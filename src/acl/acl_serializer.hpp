@@ -208,6 +208,8 @@ private:
     char session_id[256];
     OutCryptoTransport ct;
 
+    std::string manager_disconnect_reason;
+
 public:
     std::string session_type;
 
@@ -293,14 +295,13 @@ public:
             // acl connection lost
             this->ini.set_acl<cfg::context::authenticated>(false);
 
-            if (this->ini.get<cfg::context::manager_disconnect_reason>().empty()) {
+            if (this->manager_disconnect_reason.empty()) {
                 this->ini.set_acl<cfg::context::rejected>(
                     TR(trkeys::manager_close_cnx, language(this->ini)));
             }
             else {
-                this->ini.set_acl<cfg::context::rejected>(
-                    this->ini.get<cfg::context::manager_disconnect_reason>());
-                this->ini.get_ref<cfg::context::manager_disconnect_reason>().clear();
+                this->ini.set_acl<cfg::context::rejected>(this->manager_disconnect_reason);
+                this->manager_disconnect_reason.clear();
             }
         }
     }
@@ -548,8 +549,7 @@ public:
             else
             {
                 if (!this->ini.get<cfg::context::disconnect_reason>().empty()) {
-                    this->ini.set<cfg::context::manager_disconnect_reason>(
-                        this->ini.get<cfg::context::disconnect_reason>());
+                    this->manager_disconnect_reason = this->ini.get<cfg::context::disconnect_reason>();
                     this->ini.get_ref<cfg::context::disconnect_reason>().clear();
 
                     this->ini.set_acl<cfg::context::disconnect_reason_ack>(true);

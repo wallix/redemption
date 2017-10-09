@@ -2579,16 +2579,21 @@ public:
                 (this->nego.tls) ? "TLS" :
                                    "RDP");
 
-            this->nego.recv_connection_confirm(
+            if (!this->nego.recv_connection_confirm(
                 this->server_cert_store,
                 this->server_cert_check,
                 this->server_notifier,
                 this->certif_path.get(),
                 stream
-            );
-
-            if (this->nego.state == RdpNego::NEGO_STATE_FINAL){
-                this->send_connectInitialPDUwithGccConferenceCreateRequest();
+            )) {
+                this->enable_tls_state = true;
+                return ;
+            }
+            else {
+                this->enable_tls_state = false;
+                if (this->nego.state == RdpNego::NEGO_STATE_FINAL){
+                    this->send_connectInitialPDUwithGccConferenceCreateRequest();
+                }
             }
             break;
 
@@ -4088,11 +4093,13 @@ public:
 
     TpduBuffer buf;
 
+    bool enable_tls_state = false;
+
     bool process_nego(bool waked_up_by_time)
     {
         bool run = true;
         try {
-            if (!waked_up_by_time) {
+            if (!waked_up_by_time && !this->enable_tls_state) {
                 this->buf.load_data(this->nego.trans.get_transport());
             }
         }

@@ -30,6 +30,7 @@
 #include "utils/rect.hpp"
 #include "utils/ellipse.hpp"
 #include "utils/bitfu.hpp"
+#include "gdi/image_frame_api.hpp"
 
 using std::size_t;
 
@@ -2164,3 +2165,24 @@ private:
         this->default_pointer.initialize(0, 0, 32, 32, pointer_data, pointer_mask);
     }
 };
+
+namespace gdi
+{
+    inline ImageDataView get_mutable_image_view(Drawable & drawable)
+    {
+        return ImageDataView{
+            drawable.first_pixel(),
+            drawable.width(), drawable.height(),
+            drawable.rowsize(), static_cast<uint8_t>(drawable.Bpp)
+        };
+    }
+
+    inline ConstImageDataView get_image_view(Drawable const & drawable)
+    {
+        return ConstImageDataView{
+            drawable.data(),
+            drawable.width(), drawable.height(),
+            drawable.rowsize(), static_cast<uint8_t>(drawable.Bpp)
+        };
+    }
+}

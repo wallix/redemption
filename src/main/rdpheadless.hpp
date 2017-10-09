@@ -353,7 +353,7 @@ public:
     }
 
     void disconnect() {
-        std::chrono::microseconds duration = difftimeval(tvtime(), this->start_wab_session_time);
+        std::chrono::microseconds duration = difftimeval(tvtime(), this->start_win_session_time);
 
         //     std::cout << " Connection closed. Session duration = " << duration.count() / 1000  << " milisecond(s)" <<  std::endl;
         std::cout << "movielength = " << duration.count() / 1000 <<  std::endl;

@@ -22,7 +22,8 @@
 
 #include "keyboard/keymapSym.hpp"
 #include "utils/log.hpp"
-#include <string.h>
+#include <cstring>
+#include <cstdio>
 
 
 // KEYSYMS

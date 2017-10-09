@@ -38,6 +38,7 @@
 #include "system/redemption_unit_tests.hpp"
 #include "transport/transport.hpp"
 #include "utils/stream.hpp"
+#include "utils/hexdump.hpp"
 
 struct RemainingError : std::runtime_error
 {

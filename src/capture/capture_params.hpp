@@ -22,7 +22,6 @@
 
 #include <sys/time.h>
 
-class UpdateProgressData;
 class ReportMessageApi;
 
 struct CaptureParams

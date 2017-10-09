@@ -92,13 +92,12 @@ video_recorder::AVFramePtr::~AVFramePtr()
 
 video_recorder::video_recorder(
     write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,
-    int width, int height,
-    int /*imageSize*/, const uint8_t* bmp_data, int bitrate,
+    gdi::ConstImageDataView const & image_view, int bitrate,
     int frame_rate, int qscale, const char * codec_id,
     const int target_width, const int target_height,
     int log_level
 )
-: original_height(height)
+: original_height(image_view.height())
 {
     /* initialize libavcodec, and register all codecs and formats */
     av_register_all();
@@ -331,11 +330,11 @@ video_recorder::video_recorder(
 
     av_image_fill_arrays(
         this->original_picture->data, this->original_picture->linesize,
-        bmp_data, AV_PIX_FMT_BGR24, width, height, 1
+        image_view.data(), AV_PIX_FMT_BGR24, image_view.width(), image_view.height(), 1
     );
 
     this->img_convert_ctx.reset(sws_getContext(
-        width, height, AV_PIX_FMT_BGR24,
+        image_view.width(), image_view.height(), AV_PIX_FMT_BGR24,
         target_width, target_height, STREAM_PIX_FMT,
         SWS_BICUBIC, nullptr, nullptr, nullptr
     ));
@@ -395,57 +394,56 @@ void video_recorder::encoding_video_frame(uint64_t frame_index)
 {
     /* stat */// LOG(LOG_INFO, "encoding_video_frame");
 
-    // encode the image
-    // int avcodec_encode_video(AVCodecContext *avctx, uint8_t *buf, int buf_size, const AVFrame *pict);
-    //
-
     /**
-        * Encode a frame of video.
-        *
-        * Takes input raw video data from frame and writes the next output packet, if
-        * available, to avpkt. The output packet does not necessarily contain data for
-        * the most recent frame, as encoders can delay and reorder input frames
-        * internally as needed.
-        *
-        * @param avctx     codec context
-        * @param avpkt     output AVPacket.
-        *                  The user can supply an output buffer by setting
-        *                  avpkt->data and avpkt->size prior to calling the
-        *                  function, but if the size of the user-provided data is not
-        *                  large enough, encoding will fail. All other AVPacket fields
-        *                  will be reset by the encoder using av_init_packet(). If
-        *                  avpkt->data is NULL, the encoder will allocate it.
-        *                  The encoder will set avpkt->size to the size of the
-        *                  output packet. The returned data (if any) belongs to the
-        *                  caller, he is responsible for freeing it.
-        * @param[in] frame AVFrame containing the raw video data to be encoded.
-        *                  May be NULL when flushing an encoder that has the
-        *                  CODEC_CAP_DELAY capability set.
-        * @param[out] got_packet_ptr This field is set to 1 by libavcodec if the
-        *                            output packet is non-empty, and to 0 if it is
-        *                            empty. If the function returns an error, the
-        *                            packet can be assumed to be invalid, and the
-        *                            value of got_packet_ptr is undefined and should
-        *                            not be used.
-        * @return          0 on success, negative error code on failure
-        */
+    * Encode a frame of video.
+    *
+    * Takes input raw video data from frame and writes the next output packet, if
+    * available, to avpkt. The output packet does not necessarily contain data for
+    * the most recent frame, as encoders can delay and reorder input frames
+    * internally as needed.
+    *
+    * @param avctx     codec context
+    * @param avpkt     output AVPacket.
+    *                  The user can supply an output buffer by setting
+    *                  avpkt->data and avpkt->size prior to calling the
+    *                  function, but if the size of the user-provided data is not
+    *                  large enough, encoding will fail. All other AVPacket fields
+    *                  will be reset by the encoder using av_init_packet(). If
+    *                  avpkt->data is NULL, the encoder will allocate it.
+    *                  The encoder will set avpkt->size to the size of the
+    *                  output packet. The returned data (if any) belongs to the
+    *                  caller, he is responsible for freeing it.
+    * @param[in] frame AVFrame containing the raw video data to be encoded.
+    *                  May be NULL when flushing an encoder that has the
+    *                  CODEC_CAP_DELAY capability set.
+    * @param[out] got_packet_ptr This field is set to 1 by libavcodec if the
+    *                            output packet is non-empty, and to 0 if it is
+    *                            empty. If the function returns an error, the
+    *                            packet can be assumed to be invalid, and the
+    *                            value of got_packet_ptr is undefined and should
+    *                            not be used.
+    * @return          0 on success, negative error code on failure
+    */
     // int avcodec_encode_video2(AVCodecContext *avctx, AVPacket *avpkt, const AVFrame *frame, int *got_packet_ptr);
 
-    auto frame_interval = this->video_st->r_frame_rate.den;
-    auto pts = this->video_st->time_base.den * frame_index / frame_interval;
-    auto dur = this->video_st->time_base.den * (frame_index - this->old_frame_index) / frame_interval;
-    this->pkt.pts = this->pkt.dts = pts;
+    auto const frame_interval = this->video_st->r_frame_rate.den;
+    auto const pts = this->video_st->time_base.den * frame_index / frame_interval;
+    auto const old_pts = this->video_st->time_base.den * this->old_frame_index / frame_interval;
+    auto const dur = pts - old_pts;
+    //auto const dur = this->video_st->time_base.den * (frame_index - this->old_frame_index) / frame_interval;
+
+    this->pkt.pts = pts;
     this->picture->pts = pts;
-    this->old_frame_index = frame_index;
+    this->pkt.duration = dur;
 
     int got_packet = 0;
-    const int res = avcodec_encode_video2(
+    int err = avcodec_encode_video2(
         this->video_st->codec,
         &this->pkt,
         this->picture.get(),
         &got_packet);
 
-    if (res == 0 && got_packet) {
+    if (err == 0 && got_packet) {
         //if (this->frame_key == frame_key_limit) {
         //    this->pkt.flags |= AV_PKT_FLAG_KEY;
         //    this->frame_key = 0;
@@ -453,10 +451,19 @@ void video_recorder::encoding_video_frame(uint64_t frame_index)
         //++this->frame_key;
         this->pkt.stream_index = this->video_st->index;
         this->pkt.duration = dur;
+        this->pkt.pts = pts;
+        this->pkt.dts = old_pts;
 
-        if (0 != av_interleaved_write_frame(this->oc.get(), &this->pkt)){
-            LOG(LOG_ERR, "video recorder : failed to write encoded frame");
-            throw Error(ERR_RECORDER_FAILED_TO_WRITE_ENCODED_FRAME);
-        }
+        this->old_frame_index = frame_index;
+
+        err = av_interleaved_write_frame(this->oc.get(), &this->pkt);
+    }
+
+    if (err) {
+        const size_t errbuf_size = 1024;
+        char errbuf[errbuf_size]{};
+        LOG(LOG_ERR, "video recorder: failed to write encoded frame: %s",
+            av_make_error_string(errbuf, errbuf_size, err));
+        throw Error(ERR_RECORDER_FAILED_TO_WRITE_ENCODED_FRAME);
     }
 }

@@ -52,14 +52,15 @@ private:
 
     unsigned int last_update_index = 0;
 
-public:
-    VideoCropper(ImageFrameApi& pImageFrameApi, unsigned int x, unsigned int y,
+    VideoCropper(
+        ImageFrameApi& imageFrameApi, ImageView const & image_view,
+        unsigned int x, unsigned int y,
         unsigned int out_width, unsigned int out_height)
-    : image_frame_api_ptr(pImageFrameApi)
-    , in_width(pImageFrameApi.width())
-    , in_height(pImageFrameApi.height())
-    , in_rowsize(pImageFrameApi.width() * VideoCropper::bytes_per_pixel)
-    , in_bmpdata(pImageFrameApi.first_pixel())
+    : image_frame_api_ptr(imageFrameApi)
+    , in_width(image_view.width())
+    , in_height(image_view.height())
+    , in_rowsize(image_view.width() * VideoCropper::bytes_per_pixel) /* TODO image_view.rowsize() ? */
+    , in_bmpdata(image_view.data())
     , x(x)
     , y(y)
     , out_width(out_width)
@@ -77,38 +78,42 @@ public:
         }
     }
 
-    uint16_t width() const override {
-        return this->out_width;
-    }
+public:
+    VideoCropper(
+        ImageFrameApi& imageFrameApi,
+        unsigned int x, unsigned int y,
+        unsigned int out_width, unsigned int out_height)
+    : VideoCropper(imageFrameApi, imageFrameApi.get_mutable_image_view(), x, y, out_width, out_height)
+    {}
 
-    uint16_t height() const override {
-        return this->out_height;
-    }
+private:
+    template<class ImgView>
+    ImgView create_image_view() const
+    {
+        uint8_t * data = this->out_bmpdata.get();
 
-    const uint8_t* data() const override {
-        if ((this->out_width == this->in_width) &&
-            (this->out_height == this->in_height)) {
-            return this->in_bmpdata;
+        if (this->out_width == this->in_width && this->out_height == this->in_height) {
+            data = const_cast<uint8_t*>(this->in_bmpdata);
         }
 
-        return this->out_bmpdata.get();
+        return ImgView{
+            data,
+            static_cast<uint16_t>(this->out_width),
+            static_cast<uint16_t>(this->out_height),
+            this->out_rowsize_4_bytes_aligned,
+            static_cast<uint8_t>(this->bytes_per_pixel)
+        };
     }
 
-    uint8_t* first_pixel() override {
-        if ((this->out_width == this->in_width) &&
-            (this->out_height == this->in_height)) {
-            return const_cast<uint8_t*>(this->in_bmpdata);
-        }
-
-        return this->out_bmpdata.get();
+public:
+    ImageView get_mutable_image_view() override
+    {
+        return this->create_image_view<ImageView>();
     }
 
-    size_t rowsize() const override {
-        return this->out_rowsize_4_bytes_aligned;
-    }
-
-    size_t pix_len() const override {
-        return this->out_rowsize_4_bytes_aligned * this->out_height;
+    ConstImageView get_image_view() const override
+    {
+        return this->create_image_view<ConstImageView>();
     }
 
     void prepare_image_frame() override {

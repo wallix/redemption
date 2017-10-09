@@ -69,8 +69,6 @@ private:
     std::string  diagnostic_text;
     bool         fixed_format_diagnostic_text;
 
-    const char * extra_message;
-
 public:
     FlatWabClose(gdi::GraphicApi & drawable,
                  int16_t left, int16_t top, int16_t width, int16_t height, Widget& parent,

@@ -31,6 +31,7 @@
 #include "core/error.hpp"
 #include "core/RDP/fastpath.hpp"
 #include "utils/parse.hpp"
+#include "utils/hexdump.hpp"
 
 #include <cstdint>
 #include <cinttypes>

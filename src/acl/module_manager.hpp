@@ -471,7 +471,7 @@ private:
 
         bool try_input_invalidate2(array_view<Rect const> vr)
         {
-            // TODO perf
+            // TODO PERF multi opaque rect
             bool ret = false;
             for (Rect const & r : vr) {
                 if (!this->try_input_invalidate(r)) {

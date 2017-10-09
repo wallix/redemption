@@ -21,6 +21,7 @@
  */
 
 #include "utils/log.hpp"
+#include "utils/png.hpp"
 
 #include "core/front_api.hpp"
 #include "core/client_info.hpp"
@@ -262,8 +263,7 @@ inline int run_test_client(char const * type, int sck_fd, mod_api & mod, gdi::Gr
             return err;
         }
 
-        Drawable const & drawable = gd.impl();
-        dump_png24(f, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize(), true);
+        dump_png24(f, gd, true);
 
         return 0;
     }

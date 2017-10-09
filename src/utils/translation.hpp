@@ -304,7 +304,7 @@ public:
         this->ini = ini;
     }
 
-    // implementation in config.hpp
+    // implementation in config.cpp
     const char * translate(trkeys::TrKey_password k) const;
 
     const char * translate(trkeys::TrKey k) const
@@ -347,7 +347,7 @@ private:
     Translation::language_t lang;
 };
 
-// implementation in config.hpp
+// implementation in config.cpp
 Translation::language_t language(Inifile const & ini);
 
 inline Translation::language_t language(Language lang)

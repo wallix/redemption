@@ -21,7 +21,9 @@
 #pragma once
 
 #include "capture/video_recorder.hpp"
-#include "capture/flv_params.hpp"
+#include "capture/capture_params.hpp"
+#include "capture/video_params.hpp"
+#include "capture/full_video_params.hpp"
 #include "capture/notify_next_video.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "gdi/capture_api.hpp"
@@ -65,18 +67,32 @@ protected:
 
 struct VideoCaptureCtx : noncopyable
 {
+    enum class ImageByInterval : bool
+    {
+        One,
+        ZeroOrOne,
+    };
+
+    enum class TraceTimestamp : bool
+    {
+        No,
+        Yes,
+    };
+
     VideoCaptureCtx(
         timeval const & now,
-        bool no_timestamp,
+        TraceTimestamp trace_timestamp,
+        ImageByInterval image_by_interval,
         unsigned frame_rate,
         RDPDrawable & drawable,
-        gdi::ImageFrameApi * pImageFrameApi
+        gdi::ImageFrameApi & imageFrameApi
     );
 
     void frame_marker_event(video_recorder &);
     void encoding_video_frame(video_recorder &);
     gdi::CaptureApi::Microseconds snapshot(
         video_recorder &, timeval const & now, bool ignore_frame_in_timeval);
+    void next_video();
 
     uint16_t width() const noexcept {
         return this->drawable.width();
@@ -101,12 +117,14 @@ private:
     timeval start_video_capture;
     std::chrono::microseconds frame_interval;
     std::chrono::microseconds current_video_time;
+    uint64_t start_frame_index;
 
-    bool no_timestamp;
+    TraceTimestamp trace_timestamp;
+    ImageByInterval image_by_interval;
     time_t previous_second = 0;
     bool has_frame_marker = false;
 
-    gdi::ImageFrameApi * image_frame_api_ptr = nullptr;
+    gdi::ImageFrameApi & image_frame_api;
 
 public:
     TimestampTracer timestamp_tracer;
@@ -116,9 +134,9 @@ public:
 struct FullVideoCaptureImpl : gdi::CaptureApi
 {
     FullVideoCaptureImpl(
-        const timeval & now, const char * const record_path, const char * const basename,
-        const int groupid, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi,
-        FlvParams const & flv_params
+        CaptureParams const & capture_params,
+        RDPDrawable & drawable, gdi::ImageFrameApi & imageFrameApi,
+        VideoParams const & video_params, FullVideoParams const & full_video_params
     );
 
     ~FullVideoCaptureImpl();
@@ -222,8 +240,8 @@ public:
             const timeval & now,
             SequenceTransport & trans,
             RDPDrawable & drawable,
-            gdi::ImageFrameApi * pImageFrameApi,
-            FlvParams flv_params
+            gdi::ImageFrameApi & imageFrameApi,
+            VideoParams video_params
         );
 
         ~VideoCapture();
@@ -250,8 +268,8 @@ public:
         VideoCaptureCtx video_cap_ctx;
         std::unique_ptr<video_recorder> recorder;
         SequenceTransport & trans;
-        FlvParams flv_params;
-        gdi::ImageFrameApi * image_frame_api_ptr = nullptr;
+        VideoParams video_params;
+        gdi::ImageFrameApi & image_frame_api;
     } vc;
 
     SequenceTransport ic_trans;
@@ -262,7 +280,7 @@ public:
 
     /* const */ RDPDrawable & ic_drawable;
 
-    gdi::ImageFrameApi * image_frame_api_ptr = nullptr;
+    gdi::ImageFrameApi & image_frame_api;
 
 private:
     std::unique_ptr<uint8_t[]> ic_scaled_buffer;
@@ -315,14 +333,11 @@ public:
 
 public:
     SequencedVideoCaptureImpl(
-        const timeval & now,
-        const char * const record_path,
-        const char * const basename,
-        const int groupid,
+        CaptureParams const & capture_params,
         unsigned image_zoom,
         /* const */RDPDrawable & drawable,
-        gdi::ImageFrameApi * pImageFrameApi,
-        FlvParams flv_params,
+        gdi::ImageFrameApi & imageFrameApi,
+        VideoParams video_params,
         NotifyNextVideo & next_video_notifier);
 
     void next_video(const timeval& now);

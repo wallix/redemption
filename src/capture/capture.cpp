@@ -40,6 +40,7 @@
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/byte.hpp"
+#include "utils/sugar/non_null_ptr.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/make_unique.hpp"
@@ -610,12 +611,13 @@ private:
 
 class PngCapture : public gdi::CaptureApi
 {
-public:
+protected:
     OutFilenameSequenceTransport trans;
     RDPDrawable & drawable;
     timeval start_capture;
     std::chrono::microseconds frame_interval;
 
+private:
     unsigned zoom_factor;
     unsigned scaled_width;
     unsigned scaled_height;
@@ -624,9 +626,13 @@ public:
 
     TimestampTracer timestamp_tracer;
 
-    gdi::ImageFrameApi * image_frame_api_ptr;
+protected:
+    gdi::ImageFrameApi & image_frame_api;
 
-    PngCapture(const CaptureParams & capture_params, RDPDrawable & drawable, gdi::ImageFrameApi * pImageFrameApi, const PngParams & png_params)
+    PngCapture(
+        const CaptureParams & capture_params, const PngParams & png_params,
+        RDPDrawable & drawable,
+        gdi::ImageFrameApi & imageFrameApi, gdi::ImageDataView const & image_view)
     : trans(
         FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
         capture_params.record_tmp_path, capture_params.basename, ".png",
@@ -635,32 +641,38 @@ public:
     , start_capture(capture_params.now)
     , frame_interval(png_params.png_interval)
     , zoom_factor(png_params.zoom)
-    , scaled_width{(((pImageFrameApi->width() * this->zoom_factor) / 100)+3) & 0xFFC}
-    , scaled_height{((pImageFrameApi->height() * this->zoom_factor) / 100)}
-    , timestamp_tracer(pImageFrameApi->width(), pImageFrameApi->height(), this->drawable.impl().Bpp,
-          pImageFrameApi->first_pixel(), pImageFrameApi->rowsize())
-    , image_frame_api_ptr(pImageFrameApi)
+    , scaled_width{(((image_view.width() * this->zoom_factor) / 100)+3) & 0xFFC}
+    , scaled_height{((image_view.height() * this->zoom_factor) / 100)}
+    , timestamp_tracer(image_view)
+    , image_frame_api(imageFrameApi)
     {
         if (this->zoom_factor != 100) {
             this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
         }
     }
 
+public:
+    PngCapture(
+        const CaptureParams & capture_params, const PngParams & png_params,
+        RDPDrawable & drawable, gdi::ImageFrameApi & imageFrameApi)
+    : PngCapture(
+        capture_params, png_params, drawable,
+        imageFrameApi, imageFrameApi.get_mutable_image_view())
+    {}
+
     void dump(void)
     {
+        auto const image_view = this->image_frame_api.get_mutable_image_view();
         if (this->zoom_factor == 100) {
-            ::transport_dump_png24(
-                this->trans, this->image_frame_api_ptr->data(),
-                this->image_frame_api_ptr->width(), this->image_frame_api_ptr->height(),
-                this->image_frame_api_ptr->rowsize(), true);
+            ::dump_png24(this->trans, image_view, true);
         }
         else {
             scale_data(
-                this->scaled_buffer.get(), this->image_frame_api_ptr->data(),
-                this->scaled_width, this->image_frame_api_ptr->width(),
-                this->scaled_height, this->image_frame_api_ptr->height(),
-                this->image_frame_api_ptr->rowsize());
-            ::transport_dump_png24(
+                this->scaled_buffer.get(), image_view.data(),
+                this->scaled_width, image_view.width(),
+                this->scaled_height, image_view.height(),
+                image_view.rowsize());
+            ::dump_png24(
                 this->trans, this->scaled_buffer.get(),
                 this->scaled_width, this->scaled_height,
                 this->scaled_width * 3, false);
@@ -690,7 +702,7 @@ public:
                 this->drawable.trace_mouse();
                 tm ptm;
                 localtime_r(&now.tv_sec, &ptm);
-                this->image_frame_api_ptr->prepare_image_frame();
+                this->image_frame_api.prepare_image_frame();
                 this->timestamp_tracer.trace(ptm);
 
                 this->dump();
@@ -714,18 +726,19 @@ public:
 
 class PngCaptureRT : public PngCapture
 {
-public:
     uint32_t num_start;
     unsigned png_limit;
 
-    bool enable_rt_display = false;
+    bool enable_rt_display;
 
+public:
     PngCaptureRT(
-        const CaptureParams & capture_params, RDPDrawable & drawable,
-        gdi::ImageFrameApi * pImageFrameApi, const PngParams & png_params)
-    : PngCapture(capture_params, drawable, pImageFrameApi, png_params)
+        const CaptureParams & capture_params, const PngParams & png_params,
+        RDPDrawable & drawable, gdi::ImageFrameApi & imageFrameApi)
+    : PngCapture(capture_params, png_params, drawable, imageFrameApi)
     , num_start(this->trans.get_seqno())
     , png_limit(png_params.png_limit)
+    , enable_rt_display(png_params.rt_display)
     {
     }
 
@@ -754,9 +767,6 @@ public:
     Microseconds periodic_snapshot(
         timeval const & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
-        (void)x;
-        (void)y;
-        (void)ignore_frame_in_timeval;
         std::chrono::microseconds const duration = difftimeval(now, this->start_capture);
         std::chrono::microseconds const interval = this->frame_interval;
         if (this->enable_rt_display) {
@@ -943,7 +953,7 @@ public:
                 {0, 0, this->drawable.width(), this->drawable.height()});
 
 
-            this->image_frame_api_ptr->reset(
+            this->image_frame_api.reset(
                 new_image_frame_rect.x, new_image_frame_rect.y,
                 new_image_frame_rect.cx, new_image_frame_rect.cy);
         }
@@ -1467,29 +1477,29 @@ Capture::Capture(
     bool capture_png, const PngParams png_params,
     bool capture_pattern_checker, const PatternParams pattern_params,
     bool capture_ocr, const OcrParams ocr_params,
-    bool capture_flv, const SequencedVideoParams /*sequenced_video_params*/,
-    bool capture_flv_full, const FullVideoParams /*full_video_params*/,
+    bool capture_video, const SequencedVideoParams /*sequenced_video_params*/,
+    bool capture_video_full, const FullVideoParams full_video_params,
     bool capture_meta, const MetaParams meta_params,
     bool capture_kbd, const KbdLogParams kbd_log_params,
-    const FlvParams flv_params,
+    const VideoParams video_params,
     UpdateProgressData * update_progress_data,
     Rect crop_rect)
 : is_replay_mod(!capture_params.report_message)
 , update_progress_data(update_progress_data)
 , mouse_info{capture_params.now, drawable_params.width / 2, drawable_params.height / 2}
 , capture_event{}
-, capture_drawable(capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full)
+, capture_drawable(capture_wrm || capture_video || capture_ocr || capture_png || capture_video_full)
 {
    //REDASSERT(report_message ? order_bpp == capture_bpp : true);
 
-    if (capture_png || (capture_params.report_message && (capture_flv || capture_ocr))) {
+    if (capture_png || (capture_params.report_message && (capture_video || capture_ocr))) {
         if (recursive_create_directory(capture_params.record_tmp_path,
                 S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {
             LOG(LOG_INFO, "Failed to create directory: \"%s\"", capture_params.record_tmp_path);
         }
     }
 
-    if (capture_wrm || capture_flv || capture_ocr || capture_png || capture_flv_full) {
+    if (capture_wrm || capture_video || capture_ocr || capture_png || capture_video_full) {
         if (drawable_params.rdp_drawable) {
             this->gd_drawable = drawable_params.rdp_drawable;
         }
@@ -1500,7 +1510,7 @@ Capture::Capture(
         }
         this->gds.push_back(*this->gd_drawable);
 
-        gdi::ImageFrameApi * image_frame_api_ptr = this->gd_drawable;
+        non_null_ptr<gdi::ImageFrameApi> image_frame_api_ptr = this->gd_drawable;
 
         if (!crop_rect.isempty()) {
             REDASSERT(!capture_png || !png_params.real_time_image_capture)
@@ -1534,11 +1544,11 @@ Capture::Capture(
                 }
 
                 this->png_capture_real_time_obj.reset(new PngCaptureRT(
-                    capture_params, *this->gd_drawable, image_frame_api_ptr, png_params));
+                    capture_params, png_params, *this->gd_drawable, *image_frame_api_ptr));
             }
             else {
                 this->png_capture_obj.reset(new PngCapture(
-                    capture_params, *this->gd_drawable, image_frame_api_ptr, png_params));
+                    capture_params, png_params, *this->gd_drawable, *image_frame_api_ptr));
             }
         }
 
@@ -1555,24 +1565,21 @@ Capture::Capture(
             ));
         }
 
-        if (capture_flv) {
+        if (capture_video) {
             std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
-            if (flv_params.capture_chunk && this->meta_capture_obj) {
+            if (video_params.capture_chunk && this->meta_capture_obj) {
                 this->notifier_next_video.session_meta = &this->meta_capture_obj->get_session_meta();
                 notifier = this->notifier_next_video;
             }
             this->sequenced_video_capture_obj.reset(new SequencedVideoCaptureImpl(
-                capture_params.now, capture_params.record_path, capture_params.basename,
-                capture_params.groupid, png_params.zoom,
-                *this->gd_drawable, image_frame_api_ptr, flv_params, notifier
-            ));
+                capture_params, png_params.zoom, *this->gd_drawable,
+                *image_frame_api_ptr, video_params, notifier));
         }
 
-        if (capture_flv_full) {
+        if (capture_video_full) {
             this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
-                capture_params.now, capture_params.record_path, capture_params.basename,
-                capture_params.groupid, *this->gd_drawable,
-                image_frame_api_ptr, flv_params));
+                capture_params, *this->gd_drawable,
+                *image_frame_api_ptr, video_params, full_video_params));
         }
 
         if (capture_pattern_checker) {
@@ -1601,12 +1608,11 @@ Capture::Capture(
             // TODO kbd_log_params.wrm_keyboard_log
             this->kbds.push_back(*this->wrm_capture_obj);
             this->caps.push_back(*this->wrm_capture_obj);
-            this->objs.push_back(*this->wrm_capture_obj);
+            this->ext_caps.push_back(*this->wrm_capture_obj);
             this->probes.push_back(*this->wrm_capture_obj);
         }
 
         if (this->png_capture_real_time_obj) {
-            this->png_capture_real_time_obj->enable_rt_display = png_params.rt_display;
             this->caps.push_back(*this->png_capture_real_time_obj);
         }
 
@@ -1617,7 +1623,7 @@ Capture::Capture(
         if (this->sequenced_video_capture_obj) {
             //this->caps.push_back(this->sequenced_video_capture_obj->vc);
             this->caps.push_back(*this->sequenced_video_capture_obj);
-       }
+        }
 
         if (this->full_video_capture_obj) {
             this->caps.push_back(*this->full_video_capture_obj);
@@ -1677,21 +1683,19 @@ Capture::~Capture()
         this->wrm_capture_obj.reset();
         if (this->sequenced_video_capture_obj) {
             try {
-                this->sequenced_video_capture_obj->encoding_video_frame();
+                this->sequenced_video_capture_obj.reset();
             }
             catch (Error const & e) {
                 LOG(LOG_ERR, "Sequenced video: last encoding video frame error: %s", e.errmsg());
             }
-            this->sequenced_video_capture_obj.reset();
         }
         if (this->full_video_capture_obj) {
             try {
-                this->full_video_capture_obj->encoding_video_frame();
+                this->full_video_capture_obj.reset();
             }
             catch (Error const & e) {
                 LOG(LOG_ERR, "Full video: last encoding video frame error: %s", e.errmsg());
             }
-            this->full_video_capture_obj.reset();
         }
     }
     else {

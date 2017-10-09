@@ -26,7 +26,7 @@ enum class AppPath
 {
     Record,
     RecordTmp,
-    Flv,
+    Video,
     Ocr,
     Png,
     Wrm,

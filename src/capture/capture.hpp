@@ -31,7 +31,7 @@
 
 #include "capture/capture_params.hpp"
 #include "capture/drawable_params.hpp"
-#include "capture/flv_params.hpp"
+#include "capture/video_params.hpp"
 #include "capture/full_video_params.hpp"
 #include "capture/kbd_log_params.hpp"
 #include "capture/meta_params.hpp"
@@ -358,7 +358,7 @@ private:
     std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
     std::vector<std::reference_wrapper<gdi::KbdInputApi>> kbds;
     std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
-    std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> objs;
+    std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> ext_caps;
 
     bool capture_drawable = false;
 
@@ -371,11 +371,11 @@ public:
         bool capture_png, const PngParams png_params,
         bool capture_pattern_checker, const PatternParams pattern_params,
         bool capture_ocr, const OcrParams ocr_params,
-        bool capture_flv, const SequencedVideoParams /*sequenced_video_params*/,
-        bool capture_flv_full, const FullVideoParams /*full_video_params*/,
+        bool capture_video, const SequencedVideoParams /*sequenced_video_params*/,
+        bool capture_video_full, const FullVideoParams full_video_params,
         bool capture_meta, const MetaParams /*meta_params*/,
         bool capture_kbd, const KbdLogParams /*kbd_log_params*/,
-        const FlvParams flv_params,
+        const VideoParams video_params,
         UpdateProgressData * update_progress_data,
         Rect crop_rect
     );
@@ -452,13 +452,13 @@ public:
     void set_pointer_display();
 
     void external_breakpoint() override {
-        for (gdi::ExternalCaptureApi & obj : this->objs) {
+        for (gdi::ExternalCaptureApi & obj : this->ext_caps) {
             obj.external_breakpoint();
         }
     }
 
     void external_time(timeval const & now) override {
-        for (gdi::ExternalCaptureApi & obj : this->objs) {
+        for (gdi::ExternalCaptureApi & obj : this->ext_caps) {
             obj.external_time(now);
         }
     }

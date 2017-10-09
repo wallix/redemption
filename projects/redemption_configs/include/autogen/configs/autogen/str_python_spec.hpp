@@ -559,7 +559,7 @@
 "#   0: none\n"
 "#   1: png\n"
 "#   2: wrm\n"
-"#   4: flv\n"
+"#   4: video\n"
 "#   8: ocr\n"
 "# (note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
 "#_advanced\n"
@@ -619,7 +619,7 @@
 "disable_file_system_log = integer(min=0, max=3, default=1)\n\n"
 
 "#_hidden\n"
-"rt_display = integer(min=0, default=0)\n\n"
+"rt_display = boolean(default=False)\n\n"
 
 "# The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:\n"
 "#   0: 24-bit\n"
@@ -633,6 +633,11 @@
 "#   2: snappy\n"
 "#_advanced\n"
 "wrm_compression_algorithm = option(0, 1, 2, default=1)\n\n"
+
+"# Needed to play a video with ffplay or VLC.\n"
+"# Note: Useless with mpv and mplayer.\n"
+"#_advanced\n"
+"bogus_vlc_frame_rate = boolean(default=True)\n\n"
 
 "# Bitrate for low quality.\n"
 "#_advanced\n"

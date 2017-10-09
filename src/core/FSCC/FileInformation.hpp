@@ -29,6 +29,7 @@
 
 #include "utils/sugar/cast.hpp"
 #include "utils/stream.hpp"
+#include "utils/hexdump.hpp"
 #include "core/ERREF/ntstatus.hpp"
 
 namespace fscc {

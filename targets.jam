@@ -7,8 +7,10 @@ exe rdpinichecker :
 :
   $(EXE_DEPENDENCIES)
   <library>app_path_exe.o
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
 ;
 exe rdpproxy :
   $(REDEMPTION_SRC_PATH)/main/main.cpp
@@ -23,10 +25,12 @@ exe rdpproxy :
   <library>png
   <library>ppocr
   <library>program_options
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -89,6 +93,7 @@ exe rdpproxy :
   <library>src/utils/confdescriptor.o
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -105,6 +110,7 @@ exe rdpclient :
   <library>openssl
   <library>png
   <library>program_options
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/gdi/clip_from_cmd.o
@@ -125,6 +131,7 @@ exe rdpclient :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
   <library>src/utils/png.o
 ;
@@ -139,6 +146,7 @@ exe rdpheadless :
   <library>krb5
   <library>openssl
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/gdi/clip_from_cmd.o
@@ -166,8 +174,10 @@ exe rdpheadless :
   <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
   <library>src/utils/png.o
+  <library>src/utils/set_exception_handler_pretty_message.o
   <library>z
 ;
 exe rdptanalyzer :
@@ -178,6 +188,7 @@ exe rdptanalyzer :
   <library>program_options
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
+  <library>src/utils/hexdump.o
 ;
 exe rdptproxy :
   $(REDEMPTION_SRC_PATH)/main/transparent.cpp
@@ -192,10 +203,12 @@ exe rdptproxy :
   <library>png
   <library>ppocr
   <library>program_options
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -257,6 +270,7 @@ exe rdptproxy :
   <library>src/utils/confdescriptor.o
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -275,10 +289,12 @@ exe vncclient :
   <library>png
   <library>ppocr
   <library>program_options
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -340,6 +356,7 @@ exe vncclient :
   <library>src/utils/confdescriptor.o
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -357,10 +374,12 @@ lib libredrec :
   <library>png
   <library>ppocr
   <library>program_options
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -371,6 +390,7 @@ lib libredrec :
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
@@ -410,10 +430,12 @@ test-run tests/acl/test_acl_serializer :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -475,6 +497,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/utils/confdescriptor.o
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -497,10 +520,12 @@ test-run tests/acl/test_authentifier :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -562,6 +587,7 @@ test-run tests/acl/test_authentifier :
   <library>src/utils/confdescriptor.o
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -584,10 +610,12 @@ test-run tests/acl/test_module_manager :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -649,6 +677,7 @@ test-run tests/acl/test_module_manager :
   <library>src/utils/confdescriptor.o
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -671,6 +700,7 @@ test-run tests/capture/test_bogus_ocr :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/capture/test_bogus_ppocr :
@@ -686,6 +716,7 @@ test-run tests/capture/test_bogus_ppocr :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/capture/test_capture :
@@ -698,9 +729,11 @@ test-run tests/capture/test_capture :
   <library>ffmpeg
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -710,6 +743,7 @@ test-run tests/capture/test_capture :
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
@@ -730,6 +764,7 @@ test-run tests/capture/test_ocr :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/capture/test_ppocr :
@@ -745,6 +780,7 @@ test-run tests/capture/test_ppocr :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/capture/test_transparentchunk :
@@ -759,6 +795,7 @@ test-run tests/capture/test_transparentplayer :
   <library>crypto
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/capture/test_transparentrecorder :
   $(REDEMPTION_TEST_PATH)/capture/test_transparentrecorder.cpp
@@ -779,6 +816,7 @@ test-run tests/capture/test_video_capture :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/capture/test_wrm_capture :
@@ -795,6 +833,7 @@ test-run tests/capture/test_wrm_capture :
   <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -831,6 +870,7 @@ test-run tests/client_mods/cli_vnc_connection :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -843,6 +883,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>gssapi_krb5
   <library>krb5
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/gdi/clip_from_cmd.o
@@ -862,6 +903,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>tests/includes/test_only/front/fake_front.o
 ;
@@ -884,6 +926,7 @@ test-run tests/client_mods/test_rdp_client_test_card :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>tests/includes/test_only/front/fake_front.o
 ;
@@ -896,6 +939,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>gssapi_krb5
   <library>krb5
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/gdi/clip_from_cmd.o
@@ -915,6 +959,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>tests/includes/test_only/front/fake_front.o
 ;
@@ -927,6 +972,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>gssapi_krb5
   <library>krb5
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/gdi/clip_from_cmd.o
@@ -946,6 +992,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>tests/includes/test_only/front/fake_front.o
 ;
@@ -976,6 +1023,7 @@ test-run tests/client_mods/test_vnc_client_simple :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>z
@@ -984,6 +1032,7 @@ test-run tests/core/FSCC/test_FileInformation :
   $(REDEMPTION_TEST_PATH)/core/FSCC/test_FileInformation.cpp
 :
   <covfile>src/core/FSCC/FileInformation.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/caches/test_bmpcache :
   $(REDEMPTION_TEST_PATH)/core/RDP/caches/test_bmpcache.cpp
@@ -995,6 +1044,7 @@ test-run tests/core/RDP/caches/test_bmpcache :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/core/RDP/caches/test_bmpcachepersister :
@@ -1004,6 +1054,7 @@ test-run tests/core/RDP/caches/test_bmpcachepersister :
   <library>crypto
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/caches/test_brushcache :
   $(REDEMPTION_TEST_PATH)/core/RDP/caches/test_brushcache.cpp
@@ -1169,46 +1220,55 @@ test-run tests/core/RDP/channels/test_rdpdr :
   $(REDEMPTION_TEST_PATH)/core/RDP/channels/test_rdpdr.cpp
 :
   <covfile>src/core/RDP/channels/rdpdr.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/gcc/userdata/test_cs_cluster :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_cluster.cpp
 :
   <covfile>src/core/RDP/gcc/userdata/cs_cluster.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/gcc/userdata/test_cs_core :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_core.cpp
 :
   <covfile>src/core/RDP/gcc/userdata/cs_core.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/gcc/userdata/test_cs_mcs_msgchannel :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_mcs_msgchannel.cpp
 :
   <covfile>src/core/RDP/gcc/userdata/cs_mcs_msgchannel.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/gcc/userdata/test_cs_monitor :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_monitor.cpp
 :
   <covfile>src/core/RDP/gcc/userdata/cs_monitor.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/gcc/userdata/test_cs_monitor_ex :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_monitor_ex.cpp
 :
   <covfile>src/core/RDP/gcc/userdata/cs_monitor_ex.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/gcc/userdata/test_cs_multitransport :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_multitransport.cpp
 :
   <covfile>src/core/RDP/gcc/userdata/cs_multitransport.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/gcc/userdata/test_cs_net :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_net.cpp
 :
   <covfile>src/core/RDP/gcc/userdata/cs_net.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/gcc/userdata/test_cs_security :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_security.cpp
 :
   <covfile>src/core/RDP/gcc/userdata/cs_security.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/gcc/userdata/test_sc_core :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_sc_core.cpp
@@ -1225,30 +1285,35 @@ test-run tests/core/RDP/gcc/userdata/test_sc_sec1 :
 :
   <covfile>src/core/RDP/gcc/userdata/sc_sec1.hpp
   <library>crypto
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/mppc/test_mppc_40 :
   $(REDEMPTION_TEST_PATH)/core/RDP/mppc/test_mppc_40.cpp
 :
   <covfile>src/core/RDP/mppc/mppc_40.hpp
   <library>src/core/RDP/mppc.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/mppc/test_mppc_50 :
   $(REDEMPTION_TEST_PATH)/core/RDP/mppc/test_mppc_50.cpp
 :
   <covfile>src/core/RDP/mppc/mppc_50.hpp
   <library>src/core/RDP/mppc.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/mppc/test_mppc_60 :
   $(REDEMPTION_TEST_PATH)/core/RDP/mppc/test_mppc_60.cpp
 :
   <covfile>src/core/RDP/mppc/mppc_60.hpp
   <library>src/core/RDP/mppc.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/mppc/test_mppc_61 :
   $(REDEMPTION_TEST_PATH)/core/RDP/mppc/test_mppc_61.cpp
 :
   <covfile>src/core/RDP/mppc/mppc_61.hpp
   <library>src/core/RDP/mppc.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/nla/asn1/test_ber :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/asn1/test_ber.cpp
@@ -1273,18 +1338,21 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm :
 :
   <covfile>src/core/RDP/nla/ntlm/ntlm.hpp
   <library>crypto
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_avpair :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_avpair.cpp
 :
   <covfile>src/core/RDP/nla/ntlm/ntlm_avpair.hpp
   <library>crypto
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_context :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_context.cpp
 :
   <covfile>src/core/RDP/nla/ntlm/ntlm_context.hpp
   <library>crypto
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_message :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_message.cpp
@@ -1296,24 +1364,28 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate :
 :
   <covfile>src/core/RDP/nla/ntlm/ntlm_message_authenticate.hpp
   <library>crypto
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_message_challenge :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp
 :
   <covfile>src/core/RDP/nla/ntlm/ntlm_message_challenge.hpp
   <library>crypto
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp
 :
   <covfile>src/core/RDP/nla/ntlm/ntlm_message_negotiate.hpp
   <library>crypto
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/nla/test_credssp :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/test_credssp.cpp
 :
   <covfile>src/core/RDP/nla/credssp.hpp
   <library>crypto
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/nla/test_nla :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/test_nla.cpp
@@ -1323,6 +1395,7 @@ test-run tests/core/RDP/nla/test_nla :
   <library>gssapi_krb5
   <library>krb5
   <library>src/core/RDP/mppc.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/nla/test_sspi :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/test_sspi.cpp
@@ -1333,6 +1406,7 @@ test-run tests/core/RDP/orders/test_AlternateSecondaryWindowing :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_AlternateSecondaryWindowing.cpp
 :
   <covfile>src/core/RDP/orders/AlternateSecondaryWindowing.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersCommon :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersCommon.cpp
@@ -1459,6 +1533,7 @@ test-run tests/core/RDP/test_GraphicUpdatePDU :
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_PersistentKeyListPDU :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_PersistentKeyListPDU.cpp
@@ -1475,6 +1550,7 @@ test-run tests/core/RDP/test_RDPDrawable :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/core/RDP/test_RDPSerializer :
@@ -1484,6 +1560,7 @@ test-run tests/core/RDP/test_RDPSerializer :
   <library>crypto
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_RefreshRectPDU :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_RefreshRectPDU.cpp
@@ -1491,6 +1568,7 @@ test-run tests/core/RDP/test_RefreshRectPDU :
   <covfile>src/core/RDP/RefreshRectPDU.hpp
   <library>crypto
   <library>src/core/RDP/mppc.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_SaveSessionInfoPDU :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_SaveSessionInfoPDU.cpp
@@ -1501,6 +1579,7 @@ test-run tests/core/RDP/test_ServerRedirection :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_ServerRedirection.cpp
 :
   <covfile>src/core/RDP/ServerRedirection.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_autoreconnect :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_autoreconnect.cpp
@@ -1516,6 +1595,7 @@ test-run tests/core/RDP/test_bitmapupdate :
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/core/RDP/test_capabilities :
@@ -1529,6 +1609,7 @@ test-run tests/core/RDP/test_clipboard :
   <covfile>src/core/RDP/clipboard.hpp
   <library>crypto
   <library>src/core/RDP/mppc.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_fastpath :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_fastpath.cpp
@@ -1536,18 +1617,21 @@ test-run tests/core/RDP/test_fastpath :
   <covfile>src/core/RDP/fastpath.hpp
   <library>crypto
   <library>src/core/RDP/mppc.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_gcc :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_gcc.cpp
 :
   <covfile>src/core/RDP/gcc.hpp
   <library>crypto
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_lic :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_lic.cpp
 :
   <covfile>src/core/RDP/lic.hpp
   <library>crypto
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_logon :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_logon.cpp
@@ -1558,6 +1642,7 @@ test-run tests/core/RDP/test_mcs :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_mcs.cpp
 :
   <covfile>src/core/RDP/mcs.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_mppc :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_mppc.cpp
@@ -1565,6 +1650,7 @@ test-run tests/core/RDP/test_mppc :
   <covfile>src/core/RDP/mppc.cpp
   <covfile>src/core/RDP/mppc.hpp
   <library>src/core/RDP/mppc.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_nego :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_nego.cpp
@@ -1576,6 +1662,7 @@ test-run tests/core/RDP/test_nego :
   <library>krb5
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_non_null_terminated_utf16_from_utf8 :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_non_null_terminated_utf16_from_utf8.cpp
@@ -1587,6 +1674,7 @@ test-run tests/core/RDP/test_out_per_bstream :
 :
   <covfile>src/core/RDP/out_per_bstream.hpp
   <library>crypto
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_pointer :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_pointer.cpp
@@ -1602,6 +1690,7 @@ test-run tests/core/RDP/test_remote_programs :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_remote_programs.cpp
 :
   <covfile>src/core/RDP/remote_programs.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_sec :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_sec.cpp
@@ -1609,17 +1698,20 @@ test-run tests/core/RDP/test_sec :
   <covfile>src/core/RDP/sec.hpp
   <library>crypto
   <library>src/core/RDP/mppc.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_share :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_share.cpp
 :
   <covfile>src/core/RDP/share.hpp
   <library>src/core/RDP/mppc.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_slowpath :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_slowpath.cpp
 :
   <covfile>src/core/RDP/slowpath.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_tpdu_buffer :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_tpdu_buffer.cpp
@@ -1627,6 +1719,7 @@ test-run tests/core/RDP/test_tpdu_buffer :
   <covfile>src/core/RDP/tpdu_buffer.hpp
   <library>crypto
   <library>src/core/RDP/mppc.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_x224 :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_x224.cpp
@@ -1634,6 +1727,7 @@ test-run tests/core/RDP/test_x224 :
   <covfile>src/core/RDP/x224.hpp
   <library>crypto
   <library>src/core/RDP/mppc.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDPEA/test_audio_output :
   $(REDEMPTION_TEST_PATH)/core/RDPEA/test_audio_output.cpp
@@ -1641,6 +1735,7 @@ test-run tests/core/RDPEA/test_audio_output :
   <covfile>src/core/RDPEA/audio_output.hpp
   <library>crypto
   <library>src/core/RDP/mppc.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/SMB2/test_MessageSyntax :
   $(REDEMPTION_TEST_PATH)/core/SMB2/test_MessageSyntax.cpp
@@ -1673,6 +1768,7 @@ test-run tests/core/test_channel_list :
   <covfile>src/core/channel_list.hpp
   <library>crypto
   <library>src/core/RDP/mppc.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/test_channel_names :
   $(REDEMPTION_TEST_PATH)/core/test_channel_names.cpp
@@ -1724,10 +1820,12 @@ test-run tests/core/test_mainloop :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -1790,6 +1888,7 @@ test-run tests/core/test_mainloop :
   <library>src/utils/confdescriptor.o
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -1817,10 +1916,12 @@ test-run tests/core/test_session :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -1882,6 +1983,7 @@ test-run tests/core/test_session :
   <library>src/utils/confdescriptor.o
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -1899,10 +2001,12 @@ test-run tests/core/test_session_server :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -1964,6 +2068,7 @@ test-run tests/core/test_session_server :
   <library>src/utils/confdescriptor.o
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -1986,10 +2091,12 @@ test-run tests/front/test_front :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -2014,6 +2121,7 @@ test-run tests/front/test_front :
   <library>src/utils/cfgloader.o
   <library>src/utils/confdescriptor.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
@@ -2044,6 +2152,7 @@ test-run tests/gdi/test_protected_graphics :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/keyboard/test_keymap2 :
@@ -2071,10 +2180,12 @@ test-run tests/main/test_do_recorder :
   <library>png
   <library>ppocr
   <library>program_options
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -2086,6 +2197,7 @@ test-run tests/main/test_do_recorder :
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
@@ -2119,6 +2231,7 @@ test-run tests/mod/internal/test_bouncer2_mod :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>tests/includes/test_only/front/fake_front.o
 ;
@@ -2141,6 +2254,7 @@ test-run tests/mod/internal/test_copy_paste :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>tests/includes/test_only/front/fake_front.o
 ;
@@ -2152,6 +2266,7 @@ test-run tests/mod/internal/test_flat_dialog_mod :
   <library>app_path_test.o
   <library>crypto
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -2176,6 +2291,7 @@ test-run tests/mod/internal/test_flat_dialog_mod :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>tests/includes/test_only/front/fake_front.o
 ;
@@ -2187,6 +2303,7 @@ test-run tests/mod/internal/test_flat_login_mod :
   <library>app_path_test.o
   <library>crypto
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -2211,6 +2328,7 @@ test-run tests/mod/internal/test_flat_login_mod :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>tests/includes/test_only/front/fake_front.o
 ;
@@ -2222,6 +2340,7 @@ test-run tests/mod/internal/test_flat_wab_close_mod :
   <library>app_path_test.o
   <library>crypto
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -2242,6 +2361,7 @@ test-run tests/mod/internal/test_flat_wab_close_mod :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>tests/includes/test_only/front/fake_front.o
 ;
@@ -2259,6 +2379,7 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>app_path_test.o
   <library>crypto
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -2283,6 +2404,7 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>tests/includes/test_only/front/fake_front.o
 ;
@@ -2301,6 +2423,7 @@ test-run tests/mod/internal/test_internal_mod :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/mod/internal/test_replay_mod :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_replay_mod.cpp
@@ -2326,6 +2449,7 @@ test-run tests/mod/internal/test_replay_mod :
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -2355,6 +2479,7 @@ test-run tests/mod/internal/test_test_card_mod :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/test_transparent_replay_mod :
@@ -2370,6 +2495,7 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>app_path_test.o
   <library>crypto
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -2390,6 +2516,7 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>tests/includes/test_only/front/fake_front.o
 ;
@@ -2406,6 +2533,7 @@ test-run tests/mod/internal/widget/test_composite :
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_edit :
@@ -2426,6 +2554,7 @@ test-run tests/mod/internal/widget/test_edit :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_edit_valid :
@@ -2449,6 +2578,7 @@ test-run tests/mod/internal/widget/test_edit_valid :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_flat_button :
@@ -2469,6 +2599,7 @@ test-run tests/mod/internal/widget/test_flat_button :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_flat_dialog :
@@ -2496,6 +2627,7 @@ test-run tests/mod/internal/widget/test_flat_dialog :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_flat_form :
@@ -2518,6 +2650,7 @@ test-run tests/mod/internal/widget/test_flat_form :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_flat_interactive_target :
@@ -2543,6 +2676,7 @@ test-run tests/mod/internal/widget/test_flat_interactive_target :
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_flat_login :
@@ -2570,6 +2704,7 @@ test-run tests/mod/internal/widget/test_flat_login :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_flat_vnc_authentification :
@@ -2601,6 +2736,7 @@ test-run tests/mod/internal/widget/test_flat_wab_close :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_flat_wait :
@@ -2626,6 +2762,7 @@ test-run tests/mod/internal/widget/test_flat_wait :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_grid :
@@ -2645,6 +2782,7 @@ test-run tests/mod/internal/widget/test_grid :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_group_box :
@@ -2667,6 +2805,7 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_image :
@@ -2687,6 +2826,7 @@ test-run tests/mod/internal/widget/test_image :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_label :
@@ -2706,6 +2846,7 @@ test-run tests/mod/internal/widget/test_label :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_labelgrid :
@@ -2726,6 +2867,7 @@ test-run tests/mod/internal/widget/test_labelgrid :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_language_button :
@@ -2750,6 +2892,7 @@ test-run tests/mod/internal/widget/test_multiline :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_notify_api :
@@ -2776,6 +2919,7 @@ test-run tests/mod/internal/widget/test_number_edit :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_password :
@@ -2797,6 +2941,7 @@ test-run tests/mod/internal/widget/test_password :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_screen :
@@ -2817,6 +2962,7 @@ test-run tests/mod/internal/widget/test_screen :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_scroll :
@@ -2838,6 +2984,7 @@ test-run tests/mod/internal/widget/test_scroll :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_selector :
@@ -2862,6 +3009,7 @@ test-run tests/mod/internal/widget/test_selector :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_tab :
@@ -2885,6 +3033,7 @@ test-run tests/mod/internal/widget/test_tooltip :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/internal/widget/test_widget :
@@ -2909,6 +3058,7 @@ test-run tests/mod/internal/widget/test_widget_rect :
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/mod/null/test_null :
@@ -2930,6 +3080,7 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>tests/includes/test_only/front/fake_front.o
 ;
@@ -2944,6 +3095,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_asynchronous_task :
   <covfile>src/mod/rdp/channels/rdpdr_asynchronous_task.hpp
   <library>crypto
   <library>src/core/RDP/mppc.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/mod/rdp/channels/test_rdpdr_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_rdpdr_channel.cpp
@@ -2956,6 +3108,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>tests/includes/test_only/front/fake_front.o
 ;
@@ -2988,6 +3141,7 @@ test-run tests/mod/rdp/channels/test_virtual_channel_data_sender :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_virtual_channel_data_sender.cpp
 :
   <covfile>src/mod/rdp/channels/virtual_channel_data_sender.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/mod/rdp/test_rdp :
   $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp.cpp
@@ -2998,6 +3152,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>gssapi_krb5
   <library>krb5
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/gdi/clip_from_cmd.o
@@ -3017,6 +3172,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>tests/includes/test_only/front/fake_front.o
 ;
@@ -3034,6 +3190,7 @@ test-run tests/mod/rdp/test_rdp_orders :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/mod/rdp/test_rdp_params :
   $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_params.cpp
@@ -3072,6 +3229,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -3149,10 +3307,12 @@ test-run tests/server/test_mstsc_client :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -3173,6 +3333,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/cfgloader.o
   <library>src/utils/confdescriptor.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
@@ -3188,10 +3349,12 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -3212,6 +3375,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/cfgloader.o
   <library>src/utils/confdescriptor.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
@@ -3227,10 +3391,12 @@ test-run tests/server/test_rdesktop_client :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -3251,6 +3417,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/cfgloader.o
   <library>src/utils/confdescriptor.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>z
@@ -3328,6 +3495,7 @@ test-run tests/test_bitmap_perf :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/test_libpng :
@@ -3356,6 +3524,7 @@ test-run tests/transport/test_gzip_compression_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_gzip_compression_transport.cpp
 :
   <covfile>src/transport/gzip_compression_transport.hpp
+  <library>src/utils/hexdump.o
   <library>z
 ;
 test-run tests/transport/test_in_file_transport :
@@ -3376,6 +3545,7 @@ test-run tests/transport/test_in_meta_sequence_transport :
   <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>z
 ;
@@ -3400,6 +3570,7 @@ test-run tests/transport/test_snappy_compression_transport :
 :
   <covfile>src/transport/snappy_compression_transport.hpp
   <library>snappy
+  <library>src/utils/hexdump.o
 ;
 test-run tests/transport/test_socket_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_socket_transport.cpp
@@ -3411,11 +3582,13 @@ test-run tests/transport/test_socket_transport :
   <library>openssl
   <library>src/transport/socket_transport.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
 ;
 test-run tests/transport/test_test_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_test_transport.cpp
 :
+  <library>src/utils/hexdump.o
 ;
 test-run tests/transport/test_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_transport.cpp
@@ -3580,6 +3753,7 @@ test-run tests/utils/test_authorization_channels :
   <covfile>src/utils/authorization_channels.cpp
   <covfile>src/utils/authorization_channels.hpp
   <library>src/utils/authorization_channels.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/utils/test_bitfu :
   $(REDEMPTION_TEST_PATH)/utils/test_bitfu.cpp
@@ -3597,6 +3771,7 @@ test-run tests/utils/test_bitmap :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/utils/test_bitmap_data_allocator :
@@ -3615,6 +3790,7 @@ test-run tests/utils/test_bitmap_from_file :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/utils/test_bitmap_shrink :
@@ -3628,6 +3804,7 @@ test-run tests/utils/test_cfgloader :
   <covfile>src/utils/cfgloader.cpp
   <covfile>src/utils/cfgloader.hpp
   <library>src/utils/cfgloader.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/utils/test_colors :
   $(REDEMPTION_TEST_PATH)/utils/test_colors.cpp
@@ -3648,6 +3825,7 @@ test-run tests/utils/test_confdescriptor :
   <covfile>src/utils/confdescriptor.hpp
   <library>src/utils/cfgloader.o
   <library>src/utils/confdescriptor.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/utils/test_d3des :
   $(REDEMPTION_TEST_PATH)/utils/test_d3des.cpp
@@ -3675,6 +3853,7 @@ test-run tests/utils/test_drawable :
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/utils/test_ellipse :
@@ -3742,9 +3921,12 @@ test-run tests/utils/test_png :
 :
   <covfile>src/utils/png.cpp
   <covfile>src/utils/png.hpp
+  <library>crypto
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/hexdump.o
   <library>src/utils/png.o
 ;
 test-run tests/utils/test_rdtsc :
@@ -3761,6 +3943,7 @@ test-run tests/utils/test_redirection_info :
   $(REDEMPTION_TEST_PATH)/utils/test_redirection_info.cpp
 :
   <covfile>src/utils/redirection_info.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/utils/test_region :
   $(REDEMPTION_TEST_PATH)/utils/test_region.cpp
@@ -3771,14 +3954,17 @@ test-run tests/utils/test_stream :
   $(REDEMPTION_TEST_PATH)/utils/test_stream.cpp
 :
   <covfile>src/utils/stream.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/utils/test_theme :
   $(REDEMPTION_TEST_PATH)/utils/test_theme.cpp
 :
   <covfile>src/utils/theme.hpp
   <library>app_path_test.o
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/utils/test_timeout :
   $(REDEMPTION_TEST_PATH)/utils/test_timeout.cpp
@@ -3795,8 +3981,10 @@ test-run tests/utils/test_translation :
 :
   <covfile>src/utils/translation.hpp
   <library>app_path_test.o
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/utils/test_utf :
   $(REDEMPTION_TEST_PATH)/utils/test_utf.cpp
@@ -3814,6 +4002,7 @@ test-run tests/utils/winpr/test_pattern :
   <covfile>src/utils/winpr/pattern.hpp
 ;
 
+obj projects/redemption_configs/redemption_src/configs/config.o : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
 obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp ;
 obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp ;
 obj src/capture/ocr/display_learning.o : $(REDEMPTION_SRC_PATH)/capture/ocr/display_learning.cc ;
@@ -3821,6 +4010,7 @@ obj src/capture/ocr/extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/extract_
 obj src/capture/ocr/learning.o : $(REDEMPTION_SRC_PATH)/capture/ocr/learning.cc ;
 obj src/capture/ocr/locale/latin_to_cyrillic.o : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp ;
 obj src/capture/ocr/ppocr_extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/ppocr_extract_text.cpp ;
+obj src/capture/params_from_ini.o : $(REDEMPTION_SRC_PATH)/capture/params_from_ini.cpp : <cxxflags>-std=c++14 ;
 obj src/capture/rdp_ppocr/get_ocr_constants.o : $(REDEMPTION_SRC_PATH)/capture/rdp_ppocr/get_ocr_constants.cpp ;
 obj src/capture/video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.cpp ;
 obj src/capture/video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder.cpp ;
@@ -3891,9 +4081,11 @@ obj src/utils/cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
 obj src/utils/confdescriptor.o : $(REDEMPTION_SRC_PATH)/utils/confdescriptor.cpp ;
 obj src/utils/d3des.o : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 obj src/utils/fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
+obj src/utils/hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
 obj src/utils/netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp ;
 obj src/utils/pattutils.o : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp ;
 obj src/utils/png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
+obj src/utils/set_exception_handler_pretty_message.o : $(REDEMPTION_SRC_PATH)/utils/set_exception_handler_pretty_message.cpp ;
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 
 obj src/main/do_recorder.o : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp ;

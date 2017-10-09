@@ -14,25 +14,30 @@
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
 *   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2015
-*   Author(s): Jonathan Poelen
+*   Copyright (C) Wallix 2010-2016
+*   Author(s): Christophe Grosjean
 */
-
 
 #pragma once
 
-#include "utils/sugar/noncopyable.hpp"
+#include <string>
+#include <chrono>
+#include "configs/autogen/enums.hpp"
+#include "utils/rect.hpp"
 
-class Transport;
-
-namespace gdi {
-
-struct DumpPng24Api : private noncopyable
+struct VideoParams
 {
-    virtual ~DumpPng24Api() = default;
+    Level video_quality;
 
-    virtual void dump_png24(Transport & trans, bool bgr) const = 0;
+    unsigned target_width;
+    unsigned target_height;
+    unsigned frame_rate;
+    unsigned qscale;
+    unsigned bitrate;
+    std::string codec;
+    bool no_timestamp;
+    bool capture_chunk;
+    bool bogus_vlc_frame_rate;
+    std::chrono::microseconds video_interval;
+    unsigned verbosity;
 };
-
-}
-

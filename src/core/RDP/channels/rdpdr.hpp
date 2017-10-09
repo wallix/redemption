@@ -2007,21 +2007,6 @@ public:
 
 
 
-// 2.2.3.4.5 Client Drive Control Response (DR_DRIVE_CONTROL_RSP)
-
-// This message is sent by the client as a response to the Server Drive Control Request (section 2.2.3.3.5).
-
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// |                   DeviceIoResponse (variable)                 |
-// +---------------------------------------------------------------+
-// |                              ...                              |
-// +---------------------------------------------------------------+
-
-// DeviceIoResponse (variable):  Returns the result of DR_DRIVE_CONROL_REQ; it is the same as the common Device Control Response (section 2.2.1.5.5). The content of the OutputBuffer field is described in [MS-FSCC] section 2.3 as a reply type message.
-
 // 2.2.1.5.5 Device Control Response (DR_CONTROL_RSP)
 
 //  A message with this header describes a response to a Device Control Request (section 2.2.1.4.5).
@@ -2049,13 +2034,13 @@ public:
 
 // OutputBuffer (variable):  A variable-length array of bytes whose size is specified by the OutputBufferLength field.
 
-struct ClientDriveControlResponse {
+struct DriveControlResponse {
 
     uint32_t OutputBufferLength = 0;
 
-    ClientDriveControlResponse() = default;
+    DriveControlResponse() = default;
 
-    ClientDriveControlResponse( uint32_t OutputBufferLength)
+    DriveControlResponse( uint32_t OutputBufferLength)
       : OutputBufferLength(OutputBufferLength)
       {}
 
@@ -2068,7 +2053,7 @@ struct ClientDriveControlResponse {
             const unsigned expected = 4;
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ClientDriveControlResponse: expected=%u remains=%zu",
+                    "Truncated DriveControlResponse: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -2081,6 +2066,7 @@ struct ClientDriveControlResponse {
         LOG(LOG_INFO, "          * OutputBufferLength = %u (4 bytes)", this->OutputBufferLength);
     }
 };
+
 
 
 
@@ -5634,11 +5620,11 @@ void streamLog( InStream & stream , RdpDrStatus & status)
 
                                     switch (dcr.IoControlCode()) {
                                         case fscc::FSCTL_DELETE_REPARSE_POINT :
-                                            {
-                                                fscc::ReparseGUIDDataBuffer rgdb;
-                                                rgdb.receive(s);
-                                                rgdb.log();
-                                            }
+//                                             {
+//                                                 fscc::ReparseGUIDDataBuffer rgdb;
+//                                                 rgdb.receive(s);
+//                                                 rgdb.log();
+//                                             }
                                             break;
                                          case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID :
                                             break;
@@ -5879,7 +5865,7 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                             break;
                         case IRP_MJ_DEVICE_CONTROL:
                             {
-                                ClientDriveControlResponse cdcr;
+                                DriveControlResponse cdcr;
                                 cdcr.receive(s);
                                 cdcr.log();
 
@@ -5888,9 +5874,9 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                                         case fscc::FSCTL_GET_OBJECT_ID:
                                         case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID:
                                         {
-                                            fscc::FileObjectBuffer_Type1 rgdb;
-                                            rgdb.receive(s);
-                                            rgdb.log();
+//                                             fscc::FileObjectBuffer_Type1 rgdb;
+//                                             rgdb.receive(s);
+//                                             rgdb.log();
                                         }
                                             break;
                                         //case fscc::FSCTL_FILESYSTEM_GET_STATISTICS:

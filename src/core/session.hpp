@@ -446,7 +446,10 @@ public:
             front.disconnect();
         }
         catch (const Error & e) {
-            LOG(LOG_INFO, "Session::Session Init exception = %u!\n", e.id);
+            LOG(LOG_INFO, "Session::Session Init exception = %s!\n", e.errmsg());
+        }
+        catch (const std::exception & e) {
+            LOG(LOG_ERR, "Session::Session exception = %s!\n", e.what());
         }
         catch(...) {
             LOG(LOG_INFO, "Session::Session other exception in Init\n");

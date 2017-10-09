@@ -1000,10 +1000,10 @@ RED_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
     RED_CHECK_EQUAL(1, res);
 }
 
-RED_AUTO_TEST_CASE(TestAppRecorder)
+inline void test_app_recorder_impl(char const * opt_vlc, size_t sz1, size_t sz2, size_t sz3)
 {
-   LOG(LOG_INFO, "=================== TestAppRecorder =============");
-     char const * argv[] {
+    LOG(LOG_INFO, "=================== TestAppRecorder =============");
+    char const * argv[] {
         "recorder.py",
         "redrec",
         "-i",
@@ -1015,8 +1015,9 @@ RED_AUTO_TEST_CASE(TestAppRecorder)
             "/tmp/recorder.1.flva",
         "--video",
         "--full",
-        "--flvbreakinterval", "500",
-        "--video-codec", "flv"
+        "--video-break-interval", "500",
+        "--video-codec", "flv",
+        opt_vlc,
     };
     int argc = sizeof(argv)/sizeof(char*);
 
@@ -1028,14 +1029,24 @@ RED_AUTO_TEST_CASE(TestAppRecorder)
 
     const char * filename;
     filename = "/tmp/recorder.1-000000.flv";
-    RED_CHECK_EQUAL(13451264, filesize(filename));
+    RED_CHECK_EQUAL(sz1, filesize(filename));
     ::unlink(filename);
     filename = "/tmp/recorder.1-000001.flv";
-    RED_CHECK_EQUAL(1641846, filesize(filename));
+    RED_CHECK_EQUAL(sz2, filesize(filename));
     ::unlink(filename);
     filename = "/tmp/recorder.1.flv";
-    RED_CHECK_EQUAL(15092851, filesize(filename));
+    RED_CHECK_EQUAL(sz3, filesize(filename));
     ::unlink(filename);
+}
+
+RED_AUTO_TEST_CASE(TestAppRecorder)
+{
+    test_app_recorder_impl("--disable-bogus-vlc", 13451870, 1641583, 14978053);
+}
+
+RED_AUTO_TEST_CASE(TestAppRecorderVlc)
+{
+    test_app_recorder_impl("--bogus-vlc", 62515277, 7555247, 70071213);
 }
 
 RED_AUTO_TEST_CASE(TestClearTargetFiles)

@@ -2195,17 +2195,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = app_path(AppPath::Record);
     };
-    /// type: std::chrono::seconds <br/>
-    /// value{300} <br/>
-    struct video::inactivity_timeout {
-        static constexpr bool is_sesman_to_proxy() { return 0; }
-        static constexpr bool is_proxy_to_sesman() { return 0; }
-        static constexpr char const * section() { return "video"; }
-        static constexpr char const * name() { return "inactivity_timeout"; }
-        using type = std::chrono::seconds;
-        using mapped_type = type;
-        type value{300};
-    };
     /// Disable keyboard log: <br/>
     /// type: KeyboardLogFlags <br/>
     /// value{static_cast<type>(1)} <br/>
@@ -2246,7 +2235,7 @@ namespace cfg {
         type value{static_cast<type>(1)};
     };
     /// AUTHID_VIDEO_RT_DISPLAY <br/>
-    /// type: unsigned int <br/>
+    /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
     struct video::rt_display {
@@ -2257,8 +2246,8 @@ namespace cfg {
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index() { return authid_t(57); }
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = bool;
+        using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
@@ -2288,14 +2277,28 @@ namespace cfg {
     };
     /// type: std::chrono::seconds <br/>
     /// value{0} <br/>
-    struct video::flv_break_interval {
+    struct video::video_break_interval {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "video"; }
-        static constexpr char const * name() { return "flv_break_interval"; }
+        static constexpr char const * name() { return "video_break_interval"; }
         using type = std::chrono::seconds;
         using mapped_type = type;
         type value{0};
+    };
+    /// Needed to play a video with ffplay or VLC. <br/>
+    /// Note: Useless with mpv and mplayer. <br/>
+    /// type: bool <br/>
+    /// value{1} <br/>
+    struct video::bogus_vlc_frame_rate {
+        static constexpr bool is_sesman_to_proxy() { return 0; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "video"; }
+        static constexpr char const * name() { return "bogus_vlc_frame_rate"; }
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{1};
     };
     /// Bitrate for low quality. <br/>
     /// type: unsigned int <br/>
@@ -3830,17 +3833,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// type: std::string <br/>
-    /// value{} <br/>
-    struct context::manager_disconnect_reason {
-        static constexpr bool is_sesman_to_proxy() { return 0; }
-        static constexpr bool is_proxy_to_sesman() { return 0; }
-        static constexpr char const * section() { return "context"; }
-        static constexpr char const * name() { return "manager_disconnect_reason"; }
-        using type = std::string;
-        using mapped_type = type;
-        type value{};
-    };
     /// AUTHID_CONTEXT_DISCONNECT_REASON <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
@@ -4391,14 +4383,14 @@ struct video
 , cfg::video::hash_path
 , cfg::video::record_tmp_path
 , cfg::video::record_path
-, cfg::video::inactivity_timeout
 , cfg::video::disable_keyboard_log
 , cfg::video::disable_clipboard_log
 , cfg::video::disable_file_system_log
 , cfg::video::rt_display
 , cfg::video::wrm_color_depth_selection_strategy
 , cfg::video::wrm_compression_algorithm
-, cfg::video::flv_break_interval
+, cfg::video::video_break_interval
+, cfg::video::bogus_vlc_frame_rate
 , cfg::video::l_bitrate
 , cfg::video::l_framerate
 , cfg::video::l_height
@@ -4519,7 +4511,6 @@ struct context
 , cfg::context::session_probe_outbound_connection_monitoring_rules
 , cfg::context::session_probe_process_monitoring_rules
 , cfg::context::session_probe_extra_system_processes
-, cfg::context::manager_disconnect_reason
 , cfg::context::disconnect_reason
 , cfg::context::disconnect_reason_ack
 , cfg::context::ip_target

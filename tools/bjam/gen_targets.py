@@ -30,6 +30,7 @@ disable_srcs = (
 )
 
 src_requirements = dict((
+    ('src/capture/params_from_ini.cpp', '<cxxflags>-std=c++14'),
     ('src/utils/bitmap_from_file.cpp', '<cxxflags>-std=c++14'),
     ('src/utils/bitmap.cpp', '<cxxflags>-std=c++14'),
     ('src/main/rdpheadless.cpp', '<cxxflags>-std=c++14 <include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
@@ -207,6 +208,7 @@ tests = [f for f in files_on_tests \
     and not start_with(f.path, 'tests/includes/') \
     and not start_with(f.path, 'tests/system/common/') \
     and not start_with(f.path, 'tests/system/emscripten/system/') \
+    and not start_with(f.path, 'tests/web_video/') \
     and f.path != 'tests/test_meta_protocol2.cpp' \
     and f.path not in disable_tests
 ]
@@ -218,6 +220,11 @@ extra_srcs = (
         'projects/redemption_configs/redemption_src',
         'projects/redemption_configs/redemption_src/configs/config.hpp',
         'H')
+    ),
+    ('src/configs/config.cpp', File(
+        'projects/redemption_configs/redemption_src',
+        'projects/redemption_configs/redemption_src/configs/config.cpp',
+        'C')
     ),
 )
 
@@ -447,6 +454,8 @@ def inject_variable_prefix(path):
         path = '$(REDEMPTION_SRC_PATH)' + path[3:]
     elif start_with(path, 'tests/'):
         path = '$(REDEMPTION_TEST_PATH)' + path[5:]
+    elif start_with(path, 'projects/redemption_configs/'):
+        path = '$(REDEMPTION_CONFIG_PATH)' + path[27:]
     return path
 
 def generate_obj(files):

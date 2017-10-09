@@ -441,8 +441,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "record_tmp_path", set(CPP_EXPR(app_path(AppPath::RecordTmp))));
         W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "record_path", set(CPP_EXPR(app_path(AppPath::Record))));
         W.sep();
-        W.member(no_ini_no_gui, no_sesman, type_<std::chrono::seconds>(), "inactivity_timeout", set(300));
-        W.sep();
 
         W.member(ini_and_gui, no_sesman, type_<KeyboardLogFlags>{}, "disable_keyboard_log", desc{"Disable keyboard log:"}, disable_prefix_val, set(KeyboardLogFlags::syslog));
         W.sep();
@@ -450,12 +448,14 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(ini_and_gui, no_sesman, type_<FileSystemLogFlags>(), "disable_file_system_log", desc{"Disable (redirected) file system log:"}, disable_prefix_val, set(FileSystemLogFlags::syslog));
         W.sep();
-        W.member(hidden_in_gui, sesman_to_proxy, type_<unsigned>(), "rt_display", set(0));
+        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "rt_display", set(false));
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<ColorDepthSelectionStrategy>{}, "wrm_color_depth_selection_strategy", set(ColorDepthSelectionStrategy::depth16));
         W.member(advanced_in_gui, no_sesman, type_<WrmCompressionAlgorithm>{}, "wrm_compression_algorithm", set(WrmCompressionAlgorithm::gzip));
         W.sep();
-        W.member(no_ini_no_gui, no_sesman, type_<std::chrono::seconds>(), "flv_break_interval", set(0));
+        W.member(no_ini_no_gui, no_sesman, type_<std::chrono::seconds>(), "video_break_interval", set(0));
+        W.sep();
+        W.member(advanced_in_gui, no_sesman, type_<bool>(), "bogus_vlc_frame_rate", desc{"Needed to play a video with ffplay or VLC.\nNote: Useless with mpv and mplayer."}, set(true));
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<unsigned>(), "l_bitrate", desc{"Bitrate for low quality."}, set(10000));
         W.member(advanced_in_gui, no_sesman, type_<unsigned>(), "l_framerate", desc{"Framerate for low quality."}, set(5));
@@ -624,7 +624,6 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "session_probe_process_monitoring_rules");
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "session_probe_extra_system_processes");
         W.sep();
-        W.member(no_ini_no_gui, no_sesman, type_<std::string>(), "manager_disconnect_reason");
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "disconnect_reason");
         W.member(no_ini_no_gui, proxy_to_sesman, type_<bool>(), "disconnect_reason_ack", set(false));
         W.sep();

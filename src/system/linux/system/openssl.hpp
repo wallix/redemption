@@ -33,6 +33,8 @@
 #include "utils/fileutils.hpp"
 #include "utils/log.hpp"
 
+#include "transport/transport.hpp" // Transport::TlsResult
+
 #include "cxx/diagnostic.hpp"
 
 #include <memory>
@@ -66,7 +68,7 @@ extern "C" {
 }
 
 
-struct TLSContext
+class TLSContext
 {
     bool tls;
     SSL_CTX * allocated_ctx;
@@ -75,6 +77,7 @@ struct TLSContext
     std::unique_ptr<uint8_t[]> public_key;
     size_t public_key_length;
 
+public:
     TLSContext() : tls(false)
         , allocated_ctx(nullptr)
         , allocated_ssl(nullptr)
@@ -82,6 +85,33 @@ struct TLSContext
         , public_key(nullptr)
         , public_key_length(0)
     {
+    }
+
+    ~TLSContext()
+    {
+        if (this->allocated_ssl) {
+            //SSL_shutdown(this->allocated_ssl);
+            SSL_free(this->allocated_ssl);
+        }
+
+        if (this->allocated_ctx) {
+            SSL_CTX_free(this->allocated_ctx);
+        }
+    }
+
+    int pending_data() const
+    {
+        return SSL_pending(this->allocated_ssl);
+    }
+
+    uint8_t const * get_public_key() const noexcept
+    {
+        return this->public_key.get();
+    }
+
+    std::size_t get_public_key_length() const noexcept
+    {
+        return this->public_key_length;
     }
 
     static inline char* crypto_print_name(X509_NAME* name)
@@ -125,7 +155,7 @@ struct TLSContext
     }
 
 
-    void enable_client_tls(
+    Transport::TlsResult enable_client_tls(
             int sck,
             bool server_cert_store,
             bool ensure_server_certificate_match,
@@ -168,7 +198,7 @@ struct TLSContext
             LOG(LOG_ERR, "Error : SSL_CTX_new returned NULL\n");
             ERR_print_errors_cb(openssl_print_fp, static_cast<void*>(error_message));
 
-            return;
+            return Transport::TlsResult::Fail;
         }
         // TODO: This should be wrapped in some abstract layer
         this->allocated_ctx = ctx;
@@ -381,7 +411,7 @@ struct TLSContext
         SSL_set_fd(ssl, sck);
 
         LOG(LOG_INFO, "SSL_connect()");
-    again:
+
         // SSL_connect - initiate the TLS/SSL handshake with an TLS/SSL server
         // -------------------------------------------------------------------
 
@@ -418,35 +448,31 @@ struct TLSContext
         // for non-blocking BIOs. Call SSL_get_error() with the return value ret to find
         // out the reason
 
-        int connection_status = SSL_connect(ssl);
-
-        if (connection_status <= 0)
-        {
+        int const connection_status = SSL_connect(ssl);
+        if (connection_status <= 0) {
             unsigned long error;
 
             switch (SSL_get_error(ssl, connection_status))
             {
+                case SSL_ERROR_WANT_READ:
+                case SSL_ERROR_WANT_WRITE:
+                    return Transport::TlsResult::Want;
+
                 case SSL_ERROR_ZERO_RETURN:
                     LOG(LOG_WARNING, "Server closed TLS connection\n");
-                    return;
-
-                case SSL_ERROR_WANT_READ:
-                    goto again;
-
-                case SSL_ERROR_WANT_WRITE:
-                    goto again;
+                    return Transport::TlsResult::Fail;
 
                 case SSL_ERROR_SYSCALL:
                     LOG(LOG_WARNING, "I/O error\n");
                     while ((error = ERR_get_error()) != 0)
                         LOG(LOG_WARNING, "%s\n", ERR_error_string(error, nullptr));
-                    return;
+                    return Transport::TlsResult::Fail;
 
                 case SSL_ERROR_SSL:
                     LOG(LOG_WARNING, "Failure in SSL library (protocol error?)\n");
                     while ((error = ERR_get_error()) != 0)
                         LOG(LOG_WARNING, "%s\n", ERR_error_string(error, nullptr));
-                    return;
+                    return Transport::TlsResult::Fail;
 
                 default:
                     LOG(LOG_WARNING, "Unknown error\n");
@@ -454,7 +480,7 @@ struct TLSContext
                         LOG(LOG_WARNING, "%s\n", ERR_error_string(error, nullptr));
                     }
                     LOG(LOG_WARNING, "tls::tls_print_error %s [%d]", strerror(errno), errno);
-                    return;
+                    return Transport::TlsResult::Fail;
             }
         }
 
@@ -490,7 +516,7 @@ struct TLSContext
         if (!px509) {
             LOG(LOG_WARNING, "SSL_get_peer_certificate() failed");
             server_notifier.server_cert_error(strerror(errno));
-            return;
+            return Transport::TlsResult::Fail;
         }
 
         // TODO("Before to have default value certificate doesn't exists")
@@ -611,7 +637,7 @@ struct TLSContext
 
                     char const * const issuer_existing      = this->crypto_print_name(X509_get_issuer_name(px509Existing));
                     char const * const subject_existing     = this->crypto_print_name(X509_get_subject_name(px509Existing));
-                    char const * const fingerprint_existing = this->crypto_cert_fingerprint(px509Existing);;
+                    char const * const fingerprint_existing = this->crypto_cert_fingerprint(px509Existing);
 
                     LOG(LOG_INFO, "TLS::X509 existing::issuer=%s", issuer_existing);
                     LOG(LOG_INFO, "TLS::X509 existing::subject=%s", subject_existing);
@@ -746,7 +772,7 @@ struct TLSContext
             if (!pkey)
             {
                 LOG(LOG_WARNING, "TLSContext::crypto_cert_get_public_key: X509_get_pubkey() failed");
-                return;
+                return Transport::TlsResult::Fail;
             }
 
             LOG(LOG_INFO, "TLSContext::i2d_PublicKey()");
@@ -811,12 +837,12 @@ struct TLSContext
         //        void * subject_alt_names = X509_get_ext_d2i(xcert, NID_subject_alt_name, 0, 0);
 
            X509_NAME * issuer_name = X509_get_issuer_name(xcert);
-           char * issuer = crypto_print_name(issuer_name);
+           char * issuer = this->crypto_print_name(issuer_name);
            LOG(LOG_INFO, "TLS::X509::issuer=%s", issuer);
            free(issuer);
 
            X509_NAME * subject_name = X509_get_subject_name(xcert);
-           char * subject = crypto_print_name(subject_name);
+           char * subject = this->crypto_print_name(subject_name);
            LOG(LOG_INFO, "TLS::X509::subject=%s", subject);
            free(subject);
 
@@ -844,6 +870,7 @@ struct TLSContext
         }
 
         LOG(LOG_INFO, "TLSContext::enable_client_tls() done");
+        return Transport::TlsResult::Ok;
     }
 
     void enable_server_tls(int sck, const char * certificate_password, const char * ssl_cipher_list)

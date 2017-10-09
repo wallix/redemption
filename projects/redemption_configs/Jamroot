@@ -89,10 +89,19 @@ include ../../jam/testing-coverage.jam ;
 obj log_test.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;
 obj cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
 obj fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
+obj hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
 obj app_path_test.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
     <conditional>@defines-for-test
     <define>SHARE_PATH='\"\"'
     <define>CFG_PATH='\"$(REDEMPTION_ROOT_PATH)/etc/rdpproxy/\"'
+;
+
+obj config.o : redemption_src/configs/config.cpp
+:
+    <include>redemption_src
+    <implicit-dependency>generate_cpp_configs
+    <implicit-dependency>generate_python_spec
+    <implicit-dependency>generate_enum
 ;
 
 constant TEST_DEPENDENCIES :
@@ -102,10 +111,9 @@ constant TEST_DEPENDENCIES :
     <library>cfgloader.o
     <library>fileutils.o
     <library>app_path_test.o
+    <library>config.o
+    <library>hexdump.o
     <cxxflags>-frtti
-    <implicit-dependency>generate_cpp_configs
-    <implicit-dependency>generate_python_spec
-    <implicit-dependency>generate_enum
     <include>redemption_src
     <conditional>@defines-for-test
 ;
