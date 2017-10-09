@@ -185,6 +185,9 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(ini_and_gui, sesman_to_proxy, type_<bool>(), "unicode_keyboard_event_support", set(false));
+        W.sep();
+
+        W.member(advanced_in_gui, sesman_to_proxy, type_<types::range<unsigned, 100, 10000>>{}, "mod_recv_timeout", desc{"In milliseconds."}, set(1000));
     });
 
     W.section("session_log", [&]
@@ -254,6 +257,9 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(ini_and_gui, no_sesman, type_<BogusNumberOfFastpathInputEvent>(), "bogus_number_of_fastpath_input_event", set(BogusNumberOfFastpathInputEvent::pause_key_only));
+        W.sep();
+
+        W.member(advanced_in_gui, no_sesman, type_<types::range<unsigned, 100, 10000>>{}, "recv_timeout", desc{"In milliseconds."}, set(1000));
     });
 
     W.section("mod_rdp", [&]

@@ -966,6 +966,7 @@ int main(int argc, char** argv)
           , sck
           , ip.c_str()
           , port
+          , std::chrono::seconds(1)
           , to_verbose_flags(verbose)
           , &error_message
         );

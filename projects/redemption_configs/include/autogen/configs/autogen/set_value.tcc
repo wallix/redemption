@@ -391,6 +391,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::unicode_keyboard_event_support&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "mod_recv_timeout")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::globals::mod_recv_timeout&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<unsigned int, 100, 10000>>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::globals::mod_recv_timeout&>(this->variables)
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -751,6 +763,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::post_set_value(
                 this->variables,
                 static_cast<cfg::client::bogus_number_of_fastpath_input_event&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "recv_timeout")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::client::recv_timeout&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::range<unsigned int, 100, 10000>>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::client::recv_timeout&>(this->variables)
             );
         }
 

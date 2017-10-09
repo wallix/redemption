@@ -101,7 +101,7 @@ int main(int argc, char** argv)
     info.build = 420;
 
     int vnc_sck = ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms);
-    SocketTransport mod_trans( "VNC Target", vnc_sck, target_device.c_str(), target_port, to_verbose_flags(verbose), nullptr);
+    SocketTransport mod_trans( "VNC Target", vnc_sck, target_device.c_str(), target_port, std::chrono::seconds(1), to_verbose_flags(verbose), nullptr);
     // mod_trans.connect();
 
     SSL_library_init();

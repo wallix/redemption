@@ -89,6 +89,7 @@ include ../../jam/testing-coverage.jam ;
 obj log_test.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;
 obj cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
 obj fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
+obj hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
 obj app_path_test.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
     <conditional>@defines-for-test
     <define>SHARE_PATH='\"\"'
@@ -111,6 +112,7 @@ constant TEST_DEPENDENCIES :
     <library>fileutils.o
     <library>app_path_test.o
     <library>config.o
+    <library>hexdump.o
     <cxxflags>-frtti
     <include>redemption_src
     <conditional>@defines-for-test
