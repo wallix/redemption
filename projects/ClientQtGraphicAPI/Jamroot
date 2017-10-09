@@ -154,6 +154,8 @@ obj pattutils.o : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp : ;
 
 obj protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp : ;
 
+obj hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp : ;
+
 
 
 
@@ -201,6 +203,7 @@ exe client_demo_Qt4 :
     multiline.o
     mppc.o
     get_ocr_constants.o
+    hexdump.o
     /qt//QtGui       #4
     bitmap
     krb5
@@ -265,6 +268,7 @@ exe client_rdp_Qt4 :
     pattutils.o
     protected_graphics.o
     get_ocr_constants.o
+    hexdump.o
     /qt//QtGui       #4
     /qt//phonon
     bitmap
@@ -338,6 +342,7 @@ exe client_rdp_Qt5 :
     multiline.o
     mppc.o
     get_ocr_constants.o
+    hexdump.o
     /qt5//QtGui
     /qt5//QtNetwork
     /qt5//QtWidgets
