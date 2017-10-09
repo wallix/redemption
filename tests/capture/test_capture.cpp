@@ -186,14 +186,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
 
         cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
-        WrmParams wrm_params = wrm_params_from_ini(
-            24,
-            cctx,
-            rnd,
-            fstat,
-            hash_path,
-            ini
-        );
+        WrmParams const wrm_params = wrm_params_from_ini(24, cctx, rnd, fstat, hash_path, ini);
 
         CaptureParams capture_params{
             now,
@@ -339,18 +332,6 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     // TODO remove this after unifying capture interface
     bool no_timestamp = false;
 
-    GraphicToFile::Verbose wrm_verbose = to_verbose_flags(ini.get<cfg::debug::capture>())
-        | (ini.get<cfg::debug::primary_orders>()
-            ? GraphicToFile::Verbose::primary_orders : GraphicToFile::Verbose::none)
-        | (ini.get<cfg::debug::secondary_orders>()
-            ? GraphicToFile::Verbose::secondary_orders : GraphicToFile::Verbose::none)
-        | (ini.get<cfg::debug::bitmap_update>()
-            ? GraphicToFile::Verbose::bitmap_update : GraphicToFile::Verbose::none);
-
-    WrmCompressionAlgorithm wrm_compression_algorithm = ini.get<cfg::video::wrm_compression_algorithm>();
-    std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = ini.get<cfg::video::frame_interval>();
-    std::chrono::seconds wrm_break_interval = ini.get<cfg::video::break_interval>();
-
     VideoParams video_params = video_params_from_ini(scr.cx, scr.cy, ini);
     video_params.no_timestamp = no_timestamp;
     const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
@@ -365,15 +346,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     bool capture_meta = capture_ocr;
     bool capture_kbd = false;
 
-    OcrParams ocr_params = {
-        ini.get<cfg::ocr::version>(),
-        ocr::locale::LocaleId(
-            static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
-        ini.get<cfg::ocr::on_title_bar_only>(),
-        ini.get<cfg::ocr::max_unrecog_char_rate>(),
-        ini.get<cfg::ocr::interval>(),
-        ini.get<cfg::debug::ocr>()
-    };
+    OcrParams const ocr_params = ocr_params_from_ini(ini);
 
     if (ini.get<cfg::debug::capture>()) {
         LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
@@ -427,17 +400,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
     cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
-    WrmParams wrm_params(
-        24,
-        cctx,
-        rnd,
-        fstat,
-        hash_path,
-        wrm_frame_interval,
-        wrm_break_interval,
-        wrm_compression_algorithm,
-        int(wrm_verbose)
-    );
+    WrmParams const wrm_params = wrm_params_from_ini(24, cctx, rnd, fstat, hash_path, ini);
 
     CaptureParams capture_params{
         now,
@@ -958,10 +921,7 @@ public:
     }
 
     void flush() {
-        ::transport_dump_png24(
-            this->trans, this->drawable.data(),
-            this->drawable.width(), this->drawable.height(),
-            this->drawable.rowsize(), true);
+        ::dump_png24(this->trans, this->drawable, true);
     }
 };
 
@@ -1110,8 +1070,7 @@ RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
-    DumpPng24FromRDPDrawableAdapter dump_png24(drawable);
-    GraphicToFile consumer(now, trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, 24, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
 
     consumer.draw(RDPOpaqueRect(screen_rect, encode_color24()(GREEN)), screen_rect, color_ctx);
@@ -1287,8 +1246,7 @@ RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
-    DumpPng24FromRDPDrawableAdapter dump_png24(drawable);
-    GraphicToFile consumer(now, trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, 24, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
 
     consumer.draw(RDPOpaqueRect(screen_rect, encode_color24()(GREEN)), screen_rect, color_ctx);
@@ -1334,8 +1292,7 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
-    DumpPng24FromRDPDrawableAdapter dump_png24_api(drawable);
-    GraphicToFile consumer(now, trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png24_api, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, 24, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
     RED_CHECK_EQUAL(0, 0);
     RDPOpaqueRect cmd0(screen_rect, encode_color24()(GREEN));
@@ -1484,8 +1441,7 @@ RED_AUTO_TEST_CASE(TestSaveCache)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy);
-    DumpPng24FromRDPDrawableAdapter dump_png(drawable);
-    GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, 24, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
     consumer.timestamp(now);
 
@@ -1626,8 +1582,7 @@ RED_AUTO_TEST_CASE(TestSaveOrderStates)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy);
-    DumpPng24FromRDPDrawableAdapter dump_png(drawable);
-    GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, 24, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_cxt = gdi::ColorCtx::depth24();
     consumer.timestamp(now);
 
@@ -1812,8 +1767,7 @@ RED_AUTO_TEST_CASE(TestImageChunk)
     PointerCache ptr_cache;
     GlyphCache gly_cache;
     RDPDrawable drawable(scr.cx, scr.cy);
-    DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
-    GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, 24, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
@@ -1887,8 +1841,7 @@ RED_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy);
-    DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
-    GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, 24, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
@@ -1972,8 +1925,7 @@ RED_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy);
-    DumpPng24FromRDPDrawableAdapter dump_png_api(drawable);
-    GraphicToFile consumer(now, trans, scr.cx, scr.cy, 24, bmp_cache, gly_cache, ptr_cache, dump_png_api, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, 24, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
@@ -1985,8 +1937,7 @@ RED_AUTO_TEST_CASE(TestImagePNGSmallChunks)
 
     OutChunkedBufferingTransport<16> png_trans(trans);
     consumer.dump_png24(png_trans, true);
-//    DumpPng24FromRDPDrawableAdapter(consumer).dump_png24(png_trans, true);
-
+    // drawable.dump_png24(png_trans, true); true);
 }
 
 RED_AUTO_TEST_CASE(TestReadPNGFromTransport)
@@ -2014,8 +1965,7 @@ RED_AUTO_TEST_CASE(TestReadPNGFromTransport)
     );
     const int groupid = 0;
     OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
-    DumpPng24FromRDPDrawableAdapter(d).dump_png24(png_trans, true);
-//    d.dump_png24(png_trans, true);
+    dump_png24(png_trans, d, true);
     ::unlink(png_trans.seqgen()->get(0));
 }
 
@@ -2407,14 +2357,9 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     PointerCache ptr_cache;
 
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
-    DumpPng24FromRDPDrawableAdapter dump_png{drawable};
     GraphicToFile graphic_to_file(
-        player.record_now,
-        out_wrm_trans,
-        player.screen_rect.cx,
-        player.screen_rect.cy,
-        24,
-        bmp_cache, gly_cache, ptr_cache, dump_png, WrmCompressionAlgorithm::no_compression
+        player.record_now, out_wrm_trans, 24,
+        bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression
     );
     WrmCaptureImpl::NativeCaptureLocal wrm_recorder(graphic_to_file, player.record_now, std::chrono::seconds{1}, std::chrono::seconds{20});
 
@@ -2503,8 +2448,7 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 
     const int groupid = 0;
     OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
-    DumpPng24FromRDPDrawableAdapter(d).dump_png24(png_trans, true);
-//    d.dump_png24(png_trans, true);
+    dump_png24(png_trans, d, true);
     ::unlink(png_trans.seqgen()->get(0));
 }
 

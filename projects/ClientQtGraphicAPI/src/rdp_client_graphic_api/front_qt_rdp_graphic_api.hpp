@@ -746,10 +746,19 @@ public:
         return this->_portField.text().toInt();
     }
 
+    void keyPressEvent(QKeyEvent *e) {
+        if (e->key() == Qt::Key_Enter) {
+            this->connexionReleased();
+        }
+    }
 
 
 private Q_SLOTS:
     void targetPicked(int index) {
+        if (index >=  16) {
+             this->connexionReleased();
+             return;
+        }
         if (index == 0) {
             this->_IPField.clear();
             this->_userNameField.clear();

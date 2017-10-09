@@ -61,8 +61,7 @@ RED_AUTO_TEST_CASE(TestModOSD)
         ImageCaptureLocal(const Drawable & drawable, Transport & trans)
         : trans(trans)
         , drawable(drawable)
-        , timestamp_tracer(drawable.width(), drawable.height(), drawable.Bpp,
-              const_cast<Drawable&>(drawable).first_pixel(), drawable.rowsize())
+        , timestamp_tracer(gdi::get_mutable_image_view(const_cast<Drawable&>(drawable)))
         {}
 
         std::chrono::microseconds do_snapshot(const timeval & now)
@@ -80,10 +79,7 @@ RED_AUTO_TEST_CASE(TestModOSD)
         }
 
         void dump24() const {
-            ::transport_dump_png24(
-                this->trans, this->drawable.data(),
-                this->drawable.width(), this->drawable.height(),
-                this->drawable.rowsize(), true);
+            ::dump_png24(this->trans, this->drawable, true);
         }
     };
 

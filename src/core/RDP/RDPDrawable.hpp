@@ -51,7 +51,6 @@
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 
 #include "utils/drawable.hpp"
-#include "utils/png.hpp"
 
 #include "gdi/graphic_api.hpp"
 #include "gdi/image_frame_api.hpp"
@@ -79,19 +78,29 @@ public:
     {
     }
 
-    uint8_t * first_pixel() noexcept override {
+    ConstImageView get_image_view() const override
+    {
+        return gdi::get_image_view(this->drawable);
+    }
+
+    ImageView get_mutable_image_view() override
+    {
+        return gdi::get_mutable_image_view(this->drawable);
+    }
+
+    uint8_t * first_pixel() noexcept {
         return this->drawable.first_pixel();
     }
 
-    const uint8_t * data() const noexcept override {
+    const uint8_t * data() const noexcept {
         return this->drawable.data();
     }
 
-    uint16_t width() const noexcept override {
+    uint16_t width() const noexcept {
         return this->drawable.width();
     }
 
-    uint16_t height() const noexcept override {
+    uint16_t height() const noexcept {
         return this->drawable.height();
     }
 
@@ -103,11 +112,11 @@ public:
         return this->drawable.size();
     }
 
-    size_t rowsize() const noexcept override {
+    size_t rowsize() const noexcept {
         return this->drawable.rowsize();
     }
 
-    size_t pix_len() const noexcept override {
+    size_t pix_len() const noexcept {
         return this->drawable.pix_len();
     }
 
@@ -921,14 +930,3 @@ public:
         unsigned int /*out_width*/, unsigned int /*out_height*/) noexcept
         override {}
 };
-
-inline void dump_png24(Drawable & drawable, Transport & trans, bool bgr) {
-    ::transport_dump_png24(trans, drawable.data(),
-        drawable.width(), drawable.height(),
-        drawable.rowsize(),
-        bgr);
-}
-
-inline void dump_png24(RDPDrawable & drawable, Transport & trans, bool bgr) {
-    dump_png24(drawable.impl(), trans, bgr);
-}

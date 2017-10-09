@@ -476,7 +476,7 @@ RED_AUTO_TEST_CASE(TestTransportPngOneRedScreen)
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
     d.draw(cmd, screen_rect, color_cxt);
     TestTransport trans("", 0, expected_red, sizeof(expected_red)-1);
-    dump_png24(d.impl(), trans, true);
+    dump_png24(trans, d.impl(), true);
 }
 
 RED_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
@@ -487,7 +487,7 @@ RED_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
     drawable.draw(cmd, screen_rect, color_cxt);
-    dump_png24(drawable.impl(), trans, true);
+    dump_png24(trans, drawable.impl(), true);
 }
 
 RED_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
@@ -506,7 +506,7 @@ RED_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
     drawable.draw(cmd, screen_rect, color_cxt);
-    dump_png24(drawable.impl(), trans, true);
+    dump_png24(trans, drawable.impl(), true);
     trans.disconnect(); // close file before checking size
     RED_CHECK_EQUAL(2786, filesize(filename));
     ::unlink(filename);
@@ -521,13 +521,13 @@ RED_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
     drawable.draw(cmd, screen_rect, color_cxt);
-    dump_png24(drawable.impl(), trans, true);
+    dump_png24(trans, drawable.impl(), true);
 
     RDPOpaqueRect cmd2(Rect(50, 50, 100, 50), encode_color24()(BLUE));
     drawable.draw(cmd2, screen_rect, color_cxt);
     trans.next();
 
-    dump_png24(drawable.impl(), trans, true);
+    dump_png24(trans, drawable.impl(), true);
 
     const char * filename;
 
@@ -585,10 +585,8 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
         ImageCaptureLocal(const Drawable & drawable, Transport & trans)
         : trans(trans)
         , drawable(drawable)
-        , timestamp_tracer(drawable.width(), drawable.height(), drawable.Bpp,
-              const_cast<Drawable&>(drawable).first_pixel(), drawable.rowsize())
-        {
-        }
+        , timestamp_tracer(gdi::get_mutable_image_view(const_cast<Drawable&>(drawable)))
+        {}
 
         std::chrono::microseconds do_snapshot(
             const timeval & now, int x, int y, bool ignore_frame_in_timeval
@@ -609,7 +607,7 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
         }
 
         void flush() {
-            dump_png24(const_cast<Drawable&>(this->drawable), this->trans, true);
+            dump_png24(this->trans, this->drawable, true);
         }
     };
 
@@ -667,7 +665,7 @@ RED_AUTO_TEST_CASE(TestSmallImage)
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), encode_color24()(BLUE)), scr, color_cxt);
     drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), encode_color24()(WHITE)), scr, color_cxt);
-    dump_png24(drawable.impl(), trans, true);
+    dump_png24(trans, drawable.impl(), true);
     const char * filename = trans.seqgen()->get(0);
     RED_CHECK_EQUAL(107, ::filesize(filename));
     ::unlink(filename);
@@ -707,7 +705,7 @@ RED_AUTO_TEST_CASE(TestScaleImage)
         scaled_height, drawable.height(),
         drawable.rowsize());
 
-    ::transport_dump_png24(
+    ::dump_png24(
         trans, scaled_buffer.get(),
         scaled_width, scaled_height,
         scaled_width * 3, false);
@@ -840,7 +838,7 @@ RED_AUTO_TEST_CASE(TestBogusBitmap)
 //     dump_png24(f, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize(), true);
 //     fclose(f);
 
-    dump_png24(drawable.impl(), trans, true);
+    dump_png24(trans, drawable.impl(), true);
     const char * filename = trans.seqgen()->get(0);
     RED_CHECK_EQUAL(4094, ::filesize(filename));
     ::unlink(filename);
@@ -890,7 +888,7 @@ RED_AUTO_TEST_CASE(TestBogusBitmap2)
     Bitmap bloc32x1(16, 16, nullptr, 32, 1, source32x1, sizeof(source32x1)-1, true);
     drawable.draw(RDPMemBlt(0, Rect(100, 100, bloc32x1.cx(), bloc32x1.cy()), 0xCC, 0, 0, 0), scr, bloc32x1);
 
-    dump_png24(drawable.impl(), trans, true);
+    dump_png24(trans, drawable.impl(), true);
     const char * filename = trans.seqgen()->get(0);
     RED_CHECK_EQUAL(2913, ::filesize(filename));
     ::unlink(filename);

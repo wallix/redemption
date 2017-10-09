@@ -92,13 +92,12 @@ video_recorder::AVFramePtr::~AVFramePtr()
 
 video_recorder::video_recorder(
     write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,
-    int width, int height,
-    int /*imageSize*/, const uint8_t* bmp_data, int bitrate,
+    gdi::ConstImageDataView const & image_view, int bitrate,
     int frame_rate, int qscale, const char * codec_id,
     const int target_width, const int target_height,
     int log_level
 )
-: original_height(height)
+: original_height(image_view.height())
 {
     /* initialize libavcodec, and register all codecs and formats */
     av_register_all();
@@ -331,11 +330,11 @@ video_recorder::video_recorder(
 
     av_image_fill_arrays(
         this->original_picture->data, this->original_picture->linesize,
-        bmp_data, AV_PIX_FMT_BGR24, width, height, 1
+        image_view.data(), AV_PIX_FMT_BGR24, image_view.width(), image_view.height(), 1
     );
 
     this->img_convert_ctx.reset(sws_getContext(
-        width, height, AV_PIX_FMT_BGR24,
+        image_view.width(), image_view.height(), AV_PIX_FMT_BGR24,
         target_width, target_height, STREAM_PIX_FMT,
         SWS_BICUBIC, nullptr, nullptr, nullptr
     ));

@@ -25,13 +25,16 @@
 #include "utils/sugar/array_view.hpp"
 #include "capture/wrm_chunk_type.hpp"
 
+class Drawable;
 class Transport;
 namespace gdi
 {
     class GraphicApi;
+    class ImageFrameApi;
+    class ConstImageDataView;
 }
 
-void transport_dump_png24(
+void dump_png24(
     Transport & trans,
     uint8_t const * data,
     std::size_t width,
@@ -48,6 +51,14 @@ void dump_png24(
     std::size_t rowsize,
     bool bgr
 );
+
+void dump_png24(Transport & trans, Drawable const & drawable, bool bgr);
+void dump_png24(Transport & trans, gdi::ConstImageDataView const & image_view, bool bgr);
+void dump_png24(Transport & trans, gdi::ImageFrameApi const & image_frame, bool bgr);
+
+void dump_png24(std::FILE * f, Drawable const & drawable, bool bgr);
+void dump_png24(std::FILE * f, gdi::ConstImageDataView const & image_view, bool bgr);
+void dump_png24(std::FILE * f, gdi::ImageFrameApi const & image_frame, bool bgr);
 
 void read_png24(
     std::FILE * fd,
