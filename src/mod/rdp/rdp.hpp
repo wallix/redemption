@@ -1388,7 +1388,8 @@ public:
             }
             else {
                 if (mod_rdp_params.use_client_provided_alternate_shell &&
-                        info.alternate_shell[0]) {
+                        info.alternate_shell[0] &&
+                        !info.remote_program) {
                     if (this->enable_session_probe) {
                         this->real_alternate_shell = info.alternate_shell;
                         this->real_working_dir     = info.working_dir;
