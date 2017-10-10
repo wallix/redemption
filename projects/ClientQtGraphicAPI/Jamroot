@@ -69,6 +69,11 @@ install install-bin
     : <location>$(INSTALLDIR)/usr/local/bin
     ;
 
+obj config.o : ../redemption_configs/redemption_src/configs/config.cpp :
+    $(EXE_DEPENDENCIES) ;
+
+obj hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp : ;
+
 
 local obj_list ;
 rule add_src ( src : requirements * )
@@ -88,7 +93,7 @@ add_src core/app_path.cpp : $(EXE_DEPENDENCIES) ;
 add_src gdi/clip_from_cmd.cpp ;
 add_src gdi/graphic_api.cpp ;
 add_src gdi/protected_graphics.cpp ;
-add_src keyboard/KeymapSym.cpp ;
+add_src keyboard/keymapSym.cpp ;
 add_src keyboard/keymap2.cpp ;
 add_src mod/internal/client_execute.cpp ;
 add_src mod/internal/internal_mod.cpp ;
@@ -99,7 +104,6 @@ add_src mod/internal/widget/label.cpp ;
 add_src mod/internal/widget/multiline.cpp ;
 add_src mod/internal/widget/screen.cpp ;
 add_src mod/internal/widget/tooltip.cpp ;
-add_src redemption_src/configs/config.cpp ;
 add_src transport/crypto_transport.cpp ;
 add_src transport/mwrm_reader.cpp ;
 add_src transport/socket_transport.cpp ;
@@ -114,6 +118,8 @@ add_src utils/log_as_logprint.cpp ;
 add_src utils/netutils.cpp ;
 add_src utils/pattutils.cpp ;
 add_src utils/png.cpp ;
+
+
 
 constant lib_list :
     krb5
@@ -142,6 +148,8 @@ exe client_demo_Qt4 :
     front_Qt4_Demo.o
     $(obj_list)
     $(lib_list)
+    config.o
+    hexdump.o
     /qt//QtGui       #4
 :
     $(EXE_DEPENDENCIES)
@@ -163,6 +171,8 @@ exe client_rdp_Qt4 :
     front_Qt4_rdp.o
     $(obj_list)
     $(lib_list)
+    config.o
+    hexdump.o
     /qt//QtGui       #4
     /qt//phonon
 :
@@ -196,6 +206,8 @@ exe client_rdp_Qt5 :
     front_Qt5.o
     $(obj_list)
     $(lib_list)
+    config.o
+    hexdump.o
     /qt5//QtGui
     /qt5//QtNetwork
     /qt5//QtWidgets
