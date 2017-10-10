@@ -503,6 +503,45 @@ public:
         return this->disconnection_reconnection_required;
     }
 
+    void request_keep_alive() {
+        this->session_probe_keep_alive_received = false;
+
+        {
+            StaticOutStream<1024> out_s;
+
+            const size_t message_length_offset = out_s.get_offset();
+            out_s.out_skip_bytes(sizeof(uint16_t));
+
+            {
+                const char string[] = "Request=Keep-Alive";
+                out_s.out_copy_bytes(string, sizeof(string) - 1u);
+            }
+
+            out_s.out_clear_bytes(1);   // Null-terminator.
+
+            out_s.set_out_uint16_le(
+                out_s.get_offset() - message_length_offset -
+                    sizeof(uint16_t),
+                message_length_offset);
+
+            this->send_message_to_server(out_s.get_offset(),
+                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                out_s.get_data(), out_s.get_offset());
+        }
+
+        if (bool(this->verbose & RDPVerbose::sesprobe_repetitive)) {
+            LOG(LOG_INFO,
+                "SessionProbeVirtualChannel::process_event: "
+                    "Session Probe keep alive requested");
+        }
+
+        this->session_probe_event.set_trigger_time(
+            std::chrono::duration_cast<std::chrono::microseconds>(
+                this->param_session_probe_keepalive_timeout ).count());
+    }
+
+    bool client_input_disabled_because_session_probe_keepalive_is_missing = false;
+
     void process_event()
     {
         if (!this->session_probe_event.is_trigger_time_set() ||
@@ -555,14 +594,16 @@ public:
         if (this->session_probe_ready &&
             this->param_session_probe_keepalive_timeout.count()) {
             if (!this->session_probe_keep_alive_received) {
-                const bool disable_input_event     = false;
-                const bool disable_graphics_update = false;
-                this->mod.disable_input_event_and_graphics_update(
-                    disable_input_event, disable_graphics_update);
+                if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
+                    const bool disable_input_event     = false;
+                    const bool disable_graphics_update = false;
+                    this->mod.disable_input_event_and_graphics_update(
+                        disable_input_event, disable_graphics_update);
 
-                LOG(LOG_ERR,
-                    "SessionProbeVirtualChannel::process_event: "
-                        "No keep alive received from Session Probe!");
+                    LOG(LOG_ERR,
+                        "SessionProbeVirtualChannel::process_event: "
+                            "No keep alive received from Session Probe!");
+                }
 
                 if (!this->disconnection_reconnection_required) {
                     if (this->session_probe_ending_in_progress) {
@@ -570,7 +611,19 @@ public:
                     }
 
                     if (this->param_session_probe_on_keepalive_timeout_disconnect_user) {
-                        this->report_message.report("SESSION_PROBE_KEEPALIVE_MISSED", "");
+                        //this->report_message.report("SESSION_PROBE_KEEPALIVE_MISSED", "");
+
+                        if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
+                            const bool disable_input_event     = true;
+                            const bool disable_graphics_update = true;
+                             this->mod.disable_input_event_and_graphics_update(
+                                 disable_input_event, disable_graphics_update);
+
+                            this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
+                        }
+                        this->request_keep_alive();
+                        std::string string_message = "No keep alive received from Session Probe!";
+                        this->mod.display_osd_message(string_message);
                     }
                     else {
                         this->front.session_probe_started(false);
@@ -578,40 +631,7 @@ public:
                 }
             }
             else {
-                this->session_probe_keep_alive_received = false;
-
-                {
-                    StaticOutStream<1024> out_s;
-
-                    const size_t message_length_offset = out_s.get_offset();
-                    out_s.out_skip_bytes(sizeof(uint16_t));
-
-                    {
-                        const char string[] = "Request=Keep-Alive";
-                        out_s.out_copy_bytes(string, sizeof(string) - 1u);
-                    }
-
-                    out_s.out_clear_bytes(1);   // Null-terminator.
-
-                    out_s.set_out_uint16_le(
-                        out_s.get_offset() - message_length_offset -
-                            sizeof(uint16_t),
-                        message_length_offset);
-
-                    this->send_message_to_server(out_s.get_offset(),
-                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-                        out_s.get_data(), out_s.get_offset());
-                }
-
-                if (bool(this->verbose & RDPVerbose::sesprobe_repetitive)) {
-                    LOG(LOG_INFO,
-                        "SessionProbeVirtualChannel::process_event: "
-                            "Session Probe keep alive requested");
-                }
-
-                this->session_probe_event.set_trigger_time(
-                    std::chrono::duration_cast<std::chrono::microseconds>(
-                        this->param_session_probe_keepalive_timeout ).count());
+                this->request_keep_alive();
             }
         }
     }
@@ -1305,6 +1325,23 @@ public:
                         "Recevied Keep-Alive from Session Probe.");
             }
             this->session_probe_keep_alive_received = true;
+
+            if (this->client_input_disabled_because_session_probe_keepalive_is_missing) {
+                const bool disable_input_event     = false;
+                const bool disable_graphics_update = false;
+                 this->mod.disable_input_event_and_graphics_update(
+                     disable_input_event, disable_graphics_update);
+
+                 std::string string_message;
+                this->mod.display_osd_message(string_message);
+
+                this->mod.rdp_input_invalidate(Rect(0, 0,
+                    this->param_front_width, this->param_front_height));
+
+                this->request_keep_alive();
+
+                this->client_input_disabled_because_session_probe_keepalive_is_missing = false;
+            }
         }
         else if (!this->server_message.compare("SESSION_ENDING_IN_PROGRESS")) {
 

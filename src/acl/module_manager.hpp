@@ -770,8 +770,10 @@ public:
     void osd_message(std::string message, bool is_disable_by_input)
     {
         this->clear_osd_message();
-        this->mod_osd.set_message(std::move(message), is_disable_by_input);
-        this->mod_osd.draw_osd_message();
+        if (!message.empty()) {
+            this->mod_osd.set_message(std::move(message), is_disable_by_input);
+            this->mod_osd.draw_osd_message();
+        }
     }
 
     Front & front;
