@@ -20,15 +20,16 @@
 
 #pragma once
 
-#include "utils/rect.hpp"
-#include "utils/bitmap.hpp"
+#include "core/misc.hpp"
+#include "core/RDP/pointer.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/windowing_api.hpp"
-#include "core/RDP/pointer.hpp"
+#include "utils/bitmap.hpp"
+#include "utils/rect.hpp"
 
-#include <vector>
 #include <string>
+#include <vector>
 
 class FrontAPI;
 class mod_api;
@@ -38,8 +39,6 @@ class wait_obj;
 class WindowListCaps;
 namespace CHANNELS { class ChannelDef; }
 namespace gdi { class GraphicApi; }
-
-#define DUMMY_REMOTEAPP "||WABRemoteApp"
 
 enum { PTRFLAGS_EX_DOUBLE_CLICK = 0xFFFF };
 enum {BORDER_WIDTH_HEIGHT = 3 };

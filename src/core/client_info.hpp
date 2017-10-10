@@ -28,6 +28,7 @@
 #include <array>
 #include <cstring>
 
+#include "core/misc.hpp"
 #include "core/RDP/gcc.hpp"
 #include "core/RDP/logon.hpp"
 #include "core/RDP/capabilities/bmpcache2.hpp"
@@ -43,6 +44,7 @@
 #include "core/RDP/capabilities/window.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "utils/get_printable_password.hpp"
+#include "utils/sugar/cast.hpp"
 
 struct ClientInfo {
     int bpp = 0;
@@ -195,8 +197,11 @@ struct ClientInfo {
 
         this->remote_program = (infoPacket.flags & INFO_RAIL);
 
-        snprintf(this->alternate_shell, sizeof(this->alternate_shell), "%s", infoPacket.AlternateShell);
-        snprintf(this->working_dir,     sizeof(this->working_dir),     "%s", infoPacket.WorkingDir    );
+        if (::strcasecmp(::char_ptr_cast(infoPacket.AlternateShell), DUMMY_REMOTEAPP) &&
+            (::strcasestr(::char_ptr_cast(infoPacket.AlternateShell), DUMMY_REMOTEAPP ":") != ::char_ptr_cast(infoPacket.AlternateShell))) {
+            snprintf(this->alternate_shell, sizeof(this->alternate_shell), "%s", infoPacket.AlternateShell);
+            snprintf(this->working_dir,     sizeof(this->working_dir),     "%s", infoPacket.WorkingDir    );
+        }
 
         this->client_time_zone = infoPacket.extendedInfoPacket.clientTimeZone;
 
