@@ -72,7 +72,8 @@ struct ModRDPParams {
     bool                         session_probe_start_launch_timeout_timer_only_after_logon = true;
     SessionProbeOnLaunchFailure  session_probe_on_launch_failure = SessionProbeOnLaunchFailure::disconnect_user;
     std::chrono::milliseconds    session_probe_keepalive_timeout {};
-    bool                         session_probe_on_keepalive_timeout_disconnect_user = true;
+    SessionProbeOnKeepaliveTimeout
+                                 session_probe_on_keepalive_timeout = SessionProbeOnKeepaliveTimeout::disconnect_user;
     bool                         session_probe_end_disconnected_session = false;
     bool                         session_probe_customize_executable_name = false;
     std::chrono::milliseconds    session_probe_disconnected_application_limit {};
@@ -241,7 +242,7 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_start_launch_timeout_timer_only_after_logon);
         RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_on_launch_failure);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_keepalive_timeout);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_on_keepalive_timeout_disconnect_user);
+        RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_on_keepalive_timeout);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_end_disconnected_session);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_disconnected_application_limit);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_disconnected_session_limit);

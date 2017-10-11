@@ -127,7 +127,7 @@ namespace cfg {
         struct session_probe_launch_fallback_timeout;
         struct session_probe_start_launch_timeout_timer_only_after_logon;
         struct session_probe_keepalive_timeout;
-        struct session_probe_on_keepalive_timeout_disconnect_user;
+        struct session_probe_on_keepalive_timeout;
         struct session_probe_end_disconnected_session;
         struct session_probe_customize_executable_name;
         struct session_probe_enable_log;

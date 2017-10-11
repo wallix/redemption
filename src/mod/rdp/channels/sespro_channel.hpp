@@ -286,7 +286,8 @@ private:
     const std::chrono::milliseconds session_probe_effective_launch_timeout;
 
     const std::chrono::milliseconds param_session_probe_keepalive_timeout;
-    const bool     param_session_probe_on_keepalive_timeout_disconnect_user;
+
+    const SessionProbeOnKeepaliveTimeout param_session_probe_on_keepalive_timeout;
 
     const SessionProbeOnLaunchFailure param_session_probe_on_launch_failure;
 
@@ -343,7 +344,8 @@ public:
         std::chrono::milliseconds session_probe_launch_timeout;
         std::chrono::milliseconds session_probe_launch_fallback_timeout;
         std::chrono::milliseconds session_probe_keepalive_timeout;
-        bool     session_probe_on_keepalive_timeout_disconnect_user;
+
+        SessionProbeOnKeepaliveTimeout session_probe_on_keepalive_timeout;
 
         SessionProbeOnLaunchFailure session_probe_on_launch_failure;
 
@@ -396,8 +398,8 @@ public:
         )
     , param_session_probe_keepalive_timeout(
           params.session_probe_keepalive_timeout)
-    , param_session_probe_on_keepalive_timeout_disconnect_user(
-          params.session_probe_on_keepalive_timeout_disconnect_user)
+    , param_session_probe_on_keepalive_timeout(
+          params.session_probe_on_keepalive_timeout)
     , param_session_probe_on_launch_failure(
           params.session_probe_on_launch_failure)
     , param_session_probe_end_disconnected_session(
@@ -610,8 +612,12 @@ public:
                         throw Error(ERR_SESSION_PROBE_ENDING_IN_PROGRESS);
                     }
 
-                    if (this->param_session_probe_on_keepalive_timeout_disconnect_user) {
-                        //this->report_message.report("SESSION_PROBE_KEEPALIVE_MISSED", "");
+                    if (SessionProbeOnKeepaliveTimeout::disconnect_user ==
+                        this->param_session_probe_on_keepalive_timeout) {
+                        this->report_message.report("SESSION_PROBE_KEEPALIVE_MISSED", "");
+                    }
+                    else if (SessionProbeOnKeepaliveTimeout::freeze_connection_and_wait ==
+                             this->param_session_probe_on_keepalive_timeout) {
 
                         if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
                             const bool disable_input_event     = true;

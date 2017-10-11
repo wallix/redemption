@@ -336,7 +336,8 @@ void config_spec_definition(Writer && W)
             "Minimum supported server : Windows Server 2008."
         }, set(true));
         W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_keepalive_timeout", set(5000));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_on_keepalive_timeout_disconnect_user", set(true));
+        W.member(hidden_in_gui, sesman_to_proxy, type_<SessionProbeOnKeepaliveTimeout>(), "session_probe_on_keepalive_timeout", set(SessionProbeOnKeepaliveTimeout::disconnect_user));
+
         W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false));
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "session_probe_customize_executable_name", set(false));
 

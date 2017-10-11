@@ -1796,7 +1796,7 @@ class Sesman():
                 u'session_probe_launch_fallback_timeout' : 'launch_fallback_timeout',
                 u'session_probe_start_launch_timeout_timer_only_after_logon' : 'start_launch_timeout_timer_only_after_logon',
                 u'session_probe_keepalive_timeout' : 'keepalive_timeout',
-                u'session_probe_on_keepalive_timeout_disconnect_user' : 'on_keepalive_timeout_disconnect_user',
+                u'session_probe_on_keepalive_timeout' : 'on_keepalive_timeout',
                 u'session_probe_end_disconnected_session' : 'end_disconnected_session',
                 u'session_probe_disconnected_application_limit' : 'disconnected_application_limit',
                 u'session_probe_disconnected_session_limit' : 'disconnected_session_limit',

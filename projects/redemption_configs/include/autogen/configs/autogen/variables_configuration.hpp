@@ -1583,22 +1583,22 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{5000};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_ON_KEEPALIVE_TIMEOUT_DISCONNECT_USER <br/>
-    /// type: bool <br/>
+    /// AUTHID_MOD_RDP_SESSION_PROBE_ON_KEEPALIVE_TIMEOUT <br/>
+    /// type: SessionProbeOnKeepaliveTimeout <br/>
     /// sesman -> proxy <br/>
-    /// value{1} <br/>
-    struct mod_rdp::session_probe_on_keepalive_timeout_disconnect_user {
+    /// value{static_cast<type>(2)} <br/>
+    struct mod_rdp::session_probe_on_keepalive_timeout {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "mod_rdp"; }
-        static constexpr char const * name() { return "session_probe_on_keepalive_timeout_disconnect_user"; }
+        static constexpr char const * name() { return "session_probe_on_keepalive_timeout"; }
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index() { return authid_t(40); }
-        using type = bool;
-        using sesman_and_spec_type = bool;
+        using type = SessionProbeOnKeepaliveTimeout;
+        using sesman_and_spec_type = SessionProbeOnKeepaliveTimeout;
         using mapped_type = sesman_and_spec_type;
-        type value{1};
+        type value{static_cast<type>(2)};
     };
     /// End automatically a disconnected session <br/>
     /// AUTHID_MOD_RDP_SESSION_PROBE_END_DISCONNECTED_SESSION <br/>
@@ -4330,7 +4330,7 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_launch_fallback_timeout
 , cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon
 , cfg::mod_rdp::session_probe_keepalive_timeout
-, cfg::mod_rdp::session_probe_on_keepalive_timeout_disconnect_user
+, cfg::mod_rdp::session_probe_on_keepalive_timeout
 , cfg::mod_rdp::session_probe_end_disconnected_session
 , cfg::mod_rdp::session_probe_customize_executable_name
 , cfg::mod_rdp::session_probe_enable_log
@@ -4598,7 +4598,7 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::session_probe_launch_fallback_timeout
 , cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon
 , cfg::mod_rdp::session_probe_keepalive_timeout
-, cfg::mod_rdp::session_probe_on_keepalive_timeout_disconnect_user
+, cfg::mod_rdp::session_probe_on_keepalive_timeout
 , cfg::mod_rdp::session_probe_end_disconnected_session
 , cfg::mod_rdp::session_probe_enable_log
 , cfg::mod_rdp::session_probe_disconnected_application_limit
