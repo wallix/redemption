@@ -128,7 +128,6 @@ public:
         return this->trace_type != TraceType::localfile;
     }
 
-private:
     // force extension to "mwrm" if it's .log
     static array_view_const_u8 get_normalized_derivator(
         std::unique_ptr<uint8_t[]> & normalized_derivator,
@@ -160,6 +159,7 @@ private:
         return derivator;
     }
 
+private:
     void load_trace_key(uint8_t (&buffer)[MD_HASH::DIGEST_LENGTH], const_byte_array derivator)
     {
         std::unique_ptr<uint8_t[]> normalized_derivator_gc;
