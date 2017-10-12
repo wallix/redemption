@@ -1168,16 +1168,16 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_keepalive_timeout&>(this->variables)
             );
         }
-        else if (0 == strcmp(key, "session_probe_on_keepalive_timeout_disconnect_user")) {
+        else if (0 == strcmp(key, "session_probe_on_keepalive_timeout")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::mod_rdp::session_probe_on_keepalive_timeout_disconnect_user&>(this->variables).value,
-                ::configs::spec_type<bool>{},
+                static_cast<cfg::mod_rdp::session_probe_on_keepalive_timeout&>(this->variables).value,
+                ::configs::spec_type<SessionProbeOnKeepaliveTimeout>{},
                 av
             );
             ::configs::post_set_value(
                 this->variables,
-                static_cast<cfg::mod_rdp::session_probe_on_keepalive_timeout_disconnect_user&>(this->variables)
+                static_cast<cfg::mod_rdp::session_probe_on_keepalive_timeout&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "session_probe_end_disconnected_session")) {

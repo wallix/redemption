@@ -350,6 +350,22 @@ inline parse_error parse(BogusNumberOfFastpathInputEvent & x, spec_type<BogusNum
     return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
 }
 
+template<> struct zstr_buffer_traits<SessionProbeOnKeepaliveTimeout> : zstr_buffer_traits<unsigned long> {};
+
+inline array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<SessionProbeOnKeepaliveTimeout> & buf,
+    cfg_s_type<SessionProbeOnKeepaliveTimeout>,
+    SessionProbeOnKeepaliveTimeout x
+) {
+    int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
+    return array_view_const_char(buf.get(), sz);
+}
+
+inline parse_error parse(SessionProbeOnKeepaliveTimeout & x, spec_type<SessionProbeOnKeepaliveTimeout>, array_view_const_char value)
+{
+    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
+}
+
 template<> struct zstr_buffer_traits<ColorDepth> : zstr_buffer_traits<unsigned long> {};
 
 inline array_view_const_char assign_zbuf_from_cfg(

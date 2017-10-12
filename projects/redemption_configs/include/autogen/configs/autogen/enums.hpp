@@ -420,6 +420,21 @@ operator << (std::basic_ostream<Ch, Tr> & os, BogusNumberOfFastpathInputEvent e)
 { return os << static_cast<unsigned long>(e); }
 
 
+enum class SessionProbeOnKeepaliveTimeout {
+    ignore_and_continue = 0,
+    disconnect_user = 1,
+    freeze_connection_and_wait = 2,
+};
+
+inline bool is_valid_enum_value(SessionProbeOnKeepaliveTimeout e)
+{ return static_cast<unsigned long>(e) < 3; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeOnKeepaliveTimeout e)
+{ return os << static_cast<unsigned long>(e); }
+
+
 // Specifies the maximum color resolution (color depth) for client session:
 enum class ColorDepth {
     // 8-bit

@@ -342,7 +342,8 @@ protected:
     const bool                        session_probe_start_launch_timeout_timer_only_after_logon;
     const SessionProbeOnLaunchFailure session_probe_on_launch_failure;
     const std::chrono::milliseconds   session_probe_keepalive_timeout;
-    const bool                        session_probe_on_keepalive_timeout_disconnect_user;
+    const SessionProbeOnKeepaliveTimeout
+                                      session_probe_on_keepalive_timeout;
     const bool                        session_probe_end_disconnected_session;
     const std::chrono::milliseconds   session_probe_disconnected_application_limit;
     const std::chrono::milliseconds   session_probe_disconnected_session_limit;
@@ -876,7 +877,7 @@ public:
         , session_probe_start_launch_timeout_timer_only_after_logon(mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon)
         , session_probe_on_launch_failure(mod_rdp_params.session_probe_on_launch_failure)
         , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
-        , session_probe_on_keepalive_timeout_disconnect_user(mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user)
+        , session_probe_on_keepalive_timeout(mod_rdp_params.session_probe_on_keepalive_timeout)
         , session_probe_end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
         , session_probe_disconnected_application_limit(mod_rdp_params.session_probe_disconnected_application_limit)
         , session_probe_disconnected_session_limit(mod_rdp_params.session_probe_disconnected_session_limit)
@@ -1388,7 +1389,8 @@ public:
             }
             else {
                 if (mod_rdp_params.use_client_provided_alternate_shell &&
-                        info.alternate_shell[0]) {
+                        info.alternate_shell[0] &&
+                        !info.remote_program) {
                     if (this->enable_session_probe) {
                         this->real_alternate_shell = info.alternate_shell;
                         this->real_working_dir     = info.working_dir;
@@ -1693,8 +1695,8 @@ protected:
             this->session_probe_launch_fallback_timeout;
         session_probe_virtual_channel_params.session_probe_keepalive_timeout        =
             this->session_probe_keepalive_timeout;
-        session_probe_virtual_channel_params.session_probe_on_keepalive_timeout_disconnect_user =
-            this->session_probe_on_keepalive_timeout_disconnect_user;
+        session_probe_virtual_channel_params.session_probe_on_keepalive_timeout     =
+            this->session_probe_on_keepalive_timeout;
 
         session_probe_virtual_channel_params.session_probe_on_launch_failure        =
             this->session_probe_on_launch_failure;

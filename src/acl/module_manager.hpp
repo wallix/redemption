@@ -770,8 +770,10 @@ public:
     void osd_message(std::string message, bool is_disable_by_input)
     {
         this->clear_osd_message();
-        this->mod_osd.set_message(std::move(message), is_disable_by_input);
-        this->mod_osd.draw_osd_message();
+        if (!message.empty()) {
+            this->mod_osd.set_message(std::move(message), is_disable_by_input);
+            this->mod_osd.draw_osd_message();
+        }
     }
 
     Front & front;
@@ -1365,8 +1367,8 @@ public:
                                                                    = this->ini.get<cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon>();
                 mod_rdp_params.session_probe_on_launch_failure     = this->ini.get<cfg::mod_rdp::session_probe_on_launch_failure>();
                 mod_rdp_params.session_probe_keepalive_timeout     = this->ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>();
-                mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user =
-                                                                     this->ini.get<cfg::mod_rdp::session_probe_on_keepalive_timeout_disconnect_user>();
+                mod_rdp_params.session_probe_on_keepalive_timeout  =
+                                                                     this->ini.get<cfg::mod_rdp::session_probe_on_keepalive_timeout>();
                 mod_rdp_params.session_probe_end_disconnected_session
                                                                    = this->ini.get<cfg::mod_rdp::session_probe_end_disconnected_session>();
                 mod_rdp_params.session_probe_customize_executable_name

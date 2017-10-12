@@ -390,8 +390,11 @@
 "#_hidden\n"
 "#session_probe_keepalive_timeout = 5000\n\n"
 
+"#   0: ignore and continue\n"
+"#   1: disconnect user\n"
+"#   2: freeze connection and wait\n"
 "#_hidden\n"
-"#session_probe_on_keepalive_timeout_disconnect_user = 1\n\n"
+"#session_probe_on_keepalive_timeout = 2\n\n"
 
 "# End automatically a disconnected session\n"
 "#_hidden\n"

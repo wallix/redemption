@@ -739,10 +739,6 @@ int main(int argc, char** argv)
         .help("Active/unactive session probe start launch timeout timer only after logon")
         .action(cli::on_off_location(mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon)),
 
-        cli::option("sess_prob_oktdu")
-        .help("Active/unactive session probe on keepalive timeout disconnect user")
-        .action(cli::on_off_location(mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user)),
-
         cli::option("sess_prb_eds")
         .help("Active/unactive session probe end disconnected session")
         .action(cli::on_off_location(mod_rdp_params.session_probe_end_disconnected_session)),
@@ -901,7 +897,6 @@ int main(int argc, char** argv)
         std::cout << " disable_file_system_log_wrm = " << mod_rdp_params.disable_file_system_log_wrm << "\n";
         std::cout << " session_probe_use_clipboard_based_launcher = " << mod_rdp_params.session_probe_use_clipboard_based_launcher << "\n";
         std::cout << " session_probe_start_launch_timeout_timer_only_after_logon = " << mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon << "\n";
-        std::cout << " session_probe_on_keepalive_timeout_disconnect_user = " << mod_rdp_params.session_probe_on_keepalive_timeout_disconnect_user << "\n";
         std::cout << " session_probe_end_disconnected_session = " << mod_rdp_params.session_probe_end_disconnected_session << "\n";
         std::cout << " session_probe_customize_executable_name = " << mod_rdp_params.session_probe_customize_executable_name << "\n";
         std::cout << " enable_transparent_mode = " << mod_rdp_params.enable_transparent_mode << "\n";
