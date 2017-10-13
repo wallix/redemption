@@ -163,4 +163,8 @@ public:
             }
         }
     }
+
+    bool is_stopped() const override {
+        return this->stopped;
+    }
 };

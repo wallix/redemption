@@ -1548,7 +1548,8 @@ public:
                                         adjusted_client_execute_rect,
                                         std::move(managed_mod),
                                         this->client_execute,
-                                        this->front.client_info.cs_monitor
+                                        this->front.client_info.cs_monitor,
+                                        true
                                     ),
                                 nullptr,
                                 &this->client_execute
@@ -1649,6 +1650,7 @@ public:
                         this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
                         report_message,
                         false,
+                        (this->front.client_info.remote_program ? &this->client_execute : nullptr),
                         to_verbose_flags(this->ini.get<cfg::debug::mod_vnc>())
                     ));
 
@@ -1676,7 +1678,8 @@ public:
                                 adjusted_client_execute_rect,
                                 std::move(managed_mod),
                                 this->client_execute,
-                                this->front.client_info.cs_monitor
+                                this->front.client_info.cs_monitor,
+                                false
                             ));
                         LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
                     }

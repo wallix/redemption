@@ -135,6 +135,7 @@ int main(int argc, char** argv)
       , bogus_clipboard_infinite_loop
       , report_message
       , false
+      , nullptr
       , to_verbose_flags(verbose));
     mod.get_event().set_trigger_time(wait_obj::NOW);
 

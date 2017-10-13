@@ -242,6 +242,7 @@ public:
 
                         try
                         {
+                            bool call_draw_event = false;
                             for (EventHandler& event_handler : event_handlers) {
                                 if (BACK_EVENT_NONE != signal) {
                                     break;
@@ -252,7 +253,11 @@ public:
                                 if (event.is_set(event_handler.get_fd(), rfds)) {
                                     event_handler(now, mm.get_graphic_wrapper(front));
 
-                                    if (BACK_EVENT_NONE != event.signal) {
+                                    if (BACK_EVENT_CALL_DRAW_EVENT == event.signal) {
+                                        call_draw_event = true;
+                                        event.reset_trigger_time();
+                                    }
+                                    else if (BACK_EVENT_NONE != event.signal) {
                                         signal = event.signal;
                                         event.reset_trigger_time();
                                     }
@@ -260,7 +265,8 @@ public:
                             }
 
                             // Process incoming module trafic
-                            if ((BACK_EVENT_NONE == signal) && mm.is_set_event(rfds)) {
+                            if (((BACK_EVENT_NONE == signal) && mm.is_set_event(rfds)) ||
+                                call_draw_event) {
                                 mm.mod->draw_event(now, mm.get_graphic_wrapper(front));
 
                                 if (mm.mod->get_event().signal != BACK_EVENT_NONE) {

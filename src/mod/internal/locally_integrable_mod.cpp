@@ -198,8 +198,8 @@ void LocallyIntegrableMod::refresh(Rect r)
 void LocallyIntegrableMod::draw_event(time_t, gdi::GraphicApi &)
 {
     if (this->rail_enabled &&
-        (false == static_cast<bool>(this->client_execute)) &&
-        this->event.is_waked_up_by_time()) {
+        (false == static_cast<bool>(this->client_execute))/* &&
+        this->event.is_waked_up_by_time()*/) {
 
         this->client_execute.ready(*this, this->front_width, this->front_height, this->font(),
             this->is_resizing_hosted_desktop_allowed());

@@ -1208,13 +1208,15 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
 
                 this->front_->draw(order);
 
-                this->mod_->rdp_input_invalidate(
-                    Rect(
-                            this->window_rect.x,
-                            this->window_rect.y,
-                            this->window_rect.x + this->window_rect.cx,
-                            this->window_rect.y + this->window_rect.cy
-                        ));
+                if (this->mod_) {
+                    this->mod_->rdp_input_invalidate(
+                        Rect(
+                                this->window_rect.x,
+                                this->window_rect.y,
+                                this->window_rect.x + this->window_rect.cx,
+                                this->window_rect.y + this->window_rect.cy
+                            ));
+                }
             }
         }   // if (MOUSE_BUTTON_PRESSED_MINIMIZEBOX == this->pressed_mouse_button)
         else if (MOUSE_BUTTON_PRESSED_MAXIMIZEBOX == this->pressed_mouse_button) {
@@ -1439,6 +1441,77 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
     return false;
 }   // input_mouse
 
+void ClientExecute::adjust_window_to_mod() {
+    this->maximized = false;
+
+    Rect work_area_rect = this->get_current_work_area_rect();
+
+    Dimension module_dimension;
+    if (this->mod_) {
+        module_dimension = this->mod_->get_dim();
+    }
+
+    Dimension prefered_window_dimension(
+            module_dimension.w + 2,
+            module_dimension.h + 2 + TITLE_BAR_HEIGHT
+        );
+    if (((this->window_rect.cx != prefered_window_dimension.w) ||
+            (this->window_rect.cy != prefered_window_dimension.h)) &&
+        (work_area_rect.cx > prefered_window_dimension.w) &&
+        (work_area_rect.cy > prefered_window_dimension.h)) {
+        this->window_rect.cx = prefered_window_dimension.w;
+        this->window_rect.cy = prefered_window_dimension.h;
+    }
+
+    this->update_rects();
+
+    {
+        RDP::RAIL::NewOrExistingWindow order;
+
+        order.header.FieldsPresentFlags(
+                    RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
+                | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
+                | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
+                | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
+                | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
+                | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
+                | RDP::RAIL::WINDOW_ORDER_FIELD_SHOW
+                | RDP::RAIL::WINDOW_ORDER_FIELD_STYLE
+            );
+        order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
+
+        order.ClientAreaWidth(this->window_rect.cx - 6 * 2);
+        order.ClientAreaHeight(this->window_rect.cy - 25 - 6);
+        order.WindowWidth(this->window_rect.cx);
+        order.WindowHeight(this->window_rect.cy);
+        order.NumVisibilityRects(1);
+        order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+
+        order.ClientOffsetX(this->window_rect.x + 6);
+        order.ClientOffsetY(this->window_rect.y + 25);
+        order.WindowOffsetX(this->window_rect.x);
+        order.WindowOffsetY(this->window_rect.y);
+        order.VisibleOffsetX(this->window_rect.x);
+        order.VisibleOffsetY(this->window_rect.y);
+
+        order.ShowState(5);
+        order.Style(0x16CF0000);
+        order.ExtendedStyle(0x110);
+
+        if (this->verbose) {
+            StaticOutStream<1024> out_s;
+            order.emit(out_s);
+            order.log(LOG_INFO);
+            LOG(LOG_INFO, "ClientExecute::maximize_restore_window: Send NewOrExistingWindow to client: size=%zu (0)", out_s.get_offset() - 1);
+        }
+
+        this->front_->draw(order);
+    }
+
+    this->update_widget();
+}
+
 void ClientExecute::maximize_restore_window()
 {
     if (this->maximized) {
@@ -1578,6 +1651,7 @@ void ClientExecute::maximize_restore_window()
 void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_height, Font const & font, bool allow_resize_hosted_desktop)
 {
     //LOG(LOG_INFO, "ClientExecute::ready");
+
     this->mod_  = &mod;
     this->font_ = &font;
 
@@ -2072,13 +2146,15 @@ void ClientExecute::process_client_system_command_pdu(uint32_t total_length,
                     this->front_->draw(order);
                 }
 
-                this->mod_->rdp_input_invalidate(
-                    Rect(
-                            this->window_rect.x,
-                            this->window_rect.y,
-                            this->window_rect.x + this->window_rect.cx,
-                            this->window_rect.y + this->window_rect.cy
-                        ));
+                if (this->mod_) {
+                    this->mod_->rdp_input_invalidate(
+                        Rect(
+                                this->window_rect.x,
+                                this->window_rect.y,
+                                this->window_rect.x + this->window_rect.cx,
+                                this->window_rect.y + this->window_rect.cy
+                            ));
+                }
             }
             break;
 
@@ -2128,13 +2204,15 @@ void ClientExecute::process_client_system_command_pdu(uint32_t total_length,
 
                 this->front_->draw(order);
 
-                this->mod_->rdp_input_invalidate(
-                    Rect(
-                            this->window_rect.x,
-                            this->window_rect.y,
-                            this->window_rect.x + this->window_rect.cx,
-                            this->window_rect.y + this->window_rect.cy
-                        ));
+                if (this->mod_) {
+                    this->mod_->rdp_input_invalidate(
+                        Rect(
+                                this->window_rect.x,
+                                this->window_rect.y,
+                                this->window_rect.x + this->window_rect.cx,
+                                this->window_rect.y + this->window_rect.cy
+                            ));
+                }
             }
             break;
     }
@@ -2507,13 +2585,15 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
             this->front_->draw(order);
         }
 
-        this->mod_->rdp_input_invalidate(
-            Rect(
-                    this->window_rect.x,
-                    this->window_rect.y,
-                    this->window_rect.x + this->window_rect.cx,
-                    this->window_rect.y + this->window_rect.cy
-                ));
+        if (this->mod_) {
+            this->mod_->rdp_input_invalidate(
+                Rect(
+                        this->window_rect.x,
+                        this->window_rect.y,
+                        this->window_rect.x + this->window_rect.cx,
+                        this->window_rect.y + this->window_rect.cy
+                    ));
+        }
     }   // if (cspupdu.SystemParam() == SPI_SETWORKAREA)
     else if (cspupdu.SystemParam() == RAIL_SPI_TASKBARPOS) {
         RDP::RAIL::Rectangle const & body_r = cspupdu.body_r();
@@ -2972,10 +3052,12 @@ void ClientExecute::update_widget()
     widget_rect_new.y  += TITLE_BAR_HEIGHT;
     widget_rect_new.cy -= TITLE_BAR_HEIGHT;
 
-    this->mod_->move_size_widget(widget_rect_new.x, widget_rect_new.y,
-        widget_rect_new.cx, widget_rect_new.cy);
+    if (this->mod_) {
+        this->mod_->move_size_widget(widget_rect_new.x, widget_rect_new.y,
+            widget_rect_new.cx, widget_rect_new.cy);
 
-    this->mod_->refresh(this->window_rect);
+        this->mod_->refresh(this->window_rect);
+    }
 
     this->window_rect_old = this->window_rect;
 }

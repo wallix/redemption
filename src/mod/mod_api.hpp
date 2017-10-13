@@ -25,13 +25,11 @@
 #include <vector>
 
 #include "core/callback.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "core/wait_obj.hpp"
+#include "gdi/graphic_api.hpp"
 #include "utils/sugar/non_null_ptr.hpp"
-
-namespace gdi
-{
-    class GraphicApi;
-}
 
 class EventHandler
 {
@@ -80,13 +78,87 @@ protected:
     wait_obj event;
 
 public:
+    enum class AsynchronousGraphicTask {
+        none,
+        clear_screen,
+        freeze_screen
+    };
+
+private:
+    wait_obj asynchronous_graphic_task_event;
+
+    class AsynchronousGraphicTaskEventHandler : public EventHandler::CB {
+        mod_api& mod_;
+
+    public:
+        AsynchronousGraphicTaskEventHandler(mod_api& mod)
+        : mod_(mod)
+        {}
+
+        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
+            this->mod_.process_asynchronous_graphic_task_event(now, event, drawable);
+        }
+    } asynchronous_graphic_task_event_handler;
+
+    void process_asynchronous_graphic_task_event(time_t, wait_obj&, gdi::GraphicApi&) {
+        this->asynchronous_graphic_task_event.full_reset();
+
+        this->asynchronous_graphic_task_event.signal = BACK_EVENT_CALL_DRAW_EVENT;
+    }
+
+protected:
+    AsynchronousGraphicTask asynchronous_graphic_task = AsynchronousGraphicTask::none;
+
+    void perform_asynchronous_graphic_task(gdi::GraphicApi& drawable) {
+        switch (this->asynchronous_graphic_task)
+        {
+            case AsynchronousGraphicTask::clear_screen:
+            {
+                Dimension dim = this->get_dim();
+                Rect r(0, 0, dim.w, dim.h);
+                RDPOpaqueRect cmd(r, color_encode(BGRColor(BLACK), 24));
+                drawable.begin_update();
+                drawable.draw(cmd, r, gdi::ColorCtx::depth24());
+                drawable.end_update();
+            }
+            break;
+
+            case AsynchronousGraphicTask::freeze_screen:
+            {
+                Dimension dim = this->get_dim();
+                Rect r(0, 0, dim.w, dim.h);
+                RDPPatBlt cmd(r, 0xFA, color_encode(BGRColor(BLACK), 24), color_encode(BGRColor(WHITE), 24),
+                        RDPBrush(0, 0, 3, 0xaa, reinterpret_cast<const uint8_t *>("\x55\xaa\x55\xaa\x55\xaa\x55"))
+                    );
+                drawable.begin_update();
+                drawable.draw(cmd, r, gdi::ColorCtx::depth24());
+                drawable.end_update();
+            }
+            break;
+
+            case AsynchronousGraphicTask::none:
+            break;
+        }
+
+        this->asynchronous_graphic_task = AsynchronousGraphicTask::none;
+    }
+
+public:
+    void invoke_asynchronous_graphic_task(AsynchronousGraphicTask task)
+    {
+        this->asynchronous_graphic_task = task;
+
+        this->asynchronous_graphic_task_event.set_trigger_time(0);
+    }
+
+public:
     enum : bool {
         CLIENT_UNLOGGED,
         CLIENT_LOGGED
     };
     bool logged_on = CLIENT_UNLOGGED; // TODO suspicious
 
-    mod_api()
+    mod_api() : asynchronous_graphic_task_event_handler(*this)
     {
         this->event.set_trigger_time(wait_obj::NOW);
     }
@@ -97,7 +169,15 @@ public:
 
     virtual int get_fd() const { return INVALID_SOCKET; }
 
-    virtual void get_event_handlers(std::vector<EventHandler>&/* out_event_handlers*/) {}
+    virtual void get_event_handlers(std::vector<EventHandler>& out_event_handlers) {
+        if (AsynchronousGraphicTask::none != this->asynchronous_graphic_task) {
+            out_event_handlers.emplace_back(
+                &this->asynchronous_graphic_task_event,
+                &this->asynchronous_graphic_task_event_handler,
+                INVALID_SOCKET
+            );
+        }
+    }
 
     virtual void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name,
         uint8_t const * data, size_t length, size_t chunk_size, int flags) = 0;

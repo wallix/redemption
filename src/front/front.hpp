@@ -797,6 +797,7 @@ public:
             }
             else {
                 this->session_resized = true;
+                res = ResizeResult::remoteapp;
             }
         }
 

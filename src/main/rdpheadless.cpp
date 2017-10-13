@@ -1018,6 +1018,7 @@ int main(int argc, char** argv)
                             , VncBogusClipboardInfiniteLoop::delayed
                             , reportMessage
                             , false
+                            , nullptr
                             , to_verbose_flags(verbose));
 
         } else {

@@ -986,13 +986,7 @@ public:
         }
 
         // Clear client screen
-        {
-            Rect r(0, 0, front_width, front_height);
-            RDPOpaqueRect cmd(r, color_encode(BGRColor(BLACK), 24));
-            this->front.begin_update();
-            this->front.draw(cmd, r, gdi::ColorCtx::depth24());
-            this->front.end_update();
-        }
+        this->invoke_asynchronous_graphic_task(AsynchronousGraphicTask::clear_screen);
 
         this->beginning = timeobj.get_time().tv_sec;
 
@@ -2012,6 +2006,8 @@ private:
 
 public:
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
+        mod_api::get_event_handlers(out_event_handlers);
+
         if (!this->asynchronous_tasks.empty()) {
             out_event_handlers.emplace_back(
                 &this->asynchronous_task_event,
@@ -4140,10 +4136,15 @@ public:
 
     void draw_event(time_t now, gdi::GraphicApi & drawable_) override
     {
-        // LOG(LOG_INFO, "mod_rdp::draw_event()");
+        //LOG(LOG_INFO, "mod_rdp::draw_event()");
 
         if (this->remote_programs_session_manager) {
             this->remote_programs_session_manager->set_drawable(&drawable_);
+        }
+
+        if (AsynchronousGraphicTask::none != this->asynchronous_graphic_task) {
+            this->perform_asynchronous_graphic_task(drawable_);
+            return;
         }
 
         bool run = true;
@@ -7657,7 +7658,9 @@ public:
     { return Dimension(this->front_width, this->front_height); }
 
     bool is_auto_reconnectable() override {
-        return this->is_server_auto_reconnec_packet_received;
+        return (this->is_server_auto_reconnec_packet_received &&
+            this->is_up_and_running() &&
+            (!this->session_probe_launcher || this->session_probe_launcher->is_stopped()));
     }
 
 private:

@@ -52,7 +52,8 @@ public:
         no_need = 0,
         done    = 1,
         fail    = -1,
-        instant_done = 2
+        instant_done = 2,
+        remoteapp = 3
     };
     virtual ResizeResult server_resize(int width, int height, int bpp) = 0;
 
