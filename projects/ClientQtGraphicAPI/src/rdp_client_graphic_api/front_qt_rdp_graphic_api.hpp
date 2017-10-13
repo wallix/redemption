@@ -2446,11 +2446,11 @@ public:
 
 
     void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override {
-//         if (bool(this->verbose & RDPVerbose::graphics)) {
+         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
-//         }
+         }
         //std::cout << "RDPMemBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" <<  std::dec <<  std::endl;
         const Rect drect = clip.intersect(cmd.rect);
         if (drect.isempty()){
