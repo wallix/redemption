@@ -605,6 +605,8 @@ class WrmCaptureImpl :
         using GraphicToFile::draw;
         using GraphicToFile::capture_bpp;
 
+        void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {}
+
         void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
             auto compress_and_draw_bitmap_update = [&bitmap_data, this](const Bitmap & bmp) {
                 StaticOutStream<65535> bmp_stream;
@@ -742,6 +744,8 @@ public:
     void set_pointer(Pointer const & ptr) override {
         this->graphic_to_file.set_pointer(ptr);
     }
+
+    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {}
 
     class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi
     {

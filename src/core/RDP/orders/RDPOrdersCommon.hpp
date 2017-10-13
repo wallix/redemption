@@ -340,6 +340,7 @@ struct DeltaEncodedRectangle {
         DESTBLT         = 0,
         PATBLT          = 1,
         SCREENBLT       = 2,
+        NINEGRID        = 7,
         LINE            = 9,
         RECT            = 10,
         DESKSAVE        = 11,
@@ -355,6 +356,7 @@ struct DeltaEncodedRectangle {
         ELLIPSESC       = 25,
         ELLIPSECB       = 26,
         GLYPHINDEX      = 27
+
     };
 
     enum SecondaryOrderType {
@@ -487,6 +489,23 @@ struct DeltaEncodedRectangle {
 //  | 0x0D                             | Drawing Order (see section            |
 //  |                                  | 2.2.2.2.1.3.7).                       |
 //  +----------------------------------+---------------------------------------+
+
+enum {
+    TS_ALTSEC_SWITCH_SURFACE
+  , TS_ALTSEC_CREATE_OFFSCR_BITMAP
+  , TS_ALTSEC_STREAM_BITMAP_FIRST
+  , TS_ALTSEC_STREAM_BITMAP_NEXT
+  , TS_ALTSEC_CREATE_NINEGRID_BITMAP
+  , TS_ALTSEC_GDIP_FIRST
+  , TS_ALTSEC_GDIP_NEXT
+  , TS_ALTSEC_GDIP_END
+  , TS_ALTSEC_GDIP_CACHE_FIRST
+  , TS_ALTSEC_GDIP_CACHE_NEXT
+  , TS_ALTSEC_GDIP_CACHE_END
+  , TS_ALTSEC_WINDOW
+  , TS_ALTSEC_COMPDESK_FIRST
+  , TS_ALTSEC_FRAME_MARKER
+};
 
 class AltsecDrawingOrderHeader {
 public:

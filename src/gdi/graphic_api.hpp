@@ -54,6 +54,7 @@ class GlyphCache;
 
 class RDPColCache;
 class RDPBrushCache;
+class RDPNineGrid;
 
 namespace RDP {
     class RDPMultiPatBlt;
@@ -247,6 +248,7 @@ struct GraphicApi : private noncopyable
     virtual void set_palette(BGRPalette   const &) {}
 
     virtual void draw(RDP::FrameMarker    const & cmd) = 0;
+    virtual void draw(RDPNineGrid const & cmd, Rect clip, ColorCtx color_ctx, Bitmap const & bmp) = 0;
     virtual void draw(RDPDestBlt          const & cmd, Rect clip) = 0;
     virtual void draw(RDPMultiDstBlt      const & cmd, Rect clip) = 0;
     virtual void draw(RDPScrBlt           const & cmd, Rect clip) = 0;
@@ -295,6 +297,7 @@ class NullGraphic final : public GraphicApi
 {
 public:
     void draw(RDP::FrameMarker    const &) override {}
+    void draw(RDPNineGrid const & cmd, Rect , ColorCtx color_ctx, Bitmap const & bmp) override {}
     void draw(RDPDestBlt          const &, Rect) override {}
     void draw(RDPMultiDstBlt      const &, Rect) override {}
     void draw(RDPPatBlt           const &, Rect, ColorCtx) override {}

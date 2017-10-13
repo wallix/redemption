@@ -1976,33 +1976,25 @@ public:
         }
         dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
 
-        int indice(mincy-1);
+        srcBitmap = srcBitmap.mirrored(false, true);
 
         std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(srcBitmap.bytesPerLine() * drect.cy);
 
-        for (size_t k = 0 ; k < mincy; k++) {
+        const uchar * srcData = srcBitmap.constBits();
+        const uchar * dstData = dstBitmap.constBits();
 
-            const uchar * srcData = srcBitmap.constScanLine(k);
-            const uchar * dstData = dstBitmap.constScanLine(indice - k);
+        int data_len = bitmap.line_size() * mincy;
+        Op op;
+        for (int i = 0; i < data_len; i++) {
 
-            Op op;
-            int line_origine = k*srcBitmap.bytesPerLine();
-            int line_end     = line_origine + srcBitmap.bytesPerLine();
-            for (int i = line_origine; i < line_end; i++) {
-                data[i] = op.op(srcData[i], dstData[i]);
-            }
-
-//             QImage image(data.get(), mincx, 1, srcBitmap.format());
-//             QRect trect(drect.x, rowYCoord, mincx, 1);
-//             this->screen->paintCache().drawImage(trect, image);
-
-            //rowYCoord--;
+            data[i] = op.op(srcData[i], dstData[i]);
         }
 
         QImage image(data.get(), mincx, mincy, srcBitmap.format());
+
         QRect trect(drect.x, drect.y, mincx, mincy);
         if (this->connected) {
-            this->screen->paintCache().drawImage(trect, image);
+             this->screen->paintCache().drawImage(trect, image);
         }
     }
 
@@ -2032,7 +2024,7 @@ public:
 
         const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
         if (this->connected) {
-            this->screen->paintCache().drawImage(trect, qbitmap);
+             this->screen->paintCache().drawImage(trect, qbitmap);
         }
     }
 
@@ -2454,11 +2446,11 @@ public:
 
 
     void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
+//         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
-        }
+//         }
         //std::cout << "RDPMemBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" <<  std::dec <<  std::endl;
         const Rect drect = clip.intersect(cmd.rect);
         if (drect.isempty()){
@@ -2892,6 +2884,10 @@ public:
             this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
         LOG(LOG_INFO, "DEFAULT: FrameMarker");
+    }
+
+    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
+        LOG(LOG_INFO, "DEFAULT: RDPNineGrid");
     }
 
 

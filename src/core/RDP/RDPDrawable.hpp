@@ -47,6 +47,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryCreateNinegridBitmap.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 
@@ -230,6 +231,8 @@ public:
         this->drawable.destblt(trect, cmd.rop);
         this->last_update_index++;
     }
+
+    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {}
 
 private:
     // TODO removed when RDPMultiDstBlt and RDPMultiOpaqueRect contains a rect member

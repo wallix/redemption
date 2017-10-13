@@ -339,6 +339,9 @@ public:
             }
 
             this->start_win_session_time = tvtime();
+            time_t now;
+            time(&now);
+            std::string date(ctime(&now));
             std::chrono::microseconds sec_duration = difftimeval(this->start_win_session_time, this->start_wab_session_time);
             int sec_len = sec_duration.count() / 1000;
             std::cout << "secondary connection lenght = " << sec_len << " ms" << std::endl;
@@ -346,7 +349,7 @@ public:
             if (!this->out_path.empty()) {
                 std::ofstream file_movie(this->out_path + "_nego_length", std::ios::app);
                 if (file_movie) {
-                    file_movie << this->index << "\t" << sec_len << "\n";
+                    file_movie << this->index << "\t" << sec_len << "\t" << date << "n";
                 }
             }
         }
@@ -359,9 +362,12 @@ public:
         std::cout << "movielength = " << duration.count() / 1000 <<  std::endl;
 
         if (!this->out_path.empty()) {
+            time_t now;
+            time(&now);
+            std::string date(ctime(&now));
             std::ofstream file_movie(this->out_path + "_movie_length", std::ios::app);
             if (file_movie) {
-                file_movie << this->index <<  "\t" <<  duration.count() / 1000 << "\n";
+                file_movie << this->index <<  "\t" <<  duration.count() / 1000 << "\t" << date <<  "\n";
             }
         }
     }

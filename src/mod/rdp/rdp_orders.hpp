@@ -49,9 +49,11 @@
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryNineGrid.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryCreateNinegridBitmap.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
@@ -84,12 +86,14 @@ class rdp_orders
     RDPGlyphIndex      glyph_index;
     RDPPolyline        polyline;
     RDPEllipseSC       ellipseSC;
+    RDPNineGrid        ninegrid;
 
 public:
     uint8_t bpp = 0;
     BGRPalette global_palette;
 
     BmpCache * bmp_cache;
+    BmpCache * ninegrid_bmp_cache;
 
 private:
     GlyphCache gly_cache;
@@ -99,6 +103,9 @@ private:
 public:
     size_t recv_bmp_cache_count;
     size_t recv_order_count;
+
+    size_t recv_ninegrid_bmp_cache_count;
+    size_t recv_ninegrid_order_count;
 
 private:
     std::string target_host;
@@ -122,9 +129,12 @@ public:
                  , reinterpret_cast<const uint8_t *>(""))
     , global_palette(BGRPalette::classic_332())
     , bmp_cache(nullptr)
+    , ninegrid_bmp_cache(nullptr)
     , verbose(verbose)
     , recv_bmp_cache_count(0)
     , recv_order_count(0)
+    , recv_ninegrid_bmp_cache_count(0)
+    , recv_ninegrid_order_count(0)
     , target_host(target_host)
     , enable_persistent_disk_bitmap_cache(enable_persistent_disk_bitmap_cache)
     , persist_bitmap_cache_on_disk(persist_bitmap_cache_on_disk)
@@ -160,6 +170,10 @@ public:
                 LOG(LOG_ERR, "%s", err.errmsg());
             }
             delete this->bmp_cache;
+        }
+
+        if (this->ninegrid_bmp_cache) {
+            delete this->ninegrid_bmp_cache;
         }
     }
 
@@ -411,6 +425,35 @@ private:
         }
     }
 
+    void process_ninegrid_bmpcache(InStream & stream, const RDP::AltsecDrawingOrderHeader & header)
+    {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
+            LOG(LOG_INFO, "rdp_orders_process_ninegrid_bmpcache bpp=%u", this->bpp);
+        }
+
+        CreateNineGridBitmap cngb;
+        cngb.receive(stream);
+        //cngb.log();
+
+//         Bitmap bmp(uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette,
+//            uint16_t cx, uint16_t cy, const uint8_t * data, size_t size,
+//            bool compressed = false);
+//
+//         RDPBmpCache bmp_cache(bmp, id, idx, true, false, bool(this->verbose));
+//
+//         this->recv_ninegrid_bmp_cache_count++;
+//
+//         REDASSERT(bmp_cache.bmp.is_valid());
+//
+//         this->ninegrid_bmp_cache->put(bmp_cache.id, bmp_cache.idx, bmp_cache.bmp, bmp_cache.key1, bmp_cache.key2);
+//         if (bool(this->verbose & RDPVerbose::graphics)) {
+//             LOG( LOG_INFO
+//                , "rdp_orders_process_bmpcache bitmap id=%d idx=%d cx=%" PRIu16 " cy=%" PRIu16
+//                  " bmp_size=%zu original_bpp=%" PRIu8 " bpp=%" PRIu8
+//                , bmp_cache.id, bmp_cache.idx, bmp_cache.bmp.cx(), bmp_cache.bmp.cy(), bmp_cache.bmp.bmp_size(), bmp_cache.bmp.bpp(), this->bpp);
+//         }
+    }
+
     void server_add_char( uint8_t cacheId, uint16_t cacheIndex
                         , int16_t offset, int16_t baseline
                         , uint16_t width, uint16_t height, const uint8_t * data)
@@ -489,6 +532,10 @@ public:
                     break;
                     case RDP::AltsecDrawingOrderHeader::Window:
                         this->process_windowing(stream, header, gd);
+                    break;
+                    case TS_ALTSEC_CREATE_NINEGRID_BITMAP:
+                        this->process_ninegrid_bmpcache(stream, header);
+                    break;
                     break;
                     default:
                         LOG(LOG_ERR, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
@@ -644,6 +691,15 @@ public:
                     this->ellipseSC.receive(stream, header);
                     gd.draw(this->ellipseSC, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette));
                     if (bool(this->verbose & RDPVerbose::graphics)){ this->ellipseSC.log(LOG_INFO, cmd_clip); }
+                    break;
+                case NINEGRID:
+                {
+                    this->ninegrid.receive(stream, header);
+//                     const Bitmap & bitmap = this->ninegrid_bmp_cache->get(this->ninegrid.bitmapId);
+                    Bitmap bitmap;
+                    gd.draw(this->ninegrid, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette), bitmap);
+                    if (bool(this->verbose & RDPVerbose::graphics)){ this->ninegrid.log(LOG_INFO, cmd_clip); }
+                }
                     break;
                 default:
                     /* error unknown order */
