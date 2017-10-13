@@ -236,6 +236,10 @@ private:
 
     void initialize_move_size(uint16_t xPos, uint16_t yPos, int pressed_mouse_button_);
 
+public:
+    void adjust_window_to_mod();
+
+private:
     void maximize_restore_window();
 
     void process_client_activate_pdu(

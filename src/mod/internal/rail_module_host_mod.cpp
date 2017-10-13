@@ -28,7 +28,8 @@ RailModuleHostMod::RailModuleHostMod(
     FrontAPI& front, uint16_t width, uint16_t height,
     Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
     ClientExecute& client_execute,
-    const GCC::UserData::CSMonitor& cs_monitor)
+    const GCC::UserData::CSMonitor& cs_monitor,
+    bool can_resize_hosted_desktop)
 : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(),
                         client_execute, vars.get<cfg::theme>())
 , rail_module_host(front, widget_rect.x, widget_rect.y,
@@ -36,6 +37,7 @@ RailModuleHostMod::RailModuleHostMod(
                    this->screen, this, std::move(managed_mod),
                    vars.get<cfg::font>(), cs_monitor, width, height)
 , vars(vars)
+, can_resize_hosted_desktop(can_resize_hosted_desktop)
 , managed_mod_event_handler(*this)
 , client_execute(client_execute)
 {
@@ -158,5 +160,6 @@ Dimension RailModuleHostMod::get_dim() const
 
 bool RailModuleHostMod::is_resizing_hosted_desktop_allowed() const
 {
-    return vars.get<cfg::remote_program::allow_resize_hosted_desktop>();
+    return (vars.get<cfg::remote_program::allow_resize_hosted_desktop>() &&
+        this->can_resize_hosted_desktop);
 }

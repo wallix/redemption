@@ -626,6 +626,8 @@ public:
                                  disable_input_event, disable_graphics_update);
 
                             this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
+
+                            this->mod.invoke_asynchronous_graphic_task(mod_api::AsynchronousGraphicTask::freeze_screen);
                         }
                         this->request_keep_alive();
                         std::string string_message = "No keep alive received from Session Probe!";

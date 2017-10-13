@@ -762,5 +762,10 @@ private:
     void rdp_input_scancode(long param1, long param2, long device_flags, long time, Keymap2 *) {
         this->mod.send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
     }
+
+public:
+    bool is_stopped() const override {
+        return (this->state == State::STOP);
+    }
 };  // class SessionProbeClipboardBasedLauncher
 

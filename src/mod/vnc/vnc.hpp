@@ -27,33 +27,31 @@
 
 #include <zlib.h>
 
-#include "main/version.hpp"
-
-#include "utils/log.hpp"
-#include "mod/internal/widget/flat_vnc_authentification.hpp"
-#include "mod/internal/widget/notify_api.hpp"
-#include "mod/internal/internal_mod.hpp"
-#include "mod/internal/widget/notify_api.hpp"
-#include "keyboard/keymapSym.hpp"
-#include "utils/diffiehellman.hpp"
-#include "utils/d3des.hpp"
+#include "core/buf64k.hpp"
 #include "core/channel_list.hpp"
-#include "core/RDP/pointer.hpp"
+#include "core/channel_names.hpp"
+#include "core/front_api.hpp"
 #include "core/RDP/clipboard.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/pointer.hpp"
 #include "core/report_message_api.hpp"
+#include "keyboard/keymapSym.hpp"
+#include "main/version.hpp"
+#include "mod/internal/client_execute.hpp"
+#include "mod/internal/internal_mod.hpp"
+#include "mod/internal/widget/flat_vnc_authentification.hpp"
+#include "mod/internal/widget/notify_api.hpp"
+#include "utils/diffiehellman.hpp"
+#include "utils/d3des.hpp"
+#include "utils/key_qvalue_pairs.hpp"
+#include "utils/log.hpp"
 #include "utils/sugar/update_lock.hpp"
-#include "core/channel_names.hpp"
 #include "utils/sugar/strutils.hpp"
 #include "utils/utf.hpp"
 #include "utils/verbose_flags.hpp"
-#include "core/buf64k.hpp"
-#include "utils/key_qvalue_pairs.hpp"
-#include "core/front_api.hpp"
-
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -219,6 +217,8 @@ private:
 
     int keylayout;
 
+    ClientExecute* client_execute = nullptr;
+
 public:
     mod_vnc( Transport & t
            , const char * username
@@ -241,6 +241,7 @@ public:
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
            , ReportMessageApi & report_message
            , bool server_is_apple
+           , ClientExecute* client_execute
            , Verbose verbose
            )
     : InternalMod(front, front_width, front_height, font, theme, false)
@@ -265,19 +266,14 @@ public:
     , report_message(report_message)
     , server_is_apple(server_is_apple)
     , keylayout(keylayout)
+    , client_execute(client_execute)
     , frame_buffer_update_ctx(verbose)
     , clipboard_data_ctx(verbose)
     {
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
 
         // Clear client screen
-        {
-            Rect r(0, 0, front_width, front_height);
-            RDPOpaqueRect cmd(r, color_encode(BGRColor(BLACK), 24));
-            this->front.begin_update();
-            this->front.draw(cmd, r, gdi::ColorCtx::depth24());
-            this->front.end_update();
-        }
+        this->invoke_asynchronous_graphic_task(AsynchronousGraphicTask::clear_screen);
 
         ::time(&this->beginning);
 
@@ -1479,6 +1475,11 @@ public:
             LOG(LOG_INFO, "vnc::draw_event");
         }
 
+        if (AsynchronousGraphicTask::none != this->asynchronous_graphic_task) {
+            this->perform_asynchronous_graphic_task(drawable);
+            return;
+        }
+
         if (!this->event.is_waked_up_by_time()) {
             this->buf.read_from(this->t);
         }
@@ -1920,6 +1921,14 @@ private:
                 this->state = DO_INITIAL_CLEAR_SCREEN;
                 this->event.set_trigger_time(wait_obj::NOW);
                 break;
+            case FrontAPI::ResizeResult::remoteapp:
+                if (bool(this->verbose & Verbose::basic_trace)) {
+                    LOG(LOG_INFO, "resizing remoteapp");
+                }
+                if (this->client_execute) {
+                    this->client_execute->adjust_window_to_mod();
+                }
+                // RZ: Continue with FrontAPI::ResizeResult::no_need
             case FrontAPI::ResizeResult::no_need:
                 if (bool(this->verbose & Verbose::basic_trace)) {
                     LOG(LOG_INFO, "no resizing needed");
@@ -3948,5 +3957,9 @@ public:
 
     Dimension get_dim() const override
     { return Dimension(this->width, this->height); }
+
+    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
+        mod_api::get_event_handlers(out_event_handlers);
+    }
 };
 

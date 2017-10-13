@@ -44,7 +44,8 @@ public:
         RailModuleHostModVariables vars,
         FrontAPI& front, uint16_t width, uint16_t height,
         Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
-        ClientExecute& client_execute, const GCC::UserData::CSMonitor& cs_monitor);
+        ClientExecute& client_execute, const GCC::UserData::CSMonitor& cs_monitor,
+        bool can_resize_hosted_desktop);
 
     ~RailModuleHostMod() override
     {
@@ -95,6 +96,8 @@ private:
     RailModuleHost rail_module_host;
 
     RailModuleHostModVariables vars;
+
+    bool can_resize_hosted_desktop = false;
 
     class ManagedModEventHandler : public EventHandler::CB
     {

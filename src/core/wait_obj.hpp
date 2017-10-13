@@ -33,7 +33,9 @@ enum BackEvent_t {
     BACK_EVENT_STOP = 4,
     BACK_EVENT_REFRESH,
 
-    BACK_EVENT_RETRY_CURRENT
+    BACK_EVENT_RETRY_CURRENT,
+
+    BACK_EVENT_CALL_DRAW_EVENT
 };
 
 class wait_obj

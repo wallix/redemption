@@ -61,5 +61,7 @@ public:
         BaseVirtualChannel* channel) = 0;
 
     virtual void stop(bool bLaunchSuccessful, error_type& id_ref) = 0;
+
+    virtual bool is_stopped() const = 0;
 };
 
