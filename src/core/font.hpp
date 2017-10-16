@@ -32,7 +32,7 @@
 #include <vector>
 #include <algorithm>
 #include "utils/bitfu.hpp"
-#include "utils/sugar/non_null_ptr.hpp"
+#include "utils/sugar/not_null_ptr.hpp"
 #include "utils/sugar/make_unique.hpp"
 
 struct FontChar
@@ -231,7 +231,7 @@ private:
     void load_from_file(const char * file_path);
 
     std::vector<FontChar> font_items;
-    non_null_ptr<FontChar const> unknown_item = &default_unknown_glyph();
+    not_null_ptr<FontChar const> unknown_item = &default_unknown_glyph();
     uint16_t size_ = 0;
     uint16_t style_ = 0;
     char name_[32] {};

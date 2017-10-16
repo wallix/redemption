@@ -992,8 +992,8 @@ int main(int argc, char** argv)
         GCC::UserData::SCCore const original_sc_core;
         GCC::UserData::SCSecurity const original_sc_sec1;
 
-        non_null_ptr<GCC::UserData::SCCore const> sc_core_ptr = &original_sc_core;
-        non_null_ptr<GCC::UserData::SCSecurity const> sc_sec1_ptr = &original_sc_sec1;
+        not_null_ptr<GCC::UserData::SCCore const> sc_core_ptr = &original_sc_core;
+        not_null_ptr<GCC::UserData::SCSecurity const> sc_sec1_ptr = &original_sc_sec1;
 
         if (protocol_is_VNC) {
 

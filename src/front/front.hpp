@@ -105,7 +105,7 @@
 #include "utils/genfstat.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/underlying_cast.hpp"
-#include "utils/sugar/non_null_ptr.hpp"
+#include "utils/sugar/not_null_ptr.hpp"
 
 #include "gdi/clip_from_cmd.hpp"
 
@@ -486,8 +486,8 @@ private:
         );
     }
 
-    non_null_ptr<gdi::GraphicApi> gd = &gdi::null_gd();
-    non_null_ptr<gdi::GraphicApi> graphics_update = &gdi::null_gd();
+    not_null_ptr<gdi::GraphicApi> gd = &gdi::null_gd();
+    not_null_ptr<gdi::GraphicApi> graphics_update = &gdi::null_gd();
 
     void set_gd(gdi::GraphicApi * new_gd) {
         this->gd = new_gd;
