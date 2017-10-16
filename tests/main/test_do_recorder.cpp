@@ -1001,15 +1001,6 @@ RED_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
     RED_CHECK_EQUAL(1, res);
 }
 
-#define CHECK_FILE(name, sz)             \
-    RED_CHECK_EQUAL(filesize(name), sz); \
-    ::unlink(name)
-
-
-#define CHECK_CONTENTS(name, contents)               \
-    RED_CHECK_EQ(get_file_contents(name), contents); \
-    ::unlink(name)
-
 inline void test_app_recorder_impl(char const * opt_vlc, size_t sz1, size_t sz2, size_t sz3)
 {
     LOG(LOG_INFO, "=================== TestAppRecorder =============");
@@ -1037,9 +1028,9 @@ inline void test_app_recorder_impl(char const * opt_vlc, size_t sz1, size_t sz2,
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder.1.flva\".\n\n");
     RED_CHECK_EQUAL(0, res);
 
-    CHECK_FILE("/tmp/recorder.1-000000.flv", sz1);
-    CHECK_FILE("/tmp/recorder.1-000001.flv", sz2);
-    CHECK_FILE("/tmp/recorder.1.flv", sz3);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000000.flv", sz1);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000001.flv", sz2);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1.flv", sz3);
 }
 
 RED_AUTO_TEST_CASE(TestAppRecorder)
@@ -1077,12 +1068,12 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunk)
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder-chunk.mwrm\".\n\n");
     RED_CHECK_EQUAL(0, res);
 
-    CHECK_FILE("/tmp/recorder-chunk-000000.mp4", 11227513);
-    CHECK_FILE("/tmp/recorder-chunk-000000.png", 26981);
-    CHECK_FILE("/tmp/recorder-chunk-000001.mp4", 86044);
-    CHECK_FILE("/tmp/recorder-chunk-000001.png", 27536);
-    CHECK_CONTENTS("/tmp/recorder-chunk.pgs", R"js({"percentage":100,"eta":0,"videos":1})js");
-    CHECK_CONTENTS("/tmp/recorder-chunk.meta", "2016-02-18 18:27:01 + (break)\n");
+    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder-chunk-000000.png", 26981);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder-chunk-000001.png", 27536);
+    RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder-chunk-000000.mp4", 11227513, 11227499);
+    RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder-chunk-000001.mp4", 86044, 86030);
+    RED_CHECK_FILE_CONTENTS("/tmp/recorder-chunk.pgs", R"js({"percentage":100,"eta":0,"videos":1})js");
+    RED_CHECK_FILE_CONTENTS("/tmp/recorder-chunk.meta", "2016-02-18 18:27:01 + (break)\n");
 }
 
 RED_AUTO_TEST_CASE(TestClearTargetFiles)
