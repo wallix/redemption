@@ -323,41 +323,41 @@ public:
     {
         /* Log to file */
         if (this->ini.get<cfg::session_log::session_log_redirection>()) {
-            if(!ct.is_open()) {
+            if(!this->ct.is_open()) {
                 size_t base_len = 0;
                 char const * filename = this->ini.get<cfg::session_log::log_path>().c_str();
                 char const * basename = basename_len(filename, base_len);
                 auto const   hash_path = this->ini.get<cfg::video::hash_path>().to_string() + basename;
 
-                ct.open(filename, hash_path.c_str(), 0, {basename, base_len});
+                this->ct.open(filename, hash_path.c_str(), 0, {basename, base_len});
             }
 
             std::time_t t = std::time(nullptr);
             char mbstr[100];
             if (std::strftime(mbstr, sizeof(mbstr), "%F %T ", std::localtime(&t))) {
-                ct.send(mbstr, strlen(mbstr));
+                this->ct.send(mbstr, strlen(mbstr));
             }
 
-            ct.send(info.c_str(), info.size());
-            ct.send("\n", 1);
+            this->ct.send(info.c_str(), info.size());
+            this->ct.send("\n", 1);
         }
 
         /* Log to SIEM (redirected syslog) */
-        auto target_ip = (isdigit(this->ini.get<cfg::context::target_host>()[0]) ?
-                  this->ini.get<cfg::context::target_host>() :
-                  this->ini.get<cfg::context::ip_target>());
+        if (this->ini.get<cfg::session_log::enable_session_log>()) {
+            auto target_ip = (isdigit(this->ini.get<cfg::context::target_host>()[0])
+                ? this->ini.get<cfg::context::target_host>()
+                : this->ini.get<cfg::context::ip_target>());
 
-        auto session_info = key_qvalue_pairs({
-            {"session_id", this->ini.get<cfg::context::session_id>()},
-            {"client_ip",  this->ini.get<cfg::globals::host>()},
-            {"target_ip",  target_ip},
-            {"user",       this->ini.get<cfg::globals::auth_user>()},
-            {"device",     this->ini.get<cfg::globals::target_device>()},
-            {"service",    this->ini.get<cfg::context::target_service>()},
-            {"account",    this->ini.get<cfg::globals::target_user>()},
+            auto session_info = key_qvalue_pairs({
+                {"session_id", this->ini.get<cfg::context::session_id>()},
+                {"client_ip",  this->ini.get<cfg::globals::host>()},
+                {"target_ip",  target_ip},
+                {"user",       this->ini.get<cfg::globals::auth_user>()},
+                {"device",     this->ini.get<cfg::globals::target_device>()},
+                {"service",    this->ini.get<cfg::context::target_service>()},
+                {"account",    this->ini.get<cfg::globals::target_user>()},
             });
 
-        if (this->ini.get<cfg::session_log::enable_session_log>()) {
             LOG_SIEM(
                 LOG_INFO
               , "[%s Session] %s %s"
