@@ -736,6 +736,8 @@ public:
     //       DRAW FUNCTIONS
     //-----------------------------
 
+    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {}
+
     virtual void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPOpaqueRect color=" << cmd.color.as_bgr().to_u32();

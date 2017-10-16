@@ -741,11 +741,11 @@ public:
         this->graphic_to_file.draw(cmd);
     }
 
+    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {}
+
     void set_pointer(Pointer const & ptr) override {
         this->graphic_to_file.set_pointer(ptr);
     }
-
-    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {}
 
     class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi
     {

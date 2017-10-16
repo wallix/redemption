@@ -2294,8 +2294,6 @@ public:
             QColor qcolor(this->u32_to_qcolor(cmd.color, color_ctx));
             Rect rect(cmd.rect.intersect(clip));
 
-            LOG(LOG_INFO, "draw opaque rect");
-
             this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, qcolor);
 
             if (this->is_recording && !this->is_replaying) {

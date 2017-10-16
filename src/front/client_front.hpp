@@ -94,6 +94,8 @@ public:
     void draw(const RDP::RAIL::NonMonitoredDesktop &) override { }
     void draw(const RDPBitmapData &, const Bitmap &) override { }
     void set_palette(const BGRPalette&) override { }
+    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {}
+
 
     ResizeResult server_resize(int width, int height, int bpp) override {
         this->info.bpp = bpp;

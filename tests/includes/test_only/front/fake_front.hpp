@@ -91,6 +91,8 @@ public:
 
     void draw(RDPBrushCache const & cmd) override;
 
+    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {}
+
     bool can_be_start_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
 
