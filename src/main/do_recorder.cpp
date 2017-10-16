@@ -2272,6 +2272,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         recorder.video_params.bogus_vlc_frame_rate = false;
     }
     recorder.video_params.video_quality = Level::high;
+    recorder.chunk = options.count("chunk") > 0;
     recorder.capture_flags
       = (                   options.count("wrm")    ? CaptureFlags::wrm   : CaptureFlags::none)
       | ((recorder.chunk || options.count("png"))   ? CaptureFlags::png   : CaptureFlags::none)
