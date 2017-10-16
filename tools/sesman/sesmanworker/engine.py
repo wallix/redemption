@@ -866,7 +866,7 @@ class Engine(object):
             if right:
                 return right, "OK"
 
-            Logger().error("Wab account %s couldn't log into %s@%s%s" % (
+            Logger().error("Bastion account %s couldn't log into %s@%s%s" % (
                     self.wabuser.cn,
                     target_login,
                     target_device,
@@ -1122,8 +1122,9 @@ class Engine(object):
         :param target physical_target: selected target
         :return: None
         """
-        hosttarget = u"%s@%s@%s:%s" % (
+        hosttarget = u"%s%s%s@%s:%s" % (
             physical_target['account_name'],
+            '@' if physical_target['domain_cn'] else '',
             physical_target['domain_cn'],
             physical_target['device_cn'],
             physical_target['service_cn'])
