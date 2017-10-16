@@ -297,7 +297,9 @@ class NullGraphic final : public GraphicApi
 {
 public:
     void draw(RDP::FrameMarker    const &) override {}
-    void draw(RDPNineGrid const & , Rect , ColorCtx , Bitmap const & ) override {}
+
+    void draw(RDPNineGrid         const &, Rect, ColorCtx, Bitmap const &) override {}
+
     void draw(RDPDestBlt          const &, Rect) override {}
     void draw(RDPMultiDstBlt      const &, Rect) override {}
     void draw(RDPPatBlt           const &, Rect, ColorCtx) override {}

@@ -844,7 +844,7 @@ public:
     }
 
 private:
-    void set_mod(non_null_ptr<mod_api> mod, rdp_api* rdpapi = nullptr, windowing_api* winapi = nullptr)
+    void set_mod(not_null_ptr<mod_api> mod, rdp_api* rdpapi = nullptr, windowing_api* winapi = nullptr)
     {
         while (this->front.keymap.nb_char_available())
             this->front.keymap.get_char();

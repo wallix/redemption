@@ -24,31 +24,31 @@
 
 
 template<class T>
-struct non_null_ptr
+struct not_null_ptr
 {
     using pointer = T*;
     using element_type = T;
 
 
-    non_null_ptr(decltype(nullptr)) = delete;
-    non_null_ptr(int) = delete;
+    not_null_ptr(decltype(nullptr)) = delete;
+    not_null_ptr(int) = delete;
 
-    non_null_ptr(T * ptr) noexcept {
+    not_null_ptr(T * ptr) noexcept {
         *this = ptr;
     }
 
-    non_null_ptr(non_null_ptr const &) noexcept = default;
+    not_null_ptr(not_null_ptr const &) noexcept = default;
 
-    non_null_ptr& operator = (decltype(nullptr)) noexcept = delete;
-    non_null_ptr& operator = (int) noexcept = delete;
+    not_null_ptr& operator = (decltype(nullptr)) noexcept = delete;
+    not_null_ptr& operator = (int) noexcept = delete;
 
-    non_null_ptr& operator = (T * ptr) noexcept {
+    not_null_ptr& operator = (T * ptr) noexcept {
         assert(ptr);
         this->ptr_ = ptr;
         return *this;
     }
 
-    non_null_ptr& operator = (non_null_ptr const &) noexcept = default;
+    not_null_ptr& operator = (not_null_ptr const &) noexcept = default;
 
 
     T * get() const noexcept { return this->ptr_; }

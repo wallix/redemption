@@ -40,7 +40,7 @@
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/byte.hpp"
-#include "utils/sugar/non_null_ptr.hpp"
+#include "utils/sugar/not_null_ptr.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/make_unique.hpp"
@@ -1510,7 +1510,7 @@ Capture::Capture(
         }
         this->gds.push_back(*this->gd_drawable);
 
-        non_null_ptr<gdi::ImageFrameApi> image_frame_api_ptr = this->gd_drawable;
+        not_null_ptr<gdi::ImageFrameApi> image_frame_api_ptr = this->gd_drawable;
 
         if (!crop_rect.isempty()) {
             REDASSERT(!capture_png || !png_params.real_time_image_capture)

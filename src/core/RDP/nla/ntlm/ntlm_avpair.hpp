@@ -23,7 +23,7 @@
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "utils/hexdump.hpp"
-#include "utils/sugar/non_null_ptr.hpp"
+#include "utils/sugar/not_null_ptr.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
 // 2.2.2.1   AV_PAIR
@@ -134,7 +134,7 @@ class NtlmAvPairList final
 
         AvPair() = default;
 
-        AvPair(non_null_ptr<uint8_t const> value, uint16_t length)
+        AvPair(not_null_ptr<uint8_t const> value, uint16_t length)
         : avLen(length)
         , data(std::make_unique<uint8_t[]>(length))
         {
@@ -159,7 +159,7 @@ class NtlmAvPairList final
 public:
     NtlmAvPairList() = default;
 
-    void add(NTLM_AV_ID avId, non_null_ptr<uint8_t const> value, checked_int<uint16_t> length)
+    void add(NTLM_AV_ID avId, not_null_ptr<uint8_t const> value, checked_int<uint16_t> length)
     {
         this->list[avId] = AvPair(value, length);
     }

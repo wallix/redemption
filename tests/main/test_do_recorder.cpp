@@ -39,6 +39,7 @@
 
 #include "test_only/get_file_contents.hpp"
 
+
 extern "C" {
     inline int hmac_fn(uint8_t * buffer)
     {
@@ -1000,6 +1001,15 @@ RED_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
     RED_CHECK_EQUAL(1, res);
 }
 
+#define CHECK_FILE(name, sz)             \
+    RED_CHECK_EQUAL(filesize(name), sz); \
+    ::unlink(name)
+
+
+#define CHECK_CONTENTS(name, contents)               \
+    RED_CHECK_EQ(get_file_contents(name), contents); \
+    ::unlink(name)
+
 inline void test_app_recorder_impl(char const * opt_vlc, size_t sz1, size_t sz2, size_t sz3)
 {
     LOG(LOG_INFO, "=================== TestAppRecorder =============");
@@ -1027,16 +1037,9 @@ inline void test_app_recorder_impl(char const * opt_vlc, size_t sz1, size_t sz2,
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder.1.flva\".\n\n");
     RED_CHECK_EQUAL(0, res);
 
-    const char * filename;
-    filename = "/tmp/recorder.1-000000.flv";
-    RED_CHECK_EQUAL(sz1, filesize(filename));
-    ::unlink(filename);
-    filename = "/tmp/recorder.1-000001.flv";
-    RED_CHECK_EQUAL(sz2, filesize(filename));
-    ::unlink(filename);
-    filename = "/tmp/recorder.1.flv";
-    RED_CHECK_EQUAL(sz3, filesize(filename));
-    ::unlink(filename);
+    CHECK_FILE("/tmp/recorder.1-000000.flv", sz1);
+    CHECK_FILE("/tmp/recorder.1-000001.flv", sz2);
+    CHECK_FILE("/tmp/recorder.1.flv", sz3);
 }
 
 RED_AUTO_TEST_CASE(TestAppRecorder)
@@ -1047,6 +1050,39 @@ RED_AUTO_TEST_CASE(TestAppRecorder)
 RED_AUTO_TEST_CASE(TestAppRecorderVlc)
 {
     test_app_recorder_impl("--bogus-vlc", 62515277, 7555247, 70071213);
+}
+
+RED_AUTO_TEST_CASE(TestAppRecorderChunk)
+{
+    LOG(LOG_INFO, "=================== TestAppRecorder =============");
+    char const * argv[] {
+        "recorder.py",
+        "redrec",
+        "-i",
+            FIXTURES_PATH "/verifier/recorded/"
+            "toto@10.10.43.13,Administrateur@QA@cible"
+            ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
+        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "-o",
+            "/tmp/recorder-chunk",
+        "--chunk",
+        "--video-codec", "mp4",
+        "--json-pgs",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    CoutBuf cout_buf;
+    int res = do_main(argc, argv, hmac_fn, trace_fn);
+    EVP_cleanup();
+    RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder-chunk.mwrm\".\n\n");
+    RED_CHECK_EQUAL(0, res);
+
+    CHECK_FILE("/tmp/recorder-chunk-000000.mp4", 11227513);
+    CHECK_FILE("/tmp/recorder-chunk-000000.png", 26981);
+    CHECK_FILE("/tmp/recorder-chunk-000001.mp4", 86044);
+    CHECK_FILE("/tmp/recorder-chunk-000001.png", 27536);
+    CHECK_CONTENTS("/tmp/recorder-chunk.pgs", R"js({"percentage":100,"eta":0,"videos":1})js");
+    CHECK_CONTENTS("/tmp/recorder-chunk.meta", "2016-02-18 18:27:01 + (break)\n");
 }
 
 RED_AUTO_TEST_CASE(TestClearTargetFiles)

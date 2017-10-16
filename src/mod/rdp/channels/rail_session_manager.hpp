@@ -82,7 +82,7 @@ class RemoteProgramsSessionManager final
 
     uint32_t auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
-    const non_null_ptr<ClientExecute> client_execute;
+    const not_null_ptr<ClientExecute> client_execute;
 
     bool currently_without_window = false;
 
@@ -118,7 +118,7 @@ public:
     RemoteProgramsSessionManager(FrontAPI& front, mod_api& mod, Translation::language_t lang,
                                  Font const & font, Theme const & theme, AuthApi & authentifier,
                                  char const * session_probe_window_title,
-                                 non_null_ptr<ClientExecute> client_execute,
+                                 not_null_ptr<ClientExecute> client_execute,
                                  unsigned rail_disconnect_message_delay,
                                  RDPVerbose verbose)
     : front(front)

@@ -29,7 +29,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "core/wait_obj.hpp"
 #include "gdi/graphic_api.hpp"
-#include "utils/sugar/non_null_ptr.hpp"
+#include "utils/sugar/not_null_ptr.hpp"
 
 class EventHandler
 {
@@ -43,7 +43,7 @@ public:
     };
 
 public:
-    EventHandler(non_null_ptr<wait_obj> event, non_null_ptr<CB> cb, int fd = INVALID_SOCKET)
+    EventHandler(not_null_ptr<wait_obj> event, not_null_ptr<CB> cb, int fd = INVALID_SOCKET)
     : event_(event)
     , cb_(cb.get())
     , fd_(fd)

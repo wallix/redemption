@@ -25,7 +25,7 @@
 #include "mod/internal/widget/composite.hpp"
 #include "mod/mod_api.hpp"
 #include "gdi/graphic_api.hpp"
-#include "utils/sugar/non_null_ptr.hpp"
+#include "utils/sugar/not_null_ptr.hpp"
 
 #include <memory>
 
@@ -183,7 +183,7 @@ private:
 
     CompositeArray composite_array;
 
-    non_null_ptr<gdi::GraphicApi> drawable_ptr;
+    not_null_ptr<gdi::GraphicApi> drawable_ptr;
 
     gdi::GraphicApi& drawable_ref;
 
