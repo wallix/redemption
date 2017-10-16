@@ -160,7 +160,7 @@ public:
     uint16_t ulBottomHeight;
     uint32_t crTransparent;
 
-    CreateNineGridBitmap() : controlFlags(RDP::AltsecDrawingOrderHeader::CreateNinegridBitmap) {}
+    CreateNineGridBitmap() : controlFlags(RDP::SECONDARY | (RDP::AltsecDrawingOrderHeader::CreateNinegridBitmap << 2)) {}
 
     explicit CreateNineGridBitmap(                          //uint8_t controlFlags,
                                   uint16_t BitmapId,
@@ -172,7 +172,7 @@ public:
                                   uint16_t ulTopHeight,
                                   uint16_t ulBottomHeight,
                                   uint32_t crTransparent)
-                            : controlFlags(RDP::AltsecDrawingOrderHeader::CreateNinegridBitmap)
+                            : controlFlags(RDP::SECONDARY | (RDP::AltsecDrawingOrderHeader::CreateNinegridBitmap << 2))
                             , BitmapBpp(0x20)
                             , BitmapId(BitmapId)
                             , cx(cx)
@@ -185,7 +185,7 @@ public:
                             , crTransparent(crTransparent) {}
 
     void emit(OutStream & stream) const {
-        stream.out_uint8(this->controlFlags);
+        //stream.out_uint8(this->controlFlags);
 
         stream.out_uint8(this->BitmapBpp);
         stream.out_uint16_le(this->BitmapId);
@@ -201,7 +201,7 @@ public:
     }
 
     void receive(InStream & stream) {
-        this->controlFlags = stream.in_uint8();
+        //this->controlFlags = stream.in_uint8();
 
         this->BitmapBpp = stream.in_uint8();
         this->BitmapId = stream.in_uint16_le();

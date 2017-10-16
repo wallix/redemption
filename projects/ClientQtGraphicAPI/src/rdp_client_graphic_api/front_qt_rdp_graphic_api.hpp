@@ -1659,29 +1659,33 @@ public:
            LOG(LOG_INFO, "begin_update");
            LOG(LOG_INFO, "========================================\n");
         }
-        if (this->is_recording && !this->is_replaying && this->screen != nullptr) {
-            this->graph_capture->begin_update();
-            struct timeval time;
-            gettimeofday(&time, nullptr);
-            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+
+        if (this->connected && this->screen != nullptr) {
+            if (this->is_recording && !this->is_replaying && this->screen != nullptr) {
+                this->graph_capture->begin_update();
+                struct timeval time;
+                gettimeofday(&time, nullptr);
+                this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+            }
         }
     }
 
     virtual void end_update() override {
-        if (this->connected) {
-            this->screen->update_view();
-        }
-
         if (bool(this->verbose & RDPVerbose::graphics)) {
            LOG(LOG_INFO, "--------- FRONT ------------------------");
            LOG(LOG_INFO, "end_update");
            LOG(LOG_INFO, "========================================\n");
         }
-        if (this->is_recording && !this->is_replaying) {
-            this->graph_capture->end_update();
-            struct timeval time;
-            gettimeofday(&time, nullptr);
-            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+
+        if (this->connected && this->screen != nullptr) {
+            this->screen->update_view();
+
+            if (this->is_recording && !this->is_replaying && this->screen != nullptr) {
+                this->graph_capture->end_update();
+                struct timeval time;
+                gettimeofday(&time, nullptr);
+                this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+            }
         }
     }
 
@@ -2286,22 +2290,24 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        QColor qcolor(this->u32_to_qcolor(cmd.color, color_ctx));
-        Rect rect(cmd.rect.intersect(clip));
+        if (this->connected && this->screen != nullptr) {
+            QColor qcolor(this->u32_to_qcolor(cmd.color, color_ctx));
+            Rect rect(cmd.rect.intersect(clip));
 
-        if (this->connected) {
+            LOG(LOG_INFO, "draw opaque rect");
+
             this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, qcolor);
-        }
 
-        if (this->is_recording && !this->is_replaying) {
-            this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette));
-            struct timeval time;
-            gettimeofday(&time, nullptr);
-            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
-        }
+            if (this->is_recording && !this->is_replaying) {
+                this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette));
+                struct timeval time;
+                gettimeofday(&time, nullptr);
+                this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+            }
 
-        if (this->wab_diag_question) {
-            this->answer_question(this->asked_color);
+            if (this->wab_diag_question) {
+                this->answer_question(this->asked_color);
+            }
         }
     }
 

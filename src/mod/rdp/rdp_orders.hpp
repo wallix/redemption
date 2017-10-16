@@ -159,6 +159,7 @@ public:
         this->glyph_index = RDPGlyphIndex( 0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1)
                                          , RDPBrush(), 0, 0, 0, reinterpret_cast<const uint8_t *>(""));
         this->polyline        = RDPPolyline();
+        this->ninegrid     = RDPNineGrid();
     }
 
     ~rdp_orders() {

@@ -60,6 +60,7 @@ struct ModRDPParams {
     bool enable_glyph_cache = false;
     bool enable_session_probe = false;
     bool session_probe_enable_launch_mask = true;
+    bool enable_ninegrid_bitmap = false;
 
     bool disable_clipboard_log_syslog = false;
     bool disable_clipboard_log_wrm = false;

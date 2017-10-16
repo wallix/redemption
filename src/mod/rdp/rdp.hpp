@@ -331,6 +331,7 @@ protected:
     const bool enable_persistent_disk_bitmap_cache;
     const bool enable_cache_waiting_list;
     const bool persist_bitmap_cache_on_disk;
+    const bool enable_ninegrid_bitmap;
     const bool disable_clipboard_log_syslog;
     const bool disable_clipboard_log_wrm;
     const bool disable_file_system_log_syslog;
@@ -867,6 +868,7 @@ public:
         , enable_persistent_disk_bitmap_cache(mod_rdp_params.enable_persistent_disk_bitmap_cache)
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
+        , enable_ninegrid_bitmap(mod_rdp_params.enable_ninegrid_bitmap)
         , disable_clipboard_log_syslog(mod_rdp_params.disable_clipboard_log_syslog)
         , disable_clipboard_log_wrm(mod_rdp_params.disable_clipboard_log_wrm)
         , disable_file_system_log_syslog(mod_rdp_params.disable_file_system_log_syslog)
@@ -4480,6 +4482,7 @@ public:
                 order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = (this->enable_ellipsesc       ? 1 : 0);
                 order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]         = (this->enable_ellipsecb       ? 1 : 0);
                 order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
+                order_caps.orderSupport[TS_NEG_DRAWNINEGRID_INDEX] = (this->enable_ninegrid_bitmap ? 1 : 0);
 
                 order_caps.textFlags                                     = 0x06a1;
                 order_caps.orderSupportExFlags                           = ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT;
@@ -4503,7 +4506,7 @@ public:
                     , TS_NEG_SCRBLT_INDEX
                     , TS_NEG_MEMBLT_INDEX
                     , TS_NEG_MEM3BLT_INDEX
-//                    , TS_NEG_DRAWNINEGRID_INDEX
+                    , TS_NEG_DRAWNINEGRID_INDEX
                     , TS_NEG_LINETO_INDEX
 //                    , TS_NEG_MULTI_DRAWNINEGRID_INDEX
 //                    , TS_NEG_SAVEBITMAP_INDEX
