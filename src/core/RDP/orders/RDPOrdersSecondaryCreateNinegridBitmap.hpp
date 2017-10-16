@@ -216,7 +216,7 @@ public:
         this->crTransparent = stream.in_uint32_le();
     }
 
-    size_t str(char * buffer, size_t sz) const {
+//     size_t str(char * buffer, size_t sz) const {
 //         size_t lg  = snprintf( buffer
 //                              , sz
 //                              , "RDPFrameMarker(action=%s(%u))\n"
@@ -231,14 +231,14 @@ public:
 //         if (lg >= sz) {
 //             return sz;
 //         }
-        return 0;
-    }
+//         return 0;
+//     }
 
-    void log(int level) const {
+//     void log(int level) const {
 //         char buffer[1024];
 //         this->str(buffer, 1024);
 //         LOG(level, "%s", buffer);
-    }
+//     }
 };  // class CreateNineGridBitmap
 
 

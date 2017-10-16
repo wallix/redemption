@@ -605,7 +605,7 @@ class WrmCaptureImpl :
         using GraphicToFile::draw;
         using GraphicToFile::capture_bpp;
 
-        void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {}
+        void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
 
         void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
             auto compress_and_draw_bitmap_update = [&bitmap_data, this](const Bitmap & bmp) {
@@ -741,7 +741,7 @@ public:
         this->graphic_to_file.draw(cmd);
     }
 
-    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {}
+    void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
 
     void set_pointer(Pointer const & ptr) override {
         this->graphic_to_file.set_pointer(ptr);

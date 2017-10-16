@@ -232,7 +232,7 @@ public:
         this->last_update_index++;
     }
 
-    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {}
+    void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
 
 private:
     // TODO removed when RDPMultiDstBlt and RDPMultiOpaqueRect contains a rect member

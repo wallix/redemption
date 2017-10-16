@@ -736,7 +736,7 @@ public:
     //       DRAW FUNCTIONS
     //-----------------------------
 
-    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {}
+    void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
 
     virtual void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {

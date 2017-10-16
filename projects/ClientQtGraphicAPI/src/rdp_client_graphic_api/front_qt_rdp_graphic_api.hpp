@@ -3342,10 +3342,12 @@ public:
                 this->form->hide();
                 this->screen->show();
                 this->connected = true;
+
             } else {
                 this->connected = false;
             }
         }
+        LOG(LOG_INFO,  "listenning and connected true");
     }
 
     void disconnect(std::string const & error) override {

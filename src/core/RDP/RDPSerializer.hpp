@@ -277,7 +277,7 @@ private:
     }
 
 public:
-    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {}
+    void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
 
     void draw(RDPOpaqueRect const & cmd_, Rect clip, gdi::ColorCtx color_ctx) override {
         //LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect");

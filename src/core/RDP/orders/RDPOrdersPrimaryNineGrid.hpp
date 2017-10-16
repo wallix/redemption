@@ -116,8 +116,8 @@ public:
         this->bitmapId = stream.in_uint16_le();
     }
 
-    size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const
-    {
+//     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const
+//     {
 //         size_t lg = common.str(buffer, sz, !common.clip.contains(this->rect));
 //         lg += snprintf(
 //             buffer+lg,
@@ -127,12 +127,12 @@ public:
 //         if (lg >= sz){
 //             return sz;
 //         }
-        return 0;
-    }
+//         return 0;
+//     }
 
-    void log(int level, const Rect clip) const {
+//     void log(int level, const Rect clip) const {
 //         char buffer[1024];
 //         this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
 //         LOG(level, "%s", buffer);
-    }
+//     }
 };

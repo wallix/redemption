@@ -699,7 +699,7 @@ public:
 //                     const Bitmap & bitmap = this->ninegrid_bmp_cache->get(this->ninegrid.bitmapId);
                     Bitmap bitmap;
                     gd.draw(this->ninegrid, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette), bitmap);
-                    if (bool(this->verbose & RDPVerbose::graphics)){ this->ninegrid.log(LOG_INFO, cmd_clip); }
+//                     if (bool(this->verbose & RDPVerbose::graphics)){ this->ninegrid.log(LOG_INFO, cmd_clip); }
                 }
                     break;
                 default:
