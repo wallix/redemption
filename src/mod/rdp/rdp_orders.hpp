@@ -427,9 +427,9 @@ private:
 
     void process_ninegrid_bmpcache(InStream & stream, const RDP::AltsecDrawingOrderHeader & header)
     {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
+        //if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "rdp_orders_process_ninegrid_bmpcache bpp=%u", this->bpp);
-        }
+        //}
 
         CreateNineGridBitmap cngb;
         cngb.receive(stream);
