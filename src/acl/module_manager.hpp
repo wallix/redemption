@@ -373,6 +373,10 @@ private:
             this->mm.internal_mod->rdp_input_invalidate(protected_rect);
         }
 
+        const char* get_message() const {
+            return this->osd_message.c_str();
+        }
+
         void set_message(std::string message, bool is_disable_by_input)
         {
             this->osd_message = std::move(message);
@@ -769,7 +773,9 @@ public:
 
     void osd_message(std::string message, bool is_disable_by_input)
     {
-        this->clear_osd_message();
+        if (message.compare(this->mod_osd.get_message())) {
+            this->clear_osd_message();
+        }
         if (!message.empty()) {
             this->mod_osd.set_message(std::move(message), is_disable_by_input);
             this->mod_osd.draw_osd_message();
