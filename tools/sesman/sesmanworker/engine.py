@@ -27,6 +27,8 @@ try:
         PASSWORD_MAPPING, SUPPORTED_AUTHENTICATION_METHODS
     from wabengine.common.const import AM_IL_DOMAIN
     from wabx509 import AuthX509
+    CRED_DATA_LOGIN = "login"
+    CRED_DATA_ACCOUNT_UID = "account_uid"
 except Exception, e:
     import traceback
     tracelog = traceback.format_exc(e)
@@ -100,6 +102,7 @@ class Engine(object):
         self.deconnection_time = u"-"
 
         self.target_credentials = {}
+        self.account_credentials = {}
         self.proxy_rights = None
         self.rights = None
         self.targets = {}
@@ -114,6 +117,7 @@ class Engine(object):
         self.session_result = True
         self.session_diag = u'Success'
         self.primary_password = None
+        self.failed_secondary_set = False
 
         self.service = None
 
@@ -567,6 +571,7 @@ class Engine(object):
         self.pidhandler = None
         self.session_result = True
         self.session_diag = u'Success'
+        self.failed_secondary_set = False
 
         self.service = None
 
@@ -602,98 +607,11 @@ class Engine(object):
         return False
 
     def _filter_rights(self, target_context):
-        self.rights = self.proxy_rights.rights
-        self.targets = {}
-        self.targetsdom = {}
-        self.displaytargets = []
-        for right in self.rights:
-            if right.resource and right.account:
-                account_name = right.account.name
-                account_domain = right.account.domain_cn
-                account_login = right.account.login
-                account_logindom = self.get_account_login(right)
-                account_namedom = account_name
-                if account_domain and account_domain != AM_IL_DOMAIN:
-                    account_namedom = "%s@%s" % (account_name, account_domain)
-                target_groups = [x.cn for x in right.group_targets]
-                if right.resource.application:
-                    target_name = right.resource.application.cn
-                    service_name = u"APP"
-                    protocol = u"APP"
-                    host = None
-                    alias = None
-                    subprotocols = []
-                else:
-                    target_name = right.resource.device.cn
-                    service_name = right.resource.service.cn
-                    protocol = right.resource.service.protocol.cn
-                    host = right.resource.device.host
-                    alias = right.resource.device.deviceAlias
-                    subprotocols = [x.cn for x in right.subprotocols]
-                if target_context is not None:
-                    if target_context.host and host is None:
-                        continue
-                    if (target_context.host and
-                        not is_device_in_subnet(target_context.host, host) and
-                        host != target_context.dnsname):
-                        continue
-                    if (target_context.login and
-                        account_login and
-                        target_context.login not in [
-                            account_login, account_logindom,
-                            account_name, account_namedom ]):
-                        # match context login with login or name (with or without domain)
-                        continue
-                    if (target_context.service and
-                        service_name != target_context.service):
-                        continue
-                    if (target_context.group and
-                        not (target_context.group in target_groups)):
-                        continue
-
-                target_value = (service_name, target_groups, right)
-                # feed targets hashtable indexed on account_name and target_name
-                # targets{(account, target)}{domain}[(service, group, right)]
-                tuple_index = (account_name, target_name)
-                if not self.targets.get(tuple_index):
-                    self.targets[tuple_index] = {}
-                if not self.targets[tuple_index].get(account_domain):
-                    self.targets[tuple_index][account_domain] = []
-                self.targets[tuple_index][account_domain].append(target_value)
-                if alias:
-                    alias_index = (account_name, alias)
-                    if not self.targets.get(alias_index):
-                        self.targets[alias_index] = {}
-                    if not self.targets[alias_index].get(account_domain):
-                        self.targets[alias_index][account_domain] = []
-                    self.targets[alias_index][account_domain].append(target_value)
-
-                # feed targets hashtable indexed on
-                # account_name@account_domain and target_name
-                # targetsdom{(account@domain, target)}[(service, group, right)]
-                tuple_index = (account_namedom, target_name)
-                if not self.targetsdom.get(tuple_index):
-                    self.targetsdom[tuple_index] = []
-                self.targetsdom[tuple_index].append(target_value)
-                if alias:
-                    alias_index = (account_namedom, alias)
-                    if not self.targetsdom.get(alias_index):
-                        self.targetsdom[alias_index] = []
-                    self.targetsdom[alias_index].append(target_value)
-                self.displaytargets.append(DisplayInfo(account_namedom,
-                                                       target_name,
-                                                       service_name,
-                                                       protocol,
-                                                       ';'.join(target_groups),
-                                                       subprotocols,
-                                                       host))
-        if target_context and target_context.strict_transparent:
-            self._filter_subnet()
-
-    def _filter_rights_alt(self, target_context):
+        from collections import defaultdict
         self.rights = self.proxy_rights
-        self.targets = {}
-        self.targetsdom = {}
+        # targets{(account, target)}{domain}[(service, group, right)]
+        self.targets = defaultdict(lambda:defaultdict(list))
+        self.targets_alias = defaultdict(lambda:defaultdict(list))
         self.displaytargets = []
         for right in self.rights:
             account_name = right['account_name']
@@ -747,31 +665,11 @@ class Engine(object):
             # feed targets hashtable indexed on account_name and target_name
             # targets{(account, target)}{domain}[(service, group, right)]
             tuple_index = (account_name, target_name)
-            if not self.targets.get(tuple_index):
-                self.targets[tuple_index] = {}
-            if not self.targets[tuple_index].get(account_domain):
-                self.targets[tuple_index][account_domain] = []
             self.targets[tuple_index][account_domain].append(target_value)
             if alias:
                 alias_index = (account_name, alias)
-                if not self.targets.get(alias_index):
-                    self.targets[alias_index] = {}
-                if not self.targets[alias_index].get(account_domain):
-                    self.targets[alias_index][account_domain] = []
-                self.targets[alias_index][account_domain].append(target_value)
+                self.targets_alias[alias_index][account_domain].append(target_value)
 
-            # feed targets hashtable indexed on
-            # account_name@account_domain and target_name
-            # targetsdom{(account@domain, target)}[(service, group, right)]
-            tuple_index = (account_namedom, target_name)
-            if not self.targetsdom.get(tuple_index):
-                self.targetsdom[tuple_index] = []
-            self.targetsdom[tuple_index].append(target_value)
-            if alias:
-                alias_index = (account_namedom, alias)
-                if not self.targetsdom.get(alias_index):
-                    self.targetsdom[alias_index] = []
-                self.targetsdom[alias_index].append(target_value)
             self.displaytargets.append(DisplayInfo(account_namedom,
                                                    target_name,
                                                    service_name,
@@ -810,25 +708,53 @@ class Engine(object):
             return
         # start = time.time()
         # Logger().debug("** BEGIN Filter_rights **")
-        self._filter_rights_alt(target_context)
+        self._filter_rights(target_context)
         # Logger().debug("** END Filter_rights in %s sec **" % (time.time() - start))
 
-    def _find_target_right(self, target_login, target_device, target_service,
-                          target_group):
+
+    def _get_target_right_htable(self, target_account, target_device,
+                                 t_htable):
+        """
+        Get target right list from t_htable
+        filtered by target_account and target_device
+
+        target_account = <login>@<domain> or <login>
+        '@' might be present in login but not in domain
+        t_htable = {(account, device)}{domain}[(service, group, right)]
+        device can be an alias
+        """
         try:
-            Logger().debug("Find target %s@%s:%s:%s" %
-                           (target_login, target_device, target_service, target_group))
-            results = self.targetsdom.get((target_login, target_device), [])
+            acc_dom = target_account.rsplit('@', 1)
+            account = acc_dom[0]
+            domain = acc_dom[1] if len(acc_dom) == 2 else ''
+            domres = t_htable.get((account, target_device), {})
+            results = domres.get(domain)
             if not results:
-                # domain might not be provided
-                # lets check the targets hashtable
-                domres = self.targets.get((target_login, target_device), {})
+                # domain might not be provided in target_account
+                if domain:
+                    # domain field is not empty so try again with target_account
+                    domres = t_htable.get((target_account, target_device), {})
                 if len(domres) == 1:
                     # no ambiguity
                     dom, results = domres.items()[0]
                 else:
                     # ambiguity on domain
                     results = []
+        except Exception, e:
+            results = []
+        return results
+
+    def _find_target_right(self, target_account, target_device,
+                           target_service, target_group):
+        try:
+            Logger().debug("Find target %s@%s:%s:%s" %
+                           (target_account, target_device,
+                            target_service, target_group))
+            results = self._get_target_right_htable(
+                target_account, target_device, self.targets)
+            if not results:
+                results = self._get_target_right_htable(
+                    target_account, target_device, self.targets_alias)
         except Exception, e:
             results = []
         right = None
@@ -866,7 +792,7 @@ class Engine(object):
             if right:
                 return right, "OK"
 
-            Logger().error("Wab account %s couldn't log into %s@%s%s" % (
+            Logger().error("Bastion account %s couldn't log into %s@%s%s" % (
                     self.wabuser.cn,
                     target_login,
                     target_device,
@@ -909,6 +835,9 @@ class Engine(object):
         return []
 
     def secondary_failed(self, reason, wabuser, ip_source, user, host):
+        if self.failed_secondary_set:
+            return
+        self.failed_secondary_set = True
         if reason:
             try:
                 self.session_diag = reason.decode('utf8')
@@ -966,6 +895,57 @@ class Engine(object):
             Logger().info("checkout_target: target already checked out")
         return True, "OK"
 
+    def checkout_account(self, account_name, domain_name, device_name):
+        """
+        Checkout account and get credentials object
+        """
+        account = (account_name, domain_name, device_name)
+        if account not in self.account_credentials:
+            try:
+                Logger().debug("** CALL checkout_account")
+                creds = self.wabengine.checkout_account(
+                    account_name, domain_name, device_name)
+                if creds is None:
+                    return False, "No rights"
+                self.account_credentials[account] = creds
+            except AccountLocked as m:
+                Logger().info("Engine checkout_account failed: account locked")
+                return False, "%s" % m
+            except LicenseException as m:
+                Logger().info("Engine checkout_account failed: License Exception")
+                return False, "%s" % m
+            except Exception as e:
+                Logger().info("Engine checkout_account does not exist")
+                return False, "Error"
+            Logger().debug("** END checkout_account")
+        return True, "OK"
+
+    def get_account_infos(self, account_name, domain_name, device_name):
+        try:
+            Logger().info("Engine get_account_infos ...")
+            account = (account_name, domain_name, device_name)
+            status, msg = self.checkout_account(account_name,
+                                                domain_name,
+                                                device_name)
+            if not status:
+                return None
+            creds = self.account_credentials.get(account, {})
+            if not creds:
+                return None
+            from collections import namedtuple
+            account_infos = namedtuple('account_infos', 'passwords login')
+            a_infos = account_infos(
+                [ cred.data.get(CRED_DATA_PASSWORD) \
+                  for cred in creds.get(CRED_TYPE_PASSWORD, []) \
+                  if cred.data.get(CRED_DATA_PASSWORD) ],
+                creds.get(CRED_DATA_LOGIN, None))
+            Logger().info("Engine get_account_infos done")
+            return a_infos
+        except Exception:
+            import traceback
+            Logger().debug("Engine get_account_infos failed: (((%s)))" % (traceback.format_exc(e)))
+        return None
+
     def get_target_passwords(self, target_device):
         Logger().info("Engine get_target_passwords ...")
         target_uid = target_device['target_uid']
@@ -1020,6 +1000,25 @@ class Engine(object):
                 Logger().debug("Engine release_target failed: (((%s)))" % (traceback.format_exc(e)))
         return res
 
+    def release_account(self, acc_name, dom_name, dev_name):
+        res = False
+        account = (acc_name, dom_name, dev_name)
+        if account in self.account_credentials:
+            try:
+                Logger().debug("Engine release_account")
+                try:
+                    acc_creds = self.account_credentials.get(account)
+                    res = self.wabengine.release_account(
+                        acc_creds.get(CRED_DATA_ACCOUNT_UID))
+                except Exception, e:
+                    Logger().info(">>> Engine release_account does not exist")
+                self.account_credentials.pop(account, None)
+                Logger().debug("Engine release_account done")
+            except Exception, e:
+                import traceback
+                Logger().debug("Engine release_account failed: (((%s)))" % (traceback.format_exc(e)))
+        return res
+
     def release_all_target(self):
         # Logger().debug("Engine release_all_target %s" % list(self.checkout_target_creds))
         Logger().debug("Engine release_all_target")
@@ -1033,6 +1032,18 @@ class Engine(object):
                 Logger().debug("Engine release_target failed: (((%s)))" % (traceback.format_exc(e)))
         Logger().debug("Engine release_all_target done")
         self.target_credentials.clear()
+        Logger().debug("Engine release_all_account")
+        for account in self.account_credentials:
+            try:
+                acc_creds = self.account_credentials.get(account)
+                res = self.wabengine.release_account(
+                    acc_creds.get(CRED_DATA_ACCOUNT_UID))
+                Logger().debug("Engine release_account res = %s" % res)
+            except Exception, e:
+                import traceback
+                Logger().debug("Engine release_target failed: (((%s)))" % (traceback.format_exc(e)))
+        Logger().debug("Engine release_all_account done")
+        self.account_credentials.clear()
 
     def get_pidhandler(self, pid):
         if not self.pidhandler:
@@ -1049,6 +1060,7 @@ class Engine(object):
         try:
             self.session_id = self.wabengine.start_session(
                 auth, self.get_pidhandler(pid), effective_login=effective_login, **kwargs)
+            self.failed_secondary_set = False
         except LicenseException:
             Logger().info("Engine start_session failed: License Exception")
             self.session_id = None
@@ -1092,6 +1104,7 @@ class Engine(object):
         self.service = target['service_cn']
         is_critical = target['auth_is_critical']
         device_host = target['device_host']
+        self.failed_secondary_set = False
 
         if not is_critical:
             return self.session_id
@@ -1122,8 +1135,9 @@ class Engine(object):
         :param target physical_target: selected target
         :return: None
         """
-        hosttarget = u"%s@%s@%s:%s" % (
+        hosttarget = u"%s%s%s@%s:%s" % (
             physical_target['account_name'],
+            '@' if physical_target['domain_cn'] else '',
             physical_target['domain_cn'],
             physical_target['device_cn'],
             physical_target['service_cn'])
@@ -1274,6 +1288,26 @@ class Engine(object):
         data = {
             "regexp": u"filesize > %s" % filesize,
             "string": restrictstr,
+            "host": self.host,
+            "user_login": self.wabuser.cn,
+            "user": self.target_user,
+            "device": self.hname,
+            "service": self.service,
+            "action": action
+        }
+        Notify(self.wabengine, PATTERN_FOUND, data)
+        text = (u"%(action)s: The restriction '%(string)s' has been detected in the "
+                "following SSH connection: "
+                "%(user)s@%(device)s:%(service)s:%(user_login)s (%(host)s)\n") % data
+        Logger().info("%s" % text)
+        if action.lower() == "kill":
+            self.session_result = False
+
+    def globalsize_limit_notify(self, action, globalsize, limit_globalsize):
+        self.session_diag = u'Filesize restriction detected'
+        data = {
+            "regexp": "globalsize > %s" % globalsize,
+            "string": "globalsize > %s" % limit_globalsize,
             "host": self.host,
             "user_login": self.wabuser.cn,
             "user": self.target_user,
@@ -1487,6 +1521,16 @@ class Engine(object):
             return login
         return "%s@%s" % (login, domain)
 
+    def get_crypto_methods(self):
+        class crypto_methods(object):
+            def __init__(self, proxy):
+                self.proxy = proxy
+            def get_trace_sign_key(self):
+                return self.proxy.get_trace_sign_key()
+            def get_trace_encryption_key(self, name, flag):
+                return self.proxy.get_trace_encryption_key(name, flag)
+        return crypto_methods(self.wabengine)
+
 # Information Structs
 class TargetContext(object):
     def __init__(self, host=None, dnsname=None, login=None, service=None,
@@ -1504,6 +1548,8 @@ class TargetContext(object):
         return not (self.host or self.login or self.service or self.group)
 
 class DisplayInfo(object):
+    __slots__ = ("target_login", "target_name", "service_name", "protocol",
+                 "group", "subprotocols", "service_login", "host")
     def __init__(self, target_login, target_name, service_name,
                  protocol, group, subproto, host):
         self.target_login = target_login

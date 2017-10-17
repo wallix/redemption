@@ -228,6 +228,24 @@ namespace redemption_unit_test__
 # define RED_CHECK_MEM_AA(mem, memref) RED_CHECK_MEM(make_array_view(mem), make_array_view(memref))
 # endif
 
+// require #include "utils/fileutils.hpp"
+#define RED_CHECK_FILE_SIZE_AND_CLEAN(filename, sz) \
+    RED_CHECK_EQUAL(filesize(filename), sz);        \
+    ::unlink(filename)
+
+#define RED_CHECK_FILE_SIZE_AND_CLEAN2(filename, size1, size2) { \
+    size_t fsize = filesize(filename);                           \
+    if (fsize != size2){                                         \
+        RED_CHECK_EQUAL(size1, fsize);                           \
+    }                                                            \
+    ::unlink(filename);                                          \
+}
+
+// require #include "test_only/get_file_contents.hpp"
+#define RED_CHECK_FILE_CONTENTS(filename, contents)      \
+    RED_CHECK_EQ(get_file_contents(filename), contents); \
+    ::unlink(filename)
+
 // force line to last checkpoint
 #ifndef IN_IDE_PARSER
 # undef BOOST_AUTO_TEST_CASE
