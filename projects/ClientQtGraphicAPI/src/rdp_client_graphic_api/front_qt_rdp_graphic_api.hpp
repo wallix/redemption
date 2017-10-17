@@ -1710,24 +1710,27 @@ public:
             return ResizeResult::fail;
         }
 
-        this->info.bpp = bpp;
-        this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
 
-        if (this->info.width != width || this->info.height != height) {
-            this->info.width = width;
-            this->info.height = height;
-            if (this->screen) {
-                this->screen->disconnection();
-                this->dropScreen();
-                this->cache = new QPixmap(this->info.width, this->info.height);
-                this->trans_cache = new QPixmap(this->info.width, this->info.height);
-                this->trans_cache->fill(Qt::transparent);
-                if (this->is_replaying) {
-                    this->screen = new Screen_Qt(this, this->cache, this->_movie_name, this->trans_cache);
-                } else {
-                    this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
+        if (this->connected && this->screen != nullptr) {
+            this->info.bpp = bpp;
+            this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
+
+            if (this->info.width != width || this->info.height != height) {
+                this->info.width = width;
+                this->info.height = height;
+                if (this->screen) {
+                    this->screen->disconnection();
+                    this->dropScreen();
+                    this->cache = new QPixmap(this->info.width, this->info.height);
+                    this->trans_cache = new QPixmap(this->info.width, this->info.height);
+                    this->trans_cache->fill(Qt::transparent);
+                    if (this->is_replaying) {
+                        this->screen = new Screen_Qt(this, this->cache, this->_movie_name, this->trans_cache);
+                    } else {
+                        this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
+                    }
+                    this->screen->show();
                 }
-                this->screen->show();
             }
         }
 
@@ -3238,9 +3241,8 @@ public:
     virtual void connect() {
         this->is_pipe_ok = true;
         if (this->mod_qt->connect()) {
-            LOG(LOG_INFO, "mod qt connect done");
+            LOG(LOG_INFO, "mod init done");
             this->qtRDPKeymap.setKeyboardLayout(this->info.keylayout);
-            LOG(LOG_INFO, "setKeyboardLayout init done");
             this->cache = new QPixmap(this->info.width, this->info.height);
             this->trans_cache = new QPixmap(this->info.width, this->info.height);
             this->trans_cache->fill(Qt::transparent);
@@ -3335,10 +3337,10 @@ public:
                                                 );
 
                 this->graph_capture = this->capture.get()->get_graphic_api();
-
             }
 
             if (this->mod_qt->listen()) {
+                LOG(LOG_INFO, "listen init done");
                 this->form->hide();
                 this->screen->show();
                 this->connected = true;
@@ -3347,7 +3349,7 @@ public:
                 this->connected = false;
             }
         }
-        LOG(LOG_INFO,  "listenning and connected true");
+        LOG(LOG_INFO, "connexion done");
     }
 
     void disconnect(std::string const & error) override {
