@@ -602,98 +602,11 @@ class Engine(object):
         return False
 
     def _filter_rights(self, target_context):
-        self.rights = self.proxy_rights.rights
-        self.targets = {}
-        self.targetsdom = {}
-        self.displaytargets = []
-        for right in self.rights:
-            if right.resource and right.account:
-                account_name = right.account.name
-                account_domain = right.account.domain_cn
-                account_login = right.account.login
-                account_logindom = self.get_account_login(right)
-                account_namedom = account_name
-                if account_domain and account_domain != AM_IL_DOMAIN:
-                    account_namedom = "%s@%s" % (account_name, account_domain)
-                target_groups = [x.cn for x in right.group_targets]
-                if right.resource.application:
-                    target_name = right.resource.application.cn
-                    service_name = u"APP"
-                    protocol = u"APP"
-                    host = None
-                    alias = None
-                    subprotocols = []
-                else:
-                    target_name = right.resource.device.cn
-                    service_name = right.resource.service.cn
-                    protocol = right.resource.service.protocol.cn
-                    host = right.resource.device.host
-                    alias = right.resource.device.deviceAlias
-                    subprotocols = [x.cn for x in right.subprotocols]
-                if target_context is not None:
-                    if target_context.host and host is None:
-                        continue
-                    if (target_context.host and
-                        not is_device_in_subnet(target_context.host, host) and
-                        host != target_context.dnsname):
-                        continue
-                    if (target_context.login and
-                        account_login and
-                        target_context.login not in [
-                            account_login, account_logindom,
-                            account_name, account_namedom ]):
-                        # match context login with login or name (with or without domain)
-                        continue
-                    if (target_context.service and
-                        service_name != target_context.service):
-                        continue
-                    if (target_context.group and
-                        not (target_context.group in target_groups)):
-                        continue
-
-                target_value = (service_name, target_groups, right)
-                # feed targets hashtable indexed on account_name and target_name
-                # targets{(account, target)}{domain}[(service, group, right)]
-                tuple_index = (account_name, target_name)
-                if not self.targets.get(tuple_index):
-                    self.targets[tuple_index] = {}
-                if not self.targets[tuple_index].get(account_domain):
-                    self.targets[tuple_index][account_domain] = []
-                self.targets[tuple_index][account_domain].append(target_value)
-                if alias:
-                    alias_index = (account_name, alias)
-                    if not self.targets.get(alias_index):
-                        self.targets[alias_index] = {}
-                    if not self.targets[alias_index].get(account_domain):
-                        self.targets[alias_index][account_domain] = []
-                    self.targets[alias_index][account_domain].append(target_value)
-
-                # feed targets hashtable indexed on
-                # account_name@account_domain and target_name
-                # targetsdom{(account@domain, target)}[(service, group, right)]
-                tuple_index = (account_namedom, target_name)
-                if not self.targetsdom.get(tuple_index):
-                    self.targetsdom[tuple_index] = []
-                self.targetsdom[tuple_index].append(target_value)
-                if alias:
-                    alias_index = (account_namedom, alias)
-                    if not self.targetsdom.get(alias_index):
-                        self.targetsdom[alias_index] = []
-                    self.targetsdom[alias_index].append(target_value)
-                self.displaytargets.append(DisplayInfo(account_namedom,
-                                                       target_name,
-                                                       service_name,
-                                                       protocol,
-                                                       ';'.join(target_groups),
-                                                       subprotocols,
-                                                       host))
-        if target_context and target_context.strict_transparent:
-            self._filter_subnet()
-
-    def _filter_rights_alt(self, target_context):
+        from collections import defaultdict
         self.rights = self.proxy_rights
-        self.targets = {}
-        self.targetsdom = {}
+        # targets{(account, target)}{domain}[(service, group, right)]
+        self.targets = defaultdict(lambda:defaultdict(list))
+        self.targets_alias = defaultdict(lambda:defaultdict(list))
         self.displaytargets = []
         for right in self.rights:
             account_name = right['account_name']
@@ -747,31 +660,11 @@ class Engine(object):
             # feed targets hashtable indexed on account_name and target_name
             # targets{(account, target)}{domain}[(service, group, right)]
             tuple_index = (account_name, target_name)
-            if not self.targets.get(tuple_index):
-                self.targets[tuple_index] = {}
-            if not self.targets[tuple_index].get(account_domain):
-                self.targets[tuple_index][account_domain] = []
             self.targets[tuple_index][account_domain].append(target_value)
             if alias:
                 alias_index = (account_name, alias)
-                if not self.targets.get(alias_index):
-                    self.targets[alias_index] = {}
-                if not self.targets[alias_index].get(account_domain):
-                    self.targets[alias_index][account_domain] = []
-                self.targets[alias_index][account_domain].append(target_value)
+                self.targets_alias[alias_index][account_domain].append(target_value)
 
-            # feed targets hashtable indexed on
-            # account_name@account_domain and target_name
-            # targetsdom{(account@domain, target)}[(service, group, right)]
-            tuple_index = (account_namedom, target_name)
-            if not self.targetsdom.get(tuple_index):
-                self.targetsdom[tuple_index] = []
-            self.targetsdom[tuple_index].append(target_value)
-            if alias:
-                alias_index = (account_namedom, alias)
-                if not self.targetsdom.get(alias_index):
-                    self.targetsdom[alias_index] = []
-                self.targetsdom[alias_index].append(target_value)
             self.displaytargets.append(DisplayInfo(account_namedom,
                                                    target_name,
                                                    service_name,
@@ -810,25 +703,53 @@ class Engine(object):
             return
         # start = time.time()
         # Logger().debug("** BEGIN Filter_rights **")
-        self._filter_rights_alt(target_context)
+        self._filter_rights(target_context)
         # Logger().debug("** END Filter_rights in %s sec **" % (time.time() - start))
 
-    def _find_target_right(self, target_login, target_device, target_service,
-                          target_group):
+
+    def _get_target_right_htable(self, target_account, target_device,
+                                 t_htable):
+        """
+        Get target right list from t_htable
+        filtered by target_account and target_device
+
+        target_account = <login>@<domain> or <login>
+        '@' might be present in login but not in domain
+        t_htable = {(account, device)}{domain}[(service, group, right)]
+        device can be an alias
+        """
         try:
-            Logger().debug("Find target %s@%s:%s:%s" %
-                           (target_login, target_device, target_service, target_group))
-            results = self.targetsdom.get((target_login, target_device), [])
+            acc_dom = target_account.rsplit('@', 1)
+            account = acc_dom[0]
+            domain = acc_dom[1] if len(acc_dom) == 2 else ''
+            domres = t_htable.get((account, target_device), {})
+            results = domres.get(domain)
             if not results:
-                # domain might not be provided
-                # lets check the targets hashtable
-                domres = self.targets.get((target_login, target_device), {})
+                # domain might not be provided in target_account
+                if domain:
+                    # domain field is not empty so try again with target_account
+                    domres = t_htable.get((target_account, target_device), {})
                 if len(domres) == 1:
                     # no ambiguity
                     dom, results = domres.items()[0]
                 else:
                     # ambiguity on domain
                     results = []
+        except Exception, e:
+            results = []
+        return results
+
+    def _find_target_right(self, target_account, target_device,
+                           target_service, target_group):
+        try:
+            Logger().debug("Find target %s@%s:%s:%s" %
+                           (target_account, target_device,
+                            target_service, target_group))
+            results = self._get_target_right_htable(
+                target_account, target_device, self.targets)
+            if not results:
+                results = self._get_target_right_htable(
+                    target_account, target_device, self.targets_alias)
         except Exception, e:
             results = []
         right = None
