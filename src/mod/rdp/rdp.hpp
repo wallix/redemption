@@ -3741,10 +3741,14 @@ public:
                                 }
                                 else {
                                     LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->orders.bpp);
+
+
                                     if (this->transparent_recorder) {
                                         this->transparent_recorder->server_resize(this->front_width,
                                             this->front_height, this->orders.bpp);
                                     }
+
+
                                     if (FrontAPI::ResizeResult::fail == this->front.server_resize(this->front_width, this->front_height, this->orders.bpp)){
                                         LOG(LOG_ERR, "Resize not available on older clients,"
                                             " change client resolution to match server resolution");

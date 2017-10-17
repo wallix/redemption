@@ -534,7 +534,7 @@ public:
         mod_rdp_params.device_id                       = "device_id";
         mod_rdp_params.enable_tls                      = this->modRDPParamsData.enable_tls;
         mod_rdp_params.enable_nla                      = this->modRDPParamsData.enable_nla;
-        mod_rdp_params.enable_fastpath                 = false;
+        mod_rdp_params.enable_fastpath                 = true;
         mod_rdp_params.enable_mem3blt                  = true;
         mod_rdp_params.enable_new_pointer              = true;
         mod_rdp_params.enable_new_pointer              = true;
@@ -558,6 +558,7 @@ public:
                                     , this->reportMessage
                                     , this->ini
                                     );
+            this->mod->invoke_asynchronous_graphic_task(mod_api::AsynchronousGraphicTask::none);
 
         } catch (const Error &) {
             return nullptr;
@@ -630,8 +631,16 @@ public:
                 this->verbose = RDPVerbose::printer | this->verbose;
             } else if (word == "--rdpdr_dump") {
                 this->verbose = RDPVerbose::rdpdr_dump | this->verbose;
-            }  else if (word == "--cliprdr_dump") {
+            } else if (word == "--cliprdr_dump") {
                 this->verbose = RDPVerbose::cliprdr_dump | this->verbose;
+            } else if (word == "--basic_trace") {
+                this->verbose = RDPVerbose::basic_trace | this->verbose;
+            } else if (word == "--connection") {
+                this->verbose = RDPVerbose::connection | this->verbose;
+            } else if (word == "--rail_order") {
+                this->verbose = RDPVerbose::rail_order | this->verbose;
+            } else if (word == "--asynchronous_task") {
+                this->verbose = RDPVerbose::asynchronous_task | this->verbose;
             }
         }
 
@@ -3319,6 +3328,8 @@ int main(int argc, char** argv){
 
     // sudo nano /etc/rdpproxy/rdpproxy.ini
 
+    // /etc/rdpproxy/cert
+
     // bjam san -j4 rdpproxy
 
     // sudo bin/gcc-4.9.2/san/rdpproxy -nf
@@ -3339,7 +3350,8 @@ int main(int argc, char** argv){
     QApplication app(argc, argv);
 
     // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
-    RDPVerbose verbose = to_verbose_flags(0);               //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
+    //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
+    RDPVerbose verbose = to_verbose_flags(0);
 
     RDPClientQtFront front_qt(argv, argc, verbose);
 
