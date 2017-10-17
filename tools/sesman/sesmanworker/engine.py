@@ -1060,6 +1060,7 @@ class Engine(object):
         try:
             self.session_id = self.wabengine.start_session(
                 auth, self.get_pidhandler(pid), effective_login=effective_login, **kwargs)
+            self.failed_secondary_set = False
         except LicenseException:
             Logger().info("Engine start_session failed: License Exception")
             self.session_id = None
