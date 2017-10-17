@@ -27,6 +27,8 @@ try:
         PASSWORD_MAPPING, SUPPORTED_AUTHENTICATION_METHODS
     from wabengine.common.const import AM_IL_DOMAIN
     from wabx509 import AuthX509
+    CRED_DATA_LOGIN = "login"
+    CRED_DATA_ACCOUNT_UID = "account_uid"
 except Exception, e:
     import traceback
     tracelog = traceback.format_exc(e)
@@ -100,6 +102,7 @@ class Engine(object):
         self.deconnection_time = u"-"
 
         self.target_credentials = {}
+        self.account_credentials = {}
         self.proxy_rights = None
         self.rights = None
         self.targets = {}
@@ -114,6 +117,7 @@ class Engine(object):
         self.session_result = True
         self.session_diag = u'Success'
         self.primary_password = None
+        self.failed_secondary_set = False
 
         self.service = None
 
@@ -567,6 +571,7 @@ class Engine(object):
         self.pidhandler = None
         self.session_result = True
         self.session_diag = u'Success'
+        self.failed_secondary_set = False
 
         self.service = None
 
@@ -830,6 +835,9 @@ class Engine(object):
         return []
 
     def secondary_failed(self, reason, wabuser, ip_source, user, host):
+        if self.failed_secondary_set:
+            return
+        self.failed_secondary_set = True
         if reason:
             try:
                 self.session_diag = reason.decode('utf8')
@@ -887,6 +895,57 @@ class Engine(object):
             Logger().info("checkout_target: target already checked out")
         return True, "OK"
 
+    def checkout_account(self, account_name, domain_name, device_name):
+        """
+        Checkout account and get credentials object
+        """
+        account = (account_name, domain_name, device_name)
+        if account not in self.account_credentials:
+            try:
+                Logger().debug("** CALL checkout_account")
+                creds = self.wabengine.checkout_account(
+                    account_name, domain_name, device_name)
+                if creds is None:
+                    return False, "No rights"
+                self.account_credentials[account] = creds
+            except AccountLocked as m:
+                Logger().info("Engine checkout_account failed: account locked")
+                return False, "%s" % m
+            except LicenseException as m:
+                Logger().info("Engine checkout_account failed: License Exception")
+                return False, "%s" % m
+            except Exception as e:
+                Logger().info("Engine checkout_account does not exist")
+                return False, "Error"
+            Logger().debug("** END checkout_account")
+        return True, "OK"
+
+    def get_account_infos(self, account_name, domain_name, device_name):
+        try:
+            Logger().info("Engine get_account_infos ...")
+            account = (account_name, domain_name, device_name)
+            status, msg = self.checkout_account(account_name,
+                                                domain_name,
+                                                device_name)
+            if not status:
+                return None
+            creds = self.account_credentials.get(account, {})
+            if not creds:
+                return None
+            from collections import namedtuple
+            account_infos = namedtuple('account_infos', 'passwords login')
+            a_infos = account_infos(
+                [ cred.data.get(CRED_DATA_PASSWORD) \
+                  for cred in creds.get(CRED_TYPE_PASSWORD, []) \
+                  if cred.data.get(CRED_DATA_PASSWORD) ],
+                creds.get(CRED_DATA_LOGIN, None))
+            Logger().info("Engine get_account_infos done")
+            return a_infos
+        except Exception:
+            import traceback
+            Logger().debug("Engine get_account_infos failed: (((%s)))" % (traceback.format_exc(e)))
+        return None
+
     def get_target_passwords(self, target_device):
         Logger().info("Engine get_target_passwords ...")
         target_uid = target_device['target_uid']
@@ -941,6 +1000,25 @@ class Engine(object):
                 Logger().debug("Engine release_target failed: (((%s)))" % (traceback.format_exc(e)))
         return res
 
+    def release_account(self, acc_name, dom_name, dev_name):
+        res = False
+        account = (acc_name, dom_name, dev_name)
+        if account in self.account_credentials:
+            try:
+                Logger().debug("Engine release_account")
+                try:
+                    acc_creds = self.account_credentials.get(account)
+                    res = self.wabengine.release_account(
+                        acc_creds.get(CRED_DATA_ACCOUNT_UID))
+                except Exception, e:
+                    Logger().info(">>> Engine release_account does not exist")
+                self.account_credentials.pop(account, None)
+                Logger().debug("Engine release_account done")
+            except Exception, e:
+                import traceback
+                Logger().debug("Engine release_account failed: (((%s)))" % (traceback.format_exc(e)))
+        return res
+
     def release_all_target(self):
         # Logger().debug("Engine release_all_target %s" % list(self.checkout_target_creds))
         Logger().debug("Engine release_all_target")
@@ -954,6 +1032,18 @@ class Engine(object):
                 Logger().debug("Engine release_target failed: (((%s)))" % (traceback.format_exc(e)))
         Logger().debug("Engine release_all_target done")
         self.target_credentials.clear()
+        Logger().debug("Engine release_all_account")
+        for account in self.account_credentials:
+            try:
+                acc_creds = self.account_credentials.get(account)
+                res = self.wabengine.release_account(
+                    acc_creds.get(CRED_DATA_ACCOUNT_UID))
+                Logger().debug("Engine release_account res = %s" % res)
+            except Exception, e:
+                import traceback
+                Logger().debug("Engine release_target failed: (((%s)))" % (traceback.format_exc(e)))
+        Logger().debug("Engine release_all_account done")
+        self.account_credentials.clear()
 
     def get_pidhandler(self, pid):
         if not self.pidhandler:
@@ -1013,6 +1103,7 @@ class Engine(object):
         self.service = target['service_cn']
         is_critical = target['auth_is_critical']
         device_host = target['device_host']
+        self.failed_secondary_set = False
 
         if not is_critical:
             return self.session_id
@@ -1196,6 +1287,26 @@ class Engine(object):
         data = {
             "regexp": u"filesize > %s" % filesize,
             "string": restrictstr,
+            "host": self.host,
+            "user_login": self.wabuser.cn,
+            "user": self.target_user,
+            "device": self.hname,
+            "service": self.service,
+            "action": action
+        }
+        Notify(self.wabengine, PATTERN_FOUND, data)
+        text = (u"%(action)s: The restriction '%(string)s' has been detected in the "
+                "following SSH connection: "
+                "%(user)s@%(device)s:%(service)s:%(user_login)s (%(host)s)\n") % data
+        Logger().info("%s" % text)
+        if action.lower() == "kill":
+            self.session_result = False
+
+    def globalsize_limit_notify(self, action, globalsize, limit_globalsize):
+        self.session_diag = u'Filesize restriction detected'
+        data = {
+            "regexp": "globalsize > %s" % globalsize,
+            "string": "globalsize > %s" % limit_globalsize,
             "host": self.host,
             "user_login": self.wabuser.cn,
             "user": self.target_user,
@@ -1409,6 +1520,16 @@ class Engine(object):
             return login
         return "%s@%s" % (login, domain)
 
+    def get_crypto_methods(self):
+        class crypto_methods(object):
+            def __init__(self, proxy):
+                self.proxy = proxy
+            def get_trace_sign_key(self):
+                return self.proxy.get_trace_sign_key()
+            def get_trace_encryption_key(self, name, flag):
+                return self.proxy.get_trace_encryption_key(name, flag)
+        return crypto_methods(self.wabengine)
+
 # Information Structs
 class TargetContext(object):
     def __init__(self, host=None, dnsname=None, login=None, service=None,
@@ -1426,6 +1547,8 @@ class TargetContext(object):
         return not (self.host or self.login or self.service or self.group)
 
 class DisplayInfo(object):
+    __slots__ = ("target_login", "target_name", "service_name", "protocol",
+                 "group", "subprotocols", "service_login", "host")
     def __init__(self, target_login, target_name, service_name,
                  protocol, group, subproto, host):
         self.target_login = target_login
