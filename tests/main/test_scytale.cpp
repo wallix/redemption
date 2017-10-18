@@ -79,7 +79,7 @@ RED_AUTO_TEST_CASE(Testscytale)
         int with_encryption = 1; // int used as boolean 0 false, true otherwise
         int with_checksum = 1;   // int used as boolean 0 false, true otherwise
 
-        auto * handle = scytale_writer_new_with_test_random(with_encryption, with_checksum, finalname, &hmac_fn, &trace_fn);
+        auto * handle = scytale_writer_new_with_test_random(with_encryption, with_checksum, finalname, &hmac_fn, &trace_fn, false, false);
         RED_CHECK_NE(handle, nullptr);
         RED_CHECK_EQ(scytale_writer_open(handle, finalname, hash_finalname, 0), 0);
 
@@ -142,7 +142,7 @@ RED_AUTO_TEST_CASE(TestscytaleWriteUseRandom)
         int with_encryption = 1; // int used as boolean 0 false, true otherwise
         int with_checksum = 1;   // int used as boolean 0 false, true otherwise
 
-        auto * handle = scytale_writer_new(with_encryption, with_checksum, finalname, &hmac_fn, &trace_fn);
+        auto * handle = scytale_writer_new(with_encryption, with_checksum, finalname, &hmac_fn, &trace_fn, false, false);
         RED_CHECK_NE(handle, nullptr);
         RED_CHECK_EQ(scytale_writer_open(handle, finalname, hash_finalname, 0), 0);
 
@@ -170,7 +170,7 @@ RED_AUTO_TEST_CASE(TestscytaleWriteUseRandom)
         int with_encryption = 1; // int used as boolean 0 false, true otherwise
         int with_checksum = 1;   // int used as boolean 0 false, true otherwise
 
-        auto * handle = scytale_writer_new(with_encryption, with_checksum, finalname,  &hmac_fn, &trace_fn);
+        auto * handle = scytale_writer_new(with_encryption, with_checksum, finalname,  &hmac_fn, &trace_fn, false, false);
         RED_CHECK_NE(handle, nullptr);
         RED_CHECK_EQ(scytale_writer_open(handle, finalname, hash_finalname, 0), 0);
 
@@ -196,7 +196,7 @@ RED_AUTO_TEST_CASE(TestscytaleWriteUseRandom)
 
 RED_AUTO_TEST_CASE(TestscytaleError)
 {
-    auto handle_w = scytale_writer_new(1, 1, "/", &hmac_fn, &trace_fn);
+    auto handle_w = scytale_writer_new(1, 1, "/", &hmac_fn, &trace_fn, false, false);
     RED_CHECK_EQ(scytale_writer_open(handle_w, "/", "/", 0), -1);
     RED_CHECK_NE(scytale_writer_error_message(handle_w), "No error");
 
@@ -219,8 +219,6 @@ RED_AUTO_TEST_CASE(TestscytaleError)
     RED_CHECK_EQ(scytale_reader_read(nullptr, buf, 10), -1);
     RED_CHECK_EQ(scytale_reader_close(nullptr), -1);
     RED_CHECK_NE(scytale_reader_error_message(nullptr), "No error");
-
-
 }
 
 RED_AUTO_TEST_CASE(TestscytaleKeyDerivation2)

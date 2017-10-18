@@ -106,7 +106,7 @@ struct CryptoContextWrapper
 {
     CryptoContext cctx;
 
-    CryptoContextWrapper(get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn, bool with_encryption, bool with_checksum, int old_encryption_scheme = false, int one_shot_encryption_scheme = false)
+    CryptoContextWrapper(get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn, bool with_encryption, bool with_checksum, int old_encryption_scheme, int one_shot_encryption_scheme)
     {
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
@@ -169,9 +169,11 @@ struct RedCryptoWriterHandle
     RedCryptoWriterHandle(
         RandomType random_type,
         bool with_encryption, bool with_checksum,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn)
+        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        int old_encryption_scheme , int one_shot_encryption_scheme)
     : random_wrapper(random_type)
-    , cctxw(hmac_fn, trace_fn, with_encryption, with_checksum)
+    , cctxw(hmac_fn, trace_fn, with_encryption, with_checksum,
+            old_encryption_scheme, one_shot_encryption_scheme)
     , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, fstat)
     {
 
@@ -231,8 +233,8 @@ struct RedCryptoReaderHandle
     RedCryptoReaderHandle(InCryptoTransport::EncryptionMode encryption
                         , get_hmac_key_prototype * hmac_fn
                         , get_trace_key_prototype * trace_fn
-                        , int old_encryption_scheme = 0
-                        , int one_shot_encryption_scheme = 0
+                        , int old_encryption_scheme
+                        , int one_shot_encryption_scheme
                         )
     : cctxw(hmac_fn, trace_fn, 
             false /* unused for reading */, false /* unused for reading */,
@@ -302,15 +304,18 @@ char const * scytale_writer_fhashhex(RedCryptoWriterHandle * handle) {
 }
 
 
-RedCryptoWriterHandle * scytale_writer_new(int with_encryption
-                                               , int with_checksum
-                                               , const char * derivator
-                                               , get_hmac_key_prototype * hmac_fn
-                                               , get_trace_key_prototype * trace_fn) {
+RedCryptoWriterHandle * scytale_writer_new(
+    int with_encryption, int with_checksum, const char * derivator,
+    get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+    int old_scheme, int one_shot)
+{
     SCOPED_TRACE;
     CHECK_NOTHROW_R(
         auto handle = new (std::nothrow) RedCryptoWriterHandle(
-            RedCryptoWriterHandle::UDEV, with_encryption, with_checksum, hmac_fn, trace_fn
+            RedCryptoWriterHandle::UDEV,
+            with_encryption, with_checksum,
+            hmac_fn, trace_fn,
+            old_scheme, one_shot
         );
         handle->cctxw.set_master_derivator_from_file_name(derivator);
         return handle,
@@ -323,12 +328,16 @@ RedCryptoWriterHandle * scytale_writer_new(int with_encryption
 
 RedCryptoWriterHandle * scytale_writer_new_with_test_random(
     int with_encryption, int with_checksum, const char * derivator,
-    get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn
-) {
+    get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+    int old_scheme, int one_shot)
+{
     SCOPED_TRACE;
     CHECK_NOTHROW_R(
         auto handle = new (std::nothrow) RedCryptoWriterHandle(
-            RedCryptoWriterHandle::LCG, with_encryption, with_checksum, hmac_fn, trace_fn
+            RedCryptoWriterHandle::LCG,
+            with_encryption, with_checksum,
+            hmac_fn, trace_fn,
+            old_scheme, one_shot
         );
         handle->cctxw.set_master_derivator_from_file_name(derivator);
         return handle,
