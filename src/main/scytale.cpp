@@ -92,11 +92,16 @@ namespace
         }                                                   \
     } while (0)
 
-#ifdef IN_IDE_PARSER
-# define CHECK_NOTHROW(expr, errid) expr; errid
-#else
-# define CHECK_NOTHROW(expr, errid) CHECK_NOTHROW_R(expr, -1, handle->error_ctx, errid)
-#endif
+#define CHECK_NOTHROW(expr, errid) CHECK_NOTHROW_R(expr, -1, handle->error_ctx, errid)
+#define CREATE_HANDLE(construct) [&]()->decltype(new construct){ \
+    CHECK_NOTHROW_R(                                             \
+        auto handle = new (std::nothrow) construct;              \
+        return handle,                                           \
+        nullptr,                                                 \
+        RedCryptoErrorContext(),                                 \
+        ERR_MEMORY_ALLOCATION_FAILED                             \
+    );                                                           \
+}()
 
 
 extern "C"
@@ -106,7 +111,11 @@ struct CryptoContextWrapper
 {
     CryptoContext cctx;
 
-    CryptoContextWrapper(get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn, bool with_encryption, bool with_checksum, int old_encryption_scheme, int one_shot_encryption_scheme)
+    CryptoContextWrapper(
+        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        bool with_encryption, bool with_checksum,
+        bool old_encryption_scheme, bool one_shot_encryption_scheme,
+        char const * filename_derivatator)
     {
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
@@ -118,12 +127,9 @@ struct CryptoContextWrapper
                 : TraceType::localfile);
         cctx.old_encryption_scheme = old_encryption_scheme;
         cctx.one_shot_encryption_scheme = one_shot_encryption_scheme;
-    }
 
-    void set_master_derivator_from_file_name(char const * filename)
-    {
         size_t base_len = 0;
-        char const * base = basename_len(filename, base_len);
+        char const * base = basename_len(filename_derivatator, base_len);
         cctx.set_master_derivator({base, base_len});
     }
 };
@@ -170,10 +176,12 @@ struct RedCryptoWriterHandle
         RandomType random_type,
         bool with_encryption, bool with_checksum,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
-        int old_encryption_scheme , int one_shot_encryption_scheme)
+        int old_encryption_scheme , int one_shot_encryption_scheme,
+        char const * filename_derivatator)
     : random_wrapper(random_type)
     , cctxw(hmac_fn, trace_fn, with_encryption, with_checksum,
-            old_encryption_scheme, one_shot_encryption_scheme)
+            old_encryption_scheme, one_shot_encryption_scheme,
+            filename_derivatator)
     , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, fstat)
     {
 
@@ -230,15 +238,15 @@ struct RedCryptoReaderHandle
     HashHexArray qhashhex;
     HashHexArray fhashhex;
 
-    RedCryptoReaderHandle(InCryptoTransport::EncryptionMode encryption
-                        , get_hmac_key_prototype * hmac_fn
-                        , get_trace_key_prototype * trace_fn
-                        , int old_encryption_scheme
-                        , int one_shot_encryption_scheme
-                        )
+    RedCryptoReaderHandle(
+        InCryptoTransport::EncryptionMode encryption,
+        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        int old_encryption_scheme, int one_shot_encryption_scheme,
+        char const * filename_derivatator)
     : cctxw(hmac_fn, trace_fn, 
             false /* unused for reading */, false /* unused for reading */,
-            old_encryption_scheme, one_shot_encryption_scheme)
+            old_encryption_scheme, one_shot_encryption_scheme,
+            filename_derivatator)
     , in_crypto_transport(cctxw.cctx, encryption, this->fstat)
     {
         memset(this->qhashhex, '0', sizeof(this->qhashhex)-1);
@@ -310,19 +318,13 @@ RedCryptoWriterHandle * scytale_writer_new(
     int old_scheme, int one_shot)
 {
     SCOPED_TRACE;
-    CHECK_NOTHROW_R(
-        auto handle = new (std::nothrow) RedCryptoWriterHandle(
-            RedCryptoWriterHandle::UDEV,
-            with_encryption, with_checksum,
-            hmac_fn, trace_fn,
-            old_scheme, one_shot
-        );
-        handle->cctxw.set_master_derivator_from_file_name(derivator);
-        return handle,
-        nullptr,
-        RedCryptoErrorContext(),
-        ERR_TRANSPORT
-    );
+    return CREATE_HANDLE(RedCryptoWriterHandle(
+        RedCryptoWriterHandle::UDEV,
+        with_encryption, with_checksum,
+        hmac_fn, trace_fn,
+        old_scheme, one_shot,
+        derivator
+    ));
 }
 
 
@@ -332,19 +334,13 @@ RedCryptoWriterHandle * scytale_writer_new_with_test_random(
     int old_scheme, int one_shot)
 {
     SCOPED_TRACE;
-    CHECK_NOTHROW_R(
-        auto handle = new (std::nothrow) RedCryptoWriterHandle(
-            RedCryptoWriterHandle::LCG,
-            with_encryption, with_checksum,
-            hmac_fn, trace_fn,
-            old_scheme, one_shot
-        );
-        handle->cctxw.set_master_derivator_from_file_name(derivator);
-        return handle,
-        nullptr,
-        RedCryptoErrorContext(),
-        ERR_TRANSPORT
-    );
+    return CREATE_HANDLE(RedCryptoWriterHandle(
+        RedCryptoWriterHandle::LCG,
+        with_encryption, with_checksum,
+        hmac_fn, trace_fn,
+        old_scheme, one_shot,
+        derivator
+    ));
 }
 
 int scytale_writer_open(RedCryptoWriterHandle * handle, const char * path, char const * hashpath, int groupid) {
@@ -458,17 +454,12 @@ RedCryptoReaderHandle * scytale_reader_new(const char * derivator
                                                 , int one_shot)
 {
     SCOPED_TRACE;
-    CHECK_NOTHROW_R(
-        auto handle = new (std::nothrow) RedCryptoReaderHandle(
-            InCryptoTransport::EncryptionMode::Auto, hmac_fn, trace_fn, old_scheme, one_shot
-        );
-        handle->cctxw.set_master_derivator_from_file_name(derivator);
-        return handle,
-        nullptr,
-        RedCryptoErrorContext(),
-        ERR_TRANSPORT
-    );
-    ;
+    return CREATE_HANDLE(RedCryptoReaderHandle(
+        InCryptoTransport::EncryptionMode::Auto,
+        hmac_fn, trace_fn,
+        old_scheme, one_shot,
+        derivator
+    ));
 }
 
 int scytale_reader_open(RedCryptoReaderHandle * handle, char const * path, char const * derivator) {
@@ -507,11 +498,19 @@ char const * scytale_reader_error_message(RedCryptoReaderHandle * handle)
     return handle ? handle->error_ctx.message() : RedCryptoErrorContext::handle_error_message();
 }
 
-int scytale_reader_fhash(RedCryptoReaderHandle * handle, const char * file) {
-    SCOPED_TRACE;
+enum class HashType { FHash, QHash };
+
+inline int scytale_reader_hash(RedCryptoReaderHandle * handle, const char * file, HashType type)
+{
     try {
-        InCryptoTransport::HASH fhash = handle->in_crypto_transport.fhash(file);
-        hash_to_hashhex(fhash.hash, handle->fhashhex);
+        if (type == HashType::QHash) {
+            InCryptoTransport::HASH qhash = handle->in_crypto_transport.qhash(file);
+            hash_to_hashhex(qhash.hash, handle->qhashhex);
+        }
+        else {
+            InCryptoTransport::HASH fhash = handle->in_crypto_transport.fhash(file);
+            hash_to_hashhex(fhash.hash, handle->fhashhex);
+        }
     }
     catch (Error const& err) {
         EXIT_ON_ERROR(err);
@@ -526,32 +525,27 @@ int scytale_reader_fhash(RedCryptoReaderHandle * handle, const char * file) {
     return 0;
 }
 
-int scytale_reader_qhash(RedCryptoReaderHandle * handle, const char * file) {
+int scytale_reader_fhash(RedCryptoReaderHandle * handle, const char * file)
+{
     SCOPED_TRACE;
-    try {
-        InCryptoTransport::HASH qhash = handle->in_crypto_transport.qhash(file);
-        hash_to_hashhex(qhash.hash, handle->qhashhex);
-    }
-    catch (Error const& err) {
-        EXIT_ON_ERROR(err);
-        handle->error_ctx.set_error(err);
-        return -1;
-    }
-    catch (...) {
-        EXIT_ON_EXCEPTION();
-        handle->error_ctx.set_error(Error{ERR_TRANSPORT_READ_FAILED});
-        return -1;
-    }
-    return 0;
+    return scytale_reader_hash(handle, file, HashType::FHash);
+}
+
+int scytale_reader_qhash(RedCryptoReaderHandle * handle, const char * file)
+{
+    SCOPED_TRACE;
+    return scytale_reader_hash(handle, file, HashType::QHash);
 }
 
 
-const char * scytale_reader_qhashhex(RedCryptoReaderHandle * handle) {
+const char * scytale_reader_qhashhex(RedCryptoReaderHandle * handle)
+{
     SCOPED_TRACE;
     return handle->qhashhex;
 }
 
-const char * scytale_reader_fhashhex(RedCryptoReaderHandle * handle) {
+const char * scytale_reader_fhashhex(RedCryptoReaderHandle * handle)
+{
     SCOPED_TRACE;
     return handle->fhashhex;
 }
