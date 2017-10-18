@@ -320,6 +320,30 @@ public:
 };
 
 
+inline void add_time_before_closing(std::string & msg, uint32_t elapsed_time, Translator tr)
+{
+    const auto hours = elapsed_time / (60*60);
+    const auto minutes = elapsed_time / 60 - hours * 60;
+    const auto seconds = elapsed_time - hours * (60*60) - minutes * 60;
+    if (hours) {
+        msg += std::to_string(hours);
+        msg += ' ';
+        msg += tr(trkeys::hour);
+        msg += (hours > 1) ? "s, " : ", ";
+    }
+    if (minutes || hours) {
+        msg += std::to_string(minutes);
+        msg += ' ';
+        msg += tr(trkeys::minute);
+        msg += (minutes > 1) ? "s, " : ", ";
+    }
+    msg += std::to_string(seconds);
+    msg += ' ';
+    msg += tr(trkeys::second);
+    msg += (seconds > 1) ? "s " : " ";
+    msg += tr(trkeys::before_closing);
+}
+
 class ModuleManager : public MMIni
 {
     struct IniAccounts {
@@ -706,20 +730,7 @@ private:
                         // only if "reasonable" time
                         if (elapsed_time < 60*60*24*366L) {
                             msg += "  [";
-                            const auto minutes = elapsed_time / 60;
-                            const auto seconds = elapsed_time - minutes * 60;
-                            const Translator tr(language(this->mm.ini));
-                            if (minutes) {
-                                msg += std::to_string(minutes);
-                                msg += ' ';
-                                msg += tr(trkeys::minute);
-                                msg += (minutes > 1) ? "s " : " ";
-                            }
-                            msg += std::to_string(seconds);
-                            msg += ' ';
-                            msg += tr(trkeys::second);
-                            msg += (seconds > 1) ? "s " : " ";
-                            msg += tr(trkeys::before_closing);
+                            add_time_before_closing(msg, elapsed_time, Translator(this->mm.ini));
                             msg += ']';
                         }
                     }
