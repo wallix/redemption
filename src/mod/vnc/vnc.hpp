@@ -1929,6 +1929,7 @@ private:
                     this->client_execute->adjust_window_to_mod();
                 }
                 // RZ: Continue with FrontAPI::ResizeResult::no_need
+                REDEMPTION_CXX_FALLTHROUGH;
             case FrontAPI::ResizeResult::no_need:
                 if (bool(this->verbose & Verbose::basic_trace)) {
                     LOG(LOG_INFO, "no resizing needed");
