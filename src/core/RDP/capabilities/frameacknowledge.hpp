@@ -83,6 +83,6 @@ struct FrameAcknowledgeCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s FrameAcknowledge caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "FrameAcknowledge caps::maxUnacknowledgedFrameCount %u", this->maxUnacknowledgedFrameCount);
+        LOG(LOG_INFO, "     FrameAcknowledge caps::maxUnacknowledgedFrameCount %u", this->maxUnacknowledgedFrameCount);
     }
 };

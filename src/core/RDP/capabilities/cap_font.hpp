@@ -81,7 +81,7 @@ struct FontCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s Font caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "Font caps::fontSupportFlags %u", this->fontSupportFlags);
-        LOG(LOG_INFO, "Font caps::pad2octets %u", this->pad2octets);
+        LOG(LOG_INFO, "     Font caps::fontSupportFlags %u", this->fontSupportFlags);
+        LOG(LOG_INFO, "     Font caps::pad2octets %u", this->pad2octets);
     }
 };

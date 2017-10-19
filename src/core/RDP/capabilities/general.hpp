@@ -276,27 +276,27 @@ struct GeneralCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s General caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "General caps::major %u", this->os_major);
-        LOG(LOG_INFO, "General caps::minor %u", this->os_minor);
-        LOG(LOG_INFO, "General caps::protocol %u", this->protocolVersion);
-        LOG(LOG_INFO, "General caps::pad2octetA %u", this->pad2octetsA);
-        LOG(LOG_INFO, "General caps::compression type %x", this->compressionType);
-        LOG(LOG_INFO, "General caps::extra flags %x", this->extraflags);
-        LOG(LOG_INFO, "General caps::extraflags:FASTPATH_OUTPUT_SUPPORTED %s",
+        LOG(LOG_INFO, "     General caps::major %u", this->os_major);
+        LOG(LOG_INFO, "     General caps::minor %u", this->os_minor);
+        LOG(LOG_INFO, "     General caps::protocol %u", this->protocolVersion);
+        LOG(LOG_INFO, "     General caps::pad2octetA %u", this->pad2octetsA);
+        LOG(LOG_INFO, "     General caps::compression type %x", this->compressionType);
+        LOG(LOG_INFO, "     General caps::extra flags %x", this->extraflags);
+        LOG(LOG_INFO, "     General caps::extraflags:FASTPATH_OUTPUT_SUPPORTED %s",
             (extraflags & FASTPATH_OUTPUT_SUPPORTED)?"yes":"no");
-        LOG(LOG_INFO, "General caps::extraflags:LONG_CREDENTIALS_SUPPORTED %s",
+        LOG(LOG_INFO, "     General caps::extraflags:LONG_CREDENTIALS_SUPPORTED %s",
             (this->extraflags & LONG_CREDENTIALS_SUPPORTED)?"yes":"no");
-        LOG(LOG_INFO, "General caps::extraflags:AUTORECONNECT_SUPPORTED %s",
+        LOG(LOG_INFO, "     General caps::extraflags:AUTORECONNECT_SUPPORTED %s",
             (this->extraflags & AUTORECONNECT_SUPPORTED)?"yes":"no");
-        LOG(LOG_INFO, "General caps::extraflags:ENC_SALTED_CHECKSUM %s",
+        LOG(LOG_INFO, "     General caps::extraflags:ENC_SALTED_CHECKSUM %s",
             (this->extraflags & ENC_SALTED_CHECKSUM)?"yes":"no");
-        LOG(LOG_INFO, "General caps::extraflags:NO_BITMAP_COMPRESSION_HDR %s",
+        LOG(LOG_INFO, "     General caps::extraflags:NO_BITMAP_COMPRESSION_HDR %s",
             (this->extraflags & NO_BITMAP_COMPRESSION_HDR)?"yes":"no");
-        LOG(LOG_INFO, "General caps::updateCapability %x", this->updateCapability);
-        LOG(LOG_INFO, "General caps::remoteUnshare %x", this->remoteUnshare);
-        LOG(LOG_INFO, "General caps::compressionLevel %x", this->compressionLevel);
-        LOG(LOG_INFO, "General caps::refreshRectSupport %x", this->refreshRectSupport);
-        LOG(LOG_INFO, "General caps::suppressOutputSupport %x", this->suppressOutputSupport);
+        LOG(LOG_INFO, "     General caps::updateCapability %x", this->updateCapability);
+        LOG(LOG_INFO, "     General caps::remoteUnshare %x", this->remoteUnshare);
+        LOG(LOG_INFO, "     General caps::compressionLevel %x", this->compressionLevel);
+        LOG(LOG_INFO, "     General caps::refreshRectSupport %x", this->refreshRectSupport);
+        LOG(LOG_INFO, "     General caps::suppressOutputSupport %x", this->suppressOutputSupport);
     }
 
     void dump(FILE * f) const

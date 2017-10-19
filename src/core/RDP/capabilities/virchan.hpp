@@ -93,7 +93,7 @@ struct VirtualChannelCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s VirtualChannel caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "VirtualChannel caps::flags %u", this->flags);
-        LOG(LOG_INFO, "VirtualChannel caps::VCChunkSize %u", this->VCChunkSize);
+        LOG(LOG_INFO, "     VirtualChannel caps::flags %u", this->flags);
+        LOG(LOG_INFO, "     VirtualChannel caps::VCChunkSize %u", this->VCChunkSize);
     }
 };

@@ -85,7 +85,7 @@ struct CompDeskCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s CompDesk caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "CompDeskCaps caps::CompDeskSupportLevel %u", this->CompDeskSupportLevel);
+        LOG(LOG_INFO, "     CompDeskCaps caps::CompDeskSupportLevel %u", this->CompDeskSupportLevel);
     }
 };
 

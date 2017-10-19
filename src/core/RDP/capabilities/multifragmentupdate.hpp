@@ -74,6 +74,6 @@ struct MultiFragmentUpdateCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s MultifragmentUpdate caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "MultifragmentUpdate caps::MaxRequestSize %u", this->MaxRequestSize);
+        LOG(LOG_INFO, "     MultifragmentUpdate caps::MaxRequestSize %u", this->MaxRequestSize);
     }
 };

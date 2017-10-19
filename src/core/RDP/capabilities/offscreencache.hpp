@@ -87,8 +87,8 @@ struct OffScreenCacheCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s OffScreenCache caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "OffScreenCache caps::offscreenSupportLevel %u", this->offscreenSupportLevel);
-        LOG(LOG_INFO, "OffScreenCache caps::offscreenCacheSize %u", this->offscreenCacheSize);
-        LOG(LOG_INFO, "OffScreenCache caps::offscreenCacheEntries %u", this->offscreenCacheEntries);
+        LOG(LOG_INFO, "     OffScreenCache caps::offscreenSupportLevel %u", this->offscreenSupportLevel);
+        LOG(LOG_INFO, "     OffScreenCache caps::offscreenCacheSize %u", this->offscreenCacheSize);
+        LOG(LOG_INFO, "     OffScreenCache caps::offscreenCacheEntries %u", this->offscreenCacheEntries);
     }
 };

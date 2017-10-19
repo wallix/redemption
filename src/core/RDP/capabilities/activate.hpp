@@ -94,9 +94,9 @@ struct ActivationCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s Activation caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "Activation caps::helpKeyFlag %u", this->helpKeyFlag);
-        LOG(LOG_INFO, "Activation caps::helpKeyIndexFlag %u", this->helpKeyIndexFlag);
-        LOG(LOG_INFO, "Activation caps::helpExtendedKeyFlag %u", this->helpExtendedKeyFlag);
-        LOG(LOG_INFO, "Activation caps::windowManagerKeyFlag %u", this->windowManagerKeyFlag);
+        LOG(LOG_INFO, "     Activation caps::helpKeyFlag %u", this->helpKeyFlag);
+        LOG(LOG_INFO, "     Activation caps::helpKeyIndexFlag %u", this->helpKeyIndexFlag);
+        LOG(LOG_INFO, "     Activation caps::helpExtendedKeyFlag %u", this->helpExtendedKeyFlag);
+        LOG(LOG_INFO, "     Activation caps::windowManagerKeyFlag %u", this->windowManagerKeyFlag);
     }
 };

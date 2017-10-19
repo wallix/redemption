@@ -80,6 +80,14 @@ struct DrawNineGridCacheCaps : public Capability {
     uint16_t drawNineGridCacheSize;
     uint16_t drawNineGridCacheEntries;
 
+    DrawNineGridCacheCaps(uint32_t drawNineGridSupportLevel,
+                          uint16_t drawNineGridCacheSize,
+                          uint16_t drawNineGridCacheEntries)
+        : Capability(CAPSTYPE_DRAWNINEGRIDCACHE, CAPLEN_DRAWNINEGRIDCACHE)
+        , drawNineGridSupportLevel(drawNineGridSupportLevel)
+        , drawNineGridCacheSize(drawNineGridCacheSize)
+        , drawNineGridCacheEntries(drawNineGridCacheEntries) {}
+
     DrawNineGridCacheCaps()
     : Capability(CAPSTYPE_DRAWNINEGRIDCACHE, CAPLEN_DRAWNINEGRIDCACHE)
     , drawNineGridSupportLevel(DRAW_NINEGRID_NO_SUPPORT) // from a specific list of value (see enum)
@@ -108,8 +116,8 @@ struct DrawNineGridCacheCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s DrawNineGridCache caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "DrawNineGridCache caps::drawNineGridSupportLevel %u", this->drawNineGridSupportLevel);
-        LOG(LOG_INFO, "DrawNineGridCache caps::drawNineGridCacheSize %u", this->drawNineGridCacheSize);
-        LOG(LOG_INFO, "DrawNineGridCache caps::drawNineGridCacheEntries %u", this->drawNineGridCacheEntries);
+        LOG(LOG_INFO, "     DrawNineGridCache caps::drawNineGridSupportLevel %u", this->drawNineGridSupportLevel);
+        LOG(LOG_INFO, "     DrawNineGridCache caps::drawNineGridCacheSize %u", this->drawNineGridCacheSize);
+        LOG(LOG_INFO, "     DrawNineGridCache caps::drawNineGridCacheEntries %u", this->drawNineGridCacheEntries);
     }
 };

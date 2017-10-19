@@ -184,27 +184,27 @@ struct BmpCache2Caps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s BitmapCache2 caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "BitmapCache2 caps::cacheFlags %u", this->cacheFlags);
-        LOG(LOG_INFO, "BitmapCache2 caps::pad1 %u", this->pad1);
-        LOG(LOG_INFO, "BitmapCache2 caps::numCellCache %u", this->numCellCaches);
+        LOG(LOG_INFO, "     BitmapCache2 caps::cacheFlags %u", this->cacheFlags);
+        LOG(LOG_INFO, "     BitmapCache2 caps::pad1 %u", this->pad1);
+        LOG(LOG_INFO, "     BitmapCache2 caps::numCellCache %u", this->numCellCaches);
         if (this->numCellCaches < 1){ return; }
-        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache0CellInfo NumEntries=%u persistent=%s",
+        LOG(LOG_INFO, "     BitmapCache2 caps::bitampCache0CellInfo NumEntries=%u persistent=%s",
             (this->bitmapCache0CellInfo & 0x7fffffff),
             (this->bitmapCache0CellInfo & 0x80000000) ? "yes" : "no");
         if (this->numCellCaches < 2){ return; }
-        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache1CellInfo NumEntries=%u persistent=%s",
+        LOG(LOG_INFO, "     BitmapCache2 caps::bitampCache1CellInfo NumEntries=%u persistent=%s",
             (this->bitmapCache1CellInfo & 0x7fffffff),
             (this->bitmapCache1CellInfo & 0x80000000) ? "yes" : "no");
         if (this->numCellCaches < 3){ return; }
-        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache2CellInfo NumEntries=%u persistent=%s",
+        LOG(LOG_INFO, "     BitmapCache2 caps::bitampCache2CellInfo NumEntries=%u persistent=%s",
             (this->bitmapCache2CellInfo & 0x7fffffff),
             (this->bitmapCache2CellInfo & 0x80000000) ? "yes" : "no");
         if (this->numCellCaches < 4){ return; }
-        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache3CellInfo NumEntries=%u persistent=%s",
+        LOG(LOG_INFO, "     BitmapCache2 caps::bitampCache3CellInfo NumEntries=%u persistent=%s",
             (this->bitmapCache3CellInfo & 0x7fffffff),
             (this->bitmapCache3CellInfo & 0x80000000) ? "yes" : "no");
         if (this->numCellCaches < 5){ return; }
-        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache4CellInfo NumEntries=%u persistent=%s",
+        LOG(LOG_INFO, "     BitmapCache2 caps::bitampCache4CellInfo NumEntries=%u persistent=%s",
             (this->bitmapCache4CellInfo & 0x7fffffff),
             (this->bitmapCache4CellInfo & 0x80000000) ? "yes" : "no");
     }

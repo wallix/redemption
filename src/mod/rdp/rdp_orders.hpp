@@ -536,6 +536,7 @@ public:
                     break;
                     case TS_ALTSEC_CREATE_NINEGRID_BITMAP:
                         this->process_ninegrid_bmpcache(stream, header);
+                        LOG(LOG_INFO, "CREATE_NINEGRID_BITMAP !!!!!!!!!!!!!!!!!");
                     break;
                     break;
                     default:
@@ -696,6 +697,8 @@ public:
                 case NINEGRID:
                 {
                     this->ninegrid.receive(stream, header);
+
+                    LOG(LOG_INFO, "NINEGRID !!!!!!!!!!!!!!!!!");
 //                     const Bitmap & bitmap = this->ninegrid_bmp_cache->get(this->ninegrid.bitmapId);
                     Bitmap bitmap;
                     gd.draw(this->ninegrid, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette), bitmap);

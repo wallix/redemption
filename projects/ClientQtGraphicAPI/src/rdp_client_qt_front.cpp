@@ -537,7 +537,6 @@ public:
         mod_rdp_params.enable_fastpath                 = true;
         mod_rdp_params.enable_mem3blt                  = true;
         mod_rdp_params.enable_new_pointer              = true;
-        mod_rdp_params.enable_new_pointer              = true;
         mod_rdp_params.enable_glyph_cache              = true;
         mod_rdp_params.enable_ninegrid_bitmap          = true;
         std::string allow_channels = "*";
@@ -641,6 +640,8 @@ public:
                 this->verbose = RDPVerbose::rail_order | this->verbose;
             } else if (word == "--asynchronous_task") {
                 this->verbose = RDPVerbose::asynchronous_task | this->verbose;
+            } else if (word == "--capabilities") {
+                this->verbose = RDPVerbose::capabilities | this->verbose;
             }
         }
 

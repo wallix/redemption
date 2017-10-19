@@ -143,8 +143,8 @@ struct WindowListCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s WindowsList caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "WindowsList caps::WndSupportLevel 0x%X", this->WndSupportLevel);
-        LOG(LOG_INFO, "WindowsList caps::NumIconCaches %u", this->NumIconCaches);
-        LOG(LOG_INFO, "WindowsList caps::NumIconCacheEntries %u", this->NumIconCacheEntries);
+        LOG(LOG_INFO, "     WindowsList caps::WndSupportLevel 0x%X", this->WndSupportLevel);
+        LOG(LOG_INFO, "     WindowsList caps::NumIconCaches %u", this->NumIconCaches);
+        LOG(LOG_INFO, "     WindowsList caps::NumIconCacheEntries %u", this->NumIconCacheEntries);
     }
 };

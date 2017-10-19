@@ -83,7 +83,7 @@ struct SoundCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s SoundCaps caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "SoundCaps caps::soundFlags %u", this->soundFlags);
-        LOG(LOG_INFO, "SoundCaps caps::pad2octetsA %u", this->pad2octetsA);
+        LOG(LOG_INFO, "     SoundCaps caps::soundFlags %u", this->soundFlags);
+        LOG(LOG_INFO, "     SoundCaps caps::pad2octetsA %u", this->pad2octetsA);
     }
 };

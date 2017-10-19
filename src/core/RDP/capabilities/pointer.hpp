@@ -112,9 +112,9 @@ struct PointerCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s Pointer caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "Pointer caps::colorPointerFlag %u", this->colorPointerFlag);
-        LOG(LOG_INFO, "Pointer caps::colorPointerCacheSize %u", this->colorPointerCacheSize);
+        LOG(LOG_INFO, "     Pointer caps::colorPointerFlag %u", this->colorPointerFlag);
+        LOG(LOG_INFO, "     Pointer caps::colorPointerCacheSize %u", this->colorPointerCacheSize);
         if (this->len  < 10 ) return;
-        LOG(LOG_INFO, "Pointer caps::pointerCacheSize %u", this->pointerCacheSize);
+        LOG(LOG_INFO, "     Pointer caps::pointerCacheSize %u", this->pointerCacheSize);
     }
 };

@@ -89,6 +89,6 @@ struct LargePointerCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s LargePointer caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "LargePointer caps::largePointerSupportFlags %u", this->largePointerSupportFlags);
+        LOG(LOG_INFO, "     LargePointer caps::largePointerSupportFlags %u", this->largePointerSupportFlags);
     }
 };

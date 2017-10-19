@@ -97,6 +97,6 @@ struct BrushCacheCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s BrushCache caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "BrushCacheCaps caps::brushSupportLevel %u", this->brushSupportLevel);
+        LOG(LOG_INFO, "     BrushCacheCaps caps::brushSupportLevel %u", this->brushSupportLevel);
     }
 };

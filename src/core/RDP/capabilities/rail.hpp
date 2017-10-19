@@ -168,6 +168,6 @@ struct RailCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s Rail caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "Rail caps::RailSupportLevel 0x%X", this->RailSupportLevel);
+        LOG(LOG_INFO, "     Rail caps::RailSupportLevel 0x%X", this->RailSupportLevel);
     }
 };

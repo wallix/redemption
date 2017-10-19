@@ -72,6 +72,11 @@
 #include "core/RDP/capabilities/window.hpp"
 #include "core/RDP/capabilities/largepointer.hpp"
 #include "core/RDP/capabilities/multifragmentupdate.hpp"
+#include "core/RDP/capabilities/drawninegridcache.hpp"
+#include "core/RDP/capabilities/drawgdiplus.hpp"
+#include "core/RDP/capabilities/bitmapcachehostsupport.hpp"
+#include "core/RDP/capabilities/surfacecommands.hpp"
+#include "core/RDP/capabilities/compdesk.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
 #include "core/RDPEA/audio_output.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
@@ -4487,7 +4492,6 @@ public:
                 order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]         = (this->enable_ellipsecb       ? 1 : 0);
                 order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
                 order_caps.orderSupport[TS_NEG_DRAWNINEGRID_INDEX] = (this->enable_ninegrid_bitmap ? 1 : 0);
-
                 order_caps.textFlags                                     = 0x06a1;
                 order_caps.orderSupportExFlags                           = ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT;
                 order_caps.textANSICodePage                              = 0x4e4; // Windows-1252 codepage is passed (latin-1)
@@ -4709,6 +4713,14 @@ public:
                             multi_fragment_update_caps.log("Sending to server");
                         }
                         confirm_active_pdu.emit_capability_set(multi_fragment_update_caps);
+                    }
+                }
+
+                if (this->enable_ninegrid_bitmap) {
+                    DrawNineGridCacheCaps ninegrid_caps(DRAW_NINEGRID_SUPPORTED, 0xffff, 256);
+                    confirm_active_pdu.emit_capability_set(ninegrid_caps);
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                        ninegrid_caps.log("Sending to server");
                     }
                 }
 
@@ -6060,6 +6072,96 @@ public:
                     large_pointer_caps.recv(stream, capset_length);
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
                         large_pointer_caps.log("Receiving from server");
+                    }
+                }
+                break;
+            case CAPSTYPE_SOUND:
+                {
+                    SoundCaps sound_caps;
+                    sound_caps.recv(stream, capset_length);
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                        sound_caps.log("Receiving from server");
+                    }
+                }
+                break;
+            case CAPSTYPE_FONT:
+                {
+                    FontCaps fontCaps;
+                    fontCaps.recv(stream, capset_length);
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                        fontCaps.log("Receiving from server");
+                    }
+                }
+                break;
+            case CAPSTYPE_ACTIVATION:
+                {
+                    ActivationCaps caps;
+                    caps.recv(stream, capset_length);
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                        caps.log("Receiving from server");
+                    }
+                }
+                break;
+            case CAPSTYPE_VIRTUALCHANNEL:
+                {
+                    VirtualChannelCaps caps;
+                    caps.recv(stream, capset_length);
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                        caps.log("Receiving from server");
+                    }
+                }
+                break;
+            case CAPSTYPE_DRAWGDIPLUS:
+                {
+                    DrawGdiPlusCaps caps;
+                    caps.recv(stream, capset_length);
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                        caps.log("Receiving from server");
+                    }
+                }
+                break;
+            case CAPSTYPE_COLORCACHE:
+                {
+                    ColorCacheCaps caps;
+                    caps.recv(stream, capset_length);
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                        caps.log("Receiving from server");
+                    }
+                }
+                break;
+            case CAPSTYPE_BITMAPCACHE_HOSTSUPPORT:
+                {
+                    BitmapCacheHostSupportCaps caps;
+                    caps.recv(stream, capset_length);
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                        caps.log("Receiving from server");
+                    }
+                }
+                break;
+            case CAPSTYPE_SHARE:
+                {
+                    ShareCaps caps;
+                    caps.recv(stream, capset_length);
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                        caps.log("Receiving from server");
+                    }
+                }
+                break;
+            case CAPSETTYPE_COMPDESK:
+                {
+                    CompDeskCaps caps;
+                    caps.recv(stream, capset_length);
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                        caps.log("Receiving from server");
+                    }
+                }
+                break;
+            case CAPSETTYPE_SURFACE_COMMANDS:
+                {
+                    SurfaceCommandsCaps caps;
+                    caps.recv(stream, capset_length);
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                        caps.log("Receiving from server");
                     }
                 }
                 break;
