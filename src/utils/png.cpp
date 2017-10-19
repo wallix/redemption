@@ -217,21 +217,21 @@ void dump_png24(std::FILE * f, Drawable const & drawable, bool bgr)
         bgr);
 }
 
-void dump_png24(Transport & trans, gdi::ConstImageDataView const & image_view, bool bgr)
+void dump_png24(Transport & trans, ConstImageDataView const & image_view, bool bgr)
 {
     ::dump_png24(
         trans, image_view.data(),
         image_view.width(), image_view.height(),
-        image_view.rowsize(),
+        image_view.line_size(),
         bgr);
 }
 
-void dump_png24(std::FILE * f, gdi::ConstImageDataView const & image_view, bool bgr)
+void dump_png24(std::FILE * f, ConstImageDataView const & image_view, bool bgr)
 {
     ::dump_png24(
         f, image_view.data(),
         image_view.width(), image_view.height(),
-        image_view.rowsize(),
+        image_view.line_size(),
         bgr);
 }
 

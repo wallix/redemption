@@ -632,7 +632,7 @@ protected:
     PngCapture(
         const CaptureParams & capture_params, const PngParams & png_params,
         RDPDrawable & drawable,
-        gdi::ImageFrameApi & imageFrameApi, gdi::ImageDataView const & image_view)
+        gdi::ImageFrameApi & imageFrameApi, MutableImageDataView const & image_view)
     : trans(
         FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
         capture_params.record_tmp_path, capture_params.basename, ".png",
@@ -671,7 +671,7 @@ public:
                 this->scaled_buffer.get(), image_view.data(),
                 this->scaled_width, image_view.width(),
                 this->scaled_height, image_view.height(),
-                image_view.rowsize());
+                image_view.line_size());
             ::dump_png24(
                 this->trans, this->scaled_buffer.get(),
                 this->scaled_width, this->scaled_height,

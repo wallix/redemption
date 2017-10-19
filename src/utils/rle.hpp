@@ -29,12 +29,17 @@
 
 #pragma once
 
-#include "utils/bitmap.hpp"
+#include <cstdint>
 
-Bitmap bitmap_from_rle(
-  uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette,
-  uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size,
-  bool compressed);
+class OutStream;
+class ConstImageDataView;
+class MutableImageDataView;
 
-// TODO
-#include "utils/bitmap_from_rle.cpp"
+void rle_compress(ConstImageDataView const & image, OutStream & outbuffer);
+void rle_decompress(
+    MutableImageDataView const & image,
+    const uint8_t* input, uint16_t src_cx, uint16_t src_cy, std::size_t size);
+void rle_decompress60(
+  MutableImageDataView const & image,
+  uint16_t src_cx, uint16_t src_cy, const uint8_t *data, std::size_t data_size);
+void rle_compress60(ConstImageDataView const & image, OutStream & outbuffer);

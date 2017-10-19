@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "gdi/image_frame_api.hpp" // ConstImageDataView
 #include <memory>
 
 #ifndef M_PI
@@ -48,6 +47,7 @@ class AVFormatContext;
 class AVIOContext;
 class AVStream;
 class SwsContext;
+class ConstImageDataView;
 
 class video_recorder
 {
@@ -98,7 +98,7 @@ public:
 
     video_recorder(
         write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,
-        gdi::ConstImageDataView const & image_view, int bitrate,
+        ConstImageDataView const & image_view, int bitrate,
         int frame_rate, int qscale, const char * codec_id,
         const int target_width, const int target_height,
         int log_level

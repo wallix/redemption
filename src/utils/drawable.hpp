@@ -2168,12 +2168,13 @@ private:
 
 namespace gdi
 {
-    inline ImageDataView get_mutable_image_view(Drawable & drawable)
+    inline MutableImageDataView get_mutable_image_view(Drawable & drawable)
     {
-        return ImageDataView{
+        return MutableImageDataView{
             drawable.first_pixel(),
             drawable.width(), drawable.height(),
-            drawable.rowsize(), static_cast<uint8_t>(drawable.Bpp)
+            drawable.rowsize(),
+            MutableImageDataView::BytesPerPixel(drawable.Bpp)
         };
     }
 
@@ -2182,7 +2183,8 @@ namespace gdi
         return ConstImageDataView{
             drawable.data(),
             drawable.width(), drawable.height(),
-            drawable.rowsize(), static_cast<uint8_t>(drawable.Bpp)
+            drawable.rowsize(),
+            ConstImageDataView::BytesPerPixel(drawable.Bpp)
         };
     }
 }
