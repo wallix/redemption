@@ -5961,7 +5961,7 @@ public:
 
         for (uint16_t n = 0; n < ncapsets; n++) {
             expected = 4; /* capabilitySetType(2) + lengthCapability(2) */
-            LOG(LOG_INFO,  "!!!!!!!!!!! pre read");
+
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%zu",
                     expected, stream.in_remain());
@@ -5970,7 +5970,6 @@ public:
 
             uint16_t capset_type = stream.in_uint16_le();
             uint16_t capset_length = stream.in_uint16_le();
-
 
             expected = capset_length - 4 /* capabilitySetType(2) + lengthCapability(2) */;
             if (!stream.in_check_rem(expected)){
@@ -6195,7 +6194,6 @@ public:
                 }
                 break;
             }
-            LOG(LOG_INFO, "!!!!!!!!!!!!!!get current = %lu, to skip = %ld ", stream.in_remain(), next - stream.get_current());
             stream.in_skip_bytes(next - stream.get_current());
         }
 
