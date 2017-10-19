@@ -3097,6 +3097,11 @@ private:
 
                         this->client_info.glyph_cache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_NONE;
                     }
+                    if (ini.get<cfg::client::transform_glyph_to_bitmap>()) {
+                        LOG(LOG_INFO, "Front::process_confirm_active: Transform Glyph to Bitmap.");
+
+                        this->client_info.glyph_cache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_NONE;
+                    }
                     for (uint8_t i = 0; i < NUMBER_OF_GLYPH_CACHES; ++i) {
                         this->client_info.number_of_entries_in_glyph_cache[i] =
                             this->client_info.glyph_cache_caps.GlyphCache[i].CacheEntries;

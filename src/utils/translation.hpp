@@ -64,6 +64,7 @@ namespace trkeys
     TR_KV(timeleft, "Time left", "Temps restant");
     TR_KV(second, "second", "seconde");
     TR_KV(minute, "minute", "minute");
+    TR_KV(hour, "hour", "heure");
     TR_KV(before_closing, "before closing", "avant fermeture");
     TR_KV(manager_close_cnx,
         "Connection closed by manager",
@@ -327,10 +328,22 @@ inline const char * TR(trkeys::TrKey k, Translation::language_t lang)
     return TRANSLATIONCONF.translate(k);
 }
 
+// implementation in config.cpp
+Translation::language_t language(Inifile const & ini);
+
+inline Translation::language_t language(Language lang)
+{
+    return static_cast<Translation::language_t>(lang);
+}
+
 struct Translator
 {
     explicit Translator(Translation::language_t lang = Translation::EN)
       : lang(lang)
+    {}
+
+    explicit Translator(Inifile const & ini)
+      : lang(language(ini))
     {}
 
     char const * operator()(trkeys::TrKey_password const & t) const
@@ -346,11 +359,3 @@ struct Translator
 private:
     Translation::language_t lang;
 };
-
-// implementation in config.cpp
-Translation::language_t language(Inifile const & ini);
-
-inline Translation::language_t language(Language lang)
-{
-    return static_cast<Translation::language_t>(lang);
-}

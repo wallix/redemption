@@ -173,7 +173,9 @@ public:
         //  Can't see the rationale and rdesktop don't do it by the book.
         //  Behavior should be checked with server and clients from
         //  Microsoft. Looks like an error in RDP specs.
-        header.control |= dr.fully_relative() * DELTA;
+        header.control |= (dr.fully_relative() &&
+            is_1_byte(this->nXSrc - oldcmd.nXSrc) &&
+            is_1_byte(this->nYSrc - oldcmd.nYSrc)) * DELTA;
 
         header.fields = (dr.dleft            != 0                   ) * 0x0001
                       | (dr.dtop             != 0                   ) * 0x0002
@@ -348,6 +350,11 @@ public:
 
         this->nXSrc += offset_x;
         this->nYSrc += offset_y;
+
+        if (this->nDeltaEntries) {
+            this->deltaEncodedRectangles[0].leftDelta += offset_x;
+            this->deltaEncodedRectangles[0].topDelta  += offset_y;
+        }
     }
 };  // class RDPMultiScrBlt
 

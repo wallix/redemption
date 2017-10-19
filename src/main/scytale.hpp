@@ -36,12 +36,14 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     RedCryptoWriterHandle * scytale_writer_new(
         int with_encryption, int with_checksum, const char * derivator,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
+        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        int old_scheme, int one_shot);
 
     REDEMPTION_LIB_EXPORT
     RedCryptoWriterHandle * scytale_writer_new_with_test_random(
         int with_encryption, int with_checksum, const char * derivator,
-        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn);
+        get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
+        int old_scheme, int one_shot);
 
     REDEMPTION_LIB_EXPORT
     char const * scytale_writer_error_message(RedCryptoWriterHandle * handle);

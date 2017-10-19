@@ -80,3 +80,16 @@ RED_AUTO_TEST_CASE(TestModuleManagerNextMod)
     RED_CHECK_EQUAL(res, MODULE_RDP);
 }
 
+RED_AUTO_TEST_CASE(TestStrTimeBeforeClosing)
+{
+    auto to_s = [](uint32_t t) {
+        std::string s;
+        add_time_before_closing(s, t, Translator(Translation::EN));
+        return s;
+    };
+    RED_CHECK_EQ("23 seconds before closing", to_s(23));
+    RED_CHECK_EQ("36 minutes, 23 seconds before closing", to_s(23 + 36*60));
+    RED_CHECK_EQ("3 hours, 36 minutes, 23 seconds before closing", to_s(23 + 216*60));
+    RED_CHECK_EQ("1 hour, 1 minute, 1 second before closing", to_s(1 + 60 + 60*60));
+    RED_CHECK_EQ("1 hour, 0 minute, 1 second before closing", to_s(1 + 60*60));
+}

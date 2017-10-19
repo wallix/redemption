@@ -1,34 +1,34 @@
 import ctypes
 
 class CryptoReader(object):
-    def __init__(self, filename):
+    def __init__(self, filename, derivator, old_scheme, one_shot):
         print("CryptoReader::__init__")
-        self.handle = lib.redcryptofile_reader_new(get_hmac_key_func, get_trace_key_func)
+        self.handle = lib.scytale_reader_new(derivator, get_hmac_key_func, get_trace_key_func, old_scheme, one_shot)
         self.filename = filename
     
     def __del__(self):
         print("CryptoReader::__del__")
-        lib.redcryptofile_reader_delete(self.handle)
+        lib.scytale_reader_delete(self.handle)
     
     def __enter__(self):
         print("CryptoReader::__enter__")
-        res = lib.redcryptofile_reader_open(self.handle, self.filename)
+        res = lib.scytale_reader_open(self.handle, self.filename)
         if res < 0:
             raise IOError()
         return self
 
     def __exit__(self, type, value, traceback):
         print("CryptoReader::__exit__")
-        lib.redcryptofile_reader_close(self.handle)
+        lib.scytale_reader_close(self.handle)
 #        if self.checksums is not None:
-#            self.checksums.append(lib.redcryptofile_writer_qhashhex(self.handle))
-#            self.checksums.append(lib.redcryptofile_writer_fhashhex(self.handle))
+#            self.checksums.append(lib.scytale_writer_qhashhex(self.handle))
+#            self.checksums.append(lib.scytale_writer_fhashhex(self.handle))
 
     def hash(self):
-        if lib.redcryptofile_reader_hash(self.handle, self.filename) < 0:
+        if lib.scytale_reader_hash(self.handle, self.filename) < 0:
             raise IOError()
-        qhash = lib.redcryptofile_reader_qhashhex(self.handle)
-        fhash = lib.redcryptofile_reader_fhashhex(self.handle)
+        qhash = lib.scytale_reader_qhashhex(self.handle)
+        fhash = lib.scytale_reader_fhashhex(self.handle)
         return [qhash, fhash]
 
     def read(self, part_len = 4096):
@@ -36,7 +36,7 @@ class CryptoReader(object):
         buf = ctypes.create_string_buffer(part_len)
         
         while True:
-            res = lib.redcryptofile_reader_read(self.handle, buf, part_len)
+            res = lib.scytale_reader_read(self.handle, buf, part_len)
             if res < 0:
                 raise IOError()
             if res == 0:

@@ -320,6 +320,30 @@ public:
 };
 
 
+inline void add_time_before_closing(std::string & msg, uint32_t elapsed_time, Translator tr)
+{
+    const auto hours = elapsed_time / (60*60);
+    const auto minutes = elapsed_time / 60 - hours * 60;
+    const auto seconds = elapsed_time - hours * (60*60) - minutes * 60;
+    if (hours) {
+        msg += std::to_string(hours);
+        msg += ' ';
+        msg += tr(trkeys::hour);
+        msg += (hours > 1) ? "s, " : ", ";
+    }
+    if (minutes || hours) {
+        msg += std::to_string(minutes);
+        msg += ' ';
+        msg += tr(trkeys::minute);
+        msg += (minutes > 1) ? "s, " : ", ";
+    }
+    msg += std::to_string(seconds);
+    msg += ' ';
+    msg += tr(trkeys::second);
+    msg += (seconds > 1) ? "s " : " ";
+    msg += tr(trkeys::before_closing);
+}
+
 class ModuleManager : public MMIni
 {
     struct IniAccounts {
@@ -371,6 +395,10 @@ private:
             }
 
             this->mm.internal_mod->rdp_input_invalidate(protected_rect);
+        }
+
+        const char* get_message() const {
+            return this->osd_message.c_str();
         }
 
         void set_message(std::string message, bool is_disable_by_input)
@@ -702,20 +730,7 @@ private:
                         // only if "reasonable" time
                         if (elapsed_time < 60*60*24*366L) {
                             msg += "  [";
-                            const auto minutes = elapsed_time / 60;
-                            const auto seconds = elapsed_time - minutes * 60;
-                            const Translator tr(language(this->mm.ini));
-                            if (minutes) {
-                                msg += std::to_string(minutes);
-                                msg += ' ';
-                                msg += tr(trkeys::minute);
-                                msg += (minutes > 1) ? "s " : " ";
-                            }
-                            msg += std::to_string(seconds);
-                            msg += ' ';
-                            msg += tr(trkeys::second);
-                            msg += (seconds > 1) ? "s " : " ";
-                            msg += tr(trkeys::before_closing);
+                            add_time_before_closing(msg, elapsed_time, Translator(this->mm.ini));
                             msg += ']';
                         }
                     }
@@ -769,7 +784,9 @@ public:
 
     void osd_message(std::string message, bool is_disable_by_input)
     {
-        this->clear_osd_message();
+        if (message.compare(this->mod_osd.get_message())) {
+            this->clear_osd_message();
+        }
         if (!message.empty()) {
             this->mod_osd.set_message(std::move(message), is_disable_by_input);
             this->mod_osd.draw_osd_message();
