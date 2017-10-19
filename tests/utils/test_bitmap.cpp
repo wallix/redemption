@@ -28,6 +28,8 @@
 
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_from_file.hpp"
+// TODO test_rle
+#include "utils/bitmap_from_rle.hpp"
 #include "utils/drawable.hpp"
 #include "utils/stream.hpp"
 #include "test_only/check_sig.hpp"
@@ -38,257 +40,252 @@
 RED_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 {
     const unsigned white = 0xFF;
-    const BGRPalette & palette332 = BGRPalette::classic_332();
 
     // test COLOR COUNT
     {
-        RED_CHECK_EQUAL(1,1);
-        int bpp = 8;
+        RLEDecompressorImpl<8> decompressor;
         uint8_t data[4*4] = {
             0x05, 0x05, 0x05, 0x05,
             0x05, 0x05, 0x05, 0x05,
             0x05, 0x05, 0x05, 0x05,
             0x05, 0x05, 0x05, 0x05};
 
-        Bitmap bmp(bpp, bpp, &palette332, 4, 4, data, sizeof(data));
-        const uint8_t * pmin = bmp.data();
-        const uint8_t * pmax = pmin + bmp.bmp_size();
-        RED_CHECK_EQUAL(16, bmp.get_color_count(::nbbytes(bpp), pmax, bmp.data(), 0x05));
-        RED_CHECK_EQUAL(0, bmp.get_color_count(::nbbytes(bpp), pmax, bmp.data(), 0xFE));
+        const uint8_t * pmin = data;
+        const uint8_t * pmax = pmin + sizeof(data);
+        RED_CHECK_EQUAL(16, decompressor.get_color_count(pmax, pmin, 0x05));
+        RED_CHECK_EQUAL(0, decompressor.get_color_count(pmax, pmin, 0xFE));
     }
 
     // test COLOR COUNT 2
     {
-        RED_CHECK_EQUAL(1,1);
-        int bpp = 8;
+        RLEDecompressorImpl<8> decompressor;
         uint8_t data[4*4] = {
             0x01, 0x02, 0x02, 0x04,
             0x05, 0x06, 0x07, 0x08,
             0x09, 0x0A, 0x0B, 0x0C,
             0x0D, 0x0E, 0x0F, 0x10};
 
-        Bitmap bmp(bpp, bpp, &palette332, 4, 4, data, sizeof(data));
-        const uint8_t * pmax = bmp.data() + bmp.bmp_size();
-        RED_CHECK_EQUAL(1, bmp.get_color_count(::nbbytes(bpp), pmax, bmp.data(), 0x01));
-        RED_CHECK_EQUAL(2, bmp.get_color_count(::nbbytes(bpp), pmax, bmp.data() + 1, 0x02));
+        const uint8_t * pmin = data;
+        const uint8_t * pmax = pmin + sizeof(data);
+        RED_CHECK_EQUAL(1, decompressor.get_color_count(pmax, pmin, 0x01));
+        RED_CHECK_EQUAL(2, decompressor.get_color_count(pmax, pmin + 1, 0x02));
     }
 
     // test BICOLOR COUNT
     {
-        int bpp = 8;
+        RLEDecompressorImpl<8> decompressor;
         uint8_t data[4*4] = {
             0x01, 0x05, 0x01, 0x05,
             0x01, 0x05, 0x01, 0x05,
             0x01, 0x05, 0x01, 0x05,
             0x01, 0x05, 0x01, 0x05};
 
-        Bitmap bmp(8, 8, &palette332, 4, 4, data, sizeof(data));
-        const uint8_t * pmin = bmp.data();
-        const uint8_t * pmax = pmin + bmp.bmp_size();
-        RED_CHECK_EQUAL(16, bmp.get_bicolor_count(::nbbytes(bpp), pmax, pmin, 0x01, 0x05));
-        RED_CHECK_EQUAL(14, bmp.get_bicolor_count(::nbbytes(bpp), pmax, pmin+1, 0x05, 0x01));
-        RED_CHECK_EQUAL(0 , bmp.get_bicolor_count(::nbbytes(bpp), pmax, pmin, 0x05, 0x01));
+        const uint8_t * pmin = data;
+        const uint8_t * pmax = pmin + sizeof(data);
+        RED_CHECK_EQUAL(16, decompressor.get_bicolor_count(pmax, pmin, 0x01, 0x05));
+        RED_CHECK_EQUAL(14, decompressor.get_bicolor_count(pmax, pmin+1, 0x05, 0x01));
+        RED_CHECK_EQUAL(0 , decompressor.get_bicolor_count(pmax, pmin, 0x05, 0x01));
     }
 
     // test BICOLOR COUNT
     {
-        int bpp = 8;
+        RLEDecompressorImpl<8> decompressor;
         uint8_t data[4*4] = {
             0x01, 0x05, 0x01, 0x05,
             0x01, 0x05, 0x01, 0x05,
             0x01, 0x05, 0x01, 0x01,
             0x01, 0x05, 0x01, 0x05};
 
-        Bitmap bmp(bpp, bpp, &palette332, 4, 4, data, sizeof(data));
-        const uint8_t * pmin = bmp.data();
-        const uint8_t * pmax = pmin + bmp.bmp_size();
-        RED_CHECK_EQUAL(10, bmp.get_bicolor_count(::nbbytes(bpp), pmax, pmin, 0x01, 0x05));
-        RED_CHECK_EQUAL(10, bmp.get_bicolor_count(::nbbytes(bpp), pmax, pmin + 1, 0x05, 0x01));
+        const uint8_t * pmin = data;
+        const uint8_t * pmax = pmin + sizeof(data);
+        RED_CHECK_EQUAL(10, decompressor.get_bicolor_count(pmax, pmin, 0x01, 0x05));
+        RED_CHECK_EQUAL(10, decompressor.get_bicolor_count(pmax, pmin + 1, 0x05, 0x01));
     }
 
     // test FILL COUNT
     {
-        int bpp = 8;
+        RLEDecompressorImpl<8> decompressor;
         uint8_t data[4*4] = {
             0x00, 0x00, 0x00, 0x00,
             0x01, 0x05, 0x01, 0x05,
             0x01, 0x05, 0x01, 0x01,
             0x01, 0x05, 0x01, 0x05};
 
-        Bitmap bmp(bpp, bpp, &palette332, 4, 4, data, sizeof(data));
-        const uint8_t * pmin = bmp.data();
-        const uint8_t * pmax = pmin + bmp.bmp_size();
+        const uint8_t * pmin = data;
+        const uint8_t * pmax = pmin + sizeof(data);
+        const size_t line_size = 4;
 
         // Line above first line is black
-        RED_CHECK_EQUAL(4, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data()));
-        RED_CHECK_EQUAL(3, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data()+1));
+        RED_CHECK_EQUAL(4, decompressor.get_fill_count(line_size, pmin, pmax, data));
+        RED_CHECK_EQUAL(3, decompressor.get_fill_count(line_size, pmin, pmax, data+1));
 
         // 3rd line, compared to 2nd line
-        RED_CHECK_EQUAL(3, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data()+8));
+        RED_CHECK_EQUAL(3, decompressor.get_fill_count(line_size, pmin, pmax, data+8));
     }
 
     // test FILL COUNT
     {
-        int bpp = 8;
+        RLEDecompressorImpl<8> decompressor;
         uint8_t data[4*4] = {
             0x01, 0x00, 0x01, 0x00,
             0x01, 0x05, 0x01, 0x01,
             0x01, 0x05, 0x01, 0x01,
             0x01, 0x05, 0x01, 0x01};
 
-        Bitmap bmp(bpp, bpp, &palette332, 4, 4, data, sizeof(data));
-        const uint8_t * pmin = bmp.data();
-        const uint8_t * pmax = pmin + bmp.bmp_size();
+        const uint8_t * pmin = data;
+        const uint8_t * pmax = pmin + sizeof(data);
+        const size_t line_size = 4;
 
         // Line above first line is black
-        RED_CHECK_EQUAL(0, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data()));
-        RED_CHECK_EQUAL(1, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data()+1));
-        RED_CHECK_EQUAL(0, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data()+2));
-        RED_CHECK_EQUAL(2, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data()+3));
+        RED_CHECK_EQUAL(0, decompressor.get_fill_count(line_size, pmin, pmax, data));
+        RED_CHECK_EQUAL(1, decompressor.get_fill_count(line_size, pmin, pmax, data+1));
+        RED_CHECK_EQUAL(0, decompressor.get_fill_count(line_size, pmin, pmax, data+2));
+        RED_CHECK_EQUAL(2, decompressor.get_fill_count(line_size, pmin, pmax, data+3));
 
         // until the end
-        RED_CHECK_EQUAL(8, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data()+8));
+        RED_CHECK_EQUAL(8, decompressor.get_fill_count(line_size, pmin, pmax, data+8));
 
     }
 
     // test MIX COUNT
     {
-        int bpp = 8;
+        RLEDecompressorImpl<8> decompressor;
         uint8_t data[4*4] = {
             0xFF, 0xFF, 0xFF, 0xFF,
             0x01, 0x05, 0x01, 0x05,
             0xFE, 0xFA, 0xFE, 0x01,
             0x01, 0x05, 0x01, 0x05};
 
-        Bitmap bmp(bpp, bpp, &palette332, 4, 4, data, sizeof(data));
-        const uint8_t * pmin = bmp.data();
-        const uint8_t * pmax = pmin + bmp.bmp_size();
+        const uint8_t * pmin = data;
+        const uint8_t * pmax = pmin + sizeof(data);
+        const size_t line_size = 4;
 
         // Line above first line is black
-        RED_CHECK_EQUAL(4, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data(), white));
-        RED_CHECK_EQUAL(3, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data()+1, white));
+        RED_CHECK_EQUAL(4, decompressor.get_mix_count(line_size, pmin, pmax, data, white));
+        RED_CHECK_EQUAL(3, decompressor.get_mix_count(line_size, pmin, pmax, data+1, white));
 
         // 3rd line, compared to 2nd line
-        RED_CHECK_EQUAL(3, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data()+8, white));
+        RED_CHECK_EQUAL(3, decompressor.get_mix_count(line_size, pmin, pmax, data+8, white));
     }
 
     // test MIX COUNT
     {
-        int bpp = 8;
+        RLEDecompressorImpl<8> decompressor;
         uint8_t data[4*4] = {
             0x01, 0xFF, 0x01, 0xFF,
             0xFE, 0x05, 0x01, 0x01,
             0x01, 0xFA, 0xFE, 0xFE,
             0xFE, 0x05, 0x01, 0x01};
 
-        Bitmap bmp(bpp, bpp, &palette332, 4, 4, data, sizeof(data));
-        const uint8_t * pmin = bmp.data();
-        const uint8_t * pmax = pmin + bmp.bmp_size();
+        const uint8_t * pmin = data;
+        const uint8_t * pmax = pmin + sizeof(data);
+        const size_t line_size = 4;
 
         // Line above first line is black
-        RED_CHECK_EQUAL(0, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data(), white));
-        RED_CHECK_EQUAL(1, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data()+1, white));
-        RED_CHECK_EQUAL(0, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data()+2, white));
-        RED_CHECK_EQUAL(2, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data()+3, white));
+        RED_CHECK_EQUAL(0, decompressor.get_mix_count(line_size, pmin, pmax, data, white));
+        RED_CHECK_EQUAL(1, decompressor.get_mix_count(line_size, pmin, pmax, data+1, white));
+        RED_CHECK_EQUAL(0, decompressor.get_mix_count(line_size, pmin, pmax, data+2, white));
+        RED_CHECK_EQUAL(2, decompressor.get_mix_count(line_size, pmin, pmax, data+3, white));
 
         // until the end
-        RED_CHECK_EQUAL(8, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data()+8, white));
+        RED_CHECK_EQUAL(8, decompressor.get_mix_count(line_size, pmin, pmax, data+8, white));
     }
 
     // test FILL OR MIX COUNT
     {
-        int bpp = 8;
+        RLEDecompressorImpl<8> decompressor;
         uint8_t data[4*4] = {
             0x02, 0x03, 0x04, 0x05,
             0xFD, 0x03, 0xFB, 0x05,
             0xFD, 0xFC, 0xFB, 0xFA,
             0x02, 0x03, 0x04, 0xFA};
 
-        Bitmap bmp(bpp, bpp, &palette332, 4, 4, data, sizeof(data));
-        const uint8_t * pmin = bmp.data();
-        const uint8_t * pmax = pmin + bmp.bmp_size();
+        const uint8_t * pmin = data;
+        const uint8_t * pmax = pmin + sizeof(data);
+        const size_t line_size = 4;
 
         // Line above first line is black
         uint8_t masks[512];
         unsigned flags = 0;
         unsigned color = white;
-        RED_CHECK_EQUAL(1, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+15, color, flags));
+        RED_CHECK_EQUAL(1, decompressor.get_fom_count_set(line_size, pmin, pmax, data+15, color, flags));
         RED_CHECK_EQUAL(white, color);
-        RED_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FILL), flags);
-        RED_CHECK_EQUAL(2, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+14, color, flags));
+        RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FILL), flags);
+        RED_CHECK_EQUAL(2, decompressor.get_fom_count_set(line_size, pmin, pmax, data+14, color, flags));
         RED_CHECK_EQUAL(white, color);
-        RED_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
-        bmp.get_fom_masks(::nbbytes(bpp), pmin, pmin+14, masks, 2);
+        RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FOM), flags);
+        decompressor.get_fom_masks(line_size, pmin, pmin+14, masks, 2);
         RED_CHECK_EQUAL(0x01, masks[0]);
 
 
-        RED_CHECK_EQUAL(4, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+12, color, flags));
+        RED_CHECK_EQUAL(4, decompressor.get_fom_count_set(line_size, pmin, pmax, data+12, color, flags));
         RED_CHECK_EQUAL(white, color);
-        RED_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
-        bmp.get_fom_masks(::nbbytes(bpp), pmin, pmin+12, masks, 4);
+        RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FOM), flags);
+        decompressor.get_fom_masks(line_size, pmin, pmin+12, masks, 4);
         RED_CHECK_EQUAL(0x07, masks[0]);
 
-        RED_CHECK_EQUAL(5, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+11, color, flags));
+        RED_CHECK_EQUAL(5, decompressor.get_fom_count_set(line_size, pmin, pmax, data+11, color, flags));
         RED_CHECK_EQUAL(white, color);
-        RED_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
+        RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FOM), flags);
 
-        RED_CHECK_EQUAL(6, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+10, color, flags));
+        RED_CHECK_EQUAL(6, decompressor.get_fom_count_set(line_size, pmin, pmax, data+10, color, flags));
         RED_CHECK_EQUAL(white, color);
-        RED_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
-        RED_CHECK_EQUAL(12, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, bmp.data()+4, color, flags));
+        RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FOM), flags);
+        RED_CHECK_EQUAL(12, decompressor.get_fom_count_set(line_size, pmin, pmax, data+4, color, flags));
         RED_CHECK_EQUAL(white, color);
-        RED_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
-        bmp.get_fom_masks(::nbbytes(bpp), pmin, pmin+4, masks, 12);
+        RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FOM), flags);
+        decompressor.get_fom_masks(line_size, pmin, pmin+4, masks, 12);
         RED_CHECK_EQUAL(0xA5, masks[0]);
         RED_CHECK_EQUAL(0x07, masks[1]);
     }
 
     {
-        RED_CHECK_EQUAL(1, 1);
-        int bpp = 8;
+        const int bpp = 8;
+        RLEDecompressorImpl<bpp> decompressor;
         uint8_t data[4*4] = {
             0x01, 0x02, 0x03, 0x04,
             0x05, 0x06, 0x07, 0x08,
             0x09, 0x0A, 0x0B, 0x0C,
             0x0D, 0x0E, 0x0F, 0x10};
-        Bitmap bmp(bpp, bpp, &palette332, 4, 4, data, sizeof(data));
-        const uint8_t * pmin = bmp.data();
-        const uint8_t * pmax = pmin + bmp.bmp_size();
+
+        const uint8_t * pmin = data;
+        const uint8_t * pmax = pmin + sizeof(data);
+        const size_t line_size = 4;
 
         unsigned flags = 0;
-        const uint8_t * p = bmp.data()+3;
-        unsigned foreground = bmp.get_pixel_above(::nbbytes(bpp), pmin, p) ^ bmp.get_pixel(::nbbytes(bpp), p);
+        const uint8_t * p = data+3;
+        unsigned foreground = decompressor.get_pixel_above(line_size, pmin, p) ^ decompressor.get_pixel(p);
         RED_CHECK_EQUAL(0x04, foreground);
-        RED_CHECK_EQUAL(3, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, p+nbbytes(bpp), foreground));
+        RED_CHECK_EQUAL(3, decompressor.get_mix_count(line_size, pmin, pmax, p+nbbytes(bpp), foreground));
         foreground = white;
-        RED_CHECK_EQUAL(4, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, p, foreground, flags));
+        RED_CHECK_EQUAL(4, decompressor.get_fom_count_set(line_size, pmin, pmax, p, foreground, flags));
         RED_CHECK_EQUAL(0x04, foreground);
-        RED_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_MIX), flags);
+        RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_MIX), flags);
     }
 
 
     {
-        RED_CHECK_EQUAL(1, 1);
-        int bpp = 8;
+        const int bpp = 8;
+        RLEDecompressorImpl<bpp> decompressor;
         uint8_t multicolor[4*4] = {
             0x01, 0x02, 0x03, 0x04,
             0x01, 0x01, 0x01, 0x01,
             0x05, 0x06, 0x07, 0x08,
             0x01, 0x01, 0x01, 0x01};
 
-        Bitmap bmp(bpp, bpp, &palette332, 4, 4, multicolor, sizeof(multicolor));
-        const uint8_t * pmin = bmp.data();
-        const uint8_t * pmax = pmin + bmp.bmp_size();
-        const uint8_t * p = bmp.data()+3;
+        const uint8_t * pmin = multicolor;
+        const uint8_t * pmax = pmin + sizeof(multicolor);
+        const uint8_t * p = multicolor+3;
+        const size_t line_size = 4;
 
-        unsigned foreground = bmp.get_pixel_above(::nbbytes(bpp), pmin, p) ^ bmp.get_pixel(::nbbytes(bpp), p);
+        unsigned foreground = decompressor.get_pixel_above(line_size, pmin, p) ^ decompressor.get_pixel(p);
         RED_CHECK_EQUAL(4, foreground);
-        RED_CHECK_EQUAL(0, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, p+nbbytes(bpp), foreground));
+        RED_CHECK_EQUAL(0, decompressor.get_mix_count(line_size, pmin, pmax, p+nbbytes(bpp), foreground));
         foreground = white;
         unsigned flags = 0;
-        RED_CHECK_EQUAL(2, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, p, foreground, flags));
+        RED_CHECK_EQUAL(2, decompressor.get_fom_count_set(line_size, pmin, pmax, p, foreground, flags));
         RED_CHECK_EQUAL(4, foreground);
-        RED_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags); // MIX then FILL
+        RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FOM), flags); // MIX then FILL
     }
 }
 
@@ -3949,52 +3946,52 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapGetRun) {
     uint32_t run_length;
     uint32_t raw_bytes;
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("AAAABBCCCCCD"), 12, 0, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("AAAABBCCCCCD"), 12, 0, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(3,  run_length);
     RED_CHECK_EQUAL(1,  raw_bytes);
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("BBCCCCCD"), 8, 0, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("BBCCCCCD"), 8, 0, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(4,  run_length);
     RED_CHECK_EQUAL(3,  raw_bytes);
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("D"), 1, 0, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("D"), 1, 0, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(0,  run_length);
     RED_CHECK_EQUAL(1,  raw_bytes);
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("ABCDEFGHIJKL"), 12, 0, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("ABCDEFGHIJKL"), 12, 0, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(0,  run_length);
     RED_CHECK_EQUAL(12, raw_bytes);
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("ABCDEFGHIJKLMNOP"), 16, 0, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("ABCDEFGHIJKLMNOP"), 16, 0, run_length, raw_bytes);
     LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(0,  run_length);
     RED_CHECK_EQUAL(16, raw_bytes);
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("ABCDEFGHIJKLMNOOOOO"), 19, 0, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("ABCDEFGHIJKLMNOOOOO"), 19, 0, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(4,  run_length);
     RED_CHECK_EQUAL(15, raw_bytes);
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("\0\0\0\0\0\0\0\0"), 8, 0, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("\0\0\0\0\0\0\0\0"), 8, 0, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(8,  run_length);
     RED_CHECK_EQUAL(0,  raw_bytes);
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("AAABB"), 5, 0, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("AAABB"), 5, 0, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(0,  run_length);
     RED_CHECK_EQUAL(5,  raw_bytes);
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("\0\0\0\0\0\0\0\0"), 8, 0, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("\0\0\0\0\0\0\0\0"), 8, 0, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(8,  run_length);
     RED_CHECK_EQUAL(0,  raw_bytes);
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("\0\0\0\0\0\0\0\0"), 8, 0x64, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("\0\0\0\0\0\0\0\0"), 8, 0x64, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(7,  run_length);
     RED_CHECK_EQUAL(1,  raw_bytes);
@@ -4008,7 +4005,7 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane) {
 
     StaticOutStream<1024> outbuffer;
 
-    Bitmap::compress_color_plane(100, 1, outbuffer, data);
+    RLEDecompressorImpl<0>{}.compress_color_plane(100, 1, outbuffer, data);
 
     uint8_t result[] = {
         0x1F, 0x41,
@@ -4029,7 +4026,7 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane1) {
 
     StaticOutStream<1024> outbuffer;
 
-    Bitmap::compress_color_plane(6, 3, outbuffer, data);
+    RLEDecompressorImpl<0>{}.compress_color_plane(6, 3, outbuffer, data);
 
     uint8_t result[] = {
         0x13, 0xFF,
@@ -4112,7 +4109,7 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane2) {
 
     StaticOutStream<1024> outbuffer;
 
-    Bitmap::compress_color_plane(32, 32, outbuffer, data);
+    RLEDecompressorImpl<0>{}.compress_color_plane(32, 32, outbuffer, data);
 
     uint8_t result[] = {
 /* 0000 */ 0x19, 0x08, 0x25, 0x60, 0xff, 0x28, 0x30, 0x08, 0x23, 0x28, 0xff, 0x0a, 0x24, 0x9e, 0x00, 0x38,  // ..%`.(0.#(..$..8
@@ -4237,7 +4234,7 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapDecompressColorPlane) {
 
     uint8_t color_plane[6 * 3];
 
-    Bitmap::decompress_color_plane(6, 3, compressed_data, compressed_data_size, 6, color_plane);
+    ::decompress_color_plane(6, 3, compressed_data, compressed_data_size, 6, color_plane);
 
     uint8_t result[] = {
         255, 255, 255, 255, 254, 253,

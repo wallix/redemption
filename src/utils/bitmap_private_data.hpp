@@ -27,6 +27,8 @@
    color model.
 */
 
+#pragma once
+
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_data_allocator.hpp"
 #include "utils/bitfu.hpp"
