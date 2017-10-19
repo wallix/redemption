@@ -115,7 +115,8 @@ public:
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
 
-    virtual void set_pointer(Pointer const & pointer) {
+    void set_pointer(Pointer const & pointer) override
+    {
         if (this->drawable) {
             this->drawable->set_pointer(pointer);
         }
