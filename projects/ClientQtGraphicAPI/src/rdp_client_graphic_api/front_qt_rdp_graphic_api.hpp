@@ -2662,6 +2662,8 @@ public:
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
+
+
         (void) color_ctx;
         LOG(LOG_WARNING, "DEFAULT: RDPMultiOpaqueRect");
     }
@@ -3241,7 +3243,6 @@ public:
     virtual void connect() {
         this->is_pipe_ok = true;
         if (this->mod_qt->connect()) {
-            LOG(LOG_INFO, "mod init done");
             this->qtRDPKeymap.setKeyboardLayout(this->info.keylayout);
             this->cache = new QPixmap(this->info.width, this->info.height);
             this->trans_cache = new QPixmap(this->info.width, this->info.height);
@@ -3340,7 +3341,6 @@ public:
             }
 
             if (this->mod_qt->listen()) {
-                LOG(LOG_INFO, "listen init done");
                 this->form->hide();
                 this->screen->show();
                 this->connected = true;
@@ -3349,7 +3349,6 @@ public:
                 this->connected = false;
             }
         }
-        LOG(LOG_INFO, "connexion done");
     }
 
     void disconnect(std::string const & error) override {

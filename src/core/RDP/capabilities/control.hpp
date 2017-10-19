@@ -95,9 +95,9 @@ struct ControlCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s ControlCaps caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "ControlCaps caps::controlFlags %u", this->controlFlags);
-        LOG(LOG_INFO, "ControlCaps caps::remoteDetachFlag %u", this->remoteDetachFlag);
-        LOG(LOG_INFO, "ControlCaps caps::controlInterest %u", this->controlInterest);
-        LOG(LOG_INFO, "ControlCaps caps::detachInterest %u", this->detachInterest);
+        LOG(LOG_INFO, "     ControlCaps caps::controlFlags %u", this->controlFlags);
+        LOG(LOG_INFO, "     ControlCaps caps::remoteDetachFlag %u", this->remoteDetachFlag);
+        LOG(LOG_INFO, "     ControlCaps caps::controlInterest %u", this->controlInterest);
+        LOG(LOG_INFO, "     ControlCaps caps::detachInterest %u", this->detachInterest);
     }
 };

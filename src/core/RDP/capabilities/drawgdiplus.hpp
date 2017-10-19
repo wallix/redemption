@@ -274,23 +274,23 @@ struct DrawGdiPlusCaps : public Capability {
     {
         LOG(LOG_INFO, "%s DrawGdiPlus caps (%u bytes)", msg, this->len);
 
-        LOG(LOG_INFO, "DrawGdiPlus caps::drawGDIPlusSupportLevel %u", this->drawGDIPlusSupportLevel);
-        LOG(LOG_INFO, "DrawGdiPlus caps::GdipVersion %u", this->GdipVersion);
-        LOG(LOG_INFO, "DrawGdiPlus caps::drawGdiplusCacheLevel %u", this->drawGdiplusCacheLevel);
+        LOG(LOG_INFO, "     DrawGdiPlus caps::drawGDIPlusSupportLevel %u", this->drawGDIPlusSupportLevel);
+        LOG(LOG_INFO, "     DrawGdiPlus caps::GdipVersion %u", this->GdipVersion);
+        LOG(LOG_INFO, "     DrawGdiPlus caps::drawGdiplusCacheLevel %u", this->drawGdiplusCacheLevel);
 
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheEntries.GdipGraphicsCacheEntries %u", this->gdiPCacheEntries.GdipGraphicsCacheEntries);
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheEntries.GdipBrushCacheEntries %u", this->gdiPCacheEntries.GdipBrushCacheEntries);
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheEntries.GdipPenCacheEntries %u", this->gdiPCacheEntries.GdipPenCacheEntries);
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheEntries.GdipImageCacheEntries %u", this->gdiPCacheEntries.GdipImageCacheEntries);
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheEntries.GdipImageAttributesCacheEntries %u", this->gdiPCacheEntries.GdipImageAttributesCacheEntries);
+        LOG(LOG_INFO, "     DrawGdiPlus caps::gdiPCacheEntries.GdipGraphicsCacheEntries %u", this->gdiPCacheEntries.GdipGraphicsCacheEntries);
+        LOG(LOG_INFO, "     DrawGdiPlus caps::gdiPCacheEntries.GdipBrushCacheEntries %u", this->gdiPCacheEntries.GdipBrushCacheEntries);
+        LOG(LOG_INFO, "     DrawGdiPlus caps::gdiPCacheEntries.GdipPenCacheEntries %u", this->gdiPCacheEntries.GdipPenCacheEntries);
+        LOG(LOG_INFO, "     DrawGdiPlus caps::gdiPCacheEntries.GdipImageCacheEntries %u", this->gdiPCacheEntries.GdipImageCacheEntries);
+        LOG(LOG_INFO, "     DrawGdiPlus caps::gdiPCacheEntries.GdipImageAttributesCacheEntries %u", this->gdiPCacheEntries.GdipImageAttributesCacheEntries);
 
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheChunkSize.GdipGraphicsCacheChunkSize %u", this->gdiPCacheChunkSize.GdipGraphicsCacheChunkSize);
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheChunkSize.GdipObjectBrushCacheChunkSize %u", this->gdiPCacheChunkSize.GdipObjectBrushCacheChunkSize);
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheChunkSize.GdipObjectPenCacheChunkSize %u", this->gdiPCacheChunkSize.GdipObjectPenCacheChunkSize);
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheChunkSize.GdipObjectImageAttributesCacheChunkSize %u", this->gdiPCacheChunkSize.GdipObjectImageAttributesCacheChunkSize);
+        LOG(LOG_INFO, "     DrawGdiPlus caps::gdiPCacheChunkSize.GdipGraphicsCacheChunkSize %u", this->gdiPCacheChunkSize.GdipGraphicsCacheChunkSize);
+        LOG(LOG_INFO, "     DrawGdiPlus caps::gdiPCacheChunkSize.GdipObjectBrushCacheChunkSize %u", this->gdiPCacheChunkSize.GdipObjectBrushCacheChunkSize);
+        LOG(LOG_INFO, "     DrawGdiPlus caps::gdiPCacheChunkSize.GdipObjectPenCacheChunkSize %u", this->gdiPCacheChunkSize.GdipObjectPenCacheChunkSize);
+        LOG(LOG_INFO, "     DrawGdiPlus caps::gdiPCacheChunkSize.GdipObjectImageAttributesCacheChunkSize %u", this->gdiPCacheChunkSize.GdipObjectImageAttributesCacheChunkSize);
 
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdipImageCacheProperties->GdipObjectImageCacheChunkSize %u", this->gdiPImageCacheProperties.GdipObjectImageCacheChunkSize);
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdipImageCacheProperties->GdipObjectImageCacheTotalSize %u", this->gdiPImageCacheProperties.GdipObjectImageCacheTotalSize);
-        LOG(LOG_INFO, "DrawGdiPlus caps::gdipImageCacheProperties->GdipObjectImageCacheMaxSize %u", this->gdiPImageCacheProperties.GdipObjectImageCacheMaxSize);
+        LOG(LOG_INFO, "     DrawGdiPlus caps::gdipImageCacheProperties->GdipObjectImageCacheChunkSize %u", this->gdiPImageCacheProperties.GdipObjectImageCacheChunkSize);
+        LOG(LOG_INFO, "     DrawGdiPlus caps::gdipImageCacheProperties->GdipObjectImageCacheTotalSize %u", this->gdiPImageCacheProperties.GdipObjectImageCacheTotalSize);
+        LOG(LOG_INFO, "     DrawGdiPlus caps::gdipImageCacheProperties->GdipObjectImageCacheMaxSize %u", this->gdiPImageCacheProperties.GdipObjectImageCacheMaxSize);
     }
 };

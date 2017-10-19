@@ -213,27 +213,27 @@ struct BitmapCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s Bitmap caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "Bitmap caps::preferredBitsPerPixel %u", this->preferredBitsPerPixel);
-        LOG(LOG_INFO, "Bitmap caps::receive1BitPerPixel %u", this->receive1BitPerPixel);
-        LOG(LOG_INFO, "Bitmap caps::receive4BitsPerPixel %u", this->receive4BitsPerPixel);
-        LOG(LOG_INFO, "Bitmap caps::receive8BitsPerPixel %u", this->receive8BitsPerPixel);
-        LOG(LOG_INFO, "Bitmap caps::desktopWidth %u", this->desktopWidth);
-        LOG(LOG_INFO, "Bitmap caps::desktopHeight %u", this->desktopHeight);
-        LOG(LOG_INFO, "Bitmap caps::pad2octets %u", this->pad2octets);
-        LOG(LOG_INFO, "Bitmap caps::desktopResizeFlag %u (%s)",
+        LOG(LOG_INFO, "     Bitmap caps::preferredBitsPerPixel %u", this->preferredBitsPerPixel);
+        LOG(LOG_INFO, "     Bitmap caps::receive1BitPerPixel %u", this->receive1BitPerPixel);
+        LOG(LOG_INFO, "     Bitmap caps::receive4BitsPerPixel %u", this->receive4BitsPerPixel);
+        LOG(LOG_INFO, "     Bitmap caps::receive8BitsPerPixel %u", this->receive8BitsPerPixel);
+        LOG(LOG_INFO, "     Bitmap caps::desktopWidth %u", this->desktopWidth);
+        LOG(LOG_INFO, "     Bitmap caps::desktopHeight %u", this->desktopHeight);
+        LOG(LOG_INFO, "     Bitmap caps::pad2octets %u", this->pad2octets);
+        LOG(LOG_INFO, "     Bitmap caps::desktopResizeFlag %u (%s)",
             this->desktopResizeFlag, this->desktopResizeFlag?"yes":"no");
-        LOG(LOG_INFO, "Bitmap caps::bitmapCompressionFlag %u %s",
+        LOG(LOG_INFO, "     Bitmap caps::bitmapCompressionFlag %u %s",
             this->bitmapCompressionFlag, this->bitmapCompressionFlag?"yes":"no");
-        LOG(LOG_INFO, "Bitmap caps::highColorFlags %u", this->highColorFlags);
-        LOG(LOG_INFO, "Bitmap caps::drawingFlags %u", this->drawingFlags);
-        LOG(LOG_INFO, "Bitmap caps::drawingFlags:DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY %s",
+        LOG(LOG_INFO, "     Bitmap caps::highColorFlags %u", this->highColorFlags);
+        LOG(LOG_INFO, "     Bitmap caps::drawingFlags %u", this->drawingFlags);
+        LOG(LOG_INFO, "     Bitmap caps::drawingFlags:DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY %s",
             (this->drawingFlags & DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY)?"yes":"no");
-        LOG(LOG_INFO, "Bitmap caps::drawingFlags:DRAW_ALLOW_COLOR_SUBSAMPLING %s",
+        LOG(LOG_INFO, "     Bitmap caps::drawingFlags:DRAW_ALLOW_COLOR_SUBSAMPLING %s",
             (this->drawingFlags & DRAW_ALLOW_COLOR_SUBSAMPLING)?"yes":"no");
-        LOG(LOG_INFO, "Bitmap caps::drawingFlags:DRAW_ALLOW_SKIP_ALPHA %s",
+        LOG(LOG_INFO, "     Bitmap caps::drawingFlags:DRAW_ALLOW_SKIP_ALPHA %s",
             (this->drawingFlags & DRAW_ALLOW_SKIP_ALPHA)?"yes":"no");
-        LOG(LOG_INFO, "Bitmap caps::multipleRectangleSupport %u", this->multipleRectangleSupport);
-        LOG(LOG_INFO, "Bitmap caps::pad2octetsB %u", this->pad2octetsB);
+        LOG(LOG_INFO, "     Bitmap caps::multipleRectangleSupport %u", this->multipleRectangleSupport);
+        LOG(LOG_INFO, "     Bitmap caps::pad2octetsB %u", this->pad2octetsB);
     }
 
     void dump(FILE * f) const

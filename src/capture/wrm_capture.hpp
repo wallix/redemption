@@ -817,7 +817,7 @@ public:
 
     WrmCaptureImpl(
         const CaptureParams & capture_params, const WrmParams & wrm_params,
-        gdi::ImageFrameApi & image_frame_api, gdi::ConstImageDataView const & image_view)
+        gdi::ImageFrameApi & image_frame_api, ConstImageDataView const & image_view)
     : bmp_cache(
         BmpCache::Recorder, wrm_params.capture_bpp, 3, false,
         BmpCache::CacheOption(600, 768, false),

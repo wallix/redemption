@@ -156,17 +156,17 @@ struct BmpCacheCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s BitmapCache caps (%" PRIu16 " bytes)", msg, this->len);
-        LOG(LOG_INFO, "BitmapCache caps::pad1 %" PRIu32, this->pad1);
-        LOG(LOG_INFO, "BitmapCache caps::pad2 %" PRIu32, this->pad2);
-        LOG(LOG_INFO, "BitmapCache caps::pad3 %" PRIu32, this->pad3);
-        LOG(LOG_INFO, "BitmapCache caps::pad4 %" PRIu32, this->pad4);
-        LOG(LOG_INFO, "BitmapCache caps::pad5 %" PRIu32, this->pad5);
-        LOG(LOG_INFO, "BitmapCache caps::pad6 %" PRIu32, this->pad6);
-        LOG(LOG_INFO, "BitmapCache caps::cache0Entries %" PRIu16, this->cache0Entries);
-        LOG(LOG_INFO, "BitmapCache caps::cache0MaximumCellSize %" PRIu16, this->cache0MaximumCellSize);
-        LOG(LOG_INFO, "BitmapCache caps::cache1Entries %" PRIu16, this->cache1Entries);
-        LOG(LOG_INFO, "BitmapCache caps::cache1MaximumCellSize %" PRIu16, this->cache1MaximumCellSize);
-        LOG(LOG_INFO, "BitmapCache caps::cache2Entries %" PRIu16, this->cache2Entries);
-        LOG(LOG_INFO, "BitmapCache caps::cache2MaximumCellSize %" PRIu16, this->cache2MaximumCellSize);
+        LOG(LOG_INFO, "     BitmapCache caps::pad1 %" PRIu32, this->pad1);
+        LOG(LOG_INFO, "     BitmapCache caps::pad2 %" PRIu32, this->pad2);
+        LOG(LOG_INFO, "     BitmapCache caps::pad3 %" PRIu32, this->pad3);
+        LOG(LOG_INFO, "     BitmapCache caps::pad4 %" PRIu32, this->pad4);
+        LOG(LOG_INFO, "     BitmapCache caps::pad5 %" PRIu32, this->pad5);
+        LOG(LOG_INFO, "     BitmapCache caps::pad6 %" PRIu32, this->pad6);
+        LOG(LOG_INFO, "     BitmapCache caps::cache0Entries %" PRIu16, this->cache0Entries);
+        LOG(LOG_INFO, "     BitmapCache caps::cache0MaximumCellSize %" PRIu16, this->cache0MaximumCellSize);
+        LOG(LOG_INFO, "     BitmapCache caps::cache1Entries %" PRIu16, this->cache1Entries);
+        LOG(LOG_INFO, "     BitmapCache caps::cache1MaximumCellSize %" PRIu16, this->cache1MaximumCellSize);
+        LOG(LOG_INFO, "     BitmapCache caps::cache2Entries %" PRIu16, this->cache2Entries);
+        LOG(LOG_INFO, "     BitmapCache caps::cache2MaximumCellSize %" PRIu16, this->cache2MaximumCellSize);
     }
 };

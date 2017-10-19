@@ -46,6 +46,7 @@ target_requirements = dict((
 
 remove_requirements = dict((
     ('tests/capture/test_capture.cpp', '<library>src/capture/capture.o'),
+    ('tests/utils/test_rle.cpp', '<library>src/utils/rle.o'),
 ))
 
 dir_requirements = dict((

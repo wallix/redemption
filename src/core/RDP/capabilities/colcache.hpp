@@ -85,8 +85,8 @@ struct ColorCacheCaps : public Capability {
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s ColorCache caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "ColorCache caps::colorTableCacheSize %u", this->colorTableCacheSize);
-        LOG(LOG_INFO, "ColorCache caps::pad2octets %u", this->pad2octets);
+        LOG(LOG_INFO, "     ColorCache caps::colorTableCacheSize %u", this->colorTableCacheSize);
+        LOG(LOG_INFO, "     ColorCache caps::pad2octets %u", this->pad2octets);
     }
 };
 

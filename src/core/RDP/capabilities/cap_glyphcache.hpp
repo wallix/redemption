@@ -212,13 +212,13 @@ struct GlyphCacheCaps : public Capability {
     {
         LOG(LOG_INFO, "%s GlyphCache caps (%u bytes)", msg, this->len);
         for (uint8_t i = 0; i < NUMBER_OF_CACHE; ++i) {
-            LOG( LOG_INFO, "GlyphCache caps::GlyphCache[%u].CacheEntries=%u"
+            LOG( LOG_INFO, "     GlyphCache caps::GlyphCache[%u].CacheEntries=%u"
                , i, this->GlyphCache[i].CacheEntries);
-            LOG( LOG_INFO, "GlyphCache caps::GlyphCache[%u].CacheMaximumCellSize=%u"
+            LOG( LOG_INFO, "     GlyphCache caps::GlyphCache[%u].CacheMaximumCellSize=%u"
                , i, this->GlyphCache[i].CacheMaximumCellSize);
         }
-        LOG(LOG_INFO, "GlyphCache caps::FragCache %u", this->FragCache);
-        LOG(LOG_INFO, "GlyphCache caps::GlyphSupportLevel %u", this->GlyphSupportLevel);
-        LOG(LOG_INFO, "GlyphCache caps::pad2octets %u", this->pad2octets);
+        LOG(LOG_INFO, "     GlyphCache caps::FragCache %u", this->FragCache);
+        LOG(LOG_INFO, "     GlyphCache caps::GlyphSupportLevel %u", this->GlyphSupportLevel);
+        LOG(LOG_INFO, "     GlyphCache caps::pad2octets %u", this->pad2octets);
     }
 };  // struct GlyphCacheCaps

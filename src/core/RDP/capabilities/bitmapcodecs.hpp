@@ -467,7 +467,6 @@ struct BitmapCodecs {
     : bitmapCodecCount(0)  // actual number of entries (max 255) in the array in the next field
     {
     }
-
 };
 
 enum {
@@ -496,6 +495,6 @@ struct BitmapCodecCaps : public Capability {
 
     void log(const char * msg) const {
         LOG(LOG_INFO, "%s BitmapCodec caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "BitmapCodec caps::supportedBitmapCodecs %p", static_cast<void const*>(&this->supportedBitmapCodecs));
+        LOG(LOG_INFO, "     BitmapCodec caps::supportedBitmapCodecs %p", static_cast<void const*>(&this->supportedBitmapCodecs));
     }
 };

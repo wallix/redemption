@@ -110,6 +110,7 @@ add_src transport/socket_transport.cpp ;
 add_src utils/authorization_channels.cpp ;
 add_src utils/bitmap.cpp : <cxxflags>-std=c++14 ;
 add_src utils/bitmap_from_file.cpp : <cxxflags>-std=c++14 ;
+add_src utils/rle.cpp ;
 add_src utils/cfgloader.cpp ;
 add_src utils/confdescriptor.cpp ;
 add_src utils/d3des.cpp ;
