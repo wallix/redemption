@@ -210,30 +210,30 @@ RED_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         unsigned color = white;
         RED_CHECK_EQUAL(1, decompressor.get_fom_count_set(line_size, pmin, pmax, data+15, color, flags));
         RED_CHECK_EQUAL(white, color);
-        RED_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FILL), flags);
+        RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FILL), flags);
         RED_CHECK_EQUAL(2, decompressor.get_fom_count_set(line_size, pmin, pmax, data+14, color, flags));
         RED_CHECK_EQUAL(white, color);
-        RED_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
+        RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FOM), flags);
         decompressor.get_fom_masks(line_size, pmin, pmin+14, masks, 2);
         RED_CHECK_EQUAL(0x01, masks[0]);
 
 
         RED_CHECK_EQUAL(4, decompressor.get_fom_count_set(line_size, pmin, pmax, data+12, color, flags));
         RED_CHECK_EQUAL(white, color);
-        RED_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
+        RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FOM), flags);
         decompressor.get_fom_masks(line_size, pmin, pmin+12, masks, 4);
         RED_CHECK_EQUAL(0x07, masks[0]);
 
         RED_CHECK_EQUAL(5, decompressor.get_fom_count_set(line_size, pmin, pmax, data+11, color, flags));
         RED_CHECK_EQUAL(white, color);
-        RED_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
+        RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FOM), flags);
 
         RED_CHECK_EQUAL(6, decompressor.get_fom_count_set(line_size, pmin, pmax, data+10, color, flags));
         RED_CHECK_EQUAL(white, color);
-        RED_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
+        RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FOM), flags);
         RED_CHECK_EQUAL(12, decompressor.get_fom_count_set(line_size, pmin, pmax, data+4, color, flags));
         RED_CHECK_EQUAL(white, color);
-        RED_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags);
+        RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FOM), flags);
         decompressor.get_fom_masks(line_size, pmin, pmin+4, masks, 12);
         RED_CHECK_EQUAL(0xA5, masks[0]);
         RED_CHECK_EQUAL(0x07, masks[1]);
@@ -260,7 +260,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         foreground = white;
         RED_CHECK_EQUAL(4, decompressor.get_fom_count_set(line_size, pmin, pmax, p, foreground, flags));
         RED_CHECK_EQUAL(0x04, foreground);
-        RED_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_MIX), flags);
+        RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_MIX), flags);
     }
 
 
@@ -285,7 +285,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         unsigned flags = 0;
         RED_CHECK_EQUAL(2, decompressor.get_fom_count_set(line_size, pmin, pmax, p, foreground, flags));
         RED_CHECK_EQUAL(4, foreground);
-        RED_CHECK_EQUAL(static_cast<unsigned>(Bitmap::FLAG_FOM), flags); // MIX then FILL
+        RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FOM), flags); // MIX then FILL
     }
 }
 
@@ -3946,52 +3946,52 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapGetRun) {
     uint32_t run_length;
     uint32_t raw_bytes;
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("AAAABBCCCCCD"), 12, 0, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("AAAABBCCCCCD"), 12, 0, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(3,  run_length);
     RED_CHECK_EQUAL(1,  raw_bytes);
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("BBCCCCCD"), 8, 0, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("BBCCCCCD"), 8, 0, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(4,  run_length);
     RED_CHECK_EQUAL(3,  raw_bytes);
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("D"), 1, 0, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("D"), 1, 0, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(0,  run_length);
     RED_CHECK_EQUAL(1,  raw_bytes);
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("ABCDEFGHIJKL"), 12, 0, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("ABCDEFGHIJKL"), 12, 0, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(0,  run_length);
     RED_CHECK_EQUAL(12, raw_bytes);
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("ABCDEFGHIJKLMNOP"), 16, 0, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("ABCDEFGHIJKLMNOP"), 16, 0, run_length, raw_bytes);
     LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(0,  run_length);
     RED_CHECK_EQUAL(16, raw_bytes);
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("ABCDEFGHIJKLMNOOOOO"), 19, 0, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("ABCDEFGHIJKLMNOOOOO"), 19, 0, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(4,  run_length);
     RED_CHECK_EQUAL(15, raw_bytes);
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("\0\0\0\0\0\0\0\0"), 8, 0, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("\0\0\0\0\0\0\0\0"), 8, 0, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(8,  run_length);
     RED_CHECK_EQUAL(0,  raw_bytes);
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("AAABB"), 5, 0, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("AAABB"), 5, 0, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(0,  run_length);
     RED_CHECK_EQUAL(5,  raw_bytes);
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("\0\0\0\0\0\0\0\0"), 8, 0, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("\0\0\0\0\0\0\0\0"), 8, 0, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(8,  run_length);
     RED_CHECK_EQUAL(0,  raw_bytes);
 
-    Bitmap::get_run(reinterpret_cast<const uint8_t *>("\0\0\0\0\0\0\0\0"), 8, 0x64, run_length, raw_bytes);
+    RLEDecompressorImpl<0>{}.get_run(reinterpret_cast<const uint8_t *>("\0\0\0\0\0\0\0\0"), 8, 0x64, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(7,  run_length);
     RED_CHECK_EQUAL(1,  raw_bytes);
@@ -4005,7 +4005,7 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane) {
 
     StaticOutStream<1024> outbuffer;
 
-    Bitmap::compress_color_plane(100, 1, outbuffer, data);
+    RLEDecompressorImpl<0>{}.compress_color_plane(100, 1, outbuffer, data);
 
     uint8_t result[] = {
         0x1F, 0x41,
@@ -4026,7 +4026,7 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane1) {
 
     StaticOutStream<1024> outbuffer;
 
-    Bitmap::compress_color_plane(6, 3, outbuffer, data);
+    RLEDecompressorImpl<0>{}.compress_color_plane(6, 3, outbuffer, data);
 
     uint8_t result[] = {
         0x13, 0xFF,
@@ -4109,7 +4109,7 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane2) {
 
     StaticOutStream<1024> outbuffer;
 
-    Bitmap::compress_color_plane(32, 32, outbuffer, data);
+    RLEDecompressorImpl<0>{}.compress_color_plane(32, 32, outbuffer, data);
 
     uint8_t result[] = {
 /* 0000 */ 0x19, 0x08, 0x25, 0x60, 0xff, 0x28, 0x30, 0x08, 0x23, 0x28, 0xff, 0x0a, 0x24, 0x9e, 0x00, 0x38,  // ..%`.(0.#(..$..8

@@ -100,67 +100,6 @@ public:
     array_view<uint8_t const> data_compressed() const noexcept;
 
     void compute_sha1(uint8_t (&sig)[SslSha1::DIGEST_LENGTH]) const;
-
-
-// TODO move to rdp_bitmap_compressed.hpp
-// rdp_compress_bitmap(Bitmap, array_view)
-// Bitmap rdp_decompress_bitmap(array_view)
-
-    unsigned get_color_count(const uint8_t Bpp, const uint8_t *pmax, const uint8_t *p, unsigned color) const;
-    unsigned get_fill_count(const uint8_t Bpp, const uint8_t *pmin, const uint8_t *pmax, const uint8_t *p) const;
-    unsigned get_mix_count(const uint8_t Bpp, const uint8_t *pmin, const uint8_t *pmax, const uint8_t *p,
-                           unsigned foreground) const;
-
-    unsigned
-    get_bicolor_count(const uint8_t Bpp, const uint8_t *pmax, const uint8_t *p, unsigned color1, unsigned color2) const;
-
-    unsigned get_fom_count_set(const uint8_t Bpp, const uint8_t *pmin, const uint8_t *pmax, const uint8_t *p,
-                               unsigned &foreground, unsigned &flags) const;
-
-    static unsigned get_pixel(const uint8_t Bpp, const uint8_t *const p);
-
-    void
-    get_fom_masks(const uint8_t Bpp, const uint8_t *pmin, const uint8_t *p, uint8_t *mask, const unsigned count) const;
-
-    static void get_run(const uint8_t *data, uint16_t data_size, uint8_t last_raw, uint32_t &run_length,
-                        uint32_t &raw_bytes);
-
-    static void compress_color_plane(uint16_t cx, uint16_t cy, OutStream &outbuffer, uint8_t *color_plane);
-
-    unsigned get_pixel_above(const uint8_t Bpp, const uint8_t *pmin, const uint8_t *const p) const;
-    static void decompress_color_plane(uint16_t src_cx, uint16_t src_cy, const uint8_t *&data,
-                                       size_t &data_size, uint16_t cx, uint8_t *color_plane);
-
-    enum {
-        FLAG_NONE = 0,
-        FLAG_FILL = 1,
-        FLAG_MIX  = 2,
-        FLAG_FOM  = 3,
-        FLAG_MIX_SET = 6,
-        FLAG_FOM_SET = 7,
-        FLAG_COLOR = 8,
-        FLAG_BICOLOR = 9
-    };
-
-private:
-    void decompress(const uint8_t *input, uint16_t src_cx, uint16_t src_cy, size_t size) const;
-
-    template<class TBpp>
-    void decompress_(TBpp Bpp, const uint8_t *input, uint16_t src_cx, size_t size) const;
-
-    static void in_copy_color_plan(uint16_t src_cx, uint16_t src_cy, const uint8_t *&data,
-                                          size_t &data_size, uint16_t cx, uint8_t *color_plane);
-
-    void decompress60(uint16_t src_cx, uint16_t src_cy, const uint8_t *data, size_t data_size) const;
-
-    unsigned
-    get_fom_count(const uint8_t Bpp, const uint8_t *pmin, const uint8_t *pmax, const uint8_t *p, unsigned foreground,
-                  bool fill) const;
-
-    template<class TBpp>
-    void compress_(TBpp Bpp, OutStream &outbuffer) const;
-
-    void compress60(OutStream &outbuffer) const;
 };
 
 inline void swap(Bitmap & a, Bitmap & b) noexcept
