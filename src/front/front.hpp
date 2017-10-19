@@ -3217,7 +3217,6 @@ private:
                 if (bool(this->verbose)) {
                     this->client_info.multi_fragment_update_caps.log("Front::process_confirm_active: Receiving from client");
                 }
-//                this->use_multi_frag = true;
                 break;
             case CAPSETTYPE_LARGE_POINTER: /* 27 */
                 this->client_info.large_pointer_caps.recv(stream, capset_length);
