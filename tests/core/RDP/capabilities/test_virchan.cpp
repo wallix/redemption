@@ -35,8 +35,8 @@ RED_AUTO_TEST_CASE(TestCapabilityVirtualChannelEmit)
 
     RED_CHECK_EQUAL(virtualchannel_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_VIRTUALCHANNEL));
     RED_CHECK_EQUAL(virtualchannel_caps.len, static_cast<uint16_t>(CAPLEN_VIRTUALCHANNEL));
-    RED_CHECK_EQUAL(virtualchannel_caps.flags, static_cast<uint32_t>(2));
-    RED_CHECK_EQUAL(virtualchannel_caps.VCChunkSize, static_cast<uint32_t>(56897));
+    RED_CHECK_EQUAL(virtualchannel_caps.flags, static_cast<uint16_t>(2));
+    RED_CHECK_EQUAL(virtualchannel_caps.VCChunkSize, static_cast<uint16_t>(56897));
 
     StaticOutStream<1024> out_stream;
     virtualchannel_caps.emit(out_stream);
@@ -52,6 +52,6 @@ RED_AUTO_TEST_CASE(TestCapabilityVirtualChannelEmit)
     RED_CHECK_EQUAL(static_cast<uint16_t>(CAPLEN_VIRTUALCHANNEL), stream.in_uint16_le());
     virtualchannel_caps2.recv(stream, CAPLEN_VIRTUALCHANNEL);
 
-    RED_CHECK_EQUAL(virtualchannel_caps2.flags, static_cast<uint32_t>(2));
-    RED_CHECK_EQUAL(virtualchannel_caps2.VCChunkSize, static_cast<uint32_t>(56897));
+    RED_CHECK_EQUAL(virtualchannel_caps2.flags, static_cast<uint16_t>(2));
+    RED_CHECK_EQUAL(virtualchannel_caps2.VCChunkSize, static_cast<uint16_t>(56897));
 }

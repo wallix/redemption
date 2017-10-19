@@ -65,8 +65,8 @@ enum {
 };
 
 struct VirtualChannelCaps : public Capability {
-    uint32_t flags;
-    uint32_t VCChunkSize;
+    uint16_t flags;
+    uint16_t VCChunkSize;
 
     VirtualChannelCaps()
     : Capability(CAPSTYPE_VIRTUALCHANNEL, CAPLEN_VIRTUALCHANNEL)
@@ -79,15 +79,15 @@ struct VirtualChannelCaps : public Capability {
     {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
-        stream.out_uint32_le(this->flags);
-        stream.out_uint32_le(this->VCChunkSize);
+        stream.out_uint16_le(this->flags);
+        stream.out_uint16_le(this->VCChunkSize);
     }
 
     void recv(InStream & stream, uint16_t len)
     {
         this->len = len;
-        this->flags = stream.in_uint32_le();
-        this->VCChunkSize = stream.in_uint32_le();
+        this->flags = stream.in_uint16_le();
+        this->VCChunkSize = stream.in_uint16_le();
     }
 
     void log(const char * msg) const

@@ -76,6 +76,8 @@
 #include "core/RDP/capabilities/drawgdiplus.hpp"
 #include "core/RDP/capabilities/bitmapcachehostsupport.hpp"
 #include "core/RDP/capabilities/surfacecommands.hpp"
+#include "core/RDP/capabilities/bitmapcodecs.hpp"
+#include "core/RDP/capabilities/frameacknowledge.hpp"
 #include "core/RDP/capabilities/compdesk.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
 #include "core/RDPEA/audio_output.hpp"
@@ -5953,17 +5955,13 @@ public:
         autoclose_file autoclose{output_file};
 
         unsigned expected = 4; /* numberCapabilities(2) + pad2Octets(2) */
-        if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
 
         uint16_t ncapsets = stream.in_uint16_le();
         stream.in_skip_bytes(2); /* pad */
 
         for (uint16_t n = 0; n < ncapsets; n++) {
             expected = 4; /* capabilitySetType(2) + lengthCapability(2) */
+            LOG(LOG_INFO,  "!!!!!!!!!!! pre read");
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%zu",
                     expected, stream.in_remain());
@@ -5973,6 +5971,7 @@ public:
             uint16_t capset_type = stream.in_uint16_le();
             uint16_t capset_length = stream.in_uint16_le();
 
+
             expected = capset_length - 4 /* capabilitySetType(2) + lengthCapability(2) */;
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%zu",
@@ -5981,6 +5980,7 @@ public:
             }
 
             uint8_t const * next = stream.get_current() + expected;
+
             switch (capset_type) {
             case CAPSTYPE_GENERAL:
                 {
@@ -6168,6 +6168,24 @@ public:
                     }
                 }
                 break;
+            case CAPSETTYPE_BITMAP_CODECS:
+                {
+                    BitmapCodecCaps caps;
+                    caps.recv(stream, capset_length);
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                        caps.log("Receiving from server");
+                    }
+                }
+                break;
+            case CAPSETTYPE_FRAME_ACKNOWLEDGE:
+                {
+                    FrameAcknowledgeCaps caps;
+                    caps.recv(stream, capset_length);
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                        caps.log("Receiving from server");
+                    }
+                }
+                break;
             default:
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
                     LOG(LOG_WARNING,
@@ -6177,6 +6195,7 @@ public:
                 }
                 break;
             }
+            LOG(LOG_INFO, "!!!!!!!!!!!!!!get current = %lu, to skip = %ld ", stream.in_remain(), next - stream.get_current());
             stream.in_skip_bytes(next - stream.get_current());
         }
 

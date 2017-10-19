@@ -66,22 +66,34 @@ struct FontCaps : public Capability {
     {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
-        stream.out_uint16_le(this->fontSupportFlags);
-        stream.out_uint16_le(this->pad2octets);
+        if (this->len >= 6) {
+            stream.out_uint16_le(this->fontSupportFlags);
+        }
+        if (this->len >= 8) {
+            stream.out_uint16_le(this->pad2octets);
+        }
 
     }
 
     void recv(InStream & stream, uint16_t len)
     {
         this->len = len;
-        this->fontSupportFlags = stream.in_uint16_le();
-        this->pad2octets = stream.in_uint16_le();
+        if (this->len >= 6) {
+            this->fontSupportFlags = stream.in_uint16_le();
+        }
+        if (this->len >= 8) {
+            this->pad2octets = stream.in_uint16_le();
+        }
     }
 
     void log(const char * msg) const
     {
         LOG(LOG_INFO, "%s Font caps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "     Font caps::fontSupportFlags %u", this->fontSupportFlags);
-        LOG(LOG_INFO, "     Font caps::pad2octets %u", this->pad2octets);
+        if (this->len >= 6) {
+            LOG(LOG_INFO, "     Font caps::fontSupportFlags %u", this->fontSupportFlags);
+        }
+        if (this->len >= 8) {
+            LOG(LOG_INFO, "     Font caps::pad2octets %u", this->pad2octets);
+        }
     }
 };

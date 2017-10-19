@@ -467,7 +467,6 @@ struct BitmapCodecs {
     : bitmapCodecCount(0)  // actual number of entries (max 255) in the array in the next field
     {
     }
-
 };
 
 enum {
