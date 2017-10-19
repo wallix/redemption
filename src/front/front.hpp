@@ -4161,29 +4161,31 @@ protected:
     }
 
 public:
-    struct GlyphTo24Bitmap
+    class GlyphTo24Bitmap
     {
         // TODO BGRArray<256>
         uint8_t raw_data[256*3];
 
-        GlyphTo24Bitmap( FontChar const & fc
-                     , const BGRColor color_fore
-                     , const BGRColor color_back) {
+    public:
+        uint8_t const * data() const noexcept { return this->raw_data; }
 
-            for (int i = 0; i < 256*3; i += 3) {
+        GlyphTo24Bitmap(
+            FontChar const & fc,
+            const BGRColor color_fore,
+            const BGRColor color_back) noexcept
+        {
+            int const glyph_size = fc.width*fc.height*3;
+            assert(int(sizeof(this->raw_data)) <= glyph_size);
+
+            for (int i = 0; i < glyph_size; i += 3) {
                 this->raw_data[i  ] = color_fore.blue();
                 this->raw_data[i+1] = color_fore.green();
                 this->raw_data[i+2] = color_fore.red();
             }
 
-            int height_bitmap = fc.height;
-            //if (fc.width == 8) {
-                //height_bitmap *=  2;
-            //}
-
             const uint8_t * fc_data = fc.data.get();
 
-            for (int y = 0 ; y < height_bitmap; y++) {
+            for (int y = 0 ; y < fc.height; y++) {
                 uint8_t   fc_bit_mask        = 128;
                 for (int x = 0 ; x < fc.width; x++) {
                     if (!fc_bit_mask) {
@@ -4254,7 +4256,7 @@ protected:
                             rdpbd.bitmap_length  = rect.cx * rect.cy * 3;
 
                             const Rect tile(0, 0, rect.cx, rect.cy);
-                            Bitmap bmp(glyphBitmap.raw_data, fc.width, 16, 24, tile);
+                            Bitmap bmp(glyphBitmap.data(), fc.width, fc.height, 24, tile);
 
                             rdpbd.width          = bmp.cx();
                             rdpbd.height         = bmp.cy();
