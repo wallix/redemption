@@ -27,12 +27,14 @@
    color model.
 */
 
-#include "utils/bitmap_private_data.hpp"
-#include "utils/bitmap_from_rle.hpp"
+#include "utils/rle.hpp"
+#include "utils/bitmap_private_data.hpp" // aux_::bitmap_data_allocator
 #include "utils/stream.hpp"
+#include "utils/image_data_view.hpp"
+
+using std::size_t;
 
 namespace {
-
 // [MS-RDPEGDI] 2.2.2.5.1 RDP 6.0 Bitmap Compressed Bitmap Stream
 //  (RDP6_BITMAP_STREAM)
 // ==============================================================
@@ -245,78 +247,10 @@ void in_copy_color_plan(
     }
 }
 
-void decompress60(
-  Bitmap::PrivateData::Data & bmp_data,
-  uint16_t src_cx, uint16_t src_cy, const uint8_t *data, size_t data_size)
-{
-    //LOG(LOG_INFO, "bmp decompress60: cx=%u cy=%u data_size=%u", src_cx, src_cy, data_size);
-  REDASSERT((bmp_data.bpp() == 24) || (bmp_data.bpp() == 32));
-    //LOG(LOG_INFO, "data_size=%u src_cx=%u src_cy=%u", data_size, src_cx, src_cy);
-    //hexdump_d(data, data_size);
-    uint8_t FormatHeader = *data++;
-    data_size--;
-    uint8_t color_loss_level   =   (FormatHeader & 0x07);
-    bool    chroma_subsampling = (((FormatHeader & 0x08) >> 3) == 1);
-    bool    rle                = (((FormatHeader & 0x10) >> 4) == 1);
-    bool    no_alpha_plane     = (((FormatHeader & 0x20) >> 5) == 1);
-    //LOG(LOG_INFO, "FormatHeader=0x%02X color_loss_level=%d chroma_subsampling=%s rle=%s no_alpha_plane=%s",
-    //    FormatHeader, color_loss_level, (chroma_subsampling ? "yes" : "no"), (rle ? "yes" : "no"),
-    //    (no_alpha_plane ? "yes" : "no"));
-    if (color_loss_level || chroma_subsampling) {
-        LOG(LOG_INFO, "Unsupported compression options %d", color_loss_level & (chroma_subsampling << 3));
-        return;
-    }
-    const uint16_t cx = bmp_data.cx();
-    const uint16_t cy = bmp_data.cy();
-    const uint32_t color_plane_size = sizeof(uint8_t) * cx * cy;
-    struct Mem {
-        void * p; ~Mem() { aux_::bitmap_data_allocator.dealloc(p); }
-    } mem { aux_::bitmap_data_allocator.alloc(color_plane_size * 3) };
-    uint8_t * mem_color   = static_cast<uint8_t *>(mem.p);
-    uint8_t * red_plane   = mem_color + color_plane_size * 0;
-    uint8_t * green_plane = mem_color + color_plane_size * 1;
-    uint8_t * blue_plane  = mem_color + color_plane_size * 2;
-    if (rle) {
-        if (!no_alpha_plane) {
-            decompress_color_plane(src_cx, src_cy, data, data_size, cx, red_plane);
-        }
-        decompress_color_plane(src_cx, src_cy, data, data_size, cx, red_plane);
-        decompress_color_plane(src_cx, src_cy, data, data_size, cx, green_plane);
-        decompress_color_plane(src_cx, src_cy, data, data_size, cx, blue_plane);
-    }
-    else {
-        if (!no_alpha_plane) {
-            const uint32_t size = sizeof(uint8_t) * src_cx * src_cy;
-            data      += size;
-            data_size -= size;
-        }
-        in_copy_color_plan(src_cx, src_cy, data, data_size, cx, red_plane);
-        in_copy_color_plan(src_cx, src_cy, data, data_size, cx, green_plane);
-        in_copy_color_plan(src_cx, src_cy, data, data_size, cx, blue_plane);
-        data_size--;    // Pad
-    }
-    //LOG(LOG_INFO, "data_size=%u", data_size);
-    REDASSERT(!data_size);
-    uint8_t * r     = red_plane;
-    uint8_t * g     = green_plane;
-    uint8_t * b     = blue_plane;
-    uint8_t * pixel = bmp_data.get();
-    uint8_t   bpp   = nbbytes(bmp_data.bpp());
-    for (uint16_t y = 0; y < cy; y++) {
-        for (uint16_t x = 0; x < cx; x++) {
-            uint32_t color = (0xFFu << 24) | ((*r++) << 16) | ((*g++) << 8) | (*b++);
-            ::out_bytes_le(pixel, bpp, color);
-            pixel += bpp;
-        }
-    }
-    //LOG(LOG_INFO, "bmp decompress60: done");
-}
-
-
-template<int depth>
+template<int BitsPerPixel>
 struct RLEDecompressorImpl
 {
-  static constexpr std::integral_constant<uint8_t, nbbytes(depth)> Bpp = {};
+  static constexpr std::integral_constant<uint8_t, nbbytes(BitsPerPixel)> Bpp {};
 
 enum {
     FLAG_NONE = 0,
@@ -473,13 +407,13 @@ unsigned get_fom_count_set(std::size_t line_size, const uint8_t * pmin, const ui
 }
 
 void decompress_(
-  Bitmap::PrivateData::Data & bmp_data,
+  MutableImageDataView const & image,
   const uint8_t* input, uint16_t src_cx, size_t size)
 {
-  const uint16_t dst_cx = bmp_data.cx();
-    uint8_t* pmin = bmp_data.get();
-    uint8_t* pmax = pmin + bmp_data.bmp_size();
-    const size_t line_size = bmp_data.line_size();
+  const uint16_t dst_cx = image.width();
+    uint8_t* pmin = image.first_pixel();
+    uint8_t* pmax = pmin + image.pix_len();
+    const size_t line_size = image.line_size();
     uint16_t out_x_count = 0;
     unsigned yprev = 0;
     uint8_t* out = pmin;
@@ -715,7 +649,7 @@ void decompress_(
     return;
 }
 
-void compress_(Bitmap::PrivateData::Data & bmp_data, OutStream & outbuffer)
+void compress_(ConstImageDataView const & image, OutStream & outbuffer)
 {
     struct RLE_OutStream {
         OutStream & stream;
@@ -1046,8 +980,7 @@ void compress_(Bitmap::PrivateData::Data & bmp_data, OutStream & outbuffer)
             }
         }
     } out(outbuffer);
-    uint8_t * tmp_data_compressed = out.stream.get_current();
-    const uint8_t * pmin = bmp_data.get();
+    const uint8_t * pmin = image.data();
     const uint8_t * p = pmin;
     // white with the right length : either 0xFF or 0xFFFF or 0xFFFFFF
     unsigned foreground = ~(-1u << (Bpp*8));
@@ -1058,8 +991,8 @@ void compress_(Bitmap::PrivateData::Data & bmp_data, OutStream & outbuffer)
     const uint8_t * pmax = nullptr;
     uint32_t color = 0;
     uint32_t color2 = 0;
-    const size_t bmp_size = bmp_data.bmp_size();
-    const size_t align4_cx_bpp = align4(bmp_data.cx() * Bpp);
+    const size_t bmp_size = image.pix_len();
+    const size_t align4_cx_bpp = align4(image.width() * Bpp);
     for (int part = 0 ; part < 2 ; part++){
         // As far as I can see the specs of bitmap RLE compressor is crap here
         // Fill orders between first scanline and all others must be splitted
@@ -1077,7 +1010,7 @@ void compress_(Bitmap::PrivateData::Data & bmp_data, OutStream & outbuffer)
         }
         while (p < pmax)
         {
-            uint32_t fom_count = this->get_fom_count_set(bmp_data.line_size(), pmin, pmax, p, new_foreground, flags);
+            uint32_t fom_count = this->get_fom_count_set(image.line_size(), pmin, pmax, p, new_foreground, flags);
             if (nbbytes_large(fom_count) > sizeof(masks)) {
                 fom_count = sizeof(masks) * 8;
             }
@@ -1104,7 +1037,7 @@ void compress_(Bitmap::PrivateData::Data & bmp_data, OutStream & outbuffer)
             && fom_cost < copy_fom_cost) {
                 switch (flags){
                     case FLAG_FOM:
-                  this->get_fom_masks(bmp_data.line_size(), pmin, p, masks, fom_count);
+                  this->get_fom_masks(image.line_size(), pmin, p, masks, fom_count);
                         if (new_foreground != foreground){
                             flags = FLAG_FOM_SET;
                         }
@@ -1177,9 +1110,12 @@ void compress_(Bitmap::PrivateData::Data & bmp_data, OutStream & outbuffer)
             copy_count = 0;
         }
     }
-    // Memoize result of compression
-    bmp_data.copy_compressed_buffer(tmp_data_compressed, out.stream.get_current() - tmp_data_compressed);
 }
+
+};
+template<int BitsPerPixel>
+constexpr std::integral_constant<unsigned char, nbbytes(BitsPerPixel)>
+    RLEDecompressorImpl<BitsPerPixel>::Bpp;
 
 void get_run(
     const uint8_t * data, uint16_t data_size, uint8_t last_raw, uint32_t & run_length,
@@ -1329,40 +1265,16 @@ void compress_color_plane(uint16_t cx, uint16_t cy, OutStream & outbuffer, uint8
     //LOG(LOG_INFO, "compress_color_plane: exit");
 }
 
-};
-
-void decompress(
-    Bitmap::PrivateData::Data & bmp_data,
-    const uint8_t* input, uint16_t src_cx, uint16_t src_cy, size_t size)
-{
-    (void)src_cy;
-    switch (bmp_data.bpp()) {
-        case 8 : return RLEDecompressorImpl<8>{}.decompress_(bmp_data, input, src_cx, size);
-        case 15: return RLEDecompressorImpl<15>{}.decompress_(bmp_data, input, src_cx, size);
-        case 16: return RLEDecompressorImpl<16>{}.decompress_(bmp_data, input, src_cx, size);
-        default: return RLEDecompressorImpl<24>{}.decompress_(bmp_data, input, src_cx, size);
-    }
 }
 
-// TODO simplify and enhance compression using 1 pixel orders BLACK or WHITE.
-void compress(Bitmap::PrivateData::Data & bmp_data, OutStream & outbuffer)
-{
-    switch (bmp_data.bpp()) {
-        case 8 : return RLEDecompressorImpl<8 >{}.compress_(bmp_data, outbuffer);
-        case 15: return RLEDecompressorImpl<15>{}.compress_(bmp_data, outbuffer);
-        case 16: return RLEDecompressorImpl<16>{}.compress_(bmp_data, outbuffer);
-        default: return RLEDecompressorImpl<24>{}.compress_(bmp_data, outbuffer);
-    }
-}
-
-void compress60(Bitmap::PrivateData::Data & bmp_data, OutStream & outbuffer)
+void rle_compress60(ConstImageDataView const & image, OutStream & outbuffer)
 {
     //LOG(LOG_INFO, "bmp compress60");
-    REDASSERT((bmp_data.bpp() == 24) || (bmp_data.bpp() == 32));
-    uint8_t * tmp_data_compressed = outbuffer.get_current();
-    const uint16_t cx = bmp_data.cx();
-    const uint16_t cy = bmp_data.cy();
+    REDASSERT((image.bits_per_pixel() == 24) || (image.bits_per_pixel() == 32));
+    const uint16_t cx = image.width();
+    const uint16_t cy = image.height();
     const uint32_t color_plane_size = sizeof(uint8_t) * cx * cy;
+    // PERF allocation is unnecessary
     struct Mem {
         void * p; ~Mem() { aux_::bitmap_data_allocator.dealloc(p); }
     } mem { aux_::bitmap_data_allocator.alloc(color_plane_size * 3) };
@@ -1370,8 +1282,8 @@ void compress60(Bitmap::PrivateData::Data & bmp_data, OutStream & outbuffer)
     uint8_t * red_plane   = mem_color + color_plane_size * 0;
     uint8_t * green_plane = mem_color + color_plane_size * 1;
     uint8_t * blue_plane  = mem_color + color_plane_size * 2;
-    const uint8_t   byte_per_color = nbbytes(bmp_data.bpp());
-    const uint8_t * data = bmp_data.get();
+    const uint8_t   byte_per_color = image.bytes_per_pixel();
+    const uint8_t * data = image.data();
     uint8_t * pixel_over_red_plane   = red_plane;
     uint8_t * pixel_over_green_plane = green_plane;
     uint8_t * pixel_over_blue_plane  = blue_plane;
@@ -1403,18 +1315,100 @@ void compress60(Bitmap::PrivateData::Data & bmp_data, OutStream & outbuffer)
           (1 << 5)  // No alpha plane
         | (1 << 4)  // RLE
         );
-    RLEDecompressorImpl<0>{}.compress_color_plane(cx, cy, outbuffer, red_plane);
-    RLEDecompressorImpl<0>{}.compress_color_plane(cx, cy, outbuffer, green_plane);
-    RLEDecompressorImpl<0>{}.compress_color_plane(cx, cy, outbuffer, blue_plane);
-    // Memoize result of compression
-    bmp_data.copy_compressed_buffer(tmp_data_compressed, outbuffer.get_current() - tmp_data_compressed);
+    compress_color_plane(cx, cy, outbuffer, red_plane);
+    compress_color_plane(cx, cy, outbuffer, green_plane);
+    compress_color_plane(cx, cy, outbuffer, blue_plane);
     //LOG(LOG_INFO, "data_compressedsize=%u", this->data_compressedsize);
     //LOG(LOG_INFO, "bmp compress60: done");
 }
 
+void rle_decompress60(
+  MutableImageDataView const & image,
+  uint16_t src_cx, uint16_t src_cy, const uint8_t *data, size_t data_size)
+{
+    //LOG(LOG_INFO, "bmp decompress60: cx=%u cy=%u data_size=%u", src_cx, src_cy, data_size);
+  REDASSERT((image.bits_per_pixel() == 24) || (image.bits_per_pixel() == 32));
+    //LOG(LOG_INFO, "data_size=%u src_cx=%u src_cy=%u", data_size, src_cx, src_cy);
+    //hexdump_d(data, data_size);
+    uint8_t FormatHeader = *data++;
+    data_size--;
+    uint8_t color_loss_level   =   (FormatHeader & 0x07);
+    bool    chroma_subsampling = (((FormatHeader & 0x08) >> 3) == 1);
+    bool    rle                = (((FormatHeader & 0x10) >> 4) == 1);
+    bool    no_alpha_plane     = (((FormatHeader & 0x20) >> 5) == 1);
+    //LOG(LOG_INFO, "FormatHeader=0x%02X color_loss_level=%d chroma_subsampling=%s rle=%s no_alpha_plane=%s",
+    //    FormatHeader, color_loss_level, (chroma_subsampling ? "yes" : "no"), (rle ? "yes" : "no"),
+    //    (no_alpha_plane ? "yes" : "no"));
+    if (color_loss_level || chroma_subsampling) {
+        LOG(LOG_INFO, "Unsupported compression options %d", color_loss_level & (chroma_subsampling << 3));
+        return;
+    }
+    const uint16_t cx = image.width();
+    const uint16_t cy = image.height();
+    const uint32_t color_plane_size = sizeof(uint8_t) * cx * cy;
+    struct Mem {
+        void * p; ~Mem() { aux_::bitmap_data_allocator.dealloc(p); }
+    } mem { aux_::bitmap_data_allocator.alloc(color_plane_size * 3) };
+    uint8_t * mem_color   = static_cast<uint8_t *>(mem.p);
+    uint8_t * red_plane   = mem_color + color_plane_size * 0;
+    uint8_t * green_plane = mem_color + color_plane_size * 1;
+    uint8_t * blue_plane  = mem_color + color_plane_size * 2;
+    if (rle) {
+        if (!no_alpha_plane) {
+            decompress_color_plane(src_cx, src_cy, data, data_size, cx, red_plane);
+        }
+        decompress_color_plane(src_cx, src_cy, data, data_size, cx, red_plane);
+        decompress_color_plane(src_cx, src_cy, data, data_size, cx, green_plane);
+        decompress_color_plane(src_cx, src_cy, data, data_size, cx, blue_plane);
+    }
+    else {
+        if (!no_alpha_plane) {
+            const uint32_t size = sizeof(uint8_t) * src_cx * src_cy;
+            data      += size;
+            data_size -= size;
+        }
+        in_copy_color_plan(src_cx, src_cy, data, data_size, cx, red_plane);
+        in_copy_color_plan(src_cx, src_cy, data, data_size, cx, green_plane);
+        in_copy_color_plan(src_cx, src_cy, data, data_size, cx, blue_plane);
+        data_size--;    // Pad
+    }
+    //LOG(LOG_INFO, "data_size=%u", data_size);
+    REDASSERT(!data_size);
+    uint8_t * r     = red_plane;
+    uint8_t * g     = green_plane;
+    uint8_t * b     = blue_plane;
+    uint8_t * pixel = image.first_pixel();
+    uint8_t   bpp   = image.bytes_per_pixel();
+    for (uint16_t y = 0; y < cy; y++) {
+        for (uint16_t x = 0; x < cx; x++) {
+            uint32_t color = (0xFFu << 24) | ((*r++) << 16) | ((*g++) << 8) | (*b++);
+            ::out_bytes_le(pixel, bpp, color);
+            pixel += bpp;
+        }
+    }
+    //LOG(LOG_INFO, "bmp decompress60: done");
 }
 
-Bitmap bitmap_from_rle(
-    uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette,
-    uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size,
-    bool compressed);
+void rle_decompress(
+    MutableImageDataView const & image,
+    const uint8_t* input, uint16_t src_cx, uint16_t src_cy, size_t size)
+{
+    (void)src_cy;
+    switch (image.bits_per_pixel()) {
+        case 8 : return RLEDecompressorImpl<8>{}.decompress_(image, input, src_cx, size);
+        case 15: return RLEDecompressorImpl<15>{}.decompress_(image, input, src_cx, size);
+        case 16: return RLEDecompressorImpl<16>{}.decompress_(image, input, src_cx, size);
+        default: return RLEDecompressorImpl<24>{}.decompress_(image, input, src_cx, size);
+    }
+}
+
+// TODO simplify and enhance compression using 1 pixel orders BLACK or WHITE.
+void rle_compress(ConstImageDataView const & image, OutStream & outbuffer)
+{
+    switch (image.bits_per_pixel()) {
+        case 8 : return RLEDecompressorImpl<8 >{}.compress_(image, outbuffer);
+        case 15: return RLEDecompressorImpl<15>{}.compress_(image, outbuffer);
+        case 16: return RLEDecompressorImpl<16>{}.compress_(image, outbuffer);
+        default: return RLEDecompressorImpl<24>{}.compress_(image, outbuffer);
+    }
+}

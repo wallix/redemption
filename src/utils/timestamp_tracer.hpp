@@ -51,13 +51,13 @@ class TimestampTracer {
     const unsigned int rowsize;
 
 public:
-    TimestampTracer(gdi::ImageDataView const & image_view)
+    TimestampTracer(MutableImageDataView const & image_view)
     : previous_timestamp_length(0)
     , width(image_view.width())
     , height(image_view.height())
     , bpp(image_view.bytes_per_pixel())
     , pixels(image_view.first_pixel())
-    , rowsize(image_view.rowsize()) {
+    , rowsize(image_view.line_size()) {
         memset(this->timestamp_data, 0xFF, sizeof(this->timestamp_data));
         memset(this->previous_timestamp, 0x07, sizeof(this->previous_timestamp));
     }

@@ -31,12 +31,14 @@
 #include "utils/bitmap_private_data.hpp"
 #include "utils/bitmap_data_allocator.hpp"
 
-#include "utils/log.hpp"
 #include "utils/bitfu.hpp"
-#include "utils/colors.hpp"
-#include "utils/stream.hpp"
-#include "utils/rect.hpp"
 #include "utils/bitmap_data_allocator.hpp"
+#include "utils/colors.hpp"
+#include "utils/image_data_view.hpp"
+#include "utils/log.hpp"
+#include "utils/rect.hpp"
+#include "utils/rle.hpp"
+#include "utils/stream.hpp"
 #include "utils/sugar/array_view.hpp"
 
 #include "cxx/cxx.hpp"
@@ -113,9 +115,6 @@ void Bitmap::swap(Bitmap & other) noexcept
     swap(this->data_bitmap, other.data_bitmap);
 }
 
-// TODO
-#include "utils/bitmap_from_rle.hpp"
-
 Bitmap::Bitmap(
     uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette,
     uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size,
@@ -133,14 +132,23 @@ Bitmap::Bitmap(
             this->data_bitmap->palette() = BGRPalette::classic_332();
         }
     }
+
     //LOG(LOG_INFO, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, size, bpp);
     if (compressed) {
         this->data_bitmap->copy_compressed_buffer(data, size);
+        MutableImageDataView const image_view{
+            this->data_bitmap->get(),
+            this->cx(),
+            this->cy(),
+            this->line_size(),
+            ConstImageDataView::BitsPerPixel(this->bpp())
+        };
+
         if ((session_color_depth == 32) && ((bpp == 24) || (bpp == 32))) {
-            ::decompress60(*this->data_bitmap, cx, cy, data, size);
+            rle_decompress60(image_view, cx, cy, data, size);
         }
         else {
-            ::decompress(*this->data_bitmap, data, cx, cy, size);
+            rle_decompress(image_view, data, cx, cy, size);
         }
     } else {
         uint8_t * dest = this->data_bitmap->get();
@@ -274,12 +282,27 @@ void Bitmap::compress(uint8_t session_color_depth, OutStream & outbuffer) const
         outbuffer.out_copy_bytes(this->data_bitmap->compressed_data(), this->data_bitmap->compressed_size());
         return;
     }
+
+    uint8_t * tmp_data_compressed = outbuffer.get_current();
+
+    ConstImageDataView const image_view{
+        this->data(),
+        this->cx(),
+        this->cy(),
+        this->line_size(),
+        ConstImageDataView::BitsPerPixel(this->bpp())
+    };
+
     if ((session_color_depth == 32) && ((this->bpp() == 24) || (this->bpp() == 32))) {
-        ::compress60(*this->data_bitmap, outbuffer);
+        rle_compress60(image_view, outbuffer);
     }
     else {
-        ::compress(*this->data_bitmap, outbuffer);
+        rle_compress(image_view, outbuffer);
     }
+
+    // Memoize result of compression
+    this->data_bitmap->copy_compressed_buffer(
+        tmp_data_compressed, outbuffer.get_current() - tmp_data_compressed);
 }
 
 void Bitmap::compute_sha1(uint8_t (&sig)[SslSha1::DIGEST_LENGTH]) const

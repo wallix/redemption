@@ -58,6 +58,7 @@ extern "C" {
 #define av_guess_format guess_format
 #endif
 
+#include "utils/image_data_view.hpp"
 #include "utils/log.hpp"
 #include "core/error.hpp"
 #include "cxx/diagnostic.hpp"
@@ -92,7 +93,7 @@ video_recorder::AVFramePtr::~AVFramePtr()
 
 video_recorder::video_recorder(
     write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,
-    gdi::ConstImageDataView const & image_view, int bitrate,
+    ConstImageDataView const & image_view, int bitrate,
     int frame_rate, int qscale, const char * codec_id,
     const int target_width, const int target_height,
     int log_level

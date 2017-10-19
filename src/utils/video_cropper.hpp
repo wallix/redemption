@@ -101,7 +101,7 @@ private:
             static_cast<uint16_t>(this->out_width),
             static_cast<uint16_t>(this->out_height),
             this->out_rowsize_4_bytes_aligned,
-            static_cast<uint8_t>(this->bytes_per_pixel)
+            typename ImgView::BytesPerPixel(this->bytes_per_pixel)
         };
     }
 

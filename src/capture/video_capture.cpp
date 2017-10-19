@@ -681,7 +681,7 @@ void SequencedVideoCaptureImpl::scale_dump24()
         image_view.width(),
         this->ic_scaled_height,
         image_view.height(),
-        image_view.rowsize());
+        image_view.line_size());
     ::dump_png24(
         this->ic_trans, this->ic_scaled_buffer.get(),
         this->ic_scaled_width, this->ic_scaled_height,
