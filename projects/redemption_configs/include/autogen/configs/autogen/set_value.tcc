@@ -753,6 +753,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::client::bogus_ios_glyph_support_level&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "transform_glyph_to_bitmap")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::client::transform_glyph_to_bitmap&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::client::transform_glyph_to_bitmap&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "bogus_number_of_fastpath_input_event")) {
             ::configs::parse_and_log(
                 context, key,

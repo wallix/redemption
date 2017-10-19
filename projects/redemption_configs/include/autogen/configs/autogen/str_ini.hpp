@@ -243,6 +243,9 @@
 
 "#bogus_ios_glyph_support_level = 1\n\n"
 
+"#_advanced\n"
+"#transform_glyph_to_bitmap = 0\n\n"
+
 "#   0: disabled\n"
 "#   1: pause key only\n"
 "#   2: all input events\n"
@@ -394,7 +397,7 @@
 "#   1: disconnect user\n"
 "#   2: freeze connection and wait\n"
 "#_hidden\n"
-"#session_probe_on_keepalive_timeout = 2\n\n"
+"#session_probe_on_keepalive_timeout = 1\n\n"
 
 "# End automatically a disconnected session\n"
 "#_hidden\n"

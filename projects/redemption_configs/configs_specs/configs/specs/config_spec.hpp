@@ -256,6 +256,9 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, no_sesman, type_<bool>(), "bogus_ios_glyph_support_level", set(true));
         W.sep();
 
+        W.member(advanced_in_gui, no_sesman, type_<bool>(), "transform_glyph_to_bitmap", set(false));
+        W.sep();
+
         W.member(ini_and_gui, no_sesman, type_<BogusNumberOfFastpathInputEvent>(), "bogus_number_of_fastpath_input_event", set(BogusNumberOfFastpathInputEvent::pause_key_only));
         W.sep();
 

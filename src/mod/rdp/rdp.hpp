@@ -4669,7 +4669,10 @@ public:
                     glyphcache_caps = this->client_glyph_cache_caps;
 
                     glyphcache_caps.FragCache         = 0;  // Not yet supported
-                    glyphcache_caps.GlyphSupportLevel &= GlyphCacheCaps::GLYPH_SUPPORT_PARTIAL;
+//                    glyphcache_caps.GlyphSupportLevel &= GlyphCacheCaps::GLYPH_SUPPORT_PARTIAL;
+                    if (glyphcache_caps.GlyphSupportLevel != GlyphCacheCaps::GLYPH_SUPPORT_NONE) {
+                        glyphcache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_PARTIAL;
+                    }
                 }
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
                     glyphcache_caps.log("Sending to server");

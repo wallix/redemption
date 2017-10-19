@@ -1029,6 +1029,18 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
+    /// type: bool <br/>
+    /// value{0} <br/>
+    struct client::transform_glyph_to_bitmap {
+        static constexpr bool is_sesman_to_proxy() { return 0; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "client"; }
+        static constexpr char const * name() { return "transform_glyph_to_bitmap"; }
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{0};
+    };
     /// type: BogusNumberOfFastpathInputEvent <br/>
     /// value{static_cast<type>(1)} <br/>
     struct client::bogus_number_of_fastpath_input_event {
@@ -1586,7 +1598,7 @@ namespace cfg {
     /// AUTHID_MOD_RDP_SESSION_PROBE_ON_KEEPALIVE_TIMEOUT <br/>
     /// type: SessionProbeOnKeepaliveTimeout <br/>
     /// sesman -> proxy <br/>
-    /// value{static_cast<type>(2)} <br/>
+    /// value{static_cast<type>(1)} <br/>
     struct mod_rdp::session_probe_on_keepalive_timeout {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -1598,7 +1610,7 @@ namespace cfg {
         using type = SessionProbeOnKeepaliveTimeout;
         using sesman_and_spec_type = SessionProbeOnKeepaliveTimeout;
         using mapped_type = sesman_and_spec_type;
-        type value{static_cast<type>(2)};
+        type value{static_cast<type>(1)};
     };
     /// End automatically a disconnected session <br/>
     /// AUTHID_MOD_RDP_SESSION_PROBE_END_DISCONNECTED_SESSION <br/>
@@ -4291,6 +4303,7 @@ struct client
 , cfg::client::show_target_user_in_f12_message
 , cfg::client::enable_new_pointer_update
 , cfg::client::bogus_ios_glyph_support_level
+, cfg::client::transform_glyph_to_bitmap
 , cfg::client::bogus_number_of_fastpath_input_event
 , cfg::client::recv_timeout
 { static constexpr bool is_section = true; };
