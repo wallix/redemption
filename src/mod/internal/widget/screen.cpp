@@ -189,21 +189,28 @@ void WidgetScreen::allow_mouse_pointer_change(bool allow)
     this->allow_mouse_pointer_change_ = allow;
 }
 
-void WidgetScreen::redo_mouse_pointer_change()
+void WidgetScreen::redo_mouse_pointer_change(int x, int y)
 {
-    const Pointer* pointer = &this->normal_pointer;
+    Widget * w = this->last_widget_at_pos(x, y);
+    if (this->current_over != w) {
+        const Pointer* pointer = &this->normal_pointer;
 
-    if (nullptr != this->current_over) {
-        if (Pointer::POINTER_EDIT == this->current_over->pointer_flag) {
-            pointer = &this->edit_pointer;
-        }
-        else if (Pointer::POINTER_CUSTOM == this->current_over->pointer_flag) {
-            const Pointer* temp_pointer = this->current_over->get_pointer();
-            if (temp_pointer) {
-                pointer = temp_pointer;
+        if (nullptr != w) {
+            if (Pointer::POINTER_EDIT == w->pointer_flag) {
+                pointer = &this->edit_pointer;
+            }
+            else if (Pointer::POINTER_CUSTOM == w->pointer_flag) {
+                const Pointer* temp_pointer = w->get_pointer();
+                if (temp_pointer) {
+                    pointer = temp_pointer;
+                }
             }
         }
-    }
 
-    this->drawable.set_pointer(*pointer);
+        if (this->allow_mouse_pointer_change_) {
+            this->drawable.set_pointer(*pointer);
+        }
+
+        this->current_over = w;
+    }
 }

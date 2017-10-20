@@ -63,5 +63,5 @@ public:
 
     void allow_mouse_pointer_change(bool allow);
 
-    void redo_mouse_pointer_change();
+    void redo_mouse_pointer_change(int x, int y);
 };

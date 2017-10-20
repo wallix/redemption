@@ -115,6 +115,13 @@ public:
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
 
+    void set_pointer(Pointer const & pointer) override
+    {
+        if (this->drawable) {
+            this->drawable->set_pointer(pointer);
+        }
+    }
+
     RemoteProgramsSessionManager(FrontAPI& front, mod_api& mod, Translation::language_t lang,
                                  Font const & font, Theme const & theme, AuthApi & authentifier,
                                  char const * session_probe_window_title,

@@ -148,7 +148,7 @@ void LocallyIntegrableMod::rdp_input_mouse(int device_flags, int x, int y, Keyma
             }
             else {
                 if (MouseOwner::WidgetModule != this->current_mouse_owner) {
-                    this->redo_mouse_pointer_change();
+                    this->redo_mouse_pointer_change(x, y);
                 }
 
                 this->current_mouse_owner = MouseOwner::WidgetModule;
