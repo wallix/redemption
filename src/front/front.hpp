@@ -4177,16 +4177,10 @@ public:
             int const glyph_size = fc.width*fc.height*3;
             assert(int(sizeof(this->raw_data)) <= glyph_size);
 
-            for (int i = 0; i < glyph_size; i += 3) {
-                this->raw_data[i  ] = color_fore.blue();
-                this->raw_data[i+1] = color_fore.green();
-                this->raw_data[i+2] = color_fore.red();
-            }
-
             const uint8_t * fc_data = fc.data.get();
 
             for (int y = 0 ; y < fc.height; y++) {
-                uint8_t   fc_bit_mask        = 128;
+                uint8_t fc_bit_mask = 128;
                 for (int x = 0 ; x < fc.width; x++) {
                     if (!fc_bit_mask) {
                         fc_data++;
@@ -4196,11 +4190,11 @@ public:
                     const uint16_t xpix = x * 3;
                     const uint16_t ypix = y * fc.width * 3;
 
-                    if (fc_bit_mask & *fc_data) {
-                        this->raw_data[xpix + ypix    ] = color_back.blue();
-                        this->raw_data[xpix + ypix + 1] = color_back.green();
-                        this->raw_data[xpix + ypix + 2] = color_back.red();
-                    }
+                    const BGRColor color = (fc_bit_mask & *fc_data) ? color_back : color_fore;
+                    this->raw_data[xpix + ypix    ] = color.blue();
+                    this->raw_data[xpix + ypix + 1] = color.green();
+                    this->raw_data[xpix + ypix + 2] = color.red();
+
                     fc_bit_mask >>= 1;
                 }
                 fc_data++;
