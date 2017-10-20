@@ -1968,8 +1968,6 @@ public:
             return;
         }
 
-        //int rowYCoord(drect.y + drect.cy-1);
-
         QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
         QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
         QImage dstBitmap(this->screen->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
@@ -1983,23 +1981,24 @@ public:
         }
         dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
 
-        srcBitmap = srcBitmap.mirrored(false, true);
+        QImage srcBitmapMirrored = srcBitmap.mirrored(false, true);
 
-        std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(srcBitmap.bytesPerLine() * drect.cy);
+        uchar data[1600*900*3];
 
-        const uchar * srcData = srcBitmap.constBits();
+        //std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(srcBitmapMirrored.bytesPerLine() * drect.cy);
+
+        const uchar * srcData = srcBitmapMirrored.constBits();
         const uchar * dstData = dstBitmap.constBits();
 
         int data_len = bitmap.line_size() * mincy;
         Op op;
         for (int i = 0; i < data_len; i++) {
-
             data[i] = op.op(srcData[i], dstData[i]);
         }
 
-        QImage image(data.get(), mincx, mincy, srcBitmap.format());
-
+        QImage image(data, mincx, mincy, srcBitmapMirrored.format());
         QRect trect(drect.x, drect.y, mincx, mincy);
+
         if (this->connected) {
              this->screen->paintCache().drawImage(trect, image);
         }
