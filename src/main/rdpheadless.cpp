@@ -480,7 +480,7 @@ int main(int argc, char** argv)
     std::string out_path;
 
     int keep_alive_frequence = 100;
-    int index = 0;
+    std::string index = "0";
 
 
     Inifile ini;
@@ -813,7 +813,7 @@ int main(int argc, char** argv)
 
         cli::option("index")
         .help("Set an index to identify this client among clients logs")
-        .action(cli::arg([&](int i){ index = i; }))
+        .action(cli::arg("path", [&](std::string s){ index = std::move(s); }))
     );
 
     auto cli_result = cli::parse(options, argc, argv);
@@ -1264,6 +1264,7 @@ int run_mod(mod_api & mod, TestClientCLI & front, int sck, EventList & /*al*/, b
 
             std::cout << " RDP Session Log On." << std::endl;
             if (quick_connection_test) {
+                std::cout << "quick_connection_test" <<  std::endl;
                 return 0;
             }
             break;

@@ -2046,9 +2046,6 @@ public:
         }
     }
 
-
-
-
 //     QColor u32_to_qcolor_r(RDPColor color) {
 //         BGRColor_ bgr = color_decode(color, this->info.bpp, this->mod_palette);
 //         return {bgr.blue(), bgr.green(), bgr.red()};
