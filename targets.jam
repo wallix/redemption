@@ -3911,6 +3911,11 @@ test-run tests/utils/test_confdescriptor :
   <library>src/utils/confdescriptor.o
   <library>src/utils/hexdump.o
 ;
+test-run tests/utils/test_contiguous_sub_rect_f :
+  $(REDEMPTION_TEST_PATH)/utils/test_contiguous_sub_rect_f.cpp
+:
+  <covfile>src/utils/contiguous_sub_rect_f.hpp
+;
 test-run tests/utils/test_d3des :
   $(REDEMPTION_TEST_PATH)/utils/test_d3des.cpp
 :
@@ -4775,6 +4780,8 @@ alias test_compression_transport_builder : tests/utils/test_compression_transpor
 alias test_compression_transport_builder.coverage : tests/utils/test_compression_transport_builder.coverage ;
 alias test_confdescriptor : tests/utils/test_confdescriptor ;
 alias test_confdescriptor.coverage : tests/utils/test_confdescriptor.coverage ;
+alias test_contiguous_sub_rect_f : tests/utils/test_contiguous_sub_rect_f ;
+alias test_contiguous_sub_rect_f.coverage : tests/utils/test_contiguous_sub_rect_f.coverage ;
 alias test_d3des : tests/utils/test_d3des ;
 alias test_d3des.coverage : tests/utils/test_d3des.coverage ;
 alias test_diffiehellman : tests/utils/test_diffiehellman ;
@@ -5223,6 +5230,7 @@ alias tests/utils :
   tests/utils/test_colors
   tests/utils/test_compression_transport_builder
   tests/utils/test_confdescriptor
+  tests/utils/test_contiguous_sub_rect_f
   tests/utils/test_d3des
   tests/utils/test_diffiehellman
   tests/utils/test_difftimeval
