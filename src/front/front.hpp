@@ -25,92 +25,94 @@
 
 #pragma once
 
-#include "utils/log.hpp"
-
-#include <memory>
-
-#include "openssl_tls.hpp"
-#include "utils/stream.hpp"
-#include "transport/transport.hpp"
-#include "core/app_path.hpp"
-#include "core/RDP/x224.hpp"
-#include "core/RDP/nego.hpp"
-#include "core/RDP/mcs.hpp"
-#include "core/RDP/lic.hpp"
-#include "core/channel_list.hpp"
-#include "core/RDP/gcc.hpp"
-#include "core/RDP/sec.hpp"
-#include "utils/colors.hpp"
-#include "core/RDP/fastpath.hpp"
-#include "core/RDP/slowpath.hpp"
-
-#include "utils/crypto/ssl_lib.hpp"
-#include "utils/bitfu.hpp"
-#include "utils/rect.hpp"
 #include "capture/capture.hpp"
-#include "core/font.hpp"
-#include "utils/bitmap.hpp"
-#include "core/RDP/caches/bmpcache.hpp"
-#include "core/RDP/caches/bmpcachepersister.hpp"
-#include "core/RDP/caches/glyphcache.hpp"
-#include "core/RDP/caches/pointercache.hpp"
-#include "core/RDP/caches/brushcache.hpp"
-#include "core/channel_names.hpp"
-#include "core/client_info.hpp"
+#include "capture/cryptofile.hpp"
+#include "capture/params_from_ini.hpp"
+
 #include "configs/config.hpp"
-#include "core/error.hpp"
-#include "core/callback.hpp"
-#include "utils/colors.hpp"
-#include "utils/confdescriptor.hpp"
-#include "transport/in_file_transport.hpp"
-#include "utils/pattutils.hpp"
 
 #include "core/RDP/GraphicUpdatePDU.hpp"
-#include "core/RDP/tpdu_buffer.hpp"
+#include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/PersistentKeyListPDU.hpp"
-#include "core/RDP/remote_programs.hpp"
+#include "core/RDP/SaveSessionInfoPDU.hpp"
 #include "core/RDP/SaveSessionInfoPDU.hpp"
 #include "core/RDP/SuppressOutputPDU.hpp"
 
-#include "core/RDP/capabilities/cap_bmpcache.hpp"
-#include "core/RDP/capabilities/offscreencache.hpp"
-#include "core/RDP/capabilities/bmpcache2.hpp"
+#include "core/RDP/caches/bmpcache.hpp"
+#include "core/RDP/caches/bmpcachepersister.hpp"
+#include "core/RDP/caches/brushcache.hpp"
+#include "core/RDP/caches/glyphcache.hpp"
+#include "core/RDP/caches/pointercache.hpp"
+
 #include "core/RDP/capabilities/bitmapcachehostsupport.hpp"
-#include "core/RDP/capabilities/colcache.hpp"
-#include "core/RDP/capabilities/pointer.hpp"
-#include "core/RDP/capabilities/cap_share.hpp"
+#include "core/RDP/capabilities/bmpcache2.hpp"
+#include "core/RDP/capabilities/cap_bmpcache.hpp"
 #include "core/RDP/capabilities/cap_brushcache.hpp"
-#include "core/RDP/capabilities/input.hpp"
-#include "core/RDP/capabilities/multifragmentupdate.hpp"
-#include "core/RDP/capabilities/compdesk.hpp"
 #include "core/RDP/capabilities/cap_font.hpp"
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
+#include "core/RDP/capabilities/cap_share.hpp"
+#include "core/RDP/capabilities/colcache.hpp"
+#include "core/RDP/capabilities/compdesk.hpp"
+#include "core/RDP/capabilities/input.hpp"
+#include "core/RDP/capabilities/largepointer.hpp"
+#include "core/RDP/capabilities/multifragmentupdate.hpp"
+#include "core/RDP/capabilities/offscreencache.hpp"
+#include "core/RDP/capabilities/pointer.hpp"
 #include "core/RDP/capabilities/rail.hpp"
 #include "core/RDP/capabilities/window.hpp"
-#include "core/RDP/capabilities/largepointer.hpp"
 
-#include "core/RDP/SaveSessionInfoPDU.hpp"
-
-#include "core/front_api.hpp"
-#include "utils/genrandom.hpp"
-
-#include "core/report_message_api.hpp"
-
-#include "keyboard/keymap2.hpp"
-
+#include "core/RDP/fastpath.hpp"
+#include "core/RDP/gcc.hpp"
+#include "core/RDP/lic.hpp"
+#include "core/RDP/mcs.hpp"
 #include "core/RDP/mppc.hpp"
+#include "core/RDP/nego.hpp"
+#include "core/RDP/remote_programs.hpp"
+#include "core/RDP/sec.hpp"
+#include "core/RDP/slowpath.hpp"
+#include "core/RDP/tpdu_buffer.hpp"
+#include "core/RDP/x224.hpp"
 
-#include "core/RDP/MonitorLayoutPDU.hpp"
-#include "utils/timeout.hpp"
-#include "utils/genfstat.hpp"
-#include "utils/sugar/cast.hpp"
-#include "utils/sugar/underlying_cast.hpp"
-#include "utils/sugar/not_null_ptr.hpp"
+#include "core/app_path.hpp"
+#include "core/callback.hpp"
+#include "core/channel_list.hpp"
+#include "core/channel_names.hpp"
+#include "core/client_info.hpp"
+#include "core/error.hpp"
+#include "core/font.hpp"
+#include "core/front_api.hpp"
+#include "core/report_message_api.hpp"
 
 #include "gdi/clip_from_cmd.hpp"
 
-#include "capture/params_from_ini.hpp"
-#include "capture/cryptofile.hpp"
+#include "keyboard/keymap2.hpp"
+
+#include "openssl_tls.hpp"
+#include "utils/crypto/ssl_lib.hpp"
+
+#include "transport/in_file_transport.hpp"
+#include "transport/transport.hpp"
+
+#include "utils/bitfu.hpp"
+#include "utils/bitmap.hpp"
+#include "utils/colors.hpp"
+#include "utils/confdescriptor.hpp"
+#include "utils/contiguous_sub_rect_f.hpp"
+#include "utils/genfstat.hpp"
+#include "utils/genrandom.hpp"
+#include "utils/pattutils.hpp"
+#include "utils/log.hpp"
+#include "utils/rect.hpp"
+#include "utils/stream.hpp"
+#include "utils/timeout.hpp"
+
+#include "utils/sugar/cast.hpp"
+#include "utils/sugar/not_null_ptr.hpp"
+#include "utils/sugar/underlying_cast.hpp"
+
+
+#include <memory>
+
 
 
 class Front : public FrontAPI
@@ -4163,8 +4165,8 @@ protected:
 public:
     class GlyphTo24Bitmap
     {
-        // TODO BGRArray<256>
-        uint8_t raw_data[256*3];
+        // TODO BGRArray<n>
+        uint8_t raw_data[RDPSerializer::MAX_ORDERS_SIZE];
 
     public:
         uint8_t const * data() const noexcept { return this->raw_data; }
@@ -4174,8 +4176,7 @@ public:
             const BGRColor color_fore,
             const BGRColor color_back) noexcept
         {
-            int const glyph_size = fc.width*fc.height*3;
-            assert(int(sizeof(this->raw_data)) <= glyph_size);
+            assert(fc.width*fc.height*3 < int(sizeof(this->raw_data)));
 
             const uint8_t * fc_data = fc.data.get();
 
@@ -4236,15 +4237,14 @@ protected:
                         const int16_t x = cmd.bk.x + draw_pos_ref + fc.offset;
                         const int16_t y = cmd.bk.y;
 
-                        const Rect rect = Rect(x, y, fc.width, fc.height);
-                        if (rect.cx != 0 && rect.cy != 0) {
+                        contiguous_sub_rect_f(fc.width, fc.height, 64, [&](Rect rect){
                             GlyphTo24Bitmap glyphBitmap(fc, color_fore, color_back);
 
                             RDPBitmapData rdpbd;
-                            rdpbd.dest_left      = rect.x;
-                            rdpbd.dest_top       = rect.y;
-                            rdpbd.dest_right     = rect.cx + rect.x - 1;
-                            rdpbd.dest_bottom    = rect.cy + rect.y - 1;
+                            rdpbd.dest_left      = rect.x + x;
+                            rdpbd.dest_top       = rect.y + y;
+                            rdpbd.dest_right     = rect.cx + rect.x + x - 1;
+                            rdpbd.dest_bottom    = rect.cy + rect.y + y - 1;
                             rdpbd.bits_per_pixel = 24;
                             rdpbd.flags          = 0x0401;
                             rdpbd.bitmap_length  = rect.cx * rect.cy * 3;
@@ -4255,8 +4255,8 @@ protected:
                             rdpbd.width          = bmp.cx();
                             rdpbd.height         = bmp.cy();
 
-                            draw_impl(rdpbd, bmp);
-                        }
+                            this->draw_impl(rdpbd, bmp);
+                        });
                     }
                 }
                 else if (data == 0xFE) {
@@ -4410,19 +4410,12 @@ private:
         else {
             // if not we have to split it
             const uint16_t TILE_CX = ((::nbbytes(this->client_info.bpp) * 64 * 64 < RDPSerializer::MAX_ORDERS_SIZE) ? 64 : 32);
-            const uint16_t TILE_CY = TILE_CX;
 
-            for (int y = 0; y < dst_cy ; y += TILE_CY) {
-                int cy = std::min(TILE_CY, uint16_t(dst_cy - y));
-
-                for (int x = 0; x < dst_cx ; x += TILE_CX) {
-                    int cx = std::min(TILE_CX, uint16_t(dst_cx - x));
-
-                    const Rect dst_tile(dst_x + x, dst_y + y, cx, cy);
-                    const Rect src_tile(cmd.srcx + x, cmd.srcy + y, cx, cy);
-                    this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip, color_ctx...);
-                }
-            }
+            contiguous_sub_rect_f(dst_cx, dst_cy, TILE_CX, [&](Rect r){
+                const Rect dst_tile = r.offset(dst_x, dst_y);
+                const Rect src_tile = r.offset(cmd.srcx, cmd.srcy);
+                this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip, color_ctx...);
+            });
         }
     }
 
