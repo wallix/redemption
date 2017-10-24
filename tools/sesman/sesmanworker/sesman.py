@@ -129,7 +129,7 @@ class Sesman():
 
         self.proxy_conx  = conn
         self.addr        = addr
-        self.full_path   = None
+        self.full_path = None  # path + basename (without extension)
         self.record_filebase = None
         self.full_log_path = None
 
@@ -877,19 +877,33 @@ class Sesman():
                 return False, TR(u'error_getting_record_path %s') % RECORD_PATH
         return True, u''
 
-    def generate_record_filebase(self, user):
-        # Naming convention : {username}@{userip},{account}@{devicename},YYYYMMDD-HHMMSS,{wabhostname},{uid}
-        # NB :  backslashes are replaced by pipes for IE compatibility
+    def generate_record_filebase(self, session_id, user, account, start_time):
+        """
+        Naming convention :
+        {session_id},{username}@{userip},
+        {account}@{devicename},
+        YYYYMMDD-HHMMSS,{wabhostname},{uid}
+
+        NB :  backslashes are replaced by pipes for IE compatibility
+        """
         random.seed(self.pid)
-        #keeping code synchronized with wabengine/src/common/data/trace.py
-        path =  u"%s@%s," % (user, self.shared.get(u'ip_client'))
-        path += u"%s@%s," % (self.shared.get(u'target_login'), self.shared.get(u'target_device'))
-        path += u"%s," % (strftime("%Y%m%d-%H%M%S"))
-        path += u"%s," % gethostname()
-        path += u"%s" % random.randint(1000, 9999)
-        # remove all "dangerous" characters in filename
+        fname = (u"%(session_id)s,%(username)s@%(source_ip)s,"
+                 u"%(account)s@%(device)s,"
+                 u"%(timestamp)s,%(host)s,%(random)s")
+
+        basename = fname % {
+            'session_id': session_id,
+            'username': user,
+            'source_ip': self.shared.get(u'ip_client'),
+            'account': mdecode(account),
+            'device': self.shared.get(u'target_device'),
+            'timestamp': start_time.strftime("%Y%m%d-%H%M%S"),
+            'host': gethostname(),
+            'random': random.randint(1000, 9999)
+        }
         import re
-        return re.sub(r'[^-A-Za-z0-9_@,.]', u"", path)
+        basename = re.sub(r'[^-A-Za-z0-9_@,.]', "", basename)
+        return basename
 
     def load_video_recording(self, user):
         Logger().info(u"Checking video")
@@ -910,7 +924,7 @@ class Sesman():
         else:   # localfile_hashed
             data_to_send[u"trace_type"] = u'1'
 
-        self.full_path = RECORD_PATH + self.record_filebase
+        self.full_path = os.path.join(RECORD_PATH, self.record_filebase)
         derivator = self.record_filebase + u".mwrm"
         Logger().info(u"derivator='%s'" % derivator)
         encryption_key = self.engine.get_trace_encryption_key(derivator, False)
@@ -951,7 +965,10 @@ class Sesman():
             u'module': u'transitory'
         }
 
-        self.full_log_path = RECORD_PATH + self.record_filebase + u'.log'
+        self.full_log_path = os.path.join(
+            RECORD_PATH,
+            self.record_filebase + u'.log'
+        )
 
         Logger().info(u"Session log will be redirected to %s" % self.full_log_path)
         data_to_send[u'session_log_path'] = u"%s" % self.full_log_path
@@ -1240,19 +1257,26 @@ class Sesman():
             Logger().info(u"Starting Session, effective login='%s'" % self.effective_login)
 
             user = mdecode(self.engine.get_username())
-            self.record_filebase = self.generate_record_filebase(user)
+            uname = self.effective_login or target_login_info.account_login
 
             # Add connection to the observer
-            session_id = self.engine.start_session(
-                selected_target, self.pid, self.effective_login,
-                session_log_path=RECORD_PATH + '{session_id},' + self.record_filebase + u'.log')
+            session_id, start_time = self.engine.start_session(
+                selected_target,
+                self.pid,
+                self.effective_login
+            )
             if session_id is None:
                 _status, _error = False, TR(u"start_session_failed")
                 self.send_data({u'rejected': TR(u'start_session_failed')})
+            self.record_filebase = self.generate_record_filebase(
+                session_id,
+                user,
+                uname,
+                start_time
+            )
 
             is_log_redirected = self.shared[u'session_log_redirection'].lower() == u'true'
             if _status and (extra_info.is_recorded or is_log_redirected):
-                self.record_filebase = session_id + ',' + self.record_filebase
                 Logger().info(u"Session will be recorded in %s" % self.record_filebase)
                 try:
                     _status, _error = self.create_record_path_directory()
@@ -1443,15 +1467,17 @@ class Sesman():
                             socket.getfqdn(self.shared.get(u'ip_client')),
                             self.shared.get(u'ip_client'),
                             self.shared.get(u'target_login'),
-#                            self.shared.get(u'target_host'),
                             self.shared.get(u'target_device'),
                             self._physical_target_host,
                             ctime(),
                             None
-                            )
+                        )
 
-                    update_args = { "is_application": bool(application),
-                                    "target_host": self._physical_target_host }
+                    update_args = {
+                        "is_application": bool(application),
+                        "target_host": self._physical_target_host,
+                        "session_log_path": self.full_log_path
+                    }
                     if is_interactive_login:
                         update_args["effective_login"] = kv.get('target_login')
                     if self.full_path:

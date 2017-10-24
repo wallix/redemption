@@ -100,6 +100,7 @@ class Engine(object):
         self.session_record = None
         self.deconnection_epoch = 0xffffffff
         self.deconnection_time = u"-"
+        self.start_time = None
 
         self.target_credentials = {}
         self.account_credentials = {}
@@ -565,6 +566,7 @@ class Engine(object):
         self.target_right = None
         self.deconnection_epoch = 0xffffffff
         self.deconnection_time = u"-"
+        self.start_time = None
 
         self.session_record = None
         self.session_id = None
@@ -1058,22 +1060,26 @@ class Engine(object):
     def start_session(self, auth, pid, effective_login=None, **kwargs):
         Logger().debug("**** CALL wabengine START SESSION ")
         try:
-            self.session_id = self.wabengine.start_session(
-                auth, self.get_pidhandler(pid), effective_login=effective_login, **kwargs)
+            self.session_id, self.start_time = self.wabengine.start_session(
+                auth,
+                self.get_pidhandler(pid),
+                effective_login=effective_login,
+                **kwargs
+            )
             self.failed_secondary_set = False
         except LicenseException:
             Logger().info("Engine start_session failed: License Exception")
-            self.session_id = None
+            self.session_id, self.start_time = None, None
         except Exception, e:
             import traceback
-            self.session_id = None
+            self.session_id, self.start_time = None, None
             Logger().info("Engine start_session failed: (((%s)))" % (traceback.format_exc(e)))
         Logger().debug("**** END wabengine START SESSION ")
-        return self.session_id
+        return self.session_id, self.start_time
 
     def start_session_ssh(self, target, target_user, hname, host, client_addr,
                           pid, subproto, kill_handler, effective_login=None,
-                          warning_count=None, session_log_path=None):
+                          warning_count=None):
         """ Start session for new wabengine """
         self.hname = hname
         self.target_user = effective_login or target_user
@@ -1084,13 +1090,13 @@ class Engine(object):
             signal.signal(signal.SIGUSR1, kill_handler)
         Logger().debug("**** CALL wabengine START SESSION ")
         try:
-            self.session_id = self.wabengine.start_session(
+            self.session_id, self.start_time = self.wabengine.start_session(
                 target,
                 self.get_pidhandler(pid),
                 subproto,
                 effective_login=tounicode(effective_login),
-                target_host=tounicode(self.host),
-                session_log_path=tounicode(session_log_path))
+                target_host=tounicode(self.host)
+            )
         except LicenseException:
             Logger().info("Engine start_session failed: License exception")
             self.session_id = None
@@ -1107,7 +1113,7 @@ class Engine(object):
         self.failed_secondary_set = False
 
         if not is_critical:
-            return self.session_id
+            return self.session_id, self.start_time
         # Notify start
         # if subproto in ['SSH_X11_SESSION', 'SSH_SHELL_SESSION']:
         #     subproto = 'SSH'
@@ -1127,7 +1133,7 @@ class Engine(object):
             notif_data
         )
 
-        return self.session_id
+        return self.session_id, self.start_time
 
     def update_session_target(self, physical_target, **kwargs):
         """Update current session with target name.
@@ -1323,7 +1329,7 @@ class Engine(object):
         if action.lower() == "kill":
             self.session_result = False
 
-    def start_record(self, selected_target=None):
+    def start_record(self, selected_target=None, filename=None):
         target = selected_target or self.target_right
         if not target:
             Logger().debug("start_record failed: missing target right")
@@ -1331,12 +1337,17 @@ class Engine(object):
         try:
             is_recorded = target['auth_is_recorded']
             if is_recorded:
-                self.session_record = self.get_trace_writer(self.session_id, trace_type=u'ttyrec')
+                self.session_record = self.wabengine.get_trace_writer(
+                    self.session_id,
+                    filename=filename,
+                    trace_type=u'ttyrec'
+                )
                 self.session_record.initialize()
-        except Exception, e:
+        except Exception as e:
             import traceback
             Logger().info("Engine start_record failed")
-            Logger().debug("Engine get_trace_writer failed: %s" % (traceback.format_exc(e)))
+            Logger().debug("Engine get_trace_writer failed: %s" %
+                           (traceback.format_exc(e)))
             return False
         return True
 
@@ -1356,17 +1367,17 @@ class Engine(object):
             self.session_record = None
         return None
 
-    def get_trace_writer(self, session_id, trace_type):
-        trace = self.wabengine.get_trace_writer(session_id, trace_type)
-        return trace
 
     def write_trace(self, video_path):
         try:
             _status, _error = True, u"No error"
             if video_path:
                 # Notify WabEngine with Trace file descriptor
-                trace = self.wabengine.get_trace_writer(self.session_id,
-                                                        trace_type=u"rdptrc")
+                trace = self.wabengine.get_trace_writer(
+                    self.session_id,
+                    filename=video_path,
+                    trace_type=u"rdptrc"
+                )
                 trace.initialize()
                 trace.writeframe(str("%s.mwrm" % (video_path.encode('utf-8')) ) )
                 trace.end()
