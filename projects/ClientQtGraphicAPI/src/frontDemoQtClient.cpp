@@ -40,11 +40,14 @@ class FrontDemoQtClient : public FrontQtRDPGraphicAPI
     Theme      theme;
 
     bool is_apple;
+    WindowListCaps windowListCaps;
+    ClientExecute exe;
 
 
 public:
     FrontDemoQtClient(RDPVerbose verbose)
       : FrontQtRDPGraphicAPI(verbose)
+      , exe(*(this),  this->windowListCaps,  false)
       //, translator(Translation::language_t::FR)
     {
         this->is_apple = true;
@@ -56,6 +59,7 @@ public:
 
         try {
             // VNC
+
             this->mod = new mod_vnc( *(this->socket)
                                    , this->user_name.c_str()
                                    , this->user_password.c_str()
@@ -77,6 +81,7 @@ public:
                                    , VncBogusClipboardInfiniteLoop::delayed
                                    , this->reportMessage
                                    , this->is_apple
+                                   , &(this->exe)
                                    , to_verbose_flags(0xfffffffd));
 
         } catch (const Error &) {

@@ -234,8 +234,8 @@ public:
     , windowsData(this)
     {
         this->windowsData.open();
-          std::fill(std::begin(this->info.order_caps.orderSupport), std::end(this->info.order_caps.orderSupport), 1);
-
+        std::fill(std::begin(this->info.order_caps.orderSupport), std::end(this->info.order_caps.orderSupport), 1);
+        this->info.glyph_cache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_FULL;
     }
 
     virtual void send_to_channel( const CHANNELS::ChannelDef & , uint8_t const *
@@ -2691,6 +2691,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
+        LOG(LOG_WARNING, "DEFAULT: RDPGlyphIndex");
 
         Rect screen_rect = clip.intersect(this->info.width, this->info.height);
         if (screen_rect.isempty()){
