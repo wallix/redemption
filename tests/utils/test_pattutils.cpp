@@ -21,7 +21,9 @@
 #define RED_TEST_MODULE TestPattUtils
 #include "system/redemption_unit_tests.hpp"
 
-//#define LOGNULL
+#define LOGNULL
+
+#include "utils/log.hpp"
 
 #include "utils/pattutils.hpp"
 
@@ -39,7 +41,7 @@ RED_AUTO_TEST_CASE(TestKbdPattern)
 
     RED_CHECK(contains_kbd_pattern(" $kbd:kill\x01 " "AT "));
 
-     RED_CHECK(contains_kbd_pattern("AT\x01$kbd:kill"));
+    RED_CHECK(contains_kbd_pattern("AT\x01$kbd:kill"));
 
     RED_CHECK(!contains_kbd_pattern("$ocr:Bloc-notes"));
 
@@ -101,6 +103,7 @@ RED_AUTO_TEST_CASE(TestKbdOrOcrPattern)
 
     RED_CHECK(contains_kbd_or_ocr_pattern("$kbd-ocr:cmd"));
 
+    // invalid "ocm" rule
     RED_CHECK(!contains_kbd_or_ocr_pattern("$ocm:10.10.46.0/24:3389"));
 
     RED_CHECK(contains_kbd_or_ocr_pattern("$content,kbd-ocr:cmd"));

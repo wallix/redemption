@@ -26,37 +26,35 @@
 
 #include <algorithm>
 
-namespace
-{
-    struct IsWordSeparator
-    {
-        bool operator == (char c) const {
-            return c == '-' || c == ',';
-        }
-    };
-}
-
 /**
  * filter format:
  * \code{regex}
  *  option = "ocr" | "kbd" | "content" | "regex" | "exact-content" | "exact-regex"
  *  option_separator = "," | "-"
  *  filter
- *      = \s* regex
- *      | \s* "$:" regex
- *      | \s* "$" option ( option_separator option )* ":" regex
+ *      = \s* pattern
+ *      | \s* "$:" pattern
+ *      | \s* "$" option ( option_separator option )* ":" pattern
  * \endcode
  *
  * With \c conf_regex = KBD_INPUT, exact-content and exact-regex are respectively equivalent to content and regex
  */
-PatternValue get_pattern_value(array_view_const_char av)
+PatternValue get_pattern_value(array_view_const_char const pattern_rule)
 {
     using Cat = PatternValue::Cat;
+
+    struct IsWordSeparator
+    {
+        bool operator == (char c) const {
+            return c == '-' || c == ',';
+        }
+    };
 
     PatternValue pattern_value;
     constexpr PatternValue empty_pattern_value {};
 
-    av = array_view_const_char{ltrim(av.begin(), av.end()), av.end()};
+    auto av = array_view_const_char{
+        ltrim(pattern_rule.begin(), pattern_rule.end()), pattern_rule.end()};
 
     if (not av.empty() && av.front() == '$') {
         auto end_option_list = std::find(av.begin()+1, av.end(), ':');
@@ -91,7 +89,10 @@ PatternValue get_pattern_value(array_view_const_char av)
                         pattern_value.cat = is_exact ? Cat::is_exact_str : Cat::is_str;
                     }
                     else {
-                        LOG(LOG_WARNING, "unknown filter option=\"%.*s\"", int(token.size()), token.begin());
+                        LOG(LOG_WARNING, "Unknown filter option=\"%.*s\" at char %d in \"%.*s\"",
+                            int(token.size()), token.begin(),
+                            int(token.begin() - pattern_rule.begin()),
+                            int(pattern_rule.size()), pattern_rule.begin());
                         return empty_pattern_value;
                     }
                     is_exact = false;
