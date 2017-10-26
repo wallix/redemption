@@ -327,16 +327,16 @@ public:
             uint64_t prim_len = prim_duration.count() / 1000;
             std::cout << "primary connection length = " << prim_len << " ms" <<  std::endl;
 
-            if (!this->out_path.empty()) {
-                std::cout << "out_path is not empty: " << this->out_path << std::endl;
-                std::ofstream file_movie(this->out_path + "_prim_length", std::ios::app);
-                if (file_movie) {
-                    std::cout << "out_path is written " << this->out_path << std::endl;
-                    file_movie << this->index << " " << prim_len << "\n";
-                } else {
-                    std::cout << "out_path is not written " << this->out_path << std::endl;
-                }
-            }
+//             if (!this->out_path.empty()) {
+//                 std::cout << "out_path is not empty: " << this->out_path << std::endl;
+//                 std::ofstream file_movie(this->out_path + "_prim_length", std::ios::app);
+//                 if (file_movie) {
+//                     std::cout << "out_path is written " << this->out_path << std::endl;
+//                     file_movie << this->index << " " << prim_len << "\n";
+//                 } else {
+//                     std::cout << "out_path is not written " << this->out_path << std::endl;
+//                 }
+//             }
 
             this->start_win_session_time = tvtime();
 
@@ -353,19 +353,24 @@ public:
 
             std::cout << "secondary connection length = " <<  sec_len << " ms" << " " << date <<  std::endl;
 
-
-            if (!this->out_path.empty()) {
-                std::ofstream file_movie(this->out_path + "_nego_length", std::ios::app);
-                if (file_movie) {
-                    file_movie << this->index << " " << sec_len << " " << date << "\n";
-                }
-            }
+//             if (!this->out_path.empty()) {
+//                 std::ofstream file_movie(this->out_path + "_nego_length", std::ios::app);
+//                 if (file_movie) {
+//                     file_movie << this->index << " " << sec_len << " " << date << "\n";
+//                 }
+//             }
         }
     }
 
     void disconnect() {
+        std::chrono::microseconds prim_duration = difftimeval(this->start_wab_session_time, this->start_connection_time);
+        uint64_t prim_len = prim_duration.count() / 1000;
+
+        std::chrono::microseconds sec_duration = difftimeval(this->start_win_session_time, this->start_wab_session_time);
+        uint64_t sec_len = sec_duration.count() / 1000;
+
         std::chrono::microseconds duration = difftimeval(tvtime(), this->start_win_session_time);
-        uint64_t sec_len = duration.count() / 1000;
+        uint64_t movie_len = duration.count() / 1000;
 
         time_t now;
         time(&now);
@@ -376,13 +381,13 @@ public:
         strftime (buffer,80,"%F_%r",timeinfo);
         std::string date(buffer);
 
-        std::cout << "movielength = " << sec_len << " ms" << " " << date <<  std::endl;
+        std::cout << "movielength = " << movie_len << " ms" << " " << date <<  std::endl;
 
         if (!this->out_path.empty()) {
 
-            std::ofstream file_movie(this->out_path + "_movie_length", std::ios::app);
+            std::ofstream file_movie(this->out_path + "_session_length", std::ios::app);
             if (file_movie) {
-                file_movie << this->index <<  " " << sec_len << " " << date << "\n";
+                file_movie << this->index <<  " " <<  prim_len << " " << sec_len <<  " " <<  movie_len << " " << date << "\n";
             }
         }
     }
