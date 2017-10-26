@@ -459,7 +459,7 @@ private:
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
                 LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_client_information_pdu: "
+                    "RemoteProgramsVirtualChannel::process_client_notify_event_pdu: "
                         "Truncated orderLength, need=2 remains=%zu",
                     chunk.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);

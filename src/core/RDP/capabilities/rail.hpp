@@ -58,7 +58,7 @@
 // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
 // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-// |S|L|H|I|C|M|K|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|
+// |S|L|H|I|C|M|K|E|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 //  Where the bits are defined as:
@@ -128,6 +128,15 @@
 //   |                                                   | TS_RAIL_LEVEL_SUPPORTED is  |
 //   |                                                   | 0.                          |
 //   +---------------------------------------------------+-----------------------------+
+//   | E                                                 | Set to 1 if the             |
+//   | TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED              | client/server supports the  |
+//   |                                                   | HandshakeEx PDU (section    |
+//   |                                                   | 2.2.2.2.3); set to 0        |
+//   |                                                   | otherwise. This flag MUST   |
+//   |                                                   | be set to 0 if              |
+//   |                                                   | TS_RAIL_LEVEL_SUPPORTED is  |
+//   |                                                   | 0.                          |
+//   +---------------------------------------------------+-----------------------------+
 
 enum {
       TS_RAIL_LEVEL_SUPPORTED                           = 0x01
@@ -137,6 +146,7 @@ enum {
     , TS_RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED = 0x10
     , TS_RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED       = 0x20
     , TS_RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED           = 0x40
+    , TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED              = 0x80
 };
 
 enum {

@@ -496,7 +496,15 @@ public:
 
     uint32_t buildNumber() const { return this->buildNumber_; }
 
+    void buildNumber(uint32_t buildNumber_) {
+        this->buildNumber_ = buildNumber_;
+    }
+
     uint32_t railHandshakeFlags() const { return this->railHandshakeFlags_; }
+
+    void railHandshakeFlags(uint32_t railHandshakeFlags_) {
+        this->railHandshakeFlags_ = railHandshakeFlags_;
+    }
 
     static size_t size() {
         return 8;   // buildNumber(4) + railHandshakeFlags(4)
