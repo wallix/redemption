@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "cxx/diagnostic.hpp"
+
 #include <type_traits>
 #include <algorithm>
 #include <limits>
@@ -55,7 +57,12 @@ struct checked_int
     : i(checked_cast<T>(i))
     {}
 
+    template<class U>
+    operator U () const noexcept { return checked_cast<U>(i); }
+
     operator T () const noexcept { return this->i; }
+
+    T underlying() const noexcept { return this->i; }
 
 private:
     T i;
@@ -73,7 +80,12 @@ struct saturated_int
     : i(saturated_cast<T>(i))
     {}
 
+    template<class U>
+    operator U () const noexcept { return saturated_cast<U>(i); }
+
     operator T () const noexcept { return this->i; }
+
+    constexpr T underlying() const noexcept { return this->i; }
 
 private:
     T i;
@@ -91,25 +103,43 @@ struct safe_int
     : i(safe_cast<T>(i))
     {}
 
+    template<class U>
+    operator U () const noexcept { return safe_cast<U>(i); }
+
     constexpr operator T () const noexcept { return this->i; }
+
+    constexpr T underlying() const noexcept { return this->i; }
 
 private:
     T i;
 };
 
 
+template<class T> inline checked_int<T>   make_checked_int(T i)   { return {i}; }
+template<class T> inline saturated_int<T> make_saturated_int(T i) { return {i}; }
+template<class T> inline safe_int<T>      make_safe_int(T i)      { return {i}; }
+
+
+namespace std
+{
+    template<class T> struct underlying_type< ::safe_int<T>     > { using type = T; };
+    template<class T> struct underlying_type< ::checked_int<T>  > { using type = T; };
+    template<class T> struct underlying_type< ::saturated_int<T>> { using type = T; };
+}
+
 // Implementation
 
 
 namespace detail
 {
-    template<class T, class = typename std::is_enum<T>::type>
+    template<class T, class = std::integral_constant<bool,
+        (std::is_enum<T>::value || !std::is_integral<T>::value)>>
     struct underlying_type_or_integral
-    { using type = T; };
+    { using type = typename std::underlying_type<T>::type; };
 
     template<class T>
-    struct underlying_type_or_integral<T, std::true_type>
-    { using type = typename std::underlying_type<T>::type; };
+    struct underlying_type_or_integral<T, std::false_type>
+    { using type = T; };
 
     template<class T>
     using underlying_type_or_integral_t = typename underlying_type_or_integral<T>::type;
@@ -132,9 +162,12 @@ namespace detail
     /*c++14 constexpr*/ Dst checked_cast(type_<Dst>, Src value)
     {
     #ifndef NDEBUG
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wsign-compare")
         using dst_limits = std::numeric_limits<Dst>;
         assert(dst_limits::max() >= value);
         assert(dst_limits::min() <= value);
+        REDEMPTION_DIAGNOSTIC_POP
     # endif
         return static_cast<Dst>(value);
     }

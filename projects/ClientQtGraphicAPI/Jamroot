@@ -75,13 +75,28 @@ obj config.o : ../redemption_configs/redemption_src/configs/config.cpp :
 obj hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp : ;
 
 
+
+
+local obj_list_VNC ;
+rule add_src_VNC ( src : requirements * )
+{
+    obj $(src).o : $(REDEMPTION_SRC_PATH)/$(src) : $(requirements) ;
+    obj_list_VNC += $(src).o ;
+}
+add_src_VNC mod/internal/widget/flat_vnc_authentification.cpp ;
+add_src_VNC mod/internal/widget/edit_valid.cpp ;
+add_src_VNC mod/internal/widget/image.cpp ;
+add_src_VNC mod/internal/widget/password.cpp ;
+add_src_VNC mod/internal/widget/edit.cpp ;
+
+
+
 local obj_list ;
 rule add_src ( src : requirements * )
 {
     obj $(src).o : $(REDEMPTION_SRC_PATH)/$(src) : $(requirements) ;
     obj_list += $(src).o ;
 }
-
 add_src capture/capture.cpp ;
 add_src capture/file_to_graphic.cpp ;
 add_src capture/rdp_ppocr/get_ocr_constants.cpp ;
@@ -142,7 +157,7 @@ obj front_Qt4_Demo.o : src/frontDemoQtClient.cpp :
     <define>LOGPRINT
  ;
 
-exe client_demo_Qt4 :
+exe client_vnc_Qt4 :
     src/rdp_client_graphic_api/Qt4/Qt.hpp
     src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp
     src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
@@ -151,6 +166,7 @@ exe client_demo_Qt4 :
     $(lib_list)
     config.o
     hexdump.o
+    $(obj_list_VNC)
     /qt//QtGui       #4
 :
     $(EXE_DEPENDENCIES)

@@ -236,7 +236,7 @@ public:
 
     int keep_alive_freq;
 
-    int index;
+    std::string index;
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -270,7 +270,7 @@ public:
     , secondary_connection_finished(false)
     , primary_connection_finished(false)
     , keep_alive_freq(0)
-    , index(0)
+    , index("0")
     {
         SSL_load_error_strings();
         SSL_library_init();
@@ -324,32 +324,40 @@ public:
             this->secondary_connection_finished = true;
 
             std::chrono::microseconds prim_duration = difftimeval(this->start_wab_session_time, this->start_connection_time);
-            int prim_len = prim_duration.count() / 1000;
-            std::cout << "primary connection lenght = " << prim_len << " ms" <<  std::endl;
+            uint64_t prim_len = prim_duration.count() / 1000;
+            std::cout << "primary connection length = " << prim_len << " ms" <<  std::endl;
 
             if (!this->out_path.empty()) {
                 std::cout << "out_path is not empty: " << this->out_path << std::endl;
                 std::ofstream file_movie(this->out_path + "_prim_length", std::ios::app);
                 if (file_movie) {
                     std::cout << "out_path is written " << this->out_path << std::endl;
-                    file_movie << this->index << "\t" << prim_len << "\n";
+                    file_movie << this->index << " " << prim_len << "\n";
                 } else {
                     std::cout << "out_path is not written " << this->out_path << std::endl;
                 }
             }
 
             this->start_win_session_time = tvtime();
+
+            std::chrono::microseconds sec_duration = difftimeval(this->start_win_session_time, this->start_wab_session_time);
+            uint64_t sec_len = sec_duration.count() / 1000;
             time_t now;
             time(&now);
-            std::string date(ctime(&now));
-            std::chrono::microseconds sec_duration = difftimeval(this->start_win_session_time, this->start_wab_session_time);
-            int sec_len = sec_duration.count() / 1000;
-            std::cout << "secondary connection lenght = " << sec_len << " ms" << std::endl;
+
+            struct tm * timeinfo;
+            char buffer [80];
+            timeinfo = localtime (&now);
+            strftime (buffer,80,"%F_%r",timeinfo);
+            std::string date(buffer);
+
+            std::cout << "secondary connection length = " <<  sec_len << " ms" << " " << date <<  std::endl;
+
 
             if (!this->out_path.empty()) {
                 std::ofstream file_movie(this->out_path + "_nego_length", std::ios::app);
                 if (file_movie) {
-                    file_movie << this->index << "\t" << sec_len << "\t" << date << "n";
+                    file_movie << this->index << " " << sec_len << " " << date << "\n";
                 }
             }
         }
@@ -357,17 +365,24 @@ public:
 
     void disconnect() {
         std::chrono::microseconds duration = difftimeval(tvtime(), this->start_win_session_time);
+        uint64_t sec_len = duration.count() / 1000;
 
-        //     std::cout << " Connection closed. Session duration = " << duration.count() / 1000  << " milisecond(s)" <<  std::endl;
-        std::cout << "movielength = " << duration.count() / 1000 <<  std::endl;
+        time_t now;
+        time(&now);
+
+        struct tm * timeinfo;
+        char buffer [80];
+        timeinfo = localtime (&now);
+        strftime (buffer,80,"%F_%r",timeinfo);
+        std::string date(buffer);
+
+        std::cout << "movielength = " << sec_len << " ms" << " " << date <<  std::endl;
 
         if (!this->out_path.empty()) {
-            time_t now;
-            time(&now);
-            std::string date(ctime(&now));
+
             std::ofstream file_movie(this->out_path + "_movie_length", std::ios::app);
             if (file_movie) {
-                file_movie << this->index <<  "\t" <<  duration.count() / 1000 << "\t" << date <<  "\n";
+                file_movie << this->index <<  " " << sec_len << " " << date << "\n";
             }
         }
     }
@@ -417,7 +432,6 @@ public:
 //             this->primary_connection_finished = true;
 //
 //             this->start_wab_session_time = tvtime();
-//
 //         }
 
         return ResizeResult::instant_done;

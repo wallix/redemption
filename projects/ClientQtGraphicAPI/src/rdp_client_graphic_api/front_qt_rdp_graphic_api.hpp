@@ -234,8 +234,8 @@ public:
     , windowsData(this)
     {
         this->windowsData.open();
-          std::fill(std::begin(this->info.order_caps.orderSupport), std::end(this->info.order_caps.orderSupport), 1);
-
+        std::fill(std::begin(this->info.order_caps.orderSupport), std::end(this->info.order_caps.orderSupport), 1);
+        this->info.glyph_cache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_FULL;
     }
 
     virtual void send_to_channel( const CHANNELS::ChannelDef & , uint8_t const *
@@ -551,7 +551,7 @@ public:
         , _userNameField("", this)
         , _PWDField("", this)
         , _portField("", this)
-        , _IPLabel(      QString("IP serveur :"), this)
+        , _IPLabel(      QString("IP server :"), this)
         , _userNameLabel(QString("User name : "), this)
         , _PWDLabel(     QString("Password :  "), this)
         , _portLabel(    QString("Port :      "), this)
@@ -1968,8 +1968,6 @@ public:
             return;
         }
 
-        //int rowYCoord(drect.y + drect.cy-1);
-
         QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
         QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
         QImage dstBitmap(this->screen->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
@@ -1983,23 +1981,24 @@ public:
         }
         dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
 
-        srcBitmap = srcBitmap.mirrored(false, true);
+        QImage srcBitmapMirrored = srcBitmap.mirrored(false, true);
 
-        std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(srcBitmap.bytesPerLine() * drect.cy);
+        uchar data[1600*900*3];
 
-        const uchar * srcData = srcBitmap.constBits();
+        //std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(srcBitmapMirrored.bytesPerLine() * drect.cy);
+
+        const uchar * srcData = srcBitmapMirrored.constBits();
         const uchar * dstData = dstBitmap.constBits();
 
         int data_len = bitmap.line_size() * mincy;
         Op op;
         for (int i = 0; i < data_len; i++) {
-
             data[i] = op.op(srcData[i], dstData[i]);
         }
 
-        QImage image(data.get(), mincx, mincy, srcBitmap.format());
-
+        QImage image(data, mincx, mincy, srcBitmapMirrored.format());
         QRect trect(drect.x, drect.y, mincx, mincy);
+
         if (this->connected) {
              this->screen->paintCache().drawImage(trect, image);
         }
@@ -2046,9 +2045,6 @@ public:
             this->screen->paintCache().drawImage(trect, qbitmap);
         }
     }
-
-
-
 
 //     QColor u32_to_qcolor_r(RDPColor color) {
 //         BGRColor_ bgr = color_decode(color, this->info.bpp, this->mod_palette);
@@ -2695,6 +2691,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
+        LOG(LOG_WARNING, "DEFAULT: RDPGlyphIndex");
 
         Rect screen_rect = clip.intersect(this->info.width, this->info.height);
         if (screen_rect.isempty()){
