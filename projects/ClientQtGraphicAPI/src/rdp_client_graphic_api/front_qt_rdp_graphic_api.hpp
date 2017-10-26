@@ -551,7 +551,7 @@ public:
         , _userNameField("", this)
         , _PWDField("", this)
         , _portField("", this)
-        , _IPLabel(      QString("IP serveur :"), this)
+        , _IPLabel(      QString("IP server :"), this)
         , _userNameLabel(QString("User name : "), this)
         , _PWDLabel(     QString("Password :  "), this)
         , _portLabel(    QString("Port :      "), this)

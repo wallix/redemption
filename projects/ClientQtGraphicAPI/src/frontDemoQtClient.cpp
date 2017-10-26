@@ -36,9 +36,7 @@ class FrontDemoQtClient : public FrontQtRDPGraphicAPI
 
     // VNC
     Inifile    ini;
-    //Translator translator;
     Theme      theme;
-
     bool is_apple;
     WindowListCaps windowListCaps;
     ClientExecute exe;
@@ -48,18 +46,15 @@ public:
     FrontDemoQtClient(RDPVerbose verbose)
       : FrontQtRDPGraphicAPI(verbose)
       , exe(*(this),  this->windowListCaps,  false)
-      //, translator(Translation::language_t::FR)
-    {
-        this->is_apple = true;
-    }
+      , is_apple(true)
+    {}
 
     ~FrontDemoQtClient() {}
 
     virtual mod_api * init_mod() override {
 
         try {
-            // VNC
-
+            // VNC MOD
             this->mod = new mod_vnc( *(this->socket)
                                    , this->user_name.c_str()
                                    , this->user_password.c_str()
