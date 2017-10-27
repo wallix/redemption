@@ -26,13 +26,17 @@ extern "C"
 {
     class RedCryptoWriterHandle;
     class RedCryptoReaderHandle;
+    class RedCryptoMetaReaderHandle;
     class RedCryptoKeyHandle;
 
     using HashHexArray = char[MD_HASH::DIGEST_LENGTH * 2 + 1];
 
+
     REDEMPTION_LIB_EXPORT
     char const * scytale_version();
 
+
+    //@{
     REDEMPTION_LIB_EXPORT
     RedCryptoWriterHandle * scytale_writer_new(
         int with_encryption, int with_checksum, const char * derivator,
@@ -67,9 +71,10 @@ extern "C"
 
     REDEMPTION_LIB_EXPORT
     void scytale_writer_delete(RedCryptoWriterHandle * handle);
+    //@}
 
 
-
+    //@{
     REDEMPTION_LIB_EXPORT
     RedCryptoReaderHandle * scytale_reader_new(const char * derivator, get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn, int old_scheme, int one_shot);
 
@@ -96,12 +101,67 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     int scytale_reader_qhash(RedCryptoReaderHandle * handle, const char * file);
 
+    /// \return HashHexArray
     REDEMPTION_LIB_EXPORT
     const char * scytale_reader_qhashhex(RedCryptoReaderHandle * handle);
 
+    /// \return HashHexArray
     REDEMPTION_LIB_EXPORT
     const char * scytale_reader_fhashhex(RedCryptoReaderHandle * handle);
-    
+    //@}
+
+
+    //@{
+    REDEMPTION_LIB_EXPORT
+    RedCryptoMetaReaderHandle * scytale_meta_reader_new(RedCryptoReaderHandle * reader);
+
+    REDEMPTION_LIB_EXPORT
+    int scytale_meta_reader_read_hash(RedCryptoMetaReaderHandle * handle, int version, int has_checksum);
+
+    REDEMPTION_LIB_EXPORT
+    int scytale_meta_reader_read_header(RedCryptoMetaReaderHandle * handle);
+
+    REDEMPTION_LIB_EXPORT
+    int scytale_meta_reader_read_line(RedCryptoMetaReaderHandle * handle);
+
+    REDEMPTION_LIB_EXPORT
+    int scytale_meta_reader_read_line_eof(RedCryptoMetaReaderHandle * handle);
+
+    REDEMPTION_LIB_EXPORT
+    void scytale_meta_reader_delete(RedCryptoMetaReaderHandle * handle);
+
+    struct RedCryptoMwrmHeader
+    {
+        int version;
+        int has_checksum;
+    };
+
+    struct RedCryptoMwrmLine
+    {
+        char const * filename;
+        uint64_t size;
+        uint64_t mode;
+        uint64_t uid;
+        uint64_t gid;
+        uint64_t dev;
+        uint64_t ino;
+        uint64_t mtime;
+        uint64_t ctime;
+        uint64_t start_time;
+        uint64_t stop_time;
+        char const * hash1;
+        char const * hash2;
+    };
+
+    REDEMPTION_LIB_EXPORT
+    RedCryptoMwrmHeader * scytale_meta_reader_get_header(RedCryptoMetaReaderHandle * handle);
+
+    REDEMPTION_LIB_EXPORT
+    RedCryptoMwrmLine * scytale_meta_reader_get_line(RedCryptoMetaReaderHandle * handle);
+    //@}
+
+
+    //@{
     REDEMPTION_LIB_EXPORT
     RedCryptoKeyHandle * scytale_key_new(const char * masterkeyhex);
 
@@ -113,6 +173,5 @@ extern "C"
     
     const char * scytale_key_master(RedCryptoKeyHandle * handle);
     const char * scytale_key_derivated(RedCryptoKeyHandle * handle);
-
-
+    //@}
 }

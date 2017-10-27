@@ -410,6 +410,7 @@ lib libscytale :
   <library>log_print.o
   <library>snappy
   <library>src/transport/crypto_transport.o
+  <library>src/transport/mwrm_reader.o
   <library>src/utils/fileutils.o
 ;
 obj src/main/do_recorder.cpp.lib.o :
@@ -2248,6 +2249,7 @@ test-run tests/main/test_scytale :
   <library>snappy
   <library>src/main/scytale.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/mwrm_reader.o
   <library>src/utils/fileutils.o
 ;
 test-run tests/mod/internal/test_bouncer2_mod :

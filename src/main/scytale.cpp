@@ -21,6 +21,7 @@
 
 #include "main/scytale.hpp"
 #include "transport/crypto_transport.hpp"
+#include "transport/mwrm_reader.hpp"
 
 #include <memory>
 
@@ -144,7 +145,7 @@ struct RedCryptoErrorContext
     char const * message() noexcept
     {
         if (this->error.errnum && this->error.id != NO_ERROR) {
-            std::snprintf(this->msg, sizeof(msg), "%s, errno = %d", this->error.errmsg(), this->error.errnum);
+            std::snprintf(this->msg, sizeof(msg), "%s, errno = %d: %s", this->error.errmsg(), this->error.errnum, strerror(this->error.errnum));
         }
         else {
             std::snprintf(this->msg, sizeof(msg), "%s", this->error.errmsg());
@@ -383,70 +384,6 @@ char const * scytale_writer_error_message(RedCryptoWriterHandle * handle)
 }
 
 
-struct RedCryptoKeyHandle
-{
-    HashHexArray masterhex;
-    HashArray master;
-    HashHexArray derivatedhex;
-    HashArray derivated;
-    
-    RedCryptoKeyHandle(const char * masterkeyhex)
-    {
-        memcpy(this->masterhex, masterkeyhex, sizeof(this->masterhex));
-        hashex_to_hash(this->masterhex, this->master);
-    }
-};
-
-
-RedCryptoKeyHandle * scytale_key_new(const char * masterkeyhex)
-{
-    constexpr auto key_len = sizeof(HashHexArray) - 1;
-    if (!masterkeyhex || strlen(masterkeyhex) != key_len){
-        return nullptr;
-    }
-    for (char c : make_array_view(masterkeyhex, key_len)){
-        if (not ((c >= '0' and c <= '9') or (c >= 'A' and c <= 'F') or (c >= 'a' and c <= 'f'))){
-            return nullptr;
-        }
-    }
-    auto handle = new (std::nothrow) RedCryptoKeyHandle(masterkeyhex);
-    return handle;
-}
-
-
-const char * scytale_key_derivate(RedCryptoKeyHandle * handle, const uint8_t * derivator, size_t len)
-{
-    std::unique_ptr<uint8_t[]> normalized_derivator_gc;
-    auto const new_derivator = CryptoContext::get_normalized_derivator(
-        normalized_derivator_gc, {derivator, len});
-
-    CryptoContext cctx;
-    cctx.old_encryption_scheme = false;
-    cctx.one_shot_encryption_scheme = false;
-    cctx.set_master_key(handle->master);
-    cctx.get_derived_key(handle->derivated, new_derivator);
-    hash_to_hashhex(handle->derivated, handle->derivatedhex);
-    return handle->derivatedhex;
-}
-
-
-void scytale_key_delete(RedCryptoKeyHandle * handle) {
-    SCOPED_TRACE;
-    delete handle;
-}
-
-
-const char * scytale_key_master(RedCryptoKeyHandle * handle) {
-    SCOPED_TRACE;
-    return handle->masterhex;
-}
-
-const char * scytale_key_derivated(RedCryptoKeyHandle * handle) {
-    SCOPED_TRACE;
-    return handle->derivatedhex;
-}
-
-
 RedCryptoReaderHandle * scytale_reader_new(const char * derivator
                                                 , get_hmac_key_prototype* hmac_fn
                                                 , get_trace_key_prototype* trace_fn
@@ -502,7 +439,7 @@ enum class HashType { FHash, QHash };
 
 inline int scytale_reader_hash(RedCryptoReaderHandle * handle, const char * file, HashType type)
 {
-    try {
+    CHECK_NOTHROW(
         if (type == HashType::QHash) {
             InCryptoTransport::HASH qhash = handle->in_crypto_transport.qhash(file);
             hash_to_hashhex(qhash.hash, handle->qhashhex);
@@ -510,18 +447,9 @@ inline int scytale_reader_hash(RedCryptoReaderHandle * handle, const char * file
         else {
             InCryptoTransport::HASH fhash = handle->in_crypto_transport.fhash(file);
             hash_to_hashhex(fhash.hash, handle->fhashhex);
-        }
-    }
-    catch (Error const& err) {
-        EXIT_ON_ERROR(err);
-        handle->error_ctx.set_error(err);
-        return -1;
-    }
-    catch (...) {
-        EXIT_ON_EXCEPTION();
-        handle->error_ctx.set_error(Error{ERR_TRANSPORT_READ_FAILED});
-        return -1;
-    }
+        },
+        ERR_TRANSPORT_READ_FAILED
+    );
     return 0;
 }
 
@@ -548,6 +476,186 @@ const char * scytale_reader_fhashhex(RedCryptoReaderHandle * handle)
 {
     SCOPED_TRACE;
     return handle->fhashhex;
+}
+
+
+struct RedCryptoMetaReaderHandle
+{
+    RedCryptoMetaReaderHandle(RedCryptoReaderHandle & reader)
+      : mwrm_reader(reader.in_crypto_transport)
+    {}
+
+    RedCryptoMwrmHeader & get_header() noexcept
+    {
+        auto const & header = this->mwrm_reader.get_header();
+        this->c_header.version = static_cast<int>(header.version);
+        this->c_header.has_checksum = header.has_checksum;
+        return this->c_header;
+    }
+
+    RedCryptoMwrmLine & get_meta_line() noexcept
+    {
+        hash_to_hashhex(this->meta_line.hash1, this->hashhex1);
+        hash_to_hashhex(this->meta_line.hash2, this->hashhex2);
+        this->c_mwrm_line = {
+            this->meta_line.filename,
+            static_cast<uint64_t>(this->meta_line.size),
+            this->meta_line.mode,
+            this->meta_line.uid,
+            this->meta_line.gid,
+            this->meta_line.dev,
+            this->meta_line.ino,
+            static_cast<uint64_t>(this->meta_line.mtime),
+            static_cast<uint64_t>(this->meta_line.ctime),
+            static_cast<uint64_t>(this->meta_line.start_time),
+            static_cast<uint64_t>(this->meta_line.stop_time),
+            this->hashhex1,
+            this->hashhex2,
+        };
+        return this->c_mwrm_line;
+    }
+
+private:
+    HashHexArray hashhex1;
+    HashHexArray hashhex2;
+
+    RedCryptoMwrmHeader c_header;
+    RedCryptoMwrmLine c_mwrm_line;
+
+public:
+    MwrmReader mwrm_reader;
+    MetaLine meta_line;
+    bool eof = false;
+
+    RedCryptoErrorContext error_ctx;
+};
+
+
+RedCryptoMetaReaderHandle * scytale_meta_reader_new(RedCryptoReaderHandle * reader)
+{
+    SCOPED_TRACE;
+    return reader ? CREATE_HANDLE(RedCryptoMetaReaderHandle(*reader)) : nullptr;
+}
+
+int scytale_meta_reader_read_hash(RedCryptoMetaReaderHandle * handle, int version, int has_checksum)
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(handle);
+    handle->mwrm_reader.set_header({
+        static_cast<WrmVersion>(version), static_cast<bool>(has_checksum)});
+    CHECK_NOTHROW(
+        handle->mwrm_reader.read_meta_hash_line(handle->meta_line),
+        ERR_TRANSPORT_READ_FAILED);
+    return 0;
+}
+
+int scytale_meta_reader_read_header(RedCryptoMetaReaderHandle * handle)
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(handle);
+    CHECK_NOTHROW(
+        handle->mwrm_reader.read_meta_headers(),
+        ERR_TRANSPORT_READ_FAILED);
+    return 0;
+}
+
+int scytale_meta_reader_read_line(RedCryptoMetaReaderHandle * handle)
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(handle);
+    CHECK_NOTHROW(
+        handle->eof
+            = Transport::Read::Eof == handle->mwrm_reader.read_meta_line(handle->meta_line),
+        ERR_TRANSPORT_READ_FAILED);
+    return handle->eof ? ERR_TRANSPORT_NO_MORE_DATA : 0;
+}
+
+int scytale_meta_reader_read_line_eof(RedCryptoMetaReaderHandle * handle)
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(handle);
+    return handle->eof;
+}
+
+void scytale_meta_reader_delete(RedCryptoMetaReaderHandle * handle)
+{
+    delete handle;
+}
+
+RedCryptoMwrmHeader * scytale_meta_reader_get_header(RedCryptoMetaReaderHandle * handle)
+{
+    SCOPED_TRACE;
+    return handle ? &handle->get_header() : nullptr;
+}
+
+RedCryptoMwrmLine * scytale_meta_reader_get_line(RedCryptoMetaReaderHandle * handle)
+{
+    SCOPED_TRACE;
+    return handle ? &handle->get_meta_line() : nullptr;
+}
+
+
+struct RedCryptoKeyHandle
+{
+    HashHexArray masterhex;
+    HashArray master;
+    HashHexArray derivatedhex;
+    HashArray derivated;
+
+    RedCryptoKeyHandle(const char * masterkeyhex)
+    {
+        memcpy(this->masterhex, masterkeyhex, sizeof(this->masterhex));
+        hashex_to_hash(this->masterhex, this->master);
+    }
+};
+
+
+RedCryptoKeyHandle * scytale_key_new(const char * masterkeyhex)
+{
+    constexpr auto key_len = sizeof(HashHexArray) - 1;
+    if (!masterkeyhex || strlen(masterkeyhex) != key_len){
+        return nullptr;
+    }
+    for (char c : make_array_view(masterkeyhex, key_len)){
+        if (not ((c >= '0' and c <= '9') or (c >= 'A' and c <= 'F') or (c >= 'a' and c <= 'f'))){
+            return nullptr;
+        }
+    }
+    auto handle = new (std::nothrow) RedCryptoKeyHandle(masterkeyhex);
+    return handle;
+}
+
+
+const char * scytale_key_derivate(RedCryptoKeyHandle * handle, const uint8_t * derivator, size_t len)
+{
+    std::unique_ptr<uint8_t[]> normalized_derivator_gc;
+    auto const new_derivator = CryptoContext::get_normalized_derivator(
+        normalized_derivator_gc, {derivator, len});
+
+    CryptoContext cctx;
+    cctx.old_encryption_scheme = false;
+    cctx.one_shot_encryption_scheme = false;
+    cctx.set_master_key(handle->master);
+    cctx.get_derived_key(handle->derivated, new_derivator);
+    hash_to_hashhex(handle->derivated, handle->derivatedhex);
+    return handle->derivatedhex;
+}
+
+
+void scytale_key_delete(RedCryptoKeyHandle * handle) {
+    SCOPED_TRACE;
+    delete handle;
+}
+
+
+const char * scytale_key_master(RedCryptoKeyHandle * handle) {
+    SCOPED_TRACE;
+    return handle->masterhex;
+}
+
+const char * scytale_key_derivated(RedCryptoKeyHandle * handle) {
+    SCOPED_TRACE;
+    return handle->derivatedhex;
 }
 
 }
