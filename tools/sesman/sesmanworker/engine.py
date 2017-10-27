@@ -92,7 +92,7 @@ class Engine(object):
         self.wabengine_conf = Config('wabengine')
         self.client = SynClient('localhost',
                                 self.wabengine_conf.get('port',
-                                                        'unix:/var/run/wabengine.sock'))
+                                                        'unix:/run/wabengine/wabengine.sock'))
         self.session_id = None
         self.auth_x509 = None
         self._trace_type = None                 # local ?
