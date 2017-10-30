@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 version_file=include/main/version.hpp
 current_version=
 progname="$0"
