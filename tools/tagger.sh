@@ -69,7 +69,7 @@ fi
 
 
 if [ -z "$new_version" ] ; then
-    echo missing --new-version
+    echo missing --update-version
     usage
 fi
 
