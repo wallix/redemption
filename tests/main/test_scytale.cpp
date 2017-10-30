@@ -80,7 +80,7 @@ RED_AUTO_TEST_CASE(Testscytale)
         int with_checksum = 1;   // int used as boolean 0 false, true otherwise
 
         auto * handle = scytale_writer_new_with_test_random(with_encryption, with_checksum, finalname, &hmac_fn, &trace_fn, false, false);
-        RED_CHECK_NE(handle, nullptr);
+        RED_REQUIRE(handle);
         RED_CHECK_EQ(scytale_writer_open(handle, finalname, hash_finalname, 0), 0);
 
         RED_CHECK_EQ(scytale_writer_write(handle, bytes("We write, "), 10), 10);
@@ -100,8 +100,8 @@ RED_AUTO_TEST_CASE(Testscytale)
     // Reader
     {
         auto handle = scytale_reader_new(finalname, &hmac_fn, &trace_fn, 0, 0);
+        RED_REQUIRE(handle);
         RED_CHECK_EQ(scytale_reader_open(handle, finalname, finalname), 0);
-        RED_CHECK_NE(handle, nullptr);
 
         uint8_t buf[31];
 
@@ -129,6 +129,15 @@ RED_AUTO_TEST_CASE(Testscytale)
     RED_CHECK_EQ(::unlink(hash_finalname), 0);
 }
 
+RED_AUTO_TEST_CASE(TestscytaleAutoDetectScheme)
+{
+    char const * finalname = FIXTURES_PATH "/verifier/recorded/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161025-213153,wab-4-2-4.yourdomain,3243.mwrm";
+    auto handle = scytale_reader_new(finalname, &hmac_fn, &trace_fn, 0, 0);
+    RED_CHECK_NE(handle, nullptr);
+    RED_CHECK_EQ(scytale_reader_detect_and_set_encryption_scheme(handle, finalname), 1);
+    scytale_reader_delete(handle);
+}
+
 RED_AUTO_TEST_CASE(TestscytaleWriteUseRandom)
 {
     const char * finalname = "encrypted.txt";
@@ -143,7 +152,7 @@ RED_AUTO_TEST_CASE(TestscytaleWriteUseRandom)
         int with_checksum = 1;   // int used as boolean 0 false, true otherwise
 
         auto * handle = scytale_writer_new(with_encryption, with_checksum, finalname, &hmac_fn, &trace_fn, false, false);
-        RED_CHECK_NE(handle, nullptr);
+        RED_REQUIRE(handle);
         RED_CHECK_EQ(scytale_writer_open(handle, finalname, hash_finalname, 0), 0);
 
         RED_CHECK_EQ(scytale_writer_write(handle, bytes("We write, "), 10), 10);
@@ -171,7 +180,7 @@ RED_AUTO_TEST_CASE(TestscytaleWriteUseRandom)
         int with_checksum = 1;   // int used as boolean 0 false, true otherwise
 
         auto * handle = scytale_writer_new(with_encryption, with_checksum, finalname,  &hmac_fn, &trace_fn, false, false);
-        RED_CHECK_NE(handle, nullptr);
+        RED_REQUIRE(handle);
         RED_CHECK_EQ(scytale_writer_open(handle, finalname, hash_finalname, 0), 0);
 
         RED_CHECK_EQ(scytale_writer_write(handle, bytes("We write, "), 10), 10);
@@ -254,7 +263,7 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
     {
         auto filename = FIXTURES_PATH "/verifier/recorded/toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,wab-5-0-0.yourdomain,7681.mwrm";
         auto handle = scytale_reader_new(filename, &hmac_fn, &trace_fn, 0, 0);
-        RED_CHECK_NE(handle, nullptr);
+        RED_REQUIRE(handle);
         RED_CHECK_EQ(scytale_reader_open(handle, filename, filename), 0);
 
         auto meta_handle = scytale_meta_reader_new(handle);
@@ -291,7 +300,7 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
     {
         auto filename = FIXTURES_PATH "/sample.mwrm";
         auto handle = scytale_reader_new(filename, &hmac_fn, &trace_fn, 0, 0);
-        RED_CHECK_NE(handle, nullptr);
+        RED_REQUIRE(handle);
         RED_CHECK_EQ(scytale_reader_open(handle, filename, filename), 0);
 
         auto meta_handle = scytale_meta_reader_new(handle);

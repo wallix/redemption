@@ -36,6 +36,7 @@ extern "C"
     char const * scytale_version();
 
 
+    // Writer
     //@{
     REDEMPTION_LIB_EXPORT
     RedCryptoWriterHandle * scytale_writer_new(
@@ -74,6 +75,7 @@ extern "C"
     //@}
 
 
+    // Reader
     //@{
     REDEMPTION_LIB_EXPORT
     RedCryptoReaderHandle * scytale_reader_new(const char * derivator, get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn, int old_scheme, int one_shot);
@@ -81,6 +83,9 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     char const * scytale_reader_error_message(RedCryptoReaderHandle * handle);
 
+    // result is a EcryptionSchemeTypeResult
+    REDEMPTION_LIB_EXPORT
+    int scytale_reader_detect_and_set_encryption_scheme(RedCryptoReaderHandle * handle, char const * path);
 
     REDEMPTION_LIB_EXPORT
     int scytale_reader_open(RedCryptoReaderHandle * handle, char const * path, char const * derivator);
@@ -111,6 +116,7 @@ extern "C"
     //@}
 
 
+    // Meta reader
     //@{
     REDEMPTION_LIB_EXPORT
     RedCryptoMetaReaderHandle * scytale_meta_reader_new(RedCryptoReaderHandle * reader);
@@ -161,6 +167,7 @@ extern "C"
     //@}
 
 
+    // Key
     //@{
     REDEMPTION_LIB_EXPORT
     RedCryptoKeyHandle * scytale_key_new(const char * masterkeyhex);
