@@ -184,7 +184,7 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "large_pointer_support", set(true));
         W.sep();
 
-        W.member(ini_and_gui, sesman_to_proxy, type_<bool>(), "unicode_keyboard_event_support", set(false));
+        W.member(ini_and_gui, sesman_to_proxy, type_<bool>(), "unicode_keyboard_event_support", set(true));
         W.sep();
 
         W.member(advanced_in_gui, sesman_to_proxy, type_<types::range<unsigned, 100, 10000>>{}, "mod_recv_timeout", desc{"In milliseconds."}, set(1000));

@@ -120,7 +120,7 @@
 "#_advanced\n"
 "large_pointer_support = boolean(default=True)\n\n"
 
-"unicode_keyboard_event_support = boolean(default=False)\n\n"
+"unicode_keyboard_event_support = boolean(default=True)\n\n"
 
 "# In milliseconds.\n"
 "#_advanced\n"
