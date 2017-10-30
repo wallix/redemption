@@ -254,7 +254,7 @@ class Sesman():
             u'showform': False,
             u'formflag': 0,
 
-            u'recording_started': False,
+            u'recording_started': "False",
 
             u'auth_notify': u'',
 
@@ -1332,7 +1332,7 @@ class Sesman():
         proto = u'RDP' if  kv.get(u'proto_dest') != u'VNC' else u'VNC'
         kv[u'mode_console'] = u"allow"
 
-        self.shared[u'recording_started'] = u'False'
+        self.shared[u'recording_started'] = 'False'
 
         self.reporting_reason  = None
         self.reporting_target  = None
@@ -1343,7 +1343,7 @@ class Sesman():
 
         if _status:
             for physical_target in self.engine.get_effective_target(selected_target):
-                kv[u'recording_started'] = False
+                kv[u'recording_started'] = "False"
 
                 physical_info = self.engine.get_physical_target_info(physical_target)
                 if not _status:
@@ -1554,16 +1554,17 @@ class Sesman():
 
                                     self.shared[u'auth_notify'] = u''
 
-                                if self.shared.get(u'recording_started') == u'True':
-                                    if not trace_written:
-                                        # write mwrm path to rdptrc (allow real time display)
-                                        trace_written = True
-                                        Logger().info(u"Call write trace")
-                                        _status, _error = self.engine.write_trace(self.full_path)
-                                        if not _status:
-                                            _error = TR("Trace writer failed for %s") % self.full_path
-                                            Logger().info(u"Failed accessing recording path (%s)" % RECORD_PATH)
-                                            self.send_data({u'rejected': TR(u'error_getting_record_path')})
+                                if (not trace_written
+                                    and (self.shared.get('recording_started')
+                                         == 'True')):
+                                    # write mwrm path to rdptrc (allow real time display)
+                                    trace_written = True
+                                    Logger().info(u"Call write trace")
+                                    _status, _error = self.engine.write_trace(self.full_path)
+                                    if not _status:
+                                        _error = TR("Trace writer failed for %s") % self.full_path
+                                        Logger().info(u"Failed accessing recording path (%s)" % RECORD_PATH)
+                                        self.send_data({u'rejected': TR(u'error_getting_record_path')})
 
                                 if self.shared.get(u'reporting'):
                                     _reporting      = self.shared.get(u'reporting')
