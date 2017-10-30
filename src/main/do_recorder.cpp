@@ -109,55 +109,15 @@ static inline int file_start_hmac_sha256(const char * filename,
     return 0;
 }
 
-static inline int encryption_type(const std::string & full_filename, CryptoContext & cctx)
+static inline int encryption_type(const char * full_filename, CryptoContext & cctx)
 {
-    uint8_t tmp_buf[4] ={};
-    int fd = open(full_filename.c_str(), O_RDONLY);
-    if (fd == -1){
-        std::cerr << "Input file missing.\n";
-        return -1;
-    }
-
+    switch (set_encryption_scheme_type(full_filename, cctx))
     {
-        unique_fd file(fd);
-
-        const size_t len = sizeof(tmp_buf);
-        size_t remaining_len = len;
-        while (remaining_len) {
-            ssize_t ret = ::read(fd, &tmp_buf[len - remaining_len], remaining_len);
-            if (ret < 0){
-                if (ret == 0){
-                    std::cerr << "Input file truncated\n";
-                    return -1;
-                }
-                if (errno == EINTR){
-                    continue;
-                }
-                // Error should still be there next time we try to read
-                std::cerr << "Input file error\n";
-                return -1;
-            }
-            // We must exit loop or we will enter infinite loop
-            remaining_len -= ret;
-        }
+        case EcryptionSchemeTypeResult::Error: std::cerr << strerror(errno) << "\n"; return -1;
+        case EcryptionSchemeTypeResult::OldScheme: cctx.old_encryption_scheme = 1; return 1;
+        case EcryptionSchemeTypeResult::NewScheme: return 2;
+        case EcryptionSchemeTypeResult::NoEncrypted: return 0;
     }
-
-    const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
-    if (magic == WABCRYPTOFILE_MAGIC) {
-        Fstat fstat;
-        InCryptoTransport in_test(cctx, InCryptoTransport::EncryptionMode::Encrypted, fstat);
-        in_test.open(full_filename.c_str());
-        try {
-            char mem[4096];
-            auto len = in_test.partial_read(mem, sizeof(mem));
-            (void)len;
-        } catch (Error const&) {
-            cctx.old_encryption_scheme = 1;
-            return 1;
-        }
-        return 2;
-    }
-    return 0;
 }
 
 void clear_files_flv_meta_png(const char * path, const char * prefix)
@@ -2628,7 +2588,7 @@ extern "C" {
         case 1: // VERifier
             ini.set<cfg::debug::config>(false);
             try {
-                encryption_type(rp.full_path, cctx);
+                encryption_type(rp.full_path.c_str(), cctx);
 
                 res = check_encrypted_or_checksumed(
                     rp.input_filename, rp.mwrm_path, rp.hash_path,
@@ -2651,7 +2611,7 @@ extern "C" {
                     return -1;
                 }
 
-                if (0 == encryption_type(rp.full_path, cctx)){
+                if (0 == encryption_type(rp.full_path.c_str(), cctx)){
                     std::cout << "Input file is not encrypted." << std::endl;
                     return 0;
                 }

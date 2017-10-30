@@ -129,6 +129,15 @@ RED_AUTO_TEST_CASE(Testscytale)
     RED_CHECK_EQ(::unlink(hash_finalname), 0);
 }
 
+RED_AUTO_TEST_CASE(TestscytaleAutoDetectScheme)
+{
+    char const * finalname = FIXTURES_PATH "/verifier/recorded/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161025-213153,wab-4-2-4.yourdomain,3243.mwrm";
+    auto handle = scytale_reader_new(finalname, &hmac_fn, &trace_fn, 0, 0);
+    RED_CHECK_NE(handle, nullptr);
+    RED_CHECK_EQ(scytale_reader_detect_and_set_encryption_scheme(handle, finalname), 1);
+    scytale_reader_delete(handle);
+}
+
 RED_AUTO_TEST_CASE(TestscytaleWriteUseRandom)
 {
     const char * finalname = "encrypted.txt";

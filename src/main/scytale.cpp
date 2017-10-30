@@ -384,11 +384,11 @@ char const * scytale_writer_error_message(RedCryptoWriterHandle * handle)
 }
 
 
-RedCryptoReaderHandle * scytale_reader_new(const char * derivator
-                                                , get_hmac_key_prototype* hmac_fn
-                                                , get_trace_key_prototype* trace_fn
-                                                , int old_scheme
-                                                , int one_shot)
+
+RedCryptoReaderHandle * scytale_reader_new(
+    const char * derivator,
+    get_hmac_key_prototype* hmac_fn, get_trace_key_prototype* trace_fn,
+    int old_scheme, int one_shot)
 {
     SCOPED_TRACE;
     return CREATE_HANDLE(RedCryptoReaderHandle(
@@ -397,6 +397,20 @@ RedCryptoReaderHandle * scytale_reader_new(const char * derivator
         old_scheme, one_shot,
         derivator
     ));
+}
+
+int scytale_reader_detect_and_set_encryption_scheme(RedCryptoReaderHandle * handle, char const * path)
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(handle);
+    CHECK_NOTHROW(
+        auto const r = set_encryption_scheme_type(path, handle->cctxw.cctx);
+        if (r == EcryptionSchemeTypeResult::Error) {
+            handle->error_ctx.set_error(Error{ERR_TRANSPORT_READ_FAILED, errno});
+        }
+        return int(r),
+        ERR_TRANSPORT_READ_FAILED
+    );
 }
 
 int scytale_reader_open(RedCryptoReaderHandle * handle, char const * path, char const * derivator) {
