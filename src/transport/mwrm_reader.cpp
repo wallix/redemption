@@ -153,10 +153,11 @@ Transport::Read MwrmReader::read_meta_line(MetaLine & meta_line)
 
 void MwrmReader::read_meta_hash_line(MetaLine & meta_line)
 {
+    Transport::Read r;
     switch (this->header.version) {
     case WrmVersion::v1:
         init_stat_v1(meta_line);
-        this->read_meta_hash_line_v1(meta_line);
+        r = this->read_meta_hash_line_v1(meta_line);
         break;
     case WrmVersion::v2:
         bool is_eof = false;
@@ -167,11 +168,11 @@ void MwrmReader::read_meta_hash_line(MetaLine & meta_line)
         if (is_eof) {
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
-        this->read_meta_line_v2(meta_line, false);
+        r = this->read_meta_line_v2(meta_line, false);
         break;
     }
 
-    if (Transport::Read::Eof != this->line_reader.next_line()) {
+    if (r != Transport::Read::Ok || Transport::Read::Eof != this->line_reader.next_line()) {
         throw Error(ERR_TRANSPORT_READ_FAILED);
     }
 }
