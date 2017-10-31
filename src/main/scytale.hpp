@@ -122,6 +122,9 @@ extern "C"
     RedCryptoMetaReaderHandle * scytale_meta_reader_new(RedCryptoReaderHandle * reader);
 
     REDEMPTION_LIB_EXPORT
+    char const * scytale_meta_reader_message(RedCryptoMetaReaderHandle * handle);
+
+    REDEMPTION_LIB_EXPORT
     int scytale_meta_reader_read_hash(RedCryptoMetaReaderHandle * handle, int version, int has_checksum);
 
     REDEMPTION_LIB_EXPORT

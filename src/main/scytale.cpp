@@ -554,6 +554,13 @@ RedCryptoMetaReaderHandle * scytale_meta_reader_new(RedCryptoReaderHandle * read
     return CREATE_HANDLE(RedCryptoMetaReaderHandle(*reader));
 }
 
+char const * scytale_meta_reader_message(RedCryptoMetaReaderHandle * handle)
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE_R(handle, RedCryptoErrorContext::handle_error_message());
+    return handle->error_ctx.message();
+}
+
 int scytale_meta_reader_read_hash(RedCryptoMetaReaderHandle * handle, int version, int has_checksum)
 {
     SCOPED_TRACE;
