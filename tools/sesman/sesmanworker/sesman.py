@@ -138,7 +138,8 @@ class Sesman():
         self.effective_login = None
 
         # shared should be read from sesman but never written except when sending
-        self.shared                    = {}
+        self.shared = {}
+        self._changed_keys = []
 
         self._full_user_device_account = u'Unknown'
         self.target_service_name = None
@@ -333,11 +334,12 @@ class Sesman():
             self.proxy_conx.sendall(pack(">L", _remaining))
             self.proxy_conx.sendall(_r_data[_len-_remaining:_len])
 
-    def receive_data(self):
+    def receive_data(self, expected_list=None):
         u""" NB : Strings coming from the ReDemPtion proxy are UTF-8 encoded """
 
         _status, _error = True, u''
         _data = ''
+        self._changed_keys = []
         try:
             # Fetch Data from Redemption
             while True:
@@ -386,9 +388,12 @@ class Sesman():
                     _data[key] = MAGICASK
                 elif (_data[key][:1] == u'!'):
                     _data[key] = _data[key][1:]
-                else:
-                    # _data[key] unchanged
-                    pass
+            if not (expected_list and isinstance(expected_list, list)):
+                expected_list = []
+            for key in expected_list:
+                if (key in _data and
+                    _data[key] != self.shared.get(key)):
+                    self._changed_keys.append(key)
             self.shared.update(_data)
 
         return _status, _error
@@ -1484,6 +1489,10 @@ class Sesman():
                         # RT available if recording
                         # TODO: decorrelate RT and recording
                         update_args["rt"] = True
+                    if self.shared.get('width'):
+                        update_args["video_width"] = int(self.shared.get('width'))
+                    if self.shared.get('height'):
+                        update_args["video_height"] = int(self.shared.get('height'))
 
                     self.engine.update_session_target(physical_target,
                                                       **update_args)
@@ -1535,8 +1544,17 @@ class Sesman():
                                 self.update_session_parameters()
                                 self.check_session_parameters = False
                             if self.proxy_conx in r:
-                                _status, _error = self.receive_data();
+                                _status, _error = self.receive_data([
+                                    "width",
+                                    "height",
+                                ])
 
+                                if ("width" in self._changed_keys
+                                    and "height" in self._changed_keys):
+                                    self.engine.update_session(
+                                        video_width=self.shared.get("width"),
+                                        video_height=self.shared.get("height")
+                                    )
                                 if self.shared.get(u'auth_notify'):
                                     if self.shared.get(u'auth_notify') == u'rail_exec':
                                         Logger().info(u"rail_exec flags=\"%s\" exe_of_file=\"%s\"" % \

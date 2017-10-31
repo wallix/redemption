@@ -775,6 +775,9 @@ public:
                     this->client_info.width = width;
                     this->client_info.height = height;
 
+                    this->ini.set_acl<cfg::context::opt_width>(this->client_info.width);
+                    this->ini.set_acl<cfg::context::opt_height>(this->client_info.height);
+
                     if (this->capture)
                     {
                         this->must_be_stop_capture();
