@@ -1227,7 +1227,7 @@ protected:
                         data_length / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes;
                     std::unique_ptr<uint8_t[]> utf8_data(new uint8_t[utf8_data_length]);
 
-                    ::UTF8toUTF16_CrLf(utf8_data.get(), data, utf8_data_length);
+                    ::UTF16toUTF8(data, data_length, utf8_data.get(),  utf8_data_length);
 
                     client_cut_text(::char_ptr_cast(utf8_data.get()));
                 }
@@ -1259,7 +1259,7 @@ protected:
                     const size_t utf8_data_length = data_length * maximum_length_of_utf8_character_in_bytes;
                     std::unique_ptr<uint8_t[]> utf8_data(new uint8_t[utf8_data_length]);
 
-                    ::UTF8toUTF16_CrLf(utf8_data.get(),  utf16_data.get(), utf8_data_length);
+                    ::UTF16toUTF8(utf16_data.get(), result, utf8_data.get(),  utf8_data_length);
 
                     client_cut_text(::char_ptr_cast(utf8_data.get()));
                 }

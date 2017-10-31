@@ -70,7 +70,7 @@ ReplayMod::ReplayMod(
   , timeval const & end_read
   , time_t balise_time_frame
   , Verbose debug_capture)
-: InternalMod(front, width, height, font, Theme{}, false)
+: InternalMod(front, width, height, font, Theme{}, true)
 , auth_error_message(auth_error_message)
 , movie_path(replay_path, movie)
 // TODO RZ: Support encrypted recorded file.
