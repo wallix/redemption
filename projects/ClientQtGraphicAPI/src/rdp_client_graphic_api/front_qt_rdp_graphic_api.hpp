@@ -2691,8 +2691,6 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        LOG(LOG_WARNING, "DEFAULT: RDPGlyphIndex");
-
         Rect screen_rect = clip.intersect(this->info.width, this->info.height);
         if (screen_rect.isempty()){
             return ;
