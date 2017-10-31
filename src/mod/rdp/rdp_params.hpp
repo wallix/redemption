@@ -159,7 +159,8 @@ struct ModRDPParams {
     bool         use_client_provided_remoteapp = false;
     bool         should_ignore_first_client_execute = false;
 
-    bool remote_program = false;
+    bool remote_program          = false;
+    bool remote_program_enhanced = false;
 
     Font const & font;
     Theme const & theme;
@@ -342,6 +343,7 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,             should_ignore_first_client_execute);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             remote_program);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             remote_program_enhanced);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             clean_up_32_bpp_cursor);
 

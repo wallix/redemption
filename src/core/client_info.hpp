@@ -95,7 +95,8 @@ struct ClientInfo {
                            2 = arbitrary dimensions */
     bool console_session = false;
 
-    bool remote_program = false;
+    bool remote_program          = false;
+    bool remote_program_enhanced = false;
 
     char alternate_shell[512] = { 0 };
     char working_dir[512] = { 0 };
@@ -195,7 +196,8 @@ struct ClientInfo {
             this->rdp_compression_type = ((infoPacket.flags & CompressionTypeMask) >> 9);
         }
 
-        this->remote_program = (infoPacket.flags & INFO_RAIL);
+        this->remote_program          = (infoPacket.flags & INFO_RAIL);
+        this->remote_program_enhanced = (infoPacket.flags & INFO_HIDEF_RAIL_SUPPORTED);
 
         if (::strcasecmp(::char_ptr_cast(infoPacket.AlternateShell), DUMMY_REMOTEAPP) &&
             (::strcasestr(::char_ptr_cast(infoPacket.AlternateShell), DUMMY_REMOTEAPP ":") != ::char_ptr_cast(infoPacket.AlternateShell))) {

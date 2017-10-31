@@ -403,6 +403,7 @@ protected:
     bool enable_multiscrblt;
 
     const bool remote_program;
+    const bool remote_program_enhanced;
 
     TransparentRecorder * transparent_recorder;
     Transport           * persistent_key_list_transport;
@@ -932,6 +933,7 @@ public:
         , enable_multipatblt(false)
         , enable_multiscrblt(false)
         , remote_program(mod_rdp_params.remote_program)
+        , remote_program_enhanced(mod_rdp_params.remote_program_enhanced)
         , transparent_recorder(nullptr)
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
         //, total_data_received(0)
@@ -4675,7 +4677,6 @@ public:
                     glyphcache_caps = this->client_glyph_cache_caps;
 
                     glyphcache_caps.FragCache         = 0;  // Not yet supported
-//                    glyphcache_caps.GlyphSupportLevel &= GlyphCacheCaps::GLYPH_SUPPORT_PARTIAL;
                     if (glyphcache_caps.GlyphSupportLevel != GlyphCacheCaps::GLYPH_SUPPORT_NONE) {
                         glyphcache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_PARTIAL;
                     }
@@ -4687,7 +4688,7 @@ public:
 
                 if (this->remote_program) {
                     RailCaps rail_caps = this->client_rail_caps;
-                    rail_caps.RailSupportLevel &= (TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED);
+                    rail_caps.RailSupportLevel &= (TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED | TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED);
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
                         rail_caps.log("Sending to server");
                     }
@@ -7463,6 +7464,10 @@ private:
 
                 if (this->remote_program) {
                     infoPacket.flags |= INFO_RAIL;
+
+                    //if (this->remote_program_enhanced) {
+                    //    infoPacket.flags |= INFO_HIDEF_RAIL_SUPPORTED;
+                    //}
                 }
 
                 infoPacket.emit(stream);
