@@ -226,3 +226,14 @@ private:
     int groupid;
     std::vector<uint8_t> derivator;
 };
+
+
+enum class EcryptionSchemeTypeResult
+{
+    Error = -1,
+    NoEncrypted = 0,
+    OldScheme,
+    NewScheme,
+};
+
+EcryptionSchemeTypeResult set_encryption_scheme_type(const char * filename, CryptoContext & cctx);

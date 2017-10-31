@@ -609,7 +609,7 @@ namespace cfg {
     /// AUTHID_GLOBALS_UNICODE_KEYBOARD_EVENT_SUPPORT <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
-    /// value{0} <br/>
+    /// value{1} <br/>
     struct globals::unicode_keyboard_event_support {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -621,7 +621,7 @@ namespace cfg {
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value{0};
+        type value{1};
     };
     /// In milliseconds. <br/>
     /// AUTHID_GLOBALS_MOD_RECV_TIMEOUT <br/>

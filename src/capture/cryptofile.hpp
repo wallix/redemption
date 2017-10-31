@@ -169,7 +169,7 @@ private:
             new_derivator.data()
           , static_cast<int>(new_derivator.size())
           , buffer
-          , this->old_encryption_scheme?1:0
+          , this->old_encryption_scheme ? 1 : 0
         )) {
             LOG(LOG_ERR, "CryptoContext: get_trace_key_cb: callback error: %d", err);
             throw Error(ERR_WRM_INVALID_INIT_CRYPT);

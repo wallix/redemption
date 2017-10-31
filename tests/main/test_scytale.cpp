@@ -80,7 +80,7 @@ RED_AUTO_TEST_CASE(Testscytale)
         int with_checksum = 1;   // int used as boolean 0 false, true otherwise
 
         auto * handle = scytale_writer_new_with_test_random(with_encryption, with_checksum, finalname, &hmac_fn, &trace_fn, false, false);
-        RED_CHECK_NE(handle, nullptr);
+        RED_REQUIRE(handle);
         RED_CHECK_EQ(scytale_writer_open(handle, finalname, hash_finalname, 0), 0);
 
         RED_CHECK_EQ(scytale_writer_write(handle, bytes("We write, "), 10), 10);
@@ -100,8 +100,8 @@ RED_AUTO_TEST_CASE(Testscytale)
     // Reader
     {
         auto handle = scytale_reader_new(finalname, &hmac_fn, &trace_fn, 0, 0);
-        RED_CHECK_NE(scytale_reader_open(handle, finalname, finalname), -1);
-        RED_CHECK_NE(handle, nullptr);
+        RED_REQUIRE(handle);
+        RED_CHECK_EQ(scytale_reader_open(handle, finalname, finalname), 0);
 
         uint8_t buf[31];
 
@@ -129,6 +129,15 @@ RED_AUTO_TEST_CASE(Testscytale)
     RED_CHECK_EQ(::unlink(hash_finalname), 0);
 }
 
+RED_AUTO_TEST_CASE(TestscytaleAutoDetectScheme)
+{
+    char const * finalname = FIXTURES_PATH "/verifier/recorded/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161025-213153,wab-4-2-4.yourdomain,3243.mwrm";
+    auto handle = scytale_reader_new(finalname, &hmac_fn, &trace_fn, 0, 0);
+    RED_CHECK_NE(handle, nullptr);
+    RED_CHECK_EQ(scytale_reader_detect_and_set_encryption_scheme(handle, finalname), 1);
+    scytale_reader_delete(handle);
+}
+
 RED_AUTO_TEST_CASE(TestscytaleWriteUseRandom)
 {
     const char * finalname = "encrypted.txt";
@@ -143,7 +152,7 @@ RED_AUTO_TEST_CASE(TestscytaleWriteUseRandom)
         int with_checksum = 1;   // int used as boolean 0 false, true otherwise
 
         auto * handle = scytale_writer_new(with_encryption, with_checksum, finalname, &hmac_fn, &trace_fn, false, false);
-        RED_CHECK_NE(handle, nullptr);
+        RED_REQUIRE(handle);
         RED_CHECK_EQ(scytale_writer_open(handle, finalname, hash_finalname, 0), 0);
 
         RED_CHECK_EQ(scytale_writer_write(handle, bytes("We write, "), 10), 10);
@@ -171,7 +180,7 @@ RED_AUTO_TEST_CASE(TestscytaleWriteUseRandom)
         int with_checksum = 1;   // int used as boolean 0 false, true otherwise
 
         auto * handle = scytale_writer_new(with_encryption, with_checksum, finalname,  &hmac_fn, &trace_fn, false, false);
-        RED_CHECK_NE(handle, nullptr);
+        RED_REQUIRE(handle);
         RED_CHECK_EQ(scytale_writer_open(handle, finalname, hash_finalname, 0), 0);
 
         RED_CHECK_EQ(scytale_writer_write(handle, bytes("We write, "), 10), 10);
@@ -238,7 +247,6 @@ RED_AUTO_TEST_CASE(TestscytaleKeyDerivation2)
     scytale_key_delete(handle);
 }
             
-
 RED_AUTO_TEST_CASE(TestscytaleKeyDerivation)
 {
     // master derivator: "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm"
@@ -248,4 +256,108 @@ RED_AUTO_TEST_CASE(TestscytaleKeyDerivation)
     const char * result = scytale_key_derivate(handle, bytes(derivator), std::strlen(derivator));
     RED_CHECK_EQ(result, "CABD9CEE0BF786EC31532C954BD15F8B3426AC3C8B96FB4C77B57156EA5B6A89");
     scytale_key_delete(handle);
+}
+
+RED_AUTO_TEST_CASE(TestscytaleMeta)
+{
+    {
+        auto filename = FIXTURES_PATH "/verifier/recorded/toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,wab-5-0-0.yourdomain,7681.mwrm";
+        auto handle = scytale_reader_new(filename, &hmac_fn, &trace_fn, 0, 0);
+        RED_REQUIRE(handle);
+        RED_CHECK_EQ(scytale_reader_open(handle, filename, filename), 0);
+
+        auto meta_handle = scytale_meta_reader_new(handle);
+        RED_CHECK_NE(meta_handle, nullptr);
+
+        RED_CHECK_EQ(scytale_meta_reader_read_header(meta_handle), 0);
+        auto header = scytale_meta_reader_get_header(meta_handle);
+        RED_CHECK_EQ(header->version, 2);
+        RED_CHECK_EQ(header->has_checksum, 0);
+
+        RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), 0);
+        auto line = scytale_meta_reader_get_line(meta_handle);
+        RED_CHECK_EQ(line->filename, "/var/wab/recorded/rdp/toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,wab-5-0-0.yourdomain,7681-000000.wrm");
+        RED_CHECK_EQ(line->size, 181826);
+        RED_CHECK_EQ(line->mode, 33056);
+        RED_CHECK_EQ(line->uid, 1001);
+        RED_CHECK_EQ(line->gid, 1001);
+        RED_CHECK_EQ(line->dev, 65030);
+        RED_CHECK_EQ(line->ino, 81);
+        RED_CHECK_EQ(line->mtime, 1455816421);
+        RED_CHECK_EQ(line->ctime, 1455816421);
+        RED_CHECK_EQ(line->start_time, 1455815820);
+        RED_CHECK_EQ(line->stop_time, 1455816422);
+
+        RED_CHECK_EQ(scytale_meta_reader_read_line_eof(meta_handle), 0);
+
+        RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), ERR_TRANSPORT_NO_MORE_DATA);
+        RED_CHECK_EQ(scytale_meta_reader_read_line_eof(meta_handle), 1);
+
+        scytale_meta_reader_delete(meta_handle);
+        RED_CHECK_EQ(scytale_reader_close(handle), 0);
+        scytale_reader_delete(handle);
+    }
+    {
+        auto filename = FIXTURES_PATH "/sample.mwrm";
+        auto handle = scytale_reader_new(filename, &hmac_fn, &trace_fn, 0, 0);
+        RED_REQUIRE(handle);
+        RED_CHECK_EQ(scytale_reader_open(handle, filename, filename), 0);
+
+        auto meta_handle = scytale_meta_reader_new(handle);
+        RED_CHECK_NE(meta_handle, nullptr);
+
+        RED_CHECK_EQ(scytale_meta_reader_read_header(meta_handle), 0);
+        auto header = scytale_meta_reader_get_header(meta_handle);
+        RED_CHECK_EQ(header->version, 1);
+        RED_CHECK_EQ(header->has_checksum, 0);
+
+        RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), 0);
+        auto line = scytale_meta_reader_get_line(meta_handle);
+        RED_CHECK_EQ(line->filename, "./tests/fixtures/sample0.wrm");
+        RED_CHECK_EQ(line->size, 0);
+        RED_CHECK_EQ(line->mode, 0);
+        RED_CHECK_EQ(line->uid, 0);
+        RED_CHECK_EQ(line->gid, 0);
+        RED_CHECK_EQ(line->dev, 0);
+        RED_CHECK_EQ(line->ino, 0);
+        RED_CHECK_EQ(line->mtime, 0);
+        RED_CHECK_EQ(line->ctime, 0);
+        RED_CHECK_EQ(line->start_time, 1352304810);
+        RED_CHECK_EQ(line->stop_time, 1352304870);
+
+        RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), 0);
+        line = scytale_meta_reader_get_line(meta_handle);
+        RED_CHECK_EQ(line->filename, "./tests/fixtures/sample1.wrm");
+        RED_CHECK_EQ(line->size, 0);
+        RED_CHECK_EQ(line->mode, 0);
+        RED_CHECK_EQ(line->uid, 0);
+        RED_CHECK_EQ(line->gid, 0);
+        RED_CHECK_EQ(line->dev, 0);
+        RED_CHECK_EQ(line->ino, 0);
+        RED_CHECK_EQ(line->mtime, 0);
+        RED_CHECK_EQ(line->ctime, 0);
+        RED_CHECK_EQ(line->start_time, 1352304870);
+        RED_CHECK_EQ(line->stop_time, 1352304930);
+
+        RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), 0);
+        line = scytale_meta_reader_get_line(meta_handle);
+        RED_CHECK_EQ(line->filename, "./tests/fixtures/sample2.wrm");
+        RED_CHECK_EQ(line->size, 0);
+        RED_CHECK_EQ(line->mode, 0);
+        RED_CHECK_EQ(line->uid, 0);
+        RED_CHECK_EQ(line->gid, 0);
+        RED_CHECK_EQ(line->dev, 0);
+        RED_CHECK_EQ(line->ino, 0);
+        RED_CHECK_EQ(line->mtime, 0);
+        RED_CHECK_EQ(line->ctime, 0);
+        RED_CHECK_EQ(line->start_time, 1352304930);
+        RED_CHECK_EQ(line->stop_time, 1352304990);
+
+        RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), ERR_TRANSPORT_NO_MORE_DATA);
+        RED_CHECK_EQ(scytale_meta_reader_read_line_eof(meta_handle), 1);
+
+        scytale_meta_reader_delete(meta_handle);
+        RED_CHECK_EQ(scytale_reader_close(handle), 0);
+        scytale_reader_delete(handle);
+    }
 }

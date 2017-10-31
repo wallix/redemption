@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 version_file=include/main/version.hpp
 current_version=
 progname="$0"
@@ -69,7 +67,7 @@ fi
 
 
 if [ -z "$new_version" ] ; then
-    echo missing --new-version
+    echo missing --update-version
     usage
 fi
 
@@ -99,7 +97,7 @@ git ls-remote --tags origin | sed 's#.*/##' | check_tag remote
 sed s/'VERSION .*/VERSION "'"$new_version"'"/' -i "$version_file"
 
 git commit -am "Version $new_version" && git tag "$new_version" && {
-    [ $push = 1 ] && git push && git push --tags
+    if [ $push = 1 ] ; then git push && git push --tags ; fi
 }
 
 exit $?

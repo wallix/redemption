@@ -120,7 +120,7 @@
 "#_advanced\n"
 "#large_pointer_support = 1\n\n"
 
-"#unicode_keyboard_event_support = 0\n\n"
+"#unicode_keyboard_event_support = 1\n\n"
 
 "# In milliseconds.\n"
 "#_advanced\n"
