@@ -126,9 +126,9 @@
 //     |                                        | the server from processing       |
 //     |                                        | unencrypted packets in           |
 //     |                                        | man-in-the-middle attack         |
-//     |                                        | scenarios. This flag is only     |
-//     |                                        | understood by RDP 5.2, 6.0, 6.1, |
-//     |                                        | and 7.0 servers.                 |
+//     |                                        | scenarios. This flag is not      |
+//     |                                        | understood by RDP 4.0, 5.0, and  |
+//     |                                        | 5.1 servers.                     |
 //     +----------------------------------------+----------------------------------+
 //     | 0x00008000 INFO_RAIL                   | Indicates that the remote        |
 //     |                                        | connection being established is  |
@@ -173,20 +173,44 @@
 //     |                                        | not obtained directly from the   |
 //     |                                        | user.                            |
 //     +----------------------------------------+----------------------------------+
-//     | 0x00200000 RNS_INFO_AUDIOCAPTURE       | Indicates that the redirection   |
+//     | 0x00200000 INFO_AUDIOCAPTURE           | Indicates that the redirection   |
 //     |                                        | of client-side audio input to a  |
 //     |                                        | session hosted on a remote server|
 //     |                                        | is supported using the protocol  |
 //     |                                        | defined in [MS-RDPEAI] sections  |
-//     |                                        | 2 and 3. This flag is only       |
-//     |                                        | understood by RDP 7.0 servers.   |
+//     |                                        | 2 and 3. This flag is not        |
+//     |                                        | understood by RDP 4.0, 5.0, 5.1, |
+//     |                                        | 5.2, 6.0, and 6.1 servers.       |
 //     +----------------------------------------+----------------------------------+
-//     | 0x00400000 RNS_INFO_VIDEO_DISABLE      | Indicates that video redirection |
+//     | 0x00400000 INFO_VIDEO_DISABLE          | Indicates that video redirection |
 //     |                                        | or playback (using the protocol  |
 //     |                                        | defined in [MS-RDPEV] sections 2 |
 //     |                                        | and 3) MUST NOT take place. This |
-//     |                                        | flag is only understood by RDP   |
-//     |                                        | 7.0 servers.                     |
+//     |                                        | flag is not understood by RDP    |
+//     |                                        | 4.0, 5.0, 5.1, 5.2, 6.0, and 6.1 |
+//     |                                        | servers.                         |
+//     +----------------------------------------+----------------------------------+
+//     | 0x00800000 INFO_RESERVED1              | An unused flag that is reserved  |
+//     |                                        | for future use. This flag MUST   |
+//     |                                        | NOT be set.                      |
+//     +----------------------------------------+----------------------------------+
+//     | 0x02000000 INFO_HIDEF_RAIL_SUPPORTED   | Indicates that the client        |
+//     |                                        | supports Enhanced RemoteApp      |
+//     |                                        | ([MS-RDPERP] section 1.3.3). The |
+//     |                                        | INFO_HIDEF_RAIL_SUPPORTED flag   |
+//     |                                        | MUST be ignored if the INFO_RAIL |
+//     |                                        | (0x00008000) flag is not         |
+//     |                                        | specified. Furthermore, a client |
+//     |                                        | that specifies the               |
+//     |                                        | INFO_HIDEF_RAIL_SUPPORTED flag   |
+//     |                                        | MUST send the Remote Programs    |
+//     |                                        | Capability Set ([MS-RDPERP]      |
+//     |                                        | section 2.2.1.1.1) to the        |
+//     |                                        | server. The                      |
+//     |                                        | INFO_HIDEF_RAIL_SUPPORTED flag   |
+//     |                                        | is not understood by RDP 4.0,    |
+//     |                                        | 5.0, 5.1, 5.2, 6.0, 6.1, 7.0,    |
+//     |                                        | 7.1, and 8.0 servers.            |
 //     +----------------------------------------+----------------------------------+
 
 //     The CompressionTypeMask is a 4-bit enumerated value containing the highest
@@ -222,15 +246,18 @@ enum {
     CompressionTypeMask       = 0x00001E00,
 
     INFO_REMOTECONSOLEAUDIO   = 0x00002000,
-    FORCE_ENCRYPTED_CS_PDU    = 0x00004000,
+    INFO_FORCE_ENCRYPTED_CS_PDU
+                              = 0x00004000,
     INFO_RAIL                 = 0x00008000,
     INFO_LOGONERRORS          = 0x00010000,
     INFO_MOUSE_HAS_WHEEL      = 0x00020000,
     INFO_PASSWORD_IS_SC_PIN   = 0x00040000,
     INFO_NOAUDIOPLAYBACK      = 0x00080000,
     INFO_USING_SAVED_CREDS    = 0x00100000,
-    RNS_INFO_AUDIOCAPTURE     = 0x00200000,
-    RNS_INFO_VIDEO_DISABLE    = 0x00400000,
+    INFO_AUDIOCAPTURE         = 0x00200000,
+    INFO_VIDEO_DISABLE        = 0x00400000,
+
+    INFO_RESERVED1            = 0x00800000,
 
     INFO_HIDEF_RAIL_SUPPORTED = 0x02000000
 };
@@ -893,7 +920,6 @@ struct InfoPacket {
             stream.out_date_name(
                 reinterpret_cast<char const *>(this->extendedInfoPacket.clientTimeZone.StandardName), 64);
 
-//            stream.out_date_name(this->extendedInfoPacket.clientTimeZone.StandardDate, 16);
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wYear);
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wMonth);
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wDayOfWeek);
@@ -908,7 +934,6 @@ struct InfoPacket {
             stream.out_date_name(
                 reinterpret_cast<char const *>(this->extendedInfoPacket.clientTimeZone.DaylightName), 64);
 
-//            stream.out_date_name(this->extendedInfoPacket.clientTimeZone.DaylightDate, 16);
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wYear);
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wMonth);
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wDayOfWeek);
@@ -1111,15 +1136,18 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::flags:CompressionTypeMask %s",     (flags & CompressionTypeMask)?"yes":"no");
         LOG(LOG_INFO, "InfoPacket::flags:INFO_ENABLEWINDOWSKEY  %s",  (flags & INFO_ENABLEWINDOWSKEY )?"yes":"no");
         LOG(LOG_INFO, "InfoPacket::flags:INFO_REMOTECONSOLEAUDIO %s", (flags & INFO_REMOTECONSOLEAUDIO)?"yes":"no");
-        LOG(LOG_INFO, "InfoPacket::flags:FORCE_ENCRYPTED_CS_PDU %s",  (flags & FORCE_ENCRYPTED_CS_PDU)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_FORCE_ENCRYPTED_CS_PDU %s",
+                                                                      (flags & INFO_FORCE_ENCRYPTED_CS_PDU)?"yes":"no");
         LOG(LOG_INFO, "InfoPacket::flags:INFO_RAIL %s",               (flags & INFO_RAIL)?"yes":"no");
         LOG(LOG_INFO, "InfoPacket::flags:INFO_LOGONERRORS %s",        (flags & INFO_LOGONERRORS)?"yes":"no");
         LOG(LOG_INFO, "InfoPacket::flags:INFO_MOUSE_HAS_WHEEL %s",    (flags & INFO_MOUSE_HAS_WHEEL)?"yes":"no");
         LOG(LOG_INFO, "InfoPacket::flags:INFO_PASSWORD_IS_SC_PIN %s", (flags & INFO_PASSWORD_IS_SC_PIN)?"yes":"no");
         LOG(LOG_INFO, "InfoPacket::flags:INFO_NOAUDIOPLAYBACK %s",    (flags & INFO_NOAUDIOPLAYBACK)?"yes":"no");
         LOG(LOG_INFO, "InfoPacket::flags:INFO_USING_SAVED_CREDS %s",  (flags & INFO_USING_SAVED_CREDS)?"yes":"no");
-        LOG(LOG_INFO, "InfoPacket::flags:RNS_INFO_AUDIOCAPTURE %s",   (flags & RNS_INFO_AUDIOCAPTURE)?"yes":"no");
-        LOG(LOG_INFO, "InfoPacket::flags:RNS_INFO_VIDEO_DISABLE %s",  (flags & RNS_INFO_VIDEO_DISABLE)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_AUDIOCAPTURE %s",       (flags & INFO_AUDIOCAPTURE)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_VIDEO_DISABLE %s",      (flags & INFO_VIDEO_DISABLE)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_HIDEF_RAIL_SUPPORTED %s",
+                                                                      (flags & INFO_HIDEF_RAIL_SUPPORTED)?"yes":"no");
         LOG(LOG_INFO, "InfoPacket::cbDomain %u", this->cbDomain);
         LOG(LOG_INFO, "InfoPacket::cbUserName %u", this->cbUserName);
         LOG(LOG_INFO, "InfoPacket::cbPassword %u", this->cbPassword);
@@ -1158,7 +1186,6 @@ struct InfoPacket {
         ::UTF16toUTF8(this->extendedInfoPacket.clientTimeZone.StandardName,
             sizeof(this->extendedInfoPacket.clientTimeZone.StandardName) / 2,
             utf8_StandardName, sizeof(utf8_StandardName));
-//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardName %s", this->extendedInfoPacket.clientTimeZone.StandardName);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardName %s", utf8_StandardName);
 
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wYear %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wYear);
@@ -1175,7 +1202,6 @@ struct InfoPacket {
         ::UTF16toUTF8(this->extendedInfoPacket.clientTimeZone.DaylightName,
             sizeof(this->extendedInfoPacket.clientTimeZone.DaylightName) / 2,
             utf8_DaylightName, sizeof(utf8_DaylightName));
-//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightName %s", this->extendedInfoPacket.clientTimeZone.DaylightName);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightName %s", utf8_DaylightName);
 
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wYear %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wYear);
