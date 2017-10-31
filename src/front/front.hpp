@@ -1851,7 +1851,7 @@ public:
                                                     , ini.get<cfg::client::performance_flags_force_present>()
                                                     , ini.get<cfg::client::performance_flags_force_not_present>()
                                                     , ini.get<cfg::debug::password>()
-                                                    , bool(this->verbose & Verbose::sec_decrypted)
+                                                    , bool(this->verbose & Verbose::basic_trace)
                                                     );
 
                 if (sec.payload.in_remain()) {
@@ -2836,7 +2836,7 @@ private:
 
                 if (this->client_info.remote_program) {
                     RailCaps rail_caps;
-                    rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED;
+                    rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED | TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
                     if (bool(this->verbose)) {
                         rail_caps.log("Front::send_demand_active: Sending to client");
                     }
