@@ -36,6 +36,7 @@
 #include "utils/invalid_socket.hpp"
 #include "utils/select.hpp"
 #include "core/server.hpp"
+#include "cxx/diagnostic.hpp"
 
 #if !defined(IP_TRANSPARENT)
 #define IP_TRANSPARENT 19
@@ -154,9 +155,12 @@ struct Listen {
 
             switch (select(this->sck + 1, &rfds, nullptr, nullptr, &timeout)){
             default:
+                REDEMPTION_DIAGNOSTIC_PUSH
+                REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wlogical-op")
                 if ((errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == EINPROGRESS) || (errno == EINTR)) {
                     continue; /* these are not really errors */
                 }
+                REDEMPTION_DIAGNOSTIC_POP
                 LOG(LOG_WARNING, "socket error detected in listen (%s)\n", strerror(errno));
                 loop_listener = false;
                 break;

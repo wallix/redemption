@@ -775,6 +775,9 @@ public:
                     this->client_info.width = width;
                     this->client_info.height = height;
 
+                    this->ini.set_acl<cfg::context::opt_width>(this->client_info.width);
+                    this->ini.set_acl<cfg::context::opt_height>(this->client_info.height);
+
                     if (this->capture)
                     {
                         this->must_be_stop_capture();
@@ -1851,7 +1854,7 @@ public:
                                                     , ini.get<cfg::client::performance_flags_force_present>()
                                                     , ini.get<cfg::client::performance_flags_force_not_present>()
                                                     , ini.get<cfg::debug::password>()
-                                                    , bool(this->verbose & Verbose::sec_decrypted)
+                                                    , bool(this->verbose & Verbose::basic_trace)
                                                     );
 
                 if (sec.payload.in_remain()) {
@@ -2836,7 +2839,7 @@ private:
 
                 if (this->client_info.remote_program) {
                     RailCaps rail_caps;
-                    rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED;
+                    rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED | TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
                     if (bool(this->verbose)) {
                         rail_caps.log("Front::send_demand_active: Sending to client");
                     }
@@ -3927,7 +3930,7 @@ private:
                 this->ini.set_acl<cfg::context::opt_bpp>(this->client_info.bpp);
 
                 if (!this->auth_info_sent) {
-                    char         username_a_domain[512];
+                    char         username_a_domain[516];
                     const char * username;
                     if (this->client_info.domain[0] &&
                         !strchr(this->client_info.username, '@') &&

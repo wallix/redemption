@@ -145,18 +145,18 @@ Transport::Read MwrmReader::read_meta_line(MetaLine & meta_line)
         return this->read_meta_line_v1(meta_line);
     case WrmVersion::v2:
         return this->read_meta_line_v2(meta_line, true);
-    default:
-        assert(false);
-        throw Error(ERR_TRANSPORT_READ_FAILED);
     }
+    assert(false);
+    throw Error(ERR_TRANSPORT_READ_FAILED);
 }
 
 void MwrmReader::read_meta_hash_line(MetaLine & meta_line)
 {
+    Transport::Read r = Transport::Read::Eof;
     switch (this->header.version) {
     case WrmVersion::v1:
         init_stat_v1(meta_line);
-        this->read_meta_hash_line_v1(meta_line);
+        r = this->read_meta_hash_line_v1(meta_line);
         break;
     case WrmVersion::v2:
         bool is_eof = false;
@@ -167,11 +167,11 @@ void MwrmReader::read_meta_hash_line(MetaLine & meta_line)
         if (is_eof) {
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
-        this->read_meta_line_v2(meta_line, false);
+        r = this->read_meta_line_v2(meta_line, false);
         break;
     }
 
-    if (Transport::Read::Eof != this->line_reader.next_line()) {
+    if (r != Transport::Read::Ok || Transport::Read::Eof != this->line_reader.next_line()) {
         throw Error(ERR_TRANSPORT_READ_FAILED);
     }
 }
@@ -181,6 +181,8 @@ Transport::Read MwrmReader::read_meta_hash_line_v1(MetaLine & meta_line)
     if (Transport::Read::Eof == this->line_reader.next_line()) {
         return Transport::Read::Eof;
     }
+
+    meta_line.with_hash = true;
 
     // Filename HASH_64_BYTES
     //         ^
@@ -246,13 +248,18 @@ Transport::Read MwrmReader::read_meta_line_v1(MetaLine & meta_line)
     reverse_iterator e1 = std::find(first, last, ' ');
     int err = 0;
 
-    if (e1 - first == 65) {
+    meta_line.with_hash = (e1 - first == 65);
+    if (meta_line.with_hash) {
         extract_hash(meta_line.hash2, e1.base(), err);
     }
 
     reverse_iterator e2 = (e1 == last) ? e1 : std::find(e1 + 1, last, ' ');
     if (e2 - e1 == 65) {
         extract_hash(meta_line.hash1, e2.base(), err);
+    }
+    else if (meta_line.with_hash) {
+        LOG(LOG_ERR, "mwrm read line v1: fhash without qhash");
+        throw Error(ERR_TRANSPORT_READ_FAILED);
     }
 
     if (err) {
@@ -337,6 +344,8 @@ Transport::Read MwrmReader::read_meta_line_v2(MetaLine & meta_line, bool has_sta
         meta_line.start_time = 0;
         meta_line.stop_time  = 0;
     }
+
+    meta_line.with_hash = this->header.has_checksum;
     if (this->header.has_checksum) {
         // ' ' hash ' ' hash '\n'
         err |= line_buf.size() - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 3;

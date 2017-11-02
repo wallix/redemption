@@ -36,8 +36,8 @@ class WrmFGen
     char         hash_path[1024];
     char         filename[1012];
     char         extension[12];
-    mutable char filename_gen[2048];
-    mutable char hash_filename_gen[2048];
+    mutable char filename_gen[2070];
+    mutable char hash_filename_gen[2070];
 
 public:
     WrmFGen(

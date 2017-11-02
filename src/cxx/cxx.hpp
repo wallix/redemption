@@ -44,7 +44,8 @@
 #endif
 
 // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0188r1.pdf
-#if __cplusplus > REDEMPTION_CXX_STD_14 && REDEMPTION_CXX_HAS_ATTRIBUTE(fallthrough)
+#if (__cplusplus > REDEMPTION_CXX_STD_14 && REDEMPTION_CXX_HAS_ATTRIBUTE(fallthrough)) \
+ || ( REDEMPTION_COMP_GNUC >= REDEMPTION_VERSION_NUMBER(7, 1, 0))
 #  define REDEMPTION_CXX_FALLTHROUGH [[fallthrough]]
 #elif defined(__clang__)
 #  define REDEMPTION_CXX_FALLTHROUGH [[clang::fallthrough]]

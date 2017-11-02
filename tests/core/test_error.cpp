@@ -32,4 +32,7 @@ RED_AUTO_TEST_CASE(TestError)
     RED_CHECK_EQUAL("Exception ERR_SSL_CALL_FAILED", e.errmsg(false));
 
     RED_CHECK_EQUAL("Exception ERR_SSL_CALL_FAILED no : 25000", e.errmsg());
+
+    // long message error
+    RED_CHECK_EQUAL("Exception ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG no : 24211", Error(ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG).errmsg());
 }

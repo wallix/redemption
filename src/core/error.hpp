@@ -370,7 +370,7 @@ struct Error {
 private:
     mutable bool has_msg = false;
     mutable bool with_id = false;
-    mutable char msg[64]  = { 0 };
+    mutable char msg[128]  = { 0 };
 
     Error() = delete;
 

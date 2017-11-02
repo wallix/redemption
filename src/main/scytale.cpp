@@ -145,14 +145,13 @@ struct RedCryptoErrorContext
 
     char const * message() noexcept
     {
-        if (this->error.errnum && this->error.id != NO_ERROR) {
+        if (this->error.errnum) {
             std::snprintf(this->msg, sizeof(msg), "%s, errno = %d: %s", this->error.errmsg(), this->error.errnum, strerror(this->error.errnum));
+            this->msg[sizeof(this->msg)-1] = 0;
+            return this->msg;
         }
-        else {
-            std::snprintf(this->msg, sizeof(msg), "%s", this->error.errmsg());
-        }
-        this->msg[sizeof(this->msg)-1] = 0;
-        return this->msg;
+
+        return this->error.errmsg();
     }
 
     static char const * handle_error_message() noexcept
@@ -167,7 +166,7 @@ struct RedCryptoErrorContext
 
 private:
     Error error;
-    char msg[128];
+    char msg[256];
 };
 
 struct RedCryptoWriterHandle
@@ -186,7 +185,6 @@ struct RedCryptoWriterHandle
             filename_derivatator)
     , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, fstat)
     {
-
         memset(this->qhashhex, '0', sizeof(this->qhashhex)-1);
         this->qhashhex[sizeof(this->qhashhex)-1] = 0;
         memset(this->fhashhex, '0', sizeof(this->fhashhex)-1);
@@ -385,8 +383,7 @@ void scytale_writer_delete(RedCryptoWriterHandle * handle)
 char const * scytale_writer_error_message(RedCryptoWriterHandle * handle)
 {
     SCOPED_TRACE;
-    CHECK_HANDLE_R(handle, RedCryptoErrorContext::handle_error_message());
-    return handle->error_ctx.message();
+    return handle ? handle->error_ctx.message() : RedCryptoErrorContext::handle_error_message();
 }
 
 
@@ -511,8 +508,14 @@ struct RedCryptoMetaReaderHandle
 
     RedCryptoMwrmLine & get_meta_line() noexcept
     {
-        hash_to_hashhex(this->meta_line.hash1, this->hashhex1);
-        hash_to_hashhex(this->meta_line.hash2, this->hashhex2);
+        if (this->meta_line.with_hash) {
+            hash_to_hashhex(this->meta_line.hash1, this->hashhex1);
+            hash_to_hashhex(this->meta_line.hash2, this->hashhex2);
+        }
+        else {
+            this->hashhex1[0] = 0;
+            this->hashhex2[0] = 0;
+        }
         this->c_mwrm_line = {
             this->meta_line.filename,
             static_cast<uint64_t>(this->meta_line.size),
@@ -525,6 +528,7 @@ struct RedCryptoMetaReaderHandle
             static_cast<uint64_t>(this->meta_line.ctime),
             static_cast<uint64_t>(this->meta_line.start_time),
             static_cast<uint64_t>(this->meta_line.stop_time),
+            this->meta_line.with_hash,
             this->hashhex1,
             this->hashhex2,
         };
@@ -557,16 +561,14 @@ RedCryptoMetaReaderHandle * scytale_meta_reader_new(RedCryptoReaderHandle * read
 char const * scytale_meta_reader_message(RedCryptoMetaReaderHandle * handle)
 {
     SCOPED_TRACE;
-    CHECK_HANDLE_R(handle, RedCryptoErrorContext::handle_error_message());
-    return handle->error_ctx.message();
+    return handle ? handle->error_ctx.message() : RedCryptoErrorContext::handle_error_message();
 }
 
-int scytale_meta_reader_read_hash(RedCryptoMetaReaderHandle * handle, int version, int has_checksum)
+int scytale_meta_reader_read_hash(RedCryptoMetaReaderHandle * handle, int version)
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
-    handle->mwrm_reader.set_header({
-        static_cast<WrmVersion>(version), static_cast<bool>(has_checksum)});
+    handle->mwrm_reader.set_header({static_cast<WrmVersion>(version), true});
     CHECK_NOTHROW(
         handle->mwrm_reader.read_meta_hash_line(handle->meta_line),
         ERR_TRANSPORT_READ_FAILED);
