@@ -27,6 +27,7 @@
 #include "utils/genfstat.hpp"
 #include "transport/mwrm_reader.hpp"
 #include "transport/crypto_transport.hpp"
+#include "test_only/transport/test_transport.hpp"
 
 #include <fstream>
 
@@ -340,6 +341,34 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
     RED_CHECK_MEM_AC(meta_line.hash2,
       "\xf3\xc5\x36\x2b\xc3\x47\xf8\xb4\x4a\x1d\x91\x63\xdd\x68\xed\x99"
       "\xc1\xed\x58\xc2\xd3\x28\xd1\xa9\x4a\x07\x7d\x76\x58\xca\x66\x7c");
+
+    RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Eof);
+}
+
+RED_AUTO_TEST_CASE(ReadHashV2WithoutHash)
+{
+    CryptoContext cctx;
+
+    auto data = cstr_array_view("v2\n\n\ncgrosjean@10.10.43.12,Administrateur@local@win2008,20170830-174010,wab-5-0-4.cgrtc,6916.mwrm 222 33056 1001 1001 65030 28 1504107644 1504107644\n");
+
+    GeneratorTransport transport(data.data(), data.size());
+
+    MwrmReader reader(transport);
+
+    MetaLine meta_line;
+    reader.set_header({WrmVersion::v2, false});
+    reader.read_meta_hash_line(meta_line);
+    RED_REQUIRE_EQUAL(meta_line.filename,
+        "cgrosjean@10.10.43.12,Administrateur@local@win2008,20170830-174010,wab-5-0-4.cgrtc,6916.mwrm");
+    RED_CHECK_EQUAL(meta_line.size, 222);
+    RED_CHECK_EQUAL(meta_line.mode, 33056);
+    RED_CHECK_EQUAL(meta_line.uid, 1001);
+    RED_CHECK_EQUAL(meta_line.gid, 1001);
+    RED_CHECK_EQUAL(meta_line.dev, 65030);
+    RED_CHECK_EQUAL(meta_line.ino, 28);
+    RED_CHECK_EQUAL(meta_line.mtime, 1504107644);
+    RED_CHECK_EQUAL(meta_line.ctime, 1504107644);
+    RED_CHECK_EQUAL(meta_line.with_hash, false);
 
     RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Eof);
 }

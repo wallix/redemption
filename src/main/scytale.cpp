@@ -564,11 +564,11 @@ char const * scytale_meta_reader_message(RedCryptoMetaReaderHandle * handle)
     return handle ? handle->error_ctx.message() : RedCryptoErrorContext::handle_error_message();
 }
 
-int scytale_meta_reader_read_hash(RedCryptoMetaReaderHandle * handle, int version)
+int scytale_meta_reader_read_hash(RedCryptoMetaReaderHandle * handle, int version, int has_checksum)
 {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
-    handle->mwrm_reader.set_header({static_cast<WrmVersion>(version), true});
+    handle->mwrm_reader.set_header({static_cast<WrmVersion>(version), bool(has_checksum)});
     CHECK_NOTHROW(
         handle->mwrm_reader.read_meta_hash_line(handle->meta_line),
         ERR_TRANSPORT_READ_FAILED);

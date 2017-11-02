@@ -104,7 +104,7 @@ namespace
     }
 }
 
-MwrmReader::MwrmReader(InCryptoTransport & ibuf) noexcept
+MwrmReader::MwrmReader(InTransport ibuf) noexcept
 : line_reader(ibuf)
 {
     this->header.version = WrmVersion::v1;
@@ -144,7 +144,7 @@ Transport::Read MwrmReader::read_meta_line(MetaLine & meta_line)
         init_stat_v1(meta_line);
         return this->read_meta_line_v1(meta_line);
     case WrmVersion::v2:
-        return this->read_meta_line_v2(meta_line, true);
+        return this->read_meta_line_v2(meta_line, FileType::Mwrm);
     }
     assert(false);
     throw Error(ERR_TRANSPORT_READ_FAILED);
@@ -167,7 +167,7 @@ void MwrmReader::read_meta_hash_line(MetaLine & meta_line)
         if (is_eof) {
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
-        r = this->read_meta_line_v2(meta_line, false);
+        r = this->read_meta_line_v2(meta_line, FileType::Hash);
         break;
     }
 
@@ -297,7 +297,7 @@ Transport::Read MwrmReader::read_meta_line_v1(MetaLine & meta_line)
     return Transport::Read::Ok;
 }
 
-Transport::Read MwrmReader::read_meta_line_v2(MetaLine & meta_line, bool has_start_and_stop_time)
+Transport::Read MwrmReader::read_meta_line_v2(MetaLine & meta_line, FileType file_type)
 {
     if (Transport::Read::Eof == this->line_reader.next_line()) {
         return Transport::Read::Eof;
@@ -336,7 +336,7 @@ Transport::Read MwrmReader::read_meta_line_v2(MetaLine & meta_line, bool has_sta
     err |= (*pend != ' '); pline = pend; meta_line.mtime      = strtoll (pline, &pend, 10);
     err |= (*pend != ' '); pline = pend; meta_line.ctime      = strtoll (pline, &pend, 10);
 
-    if (has_start_and_stop_time) {
+    if (file_type == FileType::Mwrm) {
         err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
         err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
     }
@@ -345,8 +345,10 @@ Transport::Read MwrmReader::read_meta_line_v2(MetaLine & meta_line, bool has_sta
         meta_line.stop_time  = 0;
     }
 
-    meta_line.with_hash = this->header.has_checksum;
-    if (this->header.has_checksum) {
+    meta_line.with_hash = (file_type == FileType::Mwrm)
+      ? this->header.has_checksum
+      : (this->header.has_checksum || (*pend != '\n' && *pend != '\0'));
+    if (meta_line.with_hash) {
         // ' ' hash ' ' hash '\n'
         err |= line_buf.size() - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 3;
         if (!err)
