@@ -158,6 +158,7 @@ extern "C"
         uint64_t ctime;
         uint64_t start_time;
         uint64_t stop_time;
+        int with_hash;
         char const * hash1;
         char const * hash2;
     };

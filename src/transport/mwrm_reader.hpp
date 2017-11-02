@@ -53,6 +53,8 @@ struct MetaHeader
 struct MetaLine
 {
     char    filename[PATH_MAX + 1];
+    // always 0 with header.version = 1
+    //@{
     off_t   size;
     mode_t  mode;
     uid_t   uid;
@@ -61,8 +63,11 @@ struct MetaLine
     ino_t   ino;
     time_t  mtime;
     time_t  ctime;
+    //@}
     time_t  start_time;
     time_t  stop_time;
+    // always true with header.version = 2 and header.has_checksum = true
+    bool with_hash;
     uint8_t hash1[MD_HASH::DIGEST_LENGTH];
     uint8_t hash2[MD_HASH::DIGEST_LENGTH];
 
@@ -97,6 +102,8 @@ class LineReader
     char * eol;
     char * cur;
     InCryptoTransport & ibuf;
+
+    friend class MwrmReader; // for LineReader::read_meta_hash_line()
 
 public:
     LineReader(InCryptoTransport & reader_buf) noexcept

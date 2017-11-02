@@ -246,7 +246,7 @@ RED_AUTO_TEST_CASE(TestscytaleKeyDerivation2)
 
     scytale_key_delete(handle);
 }
-            
+
 RED_AUTO_TEST_CASE(TestscytaleKeyDerivation)
 {
     // master derivator: "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm"
@@ -287,6 +287,7 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
         RED_CHECK_EQ(line->ctime, 1455816421);
         RED_CHECK_EQ(line->start_time, 1455815820);
         RED_CHECK_EQ(line->stop_time, 1455816422);
+        RED_CHECK_EQ(line->with_hash, false);
 
         RED_CHECK_EQ(scytale_meta_reader_read_line_eof(meta_handle), 0);
 
@@ -324,6 +325,7 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
         RED_CHECK_EQ(line->ctime, 0);
         RED_CHECK_EQ(line->start_time, 1352304810);
         RED_CHECK_EQ(line->stop_time, 1352304870);
+        RED_CHECK_EQ(line->with_hash, false);
 
         RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), 0);
         line = scytale_meta_reader_get_line(meta_handle);
@@ -338,6 +340,7 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
         RED_CHECK_EQ(line->ctime, 0);
         RED_CHECK_EQ(line->start_time, 1352304870);
         RED_CHECK_EQ(line->stop_time, 1352304930);
+        RED_CHECK_EQ(line->with_hash, false);
 
         RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), 0);
         line = scytale_meta_reader_get_line(meta_handle);
@@ -352,6 +355,7 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
         RED_CHECK_EQ(line->ctime, 0);
         RED_CHECK_EQ(line->start_time, 1352304930);
         RED_CHECK_EQ(line->stop_time, 1352304990);
+        RED_CHECK_EQ(line->with_hash, false);
 
         RED_CHECK_EQ(scytale_meta_reader_read_line(meta_handle), ERR_TRANSPORT_NO_MORE_DATA);
         RED_CHECK_EQ(scytale_meta_reader_read_line_eof(meta_handle), 1);
