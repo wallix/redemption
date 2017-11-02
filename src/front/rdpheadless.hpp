@@ -73,9 +73,13 @@
 #include "keyboard/keymap2.hpp"
 #include "core/client_info.hpp"
 #include "utils/word_identification.hpp"
+#include "utils/netutils.hpp"
+#include "test_only/lcg_random.hpp"
 
 
-class TestClientCLI : public FrontAPI
+
+
+class RDPHeadlessFront : public FrontAPI
 {
 
 private:
@@ -238,13 +242,43 @@ public:
 
     std::string index;
 
+    std::string error_message;
+
+    // for VNC
+    NullReportMessage report_message_vnc;
+    Theme      theme;
+
+
+    //  RDP
+    LCGRandom gen;
+    TimeSystem timeSystem;
+    struct : NullReportMessage {
+        void report(const char* reason, const char* /*message*/) override
+        {
+            // std::cout << "report_message: " << message << "  reason:" << reason << std::endl;
+            if (!strcmp(reason, "CLOSE_SESSION_SUCCESSFUL")) {
+                this->is_closed = true;
+            }
+        }
+
+        bool is_closed = false;
+    } report_message_rdp;
+
+    NullAuthentifier authentifier;
+
+    SocketTransport * socket;
+
+
+
+
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //------------------------
     //      CONSTRUCTOR
     //------------------------
 
-    TestClientCLI(ClientInfo const & info, ReportMessageApi & report_message, uint32_t verbose)
+    RDPHeadlessFront(ClientInfo const & info, ReportMessageApi & report_message, uint32_t verbose)
     : _verbose(verbose)
     , _clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [&report_message](){
         ClipboardVirtualChannel::Params params(report_message);
@@ -271,6 +305,7 @@ public:
     , primary_connection_finished(false)
     , keep_alive_freq(0)
     , index("0")
+    , gen(0) // To always get the same client random, in tests
     {
         SSL_load_error_strings();
         SSL_library_init();
@@ -317,7 +352,10 @@ public:
         }
     }
 
-    ~TestClientCLI() {}
+    ~RDPHeadlessFront() {
+        delete (this->socket);
+        delete (this->_callback);
+    }
 
     void record_connection_nego_times() {
         if (!this->secondary_connection_finished) {
@@ -362,7 +400,224 @@ public:
         }
     }
 
+    int connect(const char * ip, const char * userName, const char * userPwd, int port, bool protocol_is_VNC, ModRDPParams & mod_rdp_params, uint32_t encryptionMethods) {
+
+        int const nbTry(3);
+        int const retryDelay(1000);
+        int const sck = ip_connect(ip, port, nbTry, retryDelay);
+        if (sck <= 0) {
+            std::cerr << "ip_connect: Cannot connect to [" << ip << "]." << std::endl;
+            return -42;
+        }
+
+//         unique_fd auto_close_sck{sck};
+
+
+        this->socket = new SocketTransport( userName
+                                          , sck
+                                          , ip
+                                          , port
+                                          , std::chrono::seconds(1)
+                                          , to_verbose_flags(this->_verbose)
+                                          , &(this->error_message)
+                                          );
+
+        std::cout << " Connected to [" << ip <<  "]." << std::endl;
+
+        this->start_connection_time = tvtime();
+
+        Inifile ini;
+
+        GCC::UserData::SCCore const original_sc_core;
+        GCC::UserData::SCSecurity const original_sc_sec1;
+
+        not_null_ptr<GCC::UserData::SCCore const> sc_core_ptr = &original_sc_core;
+        not_null_ptr<GCC::UserData::SCSecurity const> sc_sec1_ptr = &original_sc_sec1;
+
+        if (protocol_is_VNC) {
+
+            this->_callback = new mod_vnc( *(this->socket)
+                                         , userName
+                                         , userPwd
+                                         , *(this)
+                                         , this->_info.width
+                                         , this->_info.height
+                                         , ini.get<cfg::font>()
+                                         , ""
+                                         , ""
+                                         , theme
+                                         , this->_info.keylayout
+                                         , 0
+                                         , true
+                                         , true
+                                         , "0,1,-239"
+                                         , false
+                                         , true
+                                         , mod_vnc::ClipboardEncodingType::UTF8
+                                         , VncBogusClipboardInfiniteLoop::delayed
+                                         , this->report_message_vnc
+                                         , false
+                                         , nullptr
+                                         , to_verbose_flags(this->_verbose)
+                                         );
+
+        } else {
+            auto * rdp = new mod_rdp (
+                          *(this->socket)
+                        , *(this)
+                        , this->_info
+                        , ini.get_ref<cfg::mod_rdp::redir_info>()
+                        , gen
+                        , timeSystem
+                        , mod_rdp_params
+                        , this->authentifier
+                        , this->report_message_rdp
+                        , ini
+                        );
+            this->_callback = rdp;
+
+            GCC::UserData::CSSecurity & cs_security = rdp->cs_security;
+            cs_security.encryptionMethods = encryptionMethods;
+
+            sc_core_ptr = &rdp->sc_core;
+            sc_sec1_ptr = &rdp->sc_sec1;
+        }
+
+        this->_to_server_sender._callback = this->_callback;
+
+         try {
+            while (!this->_callback->is_up_and_running()) {
+                // std::cout << " Early negociations...\n";
+                if (int err = this->wait_and_draw_event(sck, this->_callback, *(this), {3, 0})) {
+                    return err;
+                }
+            }
+            this->primary_connection_finished = true;
+            this->start_wab_session_time = tvtime();
+
+        } catch (const Error & e) {
+            std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
+            if (error_message.size()) {
+                std::cout << " Error tls: " << error_message << "\n";
+            }
+            return 2;
+        }
+        std::cout << " Early negociations completes.\n";
+
+        if (protocol_is_VNC) {
+            if (this->_verbose & RDPHeadlessFront::SHOW_CORE_SERVER_INFO && !protocol_is_VNC) {
+                std::cout << " ================================" << "\n";
+                std::cout << " ======= Server Core Info =======" << "\n";
+                std::cout << " ================================" << "\n";
+
+                std::cout << " userDataType = " << sc_core_ptr->userDataType << "\n";
+                std::cout << " length = " << sc_core_ptr->length << "\n";
+                std::cout << " version = " << sc_core_ptr->version << "\n";
+                std::cout << " clientRequestedProtocols = " << sc_core_ptr->clientRequestedProtocols << "\n";
+                std::cout << " earlyCapabilityFlags = " << sc_core_ptr->earlyCapabilityFlags << "\n";
+                std::cout << std::endl;
+            }
+
+            if (this->_verbose & RDPHeadlessFront::SHOW_SECURITY_SERVER_INFO && !protocol_is_VNC) {
+                std::cout << " ================================" << "\n";
+                std::cout << " ===== Server Security Info =====" << "\n";
+                std::cout << " ================================" << "\n";
+
+                std::cout << " userDataType = " << sc_sec1_ptr->userDataType << "\n";
+                std::cout << " length = " << sc_sec1_ptr->length << "\n";
+                std::cout << " encryptionMethod = " << GCC::UserData::SCSecurity::get_encryptionMethod_name(sc_sec1_ptr->encryptionMethod) << "\n";
+                std::cout << " encryptionLevel = " << GCC::UserData::SCSecurity::get_encryptionLevel_name(sc_sec1_ptr->encryptionLevel) << "\n";
+                std::cout << " serverRandomLen = " << sc_sec1_ptr->serverRandomLen << "\n";
+                std::cout << " serverCertLen = " << sc_sec1_ptr->serverCertLen << "\n";
+                std::cout << " dwVersion = " << sc_sec1_ptr->dwVersion << "\n";
+                std::cout << " temporary = " << sc_sec1_ptr->temporary << "\n";
+
+                auto print_hex_data = [&sc_sec1_ptr](array_view_const_u8 av){
+                    for (size_t i = 0; i < av.size(); i++) {
+                        if ((i % 16) == 0 && i != 0) {
+                            std::cout << "\n                ";
+                        }
+                        std::cout <<"0x";
+                        if (av[i] < 0x10) {
+                            std::cout << "0";
+                        }
+                        std::cout << std::hex << int(sc_sec1_ptr->serverRandom[i]) << std::dec << " ";
+                    }
+                    std::cout << "\n";
+                    std::cout << "\n";
+                };
+
+                std::cout << " serverRandom : "; print_hex_data(sc_sec1_ptr->serverRandom);
+                std::cout << " pri_exp : "; print_hex_data(sc_sec1_ptr->pri_exp);
+                std::cout << " pub_sig : "; print_hex_data(sc_sec1_ptr->pub_sig);
+
+                std::cout << " proprietaryCertificate : " << "\n";
+                std::cout << "     dwSigAlgId = " << sc_sec1_ptr->proprietaryCertificate.dwSigAlgId << "\n";
+                std::cout << "     dwKeyAlgId = " << sc_sec1_ptr->proprietaryCertificate.dwKeyAlgId << "\n";
+                std::cout << "     wPublicKeyBlobType = " << sc_sec1_ptr->proprietaryCertificate.wPublicKeyBlobType << "\n";
+                std::cout << "     wPublicKeyBlobLen = " << sc_sec1_ptr->proprietaryCertificate.wPublicKeyBlobLen << "\n";
+                std::cout << "\n";
+                std::cout << "     RSAPK : " << "\n";
+                std::cout << "        magic = " << sc_sec1_ptr->proprietaryCertificate.RSAPK.magic << "\n";
+                std::cout << "\n" << std::endl;
+
+            }
+        }
+
+        return sck;
+
+    }
+
+    int wait_and_draw_event(int sck, mod_api * mod, FrontAPI & front, timeval timeout) {
+        unsigned max = 0;
+        fd_set   rfds;
+
+        io_fd_zero(rfds);
+
+        auto & event = mod->get_event();
+        event.wait_on_fd(sck, rfds, max, timeout);
+
+        int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
+        // std::cout << "RDP CLIENT :: select num = " <<  num << "\n";
+
+        if (num < 0) {
+            if (errno == EINTR) {
+                return 0;
+                //continue;
+            }
+
+            std::cerr << "RDP CLIENT :: errno = " <<  strerror(errno) << "\n";
+            return 9;
+        }
+
+        if (event.is_set(sck, rfds)) {
+            mod->draw_event(time(nullptr), front);
+        }
+
+        return 0;
+    }
+
+    mod_api * mod() {
+        return this->_callback;
+    }
+
     void disconnect() {
+        this->_callback->disconnect(tvtime().tv_sec);
+
+        if (this->_callback != nullptr) {
+            TimeSystem timeobj;
+            if (is_pipe_ok) {
+                this->_callback->disconnect(timeobj.get_time().tv_sec);
+            }
+            delete (this->_callback);
+            this->_callback = nullptr;
+        }
+
+        if (this->socket != nullptr) {
+            delete (this->socket);
+            this->socket = nullptr;
+        }
+
         std::chrono::microseconds prim_duration = difftimeval(this->start_wab_session_time, this->start_connection_time);
         uint64_t prim_len = prim_duration.count() / 1000;
 
@@ -1067,11 +1322,11 @@ class EventList
 {
     struct EventConfig
     {
-        TestClientCLI * front;
+        RDPHeadlessFront * front;
         long trigger_time;
 
 
-        EventConfig(TestClientCLI * front)
+        EventConfig(RDPHeadlessFront * front)
         : front(front)
         , trigger_time(0)
         {}
@@ -1088,7 +1343,7 @@ class EventList
         uint32_t y;
         const bool isPressed;
 
-        MouseButton( TestClientCLI * front
+        MouseButton( RDPHeadlessFront * front
                 , uint8_t button
                 , uint32_t x
                 , uint32_t y
@@ -1113,7 +1368,7 @@ class EventList
         uint32_t x;
         uint32_t y;
 
-        MouseMove( TestClientCLI * front
+        MouseMove( RDPHeadlessFront * front
                 , uint32_t x
                 , uint32_t y
                 )
@@ -1133,7 +1388,7 @@ class EventList
         uint32_t scanCode;
         uint32_t Flag;
 
-        KeyPressed( TestClientCLI * front
+        KeyPressed( RDPHeadlessFront * front
                 , uint32_t scanCode
                 , uint32_t Flag = 0
                 )
@@ -1153,7 +1408,7 @@ class EventList
         uint32_t scanCode;
         uint32_t Flag;
 
-        KeyReleased( TestClientCLI * front
+        KeyReleased( RDPHeadlessFront * front
                 , uint32_t scanCode
                 , uint32_t Flag = 0
                 )
@@ -1195,7 +1450,7 @@ class EventList
         std::string formatListDataLongName[RDPECLIP::FORMAT_LIST_MAX_SIZE];
         size_t size;
 
-        ClipboardChange( TestClientCLI * front
+        ClipboardChange( RDPHeadlessFront * front
                     , uint32_t * formatIDs
                     , std::string * formatListDataLongName
                     , size_t size)
@@ -1249,26 +1504,26 @@ public:
         this->setAction<Loop>(this, jump_size, count_steps);
     }
 
-    void setClpbrd_change( TestClientCLI * front
+    void setClpbrd_change( RDPHeadlessFront * front
                          , uint32_t * formatIDs
                          , std::string * formatListDataLongName
                          , size_t size) {
         this->setAction<ClipboardChange>(front, formatIDs, formatListDataLongName, size);
     }
 
-    void setKey_press( TestClientCLI * front
+    void setKey_press( RDPHeadlessFront * front
                      , uint32_t scanCode
                      , uint32_t flag) {
         this->setAction<KeyPressed>(front, scanCode, flag);
     }
 
-    void setKey_release( TestClientCLI * front
+    void setKey_release( RDPHeadlessFront * front
                        , uint32_t scanCode
                        , uint32_t flag) {
         this->setAction<KeyReleased>(front, scanCode, flag);
     }
 
-    void setMouse_button( TestClientCLI * front
+    void setMouse_button( RDPHeadlessFront * front
                         , uint8_t button
                         , uint32_t x
                         , uint32_t y
@@ -1276,14 +1531,14 @@ public:
         this->setAction<MouseButton>(front, button, x, y, isPressed);
     }
 
-    void setKey( TestClientCLI * front
+    void setKey( RDPHeadlessFront * front
                , uint32_t scanCode
                , uint32_t flag) {
         this->setKey_press(front, scanCode, flag);
         this->setKey_release(front, scanCode, flag);
     }
 
-    void setClick( TestClientCLI * front
+    void setClick( RDPHeadlessFront * front
                  , uint8_t button
                  , uint32_t x
                  , uint32_t y) {
@@ -1291,7 +1546,7 @@ public:
         this->setMouse_button(front, button, x, y, false);
     }
 
-    void setDouble_click( TestClientCLI * front
+    void setDouble_click( RDPHeadlessFront * front
                         , uint32_t x
                         , uint32_t y) {
         setClick(front, 0x01, x, y);

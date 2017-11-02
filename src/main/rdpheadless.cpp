@@ -22,11 +22,11 @@
 
 #include "configs/config.hpp"
 
-#include "main/rdpheadless.hpp"
+#include "front/rdpheadless.hpp"
 #include "utils/netutils.hpp"
 #include "utils/set_exception_handler_pretty_message.hpp"
 
-#include "test_only/lcg_random.hpp"
+
 
 #include <iomanip>
 
@@ -37,8 +37,7 @@
 // bjam debug rdpheadless && bin/gcc-4.9.2/debug/rdpheadless --user admin --pwd $mdp --ip 10.10.47.54 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
 
 
-int wait_and_draw_event(int sck, mod_api &, FrontAPI &, timeval timeout);
-int run_mod(mod_api &, TestClientCLI &, int sck, EventList &, bool, std::chrono::milliseconds, bool);
+int run_mod(mod_api *, RDPHeadlessFront &, int sck, EventList &, bool, std::chrono::milliseconds, bool);
 
 namespace cli
 {
@@ -475,7 +474,7 @@ int main(int argc, char** argv)
     std::string userPwd;
     int port(3389);
     std::string localIP;
-    std::chrono::milliseconds time_out_response(TestClientCLI::DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE);
+    std::chrono::milliseconds time_out_response(RDPHeadlessFront::DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE);
     bool script_on(false);
     std::string out_path;
 
@@ -520,65 +519,65 @@ int main(int argc, char** argv)
 
         cli::option("show_user_params")
         .help("Show user info parameters")
-        .action([&]{ verbose |= TestClientCLI::SHOW_USER_AND_TARGET_PARAMS; }),
+        .action([&]{ verbose |= RDPHeadlessFront::SHOW_USER_AND_TARGET_PARAMS; }),
 
         cli::option("show_rdp_params")
         .help("Show mod rdp parameters")
-        .action([&]{ verbose |= TestClientCLI::SHOW_MOD_RDP_PARAMS; }),
+        .action([&]{ verbose |= RDPHeadlessFront::SHOW_MOD_RDP_PARAMS; }),
 
         cli::option("show_draw")
         .help("Show draw orders info")
-        .action([&]{ verbose |= TestClientCLI::SHOW_DRAW_ORDERS_INFO; }),
+        .action([&]{ verbose |= RDPHeadlessFront::SHOW_DRAW_ORDERS_INFO; }),
 
         cli::option("show_clpbrd")
         .help("Show clipboard echange PDU info")
-        .action([&]{ verbose |= TestClientCLI::SHOW_CLPBRD_PDU_EXCHANGE; }),
+        .action([&]{ verbose |= RDPHeadlessFront::SHOW_CLPBRD_PDU_EXCHANGE; }),
 
         cli::option("show_cursor")
         .help("Show cursor change")
-        .action([&]{ verbose |= TestClientCLI::SHOW_CURSOR_STATE_CHANGE; }),
+        .action([&]{ verbose |= RDPHeadlessFront::SHOW_CURSOR_STATE_CHANGE; }),
 
         cli::option("show_all")
         .help("Show all log info, except PDU content")
-        .action([&]{ verbose |= TestClientCLI::SHOW_ALL; }),
+        .action([&]{ verbose |= RDPHeadlessFront::SHOW_ALL; }),
 
         cli::option("show_core")
         .help("Show core server info")
-        .action([&]{ verbose |= TestClientCLI::SHOW_CORE_SERVER_INFO; }),
+        .action([&]{ verbose |= RDPHeadlessFront::SHOW_CORE_SERVER_INFO; }),
 
         cli::option("show_security")
         .help("Show scurity server info")
-        .action([&]{ verbose |= TestClientCLI::SHOW_SECURITY_SERVER_INFO; }),
+        .action([&]{ verbose |= RDPHeadlessFront::SHOW_SECURITY_SERVER_INFO; }),
 
         cli::option("show_keyboard")
         .help("Show keyboard event")
-        .action([&]{ verbose |= TestClientCLI::SHOW_KEYBOARD_EVENT; }),
+        .action([&]{ verbose |= RDPHeadlessFront::SHOW_KEYBOARD_EVENT; }),
 
         cli::option("show_files_sys")
         .help("Show files sytem exchange info")
-        .action([&]{ verbose |= TestClientCLI::SHOW_FILE_SYSTEM_EXCHANGE; }),
+        .action([&]{ verbose |= RDPHeadlessFront::SHOW_FILE_SYSTEM_EXCHANGE; }),
 
         cli::option("show_channels")
         .help("Show all channels exchange info")
-        .action([&]{ verbose |= TestClientCLI::SHOW_FILE_SYSTEM_EXCHANGE
-                             |  TestClientCLI::SHOW_CLPBRD_PDU_EXCHANGE; }),
+        .action([&]{ verbose |= RDPHeadlessFront::SHOW_FILE_SYSTEM_EXCHANGE
+                             |  RDPHeadlessFront::SHOW_CLPBRD_PDU_EXCHANGE; }),
 
         cli::option("show_in_pdu")
         .help("Show received PDU content from shown channels")
-        .action([&]{ verbose |= TestClientCLI::TestClientCLI::SHOW_IN_PDU; }),
+        .action([&]{ verbose |= RDPHeadlessFront::SHOW_IN_PDU; }),
 
         cli::option("show_out_pdu")
         .help("Show sent PDU content from shown channels")
-        .action([&]{ verbose |= TestClientCLI::SHOW_OUT_PDU; }),
+        .action([&]{ verbose |= RDPHeadlessFront::SHOW_OUT_PDU; }),
 
         cli::option("show_pdu")
         .help("Show both sent and received PDU content from shown channels")
-        .action([&]{ verbose |= TestClientCLI::SHOW_OUT_PDU
-                             |  TestClientCLI::SHOW_IN_PDU; }),
+        .action([&]{ verbose |= RDPHeadlessFront::SHOW_OUT_PDU
+                             |  RDPHeadlessFront::SHOW_IN_PDU; }),
 
         cli::option("show_caps")
         .help("Show capabilities PDU exchange")
-        .action([&]{ verbose |= TestClientCLI::SHOW_CAPS; }),
+        .action([&]{ verbose |= RDPHeadlessFront::SHOW_CAPS; }),
 
         cli::option("script")
         .help("Show capabilities PDU exchange")
@@ -611,7 +610,7 @@ int main(int argc, char** argv)
         .action(cli::arg([&](std::string s){
             userName = std::move(s);
             mod_rdp_params.target_user = userName.c_str();
-            input_connection_data_complete |= TestClientCLI::NAME;
+            input_connection_data_complete |= RDPHeadlessFront::NAME;
         })),
 
         cli::option("pwd")
@@ -619,7 +618,7 @@ int main(int argc, char** argv)
         .action(cli::arg([&](std::string s){
             userPwd = std::move(s);
             mod_rdp_params.target_password = userPwd.c_str();
-            input_connection_data_complete |= TestClientCLI::PWD;
+            input_connection_data_complete |= RDPHeadlessFront::PWD;
         })),
 
         cli::option("ip")
@@ -627,7 +626,7 @@ int main(int argc, char** argv)
         .action(cli::arg([&](std::string s){
             ip = std::move(s);
             mod_rdp_params.target_host = ip.c_str();
-            input_connection_data_complete |= TestClientCLI::IP;
+            input_connection_data_complete |= RDPHeadlessFront::IP;
         })),
 
         cli::option("port")
@@ -835,97 +834,16 @@ int main(int argc, char** argv)
             return 1;
     }
 
-    if (verbose != 0) {
-
-        std::cout << "\n";
-        std::cout << " ================================" << "\n";
-        std::cout << " ========== Log Config ==========" << "\n";
-        std::cout << " ================================" << "\n";
-        std::cout << " SHOW_USER_AND_TARGET_PARAMS = " << bool(verbose & TestClientCLI::SHOW_USER_AND_TARGET_PARAMS) << "\n";
-        std::cout << " SHOW_MOD_RDP_PARAMS         = " << bool(verbose & TestClientCLI::SHOW_MOD_RDP_PARAMS) << "\n";
-        std::cout << " SHOW_DRAW_ORDERS            = " << bool(verbose & TestClientCLI::SHOW_DRAW_ORDERS_INFO) << "\n";
-        std::cout << " SHOW_CLPBRD_PDU_EXCHANGE    = " << bool(verbose & TestClientCLI::SHOW_CLPBRD_PDU_EXCHANGE) << "\n";
-        std::cout << " SHOW_CURSOR_STATE_CHANGE    = " << bool(verbose & TestClientCLI::SHOW_CURSOR_STATE_CHANGE) << "\n";
-        std::cout << " SHOW_CORE_SERVER_INFO       = " << bool(verbose & TestClientCLI::SHOW_CORE_SERVER_INFO) << "\n";
-        std::cout << " SHOW_SECURITY_SERVER_INFO   = " << bool(verbose & TestClientCLI::SHOW_SECURITY_SERVER_INFO) << "\n";
-        std::cout << " SHOW_KEYBOARD_EVENT         = " << bool(verbose & TestClientCLI::SHOW_KEYBOARD_EVENT) << "\n";
-        std::cout << " SHOW_FILE_SYSTEM_EXCHANGE   = " << bool(verbose & TestClientCLI::SHOW_FILE_SYSTEM_EXCHANGE) << "\n";
-        std::cout << " SHOW_CAPS                   = " << bool(verbose & TestClientCLI::SHOW_CAPS) << "\n";
-        std::cout << " SHOW_OUT_PDU                = " << bool(verbose & TestClientCLI::SHOW_OUT_PDU) << "\n";
-        std::cout << " SHOW_IN_PDU                 = " << bool(verbose & TestClientCLI::SHOW_IN_PDU) << "\n";
-        std::cout <<  std::endl;
-    }
-
-    if (verbose & TestClientCLI::SHOW_USER_AND_TARGET_PARAMS) {
-
-        std::cout << " ================================" << "\n";
-        std::cout << " == User And Target Parameters ==" << "\n";
-        std::cout << " ================================" << "\n";
-
-        std::cout << " user_name= \"" << userName << "\"" <<  "\n";
-        std::cout << " user_password= \"" << userPwd << "\"" << "\n";
-        std::cout << " ip= \"" << ip << "\"" << "\n";
-        std::cout << " port=" << port << "\n";
-        std::cout << " ip_local= \"" << localIP << "\"" << "\n";
-        std::cout << " keylayout=0x" << std::hex << info.keylayout << std::dec << "\n";
-        std::cout << " bpp=" << info.bpp << "\n";
-        std::cout << " width=" << info.width << "\n";
-        std::cout << " height=" << info.height << "\n";
-        std::cout << " wallpaper_on=" << bool(info.rdp5_performanceflags & PERF_DISABLE_WALLPAPER) << "\n";
-        std::cout << " full_window_drag_on=" << bool(info.rdp5_performanceflags & PERF_DISABLE_FULLWINDOWDRAG) << "\n";
-        std::cout << " menu_animations_on=" << bool(info.rdp5_performanceflags & PERF_DISABLE_MENUANIMATIONS) << "\n";
-        std::cout <<  std::endl;
-    }
-
-    if (verbose & TestClientCLI::SHOW_MOD_RDP_PARAMS) {
-        std::cout << " ================================" << "\n";
-        std::cout << " ======= ModRDP Parameters ======" << "\n";
-        std::cout << " ================================" << "\n";
-
-        std::cout << " enable_tls = " << mod_rdp_params.enable_tls << "\n";
-        std::cout << " enable_nla = " << mod_rdp_params.enable_nla << "\n";
-        std::cout << " enable_fastpath = " << mod_rdp_params.enable_fastpath << "\n";
-        std::cout << " enable_mem3blt = " << mod_rdp_params.enable_mem3blt << "\n";
-        std::cout << " enable_new_pointer = " << mod_rdp_params.enable_new_pointer << "\n";
-        std::cout << " enable_krb = " << mod_rdp_params.enable_krb << "\n";
-        std::cout << " enable_glyph_cache = " << mod_rdp_params.enable_glyph_cache << "\n";
-        std::cout << " enable_session_probe = " << mod_rdp_params.enable_session_probe << "\n";
-        std::cout << " session_probe_enable_launch_mask = t" << mod_rdp_params.session_probe_enable_launch_mask << "\n";
-        std::cout << " disable_clipboard_log_syslog = " << mod_rdp_params.disable_clipboard_log_syslog << "\n";
-        std::cout << " disable_clipboard_log_wrm = " << mod_rdp_params.disable_clipboard_log_wrm << "\n";
-        std::cout << " disable_file_system_log_syslog = " << mod_rdp_params.disable_file_system_log_syslog << "\n";
-        std::cout << " disable_file_system_log_wrm = " << mod_rdp_params.disable_file_system_log_wrm << "\n";
-        std::cout << " session_probe_use_clipboard_based_launcher = " << mod_rdp_params.session_probe_use_clipboard_based_launcher << "\n";
-        std::cout << " session_probe_start_launch_timeout_timer_only_after_logon = " << mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon << "\n";
-        std::cout << " session_probe_end_disconnected_session = " << mod_rdp_params.session_probe_end_disconnected_session << "\n";
-        std::cout << " session_probe_customize_executable_name = " << mod_rdp_params.session_probe_customize_executable_name << "\n";
-        std::cout << " enable_transparent_mode = " << mod_rdp_params.enable_transparent_mode << "\n";
-        std::cout << " ignore_auth_channel = " << mod_rdp_params.ignore_auth_channel << "\n";
-        std::cout << " use_client_provided_alternate_shell = " << mod_rdp_params.use_client_provided_alternate_shell << "\n";
-        std::cout << " disconnect_on_logon_user_change = " << mod_rdp_params.disconnect_on_logon_user_change << "\n";
-        std::cout << " server_cert_store = " << mod_rdp_params.server_cert_store << "\n";
-        std::cout << " hide_client_name = " << mod_rdp_params.hide_client_name << "\n";
-        std::cout << " enable_persistent_disk_bitmap_cache = t" << mod_rdp_params.enable_persistent_disk_bitmap_cache << "\n";
-        std::cout << " enable_cache_waiting_list = " << mod_rdp_params.enable_cache_waiting_list << "\n";
-        std::cout << " persist_bitmap_cache_on_disk = " << mod_rdp_params.persist_bitmap_cache_on_disk << "\n";
-        std::cout << " bogus_sc_net_size = " << mod_rdp_params.bogus_sc_net_size << "\n";
-        std::cout << " bogus_refresh_rect = " << mod_rdp_params.bogus_refresh_rect << "\n";
-        std::cout << " allow_using_multiple_monitors = " << mod_rdp_params.allow_using_multiple_monitors << "\n";
-        std::cout << " adjust_performance_flags_for_recording = " << mod_rdp_params.adjust_performance_flags_for_recording << "\n";
-        std::cout << "\n" << std::endl;
-    } //======================================================================
 
     NullAuthentifier authentifier;
-    NullReportMessage report_message;
-    TestClientCLI front(info, report_message, verbose);
+    NullReportMessage report_message_cli;
+    RDPHeadlessFront front(info, report_message_cli, verbose);
     front.out_path = out_path;
     front.index = index;
     int main_return = 40;
+    int sck = -42;
 
-    if (input_connection_data_complete & TestClientCLI::IP) {
-        // std::cout << " ================================" << "\n";
-        // std::cout << " ======= Connection steps =======" << "\n";
-        // std::cout << " ================================" << "\n";
+    if (input_connection_data_complete & RDPHeadlessFront::IP) {
 
         set_exception_handler_pretty_message();
 
@@ -945,184 +863,9 @@ int main(int argc, char** argv)
         }
 
 
-        int const nbTry(3);
-        int const retryDelay(1000);
-        int const sck = ip_connect(ip.c_str(), port, nbTry, retryDelay);
-        if (sck <= 0) {
-            std::cerr << "ip_connect: Cannot connect to [" << ip << "]." << std::endl;
-            return 1;
-        }
 
-        unique_fd auto_close_sck{sck};
+        sck = front.connect(ip.c_str(), userName.c_str(), userPwd.c_str(), port, protocol_is_VNC, mod_rdp_params, encryptionMethods, ini);
 
-        std::string error_message;
-        SocketTransport socket(
-            userName.c_str()
-          , sck
-          , ip.c_str()
-          , port
-          , std::chrono::seconds(1)
-          , to_verbose_flags(verbose)
-          , &error_message
-        );
-
-        std::cout << " Connected to [" << ip <<  "]." << std::endl;
-
-        LCGRandom gen(0); // To always get the same client random, in tests
-        TimeSystem timeSystem;
-
-        // for VNC
-        NullReportMessage reportMessage;
-        Theme      theme;
-
-        front.start_connection_time = tvtime();
-        struct : NullReportMessage {
-            void report(const char* reason, const char* /*message*/) override
-            {
-                // std::cout << "report_message: " << message << "  reason:" << reason << std::endl;
-                if (!strcmp(reason, "CLOSE_SESSION_SUCCESSFUL")) {
-                    this->is_closed = true;
-                }
-            }
-
-            bool is_closed = false;
-        } report_message;
-
-        mod_api * mod;
-        GCC::UserData::SCCore const original_sc_core;
-        GCC::UserData::SCSecurity const original_sc_sec1;
-
-        not_null_ptr<GCC::UserData::SCCore const> sc_core_ptr = &original_sc_core;
-        not_null_ptr<GCC::UserData::SCSecurity const> sc_sec1_ptr = &original_sc_sec1;
-
-        if (protocol_is_VNC) {
-
-            mod = new mod_vnc( socket
-                            , userName.c_str()
-                            , userPwd.c_str()
-                            , front
-                            , info.width
-                            , info.height
-                            , ini.get<cfg::font>()
-                            , ""
-                            , ""
-                            , theme
-                            , info.keylayout
-                            , 0
-                            , true
-                            , true
-                            , "0,1,-239"
-                            , false
-                            , true
-                            , mod_vnc::ClipboardEncodingType::UTF8
-                            , VncBogusClipboardInfiniteLoop::delayed
-                            , reportMessage
-                            , false
-                            , nullptr
-                            , to_verbose_flags(verbose));
-
-        } else {
-            auto * rdp = new mod_rdp (
-                        socket
-                        , front
-                        , info
-                        , ini.get_ref<cfg::mod_rdp::redir_info>()
-                        , gen
-                        , timeSystem
-                        , mod_rdp_params
-                        , authentifier
-                        , report_message
-                        , ini
-                        );
-            mod = rdp;
-
-            GCC::UserData::CSSecurity & cs_security = rdp->cs_security;
-            cs_security.encryptionMethods = encryptionMethods;
-
-            sc_core_ptr = &rdp->sc_core;
-            sc_sec1_ptr = &rdp->sc_sec1;
-        }
-
-        front._to_server_sender._callback = mod;
-        front._callback = mod;
-
-        try {
-            while (!mod->is_up_and_running()) {
-                // std::cout << " Early negociations...\n";
-                if (int err = wait_and_draw_event(sck, *mod, front, {3, 0})) {
-                    return err;
-                }
-            }
-            front.primary_connection_finished = true;
-            front.start_wab_session_time = tvtime();
-
-        } catch (const Error & e) {
-            std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
-            if (error_message.size()) {
-                std::cout << " Error tls: " << error_message << "\n";
-            }
-            return 2;
-        }
-        std::cout << " Early negociations completes.\n";
-
-
-        if (verbose & TestClientCLI::SHOW_CORE_SERVER_INFO && !protocol_is_VNC) {
-            std::cout << " ================================" << "\n";
-            std::cout << " ======= Server Core Info =======" << "\n";
-            std::cout << " ================================" << "\n";
-
-            std::cout << " userDataType = " << sc_core_ptr->userDataType << "\n";
-            std::cout << " length = " << sc_core_ptr->length << "\n";
-            std::cout << " version = " << sc_core_ptr->version << "\n";
-            std::cout << " clientRequestedProtocols = " << sc_core_ptr->clientRequestedProtocols << "\n";
-            std::cout << " earlyCapabilityFlags = " << sc_core_ptr->earlyCapabilityFlags << "\n";
-            std::cout << std::endl;
-        }
-
-        if (verbose & TestClientCLI::SHOW_SECURITY_SERVER_INFO && !protocol_is_VNC) {
-            std::cout << " ================================" << "\n";
-            std::cout << " ===== Server Security Info =====" << "\n";
-            std::cout << " ================================" << "\n";
-
-            std::cout << " userDataType = " << sc_sec1_ptr->userDataType << "\n";
-            std::cout << " length = " << sc_sec1_ptr->length << "\n";
-            std::cout << " encryptionMethod = " << GCC::UserData::SCSecurity::get_encryptionMethod_name(sc_sec1_ptr->encryptionMethod) << "\n";
-            std::cout << " encryptionLevel = " << GCC::UserData::SCSecurity::get_encryptionLevel_name(sc_sec1_ptr->encryptionLevel) << "\n";
-            std::cout << " serverRandomLen = " << sc_sec1_ptr->serverRandomLen << "\n";
-            std::cout << " serverCertLen = " << sc_sec1_ptr->serverCertLen << "\n";
-            std::cout << " dwVersion = " << sc_sec1_ptr->dwVersion << "\n";
-            std::cout << " temporary = " << sc_sec1_ptr->temporary << "\n";
-
-            auto print_hex_data = [&sc_sec1_ptr](array_view_const_u8 av){
-                for (size_t i = 0; i < av.size(); i++) {
-                    if ((i % 16) == 0 && i != 0) {
-                        std::cout << "\n                ";
-                    }
-                    std::cout <<"0x";
-                    if (av[i] < 0x10) {
-                        std::cout << "0";
-                    }
-                    std::cout << std::hex << int(sc_sec1_ptr->serverRandom[i]) << std::dec << " ";
-                }
-                std::cout << "\n";
-                std::cout << "\n";
-            };
-
-            std::cout << " serverRandom : "; print_hex_data(sc_sec1_ptr->serverRandom);
-            std::cout << " pri_exp : "; print_hex_data(sc_sec1_ptr->pri_exp);
-            std::cout << " pub_sig : "; print_hex_data(sc_sec1_ptr->pub_sig);
-
-            std::cout << " proprietaryCertificate : " << "\n";
-            std::cout << "     dwSigAlgId = " << sc_sec1_ptr->proprietaryCertificate.dwSigAlgId << "\n";
-            std::cout << "     dwKeyAlgId = " << sc_sec1_ptr->proprietaryCertificate.dwKeyAlgId << "\n";
-            std::cout << "     wPublicKeyBlobType = " << sc_sec1_ptr->proprietaryCertificate.wPublicKeyBlobType << "\n";
-            std::cout << "     wPublicKeyBlobLen = " << sc_sec1_ptr->proprietaryCertificate.wPublicKeyBlobLen << "\n";
-            std::cout << "\n";
-            std::cout << "     RSAPK : " << "\n";
-            std::cout << "        magic = " << sc_sec1_ptr->proprietaryCertificate.RSAPK.magic << "\n";
-            std::cout << "\n" << std::endl;
-
-        }
 
 
         //===========================================
@@ -1223,18 +966,19 @@ int main(int argc, char** argv)
             }
         }
 
-        if ((input_connection_data_complete & TestClientCLI::LOG_COMPLETE) || quick_connection_test) {
+        if ((input_connection_data_complete & RDPHeadlessFront::LOG_COMPLETE) || quick_connection_test) {
             try {
-                main_return = run_mod(*mod, front, sck, eventList, quick_connection_test, time_out_response, time_set_connection_test);
+
+                main_return = run_mod(front.mod(), front, sck, eventList, quick_connection_test, time_out_response, time_set_connection_test);
                 // std::cout << "RDP Headless end." <<  std::endl;
             }
             catch (Error const& e)
             {
                 if (e.id == ERR_TRANSPORT_NO_MORE_DATA) {
 //                     std::cerr << e.errmsg() << std::endl;
-                    report_message.is_closed = true;
+                    front.report_message_rdp.is_closed = true;
                 }
-                if (report_message.is_closed) {
+                if (front.report_message_rdp.is_closed) {
                     main_return = 0;
                 }
                 else {
@@ -1243,9 +987,10 @@ int main(int argc, char** argv)
             }
         }
 
-        front.disconnect();
-        if (!report_message.is_closed) {
-            mod->disconnect(tvtime().tv_sec);
+
+        if (!front.report_message_rdp.is_closed) {
+            front.disconnect();
+            //front.mod()->disconnect(tvtime().tv_sec);
         }
     }
 
@@ -1253,14 +998,14 @@ int main(int argc, char** argv)
 }
 
 
-int run_mod(mod_api & mod, TestClientCLI & front, int sck, EventList & /*al*/, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test) {
+int run_mod(mod_api * mod, RDPHeadlessFront & front, int sck, EventList & /*al*/, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test) {
     const timeval time_stop = addusectimeval(time_out_response, tvtime());
     const timeval time_mark = { 0, 50000 };
 
     while (front.is_pipe_ok)
     {
-        if (mod.logged_on == mod_api::CLIENT_LOGGED) {
-            mod.logged_on = mod_api::CLIENT_UNLOGGED;
+        if (mod->logged_on == mod_api::CLIENT_LOGGED) {
+            mod->logged_on = mod_api::CLIENT_UNLOGGED;
 
             std::cout << " RDP Session Log On." << std::endl;
             if (quick_connection_test) {
@@ -1277,7 +1022,7 @@ int run_mod(mod_api & mod, TestClientCLI & front, int sck, EventList & /*al*/, b
             }
         }
 
-        if (int err = wait_and_draw_event(sck, mod, front, time_mark)) {
+        if (int err = front.wait_and_draw_event(sck, mod, front, time_mark)) {
             return err;
         }
 
@@ -1285,37 +1030,6 @@ int run_mod(mod_api & mod, TestClientCLI & front, int sck, EventList & /*al*/, b
             front.send_key_to_keep_alive();
 //             al.emit();
         }
-    }
-
-    return 0;
-}
-
-
-int wait_and_draw_event(int sck, mod_api & mod, FrontAPI & front, timeval timeout)
-{
-    unsigned max = 0;
-    fd_set   rfds;
-
-    io_fd_zero(rfds);
-
-    auto & event = mod.get_event();
-    event.wait_on_fd(sck, rfds, max, timeout);
-
-    int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
-    // std::cout << "RDP CLIENT :: select num = " <<  num << "\n";
-
-    if (num < 0) {
-        if (errno == EINTR) {
-            return 0;
-            //continue;
-        }
-
-        std::cerr << "RDP CLIENT :: errno = " <<  errno << "\n";
-        return 9;
-    }
-
-    if (event.is_set(sck, rfds)) {
-        mod.draw_event(time(nullptr), front);
     }
 
     return 0;

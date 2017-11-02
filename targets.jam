@@ -2162,6 +2162,50 @@ test-run tests/front/test_front :
   <library>src/utils/rle.o
   <library>z
 ;
+test-run tests/front/test_rdpheadless :
+  $(REDEMPTION_TEST_PATH)/front/test_rdpheadless.cpp
+:
+  <covfile>src/front/rdpheadless.hpp
+  <library>app_path_test.o
+  <library>crypto
+  <library>gssapi_krb5
+  <library>krb5
+  <library>openssl
+  <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/nego.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
+  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymapSym.o
+  <library>src/mod/internal/client_execute.o
+  <library>src/mod/internal/internal_mod.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/edit.o
+  <library>src/mod/internal/widget/edit_valid.o
+  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/flat_vnc_authentification.o
+  <library>src/mod/internal/widget/image.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/password.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/transport/socket_transport.o
+  <library>src/utils/authorization_channels.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/d3des.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>z
+;
 test-run tests/gdi/test_graphic_api :
   $(REDEMPTION_TEST_PATH)/gdi/test_graphic_api.cpp
 :
@@ -4505,6 +4549,8 @@ alias test_wait_obj : tests/core/test_wait_obj ;
 alias test_wait_obj.coverage : tests/core/test_wait_obj.coverage ;
 alias test_front : tests/front/test_front ;
 alias test_front.coverage : tests/front/test_front.coverage ;
+alias test_rdpheadless : tests/front/test_rdpheadless ;
+alias test_rdpheadless.coverage : tests/front/test_rdpheadless.coverage ;
 alias test_graphic_api : tests/gdi/test_graphic_api ;
 alias test_graphic_api.coverage : tests/gdi/test_graphic_api.coverage ;
 alias test_graphic_cmd_color : tests/gdi/test_graphic_cmd_color ;
@@ -5045,6 +5091,7 @@ alias tests/core :
 ;
 alias tests/front :
   tests/front/test_front
+  tests/front/test_rdpheadless
 ;
 alias tests/gdi :
   tests/gdi/test_graphic_api
