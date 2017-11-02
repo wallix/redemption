@@ -864,7 +864,7 @@ int main(int argc, char** argv)
 
 
 
-        sck = front.connect(ip.c_str(), userName.c_str(), userPwd.c_str(), port, protocol_is_VNC, mod_rdp_params, encryptionMethods, ini);
+        sck = front.connect(ip.c_str(), userName.c_str(), userPwd.c_str(), port, protocol_is_VNC, mod_rdp_params, encryptionMethods);
 
 
 
