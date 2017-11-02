@@ -463,11 +463,11 @@ public:
                         }
                         this->reason.restart();
                         this->state = r;
-                        REDEMPTION_CXX_FALLTHROUGH;
                     }
                     else {
                         return false;
                     }
+                    REDEMPTION_CXX_FALLTHROUGH;
                 case State::ReasonFail:
                     return this->reason.run(buf, [&f](array_view_u8 av){ f(false, av); });
                 case State::Finish:

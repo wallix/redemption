@@ -1128,7 +1128,7 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::flags %#x", this->flags);
         LOG(LOG_INFO, "InfoPacket::flags:INFO_MOUSE %s",              (flags & INFO_MOUSE)?"yes":"no");
         LOG(LOG_INFO, "InfoPacket::flags:INFO_DISABLECTRLALTDEL %s",  (flags & INFO_DISABLECTRLALTDEL)?"yes":"no");
-        LOG(LOG_INFO, "InfoPacket::flags:INFO_AUTOLOGON %s",          (((this->Password[1]|this->Password[0]) != 0) * INFO_AUTOLOGON)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_AUTOLOGON %s",          ((this->Password[1]|this->Password[0]) != 0)?"yes":"no");
         LOG(LOG_INFO, "InfoPacket::flags:INFO_UNICODE %s",            (flags & INFO_UNICODE)?"yes":"no");
         LOG(LOG_INFO, "InfoPacket::flags:INFO_MAXIMIZESHELL  %s",     (flags & INFO_MAXIMIZESHELL )?"yes":"no");
         LOG(LOG_INFO, "InfoPacket::flags:INFO_LOGONNOTIFY %s",        (flags & INFO_LOGONNOTIFY)?"yes":"no");

@@ -698,8 +698,7 @@ int channel_write_common_server(ssh_session_struct * server_session, ssh_channel
             // Waiting for input
             dopoll(server_session->ctx, (server_session->flags&SSH_SESSION_FLAG_BLOCKING)?SSH_TIMEOUT_INFINITE:SSH_TIMEOUT_NONBLOCKING);
 
-            if (server_session->session_state == SSH_SESSION_STATE_ERROR
-            || server_session->session_state == SSH_SESSION_STATE_ERROR){
+            if (server_session->session_state == SSH_SESSION_STATE_ERROR){
                 LOG(LOG_INFO, "Wait for a growing window message terminated on error: exiting");
                 return SSH_ERROR;
             }

@@ -57,7 +57,7 @@ private:
     OutFileTransport out_file;
     const int groupid;
 
-    char tmp_filename[1024];
+    char tmp_filename[1128];
 
 protected:
     char final_filename[1024];

@@ -30,18 +30,18 @@
 
 
 // les cibles devraient toutes avoir une session cible, même celles gérées par FD => remplace fd_poll
-void do_fd_target_event(ssh_poll_handle_fd_struct * fd_poll, int revents)
-{
-    LOG(LOG_INFO, "%s --- fd=%d revent=%u", __FUNCTION__, fd_poll->x_fd, revents);
-
-    if (!fd_poll->lock){
-        LOG(LOG_INFO, "%s polling CLIENT (FD) not locked", __FUNCTION__);
-        /* avoid having any event caught during callback */
-        fd_poll->lock = 1;
-        int ret = fd_poll->pw_cb(fd_poll->x_fd, revents, fd_poll->pw_userdata);
-        fd_poll->lock = (ret == SSH_ERROR)?1:0;
-    }
-}
+// void do_fd_target_event(ssh_poll_handle_fd_struct * fd_poll, int revents)
+// {
+//     LOG(LOG_INFO, "%s --- fd=%d revent=%u", __FUNCTION__, fd_poll->x_fd, revents);
+//
+//     if (!fd_poll->lock){
+//         LOG(LOG_INFO, "%s polling CLIENT (FD) not locked", __FUNCTION__);
+//         /* avoid having any event caught during callback */
+//         fd_poll->lock = 1;
+//         int ret = fd_poll->pw_cb(fd_poll->x_fd, revents, fd_poll->pw_userdata);
+//         fd_poll->lock = (ret == SSH_ERROR)?1:0;
+//     }
+// }
 
 
 REDEMPTION_DIAGNOSTIC_PUSH
@@ -2528,154 +2528,154 @@ inline int ssh_auth_reply_denied_client(SshClientSession * client_session)
 /** @internal
  * @brief handles an user authentication using GSSAPI
  */
-static inline int ssh_gssapi_handle_userauth_client(SshClientSession * client_session, const char *user, uint32_t n_oid, std::vector<SSHString> oids){
-    LOG(LOG_INFO, "%s ---", __FUNCTION__);
-    char service_name[]="host";
-    gss_buffer_desc name_buf;
-    gss_name_t server_name; /* local server fqdn */
-    OM_uint32 min_stat;
-    unsigned int i;
-    gss_OID_set supported; /* oids supported by server */
-    gss_OID_set both_supported; /* oids supported by both client and server */
-    gss_OID_set selected; /* oid selected for authentication */
-    int present=0;
-    int oid_count=0;
-    struct gss_OID_desc_struct oid;
-
-    gss_create_empty_oid_set(&min_stat, &both_supported);
-
-    gss_indicate_mechs(&min_stat, &supported);
-    for (i=0; i < supported->count; ++i){
-        // TODO: avoid too long buffers, we can make this one static and truncate it
-        char *hexa = new char[supported->elements[i].length * 3 + 1];
-        size_t q = 0;
-        size_t j = 0;
-        for (q = 0; q < supported->elements[q].length; q++) {
-            const uint8_t cl = reinterpret_cast<uint8_t *>(supported->elements[q].elements)[q] >> 4;
-            const uint8_t ch = reinterpret_cast<uint8_t *>(supported->elements[q].elements)[q] & 0x0F;
-            hexa[j] = (ch < 10?'0':'a')+ch;
-            hexa[j+1] = (cl < 10?'0':'a')+cl;
-            hexa[j+2] = ':';
-            j+= 3;
-        }
-        hexa[j>0?(j-1):0] = 0;
-        LOG(LOG_DEBUG, "Supported mech %d: %s\n", i, hexa);
-        delete[] hexa;
-    }
-
-    for (auto & oid_s: oids){
-        LOG(LOG_INFO,"GSSAPI: n_oid=%u", n_oid);
-        size_t len = oid_s.size();
-        LOG(LOG_INFO,"GSSAPI: oid_len=%d %u %u %u", static_cast<int>(len), SSH_OID_TAG, oid_s[0], oid_s[1]);
-        if(len < 2){
-            LOG(LOG_WARNING,"GSSAPI: received invalid OID 1");
-            continue;
-        }
-        if(oid_s[0] != SSH_OID_TAG){
-            LOG(LOG_WARNING,"GSSAPI: received invalid OID 2");
-            continue;
-        }
-        if(static_cast<size_t>(oid_s[1]) != len - 2){
-            LOG(LOG_WARNING,"GSSAPI: received invalid OID 3");
-            continue;
-        }
-        oid.elements = &oid_s[2];
-        oid.length = len - 2;
-        gss_test_oid_set_member(&min_stat,&oid,supported,&present);
-        if(present){
-            gss_add_oid_set_member(&min_stat,&oid,&both_supported);
-            oid_count++;
-        }
-    }
-    LOG(LOG_INFO,"GSSAPI: n_oid loop done i=%u", i);
-
-    gss_release_oid_set(&min_stat, &supported);
-    if (oid_count == 0){
-        LOG(LOG_INFO,"GSSAPI: no OID match");
-        ssh_auth_reply_denied_client(client_session);
-        gss_release_oid_set(&min_stat, &both_supported);
-        return SSH_OK;
-    }
-    /* from now we have room for context */
-    if (client_session->gssapi == nullptr){
-        client_session->gssapi = new ssh_gssapi_struct;
-    }
-
-    name_buf.value = service_name;
-    name_buf.length = strlen(static_cast<const char*>(name_buf.value)) + 1;
-    OM_uint32 maj_stat2 = gss_import_name(&min_stat, &name_buf, GSS_C_NT_HOSTBASED_SERVICE, &server_name);
-    if (maj_stat2 != GSS_S_COMPLETE) {
-        LOG(LOG_WARNING, "importing name %d, %d", maj_stat2, min_stat);
-        gss_buffer_desc buffer;
-        OM_uint32 dummy;
-        OM_uint32 message_context;
-        gss_display_status(&dummy, maj_stat2, GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
-        LOG(LOG_WARNING, "GSSAPI(%s): %s", "importing name", static_cast<char *>(buffer.value));
-        return -1;
-    }
-
-    OM_uint32 maj_stat3 = gss_acquire_cred(&min_stat, server_name, 0,
-            both_supported, GSS_C_ACCEPT,
-            &client_session->gssapi->server_creds, &selected, nullptr);
-    gss_release_name(&min_stat, &server_name);
-    gss_release_oid_set(&min_stat, &both_supported);
-
-    if (maj_stat3 != GSS_S_COMPLETE) {
-        LOG(LOG_WARNING, "error acquiring credentials %d, %d", maj_stat3, min_stat);
-        gss_buffer_desc buffer;
-        OM_uint32 dummy;
-        OM_uint32 message_context;
-        gss_display_status(&dummy, maj_stat3, GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
-        LOG(LOG_WARNING, "GSSAPI(%s): %s", "acquiring creds", static_cast<char *>(buffer.value));
-
-
-        ssh_auth_reply_denied_client(client_session);
-        return SSH_ERROR;
-    }
-
-    LOG(LOG_INFO, "acquiring credentials %d, %d", maj_stat3, min_stat);
-
-    /* finding which OID from client we selected */
-    for (auto & oid_s: oids){
-        size_t len = oid_s.size();
-        if (len < 2){
-            LOG(LOG_WARNING,"GSSAPI: received invalid OID 1");
-            continue;
-        }
-        if (oid_s[0] != SSH_OID_TAG){
-            LOG(LOG_WARNING,"GSSAPI: received invalid OID 2");
-            continue;
-        }
-        if (oid_s[1] != (int)len - 2){
-            LOG(LOG_WARNING,"GSSAPI: received invalid OID 3");
-            continue;
-        }
-
-        oid.elements = &oid_s[2];
-        oid.length = len - 2;
-        gss_test_oid_set_member(&min_stat, &oid, selected, &present);
-        if(present){
-            LOG(LOG_INFO, "Selected oid %d", i);
-            break;
-        }
-    }
-    client_session->gssapi->mech.length = oid.length;
-    client_session->gssapi->mech.elements = malloc(oid.length);
-
-    // TODO : check memory allocation
-    memcpy(client_session->gssapi->mech.elements, oid.elements, oid.length);
-    gss_release_oid_set(&min_stat, &selected);
-    client_session->gssapi->user = strdup(user);
-    client_session->gssapi->service = service_name;
-    client_session->gssapi->state = SSH_GSSAPI_STATE_RCV_TOKEN;
-
-    client_session->out_buffer->out_uint8(SSH_MSG_USERAUTH_GSSAPI_RESPONSE);
-    client_session->out_buffer->out_uint32_be(oids[i].size());
-    client_session->out_buffer->out_blob(&oids[i][0], oids[i].size());
-    client_session->packet_send();
-
-    return SSH_OK;
-}
+// static inline int ssh_gssapi_handle_userauth_client(SshClientSession * client_session, const char *user, uint32_t n_oid, std::vector<SSHString> oids){
+//     LOG(LOG_INFO, "%s ---", __FUNCTION__);
+//     char service_name[]="host";
+//     gss_buffer_desc name_buf;
+//     gss_name_t server_name; /* local server fqdn */
+//     OM_uint32 min_stat;
+//     unsigned int i;
+//     gss_OID_set supported; /* oids supported by server */
+//     gss_OID_set both_supported; /* oids supported by both client and server */
+//     gss_OID_set selected; /* oid selected for authentication */
+//     int present=0;
+//     int oid_count=0;
+//     struct gss_OID_desc_struct oid;
+//
+//     gss_create_empty_oid_set(&min_stat, &both_supported);
+//
+//     gss_indicate_mechs(&min_stat, &supported);
+//     for (i=0; i < supported->count; ++i){
+//         // TODO: avoid too long buffers, we can make this one static and truncate it
+//         char *hexa = new char[supported->elements[i].length * 3 + 1];
+//         size_t q = 0;
+//         size_t j = 0;
+//         for (q = 0; q < supported->elements[q].length; q++) {
+//             const uint8_t cl = reinterpret_cast<uint8_t *>(supported->elements[q].elements)[q] >> 4;
+//             const uint8_t ch = reinterpret_cast<uint8_t *>(supported->elements[q].elements)[q] & 0x0F;
+//             hexa[j] = (ch < 10?'0':'a')+ch;
+//             hexa[j+1] = (cl < 10?'0':'a')+cl;
+//             hexa[j+2] = ':';
+//             j+= 3;
+//         }
+//         hexa[j>0?(j-1):0] = 0;
+//         LOG(LOG_DEBUG, "Supported mech %d: %s\n", i, hexa);
+//         delete[] hexa;
+//     }
+//
+//     for (auto & oid_s: oids){
+//         LOG(LOG_INFO,"GSSAPI: n_oid=%u", n_oid);
+//         size_t len = oid_s.size();
+//         LOG(LOG_INFO,"GSSAPI: oid_len=%d %u %u %u", static_cast<int>(len), SSH_OID_TAG, oid_s[0], oid_s[1]);
+//         if(len < 2){
+//             LOG(LOG_WARNING,"GSSAPI: received invalid OID 1");
+//             continue;
+//         }
+//         if(oid_s[0] != SSH_OID_TAG){
+//             LOG(LOG_WARNING,"GSSAPI: received invalid OID 2");
+//             continue;
+//         }
+//         if(static_cast<size_t>(oid_s[1]) != len - 2){
+//             LOG(LOG_WARNING,"GSSAPI: received invalid OID 3");
+//             continue;
+//         }
+//         oid.elements = &oid_s[2];
+//         oid.length = len - 2;
+//         gss_test_oid_set_member(&min_stat,&oid,supported,&present);
+//         if(present){
+//             gss_add_oid_set_member(&min_stat,&oid,&both_supported);
+//             oid_count++;
+//         }
+//     }
+//     LOG(LOG_INFO,"GSSAPI: n_oid loop done i=%u", i);
+//
+//     gss_release_oid_set(&min_stat, &supported);
+//     if (oid_count == 0){
+//         LOG(LOG_INFO,"GSSAPI: no OID match");
+//         ssh_auth_reply_denied_client(client_session);
+//         gss_release_oid_set(&min_stat, &both_supported);
+//         return SSH_OK;
+//     }
+//     /* from now we have room for context */
+//     if (client_session->gssapi == nullptr){
+//         client_session->gssapi = new ssh_gssapi_struct;
+//     }
+//
+//     name_buf.value = service_name;
+//     name_buf.length = strlen(static_cast<const char*>(name_buf.value)) + 1;
+//     OM_uint32 maj_stat2 = gss_import_name(&min_stat, &name_buf, GSS_C_NT_HOSTBASED_SERVICE, &server_name);
+//     if (maj_stat2 != GSS_S_COMPLETE) {
+//         LOG(LOG_WARNING, "importing name %d, %d", maj_stat2, min_stat);
+//         gss_buffer_desc buffer;
+//         OM_uint32 dummy;
+//         OM_uint32 message_context;
+//         gss_display_status(&dummy, maj_stat2, GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
+//         LOG(LOG_WARNING, "GSSAPI(%s): %s", "importing name", static_cast<char *>(buffer.value));
+//         return -1;
+//     }
+//
+//     OM_uint32 maj_stat3 = gss_acquire_cred(&min_stat, server_name, 0,
+//             both_supported, GSS_C_ACCEPT,
+//             &client_session->gssapi->server_creds, &selected, nullptr);
+//     gss_release_name(&min_stat, &server_name);
+//     gss_release_oid_set(&min_stat, &both_supported);
+//
+//     if (maj_stat3 != GSS_S_COMPLETE) {
+//         LOG(LOG_WARNING, "error acquiring credentials %d, %d", maj_stat3, min_stat);
+//         gss_buffer_desc buffer;
+//         OM_uint32 dummy;
+//         OM_uint32 message_context;
+//         gss_display_status(&dummy, maj_stat3, GSS_C_GSS_CODE, GSS_C_NO_OID, &message_context, &buffer);
+//         LOG(LOG_WARNING, "GSSAPI(%s): %s", "acquiring creds", static_cast<char *>(buffer.value));
+//
+//
+//         ssh_auth_reply_denied_client(client_session);
+//         return SSH_ERROR;
+//     }
+//
+//     LOG(LOG_INFO, "acquiring credentials %d, %d", maj_stat3, min_stat);
+//
+//     /* finding which OID from client we selected */
+//     for (auto & oid_s: oids){
+//         size_t len = oid_s.size();
+//         if (len < 2){
+//             LOG(LOG_WARNING,"GSSAPI: received invalid OID 1");
+//             continue;
+//         }
+//         if (oid_s[0] != SSH_OID_TAG){
+//             LOG(LOG_WARNING,"GSSAPI: received invalid OID 2");
+//             continue;
+//         }
+//         if (oid_s[1] != (int)len - 2){
+//             LOG(LOG_WARNING,"GSSAPI: received invalid OID 3");
+//             continue;
+//         }
+//
+//         oid.elements = &oid_s[2];
+//         oid.length = len - 2;
+//         gss_test_oid_set_member(&min_stat, &oid, selected, &present);
+//         if(present){
+//             LOG(LOG_INFO, "Selected oid %d", i);
+//             break;
+//         }
+//     }
+//     client_session->gssapi->mech.length = oid.length;
+//     client_session->gssapi->mech.elements = malloc(oid.length);
+//
+//     // TODO : check memory allocation
+//     memcpy(client_session->gssapi->mech.elements, oid.elements, oid.length);
+//     gss_release_oid_set(&min_stat, &selected);
+//     client_session->gssapi->user = strdup(user);
+//     client_session->gssapi->service = service_name;
+//     client_session->gssapi->state = SSH_GSSAPI_STATE_RCV_TOKEN;
+//
+//     client_session->out_buffer->out_uint8(SSH_MSG_USERAUTH_GSSAPI_RESPONSE);
+//     client_session->out_buffer->out_uint32_be(oids[i].size());
+//     client_session->out_buffer->out_blob(&oids[i][0], oids[i].size());
+//     client_session->packet_send();
+//
+//     return SSH_OK;
+// }
 
 
 /** @internal
@@ -7049,8 +7049,7 @@ int SshClientSession::ssh_channel_write_client(ssh_channel channel, const uint8_
             // Waiting for input
             dopoll(this->ctx, (this->flags&SSH_SESSION_FLAG_BLOCKING)?SSH_TIMEOUT_INFINITE:SSH_TIMEOUT_NONBLOCKING);
 
-            if (this->session_state == SSH_SESSION_STATE_ERROR
-            || this->session_state == SSH_SESSION_STATE_ERROR){
+            if (this->session_state == SSH_SESSION_STATE_ERROR){
                 LOG(LOG_INFO, "Wait for a growing window message terminated on error: exiting");
                 return SSH_ERROR;
             }

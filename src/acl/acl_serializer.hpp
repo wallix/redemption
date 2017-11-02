@@ -265,7 +265,7 @@ public:
         if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "auth::~AclSerializer");
         }
-        char session_file[256];
+        char session_file[2048];
         std::snprintf(session_file, sizeof(session_file),
                       "%s/redemption/session_%s.pid", app_path(AppPath::Pid), this->session_id);
         unlink(session_file);
@@ -830,10 +830,10 @@ public:
         bool flag = this->ini.get<cfg::context::session_id>().empty();
         this->in_items();
         if (flag && !this->ini.get<cfg::context::session_id>().empty()) {
-            char old_session_file[256];
+            char old_session_file[2048];
             std::snprintf(old_session_file, sizeof(old_session_file),
                           "%s/redemption/session_%s.pid", app_path(AppPath::Pid), this->session_id);
-            char new_session_file[256];
+            char new_session_file[2048];
             std::snprintf(new_session_file, sizeof(new_session_file),
                          "%s/redemption/session_%s.pid", app_path(AppPath::Pid),
                     this->ini.get<cfg::context::session_id>().c_str());

@@ -3872,7 +3872,7 @@ struct SshServerSession : public ssh_session_struct
             }
             REDEMPTION_CXX_FALLTHROUGH;
         default:
-            ssh_auth_reply_denied_server(this);
+            ssh_auth_reply_denied_server(false);
         }
     }
 

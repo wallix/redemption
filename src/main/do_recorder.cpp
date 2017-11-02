@@ -118,6 +118,7 @@ static inline int encryption_type(const char * full_filename, CryptoContext & cc
         case EcryptionSchemeTypeResult::NewScheme: return 2;
         case EcryptionSchemeTypeResult::NoEncrypted: return 0;
     }
+    REDEMPTION_UNREACHABLE();
 }
 
 void clear_files_flv_meta_png(const char * path, const char * prefix)

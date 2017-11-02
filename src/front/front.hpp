@@ -3930,7 +3930,7 @@ private:
                 this->ini.set_acl<cfg::context::opt_bpp>(this->client_info.bpp);
 
                 if (!this->auth_info_sent) {
-                    char         username_a_domain[512];
+                    char         username_a_domain[516];
                     const char * username;
                     if (this->client_info.domain[0] &&
                         !strchr(this->client_info.username, '@') &&

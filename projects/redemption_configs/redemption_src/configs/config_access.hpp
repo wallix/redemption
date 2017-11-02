@@ -53,10 +53,13 @@ template<class T, accessmode Mode>
 struct var
 {};
 
+// fix for gcc-7
+template<class...> using LazyInifile = Inifile;
+
 template<class... Cfg>
 class variables
 {
-    Inifile & ini;
+    LazyInifile<Cfg...> & ini;
 
     struct Pack : Cfg... {};
 

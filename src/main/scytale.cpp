@@ -147,12 +147,11 @@ struct RedCryptoErrorContext
     {
         if (this->error.errnum) {
             std::snprintf(this->msg, sizeof(msg), "%s, errno = %d: %s", this->error.errmsg(), this->error.errnum, strerror(this->error.errnum));
+            this->msg[sizeof(this->msg)-1] = 0;
+            return this->msg;
         }
-        else {
-            std::snprintf(this->msg, sizeof(msg), "%s", this->error.errmsg());
-        }
-        this->msg[sizeof(this->msg)-1] = 0;
-        return this->msg;
+
+        return this->error.errmsg();
     }
 
     static char const * handle_error_message() noexcept
@@ -167,7 +166,7 @@ struct RedCryptoErrorContext
 
 private:
     Error error;
-    char msg[128];
+    char msg[256];
 };
 
 struct RedCryptoWriterHandle

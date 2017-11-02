@@ -38,7 +38,7 @@ private:
     char         extension[12];
     Format       format;
     unsigned     pid;
-    mutable char filename_gen[1024];
+    mutable char filename_gen[2070];
 
     const char * last_filename;
     unsigned     last_num;
