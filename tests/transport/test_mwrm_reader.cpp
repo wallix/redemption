@@ -402,7 +402,7 @@ RED_AUTO_TEST_CASE(ReadHashV1)
         MwrmReader reader(transport);
 
         MetaLine meta_line;
-        reader.set_header({WrmVersion::v1, true});
+        reader.set_header({WrmVersion::v1, false});
         reader.read_meta_hash_line(meta_line);
         RED_CHECK_EQUAL(meta_line.filename, "file_xyz");
         RED_CHECK_EQUAL(meta_line.with_hash, true);
