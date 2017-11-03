@@ -273,6 +273,8 @@ rule flags ( properties * )
         if [ ge-ver $(version) : 7.1.0 ]
         {
             flags +=
+                <cxxflags>-Wrestrict
+                <cxxflags>-Wduplicated-branches
                 <cxxflags>-Walloc-zero
                 <cxxflags>-Walloca
                 <cxxflags>-Wformat-overflow #=level
