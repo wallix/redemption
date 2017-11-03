@@ -56,7 +56,7 @@
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
 
-struct mod_vnc : public InternalMod, private NotifyApi
+class mod_vnc : public InternalMod, private NotifyApi
 {
     static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
 
@@ -68,6 +68,7 @@ struct mod_vnc : public InternalMod, private NotifyApi
     char username[256];
     char password[256];
 
+public:
     struct Mouse {
         void move(Transport & t, int x, int y) {
             this->x = x;
@@ -116,13 +117,11 @@ struct mod_vnc : public InternalMod, private NotifyApi
 private:
     Transport & t;
 
-public:
     uint16_t width;
     uint16_t height;
     uint8_t  bpp;
     uint8_t  depth;
 
-private:
     uint8_t endianess;
     uint8_t true_color_flag;
 
@@ -154,7 +153,6 @@ private:
     uint32_t to_vnc_clipboard_data_size;
     uint32_t to_vnc_clipboard_data_remaining;
 
-private:
     const bool enable_clipboard_up;   // true clipboard available, false clipboard unavailable
     const bool enable_clipboard_down; // true clipboard available, false clipboard unavailable
 
@@ -185,15 +183,13 @@ public:
         Latin1 = 1
     };
 
-public:
+private:
     std::string encodings;
 
-private:
     int state;
 
     bool allow_authentification_retries;
 
-private:
     bool is_first_membelt = true;
     bool left_ctrl_pressed = false;
 
@@ -253,6 +249,10 @@ public:
     , username{0}
     , password{0}
     , t(t)
+    , width(0)
+    , height(0)
+    , bpp(0)
+    , depth(0)
     , verbose(verbose)
     , keymapSym(static_cast<uint32_t>(verbose))
     , to_vnc_clipboard_data_size(0)
