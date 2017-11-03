@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include "utils/log.hpp"
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
+#include "utils/colors.hpp"
 
 
 
@@ -109,16 +109,16 @@
 //  |                     | description of the AlphaBlend operation, see            |
 //  |                     | [MSDN-ABLEND].                                          |
 //  +---------------------+---------------------------------------------------------+
-//  | DSDNG_TILE          | Indicates that a TransparentBlt operation MUST be used  |
+//  | DSDNG_TRANSPARENT   | Indicates that a TransparentBlt operation MUST be used  |
 //  | 0x00000008          | to compose the destination NineGrid. The crTransparent  |
 //  |                     | field MUST contain the transparent color. For a         |
 //  |                     | description of the TransparentBlt operation, see        |
 //  |                     | [MSDN-TransparentBlt].                                  |
 //  +---------------------+---------------------------------------------------------+
-//  | DSDNG_TILE          | Indicates that the source NineGrid MUST be flipped on a |
+//  | DSDNG_MUSTFLIP      | Indicates that the source NineGrid MUST be flipped on a |
 //  | 0x00000010          | vertical axis.                                          |
 //  +---------------------+---------------------------------------------------------+
-//  | DSDNG_TILE          | Indicates that the source bitmap MUST be transferred    |
+//  | DSDNG_TRUESIZE      | Indicates that the source bitmap MUST be transferred    |
 //  | 0x00000020          | without stretching or tiling.                           |
 //  +---------------------+---------------------------------------------------------+
 
@@ -143,56 +143,50 @@
 // (0x00000008) flag is set in the flFlags field.
 
 
-class CreateNineGridBitmap {
-public:
+enum class Dsdng : uint32_t
+{
+    Stretch       = (1 << 0),
+    Tile          = (1 << 1),
+    PerPixelAlpha = (1 << 2),
+    Transparent   = (1 << 3),
+    MustFlip      = (1 << 4),
+    TrueSize      = (1 << 5),
+};
 
-    uint8_t controlFlags;
+struct NineGridBitmapInfo
+{
+    Dsdng flFlags;
 
-    uint8_t BitmapBpp;
-    uint16_t BitmapId;
-    uint16_t cx;
-    uint16_t cy;
-
-    uint32_t flFlags;
     uint16_t ulLeftWidth;
     uint16_t ulRightWidth;
     uint16_t ulTopHeight;
     uint16_t ulBottomHeight;
+
+    // RGB color
     uint32_t crTransparent;
 
-    CreateNineGridBitmap() : controlFlags(RDP::SECONDARY | (RDP::AltsecDrawingOrderHeader::CreateNinegridBitmap << 2)) {}
+    explicit NineGridBitmapInfo() = default;
 
-    explicit CreateNineGridBitmap(                          //uint8_t controlFlags,
-                                  uint16_t BitmapId,
-                                  uint16_t cx,
-                                  uint16_t cy,
-                                  uint32_t flFlags,
-                                  uint16_t ulLeftWidth,
-                                  uint16_t ulRightWidth,
-                                  uint16_t ulTopHeight,
-                                  uint16_t ulBottomHeight,
-                                  uint32_t crTransparent)
-                            : controlFlags(RDP::SECONDARY | (RDP::AltsecDrawingOrderHeader::CreateNinegridBitmap << 2))
-                            , BitmapBpp(0x20)
-                            , BitmapId(BitmapId)
-                            , cx(cx)
-                            , cy(cy)
-                            , flFlags(flFlags)
-                            , ulLeftWidth(ulLeftWidth)
-                            , ulRightWidth(ulRightWidth)
-                            , ulTopHeight(ulTopHeight)
-                            , ulBottomHeight(ulBottomHeight)
-                            , crTransparent(crTransparent) {}
+    explicit NineGridBitmapInfo(
+        Dsdng flFlags,
+        uint16_t ulLeftWidth,
+        uint16_t ulRightWidth,
+        uint16_t ulTopHeight,
+        uint16_t ulBottomHeight,
+        uint32_t crTransparent)
+    : flFlags(flFlags)
+    , ulLeftWidth(ulLeftWidth)
+    , ulRightWidth(ulRightWidth)
+    , ulTopHeight(ulTopHeight)
+    , ulBottomHeight(ulBottomHeight)
+    , crTransparent(crTransparent)
+    {}
 
-    void emit(OutStream & stream) const {
-        //stream.out_uint8(this->controlFlags);
+    void emit(OutStream & stream) const
+    {
+        //stream.out_uint8(this->header);
 
-        stream.out_uint8(this->BitmapBpp);
-        stream.out_uint16_le(this->BitmapId);
-        stream.out_uint16_le(this->cx);
-        stream.out_uint16_le(this->cy);
-
-        stream.out_uint32_le(this->flFlags);
+        stream.out_uint32_le(static_cast<uint32_t>(this->flFlags));
         stream.out_uint16_le(this->ulLeftWidth);
         stream.out_uint16_le(this->ulRightWidth);
         stream.out_uint16_le(this->ulTopHeight);
@@ -200,20 +194,58 @@ public:
         stream.out_uint32_le(this->crTransparent);
     }
 
-    void receive(InStream & stream) {
-        //this->controlFlags = stream.in_uint8();
-
-        this->BitmapBpp = stream.in_uint8();
-        this->BitmapId = stream.in_uint16_le();
-        this->cx = stream.in_uint16_le();
-        this->cy = stream.in_uint16_le();
-
-        this->flFlags = stream.in_uint32_le();
+    void receive(InStream & stream)
+    {
+        this->flFlags = static_cast<Dsdng>(stream.in_uint32_le());
         this->ulLeftWidth = stream.in_uint16_le();
         this->ulRightWidth = stream.in_uint16_le();
         this->ulTopHeight = stream.in_uint16_le();
         this->ulBottomHeight = stream.in_uint16_le();
         this->crTransparent = stream.in_uint32_le();
+    }
+};
+
+struct CreateNineGridBitmap
+{
+    uint8_t BitmapBpp;
+    uint16_t BitmapId;
+    uint16_t cx;
+    uint16_t cy;
+
+    NineGridBitmapInfo info;
+
+    explicit CreateNineGridBitmap() = default;
+
+    explicit CreateNineGridBitmap(
+        uint16_t BitmapId,
+        uint16_t cx,
+        uint16_t cy,
+        NineGridBitmapInfo info)
+    : BitmapBpp(0x20)
+    , BitmapId(BitmapId)
+    , cx(cx)
+    , cy(cy)
+    , info(info)
+    {}
+
+    void emit(OutStream & stream) const
+    {
+        uint8_t controlFlags = RDP::SECONDARY | (RDP::AltsecDrawingOrderHeader::CreateNinegridBitmap << 2);
+        stream.out_uint8(controlFlags);
+        stream.out_uint8(this->BitmapBpp);
+        stream.out_uint16_le(this->BitmapId);
+        stream.out_uint16_le(this->cx);
+        stream.out_uint16_le(this->cy);
+        info.emit(stream);
+    }
+
+    void receive(InStream & stream)
+    {
+        this->BitmapBpp = stream.in_uint8();
+        this->BitmapId = stream.in_uint16_le();
+        this->cx = stream.in_uint16_le();
+        this->cy = stream.in_uint16_le();
+        info.receive(stream);
     }
 
 //     size_t str(char * buffer, size_t sz) const {
@@ -240,5 +272,3 @@ public:
 //         LOG(level, "%s", buffer);
 //     }
 };  // class CreateNineGridBitmap
-
-
