@@ -65,7 +65,6 @@ class mod_vnc : public InternalMod, private NotifyApi
 
     /* mod data */
     char mod_name[256];
-    int vnc_desktop;
     char username[256];
     char password[256];
 
@@ -246,7 +245,6 @@ public:
                 "Redemption " VERSION, this->theme(), label_text_message, label_text_password,
                 this->font())
     , mod_name{0}
-    , vnc_desktop(0)
     , username{0}
     , password{0}
     , t(t)
