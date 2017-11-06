@@ -22,7 +22,7 @@
 #define RED_TEST_MODULE TestInCryptoTransport
 #include "system/redemption_unit_tests.hpp"
 
-//#define LOGNULL
+#define LOGNULL
 #include "utils/log.hpp"
 
 #include "transport/crypto_transport.hpp"
@@ -230,20 +230,45 @@ RED_AUTO_TEST_CASE(TestEncryption2)
 RED_AUTO_TEST_CASE(testSetEncryptionSchemeType)
 {
     {
-        CryptoContext cctx;
-        init_keys(cctx);
-        cctx.set_trace_type(TraceType::cryptofile);
+        auto hmac_2016_fn = [](uint8_t * buffer) {
+            uint8_t hmac_key[32] = {
+                0x56 , 0xdd , 0xb2 , 0x92 , 0x47 , 0xbe , 0x4b , 0x89 ,
+                0x1f , 0x12 , 0x62 , 0x39 , 0x0f , 0x10 , 0xb9 , 0x8e ,
+                0xac , 0xff , 0xbc , 0x8a , 0x8f , 0x71 , 0xfb , 0x21 ,
+                0x07 , 0x7d , 0xef , 0x9c , 0xb3 , 0x5f , 0xf9 , 0x7b ,
+            };
+            memcpy(buffer, hmac_key, 32);
+            return 0;
+        };
 
+        auto trace_20161025_fn = [](uint8_t const * /*base*/, int /*len*/, uint8_t * buffer, unsigned /*oldscheme*/) {
+            uint8_t trace_key[32] = {
+                0xa8, 0x6e, 0x1c, 0x63, 0xe1, 0xa6, 0xfd, 0xed,
+                0x2f, 0x73, 0x17, 0xca, 0x97, 0xad, 0x48, 0x07,
+                0x99, 0xf5, 0xcf, 0x84, 0xad, 0x9f, 0x4a, 0x16,
+                0x66, 0x38, 0x09, 0xb7, 0x74, 0xe0, 0x58, 0x34,
+            };
+            memcpy(buffer, trace_key, 32);
+            return 0;
+        };
+
+        CryptoContext cctx;
+        cctx.set_get_hmac_key_cb(hmac_2016_fn);
+        cctx.set_get_trace_key_cb(trace_20161025_fn);
+        cctx.set_master_derivator(cstr_array_view(
+            FIXTURES_PATH "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
+            "-192304,wab-4-2-4.yourdomain,5560.mwrm"
+        ));
+
+        BOOST_CHECK_EQUAL(cctx.old_encryption_scheme, false);
         BOOST_CHECK_EQUAL(
-            set_encryption_scheme_type(cctx,
+            get_encryption_scheme_type(cctx,
             FIXTURES_PATH "/verifier/recorded/"
             "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
             "-192304,wab-4-2-4.yourdomain,5560.mwrm"),
-            EcryptionSchemeTypeResult::OldScheme);
+            EncryptionSchemeTypeResult::OldScheme);
     }
     {
-        CryptoContext cctx;
-
         auto hmac_fn = [](uint8_t * buffer) {
             // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
             uint8_t hmac_key[] = {
@@ -272,6 +297,7 @@ RED_AUTO_TEST_CASE(testSetEncryptionSchemeType)
             return 0;
         };
 
+        CryptoContext cctx;
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
         cctx.set_master_derivator(cstr_array_view(
@@ -280,25 +306,25 @@ RED_AUTO_TEST_CASE(testSetEncryptionSchemeType)
         ));
 
         BOOST_CHECK_EQUAL(
-            set_encryption_scheme_type(cctx,
+            get_encryption_scheme_type(cctx,
             FIXTURES_PATH "/verifier/recorded/"
             "toto@10.10.43.13,Administrateur@QA@cible,"
             "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm"),
-            EcryptionSchemeTypeResult::NewScheme);
+            EncryptionSchemeTypeResult::NewScheme);
     }
     {
         CryptoContext cctx;
         BOOST_CHECK_EQUAL(
-            set_encryption_scheme_type(cctx,
+            get_encryption_scheme_type(cctx,
             FIXTURES_PATH "/sample.txt"),
-            EcryptionSchemeTypeResult::NoEncrypted);
+            EncryptionSchemeTypeResult::NoEncrypted);
     }
     {
         CryptoContext cctx;
         BOOST_CHECK_EQUAL(
-            set_encryption_scheme_type(cctx,
+            get_encryption_scheme_type(cctx,
             FIXTURES_PATH "/blogiblounga"),
-            EcryptionSchemeTypeResult::Error);
+            EncryptionSchemeTypeResult::Error);
         BOOST_CHECK_EQUAL(errno, ENOENT);
     }
 }

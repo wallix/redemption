@@ -67,7 +67,9 @@ public:
 
     void close();
 
-    bool is_eof();
+    bool is_eof() noexcept;
+
+    void disable_log_decrypt(bool disable = true) noexcept;
 
 private:
     // this perform atomic read, partial read will result in exception
@@ -228,7 +230,7 @@ private:
 };
 
 
-enum class EcryptionSchemeTypeResult
+enum class EncryptionSchemeTypeResult
 {
     Error = -1,
     NoEncrypted = 0,
@@ -236,6 +238,11 @@ enum class EcryptionSchemeTypeResult
     NewScheme,
 };
 
-EcryptionSchemeTypeResult set_encryption_scheme_type(
+EncryptionSchemeTypeResult get_encryption_scheme_type(
     CryptoContext & cctx, const char * filename,
+    const_byte_array derivator = const_byte_array(nullptr));
+
+/// \attention if result is \c EncryptionSchemeTypeResult::OldScheme, the CryptoContext::old_encryption_scheme must be set to 1 and the file reopen because some data are lost
+EncryptionSchemeTypeResult open_if_possible_and_get_encryption_scheme_type(
+    InCryptoTransport & in, const char * filename,
     const_byte_array derivator = const_byte_array(nullptr));

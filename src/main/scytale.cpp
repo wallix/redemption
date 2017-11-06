@@ -402,26 +402,41 @@ RedCryptoReaderHandle * scytale_reader_new(
     ));
 }
 
-int scytale_reader_detect_and_set_encryption_scheme(RedCryptoReaderHandle * handle, char const * path)
-{
-    SCOPED_TRACE;
-    CHECK_HANDLE(handle);
-    CHECK_NOTHROW(
-        auto const r = set_encryption_scheme_type(handle->cctxw.cctx, path);
-        if (r == EcryptionSchemeTypeResult::Error) {
-            handle->error_ctx.set_error(Error{ERR_TRANSPORT_READ_FAILED, errno});
-        }
-        return int(r),
-        ERR_TRANSPORT_READ_FAILED
-    );
-}
-
 int scytale_reader_open(RedCryptoReaderHandle * handle, char const * path, char const * derivator) {
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
     CHECK_NOTHROW(
         handle->in_crypto_transport.open(path, {derivator, strlen(derivator)}),
+        ERR_TRANSPORT_OPEN_FAILED);
+    return 0;
+}
+
+int scytale_reader_open_with_auto_detect_encryption_scheme(
+    RedCryptoReaderHandle * handle, char const * path, char const * derivator)
+{
+    SCOPED_TRACE;
+    CHECK_HANDLE(handle);
+    handle->error_ctx.set_error(Error(NO_ERROR));
+    const_byte_array const derivator_array{derivator, strlen(derivator)};
+    CHECK_NOTHROW(
+        auto const r = open_if_possible_and_get_encryption_scheme_type(
+            handle->in_crypto_transport, path, derivator_array);
+        switch (r)
+        {
+            case EncryptionSchemeTypeResult::Error:
+                handle->error_ctx.set_error(Error{ERR_TRANSPORT_OPEN_FAILED, errno});
+                break;
+            case EncryptionSchemeTypeResult::OldScheme:
+                // repopen file because some data are lost
+                handle->cctxw.cctx.old_encryption_scheme = 1;
+                handle->in_crypto_transport.open(path, derivator_array);
+                break;
+            case EncryptionSchemeTypeResult::NewScheme:
+            case EncryptionSchemeTypeResult::NoEncrypted:
+                break;
+        }
+        return int(r),
         ERR_TRANSPORT_OPEN_FAILED);
     return 0;
 }
