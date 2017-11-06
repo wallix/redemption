@@ -819,6 +819,26 @@ RED_AUTO_TEST_CASE(TestLatin1ToUTF16_2) {
     RED_CHECK_EQUAL(std::string(char_ptr_cast(utf8_dst)), "100 €\r\ntrapézoïdal");
 }
 
+RED_AUTO_TEST_CASE(TestLatin1ToUTF8) {
+    const uint8_t latin1_src[] = "100 \x80"                 // "100 €"
+                                 "\n"                       // \n
+                                 "trap\xe9zo\xef" "dal";    // "trapézoïdal"
+
+    const size_t number_of_characters = strlen(char_ptr_cast(latin1_src)) + 1;
+
+    const uint8_t utf8_expected[] = "100 \xc2\x80"
+                                    "\x0a"
+                                    "trap\xc3\xa9zo\xc3\xaf" "dal";
+
+    uint8_t utf8_dst[64];
+
+    RED_CHECK_EQUAL(
+        Latin1toUTF8(latin1_src, number_of_characters, utf8_dst, sizeof(utf8_dst)),
+        sizeof(utf8_expected));
+
+    RED_CHECK_EQ_RANGES(utf8_expected, make_array_view(utf8_dst, sizeof(utf8_expected)));
+}
+
 RED_AUTO_TEST_CASE(TestUTF8StringAdjustedNbBytes) {
     RED_CHECK_EQUAL(UTF8StringAdjustedNbBytes(byte_ptr_cast(""), 6), 0);
 

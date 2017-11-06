@@ -48,6 +48,7 @@
 #include "utils/d3des.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/log.hpp"
+#include "utils/sugar/make_unique.hpp"
 #include "utils/sugar/update_lock.hpp"
 #include "utils/sugar/strutils.hpp"
 #include "utils/utf.hpp"
@@ -1224,10 +1225,11 @@ protected:
                     }
 
                     const size_t utf8_data_length =
-                        data_length / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes;
+                        data_length / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes + 1;
                     std::unique_ptr<uint8_t[]> utf8_data(new uint8_t[utf8_data_length]);
 
-                    ::UTF16toUTF8(data, data_length, utf8_data.get(),  utf8_data_length);
+                    const auto len = ::UTF16toUTF8(data, data_length, utf8_data.get(),  utf8_data_length);
+                    utf8_data[len] = 0;
 
                     client_cut_text(::char_ptr_cast(utf8_data.get()));
                 }
@@ -1236,10 +1238,11 @@ protected:
                         LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> Latin-1");
                     }
 
-                    const size_t latin1_data_length = data_length / sizeof(uint16_t);
+                    const size_t latin1_data_length = data_length / sizeof(uint16_t) + 1;
                     std::unique_ptr<uint8_t[]> latin1_data(new uint8_t[latin1_data_length]);
 
-                    ::UTF16toLatin1(data, data_length, latin1_data.get(), latin1_data_length);
+                    const auto len = ::UTF16toLatin1(data, data_length, latin1_data.get(), latin1_data_length);
+                    latin1_data[len] = 0;
 
                     client_cut_text(::char_ptr_cast(latin1_data.get()));
                 }
@@ -1250,16 +1253,12 @@ protected:
                         LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> UTF-8");
                     }
 
-                    const size_t utf16_data_length = data_length * sizeof(uint16_t);
-                    std::unique_ptr<uint8_t[]> utf16_data(new uint8_t[utf16_data_length]);
+                    const size_t utf8_data_length = data_length * 2 + 1;
+                    auto utf8_data = std::make_unique<uint8_t[]>(utf8_data_length);
 
-                    const size_t result = ::Latin1toUTF16(data, data_length, utf16_data.get(),
-                        utf16_data_length);
-
-                    const size_t utf8_data_length = data_length * maximum_length_of_utf8_character_in_bytes;
-                    std::unique_ptr<uint8_t[]> utf8_data(new uint8_t[utf8_data_length]);
-
-                    ::UTF16toUTF8(utf16_data.get(), result, utf8_data.get(),  utf8_data_length);
+                    const size_t len = ::Latin1toUTF8(data, data_length, utf8_data.get(),
+                        utf8_data_length);
+                    utf8_data[len] = 0;
 
                     client_cut_text(::char_ptr_cast(utf8_data.get()));
                 }

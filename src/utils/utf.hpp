@@ -885,6 +885,38 @@ static inline size_t Latin1toUTF16(const uint8_t * latin1_source, size_t latin1_
     return (current_utf16_target - utf16_target) * 2;
 }
 
+static inline size_t Latin1toUTF8(
+    const uint8_t * latin1_source, size_t latin1_len,
+    uint8_t * utf8_target, size_t utf8_len)
+{
+    auto converter = [](uint8_t src, uint8_t *& dst, size_t & remaining_dst_len) -> bool {
+        if (src < 0x80) {
+            *dst++ = src;
+            remaining_dst_len--;
+            return true;
+        }
+
+        if (remaining_dst_len < 2) {
+            return false;
+        }
+
+        *dst++ = (src >> 6) | 0xC0;
+        *dst++ = (src & 0x3f) | 0x80;
+        remaining_dst_len -= 2;
+        return true;
+    };
+
+    uint8_t * current_utf8_target = utf8_target;
+    for (const uint8_t * latin1_source_end = latin1_source + latin1_len
+      ; latin1_source != latin1_source_end; ++latin1_source) {
+        if (!converter(*latin1_source, current_utf8_target, utf8_len)) {
+            break;
+        }
+    }
+
+    return (current_utf8_target - utf8_target);
+}
+
 static inline size_t UTF16StrLen(const uint8_t * utf16_s) {
 //    const uint16_t* utf16_str = reinterpret_cast<const uint16_t*>(utf16_s);
 
