@@ -407,7 +407,7 @@ int scytale_reader_detect_and_set_encryption_scheme(RedCryptoReaderHandle * hand
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     CHECK_NOTHROW(
-        auto const r = set_encryption_scheme_type(path, handle->cctxw.cctx);
+        auto const r = set_encryption_scheme_type(handle->cctxw.cctx, path);
         if (r == EcryptionSchemeTypeResult::Error) {
             handle->error_ctx.set_error(Error{ERR_TRANSPORT_READ_FAILED, errno});
         }

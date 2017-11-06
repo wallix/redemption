@@ -945,7 +945,8 @@ void OutCryptoTransport::do_send(const uint8_t * data, size_t len)
 }
 
 
-EcryptionSchemeTypeResult set_encryption_scheme_type(const char * filename, CryptoContext & cctx)
+EcryptionSchemeTypeResult set_encryption_scheme_type(
+    CryptoContext & cctx, const char * filename, const_byte_array derivator)
 {
     int fd = open(filename, O_RDONLY);
     if (fd == -1){
@@ -979,7 +980,12 @@ EcryptionSchemeTypeResult set_encryption_scheme_type(const char * filename, Cryp
     if (magic == WABCRYPTOFILE_MAGIC) {
         Fstat fstat;
         InCryptoTransport in_test(cctx, InCryptoTransport::EncryptionMode::Encrypted, fstat);
-        in_test.open(filename);
+        if (derivator.data()) {
+            in_test.open(filename, derivator);
+        }
+        else {
+            in_test.open(filename);
+        }
         try {
             char mem[4096];
             auto len = in_test.partial_read(mem, sizeof(mem));

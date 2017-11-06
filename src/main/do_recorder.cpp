@@ -111,7 +111,7 @@ static inline int file_start_hmac_sha256(const char * filename,
 
 static inline int encryption_type(const char * full_filename, CryptoContext & cctx)
 {
-    switch (set_encryption_scheme_type(full_filename, cctx))
+    switch (set_encryption_scheme_type(cctx, full_filename))
     {
         case EcryptionSchemeTypeResult::Error: std::cerr << strerror(errno) << "\n"; return -1;
         case EcryptionSchemeTypeResult::OldScheme: cctx.old_encryption_scheme = 1; return 1;

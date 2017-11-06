@@ -218,13 +218,89 @@ RED_AUTO_TEST_CASE(TestEncryption2)
     decrypter.open("./tmp.enc", { derivator, sizeof(derivator)});
     BOOST_CHECK_EQUAL(Transport::Read::Ok, decrypter.atomic_read(clear, 4));
     BOOST_CHECK_EQUAL(decrypter.partial_read(clear+4, 1), 0);
+    BOOST_CHECK_EQUAL(decrypter.is_encrypted(), true);
     decrypter.close();
-
 
 //    RED_CHECK_EQUAL(res2, 4);
     RED_CHECK_MEM_C(make_array_view(clear, 4), "toto");
 
     RED_CHECK(0 == ::unlink("./tmp.enc"));
+}
+
+RED_AUTO_TEST_CASE(testSetEncryptionSchemeType)
+{
+    {
+        CryptoContext cctx;
+        init_keys(cctx);
+        cctx.set_trace_type(TraceType::cryptofile);
+
+        BOOST_CHECK_EQUAL(
+            set_encryption_scheme_type(cctx,
+            FIXTURES_PATH "/verifier/recorded/"
+            "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
+            "-192304,wab-4-2-4.yourdomain,5560.mwrm"),
+            EcryptionSchemeTypeResult::OldScheme);
+    }
+    {
+        CryptoContext cctx;
+
+        auto hmac_fn = [](uint8_t * buffer) {
+            // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
+            uint8_t hmac_key[] = {
+                0xe3, 0x8d, 0xa1, 0x5e, 0x50, 0x1e, 0x4f, 0x6a,
+                0x01, 0xef, 0xde, 0x6c, 0xd9, 0xb3, 0x3a, 0x3f,
+                0x2b, 0x41, 0x72, 0x13, 0x1e, 0x97, 0x5b, 0x4c,
+                0x39, 0x54, 0x23, 0x14, 0x43, 0xae, 0x22, 0xae };
+            static_assert(sizeof(hmac_key) == MD_HASH::DIGEST_LENGTH, "");
+            memcpy(buffer, hmac_key, sizeof(hmac_key));
+            return 0;
+        };
+
+        auto trace_fn = [](uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme) {
+            // in real uses actual trace_key is derived from base and some master key
+            (void)base;
+            (void)len;
+            (void)oldscheme;
+            // 563EB6E8158F0EED2E5FB6BC2893BC15270D7E7815FA804A723EF4FB315FF4B2
+            uint8_t trace_key[] = {
+                0x56, 0x3e, 0xb6, 0xe8, 0x15, 0x8f, 0x0e, 0xed,
+                0x2e, 0x5f, 0xb6, 0xbc, 0x28, 0x93, 0xbc, 0x15,
+                0x27, 0x0d, 0x7e, 0x78, 0x15, 0xfa, 0x80, 0x4a,
+                0x72, 0x3e, 0xf4, 0xfb, 0x31, 0x5f, 0xf4, 0xb2 };
+            static_assert(sizeof(trace_key) == MD_HASH::DIGEST_LENGTH, "");
+            memcpy(buffer, trace_key, sizeof(trace_key));
+            return 0;
+        };
+
+        cctx.set_get_hmac_key_cb(hmac_fn);
+        cctx.set_get_trace_key_cb(trace_fn);
+        cctx.set_master_derivator(cstr_array_view(
+            FIXTURES_PATH "toto@10.10.43.13,Administrateur@QA@cible,"
+            "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm"
+        ));
+
+        BOOST_CHECK_EQUAL(
+            set_encryption_scheme_type(cctx,
+            FIXTURES_PATH "/verifier/recorded/"
+            "toto@10.10.43.13,Administrateur@QA@cible,"
+            "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm"),
+            EcryptionSchemeTypeResult::NewScheme);
+    }
+    {
+        CryptoContext cctx;
+        BOOST_CHECK_EQUAL(
+            set_encryption_scheme_type(cctx,
+            FIXTURES_PATH "/sample.txt"),
+            EcryptionSchemeTypeResult::NoEncrypted);
+    }
+    {
+        CryptoContext cctx;
+        BOOST_CHECK_EQUAL(
+            set_encryption_scheme_type(cctx,
+            FIXTURES_PATH "/blogiblounga"),
+            EcryptionSchemeTypeResult::Error);
+        BOOST_CHECK_EQUAL(errno, ENOENT);
+    }
 }
 
 

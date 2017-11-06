@@ -99,6 +99,10 @@ struct byte_array : array_view<uint8_t>
     byte_array & operator=(T(&)[n]) = delete;
 
 
+    constexpr byte_array(std::nullptr_t) noexcept
+    : array_view<uint8_t>(nullptr)
+    {}
+
     constexpr byte_array(byte_ptr const p, std::size_t sz) noexcept
     : array_view<uint8_t>(p.to_u8p(), sz)
     {}
@@ -148,6 +152,10 @@ struct const_byte_array : array_view<const uint8_t>
     template<class T, std::size_t n>
     const_byte_array & operator=(T(&)[n]) = delete;
 
+
+    constexpr const_byte_array(std::nullptr_t) noexcept
+    : array_view<const uint8_t>(nullptr)
+    {}
 
     constexpr const_byte_array(const_byte_ptr p, std::size_t sz) noexcept
     : array_view<const uint8_t>(p.to_u8p(), sz)

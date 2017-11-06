@@ -236,4 +236,6 @@ enum class EcryptionSchemeTypeResult
     NewScheme,
 };
 
-EcryptionSchemeTypeResult set_encryption_scheme_type(const char * filename, CryptoContext & cctx);
+EcryptionSchemeTypeResult set_encryption_scheme_type(
+    CryptoContext & cctx, const char * filename,
+    const_byte_array derivator = const_byte_array(nullptr));
