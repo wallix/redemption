@@ -2347,9 +2347,11 @@ public:
 
                         if (cfpie.payload.in_remain() &&
                             (this->ini.get<cfg::client::bogus_number_of_fastpath_input_event>() ==
-                             BogusNumberOfFastpathInputEvent::all_input_events)) {
+                             BogusNumberOfFastpathInputEvent::all_input_events) &&
+                            !((i + 1) < num_events)) {
                             LOG(LOG_INFO,
-                                "Front::incoming: BogusNumberOfFastpathInputEvent::all_input_events");
+                                "Front::incoming: BogusNumberOfFastpathInputEvent::all_input_events. in_remain=%zu num_events=%d",
+                                cfpie.payload.in_remain(), num_events);
                             num_events++;
                         }
                     }
