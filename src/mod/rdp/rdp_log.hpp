@@ -47,17 +47,19 @@ REDEMPTION_VERBOSE_FLAGS_DEF(RDPVerbose)
     input               = 0x00000100,
 
 
+    drdynvc             = 0x00001000,
     rail_order          = 0x00000200,
     credssp             = 0x00000400,
     cache_persister     = 0x00000800,
 
 
+    drdynvc_dump        = 0x00001000,
     fsdrvmgr            = 0x00002000,
     sesprobe_launcher   = 0x00004000,
     sesprobe_repetitive = 0x00008000,
 
 
-    printer             = 0x00200000, 
+    printer             = 0x00200000,
     rdpsnd              = 0x00400000,
     channels            = 0x00800000,
 
@@ -70,6 +72,4 @@ REDEMPTION_VERBOSE_FLAGS_DEF(RDPVerbose)
     sesprobe_dump       = 0x20000000,
     cliprdr_dump        = 0x40000000,
     rdpdr_dump          = 0x80000000,
-
 };
-

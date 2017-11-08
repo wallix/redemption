@@ -94,6 +94,7 @@
 #include "core/FSCC/FileInformation.hpp"
 #include "mod/internal/client_execute.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
+#include "mod/rdp/channels/drdynvc_channel.hpp"
 #include "mod/rdp/channels/rail_channel.hpp"
 #include "mod/rdp/channels/rail_session_manager.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
