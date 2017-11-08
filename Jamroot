@@ -19,6 +19,8 @@ constant GCOV :
     <variant>coverage:<cxxflags>--profile-arcs
     <variant>coverage:<cxxflags>--test-coverage
     <variant>coverage:<cxxflags>--coverage
+    <variant>coverage:<cxxflags>-pg
+    <variant>coverage:<linkflags>-pg
     #<variant>coverage:<link>shared
     <variant>coverage:<library>gcov
 ;
