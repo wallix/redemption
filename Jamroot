@@ -39,9 +39,9 @@ project redemption
 
     $(CXXFLAGS)
 
-#    <cxxflags>-fpie
+    # <cxxflags>-fpie
     <cxxflags>-fPIC
-    <variant>san:<cxxflags>-frtti # undefined reference to `typeinfo`.
+    # <variant>san:<cxxflags>-frtti # undefined reference to `typeinfo`.
 
     $(REDEMPTION_CXXFLAGS)
 
