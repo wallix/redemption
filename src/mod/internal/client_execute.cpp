@@ -1676,14 +1676,25 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
     if (!this->channel_) return;
 
     {
+        uint16_t const orderType = TS_RAIL_ORDER_HANDSHAKE/*TS_RAIL_ORDER_HANDSHAKE_EX*/;
+
         StaticOutStream<256> out_s;
         RAILPDUHeader header;
-        header.emit_begin(out_s, TS_RAIL_ORDER_HANDSHAKE);
+        header.emit_begin(out_s, orderType);
 
         HandshakePDU handshake_pdu;
         handshake_pdu.buildNumber(7601);
 
-        handshake_pdu.emit(out_s);
+        HandshakeExPDU handshakeex_pdu;
+        handshakeex_pdu.buildNumber(7601);
+        handshakeex_pdu.railHandshakeFlags(TS_RAIL_ORDER_HANDSHAKEEX_FLAGS_HIDEF);
+
+        if (TS_RAIL_ORDER_HANDSHAKE == orderType) {
+            handshake_pdu.emit(out_s);
+        }
+        else {
+            handshakeex_pdu.emit(out_s);
+        }
 
         header.emit_end();
 
@@ -1699,8 +1710,14 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
                 ::msgdump_c(send, from_or_to_client, length, flags,
                     out_s.get_data(), length);
             }
-            LOG(LOG_INFO, "ClientExecute::ready: Send to client - Server Handshake PDU");
-            handshake_pdu.log(LOG_INFO);
+            if (TS_RAIL_ORDER_HANDSHAKE == orderType) {
+                LOG(LOG_INFO, "ClientExecute::ready: Send to client - Server Handshake PDU");
+                handshake_pdu.log(LOG_INFO);
+            }
+            else {
+                LOG(LOG_INFO, "ClientExecute::ready: Send to client - Server HandshakeEx PDU");
+                handshakeex_pdu.log(LOG_INFO);
+            }
         }
 
         this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,

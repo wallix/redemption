@@ -41,6 +41,7 @@ LocallyIntegrableMod::LocallyIntegrableMod(
     Theme const & theme)
 : InternalMod(front, front_width, front_height, font, theme, false)
 , client_execute(client_execute)
+, dvc_manager(true)
 , front_width(front_width)
 , front_height(front_height)
 , dc_state(DCState::Wait)
@@ -203,6 +204,8 @@ void LocallyIntegrableMod::draw_event(time_t, gdi::GraphicApi &)
 
         this->client_execute.ready(*this, this->front_width, this->front_height, this->font(),
             this->is_resizing_hosted_desktop_allowed());
+
+        this->dvc_manager.ready(this->front);
     }
 }
 
@@ -214,6 +217,11 @@ void LocallyIntegrableMod::send_to_mod_channel(
         front_channel_name == CHANNELS::channel_names::rail) {
 
         this->client_execute.send_to_mod_rail_channel(length, chunk, flags);
+    }
+    else if (this->rail_enabled && this->client_execute &&
+        front_channel_name == CHANNELS::channel_names::drdynvc) {
+
+        this->dvc_manager.send_to_mod_drdynvc_channel(length, chunk, flags);
     }
 }
 

@@ -1790,6 +1790,10 @@ protected:
         remote_programs_virtual_channel_params.use_session_probe_to_launch_remote_program   =
             this->use_session_probe_to_launch_remote_program;
 
+        remote_programs_virtual_channel_params.client_supports_handshakeex_pdu    =
+            (this->client_rail_caps.RailSupportLevel & TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED);
+        remote_programs_virtual_channel_params.client_supports_enhanced_remoteapp =
+            this->remote_program_enhanced;
 
         return remote_programs_virtual_channel_params;
     }

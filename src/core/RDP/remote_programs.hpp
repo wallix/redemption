@@ -397,6 +397,10 @@ public:
 
     uint32_t Flags() const { return this->Flags_; }
 
+    void Flags(uint32_t Flags_) {
+        this->Flags_ = Flags_;
+    }
+
     static size_t size() {
         return 4;   // Flags(4)
     }

@@ -21,6 +21,7 @@
 #pragma once
 
 #include "mod/internal/internal_mod.hpp"
+#include "mod/internal/dvc_manager.hpp"
 
 class ClientExecute;
 
@@ -55,6 +56,7 @@ private:
     virtual bool is_resizing_hosted_desktop_allowed() const;
 
     ClientExecute & client_execute;
+    DVCManager dvc_manager;
 
     bool alt_key_pressed = false;
 

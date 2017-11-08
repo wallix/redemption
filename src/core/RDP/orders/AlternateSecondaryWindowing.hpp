@@ -640,6 +640,14 @@ public:
 // |                   ClientAreaWidth (optional)                  |
 // +---------------------------------------------------------------+
 // |                  ClientAreaHeight (optional)                  |
+// +---------------------------------------------------------------+
+// |               WindowLeftResizeMargin (optional)               |
+// +---------------------------------------------------------------+
+// |               WindowRightResizeMargin (optional)              |
+// +---------------------------------------------------------------+
+// |                WindowTopResizeMargin (optional)               |
+// +---------------------------------------------------------------+
+// |              WindowBottomResizeMargin (optional)              |
 // +---------------+-----------------------------------------------+
 // |   RPContent   |          RootParentHandle (optional)          |
 // |   (optional)  |                                               |
@@ -712,6 +720,16 @@ public:
 //  | WINDOW_ORDER_FIELD_CLIENTAREASIZE   | and ClientAreaHeight fields are    |
 //  |                                     | present.<3>                        |
 //  +-------------------------------------+------------------------------------+
+//  | 0x00000080                          | Indicates that the                 |
+//  | WINDOW_ORDER_FIELD_RESIZE_MARGIN_X  | WindowLeftResizeMargin and         |
+//  |                                     | WindowRightResizeMargin fields are |
+//  |                                     | present.                           |
+//  +-------------------------------------+------------------------------------+
+//  | 0x08000000                          | Indicates that the                 |
+//  | WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y  | WindowTopResizeMargin and          |
+//  |                                     | WindowBottomResizeMargin fields    |
+//  |                                     | are present.                       |
+//  +-------------------------------------+------------------------------------+
 //  | 0x00020000                          | Indicates that the RPContent field |
 //  | WINDOW_ORDER_FIELD_RPCONTENT        | is present. <4>                    |
 //  +-------------------------------------+------------------------------------+
@@ -760,6 +778,8 @@ enum {
     , WINDOW_ORDER_FIELD_TITLE            = 0x00000004
     , WINDOW_ORDER_FIELD_CLIENTAREAOFFSET = 0x00004000
     , WINDOW_ORDER_FIELD_CLIENTAREASIZE   = 0x00010000
+    , WINDOW_ORDER_FIELD_RESIZE_MARGIN_X  = 0x00000080
+    , WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y  = 0x08000000
     , WINDOW_ORDER_FIELD_RPCONTENT        = 0x00020000
     , WINDOW_ORDER_FIELD_ROOTPARENT       = 0x00040000
     , WINDOW_ORDER_FIELD_WNDOFFSET        = 0x00000800
@@ -848,6 +868,38 @@ enum {
 //  specified in section 2.2.1.1.2) and the Hdr field has the
 //  WINDOW_ORDER_FIELD_CLIENTAREASIZE flag is set in the FieldsPresentFlags
 //  field of the TS_WINDOW_ORDER_HEADER packet (section 2.2.1.3.1.1).
+
+// WindowLeftResizeMargin (4 bytes): An unsigned 32-bit integer specifying
+//  the width of the transparent hit-testable margin along the left edge of
+//  the window. Any mouse, pen, or touch input within this margin SHOULD be
+//  sent to the server.
+
+//  This field is present only if the WINDOW_ORDER_FIELD_RESIZE_MARGIN_X flag
+//  is set in the FieldsPresentFlags field of TS_WINDOW_ORDER_HEADER.
+
+// WindowRightResizeMargin (4 bytes): An unsigned 32-bit integer specifying
+//  the width of the transparent hit-testable margin along the right edge of
+//  the window. Any mouse, pen or touch input within this margin SHOULD be
+//  sent to the server.
+
+//  This field is present only if the WINDOW_ORDER_FIELD_ RESIZE_MARGIN_X
+//  flag is set in the FieldsPresentFlags field of TS_WINDOW_ORDER_HEADER.
+
+// WindowTopResizeMargin (4 bytes): An unsigned 32-bit integer specifying the
+//  height of the transparent hit-testable margin along the top edge of the
+//  window. Any mouse, pen or touch input within this margin SHOULD be sent
+//  to the server.
+
+//  This field is present only if the WINDOW_ORDER_FIELD_ RESIZE_MARGIN_Y
+//  flag is set in the FieldsPresentFlags field of TS_WINDOW_ORDER_HEADER.
+
+// WindowBottomResizeMargin (4 bytes): An unsigned 32-bit integer specifying
+//  the height of the transparent hit-testable margin along the bottom edge
+//  of the window. Any mouse, pen or touch input within this margin SHOULD be
+//  sent to the server.
+
+//  This field is present only if the WINDOW_ORDER_FIELD_ RESIZE_MARGIN_Y
+//  flag is set in the FieldsPresentFlags field of TS_WINDOW_ORDER_HEADER.
 
 // RPContent (1 byte): An unsigned BYTE that MUST be set to one of the
 //  following possible values.
@@ -1011,6 +1063,11 @@ private:
     uint32_t ClientAreaWidth_  = 0;
     uint32_t ClientAreaHeight_ = 0;
 
+    uint32_t WindowLeftResizeMargin_   = 0;
+    uint32_t WindowRightResizeMargin_  = 0;
+    uint32_t WindowTopResizeMargin_    = 0;
+    uint32_t WindowBottomResizeMargin_ = 0;
+
     uint8_t RPContent_ = 0;
 
     uint32_t RootParentHandle_ = 0;
@@ -1070,6 +1127,16 @@ public:
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
             stream.out_uint32_le(this->ClientAreaWidth_);
             stream.out_uint32_le(this->ClientAreaHeight_);
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X) {
+            stream.out_uint32_le(this->WindowLeftResizeMargin_);
+            stream.out_uint32_le(this->WindowRightResizeMargin_);
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y) {
+            stream.out_uint32_le(this->WindowTopResizeMargin_);
+            stream.out_uint32_le(this->WindowBottomResizeMargin_);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
@@ -1226,6 +1293,38 @@ public:
 
             this->ClientAreaWidth_  = stream.in_uint32_le();
             this->ClientAreaHeight_ = stream.in_uint32_le();
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X) {
+            {
+                const unsigned expected = 8;  // WindowLeftResizeMargin(4) + WindowRightResizeMargin(4)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (6a): expected=%u remains=%zu",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
+            this->WindowLeftResizeMargin_  = stream.in_uint32_le();
+            this->WindowRightResizeMargin_ = stream.in_uint32_le();
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y) {
+            {
+                const unsigned expected = 8;  // WindowTopResizeMargin(4) + WindowBottomResizeMargin(4)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (6b): expected=%u remains=%zu",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
+            this->WindowTopResizeMargin_  = stream.in_uint32_le();
+            this->WindowBottomResizeMargin_ = stream.in_uint32_le();
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
@@ -1435,6 +1534,22 @@ public:
 
     void ClientAreaHeight(uint32_t ClientAreaHeight_) { this->ClientAreaHeight_ = ClientAreaHeight_; }
 
+    uint32_t WindowLeftResizeMargin() const { return this->WindowLeftResizeMargin_; }
+
+    void WindowLeftResizeMargin(uint32_t WindowLeftResizeMargin_) { this->WindowLeftResizeMargin_ = WindowLeftResizeMargin_; }
+
+    uint32_t WindowRightResizeMargin() const { return this->WindowRightResizeMargin_; }
+
+    void WindowRightResizeMargin(uint32_t WindowRightResizeMargin_) { this->WindowRightResizeMargin_ = WindowRightResizeMargin_; }
+
+    uint32_t WindowTopResizeMargin() const { return this->WindowTopResizeMargin_; }
+
+    void WindowTopResizeMargin(uint32_t WindowTopResizeMargin_) { this->WindowTopResizeMargin_ = WindowTopResizeMargin_; }
+
+    uint32_t WindowBottomResizeMargin() const { return this->WindowBottomResizeMargin_; }
+
+    void WindowBottomResizeMargin(uint32_t WindowBottomResizeMargin_) { this->WindowBottomResizeMargin_ = WindowBottomResizeMargin_; }
+
     uint8_t RPContent() const { return this->RPContent_; }
 
     void RPContent(uint8_t RPContent_) { this->RPContent_ = RPContent_; }
@@ -1568,6 +1683,14 @@ public:
             count += 8; // ClientAreaWidth(4) + ClientAreaHeight(4)
         }
 
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X) {
+            count += 8; // WindowLeftResizeMargin(4) + WindowRightResizeMargin(4)
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y) {
+            count += 8; // WindowTopResizeMargin(4) + WindowBottomResizeMargin(4)
+        }
+
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RPCONTENT) {
             count += 1; // RPContent(1)
         }
@@ -1655,6 +1778,18 @@ private:
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREASIZE) {
             result = ::snprintf(buffer + length, size - length, " ClientAreaWidth=%u ClientAreaHeight=%u",
                 this->ClientAreaWidth_, this->ClientAreaHeight_);
+            length += ((result < size - length) ? result : (size - length - 1));
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RESIZE_MARGIN_X) {
+            result = ::snprintf(buffer + length, size - length, " WindowLeftResizeMargin=%u WindowRightResizeMargin=%u",
+                this->WindowLeftResizeMargin_, this->WindowRightResizeMargin_);
+            length += ((result < size - length) ? result : (size - length - 1));
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y) {
+            result = ::snprintf(buffer + length, size - length, " WindowTopResizeMargin=%u WindowBottomResizeMargin=%u",
+                this->WindowTopResizeMargin_, this->WindowBottomResizeMargin_);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 
