@@ -47,7 +47,7 @@ REDEMPTION_VERBOSE_FLAGS_DEF(RDPVerbose)
     input               = 0x00000100,
 
 
-    drdynvc             = 0x00001000,
+    drdynvc             = 0x00000100,
     rail_order          = 0x00000200,
     credssp             = 0x00000400,
     cache_persister     = 0x00000800,

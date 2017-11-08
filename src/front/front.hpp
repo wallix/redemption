@@ -1159,7 +1159,7 @@ public:
                                 , size_t length
                                 , size_t chunk_size
                                 , int flags) override {
-/*        if (bool(this->verbose & Verbose::channel))*/ {
+        if (bool(this->verbose & Verbose::channel)) {
             LOG( LOG_INFO
                , "Front::send_to_channel: (channel='%s'(%d), data=%p, length=%zu, chunk_size=%zu, flags=%x)"
                , channel.name, channel.chanid, voidp(chunk), length, chunk_size, unsigned(flags));
@@ -2434,7 +2434,7 @@ public:
                         size_t chunk_size = sec.payload.in_remain();
 
                         if (this->up_and_running) {
-/*                            if (bool(this->verbose & Verbose::channel))*/ {
+                            if (bool(this->verbose & Verbose::channel)) {
                                 LOG(LOG_INFO, "Front::incoming: channel_name=\"%s\"", channel.name);
                             }
 

@@ -41,6 +41,13 @@ public:
                          params)
     {}
 
+protected:
+    const char* get_reporting_reason_exchanged_data_limit_reached() const
+        override
+    {
+        return "DRDYNVC_LIMIT";
+    }
+
 private:
     template<class PDU, class... Args>
     void send_pdu_to_client(bool response_ok, Args&&... args) {
@@ -127,7 +134,7 @@ public:
             // break;
 
             default:
-                REDASSERT(false);
+//                REDASSERT(false);
 
                 if (bool(this->verbose & RDPVerbose::rail)) {
                     LOG(LOG_INFO,
@@ -190,7 +197,7 @@ public:
             // break;
 
             default:
-                REDASSERT(false);
+//                REDASSERT(false);
 
                 if (bool(this->verbose & RDPVerbose::drdynvc)) {
                     LOG(LOG_INFO,
