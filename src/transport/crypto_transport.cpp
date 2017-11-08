@@ -967,7 +967,8 @@ EncryptionSchemeTypeResult open_if_possible_and_get_encryption_scheme_type(
 
         in_test.disable_log_decrypt();
         char mem[1];
-        (void)in_test.partial_read(mem, 0);
+        auto len = in_test.partial_read(mem, 0);
+        (void)len;
     }
     catch(Error const& e) {
         in_test.disable_log_decrypt(false);
