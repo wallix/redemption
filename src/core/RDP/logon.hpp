@@ -851,6 +851,7 @@ struct InfoPacket {
         this->flags |= INFO_UNICODE;
         this->flags |= INFO_MAXIMIZESHELL;
         this->flags |= INFO_ENABLEWINDOWSKEY;
+        this->flags |= INFO_LOGONERRORS;
         this->flags |= INFO_LOGONNOTIFY;
 
         this->cbDomain         = UTF8ToUTF8LCopy(this->Domain,
