@@ -85,9 +85,9 @@ inline Rect get_widget_rect(uint16_t width, uint16_t height,
 #define STRMODULE_TRANSITORY       "transitory"
 #define STRMODULE_CLOSE            "close"
 #define STRMODULE_CLOSE_BACK       "close_back"
-#define STRMODULE_CONNECTION       "connection"
+#define STRMODULE_CONNECTION       "connection"             // unused
 #define STRMODULE_TARGET           "interactive_target"
-#define STRMODULE_MESSAGE          "message"
+#define STRMODULE_MESSAGE          "message"                // unused
 #define STRMODULE_RDP              "RDP"
 #define STRMODULE_VNC              "VNC"
 #define STRMODULE_INTERNAL         "INTERNAL"
@@ -95,9 +95,9 @@ inline Rect get_widget_rect(uint16_t width, uint16_t height,
 
 enum {
     MODULE_EXIT,
-    MODULE_WAITING,
-    MODULE_RUNNING,
-    MODULE_REFRESH,
+    MODULE_WAITING,                                         // unused
+    MODULE_RUNNING,                                         // unused
+    MODULE_REFRESH,                                         // unused
     MODULE_VNC,
     MODULE_RDP,
     MODULE_XUP,
@@ -118,10 +118,10 @@ enum {
     MODULE_INTERNAL_WIDGET_SELECTOR_LEGACY,
     MODULE_INTERNAL_WIDGETTEST,
     MODULE_INTERNAL_WAIT_INFO,
-    MODULE_EXIT_INTERNAL_CLOSE,
+    MODULE_EXIT_INTERNAL_CLOSE,                             // unused
     MODULE_TRANSITORY,
-    MODULE_AUTH,
-    MODULE_CLI,
+    MODULE_AUTH,                                            // unused
+    MODULE_CLI,                                             // unused
 
     MODULE_UNKNOWN
 };
