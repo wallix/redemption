@@ -37,7 +37,7 @@
 // bjam debug rdpheadless && bin/gcc-4.9.2/debug/rdpheadless --user admin --pwd $mdp --ip 10.10.47.54 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
 
 
-int run_mod(mod_api *, RDPHeadlessFront &, int sck, EventList &, bool, std::chrono::milliseconds, bool);
+int run_mod(mod_api *, RDPHeadlessFront &, int sck, bool, std::chrono::milliseconds, bool);
 
 namespace cli
 {
@@ -862,114 +862,20 @@ int main(int argc, char** argv)
             REDEMPTION_DIAGNOSTIC_POP
         }
 
-
-
-        sck = front.connect(ip.c_str(), userName.c_str(), userPwd.c_str(), port, protocol_is_VNC, mod_rdp_params, encryptionMethods, ini);
-
-
+        sck = front.connect(ip.c_str(), userName.c_str(), userPwd.c_str(), port, protocol_is_VNC, mod_rdp_params, encryptionMethods);
 
         //===========================================
         //             Scripted Events
         //===========================================
-        EventList eventList;
+
         if (script_on) {
-            std::ifstream ifichier(script_file_path);
-            if(ifichier) {
-                std::string ligne;
-                std::string delimiter = " ";
-
-                while(std::getline(ifichier, ligne)) {
-                    auto pos(ligne.find(delimiter));
-                    std::string tag  = ligne.substr(0, pos);
-                    std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
-
-                    if (       tag == "wait") {
-                        eventList.wait(std::stoi(info));
-
-                    } else if (tag == "key_press") {
-                        pos = info.find(delimiter);
-                        uint32_t scanCode(std::stoi(info.substr(0, pos)));
-                        uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                        eventList.setKey_press(&front, scanCode, flag);
-
-                    } else if (tag == "key_release") {
-                        pos = info.find(delimiter);
-                        uint32_t scanCode(std::stoi(info.substr(0, pos)));
-                        uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                        eventList.setKey_release(&front, scanCode, flag);
-
-                    } else if (tag == "mouse_press") {
-                        pos = info.find(delimiter);
-                        uint8_t button(std::stoi(info.substr(0, pos)));
-                        info = info.substr(pos + delimiter.length(), info.length());
-                        pos = info.find(delimiter);
-                        uint32_t x(std::stoi(info.substr(0, pos)));
-                        uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                        eventList.setMouse_button(&front, button, x, y, true);
-
-                    } else if (tag == "mouse_release") {
-                        pos = info.find(delimiter);
-                        uint8_t button(std::stoi(info.substr(0, pos)));
-                        info = info.substr(pos + delimiter.length(), info.length());
-                        pos = info.find(delimiter);
-                        uint32_t x(std::stoi(info.substr(0, pos)));
-                        uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                        eventList.setMouse_button(&front, button, x, y, false);
-
-                    } else if (tag == "clpbrd_change") {
-                        // TODO dynamique data and format injection
-                        uint32_t formatIDs                 = RDPECLIP::CF_TEXT;
-                        std::string formatListDataLongName("\0\0", 2);
-
-                        // TODO { formatListDataLongName, 1 } -> array_view
-                        // TODO { formatIDs, 1 } -> array_view
-                        eventList.setClpbrd_change(&front, &formatIDs, &formatListDataLongName, 1);
-
-                    } else if (tag == "click") {
-                        pos = info.find(delimiter);
-                        uint8_t button(std::stoi(info.substr(0, pos)));
-                        info = info.substr(pos + delimiter.length(), info.length());
-                        pos = info.find(delimiter);
-                        uint32_t x(std::stoi(info.substr(0, pos)));
-                        uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                        eventList.setClick(&front, button, x, y);
-
-                    } else if (tag == "double_click") {
-                        pos = info.find(delimiter);
-                        uint32_t x(std::stoi(info.substr(0, pos)));
-                        uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                        eventList.setDouble_click(&front, x, y);
-
-                    } else if (tag == "key") {
-                        pos = info.find(delimiter);
-                        uint32_t scanCode(std::stoi(info.substr(0, pos)));
-                        uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                        eventList.setKey(&front, scanCode, flag);
-
-                    } else if (tag == "loop") {
-                        pos = info.find(delimiter);
-                        uint32_t jump_size(std::stoi(info.substr(0, pos)));
-                        uint32_t count_steps(std::stoi(info.substr(pos + delimiter.length(), info.length())));
-
-                        eventList.setLoop(jump_size, count_steps);
-                    }
-                }
-            } else {
-                std::cerr <<  "Can't find " << script_file_path << "\n";
-            }
+            front.set_event_list(script_file_path.c_str());
         }
 
         if ((input_connection_data_complete & RDPHeadlessFront::LOG_COMPLETE) || quick_connection_test) {
             try {
 
-                main_return = run_mod(front.mod(), front, sck, eventList, quick_connection_test, time_out_response, time_set_connection_test);
+                main_return = run_mod(front.mod(), front, sck, quick_connection_test, time_out_response, time_set_connection_test);
                 // std::cout << "RDP Headless end." <<  std::endl;
             }
             catch (Error const& e)
@@ -998,7 +904,7 @@ int main(int argc, char** argv)
 }
 
 
-int run_mod(mod_api * mod, RDPHeadlessFront & front, int sck, EventList & /*al*/, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test) {
+int run_mod(mod_api * mod, RDPHeadlessFront & front, int sck, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test) {
     const timeval time_stop = addusectimeval(time_out_response, tvtime());
     const timeval time_mark = { 0, 50000 };
 

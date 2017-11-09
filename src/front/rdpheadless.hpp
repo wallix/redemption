@@ -114,6 +114,276 @@ private:
         }
     };
 
+    class EventList
+    {
+        struct EventConfig
+        {
+            RDPHeadlessFront * front;
+            long trigger_time;
+
+
+            EventConfig(RDPHeadlessFront * front)
+            : front(front)
+            , trigger_time(0)
+            {}
+
+            virtual ~EventConfig() {}
+
+            virtual void emit() = 0;
+        };
+
+        struct MouseButton : public EventConfig
+        {
+            uint8_t button;
+            uint32_t x;
+            uint32_t y;
+            const bool isPressed;
+
+            MouseButton( RDPHeadlessFront * front
+                    , uint8_t button
+                    , uint32_t x
+                    , uint32_t y
+                    , bool isPressed
+                    )
+                : EventConfig(front)
+                , button(button)
+                , x(x)
+                , y(y)
+                , isPressed(isPressed)
+            {}
+
+
+            virtual void emit() override {
+                this->front->mouseButtons(button, x, y, isPressed);
+            }
+        };
+
+
+        struct MouseMove : public EventConfig
+        {
+            uint32_t x;
+            uint32_t y;
+
+            MouseMove( RDPHeadlessFront * front
+                    , uint32_t x
+                    , uint32_t y
+                    )
+                : EventConfig(front)
+                , x(x)
+                , y(y)
+            {}
+
+            void emit() override {
+                this->front->mouseMove(x, y);
+            }
+        };
+
+
+        struct KeyPressed : public EventConfig
+        {
+            uint32_t scanCode;
+            uint32_t Flag;
+
+            KeyPressed( RDPHeadlessFront * front
+                    , uint32_t scanCode
+                    , uint32_t Flag = 0
+                    )
+            : EventConfig(front)
+            , scanCode(scanCode)
+            , Flag(Flag)
+            {}
+
+            virtual void emit() override {
+                this->front->keyPressed(scanCode, Flag);
+            }
+        };
+
+
+        struct KeyReleased : public EventConfig
+        {
+            uint32_t scanCode;
+            uint32_t Flag;
+
+            KeyReleased( RDPHeadlessFront * front
+                    , uint32_t scanCode
+                    , uint32_t Flag = 0
+                    )
+            : EventConfig(front)
+            , scanCode(scanCode)
+            , Flag(Flag)
+            {}
+
+            virtual void emit() override {
+                this->front->keyReleased(scanCode, Flag);
+            }
+        };
+
+        struct Loop : EventConfig {
+            EventList * list;
+            int jumpt_size;
+            int count_steps;
+
+            Loop( EventList * list
+                , int jumpt_size
+                , int count_steps)
+            : EventConfig(nullptr)
+            , list(list)
+            , jumpt_size(jumpt_size)
+            , count_steps(count_steps)
+            {}
+
+            virtual void emit() override {
+                if (count_steps) {
+                    this->list->index -= jumpt_size;
+                    count_steps--;
+                }
+            }
+        };
+
+        struct ClipboardChange : EventConfig
+        {
+            uint32_t formatIDs[RDPECLIP::FORMAT_LIST_MAX_SIZE];
+            std::string formatListDataLongName[RDPECLIP::FORMAT_LIST_MAX_SIZE];
+            size_t size;
+
+            ClipboardChange( RDPHeadlessFront * front
+                        , uint32_t * formatIDs
+                        , std::string * formatListDataLongName
+                        , size_t size)
+                : EventConfig(front)
+                , size(size)
+            {
+                for (size_t i = 0; i < this->size; i++) {
+                    this->formatIDs[i] = formatIDs[i];
+                    this->formatListDataLongName[i] = formatListDataLongName[i];
+                }
+            }
+
+            ClipboardChange( ClipboardChange & clipboardChange)
+            : EventConfig(clipboardChange.front)
+            , size(clipboardChange.size)
+            {
+                for (size_t i = 0; i < this->size; i++) {
+                    this->formatIDs[i] = clipboardChange.formatIDs[i];
+                    this->formatListDataLongName[i] = clipboardChange.formatListDataLongName[i];
+                }
+            }
+
+            virtual void emit() override {
+                this->front->send_FormatListPDU(this->formatIDs, this->formatListDataLongName, this->size);
+            }
+        };
+
+        template<class T, class... Args>
+        void setAction(Args&&... args) {
+            auto action = std::make_unique<T>(std::forward<Args>(args)...);
+            action->trigger_time = this->wait_time;
+            this->list.push_back(std::move(action));
+        }
+
+        std::vector<std::unique_ptr<EventConfig>> list;
+        long start_time;
+        long wait_time;
+        size_t index;
+
+    public:
+        EventList()
+        : start_time(0)
+        , wait_time(0)
+        , index(0)
+        {
+            std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch());
+            this->start_time = ms.count();
+        }
+
+        void setLoop(int jump_size, int count_steps) {
+            this->setAction<Loop>(this, jump_size, count_steps);
+        }
+
+        void setClpbrd_change( RDPHeadlessFront * front
+                            , uint32_t * formatIDs
+                            , std::string * formatListDataLongName
+                            , size_t size) {
+            this->setAction<ClipboardChange>(front, formatIDs, formatListDataLongName, size);
+        }
+
+        void setKey_press( RDPHeadlessFront * front
+                        , uint32_t scanCode
+                        , uint32_t flag) {
+            this->setAction<KeyPressed>(front, scanCode, flag);
+        }
+
+        void setKey_release( RDPHeadlessFront * front
+                        , uint32_t scanCode
+                        , uint32_t flag) {
+            this->setAction<KeyReleased>(front, scanCode, flag);
+        }
+
+        void setMouse_button( RDPHeadlessFront * front
+                            , uint8_t button
+                            , uint32_t x
+                            , uint32_t y
+                            , bool isPressed) {
+            this->setAction<MouseButton>(front, button, x, y, isPressed);
+        }
+
+        void setKey( RDPHeadlessFront * front
+                , uint32_t scanCode
+                , uint32_t flag) {
+            this->setKey_press(front, scanCode, flag);
+            this->setKey_release(front, scanCode, flag);
+        }
+
+        void setClick( RDPHeadlessFront * front
+                    , uint8_t button
+                    , uint32_t x
+                    , uint32_t y) {
+            this->setMouse_button(front, button, x, y, true);
+            this->setMouse_button(front, button, x, y, false);
+        }
+
+        void setDouble_click( RDPHeadlessFront * front
+                            , uint32_t x
+                            , uint32_t y) {
+            setClick(front, 0x01, x, y);
+            setClick(front, 0x01, x, y);
+        }
+
+        void wait(int ms) {
+            this->wait_time += ms;
+        }
+
+        size_t size() {
+            return this->list.size();
+        }
+
+        void emit() {
+            std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch());
+            long current_time(ms.count());
+            bool next(true);
+            size_t i = index;
+            while (next) {
+                if (i >= this->size() || this->index >= this->size()) {
+                    return;
+                }
+                long triggger(this->list[i]->trigger_time + this->start_time);
+                if (triggger <= current_time) {
+                    this->list[i]->emit();
+                    this->index++;
+
+
+                } else {
+                    next = false;
+                }
+                i++;
+            }
+        }
+
+
+
+    };
+
+
 
 public:
     uint32_t                    _verbose;
@@ -247,6 +517,8 @@ public:
     // for VNC
     NullReportMessage report_message_vnc;
     Theme      theme;
+
+    EventList eventList;
 
 
     //  RDP
@@ -600,6 +872,8 @@ public:
     mod_api * mod() {
         return this->_callback;
     }
+
+
 
     void disconnect() {
         this->_callback->disconnect(tvtime().tv_sec);
@@ -1314,277 +1588,104 @@ public:
         }
     }
 
-};
 
+    void set_event_list(const char * script_file_path) {
+        std::ifstream ifichier(script_file_path);
+            if(ifichier) {
+                std::string ligne;
+                const std::string delimiter = " ";
 
+                while(std::getline(ifichier, ligne)) {
+                    auto pos(ligne.find(delimiter));
+                    std::string tag  = ligne.substr(0, pos);
+                    std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
 
-class EventList
-{
-    struct EventConfig
-    {
-        RDPHeadlessFront * front;
-        long trigger_time;
+                    if (       tag == "wait") {
+                        this->eventList.wait(std::stoi(info));
 
+                    } else if (tag == "key_press") {
+                        pos = info.find(delimiter);
+                        uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                        uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-        EventConfig(RDPHeadlessFront * front)
-        : front(front)
-        , trigger_time(0)
-        {}
+                        this->eventList.setKey_press(this, scanCode, flag);
 
-        virtual ~EventConfig() {}
+                    } else if (tag == "key_release") {
+                        pos = info.find(delimiter);
+                        uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                        uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-        virtual void emit() = 0;
-    };
+                        this->eventList.setKey_release(this, scanCode, flag);
 
-    struct MouseButton : public EventConfig
-    {
-        uint8_t button;
-        uint32_t x;
-        uint32_t y;
-        const bool isPressed;
+                    } else if (tag == "mouse_press") {
+                        pos = info.find(delimiter);
+                        uint8_t button(std::stoi(info.substr(0, pos)));
+                        info = info.substr(pos + delimiter.length(), info.length());
+                        pos = info.find(delimiter);
+                        uint32_t x(std::stoi(info.substr(0, pos)));
+                        uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-        MouseButton( RDPHeadlessFront * front
-                , uint8_t button
-                , uint32_t x
-                , uint32_t y
-                , bool isPressed
-                )
-            : EventConfig(front)
-            , button(button)
-            , x(x)
-            , y(y)
-            , isPressed(isPressed)
-        {}
+                        this->eventList.setMouse_button(this, button, x, y, true);
 
+                    } else if (tag == "mouse_release") {
+                        pos = info.find(delimiter);
+                        uint8_t button(std::stoi(info.substr(0, pos)));
+                        info = info.substr(pos + delimiter.length(), info.length());
+                        pos = info.find(delimiter);
+                        uint32_t x(std::stoi(info.substr(0, pos)));
+                        uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-        virtual void emit() override {
-            this->front->mouseButtons(button, x, y, isPressed);
-        }
-    };
+                        this->eventList.setMouse_button(this, button, x, y, false);
 
+                    } else if (tag == "clpbrd_change") {
+                        // TODO dynamique data and format injection
+                        uint32_t formatIDs                 = RDPECLIP::CF_TEXT;
+                        std::string formatListDataLongName("\0\0", 2);
 
-    struct MouseMove : public EventConfig
-    {
-        uint32_t x;
-        uint32_t y;
+                        // TODO { formatListDataLongName, 1 } -> array_view
+                        // TODO { formatIDs, 1 } -> array_view
+                        this->eventList.setClpbrd_change(this, &formatIDs, &formatListDataLongName, 1);
 
-        MouseMove( RDPHeadlessFront * front
-                , uint32_t x
-                , uint32_t y
-                )
-            : EventConfig(front)
-            , x(x)
-            , y(y)
-        {}
+                    } else if (tag == "click") {
+                        pos = info.find(delimiter);
+                        uint8_t button(std::stoi(info.substr(0, pos)));
+                        info = info.substr(pos + delimiter.length(), info.length());
+                        pos = info.find(delimiter);
+                        uint32_t x(std::stoi(info.substr(0, pos)));
+                        uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-        void emit() override {
-            this->front->mouseMove(x, y);
-        }
-    };
+                        this->eventList.setClick(this, button, x, y);
 
+                    } else if (tag == "double_click") {
+                        pos = info.find(delimiter);
+                        uint32_t x(std::stoi(info.substr(0, pos)));
+                        uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-    struct KeyPressed : public EventConfig
-    {
-        uint32_t scanCode;
-        uint32_t Flag;
+                        this->eventList.setDouble_click(this, x, y);
 
-        KeyPressed( RDPHeadlessFront * front
-                , uint32_t scanCode
-                , uint32_t Flag = 0
-                )
-        : EventConfig(front)
-        , scanCode(scanCode)
-        , Flag(Flag)
-        {}
+                    } else if (tag == "key") {
+                        pos = info.find(delimiter);
+                        uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                        uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-        virtual void emit() override {
-            this->front->keyPressed(scanCode, Flag);
-        }
-    };
+                        this->eventList.setKey(this, scanCode, flag);
 
+                    } else if (tag == "loop") {
+                        pos = info.find(delimiter);
+                        uint32_t jump_size(std::stoi(info.substr(0, pos)));
+                        uint32_t count_steps(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-    struct KeyReleased : public EventConfig
-    {
-        uint32_t scanCode;
-        uint32_t Flag;
-
-        KeyReleased( RDPHeadlessFront * front
-                , uint32_t scanCode
-                , uint32_t Flag = 0
-                )
-        : EventConfig(front)
-        , scanCode(scanCode)
-        , Flag(Flag)
-        {}
-
-        virtual void emit() override {
-            this->front->keyReleased(scanCode, Flag);
-        }
-    };
-
-    struct Loop : EventConfig {
-        EventList * list;
-        int jumpt_size;
-        int count_steps;
-
-        Loop( EventList * list
-            , int jumpt_size
-            , int count_steps)
-        : EventConfig(nullptr)
-        , list(list)
-        , jumpt_size(jumpt_size)
-        , count_steps(count_steps)
-        {}
-
-        virtual void emit() override {
-            if (count_steps) {
-                this->list->index -= jumpt_size;
-                count_steps--;
-            }
-        }
-    };
-
-    struct ClipboardChange : EventConfig
-    {
-        uint32_t formatIDs[RDPECLIP::FORMAT_LIST_MAX_SIZE];
-        std::string formatListDataLongName[RDPECLIP::FORMAT_LIST_MAX_SIZE];
-        size_t size;
-
-        ClipboardChange( RDPHeadlessFront * front
-                    , uint32_t * formatIDs
-                    , std::string * formatListDataLongName
-                    , size_t size)
-            : EventConfig(front)
-            , size(size)
-        {
-            for (size_t i = 0; i < this->size; i++) {
-                this->formatIDs[i] = formatIDs[i];
-                this->formatListDataLongName[i] = formatListDataLongName[i];
-            }
-        }
-
-        ClipboardChange( ClipboardChange & clipboardChange)
-        : EventConfig(clipboardChange.front)
-        , size(clipboardChange.size)
-        {
-            for (size_t i = 0; i < this->size; i++) {
-                this->formatIDs[i] = clipboardChange.formatIDs[i];
-                this->formatListDataLongName[i] = clipboardChange.formatListDataLongName[i];
-            }
-        }
-
-        virtual void emit() override {
-            this->front->send_FormatListPDU(this->formatIDs, this->formatListDataLongName, this->size);
-        }
-    };
-
-    template<class T, class... Args>
-    void setAction(Args&&... args) {
-        auto action = std::make_unique<T>(std::forward<Args>(args)...);
-        action->trigger_time = this->wait_time;
-        this->list.push_back(std::move(action));
-    }
-
-    std::vector<std::unique_ptr<EventConfig>> list;
-    long start_time;
-    long wait_time;
-    size_t index;
-
-public:
-    EventList()
-      : start_time(0)
-      , wait_time(0)
-      , index(0)
-    {
-        std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch());
-        this->start_time = ms.count();
-    }
-
-    void setLoop(int jump_size, int count_steps) {
-        this->setAction<Loop>(this, jump_size, count_steps);
-    }
-
-    void setClpbrd_change( RDPHeadlessFront * front
-                         , uint32_t * formatIDs
-                         , std::string * formatListDataLongName
-                         , size_t size) {
-        this->setAction<ClipboardChange>(front, formatIDs, formatListDataLongName, size);
-    }
-
-    void setKey_press( RDPHeadlessFront * front
-                     , uint32_t scanCode
-                     , uint32_t flag) {
-        this->setAction<KeyPressed>(front, scanCode, flag);
-    }
-
-    void setKey_release( RDPHeadlessFront * front
-                       , uint32_t scanCode
-                       , uint32_t flag) {
-        this->setAction<KeyReleased>(front, scanCode, flag);
-    }
-
-    void setMouse_button( RDPHeadlessFront * front
-                        , uint8_t button
-                        , uint32_t x
-                        , uint32_t y
-                        , bool isPressed) {
-        this->setAction<MouseButton>(front, button, x, y, isPressed);
-    }
-
-    void setKey( RDPHeadlessFront * front
-               , uint32_t scanCode
-               , uint32_t flag) {
-        this->setKey_press(front, scanCode, flag);
-        this->setKey_release(front, scanCode, flag);
-    }
-
-    void setClick( RDPHeadlessFront * front
-                 , uint8_t button
-                 , uint32_t x
-                 , uint32_t y) {
-        this->setMouse_button(front, button, x, y, true);
-        this->setMouse_button(front, button, x, y, false);
-    }
-
-    void setDouble_click( RDPHeadlessFront * front
-                        , uint32_t x
-                        , uint32_t y) {
-        setClick(front, 0x01, x, y);
-        setClick(front, 0x01, x, y);
-    }
-
-    void wait(int ms) {
-        this->wait_time += ms;
-    }
-
-    size_t size() {
-        return this->list.size();
-    }
-
-    void emit() {
-        std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch());
-        long current_time(ms.count());
-        bool next(true);
-        size_t i = index;
-        while (next) {
-            if (i >= this->size() || this->index >= this->size()) {
-                return;
-            }
-            long triggger(this->list[i]->trigger_time + this->start_time);
-            if (triggger <= current_time) {
-                this->list[i]->emit();
-                this->index++;
-
-
+                        this->eventList.setLoop(jump_size, count_steps);
+                    }
+                }
             } else {
-                next = false;
+                std::cerr <<  "Can't find " << script_file_path << "\n";
             }
-            i++;
-        }
     }
 
-
-
 };
+
+
+
 
 

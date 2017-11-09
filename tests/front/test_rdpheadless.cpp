@@ -122,7 +122,7 @@ RED_AUTO_TEST_CASE(TestRDPHeadless) {
     const char * userPwd = "S3cur3!1nux";
     const char * ip = "10.10.47.36";
     int port(3389);
-    std::string localIP;
+    const char * localIP;
     std::chrono::milliseconds time_out_response(RDPHeadlessFront::DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE);
     bool script_on(false);
     std::string out_path;
@@ -155,7 +155,7 @@ RED_AUTO_TEST_CASE(TestRDPHeadless) {
     ModRDPParams mod_rdp_params( userName
                                , userPwd
                                , ip
-                               , ip
+                               , localIP
                                , 2
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
@@ -200,6 +200,9 @@ RED_AUTO_TEST_CASE(TestRDPHeadless) {
     RED_CHECK(true);
 
 //     sck = front.connect(ip, userName, userPwd, port, protocol_is_VNC, mod_rdp_params, encryptionMethods);
+
+//        RED_CHECK_EQUAL(front.client_info.width, 800);
+//        RED_CHECK_EQUAL(front.client_info.height, 600);
 //
 //     RED_CHECK(true);
 //
