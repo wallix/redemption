@@ -676,120 +676,152 @@ public:
 // | NumVisibilityRects (optional) |   VisibilityRects (variable)  |
 // +-------------------------------+-------------------------------+
 // |                              ...                              |
-// +---------------+---------------+-------------------------------+
-// |  AppBarState  |   AppBarEdge  |
-// |   (optional)  |   (optional)  |
-// +---------------+---------------+
+// +---------------------------------------------------------------+
+// |                 OverlayDescription (variable)                 |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// | TaskbarButton | EnforceServerZ|  AppBarState  |   AppBarEdge  |
+// |   (optional)  |Order(optional)|   (optional)  |   (optional)  |
+// +---------------+---------------+---------------+---------------+
 
 // Hdr (11 bytes): Eleven bytes. Common Window AltSec Order header,
 //  TS_WINDOW_ORDER_HEADER. The FieldsPresentFlags field of the header MUST
 //  conform to the values defined as follows.
 
-//  +-------------------------------------+------------------------------------+
-//  | Value                               | Meaning                            |
-//  +-------------------------------------+------------------------------------+
-//  | 0x01000000                          | Indicates a Windowing Alternate    |
-//  | WINDOW_ORDER_TYPE_WINDOW            | Secondary Drawing Order            |
-//  |                                     | describing a window. This flag     |
-//  |                                     | MUST be set.                       |
-//  +-------------------------------------+------------------------------------+
-//  | 0x10000000                          | Indicates that the Windowing       |
-//  | WINDOW_ORDER_STATE_NEW              | Alternate Secondary Drawing Order  |
-//  |                                     | contains information for a new     |
-//  |                                     | window. If this flag is not set,   |
-//  |                                     | the order contains information for |
-//  |                                     | an existing window.                |
-//  +-------------------------------------+------------------------------------+
-//  | 0x00000002                          | Indicates that the OwnerWindowId   |
-//  | WINDOW_ORDER_FIELD_OWNER            | field is present.                  |
-//  +-------------------------------------+------------------------------------+
-//  | 0x00000008                          | Indicates that the Style and       |
-//  | WINDOW_ORDER_FIELD_STYLE            | ExtendedStyle fields are present.  |
-//  +-------------------------------------+------------------------------------+
-//  | 0x00000010                          | Indicates that the ShowState field |
-//  | WINDOW_ORDER_FIELD_SHOW             | is present.                        |
-//  +-------------------------------------+------------------------------------+
-//  | 0x00000004                          | Indicates that the TitleInfo field |
-//  | WINDOW_ORDER_FIELD_TITLE            | is present.                        |
-//  +-------------------------------------+------------------------------------+
-//  | 0x00004000                          | Indicates that the ClientOffsetX   |
-//  | WINDOW_ORDER_FIELD_CLIENTAREAOFFSET | and ClientOffsetY fields are       |
-//  |                                     | present.                           |
-//  +-------------------------------------+------------------------------------+
-//  | 0x00010000                          | Indicates that the ClientAreaWidth |
-//  | WINDOW_ORDER_FIELD_CLIENTAREASIZE   | and ClientAreaHeight fields are    |
-//  |                                     | present.<3>                        |
-//  +-------------------------------------+------------------------------------+
-//  | 0x00000080                          | Indicates that the                 |
-//  | WINDOW_ORDER_FIELD_RESIZE_MARGIN_X  | WindowLeftResizeMargin and         |
-//  |                                     | WindowRightResizeMargin fields are |
-//  |                                     | present.                           |
-//  +-------------------------------------+------------------------------------+
-//  | 0x08000000                          | Indicates that the                 |
-//  | WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y  | WindowTopResizeMargin and          |
-//  |                                     | WindowBottomResizeMargin fields    |
-//  |                                     | are present.                       |
-//  +-------------------------------------+------------------------------------+
-//  | 0x00020000                          | Indicates that the RPContent field |
-//  | WINDOW_ORDER_FIELD_RPCONTENT        | is present. <4>                    |
-//  +-------------------------------------+------------------------------------+
-//  | 0x00040000                          | Indicates that the                 |
-//  | WINDOW_ORDER_FIELD_ROOTPARENT       | RootParentHandle field is present. |
-//  |                                     | <5>                                |
-//  +-------------------------------------+------------------------------------+
-//  | 0x00000800                          | Indicates that the WindowOffsetX   |
-//  | WINDOW_ORDER_FIELD_WNDOFFSET        | and WindowOffsetY fields are       |
-//  |                                     | present.                           |
-//  +-------------------------------------+------------------------------------+
-//  | 0x00008000                          | Indicates that the                 |
-//  | WINDOW_ORDER_FIELD_CLIENTDELTA      | WindowClientDeltaX and             |
-//  |                                     | WindowClientDeltaY fields are      |
-//  |                                     | present.                           |
-//  +-------------------------------------+------------------------------------+
-//  | 0x00000400                          | Indicates that the WindowWidth and |
-//  | WINDOW_ORDER_FIELD_WNDSIZE          | WindowHeight fields are present.   |
-//  +-------------------------------------+------------------------------------+
-//  | 0x00000100                          | Indicates that the NumWindowRects  |
-//  | WINDOW_ORDER_FIELD_WNDRECTS         | and WindowRects fields are         |
-//  |                                     | present.                           |
-//  +-------------------------------------+------------------------------------+
-//  | 0x00001000                          | Indicates that the VisibleOffsetX  |
-//  | WINDOW_ORDER_FIELD_VISOFFSET        | and VisibleOffsetY fields are      |
-//  |                                     | present.                           |
-//  +-------------------------------------+------------------------------------+
-//  | 0x00000200                          | Indicates that the                 |
-//  | WINDOW_ORDER_FIELD_VISIBILITY       | NumVisibilityRects and             |
-//  |                                     | VisibilityRects fields are         |
-//  |                                     | present.                           |
-//  +-------------------------------------+------------------------------------+
-//  | 0x00000040                          | Indicates that the AppBarState     |
-//  | WINDOW_ORDER_FIELD_APPBAR_STATE     | field is present.                  |
-//  +-------------------------------------+------------------------------------+
-//  | 0x00000001                          | Indicates that the AppBarEdge      |
-//  | WINDOW_ORDER_FIELD_APPBAR_EDGE      | field is present.                  |
-//  +-------------------------------------+------------------------------------+
+//  +------------------------------------------+------------------------------------+
+//  | Value                                    | Meaning                            |
+//  +------------------------------------------+------------------------------------+
+//  | 0x01000000                               | Indicates a Windowing Alternate    |
+//  | WINDOW_ORDER_TYPE_WINDOW                 | Secondary Drawing Order            |
+//  |                                          | describing a window. This flag     |
+//  |                                          | MUST be set.                       |
+//  +------------------------------------------+------------------------------------+
+//  | 0x10000000                               | Indicates that the Windowing       |
+//  | WINDOW_ORDER_STATE_NEW                   | Alternate Secondary Drawing Order  |
+//  |                                          | contains information for a new     |
+//  |                                          | window. If this flag is not set,   |
+//  |                                          | the order contains information for |
+//  |                                          | an existing window.                |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00000002                               | Indicates that the OwnerWindowId   |
+//  | WINDOW_ORDER_FIELD_OWNER                 | field is present.                  |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00000008                               | Indicates that the Style and       |
+//  | WINDOW_ORDER_FIELD_STYLE                 | ExtendedStyle fields are present.  |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00000010                               | Indicates that the ShowState field |
+//  | WINDOW_ORDER_FIELD_SHOW                  | is present.                        |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00000004                               | Indicates that the TitleInfo field |
+//  | WINDOW_ORDER_FIELD_TITLE                 | is present.                        |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00004000                               | Indicates that the ClientOffsetX   |
+//  | WINDOW_ORDER_FIELD_CLIENTAREAOFFSET      | and ClientOffsetY fields are       |
+//  |                                          | present.                           |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00010000                               | Indicates that the ClientAreaWidth |
+//  | WINDOW_ORDER_FIELD_CLIENTAREASIZE        | and ClientAreaHeight fields are    |
+//  |                                          | present.<3>                        |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00000080                               | Indicates that the                 |
+//  | WINDOW_ORDER_FIELD_RESIZE_MARGIN_X       | WindowLeftResizeMargin and         |
+//  |                                          | WindowRightResizeMargin fields are |
+//  |                                          | present.                           |
+//  +------------------------------------------+------------------------------------+
+//  | 0x08000000                               | Indicates that the                 |
+//  | WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y       | WindowTopResizeMargin and          |
+//  |                                          | WindowBottomResizeMargin fields    |
+//  |                                          | are present.                       |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00020000                               | Indicates that the RPContent field |
+//  | WINDOW_ORDER_FIELD_RPCONTENT             | is present. <4>                    |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00040000                               | Indicates that the                 |
+//  | WINDOW_ORDER_FIELD_ROOTPARENT            | RootParentHandle field is present. |
+//  |                                          | <5>                                |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00000800                               | Indicates that the WindowOffsetX   |
+//  | WINDOW_ORDER_FIELD_WNDOFFSET             | and WindowOffsetY fields are       |
+//  |                                          | present.                           |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00008000                               | Indicates that the                 |
+//  | WINDOW_ORDER_FIELD_CLIENTDELTA           | WindowClientDeltaX and             |
+//  |                                          | WindowClientDeltaY fields are      |
+//  |                                          | present.                           |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00000400                               | Indicates that the WindowWidth and |
+//  | WINDOW_ORDER_FIELD_WNDSIZE               | WindowHeight fields are present.   |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00000100                               | Indicates that the NumWindowRects  |
+//  | WINDOW_ORDER_FIELD_WNDRECTS              | and WindowRects fields are         |
+//  |                                          | present.                           |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00001000                               | Indicates that the VisibleOffsetX  |
+//  | WINDOW_ORDER_FIELD_VISOFFSET             | and VisibleOffsetY fields are      |
+//  |                                          | present.                           |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00000200                               | Indicates that the                 |
+//  | WINDOW_ORDER_FIELD_VISIBILITY            | NumVisibilityRects and             |
+//  |                                          | VisibilityRects fields are         |
+//  |                                          | present.                           |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00400000                               | Indicates that the                 |
+//  | WINDOW_ORDER_FIELD_OVERLAY_DESCRIPTION   | OverlayDescription field is        |
+//  |                                          | present.                           |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00200000                               | Indicates that a taskbar overlay   |
+//  | WINDOW_ORDER_FIELD_ICON_OVERLAY_NULL     | icon previously set by the window  |
+//  |                                          | has been removed.                  +
+//  +------------------------------------------+------------------------------------+
+//  | 0x00800000                               | Indicates that the TaskbarButton   |
+//  | WINDOW_ORDER_FIELD_TASKBAR_BUTTON        | field is present.                  |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00080000                               | Indicates that the                 |
+//  | WINDOW_ORDER_FIELD_ENFORCE_SERVER_ZORDER | EnforceServerZOrder field is       |
+//  |                                          | present.                           |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00000040                               | Indicates that the AppBarState     |
+//  | WINDOW_ORDER_FIELD_APPBAR_STATE          | field is present.                  |
+//  +------------------------------------------+------------------------------------+
+//  | 0x00000001                               | Indicates that the AppBarEdge      |
+//  | WINDOW_ORDER_FIELD_APPBAR_EDGE           | field is present.                  |
+//  +------------------------------------------+------------------------------------+
+
+// <3> Section 2.2.1.3.1.2.1: Windows does not set this flag in any server
+//  implementation.
+
+// <4> Section 2.2.1.3.1.2.1: Windows does not set this flag in any server
+//  implementation.
+
+// <5> Section 2.2.1.3.1.2.1: Windows does not set this flag in any server
+//  implementation.
 
 enum {
-      WINDOW_ORDER_TYPE_WINDOW            = 0x01000000
-    , WINDOW_ORDER_STATE_NEW              = 0x10000000
-    , WINDOW_ORDER_FIELD_OWNER            = 0x00000002
-    , WINDOW_ORDER_FIELD_STYLE            = 0x00000008
-    , WINDOW_ORDER_FIELD_SHOW             = 0x00000010
-    , WINDOW_ORDER_FIELD_TITLE            = 0x00000004
-    , WINDOW_ORDER_FIELD_CLIENTAREAOFFSET = 0x00004000
-    , WINDOW_ORDER_FIELD_CLIENTAREASIZE   = 0x00010000
-    , WINDOW_ORDER_FIELD_RESIZE_MARGIN_X  = 0x00000080
-    , WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y  = 0x08000000
-    , WINDOW_ORDER_FIELD_RPCONTENT        = 0x00020000
-    , WINDOW_ORDER_FIELD_ROOTPARENT       = 0x00040000
-    , WINDOW_ORDER_FIELD_WNDOFFSET        = 0x00000800
-    , WINDOW_ORDER_FIELD_CLIENTDELTA      = 0x00008000
-    , WINDOW_ORDER_FIELD_WNDSIZE          = 0x00000400
-    , WINDOW_ORDER_FIELD_WNDRECTS         = 0x00000100
-    , WINDOW_ORDER_FIELD_VISOFFSET        = 0x00001000
-    , WINDOW_ORDER_FIELD_VISIBILITY       = 0x00000200
-    , WINDOW_ORDER_FIELD_APPBAR_STATE     = 0x00000040
-    , WINDOW_ORDER_FIELD_APPBAR_EDGE      = 0x00000001
+      WINDOW_ORDER_TYPE_WINDOW                 = 0x01000000
+    , WINDOW_ORDER_STATE_NEW                   = 0x10000000
+    , WINDOW_ORDER_FIELD_OWNER                 = 0x00000002
+    , WINDOW_ORDER_FIELD_STYLE                 = 0x00000008
+    , WINDOW_ORDER_FIELD_SHOW                  = 0x00000010
+    , WINDOW_ORDER_FIELD_TITLE                 = 0x00000004
+    , WINDOW_ORDER_FIELD_CLIENTAREAOFFSET      = 0x00004000
+    , WINDOW_ORDER_FIELD_CLIENTAREASIZE        = 0x00010000
+    , WINDOW_ORDER_FIELD_RESIZE_MARGIN_X       = 0x00000080
+    , WINDOW_ORDER_FIELD_RESIZE_MARGIN_Y       = 0x08000000
+    , WINDOW_ORDER_FIELD_RPCONTENT             = 0x00020000
+    , WINDOW_ORDER_FIELD_ROOTPARENT            = 0x00040000
+    , WINDOW_ORDER_FIELD_WNDOFFSET             = 0x00000800
+    , WINDOW_ORDER_FIELD_CLIENTDELTA           = 0x00008000
+    , WINDOW_ORDER_FIELD_WNDSIZE               = 0x00000400
+    , WINDOW_ORDER_FIELD_WNDRECTS              = 0x00000100
+    , WINDOW_ORDER_FIELD_VISOFFSET             = 0x00001000
+    , WINDOW_ORDER_FIELD_VISIBILITY            = 0x00000200
+    , WINDOW_ORDER_FIELD_OVERLAY_DESCRIPTION   = 0x00400000
+    , WINDOW_ORDER_FIELD_ICON_OVERLAY_NULL     = 0x00200000
+    , WINDOW_ORDER_FIELD_TASKBAR_BUTTON        = 0x00800000
+    , WINDOW_ORDER_FIELD_ENFORCE_SERVER_ZORDER = 0x00080000
+    , WINDOW_ORDER_FIELD_APPBAR_STATE          = 0x00000040
+    , WINDOW_ORDER_FIELD_APPBAR_EDGE           = 0x00000001
 };
 
 // OwnerWindowId (4 bytes): An unsigned 32-bit integer. The ID of the window
@@ -1016,6 +1048,42 @@ enum {
 //  is greater than 0 and the WINDOW_ORDER_FIELD_VISIBILITY flag is set in
 //  the FieldsPresentFlags field of TS_WINDOW_ORDER_HEADER.
 
+// OverlayDescription (variable, optional): A variable length UNICODE_STRING
+//  (section 2.2.1.2.1) that contains the description text for the window's
+//  overlay icon (see sections 2.2.1.3.1.2.2 and 2.2.1.3.1.2.3).
+
+//  This field is present only if the WINDOW_ORDER_FIELD_OVERLAY_DESCRIPTION
+//  flag is set in the FieldsPresentFlags field of TS_WINDOW_ORDER_HEADER.
+
+// TaskbarButton (1 byte, optional): An 8-bit unsigned integer. If this field
+//  is set to 0x00, then the client SHOULD add a tab to the taskbar button
+//  group for the window, if supported by the operating system, instead of
+//  adding a new taskbar button for the window. If this field is set to 0x01,
+//  then the client SHOULD remove the tab from the taskbar button group for
+//  the window.
+
+//  Windows share a taskbar button group if they have matching Application
+//  IDs, as specified by the Server Get Application ID Response PDU (section
+//  2.2.2.8.1).
+
+//  This field is present only if the WINDOW_ORDER_FIELD_TASKBAR_BUTTON flag
+//  is set in the FieldsPresentFlags field of TS_WINDOW_ORDER_HEADER.
+
+// EnforceServerZOrder (1 byte, optional): An 8-bit unsigned integer. If this
+//  field is set to 0x01, then the client SHOULD order this window, and all
+//  other windows in the Z-order list (in the Actively Monitored Desktop
+//  packet, as specified in section 2.2.1.3.3.2.1) that also have the field
+//  set consecutively per the Z-order hierarchy. The client SHOULD NOT
+//  attempt to reorder these windows with respect to each other, or to move
+//  any window between the windows in this group.
+
+//  If this field is set to 0x00, then no special Z-order handling is
+//  required.
+
+//  This field is present only if the
+//  WINDOW_ORDER_FIELD_ENFORCE_SERVER_ZORDER flag is set in the
+//  FieldsPresentFlags field of TS_WINDOW_ORDER_HEADER.
+
 // AppBarState (1 byte, optional): An 8-bit unsigned integer. If this field
 //  is set to 0x01, then the window SHOULD be registered as an application
 //  desktop toolbar. If this field is set to 0x00, then the application
@@ -1092,9 +1160,15 @@ private:
 
     std::vector<Rectangle> visibility_rects;
 
-    uint8_t AppBarState_;
+    std::string overlay_description;
 
-    uint8_t AppBarEdge_;
+    uint8_t TaskbarButton_ = 0;
+
+    uint8_t EnforceServerZOrder_ = 0;
+
+    uint8_t AppBarState_ = 0;
+
+    uint8_t AppBarEdge_ = 0;
 
 public:
     void emit(OutStream & stream) const {
@@ -1116,7 +1190,7 @@ public:
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
             put_non_null_terminated_utf16_from_utf8(
-                stream, this->title_info.data(), this->title_info.size() * 2);
+                stream, this->title_info.data(), 520);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
@@ -1181,6 +1255,19 @@ public:
             for (Rectangle const & rectangle : this->visibility_rects) {
                 rectangle.emit(stream);
             }
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OVERLAY_DESCRIPTION) {
+            put_non_null_terminated_utf16_from_utf8(
+                stream, this->overlay_description.data(), this->overlay_description.size() * 2);
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_TASKBAR_BUTTON) {
+            stream.out_uint8(this->TaskbarButton_);
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_ENFORCE_SERVER_ZORDER) {
+            stream.out_uint8(this->EnforceServerZOrder_);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_APPBAR_STATE) {
@@ -1465,6 +1552,53 @@ public:
             }
         }
 
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OVERLAY_DESCRIPTION) {
+            {
+                const unsigned expected = 2;  // CbString(2)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (14a): expected=%u remains=%zu",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
+            const uint16_t CbString = stream.in_uint16_le();
+            get_non_null_terminated_utf16_from_utf8(
+                this->overlay_description, stream, CbString, "NewOrExistingWindow (14b)");
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_TASKBAR_BUTTON) {
+            {
+                const unsigned expected = 1;  // TaskbarButton(1)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (14c): expected=%u remains=%zu",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
+            this->TaskbarButton_ = stream.in_uint8();
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_ENFORCE_SERVER_ZORDER) {
+            {
+                const unsigned expected = 1;  // EnforceServerZOrder(1)
+
+                if (!stream.in_check_rem(expected)) {
+                    LOG(LOG_ERR,
+                        "Truncated NewOrExistingWindow (14d): expected=%u remains=%zu",
+                        expected, stream.in_remain());
+                    throw Error(ERR_RAIL_PDU_TRUNCATED);
+                }
+            }
+
+            this->EnforceServerZOrder_ = stream.in_uint8();
+        }
+
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_APPBAR_STATE) {
             {
                 const unsigned expected = 1;  // AppBarState(1)
@@ -1725,6 +1859,22 @@ public:
             count += this->NumVisibilityRects_ * Rectangle::size();
         }
 
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OVERLAY_DESCRIPTION) {
+            count += 2; // CbString(2)
+
+            const size_t maximum_length_of_OverlayDescription_in_bytes = this->overlay_description.length() * 2;
+
+            count += maximum_length_of_OverlayDescription_in_bytes; // OverlayDescription(variable)
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_TASKBAR_BUTTON) {
+            count += 1; // TaskbarButton(1)
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_ENFORCE_SERVER_ZORDER) {
+            count += 1; // EnforceServerZOrder(1)
+        }
+
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_APPBAR_STATE) {
             count += 1; // AppBarState(1)
         }
@@ -1870,6 +2020,24 @@ private:
             }
 
             result = ::snprintf(buffer + length, size - length, ")");
+            length += ((result < size - length) ? result : (size - length - 1));
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OVERLAY_DESCRIPTION) {
+            result = ::snprintf(buffer + length, size - length, " OverlayDescription=\"%s\"",
+                this->overlay_description.c_str());
+            length += ((result < size - length) ? result : (size - length - 1));
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_TASKBAR_BUTTON) {
+            result = ::snprintf(buffer + length, size - length, " TaskbarButton=%u",
+                this->AppBarState_);
+            length += ((result < size - length) ? result : (size - length - 1));
+        }
+
+        if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_ENFORCE_SERVER_ZORDER) {
+            result = ::snprintf(buffer + length, size - length, " EnforceServerZOrder=%u",
+                this->AppBarState_);
             length += ((result < size - length) ? result : (size - length - 1));
         }
 

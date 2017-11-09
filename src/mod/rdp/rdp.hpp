@@ -7546,9 +7546,9 @@ private:
                 if (this->remote_program) {
                     infoPacket.flags |= INFO_RAIL;
 
-                    //if (this->remote_program_enhanced) {
+                    // if (this->remote_program_enhanced) {
                     //    infoPacket.flags |= INFO_HIDEF_RAIL_SUPPORTED;
-                    //}
+                    // }
                 }
 
                 infoPacket.emit(stream);
