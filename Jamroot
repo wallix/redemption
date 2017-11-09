@@ -41,7 +41,7 @@ project redemption
 
     # <cxxflags>-fpie
     <cxxflags>-fPIC
-    <variant>san:<cxxflags>-frtti # fix undefined reference to `typeinfo`.
+    # <cxxflags>-fno-rtti
 
     $(REDEMPTION_CXXFLAGS)
 
