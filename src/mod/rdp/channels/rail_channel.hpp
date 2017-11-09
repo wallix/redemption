@@ -52,6 +52,9 @@ private:
 
     bool param_use_session_probe_to_launch_remote_program;
 
+    bool param_client_supports_handshakeex_pdu;
+    bool param_client_supports_enhanced_remoteapp;
+
     bool first_client_execute_ignored = false;
 
     bool client_execute_pdu_sent = false;
@@ -113,6 +116,9 @@ public:
 
         bool use_session_probe_to_launch_remote_program;
 
+        bool client_supports_handshakeex_pdu;
+        bool client_supports_enhanced_remoteapp;
+
         Params(ReportMessageApi & report_message) : BaseVirtualChannel::Params(report_message) {}
     };
 
@@ -136,6 +142,8 @@ public:
     , param_rail_session_manager(params.rail_session_manager)
     , param_should_ignore_first_client_execute(params.should_ignore_first_client_execute)
     , param_use_session_probe_to_launch_remote_program(params.use_session_probe_to_launch_remote_program)
+    , param_client_supports_handshakeex_pdu(params.client_supports_handshakeex_pdu)
+    , param_client_supports_enhanced_remoteapp(params.client_supports_enhanced_remoteapp)
     , vars(vars) {}
 
 protected:
@@ -1086,6 +1094,44 @@ public:
         if (bool(this->verbose & RDPVerbose::rail)) {
             hspdu.log(LOG_INFO);
         }
+
+        // if (this->param_client_supports_enhanced_remoteapp &&
+        //     this->param_client_supports_handshakeex_pdu) {
+
+        //     HandshakeExPDU hsexpdu;
+
+        //     hsexpdu.buildNumber(hspdu.buildNumber());
+        //     hsexpdu.railHandshakeFlags(TS_RAIL_ORDER_HANDSHAKEEX_FLAGS_HIDEF);
+
+        //     StaticOutStream<1024> out_s;
+        //     RAILPDUHeader header;
+        //     header.emit_begin(out_s, TS_RAIL_ORDER_HANDSHAKE_EX);
+
+        //     hsexpdu.emit(out_s);
+
+        //     header.emit_end();
+
+        //     const size_t   length = out_s.get_offset();
+        //     const uint32_t flags_ =   CHANNELS::CHANNEL_FLAG_FIRST
+        //                             | CHANNELS::CHANNEL_FLAG_LAST;
+        //     {
+        //         const bool send              = true;
+        //         const bool from_or_to_client = true;
+        //         ::msgdump_c(send, from_or_to_client, length, flags_,
+        //             out_s.get_data(), length);
+        //     }
+        //     if (bool(this->verbose & RDPVerbose::rail)) {
+        //         LOG(LOG_INFO,
+        //             "RemoteProgramsVirtualChannel::process_server_handshake_pdu: "
+        //                 "Send to client - HandshakeEx PDU");
+        //         hsexpdu.log(LOG_INFO);
+        //     }
+
+        //     this->send_message_to_client(length, flags_, out_s.get_data(),
+        //         length);
+
+        //     return false;
+        // }
 
         return true;
     }

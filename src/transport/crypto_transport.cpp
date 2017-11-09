@@ -315,9 +315,14 @@ void InCryptoTransport::close()
     this->eof = true;
 }
 
-bool InCryptoTransport::is_eof()
+bool InCryptoTransport::is_eof() noexcept
 {
     return this->eof;
+}
+
+void InCryptoTransport::disable_log_decrypt(bool disable) noexcept
+{
+    this->ectx.disable_log_decrypt(disable);
 }
 
 // this perform atomic read, partial read will result in exception
@@ -945,50 +950,45 @@ void OutCryptoTransport::do_send(const uint8_t * data, size_t len)
 }
 
 
-EcryptionSchemeTypeResult set_encryption_scheme_type(const char * filename, CryptoContext & cctx)
+EncryptionSchemeTypeResult open_if_possible_and_get_encryption_scheme_type(
+    InCryptoTransport & in_test, const char * filename, const_byte_array derivator)
 {
-    int fd = open(filename, O_RDONLY);
-    if (fd == -1){
-        return EcryptionSchemeTypeResult::Error;
-    }
-
-    uint8_t tmp_buf[4];
-    {
-        unique_fd file(fd);
-
-        const size_t len = sizeof(tmp_buf);
-        size_t remaining_len = len;
-        while (remaining_len) {
-            ssize_t ret = ::read(fd, &tmp_buf[len - remaining_len], remaining_len);
-            if (ret == 0){
-                return EcryptionSchemeTypeResult::Error;
-            }
-            if (ret < 0){
-                if (errno == EINTR){
-                    continue;
-                }
-                // Error should still be there next time we try to read
-                return EcryptionSchemeTypeResult::Error;
-            }
-            // We must exit loop or we will enter infinite loop
-            remaining_len -= ret;
+    try {
+        if (derivator.data()) {
+            in_test.open(filename, derivator);
         }
+        else {
+            in_test.open(filename);
+        }
+
+        if (not in_test.is_encrypted()) {
+            return EncryptionSchemeTypeResult::NoEncrypted;
+        }
+
+        in_test.disable_log_decrypt();
+        char mem[1];
+        auto len = in_test.partial_read(mem, 0);
+        (void)len;
+    }
+    catch(Error const& e) {
+        in_test.disable_log_decrypt(false);
+        if (e.id == ERR_SSL_CALL_FAILED) {
+            if (in_test.is_open()) {
+                in_test.close();
+            }
+            return EncryptionSchemeTypeResult::OldScheme;
+        }
+        return EncryptionSchemeTypeResult::Error;
     }
 
-    const uint32_t magic = tmp_buf[0] + (tmp_buf[1] << 8) + (tmp_buf[2] << 16) + (tmp_buf[3] << 24);
-    if (magic == WABCRYPTOFILE_MAGIC) {
-        Fstat fstat;
-        InCryptoTransport in_test(cctx, InCryptoTransport::EncryptionMode::Encrypted, fstat);
-        in_test.open(filename);
-        try {
-            char mem[4096];
-            auto len = in_test.partial_read(mem, sizeof(mem));
-            (void)len;
-        } catch (Error const&) {
-            cctx.old_encryption_scheme = 1;
-            return EcryptionSchemeTypeResult::OldScheme;
-        }
-        return EcryptionSchemeTypeResult::NewScheme;
-    }
-    return EcryptionSchemeTypeResult::NoEncrypted;
+    in_test.disable_log_decrypt(false);
+    return EncryptionSchemeTypeResult::NewScheme;
+}
+
+EncryptionSchemeTypeResult get_encryption_scheme_type(
+    CryptoContext & cctx, const char * filename, const_byte_array derivator)
+{
+    Fstat fstat;
+    InCryptoTransport in_test(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
+    return open_if_possible_and_get_encryption_scheme_type(in_test, filename, derivator);
 }

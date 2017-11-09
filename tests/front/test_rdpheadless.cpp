@@ -36,20 +36,14 @@
 #define LOGNULL
 
 
-#include "configs/config.hpp"
+#include "core/font.hpp"
+#include "utils/theme.hpp"
 // Uncomment the code block below to generate testing data.
 
 // Uncomment the code block below to generate testing data.
 //include "transport/socket_transport.hpp"
 #include "test_only/transport/test_transport.hpp"
-#include "utils/fileutils.hpp"
-
-#include "mod/null/null.hpp"
-
-// Uncomment the code block below to generate testing data.
-#include "core/listen.hpp"
-
-
+// #include "utils/fileutils.hpp"
 
 #include "front/rdpheadless.hpp"
 
@@ -64,7 +58,7 @@ namespace dump2008_PatBlt {
 
 
 
-int run_mod(mod_api * mod, RDPHeadlessFront & front, int sck, EventList & /*al*/, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test) {
+inline int run_mod(mod_api * mod, RDPHeadlessFront & front, int sck, EventList & /*al*/, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test) {
     const timeval time_stop = addusectimeval(time_out_response, tvtime());
     const timeval time_mark = { 0, 50000 };
 
@@ -117,7 +111,7 @@ RED_AUTO_TEST_CASE(TestRDPHeadless) {
     //info.encryptionLevel = 1;
     int verbose = 0;
 
-    bool protocol_is_VNC = false;
+//     bool protocol_is_VNC = false;
     const char * userName = "administrateur";
     const char * userPwd = "S3cur3!1nux";
     const char * ip = "10.10.47.36";
@@ -125,50 +119,33 @@ RED_AUTO_TEST_CASE(TestRDPHeadless) {
     const char * localIP;
     std::chrono::milliseconds time_out_response(RDPHeadlessFront::DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE);
     bool script_on(false);
+
     std::string out_path;
 
-    int keep_alive_frequence = 100;
+//     int keep_alive_frequence = 100;
     std::string index = "0";
 
 
-    Inifile ini;
-    ini.set<cfg::debug::front>(verbose);
-    ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
-    ini.set<cfg::client::cache_waiting_list>(true);
-    ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
-    ini.set<cfg::video::png_interval>(std::chrono::seconds{300});
-    ini.set<cfg::video::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth24);
-    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
-    ini.set<cfg::crypto::key0>(
-        "\x00\x01\x02\x03\x04\x05\x06\x07"
-        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-        "\x10\x11\x12\x13\x14\x15\x16\x17"
-        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-    );
-    ini.set<cfg::crypto::key1>(
-        "\x00\x01\x02\x03\x04\x05\x06\x07"
-        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-        "\x10\x11\x12\x13\x14\x15\x16\x17"
-        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-    );
+    std::array<uint8_t, 28> server_auto_reconnect_packet_by_ref {};
+    std::string close_box_extra_message_by_ref {};
 
     ModRDPParams mod_rdp_params( userName
                                , userPwd
                                , ip
                                , localIP
                                , 2
-                               , ini.get<cfg::font>()
-                               , ini.get<cfg::theme>()
-                               , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
-                               , ini.get_ref<cfg::context::close_box_extra_message>()
+                               , Font{}
+                               , Theme{}
+                               , server_auto_reconnect_packet_by_ref
+                               , close_box_extra_message_by_ref
                                , to_verbose_flags(0)
                                );
-    bool quick_connection_test = true;
-    bool time_set_connection_test = false;
-    std::string script_file_path;
-    uint32_t encryptionMethods
-      = GCC::UserData::CSSecurity::_40BIT_ENCRYPTION_FLAG
-      | GCC::UserData::CSSecurity::_128BIT_ENCRYPTION_FLAG;
+//     bool quick_connection_test = true;
+//     bool time_set_connection_test = false;
+//     std::string script_file_path;
+//     uint32_t encryptionMethods
+//       = GCC::UserData::CSSecurity::_40BIT_ENCRYPTION_FLAG
+//       | GCC::UserData::CSSecurity::_128BIT_ENCRYPTION_FLAG;
 
 
     NullAuthentifier authentifier;
@@ -176,8 +153,8 @@ RED_AUTO_TEST_CASE(TestRDPHeadless) {
     RDPHeadlessFront front(info, report_message_cli, verbose);
     front.out_path = out_path;
     front.index = index;
-    int main_return = 40;
-    int sck = -42;
+//     int main_return = 40;
+//     int sck = -42;
 
 
 //     set_exception_handler_pretty_message();
@@ -196,9 +173,9 @@ RED_AUTO_TEST_CASE(TestRDPHeadless) {
 //         sigaction(SIGPIPE, &sa, nullptr);
 //         REDEMPTION_DIAGNOSTIC_POP
 //     }
-
-    RED_CHECK(true);
-
+//
+//     RED_CHECK(true);
+//
 //     sck = front.connect(ip, userName, userPwd, port, protocol_is_VNC, mod_rdp_params, encryptionMethods);
 
 //        RED_CHECK_EQUAL(front.client_info.width, 800);
@@ -231,5 +208,4 @@ RED_AUTO_TEST_CASE(TestRDPHeadless) {
 //         front.disconnect();
 //         //front.mod()->disconnect(tvtime().tv_sec);
 //     }
-
 }

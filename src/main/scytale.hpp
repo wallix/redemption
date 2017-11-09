@@ -83,12 +83,20 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     char const * scytale_reader_error_message(RedCryptoReaderHandle * handle);
 
-    // result is a EcryptionSchemeTypeResult
-    REDEMPTION_LIB_EXPORT
-    int scytale_reader_detect_and_set_encryption_scheme(RedCryptoReaderHandle * handle, char const * path);
-
     REDEMPTION_LIB_EXPORT
     int scytale_reader_open(RedCryptoReaderHandle * handle, char const * path, char const * derivator);
+
+    // enum class EncryptionSchemeTypeResult
+    // {
+    //     Error = -1,
+    //     NoEncrypted = 0,
+    //     OldScheme,
+    //     NewScheme,
+    // };
+    // result is a EncryptionSchemeTypeResult
+    REDEMPTION_LIB_EXPORT
+    int scytale_reader_open_with_auto_detect_encryption_scheme(
+        RedCryptoReaderHandle * handle, char const * path, char const * derivator);
 
     // < 0: error, 0: eof, >0: length read
     REDEMPTION_LIB_EXPORT
@@ -125,7 +133,7 @@ extern "C"
     char const * scytale_meta_reader_message(RedCryptoMetaReaderHandle * handle);
 
     REDEMPTION_LIB_EXPORT
-    int scytale_meta_reader_read_hash(RedCryptoMetaReaderHandle * handle, int version);
+    int scytale_meta_reader_read_hash(RedCryptoMetaReaderHandle * handle, int version, int has_checksum);
 
     REDEMPTION_LIB_EXPORT
     int scytale_meta_reader_read_header(RedCryptoMetaReaderHandle * handle);

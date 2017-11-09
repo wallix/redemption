@@ -37,7 +37,7 @@
 int main(int argc, char** argv)
 {
     uint64_t verbose = 16;
-    std::string target_device = "10.10.46.70";
+    std::string target_device;
     int target_port = 5900;
     int nbretry = 3;
     int retry_delai_ms = 1000;
@@ -46,8 +46,8 @@ int main(int argc, char** argv)
     unsigned max_time_ms = 5u * inactivity_time_ms;
     std::string screen_output;
 
-    std::string username = "user2003";
-    std::string password = "SecureLinux$42";
+    std::string username;
+    std::string password;
     ClientInfo client_info;
 
     client_info.width = 800;

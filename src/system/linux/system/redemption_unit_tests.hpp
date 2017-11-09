@@ -139,6 +139,9 @@
         }(a, b);                           \
     } while (0)
 
+#define RED_CHECK_EQ_RANGES(a, b) RED_CHECK_EQUAL_RANGES(a, b)
+#define RED_REQUIRE_EQ_RANGES(a, b) RED_REQUIRE_EQUAL_RANGES(a, b)
+
 namespace std
 {
     // this is a hack...

@@ -94,6 +94,7 @@
 #include "core/FSCC/FileInformation.hpp"
 #include "mod/internal/client_execute.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
+#include "mod/rdp/channels/drdynvc_channel.hpp"
 #include "mod/rdp/channels/rail_channel.hpp"
 #include "mod/rdp/channels/rail_session_manager.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
@@ -121,6 +122,11 @@ private:
     std::unique_ptr<VirtualChannelDataSender>     clipboard_to_server_sender;
 
     std::unique_ptr<ClipboardVirtualChannel>      clipboard_virtual_channel;
+
+    std::unique_ptr<VirtualChannelDataSender>     dynamic_channel_to_client_sender;
+    std::unique_ptr<VirtualChannelDataSender>     dynamic_channel_to_server_sender;
+
+    std::unique_ptr<DynamicChannelVirtualChannel> dynamic_channel_virtual_channel;
 
     std::unique_ptr<VirtualChannelDataSender>     session_probe_to_server_sender;
 
@@ -246,7 +252,8 @@ protected:
     const AuthorizationChannels authorization_channels;
 
     data_size_type max_clipboard_data = 0;
-    data_size_type max_rdpdr_data = 0;
+    data_size_type max_rdpdr_data     = 0;
+    data_size_type max_drdynvc_data   = 0;
 
     int  use_rdp5;
 
@@ -511,6 +518,26 @@ protected:
         }
 
         return *this->clipboard_virtual_channel;
+    }
+
+    inline DynamicChannelVirtualChannel& get_dynamic_channel_virtual_channel() {
+        if (!this->dynamic_channel_virtual_channel) {
+            REDASSERT(!this->dynamic_channel_to_client_sender &&
+                !this->dynamic_channel_to_server_sender);
+
+            this->dynamic_channel_to_client_sender =
+                this->create_to_client_sender(channel_names::cliprdr);
+            this->dynamic_channel_to_server_sender =
+                this->create_to_server_sender(channel_names::cliprdr);
+
+            this->dynamic_channel_virtual_channel =
+                std::make_unique<DynamicChannelVirtualChannel>(
+                    this->dynamic_channel_to_client_sender.get(),
+                    this->dynamic_channel_to_server_sender.get(),
+                    this->get_dynamic_channel_virtual_channel_params());
+        }
+
+        return *this->dynamic_channel_virtual_channel;
     }
 
     inline FileSystemVirtualChannel& get_file_system_virtual_channel() {
@@ -1644,6 +1671,19 @@ protected:
         return clipboard_virtual_channel_params;
     }
 
+    const DynamicChannelVirtualChannel::Params
+        get_dynamic_channel_virtual_channel_params() const
+    {
+        DynamicChannelVirtualChannel::Params dynamic_channel_virtual_channel_params(this->report_message);
+
+        dynamic_channel_virtual_channel_params.exchanged_data_limit =
+            this->max_drdynvc_data;
+        dynamic_channel_virtual_channel_params.verbose              =
+            this->verbose;
+
+        return dynamic_channel_virtual_channel_params;
+    }
+
     const FileSystemVirtualChannel::Params
         get_file_system_virtual_channel_params() const
     {
@@ -1790,6 +1830,10 @@ protected:
         remote_programs_virtual_channel_params.use_session_probe_to_launch_remote_program   =
             this->use_session_probe_to_launch_remote_program;
 
+        remote_programs_virtual_channel_params.client_supports_handshakeex_pdu    =
+            (this->client_rail_caps.RailSupportLevel & TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED);
+        remote_programs_virtual_channel_params.client_supports_enhanced_remoteapp =
+            this->remote_program_enhanced;
 
         return remote_programs_virtual_channel_params;
     }
@@ -2086,6 +2130,9 @@ public:
             case channel_names::rdpdr:
                 this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags);
                 break;
+            case channel_names::drdynvc:
+                this->send_to_mod_drdynvc_channel(mod_channel, chunk, length, flags);
+                break;
             default:
                 this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
         }
@@ -2150,9 +2197,40 @@ private:
             return;
         }
 
-
-
         FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel();
+
+        channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
+    }
+
+    void send_to_mod_drdynvc_channel(const CHANNELS::ChannelDef */* rdpdr_channel*/,
+                                     InStream & chunk, size_t length, uint32_t flags) {
+        // if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+        //     if (bool(this->verbose & (RDPVerbose::drdynvc | RDPVerbose::drdynvc_dump))) {
+
+        //         LOG(LOG_INFO,
+        //             "mod_rdp::send_to_mod_drdynvc_channel: recv from Client, "
+        //                 "send Chunked Virtual Channel Data transparently.");
+        //     }
+
+        //     if (bool(this->verbose & RDPVerbose::drdynvc_dump)) {
+        //         const bool send              = false;
+        //         const bool from_or_to_client = false;
+        //         uint32_t total_length = length;
+        //         if (total_length > CHANNELS::CHANNEL_CHUNK_LENGTH) {
+        //             total_length = chunk.get_capacity() - chunk.get_offset();
+        //         }
+        //         ::msgdump_d(send, from_or_to_client, length, flags,
+        //         chunk.get_data(), total_length);
+
+        //         rdpdr::streamLog(chunk, this->rdpdrLogStatus);
+        //     }
+        // }
+
+        // this->send_to_channel(*rdpdr_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
+        // return;
+
+
+        DynamicChannelVirtualChannel& channel = this->get_dynamic_channel_virtual_channel();
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
@@ -3652,6 +3730,9 @@ public:
             }
             else if (mod_channel.name == channel_names::rdpdr) {
                 this->process_rdpdr_event(mod_channel, sec.payload, length, flags, chunk_size);
+            }
+            else if (mod_channel.name == channel_names::drdynvc) {
+                this->process_drdynvc_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else {
                 if (mod_channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
@@ -7465,9 +7546,9 @@ private:
                 if (this->remote_program) {
                     infoPacket.flags |= INFO_RAIL;
 
-                    //if (this->remote_program_enhanced) {
+                    // if (this->remote_program_enhanced) {
                     //    infoPacket.flags |= INFO_HIDEF_RAIL_SUPPORTED;
-                    //}
+                    // }
                 }
 
                 infoPacket.emit(stream);
@@ -7680,6 +7761,50 @@ private:
         }
 
         FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel();
+
+        std::unique_ptr<AsynchronousTask> out_asynchronous_task;
+
+        channel.process_server_message(length, flags, stream.get_current(), chunk_size,
+            out_asynchronous_task);
+
+        if (out_asynchronous_task) {
+            if (this->asynchronous_tasks.empty()) {
+                this->asynchronous_task_event.full_reset();
+
+                out_asynchronous_task->configure_wait_object(this->asynchronous_task_event);
+            }
+
+            this->asynchronous_tasks.push_back(std::move(out_asynchronous_task));
+        }
+    }
+
+    void process_drdynvc_event(const CHANNELS::ChannelDef &,
+            InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
+        // if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+        //     if (bool(this->verbose & (RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump))) {
+
+        //         LOG(LOG_INFO,
+        //             "mod_rdp::process_drdynvc_event: sending to Client, "
+        //                 "send Chunked Virtual Channel Data transparently.");
+        //     }
+
+        //     if (bool(this->verbose & RDPVerbose::rdpdr_dump)) {
+        //         const bool send              = false;
+        //         const bool from_or_to_client = false;
+
+        //         ::msgdump_d(send, from_or_to_client, length, flags,
+        //             stream.get_data()+8, chunk_size);
+
+        //         rdpdr::streamLog(stream, this->rdpdrLogStatus);
+        //     }
+        // }
+
+        // this->send_to_front_channel(
+        //     channel_names::rdpdr, stream.get_current(), length, chunk_size, flags);
+        // return;
+
+
+        DynamicChannelVirtualChannel& channel = this->get_dynamic_channel_virtual_channel();
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 

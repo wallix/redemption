@@ -456,12 +456,20 @@ struct DecryptContext
         if (EVP_DecryptInit_ex(this->cctx.get_ctx(), nullptr, nullptr, nullptr, nullptr) != 1
          || EVP_DecryptUpdate(this->cctx.get_ctx(), dst_buf, &written, src_buf, src_sz) != 1
          || EVP_DecryptFinal_ex(this->cctx.get_ctx(), dst_buf + written, &trail) != 1){
-            LOG(LOG_ERR, "DecryptContext::decrypt");
+            if (this->enable_log_decrypt) {
+                LOG(LOG_ERR, "DecryptContext::decrypt");
+            }
             throw Error(ERR_SSL_CALL_FAILED);
         }
         return size_t(written + trail);
     }
 
+    void disable_log_decrypt(bool disable = true) noexcept
+    {
+        this->enable_log_decrypt = !disable;
+    }
+
 private:
     CipherContext cctx;
+    bool enable_log_decrypt = true;
 };

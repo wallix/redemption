@@ -26,6 +26,7 @@
 #include "utils/log.hpp"
 
 #include "main/scytale.hpp"
+#include "transport/crypto_transport.hpp"
 #include <string>
 
 extern "C" {
@@ -129,15 +130,6 @@ RED_AUTO_TEST_CASE(Testscytale)
     RED_CHECK_EQ(::unlink(hash_finalname), 0);
 }
 
-RED_AUTO_TEST_CASE(TestscytaleAutoDetectScheme)
-{
-    char const * finalname = FIXTURES_PATH "/verifier/recorded/cgrosjean@10.10.43.13,proxyuser@local@win2008,20161025-213153,wab-4-2-4.yourdomain,3243.mwrm";
-    auto handle = scytale_reader_new(finalname, &hmac_fn, &trace_fn, 0, 0);
-    RED_CHECK_NE(handle, nullptr);
-    RED_CHECK_EQ(scytale_reader_detect_and_set_encryption_scheme(handle, finalname), 1);
-    scytale_reader_delete(handle);
-}
-
 RED_AUTO_TEST_CASE(TestscytaleWriteUseRandom)
 {
     const char * finalname = "encrypted.txt";
@@ -201,6 +193,51 @@ RED_AUTO_TEST_CASE(TestscytaleWriteUseRandom)
 
     RED_CHECK_EQ(::unlink(finalname), 0);
     RED_CHECK_EQ(::unlink(hash_finalname), 0);
+}
+
+RED_AUTO_TEST_CASE(TestscytaleReaderOpenAutoDetectScheme)
+{
+    auto hmac_2016_fn = [](uint8_t * buffer) {
+        uint8_t hmac_key[32] = {
+            0x56 , 0xdd , 0xb2 , 0x92 , 0x47 , 0xbe , 0x4b , 0x89 ,
+            0x1f , 0x12 , 0x62 , 0x39 , 0x0f , 0x10 , 0xb9 , 0x8e ,
+            0xac , 0xff , 0xbc , 0x8a , 0x8f , 0x71 , 0xfb , 0x21 ,
+            0x07 , 0x7d , 0xef , 0x9c , 0xb3 , 0x5f , 0xf9 , 0x7b ,
+        };
+        memcpy(buffer, hmac_key, 32);
+        return 0;
+    };
+
+    auto trace_20161025_fn = [](uint8_t const * /*base*/, int /*len*/, uint8_t * buffer, unsigned /*oldscheme*/) {
+        uint8_t trace_key[32] = {
+            0xa8, 0x6e, 0x1c, 0x63, 0xe1, 0xa6, 0xfd, 0xed,
+            0x2f, 0x73, 0x17, 0xca, 0x97, 0xad, 0x48, 0x07,
+            0x99, 0xf5, 0xcf, 0x84, 0xad, 0x9f, 0x4a, 0x16,
+            0x66, 0x38, 0x09, 0xb7, 0x74, 0xe0, 0x58, 0x34,
+        };
+        memcpy(buffer, trace_key, 32);
+        return 0;
+    };
+
+    char const * derivator =
+        FIXTURES_PATH "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
+        "-192304,wab-4-2-4.yourdomain,5560.mwrm";
+    char const * filename =
+        FIXTURES_PATH "/verifier/recorded/"
+        "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
+        "-192304,wab-4-2-4.yourdomain,5560.mwrm";
+
+    auto handle = scytale_reader_new(derivator, hmac_2016_fn, trace_20161025_fn, 0, 0);
+    RED_CHECK_EQ(
+        scytale_reader_open_with_auto_detect_encryption_scheme(handle, filename, filename),
+        int(EncryptionSchemeTypeResult::OldScheme));
+
+    char buf[20]{};
+    RED_CHECK_EQ(scytale_reader_read(handle, reinterpret_cast<uint8_t*>(buf), sizeof(buf)), 20);
+    RED_CHECK_EQUAL_RANGES(buf, cstr_array_view("800 600\n\n\n/var/wab/r"));
+
+    scytale_reader_close(handle);
+    scytale_reader_delete(handle);
 }
 
 RED_AUTO_TEST_CASE(TestscytaleError)

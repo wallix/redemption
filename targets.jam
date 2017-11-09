@@ -3687,6 +3687,7 @@ test-run tests/transport/test_mwrm_reader :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/transport/test_out_file_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_out_file_transport.cpp

@@ -27,8 +27,6 @@
 #include <linux/limits.h> // PATH_MAX
 #include <sys/types.h>
 
-class InCryptoTransport;
-
 
 enum class WrmVersion : uint8_t
 {
@@ -101,12 +99,12 @@ class LineReader
     char * eof;
     char * eol;
     char * cur;
-    InCryptoTransport & ibuf;
+    InTransport ibuf;
 
     friend class MwrmReader; // for LineReader::read_meta_hash_line()
 
 public:
-    LineReader(InCryptoTransport & reader_buf) noexcept
+    LineReader(InTransport reader_buf) noexcept
     : buf{}
     , eof(buf)
     , eol(buf)
@@ -125,7 +123,7 @@ public:
 
 struct MwrmReader
 {
-    MwrmReader(InCryptoTransport & ibuf) noexcept;
+    MwrmReader(InTransport ibuf) noexcept;
 
     void read_meta_headers();
 
@@ -148,5 +146,6 @@ private:
 
     Transport::Read read_meta_line_v1(MetaLine & meta_line);
 
-    Transport::Read read_meta_line_v2(MetaLine & meta_line, bool has_start_and_stop_time);
+    enum class FileType : bool { Hash, Mwrm };
+    Transport::Read read_meta_line_v2(MetaLine & meta_line, FileType);
 };

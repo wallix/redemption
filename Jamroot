@@ -19,6 +19,8 @@ constant GCOV :
     <variant>coverage:<cxxflags>--profile-arcs
     <variant>coverage:<cxxflags>--test-coverage
     <variant>coverage:<cxxflags>--coverage
+    <variant>coverage:<cxxflags>-pg
+    <variant>coverage:<linkflags>-pg
     #<variant>coverage:<link>shared
     <variant>coverage:<library>gcov
 ;
@@ -37,9 +39,9 @@ project redemption
 
     $(CXXFLAGS)
 
-#    <cxxflags>-fpie
+    # <cxxflags>-fpie
     <cxxflags>-fPIC
-    <variant>san:<cxxflags>-frtti # undefined reference to `typeinfo`.
+    <variant>san:<cxxflags>-frtti # fix undefined reference to `typeinfo`.
 
     $(REDEMPTION_CXXFLAGS)
 

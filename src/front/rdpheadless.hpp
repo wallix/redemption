@@ -20,64 +20,62 @@
 
 
 #pragma once
+#include "configs/config.hpp"
 
-
-#include <chrono>
-#include <stdio.h>
-#include <openssl/ssl.h>
-#include <iostream>
-#include <stdint.h>
-#include "transport/socket_transport.hpp"
-#include "mod/rdp/rdp.hpp"
-#include "mod/vnc/vnc.hpp"
-
-#include "core/RDP/caches/brushcache.hpp"
-#include "core/RDP/capabilities/colcache.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
-#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
-
-#include <algorithm>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <memory>
-
-#include "core/RDP/pointer.hpp"
-#include "core/RDP/clipboard.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
-#include "core/front_api.hpp"
-#include "core/channel_list.hpp"
-#include "utils/bitmap.hpp"
+#include "core/RDP/bitmapupdate.hpp"
+#include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
-#include "core/RDP/bitmapupdate.hpp"
-#include "keyboard/keymap2.hpp"
+#include "core/RDP/capabilities/colcache.hpp"
+#include "core/RDP/clipboard.hpp"
+#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "core/RDP/pointer.hpp"
+
+#include "core/channel_list.hpp"
 #include "core/client_info.hpp"
-#include "utils/word_identification.hpp"
-#include "utils/netutils.hpp"
+#include "core/front_api.hpp"
+
+#include "keyboard/keymap2.hpp"
+#include "mod/rdp/rdp.hpp"
+#include "mod/vnc/vnc.hpp"
 #include "test_only/lcg_random.hpp"
+#include "transport/socket_transport.hpp"
 
+#include "utils/bitmap.hpp"
+#include "utils/netutils.hpp"
+#include "utils/word_identification.hpp"
 
+#include "openssl_tls.hpp"
 
+#include <algorithm>
+#include <chrono>
+#include <cstdint>
+#include <cstdio>
+#include <fstream>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
 
 class RDPHeadlessFront : public FrontAPI
 {
@@ -483,9 +481,9 @@ public:
           , ARBITRARY_SCALE(40)
         {}
 
-        void add_format(uint32_t ID, const std::string & name) {
+        void add_format(uint32_t ID, std::string name) {
             IDs[index]   = ID;
-            names[index] = name;
+            names[index] = std::move(name);
             index++;
         }
     }                           _clipbrd_formats_list;
@@ -538,7 +536,7 @@ public:
 
     NullAuthentifier authentifier;
 
-    SocketTransport * socket;
+    SocketTransport * socket = nullptr;
 
 
 
@@ -625,8 +623,8 @@ public:
     }
 
     ~RDPHeadlessFront() {
-        delete (this->socket);
-        delete (this->_callback);
+        delete this->socket;
+        delete this->_callback;
     }
 
     void record_connection_nego_times() {

@@ -48,6 +48,7 @@
 #include "utils/d3des.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/log.hpp"
+#include "utils/sugar/make_unique.hpp"
 #include "utils/sugar/update_lock.hpp"
 #include "utils/sugar/strutils.hpp"
 #include "utils/utf.hpp"
@@ -56,7 +57,7 @@
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
 
-struct mod_vnc : public InternalMod, private NotifyApi
+class mod_vnc : public InternalMod, private NotifyApi
 {
     static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
 
@@ -64,10 +65,10 @@ struct mod_vnc : public InternalMod, private NotifyApi
 
     /* mod data */
     char mod_name[256];
-    int vnc_desktop;
     char username[256];
     char password[256];
 
+public:
     struct Mouse {
         void move(Transport & t, int x, int y) {
             this->x = x;
@@ -116,13 +117,11 @@ struct mod_vnc : public InternalMod, private NotifyApi
 private:
     Transport & t;
 
-public:
     uint16_t width;
     uint16_t height;
     uint8_t  bpp;
     uint8_t  depth;
 
-private:
     uint8_t endianess;
     uint8_t true_color_flag;
 
@@ -154,7 +153,6 @@ private:
     uint32_t to_vnc_clipboard_data_size;
     uint32_t to_vnc_clipboard_data_remaining;
 
-private:
     const bool enable_clipboard_up;   // true clipboard available, false clipboard unavailable
     const bool enable_clipboard_down; // true clipboard available, false clipboard unavailable
 
@@ -185,15 +183,13 @@ public:
         Latin1 = 1
     };
 
-public:
+private:
     std::string encodings;
 
-private:
     int state;
 
     bool allow_authentification_retries;
 
-private:
     bool is_first_membelt = true;
     bool left_ctrl_pressed = false;
 
@@ -249,10 +245,13 @@ public:
                 "Redemption " VERSION, this->theme(), label_text_message, label_text_password,
                 this->font())
     , mod_name{0}
-    , vnc_desktop(0)
     , username{0}
     , password{0}
     , t(t)
+    , width(0)
+    , height(0)
+    , bpp(0)
+    , depth(0)
     , verbose(verbose)
     , keymapSym(static_cast<uint32_t>(verbose))
     , to_vnc_clipboard_data_size(0)
@@ -1224,10 +1223,11 @@ protected:
                     }
 
                     const size_t utf8_data_length =
-                        data_length / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes;
+                        data_length / sizeof(uint16_t) * maximum_length_of_utf8_character_in_bytes + 1;
                     std::unique_ptr<uint8_t[]> utf8_data(new uint8_t[utf8_data_length]);
 
-                    ::UTF16toUTF8(data, data_length, utf8_data.get(),  utf8_data_length);
+                    const auto len = ::UTF16toUTF8(data, data_length, utf8_data.get(),  utf8_data_length);
+                    utf8_data[len] = 0;
 
                     client_cut_text(::char_ptr_cast(utf8_data.get()));
                 }
@@ -1236,10 +1236,11 @@ protected:
                         LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> Latin-1");
                     }
 
-                    const size_t latin1_data_length = data_length / sizeof(uint16_t);
+                    const size_t latin1_data_length = data_length / sizeof(uint16_t) + 1;
                     std::unique_ptr<uint8_t[]> latin1_data(new uint8_t[latin1_data_length]);
 
-                    ::UTF16toLatin1(data, data_length, latin1_data.get(), latin1_data_length);
+                    const auto len = ::UTF16toLatin1(data, data_length, latin1_data.get(), latin1_data_length);
+                    latin1_data[len] = 0;
 
                     client_cut_text(::char_ptr_cast(latin1_data.get()));
                 }
@@ -1250,16 +1251,12 @@ protected:
                         LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> UTF-8");
                     }
 
-                    const size_t utf16_data_length = data_length * sizeof(uint16_t);
-                    std::unique_ptr<uint8_t[]> utf16_data(new uint8_t[utf16_data_length]);
+                    const size_t utf8_data_length = data_length * 2 + 1;
+                    auto utf8_data = std::make_unique<uint8_t[]>(utf8_data_length);
 
-                    const size_t result = ::Latin1toUTF16(data, data_length, utf16_data.get(),
-                        utf16_data_length);
-
-                    const size_t utf8_data_length = data_length * maximum_length_of_utf8_character_in_bytes;
-                    std::unique_ptr<uint8_t[]> utf8_data(new uint8_t[utf8_data_length]);
-
-                    ::UTF16toUTF8(utf16_data.get(), result, utf8_data.get(),  utf8_data_length);
+                    const size_t len = ::Latin1toUTF8(data, data_length, utf8_data.get(),
+                        utf8_data_length);
+                    utf8_data[len] = 0;
 
                     client_cut_text(::char_ptr_cast(utf8_data.get()));
                 }

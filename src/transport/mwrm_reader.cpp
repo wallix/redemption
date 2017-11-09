@@ -104,7 +104,7 @@ namespace
     }
 }
 
-MwrmReader::MwrmReader(InCryptoTransport & ibuf) noexcept
+MwrmReader::MwrmReader(InTransport ibuf) noexcept
 : line_reader(ibuf)
 {
     this->header.version = WrmVersion::v1;
@@ -144,7 +144,7 @@ Transport::Read MwrmReader::read_meta_line(MetaLine & meta_line)
         init_stat_v1(meta_line);
         return this->read_meta_line_v1(meta_line);
     case WrmVersion::v2:
-        return this->read_meta_line_v2(meta_line, true);
+        return this->read_meta_line_v2(meta_line, FileType::Mwrm);
     }
     assert(false);
     throw Error(ERR_TRANSPORT_READ_FAILED);
@@ -167,7 +167,7 @@ void MwrmReader::read_meta_hash_line(MetaLine & meta_line)
         if (is_eof) {
             throw Error(ERR_TRANSPORT_READ_FAILED);
         }
-        r = this->read_meta_line_v2(meta_line, false);
+        r = this->read_meta_line_v2(meta_line, FileType::Hash);
         break;
     }
 
@@ -178,41 +178,46 @@ void MwrmReader::read_meta_hash_line(MetaLine & meta_line)
 
 Transport::Read MwrmReader::read_meta_hash_line_v1(MetaLine & meta_line)
 {
-    if (Transport::Read::Eof == this->line_reader.next_line()) {
-        return Transport::Read::Eof;
-    }
+    // don't use line_reader.next_line() because '\n' is a valid hash character :/
+    auto line_buf = [this]{
+        auto * const buf = std::begin(this->line_reader.buf);
+        auto * first = buf;
+        auto * last = std::end(this->line_reader.buf);
+        do { // read and append to buffer
+            size_t ret = this->line_reader.ibuf.partial_read(first, last-first);
+            if (ret == 0) {
+                break;
+            }
+            first += ret;
+        } while (first != last);
+        return make_array_view(buf, first);
+    }();
 
     meta_line.with_hash = true;
 
-    // Filename HASH_64_BYTES
+    // Filename HASH_64_BINARY_BYTES
     //         ^
     //         |
     //     separator
 
-    auto line_buf = this->line_reader.get_buf();
+    constexpr std::size_t hash_size = 32u;
+    constexpr std::size_t size_after_filename = hash_size * 2 + 1;
 
-    typedef std::reverse_iterator<char*> reverse_iterator;
-    reverse_iterator last(line_buf.begin());
-    reverse_iterator first(line_buf.end());
-    reverse_iterator phash = std::find(first, last, ' ');
+    static_assert(hash_size == sizeof(meta_line.hash1), "");
+    static_assert(hash_size == sizeof(meta_line.hash2), "");
 
-    if (phash - first != 65) {
+    if (line_buf.size() <= size_after_filename) {
+        throw Error(ERR_TRANSPORT_READ_FAILED);
+    }
+    if (line_buf.size() - size_after_filename >= sizeof(meta_line.filename)-1) {
         throw Error(ERR_TRANSPORT_READ_FAILED);
     }
 
-    int err = 0;
-    char * p = phash.base();
-    memcpy(meta_line.hash1, p, sizeof(meta_line.hash1));
-    p += 32;
-    memcpy(meta_line.hash2, p, sizeof(meta_line.hash2));
-    p += 32;
-    if (err || *p != '\n') {
-        throw Error(ERR_TRANSPORT_READ_FAILED);
-    }
-
-    auto const path_len = std::min(size_t(p - line_buf.begin()), sizeof(meta_line.filename)-1);
+    auto const path_len = line_buf.size() - size_after_filename;
     memcpy(meta_line.filename, line_buf.begin(), path_len);
     meta_line.filename[path_len] = 0;
+    memcpy(meta_line.hash1, line_buf.end() - 64, sizeof(meta_line.hash1));
+    memcpy(meta_line.hash2, line_buf.end() - 32, sizeof(meta_line.hash1));
 
     return Transport::Read::Ok;
 }
@@ -297,7 +302,7 @@ Transport::Read MwrmReader::read_meta_line_v1(MetaLine & meta_line)
     return Transport::Read::Ok;
 }
 
-Transport::Read MwrmReader::read_meta_line_v2(MetaLine & meta_line, bool has_start_and_stop_time)
+Transport::Read MwrmReader::read_meta_line_v2(MetaLine & meta_line, FileType file_type)
 {
     if (Transport::Read::Eof == this->line_reader.next_line()) {
         return Transport::Read::Eof;
@@ -336,7 +341,7 @@ Transport::Read MwrmReader::read_meta_line_v2(MetaLine & meta_line, bool has_sta
     err |= (*pend != ' '); pline = pend; meta_line.mtime      = strtoll (pline, &pend, 10);
     err |= (*pend != ' '); pline = pend; meta_line.ctime      = strtoll (pline, &pend, 10);
 
-    if (has_start_and_stop_time) {
+    if (file_type == FileType::Mwrm) {
         err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
         err |= (*pend != ' '); pline = pend; meta_line.stop_time  = strtoll (pline, &pend, 10);
     }
@@ -345,8 +350,10 @@ Transport::Read MwrmReader::read_meta_line_v2(MetaLine & meta_line, bool has_sta
         meta_line.stop_time  = 0;
     }
 
-    meta_line.with_hash = this->header.has_checksum;
-    if (this->header.has_checksum) {
+    meta_line.with_hash = (file_type == FileType::Mwrm)
+      ? this->header.has_checksum
+      : (this->header.has_checksum || (*pend != '\n' && *pend != '\0'));
+    if (meta_line.with_hash) {
         // ' ' hash ' ' hash '\n'
         err |= line_buf.size() - (pend - line) != (sizeof(meta_line.hash1) + sizeof(meta_line.hash2)) * 2 + 3;
         if (!err)
