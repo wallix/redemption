@@ -233,7 +233,7 @@
 //     If a client supports compression package n then it MUST support packages
 //     0...(n - 1).
 
-enum {
+enum InfoPacketFlags {
     INFO_MOUSE                = 0x00000001,
     INFO_DISABLECTRLALTDEL    = 0x00000002,
     INFO_AUTOLOGON            = 0x00000008,
