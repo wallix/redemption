@@ -58,6 +58,8 @@ namespace dump2008_PatBlt {
 
 
 
+class EventList;
+
 inline int run_mod(mod_api * mod, RDPHeadlessFront & front, int sck, EventList & /*al*/, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test) {
     const timeval time_stop = addusectimeval(time_out_response, tvtime());
     const timeval time_mark = { 0, 50000 };
