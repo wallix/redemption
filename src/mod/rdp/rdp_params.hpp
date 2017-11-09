@@ -205,9 +205,7 @@ struct ModRDPParams {
         , server_auto_reconnect_packet_ref(server_auto_reconnect_packet_ref)
         , close_box_extra_message_ref(close_box_extra_message_ref)
         , verbose(verbose)
-    {
-        LOG(LOG_INFO, "target_password = %s", this->target_password);
-    }
+    {}
 
     void log() const
     {

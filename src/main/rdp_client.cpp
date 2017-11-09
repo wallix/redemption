@@ -45,7 +45,7 @@ int main(int argc, char** argv)
 {
     RedirectionInfo redir_info;
     uint64_t verbose = 0;
-    std::string target_device = "10.10.47.205";
+    std::string target_device;
     int target_port = 3389;
     int nbretry = 3;
     int retry_delai_ms = 1000;
@@ -54,8 +54,8 @@ int main(int argc, char** argv)
     unsigned max_time_ms = 5u * inactivity_time_ms;
     std::string screen_output;
 
-    std::string username = "administrateur";
-    std::string password = "SecureLinux";
+    std::string username;
+    std::string password;
     ClientInfo client_info;
 
     client_info.width = 800;
