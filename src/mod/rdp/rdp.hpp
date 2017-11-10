@@ -833,6 +833,8 @@ protected:
 
     ModRdpVariables vars;
 
+    InfoPacketFlags info_packet_extra_flags;
+
 public:
     using Verbose = RDPVerbose;
 
@@ -1004,6 +1006,7 @@ public:
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
         , load_balance_info(mod_rdp_params.load_balance_info)
         , vars(vars)
+        , info_packet_extra_flags(info.has_sound_code ? INFO_REMOTECONSOLEAUDIO : InfoPacketFlags{})
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -7477,6 +7480,7 @@ private:
                              , this->clientAddr
                              );
         infoPacket.extendedInfoPacket.clientTimeZone = this->client_time_zone;
+        infoPacket.flags |= this->info_packet_extra_flags;
 
         InStream in_s(this->server_auto_reconnect_packet_ref.data(),
             this->server_auto_reconnect_packet_ref.size());

@@ -77,14 +77,14 @@ lib libunit_test :
     $(SYSTEM_SRC_PATH)/system/test_framework.cpp
 :
     <link>shared
-    <cxxflags>-frtti
+    # <cxxflags>-frtti
 ;
 
 constant TEST_DEPENDENCIES :
     <library>libunit_test
     <library>log_test.o
     <include>$(REDEMPTION_TEST_PATH)/includes
-    <cxxflags>-frtti
+    # <cxxflags>-frtti
     <define>BOOST_AUTO_TEST_MAIN
     <define>BOOST_TEST_DYN_LINK
     <define>REDEMPTION_DECL_LOG_TEST
