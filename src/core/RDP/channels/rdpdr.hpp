@@ -751,7 +751,7 @@ public:
         LOG(LOG_INFO, "          * DeviceId         = 0x%08x (4 bytes)", this->DeviceId_);
         LOG(LOG_INFO, "          * DeviceName       = \"%.*s\" (8 bytes)", 8, this->PreferredDosName_);
         LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->device_data.sz));
-        LOG(LOG_INFO, "          * DeviceData       = \"%.*s\" (%d byte(s))", int(this->device_data.sz), this->device_data.p, int(2*this->device_data.sz));
+        //LOG(LOG_INFO, "          * DeviceData       = \"%.*s\" (%d byte(s))", int(this->device_data.sz), this->device_data.p, int(2*this->device_data.sz));
     }
 };  // DeviceAnnounceHeader
 
@@ -905,7 +905,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
 
     DeviceAnnounceHeaderPrinterSpecificData(RDPDR_DTYP DeviceType,
                                             uint32_t DeviceId,
-                                            const char * PreferredDosName,
+                                            char * PreferredDosName,
                                             size_t DeviceDataLength,
                                             uint32_t Flags,
                                             uint32_t CodePage,
@@ -931,7 +931,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
     {
         memcpy(
             this->PreferredDosName, PreferredDosName,
-            strnlen(PreferredDosName, sizeof(this->PreferredDosName)-1));
+            sizeof(PreferredDosName));
     }
 
     void emit(OutStream & stream) const {
@@ -945,9 +945,9 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
         stream.out_uint32_le(this->DriverNameLen);
         stream.out_uint32_le(this->PrintNameLen);
         stream.out_uint32_le(this->CachedFieldsLen);
-        stream.out_copy_bytes(this->PnPName, this->PnPNameLen);
-        stream.out_copy_bytes(this->DriverName, this->DriverNameLen);
-        stream.out_copy_bytes(this->PrinterName, this->PrintNameLen);
+        stream.out_copy_bytes(reinterpret_cast<uint8_t *>(this->PnPName), this->PnPNameLen);
+        stream.out_copy_bytes(reinterpret_cast<uint8_t *>(this->DriverName), this->DriverNameLen);
+        stream.out_copy_bytes(reinterpret_cast<uint8_t *>(this->PrinterName), this->PrintNameLen);
     }
 
     void receive(InStream & stream) {

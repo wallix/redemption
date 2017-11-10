@@ -701,7 +701,6 @@ public:
                 tmp = tmp.substr(pos+1, tmp.length());
                 pos = tmp.find("/");
             }
-
             size_t size(tmp.size());
             if (size > 7) {
                 size = 7;
@@ -710,20 +709,24 @@ public:
             for (size_t i = 0; i < size; i++) {
                 this->fileSystemData.devices[0].name[i] = tmp.data()[i];
             }
-
             this->fileSystemData.devices[0].ID = 1;
             this->fileSystemData.devices[0].type = rdpdr::RDPDR_DTYP_FILESYSTEM;
 
-//             this->fileSystemData.devices[1].ID = 2;
-//             this->fileSystemData.devices[1].type = rdpdr::RDPDR_DTYP_PRINT;
+
 //             std::string name_printer("printer");
 //             const char * char_name_printer = name_printer.c_str();
-//
+//             size = name_printer.size();
+//             if (size > 7) {
+//                 size = 7;
+//             }
 //             for (size_t i = 0; i < size; i++) {
 //                 this->fileSystemData.devices[1].name[i] = char_name_printer[i];
 //             }
-//
-//             this->fileSystemData.devicesCount++;
+//             this->fileSystemData.devices[1].ID = 2;
+//             this->fileSystemData.devices[1].type = rdpdr::RDPDR_DTYP_PRINT;
+
+
+            this->fileSystemData.devicesCount = 1;
 
             CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
                                                  , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
@@ -760,20 +763,20 @@ public:
             this->cl.push_back(channel_rdpdr);
         }
 
-        CHANNELS::ChannelDef channel_WabDiag { channel_names::wabdiag
-                                             , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                               GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
-                                             , CHANID_WABDIAG
-                                             };
+//         CHANNELS::ChannelDef channel_WabDiag { channel_names::wabdiag
+//                                              , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+//                                                GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
+//                                              , CHANID_WABDIAG
+//                                              };
 //         this->cl.push_back(channel_WabDiag);
 
         if (modRDPParamsData.enable_sound) {
             CHANNELS::ChannelDef channel_audio_output{ channel_names::rdpsnd
-                                                    , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                                    GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                                    GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                                    , CHANID_RDPSND
-                                                    };
+                                                     , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                                       GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                                       GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                                     , CHANID_RDPSND
+                                                     };
             this->cl.push_back(channel_audio_output);
         }
 
@@ -1263,7 +1266,7 @@ public:
                         }
 
                         {
-                        StaticOutStream<128> out_stream;
+                        StaticOutStream<256> out_stream;
                         rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
                                                         , rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE);
                         sharedHeader.emit(out_stream);
@@ -1275,16 +1278,24 @@ public:
 
                             if (this->fileSystemData.devices[i].type == rdpdr::RDPDR_DTYP_PRINT) {
 
-//                                     rdpdr::DeviceAnnounceHeaderPrinterSpecificData dahp(
-//                                                     this->fileSystemData.devices[i].type
-//                                                   , this->fileSystemData.devices[i].ID
-//                                                   , this->fileSystemData.devices[i].name
-//                                                   , rdpdr::RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII |
+                                    char * printName = "Imprimer\0";
 
-//                                                   ,
-//                                       );
-//                                     dahp.emit(out_stream);
-
+                                     rdpdr::DeviceAnnounceHeaderPrinterSpecificData dahp(
+                                                    this->fileSystemData.devices[i].type
+                                                  , this->fileSystemData.devices[i].ID
+                                                  , this->fileSystemData.devices[i].name
+                                                  , 0
+                                                  , rdpdr::RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII
+                                                  , 0
+                                                  , 4       // PnPNameLen
+                                                  , 2       // DriverNameLen
+                                                  , sizeof(printName)  // PrintNameLen
+                                                  , 0       // CachedFieldsLen
+                                                  , "\x00\x61\x00\x00" // nPName
+                                                  , "\x61\x00"   // DriverName
+                                                  , printName // PrintName
+                                      );
+                                     dahp.emit(out_stream);
                             } else {
 
                                 rdpdr::DeviceAnnounceHeader dah( this->fileSystemData.devices[i].type
