@@ -101,9 +101,9 @@ enum {
    META_CREATEFONTINDIRECT    = 0x02FB,
    META_CREATEBRUSHINDIRECT   = 0x02FC,
    META_CREATEREGION          = 0x06FF
- };
+};
 
- inline static const char * get_RecordType_name(uint32_t RecordType) {
+inline static const char * get_RecordType_name(uint32_t RecordType) {
     switch (RecordType) {
         case META_EOF:                   return "META_EOF";
         case META_REALIZEPALETTE:        return "META_REALIZEPALETTE";
@@ -1098,6 +1098,5 @@ enum : int {
 
             this->bitmapInfoHeader.log();
         }
-
     };
 }

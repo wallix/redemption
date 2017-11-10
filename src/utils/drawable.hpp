@@ -480,6 +480,9 @@ public:
     template<class Op, class... Col>
     void mem_blt(Rect rect, const ConstImageDataView & bmp, const uint16_t srcx, const uint16_t srcy, Op op, Col... c)
     {
+        // TODO implements with ConstImageDataView::Storage::TopToBottom
+        assert(bmp.storage_type() == ConstImageDataView::Storage::BottomToTop && "other is unimplemented");
+
         P dest = this->first_pixel(rect);
         cP src = bmp.data(srcx, bmp.height() - srcy - 1);
         const size_t n = rect.cx * Bpp;
@@ -2175,7 +2178,8 @@ namespace gdi
             drawable.first_pixel(),
             drawable.width(), drawable.height(),
             drawable.rowsize(),
-            MutableImageDataView::BytesPerPixel(drawable.Bpp)
+            MutableImageDataView::BytesPerPixel(drawable.Bpp),
+            MutableImageDataView::Storage::TopToBottom
         };
     }
 
@@ -2185,7 +2189,8 @@ namespace gdi
             drawable.data(),
             drawable.width(), drawable.height(),
             drawable.rowsize(),
-            ConstImageDataView::BytesPerPixel(drawable.Bpp)
+            ConstImageDataView::BytesPerPixel(drawable.Bpp),
+            ConstImageDataView::Storage::TopToBottom
         };
     }
 }

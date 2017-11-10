@@ -1395,7 +1395,7 @@ void rle_decompress(
 {
     (void)src_cy;
     switch (image.bits_per_pixel()) {
-        case 8 : return RLEDecompressorImpl<8>{}.decompress_(image, input, src_cx, size);
+        case 8 : return RLEDecompressorImpl< 8>{}.decompress_(image, input, src_cx, size);
         case 15: return RLEDecompressorImpl<15>{}.decompress_(image, input, src_cx, size);
         case 16: return RLEDecompressorImpl<16>{}.decompress_(image, input, src_cx, size);
         default: return RLEDecompressorImpl<24>{}.decompress_(image, input, src_cx, size);
@@ -1406,7 +1406,7 @@ void rle_decompress(
 void rle_compress(ConstImageDataView const & image, OutStream & outbuffer)
 {
     switch (image.bits_per_pixel()) {
-        case 8 : return RLEDecompressorImpl<8 >{}.compress_(image, outbuffer);
+        case 8 : return RLEDecompressorImpl< 8>{}.compress_(image, outbuffer);
         case 15: return RLEDecompressorImpl<15>{}.compress_(image, outbuffer);
         case 16: return RLEDecompressorImpl<16>{}.compress_(image, outbuffer);
         default: return RLEDecompressorImpl<24>{}.compress_(image, outbuffer);

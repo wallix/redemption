@@ -141,7 +141,8 @@ Bitmap::Bitmap(
             this->cx(),
             this->cy(),
             this->line_size(),
-            ConstImageDataView::BitsPerPixel(this->bpp())
+            ConstImageDataView::BitsPerPixel(this->bpp()),
+            ConstImageDataView::Storage::BottomToTop
         };
 
         if ((session_color_depth == 32) && ((bpp == 24) || (bpp == 32))) {
@@ -290,7 +291,8 @@ void Bitmap::compress(uint8_t session_color_depth, OutStream & outbuffer) const
         this->cx(),
         this->cy(),
         this->line_size(),
-        ConstImageDataView::BitsPerPixel(this->bpp())
+        ConstImageDataView::BitsPerPixel(this->bpp()),
+        ConstImageDataView::Storage::BottomToTop
     };
 
     if ((session_color_depth == 32) && ((this->bpp() == 24) || (this->bpp() == 32))) {
@@ -378,6 +380,7 @@ Bitmap::operator ConstImageDataView() const
         this->cx(), this->cy(),
         this->line_size(),
         ConstImageDataView::BitsPerPixel(this->bpp()),
+        ConstImageDataView::Storage::BottomToTop,
         &this->data_bitmap->palette()
     };
 }
