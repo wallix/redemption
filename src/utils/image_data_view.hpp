@@ -24,6 +24,7 @@
 
 #include "utils/bitfu.hpp"
 
+class BGRPalette;
 
 struct ConstImageDataView
 {
@@ -39,7 +40,8 @@ public:
         uint16_t width,
         uint16_t height,
         size_t rowsize,
-        BytesPerPixel bytes_per_pixel
+        BytesPerPixel bytes_per_pixel,
+        BGRPalette const * palette = nullptr
     ) noexcept
     : data_(data)
     , rowsize_(rowsize)
@@ -47,6 +49,7 @@ public:
     , height_(height)
     , bits_per_pixel_(static_cast<uint8_t>(bytes_per_pixel) * 8)
     , bytes_per_pixel_(static_cast<uint8_t>(bytes_per_pixel))
+    , palette_(palette)
     {}
 
     explicit ConstImageDataView(
@@ -54,7 +57,8 @@ public:
         uint16_t width,
         uint16_t height,
         size_t line_size,
-        BitsPerPixel bits_per_pixel
+        BitsPerPixel bits_per_pixel,
+        BGRPalette const * palette = nullptr
     ) noexcept
     : data_(data)
     , rowsize_(line_size)
@@ -62,6 +66,7 @@ public:
     , height_(height)
     , bits_per_pixel_(static_cast<uint8_t>(bits_per_pixel))
     , bytes_per_pixel_(nbbytes(static_cast<uint8_t>(bits_per_pixel)))
+    , palette_(palette)
     {}
 
     uint8_t const * data() const noexcept  { return this->data_; }
@@ -72,6 +77,7 @@ public:
     size_t size() const noexcept { return this->width_ * this->height_; }
     size_t line_size() const noexcept { return this->rowsize_; }
     size_t pix_len() const noexcept { return this->rowsize_ * this->height_; }
+    BGRPalette const & palette() const noexcept { return *this->palette_; }
 
     const uint8_t * end_data() const noexcept
     { return this->data_ + this->height_ * this->rowsize_; }
@@ -79,8 +85,9 @@ public:
     const uint8_t * data(uint16_t x, uint16_t y) const noexcept
     { return this->data_ + this->offset(x, y); }
 
+
     size_t offset(uint16_t x, uint16_t y) const noexcept
-    { return (y * this->width_ + x) * this->bytes_per_pixel_; }
+    { return y * this->rowsize_ + x * this->bytes_per_pixel_; }
 
 private:
     uint8_t const * data_;
@@ -89,6 +96,7 @@ private:
     uint16_t height_;
     uint8_t bits_per_pixel_;
     uint8_t bytes_per_pixel_;
+    BGRPalette const * palette_;
 };
 
 struct MutableImageDataView : ConstImageDataView
@@ -98,9 +106,10 @@ struct MutableImageDataView : ConstImageDataView
         uint16_t width,
         uint16_t height,
         size_t line_size,
-        BytesPerPixel bytes_per_pixel
+        BytesPerPixel bytes_per_pixel,
+        BGRPalette const * palette = nullptr
     ) noexcept
-    : ConstImageDataView(data, width, height, line_size, bytes_per_pixel)
+    : ConstImageDataView(data, width, height, line_size, bytes_per_pixel, palette)
     {}
 
     explicit MutableImageDataView(
@@ -108,9 +117,10 @@ struct MutableImageDataView : ConstImageDataView
         uint16_t width,
         uint16_t height,
         size_t line_size,
-        BitsPerPixel bits_per_pixel
+        BitsPerPixel bits_per_pixel,
+        BGRPalette const * palette = nullptr
     ) noexcept
-    : ConstImageDataView(data, width, height, line_size, bits_per_pixel)
+    : ConstImageDataView(data, width, height, line_size, bits_per_pixel, palette)
     {}
 
     uint8_t * first_pixel() const noexcept { return const_cast<uint8_t*>(this->data()); }

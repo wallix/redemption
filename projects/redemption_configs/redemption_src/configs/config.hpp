@@ -96,8 +96,6 @@ namespace configs
 
 #include "configs/autogen/enums_func_ini.hpp"
 
-class Inifile;
-
 namespace configs
 {
     template<class T, class U>

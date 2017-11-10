@@ -370,3 +370,14 @@ Bitmap::Bitmap(uint8_t out_bpp, const Bitmap & bmp)
         this->data_bitmap->inc();
     }
 }
+
+Bitmap::operator ConstImageDataView() const
+{
+    return ConstImageDataView{
+        this->data(),
+        this->cx(), this->cy(),
+        this->line_size(),
+        ConstImageDataView::BitsPerPixel(this->bpp()),
+        &this->data_bitmap->palette()
+    };
+}

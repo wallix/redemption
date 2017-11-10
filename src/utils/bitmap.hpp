@@ -29,6 +29,7 @@
 
 #pragma once
 
+#include "utils/image_data_view.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/rect.hpp"
 
@@ -100,6 +101,8 @@ public:
     array_view<uint8_t const> data_compressed() const noexcept;
 
     void compute_sha1(uint8_t (&sig)[SslSha1::DIGEST_LENGTH]) const;
+
+    operator ConstImageDataView() const;
 };
 
 inline void swap(Bitmap & a, Bitmap & b) noexcept

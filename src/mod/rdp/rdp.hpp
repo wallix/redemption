@@ -3365,7 +3365,8 @@ public:
 
                     LIC::NewLicense_Recv lic(sec.payload, this->lic_layer_license_key);
 
-                    // TODO CGR: Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that
+                    // TODO CGR: Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect. 
+                    // Not obvious files is the best choice to do that
                         this->state = MOD_RDP_CONNECTED;
 
                     LOG(LOG_WARNING, "New license not saved");

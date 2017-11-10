@@ -29,7 +29,7 @@
 #include <utility>
 
 
-class Inifile;
+#include <configs/config.hpp>
 
 
 namespace vcfg {
