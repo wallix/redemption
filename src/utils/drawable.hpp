@@ -25,6 +25,7 @@
 #include <utility>
 #include <memory>
 
+#include "utils/log.hpp"
 #include "core/error.hpp"
 #include "utils/image_data_view.hpp"
 #include "utils/colors.hpp"

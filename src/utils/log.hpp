@@ -61,25 +61,33 @@ namespace { namespace compiler_aux_ {
 
 #include <syslog.h>
 
+namespace detail_ {
+    template<class T>
+    struct vlog_wrap
+    {
+        T x;
+        T const & value() const noexcept { return x; }
+    };
+}
+
 // enum type
 template<class T, typename std::enable_if<std::is_enum<T>::value, bool>::type = 1>
-typename std::underlying_type<T>::type
-log_value(T const & e) { return static_cast<typename std::underlying_type<T>::type>(e); }
+detail_::vlog_wrap<typename std::underlying_type<T>::type>
+log_value(T const & e) { return {static_cast<typename std::underlying_type<T>::type>(e)}; }
 
 namespace detail_ {
     // has c_str() member
     template<class T>
     auto log_value(T const & x, int)
     -> typename std::enable_if<
-        std::is_same<char const *, decltype(x.c_str())>::value ||
-        std::is_same<char       *, decltype(x.c_str())>::value,
-        char const *
+        std::is_convertible<decltype(x.c_str()), char const *>::value,
+        vlog_wrap<char const *>
     >::type
-    { return x.c_str(); }
+    { return {x.c_str()}; }
 
     template<class T>
-    T const & log_value(T const & x, char)
-    { return x; }
+    vlog_wrap<T const &> log_value(T const & x, char)
+    { return {x}; }
 }
 
 // not enum type
@@ -94,6 +102,10 @@ namespace {
     {
         char data[n];
     };
+
+    template<std::size_t n>
+    detail_::vlog_wrap<char const*> log_value(redemption_log_s<n> const & x)
+    { return {x.data}; }
 }
 
 template<std::size_t n>
@@ -109,9 +121,6 @@ log_array_02x_format(uint8_t const (&d)[n])
     *p = 0;
     return r;
 }
-
-template<std::size_t n>
-char const * log_value(redemption_log_s<n> const & x) { return x.data; }
 
 #if ! defined(IN_IDE_PARSER) && REDEMPTION_HAS_INCLUDE(<boost/preprocessor/config/config.hpp>)
 # include <boost/preprocessor/config/config.hpp>
@@ -129,7 +138,7 @@ char const * log_value(redemption_log_s<n> const & x) { return x.data; }
 #  include <boost/preprocessor/variadic/to_list.hpp>
 
 #  define REDEMPTION_LOG_VALUE_PARAM_0(elem)
-#  define REDEMPTION_LOG_VALUE_PARAM_1(elem) , log_value(elem)
+#  define REDEMPTION_LOG_VALUE_PARAM_1(elem) , log_value(elem).value()
 
 #  define REDEMPTION_LOG_VALUE_PARAM(r, data, elem) \
     BOOST_PP_CAT(REDEMPTION_LOG_VALUE_PARAM_, BOOST_PP_BOOL(BOOST_PP_GREATER(r, 2)))(elem)
@@ -164,7 +173,7 @@ char const * log_value(redemption_log_s<n> const & x) { return x.data; }
 # endif
 
 # define LOG_REDEMPTION_FORMAT_CHECK(...) ::compiler_aux_::unused_variables(__VA_ARGS__)
-# define REDEMPTION_LOG_VALUE(x) log_value(x)
+# define REDEMPTION_LOG_VALUE(x) log_value(x).value()
 # define LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(...) __VA_ARGS__
 
 #endif

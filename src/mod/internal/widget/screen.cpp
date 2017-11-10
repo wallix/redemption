@@ -23,6 +23,9 @@
 #include "mod/internal/widget/tooltip.hpp"
 #include "gdi/graphic_api.hpp"
 
+#include <cassert>
+
+
 WidgetScreen::WidgetScreen(
     gdi::GraphicApi & drawable, Font const & font,
     NotifyApi * notifier, Theme const & theme
@@ -102,7 +105,7 @@ bool WidgetScreen::next_focus()
         if (!future_focus_w) {
             future_focus_w = this->get_next_focus(nullptr, false);
         }
-        REDASSERT(this->current_focus);
+        assert(this->current_focus);
         this->set_widget_focus(future_focus_w, focus_reason_tabkey);
 
         return true;
@@ -122,7 +125,7 @@ bool WidgetScreen::previous_focus()
         if (!future_focus_w) {
             future_focus_w = this->get_previous_focus(nullptr, false);
         }
-        REDASSERT(this->current_focus);
+        assert(this->current_focus);
         this->set_widget_focus(future_focus_w, focus_reason_backtabkey);
 
         return true;
