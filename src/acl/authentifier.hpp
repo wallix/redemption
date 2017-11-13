@@ -138,7 +138,7 @@ public:
             return 0;
     }
 
-    void start_mod() override
+    void renew_mod() override
     {
         if (this->connected_to_acl){
             if (this->session_log_is_open) {
@@ -156,10 +156,5 @@ public:
             this->buffered_log_params.shrink_to_fit();
             this->session_log_is_open = true;
         }
-    }
-
-    void stop_mod() override
-    {
-        /*do nothing*/
     }
 };

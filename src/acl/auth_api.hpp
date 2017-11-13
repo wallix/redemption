@@ -30,8 +30,7 @@ struct AuthApi : noncopyable
 
     virtual void disconnect_target() = 0;
 
-    virtual void start_mod() = 0;
-    virtual void stop_mod() = 0;
+    virtual void renew_mod() = 0;
 
     virtual ~AuthApi() = default;
 };
@@ -52,9 +51,6 @@ struct NullAuthentifier : AuthApi
     void disconnect_target() override
     {}
 
-    void start_mod() override
-    {}
-
-    void stop_mod() override
+    void renew_mod() override
     {}
 };
