@@ -2168,6 +2168,18 @@ private:
 
         this->default_pointer.initialize(0, 0, 32, 32, pointer_data, pointer_mask);
     }
+
+public:
+    operator ConstImageDataView () const
+    {
+        return ConstImageDataView{
+            this->data(),
+            this->width(), this->height(),
+            this->rowsize(),
+            ConstImageDataView::BytesPerPixel(this->Bpp),
+            ConstImageDataView::Storage::TopToBottom
+        };
+    }
 };
 
 namespace gdi
@@ -2185,12 +2197,6 @@ namespace gdi
 
     inline ConstImageDataView get_image_view(Drawable const & drawable)
     {
-        return ConstImageDataView{
-            drawable.data(),
-            drawable.width(), drawable.height(),
-            drawable.rowsize(),
-            ConstImageDataView::BytesPerPixel(drawable.Bpp),
-            ConstImageDataView::Storage::TopToBottom
-        };
+        return drawable;
     }
 }

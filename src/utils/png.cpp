@@ -199,26 +199,9 @@ void dump_png24(
     // fwrite(this->data, 3, this->width * this->height, fd);
 }
 
-void dump_png24(Transport & trans, Drawable const & drawable, bool bgr)
-{
-    ::dump_png24(
-        trans, drawable.data(),
-        drawable.width(), drawable.height(),
-        drawable.rowsize(),
-        bgr);
-}
-
-void dump_png24(std::FILE * f, Drawable const & drawable, bool bgr)
-{
-    ::dump_png24(
-        f, drawable.data(),
-        drawable.width(), drawable.height(),
-        drawable.rowsize(),
-        bgr);
-}
-
 void dump_png24(Transport & trans, ConstImageDataView const & image_view, bool bgr)
 {
+    // TODO image_view.bytes_per_pixel(); isn't used
     ::dump_png24(
         trans, image_view.data(),
         image_view.width(), image_view.height(),
@@ -228,6 +211,7 @@ void dump_png24(Transport & trans, ConstImageDataView const & image_view, bool b
 
 void dump_png24(std::FILE * f, ConstImageDataView const & image_view, bool bgr)
 {
+    // TODO image_view.bytes_per_pixel(); isn't used
     ::dump_png24(
         f, image_view.data(),
         image_view.width(), image_view.height(),
@@ -235,16 +219,17 @@ void dump_png24(std::FILE * f, ConstImageDataView const & image_view, bool bgr)
         bgr);
 }
 
-void dump_png24(Transport & trans, gdi::ImageFrameApi const & image_frame, bool bgr)
+void dump_png24(const char * filename, ConstImageDataView const & bmp)
 {
-    dump_png24(trans, image_frame.get_image_view(), bgr);
+    if (std::FILE * f = std::fopen(filename, "wb")) {
+        struct F {
+            std::FILE * f;
+            ~F() { std::fclose(f); }
+        };
+        F auto_close{f};
+        dump_png24(f, bmp, true);
+    }
 }
-
-void dump_png24(std::FILE * f, gdi::ImageFrameApi const & image_frame, bool bgr)
-{
-    dump_png24(f, image_frame.get_image_view(), bgr);
-}
-
 
 void read_png24(
     std::FILE * fd, uint8_t * data,
