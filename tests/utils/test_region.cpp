@@ -26,7 +26,7 @@
 #define RED_TEST_MODULE TestSubRegion
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
+// #define LOGNULL
 
 #include "utils/region.hpp"
 

@@ -30,15 +30,16 @@
 inline void dump_png(const char * filename, const Drawable & drawable)
 {
     if (std::FILE * f = std::fopen(filename, "wb")) {
+        // TODO: .rowsize should be line_size
         ::dump_png24(f, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize(), true);
         std::fclose(f);
     }
 }
 
-inline void dump_png(const char * filename, const Bitmap & bmp)
+inline void dump_png(const char * filename, const ConstImageDataView & bmp)
 {
     if (std::FILE * f = std::fopen(filename, "wb")) {
-        dump_png24(f, bmp.data(), bmp.cx(), bmp.cy(), bmp.line_size(), true);
+        dump_png24(f, bmp, true);
         std::fclose(f);
     }
 }

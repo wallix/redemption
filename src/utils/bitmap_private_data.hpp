@@ -126,16 +126,16 @@ public:
     }
 protected:
     uint8_t const * data_palette() const noexcept {
-        //REDASSERT(this->bpp() == 8);
+        //assert(this->bpp() == 8);
         return reinterpret_cast<uint8_t const*>(this) + palette_index;
     }
 public:
     BGRPalette & palette() noexcept {
-        //REDASSERT(this->bpp() == 8);
+        //assert(this->bpp() == 8);
         return reinterpret_cast<BGRPalette &>(reinterpret_cast<uint8_t*>(this)[palette_index]);
     }
     const BGRPalette & palette() const noexcept {
-        //REDASSERT(this->bpp() == 8);
+        //assert(this->bpp() == 8);
         return reinterpret_cast<const BGRPalette &>(reinterpret_cast<const uint8_t*>(this)[palette_index]);
     }
     uint16_t cx() const noexcept {
@@ -154,7 +154,7 @@ public:
         return this->bmp_size_;
     }
     void copy_compressed_buffer(void const * data, size_t n) {
-        REDASSERT(this->compressed_size() == 0);
+        assert(this->compressed_size() == 0);
         uint8_t * p = static_cast<uint8_t*>(aux_::bitmap_data_allocator.alloc(n));
         this->data_compressed_ = static_cast<uint8_t*>(memcpy(p, data, n));
         this->size_compressed_ = n;

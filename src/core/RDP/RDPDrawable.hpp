@@ -50,7 +50,7 @@
 #include "core/RDP/orders/RDPOrdersSecondaryCreateNinegridBitmap.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
-
+#include "utils/bitmap.hpp"
 #include "utils/drawable.hpp"
 
 #include "gdi/graphic_api.hpp"

@@ -22,6 +22,7 @@
 #include "mod/internal/widget/language_button.hpp"
 #include "core/front_api.hpp"
 #include "keyboard/keymap2.hpp"
+#include "utils/log.hpp"
 #include "utils/theme.hpp"
 #include "utils/sugar/splitter.hpp"
 #include "utils/sugar/algostring.hpp"

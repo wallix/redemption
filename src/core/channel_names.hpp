@@ -92,11 +92,6 @@ namespace CHANNELS
         }
     };
 
-    inline char const * log_value(ChannelNameId const & channel_name)
-    {
-        return channel_name.c_str();
-    }
-
     REDEMPTION_OSTREAM(out, ChannelNameId const & channel_name)
     {
         return out << channel_name.c_str();

@@ -141,7 +141,7 @@ exe rdpheadless :
   $(REDEMPTION_SRC_PATH)/main/rdpheadless.cpp
 :
   $(EXE_DEPENDENCIES)
-  <cxxflags>-std=c++14 <include>$(REDEMPTION_TEST_PATH)/includes
+  <include>$(REDEMPTION_TEST_PATH)/includes
   <library>app_path_exe.o
   <library>crypto
   <library>gssapi_krb5
@@ -4156,7 +4156,7 @@ obj src/capture/ocr/extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/extract_
 obj src/capture/ocr/learning.o : $(REDEMPTION_SRC_PATH)/capture/ocr/learning.cc ;
 obj src/capture/ocr/locale/latin_to_cyrillic.o : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp ;
 obj src/capture/ocr/ppocr_extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/ppocr_extract_text.cpp ;
-obj src/capture/params_from_ini.o : $(REDEMPTION_SRC_PATH)/capture/params_from_ini.cpp : <cxxflags>-std=c++14 ;
+obj src/capture/params_from_ini.o : $(REDEMPTION_SRC_PATH)/capture/params_from_ini.cpp ;
 obj src/capture/rdp_ppocr/get_ocr_constants.o : $(REDEMPTION_SRC_PATH)/capture/rdp_ppocr/get_ocr_constants.cpp ;
 obj src/capture/video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.cpp ;
 obj src/capture/video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder.cpp ;
@@ -4221,8 +4221,8 @@ obj src/transport/crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_t
 obj src/transport/mwrm_reader.o : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
 obj src/transport/socket_transport.o : $(REDEMPTION_SRC_PATH)/transport/socket_transport.cpp ;
 obj src/utils/authorization_channels.o : $(REDEMPTION_SRC_PATH)/utils/authorization_channels.cpp ;
-obj src/utils/bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp : <cxxflags>-std=c++14 ;
-obj src/utils/bitmap_from_file.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp : <cxxflags>-std=c++14 ;
+obj src/utils/bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
+obj src/utils/bitmap_from_file.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp ;
 obj src/utils/cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
 obj src/utils/confdescriptor.o : $(REDEMPTION_SRC_PATH)/utils/confdescriptor.cpp ;
 obj src/utils/d3des.o : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;

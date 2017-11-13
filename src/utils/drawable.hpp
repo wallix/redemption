@@ -25,7 +25,9 @@
 #include <utility>
 #include <memory>
 
-#include "utils/bitmap.hpp"
+#include "utils/log.hpp"
+#include "core/error.hpp"
+#include "utils/image_data_view.hpp"
 #include "utils/colors.hpp"
 #include "utils/rect.hpp"
 #include "utils/ellipse.hpp"
@@ -476,13 +478,15 @@ public:
     }
 
     template<class Op, class... Col>
-    void mem_blt(Rect rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy, Op op, Col... c)
+    void mem_blt(Rect rect, const ConstImageDataView & bmp, const uint16_t srcx, const uint16_t srcy, Op op, Col... c)
     {
+        // TODO implements with ConstImageDataView::Storage::TopToBottom
+        assert(bmp.storage_type() == ConstImageDataView::Storage::BottomToTop && "other is unimplemented");
+
         P dest = this->first_pixel(rect);
-        const size_t bmp_Bpp = ::nbbytes(bmp.bpp());
-        cP src = bmp.data() + (bmp.cy() - srcy - 1) * (bmp.bmp_size() / bmp.cy()) + srcx * bmp_Bpp;
+        cP src = bmp.data(srcx, bmp.height() - srcy - 1);
         const size_t n = rect.cx * Bpp;
-        const uint8_t bmp_bpp = bmp.bpp();
+        const uint8_t bmp_bpp = bmp.bits_per_pixel();
         const size_t bmp_line_size = bmp.line_size();
 
         if (bmp_bpp == this->bpp()) {
@@ -494,13 +498,13 @@ public:
         else {
             switch (bmp_bpp) {
                 case 8: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp_Bpp, bmp_line_size, op, typename traits::fromColor8{bmp.palette()}, c...); break;
+                    bmp.bytes_per_pixel(), bmp_line_size, op, typename traits::fromColor8{bmp.palette()}, c...); break;
                 case 15: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp_Bpp, bmp_line_size, op, typename traits::fromColor15{}, c...); break;
+                    bmp.bytes_per_pixel(), bmp_line_size, op, typename traits::fromColor15{}, c...); break;
                 case 16: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp_Bpp, bmp_line_size, op, typename traits::fromColor16{}, c...); break;
+                    bmp.bytes_per_pixel(), bmp_line_size, op, typename traits::fromColor16{}, c...); break;
                 case 24: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp_Bpp, bmp_line_size, op, typename traits::fromColor24{}, c...); break;
+                    bmp.bytes_per_pixel(), bmp_line_size, op, typename traits::fromColor24{}, c...); break;
                 default: ;
             }
         }
@@ -527,7 +531,7 @@ private:
     }
 
 public:
-    void draw_bitmap(Rect rect, const Bitmap & bmp)
+    void draw_bitmap(Rect rect, ConstImageDataView bmp)
     {
         this->mem_blt(rect, bmp, 0, 0, Ops::CopySrc{});
     }
@@ -1153,27 +1157,27 @@ public:
      * a cache (data) and insert a subpart (srcx, srcy) to the local
      * image cache (this->impl().first_pixel()) a the given position (rect).
      */
-    void mem_blt(Rect rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy) {
+    void mem_blt(Rect rect, ConstImageDataView bmp, const uint16_t srcx, const uint16_t srcy) {
         this->mem_blt_op<Ops::CopySrc>(rect, bmp, srcx, srcy);
     }
 
-    void mem_blt_invert(Rect rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy) {
+    void mem_blt_invert(Rect rect, ConstImageDataView bmp, const uint16_t srcx, const uint16_t srcy) {
         this->mem_blt_op<Ops::InvertSrc>(rect, bmp, srcx, srcy);
     }
 
 private:
     template <typename Op, class... Color>
     void mem_blt_op( Rect rect
-                   , const Bitmap & bmp
+                   , const ConstImageDataView & bmp
                    , const uint16_t srcx
                    , const uint16_t srcy
                    , Color... c) {
-        if (bmp.cx() < srcx || bmp.cy() < srcy) {
+        if (bmp.width() < srcx || bmp.height() < srcy) {
             return ;
         }
 
-        const int16_t mincx = std::min<int16_t>(bmp.cx() - srcx, std::min<int16_t>(this->width() - rect.x, rect.cx));
-        const int16_t mincy = std::min<int16_t>(bmp.cy() - srcy, std::min<int16_t>(this->height() - rect.y, rect.cy));
+        const int16_t mincx = std::min<int16_t>(bmp.width() - srcx, std::min<int16_t>(this->width() - rect.x, rect.cx));
+        const int16_t mincy = std::min<int16_t>(bmp.height() - srcy, std::min<int16_t>(this->height() - rect.y, rect.cy));
 
         if (mincx <= 0 || mincy <= 0) {
             return;
@@ -1189,7 +1193,7 @@ private:
 
 public:
     void mem_blt_ex( Rect rect
-                   , const Bitmap & bmp
+                   , const ConstImageDataView & bmp
                    , const uint16_t srcx
                    , const uint16_t srcy
                    , uint8_t rop) {
@@ -1236,12 +1240,12 @@ public:
         }
     }
 
-    void draw_bitmap(Rect rect, const Bitmap & bmp) {
+    void draw_bitmap(Rect rect, const ConstImageDataView & bmp) {
         this->mem_blt_op<Ops::CopySrc>(rect, bmp, 0, 0);
     }
 
     void mem_3_blt( Rect rect
-                  , const Bitmap & bmp
+                  , const ConstImageDataView & bmp
                   , const uint16_t srcx
                   , const uint16_t srcy
                   , uint8_t rop
@@ -2174,7 +2178,8 @@ namespace gdi
             drawable.first_pixel(),
             drawable.width(), drawable.height(),
             drawable.rowsize(),
-            MutableImageDataView::BytesPerPixel(drawable.Bpp)
+            MutableImageDataView::BytesPerPixel(drawable.Bpp),
+            MutableImageDataView::Storage::TopToBottom
         };
     }
 
@@ -2184,7 +2189,8 @@ namespace gdi
             drawable.data(),
             drawable.width(), drawable.height(),
             drawable.rowsize(),
-            ConstImageDataView::BytesPerPixel(drawable.Bpp)
+            ConstImageDataView::BytesPerPixel(drawable.Bpp),
+            ConstImageDataView::Storage::TopToBottom
         };
     }
 }

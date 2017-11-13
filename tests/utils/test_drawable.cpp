@@ -30,6 +30,7 @@
 #include "test_only/check_sig.hpp"
 #include "test_only/dump_png.hpp"
 //include "utils/png.hpp"
+#include "utils/bitmap.hpp"
 #include "utils/drawable.hpp"
 #include "utils/timestamp_tracer.hpp"
 

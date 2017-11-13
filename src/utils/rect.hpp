@@ -25,7 +25,6 @@
 
 #pragma once
 
-#include "utils/log.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
 
 #include <utility>
@@ -33,6 +32,7 @@
 #include <algorithm> // min max
 #include <cstdlib> // abs
 #include <cstdint>
+#include <cassert>
 #include <cstdio> // snprintf
 
 struct Rect {
@@ -147,8 +147,7 @@ struct Rect {
     }
 
     Rect shrink(uint16_t margin) const {
-        REDASSERT((this->cx >= margin * 2) &&
-                  (this->cy >= margin * 2));
+        assert((this->cx >= margin * 2) && (this->cy >= margin * 2));
         return Rect(
             static_cast<int16_t>(this->x + margin),
             static_cast<int16_t>(this->y + margin),
@@ -300,24 +299,18 @@ struct Rect {
         }
         return static_cast<t_region>(res);
     }
-
-private:
-    size_t str(const char* label, char* buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
-            "%s: Rect(%d %d %u %u)",
-            label,
-            this->x, this->y, this->cx, this->cy);
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
-    void log(int level, const char* label) const {
-        char buffer[2048];
-        this->str(label, buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
-    }
 };
+
+inline auto log_value(Rect const & rect)
+{
+    struct {
+        char buffer[128];
+        char const * value() { return buffer; }
+    } d;
+    ::sprintf(d.buffer, "Rect(%d %d %u %u)", rect.x, rect.y, rect.cx, rect.cy);
+    return d;
+}
+
 
 struct Dimension {
     uint16_t w;
@@ -332,24 +325,18 @@ struct Dimension {
         : w(w)
         , h(h)
     {}
-
-private:
-    size_t str(const char* label, char* buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
-            "%s: Dimension(%u %u)",
-            label,
-            static_cast<unsigned>(this->w), static_cast<unsigned>(this->h));
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
-    void log(int level, const char* label) const {
-        char buffer[2048];
-        this->str(label, buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
-    }
 };
+
+inline auto log_value(Dimension const & dim)
+{
+    struct {
+        char buffer[64];
+        char const * value() { return buffer; }
+    } d;
+    ::sprintf(d.buffer, "Dimension(%u %u)", dim.w, dim.h);
+    return d;
+}
+
 
 struct Point {
     int x;
@@ -362,6 +349,17 @@ struct Point {
 
 };
 
+inline auto log_value(Point const & p)
+{
+    struct {
+        char buffer[64];
+        char const * value() { return buffer; }
+    } d;
+    ::sprintf(d.buffer, "Point(%u %u)", p.x, p.y);
+    return d;
+}
+
+
 struct Segment {
     Point a;
     Point b;
@@ -371,6 +369,18 @@ struct Segment {
         , b(b)
     {}
 };
+
+inline auto log_value(Segment const & segment)
+{
+    struct {
+        char buffer[128];
+        char const * value() { return buffer; }
+    } d;
+    ::sprintf(d.buffer, "Segment(Point(%u %u), Point(%u %u))",
+        segment.a.x, segment.a.y, segment.b.x, segment.b.y);
+    return d;
+}
+
 
 struct LineEquation {
     Segment seg;
@@ -471,6 +481,7 @@ struct LineEquation {
     }
 };
 
+
 // helper class used to compute differences between two rectangles
 class DeltaRect {
     public:
@@ -494,3 +505,14 @@ class DeltaRect {
             ;
     }
 };
+
+inline auto log_value(DeltaRect const & delta)
+{
+    struct {
+        char buffer[128];
+        char const * value() { return buffer; }
+    } d;
+    ::sprintf(d.buffer, "DeltaRect(%d %d %d %d)",
+        delta.dleft, delta.dtop, delta.dheight, delta.dwidth);
+    return d;
+}

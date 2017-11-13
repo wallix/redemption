@@ -23,6 +23,7 @@
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/colors.hpp"
 #include "utils/rect.hpp"
+#include "cxx/cxx.hpp"
 
 #include <cassert>
 #include <string>
@@ -212,7 +213,7 @@ inline RDPColor color_encode(const BGRColor color, Depth depth) noexcept
         case Depth::unspecified(): default:;
     }
 
-    REDASSERT(false);
+    REDEMPTION_UNREACHABLE();
     return RDPColor{};
 }
 
@@ -227,7 +228,7 @@ inline BGRColor color_decode(const RDPColor color, ColorCtx color_ctx) noexcept
         case Depth::unspecified(): default:;
     }
 
-    REDASSERT(false);
+    REDEMPTION_UNREACHABLE();
     return BGRColor{0, 0, 0};
 }
 
