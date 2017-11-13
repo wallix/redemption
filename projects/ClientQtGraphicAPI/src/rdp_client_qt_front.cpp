@@ -1276,35 +1276,33 @@ public:
 
                         for (size_t i = 0; i < this->fileSystemData.devicesCount; i++) {
 
-                            if (this->fileSystemData.devices[i].type == rdpdr::RDPDR_DTYP_PRINT) {
+                            rdpdr::DeviceAnnounceHeader dah( this->fileSystemData.devices[i].type
+                                                           , this->fileSystemData.devices[i].ID
+                                                           , this->fileSystemData.devices[i].name
+                                                           , nullptr, 0);
+                            dah.emit(out_stream);
 
-                                    char * printName = "Imprimer\0";
-
-                                     rdpdr::DeviceAnnounceHeaderPrinterSpecificData dahp(
-                                                    this->fileSystemData.devices[i].type
-                                                  , this->fileSystemData.devices[i].ID
-                                                  , this->fileSystemData.devices[i].name
-                                                  , 0
-                                                  , rdpdr::RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII
-                                                  , 0
-                                                  , 4       // PnPNameLen
-                                                  , 2       // DriverNameLen
-                                                  , sizeof(printName)  // PrintNameLen
-                                                  , 0       // CachedFieldsLen
-                                                  , "\x00\x61\x00\x00" // nPName
-                                                  , "\x61\x00"   // DriverName
-                                                  , printName // PrintName
-                                      );
-                                     dahp.emit(out_stream);
-                            } else {
-
-                                rdpdr::DeviceAnnounceHeader dah( this->fileSystemData.devices[i].type
-                                                                , this->fileSystemData.devices[i].ID
-                                                                , this->fileSystemData.devices[i].name
-                                                                , nullptr, 0);
-                                dah.emit(out_stream);
-
-                            }
+//                             if (this->fileSystemData.devices[i].type == rdpdr::RDPDR_DTYP_PRINT) {
+//
+//                                     char * printName = "Imprimer\0";
+//
+//                                     rdpdr::DeviceAnnounceHeaderPrinterSpecificData dahp(
+// //                                                     this->fileSystemData.devices[i].type
+// //                                                   , this->fileSystemData.devices[i].ID
+// //                                                   , this->fileSystemData.devices[i].name
+//                                                     28 + 0 + 4 + 2 + sizeof(printName)
+//                                                   , rdpdr::RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII
+//                                                   , 0
+//                                                   , 4       // PnPNameLen
+//                                                   , 2       // DriverNameLen
+//                                                   , sizeof(printName)  // PrintNameLen
+//                                                   , 0       // CachedFieldsLen
+//                                                   , "\x00\x61\x00\x00" // nPName
+//                                                   , "\x61\x00"   // DriverName
+//                                                   , printName // PrintName
+//                                       );
+//                                      dahp.emit(out_stream);
+//                             }
                         }
 
                         int total_length(out_stream.get_offset());
