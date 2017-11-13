@@ -255,6 +255,9 @@ namespace
     #if defined(LOGNULL)
         compiler_aux_::unused_variables(priority, format, ((void)(args), 1)...);
     #else
+        # if ! BOOST_PP_VARIADICS
+        using ::log_value;
+        #endif
         int const pid = getpid();
         LOG__REDEMPTION__INTERNAL__IMPL(
             priority,
