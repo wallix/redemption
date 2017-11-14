@@ -481,7 +481,7 @@ RED_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
     drawable.draw(cmd, screen_rect, color_cxt);
-    dump_png24(trans, drawable.impl(), true);
+    dump_png24(trans, drawable, true);
 }
 
 RED_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
@@ -500,7 +500,7 @@ RED_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
     drawable.draw(cmd, screen_rect, color_cxt);
-    dump_png24(trans, drawable.impl(), true);
+    dump_png24(trans, drawable, true);
     trans.disconnect(); // close file before checking size
     RED_CHECK_EQUAL(2786, filesize(filename));
     ::unlink(filename);
@@ -515,13 +515,13 @@ RED_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), encode_color24()(RED));
     drawable.draw(cmd, screen_rect, color_cxt);
-    dump_png24(trans, drawable.impl(), true);
+    dump_png24(trans, drawable, true);
 
     RDPOpaqueRect cmd2(Rect(50, 50, 100, 50), encode_color24()(BLUE));
     drawable.draw(cmd2, screen_rect, color_cxt);
     trans.next();
 
-    dump_png24(trans, drawable.impl(), true);
+    dump_png24(trans, drawable, true);
 
     const char * filename;
 
@@ -659,7 +659,7 @@ RED_AUTO_TEST_CASE(TestSmallImage)
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), encode_color24()(BLUE)), scr, color_cxt);
     drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), encode_color24()(WHITE)), scr, color_cxt);
-    dump_png24(trans, drawable.impl(), true);
+    dump_png24(trans, drawable, true);
     const char * filename = trans.seqgen()->get(0);
     RED_CHECK_EQUAL(107, ::filesize(filename));
     ::unlink(filename);
@@ -823,11 +823,9 @@ RED_AUTO_TEST_CASE(TestBogusBitmap)
     Bitmap bogus(24, 24, nullptr, 64, 64, stream.get_data(), stream.get_offset(), true);
     drawable.draw(RDPMemBlt(0, Rect(300, 100, bogus.cx(), bogus.cy()), 0xCC, 0, 0, 0), scr, bogus);
 
-//     FILE * f = fopen("/tmp/test_bmp.png", "wb");
-//     dump_png24(f, drawable.data(), drawable.width(), drawable.height(), drawable.rowsize(), true);
-//     fclose(f);
+//     dump_png24("/tmp/test_bmp.png", drawable, true);
 
-    dump_png24(trans, drawable.impl(), true);
+    dump_png24(trans, drawable, true);
     const char * filename = trans.seqgen()->get(0);
     RED_CHECK_EQUAL(4094, ::filesize(filename));
     ::unlink(filename);
@@ -877,7 +875,7 @@ RED_AUTO_TEST_CASE(TestBogusBitmap2)
     Bitmap bloc32x1(16, 16, nullptr, 32, 1, source32x1, sizeof(source32x1)-1, true);
     drawable.draw(RDPMemBlt(0, Rect(100, 100, bloc32x1.cx(), bloc32x1.cy()), 0xCC, 0, 0, 0), scr, bloc32x1);
 
-    dump_png24(trans, drawable.impl(), true);
+    dump_png24(trans, drawable, true);
     const char * filename = trans.seqgen()->get(0);
     RED_CHECK_EQUAL(2913, ::filesize(filename));
     ::unlink(filename);
