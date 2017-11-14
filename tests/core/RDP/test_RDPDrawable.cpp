@@ -46,15 +46,9 @@
 #include "utils/fileutils.hpp"
 #include "utils/timestamp_tracer.hpp"
 
-inline void dump_png(const char * prefix, const Drawable & data)
-{
-    char tmpname[128];
-    sprintf(tmpname, "%sXXXXXX.png", prefix);
-    int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
-    FILE * f = fdopen(fd, "wb");
-    ::dump_png24(f, data.data(), data.width(), data.height(), data.rowsize(), true);
-    ::fclose(f);
-}
+// #define STRINGIFY_I(x) #x
+// #define STRINGIFY(x) STRINGIFY_I(x)
+// #define DUMP_PNG(prefix, data) dump_png24(prefix STRINGIFY(__LINE__) ".png", data, true)
 
 inline void server_add_char( GlyphCache & gly_cache, uint8_t cacheId, uint16_t cacheIndex
                     , int16_t offset, int16_t baseline
@@ -163,7 +157,7 @@ RED_AUTO_TEST_CASE(TestDrawGlyphIndex)
     RED_CHECK_SIG(gd, "\xd8\xf7\x6e\xf5\xd1\xe6\x4a\x05\x56\x0a\x21\x42\xa4\x27\x73\x5a\xce\x67\xf6\xb3");
 
     // uncomment to see result in png file
-    //dump_png("test_glyph_000_", gd.impl());
+    //DUMP_PNG("test_glyph_000_", gd);
 }
 
 RED_AUTO_TEST_CASE(TestPolyline)
@@ -209,7 +203,7 @@ RED_AUTO_TEST_CASE(TestPolyline)
     RED_CHECK_SIG(gd, "\x32\x60\x8b\x02\xb9\xa2\x83\x27\x0f\xa9\x67\xef\x3c\x2e\xa0\x25\x69\x16\x02\x2b");
 
     // uncomment to see result in png file
-    //dump_png("/tmp/test_polyline_000_", gd.impl());
+    //DUMP_PNG("/tmp/test_polyline_000_", gd);
 }
 
 RED_AUTO_TEST_CASE(TestMultiDstBlt)
@@ -244,7 +238,7 @@ RED_AUTO_TEST_CASE(TestMultiDstBlt)
     RED_CHECK_SIG(gd, "\x3d\x83\xd7\x7e\x0b\x3e\xf4\xd1\x53\x50\x33\x94\x1e\x11\x46\x9c\x60\x76\xd7\x0a");
 
     // uncomment to see result in png file
-    //dump_png("/tmp/test_multidstblt_000_", gd.impl());
+    //DUMP_PNG("/tmp/test_multidstblt_000_", gd);
 }
 
 RED_AUTO_TEST_CASE(TestMultiOpaqueRect)
@@ -279,7 +273,7 @@ RED_AUTO_TEST_CASE(TestMultiOpaqueRect)
     RED_CHECK_SIG(gd, "\x1d\x52\x8e\x03\x43\xc8\x99\x8d\xeb\x51\xa6\x23\x91\x24\xab\x8c\xa4\xcc\xf0\xc8");
 
     // uncomment to see result in png file
-    //dump_png("/tmp/test_multiopaquerect_000_", gd.impl());
+    //DUMP_PNG("/tmp/test_multiopaquerect_000_", gd);
 }
 
 
@@ -682,13 +676,8 @@ RED_AUTO_TEST_CASE(TestScaleImage)
 
     {
         const char * filename = FIXTURES_PATH "/win2008capture10.png";
-        std::FILE * fd = std::fopen(filename, "r");
         // TODO "Add ability to write image to file or read image from file in RDPDrawable"
-        read_png24(
-            fd, const_cast<uint8_t*>(drawable.data()),
-            drawable.width(), drawable.height(), drawable.rowsize()
-        );
-        std::fclose(fd);
+        read_png24(filename, gdi::get_mutable_image_view(drawable));
     }
 
     // TODO: zooming should be managed by some dedicated Drawable
