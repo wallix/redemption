@@ -132,5 +132,5 @@ struct MutableImageDataView : ConstImageDataView
     : ConstImageDataView(data, width, height, line_size, bits_per_pixel, storage, palette)
     {}
 
-    uint8_t * first_pixel() const noexcept { return const_cast<uint8_t*>(this->data()); }
+    uint8_t * mutable_data() const noexcept { return const_cast<uint8_t*>(this->data()); }
 };

@@ -56,7 +56,7 @@ public:
     , width(image_view.width())
     , height(image_view.height())
     , bpp(image_view.bytes_per_pixel())
-    , pixels(image_view.first_pixel())
+    , pixels(image_view.mutable_data())
     , rowsize(image_view.line_size()) {
         memset(this->timestamp_data, 0xFF, sizeof(this->timestamp_data));
         memset(this->previous_timestamp, 0x07, sizeof(this->previous_timestamp));
