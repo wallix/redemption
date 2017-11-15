@@ -112,8 +112,9 @@ class Qt_ScanCode_KeyMap
 {
 
 
-private:
+public:
     int                                 _verbose;
+private:
     uint8_t                             _keyboardMods;
     const Keylayout_r                 * _keylayout_WORK;
     const Keylayout_r::KeyLayoutMap_t * _layoutMods[9];

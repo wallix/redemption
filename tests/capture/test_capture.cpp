@@ -1959,10 +1959,7 @@ RED_AUTO_TEST_CASE(TestReadPNGFromTransport)
 
     RDPDrawable d(20, 10);
     GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);
-    ::transport_read_png24(
-        in_png_trans, const_cast<uint8_t*>(d.data()),
-        d.width(), d.height(), d.rowsize()
-    );
+    read_png24(in_png_trans, gdi::get_mutable_image_view(d));
     const int groupid = 0;
     OutFilenameSequenceTransport png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid, ReportError{});
     dump_png24(png_trans, d, true);

@@ -439,7 +439,7 @@ RED_AUTO_TEST_CASE(DeviceAnnounceHeaderReceive)
     RED_CHECK_EQUAL(pdu.DeviceId(), 01);
     RED_CHECK_EQUAL(pdu.PreferredDosName(), "SCARD");
     RED_CHECK_EQUAL(pdu.DeviceDataLength(), 0);
-    RED_CHECK_EQUAL(pdu.DeviceData(), "");
+    RED_CHECK_EQUAL(pdu.DeviceData(), nullptr);
 }
 
 RED_AUTO_TEST_CASE(DeviceIORequestEmit)
@@ -601,7 +601,7 @@ RED_AUTO_TEST_CASE(streamLog)
 
     rdpdr::RdpDrStatus status;
 
-    rdpdr::streamLog(in_stream, status);
+    rdpdr::streamLog(in_stream, status, len);
 }
 
 RED_AUTO_TEST_CASE(ServerDriveLockControlRequestEmit)

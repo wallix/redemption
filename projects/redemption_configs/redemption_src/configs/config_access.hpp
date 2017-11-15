@@ -25,11 +25,7 @@
 #include "utils/sugar/underlying_cast.hpp"
 #include "utils/translation.hpp"
 
-// #include <type_traits>
-#include <utility>
-
-
-#include <configs/config.hpp>
+class Inifile;
 
 
 namespace vcfg {
@@ -80,35 +76,30 @@ public:
 
     template<class T>
     typename T::type const & get() const noexcept {
-//         static_assert(std::is_convertible<Pack, T>::value, "T isn't convertible");
         static_assert(has_access<T>(accessmode::get), "T isn't gettable");
         return this->ini.template get<T>();
     }
 
     template<class T, class U>
     void set(U && new_value) {
-//         static_assert(std::is_convertible<Pack, T>::value, "T isn't convertible");
         static_assert(has_access<T>(accessmode::set), "T isn't settable");
-        return this->ini.template set<T>(std::forward<U>(new_value));
+        return this->ini.template set<T>(static_cast<U&&>(new_value));
     }
 
     template<class T, class U>
     void set_acl(U && new_value) {
-//         static_assert(std::is_convertible<Pack, T>::value, "T isn't convertible");
         static_assert(has_access<T>(accessmode::set), "T isn't settable");
-        return this->ini.template set_acl<T>(std::forward<U>(new_value));
+        return this->ini.template set_acl<T>(static_cast<U&&>(new_value));
     }
 
     template<class T>
     void ask() {
-//         static_assert(std::is_convertible<Pack, T>::value, "T isn't convertible");
         static_assert(has_access<T>(accessmode::ask), "T isn't askable");
         return this->ini.template ask<T>();
     }
 
     template<class T>
     bool is_asked() const {
-//         static_assert(std::is_convertible<Pack, T>::value, "T isn't convertible");
         static_assert(has_access<T>(accessmode::is_asked), "T isn't is_askable");
         return this->ini.template is_asked<T>();
     }

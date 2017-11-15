@@ -634,6 +634,7 @@ class Bounds {
 };
 
 
+
 class RDPPrimaryOrderHeader
 {
     public:
