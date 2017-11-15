@@ -459,7 +459,7 @@ private:
             (void)param4;
             if (this->is_disable_by_input
              && keymap->nb_kevent_available() > 0
-             && !(param3 & SlowPath::KBDFLAGS_DOWN)
+//             && !(param3 & SlowPath::KBDFLAGS_DOWN)
              && keymap->top_kevent() == Keymap2::KEVENT_INSERT
             ) {
                 keymap->get_kevent();
@@ -1398,6 +1398,10 @@ public:
                                                                    this->ini.get<cfg::mod_rdp::session_probe_idle_session_limit>();
                 mod_rdp_params.session_probe_exe_or_file           = this->ini.get<cfg::mod_rdp::session_probe_exe_or_file>();
                 mod_rdp_params.session_probe_arguments             = this->ini.get<cfg::mod_rdp::session_probe_arguments>();
+
+                mod_rdp_params.session_probe_clipboard_based_launcher_clipboard_initialization_delay = this->ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay>();
+                mod_rdp_params.session_probe_clipboard_based_launcher_long_delay                     = this->ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay>();
+                mod_rdp_params.session_probe_clipboard_based_launcher_short_delay                    = this->ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay>();
 
                 mod_rdp_params.disable_clipboard_log_syslog        = bool(this->ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
                 mod_rdp_params.disable_clipboard_log_wrm           = bool(this->ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm);

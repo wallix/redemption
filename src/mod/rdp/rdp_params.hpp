@@ -84,6 +84,10 @@ struct ModRDPParams {
     const char *                 session_probe_arguments = "";
     bool                         session_probe_enable_log = false;
 
+    std::chrono::milliseconds    session_probe_clipboard_based_launcher_clipboard_initialization_delay {};
+    std::chrono::milliseconds    session_probe_clipboard_based_launcher_long_delay {};
+    std::chrono::milliseconds    session_probe_clipboard_based_launcher_short_delay {};
+
     bool         enable_transparent_mode = false;
     const char * output_filename = "";
     Transport  * persistent_key_list_transport = nullptr;
@@ -251,6 +255,11 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_idle_session_limit);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_customize_executable_name);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_enable_log);
+
+
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_clipboard_initialization_delay);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_long_delay);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_short_delay);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_syslog);
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_wrm);

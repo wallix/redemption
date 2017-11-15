@@ -137,6 +137,9 @@ namespace cfg {
         struct session_probe_idle_session_limit;
         struct session_probe_exe_or_file;
         struct session_probe_arguments;
+        struct session_probe_clipboard_based_launcher_clipboard_initialization_delay;
+        struct session_probe_clipboard_based_launcher_long_delay;
+        struct session_probe_clipboard_based_launcher_short_delay;
         struct server_cert_store;
         struct server_cert_check;
         struct server_access_allowed_message;
