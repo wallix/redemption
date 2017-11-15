@@ -885,7 +885,8 @@ public:
         this->client_execute.enable_remote_program(this->front.client_info.remote_program);
 
         this->connected = false;
-        if (this->old_target_module != target_module) {
+        bool const is_same_module = (this->old_target_module == target_module);
+        if (!is_same_module) {
             this->front.must_be_stop_capture();
         }
         this->old_target_module = target_module;
@@ -1269,7 +1270,7 @@ public:
                     client_sck,
                     this->ini.get<cfg::debug::mod_xup>(),
                     nullptr,
-                    (this->old_target_module == target_module),
+                    is_same_module,
                     sock_mod_barrier(),
                     this->front,
                     this->front.client_info.width,
@@ -1536,7 +1537,7 @@ public:
                         client_sck,
                         this->ini.get<cfg::debug::mod_rdp>(),
                         &this->ini.get_ref<cfg::context::auth_error_message>(),
-                        (this->old_target_module == target_module),
+                        is_same_module,
                         sock_mod_barrier(),
                         this->front,
                         client_info,
@@ -1649,7 +1650,7 @@ public:
                         client_sck,
                         this->ini.get<cfg::debug::mod_vnc>(),
                         nullptr,
-                        (this->old_target_module == target_module),
+                        is_same_module,
                         sock_mod_barrier(),
                         this->ini.get<cfg::globals::target_user>().c_str(),
                         this->ini.get<cfg::context::target_password>().c_str(),
