@@ -19,6 +19,7 @@
 */
 
 #include "utils/png.hpp"
+#include "cxx/cxx.hpp"
 #include "gdi/graphic_api.hpp"
 #include "transport/transport.hpp"
 #include "utils/drawable.hpp"
@@ -30,8 +31,61 @@
 
 #include <png.h>
 
-namespace detail
+namespace
 {
+    struct File
+    {
+        std::FILE * f;
+
+        File(const char * filename, const char * mode)
+          : f(std::fopen(filename, mode))
+        {}
+
+        operator std::FILE* () noexcept
+        {
+            return f;
+        }
+
+        ~File()
+        {
+            std::fclose(f);
+        }
+    };
+
+    struct PngWriteStruct
+    {
+        png_struct * ppng = nullptr;
+        png_info * pinfo = nullptr;
+
+        PngWriteStruct()
+        {
+            ppng = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+            pinfo = png_create_info_struct(ppng);
+        }
+
+        ~PngWriteStruct()
+        {
+            png_destroy_write_struct(&ppng, &pinfo);
+        }
+    };
+
+    struct PngReadStruct
+    {
+        png_struct * ppng = nullptr;
+        png_info * pinfo = nullptr;
+
+        PngReadStruct()
+        {
+            ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+            pinfo = png_create_info_struct(ppng);
+        }
+
+        ~PngReadStruct()
+        {
+            png_destroy_read_struct(&ppng, &pinfo, nullptr);
+        }
+    };
+
     template<class IsOk>
     static void dump_png24_impl(
         png_struct * ppng, png_info * pinfo,
@@ -85,91 +139,24 @@ namespace detail
         }
     }
 
-    struct PngWriteStruct
+    void read_png24_impl(
+        PngReadStruct & png, uint8_t * data,
+        const size_t width, const size_t height, const size_t rowsize)
     {
-        png_struct * ppng = nullptr;
-        png_info * pinfo = nullptr;
+        png_read_info(png.ppng, png.pinfo);
 
-        PngWriteStruct()
-        {
-            ppng = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-            pinfo = png_create_info_struct(ppng);
+        assert(height == png_get_image_height(png.ppng, png.pinfo));
+        assert(width == png_get_image_width(png.ppng, png.pinfo));
+        assert(width <= rowsize);
+
+        (void)width;
+
+        for (size_t k = 0; k < height; ++k) {
+            png_read_row(png.ppng, data, nullptr);
+            data += rowsize;
         }
 
-        ~PngWriteStruct()
-        {
-            png_destroy_write_struct(&ppng, &pinfo);
-        }
-    };
-
-    struct PngReadStruct
-    {
-        png_struct * ppng = nullptr;
-        png_info * pinfo = nullptr;
-
-        PngReadStruct()
-        {
-            ppng = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-            pinfo = png_create_info_struct(ppng);
-        }
-
-        ~PngReadStruct()
-        {
-            png_destroy_read_struct(&ppng, &pinfo, nullptr);
-        }
-    };
-
-    template<class TransportType>
-    void transport_dump_png24(
-        TransportType & trans, const uint8_t * data,
-        const size_t width, const size_t height, const size_t rowsize,
-        const bool bgr
-    ) {
-        struct NoExceptTransport
-        {
-            TransportType & trans;
-            int         error_id;
-        };
-
-        auto png_write_data = [](png_structp png_ptr, png_bytep data, png_size_t length) noexcept {
-            try {
-                // static_cast<NoExceptTransport*>(png_ptr->io_ptr)->trans.send(data, length);
-                static_cast<NoExceptTransport*>(png_get_io_ptr(png_ptr))->trans.send(data, length);
-            } catch (...) {
-                // static_cast<NoExceptTransport*>(png_ptr->io_ptr)->error_id = -1;
-                static_cast<NoExceptTransport*>(png_get_io_ptr(png_ptr))->error_id = -1;
-                png_error(png_ptr, "Exception in Transport::send");
-            }
-        };
-
-        auto png_flush_data = [](png_structp png_ptr) noexcept {
-            try {
-                // static_cast<NoExceptTransport*>(png_ptr->io_ptr)->trans.flush();
-                static_cast<NoExceptTransport*>(png_get_io_ptr(png_ptr))->trans.flush();
-            } catch (...) {
-                // static_cast<NoExceptTransport*>(png_ptr->io_ptr)->error_id = -1;
-                static_cast<NoExceptTransport*>(png_get_io_ptr(png_ptr))->error_id = -1;
-                png_error(png_ptr, "Exception in Transport::flush");
-            }
-        };
-
-        NoExceptTransport no_except_transport = { trans, 0 };
-
-        PngWriteStruct png;
-        png_set_write_fn(png.ppng, &no_except_transport, png_write_data, png_flush_data);
-
-        detail::dump_png24_impl(
-            png.ppng, png.pinfo, data, width, height, rowsize, bgr,
-            [&]() noexcept { return !no_except_transport.error_id; }
-        );
-
-        if (!no_except_transport.error_id) {
-            png_write_end(png.ppng, png.pinfo);
-            trans.flush();
-        }
-
-        // commented line below it to create row capture
-        // fwrite(this->data, 3, this->width * this->height, fd);
+        png_read_end(png.ppng, png.pinfo);
     }
 }
 
@@ -178,7 +165,49 @@ void dump_png24(
     const size_t width, const size_t height, const size_t rowsize,
     const bool bgr
 ) {
-    detail::transport_dump_png24(trans, data, width, height, rowsize, bgr);
+    struct NoExceptTransport
+    {
+        Transport & trans;
+        bool        has_error;
+
+        static NoExceptTransport& get(png_structp png_ptr) noexcept
+        {
+            return *static_cast<NoExceptTransport*>(png_get_io_ptr(png_ptr));
+        }
+    };
+
+    auto png_write_data = [](png_structp png_ptr, png_bytep data, png_size_t length) noexcept {
+        try {
+            NoExceptTransport::get(png_ptr).trans.send(data, length);
+        } catch (...) {
+            NoExceptTransport::get(png_ptr).has_error = true;
+            png_error(png_ptr, "Exception in Transport::send");
+        }
+    };
+
+    auto png_flush_data = [](png_structp png_ptr) noexcept {
+        try {
+            NoExceptTransport::get(png_ptr).trans.flush();
+        } catch (...) {
+            NoExceptTransport::get(png_ptr).has_error = true;
+            png_error(png_ptr, "Exception in Transport::flush");
+        }
+    };
+
+    NoExceptTransport no_except_transport = { trans, false };
+
+    PngWriteStruct png;
+    png_set_write_fn(png.ppng, &no_except_transport, png_write_data, png_flush_data);
+
+    dump_png24_impl(
+        png.ppng, png.pinfo, data, width, height, rowsize, bgr,
+        [&]() noexcept { return !no_except_transport.has_error; }
+    );
+
+    if (!no_except_transport.has_error) {
+        png_write_end(png.ppng, png.pinfo);
+        trans.flush();
+    }
 }
 
 void dump_png24(
@@ -186,12 +215,12 @@ void dump_png24(
     const size_t width, const size_t height, const size_t rowsize,
     const bool bgr
 ) {
-    detail::PngWriteStruct png;
+    PngWriteStruct png;
 
     // prepare png header
     png_init_io(png.ppng, fd);
 
-    detail::dump_png24_impl(png.ppng, png.pinfo, data, width, height, rowsize, bgr, []{return true;});
+    dump_png24_impl(png.ppng, png.pinfo, data, width, height, rowsize, bgr, []{return true;});
 
     png_write_end(png.ppng, png.pinfo);
 
@@ -199,26 +228,11 @@ void dump_png24(
     // fwrite(this->data, 3, this->width * this->height, fd);
 }
 
-void dump_png24(Transport & trans, Drawable const & drawable, bool bgr)
-{
-    ::dump_png24(
-        trans, drawable.data(),
-        drawable.width(), drawable.height(),
-        drawable.rowsize(),
-        bgr);
-}
-
-void dump_png24(std::FILE * f, Drawable const & drawable, bool bgr)
-{
-    ::dump_png24(
-        f, drawable.data(),
-        drawable.width(), drawable.height(),
-        drawable.rowsize(),
-        bgr);
-}
-
 void dump_png24(Transport & trans, ConstImageDataView const & image_view, bool bgr)
 {
+    // TODO image_view.bytes_per_pixel(); isn't used
+    assert(3 == image_view.bytes_per_pixel());
+
     ::dump_png24(
         trans, image_view.data(),
         image_view.width(), image_view.height(),
@@ -228,47 +242,61 @@ void dump_png24(Transport & trans, ConstImageDataView const & image_view, bool b
 
 void dump_png24(std::FILE * f, ConstImageDataView const & image_view, bool bgr)
 {
-    ::dump_png24(
-        f, image_view.data(),
+    // TODO image_view.bytes_per_pixel(); isn't used
+    assert(3 == image_view.bytes_per_pixel());
+
+    PngWriteStruct png;
+
+    // prepare png header
+    png_init_io(png.ppng, f);
+
+    dump_png24_impl(
+        png.ppng, png.pinfo,
+        image_view.data(),
         image_view.width(), image_view.height(),
         image_view.line_size(),
-        bgr);
+        bgr, []{return true;});
+
+    png_write_end(png.ppng, png.pinfo);
 }
 
-void dump_png24(Transport & trans, gdi::ImageFrameApi const & image_frame, bool bgr)
+void dump_png24(const char * filename, ConstImageDataView const & image_view)
 {
-    dump_png24(trans, image_frame.get_image_view(), bgr);
-}
+    // TODO image_view.bytes_per_pixel(); isn't used
+    assert(3 == image_view.bytes_per_pixel());
 
-void dump_png24(std::FILE * f, gdi::ImageFrameApi const & image_frame, bool bgr)
-{
-    dump_png24(f, image_frame.get_image_view(), bgr);
-}
-
-
-void read_png24(
-    std::FILE * fd, uint8_t * data,
-    const size_t width, const size_t height, const size_t rowsize
-) {
-    (void)width;
-
-    detail::PngReadStruct png;
-    png_init_io(png.ppng, fd);
-    png_read_info(png.ppng, png.pinfo);
-
-    for (size_t k = 0 ; k < height ; ++k) {
-        png_read_row(png.ppng, data, nullptr);
-        data += rowsize;
+    if (File f{filename, "wb"}) {
+        dump_png24(f, image_view, true);
     }
-
-    png_read_end(png.ppng, png.pinfo);
 }
 
-void transport_read_png24(
-    Transport & trans, uint8_t * data,
-    const size_t width, const size_t height, const size_t rowsize
-) {
-    (void)width;
+
+void read_png24(const char * filename, MutableImageDataView const & image_view)
+{
+    // TODO image_view.bytes_per_pixel(); isn't used
+    assert(3 == image_view.bytes_per_pixel());
+
+    if (File f{filename, "r"}) {
+        read_png24(f, image_view);
+    }
+}
+
+void read_png24(std::FILE * fd, MutableImageDataView const & image_view)
+{
+    // TODO image_view.bytes_per_pixel(); isn't used
+    assert(3 == image_view.bytes_per_pixel());
+
+    PngReadStruct png;
+    png_init_io(png.ppng, fd);
+    read_png24_impl(png, image_view.mutable_data(),
+        image_view.width(), image_view.height(),
+        image_view.line_size());
+}
+
+void read_png24(Transport & trans, MutableImageDataView const & image_view)
+{
+    // TODO image_view.bytes_per_pixel(); isn't used
+    assert(3 == image_view.bytes_per_pixel());
 
     auto png_read_data_fn = [](png_structp png_ptr, png_bytep data, png_size_t length) {
        // TODO catch exception ?
@@ -276,18 +304,14 @@ void transport_read_png24(
         static_cast<Transport*>(png_get_io_ptr(png_ptr))->recv_boom(data, length);
     };
 
-    detail::PngReadStruct png;
+    PngReadStruct png;
     png_set_read_fn(png.ppng, &trans, png_read_data_fn);
-    png_read_info(png.ppng, png.pinfo);
-
-    for (size_t k = 0 ; k < height ; ++k) {
-        png_read_row(png.ppng, data, nullptr);
-        data += rowsize;
-    }
-
-    png_read_end(png.ppng, png.pinfo);
+    read_png24_impl(png, image_view.mutable_data(),
+        image_view.width(), image_view.height(),
+        image_view.line_size());
 }
 
+// TODO void read_png24_by_line(read_fn:size_t(byte_array), f:void(byte_array))
 void set_rows_from_image_chunk(
     Transport & trans,
     const WrmChunkType chunk_type,
@@ -354,7 +378,7 @@ void set_rows_from_image_chunk(
     };
 
     InChunkedImage chunk_trans(chunk_type, chunk_size, trans);
-    detail::PngReadStruct png;
+    PngReadStruct png;
     png_set_read_fn(png.ppng, &chunk_trans, png_read_data_fn);
 
 #if PNG_LIBPNG_VER_MAJOR > 1 || (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR >= 4)
@@ -378,6 +402,7 @@ void set_rows_from_image_chunk(
 
         uint8_t * t = tmp;
         const uint8_t * e = t + (width / 4) * 12;
+
         for (; t < e; t += 12){
             using std::swap;
             swap(t[0], t[2]);

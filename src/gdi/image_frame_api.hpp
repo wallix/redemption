@@ -34,6 +34,11 @@ struct ImageFrameApi
     virtual ImageView get_mutable_image_view() = 0;
     virtual ConstImageView get_image_view() const = 0;
 
+    operator ConstImageView () const
+    {
+        return get_image_view();
+    }
+
     virtual void prepare_image_frame() = 0;
 
     virtual unsigned int get_last_update_index() const = 0;

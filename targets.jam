@@ -4058,14 +4058,11 @@ test-run tests/utils/test_png :
 :
   <covfile>src/utils/png.cpp
   <covfile>src/utils/png.hpp
-  <library>crypto
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
-  <library>src/utils/bitmap.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
-  <library>src/utils/rle.o
 ;
 test-run tests/utils/test_rdtsc :
   $(REDEMPTION_TEST_PATH)/utils/test_rdtsc.cpp

@@ -411,7 +411,7 @@ void decompress_(
   const uint8_t* input, uint16_t src_cx, size_t size)
 {
   const uint16_t dst_cx = image.width();
-    uint8_t* pmin = image.first_pixel();
+    uint8_t* pmin = image.mutable_data();
     uint8_t* pmax = pmin + image.pix_len();
     const size_t line_size = image.line_size();
     uint16_t out_x_count = 0;
@@ -1377,7 +1377,7 @@ void rle_decompress60(
     uint8_t * r     = red_plane;
     uint8_t * g     = green_plane;
     uint8_t * b     = blue_plane;
-    uint8_t * pixel = image.first_pixel();
+    uint8_t * pixel = image.mutable_data();
     uint8_t   bpp   = image.bytes_per_pixel();
     for (uint16_t y = 0; y < cy; y++) {
         for (uint16_t x = 0; x < cx; x++) {

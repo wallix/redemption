@@ -85,9 +85,9 @@ inline Rect get_widget_rect(uint16_t width, uint16_t height,
 #define STRMODULE_TRANSITORY       "transitory"
 #define STRMODULE_CLOSE            "close"
 #define STRMODULE_CLOSE_BACK       "close_back"
-#define STRMODULE_CONNECTION       "connection"             // unused
+#define STRMODULE_CONNECTION       "connection"
 #define STRMODULE_TARGET           "interactive_target"
-#define STRMODULE_MESSAGE          "message"                // unused
+#define STRMODULE_MESSAGE          "message"
 #define STRMODULE_RDP              "RDP"
 #define STRMODULE_VNC              "VNC"
 #define STRMODULE_INTERNAL         "INTERNAL"
@@ -95,9 +95,9 @@ inline Rect get_widget_rect(uint16_t width, uint16_t height,
 
 enum {
     MODULE_EXIT,
-    MODULE_WAITING,                                         // unused
-    MODULE_RUNNING,                                         // unused
-    MODULE_REFRESH,                                         // unused
+    MODULE_WAITING,
+    MODULE_RUNNING,
+    MODULE_REFRESH,
     MODULE_VNC,
     MODULE_RDP,
     MODULE_XUP,
@@ -118,10 +118,10 @@ enum {
     MODULE_INTERNAL_WIDGET_SELECTOR_LEGACY,
     MODULE_INTERNAL_WIDGETTEST,
     MODULE_INTERNAL_WAIT_INFO,
-    MODULE_EXIT_INTERNAL_CLOSE,                             // unused
+    MODULE_EXIT_INTERNAL_CLOSE,
     MODULE_TRANSITORY,
-    MODULE_AUTH,                                            // unused
-    MODULE_CLI,                                             // unused
+    MODULE_AUTH,
+    MODULE_CLI,
 
     MODULE_UNKNOWN
 };
@@ -665,7 +665,6 @@ private:
     class ModWithSocket final : private SocketTransport, public Mod
     {
         ModuleManager & mm;
-        AuthApi & authentifier;
         bool target_info_is_shown = false;
 
     public:
@@ -673,7 +672,7 @@ private:
         ModWithSocket(
             ModuleManager & mm, AuthApi & authentifier,
             const char * name, int sck, uint32_t verbose,
-            std::string * error_message, sock_mod_barrier, Args && ... mod_args)
+            std::string * error_message, bool same_module, sock_mod_barrier, Args && ... mod_args)
         : SocketTransport( name, sck
                          , mm.ini.get<cfg::context::target_host>().c_str()
                          , mm.ini.get<cfg::context::target_port>()
@@ -681,16 +680,16 @@ private:
                          , to_verbose_flags(verbose), error_message)
         , Mod(*this, std::forward<Args>(mod_args)...)
         , mm(mm)
-        , authentifier(authentifier)
         {
-            this->authentifier.start_mod();
+            if (!same_module) {
+                authentifier.renew_mod();
+            }
             this->mm.socket_transport = this;
         }
 
         ~ModWithSocket()
         {
             this->mm.socket_transport = nullptr;
-            this->authentifier.stop_mod();
         }
 
         void display_osd_message(std::string const & message) override {
@@ -1270,6 +1269,7 @@ public:
                     client_sck,
                     this->ini.get<cfg::debug::mod_xup>(),
                     nullptr,
+                    (this->old_target_module == target_module),
                     sock_mod_barrier(),
                     this->front,
                     this->front.client_info.width,
@@ -1532,6 +1532,7 @@ public:
                         client_sck,
                         this->ini.get<cfg::debug::mod_rdp>(),
                         &this->ini.get_ref<cfg::context::auth_error_message>(),
+                        (this->old_target_module == target_module),
                         sock_mod_barrier(),
                         this->front,
                         client_info,
@@ -1567,7 +1568,7 @@ public:
                                         std::move(managed_mod),
                                         this->client_execute,
                                         this->front.client_info.cs_monitor,
-                                        true
+                                        !this->ini.get<cfg::globals::is_rec>()
                                     ),
                                 nullptr,
                                 &this->client_execute
@@ -1644,6 +1645,7 @@ public:
                         client_sck,
                         this->ini.get<cfg::debug::mod_vnc>(),
                         nullptr,
+                        (this->old_target_module == target_module),
                         sock_mod_barrier(),
                         this->ini.get<cfg::globals::target_user>().c_str(),
                         this->ini.get<cfg::context::target_password>().c_str(),

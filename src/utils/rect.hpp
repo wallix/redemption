@@ -355,7 +355,7 @@ inline auto log_value(Point const & p)
         char buffer[64];
         char const * value() { return buffer; }
     } d;
-    ::sprintf(d.buffer, "Point(%u %u)", p.x, p.y);
+    ::sprintf(d.buffer, "Point(%d %d)", p.x, p.y);
     return d;
 }
 
@@ -376,7 +376,7 @@ inline auto log_value(Segment const & segment)
         char buffer[128];
         char const * value() { return buffer; }
     } d;
-    ::sprintf(d.buffer, "Segment(Point(%u %u), Point(%u %u))",
+    ::sprintf(d.buffer, "Segment(Point(%d %d), Point(%d %d))",
         segment.a.x, segment.a.y, segment.b.x, segment.b.y);
     return d;
 }

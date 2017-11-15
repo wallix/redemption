@@ -25,12 +25,11 @@
 #include "utils/sugar/array_view.hpp"
 #include "capture/wrm_chunk_type.hpp"
 
-class Drawable;
 class Transport;
 class ConstImageDataView;
+class MutableImageDataView;
 namespace gdi
 {
-    class ImageFrameApi;
     class GraphicApi;
 }
 
@@ -44,7 +43,7 @@ void dump_png24(
 );
 
 void dump_png24(
-    std::FILE * fd,
+    std::FILE * f,
     uint8_t const * data,
     std::size_t width,
     std::size_t height,
@@ -52,29 +51,13 @@ void dump_png24(
     bool bgr
 );
 
-void dump_png24(Transport & trans, Drawable const & drawable, bool bgr);
-void dump_png24(Transport & trans, ConstImageDataView const & image_view, bool bgr);
-void dump_png24(Transport & trans, gdi::ImageFrameApi const & image_frame, bool bgr);
-
-void dump_png24(std::FILE * f, Drawable const & drawable, bool bgr);
 void dump_png24(std::FILE * f, ConstImageDataView const & image_view, bool bgr);
-void dump_png24(std::FILE * f, gdi::ImageFrameApi const & image_frame, bool bgr);
+void dump_png24(Transport & trans, ConstImageDataView const & image_view, bool bgr);
+void dump_png24(const char * filename, ConstImageDataView const & bmp);
 
-void read_png24(
-    std::FILE * fd,
-    uint8_t * data,
-    std::size_t width,
-    std::size_t height,
-    std::size_t rowsize
-);
-
-void transport_read_png24(
-    Transport & trans,
-    uint8_t * data,
-    std::size_t width,
-    std::size_t height,
-    std::size_t rowsize
-);
+void read_png24(std::FILE * f, MutableImageDataView const & mutable_image_view);
+void read_png24(Transport & trans, MutableImageDataView const & mutable_image_view);
+void read_png24(const char * filename, MutableImageDataView const & image_view);
 
 void set_rows_from_image_chunk(
     Transport & trans,

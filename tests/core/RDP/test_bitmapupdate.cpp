@@ -22,12 +22,13 @@
 #define RED_TEST_MODULE TestBitmapUpdate
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
+// #define LOGNULL
+
+#include "test_only/check_sig.hpp"
 
 #include "core/RDP/bitmapupdate.hpp"
-#include "test_only/check_sig.hpp"
-#include "test_only/dump_png.hpp"
 #include "core/RDP/RDPDrawable.hpp"
+#include "utils/png.hpp"
 
 
 RED_AUTO_TEST_CASE(TestDrawBitmapUpdate)
