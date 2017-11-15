@@ -107,6 +107,7 @@ les options de la session RDP.
 	--rail_order	     affiche les logs du rail order du mod_rdp.
 	--asynchronous_task  affiche les logs des fonctions des tâches asynchrones du mod_rdp.
 	--capabilities       affiche les logs des capabilities lors de la négociation entre mod_rdp et cible.
+	--keyboard	     affiche les logs des entrées claviers.
 
 
     Boite de dialogue des options du client Qt RDP

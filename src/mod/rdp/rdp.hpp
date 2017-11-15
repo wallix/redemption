@@ -2192,7 +2192,7 @@ private:
                     ::msgdump_d(send, from_or_to_client, length, flags,
                     chunk.get_data(), total_length);
 
-                    rdpdr::streamLog(chunk, this->rdpdrLogStatus);
+                    rdpdr::streamLog(chunk, this->rdpdrLogStatus, length);
                 }
             }
 
@@ -3365,7 +3365,7 @@ public:
 
                     LIC::NewLicense_Recv lic(sec.payload, this->lic_layer_license_key);
 
-                    // TODO CGR: Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect. 
+                    // TODO CGR: Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect.
                     // Not obvious files is the best choice to do that
                         this->state = MOD_RDP_CONNECTED;
 
@@ -7756,7 +7756,7 @@ private:
                     ::msgdump_d(send, from_or_to_client, length, flags,
                         stream.get_data()+8, chunk_size);
 
-                    rdpdr::streamLog(stream, this->rdpdrLogStatus);
+                    rdpdr::streamLog(stream, this->rdpdrLogStatus, length);
                 }
             }
 

@@ -622,8 +622,7 @@ class DeviceAnnounceHeader {
 
     uint8_t  PreferredDosName_[8 /* PreferredDosName(8) */ + 1] = { 0 };
 
-    std::size_t DeviceDataLength_;
-//     struct { uint8_t const * p; std::size_t sz; } device_data = {nullptr, 0u};
+    struct { uint8_t const * p; std::size_t sz; } device_data = {nullptr, 0u};
 
 public:
     DeviceAnnounceHeader() = default;
@@ -633,9 +632,9 @@ public:
                          uint8_t const * device_data_p, size_t device_data_size)
     : DeviceType_(DeviceType)
     , DeviceId_(DeviceId)
-    , DeviceDataLength_(device_data_size) {
-//         memcpy(this->PreferredDosName_, preferred_dos_name,
-//             strnlen(preferred_dos_name, sizeof(this->PreferredDosName_)-1));
+    , device_data{device_data_p, device_data_size} {
+        memcpy(this->PreferredDosName_, preferred_dos_name,
+            strnlen(preferred_dos_name, sizeof(this->PreferredDosName_)-1));
     }
 
     REDEMPTION_NON_COPYABLE(DeviceAnnounceHeader);
@@ -646,9 +645,11 @@ public:
 
         stream.out_copy_bytes(this->PreferredDosName_, 8 /* PreferredDosName(8) */);
 
-        stream.out_uint32_le(this->DeviceDataLength_); // DeviceDataLength(4)
-//
-//         stream.out_copy_bytes(this->device_data.p, this->device_data.sz);
+        stream.out_uint32_le(this->device_data.sz); // DeviceDataLength(4)
+
+        if (this->device_data.p) {
+            stream.out_copy_bytes(this->device_data.p, this->device_data.sz);
+        }
     }
 
     void receive(InStream & stream) {
@@ -667,10 +668,10 @@ public:
         this->DeviceId_   = stream.in_uint32_le();
 
         stream.in_copy_bytes(this->PreferredDosName_, 8 /* PreferredDosName(8) */);
-        this->PreferredDosName_[8 /* PreferredDosName(8) */ ] = '\0';
-         stream.in_skip_bytes(8);
-        this->DeviceDataLength_ = stream.in_uint32_le();
-//
+        //this->PreferredDosName_[8 /* PreferredDosName(8) */ ] = '\0';
+
+//         const uint32_t DeviceDataLength = stream.in_uint32_le();
+
 //         {
 //             const unsigned expected = DeviceDataLength;  // DeviceData(variable)
 //
@@ -682,9 +683,9 @@ public:
 //             }
 //         }
 
-
-//         this->device_data = {stream.get_current(), DeviceDataLength};
-//         stream.in_skip_bytes(DeviceDataLength);
+        this->device_data.sz = stream.in_uint32_le();
+        //this->device_data = {stream.get_current(), DeviceDataLength};
+//         stream.in_skip_bytes(stream.in_remain());           // DeviceDataLength
     }
 
     RDPDR_DTYP DeviceType() const { return this->DeviceType_; }
@@ -696,18 +697,18 @@ public:
     }
 
     const char * DeviceData() const {
-        return nullptr;                                     //::char_ptr_cast(this->device_data.p);
+        return ::char_ptr_cast(this->device_data.p);
     }
 
     size_t DeviceDataLength() const {
-        return this->DeviceDataLength_ /* DeviceData(variable) */
+        return this->device_data.sz /* DeviceData(variable) */
             ;
     }
 
     size_t size() const {
         return 20 + // DeviceType(4) + DeviceId(4) + PreferredDosName(8) +
                     // DeviceDataLength(4)
-            this->DeviceDataLength_ /* DeviceData(variable) */
+            this->device_data.sz /* DeviceData(variable) */
             ;
     }
 
@@ -741,18 +742,18 @@ public:
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
-//         if (level == LOG_INFO) {
-//             hexdump(this->device_data.p, this->device_data.sz);
-//         }
+        if (level == LOG_INFO) {
+            hexdump(this->device_data.p, this->device_data.sz);
+        }
     }
 
     void log() const {
         LOG(LOG_INFO, "     Device Announce:");
         LOG(LOG_INFO, "          * DeviceType       = 0x%08x (4 bytes): %s", this->DeviceType_, get_DeviceType_name(this->DeviceType_));
         LOG(LOG_INFO, "          * DeviceId         = 0x%08x (4 bytes)", this->DeviceId_);
-        LOG(LOG_INFO, "          * DeviceName       = \"%.*s\" (8 bytes)", 8, this->PreferredDosName_);
-        LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->DeviceDataLength()));
-        //LOG(LOG_INFO, "          * DeviceData       = \"%.*s\" (%d byte(s))", int(this->device_data.sz), this->device_data.p, int(2*this->device_data.sz));
+        LOG(LOG_INFO, "          * PreferredDosName = \"%s\" (8 bytes)", this->PreferredDosName());
+        LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->device_data.sz));
+//         LOG(LOG_INFO, "          * DeviceData       = \"%.*s\" (%d byte(s))", int(this->device_data.sz), this->device_data.p, int(2*this->device_data.sz));
     }
 };  // DeviceAnnounceHeader
 
@@ -885,8 +886,8 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
 //     uint32_t DeviceId   = 0;
 //
 //     uint8_t  PreferredDosName[8 /* PreferredDosName(8) */ + 1] = { 0 };
-
-    size_t DeviceDataLength = 0;
+//
+//     size_t DeviceDataLength = 0;
 
     uint32_t Flags;
     uint32_t CodePage;
@@ -906,7 +907,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
 
     DeviceAnnounceHeaderPrinterSpecificData(/*RDPDR_DTYP DeviceType,
                                             uint32_t DeviceId,
-                                            char * PreferredDosName,
+                                            uint8_t * PreferredDosName,
                                             size_t DeviceDataLength,*/
                                             uint32_t Flags,
                                             uint32_t CodePage,
@@ -919,7 +920,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
                                             char * PrinterName )
 //         : DeviceType(DeviceType)
 //         , DeviceId(DeviceId)
-//         : DeviceDataLength(DeviceDataLength)
+//         , DeviceDataLength(DeviceDataLength)
         : Flags(Flags)
         , CodePage(CodePage)
         , PnPNameLen(PnPNameLen)
@@ -953,17 +954,17 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
 
     void receive(InStream & stream) {
         {
-//             const unsigned expected = 44;  // DeviceType(4) + DeviceId(4) + PreferredDosName(8) + DeviceDataLength(4) +
-//                                            //     Flags(4) + CodePage(4) + PnPNameLen(4) +
-//                                            //     DriverNameLen(4) + PrintNameLen(4) +
-//                                            //     CachedFieldsLen(4)
-//
-//             if (!stream.in_check_rem(expected)) {
-//                 LOG(LOG_ERR,
-//                     "Truncated DeviceIORequest: expected=%u remains=%zu",
-//                     expected, stream.in_remain());
-//                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
-//             }
+            const unsigned expected = 44;  // DeviceType(4) + DeviceId(4) + PreferredDosName(8) + DeviceDataLength(4) +
+                                           //     Flags(4) + CodePage(4) + PnPNameLen(4) +
+                                           //     DriverNameLen(4) + PrintNameLen(4) +
+                                           //     CachedFieldsLen(4)
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated DeviceIORequest: expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
         }
 //         this->DeviceType = RDPDR_DTYP(stream.in_uint32_le());
 //         this->DeviceId = stream.in_uint32_le();
@@ -1016,7 +1017,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
         LOG(LOG_INFO, "          * PnPName         = \"%s\" (%zu bytes)", this->PnPName, this->PnPNameLen);
         LOG(LOG_INFO, "          * DriverName      = \"%s\" (%zu bytes)", this->DriverName, this->DriverNameLen);
         LOG(LOG_INFO, "          * PrinterName     = \"%s\" (%zu bytes)", this->PrinterName, this->PrintNameLen);
-        LOG(LOG_INFO, "          * CachedPrinterConfigData  (%zu bytes)", this->CachedFieldsLen);
+//         LOG(LOG_INFO, "          * CachedPrinterConfigData  (%zu bytes)", this->CachedFieldsLen);
     }
 
 };
@@ -5455,6 +5456,11 @@ struct RdpDrStatus
 
     std::vector<DeviceIORequestData> requestList;
 
+
+    struct DevideAnnounceRequestMem {
+        int in_wait_data = 0;
+    };
+
     void SetFsInformationClass(uint32_t FsInformationClass) {
         this->requestList[this->requestList.size()-1].FsInformationClass = FsInformationClass;
     }
@@ -5513,7 +5519,7 @@ struct RdpDrStatus
 
 
 static inline
-void streamLog( InStream & stream , RdpDrStatus & status)
+void streamLog( InStream & stream , RdpDrStatus & status, size_t length)
 {
     InStream s = stream.clone();
 
@@ -5562,16 +5568,6 @@ void streamLog( InStream & stream , RdpDrStatus & status)
                             DeviceAnnounceHeader dah;
                             dah.receive(s);
                             dah.log();
-
-                            if (dah.DeviceDataLength() > 0) {
-//                                 if (dah.DeviceType() == RDPDR_DTYP_PRINT) {
-//                                     rdpdr::DeviceAnnounceHeaderPrinterSpecificData dahp;
-//                                     dahp.receive(s);
-//                                     dahp.log();
-//                                 } else {
-                                    s.in_skip_bytes(dah.DeviceDataLength());
-//                                 }
-                            }
                         }
                     }
                     break;
@@ -6166,6 +6162,7 @@ void streamLog( InStream & stream , RdpDrStatus & status)
             break;
 
         case Component::RDPDR_CTYP_PRT:
+            LOG(LOG_WARNING, "Component::RDPDR_CTYP_PRT");
             break;
     }
 }

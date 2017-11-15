@@ -103,7 +103,7 @@ public:
         bool drives_created = false;
         bool fileSystemCapacity[5] = { false };
         size_t devicesCount = 1;
-        DeviceData devices[1];
+        DeviceData devices[2];
 
         uint32_t next_file_id = 0;
 
@@ -642,6 +642,8 @@ public:
                 this->verbose = RDPVerbose::asynchronous_task | this->verbose;
             } else if (word == "--capabilities") {
                 this->verbose = RDPVerbose::capabilities | this->verbose;
+            } else if (word ==  "--keyboard") {
+                this->qtRDPKeymap._verbose = 1;
             }
         }
 
@@ -697,6 +699,8 @@ public:
             std::string tmp(this->SHARE_DIR);
             int pos(tmp.find("/"));
 
+            this->fileSystemData.devicesCount = 0;
+
             while (pos != -1) {
                 tmp = tmp.substr(pos+1, tmp.length());
                 pos = tmp.find("/");
@@ -705,28 +709,27 @@ public:
             if (size > 7) {
                 size = 7;
             }
-
             for (size_t i = 0; i < size; i++) {
-                this->fileSystemData.devices[0].name[i] = tmp.data()[i];
+                this->fileSystemData.devices[this->fileSystemData.devicesCount].name[i] = tmp.data()[i];
             }
-            this->fileSystemData.devices[0].ID = 1;
-            this->fileSystemData.devices[0].type = rdpdr::RDPDR_DTYP_FILESYSTEM;
+            this->fileSystemData.devices[this->fileSystemData.devicesCount].ID = 1;
+            this->fileSystemData.devices[this->fileSystemData.devicesCount].type = rdpdr::RDPDR_DTYP_FILESYSTEM;
+            this->fileSystemData.devicesCount++;
 
 
-//             std::string name_printer("printer");
-//             const char * char_name_printer = name_printer.c_str();
-//             size = name_printer.size();
-//             if (size > 7) {
-//                 size = 7;
-//             }
-//             for (size_t i = 0; i < size; i++) {
-//                 this->fileSystemData.devices[1].name[i] = char_name_printer[i];
-//             }
-//             this->fileSystemData.devices[1].ID = 2;
-//             this->fileSystemData.devices[1].type = rdpdr::RDPDR_DTYP_PRINT;
+            std::string name_printer("printer");
+            const char * char_name_printer = name_printer.c_str();
+            size = name_printer.size();
+            if (size > 7) {
+                size = 7;
+            }
+            for (size_t i = 0; i < size; i++) {
+                this->fileSystemData.devices[this->fileSystemData.devicesCount].name[i] = char_name_printer[i];
+            }
+            this->fileSystemData.devices[this->fileSystemData.devicesCount].ID = 2;
+            this->fileSystemData.devices[this->fileSystemData.devicesCount].type = rdpdr::RDPDR_DTYP_PRINT;
+            this->fileSystemData.devicesCount++;
 
-
-            this->fileSystemData.devicesCount = 1;
 
             CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
                                                  , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
@@ -1099,6 +1102,8 @@ public:
             return;
         }
 
+
+
         uint16_t component = chunk.in_uint16_le();
         uint16_t packetId  = chunk.in_uint16_le();
 
@@ -1276,33 +1281,39 @@ public:
 
                         for (size_t i = 0; i < this->fileSystemData.devicesCount; i++) {
 
-                            rdpdr::DeviceAnnounceHeader dah( this->fileSystemData.devices[i].type
-                                                           , this->fileSystemData.devices[i].ID
-                                                           , this->fileSystemData.devices[i].name
-                                                           , nullptr, 0);
-                            dah.emit(out_stream);
+                            if (this->fileSystemData.devices[i].type == rdpdr::RDPDR_DTYP_PRINT) {
 
-//                             if (this->fileSystemData.devices[i].type == rdpdr::RDPDR_DTYP_PRINT) {
-//
-//                                     char * printName = "Imprimer\0";
-//
-//                                     rdpdr::DeviceAnnounceHeaderPrinterSpecificData dahp(
-// //                                                     this->fileSystemData.devices[i].type
-// //                                                   , this->fileSystemData.devices[i].ID
-// //                                                   , this->fileSystemData.devices[i].name
-//                                                     28 + 0 + 4 + 2 + sizeof(printName)
-//                                                   , rdpdr::RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII
-//                                                   , 0
-//                                                   , 4       // PnPNameLen
-//                                                   , 2       // DriverNameLen
-//                                                   , sizeof(printName)  // PrintNameLen
-//                                                   , 0       // CachedFieldsLen
-//                                                   , "\x00\x61\x00\x00" // nPName
-//                                                   , "\x61\x00"   // DriverName
-//                                                   , printName // PrintName
-//                                       );
-//                                      dahp.emit(out_stream);
-//                             }
+                                rdpdr::DeviceAnnounceHeader dah( this->fileSystemData.devices[i].type
+                                                               , this->fileSystemData.devices[i].ID
+                                                               , this->fileSystemData.devices[i].name
+                                                               , nullptr, 24 + 0 + 4 + 2 + 8 + 0);
+                                dah.emit(out_stream);
+
+                                rdpdr::DeviceAnnounceHeaderPrinterSpecificData dahp(
+//                                                     this->fileSystemData.devices[i].type
+//                                                   , this->fileSystemData.devices[i].ID
+//                                                   , this->fileSystemData.devices[i].name
+//                                                     24 + 0 + 4 + 2 + sizeof(printName)
+                                                rdpdr::RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII
+                                                , 0
+                                                , 4       // PnPNameLen
+                                                , 2       // DriverNameLen
+                                                , 8  // PrintNameLen
+                                                , 0       // CachedFieldsLen
+                                                , "\x00\x61\x00\x00" // nPName
+                                                , "\x61\x00"   // DriverName
+                                                , "\x00\x61\x00\x61\x00\x61\x00\x00" // PrintName
+                                                );
+                                dahp.emit(out_stream);
+
+                            } else {
+                                rdpdr::DeviceAnnounceHeader dah( this->fileSystemData.devices[i].type
+                                                               , this->fileSystemData.devices[i].ID
+                                                               , this->fileSystemData.devices[i].name
+                                                               , nullptr, 0);
+                                dah.emit(out_stream);
+
+                            }
                         }
 
                         int total_length(out_stream.get_offset());
@@ -1348,6 +1359,10 @@ public:
                         rdpdr::DeviceIORequest deviceIORequest;
                         deviceIORequest.receive(chunk);
 
+                        if (deviceIORequest.DeviceId() ==  2) {
+                            this->verbose = RDPVerbose::rdpdr;
+                        }
+
                         StaticOutStream<1024> out_stream;
                         rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
                                                         , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
@@ -1387,15 +1402,16 @@ public:
                                 rdpdr::DeviceCreateRequest request;
                                 request.receive(chunk);
 
-                                std::string new_path(this->SHARE_DIR + request.Path());
-
                                 if (id == 0) {
+
+                                    std::string new_path(this->SHARE_DIR + request.Path());
 
                                     std::ifstream file(new_path.c_str());
                                     if (file.good()) {
                                         id = this->fileSystemData.get_file_id();
                                         this->fileSystemData.paths.emplace(id, new_path);
                                     } else {
+//                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Create Request 3");
                                         if (request.CreateDisposition() & smb2::FILE_CREATE) {
 
                                             id = this->fileSystemData.get_file_id();
@@ -1520,6 +1536,7 @@ public:
                                         uint32_t NumberOfLinks  = buff.st_nlink;
                                         uint8_t  DeletePending  = 1;
                                         uint8_t  Directory      = 0;
+
 
                                         if (S_ISDIR(buff.st_mode)) {
                                             Directory = 1;
@@ -2248,6 +2265,10 @@ public:
 
                             default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT: Device I/O Request unknow MajorFunction = %x",       deviceIORequest.MajorFunction());
                                 break;
+                        }
+
+                        if (deviceIORequest.DeviceId() ==  2) {
+                            this->verbose = RDPVerbose::none;
                         }
 
                         } break;
