@@ -407,6 +407,7 @@ lib libscytale :
   $(LIB_DEPENDENCIES)
   <include>$(REDEMPTION_TEST_PATH)/includes
   <library>crypto
+  <library>log.o
   <library>snappy
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
