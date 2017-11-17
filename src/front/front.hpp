@@ -846,11 +846,13 @@ public:
             return false;
         }
 
+        bool const capture_pattern_checker
+          = (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
+          || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
+
         if (!ini.get<cfg::globals::is_rec>()) {
             ini.set<cfg::video::capture_flags>(
-                (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str()) ||
-                 ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())) ?
-                CaptureFlags::ocr : CaptureFlags::none);
+                capture_pattern_checker ? CaptureFlags::ocr : CaptureFlags::none);
             ini.set<cfg::video::png_limit>(0);
         }
 
@@ -875,13 +877,12 @@ public:
         const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
 
         bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-        bool capture_pattern_checker = (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-                || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
 
         bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
         bool capture_video = bool(capture_flags & CaptureFlags::video);
         bool capture_video_full = full_video;
-        bool capture_meta = capture_ocr;
+        // TODO missing CaptureFlags::meta
+        bool capture_meta = ini.get<cfg::globals::is_rec>() && bool(capture_flags & CaptureFlags::ocr);
         bool capture_kbd = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
           || ini.get<cfg::session_log::enable_session_log>()
           || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
