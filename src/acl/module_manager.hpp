@@ -197,7 +197,12 @@ public:
             this->ini.set<cfg::context::auth_error_message>(auth_error_message);
         }
         if (this->mod) {
-            this->mod->disconnect(now);
+            try {
+                this->mod->disconnect(now);
+            }
+            catch (Error & e) {
+                LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!\n", e.id);
+            }
         }
         this->remove_mod();
         if (this->ini.get<cfg::globals::enable_close_box>()) {
