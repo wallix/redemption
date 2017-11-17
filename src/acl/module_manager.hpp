@@ -1006,7 +1006,7 @@ public:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'INTERNAL::Close'");
                 if (this->ini.get<cfg::context::auth_error_message>().empty()) {
-                    this->ini.set<cfg::context::auth_error_message>("Connection to server ended");
+                    this->ini.set<cfg::context::auth_error_message>(TR(trkeys::connection_ended, language(this->ini)));
                 }
                 this->set_mod(new FlatWabCloseMod(
                     this->ini,
@@ -1029,7 +1029,7 @@ public:
         case MODULE_INTERNAL_CLOSE_BACK:
             {
                 if (this->ini.get<cfg::context::auth_error_message>().empty()) {
-                    this->ini.set<cfg::context::auth_error_message>("Connection to server ended");
+                    this->ini.set<cfg::context::auth_error_message>(TR(trkeys::connection_ended, language(this->ini)));
                 }
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'INTERNAL::CloseBack'");
                 this->set_mod(new FlatWabCloseMod(
@@ -1242,7 +1242,7 @@ public:
                 if (status){
                     report_message.log5("type=\"CONNECTION_FAILED\"");
 
-                    this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
+                    this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
                     // TODO: actually this is DNS Failure or invalid address
                     LOG(LOG_ERR, "Failed to connect to remote TCP host (1)");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
@@ -1255,12 +1255,12 @@ public:
                 if (client_sck == -1){
                     report_message.log5("type=\"CONNECTION_FAILED\"");
 
-                    this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
+                    this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
                     LOG(LOG_ERR, "Failed to connect to remote TCP host (2)");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
-                this->ini.set<cfg::context::auth_error_message>("failed authentification on remote X host");
+                this->ini.set<cfg::context::auth_error_message>(TR(trkeys::authentification_x_fail, language(this->ini)));
                 this->ini.set<cfg::context::ip_target>(ip_addr);
 
                 this->set_mod(new ModWithSocket<xup_mod>(
@@ -1312,7 +1312,7 @@ public:
                 if (status){
                     report_message.log5("type=\"CONNECTION_FAILED\"");
 
-                    this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
+                    this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
                     // TODO: actually this is DNS Failure or invalid address
                     LOG(LOG_ERR, "Failed to connect to remote TCP host (3)");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
@@ -1325,12 +1325,12 @@ public:
                 if (client_sck == -1) {
                     report_message.log5("type=\"CONNECTION_FAILED\"");
 
-                    this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
+                    this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
                     LOG(LOG_ERR, "Failed to connect to remote TCP host (4)");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
-                this->ini.set<cfg::context::auth_error_message>("failed authentification on remote RDP host");
+                this->ini.set<cfg::context::auth_error_message>(TR(trkeys::authentification_rdp_fail, language(this->ini)));
                 this->ini.set<cfg::context::ip_target>(ip_addr);
 
                 // BEGIN READ PROXY_OPT
@@ -1619,7 +1619,7 @@ public:
                 if (status){
                     report_message.log5("type=\"CONNECTION_FAILED\"");
 
-                    this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
+                    this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
                     // TODO: actually this is DNS Failure or invalid address
                     LOG(LOG_ERR, "Failed to connect to remote TCP host (5)");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
@@ -1632,12 +1632,12 @@ public:
                 if (client_sck == -1) {
                     report_message.log5("type=\"CONNECTION_FAILED\"");
 
-                    this->ini.set<cfg::context::auth_error_message>("failed to connect to remote TCP host");
+                    this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
                     LOG(LOG_ERR, "Failed to connect to remote TCP host (6)");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
-                this->ini.set<cfg::context::auth_error_message>("failed authentification on remote VNC host");
+                this->ini.set<cfg::context::auth_error_message>(TR(trkeys::authentification_vnc_fail, language(this->ini)));
                 this->ini.set<cfg::context::ip_target>(ip_addr);
 
                 try {

@@ -51,7 +51,7 @@ namespace trkeys
     TR_KV(username, "Username", "Nom d'utilisateur");
     TR_KV(password_expire,
         "Your password will expire soon. Please change it.",
-        "Votre mot de passe va bientôt expirer. Veuillez le changer");
+        "Votre mot de passe va bientôt expirer. Veuillez le changer.");
     TR_KV(protocol, "Protocol", "Protocole");
     TR_KV(target_group, "Target Group", "Groupe");
     TR_KV(authorization, "Authorization", "Autorisation");
@@ -67,8 +67,8 @@ namespace trkeys
     TR_KV(hour, "hour", "heure");
     TR_KV(before_closing, "before closing", "avant fermeture");
     TR_KV(manager_close_cnx,
-        "Connection closed by manager",
-        "Le gestionnaire de session a coupé la connexion");
+        "Connection closed by manager.",
+        "Le gestionnaire de session a coupé la connexion.");
     TR_KV(end_connection, "End of connection", "Fin de connexion");
     TR_KV(help_message,
         "In login edit box, enter:<br>"
@@ -110,8 +110,22 @@ namespace trkeys
         "Authentifier service failed",
         "Echec du service d'authentification");
     TR_KV(target_fail,
-        "Failed to connect to remote TCP host",
-        "Echec de la connexion à la cible distante");
+        "Failed to connect to remote host.",
+        "Echec de la connexion à l'hote distante.");
+
+    TR_KV(authentification_rdp_fail,
+        "Failed to authenticate with remote RDP host.",
+        "Échec de l'authentification avec l'hôte RDP distant.");
+    TR_KV(authentification_vnc_fail,
+        "Failed to authenticate with remote VNC host.",
+        "Échec de l'authentification avec l'hôte VNC distant.");
+    TR_KV(authentification_x_fail,
+        "Failed to authenticate with remote X host.",
+        "Échec de l'authentification avec l'hôte X distant.");
+    TR_KV(connection_ended,
+        "Connection to server ended.",
+        "Connexion au serveur terminée.");
+
     TR_KV(no_results, "No results found", "Aucun résultat");
     TR_KV(back_selector, "Back to Selector", "Retour au Sélecteur");
     TR_KV(exit, "Exit", "Sortir");
@@ -153,8 +167,8 @@ namespace trkeys
         "Fermeture de session en cours."
     );
     TR_KV(starting_remoteapp,
-        "Starting RemoteApp.",
-        "Lancement de RemoteApp..."
+        "Starting RemoteApp ...",
+        "Lancement de RemoteApp ..."
     );
     TR_KV(closing_remoteapp,
         "All RemoteApp windows are closed.",

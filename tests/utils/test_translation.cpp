@@ -54,7 +54,7 @@ RED_AUTO_TEST_CASE(TestTranslation)
     RED_CHECK_EQUAL(TR(trkeys::second, lang),            std::string("second"));
     RED_CHECK_EQUAL(TR(trkeys::minute, lang),            std::string("minute"));
     RED_CHECK_EQUAL(TR(trkeys::before_closing, lang),    std::string("before closing"));
-    RED_CHECK_EQUAL(TR(trkeys::manager_close_cnx, lang), std::string("Connection closed by manager"));
+    RED_CHECK_EQUAL(TR(trkeys::manager_close_cnx, lang), std::string("Connection closed by manager."));
     RED_CHECK_EQUAL(TR(trkeys::end_connection, lang),    std::string("End of connection"));
     RED_CHECK_EQUAL(TR(trkeys::help_message, lang),
                       std::string(
@@ -90,7 +90,7 @@ RED_AUTO_TEST_CASE(TestTranslation)
     RED_CHECK_EQUAL(TR(trkeys::close, lang),              std::string("Fermer"));
     RED_CHECK_EQUAL(TR(trkeys::refused, lang),            std::string("Refuser"));
     RED_CHECK_EQUAL(TR(trkeys::username, lang),           std::string("Nom d'utilisateur"));
-    RED_CHECK_EQUAL(TR(trkeys::password_expire, lang),    std::string("Votre mot de passe va bientôt expirer. Veuillez le changer"));
+    RED_CHECK_EQUAL(TR(trkeys::password_expire, lang),    std::string("Votre mot de passe va bientôt expirer. Veuillez le changer."));
     RED_CHECK_EQUAL(TR(trkeys::protocol, lang),           std::string("Protocole"));
     RED_CHECK_EQUAL(TR(trkeys::target_group, lang),       std::string("Groupe"));
     RED_CHECK_EQUAL(TR(trkeys::target, lang),             std::string("Cible"));
@@ -102,7 +102,7 @@ RED_AUTO_TEST_CASE(TestTranslation)
     RED_CHECK_EQUAL(TR(trkeys::second, lang),             std::string("seconde"));
     RED_CHECK_EQUAL(TR(trkeys::minute, lang),             std::string("minute"));
     RED_CHECK_EQUAL(TR(trkeys::before_closing, lang),     std::string("avant fermeture"));
-    RED_CHECK_EQUAL(TR(trkeys::manager_close_cnx, lang),  std::string("Le gestionnaire de session a coupé la connexion"));
+    RED_CHECK_EQUAL(TR(trkeys::manager_close_cnx, lang),  std::string("Le gestionnaire de session a coupé la connexion."));
     RED_CHECK_EQUAL(TR(trkeys::end_connection, lang),     std::string("Fin de connexion"));
     RED_CHECK_EQUAL(TR(trkeys::help_message, lang),       std::string(
                                   "Dans la zone de saisie login, entrez:<br>"
