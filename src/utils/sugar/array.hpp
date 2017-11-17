@@ -67,7 +67,7 @@ namespace utils
 
     template<class C>
     constexpr auto data(C & c)
-    noexcept(noexcept(detail_::data(c)))
+    noexcept(noexcept(detail_::data_impl(c)))
     -> decltype(detail_::data_impl(c))
     { return detail_::data_impl(c); }
 
