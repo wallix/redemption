@@ -122,7 +122,7 @@
 
 "unicode_keyboard_event_support = boolean(default=True)\n\n"
 
-"# In milliseconds.\n"
+"# (is in millisecond)\n"
 "#_advanced\n"
 "mod_recv_timeout = integer(min=100, max=10000, default=1000)\n\n"
 
@@ -251,7 +251,7 @@
 "#   2: all input events\n"
 "bogus_number_of_fastpath_input_event = option(0, 1, 2, default=1)\n\n"
 
-"# In milliseconds.\n"
+"# (is in millisecond)\n"
 "#_advanced\n"
 "recv_timeout = integer(min=100, max=10000, default=1000)\n\n"
 

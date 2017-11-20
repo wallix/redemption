@@ -210,6 +210,10 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
     void write_type_info(type_<std::chrono::duration<T, Ratio>>)
     { this->out() << "\"# (is in " << Ratio::num << "/" << Ratio::den << " second)\\n\"\n"; }
 
+    template<class T, class Ratio, long min, long max>
+    void write_type_info(type_<types::range<std::chrono::duration<T, Ratio>, min, max>>)
+    { write_type_info(type_<std::chrono::duration<T, Ratio>>{}); }
+
 
     template<class T, class V>
     void write_value_(T const & name, V const & v, char const * prefix)

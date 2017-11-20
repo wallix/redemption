@@ -395,7 +395,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::globals::mod_recv_timeout&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::range<unsigned int, 100, 10000>>{},
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 100, 10000>>{},
                 av
             );
             ::configs::post_set_value(
@@ -781,7 +781,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::client::recv_timeout&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::range<unsigned int, 100, 10000>>{},
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 100, 10000>>{},
                 av
             );
             ::configs::post_set_value(
@@ -1589,7 +1589,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::ocr::interval&>(this->variables).value,
-                ::configs::spec_type<std::chrono::duration<unsigned int, std::ratio<1, 100>>>{},
+                ::configs::spec_type<std::chrono::duration<unsigned, std::ratio<1, 100>>>{},
                 av
             );
             ::configs::post_set_value(
@@ -1656,7 +1656,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::video::png_interval&>(this->variables).value,
-                ::configs::spec_type<std::chrono::duration<unsigned int, std::ratio<1, 10>>>{},
+                ::configs::spec_type<std::chrono::duration<unsigned, std::ratio<1, 10>>>{},
                 av
             );
             ::configs::post_set_value(
@@ -1668,7 +1668,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::video::frame_interval&>(this->variables).value,
-                ::configs::spec_type<std::chrono::duration<unsigned int, std::ratio<1, 100>>>{},
+                ::configs::spec_type<std::chrono::duration<unsigned, std::ratio<1, 100>>>{},
                 av
             );
             ::configs::post_set_value(

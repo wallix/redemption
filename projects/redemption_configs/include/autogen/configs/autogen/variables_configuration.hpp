@@ -623,9 +623,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    /// In milliseconds. <br/>
     /// AUTHID_GLOBALS_MOD_RECV_TIMEOUT <br/>
-    /// type: unsigned int <br/>
+    /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{1000} <br/>
     struct globals::mod_recv_timeout {
@@ -636,8 +635,8 @@ namespace cfg {
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index() { return authid_t(16); }
-        using type = unsigned int;
-        using sesman_and_spec_type = ::configs::spec_types::range<unsigned int, 100, 10000>;
+        using type = std::chrono::milliseconds;
+        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 100, 10000>;
         using mapped_type = sesman_and_spec_type;
         type value{1000};
     };
@@ -1053,16 +1052,15 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(1)};
     };
-    /// In milliseconds. <br/>
-    /// type: unsigned int <br/>
+    /// type: std::chrono::milliseconds <br/>
     /// value{1000} <br/>
     struct client::recv_timeout {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "client"; }
         static constexpr char const * name() { return "recv_timeout"; }
-        using type = unsigned int;
-        using sesman_and_spec_type = ::configs::spec_types::range<unsigned int, 100, 10000>;
+        using type = std::chrono::milliseconds;
+        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 100, 10000>;
         using mapped_type = sesman_and_spec_type;
         type value{1000};
     };
@@ -2106,15 +2104,15 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{static_cast<type>(0)};
     };
-    /// type: std::chrono::duration<unsigned int, std::ratio<1, 100>> <br/>
+    /// type: std::chrono::duration<unsigned, std::ratio<1, 100>> <br/>
     /// value{100} <br/>
     struct ocr::interval {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "ocr"; }
         static constexpr char const * name() { return "interval"; }
-        using type = std::chrono::duration<unsigned int, std::ratio<1, 100>>;
-        using sesman_and_spec_type = std::chrono::duration<unsigned int, std::ratio<1, 100>>;
+        using type = std::chrono::duration<unsigned, std::ratio<1, 100>>;
+        using sesman_and_spec_type = std::chrono::duration<unsigned, std::ratio<1, 100>>;
         using mapped_type = sesman_and_spec_type;
         type value{100};
     };
@@ -2171,28 +2169,28 @@ namespace cfg {
         type value{static_cast<type>(3)};
     };
     /// Frame interval. <br/>
-    /// type: std::chrono::duration<unsigned int, std::ratio<1, 10>> <br/>
+    /// type: std::chrono::duration<unsigned, std::ratio<1, 10>> <br/>
     /// value{10} <br/>
     struct video::png_interval {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "video"; }
         static constexpr char const * name() { return "png_interval"; }
-        using type = std::chrono::duration<unsigned int, std::ratio<1, 10>>;
-        using sesman_and_spec_type = std::chrono::duration<unsigned int, std::ratio<1, 10>>;
+        using type = std::chrono::duration<unsigned, std::ratio<1, 10>>;
+        using sesman_and_spec_type = std::chrono::duration<unsigned, std::ratio<1, 10>>;
         using mapped_type = sesman_and_spec_type;
         type value{10};
     };
     /// Frame interval. <br/>
-    /// type: std::chrono::duration<unsigned int, std::ratio<1, 100>> <br/>
+    /// type: std::chrono::duration<unsigned, std::ratio<1, 100>> <br/>
     /// value{40} <br/>
     struct video::frame_interval {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "video"; }
         static constexpr char const * name() { return "frame_interval"; }
-        using type = std::chrono::duration<unsigned int, std::ratio<1, 100>>;
-        using sesman_and_spec_type = std::chrono::duration<unsigned int, std::ratio<1, 100>>;
+        using type = std::chrono::duration<unsigned, std::ratio<1, 100>>;
+        using sesman_and_spec_type = std::chrono::duration<unsigned, std::ratio<1, 100>>;
         using mapped_type = sesman_and_spec_type;
         type value{40};
     };

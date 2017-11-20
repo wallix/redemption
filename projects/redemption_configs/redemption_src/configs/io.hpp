@@ -107,7 +107,22 @@ namespace spec_types
     template<class T> class list;
     using ip = std::string;
 
-    template<class T, T min, T max>
+    template<class T>
+    struct underlying_type_for_range
+    {
+        using type = T;
+    };
+
+    template<class Rep, class Period>
+    struct underlying_type_for_range<std::chrono::duration<Rep, Period>>
+    {
+        using type = Rep;
+    };
+
+    template<class T>
+    using underlying_type_for_range_t = typename underlying_type_for_range<T>::type;
+
+    template<class T, underlying_type_for_range_t<T> min, underlying_type_for_range_t<T> max>
     struct range {};
 
     struct directory_path
@@ -228,7 +243,9 @@ array_view_const_char assign_zbuf_from_cfg(
     return array_view_const_char(buf.get(), p-buf.get());
 }
 
-template<class T, T min, T max>
+template<class T,
+    spec_types::underlying_type_for_range_t<T> min,
+    spec_types::underlying_type_for_range_t<T> max>
 array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<T> & zbuf,
     cfg_s_type<spec_types::range<T, min, max>>,
@@ -360,20 +377,23 @@ inline parse_error parse(
     return no_parse_error;
 }
 
-template<class T, T min, T max>
+template<class T,
+    spec_types::underlying_type_for_range_t<T> min,
+    spec_types::underlying_type_for_range_t<T> max>
 parse_error parse(
     T & x,
     spec_type<spec_types::range<T, min, max>>,
     array_view_const_char value
 ) {
-    T y;
-    if (auto err = parse(y, spec_type<T>{}, value)) {
+    using Int = spec_types::underlying_type_for_range_t<T>;
+    Int y;
+    if (auto err = parse(y, spec_type<Int>{}, value)) {
         return err;
     }
     if (y < min || max < y) {
         return parse_error{"invalid range"};
     }
-    x = y;
+    x = T{y};
     return no_parse_error;
 }
 
@@ -662,12 +682,14 @@ namespace detail
         { impl(x, str.data(), str.size()); }
     };
 
-    template<class T, T min, T max>
+    template<class T,
+        spec_types::underlying_type_for_range_t<T> min,
+        spec_types::underlying_type_for_range_t<T> max>
     struct set_value_impl<T, spec_types::range<T, min, max>>
     {
         static void impl(T & x, T new_value)
         {
-            assert(x < min || max < x);
+            assert(x < T{min} || T{max} < x);
             x = new_value;
         }
     };

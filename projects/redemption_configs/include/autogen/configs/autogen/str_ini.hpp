@@ -122,7 +122,7 @@
 
 "#unicode_keyboard_event_support = 1\n\n"
 
-"# In milliseconds.\n"
+"# (is in millisecond)\n"
 "#_advanced\n"
 "#mod_recv_timeout = 1000\n\n"
 
@@ -251,7 +251,7 @@
 "#   2: all input events\n"
 "#bogus_number_of_fastpath_input_event = 1\n\n"
 
-"# In milliseconds.\n"
+"# (is in millisecond)\n"
 "#_advanced\n"
 "#recv_timeout = 1000\n\n"
 
