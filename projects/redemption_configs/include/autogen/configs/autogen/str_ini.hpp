@@ -130,10 +130,6 @@
 
 "#enable_session_log = 1\n\n"
 
-"# Log redirection in a file\n"
-"#_advanced\n"
-"#session_log_redirection = 1\n\n"
-
 "#_advanced\n"
 "#log_path = \n\n"
 

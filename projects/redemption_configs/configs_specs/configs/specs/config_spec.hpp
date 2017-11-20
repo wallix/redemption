@@ -193,7 +193,6 @@ void config_spec_definition(Writer && W)
     W.section("session_log", [&]
     {
         W.member(ini_and_gui, no_sesman, type_<bool>(), "enable_session_log", set(true));
-        W.member(advanced_in_gui, proxy_to_sesman, type_<bool>(), "session_log_redirection", desc{"Log redirection in a file"}, set(true));
         W.member(advanced_in_gui, sesman_to_proxy, type_<std::string>(), "log_path", sesman::name{"session_log_path"});
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", set(KeyboardInputMaskingLevel::fully_masked));

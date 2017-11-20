@@ -59,7 +59,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
     char outdata[] =
         // Time: 10011
-        "\x00\x00\x01\xA3"
+        "\x00\x00\x01\x85"
         "bpp\n!24\n"
         "width\n!800\n"
         "height\n!600\n"
@@ -82,7 +82,6 @@ RED_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
         "ip_target\n!\n"
         "target_device\nASK\n"
         "target_login\nASK\n"
-        "session_log_redirection\n!True\n"
 
         // Time: 10043
         "\x00\x00\x00\x0E"
@@ -159,7 +158,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
     char outdata[] =
         // Time 10011
-        "\x00\x00\x01\xA3"
+        "\x00\x00\x01\x85"
         "bpp\n!24\n"
         "width\n!800\n"
         "height\n!600\n"
@@ -182,7 +181,6 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
         "ip_target\n!\n"
         "target_device\nASK\n"
         "target_login\nASK\n"
-        "session_log_redirection\n!True\n"
 
         // Time 10043
         "\x00\x00\x00\x0E"
@@ -290,7 +288,7 @@ RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     char outdata[] =
         // Time 10011
-        "\x00\x00\x01\xA3"
+        "\x00\x00\x01\x85"
         "bpp\n!24\n"
         "width\n!800\n"
         "height\n!600\n"
@@ -313,7 +311,6 @@ RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
         "ip_target\n!\n"
         "target_device\nASK\n"
         "target_login\nASK\n"
-        "session_log_redirection\n!True\n"
     ;
 
     char indata[] =

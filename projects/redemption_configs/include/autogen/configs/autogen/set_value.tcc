@@ -422,18 +422,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::session_log::enable_session_log&>(this->variables)
             );
         }
-        else if (0 == strcmp(key, "session_log_redirection")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::session_log::session_log_redirection&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::session_log::session_log_redirection&>(this->variables)
-            );
-        }
         else if (0 == strcmp(key, "log_path")) {
             ::configs::parse_and_log(
                 context, key,

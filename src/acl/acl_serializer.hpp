@@ -324,11 +324,12 @@ public:
         assert(this->ct.is_open());
 
         /* Log to file */
-        if (this->ini.get<cfg::session_log::session_log_redirection>()) {
+        {
             std::time_t t = std::time(nullptr);
             char mbstr[100];
-            if (std::strftime(mbstr, sizeof(mbstr), "%F %T ", std::localtime(&t))) {
-                this->ct.send(mbstr, strlen(mbstr));
+            auto const len = std::strftime(mbstr, sizeof(mbstr), "%F %T ", std::localtime(&t));
+            if (len) {
+                this->ct.send(mbstr, len);
             }
 
             this->ct.send(info.c_str(), info.size());
