@@ -433,6 +433,18 @@
 "#_hidden\n"
 "#session_probe_arguments = " REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS "\n\n"
 
+"# (is in millisecond)\n"
+"#_hidden\n"
+"#session_probe_clipboard_based_launcher_clipboard_initialization_delay = 2000\n\n"
+
+"# (is in millisecond)\n"
+"#_hidden\n"
+"#session_probe_clipboard_based_launcher_long_delay = 500\n\n"
+
+"# (is in millisecond)\n"
+"#_hidden\n"
+"#session_probe_clipboard_based_launcher_short_delay = 50\n\n"
+
 "# Keep known server certificates on WAB\n"
 "#_hidden\n"
 "#server_cert_store = 1\n\n"

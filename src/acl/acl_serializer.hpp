@@ -194,7 +194,7 @@ public:
 
 };
 
-class AclSerializer : ReportMessageApi
+class AclSerializer final : ReportMessageApi
 {
     enum {
         HEADER_SIZE = 4

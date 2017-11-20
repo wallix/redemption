@@ -455,9 +455,9 @@ namespace FastPath {
             if (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE){
                 this->spKeyboardFlags |= SlowPath::KBDFLAGS_RELEASE;
             }
-            else{
-                this->spKeyboardFlags |= SlowPath::KBDFLAGS_DOWN;
-            }
+//            else{
+//                this->spKeyboardFlags |= SlowPath::KBDFLAGS_DOWN;
+//            }
 
             if (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_EXTENDED){
                 this->spKeyboardFlags |= SlowPath::KBDFLAGS_EXTENDED;

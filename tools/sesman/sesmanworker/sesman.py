@@ -405,8 +405,11 @@ class Sesman():
         if target_tuple is not None:
             target_login, target_device, target_service, target_group = target_tuple
         if self.passthrough_mode:
+            Logger().info(u'Passthrough mode is enabled')
             if self.passthrough_target_login is None:
                 self.passthrough_target_login = wab_login
+            if not self.passthrough_target_login:
+                Logger().info(u'Passthrough mode is enabled, but login information is not provided')
             if self.default_login:
                 effective_login = self.passthrough_target_login
                 wab_login = self.default_login
@@ -1849,7 +1852,10 @@ class Sesman():
                 u'session_probe_outbound_connection_monitoring_rules' : 'outbound_connection_monitoring_rules',
                 u'session_probe_process_monitoring_rules' : 'process_monitoring_rules',
                 u'session_probe_extra_system_processes' : 'extra_system_processes',
-                u'session_probe_enable_log' : 'enable_log'
+                u'session_probe_enable_log' : 'enable_log',
+                u'session_probe_smart_launcher_clipboard_initialization_delay' : 'smart_launcher_clipboard_initialization_delay',
+                u'session_probe_smart_launcher_long_delay' : 'smart_launcher_long_delay',
+                u'session_probe_smart_launcher_short_delay' : 'smart_launcher_short_delay'
                 },
             'server_cert': {
                 u'server_cert_store' : 'server_cert_store',

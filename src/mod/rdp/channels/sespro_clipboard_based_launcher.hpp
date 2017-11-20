@@ -74,9 +74,9 @@ class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
     SessionProbeVirtualChannel* sesprob_channel = nullptr;
     ClipboardVirtualChannel*    cliprdr_channel = nullptr;
 
-    const uint64_t clipboard_initialization_delay  = 2000000;
-    const uint64_t long_delay                      = 500000;
-    const uint64_t short_delay                     = 50000;
+    const std::chrono::milliseconds clipboard_initialization_delay;
+    const std::chrono::milliseconds long_delay;
+    const std::chrono::milliseconds short_delay;
 
     unsigned int copy_paste_loop_counter = 0;
 
@@ -84,11 +84,29 @@ class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
 
 public:
     SessionProbeClipboardBasedLauncher(mod_api& mod,
-        const char* alternate_shell, RDPVerbose verbose)
+        const char* alternate_shell,
+        std::chrono::milliseconds clipboard_initialization_delay_ms,
+        std::chrono::milliseconds long_delay_ms,
+        std::chrono::milliseconds short_delay_ms, RDPVerbose verbose)
     : mod(mod)
     , alternate_shell(alternate_shell)
+    , clipboard_initialization_delay(
+        (clipboard_initialization_delay_ms < std::chrono::milliseconds(2000)) ? std::chrono::milliseconds(2000) : clipboard_initialization_delay_ms
+        )
+    , long_delay((long_delay_ms < std::chrono::milliseconds(500)) ? std::chrono::milliseconds(500) : long_delay_ms)
+    , short_delay((short_delay_ms < std::chrono::milliseconds(50)) ? std::chrono::milliseconds(50) : short_delay_ms)
     , verbose(verbose)
-    {}
+    {
+        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
+            LOG(LOG_INFO,
+                "SessionProbeClipboardBasedLauncher: "
+                    "clipboard_initialization_delay_ms=%" PRId64 " "
+                    "long_delay_ms=%" PRId64 " "
+                    "short_delay_ms=%" PRId64,
+                clipboard_initialization_delay_ms.count(), long_delay_ms.count(),
+                short_delay_ms.count());
+        }
+    }
 
     wait_obj* get_event() override {
         if (this->event.is_trigger_time_set()) {
@@ -123,7 +141,7 @@ public:
         this->clipboard_monitor_ready = true;
 
         if (this->state == State::START) {
-            this->event.set_trigger_time(this->clipboard_initialization_delay);
+            this->event.set_trigger_time(clipboard_initialization_delay);
         }
 
         if (this->sesprob_channel) {
@@ -206,8 +224,7 @@ public:
                 // d (up)
                 this->rdp_input_scancode(32,
                                          param2,
-                                         SlowPath::KBDFLAGS_DOWN |
-                                             SlowPath::KBDFLAGS_RELEASE,
+                                         SlowPath::KBDFLAGS_RELEASE,
                                          param4,
                                          keymap);
 
@@ -221,7 +238,6 @@ public:
                 this->rdp_input_scancode(91,
                                          param2,
                                          SlowPath::KBDFLAGS_EXTENDED |
-                                             SlowPath::KBDFLAGS_DOWN |
                                              SlowPath::KBDFLAGS_RELEASE,
                                          param4,
                                          keymap);
@@ -261,8 +277,7 @@ public:
                 // r (up)
                 this->rdp_input_scancode(19,
                                          param2,
-                                         SlowPath::KBDFLAGS_DOWN |
-                                             SlowPath::KBDFLAGS_RELEASE,
+                                         SlowPath::KBDFLAGS_RELEASE,
                                          param4,
                                          keymap);
 
@@ -276,7 +291,6 @@ public:
                 this->rdp_input_scancode(91,
                                          param2,
                                          SlowPath::KBDFLAGS_EXTENDED |
-                                             SlowPath::KBDFLAGS_DOWN |
                                              SlowPath::KBDFLAGS_RELEASE,
                                          param4,
                                          keymap);
@@ -322,8 +336,7 @@ public:
                 // a (up)
                 this->rdp_input_scancode(16,
                                          param2,
-                                         SlowPath::KBDFLAGS_DOWN |
-                                             SlowPath::KBDFLAGS_RELEASE,
+                                         SlowPath::KBDFLAGS_RELEASE,
                                          param4,
                                          keymap);
 
@@ -336,8 +349,7 @@ public:
                 // Ctrl (up)
                 this->rdp_input_scancode(29,
                                          param2,
-                                         SlowPath::KBDFLAGS_DOWN |
-                                             SlowPath::KBDFLAGS_RELEASE,
+                                         SlowPath::KBDFLAGS_RELEASE,
                                          param4,
                                          keymap);
 
@@ -376,8 +388,7 @@ public:
                 // v (up)
                 this->rdp_input_scancode(47,
                                          param2,
-                                         SlowPath::KBDFLAGS_DOWN |
-                                             SlowPath::KBDFLAGS_RELEASE,
+                                         SlowPath::KBDFLAGS_RELEASE,
                                          param4,
                                          keymap);
 
@@ -390,8 +401,7 @@ public:
                 // Ctrl (up)
                 this->rdp_input_scancode(29,
                                          param2,
-                                         SlowPath::KBDFLAGS_DOWN |
-                                             SlowPath::KBDFLAGS_RELEASE,
+                                         SlowPath::KBDFLAGS_RELEASE,
                                          param4,
                                          keymap);
 
@@ -421,8 +431,7 @@ public:
                 // Enter (up)
                 this->rdp_input_scancode(28,
                                          param2,
-                                         SlowPath::KBDFLAGS_DOWN |
-                                             SlowPath::KBDFLAGS_RELEASE,
+                                         SlowPath::KBDFLAGS_RELEASE,
                                          param4,
                                          keymap);
 

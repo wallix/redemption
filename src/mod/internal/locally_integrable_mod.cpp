@@ -171,12 +171,13 @@ void LocallyIntegrableMod::rdp_input_scancode(
 
     if (this->rail_enabled) {
         if (!this->alt_key_pressed) {
-            if ((param1 == 56) && !param3) {
+            if ((param1 == 56) && !(param3 & SlowPath::KBDFLAGS_RELEASE)) {
                 this->alt_key_pressed = true;
             }
         }
         else {
-            if ((param1 == 56) && (param3 == (SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE))) {
+//            if ((param1 == 56) && (param3 == (SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE))) {
+            if ((param1 == 56) && (param3 & SlowPath::KBDFLAGS_RELEASE)) {
                 this->alt_key_pressed = false;
             }
             else if ((param1 == 62) && !param3) {

@@ -45,7 +45,6 @@ class Authentifier : public AuthApi, public ReportMessageApi
     Inifile & ini;
     CryptoContext & cctx;
 
-    bool connected_to_acl;
     AclSerializer * acl_serial;
 
 public:
@@ -58,7 +57,6 @@ public:
     Authentifier(Inifile & ini, CryptoContext & cctx, Verbose verbose)
         : ini(ini)
         , cctx(cctx)
-        , connected_to_acl(false)
         , acl_serial(nullptr)
         , verbose(verbose)
     {
@@ -70,7 +68,6 @@ public:
     void set_acl_serial(AclSerializer * acl_serial)
     {
         this->acl_serial = acl_serial;
-        this->connected_to_acl = bool(acl_serial);
     }
 
     ~Authentifier() override {
@@ -80,31 +77,31 @@ public:
     }
 
     void receive() {
-        if (this->connected_to_acl){
+        if (this->acl_serial){
             this->acl_serial->receive();
         }
     }
 
     void set_auth_channel_target(const char * target) override {
-        if (this->connected_to_acl){
+        if (this->acl_serial){
             this->acl_serial->ini.set_acl<cfg::context::auth_channel_target>(target);
         }
     }
 
     void set_auth_error_message(const char * error_message) override {
-        if (this->connected_to_acl){
+        if (this->acl_serial){
             this->acl_serial->ini.set<cfg::context::auth_error_message>(error_message);
         }
     }
 
     void report(const char * reason, const char * message) override {
-        if (this->connected_to_acl){
+        if (this->acl_serial){
             this->acl_serial->report(reason, message);
         }
     }
 
     void disconnect_target() override {
-        if (this->connected_to_acl &&
+        if (this->acl_serial &&
             // Call disconnect_target >>> Show Close Box (with back to selector)
             this->acl_serial->ini.get<cfg::globals::enable_close_box>()) {
             this->acl_serial->ini.set_acl<cfg::context::module>(STRMODULE_CLOSE);
@@ -114,7 +111,7 @@ public:
     void log5(const std::string & info) override
     {
         // TODO: should we delay logs sent to SIEM ?
-        if (this->connected_to_acl && this->session_log_is_open) {
+        if (this->acl_serial && this->session_log_is_open) {
             this->acl_serial->log5(info);
         }
         else {
@@ -124,14 +121,14 @@ public:
 
     void update_inactivity_timeout() override
     {
-        if (this->connected_to_acl){
+        if (this->acl_serial){
             this->acl_serial->update_inactivity_timeout();
         }
     }
 
     time_t get_inactivity_timeout() override
     {
-        if (this->connected_to_acl){
+        if (this->acl_serial){
             return this->acl_serial->get_inactivity_timeout();
         }
         else
@@ -140,7 +137,7 @@ public:
 
     void renew_mod() override
     {
-        if (this->connected_to_acl){
+        if (this->acl_serial){
             if (this->session_log_is_open) {
                 this->acl_serial->close_session_log();
             }

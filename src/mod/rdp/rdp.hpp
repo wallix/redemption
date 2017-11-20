@@ -368,6 +368,10 @@ protected:
 
     const bool                        use_session_probe_to_launch_remote_program;
 
+    const std::chrono::milliseconds   session_probe_clipboard_based_launcher_clipboard_initialization_delay;
+    const std::chrono::milliseconds   session_probe_clipboard_based_launcher_long_delay;
+    const std::chrono::milliseconds   session_probe_clipboard_based_launcher_short_delay;
+
     const bool                        bogus_ios_rdpdr_virtual_channel;
 
     std::string session_probe_target_informations;
@@ -927,6 +931,9 @@ public:
                                                       !info.alternate_shell[0]))
         , session_probe_enable_log(mod_rdp_params.session_probe_enable_log)
         , use_session_probe_to_launch_remote_program(mod_rdp_params.use_session_probe_to_launch_remote_program)
+        , session_probe_clipboard_based_launcher_clipboard_initialization_delay(mod_rdp_params.session_probe_clipboard_based_launcher_clipboard_initialization_delay)
+        , session_probe_clipboard_based_launcher_long_delay(mod_rdp_params.session_probe_clipboard_based_launcher_long_delay)
+        , session_probe_clipboard_based_launcher_short_delay(mod_rdp_params.session_probe_clipboard_based_launcher_short_delay)
         , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
         , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
         , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
@@ -1472,7 +1479,11 @@ public:
                         if (this->session_probe_use_clipboard_based_launcher) {
                             this->session_probe_launcher =
                                 std::make_unique<SessionProbeClipboardBasedLauncher>(
-                                    *this, alternate_shell.c_str(), this->verbose);
+                                    *this, alternate_shell.c_str(),
+                                    this->session_probe_clipboard_based_launcher_clipboard_initialization_delay,
+                                    this->session_probe_clipboard_based_launcher_long_delay,
+                                    this->session_probe_clipboard_based_launcher_short_delay,
+                                    this->verbose);
                         }
                         else {
                             strncpy(this->program, alternate_shell.c_str(), sizeof(this->program) - 1);
