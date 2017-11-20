@@ -1324,6 +1324,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "session_probe_allow_multiple_handshake")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::session_probe_allow_multiple_handshake&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_rdp::session_probe_allow_multiple_handshake&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "server_cert_store")) {
             ::configs::parse_and_log(
                 context, key,

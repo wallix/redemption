@@ -1791,6 +1791,18 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{50};
     };
+    /// type: bool <br/>
+    /// value{0} <br/>
+    struct mod_rdp::session_probe_allow_multiple_handshake {
+        static constexpr bool is_sesman_to_proxy() { return 0; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "mod_rdp"; }
+        static constexpr char const * name() { return "session_probe_allow_multiple_handshake"; }
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{0};
+    };
     /// Keep known server certificates on WAB <br/>
     /// AUTHID_MOD_RDP_SERVER_CERT_STORE <br/>
     /// type: bool <br/>
@@ -4406,6 +4418,7 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay
 , cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay
 , cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay
+, cfg::mod_rdp::session_probe_allow_multiple_handshake
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check
 , cfg::mod_rdp::server_access_allowed_message

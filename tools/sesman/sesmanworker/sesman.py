@@ -1674,6 +1674,12 @@ class Sesman():
                                         self.engine.set_session_status(
                                             result=False, diag=release_reason)
                                         self.send_data({u'disconnect_reason': TR(u"session_probe_failed_to_run_startup_application")})
+                                    elif _reporting_reason == u'SESSION_PROBE_RECONNECTION':
+                                        Logger().info(u'RDP connection terminated. Reason: Session Probe reconnection without disconnection')
+                                        release_reason = u'Interrupt: Session Probe reconnection without disconnection'
+                                        self.engine.set_session_status(
+                                            result=False, diag=release_reason)
+                                        self.send_data({u'disconnect_reason': TR(u"session_probe_reconnection")})
 
                                 if self.shared.get(u'disconnect_reason_ack'):
                                     break

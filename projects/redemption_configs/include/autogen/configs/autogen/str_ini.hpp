@@ -445,6 +445,9 @@
 "#_hidden\n"
 "#session_probe_clipboard_based_launcher_short_delay = 50\n\n"
 
+"#_advanced\n"
+"#session_probe_allow_multiple_handshake = 0\n\n"
+
 "# Keep known server certificates on WAB\n"
 "#_hidden\n"
 "#server_cert_store = 1\n\n"

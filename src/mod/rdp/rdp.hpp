@@ -372,6 +372,8 @@ protected:
     const std::chrono::milliseconds   session_probe_clipboard_based_launcher_long_delay;
     const std::chrono::milliseconds   session_probe_clipboard_based_launcher_short_delay;
 
+    const bool                        session_probe_allow_multiple_handshake;
+
     const bool                        bogus_ios_rdpdr_virtual_channel;
 
     std::string session_probe_target_informations;
@@ -934,6 +936,7 @@ public:
         , session_probe_clipboard_based_launcher_clipboard_initialization_delay(mod_rdp_params.session_probe_clipboard_based_launcher_clipboard_initialization_delay)
         , session_probe_clipboard_based_launcher_long_delay(mod_rdp_params.session_probe_clipboard_based_launcher_long_delay)
         , session_probe_clipboard_based_launcher_short_delay(mod_rdp_params.session_probe_clipboard_based_launcher_short_delay)
+        , session_probe_allow_multiple_handshake(mod_rdp_params.session_probe_allow_multiple_handshake)
         , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
         , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
         , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
@@ -1780,6 +1783,9 @@ protected:
 
         session_probe_virtual_channel_params.session_probe_enable_log               =
             this->session_probe_enable_log;
+
+        session_probe_virtual_channel_params.session_probe_allow_multiple_handshake =
+            this->session_probe_allow_multiple_handshake;
 
         session_probe_virtual_channel_params.real_alternate_shell                   =
             this->real_alternate_shell.c_str();

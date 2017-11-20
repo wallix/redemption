@@ -852,6 +852,8 @@ public:
 
     void remove_mod() override {
         if (this->internal_mod != &this->no_mod) {
+            this->clear_osd_message();
+
             delete this->internal_mod;
             this->internal_mod = &this->no_mod;
             this->mod = &this->no_mod;
@@ -1421,6 +1423,9 @@ public:
                     this->ini.get<cfg::context::session_probe_process_monitoring_rules>().c_str();
 
                 mod_rdp_params.session_probe_enable_log            = this->ini.get<cfg::mod_rdp::session_probe_enable_log>();
+
+                mod_rdp_params.session_probe_allow_multiple_handshake
+                                                                   = this->ini.get<cfg::mod_rdp::session_probe_allow_multiple_handshake>();
 
                 mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
                 mod_rdp_params.auth_channel                        = CHANNELS::ChannelNameId(this->ini.get<cfg::mod_rdp::auth_channel>());
