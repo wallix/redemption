@@ -1548,12 +1548,11 @@ public:
                             }
 
                             if (!this->param_dont_log_data_into_wrm) {
-                                std::string message("UseRedirectedDevice=");
-                                if (p_device_name) { message += p_device_name->c_str(); }
-                                message += "<";
+                                std::string message("DRIVE_REDIRECTION_USE=");
+                                message += device_name;
+                                message += "\x0";
                                 message += rdpdr::DeviceAnnounceHeader::get_DeviceType_friendly_name(
                                     device_type);
-                                message += ">";
 
                                 this->front.session_update(message);
                             }
@@ -1685,7 +1684,7 @@ public:
                                     }
 
                                     if (!this->param_dont_log_data_into_wrm) {
-                                        std::string message("ReadRedirectedFileSystem=");
+                                        std::string message("DRIVE_REDIRECTION_READ=");
                                         message += target_info.file_path;
 
                                         this->front.session_update(message);
@@ -1731,7 +1730,7 @@ public:
                                 }
 
                                 if (!this->param_dont_log_data_into_wrm) {
-                                    std::string message("WriteRedirectedFileSystem=");
+                                    std::string message("DRIVE_REDIRECTION_WRITE=");
                                     message += target_info.file_path;
 
                                     this->front.session_update(message);
@@ -1786,6 +1785,13 @@ public:
                                     LOG(LOG_INFO, "%s", info);
                                 }
                             }
+
+                            if (!this->param_dont_log_data_into_wrm) {
+                                std::string message("DRIVE_REDIRECTION_DELETE=");
+                                message += target_iter->file_path;
+
+                                this->front.session_update(message);
+                            }
                         }
                         break;
 
@@ -1805,6 +1811,15 @@ public:
                                 if (!this->param_dont_log_data_into_syslog) {
                                     LOG(LOG_INFO, "%s", info);
                                 }
+                            }
+
+                            if (!this->param_dont_log_data_into_wrm) {
+                                std::string message("DRIVE_REDIRECTION_RENAME=");
+                                message += target_iter->file_path;
+                                message += "\x0";
+                                message += file_path;
+
+                                this->front.session_update(message);
                             }
                         }
                         break;

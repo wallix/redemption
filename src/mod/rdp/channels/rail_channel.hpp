@@ -958,7 +958,7 @@ public:
 
                 auto info = key_qvalue_pairs({
                     {"type", "CLIENT_EXECUTE_REMOTEAPP"},
-                    {"ExeOrFile", serpdu.ExeOrFile()},
+                    {"exe_or_file", serpdu.ExeOrFile()},
                     });
 
                 this->report_message.log5(info);

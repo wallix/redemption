@@ -1048,6 +1048,38 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
         else if (cstr_equal("EDIT_CHANGED", order)) {
             line_with_2_var("windows", "edit");
         }
+
+
+        else if (cstr_equal("DRIVE_REDIRECTION_USE", order)) {
+            line_with_2_var("device_name", "device_type");
+        }
+        else if (cstr_equal("DRIVE_REDIRECTION_READ", order)
+              || cstr_equal("DRIVE_REDIRECTION_WRITE", order)
+              || cstr_equal("DRIVE_REDIRECTION_DELETE", order)) {
+            line_with_1_var("file_name");
+        }
+        else if (cstr_equal("DRIVE_REDIRECTION_RENAME", order)) {
+            line_with_2_var("old_file_name", "new_file_name");
+        }
+
+        else if (cstr_equal("CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION", order)
+              || cstr_equal("CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION", order)) {
+            line_with_2_var("file_name", "size");
+        }
+
+        else if (cstr_equal("CLIENT_EXECUTE_REMOTEAPP", order)) {
+            line_with_1_var("exe_or_file");
+        }
+
+        else if (cstr_equal("CERTIFICATE_CHECK_SUCCESS", order)
+              || cstr_equal("SERVER_CERTIFICATE_NEW", order)
+              || cstr_equal("SERVER_CERTIFICATE_MATCH_SUCCESS", order)
+              || cstr_equal("SERVER_CERTIFICATE_MATCH_FAILURE", order)
+              || cstr_equal("SERVER_CERTIFICATE_ERROR", order)) {
+            line_with_1_var("description");
+        }
+
+
         else {
             message.clear();
             LOG(LOG_WARNING,

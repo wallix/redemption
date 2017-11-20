@@ -532,9 +532,9 @@ protected:
                 !this->dynamic_channel_to_server_sender);
 
             this->dynamic_channel_to_client_sender =
-                this->create_to_client_sender(channel_names::cliprdr);
+                this->create_to_client_sender(channel_names::drdynvc);
             this->dynamic_channel_to_server_sender =
-                this->create_to_server_sender(channel_names::cliprdr);
+                this->create_to_server_sender(channel_names::drdynvc);
 
             this->dynamic_channel_virtual_channel =
                 std::make_unique<DynamicChannelVirtualChannel>(
@@ -638,6 +638,8 @@ protected:
 
     class RDPServerNotifier : public ServerNotifier {
     private:
+        FrontAPI & front;
+
         ReportMessageApi & report_message;
 
         const ServerNotification server_access_allowed_message;
@@ -654,6 +656,7 @@ protected:
 
     public:
         RDPServerNotifier(
+                FrontAPI & front,
                 ReportMessageApi & report_message,
                 ServerNotification server_access_allowed_message,
                 ServerNotification server_cert_create_message,
@@ -662,7 +665,8 @@ protected:
                 ServerNotification server_cert_error_message,
                 RDPVerbose verbose
             )
-        : report_message(report_message)
+        : front(front)
+        , report_message(report_message)
         , server_access_allowed_message(server_access_allowed_message)
         , server_cert_create_message(server_cert_create_message)
         , server_cert_success_message(server_cert_success_message)
@@ -726,6 +730,14 @@ protected:
 
             if (bool(this->verbose & RDPVerbose::basic_trace)) {
                 LOG(LOG_INFO, "%s", this->message.str());
+            }
+
+            {
+                std::string message(type.data.data(), type.data.size());
+                message += "=";
+                message.append(description.data.data(), description.data.size());
+
+                this->front.session_update(message);
             }
         }
     } server_notifier;
@@ -984,7 +996,8 @@ public:
         , lang(mod_rdp_params.lang)
         , font(mod_rdp_params.font)
         , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
-        , server_notifier(report_message,
+        , server_notifier(front,
+                          report_message,
                           mod_rdp_params.server_access_allowed_message,
                           mod_rdp_params.server_cert_create_message,
                           mod_rdp_params.server_cert_success_message,
