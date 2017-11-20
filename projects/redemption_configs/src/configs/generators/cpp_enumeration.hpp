@@ -131,7 +131,7 @@ namespace cpp_enumeration_writer
         for (auto & e : enums.enumerations_) {
             cfg_to_s_fmt(e);
             parse_fmt(e, [&]{ write(e,
-                "    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (%u - 1)) - 1));\n"
+                "    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (%u - 1)) - 1)>());\n"
             ); });
         }
         for (auto & e : enums.enumerations_set_) {

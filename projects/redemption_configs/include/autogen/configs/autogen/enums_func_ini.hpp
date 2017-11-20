@@ -29,7 +29,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(CaptureFlags & x, spec_type<CaptureFlags>, array_view_const_char value)
 {
-    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (5 - 1)) - 1));
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (5 - 1)) - 1)>());
 }
 
 template<> struct zstr_buffer_traits<Level> : zstr_buffer_traits<void> {};
@@ -116,7 +116,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(KeyboardLogFlags & x, spec_type<KeyboardLogFlags>, array_view_const_char value)
 {
-    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (4 - 1)) - 1));
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (4 - 1)) - 1)>());
 }
 
 template<> struct zstr_buffer_traits<ClipboardLogFlags> : zstr_buffer_traits<unsigned long> {};
@@ -132,7 +132,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(ClipboardLogFlags & x, spec_type<ClipboardLogFlags>, array_view_const_char value)
 {
-    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (3 - 1)) - 1)>());
 }
 
 template<> struct zstr_buffer_traits<FileSystemLogFlags> : zstr_buffer_traits<unsigned long> {};
@@ -148,7 +148,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(FileSystemLogFlags & x, spec_type<FileSystemLogFlags>, array_view_const_char value)
 {
-    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (3 - 1)) - 1)>());
 }
 
 template<> struct zstr_buffer_traits<ServerNotification> : zstr_buffer_traits<unsigned long> {};
@@ -164,7 +164,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(ServerNotification & x, spec_type<ServerNotification>, array_view_const_char value)
 {
-    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (4 - 1)) - 1));
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (4 - 1)) - 1)>());
 }
 
 template<> struct zstr_buffer_traits<ServerCertCheck> : zstr_buffer_traits<unsigned long> {};
@@ -180,7 +180,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(ServerCertCheck & x, spec_type<ServerCertCheck>, array_view_const_char value)
 {
-    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (4 - 1)) - 1));
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (4 - 1)) - 1)>());
 }
 
 template<> struct zstr_buffer_traits<TraceType> : zstr_buffer_traits<unsigned long> {};
@@ -196,7 +196,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(TraceType & x, spec_type<TraceType>, array_view_const_char value)
 {
-    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (3 - 1)) - 1)>());
 }
 
 template<> struct zstr_buffer_traits<KeyboardInputMaskingLevel> : zstr_buffer_traits<unsigned long> {};
@@ -212,7 +212,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(KeyboardInputMaskingLevel & x, spec_type<KeyboardInputMaskingLevel>, array_view_const_char value)
 {
-    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (4 - 1)) - 1));
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (4 - 1)) - 1)>());
 }
 
 template<> struct zstr_buffer_traits<SessionProbeOnLaunchFailure> : zstr_buffer_traits<unsigned long> {};
@@ -228,7 +228,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(SessionProbeOnLaunchFailure & x, spec_type<SessionProbeOnLaunchFailure>, array_view_const_char value)
 {
-    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (3 - 1)) - 1)>());
 }
 
 template<> struct zstr_buffer_traits<VncBogusClipboardInfiniteLoop> : zstr_buffer_traits<unsigned long> {};
@@ -244,7 +244,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(VncBogusClipboardInfiniteLoop & x, spec_type<VncBogusClipboardInfiniteLoop>, array_view_const_char value)
 {
-    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (3 - 1)) - 1)>());
 }
 
 template<> struct zstr_buffer_traits<ColorDepthSelectionStrategy> : zstr_buffer_traits<unsigned long> {};
@@ -260,7 +260,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(ColorDepthSelectionStrategy & x, spec_type<ColorDepthSelectionStrategy>, array_view_const_char value)
 {
-    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (2 - 1)) - 1));
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (2 - 1)) - 1)>());
 }
 
 template<> struct zstr_buffer_traits<WrmCompressionAlgorithm> : zstr_buffer_traits<unsigned long> {};
@@ -276,7 +276,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(WrmCompressionAlgorithm & x, spec_type<WrmCompressionAlgorithm>, array_view_const_char value)
 {
-    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (3 - 1)) - 1)>());
 }
 
 template<> struct zstr_buffer_traits<RdpCompression> : zstr_buffer_traits<unsigned long> {};
@@ -292,7 +292,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(RdpCompression & x, spec_type<RdpCompression>, array_view_const_char value)
 {
-    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (5 - 1)) - 1));
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (5 - 1)) - 1)>());
 }
 
 template<> struct zstr_buffer_traits<BogusLinuxCursor> : zstr_buffer_traits<unsigned long> {};
@@ -308,7 +308,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(BogusLinuxCursor & x, spec_type<BogusLinuxCursor>, array_view_const_char value)
 {
-    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (3 - 1)) - 1)>());
 }
 
 template<> struct zstr_buffer_traits<OcrLocale> : zstr_buffer_traits<void> {};
@@ -347,7 +347,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(BogusNumberOfFastpathInputEvent & x, spec_type<BogusNumberOfFastpathInputEvent>, array_view_const_char value)
 {
-    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (3 - 1)) - 1)>());
 }
 
 template<> struct zstr_buffer_traits<SessionProbeOnKeepaliveTimeout> : zstr_buffer_traits<unsigned long> {};
@@ -363,7 +363,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(SessionProbeOnKeepaliveTimeout & x, spec_type<SessionProbeOnKeepaliveTimeout>, array_view_const_char value)
 {
-    return parse_enum_u(x, value, static_cast<unsigned long>((1 << (3 - 1)) - 1));
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (3 - 1)) - 1)>());
 }
 
 template<> struct zstr_buffer_traits<ColorDepth> : zstr_buffer_traits<unsigned long> {};
