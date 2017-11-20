@@ -136,6 +136,7 @@ public:
     const std::string    WINDOWS_CONF;
 
     std::string _movie_name;
+    std::string _movie_dir;
 
     bool wab_diag_question;
     int asked_color;
@@ -260,8 +261,8 @@ public:
     virtual bool is_no_win_data() = 0;
     virtual void writeWindowsConf() = 0;
 
-    virtual void replay(std::string const & movie_path) = 0;
-    virtual bool load_replay_mod(std::string const & movie_name, timeval begin_read, timeval end_read) = 0;
+    virtual void replay(std::string const & movie_dir, std::string const & movie_path) = 0;
+    virtual bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) = 0;
     virtual void delete_replay_mod() = 0;
     virtual void callback() = 0;
 
@@ -783,12 +784,19 @@ private Q_SLOTS:
                                                 this->_front->REPLAY_DIR.c_str(),
                                                 tr("Movie Files(*.mwrm)"));
         std::string str_movie_path(filePath.toStdString());
+
         auto const last_delimiter_it = std::find(str_movie_path.rbegin(), str_movie_path.rend(), '/');
-        std::string const movie_path = (last_delimiter_it == str_movie_path.rend())
+        int pos = str_movie_path.size() - (last_delimiter_it - str_movie_path.rbegin());
+
+        std::string const movie_name = (last_delimiter_it == str_movie_path.rend())
         ? str_movie_path
         : str_movie_path.substr(str_movie_path.size() - (last_delimiter_it - str_movie_path.rbegin()));
-        this->_front->_movie_name = movie_path;
-        this->_front->replay(movie_path);
+
+        std::string const movie_dir = str_movie_path.substr(0, pos);
+
+        this->_front->_movie_name = movie_name;
+        this->_front->_movie_dir = movie_dir;
+        this->_front->replay(movie_dir, movie_name);
     }
 
     void connexionReleased() {
@@ -887,6 +895,7 @@ public:
 
     bool           _running;
     std::string    _movie_name;
+    std::string    _movie_dir;
 
     enum : int {
         BUTTON_HEIGHT = 20,
@@ -947,7 +956,7 @@ private:
     }
 
 public:
-    Screen_Qt (Front_Qt_API * front, QPixmap * cache, std::string const & movie_name, QPixmap * trans_cache)
+    Screen_Qt (Front_Qt_API * front, QPixmap * cache, std::string const & movie_dir, std::string const & movie_name, QPixmap * trans_cache)
         : QWidget()
         , _front(front)
         , _buttonCtrlAltDel("Play", this)
@@ -966,6 +975,7 @@ public:
         , _screen_index(0)
         , _running(false)
         , _movie_name(movie_name)
+        , _movie_dir(movie_dir)
         , cursorHotx(0)
         , cursorHoty(0)
         , mouse_out(false)
@@ -1082,7 +1092,7 @@ public:
             }
         }
 
-        this->_front->load_replay_mod(this->_movie_name, {this->begin, 0}, {0, 0});
+        this->_front->load_replay_mod(this->_movie_dir, this->_movie_name, {this->begin, 0}, {0, 0});
     }
 
 
@@ -1354,7 +1364,7 @@ private:
                 switch (this->_front->replay_mod->get_wrm_version()) {
 
                     case WrmVersion::v1:
-                        if (this->_front->load_replay_mod(this->_movie_name, {0, 0}, {0, 0})) {
+                        if (this->_front->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0})) {
                             this->_front->replay_mod->instant_play_client(std::chrono::microseconds(this->begin*1000000));
                             this->movie_time_start = tvtime();
                         }
@@ -1363,7 +1373,7 @@ private:
                     case WrmVersion::v2:
                     {
                         int last_balised = (this->begin/ BALISED_FRAME);
-                        if (this->_front->load_replay_mod(this->_movie_name, {last_balised * BALISED_FRAME, 0}, {0, 0})) {
+                        if (this->_front->load_replay_mod(this->_movie_dir, this->_movie_name, {last_balised * BALISED_FRAME, 0}, {0, 0})) {
                             this->_cache_painter.drawPixmap(QPoint(0, 0), *(this->balises[last_balised]), QRect(0, 0, this->_width, this->_height));
                             this->_front->replay_mod->instant_play_client(std::chrono::microseconds(this->begin*1000000));
                             this->slotRepainMatch();
@@ -1467,7 +1477,7 @@ public Q_SLOTS:
             this->movie_status.setText("  Stop ");
             this->_running = false;
             this->is_paused = false;
-            this->_front->load_replay_mod(this->_movie_name, {0, 0}, {0, 0});
+            this->_front->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0});
         }
     }
 
@@ -1517,7 +1527,7 @@ public Q_SLOTS:
         this->current_time_movie = 0;
         this->show_video_real_time_hms();
 
-        if (this->_front->load_replay_mod(this->_movie_name, {0, 0}, {0, 0})) {
+        if (this->_front->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0})) {
             this->_cache_painter.fillRect(0, 0, this->_width, this->_height, Qt::black);
             this->slotRepainMatch();
         }
@@ -1660,7 +1670,7 @@ public:
            LOG(LOG_INFO, "========================================\n");
         }
 
-        if (this->connected && this->screen != nullptr) {
+        if ((this->connected || this->is_replaying) && this->screen != nullptr) {
             if (this->is_recording && !this->is_replaying && this->screen != nullptr) {
                 this->graph_capture->begin_update();
                 struct timeval time;
@@ -1677,7 +1687,7 @@ public:
            LOG(LOG_INFO, "========================================\n");
         }
 
-        if (this->connected && this->screen != nullptr) {
+        if ((this->connected || this->is_replaying) && this->screen != nullptr) {
             this->screen->update_view();
 
             if (this->is_recording && !this->is_replaying && this->screen != nullptr) {
@@ -1700,18 +1710,18 @@ public:
     }
 
     virtual ResizeResult server_resize(int width, int height, int bpp) override{
-        if (bool(this->verbose & RDPVerbose::graphics)) {
+//         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d)", width, height, bpp);
             LOG(LOG_INFO, "========================================\n");
-        }
+//         }
 
         if (width == 0 || height == 0) {
             return ResizeResult::fail;
         }
 
 
-        if (this->connected && this->screen != nullptr) {
+        if ((this->connected || this->is_replaying) && this->screen != nullptr) {
             this->info.bpp = bpp;
             this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
 
@@ -1721,16 +1731,17 @@ public:
                 if (this->screen) {
                     this->screen->disconnection();
                     this->dropScreen();
-                    this->cache = new QPixmap(this->info.width, this->info.height);
+                }
+                this->cache = new QPixmap(this->info.width, this->info.height);
+
+                if (this->is_replaying) {
+                    this->screen = new Screen_Qt(this, this->cache, this->_movie_dir, this->_movie_name, this->trans_cache);
+                } else {
                     this->trans_cache = new QPixmap(this->info.width, this->info.height);
                     this->trans_cache->fill(Qt::transparent);
-                    if (this->is_replaying) {
-                        this->screen = new Screen_Qt(this, this->cache, this->_movie_name, this->trans_cache);
-                    } else {
-                        this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
-                    }
-                    this->screen->show();
+                    this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
                 }
+                this->screen->show();
             }
         }
 
@@ -1784,10 +1795,10 @@ public:
         }
     }
 
-    bool load_replay_mod(std::string const & movie_name, timeval begin_read, timeval end_read) override {
+    bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) override {
          try {
             this->replay_mod.reset(new ReplayMod( *this
-                                                , (this->REPLAY_DIR + "/").c_str()
+                                                , movie_dir.c_str() //(this->REPLAY_DIR + "/").c_str()
                                                 , movie_name.c_str()
                                                 , 0             //this->info.width
                                                 , 0             //this->info.height
@@ -1999,7 +2010,7 @@ public:
         QImage image(data, mincx, mincy, srcBitmapMirrored.format());
         QRect trect(drect.x, drect.y, mincx, mincy);
 
-        if (this->connected) {
+        if (this->connected || this->is_replaying) {
              this->screen->paintCache().drawImage(trect, image);
         }
     }
@@ -2029,7 +2040,7 @@ public:
         }
 
         const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-        if (this->connected) {
+        if (this->connected || this->is_replaying) {
              this->screen->paintCache().drawImage(trect, qbitmap);
         }
     }
@@ -2080,7 +2091,7 @@ public:
 
     void draw_RDPPatBlt(const Rect & rect, const QColor color, const QPainter::CompositionMode mode, const Qt::BrushStyle style) {
         QBrush brush(color, style);
-        if (this->connected) {
+        if (this->connected || this->is_replaying) {
             this->screen->paintCache().setBrush(brush);
             this->screen->paintCache().setCompositionMode(mode);
             this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
@@ -2090,7 +2101,7 @@ public:
     }
 
     void draw_RDPPatBlt(const Rect & rect, const QPainter::CompositionMode mode) {
-        if (this->connected) {
+        if (this->connected || this->is_replaying) {
             this->screen->paintCache().setCompositionMode(mode);
             this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
             this->screen->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
@@ -2129,7 +2140,7 @@ public:
                 case 0x5A:
                     {
                         QBrush brush(backColor, Qt::Dense4Pattern);
-                        if (this->connected) {
+                        if (this->connected || this->is_replaying) {
                             this->screen->paintCache().setBrush(brush);
                             this->screen->paintCache().setCompositionMode(QPainter::RasterOp_SourceXorDestination);
                             this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
@@ -2145,7 +2156,7 @@ public:
                 // +------+-------------------------------+
                 case 0xF0:
                     {
-                        if (this->connected) {
+                        if (this->connected || this->is_replaying) {
                             QBrush brush(foreColor, Qt::Dense4Pattern);
                             this->screen->paintCache().setPen(Qt::NoPen);
                             this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
@@ -2163,7 +2174,7 @@ public:
             switch (cmd.rop) {
 
                 case 0x00: // blackness
-                    if (this->connected) {
+                    if (this->connected || this->is_replaying) {
                         this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::black);
                     }
                     break;
@@ -2238,7 +2249,7 @@ public:
                     // |      | RPN: P                        |
                     // +------+-------------------------------+
                 case 0xF0:
-                    if (this->connected) {
+                    if (this->connected || this->is_replaying) {
                         this->screen->paintCache().setPen(Qt::NoPen);
                         this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
                         this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
@@ -2260,7 +2271,7 @@ public:
                     break;
 
                 case 0xFF: // whiteness
-                    if (this->connected) {
+                    if (this->connected || this->is_replaying) {
                         this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::white);
                     }
                     break;
@@ -2289,7 +2300,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        if (this->connected && this->screen != nullptr) {
+        if ((this->connected || this->is_replaying) && this->screen != nullptr) {
             QColor qcolor(this->u32_to_qcolor(cmd.color, color_ctx));
             Rect rect(cmd.rect.intersect(clip));
 
@@ -2304,6 +2315,12 @@ public:
 
             if (this->wab_diag_question) {
                 this->answer_question(this->asked_color);
+            }
+        } else {
+            if (this->connected || this->is_replaying) {
+                LOG(LOG_INFO, "opaquerect is else and connected");
+            } else {
+                LOG(LOG_INFO, "opaquerect is else");
             }
         }
     }
@@ -2348,7 +2365,7 @@ public:
 
         qbitmap = qbitmap.mirrored(false, true);
         QRect trect(drect.x, drect.y, mincx, mincy);
-        if (this->connected) {
+        if (this->connected || this->is_replaying) {
             this->screen->paintCache().drawImage(trect, qbitmap);
         }
 
@@ -2373,7 +2390,7 @@ public:
         }
 
         // TODO clipping
-        if (this->connected) {
+        if (this->connected || this->is_replaying) {
             this->screen->setPenColor(this->u32_to_qcolor(cmd.back_color, color_ctx));
 
             this->screen->paintCache().drawLine(cmd.startx, cmd.starty, cmd.endx, cmd.endy);
@@ -2412,7 +2429,7 @@ public:
         switch (cmd.rop) {
 
             case 0x00:
-                if (this->connected) {
+                if (this->connected || this->is_replaying) {
                     this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
                 }
                 break;
@@ -2427,7 +2444,7 @@ public:
                 break;
 
             case 0xFF:
-                if (this->connected) {
+                if (this->connected || this->is_replaying) {
                     this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
                 }
                 break;
@@ -2463,7 +2480,7 @@ public:
         switch (cmd.rop) {
 
             case 0x00:
-                if (this->connected) {
+                if (this->connected || this->is_replaying) {
                     this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
                 }
                 break;
@@ -2500,7 +2517,7 @@ public:
                 break;
 
             case 0xFF:
-                if (this->connected) {
+                if (this->connected || this->is_replaying) {
                     this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
                 }
                 break;
@@ -2576,7 +2593,7 @@ public:
                         image = image.convertToFormat(this->imageFormatRGB);
                     }
                     QRect trect(drect.x, rowYCoord, mincx, 1);
-                    if (this->connected) {
+                    if (this->connected || this->is_replaying) {
                         this->screen->paintCache().drawImage(trect, image);
                     }
                     rowYCoord--;
@@ -2612,7 +2629,7 @@ public:
 
         switch (cmd.rop) {
             case 0x00: // blackness
-                if (this->connected) {
+                if (this->connected || this->is_replaying) {
                     this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
                 }
                 break;
@@ -2622,7 +2639,7 @@ public:
             case 0xAA: // change nothing
                 break;
             case 0xFF: // whiteness
-                if (this->connected) {
+                if (this->connected || this->is_replaying) {
                     this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
                 }
                 break;
@@ -2770,7 +2787,7 @@ public:
                                 if (clip.contains_pt(x + fc.offset + xx, y + fc.baseline + yy)
                                 && (fc_bit_mask & *fc_data))
                                 {
-                                    if (this->connected) {
+                                    if (this->connected || this->is_replaying) {
                                         this->screen->paintCache().fillRect(x + fc.offset + xx, y + fc.baseline + yy, 1, 1, color);
                                     }
                                 }
@@ -3043,7 +3060,7 @@ public:
     }
 
     void setMainScreenOnTopRelease() override {
-        if (this->connected) {
+        if (this->connected || this->is_replaying) {
             this->screen->activateWindow();
         }
     }
@@ -3098,7 +3115,7 @@ public:
         }
     }
 
-    void replay(std::string const & movie_path_) override {
+    void replay(std::string const & movie_dir_, std::string const & movie_path_) override {
         if (movie_path_.empty()) {
 //             this->readError(movie_path_);
             return;
@@ -3106,13 +3123,13 @@ public:
 
         this->is_replaying = true;
         //this->setScreenDimension();
-        if (this->load_replay_mod(movie_path_, {0, 0}, {0, 0})) {
+        if (this->load_replay_mod(movie_dir_, movie_path_, {0, 0}, {0, 0})) {
             this->info.width = this->replay_mod->get_dim().w;
             this->info.height = this->replay_mod->get_dim().h;
             this->cache_replay = new QPixmap(this->info.width, this->info.height);
             this->trans_cache = new QPixmap(this->info.width, this->info.height);
             this->trans_cache->fill(Qt::transparent);
-            this->screen = new Screen_Qt(this, this->cache_replay, movie_path_, this->trans_cache);
+            this->screen = new Screen_Qt(this, this->cache_replay, movie_dir_, movie_path_, this->trans_cache);
             //this->connected = true;
             this->form->hide();
             if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
@@ -3243,13 +3260,15 @@ public:
             this->trans_cache = new QPixmap(this->info.width, this->info.height);
             this->trans_cache->fill(Qt::transparent);
 
+            LOG(LOG_INFO, "Connect!!!!!!!!!! 1");
+
             this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
 
             this->is_replaying = false;
             if (this->is_recording && !this->is_replaying) {
 
 //                 this->start_capture();
-
+                    LOG(LOG_INFO, "Connect!!!!!!!!!! 2");
 
                    Inifile ini;
                     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
@@ -3278,6 +3297,8 @@ public:
 
                 UdevRandom gen;
 
+                LOG(LOG_INFO, "Connect!!!!!!!!!! 3");
+
                 //NullReportMessage * reportMessage  = nullptr;
                 struct timeval time;
                 gettimeofday(&time, nullptr);
@@ -3290,7 +3311,7 @@ public:
                                             ini.get<cfg::ocr::interval>(),
                                             0
                                         };
-
+                LOG(LOG_INFO, "Connect!!!!!!!!!! 4");
 
                 std::string record_path = this->REPLAY_DIR.c_str() + std::string("/");
 
@@ -3310,12 +3331,24 @@ public:
 
                 PatternParams patternCheckerParams;
                 SequencedVideoParams sequenced_video_params;
-                FullVideoParams full_video_params = { false };;
+                FullVideoParams full_video_params = { false };
                 MetaParams meta_params;
                 KbdLogParams kbd_log_params;
 
                 CaptureParams captureParams;
+                captureParams.now = tvtime();
+                captureParams.basename = movie_name.c_str();
+                captureParams.record_tmp_path = record_path.c_str();
+                captureParams.record_path = record_path.c_str();
+                captureParams.groupid = 0;
+                captureParams.report_message = nullptr;
+
                 DrawableParams drawableParams;
+                drawableParams.width  = this->info.width;
+                drawableParams.height = this->info.height;
+                drawableParams.rdp_drawable = nullptr;
+
+                LOG(LOG_INFO, "Connect!!!!!!!!!! 5");
 
                 this->capture = std::make_unique<Capture>(captureParams
                                                 , drawableParams
@@ -3331,6 +3364,8 @@ public:
                                                 , nullptr
                                                 , Rect(0, 0, 0, 0)
                                                 );
+
+                LOG(LOG_INFO, "Connect!!!!!!!!!! 6");
 
                 this->graph_capture = this->capture.get()->get_graphic_api();
             }
