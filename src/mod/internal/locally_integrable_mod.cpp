@@ -83,6 +83,15 @@ void LocallyIntegrableMod::rdp_input_invalidate(Rect r)
 
 void LocallyIntegrableMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
 {
+    if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
+        x = this->old_mouse_x;
+        y = this->old_mouse_y;
+    }
+    else {
+        this->old_mouse_x = x;
+        this->old_mouse_y = y;
+    }
+
     bool out_mouse_captured = false;
 
     if (!this->rail_enabled ||

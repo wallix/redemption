@@ -675,7 +675,7 @@ private:
     public:
         template<class... Args>
         ModWithSocket(
-            ModuleManager & mm, AuthApi & authentifier,
+            ModuleManager & mm, AuthApi & /*authentifier*/,
             const char * name, int sck, uint32_t verbose,
             std::string * error_message, sock_mod_barrier, Args && ... mod_args)
         : SocketTransport( name, sck

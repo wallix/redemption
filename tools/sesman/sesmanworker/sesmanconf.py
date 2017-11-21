@@ -123,7 +123,7 @@ class SesmanConfig(object):
             , u'session_probe_outbound_connection_blocking_failed' : u'Connexion sortante potentiellement indésirable detectée, le gestionnaire de session a coupé la connexion.'
             , u'session_probe_process_blocking_failed' : u'Processus potentiellement indésirable détecté, le gestionnaire de session a coupé la connexion.'
             , u'session_probe_failed_to_run_startup_application' : u"Echec de lancement d'application de démarrage, le gestionnaire de session a coupé la connexion."
-            , u'session_probe_reconnection' : u"Une reconnexion de Session Probe est détectée."
+            , u'session_probe_reconnection' : u"Une reconnexion de Session Probe non autorisée est détectée."
             }
         , u'en':
             { # u'login'                  : u"Login"
@@ -214,7 +214,7 @@ class SesmanConfig(object):
             , u'session_probe_outbound_connection_blocking_failed' : u'Potentially undesirable outbound connection detected, connection closed by manager.'
             , u'session_probe_process_blocking_failed' : u'Potentially undesirable process detected, connection closed by manager.'
             , u'session_probe_failed_to_run_startup_application' : u'Startup application launch failed, connection closed by manager.'
-            , u'session_probe_reconnection' : u"Session Probe reconnection detected."
+            , u'session_probe_reconnection' : u"Unauthorized Session Probe reconnection is detected."
             }
         }
 

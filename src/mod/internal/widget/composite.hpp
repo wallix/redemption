@@ -95,6 +95,9 @@ class WidgetParent : public Widget
 
     BGRColor bg_color;
 
+    int old_mouse_x = 0;
+    int old_mouse_y = 0;
+
 protected:
     CompositeContainer * impl;
 

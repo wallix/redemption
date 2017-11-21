@@ -68,6 +68,7 @@ enum : uint16_t {
     MOUSE_FLAG_BUTTON5             = 0x0380,
     MOUSE_FLAG_DOWN                = 0x8000,
     MOUSE_FLAG_HWHEEL              = 0x0400,
+    MOUSE_FLAG_WHEEL               = 0x0200,
     MOUSE_FLAG_WHEEL_NEGATIVE      = 0x0100
 };
 
