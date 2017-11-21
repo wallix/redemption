@@ -944,24 +944,25 @@ class Sesman():
         #TODO remove .flv extention and adapt ReDemPtion proxy code
         data_to_send[u'rec_path'] = u"%s.flv" % (self.full_path)
 
-        record_warning = SESMANCONF[u'sesman'].get('record_warning', True)
-        if record_warning:
-            message =  u"Warning! Your remote session may be recorded and kept in electronic format."
-            try:
-                with open('/var/wab/etc/proxys/messages/motd.%s' % self.language) as f:
-                    message = f.read().decode('utf-8')
-            except Exception, e:
-                pass
-            data_to_send[u'message'] = cut_message(message)
+        record_warning = SESMANCONF[u'sesman'].get('record_warning', False)
+#        if record_warning:
+#	    
+#            message =  u"Warning! Your remote session may be recorded and kept in electronic format."
+#            try:
+#                with open('/var/wab/etc/proxys/messages/motd.%s' % self.language) as f:
+#                    message = f.read().decode('utf-8')
+#            except Exception, e:
+#                pass
+#            data_to_send[u'message'] = cut_message(message)
 
-            _status, _error = self.interactive_accept_message(data_to_send)
-            Logger().info(u"Recording agreement of %s to %s@%s : %s" %
-                            (user,
-                            self.shared.get(u'target_login'),
-                            self.shared.get(u'target_device'),
-                            ["NO", "YES"][_status]))
-        else:
-            self.send_data(data_to_send)
+#            _status, _error = self.interactive_accept_message(data_to_send)
+#            Logger().info(u"Recording agreement of %s to %s@%s : %s" %
+#                            (user,
+#                            self.shared.get(u'target_login'),
+#                            self.shared.get(u'target_device'),
+#                            ["NO", "YES"][_status]))
+#        else:
+        self.send_data(data_to_send)
 
         return _status, _error
 

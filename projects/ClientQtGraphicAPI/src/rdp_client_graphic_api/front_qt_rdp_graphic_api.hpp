@@ -63,6 +63,9 @@
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
 
+
+#include "core/RDP/RDPDrawable.hpp"
+
 #include "Qt4/Qt.hpp"
 
 #endif
@@ -434,7 +437,6 @@ public:
                     } else {
                         this->timer.start( time_to_wake );
                     }
-
                 }
             } else {
                 const std::string errorMsg("Error: Mod Initialization failed.");
@@ -1388,7 +1390,7 @@ private:
 
                 }
 
-                this->_timer_replay.start(1);
+                this->_timer_replay.start(4);
             }
         } else {
 
@@ -1710,16 +1712,15 @@ public:
     }
 
     virtual ResizeResult server_resize(int width, int height, int bpp) override{
-//         if (bool(this->verbose & RDPVerbose::graphics)) {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d)", width, height, bpp);
             LOG(LOG_INFO, "========================================\n");
-//         }
+        }
 
         if (width == 0 || height == 0) {
             return ResizeResult::fail;
         }
-
 
         if ((this->connected || this->is_replaying) && this->screen != nullptr) {
             this->info.bpp = bpp;
@@ -1736,10 +1737,16 @@ public:
 
                 if (this->is_replaying) {
                     this->screen = new Screen_Qt(this, this->cache, this->_movie_dir, this->_movie_name, this->trans_cache);
+
                 } else {
                     this->trans_cache = new QPixmap(this->info.width, this->info.height);
                     this->trans_cache->fill(Qt::transparent);
                     this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
+                }
+
+                if (this->is_recording) {
+                    LOG(LOG_INFO, "!!!!!!!!!!!!!!!!! server_resize width = %d", this->capture.get()->gd_drawable->width());
+                    LOG(LOG_INFO, "!!!!!!!!!!!!!!!!! server_resize height = %d", this->capture.get()->gd_drawable->height());
                 }
                 this->screen->show();
             }
@@ -3260,15 +3267,12 @@ public:
             this->trans_cache = new QPixmap(this->info.width, this->info.height);
             this->trans_cache->fill(Qt::transparent);
 
-            LOG(LOG_INFO, "Connect!!!!!!!!!! 1");
-
             this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
 
             this->is_replaying = false;
             if (this->is_recording && !this->is_replaying) {
 
 //                 this->start_capture();
-                    LOG(LOG_INFO, "Connect!!!!!!!!!! 2");
 
                    Inifile ini;
                     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
@@ -3297,8 +3301,6 @@ public:
 
                 UdevRandom gen;
 
-                LOG(LOG_INFO, "Connect!!!!!!!!!! 3");
-
                 //NullReportMessage * reportMessage  = nullptr;
                 struct timeval time;
                 gettimeofday(&time, nullptr);
@@ -3311,7 +3313,6 @@ public:
                                             ini.get<cfg::ocr::interval>(),
                                             0
                                         };
-                LOG(LOG_INFO, "Connect!!!!!!!!!! 4");
 
                 std::string record_path = this->REPLAY_DIR.c_str() + std::string("/");
 
@@ -3348,8 +3349,6 @@ public:
                 drawableParams.height = this->info.height;
                 drawableParams.rdp_drawable = nullptr;
 
-                LOG(LOG_INFO, "Connect!!!!!!!!!! 5");
-
                 this->capture = std::make_unique<Capture>(captureParams
                                                 , drawableParams
                                                 , true, wrmParams
@@ -3365,7 +3364,11 @@ public:
                                                 , Rect(0, 0, 0, 0)
                                                 );
 
-                LOG(LOG_INFO, "Connect!!!!!!!!!! 6");
+
+                LOG(LOG_INFO, "!!!!!!!!!!!!!!!!! width = %d", this->capture.get()->gd_drawable->width());
+                LOG(LOG_INFO, "!!!!!!!!!!!!!!!!! height = %d", this->capture.get()->gd_drawable->height());
+
+                this->capture.get()->gd_drawable->width();
 
                 this->graph_capture = this->capture.get()->get_graphic_api();
             }

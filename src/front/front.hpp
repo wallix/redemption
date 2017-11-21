@@ -111,6 +111,8 @@
 #include "utils/sugar/underlying_cast.hpp"
 
 
+#include "core/RDP/RDPDrawable.hpp"
+
 #include <memory>
 
 
@@ -979,21 +981,24 @@ public:
             &this->report_message
         };
 
-        this->capture = new Capture(
-                                      capture_params
-                                    , drawable_params
-                                    , capture_wrm, wrm_params
-                                    , capture_png, png_params
-                                    , capture_pattern_checker, pattern_params
-                                    , capture_ocr, ocr_params
-                                    , capture_video, sequenced_video_params
-                                    , capture_video_full, full_video_params
-                                    , capture_meta, meta_params
-                                    , capture_kbd, kbd_log_params
-                                    , video_params
-                                    , nullptr
-                                    , Rect()
-                                    );
+        this->capture = new Capture( capture_params
+                                   , drawable_params
+                                   , capture_wrm, wrm_params
+                                   , capture_png, png_params
+                                   , capture_pattern_checker, pattern_params
+                                   , capture_ocr, ocr_params
+                                   , capture_video, sequenced_video_params
+                                   , capture_video_full, full_video_params
+                                   , capture_meta, meta_params
+                                   , capture_kbd, kbd_log_params
+                                   , video_params
+                                   , nullptr
+                                   , Rect()
+                                   );
+
+        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!! server_resize width = %d", this->capture->gd_drawable->width());
+        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!! server_resize height = %d", this->capture->gd_drawable->height());
+
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }
