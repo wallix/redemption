@@ -25,6 +25,7 @@
 
 #include <cstddef>
 #include <cstring>
+#include <chrono>
 
 
 struct string_type_name
@@ -62,13 +63,38 @@ namespace detail
 #endif
         }
     };
+
+    template<std::size_t n>
+    string_type_name zstring_to_string_type(char const (&s)[n])
+    {
+        return {s, s+n-1};
+    }
+
+#define TYPE_NAME_I(...)                                 \
+    template<>                                           \
+    struct type_name_impl<__VA_ARGS__, false>            \
+    {                                                    \
+        static string_type_name impl()                   \
+        {                                                \
+            return zstring_to_string_type(#__VA_ARGS__); \
+        }                                                \
+    }
+
+    TYPE_NAME_I(std::chrono::hours);
+    TYPE_NAME_I(std::chrono::minutes);
+    TYPE_NAME_I(std::chrono::seconds);
+    TYPE_NAME_I(std::chrono::milliseconds);
+    TYPE_NAME_I(std::chrono::duration<unsigned, std::ratio<1, 10>>);
+    TYPE_NAME_I(std::chrono::duration<unsigned, std::ratio<1, 100>>);
+
+#undef TYPE_NAME_I
 }
 
 template<class T>
 string_type_name type_name(T const * = nullptr)
 { return detail::type_name_impl<T>::impl(); }
 
-#define CONFIG_DEFINE_TYPE_NAME(type, name)                      \
+#define CONFIG_DEFINE_TYPE_NAME(type, name)               \
     namespace detail {                                    \
         template<bool B> struct type_name_impl<type, B> { \
             static string_type_name impl() {              \
@@ -81,7 +107,7 @@ string_type_name type_name(T const * = nullptr)
     CONFIG_DEFINE_TYPE_NAME(type, #type)
 
 #define CONFIG_DEFINE_TYPE(type) \
-    class type {};        \
+    class type {};               \
     CONFIG_DEFINE_TYPE_NAME(type, #type)
 
 CONFIG_DEFINE_TYPE_NAME2(std::string)

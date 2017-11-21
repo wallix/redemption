@@ -313,6 +313,8 @@ private:
 
     const bool param_show_maximized;
 
+    const bool param_allow_multiple_handshake;
+
     FrontAPI& front;
 
     mod_api& mod;
@@ -371,6 +373,8 @@ public:
 
         const char* session_probe_process_monitoring_rules;
 
+        bool session_probe_allow_multiple_handshake;
+
         Translation::language_t lang;
 
         bool bogus_refresh_rect_ex;
@@ -419,6 +423,7 @@ public:
     , param_lang(params.lang)
     , param_bogus_refresh_rect_ex(params.bogus_refresh_rect_ex)
     , param_show_maximized(params.show_maximized)
+    , param_allow_multiple_handshake(params.session_probe_allow_multiple_handshake)
     , front(front)
     , mod(mod)
     , rdp(rdp)
@@ -716,6 +721,16 @@ public:
             if (this->session_probe_stop_launch_sequence_notifier) {
                 this->session_probe_stop_launch_sequence_notifier->stop(true, err_id);
                 this->session_probe_stop_launch_sequence_notifier = nullptr;
+            }
+
+            if (this->session_probe_ready) {
+                LOG(LOG_INFO,
+                    "SessionProbeVirtualChannel::process_server_message: "
+                        "Session Probe reconnection detect.");
+
+                if (!this->param_allow_multiple_handshake) {
+                    this->report_message.report("SESSION_PROBE_RECONNECTION", "");
+                }
             }
 
             this->session_probe_ready = true;

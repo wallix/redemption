@@ -122,17 +122,13 @@
 
 "unicode_keyboard_event_support = boolean(default=True)\n\n"
 
-"# In milliseconds.\n"
+"# (is in millisecond)\n"
 "#_advanced\n"
 "mod_recv_timeout = integer(min=100, max=10000, default=1000)\n\n"
 
 "[session_log]\n\n"
 
 "enable_session_log = boolean(default=True)\n\n"
-
-"# Log redirection in a file\n"
-"#_advanced\n"
-"session_log_redirection = boolean(default=True)\n\n"
 
 "#_advanced\n"
 "log_path = string(default='')\n\n"
@@ -251,7 +247,7 @@
 "#   2: all input events\n"
 "bogus_number_of_fastpath_input_event = option(0, 1, 2, default=1)\n\n"
 
-"# In milliseconds.\n"
+"# (is in millisecond)\n"
 "#_advanced\n"
 "recv_timeout = integer(min=100, max=10000, default=1000)\n\n"
 
@@ -444,6 +440,9 @@
 "# (is in millisecond)\n"
 "#_hidden\n"
 "session_probe_clipboard_based_launcher_short_delay = integer(min=0, default=50)\n\n"
+
+"#_advanced\n"
+"session_probe_allow_multiple_handshake = boolean(default=False)\n\n"
 
 "# Keep known server certificates on WAB\n"
 "#_hidden\n"

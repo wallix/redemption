@@ -463,7 +463,6 @@ private:
         this->push_to_send_index<cfg::globals::target>();
         this->ask<cfg::globals::target_device>();
         this->ask<cfg::globals::target_user>();
-        this->push_to_send_index<cfg::session_log::session_log_redirection>();
 
         static_cast<Field<cfg::context::target_port>&>(this->fields).asked_ = true;
     }

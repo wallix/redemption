@@ -372,6 +372,8 @@ protected:
     const std::chrono::milliseconds   session_probe_clipboard_based_launcher_long_delay;
     const std::chrono::milliseconds   session_probe_clipboard_based_launcher_short_delay;
 
+    const bool                        session_probe_allow_multiple_handshake;
+
     const bool                        bogus_ios_rdpdr_virtual_channel;
 
     std::string session_probe_target_informations;
@@ -530,9 +532,9 @@ protected:
                 !this->dynamic_channel_to_server_sender);
 
             this->dynamic_channel_to_client_sender =
-                this->create_to_client_sender(channel_names::cliprdr);
+                this->create_to_client_sender(channel_names::drdynvc);
             this->dynamic_channel_to_server_sender =
-                this->create_to_server_sender(channel_names::cliprdr);
+                this->create_to_server_sender(channel_names::drdynvc);
 
             this->dynamic_channel_virtual_channel =
                 std::make_unique<DynamicChannelVirtualChannel>(
@@ -636,6 +638,8 @@ protected:
 
     class RDPServerNotifier : public ServerNotifier {
     private:
+        FrontAPI & front;
+
         ReportMessageApi & report_message;
 
         const ServerNotification server_access_allowed_message;
@@ -652,6 +656,7 @@ protected:
 
     public:
         RDPServerNotifier(
+                FrontAPI & front,
                 ReportMessageApi & report_message,
                 ServerNotification server_access_allowed_message,
                 ServerNotification server_cert_create_message,
@@ -660,7 +665,8 @@ protected:
                 ServerNotification server_cert_error_message,
                 RDPVerbose verbose
             )
-        : report_message(report_message)
+        : front(front)
+        , report_message(report_message)
         , server_access_allowed_message(server_access_allowed_message)
         , server_cert_create_message(server_cert_create_message)
         , server_cert_success_message(server_cert_success_message)
@@ -724,6 +730,14 @@ protected:
 
             if (bool(this->verbose & RDPVerbose::basic_trace)) {
                 LOG(LOG_INFO, "%s", this->message.str());
+            }
+
+            {
+                std::string message(type.data.data(), type.data.size());
+                message += "=";
+                message.append(description.data.data(), description.data.size());
+
+                this->front.session_update(message);
             }
         }
     } server_notifier;
@@ -934,6 +948,7 @@ public:
         , session_probe_clipboard_based_launcher_clipboard_initialization_delay(mod_rdp_params.session_probe_clipboard_based_launcher_clipboard_initialization_delay)
         , session_probe_clipboard_based_launcher_long_delay(mod_rdp_params.session_probe_clipboard_based_launcher_long_delay)
         , session_probe_clipboard_based_launcher_short_delay(mod_rdp_params.session_probe_clipboard_based_launcher_short_delay)
+        , session_probe_allow_multiple_handshake(mod_rdp_params.session_probe_allow_multiple_handshake)
         , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
         , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
         , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
@@ -981,7 +996,8 @@ public:
         , lang(mod_rdp_params.lang)
         , font(mod_rdp_params.font)
         , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
-        , server_notifier(report_message,
+        , server_notifier(front,
+                          report_message,
                           mod_rdp_params.server_access_allowed_message,
                           mod_rdp_params.server_cert_create_message,
                           mod_rdp_params.server_cert_success_message,
@@ -1780,6 +1796,9 @@ protected:
 
         session_probe_virtual_channel_params.session_probe_enable_log               =
             this->session_probe_enable_log;
+
+        session_probe_virtual_channel_params.session_probe_allow_multiple_handshake =
+            this->session_probe_allow_multiple_handshake;
 
         session_probe_virtual_channel_params.real_alternate_shell                   =
             this->real_alternate_shell.c_str();

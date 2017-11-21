@@ -34,6 +34,7 @@
 #include "utils/sugar/splitter.hpp"
 
 #include "utils/log.hpp"
+#include "cxx/diagnostic.hpp"
 
 namespace configs {
 
@@ -107,7 +108,22 @@ namespace spec_types
     template<class T> class list;
     using ip = std::string;
 
-    template<class T, T min, T max>
+    template<class T>
+    struct underlying_type_for_range
+    {
+        using type = T;
+    };
+
+    template<class Rep, class Period>
+    struct underlying_type_for_range<std::chrono::duration<Rep, Period>>
+    {
+        using type = Rep;
+    };
+
+    template<class T>
+    using underlying_type_for_range_t = typename underlying_type_for_range<T>::type;
+
+    template<class T, underlying_type_for_range_t<T> min, underlying_type_for_range_t<T> max>
     struct range {};
 
     struct directory_path
@@ -228,7 +244,9 @@ array_view_const_char assign_zbuf_from_cfg(
     return array_view_const_char(buf.get(), p-buf.get());
 }
 
-template<class T, T min, T max>
+template<class T,
+    spec_types::underlying_type_for_range_t<T> min,
+    spec_types::underlying_type_for_range_t<T> max>
 array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<T> & zbuf,
     cfg_s_type<spec_types::range<T, min, max>>,
@@ -283,15 +301,69 @@ struct parse_error
 {
     constexpr explicit parse_error(char const * err) noexcept : s_err(err) {}
 
-    explicit operator bool () const { return this->s_err; }
-    char const * c_str() const { return this->s_err; }
+    explicit operator bool () const noexcept { return this->s_err; }
+    char const * c_str() const noexcept { return this->s_err; }
 
 private:
     char const * s_err;
 };
 
-constexpr parse_error no_parse_error {nullptr};
+namespace
+{
+    template<char... c>
+    struct string_literal
+    {
+        template<char... c2>
+        string_literal<c..., c2...>
+        operator+(string_literal<c2...> const&) const
+        { return {}; }
 
+        operator char const * () const
+        {
+            return c_str;
+        }
+
+        static constexpr char c_str[sizeof...(c)+1] = {c..., '\0'};
+    };
+    template<char... c>
+    constexpr char string_literal<c...>::c_str[sizeof...(c)+1];
+
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
+    template<class T, T... c>
+    string_literal<c...> operator "" _mp_str ()
+    { return {}; }
+    REDEMPTION_DIAGNOSTIC_POP
+
+
+    template<long long val, char... c>
+    struct int_to_meta_string_impl
+      : int_to_meta_string_impl<val/10, (val % 10) + '0', c...>
+    {};
+
+    template<char... c>
+    struct int_to_meta_string_impl<0, c...>
+    {
+        using type = string_literal<c...>;
+    };
+
+    template<class T, T val, bool negate = (val < 0)>
+    struct int_to_meta_string
+    {
+        using type = decltype("-"_mp_str +
+            typename int_to_meta_string_impl<-(val / 10), -(val % 10) + '0'>::type());
+    };
+
+    template<class T, T val>
+    struct int_to_meta_string<T, val, false>
+      : int_to_meta_string_impl<val / 10, val % 10 + '0'>
+    {};
+
+    template<class T, T val>
+    using mp_to_string = typename int_to_meta_string<T, val>::type;
+}
+
+constexpr parse_error no_parse_error {nullptr};
 
 inline parse_error parse(std::string & x, spec_type<std::string>, array_view_const_char value)
 {
@@ -303,7 +375,7 @@ template<std::size_t N>
 parse_error parse(char (&x)[N], spec_type<char[N]>, array_view_const_char value)
 {
     if (value.size() >= N-1) {
-        return parse_error{"out of bounds"};
+        return parse_error{"out of bounds, limits is "_mp_str + mp_to_string<long, N-1>()};
     }
     memcpy(x, value.data(), value.size());
     x[value.size()] = 0;
@@ -314,7 +386,7 @@ template<std::size_t N>
 parse_error parse(char (&x)[N], spec_type<spec_types::fixed_string>, array_view_const_char value)
 {
     if (value.size() >= N) {
-        return parse_error{"out of bounds"};
+        return parse_error{"out of bounds, limits is "_mp_str + mp_to_string<long, N>()};
     }
     memcpy(x, value.data(), value.size());
     memset(x + value.size(), 0, N - value.size());
@@ -328,7 +400,7 @@ parse_error parse(
     array_view_const_char value
 ) {
     if (value.size() != N*2) {
-        return parse_error{"bad length"};
+        return parse_error{"bad length, should be "_mp_str + mp_to_string<long, N*2>()};
     }
 
     char   hexval[3] = { 0 };
@@ -338,7 +410,7 @@ parse_error parse(
         hexval[1] = value[i*2+1];
         key[i] = strtol(hexval, &end, 16);
         if (end != hexval+2) {
-            return parse_error{"bad format"};
+            return parse_error{"bad format, expected hexadecimal value"};
         }
     }
 
@@ -360,20 +432,26 @@ inline parse_error parse(
     return no_parse_error;
 }
 
-template<class T, T min, T max>
+template<class T,
+    spec_types::underlying_type_for_range_t<T> min,
+    spec_types::underlying_type_for_range_t<T> max>
 parse_error parse(
     T & x,
     spec_type<spec_types::range<T, min, max>>,
     array_view_const_char value
 ) {
-    T y;
-    if (auto err = parse(y, spec_type<T>{}, value)) {
+    using Int = spec_types::underlying_type_for_range_t<T>;
+    Int y;
+    if (auto err = parse(y, spec_type<Int>{}, value)) {
         return err;
     }
     if (y < min || max < y) {
-        return parse_error{"invalid range"};
+        return parse_error{
+            "invalid range in ["_mp_str +
+            mp_to_string<Int, min>() + ", "_mp_str + mp_to_string<Int, max>() +
+            "]"_mp_str};
     }
-    x = y;
+    x = T{y};
     return no_parse_error;
 }
 
@@ -383,8 +461,10 @@ namespace detail
     inline T * ignore_0(T * buf, std::size_t sz)
     { return std::find_if_not(buf, buf + sz, [](char c){ return c == '0'; }); }
 
-    template<class TInt>
-    parse_error parse_integral(TInt & x, array_view_const_char value, TInt min, TInt max)
+    template<bool InList = false, class TInt, TInt min, TInt max>
+    parse_error parse_integral(
+        TInt & x, array_view_const_char value,
+        std::integral_constant<TInt, min>, std::integral_constant<TInt, max>)
     {
         range<char const *> rng = trim(value);
 
@@ -401,7 +481,8 @@ namespace detail
 
             constexpr std::size_t buf_sz = detail::integral_buffer_size<TInt>();
             if (sz > buf_sz) {
-                return parse_error{"too large"};
+                return parse_error{"too large, limited to"_mp_str +
+                    mp_to_string<std::size_t, buf_sz>()};
             }
             if (sz == 0) {
                 x = 0;
@@ -419,15 +500,17 @@ namespace detail
                 val = strtoull(buf, &end, base);
             }
             if (errno == ERANGE || std::size_t(end - buf) != sz) {
-                return parse_error{"bad format"};
+                return InList
+                    ? parse_error{"bad format, expected list of decimal, hexadecimal or octal (ex: \"integral[, integral ...]*\")"}
+                    : parse_error{"bad format, expected decimal, hexadecimal or octal"};
             }
         }
 
-        if (val > max) {
-            return parse_error{"too large"};
-        }
-        if (val < min) {
-            return parse_error{"too short"};
+        if (val < min || max < val) {
+            return parse_error{
+                "invalid range in ["_mp_str +
+                mp_to_string<TInt, min>() + ", "_mp_str + mp_to_string<TInt, max>() +
+                "]"_mp_str};
         }
 
         x = val;
@@ -435,10 +518,20 @@ namespace detail
     }
 }
 
+namespace
+{
+    template<class T>
+    using max_integral = std::integral_constant<T, std::numeric_limits<T>::max()>;
+    template<class T>
+    using min_integral = std::integral_constant<T, std::numeric_limits<T>::min()>;
+    template<class T>
+    using zero_integral = std::integral_constant<T, 0>;
+}
+
 template<class TInt>
 typename std::enable_if<std::is_integral<TInt>::value && !std::is_same<TInt, bool>::value, parse_error>::type
 parse(TInt & x, spec_type<TInt>, array_view_const_char value)
-{ return detail::parse_integral(x, value, std::numeric_limits<TInt>::min(), std::numeric_limits<TInt>::max()); }
+{ return detail::parse_integral(x, value, min_integral<TInt>(), max_integral<TInt>()); }
 
 template<class T, class Ratio>
 parse_error parse(
@@ -447,7 +540,7 @@ parse_error parse(
     array_view_const_char value
 ) {
     T y{}; // create with default value
-    if (parse_error err = detail::parse_integral(y, value, T{0}, std::numeric_limits<T>::max())) {
+    if (parse_error err = detail::parse_integral(y, value, zero_integral<T>(), max_integral<T>())) {
         return err;
     }
     x = std::chrono::duration<T, Ratio>{y};
@@ -460,11 +553,8 @@ namespace detail
     parse_error parse_integral_list(std::string & x, array_view_const_char value) {
         for (auto r : get_split(value, ',')) {
             IntOrigin i;
-            using limits = std::numeric_limits<IntOrigin>;
-            if (auto err = parse_integral(i, {r.begin(), r.size()}, limits::min(), limits::max())) {
-                if (strcmp(err.c_str(), "bad format")) {
-                    return parse_error{"bad format, expected \"integral[, integral ...]*\""};
-                }
+            if (auto err = parse_integral<true>(i, {r.begin(), r.size()}, min_integral<IntOrigin>(), max_integral<IntOrigin>())) {
+                return err;
             }
         }
         x.assign(value.data(), value.size());
@@ -538,11 +628,12 @@ parse(T & x, spec_type<U> ty, array_view_const_char value)
 }
 
 
-template<class E>
-parse_error parse_enum_u(E & x, array_view_const_char value, unsigned long max)
+template<class E, class Max>
+parse_error parse_enum_u(E & x, array_view_const_char value, Max max)
 {
-    unsigned long xi = 0;
-    if (parse_error err = detail::parse_integral(xi, value, 0ul, max)) {
+    using ul = unsigned long;
+    ul xi = 0;
+    if (parse_error err = detail::parse_integral(xi, value, zero_integral<ul>(), max)) {
         return err;
     }
     //if (~~static_cast<E>(xi) != static_cast<E>(xi)) {
@@ -570,9 +661,9 @@ parse_error parse_enum_str(
 template<class E>
 parse_error parse_enum_list(E & x, array_view_const_char value, std::initializer_list<E> l)
 {
-    unsigned long xi = 0;
-    using limits = std::numeric_limits<unsigned long>;
-    if (parse_error err = detail::parse_integral(xi, value, limits::min(), limits::max())) {
+    using ul = unsigned long;
+    ul xi = 0;
+    if (parse_error err = detail::parse_integral(xi, value, min_integral<ul>(), max_integral<ul>())) {
         return err;
     }
     for (auto val : l) {
@@ -662,12 +753,14 @@ namespace detail
         { impl(x, str.data(), str.size()); }
     };
 
-    template<class T, T min, T max>
+    template<class T,
+        spec_types::underlying_type_for_range_t<T> min,
+        spec_types::underlying_type_for_range_t<T> max>
     struct set_value_impl<T, spec_types::range<T, min, max>>
     {
         static void impl(T & x, T new_value)
         {
-            assert(x < min || max < x);
+            assert(x < T{min} || T{max} < x);
             x = new_value;
         }
     };

@@ -96,4 +96,7 @@ private:
     };
 
     MouseOwner current_mouse_owner;
+
+    int old_mouse_x = 0;
+    int old_mouse_y = 0;
 };

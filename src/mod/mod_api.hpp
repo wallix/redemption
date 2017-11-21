@@ -127,7 +127,7 @@ protected:
             {
                 Dimension dim = this->get_dim();
                 Rect r(0, 0, dim.w, dim.h);
-                RDPPatBlt cmd(r, 0xFA, color_encode(BGRColor(BLACK), 24), color_encode(BGRColor(WHITE), 24),
+                RDPPatBlt cmd(r, 0xA0, color_encode(BGRColor(BLACK), 24), color_encode(BGRColor(WHITE), 24),
                         RDPBrush(0, 0, 3, 0xaa, reinterpret_cast<const uint8_t *>("\x55\xaa\x55\xaa\x55\xaa\x55"))
                     );
                 drawable.begin_update();

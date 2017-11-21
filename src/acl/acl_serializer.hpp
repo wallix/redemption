@@ -321,21 +321,15 @@ public:
 
     void log5(const std::string & info) override
     {
+        assert(this->ct.is_open());
+
         /* Log to file */
-        if (this->ini.get<cfg::session_log::session_log_redirection>()) {
-            if(!this->ct.is_open()) {
-                size_t base_len = 0;
-                char const * filename = this->ini.get<cfg::session_log::log_path>().c_str();
-                char const * basename = basename_len(filename, base_len);
-                auto const   hash_path = this->ini.get<cfg::video::hash_path>().to_string() + basename;
-
-                this->ct.open(filename, hash_path.c_str(), 0, {basename, base_len});
-            }
-
+        {
             std::time_t t = std::time(nullptr);
             char mbstr[100];
-            if (std::strftime(mbstr, sizeof(mbstr), "%F %T ", std::localtime(&t))) {
-                this->ct.send(mbstr, strlen(mbstr));
+            auto const len = std::strftime(mbstr, sizeof(mbstr), "%F %T ", std::localtime(&t));
+            if (len) {
+                this->ct.send(mbstr, len);
             }
 
             this->ct.send(info.c_str(), info.size());
@@ -365,6 +359,19 @@ public:
               , session_info.c_str()
               , info.c_str());
         }
+    }
+
+    void start_session_log()
+    {
+        assert(!this->ct.is_open());
+        size_t base_len = 0;
+        char const * filename = this->ini.get<cfg::session_log::log_path>().c_str();
+        char const * basename = basename_len(filename, base_len);
+        auto const   hash_path = this->ini.get<cfg::video::hash_path>().to_string() + basename;
+
+        this->ct.open(filename, hash_path.c_str(), 0, {basename, base_len});
+        // force creating file
+        this->ct.send("", 0);
     }
 
     void close_session_log()

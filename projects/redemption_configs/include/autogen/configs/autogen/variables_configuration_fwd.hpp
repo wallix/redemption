@@ -57,7 +57,6 @@ namespace cfg {
 
     struct session_log {
         struct enable_session_log;
-        struct session_log_redirection;
         struct log_path;
         struct keyboard_input_masking_level;
         struct hide_non_printable_kbd_input;
@@ -140,6 +139,7 @@ namespace cfg {
         struct session_probe_clipboard_based_launcher_clipboard_initialization_delay;
         struct session_probe_clipboard_based_launcher_long_delay;
         struct session_probe_clipboard_based_launcher_short_delay;
+        struct session_probe_allow_multiple_handshake;
         struct server_cert_store;
         struct server_cert_check;
         struct server_access_allowed_message;

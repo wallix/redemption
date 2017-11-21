@@ -155,7 +155,6 @@ class Sesman():
         self.shared[u'selector_lines_per_page'] = u'0'
         self.shared[u'real_target_device']      = MAGICASK
         self.shared[u'reporting']               = u''
-        self.shared[u'session_log_redirection'] = u'False'
 
         self._trace_type = self.engine.get_trace_type()
         self.language           = None
@@ -1284,14 +1283,13 @@ class Sesman():
                 start_time
             )
 
-            is_log_redirected = self.shared[u'session_log_redirection'].lower() == u'true'
-            if _status and (extra_info.is_recorded or is_log_redirected):
+            if _status:
                 Logger().info(u"Session will be recorded in %s" % self.record_filebase)
                 try:
                     _status, _error = self.create_record_path_directory()
                     if _status and extra_info.is_recorded:
                         _status, _error = self.load_video_recording(user)
-                    if _status and is_log_redirected:
+                    if _status:
                         _status, _error = self.load_session_log_redirection()
                 except Exception, e:
                     if DEBUG:
@@ -1675,6 +1673,12 @@ class Sesman():
                                         self.engine.set_session_status(
                                             result=False, diag=release_reason)
                                         self.send_data({u'disconnect_reason': TR(u"session_probe_failed_to_run_startup_application")})
+                                    elif _reporting_reason == u'SESSION_PROBE_RECONNECTION':
+                                        Logger().info(u'RDP connection terminated. Reason: Session Probe reconnection without disconnection')
+                                        release_reason = u'Interrupt: Session Probe reconnection without disconnection'
+                                        self.engine.set_session_status(
+                                            result=False, diag=release_reason)
+                                        self.send_data({u'disconnect_reason': TR(u"session_probe_reconnection")})
 
                                 if self.shared.get(u'disconnect_reason_ack'):
                                     break

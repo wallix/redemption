@@ -187,13 +187,12 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, sesman_to_proxy, type_<bool>(), "unicode_keyboard_event_support", set(true));
         W.sep();
 
-        W.member(advanced_in_gui, sesman_to_proxy, type_<types::range<unsigned, 100, 10000>>{}, "mod_recv_timeout", desc{"In milliseconds."}, set(1000));
+        W.member(advanced_in_gui, sesman_to_proxy, type_<types::range<std::chrono::milliseconds, 100, 10000>>{}, "mod_recv_timeout", set(1000));
     });
 
     W.section("session_log", [&]
     {
         W.member(ini_and_gui, no_sesman, type_<bool>(), "enable_session_log", set(true));
-        W.member(advanced_in_gui, proxy_to_sesman, type_<bool>(), "session_log_redirection", desc{"Log redirection in a file"}, set(true));
         W.member(advanced_in_gui, sesman_to_proxy, type_<std::string>(), "log_path", sesman::name{"session_log_path"});
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", set(KeyboardInputMaskingLevel::fully_masked));
@@ -262,7 +261,7 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, no_sesman, type_<BogusNumberOfFastpathInputEvent>(), "bogus_number_of_fastpath_input_event", set(BogusNumberOfFastpathInputEvent::pause_key_only));
         W.sep();
 
-        W.member(advanced_in_gui, no_sesman, type_<types::range<unsigned, 100, 10000>>{}, "recv_timeout", desc{"In milliseconds."}, set(1000));
+        W.member(advanced_in_gui, no_sesman, type_<types::range<std::chrono::milliseconds, 100, 10000>>{}, "recv_timeout", set(1000));
     });
 
     W.section("mod_rdp", [&]
@@ -366,6 +365,9 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_clipboard_initialization_delay", sesman::name{"session_probe_smart_launcher_clipboard_initialization_delay"}, set(2000));
         W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_long_delay", sesman::name{"session_probe_smart_launcher_long_delay"}, set(500));
         W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_short_delay", sesman::name{"session_probe_smart_launcher_short_delay"}, set(50));
+        W.sep();
+
+        W.member(advanced_in_gui, no_sesman, type_<bool>(), "session_probe_allow_multiple_handshake", set(false));
         W.sep();
 
         W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true));

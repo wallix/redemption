@@ -675,9 +675,9 @@ private:
     public:
         template<class... Args>
         ModWithSocket(
-            ModuleManager & mm, AuthApi & authentifier,
+            ModuleManager & mm, AuthApi & /*authentifier*/,
             const char * name, int sck, uint32_t verbose,
-            std::string * error_message, bool same_module, sock_mod_barrier, Args && ... mod_args)
+            std::string * error_message, sock_mod_barrier, Args && ... mod_args)
         : SocketTransport( name, sck
                          , mm.ini.get<cfg::context::target_host>().c_str()
                          , mm.ini.get<cfg::context::target_port>()
@@ -686,9 +686,6 @@ private:
         , Mod(*this, std::forward<Args>(mod_args)...)
         , mm(mm)
         {
-            if (!same_module) {
-                authentifier.renew_mod();
-            }
             this->mm.socket_transport = this;
         }
 
@@ -852,6 +849,8 @@ public:
 
     void remove_mod() override {
         if (this->internal_mod != &this->no_mod) {
+            this->clear_osd_message();
+
             delete this->internal_mod;
             this->internal_mod = &this->no_mod;
             this->mod = &this->no_mod;
@@ -1240,6 +1239,10 @@ public:
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
                 }
 
+                if (!is_same_module) {
+                    authentifier.renew_mod();
+                }
+
                 const char * ip = this->ini.get<cfg::context::target_host>().c_str();
                 char ip_addr[256] {};
                 in_addr s4_sin_addr;
@@ -1275,7 +1278,6 @@ public:
                     client_sck,
                     this->ini.get<cfg::debug::mod_xup>(),
                     nullptr,
-                    is_same_module,
                     sock_mod_barrier(),
                     this->front,
                     this->front.client_info.width,
@@ -1295,6 +1297,10 @@ public:
         case MODULE_RDP:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP'");
+
+                if (!is_same_module) {
+                    authentifier.renew_mod();
+                }
 
                 ClientInfo client_info = this->front.client_info;
 
@@ -1422,6 +1428,9 @@ public:
 
                 mod_rdp_params.session_probe_enable_log            = this->ini.get<cfg::mod_rdp::session_probe_enable_log>();
 
+                mod_rdp_params.session_probe_allow_multiple_handshake
+                                                                   = this->ini.get<cfg::mod_rdp::session_probe_allow_multiple_handshake>();
+
                 mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
                 mod_rdp_params.auth_channel                        = CHANNELS::ChannelNameId(this->ini.get<cfg::mod_rdp::auth_channel>());
                 mod_rdp_params.alternate_shell                     = this->ini.get<cfg::mod_rdp::alternate_shell>().c_str();
@@ -1542,7 +1551,6 @@ public:
                         client_sck,
                         this->ini.get<cfg::debug::mod_rdp>(),
                         &this->ini.get_ref<cfg::context::auth_error_message>(),
-                        is_same_module,
                         sock_mod_barrier(),
                         this->front,
                         client_info,
@@ -1616,6 +1624,11 @@ public:
         case MODULE_VNC:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'\n");
+
+                if (!is_same_module) {
+                    authentifier.renew_mod();
+                }
+
                 const char * ip = this->ini.get<cfg::context::target_host>().c_str();
 
                 char ip_addr[256] {};
@@ -1655,7 +1668,6 @@ public:
                         client_sck,
                         this->ini.get<cfg::debug::mod_vnc>(),
                         nullptr,
-                        is_same_module,
                         sock_mod_barrier(),
                         this->ini.get<cfg::globals::target_user>().c_str(),
                         this->ini.get<cfg::context::target_password>().c_str(),

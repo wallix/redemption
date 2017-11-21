@@ -472,7 +472,7 @@ private:
             {"file_name", fd.fileName()},
             {"size", file_size_str}
             });
-           
+
         this->report_message.log5(info);
 
         if (!this->param_dont_log_data_into_syslog){
@@ -480,11 +480,10 @@ private:
         }
 
         if (!this->param_dont_log_data_into_wrm) {
-            std::string message("SendFileToServerClipboard=");
+            std::string message("CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION=");
             message += fd.fileName();
-            message += '<';
+            message += "\x0";
             message += file_size_str;
-            message += '>';
 
             this->front.session_update(message);
         }
@@ -1048,7 +1047,7 @@ public:
                     {"file_name", fd.fileName()},
                     {"size", file_size_str}
                     });
-                   
+
                 this->report_message.log5(info);
 
                 if (!this->param_dont_log_data_into_syslog){
@@ -1056,11 +1055,10 @@ public:
                 }
 
                 if (!this->param_dont_log_data_into_wrm) {
-                    std::string message("SendFileToClientClipboard=");
+                    std::string message("CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION=");
                     message += fd.fileName();
-                    message += "<";
-                    message += std::to_string(fd.file_size());
-                    message += ">";
+                    message += "\x0";
+                    message += file_size_str;
 
                     this->front.session_update(message);
                 }
@@ -1082,7 +1080,7 @@ public:
                     {"file_name", fd.fileName()},
                     {"size", file_size_str}
                     });
-                   
+
                 this->report_message.log5(info);
 
                 if (!this->param_dont_log_data_into_syslog){
@@ -1090,11 +1088,10 @@ public:
                 }
 
                 if (!this->param_dont_log_data_into_wrm) {
-                    std::string message("SendFileToClientClipboard=");
+                    std::string message("CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION=");
                     message += fd.fileName();
-                    message += "<";
-                    message += std::to_string(fd.file_size());
-                    message += ">";
+                    message += "\x0";
+                    message += file_size_str;
 
                     this->front.session_update(message);
                 }

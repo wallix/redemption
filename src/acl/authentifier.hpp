@@ -146,12 +146,14 @@ public:
             this->cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
             this->cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
+            this->acl_serial->start_session_log();
+            this->session_log_is_open = true;
+
             for (LogParam const & log_param : this->buffered_log_params) {
                 this->acl_serial->log5(log_param.info);
             }
             this->buffered_log_params.clear();
             this->buffered_log_params.shrink_to_fit();
-            this->session_log_is_open = true;
         }
     }
 };

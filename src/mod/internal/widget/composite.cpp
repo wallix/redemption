@@ -541,6 +541,15 @@ void WidgetParent::rdp_input_unicode(uint16_t unicode, uint16_t flag)
 
 void WidgetParent::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
 {
+    if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
+        x = this->old_mouse_x;
+        y = this->old_mouse_y;
+    }
+    else {
+        this->old_mouse_x = x;
+        this->old_mouse_y = y;
+    }
+
     Widget * w = this->widget_at_pos(x, y);
 
     // Mouse clic release
