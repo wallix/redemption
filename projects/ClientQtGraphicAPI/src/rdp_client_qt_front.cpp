@@ -2428,11 +2428,9 @@ public:
                         {
                         RDPECLIP::ClipboardCapabilitiesPDU pdu;
                         pdu.recv(chunk_series);
-//                         pdu.log();
 
                         RDPECLIP::GeneralCapabilitySet pdu2;
                         pdu2.recv(chunk_series);
-//                         pdu2.log();
                         this->clipboard_qt->server_use_long_format_names = bool(pdu2.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
                         }
 
