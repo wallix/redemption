@@ -111,6 +111,8 @@
 #include "utils/sugar/underlying_cast.hpp"
 
 
+#include "core/RDP/RDPDrawable.hpp"
+
 #include <memory>
 
 
@@ -775,6 +777,10 @@ public:
                     this->client_info.width = width;
                     this->client_info.height = height;
 
+//                     this->capture->graphic_api.get()->
+
+
+
                     this->ini.set_acl<cfg::context::opt_width>(this->client_info.width);
                     this->ini.set_acl<cfg::context::opt_height>(this->client_info.height);
 
@@ -975,21 +981,22 @@ public:
             &this->report_message
         };
 
-        this->capture = new Capture(
-                                      capture_params
-                                    , drawable_params
-                                    , capture_wrm, wrm_params
-                                    , capture_png, png_params
-                                    , capture_pattern_checker, pattern_params
-                                    , capture_ocr, ocr_params
-                                    , capture_video, sequenced_video_params
-                                    , capture_video_full, full_video_params
-                                    , capture_meta, meta_params
-                                    , capture_kbd, kbd_log_params
-                                    , video_params
-                                    , nullptr
-                                    , Rect()
-                                    );
+        this->capture = new Capture( capture_params
+                                   , drawable_params
+                                   , capture_wrm, wrm_params
+                                   , capture_png, png_params
+                                   , capture_pattern_checker, pattern_params
+                                   , capture_ocr, ocr_params
+                                   , capture_video, sequenced_video_params
+                                   , capture_video_full, full_video_params
+                                   , capture_meta, meta_params
+                                   , capture_kbd, kbd_log_params
+                                   , video_params
+                                   , nullptr
+                                   , Rect()
+                                   );
+
+
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }

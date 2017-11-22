@@ -2425,6 +2425,17 @@ public:
                         if (bool(this->verbose & RDPVerbose::cliprdr)) {
                             LOG(LOG_INFO, "SERVER >> CB Channel: Clipboard Capabilities PDU");
                         }
+                        {
+                        RDPECLIP::ClipboardCapabilitiesPDU pdu;
+                        pdu.recv(chunk_series);
+//                         pdu.log();
+
+                        RDPECLIP::GeneralCapabilitySet pdu2;
+                        pdu2.recv(chunk_series);
+//                         pdu2.log();
+                        this->clipboard_qt->server_use_long_format_names = bool(pdu2.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+                        }
+
                     break;
 
                     case RDPECLIP::CB_MONITOR_READY:
@@ -2434,7 +2445,12 @@ public:
 
                         {
                             RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1, RDPECLIP::GeneralCapabilitySet::size());
-                            RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_2, RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_USE_LONG_FORMAT_NAMES | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS);
+                            uint32_t generalFlags = RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS;
+                            if (this->clipboard_qt->server_use_long_format_names) {
+                                generalFlags = generalFlags | RDPECLIP::CB_USE_LONG_FORMAT_NAMES;
+                            }
+                            RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_2, generalFlags);
+
                             StaticOutStream<1024> out_stream;
                             clipboard_caps_pdu.emit(out_stream);
                             general_cap_set.emit(out_stream);
@@ -2470,7 +2486,7 @@ public:
                             }*/
                             this->_monitorCountNegociated = true;
                         }
-                        {
+                        if (this->clipboard_qt->server_use_long_format_names) {
                             const uint16_t * names[] = {
                                         reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[0].data()),
                                         reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[1].data()),
@@ -2482,6 +2498,20 @@ public:
                             size_t sizes[] = {26, 42, 2, 2, 2};
 
                             this->send_FormatListPDU(this->clipbrdFormatsList.IDs, names, sizes, ClipbrdFormatsList::CLIPBRD_FORMAT_COUNT);
+                        } else {
+                            const uint16_t * names[] = {
+                                        reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[2].data()),
+                                        reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[3].data()),
+                                        reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[4].data())
+                                                       };
+
+                            size_t sizes[] = {2, 2, 2};
+
+                            uint32_t ids[] = { this->clipbrdFormatsList.IDs[2]
+                                             , this->clipbrdFormatsList.IDs[3]
+                                             , this->clipbrdFormatsList.IDs[4]};
+                            LOG(LOG_INFO, "short format to send");
+                            this->send_FormatListPDU(ids, names, sizes, 3);
                         }
 
                     break;
@@ -3308,8 +3338,14 @@ public:
     void send_FormatListPDU(uint32_t const * formatIDs, const uint16_t ** formatListName, const std::size_t * size_names, const std::size_t formatIDs_size) override {
 
         StaticOutStream<1600> out_stream;
-        RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListName, size_names, formatIDs_size);
-        format_list_pdu_long.emit(out_stream);
+        if (this->clipboard_qt->server_use_long_format_names) {
+            RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListName, size_names, formatIDs_size);
+            format_list_pdu_long.emit(out_stream);
+        } else {
+            RDPECLIP::FormatListPDU_ShortName format_list_pdu_short(formatIDs, formatListName, size_names, formatIDs_size);
+            format_list_pdu_short.emit(out_stream);
+        }
+
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
         this->mod->send_to_mod_channel( channel_names::cliprdr

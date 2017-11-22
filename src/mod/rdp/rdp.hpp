@@ -151,9 +151,7 @@ protected:
     class ToClientSender : public VirtualChannelDataSender
     {
         FrontAPI& front;
-
         const CHANNELS::ChannelDef& channel;
-
         const RDPVerbose verbose;
 
     public:

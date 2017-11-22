@@ -210,8 +210,6 @@ public:
             if (test_searcher_it->next(utf8_char)) {
                 utf8_kbd_data.linearize();
                 char const * char_kbd_data = ::char_ptr_cast(utf8_kbd_data.get_data());
-                test_searcher_it->reset(named_regex.regex);
-
                 if (named_regex.regex.search_with_matches(char_kbd_data)) {
                     auto & match_result = test_searcher_it->match_result(named_regex.regex);
                     auto str = (!match_result.empty() && match_result[0].first)
@@ -220,6 +218,7 @@ public:
                     report(named_regex.name.c_str(), str);
                     has_notify = true;
                 }
+                test_searcher_it->reset(named_regex.regex);
             }
 
             ++test_searcher_it;

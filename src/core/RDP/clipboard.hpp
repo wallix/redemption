@@ -1211,6 +1211,18 @@ struct FormatListPDU_ShortName  {
     void recv(InStream & stream) {
         this->header.recv(stream);
 
+        this->formatListSize = this->header.dataLen() / 36;
+
+        if (this->formatListSize > FORMAT_LIST_MAX_SIZE) {
+            this->formatListSize = FORMAT_LIST_MAX_SIZE;
+        }
+
+        LOG(LOG_INFO, " formatListSize =  %zu bytes", this->formatListSize);
+
+        for (size_t i = 0; i < this->formatListSize; i++) {
+            this->formatListIDs[i] = stream.in_uint32_le();
+            stream.in_copy_bytes(reinterpret_cast<uint8_t *>(this->formatListName[i]), SHORT_NAME_MAX_SIZE);
+        }
     }
 
     void log() const {
@@ -2632,7 +2644,9 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
                 pdu2.recv(stream);
                 pdu2.log();
 
-                state.use_long_format_names = bool(pdu2.generalFlags() & CB_USE_LONG_FORMAT_NAMES);
+                if (state.use_long_format_names) {
+                    state.use_long_format_names = bool(pdu2.generalFlags() & CB_USE_LONG_FORMAT_NAMES);
+                }
             }
                 break;
 

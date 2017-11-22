@@ -32,6 +32,7 @@ InternalMod::InternalMod(
     , front(front)
     , screen(front, font, nullptr, theme)
 {
+
     this->screen.set_wh(front_width, front_height);
 
     if (!dont_resize) {

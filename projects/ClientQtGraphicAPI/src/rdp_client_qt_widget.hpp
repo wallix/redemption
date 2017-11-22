@@ -1018,6 +1018,7 @@ public:
     };
     std::vector<CB_out_File *>  _items_list;
     std::vector<std::string>    _temp_files_list;
+    bool server_use_long_format_names;
 
 
 
@@ -1031,6 +1032,7 @@ public:
         , _bufferTypeID(0)
         , _bufferTypeLongName("")
         , _cItems(0)
+        , server_use_long_format_names(false)
     {
         this->clean_CB_temp_dir();
         this->_clipboard = QApplication::clipboard();
