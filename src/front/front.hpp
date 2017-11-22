@@ -996,8 +996,6 @@ public:
                                    , Rect()
                                    );
 
-        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!! server_resize width = %d", this->capture->gd_drawable->width());
-        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!! server_resize height = %d", this->capture->gd_drawable->height());
 
         if (this->nomouse) {
             this->capture->set_pointer_display();
