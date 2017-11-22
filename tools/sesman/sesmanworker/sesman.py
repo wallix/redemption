@@ -1551,11 +1551,9 @@ class Sesman():
                                     "height",
                                 ])
 
-                                if ("width" in self._changed_keys
-                                    and "height" in self._changed_keys):
-                                    self.engine.update_session(
-                                        video_width=self.shared.get("width"),
-                                        video_height=self.shared.get("height")
+                                if self._changed_keys:
+                                    self.update_session_data(
+                                        self._changed_keys
                                     )
                                 if self.shared.get(u'auth_notify'):
                                     if self.shared.get(u'auth_notify') == u'rail_exec':
@@ -1828,6 +1826,17 @@ class Sesman():
         else:
             Logger().info(
                 u"Unexpected reporting reason: \"%s\" \"%s\" \"%s\"" % (reason, target, message))
+
+    def update_session_data(self, changed_keys):
+        keymapping = {
+            'height': 'video_height',
+            'width': 'video_width'
+        }
+        data_to_update = {
+            keymapping.get(key) : self.shared.get(key) for key in changed_keys
+            if keymapping.get(key) is not None
+        }
+        self.engine.update_session(**data_to_update)
 
     def fetch_connectionpolicy(self, conn_opts):
         cp_spec = {
