@@ -439,7 +439,7 @@ void config_spec_definition(Writer && W)
     {
         W.member(advanced_in_gui, no_sesman, type_<unsigned>(), "capture_groupid", set(33));
         W.sep();
-        W.member(advanced_in_gui, no_sesman, type_<CaptureFlags>{}, "capture_flags", set(CaptureFlags::png | CaptureFlags::wrm));
+        W.member(advanced_in_gui, no_sesman, type_<CaptureFlags>{}, "capture_flags", set(CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr));
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<std::chrono::duration<unsigned, std::deci>>(), "png_interval", desc{"Frame interval."}, set(10));
         W.member(advanced_in_gui, no_sesman, type_<std::chrono::duration<unsigned, std::centi>>(), "frame_interval", desc{"Frame interval."}, set(40));
