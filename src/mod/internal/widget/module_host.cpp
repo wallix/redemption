@@ -289,7 +289,68 @@ struct WidgetModuleHost::Impl
         draw_impl(wmh, RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bmp);
     }
 
+    static void draw_impl(WidgetModuleHost & wmh, const RDPScrBlt& cmd, const Rect clip)
+    {
+        Rect new_clip = compute_clip(wmh, clip);
+        if (new_clip.isempty()) { return; }
 
+        RDPScrBlt new_cmd = cmd;
+        new_cmd.move(wmh.x() - wmh.mod_visible_rect.x, wmh.y() - wmh.mod_visible_rect.y);
+
+        const Rect src_rect(cmd.srcx, cmd.srcy, cmd.rect.cx, cmd.rect.cy);
+
+        if (wmh.mod_visible_rect.contains(src_rect)) {
+            LOG(LOG_INFO, "WidgetModuleHost::Impl::draw_impl(RDPScrBlt): draw");
+            get_drawable(wmh).draw(new_cmd, new_clip);
+        }
+        else {
+            LOG(LOG_INFO, "WidgetModuleHost::Impl::draw_impl(RDPScrBlt): rdp_input_invalidate");
+            wmh.rdp_input_invalidate(new_clip);
+        }
+    }
+
+    static void draw_impl(WidgetModuleHost & wmh, const RDP::RDPMultiScrBlt& cmd, const Rect clip)
+    {
+        Rect new_clip = compute_clip(wmh, clip);
+        if (new_clip.isempty()) { return; }
+
+        RDP::RDPMultiScrBlt new_cmd = cmd;
+        new_cmd.move(wmh.x() - wmh.mod_visible_rect.x, wmh.y() - wmh.mod_visible_rect.y);
+
+        Rect src_rect(cmd.nXSrc, cmd.nYSrc, cmd.rect.cx, cmd.rect.cy);
+
+        const signed int delta_x = cmd.nXSrc - cmd.rect.x;
+        const signed int delta_y = cmd.nYSrc - cmd.rect.y;
+
+        Rect sub_dest_rect;
+
+        for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
+            sub_dest_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
+            sub_dest_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
+            sub_dest_rect.cx  = cmd.deltaEncodedRectangles[i].width;
+            sub_dest_rect.cy  = cmd.deltaEncodedRectangles[i].height;
+
+            const Rect sub_src_rect(sub_dest_rect.x + delta_x,
+                              sub_dest_rect.y + delta_y,
+                              sub_dest_rect.cx, sub_dest_rect.cy);
+
+            LOG(LOG_INFO, "Rect(%d %d %u %u)", sub_src_rect.x, sub_src_rect.y, sub_src_rect.cx, sub_src_rect.cy);
+
+            src_rect = src_rect.disjunct(sub_src_rect);
+        }
+
+        LOG(LOG_INFO, "Rect(%d %d %u %u)", wmh.mod_visible_rect.x, wmh.mod_visible_rect.y, wmh.mod_visible_rect.cx, wmh.mod_visible_rect.cy);
+        LOG(LOG_INFO, "Rect(%d %d %u %u)", src_rect.x, src_rect.y, src_rect.cx, src_rect.cy);
+
+        if (wmh.mod_visible_rect.contains(src_rect)) {
+            LOG(LOG_INFO, "WidgetModuleHost::Impl::draw_impl(RDPMultiScrBlt): draw");
+            get_drawable(wmh).draw(new_cmd, new_clip);
+        }
+        else {
+            LOG(LOG_INFO, "WidgetModuleHost::Impl::draw_impl(RDPMultiScrBlt): rdp_input_invalidate");
+            wmh.rdp_input_invalidate(new_clip);
+        }
+    }
 };
 
 
