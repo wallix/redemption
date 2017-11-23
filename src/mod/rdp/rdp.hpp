@@ -940,7 +940,8 @@ public:
         , session_probe_use_clipboard_based_launcher(mod_rdp_params.session_probe_use_clipboard_based_launcher &&
                                                      (!mod_rdp_params.target_application || !(*mod_rdp_params.target_application)) &&
                                                      (!mod_rdp_params.use_client_provided_alternate_shell ||
-                                                      !info.alternate_shell[0]))
+                                                      !info.alternate_shell[0] ||
+                                                      info.remote_program))
         , session_probe_enable_log(mod_rdp_params.session_probe_enable_log)
         , use_session_probe_to_launch_remote_program(mod_rdp_params.use_session_probe_to_launch_remote_program)
         , session_probe_clipboard_based_launcher_clipboard_initialization_delay(mod_rdp_params.session_probe_clipboard_based_launcher_clipboard_initialization_delay)
@@ -1046,6 +1047,9 @@ public:
 
             mod_rdp_params.log();
         }
+
+LOG(LOG_INFO, " > > > > AS=\"%s\"", info.alternate_shell);
+LOG(LOG_INFO, " > > > > TS=\"%s\"", (mod_rdp_params.target_application ? mod_rdp_params.target_application : ""));
 
         // Clear client screen
         this->invoke_asynchronous_graphic_task(AsynchronousGraphicTask::clear_screen);

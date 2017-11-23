@@ -566,7 +566,6 @@ enum {
 
 static inline const std::string get_generalFlags_names(uint32_t generalFlags) {
         std::string str;
-        (generalFlags & CB_CAPSTYPE_GENERAL) ? str+="CB_CAPSTYPE_GENERAL " :str;
         (generalFlags & CB_USE_LONG_FORMAT_NAMES) ? str+="CB_USE_LONG_FORMAT_NAMES " :str;
         (generalFlags & CB_STREAM_FILECLIP_ENABLED) ? str+="CB_STREAM_FILECLIP_ENABLED " :str;
 
@@ -1173,7 +1172,7 @@ struct FormatListPDU_ShortName  {
     CliprdrHeader header;
     uint32_t    formatListIDs[FORMAT_LIST_MAX_SIZE];
     uint16_t    formatListName[FORMAT_LIST_MAX_SIZE][SHORT_NAME_MAX_SIZE] = { {0} };
-    std::size_t formatListSize;
+    std::size_t formatListSize = 0;
 
     explicit FormatListPDU_ShortName( const uint32_t * formatListIDs
                                    , const uint16_t ** formatListName

@@ -2450,6 +2450,16 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 }
 
 
+RED_AUTO_TEST_CASE(TestPatternSearcher)
+{
+    PatternSearcher searcher(utils::MatchFinder::KBD_INPUT, "$kbd:e");
+    auto u8p = [](char const * s) { return reinterpret_cast<const uint8_t*>(s); };
+    searcher.test_uchar(u8p("e"), 1, [](char const *, char const *){});
+    searcher.test_uchar(u8p("a"), 1, [](char const *, char const *){});
+    // #15241: Pattern detection crash
+    searcher.test_uchar(u8p("e"), 1, [](char const *, char const *){});
+}
+
 
 #include "utils/fileutils.hpp"
 
@@ -2471,3 +2481,5 @@ RED_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
     unlink(fnt.seqgen()->get(0));
     unlink(fnt.seqgen()->get(1));
 }
+
+
