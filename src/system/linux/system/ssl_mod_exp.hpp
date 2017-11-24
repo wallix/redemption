@@ -41,20 +41,27 @@ static inline size_t mod_exp(
     struct Bignum_base
     {
         Bignum_base()
-        {
-            BN_init(&this->bn);
-        }
+          : bn(BN_new())
+        {}
 
         Bignum_base(const uint8_t * data, size_t len)
+          : bn(BN_new())
         {
-            BN_init(&this->bn);
-            BN_bin2bn(data, len, &this->bn);
+            BN_bin2bn(data, len, this->bn);
+        }
+
+        operator BIGNUM * ()
+        {
+            return this->bn;
         }
 
         ~Bignum_base()
-        { BN_free(&this->bn); }
+        {
+            BN_free(this->bn);
+        }
 
-        BIGNUM bn;
+    private:
+        BIGNUM * bn;
     };
 
     Bignum_base mod(modulus, modulus_size);
@@ -64,8 +71,11 @@ static inline size_t mod_exp(
     Bignum_base result;
 
     BN_CTX *ctx = BN_CTX_new();
-    BN_mod_exp(&result.bn, &x.bn, &exp.bn, &mod.bn, ctx);
+    BN_mod_exp(result, x, exp, mod, ctx);
     BN_CTX_free(ctx);
 
-    return BN_bn2bin(&result.bn, out);
+    auto const outlen = BN_bn2bin(result, out);
+    // BN_clear is used to destroy sensitive data
+    BN_clear(x);
+    return outlen;
 }
