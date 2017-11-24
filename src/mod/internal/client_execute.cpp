@@ -1273,44 +1273,6 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                 this->window_rect.y = this->window_rect_saved.y + diff_y;
 
                 this->update_rects();
-
-                {
-                    RDP::RAIL::NewOrExistingWindow order;
-
-                    order.header.FieldsPresentFlags(
-                                RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                            | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
-                            | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
-                            | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
-                            | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
-                            | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
-                            | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
-                        );
-                    order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
-
-                    order.ClientAreaWidth(this->window_rect.cx - 6 * 2);
-                    order.ClientAreaHeight(this->window_rect.cy - 25 - 6);
-                    order.WindowWidth(this->window_rect.cx);
-                    order.WindowHeight(this->window_rect.cy);
-                    order.NumVisibilityRects(1);
-                    order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
-
-                    order.ClientOffsetX(this->window_rect.x + 6);
-                    order.ClientOffsetY(this->window_rect.y + 25);
-                    order.WindowOffsetX(this->window_rect.x);
-                    order.WindowOffsetY(this->window_rect.y);
-                    order.VisibleOffsetX(this->window_rect.x);
-                    order.VisibleOffsetY(this->window_rect.y);
-
-                    if (this->verbose) {
-                        StaticOutStream<1024> out_s;
-                        order.emit(out_s);
-                        order.log(LOG_INFO);
-                        LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (2)", out_s.get_offset() - 1);
-                    }
-
-                    this->front_->draw(order);
-                }
             }   // if (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button)
 
             int move_size_type = 0;
@@ -1364,6 +1326,44 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
 
                 this->move_size_initialized = false;
             }   // if (0 != move_size_type)
+
+            {
+                RDP::RAIL::NewOrExistingWindow order;
+
+                order.header.FieldsPresentFlags(
+                            RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                        | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
+                    );
+                order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
+
+                order.ClientAreaWidth(this->window_rect.cx - 6 * 2);
+                order.ClientAreaHeight(this->window_rect.cy - 25 - 6);
+                order.WindowWidth(this->window_rect.cx);
+                order.WindowHeight(this->window_rect.cy);
+                order.NumVisibilityRects(1);
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+
+                order.ClientOffsetX(this->window_rect.x + 6);
+                order.ClientOffsetY(this->window_rect.y + 25);
+                order.WindowOffsetX(this->window_rect.x);
+                order.WindowOffsetY(this->window_rect.y);
+                order.VisibleOffsetX(this->window_rect.x);
+                order.VisibleOffsetY(this->window_rect.y);
+
+                if (this->verbose) {
+                    StaticOutStream<1024> out_s;
+                    order.emit(out_s);
+                    order.log(LOG_INFO);
+                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (2)", out_s.get_offset() - 1);
+                }
+
+                this->front_->draw(order);
+            }
 
             if (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button) {
                 this->update_widget();

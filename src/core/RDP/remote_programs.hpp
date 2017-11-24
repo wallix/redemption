@@ -2919,13 +2919,23 @@ public:
 
     uint32_t WindowId() const { return this->WindowId_; }
 
+    void WindowId(uint32_t WindowId_) { this->WindowId_ = WindowId_; }
+
     uint16_t Left() const { return this->Left_; }
+
+    void Left(uint32_t Left_) { this->Left_ = Left_; }
 
     uint16_t Top() const { return this->Top_; }
 
+    void Top(uint32_t Top_) { this->Top_ = Top_; }
+
     uint16_t Right() const { return this->Right_; }
 
+    void Right(uint32_t Right_) { this->Right_ = Right_; }
+
     uint16_t Bottom() const { return this->Bottom_; }
+
+    void Bottom(uint32_t Bottom_) { this->Bottom_ = Bottom_; }
 
     static size_t size() {
         return 12;  // WindowId(4) + Left(2) + Top(2) +
