@@ -556,4 +556,11 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
+
+    void move(int offset_x, int offset_y) {
+        this->bk = this->bk.offset(offset_x, offset_y);
+        this->op = this->op.offset(offset_x, offset_y);
+        this->glyph_x += offset_x;
+        this->glyph_y += offset_y;
+    }
 };

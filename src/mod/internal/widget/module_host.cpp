@@ -242,8 +242,7 @@ struct WidgetModuleHost::Impl
         std::is_same<Cmd, RDPEllipseCB  >::value ||
         std::is_same<Cmd, RDPEllipseSC  >::value ||
         std::is_same<Cmd, RDPPolygonCB  >::value ||
-        std::is_same<Cmd, RDPPolygonSC  >::value ||
-        std::is_same<Cmd, RDPGlyphIndex >::value
+        std::is_same<Cmd, RDPPolygonSC  >::value
     >;
 
     inline static Rect compute_clip(WidgetModuleHost const& wmh, const Rect clip) noexcept
