@@ -4232,13 +4232,15 @@ protected:
                         REDASSERT(fc);
                     }
 
-                    if (has_delta_bytes) {
-                        data = variable_bytes.in_uint8();
-                        if (data == 0x80) {
-                            draw_pos_ref += variable_bytes.in_uint16_le();
-                        }
-                        else {
-                            draw_pos_ref += data;
+                    if (!cmd.ui_charinc) {
+                       if (has_delta_bytes) {
+                           data = variable_bytes.in_uint8();
+                           if (data == 0x80) {
+                               draw_pos_ref += variable_bytes.in_uint16_le();
+                           }
+                           else {
+                               draw_pos_ref += data;
+                           }
                         }
                     }
 
@@ -4274,6 +4276,10 @@ protected:
                 else if (data == 0xFF)  {
                     LOG(LOG_WARNING, "Front::draw_impl(RDPGlyphIndex): Glyph fragment not implemented yet");
                 }
+            }
+
+            if (cmd.ui_charinc) {
+                draw_pos_ref += cmd.ui_charinc;
             }
 
         } else {

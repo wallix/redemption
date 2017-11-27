@@ -2709,11 +2709,11 @@ public:
     }
 
     void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
-//         if (bool(this->verbose & RDPVerbose::graphics)) {
+         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
-//         }
+         }
 
         Rect screen_rect = clip.intersect(this->info.width, this->info.height);
         if (screen_rect.isempty()){
@@ -2761,16 +2761,18 @@ public:
                     REDASSERT(fc);
                 }
 
-                if (has_delta_bytes)
-                {
-                    data = variable_bytes.in_uint8();
-                    if (data == 0x80)
+                if (!cmd.ui_charinc) {
+                    if (has_delta_bytes)
                     {
-                        draw_pos += variable_bytes.in_uint16_le();
-                    }
-                    else
-                    {
-                        draw_pos += data;
+                        data = variable_bytes.in_uint8();
+                        if (data == 0x80)
+                        {
+                            draw_pos += variable_bytes.in_uint16_le();
+                        }
+                        else
+                        {
+                            draw_pos += data;
+                        }
                     }
                 }
 
@@ -2806,9 +2808,16 @@ public:
                 } else {
                     LOG(LOG_WARNING, "DEFAULT: RDPGlyphIndex glyph_cache unknow FontChar");
                 }
+
+                if (cmd.ui_charinc) {
+                    draw_pos += cmd.ui_charinc;
+                }
+
             } else {
                 LOG(LOG_WARNING, "DEFAULT: RDPGlyphIndex glyph_cache 0xFD");
             }
+
+
         }
         //this->draw_VariableBytes(cmd.data, cmd.data_len, has_delta_bytes,
             //draw_pos, offset_y, color, cmd.bk.x + offset_x, cmd.bk.y,
