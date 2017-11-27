@@ -1154,11 +1154,13 @@ struct FormatListPDU_LongName {
             LOG(LOG_INFO, "         Long Format Name:");
             uint8_t utf8_string[500];
 
-            ::UTF16toUTF8(
+            const size_t size = ::UTF16toUTF8(
                 reinterpret_cast<const uint8_t *>(this->formatListName[i]),
                 this->formatListNameLen[i],
                 utf8_string,
                 sizeof(utf8_string));
+
+            utf8_string[size] = 0;
 
             LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatListIDs[i], get_Format_name(this->formatListIDs[i]));
             LOG(LOG_INFO, "             * formatListDataName = \"%s\" (%zu bytes)", reinterpret_cast<char *>(utf8_string), this->formatListNameLen[i]);
