@@ -4232,15 +4232,13 @@ protected:
                         REDASSERT(fc);
                     }
 
-                    if (!cmd.ui_charinc) {
-                       if (has_delta_bytes) {
-                           data = variable_bytes.in_uint8();
-                           if (data == 0x80) {
-                               draw_pos_ref += variable_bytes.in_uint16_le();
-                           }
-                           else {
-                               draw_pos_ref += data;
-                           }
+                    if (has_delta_bytes) {
+                        data = variable_bytes.in_uint8();
+                        if (data == 0x80) {
+                            draw_pos_ref += variable_bytes.in_uint16_le();
+                        }
+                        else {
+                            draw_pos_ref += data;
                         }
                     }
 

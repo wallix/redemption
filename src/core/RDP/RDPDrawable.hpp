@@ -689,7 +689,7 @@ public:
                     REDASSERT(fc);
                 }
 
-                if (has_delta_bytes && !ui_charinc)
+                if (has_delta_bytes)
                 {
                     data = variable_bytes.in_uint8();
                     if (data == 0x80)
@@ -738,6 +738,10 @@ public:
                     fragment_index, this->fragment_cache[fragment_index][0], delta);
 
                 fragment_begin_position = variable_bytes.get_current();
+
+                if (ui_charinc) {
+                    draw_pos_ref += ui_charinc;
+                }
 
                 this->draw_VariableBytes(&this->fragment_cache[fragment_index][1],
                     this->fragment_cache[fragment_index][0], has_delta_bytes, ui_charinc,
