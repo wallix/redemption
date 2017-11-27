@@ -777,10 +777,6 @@ public:
                     this->client_info.width = width;
                     this->client_info.height = height;
 
-//                     this->capture->graphic_api.get()->
-
-
-
                     this->ini.set_acl<cfg::context::opt_width>(this->client_info.width);
                     this->ini.set_acl<cfg::context::opt_height>(this->client_info.height);
 
@@ -4278,6 +4274,10 @@ protected:
                 else if (data == 0xFF)  {
                     LOG(LOG_WARNING, "Front::draw_impl(RDPGlyphIndex): Glyph fragment not implemented yet");
                 }
+            }
+
+            if (cmd.ui_charinc) {
+                draw_pos_ref += cmd.ui_charinc;
             }
 
         } else {

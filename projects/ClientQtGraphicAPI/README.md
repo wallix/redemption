@@ -211,7 +211,7 @@ L'API consiste à créer des clients composés de deux élément principaux:
 	$        src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp
 	$        src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
 	$        [Optionnel: chemins vers les fichiers .hpp contenant des classes dérivés de QObject si vous en avez ajouté]
-	$        [nom_de_votre_fichier_qui_contient_votre_class_front.hpp]
+	$        [nom_du_fichier_qui_contient_votre_class_front.hpp]
 	$        $(obj_list)
 	$        $(lib_list)
 	$        config.o

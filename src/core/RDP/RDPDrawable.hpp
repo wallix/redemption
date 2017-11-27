@@ -667,7 +667,7 @@ private:
     }
 
 public:
-    void draw_VariableBytes(uint8_t const * data, uint16_t size, bool has_delta_bytes,
+    void draw_VariableBytes(uint8_t const * data, uint16_t size, bool has_delta_bytes, uint16_t ui_charinc,
             uint16_t & draw_pos_ref, int16_t offset_y, Color color,
             int16_t bmp_pos_x, int16_t bmp_pos_y, Rect clip,
             uint8_t cache_id, const GlyphCache & gly_cache) {
@@ -710,6 +710,10 @@ public:
                         this->draw_glyph(fc, x + fc.offset, y, color, clip);
                     }
                 }
+
+                if (ui_charinc) {
+                    draw_pos_ref += ui_charinc;
+                }
             }
             else if (data == 0xFE)
             {
@@ -735,8 +739,12 @@ public:
 
                 fragment_begin_position = variable_bytes.get_current();
 
+                if (ui_charinc) {
+                    draw_pos_ref += ui_charinc;
+                }
+
                 this->draw_VariableBytes(&this->fragment_cache[fragment_index][1],
-                    this->fragment_cache[fragment_index][0], has_delta_bytes,
+                    this->fragment_cache[fragment_index][0], has_delta_bytes, ui_charinc,
                     draw_pos_ref, offset_y, color, bmp_pos_x, bmp_pos_y, clip,
                     cache_id, gly_cache);
             }
@@ -764,6 +772,8 @@ public:
 
                 fragment_begin_position = variable_bytes.get_current();
             }
+
+
         }
     }
 
@@ -794,7 +804,7 @@ public:
 
         uint16_t draw_pos = 0;
 
-        this->draw_VariableBytes(cmd.data, cmd.data_len, has_delta_bytes,
+        this->draw_VariableBytes(cmd.data, cmd.data_len, has_delta_bytes, cmd.ui_charinc,
             draw_pos, offset_y, color, cmd.bk.x + offset_x, cmd.bk.y,
             clipped_glyph_fragment_rect, cmd.cache_id, gly_cache);
         this->last_update_index++;

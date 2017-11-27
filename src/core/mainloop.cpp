@@ -254,11 +254,11 @@ void redemption_main_loop(Inifile & ini, CryptoContext & cctx, Random & rnd, Fst
     REDEMPTION_DIAGNOSTIC_POP
     int port = ini.get<cfg::globals::port>();
     Listen listener( ss
-                     , s_addr
-                     , port
-                     , false                              /* exit on timeout       */
-                     , 60                                 /* timeout sec           */
-                     , ini.get<cfg::globals::enable_transparent_mode>()
-                     );
+                   , s_addr
+                   , port
+                   , false                              /* exit on timeout       */
+                   , 60                                 /* timeout sec           */
+                   , ini.get<cfg::globals::enable_transparent_mode>()
+                   );
     listener.run();
 }

@@ -9,6 +9,8 @@ include $(JAM_INCLUDE_PATH)/cxxflags.jam ;
 include $(JAM_INCLUDE_PATH)/defines.jam ;
 include $(JAM_INCLUDE_PATH)/includes.jam ;
 
+lib gssglue : : <name>gssglue <link>shared ;
+
 constant SHELL_PWD : [ SHELL "echo -n $PWD" ] ; # rule location
 
 constant MAIN_PATH : [ setvar MAIN_PATH : $(SHELL_PWD) ] ;
@@ -137,13 +139,14 @@ add_src utils/png.cpp ;
 
 
 
+
 constant lib_list :
     krb5
     openssl
     crypto
-    gssglue
     png
     ocr
+    gssglue
     ffmpeg
     dl
     snappy

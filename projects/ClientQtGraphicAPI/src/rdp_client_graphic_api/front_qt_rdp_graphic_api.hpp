@@ -2709,11 +2709,11 @@ public:
     }
 
     void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
+         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
-        }
+         }
 
         Rect screen_rect = clip.intersect(this->info.width, this->info.height);
         if (screen_rect.isempty()){
@@ -2728,12 +2728,12 @@ public:
 
         // set a background color
         {
-            /*Rect ajusted = cmd.f_op_redundant ? cmd.bk : cmd.op;
+            Rect ajusted = cmd.f_op_redundant ? cmd.bk : cmd.op;
             if ((ajusted.cx > 1) && (ajusted.cy > 1)) {
                 ajusted.cy--;
-                ajusted.intersect(screen_rect);
-                this->screen->paintCache().fillRect(ajusted.x, ajusted.y, ajusted.cx, ajusted.cy, this->u32_to_qcolor(color_decode_opaquerect(cmd.fore_color, this->info.bpp, this->mod_palette)));
-            }*/
+                ajusted = ajusted.intersect(screen_rect);
+                this->screen->paintCache().fillRect(ajusted.x, ajusted.y, ajusted.cx, ajusted.cy, this->u32_to_qcolor(cmd.fore_color, color_ctx));
+            }
         }
 
         bool has_delta_bytes = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
@@ -2803,10 +2803,19 @@ public:
                             fc_data++;
                         }
                     }
+                } else {
+                    LOG(LOG_WARNING, "DEFAULT: RDPGlyphIndex glyph_cache unknow FontChar");
                 }
+
+                if (cmd.ui_charinc) {
+                    draw_pos += cmd.ui_charinc;
+                }
+
             } else {
-                LOG(LOG_WARNING, "DEFAULT: RDPGlyphIndex glyph_cache");
+                LOG(LOG_WARNING, "DEFAULT: RDPGlyphIndex glyph_cache 0xFD");
             }
+
+
         }
         //this->draw_VariableBytes(cmd.data, cmd.data_len, has_delta_bytes,
             //draw_pos, offset_y, color, cmd.bk.x + offset_x, cmd.bk.y,
@@ -3364,10 +3373,6 @@ public:
                                                 , Rect(0, 0, 0, 0)
                                                 );
 
-
-                LOG(LOG_INFO, "!!!!!!!!!!!!!!!!! width = %d", this->capture.get()->gd_drawable->width());
-                LOG(LOG_INFO, "!!!!!!!!!!!!!!!!! height = %d", this->capture.get()->gd_drawable->height());
-
                 this->capture.get()->gd_drawable->width();
 
                 this->graph_capture = this->capture.get()->get_graphic_api();
@@ -3385,8 +3390,6 @@ public:
     }
 
     void disconnect(std::string const & error) override {
-
-
 
         if (this->mod_qt != nullptr) {
             this->mod_qt->disconnect(true);
