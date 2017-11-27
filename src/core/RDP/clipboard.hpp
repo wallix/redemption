@@ -1229,13 +1229,14 @@ struct FormatListPDU_ShortName  {
         LOG(LOG_INFO, "     Format List PDU Short Name:");;
         for (size_t i = 0; i < this->formatListSize; i++) {
             LOG(LOG_INFO, "         Short Format Name:");
-            uint8_t utf8_string[32];
+            uint8_t utf8_string[SHORT_NAME_MAX_SIZE * 4 + 1];
 
-            ::UTF16toUTF8(
+            auto const len = ::UTF16toUTF8(
                 reinterpret_cast<const uint8_t *>(this->formatListName[i]),
                 SHORT_NAME_MAX_SIZE,
                 utf8_string,
-                sizeof(utf8_string));
+                sizeof(utf8_string) - 1);
+            utf8_string[len] = 0;
 
             LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatListIDs[i], get_Format_name(this->formatListIDs[i]));
             LOG(LOG_INFO, "             * formatListDataName = \"%s\" (32 bytes)", reinterpret_cast<char *>(utf8_string));
