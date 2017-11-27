@@ -41,7 +41,7 @@ LocallyIntegrableMod::LocallyIntegrableMod(
     Theme const & theme)
 : InternalMod(front, front_width, front_height, font, theme, false)
 , client_execute(client_execute)
-, dvc_manager(true)
+, dvc_manager(false)
 , front_width(front_width)
 , front_height(front_height)
 , dc_state(DCState::Wait)

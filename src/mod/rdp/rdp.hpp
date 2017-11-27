@@ -1048,9 +1048,6 @@ public:
             mod_rdp_params.log();
         }
 
-LOG(LOG_INFO, " > > > > AS=\"%s\"", info.alternate_shell);
-LOG(LOG_INFO, " > > > > TS=\"%s\"", (mod_rdp_params.target_application ? mod_rdp_params.target_application : ""));
-
         // Clear client screen
         this->invoke_asynchronous_graphic_task(AsynchronousGraphicTask::clear_screen);
 
@@ -7554,7 +7551,7 @@ private:
 
             SslHMAC_Md5 hmac_md5(server_auto_reconnect_packet.ArcRandomBits,
                 sizeof(server_auto_reconnect_packet.ArcRandomBits));
-            if (!this->nego.tls && !this->nego.nla) {
+            if (!this->nego.enhanced_rdp_security_is_in_effect()) {
                 if (bool(this->verbose & RDPVerbose::basic_trace)){
                     LOG(LOG_INFO, "Use client random");
                 }

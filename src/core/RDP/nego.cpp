@@ -421,3 +421,8 @@ void RdpNego::send_negotiation_request()
     this->trans.send(stream.get_data(), stream.get_offset());
     LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
 }
+
+bool RdpNego::enhanced_rdp_security_is_in_effect() const
+{
+    return (this->enabled_protocols != RdpNegoProtocols::Rdp);
+}
