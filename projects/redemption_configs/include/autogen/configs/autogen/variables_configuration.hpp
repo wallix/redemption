@@ -671,7 +671,7 @@ namespace cfg {
         type value{};
     };
     /// type: KeyboardInputMaskingLevel <br/>
-    /// value{static_cast<type>(3)} <br/>
+    /// value{static_cast<type>(2)} <br/>
     struct session_log::keyboard_input_masking_level {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -680,7 +680,7 @@ namespace cfg {
         using type = KeyboardInputMaskingLevel;
         using sesman_and_spec_type = KeyboardInputMaskingLevel;
         using mapped_type = sesman_and_spec_type;
-        type value{static_cast<type>(3)};
+        type value{static_cast<type>(2)};
     };
     /// type: bool <br/>
     /// value{0} <br/>
