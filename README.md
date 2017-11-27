@@ -7,11 +7,10 @@ Dependencies
 ============
 
 To compile ReDemPtion you need the following packages:
-- libboost-dev (contains bjam : software build tool) (http://sourceforge.net/projects/boost/files/boost/)
+- libboost-tools-dev (contains bjam: software build tool) (http://sourceforge.net/projects/boost/files/boost/)
 - libboost-test-dev (unit-test dependency)
 - libssl-dev
 - libkrb5-dev
-- libgssglue-dev
 - libsnappy-dev
 - libpng12-dev
 - libffmpeg-dev (see below)
@@ -32,11 +31,12 @@ Submodule ($ `git submodule update --init`):
 - libavformat-dev
 - libavutil-dev
 - libswscale-dev
+- libx264-dev
+- libbz2-dev
 - libavcodec-ffmpeg56
 - libavformat-ffmpeg56
 - libavutil-ffmpeg54
 - libswscale-ffmpeg3
-<!-- - libbz2-dev -->
 <!-- END optional -->
 
 ### Other distros:

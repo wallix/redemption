@@ -5,7 +5,6 @@ import toolset ;
 lib openssl : : <name>ssl <link>shared ;
 
 lib krb5 : : <name>krb5 <link>shared ;
-lib gssglue : : <name>gssglue <link>shared ;
 
 lib crypto : : <name>crypto <link>shared ;
 lib z : : <name>z <link>shared ;
