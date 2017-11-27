@@ -2828,18 +2828,30 @@ public:
                                     Kudos to Richard Levitte for the following (. intuitive .)
                                     lines of code that resets the OID and let's us extract the key. */
 
-                                int nid = OBJ_obj2nid(cert->cert_info->key->algor->algorithm);
-                                if ((nid == NID_md5WithRSAEncryption)
-                                    || (nid == NID_shaWithRSAEncryption)){
-                                    ASN1_OBJECT_free(cert->cert_info->key->algor->algorithm);
-                                    cert->cert_info->key->algor->algorithm = OBJ_nid2obj(NID_rsaEncryption);
+                                {
+                                    X509_PUBKEY * key = X509_get_X509_PUBKEY(cert);
+                                    if (!key) {
+                                        LOG(LOG_ERR, "Failed to get public key from certificate");
+                                        throw Error(ERR_SEC);
+                                    }
+                                    X509_ALGOR * algor;
+                                    if (X509_PUBKEY_get0_param(NULL, NULL, 0, &algor, key) != 1) {
+                                        LOG(LOG_ERR, "Faild to get algorithm used for public key.");
+                                        throw Error(ERR_SEC);
+                                    }
+
+                                    int const nid = OBJ_obj2nid(algor->algorithm);
+                                    if ((nid == NID_md5WithRSAEncryption)
+                                    || (nid == NID_shaWithRSAEncryption)) {
+                                        X509_PUBKEY_set0_param(key, OBJ_nid2obj(NID_rsaEncryption), 0, NULL, NULL, 0);
+                                    }
                                 }
 
-//                                            LOG(LOG_INFO, "================= SC_SECURITY X509_get_pubkey");
+                                // LOG(LOG_INFO, "================= SC_SECURITY X509_get_pubkey");
 
                                 EVP_PKEY * epk = X509_get_pubkey(cert);
                                 if (nullptr == epk){
-                                    LOG(LOG_ERR, "Failed to extract public key from certificate\n");
+                                    LOG(LOG_ERR, "Failed to extract public key from certificate");
                                     throw Error(ERR_SEC);
                                 }
 
@@ -2858,19 +2870,27 @@ public:
                                     throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
                                 }
 
-                                if ((BN_num_bytes(server_public_key->e) > SEC_EXPONENT_SIZE)
-                                    ||  (BN_num_bytes(server_public_key->n) > SEC_MAX_MODULUS_SIZE)){
+                                BIGNUM const *e, *n;
+                                #if OPENSSL_VERSION_NUMBER <= 0x1000207fL
+                                e = server_public_key->e;
+                                n = server_public_key->n;
+                                #else
+                                RSA_get0_key(server_public_key, &n, &e, nullptr);
+                                #endif
+
+                                if ((BN_num_bytes(e) > SEC_EXPONENT_SIZE)
+                                    ||  (BN_num_bytes(n) > SEC_MAX_MODULUS_SIZE)){
                                     LOG(LOG_ERR, "Failed to extract RSA exponent and modulus");
                                     throw Error(ERR_SEC);
                                 }
 
-                                int len_e = BN_bn2bin(server_public_key->e, exponent);
-                                int len_n = BN_bn2bin(server_public_key->n, modulus);
+                                int len_e = BN_bn2bin(e, exponent);
+                                int len_n = BN_bn2bin(n, modulus);
                                 reverseit(exponent, len_e);
                                 reverseit(modulus, len_n);
                                 RSA_free(server_public_key);
 
-                                #endif
+                                #endif // __EMSCRIPTEN__
                             }
 
                             /* Generate a client random, and determine encryption keys */

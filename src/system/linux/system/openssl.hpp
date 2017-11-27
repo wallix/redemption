@@ -38,6 +38,7 @@
 #include "cxx/diagnostic.hpp"
 
 #include <memory>
+#include <cstring>
 
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")

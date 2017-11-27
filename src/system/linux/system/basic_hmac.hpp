@@ -28,16 +28,38 @@
 
 namespace detail_
 {
+
+struct HMACWrap
+{
+# if OPENSSL_VERSION_NUMBER <= 0x1000207fL
+    void init() { HMAC_CTX_init(&this->hmac); }
+    void deinit() { HMAC_CTX_cleanup(&this->hmac); }
+    HMAC_CTX * operator->() noexcept { return &this->hmac; }
+    operator HMAC_CTX * () noexcept { return &this->hmac; }
+
+private:
+    HMAC_CTX hmac;
+# else
+    void init() { this->hmac = HMAC_CTX_new(); }
+    void deinit() { HMAC_CTX_free(this->hmac); }
+    HMAC_CTX * operator->() noexcept { return this->hmac; }
+    operator HMAC_CTX * () noexcept { return this->hmac; }
+
+private:
+    HMAC_CTX * hmac = nullptr;
+# endif
+};
+
 template<const EVP_MD * (* evp)(), std::size_t DigestLength>
 class basic_HMAC
 {
-    HMAC_CTX hmac;
+    HMACWrap hmac;
 
 public:
     basic_HMAC(const uint8_t * const key, size_t key_size)
     {
-        HMAC_CTX_init(&this->hmac);
-        int res = HMAC_Init_ex(&this->hmac, key, key_size, evp(), nullptr);
+        this->hmac.init();
+        int res = HMAC_Init_ex(this->hmac, key, key_size, evp(), nullptr);
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
         }
@@ -45,12 +67,12 @@ public:
 
     ~basic_HMAC()
     {
-        HMAC_CTX_cleanup(&this->hmac);
+        this->hmac.deinit();
     }
 
     void update(const uint8_t * const data, size_t data_size)
     {
-        int res = HMAC_Update(&this->hmac, data, data_size);
+        int res = HMAC_Update(this->hmac, data, data_size);
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
         }
@@ -59,7 +81,7 @@ public:
     void final(uint8_t (&out_data)[DigestLength])
     {
         unsigned int len = 0;
-        int res = HMAC_Final(&this->hmac, out_data, &len);
+        int res = HMAC_Final(this->hmac, out_data, &len);
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
         }
@@ -70,7 +92,7 @@ template<const EVP_MD * (* evp)(), std::size_t DigestLength>
 class DelayedHMAC
 {
     bool initialized = false;
-    HMAC_CTX hmac;
+    HMACWrap hmac;
 
 public:
     DelayedHMAC() = default;
@@ -80,8 +102,8 @@ public:
         if (this->initialized){
             throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
         }
-        HMAC_CTX_init(&this->hmac);
-        int res = HMAC_Init_ex(&this->hmac, key, key_size, evp(), nullptr);
+        this->hmac.init();
+        int res = HMAC_Init_ex(this->hmac, key, key_size, evp(), nullptr);
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
         }
@@ -91,7 +113,7 @@ public:
     ~DelayedHMAC()
     {
         if (this->initialized){
-            HMAC_CTX_cleanup(&this->hmac);
+            this->hmac.deinit();
         }
     }
 
@@ -100,7 +122,7 @@ public:
         if (!this->initialized){
             throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
         }
-        int res = HMAC_Update(&this->hmac, data, data_size);
+        int res = HMAC_Update(this->hmac, data, data_size);
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
         }
@@ -112,11 +134,11 @@ public:
             throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
         }
         unsigned int len = 0;
-        int res = HMAC_Final(&this->hmac, out_data, &len);
+        int res = HMAC_Final(this->hmac, out_data, &len);
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
         }
-        HMAC_CTX_cleanup(&this->hmac);
+        this->hmac.deinit();
         this->initialized = false;
     }
 };

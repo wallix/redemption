@@ -346,14 +346,14 @@ struct CipherContext : noncopyable
     void init() noexcept
     {
         this->deinit();
-        ::EVP_CIPHER_CTX_init(&this->ectx);
+        this->ectx = ::EVP_CIPHER_CTX_new();
         this->is_init = true;
     }
 
     void deinit() noexcept
     {
         if (this->is_init) {
-            EVP_CIPHER_CTX_cleanup(&this->ectx);
+            ::EVP_CIPHER_CTX_free(this->ectx);
             this->is_init = false;
         }
     }
@@ -365,7 +365,7 @@ struct CipherContext : noncopyable
 
     EVP_CIPHER_CTX* get_ctx() noexcept
     {
-        return &this->ectx;
+        return this->ectx;
     }
 
     bool is_initialized() const noexcept
@@ -374,7 +374,7 @@ struct CipherContext : noncopyable
     }
 
 private:
-    EVP_CIPHER_CTX ectx; // [en|de]cryption context
+    EVP_CIPHER_CTX * ectx = nullptr; // [en|de]cryption context
     bool is_init = false;
 };
 
