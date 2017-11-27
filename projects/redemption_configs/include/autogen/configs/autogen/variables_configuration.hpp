@@ -2139,7 +2139,7 @@ namespace cfg {
         type value{33};
     };
     /// type: CaptureFlags <br/>
-    /// value{static_cast<type>(3)} <br/>
+    /// value{static_cast<type>(11)} <br/>
     struct video::capture_flags {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2148,7 +2148,7 @@ namespace cfg {
         using type = CaptureFlags;
         using sesman_and_spec_type = CaptureFlags;
         using mapped_type = sesman_and_spec_type;
-        type value{static_cast<type>(3)};
+        type value{static_cast<type>(11)};
     };
     /// Frame interval. <br/>
     /// type: std::chrono::duration<unsigned, std::ratio<1, 10>> <br/>

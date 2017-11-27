@@ -1363,7 +1363,6 @@ public:
 
 class TitleCaptureImpl : public gdi::CaptureApi, public gdi::CaptureProbeApi
 {
-public:
     OcrTitleExtractorBuilder ocr_title_extractor_builder;
     AgentTitleExtractor agent_title_extractor;
 
@@ -1374,11 +1373,16 @@ public:
 
     NotifyTitleChanged & notify_title_changed;
 
+    KeyQvalueFormatter formatted_message;
+    ReportMessageApi * report_message;
+
+public:
     TitleCaptureImpl(
         const timeval & now,
         RDPDrawable & drawable,
         OcrParams ocr_params,
-        NotifyTitleChanged & notify_title_changed)
+        NotifyTitleChanged & notify_title_changed,
+        ReportMessageApi * report_message)
     : ocr_title_extractor_builder(
         drawable.impl(),
         ocr_params.verbosity,
@@ -1390,6 +1394,7 @@ public:
     , last_ocr(now)
     , usec_ocr_interval(ocr_params.interval)
     , notify_title_changed(notify_title_changed)
+    , report_message(report_message)
     {
     }
 
@@ -1406,6 +1411,12 @@ public:
 
             if (title.data()/* && title.size()*/) {
                 notify_title_changed.notify_title_changed(now, title);
+                if (&this->title_extractor.get() != &this->agent_title_extractor
+                 && this->report_message)
+                {
+                    this->formatted_message.assign("TITLE_BAR", {{"data", title}});
+                    this->report_message->log5(this->formatted_message.str());
+                }
             }
 
             return this->usec_ocr_interval;
@@ -1419,12 +1430,12 @@ public:
         bool const enable_probe = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
         if (enable_probe) {
             this->title_extractor = this->agent_title_extractor;
+            this->agent_title_extractor.session_update(message);
         }
         else {
             this->title_extractor = this->ocr_title_extractor_builder.get_title_extractor();
         }
 
-        this->agent_title_extractor.session_update(message);
     }
 
     void possible_active_window_change() override {}
@@ -1625,7 +1636,7 @@ Capture::Capture(
             if (this->patterns_checker || this->meta_capture_obj || this->sequenced_video_capture_obj) {
                 this->title_capture_obj.reset(new TitleCaptureImpl(
                     capture_params.now, *this->gd_drawable, ocr_params,
-                    this->notifier_title_changed
+                    this->notifier_title_changed, capture_params.report_message
                 ));
             }
             else {

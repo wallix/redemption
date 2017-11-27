@@ -580,7 +580,7 @@
 "#   8: ocr\n"
 "# (note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
 "#_advanced\n"
-"#capture_flags = 3\n\n"
+"#capture_flags = 11\n\n"
 
 "# Frame interval.\n"
 "# (is in 1/10 second)\n"

@@ -86,7 +86,7 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     RED_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
-    RED_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
+    RED_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr,
                                                         ini.get<cfg::video::capture_flags>());
     RED_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
     RED_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
@@ -407,7 +407,7 @@ RED_AUTO_TEST_CASE(TestConfig1)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     RED_CHECK_EQUAL("/var/tmp/wab/persistent/rdp/",   ini.get<cfg::globals::persistent_path>());
 
-    RED_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
+    RED_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr,
                                                         ini.get<cfg::video::capture_flags>());
     RED_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
     RED_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
@@ -631,7 +631,7 @@ RED_AUTO_TEST_CASE(TestConfig1bis)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     RED_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
-    RED_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
+    RED_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr,
                                                         ini.get<cfg::video::capture_flags>());
     RED_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
     RED_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
@@ -825,7 +825,7 @@ RED_AUTO_TEST_CASE(TestConfig2)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     RED_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
-    RED_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
+    RED_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr,
                                                         ini.get<cfg::video::capture_flags>());
     RED_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
     RED_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
@@ -1023,7 +1023,7 @@ RED_AUTO_TEST_CASE(TestConfig3)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     RED_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
-    RED_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
+    RED_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr,
                                                         ini.get<cfg::video::capture_flags>());
     RED_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
     RED_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
@@ -1194,7 +1194,7 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     RED_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
-    RED_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
+    RED_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr,
                                                         ini.get<cfg::video::capture_flags>());
     RED_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
     RED_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
@@ -1366,7 +1366,7 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     RED_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
-    RED_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
+    RED_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr,
                                                         ini.get<cfg::video::capture_flags>());
     RED_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
     RED_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
@@ -1523,7 +1523,7 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     RED_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
-    RED_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
+    RED_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr,
                                                         ini.get<cfg::video::capture_flags>());
     RED_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
     RED_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
@@ -1683,7 +1683,7 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
     RED_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
-    RED_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm,
+    RED_CHECK_EQUAL(CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr,
                                                         ini.get<cfg::video::capture_flags>());
     RED_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
     RED_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
