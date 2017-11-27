@@ -361,7 +361,6 @@ private:
 
 
 
-
 class SyslogKbd final : public gdi::KbdInputApi, public gdi::CaptureApi
 {
     uint8_t kbd_buffer[1024];
