@@ -961,9 +961,9 @@ namespace cfg {
         type value{1};
     };
     /// [Not configured]: Compatible with more RDP clients (less secure) <br/>
-    /// HIGH:!ADH:!3DES:!SHA: Compatible only with MS Windows 2008 R2 client or more recent (more secure) <br/>
+    /// HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure) <br/>
     /// type: std::string <br/>
-    /// value{} <br/>
+    /// value = "HIGH:!ADH:!3DES:!SHA" <br/>
     struct client::ssl_cipher_list {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -972,7 +972,7 @@ namespace cfg {
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
-        type value{};
+        type value = "HIGH:!ADH:!3DES:!SHA";
     };
     /// type: bool <br/>
     /// value{0} <br/>
