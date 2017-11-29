@@ -1589,6 +1589,19 @@ public:
 
                             this->report_message.log5(info);
 
+                            {
+                                char message[4096];
+
+                                // rule, app_name, app_cmd_line, dst_addr, dst_port
+                                snprintf(message, sizeof(message), "%s|%s|%s|%s|%s",
+                                    description.c_str(), parameters[1].c_str(), parameters[2].c_str(),
+                                    parameters[3].c_str(), parameters[4].c_str());
+
+                                this->report_message.report(
+                                    (deny ? "FINDCONNECTION_DENY" : "FINDCONNECTION_NOTIFY"),
+                                    message);
+                            }
+
                             if (bool(this->verbose & RDPVerbose::sesprobe)) {
                                 LOG(LOG_INFO, "%s", info);
                             }
@@ -1644,6 +1657,18 @@ public:
                                 });
 
                             this->report_message.log5(info);
+
+                            {
+                                char message[4096];
+
+                                // rule, app_name, app_cmd_line, dst_addr, dst_port
+                                snprintf(message, sizeof(message), "%s|%s|%s",
+                                    description.c_str(), parameters[1].c_str(), parameters[2].c_str());
+
+                                this->report_message.report(
+                                    (deny ? "FINDPROCESS_DENY" : "FINDPROCESS_NOTIFY"),
+                                    message);
+                            }
 
                             if (bool(this->verbose & RDPVerbose::sesprobe)) {
                                 LOG(LOG_INFO, "%s", info);

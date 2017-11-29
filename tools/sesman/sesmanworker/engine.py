@@ -518,9 +518,64 @@ class Engine(object):
              }
 
             Notify(self.wabengine, RDP_PATTERN_FOUND, notif_data)
+
+            text = (u"%(regexp)s: The string '%(string)s' has been detected in the "
+                    "following RDP connection: "
+                    "%(user)s@%(device)s:%(service)s:%(user_login)s (%(host)s)\n") % notif_data
+            Logger().info("%s" % text)
         except Exception, e:
             import traceback
             Logger().info("Engine NotifyFindPatternInRDPFlow failed: (((%s)))" % (traceback.format_exc(e)))
+
+    def NotifyFindConnectionInRDPFlow(self, rule, deny, app_name, app_cmd_line, dst_addr, dst_port, user_login, user, host, cn, service):
+        try:
+            notif_data = {
+                   u'rule'         : rule
+                 , u'deny'         : deny
+                 , u'app_name'     : app_name
+                 , u'app_cmd_line' : app_cmd_line
+                 , u'dst_addr'     : dst_addr
+                 , u'dst_port'     : dst_port
+                 , u'user_login'   : user_login
+                 , u'user'         : user
+                 , u'host'         : host
+                 , u'device'       : cn
+                 , u'service'      : service
+             }
+
+#            Notify(self.wabengine, RDP_CONNECTION_FOUND, notif_data)
+
+            text = (u"%(rule)s: The connection '%(dst_addr)s:%(dst_port)s' has been detected in the "
+                    "following RDP connection: "
+                    "%(user)s@%(device)s:%(service)s:%(user_login)s (%(host)s)\n") % notif_data
+            Logger().info("%s" % text)
+        except Exception, e:
+            import traceback
+            Logger().info("Engine NotifyFindConnectionInRDPFlow failed: (((%s)))" % (traceback.format_exc(e)))
+
+    def NotifyFindProcessInRDPFlow(self, regex, deny, app_name, app_cmd_line, user_login, user, host, cn, service):
+        try:
+            notif_data = {
+                   u'regex'        : regex
+                 , u'deny'         : deny
+                 , u'app_name'     : app_name
+                 , u'app_cmd_line' : app_cmd_line
+                 , u'user_login'   : user_login
+                 , u'user'         : user
+                 , u'host'         : host
+                 , u'device'       : cn
+                 , u'service'      : service
+             }
+
+#            Notify(self.wabengine, RDP_PROCESS_FOUND, notif_data)
+
+            text = (u"%(regex)s: The application '%(app_name)s' has been detected in the "
+                    "following RDP connection: "
+                    "%(user)s@%(device)s:%(service)s:%(user_login)s (%(host)s)\n") % notif_data
+            Logger().info("%s" % text)
+        except Exception, e:
+            import traceback
+            Logger().info("Engine NotifyFindProcessInRDPFlow failed: (((%s)))" % (traceback.format_exc(e)))
 
     def get_targets_list(self, group_filter, device_filter, protocol_filter, case_sensitive):
         targets = []

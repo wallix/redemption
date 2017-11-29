@@ -945,7 +945,7 @@ class Sesman():
 
         record_warning = SESMANCONF[u'sesman'].get('record_warning', False)
 #        if record_warning:
-#	    
+#
 #            message =  u"Warning! Your remote session may be recorded and kept in electronic format."
 #            try:
 #                with open('/var/wab/etc/proxys/messages/motd.%s' % self.language) as f:
@@ -1821,8 +1821,22 @@ class Sesman():
 #            Logger().info(u"regexp=\"%s\" string=\"%s\" user_login=\"%s\" user=\"%s\" host=\"%s\"" %
 #                (regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device')))
             self.engine.NotifyFindPatternInRDPFlow(regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device'), self.cn, self.target_service_name)
-            if (reason == u'FINDPATTERN_KILL'):
-                self.engine.set_session_status(diag=u'Restriction pattern detected')
+        elif (reason == u'FINDCONNECTION_DENY') or (reason == u'FINDCONNECTION_NOTIFY'):
+            pattern = message.split(u'|')
+            rule         = pattern[0]
+            deny         = (reason == u'FINDCONNECTION_DENY')
+            app_name     = pattern[1]
+            app_cmd_line = pattern[2]
+            dst_addr     = pattern[3]
+            dst_port     = pattern[4]
+            self.engine.NotifyFindConnectionInRDPFlow(rule, deny, app_name, app_cmd_line, dst_addr, dst_port, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device'), self.cn, self.target_service_name)
+        elif (reason == u'FINDPROCESS_DENY') or (reason == u'FINDPROCESS_NOTIFY'):
+            pattern = message.split(u'|')
+            regexp       = pattern[0]
+            deny         = (reason == u'FINDPROCESS_DENY')
+            app_name     = pattern[1]
+            app_cmd_line = pattern[2]
+            self.engine.NotifyFindProcessInRDPFlow(regexp, deny, app_name, app_cmd_line, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device'), self.cn, self.target_service_name)
         else:
             Logger().info(
                 u"Unexpected reporting reason: \"%s\" \"%s\" \"%s\"" % (reason, target, message))
