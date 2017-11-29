@@ -358,7 +358,8 @@ public:
                                                       in_s,
                                                       totalLength,
                                                         CHANNELS::CHANNEL_FLAG_FIRST
-                                                      | CHANNELS::CHANNEL_FLAG_LAST);
+                                                      | CHANNELS::CHANNEL_FLAG_LAST
+                                                      | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
 
                         if (bool(this->verbose & RDPVerbose::rail)) {
                             LOG(LOG_INFO, "RemoteProgramsSessionManager::draw(NewOrExistingWindow): Window 0x%X is minimized.", window_id);

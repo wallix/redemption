@@ -278,6 +278,47 @@ namespace trkeys
         "Unknown backend failure.",
         "Erreur de backend inconnue."
     );
+    TR_KV(err_login_password,
+        "Provided login/password is probably incorrect.",
+        "Le nom d'utilisateur/mot de passe fourni est probablement incorrect."
+    );
+    TR_KV(err_nla_required,
+        "Enable NLA is probably required.",
+        "Il est probablement nécessaire d'activer NLA."
+    );
+    TR_KV(err_tls_required,
+        "Enable TLS is probably required.",
+        "Il est probablement nécessaire d'activer TLS."
+    );
+    TR_KV(err_server_denied_connection,
+        "Please check provided Load Balance Info.",
+        "Veuillez vérifier le Load Balance Info fournies."
+    );
+
+    TR_KV(err_mod_rdp_nego,
+        "Fail during TLS security exchange.",
+        "Échec lors de l'échange de sécurité TLS."
+    );
+    TR_KV(err_mod_rdp_basic_settings_exchange,
+        "Fail during basic setting exchange.",
+        "Échec lors de l'échange de paramètres de base."
+    );
+    TR_KV(err_mod_rdp_channel_connection_attach_user,
+        "Fail during channels connection.",
+        "Échec lors de la connexion des canaux."
+    );
+    TR_KV(mod_rdp_channel_join_confirme,
+        "Fail during channels connection.",
+        "Échec lors de la connexion des canaux."
+    );
+    TR_KV(mod_rdp_get_license,
+        "Failed while trying to get licence.",
+        "Échec en essayant d'obtenir une licence."
+    );
+    TR_KV(err_mod_rdp_connected,
+        "Fail while connecting session on the target.",
+        "Échec lors de la connexion de la session sur la cible."
+    );
 #undef TR_KV
 }
 

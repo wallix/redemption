@@ -907,7 +907,7 @@ public:
         , nego( mod_rdp_params.enable_tls, trans, mod_rdp_params.target_user
               , mod_rdp_params.enable_nla, mod_rdp_params.target_host
               , mod_rdp_params.enable_krb, gen, timeobj
-              , this->close_box_extra_message_ref
+              , this->close_box_extra_message_ref, mod_rdp_params.lang
               , static_cast<RdpNego::Verbose>(mod_rdp_params.verbose))
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_client_input_event(false)
@@ -3850,7 +3850,7 @@ public:
                                 this->process_error_info(error_info);
                                 if (error_info == ERRINFO_SERVER_DENIED_CONNECTION) {
                                     this->close_box_extra_message_ref += " ";
-                                    this->close_box_extra_message_ref += " Please check provided Load Balance Info.";
+                                    this->close_box_extra_message_ref += TR(trkeys::err_server_denied_connection, this->lang);
                                 }
                             }
 
@@ -4442,12 +4442,12 @@ public:
                                     this->close_box_extra_message_ref += statestr;      \
                                     this->close_box_extra_message_ref += ")";           \
                                 break
-                            CASE(MOD_RDP_NEGO, "Fail during TLS security exchange.");
-                            CASE(MOD_RDP_BASIC_SETTINGS_EXCHANGE, "Fail during basic setting exchange.");
-                            CASE(MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER, "Fail during channels connection.");
-                            CASE(MOD_RDP_CHANNEL_JOIN_CONFIRME, "Fail during channels connection.");
-                            CASE(MOD_RDP_GET_LICENSE, "Failed while trying to get licence.");
-                            CASE(MOD_RDP_CONNECTED, "Fail while connecting session on the target.");
+                            CASE(MOD_RDP_NEGO, TR(trkeys::err_mod_rdp_nego, this->lang));
+                            CASE(MOD_RDP_BASIC_SETTINGS_EXCHANGE, TR(trkeys::err_mod_rdp_basic_settings_exchange, this->lang));
+                            CASE(MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER, TR(trkeys::err_mod_rdp_channel_connection_attach_user, this->lang));
+                            CASE(MOD_RDP_CHANNEL_JOIN_CONFIRME, TR(trkeys::mod_rdp_channel_join_confirme, this->lang));
+                            CASE(MOD_RDP_GET_LICENSE, TR(trkeys::mod_rdp_get_license, this->lang));
+                            CASE(MOD_RDP_CONNECTED, TR(trkeys::err_mod_rdp_connected, this->lang));
                             #undef CASE
                         }
 

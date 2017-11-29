@@ -99,7 +99,8 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     LCGRandom rand(0);
     LCGTime timeobj;
     std::string extra_message;
-    rdpCredsspClient credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj, extra_message);
+    Translation::language_t lang = Translation::EN;
+    rdpCredsspClient credssp(logtrans, user, domain, pass, host, "107.0.0.1", false, false, rand, timeobj, extra_message, lang);
     RED_CHECK(credssp.credssp_client_authenticate_init());
 
     rdpCredsspClient::State st = rdpCredsspClient::State::Cont;
@@ -186,7 +187,8 @@ RED_AUTO_TEST_CASE(TestNlaserver)
     LCGRandom rand(0);
     LCGTime timeobj;
     std::string extra_message;
-    rdpCredsspServer credssp(logtrans, user, domain, pass, host, false, false, rand, timeobj, extra_message);
+    Translation::language_t lang = Translation::EN;
+    rdpCredsspServer credssp(logtrans, user, domain, pass, host, false, false, rand, timeobj, extra_message, lang);
     credssp.hardcoded_tests = true;
     int res = credssp.credssp_server_authenticate();
     RED_CHECK_EQUAL(res, 1);

@@ -45,7 +45,8 @@ struct RdpNegoProtocols
 
 RdpNego::RdpNego(const bool tls, Transport & socket_trans, const char * username, bool nla,
                  const char * target_host, const char krb, Random & rand, TimeObj & timeobj,
-                 std::string& extra_message, const Verbose verbose)
+                 std::string& extra_message, Translation::language_t lang,
+                 const Verbose verbose)
     : tls(nla || tls)
     , nla(nla)
     , krb(nla && krb)
@@ -59,6 +60,7 @@ RdpNego::RdpNego(const bool tls, Transport & socket_trans, const char * username
     , timeobj(timeobj)
     , lb_info(nullptr)
     , extra_message(extra_message)
+    , lang(lang)
     , verbose(verbose)
 {
 
@@ -298,7 +300,7 @@ bool RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck se
                 this->domain, this->current_password,
                 this->hostname, this->target_host,
                 this->krb, this->restricted_admin_mode,
-                this->rand, this->timeobj, this->extra_message,
+                this->rand, this->timeobj, this->extra_message, this->lang,
                 bool(this->verbose & Verbose::credssp)
             ));
 
@@ -333,6 +335,10 @@ bool RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck se
     }
     else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE) {
         if (x224.rdp_neg_code == X224::HYBRID_REQUIRED_BY_SERVER) {
+            if (!this->nla_tried) {
+                this->extra_message = " ";
+                this->extra_message.append(TR(trkeys::err_nla_required, this->lang));
+            }
             LOG(LOG_INFO, "Enable NLA is probably required");
             this->trans.disconnect();
             if (this->nla_tried) {
@@ -343,6 +349,10 @@ bool RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck se
             }
         }
         else if (x224.rdp_neg_code == X224::SSL_REQUIRED_BY_SERVER) {
+            if (!this->tls) {
+                this->extra_message = " ";
+                this->extra_message.append(TR(trkeys::err_tls_required, this->lang));
+            }
             LOG(LOG_INFO, "Enable TLS is probably required");
             this->trans.disconnect();
             throw Error(ERR_NEGO_SSL_REQUIRED_BY_SERVER);

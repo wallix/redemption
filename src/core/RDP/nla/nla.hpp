@@ -25,6 +25,7 @@
 #include "core/RDP/nla/credssp.hpp"
 #include "core/RDP/nla/ntlm/ntlm.hpp"
 #include "utils/hexdump.hpp"
+#include "utils/translation.hpp"
 
 #ifndef __EMSCRIPTEN__
 #include "core/RDP/nla/kerberos/kerberos.hpp"
@@ -59,6 +60,7 @@ protected:
     Random & rand;
     TimeObj & timeobj;
     std::string& extra_message;
+    Translation::language_t lang;
     const bool verbose;
 
 public:
@@ -75,6 +77,7 @@ public:
         Random & rand,
         TimeObj & timeobj,
         std::string& extra_message,
+        Translation::language_t lang,
         const bool verbose = false
     )
         : server(false)
@@ -90,6 +93,7 @@ public:
         , rand(rand)
         , timeobj(timeobj)
         , extra_message(extra_message)
+        , lang(lang)
         , verbose(verbose)
     {
         if (this->verbose) {
@@ -259,7 +263,8 @@ protected:
             LOG(LOG_ERR, "unexpected pubKeyAuth buffer size:%zu",
                 this->pubKeyAuth.size());
             if (this->pubKeyAuth.size() == 0) {
-                this->extra_message = " Provided login/password is probably incorrect.";
+                this->extra_message = " ";
+                this->extra_message.append(TR(trkeys::err_login_password, this->lang));
                 LOG(LOG_INFO, "Provided login/password is probably incorrect.");
             }
             return SEC_E_INVALID_TOKEN;
@@ -343,10 +348,12 @@ public:
                Random & rand,
                TimeObj & timeobj,
                std::string& extra_message,
+               Translation::language_t lang,
                const bool verbose = false)
         : rdpCredsspBase(
             user, domain, pass, hostname, target_host, krb,
-            restricted_admin_mode, rand, timeobj, extra_message, verbose)
+            restricted_admin_mode, rand, timeobj, extra_message, lang,
+            verbose)
         , trans(transport)
     {
     }
@@ -727,10 +734,12 @@ public:
                Random & rand,
                TimeObj & timeobj,
                std::string& extra_message,
+               Translation::language_t lang,
                const bool verbose = false)
         : rdpCredsspBase(
             user, domain, pass, hostname, "", krb,
-            restricted_admin_mode, rand, timeobj, extra_message, verbose)
+            restricted_admin_mode, rand, timeobj, extra_message, lang,
+            verbose)
         , trans(transport)
     {
     }
