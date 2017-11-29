@@ -979,7 +979,7 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
 
     auto separator = find(data, '=');
 
-    auto const tmp_size = message.av().size();
+    message.clear();
 
     if (separator) {
         auto left = [](Av s, char const * pos) { return Av(begin(s), pos - begin(s)); };
@@ -1021,6 +1021,31 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
                 }
             }
         };
+        auto line_with_5_var = [&](Av var1, Av var2, Av var3, Av var4, Av var5) {
+            if (auto subitem_separator = find(parameters, '\x01')) {
+                auto text = left(parameters, subitem_separator);
+                auto remaining = right(parameters, subitem_separator);
+                if (auto subitem_separator2 = find(remaining, '\x01')) {
+                    auto const text2 = left(remaining, subitem_separator2);
+                    auto remaining2 = right(remaining, subitem_separator2);
+                    if (auto const subitem_separator3 = find(remaining2, '\x01')) {
+                        auto const text3 = left(remaining2, subitem_separator3);
+                        auto remaining3 = right(remaining2, subitem_separator3);
+                        if (auto const subitem_separator4 = find(remaining3, '\x01')) {
+                            auto const text4 = left(remaining3, subitem_separator4);
+                            auto const text5 = right(remaining3, subitem_separator4);
+                            message.assign(order, {
+                                {zstr(var1), text},
+                                {zstr(var2), text2},
+                                {zstr(var3), text3},
+                                {zstr(var4), text4},
+                                {zstr(var5), text5},
+                            });
+                        }
+                    }
+                }
+            }
+        };
 
         // TODO used string_id: switch (sid(order)) { case "string"_sid: ... }
         if (cstr_equal("PASSWORD_TEXT_BOX_GET_FOCUS", order)
@@ -1046,7 +1071,6 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
         else if (cstr_equal("EDIT_CHANGED", order)) {
             line_with_2_var("windows", "edit");
         }
-
 
         else if (cstr_equal("DRIVE_REDIRECTION_USE", order)) {
             line_with_2_var("device_name", "device_type");
@@ -1077,6 +1101,10 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
             line_with_1_var("description");
         }
 
+        else if ((cstr_equal("OUTBOUND_CONNECTION_BLOCKED_2", order)) ||
+                 (cstr_equal("OUTBOUND_CONNECTION_DETECTED_2", order))) {
+            line_with_5_var("rule", "app_name", "app_cmd_line", "dst_addr", "dst_port");
+        }
 
         else {
             message.clear();
@@ -1087,8 +1115,7 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
         }
     }
 
-    if (message.av().size() == tmp_size) {
-        message.clear();
+    if (!message.av().size()) {
         LOG(LOG_WARNING,
             "MetaDataExtractor(): Invalid data format. Data=\"%.*s\"",
             int(data.size()), data.data());

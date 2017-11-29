@@ -299,11 +299,9 @@ struct WidgetModuleHost::Impl
         const Rect src_rect(cmd.srcx, cmd.srcy, cmd.rect.cx, cmd.rect.cy);
 
         if (wmh.mod_visible_rect.contains(src_rect)) {
-            LOG(LOG_INFO, "WidgetModuleHost::Impl::draw_impl(RDPScrBlt): draw");
             get_drawable(wmh).draw(new_cmd, new_clip);
         }
         else {
-            LOG(LOG_INFO, "WidgetModuleHost::Impl::draw_impl(RDPScrBlt): rdp_input_invalidate");
             wmh.rdp_input_invalidate(new_clip);
         }
     }
@@ -342,11 +340,9 @@ struct WidgetModuleHost::Impl
         LOG(LOG_INFO, "Rect(%d %d %u %u)", src_rect.x, src_rect.y, src_rect.cx, src_rect.cy);
 
         if (wmh.mod_visible_rect.contains(src_rect)) {
-            LOG(LOG_INFO, "WidgetModuleHost::Impl::draw_impl(RDPMultiScrBlt): draw");
             get_drawable(wmh).draw(new_cmd, new_clip);
         }
         else {
-            LOG(LOG_INFO, "WidgetModuleHost::Impl::draw_impl(RDPMultiScrBlt): rdp_input_invalidate");
             wmh.rdp_input_invalidate(new_clip);
         }
     }

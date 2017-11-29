@@ -878,6 +878,8 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
         meta.kbd_input(now, '/'); now.tv_sec += 1;
         meta.kbd_input(now, 0x08); now.tv_sec += 1;
         meta.kbd_input(now, 'V'); now.tv_sec += 1;
+
+        meta.session_update(now, cstr_array_view("BUTTON_CLICKED=\"Connexion Bureau à distance\"\x01" "&Connexion")); now.tv_sec += 1;
     }
 
     RED_CHECK_EQ(
@@ -897,7 +899,8 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
         "1970-01-01 01:17:07 + type=\"TITLE_BAR\" data=\"Blah5\"\n"
         "1970-01-01 01:17:13 - type=\"KBD_INPUT\" data=\"MP\"\n"
         "1970-01-01 01:17:14 + type=\"TITLE_BAR\" data=\"Blah6\"\n"
-        "1970-01-01 01:17:27 - type=\"KBD_INPUT\" data=\"QRT/U/V\"\n"
+        "1970-01-01 01:17:28 - type=\"BUTTON_CLICKED\" windows=\"\\\"Connexion Bureau à distance\\\"\" button=\"&Connexion\"\n"
+        "1970-01-01 01:17:28 - type=\"KBD_INPUT\" data=\"QRT/U/V\"\n"
     );
 }
 
