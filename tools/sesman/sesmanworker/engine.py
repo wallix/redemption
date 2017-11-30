@@ -543,7 +543,7 @@ class Engine(object):
                  , u'service'      : service
              }
 
-#            Notify(self.wabengine, RDP_CONNECTION_FOUND, notif_data)
+#            Notify(self.wabengine, RDP_OUTCXN_FOUND, notif_data)
 
             text = (u"%(rule)s: The connection '%(dst_addr)s:%(dst_port)s' has been detected in the "
                     "following RDP connection: "
