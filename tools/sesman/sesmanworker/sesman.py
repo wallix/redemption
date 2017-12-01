@@ -1528,7 +1528,6 @@ class Sesman():
                         # Looping on keepalived socket
                         while True:
                             r = []
-                            Logger().debug(u"Waiting on proxy")
                             got_signal = False
                             try:
                                 r, w, x = select([self.proxy_conx], [], [], 60)
@@ -1820,25 +1819,42 @@ class Sesman():
 #            Logger().info(u"regexp=\"%s\" string=\"%s\" user_login=\"%s\" user=\"%s\" host=\"%s\"" %
 #                (regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device')))
             self.engine.NotifyFindPatternInRDPFlow(regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device'), self.cn, self.target_service_name)
-        elif (reason == u'FINDCONNECTION_DENY') or (reason == u'FINDCONNECTION_NOTIFY'):
+        elif (reason == u'FINDCONNECTION_DENY'
+              or reason == u'FINDCONNECTION_NOTIFY'):
             pattern = message.split(u'|')
-            rule         = pattern[0]
-            deny         = (reason == u'FINDCONNECTION_DENY')
-            app_name     = pattern[1]
-            app_cmd_line = pattern[2]
-            dst_addr     = pattern[3]
-            dst_port     = pattern[4]
-            self.engine.NotifyFindConnectionInRDPFlow(rule, deny, app_name, app_cmd_line, dst_addr, dst_port, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device'), self.cn, self.target_service_name)
-        elif (reason == u'FINDPROCESS_DENY') or (reason == u'FINDPROCESS_NOTIFY'):
+            notify_params = {
+                'rule' : pattern[0],
+                'deny' : (reason == u'FINDCONNECTION_DENY'),
+                'app_name' : pattern[1],
+                'app_cmd_line' : pattern[2],
+                'dst_addr' : pattern[3],
+                'dst_port' : pattern[4],
+                'user_login' : self.shared.get(u'login'),
+                'user' : self.shared.get(u'target_login'),
+                'host' : self.shared.get(u'target_device'),
+                'cn' : self.cn,
+                'service' : self.target_service_name
+            }
+            self.engine.notify_find_connection_rdp(**notify_params)
+        elif (reason == u'FINDPROCESS_DENY'
+              or reason == u'FINDPROCESS_NOTIFY'):
             pattern = message.split(u'|')
-            regexp       = pattern[0]
-            deny         = (reason == u'FINDPROCESS_DENY')
-            app_name     = pattern[1]
-            app_cmd_line = pattern[2]
-            self.engine.NotifyFindProcessInRDPFlow(regexp, deny, app_name, app_cmd_line, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device'), self.cn, self.target_service_name)
+            notify_params = {
+                'regex' : pattern[0],
+                'deny' : (reason == u'FINDPROCESS_DENY'),
+                'app_name' : pattern[1],
+                'app_cmd_line' : pattern[2],
+                'user_login' : self.shared.get(u'login'),
+                'user' : self.shared.get(u'target_login'),
+                'host' : self.shared.get(u'target_device'),
+                'cn' : self.cn,
+                'service' : self.target_service_name
+            }
+            self.engine.notify_find_process_rdp(**notify_params)
         else:
             Logger().info(
-                u"Unexpected reporting reason: \"%s\" \"%s\" \"%s\"" % (reason, target, message))
+                u"Unexpected reporting reason: "
+                "\"%s\" \"%s\" \"%s\"" % (reason, target, message))
 
     def update_session_data(self, changed_keys):
         keymapping = {

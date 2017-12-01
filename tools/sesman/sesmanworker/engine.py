@@ -13,7 +13,7 @@ try:
     from wabengine.common.exception import SessionAlreadyStopped
     from wallixgenericnotifier import Notify, CX_EQUIPMENT, PATTERN_FOUND, \
         PRIMARY_CX_FAILED, SECONDARY_CX_FAILED, NEW_FINGERPRINT, WRONG_FINGERPRINT, \
-        RDP_PATTERN_FOUND, FILESYSTEM_FULL
+        RDP_PATTERN_FOUND, RDP_PROCESS_FOUND, RDP_OUTCXN_FOUND, FILESYSTEM_FULL
     from wabconfig import Config
     from wabengine.client.sync_client import SynClient
     from wabengine.common.const import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
@@ -519,63 +519,74 @@ class Engine(object):
 
             Notify(self.wabengine, RDP_PATTERN_FOUND, notif_data)
 
-            text = (u"%(regexp)s: The string '%(string)s' has been detected in the "
-                    "following RDP connection: "
-                    "%(user)s@%(device)s:%(service)s:%(user_login)s (%(host)s)\n") % notif_data
+            text = (
+                "%(regexp)s: The string '%(string)s' has been detected in the "
+                "following RDP connection: "
+                "%(user)s@%(device)s:%(service)s:%(user_login)s "
+                "(%(host)s)\n"
+            ) % notif_data
             Logger().info("%s" % text)
-        except Exception, e:
+        except Exception as err:
             import traceback
-            Logger().info("Engine NotifyFindPatternInRDPFlow failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().info("Engine NotifyFindPatternInRDPFlow failed: "
+                          "(((%s)))" % (traceback.format_exc(err)))
 
-    def NotifyFindConnectionInRDPFlow(self, rule, deny, app_name, app_cmd_line, dst_addr, dst_port, user_login, user, host, cn, service):
+    def notify_find_connection_rdp(self, rule, deny, app_name, app_cmd_line,
+                                   dst_addr, dst_port, user_login, user,
+                                   host, cn, service):
         try:
             notif_data = {
-                   u'rule'         : rule
-                 , u'deny'         : deny
-                 , u'app_name'     : app_name
-                 , u'app_cmd_line' : app_cmd_line
-                 , u'dst_addr'     : dst_addr
-                 , u'dst_port'     : dst_port
-                 , u'user_login'   : user_login
-                 , u'user'         : user
-                 , u'host'         : host
-                 , u'device'       : cn
-                 , u'service'      : service
-             }
-
-#            Notify(self.wabengine, RDP_OUTCXN_FOUND, notif_data)
-
-            text = (u"%(rule)s: The connection '%(dst_addr)s:%(dst_port)s' has been detected in the "
-                    "following RDP connection: "
-                    "%(user)s@%(device)s:%(service)s:%(user_login)s (%(host)s)\n") % notif_data
+                u'rule' : rule,
+                u'deny' : deny,
+                u'app_name' : app_name,
+                u'app_cmd_line' : app_cmd_line,
+                u'dst_addr' : dst_addr,
+                u'dst_port' : dst_port,
+                u'user_login' : user_login,
+                u'user' : user,
+                u'host' : host,
+                u'device' : cn,
+                u'service' : service
+            }
+            Notify(self.wabengine, RDP_OUTCXN_FOUND, notif_data)
+            text = (
+                "%(rule)s: The connection '%(dst_addr)s:%(dst_port)s' has been "
+                "detected in the following RDP connection: "
+                "%(user)s@%(device)s:%(service)s:%(user_login)s "
+                "(%(host)s)\n"
+            ) % notif_data
             Logger().info("%s" % text)
-        except Exception, e:
+        except Exception as err:
             import traceback
-            Logger().info("Engine NotifyFindConnectionInRDPFlow failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().info("Engine NotifyFindConnectionInRDPFlow failed: "
+                          "(((%s)))" % (traceback.format_exc(err)))
 
-    def NotifyFindProcessInRDPFlow(self, regex, deny, app_name, app_cmd_line, user_login, user, host, cn, service):
+    def notify_find_process_rdp(self, regex, deny, app_name, app_cmd_line,
+                                user_login, user, host, cn, service):
         try:
             notif_data = {
-                   u'regex'        : regex
-                 , u'deny'         : deny
-                 , u'app_name'     : app_name
-                 , u'app_cmd_line' : app_cmd_line
-                 , u'user_login'   : user_login
-                 , u'user'         : user
-                 , u'host'         : host
-                 , u'device'       : cn
-                 , u'service'      : service
-             }
-
-#            Notify(self.wabengine, RDP_PROCESS_FOUND, notif_data)
-
-            text = (u"%(regex)s: The application '%(app_name)s' has been detected in the "
-                    "following RDP connection: "
-                    "%(user)s@%(device)s:%(service)s:%(user_login)s (%(host)s)\n") % notif_data
+                u'regex' : regex,
+                u'deny' : deny,
+                u'app_name' : app_name,
+                u'app_cmd_line': app_cmd_line,
+                u'user_login' : user_login,
+                u'user' : user,
+                u'host' : host,
+                u'device' : cn,
+                u'service' : service
+            }
+            Notify(self.wabengine, RDP_PROCESS_FOUND, notif_data)
+            text = (
+                "%(regex)s: The application '%(app_name)s' has been detected "
+                "in the following RDP connection: "
+                "%(user)s@%(device)s:%(service)s:%(user_login)s "
+                "(%(host)s)\n"
+            ) % notif_data
             Logger().info("%s" % text)
-        except Exception, e:
+        except Exception as err:
             import traceback
-            Logger().info("Engine NotifyFindProcessInRDPFlow failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().info("Engine NotifyFindProcessInRDPFlow failed: "
+                          "(((%s)))" % (traceback.format_exc(err)))
 
     def get_targets_list(self, group_filter, device_filter, protocol_filter, case_sensitive):
         targets = []
