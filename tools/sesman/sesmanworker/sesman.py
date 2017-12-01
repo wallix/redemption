@@ -1823,32 +1823,32 @@ class Sesman():
               or reason == u'FINDCONNECTION_NOTIFY'):
             pattern = message.split(u'|')
             notify_params = {
-                'rule' : pattern[0],
-                'deny' : (reason == u'FINDCONNECTION_DENY'),
-                'app_name' : pattern[1],
-                'app_cmd_line' : pattern[2],
-                'dst_addr' : pattern[3],
-                'dst_port' : pattern[4],
-                'user_login' : self.shared.get(u'login'),
-                'user' : self.shared.get(u'target_login'),
-                'host' : self.shared.get(u'target_device'),
-                'cn' : self.cn,
-                'service' : self.target_service_name
+                'rule': pattern[0],
+                'deny': (reason == u'FINDCONNECTION_DENY'),
+                'app_name': pattern[1],
+                'app_cmd_line': pattern[2],
+                'dst_addr': pattern[3],
+                'dst_port': pattern[4],
+                'user_login': self.shared.get(u'login'),
+                'user': self.shared.get(u'target_login'),
+                'host': self.shared.get(u'target_device'),
+                'cn': self.cn,
+                'service': self.target_service_name
             }
             self.engine.notify_find_connection_rdp(**notify_params)
         elif (reason == u'FINDPROCESS_DENY'
               or reason == u'FINDPROCESS_NOTIFY'):
             pattern = message.split(u'|')
             notify_params = {
-                'regex' : pattern[0],
-                'deny' : (reason == u'FINDPROCESS_DENY'),
-                'app_name' : pattern[1],
-                'app_cmd_line' : pattern[2],
-                'user_login' : self.shared.get(u'login'),
-                'user' : self.shared.get(u'target_login'),
-                'host' : self.shared.get(u'target_device'),
-                'cn' : self.cn,
-                'service' : self.target_service_name
+                'regex': pattern[0],
+                'deny': (reason == u'FINDPROCESS_DENY'),
+                'app_name': pattern[1],
+                'app_cmd_line': pattern[2],
+                'user_login': self.shared.get(u'login'),
+                'user': self.shared.get(u'target_login'),
+                'host': self.shared.get(u'target_device'),
+                'cn': self.cn,
+                'service': self.target_service_name
             }
             self.engine.notify_find_process_rdp(**notify_params)
         else:

@@ -536,17 +536,17 @@ class Engine(object):
                                    host, cn, service):
         try:
             notif_data = {
-                u'rule' : rule,
-                u'deny' : deny,
-                u'app_name' : app_name,
-                u'app_cmd_line' : app_cmd_line,
-                u'dst_addr' : dst_addr,
-                u'dst_port' : dst_port,
-                u'user_login' : user_login,
-                u'user' : user,
-                u'host' : host,
-                u'device' : cn,
-                u'service' : service
+                u'rule': rule,
+                u'deny': deny,
+                u'app_name': app_name,
+                u'app_cmd_line': app_cmd_line,
+                u'dst_addr': dst_addr,
+                u'dst_port': dst_port,
+                u'user_login': user_login,
+                u'user': user,
+                u'host': host,
+                u'device': cn,
+                u'service': service
             }
             Notify(self.wabengine, RDP_OUTCXN_FOUND, notif_data)
             text = (
@@ -565,15 +565,15 @@ class Engine(object):
                                 user_login, user, host, cn, service):
         try:
             notif_data = {
-                u'regex' : regex,
-                u'deny' : deny,
-                u'app_name' : app_name,
+                u'regex': regex,
+                u'deny': deny,
+                u'app_name': app_name,
                 u'app_cmd_line': app_cmd_line,
-                u'user_login' : user_login,
-                u'user' : user,
-                u'host' : host,
-                u'device' : cn,
-                u'service' : service
+                u'user_login': user_login,
+                u'user': user,
+                u'host': host,
+                u'device': cn,
+                u'service': service
             }
             Notify(self.wabengine, RDP_PROCESS_FOUND, notif_data)
             text = (
