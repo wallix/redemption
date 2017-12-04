@@ -24,9 +24,8 @@
 
 #include "front/rdpheadless.hpp"
 #include "utils/netutils.hpp"
+#include "utils/sugar/not_null_ptr.hpp"
 #include "utils/set_exception_handler_pretty_message.hpp"
-
-
 
 #include <iomanip>
 
@@ -37,7 +36,7 @@
 // bjam debug rdpheadless && bin/gcc-4.9.2/debug/rdpheadless --user admin --pwd $mdp --ip 10.10.47.54 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
 
 
-int run_mod(mod_api *, RDPHeadlessFront &, int sck, bool, std::chrono::milliseconds, bool);
+int run_mod(not_null_ptr<mod_api>, RDPHeadlessFront &, int sck, bool, std::chrono::milliseconds, bool);
 
 namespace cli
 {
@@ -479,7 +478,7 @@ int main(int argc, char** argv)
     std::string out_path;
 
     int keep_alive_frequence = 100;
-    std::string index = "0";
+    int index = 0;
 
 
     Inifile ini;
@@ -812,7 +811,7 @@ int main(int argc, char** argv)
 
         cli::option("index")
         .help("Set an index to identify this client among clients logs")
-        .action(cli::arg("path", [&](std::string s){ index = std::move(s); }))
+        .action(cli::arg("path", [&](int i){ index = i; }))
     );
 
     auto cli_result = cli::parse(options, argc, argv);
@@ -835,13 +834,21 @@ int main(int argc, char** argv)
     }
 
 
+    struct : NullReportMessage {
+        void report(const char* reason, const char* /*message*/) override
+        {
+            // std::cout << "report_message: " << message << "  reason:" << reason << std::endl;
+            if (!strcmp(reason, "CLOSE_SESSION_SUCCESSFUL")) {
+                this->is_closed = true;
+            }
+        }
+
+        bool is_closed = false;
+    } report_message;
     NullAuthentifier authentifier;
-    NullReportMessage report_message_cli;
-    RDPHeadlessFront front(info, report_message_cli, verbose);
-    front.out_path = out_path;
-    front.index = index;
+    RDPHeadlessFront front(info, report_message, verbose,
+      RDPHeadlessFrontParams{std::move(out_path), index});
     int main_return = 40;
-    int sck = -42;
 
     if (input_connection_data_complete & RDPHeadlessFront::IP) {
 
@@ -862,7 +869,7 @@ int main(int argc, char** argv)
             REDEMPTION_DIAGNOSTIC_POP
         }
 
-        sck = front.connect(ip.c_str(), userName.c_str(), userPwd.c_str(), port, protocol_is_VNC, mod_rdp_params, encryptionMethods);
+        int const sck = front.connect(ip.c_str(), userName.c_str(), userPwd.c_str(), port, protocol_is_VNC, mod_rdp_params, encryptionMethods);
 
         //===========================================
         //             Scripted Events
@@ -874,7 +881,6 @@ int main(int argc, char** argv)
 
         if ((input_connection_data_complete & RDPHeadlessFront::LOG_COMPLETE) || quick_connection_test) {
             try {
-
                 main_return = run_mod(front.mod(), front, sck, quick_connection_test, time_out_response, time_set_connection_test);
                 // std::cout << "RDP Headless end." <<  std::endl;
             }
@@ -882,9 +888,9 @@ int main(int argc, char** argv)
             {
                 if (e.id == ERR_TRANSPORT_NO_MORE_DATA) {
 //                     std::cerr << e.errmsg() << std::endl;
-                    front.report_message_rdp.is_closed = true;
+                    report_message.is_closed = true;
                 }
-                if (front.report_message_rdp.is_closed) {
+                if (report_message.is_closed) {
                     main_return = 0;
                 }
                 else {
@@ -893,8 +899,7 @@ int main(int argc, char** argv)
             }
         }
 
-
-        if (!front.report_message_rdp.is_closed) {
+        if (!report_message.is_closed) {
             front.disconnect();
             //front.mod()->disconnect(tvtime().tv_sec);
         }
@@ -904,14 +909,16 @@ int main(int argc, char** argv)
 }
 
 
-int run_mod(mod_api * mod, RDPHeadlessFront & front, int sck, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test) {
+int run_mod(not_null_ptr<mod_api> mod_ptr, RDPHeadlessFront & front, int sck, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test) {
     const timeval time_stop = addusectimeval(time_out_response, tvtime());
     const timeval time_mark = { 0, 50000 };
 
-    while (front.is_pipe_ok)
+    auto & mod = *mod_ptr;
+
+    while (front.is_connected())
     {
-        if (mod->logged_on == mod_api::CLIENT_LOGGED) {
-            mod->logged_on = mod_api::CLIENT_UNLOGGED;
+        if (mod.logged_on == mod_api::CLIENT_LOGGED) {
+            mod.logged_on = mod_api::CLIENT_UNLOGGED;
 
             std::cout << " RDP Session Log On." << std::endl;
             if (quick_connection_test) {
