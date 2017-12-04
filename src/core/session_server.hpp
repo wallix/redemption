@@ -187,7 +187,7 @@ public:
                         &&  strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
                         ini.set_acl<cfg::context::real_target_device>(real_target_ip);
                     }
-                    Session session(sck, ini, this->cctx, this->rnd, this->fstat);
+                    Session session(unique_fd{sck}, ini, this->cctx, this->rnd, this->fstat);
 
                     // Suppress session file
                     unlink(session_file);
@@ -195,9 +195,6 @@ public:
                     if (ini.get<cfg::debug::session>()){
                         LOG(LOG_INFO, "Session::end of Session(%d)", sck);
                     }
-
-                    shutdown(sck, 2);
-                    close(sck);
                 }
                 else {
                     LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");

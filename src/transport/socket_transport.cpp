@@ -38,10 +38,12 @@ namespace
     ssize_t socket_send_all(int sck, const uint8_t * data, size_t len);
 }
 
-SocketTransport::SocketTransport(const char * name, int sck, const char *ip_address, int port,
-                                 std::chrono::milliseconds recv_timeout,
-                                 Verbose verbose, std::string * error_message)
-    : sck(sck)
+SocketTransport::SocketTransport(
+    const char * name, unique_fd sck, const char *ip_address, int port,
+    std::chrono::milliseconds recv_timeout,
+    Verbose verbose, std::string * error_message
+)
+    : sck(sck.release())
     , name(name)
     , port(port)
     , error_message(error_message)
@@ -169,7 +171,7 @@ bool SocketTransport::disconnect()
 bool SocketTransport::connect()
 {
     if (this->sck <= 0){
-        this->sck = ip_connect(this->ip_address, this->port, 3, 1000);
+        this->sck = ip_connect(this->ip_address, this->port, 3, 1000).release();
     }
     return this->sck > 0;
 }

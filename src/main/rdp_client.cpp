@@ -123,8 +123,10 @@ int main(int argc, char** argv)
     }
 
     /* SocketTransport mod_trans */
-    int client_sck = ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms);
-    SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port, std::chrono::seconds(1), to_verbose_flags(verbose), nullptr);
+    SocketTransport mod_trans(
+        "RDP Server", ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms),
+        target_device.c_str(), target_port, std::chrono::seconds(1),
+        to_verbose_flags(verbose), nullptr);
 
     /* Random */
     UdevRandom gen;
