@@ -41,7 +41,7 @@ WidgetSelector::WidgetSelector(
     const char * current_page,
     const char * number_of_page,
     WidgetFlatButton * extra_button,
-    WidgetSelectorParams selector_params,
+    WidgetSelectorParams const & selector_params,
     Font const & font, Theme const & theme, Translation::language_t lang)
 : WidgetParent(drawable, parent, notifier)
 , less_than_800(width < 800)

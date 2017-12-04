@@ -814,14 +814,11 @@ public:
         int16_t startx = cmd.xStart;
         int16_t starty = cmd.yStart;
 
-        int16_t endx;
-        int16_t endy;
-
         const Color color = this->u32rgb_to_color(color_ctx, cmd.PenColor);
 
         for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
-            endx = startx + cmd.deltaEncodedPoints[i].xDelta;
-            endy = starty + cmd.deltaEncodedPoints[i].yDelta;
+            int16_t const endx = startx + cmd.deltaEncodedPoints[i].xDelta;
+            int16_t const endy = starty + cmd.deltaEncodedPoints[i].yDelta;
 
             this->drawable.draw_line(0x0001, startx, starty, endx, endy, cmd.bRop2, color, clip);
 

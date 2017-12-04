@@ -23,7 +23,6 @@
 
 */
 
-
 #pragma once
 
 #include "core/channel_names.hpp"
@@ -87,7 +86,7 @@ enum: uint8_t {
 };
 
 
-struct RdpInput : noncopyable
+struct RdpInput : private noncopyable
 {
     virtual ~RdpInput() = default;
     virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) = 0;

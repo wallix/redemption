@@ -538,7 +538,6 @@ public:
                         this->process_ninegrid_bmpcache(stream, header);
                         LOG(LOG_INFO, "CREATE_NINEGRID_BITMAP !!!!!!!!!!!!!!!!!");
                     break;
-                    break;
                     default:
                         LOG(LOG_ERR, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
                         /* error, unknown order */

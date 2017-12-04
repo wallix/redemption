@@ -19,10 +19,11 @@
  */
 
 #pragma once
+#include "utils/sugar/noncopyable.hpp"
 
 class Widget;
 
-class NotifyApi
+class NotifyApi : noncopyable
 {
 public:
     typedef int notify_event_t;

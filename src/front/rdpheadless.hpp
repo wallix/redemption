@@ -123,18 +123,17 @@ class RDPHeadlessFront : public FrontAPI
 
     class EventList
     {
-        struct EventConfig
+        struct EventConfig : private ::noncopyable
         {
             RDPHeadlessFront * front;
             long trigger_time;
-
 
             EventConfig(RDPHeadlessFront * front)
             : front(front)
             , trigger_time(0)
             {}
 
-            virtual ~EventConfig() {}
+            virtual ~EventConfig() = default;
 
             virtual void emit() = 0;
         };
@@ -253,7 +252,7 @@ class RDPHeadlessFront : public FrontAPI
             std::string formatListDataLongName[RDPECLIP::FORMAT_LIST_MAX_SIZE];
             size_t size;
 
-            ClipboardChange( RDPHeadlessFront * front
+            ClipboardChange(RDPHeadlessFront * front
                         , uint32_t * formatIDs
                         , std::string * formatListDataLongName
                         , size_t size)
@@ -263,16 +262,6 @@ class RDPHeadlessFront : public FrontAPI
                 for (size_t i = 0; i < this->size; i++) {
                     this->formatIDs[i] = formatIDs[i];
                     this->formatListDataLongName[i] = formatListDataLongName[i];
-                }
-            }
-
-            ClipboardChange( ClipboardChange & clipboardChange)
-            : EventConfig(clipboardChange.front)
-            , size(clipboardChange.size)
-            {
-                for (size_t i = 0; i < this->size; i++) {
-                    this->formatIDs[i] = clipboardChange.formatIDs[i];
-                    this->formatListDataLongName[i] = clipboardChange.formatListDataLongName[i];
                 }
             }
 

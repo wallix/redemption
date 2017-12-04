@@ -39,15 +39,6 @@ struct WidgetSelectorParams
     uint16_t base_len[GRID_NB_COLUMNS_MAX] = {0};
 
     WidgetSelectorParams() = default;
-
-    WidgetSelectorParams(const WidgetSelectorParams & params)
-      : nb_columns(params.nb_columns)
-    {
-        for (int i = 0; i < this->nb_columns; i++) {
-            this->label[i] = params.label[i];
-            this->base_len[i] = params.base_len[i];
-        }
-    }
 };
 
 
@@ -121,7 +112,7 @@ public:
                    const char * current_page,
                    const char * number_of_page,
                    WidgetFlatButton * extra_button,
-                   WidgetSelectorParams selector_params,
+                   WidgetSelectorParams const & selector_params,
                    Font const & font, Theme const & theme, Translation::language_t lang);
 
     ~WidgetSelector() override;
