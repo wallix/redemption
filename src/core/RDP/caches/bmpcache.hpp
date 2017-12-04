@@ -189,10 +189,7 @@ private:
             this->storage.template update<T>();
         }
 
-        aligned_set_allocator(aligned_set_allocator const & other)
-        : std::allocator<T>(other)
-        , storage(other.storage)
-        {}
+        aligned_set_allocator(aligned_set_allocator const & other) = default;
 
         template<class U>
         explicit aligned_set_allocator(aligned_set_allocator<U> const & other)

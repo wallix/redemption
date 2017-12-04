@@ -1628,14 +1628,12 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
             meta_line.start_time = 0;
             meta_line.stop_time = 0;
 
-            time_t start_time = 0;
-
             if (Transport::Read::Ok == mwrm_reader.read_meta_line(meta_line)) {
-                start_time = meta_line.start_time;
+                time_t const start_time = meta_line.start_time;
                 while (Transport::Read::Ok == mwrm_reader.read_meta_line(meta_line)) {
                 }
 
-                auto duration = meta_line.stop_time - start_time;
+                auto const duration = meta_line.stop_time - start_time;
 
                 if (begin_cap < 0) {
                     begin_cap = std::max<decltype(begin_cap)>(begin_cap + duration, 0);

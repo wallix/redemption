@@ -4267,6 +4267,10 @@ protected:
                             this->draw_impl(rdpbd, bmp);
                         });
                     }
+
+                    if (cmd.ui_charinc) {
+                        draw_pos_ref += cmd.ui_charinc;
+                    }
                 }
                 else if (data == 0xFE) {
                      LOG(LOG_WARNING, "Front::draw_impl(RDPGlyphIndex): Glyph fragment not implemented yet");
@@ -4274,10 +4278,6 @@ protected:
                 else if (data == 0xFF)  {
                     LOG(LOG_WARNING, "Front::draw_impl(RDPGlyphIndex): Glyph fragment not implemented yet");
                 }
-            }
-
-            if (cmd.ui_charinc) {
-                draw_pos_ref += cmd.ui_charinc;
             }
 
         } else {

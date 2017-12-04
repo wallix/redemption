@@ -6089,13 +6089,11 @@ public:
             : nullptr;
         autoclose_file autoclose{output_file};
 
-        unsigned expected = 4; /* numberCapabilities(2) + pad2Octets(2) */
-
         uint16_t ncapsets = stream.in_uint16_le();
         stream.in_skip_bytes(2); /* pad */
 
         for (uint16_t n = 0; n < ncapsets; n++) {
-            expected = 4; /* capabilitySetType(2) + lengthCapability(2) */
+            unsigned expected = 4; /* capabilitySetType(2) + lengthCapability(2) */
 
             if (!stream.in_check_rem(expected)){
                 LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%zu",
