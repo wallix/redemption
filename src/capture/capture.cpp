@@ -1059,7 +1059,8 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
               || cstr_equal("COMPLETED_PROCESS", order)) {
             line_with_1_var("command_line");
         }
-        else if (cstr_equal("OUTBOUND_CONNECTION_BLOCKED", order)) {
+        else if (cstr_equal("OUTBOUND_CONNECTION_BLOCKED", order)
+              || cstr_equal("OUTBOUND_CONNECTION_DETECTED", order)) {
             line_with_2_var("rule", "application_name");
         }
         else if (cstr_equal("FOREGROUND_WINDOW_CHANGED", order)) {
@@ -1104,6 +1105,19 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
         else if ((cstr_equal("OUTBOUND_CONNECTION_BLOCKED_2", order)) ||
                  (cstr_equal("OUTBOUND_CONNECTION_DETECTED_2", order))) {
             line_with_5_var("rule", "app_name", "app_cmd_line", "dst_addr", "dst_port");
+        }
+
+        else if (cstr_equal("STARTUP_APPLICATION_FAIL_TO_RUN", order)) {
+            line_with_2_var("application_name", "raw_result");
+        }
+
+        else if (cstr_equal("STARTUP_APPLICATION_FAIL_TO_RUN_2", order)) {
+            line_with_3_var("application_name", "raw_result", "raw_result_message");
+        }
+
+        else if (cstr_equal("PROCESS_BLOCKED", order)
+              || cstr_equal("PROCESS_DETECTED", order)) {
+            line_with_3_var("rule", "app_name", "app_cmd_line");
         }
 
         else {

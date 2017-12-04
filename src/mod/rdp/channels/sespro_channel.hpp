@@ -1492,7 +1492,32 @@ public:
                         auto info = key_qvalue_pairs({
                             {"type",             "STARTUP_APPLICATION_FAIL_TO_RUN"},
                             {"application_name", parameters[0]},
-                            {"RawResult",        parameters[1]},
+                            {"raw_result",       parameters[1]},
+                        });
+
+                        this->report_message.log5(info);
+
+                        if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                            LOG(LOG_INFO, "%s", info);
+                        }
+
+                        LOG(LOG_ERR,
+                            "Session Probe failed to run startup application: %s", info);
+
+                        this->report_message.report(
+                            "SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED", "");
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!order.compare("STARTUP_APPLICATION_FAIL_TO_RUN_2")) {
+                    if (parameters.size() == 2) {
+                        auto info = key_qvalue_pairs({
+                            {"type",               "STARTUP_APPLICATION_FAIL_TO_RUN"},
+                            {"application_name",   parameters[0]},
+                            {"raw_result",         parameters[1]},
+                            {"raw_result_message", parameters[2]},
                         });
 
                         this->report_message.log5(info);
@@ -1532,8 +1557,8 @@ public:
                 else if (!order.compare("OUTBOUND_CONNECTION_DETECTED")) {
                     if (parameters.size() == 2) {
                         auto info = key_qvalue_pairs({
-                            {"type", "OUTBOUND_CONNECTION_DETECTED"},
-                            {"rule", parameters[0]},
+                            {"type",             "OUTBOUND_CONNECTION_DETECTED"},
+                            {"rule",             parameters[0]},
                             {"application_name", parameters[1]}
                             });
 
