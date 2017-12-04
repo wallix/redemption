@@ -26,6 +26,7 @@
 #include "transport/transport.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/invalid_socket.hpp"
+#include "utils/sugar/unique_fd.hpp"
 #include "configs/autogen/enums.hpp"
 
 #include <string>
@@ -59,7 +60,7 @@ public:
         dump = 0x100,
     };
 
-    SocketTransport( const char * name, int sck, const char *ip_address, int port
+    SocketTransport( const char * name, unique_fd sck, const char *ip_address, int port
                    , std::chrono::milliseconds recv_timeout
                    , Verbose verbose, std::string * error_message = nullptr);
 

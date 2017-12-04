@@ -674,18 +674,15 @@ public:
 
         int const nbTry(3);
         int const retryDelay(1000);
-        int const sck = ip_connect(ip, port, nbTry, retryDelay);
-        if (sck <= 0) {
+        int const sck = ip_connect(ip, port, nbTry, retryDelay).release();
+        if (sck < 0) {
             std::cerr << "ip_connect: Cannot connect to [" << ip << "]." << std::endl;
             return -42;
         }
 
-//         unique_fd auto_close_sck{sck};
-
-
         this->socket = std::make_unique<SocketTransport>(
             userName,
-            sck,
+            unique_fd{sck},
             ip,
             port,
             std::chrono::seconds(1),

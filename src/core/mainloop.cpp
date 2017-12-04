@@ -225,14 +225,11 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
 
     int nodelay = 1;
     if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<char*>(&nodelay), sizeof(nodelay))){
-        Session session(sck, ini, cctx, rnd, fstat);
+        Session session(unique_fd{sck}, ini, cctx, rnd, fstat);
 
         if (ini.get<cfg::debug::session>()){
             LOG(LOG_INFO, "Session::end of Session(%d)", sck);
         }
-
-        shutdown(sck, 2);
-        close(sck);
     }
     else {
         LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");

@@ -94,8 +94,8 @@ namespace
         return true;
     }
 
-    int connect_sck(int sck, int nbretry, int retry_delai_ms, sockaddr & addr,
-                    socklen_t addr_len, const char * target)
+    unique_fd connect_sck(int sck, int nbretry, int retry_delai_ms, sockaddr & addr,
+                          socklen_t addr_len, const char * target)
     {
         fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
 
@@ -132,11 +132,11 @@ namespace
 
         if (trial >= nbretry){
             LOG(LOG_INFO, "All trials done connecting to %s", target);
-            return -1;
+            return unique_fd{-1};
         }
 
         LOG(LOG_INFO, "connection to %s succeeded : socket %d", target, sck);
-        return sck;
+        return unique_fd{sck};
     }
 }
 
@@ -157,7 +157,7 @@ int resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
     return 0;
 }
 
-int ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_delai_ms /*1000*/)
+unique_fd ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_delai_ms /*1000*/)
 {
     LOG(LOG_INFO, "connecting to %s:%d\n", ip, port);
 
@@ -186,14 +186,14 @@ int ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_delai_ms
     if (status){
         LOG(LOG_INFO, "Connecting to %s:%d failed\n", ip, port);
         close(sck);
-        return status;
+        return unique_fd{-1};
     }
 
     /* set snd buffer to at least 32 Kbytes */
     if (!set_snd_buffer(sck, 32768)) {
         LOG(LOG_INFO, "Connecting to %s:%d failed : cannot set socket buffer size\n", ip, port);
         close(sck);
-        return -1;
+        return unique_fd{-1};
     }
 
 
@@ -205,7 +205,7 @@ int ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_delai_ms
 
 
 // TODO int retry_delai_ms -> std::milliseconds
-int local_connect(const char* sck_name, int nbretry, int retry_delai_ms)
+unique_fd local_connect(const char* sck_name, int nbretry, int retry_delai_ms)
 {
     char target[1024] = {};
     snprintf(target, sizeof(target), "%s", sck_name);
@@ -219,7 +219,7 @@ int local_connect(const char* sck_name, int nbretry, int retry_delai_ms)
 
     /* set snd buffer to at least 32 Kbytes */
     if (!set_snd_buffer(sck, 32768)) {
-        return -1;
+        return unique_fd{-1};
     }
 
     union

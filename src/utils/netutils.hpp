@@ -23,19 +23,20 @@
 
 #pragma once
 
+#include "utils/sugar/unique_fd.hpp"
+
 #include <cstdint>
 #include <sys/types.h>
 #include <netinet/in.h>
-
 
 bool try_again(int errnum);
 
 int resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr);
 
-int ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_delai_ms /*1000*/);
+unique_fd ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_delai_ms /*1000*/);
 
 // TODO int retry_delai_ms -> std::milliseconds
-int local_connect(const char* sck_name, int nbretry = 3, int retry_delai_ms = 1000);
+unique_fd local_connect(const char* sck_name, int nbretry = 3, int retry_delai_ms = 1000);
 
 int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport,
                        char * transparent_dest, size_t sz_transparent_dest, uint32_t verbose = 0);

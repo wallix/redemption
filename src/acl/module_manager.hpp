@@ -676,9 +676,9 @@ private:
         template<class... Args>
         ModWithSocket(
             ModuleManager & mm, AuthApi & /*authentifier*/,
-            const char * name, int sck, uint32_t verbose,
+            const char * name, unique_fd sck, uint32_t verbose,
             std::string * error_message, sock_mod_barrier, Args && ... mod_args)
-        : SocketTransport( name, sck
+        : SocketTransport( name, std::move(sck)
                          , mm.ini.get<cfg::context::target_host>().c_str()
                          , mm.ini.get<cfg::context::target_port>()
                          , std::chrono::milliseconds(mm.ini.get<cfg::globals::mod_recv_timeout>())
@@ -1258,9 +1258,9 @@ public:
 
                 snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
 
-                int client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 4, 1000);
+                unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 4, 1000);
 
-                if (client_sck == -1){
+                if (!client_sck.is_open()){
                     report_message.log5("type=\"CONNECTION_FAILED\"");
 
                     this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
@@ -1275,7 +1275,7 @@ public:
                     *this,
                     authentifier,
                     name,
-                    client_sck,
+                    std::move(client_sck),
                     this->ini.get<cfg::debug::mod_xup>(),
                     nullptr,
                     sock_mod_barrier(),
@@ -1331,9 +1331,9 @@ public:
 
                 snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
 
-                int client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
+                unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
 
-                if (client_sck == -1) {
+                if (!client_sck.is_open()) {
                     report_message.log5("type=\"CONNECTION_FAILED\"");
 
                     this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
@@ -1548,7 +1548,7 @@ public:
                         *this,
                         authentifier,
                         name,
-                        client_sck,
+                        std::move(client_sck),
                         this->ini.get<cfg::debug::mod_rdp>(),
                         &this->ini.get_ref<cfg::context::auth_error_message>(),
                         sock_mod_barrier(),
@@ -1645,9 +1645,9 @@ public:
 
                 snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
 
-                int client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
+                unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
 
-                if (client_sck == -1) {
+                if (!client_sck.is_open()) {
                     report_message.log5("type=\"CONNECTION_FAILED\"");
 
                     this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
@@ -1665,7 +1665,7 @@ public:
                         *this,
                         authentifier,
                         name,
-                        client_sck,
+                        std::move(client_sck),
                         this->ini.get<cfg::debug::mod_vnc>(),
                         nullptr,
                         sock_mod_barrier(),

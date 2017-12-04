@@ -175,7 +175,7 @@ int main(int argc, char * argv[]) {
                         , sizeof(nodelay))) {
         LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
     }
-    SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0, std::chrono::seconds(1)
+    SocketTransport front_trans( "RDP Client", unique_fd{one_shot_server.sck}, "0.0.0.0", 0, std::chrono::seconds(1)
                                , to_verbose_flags(ini.get<cfg::debug::front>()), nullptr);
     wait_obj front_event;
 
@@ -252,9 +252,11 @@ int main(int argc, char * argv[]) {
                     persistent_key_list_filename.c_str());
             }
 
-            int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000);
-            SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port, std::chrono::seconds(1)
-                                     , to_verbose_flags(ini.get<cfg::debug::mod_rdp>()), &ini.get_ref<cfg::context::auth_error_message>());
+            SocketTransport mod_trans(
+                "RDP Server", ip_connect(target_device.c_str(), target_port, 3, 1000),
+                target_device.c_str(), target_port, std::chrono::seconds(1),
+                to_verbose_flags(ini.get<cfg::debug::mod_rdp>()),
+                &ini.get_ref<cfg::context::auth_error_message>());
 
             ClientInfo client_info = front.client_info;
 
@@ -299,11 +301,6 @@ int main(int argc, char * argv[]) {
                         gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
             run_mod(mod, front, front_event, &mod_trans, &front_trans);
-
-            if (client_sck != -1) {
-                shutdown(client_sck, 2);
-                close(client_sck);
-            }
         }
     }   // try
     catch (Error & e) {

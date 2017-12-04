@@ -65,10 +65,10 @@ class Session
         wait_obj        auth_event;
         AclSerializer   acl_serial;
 
-        Acl(Inifile & ini, int client_sck, time_t now,
+        Acl(Inifile & ini, unique_fd client_sck, time_t now,
             CryptoContext & cctx, Random & rnd, Fstat & fstat)
         : auth_trans(
-            "Authentifier", client_sck,
+            "Authentifier", std::move(client_sck),
             ini.get<cfg::globals::authfile>().c_str(), 0,
             std::chrono::seconds(1),
             to_verbose_flags(ini.get<cfg::debug::auth>()))
@@ -87,7 +87,7 @@ class Session
     static const time_t select_timeout_tv_sec = 3;
 
 public:
-    Session(int sck, Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat)
+    Session(unique_fd sck, Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat)
         : ini(ini)
         , perf_last_info_collect_time(0)
         , perf_pid(getpid())
@@ -96,7 +96,7 @@ public:
         TRANSLATIONCONF.set_ini(&ini);
 
         SocketTransport front_trans(
-            "RDP Client", sck, "", 0, std::chrono::milliseconds(ini.get<cfg::client::recv_timeout>()),
+            "RDP Client", std::move(sck), "", 0, std::chrono::milliseconds(ini.get<cfg::client::recv_timeout>()),
             to_verbose_flags(this->ini.get<cfg::debug::front>())
         );
 
@@ -362,7 +362,7 @@ public:
                                 try {
                                     std::string const & authtarget = this->ini.get<cfg::globals::authfile>();
                                     size_t pos = authtarget.find(':');
-                                    int client_sck = (pos == std::string::npos)
+                                    unique_fd client_sck = (pos == std::string::npos)
                                         ? local_connect(authtarget.c_str(), 30, 1000)
                                         : [&](){
                                             // TODO: add some explicit error checking
@@ -370,7 +370,7 @@ public:
                                             int port = std::atoi(authtarget.c_str() + pos+1);
                                             return ip_connect(ip.c_str(), port, 30, 1000);
                                         }();
-                                    if (client_sck == -1) {
+                                    if (!client_sck.is_open()) {
                                         LOG(LOG_ERR,
                                             "Failed to connect to authentifier (%s)",
                                             this->ini.get<cfg::globals::authfile>().c_str());
@@ -379,7 +379,7 @@ public:
 
                                     // now is authentifier start time
                                     acl.reset(new Acl(
-                                        ini, client_sck, now, cctx, rnd, fstat
+                                        ini, std::move(client_sck), now, cctx, rnd, fstat
                                     ));
                                     authentifier.set_acl_serial(&acl->acl_serial);
                                     signal = BACK_EVENT_NEXT;
