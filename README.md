@@ -59,6 +59,8 @@ When create a new test or when a target fail with link error:
 
 `bjam targets.jam` for updated `targets.jam` file.
 
+Or run `./tools/bjam/gen_targets.py > targets.jam`
+
 Specific deps (libs, header, cpp, etc) in `./tools/bjam/gen_targets.py`.
 
 

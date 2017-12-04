@@ -77,17 +77,27 @@
 #include <string>
 #include <vector>
 
+struct RDPHeadlessFrontParams
+{
+    std::string out_path;
+    int index;
+
+    RDPHeadlessFrontParams() = default;
+
+    RDPHeadlessFrontParams(std::string out_path, int index = 0)
+      : out_path(std::move(out_path))
+      , index(index)
+    {}
+};
+
 class RDPHeadlessFront : public FrontAPI
 {
-
-private:
     class ClipboardServerChannelDataSender : public VirtualChannelDataSender
     {
     public:
         mod_api        * _callback;
 
         ClipboardServerChannelDataSender() = default;
-
 
         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
             //std::cout << "operator()  server " << (int)flags  << std::endl;
@@ -103,7 +113,6 @@ private:
         CHANNELS::ChannelDef  _channel;
 
         ClipboardClientChannelDataSender() = default;
-
 
         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
             //std::cout << "operator()  client " << (int)flags  << std::endl;
@@ -151,7 +160,7 @@ private:
             {}
 
 
-            virtual void emit() override {
+            void emit() override {
                 this->front->mouseButtons(button, x, y, isPressed);
             }
         };
@@ -191,7 +200,7 @@ private:
             , Flag(Flag)
             {}
 
-            virtual void emit() override {
+            void emit() override {
                 this->front->keyPressed(scanCode, Flag);
             }
         };
@@ -211,7 +220,7 @@ private:
             , Flag(Flag)
             {}
 
-            virtual void emit() override {
+            void emit() override {
                 this->front->keyReleased(scanCode, Flag);
             }
         };
@@ -230,7 +239,7 @@ private:
             , count_steps(count_steps)
             {}
 
-            virtual void emit() override {
+            void emit() override {
                 if (count_steps) {
                     this->list->index -= jumpt_size;
                     count_steps--;
@@ -267,7 +276,7 @@ private:
                 }
             }
 
-            virtual void emit() override {
+            void emit() override {
                 this->front->send_FormatListPDU(this->formatIDs, this->formatListDataLongName, this->size);
             }
         };
@@ -376,15 +385,13 @@ private:
                 i++;
             }
         }
-
-
-
     };
 
 
+    uint32_t                    _verbose;
 
 public:
-    uint32_t                    _verbose;
+    // TODO enum class
     enum : uint32_t {
         SHOW_USER_AND_TARGET_PARAMS = 1 << 0
       , SHOW_MOD_RDP_PARAMS         = 1 << 1
@@ -400,6 +407,8 @@ public:
       , SHOW_CAPS                   = 1 << 11
       , SHOW_ALL                    = (1 << 12) - 1
     };
+
+private:
     CHANNELS::ChannelDefArray   _cl;
     int                      _timer;
     ClipboardVirtualChannel  _clipboard_channel;
@@ -412,7 +421,10 @@ public:
 
     // Connexion socket members
     ClientInfo        _info;
-    mod_api         * _callback;
+    std::unique_ptr<mod_api> _callback;
+
+public:
+    // TODO enum class
     enum : int {
         LOG_COMPLETE   = 3
       , INPUT_COMPLETE = 12
@@ -422,12 +434,12 @@ public:
       , PORT           = 8
     };
 
+    // TODO enum class
     enum : long {
         DEFAULT_MAX_TIMEOUT_MILISEC_RESPONSE = 2000
     };
 
-
-
+private:
     // Keyboard Controllers members
     Keymap2              _keymap;
     bool                 _ctrl_alt_delete; // currently not used and always false
@@ -436,10 +448,12 @@ public:
 
 
     //  Clipboard Channel Management members
+    // TODO enum class
     enum : int {
         PDU_MAX_SIZE    = 1600
       , PDU_HEADER_SIZE =    8
     };
+    // TODO enum class
     enum : int {
         PASTE_TEXT_CONTENT_SIZE = PDU_MAX_SIZE - PDU_HEADER_SIZE
       , PASTE_PIC_CONTENT_SIZE  = PDU_MAX_SIZE - RDPECLIP::METAFILE_HEADERS_SIZE - PDU_HEADER_SIZE
@@ -455,10 +469,12 @@ public:
     int                         _bufferRDPCLipboardMetaFilePic_height;
     int                         _bufferRDPClipboardMetaFilePicBPP;*/
     struct ClipbrdFormatsList{
+        // TODO enum class
         enum : uint16_t {
               CF_CLIENT_FILEGROUPDESCRIPTORW = 48025
             , CF_CLIENT_FILECONTENTS         = 48026
         };
+        // TODO enum class
         enum : int {
               CLIPBRD_FORMAT_COUNT = 5
         };
@@ -508,47 +524,32 @@ public:
 
     int keep_alive_freq;
 
-    std::string index;
+    int index;
 
     std::string error_message;
 
-    // for VNC
-    NullReportMessage report_message_vnc;
-    Theme      theme;
-
+    ReportMessageApi & report_message;
     EventList eventList;
 
+    // for VNC
+    Theme      theme;
 
     //  RDP
     LCGRandom gen;
     TimeSystem timeSystem;
-    struct : NullReportMessage {
-        void report(const char* reason, const char* /*message*/) override
-        {
-            // std::cout << "report_message: " << message << "  reason:" << reason << std::endl;
-            if (!strcmp(reason, "CLOSE_SESSION_SUCCESSFUL")) {
-                this->is_closed = true;
-            }
-        }
-
-        bool is_closed = false;
-    } report_message_rdp;
 
     NullAuthentifier authentifier;
 
-    SocketTransport * socket = nullptr;
+    std::unique_ptr<SocketTransport> socket = nullptr;
 
 
-
-
-
-
+public:
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //------------------------
     //      CONSTRUCTOR
     //------------------------
 
-    RDPHeadlessFront(ClientInfo const & info, ReportMessageApi & report_message, uint32_t verbose)
+    RDPHeadlessFront(ClientInfo const & info, ReportMessageApi & report_message, uint32_t verbose, RDPHeadlessFrontParams params = {})
     : _verbose(verbose)
     , _clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [&report_message](){
         ClipboardVirtualChannel::Params params(report_message);
@@ -571,10 +572,12 @@ public:
     , _callback(nullptr)
     , _running(false)
     , is_pipe_ok(true)
+    , out_path(std::move(params.out_path))
     , secondary_connection_finished(false)
     , primary_connection_finished(false)
     , keep_alive_freq(0)
-    , index("0")
+    , index(params.index)
+    , report_message(report_message)
     , gen(0) // To always get the same client random, in tests
     {
         SSL_load_error_strings();
@@ -622,10 +625,7 @@ public:
         }
     }
 
-    ~RDPHeadlessFront() {
-        delete this->socket;
-        delete this->_callback;
-    }
+    ~RDPHeadlessFront() = default;
 
     void record_connection_nego_times() {
         if (!this->secondary_connection_finished) {
@@ -683,14 +683,14 @@ public:
 //         unique_fd auto_close_sck{sck};
 
 
-        this->socket = new SocketTransport( userName
-                                          , sck
-                                          , ip
-                                          , port
-                                          , std::chrono::seconds(1)
-                                          , to_verbose_flags(this->_verbose)
-                                          , &(this->error_message)
-                                          );
+        this->socket = std::make_unique<SocketTransport>(
+            userName,
+            sck,
+            ip,
+            port,
+            std::chrono::seconds(1),
+            to_verbose_flags(this->_verbose),
+            &this->error_message);
 
         std::cout << " Connected to [" << ip <<  "]." << std::endl;
 
@@ -705,60 +705,58 @@ public:
         not_null_ptr<GCC::UserData::SCSecurity const> sc_sec1_ptr = &original_sc_sec1;
 
         if (protocol_is_VNC) {
-
-            this->_callback = new mod_vnc( *(this->socket)
-                                         , userName
-                                         , userPwd
-                                         , *(this)
-                                         , this->_info.width
-                                         , this->_info.height
-                                         , ini.get<cfg::font>()
-                                         , ""
-                                         , ""
-                                         , theme
-                                         , this->_info.keylayout
-                                         , 0
-                                         , true
-                                         , true
-                                         , "0,1,-239"
-                                         , false
-                                         , true
-                                         , mod_vnc::ClipboardEncodingType::UTF8
-                                         , VncBogusClipboardInfiniteLoop::delayed
-                                         , this->report_message_vnc
-                                         , false
-                                         , nullptr
-                                         , to_verbose_flags(this->_verbose)
-                                         );
-
+            this->_callback = std::make_unique<mod_vnc>(
+                *this->socket
+              , userName
+              , userPwd
+              , *(this)
+              , this->_info.width
+              , this->_info.height
+              , ini.get<cfg::font>()
+              , ""
+              , ""
+              , this->theme
+              , this->_info.keylayout
+              , 0
+              , true
+              , true
+              , "0,1,-239"
+              , false
+              , true
+              , mod_vnc::ClipboardEncodingType::UTF8
+              , VncBogusClipboardInfiniteLoop::delayed
+              , this->report_message
+              , false
+              , nullptr
+              , to_verbose_flags(this->_verbose)
+              );
         } else {
-            auto * rdp = new mod_rdp (
-                          *(this->socket)
-                        , *(this)
-                        , this->_info
-                        , ini.get_ref<cfg::mod_rdp::redir_info>()
-                        , gen
-                        , timeSystem
-                        , mod_rdp_params
-                        , this->authentifier
-                        , this->report_message_rdp
-                        , ini
-                        );
-            this->_callback = rdp;
+            auto rdp = std::make_unique<mod_rdp>(
+                *this->socket
+              , *this
+              , this->_info
+              , ini.get_ref<cfg::mod_rdp::redir_info>()
+              , this->gen
+              , this->timeSystem
+              , mod_rdp_params
+              , this->authentifier
+              , this->report_message
+              , ini);
 
             GCC::UserData::CSSecurity & cs_security = rdp->cs_security;
             cs_security.encryptionMethods = encryptionMethods;
 
             sc_core_ptr = &rdp->sc_core;
             sc_sec1_ptr = &rdp->sc_sec1;
+            this->_callback = std::move(rdp);
         }
 
-        this->_to_server_sender._callback = this->_callback;
+        this->_to_server_sender._callback = this->_callback.get();
 
-         try {
+        try {
             while (!this->_callback->is_up_and_running()) {
                 // std::cout << " Early negociations...\n";
-                if (int err = this->wait_and_draw_event(sck, this->_callback, *(this), {3, 0})) {
+                if (int err = this->wait_and_draw_event(sck, *this->_callback, *(this), {3, 0})) {
                     return err;
                 }
             }
@@ -838,13 +836,13 @@ public:
 
     }
 
-    int wait_and_draw_event(int sck, mod_api * mod, FrontAPI & front, timeval timeout) {
+    int wait_and_draw_event(int sck, mod_api& mod, FrontAPI & front, timeval timeout) {
         unsigned max = 0;
         fd_set   rfds;
 
         io_fd_zero(rfds);
 
-        auto & event = mod->get_event();
+        auto & event = mod.get_event();
         event.wait_on_fd(sck, rfds, max, timeout);
 
         int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
@@ -861,17 +859,15 @@ public:
         }
 
         if (event.is_set(sck, rfds)) {
-            mod->draw_event(time(nullptr), front);
+            mod.draw_event(time(nullptr), front);
         }
 
         return 0;
     }
 
     mod_api * mod() {
-        return this->_callback;
+        return this->_callback.get();
     }
-
-
 
     void disconnect() {
         this->_callback->disconnect(tvtime().tv_sec);
@@ -881,14 +877,9 @@ public:
             if (is_pipe_ok) {
                 this->_callback->disconnect(timeobj.get_time().tv_sec);
             }
-            delete (this->_callback);
-            this->_callback = nullptr;
+            this->_callback.reset();
         }
-
-        if (this->socket != nullptr) {
-            delete (this->socket);
-            this->socket = nullptr;
-        }
+        this->socket.reset();
 
         std::chrono::microseconds prim_duration = difftimeval(this->start_wab_session_time, this->start_connection_time);
         uint64_t prim_len = prim_duration.count() / 1000;
@@ -923,21 +914,22 @@ public:
         return this->_running;
     }
 
-    virtual bool can_be_start_capture() override { return true; }
-    virtual bool must_be_stop_capture() override {
+    bool can_be_start_capture() override { return true; }
+    bool must_be_stop_capture() override {
         this->is_pipe_ok = false;
         return true;
     }
-    virtual void begin_update() override {}
-    virtual void end_update() override {}
+    bool is_connected() const { return this->is_pipe_ok; }
+    void begin_update() override {}
+    void end_update() override {}
 
-    virtual void set_pointer(Pointer const & cursor) override {
+    void set_pointer(Pointer const & cursor) override {
         if (this->_verbose & SHOW_CURSOR_STATE_CHANGE) {
             std::cout <<  "server >> cursor=" << int(cursor.pointer_type) <<  std::endl;
         }
     }
 
-    virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
+    const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
         return this->_cl;
     }
 
@@ -951,7 +943,7 @@ public:
         }
     }
 
-    virtual ResizeResult server_resize(int width, int height, int bpp) override {
+    ResizeResult server_resize(int width, int height, int bpp) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server_resize width=" << width << " height=" << height << " bpp=" << bpp << std::endl;
         }
@@ -1010,7 +1002,7 @@ public:
     //         CLIPBOARD
     //-----------------------------
 
-    virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t , size_t chunk_size, int flags) override {
+    void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t , size_t chunk_size, int flags) override {
         const CHANNELS::ChannelDef * mod_channel = this->_cl.get_by_name(channel.name);
         if (!mod_channel) {
             return;
@@ -1284,7 +1276,7 @@ public:
 
     void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
 
-    virtual void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+    void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPOpaqueRect color=" << cmd.color.as_bgr().to_u32();
             std::cout << " bpp: " << color_ctx.depth().to_bpp();
@@ -1292,14 +1284,14 @@ public:
         }
     }
 
-    virtual void draw(const RDPScrBlt & cmd, Rect clip) override {
+    void draw(const RDPScrBlt & cmd, Rect clip) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPScrBlt rop=" << int(cmd.rop);
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
 
-    virtual void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override {
+    void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override {
         (void)bitmap;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMemBlt rop=" << int(cmd.rop);
@@ -1309,7 +1301,7 @@ public:
         this->record_connection_nego_times();
     }
 
-    virtual void draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+    void draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPLineTo " << std::endl;
@@ -1318,7 +1310,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+    void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPatBlt rop=" << int(cmd.rop);
             std::cout << " bpp: " << color_ctx.depth().to_bpp();
@@ -1326,7 +1318,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override {
+    void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override {
         (void)bitmap;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMem3Blt rop=" << int(cmd.rop);
@@ -1345,14 +1337,14 @@ public:
         this->record_connection_nego_times();
     }
 
-    virtual void draw(const RDPDestBlt & cmd, Rect clip) override {
+    void draw(const RDPDestBlt & cmd, Rect clip) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPDestBlt rop=" << int(cmd.rop);
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
 
-    virtual void draw(const RDPMultiDstBlt & cmd, Rect clip) override {
+    void draw(const RDPMultiDstBlt & cmd, Rect clip) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMultiDstBlt " << std::endl;
@@ -1360,7 +1352,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+    void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMultiOpaqueRect " << std::endl;
@@ -1369,7 +1361,7 @@ public:
         }
     }
 
-    virtual void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+    void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMultiPatBlt " << std::endl;
@@ -1378,7 +1370,7 @@ public:
         }
     }
 
-    virtual void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override {
+    void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMultiScrBlt " << std::endl;
@@ -1386,7 +1378,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
+    void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
         (void)cmd;
         (void)gly_cache;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
@@ -1423,7 +1415,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPEllipseSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+    void draw(const RDPEllipseSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPEllipseSC " << std::endl;
@@ -1432,7 +1424,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPEllipseCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+    void draw(const RDPEllipseCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPEllipseCB " << std::endl;
@@ -1441,77 +1433,77 @@ public:
         }
     }
 
-    virtual void draw(const RDP::FrameMarker & order) override {
+    void draw(const RDP::FrameMarker & order) override {
         (void)order;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> FrameMarker " << std::endl;
         }
     }
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
+    void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
         (void)order;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> NewOrExistingWindow " << std::endl;
         }
     }
 
-    virtual void draw(const RDP::RAIL::WindowIcon & order) override {
+    void draw(const RDP::RAIL::WindowIcon & order) override {
         (void)order;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> WindowIcon " << std::endl;
         }
     }
 
-    virtual void draw(const RDP::RAIL::CachedIcon & order) override {
+    void draw(const RDP::RAIL::CachedIcon & order) override {
         (void)order;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> CachedIcon " << std::endl;
         }
     }
 
-    virtual void draw(const RDP::RAIL::DeletedWindow & order) override {
+    void draw(const RDP::RAIL::DeletedWindow & order) override {
         (void)order;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> DeletedWindow " << std::endl;
         }
     }
 
-    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override {
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override {
         (void)order;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> NewOrExistingNotificationIcons " << std::endl;
         }
     }
 
-    virtual void draw(const RDP::RAIL::DeletedNotificationIcons & order) override {
+    void draw(const RDP::RAIL::DeletedNotificationIcons & order) override {
         (void)order;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> DeletedNotificationIcons " << std::endl;
         }
     }
 
-    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override {
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override {
         (void)order;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> ActivelyMonitoredDesktop " << std::endl;
         }
     }
 
-    virtual void draw(const RDP::RAIL::NonMonitoredDesktop & order) override {
+    void draw(const RDP::RAIL::NonMonitoredDesktop & order) override {
         (void)order;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> NonMonitoredDesktop " << std::endl;
         }
     }
 
-    virtual void draw(const RDPColCache & cmd) override {
+    void draw(const RDPColCache & cmd) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPColCache " << std::endl;
         }
     }
 
-    virtual void draw(const RDPBrushCache & cmd) override {
+    void draw(const RDPBrushCache & cmd) override {
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPBrushCache " << std::endl;
@@ -1589,101 +1581,95 @@ public:
 
     void set_event_list(const char * script_file_path) {
         std::ifstream ifichier(script_file_path);
-            if(ifichier) {
-                std::string ligne;
-                const std::string delimiter = " ";
+        if(ifichier) {
+            std::string ligne;
+            const std::string delimiter = " ";
 
-                while(std::getline(ifichier, ligne)) {
-                    auto pos(ligne.find(delimiter));
-                    std::string tag  = ligne.substr(0, pos);
-                    std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
+            while(std::getline(ifichier, ligne)) {
+                auto pos(ligne.find(delimiter));
+                std::string tag  = ligne.substr(0, pos);
+                std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
 
-                    if (       tag == "wait") {
-                        this->eventList.wait(std::stoi(info));
+                if (       tag == "wait") {
+                    this->eventList.wait(std::stoi(info));
 
-                    } else if (tag == "key_press") {
-                        pos = info.find(delimiter);
-                        uint32_t scanCode(std::stoi(info.substr(0, pos)));
-                        uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                } else if (tag == "key_press") {
+                    pos = info.find(delimiter);
+                    uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                    uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                        this->eventList.setKey_press(this, scanCode, flag);
+                    this->eventList.setKey_press(this, scanCode, flag);
 
-                    } else if (tag == "key_release") {
-                        pos = info.find(delimiter);
-                        uint32_t scanCode(std::stoi(info.substr(0, pos)));
-                        uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                } else if (tag == "key_release") {
+                    pos = info.find(delimiter);
+                    uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                    uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                        this->eventList.setKey_release(this, scanCode, flag);
+                    this->eventList.setKey_release(this, scanCode, flag);
 
-                    } else if (tag == "mouse_press") {
-                        pos = info.find(delimiter);
-                        uint8_t button(std::stoi(info.substr(0, pos)));
-                        info = info.substr(pos + delimiter.length(), info.length());
-                        pos = info.find(delimiter);
-                        uint32_t x(std::stoi(info.substr(0, pos)));
-                        uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                } else if (tag == "mouse_press") {
+                    pos = info.find(delimiter);
+                    uint8_t button(std::stoi(info.substr(0, pos)));
+                    info = info.substr(pos + delimiter.length(), info.length());
+                    pos = info.find(delimiter);
+                    uint32_t x(std::stoi(info.substr(0, pos)));
+                    uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                        this->eventList.setMouse_button(this, button, x, y, true);
+                    this->eventList.setMouse_button(this, button, x, y, true);
 
-                    } else if (tag == "mouse_release") {
-                        pos = info.find(delimiter);
-                        uint8_t button(std::stoi(info.substr(0, pos)));
-                        info = info.substr(pos + delimiter.length(), info.length());
-                        pos = info.find(delimiter);
-                        uint32_t x(std::stoi(info.substr(0, pos)));
-                        uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                } else if (tag == "mouse_release") {
+                    pos = info.find(delimiter);
+                    uint8_t button(std::stoi(info.substr(0, pos)));
+                    info = info.substr(pos + delimiter.length(), info.length());
+                    pos = info.find(delimiter);
+                    uint32_t x(std::stoi(info.substr(0, pos)));
+                    uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                        this->eventList.setMouse_button(this, button, x, y, false);
+                    this->eventList.setMouse_button(this, button, x, y, false);
 
-                    } else if (tag == "clpbrd_change") {
-                        // TODO dynamique data and format injection
-                        uint32_t formatIDs                 = RDPECLIP::CF_TEXT;
-                        std::string formatListDataLongName("\0\0", 2);
+                } else if (tag == "clpbrd_change") {
+                    // TODO dynamique data and format injection
+                    uint32_t formatIDs                 = RDPECLIP::CF_TEXT;
+                    std::string formatListDataLongName("\0\0", 2);
 
-                        // TODO { formatListDataLongName, 1 } -> array_view
-                        // TODO { formatIDs, 1 } -> array_view
-                        this->eventList.setClpbrd_change(this, &formatIDs, &formatListDataLongName, 1);
+                    // TODO { formatListDataLongName, 1 } -> array_view
+                    // TODO { formatIDs, 1 } -> array_view
+                    this->eventList.setClpbrd_change(this, &formatIDs, &formatListDataLongName, 1);
 
-                    } else if (tag == "click") {
-                        pos = info.find(delimiter);
-                        uint8_t button(std::stoi(info.substr(0, pos)));
-                        info = info.substr(pos + delimiter.length(), info.length());
-                        pos = info.find(delimiter);
-                        uint32_t x(std::stoi(info.substr(0, pos)));
-                        uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                } else if (tag == "click") {
+                    pos = info.find(delimiter);
+                    uint8_t button(std::stoi(info.substr(0, pos)));
+                    info = info.substr(pos + delimiter.length(), info.length());
+                    pos = info.find(delimiter);
+                    uint32_t x(std::stoi(info.substr(0, pos)));
+                    uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                        this->eventList.setClick(this, button, x, y);
+                    this->eventList.setClick(this, button, x, y);
 
-                    } else if (tag == "double_click") {
-                        pos = info.find(delimiter);
-                        uint32_t x(std::stoi(info.substr(0, pos)));
-                        uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                } else if (tag == "double_click") {
+                    pos = info.find(delimiter);
+                    uint32_t x(std::stoi(info.substr(0, pos)));
+                    uint32_t y(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                        this->eventList.setDouble_click(this, x, y);
+                    this->eventList.setDouble_click(this, x, y);
 
-                    } else if (tag == "key") {
-                        pos = info.find(delimiter);
-                        uint32_t scanCode(std::stoi(info.substr(0, pos)));
-                        uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                } else if (tag == "key") {
+                    pos = info.find(delimiter);
+                    uint32_t scanCode(std::stoi(info.substr(0, pos)));
+                    uint32_t flag(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                        this->eventList.setKey(this, scanCode, flag);
+                    this->eventList.setKey(this, scanCode, flag);
 
-                    } else if (tag == "loop") {
-                        pos = info.find(delimiter);
-                        uint32_t jump_size(std::stoi(info.substr(0, pos)));
-                        uint32_t count_steps(std::stoi(info.substr(pos + delimiter.length(), info.length())));
+                } else if (tag == "loop") {
+                    pos = info.find(delimiter);
+                    uint32_t jump_size(std::stoi(info.substr(0, pos)));
+                    uint32_t count_steps(std::stoi(info.substr(pos + delimiter.length(), info.length())));
 
-                        this->eventList.setLoop(jump_size, count_steps);
-                    }
+                    this->eventList.setLoop(jump_size, count_steps);
                 }
-            } else {
-                std::cerr <<  "Can't find " << script_file_path << "\n";
             }
+        } else {
+            std::cerr <<  "Can't open " << script_file_path << ": " << strerror(errno) << "\n";
+        }
     }
-
 };
-
-
-
-
-
