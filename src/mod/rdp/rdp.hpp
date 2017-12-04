@@ -7719,8 +7719,6 @@ private:
 
         std::string auth_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
 
-        LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message);
-
         this->auth_channel_flags  = flags;
         this->auth_channel_chanid = auth_channel.chanid;
 
@@ -7732,6 +7730,8 @@ private:
             LOG(LOG_INFO, "WABLauncher: %s", log_string);
         }
         else {
+            LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message);
+
             this->authentifier.set_auth_channel_target(
                 auth_channel_message.c_str());
         }
