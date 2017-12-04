@@ -2832,7 +2832,7 @@ public:
                                         throw Error(ERR_SEC);
                                     }
                                     X509_ALGOR * algor;
-                                    if (X509_PUBKEY_get0_param(NULL, NULL, 0, &algor, key) != 1) {
+                                    if (X509_PUBKEY_get0_param(nullptr, nullptr, nullptr, &algor, key) != 1) {
                                         LOG(LOG_ERR, "Faild to get algorithm used for public key.");
                                         throw Error(ERR_SEC);
                                     }
@@ -2840,7 +2840,7 @@ public:
                                     int const nid = OBJ_obj2nid(algor->algorithm);
                                     if ((nid == NID_md5WithRSAEncryption)
                                     || (nid == NID_shaWithRSAEncryption)) {
-                                        X509_PUBKEY_set0_param(key, OBJ_nid2obj(NID_rsaEncryption), 0, NULL, NULL, 0);
+                                        X509_PUBKEY_set0_param(key, OBJ_nid2obj(NID_rsaEncryption), 0, nullptr, nullptr, 0);
                                     }
                                 }
 
