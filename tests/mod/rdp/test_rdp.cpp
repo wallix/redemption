@@ -52,8 +52,6 @@ RED_AUTO_TEST_CASE(TestModRDPXPServer)
 
     FakeFront front(info, verbose);
 
-    const char * name = "RDP XP Target";
-
     // int client_sck = ip_connect("10.10.47.175", 3389, 3, 1000);
     // std::string error_message;
     // SocketTransport t( name
@@ -66,7 +64,7 @@ RED_AUTO_TEST_CASE(TestModRDPXPServer)
 
 
     #include "fixtures/dump_xp_mem3blt.hpp"
-    TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
 
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
@@ -74,66 +72,57 @@ RED_AUTO_TEST_CASE(TestModRDPXPServer)
 
     Inifile ini;
 
-    try {
-        ModRDPParams mod_rdp_params( "xavier"
-                                   , "SecureLinux"
-                                   , "10.10.47.175"
-                                   , "10.10.9.161"
-                                   , 7
-                                   , ini.get<cfg::font>()
-                                   , ini.get<cfg::theme>()
-                                   , verbose
-                                   );
-        mod_rdp_params.enable_tls                      = false;
-        mod_rdp_params.enable_nla                      = false;
-        //mod_rdp_params.enable_krb                      = false;
-        //mod_rdp_params.enable_clipboard                = true;
-        mod_rdp_params.enable_fastpath                 = false;
-        //mod_rdp_params.enable_mem3blt                  = true;
-        mod_rdp_params.enable_new_pointer              = false;
-        //mod_rdp_params.rdp_compression                 = 0;
-        //mod_rdp_params.error_message                   = nullptr;
-        //mod_rdp_params.disconnect_on_logon_user_change = false;
-        //mod_rdp_params.open_session_timeout            = 0;
-        //mod_rdp_params.certificate_change_action       = 0;
-        //mod_rdp_params.extra_orders                    = "";
+    ModRDPParams mod_rdp_params( "xavier"
+                                , "SecureLinux"
+                                , "10.10.47.175"
+                                , "10.10.9.161"
+                                , 7
+                                , ini.get<cfg::font>()
+                                , ini.get<cfg::theme>()
+                                , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
+                                , ini.get_ref<cfg::context::close_box_extra_message>()
+                                , RDPVerbose{}
+                                );
+    mod_rdp_params.enable_tls                      = false;
+    mod_rdp_params.enable_nla                      = false;
+    //mod_rdp_params.enable_krb                      = false;
+    //mod_rdp_params.enable_clipboard                = true;
+    mod_rdp_params.enable_fastpath                 = false;
+    //mod_rdp_params.enable_mem3blt                  = true;
+    mod_rdp_params.enable_new_pointer              = false;
+    //mod_rdp_params.rdp_compression                 = 0;
+    //mod_rdp_params.error_message                   = nullptr;
+    //mod_rdp_params.disconnect_on_logon_user_change = false;
+    //mod_rdp_params.open_session_timeout            = 0;
+    //mod_rdp_params.certificate_change_action       = 0;
+    //mod_rdp_params.extra_orders                    = "";
 
-        // To always get the same client random, in tests
-        LCGRandom gen(0);
-        NullAuthentifier authentifier;
-        mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params, authentifier);
-        mod_api * mod = &mod_;
+    // To always get the same client random, in tests
+    LCGRandom gen(0);
+    LCGTime timeobj;
+    NullAuthentifier authentifier;
+    NullReportMessage report_message;
+    mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
+        gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
-        if (verbose > 2){
-            LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
-        }
-        RED_CHECK(t.get_status());
-        RED_CHECK_EQUAL(mod->get_front_width(), 800);
-        RED_CHECK_EQUAL(mod->get_front_height(), 600);
-
-        uint32_t count = 0;
-        BackEvent_t res = BACK_EVENT_NONE;
-        while (res == BACK_EVENT_NONE){
-            LOG(LOG_INFO, "=======================> count=%u", count);
-
-            if (count++ >= 25) break;
-    //        if (count == 10){
-    //            front.dump_png("trace_xp_10_");
-    //        }
-    //        if (count == 20){
-    //            front.dump_png("trace_xp_20_");
-    //        }
-            mod->draw_event(time(nullptr), front);
-        }
+    if (verbose > 2){
+        LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-    catch (const Error & e) {
-        LOG(LOG_INFO, "=======================> Exception raised=%u", e.id);
-    };
-//    front.dump_png("trace_xp_");
+    RED_CHECK_EQUAL(front.info.width, 800);
+    RED_CHECK_EQUAL(front.info.height, 600);
+
+    uint32_t count = 0;
+    BackEvent_t res = BACK_EVENT_NONE;
+    while (res == BACK_EVENT_NONE){
+        LOG(LOG_INFO, "=======================> count=%u", count);
+
+        if (count++ >= 25) break;
+        mod.draw_event(time(nullptr), front);
+    }
+
+    // front.dump_png("trace_xp_");
 }
 */
-
-
 
 RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 {
@@ -245,8 +234,6 @@ RED_AUTO_TEST_CASE(TestModRDPW2003Server)
 
     FakeFront front(info, verbose);
 
-    const char * name = "RDP W2003 Target";
-
     // int client_sck = ip_connect("10.10.47.205", 3389, 3, 1000);
     // std::string error_message;
     // SocketTransport t( name
@@ -259,7 +246,7 @@ RED_AUTO_TEST_CASE(TestModRDPW2003Server)
 
 
     #include "fixtures/dump_w2003_mem3blt.hpp"
-    TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
 
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
@@ -274,7 +261,9 @@ RED_AUTO_TEST_CASE(TestModRDPW2003Server)
                                , 2
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
-                               , verbose
+                               , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
+                               , ini.get_ref<cfg::context::close_box_extra_message>()
+                               , RDPVerbose{}
                                );
     mod_rdp_params.enable_tls                      = false;
     mod_rdp_params.enable_nla                      = false;
@@ -292,37 +281,31 @@ RED_AUTO_TEST_CASE(TestModRDPW2003Server)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
+    LCGTime timeobj;
     NullAuthentifier authentifier;
-    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params, authentifier);
-    mod_api * mod = &mod_;
+    NullReportMessage report_message;
+    mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
+        gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-
-    RED_CHECK(t.get_status());
-    RED_CHECK_EQUAL(mod->get_front_width(), 800);
-    RED_CHECK_EQUAL(mod->get_front_height(), 600);
+    RED_CHECK_EQUAL(front.info.width, 800);
+    RED_CHECK_EQUAL(front.info.height, 600);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
     while (res == BACK_EVENT_NONE){
         LOG(LOG_INFO, "=======================> count=%u", count);
-
         if (count++ >= 25) break;
-//        if (count == 10){
-//            front.dump_png("trace_w2003_10_");
-//        }
-//        if (count == 20){
-//            front.dump_png("trace_w2003_20_");
-//        }
-        mod->draw_event(time(nullptr), front);
+        mod.draw_event(time(nullptr), front);
     }
 
-
-//    front.dump_png("trace_w2003_");
+    // front.dump_png("trace_w2003_");
 }
+*/
 
+/*
 RED_AUTO_TEST_CASE(TestModRDPW2000Server)
 {
     ClientInfo info;
@@ -338,8 +321,6 @@ RED_AUTO_TEST_CASE(TestModRDPW2000Server)
 
     FakeFront front(info, verbose);
 
-    const char * name = "RDP W2000 Target";
-
     // int client_sck = ip_connect("10.10.47.39", 3389, 3, 1000);
     // std::string error_message;
     // SocketTransport t( name
@@ -351,7 +332,7 @@ RED_AUTO_TEST_CASE(TestModRDPW2000Server)
     //                  );
 
     #include "fixtures/dump_w2000_mem3blt.hpp"
-    TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
 
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
@@ -366,7 +347,9 @@ RED_AUTO_TEST_CASE(TestModRDPW2000Server)
                                , 2
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
-                               , 0
+                               , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
+                               , ini.get_ref<cfg::context::close_box_extra_message>()
+                               , RDPVerbose{}
                                );
     mod_rdp_params.enable_tls                      = false;
     mod_rdp_params.enable_nla                      = false;
@@ -384,33 +367,27 @@ RED_AUTO_TEST_CASE(TestModRDPW2000Server)
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
+    LCGTime timeobj;
     NullAuthentifier authentifier;
-    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen, mod_rdp_params, authentifier);
+    NullReportMessage report_message;
+    mod_rdp mod_(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
+        gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
     mod_api * mod = &mod_;
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-
-    RED_CHECK(t.get_status());
-    RED_CHECK_EQUAL(mod->get_front_width(), 800);
-    RED_CHECK_EQUAL(mod->get_front_height(), 600);
+    RED_CHECK_EQUAL(front.info.width, 800);
+    RED_CHECK_EQUAL(front.info.height, 600);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
     while (res == BACK_EVENT_NONE){
         LOG(LOG_INFO, "=======================> count=%u", count);
-
         if (count++ >= 25) break;
-//        if (count == 10){
-//            front.dump_png("trace_w2000_10_");
-//        }
-//        if (count == 20){
-//            front.dump_png("trace_w2000_20_");
-//        }
         mod->draw_event(time(nullptr), front);
     }
 
-//    front.dump_png("trace_w2000_");
+    // front.dump_png("trace_w2000_");
 }
 */
