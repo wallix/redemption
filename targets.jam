@@ -3680,11 +3680,6 @@ test-run tests/transport/test_transport :
 :
   <covfile>src/transport/transport.hpp
 ;
-test-run tests/utils/apps/test_recording_progress :
-  $(REDEMPTION_TEST_PATH)/utils/apps/test_recording_progress.cpp
-:
-  <covfile>src/utils/apps/recording_progress.hpp
-;
 test-run tests/utils/crypto/test_ssl_aes_direct :
   $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_aes_direct.cpp
 :
@@ -4019,6 +4014,11 @@ test-run tests/utils/test_rdtsc :
   $(REDEMPTION_TEST_PATH)/utils/test_rdtsc.cpp
 :
   <covfile>src/utils/rdtsc.hpp
+;
+test-run tests/utils/test_recording_progress :
+  $(REDEMPTION_TEST_PATH)/utils/test_recording_progress.cpp
+:
+  <covfile>src/utils/recording_progress.hpp
 ;
 test-run tests/utils/test_rect :
   $(REDEMPTION_TEST_PATH)/utils/test_rect.cpp
@@ -4695,8 +4695,6 @@ alias test_socket_transport.coverage : tests/transport/test_socket_transport.cov
 alias test_test_transport : tests/transport/test_test_transport ;
 alias test_transport : tests/transport/test_transport ;
 alias test_transport.coverage : tests/transport/test_transport.coverage ;
-alias test_recording_progress : tests/utils/apps/test_recording_progress ;
-alias test_recording_progress.coverage : tests/utils/apps/test_recording_progress.coverage ;
 alias test_ssl_aes_direct : tests/utils/crypto/test_ssl_aes_direct ;
 alias test_ssl_aes_direct.coverage : tests/utils/crypto/test_ssl_aes_direct.coverage ;
 alias test_ssl_lib : tests/utils/crypto/test_ssl_lib ;
@@ -4808,6 +4806,8 @@ alias test_png : tests/utils/test_png ;
 alias test_png.coverage : tests/utils/test_png.coverage ;
 alias test_rdtsc : tests/utils/test_rdtsc ;
 alias test_rdtsc.coverage : tests/utils/test_rdtsc.coverage ;
+alias test_recording_progress : tests/utils/test_recording_progress ;
+alias test_recording_progress.coverage : tests/utils/test_recording_progress.coverage ;
 alias test_rect : tests/utils/test_rect ;
 alias test_rect.coverage : tests/utils/test_rect.coverage ;
 alias test_redirection_info : tests/utils/test_redirection_info ;
@@ -5174,9 +5174,6 @@ alias tests/transport :
   tests/transport/test_test_transport
   tests/transport/test_transport
 ;
-alias tests/utils/apps :
-  tests/utils/apps/test_recording_progress
-;
 alias tests/utils/crypto :
   tests/utils/crypto/test_ssl_aes_direct
   tests/utils/crypto/test_ssl_lib
@@ -5240,6 +5237,7 @@ alias tests/utils :
   tests/utils/test_pattutils
   tests/utils/test_png
   tests/utils/test_rdtsc
+  tests/utils/test_recording_progress
   tests/utils/test_rect
   tests/utils/test_redirection_info
   tests/utils/test_region
@@ -5295,7 +5293,6 @@ alias tests.full :
   tests/system/linux/system
   tests
   tests/transport
-  tests/utils/apps
   tests/utils/crypto
   tests/utils/sugar/numerics
   tests/utils/sugar

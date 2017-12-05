@@ -73,7 +73,7 @@
 
 #include "capture/video_capture.hpp"
 
-#include "utils/apps/recording_progress.hpp"
+#include "utils/recording_progress.hpp"
 #include "utils/sugar/underlying_cast.hpp"
 
 

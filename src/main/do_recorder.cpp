@@ -28,7 +28,7 @@
 #include "transport/out_file_transport.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 
-#include "utils/apps/recording_progress.hpp"
+#include "utils/recording_progress.hpp"
 #include "utils/chex_to_int.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/genrandom.hpp"

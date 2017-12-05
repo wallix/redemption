@@ -28,6 +28,8 @@
 #include <cassert>
 #include <ctime>
 #include <iostream>
+#include <cerrno>
+#include <cstring>
 
 /**
  * Format (JSON):
@@ -52,7 +54,7 @@
  */
 class UpdateProgressDataJSONFormat : noncopyable
 {
-    int fd;
+    unique_fd fd;
 
     const time_t start_record;
     const time_t stop_record;
@@ -69,32 +71,23 @@ class UpdateProgressDataJSONFormat : noncopyable
 
 public:
     UpdateProgressDataJSONFormat() = delete;
-    UpdateProgressDataJSONFormat( const char * progress_filename
-                      , const time_t begin_record, const time_t end_record
-                      , const time_t begin_capture, const time_t end_capture) noexcept
-    : fd(::open(progress_filename, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IRGRP))
-    , start_record(begin_capture ? begin_capture : begin_record)
-    , stop_record(end_capture ? end_capture : end_record)
+    UpdateProgressDataJSONFormat(
+        unique_fd fd, const time_t start_record, const time_t stop_record) noexcept
+    : fd(std::move(fd))
+    , start_record(start_record)
+    , stop_record(stop_record)
     , processing_start_time(::time(nullptr))
     {
-        if (this->fd != -1) {
-            this->write_datas();
-        }
-        else {
-            LOG(LOG_ERR, "Failed to create file: \"%s\"", progress_filename);
-        }
+        this->write_datas();
     }
 
     ~UpdateProgressDataJSONFormat()
     {
-        if (this->fd != -1) {
-            if (!this->error_raised) {
-                this->time_percentage = 100;
-                this->time_remaining = 0;
-                ++this->nb_videos;
-                this->write_datas();
-            }
-            ::close(this->fd);
+        if (!this->error_raised) {
+            this->time_percentage = 100;
+            this->time_remaining = 0;
+            ++this->nb_videos;
+            this->write_datas();
         }
     }
 
@@ -106,15 +99,11 @@ public:
 
     bool is_valid() const
     {
-        return (this->fd != -1);
+        return this->fd.is_open();
     }
 
     void operator()(time_t record_now)
     {
-        if (this->fd == -1) {
-            return;
-        }
-
         if (record_now <= this->start_record) {
             this->time_percentage = 0;
         }
@@ -138,10 +127,6 @@ public:
 
     void raise_error(int code, const char * message)
     {
-        if (this->fd == -1) {
-            return;
-        }
-
         char str_error_message[1024];
 
         int const len = std::snprintf(
@@ -172,19 +157,20 @@ private:
     {
         bool has_error = true;
 
-        off_t const seek_result = ::lseek(this->fd, 0, SEEK_SET);
+        off_t const seek_result = ::lseek(this->fd.fd(), 0, SEEK_SET);
         if (seek_result != -1) {
-            ssize_t const write_result = ::write(this->fd, buf, len);
+            ssize_t const write_result = ::write(this->fd.fd(), buf, len);
             if (write_result != -1) {
-                int const truncate_result = ::ftruncate(this->fd, write_result);
+                int const truncate_result = ::ftruncate(this->fd.fd(), write_result);
                 if (truncate_result !=  1) {
                     has_error = false;
                 }
             }
         }
 
-        if (has_error) {
-            LOG(LOG_ERR, "Failed to write progress information file!");
+        if (has_error && this->fd.is_open()) {
+            LOG(LOG_ERR, "Failed to write progress information file! %s", strerror(errno));
+            this->fd.close();
         }
     }
 };
@@ -199,7 +185,7 @@ private:
 // error: -1 $error ($error_code)
 class UpdateProgressDataOldFormat : noncopyable
 {
-    int fd;
+    unique_fd fd;
 
     const time_t start_record;
     const time_t stop_record;
@@ -212,47 +198,31 @@ class UpdateProgressDataOldFormat : noncopyable
 
 public:
     UpdateProgressDataOldFormat() = delete;
-    UpdateProgressDataOldFormat( const char * progress_filename
-                      , const time_t begin_record, const time_t end_record
-                      , const time_t begin_capture, const time_t end_capture) noexcept
-    : fd(-1)
-    , start_record(begin_capture ? begin_capture : begin_record)
-    , stop_record(end_capture ? end_capture : end_record)
+    UpdateProgressDataOldFormat(
+        unique_fd fd, const time_t start_record, const time_t stop_record) noexcept
+    : fd(std::move(fd))
+    , start_record(start_record)
+    , stop_record(stop_record)
     , processing_start_time(::time(nullptr))
-    , last_written_time_percentage(0) {
-        this->fd = ::open(progress_filename, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IRGRP);
-        if (this->fd != -1) {
-            int write_result = ::write(this->fd, "0 -1", 4);
-(void)write_result;
-        }
-        else {
-            std::cerr << "Failed to create file: \"" << progress_filename << "\"" << std::endl;
+    , last_written_time_percentage(0)
+    {
+        this->write("0 -1", 4);
+    }
+
+    ~UpdateProgressDataOldFormat()
+    {
+        if (!this->error_raised) {
+            this->write("100 0", 5);
         }
     }
 
-    ~UpdateProgressDataOldFormat() {
-        if (this->fd != -1) {
-            if (!this->error_raised) {
-                ::lseek(this->fd, 0, SEEK_SET);
-                int write_result = ::write(this->fd, "100 0", 5);
-                if (write_result != -1) {
-                    int truncate_result = ::ftruncate(this->fd, write_result);
-(void)truncate_result;
-                }
-            }
-            ::close(this->fd);
-        }
+    bool is_valid() const
+    {
+        return this->fd.is_open();
     }
 
-    bool is_valid() const {
-        return (this->fd != -1);
-    }
-
-    void operator()(time_t record_now) {
-        if (this->fd == -1) {
-            return;
-        }
-
+    void operator()(time_t record_now)
+    {
         unsigned int time_percentage;
 
         if (record_now <= this->start_record) {
@@ -277,25 +247,13 @@ public:
                                         , time_percentage
                                         , elapsed_time * 100 / time_percentage - elapsed_time);
 
-            ::lseek(this->fd, 0, SEEK_SET);
-            int write_result = ::write(this->fd, str_time_percentage, len);
-            if (write_result != -1) {
-                int truncate_result = ::ftruncate(this->fd, write_result);
-(void)truncate_result;
-            }
-            else {
-                LOG(LOG_ERR, "Failed to write progress information file!");
-            }
-
+            this->write(str_time_percentage, len);
             this->last_written_time_percentage = time_percentage;
         }
     }
 
-    void raise_error(int code, const char * message) {
-        if (this->fd == -1) {
-            return;
-        }
-
+    void raise_error(int code, const char * message)
+    {
         char str_error_message[1024];
 
         std::size_t len = ::snprintf( str_error_message, sizeof(str_error_message), "-1 %s (%d)"
@@ -303,17 +261,30 @@ public:
                                     , code
                                     );
 
-        ::lseek(this->fd, 0, SEEK_SET);
-        int write_result = ::write(this->fd, str_error_message, len);
-        if (write_result != -1) {
-            int truncate_result = ::ftruncate(this->fd, write_result);
-(void)truncate_result;
-        }
-        else {
-            LOG(LOG_ERR, "Failed to write progress information file!");
+        this->write(str_error_message, len);
+        this->error_raised = true;
+    }
+
+private:
+    void write(void const * data, size_t len)
+    {
+        bool has_error = true;
+
+        off_t const seek_result = ::lseek(this->fd.fd(), 0, SEEK_SET);
+        if (seek_result != -1) {
+            ssize_t const write_result = ::write(this->fd.fd(), data, len);
+            if (write_result != -1) {
+                int const truncate_result = ::ftruncate(this->fd.fd(), write_result);
+                if (truncate_result !=  1) {
+                    has_error = false;
+                }
+            }
         }
 
-        this->error_raised = true;
+        if (has_error && this->fd.is_open()) {
+            LOG(LOG_ERR, "Failed to write progress information file! %s", strerror(errno));
+            this->fd.close();
+        }
     }
 };
 
@@ -331,14 +302,23 @@ public:
     ) noexcept
     : format(format)
     {
+        int fd = ::open(progress_filename, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IRGRP);
+        if (fd == -1) {
+            LOG(LOG_ERR, "Failed to create progress information file (%s): %s",
+                progress_filename, strerror(errno));
+        }
+
+        auto const start_record = (begin_capture ? begin_capture : begin_record);
+        auto const stop_record = (end_capture ? end_capture : end_record);
+
         if (format == OLD_FORMAT) {
             new(&u.old_format) UpdateProgressDataOldFormat(
-                progress_filename, begin_record, end_record, begin_capture, end_capture
+                unique_fd{fd}, start_record, stop_record
             );
         }
         else {
             new(&u.json_format) UpdateProgressDataJSONFormat(
-                progress_filename, begin_record, end_record, begin_capture, end_capture
+                unique_fd{fd}, start_record, stop_record
             );
         }
     }

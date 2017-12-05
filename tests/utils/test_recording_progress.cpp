@@ -20,16 +20,16 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define RED_TEST_MODULE TestXXXXXXXXXX
+#define RED_TEST_MODULE TestRecordingProgress
 #include "system/redemption_unit_tests.hpp"
 
 
 // #define LOGNULL
-#include "utils/apps/recording_progress.hpp"
+#include "utils/recording_progress.hpp"
 #include "test_only/get_file_contents.hpp"
 
 
-RED_AUTO_TEST_CASE(TestXXXXXXXXX)
+RED_AUTO_TEST_CASE(TestRecordingProgress)
 {
     std::string contents;
 
