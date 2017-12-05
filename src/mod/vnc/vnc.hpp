@@ -2364,7 +2364,7 @@ private:
                 }
             }
         }
-        catch (Error & e)
+        catch (Error const& e)
         {
             if (e.id != ERR_VNC_NEED_MORE_DATA)
                 throw;

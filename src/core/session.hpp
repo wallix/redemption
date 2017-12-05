@@ -207,7 +207,7 @@ public:
                 if (front_trans.is_set(front.get_event(), rfds)) {
                     try {
                         front.incoming(mm.get_callback(), now);
-                    } catch (Error & e) {
+                    } catch (Error const& e) {
                         if (ERR_DISCONNECT_BY_USER == e.id) {
                             front_signal = BACK_EVENT_NEXT;
                         }
@@ -440,7 +440,7 @@ public:
                             acl.reset();
                         }
                     }
-                } catch (Error & e) {
+                } catch (Error const& e) {
                     LOG(LOG_INFO, "Session::Session exception = %u!\n", e.id);
                     time_t now = time(nullptr);
                     mm.invoke_close_box(local_err_msg(e, language(this->ini)), signal, now, authentifier, authentifier);
@@ -451,7 +451,7 @@ public:
             }
             front.disconnect();
         }
-        catch (const Error & e) {
+        catch (Error const& e) {
             LOG(LOG_INFO, "Session::Session Init exception = %s!\n", e.errmsg());
         }
         catch (const std::exception & e) {

@@ -153,7 +153,7 @@ public:
                 }
             }
         }
-        catch (Error & e){
+        catch (Error const& e){
             LOG(LOG_INFO,"receive error %u : end of transport", e.id);
             // receive error, end of transport
             return false;

@@ -303,7 +303,7 @@ int main(int argc, char * argv[]) {
             run_mod(mod, front, front_event, &mod_trans, &front_trans);
         }
     }   // try
-    catch (Error & e) {
+    catch (Error const& e) {
         LOG(LOG_ERR, "errid = %u", e.id);
     }
 
@@ -379,7 +379,7 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
             }
             else {
             }
-        } catch (Error & e) {
+        } catch (Error const& e) {
             LOG(LOG_ERR, "Session::Session exception = %u!\n", e.id);
             run_session = false;
         };

@@ -210,7 +210,6 @@ private:
 
     std::string manager_disconnect_reason;
 
-public:
     std::string session_type;
 
     bool remote_answer;       // false initialy, set to true once response is
@@ -221,6 +220,7 @@ public:
 
     Inactivity inactivity;
 
+public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
@@ -504,7 +504,7 @@ public:
                 try {
                     mm.new_mod(next_state, now, authentifier, report_message);
                 }
-                catch (Error & e) {
+                catch (Error const& e) {
                     if (e.id == ERR_SOCKET_CONNECT_FAILED) {
                         this->ini.set_acl<cfg::context::module>(STRMODULE_TRANSITORY);
 

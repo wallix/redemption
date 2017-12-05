@@ -200,7 +200,7 @@ public:
             try {
                 this->mod->disconnect(now);
             }
-            catch (Error & e) {
+            catch (Error const& e) {
                 LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!\n", e.id);
             }
         }
