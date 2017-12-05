@@ -1512,7 +1512,7 @@ public:
                     }
                 }
                 else if (!order.compare("STARTUP_APPLICATION_FAIL_TO_RUN_2")) {
-                    if (parameters.size() == 2) {
+                    if (parameters.size() == 3) {
                         auto info = key_qvalue_pairs({
                             {"type",               "STARTUP_APPLICATION_FAIL_TO_RUN"},
                             {"application_name",   parameters[0]},
