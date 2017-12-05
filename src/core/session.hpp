@@ -164,7 +164,7 @@ public:
                     }
                 }
 
-                if (acl && (INVALID_SOCKET != acl->auth_trans.sck)) {
+                if (acl) {
                     acl->auth_event.wait_on_fd(acl->auth_trans.sck, rfds, max, timeout);
                 }
 
@@ -389,13 +389,9 @@ public:
                                 }
                             }
                         }
-                        else {
-                            if (acl
-                            && (INVALID_SOCKET != acl->auth_trans.sck)
-                            && acl->auth_trans.is_set(acl->auth_event, rfds)) {
-                                // authentifier received updated values
-                                acl->acl_serial.receive();
-                            }
+                        else if (acl->auth_trans.is_set(acl->auth_event, rfds)) {
+                            // authentifier received updated values
+                            acl->acl_serial.receive();
                         }
                         if (enable_osd) {
                             const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
