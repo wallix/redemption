@@ -90,5 +90,23 @@ private:
         return Read::Ok;
     }
 
+    size_t do_partial_read(uint8_t * buffer, size_t len) override
+    {
+        if (!len) {
+            return 0;
+        }
+
+        ssize_t res;
+        do {
+            res = ::read(this->file.fd(), buffer, len);
+        } while (res == 0 && errno == EINTR);
+
+        if (res < 0) {
+            throw Error(ERR_TRANSPORT_READ_FAILED);
+        }
+
+        return static_cast<size_t>(res);
+    }
+
     unique_fd file;
 };

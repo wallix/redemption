@@ -255,3 +255,55 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
 
     RED_REQUIRE_EQUAL(ini.get<cfg::context::rejected>(), result);
 }
+
+
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include "test_only/get_file_contents.hpp"
+
+RED_AUTO_TEST_CASE(TestAclLog5)
+{
+    std::string const prefix_path = "/tmp/test_acl_dir/";
+    std::string const hashdir = prefix_path + "hash/";
+    char const * const logname = "acl_log.txt";
+    std::string const filename = prefix_path + logname;
+    std::string const hashname = hashdir + logname;
+
+    ::unlink(filename.c_str());
+    ::unlink(hashname.c_str());
+
+    Inifile ini;
+    ini.clear_send_index();
+
+    ini.set<cfg::session_log::log_path>(filename);
+    ini.set<cfg::video::hash_path>(hashdir);
+    mkdir(prefix_path.c_str(), 0777);
+    mkdir(prefix_path.c_str(), 0777);
+
+    LCGRandom rnd(0);
+    Fstat fstat;
+    CryptoContext cctx;
+    init_keys(cctx);
+    GeneratorTransport trans("", 0);
+    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
+
+    acl.start_session_log();
+    acl.log5("test first");
+    acl.log5("test second");
+    acl.close_session_log();
+
+    auto s = get_file_contents(filename);
+    RED_CHECK_EQ(s.size(), 63);
+    std::replace_if(s.begin(), s.end()-1, [](char c){ return '0' <= c && c <= '9'; }, 'x');
+    RED_CHECK_EQ(s, "xxxx-xx-xx xx:xx:xx test first\nxxxx-xx-xx xx:xx:xx test second\n");
+
+    InFileTransport t(unique_fd{open(hashname.c_str(), O_RDONLY)});
+    MwrmReader mwrm_reader(t);
+    MetaLine meta_line;
+    mwrm_reader.set_header({WrmVersion::v2, false});
+    mwrm_reader.read_meta_hash_line(meta_line);
+    RED_CHECK_EQ(meta_line.filename, logname);
+    RED_CHECK_EQ(meta_line.with_hash, false);
+    RED_CHECK_EQ(meta_line.size, 63);
+}
