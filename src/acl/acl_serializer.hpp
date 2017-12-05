@@ -194,6 +194,64 @@ public:
 
 };
 
+
+class SessionLogFile
+{
+    OutCryptoTransport ct;
+
+public:
+    SessionLogFile(CryptoContext & cctx, Random & rnd, Fstat & fstat, ReportError report_error)
+    : ct(cctx, rnd, fstat, std::move(report_error))
+    {}
+
+    ~SessionLogFile()
+    {
+        try {
+            this->close();
+        }
+        catch (Error const& e) {
+            LOG(LOG_ERR, "~SessionLogFile: %s", e.errmsg());
+        }
+    }
+
+    void open(std::string const& log_path, std::string const& hash_directory)
+    {
+        assert(!this->ct.is_open());
+
+        size_t base_len = 0;
+        char const * basename = basename_len(log_path.c_str(), base_len);
+        auto const   hash_file = hash_directory + basename;
+
+        this->ct.open(log_path.c_str(), hash_file.c_str(), 0, {basename, base_len});
+        // force to create the file
+        this->ct.send("", 0);
+    }
+
+    void close()
+    {
+        if (this->ct.is_open()) {
+            uint8_t qhash[MD_HASH::DIGEST_LENGTH];
+            uint8_t fhash[MD_HASH::DIGEST_LENGTH];
+            this->ct.close(qhash, fhash);
+        }
+    }
+
+    void write_line(std::time_t time, array_view_const_char av)
+    {
+        assert(this->ct.is_open());
+
+        char mbstr[100];
+        auto const len = std::strftime(mbstr, sizeof(mbstr), "%F %T ", std::localtime(&time));
+        if (len) {
+            this->ct.send(mbstr, len);
+        }
+
+        this->ct.send(av.data(), av.size());
+        this->ct.send("\n", 1);
+    }
+};
+
+
 class AclSerializer final : ReportMessageApi
 {
     enum {
@@ -206,7 +264,7 @@ public:
 private:
     Transport & auth_trans;
     char session_id[256];
-    OutCryptoTransport ct;
+    SessionLogFile log_file;
 
     std::string manager_disconnect_reason;
 
@@ -236,7 +294,7 @@ public:
         : ini(ini)
         , auth_trans(auth_trans)
         , session_id{}
-        , ct(cctx, rnd, fstat, report_error_from_reporter(*this))
+        , log_file(cctx, rnd, fstat, report_error_from_reporter(*this))
         , remote_answer(false)
         , keepalive(
             ini.get<cfg::globals::keepalive_grace_delay>(),
@@ -254,13 +312,6 @@ public:
 
     ~AclSerializer()
     {
-        try {
-            this->close_session_log();
-        }
-        catch (Error const & e) {
-            LOG(LOG_ERR, "auth::~AclSerializer: %s", e.errmsg());
-        }
-
         this->auth_trans.disconnect();
         if (bool(this->verbose & Verbose::state)) {
             LOG(LOG_INFO, "auth::~AclSerializer");
@@ -321,20 +372,7 @@ public:
 
     void log5(const std::string & info) override
     {
-        assert(this->ct.is_open());
-
-        /* Log to file */
-        {
-            std::time_t t = std::time(nullptr);
-            char mbstr[100];
-            auto const len = std::strftime(mbstr, sizeof(mbstr), "%F %T ", std::localtime(&t));
-            if (len) {
-                this->ct.send(mbstr, len);
-            }
-
-            this->ct.send(info.c_str(), info.size());
-            this->ct.send("\n", 1);
-        }
+        this->log_file.write_line(std::time(nullptr), info);
 
         /* Log to SIEM (redirected syslog) */
         if (this->ini.get<cfg::session_log::enable_session_log>()) {
@@ -363,25 +401,14 @@ public:
 
     void start_session_log()
     {
-        assert(!this->ct.is_open());
-        size_t base_len = 0;
-        char const * filename = this->ini.get<cfg::session_log::log_path>().c_str();
-        char const * basename = basename_len(filename, base_len);
-        auto const   hash_path = this->ini.get<cfg::video::hash_path>().to_string() + basename;
-
-        this->ct.open(filename, hash_path.c_str(), 0, {basename, base_len});
-        // force creating file
-        this->ct.send("", 0);
+        this->log_file.open(
+            this->ini.get<cfg::session_log::log_path>(),
+            this->ini.get<cfg::video::hash_path>().to_string());
     }
 
     void close_session_log()
     {
-        if (this->ct.is_open()) {
-            uint8_t qhash[MD_HASH::DIGEST_LENGTH];
-            uint8_t fhash[MD_HASH::DIGEST_LENGTH];
-            this->ct.close(qhash, fhash);
-            // TODO qhash and fhash are unused
-        }
+        this->log_file.close();
     }
 
     bool check(

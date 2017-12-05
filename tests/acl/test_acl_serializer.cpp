@@ -262,7 +262,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
 #include <sys/time.h>
 #include "test_only/get_file_contents.hpp"
 
-RED_AUTO_TEST_CASE(TestAclLog5)
+RED_AUTO_TEST_CASE(TestSessionLogFile)
 {
     std::string const prefix_path = "/tmp/test_acl_dir/";
     std::string const hashdir = prefix_path + "hash/";
@@ -272,31 +272,28 @@ RED_AUTO_TEST_CASE(TestAclLog5)
 
     ::unlink(filename.c_str());
     ::unlink(hashname.c_str());
-
-    Inifile ini;
-    ini.clear_send_index();
-
-    ini.set<cfg::session_log::log_path>(filename);
-    ini.set<cfg::video::hash_path>(hashdir);
     mkdir(prefix_path.c_str(), 0777);
-    mkdir(prefix_path.c_str(), 0777);
+    mkdir(hashdir.c_str(), 0777);
 
     LCGRandom rnd(0);
     Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
-    GeneratorTransport trans("", 0);
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
+    SessionLogFile log_file(cctx, rnd, fstat, ReportError([](Error e){
+        RED_CHECK(false);
+        return e;
+    }));
 
-    acl.start_session_log();
-    acl.log5("test first");
-    acl.log5("test second");
-    acl.close_session_log();
+    setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);          // for localtime
 
-    auto s = get_file_contents(filename);
-    RED_CHECK_EQ(s.size(), 63);
-    std::replace_if(s.begin(), s.end()-1, [](char c){ return '0' <= c && c <= '9'; }, 'x');
-    RED_CHECK_EQ(s, "xxxx-xx-xx xx:xx:xx test first\nxxxx-xx-xx xx:xx:xx test second\n");
+    log_file.open(filename, hashdir);
+    log_file.write_line(1512484183, cstr_array_view("test first"));
+    log_file.write_line(1512484185, cstr_array_view("test second"));
+    log_file.close();
+
+    RED_CHECK_EQ(get_file_contents(filename),
+        "2017-12-05 15:29:43 test first\n"
+        "2017-12-05 15:29:45 test second\n");
 
     InFileTransport t(unique_fd{open(hashname.c_str(), O_RDONLY)});
     MwrmReader mwrm_reader(t);
