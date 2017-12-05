@@ -3680,11 +3680,6 @@ test-run tests/transport/test_transport :
 :
   <covfile>src/transport/transport.hpp
 ;
-test-run tests/utils/apps/test_app_proxy :
-  $(REDEMPTION_TEST_PATH)/utils/apps/test_app_proxy.cpp
-:
-  <covfile>src/utils/apps/app_proxy.hpp
-;
 test-run tests/utils/apps/test_recording_progress :
   $(REDEMPTION_TEST_PATH)/utils/apps/test_recording_progress.cpp
 :
@@ -4700,8 +4695,6 @@ alias test_socket_transport.coverage : tests/transport/test_socket_transport.cov
 alias test_test_transport : tests/transport/test_test_transport ;
 alias test_transport : tests/transport/test_transport ;
 alias test_transport.coverage : tests/transport/test_transport.coverage ;
-alias test_app_proxy : tests/utils/apps/test_app_proxy ;
-alias test_app_proxy.coverage : tests/utils/apps/test_app_proxy.coverage ;
 alias test_recording_progress : tests/utils/apps/test_recording_progress ;
 alias test_recording_progress.coverage : tests/utils/apps/test_recording_progress.coverage ;
 alias test_ssl_aes_direct : tests/utils/crypto/test_ssl_aes_direct ;
@@ -5182,7 +5175,6 @@ alias tests/transport :
   tests/transport/test_transport
 ;
 alias tests/utils/apps :
-  tests/utils/apps/test_app_proxy
   tests/utils/apps/test_recording_progress
 ;
 alias tests/utils/crypto :
