@@ -25,6 +25,7 @@
 #pragma once
 
 #include "core/RDP/capabilities/common.hpp"
+#include "utils/log.hpp"
 #include "utils/stream.hpp"
 
 // 2.2.1.2 DrawNineGrid Cache Capability Set (TS_DRAW_NINEGRID_CAPABILITYSET)

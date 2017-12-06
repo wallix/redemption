@@ -60,9 +60,6 @@ private:
 
     bool alt_key_pressed = false;
 
-    uint16_t front_width;
-    uint16_t front_height;
-
     enum class DCState
     {
         Wait,

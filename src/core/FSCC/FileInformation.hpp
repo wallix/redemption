@@ -27,6 +27,7 @@
 
 #include "core/error.hpp"
 
+#include "utils/log.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/stream.hpp"
 #include "utils/hexdump.hpp"

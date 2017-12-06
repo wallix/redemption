@@ -865,6 +865,9 @@ int main(int argc, char** argv)
             REDEMPTION_DIAGNOSTIC_PUSH
             REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
             REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
+            #if REDEMPTION_COMP_CLANG >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
+                REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
+            #endif
             sigaction(SIGPIPE, &sa, nullptr);
             REDEMPTION_DIAGNOSTIC_POP
         }

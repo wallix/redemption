@@ -199,7 +199,7 @@ private:
             this->storage.template update<T>();
         }
 
-        T * allocate(size_type /*n*/, std::allocator<void>::const_pointer /*hint*/ = 0)
+        T * allocate(size_type /*n*/, std::allocator<void>::const_pointer /*hint*/ = nullptr)
         {
             return static_cast<T*>(this->storage.pop());
         }

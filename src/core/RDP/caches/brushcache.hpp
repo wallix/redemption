@@ -23,7 +23,6 @@
 #pragma once
 
 #include <string.h>
-#include "utils/log.hpp"
 
 struct brush_item {
     int stamp;

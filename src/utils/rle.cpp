@@ -27,6 +27,7 @@
    color model.
 */
 
+#include "utils/log.hpp"
 #include "utils/rle.hpp"
 #include "utils/bitmap_private_data.hpp" // aux_::bitmap_data_allocator
 #include "utils/stream.hpp"

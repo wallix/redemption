@@ -27,9 +27,6 @@
 #define RED_TEST_MODULE TestGenFstat
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-#include "utils/log.hpp"
-
 #include "utils/genfstat.hpp"
 
 RED_AUTO_TEST_CASE(TestGenFstat)

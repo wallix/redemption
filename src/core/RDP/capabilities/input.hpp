@@ -27,6 +27,7 @@
 #include <cinttypes>
 
 #include "core/RDP/capabilities/common.hpp"
+#include "utils/log.hpp"
 #include "utils/stream.hpp"
 
 //2.2.7.1.6 Input Capability Set (TS_INPUT_CAPABILITYSET)

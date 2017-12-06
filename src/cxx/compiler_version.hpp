@@ -21,20 +21,20 @@
 #pragma once
 
 
-#define REDEMPTION_VERSION_NUMBER(major, minor, patch) \
+#define REDEMPTION_COMP_VERSION_NUMBER(major, minor, patch) \
   ( (((major)%100)*10000000) + (((minor)%100)*100000) + ((patch)%100000) )
 
-#define REDEMPTION_VERSION_NUMBER_NOT_AVAILABLE 0
+#define REDEMPTION_COMP_VERSION_NUMBER_NOT_AVAILABLE 0
 
 // Clang
 
 #ifdef __clang__
-# define REDEMPTION_COMP_CLANG REDEMPTION_VERSION_NUMBER( \
+# define REDEMPTION_COMP_CLANG REDEMPTION_COMP_VERSION_NUMBER( \
     __clang_major__,                              \
     __clang_minor__,                              \
     __clang_patchlevel__)
 #else
-# define REDEMPTION_COMP_CLANG REDEMPTION_VERSION_NUMBER_NOT_AVAILABLE
+# define REDEMPTION_COMP_CLANG REDEMPTION_COMP_VERSION_NUMBER_NOT_AVAILABLE
 #endif
 
 
@@ -42,18 +42,18 @@
 
 #ifdef __GNUC__
 # ifdef __GNUC_PATCHLEVEL__
-#   define REDEMPTION_COMP_GNUC REDEMPTION_VERSION_NUMBER( \
+#   define REDEMPTION_COMP_GNUC REDEMPTION_COMP_VERSION_NUMBER( \
       __GNUC__,                                    \
       __GNUC_MINOR__,                              \
       __GNUC_PATCHLEVEL__)
 # else
-#   define REDEMPTION_COMP_GNUC REDEMPTION_VERSION_NUMBER( \
+#   define REDEMPTION_COMP_GNUC REDEMPTION_COMP_VERSION_NUMBER( \
       __GNUC__,                                    \
       __GNUC_MINOR__,                              \
       0)
 # endif
 #else
-# define REDEMPTION_COMP_GNUC REDEMPTION_VERSION_NUMBER_NOT_AVAILABLE
+# define REDEMPTION_COMP_GNUC REDEMPTION_COMP_VERSION_NUMBER_NOT_AVAILABLE
 #endif
 
 
@@ -81,16 +81,16 @@
   mapping from MSC version to VS product version.
   */
 # if (_MSC_VER >= 1900)
-#   define REDEMPTION_COMP_MSVC REDEMPTION_VERSION_NUMBER( \
+#   define REDEMPTION_COMP_MSVC REDEMPTION_COMP_VERSION_NUMBER( \
       _MSC_VER/100-5,                              \
       _MSC_VER%100,                                \
       REDEMPTION_COMP_MSVC_BUILD)
 # else
-#   define REDEMPTION_COMP_MSVC REDEMPTION_VERSION_NUMBER( \
+#   define REDEMPTION_COMP_MSVC REDEMPTION_COMP_VERSION_NUMBER( \
       _MSC_VER/100-6,                              \
       _MSC_VER%100,                                \
       REDEMPTION_COMP_MSVC_BUILD)
 # endif
 #else
-# define REDEMPTION_COMP_MSVC REDEMPTION_VERSION_NUMBER_NOT_AVAILABLE
+# define REDEMPTION_COMP_MSVC REDEMPTION_COMP_VERSION_NUMBER_NOT_AVAILABLE
 #endif

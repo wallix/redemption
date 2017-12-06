@@ -930,7 +930,7 @@ namespace MCS
 
         CONNECT_RESPONSE_PDU_Recv(InStream & stream, int encoding)
             : ber_stream(stream)
-            , tag([&stream, encoding, this](){
+            , tag([&encoding, this](){
                     if (encoding != BER_ENCODING){
                         LOG(LOG_ERR, "Connect Response::BER_ENCODING mandatory for Connect PDUs");
                         throw Error(ERR_MCS);
@@ -950,7 +950,7 @@ namespace MCS
                     }
                     return MCSPDU_CONNECT_RESPONSE;
                 }())
-            , tag_len([&stream, this](){
+            , tag_len([this](){
 
                 bool in_result;
                 size_t tag_len = this->ber_stream.in_ber_len_with_check(in_result);
@@ -960,7 +960,7 @@ namespace MCS
                 }
                 return tag_len;
             }())
-            , result([&stream, this](){
+            , result([this](){
 
                 bool in_result;
                 uint8_t tag = this->ber_stream.in_uint8_with_check(in_result);
@@ -990,7 +990,7 @@ namespace MCS
                 }
                 return result;
             }())
-            , connectId([&stream, this](){
+            , connectId([this](){
 
                 bool in_result;
                 uint8_t tag = this->ber_stream.in_uint8_with_check(in_result);
@@ -1016,7 +1016,7 @@ namespace MCS
                 }
                 return this->ber_stream.in_bytes_le(len); /* connect id */
             }())
-            , domainParameters([&stream, this](){
+            , domainParameters([this](){
 
                     struct DomainParameters domainParameters;
                     if (-1 == domainParameters.recv(this->ber_stream)){

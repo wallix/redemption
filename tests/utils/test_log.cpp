@@ -22,11 +22,9 @@
 #define RED_TEST_MODULE TestXXX
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-
 #include "utils/log.hpp"
-
 
 RED_AUTO_TEST_CASE(TestXXX)
 {
+    LOG(LOG_INFO, "test %s", "1");
 }

@@ -30,6 +30,9 @@
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
 REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
+#if REDEMPTION_COMP_CLANG >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
+#endif
 
 namespace {
     //const char* KERBEROS_PACKAGE_NAME = "KERBEROS";
@@ -544,8 +547,9 @@ public:
             str);
 
         do {
-                ms = gss_display_status(&minor_status, major_status,
-                                        code, GSS_C_NULL_OID, &msgctx, &status_string);
+            ms = gss_display_status(
+                &minor_status, major_status,
+                code, GSS_C_NULL_OID, &msgctx, &status_string);
         	if (ms != GSS_S_COMPLETE)
                     continue;
 

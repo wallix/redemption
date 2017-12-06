@@ -96,17 +96,15 @@ auto log_value(T const & x)
 -> decltype(detail_::log_value(x, 1))
 { return detail_::log_value(x, 1); }
 
-namespace {
-    template<std::size_t n>
-    struct redemption_log_s
-    {
-        char data[n];
-    };
+template<std::size_t n>
+struct redemption_log_s
+{
+    char data[n];
+};
 
-    template<std::size_t n>
-    detail_::vlog_wrap<char const*> log_value(redemption_log_s<n> const & x)
-    { return {x.data}; }
-}
+template<std::size_t n>
+detail_::vlog_wrap<char const*> log_value(redemption_log_s<n> const & x)
+{ return {x.data}; }
 
 template<std::size_t n>
 redemption_log_s<n*2+1>
@@ -176,6 +174,8 @@ log_array_02x_format(uint8_t const (&d)[n])
 # define REDEMPTION_LOG_VALUE(x) log_value(x).value()
 # define LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(...) __VA_ARGS__
 
+# define LOG_UNCHECK_FORMAT 1
+
 #endif
 
 
@@ -224,12 +224,14 @@ namespace {
     inline void LOGCHECK__REDEMPTION__INTERNAL(int)
     {}
 
+#if defined(LOGNULL) || defined(LOG_UNCHECK_FORMAT)
     namespace compiler_aux_
     {
         template<class... Ts>
         void unused_variables(Ts const & ...)
         {}
     }
+#endif
 }
 
 void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...);

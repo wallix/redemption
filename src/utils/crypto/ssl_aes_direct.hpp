@@ -29,9 +29,6 @@
 #include <cstdint>
 #include <cstring>
 
-#include "utils/log.hpp"
-
-
 enum class AES_direction : bool {
     SSL_AES_ENCRYPT = 0,
     SSL_AES_DECRYPT = 1

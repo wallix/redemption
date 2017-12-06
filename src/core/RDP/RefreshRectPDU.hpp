@@ -218,7 +218,7 @@ struct RefreshRectPDU {
                                               MCS::PER_ENCODING);
                 (void)mcs;
             },
-            [this](StreamSize<256>, OutStream &x224_header, std::size_t pkt_size) {
+            [](StreamSize<256>, OutStream &x224_header, std::size_t pkt_size) {
                 X224::DT_TPDU_Send(x224_header, pkt_size);
             }
         );

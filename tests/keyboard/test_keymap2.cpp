@@ -26,8 +26,6 @@
 #define RED_TEST_MODULE TestKeymap
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-
 #include "utils/stream.hpp"
 #include "keyboard/keymap2.hpp"
 

@@ -42,8 +42,6 @@ LocallyIntegrableMod::LocallyIntegrableMod(
 : InternalMod(front, front_width, front_height, font, theme, false)
 , client_execute(client_execute)
 , dvc_manager(false)
-, front_width(front_width)
-, front_height(front_height)
 , dc_state(DCState::Wait)
 , first_click_down_event_handler(*this)
 , rail_enabled(client_execute.is_rail_enabled())

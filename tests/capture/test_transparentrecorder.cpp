@@ -23,9 +23,6 @@
 #define RED_TEST_MODULE Testtransparentrecorder
 #include "system/redemption_unit_tests.hpp"
 
-
-#define LOGNULL
-
 #include "capture/transparentrecorder.hpp"
 
 RED_AUTO_TEST_CASE(Test_transparentrecorder)

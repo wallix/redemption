@@ -23,10 +23,6 @@
 #define RED_TEST_MODULE TestWordIdentification
 #include "system/redemption_unit_tests.hpp"
 
-
-//#define LOGNULL
-#include "utils/log.hpp"
-
 #include "utils/word_identification.hpp"
 
 
@@ -46,19 +42,3 @@ RED_AUTO_TEST_CASE(Test_Word)
     
     
 }
-
-//RED_AUTO_TEST_CASE(Test_end)
-//{
-//    RED_CHECK_EQUAL(0, ends_with("./tools/verifier.py", {}));
-
-//    const char * options1[] = {"one"};
-//    RED_CHECK_EQUAL(0, ends_with("./tools/verifier.py", options1));
-//    RED_CHECK_EQUAL(1, ends_with("./tools/verifier.py", {"verifier.py"}));
-
-//    const char * options3[] = {"one", "two", "verifier.py"};
-//    RED_CHECK_EQUAL(3, ends_with("./tools/verifier.py", options3));
-//    RED_CHECK_EQUAL(0, ends_with("./tools/verifier.py", {"one", "two", "three"}));
-
-//    RED_CHECK_EQUAL(3, ends_with("./tools/verifier.py", options3));
-//    RED_CHECK_EQUAL(3, ends_with("./tools/verifier.py", {"one", "two", "verifier.py"}));
-//}

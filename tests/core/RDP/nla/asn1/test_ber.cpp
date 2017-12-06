@@ -21,8 +21,6 @@
 #define RED_TEST_MODULE TestBER
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-
 #include "core/RDP/nla/asn1/ber.hpp"
 
 RED_AUTO_TEST_CASE(TestBERInteger)

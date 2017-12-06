@@ -2661,13 +2661,13 @@ public:
                     this->cs_monitor.emit(stream);
                 }
             },
-            [this](StreamSize<256>, OutStream & gcc_header, std::size_t packet_size) {
+            [](StreamSize<256>, OutStream & gcc_header, std::size_t packet_size) {
                 GCC::Create_Request_Send(
                     static_cast<OutPerStream&>(gcc_header),
                     packet_size
                 );
             },
-            [this](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
+            [](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
                 MCS::CONNECT_INITIAL_Send mcs(mcs_header, packet_size, MCS::BER_ENCODING);
                 (void)mcs;
             },
