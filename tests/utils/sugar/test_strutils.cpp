@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestStrUtils
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "utils/sugar/strutils.hpp"
 

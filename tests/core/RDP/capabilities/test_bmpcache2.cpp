@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestCapabilityBmpCache2
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 #include "core/RDP/capabilities/bmpcache2.hpp"
 
 RED_AUTO_TEST_CASE(TestCapabilityBmpCache2)

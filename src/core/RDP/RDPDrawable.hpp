@@ -179,7 +179,7 @@ private:
             case Depth::unspecified(): default:;
         }
 
-        REDASSERT(false);
+        assert(false);
         return {Color{0, 0, 0}, Color{0, 0, 0}};
     }
 
@@ -686,7 +686,7 @@ public:
                     LOG( LOG_INFO
                        , "RDPDrawable::draw_VariableBytes: Unknown glyph, cacheId=%u cacheIndex=%u"
                        , cache_id, data);
-                    REDASSERT(fc);
+                    assert(fc);
                 }
 
                 if (has_delta_bytes)
@@ -728,7 +728,7 @@ public:
                         delta = variable_bytes.in_uint16_le();
                     }
                 }
-                REDASSERT(!delta);  // Fragment's position delta is not yet supported.
+                assert(!delta);  // Fragment's position delta is not yet supported.
 
                 LOG(LOG_WARNING,
                     "RDPDrawable::draw_VariableBytes: "
@@ -760,9 +760,9 @@ public:
                         "fragment_index=%u fragment_size=%u",
                     fragment_index, fragment_size);
 
-                REDASSERT(!variable_bytes.in_remain());
+                assert(!variable_bytes.in_remain());
 
-                REDASSERT(fragment_begin_position + fragment_size + 3 == variable_bytes.get_current());
+                assert(fragment_begin_position + fragment_size + 3 == variable_bytes.get_current());
 
                 this->fragment_cache[fragment_index][0] = fragment_size;
                 ::memcpy(&this->fragment_cache[fragment_index][1],
@@ -893,7 +893,7 @@ public:
 
     void draw(const RDP::FrameMarker & order) override {
         this->frame_start_count += ((order.action == RDP::FrameMarker::FrameStart) ? 1 : -1);
-        REDASSERT(this->frame_start_count >= 0);
+        assert(this->frame_start_count >= 0);
         this->drawable.logical_frame_ended = (this->frame_start_count == 0);
         this->last_update_index++;
     }

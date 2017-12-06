@@ -175,7 +175,7 @@ class RAILPDUHeader {
 
 public:
     void emit_begin(OutStream & stream, uint16_t orderType) const {
-        REDASSERT(this->output_stream == nullptr);
+        assert(this->output_stream == nullptr);
 
         this->output_stream = &stream;
 
@@ -1093,7 +1093,7 @@ public:
             throw Error(ERR_RAIL_PDU_TRUNCATED);
         }
 
-        REDASSERT(ColorSchemeLength >= 2);
+        assert(ColorSchemeLength >= 2);
 
         get_non_null_terminated_utf16_from_utf8(
             this->color_scheme, stream, stream.in_uint16_le(),
@@ -2434,7 +2434,7 @@ public:
     bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
         const uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->WindowId_);
 
-        REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+        assert(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
 
         if (client_window_id == this->WindowId_) {
             return false;
@@ -2802,7 +2802,7 @@ public:
     bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
         const uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->WindowId_);
 
-        REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+        assert(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
 
         if (client_window_id == this->WindowId_) {
             return false;
@@ -3081,7 +3081,7 @@ public:
     bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
         const uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->WindowId_);
 
-        REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+        assert(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
 
         if (client_window_id == this->WindowId_) {
             return false;
@@ -3921,7 +3921,7 @@ public:
     bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
         const uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->WindowIdMarker_);
 
-        REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+        assert(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
 
         if (client_window_id == this->WindowIdMarker_) {
             return false;

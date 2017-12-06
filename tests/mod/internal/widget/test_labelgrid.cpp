@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE TestWidgetLabelGrid
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "core/font.hpp"
 #include "mod/internal/widget/grid.hpp"

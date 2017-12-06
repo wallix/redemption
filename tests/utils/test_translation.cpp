@@ -23,7 +23,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#define LOGNULL
 
 #include "configs/config.hpp"
 #include "utils/translation.hpp"

@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE TestInMetaSequenceTransport
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "capture/wrm_capture.hpp"
 #include "transport/in_meta_sequence_transport.hpp"

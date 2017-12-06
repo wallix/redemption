@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestSnappyCompressionTransport
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "transport/snappy_compression_transport.hpp"
 #include "test_only/transport/test_transport.hpp"

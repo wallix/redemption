@@ -23,7 +23,6 @@
 #define RED_TEST_MODULE TestNewOCR
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "core/app_path.hpp"
 

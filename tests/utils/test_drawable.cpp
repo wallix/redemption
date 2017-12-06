@@ -25,7 +25,6 @@
 #define RED_TEST_MODULE TestDrawable
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "test_only/check_sig.hpp"
 #include "utils/bitmap.hpp"

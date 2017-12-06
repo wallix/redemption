@@ -1,6 +1,5 @@
 #define RED_TEST_MODULE TestRc4
 
-#define LOGNULL
 
 #include "system/ssl_rc4.hpp"
 

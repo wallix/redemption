@@ -294,7 +294,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
                 file_Qpp = 2;
                 REDEMPTION_CXX_FALLTHROUGH;
             case 4:
-                REDASSERT(header.clr_used * 4 <= 8192);
+                assert(header.clr_used * 4 <= 8192);
                 if (not read_all(fd, stream_data, header.clr_used * 4)){
                     return bitmap;
                 }

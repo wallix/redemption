@@ -52,6 +52,63 @@ And set environment variable (optionally)
 List with `grep '\[ setvar' jam/defines.jam`
 
 
+Compilation
+===========
+
+Well, that's pretty easy once you installed the required dependencies.
+
+Just run (as user):
+
+$ `bjam` or `bjam toolset=gcc`, `bjam toolset=clang` or `bjam toolset=your-compiler` (see http://www.boost.org/build/doc/html/bbv2/overview/configuration.html)
+
+Verbose tests:
+
+$ `REDEMPTION_LOG_PRINT=1 bjam tests`
+
+Compile executables without tests (as user):
+
+$ `bjam exe libs`
+
+and install (as administrator):
+
+\# `bjam install`
+
+Binaries are located in /usr/local/bin.
+
+
+Run ReDemPtion
+==============
+
+To test it, executes:
+
+$ `python tools/passthrough/passthrough.py`
+
+\# `/usr/local/bin/rdpproxy -nf`
+
+Now, at that point you'll just have two servers waiting for connections
+not much fun. You still have to run some RDP client to connect to proxy. Choose
+whichever you like xfreerdp, rdesktop, remmina, tsclient on Linux or of course
+mstsc.exe if you are on windows. All are supposed to work. If some problem
+occurs just report it to us so that we can correct it.
+
+Example with freerdp when the proxy runs on the same host as the client:
+
+$ `xfreerdp 127.0.0.1`
+
+A dialog box should open in which you can type a username and a password.
+With default authhook at least internal services should work. Try login: bouncer
+and password: bouncer, or login: card and password: card. To access your own
+remote RDP hosts you'll of course have to configure them in authhook.py.
+Hopefully at some time in the future these won't be hardcoded, but authhook.py
+will access to some configuration file. If you want to provide such extensions
+to current authhook.py, please contribute it, it will be much appreciated.
+
+You can also bypass login dialog box and go directly to the RDP server by
+providing a login and a password from command line.
+
+$ `xfreerdp -u 'bouncer' -p 'bouncer' 127.0.0.1`
+
+
 Generate target and lib/obj dependencies
 ========================================
 
@@ -130,54 +187,6 @@ The main drawback of bjam is the smaller user base.
 But keeping in mind the complexity of make (or worse autotools + make), bjam is
 a great help. We also used to have an alternative cmake build system, but it was
 more complex than bjam and not maintained, so was removed.
-
-
-Q - Fine, now how do I compile and run ReDemPtion ?
----------------------------------------------------
-Well, that's pretty easy once you installed the required dependencies.
-
-Just run (as user):
-
-$ `bjam` or `bjam toolset=gcc`, `bjam toolset=clang` or `bjam toolset=your-compiler` (see http://www.boost.org/build/doc/html/bbv2/overview/configuration.html)
-
-Compile executables without tests (as user):
-
-$ `bjam exe libs`
-
-and install (as administrator):
-
-\# `bjam install`
-
-Binaries are located in /usr/local/bin.
-
-To test it, executes:
-
-$ `python tools/passthrough/passthrough.py`
-
-\# `/usr/local/bin/rdpproxy -nf`
-
-Now, at that point you'll just have two servers waiting for connections
-not much fun. You still have to run some RDP client to connect to proxy. Choose
-whichever you like xfreerdp, rdesktop, remmina, tsclient on Linux or of course
-mstsc.exe if you are on windows. All are supposed to work. If some problem
-occurs just report it to us so that we can correct it.
-
-Example with freerdp when the proxy runs on the same host as the client:
-
-$ `xfreerdp 127.0.0.1`
-
-A dialog box should open in which you can type a username and a password.
-With default authhook at least internal services should work. Try login: bouncer
-and password: bouncer, or login: card and password: card. To access your own
-remote RDP hosts you'll of course have to configure them in authhook.py.
-Hopefully at some time in the future these won't be hardcoded, but authhook.py
-will access to some configuration file. If you want to provide such extensions
-to current authhook.py, please contribute it, it will be much appreciated.
-
-You can also bypass login dialog box and go directly to the RDP server by
-providing a login and a password from command line.
-
-$ `xfreerdp -u 'bouncer' -p 'bouncer' 127.0.0.1`
 
 
 Q - Why did you choose this special "headers only" coding style ?

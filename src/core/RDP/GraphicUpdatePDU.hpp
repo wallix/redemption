@@ -94,7 +94,7 @@ void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_s
                        , StaticOutReservedStreamHelper<1024, 65536-1024> & data
                        // TODO enum Verbose
                        , uint32_t log_condition, uint32_t verbose) {
-    REDASSERT(!compression_support || mppc_enc);
+    assert(!compression_support || mppc_enc);
 
     StaticOutReservedStreamHelper<1024, 65536-1024> data_compressed;
     std::reference_wrapper<StaticOutReservedStreamHelper<1024, 65536-1024> > data_(data);
@@ -168,7 +168,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
            );
     }
 
-    REDASSERT(!compression_support || mppc_enc);
+    assert(!compression_support || mppc_enc);
 
     if (fastpath_support) {
         uint8_t compressionFlags = 0;
@@ -213,7 +213,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                 break;
 
             default:
-                REDASSERT(false);
+                assert(false);
                 break;
         }
 
@@ -333,7 +333,7 @@ if (updateType == RDP_POINTER_NEW) {
                 break;
 
             default:
-                REDASSERT(false);
+                assert(false);
                 break;
         }
 

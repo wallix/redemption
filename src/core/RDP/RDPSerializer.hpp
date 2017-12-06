@@ -502,7 +502,7 @@ public:
             if (new_cmd.data[i] <= 0xFD) {
                 //LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
                 FontChar const & fc = gly_cache.glyphs[new_cmd.cache_id][new_cmd.data[i]].font_item;
-                REDASSERT(fc);
+                assert(fc);
 
                 int cacheIndex;
                 if (this->glyph_cache.add_glyph(fc, new_cmd.cache_id, cacheIndex) ==
@@ -515,7 +515,7 @@ public:
                     this->glyph_cache.set_cached(new_cmd.cache_id, cacheIndex, true);
                 }
 
-                REDASSERT(cacheIndex >= 0);
+                assert(cacheIndex >= 0);
                 new_cmd.data[i++] = static_cast<uint8_t>(cacheIndex);
                 if (has_delta_byte) {
                     const uint16_t delta = get_delta(new_cmd, i);
@@ -576,7 +576,7 @@ public:
                         fragment_index, fragment_size);
                 }
 
-                REDASSERT(i == new_cmd.data_len);
+                assert(i == new_cmd.data_len);
             }
         }
 
@@ -759,7 +759,7 @@ public:
     }
 
     void draw( const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
-        REDASSERT(bmp.has_data_compressed());
+        assert(bmp.has_data_compressed());
         auto data_compressed = bmp.data_compressed();
         this->reserve_bitmap(bitmap_data.struct_size() + data_compressed.size());
 

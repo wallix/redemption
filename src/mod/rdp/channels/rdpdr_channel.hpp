@@ -120,7 +120,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             void operator()(uint32_t total_length, uint32_t flags,
                 const uint8_t* chunk_data, uint32_t chunk_data_length)
                     override {
-                REDASSERT((flags & CHANNELS::CHANNEL_FLAG_FIRST) ||
+                assert((flags & CHANNELS::CHANNEL_FLAG_FIRST) ||
                           bool(this->device_announce_data));
 
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -131,7 +131,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                         this->device_announce_data.get(), total_length);
                 }
 
-                REDASSERT(this->device_announce_stream.tailroom() >=
+                assert(this->device_announce_stream.tailroom() >=
                     chunk_data_length);
 
                 this->device_announce_stream.out_copy_bytes(chunk_data,
@@ -317,7 +317,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         void announce_device() {
             while (!this->waiting_for_server_device_announce_response &&
                    this->device_announces.size()) {
-                REDASSERT(this->to_server_sender);
+                assert(this->to_server_sender);
 
                 const uint32_t total_length = this->device_announces.front().length;
                 uint8_t const * chunk_data = this->device_announces.front().data.get();
@@ -331,17 +331,17 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
                     client_message_header.receive(chunk);
 
-                    REDASSERT(client_message_header.component ==
+                    assert(client_message_header.component ==
                         rdpdr::Component::RDPDR_CTYP_CORE);
-                    REDASSERT(client_message_header.packet_id ==
+                    assert(client_message_header.packet_id ==
                         rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE);
 
-                    REDASSERT(chunk.in_remain() >=
+                    assert(chunk.in_remain() >=
                               4 // DeviceCount(4)
                              );
                     const uint32_t DeviceCount = chunk.in_uint32_le();
                     (void)DeviceCount;
-                    REDASSERT(DeviceCount == 1);
+                    assert(DeviceCount == 1);
 
                     rdpdr::DeviceAnnounceHeader device_announce_header;
 
@@ -406,9 +406,9 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             (void)total_length;
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST)
             {
-                REDASSERT(
+                assert(
                     !this->length_of_remaining_device_data_to_be_processed);
-                REDASSERT(
+                assert(
                     !this->length_of_remaining_device_data_to_be_skipped);
 
                 {
@@ -529,7 +529,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                         ((DeviceType == rdpdr::RDPDR_DTYP_SMARTCARD) &&
                          this->param_smart_card_authorized))
                     {
-                        REDASSERT(!bool(this->current_device_announce_data));
+                        assert(!bool(this->current_device_announce_data));
 
                         const uint32_t current_device_announce_data_length =
                               rdpdr::SharedHeader::size()
@@ -610,7 +610,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                             server_device_announce_response.log(LOG_INFO);
                         }
 
-                        REDASSERT(this->to_client_sender);
+                        assert(this->to_client_sender);
 
                         const uint32_t total_length_      = out_stream.get_offset();
                         const uint32_t flags_             =
@@ -788,7 +788,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 client_drive_device_list_remove_stream.set_out_uint32_le(
                     number_of_removable_device, device_count_offset);
 
-                REDASSERT(this->to_server_sender);
+                assert(this->to_server_sender);
 
                 const uint32_t total_length_      =
                     client_drive_device_list_remove_stream.get_offset();
@@ -934,7 +934,7 @@ public:
 #ifndef NDEBUG
         for (device_io_request_info_type & request_info : this->device_io_request_info_inventory)
         {
-            REDASSERT(request_info.major_function != rdpdr::IRP_MJ_DIRECTORY_CONTROL);
+            assert(request_info.major_function != rdpdr::IRP_MJ_DIRECTORY_CONTROL);
 
             LOG(LOG_WARNING,
                 "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
@@ -1083,7 +1083,7 @@ public:
     bool process_client_core_capability_response(
         uint32_t total_length, uint32_t flags, InStream& chunk)
     {
-        REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
+        assert((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
             (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
         {
@@ -1482,7 +1482,7 @@ public:
     bool process_client_drive_io_response(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        REDASSERT(flags & CHANNELS::CHANNEL_FLAG_FIRST);
+        assert(flags & CHANNELS::CHANNEL_FLAG_FIRST);
 
         rdpdr::DeviceIOResponse device_io_response;
 
@@ -1603,7 +1603,7 @@ public:
                                 "Device not found. DeviceId=%u",
                             device_io_response.DeviceId());
 
-                        //REDASSERT(false);
+                        //assert(false);
                     }
                 }
             }
@@ -1891,7 +1891,7 @@ public:
         switch (this->client_message_header.packet_id)
         {
             case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
-                REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
+                assert((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -1907,7 +1907,7 @@ public:
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENT_NAME:
-                REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
+                assert((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -1978,7 +1978,7 @@ public:
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENT_CAPABILITY:
-                REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
+                assert((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -1993,7 +1993,7 @@ public:
             break;
 
             case rdpdr::PacketId::PAKID_CORE_DEVICELIST_REMOVE:
-                REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
+                assert((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -2597,7 +2597,7 @@ public:
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
-                REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
+                assert((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -2612,7 +2612,7 @@ public:
             break;
 
             case rdpdr::PacketId::PAKID_CORE_DEVICE_REPLY:
-                REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
+                assert((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -2638,7 +2638,7 @@ public:
             break;
 
             case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
-                REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
+                assert((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -2649,7 +2649,7 @@ public:
             break;
 
             case rdpdr::PacketId::PAKID_CORE_USER_LOGGEDON:
-                REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
+                assert((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -2672,7 +2672,7 @@ public:
             break;
 
             case rdpdr::PacketId::PAKID_PRN_USING_XPS:
-                REDASSERT((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
+                assert((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) ==
                     (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST));
 
                 if (bool(this->verbose & RDPVerbose::rdpdr)) {

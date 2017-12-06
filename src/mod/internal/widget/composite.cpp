@@ -41,19 +41,19 @@ CompositeArray::CompositeArray()
 
 CompositeArray::iterator CompositeArray::add(Widget * w)
 {
-    REDASSERT(w);
-    REDASSERT(this->children_count < MAX_CHILDREN_COUNT);
+    assert(w);
+    assert(this->children_count < MAX_CHILDREN_COUNT);
     this->child_table[this->children_count] = w;
     return static_cast<iterator>(&this->child_table[this->children_count++]);
 }
 
 void CompositeArray::remove(const Widget * w)
 {
-    REDASSERT(w);
-    REDASSERT(this->children_count);
+    assert(w);
+    assert(this->children_count);
     auto last = this->child_table + this->children_count;
     auto it = std::find(&this->child_table[0], last, w);
-    REDASSERT(it != last);
+    assert(it != last);
     if (it != last) {
         auto new_last = std::copy(it+1, last, it);
         *new_last = nullptr;
@@ -145,7 +145,7 @@ WidgetParent::~WidgetParent() = default;
 
 void WidgetParent::set_widget_focus(Widget * new_focused, int reason)
 {
-    REDASSERT(new_focused);
+    assert(new_focused);
     if (new_focused != this->current_focus) {
         if (this->current_focus) {
             this->current_focus->blur();
@@ -194,7 +194,7 @@ Widget * WidgetParent::get_next_focus(Widget * w, bool loop)
 {
     CompositeContainer::iterator iter;
     if (!w) {
-        REDASSERT(!loop);
+        assert(!loop);
         if ((iter = this->impl->get_first()) == reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
             return nullptr;
         }
@@ -206,7 +206,7 @@ Widget * WidgetParent::get_next_focus(Widget * w, bool loop)
     }
     else {
         iter = this->impl->find(w);
-        REDASSERT(iter != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator));
+        assert(iter != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator));
     }
 
     CompositeContainer::iterator future_focus_iter;
@@ -230,7 +230,7 @@ Widget * WidgetParent::get_previous_focus(Widget * w, bool loop)
 {
     CompositeContainer::iterator iter;
     if (!w) {
-        REDASSERT(!loop);
+        assert(!loop);
         if ((iter = this->impl->get_last()) == reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
             return nullptr;
         }
@@ -242,7 +242,7 @@ Widget * WidgetParent::get_previous_focus(Widget * w, bool loop)
     }
     else {
         iter = this->impl->find(w);
-        REDASSERT(iter != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator));
+        assert(iter != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator));
     }
 
     CompositeContainer::iterator future_focus_iter;
@@ -302,7 +302,7 @@ void WidgetParent::invalidate_children(Rect clip)
     CompositeContainer::iterator iter_w_current = this->impl->get_first();
     while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
         Widget * w = this->impl->get(iter_w_current);
-        REDASSERT(w);
+        assert(w);
 
         Rect newr = clip.intersect(w->get_rect());
 
@@ -319,7 +319,7 @@ void WidgetParent::refresh_children(Rect clip)
     CompositeContainer::iterator iter_w_current = this->impl->get_first();
     while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
         Widget * w = this->impl->get(iter_w_current);
-        REDASSERT(w);
+        assert(w);
 
         Rect newr = clip.intersect(w->get_rect());
 
@@ -339,7 +339,7 @@ void WidgetParent::draw_inner_free(Rect clip, BGRColor bg_color)
     CompositeContainer::iterator iter_w_current = this->impl->get_first();
     while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
         Widget * w = this->impl->get(iter_w_current);
-        REDASSERT(w);
+        assert(w);
 
         Rect rect_widget = clip.intersect(w->get_rect());
         if (!rect_widget.isempty()) {
@@ -358,7 +358,7 @@ void WidgetParent::draw_inner_free(Rect clip, BGRColor bg_color)
 //    CompositeContainer::iterator iter_w_current = this->impl->get_first();
 //    while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
 //        Widget * w = this->impl->get(iter_w_current);
-//        REDASSERT(w);
+//        assert(w);
 //
 //        Rect rect_widget = clip.intersect(w->rect);
 //        if (!rect_widget.isempty()) {
@@ -387,7 +387,7 @@ void WidgetParent::move_children_xy(int16_t x, int16_t y)
         CompositeContainer::iterator iter_w_current = iter_w_first;
         do {
             Widget * w = this->impl->get(iter_w_current);
-            REDASSERT(w);
+            assert(w);
             w->move_xy(x, y);
 
             iter_w_current = this->impl->get_next(iter_w_current);
@@ -414,7 +414,7 @@ bool WidgetParent::next_focus()
 
         this->current_focus->blur();
         this->current_focus = this->get_next_focus(nullptr, false);
-        REDASSERT(this->current_focus);
+        assert(this->current_focus);
     }
 
     return false;
@@ -437,7 +437,7 @@ bool WidgetParent::previous_focus()
 
         this->current_focus->blur();
         this->current_focus = this->get_previous_focus(nullptr, false);
-        REDASSERT(this->current_focus);
+        assert(this->current_focus);
     }
 
     return false;
@@ -457,7 +457,7 @@ Widget * WidgetParent::widget_at_pos(int16_t x, int16_t y)
     CompositeContainer::iterator iter_w_current = this->impl->get_last();
     while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
         Widget * w = this->impl->get(iter_w_current);
-        REDASSERT(w);
+        assert(w);
         if (w->get_rect().contains_pt(x, y)) {
             return w;
         }

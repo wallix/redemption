@@ -26,7 +26,7 @@
 void LocallyIntegrableMod::FirstClickDownEventHandler
   ::operator()(time_t /*now*/, wait_obj& /*event*/, gdi::GraphicApi& /*drawable*/)
 {
-    REDASSERT(this->mod_.rail_enabled);
+    assert(this->mod_.rail_enabled);
 
     if (this->mod_.first_click_down_event.is_trigger_time_set() &&
         this->mod_.first_click_down_event.is_waked_up_by_time()) {
@@ -143,7 +143,7 @@ void LocallyIntegrableMod::rdp_input_mouse(int device_flags, int x, int y, Keyma
                 break;
 
                 default:
-                    REDASSERT(false);
+                    assert(false);
 
                     this->cancel_double_click_detection();
                 break;
@@ -235,7 +235,7 @@ void LocallyIntegrableMod::send_to_mod_channel(
 
 void LocallyIntegrableMod::cancel_double_click_detection()
 {
-    REDASSERT(this->rail_enabled);
+    assert(this->rail_enabled);
 
     this->first_click_down_event.reset_trigger_time();
 
@@ -244,7 +244,7 @@ void LocallyIntegrableMod::cancel_double_click_detection()
 
 bool LocallyIntegrableMod::is_resizing_hosted_desktop_allowed() const
 {
-    REDASSERT(this->rail_enabled);
+    assert(this->rail_enabled);
 
     return false;
 }

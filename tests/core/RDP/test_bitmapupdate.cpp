@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE TestBitmapUpdate
 #include "system/redemption_unit_tests.hpp"
 
-// #define LOGNULL
 
 #include "test_only/check_sig.hpp"
 

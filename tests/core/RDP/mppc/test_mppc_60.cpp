@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestMPPC60
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "core/RDP/mppc/mppc_60.hpp"
 

@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestBitmapCodecs
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 #include "core/RDP/capabilities/bitmapcodecs.hpp"
 #include "utils/stream.hpp"
 

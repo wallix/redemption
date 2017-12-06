@@ -145,7 +145,7 @@ public:
         // The length in bytes of the Server Auto-Reconnect packet.
         const uint32_t cbLen = stream.in_uint32_le();
         (void)cbLen;
-        REDASSERT(0x0000001C == cbLen);
+        assert(0x0000001C == cbLen);
 
         this->Version = stream.in_uint32_le();
         this->LogonId = stream.in_uint32_le();

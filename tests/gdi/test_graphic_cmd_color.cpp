@@ -26,7 +26,6 @@
 #define RED_TEST_MODULE TestGdCmdConverter
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "gdi/graphic_cmd_color.hpp"

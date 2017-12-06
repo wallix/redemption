@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE TestWidgetComposite
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "mod/internal/widget/widget_rect.hpp"
 #include "mod/internal/widget/composite.hpp"

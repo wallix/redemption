@@ -24,7 +24,6 @@
 #define RED_TEST_MODULE TestCapabilityCompDesk
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 #include "core/RDP/capabilities/compdesk.hpp"
 
 RED_AUTO_TEST_CASE(TestCapabilityCompDeskEmit)

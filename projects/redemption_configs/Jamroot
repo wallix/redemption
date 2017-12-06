@@ -63,12 +63,13 @@ alias generate_python_spec : $(FILEGEN_SPEC) ;
 alias generate_enum : $(FILEGEN_ENUM) ;
 alias generate_ini : $(FILEGEN_INI) ;
 
-obj keymap : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp : <define>LOGNULL ;
+obj log_test.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;
+obj keymap : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp : ;
 
-exe make_cpp_config : src/configs/write_cpp_config.cpp : <library>keymap ;
-exe make_python_spec : src/configs/write_python_spec.cpp : <library>keymap ;
-exe make_cpp_enum : src/configs/write_cpp_enumeration.cpp : <library>keymap ;
-exe make_ini : src/configs/write_ini.cpp : <library>keymap ;
+exe make_cpp_config : src/configs/write_cpp_config.cpp : <library>keymap <library>log_test.o ;
+exe make_python_spec : src/configs/write_python_spec.cpp : <library>keymap <library>log_test.o ;
+exe make_cpp_enum : src/configs/write_cpp_enumeration.cpp : <library>keymap <library>log_test.o ;
+exe make_ini : src/configs/write_ini.cpp : <library>keymap <library>log_test.o ;
 
 
 alias generate_types :
@@ -86,7 +87,6 @@ alias generate : generate_types generate_descs ;
 
 include ../../jam/testing-coverage.jam ;
 
-obj log_test.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;
 obj cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
 obj fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
 obj hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;

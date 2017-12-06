@@ -631,7 +631,7 @@ struct ShareData
         this->uncompressedLen = _uncompressedLen;
         if (!_uncompressedLen) {
             stream.out_clear_bytes(2); // skip len
-            REDASSERT(compressedType == 0);
+            assert(compressedType == 0);
         }
         else {
             stream.out_uint16_le(_uncompressedLen);

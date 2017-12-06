@@ -95,7 +95,7 @@ public:
 
 private:
     uint32_t map_server_window(uint32_t server_window_id) const {
-        REDASSERT(this->server_to_client.find(server_window_id) == this->server_to_client.end());
+        assert(this->server_to_client.find(server_window_id) == this->server_to_client.end());
 
         if ((RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_0 == server_window_id) ||
             (RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_1 == server_window_id) ||

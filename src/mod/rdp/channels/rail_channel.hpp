@@ -844,7 +844,7 @@ public:
             break;
 
             default:
-                REDASSERT(false);
+                assert(false);
 
                 if (bool(this->verbose & RDPVerbose::rail)) {
                     LOG(LOG_INFO,
@@ -966,7 +966,7 @@ public:
         }
 
         if (!this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
-            REDASSERT(!is_auth_application);
+            assert(!is_auth_application);
 
             if (this->session_probe_channel) {
 /*
@@ -996,7 +996,7 @@ public:
             return (!this->session_probe_channel);
         }
         else if (!this->param_client_execute_exe_or_file_2.compare(serpdu.ExeOrFile())) {
-            REDASSERT(!is_auth_application);
+            assert(!is_auth_application);
 
             if (this->session_probe_channel) {
                 this->session_probe_channel->start_end_session_check();
@@ -1445,7 +1445,7 @@ public:
             break;
 
             default:
-                REDASSERT(false);
+                assert(false);
 
                 if (bool(this->verbose & RDPVerbose::rail)) {
                     LOG(LOG_INFO,
@@ -1672,7 +1672,7 @@ private:
             return;
         }
 
-        REDASSERT(!this->exe_or_file_2_sent &&
+        assert(!this->exe_or_file_2_sent &&
             !this->param_client_execute_exe_or_file_2.empty());
 
         this->exe_or_file_2_sent = true;

@@ -23,7 +23,6 @@
 #define RED_TEST_MODULE TestSC_SEC1
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "utils/crypto/ssl_lib.hpp"
 #include "test_only/transport/test_transport.hpp"

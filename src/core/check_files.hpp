@@ -97,7 +97,7 @@ struct CheckFile {
         {
             if (!tmp_check_list->need_be_readable && !tmp_check_list->need_be_writeable)
             {
-                REDASSERT(false);
+                assert(false);
 
                 continue;
             }
@@ -105,7 +105,7 @@ struct CheckFile {
             if (::strlen(tmp_check_list->directory) + 1 +
                 ::strlen(tmp_check_list->filename) >= sizeof(full_path))
             {
-                REDASSERT(false);
+                assert(false);
 
                 continue;
             }

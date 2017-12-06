@@ -25,7 +25,6 @@
 #define RED_TEST_MODULE TestLibPng
 #include "system/redemption_unit_tests.hpp"
 
-// #define LOGNULL
 
 #include <unistd.h>
 #include <stdio.h>

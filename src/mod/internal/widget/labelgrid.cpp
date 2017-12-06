@@ -68,7 +68,7 @@ void WidgetLabelGrid::clean_labels()
 
 uint16_t WidgetLabelGrid::add_line(const char ** entries)
 {
-    REDASSERT(this->nb_rows <= GRID_NB_ROWS_MAX);
+    assert(this->nb_rows <= GRID_NB_ROWS_MAX);
     for (int i = 0; i < this->nb_columns; i++) {
         bool odd = this->nb_rows & 1;
         WidgetLabel * label = new WidgetLabel(

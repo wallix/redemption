@@ -26,33 +26,15 @@
 
 #define LOG_SIEM syslog
 
-// These are used to help coverage chain when function length autodetection (using ctags and gcov) fails
-
-// -Wnull-dereference and clang++
-namespace { namespace compiler_aux_ {
-    inline void * null_pointer()
-    { return nullptr; }
-} }
-#define BOOM (*reinterpret_cast<int*>(compiler_aux_::null_pointer())=1)
-
-// REDASSERT behave like assert but instaed of calling abort it triggers a segfault
-// This is handy to get stacktrace while debugging.
-
-#ifdef NDEBUG
-# define REDASSERT(x)
-#else
-# if defined(REDASSERT_AS_ASSERT)
-#  include <cassert>
-#  define REDASSERT(x) assert(x)
-# else
-#  define REDASSERT(x) if(!(x)){BOOM;}
-# endif
+#ifdef LOGPRINT
+# error LOGPRINT is deprecated. Used REDEMPTION_LOG_PRINT environment variable instead. Ex: `REDEMPTION_LOG_PRINT=1 bjam`
+#endif
+#ifdef LOGNULL
+# error LOGNULL is deprecated. Used REDEMPTION_LOG_PRINT environment variable instead. Ex: `REDEMPTION_LOG_PRINT=0 bjam`. By default REDEMPTION_LOG_PRINT = 0
 #endif
 
-#if !defined(LOGNULL)
-# include <sys/types.h> // getpid
-# include <unistd.h> // getpid
-#endif
+#include <sys/types.h> // getpid
+#include <unistd.h> // getpid
 
 #include <type_traits>
 #include <cstdint>
@@ -174,13 +156,14 @@ log_array_02x_format(uint8_t const (&d)[n])
 # define REDEMPTION_LOG_VALUE(x) log_value(x).value()
 # define LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(...) __VA_ARGS__
 
-# define LOG_UNCHECK_FORMAT 1
+# define LOG_UNCHECKED_FORMAT 1
 
 #endif
 
 
 #ifdef IN_IDE_PARSER
-#  define LOG(priority, ...) compiler_aux_::unused_variables(priority, "" __VA_ARGS__)
+# define LOG(priority, ...) compiler_aux_::unused_variables(priority, "" __VA_ARGS__)
+# define LOG_UNCHECKED_FORMAT 1
 
 #else
 #  define LOG(priority, ...) do {                                \
@@ -206,7 +189,6 @@ namespace {
     // LOG_INFO       informational message
     // LOG_DEBUG      debug-level message
 
-#if !defined(LOGNULL)
     constexpr const char * const prioritynames[] =
     {
         "EMERG"/*, LOG_EMERG*/,
@@ -219,12 +201,11 @@ namespace {
         "DEBUG"/*, LOG_DEBUG*/,
         //{ nullptr/*, -1*/ }
     };
-#endif
 
     inline void LOGCHECK__REDEMPTION__INTERNAL(int)
     {}
 
-#if defined(LOGNULL) || defined(LOG_UNCHECK_FORMAT)
+#if defined(LOG_UNCHECKED_FORMAT)
     namespace compiler_aux_
     {
         template<class... Ts>
@@ -238,15 +219,6 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...);
 
 #ifdef REDEMPTION_DECL_LOG_TEST
 bool & LOG__REDEMPTION__AS__LOGPRINT();
-# ifdef LOGNULL
-static struct LOG__REDEMPTION__AS__LOGNULL__INIT
-{
-    LOG__REDEMPTION__AS__LOGNULL__INIT()
-    {
-        LOG__REDEMPTION__AS__LOGPRINT() = false;
-    }
-} LOG__REDEMPTION__AS__LOGNULL__INIT_;
-# endif
 #endif
 
 namespace
@@ -254,9 +226,6 @@ namespace
     template<class... Ts>
     void LOG__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args)
     {
-    #if defined(LOGNULL)
-        compiler_aux_::unused_variables(priority, format, ((void)(args), 1)...);
-    #else
         using ::log_value;
         int const pid = getpid();
         LOG__REDEMPTION__INTERNAL__IMPL(
@@ -267,6 +236,5 @@ namespace
             pid,
             REDEMPTION_LOG_VALUE(args)...
         );
-    #endif
     }
 }

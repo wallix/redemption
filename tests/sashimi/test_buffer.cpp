@@ -24,7 +24,6 @@
 #define RED_TEST_MODULE TestBuffer
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 #include "sashimi/libssh/libssh.h"
 
 #include "sashimi/buffer.hpp"

@@ -327,7 +327,7 @@ public:
                     info_cache_4_persistent         = (stream.in_uint8() ? true : false);
 
                     //uint8_t info_compression_algorithm = stream.in_uint8();
-                    //REDASSERT(info_compression_algorithm < 3);
+                    //assert(info_compression_algorithm < 3);
                 }
 
 
@@ -592,7 +592,7 @@ private:
                 this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
 
                 this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
-                REDASSERT(is_valid_enum_value(this->info_compression_algorithm));
+                assert(is_valid_enum_value(this->info_compression_algorithm));
                 if (!is_valid_enum_value(this->info_compression_algorithm)) {
                     this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
                 }

@@ -176,7 +176,7 @@ void decompress_color_plane(
     uint8_t  * write_point = line_start;
     while (size) {
         //LOG(LOG_INFO, "size=%u data_size=%u", size, data_size);
-        REDASSERT(data_size);
+        assert(data_size);
         uint8_t controlByte = *data++;
         data_size--;
         uint8_t nRunLength =  (controlByte & 0x0F);
@@ -1215,7 +1215,7 @@ void compress_color_plane(uint16_t cx, uint16_t cy, OutStream & outbuffer, uint8
                     else {
                         outbuffer.out_uint8((0                 << 4) | run_length); // Control byte
                         //LOG(LOG_INFO, "controlByte(3): (0, %d); rawValues: <none>", run_length);
-                        REDASSERT(!run_length || (run_length > 2));
+                        assert(!run_length || (run_length > 2));
                         xpos        += run_length;
                         data_size   -= run_length;
                         run_length  =  0;
@@ -1251,7 +1251,7 @@ void compress_color_plane(uint16_t cx, uint16_t cy, OutStream & outbuffer, uint8
                         outbuffer.out_uint8((raw_bytes << 4) | run_length); // Control byte
                         //LOG(LOG_INFO, "controlByte(5): (%d, %d); rawValues: %s", raw_bytes, run_length, rb);
                         //hexdump_d(rb, raw_bytes);
-                        REDASSERT(!run_length || (run_length > 2));
+                        assert(!run_length || (run_length > 2));
                         outbuffer.out_copy_bytes(xpos, raw_bytes);
                         xpos        += raw_bytes + run_length;
                         data_size   -= raw_bytes + run_length;
@@ -1271,7 +1271,7 @@ void compress_color_plane(uint16_t cx, uint16_t cy, OutStream & outbuffer, uint8
 void rle_compress60(ConstImageDataView const & image, OutStream & outbuffer)
 {
     //LOG(LOG_INFO, "bmp compress60");
-    REDASSERT((image.bits_per_pixel() == 24) || (image.bits_per_pixel() == 32));
+    assert((image.bits_per_pixel() == 24) || (image.bits_per_pixel() == 32));
     const uint16_t cx = image.width();
     const uint16_t cy = image.height();
     const uint32_t color_plane_size = sizeof(uint8_t) * cx * cy;
@@ -1303,7 +1303,7 @@ void rle_compress60(ConstImageDataView const & image, OutStream & outbuffer)
         }
     }
     /*
-    REDASSERT(outbuffer.has_room(1 + color_plane_size * 3));
+    assert(outbuffer.has_room(1 + color_plane_size * 3));
     outbuffer.out_uint8(
           (1 << 5)  // No alpha plane
         );
@@ -1328,7 +1328,7 @@ void rle_decompress60(
   uint16_t src_cx, uint16_t src_cy, const uint8_t *data, size_t data_size)
 {
     //LOG(LOG_INFO, "bmp decompress60: cx=%u cy=%u data_size=%u", src_cx, src_cy, data_size);
-  REDASSERT((image.bits_per_pixel() == 24) || (image.bits_per_pixel() == 32));
+  assert((image.bits_per_pixel() == 24) || (image.bits_per_pixel() == 32));
     //LOG(LOG_INFO, "data_size=%u src_cx=%u src_cy=%u", data_size, src_cx, src_cy);
     //hexdump_d(data, data_size);
     uint8_t FormatHeader = *data++;
@@ -1374,7 +1374,7 @@ void rle_decompress60(
         data_size--;    // Pad
     }
     //LOG(LOG_INFO, "data_size=%u", data_size);
-    REDASSERT(!data_size);
+    assert(!data_size);
     uint8_t * r     = red_plane;
     uint8_t * g     = green_plane;
     uint8_t * b     = blue_plane;

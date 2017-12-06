@@ -83,7 +83,7 @@ void ClientExecute::get_event_handlers(std::vector<EventHandler>& out_event_hand
 
 void ClientExecute::process_button_1_down_event(time_t, wait_obj &, gdi::GraphicApi&)
 {
-    REDASSERT(bool(*this));
+    assert(bool(*this));
 
     this->initialize_move_size(this->button_1_down_x, this->button_1_down_y,
         this->button_1_down);
@@ -116,7 +116,7 @@ Rect ClientExecute::adjust_rect(Rect rect)
 
 Rect ClientExecute::get_current_work_area_rect() const
 {
-    REDASSERT(this->work_area_count);
+    assert(this->work_area_count);
 
     if (!this->window_rect.isempty()) {
         size_t current_surface_size = 0;
@@ -534,7 +534,7 @@ void ClientExecute::input_invalidate(const Rect r)
 
 void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, int pressed_mouse_button_)
 {
-    REDASSERT(!this->move_size_initialized);
+    assert(!this->move_size_initialized);
 
     this->pressed_mouse_button = pressed_mouse_button_;
 

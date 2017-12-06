@@ -24,7 +24,6 @@
 #define RED_TEST_MODULE TestRle
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "utils/rle.cpp" // Yolo :O
 #include "utils/stream.hpp"

@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestLib
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "utils/crypto/ssl_lib.hpp"
 

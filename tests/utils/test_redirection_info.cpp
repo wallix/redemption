@@ -23,7 +23,6 @@
 #define RED_TEST_MODULE TestRedirectionInfo
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 #include "utils/redirection_info.hpp"
 
 RED_AUTO_TEST_CASE(TestRedirectionInfo)

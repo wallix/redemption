@@ -532,7 +532,7 @@ public:
             case State::STOP:
             default:
                 LOG(LOG_WARNING, "SessionProbeClipboardBasedLauncher::on_event: State=%d", this->state);
-                REDASSERT(false);
+                assert(false);
             break;
         }   // switch (this->state)
 
@@ -759,7 +759,7 @@ private:
     }
 
     void do_state_start() {
-        REDASSERT(State::START == this->state);
+        assert(State::START == this->state);
 
         if (!this->drive_ready || !this->clipboard_initialized) {
             return;

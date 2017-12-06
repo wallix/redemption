@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestNtlm
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 #include "core/RDP/nla/ntlm/ntlm.hpp"
 #include "test_only/check_sig.hpp"
 

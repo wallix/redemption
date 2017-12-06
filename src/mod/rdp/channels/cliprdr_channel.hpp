@@ -178,7 +178,7 @@ private:
         chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
         const uint16_t cCapabilitiesSets = chunk.in_uint16_le();
-        REDASSERT(1 == cCapabilitiesSets);
+        assert(1 == cCapabilitiesSets);
 
         chunk.in_skip_bytes(2); // pad1(2)
 
@@ -325,7 +325,7 @@ private:
 
                 case RDPECLIP::CF_UNICODETEXT:
                 {
-                    REDASSERT(!(chunk.in_remain() & 1));
+                    assert(!(chunk.in_remain() & 1));
 
                     constexpr size_t max_length_of_data_to_dump = 256;
 
@@ -401,7 +401,7 @@ private:
                     RDPECLIP::FileDescriptor::size() -
                         this->file_descriptor_stream.get_offset();
 
-                REDASSERT(chunk.in_remain() >= complementary_data_length);
+                assert(chunk.in_remain() >= complementary_data_length);
 
                 this->file_descriptor_stream.out_copy_bytes(chunk.get_current(),
                     complementary_data_length);
@@ -823,7 +823,7 @@ public:
         chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
         const uint16_t cCapabilitiesSets = chunk.in_uint16_le();
-        REDASSERT(1 == cCapabilitiesSets);
+        assert(1 == cCapabilitiesSets);
 
         chunk.in_skip_bytes(2); // pad1(2)
 
@@ -959,7 +959,7 @@ public:
 
                 case RDPECLIP::CF_UNICODETEXT:
                 {
-                    REDASSERT(!(chunk.in_remain() & 1));
+                    assert(!(chunk.in_remain() & 1));
 
                     const size_t length_of_data_to_dump = std::min(
                         chunk.in_remain(),
@@ -1023,7 +1023,7 @@ public:
                     RDPECLIP::FileDescriptor::size() -
                         this->file_descriptor_stream.get_offset();
 
-                REDASSERT(chunk.in_remain() >= complementary_data_length);
+                assert(chunk.in_remain() >= complementary_data_length);
 
                 this->file_descriptor_stream.out_copy_bytes(chunk.get_current(),
                     complementary_data_length);

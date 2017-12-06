@@ -22,7 +22,6 @@
 #include "system/redemption_unit_tests.hpp"
 #include <stdio.h>
 
-#define LOGNULL
 
 #include "utils/theme.hpp"
 #include "configs/config.hpp"

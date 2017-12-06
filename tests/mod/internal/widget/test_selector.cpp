@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE TestWidgetSelector
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "utils/log.hpp"
 

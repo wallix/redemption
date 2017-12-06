@@ -134,7 +134,7 @@ public:
             // break;
 
             default:
-//                REDASSERT(false);
+//                assert(false);
 
                 if (bool(this->verbose & RDPVerbose::rail)) {
                     LOG(LOG_INFO,
@@ -197,7 +197,7 @@ public:
             // break;
 
             default:
-//                REDASSERT(false);
+//                assert(false);
 
                 if (bool(this->verbose & RDPVerbose::drdynvc)) {
                     LOG(LOG_INFO,

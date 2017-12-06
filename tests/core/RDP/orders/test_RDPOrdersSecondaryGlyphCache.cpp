@@ -24,7 +24,6 @@
 #define RED_TEST_MODULE TestOrderGlyphCache
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "utils/stream.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"

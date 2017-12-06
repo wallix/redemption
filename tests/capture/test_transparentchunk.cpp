@@ -23,7 +23,6 @@
 #define RED_TEST_MODULE Testtransparentchunk
 #include "system/redemption_unit_tests.hpp"
 
-//#define LOGNULL
 
 #include "capture/transparentchunk.hpp"
 

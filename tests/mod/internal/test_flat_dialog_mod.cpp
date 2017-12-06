@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE TestFlatDialogMod
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "core/client_info.hpp"
 #include "configs/config.hpp"

@@ -157,7 +157,6 @@ using qt : /usr ; #4
 obj front_Qt4_Demo.o : src/frontDemoQtClient.cpp :
     $(EXE_DEPENDENCIES)
     <define>REDEMPTION_DECL_LOG_TEST
-    <define>LOGPRINT
  ;
 
 exe client_vnc_Qt4 :
@@ -178,7 +177,6 @@ exe client_vnc_Qt4 :
 obj front_Qt4_rdp.o : src/rdp_client_qt_front.cpp :
     $(EXE_DEPENDENCIES)
     <define>REDEMPTION_DECL_LOG_TEST
-    <define>LOGPRINT
  ;
 
 
@@ -214,7 +212,6 @@ using qt5
 obj front_Qt5.o : src/front_Qt.cpp :
     $(EXE_DEPENDENCIES)
     <define>REDEMPTION_DECL_LOG_TEST
-    <define>LOGPRINT
  ;
 
 

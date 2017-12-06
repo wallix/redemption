@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE TestCopyPaste
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "core/RDP/clipboard.hpp"
 #include "core/font.hpp"

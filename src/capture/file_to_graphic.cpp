@@ -612,7 +612,7 @@ void FileToGraphic::interpret_order()
             this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
 
             this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
-            REDASSERT(is_valid_enum_value(this->info_compression_algorithm));
+            assert(is_valid_enum_value(this->info_compression_algorithm));
             if (!is_valid_enum_value(this->info_compression_algorithm)) {
                 this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
             }
@@ -789,10 +789,10 @@ void FileToGraphic::interpret_order()
         cursor.y = this->stream.in_uint8();
 
         uint16_t data_size = this->stream.in_uint16_le();
-        REDASSERT(data_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 3);
+        assert(data_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 3);
 
         uint16_t mask_size = this->stream.in_uint16_le();
-        REDASSERT(mask_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8);
+        assert(mask_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8);
 
         stream.in_copy_bytes(cursor.data, std::min<size_t>(sizeof(cursor.data), data_size));
         stream.in_copy_bytes(cursor.mask, std::min<size_t>(sizeof(cursor.mask), mask_size));

@@ -26,7 +26,6 @@
 
 
 // Comment the code block below to generate testing data.
-#define LOGNULL
 // Uncomment the code block below to generate testing data.
 
 #include "test_only/check_sig.hpp"

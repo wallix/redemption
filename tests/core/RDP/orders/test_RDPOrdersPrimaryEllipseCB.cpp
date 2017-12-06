@@ -25,7 +25,6 @@
 #define RED_TEST_MODULE TestOrderEllipseCB
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
 

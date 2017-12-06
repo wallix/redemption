@@ -37,7 +37,10 @@ REDEMPTION_DIAGNOSTIC_POP
 
 bool & LOG__REDEMPTION__AS__LOGPRINT()
 {
-    static bool logprint = false;
+    static bool logprint = []{
+        auto s = std::getenv("REDEMPTION_LOG_PRINT");
+        return s && s[0] == '1';
+    }();
     return logprint;
 }
 

@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestConfDescriptor
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "utils/confdescriptor.hpp"
 #include "core/RDP/capabilities/general.hpp"

@@ -1,6 +1,5 @@
 #define RED_TEST_MODULE TestMd4
 
-#define LOGNULL
 
 #include "system/ssl_md4.hpp"
 

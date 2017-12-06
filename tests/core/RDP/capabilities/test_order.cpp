@@ -24,7 +24,6 @@
 #define RED_TEST_MODULE TestCapabilityOrder
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "core/RDP/capabilities/order.hpp"
 

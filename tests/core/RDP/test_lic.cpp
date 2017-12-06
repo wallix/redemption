@@ -23,7 +23,6 @@
 #define RED_TEST_MODULE TestLic
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "utils/stream.hpp"
 #include "core/RDP/lic.hpp"

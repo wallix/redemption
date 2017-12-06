@@ -449,7 +449,7 @@ struct ClientDriveDeviceListRemove {
                                , uint32_t * DeviceIds)
     : DeviceCount(DeviceCount)
     {
-        //REDASSERT(this->DeviceCount > 1592);
+        //assert(this->DeviceCount > 1592);
         for (uint32_t i = 0; i < DeviceCount; i++) {
             this->DeviceIds[i] = DeviceIds[i];
         }
@@ -1352,7 +1352,7 @@ public:
             Path_unicode_data,
             sizeof(Path_unicode_data));
 
-        REDASSERT(size_of_Path_unicode_data <= 65534);
+        assert(size_of_Path_unicode_data <= 65534);
 
         // Writes null terminator.
         Path_unicode_data[size_of_Path_unicode_data    ] = 0;
@@ -2783,7 +2783,7 @@ public:
 
     explicit ClientNameRequest(const char * computer_name)
     {
-//         REDASSERT(this->ComputerNameLen <= (65536/2)-1);
+//         assert(this->ComputerNameLen <= (65536/2)-1);
         std::memcpy(this->ComputerName, computer_name,  65536/2);
     }
 
@@ -2791,7 +2791,7 @@ public:
     : UnicodeFlag(unicodeFlag)
     , ComputerNameLen(sizeof(computer_name))
     {
-//         REDASSERT(this->ComputerNameLen <= (65536/2)-1);
+//         assert(this->ComputerNameLen <= (65536/2)-1);
         std::memcpy(this->ComputerName, computer_name, 65536/2);
     }
 
@@ -3415,7 +3415,7 @@ public:
         this->FsInformationClass_ = stream.in_uint32_le();
 
         const uint32_t Length = stream.in_uint32_le();
-        REDASSERT(!Length);
+        assert(!Length);
 
         stream.in_skip_bytes(24);   // Padding(24)
 
@@ -3662,7 +3662,7 @@ public:
         this->FsInformationClass_ = stream.in_uint32_le();
 
         const uint32_t Length = stream.in_uint32_le();
-        REDASSERT(!Length);
+        assert(!Length);
 
         stream.in_skip_bytes(24);   // Padding(24)
 
@@ -4220,7 +4220,7 @@ public:
             reinterpret_cast<const uint8_t *>(this->Path_),
             Path_unicode_data, sizeof(Path_unicode_data));
 
-        REDASSERT(size_of_Path_unicode_data <= 65534);
+        assert(size_of_Path_unicode_data <= 65534);
         // Writes null terminator.
         Path_unicode_data[size_of_Path_unicode_data    ] =
         Path_unicode_data[size_of_Path_unicode_data + 1] = 0;

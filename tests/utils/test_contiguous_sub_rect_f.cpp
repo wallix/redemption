@@ -25,9 +25,6 @@
 #define RED_TEST_MODULE TestSubRectGenerator
 #include "system/redemption_unit_tests.hpp"
 
-// #define LOGPRINT
-// #define LOGNULL
-
 #include "utils/contiguous_sub_rect_f.hpp"
 #include <array>
 

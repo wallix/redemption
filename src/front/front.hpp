@@ -468,7 +468,7 @@ private:
     /// \param fn  Fn(MCS::ChannelJoinRequest_Recv &)
     template<class Fn>
     void channel_join_request_transmission(InStream & x224_data, Fn fn) {
-        REDASSERT(buf.current_pdu_get_type() == X224::DT_TPDU);
+        assert(buf.current_pdu_get_type() == X224::DT_TPDU);
         X224::DT_TPDU_Recv x224(x224_data);
         MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
@@ -1664,7 +1664,7 @@ public:
                     LOG(LOG_INFO, "Front::incoming: Recv MCS::ErectDomainRequest");
                 }
                 {
-                    REDASSERT(buf.current_pdu_get_type() == X224::DT_TPDU);
+                    assert(buf.current_pdu_get_type() == X224::DT_TPDU);
                     X224::DT_TPDU_Recv x224(new_x224_stream);
                     MCS::ErectDomainRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 }
@@ -4229,7 +4229,7 @@ protected:
                 if (data <= 0xFD) {
                     FontChar const & fc = gly_cache.glyphs[cmd.cache_id][data].font_item;
                     if (!fc) {
-                        REDASSERT(fc);
+                        assert(fc);
                     }
 
                     if (has_delta_bytes) {

@@ -87,7 +87,7 @@ void Keymap2::synchronize(uint16_t param1)
 
 void Keymap2::DecodedKeys::set_uchar(uint32_t uchar)
 {
-    REDASSERT(this->count < 2);
+    assert(this->count < 2);
     this->uchars[this->count++] = uchar;
 }
 

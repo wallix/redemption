@@ -109,7 +109,7 @@ public:
         , selection_y(static_cast<uint16_t>(-1u))
         , click_interval()
     {
-        REDASSERT(nb_columns <= GRID_NB_COLUMNS_MAX);
+        assert(nb_columns <= GRID_NB_COLUMNS_MAX);
     }
 
     ~WidgetGrid() override {
@@ -187,24 +187,24 @@ public:
     }
 
     uint16_t get_column_width(uint16_t column_index) const {
-        REDASSERT(column_index < this->nb_columns);
+        assert(column_index < this->nb_columns);
 
         return this->column_width[column_index];
     }
     void set_column_width(uint16_t column_index, uint16_t width) {
-        REDASSERT(column_index < this->nb_columns);
+        assert(column_index < this->nb_columns);
 
         this->column_width[column_index] = width;
     }
 
     void * get_meta_data(uint16_t row_index, uint16_t column_index) const {
-        REDASSERT(column_index <= this->nb_columns);
-        REDASSERT(row_index <= GRID_NB_ROWS_MAX);
+        assert(column_index <= this->nb_columns);
+        assert(row_index <= GRID_NB_ROWS_MAX);
         return this->meta_data[column_index][row_index];
     }
     void * set_meta_data(uint16_t row_index, uint16_t column_index, void * meta_data) {
-        REDASSERT(column_index <= this->nb_columns);
-        REDASSERT(row_index <= GRID_NB_ROWS_MAX);
+        assert(column_index <= this->nb_columns);
+        assert(row_index <= GRID_NB_ROWS_MAX);
         void * res = this->meta_data[column_index][row_index];
         this->meta_data[column_index][row_index] = meta_data;
         return res;
@@ -214,7 +214,7 @@ public:
         return this->nb_rows;
     }
     uint16_t set_nb_rows(uint16_t nb_rows) {
-        REDASSERT(nb_rows < GRID_NB_ROWS_MAX);
+        assert(nb_rows < GRID_NB_ROWS_MAX);
 
         uint16_t old_nb_rows = this->nb_rows;
         this->nb_rows = nb_rows;
@@ -222,26 +222,26 @@ public:
     }
 
     uint16_t get_row_height(uint16_t row_index) const {
-        REDASSERT(row_index < this->nb_rows);
+        assert(row_index < this->nb_rows);
 
         return this->row_height[row_index];
     }
     void set_row_height(uint16_t row_index, uint16_t height) {
-        REDASSERT(row_index < this->nb_rows);
+        assert(row_index < this->nb_rows);
 
         this->row_height[row_index] = height;
     }
 
     Widget * get_widget(uint16_t row_index, uint16_t column_index) const {
-        REDASSERT(column_index <= this->nb_columns);
-        REDASSERT(row_index <= GRID_NB_ROWS_MAX);
+        assert(column_index <= this->nb_columns);
+        assert(row_index <= GRID_NB_ROWS_MAX);
         return this->widgets[column_index][row_index];
     }
 
     Widget * set_widget(uint16_t row_index, uint16_t column_index, Widget * w,
                          void * meta_data = nullptr) {
-        REDASSERT(column_index <= this->nb_columns);
-        REDASSERT(row_index <= GRID_NB_ROWS_MAX);
+        assert(column_index <= this->nb_columns);
+        assert(row_index <= GRID_NB_ROWS_MAX);
         Widget * res = this->widgets[column_index][row_index];
         this->widgets[column_index][row_index]   = w;
         this->meta_data[column_index][row_index] = meta_data;

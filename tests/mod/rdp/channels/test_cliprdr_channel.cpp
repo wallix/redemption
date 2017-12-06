@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE TestCLIPRDRChannel
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "core/channel_list.hpp"
 #include "core/client_info.hpp"

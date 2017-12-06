@@ -325,7 +325,7 @@ public:
 
         if ((RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == this->blocked_server_window_id) &&
             this->graphics_update_disabled) {
-            REDASSERT(!window_is_blocked);
+            assert(!window_is_blocked);
 
             const char*  blocked_window_title        = this->session_probe_window_title.c_str();
             const size_t blocked_window_title_length = this->session_probe_window_title.length();
@@ -574,7 +574,7 @@ private:
     }
 
     void dialog_box_destroy() {
-        REDASSERT(this->dialog_box_window_id);
+        assert(this->dialog_box_window_id);
 
         {
             RDP::RAIL::DeletedWindow order;
@@ -813,7 +813,7 @@ public:
 
     void process_event() {
         if (this->currently_without_window) {
-            REDASSERT(DialogBoxType::NONE == this->dialog_box_type);
+            assert(DialogBoxType::NONE == this->dialog_box_type);
 
             if (this->currently_without_window) {
                 this->dialog_box_create(DialogBoxType::WAITING_SCREEN);

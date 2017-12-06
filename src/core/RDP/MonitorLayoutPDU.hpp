@@ -195,7 +195,7 @@ public:
     }
 
     void emit(OutStream & stream) const {
-        REDASSERT((this->monitorCount > 0) &&
+        assert((this->monitorCount > 0) &&
             (this->monitorCount <=
              GCC::UserData::CSMonitor::MAX_MONITOR_COUNT));
 

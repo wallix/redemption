@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE TestXXX
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "mod/internal/test_card_mod.hpp"
 

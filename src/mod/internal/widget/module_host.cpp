@@ -52,7 +52,7 @@ WidgetModuleHost::ModuleHolder::ModuleHolder(
 : host(host)
 , managed_mod(std::move(managed_mod))
 {
-    REDASSERT(this->managed_mod);
+    assert(this->managed_mod);
 }
 
 // Callback
@@ -675,7 +675,7 @@ void WidgetModuleHost::notify(Widget* /*widget*/, NotifyApi::notify_event_t even
                 region.add_rect(visible_vision_rect);
                 region.subtract_rect(dest_rect);
 
-                REDASSERT(region.rects.size() == 1);
+                assert(region.rects.size() == 1);
 
                 this->module_holder.rdp_input_invalidate(region.rects[0].offset(
                         -this->x() + this->mod_visible_rect.x,
@@ -710,7 +710,7 @@ void WidgetModuleHost::notify(Widget* /*widget*/, NotifyApi::notify_event_t even
                 region.add_rect(visible_vision_rect);
                 region.subtract_rect(dest_rect);
 
-                REDASSERT(region.rects.size() == 1);
+                assert(region.rects.size() == 1);
 
                 this->module_holder.rdp_input_invalidate(region.rects[0].offset(
                         -this->x() + this->mod_visible_rect.x,

@@ -145,7 +145,7 @@ private:
         }
 
         void reserve(size_t sz) {
-            REDASSERT(!this->data.get());
+            assert(!this->data.get());
             this->data.reset(new uint8_t[sz * this->elem_size]);
             this->free_list.reset(new void*[sz]);
             this->free_list_cur = this->free_list.get();
@@ -158,7 +158,7 @@ private:
         }
 
         void * pop() {
-            REDASSERT(this->free_list_cur != this->free_list.get());
+            assert(this->free_list_cur != this->free_list.get());
             return *--this->free_list_cur;
         }
 
@@ -432,7 +432,7 @@ public:
     , stamp(0)
     , verbose(verbose)
     {
-        REDASSERT(
+        assert(
            (number_of_cache == (!c0.entries ? 0 :
            !c1.entries ? 1 :
            !c2.entries ? 2 :
@@ -524,7 +524,7 @@ public:
     }
 
     void put(uint8_t id, uint16_t idx, const Bitmap & bmp, uint32_t key1, uint32_t key2) {
-        REDASSERT(((id & IN_WAIT_LIST) == 0) && (id < MAXIMUM_NUMBER_OF_CACHES));
+        assert(((id & IN_WAIT_LIST) == 0) && (id < MAXIMUM_NUMBER_OF_CACHES));
         Cache<cache_element> & r = this->caches[id];
         if (idx == RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX) {
             // Last bitmap cache entry is used by waiting list.
@@ -551,12 +551,12 @@ public:
 
     const Bitmap & get(uint8_t id, uint16_t idx) const {
         if ((id & IN_WAIT_LIST) || (id == MAXIMUM_NUMBER_OF_CACHES)) {
-            REDASSERT((this->owner != Mod_rdp) && this->waiting_list_bitmap.is_valid());
+            assert((this->owner != Mod_rdp) && this->waiting_list_bitmap.is_valid());
             return this->waiting_list_bitmap;
         }
         Cache<cache_element> const & r = this->caches[id];
         if (idx == RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX) {
-            REDASSERT(this->owner != Front);
+            assert(this->owner != Front);
             // Last bitmap cache entry is used by waiting list.
             //LOG(LOG_INFO, "BmpCache: Get bitmap from waiting list.");
             idx = r.size() - 1;
@@ -565,16 +565,16 @@ public:
     }
 
     bool is_cached(uint8_t id, uint16_t idx) const {
-        REDASSERT(this->owner == Recorder);
-        REDASSERT(!(id & IN_WAIT_LIST) && (id != MAXIMUM_NUMBER_OF_CACHES));
+        assert(this->owner == Recorder);
+        assert(!(id & IN_WAIT_LIST) && (id != MAXIMUM_NUMBER_OF_CACHES));
 
         const Cache<cache_element> & r = this->caches[id];
         return r[idx].cached;
     }
 
     void set_cached(uint8_t id, uint16_t idx, bool cached) {
-        REDASSERT(this->owner == Recorder);
-        REDASSERT(!(id & IN_WAIT_LIST) && (id != MAXIMUM_NUMBER_OF_CACHES));
+        assert(this->owner == Recorder);
+        assert(!(id & IN_WAIT_LIST) && (id != MAXIMUM_NUMBER_OF_CACHES));
 
         Cache<cache_element> & r = this->caches[id];
         r[idx].cached = cached;
@@ -587,7 +587,7 @@ public:
         if (id == MAXIMUM_NUMBER_OF_CACHES) {
             return true;
         }
-        REDASSERT(id <= MAXIMUM_NUMBER_OF_CACHES);
+        assert(id <= MAXIMUM_NUMBER_OF_CACHES);
         return false;
     }
 
@@ -602,7 +602,7 @@ public:
 
 private:
     uint16_t get_cache_usage(uint8_t cache_id) const {
-        REDASSERT((cache_id & IN_WAIT_LIST) == 0);
+        assert((cache_id & IN_WAIT_LIST) == 0);
         uint16_t cache_entries = 0;
         const cache_range<cache_element> & r = this->caches[cache_id];
         const size_t last_index = r.size();
@@ -629,7 +629,7 @@ public:
 
     // TODO palette to use for conversion when we are in 8 bits mode should be passed from memblt.cache_id, not stored in bitmap
     uint32_t cache_bitmap(const Bitmap & oldbmp) {
-        REDASSERT(this->owner != Mod_rdp);
+        assert(this->owner != Mod_rdp);
 
         // Generating source code for unit test.
         //if (this->verbose & 8192) {
@@ -667,7 +667,7 @@ public:
                 , (this->caches[3].size() ? this->caches[3].bmp_size() : 0u)
                 , (this->caches[4].size() ? this->caches[4].bmp_size() : 0u)
                 );
-            REDASSERT(0);
+            assert(0);
             throw Error(ERR_BITMAP_CACHE_TOO_BIG);
         }
 
@@ -793,7 +793,7 @@ public:
     }
 
     const Cache<cache_element> & get_cache(uint8_t cache_id) const {
-        REDASSERT(cache_id < MAXIMUM_NUMBER_OF_CACHES);
+        assert(cache_id < MAXIMUM_NUMBER_OF_CACHES);
         return this->caches[cache_id];
     }
 };

@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestWidgetScroll
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "mod/internal/widget/scroll.hpp"
 #include "mod/internal/widget/screen.hpp"
