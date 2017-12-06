@@ -766,8 +766,7 @@ struct LogonErrorsInfo_Recv {
         this->ErrorNotificationType = stream.in_uint32_le();
         this->ErrorNotificationData = stream.in_uint32_le();
 
-        if ((this->ErrorNotificationType != LOGON_MSG_SESSION_CONTINUE) ||
-            (this->ErrorNotificationData != LOGON_FAILED_OTHER)) {
+        if (this->ErrorNotificationType != LOGON_MSG_SESSION_CONTINUE) {
             LOG(LOG_INFO,
                 "ErrorNotificationType=%s(0x%08X) \"%s\" ErrorNotificationData=%s(0x%08X) \"%s\"",
                 ErrorNotificationTypeToString(this->ErrorNotificationType),
@@ -776,6 +775,14 @@ struct LogonErrorsInfo_Recv {
                 ErrorNotificationDataToString(this->ErrorNotificationData),
                 this->ErrorNotificationData,
                 ErrorNotificationDataToMessage(this->ErrorNotificationData));
+        }
+        else {
+                LOG(LOG_INFO,
+                    "ErrorNotificationType=%s(0x%08X) \"%s\" SessionIdentifier=%u",
+                    ErrorNotificationTypeToString(this->ErrorNotificationType),
+                    this->ErrorNotificationType,
+                    ErrorNotificationTypeToMessage(this->ErrorNotificationType),
+                    this->ErrorNotificationData);
         }
     }
 
@@ -858,7 +865,7 @@ struct LogonErrorsInfo_Recv {
                 "The user's focus SHOULD be directed to the WinLogon screen.";
 
         default:
-            return "Unexpected Error Notification Type.";
+            return "Unexpected Error Notification Data.";
         }
     }
 

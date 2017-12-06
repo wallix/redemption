@@ -175,10 +175,13 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
         bool session_probe_drive_should_be_disable = false;
 
+        FileSystemVirtualChannel& file_system_virtual_channel;
+
         const RDPVerbose verbose;
 
     public:
         DeviceRedirectionManager(
+            FileSystemVirtualChannel& file_system_virtual_channel,
             FileSystemDriveManager& file_system_drive_manager,
             bool& user_logged_on,
             VirtualChannelDataSender* to_client_sender_,
@@ -202,6 +205,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         , param_smart_card_authorized(smart_card_authorized)
         , remaining_device_announce_request_header_stream(
               this->remaining_device_announce_request_header_data)
+        , file_system_virtual_channel(file_system_virtual_channel)
         , verbose(verbose) {
             (void)channel_chunk_length;
         }
@@ -842,12 +846,24 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 this->remove_known_device(
                     server_device_announce_response.DeviceId());
             }
+            else {
+                if (server_device_announce_response.DeviceId() ==
+                    this->file_system_drive_manager.GetSessionProbeDriveId()) {
+                    if (this->file_system_virtual_channel.session_probe_device_announce_responded_notifier) {
+                        if (!this->file_system_virtual_channel.session_probe_device_announce_responded_notifier->on_device_announce_responded()) {
+                            this->file_system_virtual_channel.session_probe_device_announce_responded_notifier = nullptr;
+                        }
+                    }
+                }
+            }
         }
     } device_redirection_manager;
 
     FrontAPI& front;
 
     SessionProbeLauncher* drive_redirection_initialize_notifier = nullptr;
+
+    SessionProbeLauncher* session_probe_device_announce_responded_notifier = nullptr;
 
     template<class Cont, class ItFw>
     static void unordered_erase(Cont & cont, ItFw && pos)
@@ -898,6 +914,7 @@ public:
     , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
     , device_redirection_manager(
+          *this,
           file_system_drive_manager,
           user_logged_on,
           to_client_sender_,
@@ -1025,7 +1042,7 @@ public:
             if (need_enable_user_loggedon_pdu) {
                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
                     LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_client_general_capability_set:"
+                        "FileSystemVirtualChannel::process_client_general_capability_set: "
                             "Allow the server to send a "
                             "Server User Logged On packet.");
                 }
@@ -1038,7 +1055,7 @@ public:
             if (need_deny_asyncio) {
                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
                     LOG(LOG_INFO,
-                        "FileSystemVirtualChannel::process_client_general_capability_set:"
+                        "FileSystemVirtualChannel::process_client_general_capability_set: "
                             "Deny user to send multiple simultaneous "
                             "read or write requests on the same file from "
                             "a redirected file system.");
@@ -2698,6 +2715,7 @@ public:
 
     void set_session_probe_launcher(SessionProbeLauncher* launcher) {
         this->drive_redirection_initialize_notifier = launcher;
+        this->session_probe_device_announce_responded_notifier = launcher;
     }
 };  // class FileSystemVirtualChannel
 

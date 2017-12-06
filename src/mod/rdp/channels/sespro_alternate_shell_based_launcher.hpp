@@ -66,6 +66,23 @@ public:
         return false;
     }
 
+    bool on_device_announce_responded() override {
+        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
+            LOG(LOG_INFO,
+                "SessionProbeAlternateShellBasedLauncher :=> on_device_announce_responded");
+        }
+
+        if (this->stopped) {
+            return false;
+        }
+
+        if (this->sespro_channel) {
+            this->sespro_channel->give_additional_launch_time();
+        }
+
+        return false;
+    }
+
     bool on_drive_redirection_initialize() override {
         if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
             LOG(LOG_INFO,

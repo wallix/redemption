@@ -172,6 +172,27 @@ public:
         return false;
     }
 
+    bool on_device_announce_responded() override {
+        if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
+            LOG(LOG_INFO,
+                "SessionProbeClipboardBasedLauncher :=> on_device_announce_responded");
+        }
+
+        if (this->state != State::START) {
+            return false;
+        }
+
+        if (this->sesprob_channel) {
+            this->sesprob_channel->give_additional_launch_time();
+        }
+
+        this->drive_ready = true;
+
+        this->do_state_start();
+
+        return false;
+    }
+
     bool on_drive_redirection_initialize() override {
         if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
             LOG(LOG_INFO,

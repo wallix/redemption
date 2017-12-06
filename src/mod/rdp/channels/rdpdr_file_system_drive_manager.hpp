@@ -1784,6 +1784,8 @@ public:
     }
 
 public:
+    uint32_t GetSessionProbeDriveId() const { return this->session_probe_drive_id; }
+
     bool HasManagedDrive() const {
         return (this->managed_drives.size() > 0);
     }
