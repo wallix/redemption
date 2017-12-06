@@ -7088,11 +7088,10 @@ public:
                 for (unsigned int i1 = 0; i1 < width; ++i1) {
                     RDPColor px = RDPColor::from(in_uint32_from_nb_bytes_le(BPP, src));
                     src += BPP;
-                    ::out_bytes_le(dest, 3, color_decode(px, bpp, this->orders.global_palette).to_u32());
+                    ::out_bytes_le(dest, 3, BGRColor(BGRasRGBColor(color_decode(px, bpp, this->orders.global_palette))).to_u32());
                     dest += 3;
                 }
             }
-
         }
         break;
         default:
