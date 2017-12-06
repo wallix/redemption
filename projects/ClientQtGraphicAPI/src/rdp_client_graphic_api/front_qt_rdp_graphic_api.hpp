@@ -406,7 +406,7 @@ public:
                 this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
                 return false;
             }
-            
+
         } else {
             std::string windowErrorMsg(errorMsg+" Invalid ip or port.");
             LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
@@ -2762,7 +2762,7 @@ public:
                     LOG( LOG_INFO
                         , "RDPDrawable::draw_VariableBytes: Unknown glyph, cacheId=%u cacheIndex=%u"
                         , cmd.cache_id, data);
-                    REDASSERT(fc);
+                    assert(fc);
                 }
 
                 if (has_delta_bytes)
