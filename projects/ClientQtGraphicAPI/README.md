@@ -224,7 +224,7 @@ L'API consiste à créer des clients composés de deux élément principaux:
 	$    :
 	$        $(EXE_DEPENDENCIES)
 
-    Enfin compiler votre client à l'aide de la commande
+    Enfin compiler votre client à l'aide de la commande suivante:
 	$ bjam votre_client_exe
 
 

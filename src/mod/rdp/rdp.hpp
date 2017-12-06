@@ -1571,6 +1571,8 @@ public:
                     this->verbose
                 );
         }
+
+        LOG(LOG_INFO, "RDP mod contructed");
     }   // mod_rdp
 
     ~mod_rdp() override {

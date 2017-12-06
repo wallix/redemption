@@ -146,8 +146,6 @@ public:
 
 
 
-
-
     struct WindowsData {
         int form_x = 0;
         int form_y = 0;
@@ -366,7 +364,7 @@ public:
             if (is_pipe_ok) {
                 this->_callback->disconnect(timeobj.get_time().tv_sec);
             }
-            delete (this->_callback);
+//             delete (this->_callback);
             this->_callback = nullptr;
             this->_front->mod = nullptr;
         }
@@ -435,6 +433,7 @@ public:
                     if (time_to_wake < 0) {
                         this->timer.stop();
                     } else {
+
                         this->timer.start( time_to_wake );
                     }
                 }
@@ -1598,6 +1597,7 @@ public:
 
     bool is_pipe_ok;
 
+    bool remoteapp;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1621,6 +1621,7 @@ public:
       , keymap()
       , ctrl_alt_delete(false)
       , is_pipe_ok(true)
+      , remoteapp(true)
     {
         SSL_load_error_strings();
         SSL_library_init();
@@ -1718,6 +1719,10 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
+        if (this->remoteapp) {
+            return ResizeResult::remoteapp;
+        }
+
         if (width == 0 || height == 0) {
             return ResizeResult::fail;
         }
@@ -1744,13 +1749,10 @@ public:
                     this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
                 }
 
-                if (this->is_recording) {
-                    LOG(LOG_INFO, "!!!!!!!!!!!!!!!!! server_resize width = %d", this->capture.get()->gd_drawable->width());
-                    LOG(LOG_INFO, "!!!!!!!!!!!!!!!!! server_resize height = %d", this->capture.get()->gd_drawable->height());
-                }
                 this->screen->show();
             }
         }
+
 
         return ResizeResult::instant_done;
     }
@@ -2929,7 +2931,6 @@ public:
 
 
 
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //------------------------
     //      CONTROLLERS
@@ -3313,7 +3314,7 @@ public:
                 //NullReportMessage * reportMessage  = nullptr;
                 struct timeval time;
                 gettimeofday(&time, nullptr);
-                PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, true, true, true};
+                PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, true, this->info.remote_program, static_cast<bool>(ini.get<cfg::video::rt_display>())};
                 VideoParams videoParams = {Level::high, this->info.width, this->info.height, 0, 0, 0, std::string(""), true, true, false, ini.get<cfg::video::break_interval>(), 0};
                 OcrParams ocr_params = { ini.get<cfg::ocr::version>(),
                                             static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),

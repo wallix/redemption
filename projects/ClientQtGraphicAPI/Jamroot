@@ -136,6 +136,11 @@ add_src utils/log_as_logprint.cpp ;
 add_src utils/netutils.cpp ;
 add_src utils/pattutils.cpp ;
 add_src utils/png.cpp ;
+add_src mod/internal/rail_module_host_mod.cpp ;
+add_src mod/internal/widget/rail_module_host.cpp ;
+add_src mod/internal/widget/module_host.cpp ;
+add_src mod/internal/widget/scroll.cpp ;
+add_src mod/internal/locally_integrable_mod.cpp ;
 
 
 

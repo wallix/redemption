@@ -687,7 +687,7 @@ public:
                             if (!this->getCustomKeysExtendedKeylayoutApplied()) {
                                 if (!this->getCustomKeysExtended()) {
                                     this->showkey(keyStatusFlag, keyEvent);
-                                    std::cout << "Error: Key(0x" << keyCode << ") not recognized." << std::endl;
+                                    std::cout << "Error: Key(0x" << keyCode << ") unknown key code." << std::endl;
                                 }
                             }
                         }

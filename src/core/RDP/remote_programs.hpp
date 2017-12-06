@@ -1199,6 +1199,30 @@ public:
 //  | SPI_SETHIGHCONTRAST    | The system parameter to set the parameters of   |
 //  | 0x00000043             | the HighContrast accessibility feature.         |
 //  +------------------------+-------------------------------------------------+
+//  | SPI_SETCARETWIDTH      | The system parameter to set the caret width     |
+//  | 0x00002007             | used for text entry controls. This flag SHOULD  |
+//  |                        | NOT be sent if the server did not advertise the |
+//  |                        | EXTENDED_SPI_SUPPORTED flag in the HandshakeEx  |
+//  |                        | PDU (section 2.2.2.2.3).                        |
+//  +------------------------+-------------------------------------------------+
+//  | SPI_SETSTICKYKEYS      | The system parameter to set the parameters of   |
+//  | 0x0000003B             | the Sticky Keys accessibility feature. This     |
+//  |                        | flag SHOULD NOT be sent if the server did not   |
+//  |                        | advertise the EXTENDED_SPI_SUPPORTED flag in    |
+//  |                        | the HandshakeEx PDU.                            |
+//  +------------------------+-------------------------------------------------+
+//  | SPI_SETTOGGLEKEYS      | The system parameter to set the parameters of   |
+//  | 0x00000035             | the Toggle Keys accessibility feature. This     |
+//  |                        | flag SHOULD NOT be sent if the server did not   |
+//  |                        | advertise the EXTENDED_SPI_SUPPORTED flag in    |
+//  |                        | the HandshakeEx PDU.                            |
+//  +------------------------+-------------------------------------------------+
+//  | SPI_SETFILTERKEYS      | The system parameter to set the parameters of   |
+//  | 0x00000033             | the Filter Keys accessibility feature. This     |
+//  |                        | flag SHOULD NOT be sent if the server did not   |
+//  |                        | advertise the EXTENDED_SPI_SUPPORTED flag in    |
+//  |                        | the HandshakeEx PDU.                            |
+//  +------------------------+-------------------------------------------------+
 
 enum {
       SPI_SETDRAGFULLWINDOWS = 0x00000025
@@ -1209,6 +1233,10 @@ enum {
     , SPI_SETMOUSEBUTTONSWAP = 0x00000021
     , RAIL_SPI_TASKBARPOS    = 0x0000F000
     , SPI_SETHIGHCONTRAST    = 0x00000043
+    , SPI_SETCARETWIDTH      = 0x00002007
+    , SPI_SETSTICKYKEYS      = 0x0000003B
+    , SPI_SETTOGGLEKEYS      = 0x00000035
+    , SPI_SETFILTERKEYS      = 0x00000033
 };
 
 // Body (variable): The contents of this field depend on the SystemParameter
