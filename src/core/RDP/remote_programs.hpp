@@ -670,13 +670,14 @@ enum {
 //  TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS mask of Flags field), is 16,000 bytes.
 
 class ClientExecutePDU {
+public:
     uint16_t Flags_ = 0;
 
     std::string exe_or_file;
     std::string working_dir;
     std::string arguments;
 
-public:
+
     void emit(OutStream & stream) const {
         stream.out_uint16_le(this->Flags_);
 

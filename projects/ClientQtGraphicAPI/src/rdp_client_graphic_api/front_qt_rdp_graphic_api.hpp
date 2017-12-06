@@ -381,13 +381,14 @@ public:
         const char * targetIP(this->_front->target_IP.c_str());
         const std::string errorMsg("Cannot connect to [" + this->_front->target_IP +  "].");
 
-        this->_client_sck = ip_connect(targetIP, this->_front->port, this->_front->nbTry, this->_front->retryDelay);
+        unique_fd client_sck = ip_connect(targetIP, this->_front->port, this->_front->nbTry, this->_front->retryDelay);
+        this->_client_sck = client_sck.fd();
 
         if (this->_client_sck > 0) {
             try {
 
                 this->_sck = new SocketTransport( name
-                                                , this->_client_sck
+                                                , std::move(client_sck)
                                                 , targetIP
                                                 , this->_front->port
                                                 , std::chrono::milliseconds(1000)
@@ -405,6 +406,7 @@ public:
                 this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
                 return false;
             }
+            
         } else {
             std::string windowErrorMsg(errorMsg+" Invalid ip or port.");
             LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
