@@ -203,23 +203,12 @@ struct SharedHeader {
         return 4;   // Component(2) + PacketId(2)
     }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
-            "SharedHeader: Component=%s(0x%X) PacketId=%s(0x%X)",
+    void log(int level) const {
+        LOG(level, "SharedHeader: Component=%s(0x%X) PacketId=%s(0x%X)",
             this->get_Component_name(this->component),
             unsigned(this->component),
             this->get_PacketId_name(this->packet_id),
             unsigned(this->packet_id));
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
-    void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
     }
 
     void log() const {
@@ -727,21 +716,10 @@ public:
         return "<unknown>";
     }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
-            "DeviceAnnounceHeader: DeviceType=%s(%u) DeviceId=%u PreferredDosName=\"%s\"",
+    void log(int level) const {
+        LOG(level, "DeviceAnnounceHeader: DeviceType=%s(%u) DeviceId=%u PreferredDosName=\"%s\"",
             get_DeviceType_name(this->DeviceType_),
             this->DeviceType_, this->DeviceId_, this->PreferredDosName_);
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
-    void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
         if (level == LOG_INFO) {
             hexdump(this->device_data.p, this->device_data.sz);
         }
@@ -1229,24 +1207,13 @@ public:
 
     uint32_t MinorFunction() const { return this->MinorFunction_; }
 
-
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
+    void log(int level) const {
+        LOG(level,
             "DeviceIORequest: "
                 "DeviceId=%u FileId=%u CompletionId=%u MajorFunction=%s(0x%X) MinorFunction=%s(0x%X)",
             this->DeviceId_, this->FileId_, this->CompletionId_,
             get_MajorFunction_name(this->MajorFunction_), this->MajorFunction_,
             get_MinorFunction_name(this->MinorFunction_), this->MinorFunction_);
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
-    void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
     }
 
     void log() const {
@@ -1475,25 +1442,14 @@ public:
 
     size_t PathLength() const { return PathLength_UTF8*2; }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
+    void log(int level) const {
+        LOG(level,
             "DeviceCreateRequest: DesiredAccess=0x%X AllocationSize=%" PRIu64 " "
                 "FileAttributes=0x%X SharedAccess=0x%X CreateDisposition=0x%X "
                 "CreateOptions=0x%X Path=\"%s\"",
             this->DesiredAccess_, this->AllocationSize_, this->FileAttributes_,
             this->SharedAccess_, this->CreateDisposition_, this->CreateOptions_,
             reinterpret_cast<const char *>(this->Path_));
-        return ((length < size) ? length : size - 1);
-    }
-
-
-public:
-    void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
     }
 
     void log() const {
@@ -1583,18 +1539,8 @@ public:
         stream.in_skip_bytes(32);   // Padding(32)
     }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size, "DeviceCloseRequest:");
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
     void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
+        LOG(level, "DeviceCloseRequest:");
     }
 
     void log() const {
@@ -1695,20 +1641,9 @@ public:
 
     uint64_t Offset() const { return this->Offset_; }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
-            "DeviceReadRequest: Length=%u Offset=%" PRIu64,
-            this->Length_, this->Offset_);
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
     void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
+        LOG(level, "DeviceReadRequest: Length=%u Offset=%" PRIu64,
+            this->Length_, this->Offset_);
     }
 
     void log() const {
@@ -1979,22 +1914,11 @@ public:
 
     uint32_t IoControlCode() const { return this->IoControlCode_; }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
-            "DeviceControlRequest: OutputBufferLength=%u InputBufferLength=%zu "
+    void log(int level) const {
+        LOG(level, "DeviceControlRequest: OutputBufferLength=%u InputBufferLength=%zu "
                 "IoControlCode=0x%X",
             this->OutputBufferLength, this->input_buffer.sz,
             this->IoControlCode_);
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
-    void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
     }
 
     void log() const {
@@ -2161,20 +2085,9 @@ public:
         return 12;  // DeviceId(4) + CompletionId(4) + IoStatus(4)
     }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
-            "DeviceIOResponse: DeviceId=%u CompletionId=%u IoStatus=0x%08X",
-            this->DeviceId_, this->CompletionId_, static_cast<uint32_t>(this->IoStatus_));
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
     void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
+        LOG(level, "DeviceIOResponse: DeviceId=%u CompletionId=%u IoStatus=0x%08X",
+            this->DeviceId_, this->CompletionId_, static_cast<uint32_t>(this->IoStatus_));
     }
 
     void log() const {
@@ -2337,20 +2250,11 @@ private:
         return "<unknown>";
     }
 
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
-            "DeviceCreateResponse: FileId=%u Information=%s(0x%X)",
-            this->FileId_, this->get_Information_name(this->Information),
-            unsigned(this->Information));
-        return ((length < size) ? length : size - 1);
-    }
-
 public:
     void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
+        LOG(level, "DeviceCreateResponse: FileId=%u Information=%s(0x%X)",
+            this->FileId_, this->get_Information_name(this->Information),
+            unsigned(this->Information));
     }
 
     void log() const {
@@ -2615,20 +2519,9 @@ public:
 
     erref::NTSTATUS ResultCode() const { return this->ResultCode_; }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
-            "ServerDeviceAnnounceResponse: DeviceId=%" PRIu32 " ResultCode=0x%08" PRIX32,
-            this->DeviceId_, underlying_cast(this->ResultCode_));
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
     void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
+        LOG(level, "ServerDeviceAnnounceResponse: DeviceId=%" PRIu32 " ResultCode=0x%08" PRIX32,
+            this->DeviceId_, underlying_cast(this->ResultCode_));
     }
 
     void log() const {
@@ -2714,20 +2607,9 @@ public:
 
     uint16_t ClientId() const { return this->ClientId_; }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
-            "ServerAnnounceRequest: VersionMajor=0x%04X VersionMinor=0x%04X ClientId=%u",
-            unsigned(this->VersionMajor_), unsigned(this->VersionMinor_), unsigned(this->ClientId_));
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
     void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
+        LOG(level, "ServerAnnounceRequest: VersionMajor=0x%04X VersionMinor=0x%04X ClientId=%u",
+            unsigned(this->VersionMajor_), unsigned(this->VersionMinor_), unsigned(this->ClientId_));
     }
 
     void log() const {
@@ -2819,20 +2701,9 @@ public:
         this->ClientId     = stream.in_uint32_le();
     }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
-            "ClientAnnounceReply: VersionMajor=0x%04X VersionMinor=0x%04X ClientId=%u",
-            unsigned(this->VersionMajor), unsigned(this->VersionMinor), unsigned(this->ClientId));
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
     void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
+        LOG(level, "ClientAnnounceReply: VersionMajor=0x%04X VersionMinor=0x%04X ClientId=%u",
+            unsigned(this->VersionMajor), unsigned(this->VersionMinor), unsigned(this->ClientId));
     }
 
     void log() const {
@@ -3007,20 +2878,9 @@ public:
         }
     }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
-            "ClientNameRequest: UnicodeFlag=0x%X CodePage=%u ComputerName=\"%s\"",
-            this->UnicodeFlag, this->CodePage, this->ComputerName);
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
     void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
+        LOG(level, "ClientNameRequest: UnicodeFlag=0x%X CodePage=%u ComputerName=\"%s\"",
+            this->UnicodeFlag, this->CodePage, this->ComputerName);
     }
 
     void log() const {
@@ -3312,9 +3172,8 @@ public:
             ((version == GENERAL_CAPABILITY_VERSION_02) ? 4 /* SpecialTypeDeviceCap(4) */ : 0);
     }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
+    void log(int level) const {
+        LOG(level,
             "GeneralCapabilitySet: osType=0x%X osVersion=0x%X "
                 "protocolMajorVersion=0x%X protocolMinorVersion=0x%X "
                 "ioCode1=0x%X ioCode2=0x%X extendedPDU=0x%X extraFlags1=0x%X "
@@ -3323,15 +3182,6 @@ private:
             unsigned(this->protocolMinorVersion), this->ioCode1, this->ioCode2,
             this->extendedPDU_, this->extraFlags1_, this->extraFlags2,
             this->SpecialTypeDeviceCap);
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
-    void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
     }
 
     void log() const {
@@ -3598,23 +3448,10 @@ public:
         return "<unknown>";
     }
 
-
-
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
-            "ServerDriveQueryInformationRequest: FsInformationClass=%s(0x%X) Length=%zu",
+    void log(int level) const {
+        LOG(level, "ServerDriveQueryInformationRequest: FsInformationClass=%s(0x%X) Length=%zu",
             this->get_FsInformationClass_name(this->FsInformationClass_),
             this->FsInformationClass_, this->query_buffer.sz);
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
-    void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
     }
 
     void log() const {
@@ -3848,23 +3685,11 @@ public:
 
     uint32_t Length() const { return this->query_volume_buffer.sz; }
 
-
-
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
+    void log(int level) const {
+        LOG(level,
             "ServerDriveQueryVolumeInformationRequest: FsInformationClass=%s(0x%X) Length=%zu",
             get_FsInformationClass_name(this->FsInformationClass_),
             this->FsInformationClass_, this->query_volume_buffer.sz);
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
-    void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
     }
 
     void log() const {
@@ -4121,22 +3946,12 @@ public:
         return "<unknown>";
     }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
+    void log(int level) const {
+        LOG(level,
             "ServerDriveSetInformationRequest: FsInformationClass=%s(0x%X) "
                 "Length=%u",
             this->get_FsInformationClass_name(this->FsInformationClass_),
             this->FsInformationClass_, this->Length_);
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
-    void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
     }
 
     void log() const {
@@ -4270,21 +4085,11 @@ public:
 
     const char * FileName() const { return this->FileName_; }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
+    void log(int level) const {
+        LOG(level,
             "RDP_FILE_RENAME_INFORMATION: ReplaceIfExists=%s RootDirectory=%u FileName=\"%s\"",
             (this->replace_if_exists_ ? "yes" : "no"),
             unsigned(this->RootDirectory_), this->FileName_);
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
-    void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
     }
 
     void log() const {
@@ -4505,22 +4310,11 @@ public:
         return "<unknown>";
     }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = ::snprintf(buffer, size,
-            "ServerDriveQueryDirectoryRequest: FsInformationClass=%s(0x%X) "
+    void log(int level) const {
+        LOG(level, "ServerDriveQueryDirectoryRequest: FsInformationClass=%s(0x%X) "
                 "InitialQuery=%u Path=\"%s\"",
             this->get_FsInformationClass_name(this->FsInformationClass_),
             this->FsInformationClass_, unsigned(this->InitialQuery_), this->Path_);
-        return ((length < size) ? length : size - 1);
-    }
-
-public:
-    void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
     }
 
     void log() const {
