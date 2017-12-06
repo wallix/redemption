@@ -27,7 +27,6 @@
 #include <sys/resource.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
-#include <netinet/tcp.h>
 #include <errno.h>
 #include <string.h>
 #include <assert.h>

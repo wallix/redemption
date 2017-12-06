@@ -32,7 +32,6 @@
 #include "utils/bitmap_data_allocator.hpp"
 
 #include "utils/bitfu.hpp"
-#include "utils/bitmap_data_allocator.hpp"
 #include "utils/colors.hpp"
 #include "utils/image_data_view.hpp"
 #include "utils/log.hpp"

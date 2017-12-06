@@ -90,11 +90,9 @@
 #include "../src/keyboard/reversed_keymaps/keylayout_x80000418.hpp" // Romanian (Romania) Romanian
 #include "../src/keyboard/reversed_keymaps/keylayout_x80000419.hpp" // Russian (Russia)
 #include "../src/keyboard/reversed_keymaps/keylayout_x80010419.hpp" // Russian (Russia) typewriter
-#include "../src/keyboard/reversed_keymaps/keylayout_x80000424.hpp" // Slovenian (Slovenia) Slovenian
 #include "../src/keyboard/reversed_keymaps/keylayout_x8000043b.hpp" // Sami (Northern) (Norway) Norwegian with Sami
 #include "../src/keyboard/reversed_keymaps/keylayout_x8001043b.hpp" // Sami (Northern) (Norway) Sami Extended Norway
 #include "../src/keyboard/reversed_keymaps/keylayout_x8000083b.hpp" // Sami (Northern) (Sweden)
-#include "../src/keyboard/reversed_keymaps/keylayout_x8000083b.hpp" // Sami (Northern) (Sweden) Swedish with Sami
 #include "../src/keyboard/reversed_keymaps/keylayout_x8001083b.hpp" // Sami (Northern) (Sweden) Finnish with Sami
 #include "../src/keyboard/reversed_keymaps/keylayout_x8002083b.hpp" // Sami (Northern) (Sweden) Sami Extended Finland-Sweden
 #include "../src/keyboard/reversed_keymaps/keylayout_x80000c1a.hpp" // Serbian (Cyrillic, Serbia) Serbian (Cyrillic)

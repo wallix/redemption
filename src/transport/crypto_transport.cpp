@@ -28,7 +28,6 @@
 #include "utils/parse.hpp"
 #include "utils/sugar/byte.hpp"
 #include "utils/sugar/unique_fd.hpp"
-#include "utils/genfstat.hpp"
 
 #include <memory>
 

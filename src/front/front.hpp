@@ -35,7 +35,6 @@
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/PersistentKeyListPDU.hpp"
 #include "core/RDP/SaveSessionInfoPDU.hpp"
-#include "core/RDP/SaveSessionInfoPDU.hpp"
 #include "core/RDP/SuppressOutputPDU.hpp"
 
 #include "core/RDP/caches/bmpcache.hpp"

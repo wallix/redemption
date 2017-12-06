@@ -24,7 +24,6 @@
 #include <chrono>
 #include <utility>
 #include <string>
-#include <chrono>
 
 #include <ctime> // localtime_r
 #include <cstdio> //snprintf
@@ -61,7 +60,6 @@
 #include "gdi/capture_api.hpp"
 #include "gdi/kbd_input_api.hpp"
 
-#include "capture/utils/match_finder.hpp"
 #include "capture/title_extractors/agent_title_extractor.hpp"
 #include "capture/title_extractors/ocr_title_filter.hpp"
 #include "capture/title_extractors/ocr_titles_extractor.hpp"

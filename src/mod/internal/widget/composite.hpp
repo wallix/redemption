@@ -24,7 +24,6 @@
 #include "utils/colors.hpp"
 #include "mod/internal/widget/widget.hpp"
 
-class Widget;
 class SubRegion;
 class NotifyApi;
 namespace
