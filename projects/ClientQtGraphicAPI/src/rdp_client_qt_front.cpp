@@ -944,26 +944,27 @@ public:
         switch (header.orderType()) {
 
             case TS_RAIL_ORDER_HANDSHAKE:
-                {
                 LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE");
-                HandshakePDU hspdu;
-                hspdu.receive(stream);
+                {
 
-                StaticOutStream<32> out_stream;
-
-                out_stream.out_uint16_le(header.orderType());
-                out_stream.out_uint16_le(header.orderLength());
-                out_stream.out_uint32_le(hspdu.buildNumber());
-
-                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-
-                this->mod->send_to_mod_channel( channel_names::rail
-                                              , chunk_to_send
-                                              , out_stream.get_offset()
-                                              , CHANNELS::CHANNEL_FLAG_LAST |
-                                                CHANNELS::CHANNEL_FLAG_FIRST
-                                              );
-                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE");
+//                 HandshakePDU hspdu;
+//                 hspdu.receive(stream);
+//
+//                 StaticOutStream<32> out_stream;
+//
+//                 out_stream.out_uint16_le(header.orderType());
+//                 out_stream.out_uint16_le(header.orderLength());
+//                 out_stream.out_uint32_le(hspdu.buildNumber());
+//
+//                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+//
+//                 this->mod->send_to_mod_channel( channel_names::rail
+//                                               , chunk_to_send
+//                                               , out_stream.get_offset()
+//                                               , CHANNELS::CHANNEL_FLAG_LAST |
+//                                                 CHANNELS::CHANNEL_FLAG_FIRST
+//                                               );
+//                 LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE");
                 }
                 {
                 StaticOutStream<32> out_stream;
