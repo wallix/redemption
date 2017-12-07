@@ -116,7 +116,7 @@
 #endif
 
 #define REPLAY_PATH "/replay"
-#define LOGINS_PATH "/config/logins.config"
+#define LOGINS_PATH "/config/login.config"
 #define WINODW_CONF_PATH "/config/windows_config.config"
 
 #ifndef MAIN_PATH
@@ -124,16 +124,6 @@
 # define MAIN_PATH ""
 #endif
 
-
-// class DummyAuthentifier : public auth_api
-// {
-// public:
-//     virtual void set_auth_channel_target(const char *) {}
-//     virtual void set_auth_error_message(const char *) {}
-//     virtual void report(const char * , const char *) {}
-//     virtual void log4(bool , const char *, const char * = nullptr) {}
-//     virtual void disconnect_target() {}
-// };
 
 
 class ProgressBarWindow;
@@ -1667,7 +1657,7 @@ public:
       , keymap()
       , ctrl_alt_delete(false)
       , is_pipe_ok(true)
-      , remoteapp(false)
+      , remoteapp(true)
     {
         SSL_load_error_strings();
         SSL_library_init();
@@ -2046,8 +2036,6 @@ public:
         QImage srcBitmapMirrored = srcBitmap.mirrored(false, true);
 
         uchar data[1600*900*3];
-
-        //std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(srcBitmapMirrored.bytesPerLine() * drect.cy);
 
         const uchar * srcData = srcBitmapMirrored.constBits();
         const uchar * dstData = dstBitmap.constBits();
