@@ -583,7 +583,6 @@ RED_AUTO_TEST_CASE(RDP_Lock_InfoReceive)
 
 RED_AUTO_TEST_CASE(streamLog)
 {
-    const size_t len = 84;
     const char data[] =
     /* 0000 */ "\x01\x00\x00\x00"                                                 //....
     /* 0000 */ "\x00\x00\x00\x00"                                                 //....
@@ -596,7 +595,7 @@ RED_AUTO_TEST_CASE(streamLog)
     /* 0040 */ "\x01\x00\x00\x00\x04\x00\x08\x00\x01\x00\x00\x00\x05\x00\x08\x00" //................
     /* 0050 */ "\x01\x00\x00\x00";
 
-    InStream in_stream(data, len);
+    InStream in_stream(data);
 
     rdpdr::RdpDrStatus status;
 
