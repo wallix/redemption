@@ -24,6 +24,7 @@
 #define RED_TEST_MODULE TestRDPQt
 #include "system/redemption_unit_tests.hpp"
 #include <unistd.h>
+#include <iostream>
 
 #include "configs/config.hpp"
 
@@ -38,7 +39,6 @@
 
 RED_AUTO_TEST_CASE(TestRDPQt)
 {
-    bool test_boost(false);
     std::string targetIP(TARGET_IP); // 10.10.46.73
     int verbose(511);
     int argc(8);
@@ -48,6 +48,7 @@ RED_AUTO_TEST_CASE(TestRDPQt)
 
     QApplication app(argc, const_cast<char**>(argv));
 
+
     //=====================
     // test connexion init
     //=====================
@@ -56,29 +57,14 @@ RED_AUTO_TEST_CASE(TestRDPQt)
 
     Front_Qt front(const_cast<char**>(argv), argc, verbose);
 
-    if (front._screen    != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._form      != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-
-    if (front._callback            != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    if (test_boost) {
-        RED_CHECK_EQUAL(front._callback->get_front_width(), 800);
-        RED_CHECK_EQUAL(front._callback->get_front_height(), 600);
-    }
-    test_boost = false;
-    if (front._connector->_sckRead != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector->_sck     != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
+    RED_CHECK(front._screen);
+    RED_CHECK(front._form);
+    RED_REQUIRE(front._connector);
+    RED_REQUIRE(front._callback);
+    RED_CHECK_EQUAL(front._callback->get_front_width(), 800);
+    RED_CHECK_EQUAL(front._callback->get_front_height(), 600);
+    RED_CHECK(front._connector->_sckRead);
+    RED_CHECK(front._connector->_sck);
 
     RED_CHECK_EQUAL(front._userName, "QA\\administrateur");
     RED_CHECK_EQUAL(front._pwd,      "S3cur3!1nux");
@@ -88,35 +74,19 @@ RED_AUTO_TEST_CASE(TestRDPQt)
     RED_CHECK_EQUAL(front._connected, true);
 
 
-
     //=====================
     //  test disconnexion
     //=====================
     std::cout <<  std::endl << "Test  disconnection" <<  std::endl;
     front.disconnexionReleased();
 
-    if (front._screen    == nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._form      != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-
-    if (front._callback             == nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector->_callback == nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector->_sckRead  == nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector->_sck      == nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
+    RED_CHECK(not front._screen);
+    RED_CHECK(front._form);
+    RED_CHECK(front._connector);
+    RED_CHECK(not front._callback);
+    RED_CHECK(not front._connector->_callback);
+    RED_CHECK(not front._connector->_sckRead);
+    RED_CHECK(not front._connector->_sck);
 
     RED_CHECK_EQUAL(front._form->_errorLabel.text().toStdString(), "");
 
@@ -133,7 +103,6 @@ RED_AUTO_TEST_CASE(TestRDPQt)
     RED_CHECK_EQUAL(front._connected, false);
 
 
-
     //======================
     // test connexion error
     //======================
@@ -141,28 +110,13 @@ RED_AUTO_TEST_CASE(TestRDPQt)
     front._form->set_IPField(targetIP+"0");
     front.connexionReleased();
 
-    if (front._screen    == nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._form      != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-
-    if (front._callback             == nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector->_callback == nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector->_sckRead  == nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector->_sck      == nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
+    RED_CHECK(not front._screen);
+    RED_CHECK(front._form);
+    RED_CHECK(front._connector);
+    RED_CHECK(not front._callback);
+    RED_CHECK(not front._connector->_callback);
+    RED_CHECK(not front._connector->_sckRead);
+    RED_CHECK(not front._connector->_sck);
 
     RED_CHECK_EQUAL(front._userName, "QA\\administrateur");
     RED_CHECK_EQUAL(front._pwd,      "S3cur3!1nux");
@@ -198,32 +152,15 @@ RED_AUTO_TEST_CASE(TestRDPQt)
     RED_CHECK_EQUAL(front._targetIP, targetIP);
     RED_CHECK_EQUAL(front._port,     3389);
 
-    if (front._screen    != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._form      != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-
-    if (front._callback            != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    if (test_boost) {
-        RED_CHECK_EQUAL(front._callback->get_front_width(), 800);
-        RED_CHECK_EQUAL(front._callback->get_front_height(), 600);
-    }
-    test_boost = false;
-    if (front._connector->_sckRead != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector->_sck     != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-
-    RED_CHECK_EQUAL(front._connected, true);
-
+    RED_CHECK(front._screen);
+    RED_CHECK(front._form);
+    RED_REQUIRE(front._connector);
+    RED_REQUIRE(front._callback);
+    RED_CHECK_EQUAL(front._callback->get_front_width(), 800);
+    RED_CHECK_EQUAL(front._callback->get_front_height(), 600);
+    RED_CHECK(front._connector->_sckRead);
+    RED_CHECK(front._connector->_sck);
+    RED_CHECK(front._connected);
 
 
     //====================
@@ -254,55 +191,24 @@ RED_AUTO_TEST_CASE(TestRDPQt)
     std::cout <<  std::endl << "Test drop connection" <<  std::endl;
     front.connexionReleased();
 
-    RED_CHECK_EQUAL(front._connected, true);
-
-    if (front._screen    != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._form      != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-
-    if (front._callback             != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector->_callback != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector->_sckRead  != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector->_sck      != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
+    RED_CHECK(front._connected);
+    RED_CHECK(front._screen);
+    RED_CHECK(front._form);
+    RED_REQUIRE(front._connector);
+    RED_CHECK(front._callback);
+    RED_CHECK(front._connector->_callback);
+    RED_CHECK(front._connector->_sckRead);
+    RED_CHECK(front._connector->_sck);
 
     front._connector->drop_connexion();
 
-    if (front._screen    != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._form      != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector != nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-
-    if (front._callback             == nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector->_callback == nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector->_sckRead  == nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
-    if (front._connector->_sck      == nullptr) { test_boost = true;}
-    RED_CHECK_EQUAL(test_boost, true);
-    test_boost = false;
+    RED_CHECK(front._screen);
+    RED_CHECK(front._form);
+    RED_REQUIRE(front._connector);
+    RED_CHECK(not front._callback);
+    RED_CHECK(not front._connector->_callback);
+    RED_CHECK(not front._connector->_sckRead);
+    RED_CHECK(not front._connector->_sck);
 
     RED_CHECK_EQUAL(front._userName, "QA\\administrateur");
     RED_CHECK_EQUAL(front._pwd,      "S3cur3!1nux");
@@ -319,58 +225,14 @@ RED_AUTO_TEST_CASE(TestRDPQt)
     //       test show
     //========================
     std::cout <<  std::endl << "Test show window" <<  std::endl;
-    front.connexionReleased();;
+    front.connexionReleased();
     front.disconnect("");
     app.exec();
 
     std::cout <<  std::endl << "Test close" <<  std::endl;
-    if (front._connected) {
-
-        //========================
-        // test close from screen
-        //========================
-
-        RED_CHECK_EQUAL(front._connected, true);
-
-        if (front._callback  == nullptr) { test_boost = true;}
-        RED_CHECK_EQUAL(test_boost, true);
-        test_boost = false;
-        if (front._connector->_callback == nullptr) { test_boost = true;}
-        RED_CHECK_EQUAL(test_boost, true);
-        test_boost = false;
-        if (front._connector->_sckRead  == nullptr) { test_boost = true;}
-        RED_CHECK_EQUAL(test_boost, true);
-        test_boost = false;
-        if (front._connector->_sck      == nullptr) { test_boost = true;}
-        RED_CHECK_EQUAL(test_boost, true);
-        test_boost = false;
-
-        //************************************************************************
-
-    } else {
-
-        //========================
-        // test close from form
-        //========================
-
-        RED_CHECK_EQUAL(front._connected, false);
-
-        if (front._callback  == nullptr) { test_boost = true;}
-        RED_CHECK_EQUAL(test_boost, true);
-        test_boost = false;
-        if (front._connector->_callback == nullptr) { test_boost = true;}
-        RED_CHECK_EQUAL(test_boost, true);
-        test_boost = false;
-        if (front._connector->_sckRead  == nullptr) { test_boost = true;}
-        RED_CHECK_EQUAL(test_boost, true);
-        test_boost = false;
-        if (front._connector->_sck      == nullptr) { test_boost = true;}
-        RED_CHECK_EQUAL(test_boost, true);
-        test_boost = false;
-
-        //************************************************************************
-    }
-
-
+    RED_CHECK(not front._callback);
+    RED_CHECK(not front._connector->_callback);
+    RED_CHECK(not front._connector->_sckRead);
+    RED_CHECK(not front._connector->_sck);
 }
 

@@ -1673,12 +1673,8 @@ public:
         SSL_library_init();
 
         // Windows and socket contrainer
-        this->mod_qt = new Mod_Qt(this, this->form);
         this->form = new Form_Qt(this);
-
-        if (this->mod_bpp == this->info.bpp) {
-            this->mod_palette = BGRPalette::classic_332();
-        }
+        this->mod_qt = new Mod_Qt(this, this->form);
 
         this->info.width  = 800;
         this->info.height = 600;
@@ -3379,11 +3375,11 @@ public:
                     , 0
                 );
 
-                PatternParams patternCheckerParams;
-                SequencedVideoParams sequenced_video_params;
+                PatternParams patternCheckerParams {};
+                SequencedVideoParams sequenced_video_params {};
                 FullVideoParams full_video_params = { false };
-                MetaParams meta_params;
-                KbdLogParams kbd_log_params;
+                MetaParams meta_params {};
+                KbdLogParams kbd_log_params {};
 
                 CaptureParams captureParams;
                 captureParams.now = tvtime();
@@ -3430,11 +3426,8 @@ public:
     }
 
     void disconnect(std::string const & error) override {
-
-        if (this->mod_qt != nullptr) {
-            this->mod_qt->disconnect(true);
-        }
-
+        this->mod_qt->disconnect(true);
+        
         //this->must_be_stop_capture();
 
         this->form->set_IPField(this->target_IP);
