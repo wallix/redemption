@@ -1220,7 +1220,7 @@ public:
         this->send_to_clipboard_Buffer(chunk);
     }
 
-    void send_FormatListPDU(uint32_t const * formatIDs, std::string const * formatListDataShortName, std::size_t formatIDs_size) {
+    void send_FormatListPDU(uint32_t const * /*formatIDs*/, std::string const * /*formatListDataShortName*/, std::size_t /*formatIDs_size*/) {
 //         StaticOutStream<1024> out_stream;
 //         RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListDataShortName, formatIDs_size);
 //         format_list_pdu_long.emit(out_stream);

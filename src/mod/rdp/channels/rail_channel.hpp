@@ -52,8 +52,8 @@ private:
 
     bool param_use_session_probe_to_launch_remote_program;
 
-    bool param_client_supports_handshakeex_pdu;
-    bool param_client_supports_enhanced_remoteapp;
+    //bool param_client_supports_handshakeex_pdu;
+    //bool param_client_supports_enhanced_remoteapp;
 
     bool first_client_execute_ignored = false;
 
@@ -142,8 +142,8 @@ public:
     , param_rail_session_manager(params.rail_session_manager)
     , param_should_ignore_first_client_execute(params.should_ignore_first_client_execute)
     , param_use_session_probe_to_launch_remote_program(params.use_session_probe_to_launch_remote_program)
-    , param_client_supports_handshakeex_pdu(params.client_supports_handshakeex_pdu)
-    , param_client_supports_enhanced_remoteapp(params.client_supports_enhanced_remoteapp)
+    //, param_client_supports_handshakeex_pdu(params.client_supports_handshakeex_pdu)
+    //, param_client_supports_enhanced_remoteapp(params.client_supports_enhanced_remoteapp)
     , vars(vars) {}
 
 protected:
