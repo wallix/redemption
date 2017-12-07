@@ -779,6 +779,7 @@ public Q_SLOTS:
     void setEnableSharePath(int value) {
         this->_sharePath.setEnabled(value);
         this->_buttonSharePath.setEnabled(value);
+        this->_front->enable_shared_virtual_disk = bool(value);
     }
 
     void dirPathPressed() {

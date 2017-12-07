@@ -22,6 +22,7 @@
 
 #include "utils/log.hpp"
 
+#include <dirent.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/ioctl.h>
@@ -750,7 +751,41 @@ public:
         this->cl.clear_channels();
 
         if (this->enable_shared_clipboard) {
+            DIR *pDir;
+            pDir = opendir (this->CB_TEMP_DIR.c_str());
 
+            if (pDir) {
+
+                CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
+                                                    , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                                    GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                                    GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                                    , CHANID_CLIPDRD
+                                                    };
+                this->_to_client_sender._channel = channel_cliprdr;
+                this->cl.push_back(channel_cliprdr);
+
+                this->clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS
+                                                , this->clipbrdFormatsList.FILECONTENTS
+                                                );
+                this->clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW
+                                                , this->clipbrdFormatsList.FILEGROUPDESCRIPTORW
+                                                );
+                this->clipbrdFormatsList.add_format( RDPECLIP::CF_UNICODETEXT
+                                                , std::string("\0\0", 2)
+                                                );
+                this->clipbrdFormatsList.add_format( RDPECLIP::CF_TEXT
+                                                , std::string("\0\0", 2)
+                                                );
+                this->clipbrdFormatsList.add_format( RDPECLIP::CF_METAFILEPICT
+                                                , std::string("\0\0", 2)
+                                                );
+            } else {
+                LOG(LOG_WARNING, "Can't enable shared clipboard, %s directory doesn't exist.", this->CB_TEMP_DIR);
+            }
+        }
+
+        if (this->enable_shared_virtual_disk) {
             std::string tmp(this->SHARE_DIR);
             int pos(tmp.find("/"));
 
@@ -785,34 +820,6 @@ public:
             this->fileSystemData.devices[this->fileSystemData.devicesCount].type = rdpdr::RDPDR_DTYP_PRINT;
             this->fileSystemData.devicesCount++;
 
-
-            CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
-                                                 , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                                   GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                                   GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                                 , CHANID_CLIPDRD
-                                                 };
-            this->_to_client_sender._channel = channel_cliprdr;
-            this->cl.push_back(channel_cliprdr);
-
-            this->clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS
-                                               , this->clipbrdFormatsList.FILECONTENTS
-                                               );
-            this->clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW
-                                               , this->clipbrdFormatsList.FILEGROUPDESCRIPTORW
-                                               );
-            this->clipbrdFormatsList.add_format( RDPECLIP::CF_UNICODETEXT
-                                               , std::string("\0\0", 2)
-                                               );
-            this->clipbrdFormatsList.add_format( RDPECLIP::CF_TEXT
-                                               , std::string("\0\0", 2)
-                                               );
-            this->clipbrdFormatsList.add_format( RDPECLIP::CF_METAFILEPICT
-                                               , std::string("\0\0", 2)
-                                               );
-        }
-
-        if (this->enable_shared_virtual_disk) {
             CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
                                               , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                                 GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
@@ -987,58 +994,6 @@ public:
                                         + 6);
                 cepdu.emit(out_stream);
 
-
-//
-//                 out_stream.out_uint32_le(SPI_SETDRAGFULLWINDOWS);
-//                 out_stream.out_uint8(1);
-//
-//                 out_stream.out_uint32_le(SPI_SETHIGHCONTRAST);
-//                 out_stream.out_uint32_le(0x7e);
-//                 out_stream.out_uint32_le(2);
-//                 out_stream.out_uint16_le(0);
-//
-//                 out_stream.out_uint32_le(SPI_SETKEYBOARDCUES);
-//                 out_stream.out_uint8(1);
-//
-//                 out_stream.out_uint32_le(SPI_SETKEYBOARDPREF);
-//                 out_stream.out_uint8(0);
-//
-//                 out_stream.out_uint32_le(SPI_SETWORKAREA);
-//                 out_stream.out_uint16_le(0);
-//                 out_stream.out_uint16_le(0);
-//                 out_stream.out_uint16_le(1600);
-//                 out_stream.out_uint16_le(900);
-//
-//                 out_stream.out_uint32_le(RAIL_SPI_DISPLAYCHANGE);
-//                 out_stream.out_uint16_le(0);
-//                 out_stream.out_uint16_le(0);
-//                 out_stream.out_uint16_le(1600);
-//                 out_stream.out_uint16_le(900);
-//
-//                 out_stream.out_uint32_le(SPI_SETMOUSEBUTTONSWAP);
-//                 out_stream.out_uint8(0);
-//
-//                 out_stream.out_uint32_le(RAIL_SPI_TASKBARPOS);
-//                 out_stream.out_uint16_le(0);
-//                 out_stream.out_uint16_le(0);
-//                 out_stream.out_uint16_le(1600);
-//                 out_stream.out_uint16_le(30);
-//
-//                 out_stream.out_uint32_le(SPI_SETCARETWIDTH);
-//                 out_stream.out_uint32_le(1);
-//
-//                 out_stream.out_uint32_le(SPI_SETSTICKYKEYS);
-//                 out_stream.out_uint32_le(1);
-//
-//                 out_stream.out_uint32_le(SPI_SETTOGGLEKEYS);
-//                 out_stream.out_uint32_le(1);
-//
-//                 out_stream.out_uint32_le(SPI_SETFILTERKEYS);
-//                 out_stream.out_uint32_le(1);
-//                 out_stream.out_uint32_le(1);
-//                 out_stream.out_uint32_le(1);
-//                 out_stream.out_uint32_le(1);
-//                 out_stream.out_uint32_le(1);
 
                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
