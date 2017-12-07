@@ -2223,7 +2223,7 @@ private:
                     ::msgdump_d(send, from_or_to_client, length, flags,
                     chunk.get_data(), total_length);
 
-                    rdpdr::streamLog(chunk, this->rdpdrLogStatus, length);
+                    rdpdr::streamLog(chunk, this->rdpdrLogStatus);
                 }
             }
 
@@ -7805,7 +7805,7 @@ private:
                     ::msgdump_d(send, from_or_to_client, length, flags,
                         stream.get_data()+8, chunk_size);
 
-                    rdpdr::streamLog(stream, this->rdpdrLogStatus, length);
+                    rdpdr::streamLog(stream, this->rdpdrLogStatus);
                 }
             }
 

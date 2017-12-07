@@ -2971,7 +2971,7 @@ public:
         LOG(LOG_INFO, "DEFAULT: FrameMarker");
     }
 
-    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
+    void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {
         LOG(LOG_INFO, "DEFAULT: RDPNineGrid");
     }
 
@@ -3360,7 +3360,7 @@ public:
                 //NullReportMessage * reportMessage  = nullptr;
                 struct timeval time;
                 gettimeofday(&time, nullptr);
-                PngParams png_params = {0, 0, std::chrono::milliseconds{60}, 100, true, this->info.remote_program, static_cast<bool>(ini.get<cfg::video::rt_display>())};
+                PngParams png_params = {0, 0, ini.get<cfg::video::png_interval>(), 100, ini.get<cfg::video::png_limit>(), true, this->info.remote_program, static_cast<bool>(ini.get<cfg::video::rt_display>())};
                 VideoParams videoParams = {Level::high, this->info.width, this->info.height, 0, 0, 0, std::string(""), true, true, false, ini.get<cfg::video::break_interval>(), 0};
                 OcrParams ocr_params = { ini.get<cfg::ocr::version>(),
                                             static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
