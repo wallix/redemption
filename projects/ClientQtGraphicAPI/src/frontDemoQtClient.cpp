@@ -45,13 +45,13 @@ class FrontDemoQtClient : public FrontQtRDPGraphicAPI
 public:
     FrontDemoQtClient(RDPVerbose verbose)
       : FrontQtRDPGraphicAPI(verbose)
-      , exe(*(this),  this->windowListCaps,  false)
       , is_apple(true)
+      , exe(*(this),  this->windowListCaps,  false)
     {}
 
     ~FrontDemoQtClient() {}
 
-    virtual mod_api * init_mod() override {
+    mod_api * init_mod() override {
 
         try {
             // VNC MOD
@@ -86,16 +86,16 @@ public:
         return this->mod;
     }
 
-    virtual void callback() override {
+    void callback() override {
         FrontQtRDPGraphicAPI::callback();
     }
 
-    virtual void connect() override {
+    void connect() override {
         FrontQtRDPGraphicAPI::connect();
         // TODO check verr num state
     }
 
-    virtual void options() override {
+    void options() override {
         FrontQtRDPGraphicAPI::options();
     }
 

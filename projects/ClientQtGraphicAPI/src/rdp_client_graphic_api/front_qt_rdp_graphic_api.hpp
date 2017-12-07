@@ -285,8 +285,8 @@ public:
         this->info.glyph_cache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_FULL;
     }
 
-    virtual void send_to_channel( const CHANNELS::ChannelDef & , uint8_t const *
-                                , std::size_t , std::size_t , int ) override {}
+    void send_to_channel( const CHANNELS::ChannelDef & , uint8_t const *
+                        , std::size_t , std::size_t , int ) override {}
 
     // CONTROLLER
     virtual void connexionReleased() = 0;
@@ -312,7 +312,7 @@ public:
     virtual void delete_replay_mod() = 0;
     virtual void callback() = 0;
 
-    virtual bool can_be_start_capture() override { return true; }
+    bool can_be_start_capture() override { return true; }
 
     virtual void options() {
         LOG(LOG_WARNING, "No options window implemented yet. Virtual function \"void options()\" must be override.");
@@ -796,7 +796,7 @@ public:
         return this->_portField.text().toInt();
     }
 
-    void keyPressEvent(QKeyEvent *e) {
+    void keyPressEvent(QKeyEvent *e) override {
         if (e->key() == Qt::Key_Enter) {
             this->connexionReleased();
         }
@@ -1311,7 +1311,7 @@ public:
         return this->_trans_cache_painter;
     }
 
-    void paintEvent(QPaintEvent * event) {
+    void paintEvent(QPaintEvent * event) override {
         Q_UNUSED(event);
 
         QPen                 pen;
@@ -1356,7 +1356,7 @@ public:
         this->_penColor = color;
     }
 
-    bool event(QEvent *event) {
+    bool event(QEvent *event) override {
         if (this->_front->is_replaying) {
             QHelpEvent *helpEvent = static_cast<QHelpEvent*>( event );
             QRect bar_zone(44, this->_height+4, this->reading_bar_len, READING_BAR_H);
@@ -1378,7 +1378,7 @@ public:
 
 
 private:
-    void mousePressEvent(QMouseEvent *e) {
+    void mousePressEvent(QMouseEvent *e) override {
         int x = e->x();
         int y = e->y();
         if (this->_front->is_replaying) {
@@ -1443,29 +1443,29 @@ private:
         }
     }
 
-    void mouseReleaseEvent(QMouseEvent *e) {
+    void mouseReleaseEvent(QMouseEvent *e) override {
         this->_front->mouseReleaseEvent(e, 0);
     }
 
-    void keyPressEvent(QKeyEvent *e) {
+    void keyPressEvent(QKeyEvent *e) override {
         this->_front->keyPressEvent(e);
     }
 
-    void keyReleaseEvent(QKeyEvent *e) {
+    void keyReleaseEvent(QKeyEvent *e) override {
         this->_front->keyReleaseEvent(e);
     }
 
-    void wheelEvent(QWheelEvent *e) {
+    void wheelEvent(QWheelEvent *e) override {
         this->_front->wheelEvent(e);
     }
 
-    void enterEvent(QEvent *event) {
+    void enterEvent(QEvent *event) override {
         Q_UNUSED(event);
         //this->update_current_cursor();
         //this->_front->_current_screen_index =  this->_screen_index;
     }
 
-    bool eventFilter(QObject *obj, QEvent *e) {
+    bool eventFilter(QObject *obj, QEvent *e) override {
         this->_front->eventFilter(obj, e, 0);
         return false;
     }
@@ -1699,7 +1699,7 @@ public:
         this->disconnect("");
     }
 
-    virtual bool must_be_stop_capture() override {
+    bool must_be_stop_capture() override {
 //         this->is_pipe_ok = false;
 //         if (this->capture) {
 //             this->capture.reset(nullptr);
@@ -1711,7 +1711,7 @@ public:
         return false;
     }
 
-    virtual void begin_update() override {
+    void begin_update() override {
 
         if (bool(this->verbose & RDPVerbose::graphics)) {
            LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -1729,7 +1729,7 @@ public:
         }
     }
 
-    virtual void end_update() override {
+    void end_update() override {
         if (bool(this->verbose & RDPVerbose::graphics)) {
            LOG(LOG_INFO, "--------- FRONT ------------------------");
            LOG(LOG_INFO, "end_update");
@@ -1748,7 +1748,7 @@ public:
         }
     }
 
-    virtual void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
+    void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
 
         if (this->is_replaying) {
             this->trans_cache->fill(Qt::transparent);
@@ -1758,7 +1758,7 @@ public:
         }
     }
 
-    virtual ResizeResult server_resize(int width, int height, int bpp) override{
+    ResizeResult server_resize(int width, int height, int bpp) override {
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d)", width, height, bpp);
@@ -1803,7 +1803,7 @@ public:
         return ResizeResult::instant_done;
     }
 
-    virtual void set_pointer(Pointer const & cursor) override {
+    void set_pointer(Pointer const & cursor) override {
 
         QImage image_data(cursor.data, cursor.width, cursor.height, this->bpp_to_QFormat(24, false));
         QImage image_mask(cursor.mask, cursor.width, cursor.height, QImage::Format_Mono);
@@ -1887,11 +1887,11 @@ public:
         this->replay_mod.reset();
     }
 
-    virtual bool is_no_win_data() {
+    bool is_no_win_data() override {
         return this->windowsData.no_data;
     }
 
-    virtual void writeWindowsConf() {
+    void writeWindowsConf() override {
         this->windowsData.write();
     }
 
@@ -2971,7 +2971,7 @@ public:
         LOG(LOG_INFO, "DEFAULT: FrameMarker");
     }
 
-    void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {
+    void draw(RDPNineGrid const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {
         LOG(LOG_INFO, "DEFAULT: RDPNineGrid");
     }
 
@@ -3049,15 +3049,8 @@ public:
         if (e->type() == QEvent::MouseMove)
         {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
-            int x = mouseEvent->x() + screen_shift;
-            int y = mouseEvent->y();
-
-            if (x < 0) {
-                x = 0;
-            }
-            if (y < 0) {
-                y = 0;
-            }
+            int const x = std::max(0, mouseEvent->x() + screen_shift);
+            int const y = std::max(0, mouseEvent->y());
 
 //             if (y > this->info.height) {
 //                 LOG(LOG_INFO, "eventFilter out");
@@ -3096,7 +3089,7 @@ public:
         this->mod->rdp_input_invalidate(rect);
     }
 
-    void CtrlAltDelPressed() {
+    void CtrlAltDelPressed() override {
         int flag = Keymap2::KBDFLAGS_EXTENDED;
 
         this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
@@ -3104,7 +3097,7 @@ public:
         this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
     }
 
-    void CtrlAltDelReleased() {
+    void CtrlAltDelReleased() override {
         int flag = Keymap2::KBDFLAGS_EXTENDED | KBD_FLAG_UP;
 
         this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
@@ -3360,7 +3353,7 @@ public:
                 //NullReportMessage * reportMessage  = nullptr;
                 struct timeval time;
                 gettimeofday(&time, nullptr);
-                PngParams png_params = {0, 0, ini.get<cfg::video::png_interval>(), 100, ini.get<cfg::video::png_limit>(), true, this->info.remote_program, static_cast<bool>(ini.get<cfg::video::rt_display>())};
+                PngParams png_params = {0, 0, ini.get<cfg::video::png_interval>(), 100, 0, true, this->info.remote_program, ini.get<cfg::video::rt_display>()};
                 VideoParams videoParams = {Level::high, this->info.width, this->info.height, 0, 0, 0, std::string(""), true, true, false, ini.get<cfg::video::break_interval>(), 0};
                 OcrParams ocr_params = { ini.get<cfg::ocr::version>(),
                                             static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
@@ -3454,7 +3447,7 @@ public:
         this->connected = false;
     }
 
-    virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
+    const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
         return this->cl;
     }
 
@@ -3465,7 +3458,7 @@ public:
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------
 
-    virtual void callback() override {
+    void callback() override {
 
         if (this->mod != nullptr) {
             try {

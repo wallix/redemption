@@ -73,7 +73,7 @@ project redemption_qt4_client
     <cxxflags>-std=c++14
 
     $(CXXFLAGS)
-    <toolset>gcc:<cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant
+    # <toolset>gcc:<cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant
 
     # <cxxflags>-fPIC
     <variant>debug:<cxxflags>-frtti
@@ -253,6 +253,7 @@ exe client_vnc_Qt$(qtversion) :
     libqtclient
 :
     $(EXE_DEPENDENCIES)
+    <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
 ;
 
 exe client_rdp_Qt$(qtversion) :
@@ -268,6 +269,7 @@ exe client_rdp_Qt$(qtversion) :
     libphonon
 :
     $(EXE_DEPENDENCIES)
+    <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
 ;
 
 alias client_vnc_Qt : client_vnc_Qt$(qtversion) ;

@@ -41,6 +41,8 @@
 #pragma GCC diagnostic pop
 
 
+constexpr long long WINDOWS_TICK = 10000000;
+constexpr long long SEC_TO_UNIX_EPOCH = 11644473600LL;
 
 
 class RDPClientQtFront : public Front_RDP_Qt_API
@@ -140,16 +142,16 @@ public:
     std::unique_ptr<mod_api> rdp_mod;
     std::unique_ptr<mod_api> rail_mod;
 
-    virtual void options() override {
+    void options() override {
         new DialogOptions_Qt(this, this->form);
     }
 
     unsigned WindowsTickToUnixSeconds(long long windowsTicks) {
-        return unsigned((windowsTicks / _WINDOWS_TICK) - _SEC_TO_UNIX_EPOCH);
+        return unsigned((windowsTicks / WINDOWS_TICK) - SEC_TO_UNIX_EPOCH);
     }
 
     long long UnixSecondsToWindowsTick(unsigned unixSeconds) {
-        return ((unixSeconds + _SEC_TO_UNIX_EPOCH) * _WINDOWS_TICK);
+        return ((unixSeconds + SEC_TO_UNIX_EPOCH) * WINDOWS_TICK);
     }
 
     uint32_t string_to_hex32(unsigned char * str) {
@@ -337,7 +339,7 @@ public:
         }
     }
 
-    virtual void writeClientInfo() override {
+    void writeClientInfo() override {
         std::fstream ofichier(this->USER_CONF_DIR);
         if(ofichier) {
 
@@ -417,7 +419,7 @@ public:
         }
     }
 
-    virtual void deleteCurrentProtile() {
+    void deleteCurrentProtile() override {
         std::ifstream ifichier(this->USER_CONF_DIR, std::ios::in);
         if(ifichier) {
 
@@ -457,7 +459,7 @@ public:
         }
     }
 
-    virtual void setDefaultConfig() {
+    void setDefaultConfig() override {
         //this->current_user_profil = 0;
         this->info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
         this->info.console_session = 0;
@@ -521,7 +523,7 @@ public:
     }
 
 
-    virtual mod_api * init_mod() override {
+    mod_api * init_mod() override {
 
         ModRDPParams mod_rdp_params( this->user_name.c_str()
                                    , this->user_password.c_str()
@@ -741,7 +743,7 @@ public:
     //      CONTROLLERS
     //------------------------
 
-    virtual void connect() override {
+    void connect() override {
 
         this->setClientInfo();
 
@@ -2042,7 +2044,7 @@ public:
                                             if (this->fileSystemData.paths.end() != this->fileSystemData.paths.find(id)) {
                                                 str_dir_path = this->fileSystemData.paths.at(id);
                                             } else {
-                                                LOG(LOG_WARNING, " Device I/O Query Directory Request Unknow ID (%d).", id);
+                                                LOG(LOG_WARNING, " Device I/O Query Directory Request Unknow ID (%u).", id);
                                                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                             }
 
@@ -2075,7 +2077,7 @@ public:
                                                             }
                                                         }
                                                     } catch (Error & e) {
-                                                        LOG(LOG_WARNING, "readdir error: (%d) %s", e.id, e.errmsg());
+                                                        LOG(LOG_WARNING, "readdir error: (%u) %s", e.id, e.errmsg());
                                                     }
                                                     closedir (dir);
 
@@ -2247,7 +2249,7 @@ public:
                                     if (this->fileSystemData.paths.end() != this->fileSystemData.paths.find(id)) {
                                         str_path = this->fileSystemData.paths.at(id);
                                     } else {
-                                        LOG(LOG_WARNING, " Device I/O Query Volume Information Request Unknow ID (%d).", id);
+                                        LOG(LOG_WARNING, " Device I/O Query Volume Information Request Unknow ID (%u).", id);
                                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                     }
 
@@ -3053,7 +3055,7 @@ public:
                                                                             );
                                         data_sent += first_part_data_size + RDPECLIP::FileDescriptor::size();
                                         if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                                            LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%d", data_sent, total_length);
+                                            LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%u", data_sent, total_length);
                                         }
 
                                         for (int i = 1; i < this->clipboard_qt->_cItems; i++) {
@@ -3085,7 +3087,7 @@ public:
 
                                             data_sent += RDPECLIP::FileDescriptor::size();
                                             if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                                                LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%d", data_sent, total_length);
+                                                LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%u", data_sent, total_length);
                                             }
                                         }
                                     }
@@ -3615,7 +3617,7 @@ public:
         this->empty_buffer();
     }
 
-    virtual void empty_buffer() override {
+    void empty_buffer() override {
         this->_cb_buffers.pic_bpp    = 0;
         this->_cb_buffers.sizeTotal  = 0;
         this->_cb_buffers.pic_width  = 0;
@@ -3660,7 +3662,7 @@ public:
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------
 
-    virtual void callback() override {
+    void callback() override {
         if (this->_recv_disconnect_ultimatum) {
             this->dropScreen();
             std::string labelErrorMsg("<font color='Red'>Disconnected by server</font>");

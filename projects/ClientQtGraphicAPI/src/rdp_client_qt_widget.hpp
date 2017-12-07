@@ -37,15 +37,10 @@
 #include "rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp"
 
 
-#define _SHARE_PATH "/share"
+#define SHARE_PATH "/share"
 #define CB_FILE_TEMP_PATH "/clipboard_temp"
 #define KEY_SETTING_PATH "/config/keySetting.config"
 #define USER_CONF_PATH "/config/userConfig.config"
-
-
-#define _WINDOWS_TICK 10000000
-#define _SEC_TO_UNIX_EPOCH 11644473600LL
-
 
 
 class Front_RDP_Qt_API : public FrontQtRDPGraphicAPI
@@ -230,7 +225,7 @@ public:
     , enable_shared_clipboard(false)
     , enable_shared_virtual_disk(false)
     , CB_TEMP_DIR(MAIN_DIR + std::string(CB_FILE_TEMP_PATH))
-    , SHARE_DIR(MAIN_DIR + std::string(_SHARE_PATH))
+    , SHARE_DIR(MAIN_DIR + std::string(SHARE_PATH))
     , USER_CONF_DIR(MAIN_DIR + std::string(USER_CONF_PATH))
     , clipbrdFormatsList()
     , _cb_filesList()

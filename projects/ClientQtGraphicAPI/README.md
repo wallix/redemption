@@ -160,21 +160,21 @@ L'API consiste à créer des clients composés de deux élément principaux:
 
     en option il est possible de reimplémenter les fonction suivantes:
 
-	    //  virtual void callback() override {
+	    //  void callback() override {
 	    //       FrontQtRDPGraphicAPI::callback();
 	    //  }
 	    
             callback() est appelée quand il y a un event socket, il est nécessaire de continuer à appeler 
             l'implémentation FrontQtRDPGraphicAPI::callback() dans l'override.
 
-	    //  virtual void connect() override {
+	    //  void connect() override {
 	    //       FrontQtRDPGraphicAPI::connect();
 	    //  }
 
             connect() est appelée quand le bouton "connection" est pressé, il est nécessaire de continuer à appeler 
             l'implémentation FrontQtRDPGraphicAPI::connect() dans l'override.
 
-	    //  virtual void options() override {}
+	    //  void options() override {}
 
             options() est appelée quand le bouton "options" est pressé, l'appel à l'implémentation de la classe mère 
             n'est pas nécessaire.
