@@ -84,10 +84,13 @@
 #   include <QtCore/QByteArray>
 #   include <QtCore/QUrl>
 #   include <QtCore/QtGlobal>
-
+#   include <phonon/AudioOutput>
+#   include <phonon/MediaObject>
 #   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
 #else
 #   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtWidgets/name>
+#   include <Phonon/AudioOutput>
+#   include <Phonon/MediaObject>
 #endif
 
 #include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
@@ -109,8 +112,6 @@
 
 #undef REDEMPTION_QT_INCLUDE_WIDGET
 
-#include <Phonon/AudioOutput>
-#include <Phonon/MediaObject>
 
 #endif
 
@@ -1807,17 +1808,17 @@ public:
         QImage image_data(cursor.data, cursor.width, cursor.height, this->bpp_to_QFormat(24, false));
         QImage image_mask(cursor.mask, cursor.width, cursor.height, QImage::Format_Mono);
 
-        if (cursor.mask[0x48] == 0xFF &&
-            cursor.mask[0x49] == 0xFF &&
-            cursor.mask[0x4A] == 0xFF &&
-            cursor.mask[0x4B] == 0xFF) {
-
-            image_mask = image_data.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-            image_data.invertPixels();
-
-        } else {
-            image_mask.invertPixels();
-        }
+//         if (cursor.mask[0x48] == 0xFF &&
+//             cursor.mask[0x49] == 0xFF &&
+//             cursor.mask[0x4A] == 0xFF &&
+//             cursor.mask[0x4B] == 0xFF) {
+//
+//             image_mask = image_data.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+//             image_data.invertPixels();
+//
+//         } else {
+        image_mask.invertPixels();
+//         }
 
         image_data = image_data.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
         image_mask = image_mask.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
