@@ -64,16 +64,35 @@ constant SHELL_PWD : [ SHELL "echo -n $PWD" ] ; # rule location
 
 constant MAIN_PATH : [ setvar MAIN_PATH : $(SHELL_PWD) ] ;
 
+rule disable-buggy-warn ( properties * )
+{
+    local ps = [ property-set.create $(properties) ] ;
+    local toolset = [ $(ps).get <toolset> ] ;
+    # TODO is not the real version. For toolset=gcc-5, version is 5
+    # gcc -dumpversion
+    # clang -dumpversion = llvm version ?
+    local version = [ $(ps).get <toolset-$(toolset):version> ] ;
+
+    local flags ;
+
+    if $(toolset) = gcc && ! [ ge-ver $(version) : 5.0.0 ]
+    {
+        flags += <cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant ;
+    }
+
+    return $(flags) ;
+}
+
 project redemption_qt4_client
     : requirements
 
     <conditional>@includes
     <conditional>@flags
+    <conditional>@disable-buggy-warn
 
     <cxxflags>-std=c++14
 
     $(CXXFLAGS)
-    # <toolset>gcc:<cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant
 
     # <cxxflags>-fPIC
     <variant>debug:<cxxflags>-frtti
