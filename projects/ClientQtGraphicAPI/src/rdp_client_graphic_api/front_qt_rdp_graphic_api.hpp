@@ -821,7 +821,6 @@ private Q_SLOTS:
                 }
             }
             if (!alreadySet && (this->_accountNB < MAX_ACCOUNT_DATA)) {
-                LOG(LOG_INFO, "ip = %s name = %s pwd = %s", this->get_IPField(), this->get_userNameField(), this->get_PWDField());
                 this->_accountData[this->_accountNB].title = title;
                 this->_accountData[this->_accountNB].IP    = this->get_IPField();
                 this->_accountData[this->_accountNB].name  = this->get_userNameField();

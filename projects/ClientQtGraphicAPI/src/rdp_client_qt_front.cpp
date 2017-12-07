@@ -754,12 +754,18 @@ public:
             DIR *pDir;
             pDir = opendir (this->CB_TEMP_DIR.c_str());
 
+            if (!pDir) {
+                mkdir(this->CB_TEMP_DIR.c_str(), 0777);
+            }
+
+            pDir = opendir (this->CB_TEMP_DIR.c_str());
+
             if (pDir) {
 
                 CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
                                                     , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                                    GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                                    GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                                      GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                                      GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
                                                     , CHANID_CLIPDRD
                                                     };
                 this->_to_client_sender._channel = channel_cliprdr;
@@ -1087,7 +1093,7 @@ public:
 
                 out_stream.out_uint32_le(RAIL_SPI_TASKBARPOS);
                 out_stream.out_uint16_le(0);
-                out_stream.out_uint16_le(0);
+                out_stream.out_uint16_le(870);
                 out_stream.out_uint16_le(1600);
                 out_stream.out_uint16_le(30);
 

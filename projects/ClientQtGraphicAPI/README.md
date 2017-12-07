@@ -50,7 +50,14 @@ sous protocole (copier/coller, partage de disque...).
 .) Compilation du client Qt RDP
 --------------------------------
 
-    Il existe une implémentation déjà présente d'un Client Qt RDP.
+    Prerequies
+    ----------
+	
+	Installer les lib Qt4 ou Qt5.
+
+    Compilation
+    -----------
+
     Pour le compiler il faut se placer dans le dossier redemption/project/ClientQtGraphicAPI:
 
     Pour compiler avec la librairie Qt4:
@@ -108,6 +115,8 @@ les options de la session RDP.
 	--asynchronous_task  affiche les logs des fonctions des tâches asynchrones du mod_rdp.
 	--capabilities       affiche les logs des capabilities lors de la négociation entre mod_rdp et cible.
 	--keyboard	     affiche les logs des entrées claviers.
+	--rail		     affiche les logs du cannal rail.
+	--rail_dump	     affiche les logs du cannal rail ainsi que le contenu brute des rail PDU.
 
 
     Boite de dialogue des options du client Qt RDP
