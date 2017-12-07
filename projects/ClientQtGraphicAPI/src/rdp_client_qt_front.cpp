@@ -1596,9 +1596,9 @@ public:
                                                 , 2       // DriverNameLen
                                                 , 8  // PrintNameLen
                                                 , 0       // CachedFieldsLen
-                                                , "\x00\x61\x00\x00" // nPName
-                                                , "\x61\x00"   // DriverName
-                                                , "\x00\x61\x00\x61\x00\x61\x00\x00" // PrintName
+                                                , const_cast<char*>("\x00\x61\x00\x00") // nPName
+                                                , const_cast<char*>("\x61\x00")   // DriverName
+                                                , const_cast<char*>("\x00\x61\x00\x61\x00\x61\x00\x00") // PrintName
                                                 );
                                 dahp.emit(out_stream);
 
@@ -3723,4 +3723,3 @@ int main(int argc, char** argv){
 
     //  xfreerdp /u:x /p: /port:3389 /v:10.10.43.46 /multimon /monitors:2
 }
-

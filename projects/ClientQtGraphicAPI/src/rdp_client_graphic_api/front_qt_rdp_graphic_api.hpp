@@ -66,7 +66,51 @@
 
 #include "core/RDP/RDPDrawable.hpp"
 
-#include "Qt4/Qt.hpp"
+#include <QtCore/QList>
+#include <QtCore/QTimer>
+#include <QtCore/QStringList>
+#include <QtCore/QMimeData>
+#include <QtCore/QSocketNotifier>
+#include <QtGui/QBitmap>
+#include <QtGui/QClipboard>
+#include <QtGui/QColor>
+#include <QtGui/QImage>
+#include <QtGui/QMouseEvent>
+#include <QtGui/QPainter>
+#include <QtGui/QRgb>
+#include <QtGui/QWheelEvent>
+
+#if REDEMPTION_QT_VERSION == 4
+#   include <QtCore/QByteArray>
+#   include <QtCore/QUrl>
+#   include <QtCore/QtGlobal>
+
+#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
+#else
+#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtWidgets/name>
+#endif
+
+#include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QCheckBox)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QComboBox)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QDesktopWidget)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QDialog)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QFileDialog)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QFormLayout)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QGridLayout)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QLabel)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QLineEdit)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QProgressBar)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QPushButton)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QTabWidget)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QTableWidget)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QToolTip)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
+
+#undef REDEMPTION_QT_INCLUDE_WIDGET
+
+#include <Phonon/AudioOutput>
+#include <Phonon/MediaObject>
 
 #endif
 
@@ -531,7 +575,7 @@ public:
     QPushButton          _buttonConnexion;
     QPushButton          _buttonOptions;
     QPushButton          _buttonReplay;
-    QCompleter         * _completer;
+    //QCompleter         * _completer;
     struct AccountData {
         std::string title;
         std::string IP;
@@ -692,7 +736,7 @@ public:
                 this->_IPCombobox.addItem(QString(title.c_str()), i+1);
                 stringList << title.c_str();
             }
-            this->_completer = new QCompleter(stringList, this);
+            //this->_completer = new QCompleter(stringList, this);
         }
      }
 
@@ -1622,7 +1666,7 @@ public:
       , keymap()
       , ctrl_alt_delete(false)
       , is_pipe_ok(true)
-      , remoteapp(true)
+      , remoteapp(false)
     {
         SSL_load_error_strings();
         SSL_library_init();

@@ -940,7 +940,7 @@ enum : int {
                 this->width = stream.in_uint32_le();
                 this->height = stream.in_uint32_le();
                 this->planes = stream.in_uint16_le();
-                assert(this->planes = PLANES_NUMBER);
+                assert(this->planes == PLANES_NUMBER);
                 this->bitCount = stream.in_uint16_le();
                 this->compression = stream.in_uint32_le();
                 this->imageSize = stream.in_uint32_le();
