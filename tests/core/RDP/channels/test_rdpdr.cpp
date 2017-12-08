@@ -600,7 +600,7 @@ RED_AUTO_TEST_CASE(streamLog)
 
     rdpdr::RdpDrStatus status;
 
-    rdpdr::streamLog(in_stream, status, len);
+    rdpdr::streamLog(in_stream, status);
 }
 
 RED_AUTO_TEST_CASE(ServerDriveLockControlRequestEmit)
