@@ -439,7 +439,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
 
     MwrmWriterBuf meta_file_buf;
     MwrmWriterBuf::HashArray dummy_hash;
-    struct stat st;
+    struct stat st {};
     meta_file_buf.write_hash_file(filename, st, false, dummy_hash, dummy_hash);
 
     RED_CHECK_EQUAL(meta_file_buf.buffer().size(), filesize(meta_hash_path));
