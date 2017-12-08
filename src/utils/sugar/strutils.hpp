@@ -26,7 +26,7 @@
 inline static char * in_place_windows_to_linux_newline_convert(char * s) {
     char * src, * dest;
 
-    REDASSERT(s);
+    assert(s);
 
     src = dest = s;
 
@@ -113,7 +113,7 @@ inline static bool ends_case_with(const char * str, size_t str_len, const char *
 //  terminated by an empty string (\0) so that the last two
 //  characters are both null terminators.
 inline static void SOHSeparatedStringsToMultiSZ(char * dest, size_t dest_size, const char * src) {
-    REDASSERT(dest_size > 1);
+    assert(dest_size > 1);
 
     char const * e = src + dest_size - 2;
     for (; src != e && *src; ++dest, ++src) {
@@ -126,7 +126,7 @@ inline static void SOHSeparatedStringsToMultiSZ(char * dest, size_t dest_size, c
 //  terminated by an empty string (\0) so that the last two
 //  characters are both null terminators.
 inline static void MultiSZCopy(char * dest, size_t dest_size, const char * src) {
-    REDASSERT(dest_size > 1);
+    assert(dest_size > 1);
 
     memset(dest, 0, dest_size);
     size_t total_len = 0;

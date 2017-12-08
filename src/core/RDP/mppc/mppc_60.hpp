@@ -201,8 +201,8 @@ static const size_t RDP_60_OFFSET_CACHE_SIZE = 8;
 
 static inline void cache_add(uint16_t * offset_cache, uint16_t copy_offset)
 {
-    REDASSERT(copy_offset);
-    REDASSERT((copy_offset != offset_cache[0]) && (copy_offset != offset_cache[1]) &&
+    assert(copy_offset);
+    assert((copy_offset != offset_cache[0]) && (copy_offset != offset_cache[1]) &&
         (copy_offset != offset_cache[2]) && (copy_offset != offset_cache[3]));
 
     *(offset_cache+3) = *(offset_cache+2);
@@ -214,7 +214,7 @@ static inline void cache_add(uint16_t * offset_cache, uint16_t copy_offset)
 
 static inline void cache_swap(uint16_t * offset_cache, uint16_t LUTIndex)
 {
-    REDASSERT(LUTIndex);
+    assert(LUTIndex);
 
     uint16_t t = *offset_cache;
     *offset_cache              = *(offset_cache + LUTIndex);
@@ -640,7 +640,7 @@ static inline void insert_n_bits_60(uint8_t n, uint32_t data,
         LOG(LOG_INFO, "data=%u bit=%u", data, n);
     }
 
-    REDASSERT(bits_left > 0);
+    assert(bits_left > 0);
 
     while (n)
     {
@@ -760,7 +760,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc
         size_t index;
         for (index = 0; *(table + index) < data; index++);
         if (*(table + index) > data) {
-            REDASSERT(index > 0);
+            assert(index > 0);
 
             return index - 1;
         }
@@ -855,7 +855,7 @@ private:
                     }
                 }
 
-                REDASSERT(!::memcmp(this->historyBuffer + previous_match, this->historyBuffer + offset, lom));
+                assert(!::memcmp(this->historyBuffer + previous_match, this->historyBuffer + offset, lom));
 
                 /////////////////////////////////////////////////////////////
                 // Fix 'short compressed stream' issue with MSTSC. Length of
@@ -875,7 +875,7 @@ private:
                 int offsetCacheIndex;
                 int LUTIndex;
                 if ((offsetCacheIndex = cache_find(this->offsetCache, copy_offset)) != -1) {
-                    REDASSERT((offsetCacheIndex >= 0) && (offsetCacheIndex <= 3));
+                    assert((offsetCacheIndex >= 0) && (offsetCacheIndex <= 3));
 
                     if (this->verbose) {
                         LOG(LOG_INFO, "offsetCacheIndex=%d", offsetCacheIndex);
@@ -898,7 +898,7 @@ private:
 
                     LUTIndex = indexOfEqualOrSmallerEntry<uint32_t>(copy_offset + 1,
                         CopyOffsetBaseLUT);
-                    REDASSERT((CopyOffsetBaseLUT[LUTIndex] == (copy_offset + 1)) ||
+                    assert((CopyOffsetBaseLUT[LUTIndex] == (copy_offset + 1)) ||
                         ((CopyOffsetBaseLUT[LUTIndex] < (copy_offset + 1)) &&
                          (CopyOffsetBaseLUT[LUTIndex + 1] > (copy_offset + 1))));
                     if (this->verbose) {
@@ -922,9 +922,9 @@ private:
                     }
                 }
 
-                REDASSERT(lom <= 514);
+                assert(lom <= 514);
                 LUTIndex = indexOfEqualOrSmallerEntry<uint16_t>(lom, LOMBaseLUT);
-                REDASSERT((LOMBaseLUT[LUTIndex] == lom) ||
+                assert((LOMBaseLUT[LUTIndex] == lom) ||
                     ((LOMBaseLUT[LUTIndex] < lom) && (LOMBaseLUT[LUTIndex + 1] > lom)));
                 if (this->verbose) {
                     LOG(LOG_INFO, "LUTIndex=%d", LUTIndex);

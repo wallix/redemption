@@ -24,7 +24,6 @@
 
 #pragma once
 
-#include "utils/log.hpp" // REDASSERT
 #include "utils/bitfu.hpp"
 #include "utils/utf.hpp"
 #include "utils/parse.hpp"
@@ -34,6 +33,7 @@
 #include <memory>
 #include <initializer_list>
 
+#include <cassert>
 #include <cstring> // for memcpy, memset
 
 
@@ -56,7 +56,7 @@ public:
     , end(array + len)
     , p(this->begin + offset)
     {
-        REDASSERT(len >= offset);
+        assert(len >= offset);
     }
 
     explicit InStream(char const * array, std::size_t len, std::size_t offset = 0)
@@ -105,7 +105,7 @@ public:
     }
 
     size_t in_remain() const {
-        REDASSERT(this->p.p <= this->end);
+        assert(this->p.p <= this->end);
         return this->end - this->p.p;
     }
 
@@ -120,13 +120,13 @@ public:
 
     // go back by the given amount (like rewind but relative)
     void unget(size_t n) {
-        REDASSERT(this->begin + n < this->p.p);
+        assert(this->begin + n < this->p.p);
         this->p.unget(n);
     }
 
     /// set current position to start buffer (\a p = \a begin)
     void rewind(std::size_t offset) {
-        REDASSERT(this->begin + offset <= this->end);
+        assert(this->begin + offset <= this->end);
         this->p.p = this->begin + offset;
     }
 
@@ -140,50 +140,50 @@ public:
     // =========================================================================
 
     int8_t in_sint8(void) {
-        REDASSERT(this->in_check_rem(1));
+        assert(this->in_check_rem(1));
         return this->p.in_sint8();
     }
 
     // ---------------------------------------------------------------------------
 
     uint8_t in_uint8(void) {
-        REDASSERT(this->in_check_rem(1));
+        assert(this->in_check_rem(1));
         return this->p.in_uint8();
     }
 
     /* Peek a byte from stream without move <p>. */
     uint8_t peek_uint8(void) {
-        REDASSERT(this->in_check_rem(1));
+        assert(this->in_check_rem(1));
         return *this->p.p;
     }
 
     int16_t in_sint16_be(void) {
-        REDASSERT(this->in_check_rem(2));
+        assert(this->in_check_rem(2));
         return this->p.in_sint16_be();
     }
 
     int16_t in_sint16_le(void) {
-        REDASSERT(this->in_check_rem(2));
+        assert(this->in_check_rem(2));
         return this->p.in_sint16_le();
     }
 
     uint16_t in_uint16_le(void) {
-        REDASSERT(this->in_check_rem(2));
+        assert(this->in_check_rem(2));
         return this->p.in_uint16_le();
     }
 
     uint16_t in_uint16_be(void) {
-        REDASSERT(this->in_check_rem(2));
+        assert(this->in_check_rem(2));
         return this->p.in_uint16_be();
     }
 
     uint32_t in_uint32_le(void) {
-        REDASSERT(this->in_check_rem(4));
+        assert(this->in_check_rem(4));
         return this->p.in_uint32_le();
     }
 
     uint32_t in_uint32_be(void) {
-        REDASSERT(this->in_check_rem(4));
+        assert(this->in_check_rem(4));
         return this->p.in_uint32_be();
     }
 
@@ -211,42 +211,42 @@ public:
     }
 
     uint64_t in_uint64_le(void) {
-        REDASSERT(this->in_check_rem(8));
+        assert(this->in_check_rem(8));
         return this->p.in_uint64_le();
     }
 
     uint64_t in_uint64_be(void) {
-        REDASSERT(this->in_check_rem(8));
+        assert(this->in_check_rem(8));
         return this->p.in_uint64_be();
     }
 
     uint32_t in_bytes_le(const uint8_t nb){
-        REDASSERT(this->in_check_rem(nb));
+        assert(this->in_check_rem(nb));
         return this->p.in_bytes_le(nb);
     }
 
     uint32_t in_bytes_be(const uint8_t nb){
-        REDASSERT(this->in_check_rem(nb));
+        assert(this->in_check_rem(nb));
         return this->p.in_bytes_be(nb);
     }
 
     void in_copy_bytes(uint8_t * v, size_t n) {
-        REDASSERT(this->in_check_rem(n));
+        assert(this->in_check_rem(n));
         return this->p.in_copy_bytes(v, n);
     }
 
     void in_copy_bytes(char * v, size_t n) {
-        REDASSERT(this->in_check_rem(n));
+        assert(this->in_check_rem(n));
         return this->p.in_copy_bytes(v, n);
     }
 
     const uint8_t *in_uint8p(unsigned int n) {
-        REDASSERT(this->in_check_rem(n));
+        assert(this->in_check_rem(n));
         return this->p.in_uint8p(n);
     }
 
     void in_skip_bytes(unsigned int n) {
-        REDASSERT(this->in_check_rem(n));
+        assert(this->in_check_rem(n));
         return this->p.in_skip_bytes(n);
     }
 
@@ -388,7 +388,7 @@ public:
     , end(array + len)
     , p(this->begin + offset)
     {
-        REDASSERT(len >= offset);
+        assert(len >= offset);
     }
 
     explicit OutStream(char * array, std::size_t len, std::size_t offset = 0)
@@ -445,7 +445,7 @@ public:
     // ---------------------------------------------------------------------------
 
     void out_uint64_le(uint64_t v) {
-        REDASSERT(this->has_room(8));
+        assert(this->has_room(8));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p[2] = (v >> 16) & 0xFF;
@@ -458,7 +458,7 @@ public:
     }
 
     void out_uint64_be(uint64_t v) {
-        REDASSERT(this->has_room(8));
+        assert(this->has_room(8));
         this->p[0] = (v >> 56) & 0xFF;
         this->p[1] = (v >> 48) & 0xFF;
         this->p[2] = (v >> 40) & 0xFF;
@@ -471,7 +471,7 @@ public:
     }
 
     void out_sint64_le(int64_t v) {
-        REDASSERT(this->has_room(8));
+        assert(this->has_room(8));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p[2] = (v >> 16) & 0xFF;
@@ -484,12 +484,12 @@ public:
     }
 
     void out_skip_bytes(unsigned int n) {
-        REDASSERT(this->has_room(n));
+        assert(this->has_room(n));
         this->p+=n;
     }
 
     void out_uint8(uint8_t v) {
-        REDASSERT(this->has_room(1));
+        assert(this->has_room(1));
         *(this->p++) = v;
     }
 
@@ -579,7 +579,7 @@ public:
 
 
     void out_4BUE(uint32_t v){
-        REDASSERT(!(v & 0xC0000000));
+        assert(!(v & 0xC0000000));
              if (v <= 0x3F      ) {
             this->out_uint8(static_cast<uint8_t>(v));
         }
@@ -653,12 +653,12 @@ public:
     }
 
     void out_sint8(char v) {
-        REDASSERT(this->has_room(1));
+        assert(this->has_room(1));
         *(this->p++) = v;
     }
 
     void out_uint16_le(unsigned int v) {
-        REDASSERT(this->has_room(2));
+        assert(this->has_room(2));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p+=2;
@@ -670,14 +670,14 @@ public:
     }
 
     void out_sint16_le(signed int v) {
-        REDASSERT(this->has_room(2));
+        assert(this->has_room(2));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p+=2;
     }
 
     void out_uint16_be(unsigned int v) {
-        REDASSERT(this->has_room(2));
+        assert(this->has_room(2));
         this->p[1] = v & 0xFF;
         this->p[0] = (v >> 8) & 0xFF;
         this->p+=2;
@@ -689,7 +689,7 @@ public:
     }
 
     void out_uint32_le(unsigned int v) {
-        REDASSERT(this->has_room(4));
+        assert(this->has_room(4));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p[2] = (v >> 16) & 0xFF;
@@ -705,7 +705,7 @@ public:
     }
 
     void out_uint32_be(unsigned int v) {
-        REDASSERT(this->has_room(4));
+        assert(this->has_room(4));
         this->p[0] = (v >> 24) & 0xFF;
         this->p[1] = (v >> 16) & 0xFF;
         this->p[2] = (v >> 8) & 0xFF;
@@ -714,7 +714,7 @@ public:
     }
 
     void set_out_uint32_be(unsigned int v, size_t offset) {
-        REDASSERT(this->has_room(4));
+        assert(this->has_room(4));
         (this->get_data())[offset+0] = (v >> 24) & 0xFF;
         (this->get_data())[offset+1] = (v >> 16) & 0xFF;
         (this->get_data())[offset+2] = (v >> 8) & 0xFF;
@@ -722,7 +722,7 @@ public:
     }
 
     void out_sint32_le(int64_t v) {
-        REDASSERT(this->has_room(4));
+        assert(this->has_room(4));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p[2] = (v >> 16) & 0xFF;
@@ -771,12 +771,12 @@ public:
 
     /// set current position to start buffer (\a p = \a begin)
     void rewind(std::size_t offset = 0) {
-        REDASSERT(this->begin + offset <= this->end);
+        assert(this->begin + offset <= this->end);
         this->p = this->begin + offset;
     }
 
     void out_copy_bytes(const void * v, size_t n) {
-        REDASSERT(this->has_room(n));
+        assert(this->has_room(n));
         memcpy(this->p, v, n);
         this->p += n;
     }
@@ -791,13 +791,13 @@ public:
     }
 
     void out_clear_bytes(size_t n) {
-        REDASSERT(this->has_room(n));
+        assert(this->has_room(n));
         memset(this->p, 0, n);
         this->p += n;
     }
 
     void out_bytes_le(const uint8_t nb, const unsigned value){
-        REDASSERT(this->has_room(nb));
+        assert(this->has_room(nb));
         ::out_bytes_le(this->p, nb, value);
         this->p += nb;
     }
@@ -932,7 +932,7 @@ struct OutReservedStreamHelper
     }
 
     Packet copy_to_head(OutStream const & stream) {
-        REDASSERT(stream.get_offset() <= this->reserved_leading_space);
+        assert(stream.get_offset() <= this->reserved_leading_space);
         this->buf -= stream.get_offset();
         this->reserved_leading_space -= stream.get_offset();
         memcpy(this->buf, stream.get_data(), stream.get_offset());
@@ -942,7 +942,7 @@ struct OutReservedStreamHelper
 
     Packet copy_to_head(OutStream const & stream1, OutStream const & stream2) {
         auto const total_stream_size = stream1.get_offset() + stream2.get_offset();
-        REDASSERT(total_stream_size <= this->reserved_leading_space);
+        assert(total_stream_size <= this->reserved_leading_space);
         this->reserved_leading_space -= total_stream_size;
         this->buf -= total_stream_size;
 
@@ -956,7 +956,7 @@ struct OutReservedStreamHelper
 
     Packet copy_to_head(OutStream const & stream1, OutStream const & stream2, OutStream const & stream3) {
         auto const total_stream_size = stream1.get_offset() + stream2.get_offset() + stream3.get_offset();
-        REDASSERT(total_stream_size <= this->reserved_leading_space);
+        assert(total_stream_size <= this->reserved_leading_space);
         this->reserved_leading_space -= total_stream_size;
         this->buf -= total_stream_size;
 
@@ -1007,12 +1007,12 @@ struct DynamicStreamWriter
     }
 
     void operator()(std::size_t, OutStream & ostream) const {
-        REDASSERT(ostream.get_capacity() == this->stream_size_);
+        assert(ostream.get_capacity() == this->stream_size_);
         this->apply_writer1(ostream, this->writer_, 1);
     }
 
     void operator()(std::size_t, OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz) const {
-        REDASSERT(ostream.get_capacity() == this->stream_size_);
+        assert(ostream.get_capacity() == this->stream_size_);
         this->apply_writer2(ostream, buf, used_buf_sz, this->writer_, 1);
     }
 

@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE Testscytale
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 #include "utils/log.hpp"
 
 #include "main/scytale.hpp"

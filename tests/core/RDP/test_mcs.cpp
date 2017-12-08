@@ -24,7 +24,6 @@
 #define RED_TEST_MODULE TestMCS
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "utils/stream.hpp"
 #include "test_only/transport/test_transport.hpp"

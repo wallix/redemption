@@ -415,7 +415,7 @@ private:
 
         this->recv_bmp_cache_count++;
 
-        REDASSERT(bmp.bmp.is_valid());
+        assert(bmp.bmp.is_valid());
 
         this->bmp_cache->put(bmp.id, bmp.idx, bmp.bmp, bmp.key1, bmp.key2);
         if (bool(this->verbose & RDPVerbose::graphics)) {
@@ -444,7 +444,7 @@ private:
 //
 //         this->recv_ninegrid_bmp_cache_count++;
 //
-//         REDASSERT(bmp_cache.bmp.is_valid());
+//         assert(bmp_cache.bmp.is_valid());
 //
 //         this->ninegrid_bmp_cache->put(bmp_cache.id, bmp_cache.idx, bmp_cache.bmp, bmp_cache.key1, bmp_cache.key2);
 //         if (bool(this->verbose & RDPVerbose::graphics)) {
@@ -655,7 +655,7 @@ public:
                         else {
                             LOG(LOG_ERR, "rdp_orders::process_orders: MEMBLT - Bitmap is not found in cache! cache_id=%u cache_index=%u",
                                 this->memblt.cache_id & 0x3u, this->memblt.cache_idx);
-                            REDASSERT(false);
+                            assert(false);
                         }
                     }
                     break;
@@ -679,7 +679,7 @@ public:
                         else {
                             LOG(LOG_ERR, "rdp_orders::process_orders: MEM3BLT - Bitmap is not found in cache! cache_id=%u cache_index=%u",
                                 this->mem3blt.cache_id & 0x3u, this->mem3blt.cache_idx);
-                            REDASSERT(false);
+                            assert(false);
                         }
                     }
                     break;
@@ -713,7 +713,7 @@ public:
             else {
                 /* error, this should always be set */
                 LOG(LOG_ERR, "Unsupported drawing order detected : protocol error. class=0x%02X", class_);
-                REDASSERT(false);
+                assert(false);
                 break;
             }
             processed++;

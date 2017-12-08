@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestGZipCompressionTransport
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "transport/gzip_compression_transport.hpp"
 #include "test_only/transport/test_transport.hpp"

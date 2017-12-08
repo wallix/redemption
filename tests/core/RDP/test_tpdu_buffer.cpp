@@ -24,7 +24,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#define LOGNULL
 #include "core/RDP/tpdu_buffer.hpp"
 
 struct BlockTransport : Transport

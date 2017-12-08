@@ -141,8 +141,8 @@ private:
 
 public:
     // DrawApi
-    bool can_be_start_capture() override { REDASSERT(false); return false; }
-    bool must_be_stop_capture() override { REDASSERT(false); return false; }
+    bool can_be_start_capture() override { assert(false); return false; }
+    bool must_be_stop_capture() override { assert(false); return false; }
 
     // FrontAPI
     const CHANNELS::ChannelDefArray & get_channel_list() const override {

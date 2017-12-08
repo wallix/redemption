@@ -23,7 +23,6 @@
 #define RED_TEST_MODULE Test_Bitmap_With_PNG
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "utils/drawable.hpp"
 #include "utils/bitmap_from_file.hpp"

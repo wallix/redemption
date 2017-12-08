@@ -505,7 +505,7 @@ protected:
 
     inline ClipboardVirtualChannel& get_clipboard_virtual_channel() {
         if (!this->clipboard_virtual_channel) {
-            REDASSERT(!this->clipboard_to_client_sender &&
+            assert(!this->clipboard_to_client_sender &&
                 !this->clipboard_to_server_sender);
 
             this->clipboard_to_client_sender =
@@ -526,7 +526,7 @@ protected:
 
     inline DynamicChannelVirtualChannel& get_dynamic_channel_virtual_channel() {
         if (!this->dynamic_channel_virtual_channel) {
-            REDASSERT(!this->dynamic_channel_to_client_sender &&
+            assert(!this->dynamic_channel_to_client_sender &&
                 !this->dynamic_channel_to_server_sender);
 
             this->dynamic_channel_to_client_sender =
@@ -546,7 +546,7 @@ protected:
 
     inline FileSystemVirtualChannel& get_file_system_virtual_channel() {
         if (!this->file_system_virtual_channel) {
-            REDASSERT(!this->file_system_to_client_sender &&
+            assert(!this->file_system_to_client_sender &&
                 !this->file_system_to_server_sender);
 
             this->file_system_to_client_sender =
@@ -571,7 +571,7 @@ protected:
 
     inline SessionProbeVirtualChannel& get_session_probe_virtual_channel() {
         if (!this->session_probe_virtual_channel) {
-            REDASSERT(!this->session_probe_to_server_sender);
+            assert(!this->session_probe_to_server_sender);
 
             this->session_probe_to_server_sender =
                 this->create_to_server_sender(channel_names::sespro);
@@ -594,7 +594,7 @@ protected:
 
     inline RemoteProgramsVirtualChannel& get_remote_programs_virtual_channel() {
         if (!this->remote_programs_virtual_channel) {
-            REDASSERT(!this->remote_programs_to_client_sender &&
+            assert(!this->remote_programs_to_client_sender &&
                 !this->remote_programs_to_server_sender);
 
             this->remote_programs_to_client_sender =
@@ -1292,7 +1292,7 @@ public:
             else {
                 if (mod_rdp_params.session_probe_use_clipboard_based_launcher &&
                     (mod_rdp_params.target_application && (*mod_rdp_params.target_application))) {
-                    REDASSERT(!this->session_probe_use_clipboard_based_launcher);
+                    assert(!this->session_probe_use_clipboard_based_launcher);
 
                     LOG(LOG_WARNING,
                         "mod_rdp: "
@@ -1571,6 +1571,8 @@ public:
                     this->verbose
                 );
         }
+
+        LOG(LOG_INFO, "RDP mod contructed");
     }   // mod_rdp
 
     ~mod_rdp() override {
@@ -2221,7 +2223,7 @@ private:
                     ::msgdump_d(send, from_or_to_client, length, flags,
                     chunk.get_data(), total_length);
 
-                    rdpdr::streamLog(chunk, this->rdpdrLogStatus, length);
+                    rdpdr::streamLog(chunk, this->rdpdrLogStatus);
                 }
             }
 
@@ -2620,7 +2622,7 @@ public:
 
                     // Inject a new channel for auth_channel virtual channel (wablauncher)
                     if (this->enable_auth_channel) {
-                        REDASSERT(this->auth_channel.c_str()[0]);
+                        assert(this->auth_channel.c_str()[0]);
                         memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->auth_channel.c_str(), 8);
                         cs_net.channelDefArray[cs_net.channelCount].options =
                             GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
@@ -2661,13 +2663,13 @@ public:
                     this->cs_monitor.emit(stream);
                 }
             },
-            [this](StreamSize<256>, OutStream & gcc_header, std::size_t packet_size) {
+            [](StreamSize<256>, OutStream & gcc_header, std::size_t packet_size) {
                 GCC::Create_Request_Send(
                     static_cast<OutPerStream&>(gcc_header),
                     packet_size
                 );
             },
-            [this](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
+            [](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
                 MCS::CONNECT_INITIAL_Send mcs(mcs_header, packet_size, MCS::BER_ENCODING);
                 (void)mcs;
             },
@@ -4094,7 +4096,7 @@ public:
 
                                         this->front.set_keyboard_indicators(LedFlags);
 
-                                        REDASSERT(sdata.payload.get_current() == sdata.payload.get_data_end());
+                                        assert(sdata.payload.get_current() == sdata.payload.get_data_end());
                                     }
                                     break;
 
@@ -4775,7 +4777,7 @@ public:
                     pointer_caps.pointerCacheSize      = 0;
                     pointer_caps.colorPointerCacheSize = 20;
                     pointer_caps.len                   = 8;
-                    REDASSERT(pointer_caps.colorPointerCacheSize <= sizeof(this->cursors) / sizeof(Pointer));
+                    assert(pointer_caps.colorPointerCacheSize <= sizeof(this->cursors) / sizeof(Pointer));
                 }
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
                     pointer_caps.log("Sending to server");
@@ -7705,7 +7707,7 @@ private:
     ) {
         (void)length;
         (void)chunk_size;
-        REDASSERT(stream.in_remain() == chunk_size);
+        assert(stream.in_remain() == chunk_size);
 
         if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) !=
             (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST))
@@ -7746,7 +7748,7 @@ private:
         channel.process_server_message(length, flags, stream.get_current(), chunk_size,
             out_asynchronous_task);
 
-        REDASSERT(!out_asynchronous_task);
+        assert(!out_asynchronous_task);
     }
 
     void process_cliprdr_event(
@@ -7766,7 +7768,7 @@ private:
         channel.process_server_message(length, flags, stream.get_current(), chunk_size,
             out_asynchronous_task);
 
-        REDASSERT(!out_asynchronous_task);
+        assert(!out_asynchronous_task);
     }   // process_cliprdr_event
 
     void process_rail_event(const CHANNELS::ChannelDef & rail_channel,
@@ -7779,7 +7781,7 @@ private:
         channel.process_server_message(length, flags, stream.get_current(), chunk_size,
             out_asynchronous_task);
 
-        REDASSERT(!out_asynchronous_task);
+        assert(!out_asynchronous_task);
     }
 
     void process_rdpdr_event(const CHANNELS::ChannelDef &,
@@ -7802,7 +7804,7 @@ private:
                     ::msgdump_d(send, from_or_to_client, length, flags,
                         stream.get_data()+8, chunk_size);
 
-                    rdpdr::streamLog(stream, this->rdpdrLogStatus, length);
+                    rdpdr::streamLog(stream, this->rdpdrLogStatus);
                 }
             }
 

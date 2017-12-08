@@ -25,7 +25,6 @@
 #define RED_TEST_MODULE TestVncConnection
 #include "system/redemption_unit_tests.hpp"
 
-//#define LOGNULL
 
 // include "transport/socket_transport.hpp"
 // include "core/client_info.hpp"

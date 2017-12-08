@@ -22,6 +22,7 @@
 #pragma once
 
 #include "core/RDP/capabilities/common.hpp"
+#include "utils/log.hpp"
 #include "utils/stream.hpp"
 
 // [MS-RDPBCGR] - 2.2.7.1.8 Glyph Cache Capability Set

@@ -23,7 +23,6 @@
 #define RED_TEST_MODULE TestNewOCR
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "capture/title_extractors/ppocr_titles_extractor.hpp"
 #include "capture/title_extractors/ocr_title_filter.hpp"

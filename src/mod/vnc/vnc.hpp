@@ -2267,8 +2267,8 @@ private:
 
                     // LOG(LOG_INFO, "VNC Encoding: ZRLE, run_length=%u", run_length);
 
-                    REDASSERT(!run_length);
-                    REDASSERT(!tile_data_length_remain);
+                    assert(!run_length);
+                    assert(!tile_data_length_remain);
                 }
                 else if (subencoding == 129)
                 {
@@ -2341,8 +2341,8 @@ private:
 
                     // LOG(LOG_INFO, "VNC Encoding: ZRLE, run_length=%u", run_length);
 
-                    REDASSERT(!run_length);
-                    REDASSERT(!tile_data_length_remain);
+                    assert(!run_length);
+                    assert(!tile_data_length_remain);
                 }
 
                 this->front.begin_update();
@@ -3794,8 +3794,8 @@ private:
             break;
 
             case RDPECLIP::CB_CHUNKED_FORMAT_DATA_RESPONSE:
-                REDASSERT(this->to_vnc_clipboard_data.get_offset() != 0);
-                REDASSERT(this->to_vnc_clipboard_data_size);
+                assert(this->to_vnc_clipboard_data.get_offset() != 0);
+                assert(this->to_vnc_clipboard_data_size);
 
                 // Virtual channel data span in multiple Virtual Channel PDUs.
                 if (bool(this->verbose & Verbose::basic_trace)) {
@@ -3824,7 +3824,7 @@ private:
                 }
 
                 if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
-                    REDASSERT((this->to_vnc_clipboard_data.get_capacity() < this->to_vnc_clipboard_data_size) ||
+                    assert((this->to_vnc_clipboard_data.get_capacity() < this->to_vnc_clipboard_data_size) ||
                         !this->to_vnc_clipboard_data_remaining);
 
                     this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_data(),

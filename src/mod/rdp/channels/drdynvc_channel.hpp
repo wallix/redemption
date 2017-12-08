@@ -134,9 +134,9 @@ public:
             // break;
 
             default:
-//                REDASSERT(false);
+//                assert(false);
 
-                if (bool(this->verbose & RDPVerbose::rail)) {
+                if (bool(this->verbose & RDPVerbose::drdynvc)) {
                     LOG(LOG_INFO,
                         "DynamicChannelVirtualChannel::process_client_message: "
                             "Delivering unprocessed messages %s(%u) to server.",
@@ -197,7 +197,7 @@ public:
             // break;
 
             default:
-//                REDASSERT(false);
+//                assert(false);
 
                 if (bool(this->verbose & RDPVerbose::drdynvc)) {
                     LOG(LOG_INFO,

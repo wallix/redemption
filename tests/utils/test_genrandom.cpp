@@ -27,7 +27,6 @@
 #define RED_TEST_MODULE TestGenRandom
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "utils/genrandom.hpp"
 #include "test_only/lcg_random.hpp"

@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "utils/log.hpp"
 #include "utils/stream.hpp"
 
 #include <string>

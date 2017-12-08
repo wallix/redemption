@@ -520,7 +520,7 @@ public:
     //}
 
     void emit_begin(OutStream & stream) const {
-        REDASSERT(this->output_stream == nullptr);
+        assert(this->output_stream == nullptr);
 
         this->output_stream = &stream;
 
@@ -535,7 +535,7 @@ public:
     }
 
     void emit_end() const {
-        REDASSERT(this->output_stream != nullptr);
+        assert(this->output_stream != nullptr);
 
         this->OrderSize =   this->output_stream->get_offset()
                           - this->offset_of_OrderSize
@@ -590,7 +590,7 @@ public:
     bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
         const uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->WindowId_);
 
-        REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+        assert(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
 
         if (client_window_id == this->WindowId_) {
             return false;
@@ -1729,7 +1729,7 @@ public:
             return this->window_rects[idx_window_rect];
         }
 
-        REDASSERT(false);
+        assert(false);
 
         return Rectangle();
     }
@@ -1761,7 +1761,7 @@ public:
             return this->visibility_rects[idx_visibility_rect];
         }
 
-        REDASSERT(false);
+        assert(false);
 
         return Rectangle();
     }
@@ -2074,7 +2074,7 @@ public:
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OWNER) {
             const uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->OwnerWindowId_);
 
-            REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+            assert(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
 
             if (this->OwnerWindowId_ != client_window_id) {
                 this->OwnerWindowId_ = client_window_id;
@@ -2479,7 +2479,7 @@ public:
     //}
 
     void emit_begin(OutStream & stream) const {
-        REDASSERT(this->output_stream == nullptr);
+        assert(this->output_stream == nullptr);
 
         this->output_stream = &stream;
 
@@ -2495,7 +2495,7 @@ public:
     }
 
     void emit_end() const {
-        REDASSERT(this->output_stream != nullptr);
+        assert(this->output_stream != nullptr);
 
         this->OrderSize =   this->output_stream->get_offset()
                           - this->offset_of_OrderSize
@@ -2547,7 +2547,7 @@ public:
     bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
         const uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->WindowId_);
 
-        REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+        assert(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
 
         if (client_window_id == this->WindowId_) {
             return false;
@@ -3268,7 +3268,7 @@ public:
     //}
 
     void emit_begin(OutStream & stream) const {
-        REDASSERT(this->output_stream == nullptr);
+        assert(this->output_stream == nullptr);
 
         this->output_stream = &stream;
 
@@ -3282,7 +3282,7 @@ public:
     }
 
     void emit_end() const {
-        REDASSERT(this->output_stream != nullptr);
+        assert(this->output_stream != nullptr);
 
         this->OrderSize =   this->output_stream->get_offset()
                           - this->offset_of_OrderSize
@@ -3597,7 +3597,7 @@ public:
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND) {
             uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->ActiveWindowId_);
 
-            REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+            assert(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
 
             if (client_window_id != this->ActiveWindowId_) {
                 this->ActiveWindowId_ = client_window_id;
@@ -3611,7 +3611,7 @@ public:
             for (uint16_t i = 0; i < this->NumWindowIds_; ++i) {
                 uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->window_ids_[i]);
 
-                REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+                assert(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
 
                 if (client_window_id != this->window_ids_[i]) {
                     this->window_ids_[i] = client_window_id;
@@ -3633,7 +3633,7 @@ public:
             }
 
             if (invalid_window_id_count) {
-                REDASSERT(this->NumWindowIds_ >= invalid_window_id_count);
+                assert(this->NumWindowIds_ >= invalid_window_id_count);
 
                 this->NumWindowIds_ -= invalid_window_id_count;
             }

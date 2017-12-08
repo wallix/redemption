@@ -24,7 +24,6 @@
 #include <chrono>
 #include <utility>
 #include <string>
-#include <chrono>
 
 #include <ctime> // localtime_r
 #include <cstdio> //snprintf
@@ -61,7 +60,6 @@
 #include "gdi/capture_api.hpp"
 #include "gdi/kbd_input_api.hpp"
 
-#include "capture/utils/match_finder.hpp"
 #include "capture/title_extractors/agent_title_extractor.hpp"
 #include "capture/title_extractors/ocr_title_filter.hpp"
 #include "capture/title_extractors/ocr_titles_extractor.hpp"
@@ -921,7 +919,7 @@ public:
                                     return;
                                 }
 
-                                REDASSERT(window_record.fields_present_flags &
+                                assert(window_record.fields_present_flags &
                                     RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET);
 
 // visibility_rect_record.rect.offset(
@@ -1572,7 +1570,7 @@ Capture::Capture(
 , capture_event{}
 , capture_drawable(capture_wrm || capture_video || capture_ocr || capture_png || capture_video_full)
 {
-   //REDASSERT(report_message ? order_bpp == capture_bpp : true);
+   //assert(report_message ? order_bpp == capture_bpp : true);
 
     if (capture_png || (capture_params.report_message && (capture_video || capture_ocr))) {
         if (recursive_create_directory(capture_params.record_tmp_path,
@@ -1595,7 +1593,7 @@ Capture::Capture(
         not_null_ptr<gdi::ImageFrameApi> image_frame_api_ptr = this->gd_drawable;
 
         if (!crop_rect.isempty()) {
-            REDASSERT(!capture_png || !png_params.real_time_image_capture)
+            assert(!capture_png || !png_params.real_time_image_capture);
             this->video_cropper.reset(new VideoCropper(
                     *this->gd_drawable,
                     crop_rect.x,
@@ -1612,7 +1610,7 @@ Capture::Capture(
         if (capture_png) {
             if (png_params.real_time_image_capture) {
                 if (png_params.remote_program_session) {
-                    REDASSERT(image_frame_api_ptr == this->gd_drawable);
+                    assert(image_frame_api_ptr == this->gd_drawable);
 
                     this->video_cropper.reset(new VideoCropper(
                             *this->gd_drawable,

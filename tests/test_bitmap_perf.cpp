@@ -24,8 +24,6 @@
 #define RED_TEST_MODULE TestBitmapPerf
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
-
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "utils/difftimeval.hpp"

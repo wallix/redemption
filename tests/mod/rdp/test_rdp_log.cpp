@@ -23,7 +23,6 @@
 #define RED_TEST_MODULE TestXXXXXXXXXX
 #include "system/redemption_unit_tests.hpp"
 
-// #define LOGNULL
 
 #include "mod/rdp/rdp_log.hpp"
 

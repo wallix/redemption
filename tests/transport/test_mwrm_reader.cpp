@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestMwrmReader
 #include "system/redemption_unit_tests.hpp"
 
-// #define LOGNULL
 
 #include "utils/sugar/iter.hpp"
 #include "utils/genfstat.hpp"

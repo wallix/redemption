@@ -475,15 +475,15 @@ enum : int {
         void recv(InStream & stream) {
             this->type = stream.in_uint16_le();
             this->headerSize = stream.in_uint16_le();
-            REDASSERT(this->headerSize == 9);
+            assert(this->headerSize == 9);
             this->version = stream.in_uint16_le();
             this->size = stream.in_uint32_le();
-            REDASSERT(this->size >=  METAFILE_WORDS_HEADER_SIZE);
+            assert(this->size >=  METAFILE_WORDS_HEADER_SIZE);
             this->numberOfObjects = stream.in_uint16_le();
             this->maxRecord = stream.in_uint32_le();
-            REDASSERT(this->maxRecord >=  META_DIBSTRETCHBLT_HEADER_SIZE);
+            assert(this->maxRecord >=  META_DIBSTRETCHBLT_HEADER_SIZE);
             this->numberOfMembers = stream.in_uint16_le();
-            REDASSERT(this->numberOfMembers == 0);
+            assert(this->numberOfMembers == 0);
         }
 
         void log() const {
@@ -593,7 +593,7 @@ enum : int {
 
         void recv(InStream & stream) {
             Record::recv(stream);
-            REDASSERT(this->recordSize == 4);
+            assert(this->recordSize == 4);
             this->mappingMode = stream.in_uint16_le();
         }
 
@@ -657,7 +657,7 @@ enum : int {
 
         void recv(InStream & stream) {
             Record::recv(stream);
-            REDASSERT(this->recordSize == 5);
+            assert(this->recordSize == 5);
             this->height = stream.in_uint16_le();
             this->width = stream.in_uint16_le();
         }
@@ -722,7 +722,7 @@ enum : int {
 
         void recv(InStream & stream) {
             Record::recv(stream);
-            REDASSERT(this->recordSize == 5);
+            assert(this->recordSize == 5);
             this->yOrg = stream.in_uint16_le();
             this->xOrg = stream.in_uint16_le();
         }
@@ -940,7 +940,7 @@ enum : int {
                 this->width = stream.in_uint32_le();
                 this->height = stream.in_uint32_le();
                 this->planes = stream.in_uint16_le();
-                REDASSERT(this->planes = PLANES_NUMBER);
+                assert(this->planes == PLANES_NUMBER);
                 this->bitCount = stream.in_uint16_le();
                 this->compression = stream.in_uint32_le();
                 this->imageSize = stream.in_uint32_le();
@@ -1044,9 +1044,9 @@ enum : int {
         , yDest(0)
         , xDest(0)
         {
-            //REDASSERT( (this->srcHeight * this->srcWidth * this->bitmapInfoHeader.bitCount / 8) == int(this->bitmapInfoHeader.imageSize));
-//             REDASSERT(uint16_t(this->bitmapInfoHeader.height) == this->destHeight);
-//             REDASSERT(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
+            //assert( (this->srcHeight * this->srcWidth * this->bitmapInfoHeader.bitCount / 8) == int(this->bitmapInfoHeader.imageSize));
+//             assert(uint16_t(this->bitmapInfoHeader.height) == this->destHeight);
+//             assert(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
         }
 
         void emit(OutStream & stream) const {
@@ -1066,7 +1066,7 @@ enum : int {
 
         void recv(InStream & stream) {
             Record::recv(stream);
-            REDASSERT(this->recordSize >= META_DIBSTRETCHBLT_HEADER_SIZE/2);
+            assert(this->recordSize >= META_DIBSTRETCHBLT_HEADER_SIZE/2);
             this->rasterOperation = stream.in_uint32_le();
             this->srcHeight = stream.in_uint16_le();
             this->srcWidth = stream.in_uint16_le();
@@ -1078,9 +1078,9 @@ enum : int {
             this->xDest = stream.in_uint16_le();
 
             this->bitmapInfoHeader.recv(stream);
-            //REDASSERT( (this->srcHeight * this->srcWidth * this->bitmapInfoHeader.bitCount / 8) == int(this->bitmapInfoHeader.imageSize));
-//             REDASSERT(uint16_t(this->bitmapInfoHeader.height) == this->destHeight);
-//             REDASSERT(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
+            //assert( (this->srcHeight * this->srcWidth * this->bitmapInfoHeader.bitCount / 8) == int(this->bitmapInfoHeader.imageSize));
+//             assert(uint16_t(this->bitmapInfoHeader.height) == this->destHeight);
+//             assert(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
         }
 
         void log() const {

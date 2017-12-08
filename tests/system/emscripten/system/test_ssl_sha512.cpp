@@ -1,6 +1,5 @@
 #define RED_TEST_MODULE TestSha512
 
-#define LOGNULL
 
 #include "system/ssl_sha512.hpp"
 

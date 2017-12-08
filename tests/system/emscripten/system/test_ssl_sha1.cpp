@@ -1,6 +1,5 @@
 #define RED_TEST_MODULE TestSha1
 
-#define LOGNULL
 
 #include "system/ssl_sha1.hpp"
 

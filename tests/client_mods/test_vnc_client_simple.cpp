@@ -25,7 +25,6 @@
 #define RED_TEST_MODULE TestVncClientSimple
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "test_only/transport/test_transport.hpp"
 #include "core/client_info.hpp"

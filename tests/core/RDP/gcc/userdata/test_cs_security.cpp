@@ -23,7 +23,6 @@
 #define RED_TEST_MODULE TestCS_SECURITY
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "test_only/transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/cs_security.hpp"

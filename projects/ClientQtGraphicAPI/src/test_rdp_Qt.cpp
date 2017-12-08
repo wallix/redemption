@@ -25,7 +25,6 @@
 #include "system/redemption_unit_tests.hpp"
 #include <unistd.h>
 
-#define LOGNULL
 #include "configs/config.hpp"
 
 #include "../src/front/front_widget_Qt.hpp"

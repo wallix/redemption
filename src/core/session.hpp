@@ -27,7 +27,6 @@
 #include <sys/resource.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
-#include <netinet/tcp.h>
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
@@ -491,7 +490,7 @@ public:
 private:
     void write_performance_log(time_t now) {
         if (!this->perf_last_info_collect_time) {
-            REDASSERT(!this->perf_file);
+            assert(!this->perf_file);
 
             this->perf_last_info_collect_time = now - this->select_timeout_tv_sec;
 

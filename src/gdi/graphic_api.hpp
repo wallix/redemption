@@ -30,7 +30,6 @@
 
 class Font;
 
-struct BGRPalette;
 class RDPDestBlt;
 class RDPMultiDstBlt;
 class RDPPatBlt;
@@ -49,7 +48,6 @@ class RDPEllipseCB;
 
 struct RDPBitmapData;
 struct Pointer;
-struct Rect;
 class Bitmap;
 class GlyphCache;
 

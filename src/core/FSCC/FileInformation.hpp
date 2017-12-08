@@ -27,6 +27,7 @@
 
 #include "core/error.hpp"
 
+#include "utils/log.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/stream.hpp"
 #include "utils/hexdump.hpp"
@@ -603,7 +604,7 @@ struct ReparseGUIDDataBuffer {
     , ReparseDataLength(ReparseDataLength)
     {
         std::memcpy(this->ReparseGuid, ReparseGuid, GUID_SIZE);
-//         REDASSERT(ReparseDataLength <=  65536);
+//         assert(ReparseDataLength <=  65536);
         std::memcpy(this->DataBuffer, DataBuffer, ReparseDataLength);
     }
 

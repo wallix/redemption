@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestWidgetGroupBox
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "core/font.hpp"
 #include "mod/internal/widget/flat_button.hpp"

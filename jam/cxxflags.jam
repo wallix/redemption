@@ -363,6 +363,13 @@ rule flags ( properties * )
 
             #<cxxflags>-Qunused-arguments
         ;
+
+        if [ ge-ver $(version) : 5.0 ]
+        {
+            flags +=
+                <cxxflags>-Wno-inconsistent-missing-destructor-override
+            ;
+        }
     }
 
     ## Sanitizers

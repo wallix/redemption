@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestSocketTransport
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "transport/socket_transport.hpp"
 #include "core/listen.hpp"

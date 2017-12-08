@@ -23,7 +23,6 @@
 #define RED_TEST_MODULE TestSC_CORE
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "core/RDP/gcc/userdata/sc_core.hpp"  
 

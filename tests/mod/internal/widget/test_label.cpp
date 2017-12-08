@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE TestWidgetLabel
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "keyboard/keymap2.hpp"
 #include "core/font.hpp"

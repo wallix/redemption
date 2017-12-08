@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE TestFlatLogin
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "mod/internal/widget/flat_login.hpp"
 #include "mod/internal/widget/screen.hpp"

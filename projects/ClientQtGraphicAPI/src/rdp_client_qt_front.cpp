@@ -22,6 +22,7 @@
 
 #include "utils/log.hpp"
 
+#include <dirent.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/ioctl.h>
@@ -32,7 +33,7 @@
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "configs/autogen/enums.hpp"
-
+#include "mod/internal/rail_module_host_mod.hpp"
 
 #include "rdp_client_qt_widget.hpp"
 
@@ -40,6 +41,8 @@
 #pragma GCC diagnostic pop
 
 
+constexpr long long WINDOWS_TICK = 10000000;
+constexpr long long SEC_TO_UNIX_EPOCH = 11644473600LL;
 
 
 class RDPClientQtFront : public Front_RDP_Qt_API
@@ -67,7 +70,8 @@ public:
         CHANID_CLIPDRD = 1601,
         CHANID_RDPDR   = 1602,
         CHANID_WABDIAG = 1603,
-        CHANID_RDPSND  = 1604
+        CHANID_RDPSND  = 1604,
+        CHANID_RAIL    = 1605
     };
 
 
@@ -133,17 +137,21 @@ public:
     timeval paste_data_request_time;
     long paste_data_len = 0;
 
+    ClientExecute client_execute;
 
-    virtual void options() override {
+    std::unique_ptr<mod_api> rdp_mod;
+    std::unique_ptr<mod_api> rail_mod;
+
+    void options() override {
         new DialogOptions_Qt(this, this->form);
     }
 
     unsigned WindowsTickToUnixSeconds(long long windowsTicks) {
-        return unsigned((windowsTicks / _WINDOWS_TICK) - _SEC_TO_UNIX_EPOCH);
+        return unsigned((windowsTicks / WINDOWS_TICK) - SEC_TO_UNIX_EPOCH);
     }
 
     long long UnixSecondsToWindowsTick(unsigned unixSeconds) {
-        return ((unixSeconds + _SEC_TO_UNIX_EPOCH) * _WINDOWS_TICK);
+        return ((unixSeconds + SEC_TO_UNIX_EPOCH) * WINDOWS_TICK);
     }
 
     uint32_t string_to_hex32(unsigned char * str) {
@@ -331,7 +339,7 @@ public:
         }
     }
 
-    virtual void writeClientInfo() override {
+    void writeClientInfo() override {
         std::fstream ofichier(this->USER_CONF_DIR);
         if(ofichier) {
 
@@ -411,7 +419,7 @@ public:
         }
     }
 
-    virtual void deleteCurrentProtile() {
+    void deleteCurrentProtile() override {
         std::ifstream ifichier(this->USER_CONF_DIR, std::ios::in);
         if(ifichier) {
 
@@ -451,7 +459,7 @@ public:
         }
     }
 
-    virtual void setDefaultConfig() {
+    void setDefaultConfig() override {
         //this->current_user_profil = 0;
         this->info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
         this->info.console_session = 0;
@@ -515,7 +523,7 @@ public:
     }
 
 
-    virtual mod_api * init_mod() override {
+    mod_api * init_mod() override {
 
         ModRDPParams mod_rdp_params( this->user_name.c_str()
                                    , this->user_password.c_str()
@@ -542,22 +550,67 @@ public:
         std::string allow_channels = "*";
         mod_rdp_params.allow_channels                  = &allow_channels;
         mod_rdp_params.deny_channels = nullptr;
+
+        if (this->remoteapp) {
+            this->client_execute.enable_remote_program(true);
+            mod_rdp_params.remote_program = true;
+            mod_rdp_params.client_execute = &(this->client_execute);
+            mod_rdp_params.remote_program_enhanced = INFO_HIDEF_RAIL_SUPPORTED;
+            mod_rdp_params.use_client_provided_remoteapp = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
+            mod_rdp_params.use_session_probe_to_launch_remote_program = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
+        }
+
         //mod_rdp_params.verbose = to_verbose_flags(0);
 
 
         try {
-            this->mod = new mod_rdp( *(this->socket)
-                                    , *(this)
-                                    , this->info
-                                    , ini.get_ref<cfg::mod_rdp::redir_info>()
-                                    , this->gen
-                                    , this->timeSystem
-                                    , mod_rdp_params
-                                    , this->authentifier
-                                    , this->reportMessage
-                                    , this->ini
-                                    );
+            this->mod = nullptr;
+
+            this->rdp_mod.reset(new mod_rdp( *(this->socket)
+                                           , *(this)
+                                           , this->info
+                                           , ini.get_ref<cfg::mod_rdp::redir_info>()
+                                           , this->gen
+                                           , this->timeSystem
+                                           , mod_rdp_params
+                                           , this->authentifier
+                                           , this->reportMessage
+                                           , this->ini
+                                           ));
+
+
+            if (this->remoteapp) {
+
+                std::string target_info = this->ini.get<cfg::context::target_str>();
+                target_info += ":";
+                target_info += this->ini.get<cfg::globals::primary_user_id>();
+
+                this->client_execute.set_target_info(target_info.c_str());
+
+                this->rail_mod.reset(new RailModuleHostMod(
+                                        this->ini,
+                                        *(this),
+                                        this->info.width,
+                                        this->info.height,
+                                        Rect(0, 0, this->info.width, this->info.height),
+                                        std::move(this->rdp_mod),
+                                        this->client_execute,
+                                        this->info.cs_monitor,
+                                        false
+                                    ));
+
+                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
+
+                this->mod = this->rail_mod.get();
+
+
+            } else {
+
+                this->mod = this->rdp_mod.get();
+            }
+
             this->mod->invoke_asynchronous_graphic_task(mod_api::AsynchronousGraphicTask::none);
+
 
         } catch (const Error &) {
             return nullptr;
@@ -581,6 +634,7 @@ public:
         , _monitorCountNegociated(false)
         , _waiting_for_data(false)
         , close_box_extra_message_ref("Close")
+        , client_execute(*(this), this->info.window_list_caps,  false)
     {
         this->clipboard_qt = new ClipBoard_Qt(this, this->form);
         this->sound_qt     = new Sound_Qt(this->form, this);
@@ -644,6 +698,10 @@ public:
                 this->verbose = RDPVerbose::capabilities | this->verbose;
             } else if (word ==  "--keyboard") {
                 this->qtRDPKeymap._verbose = 1;
+            } else if (word ==  "--rail") {
+                this->verbose = RDPVerbose::rail | this->verbose;
+            } else if (word ==  "--rail_dump") {
+                this->verbose = RDPVerbose::rail_dump | this->verbose;
             }
         }
 
@@ -685,7 +743,7 @@ public:
     //      CONTROLLERS
     //------------------------
 
-    virtual void connect() override {
+    void connect() override {
 
         this->setClientInfo();
 
@@ -695,7 +753,47 @@ public:
         this->cl.clear_channels();
 
         if (this->enable_shared_clipboard) {
+            DIR *pDir;
+            pDir = opendir (this->CB_TEMP_DIR.c_str());
 
+            if (!pDir) {
+                mkdir(this->CB_TEMP_DIR.c_str(), 0777);
+            }
+
+            pDir = opendir (this->CB_TEMP_DIR.c_str());
+
+            if (pDir) {
+
+                CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
+                                                    , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                                      GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                                      GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                                    , CHANID_CLIPDRD
+                                                    };
+                this->_to_client_sender._channel = channel_cliprdr;
+                this->cl.push_back(channel_cliprdr);
+
+                this->clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS
+                                                , this->clipbrdFormatsList.FILECONTENTS
+                                                );
+                this->clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW
+                                                , this->clipbrdFormatsList.FILEGROUPDESCRIPTORW
+                                                );
+                this->clipbrdFormatsList.add_format( RDPECLIP::CF_UNICODETEXT
+                                                , std::string("\0\0", 2)
+                                                );
+                this->clipbrdFormatsList.add_format( RDPECLIP::CF_TEXT
+                                                , std::string("\0\0", 2)
+                                                );
+                this->clipbrdFormatsList.add_format( RDPECLIP::CF_METAFILEPICT
+                                                , std::string("\0\0", 2)
+                                                );
+            } else {
+                LOG(LOG_WARNING, "Can't enable shared clipboard, %s directory doesn't exist.", this->CB_TEMP_DIR);
+            }
+        }
+
+        if (this->enable_shared_virtual_disk) {
             std::string tmp(this->SHARE_DIR);
             int pos(tmp.find("/"));
 
@@ -730,34 +828,6 @@ public:
             this->fileSystemData.devices[this->fileSystemData.devicesCount].type = rdpdr::RDPDR_DTYP_PRINT;
             this->fileSystemData.devicesCount++;
 
-
-            CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
-                                                 , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                                   GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                                   GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                                 , CHANID_CLIPDRD
-                                                 };
-            this->_to_client_sender._channel = channel_cliprdr;
-            this->cl.push_back(channel_cliprdr);
-
-            this->clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS
-                                               , this->clipbrdFormatsList.FILECONTENTS
-                                               );
-            this->clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW
-                                               , this->clipbrdFormatsList.FILEGROUPDESCRIPTORW
-                                               );
-            this->clipbrdFormatsList.add_format( RDPECLIP::CF_UNICODETEXT
-                                               , std::string("\0\0", 2)
-                                               );
-            this->clipbrdFormatsList.add_format( RDPECLIP::CF_TEXT
-                                               , std::string("\0\0", 2)
-                                               );
-            this->clipbrdFormatsList.add_format( RDPECLIP::CF_METAFILEPICT
-                                               , std::string("\0\0", 2)
-                                               );
-        }
-
-        if (this->enable_shared_virtual_disk) {
             CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
                                               , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                                 GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
@@ -765,6 +835,31 @@ public:
                                               };
             this->cl.push_back(channel_rdpdr);
         }
+
+        if (this->remoteapp) {
+            this->info.remote_program |= INFO_RAIL;
+            this->info.remote_program_enhanced |= INFO_HIDEF_RAIL_SUPPORTED;
+            this->info.rail_caps.RailSupportLevel =   TS_RAIL_LEVEL_SUPPORTED
+                                                    | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED
+                                                    | TS_RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED
+                                                    | TS_RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED
+                                                    | TS_RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED
+                                                    | TS_RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED
+                                                    | TS_RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED
+                                                    | TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
+
+            this->info.window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED;
+            this->info.window_list_caps.NumIconCaches = 3;
+            this->info.window_list_caps.NumIconCacheEntries = 12;
+        }
+
+        CHANNELS::ChannelDef channel_rail { channel_names::rail
+                                          , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                            GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                            GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                          , CHANID_RAIL
+                                          };
+        this->cl.push_back(channel_rail);
 
 //         CHANNELS::ChannelDef channel_WabDiag { channel_names::wabdiag
 //                                              , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
@@ -814,6 +909,9 @@ public:
             case CHANID_RDPSND:  this->process_server_rdpsnd_PDU(chunk, flags);
                 break;
 
+            case CHANID_RAIL:  this->process_server_rail_PDU(chunk, flags);
+                break;
+
             case CHANID_WABDIAG:
             {
                 int len = chunk.in_uint32_le();
@@ -836,6 +934,206 @@ public:
             default: LOG(LOG_WARNING, " send_to_channel unknow channel id: %d", channel.chanid);
                 break;
         }
+    }
+
+    void process_server_rail_PDU(InStream & stream, int) {
+
+        RAILPDUHeader header;
+        header.receive(stream);
+
+        switch (header.orderType()) {
+
+            case TS_RAIL_ORDER_HANDSHAKE:
+                {
+                LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE");
+                HandshakePDU hspdu;
+                hspdu.receive(stream);
+
+                StaticOutStream<32> out_stream;
+
+                out_stream.out_uint16_le(header.orderType());
+                out_stream.out_uint16_le(header.orderLength());
+                out_stream.out_uint32_le(hspdu.buildNumber());
+
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                this->mod->send_to_mod_channel( channel_names::rail
+                                              , chunk_to_send
+                                              , out_stream.get_offset()
+                                              , CHANNELS::CHANNEL_FLAG_LAST |
+                                                CHANNELS::CHANNEL_FLAG_FIRST
+                                              );
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE");
+                }
+                {
+                StaticOutStream<32> out_stream;
+                out_stream.out_uint16_le(TS_RAIL_ORDER_CLIENTSTATUS);
+                out_stream.out_uint16_le(8);
+                out_stream.out_uint32_le( TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE
+                                        | TS_RAIL_CLIENTSTATUS_AUTORECONNECT
+                                        | TS_RAIL_CLIENTSTATUS_ZORDER_SYNC
+                                        | TS_RAIL_CLIENTSTATUS_WINDOW_RESIZE_MARGIN_SUPPORTED
+                                        | TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED
+                                        );
+
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                this->mod->send_to_mod_channel( channel_names::rail
+                                              , chunk_to_send
+                                              , out_stream.get_offset()
+                                              , CHANNELS::CHANNEL_FLAG_LAST |
+                                                CHANNELS::CHANNEL_FLAG_FIRST
+                                              );
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_CLIENTSTATUS");
+                }
+                {
+
+                StaticOutStream<1600> out_stream;
+
+                ClientExecutePDU cepdu;
+                cepdu.Flags_ = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
+                cepdu.exe_or_file = std::string("C:\\Windows\\system32\\notepad.exe");
+                cepdu.working_dir = std::string("C:\\Users\\user1");
+
+                out_stream.out_uint16_le(TS_RAIL_ORDER_EXEC);
+                out_stream.out_uint16_le( (cepdu.exe_or_file.size()*2)
+                                        + (cepdu.working_dir.size() *2)
+                                        + (cepdu.arguments.size() *2)
+                                        + 6);
+                cepdu.emit(out_stream);
+
+
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                this->mod->send_to_mod_channel( channel_names::rail
+                                              , chunk_to_send
+                                              , out_stream.get_offset()
+                                              , CHANNELS::CHANNEL_FLAG_LAST |
+                                                CHANNELS::CHANNEL_FLAG_FIRST
+                                              );
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_EXEC");
+                }
+                {
+                StaticOutStream<32> out_stream;
+                out_stream.out_uint16_le(TS_RAIL_ORDER_GET_APPID_REQ);
+                out_stream.out_uint16_le(8);
+                out_stream.out_uint32_le(0x2002A);
+
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                this->mod->send_to_mod_channel( channel_names::rail
+                                              , chunk_to_send
+                                              , out_stream.get_offset()
+                                              , CHANNELS::CHANNEL_FLAG_LAST |
+                                                CHANNELS::CHANNEL_FLAG_FIRST
+                                              );
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_GET_APPID_REQ");
+                }
+                break;
+
+            case TS_RAIL_ORDER_HANDSHAKE_EX:
+                LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE_EX");
+                break;
+
+//             case TS_RAIL_ORDER_CLIENTSTATUS:
+//                 LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_CLIENTSTATUS");
+//                 break;
+
+            case TS_RAIL_ORDER_SYSPARAM:
+                LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
+                {
+                ServerSystemParametersUpdatePDU sspu;
+                sspu.receive(stream);
+                sspu.log(LOG_INFO);
+                }
+                break;
+
+//             case TS_ALTSEC_WINDOW:
+//                 break;
+
+            case TS_RAIL_ORDER_GET_APPID_RESP:
+                LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_GET_APPID_RESP");
+                {
+                ServerGetApplicationIDResponsePDU sgaior;
+                sgaior.receive(stream);
+                sgaior.log(LOG_INFO);
+                }
+                {
+                StaticOutStream<1600> out_stream;;
+
+                out_stream.out_uint16_le(TS_RAIL_ORDER_CLIENTSTATUS);
+                out_stream.out_uint16_le((20*4) + (15*2) + 4);
+
+                out_stream.out_uint32_le(SPI_SETDRAGFULLWINDOWS);
+                out_stream.out_uint8(1);
+
+                out_stream.out_uint32_le(SPI_SETHIGHCONTRAST);
+                out_stream.out_uint32_le(0x7e);
+                out_stream.out_uint32_le(2);
+                out_stream.out_uint16_le(0);
+
+                out_stream.out_uint32_le(SPI_SETKEYBOARDCUES);
+                out_stream.out_uint8(1);
+
+                out_stream.out_uint32_le(SPI_SETKEYBOARDPREF);
+                out_stream.out_uint8(0);
+
+                out_stream.out_uint32_le(SPI_SETWORKAREA);
+                out_stream.out_uint16_le(0);
+                out_stream.out_uint16_le(0);
+                out_stream.out_uint16_le(1600);
+                out_stream.out_uint16_le(900);
+
+                out_stream.out_uint32_le(RAIL_SPI_DISPLAYCHANGE);
+                out_stream.out_uint16_le(0);
+                out_stream.out_uint16_le(0);
+                out_stream.out_uint16_le(1600);
+                out_stream.out_uint16_le(900);
+
+                out_stream.out_uint32_le(SPI_SETMOUSEBUTTONSWAP);
+                out_stream.out_uint8(0);
+
+                out_stream.out_uint32_le(RAIL_SPI_TASKBARPOS);
+                out_stream.out_uint16_le(0);
+                out_stream.out_uint16_le(870);
+                out_stream.out_uint16_le(1600);
+                out_stream.out_uint16_le(30);
+
+                out_stream.out_uint32_le(SPI_SETCARETWIDTH);
+                out_stream.out_uint32_le(1);
+
+                out_stream.out_uint32_le(SPI_SETSTICKYKEYS);
+                out_stream.out_uint32_le(1);
+
+                out_stream.out_uint32_le(SPI_SETTOGGLEKEYS);
+                out_stream.out_uint32_le(1);
+
+                out_stream.out_uint32_le(SPI_SETFILTERKEYS);
+                out_stream.out_uint32_le(1);
+                out_stream.out_uint32_le(1);
+                out_stream.out_uint32_le(1);
+                out_stream.out_uint32_le(1);
+                out_stream.out_uint32_le(1);
+
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                this->mod->send_to_mod_channel( channel_names::rail
+                                              , chunk_to_send
+                                              , out_stream.get_offset()
+                                              , CHANNELS::CHANNEL_FLAG_LAST |
+                                                CHANNELS::CHANNEL_FLAG_FIRST
+                                              );
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_CLIENTSTATUS");
+                }
+                break;
+
+
+
+            default:
+                LOG(LOG_WARNING, "SERVER >> RAIL CHANNEL DEFAULT 0x%04x %s", header.orderType(), get_RAIL_orderType_name(header.orderType()));
+                break;
+        }
+
     }
 
 
@@ -1300,9 +1598,9 @@ public:
                                                 , 2       // DriverNameLen
                                                 , 8  // PrintNameLen
                                                 , 0       // CachedFieldsLen
-                                                , "\x00\x61\x00\x00" // nPName
-                                                , "\x61\x00"   // DriverName
-                                                , "\x00\x61\x00\x61\x00\x61\x00\x00" // PrintName
+                                                , const_cast<char*>("\x00\x61\x00\x00") // nPName
+                                                , const_cast<char*>("\x61\x00")   // DriverName
+                                                , const_cast<char*>("\x00\x61\x00\x61\x00\x61\x00\x00") // PrintName
                                                 );
                                 dahp.emit(out_stream);
 
@@ -1746,7 +2044,7 @@ public:
                                             if (this->fileSystemData.paths.end() != this->fileSystemData.paths.find(id)) {
                                                 str_dir_path = this->fileSystemData.paths.at(id);
                                             } else {
-                                                LOG(LOG_WARNING, " Device I/O Query Directory Request Unknow ID (%d).", id);
+                                                LOG(LOG_WARNING, " Device I/O Query Directory Request Unknow ID (%u).", id);
                                                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                             }
 
@@ -1779,7 +2077,7 @@ public:
                                                             }
                                                         }
                                                     } catch (Error & e) {
-                                                        LOG(LOG_WARNING, "readdir error: (%d) %s", e.id, e.errmsg());
+                                                        LOG(LOG_WARNING, "readdir error: (%u) %s", e.id, e.errmsg());
                                                     }
                                                     closedir (dir);
 
@@ -1951,7 +2249,7 @@ public:
                                     if (this->fileSystemData.paths.end() != this->fileSystemData.paths.find(id)) {
                                         str_path = this->fileSystemData.paths.at(id);
                                     } else {
-                                        LOG(LOG_WARNING, " Device I/O Query Volume Information Request Unknow ID (%d).", id);
+                                        LOG(LOG_WARNING, " Device I/O Query Volume Information Request Unknow ID (%u).", id);
                                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                     }
 
@@ -2757,7 +3055,7 @@ public:
                                                                             );
                                         data_sent += first_part_data_size + RDPECLIP::FileDescriptor::size();
                                         if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                                            LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%d", data_sent, total_length);
+                                            LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%u", data_sent, total_length);
                                         }
 
                                         for (int i = 1; i < this->clipboard_qt->_cItems; i++) {
@@ -2789,7 +3087,7 @@ public:
 
                                             data_sent += RDPECLIP::FileDescriptor::size();
                                             if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                                                LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%d", data_sent, total_length);
+                                                LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%u", data_sent, total_length);
                                             }
                                         }
                                     }
@@ -2846,7 +3144,6 @@ public:
                                     this->clipboard_qt->_cliboard_data_length = this->clipboard_qt->_items_list[lindex]->size;
                                     int total_length(this->clipboard_qt->_items_list[lindex]->size + 12);
                                     int first_part_data_size(this->clipboard_qt->_items_list[lindex]->size);
-                                    first_part_data_size = this->clipboard_qt->_items_list[lindex]->size;
                                     if (first_part_data_size > CHANNELS::CHANNEL_CHUNK_LENGTH - 12) {
                                         first_part_data_size = CHANNELS::CHANNEL_CHUNK_LENGTH - 12;
                                     }
@@ -3320,7 +3617,7 @@ public:
         this->empty_buffer();
     }
 
-    virtual void empty_buffer() override {
+    void empty_buffer() override {
         this->_cb_buffers.pic_bpp    = 0;
         this->_cb_buffers.sizeTotal  = 0;
         this->_cb_buffers.pic_width  = 0;
@@ -3365,7 +3662,7 @@ public:
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------
 
-    virtual void callback() override {
+    void callback() override {
         if (this->_recv_disconnect_ultimatum) {
             this->dropScreen();
             std::string labelErrorMsg("<font color='Red'>Disconnected by server</font>");
@@ -3428,4 +3725,3 @@ int main(int argc, char** argv){
 
     //  xfreerdp /u:x /p: /port:3389 /v:10.10.43.46 /multimon /monitors:2
 }
-

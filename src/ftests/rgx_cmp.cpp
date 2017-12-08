@@ -1,7 +1,6 @@
 #include <boost/xpressive/xpressive.hpp>
 // include <boost/regex.hpp>
 #include <boost/function.hpp>
-#include <iostream>
 #include <vector>
 
 void boost_regex_test(const char * str_text, const char * rgx_text,

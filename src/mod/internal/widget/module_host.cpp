@@ -52,7 +52,7 @@ WidgetModuleHost::ModuleHolder::ModuleHolder(
 : host(host)
 , managed_mod(std::move(managed_mod))
 {
-    REDASSERT(this->managed_mod);
+    assert(this->managed_mod);
 }
 
 // Callback
@@ -87,6 +87,8 @@ void WidgetModuleHost::ModuleHolder::draw_event(time_t now, gdi::GraphicApi& dra
     if (this->managed_mod)
     {
         this->host.drawable_ptr = &drawable;
+
+        LOG(LOG_INFO, "loooooool");
 
         this->managed_mod->draw_event(now, this->host);
 
@@ -181,8 +183,7 @@ void WidgetModuleHost::ModuleHolder::rdp_input_scancode(
 {
     if (this->managed_mod)
     {
-        this->managed_mod->rdp_input_scancode(param1, param2, param3,
-            param4, keymap);
+        this->managed_mod->rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 }
 
@@ -675,7 +676,7 @@ void WidgetModuleHost::notify(Widget* /*widget*/, NotifyApi::notify_event_t even
                 region.add_rect(visible_vision_rect);
                 region.subtract_rect(dest_rect);
 
-                REDASSERT(region.rects.size() == 1);
+                assert(region.rects.size() == 1);
 
                 this->module_holder.rdp_input_invalidate(region.rects[0].offset(
                         -this->x() + this->mod_visible_rect.x,
@@ -710,7 +711,7 @@ void WidgetModuleHost::notify(Widget* /*widget*/, NotifyApi::notify_event_t even
                 region.add_rect(visible_vision_rect);
                 region.subtract_rect(dest_rect);
 
-                REDASSERT(region.rects.size() == 1);
+                assert(region.rects.size() == 1);
 
                 this->module_holder.rdp_input_invalidate(region.rects[0].offset(
                         -this->x() + this->mod_visible_rect.x,

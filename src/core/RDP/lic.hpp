@@ -31,6 +31,7 @@
 #include <cinttypes>
 
 
+#include "utils/log.hpp"
 #include "utils/crypto/ssl_lib.hpp"
 #include "utils/stream.hpp"
 #include "utils/hexdump.hpp"

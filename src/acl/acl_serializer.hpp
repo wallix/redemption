@@ -500,7 +500,7 @@ public:
                     LOG(LOG_INFO, "===========> MODULE_NEXT");
                 }
                 else {
-                    REDASSERT(signal == BACK_EVENT_RETRY_CURRENT);
+                    assert(signal == BACK_EVENT_RETRY_CURRENT);
 
                     LOG(LOG_INFO, "===========> MODULE_RETRY_CURRENT");
                 }

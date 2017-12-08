@@ -101,15 +101,17 @@ namespace
 
         int trial = 0;
         for (; trial < nbretry ; trial++){
-            int res = ::connect(sck, &addr, addr_len);
+            int const res = ::connect(sck, &addr, addr_len);
             if (-1 != res){
                 // connection suceeded
                 break;
             }
+
             int const err =  errno;
             if (trial > 0){
                 LOG(LOG_INFO, "Connection to %s failed with errno = %d (%s)", target, err, strerror(err));
             }
+
             if ((err == EINPROGRESS) || (err == EALREADY)){
                 // try again
                 fd_set fds;
@@ -127,6 +129,7 @@ namespace
             else {
                 // real failure
                 trial = nbretry;
+                break;
             }
         }
 

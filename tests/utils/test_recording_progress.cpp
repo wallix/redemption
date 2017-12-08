@@ -24,7 +24,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-// #define LOGNULL
 #include "utils/recording_progress.hpp"
 #include "test_only/get_file_contents.hpp"
 

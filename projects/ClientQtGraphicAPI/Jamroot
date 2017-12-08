@@ -9,46 +9,105 @@ include $(JAM_INCLUDE_PATH)/cxxflags.jam ;
 include $(JAM_INCLUDE_PATH)/defines.jam ;
 include $(JAM_INCLUDE_PATH)/includes.jam ;
 
+
+# select best Qt version
+## @{
+import os ;
+local qtversion = [ os.environ qtversion ] ;
+if ! $(qtversion)
+{
+    qtversion = [ os.environ qt ] ;
+}
+
+if ! $(qtversion)
+{
+    qtversion = [ os.environ KDE_SESSION_VERSION ] ;
+    if $(qtversion)
+    {
+        echo "KDE_SESSION_VERSION=$(qtversion) found. Use Qt$(qtversion)." ;
+    }
+}
+
+if $(qtversion) != 4 && $(qtversion) != 5 && $(qtversion) != 6
+{
+    echo "Unknown Qt$(qtversion)." ;
+    qtversion = ;
+}
+
+if ! $(qtversion)
+{
+    exit "Please set a valid Qt version (4 or 5) with `bjam qt=4`." ;
+}
+## @}
+
+
+if $(qtversion) = 4
+{
+    # TODO search include qt4 directory
+    constant QT4_INCLUDE : [ setvar QT4_INCLUDE : /usr/include/qt4 ] ;
+
+    constant QT_INCLUDES : $(QT4_INCLUDE) ;
+}
+else
+{
+    # TODO search include qt5 directory
+    constant QT5_INCLUDE : [ setvar QT5_INCLUDE : /usr/include/x86_64-linux-gnu/qt$(qtversion) ] ;
+    # TODO search include phonon directory
+    constant QT5_PHONON_INCLUDE : [ setvar QT5_PHONON_INCLUDE : /usr/include/phonon4qt$(qtversion)/phonon ] ;
+
+    constant QT_INCLUDES : $(QT5_INCLUDE) $(QT5_PHONON_INCLUDE) ;
+}
+
 lib gssglue : : <name>gssglue <link>shared ;
 
 constant SHELL_PWD : [ SHELL "echo -n $PWD" ] ; # rule location
 
 constant MAIN_PATH : [ setvar MAIN_PATH : $(SHELL_PWD) ] ;
 
+rule disable-buggy-warn ( properties * )
+{
+    local ps = [ property-set.create $(properties) ] ;
+    local toolset = [ $(ps).get <toolset> ] ;
+    # TODO is not the real version. For toolset=gcc-5, version is 5
+    # gcc -dumpversion
+    # clang -dumpversion = llvm version ?
+    local version = [ $(ps).get <toolset-$(toolset):version> ] ;
+
+    local flags ;
+
+    if $(toolset) = gcc && ! [ ge-ver $(version) : 5.0.0 ]
+    {
+        flags += <cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant ;
+    }
+
+    return $(flags) ;
+}
+
 project redemption_qt4_client
     : requirements
 
     <conditional>@includes
-
-    <conditional>@defines
+    <conditional>@flags
+    <conditional>@disable-buggy-warn
 
     <cxxflags>-std=c++14
 
     $(CXXFLAGS)
-    <toolset>gcc:<cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant
 
-#    <cxxflags>-fpie
-    <cxxflags>-fPIC
+    # <cxxflags>-fPIC
     <variant>debug:<cxxflags>-frtti
   
     <define>_FILE_OFFSET_BITS=64
     <define>_LARGEFILE64_SOURCE
-
     <define>__STDC_FORMAT_MACROS
 
     <define>QT_NO_KEYWORDS
-    # TODO search include qt4 directory
-    <cxxflags>-isystem/usr/include/qt4
+
+    <cxxflags>-isystem$(QT_INCLUDES)
+
     <toolset>gcc:<cxxflags>-Wno-missing-include-dirs
 
    : default-build release
-
-;
-
-constant EXE_DEPENDENCIES :
-    <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
-    <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)$(MAIN_PATH)\"'
-    <define>MAIN_PATH='\"$(MAIN_PATH)\"'
 ;
 
 include $(JAM_INCLUDE_PATH)/ocr.jam ;
@@ -71,8 +130,7 @@ install install-bin
     : <location>$(INSTALLDIR)/usr/local/bin
     ;
 
-obj config.o : ../redemption_configs/redemption_src/configs/config.cpp :
-    $(EXE_DEPENDENCIES) ;
+obj config.o : ../redemption_configs/redemption_src/configs/config.cpp ;
 
 obj hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp : ;
 
@@ -106,7 +164,11 @@ add_src capture/video_capture.cpp ;
 add_src capture/video_recorder.cpp ;
 add_src core/RDP/mppc.cpp ;
 add_src core/RDP/nego.cpp ;
-add_src core/app_path.cpp : $(EXE_DEPENDENCIES) ;
+add_src core/app_path.cpp :
+    <conditional>@defines
+    <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
+    <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)$(MAIN_PATH)\"'
+;
 add_src gdi/clip_from_cmd.cpp ;
 add_src gdi/graphic_api.cpp ;
 add_src gdi/protected_graphics.cpp ;
@@ -125,8 +187,8 @@ add_src transport/crypto_transport.cpp ;
 add_src transport/mwrm_reader.cpp ;
 add_src transport/socket_transport.cpp ;
 add_src utils/authorization_channels.cpp ;
-add_src utils/bitmap.cpp : <cxxflags>-std=c++14 ;
-add_src utils/bitmap_from_file.cpp : <cxxflags>-std=c++14 ;
+add_src utils/bitmap.cpp ;
+add_src utils/bitmap_from_file.cpp ;
 add_src utils/rle.cpp ;
 add_src utils/cfgloader.cpp ;
 add_src utils/confdescriptor.cpp ;
@@ -136,8 +198,11 @@ add_src utils/log_as_logprint.cpp ;
 add_src utils/netutils.cpp ;
 add_src utils/pattutils.cpp ;
 add_src utils/png.cpp ;
-
-
+add_src mod/internal/rail_module_host_mod.cpp ;
+add_src mod/internal/widget/rail_module_host.cpp ;
+add_src mod/internal/widget/module_host.cpp ;
+add_src mod/internal/widget/scroll.cpp ;
+add_src mod/internal/locally_integrable_mod.cpp ;
 
 
 constant lib_list :
@@ -152,85 +217,79 @@ constant lib_list :
     snappy
 ;
 
-using qt : /usr ; #4
+constant EXE_DEPENDENCIES :
+    <define>MAIN_PATH='\"$(MAIN_PATH)\"'
+    <define>REDEMPTION_QT_VERSION=$(qtversion)
+;
 
-obj front_Qt4_Demo.o : src/frontDemoQtClient.cpp :
-    $(EXE_DEPENDENCIES)
+if $(qtversion) = 4
+{
+    using qt : /usr ;
+    alias libqtclient : /qt//QtGui ;
+    alias libphonon : /qt//phonon ;
+}
+else
+{
+    using qt5
+        : /usr/lib/x86_64-linux-gnu/qt5
+        : 5.3
+        :
+        :
+        :
+        :
+        : $(QT5_INCLUDE)
+        : /usr/lib/x86_64-linux-gnu
+        ;
+
+    alias libqtclient :
+        /qt5//QtGui
+        /qt5//QtNetwork
+        /qt5//QtWidgets
+    ;
+
+    lib libphonon : : <name>phonon4qt5 <link>shared ;
+}
+
+obj front_Qt$(qtversion)_Demo.o : src/frontDemoQtClient.cpp :
     <define>REDEMPTION_DECL_LOG_TEST
-    <define>LOGPRINT
- ;
+    $(EXE_DEPENDENCIES)
+;
 
-exe client_vnc_Qt4 :
-    src/rdp_client_graphic_api/Qt4/Qt.hpp
+obj front_Qt$(qtversion)_rdp.o : src/rdp_client_qt_front.cpp :
+    <define>REDEMPTION_DECL_LOG_TEST
+    $(EXE_DEPENDENCIES)
+;
+
+exe client_vnc_Qt$(qtversion) :
     src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp
     src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
-    front_Qt4_Demo.o
+    front_Qt$(qtversion)_Demo.o
     $(obj_list)
     $(lib_list)
     config.o
     hexdump.o
     $(obj_list_VNC)
-    /qt//QtGui       #4
+    libqtclient
 :
     $(EXE_DEPENDENCIES)
+    <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
 ;
 
-obj front_Qt4_rdp.o : src/rdp_client_qt_front.cpp :
-    $(EXE_DEPENDENCIES)
-    <define>REDEMPTION_DECL_LOG_TEST
-    <define>LOGPRINT
- ;
-
-
-
-exe client_rdp_Qt4 :
-    src/rdp_client_graphic_api/Qt4/Qt.hpp
+exe client_rdp_Qt$(qtversion) :
     src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp
     src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
     src/rdp_client_qt_widget.hpp
-    front_Qt4_rdp.o
+    front_Qt$(qtversion)_rdp.o
     $(obj_list)
     $(lib_list)
     config.o
     hexdump.o
-    /qt//QtGui       #4
-    /qt//phonon
+    libqtclient
+    libphonon
 :
     $(EXE_DEPENDENCIES)
+    <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
 ;
 
-using qt5
-    : /usr/lib/x86_64-linux-gnu/qt5
-    : 5.3
-    :
-    :
-    :
-    :
-    : /usr/include/x86_64-linux-gnu/qt5
-    : /usr/lib/x86_64-linux-gnu
-
-    ;
-
-obj front_Qt5.o : src/front_Qt.cpp :
-    $(EXE_DEPENDENCIES)
-    <define>REDEMPTION_DECL_LOG_TEST
-    <define>LOGPRINT
- ;
-
-
-exe client_rdp_Qt5 :
-    src/rdp_client_graphic_api/Qt5/Qt.hpp
-    src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp
-    src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
-    src/rdp_client_qt_widget.hpp
-    front_Qt5.o
-    $(obj_list)
-    $(lib_list)
-    config.o
-    hexdump.o
-    /qt5//QtGui
-    /qt5//QtNetwork
-    /qt5//QtWidgets
-:
-    $(EXE_DEPENDENCIES)
-;
+alias client_vnc_Qt : client_vnc_Qt$(qtversion) ;
+alias client_rdp_Qt : client_rdp_Qt$(qtversion) ;

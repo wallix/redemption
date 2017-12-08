@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE TestTestTransport
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "test_only/transport/test_transport.hpp"
 #include "core/error.hpp"

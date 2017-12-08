@@ -23,10 +23,6 @@
 #define RED_TEST_MODULE TestXXXXXXXXXX
 #include "system/redemption_unit_tests.hpp"
 
-
-#define LOGNULL
-#include "utils/log.hpp"
-
 #include "core/RDP/pointer.hpp"
 
 RED_AUTO_TEST_CASE(TestDataSize)

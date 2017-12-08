@@ -288,7 +288,7 @@ public:
                 }
                 PSecBuffer output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
 
-                if (!output_buffer->BufferType) {
+                if (!output_buffer || !output_buffer->BufferType) {
                     return SEC_E_INVALID_TOKEN;
                 }
                 if (output_buffer->Buffer.size() < 1) {

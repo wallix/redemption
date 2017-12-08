@@ -25,7 +25,6 @@
 #define RED_TEST_MODULE TestMPPC
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include <sys/time.h>
 #include "core/RDP/mppc.hpp"

@@ -232,7 +232,7 @@ namespace FastPath {
                 }
 
                 stream.in_copy_bytes(this->dataSignature, 8);
-                REDASSERT(out_decrypt_stream);
+                assert(out_decrypt_stream);
                 decrypt.decrypt(stream.get_current(), stream.in_remain(), out_decrypt_stream);
 
                 istream = InStream(out_decrypt_stream, stream.in_remain());
@@ -1057,7 +1057,7 @@ namespace FastPath {
                 }
                 stream.in_copy_bytes(this->dataSignature, 8);
 
-                REDASSERT(out_decrypt_stream);
+                assert(out_decrypt_stream);
                 decrypt.decrypt(stream.get_current(), stream.in_remain(), out_decrypt_stream);
 
                 return InStream(out_decrypt_stream, stream.in_remain());

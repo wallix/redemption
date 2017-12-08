@@ -175,7 +175,7 @@ class RAILPDUHeader {
 
 public:
     void emit_begin(OutStream & stream, uint16_t orderType) const {
-        REDASSERT(this->output_stream == nullptr);
+        assert(this->output_stream == nullptr);
 
         this->output_stream = &stream;
 
@@ -670,13 +670,14 @@ enum {
 //  TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS mask of Flags field), is 16,000 bytes.
 
 class ClientExecutePDU {
+public:
     uint16_t Flags_ = 0;
 
     std::string exe_or_file;
     std::string working_dir;
     std::string arguments;
 
-public:
+
     void emit(OutStream & stream) const {
         stream.out_uint16_le(this->Flags_);
 
@@ -1093,7 +1094,7 @@ public:
             throw Error(ERR_RAIL_PDU_TRUNCATED);
         }
 
-        REDASSERT(ColorSchemeLength >= 2);
+        assert(ColorSchemeLength >= 2);
 
         get_non_null_terminated_utf16_from_utf8(
             this->color_scheme, stream, stream.in_uint16_le(),
@@ -1199,6 +1200,30 @@ public:
 //  | SPI_SETHIGHCONTRAST    | The system parameter to set the parameters of   |
 //  | 0x00000043             | the HighContrast accessibility feature.         |
 //  +------------------------+-------------------------------------------------+
+//  | SPI_SETCARETWIDTH      | The system parameter to set the caret width     |
+//  | 0x00002007             | used for text entry controls. This flag SHOULD  |
+//  |                        | NOT be sent if the server did not advertise the |
+//  |                        | EXTENDED_SPI_SUPPORTED flag in the HandshakeEx  |
+//  |                        | PDU (section 2.2.2.2.3).                        |
+//  +------------------------+-------------------------------------------------+
+//  | SPI_SETSTICKYKEYS      | The system parameter to set the parameters of   |
+//  | 0x0000003B             | the Sticky Keys accessibility feature. This     |
+//  |                        | flag SHOULD NOT be sent if the server did not   |
+//  |                        | advertise the EXTENDED_SPI_SUPPORTED flag in    |
+//  |                        | the HandshakeEx PDU.                            |
+//  +------------------------+-------------------------------------------------+
+//  | SPI_SETTOGGLEKEYS      | The system parameter to set the parameters of   |
+//  | 0x00000035             | the Toggle Keys accessibility feature. This     |
+//  |                        | flag SHOULD NOT be sent if the server did not   |
+//  |                        | advertise the EXTENDED_SPI_SUPPORTED flag in    |
+//  |                        | the HandshakeEx PDU.                            |
+//  +------------------------+-------------------------------------------------+
+//  | SPI_SETFILTERKEYS      | The system parameter to set the parameters of   |
+//  | 0x00000033             | the Filter Keys accessibility feature. This     |
+//  |                        | flag SHOULD NOT be sent if the server did not   |
+//  |                        | advertise the EXTENDED_SPI_SUPPORTED flag in    |
+//  |                        | the HandshakeEx PDU.                            |
+//  +------------------------+-------------------------------------------------+
 
 enum {
       SPI_SETDRAGFULLWINDOWS = 0x00000025
@@ -1209,6 +1234,10 @@ enum {
     , SPI_SETMOUSEBUTTONSWAP = 0x00000021
     , RAIL_SPI_TASKBARPOS    = 0x0000F000
     , SPI_SETHIGHCONTRAST    = 0x00000043
+    , SPI_SETCARETWIDTH      = 0x00002007
+    , SPI_SETSTICKYKEYS      = 0x0000003B
+    , SPI_SETTOGGLEKEYS      = 0x00000035
+    , SPI_SETFILTERKEYS      = 0x00000033
 };
 
 // Body (variable): The contents of this field depend on the SystemParameter
@@ -2434,7 +2463,7 @@ public:
     bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
         const uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->WindowId_);
 
-        REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+        assert(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
 
         if (client_window_id == this->WindowId_) {
             return false;
@@ -2802,7 +2831,7 @@ public:
     bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
         const uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->WindowId_);
 
-        REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+        assert(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
 
         if (client_window_id == this->WindowId_) {
             return false;
@@ -3081,7 +3110,7 @@ public:
     bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
         const uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->WindowId_);
 
-        REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+        assert(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
 
         if (client_window_id == this->WindowId_) {
             return false;
@@ -3921,7 +3950,7 @@ public:
     bool map_window_id(RemoteProgramsWindowIdManager const & rail_window_id_manager) const {
         const uint32_t client_window_id = rail_window_id_manager.get_client_window_id_ex(this->WindowIdMarker_);
 
-        REDASSERT(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
+        assert(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != client_window_id);
 
         if (client_window_id == this->WindowIdMarker_) {
             return false;

@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE Test_audio_ouput
 #include "system/redemption_unit_tests.hpp"
 
-//#define LOGNULL
 #include "core/RDPEA/audio_output.hpp"
 #include "utils/sugar/underlying_cast.hpp"
 

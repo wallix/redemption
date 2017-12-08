@@ -797,7 +797,7 @@ enum {
         uint32_t flags;
         InStream payload;
         Sec_Recv(InStream & stream, CryptContext & crypt, uint32_t encryptionLevel)
-            : flags([&stream, this, encryptionLevel, &crypt](){
+            : flags([&stream, encryptionLevel, &crypt](){
                 uint32_t flags = 0;
                 if (encryptionLevel){
                     const unsigned need = 4; /* flags(4) */

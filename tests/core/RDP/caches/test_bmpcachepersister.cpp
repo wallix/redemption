@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestBmpCachePersister
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "core/RDP/caches/bmpcachepersister.hpp"
 #include "core/RDP/PersistentKeyListPDU.hpp"

@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE TestXXX
 #include "system/redemption_unit_tests.hpp"
 
-// #define LOGNULL
 
 RED_AUTO_TEST_CASE(TestXXX)
 {

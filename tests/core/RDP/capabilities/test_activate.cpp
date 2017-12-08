@@ -24,7 +24,6 @@
 #define RED_TEST_MODULE TestCapabilityActivation
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 #include "core/RDP/capabilities/activate.hpp"
 
 RED_AUTO_TEST_CASE(TestCapabilityActivationEmit)

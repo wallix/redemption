@@ -239,7 +239,7 @@ int main(int argc, char** argv)
         //{"test", "check Inifile syntax"}
     });
 
-    auto options = program_options::parse_command_line(argc, const_cast<char**>(argv), desc);
+    auto options = program_options::parse_command_line(argc, argv, desc);
 
     if (options.count("kill")) {
         int status = shutdown(app_path(AppPath::LockFile));

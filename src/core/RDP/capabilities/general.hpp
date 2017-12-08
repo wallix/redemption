@@ -24,6 +24,7 @@
 #pragma once
 
 #include "core/RDP/capabilities/common.hpp"
+#include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "core/error.hpp"
 

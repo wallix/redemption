@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestNLA
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 #include "core/RDP/nla/nla.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 

@@ -51,5 +51,5 @@ private:
     std::vector<Loc> locales;
     unsigned selected_language = 0;
     FrontAPI & front;
-    Widget & parent;
+    Widget & parent_redraw;
 };

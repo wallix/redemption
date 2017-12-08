@@ -23,7 +23,6 @@
 #define RED_TEST_MODULE MatchFinder
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "capture/utils/match_finder.hpp"
 

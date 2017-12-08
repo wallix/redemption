@@ -23,7 +23,6 @@
 #define RED_TEST_MODULE TestFlatInteractiveTarget
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "core/font.hpp"
 #include "utils/log.hpp"

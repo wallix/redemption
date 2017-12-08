@@ -27,7 +27,6 @@
 #include <iosfwd>
 #include<string>
 
-#include "utils/log.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
 
 

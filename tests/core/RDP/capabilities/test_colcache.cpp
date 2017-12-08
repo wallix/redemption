@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestColorCacheCaps
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 #include "core/RDP/capabilities/colcache.hpp"
 
 RED_AUTO_TEST_CASE(TestColorCacheCaps)

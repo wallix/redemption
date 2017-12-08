@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestRDPOrdersCommon
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 

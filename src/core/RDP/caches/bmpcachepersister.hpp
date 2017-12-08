@@ -161,7 +161,7 @@ private:
             stream.in_copy_bytes(sig, 8); // sig(8);
 
             uint8_t  original_bpp = stream.in_uint8();
-            REDASSERT((original_bpp == 8) || (original_bpp == 15) || (original_bpp == 16) ||
+            assert((original_bpp == 8) || (original_bpp == 15) || (original_bpp == 16) ||
                 (original_bpp == 24) || (original_bpp == 32));
             uint16_t cx           = stream.in_uint16_le();
             uint16_t cy           = stream.in_uint16_le();
@@ -193,7 +193,7 @@ private:
                        , key.str(), original_bpp, cx, cy, bmp_size);
                 }
 
-                REDASSERT(this->bmp_map[cache_id][key].is_valid() == false);
+                assert(this->bmp_map[cache_id][key].is_valid() == false);
 
                 Bitmap bmp( this->bmp_cache.bpp, original_bpp
                           , &original_palette, cx, cy, stream.get_data()
@@ -204,7 +204,7 @@ private:
                 if (memcmp(sig, sha1, sizeof(sig))) {
                     LOG( LOG_ERR
                        , "BmpCachePersister::preload_from_disk: Preload failed. Cause: bitmap or key corruption.");
-                    REDASSERT(false);
+                    assert(false);
                 }
                 else {
                     this->bmp_map[cache_id][key] = bmp;
@@ -229,7 +229,7 @@ public:
         for (uint8_t entry_index = 0;
              (entry_index < number_of_entries) && (cache_index < max_number_of_entries);
              entry_index++, cache_index++, sig++) {
-            REDASSERT(!this->bmp_cache.get_cache(cache_id)[cache_index]);
+            assert(!this->bmp_cache.get_cache(cache_id)[cache_index]);
 
             map_key key(sig->sig_8);
 
@@ -315,7 +315,7 @@ private:
             stream.in_copy_bytes(sig.sig_8, 8); // sig(8);
 
             uint8_t  original_bpp = stream.in_uint8();
-            REDASSERT((original_bpp == 8) || (original_bpp == 15) || (original_bpp == 16) ||
+            assert((original_bpp == 8) || (original_bpp == 15) || (original_bpp == 16) ||
                 (original_bpp == 24) || (original_bpp == 32));
             uint16_t cx           = stream.in_uint16_le();
             uint16_t cy           = stream.in_uint16_le();
@@ -422,7 +422,7 @@ private:
                 //        , "BmpCachePersister::save_to_disk: sig=\"%s\" sha1=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
                 //        , sig_sig, sig_sha1, bmp.bpp(), bmp.cx(), bmp.cy(), bmp_size);
 
-                //     REDASSERT(!memcmp(bmp_cache.sig[cache_id][cache_index].sig_8, sha1, sizeof(bmp_cache.sig[cache_id][cache_index].sig_8)));
+                //     assert(!memcmp(bmp_cache.sig[cache_id][cache_index].sig_8, sha1, sizeof(bmp_cache.sig[cache_id][cache_index].sig_8)));
                 // }
 
                 map_key key(sig);

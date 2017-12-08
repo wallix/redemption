@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestAuthentifierNew
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "acl/module_manager.hpp"
 #include "test_only/lcg_random.hpp"

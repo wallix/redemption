@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestDiffieHellman
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 #include "utils/diffiehellman.hpp"
 
 RED_AUTO_TEST_CASE(TestDiffieHellman)

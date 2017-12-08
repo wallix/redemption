@@ -23,10 +23,6 @@
 #define RED_TEST_MODULE TestKeyValuePairs
 #include "system/redemption_unit_tests.hpp"
 
-
-//#define LOGNULL
-#include "utils/log.hpp"
-
 #include "utils/key_qvalue_pairs.hpp"
 
 

@@ -24,7 +24,6 @@
 #define RED_TEST_MODULE TestX224
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 #include "test_only/transport/test_transport.hpp"
 #include "core/RDP/x224.hpp"
 

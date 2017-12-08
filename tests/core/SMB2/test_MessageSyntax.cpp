@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestGCC
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "core/SMB2/MessageSyntax.hpp"
 

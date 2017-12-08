@@ -25,7 +25,6 @@
 #define RED_TEST_MODULE TestRect
 #include "system/redemption_unit_tests.hpp"
 
-// #define LOGNULL
 
 #include "utils/rect.hpp"
 

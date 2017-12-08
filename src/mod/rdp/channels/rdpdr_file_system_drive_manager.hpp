@@ -78,7 +78,7 @@ public:
     }
 
     inline int FileDescriptor() const {
-        REDASSERT(this->fd > -1);
+        assert(this->fd > -1);
 
         return this->fd;
     }
@@ -123,7 +123,7 @@ public:
         (void)path;
         (void)device_control_request;
         (void)in_stream;
-        REDASSERT(this->fd > -1);
+        assert(this->fd > -1);
 
         StaticOutStream<65536> out_stream;
 
@@ -157,7 +157,7 @@ public:
             RDPVerbose verbose
       ) {
         (void)in_stream;
-        REDASSERT(this->fd > -1);
+        assert(this->fd > -1);
 
         StaticOutStream<65536> out_stream;
 
@@ -348,7 +348,7 @@ public:
       ) {
         (void)path;
         (void)in_stream;
-        REDASSERT(this->fd > -1);
+        assert(this->fd > -1);
 
         StaticOutStream<65536> out_stream;
 
@@ -468,7 +468,7 @@ public:
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             RDPVerbose verbose) {
-        REDASSERT(this->fd > -1);
+        assert(this->fd > -1);
 
         if ((drive_access_mode != O_RDWR) && (drive_access_mode != O_WRONLY)) {
             this->SendClientDriveIoResponse(
@@ -591,7 +591,7 @@ public:
                     rdp_file_rename_information.log(LOG_INFO);
                 }
 
-                REDASSERT(!rdp_file_rename_information.RootDirectory());
+                assert(!rdp_file_rename_information.RootDirectory());
 
                 std::string new_full_path(path);
                 new_full_path += rdp_file_rename_information.FileName();
@@ -658,7 +658,7 @@ public:
                     server_drive_set_information_request.get_FsInformationClass_name(
                         server_drive_set_information_request.FsInformationClass()),
                     server_drive_set_information_request.FsInformationClass());
-                REDASSERT(false);
+                assert(false);
 
                 SendClientDriveIoUnsuccessfulResponse(device_io_request,
                                                       "ManagedFileSystemObject::ProcessServerDriveSetInformationRequest",
@@ -667,7 +667,7 @@ public:
                                                       verbose);
 
                 // Unsupported.
-                REDASSERT(false);
+                assert(false);
             break;
         }
     }
@@ -693,7 +693,7 @@ public:
             verbose);
 
         // Unsupported.
-        REDASSERT(false);
+        assert(false);
     }
 
     virtual void ProcessServerDriveQueryDirectoryRequest(
@@ -850,7 +850,7 @@ public:
       ) override {
         (void)in_stream;
         (void)is_session_probe_image;
-        REDASSERT(!this->dir);
+        assert(!this->dir);
 
         out_drive_created = false;
 
@@ -958,7 +958,7 @@ public:
         (void)path;
         (void)in_stream;
 
-        REDASSERT(this->dir);
+        assert(this->dir);
 
         //LOG(LOG_INFO, "ManagedDirectory::ProcessServerCloseDriveRequest(): <%p> fd=%d",
         //    this, ::dirfd(this->dir));
@@ -986,7 +986,7 @@ public:
             out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
             verbose);
 
-        REDASSERT(!this->dir);
+        assert(!this->dir);
     }
 
     void ProcessServerDriveReadRequest(
@@ -1000,7 +1000,7 @@ public:
         (void)device_read_request;
         (void)path;
         (void)in_stream;
-        REDASSERT(this->dir);
+        assert(this->dir);
 
         StaticOutStream<65536> out_stream;
 
@@ -1035,7 +1035,7 @@ public:
             ::rewinddir(this->dir);
 
             const char * separator = strrchr(server_drive_query_directory_request.Path(), '/');
-            REDASSERT(separator);
+            assert(separator);
             this->pattern = (++separator);
         }
 
@@ -1179,7 +1179,7 @@ public:
                         "ManagedDirectory::ProcessServerDriveQueryDirectoryRequest: "
                             "Unknown FsInformationClass(0x%X)",
                         server_drive_query_directory_request.FsInformationClass());
-                    REDASSERT(false);
+                    assert(false);
 
                     this->MakeClientDriveIoResponse(
                         out_stream,
@@ -1214,7 +1214,7 @@ public:
 
         // File descriptor will be closed when in_file_transport is destroyed.
 
-        REDASSERT(this->fd <= -1);
+        assert(this->fd <= -1);
 
         if (this->fd <= -1) {
           ::close(this->fd);
@@ -1240,7 +1240,7 @@ public:
             RDPVerbose verbose
       ) override {
         (void)in_stream;
-        REDASSERT(this->fd == -1);
+        assert(this->fd == -1);
 
         out_drive_created = false;
 
@@ -1383,7 +1383,7 @@ public:
       ) override {
         (void)path;
         (void)in_stream;
-        REDASSERT(this->fd > -1);
+        assert(this->fd > -1);
 
         //LOG(LOG_INFO, "ManagedFile::ProcessServerCloseDriveRequest(): <%p> fd=%d",
         //    this, this->fd);
@@ -1410,7 +1410,7 @@ public:
             out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
             verbose);
 
-        REDASSERT(this->fd == -1);
+        assert(this->fd == -1);
     }
 
     void ProcessServerDriveReadRequest(
@@ -1423,7 +1423,7 @@ public:
       ) override {
         (void)path;
         (void)in_stream;
-        REDASSERT(this->fd > -1);
+        assert(this->fd > -1);
 
         const uint32_t Length = device_read_request.Length();
 
@@ -1473,7 +1473,7 @@ public:
         (void)device_control_request;
         (void)path;
         (void)in_stream;
-        REDASSERT(this->fd > -1);
+        assert(this->fd > -1);
 
         StaticOutStream<65536> out_stream;
 
@@ -1514,7 +1514,7 @@ public:
       ) override {
         (void)path;
         (void)drive_access_mode;
-        REDASSERT(this->fd > -1);
+        assert(this->fd > -1);
 
         if (first_chunk) {
             Length = in_stream.in_uint32_le();
@@ -1534,7 +1534,7 @@ public:
             }
         }
 
-        REDASSERT(remaining_number_of_bytes_to_write >= in_stream.in_remain());
+        assert(remaining_number_of_bytes_to_write >= in_stream.in_remain());
 
         if (bool(verbose & RDPVerbose::fsdrvmgr)) {
             LOG(LOG_INFO,
@@ -1547,7 +1547,7 @@ public:
 
         off64_t seek_result = ::lseek64(this->fd, current_offset, SEEK_SET);
         (void)seek_result;
-        REDASSERT(seek_result == current_offset);
+        assert(seek_result == current_offset);
         int write_result = ::write(this->fd, in_stream.get_current(), in_stream.in_remain());
         (void)write_result;
 
@@ -2181,7 +2181,7 @@ public:
                     rdpdr::get_MajorFunction_name(
                         device_io_request.MajorFunction()),
                     device_io_request.MajorFunction());
-                REDASSERT(false);
+                assert(false);
 
                 ManagedFileSystemObject::SendClientDriveIoUnsuccessfulResponse(
                     device_io_request,

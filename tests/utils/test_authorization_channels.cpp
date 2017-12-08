@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestAuthorizationChannels
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "utils/authorization_channels.hpp"
 

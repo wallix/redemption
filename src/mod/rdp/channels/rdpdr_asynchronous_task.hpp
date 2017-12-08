@@ -96,7 +96,7 @@ public:
     {}
 
     void configure_wait_object(wait_obj & wait_object) const override {
-        REDASSERT(!wait_object.is_waked_up_by_time());
+        assert(!wait_object.is_waked_up_by_time());
 
         wait_object.set_trigger_time(1000000);
     }
@@ -139,7 +139,7 @@ public:
 
             out_flags |= CHANNELS::CHANNEL_FLAG_FIRST;
 
-            REDASSERT(!this->length);
+            assert(!this->length);
 
             this->length = out_stream.get_offset() + this->total_number_of_bytes_to_read;
         }
@@ -166,7 +166,7 @@ public:
                 out_flags |= CHANNELS::CHANNEL_FLAG_LAST;
             }
 
-            REDASSERT(this->length);
+            assert(this->length);
 
             this->to_server_sender(this->length, out_flags, out_stream.get_data(), out_stream.get_offset());
         }
@@ -203,7 +203,7 @@ public:
     }
 
     void configure_wait_object(wait_obj & wait_object) const override {
-        REDASSERT(!wait_object.is_waked_up_by_time());
+        assert(!wait_object.is_waked_up_by_time());
 
         wait_object.set_trigger_time(1000); // 1 ms
     }
@@ -217,7 +217,7 @@ public:
             return false;
         }
 
-        REDASSERT(this->remaining_number_of_bytes_to_send);
+        assert(this->remaining_number_of_bytes_to_send);
 
         uint32_t out_flags = this->flags;
 
@@ -268,13 +268,13 @@ public:
     }
 
     void configure_wait_object(wait_obj & wait_object) const override {
-        REDASSERT(!wait_object.is_waked_up_by_time());
+        assert(!wait_object.is_waked_up_by_time());
 
         wait_object.set_trigger_time(1000); // 1 ms
     }
 
     bool run(const wait_obj &) override {
-        REDASSERT(this->chunked_data_length <=
+        assert(this->chunked_data_length <=
             CHANNELS::CHANNEL_CHUNK_LENGTH);
 
         this->to_server_sender(this->total_length, this->flags,

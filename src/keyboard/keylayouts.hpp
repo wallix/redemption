@@ -90,10 +90,8 @@
 #include "keylayout_x00000418.hpp" // Romanian (Romania) Romanian
 #include "keylayout_x00000419.hpp" // Russian (Russia)
 #include "keylayout_x00010419.hpp" // Russian (Russia) typewriter
-#include "keylayout_x00000424.hpp" // Slovenian (Slovenia) Slovenian
 #include "keylayout_x0000043b.hpp" // Sami (Northern) (Norway) Norwegian with Sami
 #include "keylayout_x0001043b.hpp" // Sami (Northern) (Norway) Sami Extended Norway
-#include "keylayout_x0000083b.hpp" // Sami (Northern) (Sweden)
 #include "keylayout_x0000083b.hpp" // Sami (Northern) (Sweden) Swedish with Sami
 #include "keylayout_x0001083b.hpp" // Sami (Northern) (Sweden) Finnish with Sami
 #include "keylayout_x0002083b.hpp" // Sami (Northern) (Sweden) Sami Extended Finland-Sweden

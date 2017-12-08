@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE TestReplayMod
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "mod/internal/replay_mod.hpp"
 

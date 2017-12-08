@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE TestInCryptoTransport
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 #include "utils/log.hpp"
 
 #include "transport/crypto_transport.hpp"

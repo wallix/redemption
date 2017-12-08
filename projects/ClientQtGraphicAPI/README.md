@@ -1,4 +1,4 @@
-
+# RDP Qt Client
 
 Le ClientQtGraphicAPI est une couche graphique Qt pour client RDP qui assure l'affichage 
 d'ordre de tracé RDP et capture les entrées souris et clavier.
@@ -22,19 +22,19 @@ sous protocole (copier/coller, partage de disque...).
 	User name: renseigne le nom du user du compte de la cible.
 	Password: renseigne le mot de passe du compte de la cible.
 	Port: renseigne le port de connexion à la cible.
-    Un bouton "Connection" qui permet de lancer une connexion à une cible et d'ouvrir l'écran 
+    Un bouton "Connection" qui permet de lancer une connexion à une cible et d'ouvrir l'écran
     de session.
     Un bouton "Replay" qui permet de selectionner une film RDP en format .mwrm puis de le lire.
     L'écran de session va alors s'ouvrir et afficher le contenu du film.
     Un bouton "Options" permet d'ouvrir une fenêtre d'interface des options du client. Cette fenêtre
-    n'est pas contenu dans l'API et necessite d'être implémenter. 
+    n'est pas contenu dans l'API et necessite d'être implémenter.
 
 
     L'écran de session
     ------------------
 
-    L'écran de session est une fenêtre qui permet d'afficher les ordres de tracé RDP et de capturer 
-    les entrées claviers et souris de façon reproduire une session RDP.dont la taille s'adapte à la 
+    L'écran de session est une fenêtre qui permet d'afficher les ordres de tracé RDP et de capturer
+    les entrées claviers et souris de façon reproduire une session RDP.dont la taille s'adapte à la
     résolution du client.
     Il y a 3 boutons en bas de la fenêtre:
 	"CTRL + ALT + DELETE" qui envoie le signale de la pression de ces 3 touches à la session windows
@@ -50,20 +50,21 @@ sous protocole (copier/coller, partage de disque...).
 .) Compilation du client Qt RDP
 --------------------------------
 
-    Il existe une implémentation déjà présente d'un Client Qt RDP.
+    Prerequies
+    ----------
+	
+	Installer les lib Qt4 ou Qt5.
+
+    Compilation
+    -----------
+
     Pour le compiler il faut se placer dans le dossier redemption/project/ClientQtGraphicAPI:
 
-    Pour compiler avec la librairie Qt4:
-	$ bjam client_rdp_Qt4
+    Pour compiler avec la bibliothèque Qt4:
+	$ bjam client_rdp_Qt -s qt=4
 
-    Pour compiler avec la librairie Qt5:
-	Dans le dossier redemption/project/ClientQtGraphicAPI/front_qt_rdp_graphic_api.hpp, remplacer
-	la ligne 66 
-		#include "Qt4/Qt.hpp"
-	par la ligne
-		#include "Qt5/Qt.hpp"
-	et compiler avec:
-	$ bjam client_rdp_Qt5
+    Pour compiler avec la bibliothèque Qt5:
+	$ bjam -s qt=5 client_rdp_Qt
 
 
 
@@ -108,6 +109,8 @@ les options de la session RDP.
 	--asynchronous_task  affiche les logs des fonctions des tâches asynchrones du mod_rdp.
 	--capabilities       affiche les logs des capabilities lors de la négociation entre mod_rdp et cible.
 	--keyboard	     affiche les logs des entrées claviers.
+	--rail		     affiche les logs du cannal rail.
+	--rail_dump	     affiche les logs du cannal rail ainsi que le contenu brute des rail PDU.
 
 
     Boite de dialogue des options du client Qt RDP
@@ -157,21 +160,21 @@ L'API consiste à créer des clients composés de deux élément principaux:
 
     en option il est possible de reimplémenter les fonction suivantes:
 
-	    //  virtual void callback() override {
+	    //  void callback() override {
 	    //       FrontQtRDPGraphicAPI::callback();
 	    //  }
 	    
             callback() est appelée quand il y a un event socket, il est nécessaire de continuer à appeler 
             l'implémentation FrontQtRDPGraphicAPI::callback() dans l'override.
 
-	    //  virtual void connect() override {
+	    //  void connect() override {
 	    //       FrontQtRDPGraphicAPI::connect();
 	    //  }
 
             connect() est appelée quand le bouton "connection" est pressé, il est nécessaire de continuer à appeler 
             l'implémentation FrontQtRDPGraphicAPI::connect() dans l'override.
 
-	    //  virtual void options() override {}
+	    //  void options() override {}
 
             options() est appelée quand le bouton "options" est pressé, l'appel à l'implémentation de la classe mère 
             n'est pas nécessaire.
@@ -224,7 +227,7 @@ L'API consiste à créer des clients composés de deux élément principaux:
 	$    :
 	$        $(EXE_DEPENDENCIES)
 
-    Enfin compiler votre client à l'aide de la commande
+    Enfin compiler votre client à l'aide de la commande suivante:
 	$ bjam votre_client_exe
 
 

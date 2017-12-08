@@ -24,7 +24,6 @@
 #define RED_TEST_MODULE TestCapabilityBrushCache
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 #include "core/RDP/capabilities/cap_brushcache.hpp"
 
 RED_AUTO_TEST_CASE(TestCapabilityBrushCacheEmit)

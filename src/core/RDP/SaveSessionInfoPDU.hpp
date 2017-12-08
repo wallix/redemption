@@ -591,7 +591,7 @@ struct LogonInfoExtended_Recv {
 struct LogonInfoExtended_Send {
     LogonInfoExtended_Send(OutStream & stream, uint32_t FieldsPresent)
     {
-        REDASSERT((FieldsPresent == RDP::LOGON_EX_AUTORECONNECTCOOKIE) ||
+        assert((FieldsPresent == RDP::LOGON_EX_AUTORECONNECTCOOKIE) ||
             (FieldsPresent == RDP::LOGON_EX_LOGONERRORS));
 
         uint32_t Length = 10 /* Length(2) + FieldsPresent(2) + cbFieldData(4) */;

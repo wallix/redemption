@@ -24,7 +24,6 @@
 #define RED_TEST_MODULE TestCapabilityFont
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 #include "core/RDP/capabilities/cap_font.hpp"
 
 RED_AUTO_TEST_CASE(TestCapabilityFontEmit)

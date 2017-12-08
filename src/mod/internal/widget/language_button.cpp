@@ -39,7 +39,7 @@ LanguageButton::LanguageButton(
                        theme.global.fgcolor, theme.global.bgcolor,
                        theme.global.focus_color, 2, font, 7, 7)
     , front(front)
-    , parent(parent)
+    , parent_redraw(parent)
 {
     using std::begin;
     using std::end;
@@ -101,7 +101,7 @@ void LanguageButton::notify(Widget* widget, NotifyApi::notify_event_t event)
 
         rect.cx = std::max(rect.cx, this->cx());
         rect.cy = std::max(rect.cy, this->cy());
-        this->parent.rdp_input_invalidate(rect);
+        this->parent_redraw.rdp_input_invalidate(rect);
 
         front.set_keylayout(this->locales[this->selected_language].LCID);
     }

@@ -602,7 +602,7 @@ public:
     }
 
     void recv(InStream & stream, const CapabilitySetRecvFactory & recv_factory) {
-        REDASSERT(recv_factory.capabilitySetType == CB_CAPSTYPE_GENERAL);
+        assert(recv_factory.capabilitySetType == CB_CAPSTYPE_GENERAL);
 
         const unsigned expected = 10;   // lengthCapability(2) + version(4) +
                                         //     generalFlags(4)
@@ -616,7 +616,7 @@ public:
         this->capabilitySetType = recv_factory.capabilitySetType;
         this->lengthCapability  = stream.in_uint16_le();
 
-        REDASSERT(this->lengthCapability == size());
+        assert(this->lengthCapability == size());
 
         this->version_      = stream.in_uint32_le();
         this->generalFlags_ = stream.in_uint32_le();
@@ -636,7 +636,7 @@ public:
         this->capabilitySetType = stream.in_uint16_le();
         this->lengthCapability  = stream.in_uint16_le();
 
-        REDASSERT(this->lengthCapability == size());
+        assert(this->lengthCapability == size());
 
         this->version_      = stream.in_uint32_le();
         this->generalFlags_ = stream.in_uint32_le();
@@ -888,7 +888,7 @@ struct FormatListPDU
         , formatListDataName(formatListDataName)
         , formatListDataSize(formatListDataSize)
         {
-            REDASSERT(this->formatListDataSize <= FORMAT_LIST_MAX_SIZE);
+            assert(this->formatListDataSize <= FORMAT_LIST_MAX_SIZE);
         }
 
     FormatListPDU()
@@ -1094,7 +1094,7 @@ struct FormatListPDU_LongName {
     : header(CB_FORMAT_LIST, 0, 0)
     , formatListSize(formatListSize)
     {
-        REDASSERT(this->formatListSize <= FORMAT_LIST_MAX_SIZE);
+        assert(this->formatListSize <= FORMAT_LIST_MAX_SIZE);
 
         for (std::size_t i = 0; i < this->formatListSize; i++) {
 
@@ -1102,13 +1102,13 @@ struct FormatListPDU_LongName {
 
             this->formatListIDs[i] = formatListIDs[i];
 
-            REDASSERT(formatListNameLen[i] <= 500);
+            assert(formatListNameLen[i] <= 500);
             this->formatListNameLen[i] = formatListNameLen[i];
 
             std::memcpy(this->formatListName[i], formatListName[i], this->formatListNameLen[i]);
         }
 
-        REDASSERT(this->header.dataLen_ <= 1692);
+        assert(this->header.dataLen_ <= 1692);
     }
 
     FormatListPDU_LongName() = default;
@@ -1183,7 +1183,7 @@ struct FormatListPDU_ShortName  {
     : header(CB_FORMAT_LIST, 0, 0)
     , formatListSize(formatListSize)
     {
-        REDASSERT(this->formatListSize <= FORMAT_LIST_MAX_SIZE);
+        assert(this->formatListSize <= FORMAT_LIST_MAX_SIZE);
 
         this->header.dataLen_ = this->formatListSize * (4 + SHORT_NAME_MAX_SIZE);    /* formatId(4) + formatName(32) */
 
@@ -2223,16 +2223,16 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
                 case MFF::META_SETMAPMODE:
                     this->metaSetMapMod.recv(stream);
                     stream_header.in_skip_bytes(2);
-                    REDASSERT(this->mappingMode == this->metaSetMapMod.mappingMode);
+                    assert(this->mappingMode == this->metaSetMapMod.mappingMode);
                     break;
 
                 case MFF::META_DIBSTRETCHBLT:
                     {
                         notEOF = false;
                         this->dibStretchBLT.recv(stream);
-                        REDASSERT(this->metaHeader.maxRecord == this->dibStretchBLT.recordSize);
-                        REDASSERT(this->metaSetWindowExt.height == this->dibStretchBLT.destHeight);
-                        REDASSERT(this->metaSetWindowExt.width == this->dibStretchBLT.destWidth);
+                        assert(this->metaHeader.maxRecord == this->dibStretchBLT.recordSize);
+                        assert(this->metaSetWindowExt.height == this->dibStretchBLT.destHeight);
+                        assert(this->metaSetWindowExt.width == this->dibStretchBLT.destWidth);
                     }
                     break;
 
@@ -2411,7 +2411,7 @@ public:
                     chunk.in_skip_bytes(4);
 
                     this->imageSize   = chunk.in_uint32_le();
-                    //REDASSERT(this->imageSize == ((this->bpp/8) * this->height * this->width));
+                    //assert(this->imageSize == ((this->bpp/8) * this->height * this->width));
                     chunk.in_skip_bytes(8);
 
                     int skip(0);

@@ -25,6 +25,7 @@
 #pragma once
 
 #include "core/RDP/capabilities/common.hpp"
+#include "utils/log.hpp"
 #include "utils/stream.hpp"
 
 // 2.2.7.2.6 Multifragment Update Capability Set (TS_MULTIFRAGMENTUPDATE_CAPABILITYSET)

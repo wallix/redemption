@@ -26,6 +26,7 @@
 #include <snappy-c.h>
 
 #include "transport/transport.hpp"
+#include "utils/log.hpp"
 #include "utils/stream.hpp"
 
 static const size_t SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH = 1024 * 64;
@@ -57,7 +58,7 @@ private:
 
         while (remaining_size) {
             if (this->uncompressed_data_length) {
-                REDASSERT(this->uncompressed_data);
+                assert(this->uncompressed_data);
 
                 const size_t data_length = std::min<size_t>(remaining_size, this->uncompressed_data_length);
 
@@ -122,8 +123,8 @@ public:
     , uncompressed_data()
     , uncompressed_data_length(0) {
         (void)verbose;
-        REDASSERT(::snappy_max_compressed_length(MAX_UNCOMPRESSED_DATA_LENGTH) <= SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH);
-        REDASSERT(MAX_UNCOMPRESSED_DATA_LENGTH <= 0xFFFF); // 0xFFFF (for uint16_t)
+        assert(::snappy_max_compressed_length(MAX_UNCOMPRESSED_DATA_LENGTH) <= SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH);
+        assert(MAX_UNCOMPRESSED_DATA_LENGTH <= 0xFFFF); // 0xFFFF (for uint16_t)
     }
 
     ~SnappyCompressionOutTransport() override {

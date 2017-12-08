@@ -21,11 +21,12 @@
 
 #pragma once
 
-#include <zlib.h>
-
 #include "transport/transport.hpp"
 #include "utils/stream.hpp"
 #include "cxx/diagnostic.hpp"
+
+#include <cassert>
+#include <zlib.h>
 
 constexpr size_t GZIP_COMPRESSION_TRANSPORT_BUFFER_LENGTH = 1024 * 64;
 
@@ -78,7 +79,7 @@ private:
 
         while (remaining_size) {
             if (this->uncompressed_data_length) {
-                REDASSERT(this->uncompressed_data);
+                assert(this->uncompressed_data);
 
                 const size_t data_length = std::min<size_t>(remaining_size, this->uncompressed_data_length);
 
@@ -99,7 +100,7 @@ private:
                     InStream compressed_data(this->compressed_data_buf);
 
                     if (compressed_data.in_uint8() == 1) {
-                        REDASSERT(this->inflate_pending == false);
+                        assert(this->inflate_pending == false);
 
                         ::inflateEnd(&this->compression_stream);
 
@@ -219,7 +220,7 @@ private:
             //    LOG(LOG_INFO, "GZipCompressionOutTransport::compress: deflate return %d", ret);
             //}
             (void)ret;
-            REDASSERT(ret != Z_STREAM_ERROR);
+            assert(ret != Z_STREAM_ERROR);
 
             //if (this->verbose & 0x2) {
             //    LOG( LOG_INFO
@@ -252,7 +253,7 @@ private:
             }
         }
         while (this->compression_stream.avail_out == 0);
-        REDASSERT(this->compression_stream.avail_in == 0);
+        assert(this->compression_stream.avail_in == 0);
     }
 
     void do_send(const uint8_t * const buffer, size_t len) override {

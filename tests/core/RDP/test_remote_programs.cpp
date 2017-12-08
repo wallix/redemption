@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestRemotePrograms
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "utils/log.hpp"
 #include "core/RDP/remote_programs.hpp"

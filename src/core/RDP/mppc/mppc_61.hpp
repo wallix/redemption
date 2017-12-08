@@ -393,12 +393,12 @@ struct rdp_mppc_61_enc_sequential_search_match_finder : public rdp_mppc_enc_matc
             return;
         }
 
-        REDASSERT(output_data_size >= RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH);
+        assert(output_data_size >= RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH);
 
         const uint8_t * history_data_begin = history_data;
         const uint8_t * history_data_end   = history_data_begin + history_data_size - (RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1);
         while (history_data_begin != history_data_end) {
-            REDASSERT(history_data_begin <= history_data_end);
+            assert(history_data_begin <= history_data_end);
             if (memcmp(output_data, history_data_begin, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)) {
                 history_data_begin++;
                 continue;
@@ -435,14 +435,14 @@ struct rdp_mppc_61_enc_sequential_search_match_finder : public rdp_mppc_enc_matc
         const uint8_t * output_data_begin  = historyBuffer + historyOffset;
         const uint8_t * output_data_end    = output_data_begin + uncompressed_data_size - (RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1);
         while (output_data_begin < output_data_end) {
-            REDASSERT(output_data_length >= RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH);
+            assert(output_data_length >= RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH);
 
             uint16_t MatchLength;
             uint32_t MatchHistoryOffset;
             this->get_match_length(output_data_begin, output_data_length,
                 historyBuffer, history_data_size, MatchLength, MatchHistoryOffset);
             if (MatchLength) {
-                REDASSERT(MatchLength >= RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH);
+                assert(MatchLength >= RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH);
 
                 this->match_details_stream.out_uint16_le(MatchLength);
                 //LOG(LOG_INFO, "MatchLength=%d", MatchLength);

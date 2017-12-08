@@ -26,7 +26,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 // Comment the code block below to generate testing data.
-#define LOGNULL
 // Uncomment the code block below to generate testing data.
 
 #include "test_only/transport/test_transport.hpp"

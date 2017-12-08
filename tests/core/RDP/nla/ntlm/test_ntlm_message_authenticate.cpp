@@ -21,7 +21,6 @@
 #define RED_TEST_MODULE TestNtlmMessageAuthenticate
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "core/RDP/nla/credssp.hpp"
 #include "core/RDP/nla/ntlm/ntlm_message_authenticate.hpp"

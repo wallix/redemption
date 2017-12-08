@@ -22,7 +22,6 @@
 #define RED_TEST_MODULE TestRDPDRAsynchronousTask
 #include "system/redemption_unit_tests.hpp"
 
-#define LOGNULL
 
 #include "test_only/get_file_contents.hpp"
 #include "transport/in_file_transport.hpp"

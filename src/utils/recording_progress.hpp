@@ -236,7 +236,7 @@ public:
                 (this->stop_record - this->start_record);
         }
 
-        REDASSERT(time_percentage < 100);
+        assert(time_percentage < 100);
 
         if (time_percentage != this->last_written_time_percentage) {
             unsigned int elapsed_time = ::time(nullptr) - this->processing_start_time;
