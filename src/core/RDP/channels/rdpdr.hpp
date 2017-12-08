@@ -5519,7 +5519,7 @@ struct RdpDrStatus
 
 
 static inline
-void streamLog( InStream & stream , RdpDrStatus & status, size_t length)
+void streamLog( InStream & stream , RdpDrStatus & status, size_t /*length*/)
 {
     InStream s = stream.clone();
 

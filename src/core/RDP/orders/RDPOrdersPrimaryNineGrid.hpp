@@ -107,7 +107,7 @@ public:
         stream.out_uint16_le(this->bitmapId);
     }
 
-    void receive(InStream & stream, const RDPPrimaryOrderHeader & header)
+    void receive(InStream & stream, const RDPPrimaryOrderHeader & /*header*/)
     {
         this->ulLeftWidth = stream.in_uint16_le();
         this->ulRightWidth = stream.in_uint16_le();

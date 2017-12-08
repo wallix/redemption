@@ -797,7 +797,7 @@ protected:
             uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8] = { 0 };
 
             for (unsigned int h = 0; h < cursor.height; ++h) {
-                const uint8_t * psource = cursor.data 
+                const uint8_t * psource = cursor.data
                     + (cursor.height - h - 1) * source_xor_padded_line_length_in_byte;
                 uint8_t * pdest   = xorMaskData + h * xor_padded_line_length_in_byte;
                 uint8_t xor_bit_mask_generation = 7;
@@ -832,10 +832,10 @@ protected:
                       uint8_t* pdest   = xorMaskData + (cursor.height - h - 1) * xor_padded_line_length_in_byte;
 
                 for (unsigned int w = 0; w < cursor.width; ++w) {
-                    * pdest      = * psource;
+                    * pdest      = *(psource + 2);
                     *(pdest + 1) = *(psource + 1);
-                    *(pdest + 2) = *(psource + 2);
-                    *(pdest + 3) = 0;
+                    *(pdest + 2) = * psource;
+                    *(pdest + 3) = 0xFF;
 
                     pdest   += 4;
                     psource += 3;
