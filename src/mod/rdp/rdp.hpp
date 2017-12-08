@@ -374,6 +374,8 @@ protected:
 
     const bool                        bogus_ios_rdpdr_virtual_channel;
 
+    const bool                        enable_rdpdr_data_analysis;
+
     std::string session_probe_target_informations;
 
     SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
@@ -949,6 +951,7 @@ public:
         , session_probe_clipboard_based_launcher_short_delay(mod_rdp_params.session_probe_clipboard_based_launcher_short_delay)
         , session_probe_allow_multiple_handshake(mod_rdp_params.session_probe_allow_multiple_handshake)
         , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
+        , enable_rdpdr_data_analysis(mod_rdp_params.enable_rdpdr_data_analysis)
         , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
         , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
         , session_probe_process_monitoring_rules(mod_rdp_params.session_probe_process_monitoring_rules)
@@ -2202,12 +2205,12 @@ private:
 private:
     void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
                                    InStream & chunk, size_t length, uint32_t flags) {
-        if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
+        if (!this->enable_rdpdr_data_analysis &&
+            this->authorization_channels.rdpdr_type_all_is_authorized() &&
             !this->file_system_drive_manager.HasManagedDrive()) {
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 if (bool(this->verbose & (RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump))) {
-
                     LOG(LOG_INFO,
                         "mod_rdp::send_to_mod_rdpdr_channel: recv from Client, "
                             "send Chunked Virtual Channel Data transparently.");

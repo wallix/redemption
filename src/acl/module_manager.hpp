@@ -1512,6 +1512,8 @@ public:
 
                 mod_rdp_params.bogus_ios_rdpdr_virtual_channel     = this->ini.get<cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel>();
 
+                mod_rdp_params.enable_rdpdr_data_analysis          = this->ini.get<cfg::mod_rdp::enable_rdpdr_data_analysis>();
+
                 try {
                     const char * const name = "RDP Target";
 

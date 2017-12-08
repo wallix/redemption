@@ -150,6 +150,7 @@ namespace cfg {
         struct hide_client_name;
         struct clean_up_32_bpp_cursor;
         struct bogus_ios_rdpdr_virtual_channel;
+        struct enable_rdpdr_data_analysis;
     };
 
     struct mod_vnc {

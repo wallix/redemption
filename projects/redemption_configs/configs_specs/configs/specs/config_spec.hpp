@@ -393,6 +393,9 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(ini_and_gui, no_sesman, type_<bool>(), "bogus_ios_rdpdr_virtual_channel", set(true));
+        W.sep();
+
+        W.member(advanced_in_gui, sesman_to_proxy, type_<bool>(), "enable_rdpdr_data_analysis", set(true));
     });
 
     W.section("mod_vnc", [&]

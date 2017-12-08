@@ -510,6 +510,9 @@
 
 "bogus_ios_rdpdr_virtual_channel = boolean(default=True)\n\n"
 
+"#_advanced\n"
+"enable_rdpdr_data_analysis = boolean(default=True)\n\n"
+
 "[mod_vnc]\n\n"
 
 "# Enable or disable the clipboard from client (client to server).\n"
