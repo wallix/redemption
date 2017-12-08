@@ -26,6 +26,7 @@
 #include "core/error.hpp"
 
 #include "transport/crypto_transport.hpp"
+#include "transport/mwrm_reader.hpp"
 
 #include <cstdio>
 
@@ -147,10 +148,10 @@ public:
             this->mf_.filename,
             this->hf_.filename,
             S_IRUSR | S_IRGRP | S_IWUSR);
-        char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
-        const int len = sprintf(header1, "v2\n%u %u\n%s\n\n\n",
-        unsigned(width),  unsigned(height), this->cctx.get_with_checksum()?"checksum":"nochecksum");
-        this->meta_buf_encrypt_transport.send(header1, len);
+
+        MwrmWriterBuf mwrm_file_buf;
+        mwrm_file_buf.write_header(width, height, this->cctx.get_with_checksum());
+        this->meta_buf_encrypt_transport.send(mwrm_file_buf.buffer());
     }
 
     ~MetaSeqBuf()
@@ -211,17 +212,12 @@ private:
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
 
-        OutBufferHashLineCtx buf;
-
-        buf.write_filename(filename);
-        buf.write_stat(stat);
-        buf.write_start_and_stop(this->start_sec_, this->stop_sec_);
-        if (this->cctx.get_with_checksum()) {
-            buf.write_hashs(qhash, fhash);
-        }
-        buf.write_newline();
-
-        this->meta_buf_encrypt_transport.send(buf.mes, buf.len);
+        MwrmWriterBuf mwrm_file_buf;
+        mwrm_file_buf.write_line(
+            filename, stat,
+            this->start_sec_, this->stop_sec_ + 1,
+            this->cctx.get_with_checksum(), qhash, fhash);
+        this->meta_buf_encrypt_transport.send(mwrm_file_buf.buffer());
 
         this->start_sec_ = this->stop_sec_+1;
     }

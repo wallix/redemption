@@ -30,7 +30,7 @@
 // buffer must be able to contain line
 // if no line at end of buffer apply some memmove
 /// \exception Error : ERR_TRANSPORT_READ_FAILED
-Transport::Read LineReader::next_line()
+Transport::Read MwrmLineReader::next_line()
 {
     if (this->eol > this->eof) {
         return Transport::Read::Eof;
@@ -106,9 +106,8 @@ namespace
 
 MwrmReader::MwrmReader(InTransport ibuf) noexcept
 : line_reader(ibuf)
+, header(WrmVersion::v1, false)
 {
-    this->header.version = WrmVersion::v1;
-    this->header.has_checksum = false;
 }
 
 void MwrmReader::read_meta_headers()
@@ -119,10 +118,12 @@ void MwrmReader::read_meta_headers()
         }
     };
     next_line();
-    this->header.has_checksum = false;
-    this->header.version = WrmVersion::v1;
+    this->header = MetaHeader(WrmVersion::v1, false);
     if (this->line_reader.get_buf()[0] == 'v') {
         next_line(); // 800 600
+        auto wh_line = this->line_reader.get_buf().data();
+        this->header.witdh = strtoll(wh_line, &wh_line, 10);
+        this->header.height = strtoll(wh_line, &wh_line, 10);
         next_line(); // checksum or nochecksum
         this->header.version = WrmVersion::v2;
         this->header.has_checksum = (this->line_reader.get_buf()[0] == 'c');
@@ -369,4 +370,186 @@ Transport::Read MwrmReader::read_meta_line_v2(MetaLine & meta_line, FileType fil
     }
 
     return Transport::Read::Ok;
+}
+
+
+void MwrmWriterBuf::write_header(MetaHeader const & header) noexcept
+{
+    this->write_header(header.witdh, header.height, header.has_checksum);
+}
+
+void MwrmWriterBuf::write_header(uint16_t width, uint16_t height, bool has_checksum) noexcept
+{
+    this->len = sprintf(this->mes, "v2\n%u %u\n%s\n\n\n",
+        unsigned(width),  unsigned(height), has_checksum ? "checksum" : "nochecksum");
+}
+
+struct PrivateMwrmWriterBuf
+{
+    MwrmWriterBuf & writer;
+    using HashArray = MwrmWriterBuf::HashArray;
+
+    template<class Stat>
+    void mwrm_write_line(
+        char const * filename, Stat const & stat,
+        bool with_time, time_t start_time, time_t stop_time,
+        bool with_hash, MwrmWriterBuf::HashArray const & qhash, MwrmWriterBuf::HashArray const & fhash
+    ) noexcept
+    {
+        assert(writer.len < MwrmWriterBuf::max_header_size);
+
+        write_filename(filename);
+        write_stat(stat);
+        if (with_time) {
+            write_start_and_stop(start_time, stop_time);
+        }
+        if (with_hash) {
+            write_hashs(qhash, fhash);
+        }
+        write_newline();
+    }
+
+    void write_hash_header() noexcept
+    {
+        writer.len = sprintf(writer.mes, "v2\n\n\n");
+    }
+
+private:
+    void write_filename(char const * filename) noexcept
+    {
+        for (size_t i = 0; (filename[i]) && (writer.len < PATH_MAX-2) ; i++){
+            switch (filename[i]){
+            case '\\':
+            case ' ':
+                writer.mes[writer.len++] = '\\';
+                REDEMPTION_CXX_FALLTHROUGH;
+            default:
+                writer.mes[writer.len++] = filename[i];
+            break;
+            }
+        }
+    }
+
+    void write_stat(struct stat const & stat) noexcept
+    {
+        using ull = unsigned long long;
+        using ll = long long;
+        writer.len += std::sprintf(
+            writer.mes + writer.len,
+            " %lld %llu %lld %lld %llu %lld %lld %lld",
+            ll(stat.st_size),
+            ull(stat.st_mode),
+            ll(stat.st_uid),
+            ll(stat.st_gid),
+            ull(stat.st_dev),
+            ll(stat.st_ino),
+            ll(stat.st_mtim.tv_sec),
+            ll(stat.st_ctim.tv_sec)
+        );
+    }
+
+    void write_stat(MetaLine const & meta_line) noexcept
+    {
+        using ull = unsigned long long;
+        using ll = long long;
+        writer.len += std::sprintf(
+            writer.mes + writer.len,
+            " %lld %llu %lld %lld %llu %lld %lld %lld",
+            ll(meta_line.size),
+            ull(meta_line.mode),
+            ll(meta_line.uid),
+            ll(meta_line.gid),
+            ull(meta_line.dev),
+            ll(meta_line.ino),
+            ll(meta_line.mtime),
+            ll(meta_line.ctime)
+        );
+    }
+
+    void write_start_and_stop(time_t start, time_t stop) noexcept
+    {
+        using ll = long long;
+        writer.len += std::sprintf(
+            writer.mes + writer.len,
+            " %lld %lld",
+            ll(start),
+            ll(stop)
+        );
+    }
+    void write_hashs(HashArray const & qhash, HashArray const & fhash) noexcept
+    {
+        char * p = writer.mes + writer.len;
+
+        auto hexdump = [&p](uint8_t const (&hash)[MD_HASH::DIGEST_LENGTH]) {
+            *p++ = ' ';                // 1 octet
+            for (unsigned c : hash) {
+                sprintf(p, "%02x", c); // 64 octets (hash)
+                p += 2;
+            }
+        };
+        hexdump(qhash);
+        hexdump(fhash);
+
+        writer.len = p - writer.mes;
+    }
+    void write_newline() noexcept
+    {
+        writer.mes[writer.len++] = '\n';
+    }
+};
+
+void MwrmWriterBuf::write_line(MetaLine const & meta_line) noexcept
+{
+    this->reset_buf();
+    PrivateMwrmWriterBuf{*this}.mwrm_write_line(
+        meta_line.filename, meta_line,
+        true, meta_line.start_time, meta_line.stop_time,
+        meta_line.with_hash, meta_line.hash1, meta_line.hash2);
+}
+
+void MwrmWriterBuf::write_line(
+    char const * filename, struct stat const & stat,
+    time_t start_time, time_t stop_time,
+    bool with_hash, HashArray const & qhash, HashArray const & fhash) noexcept
+{
+    this->reset_buf();
+    PrivateMwrmWriterBuf{*this}.mwrm_write_line(
+        filename, stat,
+        true, start_time, stop_time,
+        with_hash, qhash, fhash);
+}
+
+void MwrmWriterBuf::write_hash_file(MetaLine const & meta_line) noexcept
+{
+    PrivateMwrmWriterBuf{*this}.write_hash_header();
+    PrivateMwrmWriterBuf{*this}.mwrm_write_line(
+        meta_line.filename, meta_line,
+        false, 0, 0,
+        meta_line.with_hash, meta_line.hash1, meta_line.hash2);
+}
+
+void MwrmWriterBuf::write_hash_file(
+    char const * filename, struct stat const & stat,
+    bool with_hash, HashArray const & qhash, HashArray const & fhash) noexcept
+{
+    PrivateMwrmWriterBuf{*this}.write_hash_header();
+    PrivateMwrmWriterBuf{*this}.mwrm_write_line(
+        filename, stat,
+        false, 0, 0,
+        with_hash, qhash, fhash);
+}
+
+array_view_const_char MwrmWriterBuf::buffer() const noexcept
+{
+    return {this->mes, this->len};
+}
+
+char const * MwrmWriterBuf::c_str() const noexcept
+{
+    return this->mes;
+}
+
+bool MwrmWriterBuf::is_full() const noexcept
+{
+    return sizeof(this->mes)-1 >= this->len;
 }

@@ -752,6 +752,7 @@ test-run tests/capture/test_capture :
   <library>src/core/RDP/mppc.o
   <library>src/gdi/graphic_api.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
@@ -2150,6 +2151,7 @@ test-run tests/front/test_front :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/mwrm_reader.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -3407,6 +3409,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -3450,6 +3453,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -3493,6 +3497,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
+  <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -3601,6 +3606,7 @@ test-run tests/transport/test_crypto_transport :
   <library>crypto
   <library>snappy
   <library>src/transport/crypto_transport.o
+  <library>src/transport/mwrm_reader.o
   <library>src/utils/fileutils.o
 ;
 test-run tests/transport/test_gzip_compression_transport :

@@ -247,6 +247,9 @@ all_files.update(tuple_files(mains))
 all_files.update(tuple_files(libs))
 all_files.update(extra_srcs)
 
+#print([f.path for f in sources])
+#print("------")
+
 
 ###
 ### Get user includes
@@ -273,6 +276,9 @@ def get_includes(path):
                                 found = True
                                 break
                         if not found:
+                            file_name = path[0:path.rfind('/')] + '/' + inc
+                            if file_name in all_files:
+                                user_includes.append(all_files[file_name])
                             unknown_user_includes.append(inc)
                     if len(line) and line[0] == '<':
                         system_includes.append(line[1:line.rfind('>')])
@@ -281,8 +287,8 @@ def get_includes(path):
 for name, f in all_files.items():
     f.user_includes, f.system_includes, f.unknown_user_includes = get_includes(f.path)
 
-#for name, f in sources.items():
-    #print(name, f.user_includes, f.system_includes, f.unknown_user_includes)
+#for f in sources:
+    #print("--", f.path, [a.path for a in f.user_includes], f.system_includes, f.unknown_user_includes)
 
 
 ###

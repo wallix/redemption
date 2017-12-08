@@ -114,14 +114,31 @@ public:
     }
 
     REDEMPTION_CXX_NODISCARD
+    Read atomic_read(byte_array buffer)
+    {
+        return this->do_atomic_read(buffer.to_u8p(), buffer.size());
+    }
+
+    REDEMPTION_CXX_NODISCARD
     size_t partial_read(byte_ptr buffer, size_t len)
     {
         return this->do_partial_read(buffer.to_u8p(), len);
     }
 
+    REDEMPTION_CXX_NODISCARD
+    size_t partial_read(byte_array buffer)
+    {
+        return this->do_partial_read(buffer.to_u8p(), buffer.size());
+    }
+
     void send(cbyte_ptr buffer, size_t len)
     {
         this->do_send(buffer.to_u8p(), len);
+    }
+
+    void send(cbyte_array buffer)
+    {
+        this->do_send(buffer.to_u8p(), buffer.size());
     }
 
     virtual void flush()

@@ -872,44 +872,6 @@ public:
     { return 0; }
 };
 
-static inline int dorecorder_write_filename(dorecorder_ofile_buf_out & writer, const char * filename)
-{
-    auto pfile = filename;
-    auto epfile = filename;
-    for (; *epfile; ++epfile) {
-        if (*epfile == '\\') {
-            ssize_t len = epfile - pfile + 1;
-            auto res = writer.write(pfile, len);
-            if (res < len) {
-                return res < 0 ? res : 1;
-            }
-            pfile = epfile;
-        }
-        if (*epfile == ' ') {
-            ssize_t len = epfile - pfile;
-            auto res = writer.write(pfile, len);
-            if (res < len) {
-                return res < 0 ? res : 1;
-            }
-            res = writer.write("\\", 1u);
-            if (res < 1) {
-                return res < 0 ? res : 1;
-            }
-            pfile = epfile;
-        }
-    }
-
-    if (pfile != epfile) {
-        ssize_t len = epfile - pfile;
-        auto res = writer.write(pfile, len);
-        if (res < len) {
-            return res < 0 ? res : 1;
-        }
-    }
-
-    return 0;
-}
-
 static inline int check_encrypted_or_checksumed(
     std::string const & input_filename,
     std::string const & mwrm_path,
@@ -1003,9 +965,7 @@ static inline int check_encrypted_or_checksumed(
         const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
         std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
         std::string const full_part_filename = mwrm_path + meta_line_wrm_filename;
-
-//        LOG(LOG_INFO, "checking part %s", full_part_filename);
-
+        // LOG(LOG_INFO, "checking part %s", full_part_filename);
 
         bool has_mismatch_stat_mwrm = false;
         if (!check_file(
@@ -1073,71 +1033,32 @@ static inline int check_encrypted_or_checksumed(
 
         // copy mwrm headers
         {
-            InCryptoTransport mwrm_file(cctx, EncryptionMode::NotEncrypted, fstat);
-            mwrm_file.open(full_mwrm_filename.c_str());
-            LineReader line_reader(mwrm_file);
+            MwrmWriterBuf mwrm_file_buf;
+            mwrm_file_buf.write_header(reader.get_header());
 
-            // v2, w h, nochecksum, blank, blank
-            for (int i = 0; i < 5; ++i) {
-                if (Transport::Read::Eof == line_reader.next_line()) {
-                    throw Error(ERR_TRANSPORT_READ_FAILED, 0);
-                }
-                auto av = line_reader.get_buf();
-                if (mwrm_file_cp.write(av.data(), av.size()) != ssize_t(av.size())) {
-                    throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
-                }
+            auto buf = mwrm_file_buf.buffer();
+            ssize_t res = mwrm_file_cp.write(buf.data(), buf.size());
+            if (res < static_cast<ssize_t>(buf.size())) {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
             }
         }
 
-
-        // TODO: this is much too complicated, use factorized code from wrm_capture to compute hash file
         for (MetaLine2CtxForRewriteStat & ctx : meta_line_ctx_list) {
             struct stat sb;
             if (lstat(ctx.wrm_filename.c_str(), &sb) < 0) {
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
             }
 
-            const char * filename = ctx.filename.c_str();
-            auto start_sec = ctx.start_time;
-            auto stop_sec = ctx.stop_time;
-            int err = dorecorder_write_filename(mwrm_file_cp, filename);
-            if (err){
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
-            }
+            MwrmWriterBuf mwrm_file_buf;
+            MwrmWriterBuf::HashArray dummy_hash;
+            mwrm_file_buf.write_line(
+                ctx.filename.c_str(), sb,
+                ctx.start_time, ctx.stop_time,
+                false, dummy_hash, dummy_hash);
 
-            using ull = unsigned long long;
-            using ll = long long;
-            char mes[
-                (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-                (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-                MD_HASH::DIGEST_LENGTH*4 + 1 +
-                2
-            ];
-            ssize_t len = std::sprintf(
-                mes,
-                " %lld %llu %lld %lld %llu %lld %lld %lld",
-                ll(sb.st_size),
-                ull(sb.st_mode),
-                ll(sb.st_uid),
-                ll(sb.st_gid),
-                ull(sb.st_dev),
-                ll(sb.st_ino),
-                ll(sb.st_mtim.tv_sec),
-                ll(sb.st_ctim.tv_sec)
-            );
-            len += std::sprintf(
-                mes + len,
-                " %lld %lld",
-                ll(start_sec),
-                ll(stop_sec)
-            );
-
-            char * p = mes + len;
-            *p++ = '\n';
-
-            ssize_t res = mwrm_file_cp.write(mes, p-mes);
-
-            if (res < p-mes) {
+            auto buf = mwrm_file_buf.buffer();
+            ssize_t res = mwrm_file_cp.write(buf.data(), buf.size());
+            if (res < static_cast<ssize_t>(buf.size())) {
                 throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
             }
         }
@@ -1181,47 +1102,19 @@ static inline int check_encrypted_or_checksumed(
         snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
         if (hash_file_cp.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
-            char header[] = "v2\n\n\n";
-            hash_file_cp.write(header, sizeof(header)-1);
-
             struct stat stat;
             int err = ::stat(meta_filename, &stat);
             if (!err) {
-               err = dorecorder_write_filename(hash_file_cp, filename);
-                if (err) {
-                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
-                    return 1;
-                }
+                MwrmWriterBuf mwrm_file_buf;
+                MwrmWriterBuf::HashArray dummy_hash;
+                mwrm_file_buf.write_hash_file(
+                    filename, stat,
+                    false, dummy_hash, dummy_hash);
 
-                using ull = unsigned long long;
-                using ll = long long;
-                char mes[
-                    (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-                    (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-                    MD_HASH::DIGEST_LENGTH*4 + 1 +
-                    2
-                ];
-                ssize_t len = std::sprintf(
-                    mes,
-                    " %lld %llu %lld %lld %llu %lld %lld %lld",
-                    ll(stat.st_size),
-                    ull(stat.st_mode),
-                    ll(stat.st_uid),
-                    ll(stat.st_gid),
-                    ull(stat.st_dev),
-                    ll(stat.st_ino),
-                    ll(stat.st_mtim.tv_sec),
-                    ll(stat.st_ctim.tv_sec)
-                );
-
-                char * p = mes + len;
-                *p++ = '\n';
-
-                ssize_t res = hash_file_cp.write(mes, p-mes);
-
-                if (res < p-mes) {
-                    LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", filename, err);
-                    return 1;
+                auto buf = mwrm_file_buf.buffer();
+                ssize_t res = hash_file_cp.write(buf.data(), buf.size());
+                if (res < static_cast<ssize_t>(buf.size())) {
+                    err = -1;
                 }
             }
             if (!err) {

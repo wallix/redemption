@@ -67,7 +67,7 @@ constexpr auto is_encrypted = InCryptoTransport::EncryptionMode::Encrypted;
 constexpr auto is_not_encrypted = InCryptoTransport::EncryptionMode::NotEncrypted;
 
 
-RED_AUTO_TEST_CASE(TestLineReader)
+RED_AUTO_TEST_CASE(TestMwrmLineReader)
 {
     char const * filename = "/tmp/test_app_verifier_s.txt";
 
@@ -84,7 +84,7 @@ RED_AUTO_TEST_CASE(TestLineReader)
     {
         InCryptoTransport ifile(cctx, is_not_encrypted, fstat);
         ifile.open(filename);
-        LineReader line_reader(ifile);
+        MwrmLineReader line_reader(ifile);
         RED_CHECK_EQUAL(line_reader.next_line(), Read::Ok);
         RED_CHECK_EQUAL(line_reader.get_buf().size(), 5);
         RED_CHECK_EQUAL(line_reader.next_line(), Read::Ok);
@@ -103,7 +103,7 @@ RED_AUTO_TEST_CASE(TestLineReader)
     {
         InCryptoTransport ifile(cctx, is_not_encrypted, fstat);
         ifile.open(filename);
-        LineReader line_reader(ifile);
+        MwrmLineReader line_reader(ifile);
         RED_CHECK_EQUAL(line_reader.next_line(), Read::Ok);
         RED_CHECK_EQUAL(line_reader.get_buf().size(), big_line_len+1);
         RED_CHECK_EQUAL(line_reader.next_line(), Read::Ok);
@@ -116,7 +116,7 @@ RED_AUTO_TEST_CASE(TestLineReader)
     {
         InCryptoTransport ifile(cctx, is_not_encrypted, fstat);
         ifile.open(filename);
-        LineReader line_reader(ifile);
+        MwrmLineReader line_reader(ifile);
         RED_CHECK_EXCEPTION_ERROR_ID(line_reader.next_line(), ERR_TRANSPORT_READ_FAILED);
     }
 
@@ -346,7 +346,7 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
 
 RED_AUTO_TEST_CASE(ReadHashV2WithoutHash)
 {
-    auto data = cstr_array_view("v2\n\n\ncgrosjean@10.10.43.12,Administrateur@local@win2008,20170830-174010,wab-5-0-4.cgrtc,6916.mwrm 222 33056 1001 1001 65030 28 1504107644 1504107644\n");
+    auto const data = cstr_array_view("v2\n\n\ncgrosjean@10.10.43.12,Administrateur@local@win2008,20170830-174010,wab-5-0-4.cgrtc,6916.mwrm 222 33056 1001 1001 65030 28 1504107644 1504107644\n");
 
     GeneratorTransport transport(data.data(), data.size());
 
@@ -368,6 +368,10 @@ RED_AUTO_TEST_CASE(ReadHashV2WithoutHash)
     RED_CHECK_EQUAL(meta_line.with_hash, false);
 
     RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Eof);
+
+    MwrmWriterBuf writer;
+    writer.write_hash_file(meta_line);
+    RED_CHECK_EQUAL(writer.c_str(), data.data());
 }
 
 RED_AUTO_TEST_CASE(ReadHashV1)

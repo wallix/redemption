@@ -153,37 +153,6 @@ private:
 };
 
 
-struct OutBufferHashLineCtx
-{
-    using ull = unsigned long long;
-    using ll = long long;
-
-    // 8Ko for a filename with expanded slash should be enough
-    // or we will truncate filename at buffersize
-    static const std::size_t tmp_filename_size = 8192;
-    char mes[
-        tmp_filename_size +
-        (std::numeric_limits<ll>::digits10 + 1 + 1) * 8 +
-        (std::numeric_limits<ull>::digits10 + 1 + 1) * 2 +
-        (MD_HASH::DIGEST_LENGTH*2 + 1) * 2 + 1 +
-        2
-    ];
-    std::size_t len = 0;
-
-    void write_filename(char const * filename);
-
-    void write_stat(struct stat & stat);
-
-    void write_start_and_stop(time_t start, time_t stop);
-
-    void write_hashs(
-        uint8_t const (&qhash)[MD_HASH::DIGEST_LENGTH],
-        uint8_t const (&fhash)[MD_HASH::DIGEST_LENGTH]);
-
-    void write_newline();
-};
-
-
 class OutCryptoTransport : public Transport
 {
 public:

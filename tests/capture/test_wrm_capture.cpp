@@ -23,8 +23,6 @@
 #define RED_TEST_MODULE TestWrmCapture
 #include "system/redemption_unit_tests.hpp"
 
-
-
 #include "utils/log.hpp"
 
 #include <snappy-c.h>
@@ -346,21 +344,6 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 
 
 template<class Writer>
-int wrmcapture_write_filename(Writer & writer, const char * filename)
-{
-    OutBufferHashLineCtx buf;
-    buf.write_filename(filename);
-
-    ssize_t res = writer.write(buf.mes, buf.len);
-    if (res < static_cast<ssize_t>(buf.len)) {
-        return res < 0 ? res : 1;
-    }
-
-    return 0;
-}
-
-
-template<class Writer>
 int wrmcapture_write_meta_file(
     Writer & writer, Fstat & fstat, const char * filename,
     time_t start_sec, time_t stop_sec
@@ -371,17 +354,15 @@ int wrmcapture_write_meta_file(
         return err;
     }
 
-    OutBufferHashLineCtx buf;
-    buf.write_filename(filename);
-    buf.write_stat(stat);
-    buf.write_start_and_stop(start_sec, stop_sec);
-    buf.write_newline();
+    MwrmWriterBuf mwrm_buf;
+    MwrmWriterBuf::HashArray dummy_hash;
+    mwrm_buf.write_line(filename, stat, start_sec, stop_sec, false, dummy_hash, dummy_hash);
 
-    ssize_t res = writer.write(buf.mes, buf.len);
-    if (res < static_cast<ssize_t>(buf.len)) {
+    auto buf = mwrm_buf.buffer();
+    ssize_t res = writer.write(cbyte_ptr(buf.data()), buf.size());
+    if (res < static_cast<ssize_t>(buf.size())) {
         return res < 0 ? res : 1;
     }
-
     return 0;
 }
 
@@ -389,19 +370,19 @@ int wrmcapture_write_meta_file(
 
 RED_AUTO_TEST_CASE(TestWriteFilename)
 {
-    struct {
-        std::string s;
+    auto wrmcapture_write_filename = [](char const * filename) {
+        struct stat st;
+        FakeFstat().stat("", st);
+        MwrmWriterBuf mwrm_buf;
+        MwrmWriterBuf::HashArray dummy_hash;
+        mwrm_buf.write_line(filename, st, 0, 0, false, dummy_hash, dummy_hash);
+        auto buf = mwrm_buf.buffer();
+        return std::string{cbyte_ptr(buf.data()), buf.size()};
+    };
 
-        int write(char const * data, std::size_t len) {
-            s.append(data, len);
-            return len;
-        }
-    } writer;
-
-#define TEST_WRITE_FILENAME(origin_filename, wrote_filename) \
-    wrmcapture_write_filename(writer, origin_filename);      \
-    RED_CHECK_EQUAL(writer.s, wrote_filename);             \
-    writer.s.clear()
+#define TEST_WRITE_FILENAME(origin_filename, wrote_filename)    \
+    RED_CHECK_EQUAL(wrmcapture_write_filename(origin_filename), \
+    wrote_filename " 0 0 0 0 0 0 0 0 0 0\n");                   \
 
     TEST_WRITE_FILENAME("abcde.txt", "abcde.txt");
 
@@ -452,6 +433,18 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
         wrm_trans.send("CCCCX", 5);
     } // brackets necessary to force closing sequence
 
+    const char * meta_path = "./xxx.mwrm";
+    const char * filename = meta_path + 2;
+    const char * meta_hash_path = "./hash-xxx.mwrm";
+
+    MwrmWriterBuf meta_file_buf;
+    MwrmWriterBuf::HashArray dummy_hash;
+    struct stat st;
+    meta_file_buf.write_hash_file(filename, st, false, dummy_hash, dummy_hash);
+
+    RED_CHECK_EQUAL(meta_file_buf.buffer().size(), filesize(meta_hash_path));
+    RED_CHECK_EQUAL(0, ::unlink(meta_hash_path));
+
     struct {
         size_t len = 0;
         ssize_t write(char const *, size_t len) {
@@ -459,22 +452,6 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
             return len;
         }
     } meta_len_writer;
-
-    const char * meta_path = "./xxx.mwrm";
-    const char * filename = meta_path + 2;
-    const char * meta_hash_path = "./hash-xxx.mwrm";
-    meta_len_writer.len = 5; // header
-    struct stat stat;
-    RED_CHECK(!FakeFstat{}.stat(meta_path, stat));
-
-    wrmcapture_write_filename(meta_len_writer, filename);
-    meta_len_writer.len += 17; // " 0 0 0 0 0 0 0 0\n"
-
-    RED_CHECK_EQUAL(meta_len_writer.len, filesize(meta_hash_path));
-    RED_CHECK_EQUAL(0, ::unlink(meta_hash_path));
-
-
-    meta_len_writer.len = 0;
 
     wrmcapture_write_meta_headers(meta_len_writer, 800, 600, false);
 

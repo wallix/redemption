@@ -870,7 +870,6 @@ public:
 
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16) ? 16 : 24);
         // TODO remove this after unifying capture interface
-        bool full_video = false;
         VideoParams video_params = video_params_from_ini(this->client_info.width, this->client_info.height, ini);
 
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
@@ -881,7 +880,8 @@ public:
 
         bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
         bool capture_video = bool(capture_flags & CaptureFlags::video);
-        bool capture_video_full = full_video;
+        // TODO missing CaptureFlags::full_video
+        bool capture_video_full = false;
         // TODO missing CaptureFlags::meta
         bool capture_meta = ini.get<cfg::globals::is_rec>() && bool(capture_flags & CaptureFlags::ocr);
         bool capture_kbd = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)

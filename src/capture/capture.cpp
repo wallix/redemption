@@ -44,7 +44,6 @@
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/make_unique.hpp"
 
-#include "utils/match_finder.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/bitmap_shrink.hpp"
@@ -68,6 +67,7 @@
 
 #include "capture/capture.hpp"
 #include "capture/wrm_capture.hpp"
+#include "capture/utils/match_finder.hpp"
 
 #include "capture/video_capture.hpp"
 

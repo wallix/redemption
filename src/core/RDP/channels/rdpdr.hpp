@@ -5313,7 +5313,7 @@ struct RdpDrStatus
 
 
 static inline
-void streamLog( InStream & stream , RdpDrStatus & status)
+void streamLog(InStream & stream , RdpDrStatus & status)
 {
     InStream s = stream.clone();
 

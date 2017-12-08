@@ -25,6 +25,7 @@
 #include "utils/sugar/std_stream_proto.hpp"
 
 #include <linux/limits.h> // PATH_MAX
+#include <sys/stat.h>
 #include <sys/types.h>
 
 
@@ -43,9 +44,25 @@ REDEMPTION_OSTREAM(out, WrmVersion version)
 struct MetaHeader
 {
     WrmVersion version;
-    //unsigned witdh;
-    //unsigned height;
+    uint16_t witdh;
+    uint16_t height;
     bool has_checksum;
+
+    MetaHeader() = default;
+
+    MetaHeader(WrmVersion version, bool has_checksum)
+      : version(version)
+      , witdh(0)
+      , height(0)
+      , has_checksum(has_checksum)
+    {}
+
+    MetaHeader(WrmVersion version, uint16_t witdh, uint16_t height, bool has_checksum)
+      : version(version)
+      , witdh(witdh)
+      , height(height)
+      , has_checksum(has_checksum)
+    {}
 };
 
 struct MetaLine
@@ -86,8 +103,9 @@ struct MetaLine
     {}
 };
 
-class LineReader
+class MwrmLineReader
 {
+public:
     constexpr static std::size_t line_max =
         PATH_MAX + 1 + 1 +
         (std::numeric_limits<long long>::digits10 + 1 + 1) * 8 +
@@ -101,10 +119,8 @@ class LineReader
     char * cur;
     InTransport ibuf;
 
-    friend class MwrmReader; // for LineReader::read_meta_hash_line()
-
 public:
-    LineReader(InTransport reader_buf) noexcept
+    MwrmLineReader(InTransport reader_buf) noexcept
     : buf{}
     , eof(buf)
     , eol(buf)
@@ -120,6 +136,7 @@ public:
     array_view_char get_buf() const
     { return {this->cur, this->eol}; }
 };
+
 
 struct MwrmReader
 {
@@ -139,7 +156,7 @@ struct MwrmReader
     }
 
 private:
-    LineReader line_reader;
+    MwrmLineReader line_reader;
     MetaHeader header;
 
     Transport::Read read_meta_hash_line_v1(MetaLine & meta_line);
@@ -148,4 +165,42 @@ private:
 
     enum class FileType : bool { Hash, Mwrm };
     Transport::Read read_meta_line_v2(MetaLine & meta_line, FileType);
+};
+
+
+struct MwrmWriterBuf
+{
+    using HashArray = uint8_t[MD_HASH::DIGEST_LENGTH];
+
+    void write_header(MetaHeader const & header) noexcept;
+    void write_header(uint16_t width, uint16_t height, bool has_checksum) noexcept;
+
+    void write_hash_file(MetaLine const & meta_line) noexcept;
+    void write_hash_file(
+        char const * filename, struct stat const & stat,
+        bool with_hash, HashArray const & qhash, HashArray const & fhash) noexcept;
+
+    // reset buf then write{filename, stat, start_and_stop, hashs};
+    void write_line(MetaLine const & meta_line) noexcept;
+    // reset buf then write{filename, stat, start_and_stop, hashs};
+    void write_line(
+        char const * filename, struct stat const & stat,
+        time_t start_time, time_t stop_time,
+        bool with_hash, HashArray const & qhash, HashArray const & fhash) noexcept;
+
+    array_view_const_char buffer() const noexcept;
+    char const * c_str() const noexcept;
+    bool is_full() const noexcept;
+
+    void reset_buf() noexcept
+    {
+        this->len = 0;
+    }
+
+private:
+    friend class PrivateMwrmWriterBuf;
+
+    static const std::size_t max_header_size = 42;
+    char mes[MwrmLineReader::line_max + max_header_size];
+    std::size_t len = 0;
 };

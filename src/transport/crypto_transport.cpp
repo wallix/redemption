@@ -20,6 +20,7 @@
 
 #include "transport/crypto_transport.hpp"
 #include "capture/cryptofile.hpp"
+#include "transport/mwrm_reader.hpp"
 #include "transport/out_file_transport.hpp"
 #include "transport/transport.hpp"
 #include "utils/fileutils.hpp"
@@ -647,71 +648,6 @@ ocrypto::Result ocrypto::write(const uint8_t * data, size_t len)
     return {{this->result_buffer, towrite}, available_size};
 }
 
-void OutBufferHashLineCtx::write_filename(char const * filename)
-{
-    for (size_t i = 0; (filename[i]) && (this->len < tmp_filename_size-2) ; i++){
-        switch (filename[i]){
-        case '\\':
-        case ' ':
-            this->mes[this->len++] = '\\';
-            REDEMPTION_CXX_FALLTHROUGH;
-        default:
-            this->mes[this->len++] = filename[i];
-        break;
-        }
-    }
-}
-
-void OutBufferHashLineCtx::write_stat(struct stat & stat)
-{
-    this->len += std::sprintf(
-        this->mes + this->len,
-        " %lld %llu %lld %lld %llu %lld %lld %lld",
-        ll(stat.st_size),
-        ull(stat.st_mode),
-        ll(stat.st_uid),
-        ll(stat.st_gid),
-        ull(stat.st_dev),
-        ll(stat.st_ino),
-        ll(stat.st_mtim.tv_sec),
-        ll(stat.st_ctim.tv_sec)
-    );
-}
-
-void OutBufferHashLineCtx::write_start_and_stop(time_t start, time_t stop)
-{
-    this->len += std::sprintf(
-        this->mes + this->len,
-        " %lld %lld",
-        ll(start),
-        ll(stop+1)
-    );
-}
-
-void OutBufferHashLineCtx::write_hashs(
-    uint8_t const (&qhash)[MD_HASH::DIGEST_LENGTH],
-    uint8_t const (&fhash)[MD_HASH::DIGEST_LENGTH])
-{
-    char * p = this->mes + this->len;
-
-    auto hexdump = [&p](uint8_t const (&hash)[MD_HASH::DIGEST_LENGTH]) {
-        *p++ = ' ';                // 1 octet
-        for (unsigned c : hash) {
-            sprintf(p, "%02x", c); // 64 octets (hash)
-            p += 2;
-        }
-    };
-    hexdump(qhash);
-    hexdump(fhash);
-
-    this->len = p - this->mes;
-}
-
-void OutBufferHashLineCtx::write_newline()
-{
-    this->mes[this->len++] = '\n';
-}
-
 
 OutCryptoTransport::OutCryptoTransport(
     CryptoContext & cctx, Random & rnd, Fstat & fstat,
@@ -862,9 +798,10 @@ void OutCryptoTransport::close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t
 namespace
 {
     void send_data(
-        const uint8_t * data, size_t len,
+        cbyte_ptr data_, size_t len,
         ocrypto & encrypter, OutFileTransport & out_file)
     {
+        const uint8_t * data = data_.to_u8p();
         auto to_send = len;
         while (to_send > 0) {
             const ocrypto::Result res = encrypter.write(data, to_send);
@@ -904,30 +841,27 @@ void OutCryptoTransport::create_hash_file(
         hash_out_file.send(res.buf.data(), res.buf.size());
     }
 
-    constexpr char header[] = "v2\n\n\n";
-    send_data(cbyte_ptr(header), sizeof(header)-1, hash_encrypter, hash_out_file);
+    // write
+    {
+        char path[1024] = {};
+        char basename[1024] = {};
+        char extension[256] = {};
 
-    char path[1024] = {};
-    char basename[1024] = {};
-    char extension[256] = {};
+        canonical_path(
+            this->finalname,
+            path, sizeof(path),
+            basename, sizeof(basename),
+            extension, sizeof(extension)
+        );
 
-    canonical_path(
-        this->finalname,
-        path, sizeof(path),
-        basename, sizeof(basename),
-        extension, sizeof(extension)
-    );
+        strncat(basename, extension, sizeof(basename)-1);
+        utils::back(basename) = '\0';
 
-    OutBufferHashLineCtx buf;
-    buf.write_filename(basename);
-    buf.write_filename(extension);
-    buf.write_stat(stat);
-    if (this->cctx.get_with_checksum()) {
-        buf.write_hashs(qhash, fhash);
+        MwrmWriterBuf hash_file_buf;
+        hash_file_buf.write_hash_file(basename, stat, this->cctx.get_with_checksum(), qhash, fhash);
+        auto buf = hash_file_buf.buffer();
+        send_data(buf.data(), buf.size(), hash_encrypter, hash_out_file);
     }
-    buf.write_newline();
-
-    send_data(cbyte_ptr(buf.mes), buf.len, hash_encrypter, hash_out_file);
 
     // close
     {
