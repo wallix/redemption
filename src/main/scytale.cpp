@@ -419,13 +419,14 @@ int scytale_reader_open_with_auto_detect_encryption_scheme(
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
     const_byte_array const derivator_array{derivator, strlen(derivator)};
+    Error out_error{NO_ERROR};
     CHECK_NOTHROW(
         auto const r = open_if_possible_and_get_encryption_scheme_type(
-            handle->in_crypto_transport, path, derivator_array);
+            handle->in_crypto_transport, path, derivator_array, &out_error);
         switch (r)
         {
             case EncryptionSchemeTypeResult::Error:
-                handle->error_ctx.set_error(Error{ERR_TRANSPORT_OPEN_FAILED, errno});
+                handle->error_ctx.set_error(out_error);
                 break;
             case EncryptionSchemeTypeResult::OldScheme:
                 // repopen file because some data are lost

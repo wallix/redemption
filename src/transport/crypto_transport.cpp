@@ -884,7 +884,7 @@ void OutCryptoTransport::do_send(const uint8_t * data, size_t len)
 
 
 EncryptionSchemeTypeResult open_if_possible_and_get_encryption_scheme_type(
-    InCryptoTransport & in_test, const char * filename, const_byte_array derivator)
+    InCryptoTransport & in_test, const char * filename, const_byte_array derivator, Error * err)
 {
     try {
         if (derivator.data()) {
@@ -911,6 +911,9 @@ EncryptionSchemeTypeResult open_if_possible_and_get_encryption_scheme_type(
             }
             return EncryptionSchemeTypeResult::OldScheme;
         }
+        if (err) {
+            *err = Error{e.id, (e.errnum ? e.errnum : errno)};
+        }
         return EncryptionSchemeTypeResult::Error;
     }
 
@@ -919,9 +922,9 @@ EncryptionSchemeTypeResult open_if_possible_and_get_encryption_scheme_type(
 }
 
 EncryptionSchemeTypeResult get_encryption_scheme_type(
-    CryptoContext & cctx, const char * filename, const_byte_array derivator)
+    CryptoContext & cctx, const char * filename, const_byte_array derivator, Error * err)
 {
     Fstat fstat;
     InCryptoTransport in_test(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
-    return open_if_possible_and_get_encryption_scheme_type(in_test, filename, derivator);
+    return open_if_possible_and_get_encryption_scheme_type(in_test, filename, derivator, err);
 }

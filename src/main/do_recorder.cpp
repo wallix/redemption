@@ -109,18 +109,6 @@ static inline int file_start_hmac_sha256(const char * filename,
     return 0;
 }
 
-static inline int encryption_type(const char * full_filename, CryptoContext & cctx)
-{
-    switch (get_encryption_scheme_type(cctx, full_filename))
-    {
-        case EncryptionSchemeTypeResult::Error: std::cerr << strerror(errno) << "\n"; return -1;
-        case EncryptionSchemeTypeResult::OldScheme: cctx.old_encryption_scheme = 1; return 1;
-        case EncryptionSchemeTypeResult::NewScheme: return 2;
-        case EncryptionSchemeTypeResult::NoEncrypted: return 0;
-    }
-    REDEMPTION_UNREACHABLE();
-}
-
 void clear_files_flv_meta_png(const char * path, const char * prefix)
 {
     struct D {
@@ -1164,7 +1152,6 @@ inline unsigned get_file_count(
 
     next_wrm();
     begin_record.tv_sec = in_wrm_trans.begin_chunk_time();
-    // TODO a negative time should be a time relative to end of movie
     // less than 1 year means we are given a time relatve to beginning of movie
     if (begin_cap && (begin_cap < 31536000)) {  // less than 1 year, it is relative not absolute timestamp
         // begin_capture.tv_usec is 0
@@ -2320,6 +2307,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     return ClRes::Ok;
 }
 
+
 extern "C" {
     REDEMPTION_LIB_EXPORT
     int do_main(int argc, char const ** argv,
@@ -2480,7 +2468,17 @@ extern "C" {
         case 1: // VERifier
             ini.set<cfg::debug::config>(false);
             try {
-                encryption_type(rp.full_path.c_str(), cctx);
+                Error out_error{NO_ERROR};
+                switch (get_encryption_scheme_type(cctx, rp.full_path.c_str(), cbyte_array{}, &out_error))
+                {
+                    case EncryptionSchemeTypeResult::Error:
+                        throw out_error;
+                    case EncryptionSchemeTypeResult::OldScheme:
+                        cctx.old_encryption_scheme = 1;
+                        break;
+                    default:
+                        break;
+                }
 
                 res = check_encrypted_or_checksumed(
                     rp.input_filename, rp.mwrm_path, rp.hash_path,
@@ -2494,22 +2492,28 @@ extern "C" {
         break;
         default: // DECrypter
             try {
-                // TODO file is unused
-                unique_fd file(rp.full_path, O_RDONLY);
-
-                if (!file.is_open()) {
-                    std::cerr << "can't open file " << rp.full_path << "\n\n";
-                    std::cout << "decrypt failed" << std::endl;
-                    return -1;
-                }
-
-                if (0 == encryption_type(rp.full_path.c_str(), cctx)){
-                    std::cout << "Input file is not encrypted." << std::endl;
-                    return 0;
-                }
-
                 Fstat fstat;
-                InCryptoTransport in_t(cctx, EncryptionMode::Encrypted, fstat);
+                InCryptoTransport in_t(cctx, EncryptionMode::Auto, fstat);
+                Error out_error{NO_ERROR};
+                switch (open_if_possible_and_get_encryption_scheme_type(
+                    in_t, rp.full_path.c_str(), cbyte_array{}, &out_error))
+                {
+                    case EncryptionSchemeTypeResult::Error:
+                        std::cerr
+                          << "can't open file " << rp.full_path.c_str()
+                          << ": " << out_error.errmsg() << std::endl;
+                        std::cout << "decrypt failed" << std::endl;
+                        return -1;
+                    case EncryptionSchemeTypeResult::NoEncrypted:
+                        std::cout << "Input file is not encrypted." << std::endl;
+                        return 0;
+                    case EncryptionSchemeTypeResult::OldScheme:
+                        cctx.old_encryption_scheme = 1;
+                        in_t.open(rp.full_path.c_str());
+                        break;
+                    default:
+                        break;
+                }
 
                 size_t res = -1ull;
                 unique_fd fd1(rp.output_filename, O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
@@ -2518,14 +2522,12 @@ extern "C" {
                     OutFileTransport out_t(std::move(fd1));
 
                     try {
-                        char mem[4096];
+                        if (!in_t.is_open()) {
+                            in_t.open(rp.full_path.c_str());
+                        }
 
-                        in_t.open(rp.full_path.c_str());
-                        while (1) {
-                            res = in_t.partial_read(mem, sizeof(mem));
-                            if (res == 0){
-                                break;
-                            }
+                        char mem[4096];
+                        while ((res = in_t.partial_read(mem, sizeof(mem)))) {
                             out_t.send(mem, res);
                         }
                     }
