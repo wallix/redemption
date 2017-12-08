@@ -70,7 +70,9 @@ namespace mln
         struct value_< ::ocr::rgb8>
         {
             static ::ocr::rgb8::value_type max() { return 255u; }
-            static void read_value(std::istream& is, ::ocr::rgb8 & v)
+
+            template<class Ch, class Tr>
+            static void read_value(std::basic_istream<Ch, Tr>& is, ::ocr::rgb8 & v)
             { is.read(reinterpret_cast<char*>(&v), sizeof(::ocr::rgb8)); }
         };
     }
