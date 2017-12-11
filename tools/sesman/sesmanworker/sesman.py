@@ -1353,11 +1353,11 @@ class Sesman():
         self.reporting_target  = None
         self.reporting_message = None
 
-        try_next = False
-        close_box = False
 
         if _status:
             for physical_target in self.engine.get_effective_target(selected_target):
+                try_next = False
+                close_box = False
                 kv[u'recording_started'] = "False"
 
                 physical_info = self.engine.get_physical_target_info(physical_target)
@@ -1724,7 +1724,6 @@ class Sesman():
                                     release_reason = u'Break connection'
                                     break
                         if self.shared.get(u'module') == u"close":
-                            try_next = False
                             close_box = True
                         Logger().debug(u"End Of Keep Alive")
 
