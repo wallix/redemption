@@ -912,6 +912,19 @@ class Sesman():
         basename = re.sub(r'[^-A-Za-z0-9_@,.]', "", basename)
         return basename
 
+    def get_trace_keys(self):
+        derivator = self.record_filebase + u".mwrm"
+        encryption_key = self.engine.get_trace_encryption_key(derivator, False)
+        formated_encryption_key = "".join(
+            "{:02x}".format(ord(c)) for c in encryption_key
+        )
+
+        sign_key = self.engine.get_trace_sign_key()
+        formated_sign_key = "".join(
+            "{:02x}".format(ord(c)) for c in sign_key
+        )
+        return formated_encryption_key, formated_sign_key
+
     def load_video_recording(self, user):
         Logger().info(u"Checking video")
 
@@ -932,13 +945,6 @@ class Sesman():
             data_to_send[u"trace_type"] = u'1'
 
         self.full_path = os.path.join(RECORD_PATH, self.record_filebase)
-        derivator = self.record_filebase + u".mwrm"
-        Logger().info(u"derivator='%s'" % derivator)
-        encryption_key = self.engine.get_trace_encryption_key(derivator, False)
-        data_to_send[u"encryption_key"] = "".join("{:02x}".format(ord(c)) for c in encryption_key)
-
-        sign_key = self.engine.get_trace_sign_key()
-        data_to_send[u"sign_key"] = "".join("{:02x}".format(ord(c)) for c in sign_key)
 
         #TODO remove .flv extention and adapt ReDemPtion proxy code
         data_to_send[u'rec_path'] = u"%s.flv" % (self.full_path)
@@ -1290,10 +1296,13 @@ class Sesman():
                         _status, _error = self.load_video_recording(user)
                     if _status:
                         _status, _error = self.load_session_log_redirection()
-                except Exception, e:
-                    if DEBUG:
-                        import traceback
-                        Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                    if _status:
+                        encryption_key, sign_key = self.get_trace_keys()
+                        kv['encryption_key'] = encryption_key
+                        kv['sign_key'] = sign_key
+                except Exception as e:
+                    import traceback
+                    Logger().debug("%s" % traceback.format_exc(e))
                     _status, _error = False, TR(u"Connection closed by client")
 
             if not _status:
