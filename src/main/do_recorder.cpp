@@ -119,7 +119,6 @@ void clear_files_flv_meta_png(const char * path, const char * prefix)
     } d{opendir(path)};
 
     if (d){
-//        char static_buffer[8192];
         char buffer[8192];
         size_t path_len = strlen(path);
         size_t prefix_len = strlen(prefix);
@@ -133,9 +132,7 @@ void clear_files_flv_meta_png(const char * path, const char * prefix)
             buffer[path_len] = '/'; path_len++; buffer[path_len] = 0;
         }
 
-        // TODO size_t len = offsetof(struct dirent, d_name) + NAME_MAX + 1 ?
-        struct dirent * result;
-        while ((result = readdir(d))) {
+        while (struct dirent * result = readdir(d)) {
             if ((0 == strcmp(result->d_name, ".")) || (0 == strcmp(result->d_name, ".."))){
                 continue;
             }
@@ -145,13 +142,14 @@ void clear_files_flv_meta_png(const char * path, const char * prefix)
             }
 
             strncpy(buffer + path_len, result->d_name, file_len);
-            const char * eob = buffer + path_len + strlen(result->d_name);
-            const bool extension = ((strlen(result->d_name) > 4) && (eob[-4] == '.')
-                    && (((eob[-3] == 'f') && (eob[-2] == 'l') && (eob[-1] == 'v'))
-                      ||((eob[-3] == 'p') && (eob[-2] == 'n') && (eob[-1] == 'g'))
-                      ||((eob[-3] == 'p') && (eob[-2] == 'g') && (eob[-1] == 's'))))
-                || (((strlen(result->d_name) > 5) && (eob[-5] == '.')
-                    && (eob[-4] == 'm') && (eob[-3] == 'e') && (eob[-2] == 't') && (eob[-1] == 'a')))
+            size_t const name_len = strlen(result->d_name);
+            const char * eob = buffer + path_len + name_len;
+            const bool extension = ((name_len > 4) && (eob[-4] == '.')
+                && ( ((eob[-3] == 'f') && (eob[-2] == 'l') && (eob[-1] == 'v'))
+                  || ((eob[-3] == 'p') && (eob[-2] == 'n') && (eob[-1] == 'g'))
+                  || ((eob[-3] == 'p') && (eob[-2] == 'g') && (eob[-1] == 's')) ))
+                || ((name_len > 5) && (eob[-5] == '.')
+                    && (eob[-4] == 'm') && (eob[-3] == 'e') && (eob[-2] == 't') && (eob[-1] == 'a'))
                 ;
 
             if (!extension){

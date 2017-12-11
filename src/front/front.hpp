@@ -635,7 +635,7 @@ public:
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
           , time_t now
-          , const char * server_capabilities_filename = ""
+          , std::string server_capabilities_filename = {}
           , Transport * persistent_key_list_transport = nullptr
           )
     : nomouse(ini.get<cfg::globals::nomouse>())
@@ -660,7 +660,7 @@ public:
     , tls_client_active(true)
     , mem3blt_support(mem3blt_support)
     , clientRequestedProtocols(X224::PROTOCOL_RDP)
-    , server_capabilities_filename(server_capabilities_filename)
+    , server_capabilities_filename(std::move(server_capabilities_filename))
     , persistent_key_list_transport(persistent_key_list_transport)
     , report_message(report_message)
     , auth_info_sent(false)

@@ -970,36 +970,34 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
 {
     using Av = array_view_const_char;
 
-    auto find = [](Av & s, char c) {
+    auto find = [](Av const & s, char c) {
         auto p = std::find(begin(s), end(s), c);
         return p == end(s) ? nullptr : p;
     };
 
-    auto separator = find(data, '=');
+    auto const pos_separator = find(data, '=');
 
     message.clear();
 
-    if (separator) {
+    if (pos_separator) {
         auto left = [](Av s, char const * pos) { return Av(begin(s), pos - begin(s)); };
         auto right = [](Av s, char const * pos) { return Av(pos + 1, begin(s) + s.size() - (pos + 1)); };
-
-        auto order = left(data, separator);
-        auto parameters = right(data, separator);
 
         auto zstr = [](Av var) {
             // array_view with zero terminal
             return make_array_view(var.data(), var.size()-1);
         };
 
-        if (parameters.size() && (parameters[parameters.size() - 1] == '\x0')) {
-            parameters = zstr(parameters);
-        }
+        auto const order = left(data, pos_separator);
+        auto const parameters = (data.back() == '\x0')
+          ? Av(pos_separator+1, data.end()-1)
+          : Av(pos_separator+1, data.end());
 
         auto line_with_1_var = [&](Av var1) {
             message.assign(order, {{zstr(var1), parameters}});
         };
         auto line_with_2_var = [&](Av var1, Av var2) {
-            if (auto subitem_separator = find(parameters, '\x01')) {
+            if (auto const subitem_separator = find(parameters, '\x01')) {
                 message.assign(order, {
                     {zstr(var1), left(parameters, subitem_separator)},
                     {zstr(var2), right(parameters, subitem_separator)},
@@ -1007,10 +1005,10 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
             }
         };
         auto line_with_3_var = [&](Av var1, Av var2, Av var3) {
-            if (auto subitem_separator = find(parameters, '\x01')) {
-                auto text = left(parameters, subitem_separator);
-                auto remaining = right(parameters, subitem_separator);
-                if (auto subitem_separator2 = find(remaining, '\x01')) {
+            if (auto const subitem_separator = find(parameters, '\x01')) {
+                auto const text = left(parameters, subitem_separator);
+                auto const remaining = right(parameters, subitem_separator);
+                if (auto const subitem_separator2 = find(remaining, '\x01')) {
                     message.assign(order, {
                         {zstr(var1), text},
                         {zstr(var2), left(remaining, subitem_separator2)},
@@ -1020,15 +1018,15 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
             }
         };
         auto line_with_5_var = [&](Av var1, Av var2, Av var3, Av var4, Av var5) {
-            if (auto subitem_separator = find(parameters, '\x01')) {
-                auto text = left(parameters, subitem_separator);
-                auto remaining = right(parameters, subitem_separator);
-                if (auto subitem_separator2 = find(remaining, '\x01')) {
+            if (auto const subitem_separator = find(parameters, '\x01')) {
+                auto const text = left(parameters, subitem_separator);
+                auto const remaining = right(parameters, subitem_separator);
+                if (auto const subitem_separator2 = find(remaining, '\x01')) {
                     auto const text2 = left(remaining, subitem_separator2);
-                    auto remaining2 = right(remaining, subitem_separator2);
+                    auto const remaining2 = right(remaining, subitem_separator2);
                     if (auto const subitem_separator3 = find(remaining2, '\x01')) {
                         auto const text3 = left(remaining2, subitem_separator3);
-                        auto remaining3 = right(remaining2, subitem_separator3);
+                        auto const remaining3 = right(remaining2, subitem_separator3);
                         if (auto const subitem_separator4 = find(remaining3, '\x01')) {
                             auto const text4 = left(remaining3, subitem_separator4);
                             auto const text5 = right(remaining3, subitem_separator4);
