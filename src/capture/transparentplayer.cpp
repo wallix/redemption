@@ -26,6 +26,9 @@
 #include "utils/difftimeval.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
+#include <cerrno>
+
+
 TransparentPlayer::TransparentPlayer(Transport & t, FrontAPI & consumer)
 : t(t), consumer(consumer), meta_ok(false)
 {
