@@ -5,6 +5,8 @@
  * See : https://msdn.microsoft.com/en-us/library/c46d0ecf-3836-4a3b-b379-339ab6a11589
  */
 
+#pragma once
+
 #include <cstdint>
 
 constexpr uint16_t lowers[] = {

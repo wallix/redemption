@@ -44,12 +44,13 @@
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/make_unique.hpp"
 
-#include "utils/difftimeval.hpp"
-#include "utils/fileutils.hpp"
 #include "utils/bitmap_shrink.hpp"
 #include "utils/colors.hpp"
-#include "utils/stream.hpp"
+#include "utils/difftimeval.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/key_qvalue_pairs.hpp"
 #include "utils/png.hpp"
+#include "utils/stream.hpp"
 #include "utils/timestamp_tracer.hpp"
 
 #include "transport/out_file_transport.hpp"

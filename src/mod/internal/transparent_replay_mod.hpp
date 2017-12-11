@@ -49,7 +49,7 @@ public:
         }
         return fd;
     }()})
-    , player(&this->ift, &this->front)
+    , player(this->ift, this->front)
     {}
 
     void draw_event(time_t now, gdi::GraphicApi &) override

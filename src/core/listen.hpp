@@ -61,12 +61,13 @@ struct Listen {
         struct Socket
         {
             int sck;
+
             Socket()
-             : sck(INVALID_SOCKET)
+             : sck(socket(PF_INET, SOCK_STREAM, 0))
+            {}
+
+            ~Socket()
             {
-                this->sck = socket(PF_INET, SOCK_STREAM, 0);
-            }
-            ~Socket(){
                 if (this->sck != INVALID_SOCKET){
                     close(this->sck);
                 }

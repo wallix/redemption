@@ -623,7 +623,7 @@ int main(int argc, char * argv[]) {
         InFileTransport trans(std::move(file));
         Analyzer        analyzer;
 
-        TransparentPlayer player(&trans, &analyzer);
+        TransparentPlayer player(trans, analyzer);
 
         while (player.interpret_chunk(/*real_time = */false));
 

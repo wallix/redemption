@@ -32,6 +32,11 @@
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "gdi/graphic_api.hpp"
 
+#include <cstdlib>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 namespace
 {
     void draw_impl(RDPDrawable & gd, int verbose, const RDPBitmapData & cmd, const Bitmap & bmp)

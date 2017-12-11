@@ -24,6 +24,7 @@
 #include "system/redemption_unit_tests.hpp"
 
 
+#include "core/report_message_api.hpp"
 #include "capture/utils/match_finder.hpp"
 
 constexpr bool verbosity = true;
