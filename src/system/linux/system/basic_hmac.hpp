@@ -31,7 +31,7 @@ namespace detail_
 
 struct HMACWrap
 {
-# if OPENSSL_VERSION_NUMBER <= 0x1000207fL
+# if OPENSSL_VERSION_NUMBER < 0x10100000L
     void init() { HMAC_CTX_init(&this->hmac); }
     void deinit() { HMAC_CTX_cleanup(&this->hmac); }
     HMAC_CTX * operator->() noexcept { return &this->hmac; }

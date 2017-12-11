@@ -2873,7 +2873,7 @@ public:
                                 }
 
                                 BIGNUM const *e, *n;
-                                #if OPENSSL_VERSION_NUMBER <= 0x1000207fL
+                                #if OPENSSL_VERSION_NUMBER < 0x10100000L
                                 e = server_public_key->e;
                                 n = server_public_key->n;
                                 #else
