@@ -697,10 +697,6 @@ static int do_recompress(
 }   // do_recompress
 
 
-struct HashHeader {
-    unsigned version;
-};
-
 using EncryptionMode = InCryptoTransport::EncryptionMode;
 
 inline void load_hash(
@@ -790,57 +786,42 @@ static inline int check_file(const std::string & filename, const MetaLine & meta
     return true;
 }
 
-class dorecorder_ofile_buf_out
+class OutFilenameCp
 {
-    int fd;
+    OutFileTransport file;
+    char const * filename;
+
 public:
-    dorecorder_ofile_buf_out() : fd(-1) {}
-    ~dorecorder_ofile_buf_out()
-    {
-        this->close();
-    }
+    OutFilenameCp(const char * filename, mode_t mode)
+      : file(unique_fd{::open(filename, O_WRONLY | O_CREAT, mode)})
+      , filename(filename)
+    {}
 
-    int open(const char * filename, mode_t mode)
+    bool rename_to(const char * new_filename) noexcept
     {
-        this->close();
-        this->fd = ::open(filename, O_WRONLY | O_CREAT, mode);
-        return this->fd;
-    }
-
-    int close()
-    {
-        if (this->is_open()) {
-            const int ret = ::close(this->fd);
-            this->fd = -1;
-            return ret;
+        if (!rename(this->filename, new_filename)) {
+            this->filename = nullptr;
+            return true;
         }
-        return 0;
+        return false;
     }
 
-    ssize_t write(const void * data, size_t len)
+    ~OutFilenameCp()
     {
-        size_t remaining_len = len;
-        size_t total_sent = 0;
-        while (remaining_len) {
-            ssize_t ret = ::write(this->fd,
-                static_cast<const char*>(data) + total_sent, remaining_len);
-            if (ret <= 0){
-                if (errno == EINTR){
-                    continue;
-                }
-                return -1;
-            }
-            remaining_len -= ret;
-            total_sent += ret;
+        if (this->filename) {
+            remove(this->filename);
         }
-        return total_sent;
+    }
+
+    void write(array_view_const_char data)
+    {
+        this->file.send(data);
     }
 
     bool is_open() const noexcept
-    { return -1 != this->fd; }
-
-    int flush() const
-    { return 0; }
+    {
+        return -1 != this->file.get_fd();
+    }
 };
 
 static inline int check_encrypted_or_checksumed(
@@ -968,16 +949,6 @@ static inline int check_encrypted_or_checksumed(
     /*******************
     * Rewite stat info *
     ********************/
-    struct local_auto_remove
-    {
-        char const * filename;
-        ~local_auto_remove() {
-            if (this->filename) {
-                remove(this->filename);
-            }
-        }
-    };
-
     if (!wrm_stat_is_ok) {
         if (verbose) {
             LOG(LOG_INFO, "%s", "Update mwrm file");
@@ -985,16 +956,17 @@ static inline int check_encrypted_or_checksumed(
 
         has_mismatch_stat_hash = true;
 
-        auto full_mwrm_filename_tmp = full_mwrm_filename + ".tmp";
+        auto const str_full_mwrm_filename_tmp = full_mwrm_filename + ".tmp";
+        auto * const full_mwrm_filename_tmp = str_full_mwrm_filename_tmp.c_str();
 
-        // out_meta_sequence_filename_buf_impl ctor
-        dorecorder_ofile_buf_out mwrm_file_cp;
-        if (mwrm_file_cp.open(full_mwrm_filename_tmp.c_str(), S_IRUSR | S_IRGRP | S_IWUSR) < 0) {
+        OutFilenameCp mwrm_file_cp(
+            full_mwrm_filename_tmp, S_IRUSR | S_IRGRP | S_IWUSR);
+        if (not mwrm_file_cp.is_open()) {
             LOG(LOG_ERR, "Failed to open meta file %s", full_mwrm_filename_tmp);
             throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
         }
-        local_auto_remove auto_remove{full_mwrm_filename_tmp.c_str()};
-        if (chmod(full_mwrm_filename_tmp.c_str(), S_IRUSR | S_IRGRP) == -1) {
+
+        if (chmod(full_mwrm_filename_tmp, S_IRUSR | S_IRGRP) == -1) {
             LOG( LOG_ERR, "can't set file %s mod to %s : %s [%d]"
                 , full_mwrm_filename_tmp
                 , "u+r, g+r"
@@ -1006,12 +978,7 @@ static inline int check_encrypted_or_checksumed(
         {
             MwrmWriterBuf mwrm_file_buf;
             mwrm_file_buf.write_header(reader.get_header());
-
-            auto buf = mwrm_file_buf.buffer();
-            ssize_t res = mwrm_file_cp.write(buf.data(), buf.size());
-            if (res < static_cast<ssize_t>(buf.size())) {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
-            }
+            mwrm_file_cp.write(mwrm_file_buf.buffer());
         }
 
         for (MetaLine2CtxForRewriteStat & ctx : meta_line_ctx_list) {
@@ -1026,15 +993,10 @@ static inline int check_encrypted_or_checksumed(
                 ctx.filename.c_str(), sb,
                 ctx.start_time, ctx.stop_time,
                 false, dummy_hash, dummy_hash);
-
-            auto buf = mwrm_file_buf.buffer();
-            ssize_t res = mwrm_file_cp.write(buf.data(), buf.size());
-            if (res < static_cast<ssize_t>(buf.size())) {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
-            }
+            mwrm_file_cp.write(mwrm_file_buf.buffer());
         }
 
-        if (rename(full_mwrm_filename_tmp.c_str(), full_mwrm_filename.c_str())) {
+        if (not mwrm_file_cp.rename_to(full_mwrm_filename.c_str())) {
             std::cerr << strerror(errno) << std::endl;
             return 1;
         }
@@ -1042,7 +1004,6 @@ static inline int check_encrypted_or_checksumed(
         if (verbose) {
             LOG(LOG_INFO, "%s", "Update mwrm file, done");
         }
-        auto_remove.filename = nullptr;
     }
 
     if (has_mismatch_stat_hash) {
@@ -1050,13 +1011,9 @@ static inline int check_encrypted_or_checksumed(
             LOG(LOG_INFO, "%s", "Update hash file");
         }
 
-        auto const full_hash_path_tmp = (full_hash_path + ".tmp");
-        dorecorder_ofile_buf_out hash_file_cp;
-
-        local_auto_remove auto_remove{full_hash_path_tmp.c_str()};
-
-        char const * hash_filename = full_hash_path_tmp.c_str();
-        char const * meta_filename = full_mwrm_filename.c_str();
+        auto const full_hash_path_tmp = full_hash_path + ".tmp";
+        auto * const hash_filename = full_hash_path_tmp.c_str();
+        auto * const meta_filename = full_mwrm_filename.c_str();
 
         char path[1024] = {};
         char basename[1024] = {};
@@ -1072,7 +1029,8 @@ static inline int check_encrypted_or_checksumed(
 
         snprintf(filename, sizeof(filename), "%s%s", basename, extension);
 
-        if (hash_file_cp.open(hash_filename, S_IRUSR|S_IRGRP) >= 0) {
+        OutFilenameCp hash_file_cp(hash_filename, S_IRUSR | S_IRGRP);
+        if (hash_file_cp.is_open()) {
             struct stat stat;
             int err = ::stat(meta_filename, &stat);
             if (!err) {
@@ -1082,14 +1040,12 @@ static inline int check_encrypted_or_checksumed(
                     filename, stat,
                     false, dummy_hash, dummy_hash);
 
-                auto buf = mwrm_file_buf.buffer();
-                ssize_t res = hash_file_cp.write(buf.data(), buf.size());
-                if (res < static_cast<ssize_t>(buf.size())) {
+                try {
+                    hash_file_cp.write(mwrm_file_buf.buffer());
+                }
+                catch (Error const&) {
                     err = -1;
                 }
-            }
-            if (!err) {
-                err = hash_file_cp.close(/*hash*/);
             }
             if (err) {
                 LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]\n", hash_filename, err);
@@ -1103,12 +1059,11 @@ static inline int check_encrypted_or_checksumed(
             return 1;
         }
 
-        if (rename(full_hash_path_tmp.c_str(), full_hash_path.c_str())) {
+        if (not hash_file_cp.rename_to(full_hash_path.c_str())) {
             std::cerr << strerror(errno) << std::endl;
             return 1;
         }
 
-        auto_remove.filename = nullptr;
         if (verbose) {
             LOG(LOG_INFO, "%s", "Update hash file, done");
         }
