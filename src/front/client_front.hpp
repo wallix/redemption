@@ -22,6 +22,7 @@
 
 #include "utils/log.hpp"
 #include "utils/png.hpp"
+#include "utils/sugar/scope_exit.hpp"
 
 #include "core/front_api.hpp"
 #include "core/client_info.hpp"
@@ -253,10 +254,7 @@ inline int run_test_client(char const * type, int sck_fd, mod_api & mod, gdi::Gr
             LOG(LOG_ERR, "%s CLIENT :: %s: %s", type, screen_output.c_str(), strerror(errno));
             return 1;
         }
-
-        struct AutoClose {
-            FILE * f; ~AutoClose() { fclose(f); }
-        } auto_close{f};
+        SCOPE_EXIT(fclose(f));
 
         Dimension dim = mod.get_dim();
         RDPDrawable gd(dim.w, dim.h);

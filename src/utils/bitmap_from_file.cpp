@@ -34,6 +34,7 @@
 #include "utils/bitmap_private_data.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/sugar/scope_exit.hpp"
 #include "cxx/cxx.hpp"
 
 #include <png.h>
@@ -123,21 +124,13 @@ Bitmap bitmap_from_png_without_sig(int fd, const char * /*filename*/)
     if (!png_ptr) {
         return bitmap;
     }
+    png_infop info_ptr = nullptr;
+    SCOPE_EXIT(png_destroy_read_struct(&png_ptr, &info_ptr, nullptr));
 
-    struct auto_png_destroy_read_struct
-    {
-        png_structpp png_ptr_ptr;
-        png_infopp info_ptr_ptr;
-        ~auto_png_destroy_read_struct() {
-            png_destroy_read_struct(this->png_ptr_ptr, this->info_ptr_ptr, nullptr);
-        }
-    } png_destroy_{&png_ptr, nullptr};
-
-    png_infop info_ptr = png_create_info_struct(png_ptr);
+    info_ptr = png_create_info_struct(png_ptr);
     if (!info_ptr) {
         return bitmap;
     }
-    png_destroy_.info_ptr_ptr = &info_ptr;
 
 #if PNG_LIBPNG_VER_MAJOR > 1 || (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR >= 4)
     if (setjmp(png_jmpbuf(png_ptr)))
@@ -149,14 +142,12 @@ Bitmap bitmap_from_png_without_sig(int fd, const char * /*filename*/)
     }
     // this handle lib png errors for this call
 
-    struct auto_close {
-        FILE * file;
-        ~auto_close() { fclose(this->file); }
-    } auto_close_ {fdopen(fd, "rb")};
-    if (!auto_close_.file) {
+    FILE* file = fdopen(fd, "rb");
+    if (!file) {
         return bitmap;
     }
-    png_init_io(png_ptr, auto_close_.file);
+    SCOPE_EXIT(fclose(file));
+    png_init_io(png_ptr, file);
 
     png_set_sig_bytes(png_ptr, 8);
 

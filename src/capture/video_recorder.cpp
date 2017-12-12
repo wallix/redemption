@@ -58,10 +58,11 @@ extern "C" {
 #define av_guess_format guess_format
 #endif
 
-#include "utils/image_data_view.hpp"
-#include "utils/log.hpp"
 #include "core/error.hpp"
 #include "cxx/diagnostic.hpp"
+#include "utils/image_data_view.hpp"
+#include "utils/log.hpp"
+#include "utils/sugar/scope_exit.hpp"
 
 #include <algorithm>
 
@@ -249,23 +250,10 @@ video_recorder::video_recorder(
         }
     }
 
-    struct avcodec_not_close_if_success
-    {
-        AVCodecContext * codec;
-        bool success;
-
-        avcodec_not_close_if_success(AVCodecContext * codec)
-        : codec(codec)
-        , success(false)
-        {}
-
-        ~avcodec_not_close_if_success()
-        {
-            if (!this->success) {
-                avcodec_close(this->codec);
-            }
-        }
-    } no_close_if_success(this->video_st->codec);
+    bool avcodec_not_close_if_success = false;
+    SCOPE_EXIT(if (!avcodec_not_close_if_success) {
+        avcodec_close(this->video_st->codec);
+    });
 
     if (!(this->oc->oformat->flags & AVFMT_RAWPICTURE)) {
         /* allocate output buffer */
@@ -345,7 +333,7 @@ video_recorder::video_recorder(
         throw Error(ERR_RECORDER_FAILED_TO_INITIALIZE_CONVERSION_CONTEXT);
     }
 
-    no_close_if_success.success = true;
+    avcodec_not_close_if_success = true;
 
     av_init_packet(&this->pkt);
     this->pkt.data = this->video_outbuf.get();

@@ -36,6 +36,7 @@
 #include "utils/log.hpp"
 #include "utils/sugar/iter.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/sugar/scope_exit.hpp"
 #include "utils/word_identification.hpp"
 
 
@@ -111,79 +112,63 @@ static inline int file_start_hmac_sha256(const char * filename,
 
 void clear_files_flv_meta_png(const char * path, const char * prefix)
 {
-    struct D {
-        DIR * d;
-
-        ~D() { closedir(d); }
-        operator DIR * () const { return d; }
-    } d{opendir(path)};
-
-    if (d){
-        char buffer[8192];
-        size_t path_len = strlen(path);
-        size_t prefix_len = strlen(prefix);
-        size_t file_len = 1024;
-        if (file_len + path_len + 1 > sizeof(buffer)) {
-            LOG(LOG_WARNING, "Path len %zu > %zu", file_len + path_len + 1, sizeof(buffer));
-            return;
-        }
-        strncpy(buffer, path, file_len + path_len + 1);
-        if (buffer[path_len] != '/'){
-            buffer[path_len] = '/'; path_len++; buffer[path_len] = 0;
-        }
-
-        while (struct dirent * result = readdir(d)) {
-            if ((0 == strcmp(result->d_name, ".")) || (0 == strcmp(result->d_name, ".."))){
-                continue;
-            }
-
-            if (strncmp(result->d_name, prefix, prefix_len)){
-                continue;
-            }
-
-            strncpy(buffer + path_len, result->d_name, file_len);
-            size_t const name_len = strlen(result->d_name);
-            const char * eob = buffer + path_len + name_len;
-            const bool extension = ((name_len > 4) && (eob[-4] == '.')
-                && ( ((eob[-3] == 'f') && (eob[-2] == 'l') && (eob[-1] == 'v'))
-                  || ((eob[-3] == 'p') && (eob[-2] == 'n') && (eob[-1] == 'g'))
-                  || ((eob[-3] == 'p') && (eob[-2] == 'g') && (eob[-1] == 's')) ))
-                || ((name_len > 5) && (eob[-5] == '.')
-                    && (eob[-4] == 'm') && (eob[-3] == 'e') && (eob[-2] == 't') && (eob[-1] == 'a'))
-                ;
-
-            if (!extension){
-                continue;
-            }
-
-            struct stat st;
-            if (stat(buffer, &st) < 0){
-                LOG(LOG_WARNING, "Failed to read file %s [%d: %s]", buffer, errno, strerror(errno));
-                continue;
-            }
-            if (unlink(buffer) < 0){
-                LOG(LOG_WARNING, "Failed to remove file %s [%d: %s]", buffer, errno, strerror(errno));
-            }
-        }
-    }
-    else {
+    DIR * d{opendir(path)};
+    if (!d){
         LOG(LOG_WARNING, "Failed to open directory %s [%d: %s]", path, errno, strerror(errno));
+        return;
+    }
+    SCOPE_EXIT(closedir(d));
+
+    char buffer[8192];
+    size_t path_len = strlen(path);
+    size_t prefix_len = strlen(prefix);
+    size_t file_len = 1024;
+    if (file_len + path_len + 1 > sizeof(buffer)) {
+        LOG(LOG_WARNING, "Path len %zu > %zu", file_len + path_len + 1, sizeof(buffer));
+        return;
+    }
+    strncpy(buffer, path, file_len + path_len + 1);
+    if (buffer[path_len] != '/'){
+        buffer[path_len] = '/'; path_len++; buffer[path_len] = 0;
+    }
+
+    while (struct dirent * result = readdir(d)) {
+        if ((0 == strcmp(result->d_name, ".")) || (0 == strcmp(result->d_name, ".."))){
+            continue;
+        }
+
+        if (strncmp(result->d_name, prefix, prefix_len)){
+            continue;
+        }
+
+        strncpy(buffer + path_len, result->d_name, file_len);
+        size_t const name_len = strlen(result->d_name);
+        const char * eob = buffer + path_len + name_len;
+        const bool extension = ((name_len > 4) && (eob[-4] == '.')
+            && ( ((eob[-3] == 'f') && (eob[-2] == 'l') && (eob[-1] == 'v'))
+                || ((eob[-3] == 'p') && (eob[-2] == 'n') && (eob[-1] == 'g'))
+                || ((eob[-3] == 'p') && (eob[-2] == 'g') && (eob[-1] == 's')) ))
+            || ((name_len > 5) && (eob[-5] == '.')
+                && (eob[-4] == 'm') && (eob[-3] == 'e') && (eob[-2] == 't') && (eob[-1] == 'a'))
+            ;
+
+        if (!extension){
+            continue;
+        }
+
+        struct stat st;
+        if (stat(buffer, &st) < 0){
+            LOG(LOG_WARNING, "Failed to read file %s [%d: %s]", buffer, errno, strerror(errno));
+            continue;
+        }
+        if (unlink(buffer) < 0){
+            LOG(LOG_WARNING, "Failed to remove file %s [%d: %s]", buffer, errno, strerror(errno));
+        }
     }
 }
 
-using std::begin;
-using std::end;
 
-
-
-// struct RDPChunkedDevice {
-//     virtual ~RDPChunkedDevice () {}
-//
-//     virtual void chunk(uint16_t chunk_type, uint16_t chunk_count, InStream data) = 0;
-// };
-
-
-class ChunkToFile //: public RDPChunkedDevice
+class ChunkToFile
 {
     CompressionOutTransportBuilder compression_bullder;
     Transport & trans_target;

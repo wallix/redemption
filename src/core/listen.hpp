@@ -35,6 +35,7 @@
 #include "utils/log.hpp"
 #include "utils/invalid_socket.hpp"
 #include "utils/select.hpp"
+#include "utils/sugar/scope_exit.hpp"
 #include "core/server.hpp"
 #include "cxx/diagnostic.hpp"
 
@@ -58,25 +59,14 @@ struct Listen {
         , exit_on_timeout(exit_on_timeout)
         , timeout_sec(timeout_sec)
     {
-        struct Socket
-        {
-            int sck;
-
-            Socket()
-             : sck(socket(PF_INET, SOCK_STREAM, 0))
-            {}
-
-            ~Socket()
-            {
-                if (this->sck != INVALID_SOCKET){
-                    close(this->sck);
-                }
-            }
-        } sck;
+        int sck = socket(PF_INET, SOCK_STREAM, 0);
+        SCOPE_EXIT(if (sck != INVALID_SOCKET){
+            close(sck);
+        });
 
         /* reuse same port if a previous daemon was stopped */
         int allow_reuse = 1;
-        setsockopt(sck.sck, SOL_SOCKET, SO_REUSEADDR, &allow_reuse, sizeof(allow_reuse));
+        setsockopt(sck, SOL_SOCKET, SO_REUSEADDR, &allow_reuse, sizeof(allow_reuse));
 
         /* set snd buffer to at least 32 Kbytes */
         int snd_buffer_size = 32768;
@@ -84,12 +74,12 @@ struct Listen {
         if (0 == getsockopt(this->sck, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, &option_len)) {
             if (snd_buffer_size < 32768) {
                 snd_buffer_size = 32768;
-                setsockopt(sck.sck, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, sizeof(snd_buffer_size));
+                setsockopt(sck, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, sizeof(snd_buffer_size));
             }
         }
 
         /* set non blocking */
-        fcntl(sck.sck, F_SETFL, fcntl(sck.sck, F_GETFL) | O_NONBLOCK);
+        fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
 
         union
         {
@@ -106,8 +96,8 @@ struct Listen {
         REDEMPTION_DIAGNOSTIC_POP
         u.s4.sin_addr.s_addr = this->s_addr;
 
-        LOG(LOG_INFO, "Listen: binding socket %d on %s:%d", sck.sck, ::inet_ntoa(u.s4.sin_addr), this->port);
-        if (0 != ::bind(sck.sck, &u.s, sizeof(u))) {
+        LOG(LOG_INFO, "Listen: binding socket %d on %s:%d", sck, ::inet_ntoa(u.s4.sin_addr), this->port);
+        if (0 != ::bind(sck, &u.s, sizeof(u))) {
             LOG(LOG_ERR, "Listen: error binding socket [errno=%d] %s", errno, strerror(errno));
             return;
         }
@@ -116,22 +106,21 @@ struct Listen {
             LOG(LOG_INFO, "Enable transparent proxying on listened socket.\n");
             int optval = 1;
 
-            if (setsockopt(sck.sck, SOL_IP, IP_TRANSPARENT, &optval, sizeof(optval))) {
+            if (setsockopt(sck, SOL_IP, IP_TRANSPARENT, &optval, sizeof(optval))) {
                 LOG(LOG_ERR, "Failed to enable transparent proxying on listened socket.\n");
                 return;
             }
         }
 
-        LOG(LOG_INFO, "Listen: listening on socket %d", sck.sck);
-        if (0 != listen(sck.sck, 2)) {
+        LOG(LOG_INFO, "Listen: listening on socket %d", sck);
+        if (0 != listen(sck, 2)) {
             LOG(LOG_ERR, "Listen: error listening on socket\n");
         }
 
         // OK, keep the temporary socket everything was fine
-        this->sck = sck.sck;
+        this->sck = sck;
         // This to avoid closing old temporary socket through RAII
-        sck.sck = INVALID_SOCKET;
-        return;
+        sck = INVALID_SOCKET;
     }
 
     ~Listen()
