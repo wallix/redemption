@@ -157,31 +157,38 @@ rule add_src ( src : requirements * )
     obj $(src).o : $(REDEMPTION_SRC_PATH)/$(src) : $(requirements) ;
     obj_list += $(src).o ;
 }
-add_src capture/capture.cpp ;
-add_src capture/file_to_graphic.cpp ;
-add_src capture/rdp_ppocr/get_ocr_constants.cpp ;
-add_src capture/video_capture.cpp ;
-add_src capture/video_recorder.cpp ;
-add_src core/RDP/mppc.cpp ;
-add_src core/RDP/nego.cpp ;
 add_src core/app_path.cpp :
     <conditional>@defines
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)$(MAIN_PATH)\"'
 ;
+add_src capture/capture.cpp ;
+add_src capture/file_to_graphic.cpp ;
+add_src capture/rdp_ppocr/get_ocr_constants.cpp ;
+add_src capture/utils/match_finder.cpp ;
+add_src capture/video_capture.cpp ;
+add_src capture/video_recorder.cpp ;
+add_src core/RDP/mppc.cpp ;
+add_src core/RDP/nego.cpp ;
+add_src core/font.cpp ;
 add_src gdi/clip_from_cmd.cpp ;
 add_src gdi/graphic_api.cpp ;
 add_src gdi/protected_graphics.cpp ;
-add_src keyboard/keymapSym.cpp ;
 add_src keyboard/keymap2.cpp ;
+add_src keyboard/keymapSym.cpp ;
 add_src mod/internal/client_execute.cpp ;
 add_src mod/internal/internal_mod.cpp ;
+add_src mod/internal/locally_integrable_mod.cpp ;
+add_src mod/internal/rail_module_host_mod.cpp ;
 add_src mod/internal/replay_mod.cpp ;
 add_src mod/internal/widget/composite.cpp ;
 add_src mod/internal/widget/flat_button.cpp ;
 add_src mod/internal/widget/label.cpp ;
+add_src mod/internal/widget/module_host.cpp ;
 add_src mod/internal/widget/multiline.cpp ;
+add_src mod/internal/widget/rail_module_host.cpp ;
 add_src mod/internal/widget/screen.cpp ;
+add_src mod/internal/widget/scroll.cpp ;
 add_src mod/internal/widget/tooltip.cpp ;
 add_src transport/crypto_transport.cpp ;
 add_src transport/mwrm_reader.cpp ;
@@ -189,7 +196,6 @@ add_src transport/socket_transport.cpp ;
 add_src utils/authorization_channels.cpp ;
 add_src utils/bitmap.cpp ;
 add_src utils/bitmap_from_file.cpp ;
-add_src utils/rle.cpp ;
 add_src utils/cfgloader.cpp ;
 add_src utils/confdescriptor.cpp ;
 add_src utils/d3des.cpp ;
@@ -198,11 +204,7 @@ add_src utils/log_as_logprint.cpp ;
 add_src utils/netutils.cpp ;
 add_src utils/pattutils.cpp ;
 add_src utils/png.cpp ;
-add_src mod/internal/rail_module_host_mod.cpp ;
-add_src mod/internal/widget/rail_module_host.cpp ;
-add_src mod/internal/widget/module_host.cpp ;
-add_src mod/internal/widget/scroll.cpp ;
-add_src mod/internal/locally_integrable_mod.cpp ;
+add_src utils/rle.cpp ;
 
 
 constant lib_list :
