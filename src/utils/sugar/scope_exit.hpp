@@ -62,8 +62,8 @@ Author(s): Jonathan Poelen
 //     }
 // }
 //
-// #define scope_exit                               \
-//     auto REDEMPTION_PP_CONCAT(scope_exit__,      \
-//         REDEMPTION_PP_CONCAT(__COUNTER__,        \
-//             REDEMPTION_PP_CONCAT(__, __LINE__))) \
+// #define scope_exit
+//     auto REDEMPTION_PP_CONCAT(scope_exit__,
+//         REDEMPTION_PP_CONCAT(__COUNTER__,
+//             REDEMPTION_PP_CONCAT(__, __LINE__)))
 //     = ::ReDemPtion::detail::ScopeGuardMaker() + [&]()
