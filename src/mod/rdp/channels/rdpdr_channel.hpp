@@ -1567,7 +1567,7 @@ public:
                             if (!this->param_dont_log_data_into_wrm) {
                                 std::string message("DRIVE_REDIRECTION_USE=");
                                 message += device_name;
-                                message += "\x0";
+                                message += "\x01";
                                 message += rdpdr::DeviceAnnounceHeader::get_DeviceType_friendly_name(
                                     device_type);
 
@@ -1833,7 +1833,7 @@ public:
                             if (!this->param_dont_log_data_into_wrm) {
                                 std::string message("DRIVE_REDIRECTION_RENAME=");
                                 message += target_iter->file_path;
-                                message += "\x0";
+                                message += "\x01";
                                 message += file_path;
 
                                 this->front.session_update(message);
