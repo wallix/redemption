@@ -1962,6 +1962,18 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
+    /// type: bool <br/>
+    /// value{1} <br/>
+    struct mod_rdp::experimental_fix_input_event_sync {
+        static constexpr bool is_sesman_to_proxy() { return 0; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "mod_rdp"; }
+        static constexpr char const * name() { return "experimental_fix_input_event_sync"; }
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{1};
+    };
 
     /// Enable or disable the clipboard from client (client to server). <br/>
     /// AUTHID_MOD_VNC_CLIPBOARD_UP <br/>
@@ -4426,6 +4438,7 @@ struct mod_rdp
 , cfg::mod_rdp::clean_up_32_bpp_cursor
 , cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel
 , cfg::mod_rdp::enable_rdpdr_data_analysis
+, cfg::mod_rdp::experimental_fix_input_event_sync
 { static constexpr bool is_section = true; };
 
 struct mod_vnc

@@ -189,6 +189,8 @@ struct ModRDPParams {
 
     bool enable_rdpdr_data_analysis = true;
 
+    bool experimental_fix_input_event_sync = true;
+
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
@@ -370,6 +372,8 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,             bogus_ios_rdpdr_virtual_channel);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_rdpdr_data_analysis);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             experimental_fix_input_event_sync);
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, verbose);
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);

@@ -1514,6 +1514,8 @@ public:
 
                 mod_rdp_params.enable_rdpdr_data_analysis          = this->ini.get<cfg::mod_rdp::enable_rdpdr_data_analysis>();
 
+                mod_rdp_params.experimental_fix_input_event_sync   = this->ini.get<cfg::mod_rdp::experimental_fix_input_event_sync>();
+
                 try {
                     const char * const name = "RDP Target";
 

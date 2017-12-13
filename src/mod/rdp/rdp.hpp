@@ -376,6 +376,8 @@ protected:
 
     const bool                        enable_rdpdr_data_analysis;
 
+    const bool                        experimental_fix_input_event_sync;
+
     std::string session_probe_target_informations;
 
     SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
@@ -952,6 +954,7 @@ public:
         , session_probe_allow_multiple_handshake(mod_rdp_params.session_probe_allow_multiple_handshake)
         , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
         , enable_rdpdr_data_analysis(mod_rdp_params.enable_rdpdr_data_analysis)
+        , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
         , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
         , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
         , session_probe_process_monitoring_rules(mod_rdp_params.session_probe_process_monitoring_rules)
@@ -4186,7 +4189,8 @@ public:
                                 this->send_fonts(2);
                             }
 
-                            this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
+                            this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0,
+                                (this->experimental_fix_input_event_sync ? (this->key_flags & 0x07) : 0), 0);
 
 /*
                             LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->orders.bpp);
@@ -6589,6 +6593,11 @@ public:
             LOG(LOG_INFO, "mod_rdp::send_input_slowpath");
         }
 
+        if (message_type == RDP_INPUT_SYNCHRONIZE) {
+            LOG(LOG_INFO, "mod_rdp::send_input_slowpath: Synchronize Event toggleFlags=0x%X",
+                static_cast<unsigned>(param1));
+        }
+
         this->send_pdu_type2(
             PDUTYPE2_INPUT, RDP::STREAM_HI,
             [&](StreamSize<16>, OutStream & stream){
@@ -6627,6 +6636,9 @@ public:
                     break;
 
                 case RDP_INPUT_SYNCHRONIZE:
+                    LOG(LOG_INFO, "mod_rdp::send_input_fastpath: Synchronize Event toggleFlags=0x%X",
+                        static_cast<unsigned>(param1));
+
                     FastPath::SynchronizeEvent_Send(stream, param1);
                     break;
 

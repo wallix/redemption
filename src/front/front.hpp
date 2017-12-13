@@ -2313,6 +2313,8 @@ public:
                                     LOG(LOG_INFO, "Front::incoming: Received Fast-Path PUD, sync eventFlags=0x%X",
                                         se.eventFlags);
                                 }
+                                LOG(LOG_INFO, "Front::incoming: (Fast-Path) Synchronize Event toggleFlags=0x%X",
+                                    static_cast<unsigned int>(se.eventFlags));
 
                                 this->keymap.synchronize(se.eventFlags);
                                 if (this->up_and_running) {
@@ -3631,6 +3633,9 @@ private:
                                 LOG(LOG_INFO, "Front::process_data: Slow-Path INPUT_EVENT_SYNC eventTime=%u toggleFlags=0x%04X",
                                     ie.eventTime, se.toggleFlags);
                             }
+                            LOG(LOG_INFO, "Front::process_data: (Slow-Path) Synchronize Event toggleFlags=0x%X",
+                                se.toggleFlags);
+
                             // happens when client gets focus and sends key modifier info
                             this->keymap.synchronize(se.toggleFlags & 0xFFFF);
                             if (this->up_and_running) {
