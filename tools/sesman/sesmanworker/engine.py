@@ -118,6 +118,7 @@ class Engine(object):
         self.session_result = True
         self.session_diag = u'Success'
         self.primary_password = None
+        self.trace_hash = None
         self.failed_secondary_set = False
 
         self.service = None
@@ -640,6 +641,7 @@ class Engine(object):
         self.session_result = True
         self.session_diag = u'Success'
         self.failed_secondary_set = False
+        self.trace_hash = None
 
         self.service = None
 
@@ -1240,8 +1242,14 @@ class Engine(object):
             if self.session_id:
                 # Logger().info("Engine stop_session: result='%s', diag='%s', title='%s'" %
                 #               (self.session_result, self.session_diag, title))
-                self.wabengine.stop_session(self.session_id, result=self.session_result,
-                                            diag=self.session_diag, title=title)
+                self.wabengine.stop_session(
+                    self.session_id,
+                    result=self.session_result,
+                    diag=self.session_diag,
+                    title=title,
+                    check=self.trace_hash
+                )
+                self.trace_hash = None
         except SessionAlreadyStopped:
             pass
         except Exception, e:
@@ -1446,7 +1454,7 @@ class Engine(object):
                 )
                 trace.initialize()
                 trace.writeframe(str("%s.mwrm" % (video_path.encode('utf-8')) ) )
-                trace.end()
+                self.trace_hash = trace.end()
         except Exception, e:
             Logger().info("Engine write_trace failed: %s" % e)
             _status, _error = False, u"Exception"
