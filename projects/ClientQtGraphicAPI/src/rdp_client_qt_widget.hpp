@@ -1110,14 +1110,17 @@ public:
 
     void clean_CB_temp_dir() {
         DIR *theFolder = opendir(this->_front->CB_TEMP_DIR.c_str());
-        struct dirent *next_file;
 
-        while ( (next_file = readdir(theFolder)) != NULL )
-        {
-            std::string filepath(this->_front->CB_TEMP_DIR + std::string("/") + std::string(next_file->d_name));
-            remove(filepath.c_str());
+        if (theFolder) {
+            struct dirent *next_file;
+
+            while ( (next_file = readdir(theFolder)) != NULL )
+            {
+                std::string filepath(this->_front->CB_TEMP_DIR + std::string("/") + std::string(next_file->d_name));
+                remove(filepath.c_str());
+            }
+            closedir(theFolder);
         }
-        closedir(theFolder);
     }
 
     void emptyBuffer() {

@@ -65,6 +65,12 @@ ClientExecute::~ClientExecute()
     this->reset(false);
 }
 
+void ClientExecute::set_verbose(bool verbose)
+{
+    this->verbose = this->verbose |  verbose;
+}
+
+
 void ClientExecute::enable_remote_program(bool enable)
 {
     this->rail_enabled = enable;

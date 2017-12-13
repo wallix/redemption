@@ -139,7 +139,7 @@ public:
 
     ClientExecute client_execute;
 
-    std::unique_ptr<mod_api> rdp_mod;
+    std::unique_ptr<mod_rdp> rdp_mod;
     std::unique_ptr<mod_api> rail_mod;
 
     void options() override {
@@ -558,6 +558,7 @@ public:
             mod_rdp_params.remote_program_enhanced = INFO_HIDEF_RAIL_SUPPORTED;
             mod_rdp_params.use_client_provided_remoteapp = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
             mod_rdp_params.use_session_probe_to_launch_remote_program = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
+//             this->client_execute.set_target_info("Q\0t\0_\0R\0D\0P\0_\0C\0L\0I\0E\0N\0T\0");
         }
 
         //mod_rdp_params.verbose = to_verbose_flags(0);
@@ -596,7 +597,7 @@ public:
                                         std::move(this->rdp_mod),
                                         this->client_execute,
                                         this->info.cs_monitor,
-                                        false
+                                        true
                                     ));
 
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
@@ -634,11 +635,10 @@ public:
         , _monitorCountNegociated(false)
         , _waiting_for_data(false)
         , close_box_extra_message_ref("Close")
-        , client_execute(*(this), this->info.window_list_caps,  false)
+        , client_execute(*(this), this->info.window_list_caps, false)
     {
         this->clipboard_qt = new ClipBoard_Qt(this, this->form);
         this->sound_qt     = new Sound_Qt(this->form, this);
-
 
         this->setDefaultConfig();
         this->setUserProfil();
@@ -704,6 +704,8 @@ public:
                 this->verbose = RDPVerbose::rail_dump | this->verbose;
             }
         }
+
+        this->client_execute.set_verbose(bool( (RDPVerbose::rail & this->verbose) | (RDPVerbose::rail_dump & this->verbose) ));
 
 
 
@@ -849,7 +851,8 @@ public:
                                                     | TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
 
             this->info.window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED;
-            this->info.window_list_caps.NumIconCaches = 3;
+            this->info.window_list_caps.NumIconCaches = 3;  // 3;
+            // 12;
             this->info.window_list_caps.NumIconCacheEntries = 12;
         }
 
@@ -947,32 +950,41 @@ public:
                 LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE");
                 {
 
-//                 HandshakePDU hspdu;
-//                 hspdu.receive(stream);
-//
-//                 StaticOutStream<32> out_stream;
-//
-//                 out_stream.out_uint16_le(header.orderType());
-//                 out_stream.out_uint16_le(header.orderLength());
-//                 out_stream.out_uint32_le(hspdu.buildNumber());
-//
-//                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-//
-//                 this->mod->send_to_mod_channel( channel_names::rail
-//                                               , chunk_to_send
-//                                               , out_stream.get_offset()
-//                                               , CHANNELS::CHANNEL_FLAG_LAST |
-//                                                 CHANNELS::CHANNEL_FLAG_FIRST
-//                                               );
-//                 LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE");
+                HandshakePDU hspdu;
+                hspdu.receive(stream);
+
+                StaticOutStream<32> out_stream;
+
+                out_stream.out_uint16_le(header.orderType());
+                out_stream.out_uint16_le(header.orderLength());
+                out_stream.out_uint32_le(hspdu.buildNumber());
+
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                this->mod->send_to_mod_channel( channel_names::rail
+                                              , chunk_to_send
+                                              , out_stream.get_offset()
+                                              , CHANNELS::CHANNEL_FLAG_LAST |
+                                                CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                              );
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE");
                 }
+                break;
+
+            case TS_RAIL_ORDER_SYSPARAM:
+                LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
+                {
+                ServerSystemParametersUpdatePDU sspu;
+                sspu.receive(stream);
+                sspu.log(LOG_INFO);
+                if (sspu.SystemParam() ==  SPI_SETSCREENSAVESECURE) {
                 {
                 StaticOutStream<32> out_stream;
                 out_stream.out_uint16_le(TS_RAIL_ORDER_CLIENTSTATUS);
                 out_stream.out_uint16_le(8);
                 out_stream.out_uint32_le( TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE
                                         | TS_RAIL_CLIENTSTATUS_AUTORECONNECT
-                                        | TS_RAIL_CLIENTSTATUS_ZORDER_SYNC
+                                        //| TS_RAIL_CLIENTSTATUS_ZORDER_SYNC
                                         | TS_RAIL_CLIENTSTATUS_WINDOW_RESIZE_MARGIN_SUPPORTED
                                         | TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED
                                         );
@@ -983,24 +995,21 @@ public:
                                               , chunk_to_send
                                               , out_stream.get_offset()
                                               , CHANNELS::CHANNEL_FLAG_LAST |
-                                                CHANNELS::CHANNEL_FLAG_FIRST
+                                                CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                               );
                 LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_CLIENTSTATUS");
                 }
                 {
-
                 StaticOutStream<1600> out_stream;
 
                 ClientExecutePDU cepdu;
-                cepdu.Flags_ = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
-                cepdu.exe_or_file = std::string("C:\\Windows\\system32\\notepad.exe");
-                cepdu.working_dir = std::string("C:\\Users\\user1");
+                cepdu.Flags(TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY);
+                cepdu.ExeOrFile("C:\\Windows\\system32\\notepad.exe");
+                cepdu.WorkingDir("C:\\Users\\user1");
+                cepdu.Arguments("");
 
                 out_stream.out_uint16_le(TS_RAIL_ORDER_EXEC);
-                out_stream.out_uint16_le( (cepdu.exe_or_file.size()*2)
-                                        + (cepdu.working_dir.size() *2)
-                                        + (cepdu.arguments.size() *2)
-                                        + 6);
+                out_stream.out_uint16_le(cepdu.size());
                 cepdu.emit(out_stream);
 
 
@@ -1010,7 +1019,7 @@ public:
                                               , chunk_to_send
                                               , out_stream.get_offset()
                                               , CHANNELS::CHANNEL_FLAG_LAST |
-                                                CHANNELS::CHANNEL_FLAG_FIRST
+                                                CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                               );
                 LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_EXEC");
                 }
@@ -1018,7 +1027,7 @@ public:
                 StaticOutStream<32> out_stream;
                 out_stream.out_uint16_le(TS_RAIL_ORDER_GET_APPID_REQ);
                 out_stream.out_uint16_le(8);
-                out_stream.out_uint32_le(0x2002A);
+                out_stream.out_uint32_le(40000);
 
                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
@@ -1026,58 +1035,93 @@ public:
                                               , chunk_to_send
                                               , out_stream.get_offset()
                                               , CHANNELS::CHANNEL_FLAG_LAST |
-                                                CHANNELS::CHANNEL_FLAG_FIRST
+                                                CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                               );
                 LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_GET_APPID_REQ");
-                }
-                break;
-
-            case TS_RAIL_ORDER_HANDSHAKE_EX:
-                LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE_EX");
-                break;
-
-//             case TS_RAIL_ORDER_CLIENTSTATUS:
-//                 LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_CLIENTSTATUS");
-//                 break;
-
-            case TS_RAIL_ORDER_SYSPARAM:
-                LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
-                {
-                ServerSystemParametersUpdatePDU sspu;
-                sspu.receive(stream);
-                sspu.log(LOG_INFO);
-                }
-                break;
-
-//             case TS_ALTSEC_WINDOW:
-//                 break;
-
-            case TS_RAIL_ORDER_GET_APPID_RESP:
-                LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_GET_APPID_RESP");
-                {
-                ServerGetApplicationIDResponsePDU sgaior;
-                sgaior.receive(stream);
-                sgaior.log(LOG_INFO);
                 }
                 {
                 StaticOutStream<1600> out_stream;;
 
-                out_stream.out_uint16_le(TS_RAIL_ORDER_CLIENTSTATUS);
-                out_stream.out_uint16_le((20*4) + (15*2) + 4);
+                out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
+                out_stream.out_uint16_le(9);                //(20*4) + (15*2) + 4);
 
                 out_stream.out_uint32_le(SPI_SETDRAGFULLWINDOWS);
                 out_stream.out_uint8(1);
+
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                this->mod->send_to_mod_channel( channel_names::rail
+                                              , chunk_to_send
+                                              , out_stream.get_offset()
+                                              , CHANNELS::CHANNEL_FLAG_LAST |
+                                                CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                              );
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
+                }
+                {
+                StaticOutStream<1600> out_stream;;
+
+                out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
+                out_stream.out_uint16_le(18);
 
                 out_stream.out_uint32_le(SPI_SETHIGHCONTRAST);
                 out_stream.out_uint32_le(0x7e);
                 out_stream.out_uint32_le(2);
                 out_stream.out_uint16_le(0);
 
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                this->mod->send_to_mod_channel( channel_names::rail
+                                              , chunk_to_send
+                                              , out_stream.get_offset()
+                                              , CHANNELS::CHANNEL_FLAG_LAST |
+                                                CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                              );
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
+                }
+                {
+                StaticOutStream<1600> out_stream;;
+
+                out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
+                out_stream.out_uint16_le(9);
+
                 out_stream.out_uint32_le(SPI_SETKEYBOARDCUES);
-                out_stream.out_uint8(1);
+                out_stream.out_uint8(0);
+
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                this->mod->send_to_mod_channel( channel_names::rail
+                                              , chunk_to_send
+                                              , out_stream.get_offset()
+                                              , CHANNELS::CHANNEL_FLAG_LAST |
+                                                CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                              );
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
+                }
+                {
+                StaticOutStream<1600> out_stream;;
+
+                out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
+                out_stream.out_uint16_le(9);
 
                 out_stream.out_uint32_le(SPI_SETKEYBOARDPREF);
                 out_stream.out_uint8(0);
+
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                this->mod->send_to_mod_channel( channel_names::rail
+                                              , chunk_to_send
+                                              , out_stream.get_offset()
+                                              , CHANNELS::CHANNEL_FLAG_LAST |
+                                                CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                              );
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
+                }
+                {
+                StaticOutStream<1600> out_stream;;
+
+                out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
+                out_stream.out_uint16_le(16);
 
                 out_stream.out_uint32_le(SPI_SETWORKAREA);
                 out_stream.out_uint16_le(0);
@@ -1085,29 +1129,141 @@ public:
                 out_stream.out_uint16_le(1600);
                 out_stream.out_uint16_le(900);
 
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                this->mod->send_to_mod_channel( channel_names::rail
+                                              , chunk_to_send
+                                              , out_stream.get_offset()
+                                              , CHANNELS::CHANNEL_FLAG_LAST |
+                                                CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                              );
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
+                }
+                {
+                StaticOutStream<1600> out_stream;;
+
+                out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
+                out_stream.out_uint16_le(16);
+
                 out_stream.out_uint32_le(RAIL_SPI_DISPLAYCHANGE);
                 out_stream.out_uint16_le(0);
                 out_stream.out_uint16_le(0);
                 out_stream.out_uint16_le(1600);
                 out_stream.out_uint16_le(900);
 
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                this->mod->send_to_mod_channel( channel_names::rail
+                                              , chunk_to_send
+                                              , out_stream.get_offset()
+                                              , CHANNELS::CHANNEL_FLAG_LAST |
+                                                CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                              );
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
+                }
+                {
+                StaticOutStream<1600> out_stream;;
+
+                out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
+                out_stream.out_uint16_le(9);
+
                 out_stream.out_uint32_le(SPI_SETMOUSEBUTTONSWAP);
                 out_stream.out_uint8(0);
 
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                this->mod->send_to_mod_channel( channel_names::rail
+                                              , chunk_to_send
+                                              , out_stream.get_offset()
+                                              , CHANNELS::CHANNEL_FLAG_LAST |
+                                                CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                              );
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
+                }
+                {
+                StaticOutStream<1600> out_stream;;
+
+                out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
+                out_stream.out_uint16_le(16);
+
                 out_stream.out_uint32_le(RAIL_SPI_TASKBARPOS);
                 out_stream.out_uint16_le(0);
-                out_stream.out_uint16_le(870);
-                out_stream.out_uint16_le(1600);
-                out_stream.out_uint16_le(30);
+                out_stream.out_uint16_le(560);
+                out_stream.out_uint16_le(800);
+                out_stream.out_uint16_le(600);
+
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                this->mod->send_to_mod_channel( channel_names::rail
+                                              , chunk_to_send
+                                              , out_stream.get_offset()
+                                              , CHANNELS::CHANNEL_FLAG_LAST |
+                                                CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                              );
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
+                }
+                {
+                StaticOutStream<1600> out_stream;
+
+                out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
+                out_stream.out_uint16_le(12);
 
                 out_stream.out_uint32_le(SPI_SETCARETWIDTH);
                 out_stream.out_uint32_le(1);
 
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                this->mod->send_to_mod_channel( channel_names::rail
+                                              , chunk_to_send
+                                              , out_stream.get_offset()
+                                              , CHANNELS::CHANNEL_FLAG_LAST |
+                                                CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                              );
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
+                }
+                {
+                StaticOutStream<1600> out_stream;;
+
+                out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
+                out_stream.out_uint16_le(12);
+
                 out_stream.out_uint32_le(SPI_SETSTICKYKEYS);
                 out_stream.out_uint32_le(1);
 
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                this->mod->send_to_mod_channel( channel_names::rail
+                                              , chunk_to_send
+                                              , out_stream.get_offset()
+                                              , CHANNELS::CHANNEL_FLAG_LAST |
+                                                CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                              );
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
+                }
+                {
+                StaticOutStream<1600> out_stream;;
+
+                out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
+                out_stream.out_uint16_le(12);
+
                 out_stream.out_uint32_le(SPI_SETTOGGLEKEYS);
                 out_stream.out_uint32_le(1);
+
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                this->mod->send_to_mod_channel( channel_names::rail
+                                              , chunk_to_send
+                                              , out_stream.get_offset()
+                                              , CHANNELS::CHANNEL_FLAG_LAST |
+                                                CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                              );
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
+                }
+                {
+                StaticOutStream<1600> out_stream;;
+
+                out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
+                out_stream.out_uint16_le(28);
 
                 out_stream.out_uint32_le(SPI_SETFILTERKEYS);
                 out_stream.out_uint32_le(1);
@@ -1122,10 +1278,62 @@ public:
                                               , chunk_to_send
                                               , out_stream.get_offset()
                                               , CHANNELS::CHANNEL_FLAG_LAST |
-                                                CHANNELS::CHANNEL_FLAG_FIRST
+                                                CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                               );
-                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_CLIENTSTATUS");
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
                 }
+                {
+                StaticOutStream<1600> out_stream;;
+
+                out_stream.out_uint16_le(TS_RAIL_ORDER_LANGBARINFO);
+                out_stream.out_uint16_le(8);
+
+                out_stream.out_uint32_le(TF_SFT_SHOWNORMAL);
+
+
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+
+                RailModuleHostMod * mod_rail = reinterpret_cast<RailModuleHostMod *>(this->mod);
+                mod_rail->rail_module_host.get_managed_mod().send_to_mod_channel( channel_names::rail
+                                            , chunk_to_send
+                                            , out_stream.get_offset()
+                                            , CHANNELS::CHANNEL_FLAG_LAST |
+                                              CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                            );
+
+                LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_LANGBARINFO");
+                }
+                }
+                }
+                break;
+
+            case TS_RAIL_ORDER_HANDSHAKE_EX:
+                LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE_EX");
+                break;
+
+//             case TS_RAIL_ORDER_CLIENTSTATUS:
+//                 LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_CLIENTSTATUS");
+//                 break;
+
+
+
+            case TS_RAIL_ORDER_GET_APPID_RESP:
+                LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_GET_APPID_RESP");
+                {
+                ServerGetApplicationIDResponsePDU sgaior;
+                sgaior.receive(stream);
+                sgaior.log(LOG_INFO);
+                }
+
+                break;
+
+            case TS_RAIL_ORDER_EXEC_RESULT:
+                LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_EXEC_RESULT");
+                break;
+
+            case TS_RAIL_ORDER_LANGBARINFO:
+                LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_LANGBARINFO");
                 break;
 
 
@@ -1135,6 +1343,130 @@ public:
                 break;
         }
 
+    }
+
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop  & cmd) override {
+        LOG(LOG_INFO, "RDP::RAIL::ActivelyMonitoredDesktop");
+        cmd.log(LOG_INFO);
+
+        switch (cmd.ActiveWindowId()) {
+
+            case 40000:
+                break;
+
+            case RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_0:
+                break;
+
+             case RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_1:
+                break;
+
+            case RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_2:
+                break;
+
+            case RemoteProgramsWindowIdManager::INVALID_WINDOW_ID:
+                break;
+
+        }
+
+
+    }
+
+    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override {
+        LOG(LOG_INFO, "RDP::RAIL::NewOrExistingWindow");
+        cmd.log(LOG_INFO);
+
+        switch (cmd.header.WindowId()) {
+
+            case 40000:
+
+                if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_TITLE) {
+                    this->screen->setWindowTitle(QString(cmd.TitleInfo()));
+                }
+                if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
+                    //this->screen->show();
+                }
+                if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE) {
+//                     this->remoteapp = false;
+//                     this->server_resize(cmd.WindowWidth(),  cmd.WindowHeight(), this->info.bpp);
+//                     this->remoteapp = true;
+                }
+
+                if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTDELTA) {
+                    this->remoteapp = false;
+                    this->server_resize(this->info.width - cmd.WindowClientDeltaX(),
+                                        this->info.height - cmd.WindowClientDeltaY(),
+                                        this->info.bpp);
+                    this->remoteapp = true;
+                }
+                if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_SHOW) {
+                    if (cmd.ShowState()) {
+                        if (this->screen) {
+                            this->screen->show();
+                        }
+                    }
+                }
+                break;
+
+//                 case RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_0:
+//                     break;
+//
+//                 case RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_1:
+//                     break;
+//
+//                 case RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_2:
+//                     break;
+//
+//                 case RemoteProgramsWindowIdManager::INVALID_WINDOW_ID:
+//                     break;
+            default:
+                LOG(LOG_WARNING, "RDP::RAIL::NewOrExistingWindow can't be create,  window ID(%u)", cmd.header.WindowId());
+                break;
+
+        }
+    }
+
+    void draw(const RDP::RAIL::WindowIcon            & cmd) override {
+        LOG(LOG_INFO, "RDP::RAIL::WindowIcon");
+        cmd.log(LOG_INFO);
+    }
+
+    void draw(const RDP::RAIL::CachedIcon            & cmd) override {
+        LOG(LOG_INFO, "RDP::RAIL::CachedIcon");
+        cmd.log(LOG_INFO);
+    }
+
+    void draw(const RDP::RAIL::DeletedWindow            & cmd) override {
+        LOG(LOG_INFO, "RDP::RAIL::DeletedWindow");
+        cmd.log(LOG_INFO);
+
+        switch (cmd.header.WindowId()) {
+
+            case 40000:
+                if (this->screen) {
+                    this->screen->close();
+                }
+                break;
+
+            default:
+                LOG(LOG_WARNING, "RDP::RAIL::NewOrExistingWindow can't be create,  window ID(%u)", cmd.header.WindowId());
+                break;
+
+        }
+    }
+
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons            & cmd) override {
+        LOG(LOG_INFO, "RDP::RAIL::NewOrExistingNotificationIcons");
+        cmd.log(LOG_INFO);
+    }
+
+    void draw(const RDP::RAIL::DeletedNotificationIcons            & cmd) override {
+        LOG(LOG_INFO, "RDP::RAIL::DeletedNotificationIcons");
+        cmd.log(LOG_INFO);
+    }
+
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override {
+        LOG(LOG_INFO, "RDP::RAIL::NonMonitoredDesktop");
+        cmd.log(LOG_INFO);
     }
 
 
@@ -3663,6 +3995,22 @@ public:
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------
 
+    void disconnect(std::string const & error) override {
+
+        if( this->remoteapp && this->rail_mod.get()) {
+            time_t  timev;
+            time(&timev);
+            this->rail_mod.get()->disconnect(timev);
+            mod_api * rail_mod_ptr = this->rail_mod.release();
+            delete (rail_mod_ptr);
+            this->rail_mod.reset(nullptr);
+            this->mod = this->rdp_mod.get();
+            this->mod_qt->_callback = this->rdp_mod.get();
+        }
+
+        FrontQtRDPGraphicAPI::disconnect(error);
+    }
+
     void callback() override {
         if (this->_recv_disconnect_ultimatum) {
             this->dropScreen();
@@ -3699,7 +4047,7 @@ int main(int argc, char** argv){
 
     // sudo bin/gcc-4.9.2/release/link-static/rdpproxy -nf
 
-    //bjam debug client_rdp_Qt4 && bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4 -n admin -w $mdp -i 10.10.40.22 -p 3389
+    //bjam -s qt=4 debug client_rdp_Qt4 && bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4
 
     // sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' &&
 

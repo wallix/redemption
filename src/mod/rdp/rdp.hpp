@@ -2197,6 +2197,7 @@ private:
         RemoteProgramsVirtualChannel& channel = this->get_remote_programs_virtual_channel();
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
+
     }   // send_to_mod_rail_channel
 
 private:

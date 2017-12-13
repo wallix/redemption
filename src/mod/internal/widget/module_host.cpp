@@ -88,8 +88,6 @@ void WidgetModuleHost::ModuleHolder::draw_event(time_t now, gdi::GraphicApi& dra
     {
         this->host.drawable_ptr = &drawable;
 
-        LOG(LOG_INFO, "loooooool");
-
         this->managed_mod->draw_event(now, this->host);
 
         this->host.drawable_ptr = &this->host.drawable_ref;
