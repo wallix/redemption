@@ -599,7 +599,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta2)
         meta.periodic_snapshot(now, 0, 0, 0);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
         meta.periodic_snapshot(now, 0, 0, 0);
-        meta.send_line(now.tv_sec, cstr_array_view("(break)"));
+        meta.next_video(now.tv_sec);
     }
 
     RED_CHECK_EQ(
@@ -643,7 +643,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
         meta.periodic_snapshot(now, 0, 0, 0);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
         meta.periodic_snapshot(now, 0, 0, 0);
-        meta.send_line(now.tv_sec, cstr_array_view("(break)"));
+        meta.next_video(now.tv_sec);
     }
 
     RED_CHECK_EQ(
@@ -692,7 +692,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
         meta.periodic_snapshot(now, 0, 0, 0);
         meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
         meta.periodic_snapshot(now, 0, 0, 0);
-        meta.send_line(now.tv_sec, cstr_array_view("(break)"));
+        meta.next_video(now.tv_sec);
     }
 
     RED_CHECK_EQ(
@@ -745,7 +745,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
         meta.kbd_input(now, '\t'); now.tv_sec += 1;
         meta.kbd_input(now, 'H'); now.tv_sec += 1;
         meta.periodic_snapshot(now, 0, 0, 0);
-        meta.send_line(now.tv_sec, cstr_array_view("(break)"));
+        meta.next_video(now.tv_sec);
         meta.kbd_input(now, 'I'); now.tv_sec += 1;
         meta.kbd_input(now, 'J'); now.tv_sec += 1;
         meta.kbd_input(now, 0x08); now.tv_sec += 1;
@@ -804,6 +804,29 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
 }
 
 
+RED_AUTO_TEST_CASE(TestSessionSessionLog)
+{
+    BufTransport trans;
+
+    {
+        timeval now;
+        now.tv_sec  = 1000;
+        now.tv_usec = 0;
+        SessionMeta meta(now, trans, false);
+        SessionLogAgent log_agent(meta);
+
+        log_agent.session_update(now, cstr_array_view("NEW_PROCESS=abc")); now.tv_sec += 1;
+        log_agent.session_update(now, cstr_array_view("BUTTON_CLICKED=de\01fg")); now.tv_sec += 1;
+    }
+
+    RED_CHECK_EQ(
+        trans.buf,
+        "1970-01-01 01:16:40 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
+        "1970-01-01 01:16:41 - type=\"BUTTON_CLICKED\" windows=\"de\" button=\"fg\"\n"
+    );
+}
+
+
 RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
 {
     BufTransport trans;
@@ -842,7 +865,7 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
         meta.kbd_input(now, '\t'); now.tv_sec += 1;
         meta.kbd_input(now, 'H'); now.tv_sec += 1;
         meta.periodic_snapshot(now, 0, 0, 0);
-        meta.send_line(now.tv_sec, cstr_array_view("(break)"));
+        meta.next_video(now.tv_sec);
         meta.kbd_input(now, 'I'); now.tv_sec += 1;
         meta.kbd_input(now, 'J'); now.tv_sec += 1;
         meta.kbd_input(now, 0x08); now.tv_sec += 1;

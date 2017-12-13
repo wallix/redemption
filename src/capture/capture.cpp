@@ -1204,8 +1204,12 @@ public:
         return true;
     }
 
-    void send_line(time_t rawtime, array_view_const_char line) {
-        this->send_data(rawtime, line, '+');
+    void send_line(time_t rawtime, array_view_const_char data) {
+        this->send_data(rawtime, data, '-');
+    }
+
+    void next_video(time_t rawtime) {
+        this->send_data(rawtime, cstr_array_view("(break)"), '+');
     }
 
 private:
@@ -1221,7 +1225,7 @@ public:
         this->is_probe_enabled_session = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
         agent_data_extractor(this->formatted_message, message);
         if (!this->formatted_message.av().empty()) {
-            this->send_data(now.tv_sec, this->formatted_message.av(), '-');
+            this->send_line(now.tv_sec, this->formatted_message.av());
         }
     }
 
@@ -1544,7 +1548,7 @@ void Capture::NotifyMetaIfNextVideo::notify_next_video(
 ) {
     assert(this->session_meta);
     if (reason == NotifyNextVideo::reason::sequenced) {
-        this->session_meta->send_line(now.tv_sec, cstr_array_view("(break)"));
+        this->session_meta->next_video(now.tv_sec);
     }
 }
 
@@ -1743,8 +1747,8 @@ Capture::Capture(
             this->kbds.push_back(this->meta_capture_obj->meta);
             this->probes.push_back(this->meta_capture_obj->meta);
         }
-
-        if (this->meta_capture_obj->enable_agent) {
+        else if (this->meta_capture_obj->enable_agent) {
+            // meta includes session_log_agent
             this->probes.push_back(this->meta_capture_obj->session_log_agent);
         }
     }
