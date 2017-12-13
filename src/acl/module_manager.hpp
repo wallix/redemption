@@ -43,6 +43,7 @@
 #include "mod/internal/replay_mod.hpp"
 #include "front/front.hpp"
 #include "utils/translation.hpp"
+#include "utils/sugar/scope_exit.hpp"
 
 #include "mod/internal/flat_login_mod.hpp"
 #include "mod/internal/selector_mod.hpp"
@@ -889,15 +890,28 @@ public:
         this->client_execute.enable_remote_program(this->front.client_info.remote_program);
 
         this->connected = false;
-        bool const is_same_module = (this->old_target_module == target_module);
-        if (!is_same_module) {
+
+        if (this->old_target_module != target_module) {
             this->front.must_be_stop_capture();
+
+            auto is_remote_mod = [](int mod_type){
+                return
+                    (mod_type == MODULE_XUP)
+                 || (mod_type == MODULE_RDP)
+                 || (mod_type == MODULE_VNC);
+            };
+
+            if (is_remote_mod(this->old_target_module)) {
+                authentifier.delete_remote_mod();
+            }
+
+            if (is_remote_mod(target_module)) {
+                authentifier.new_remote_mod();
+            }
         }
         this->old_target_module = target_module;
 
-        auto final = finally([this]() {
-            this->ini.set<cfg::context::perform_automatic_reconnection>(false);
-        });
+        SCOPE_EXIT(this->ini.set<cfg::context::perform_automatic_reconnection>(false));
         if (!this->ini.get<cfg::context::perform_automatic_reconnection>()) {
             std::array<uint8_t, 28>& server_auto_reconnect_packet_ref =
                 this->ini.get_ref<cfg::context::server_auto_reconnect_packet>();
@@ -1239,10 +1253,6 @@ public:
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
                 }
 
-                if (!is_same_module) {
-                    authentifier.renew_mod();
-                }
-
                 const char * ip = this->ini.get<cfg::context::target_host>().c_str();
                 char ip_addr[256] {};
                 in_addr s4_sin_addr;
@@ -1297,10 +1307,6 @@ public:
         case MODULE_RDP:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP'");
-
-                if (!is_same_module) {
-                    authentifier.renew_mod();
-                }
 
                 ClientInfo client_info = this->front.client_info;
 
@@ -1628,10 +1634,6 @@ public:
         case MODULE_VNC:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'\n");
-
-                if (!is_same_module) {
-                    authentifier.renew_mod();
-                }
 
                 const char * ip = this->ini.get<cfg::context::target_host>().c_str();
 
