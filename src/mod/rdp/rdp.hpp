@@ -7802,7 +7802,8 @@ private:
 
     void process_rdpdr_event(const CHANNELS::ChannelDef &,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
-        if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
+        if (!this->enable_rdpdr_data_analysis &&
+            this->authorization_channels.rdpdr_type_all_is_authorized() &&
             !this->file_system_drive_manager.HasManagedDrive()) {
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
