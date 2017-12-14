@@ -831,14 +831,31 @@ protected:
                 const uint8_t* psource = cursor.data + (cursor.height - h - 1) * source_xor_padded_line_length_in_byte;
                       uint8_t* pdest   = xorMaskData + (cursor.height - h - 1) * xor_padded_line_length_in_byte;
 
+                const uint8_t* andMask = cursor.mask + (cursor.height - h - 1) * and_padded_line_length_in_byte;
+                unsigned char and_bit_extraction_mask = 7;
+
+
                 for (unsigned int w = 0; w < cursor.width; ++w) {
                     * pdest      = *(psource + 2);
                     *(pdest + 1) = *(psource + 1);
                     *(pdest + 2) = * psource;
-                    *(pdest + 3) = 0xFF;
+                    if ((*andMask) & (1 << and_bit_extraction_mask)) {
+                        *(pdest + 3) = 0x00;
+                    }
+                    else {
+                        *(pdest + 3) = 0xFF;
+                    }
 
                     pdest   += 4;
                     psource += 3;
+
+                    if (and_bit_extraction_mask) {
+                        and_bit_extraction_mask--;
+                    }
+                    else {
+                        and_bit_extraction_mask = 7;
+                        andMask++;
+                    }
                 }
             }
 

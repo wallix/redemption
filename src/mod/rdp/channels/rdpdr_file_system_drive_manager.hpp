@@ -1823,8 +1823,8 @@ private:
         }
 
         std::string full_path    = path;
-        std::string request_path = device_create_request.Path();
-        if ((full_path.back() != '/') && (request_path.front() != '/')) {
+        auto const  request_path = device_create_request.Path();
+        if ((full_path.back() != '/') && (request_path[0] != '/')) {
             full_path += '/';
         }
         full_path += request_path;

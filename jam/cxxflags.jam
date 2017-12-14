@@ -215,7 +215,7 @@ rule flags ( properties * )
     || <variant>san in $(properties)
     || <san>on in $(properties)
     {
-        if $(CXX_GLIBCXX_BROKEN_API) = 1
+        if $(GLIBCXX_ALLOW_BROKEN_ABI) = 1
         {
             flags += <define>_GLIBCXX_DEBUG ;
         }

@@ -135,13 +135,9 @@ public:
             return 0;
     }
 
-    void renew_mod() override
+    void new_remote_mod() override
     {
         if (this->acl_serial){
-            if (this->session_log_is_open) {
-                this->acl_serial->close_session_log();
-            }
-
             this->cctx.set_master_key(ini.get<cfg::crypto::key0>());
             this->cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
             this->cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
@@ -154,6 +150,15 @@ public:
             }
             this->buffered_log_params.clear();
             this->buffered_log_params.shrink_to_fit();
+        }
+    }
+
+    void delete_remote_mod() override
+    {
+        if (this->acl_serial){
+            if (this->session_log_is_open) {
+                this->acl_serial->close_session_log();
+            }
         }
     }
 };
