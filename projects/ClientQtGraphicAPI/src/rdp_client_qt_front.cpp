@@ -786,9 +786,9 @@ public:
                 this->clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW
                                                 , this->clipbrdFormatsList.FILEGROUPDESCRIPTORW
                                                 );
-                this->clipbrdFormatsList.add_format( RDPECLIP::CF_UNICODETEXT
-                                                , std::string("\0\0", 2)
-                                                );
+//                 this->clipbrdFormatsList.add_format( RDPECLIP::CF_UNICODETEXT
+//                                                 , std::string("\0\0", 2)
+//                                                 );
                 this->clipbrdFormatsList.add_format( RDPECLIP::CF_TEXT
                                                 , std::string("\0\0", 2)
                                                 );
@@ -3177,19 +3177,29 @@ public:
                                     uint32_t formatID = chunk.in_uint32_le();
                                     formatAvailable -=  4;
 
-                                    uint16_t utf16_string[120];
-                                    int k(0);
-                                    bool isEndString = false;
-                                    while (!isEndString) {
-                                        u_int16_t bit(chunk.in_uint16_le());
-                                        if (bit == 0) {
-                                            isEndString = true;
+                                    if (!this->clipboard_qt->server_use_long_format_names) {
+                                        formatAvailable -=  32;
+                                        uint8_t utf16_string[32];
+                                        chunk.in_copy_bytes(utf16_string, 32);
+                                        this->_requestedFormatName = std::string(reinterpret_cast<const char*>(utf16_string), 32);
+                                    } else {
+
+                                        uint16_t utf16_string[120];
+                                        int k(0);
+                                        bool isEndString = false;
+                                        while (!isEndString) {
+                                            u_int16_t bit(chunk.in_uint16_le());
+                                            if (bit == 0) {
+                                                isEndString = true;
+                                            }
+                                            utf16_string[k] = bit;
+                                            k++;
+
+                                            formatAvailable -=  2;
                                         }
-                                        utf16_string[k] = bit;
-                                        k++;
-                                        formatAvailable -=  2;
+                                        this->_requestedFormatName = std::string(reinterpret_cast<const char*>(utf16_string), k*2);
                                     }
-                                    this->_requestedFormatName = std::string(reinterpret_cast<const char*>(utf16_string), k*2);
+
 
                                     for (int j = 0; j < ClipbrdFormatsList::CLIPBRD_FORMAT_COUNT && !isSharedFormat; j++) {
                                         if (this->clipbrdFormatsList.IDs[j] == formatID) {
@@ -3306,6 +3316,8 @@ public:
                                 if (bool(this->verbose & RDPVerbose::cliprdr)) {
                                     LOG(LOG_INFO, "CLIENT >> CB Channel: Format Data Response PDU");
                                 }
+
+
 
                                 switch(this->clipboard_qt->_bufferTypeID) {
 
@@ -3710,10 +3722,15 @@ public:
         switch (this->_requestedFormatId) {
 
             case RDPECLIP::CF_UNICODETEXT:
+                this->send_to_clipboard_Buffer(chunk);
+                if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                    this->send_textBuffer_to_clipboard(true);
+                }
+            break;
             case RDPECLIP::CF_TEXT:
                 this->send_to_clipboard_Buffer(chunk);
                 if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                    this->send_textBuffer_to_clipboard();
+                    this->send_textBuffer_to_clipboard(false);
                 }
             break;
 
@@ -3876,7 +3893,7 @@ public:
                     this->send_to_clipboard_Buffer(chunk);
 
                     if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                        this->send_textBuffer_to_clipboard();
+                        this->send_textBuffer_to_clipboard(false);
                     }
 
                 }  else {
@@ -3911,12 +3928,24 @@ public:
         }
     }
 
-    void send_textBuffer_to_clipboard() {
+    void send_textBuffer_to_clipboard(bool is_utf16) {
+
+        const char * str_data;
+        size_t length_of_utf8_string;
+
+        if (is_utf16) {
         std::unique_ptr<uint8_t[]> utf8_string = std::make_unique<uint8_t[]>(this->_cb_buffers.sizeTotal);
-        size_t length_of_utf8_string = ::UTF16toUTF8(
+        length_of_utf8_string = ::UTF16toUTF8(
             this->_cb_buffers.data.get(), this->_cb_buffers.sizeTotal,
             utf8_string.get(), this->_cb_buffers.sizeTotal);
-        std::string str(reinterpret_cast<const char*>(utf8_string.get()), length_of_utf8_string);
+            str_data = reinterpret_cast<const char*>(utf8_string.get());
+        } else {
+            str_data = reinterpret_cast<const char*>(this->_cb_buffers.data.get());
+            length_of_utf8_string = this->_cb_buffers.size;
+        }
+
+
+        std::string str(reinterpret_cast<const char*>(str_data), length_of_utf8_string);
 
         this->clipboard_qt->_local_clipboard_stream = false;
         this->clipboard_qt->setClipboard_text(str);

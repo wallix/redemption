@@ -2706,8 +2706,6 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             default: LOG(LOG_WARNING, "CLIPRDR Unknow PDU with length = %u", header.dataLen());
                 break;
         }
-        LOG(LOG_INFO, "");
-
     }
 }
 

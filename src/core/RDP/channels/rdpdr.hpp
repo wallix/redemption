@@ -2776,23 +2776,23 @@ class ClientNameRequest {
 
     size_t ComputerNameLen = 0;
 
-    char ComputerName[65536/2];
+    char ComputerName[500];
 
 public:
     ClientNameRequest() = default;
 
     explicit ClientNameRequest(const char * computer_name)
     {
-//         assert(this->ComputerNameLen <= (65536/2)-1);
-        std::memcpy(this->ComputerName, computer_name,  65536/2);
+//         assert(this->ComputerNameLen <= 500)-1);
+        std::memcpy(this->ComputerName, computer_name,  500);
     }
 
     explicit ClientNameRequest(const char * computer_name, const uint32_t unicodeFlag)
     : UnicodeFlag(unicodeFlag)
     , ComputerNameLen(sizeof(computer_name))
     {
-//         assert(this->ComputerNameLen <= (65536/2)-1);
-        std::memcpy(this->ComputerName, computer_name, 65536/2);
+//         assert(this->ComputerNameLen <= 500-1);
+        std::memcpy(this->ComputerName, computer_name, 500);
     }
 
 

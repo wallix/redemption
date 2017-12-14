@@ -3363,7 +3363,7 @@ public:
                     , 0
                 );
 
-                PatternParams patternCheckerParams {};
+                PatternParams patternCheckerParams {"", "", 0};
                 SequencedVideoParams sequenced_video_params {};
                 FullVideoParams full_video_params = { false };
                 MetaParams meta_params {};
