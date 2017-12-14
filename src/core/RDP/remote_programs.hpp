@@ -670,14 +670,14 @@ enum {
 //  TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS mask of Flags field), is 16,000 bytes.
 
 class ClientExecutePDU {
-public:
+
     uint16_t Flags_ = 0;
 
     std::string exe_or_file;
     std::string working_dir;
     std::string arguments;
 
-
+public:
     void emit(OutStream & stream) const {
         stream.out_uint16_le(this->Flags_);
 
@@ -1294,6 +1294,20 @@ enum {
 //  | SPI_SETHIGHCONTRAST    | Size of Body field: Variable number of bytes.  |
 //  | 0x0043                 | The body is a TS_HIGHCONTRAST structure.       |
 //  +------------------------+------------------------------------------------+
+//  | SPI_SETCARETWIDTH      | Size of Body field: 4 bytes.                   |
+//  | 0x00002007             | The body is an unsigned 32-bit integer that    |
+//  |                        | indicates the width of the caret. The minimum  |
+//  |                        | allowed value is 0x00000001.                   |
+//  +------------------------+------------------------------------------------+
+//  | SPI_SETSTICKYKEYS      | Size of Body field: 4 bytes.                   |
+//  | 0x0000003B             | The body is a TS_STICKYKEYS structure.         |
+//  +------------------------+------------------------------------------------+
+//  | SPI_SETTOGGLEKEYS      | Size of Body field: 4 bytes.                   |
+//  | 0x00000035             | The body is a TS_TOGGLEKEYS structure.         |
+//  +------------------------+------------------------------------------------+
+//  | SPI_SETFILTERKEYS      | Size of Body field: 20 bytes.                  |
+//  | 0x00000033             | The body is a TS_FILTERKEYS structure.         |
+//  +------------------------+------------------------------------------------+
 
 static inline
 const char* get_RAIL_ClientSystemParam_name(uint32_t SystemParam) {
@@ -1306,6 +1320,11 @@ const char* get_RAIL_ClientSystemParam_name(uint32_t SystemParam) {
         case SPI_SETMOUSEBUTTONSWAP: return "SPI_SETMOUSEBUTTONSWAP";
         case RAIL_SPI_TASKBARPOS:    return "RAIL_SPI_TASKBARPOS";
         case SPI_SETHIGHCONTRAST:    return "SPI_SETHIGHCONTRAST";
+        case SPI_SETCARETWIDTH:      return "SPI_SETCARETWIDTH";
+        case SPI_SETSTICKYKEYS:      return "SPI_SETSTICKYKEYS";
+        case SPI_SETTOGGLEKEYS:      return "SPI_SETTOGGLEKEYS";
+        case SPI_SETFILTERKEYS:      return "SPI_SETFILTERKEYS";
+
         default:                     return "<unknown>";
     }
 }

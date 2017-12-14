@@ -49,6 +49,10 @@ RailModuleHostMod::RailModuleHostMod(
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 }
 
+RailModuleHost * RailModuleHostMod::get_module_host() {
+    return &(this->rail_module_host);
+}
+
 // RdpInput
 
 void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)

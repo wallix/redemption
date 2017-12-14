@@ -176,6 +176,8 @@ public:
 
     ~ClientExecute();
 
+    void set_verbose(bool verbose);
+
     void enable_remote_program(bool enable);
 
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers);
