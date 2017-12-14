@@ -4445,21 +4445,21 @@ public:
                         const char * statestr = "UNKNOWN_STATE";
                         const char * statedescr = "Unknow state.";
                         switch (this->state) {
-                            #define CASE(e, s)                                          \
-                                case e:                                                 \
-                                    statestr = #e + 4; statedescr = s;                  \
-                                    this->close_box_extra_message_ref += " ";           \
-                                    this->close_box_extra_message_ref += statedescr;    \
-                                    this->close_box_extra_message_ref += " (";          \
-                                    this->close_box_extra_message_ref += statestr;      \
-                                    this->close_box_extra_message_ref += ")";           \
+                            #define CASE(e, trkey)                                         \
+                                case e:                                                    \
+                                    statestr = #e + 4; statedescr = TR(trkey, this->lang); \
+                                    this->close_box_extra_message_ref += " ";              \
+                                    this->close_box_extra_message_ref += statedescr;       \
+                                    this->close_box_extra_message_ref += " (";             \
+                                    this->close_box_extra_message_ref += statestr;         \
+                                    this->close_box_extra_message_ref += ")";              \
                                 break
-                            CASE(MOD_RDP_NEGO, TR(trkeys::err_mod_rdp_nego, this->lang));
-                            CASE(MOD_RDP_BASIC_SETTINGS_EXCHANGE, TR(trkeys::err_mod_rdp_basic_settings_exchange, this->lang));
-                            CASE(MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER, TR(trkeys::err_mod_rdp_channel_connection_attach_user, this->lang));
-                            CASE(MOD_RDP_CHANNEL_JOIN_CONFIRME, TR(trkeys::mod_rdp_channel_join_confirme, this->lang));
-                            CASE(MOD_RDP_GET_LICENSE, TR(trkeys::mod_rdp_get_license, this->lang));
-                            CASE(MOD_RDP_CONNECTED, TR(trkeys::err_mod_rdp_connected, this->lang));
+                            CASE(MOD_RDP_NEGO, trkeys::err_mod_rdp_nego);
+                            CASE(MOD_RDP_BASIC_SETTINGS_EXCHANGE, trkeys::err_mod_rdp_basic_settings_exchange);
+                            CASE(MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER, trkeys::err_mod_rdp_channel_connection_attach_user);
+                            CASE(MOD_RDP_CHANNEL_JOIN_CONFIRME, trkeys::mod_rdp_channel_join_confirme);
+                            CASE(MOD_RDP_GET_LICENSE, trkeys::mod_rdp_get_license);
+                            CASE(MOD_RDP_CONNECTED, trkeys::err_mod_rdp_connected);
                             #undef CASE
                         }
 
