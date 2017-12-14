@@ -94,6 +94,7 @@ inline Rect get_widget_rect(uint16_t width, uint16_t height,
 #define STRMODULE_INTERNAL         "INTERNAL"
 #define STRMODULE_WAITINFO         "waitinfo"
 
+// TODO enum class
 enum {
     MODULE_EXIT,
     MODULE_WAITING,

@@ -4363,15 +4363,17 @@ public:
                 catch(Error const & e){
                     LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception");
 
-                    this->front.must_be_stop_capture();
-
                     if (e.id == ERR_RDP_SERVER_REDIR) {
+                        this->front.must_be_stop_capture();
                         throw;
                     }
 
                     if (this->session_probe_virtual_channel_p &&
                         this->session_probe_virtual_channel_p->is_disconnection_reconnection_required()) {
                         throw Error(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION);
+                    }
+                    else {
+                        this->front.must_be_stop_capture();
                     }
 
                     if (this->remote_apps_not_enabled) {
