@@ -836,9 +836,9 @@ protected:
 
 
                 for (unsigned int w = 0; w < cursor.width; ++w) {
-                    * pdest      = *(psource + 2);
+                    * pdest      = * psource;
                     *(pdest + 1) = *(psource + 1);
-                    *(pdest + 2) = * psource;
+                    *(pdest + 2) = *(psource + 2);
                     if ((*andMask) & (1 << and_bit_extraction_mask)) {
                         *(pdest + 3) = 0x00;
                     }
