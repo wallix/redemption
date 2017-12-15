@@ -3,6 +3,16 @@ Master branch: [![Build Status from master](https://travis-ci.org/wallix/redempt
 Future branch: [![Build Status from future](https://travis-ci.org/wallix/redemption.svg?branch=future)](https://travis-ci.org/wallix/redemption)
 
 
+A RDP (Remote Desktop Protocol) proxy.
+
+(A RDP client in `projects/ClientQtGraphicAPI`)
+
+Support of:
+
+- RDP client to RDP server and
+- RDP client to VNC server
+
+
 Dependencies
 ============
 
