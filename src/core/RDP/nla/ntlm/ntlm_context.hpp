@@ -213,7 +213,7 @@ public:
     }
 
     NTLMContext(NTLMContext const &) = delete;
-    NTLMContext operator = (NTLMContext const &) = delete;
+    NTLMContext& operator = (NTLMContext const &) = delete;
 
     /**
      * Generate timestamp for AUTHENTICATE_MESSAGE.
