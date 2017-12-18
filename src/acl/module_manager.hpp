@@ -1361,6 +1361,7 @@ public:
                 }
                 // END READ PROXY_OPT
 
+                this->ini.get_ref<cfg::context::close_box_extra_message>().clear();
                 ModRDPParams mod_rdp_params( this->ini.get<cfg::globals::target_user>().c_str()
                                            , this->ini.get<cfg::context::target_password>().c_str()
                                            , this->ini.get<cfg::context::target_host>().c_str()
