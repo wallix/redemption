@@ -345,6 +345,7 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "session_probe_customize_executable_name", set(false));
 
         W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_enable_log", set(false));
+        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_enable_log_rotation", set(true));
 
         W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_disconnected_application_limit", desc{
             "This policy setting allows you to configure a time limit for disconnected application sessions.\n"

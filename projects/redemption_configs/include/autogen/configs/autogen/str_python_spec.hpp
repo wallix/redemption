@@ -405,6 +405,9 @@
 "#_hidden\n"
 "session_probe_enable_log = boolean(default=False)\n\n"
 
+"#_hidden\n"
+"session_probe_enable_log_rotation = boolean(default=True)\n\n"
+
 "# This policy setting allows you to configure a time limit for disconnected application sessions.\n"
 "# 0 to disable timeout.\n"
 "# (is in millisecond)\n"

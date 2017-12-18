@@ -131,6 +131,7 @@ namespace cfg {
         struct session_probe_end_disconnected_session;
         struct session_probe_customize_executable_name;
         struct session_probe_enable_log;
+        struct session_probe_enable_log_rotation;
         struct session_probe_disconnected_application_limit;
         struct session_probe_disconnected_session_limit;
         struct session_probe_idle_session_limit;

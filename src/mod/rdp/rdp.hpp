@@ -363,6 +363,7 @@ protected:
     const std::chrono::milliseconds   session_probe_idle_session_limit;
     const bool                        session_probe_use_clipboard_based_launcher;
     const bool                        session_probe_enable_log;
+    const bool                        session_probe_enable_log_rotation;
 
     const bool                        use_session_probe_to_launch_remote_program;
 
@@ -947,6 +948,7 @@ public:
                                                       !info.alternate_shell[0] ||
                                                       info.remote_program))
         , session_probe_enable_log(mod_rdp_params.session_probe_enable_log)
+        , session_probe_enable_log_rotation(mod_rdp_params.session_probe_enable_log_rotation)
         , use_session_probe_to_launch_remote_program(mod_rdp_params.use_session_probe_to_launch_remote_program)
         , session_probe_clipboard_based_launcher_clipboard_initialization_delay(mod_rdp_params.session_probe_clipboard_based_launcher_clipboard_initialization_delay)
         , session_probe_clipboard_based_launcher_long_delay(mod_rdp_params.session_probe_clipboard_based_launcher_long_delay)
@@ -1803,6 +1805,8 @@ protected:
 
         session_probe_virtual_channel_params.session_probe_enable_log               =
             this->session_probe_enable_log;
+        session_probe_virtual_channel_params.session_probe_enable_log_rotation      =
+            this->session_probe_enable_log_rotation;
 
         session_probe_virtual_channel_params.session_probe_allow_multiple_handshake =
             this->session_probe_allow_multiple_handshake;
