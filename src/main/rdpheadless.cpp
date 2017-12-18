@@ -847,7 +847,7 @@ int main(int argc, char** argv)
     } report_message;
     NullAuthentifier authentifier;
     RDPHeadlessFront front(info, report_message, verbose,
-      RDPHeadlessFrontParams{std::move(out_path), index});
+      RDPHeadlessFrontParams{std::move(out_path), index, keep_alive_frequence});
     int main_return = 40;
 
     if (input_connection_data_complete & RDPHeadlessFront::IP) {
