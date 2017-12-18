@@ -89,6 +89,7 @@
 #include "core/client_info.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/authorization_channels.hpp"
+#include "utils/sugar/scope_exit.hpp"
 #include "core/channel_names.hpp"
 
 #include "core/FSCC/FileInformation.hpp"
@@ -6089,21 +6090,11 @@ public:
             LOG(LOG_INFO, "mod_rdp::process_server_caps");
         }
 
-        struct autoclose_file {
-            FILE * file;
-
-            ~autoclose_file()
-            {
-                if (this->file) {
-                    fclose(this->file);
-                }
-            }
-        };
         FILE * const output_file =
             !this->output_filename.empty()
             ? fopen(this->output_filename.c_str(), "w")
             : nullptr;
-        autoclose_file autoclose{output_file};
+        SCOPE_EXIT(if (output_file) { fclose(output_file); });
 
         uint16_t ncapsets = stream.in_uint16_le();
         stream.in_skip_bytes(2); /* pad */
