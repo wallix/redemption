@@ -1447,7 +1447,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "SystemParam=%s(%u) ",
+            "SystemParam=%s(0x%X) ",
             ::get_RAIL_ClientSystemParam_name(this->SystemParam_),
             this->SystemParam_);
         length += ((result < size - length) ? result : (size - length - 1));
@@ -1606,7 +1606,7 @@ private:
         length += ((result < size - length) ? result : (size - length - 1));
 
         result = ::snprintf(buffer + length, size - length,
-            "SystemParam=%s(%u) Body=%s(\\x%02x)",
+            "SystemParam=%s(0x%X) Body=%s(\\x%02x)",
             ::get_RAIL_ServerSystemParam_name(this->SystemParam_),
             this->SystemParam_, (this->Body_ ? "TRUE" : "FALSE"),
             this->Body_);
