@@ -94,6 +94,7 @@ inline Rect get_widget_rect(uint16_t width, uint16_t height,
 #define STRMODULE_INTERNAL         "INTERNAL"
 #define STRMODULE_WAITINFO         "waitinfo"
 
+// TODO enum class
 enum {
     MODULE_EXIT,
     MODULE_WAITING,
@@ -1433,6 +1434,7 @@ public:
                     this->ini.get<cfg::context::session_probe_process_monitoring_rules>().c_str();
 
                 mod_rdp_params.session_probe_enable_log            = this->ini.get<cfg::mod_rdp::session_probe_enable_log>();
+                mod_rdp_params.session_probe_enable_log_rotation   = this->ini.get<cfg::mod_rdp::session_probe_enable_log_rotation>();
 
                 mod_rdp_params.session_probe_allow_multiple_handshake
                                                                    = this->ini.get<cfg::mod_rdp::session_probe_allow_multiple_handshake>();

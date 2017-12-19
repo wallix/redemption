@@ -2316,6 +2316,53 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
         }
 
         {
+            RDP::RAIL::NewOrExistingWindow order;
+
+            order.header.FieldsPresentFlags(
+                        RDP::RAIL::WINDOW_ORDER_STATE_NEW
+                    | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTDELTA
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_SHOW
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_STYLE
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_TITLE
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_OWNER
+                );
+            order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
+
+            order.OwnerWindowId(0x0);
+            order.Style(0x14EE0000);
+            order.ExtendedStyle(0x40310);
+            order.ShowState(this->maximized ? 3 : 5);
+            order.TitleInfo(this->window_title.c_str());
+            order.ClientOffsetX(this->window_rect.x + 6);
+            order.ClientOffsetY(this->window_rect.y + 25);
+            order.WindowOffsetX(this->window_rect.x);
+            order.WindowOffsetY(this->window_rect.y);
+            order.WindowClientDeltaX(6);
+            order.WindowClientDeltaY(25);
+            order.WindowWidth(this->window_rect.cx);
+            order.WindowHeight(this->window_rect.cy);
+            order.VisibleOffsetX(this->window_rect.x);
+            order.VisibleOffsetY(this->window_rect.y);
+            order.NumVisibilityRects(1);
+            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+
+            if (this->verbose) {
+                StaticOutStream<1024> out_s;
+                order.emit(out_s);
+                order.log(LOG_INFO);
+                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
+            }
+
+            this->front_->draw(order);
+        }
+
+        {
             RDP::RAIL::ActivelyMonitoredDesktop order;
 
             order.header.FieldsPresentFlags(
@@ -2370,53 +2417,6 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
                 order.emit(out_s);
                 order.log(LOG_INFO);
                 LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
-            }
-
-            this->front_->draw(order);
-        }
-
-        {
-            RDP::RAIL::NewOrExistingWindow order;
-
-            order.header.FieldsPresentFlags(
-                        RDP::RAIL::WINDOW_ORDER_STATE_NEW
-                    | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                    | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTDELTA
-                    | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
-                    | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
-                    | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
-                    | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
-                    | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
-                    | RDP::RAIL::WINDOW_ORDER_FIELD_SHOW
-                    | RDP::RAIL::WINDOW_ORDER_FIELD_STYLE
-                    | RDP::RAIL::WINDOW_ORDER_FIELD_TITLE
-                    | RDP::RAIL::WINDOW_ORDER_FIELD_OWNER
-                );
-            order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
-
-            order.OwnerWindowId(0x0);
-            order.Style(0x14EE0000);
-            order.ExtendedStyle(0x40310);
-            order.ShowState(this->maximized ? 3 : 5);
-            order.TitleInfo(this->window_title.c_str());
-            order.ClientOffsetX(this->window_rect.x + 6);
-            order.ClientOffsetY(this->window_rect.y + 25);
-            order.WindowOffsetX(this->window_rect.x);
-            order.WindowOffsetY(this->window_rect.y);
-            order.WindowClientDeltaX(6);
-            order.WindowClientDeltaY(25);
-            order.WindowWidth(this->window_rect.cx);
-            order.WindowHeight(this->window_rect.cy);
-            order.VisibleOffsetX(this->window_rect.x);
-            order.VisibleOffsetY(this->window_rect.y);
-            order.NumVisibilityRects(1);
-            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
-
-            if (this->verbose) {
-                StaticOutStream<1024> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
             }
 
             this->front_->draw(order);

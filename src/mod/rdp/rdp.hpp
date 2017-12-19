@@ -363,6 +363,7 @@ protected:
     const std::chrono::milliseconds   session_probe_idle_session_limit;
     const bool                        session_probe_use_clipboard_based_launcher;
     const bool                        session_probe_enable_log;
+    const bool                        session_probe_enable_log_rotation;
 
     const bool                        use_session_probe_to_launch_remote_program;
 
@@ -947,6 +948,7 @@ public:
                                                       !info.alternate_shell[0] ||
                                                       info.remote_program))
         , session_probe_enable_log(mod_rdp_params.session_probe_enable_log)
+        , session_probe_enable_log_rotation(mod_rdp_params.session_probe_enable_log_rotation)
         , use_session_probe_to_launch_remote_program(mod_rdp_params.use_session_probe_to_launch_remote_program)
         , session_probe_clipboard_based_launcher_clipboard_initialization_delay(mod_rdp_params.session_probe_clipboard_based_launcher_clipboard_initialization_delay)
         , session_probe_clipboard_based_launcher_long_delay(mod_rdp_params.session_probe_clipboard_based_launcher_long_delay)
@@ -1803,6 +1805,8 @@ protected:
 
         session_probe_virtual_channel_params.session_probe_enable_log               =
             this->session_probe_enable_log;
+        session_probe_virtual_channel_params.session_probe_enable_log_rotation      =
+            this->session_probe_enable_log_rotation;
 
         session_probe_virtual_channel_params.session_probe_allow_multiple_handshake =
             this->session_probe_allow_multiple_handshake;
@@ -4363,15 +4367,17 @@ public:
                 catch(Error const & e){
                     LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception");
 
-                    this->front.must_be_stop_capture();
-
                     if (e.id == ERR_RDP_SERVER_REDIR) {
+                        this->front.must_be_stop_capture();
                         throw;
                     }
 
                     if (this->session_probe_virtual_channel_p &&
                         this->session_probe_virtual_channel_p->is_disconnection_reconnection_required()) {
                         throw Error(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION);
+                    }
+                    else {
+                        this->front.must_be_stop_capture();
                     }
 
                     if (this->remote_apps_not_enabled) {
@@ -4443,21 +4449,21 @@ public:
                         const char * statestr = "UNKNOWN_STATE";
                         const char * statedescr = "Unknow state.";
                         switch (this->state) {
-                            #define CASE(e, s)                                          \
-                                case e:                                                 \
-                                    statestr = #e + 4; statedescr = s;                  \
-                                    this->close_box_extra_message_ref += " ";           \
-                                    this->close_box_extra_message_ref += statedescr;    \
-                                    this->close_box_extra_message_ref += " (";          \
-                                    this->close_box_extra_message_ref += statestr;      \
-                                    this->close_box_extra_message_ref += ")";           \
+                            #define CASE(e, trkey)                                         \
+                                case e:                                                    \
+                                    statestr = #e + 4; statedescr = TR(trkey, this->lang); \
+                                    this->close_box_extra_message_ref += " ";              \
+                                    this->close_box_extra_message_ref += statedescr;       \
+                                    this->close_box_extra_message_ref += " (";             \
+                                    this->close_box_extra_message_ref += statestr;         \
+                                    this->close_box_extra_message_ref += ")";              \
                                 break
-                            CASE(MOD_RDP_NEGO, TR(trkeys::err_mod_rdp_nego, this->lang));
-                            CASE(MOD_RDP_BASIC_SETTINGS_EXCHANGE, TR(trkeys::err_mod_rdp_basic_settings_exchange, this->lang));
-                            CASE(MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER, TR(trkeys::err_mod_rdp_channel_connection_attach_user, this->lang));
-                            CASE(MOD_RDP_CHANNEL_JOIN_CONFIRME, TR(trkeys::mod_rdp_channel_join_confirme, this->lang));
-                            CASE(MOD_RDP_GET_LICENSE, TR(trkeys::mod_rdp_get_license, this->lang));
-                            CASE(MOD_RDP_CONNECTED, TR(trkeys::err_mod_rdp_connected, this->lang));
+                            CASE(MOD_RDP_NEGO, trkeys::err_mod_rdp_nego);
+                            CASE(MOD_RDP_BASIC_SETTINGS_EXCHANGE, trkeys::err_mod_rdp_basic_settings_exchange);
+                            CASE(MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER, trkeys::err_mod_rdp_channel_connection_attach_user);
+                            CASE(MOD_RDP_CHANNEL_JOIN_CONFIRME, trkeys::mod_rdp_channel_join_confirme);
+                            CASE(MOD_RDP_GET_LICENSE, trkeys::mod_rdp_get_license);
+                            CASE(MOD_RDP_CONNECTED, trkeys::err_mod_rdp_connected);
                             #undef CASE
                         }
 
@@ -7802,7 +7808,8 @@ private:
 
     void process_rdpdr_event(const CHANNELS::ChannelDef &,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
-        if (this->authorization_channels.rdpdr_type_all_is_authorized() &&
+        if (!this->enable_rdpdr_data_analysis &&
+            this->authorization_channels.rdpdr_type_all_is_authorized() &&
             !this->file_system_drive_manager.HasManagedDrive()) {
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
