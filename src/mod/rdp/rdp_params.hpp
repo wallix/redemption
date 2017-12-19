@@ -158,7 +158,7 @@ struct ModRDPParams {
 
     ClientExecute * client_execute = nullptr;
 
-    uint16_t     client_execute_flags;
+    uint16_t     client_execute_flags = 0;
     const char * client_execute_exe_or_file = "";
     const char * client_execute_working_dir = "";
     const char * client_execute_arguments = "";
