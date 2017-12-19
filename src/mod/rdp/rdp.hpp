@@ -2819,15 +2819,13 @@ public:
                                 #ifndef __EMSCRIPTEN__
 
 //                                            LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_X509");
-                                uint32_t certcount = this->sc_sec1.x509.certCount;
+                                uint32_t const certcount = this->sc_sec1.x509.certCount;
                                 if (certcount < 2){
                                     LOG(LOG_ERR, "Server didn't send enough X509 certificates");
                                     throw Error(ERR_SEC);
                                 }
 
-                                uint32_t cert_len = this->sc_sec1.x509.cert[certcount - 1].len;
-                                X509 *cert = this->sc_sec1.x509.cert[certcount - 1].cert;
-                                (void)cert_len;
+                                X509 *cert = this->sc_sec1.x509.certs[certcount - 1];
 
                                 // TODO CGR: Currently, we don't use the CA Certificate, we should
                                 // TODO *) Verify the server certificate (server_cert) with the CA certificate.
