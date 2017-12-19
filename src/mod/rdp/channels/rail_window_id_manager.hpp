@@ -62,6 +62,7 @@ public:
     }
 
     uint32_t get_server_window_id(uint32_t client_window_id) const {
+
         auto iter = this->client_to_server.find(client_window_id);
         if (iter != this->client_to_server.end()) {
             return iter->second;
@@ -119,7 +120,7 @@ private:
         this->client_to_server[client_window_id] = server_window_id;
         this->server_to_client[server_window_id] = client_window_id;
 
-        //LOG(LOG_INFO, "RemoteProgramsWindowIdManager::map_server_window: ServerWindowId=0x%X ClientWindowId=0x%X", server_window_id, client_window_id);
+        LOG(LOG_INFO, "RemoteProgramsWindowIdManager::map_server_window: ServerWindowId=0x%X ClientWindowId=0x%X", server_window_id, client_window_id);
 
         return client_window_id;
     }

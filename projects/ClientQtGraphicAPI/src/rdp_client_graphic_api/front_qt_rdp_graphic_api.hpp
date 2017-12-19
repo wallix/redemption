@@ -1657,7 +1657,7 @@ public:
       , keymap()
       , ctrl_alt_delete(false)
       , is_pipe_ok(true)
-      , remoteapp(false)
+      , remoteapp(true)
     {
         SSL_load_error_strings();
         SSL_library_init();
@@ -3366,8 +3366,11 @@ public:
                 PatternParams patternCheckerParams {"", "", 0};
                 SequencedVideoParams sequenced_video_params {};
                 FullVideoParams full_video_params = { false };
-                MetaParams meta_params {};
-                KbdLogParams kbd_log_params {};
+                MetaParams meta_params {
+                    MetaParams::EnableSessionLog::No,
+                    MetaParams::HideNonPrintable::No
+                };
+                KbdLogParams kbd_log_params {false, false, false, false};
 
                 CaptureParams captureParams;
                 captureParams.now = tvtime();
@@ -3464,7 +3467,6 @@ public:
                 this->disconnect(labelErrorMsg);
             }
         }
-
     }
 
 

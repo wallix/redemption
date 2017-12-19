@@ -53,7 +53,17 @@ Lors de la lecture de film .mwrm, une barre de lecture horizontale permet de sui
 Prerequies
 ----------
 	
-	Installer les lib Qt4 ou Qt5.
+Installer les lib Qt4 ou Qt5.
+
+To compile ReDemPtion you need the following packages:
+- libboost-tools-dev (contains bjam: software build tool) (http://sourceforge.net/projects/boost/files/boost/)
+- libboost-test-dev (unit-test dependency)
+- libssl-dev
+- libkrb5-dev
+- libsnappy-dev
+- libpng12-dev
+- libffmpeg-dev (see below)
+- g++ >= 4.9 or clang++ >= 3.5 or other C++14 compiler
 
 Compilation
 -----------

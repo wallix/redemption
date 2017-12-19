@@ -2556,6 +2556,7 @@ struct CliprdrLogState
 
 static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogState & state) {
     if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+        LOG(LOG_INFO, "");
         InStream chunk =  stream.clone();
         CliprdrHeader header;
         header.recv(chunk);

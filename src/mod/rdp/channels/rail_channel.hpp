@@ -190,7 +190,7 @@ private:
         PDU pdu;
 
         pdu.receive(chunk);
-
+        
         if (bool(this->verbose & RDPVerbose::rail)) {
             pdu.log(LOG_INFO);
         }
