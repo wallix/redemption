@@ -158,30 +158,9 @@ public:
         return 0x0000001C;
     }
 
-private:
-    size_t str(char * buffer, size_t size) const {
-        size_t length = 0;
-
-        size_t result = ::snprintf(buffer + length, size - length, "ServerAutoReconnectPacket: ");
-        length += ((result < size - length) ? result : (size - length - 1));
-
-        result = ::snprintf(buffer + length, size - length, " Version=%u",
-            this->Version);
-        length += ((result < size - length) ? result : (size - length - 1));
-
-        result = ::snprintf(buffer + length, size - length, " LogonId=%u",
-            this->LogonId);
-        length += ((result < size - length) ? result : (size - length - 1));
-
-        return length;
-    }
-
-public:
     void log(int level) const {
-        char buffer[2048];
-        this->str(buffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = 0;
-        LOG(level, "%s", buffer);
+        LOG(level, "ServerAutoReconnectPacket: Version=%u LogonId=%u",
+            this->Version, this->LogonId);
         hexdump(this->ArcRandomBits, sizeof(this->ArcRandomBits));
     }
 };
