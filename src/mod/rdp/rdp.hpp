@@ -2837,6 +2837,8 @@ public:
                                     Kudos to Richard Levitte for the following (. intuitive .)
                                     lines of code that resets the OID and let's us extract the key. */
 
+                                RSA * server_public_key = nullptr;
+
                                 {
                                     X509_PUBKEY * key = X509_get_X509_PUBKEY(cert);
                                     if (!key) {
@@ -2845,27 +2847,44 @@ public:
                                     }
                                     X509_ALGOR * algor;
                                     if (X509_PUBKEY_get0_param(nullptr, nullptr, nullptr, &algor, key) != 1) {
-                                        LOG(LOG_ERR, "Faild to get algorithm used for public key.");
+                                        LOG(LOG_ERR, "Failed to get algorithm used for public key.");
                                         throw Error(ERR_SEC);
                                     }
 
                                     int const nid = OBJ_obj2nid(algor->algorithm);
                                     if ((nid == NID_md5WithRSAEncryption)
                                     || (nid == NID_shaWithRSAEncryption)) {
+                                        #if OPENSSL_VERSION_NUMBER < 0x10100000L
                                         X509_PUBKEY_set0_param(key, OBJ_nid2obj(NID_rsaEncryption), 0, nullptr, nullptr, 0);
+                                        #else
+                                        const unsigned char *p;
+                                        int pklen;
+                                        if (!X509_PUBKEY_get0_param(NULL, &p, &pklen, NULL, key)) {
+                                            LOG(LOG_ERR, "Failed to get algorithm used for public key.");
+                                            throw Error(ERR_SEC);
+                                        }
+                                        if (!(server_public_key = d2i_RSAPublicKey(NULL, &p, pklen))) {
+                                            LOG(LOG_ERR, "Failed to extract public key from certificate");
+                                            throw Error(ERR_SEC);
+                                        }
+                                        #endif
                                     }
                                 }
 
                                 // LOG(LOG_INFO, "================= SC_SECURITY X509_get_pubkey");
 
-                                EVP_PKEY * epk = X509_get_pubkey(cert);
-                                if (nullptr == epk){
-                                    LOG(LOG_ERR, "Failed to extract public key from certificate");
-                                    throw Error(ERR_SEC);
+                                #if OPENSSL_VERSION_NUMBER >= 0x10100000L
+                                if (!server_public_key)
+                                #endif
+                                {
+                                    EVP_PKEY * epk = X509_get_pubkey(cert);
+                                    if (nullptr == epk){
+                                        LOG(LOG_ERR, "Failed to extract public key from certificate");
+                                        throw Error(ERR_SEC);
+                                    }
+                                    server_public_key = EVP_PKEY_get1_RSA(epk);
+                                    EVP_PKEY_free(epk);
                                 }
-
-                                RSA * server_public_key = EVP_PKEY_get1_RSA(epk);
-                                EVP_PKEY_free(epk);
                                 this->server_public_key_len = RSA_size(server_public_key);
 
                                 if (nullptr == server_public_key){
