@@ -2378,11 +2378,7 @@ private:
 
         write_packets(
             this->nego.trans,
-#ifdef IN_IDE_PARSER
-            writer_data,
-#else
             writer_data...,
-#endif
             [this, channelId](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
                 MCS::SendDataRequest_Send mcs(
                     static_cast<OutPerStream&>(mcs_header), this->userid,

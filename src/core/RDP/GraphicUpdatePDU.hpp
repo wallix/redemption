@@ -64,11 +64,7 @@ void send_data_indication_ex( Transport & trans
 {
     write_packets(
         trans,
-#ifdef IN_IDE_PARSER
-        data_writer,
-#else
         data_writer...,
-#endif
         [&](StreamSize<256>, OutStream & security_header, uint8_t * data, std::size_t data_sz) {
             SEC::Sec_Send sec(security_header, data, data_sz, 0, encrypt, encryptionLevel);
         },
