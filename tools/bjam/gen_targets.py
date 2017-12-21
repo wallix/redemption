@@ -17,6 +17,7 @@ includes = (
 )
 
 disable_tests = (
+    'tests/utils/test_executor.cpp',
     'tests/utils/crypto/test_ssl_mod_exp_direct.cpp',
     'src/system/linux/system/test_framework.cpp',
 )
@@ -411,6 +412,11 @@ def get_requirements(f):
     requirement_action(f, lambda r: a.append(r))
     return a
 
+all_targets = []
+def mark_target(target, dep = None):
+    all_targets.append([target, dep])
+    return target
+
 def generate(type, files, requirements, get_target_cb = get_target):
     for f in files:
         src = f.path
@@ -438,7 +444,7 @@ def generate(type, files, requirements, get_target_cb = get_target):
         elif type == 'lib':
             src += '.lib.o'
 
-        print(type, ' ', target, ' :\n  ', src, '\n:', sep='')
+        print(type, ' ', mark_target(target), ' :\n  ', src, '\n:', sep='')
 
         if requirements:
             print(' ', requirements)
@@ -465,7 +471,7 @@ def inject_variable_prefix(path):
 def generate_obj(files):
     for f in files:
         if f.type == 'C' and f != app_path_cpp:
-            print('obj', cpp_to_obj(f), ':', inject_variable_prefix(f.path), end='')
+            print('obj', mark_target(cpp_to_obj(f)), ':', inject_variable_prefix(f.path), end='')
             requirement_action(f, lambda r: print(' :', r, end=''))
             print(' ;')
 
@@ -474,7 +480,7 @@ print()
 
 generate('lib', libs, '$(LIB_DEPENDENCIES)', lambda f: 'lib'+get_target(f))
 for f in libs:
-    print('obj ', f.path, '.lib.o :\n  ', inject_variable_prefix(f.path), '\n:\n  $(LIB_DEPENDENCIES)', sep='')
+    print('obj ', mark_target(f.path), '.lib.o :\n  ', inject_variable_prefix(f.path), '\n:\n  $(LIB_DEPENDENCIES)', sep='')
     requirement_action(f, lambda r: print(' ', r))
     print(';')
 print()
@@ -501,9 +507,9 @@ for k,t in test_targets_counter.items():
     if t[0] == 1:
         f = t[1]
         unprefixed = unprefixed_file(f)
-        print('alias', k, ':', unprefixed, ';')
+        print('alias', mark_target(k, unprefixed), ':', unprefixed, ';')
         if f.have_coverage:
-            print('alias ', k, '.coverage : ', unprefixed, '.coverage ;', sep='')
+            print('alias ', mark_target(k), '.coverage : ', unprefixed, '.coverage ;', sep='')
 
 # alias by directory
 dir_tests = OrderedDict()
@@ -511,11 +517,18 @@ for f in tests:
     dir_tests.setdefault(f.root, []).append(unprefixed_file(f))
 
 for name,aliases in dir_tests.items():
-    #print('explicit', name, ';')
-    print('alias ', name, ' :\n  ', '\n  '.join(aliases), '\n;', sep='')
+    print('explicit', name, ';')
+    print('alias ', mark_target(name), ' :\n  ', '\n  '.join(aliases), '\n;', sep='')
 
-#print('explicit tests.full ;')
+print('explicit tests.full ;')
 print('alias tests.full :')
 for name in dir_tests.keys():
     print(' ', name)
+print(';')
+
+# explicit sashimi
+print('explicit ')
+for target,dep in all_targets:
+    if -1 != target.find("/sashimi/") or (dep and -1 != dep.find("/sashimi/")):
+        print(' ', target)
 print(';')

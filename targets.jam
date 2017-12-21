@@ -4957,6 +4957,7 @@ alias test_word_identification : tests/utils/test_word_identification ;
 alias test_word_identification.coverage : tests/utils/test_word_identification.coverage ;
 alias test_pattern : tests/utils/winpr/test_pattern ;
 alias test_pattern.coverage : tests/utils/winpr/test_pattern.coverage ;
+explicit tests/acl ;
 alias tests/acl :
   tests/acl/test_acl_serializer
   tests/acl/test_auth_api
@@ -4964,9 +4965,11 @@ alias tests/acl :
   tests/acl/test_mm_api
   tests/acl/test_module_manager
 ;
+explicit tests/capture/ocr/locale ;
 alias tests/capture/ocr/locale :
   tests/capture/ocr/locale/test_latin_to_cyrillic
 ;
+explicit tests/capture ;
 alias tests/capture :
   tests/capture/test_bogus_ocr
   tests/capture/test_bogus_ppocr
@@ -4980,9 +4983,11 @@ alias tests/capture :
   tests/capture/test_video_capture
   tests/capture/test_wrm_capture
 ;
+explicit tests/capture/utils ;
 alias tests/capture/utils :
   tests/capture/utils/test_match_finder
 ;
+explicit tests/client_mods ;
 alias tests/client_mods :
   tests/client_mods/cli_vnc_connection
   tests/client_mods/test_rdp_client_large_pointer
@@ -4991,9 +4996,11 @@ alias tests/client_mods :
   tests/client_mods/test_rdp_client_wab
   tests/client_mods/test_vnc_client_simple
 ;
+explicit tests/core/FSCC ;
 alias tests/core/FSCC :
   tests/core/FSCC/test_FileInformation
 ;
+explicit tests/core/RDP/caches ;
 alias tests/core/RDP/caches :
   tests/core/RDP/caches/test_bmpcache
   tests/core/RDP/caches/test_bmpcachepersister
@@ -5001,6 +5008,7 @@ alias tests/core/RDP/caches :
   tests/core/RDP/caches/test_glyphcache
   tests/core/RDP/caches/test_pointercache
 ;
+explicit tests/core/RDP/capabilities ;
 alias tests/core/RDP/capabilities :
   tests/core/RDP/capabilities/test_activate
   tests/core/RDP/capabilities/test_bitmapcachehostsupport
@@ -5032,9 +5040,11 @@ alias tests/core/RDP/capabilities :
   tests/core/RDP/capabilities/test_virchan
   tests/core/RDP/capabilities/test_window
 ;
+explicit tests/core/RDP/channels ;
 alias tests/core/RDP/channels :
   tests/core/RDP/channels/test_rdpdr
 ;
+explicit tests/core/RDP/gcc/userdata ;
 alias tests/core/RDP/gcc/userdata :
   tests/core/RDP/gcc/userdata/test_cs_cluster
   tests/core/RDP/gcc/userdata/test_cs_core
@@ -5048,19 +5058,23 @@ alias tests/core/RDP/gcc/userdata :
   tests/core/RDP/gcc/userdata/test_sc_net
   tests/core/RDP/gcc/userdata/test_sc_sec1
 ;
+explicit tests/core/RDP/mppc ;
 alias tests/core/RDP/mppc :
   tests/core/RDP/mppc/test_mppc_40
   tests/core/RDP/mppc/test_mppc_50
   tests/core/RDP/mppc/test_mppc_60
   tests/core/RDP/mppc/test_mppc_61
 ;
+explicit tests/core/RDP/nla/asn1 ;
 alias tests/core/RDP/nla/asn1 :
   tests/core/RDP/nla/asn1/test_ber
 ;
+explicit tests/core/RDP/nla/kerberos ;
 alias tests/core/RDP/nla/kerberos :
   tests/core/RDP/nla/kerberos/test_credentials
   tests/core/RDP/nla/kerberos/test_kerberos
 ;
+explicit tests/core/RDP/nla/ntlm ;
 alias tests/core/RDP/nla/ntlm :
   tests/core/RDP/nla/ntlm/test_ntlm
   tests/core/RDP/nla/ntlm/test_ntlm_avpair
@@ -5070,11 +5084,13 @@ alias tests/core/RDP/nla/ntlm :
   tests/core/RDP/nla/ntlm/test_ntlm_message_challenge
   tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate
 ;
+explicit tests/core/RDP/nla ;
 alias tests/core/RDP/nla :
   tests/core/RDP/nla/test_credssp
   tests/core/RDP/nla/test_nla
   tests/core/RDP/nla/test_sspi
 ;
+explicit tests/core/RDP/orders ;
 alias tests/core/RDP/orders :
   tests/core/RDP/orders/test_AlternateSecondaryWindowing
   tests/core/RDP/orders/test_RDPOrdersCommon
@@ -5101,6 +5117,7 @@ alias tests/core/RDP/orders :
   tests/core/RDP/orders/test_RDPOrdersSecondaryFrameMarker
   tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache
 ;
+explicit tests/core/RDP ;
 alias tests/core/RDP :
   tests/core/RDP/test_GraphicUpdatePDU
   tests/core/RDP/test_PersistentKeyListPDU
@@ -5131,15 +5148,19 @@ alias tests/core/RDP :
   tests/core/RDP/test_tpdu_buffer
   tests/core/RDP/test_x224
 ;
+explicit tests/core/RDPEA ;
 alias tests/core/RDPEA :
   tests/core/RDPEA/test_audio_output
 ;
+explicit tests/core/SMB2 ;
 alias tests/core/SMB2 :
   tests/core/SMB2/test_MessageSyntax
 ;
+explicit tests/core/WMF ;
 alias tests/core/WMF :
   tests/core/WMF/test_MetaFileFormat
 ;
+explicit tests/core ;
 alias tests/core :
   tests/core/test_authid
   tests/core/test_buf64k
@@ -5159,22 +5180,27 @@ alias tests/core :
   tests/core/test_session_server
   tests/core/test_wait_obj
 ;
+explicit tests/front ;
 alias tests/front :
   tests/front/test_front
 ;
+explicit tests/gdi ;
 alias tests/gdi :
   tests/gdi/test_graphic_api
   tests/gdi/test_graphic_cmd_color
   tests/gdi/test_protected_graphics
 ;
+explicit tests/keyboard ;
 alias tests/keyboard :
   tests/keyboard/test_keymap2
   tests/keyboard/test_keymapSym
 ;
+explicit tests/main ;
 alias tests/main :
   tests/main/test_do_recorder
   tests/main/test_scytale
 ;
+explicit tests/mod/internal ;
 alias tests/mod/internal :
   tests/mod/internal/test_bouncer2_mod
   tests/mod/internal/test_copy_paste
@@ -5190,6 +5216,7 @@ alias tests/mod/internal :
   tests/mod/internal/test_transparent_replay_mod
   tests/mod/internal/test_widget_test_mod
 ;
+explicit tests/mod/internal/widget ;
 alias tests/mod/internal/widget :
   tests/mod/internal/widget/test_composite
   tests/mod/internal/widget/test_edit
@@ -5220,9 +5247,11 @@ alias tests/mod/internal/widget :
   tests/mod/internal/widget/test_widget
   tests/mod/internal/widget/test_widget_rect
 ;
+explicit tests/mod/null ;
 alias tests/mod/null :
   tests/mod/null/test_null
 ;
+explicit tests/mod/rdp/channels ;
 alias tests/mod/rdp/channels :
   tests/mod/rdp/channels/test_base_channel
   tests/mod/rdp/channels/test_cliprdr_channel
@@ -5236,21 +5265,26 @@ alias tests/mod/rdp/channels :
   tests/mod/rdp/channels/test_sespro_launcher
   tests/mod/rdp/channels/test_virtual_channel_data_sender
 ;
+explicit tests/mod/rdp ;
 alias tests/mod/rdp :
   tests/mod/rdp/test_rdp
   tests/mod/rdp/test_rdp_log
   tests/mod/rdp/test_rdp_orders
   tests/mod/rdp/test_rdp_params
 ;
+explicit tests/mod ;
 alias tests/mod :
   tests/mod/test_mod_api
 ;
+explicit tests/mod/vnc ;
 alias tests/mod/vnc :
   tests/mod/vnc/test_vnc
 ;
+explicit tests/mod/xup ;
 alias tests/mod/xup :
   tests/mod/xup/test_xup
 ;
+explicit tests/regex ;
 alias tests/regex :
   tests/regex/test_regex
   tests/regex/test_regex_automate
@@ -5261,15 +5295,18 @@ alias tests/regex :
   tests/regex/test_regex_states_value
   tests/regex/test_regex_utils
 ;
+explicit tests/sashimi ;
 alias tests/sashimi :
   tests/sashimi/test_buffer
   tests/sashimi/test_crypto
 ;
+explicit tests/server ;
 alias tests/server :
   tests/server/test_mstsc_client
   tests/server/test_mstsc_client_rdp50bulk
   tests/server/test_rdesktop_client
 ;
+explicit tests/system/linux/system ;
 alias tests/system/linux/system :
   tests/system/linux/system/test_openssl
   tests/system/linux/system/test_ssl_aes
@@ -5282,11 +5319,13 @@ alias tests/system/linux/system :
   tests/system/linux/system/test_ssl_sha256
   tests/system/linux/system/test_ssl_sha512
 ;
+explicit tests ;
 alias tests :
   tests/test_bitmap_perf
   tests/test_libpng
   tests/test_ssl
 ;
+explicit tests/transport ;
 alias tests/transport :
   tests/transport/test_crypto_transport
   tests/transport/test_gzip_compression_transport
@@ -5299,6 +5338,7 @@ alias tests/transport :
   tests/transport/test_test_transport
   tests/transport/test_transport
 ;
+explicit tests/utils/crypto ;
 alias tests/utils/crypto :
   tests/utils/crypto/test_ssl_aes_direct
   tests/utils/crypto/test_ssl_lib
@@ -5310,9 +5350,11 @@ alias tests/utils/crypto :
   tests/utils/crypto/test_ssl_sha512_direct
   tests/utils/crypto/test_ssl_sign
 ;
+explicit tests/utils/sugar/numerics ;
 alias tests/utils/sugar/numerics :
   tests/utils/sugar/numerics/test_safe_conversions
 ;
+explicit tests/utils/sugar ;
 alias tests/utils/sugar :
   tests/utils/sugar/test_algostring
   tests/utils/sugar/test_array_view
@@ -5332,6 +5374,7 @@ alias tests/utils/sugar :
   tests/utils/sugar/test_unique_fd
   tests/utils/sugar/test_update_lock
 ;
+explicit tests/utils ;
 alias tests/utils :
   tests/utils/test_asynchronous_task_manager
   tests/utils/test_authorization_channels
@@ -5375,9 +5418,11 @@ alias tests/utils :
   tests/utils/test_utf
   tests/utils/test_word_identification
 ;
+explicit tests/utils/winpr ;
 alias tests/utils/winpr :
   tests/utils/winpr/test_pattern
 ;
+explicit tests.full ;
 alias tests.full :
   tests/acl
   tests/capture/ocr/locale
@@ -5423,4 +5468,18 @@ alias tests.full :
   tests/utils/sugar
   tests/utils
   tests/utils/winpr
+;
+explicit 
+  tests/sashimi/test_buffer
+  tests/sashimi/test_crypto
+  src/sashimi/channels.o
+  src/sashimi/channels_client.o
+  src/sashimi/channels_server.o
+  src/sashimi/dh.o
+  src/sashimi/libssh.o
+  src/sashimi/pki.o
+  src/sashimi/sftp.o
+  src/sashimi/ssh_error.o
+  test_buffer
+  test_crypto
 ;

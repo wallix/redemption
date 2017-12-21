@@ -274,10 +274,33 @@ make ppocr_resources :
 # explicit test_meta_protocol2 ;
 
 
-explicit install-sashimi local-install-sashimi sashimi ;
+## sashimi {
+explicit install-sashimi local-install-sashimi libsashimi sashimi ;
 
 install install-sashimi : sashimi : <location>debian/sashimi/usr/lib ;
 install local-install-sashimi : sashimi : <location>/usr/lib ;
+
+alias sashimi : libsashimi tests/sashimi ;
+
+lib libsashimi :
+    log_print.o
+    src/sashimi/channels.o
+    src/sashimi/pki.o
+    src/sashimi/sftp.o
+    src/sashimi/libssh.o
+    src/sashimi/ssh_error.o
+    krb5
+    gssapi_krb5
+    crypto
+    dl
+    z
+    rt
+:
+    <link>shared
+    # <linkflags>-Wl,-Bsymbolic
+    $(LIB_DEPENDENCIES)
+;
+## } sashimi
 
 
 include $(REDEMPTION_PUBLIC_PATH)/targets.jam ;
@@ -336,10 +359,10 @@ make tests/web_video/test.mp4 : generate_video : @run_web_video_mp4 ;
 alias test_web_video_mp4 : tests/web_video/test.mp4 ;
 ## } test_web_video_mp4
 
-explicit test_executor ;
 test-run test_executor :
   $(REDEMPTION_TEST_PATH)/utils/test_executor.cpp
 :
-  <covfile>src/utils/executor.hpp
+#   <covfile>src/utils/executor.hpp
   <cxxflags>-std=c++1z
 ;
+explicit test_executor ;
