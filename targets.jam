@@ -5481,5 +5481,6 @@ explicit
   src/sashimi/sftp.o
   src/sashimi/ssh_error.o
   test_buffer
+  test_buffer.coverage
   test_crypto
 ;

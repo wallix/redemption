@@ -509,7 +509,7 @@ for k,t in test_targets_counter.items():
         unprefixed = unprefixed_file(f)
         print('alias', mark_target(k, unprefixed), ':', unprefixed, ';')
         if f.have_coverage:
-            print('alias ', mark_target(k), '.coverage : ', unprefixed, '.coverage ;', sep='')
+            print('alias ', mark_target(k+'.coverage', unprefixed), ' : ', unprefixed, '.coverage ;', sep='')
 
 # alias by directory
 dir_tests = OrderedDict()
