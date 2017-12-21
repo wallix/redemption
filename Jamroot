@@ -335,3 +335,11 @@ make tests/web_video/test.mp4 : generate_video : @run_web_video_mp4 ;
 
 alias test_web_video_mp4 : tests/web_video/test.mp4 ;
 ## } test_web_video_mp4
+
+explicit test_executor ;
+test-run test_executor :
+  $(REDEMPTION_TEST_PATH)/utils/test_executor.cpp
+:
+  <covfile>src/utils/executor.hpp
+  <cxxflags>-std=c++1z
+;
