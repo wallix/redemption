@@ -134,9 +134,6 @@ class ClientExecute : public windowing_api
 
     Rect work_areas[max_work_area];
 
-    uint16_t total_width_of_work_areas = 0;
-    uint16_t total_height_of_work_areas = 0;
-
     std::string window_title;
 
     bool const window_level_supported_ex;
@@ -168,6 +165,11 @@ class ClientExecute : public windowing_api
     } button_1_down_event_handler;
 
     bool rail_enabled = false;
+
+    int window_offset_x = 0;
+    int window_offset_y = 0;
+
+    Rect virtual_screen_rect;
 
     bool verbose;
 
