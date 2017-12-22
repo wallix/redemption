@@ -468,10 +468,7 @@ struct SCSecurity {
 
     struct X509CertificateChain {
         uint32_t certCount;
-        struct X509CertificateWithLen {
-            uint32_t len;
-            X509 * cert;
-        } cert[32]; // a chain of at most 32 certificates, should be enough
+        X509 * certs[32]; // a chain of at most 32 certificates, should be enough
     } x509;
 
     SCSecurity()
@@ -483,20 +480,18 @@ struct SCSecurity {
     , serverCertLen(184)
     , dwVersion(CERT_CHAIN_VERSION_1)
     , temporary(false)
+    , x509{}
     {
-        for (size_t i = 0 ; i < sizeof(this->x509.cert) / sizeof(this->x509.cert[0]) ; i++){
-            this->x509.cert[i].cert = nullptr;
-        }
     }
 
     SCSecurity(SCSecurity const &) = delete;
     SCSecurity & operator = (SCSecurity const &) = delete;
 
     ~SCSecurity(){
-        for (size_t i = 0 ; i < sizeof(this->x509.cert) / sizeof(this->x509.cert[0]) ; i++){
-            if (this->x509.cert[i].cert){
-                X509_free(this->x509.cert[i].cert);
-                this->x509.cert[i].cert = nullptr;
+        for (auto&& cert: this->x509.certs){
+            if (cert){
+                X509_free(cert);
+                cert = nullptr;
             }
         }
     }
@@ -705,12 +700,12 @@ struct SCSecurity {
             }
 
             for (size_t i = 0; i < this->x509.certCount ; i++){
-                this->x509.cert[i].len = stream.in_uint32_le();
-                if (this->x509.cert[i].cert) {
-                    X509_free(this->x509.cert[i].cert);
+                auto const len = stream.in_uint32_le();
+                if (this->x509.certs[i]) {
+                    X509_free(this->x509.certs[i]);
                 }
                 auto p = stream.get_current();
-                this->x509.cert[i].cert = d2i_X509(nullptr, &p, this->x509.cert[i].len);
+                this->x509.certs[i] = d2i_X509(nullptr, &p, len);
                 stream.in_skip_bytes(p - stream.get_current());
             }
             stream.in_skip_bytes(16); /* Padding */

@@ -89,6 +89,7 @@
 #include "core/client_info.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/authorization_channels.hpp"
+#include "utils/sugar/scope_exit.hpp"
 #include "core/channel_names.hpp"
 
 #include "core/FSCC/FileInformation.hpp"
@@ -2377,11 +2378,7 @@ private:
 
         write_packets(
             this->nego.trans,
-#ifdef IN_IDE_PARSER
-            writer_data,
-#else
             writer_data...,
-#endif
             [this, channelId](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
                 MCS::SendDataRequest_Send mcs(
                     static_cast<OutPerStream&>(mcs_header), this->userid,
@@ -2818,15 +2815,13 @@ public:
                                 #ifndef __EMSCRIPTEN__
 
 //                                            LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_X509");
-                                uint32_t certcount = this->sc_sec1.x509.certCount;
+                                uint32_t const certcount = this->sc_sec1.x509.certCount;
                                 if (certcount < 2){
                                     LOG(LOG_ERR, "Server didn't send enough X509 certificates");
                                     throw Error(ERR_SEC);
                                 }
 
-                                uint32_t cert_len = this->sc_sec1.x509.cert[certcount - 1].len;
-                                X509 *cert = this->sc_sec1.x509.cert[certcount - 1].cert;
-                                (void)cert_len;
+                                X509 *cert = this->sc_sec1.x509.certs[certcount - 1];
 
                                 // TODO CGR: Currently, we don't use the CA Certificate, we should
                                 // TODO *) Verify the server certificate (server_cert) with the CA certificate.
@@ -2838,6 +2833,8 @@ public:
                                     Kudos to Richard Levitte for the following (. intuitive .)
                                     lines of code that resets the OID and let's us extract the key. */
 
+                                RSA * server_public_key = nullptr;
+
                                 {
                                     X509_PUBKEY * key = X509_get_X509_PUBKEY(cert);
                                     if (!key) {
@@ -2846,27 +2843,44 @@ public:
                                     }
                                     X509_ALGOR * algor;
                                     if (X509_PUBKEY_get0_param(nullptr, nullptr, nullptr, &algor, key) != 1) {
-                                        LOG(LOG_ERR, "Faild to get algorithm used for public key.");
+                                        LOG(LOG_ERR, "Failed to get algorithm used for public key.");
                                         throw Error(ERR_SEC);
                                     }
 
                                     int const nid = OBJ_obj2nid(algor->algorithm);
                                     if ((nid == NID_md5WithRSAEncryption)
                                     || (nid == NID_shaWithRSAEncryption)) {
+                                        #if OPENSSL_VERSION_NUMBER < 0x10100000L
                                         X509_PUBKEY_set0_param(key, OBJ_nid2obj(NID_rsaEncryption), 0, nullptr, nullptr, 0);
+                                        #else
+                                        const unsigned char *p;
+                                        int pklen;
+                                        if (!X509_PUBKEY_get0_param(NULL, &p, &pklen, NULL, key)) {
+                                            LOG(LOG_ERR, "Failed to get algorithm used for public key.");
+                                            throw Error(ERR_SEC);
+                                        }
+                                        if (!(server_public_key = d2i_RSAPublicKey(NULL, &p, pklen))) {
+                                            LOG(LOG_ERR, "Failed to extract public key from certificate");
+                                            throw Error(ERR_SEC);
+                                        }
+                                        #endif
                                     }
                                 }
 
                                 // LOG(LOG_INFO, "================= SC_SECURITY X509_get_pubkey");
 
-                                EVP_PKEY * epk = X509_get_pubkey(cert);
-                                if (nullptr == epk){
-                                    LOG(LOG_ERR, "Failed to extract public key from certificate");
-                                    throw Error(ERR_SEC);
+                                #if OPENSSL_VERSION_NUMBER >= 0x10100000L
+                                if (!server_public_key)
+                                #endif
+                                {
+                                    EVP_PKEY * epk = X509_get_pubkey(cert);
+                                    if (nullptr == epk){
+                                        LOG(LOG_ERR, "Failed to extract public key from certificate");
+                                        throw Error(ERR_SEC);
+                                    }
+                                    server_public_key = EVP_PKEY_get1_RSA(epk);
+                                    EVP_PKEY_free(epk);
                                 }
-
-                                RSA * server_public_key = EVP_PKEY_get1_RSA(epk);
-                                EVP_PKEY_free(epk);
                                 this->server_public_key_len = RSA_size(server_public_key);
 
                                 if (nullptr == server_public_key){
@@ -6089,21 +6103,11 @@ public:
             LOG(LOG_INFO, "mod_rdp::process_server_caps");
         }
 
-        struct autoclose_file {
-            FILE * file;
-
-            ~autoclose_file()
-            {
-                if (this->file) {
-                    fclose(this->file);
-                }
-            }
-        };
         FILE * const output_file =
             !this->output_filename.empty()
             ? fopen(this->output_filename.c_str(), "w")
             : nullptr;
-        autoclose_file autoclose{output_file};
+        SCOPE_EXIT(if (output_file) { fclose(output_file); });
 
         uint16_t ncapsets = stream.in_uint16_le();
         stream.in_skip_bytes(2); /* pad */
