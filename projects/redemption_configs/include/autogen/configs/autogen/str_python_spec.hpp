@@ -230,7 +230,6 @@
 
 "# [Not configured]: Compatible with more RDP clients (less secure)\n"
 "# HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)\n"
-"#_advanced\n"
 "ssl_cipher_list = string(default='HIGH:!ADH:!3DES:!SHA')\n\n"
 
 "show_target_user_in_f12_message = boolean(default=False)\n\n"

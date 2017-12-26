@@ -242,7 +242,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(ini_and_gui, no_sesman, type_<bool>(), "enable_suppress_output", set(true));
         W.sep();
-        W.member(advanced_in_gui, no_sesman, type_<std::string>(), "ssl_cipher_list", desc{
+        W.member(ini_and_gui, no_sesman, type_<std::string>(), "ssl_cipher_list", desc{
             "[Not configured]: Compatible with more RDP clients (less secure)\n"
             "HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)"
             "HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)"
