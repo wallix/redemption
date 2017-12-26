@@ -3508,6 +3508,12 @@ private:
     }   // void send_savesessioninfo()
 
     void send_monitor_layout() {
+        if (!this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+            this->client_info.cs_monitor.monitorCount &&
+            this->client_info.remote_program) {
+            LOG(LOG_WARNING, "Front::send_monitor_layout: RemoteApp in multimon mode, but the use of multiple monitors is not allowed. You may experience display issues!");
+        }
+
         if (!this->ini.get<cfg::globals::allow_using_multiple_monitors>() ||
             !this->client_info.cs_monitor.monitorCount ||
             !this->client_support_monitor_layout_pdu) {

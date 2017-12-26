@@ -105,7 +105,7 @@
 "#_hidden\n"
 "#enable_wab_integration = " CONFIG_PP_STRINGIZE(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION) "\n\n"
 
-"#allow_using_multiple_monitors = 0\n\n"
+"#allow_using_multiple_monitors = 1\n\n"
 
 "# Needed to refresh screen of Windows Server 2012.\n"
 "#_advanced\n"
