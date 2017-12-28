@@ -843,6 +843,7 @@ protected:
 
     bool client_use_bmp_cache_2 = false;
 
+    const bool perform_automatic_reconnection;
     std::array<uint8_t, 28>& server_auto_reconnect_packet_ref;
 
     bool is_server_auto_reconnec_packet_received = false;
@@ -1034,6 +1035,7 @@ public:
         , client_rail_caps(info.rail_caps)
         , client_window_list_caps(info.window_list_caps)
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
+        , perform_automatic_reconnection(mod_rdp_params.perform_automatic_reconnection)
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
         , load_balance_info(mod_rdp_params.load_balance_info)
         , vars(vars)
@@ -7557,15 +7559,12 @@ private:
         infoPacket.extendedInfoPacket.clientTimeZone = this->client_time_zone;
         infoPacket.flags |= this->info_packet_extra_flags;
 
-        InStream in_s(this->server_auto_reconnect_packet_ref.data(),
-            this->server_auto_reconnect_packet_ref.size());
-        RDP::ServerAutoReconnectPacket server_auto_reconnect_packet;
-        server_auto_reconnect_packet.receive(in_s);
+        if (this->perform_automatic_reconnection) {
+            InStream in_s(this->server_auto_reconnect_packet_ref.data(),
+                this->server_auto_reconnect_packet_ref.size());
+            RDP::ServerAutoReconnectPacket server_auto_reconnect_packet;
+            server_auto_reconnect_packet.receive(in_s);
 
-        // TODO: see where this->server_auto_reconnect_packet_ref is initialized, 
-        // behavior differs is reconnection or not, providing that info 
-        // through content of reconnect_packet seems evil
-        if (server_auto_reconnect_packet.cbLen) {
             if (bool(this->verbose & RDPVerbose::basic_trace)){
                 LOG(LOG_INFO, "Use Server Auto-Reconnect Packet");
                 LOG(LOG_INFO, "Server Reconnect Random");

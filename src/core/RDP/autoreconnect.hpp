@@ -77,7 +77,6 @@ namespace RDP {
 //  generated as a key for secure reconnection (see section 5.5).
 
 struct ServerAutoReconnectPacket {
-    uint32_t cbLen;
     uint32_t Version;
     uint32_t LogonId;
     uint8_t  ArcRandomBits[16];
@@ -107,9 +106,8 @@ public:
         }
 
         // The length in bytes of the Server Auto-Reconnect packet.
-        this->cbLen = stream.in_uint32_le();
-        // TODO: Special case if cbLen is 0 see rdp.hpp::send_client_info_pdu, we should find another way to do that
-        if (this->cbLen != 0 && 0x0000001C != cbLen){
+        const uint32_t cbLen = stream.in_uint32_le();
+        if (0x0000001C != cbLen){
             LOG(LOG_ERR, "ServerAutoReconnectPacket::receive cbLen=%u expected=%u", cbLen, expected);
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }

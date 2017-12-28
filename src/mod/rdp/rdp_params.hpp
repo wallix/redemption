@@ -176,6 +176,7 @@ struct ModRDPParams {
 
     bool large_pointer_support = true;
 
+    bool perform_automatic_reconnection = false;
     std::array<uint8_t, 28>& server_auto_reconnect_packet_ref;
 
     std::string& close_box_extra_message_ref;
