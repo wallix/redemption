@@ -7559,8 +7559,12 @@ private:
 
         InStream in_s(this->server_auto_reconnect_packet_ref.data(),
             this->server_auto_reconnect_packet_ref.size());
-        RDP::ServerAutoReconnectPacket_Recv server_auto_reconnect_packet(in_s);
+        RDP::ServerAutoReconnectPacket server_auto_reconnect_packet;
+        server_auto_reconnect_packet.receive(in_s);
 
+        // TODO: see where this->server_auto_reconnect_packet_ref is initialized, 
+        // behavior differs is reconnection or not, providing that info 
+        // through content of reconnect_packet seems evil
         if (server_auto_reconnect_packet.cbLen) {
             if (bool(this->verbose & RDPVerbose::basic_trace)){
                 LOG(LOG_INFO, "Use Server Auto-Reconnect Packet");
