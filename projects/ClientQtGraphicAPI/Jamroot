@@ -36,7 +36,7 @@ if $(qtversion) != 4 && $(qtversion) != 5 && $(qtversion) != 6
 
 if ! $(qtversion)
 {
-    exit "Please set a valid Qt version (4 or 5) with `bjam qt=4`." ;
+    exit "Please set a valid Qt version (4 or 5) with `bjam -s qt=4`." ;
 }
 ## @}
 
@@ -50,6 +50,7 @@ if $(qtversion) = 4
 }
 else
 {
+    # Need packages qttools5-dev libphonon4qt5-dev
     # TODO search include qt5 directory
     constant QT5_INCLUDE : [ setvar QT5_INCLUDE : /usr/include/x86_64-linux-gnu/qt$(qtversion) ] ;
     # TODO search include phonon directory

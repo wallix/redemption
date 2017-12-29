@@ -76,41 +76,6 @@ namespace RDP {
 // ArcRandomBits (16 bytes): Byte buffer containing a 16-byte, random number
 //  generated as a key for secure reconnection (see section 5.5).
 
-struct ServerAutoReconnectPacket_Recv {
-    uint32_t cbLen;
-    uint32_t Version;
-    uint32_t LogonId;
-    uint8_t  ArcRandomBits[16];
-
-    explicit ServerAutoReconnectPacket_Recv(InStream & stream) :
-    cbLen(0),
-    Version(0),
-    LogonId(0) {
-        memset(ArcRandomBits, 0, sizeof(ArcRandomBits));
-
-        const unsigned expected = 4 +   // cbLen(4)
-                                  4 +   // Version(4)
-                                  4 +   // LogonId(4)
-                                  16;   // ArcRandomBits(16)
-
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR,
-                "Truncated Server Auto-Reconnect Packet (data): expected=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
-
-        this->cbLen   = stream.in_uint32_le();
-        this->Version = stream.in_uint32_le();
-        this->LogonId = stream.in_uint32_le();
-
-        stream.in_copy_bytes(this->ArcRandomBits, sizeof(this->ArcRandomBits));
-
-        LOG(LOG_INFO, "LogonId=%" PRIu32, this->LogonId);
-        hexdump(this->ArcRandomBits, sizeof(this->ArcRandomBits));
-    }
-};  // ServerAutoReconnectPacket_Recv
-
 struct ServerAutoReconnectPacket {
     uint32_t Version;
     uint32_t LogonId;
@@ -128,24 +93,24 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4 +   // cbLen(4)
-                                      4 +   // Version(4)
-                                      4 +   // LogonId(4)
-                                      16;   // ArcRandomBits(16)
+        const unsigned expected = 4 +   // cbLen(4)
+                                  4 +   // Version(4)
+                                  4 +   // LogonId(4)
+                                  16;   // ArcRandomBits(16)
 
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated Server Auto-Reconnect Packet (data): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
+        if (!stream.in_check_rem(expected)) {
+            LOG(LOG_ERR,
+                "Truncated Server Auto-Reconnect Packet (data): expected=%u remains=%zu",
+                expected, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
         }
 
         // The length in bytes of the Server Auto-Reconnect packet.
         const uint32_t cbLen = stream.in_uint32_le();
-        (void)cbLen;
-        assert(0x0000001C == cbLen);
+        if (0x0000001C != cbLen){
+            LOG(LOG_ERR, "ServerAutoReconnectPacket::receive cbLen=%u expected=%u", cbLen, expected);
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
 
         this->Version = stream.in_uint32_le();
         this->LogonId = stream.in_uint32_le();

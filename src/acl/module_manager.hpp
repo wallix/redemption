@@ -912,14 +912,6 @@ public:
         }
         this->old_target_module = target_module;
 
-        SCOPE_EXIT(this->ini.set<cfg::context::perform_automatic_reconnection>(false));
-        if (!this->ini.get<cfg::context::perform_automatic_reconnection>()) {
-            std::array<uint8_t, 28>& server_auto_reconnect_packet_ref =
-                this->ini.get_ref<cfg::context::server_auto_reconnect_packet>();
-
-            server_auto_reconnect_packet_ref.fill(0);
-        }
-
         switch (target_module)
         {
         case MODULE_INTERNAL_BOUNCER2:
@@ -1374,6 +1366,10 @@ public:
                                            , to_verbose_flags(this->ini.get<cfg::debug::mod_rdp>())
                                            //, RDPVerbose::basic_trace4 | RDPVerbose::basic_trace3 | RDPVerbose::basic_trace7 | RDPVerbose::basic_trace
                                            );
+
+                SCOPE_EXIT(this->ini.set<cfg::context::perform_automatic_reconnection>(false));
+                mod_rdp_params.perform_automatic_reconnection = this->ini.get<cfg::context::perform_automatic_reconnection>();
+
                 mod_rdp_params.device_id                           = this->ini.get<cfg::globals::device_id>().c_str();
 
                 mod_rdp_params.primary_user_id                     = this->ini.get<cfg::globals::primary_user_id>().c_str();
