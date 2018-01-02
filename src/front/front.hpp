@@ -2532,7 +2532,6 @@ public:
                             }
 
                             // TODO check all sctrl.payload data is consumed
-                            sec.payload.in_skip_bytes(sctrl.payload.get_current() - sec.payload.get_current());
                         }
                     }
 
