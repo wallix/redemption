@@ -3262,11 +3262,6 @@ private:
             }
             stream.in_skip_bytes(next - stream.get_current());
         }
-        // After Capabilities read optional SessionId
-        if (stream.in_remain() >= 4) {
-            // From the documentation SessionId is ignored by client.
-            stream.in_skip_bytes(4); /* Session Id */
-        }
         if (bool(this->verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "Front::process_confirm_active: done p=%p end=%p",
                 voidp(stream.get_current()), voidp(stream.get_data_end()));
