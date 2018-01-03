@@ -434,7 +434,7 @@ struct OrderCaps : public Capability {
         LOG(LOG_INFO, "     Order caps::pad2octetsA %u", this->pad2octetsA);
         LOG(LOG_INFO, "     Order caps::maximumOrderLevel %u", this->maximumOrderLevel);
         LOG(LOG_INFO, "     Order caps::numberFonts %u", this->numberFonts);
-        LOG(LOG_INFO, "     Order caps::orderFlags %u", this->orderFlags);
+        LOG(LOG_INFO, "     Order caps::orderFlags 0x%X", this->orderFlags);
         LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_DSTBLT_INDEX] %u"
                         , this->orderSupport[TS_NEG_DSTBLT_INDEX]);
         LOG(LOG_INFO, "     Order caps::orderSupport[TS_NEG_PATBLT_INDEX] %u"
@@ -500,7 +500,7 @@ struct OrderCaps : public Capability {
         LOG(LOG_INFO, "     Order caps::orderSupport[UnusedIndex11] %u"
                         , this->orderSupport[UnusedIndex11]);
         LOG(LOG_INFO, "     Order caps::textFlags %u", this->textFlags);
-        LOG(LOG_INFO, "     Order caps::orderSupportExFlags %u", this->orderSupportExFlags);
+        LOG(LOG_INFO, "     Order caps::orderSupportExFlags 0x%X", this->orderSupportExFlags);
         LOG(LOG_INFO, "     Order caps::pad4octetsB %u", this->pad4octetsB);
         LOG(LOG_INFO, "     Order caps::desktopSaveSize %u", this->desktopSaveSize);
         LOG(LOG_INFO, "     Order caps::pad2octetsC %u", this->pad2octetsC);
@@ -517,7 +517,7 @@ struct OrderCaps : public Capability {
        fprintf(f, "desktopSaveYGranularity=%u\n",         unsigned(this->desktopSaveYGranularity));
        fprintf(f, "maximumOrderLevel=%u\n",               unsigned(this->maximumOrderLevel));
        fprintf(f, "numberFonts=%u\n",                     unsigned(this->numberFonts));
-       fprintf(f, "orderFlags=%u\n",                      unsigned(this->orderFlags));
+       fprintf(f, "orderFlags=0x%X\n",                    unsigned(this->orderFlags));
        fprintf(f, "TS_NEG_DSTBLT_INDEX=%u\n",             unsigned(this->orderSupport[TS_NEG_DSTBLT_INDEX]));
        fprintf(f, "TS_NEG_PATBLT_INDEX=%u\n",             unsigned(this->orderSupport[TS_NEG_PATBLT_INDEX]));
        fprintf(f, "TS_NEG_SCRBLT_INDEX=%u\n",             unsigned(this->orderSupport[TS_NEG_SCRBLT_INDEX]));
@@ -539,7 +539,7 @@ struct OrderCaps : public Capability {
        fprintf(f, "TS_NEG_ELLIPSE_SC_INDEX=%u\n",         unsigned(this->orderSupport[TS_NEG_ELLIPSE_SC_INDEX]));
        fprintf(f, "TS_NEG_ELLIPSE_CB_INDEX=%u\n",         unsigned(this->orderSupport[TS_NEG_ELLIPSE_CB_INDEX]));
        fprintf(f, "TS_NEG_INDEX_INDEX=%u\n",              unsigned(this->orderSupport[TS_NEG_INDEX_INDEX]));
-       fprintf(f, "orderSupportExFlags=%u\n",             unsigned(this->orderSupportExFlags));
+       fprintf(f, "orderSupportExFlags=0x%X\n",           unsigned(this->orderSupportExFlags));
        fprintf(f, "desktopSaveSize=%u\n",                 this->desktopSaveSize);
        fprintf(f, "textANSICodePage=%u\n\n",              unsigned(this->textANSICodePage));
     }
