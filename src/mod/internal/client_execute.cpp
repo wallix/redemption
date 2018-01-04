@@ -109,6 +109,9 @@ Rect ClientExecute::adjust_rect(Rect rect)
         this->window_rect.cx = rect.cx * 80 / 100;
         this->window_rect.cy = rect.cy * 80 / 100;
 
+        this->window_offset_x = (-rect.x);
+        this->window_offset_y = (-rect.y);
+
         this->update_rects();
     }
 
@@ -125,10 +128,13 @@ Rect ClientExecute::get_current_work_area_rect() const
     assert(this->work_area_count);
 
     if (!this->window_rect.isempty()) {
+        const Rect adjusted_window_rect = this->window_rect.offset(
+            this->window_offset_x, this->window_offset_y);
+
         size_t current_surface_size = 0;
         Rect current_work_area = this->work_areas[0];
         for (unsigned int i = 0; i < this->work_area_count; ++i) {
-            Rect intersect_rect = this->work_areas[i].intersect(this->window_rect);
+            Rect intersect_rect = this->work_areas[i].intersect(adjusted_window_rect);
             if (!intersect_rect.isempty()) {
                 size_t surface_size = intersect_rect.cx * intersect_rect.cy;
                 if (current_surface_size < surface_size) {
@@ -138,10 +144,10 @@ Rect ClientExecute::get_current_work_area_rect() const
             }
         }
 
-        return current_work_area;
+        return current_work_area.offset(-this->window_offset_x, -this->window_offset_y);;
     }
 
-    return this->work_areas[0];
+    return this->work_areas[0].offset(-this->window_offset_x, -this->window_offset_y);
 }
 
 Rect ClientExecute::get_window_rect() const
@@ -444,7 +450,7 @@ void ClientExecute::draw_maximize_box(bool mouse_over, const Rect r)
 
 void ClientExecute::input_invalidate(const Rect r)
 {
-    //LOG(LOG_INFO, "ClientExecute::input_invalidate");
+    //LOG(LOG_INFO, "ClientExecute::input_invalidate(): r=%s", r);
 
     if (!this->channel_) return;
 
@@ -554,19 +560,20 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, int press
         RAILPDUHeader header;
         header.emit_begin(out_s, TS_RAIL_ORDER_MINMAXINFO);
 
+        const Rect adjusted_virtual_sreen_rect = this->virtual_screen_rect.offset(
+            this->window_offset_x, this->window_offset_y);
+
         ServerMinMaxInfoPDU smmipdu;
 
-        Rect work_area_rect = this->get_current_work_area_rect();
-
         smmipdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
-        smmipdu.MaxWidth(work_area_rect.cx - 1);
-        smmipdu.MaxHeight(work_area_rect.cy - 1);
-        smmipdu.MaxPosX(work_area_rect.x);
-        smmipdu.MaxPosY(work_area_rect.y);
+        smmipdu.MaxWidth(adjusted_virtual_sreen_rect.cx - 1);
+        smmipdu.MaxHeight(adjusted_virtual_sreen_rect.cy - 1);
+        smmipdu.MaxPosX(adjusted_virtual_sreen_rect.right());
+        smmipdu.MaxPosY(adjusted_virtual_sreen_rect.bottom());
         smmipdu.MinTrackWidth(INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH);
         smmipdu.MinTrackHeight(INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT);
-        smmipdu.MaxTrackWidth(this->total_width_of_work_areas - 1);
-        smmipdu.MaxTrackHeight(this->total_height_of_work_areas - 1);
+        smmipdu.MaxTrackWidth(adjusted_virtual_sreen_rect.cx - 1);
+        smmipdu.MaxTrackHeight(adjusted_virtual_sreen_rect.cy - 1);
 
         smmipdu.emit(out_s);
 
@@ -1003,23 +1010,25 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     );
                 order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
 
+                const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+
                 order.OwnerWindowId(0x0);
                 order.Style(0x14EE0000);
                 order.ExtendedStyle(0x40310);
                 order.ShowState(5);
                 order.TitleInfo(this->window_title.c_str());
-                order.ClientOffsetX(this->window_rect.x + 6);
-                order.ClientOffsetY(this->window_rect.y + 25);
-                order.WindowOffsetX(this->window_rect.x);
-                order.WindowOffsetY(this->window_rect.y);
+                order.ClientOffsetX(adjusted_window_rect.x + 6);
+                order.ClientOffsetY(adjusted_window_rect.y + 25);
+                order.WindowOffsetX(adjusted_window_rect.x);
+                order.WindowOffsetY(adjusted_window_rect.y);
                 order.WindowClientDeltaX(6);
                 order.WindowClientDeltaY(25);
-                order.WindowWidth(this->window_rect.cx);
-                order.WindowHeight(this->window_rect.cy);
-                order.VisibleOffsetX(this->window_rect.x);
-                order.VisibleOffsetY(this->window_rect.y);
+                order.WindowWidth(adjusted_window_rect.cx);
+                order.WindowHeight(adjusted_window_rect.cy);
+                order.VisibleOffsetX(adjusted_window_rect.x);
+                order.VisibleOffsetY(adjusted_window_rect.y);
                 order.NumVisibilityRects(1);
-                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, adjusted_window_rect.cx, adjusted_window_rect.cy));
 
                 if (this->verbose) {
                     StaticOutStream<1024> out_s;
@@ -1299,13 +1308,15 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                 RAILPDUHeader header;
                 header.emit_begin(out_s, TS_RAIL_ORDER_LOCALMOVESIZE);
 
+                const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+
                 ServerMoveSizeStartOrEndPDU smssoepdu;
 
                 smssoepdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
                 smssoepdu.IsMoveSizeStart(0);
                 smssoepdu.MoveSizeType(move_size_type);
-                smssoepdu.PosXOrTopLeftX(this->window_rect.x);
-                smssoepdu.PosYOrTopLeftY(this->window_rect.y);
+                smssoepdu.PosXOrTopLeftX(adjusted_window_rect.x);
+                smssoepdu.PosYOrTopLeftY(adjusted_window_rect.y);
 
                 smssoepdu.emit(out_s);
 
@@ -1334,6 +1345,8 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             }   // if (0 != move_size_type)
 
             {
+                const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+
                 RDP::RAIL::NewOrExistingWindow order;
 
                 order.header.FieldsPresentFlags(
@@ -1347,19 +1360,19 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     );
                 order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
 
-                order.ClientAreaWidth(this->window_rect.cx - 6 * 2);
-                order.ClientAreaHeight(this->window_rect.cy - 25 - 6);
-                order.WindowWidth(this->window_rect.cx);
-                order.WindowHeight(this->window_rect.cy);
+                order.ClientAreaWidth(adjusted_window_rect.cx - 6 * 2);
+                order.ClientAreaHeight(adjusted_window_rect.cy - 25 - 6);
+                order.WindowWidth(adjusted_window_rect.cx);
+                order.WindowHeight(adjusted_window_rect.cy);
                 order.NumVisibilityRects(1);
-                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, adjusted_window_rect.cx, adjusted_window_rect.cy));
 
-                order.ClientOffsetX(this->window_rect.x + 6);
-                order.ClientOffsetY(this->window_rect.y + 25);
-                order.WindowOffsetX(this->window_rect.x);
-                order.WindowOffsetY(this->window_rect.y);
-                order.VisibleOffsetX(this->window_rect.x);
-                order.VisibleOffsetY(this->window_rect.y);
+                order.ClientOffsetX(adjusted_window_rect.x + 6);
+                order.ClientOffsetY(adjusted_window_rect.y + 25);
+                order.WindowOffsetX(adjusted_window_rect.x);
+                order.WindowOffsetY(adjusted_window_rect.y);
+                order.VisibleOffsetX(adjusted_window_rect.x);
+                order.VisibleOffsetY(adjusted_window_rect.y);
 
                 if (this->verbose) {
                     StaticOutStream<1024> out_s;
@@ -1390,6 +1403,8 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             this->update_rects();
 
             {
+                const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+
                 RDP::RAIL::NewOrExistingWindow order;
 
                 order.header.FieldsPresentFlags(
@@ -1403,19 +1418,19 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     );
                 order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
 
-                order.ClientAreaWidth(this->window_rect.cx - 6 * 2);
-                order.ClientAreaHeight(this->window_rect.cy - 25 - 6);
-                order.WindowWidth(this->window_rect.cx);
-                order.WindowHeight(this->window_rect.cy);
+                order.ClientAreaWidth(adjusted_window_rect.cx - 6 * 2);
+                order.ClientAreaHeight(adjusted_window_rect.cy - 25 - 6);
+                order.WindowWidth(adjusted_window_rect.cx);
+                order.WindowHeight(adjusted_window_rect.cy);
                 order.NumVisibilityRects(1);
-                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, adjusted_window_rect.cx, adjusted_window_rect.cy));
 
-                order.ClientOffsetX(this->window_rect.x + 6);
-                order.ClientOffsetY(this->window_rect.y + 25);
-                order.WindowOffsetX(this->window_rect.x);
-                order.WindowOffsetY(this->window_rect.y);
-                order.VisibleOffsetX(this->window_rect.x);
-                order.VisibleOffsetY(this->window_rect.y);
+                order.ClientOffsetX(adjusted_window_rect.x + 6);
+                order.ClientOffsetY(adjusted_window_rect.y + 25);
+                order.WindowOffsetX(adjusted_window_rect.x);
+                order.WindowOffsetY(adjusted_window_rect.y);
+                order.VisibleOffsetX(adjusted_window_rect.x);
+                order.VisibleOffsetY(adjusted_window_rect.y);
 
                 if (this->verbose) {
                     StaticOutStream<1024> out_s;
@@ -1472,6 +1487,8 @@ void ClientExecute::adjust_window_to_mod() {
     this->update_rects();
 
     {
+        const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+
         RDP::RAIL::NewOrExistingWindow order;
 
         order.header.FieldsPresentFlags(
@@ -1487,19 +1504,19 @@ void ClientExecute::adjust_window_to_mod() {
             );
         order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
 
-        order.ClientAreaWidth(this->window_rect.cx - 6 * 2);
-        order.ClientAreaHeight(this->window_rect.cy - 25 - 6);
-        order.WindowWidth(this->window_rect.cx);
-        order.WindowHeight(this->window_rect.cy);
+        order.ClientAreaWidth(adjusted_window_rect.cx - 6 * 2);
+        order.ClientAreaHeight(adjusted_window_rect.cy - 25 - 6);
+        order.WindowWidth(adjusted_window_rect.cx);
+        order.WindowHeight(adjusted_window_rect.cy);
         order.NumVisibilityRects(1);
-        order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+        order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, adjusted_window_rect.cx, adjusted_window_rect.cy));
 
-        order.ClientOffsetX(this->window_rect.x + 6);
-        order.ClientOffsetY(this->window_rect.y + 25);
-        order.WindowOffsetX(this->window_rect.x);
-        order.WindowOffsetY(this->window_rect.y);
-        order.VisibleOffsetX(this->window_rect.x);
-        order.VisibleOffsetY(this->window_rect.y);
+        order.ClientOffsetX(adjusted_window_rect.x + 6);
+        order.ClientOffsetY(adjusted_window_rect.y + 25);
+        order.WindowOffsetX(adjusted_window_rect.x);
+        order.WindowOffsetY(adjusted_window_rect.y);
+        order.VisibleOffsetX(adjusted_window_rect.x);
+        order.VisibleOffsetY(adjusted_window_rect.y);
 
         order.ShowState(5);
         order.Style(0x16CF0000);
@@ -1509,7 +1526,7 @@ void ClientExecute::adjust_window_to_mod() {
             StaticOutStream<1024> out_s;
             order.emit(out_s);
             order.log(LOG_INFO);
-            LOG(LOG_INFO, "ClientExecute::maximize_restore_window: Send NewOrExistingWindow to client: size=%zu (0)", out_s.get_offset() - 1);
+            LOG(LOG_INFO, "ClientExecute::adjust_window_to_mod: Send NewOrExistingWindow to client: size=%zu (0)", out_s.get_offset() - 1);
         }
 
         this->front_->draw(order);
@@ -1547,6 +1564,8 @@ void ClientExecute::maximize_restore_window()
         this->update_rects();
 
         {
+            const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+
             RDP::RAIL::NewOrExistingWindow order;
 
             order.header.FieldsPresentFlags(
@@ -1562,19 +1581,19 @@ void ClientExecute::maximize_restore_window()
                 );
             order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
 
-            order.ClientAreaWidth(this->window_rect.cx - 6 * 2);
-            order.ClientAreaHeight(this->window_rect.cy - 25 - 6);
-            order.WindowWidth(this->window_rect.cx);
-            order.WindowHeight(this->window_rect.cy);
+            order.ClientAreaWidth(adjusted_window_rect.cx - 6 * 2);
+            order.ClientAreaHeight(adjusted_window_rect.cy - 25 - 6);
+            order.WindowWidth(adjusted_window_rect.cx);
+            order.WindowHeight(adjusted_window_rect.cy);
             order.NumVisibilityRects(1);
-            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, adjusted_window_rect.cx, adjusted_window_rect.cy));
 
-            order.ClientOffsetX(this->window_rect.x + 6);
-            order.ClientOffsetY(this->window_rect.y + 25);
-            order.WindowOffsetX(this->window_rect.x);
-            order.WindowOffsetY(this->window_rect.y);
-            order.VisibleOffsetX(this->window_rect.x);
-            order.VisibleOffsetY(this->window_rect.y);
+            order.ClientOffsetX(adjusted_window_rect.x + 6);
+            order.ClientOffsetY(adjusted_window_rect.y + 25);
+            order.WindowOffsetX(adjusted_window_rect.x);
+            order.WindowOffsetY(adjusted_window_rect.y);
+            order.VisibleOffsetX(adjusted_window_rect.x);
+            order.VisibleOffsetY(adjusted_window_rect.y);
 
             order.ShowState(5);
             order.Style(0x16CF0000);
@@ -1607,6 +1626,8 @@ void ClientExecute::maximize_restore_window()
         this->update_rects();
 
         {
+            const Rect adjusted_window_rect = work_area_rect.offset(this->window_offset_x, this->window_offset_y);
+
             RDP::RAIL::NewOrExistingWindow order;
 
             order.header.FieldsPresentFlags(
@@ -1622,19 +1643,19 @@ void ClientExecute::maximize_restore_window()
                 );
             order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
 
-            order.ClientAreaWidth(work_area_rect.cx);
-            order.ClientAreaHeight(work_area_rect.cy - 25);
-            order.WindowWidth(work_area_rect.cx + 2);
-            order.WindowHeight(work_area_rect.cy + 2);
+            order.ClientAreaWidth(adjusted_window_rect.cx);
+            order.ClientAreaHeight(adjusted_window_rect.cy - 25);
+            order.WindowWidth(adjusted_window_rect.cx + 2);
+            order.WindowHeight(adjusted_window_rect.cy + 2);
             order.NumVisibilityRects(1);
-            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, work_area_rect.cx, work_area_rect.cy + 1));
+            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, adjusted_window_rect.cx, adjusted_window_rect.cy + 1));
 
-            order.ClientOffsetX(work_area_rect.x/* + 0*/);
-            order.ClientOffsetY(work_area_rect.y + 25);
-            order.WindowOffsetX(work_area_rect.x + -1);
-            order.WindowOffsetY(work_area_rect.y + -1);
-            order.VisibleOffsetX(work_area_rect.x/* + 0*/);
-            order.VisibleOffsetY(work_area_rect.y/* + 0*/);
+            order.ClientOffsetX(adjusted_window_rect.x/* + 0*/);
+            order.ClientOffsetY(adjusted_window_rect.y + 25);
+            order.WindowOffsetX(adjusted_window_rect.x + -1);
+            order.WindowOffsetY(adjusted_window_rect.y + -1);
+            order.VisibleOffsetX(adjusted_window_rect.x/* + 0*/);
+            order.VisibleOffsetY(adjusted_window_rect.y/* + 0*/);
 
             order.ShowState(3);
             order.Style(0x17CF0000);
@@ -2183,6 +2204,8 @@ void ClientExecute::process_client_system_command_pdu(uint32_t total_length,
 
         case SC_RESTORE:
             {
+                const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+
                 RDP::RAIL::NewOrExistingWindow order;
 
                 order.header.FieldsPresentFlags(
@@ -2205,18 +2228,18 @@ void ClientExecute::process_client_system_command_pdu(uint32_t total_length,
                 order.ExtendedStyle(0x40310);
                 order.ShowState(5);
                 order.TitleInfo(this->window_title.c_str());
-                order.ClientOffsetX(this->window_rect.x + 6);
-                order.ClientOffsetY(this->window_rect.y + 25);
-                order.WindowOffsetX(this->window_rect.x);
-                order.WindowOffsetY(this->window_rect.y);
+                order.ClientOffsetX(adjusted_window_rect.x + 6);
+                order.ClientOffsetY(adjusted_window_rect.y + 25);
+                order.WindowOffsetX(adjusted_window_rect.x);
+                order.WindowOffsetY(adjusted_window_rect.y);
                 order.WindowClientDeltaX(6);
                 order.WindowClientDeltaY(25);
-                order.WindowWidth(this->window_rect.cx);
-                order.WindowHeight(this->window_rect.cy);
-                order.VisibleOffsetX(this->window_rect.x);
-                order.VisibleOffsetY(this->window_rect.y);
+                order.WindowWidth(adjusted_window_rect.cx);
+                order.WindowHeight(adjusted_window_rect.cy);
+                order.VisibleOffsetX(adjusted_window_rect.x);
+                order.VisibleOffsetY(adjusted_window_rect.y);
                 order.NumVisibilityRects(1);
-                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, adjusted_window_rect.cx, adjusted_window_rect.cy));
 
                 if (this->verbose) {
                     StaticOutStream<1024> out_s;
@@ -2282,12 +2305,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
                 this->work_areas[this->work_area_count].cx, this->work_areas[this->work_area_count].cy);
         }
 
-        if (this->total_width_of_work_areas < body_r.Right()) {
-            this->total_width_of_work_areas = body_r.Right();
-        }
-        if (this->total_height_of_work_areas < body_r.Bottom()) {
-            this->total_height_of_work_areas = body_r.Bottom();
-        }
+        this->virtual_screen_rect = this->virtual_screen_rect.disjunct(this->work_areas[this->work_area_count]);
 
         this->work_area_count++;
 
@@ -2334,23 +2352,25 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
                 );
             order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
 
+            const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+
             order.OwnerWindowId(0x0);
             order.Style(0x14EE0000);
             order.ExtendedStyle(0x40310);
             order.ShowState(this->maximized ? 3 : 5);
             order.TitleInfo(this->window_title.c_str());
-            order.ClientOffsetX(this->window_rect.x + 6);
-            order.ClientOffsetY(this->window_rect.y + 25);
-            order.WindowOffsetX(this->window_rect.x);
-            order.WindowOffsetY(this->window_rect.y);
+            order.ClientOffsetX(adjusted_window_rect.x + 6);
+            order.ClientOffsetY(adjusted_window_rect.y + 25);
+            order.WindowOffsetX(adjusted_window_rect.x);
+            order.WindowOffsetY(adjusted_window_rect.y);
             order.WindowClientDeltaX(6);
             order.WindowClientDeltaY(25);
-            order.WindowWidth(this->window_rect.cx);
-            order.WindowHeight(this->window_rect.cy);
-            order.VisibleOffsetX(this->window_rect.x);
-            order.VisibleOffsetY(this->window_rect.y);
+            order.WindowWidth(adjusted_window_rect.cx);
+            order.WindowHeight(adjusted_window_rect.cy);
+            order.VisibleOffsetX(adjusted_window_rect.x);
+            order.VisibleOffsetY(adjusted_window_rect.y);
             order.NumVisibilityRects(1);
-            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, adjusted_window_rect.cx, adjusted_window_rect.cy));
 
             if (this->verbose) {
                 StaticOutStream<1024> out_s;
@@ -2669,14 +2689,16 @@ void ClientExecute::process_client_window_move_pdu(uint32_t total_length,
     }
 
     if (INTERNAL_MODULE_WINDOW_ID == cwmpdu.WindowId()) {
-        this->window_rect.x  = cwmpdu.Left();
-        this->window_rect.y  = cwmpdu.Top();
+        this->window_rect.x  = cwmpdu.Left() - this->window_offset_x;
+        this->window_rect.y  = cwmpdu.Top() - this->window_offset_y;
         this->window_rect.cx = cwmpdu.Right() - cwmpdu.Left();
         this->window_rect.cy = cwmpdu.Bottom() - cwmpdu.Top();
 
         this->update_rects();
 
         {
+            const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+
             RDP::RAIL::NewOrExistingWindow order;
 
             order.header.FieldsPresentFlags(
@@ -2690,19 +2712,19 @@ void ClientExecute::process_client_window_move_pdu(uint32_t total_length,
                 );
             order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
 
-            order.ClientAreaWidth(this->window_rect.cx - 6 * 2);
-            order.ClientAreaHeight(this->window_rect.cy - 25 - 6);
-            order.WindowWidth(this->window_rect.cx);
-            order.WindowHeight(this->window_rect.cy);
+            order.ClientAreaWidth(adjusted_window_rect.cx - 6 * 2);
+            order.ClientAreaHeight(adjusted_window_rect.cy - 25 - 6);
+            order.WindowWidth(adjusted_window_rect.cx);
+            order.WindowHeight(adjusted_window_rect.cy);
             order.NumVisibilityRects(1);
-            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->window_rect.cx, this->window_rect.cy));
+            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, adjusted_window_rect.cx, adjusted_window_rect.cy));
 
-            order.ClientOffsetX(this->window_rect.x + 6);
-            order.ClientOffsetY(this->window_rect.y + 25);
-            order.WindowOffsetX(this->window_rect.x);
-            order.WindowOffsetY(this->window_rect.y);
-            order.VisibleOffsetX(this->window_rect.x);
-            order.VisibleOffsetY(this->window_rect.y);
+            order.ClientOffsetX(adjusted_window_rect.x + 6);
+            order.ClientOffsetY(adjusted_window_rect.y + 25);
+            order.WindowOffsetX(adjusted_window_rect.x);
+            order.WindowOffsetY(adjusted_window_rect.y);
+            order.VisibleOffsetX(adjusted_window_rect.x);
+            order.VisibleOffsetY(adjusted_window_rect.y);
 
             if (this->verbose) {
                 StaticOutStream<1024> out_s;
@@ -2728,6 +2750,8 @@ void ClientExecute::process_client_window_move_pdu(uint32_t total_length,
         }
 
         if (0 != move_size_type) {
+            const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+
             StaticOutStream<256> out_s;
             RAILPDUHeader header;
             header.emit_begin(out_s, TS_RAIL_ORDER_LOCALMOVESIZE);
@@ -2737,8 +2761,8 @@ void ClientExecute::process_client_window_move_pdu(uint32_t total_length,
             smssoepdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
             smssoepdu.IsMoveSizeStart(0);
             smssoepdu.MoveSizeType(move_size_type);
-            smssoepdu.PosXOrTopLeftX(this->window_rect.x);
-            smssoepdu.PosYOrTopLeftY(this->window_rect.y);
+            smssoepdu.PosXOrTopLeftX(adjusted_window_rect.x);
+            smssoepdu.PosYOrTopLeftY(adjusted_window_rect.y);
 
             smssoepdu.emit(out_s);
 
@@ -2978,13 +3002,15 @@ const char * ClientExecute::Arguments() const { return this->client_execute_argu
 
 bool ClientExecute::should_ignore_first_client_execute() const { return this->should_ignore_first_client_execute_; }
 
-void ClientExecute::create_auxiliary_window(Rect const window_rect)
+void ClientExecute::create_auxiliary_window(Rect const window_rect_)
 {
     if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != this->auxiliary_window_id) return;
 
     this->auxiliary_window_id = AUXILIARY_WINDOW_ID;
 
     {
+        const Rect adjusted_window_rect = window_rect_.offset(this->window_offset_x, this->window_offset_y);
+
         RDP::RAIL::NewOrExistingWindow order;
 
         order.header.FieldsPresentFlags(
@@ -3008,18 +3034,18 @@ void ClientExecute::create_auxiliary_window(Rect const window_rect)
         order.ExtendedStyle(0x40310 | 0x8);
         order.ShowState(5);
         order.TitleInfo("Dialog box");
-        order.ClientOffsetX(window_rect.x + 6);
-        order.ClientOffsetY(window_rect.y + 25);
-        order.WindowOffsetX(window_rect.x);
-        order.WindowOffsetY(window_rect.y);
+        order.ClientOffsetX(adjusted_window_rect.x + 6);
+        order.ClientOffsetY(adjusted_window_rect.y + 25);
+        order.WindowOffsetX(adjusted_window_rect.x);
+        order.WindowOffsetY(adjusted_window_rect.y);
         order.WindowClientDeltaX(6);
         order.WindowClientDeltaY(25);
-        order.WindowWidth(window_rect.cx);
-        order.WindowHeight(window_rect.cy);
-        order.VisibleOffsetX(window_rect.x);
-        order.VisibleOffsetY(window_rect.y);
+        order.WindowWidth(adjusted_window_rect.cx);
+        order.WindowHeight(adjusted_window_rect.cy);
+        order.VisibleOffsetX(adjusted_window_rect.x);
+        order.VisibleOffsetY(adjusted_window_rect.y);
         order.NumVisibilityRects(1);
-        order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, window_rect.cx, window_rect.cy));
+        order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, adjusted_window_rect.cx, adjusted_window_rect.cy));
 
         if (this->verbose) {
             StaticOutStream<1024> out_s;

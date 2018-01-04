@@ -158,7 +158,7 @@ struct ModRDPParams {
 
     ClientExecute * client_execute = nullptr;
 
-    uint16_t     client_execute_flags;
+    uint16_t     client_execute_flags = 0;
     const char * client_execute_exe_or_file = "";
     const char * client_execute_working_dir = "";
     const char * client_execute_arguments = "";
@@ -176,6 +176,7 @@ struct ModRDPParams {
 
     bool large_pointer_support = true;
 
+    bool perform_automatic_reconnection = false;
     std::array<uint8_t, 28>& server_auto_reconnect_packet_ref;
 
     std::string& close_box_extra_message_ref;

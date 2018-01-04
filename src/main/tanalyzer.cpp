@@ -231,7 +231,9 @@ public:
                             if (lie.FieldsPresent & RDP::LOGON_EX_AUTORECONNECTCOOKIE) {
                                 LOG(LOG_INFO, "send_data_indication_ex : Auto-reconnect cookie");
 
-                                RDP::ServerAutoReconnectPacket_Recv sarp(lif.payload);
+                                RDP::ServerAutoReconnectPacket sarp;
+
+                                sarp.receive(lif.payload);
                             }
                             if (lie.FieldsPresent & RDP::LOGON_EX_LOGONERRORS) {
                                 LOG(LOG_INFO, "send_data_indication_ex : Logon Errors Info");

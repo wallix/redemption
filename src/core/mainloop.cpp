@@ -38,9 +38,7 @@
 
 namespace {
 /*****************************************************************************/
-#ifndef IN_IDE_PARSER
 [[noreturn]]
-#endif
 void shutdown(int sig)
 {
     LOG(LOG_INFO, "shutting down : signal %d pid=%d\n", sig, getpid());

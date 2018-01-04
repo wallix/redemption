@@ -172,7 +172,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(hidden_in_gui, no_sesman, type_<bool>(), "enable_wab_integration", set((CPP_MACRO(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION))));
         W.sep();
-        W.member(ini_and_gui, no_sesman, type_<bool>(), "allow_using_multiple_monitors", set(false));
+        W.member(ini_and_gui, no_sesman, type_<bool>(), "allow_using_multiple_monitors", set(true));
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "bogus_refresh_rect", desc{"Needed to refresh screen of Windows Server 2012."}, set(true));
         W.sep();
@@ -242,7 +242,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(ini_and_gui, no_sesman, type_<bool>(), "enable_suppress_output", set(true));
         W.sep();
-        W.member(advanced_in_gui, no_sesman, type_<std::string>(), "ssl_cipher_list", desc{
+        W.member(ini_and_gui, no_sesman, type_<std::string>(), "ssl_cipher_list", desc{
             "[Not configured]: Compatible with more RDP clients (less secure)\n"
             "HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)"
             "HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)"

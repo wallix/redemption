@@ -81,12 +81,14 @@ struct RDPHeadlessFrontParams
 {
     std::string out_path;
     int index;
+    int keep_alive_freq;
 
     RDPHeadlessFrontParams() = default;
 
-    RDPHeadlessFrontParams(std::string out_path, int index = 0)
+    RDPHeadlessFrontParams(std::string out_path, int index = 0, int keep_alive_freq = 0)
       : out_path(std::move(out_path))
       , index(index)
+      , keep_alive_freq(keep_alive_freq)
     {}
 };
 
@@ -564,7 +566,7 @@ public:
     , out_path(std::move(params.out_path))
     , secondary_connection_finished(false)
     , primary_connection_finished(false)
-    , keep_alive_freq(0)
+    , keep_alive_freq(params.keep_alive_freq)
     , index(params.index)
     , report_message(report_message)
     , gen(0) // To always get the same client random, in tests
@@ -1150,7 +1152,6 @@ public:
                             sharedHeader.emit(stream);
                             char username[LOGIN_NAME_MAX];
                             gethostname(username, LOGIN_NAME_MAX);
-                            std::string str_username(username);
 
                             rdpdr::ClientNameRequest clientNameRequest(username);
                             clientNameRequest.emit(stream);

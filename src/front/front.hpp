@@ -2532,7 +2532,6 @@ public:
                             }
 
                             // TODO check all sctrl.payload data is consumed
-                            sec.payload.in_skip_bytes(sctrl.payload.get_current() - sec.payload.get_current());
                         }
                     }
 
@@ -3263,11 +3262,6 @@ private:
             }
             stream.in_skip_bytes(next - stream.get_current());
         }
-        // After Capabilities read optional SessionId
-        if (stream.in_remain() >= 4) {
-            // From the documentation SessionId is ignored by client.
-            stream.in_skip_bytes(4); /* Session Id */
-        }
         if (bool(this->verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "Front::process_confirm_active: done p=%p end=%p",
                 voidp(stream.get_current()), voidp(stream.get_data_end()));
@@ -3508,6 +3502,12 @@ private:
     }   // void send_savesessioninfo()
 
     void send_monitor_layout() {
+        if (!this->ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+            this->client_info.cs_monitor.monitorCount &&
+            this->client_info.remote_program) {
+            LOG(LOG_WARNING, "Front::send_monitor_layout: RemoteApp in multimon mode, but the use of multiple monitors is not allowed. You may experience display issues!");
+        }
+
         if (!this->ini.get<cfg::globals::allow_using_multiple_monitors>() ||
             !this->client_info.cs_monitor.monitorCount ||
             !this->client_support_monitor_layout_pdu) {

@@ -546,7 +546,7 @@ namespace cfg {
         type value = REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION;
     };
     /// type: bool <br/>
-    /// value{0} <br/>
+    /// value{1} <br/>
     struct globals::allow_using_multiple_monitors {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -555,7 +555,7 @@ namespace cfg {
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value{0};
+        type value{1};
     };
     /// Needed to refresh screen of Windows Server 2012. <br/>
     /// type: bool <br/>

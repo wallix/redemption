@@ -105,7 +105,7 @@
 "#_hidden\n"
 "#enable_wab_integration = " CONFIG_PP_STRINGIZE(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION) "\n\n"
 
-"#allow_using_multiple_monitors = 0\n\n"
+"#allow_using_multiple_monitors = 1\n\n"
 
 "# Needed to refresh screen of Windows Server 2012.\n"
 "#_advanced\n"
@@ -230,7 +230,6 @@
 
 "# [Not configured]: Compatible with more RDP clients (less secure)\n"
 "# HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)\n"
-"#_advanced\n"
 "#ssl_cipher_list = HIGH:!ADH:!3DES:!SHA\n\n"
 
 "#show_target_user_in_f12_message = 0\n\n"
