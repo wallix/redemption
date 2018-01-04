@@ -241,6 +241,8 @@ public:
 
     } windowsData;
 
+    int current_user_profil;
+
 
     Front_Qt_API( RDPVerbose verbose)
     : verbose(verbose)
@@ -269,6 +271,7 @@ public:
     , wab_diag_question(false)
     , asked_color(0)
     , windowsData(this)
+    , current_user_profil(0)
     {
         this->windowsData.open();
         std::fill(std::begin(this->info.order_caps.orderSupport), std::end(this->info.order_caps.orderSupport), 1);
@@ -573,6 +576,7 @@ public:
         std::string name;
         std::string pwd;
         int port;
+        int options_profil = 0;
     }                    _accountData[MAX_ACCOUNT_DATA];
     bool                 _pwdCheckBoxChecked;
     int                  _lastTargetIndex;
@@ -705,13 +709,18 @@ public:
                 if (tag.compare(std::string("pwd")) == 0) {
                     this->_accountData[accountNB].pwd = info;
                 } else
-                if (tag.compare(std::string("port")) == 0) {
-                    this->_accountData[accountNB].port = std::stoi(info);
+                if (tag.compare(std::string("options_profil")) == 0) {
+                    this->_accountData[accountNB].options_profil = std::stoi(info);
+                    LOG(LOG_INFO," this->_accountData[accountNB].options_profil = %d", this->_accountData[accountNB].options_profil);
                     accountNB++;
                     if (accountNB == MAX_ACCOUNT_DATA) {
                         this->_accountNB = MAX_ACCOUNT_DATA;
                         accountNB = 0;
                     }
+                } else
+                if (tag.compare(std::string("port")) == 0) {
+                    this->_accountData[accountNB].port = std::stoi(info);
+
                 }
             }
 
@@ -811,6 +820,12 @@ private Q_SLOTS:
             this->set_userNameField(this->_accountData[index].name);
             this->set_PWDField(this->_accountData[index].pwd);
             this->set_portField(this->_accountData[index].port);
+
+            this->_front->current_user_profil = this->_accountData[index].options_profil;
+
+            LOG(LOG_INFO, "current_user_profil = %d ip = %s", this->_front->current_user_profil, this->_accountData[index].IP);
+
+            LOG(LOG_INFO, "this->_accountData[index].options_profil = %d ip = %s", this->_accountData[index].options_profil, this->_accountData[index].IP);
         }
 
         this->_buttonConnexion.setFocus();
@@ -853,6 +868,8 @@ private Q_SLOTS:
                     this->_lastTargetIndex = i;
                     this->_accountData[i].pwd  = this->get_PWDField();
                     this->_accountData[i].port = this->get_portField();
+                    this->_accountData[i].options_profil  = this->_front->current_user_profil;
+
                 }
             }
             if (!alreadySet && (this->_accountNB < MAX_ACCOUNT_DATA)) {
@@ -861,6 +878,7 @@ private Q_SLOTS:
                 this->_accountData[this->_accountNB].name  = this->get_userNameField();
                 this->_accountData[this->_accountNB].pwd   = this->get_PWDField();
                 this->_accountData[this->_accountNB].port  = this->get_portField();
+                this->_accountData[this->_accountNB].options_profil  = this->_front->current_user_profil;
                 this->_accountNB++;
 
                 if (this->_accountNB > MAX_ACCOUNT_DATA) {
@@ -891,8 +909,10 @@ private Q_SLOTS:
                         ofichier << "pwd " << "\n";
                     }
                     ofichier << "port " << this->_accountData[i].port << "\n";
+                    ofichier << "options_profil " << this->_accountData[i].options_profil << "\n";
                     ofichier << "\n";
                 }
+                ofichier.close();
             }
         }
     }

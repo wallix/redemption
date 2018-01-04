@@ -172,7 +172,7 @@ public:
     } _cb_buffers;
 
 
-    int current_user_profil;
+
     struct UserProfil {
         int id;
         std::string name;
@@ -230,7 +230,6 @@ public:
     , clipbrdFormatsList()
     , _cb_filesList()
     , _cb_buffers()
-    , current_user_profil(0)
     {
         this->_to_client_sender._front = this;
     }

@@ -81,6 +81,8 @@ public:
         uint16_t y = 0;
     } _mouse_data;
 
+
+
     // Connexion socket members
     ClipBoard_Qt       * clipboard_qt;
     Sound_Qt           * sound_qt;
@@ -191,7 +193,7 @@ public:
     }
 
     void setClientInfo() override {
-
+      
         this->userProfils.clear();
         this->userProfils.push_back({0, "Default"});
 
@@ -746,7 +748,6 @@ public:
         this->empty_buffer();
         this->fileSystemData.paths.clear();
     }
-
 
 
 
