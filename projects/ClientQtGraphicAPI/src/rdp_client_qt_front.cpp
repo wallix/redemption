@@ -852,7 +852,7 @@ public:
             this->info.remote_program |= INFO_RAIL;
             this->info.remote_program_enhanced |= INFO_HIDEF_RAIL_SUPPORTED;
             this->info.rail_caps.RailSupportLevel =   TS_RAIL_LEVEL_SUPPORTED
-                                                    | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED
+//                                                     | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED
                                                     | TS_RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED
                                                     | TS_RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED
                                                     | TS_RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED
@@ -976,30 +976,7 @@ public:
 
                 if (sspu.SystemParam() ==  SPI_SETSCREENSAVEACTIVE) {
 
-                    {
-                    StaticOutStream<1600> out_stream;
 
-                    ClientExecutePDU cepdu;
-                    cepdu.Flags(TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY);
-                    cepdu.ExeOrFile("C:\\Windows\\system32\\notepad.exe");
-                    cepdu.WorkingDir("C:\\Users\\user1");
-                    cepdu.Arguments("");
-
-                    out_stream.out_uint16_le(TS_RAIL_ORDER_EXEC);
-                    out_stream.out_uint16_le(cepdu.size());
-                    cepdu.emit(out_stream);
-
-
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-
-                    this->mod->send_to_mod_channel( channel_names::rail
-                                                , chunk_to_send
-                                                , out_stream.get_offset()
-                                                , CHANNELS::CHANNEL_FLAG_LAST |
-                                                    CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                );
-                    LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_EXEC");
-                    }
 
                     {
                     StaticOutStream<32> out_stream;;
@@ -1284,27 +1261,52 @@ public:
                                                   );
                     LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE");
                     }
+//                     {
+//                     StaticOutStream<32> out_stream;;
+//
+//                     out_stream.out_uint16_le(TS_RAIL_ORDER_LANGBARINFO);
+//                     out_stream.out_uint16_le(8);
+//
+//                     out_stream.out_uint32_le(0x491);
+//
+//
+//                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+//
+//                     // this->mod_rail_hosted
+//                     this->mod->send_to_mod_channel( channel_names::rail
+//                                                 , chunk_to_send
+//                                                 , out_stream.get_offset()
+//                                                 , CHANNELS::CHANNEL_FLAG_LAST |
+//                                                   CHANNELS::CHANNEL_FLAG_FIRST |
+//                                                   CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+//                                                 );
+//
+//                     LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_LANGBARINFO");
+//                     }
+
                     {
-                    StaticOutStream<32> out_stream;;
+                    StaticOutStream<1600> out_stream;
 
-                    out_stream.out_uint16_le(TS_RAIL_ORDER_LANGBARINFO);
-                    out_stream.out_uint16_le(8);
+                    ClientExecutePDU cepdu;
+                    cepdu.Flags(TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY);
+                    cepdu.ExeOrFile("||CMD");               //"C:\\Windows\\system32\\notepad.exe");
+                    cepdu.WorkingDir("C:\\Users\\user1");
+                    cepdu.Arguments("C:\\Windows\\system32\\notepad.exe");
 
-                    out_stream.out_uint32_le(0x491);
+                    out_stream.out_uint16_le(TS_RAIL_ORDER_EXEC);
+                    out_stream.out_uint16_le(cepdu.size());
+                    cepdu.emit(out_stream);
 
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    // this->mod_rail_hosted
                     this->mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
-                                                  CHANNELS::CHANNEL_FLAG_FIRST |
-                                                  CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                                    CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                 );
-
-                    LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_LANGBARINFO");
+                    LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_EXEC");
                     }
                 }
                 }
@@ -1328,23 +1330,23 @@ public:
                 sgaior.log(LOG_INFO);
                 this->ServerWwindowID = sgaior.WindowId();
                 }
-                {
-                    StaticOutStream<32> out_stream;
-                    out_stream.out_uint16_le(TS_RAIL_ORDER_SYSCOMMAND);
-                    out_stream.out_uint16_le(9);
-                    out_stream.out_uint32_le(this->ServerWwindowID);
-                    out_stream.out_uint16_le(SC_MINIMIZE);
-
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-
-                    this->mod->send_to_mod_channel( channel_names::rail
-                                                    , chunk_to_send
-                                                    , out_stream.get_offset()
-                                                    , CHANNELS::CHANNEL_FLAG_LAST |
-                                                    CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                    );
-                    LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSCOMMAND");
-                }
+//                 {
+//                     StaticOutStream<32> out_stream;
+//                     out_stream.out_uint16_le(TS_RAIL_ORDER_SYSCOMMAND);
+//                     out_stream.out_uint16_le(9);
+//                     out_stream.out_uint32_le(this->ServerWwindowID);
+//                     out_stream.out_uint16_le(SC_MINIMIZE);
+//
+//                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+//
+//                     this->mod->send_to_mod_channel( channel_names::rail
+//                                                     , chunk_to_send
+//                                                     , out_stream.get_offset()
+//                                                     , CHANNELS::CHANNEL_FLAG_LAST |
+//                                                     CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+//                                                     );
+//                     LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSCOMMAND");
+//                 }
                 break;
 
             case TS_RAIL_ORDER_EXEC_RESULT:
@@ -1387,21 +1389,21 @@ public:
                  {
                     this->clientWindowID = cmd.ActiveWindowId();
 
-                    StaticOutStream<32> out_stream;
-                    out_stream.out_uint16_le(TS_RAIL_ORDER_GET_APPID_REQ);
-                    out_stream.out_uint16_le(8);
-                    out_stream.out_uint32_le(this->clientWindowID);
-
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-
-                    this->mod->send_to_mod_channel( channel_names::rail
-                                                    , chunk_to_send
-                                                    , out_stream.get_offset()
-                                                    , CHANNELS::CHANNEL_FLAG_LAST |
-                                                      CHANNELS::CHANNEL_FLAG_FIRST |
-                                                      CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                    );
-                    LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_GET_APPID_REQ");
+//                     StaticOutStream<32> out_stream;
+//                     out_stream.out_uint16_le(TS_RAIL_ORDER_GET_APPID_REQ);
+//                     out_stream.out_uint16_le(8);
+//                     out_stream.out_uint32_le(this->clientWindowID);
+//
+//                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+//
+//                     this->mod->send_to_mod_channel( channel_names::rail
+//                                                     , chunk_to_send
+//                                                     , out_stream.get_offset()
+//                                                     , CHANNELS::CHANNEL_FLAG_LAST |
+//                                                       CHANNELS::CHANNEL_FLAG_FIRST |
+//                                                       CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+//                                                     );
+//                     LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_GET_APPID_REQ");
                 }
 //                 {
 //                     this->windowID = cmd.ActiveWindowId();

@@ -3359,7 +3359,7 @@ public:
 //  +------------------------------------------+-----------------------------------+
 //  | Value                                    | Meaning                           |
 //  +------------------------------------------+-----------------------------------+
-//  | 0x04000000                               | Indicates an order specifyinga    |
+//  | 0x04000000                               | Indicates an order specifyingna   |
 //  | WINDOW_ORDER_TYPE_DESKTOP                | desktop. This flag MUST be set.   |
 //  +------------------------------------------+-----------------------------------+
 //  | 0x00000002                               | Indicates that the server will be |
