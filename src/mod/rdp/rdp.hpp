@@ -6087,7 +6087,7 @@ public:
 
                     errmsg += RDP::LogonErrorsInfo_Recv::ErrorNotificationDataToShortMessage(lei.ErrorNotificationData);
                     this->authentifier.set_auth_error_message(errmsg.c_str());
-                    //throw Error(ERR_RAIL_LOGON_FAILED_OR_WARNING);
+                    throw Error(ERR_RAIL_LOGON_FAILED_OR_WARNING);
                 }
             }
         }
