@@ -1657,7 +1657,7 @@ public:
       , keymap()
       , ctrl_alt_delete(false)
       , is_pipe_ok(true)
-      , remoteapp(true)
+      , remoteapp(false)
     {
         SSL_load_error_strings();
         SSL_library_init();

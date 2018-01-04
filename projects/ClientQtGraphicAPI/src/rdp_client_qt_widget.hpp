@@ -117,7 +117,7 @@ public:
         };
 
         enum : int {
-              CLIPBRD_FORMAT_COUNT = 5
+              CLIPBRD_FORMAT_COUNT = 4
         };
 
         const std::string FILECONTENTS;
