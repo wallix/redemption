@@ -290,40 +290,40 @@ private:
 class ExecutorCompleted {};
 
 #define MK_NothingFinal(i, mem)                                           \
-    template<class EventCtx>                                                  \
-    struct REDEMPTION_CXX_NODISCARD SetNothing<EventCtx, false, i>                   \
-    {                                                                         \
-        template<class F>                                                     \
-        ExecutorResult mem(F&& f) &&                                          \
-        {                                                                     \
-            this->event_initializer.init_##mem(static_cast<F&&>(f));          \
+    template<class EventCtx>                                              \
+    struct REDEMPTION_CXX_NODISCARD SetNothing<EventCtx, false, i>        \
+    {                                                                     \
+        template<class F>                                                 \
+        ExecutorResult mem(F&& f) &&                                      \
+        {                                                                 \
+            this->event_initializer.init_##mem(static_cast<F&&>(f));      \
             return detail::FriendExecutorResult::Nothing;                 \
-        }                                                                     \
-                                                                              \
+        }                                                                 \
+                                                                          \
         SetNothing(EventInitializer<EventCtx> event_initializer) noexcept \
-        : event_initializer(event_initializer)                                \
-        {}                                                                    \
-                                                                              \
-    private:                                                                  \
-        EventInitializer<EventCtx> event_initializer;                         \
-    };                                                                        \
-                                                                              \
-    template<class EventCtx>                                                  \
+        : event_initializer(event_initializer)                            \
+        {}                                                                \
+                                                                          \
+    private:                                                              \
+        EventInitializer<EventCtx> event_initializer;                     \
+    };                                                                    \
+                                                                          \
+    template<class EventCtx>                                              \
     struct SetNothing<EventCtx, true, i>                                  \
-    {                                                                         \
-        template<class F>                                                     \
-        ExecutorCompleted mem(F&& f) &&                                       \
-        {                                                                     \
-            this->event_initializer.init_##mem(static_cast<F&&>(f));          \
-            return {};                                                        \
-        }                                                                     \
-                                                                              \
+    {                                                                     \
+        template<class F>                                                 \
+        ExecutorCompleted mem(F&& f) &&                                   \
+        {                                                                 \
+            this->event_initializer.init_##mem(static_cast<F&&>(f));      \
+            return {};                                                    \
+        }                                                                 \
+                                                                          \
         SetNothing(EventInitializer<EventCtx> event_initializer) noexcept \
-        : event_initializer(event_initializer)                                \
-        {}                                                                    \
-                                                                              \
-    private:                                                                  \
-        EventInitializer<EventCtx> event_initializer;                         \
+        : event_initializer(event_initializer)                            \
+        {}                                                                \
+                                                                          \
+    private:                                                              \
+        EventInitializer<EventCtx> event_initializer;                     \
     }
 
 MK_NothingFinal(6/*0b110*/, on_action);
@@ -580,19 +580,7 @@ struct ExecutorExitContext : ExecutorContext<Ctx>
 
 bool Executor::exec()
 {
-    auto replace_action = [this]{
-        this->base.events[this->base.events.size()-2].on_action
-          = std::move(this->base.events.back().on_action);
-        this->base.events.pop_back();
-    };
-
-    auto replace_timeout = [this]{
-        this->base.events[this->base.events.size()-2].on_timeout
-          = std::move(this->base.events.back().on_timeout);
-        this->base.events.pop_back();
-    };
-
-    auto process_exit = [=](bool status) {
+    auto process_exit = [this](bool status) {
         while (!this->base.events.empty()) {
             ExecutorResult r = this->base.events.back().on_exit(
                 this->base, status, *this->base.events.back().ctx);
@@ -606,11 +594,7 @@ bool Executor::exec()
                     this->base.events.pop_back();
                     break;
                 case ExecutorResult::ReplaceAction:
-                    replace_action();
-                    return;
                 case ExecutorResult::ReplaceTimeout:
-                    replace_timeout();
-                    return;
                 case ExecutorResult::Nothing:
                     return;
             }
@@ -627,11 +611,7 @@ bool Executor::exec()
             process_exit(false);
             break;
         case ExecutorResult::ReplaceAction:
-            replace_action();
-            break;
         case ExecutorResult::ReplaceTimeout:
-            replace_timeout();
-            break;
         case ExecutorResult::Nothing:
             break;
     }
@@ -640,7 +620,7 @@ bool Executor::exec()
 }
 
 template<class F>
-F no_contextual_callback() noexcept
+F make_lambda() noexcept
 {
     static_assert(
         std::is_empty<F>::value,
@@ -656,7 +636,7 @@ void EventInitializer<Ctx>::init_on_action(F)
 {
     this->executor_event.on_action = [](ExecutorBase& executor, ExecutorEvent::any& any){
         return reinterpret_cast<Ctx&>(any).invoke(
-            no_contextual_callback<F>(), ExecutorActionContext<Ctx>(executor));
+            make_lambda<F>(), ExecutorActionContext<Ctx>(executor));
     };
 }
 
@@ -666,7 +646,7 @@ void EventInitializer<Ctx>::init_on_exit(F)
 {
     this->executor_event.on_exit = [](ExecutorBase& executor, bool success, ExecutorEvent::any& any){
         return reinterpret_cast<Ctx&>(any).invoke(
-            no_contextual_callback<F>(), ExecutorExitContext<Ctx>(executor), success);
+            make_lambda<F>(), ExecutorExitContext<Ctx>(executor), success);
     };
 }
 
@@ -676,6 +656,6 @@ void EventInitializer<Ctx>::init_on_timeout(F)
 {
     this->executor_event.on_timeout = [](ExecutorBase& executor, ExecutorEvent::any& any){
         return reinterpret_cast<Ctx&>(any).invoke(
-            no_contextual_callback<F>(), ExecutorTimeoutContext<Ctx>(executor));
+            make_lambda<F>(), ExecutorTimeoutContext<Ctx>(executor));
     };
 }
