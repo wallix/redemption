@@ -2857,11 +2857,11 @@ public:
                                         #else
                                         const unsigned char *p;
                                         int pklen;
-                                        if (!X509_PUBKEY_get0_param(NULL, &p, &pklen, NULL, key)) {
+                                        if (!X509_PUBKEY_get0_param(nullptr, &p, &pklen, nullptr, key)) {
                                             LOG(LOG_ERR, "Failed to get algorithm used for public key.");
                                             throw Error(ERR_SEC);
                                         }
-                                        if (!(server_public_key = d2i_RSAPublicKey(NULL, &p, pklen))) {
+                                        if (!(server_public_key = d2i_RSAPublicKey(nullptr, &p, pklen))) {
                                             LOG(LOG_ERR, "Failed to extract public key from certificate");
                                             throw Error(ERR_SEC);
                                         }

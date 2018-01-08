@@ -480,7 +480,7 @@ class rdp_mppc_unified_dec : public rdp_mppc_dec
 
 public:
     rdp_mppc_unified_dec() = default;
-    ~rdp_mppc_unified_dec();
+    ~rdp_mppc_unified_dec() override;
 
     void mini_dump() override;
 
