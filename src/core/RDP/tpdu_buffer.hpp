@@ -217,6 +217,12 @@ struct TpduBuffer
         return this->extractors.x224.get_type();
     }
 
+    void consume_current_packet() noexcept
+    {
+        this->buf.advance(this->pdu_len);
+        this->pdu_len = 0;
+    }
+
 private:
     enum class StateRead : bool
     {
@@ -236,8 +242,7 @@ private:
         switch (this->state)
         {
             case StateRead::Header:
-                this->buf.advance(this->pdu_len);
-                this->pdu_len = 0;
+                this->consume_current_packet();
                 if (auto r = extractor.read_header(this->buf))
                 {
                     this->pdu_len = r.data_size();
