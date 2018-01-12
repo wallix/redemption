@@ -694,7 +694,7 @@ public:
         , _waiting_for_data(false)
         , close_box_extra_message_ref("Close")
         , client_execute(*(this), this->info.window_list_caps, false)
-        , vnc(true)
+        , vnc(false)
         , is_apple(true)
         , exe(*(this),  this->windowListCaps,  false)
 

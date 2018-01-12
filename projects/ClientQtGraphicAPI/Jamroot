@@ -76,7 +76,7 @@ rule disable-buggy-warn ( properties * )
 
     local flags ;
 
-    if $(toolset) = gcc && ! [ ge-ver $(version) : 5.0.0 ]
+    if $(toolset) = gcc && !  $(version) <= 05.00
     {
         flags += <cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant ;
     }
