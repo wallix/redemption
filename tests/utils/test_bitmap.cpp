@@ -4127,7 +4127,7 @@ RED_AUTO_TEST_CASE(TestConvertBitmap2)
     //dump_png("/tmp/rawdisk/8_8.png", bmp_8_to_8);
 }
 
-int rle_bin_to_run_order(uint16_t image_width, uint8_t image_bpp, const uint8_t*image_data_p,
+static int rle_bin_to_run_order(uint16_t image_width, uint8_t image_bpp, const uint8_t*image_data_p,
         size_t image_data_size) {
     LOG(LOG_INFO, "ImageWidth=%u ImageBPP=%u", image_width, image_bpp);
 
@@ -4283,7 +4283,7 @@ int rle_bin_to_run_order(uint16_t image_width, uint8_t image_bpp, const uint8_t*
                     };
 
             default:
-                LOG(LOG_ERR, "rle_bin_to_run_order: Unknown Run Order(2) 0x%X", (image_data_current & 0xF0));
+                LOG(LOG_ERR, "rle_bin_to_run_order: Unknown Run Order(2) 0x%X", static_cast<unsigned>(image_data_current & 0xF0));
 
                 return {
                         true,
