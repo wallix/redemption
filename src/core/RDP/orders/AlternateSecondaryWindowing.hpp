@@ -3521,7 +3521,7 @@ public:
 
     void NumWindowIds(uint8_t NumWindowIds_) { this->NumWindowIds_ = NumWindowIds_; }
 
-    uint32_t window_ids(uint8_t idx_window_id) { return this->window_ids_[idx_window_id]; }
+    uint32_t window_ids(uint8_t idx_window_id) const { return this->window_ids_[idx_window_id]; }
 
     void window_ids(uint8_t idx_window_id, uint32_t window_id) { this->window_ids_[idx_window_id] = window_id; }
 

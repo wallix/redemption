@@ -77,7 +77,8 @@ public:
                                    , this->reportMessage
                                    , this->is_apple
                                    , &(this->exe)
-                                   , to_verbose_flags(0xfffffffd));
+                                   , to_verbose_flags(0xfffffffd)
+                                   );
 
         } catch (const Error &) {
             return nullptr;

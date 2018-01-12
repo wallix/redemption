@@ -37,6 +37,8 @@
 
 #include "rdp_client_qt_widget.hpp"
 
+#include "mod/vnc/vnc.hpp"
+
 
 #pragma GCC diagnostic pop
 
@@ -142,11 +144,47 @@ public:
     ClientExecute client_execute;
 
     std::unique_ptr<mod_rdp> rdp_mod;
-    std::unique_ptr<mod_api> rail_mod;
-    mod_api * mod_rail_hosted;
+    std::unique_ptr<mod_api> unique_mod;
+
     int build_number;
-    uint32_t clientWindowID;
-    uint32_t ServerWwindowID;
+
+    struct RailChannelData {
+        uint32_t clientWindowID;
+        uint32_t ServerWindowID;
+
+        uint32_t WindowIDToShow = 0;
+
+        bool ExecuteResult = false;
+
+        struct AppData {
+            uint32_t ID = 0;
+
+            int x = 0;
+            int y = 0;
+            int w = 0;
+            int h = 0;
+
+            AppData() {}
+
+            AppData(int ID, int x, int y, int w, int h)
+              : ID(ID), x(x), y(y), w(w), h(h)
+            {}
+        };
+
+        std::vector<uint32_t> z_order;
+
+        std::vector<AppData> apps;
+
+    } rail_channel_data;
+
+    bool vnc;
+    bool is_apple;
+    Theme      theme;
+    WindowListCaps windowListCaps;
+    ClientExecute exe;
+
+
+
 
     void options() override {
         new DialogOptions_Qt(this, this->form);
@@ -193,7 +231,7 @@ public:
     }
 
     void setClientInfo() override {
-      
+
         this->userProfils.clear();
         this->userProfils.push_back({0, "Default"});
 
@@ -531,6 +569,7 @@ public:
 
     mod_api * init_mod() override {
 
+
         ModRDPParams mod_rdp_params( this->user_name.c_str()
                                    , this->user_password.c_str()
                                    , this->target_IP.c_str()
@@ -564,7 +603,10 @@ public:
             mod_rdp_params.remote_program_enhanced = INFO_HIDEF_RAIL_SUPPORTED;
             mod_rdp_params.use_client_provided_remoteapp = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
             mod_rdp_params.use_session_probe_to_launch_remote_program = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
-//             this->client_execute.set_target_info("Q\0t\0_\0R\0D\0P\0_\0C\0L\0I\0E\0N\0T\0");
+
+            QDesktopWidget* desktop = QApplication::desktop();
+            this->info.width = desktop->width();
+            this->info.height = desktop->height();
         }
 
         //mod_rdp_params.verbose = to_verbose_flags(0);
@@ -573,54 +615,58 @@ public:
         try {
             this->mod = nullptr;
 
-            this->rdp_mod.reset(new mod_rdp( *(this->socket)
-                                           , *(this)
-                                           , this->info
-                                           , ini.get_ref<cfg::mod_rdp::redir_info>()
-                                           , this->gen
-                                           , this->timeSystem
-                                           , mod_rdp_params
-                                           , this->authentifier
-                                           , this->reportMessage
-                                           , this->ini
-                                           ));
+            if (this->vnc) {
+                 this->unique_mod.reset(new mod_vnc( *(this->socket)
+                                                    , this->user_name.c_str()
+                                                    , this->user_password.c_str()
+                                                    , *(this)
+                                                    , this->info.width
+                                                    , this->info.height
+                                                    , this->ini.get<cfg::font>()
+                                                    , nullptr
+                                                    , nullptr
+                                                    , this->theme
+                                                    , this->info.keylayout
+                                                    , 0
+                                                    , true
+                                                    , true
+                                                    , "0,1,-239"
+                                                    , false
+                                                    , true
+                                                    , mod_vnc::ClipboardEncodingType::UTF8
+                                                    , VncBogusClipboardInfiniteLoop::delayed
+                                                    , this->reportMessage
+                                                    , this->is_apple
+                                                    , &(this->exe)
+                                                    , to_verbose_flags(0xfffffffd)
+                                                   )
+                                        );
+            } else {
 
 
-            if (this->remoteapp) {
+                this->unique_mod.reset(new mod_rdp( *(this->socket)
+                                            , *(this)
+                                            , this->info
+                                            , ini.get_ref<cfg::mod_rdp::redir_info>()
+                                            , this->gen
+                                            , this->timeSystem
+                                            , mod_rdp_params
+                                            , this->authentifier
+                                            , this->reportMessage
+                                            , this->ini
+                                            ));
 
-                std::string target_info = this->ini.get<cfg::context::target_str>();
-                target_info += ":";
-                target_info += this->ini.get<cfg::globals::primary_user_id>();
 
-                this->client_execute.set_target_info(target_info.c_str());
+                if (this->remoteapp) {
 
+                    std::string target_info = this->ini.get<cfg::context::target_str>();
+                    target_info += ":";
+                    target_info += this->ini.get<cfg::globals::primary_user_id>();
 
-
-//                 this->rail_mod.reset(new RailModuleHostMod(
-//                                         this->ini,
-//                                         *(this),
-//                                         this->info.width,
-//                                         this->info.height,
-//                                         Rect(0, 0, this->info.width, this->info.height),
-//                                         std::move(this->rdp_mod),
-//                                         this->client_execute,
-//                                         this->info.cs_monitor,
-//                                         true
-//                                     ));
-//
-//                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
-//
-//                 this->mod = this->rail_mod.get();
-//
-//                 RailModuleHostMod * mod_rail = reinterpret_cast<RailModuleHostMod *>(this->mod);
-//                 this->mod_rail_hosted = &(mod_rail->get_module_host()->get_managed_mod());
-
-            } /*else {
-
-                this->mod = this->rdp_mod.get();
-            }*/
-
-            this->mod = this->rdp_mod.get();
+                    this->client_execute.set_target_info(target_info.c_str());
+                }
+            }
+            this->mod = this->unique_mod.get();
 
             this->mod->invoke_asynchronous_graphic_task(mod_api::AsynchronousGraphicTask::none);
 
@@ -648,6 +694,10 @@ public:
         , _waiting_for_data(false)
         , close_box_extra_message_ref("Close")
         , client_execute(*(this), this->info.window_list_caps, false)
+        , vnc(true)
+        , is_apple(true)
+        , exe(*(this),  this->windowListCaps,  false)
+
     {
         this->clipboard_qt = new ClipBoard_Qt(this, this->form);
         this->sound_qt     = new Sound_Qt(this->form, this);
@@ -714,6 +764,8 @@ public:
                 this->verbose = RDPVerbose::rail | this->verbose;
             } else if (word ==  "--rail_dump") {
                 this->verbose = RDPVerbose::rail_dump | this->verbose;
+            } else if (word ==  "--vnc") {
+                this->vnc = true;
             }
         }
 
@@ -758,12 +810,17 @@ public:
 
     void connect() override {
 
+        this->rail_channel_data.apps.clear();
+        this->rail_channel_data.z_order.clear();
+
         this->setClientInfo();
 
         this->setScreenDimension();
 
         this->clipbrdFormatsList.index = 0;
         this->cl.clear_channels();
+
+        if (!(this->vnc)) {
 
         if (this->enable_shared_clipboard) {
             DIR *pDir;
@@ -855,7 +912,7 @@ public:
             this->info.rail_caps.RailSupportLevel =   TS_RAIL_LEVEL_SUPPORTED
 //                                                     | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED
                                                     | TS_RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED
-                                                    | TS_RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED
+                                                    //| TS_RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED
                                                     | TS_RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED
                                                     | TS_RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED
                                                     | TS_RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED
@@ -890,6 +947,8 @@ public:
                                                      , CHANID_RDPSND
                                                      };
             this->cl.push_back(channel_audio_output);
+        }
+
         }
 
         return FrontQtRDPGraphicAPI::connect();
@@ -976,8 +1035,6 @@ public:
                 sspu.log(LOG_INFO);
 
                 if (sspu.SystemParam() ==  SPI_SETSCREENSAVEACTIVE) {
-
-
 
                     {
                     StaticOutStream<32> out_stream;;
@@ -1066,30 +1123,8 @@ public:
                     out_stream.out_uint32_le(SPI_SETWORKAREA);
                     out_stream.out_uint16_le(0);
                     out_stream.out_uint16_le(0);
-                    out_stream.out_uint16_le(1600);
-                    out_stream.out_uint16_le(900);
-
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-
-                    this->mod->send_to_mod_channel( channel_names::rail
-                                                , chunk_to_send
-                                                , out_stream.get_offset()
-                                                , CHANNELS::CHANNEL_FLAG_LAST |
-                                                    CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                );
-                    LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSPARAM");
-                    }
-                    {
-                    StaticOutStream<32> out_stream;;
-
-                    out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
-                    out_stream.out_uint16_le(16);
-
-                    out_stream.out_uint32_le(RAIL_SPI_DISPLAYCHANGE);
-                    out_stream.out_uint16_le(0);
-                    out_stream.out_uint16_le(0);
-                    out_stream.out_uint16_le(1600);
-                    out_stream.out_uint16_le(900);
+                    out_stream.out_uint16_le(this->info.width);
+                    out_stream.out_uint16_le(this->info.height);
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
@@ -1229,8 +1264,8 @@ public:
                     out_stream.out_uint32_le( TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE
                                             | TS_RAIL_CLIENTSTATUS_AUTORECONNECT
                                             //| TS_RAIL_CLIENTSTATUS_ZORDER_SYNC
-                                            | TS_RAIL_CLIENTSTATUS_WINDOW_RESIZE_MARGIN_SUPPORTED
-                                            | TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED
+                                            //| TS_RAIL_CLIENTSTATUS_WINDOW_RESIZE_MARGIN_SUPPORTED
+                                            //| TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED
                                             );
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
@@ -1288,16 +1323,28 @@ public:
                     {
                     StaticOutStream<1600> out_stream;
 
-                    ClientExecutePDU cepdu;
-                    cepdu.Flags(TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY);
-                    cepdu.ExeOrFile("||CMD");               //"C:\\Windows\\system32\\notepad.exe");
-                    cepdu.WorkingDir("C:\\Users\\user1");
-                    cepdu.Arguments("C:\\Windows\\system32\\notepad.exe");
+                    const char * source_of_ExeOrFile = "C:\\Windows\\system32\\notepad.exe";
+                    uint8_t unicode_ExeOrFile[500];
+                    const size_t size_of_unicode_ExeOrFile = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(source_of_ExeOrFile), unicode_ExeOrFile, 500);
+
+                    const char * source_of_WorkingDir = "C:\\Users\\user1";
+                    uint8_t unicode_WorkingDir[500];
+                    const size_t size_of_unicode_WorkingDir = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(source_of_WorkingDir), unicode_WorkingDir, 500);
+
+                    const char * source_of_Arguments = "";
+                    uint8_t unicode_Arguments[500];
+                    const size_t size_of_unicode_Arguments = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(source_of_Arguments), unicode_Arguments, 500);
 
                     out_stream.out_uint16_le(TS_RAIL_ORDER_EXEC);
-                    out_stream.out_uint16_le(cepdu.size());
-                    cepdu.emit(out_stream);
+                    out_stream.out_uint16_le(12 + size_of_unicode_ExeOrFile + size_of_unicode_WorkingDir +size_of_unicode_Arguments);
 
+                    out_stream.out_uint16_le(TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY | TS_RAIL_EXEC_FLAG_APP_USER_MODEL_ID |  TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS);
+                    out_stream.out_uint16_le(size_of_unicode_ExeOrFile);
+                    out_stream.out_uint16_le(size_of_unicode_WorkingDir);
+                    out_stream.out_uint16_le(size_of_unicode_Arguments);
+                    out_stream.out_copy_bytes(unicode_ExeOrFile, size_of_unicode_ExeOrFile);
+                    out_stream.out_copy_bytes(unicode_WorkingDir, size_of_unicode_WorkingDir);
+                    out_stream.out_copy_bytes(source_of_Arguments, size_of_unicode_Arguments);
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
@@ -1321,15 +1368,13 @@ public:
 //                 LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_CLIENTSTATUS");
 //                 break;
 
-
-
             case TS_RAIL_ORDER_GET_APPID_RESP:
                 LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_GET_APPID_RESP");
                 {
                 ServerGetApplicationIDResponsePDU sgaior;
                 sgaior.receive(stream);
                 sgaior.log(LOG_INFO);
-                this->ServerWwindowID = sgaior.WindowId();
+                this->rail_channel_data.ServerWindowID = sgaior.WindowId();
                 }
 //                 {
 //                     StaticOutStream<32> out_stream;
@@ -1352,6 +1397,14 @@ public:
 
             case TS_RAIL_ORDER_EXEC_RESULT:
                 LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_EXEC_RESULT");
+                {
+                    ServerExecuteResultPDU res_pdu;
+                    res_pdu.receive(stream);
+                    res_pdu.log(LOG_INFO);
+                    if (res_pdu.ExecResult() == RAIL_EXEC_S_OK) {
+                        this->rail_channel_data.ExecuteResult = true;
+                    }
+                }
                 break;
 
             case TS_RAIL_ORDER_LANGBARINFO:
@@ -1368,152 +1421,211 @@ public:
 
     void draw(const RDP::RAIL::ActivelyMonitoredDesktop  & cmd) override {
         LOG(LOG_INFO, "RDP::RAIL::ActivelyMonitoredDesktop");
-        cmd.log(LOG_INFO);
+        //cmd.log(LOG_INFO);
+
+        if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER) {
+            this->rail_channel_data.z_order.clear();
+            if (this->rail_channel_data.ExecuteResult) {
+                for (size_t i = 0; i < cmd.NumWindowIds(); i++) {
+                    this->rail_channel_data.z_order.push_back(cmd.window_ids(i));
+                }
+            }
+        }
+    }
 
 
 
-        switch (cmd.ActiveWindowId()) {
+    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override {
+        LOG(LOG_INFO, "RDP::RAIL::NewOrExistingWindow");
+
+
+        switch (cmd.header.WindowId()) {
 
             case RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_0:
-                break;
-
-             case RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_1:
-                break;
-
+            case RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_1:
             case RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_2:
-                break;
-
             case RemoteProgramsWindowIdManager::INVALID_WINDOW_ID:
                 break;
 
             default:
-                 {
-                    this->clientWindowID = cmd.ActiveWindowId();
+                if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_OWNER) {
+                        //cmd.log(LOG_INFO);
 
-//                     StaticOutStream<32> out_stream;
-//                     out_stream.out_uint16_le(TS_RAIL_ORDER_GET_APPID_REQ);
-//                     out_stream.out_uint16_le(8);
-//                     out_stream.out_uint32_le(this->clientWindowID);
-//
-//                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-//
-//                     this->mod->send_to_mod_channel( channel_names::rail
-//                                                     , chunk_to_send
-//                                                     , out_stream.get_offset()
-//                                                     , CHANNELS::CHANNEL_FLAG_LAST |
-//                                                       CHANNELS::CHANNEL_FLAG_FIRST |
-//                                                       CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-//                                                     );
-//                     LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_GET_APPID_REQ");
-                }
-//                 {
-//                     this->windowID = cmd.ActiveWindowId();
-//
-//                     StaticOutStream<32> out_stream;
-//                     out_stream.out_uint16_le(TS_RAIL_ORDER_SYSCOMMAND);
-//                     out_stream.out_uint16_le(9);
-//                     out_stream.out_uint32_le(this->windowID);
-//                     out_stream.out_uint16_le(SC_MINIMIZE);
-//
-//                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-//
-//                     this->mod->send_to_mod_channel( channel_names::rail
-//                                                     , chunk_to_send
-//                                                     , out_stream.get_offset()
-//                                                     , CHANNELS::CHANNEL_FLAG_LAST |
-//                                                     CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-//                                                     );
-//                     LOG(LOG_INFO, "CLIENT >> RAIL CHANNEL TS_RAIL_ORDER_SYSCOMMAND");
-//                 }
-                break;
+                    if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {}
 
-        }
+                    if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE) {
+                        if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET) {
 
+                            this->rail_channel_data.apps.push_back(
+                                RailChannelData::AppData(cmd.header.WindowId(),
+                                                            cmd.WindowOffsetX(), cmd.WindowOffsetY(),
+                                                            cmd.WindowWidth(), cmd.WindowHeight())
+                            );
 
+                            if (this->rail_channel_data.ExecuteResult) {
 
+                                for (size_t i = 0; i < this->rail_channel_data.apps.size(); i++) {
 
-    }
+                                    if (this->rail_channel_data.z_order[0] == this->rail_channel_data.apps[i].ID) {
 
-    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override {
-        LOG(LOG_INFO, "RDP::RAIL::NewOrExistingWindow");
-        cmd.log(LOG_INFO);
+                                        RailChannelData::AppData app = this->rail_channel_data.apps[i];
 
-        switch (cmd.header.WindowId()) {
+                                        this->dropScreen();
+                                        this->screen = new Screen_Qt(this, app.w, app.h, app.x, app.y);
+                                        this->RefreshPressed();
+                                        this->screen->update_view();
 
-            case 40000:
-
-                if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_TITLE) {
-                    this->screen->setWindowTitle(QString(cmd.TitleInfo()));
-                }
-                if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
-                    //this->screen->show();
-                }
-                if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE) {
-//                     this->remoteapp = false;
-//                     this->server_resize(cmd.WindowWidth(),  cmd.WindowHeight(), this->info.bpp);
-//                     this->remoteapp = true;
-                }
-
-                if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTDELTA) {
-                    this->remoteapp = false;
-                    this->server_resize(this->info.width - cmd.WindowClientDeltaX(),
-                                        this->info.height - cmd.WindowClientDeltaY(),
-                                        this->info.bpp);
-                    this->remoteapp = true;
-                }
-                if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_SHOW) {
-                    if (cmd.ShowState()) {
-                        if (this->screen) {
-                            this->screen->show();
+                                        break;
+                                    }
+                                }
+                            }
                         }
+                    }
+
+                    if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_SHOW) {
+                        if (cmd.ShowState()) {
+                            if (this->screen) {
+                                this->screen->show();
+                            }
+                        }
+                    }
+                   // }
+                } else {
+                    if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET) {
+
+                        this->screen->x_pixmap_shift = cmd.WindowOffsetX();
+                        this->screen->y_pixmap_shift = cmd.WindowOffsetY();
+
+                        int x_offset = cmd.WindowOffsetX();
+                        int y_offset = cmd.WindowOffsetY();
+
+                        if (this->screen->x_pixmap_shift < 0) {
+                            this->screen->setFixedSize(this->screen->_width + this->screen->x_pixmap_shift, this->screen->height());
+                            this->screen->x_pixmap_shift = 0;
+
+                        } else {
+                            if (this->screen->width() != this->screen->_width) {
+                                this->screen->setFixedSize(this->screen->_width, this->screen->height());
+                            }
+
+                            if ((this->screen->x_pixmap_shift + this->screen->width()) > this->screen_max_width) {
+                                this->screen->setFixedSize(1+this->screen_max_width - x_offset, this->screen->height());
+                                this->screen->x_pixmap_shift = this->screen_max_width - this->screen->width();
+                            } else {
+                                if (this->screen->width() != this->screen->_width) {
+                                    int current_width= this->screen_max_width - y_offset;
+                                    if (current_width > this->screen->_width) {
+                                        current_width = this->screen->_width;
+                                    }
+                                    this->screen->setFixedSize(current_width, this->screen->height());
+                                }
+                            }
+                        }
+
+                        if (this->screen->y_pixmap_shift < 0) {
+                            this->screen->setFixedSize(this->screen->width(), this->screen->_height + this->screen->y_pixmap_shift);
+                            this->screen->y_pixmap_shift = 0;
+                        } else {
+                            if (this->screen->height() != this->screen->_height) {
+                                this->screen->setFixedSize(this->screen->width(), this->screen->_height);
+                            }
+
+                            if ((this->screen->y_pixmap_shift + this->screen->height()) > this->screen_max_height && !(this->screen->y_pixmap_shift == 0)) {
+                                this->screen->setFixedSize(this->screen->width(), 1+this->screen_max_height - y_offset);
+                                this->screen->y_pixmap_shift = this->screen_max_height - this->screen->height();
+                            } else {
+                                if (this->screen->height() != this->screen->_height) {
+                                    int current_height = this->screen_max_height - y_offset;
+                                    if (current_height > this->screen->_height) {
+                                        current_height = this->screen->_height;
+                                    }
+                                    this->screen->setFixedSize(this->screen->width(), current_height);
+                                }
+                            }
+                        }
+
+                        this->screen->move(x_offset, y_offset);
+
+                    }
+                    if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE) {
+
+                        this->screen->setFixedSize(cmd.WindowWidth(), cmd.WindowHeight());
+                        this->screen->_width = cmd.WindowWidth();
+                        this->screen->_height = cmd.WindowHeight();
+                        this->RefreshPressed();
+                        this->screen->update_view();
                     }
                 }
                 break;
-
-//                 case RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_0:
-//                     break;
-//
-//                 case RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_1:
-//                     break;
-//
-//                 case RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_2:
-//                     break;
-//
-//                 case RemoteProgramsWindowIdManager::INVALID_WINDOW_ID:
-//                     break;
-            default:
-                LOG(LOG_WARNING, "RDP::RAIL::NewOrExistingWindow can't be create,  window ID(%u)", cmd.header.WindowId());
-                break;
-
         }
     }
 
-    void draw(const RDP::RAIL::WindowIcon            & cmd) override {
+    void draw(const RDP::RAIL::WindowIcon            & ) override {
         LOG(LOG_INFO, "RDP::RAIL::WindowIcon");
-        cmd.log(LOG_INFO);
+//         cmd.log(LOG_INFO);
     }
 
-    void draw(const RDP::RAIL::CachedIcon            & cmd) override {
+    void draw(const RDP::RAIL::CachedIcon            & ) override {
         LOG(LOG_INFO, "RDP::RAIL::CachedIcon");
-        cmd.log(LOG_INFO);
+//         cmd.log(LOG_INFO);
     }
 
     void draw(const RDP::RAIL::DeletedWindow            & cmd) override {
         LOG(LOG_INFO, "RDP::RAIL::DeletedWindow");
-        cmd.log(LOG_INFO);
+        //cmd.log(LOG_INFO);
 
-        switch (cmd.header.WindowId()) {
-
-            case 40000:
-                if (this->screen) {
-                    this->screen->close();
+        if (this->screen) {
+            int elem_to_erase = -1;
+            for (size_t i = 0; i < this->rail_channel_data.apps.size(); i++) {
+                if (this->rail_channel_data.apps[i].ID == cmd.header.WindowId()) {
+                    elem_to_erase = i;
                 }
-                break;
+            }
 
-            default:
-                LOG(LOG_WARNING, "RDP::RAIL::NewOrExistingWindow can't be create,  window ID(%u)", cmd.header.WindowId());
-                break;
+            if (elem_to_erase != -1) {
+                this->rail_channel_data.apps.erase(this->rail_channel_data.apps.begin()+elem_to_erase);
+            }
 
+            elem_to_erase = -1;
+            for (size_t i = 0; i < this->rail_channel_data.z_order.size(); i++) {
+                if (this->rail_channel_data.z_order[i] == cmd.header.WindowId()) {
+                    elem_to_erase = i;
+                }
+            }
+
+            if (elem_to_erase != -1) {
+                this->rail_channel_data.z_order.erase(this->rail_channel_data.z_order.begin()+elem_to_erase);
+            }
+
+            if (this->rail_channel_data.apps.size() == 0 || this->rail_channel_data.z_order.size() == 0) {
+                this->disconnect(std::string(""));
+                this->screen->close();
+
+            } else {
+
+                for (size_t i = 0; i < this->rail_channel_data.apps.size(); i++) {
+
+                    if (this->rail_channel_data.z_order[0] == this->rail_channel_data.apps[i].ID) {
+                        RailChannelData::AppData app = this->rail_channel_data.apps[i];
+
+                        this->screen->setFixedSize(app.w, app.h);
+                        this->screen->_width = app.w;
+                        this->screen->_height = app.h;
+
+                        this->screen->x_pixmap_shift = app.x;
+                        this->screen->y_pixmap_shift = app.y;
+
+                        this->screen->move(app.x, app.y);
+
+                        this->RefreshPressed();
+                        this->screen->update_view();
+
+                        break;
+                    }
+                }
+            }
+
+             ;
         }
     }
 
@@ -1823,8 +1935,8 @@ public:
                         sharedHeader.emit(stream);
 
                         rdpdr::ClientAnnounceReply clientAnnounceReply( versionMajor
-                                                                    , this->fileSystemData.protocol_minor_version
-                                                                    , clientID);
+                                                                      , this->fileSystemData.protocol_minor_version
+                                                                      , clientID);
                         clientAnnounceReply.emit(stream);
 
                         int total_length(stream.get_offset());
@@ -4088,16 +4200,16 @@ public:
 
     void disconnect(std::string const & error) override {
 
-        if( this->remoteapp && this->rail_mod.get()) {
-            time_t  timev;
-            time(&timev);
-            this->rail_mod.get()->disconnect(timev);
-            mod_api * rail_mod_ptr = this->rail_mod.release();
-            delete (rail_mod_ptr);
-            this->rail_mod.reset(nullptr);
-            this->mod = this->rdp_mod.get();
-            this->mod_qt->_callback = this->rdp_mod.get();
-        }
+//         if( this->remoteapp && this->rail_mod.get()) {
+//             time_t  timev;
+//             time(&timev);
+//             this->rail_mod.get()->disconnect(timev);
+//             mod_api * rail_mod_ptr = this->rail_mod.release();
+//             delete (rail_mod_ptr);
+//             this->rail_mod.reset(nullptr);
+//             this->mod = this->rdp_mod.get();
+//             this->mod_qt->_callback = this->rdp_mod.get();
+//         }
 
         FrontQtRDPGraphicAPI::disconnect(error);
     }
@@ -4107,8 +4219,8 @@ public:
             this->dropScreen();
             std::string labelErrorMsg("<font color='Red'>Disconnected by server</font>");
             this->disconnect(labelErrorMsg);
-            this->cache = nullptr;
-            this->trans_cache = nullptr;
+//             this->cache = nullptr;
+//             this->trans_cache = nullptr;
             this->capture = nullptr;
             this->graph_capture = nullptr;
             this->_recv_disconnect_ultimatum = false;

@@ -79,6 +79,7 @@
 #include <QtGui/QPainter>
 #include <QtGui/QRgb>
 #include <QtGui/QWheelEvent>
+// #include <QtGui/QWindowsCEStyle>
 
 #if REDEMPTION_QT_VERSION == 4
 #   include <QtCore/QByteArray>
@@ -243,6 +244,9 @@ public:
 
     int current_user_profil;
 
+    const int screen_max_width;
+    const int screen_max_height;
+
 
     Front_Qt_API( RDPVerbose verbose)
     : verbose(verbose)
@@ -272,6 +276,8 @@ public:
     , asked_color(0)
     , windowsData(this)
     , current_user_profil(0)
+    , screen_max_width(QApplication::desktop()->width())
+    , screen_max_height(QApplication::desktop()->height())
     {
         this->windowsData.open();
         std::fill(std::begin(this->info.order_caps.orderSupport), std::end(this->info.order_caps.orderSupport), 1);
@@ -711,7 +717,6 @@ public:
                 } else
                 if (tag.compare(std::string("options_profil")) == 0) {
                     this->_accountData[accountNB].options_profil = std::stoi(info);
-                    LOG(LOG_INFO," this->_accountData[accountNB].options_profil = %d", this->_accountData[accountNB].options_profil);
                     accountNB++;
                     if (accountNB == MAX_ACCOUNT_DATA) {
                         this->_accountNB = MAX_ACCOUNT_DATA;
@@ -822,10 +827,6 @@ private Q_SLOTS:
             this->set_portField(this->_accountData[index].port);
 
             this->_front->current_user_profil = this->_accountData[index].options_profil;
-
-            LOG(LOG_INFO, "current_user_profil = %d ip = %s", this->_front->current_user_profil, this->_accountData[index].IP);
-
-            LOG(LOG_INFO, "this->_accountData[index].options_profil = %d ip = %s", this->_accountData[index].options_profil, this->_accountData[index].IP);
         }
 
         this->_buttonConnexion.setFocus();
@@ -934,16 +935,16 @@ Q_OBJECT
 
 public:
     Front_Qt_API  * _front;
+    int             _width;
+    int             _height;
     QPushButton     _buttonCtrlAltDel;
     QPushButton     _buttonRefresh;
     QPushButton     _buttonDisconnexion;
     QColor          _penColor;
-    QPixmap      * _cache;
+    QPixmap        _cache;
     QPainter       _cache_painter;
-    QPixmap      * _trans_cache;
+    QPixmap        _trans_cache;
     QPainter       _trans_cache_painter;
-    const int      _width;
-    const int      _height;
     QPixmap        _match_pixmap;
     bool           _connexionLasted;
     QTimer         _timer;
@@ -983,6 +984,9 @@ public:
 
     std::vector<QPixmap*> balises;
 
+    int x_pixmap_shift;
+    int y_pixmap_shift;
+
 private:
     static time_t get_movie_time_length(char const * mwrm_filename)
     {
@@ -1013,19 +1017,19 @@ private:
     }
 
 public:
-    Screen_Qt (Front_Qt_API * front, QPixmap * cache, std::string const & movie_dir, std::string const & movie_name, QPixmap * trans_cache)
+    Screen_Qt (Front_Qt_API * front, std::string const & movie_dir, std::string const & movie_name)
         : QWidget()
         , _front(front)
+        , _width(this->_front->info.width)
+        , _height(this->_front->info.height)
         , _buttonCtrlAltDel("Play", this)
         , _buttonRefresh("Stop", this)
         , _buttonDisconnexion("Close", this)
         , _penColor(Qt::black)
-        , _cache(cache)
-        , _cache_painter(this->_cache)
-        , _trans_cache(trans_cache)
-        , _trans_cache_painter(this->_trans_cache)
-        , _width(this->_front->info.width)
-        , _height(this->_front->info.height)
+        , _cache(this->_width, this->_height)
+        , _cache_painter(&(this->_cache))
+        , _trans_cache(this->_width, this->_height)
+        , _trans_cache_painter(&(this->_trans_cache))
         , _match_pixmap(this->_width+2, this->_height+2)
         , _connexionLasted(false)
         , _timer_replay(this)
@@ -1050,6 +1054,7 @@ public:
         std::string title = "Remote Desktop Player " + this->_movie_name;
         this->setWindowTitle(QString(title.c_str()));
         this->setAttribute(Qt::WA_DeleteOnClose);
+        this->_trans_cache.fill(Qt::transparent);
         this->paintCache().fillRect(0, 0, this->_width, this->_height, {0, 0, 0});
 
         if (this->_front->is_spanning) {
@@ -1141,7 +1146,7 @@ public:
             this->_front->replay_mod->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
 
             this->balises.push_back(nullptr);
-            this->balises[i] = new QPixmap(*(this->_cache));
+            this->balises[i] = new QPixmap(this->_cache);
             endin_frame += BALISED_FRAME;
             i++;
             if (this->_front->bar) {
@@ -1154,18 +1159,18 @@ public:
 
 
 
-    Screen_Qt (Front_Qt_API * front, QPixmap * cache, QPixmap * trans_cache)
+    Screen_Qt (Front_Qt_API * front)
         : QWidget()
         , _front(front)
+        , _width(this->_front->info.width)
+        , _height(this->_front->info.height)
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
         , _buttonRefresh("Refresh", this)
         , _buttonDisconnexion("Disconnection", this)
         , _penColor(Qt::black)
-        , _cache(cache)
-        , _cache_painter(this->_cache)
-        , _trans_cache(trans_cache)
-        , _width(this->_front->info.width)
-        , _height(this->_front->info.height)
+        , _cache(this->_width, this->_height)
+        , _cache_painter(&(this->_cache))
+        , _trans_cache(this->_width, this->_height)
         , _match_pixmap(this->_width, this->_height)
         , _connexionLasted(false)
         , _screen_index(0)
@@ -1186,6 +1191,7 @@ public:
         this->setAttribute(Qt::WA_DeleteOnClose);
         std::string title = "Remote Desktop Player connected to [" + this->_front->target_IP +  "].";
         this->setWindowTitle(QString(title.c_str()));
+        this->_trans_cache.fill(Qt::transparent);
 
         if (this->_front->is_spanning) {
             this->setWindowState(Qt::WindowFullScreen);
@@ -1228,6 +1234,67 @@ public:
             }
             this->move(this->_front->windowsData.screen_x, this->_front->windowsData.screen_y);
         }
+
+        this->setFocusPolicy(Qt::StrongFocus);
+    }
+
+     Screen_Qt (Front_Qt_API * front, int width, int height, int x, int y)
+        : QWidget()
+        , _front(front)
+        , _width(width)
+        , _height(height)
+//         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
+//         , _buttonRefresh("Refresh", this)
+//         , _buttonDisconnexion("Disconnection", this)
+        , _penColor(Qt::black)
+        , _cache(this->_front->screen_max_width, this->_front->screen_max_height)
+        , _cache_painter(&(this->_cache))
+//         , _trans_cache(this->_width, this->_height)
+        , _match_pixmap(this->_front->screen_max_width, this->_front->screen_max_height)
+        , _connexionLasted(false)
+        , _screen_index(0)
+        , _running(false)
+        , cursorHotx(0)
+        , cursorHoty(0)
+        , mouse_out(false)
+        , is_paused(false)
+        , movie_time(0)
+        , begin(0)
+        , reading_bar_len(this->_width - 60)
+        , readding_bar(this->reading_bar_len+12, READING_BAR_H)
+        , current_time_movie(0)
+        , real_time_record(0)
+        , x_pixmap_shift(x)
+        , y_pixmap_shift(y)
+    {
+        this->setMouseTracking(true);
+        this->installEventFilter(this);
+        this->setAttribute(Qt::WA_DeleteOnClose);
+        std::string title = "Remote Desktop Player connected to [" + this->_front->target_IP +  "].";
+        this->setWindowTitle(QString(title.c_str()));
+        setWindowFlags( Qt::FramelessWindowHint );
+        //this->setAttribute(Qt::WA_OutsideWSRange);
+//         this->_trans_cache.fill(Qt::transparent);
+
+        if (this->_front->is_spanning) {
+            this->setWindowState(Qt::WindowFullScreen);
+        } else {
+            this->setFixedSize(this->_width, this->_height);
+        }
+
+        QPainter painter(&(this->readding_bar));
+        painter.fillRect(0, 0, this->reading_bar_len+12, READING_BAR_H, this->palette().color(QWidget::backgroundRole()));
+
+//         if (this->_front->is_spanning) {
+            this->move(this->x_pixmap_shift, this->y_pixmap_shift);
+//         } else {
+//             if (this->_front->is_no_win_data()) {
+//                 QDesktopWidget* desktop = QApplication::desktop();
+//                 this->_front->windowsData.screen_x = (desktop->width()/2)  - (this->_width/2);
+//                 this->_front->windowsData.screen_y = (desktop->height()/2) - (this->_height/2);
+//             }
+//             this->move(this->_front->windowsData.screen_x, this->_front->windowsData.screen_y);
+//         }
 
         this->setFocusPolicy(Qt::StrongFocus);
     }
@@ -1331,7 +1398,7 @@ public:
         pen.setWidth(1);
         pen.setBrush(this->_penColor);
         painter.setPen(pen);
-        painter.drawPixmap(QPoint(0, 0), this->_match_pixmap, QRect(0, 0, this->_width, this->_height));
+        painter.drawPixmap(QPoint(0, 0), this->_match_pixmap, QRect(this->x_pixmap_shift, this->y_pixmap_shift, this->_width, this->_height));
         painter.drawPixmap(QPoint(52, this->_height+4), this->readding_bar, QRect(0, 0, this->reading_bar_len+10, READING_BAR_H));
         painter.end();
     }
@@ -1359,7 +1426,7 @@ public:
     }
 
     QPixmap * getCache() {
-        return this->_cache;
+        return &(this->_cache);
     }
 
     void setPenColor(QColor color) {
@@ -1545,15 +1612,15 @@ public Q_SLOTS:
 
     void slotRepaint() {
         QPainter match_painter(&(this->_match_pixmap));
-        match_painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(0, 0, this->_width, this->_height));
+        match_painter.drawPixmap(QPoint(0, 0), this->_cache, QRect(0, 0, this->_cache.width(), this->_cache.height()));
         //match_painter.drawPixmap(QPoint(0, 0), *(this->_trans_cache), QRect(0, 0, this->_width, this->_height));
         this->repaint();
     }
 
     void slotRepainMatch() {
         QPainter match_painter(&(this->_match_pixmap));
-        match_painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(0, 0, this->_width, this->_height));
-        match_painter.drawPixmap(QPoint(0, 0), *(this->_trans_cache), QRect(0, 0, this->_width, this->_height));
+        match_painter.drawPixmap(QPoint(0, 0), this->_cache, QRect(0, 0, this->_width, this->_height));
+        match_painter.drawPixmap(QPoint(0, 0), this->_trans_cache, QRect(0, 0, this->_width, this->_height));
         this->repaint();
     }
 
@@ -1627,8 +1694,8 @@ public:
     Form_Qt            * form;
     Screen_Qt          * screen;
     Mod_Qt             * mod_qt;
-    QPixmap            * cache;
-    QPixmap            * trans_cache;
+//     QPixmap            * cache;
+//     QPixmap            * trans_cache;
     gdi::GraphicApi    * graph_capture;
 
     struct MouseData {
@@ -1669,8 +1736,8 @@ public:
       , form(nullptr)
       , screen(nullptr)
       , mod_qt(nullptr)
-      , cache(nullptr)
-      , trans_cache(nullptr)
+//       , cache(nullptr)
+//       , trans_cache(nullptr)
       , graph_capture(nullptr)
       , _timer(0)
       , _error("error")
@@ -1757,7 +1824,7 @@ public:
     void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
 
         if (this->is_replaying) {
-            this->trans_cache->fill(Qt::transparent);
+            this->screen->_trans_cache.fill(Qt::transparent);
             QRect nrect(xPos, yPos, this->mouse_data.cursor_image.width(), this->mouse_data.cursor_image.height());
 
             this->screen->paintTransCache().drawImage(nrect, this->mouse_data.cursor_image);
@@ -1790,15 +1857,13 @@ public:
                     this->screen->disconnection();
                     this->dropScreen();
                 }
-                this->cache = new QPixmap(this->info.width, this->info.height);
 
                 if (this->is_replaying) {
-                    this->screen = new Screen_Qt(this, this->cache, this->_movie_dir, this->_movie_name, this->trans_cache);
+                    this->screen = new Screen_Qt(this, this->_movie_dir, this->_movie_name);
 
                 } else {
-                    this->trans_cache = new QPixmap(this->info.width, this->info.height);
-                    this->trans_cache->fill(Qt::transparent);
-                    this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
+
+                    this->screen = new Screen_Qt(this);
                 }
 
                 this->screen->show();
@@ -1902,7 +1967,7 @@ public:
     }
 
     void answer_question(int color) {
-        QImage image = this->cache->toImage();
+        QImage image = this->screen->getCache()->toImage();
 
         QRgb asked(color);
 
@@ -2376,11 +2441,11 @@ public:
                 this->answer_question(this->asked_color);
             }
         } else {
-            if (this->connected || this->is_replaying) {
-                LOG(LOG_INFO, "opaquerect is else and connected");
-            } else {
-                LOG(LOG_INFO, "opaquerect is else");
-            }
+//             if (this->connected || this->is_replaying) {
+//                 LOG(LOG_INFO, "opaquerect is else and connected");
+//             } else {
+//                 LOG(LOG_INFO, "opaquerect is else");
+//             }
         }
     }
 
@@ -2846,7 +2911,7 @@ public:
                                 if (clip.contains_pt(x + fc.offset + xx, y + fc.baseline + yy)
                                 && (fc_bit_mask & *fc_data))
                                 {
-                                    if (this->connected || this->is_replaying) {
+                                    if ((this->connected || this->is_replaying) && this->screen) {
                                         this->screen->paintCache().fillRect(x + fc.offset + xx, y + fc.baseline + yy, 1, 1, color);
                                     }
                                 }
@@ -3001,7 +3066,16 @@ public:
                 default: break;
             }
 
-            this->mod->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, e->x() + screen_shift, e->y(), &(this->keymap));
+            int x = e->x() + screen_shift;
+            int y = e->y();
+
+            if (remoteapp) {
+                QPoint mouseLoc = QCursor::pos();
+                x = mouseLoc.x();
+                y = mouseLoc.y();
+            }
+
+            this->mod->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, x, y, &(this->keymap));
         }
     }
 
@@ -3021,7 +3095,17 @@ public:
                 default: break;
             }
 
-            this->mod->rdp_input_mouse(flag, e->x() + screen_shift, e->y(), &(this->keymap));
+            int x = e->x() + screen_shift;
+            int y = e->y();
+
+            if (remoteapp) {
+                QPoint mouseLoc = QCursor::pos();
+                x = mouseLoc.x();
+                y = mouseLoc.y();
+            }
+
+
+            this->mod->rdp_input_mouse(flag, x, y, &(this->keymap));
         }
     }
 
@@ -3053,8 +3137,8 @@ public:
         if (e->type() == QEvent::MouseMove)
         {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
-            int const x = std::max(0, mouseEvent->x() + screen_shift);
-            int const y = std::max(0, mouseEvent->y());
+            this->mouse_data.x = std::max(0, mouseEvent->x() + screen_shift);
+            this->mouse_data.y = std::max(0, mouseEvent->y());
 
 //             if (y > this->info.height) {
 //                 LOG(LOG_INFO, "eventFilter out");
@@ -3064,10 +3148,15 @@ public:
 //                 this->screen->mouse_out = false;
 //             }
 
-            if (this->mod != nullptr && y < this->info.height) {
-                this->mouse_data.x = x;
-                this->mouse_data.y = y;
-                this->mod->rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, &(this->keymap));
+            if (this->mod != nullptr && this->mouse_data.y < this->info.height) {
+                if (remoteapp) {
+                    QPoint mouseLoc = QCursor::pos();
+                    this->mouse_data.x = mouseLoc.x();
+                    this->mouse_data.y = mouseLoc.y();
+
+                }
+
+                this->mod->rdp_input_mouse(MOUSE_FLAG_MOVE, this->mouse_data.x, this->mouse_data.y, &(this->keymap));
             }
         }
         return false;
@@ -3113,8 +3202,6 @@ public:
         this->is_replaying = false;
         this->dropScreen();
         this->disconnect("");
-        this->cache = nullptr;
-        this->trans_cache = nullptr;
         this->capture = nullptr;
         this->graph_capture = nullptr;
     }
@@ -3186,10 +3273,8 @@ public:
         if (this->load_replay_mod(movie_dir_, movie_path_, {0, 0}, {0, 0})) {
             this->info.width = this->replay_mod->get_dim().w;
             this->info.height = this->replay_mod->get_dim().h;
-            this->cache_replay = new QPixmap(this->info.width, this->info.height);
-            this->trans_cache = new QPixmap(this->info.width, this->info.height);
-            this->trans_cache->fill(Qt::transparent);
-            this->screen = new Screen_Qt(this, this->cache_replay, movie_dir_, movie_path_, this->trans_cache);
+//             this->cache_replay = new QPixmap(this->info.width, this->info.height);
+            this->screen = new Screen_Qt(this, movie_dir_, movie_path_);
             //this->connected = true;
             this->form->hide();
             if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
@@ -3316,11 +3401,11 @@ public:
         this->is_pipe_ok = true;
         if (this->mod_qt->connect()) {
             this->qtRDPKeymap.setKeyboardLayout(this->info.keylayout);
-            this->cache = new QPixmap(this->info.width, this->info.height);
-            this->trans_cache = new QPixmap(this->info.width, this->info.height);
-            this->trans_cache->fill(Qt::transparent);
+//             this->cache = new QPixmap(this->info.width, this->info.height);
+//             this->trans_cache = new QPixmap(this->info.width, this->info.height);
+//             this->trans_cache->fill(Qt::transparent);
 
-            this->screen = new Screen_Qt(this, this->cache, this->trans_cache);
+            this->screen = new Screen_Qt(this);
 
             this->is_replaying = false;
             if (this->is_recording && !this->is_replaying) {

@@ -208,6 +208,7 @@ add_src utils/png.cpp ;
 add_src utils/rle.cpp ;
 
 
+
 constant lib_list :
     krb5
     openssl
@@ -285,6 +286,7 @@ exe client_rdp_Qt$(qtversion) :
     front_Qt$(qtversion)_rdp.o
     $(obj_list)
     $(lib_list)
+    $(obj_list_VNC)
     config.o
     hexdump.o
     libqtclient
