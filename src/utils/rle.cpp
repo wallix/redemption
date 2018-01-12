@@ -1012,9 +1012,6 @@ void compress_(ConstImageDataView const & image, OutStream & outbuffer)
         while (p < pmax)
         {
             uint32_t fom_count = this->get_fom_count_set(image.line_size(), pmin, pmax, p, new_foreground, flags);
-            if (nbbytes_large(fom_count) > sizeof(masks)) {
-                fom_count = sizeof(masks) * 8;
-            }
             uint32_t color_count = 0;
             uint32_t bicolor_count = 0;
             if (p + Bpp < pmax){
@@ -1038,7 +1035,10 @@ void compress_(ConstImageDataView const & image, OutStream & outbuffer)
             && fom_cost < copy_fom_cost) {
                 switch (flags){
                     case FLAG_FOM:
-                  this->get_fom_masks(image.line_size(), pmin, p, masks, fom_count);
+                        if (nbbytes_large(fom_count) > sizeof(masks)) {
+                            fom_count = sizeof(masks) * 8;
+                        }
+                        this->get_fom_masks(image.line_size(), pmin, p, masks, fom_count);
                         if (new_foreground != foreground){
                             flags = FLAG_FOM_SET;
                         }
@@ -1080,6 +1080,9 @@ void compress_(ConstImageDataView const & image, OutStream & outbuffer)
                     p+= color_count * Bpp;
                 break;
                 case FLAG_FOM_SET:
+                    if (nbbytes_large(fom_count) > sizeof(masks)) {
+                        fom_count = sizeof(masks) * 8;
+                    }
                     out.out_fom_sequence_set(fom_count, new_foreground, masks);
                     foreground = new_foreground;
                     p+= fom_count * Bpp;
@@ -1090,6 +1093,9 @@ void compress_(ConstImageDataView const & image, OutStream & outbuffer)
                     p+= fom_count * Bpp;
                 break;
                 case FLAG_FOM:
+                    if (nbbytes_large(fom_count) > sizeof(masks)) {
+                        fom_count = sizeof(masks) * 8;
+                    }
                     out.out_fom_sequence(fom_count, masks);
                     p+= fom_count * Bpp;
                 break;

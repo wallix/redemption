@@ -759,12 +759,19 @@ public:
     }
 
     void draw( const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
-        assert(bmp.has_data_compressed());
-        auto data_compressed = bmp.data_compressed();
-        this->reserve_bitmap(bitmap_data.struct_size() + data_compressed.size());
+        if (bmp.has_data_compressed()) {
+            auto data_compressed = bmp.data_compressed();
+            this->reserve_bitmap(bitmap_data.struct_size() + data_compressed.size());
 
-        bitmap_data.emit(this->stream_bitmaps);
-        this->stream_bitmaps.out_copy_bytes(data_compressed.data(), data_compressed.size());
+            bitmap_data.emit(this->stream_bitmaps);
+            this->stream_bitmaps.out_copy_bytes(data_compressed.data(), data_compressed.size());
+        }
+        else {
+            this->reserve_bitmap(bitmap_data.struct_size() + bmp.bmp_size());
+
+            bitmap_data.emit(this->stream_bitmaps);
+            this->stream_bitmaps.out_copy_bytes(bmp.data(), bmp.bmp_size());
+        }
         if (bool(this->verbose & Verbose::bitmap_update)) {
             bitmap_data.log(LOG_INFO);
         }
