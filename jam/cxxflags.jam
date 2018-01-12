@@ -1,19 +1,5 @@
 variant san : debug : ;
 
-
-rule ge-ver ( a : b )
-{
-    #TODO FIX: 11.3 < 9.4 = true (lexicographie test)
-    if $(a) >= $(b)
-    {
-        return 1 ;
-    }
-    else
-    {
-        return ;
-    }
-}
-
 import property-set ;
 import feature ;
 import toolset ;
@@ -64,6 +50,24 @@ toolset.flags security SECURITY : <security> ;
 
 GLIBCXX_ALLOW_BROKEN_ABI = 1 ; # for _GLIBCXX_DEBUG or _GLIBCXX_ASSERTIONS
 
+local ORIGINAL_COMP_VERSION = 0 ;
+local COMP_VERSION = 000.000 ;
+
+import string ;
+
+rule normalized-compiler-version ( version )
+{
+    if $(ORIGINAL_COMP_VERSION) != $(version)
+    {
+        local match = [ MATCH ^([0-9]+)(\\.([0-9]+))? : $(version) ] ;
+        local major = [ MATCH (..)$ : [ string.join 00 $(match[1]) ] ] ;
+        local minor = [ MATCH (..)$ : [ string.join 00 $(match[3]) ] ] ;
+        COMP_VERSION = $(major).$(minor) ;
+        ORIGINAL_COMP_VERSION = $(version) ;
+    }
+    return $(COMP_VERSION) ;
+}
+
 rule flags ( properties * )
 {
     local ps = [ property-set.create $(properties) ] ;
@@ -71,7 +75,7 @@ rule flags ( properties * )
     # TODO is not the real version. For toolset=gcc-5, version is 5
     # gcc -dumpversion
     # clang -dumpversion = llvm version ?
-    local version = [ $(ps).get <toolset-$(toolset):version> ] ;
+    local version = [ normalized-compiler-version [ $(ps).get <toolset-$(toolset):version> ] ] ;
 
     local flags ;
 
@@ -106,7 +110,7 @@ rule flags ( properties * )
             <cxxflags>-flto
             <linkflags>-flto
         ;
-        if $(toolset) = gcc || [ ge-ver $(version) : 5.0.0 ]
+        if $(toolset) = gcc || $(version) >= 05.00
         {
             flags +=
                 <cxxflags>-flto-odr-type-merging
@@ -139,7 +143,7 @@ rule flags ( properties * )
         if <stack-protector>strong in $(properties)
         || <security>strong in $(properties)
         {
-            if $(toolset) != gcc || [ ge-ver $(version) : 4.9.0 ]
+            if $(toolset) != gcc || $(version) >= 04.09
             {
                 flags +=
                     <cxxflags>-fstack-protector-strong
@@ -200,7 +204,7 @@ rule flags ( properties * )
             <cxxflags>-Wsuggest-attribute=pure
             <cxxflags>-Wsuggest-attribute=const
         ;
-        if [ ge-ver $(version) : 5.0.0 ]
+        if $(version) >= 05.00
         {
             flags +=
                 <cxxflags>-Wsuggest-final-types
@@ -270,7 +274,7 @@ rule flags ( properties * )
             #<cxxflags>-Werror # warnings-as-errors=on
         ;
 
-        if [ ge-ver $(version) : 7.1.0 ]
+        if $(version) >= 07.01
         {
             flags +=
                 <cxxflags>-Wrestrict
@@ -283,21 +287,21 @@ rule flags ( properties * )
                 <cxxflags>-Wshadow=compatible-local
             ;
         }
-        if [ ge-ver $(version) : 7.0.0 ]
+        if $(version) >= 07.00
         {
             flags +=
                 <cxxflags>-Waligned-new
                 #<cxxflags>-Wregister # pedantic warning and register is removed in c++17
             ;
         }
-        if [ ge-ver $(version) : 6.1.0 ]
+        if $(version) >= 06.01
         {
             flags +=
                 <cxxflags>-Wduplicated-cond
                 <cxxflags>-Wnull-dereference # This option is only active when -fdelete-null-pointer-checks is active, which is enabled by optimizations in most targets
             ;
         }
-        if [ ge-ver $(version) : 5.1.0 ]
+        if $(version) >= 05.01
         {
             flags +=
                 <cxxflags>-fsized-deallocation
@@ -311,7 +315,7 @@ rule flags ( properties * )
                 <cxxflags>-Wformat-signedness
             ;
         }
-        if [ ge-ver $(version) : 4.9.0 ]
+        if $(version) >= 04.09
         {
             flags +=
                 <cxxflags>-Wconditionally-supported
@@ -319,13 +323,13 @@ rule flags ( properties * )
                 <cxxflags>-Wopenmp-simd
             ;
         }
-        if [ ge-ver $(version) : 4.8.0 ]
+        if $(version) >= 04.08
         {
             flags +=
                 <cxxflags>-Wuseless-cast
             ;
         }
-        if [ ge-ver $(version) : 4.7.0 ]
+        if $(version) >= 04.07
         {
             flags +=
                 <cxxflags>-Wsuggest-attribute=noreturn
@@ -364,7 +368,7 @@ rule flags ( properties * )
             #<cxxflags>-Qunused-arguments
         ;
 
-        if [ ge-ver $(version) : 5.0 ]
+        if $(version) >= 05.00
         {
             flags +=
                 <cxxflags>-Wno-inconsistent-missing-destructor-override
@@ -375,21 +379,21 @@ rule flags ( properties * )
     ## Sanitizers
     if <variant>san in $(properties) && ! <target-os>windows in $(properties)
     {
-        if [ ge-ver $(version) : 6.1.0 ]
+        if $(version) >= 06.01
         {
             flags +=
                 <cxxflags>-fsanitize=bounds-strict
                 <linkflags>-fsanitize=bounds-strict
             ;
         }
-        if $(toolset) != gcc || [ ge-ver $(version) : 5.0.0 ]
+        if $(toolset) != gcc || $(version) >= 05.00
         {
             flags +=
                 <cxxflags>-fsanitize=bounds
                 <linkflags>-fsanitize=bounds
             ;
         }
-        if $(toolset) != gcc || [ ge-ver $(version) : 4.9.0 ]
+        if $(toolset) != gcc || $(version) >= 04.09
         {
             flags +=
                 <cxxflags>-fsanitize=address
@@ -405,6 +409,8 @@ rule flags ( properties * )
             ;
         }
     }
+
+    echo $(flags) ;
 
     return $(flags) ;
 }
