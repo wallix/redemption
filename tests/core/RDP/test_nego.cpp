@@ -113,40 +113,31 @@ RED_AUTO_TEST_CASE(TestNego)
     NullServerNotifier null_server_notifier;
     std::string extra_message;
     Translation::language_t lang = Translation::EN;
-    RdpNego nego(true, logtrans, "test", true, "127.0.0.1", false, rand, timeobj, extra_message, lang);
+    RdpNego nego(true, "test", true, "127.0.0.1", false, rand, timeobj, extra_message, lang);
     nego.set_identity(user, domain, pass, host);
 
-    nego.send_negotiation_request();
-    nego.state = RdpNego::NEGO_STATE_NEGOCIATE;
-
     const bool server_cert_store = true;
-
-    constexpr std::size_t array_size = AUTOSIZE;
-    uint8_t array[array_size];
-    uint8_t * end = array;
-    const X224::RecvFactory fx224(nego.trans.get_transport(), &end, array_size);
-    InStream x224_data(array, end - array);
-
-    nego.recv_connection_confirm(
-        server_cert_store,
-        ServerCertCheck::always_succeed,
-        null_server_notifier,
-        "/tmp/certif",
-        x224_data
-    );
-
-    RED_CHECK_EQUAL(nego.state, RdpNego::NEGO_STATE_CREDSSP);
-
     TpduBuffer buf;
-    while (nego.state == RdpNego::NEGO_STATE_CREDSSP) {
-        buf.load_data(logtrans);
-        while (buf.next_credssp() && nego.state == RdpNego::NEGO_STATE_CREDSSP) {
-            InStream in_stream(buf.current_pdu_buffer());
-            nego.recv_credssp(in_stream);
-        }
+
+    nego.send_negotiation_request(logtrans);
+
+    for (int i = 0;
+        nego.recv_next_data(
+            buf, logtrans,
+            RdpNego::ServerCert{
+                server_cert_store,
+                ServerCertCheck::always_succeed,
+                "/tmp/certif",
+                null_server_notifier
+            }
+        );
+        ++i
+    ){
+        RED_REQUIRE_LT(i, 1000);
     }
+
+    buf.consume_current_packet();
     RED_CHECK_EQUAL(0, buf.remaining());
-    RED_CHECK_EQUAL(nego.state, RdpNego::NEGO_STATE_FINAL);
 }
 
 // RED_AUTO_TEST_CASE(TestNego2)
@@ -166,22 +157,3 @@ RED_AUTO_TEST_CASE(TestNego)
 //     ClientInfo client_info(0, true);
 //     nego.recv_resquest(nullptr, client_info, true, true);
 // }
-
-
-RED_AUTO_TEST_CASE(TestSetIdentity) {
-    LogTransport null_transport;
-
-    LCGRandom rand(0);
-    LCGTime timeobj;
-    std::string extra_message;
-    Translation::language_t lang = Translation::EN;
-    RdpNego nego(true, null_transport, "test", true, "127.0.0.1", false, rand, timeobj, extra_message, lang);
-
-    char pass[] = "Password\x00Pass\x00";
-
-    nego.set_identity("Administrateur", "QA", pass, "Server");
-
-    RED_CHECK_EQUAL(0, ::memcmp(pass, nego.password, sizeof(pass)));
-
-    hexdump(pass, sizeof(pass));
-}

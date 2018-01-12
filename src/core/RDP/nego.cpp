@@ -28,6 +28,7 @@
 #include "utils/sugar/strutils.hpp"
 
 #include "utils/verbose_flags.hpp"
+#include "core/RDP/tpdu_buffer.hpp"
 
 // Protocol Security Negotiation Protocols
 // NLA : Network Level Authentication (TLS implicit)
@@ -43,25 +44,25 @@ struct RdpNegoProtocols
     };
 };
 
-RdpNego::RdpNego(const bool tls, Transport & socket_trans, const char * username, bool nla,
-                 const char * target_host, const char krb, Random & rand, TimeObj & timeobj,
-                 std::string& extra_message, Translation::language_t lang,
-                 const Verbose verbose)
-    : tls(nla || tls)
-    , nla(nla)
-    , krb(nla && krb)
-    , restricted_admin_mode(false)
-    , state(NEGO_STATE_INITIAL)
-    , selected_protocol(RdpNegoProtocols::Rdp)
-    , trans(socket_trans)
-    , target_host(target_host)
-    , current_password(nullptr)
-    , rand(rand)
-    , timeobj(timeobj)
-    , lb_info(nullptr)
-    , extra_message(extra_message)
-    , lang(lang)
-    , verbose(verbose)
+RdpNego::RdpNego(
+    const bool tls, const char * username, bool nla,
+    const char * target_host, const char krb, Random & rand, TimeObj & timeobj,
+    std::string& extra_message, Translation::language_t lang,
+    const Verbose verbose)
+: tls(nla || tls)
+, nla(nla)
+, krb(nla && krb)
+, restricted_admin_mode(false)
+, selected_protocol(RdpNegoProtocols::Rdp)
+, target_host(target_host)
+, current_password(nullptr)
+, rand(rand)
+, timeobj(timeobj)
+, lb_info(nullptr)
+, extra_message(extra_message)
+, lang(lang)
+, state(State::Negociate)
+, verbose(verbose)
 {
 
     this->enabled_protocols = RdpNegoProtocols::Rdp
@@ -214,11 +215,216 @@ void RdpNego::set_lb_info(uint8_t * lb_info, size_t lb_info_length)
 // |                                      | (section 5.4) with CredSSP (section|
 // |                                      | 5.4.5.2).                          |
 // +--------------------------------------+------------------------------------+
-void RdpNego::fallback_to_tls()
-{
-    this->trans.disconnect();
 
-    if (!this->trans.connect()){
+bool RdpNego::recv_next_data(TpduBuffer& buf, Transport& trans, ServerCert const& cert)
+{
+    switch (this->state) {
+        case State::Negociate:
+            buf.load_data(trans);
+            if (!buf.next_pdu()) {
+                return true;
+            }
+            do {
+                LOG(LOG_INFO, "nego->state=RdpNego::NEGO_STATE_NEGOCIATE");
+                LOG(LOG_INFO, "RdpNego::NEGO_STATE_%s",
+                                    (this->nla) ? "NLA" :
+                                    (this->tls) ? "TLS" :
+                                                  "RDP");
+                this->state = this->recv_connection_confirm(trans, InStream(buf.current_pdu_buffer()), cert);
+            } while (this->state == State::Negociate && buf.next_pdu());
+            return (this->state != State::Final);
+
+        case State::SslHybrid:
+            assert(0 == buf.remaining());
+            this->state = this->activate_ssl_hybrid(trans, cert);
+            return (this->state != State::Final);
+
+        case State::Tls:
+            assert(0 == buf.remaining());
+            this->state = this->activate_ssl_tls(trans, cert);
+            return (this->state != State::Final);
+
+        case State::Credssp:
+            try {
+                buf.load_data(trans);
+            }
+            catch (Error const &) {
+                this->state = this->fallback_to_tls(trans);
+                return true;
+            }
+
+            while (this->state == State::Credssp && buf.next_credssp()) {
+                this->state = this->recv_credssp(trans, InStream(buf.current_pdu_buffer()));
+            }
+
+            while (this->state == State::Negociate && buf.next_pdu()) {
+                this->state = this->recv_connection_confirm(trans, InStream(buf.current_pdu_buffer()), cert);
+            }
+            return (this->state != State::Final);
+
+        case State::Final:
+            return false;
+    }
+}
+
+RdpNego::State RdpNego::recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerCert const& cert)
+{
+    LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
+
+    X224::CC_TPDU_Recv x224(x224_stream);
+
+    if (x224.rdp_neg_type == X224::RDP_NEG_NONE){
+        this->enabled_protocols = RdpNegoProtocols::Rdp;
+        LOG(LOG_INFO, "RdpNego::recv_connection_confirm done (legacy, no TLS)");
+        return State::Final;
+    }
+
+    this->selected_protocol = x224.rdp_neg_code;
+
+    if (x224.rdp_neg_type == X224::RDP_NEG_RSP)
+    {
+        if (x224.rdp_neg_code == X224::PROTOCOL_HYBRID)
+        {
+            LOG(LOG_INFO, "activating SSL");
+            return this->activate_ssl_hybrid(trans, cert);
+        }
+
+        if (x224.rdp_neg_code == X224::PROTOCOL_TLS)
+        {
+            LOG(LOG_INFO, "activating SSL");
+            return this->activate_ssl_tls(trans, cert);
+        }
+
+        if (x224.rdp_neg_code == X224::PROTOCOL_RDP)
+        {
+            return State::Final;
+        }
+    }
+    else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE)
+    {
+        if (x224.rdp_neg_code == X224::HYBRID_REQUIRED_BY_SERVER)
+        {
+            LOG(LOG_INFO, "Enable NLA is probably required");
+
+            if (!this->nla_tried) {
+                this->extra_message += " ";
+                this->extra_message += TR(trkeys::err_nla_required, this->lang);
+            }
+            trans.disconnect();
+
+            throw Error(this->nla_tried
+                ? ERR_NLA_AUTHENTICATION_FAILED
+                : ERR_NEGO_HYBRID_REQUIRED_BY_SERVER);
+        }
+
+        if (x224.rdp_neg_code == X224::SSL_REQUIRED_BY_SERVER) {
+            LOG(LOG_INFO, "Enable TLS is probably required");
+
+            if (!this->tls) {
+                this->extra_message += " ";
+                this->extra_message += TR(trkeys::err_tls_required, this->lang);
+            }
+            trans.disconnect();
+
+            throw Error(ERR_NEGO_SSL_REQUIRED_BY_SERVER);
+        }
+
+        if (x224.rdp_neg_code == X224::SSL_NOT_ALLOWED_BY_SERVER
+            || x224.rdp_neg_code == X224::SSL_CERT_NOT_ON_SERVER) {
+            LOG(LOG_INFO, "Can't activate SSL, falling back to RDP legacy encryption");
+
+            trans.disconnect();
+            if (!trans.connect()){
+                throw Error(ERR_SOCKET_CONNECT_FAILED);
+            }
+            this->enabled_protocols = RdpNegoProtocols::Rdp;
+            this->send_negotiation_request(trans);
+            return State::Negociate;
+        }
+    }
+
+    LOG(LOG_INFO, "RdpNego::recv_connection_confirm done");
+    return State::Final;
+}
+
+inline bool enable_client_tls(OutTransport trans, RdpNego::ServerCert const& cert)
+{
+    switch (trans.enable_client_tls(
+        cert.store, cert.check, cert.notifier, cert.path))
+    {
+        case Transport::TlsResult::Want: return false;
+        case Transport::TlsResult::Fail:
+            LOG(LOG_ERR, "enable_client_tls fail");
+            REDEMPTION_CXX_FALLTHROUGH;
+        case Transport::TlsResult::Ok: break;
+    }
+    return true;
+}
+
+RdpNego::State RdpNego::activate_ssl_tls(OutTransport trans, ServerCert const& cert)
+{
+    if (!enable_client_tls(trans, cert)) {
+        return State::Tls;
+    }
+    return State::Final;
+}
+
+RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerCert const& cert)
+{
+    // if (x224.rdp_neg_flags & X224::RESTRICTED_ADMIN_MODE_SUPPORTED) {
+    //     LOG(LOG_INFO, "Restricted Admin Mode Supported");
+    //     this->restricted_admin_mode = true;
+    // }
+    if (!enable_client_tls(trans, cert)) {
+        return State::SslHybrid;
+    }
+
+    this->nla_tried = true;
+
+    LOG(LOG_INFO, "activating CREDSSP");
+    this->credssp.reset(new rdpCredsspClient(
+        trans, this->user,
+        // this->domain, this->password,
+        this->domain, this->current_password,
+        this->hostname, this->target_host,
+        this->krb, this->restricted_admin_mode,
+        this->rand, this->timeobj, this->extra_message, this->lang,
+        bool(this->verbose & Verbose::credssp)
+    ));
+
+    if (!this->credssp->credssp_client_authenticate_init())
+    {
+        LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (1)");
+        (void)this->fallback_to_tls(trans);
+        return State::Negociate;
+    }
+
+    return State::Credssp;
+}
+
+RdpNego::State RdpNego::recv_credssp(OutTransport trans, InStream stream)
+{
+    // LOG(LOG_INFO, "RdpNego::recv_credssp");
+
+    switch (credssp->credssp_client_authenticate_next(stream))
+    {
+        case rdpCredsspClient::State::Cont:
+            break;
+        case rdpCredsspClient::State::Err:
+            LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (2)");
+            return this->fallback_to_tls(trans);
+        case rdpCredsspClient::State::Finish:
+            this->credssp.reset();
+            return State::Final;
+    }
+    return State::Credssp;
+}
+
+RdpNego::State RdpNego::fallback_to_tls(OutTransport trans)
+{
+    trans.disconnect();
+
+    if (!trans.connect()){
         LOG(LOG_ERR, "Failed to disconnect transport");
         throw Error(ERR_SOCKET_CONNECT_FAILED);
     }
@@ -227,150 +433,16 @@ void RdpNego::fallback_to_tls()
 
     if (*this->current_password) {
         LOG(LOG_INFO, "try next password");
-        this->send_negotiation_request();
+        this->send_negotiation_request(trans);
     }
     else {
         LOG(LOG_INFO, "Can't activate NLA");
         LOG(LOG_INFO, "falling back to SSL only");
         this->enabled_protocols = RdpNegoProtocols::Tls | RdpNegoProtocols::Rdp;
-        this->send_negotiation_request();
-        this->state = NEGO_STATE_NEGOCIATE;
+        this->send_negotiation_request(trans);
+        return State::Negociate;
     }
-}
-
-void RdpNego::recv_credssp(InStream & stream)
-{
-    switch (this->credssp->credssp_client_authenticate_next(stream))
-    {
-        case rdpCredsspClient::State::Cont:
-            break;
-        case rdpCredsspClient::State::Err:
-            LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (2)");
-            this->fallback_to_tls();
-            break;
-        case rdpCredsspClient::State::Finish:
-            this->state = NEGO_STATE_FINAL;
-            this->credssp.reset();
-            break;
-    }
-}
-
-bool RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck server_cert_check,
-                                      ServerNotifier & server_notifier, const char * certif_path,
-                                      InStream & stream)
-{
-    LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
-
-    X224::CC_TPDU_Recv x224(stream);
-
-    if (x224.rdp_neg_type == X224::RDP_NEG_NONE){
-        this->enabled_protocols = RdpNegoProtocols::Rdp;
-        this->state = NEGO_STATE_FINAL;
-        LOG(LOG_INFO, "RdpNego::recv_connection_confirm done (legacy, no TLS)");
-        return true;
-    }
-    this->selected_protocol = x224.rdp_neg_code;
-
-    if (x224.rdp_neg_type == X224::RDP_NEG_RSP) {
-        if (x224.rdp_neg_code == X224::PROTOCOL_HYBRID) {
-            // if (x224.rdp_neg_flags & X224::RESTRICTED_ADMIN_MODE_SUPPORTED) {
-            //     LOG(LOG_INFO, "Restricted Admin Mode Supported");
-            //     this->restricted_admin_mode = true;
-            // }
-            LOG(LOG_INFO, "activating SSL");
-            switch (this->trans.enable_client_tls(
-                server_cert_store,
-                server_cert_check,
-                server_notifier,
-                certif_path
-            )) {
-                case Transport::TlsResult::Want: return false;
-                case Transport::TlsResult::Fail:
-                    LOG(LOG_ERR, "enable_client_tls fail");
-                    REDEMPTION_CXX_FALLTHROUGH;
-                case Transport::TlsResult::Ok: break;
-            }
-
-            this->nla_tried = true;
-
-            LOG(LOG_INFO, "activating CREDSSP");
-            this->credssp.reset(new rdpCredsspClient(
-                this->trans, this->user,
-                // this->domain, this->password,
-                this->domain, this->current_password,
-                this->hostname, this->target_host,
-                this->krb, this->restricted_admin_mode,
-                this->rand, this->timeobj, this->extra_message, this->lang,
-                bool(this->verbose & Verbose::credssp)
-            ));
-
-            if (!this->credssp->credssp_client_authenticate_init()) {
-                LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (1)");
-                this->fallback_to_tls();
-            }
-            else {
-                this->state = NEGO_STATE_CREDSSP;
-            }
-            return true;
-        }
-        else if (x224.rdp_neg_code == X224::PROTOCOL_TLS) {
-            LOG(LOG_INFO, "activating SSL");
-            switch (this->trans.enable_client_tls(
-                server_cert_store,
-                server_cert_check,
-                server_notifier,
-                certif_path
-            )) {
-                case Transport::TlsResult::Want: return false;
-                case Transport::TlsResult::Fail:
-                    LOG(LOG_ERR, "enable_client_tls fail");
-                    REDEMPTION_CXX_FALLTHROUGH;
-                case Transport::TlsResult::Ok: break;
-            }
-            this->state = NEGO_STATE_FINAL;
-        }
-        else if (x224.rdp_neg_code == X224::PROTOCOL_RDP) {
-            this->state = NEGO_STATE_FINAL;
-        }
-    }
-    else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE) {
-        if (x224.rdp_neg_code == X224::HYBRID_REQUIRED_BY_SERVER) {
-            if (!this->nla_tried) {
-                this->extra_message = " ";
-                this->extra_message.append(TR(trkeys::err_nla_required, this->lang));
-            }
-            LOG(LOG_INFO, "Enable NLA is probably required");
-            this->trans.disconnect();
-            if (this->nla_tried) {
-                throw Error(ERR_NLA_AUTHENTICATION_FAILED);
-            }
-            else {
-                throw Error(ERR_NEGO_HYBRID_REQUIRED_BY_SERVER);
-            }
-        }
-        else if (x224.rdp_neg_code == X224::SSL_REQUIRED_BY_SERVER) {
-            if (!this->tls) {
-                this->extra_message = " ";
-                this->extra_message.append(TR(trkeys::err_tls_required, this->lang));
-            }
-            LOG(LOG_INFO, "Enable TLS is probably required");
-            this->trans.disconnect();
-            throw Error(ERR_NEGO_SSL_REQUIRED_BY_SERVER);
-        }
-        else if (x224.rdp_neg_code == X224::SSL_NOT_ALLOWED_BY_SERVER
-                 || x224.rdp_neg_code == X224::SSL_CERT_NOT_ON_SERVER) {
-            LOG(LOG_INFO, "Can't activate SSL, falling back to RDP legacy encryption");
-            this->trans.disconnect();
-            if (!this->trans.connect()){
-                throw Error(ERR_SOCKET_CONNECT_FAILED);
-            }
-            this->enabled_protocols = RdpNegoProtocols::Rdp;
-            this->send_negotiation_request();
-            this->state = NEGO_STATE_NEGOCIATE;
-        }
-    }
-    LOG(LOG_INFO, "RdpNego::recv_connection_confirm done");
-    return true;
+    return State::Credssp;
 }
 
 
@@ -405,14 +477,14 @@ bool RdpNego::recv_connection_confirm(bool server_cert_store, ServerCertCheck se
 // structure. The length of this negotiation structure is include " in the X.224
 // Connection Request Length Indicator field.
 
-void RdpNego::send_negotiation_request()
+void RdpNego::send_negotiation_request(OutTransport trans)
 {
     LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu");
     char cookie[256];
     snprintf(cookie, 256, "Cookie: mstshash=%s\x0D\x0A", this->username);
-    char * cookie_or_token = this->lb_info?this->lb_info:cookie;
+    char * cookie_or_token = this->lb_info ? this->lb_info : cookie;
     if (bool(this->verbose & Verbose::negotiation)) {
-        LOG(LOG_INFO, "Send %s:", this->lb_info?"load_balance_info":"cookie");
+        LOG(LOG_INFO, "Send %s:", this->lb_info ? "load_balance_info" : "cookie");
         hexdump_c(cookie_or_token, strlen(cookie_or_token));
     }
     uint32_t rdp_neg_requestedProtocols = X224::PROTOCOL_RDP
@@ -421,14 +493,13 @@ void RdpNego::send_negotiation_request()
         | ((this->enabled_protocols & RdpNegoProtocols::Tls) ?
            X224::PROTOCOL_TLS : 0);
 
-
     StaticOutStream<65536> stream;
     X224::CR_TPDU_Send(stream, cookie_or_token,
-                       this->tls?(X224::RDP_NEG_REQ):(X224::RDP_NEG_NONE),
+                       this->tls ? (X224::RDP_NEG_REQ) : (X224::RDP_NEG_NONE),
                        // X224::RESTRICTED_ADMIN_MODE_REQUIRED,
                        0,
                        rdp_neg_requestedProtocols);
-    this->trans.send(stream.get_data(), stream.get_offset());
+    trans.send(stream.get_data(), stream.get_offset());
     LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
 }
 

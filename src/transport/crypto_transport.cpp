@@ -854,7 +854,7 @@ void OutCryptoTransport::create_hash_file(
             extension, sizeof(extension)
         );
 
-        strncat(basename, extension, sizeof(basename)-1);
+        strncat(basename, extension, sizeof(basename) - strlen(basename) - 1);
         utils::back(basename) = '\0';
 
         MwrmWriterBuf hash_file_buf;

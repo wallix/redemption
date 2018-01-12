@@ -111,6 +111,7 @@
 
 #include <cstdlib>
 
+
 class mod_rdp : public mod_api, public rdp_api
 {
 private:
@@ -290,7 +291,8 @@ protected:
     CryptContext encrypt, decrypt;
 
     enum ModState : uint8_t {
-          MOD_RDP_NEGO
+          MOD_RDP_NEGO_INITIATE
+        , MOD_RDP_NEGO
         , MOD_RDP_BASIC_SETTINGS_EXCHANGE
         , MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER
         , MOD_RDP_CHANNEL_JOIN_CONFIRME
@@ -329,6 +331,7 @@ protected:
     std::string& close_box_extra_message_ref;
 
     RdpNego nego;
+    Transport& trans;
 
     char clientAddr[512];
 
@@ -895,7 +898,7 @@ public:
         , key_flags(mod_rdp_params.key_flags)
         , server_public_key_len(0)
         , connection_finalization_state(EARLY)
-        , state(MOD_RDP_NEGO)
+        , state(MOD_RDP_NEGO_INITIATE)
         , console_session(info.console_session)
         , front_bpp(info.bpp)
         , performanceFlags(info.rdp5_performanceflags &
@@ -911,11 +914,12 @@ public:
         , authentifier(authentifier)
         , report_message(report_message)
         , close_box_extra_message_ref(mod_rdp_params.close_box_extra_message_ref)
-        , nego( mod_rdp_params.enable_tls, trans, mod_rdp_params.target_user
+        , nego( mod_rdp_params.enable_tls, mod_rdp_params.target_user
               , mod_rdp_params.enable_nla, mod_rdp_params.target_host
               , mod_rdp_params.enable_krb, gen, timeobj
               , this->close_box_extra_message_ref, mod_rdp_params.lang
               , static_cast<RdpNego::Verbose>(mod_rdp_params.verbose))
+        , trans(trans)
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
@@ -1619,7 +1623,7 @@ public:
         }
     }
 
-    int get_fd() const override { return this->nego.trans.get_fd(); }
+    int get_fd() const override { return this->trans.get_fd(); }
 
 protected:
     std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
@@ -1660,7 +1664,7 @@ protected:
 
         std::unique_ptr<ToServerSender> to_server_sender =
             std::make_unique<ToServerSender>(
-                this->nego.trans,
+                this->trans,
                 this->encrypt,
                 this->encryptionLevel,
                 this->userid,
@@ -2295,7 +2299,7 @@ public:
         stream_data.out_copy_bytes(string_data, data_size);
 
         virtual_channel_pdu.send_to_server(
-            this->nego.trans, this->encrypt, this->encryptionLevel
+            this->trans, this->encrypt, this->encryptionLevel
           , this->userid, this->auth_channel_chanid
           , stream_data.get_offset()
           , this->auth_channel_flags
@@ -2328,7 +2332,7 @@ private:
             CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
             virtual_channel_pdu.send_to_server(
-                this->nego.trans, this->encrypt, this->encryptionLevel
+                this->trans, this->encrypt, this->encryptionLevel
               , this->userid, channel.chanid, length, flags, chunk, chunk_size);
         }
         else {
@@ -2356,7 +2360,7 @@ private:
 
                 LOG(LOG_INFO, "send to server");
 
-                virtual_channel_pdu.send_to_server( this->nego.trans, this->encrypt, this->encryptionLevel
+                virtual_channel_pdu.send_to_server( this->trans, this->encrypt, this->encryptionLevel
                                                   , this->userid, channel.chanid, length
                                                   , get_channel_control_flags(flags, length, remaining_data_length, virtual_channel_data_length)
                                                   , virtual_channel_data, virtual_channel_data_length);
@@ -2379,7 +2383,7 @@ private:
         }
 
         write_packets(
-            this->nego.trans,
+            this->trans,
             writer_data...,
             [this, channelId](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
                 MCS::SendDataRequest_Send mcs(
@@ -2436,7 +2440,7 @@ public:
 
         /* Generic Conference Control (T.124) ConferenceCreateRequest */
         write_packets(
-            this->nego.trans,
+            this->trans,
             [this, &hostname](StreamSize<65536-1024>, OutStream & stream) {
                 // ------------------------------------------------------------
                 GCC::UserData::CSCore cs_core;
@@ -2689,63 +2693,6 @@ public:
         this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
     }
 
-    void early_tls_security_exchange(InStream & stream)
-    {
-        if (bool(this->verbose & RDPVerbose::security)){
-            LOG(LOG_INFO, "mod_rdp::Early TLS Security Exchange");
-        }
-
-        switch (this->nego.state){
-        case RdpNego::NEGO_STATE_INITIAL:
-            LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
-            this->nego.send_negotiation_request();
-            this->nego.state = RdpNego::NEGO_STATE_NEGOCIATE;
-            this->event.reset_trigger_time();
-            break;
-
-        case RdpNego::NEGO_STATE_NEGOCIATE:
-            LOG(LOG_INFO, "nego->state=RdpNego::NEGO_STATE_NEGOCIATE");
-            LOG(LOG_INFO, "RdpNego::NEGO_STATE_%s",
-                (this->nego.nla) ? "NLA" :
-                (this->nego.tls) ? "TLS" :
-                                   "RDP");
-
-            if (!this->nego.recv_connection_confirm(
-                this->server_cert_store,
-                this->server_cert_check,
-                this->server_notifier,
-                this->certif_path.get(),
-                stream
-            )) {
-                this->enable_tls_state = true;
-                return ;
-            }
-            else {
-                this->enable_tls_state = false;
-                if (this->nego.state == RdpNego::NEGO_STATE_FINAL){
-                    this->send_connectInitialPDUwithGccConferenceCreateRequest();
-                }
-            }
-            break;
-
-        case RdpNego::NEGO_STATE_CREDSSP:
-            this->nego.recv_credssp(stream);
-            if (this->nego.state == RdpNego::NEGO_STATE_FINAL){
-                this->send_connectInitialPDUwithGccConferenceCreateRequest();
-            }
-            break;
-
-        case RdpNego::NEGO_STATE_FINAL:
-            //TODO: we should never go there, add checking code
-            LOG(LOG_INFO, "RdpNego::NEGO_STATE_FINAL");
-            break;
-        }
-
-        if (bool(this->verbose & RDPVerbose::security)){
-            LOG(LOG_INFO, "mod_rdp::Early TLS Security Exchange end");
-        }
-    }
-
     void basic_settings_exchange(InStream & x224_data)
     {
         if (bool(this->verbose & RDPVerbose::security)){
@@ -2857,11 +2804,11 @@ public:
                                         #else
                                         const unsigned char *p;
                                         int pklen;
-                                        if (!X509_PUBKEY_get0_param(NULL, &p, &pklen, NULL, key)) {
+                                        if (!X509_PUBKEY_get0_param(nullptr, &p, &pklen, nullptr, key)) {
                                             LOG(LOG_ERR, "Failed to get algorithm used for public key.");
                                             throw Error(ERR_SEC);
                                         }
-                                        if (!(server_public_key = d2i_RSAPublicKey(NULL, &p, pklen))) {
+                                        if (!(server_public_key = d2i_RSAPublicKey(nullptr, &p, pklen))) {
                                             LOG(LOG_ERR, "Failed to extract public key from certificate");
                                             throw Error(ERR_SEC);
                                         }
@@ -3048,7 +2995,7 @@ public:
             LOG(LOG_INFO, "Send MCS::ErectDomainRequest");
         }
         write_packets(
-            this->nego.trans,
+            this->trans,
             [](StreamSize<256>, OutStream & mcs_header){
                 MCS::ErectDomainRequest_Send mcs(
                     static_cast<OutPerStream&>(mcs_header),
@@ -3063,7 +3010,7 @@ public:
             LOG(LOG_INFO, "Send MCS::AttachUserRequest");
         }
         write_packets(
-            this->nego.trans,
+            this->trans,
             [](StreamSize<256>, OutStream & mcs_data){
                 MCS::AttachUserRequest_Send mcs(mcs_data, MCS::PER_ENCODING);
                 (void)mcs;
@@ -3103,7 +3050,7 @@ public:
                 LOG(LOG_INFO, "cjrq[%zu] = %" PRIu16, index, channels_id[index]);
             }
             write_packets(
-                this->nego.trans,
+                this->trans,
                 [this, &channels_id, index](StreamSize<256>, OutStream & mcs_cjrq_data){
                     MCS::ChannelJoinRequest_Send mcs(
                         mcs_cjrq_data, this->userid,
@@ -4270,49 +4217,6 @@ public:
 
     TpduBuffer buf;
 
-    bool enable_tls_state = false;
-
-    bool process_nego(bool waked_up_by_time)
-    {
-        bool run = true;
-        try {
-            if (!waked_up_by_time && !this->enable_tls_state) {
-                this->buf.load_data(this->nego.trans.get_transport());
-            }
-        }
-        catch (Error const &) {
-            if (this->nego.state == RdpNego::NEGO_STATE_CREDSSP) {
-                this->nego.fallback_to_tls();
-                run = false;
-            }
-        }
-        while (run && this->state == MOD_RDP_NEGO) {
-            if (this->nego.state == RdpNego::NEGO_STATE_NEGOCIATE) {
-                if (!waked_up_by_time && this->buf.next_pdu()) {
-                    InStream x224_data(this->buf.current_pdu_buffer());
-                    this->early_tls_security_exchange(x224_data);
-                }
-                else {
-                    run = false;
-                }
-            }
-            else if (this->nego.state == RdpNego::NEGO_STATE_CREDSSP) {
-                if (!waked_up_by_time && this->buf.next_credssp()) {
-                    InStream credssp_data(this->buf.current_pdu_buffer());
-                    this->early_tls_security_exchange(credssp_data);
-                }
-                else {
-                    run = false;
-                }
-            }
-            else {
-                InStream x224_data;
-                this->early_tls_security_exchange(x224_data);
-            }
-        }
-        return run;
-    }
-
     void draw_event(time_t now, gdi::GraphicApi & drawable_) override
     {
         //LOG(LOG_INFO, "mod_rdp::draw_event()");
@@ -4329,11 +4233,26 @@ public:
         bool run = true;
         bool waked_up_by_time = this->event.is_waked_up_by_time();
 
-        if (this->state == MOD_RDP_NEGO) {
-            run = this->process_nego(waked_up_by_time);
+        if (this->state == MOD_RDP_NEGO_INITIATE) {
+            LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
+            this->nego.send_negotiation_request(this->trans);
+            this->event.reset_trigger_time();
+            this->state = MOD_RDP_NEGO;
+            run = false;
+        }
+        else if (this->state == MOD_RDP_NEGO && !waked_up_by_time) {
+            run = this->nego.recv_next_data(this->buf, this->trans, RdpNego::ServerCert{
+                this->server_cert_store,
+                this->server_cert_check,
+                this->certif_path.get(),
+                this->server_notifier
+            });
+            if (not run) {
+                this->send_connectInitialPDUwithGccConferenceCreateRequest();
+            }
         }
         else if (!waked_up_by_time) {
-            this->buf.load_data(this->nego.trans.get_transport());
+            this->buf.load_data(this->trans);
         }
 
         if (run && !waked_up_by_time) {
@@ -4343,6 +4262,7 @@ public:
                 try{
                     //LOG(LOG_INFO, "mod_rdp::draw_event() state switch");
                     switch (this->state){
+                    case MOD_RDP_NEGO_INITIATE:
                     case MOD_RDP_NEGO:
                         assert(false);
                         break;
@@ -4423,7 +4343,7 @@ public:
                     StaticOutStream<256> stream;
                     X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
                     try {
-                        this->nego.trans.send(stream.get_data(), stream.get_offset());
+                        this->trans.send(stream.get_data(), stream.get_offset());
                         LOG(LOG_INFO, "Connection to server closed");
                     }
                     catch(Error const & e){
@@ -4474,6 +4394,7 @@ public:
                                     this->close_box_extra_message_ref += statestr;         \
                                     this->close_box_extra_message_ref += ")";              \
                                 break
+                            CASE(MOD_RDP_NEGO_INITIATE, trkeys::err_mod_rdp_nego);
                             CASE(MOD_RDP_NEGO, trkeys::err_mod_rdp_nego);
                             CASE(MOD_RDP_BASIC_SETTINGS_EXCHANGE, trkeys::err_mod_rdp_basic_settings_exchange);
                             CASE(MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER, trkeys::err_mod_rdp_channel_connection_attach_user);
@@ -6637,7 +6558,7 @@ public:
         }
 
         write_packets(
-            this->nego.trans,
+            this->trans,
             [&](StreamSize<256>, OutStream & stream) {
                 switch (message_type) {
                 case RDP_INPUT_SCANCODE:
@@ -6700,7 +6621,7 @@ public:
 
                 rrpdu.addInclusiveRect(r.x, r.y, r.x + r.cx - 1, r.y + r.cy - 1);
 
-                rrpdu.emit(this->nego.trans);
+                rrpdu.emit(this->trans);
             }
         }
         //this->draw_event(time(nullptr), this->front);
@@ -6724,7 +6645,7 @@ public:
                     rrpdu.addInclusiveRect(rect.x, rect.y, rect.x + rect.cx - 1, rect.y + rect.cy - 1);
                 }
             }
-            rrpdu.emit(this->nego.trans);
+            rrpdu.emit(this->trans);
         }
         if (bool(this->verbose & RDPVerbose::input)){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate 2 done");
@@ -7711,7 +7632,7 @@ private:
             LOG(LOG_INFO, "SEND MCS DISCONNECT PROVIDER ULTIMATUM PDU");
         }
         write_packets(
-            this->nego.trans,
+            this->trans,
             [](StreamSize<256>, OutStream & mcs_data) {
                 MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
             },

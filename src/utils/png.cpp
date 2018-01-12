@@ -344,6 +344,7 @@ void set_rows_from_image_chunk(
         //        auto & chunk_trans = *static_cast<InChunkedImage*>(png_ptr->io_ptr);
         auto & chunk_trans = *static_cast<InChunkedImage*>(png_get_io_ptr(png_ptr));
         size_t total_len = 0;
+        char const * msg_error = "Failed to read embedded image from WRM";
         while (total_len < len){
             size_t remaining = chunk_trans.in_stream.in_remain();
             if (remaining >= (len - total_len)){
@@ -368,11 +369,11 @@ void set_rows_from_image_chunk(
             }
             break;
             case WrmChunkType::LAST_IMAGE_CHUNK:
-                LOG(LOG_ERR, "Failed to read embedded image from WRM (transport closed)");
-                png_error(png_ptr, "Failed to read embedded image from WRM (transport closed)");
+                msg_error = "Failed to read embedded image from WRM (transport closed)";
+                REDEMPTION_CXX_FALLTHROUGH;
             default:
-                LOG(LOG_ERR, "Failed to read embedded image from WRM");
-                png_error(png_ptr, "Failed to read embedded image from WRM");
+                LOG(LOG_ERR, "%s", msg_error);
+                png_error(png_ptr, msg_error);
             }
         }
     };

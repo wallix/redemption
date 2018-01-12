@@ -250,10 +250,16 @@ video_recorder::video_recorder(
         }
     }
 
-    bool avcodec_not_close_if_success = false;
-    SCOPE_EXIT(if (!avcodec_not_close_if_success) {
-        avcodec_close(this->video_st->codec);
-    });
+    struct AvCodecPtr
+    {
+        video_recorder * ptr;
+        ~AvCodecPtr() {
+            if (ptr) {
+                avcodec_close(ptr->video_st->codec);
+            }
+        }
+    };
+    AvCodecPtr av_codec_close_if_fails{this};
 
     if (!(this->oc->oformat->flags & AVFMT_RAWPICTURE)) {
         /* allocate output buffer */
@@ -333,7 +339,7 @@ video_recorder::video_recorder(
         throw Error(ERR_RECORDER_FAILED_TO_INITIALIZE_CONVERSION_CONTEXT);
     }
 
-    avcodec_not_close_if_success = true;
+    av_codec_close_if_fails.ptr = nullptr;
 
     av_init_packet(&this->pkt);
     this->pkt.data = this->video_outbuf.get();

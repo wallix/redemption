@@ -34,8 +34,9 @@ class ServerNotifier;
 class Random;
 class TimeObj;
 class InStream;
+class TpduBuffer;
 
-class RdpNego
+struct RdpNego
 {
 public:
     enum {
@@ -46,36 +47,21 @@ public:
     const bool nla;
 
 private:
-    bool krb;
-    bool restricted_admin_mode;
+    const bool krb;
+    const bool restricted_admin_mode;
 
     bool nla_tried = false;
 
 public:
-    enum
-    {
-        NEGO_STATE_INITIAL,
-        NEGO_STATE_NEGOCIATE,
-        // NEGO_STATE_FAIL, // Negotiation failure */
-        NEGO_STATE_FINAL,
-        NEGO_STATE_CREDSSP
-    } state;
-
     uint32_t selected_protocol;
 
 private:
     uint32_t enabled_protocols;
     char username[128];
 
-public:
-    OutTransport trans;
-
-private:
     uint8_t hostname[16];
     uint8_t user[128];
-public: // for test_nego
     uint8_t password[2048];
-private:
     uint8_t domain[256];
     const char * target_host;
 
@@ -89,6 +75,17 @@ private:
     std::string& extra_message;
     Translation::language_t lang;
 
+    enum class REDEMPTION_CXX_NODISCARD State
+    {
+        Negociate,
+        SslHybrid,
+        Tls,
+        Credssp,
+        Final,
+    };
+
+    State state = State::Negociate;
+
 public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
@@ -97,32 +94,41 @@ public:
         negotiation = 128,
     };
 
-public:
-    RdpNego(const bool tls, Transport & socket_trans, const char * username, bool nla,
-            const char * target_host, const char krb, Random & rand, TimeObj & timeobj,
-            std::string& extra_message, Translation::language_t lang,
-            const Verbose verbose = {});
+    bool enhanced_rdp_security_is_in_effect() const;
+    void set_lb_info(uint8_t * lb_info, size_t lb_info_length);
+
+    RdpNego(
+        const bool tls, const char * username, bool nla,
+        const char * target_host, const char krb, Random & rand, TimeObj & timeobj,
+        std::string& extra_message, Translation::language_t lang,
+        const Verbose verbose = {});
+
     ~RdpNego();
 
     void set_identity(char const * user, char const * domain, char const * pass, char const * hostname);
-    void set_lb_info(uint8_t * lb_info, size_t lb_info_length);
 
-    // 2.2.1.2 Server X.224 Connection Confirm PDU
-    // 2.2.1.2.1 RDP Negotiation Response (RDP_NEG_RSP)
-    // 2.2.1.2.2 RDP Negotiation Failure (RDP_NEG_FAILURE)
-    void recv_credssp(InStream & stream);
+    void send_negotiation_request(OutTransport trans);
 
-    bool recv_connection_confirm(
-        bool server_cert_store,
-        ServerCertCheck server_cert_check,
-        ServerNotifier & server_notifier,
-        const char * certif_path,
-        InStream & stream);
+    struct ServerCert
+    {
+        const bool            store;
+        const ServerCertCheck check;
+        const char *          path;
+        ServerNotifier&       notifier;
+    };
 
-    // 2.2.1.1 Client X.224 Connection Request PDU
-    // ===========================================
-    void send_negotiation_request();
-    void fallback_to_tls();
+    /// \return false if terminal state
+    REDEMPTION_CXX_NODISCARD
+    bool recv_next_data(TpduBuffer& buf, Transport& trans, ServerCert const& cert);
 
-    bool enhanced_rdp_security_is_in_effect() const;
+private:
+    State fallback_to_tls(OutTransport trans);
+
+    State recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerCert const& cert);
+
+    State activate_ssl_tls(OutTransport trans, ServerCert const& cert);
+
+    State activate_ssl_hybrid(OutTransport trans, ServerCert const& cert);
+
+    State recv_credssp(OutTransport trans, InStream stream);
 };
