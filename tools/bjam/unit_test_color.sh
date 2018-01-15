@@ -30,6 +30,9 @@ s/^terminate called.*$/'$term_mess'&'$reset'/;t
 s/^  what\(\): .*$/'$exception'&'$reset'/;t
 s/^     "([^"]+)" /    "'$exec'\1'$reset'" /;t
 s/^\*\*\* [0-9]+ failures? .*$/'$err'&'$reset'/;t
-s/^(test_[^:]+): ([^:]+:[^:]+): (.*): Assertion `(.*) failed.$/'$file'\2'$reset': '$err'failed'$reset' (\1): '$op'\3'$reset': Assertion `'$code'\4'$reset'`/;t
+/Assert/{
+  s/([^:]+): ([^:]+:[^:]+): ([^:]+): Assertion `(.*) failed.$/'$file'\2'$reset': '$err'failed'$reset' (\1): '$op'\3'$reset': Assertion `'$code'\4'$reset'`/;t
+  s/^.*$/'$err'[[&]]'$reset'/;t
+}
 ' \
 "$@"
