@@ -23,8 +23,30 @@ Author(s): Jonathan Poelen
 #include "utils/rect.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
+struct CxCy
+{
+    explicit CxCy(checked_int<uint16_t> cx, checked_int<uint16_t> cy) noexcept
+      : cx(cx)
+      , cy(cy)
+    {}
+
+    uint16_t const cx;
+    uint16_t const cy;
+};
+
+struct SubCxCy
+{
+    explicit SubCxCy(checked_int<uint16_t> cx, checked_int<uint16_t> cy) noexcept
+      : cx(cx)
+      , cy(cy)
+    {}
+
+    uint16_t const cx;
+    uint16_t const cy;
+};
+
 /**
- * \brief apply f on each splitted sub-rect
+ * \brief apply f on each splitted sub-rect with maximal size specified by \c sub_wh
  * \param f  fonctor with a Rect parameter
 
     +-----+-----+-+
@@ -35,26 +57,20 @@ Author(s): Jonathan Poelen
     |  4  |  5  |6|
     +-----+-----+-┘
 */
-
 template<class F>
-void contiguous_sub_rect_f(
-    checked_int<uint16_t> const cx_,
-    checked_int<uint16_t> const cy_,
-    checked_int<uint16_t> const sub_cx_cy_,
-    F && f)
+void contiguous_sub_rect_f(CxCy wh, SubCxCy sub_wh, F && f)
 {
-    uint16_t const cx = cx_;
-    uint16_t const cy = cy_;
-    uint16_t const sub_cx_cy = sub_cx_cy_;
-
     Rect rect;
 
-    for (rect.y = 0; rect.y < cy; rect.y += sub_cx_cy) {
-        rect.cy = std::min(sub_cx_cy, uint16_t(cy - rect.y));
+    for (rect.y = 0; rect.y < wh.cy; rect.y += sub_wh.cy) {
+        rect.cy = std::min(sub_wh.cy, uint16_t(wh.cy - rect.y));
 
-        for (rect.x = 0; rect.x < cx ; rect.x += sub_cx_cy) {
-            rect.cx = std::min(sub_cx_cy, uint16_t(cx - rect.x));
+        for (rect.x = 0; rect.x < wh.cx ; rect.x += sub_wh.cx) {
+            rect.cx = std::min(sub_wh.cx, uint16_t(wh.cx - rect.x));
             f(const_cast<Rect const&>(rect));
         }
     }
 }
+
+// template<class F>
+// void optimal_sub_rect_f(CxCy wh, std::size_t sub_pixcount, F && f);

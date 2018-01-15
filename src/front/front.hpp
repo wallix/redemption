@@ -224,34 +224,32 @@ private:
                 Bitmap new_bmp(this->capture_bpp, bmp);
 
                 if (static_cast<size_t>(new_bmp.cx() * new_bmp.cy() * new_bmp.bpp()) > this->max_bitmap_size_) {
-                    const uint16_t max_image_width =
-                        std::min<uint16_t>(
-                                align4(this->max_bitmap_size_ / nbbytes(new_bmp.bpp())),
-                                new_bmp.cx()
-                            );
+                    const uint16_t max_image_width
+                      = std::min<uint16_t>(
+                            align4(this->max_bitmap_size_ / nbbytes(new_bmp.bpp())),
+                            new_bmp.cx()
+                        );
                     const uint16_t max_image_height = this->max_bitmap_size_ / (max_image_width * nbbytes(new_bmp.bpp()));
 
-
-                    for (uint32_t y = 0; y < new_bmp.cy(); y += max_image_height) {
-                        for (uint32_t x = 0; x < new_bmp.cx(); x += max_image_width) {
-                            const uint16_t sub_image_width = std::min<uint16_t>(new_bmp.cx() - x, max_image_width);
-                            const uint16_t sub_image_height = std::min<uint16_t>(new_bmp.cy() - y, max_image_height);
-
-                            Bitmap sub_image(new_bmp, Rect(x, y, sub_image_width, sub_image_height));
+                    contiguous_sub_rect_f(
+                        CxCy{new_bmp.cx(), new_bmp.cy()},
+                        SubCxCy{max_image_width, max_image_height},
+                        [&](Rect subrect){
+                            Bitmap sub_image(new_bmp, subrect);
 
                             StaticOutStream<65535> bmp_stream;
                             sub_image.compress(this->capture_bpp, bmp_stream);
 
                             RDPBitmapData sub_image_data = bitmap_data;
 
-                            sub_image_data.dest_left += x;
-                            sub_image_data.dest_top  += y;
+                            sub_image_data.dest_left += subrect.x;
+                            sub_image_data.dest_top  += subrect.y;
 
-                            sub_image_data.dest_right = std::min<uint16_t>(sub_image_data.dest_left + sub_image_width - 1, bitmap_data.dest_right);
-                            sub_image_data.dest_bottom = sub_image_data.dest_top + sub_image_height - 1;
+                            sub_image_data.dest_right = std::min<uint16_t>(sub_image_data.dest_left + subrect.cx - 1, bitmap_data.dest_right);
+                            sub_image_data.dest_bottom = sub_image_data.dest_top + subrect.cy - 1;
 
-                            sub_image_data.width = sub_image_width;
-                            sub_image_data.height = sub_image_height;
+                            sub_image_data.width = subrect.cx;
+                            sub_image_data.height = subrect.cy;
 
                             sub_image_data.bits_per_pixel = sub_image.bpp();
                             sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
@@ -259,7 +257,7 @@ private:
 
                             GraphicsUpdatePDU::draw(sub_image_data, sub_image);
                         }
-                    }
+                    );
                 }
                 else {
                     StaticOutStream<65535> bmp_stream;
@@ -4292,7 +4290,7 @@ protected:
                         const int16_t x = cmd.bk.x + draw_pos_ref + fc.offset;
                         const int16_t y = cmd.bk.y;
 
-                        contiguous_sub_rect_f(fc.width, fc.height, 64, [&](Rect rect){
+                        contiguous_sub_rect_f(CxCy{fc.width, fc.height}, SubCxCy{64, 64}, [&](Rect rect){
                             GlyphTo24Bitmap glyphBitmap(fc, color_fore, color_back);
 
                             RDPBitmapData rdpbd;
@@ -4468,8 +4466,9 @@ private:
         else {
             // if not we have to split it
             const uint16_t TILE_CX = ((::nbbytes(this->client_info.bpp) * 64 * 64 < RDPSerializer::MAX_ORDERS_SIZE) ? 64 : 32);
+            const uint16_t TILE_CY = TILE_CX;
 
-            contiguous_sub_rect_f(dst_cx, dst_cy, TILE_CX, [&](Rect r){
+            contiguous_sub_rect_f(CxCy{dst_cx, dst_cy}, SubCxCy{TILE_CX, TILE_CY}, [&](Rect r){
                 const Rect dst_tile = r.offset(dst_x, dst_y);
                 const Rect src_tile = r.offset(cmd.srcx, cmd.srcy);
                 this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip, color_ctx...);
