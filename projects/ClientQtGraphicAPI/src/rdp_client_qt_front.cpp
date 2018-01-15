@@ -125,10 +125,6 @@ public:
         int writeData_to_wait = 0;
         int file_to_write_id = 0;
 
-        enum : uint32_t {
-            NEW_FILE_ATTRIBUTES =  fscc::FILE_SUPPORTS_USN_JOURNAL | fscc::FILE_SUPPORTS_OPEN_BY_FILE_ID | fscc::FILE_SUPPORTS_EXTENDED_ATTRIBUTES | fscc::FILE_SUPPORTS_HARD_LINKS | fscc::FILE_SUPPORTS_TRANSACTIONS | fscc::FILE_NAMED_STREAMS | fscc::FILE_SUPPORTS_ENCRYPTION | fscc::FILE_SUPPORTS_OBJECT_IDS | fscc::FILE_SUPPORTS_REPARSE_POINTS | fscc::FILE_SUPPORTS_SPARSE_FILES | fscc::FILE_VOLUME_QUOTAS | fscc::FILE_FILE_COMPRESSION | fscc::FILE_PERSISTENT_ACLS | fscc::FILE_UNICODE_ON_DISK | fscc::FILE_CASE_PRESERVED_NAMES | fscc::FILE_CASE_SENSITIVE_SEARCH // = 0 x03e700ff
-        };
-
         uint32_t current_dir_id = 0;
         std::vector<std::string> elem_in_path;
 
@@ -1019,6 +1015,7 @@ public:
             case TS_RAIL_ORDER_HANDSHAKE:
                 LOG(LOG_INFO, "SERVER >> RAIL CHANNEL TS_RAIL_ORDER_HANDSHAKE");
                 {
+                this->screen->hide();
 
                 HandshakePDU hspdu;
                 hspdu.receive(stream);
@@ -1416,7 +1413,6 @@ public:
                 LOG(LOG_WARNING, "SERVER >> RAIL CHANNEL DEFAULT 0x%04x %s", header.orderType(), get_RAIL_orderType_name(header.orderType()));
                 break;
         }
-
     }
 
     void draw(const RDP::RAIL::ActivelyMonitoredDesktop  & cmd) override {
@@ -1624,8 +1620,6 @@ public:
                     }
                 }
             }
-
-             ;
         }
     }
 
@@ -1700,7 +1694,7 @@ public:
                     header_out.emit(out_stream);
 
                     rdpsnd::ClientAudioFormatsandVersionHeader cafvh( rdpsnd::TSSNDCAPS_ALIVE |
-                                                                        rdpsnd::TSSNDCAPS_VOLUME
+                                                                        rdpsnd::TSSNDCAPS_VOLUME 
                                                                     , 0x7fff7fff
                                                                     , 0
                                                                     , 0
@@ -2741,7 +2735,7 @@ public:
                                     const char * VolumeLabel                = "";
                                     const char * FileSystemName             = "ext4";
 
-                                    uint32_t FileSystemAttributes           = FileSystemData::NEW_FILE_ATTRIBUTES;
+                                    uint32_t FileSystemAttributes           = fscc::NEW_FILE_ATTRIBUTES;
                                     uint32_t SectorsPerAllocationUnit       = 8;
 
                                     uint32_t BytesPerSector                 = 0;
