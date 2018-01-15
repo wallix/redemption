@@ -947,32 +947,11 @@ public:
         case MODULE_INTERNAL_WIDGETTEST:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
-
-                Rect adjusted_client_execute_rect =
-                    this->client_execute.adjust_rect(get_widget_rect(
-                            this->front.client_info.width,
-                            this->front.client_info.height,
-                            this->front.client_info.cs_monitor
-                        ));
-
-                std::unique_ptr<mod_api> managed_mod(
-                        new Bouncer2Mod(
-                                this->front,
-                                adjusted_client_execute_rect.cx - 8 * 2,
-                                adjusted_client_execute_rect.cy - 8 * 2,
-                                this->ini.get<cfg::font>(),
-                                true
-                            )
-                    );
                 this->set_mod(new WidgetTestMod(
-                    this->ini,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
-                    adjusted_client_execute_rect,
-                    std::move(managed_mod),
-                    this->client_execute,
-                    this->front.client_info.cs_monitor
+                    this->ini.get<cfg::font>()
                 ));
                 LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
             }

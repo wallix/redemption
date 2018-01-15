@@ -22,14 +22,9 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#include "configs/config.hpp"
 #include "core/client_info.hpp"
-#include "core/RDP/capabilities/window.hpp"
-#include "core/RDP/gcc/userdata/cs_monitor.hpp"
-#include "mod/internal/bouncer2_mod.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 #include "mod/internal/client_execute.hpp"
-#include "keyboard/keymap2.hpp"
 #include "test_only/front/fake_front.hpp"
 
 RED_AUTO_TEST_CASE(TestDialogMod)
@@ -43,25 +38,10 @@ RED_AUTO_TEST_CASE(TestDialogMod)
     info.height = 600;
 
     FakeFront front(info, 0);
-    WindowListCaps window_list_caps;
-    ClientExecute client_execute(front, window_list_caps, 0);
 
     Font font;
 
-    Inifile ini;
-
-    Keymap2 keymap;
-    keymap.init_layout(info.keylayout);
-
-    std::unique_ptr<mod_api> managed_mod(
-        new Bouncer2Mod(front, 800, 600, font, true));
-
-    GCC::UserData::CSMonitor cs_monitor;
-
-    cs_monitor.monitorCount = 0;
-
-    WidgetTestMod d(ini, front, 800, 600, Rect(0, 0, 799, 599),
-        std::move(managed_mod), client_execute, cs_monitor);
+    WidgetTestMod d(front, 800, 600, font);
     d.draw_event(100001, front);
 /*
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate

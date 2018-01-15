@@ -18,36 +18,26 @@
     Author(s): Christophe Grosjean, Meng Tan, Jonathan Poelen, Raphael Zhou
 */
 
-#include "mod/internal/widget_test_mod.hpp"
 #include "core/front_api.hpp"
-#include "configs/config.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "mod/internal/widget_test_mod.hpp"
+#include "keyboard/keymap2.hpp"
+#include "utils/bitmap.hpp"
+#include "utils/bitmap_private_data.hpp"
+#include "utils/sugar/update_lock.hpp"
 
-void WidgetTestMod::ManagedModEventHandler
-  ::operator()(time_t now, wait_obj& /*event*/, gdi::GraphicApi& drawable)
-{
-    mod_api& mod = this->mod_.widget_test.get_managed_mod();
-    mod.draw_event(now, drawable);
-}
+#include <cstring>
+
+
+// Pimpl
+class WidgetTestMod::WidgetTestModPrivate {};
 
 WidgetTestMod::WidgetTestMod(
-    WidgetTestModVariables vars,
-    FrontAPI& front, uint16_t width, uint16_t height,
-    Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
-    ClientExecute& client_execute,
-    const GCC::UserData::CSMonitor& cs_monitor)
-: LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(),
-                       client_execute, vars.get<cfg::theme>())
-, widget_test(front, widget_rect.x, widget_rect.y,
-              widget_rect.cx, widget_rect.cy,
-              this->screen, this, std::move(managed_mod),
-              vars.get<cfg::font>(), cs_monitor, width, height)
-, managed_mod_event_handler(*this)
+    FrontAPI & front, uint16_t width, uint16_t height, Font const & font)
+: InternalMod(front, width, height, font, Theme{}, false)
 {
-    this->screen.add_widget(&this->widget_test);
-
-    this->screen.set_widget_focus(&this->widget_test, Widget::focus_reason_tabkey);
-
-    this->screen.rdp_input_invalidate(this->screen.get_rect());
+    front.server_resize(width, height, 8);
 }
 
 WidgetTestMod::~WidgetTestMod()
@@ -55,71 +45,89 @@ WidgetTestMod::~WidgetTestMod()
     this->screen.clear();
 }
 
-// RdpInput
+void WidgetTestMod::rdp_input_invalidate(Rect /*r*/)
+{}
 
-void WidgetTestMod::rdp_input_invalidate(Rect r)
+void WidgetTestMod::rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/)
+{}
+
+void WidgetTestMod::rdp_input_scancode(
+    long /*param1*/, long /*param2*/, long /*param3*/, long /*param4*/, Keymap2 * keymap)
 {
-    LocallyIntegrableMod::rdp_input_invalidate(r);
-
-    this->widget_test.rdp_input_invalidate(r);
+    if (keymap->nb_kevent_available() > 0
+        && keymap->get_kevent() == Keymap2::KEVENT_ENTER) {
+        this->event.signal = BACK_EVENT_STOP;
+        this->event.set_trigger_time(wait_obj::NOW);
+    }
 }
 
-void WidgetTestMod::rdp_input_up_and_running()
+void WidgetTestMod::refresh(Rect clip)
 {
-    mod_api& mod = this->widget_test.get_managed_mod();
-
-    mod.rdp_input_up_and_running();
+    this->rdp_input_invalidate(clip);
 }
 
-// Callback
-
-void WidgetTestMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name,
-                            InStream& chunk, size_t length,
-                            uint32_t flags)
+void WidgetTestMod::draw_event(time_t, gdi::GraphicApi& gd)
 {
-    LocallyIntegrableMod::send_to_mod_channel(
-        front_channel_name, chunk, length, flags);
+    update_lock<decltype(this->front)> update_lock{this->front};
 
-    mod_api& mod = this->widget_test.get_managed_mod();
+    auto mono_palette = [&](BGRColor const& color) {
+        BGRColor d[256];
+        for (auto & c : d) {
+            c = color;
+        }
+        return BGRPalette{d};
+    };
 
-    mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
-}
+    const auto clip = this->get_screen_rect();
+    const auto color_ctx = gdi::ColorCtx::depth8(BGRPalette::classic_332());
+    const auto encode_color = encode_color8();
+    const auto cx = clip.cx / 2;
+    const auto cy = clip.cy / 3;
 
-// mod_api
+    auto send_mono_palette = [&](BGRColor const& color){
+        this->front.sync();
+        this->front.set_palette(mono_palette(color));
+    };
 
-void WidgetTestMod::draw_event(time_t now, gdi::GraphicApi& gapi)
-{
-    LocallyIntegrableMod::draw_event(now, gapi);
+    auto draw_rect = [&](int x, int y, BGRColor color){
+        this->front.draw(RDPOpaqueRect(Rect(x*cx, y*cy, cx, cy), encode_color(color)), clip, color_ctx);
+    };
 
-    this->event.reset_trigger_time();
-}
+    auto draw_text = [&](int x, int y, char const* txt){
+        gdi::server_draw_text(gd, this->font(), 10+x*cx, 10+y*cy, txt, encode_color(WHITE), encode_color(BLACK), color_ctx, clip);
+    };
 
-void WidgetTestMod::get_event_handlers(std::vector<EventHandler>& out_event_handlers)
-{
-    mod_api& mod = this->widget_test.get_managed_mod();
+    auto draw_img = [&](int x, int y, int col, Bitmap const& bitmap){
+        this->front.draw(RDPMemBlt(col, Rect(x*cx, y*cy, cx, cy), 0xCC, 0, 0, 0), clip, bitmap);
+    };
 
-    mod.get_event_handlers(out_event_handlers);
+    auto plain_img = [&](BGRColor const& color){
+        Bitmap img;
+        Bitmap::PrivateData::Data & data = Bitmap::PrivateData::initialize(img, 8, cx, cy);
+        memset(data.get(), encode_color(color).as_bgr().to_u32(), data.line_size() * cy);
+        //data.palette() = BGRPalette::classic_332();
+        data.palette() = mono_palette(color);
+        return img;
+    };
 
-    out_event_handlers.emplace_back(
-        &mod.get_event(),
-        &this->managed_mod_event_handler,
-        mod.get_fd()
-    );
+    const auto img1 = plain_img(GREEN);
+    const auto img2 = plain_img(ANTHRACITE);
 
-    LocallyIntegrableMod::get_event_handlers(out_event_handlers);
-}
+    draw_rect(0, 0, BLUE);
+    draw_rect(1, 0, RED);
+    draw_img(0, 1, 0, img1);
+    draw_img(1, 1, 1, img2);
+    draw_img(0, 2, 0, img1);
+    draw_img(1, 2, 1, img2);
 
-bool WidgetTestMod::is_up_and_running()
-{
-    mod_api& mod = this->widget_test.get_managed_mod();
+//     this->front.sync();
+//     this->front.set_palette(BGRPalette::classic_332_rgb());
+    draw_text(0, 0, "blue");
+    draw_text(1, 0, "red");
+    draw_text(0, 1, "cyan img");
+    draw_text(1, 1, "pink img");
+    draw_text(0, 2, "yellow palette");
+    draw_text(1, 2, "yellow palette");
 
-    return mod.is_up_and_running();
-}
-
-void WidgetTestMod::move_size_widget(int16_t left, int16_t top, uint16_t width,
-                        uint16_t height)
-{
-    this->widget_test.move_size_widget(left, top, width, height);
-
-    this->rdp_input_invalidate(Rect(left, top, width, height));
+    this->event.set_trigger_time(std::chrono::seconds(3));
 }

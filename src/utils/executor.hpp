@@ -209,13 +209,13 @@ struct EventInitializer
 enum class ExitStatus { Error, Success, };
 
 #ifdef IN_IDE_PARSER
-struct NothingConcept_
+struct SubExecutorBuilderConcept_
 {
-    template<class F> NothingConcept_ on_action (F&&) && { return *this; }
-    template<class F> NothingConcept_ on_timeout(F&&) && { return *this; }
-    template<class F> NothingConcept_ on_exit   (F&&) && { return *this; }
+    template<class F> SubExecutorBuilderConcept_ on_action (F&&) && { return *this; }
+    template<class F> SubExecutorBuilderConcept_ on_timeout(F&&) && { return *this; }
+    template<class F> SubExecutorBuilderConcept_ on_exit   (F&&) && { return *this; }
 
-    template<class T> NothingConcept_(T const &) noexcept;
+    template<class T> SubExecutorBuilderConcept_(T const &) noexcept;
 };
 
 struct ExecutorContextConcept_
@@ -225,7 +225,7 @@ struct ExecutorContextConcept_
     ExecutorResult exit_on_error();
     ExecutorResult exit_on_success();
 
-    template<class... Args> NothingConcept_ sub_executor(Args&&...);
+    template<class... Args> SubExecutorBuilderConcept_ sub_executor(Args&&...);
 };
 
 struct ExecutorTimeoutContextConcept_ : ExecutorContextConcept_
@@ -249,36 +249,36 @@ struct ExecutorExitContextConcept_ : ExecutorContextConcept_
 
 
 template<class EventCtx, bool Initial, int Mask = 0>
-struct REDEMPTION_CXX_NODISCARD SetNothing
+struct REDEMPTION_CXX_NODISCARD SetSubExecutorBuilder
 {
     template<class F>
-    SetNothing<EventCtx, Initial, Mask | 1>
+    SetSubExecutorBuilder<EventCtx, Initial, Mask | 1>
     on_action(F&& f) &&
     {
         static_assert(!(Mask & 1), "on_action already set");
         this->event_initializer.init_on_action(static_cast<F&&>(f));
-        return SetNothing<EventCtx, Initial, Mask | 1>{this->event_initializer};
+        return SetSubExecutorBuilder<EventCtx, Initial, Mask | 1>{this->event_initializer};
     }
 
     template<class F>
-    SetNothing<EventCtx, Initial, Mask | 2>
+    SetSubExecutorBuilder<EventCtx, Initial, Mask | 2>
     on_timeout(F&& f) &&
     {
         static_assert(!(Mask & 2), "on_timeout already set");
         this->event_initializer.init_on_timeout(static_cast<F&&>(f));
-        return SetNothing<EventCtx, Initial, Mask | 2>{this->event_initializer};
+        return SetSubExecutorBuilder<EventCtx, Initial, Mask | 2>{this->event_initializer};
     }
 
     template<class F>
-    SetNothing<EventCtx, Initial, Mask | 4>
+    SetSubExecutorBuilder<EventCtx, Initial, Mask | 4>
     on_exit(F&& f) &&
     {
         static_assert(!(Mask & 4), "on_exit already set");
         this->event_initializer.init_on_exit(static_cast<F&&>(f));
-        return SetNothing<EventCtx, Initial, Mask | 4>{this->event_initializer};
+        return SetSubExecutorBuilder<EventCtx, Initial, Mask | 4>{this->event_initializer};
     }
 
-    explicit SetNothing(EventInitializer<EventCtx> event_initializer) noexcept
+    explicit SetSubExecutorBuilder(EventInitializer<EventCtx> event_initializer) noexcept
       : event_initializer(event_initializer)
     {}
 
@@ -289,77 +289,71 @@ private:
 // for pretty error
 class ExecutorCompleted {};
 
-#define MK_NothingFinal(i, mem)                                           \
-    template<class EventCtx>                                              \
-    struct REDEMPTION_CXX_NODISCARD SetNothing<EventCtx, false, i>        \
-    {                                                                     \
-        template<class F>                                                 \
-        ExecutorResult mem(F&& f) &&                                      \
-        {                                                                 \
-            this->event_initializer.init_##mem(static_cast<F&&>(f));      \
-            return detail::FriendExecutorResult::Nothing;                 \
-        }                                                                 \
-                                                                          \
-        SetNothing(EventInitializer<EventCtx> event_initializer) noexcept \
-        : event_initializer(event_initializer)                            \
-        {}                                                                \
-                                                                          \
-    private:                                                              \
-        EventInitializer<EventCtx> event_initializer;                     \
-    };                                                                    \
-                                                                          \
-    template<class EventCtx>                                              \
-    struct SetNothing<EventCtx, true, i>                                  \
-    {                                                                     \
-        template<class F>                                                 \
-        ExecutorCompleted mem(F&& f) &&                                   \
-        {                                                                 \
-            this->event_initializer.init_##mem(static_cast<F&&>(f));      \
-            return {};                                                    \
-        }                                                                 \
-                                                                          \
-        SetNothing(EventInitializer<EventCtx> event_initializer) noexcept \
-        : event_initializer(event_initializer)                            \
-        {}                                                                \
-                                                                          \
-    private:                                                              \
-        EventInitializer<EventCtx> event_initializer;                     \
+#define MK_SubExecutorBuilderFinal(i, mem)                                           \
+    template<class EventCtx>                                                         \
+    struct REDEMPTION_CXX_NODISCARD SetSubExecutorBuilder<EventCtx, false, i>        \
+    {                                                                                \
+        template<class F>                                                            \
+        ExecutorResult mem(F&& f) &&                                                 \
+        {                                                                            \
+            this->event_initializer.init_##mem(static_cast<F&&>(f));                 \
+            return detail::FriendExecutorResult::Nothing;                            \
+        }                                                                            \
+                                                                                     \
+        SetSubExecutorBuilder(EventInitializer<EventCtx> event_initializer) noexcept \
+        : event_initializer(event_initializer)                                       \
+        {}                                                                           \
+                                                                                     \
+    private:                                                                         \
+        EventInitializer<EventCtx> event_initializer;                                \
+    };                                                                               \
+                                                                                     \
+    template<class EventCtx>                                                         \
+    struct SetSubExecutorBuilder<EventCtx, true, i>                                  \
+    {                                                                                \
+        template<class F>                                                            \
+        ExecutorCompleted mem(F&& f) &&                                              \
+        {                                                                            \
+            this->event_initializer.init_##mem(static_cast<F&&>(f));                 \
+            return {};                                                               \
+        }                                                                            \
+                                                                                     \
+        SetSubExecutorBuilder(EventInitializer<EventCtx> event_initializer) noexcept \
+        : event_initializer(event_initializer)                                       \
+        {}                                                                           \
+                                                                                     \
+    private:                                                                         \
+        EventInitializer<EventCtx> event_initializer;                                \
     }
 
-MK_NothingFinal(6/*0b110*/, on_action);
-MK_NothingFinal(5/*0b101*/, on_timeout);
-MK_NothingFinal(3/*0b011*/, on_exit);
+MK_SubExecutorBuilderFinal(6/*0b110*/, on_action);
+MK_SubExecutorBuilderFinal(5/*0b101*/, on_timeout);
+MK_SubExecutorBuilderFinal(3/*0b011*/, on_exit);
 
-#undef MK_NothingFinal
-
-template<class EventCtx>
-using InitialNothing = SetNothing<EventCtx, true>;
-
-template<class EventCtx>
-using Nothing = SetNothing<EventCtx, false>;
+#undef MK_SubExecutorBuilderFinal
 
 #ifdef IN_IDE_PARSER
 template<class... Args>
-using MakeNothing = NothingConcept_;
+using MakeSubExecutorBuilder = SubExecutorBuilderConcept_;
 
 template<class... Args>
-using MakeInitialNothing = NothingConcept_;
+using MakeInitialSubExecutorBuilder = SubExecutorBuilderConcept_;
 #else
 template<class... Args>
-using MakeNothing = Nothing<detail::ctx_arg_type<Args...>>;
+using MakeSubExecutorBuilder = SetSubExecutorBuilder<detail::ctx_arg_type<Args...>, false>;
 
 template<class... Args>
-using MakeInitialNothing = InitialNothing<detail::ctx_arg_type<Args...>>;
+using MakeInitialSubExecutorBuilder = SetSubExecutorBuilder<detail::ctx_arg_type<Args...>, true>;
 #endif
 
 struct ExecutorBase
 {
     template<class... Args>
     CXX_WARN_UNUSED_RESULT
-    MakeNothing<Args...>
+    MakeSubExecutorBuilder<Args...>
     sub_executor(Args&&... args)
     {
-        return MakeNothing<Args...>{
+        return MakeSubExecutorBuilder<Args...>{
             this->create_ctx_events(static_cast<Args&&>(args)...)};
     }
 
@@ -393,6 +387,14 @@ struct ExecutorBase
         EventInitializer<Ctx>{this->events.back()}
           .init_on_action(static_cast<F&&>(f));
         return ExecutorResult::ReplaceAction;
+    }
+
+    template<class Ctx, class F>
+    ExecutorResult result_exec_action(F&& f)
+    {
+        EventInitializer<Ctx>{this->events.back()}
+          .init_on_action(static_cast<F&&>(f));
+        return this->events.back().on_action(*this, *this->events.back().ctx);
     }
 
     template<class Ctx, class F>
@@ -459,10 +461,10 @@ struct Executor
 {
     template<class... Args>
     CXX_WARN_UNUSED_RESULT
-    MakeInitialNothing<Args...>
+    MakeInitialSubExecutorBuilder<Args...>
     initial_executor(Args&&... args)
     {
-        return MakeInitialNothing<Args...>{
+        return MakeInitialSubExecutorBuilder<Args...>{
             this->base.create_ctx_events(static_cast<Args&&>(args)...)};
     }
 
@@ -478,7 +480,7 @@ private:
     ExecutorBase base;
 };
 
-template<class Ctx>
+// TODO private implementation
 struct ExecutorContext
 {
     ExecutorResult retry()
@@ -503,7 +505,7 @@ struct ExecutorContext
 
     template<class... Args>
     CXX_WARN_UNUSED_RESULT
-    MakeNothing<Args...>
+    MakeSubExecutorBuilder<Args...>
     sub_executor(Args&&... args)
     {
         return this->executor.sub_executor(static_cast<Args&&>(args)...);
@@ -519,7 +521,7 @@ protected:
 
 
 template<class Ctx>
-struct ExecutorTimeoutContext : ExecutorContext<Ctx>
+struct ExecutorTimeoutContext : ExecutorContext
 {
     template<class F>
     ExecutorResult next_timeout(F&& f)
@@ -534,17 +536,23 @@ struct ExecutorTimeoutContext : ExecutorContext<Ctx>
     }
 
     explicit ExecutorTimeoutContext(ExecutorBase& executor) noexcept
-      : ExecutorContext<Ctx>(executor)
+      : ExecutorContext(executor)
     {}
 };
 
 template<class Ctx>
-struct ExecutorActionContext : ExecutorContext<Ctx>
+struct ExecutorActionContext : ExecutorContext
 {
     template<class F>
     ExecutorResult next_action(F&& f)
     {
         return this->executor.template result_replace_action<Ctx>(static_cast<F&&>(f));
+    }
+
+    template<class F>
+    ExecutorResult exec_action(F&& f)
+    {
+        return this->executor.template result_exec_action<Ctx>(static_cast<F&&>(f));
     }
 
     template<class F>
@@ -554,12 +562,12 @@ struct ExecutorActionContext : ExecutorContext<Ctx>
     }
 
     explicit ExecutorActionContext(ExecutorBase& executor) noexcept
-      : ExecutorContext<Ctx>(executor)
+      : ExecutorContext(executor)
     {}
 };
 
 template<class Ctx>
-struct ExecutorExitContext : ExecutorContext<Ctx>
+struct ExecutorExitContext : ExecutorContext
 {
     template<class F>
     void set_action(F&& f)
@@ -574,7 +582,7 @@ struct ExecutorExitContext : ExecutorContext<Ctx>
     }
 
     explicit ExecutorExitContext(ExecutorBase& executor) noexcept
-      : ExecutorContext<Ctx>(executor)
+      : ExecutorContext(executor)
     {}
 };
 

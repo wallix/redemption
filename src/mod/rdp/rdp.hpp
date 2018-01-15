@@ -1064,7 +1064,9 @@ public:
         }
 
         // Clear client screen
-        this->invoke_asynchronous_graphic_task(AsynchronousGraphicTask::clear_screen);
+        if (this->client_order_caps.orderSupport[TS_NEG_PATBLT_INDEX]) {
+            this->invoke_asynchronous_graphic_task(AsynchronousGraphicTask::clear_screen);
+        }
 
         this->beginning = timeobj.get_time().tv_sec;
 

@@ -364,5 +364,11 @@ test-run test_executor :
 :
 #   <covfile>src/utils/executor.hpp
   <cxxflags>-std=c++1z
+  <library>crypto
+  <library>gssapi_krb5
+  <library>krb5
+  <library>openssl
+  <library>src/core/RDP/nego.o
+  <library>src/utils/hexdump.o
 ;
 explicit test_executor ;

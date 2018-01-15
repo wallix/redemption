@@ -52,14 +52,14 @@ rects(Rects... rects)
 RED_AUTO_TEST_CASE(Testcontiguous_sub_rect_f1)
 {
     auto f = rects();
-    contiguous_sub_rect_f(0, 0, 32, std::ref(f));
+    contiguous_sub_rect_f(CxCy{0, 0}, SubCxCy{32, 32}, std::ref(f));
     RED_CHECK_EQUAL_RANGES(f.ref, f.computed);
 }
 
 RED_AUTO_TEST_CASE(Testcontiguous_sub_rect_f2)
 {
     auto f = rects(Rect(0, 0, 50, 50));
-    contiguous_sub_rect_f(50, 50, 50, std::ref(f));
+    contiguous_sub_rect_f(CxCy{50, 50}, SubCxCy{50, 50}, std::ref(f));
     RED_CHECK_EQUAL_RANGES(f.ref, f.computed);
 }
 
@@ -70,7 +70,7 @@ RED_AUTO_TEST_CASE(Testcontiguous_sub_rect_f3)
         Rect(25,  0, 25, 25),
         Rect( 0, 25, 25, 25),
         Rect(25, 25, 25, 25));
-    contiguous_sub_rect_f(50, 50, 25, std::ref(f));
+    contiguous_sub_rect_f(CxCy{50, 50}, SubCxCy{25, 25}, std::ref(f));
     RED_CHECK_EQUAL_RANGES(f.ref, f.computed);
 }
 
@@ -93,6 +93,6 @@ RED_AUTO_TEST_CASE(Testcontiguous_sub_rect_f4)
         Rect(32, 96, 32,  4),
         Rect(64, 96, 32,  4),
         Rect(96, 96,  4,  4));
-    contiguous_sub_rect_f(100, 100, 32, std::ref(f));
+    contiguous_sub_rect_f(CxCy{100, 100}, SubCxCy{32, 32}, std::ref(f));
     RED_CHECK_EQUAL_RANGES(f.ref, f.computed);
 }
