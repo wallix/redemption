@@ -4219,8 +4219,6 @@ static int rle_bin_to_run_order(uint16_t image_width, uint8_t image_bpp, const u
                                 0
                             };
                 }
-            break;
-
             case 0xE0:
                 return {
                         true,
