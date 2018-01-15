@@ -350,6 +350,7 @@ public:
                                 throw;
                             }
                         }
+
                         if (front.capture && front.capture->get_capture_event().is_set(INVALID_SOCKET, rfds)) {
                             front.periodic_snapshot();
                         }
