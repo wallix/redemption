@@ -4377,25 +4377,50 @@ protected:
             RDPColor image_color = color_encode(order_color, image_bpp);
             uint32_t pixel_color = ((nbbytes(image_bpp) <= 2) ? image_color.as_bgr().to_u32() : BGRColor(image_color.as_rgb()).to_u32());
 
+            std::vector<Bitmap> image_collection;
+
+            auto get_image = [&image_collection](uint16_t width, uint16_t height, uint8_t bpp, uint32_t color) -> Bitmap const & {
+                    std::vector<Bitmap>::iterator iter = std::find_if(image_collection.begin(), image_collection.end(),
+                        [width, height](Bitmap const & bitmap) {
+                                return ((bitmap.cx() == width) && (bitmap.cy() == height));
+                            });
+                    if (image_collection.end() != iter) {
+                        return *iter;
+                    }
+
+                    unsigned int const Bpp = nbbytes(bpp);
+
+                    image_collection.emplace_back();
+
+                    Bitmap & bitmap = image_collection.back();
+
+                    Bitmap::PrivateData::Data & data = Bitmap::PrivateData::initialize(bitmap, bpp, width, height);
+
+                    uint8_t * begin_ptr = data.get();
+                    uint8_t * write_ptr = begin_ptr;
+                    for (uint16_t i = 0; i < width; ++i, write_ptr += Bpp) {
+                        memcpy(write_ptr, &color, Bpp);
+                    }
+
+                    unsigned int const line_size = data.line_size();
+
+                    write_ptr = data.get() + line_size;
+                    for (uint16_t i = 1; i < height; ++i, write_ptr += line_size) {
+                        memcpy(write_ptr, begin_ptr, line_size);
+                    }
+
+                    StaticOutStream<65535> bmp_stream;
+                    bitmap.compress(bpp, bmp_stream);
+
+                    return bitmap;
+                };
+
             for (uint32_t y = 0; y < image_rect.cy; y += max_image_height) {
                 for (uint32_t x = 0; x < image_rect.cx; x += max_image_width) {
                     const uint16_t sub_image_width = std::min<uint16_t>(image_rect.cx - x, max_image_width);
                     const uint16_t sub_image_height = std::min<uint16_t>(image_rect.cy - y, max_image_height);
 
-                    Bitmap sub_image;
-
-                    Bitmap::PrivateData::Data & data = Bitmap::PrivateData::initialize(sub_image, image_bpp, sub_image_width, sub_image_height);
-
-                    for (uint16_t i = 0; i < sub_image_width; ++i) {
-                        memcpy(data.get() + i * nbbytes(image_bpp), &pixel_color, nbbytes(image_bpp));
-                    }
-
-                    for (uint16_t i = 1; i < sub_image_height; ++i) {
-                        memcpy(data.get() + i * sub_image.line_size(), data.get(), sub_image.line_size());
-                    }
-
-                    StaticOutStream<65535> bmp_stream;
-                    sub_image.compress(this->capture_bpp, bmp_stream);
+                    Bitmap const & sub_image = get_image(sub_image_width, sub_image_height, image_bpp, pixel_color);
 
                     RDPBitmapData sub_image_data;
 
@@ -4410,7 +4435,7 @@ protected:
 
                     sub_image_data.bits_per_pixel = sub_image.bpp();
                     sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
-                    sub_image_data.bitmap_length = bmp_stream.get_offset();
+                    sub_image_data.bitmap_length = sub_image.data_compressed().size();
 
                     this->draw_impl(sub_image_data, sub_image);
                 }
