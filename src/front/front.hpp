@@ -94,6 +94,7 @@
 
 #include "utils/bitfu.hpp"
 #include "utils/bitmap.hpp"
+#include "utils/bitmap_private_data.hpp"
 #include "utils/colors.hpp"
 #include "utils/confdescriptor.hpp"
 #include "utils/contiguous_sub_rect_f.hpp"
@@ -4335,7 +4336,8 @@ protected:
     void draw_impl(RDPBitmapData const & bitmap_data, Bitmap const & bmp) {
         //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
 
-        if (   !this->ini.get<cfg::globals::enable_bitmap_update>()) {
+        if (!this->ini.get<cfg::globals::enable_bitmap_update>() &&
+            this->client_info.order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]) {
             Rect boundary(bitmap_data.dest_left,
                           bitmap_data.dest_top,
                           bitmap_data.dest_right - bitmap_data.dest_left + 1,
@@ -4346,6 +4348,73 @@ protected:
         }
         else {
             this->graphics_update->draw(bitmap_data, bmp);
+        }
+    }
+
+    void draw_impl(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) {
+        Rect dest_rect = cmd.rect.intersect(clip);
+        if (dest_rect.isempty()) {
+            return;
+        }
+
+        if (this->client_info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX]) {
+            this->graphics_update->draw(cmd, clip, color_ctx);
+        }
+        else {
+            Rect image_rect = dest_rect;
+            image_rect.cx = align4(dest_rect.cx);
+
+            uint8_t image_bpp = (this->capture_bpp ? this->capture_bpp : this->client_info.bpp);
+
+            const uint16_t max_image_width =
+                std::min<uint16_t>(
+                        align4(this->max_bitmap_size / nbbytes(image_bpp)),
+                        image_rect.cx
+                    );
+            const uint16_t max_image_height = this->max_bitmap_size / (max_image_width * nbbytes(image_bpp));
+
+            BGRColor order_color = color_decode(cmd.color, color_ctx);
+            RDPColor image_color = color_encode(order_color, image_bpp);
+            uint32_t pixel_color = ((nbbytes(image_bpp) <= 2) ? image_color.as_bgr().to_u32() : BGRColor(image_color.as_rgb()).to_u32());
+
+            for (uint32_t y = 0; y < image_rect.cy; y += max_image_height) {
+                for (uint32_t x = 0; x < image_rect.cx; x += max_image_width) {
+                    const uint16_t sub_image_width = std::min<uint16_t>(image_rect.cx - x, max_image_width);
+                    const uint16_t sub_image_height = std::min<uint16_t>(image_rect.cy - y, max_image_height);
+
+                    Bitmap sub_image;
+
+                    Bitmap::PrivateData::Data & data = Bitmap::PrivateData::initialize(sub_image, image_bpp, sub_image_width, sub_image_height);
+
+                    for (uint16_t i = 0; i < sub_image_width; ++i) {
+                        memcpy(data.get() + i * nbbytes(image_bpp), &pixel_color, nbbytes(image_bpp));
+                    }
+
+                    for (uint16_t i = 1; i < sub_image_height; ++i) {
+                        memcpy(data.get() + i * sub_image.line_size(), data.get(), sub_image.line_size());
+                    }
+
+                    StaticOutStream<65535> bmp_stream;
+                    sub_image.compress(this->capture_bpp, bmp_stream);
+
+                    RDPBitmapData sub_image_data;
+
+                    sub_image_data.dest_left = dest_rect.x + x;
+                    sub_image_data.dest_top  = dest_rect.y + y;
+
+                    sub_image_data.dest_right = std::min<uint16_t>(sub_image_data.dest_left + sub_image_width - 1, dest_rect.x + dest_rect.cx - 1);
+                    sub_image_data.dest_bottom = sub_image_data.dest_top + sub_image_height - 1;
+
+                    sub_image_data.width = sub_image_width;
+                    sub_image_data.height = sub_image_height;
+
+                    sub_image_data.bits_per_pixel = sub_image.bpp();
+                    sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
+                    sub_image_data.bitmap_length = bmp_stream.get_offset();
+
+                    this->draw_impl(sub_image_data, sub_image);
+                }
+            }
         }
     }
 

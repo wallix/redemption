@@ -23,6 +23,7 @@
 #include "utils/bitmap_from_file.hpp"
 #include "gdi/graphic_api.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/bitmapupdate.hpp"
 
 WidgetImage::WidgetImage(
     gdi::GraphicApi & drawable, const char * filename, Widget & parent,
@@ -40,24 +41,41 @@ WidgetImage::~WidgetImage() = default;
 void WidgetImage::rdp_input_invalidate(Rect clip)
 {
     Rect rect_intersect = clip.intersect(this->get_rect());
+    if (rect_intersect.x < 0) {
+        rect_intersect.cx -= std::min<uint16_t>(-rect_intersect.x, rect_intersect.cx);
+        rect_intersect.x = 0;
+    }
+    if (rect_intersect.y < 0) {
+        rect_intersect.cy -= std::min<uint16_t>(-rect_intersect.y, rect_intersect.cy);
+        rect_intersect.y = 0;
+    }
+
+    auto draw_bitmap = [this](gdi::GraphicApi & drawable, Bitmap const & bitmap, Rect const & rect ) {
+        RDPBitmapData bitmap_data;
+
+        bitmap_data.dest_left       = rect.x;
+        bitmap_data.dest_top        = rect.y;
+        bitmap_data.dest_right      = rect.x + rect.cx - 1;
+        bitmap_data.dest_bottom     = rect.y + rect.cy - 1;
+        bitmap_data.width           = bitmap.cx();
+        bitmap_data.height          = bitmap.cy();
+        bitmap_data.bits_per_pixel  = bitmap.bpp();
+        bitmap_data.flags           = 0;
+        bitmap_data.bitmap_length   = bitmap.bmp_size();
+
+        drawable.draw(bitmap_data, bitmap);
+    };
 
     if (!rect_intersect.isempty()) {
-        this->drawable.begin_update();
+        if ((rect_intersect != this->get_rect()) || (this->bmp.cx() % 4)) {
+            Bitmap new_bmp(this->bmp, Rect(rect_intersect.x - this->x(),
+                rect_intersect.y - this->y(), align4(rect_intersect.cx), rect_intersect.cy));
 
-        this->drawable.draw(
-            RDPMemBlt(
-                0,
-                rect_intersect,
-                0xCC,
-                rect_intersect.x - this->x(),
-                rect_intersect.y - this->y(),
-                0
-            ),
-            rect_intersect,
-            this->bmp
-        );
-
-        this->drawable.end_update();
+            draw_bitmap(this->drawable, new_bmp, rect_intersect);
+        }
+        else {
+            draw_bitmap(this->drawable, this->bmp, this->get_rect());
+        }
     }
 }
 

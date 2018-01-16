@@ -186,19 +186,19 @@ Bitmap::Bitmap(const Bitmap & src_bmp, const Rect r)
     // bitmap width must always be a multiple of 4
     const uint8_t Bpp = nbbytes(this->bpp());
     uint8_t *dest = this->data_bitmap->get();
-    const size_t line_size = this->line_size();
+    const size_t dest_line_size = this->line_size();
     const size_t src_line_size = src_bmp.line_size();
     const uint16_t cy = this->cy();
     const uint16_t src_cy = src_bmp.cy();
     const uint8_t *src = src_bmp.data_bitmap->get() + src_line_size * (src_cy - r.y - cy) + r.x * Bpp;
-    const unsigned line_to_copy = r.cx * Bpp;
+    const unsigned line_to_copy = std::min<unsigned>(r.cx * Bpp, (src_bmp.cx() - r.x) * Bpp);
     for (uint16_t i = 0; i < cy; i++) {
         memcpy(dest, src, line_to_copy);
-        if (line_to_copy < line_size){
-            memset(dest + line_to_copy, 0, line_size - line_to_copy);
+        if (line_to_copy < dest_line_size){
+            memset(dest + line_to_copy, 0, dest_line_size - line_to_copy);
         }
         src += src_line_size;
-        dest += line_size;
+        dest += dest_line_size;
     }
 }
 

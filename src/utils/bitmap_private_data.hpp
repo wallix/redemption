@@ -33,6 +33,7 @@
 #include "utils/bitmap_data_allocator.hpp"
 #include "utils/bitfu.hpp"
 #include "utils/colors.hpp"
+#include "utils/log.hpp"
 
 #include <cstring>
 #include <cassert>
