@@ -573,7 +573,7 @@ private:
 
     bool palette_memblt_sent[6];
 
-    BGRPalette mod_palette_rgb {BGRPalette::classic_332_rgb()};
+    BGRPalette mod_palette_rgb {BGRPalette::classic_332()};
 
 public:
     uint8_t mod_bpp;
