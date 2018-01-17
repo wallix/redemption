@@ -2446,8 +2446,7 @@ private:
             this->state = State::Header;
         }
 
-        template<class F>
-        bool run(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable, F && f)
+        bool run(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             Result r = Result::fail();
 
@@ -2934,56 +2933,7 @@ private:
 
     bool lib_frame_buffer_update(gdi::GraphicApi & drawable, Buf64k & buf)
     {
-        struct CtxFn
-        {
-            // raw_fn
-            void operator()(Rect rect, array_view_const_u8 av, mod_vnc & vnc, gdi::GraphicApi & drawable)
-            {
-                update_lock<FrontAPI> lock(vnc.front);
-                vnc.draw_tile(rect, av.data(), drawable);
-            }
-
-            // copy_rect_fn
-            void operator()(Rect rect, uint16_t srcx, uint16_t srcy, mod_vnc & vnc, gdi::GraphicApi & drawable)
-            {
-                //LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
-                update_lock<FrontAPI> lock(vnc.front);
-                drawable.draw(
-                    RDPScrBlt(rect, 0xCC, srcx, srcy),
-                    Rect(0, 0, vnc.front_width, vnc.front_height)
-                );
-            }
-
-            // rre_fn
-            void operator()(Rect rect, uint8_t const * bitmap_data, mod_vnc & vnc, gdi::GraphicApi & drawable)
-            {
-                update_lock<FrontAPI> lock(vnc.front);
-                vnc.draw_tile(rect, bitmap_data, drawable);
-            }
-
-            // zrle_fn
-            void operator()(
-                InStream & zlib_uncompressed_data_stream,
-                ZRLEUpdateContext & zrle_update_context,
-                mod_vnc & vnc, gdi::GraphicApi & drawable
-            ){
-                vnc.lib_framebuffer_update_zrle(
-                    zlib_uncompressed_data_stream,
-                    zrle_update_context,
-                    drawable
-                );
-            }
-
-            // cursor_fn
-            void operator()(Pointer const & cursor, mod_vnc & vnc, gdi::GraphicApi & drawable)
-            {
-                vnc.front.begin_update();
-                vnc.front.set_pointer(cursor);
-                vnc.front.end_update();
-            }
-        };
-
-        if (!this->frame_buffer_update_ctx.run(buf, *this, drawable, CtxFn{})) {
+        if (!this->frame_buffer_update_ctx.run(buf, *this, drawable)) {
             return false;
         }
 
