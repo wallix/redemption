@@ -2479,7 +2479,7 @@ private:
                         r = this->read_data_zrle(buf, vnc, drawable); 
                     break;
                     case 0xffffff11: /* (-239) cursor */
-                        r = this->read_data_cursor(buf, f, vnc, drawable); 
+                        r = this->read_data_cursor(buf, vnc, drawable); 
                     break;
                     case 5: /* Hextile */ // TODO unimplemented
                         LOG(LOG_INFO,
@@ -2566,6 +2566,15 @@ private:
             return Result::ok(State::Data);
         }
 
+
+//            // raw_fn
+//            void operator()(Rect rect, array_view_const_u8 av, mod_vnc & vnc, gdi::GraphicApi & drawable)
+//            {
+//                update_lock<FrontAPI> lock(vnc.front);
+//                vnc.draw_tile(rect, av.data(), drawable);
+//            }
+
+
         template<class F>
         Result read_data_raw(Buf64k & buf, F && f, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
@@ -2592,6 +2601,18 @@ private:
             return Result::ok(this->cy ? State::Data : State::Encoding);
         }
 
+//            // copy_rect_fn
+//            void operator()(Rect rect, uint16_t srcx, uint16_t srcy, mod_vnc & vnc, gdi::GraphicApi & drawable)
+//            {
+//                //LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
+//                update_lock<FrontAPI> lock(vnc.front);
+//                drawable.draw(
+//                    RDPScrBlt(rect, 0xCC, srcx, srcy),
+//                    Rect(0, 0, vnc.front_width, vnc.front_height)
+//                );
+//            }
+
+
         template<class F>
         Result read_data_copy_rect(Buf64k & buf, F && f, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
@@ -2612,6 +2633,14 @@ private:
 
             return Result::ok(State::Encoding);
         }
+
+//            // rre_fn
+//            void operator()(Rect rect, uint8_t const * bitmap_data, mod_vnc & vnc, gdi::GraphicApi & drawable)
+//            {
+//                update_lock<FrontAPI> lock(vnc.front);
+//                vnc.draw_tile(rect, bitmap_data, drawable);
+//            }
+
 
         Result read_data_rre(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
@@ -2684,6 +2713,19 @@ private:
 
             return Result::ok(State::RreData);
         }
+
+//            // zrle_fn
+//            void operator()(
+//                InStream & zlib_uncompressed_data_stream,
+//                ZRLEUpdateContext & zrle_update_context,
+//                mod_vnc & vnc, gdi::GraphicApi & drawable
+//            ){
+//                vnc.lib_framebuffer_update_zrle(
+//                    zlib_uncompressed_data_stream,
+//                    zrle_update_context,
+//                    drawable
+//                );
+//            }
 
         Result read_data_zrle(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
@@ -2785,8 +2827,7 @@ private:
             return Result::ok(State::Encoding);
         }
 
-        template<class F>
-        Result read_data_cursor(Buf64k & buf, F && f, mod_vnc & vnc, gdi::GraphicApi & drawable)
+        Result read_data_cursor(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             // TODO see why we get these empty rects ?
             if (this->cx <= 0 && this->cy <= 0) {
@@ -2898,7 +2939,9 @@ private:
             }
             cursor.update_bw();
             // TODO we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation
-            f(cursor, vnc, drawable);
+            drawable.begin_update();
+            drawable.set_pointer(cursor);
+            drawable.end_update();
 
             buf.advance(sz_pixel_array + sz_bitmask);
             return Result::ok(State::Encoding);
