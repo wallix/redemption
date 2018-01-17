@@ -2472,10 +2472,10 @@ private:
                         r = this->read_data_copy_rect(buf, vnc, drawable); 
                     break;
                     case 2:  /* RRE */       
-                        r = this->read_data_rre(buf, vnc, drawable); 
+                        r = this->read_data_rre(buf); 
                     break;
                     case 16: /* ZRLE */
-                        r = this->read_data_zrle(buf, vnc, drawable); 
+                        r = this->read_data_zrle(buf); 
                     break;
                     case 0xffffff11: /* (-239) cursor */
                         r = this->read_data_cursor(buf, vnc, drawable); 
@@ -2579,7 +2579,7 @@ private:
 
             Rect rect(this->x, this->y, this->cx, cy);
 
-            update_lock<FrontAPI> lock(vnc.front);
+            update_lock<gdi::GraphicApi> lock(drawable);
             vnc.draw_tile(rect, new_av.data(), drawable);
 
             this->y += cy;
@@ -2604,7 +2604,7 @@ private:
 
             buf.advance(sz);
 
-            update_lock<FrontAPI> lock(vnc.front);
+            update_lock<gdi::GraphicApi> lock(drawable);
             drawable.draw(
                 RDPScrBlt(Rect(this->x, this->y, this->cx, this->cy), 0xCC, srcx, srcy),
                 Rect(0, 0, vnc.front_width, vnc.front_height)
@@ -2613,15 +2613,7 @@ private:
             return Result::ok(State::Encoding);
         }
 
-//            // rre_fn
-//            void operator()(Rect rect, uint8_t const * bitmap_data, mod_vnc & vnc, gdi::GraphicApi & drawable)
-//            {
-//                update_lock<FrontAPI> lock(vnc.front);
-//                vnc.draw_tile(rect, bitmap_data, drawable);
-//            }
-
-
-        Result read_data_rre(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
+        Result read_data_rre(Buf64k & buf)
         {
             const size_t sz = 4 + this->Bpp;
 
@@ -2654,7 +2646,7 @@ private:
         {
             if (!this->number_of_subrectangles_remain) {
                 // TODO use MultiRect
-                update_lock<FrontAPI> lock(vnc.front);
+                update_lock<gdi::GraphicApi> lock(drawable);
                 vnc.draw_tile(Rect(this->x, this->y, this->cx, this->cy), this->rre_raw.get(), drawable);
                 this->rre_raw.reset();
                 return Result::ok(State::Encoding);
@@ -2693,20 +2685,7 @@ private:
             return Result::ok(State::RreData);
         }
 
-//            // zrle_fn
-//            void operator()(
-//                InStream & zlib_uncompressed_data_stream,
-//                ZRLEUpdateContext & zrle_update_context,
-//                mod_vnc & vnc, gdi::GraphicApi & drawable
-//            ){
-//                vnc.lib_framebuffer_update_zrle(
-//                    zlib_uncompressed_data_stream,
-//                    zrle_update_context,
-//                    drawable
-//                );
-//            }
-
-        Result read_data_zrle(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
+        Result read_data_zrle(Buf64k & buf)
         {
             const size_t sz = 4;
 
