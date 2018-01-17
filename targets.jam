@@ -900,6 +900,7 @@ test-run tests/client_mods/cli_vnc_connection :
   <covflag>nocover $(GCOV_NO_BUILD)
   <library>app_path_test.o
   <library>crypto
+  <library>openssl
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
@@ -919,13 +920,18 @@ test-run tests/client_mods/cli_vnc_connection :
   <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
+  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/set_exception_handler_pretty_message.o
+  <library>tests/includes/test_only/front/fake_front.o
   <library>z
 ;
 test-run tests/client_mods/test_rdp_client_large_pointer :

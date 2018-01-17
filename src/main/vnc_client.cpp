@@ -130,7 +130,7 @@ int main(int argc, char** argv)
       , 0             /* key_flags */
       , true          /* clipboard */
       , true          /* clipboard */
-      , "0,1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
+      , "2, 0, 1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
       , false         /* allow authentification retries */
       , is_socket_transport
       , mod_vnc::ClipboardEncodingType::UTF8

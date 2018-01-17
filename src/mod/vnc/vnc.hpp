@@ -1327,6 +1327,40 @@ public:
     }
 
 protected:
+
+//   Encoding value |   Mnemonic     | Encoding Description
+// -------------------------------------------------------------------------------------
+//    0             |                | Raw Encoding                                    |
+//    1             |                | CopyRect Encoding                               |
+//    2             |                | RRE Encoding                                    |
+//    4             |                | CoRRE Encoding                                  |
+//    5             |                | Hextile Encoding                                |
+//    6             |                | zlib Encoding                                   |
+//    7             |                | Tight Encoding                                  |
+//    8             |                | zlibhex Encoding                                |
+//    16            |                | ZRLE Encoding                                   |
+//    -23 to -32    |                | JPEG Quality Level Pseudo-encoding              |
+//    -223          |                | DesktopSize Pseudo-encoding                     |
+//    -224          |                | LastRect Pseudo-encoding                        |
+//    -239          |                | Cursor Pseudo-encoding                          |
+//    -240          |                | X Cursor Pseudo-encoding                        |
+//    -247 to -256  |                | Compression Level Pseudo-encoding               |
+//    -257          |                | QEMU Pointer Motion Change Pseudo-encoding      |
+//    -258          |                | QEMU Extended Key Event Pseudo-encoding         |
+//    -259          |                | QEMU Audio Pseudo-encoding                      |
+//    -261          |                | LED State Pseudo-encoding                       |
+//    -305          |                | gii Pseudo-encoding                             |
+//    -307          |                | DesktopName Pseudo-encoding                     |
+//    -308          |                | ExtendedDesktopSize Pseudo-encoding             |
+//    -309          |                | xvp Pseudo-encoding                             |
+//    -312          |                | Fence Pseudo-encoding                           |
+//    -313          |                | ContinuousUpdates Pseudo-encoding               |
+//    -314          |                | Cursor With Alpha Pseudo-encoding               |
+//    -412 to -512  |                | JPEG Fine-Grained Quality Level Pseudo-encoding |                | 
+//    -763 to -768  |                | JPEG Subsampling Level Pseudo-encoding          |
+//    0xc0a1e5ce    |                | Extended Clipboard Pseudo-encoding              |
+
+
     static void fill_encoding_types_buffer(const char * encodings, OutStream & stream, uint16_t & number_of_encodings, Verbose verbose)
     {
         if (bool(verbose & Verbose::basic_trace)) {
@@ -1337,9 +1371,7 @@ protected:
 
         char * end;
         char const * p = encodings;
-        for (int32_t encoding_type = std::strtol(p, &end, 0);
-            p != end;
-            encoding_type = std::strtol(p, &end, 10))
+        for (int32_t encoding_type = std::strtol(p, &end, 0); p != end ; encoding_type = std::strtol(p, &end, 0))
         {
             if (bool(verbose & Verbose::basic_trace)) {
                 LOG(LOG_INFO, "VNC Encoding type=0x%08X", unsigned(encoding_type));
@@ -2415,7 +2447,7 @@ private:
         }
 
         template<class F>
-        bool run(Buf64k & buf, mod_vnc & vnc, F && f)
+        bool run(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable, F && f)
         {
             Result r = Result::fail();
 
@@ -2423,7 +2455,8 @@ private:
                 switch (this->state)
                 {
                 case State::Header:
-                    r = this->read_header(buf); break;
+                    r = this->read_header(buf); 
+                break;
                 case State::Encoding:
                     if (0 == this->num_recs) {
                         return true;
@@ -2433,12 +2466,21 @@ private:
                 case State::Data:
                     switch (this->encoding)
                     {
-                    case 0:  /* raw */       r = this->read_data_raw(buf, f); break;
-                    case 1:  /* copy rect */ r = this->read_data_copy_rect(buf, f); break;
-                    case 2:  /* RRE */       r = this->read_data_rre(buf); break;
-                    case 16: /* ZRLE */      r = this->read_data_zrle(buf); break;
+                    case 0:  /* raw */       
+                        r = this->read_data_raw(buf, f, vnc, drawable); 
+                    break;
+                    case 1:  /* copy rect */ 
+                        r = this->read_data_copy_rect(buf, f, vnc, drawable); 
+                    break;
+                    case 2:  /* RRE */       
+                        r = this->read_data_rre(buf, vnc, drawable); 
+                    break;
+                    case 16: /* ZRLE */
+                        r = this->read_data_zrle(buf, vnc, drawable); 
+                    break;
                     case 0xffffff11: /* (-239) cursor */
-                                             r = this->read_data_cursor(buf, vnc, f); break;
+                        r = this->read_data_cursor(buf, f, vnc, drawable); 
+                    break;
                     case 5: /* Hextile */ // TODO unimplemented
                         LOG(LOG_INFO,
                             "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u",
@@ -2450,8 +2492,8 @@ private:
                         throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
                     }
                     break;
-                case State::ZrleData: r = this->read_data_zrle_data(buf, f); break;
-                case State::RreData: r = this->read_data_rre_data(buf, f); break;
+                case State::ZrleData: r = this->read_data_zrle_data(buf, f, vnc, drawable); break;
+                case State::RreData: r = this->read_data_rre_data(buf, f, vnc, drawable); break;
                 }
 
                 if (!r) {
@@ -2525,7 +2567,7 @@ private:
         }
 
         template<class F>
-        Result read_data_raw(Buf64k & buf, F && f)
+        Result read_data_raw(Buf64k & buf, F && f, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             size_t const line_size = this->cx * this->Bpp;
 
@@ -2536,7 +2578,12 @@ private:
             auto const cy = std::min<size_t>(buf.remaining() / line_size, this->cy);
             auto const new_av = buf.av(cy * line_size);
 
-            f(Rect(this->x, this->y, this->cx, cy), new_av);
+
+            // raw_fn
+            Rect rect(this->x, this->y, this->cx, cy);
+
+            update_lock<FrontAPI> lock(vnc.front);
+            vnc.draw_tile(rect, new_av.data(), drawable);
 
             this->y += cy;
             this->cy -= cy;
@@ -2546,7 +2593,7 @@ private:
         }
 
         template<class F>
-        Result read_data_copy_rect(Buf64k & buf, F && f)
+        Result read_data_copy_rect(Buf64k & buf, F && f, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             const size_t sz = 4;
 
@@ -2561,12 +2608,12 @@ private:
 
             buf.advance(sz);
 
-            f(Rect(this->x, this->y, this->cx, this->cy), srcx, srcy);
+            f(Rect(this->x, this->y, this->cx, this->cy), srcx, srcy, vnc, drawable);
 
             return Result::ok(State::Encoding);
         }
 
-        Result read_data_rre(Buf64k & buf)
+        Result read_data_rre(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             const size_t sz = 4 + this->Bpp;
 
@@ -2596,11 +2643,11 @@ private:
         }
 
         template<class F>
-        Result read_data_rre_data(Buf64k & buf, F && f)
+        Result read_data_rre_data(Buf64k & buf, F && f, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             if (!this->number_of_subrectangles_remain) {
                 // TODO used MultiRect
-                f(Rect(this->x, this->y, this->cx, this->cy), this->rre_raw.get());
+                f(Rect(this->x, this->y, this->cx, this->cy), this->rre_raw.get(), vnc, drawable);
                 this->rre_raw.reset();
                 return Result::ok(State::Encoding);
             }
@@ -2638,7 +2685,7 @@ private:
             return Result::ok(State::RreData);
         }
 
-        Result read_data_zrle(Buf64k & buf)
+        Result read_data_zrle(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             const size_t sz = 4;
 
@@ -2670,7 +2717,7 @@ private:
         }
 
         template<class F>
-        Result read_data_zrle_data(Buf64k & buf, F && f)
+        Result read_data_zrle_data(Buf64k & buf, F && f, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             if (buf.remaining() < this->zlib_compressed_data_length)
             {
@@ -2730,7 +2777,7 @@ private:
                     zrle_update_context.data_remain.rewind();
                 }
 
-                f(zlib_uncompressed_data_stream, zrle_update_context);
+                f(zlib_uncompressed_data_stream, zrle_update_context, vnc, drawable);
             }
 
             buf.advance(this->zlib_compressed_data_length);
@@ -2739,7 +2786,7 @@ private:
         }
 
         template<class F>
-        Result read_data_cursor(Buf64k & buf, mod_vnc & vnc, F && f)
+        Result read_data_cursor(Buf64k & buf, F && f, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             // TODO see why we get these empty rects ?
             if (this->cx <= 0 && this->cy <= 0) {
@@ -2851,7 +2898,7 @@ private:
             }
             cursor.update_bw();
             // TODO we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation
-            f(cursor);
+            f(cursor, vnc, drawable);
 
             buf.advance(sz_pixel_array + sz_bitmask);
             return Result::ok(State::Encoding);
@@ -2863,18 +2910,15 @@ private:
     {
         struct CtxFn
         {
-            mod_vnc & vnc;
-            gdi::GraphicApi & drawable;
-
             // raw_fn
-            void operator()(Rect rect, array_view_const_u8 av)
+            void operator()(Rect rect, array_view_const_u8 av, mod_vnc & vnc, gdi::GraphicApi & drawable)
             {
                 update_lock<FrontAPI> lock(vnc.front);
                 vnc.draw_tile(rect, av.data(), drawable);
             }
 
             // copy_rect_fn
-            void operator()(Rect rect, uint16_t srcx, uint16_t srcy)
+            void operator()(Rect rect, uint16_t srcx, uint16_t srcy, mod_vnc & vnc, gdi::GraphicApi & drawable)
             {
                 //LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
                 update_lock<FrontAPI> lock(vnc.front);
@@ -2885,7 +2929,7 @@ private:
             }
 
             // rre_fn
-            void operator()(Rect rect, uint8_t const * bitmap_data)
+            void operator()(Rect rect, uint8_t const * bitmap_data, mod_vnc & vnc, gdi::GraphicApi & drawable)
             {
                 update_lock<FrontAPI> lock(vnc.front);
                 vnc.draw_tile(rect, bitmap_data, drawable);
@@ -2894,7 +2938,8 @@ private:
             // zrle_fn
             void operator()(
                 InStream & zlib_uncompressed_data_stream,
-                ZRLEUpdateContext & zrle_update_context
+                ZRLEUpdateContext & zrle_update_context,
+                mod_vnc & vnc, gdi::GraphicApi & drawable
             ){
                 vnc.lib_framebuffer_update_zrle(
                     zlib_uncompressed_data_stream,
@@ -2904,7 +2949,7 @@ private:
             }
 
             // cursor_fn
-            void operator()(Pointer const & cursor)
+            void operator()(Pointer const & cursor, mod_vnc & vnc, gdi::GraphicApi & drawable)
             {
                 vnc.front.begin_update();
                 vnc.front.set_pointer(cursor);
@@ -2912,7 +2957,7 @@ private:
             }
         };
 
-        if (!this->frame_buffer_update_ctx.run(buf, *this, CtxFn{*this, drawable})) {
+        if (!this->frame_buffer_update_ctx.run(buf, *this, drawable, CtxFn{})) {
             return false;
         }
 
