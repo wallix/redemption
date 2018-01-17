@@ -2470,7 +2470,7 @@ private:
                         r = this->read_data_raw(buf, vnc, drawable); 
                     break;
                     case 1:  /* copy rect */ 
-                        r = this->read_data_copy_rect(buf, f, vnc, drawable); 
+                        r = this->read_data_copy_rect(buf, vnc, drawable); 
                     break;
                     case 2:  /* RRE */       
                         r = this->read_data_rre(buf, vnc, drawable); 
@@ -2578,8 +2578,6 @@ private:
             auto const cy = std::min<size_t>(buf.remaining() / line_size, this->cy);
             auto const new_av = buf.av(cy * line_size);
 
-
-            // raw_fn
             Rect rect(this->x, this->y, this->cx, cy);
 
             update_lock<FrontAPI> lock(vnc.front);
@@ -2592,20 +2590,7 @@ private:
             return Result::ok(this->cy ? State::Data : State::Encoding);
         }
 
-//            // copy_rect_fn
-//            void operator()(Rect rect, uint16_t srcx, uint16_t srcy, mod_vnc & vnc, gdi::GraphicApi & drawable)
-//            {
-//                //LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
-//                update_lock<FrontAPI> lock(vnc.front);
-//                drawable.draw(
-//                    RDPScrBlt(rect, 0xCC, srcx, srcy),
-//                    Rect(0, 0, vnc.front_width, vnc.front_height)
-//                );
-//            }
-
-
-        template<class F>
-        Result read_data_copy_rect(Buf64k & buf, F && f, mod_vnc & vnc, gdi::GraphicApi & drawable)
+        Result read_data_copy_rect(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             const size_t sz = 4;
 
@@ -2620,7 +2605,11 @@ private:
 
             buf.advance(sz);
 
-            f(Rect(this->x, this->y, this->cx, this->cy), srcx, srcy, vnc, drawable);
+            update_lock<FrontAPI> lock(vnc.front);
+            drawable.draw(
+                RDPScrBlt(Rect(this->x, this->y, this->cx, this->cy), 0xCC, srcx, srcy),
+                Rect(0, 0, vnc.front_width, vnc.front_height)
+            );
 
             return Result::ok(State::Encoding);
         }
