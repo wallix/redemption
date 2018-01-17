@@ -5811,3 +5811,29 @@ RED_AUTO_TEST_CASE(TestBitmapCompress2)
 
     trans.send(test_bmp.data(), test_bmp.bmp_size());
 }
+
+RED_AUTO_TEST_CASE(TestBitmapConv)
+{
+    const char * filename = FIXTURES_PATH "/wablogoblue_198x67.png";
+
+    Bitmap bitmap_1 = bitmap_from_file(filename);
+
+    RED_CHECK_EQUAL(198, bitmap_1.cx());
+    RED_CHECK_EQUAL(198 * 3, bitmap_1.line_size());
+
+    Bitmap bitmap_2(bitmap_1, Rect(0, 0, align4(bitmap_1.cx()), bitmap_1.cy()));
+
+    RED_CHECK_EQUAL(200, bitmap_2.cx());
+
+    Drawable gd(1024, 768);
+
+    gd.opaquerect(Rect(0, 0, 1024, 768), gd.u32bgr_to_color(GREEN));
+
+    gd.mem_blt(Rect(10, 10, bitmap_2.cx(), bitmap_2.cx()), bitmap_2, 0, 0);
+
+    RED_CHECK_SIG(gd, "\x8d\xa7\x35\x7d\x14\x71\xe7\xc9\x8e\xfa\xf5\xaa\xbc\x22\x75\xaf\x40\xcf\x81\x65");
+
+    const int groupid = 0;
+    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testbitmapconv", ".png", groupid, ReportError{});
+    dump_png24(out_png_trans, gd, true);
+}
