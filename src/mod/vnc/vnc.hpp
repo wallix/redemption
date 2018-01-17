@@ -2467,7 +2467,7 @@ private:
                     switch (this->encoding)
                     {
                     case 0:  /* raw */       
-                        r = this->read_data_raw(buf, f, vnc, drawable); 
+                        r = this->read_data_raw(buf, vnc, drawable); 
                     break;
                     case 1:  /* copy rect */ 
                         r = this->read_data_copy_rect(buf, f, vnc, drawable); 
@@ -2567,16 +2567,7 @@ private:
         }
 
 
-//            // raw_fn
-//            void operator()(Rect rect, array_view_const_u8 av, mod_vnc & vnc, gdi::GraphicApi & drawable)
-//            {
-//                update_lock<FrontAPI> lock(vnc.front);
-//                vnc.draw_tile(rect, av.data(), drawable);
-//            }
-
-
-        template<class F>
-        Result read_data_raw(Buf64k & buf, F && f, mod_vnc & vnc, gdi::GraphicApi & drawable)
+        Result read_data_raw(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             size_t const line_size = this->cx * this->Bpp;
 
