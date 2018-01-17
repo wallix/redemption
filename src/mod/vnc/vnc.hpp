@@ -2492,8 +2492,8 @@ private:
                         throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
                     }
                     break;
-                case State::ZrleData: r = this->read_data_zrle_data(buf, f, vnc, drawable); break;
-                case State::RreData: r = this->read_data_rre_data(buf, f, vnc, drawable); break;
+                case State::ZrleData: r = this->read_data_zrle_data(buf, vnc, drawable); break;
+                case State::RreData: r = this->read_data_rre_data(buf, vnc, drawable); break;
                 }
 
                 if (!r) {
@@ -2671,12 +2671,12 @@ private:
             return Result::ok(State::RreData);
         }
 
-        template<class F>
-        Result read_data_rre_data(Buf64k & buf, F && f, mod_vnc & vnc, gdi::GraphicApi & drawable)
+        Result read_data_rre_data(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             if (!this->number_of_subrectangles_remain) {
-                // TODO used MultiRect
-                f(Rect(this->x, this->y, this->cx, this->cy), this->rre_raw.get(), vnc, drawable);
+                // TODO use MultiRect
+                update_lock<FrontAPI> lock(vnc.front);
+                vnc.draw_tile(Rect(this->x, this->y, this->cx, this->cy), this->rre_raw.get(), drawable);
                 this->rre_raw.reset();
                 return Result::ok(State::Encoding);
             }
@@ -2758,8 +2758,7 @@ private:
             return Result::ok(State::ZrleData);
         }
 
-        template<class F>
-        Result read_data_zrle_data(Buf64k & buf, F && f, mod_vnc & vnc, gdi::GraphicApi & drawable)
+        Result read_data_zrle_data(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             if (buf.remaining() < this->zlib_compressed_data_length)
             {
@@ -2819,7 +2818,11 @@ private:
                     zrle_update_context.data_remain.rewind();
                 }
 
-                f(zlib_uncompressed_data_stream, zrle_update_context, vnc, drawable);
+                vnc.lib_framebuffer_update_zrle(
+                    zlib_uncompressed_data_stream,
+                    zrle_update_context,
+                    drawable
+                );
             }
 
             buf.advance(this->zlib_compressed_data_length);
