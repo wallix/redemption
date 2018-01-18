@@ -374,6 +374,8 @@ Bitmap::Bitmap(uint8_t out_bpp, const Bitmap & bmp)
 
 Bitmap::operator ConstImageDataView() const
 {
+    // 8, 15, 16 = BGR
+    // 24 = RGB
     return ConstImageDataView{
         this->data(),
         this->cx(), this->cy(),

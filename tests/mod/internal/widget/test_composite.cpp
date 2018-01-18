@@ -107,7 +107,7 @@ RED_AUTO_TEST_CASE(TraceWidgetComposite)
                                          wcomposite.cx(),
                                          wcomposite.cy()));
 
-    drawable.save_to_png("/tmp/composite.png");
+    // drawable.save_to_png("/tmp/composite.png");
 
     RED_CHECK_SIG(drawable.gd, "\x42\xfd\x22\x64\x4d\xb8\xea\xfd\xf8\x95\x7b\x4d\x51\x98\x9d\x67\xb5\xe6\x82\xba");
 
