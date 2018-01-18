@@ -2621,28 +2621,20 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>app_path_test.o
   <library>crypto
   <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/locally_integrable_mod.o
   <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/module_host.o
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/scroll.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget_test_mod.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -4218,6 +4210,11 @@ test-run tests/utils/test_word_identification :
 :
   <covfile>src/utils/word_identification.hpp
 ;
+test-run tests/utils/test_zlib :
+  $(REDEMPTION_TEST_PATH)/utils/test_zlib.cpp
+:
+  <library>z
+;
 test-run tests/utils/winpr/test_pattern :
   $(REDEMPTION_TEST_PATH)/utils/winpr/test_pattern.cpp
 :
@@ -4961,6 +4958,7 @@ alias test_utf : tests/utils/test_utf ;
 alias test_utf.coverage : tests/utils/test_utf.coverage ;
 alias test_word_identification : tests/utils/test_word_identification ;
 alias test_word_identification.coverage : tests/utils/test_word_identification.coverage ;
+alias test_zlib : tests/utils/test_zlib ;
 alias test_pattern : tests/utils/winpr/test_pattern ;
 alias test_pattern.coverage : tests/utils/winpr/test_pattern.coverage ;
 explicit tests/acl ;
@@ -5423,6 +5421,7 @@ alias tests/utils :
   tests/utils/test_translation
   tests/utils/test_utf
   tests/utils/test_word_identification
+  tests/utils/test_zlib
 ;
 explicit tests/utils/winpr ;
 alias tests/utils/winpr :

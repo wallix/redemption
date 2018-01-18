@@ -1356,9 +1356,35 @@ protected:
 //    -312          |                | Fence Pseudo-encoding                           |
 //    -313          |                | ContinuousUpdates Pseudo-encoding               |
 //    -314          |                | Cursor With Alpha Pseudo-encoding               |
-//    -412 to -512  |                | JPEG Fine-Grained Quality Level Pseudo-encoding |                | 
+//    -412 to -512  |                | JPEG Fine-Grained Quality Level Pseudo-encoding |
 //    -763 to -768  |                | JPEG Subsampling Level Pseudo-encoding          |
 //    0xc0a1e5ce    |                | Extended Clipboard Pseudo-encoding              |
+
+    enum rfb_encodings {
+        RAW_ENCODING      = 0,
+        COPYRECT_ENCODING = 1,
+        RRE_ENCODING      = 2,
+        CORRE_ENCODING    = 4,
+        HEXTILE_ENCODING  = 5,
+        ZLIB_ENCODING     = 6,
+        TIGHT_ENCODING    = 7,
+        ZLIBHEX_ENCODING  = 8,
+        ZRLE_ENCODING     = 16,
+        JPEGQL1_PSEUDO_ENCODING      = -23,
+        JPEGQL2_PSEUDO_ENCODING      = -24,
+        JPEGQL3_PSEUDO_ENCODING      = -25,
+        JPEGQL4_PSEUDO_ENCODING      = -26,
+        JPEGQL5_PSEUDO_ENCODING      = -27,
+        JPEGQL6_PSEUDO_ENCODING      = -28,
+        JPEGQL7_PSEUDO_ENCODING      = -29,
+        JPEGQL8_PSEUDO_ENCODING      = -30,
+        JPEGQL9_PSEUDO_ENCODING      = -21,
+        JPEGQLA_PSEUDO_ENCODING      = -32,
+        DESKTOPSIZE_PSEUDO_ENCODING  = -223,
+        LASTRECT_PSEUDO_ENCODING     = -224,
+        CURSOR_PSEUDO_ENCODING       = -239,
+        XCURSOR_PSEUDO_ENCODING      = -240,
+    };
 
 
     static void fill_encoding_types_buffer(const char * encodings, OutStream & stream, uint16_t & number_of_encodings, Verbose verbose)
@@ -1512,6 +1538,7 @@ public:
         if (!this->event.is_waked_up_by_time()) {
             this->buf.read_from(this->t);
         }
+
         while (this->draw_event_impl(drawable)) {
 
         }
@@ -2062,7 +2089,9 @@ private:
 
     void lib_framebuffer_update_zrle(InStream & uncompressed_data_buffer, ZRLEUpdateContext & update_context, gdi::GraphicApi & drawable)
     {
-        uint8_t         tile_data[16384];    // max size with 16 bpp
+        LOG(LOG_INFO, "lib_framebuffer_update_zrle %zu", uncompressed_data_buffer.in_remain());
+
+        uint8_t         tile_data[2*16384];    // max size with 16 bpp
 
         uint8_t const * remaining_data        = nullptr;
         uint16_t        remaining_data_length = 0;
@@ -2463,31 +2492,38 @@ private:
                     r = this->read_encoding(buf);
                     break;
                 case State::Data:
+
                     switch (this->encoding)
                     {
-                    case 0:  /* raw */       
+                    case RAW_ENCODING:  /* raw */       
+                        LOG(LOG_INFO, "RAW_ENCODING %zu", buf.remaining());
                         r = this->read_data_raw(buf, vnc, drawable); 
                     break;
-                    case 1:  /* copy rect */ 
+                    case COPYRECT_ENCODING:  /* copy rect */ 
+                        LOG(LOG_INFO, "COPYRECT_ENCODING");
                         r = this->read_data_copy_rect(buf, vnc, drawable); 
                     break;
-                    case 2:  /* RRE */       
+                    case RRE_ENCODING:  /* RRE */       
+                        LOG(LOG_INFO, "RRE_ENCODING");
                         r = this->read_data_rre(buf); 
                     break;
-                    case 16: /* ZRLE */
+                    case ZRLE_ENCODING: /* ZRLE */
+                        LOG(LOG_INFO, "ZRLE_ENCODING");
                         r = this->read_data_zrle(buf); 
                     break;
-                    case 0xffffff11: /* (-239) cursor */
+                    case CURSOR_PSEUDO_ENCODING: /* (-239) cursor */
+                        LOG(LOG_INFO, "CURSOR_PSEUDO_ENCODING");
                         r = this->read_data_cursor(buf, vnc, drawable); 
                     break;
-                    case 5: /* Hextile */ // TODO unimplemented
+                    case HEXTILE_ENCODING: /* Hextile */ // TODO unimplemented
+                        LOG(LOG_INFO, "HEXTILE_ENCODING");
                         LOG(LOG_INFO,
                             "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u",
                             this->Bpp, this->x, this->y, this->cx, this->cy);
                         r = Result::ok(State::Encoding);
                         break;
                     default:
-                        LOG(LOG_ERR, "unexpected encoding %8x in lib_frame_buffer", encoding);
+                        LOG(LOG_ERR, "unexpected encoding %d in lib_frame_buffer", encoding);
                         throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
                     }
                     break;
@@ -2513,7 +2549,7 @@ private:
         uint16_t y;
         uint16_t cx;
         uint16_t cy;
-        uint32_t encoding;
+        int32_t encoding;
 
         uint32_t zlib_compressed_data_length;
 
@@ -2537,12 +2573,43 @@ private:
             stream.in_skip_bytes(1);
             this->num_recs = stream.in_uint16_be();
 
+            LOG(LOG_INFO, "FrameBufferUpdate: HEADER (%u)", this->num_recs);
+            hexdump(buf.av(sz).data(), sz);
+
             buf.advance(sz);
             return Result::ok(State::Encoding);
         }
 
+
+//  7.5.1   FramebufferUpdate (part 2 : rectangles)
+// ----------------------------------
+
+//  FrameBufferUpdate message is followed by number-of-rectangles 
+// of pixel data. Each rectangle consists of:
+
+//     No. of bytes | Type   |  Description
+// ---------------------------------------------
+//         2        |  U16   |  x-position
+//         2        |  U16   |  y-position
+//         2        |  U16   |  width
+//         2        |  U16   |  height
+//         4        |  S32   |  encoding-type
+
+//  followed by the pixel data in the specified encoding. See Encodings for the format of the data for each encoding
+// and Pseudo-encodings for the meaning of pseudo-encodings.
+
+// Note that a framebuffer update marks a transition from one valid framebuffer state to another. That
+// means that a single update handles all received FramebufferUpdateRequest up to the point where th
+// e update is sent out.
+
+// However, because there is no strong connection between a FramebufferUpdateRequest and a subsequent 
+// FramebufferUpdate, a client that has more than one FramebufferUpdateRequest pending at any given 
+// time cannot be sure that it has received all framebuffer updates.
+
+
         Result read_encoding(Buf64k & buf) noexcept
         {
+
             const size_t sz = 12;
 
             if (buf.remaining() < sz)
@@ -2555,7 +2622,10 @@ private:
             this->y = stream.in_uint16_be();
             this->cx = stream.in_uint16_be();
             this->cy = stream.in_uint16_be();
-            this->encoding = stream.in_uint32_be();
+            this->encoding = stream.in_sint32_be();
+
+            LOG(LOG_INFO, "Encoding: %u (%u, %u, %u, %u) : %d", this->num_recs, this->x, this->y, this->cx, this->cy, this->encoding);
+            hexdump(buf.av(sz).data(), sz);
 
             --this->num_recs;
             buf.advance(sz);
@@ -2585,6 +2655,7 @@ private:
             this->y += cy;
             this->cy -= cy;
 
+            LOG(LOG_INFO, "Send %d lines, remains %d", y, this->cy);
             buf.advance(new_av.size());
             return Result::ok(this->cy ? State::Data : State::Encoding);
         }
@@ -2687,6 +2758,7 @@ private:
 
         Result read_data_zrle(Buf64k & buf)
         {
+            LOG(LOG_INFO, "read_data_zrle %zu", buf.remaining());
             const size_t sz = 4;
 
             if (buf.remaining() < sz)
@@ -2702,15 +2774,6 @@ private:
                     this->zlib_compressed_data_length);
             }
 
-            if (this->zlib_compressed_data_length > 65536)
-            {
-                LOG(LOG_ERR,
-                    "VNC Encoding: ZRLE, compressed data buffer too small "
-                        "(65536 < %" PRIu32 ")",
-                    this->zlib_compressed_data_length);
-                throw Error(ERR_BUFFER_TOO_SMALL);
-            }
-
             buf.advance(sz);
 
             return Result::ok(State::ZrleData);
@@ -2718,6 +2781,7 @@ private:
 
         Result read_data_zrle_data(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
+            LOG(LOG_INFO, "read_data_zrle_data %zu", buf.remaining());
             if (buf.remaining() < this->zlib_compressed_data_length)
             {
                 return Result::fail();
@@ -2738,8 +2802,8 @@ private:
 
             while (this->zstrm.avail_in > 0)
             {
-                constexpr std::size_t reserved_leading_space = 16384;
-                constexpr std::size_t total_size = 49152;
+                constexpr std::size_t reserved_leading_space = 10*16384;
+                constexpr std::size_t total_size = 10*49152;
                 constexpr std::size_t data_size = total_size - reserved_leading_space;
 
                 uint8_t zlib_uncompressed_data_buffer[total_size];
