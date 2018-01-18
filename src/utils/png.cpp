@@ -28,6 +28,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <memory>
 
 #include <png.h>
 
@@ -105,11 +106,19 @@ namespace
         const uint8_t * row = data;
 
         if (bgr) {
-            uint8_t bgrtmp[8192*4];
+            uint8_t bgrline[8192*4];
+            uint8_t * bgrtmp = bgrline;
+
+            std::unique_ptr<uint8_t[]> dynline;
+            if (sizeof(bgrtmp) < rowsize) {
+                dynline = std::make_unique<uint8_t[]>(rowsize);
+                bgrtmp = dynline.get();
+            }
+
             for (size_t k = 0 ; k < height && is_ok(); ++k) {
                 const uint8_t * s = row;
                 uint8_t * t = bgrtmp;
-                uint8_t * e = t + (width / 4) * 12;
+                uint8_t * e = t + (width / 4u) * 12u;
                 for (; t < e; s += 12, t += 12){
                     t[0] = s[2];
                     t[1] = s[1];
