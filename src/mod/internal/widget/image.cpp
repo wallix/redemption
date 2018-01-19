@@ -22,7 +22,6 @@
 #include "mod/internal/widget/image.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "gdi/graphic_api.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 
 WidgetImage::WidgetImage(

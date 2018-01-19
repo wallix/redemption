@@ -538,21 +538,19 @@ private:
 
             drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip, color_ctx);
 
-            StaticOutStream<256> deltaPoints;
-            deltaPoints.out_sint16_le(this->clip.cx - 1);
-            deltaPoints.out_sint16_le(0);
-            deltaPoints.out_sint16_le(0);
-            deltaPoints.out_sint16_le(this->clip.cy - 1);
-            deltaPoints.out_sint16_le(-this->clip.cx + 1);
-            deltaPoints.out_sint16_le(0);
-            deltaPoints.out_sint16_le(0);
-            deltaPoints.out_sint16_le(-this->clip.cy + 1);
+            RDPLineTo line_left(1, this->clip.x, this->clip.y, this->clip.x, this->clip.y + this->clip.cy - 1,
+                encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
+            drawable.draw(line_left, this->clip, color_ctx);
+            RDPLineTo line_bottom(1, this->clip.x, this->clip.y + this->clip.cy - 1, this->clip.x + this->clip.cx - 1, this->clip.y + this->clip.cy - 1,
+                encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
+            drawable.draw(line_bottom, this->clip, color_ctx);
 
-            InStream in_deltaPoints(deltaPoints.get_data(), deltaPoints.get_offset());
-
-            // TODO Not supported on MAC OS with Microsoft Remote Desktop 8.0.15 (Build 25886)
-            RDPPolyline polyline_box(this->clip.x, this->clip.y, 0x0D, 0, encode_color24()(BLACK) /* NOTE WHITE and BLACK should be special color*/, 4, in_deltaPoints);
-            drawable.draw(polyline_box, this->clip, color_ctx);
+            RDPLineTo line_right(1, this->clip.x + this->clip.cx - 1, this->clip.y + this->clip.cy - 1, this->clip.x + this->clip.cx - 1, this->clip.y,
+                encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
+            drawable.draw(line_right, this->clip, color_ctx);
+            RDPLineTo line_top(1, this->clip.x + this->clip.cx - 1, this->clip.y, this->clip.x, this->clip.y,
+                encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
+            drawable.draw(line_top, this->clip, color_ctx);
 
             gdi::server_draw_text(
                 drawable, this->mm.ini.get<cfg::font>(),

@@ -4201,7 +4201,40 @@ protected:
     }
 
     void draw_impl(RDPMemBlt const& cmd, Rect clip, Bitmap const & bitmap) {
-        this->priv_draw_memblt(cmd, clip, bitmap);
+        if (this->client_info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX]) {
+            this->priv_draw_memblt(cmd, clip, bitmap);
+        }
+        else {
+            Rect dest_rect = clip.intersect(cmd.rect);
+            auto drew_bitmap = [this](Bitmap const &bitmap, Rect const & rect) {
+                RDPBitmapData bitmap_data;
+
+                bitmap_data.dest_left = rect.x;
+                bitmap_data.dest_top = rect.y;
+                bitmap_data.dest_right = rect.x + rect.cx - 1;
+                bitmap_data.dest_bottom = rect.y + rect.cy - 1;
+
+                bitmap_data.width = bitmap.cx();
+                bitmap_data.height = bitmap.cy();
+                bitmap_data.bits_per_pixel = bitmap.bpp();
+                bitmap_data.flags = 0;
+
+                bitmap_data.bitmap_length = bitmap.bmp_size();
+
+                this->draw_impl(bitmap_data, bitmap);
+            };
+            if (!dest_rect.isempty()) {
+                if (dest_rect == cmd.rect) {
+                    Bitmap new_bitmap(bitmap, Rect(cmd.srcx, cmd.srcy, cmd.rect.cx, cmd.rect.cy));
+                    drew_bitmap(new_bitmap, cmd.rect);
+                }
+                else {
+                    Bitmap new_bitmap(bitmap, Rect(cmd.srcx + dest_rect.x - cmd.rect.x,
+                        cmd.srcy + dest_rect.y - cmd.rect.y, dest_rect.cx, dest_rect.cy));
+                    drew_bitmap(new_bitmap, dest_rect);
+                }
+            }
+        }
     }
 
     void draw_impl(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bitmap) {
@@ -4209,7 +4242,12 @@ protected:
     }
 
     void draw_impl(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) {
-        this->priv_draw_and_update_cache_brush(cmd, clip, color_ctx);
+        if (this->client_info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX]) {
+            this->priv_draw_and_update_cache_brush(cmd, clip, color_ctx);
+        }
+        else {
+            LOG(LOG_WARNING, "Front::draw_impl(RDPPatBlt): This Primary Drawing Order is not supported by client!");
+        }
     }
 
     void draw_impl(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) {
@@ -4348,6 +4386,25 @@ protected:
         }
         else {
             this->graphics_update->draw(bitmap_data, bmp);
+        }
+    }
+
+    void draw_impl(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx color_ctx) {
+        if (this->client_info.order_caps.orderSupport[TS_NEG_LINETO_INDEX]) {
+            this->graphics_update->draw(cmd, clip, color_ctx);
+        }
+        else {
+            if ((cmd.startx == cmd.endx) || (cmd.starty == cmd.endy)) {
+                int16_t const min_x = std::min<int16_t>(cmd.startx, cmd.endx);
+                int16_t const max_x = std::max<int16_t>(cmd.startx, cmd.endx);
+                int16_t const min_y = std::min<int16_t>(cmd.starty, cmd.endy);
+                int16_t const max_y = std::max<int16_t>(cmd.starty, cmd.endy);
+                RDPOpaqueRect other_cmd(Rect(min_x, min_y, max_x - min_x + 1, max_y - min_y + 1), cmd.pen.color);
+                this->draw_impl(other_cmd, clip, color_ctx);
+            }
+            else {
+                LOG(LOG_WARNING, "Front::draw_impl(RDPLineTo): This Primary Drawing Order is not supported by client!");
+            }
         }
     }
 
