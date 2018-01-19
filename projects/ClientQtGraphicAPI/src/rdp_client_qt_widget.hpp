@@ -25,58 +25,51 @@
 
 #include <vector>
 
-#include "core/RDP/clipboard.hpp"
-#include "core/FSCC/FileInformation.hpp"
-#include "core/RDP/channels/rdpdr.hpp"
-#include "core/RDPEA/audio_output.hpp"
+
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
 
-#include "mod/rdp/rdp.hpp"
+
 
 #include "rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp"
 
 
-#define SHARE_PATH "/share"
-#define CB_FILE_TEMP_PATH "/clipboard_temp"
-#define KEY_SETTING_PATH "/config/keySetting.config"
-#define USER_CONF_PATH "/config/userConfig.config"
 
 
 class Front_RDP_Qt_API : public FrontQtRDPGraphicAPI
 {
 
-private:
-    class ClipboardServerChannelDataSender : public VirtualChannelDataSender
-    {
-    public:
-        mod_api        * _callback;
-
-        ClipboardServerChannelDataSender() = default;
-
-
-        void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
-            //std::cout << "operator()  server " << (int)flags  << std::endl;
-            InStream chunk(chunk_data, chunk_data_length);
-            this->_callback->send_to_mod_channel(channel_names::cliprdr, chunk, total_length, flags);
-        }
-    };
-
-    class ClipboardClientChannelDataSender : public VirtualChannelDataSender
-    {
-    public:
-        FrontAPI            * _front;
-        CHANNELS::ChannelDef  _channel;
-
-        ClipboardClientChannelDataSender() = default;
-
-
-        void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
-            //std::cout << "operator()  client " << (int)flags  << std::endl;
-
-            this->_front->send_to_channel(this->_channel, chunk_data, total_length, chunk_data_length, flags);
-        }
-    };
+// private:
+//     class ClipboardServerChannelDataSender : public VirtualChannelDataSender
+//     {
+//     public:
+//         mod_api        * _callback;
+//
+//         ClipboardServerChannelDataSender() = default;
+//
+//
+//         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
+//             //std::cout << "operator()  server " << (int)flags  << std::endl;
+//             InStream chunk(chunk_data, chunk_data_length);
+//             this->_callback->send_to_mod_channel(channel_names::cliprdr, chunk, total_length, flags);
+//         }
+//     };
+//
+//     class ClipboardClientChannelDataSender : public VirtualChannelDataSender
+//     {
+//     public:
+//         FrontAPI            * _front;
+//         CHANNELS::ChannelDef  _channel;
+//
+//         ClipboardClientChannelDataSender() = default;
+//
+//
+//         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
+//             //std::cout << "operator()  client " << (int)flags  << std::endl;
+//
+//             this->_front->send_to_channel(this->_channel, chunk_data, total_length, chunk_data_length, flags);
+//         }
+//     };
 
 public:
 
@@ -88,9 +81,9 @@ public:
         MAX_MONITOR_COUNT = GCC::UserData::CSMonitor::MAX_MONITOR_COUNT / 4
     };
 
-    ClipboardServerChannelDataSender _to_server_sender;
-    ClipboardClientChannelDataSender _to_client_sender;
-    ClipboardVirtualChannel          clipboard_channel;
+//     ClipboardServerChannelDataSender _to_server_sender;
+//     ClipboardClientChannelDataSender _to_client_sender;
+//     ClipboardVirtualChannel          clipboard_channel;
     int                  _monitorCount;
     Rect                 _screen_dimensions[MAX_MONITOR_COUNT];
     int                  _current_screen_index;
@@ -98,9 +91,6 @@ public:
     bool                 enable_shared_clipboard;
     bool                 enable_shared_virtual_disk;
 
-    const std::string    CB_TEMP_DIR;
-    std::string          SHARE_DIR;
-    const std::string    USER_CONF_DIR;
 
     struct ModRDPParamsData
     {
@@ -109,67 +99,24 @@ public:
         bool enable_sound                    = false;
     } modRDPParamsData;
 
-    struct ClipbrdFormatsList{
 
-        enum : uint16_t {
-              CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
-            , CF_QT_CLIENT_FILECONTENTS         = 48026
-        };
+    bool                 _monitorCountNegociated = false;
 
-        enum : int {
-              CLIPBRD_FORMAT_COUNT = 4
-        };
 
-        const std::string FILECONTENTS;
-        const std::string FILEGROUPDESCRIPTORW;
-        uint32_t          IDs[CLIPBRD_FORMAT_COUNT];
-        std::string       names[CLIPBRD_FORMAT_COUNT];
-        int index = 0;
-        const double      ARBITRARY_SCALE;  //  module MetaFilePic resolution, value=40 is
-                                            //  empirically close to original resolution.
+//     struct CB_FilesList {
+//         struct CB_in_Files {
+//             int         size;
+//             std::string name;
+//         };
+//         uint32_t                 cItems = 0;
+//         uint32_t                 lindexToRequest = 0;
+//         int                      streamIDToRequest = 0;
+//         std::vector<CB_in_Files> itemslist;
+//         int                      lindex = 0;
+//
+//     }  _cb_filesList;
 
-        ClipbrdFormatsList()
-          : FILECONTENTS(
-              "F\0i\0l\0e\0C\0o\0n\0t\0e\0n\0t\0s\0\0\0"
-            , 26)
-          , FILEGROUPDESCRIPTORW(
-              "F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0"
-            , 42)
-          , ARBITRARY_SCALE(40)
-        {}
 
-        void add_format(uint32_t ID, const std::string & name) {
-            if (index < CLIPBRD_FORMAT_COUNT) {
-                IDs[index]   = ID;
-                names[index] = name;
-                index++;
-            }
-        }
-
-    } clipbrdFormatsList;
-
-    struct CB_FilesList {
-        struct CB_in_Files {
-            int         size;
-            std::string name;
-        };
-        uint32_t                 cItems = 0;
-        uint32_t                 lindexToRequest = 0;
-        int                      streamIDToRequest = 0;
-        std::vector<CB_in_Files> itemslist;
-        int                      lindex = 0;
-
-    }  _cb_filesList;
-
-    struct CB_Buffers {
-        std::unique_ptr<uint8_t[]>  data = nullptr;
-        size_t size = 0;
-        size_t sizeTotal = 0;
-        int    pic_width = 0;
-        int    pic_height = 0;
-        int    pic_bpp = 0;
-
-    } _cb_buffers;
 
 
 
@@ -202,36 +149,33 @@ public:
 
     Front_RDP_Qt_API( RDPVerbose verbose)
     : FrontQtRDPGraphicAPI(verbose)
-     , clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [](){
-            NullReportMessage reportMessage;
-            ClipboardVirtualChannel::Params params(reportMessage);
-
-            params.exchanged_data_limit = ~decltype(params.exchanged_data_limit){};
-            params.verbose = to_verbose_flags(0);
-
-            params.clipboard_down_authorized = true;
-            params.clipboard_up_authorized = true;
-            params.clipboard_file_authorized = true;
-
-            params.dont_log_data_into_syslog = true;
-            params.dont_log_data_into_wrm = true;
-
-//            params.client_use_long_format_names = true;
-
-            return params;
-        }())
+//      , clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [](){
+//             NullReportMessage reportMessage;
+//             ClipboardVirtualChannel::Params params(reportMessage);
+//
+//             params.exchanged_data_limit = ~decltype(params.exchanged_data_limit){};
+//             params.verbose = to_verbose_flags(0);
+//
+//             params.clipboard_down_authorized = true;
+//             params.clipboard_up_authorized = true;
+//             params.clipboard_file_authorized = true;
+//
+//             params.dont_log_data_into_syslog = true;
+//             params.dont_log_data_into_wrm = true;
+//
+// //            params.client_use_long_format_names = true;
+//
+//             return params;
+//         }())
     , _current_screen_index(0)
     , _recv_disconnect_ultimatum(false)
     , enable_shared_clipboard(false)
     , enable_shared_virtual_disk(false)
-    , CB_TEMP_DIR(MAIN_DIR + std::string(CB_FILE_TEMP_PATH))
-    , SHARE_DIR(MAIN_DIR + std::string(SHARE_PATH))
-    , USER_CONF_DIR(MAIN_DIR + std::string(USER_CONF_PATH))
-    , clipbrdFormatsList()
-    , _cb_filesList()
-    , _cb_buffers()
+
+//     , clipbrdFormatsList()
+
     {
-        this->_to_client_sender._front = this;
+//         this->_to_client_sender._front = this;
     }
 
     virtual void setClientInfo() = 0;
@@ -239,10 +183,13 @@ public:
     virtual void writeClientInfo() = 0;
     virtual void deleteCurrentProtile() = 0;
 
+    //  channel callbacks
+//     virtual void clipboard_callback() = 0;
+
     // CHANNELS
-    virtual void send_FormatListPDU(uint32_t const * formatIDs, const uint16_t ** formatListDataShortName, const std::size_t * size_names, std::size_t formatIDs_size) = 0;
-    virtual void empty_buffer() = 0;
-    virtual void emptyLocalBuffer() = 0;
+//     virtual void send_FormatListPDU(uint32_t const * formatIDs, const uint16_t ** formatListDataShortName, const std::size_t * size_names, std::size_t formatIDs_size) = 0;
+//     virtual void empty_buffer() = 0;
+//     virtual void emptyLocalBuffer() = 0;
 
 };
 
@@ -979,12 +926,21 @@ public Q_SLOTS:
 
 
 
+#include "core/RDP/clipboard.hpp"
+#include "utils/fileutils.hpp"
+
 class ClipBoard_Qt : public QObject
 {
 
     Q_OBJECT
 
 public:
+
+    enum : uint16_t {
+          CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
+        , CF_QT_CLIENT_FILECONTENTS         = 48026
+    };
+
     Front_RDP_Qt_API                  * _front;
     QClipboard                * _clipboard;
     bool                        _local_clipboard_stream;
@@ -1045,7 +1001,7 @@ public:
         }
     }
 
-    void setClipboard_files(std::vector<Front_RDP_Qt_API::CB_FilesList::CB_in_Files> items_list) {
+    void setClipboard_files(std::string & name) {           //std::vector<Front_RDP_Qt_API::CB_FilesList::CB_in_Files> items_list) {
 
         /*QClipboard *cb = QApplication::clipboard();
         QMimeData* newMimeData = new QMimeData();
@@ -1074,29 +1030,42 @@ public:
         cb->setMimeData(newMimeData);*/
 
 
-        QClipboard *cb = QApplication::clipboard();
-        QMimeData* newMimeData = new QMimeData();
-        const QMimeData* oldMimeData = cb->mimeData();
-        QStringList ll = oldMimeData->formats();
-        for (int i = 0; i < ll.size(); i++) {
-            newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
-        }
+//         QClipboard *cb = QApplication::clipboard();
+//         QMimeData* newMimeData = new QMimeData();
+//         const QMimeData* oldMimeData = cb->mimeData();
+//         QStringList ll = oldMimeData->formats();
+//         for (int i = 0; i < ll.size(); i++) {
+//             newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
+//         }
 
-        QByteArray gnomeFormat = QByteArray("copy\n");
+//         QByteArray gnomeFormat = QByteArray("copy\n");
 
-        for (size_t i = 0; i < items_list.size(); i++) {
+//         for (size_t i = 0; i < items_list.size(); i++) {
 
-            std::string path(this->_front->CB_TEMP_DIR + std::string("/") + items_list[i].name);
+            QClipboard *cb = QApplication::clipboard();
+            QMimeData* newMimeData = new QMimeData();
+            const QMimeData* oldMimeData = cb->mimeData();
+            QStringList ll = oldMimeData->formats();
+            for (int i = 0; i < ll.size(); i++) {
+                newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
+            }
+
+            QByteArray gnomeFormat = QByteArray("copy\n");
+
+            std::string path(this->_front->CB_TEMP_DIR + std::string("/") + name);
             //std::cout <<  path <<  std::endl;
             QString qpath(path.c_str());
 
             //qDebug() << "QUrl" << QUrl::fromLocalFile(qpath);
 
             gnomeFormat.append(QUrl::fromLocalFile(qpath).toEncoded());
-        }
 
-        newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
-        cb->setMimeData(newMimeData);
+            newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
+            cb->setMimeData(newMimeData);
+//         }
+
+//         newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
+//         cb->setMimeData(newMimeData);
     }
 
     void setClipboard_text(std::string & str) {
@@ -1135,13 +1104,7 @@ public:
         this->_items_list.clear();
     }
 
-    void send_FormatListPDU() {
-        uint32_t formatIDs[]                  = { this->_bufferTypeID };
-        const uint16_t * formatListDataShortName[] = { reinterpret_cast<const uint16_t *>(this->_bufferTypeLongName.data())};
-        const size_t size_names[] = {this->_bufferTypeLongName.size()};
 
-        this->_front->send_FormatListPDU(formatIDs, formatListDataShortName, size_names, 1);
-    }
 
 
 public Q_SLOTS:
@@ -1175,7 +1138,7 @@ public Q_SLOTS:
                 RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender ender;
                 ender.emit(this->_chunk.get(), this->_cliboard_data_length);
 
-                this->send_FormatListPDU();
+                this->_front->clipboard_callback();
             //==========================================================================
 
 
@@ -1191,8 +1154,8 @@ public Q_SLOTS:
                 //==================
                 //    FILE COPY
                 //==================
-                        this->_bufferTypeID       = Front_RDP_Qt_API::ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
-                        this->_bufferTypeLongName = this->_front->clipbrdFormatsList.FILEGROUPDESCRIPTORW;
+                        this->_bufferTypeID       = CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
+                        this->_bufferTypeLongName = std::string("F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0", 42);
 
                         // retrieve each path
                         const std::string delimiter = "\n";
@@ -1257,7 +1220,7 @@ public Q_SLOTS:
                             }
                         }
 
-                        this->send_FormatListPDU();
+                        this->_front->clipboard_callback();
                 //==========================================================================
 
 
@@ -1281,7 +1244,7 @@ public Q_SLOTS:
 
                         this->_cliboard_data_length += RDPECLIP::FormatDataResponsePDU_Text::Ender::SIZE;
 
-                        this->send_FormatListPDU();
+                        this->_front->clipboard_callback();
                 //==========================================================================
                     }
                 }
@@ -1293,113 +1256,110 @@ public Q_SLOTS:
 
 
 
-class Sound_Qt : public QObject
-{
-
-Q_OBJECT
-
-    Phonon::MediaObject * media;
-    Phonon::AudioOutput * audioOutput;
-
-public:
-    int wave_data_to_wait;
-
-    uint32_t n_sample_per_sec;
-    uint16_t bit_per_sample;
-    uint16_t n_channels;
-    uint16_t n_block_align;
-    uint32_t bit_per_sec;
-
-    bool last_PDU_is_WaveInfo;
-
-    Front_RDP_Qt_API * front;
-
-    std::string wave_file_to_write;
-
-    int current_wav_index;
-    int total_wav_files;
-
-
-
-    Sound_Qt(QWidget * parent, Front_RDP_Qt_API * front)
-      : QObject(parent)
-      , media(nullptr)
-      , audioOutput(nullptr)
-      , wave_data_to_wait(0)
-      , n_sample_per_sec(0)
-      , bit_per_sample(0)
-      , n_channels(0)
-      , n_block_align(0)
-      , bit_per_sec(0)
-      , last_PDU_is_WaveInfo(false)
-      , front(front)
-      , current_wav_index(0)
-      , total_wav_files(0)
-    {
-        this->media = new Phonon::MediaObject(this);
-        this->audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
-        Phonon::createPath(this->media, this->audioOutput);
-
-        this->QObject::connect(this->media, SIGNAL (finished()),  this, SLOT (call_playback_over()));
-    }
-
-    void init(size_t raw_total_size) {
-
-        this->total_wav_files++;
-
-        this->wave_file_to_write = std::string("sound") + std::to_string(this->total_wav_files) +std::string(".wav");
-
-        StaticOutStream<64> out_stream;
-        out_stream.out_copy_bytes("RIFF", 4);
-        out_stream.out_uint32_le(raw_total_size + 36);
-        out_stream.out_copy_bytes("WAVEfmt ", 8);
-        out_stream.out_uint32_le(16);
-        out_stream.out_uint16_le(1);
-        out_stream.out_uint16_le(this->n_channels);
-        out_stream.out_uint32_le(this->n_sample_per_sec);
-        out_stream.out_uint32_le(this->bit_per_sec);
-        out_stream.out_uint16_le(this->n_block_align);
-        out_stream.out_uint16_le(this->bit_per_sample);
-        out_stream.out_copy_bytes("data", 4);
-        out_stream.out_uint32_le(raw_total_size);
-
-        std::ofstream file(this->wave_file_to_write.c_str(), std::ios::out| std::ios::binary);
-        if (file.is_open()) {
-            file.write(reinterpret_cast<const char *>(out_stream.get_data()), 44);
-            file.close();
-        }
-    }
-
-    void setData(const uint8_t * data, size_t size) {
-        std::ofstream file(this->wave_file_to_write.c_str(), std::ios::app | std::ios::out| std::ios::binary);
-        if (file) {
-            file.write(reinterpret_cast<const char *>(data), size);
-            file.close();
-        }
-    }
-
-    void play() {
-        if (this->media->state() == Phonon::StoppedState) {
-
-            if (this->total_wav_files > this->current_wav_index) {
-
-                this->current_wav_index++;
-                std::string wav_file_name = std::string("sound") + std::to_string(this->current_wav_index) +std::string(".wav");
-
-                Phonon::MediaSource sources(QUrl(wav_file_name.c_str()));
-                this->media->setCurrentSource(sources);
-                this->media->play();
-            }
-        }
-    }
-
-private Q_SLOTS:
-    void call_playback_over() {
-        std::string wav_file_name = std::string("sound") + std::to_string(this->current_wav_index) +std::string(".wav");
-        remove(wav_file_name.c_str());
-
-        this->play();
-    }
-
-};
+// class Sound_Qt : public QObject
+// {
+//
+// Q_OBJECT
+//
+//     Phonon::MediaObject * media;
+//     Phonon::AudioOutput * audioOutput;
+//
+// public:
+//     int wave_data_to_wait;
+//
+//     uint32_t n_sample_per_sec;
+//     uint16_t bit_per_sample;
+//     uint16_t n_channels;
+//     uint16_t n_block_align;
+//     uint32_t bit_per_sec;
+//
+//     bool last_PDU_is_WaveInfo;
+//
+//     std::string wave_file_to_write;
+//
+//     int current_wav_index;
+//     int total_wav_files;
+//
+//
+//
+//     Sound_Qt(QWidget * parent)
+//       : QObject(parent)
+//       , media(nullptr)
+//       , audioOutput(nullptr)
+//       , wave_data_to_wait(0)
+//       , n_sample_per_sec(0)
+//       , bit_per_sample(0)
+//       , n_channels(0)
+//       , n_block_align(0)
+//       , bit_per_sec(0)
+//       , last_PDU_is_WaveInfo(false)
+//       , current_wav_index(0)
+//       , total_wav_files(0)
+//     {
+//         this->media = new Phonon::MediaObject(this);
+//         this->audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
+//         Phonon::createPath(this->media, this->audioOutput);
+//
+//         this->QObject::connect(this->media, SIGNAL (finished()),  this, SLOT (call_playback_over()));
+//     }
+//
+//     void init(size_t raw_total_size) {
+//
+//         this->total_wav_files++;
+//
+//         this->wave_file_to_write = std::string("sound") + std::to_string(this->total_wav_files) +std::string(".wav");
+//
+//         StaticOutStream<64> out_stream;
+//         out_stream.out_copy_bytes("RIFF", 4);
+//         out_stream.out_uint32_le(raw_total_size + 36);
+//         out_stream.out_copy_bytes("WAVEfmt ", 8);
+//         out_stream.out_uint32_le(16);
+//         out_stream.out_uint16_le(1);
+//         out_stream.out_uint16_le(this->n_channels);
+//         out_stream.out_uint32_le(this->n_sample_per_sec);
+//         out_stream.out_uint32_le(this->bit_per_sec);
+//         out_stream.out_uint16_le(this->n_block_align);
+//         out_stream.out_uint16_le(this->bit_per_sample);
+//         out_stream.out_copy_bytes("data", 4);
+//         out_stream.out_uint32_le(raw_total_size);
+//
+//         std::ofstream file(this->wave_file_to_write.c_str(), std::ios::out| std::ios::binary);
+//         if (file.is_open()) {
+//             file.write(reinterpret_cast<const char *>(out_stream.get_data()), 44);
+//             file.close();
+//         }
+//     }
+//
+//     void setData(const uint8_t * data, size_t size) {
+//         std::ofstream file(this->wave_file_to_write.c_str(), std::ios::app | std::ios::out| std::ios::binary);
+//         if (file) {
+//             file.write(reinterpret_cast<const char *>(data), size);
+//             file.close();
+//         }
+//     }
+//
+//     void play() {
+//         if (this->media->state() == Phonon::StoppedState) {
+//
+//             if (this->total_wav_files > this->current_wav_index) {
+//
+//                 this->current_wav_index++;
+//                 std::string wav_file_name = std::string("sound") + std::to_string(this->current_wav_index) +std::string(".wav");
+//
+//                 Phonon::MediaSource sources(QUrl(wav_file_name.c_str()));
+//                 this->media->setCurrentSource(sources);
+//                 this->media->play();
+//             }
+//         }
+//     }
+//
+// private Q_SLOTS:
+//     void call_playback_over() {
+//         std::string wav_file_name = std::string("sound") + std::to_string(this->current_wav_index) +std::string(".wav");
+//         remove(wav_file_name.c_str());
+//
+//         this->play();
+//     }
+//
+// };
 

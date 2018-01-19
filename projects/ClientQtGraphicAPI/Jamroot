@@ -264,24 +264,11 @@ obj front_Qt$(qtversion)_rdp.o : src/rdp_client_qt_front.cpp :
     $(EXE_DEPENDENCIES)
 ;
 
-exe client_vnc_Qt$(qtversion) :
-    src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp
-    src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
-    front_Qt$(qtversion)_Demo.o
-    $(obj_list)
-    $(lib_list)
-    config.o
-    hexdump.o
-    $(obj_list_VNC)
-    libqtclient
-:
-    $(EXE_DEPENDENCIES)
-    <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
-;
-
 exe client_rdp_Qt$(qtversion) :
     src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp
     src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
+    src/qt_input_output_api/qt_output_sound.hpp
+    src/qt_input_output_api/qt_input_output_clipboard.hpp
     src/rdp_client_qt_widget.hpp
     front_Qt$(qtversion)_rdp.o
     $(obj_list)

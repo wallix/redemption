@@ -85,8 +85,8 @@
 #   include <QtCore/QByteArray>
 #   include <QtCore/QUrl>
 #   include <QtCore/QtGlobal>
-#   include <phonon/AudioOutput>
-#   include <phonon/MediaObject>
+#include <phonon/AudioOutput>
+#include <phonon/MediaObject>
 #   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
 #else
 #   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtWidgets/name>
@@ -113,12 +113,18 @@
 
 #undef REDEMPTION_QT_INCLUDE_WIDGET
 
+#include "../client_input_output_api.hpp"
 
 #endif
 
 #define REPLAY_PATH "/replay"
 #define LOGINS_PATH "/config/login.config"
 #define WINODW_CONF_PATH "/config/windows_config.config"
+#define SHARE_PATH "/share"
+#define CB_FILE_TEMP_PATH "/clipboard_temp"
+#define KEY_SETTING_PATH "/config/keySetting.config"
+#define USER_CONF_PATH "/config/userConfig.config"
+
 
 #ifndef MAIN_PATH
 # error "undefined MAIN_PATH macro"
@@ -173,12 +179,18 @@ public:
     const std::string    REPLAY_DIR;
     const std::string    USER_CONF_LOG;
     const std::string    WINDOWS_CONF;
+    const std::string    CB_TEMP_DIR;
+    std::string          SHARE_DIR;
+    const std::string    USER_CONF_DIR;
+
 
     std::string _movie_name;
     std::string _movie_dir;
 
     bool wab_diag_question;
     int asked_color;
+
+    std::string close_box_extra_message_ref;
 
 
 
@@ -272,12 +284,16 @@ public:
     , REPLAY_DIR(MAIN_PATH REPLAY_PATH)
     , USER_CONF_LOG(MAIN_PATH LOGINS_PATH)
     , WINDOWS_CONF(MAIN_PATH WINODW_CONF_PATH)
+    , CB_TEMP_DIR(MAIN_DIR + std::string(CB_FILE_TEMP_PATH))
+    , SHARE_DIR(MAIN_DIR + std::string(SHARE_PATH))
+    , USER_CONF_DIR(MAIN_DIR + std::string(USER_CONF_PATH))
     , wab_diag_question(false)
     , asked_color(0)
     , windowsData(this)
     , current_user_profil(0)
     , screen_max_width(QApplication::desktop()->width())
     , screen_max_height(QApplication::desktop()->height())
+    , close_box_extra_message_ref("Close")
     {
         this->windowsData.open();
         std::fill(std::begin(this->info.order_caps.orderSupport), std::end(this->info.order_caps.orderSupport), 1);
@@ -319,6 +335,8 @@ public:
 
     virtual mod_api * init_mod() = 0;
 
+
+    virtual void clipboard_callback() = 0;
 };
 
 
@@ -986,6 +1004,8 @@ public:
 
     int x_pixmap_shift;
     int y_pixmap_shift;
+
+
 
 private:
     static time_t get_movie_time_length(char const * mwrm_filename)

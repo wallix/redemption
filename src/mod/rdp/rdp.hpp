@@ -2013,6 +2013,22 @@ public:
         }
     }   // configure_proxy_managed_drives
 
+    void configure_proxy_managed_drives_client(const char * proxy_managed_drives) {
+         std::string drive;
+        for (auto & r : get_line(proxy_managed_drives, ',')) {
+            auto trimmed_range = trim(r);
+
+            if (trimmed_range.empty()) continue;
+
+            drive.assign(begin(trimmed_range), end(trimmed_range));
+
+            if (bool(this->verbose & RDPVerbose::connection)) {
+                LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive);
+            }
+            this->file_system_drive_manager.EnableDriveClient(drive.c_str(), this->verbose);
+        }
+    }
+
     void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 *) override {
         if ((UP_AND_RUNNING == this->connection_finalization_state) &&
             !this->input_event_disabled) {
