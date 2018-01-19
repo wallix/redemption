@@ -34,8 +34,6 @@
 
 RED_AUTO_TEST_CASE(TestDecodePacket)
 {
-    RED_CHECK(1);
-
     ClientInfo info;
     info.keylayout = 0x04C;
     info.console_session = 0;
@@ -293,10 +291,8 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 //    mod.draw_event(time(nullptr), front);
 }
 
-ED_AUTO_TEST_CASE(TestDecodePacket)
+RED_AUTO_TEST_CASE(TestDecodePacket2)
 {
-    RED_CHECK(1);
-
     ClientInfo info;
     info.keylayout = 0x04C;
     info.console_session = 0;
