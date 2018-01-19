@@ -14,12 +14,10 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Meng Tan,
-              Jennifer Inthavong
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+   Copyright (C) Wallix 2018
+   Author(s): Christophe Grosjean
 
-   Unit test for Lightweight UTF library
+   Unit test for Zlib library
 
 */
 
@@ -48,7 +46,8 @@ RED_AUTO_TEST_CASE(TestZLIB0)
 
 
     z_stream strm;
-    const size_t CHUNK = 16384;
+    const size_t CHUNK = 16384; // magic number, 16384 is minimal value recommanded by zlib
+    const size_t INCHUNK = 3265; // magic numbers, whatever could do
     unsigned char out[CHUNK];
 
     /* allocate deflate state */
@@ -62,26 +61,24 @@ RED_AUTO_TEST_CASE(TestZLIB0)
 
     /* compress until end of data */
     size_t total_compressed_size = 0;
-    q = 0;
-    do {
-       size_t datasize = (q + CHUNK > sizeof(uncompressed))?sizeof(uncompressed)-q:CHUNK;
-       strm.avail_in = datasize;
-       strm.next_in = &uncompressed[q];
-        printf("datasize=%zu\n", datasize);
-    
-        /* run deflate() on input until output buffer not full, finish
-           compression if all of source has been read in */
+    size_t qlen = 1;
+    strm.avail_in = 0;
+    for ( q = 0 ; qlen - strm.avail_in ; q += qlen - strm.avail_in) {
+        strm.next_in = &uncompressed[q];
+        strm.avail_in = qlen = (q + INCHUNK < sizeof(uncompressed))?INCHUNK:sizeof(uncompressed)-q;
         do {
-            // Output space is provided to deflate() by setting 
-            // avail_out to the number of available output bytes 
-            // and next_out to a pointer to that space.
             strm.avail_out = CHUNK;
             strm.next_out = &out[0];
-            ret = deflate(&strm, true||(datasize != CHUNK) ? Z_FINISH : Z_NO_FLUSH);
-            size_t have = CHUNK - strm.avail_out;
-            printf("have=%zu avail_out=%zu\n", have, strm.avail_out);
+            ret = deflate(&strm, Z_NO_FLUSH);
             total_compressed_size += CHUNK-strm.avail_out;
+            // or copy result
         } while (CHUNK != strm.avail_out);
-    } while (0);
-    RED_CHECK_EQUAL(total_compressed_size, 170);
+    }
+    do {
+        strm.avail_out = CHUNK;
+        strm.next_out = &out[0];
+        ret = deflate(&strm, Z_FINISH);
+        total_compressed_size += CHUNK-strm.avail_out;
+    } while (CHUNK != strm.avail_out);
+    RED_CHECK_EQUAL(total_compressed_size, 482);
 }
