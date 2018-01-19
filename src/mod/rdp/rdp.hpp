@@ -812,7 +812,6 @@ protected:
         }
     } session_probe_virtual_channel_event_handler;
 
-
     class RemoteProgramSessionManagerEventHandler : public EventHandler::CB {
         mod_rdp& mod_;
 
@@ -825,6 +824,19 @@ protected:
             this->mod_.process_remote_program_session_manager_event(now, event, drawable);
         }
     } remote_program_session_manager_event_handler;
+
+    class FileSystemVirtualChannelEventHandler : public EventHandler::CB {
+        mod_rdp& mod_;
+
+    public:
+        FileSystemVirtualChannelEventHandler(mod_rdp& mod)
+        : mod_(mod)
+        {}
+
+        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
+            this->mod_.process_file_system_virtual_channel_event(now, event, drawable);
+        }
+    } file_system_virtual_channel_event_handler;
 
     bool clean_up_32_bpp_cursor;
     bool large_pointer_support;
@@ -1025,6 +1037,7 @@ public:
         , session_probe_launcher_event_handler(*this)
         , session_probe_virtual_channel_event_handler(*this)
         , remote_program_session_manager_event_handler(*this)
+        , file_system_virtual_channel_event_handler(*this)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
         , client_large_pointer_caps(info.large_pointer_caps)
@@ -1064,9 +1077,7 @@ public:
         }
 
         // Clear client screen
-        if (this->client_order_caps.orderSupport[TS_NEG_PATBLT_INDEX]) {
-            this->invoke_asynchronous_graphic_task(AsynchronousGraphicTask::clear_screen);
-        }
+        this->invoke_asynchronous_graphic_task(AsynchronousGraphicTask::clear_screen);
 
         this->beginning = timeobj.get_time().tv_sec;
 
@@ -2128,6 +2139,12 @@ private:
         }
     }
 
+    void process_file_system_virtual_channel_event(time_t, wait_obj& /*event*/, gdi::GraphicApi&) {
+        if (this->file_system_virtual_channel) {
+            this->file_system_virtual_channel->process_event();
+        }
+    }
+
 public:
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
         mod_api::get_event_handlers(out_event_handlers);
@@ -2165,6 +2182,16 @@ public:
                 out_event_handlers.emplace_back(
                     event,
                     &this->remote_program_session_manager_event_handler,
+                    INVALID_SOCKET
+                );
+            }
+        }
+
+        if (this->file_system_virtual_channel) {
+            if (wait_obj* event = this->file_system_virtual_channel->get_event()) {
+                out_event_handlers.emplace_back(
+                    event,
+                    &this->file_system_virtual_channel_event_handler,
                     INVALID_SOCKET
                 );
             }
@@ -3719,7 +3746,7 @@ public:
                 double seconds = ::difftime(now, this->beginning);
 
                 char duration[1024];
-                snprintf(duration, sizeof(duration), "%02d:%02d:%02d",
+                snprintf(duration, sizeof(duration), "%d:%02d:%02d",
                     (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
                     (int(seconds) % 60));
 
@@ -7609,7 +7636,7 @@ public:
             double seconds = ::difftime(now, this->beginning);
 
             char extra[1024];
-            snprintf(extra, sizeof(extra), "duration=\"%02d:%02d:%02d\"",
+            snprintf(extra, sizeof(extra), "%d:%02d:%02d",
                 (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
                 (int(seconds) % 60));
 

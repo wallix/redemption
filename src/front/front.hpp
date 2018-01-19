@@ -94,6 +94,7 @@
 
 #include "utils/bitfu.hpp"
 #include "utils/bitmap.hpp"
+#include "utils/bitmap_private_data.hpp"
 #include "utils/colors.hpp"
 #include "utils/confdescriptor.hpp"
 #include "utils/contiguous_sub_rect_f.hpp"
@@ -4200,7 +4201,40 @@ protected:
     }
 
     void draw_impl(RDPMemBlt const& cmd, Rect clip, Bitmap const & bitmap) {
-        this->priv_draw_memblt(cmd, clip, bitmap);
+        if (this->client_info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX]) {
+            this->priv_draw_memblt(cmd, clip, bitmap);
+        }
+        else {
+            Rect dest_rect = clip.intersect(cmd.rect);
+            auto drew_bitmap = [this](Bitmap const &bitmap, Rect const & rect) {
+                RDPBitmapData bitmap_data;
+
+                bitmap_data.dest_left = rect.x;
+                bitmap_data.dest_top = rect.y;
+                bitmap_data.dest_right = rect.x + rect.cx - 1;
+                bitmap_data.dest_bottom = rect.y + rect.cy - 1;
+
+                bitmap_data.width = bitmap.cx();
+                bitmap_data.height = bitmap.cy();
+                bitmap_data.bits_per_pixel = bitmap.bpp();
+                bitmap_data.flags = 0;
+
+                bitmap_data.bitmap_length = bitmap.bmp_size();
+
+                this->draw_impl(bitmap_data, bitmap);
+            };
+            if (!dest_rect.isempty()) {
+                if (dest_rect == cmd.rect) {
+                    Bitmap new_bitmap(bitmap, Rect(cmd.srcx, cmd.srcy, cmd.rect.cx, cmd.rect.cy));
+                    drew_bitmap(new_bitmap, cmd.rect);
+                }
+                else {
+                    Bitmap new_bitmap(bitmap, Rect(cmd.srcx + dest_rect.x - cmd.rect.x,
+                        cmd.srcy + dest_rect.y - cmd.rect.y, dest_rect.cx, dest_rect.cy));
+                    drew_bitmap(new_bitmap, dest_rect);
+                }
+            }
+        }
     }
 
     void draw_impl(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bitmap) {
@@ -4208,7 +4242,12 @@ protected:
     }
 
     void draw_impl(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) {
-        this->priv_draw_and_update_cache_brush(cmd, clip, color_ctx);
+        if (this->client_info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX]) {
+            this->priv_draw_and_update_cache_brush(cmd, clip, color_ctx);
+        }
+        else {
+            LOG(LOG_WARNING, "Front::draw_impl(RDPPatBlt): This Primary Drawing Order is not supported by client!");
+        }
     }
 
     void draw_impl(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) {
@@ -4335,7 +4374,8 @@ protected:
     void draw_impl(RDPBitmapData const & bitmap_data, Bitmap const & bmp) {
         //LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
 
-        if (   !this->ini.get<cfg::globals::enable_bitmap_update>()) {
+        if (!this->ini.get<cfg::globals::enable_bitmap_update>() &&
+            this->client_info.order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]) {
             Rect boundary(bitmap_data.dest_left,
                           bitmap_data.dest_top,
                           bitmap_data.dest_right - bitmap_data.dest_left + 1,
@@ -4346,6 +4386,117 @@ protected:
         }
         else {
             this->graphics_update->draw(bitmap_data, bmp);
+        }
+    }
+
+    void draw_impl(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx color_ctx) {
+        if (this->client_info.order_caps.orderSupport[TS_NEG_LINETO_INDEX]) {
+            this->graphics_update->draw(cmd, clip, color_ctx);
+        }
+        else {
+            if ((cmd.startx == cmd.endx) || (cmd.starty == cmd.endy)) {
+                int16_t const min_x = std::min<int16_t>(cmd.startx, cmd.endx);
+                int16_t const max_x = std::max<int16_t>(cmd.startx, cmd.endx);
+                int16_t const min_y = std::min<int16_t>(cmd.starty, cmd.endy);
+                int16_t const max_y = std::max<int16_t>(cmd.starty, cmd.endy);
+                RDPOpaqueRect other_cmd(Rect(min_x, min_y, max_x - min_x + 1, max_y - min_y + 1), cmd.pen.color);
+                this->draw_impl(other_cmd, clip, color_ctx);
+            }
+            else {
+                LOG(LOG_WARNING, "Front::draw_impl(RDPLineTo): This Primary Drawing Order is not supported by client!");
+            }
+        }
+    }
+
+    void draw_impl(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) {
+        Rect dest_rect = cmd.rect.intersect(clip);
+        if (dest_rect.isempty()) {
+            return;
+        }
+
+        if (this->client_info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX]) {
+            this->graphics_update->draw(cmd, clip, color_ctx);
+        }
+        else {
+            Rect image_rect = dest_rect;
+            image_rect.cx = align4(dest_rect.cx);
+
+            uint8_t image_bpp = (this->capture_bpp ? this->capture_bpp : this->client_info.bpp);
+
+            const uint16_t max_image_width =
+                std::min<uint16_t>(
+                        align4(this->max_bitmap_size / nbbytes(image_bpp)),
+                        image_rect.cx
+                    );
+            const uint16_t max_image_height = this->max_bitmap_size / (max_image_width * nbbytes(image_bpp));
+
+            BGRColor order_color = color_decode(cmd.color, color_ctx);
+            RDPColor image_color = color_encode(order_color, image_bpp);
+            uint32_t pixel_color = ((nbbytes(image_bpp) <= 2) ? image_color.as_bgr().to_u32() : BGRColor(image_color.as_rgb()).to_u32());
+
+            std::vector<Bitmap> image_collection;
+
+            auto get_image = [&image_collection](uint16_t width, uint16_t height, uint8_t bpp, uint32_t color) -> Bitmap const & {
+                    std::vector<Bitmap>::iterator iter = std::find_if(image_collection.begin(), image_collection.end(),
+                        [width, height](Bitmap const & bitmap) {
+                                return ((bitmap.cx() == width) && (bitmap.cy() == height));
+                            });
+                    if (image_collection.end() != iter) {
+                        return *iter;
+                    }
+
+                    unsigned int const Bpp = nbbytes(bpp);
+
+                    image_collection.emplace_back();
+
+                    Bitmap & bitmap = image_collection.back();
+
+                    Bitmap::PrivateData::Data & data = Bitmap::PrivateData::initialize(bitmap, bpp, width, height);
+
+                    uint8_t * begin_ptr = data.get();
+                    uint8_t * write_ptr = begin_ptr;
+                    for (uint16_t i = 0; i < width; ++i, write_ptr += Bpp) {
+                        memcpy(write_ptr, &color, Bpp);
+                    }
+
+                    unsigned int const line_size = data.line_size();
+
+                    write_ptr = data.get() + line_size;
+                    for (uint16_t i = 1; i < height; ++i, write_ptr += line_size) {
+                        memcpy(write_ptr, begin_ptr, line_size);
+                    }
+
+                    StaticOutStream<65535> bmp_stream;
+                    bitmap.compress(bpp, bmp_stream);
+
+                    return bitmap;
+                };
+
+            for (uint32_t y = 0; y < image_rect.cy; y += max_image_height) {
+                for (uint32_t x = 0; x < image_rect.cx; x += max_image_width) {
+                    const uint16_t sub_image_width = std::min<uint16_t>(image_rect.cx - x, max_image_width);
+                    const uint16_t sub_image_height = std::min<uint16_t>(image_rect.cy - y, max_image_height);
+
+                    Bitmap const & sub_image = get_image(sub_image_width, sub_image_height, image_bpp, pixel_color);
+
+                    RDPBitmapData sub_image_data;
+
+                    sub_image_data.dest_left = dest_rect.x + x;
+                    sub_image_data.dest_top  = dest_rect.y + y;
+
+                    sub_image_data.dest_right = std::min<uint16_t>(sub_image_data.dest_left + sub_image_width - 1, dest_rect.x + dest_rect.cx - 1);
+                    sub_image_data.dest_bottom = sub_image_data.dest_top + sub_image_height - 1;
+
+                    sub_image_data.width = sub_image_width;
+                    sub_image_data.height = sub_image_height;
+
+                    sub_image_data.bits_per_pixel = sub_image.bpp();
+                    sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
+                    sub_image_data.bitmap_length = sub_image.data_compressed().size();
+
+                    this->draw_impl(sub_image_data, sub_image);
+                }
+            }
         }
     }
 

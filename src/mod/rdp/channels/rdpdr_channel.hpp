@@ -865,6 +865,13 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
     SessionProbeLauncher* session_probe_device_announce_responded_notifier = nullptr;
 
+    const std::chrono::milliseconds initialization_timeout = std::chrono::milliseconds(5000);
+
+    bool disable_client_sender = false;
+
+    uint16_t server_major_version_number = 0;
+    uint32_t server_generated_client_id = 0;
+
     template<class Cont, class ItFw>
     static void unordered_erase(Cont & cont, ItFw && pos)
     {
@@ -1904,6 +1911,8 @@ public:
                     client_announce_reply.receive(chunk);
                     client_announce_reply.log(LOG_INFO);
                 }
+
+                this->initialization_timeout_event.reset_trigger_time();
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENT_NAME:
@@ -2056,8 +2065,15 @@ public:
             server_announce_request.log(LOG_INFO);
         }
 
+        this->server_major_version_number = server_announce_request.VersionMajor();
+        this->server_generated_client_id = server_announce_request.ClientId();
+
         // Virtual channel is opened at client side and is authorized.
         if (this->has_valid_to_client_sender()) {
+            this->initialization_timeout_event.set_trigger_time(
+                std::chrono::duration_cast<std::chrono::microseconds>(
+                    this->initialization_timeout).count());
+
             return true;
         }
 
@@ -2136,7 +2152,7 @@ public:
         }
 
         // Virtual channel is opened at client side and is authorized.
-        if (this->has_valid_to_client_sender())
+        if (this->has_valid_to_client_sender() && !this->disable_client_sender)
             return true;
 
         {
@@ -2579,7 +2595,7 @@ public:
             this->server_message_header.receive(chunk);
         }
 
-        bool send_message_to_client = this->has_valid_to_client_sender();
+        bool send_message_to_client = (this->has_valid_to_client_sender() && !this->disable_client_sender);
 
         switch (this->server_message_header.packet_id)
         {
@@ -2716,6 +2732,84 @@ public:
     void set_session_probe_launcher(SessionProbeLauncher* launcher) {
         this->drive_redirection_initialize_notifier = launcher;
         this->session_probe_device_announce_responded_notifier = launcher;
+    }
+
+    wait_obj initialization_timeout_event;
+
+    wait_obj* get_event()
+    {
+        if (this->initialization_timeout_event.is_trigger_time_set()) {
+            return &this->initialization_timeout_event;
+        }
+
+        return nullptr;
+    }
+
+    void process_event() {
+        this->initialization_timeout_event.reset_trigger_time();
+
+        uint8_t message_buffer[1024];
+
+        {
+            OutStream out_stream(message_buffer);
+
+            rdpdr::SharedHeader clent_message_header(
+                rdpdr::Component::RDPDR_CTYP_CORE,
+                rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM);
+            clent_message_header.emit(out_stream);
+
+            rdpdr::ClientAnnounceReply client_announce_reply(
+                0x0001, // VersionMajor, MUST be set to 0x0001.
+                0x0006, // Windows XP SP3.
+                // [MS-RDPEFS] - 3.2.5.1.3 Sending a Client Announce
+                //     Reply Message.
+                ((this->server_major_version_number >= 12) ?
+                 this->param_random_number :
+                 this->server_generated_client_id));
+            if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                LOG(LOG_INFO,
+                    "FileSystemVirtualChannel::process_event:");
+                client_announce_reply.log(LOG_INFO);
+            }
+            client_announce_reply.emit(out_stream);
+
+            this->send_message_to_server(
+                out_stream.get_offset(),
+                  CHANNELS::CHANNEL_FLAG_FIRST
+                | CHANNELS::CHANNEL_FLAG_LAST,
+                out_stream.get_data(),
+                out_stream.get_offset());
+        }
+
+        {
+            OutStream out_stream(message_buffer);
+
+            rdpdr::SharedHeader clent_message_header(
+                rdpdr::Component::RDPDR_CTYP_CORE,
+                rdpdr::PacketId::PAKID_CORE_CLIENT_NAME);
+            clent_message_header.emit(out_stream);
+
+            rdpdr::ClientNameRequest client_name_request(
+                this->param_client_name);
+            if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                LOG(LOG_INFO,
+                    "FileSystemVirtualChannel::process_event:");
+                client_name_request.log(LOG_INFO);
+            }
+            client_name_request.emit(out_stream);
+
+            this->send_message_to_server(
+                out_stream.get_offset(),
+                  CHANNELS::CHANNEL_FLAG_FIRST
+                | CHANNELS::CHANNEL_FLAG_LAST,
+                out_stream.get_data(),
+                out_stream.get_offset());
+        }
+
+        LOG(LOG_INFO,
+            "FileSystemVirtualChannel::process_event:"
+                "Initialization timeout reached.");
+        this->disable_client_sender = true;
     }
 };  // class FileSystemVirtualChannel
 

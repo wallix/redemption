@@ -60,10 +60,23 @@ void ProtectedGraphics::draw_impl(const RDPBitmapData & bitmap_data, const Bitma
         this->drawable.begin_update();
         for (const Rect & subrect : subrect4(rectBmp, this->protected_rect)) {
             if (!subrect.isempty()) {
-                this->drawable.draw(
-                    RDPMemBlt(0, subrect, 0xCC, subrect.x - rectBmp.x, subrect.y - rectBmp.y, 0),
-                    subrect, bmp
-                );
+                Bitmap sub_bmp(bmp, Rect(subrect.x - rectBmp.x, subrect.y - rectBmp.y, subrect.cx, subrect.cy));
+
+                RDPBitmapData sub_bmp_data = bitmap_data;
+
+                sub_bmp_data.dest_left = subrect.x;
+                sub_bmp_data.dest_top = subrect.y;
+                sub_bmp_data.dest_right = std::min<uint16_t>(sub_bmp_data.dest_left + subrect.cx - 1, bitmap_data.dest_right);
+                sub_bmp_data.dest_bottom = sub_bmp_data.dest_top + subrect.cy - 1;
+
+                sub_bmp_data.width = sub_bmp.cx();
+                sub_bmp_data.height = sub_bmp.cy();
+                sub_bmp_data.bits_per_pixel = sub_bmp.bpp();
+                sub_bmp_data.flags = 0;
+
+                sub_bmp_data.bitmap_length = sub_bmp.bmp_size();
+
+                this->drawable.draw(sub_bmp_data, sub_bmp);
             }
         }
         this->drawable.end_update();

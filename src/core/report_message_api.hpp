@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include <string>
 #include "utils/sugar/noncopyable.hpp"
 
 struct ReportMessageApi : noncopyable
