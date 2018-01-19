@@ -4213,6 +4213,7 @@ test-run tests/utils/test_word_identification :
 test-run tests/utils/test_zlib :
   $(REDEMPTION_TEST_PATH)/utils/test_zlib.cpp
 :
+  <library>src/utils/hexdump.o
   <library>z
 ;
 test-run tests/utils/winpr/test_pattern :

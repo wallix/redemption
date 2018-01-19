@@ -26,9 +26,13 @@
 
 #include <zlib.h>
 #include "utils/log.hpp"
+#include "utils/hexdump.hpp"
 
 RED_AUTO_TEST_CASE(TestZLIB0)
 {
+    size_t total_size = 0;
+    uint8_t all_out[32768];
+
     // Create some easy to compress pattern
     uint8_t uncompressed[70000]; 
 
@@ -63,22 +67,211 @@ RED_AUTO_TEST_CASE(TestZLIB0)
     size_t total_compressed_size = 0;
     size_t qlen = 1;
     strm.avail_in = 0;
+    size_t last_avail_out;
     for ( q = 0 ; qlen - strm.avail_in ; q += qlen - strm.avail_in) {
         strm.next_in = &uncompressed[q];
         strm.avail_in = qlen = (q + INCHUNK < sizeof(uncompressed))?INCHUNK:sizeof(uncompressed)-q;
         do {
             strm.avail_out = CHUNK;
             strm.next_out = &out[0];
+            last_avail_out = strm.avail_out;
             ret = deflate(&strm, Z_NO_FLUSH);
             total_compressed_size += CHUNK-strm.avail_out;
+            
+            memcpy(&all_out[total_size], &strm.next_out[-last_avail_out+strm.avail_out], last_avail_out-strm.avail_out);
+            total_size += last_avail_out - strm.avail_out;
             // or copy result
         } while (CHUNK != strm.avail_out);
     }
     do {
         strm.avail_out = CHUNK;
         strm.next_out = &out[0];
+        last_avail_out = strm.avail_out;
+        ret = deflate(&strm, Z_FINISH);
+        total_compressed_size += last_avail_out-strm.avail_out;
+
+        memcpy(&all_out[total_size], &strm.next_out[-last_avail_out+strm.avail_out], last_avail_out-strm.avail_out);
+        total_size += last_avail_out - strm.avail_out;
+
+    } while (CHUNK != strm.avail_out);
+
+    ret = deflateEnd(&strm);
+
+    RED_CHECK_EQUAL(total_compressed_size, 482);
+
+   hexdump(&all_out[0], total_size); 
+
+   RED_CHECK_EQUAL(total_size, 482);
+ }
+
+
+RED_AUTO_TEST_CASE(TestZLIB1)
+{
+    // Create some easy to compress pattern
+    size_t total_size = 0;
+    uint8_t all_out[32768];
+    uint8_t uncompressed[70000]; 
+
+    uint8_t pattern[] = {
+            'H', 'E', 'R', 'E', ' ', 'I', 'S', ' ', 'T', 'H', 'E', ' ', 'D', 'A', 'T', 'A',
+            ' ', 'I', ' ', 'W', 'A', 'N', 'T', ' ', 'T', 'O', ' ', 'C', 'O', 'M', 'P', 'R',
+            'E', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', '!',
+    };
+
+    size_t q = 0;
+    for (; q + sizeof(pattern) < sizeof(uncompressed) ; q += sizeof(pattern)){
+        memcpy(&uncompressed[q], pattern, sizeof(pattern));
+    }
+    memcpy(&uncompressed[q], pattern, sizeof(uncompressed)-q);
+
+
+    z_stream strm;
+    const size_t CHUNK = 16384; // magic number, 16384 is minimal value recommanded by zlib
+    unsigned char out[CHUNK];
+
+    /* allocate deflate state */
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    int ret = deflateInit(&strm, 1);
+    if (ret != Z_OK){
+        RED_ERROR("deflateInit failed");
+    }
+
+    /* compress until end of data */
+    size_t total_compressed_size = 0;
+    strm.avail_in = sizeof(uncompressed);
+    strm.next_in = &uncompressed[0];
+    strm.avail_out = CHUNK;
+    strm.next_out = &out[0];
+
+    size_t last_avail_out = 0;
+    while (strm.avail_in) {
+        last_avail_out = strm.avail_out;
+        if (strm.avail_out == 0){
+            strm.avail_out = CHUNK;
+            strm.next_out = &out[0];
+        }
+        ret = deflate(&strm, Z_NO_FLUSH);
+        total_compressed_size += last_avail_out-strm.avail_out;
+        memcpy(&all_out[total_size], &strm.next_out[-(last_avail_out - strm.avail_out)], last_avail_out - strm.avail_out);
+        total_size += last_avail_out - strm.avail_out;
+    }
+    do {
+        strm.avail_out = CHUNK;
+        strm.next_out = &out[0];
         ret = deflate(&strm, Z_FINISH);
         total_compressed_size += CHUNK-strm.avail_out;
+        memcpy(&all_out[total_size], &strm.next_out[-(last_avail_out - strm.avail_out)], last_avail_out - strm.avail_out);
+        total_size += last_avail_out - strm.avail_out;
     } while (CHUNK != strm.avail_out);
-    RED_CHECK_EQUAL(total_compressed_size, 482);
+    BOOST_CHECK_EQUAL(ret, Z_STREAM_END);
+
+    hexdump(&all_out[0], total_size); 
+
+   RED_CHECK_EQUAL(total_size, 482);
+   RED_CHECK_EQUAL(total_compressed_size, 482);
+}
+
+template <size_t outsize = 65536>
+class Zcompressor
+{
+    size_t offset;
+    uint8_t out[outsize];
+    z_stream z;
+    public:
+    Zcompressor()
+    {
+        this->z.zalloc = Z_NULL;
+        this->z.zfree = Z_NULL;
+        this->z.opaque = Z_NULL;
+        deflateInit(&this->z, 1);
+        this->offset = 0;
+        this->z.next_out = &this->out[this->offset];
+        this->z.avail_out = sizeof(this->out) - this->offset;
+    };
+
+    ~Zcompressor()
+    {
+        deflateEnd(&this->z);
+    }
+
+
+    // send more data to compressor
+    // returns the amount of data processed
+    size_t update(uint8_t * const data, size_t data_size)
+    {
+        this->z.next_in = data;
+        this->z.avail_in = data_size;
+        deflate(&z, Z_NO_FLUSH);
+        printf("avail_in = %d\n", this->z.avail_in);
+        return data_size  - this->z.avail_in;
+    }
+
+    // return the amount of compressed data available for emission
+    size_t available() const {
+        return sizeof(this->out) - this->offset - this->z.avail_out;
+    }
+
+    // TODO: we could return a pair buffer/size pointing to inner buffer
+    // TODO: we mau also use a vector for that
+    size_t flush_ready(uint8_t * data, size_t data_size){
+        size_t to_send = data_size >= this->available() ? this->available() : data_size;
+        memcpy(data, &this->out[this->offset], to_send);
+        if (to_send < this->available()){
+            this->offset += to_send;
+            return to_send;
+        }
+        this->offset = 0;
+        this->z.avail_out = sizeof(this->out);
+        this->z.next_out = &this->out[0];
+        return to_send;
+    }
+
+    bool full(){
+        return this->z.avail_out == 0;
+    }
+
+    // finish flushes all buffer
+    // we may need to call it several times (and flush ready data) until it returns true
+    bool finish()
+    {
+        return deflate(&this->z, Z_FINISH) == Z_STREAM_END;
+    }
+};
+
+
+RED_AUTO_TEST_CASE(TestZLIB3)
+{
+    // Create some easy to compress pattern
+    size_t total_size = 0;
+    uint8_t all_out[32768];
+    uint8_t uncompressed[70000]; 
+
+    uint8_t pattern[] = {
+            'H', 'E', 'R', 'E', ' ', 'I', 'S', ' ', 'T', 'H', 'E', ' ', 'D', 'A', 'T', 'A',
+            ' ', 'I', ' ', 'W', 'A', 'N', 'T', ' ', 'T', 'O', ' ', 'C', 'O', 'M', 'P', 'R',
+            'E', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', 'S', '!',
+    };
+
+    size_t q = 0;
+    for (; q + sizeof(pattern) < sizeof(uncompressed) ; q += sizeof(pattern)){
+        memcpy(&uncompressed[q], pattern, sizeof(pattern));
+    }
+    memcpy(&uncompressed[q], pattern, sizeof(uncompressed)-q);
+
+    Zcompressor<> z;
+    const size_t step = 1024;
+    
+    for (q = 0 ; q < sizeof(uncompressed) ; q += z.update(&uncompressed[q], std::min(step,sizeof(uncompressed)-q))){
+        if (z.full()) {
+            total_size += z.flush_ready(&all_out[total_size], sizeof(all_out)-total_size);
+        }
+    }
+    while (!z.finish() || z.available()){
+        total_size += z.flush_ready(&all_out[total_size], sizeof(all_out)-total_size);
+    }
+
+    hexdump(&all_out[0], total_size); 
+    RED_CHECK_EQUAL(total_size, 482);
 }
