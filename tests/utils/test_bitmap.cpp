@@ -5833,7 +5833,5 @@ RED_AUTO_TEST_CASE(TestBitmapConv)
 
     RED_CHECK_SIG(gd, "\x8d\xa7\x35\x7d\x14\x71\xe7\xc9\x8e\xfa\xf5\xaa\xbc\x22\x75\xaf\x40\xcf\x81\x65");
 
-    const int groupid = 0;
-    OutFilenameSequenceTransport out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "testbitmapconv", ".png", groupid, ReportError{});
-    dump_png24(out_png_trans, gd, true);
+    // dump_png24("testbitmapconv.png", gd);
 }
