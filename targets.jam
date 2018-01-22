@@ -894,46 +894,6 @@ test-run tests/capture/utils/test_match_finder :
   <library>src/capture/utils/match_finder.o
   <library>src/utils/pattutils.o
 ;
-test-run tests/client_mods/cli_vnc_connection :
-  $(REDEMPTION_TEST_PATH)/client_mods/cli_vnc_connection.cpp
-:
-  <covflag>nocover $(GCOV_NO_BUILD)
-  <library>app_path_test.o
-  <library>crypto
-  <library>openssl
-  <library>png
-  <library>src/core/RDP/mppc.o
-  <library>src/core/font.o
-  <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
-  <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
-  <library>src/mod/internal/widget/image.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/password.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/transport/socket_transport.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/d3des.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
-  <library>src/utils/png.o
-  <library>src/utils/rle.o
-  <library>src/utils/set_exception_handler_pretty_message.o
-  <library>tests/includes/test_only/front/fake_front.o
-  <library>z
-;
 test-run tests/client_mods/test_rdp_client_large_pointer :
   $(REDEMPTION_TEST_PATH)/client_mods/test_rdp_client_large_pointer.cpp
 :
@@ -4341,7 +4301,6 @@ alias test_wrm_capture : tests/capture/test_wrm_capture ;
 alias test_wrm_capture.coverage : tests/capture/test_wrm_capture.coverage ;
 alias test_match_finder : tests/capture/utils/test_match_finder ;
 alias test_match_finder.coverage : tests/capture/utils/test_match_finder.coverage ;
-alias cli_vnc_connection : tests/client_mods/cli_vnc_connection ;
 alias test_rdp_client_large_pointer : tests/client_mods/test_rdp_client_large_pointer ;
 alias test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card ;
 alias test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008 ;
@@ -4987,7 +4946,6 @@ alias tests/capture/utils :
 ;
 explicit tests/client_mods ;
 alias tests/client_mods :
-  tests/client_mods/cli_vnc_connection
   tests/client_mods/test_rdp_client_large_pointer
   tests/client_mods/test_rdp_client_test_card
   tests/client_mods/test_rdp_client_tls_w2008
