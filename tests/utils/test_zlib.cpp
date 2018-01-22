@@ -27,6 +27,7 @@
 #include <zlib.h>
 #include "utils/log.hpp"
 #include "utils/hexdump.hpp"
+#include "utils/zlib.hpp"
 
 RED_AUTO_TEST_CASE(TestZLIB0)
 {
@@ -172,139 +173,6 @@ RED_AUTO_TEST_CASE(TestZLIB1)
    RED_CHECK_EQUAL(total_size, 262);
    RED_CHECK_EQUAL(total_compressed_size, 262);
 }
-
-template <size_t outsize = 65536>
-class Zcompressor
-{
-    size_t offset;
-    uint8_t out[outsize];
-    z_stream z;
-    public:
-    Zcompressor()
-    {
-        this->z.zalloc = nullptr; // Z_NULL;
-        this->z.zfree = nullptr; // Z_NULL;
-        this->z.opaque = nullptr; //Z_NULL;
-        deflateInit(&this->z, 9);
-        this->offset = 0;
-        this->z.next_out = &this->out[this->offset];
-        this->z.avail_out = sizeof(this->out) - this->offset;
-    };
-
-    ~Zcompressor()
-    {
-        deflateEnd(&this->z);
-    }
-
-
-    // send more data to compressor
-    // returns the amount of data processed
-    size_t update(uint8_t * const data, size_t data_size)
-    {
-        this->z.next_in = data;
-        this->z.avail_in = data_size;
-        deflate(&z, Z_NO_FLUSH);
-        return data_size  - this->z.avail_in;
-    }
-
-    // return the amount of compressed data available for emission
-    size_t available() const {
-        return sizeof(this->out) - this->offset - this->z.avail_out;
-    }
-
-    // TODO: we could return a pair buffer/size pointing to inner buffer
-    // TODO: we mau also use a vector for that
-    size_t flush_ready(uint8_t * data, size_t data_size){
-        size_t to_send = data_size >= this->available() ? this->available() : data_size;
-        memcpy(data, &this->out[this->offset], to_send);
-        if (to_send < this->available()){
-            this->offset += to_send;
-            return to_send;
-        }
-        this->offset = 0;
-        this->z.avail_out = sizeof(this->out);
-        this->z.next_out = &this->out[0];
-        return to_send;
-    }
-
-    bool full(){
-        return this->z.avail_out == 0;
-    }
-
-    // finish flushes all buffer
-    // we may need to call it several times (and flush ready data) until it returns true
-    bool finish()
-    {
-        return deflate(&this->z, Z_FINISH) == Z_STREAM_END;
-    }
-};
-
-
-template <size_t outsize = 65536>
-class Zdecompressor
-{
-    size_t offset;
-    uint8_t out[outsize];
-    z_stream z;
-    public:
-    Zdecompressor()
-    {
-        this->z.zalloc = nullptr; // Z_NULL;
-        this->z.zfree = nullptr; // Z_NULL;
-        this->z.opaque = nullptr; //Z_NULL;
-        inflateInit(&this->z);
-        this->offset = 0;
-        this->z.next_out = &this->out[this->offset];
-        this->z.avail_out = sizeof(this->out) - this->offset;
-    };
-
-    ~Zdecompressor()
-    {
-        inflateEnd(&this->z);
-    }
-
-
-    // send more data to compressor
-    // returns the amount of data processed
-    size_t update(uint8_t * const data, size_t data_size)
-    {
-        this->z.next_in = data;
-        this->z.avail_in = data_size;
-        inflate(&z, Z_NO_FLUSH);
-        return data_size  - this->z.avail_in;
-    }
-
-    // return the amount of compressed data available for emission
-    size_t available() const {
-        return sizeof(this->out) - this->offset - this->z.avail_out;
-    }
-
-    // TODO: we could return a pair buffer/size pointing to inner buffer
-    // TODO: we mau also use a vector for that
-    size_t flush_ready(uint8_t * data, size_t data_size){
-        size_t to_send = data_size >= this->available() ? this->available() : data_size;
-        memcpy(data, &this->out[this->offset], to_send);
-        if (to_send < this->available()){
-            this->offset += to_send;
-            return to_send;
-        }
-        this->offset = 0;
-        this->z.avail_out = sizeof(this->out);
-        this->z.next_out = &this->out[0];
-        return to_send;
-    }
-
-    bool full(){
-        return this->z.avail_out == 0;
-    }
-
-    // finish flushes all buffer
-    // we may need to call it several times (and flush ready data) until it returns true
-    bool finish()
-    {
-        return inflate(&this->z, Z_FINISH) == Z_STREAM_END;
-    }
-};
 
 RED_AUTO_TEST_CASE(TestZLIB3)
 {
