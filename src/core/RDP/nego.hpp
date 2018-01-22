@@ -75,7 +75,7 @@ private:
     std::string& extra_message;
     Translation::language_t lang;
 
-    enum class REDEMPTION_CXX_NODISCARD State
+    enum class /*REDEMPTION_CXX_NODISCARD*/ State
     {
         Negociate,
         SslHybrid,
