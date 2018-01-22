@@ -49,7 +49,7 @@ void WidgetImage::rdp_input_invalidate(Rect clip)
         rect_intersect.y = 0;
     }
 
-    auto draw_bitmap = [this](gdi::GraphicApi & drawable, Bitmap const & bitmap, Rect const & rect ) {
+    auto draw_bitmap = [](gdi::GraphicApi & drawable, Bitmap const & bitmap, Rect const & rect ) {
         RDPBitmapData bitmap_data;
 
         bitmap_data.dest_left       = rect.x;
