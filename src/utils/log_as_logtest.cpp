@@ -44,9 +44,56 @@ bool & LOG__REDEMPTION__AS__LOGPRINT()
     return logprint;
 }
 
+namespace
+{
+    static std::string log_buf = {};
+    static bool enable_buf_log = false;
+}
+
+LOG__REDEMPTION__BUFFERED::LOG__REDEMPTION__BUFFERED()
+{
+    log_buf.clear();
+    enable_buf_log = true;
+}
+
+LOG__REDEMPTION__BUFFERED::~LOG__REDEMPTION__BUFFERED()
+{
+    enable_buf_log = false;
+}
+
+std::string const& LOG__REDEMPTION__BUFFERED::buf() const
+{
+    return log_buf;
+}
+
+void LOG__REDEMPTION__BUFFERED::clear()
+{
+    log_buf.clear();
+}
+
+
 void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...)
 {
-    if (LOG__REDEMPTION__AS__LOGPRINT())
+    if (enable_buf_log) {
+        va_list ap;
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+        va_start(ap, format);
+        auto sz = std::vsnprintf(nullptr, 0, format, ap) + 1;
+        va_end(ap);
+        log_buf.resize(log_buf.size() + sz);
+        va_start(ap, format);
+        std::vsnprintf(&log_buf[log_buf.size() - sz], sz, format, ap);
+        va_end(ap);
+        REDEMPTION_DIAGNOSTIC_POP
+        log_buf.back() = '\n';
+
+        // replace "priority (31905/31905) --  message" by "priority - message"
+        auto p = log_buf.find('(', log_buf.size() - sz + 5);
+        auto e = log_buf.find('-', p);
+        log_buf.replace(p, e-p+3, "-");
+    }
+    else if (LOG__REDEMPTION__AS__LOGPRINT())
     {
         (void)priority;
         va_list ap;
