@@ -247,8 +247,6 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         ::unlink(file);
     }
 
-    RED_CHECK(true);
-
     CryptoContext cctx;
     cctx.set_master_key(cstr_array_view(
         "\x00\x01\x02\x03\x04\x05\x06\x07"

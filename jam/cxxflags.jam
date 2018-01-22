@@ -50,20 +50,21 @@ toolset.flags security SECURITY : <security> ;
 
 GLIBCXX_ALLOW_BROKEN_ABI = 1 ; # for _GLIBCXX_DEBUG or _GLIBCXX_ASSERTIONS
 
-local ORIGINAL_COMP_VERSION = 0 ;
+local ORIGINAL_TOOLSET = 0 ;
 local COMP_VERSION = 000.000 ;
 
 import string ;
 
-rule normalized-compiler-version ( version )
+rule get-normalized-compiler-version ( toolset : ps )
 {
-    if $(ORIGINAL_COMP_VERSION) != $(version)
+    if $(ORIGINAL_TOOLSET) != $(toolset)
     {
+        local version = [ MATCH ^[^0-9]*(.*)$ : [ $(ps).get <toolset-$(toolset):version> ] ] ;
         local match = [ MATCH ^([0-9]+)(\\.([0-9]+))? : $(version) ] ;
         local major = [ MATCH (..)$ : [ string.join 00 $(match[1]) ] ] ;
         local minor = [ MATCH (..)$ : [ string.join 00 $(match[3]) ] ] ;
         COMP_VERSION = $(major).$(minor) ;
-        ORIGINAL_COMP_VERSION = $(version) ;
+        ORIGINAL_TOOLSET = $(toolset) ;
     }
     return $(COMP_VERSION) ;
 }
@@ -72,10 +73,12 @@ rule flags ( properties * )
 {
     local ps = [ property-set.create $(properties) ] ;
     local toolset = [ $(ps).get <toolset> ] ;
-    # TODO is not the real version. For toolset=gcc-5, version is 5
-    # gcc -dumpversion
-    # clang -dumpversion = llvm version ?
-    local version = [ normalized-compiler-version [ $(ps).get <toolset-$(toolset):version> ] ] ;
+    # TODO is not the real version. For toolset=gcc-5, version is 5 ; for clang-scan, version is ''
+    # define PP_CAT_I(a,b) a##b
+    # define PP_CAT(a,b) PP_CAT_I(a,b)
+    # g++ -x c++ -E - <<<'PP_CAT(__GNUC__, PP_CAT(__GNUC_MINOR__, __GNUC_PATCHLEVEL__))'
+    # clang++ -x c++ -E - <<<'PP_CAT(__clang_major__, PP_CAT(__clang_minor__, __clang_patchlevel__))'
+    local version = [ get-normalized-compiler-version $(toolset) : $(ps) ] ;
 
     local flags ;
 

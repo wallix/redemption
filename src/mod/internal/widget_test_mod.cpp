@@ -21,6 +21,7 @@
 #include "core/front_api.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 #include "keyboard/keymap2.hpp"
 #include "utils/bitmap.hpp"
@@ -84,10 +85,10 @@ void WidgetTestMod::draw_event(time_t, gdi::GraphicApi& gd)
     const auto cx = clip.cx / 2;
     const auto cy = clip.cy / 3;
 
-    auto send_mono_palette = [&](BGRColor const& color){
-        this->front.sync();
-        this->front.set_palette(mono_palette(color));
-    };
+//     auto send_mono_palette = [&](BGRColor const& color){
+//         this->front.sync();
+//         this->front.set_palette(mono_palette(color));
+//     };
 
     auto draw_rect = [&](int x, int y, BGRColor color){
         this->front.draw(RDPOpaqueRect(Rect(x*cx, y*cy, cx, cy), encode_color(color)), clip, color_ctx);
@@ -115,13 +116,17 @@ void WidgetTestMod::draw_event(time_t, gdi::GraphicApi& gd)
 
     draw_rect(0, 0, BLUE);
     draw_rect(1, 0, RED);
+    this->front.sync();
     draw_img(0, 1, 0, img1);
     draw_img(1, 1, 1, img2);
-    draw_img(0, 2, 0, img1);
-    draw_img(1, 2, 1, img2);
-
-//     this->front.sync();
-//     this->front.set_palette(BGRPalette::classic_332_rgb());
+    this->front.sync();
+    this->front.draw(RDPColCache(0, mono_palette(WHITE)));
+    this->front.draw(RDPColCache(1, mono_palette(WHITE)));
+    this->front.sync();
+    const auto img3 = plain_img(DARK_WABGREEN);
+    const auto img4 = plain_img(BLUE);
+    draw_img(0, 2, 0, img3);
+    draw_img(1, 2, 1, img4);
     draw_text(0, 0, "blue");
     draw_text(1, 0, "red");
     draw_text(0, 1, "cyan img");

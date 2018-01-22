@@ -21,10 +21,8 @@
    Using lib boost functions for testing
 */
 
-
 #define RED_TEST_MODULE TestDrawable
 #include "system/redemption_unit_tests.hpp"
-
 
 #include "test_only/check_sig.hpp"
 #include "utils/bitmap.hpp"

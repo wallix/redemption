@@ -3730,7 +3730,7 @@ public:
                 double seconds = ::difftime(now, this->beginning);
 
                 char duration[1024];
-                snprintf(duration, sizeof(duration), "%02d:%02d:%02d",
+                snprintf(duration, sizeof(duration), "%d:%02d:%02d",
                     (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
                     (int(seconds) % 60));
 
@@ -7620,7 +7620,7 @@ public:
             double seconds = ::difftime(now, this->beginning);
 
             char extra[1024];
-            snprintf(extra, sizeof(extra), "duration=\"%02d:%02d:%02d\"",
+            snprintf(extra, sizeof(extra), "%d:%02d:%02d",
                 (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
                 (int(seconds) % 60));
 

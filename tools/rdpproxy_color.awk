@@ -1,6 +1,6 @@
 #!/usr/bin/awk  -OSf
-# 'https://github.com/jonathanpoelen/colout/colout' '-po' '-ER' '^rdpproxy: (INFO [^-]+--  [-=]{3,}>? )([^-=<]*)(.*)?' 'b' 'g' 'b' '--' '-ERci2' '^([^:]+: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT)).* --  ([^:]+:)?(.*)' 'n' 'n' 'b' 'Y' 'R' 'c' 'W' '+u' '+ro' '--' '-c' '(Assertion) `(.*)'\'' failed.' 'y' 'R' '--' '^rdpproxy: (\[RDP Session\]) ' 'd' '--' '-cri5' '( type)="([^"]+)"|^([^=]+)="((\\"|[^"])+)"' 'lr' 'lm' 'lb' 'd'
-# gawk profile, created Mon Jan 15 11:54:41 2018
+# 'https://github.com/jonathanpoelen/colout/colout' '-po' '-ER' '^rdpproxy: (INFO [^-]+--  [-=]{3,}>? )([^-=<]*)(.*)?' 'b' 'g' 'b' '--' '-ERci2' '^([a-zA-Z0-9_]+: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT)).* --  (error:)?([a-zA-Z0-9_]+:)?(.*)' 'n' 'n' 'b' 'Y' 'R' 'c' 'W' 'R' '+u' '+ru' '--' '-c' '(Assertion) `(.*)'\'' failed.' 'y' 'R' '--' '^rdpproxy: (\[RDP Session\]) ' 'd' '--' '-cri5' '( type)="([^"]+)"|^([^=]+)="((\\"|[^"])+)"' 'lr' 'lm' 'lb' 'd'
+# gawk profile, created Mon Jan 15 18:18:22 2018
 
 # BEGIN rule(s)
 
@@ -17,9 +17,10 @@ BEGIN {
 	colors1[4] = ";31;1"
 	colors1[5] = ";36"
 	colors1[6] = ";97;1"
-	colors1[7] = "4"
-	colors1[8] = "21"
-	nb_colors1 = 9
+	colors1[7] = ";31;1"
+	colors1[8] = "4"
+	colors1[9] = "24"
+	nb_colors1 = 10
 	colors2[0] = ";33"
 	colors2[1] = ";31;1"
 	nb_colors2 = 2
@@ -58,7 +59,7 @@ BEGIN {
 		}
 		$0 = substr($0, RLENGTH + RSTART) esc_reset
 	}
-	if (match($0, /^([^:]+: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT)).* --  ([^:]+:)?(.*)/, a)) {
+	if (match($0, /^([a-zA-Z0-9_]+: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT)).* --  (error:)?([a-zA-Z0-9_]+:)?(.*)/, a)) {
 		n = length(a) / 3
 		if (n == 1) {
 			i = 0

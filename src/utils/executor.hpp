@@ -25,12 +25,13 @@ Author(s): Jonathan Poelen
 
 #include <vector>
 #include <type_traits>
+#include <functional> // std::reference_wrapper
 #include <cassert>
 
 namespace detail
 {
     template<int...>
-    class seq_int;
+    class seq_int {};
 
     template<class, class>
     struct cat_seq;
@@ -78,7 +79,6 @@ namespace detail
     {
         template<class F, class... Args>
         auto invoke(F && f, Args&&... args)
-        -> decltype(f(static_cast<Args&&>(args)..., *static_cast<Ts*>(nullptr)...))
         {
             return f(
                 static_cast<Args&&>(args)...,
@@ -117,8 +117,19 @@ namespace detail
 //         tuple& operator=(tuple const &) = default;
     };
 
+    template<class T>
+    struct decay_and_strip
+      : std::decay<T>
+    {};
+
+    template<class T> struct decay_and_strip<std::reference_wrapper<T>> { using type = T&; };
+    template<class T> struct decay_and_strip<std::reference_wrapper<T>&> { using type = T&; };
+    template<class T> struct decay_and_strip<std::reference_wrapper<T>&&> { using type = T&; };
+    template<class T> struct decay_and_strip<std::reference_wrapper<T>const&> { using type = T&; };
+    template<class T> struct decay_and_strip<std::reference_wrapper<T>const&&> { using type = T&; };
+
     template<class... Args>
-    using ctx_arg_type = detail::tuple<typename std::decay<Args>::type...>;
+    using ctx_arg_type = detail::tuple<typename decay_and_strip<Args>::type...>;
 }
 
 
@@ -397,6 +408,9 @@ struct ExecutorBase
         return this->events.back().on_action(*this, *this->events.back().ctx);
     }
 
+    template<class Ctx, class F1, class F2>
+    ExecutorResult result_exec_action2(F1&& f1, F2);
+
     template<class Ctx, class F>
     ExecutorResult result_replace_timeout(F&& f)
     {
@@ -540,9 +554,33 @@ struct ExecutorTimeoutContext : ExecutorContext
     {}
 };
 
+template<class T, class U>
+struct is_context_convertible;
+
+template<class... Ts, class... Us>
+struct is_context_convertible<detail::tuple<Ts...>, detail::tuple<Us...>>
+  : std::integral_constant<bool, (... && std::is_convertible<Ts, Us>::value)>
+{
+    using seq_is_convertible = detail::seq_int<int(std::is_convertible<Ts, Us>::value)...>;
+    using seq_true = detail::seq_int<((void)static_cast<std::void_t<Ts>*>(nullptr), 1)...>;
+};
+
 template<class Ctx>
 struct ExecutorActionContext : ExecutorContext
 {
+    template<class PreviousCtx>
+    ExecutorActionContext(ExecutorActionContext<PreviousCtx> other)
+      : ExecutorContext(other)
+    {
+        using Is = is_context_convertible<PreviousCtx, Ctx>;
+        typename Is::seq_true{} = typename Is::seq_is_convertible{};
+    }
+
+    ExecutorActionContext(ExecutorActionContext &&) = default;
+    ExecutorActionContext(ExecutorActionContext const &) = default;
+    ExecutorActionContext& operator=(ExecutorActionContext &&) = default;
+    ExecutorActionContext& operator=(ExecutorActionContext const &) = default;
+
     template<class F>
     ExecutorResult next_action(F&& f)
     {
@@ -553,6 +591,13 @@ struct ExecutorActionContext : ExecutorContext
     ExecutorResult exec_action(F&& f)
     {
         return this->executor.template result_exec_action<Ctx>(static_cast<F&&>(f));
+    }
+
+    template<class F1, class F2>
+    ExecutorResult exec_action2(F1&& f1, F2&& f2)
+    {
+        return this->executor.template result_exec_action2<Ctx>(
+            static_cast<F1&&>(f1), static_cast<F2&&>(f2));
     }
 
     template<class F>
@@ -638,14 +683,29 @@ F make_lambda() noexcept
     return reinterpret_cast<F const&>(f);
 }
 
+template<class Ctx, class F>
+auto make_on_action()
+{
+    return [](ExecutorBase& executor, ExecutorEvent::any& any){
+        return reinterpret_cast<Ctx&>(any).invoke(
+            make_lambda<F>(), ExecutorActionContext<Ctx>(executor));
+    };
+}
+
+template<class Ctx, class F1, class F2>
+ExecutorResult ExecutorBase::result_exec_action2(F1&& f1, F2)
+{
+    EventInitializer<Ctx>{this->events.back()}
+        .init_on_action(static_cast<F1&&>(f1));
+    return make_on_action<Ctx, F2>()(*this, *this->events.back().ctx);
+}
+
+
 template<class Ctx>
 template<class F>
 void EventInitializer<Ctx>::init_on_action(F)
 {
-    this->executor_event.on_action = [](ExecutorBase& executor, ExecutorEvent::any& any){
-        return reinterpret_cast<Ctx&>(any).invoke(
-            make_lambda<F>(), ExecutorActionContext<Ctx>(executor));
-    };
+    this->executor_event.on_action = make_on_action<Ctx, F>();
 }
 
 template<class Ctx>

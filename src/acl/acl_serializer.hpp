@@ -822,7 +822,13 @@ public:
 
         while (auto key = reader.key(bool(this->verbose & Verbose::variable))) {
             auto authid = authid_from_string(key);
-            if (auto field = this->ini.get_acl_field(authid)) {
+            if (authid == AUTHID_UNKNOWN)
+            {
+                auto val = reader.get_val();
+
+                LOG(LOG_WARNING, "Unexpected receving '%s' - '%s'", key, val);
+            }
+            else if (auto field = this->ini.get_acl_field(authid)) {
                 if (reader.is_set_value()) {
                     if (field.set(reader.get_val()) && bool(this->verbose & Verbose::variable)) {
                         const char * val         = field.c_str();
