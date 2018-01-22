@@ -2069,6 +2069,129 @@ private:
     }
 
 private:
+
+//    7.6.9   ZRLE Encoding
+//    =====================
+
+//    ZRLE stands for Zlib [3] Run-Length Encoding, and combines zlib compression, tiling, palettisation and run-length encoding. 
+//    On the wire, the rectangle begins with a 4-byte length field, and is followed by that many bytes of zlib-compressed data. 
+//    A single zlib "stream" object is used for a given RFB protocol connection, so that ZRLE rectangles must be encoded and 
+//    decoded strictly in order.
+
+//        | No. of bytes | Type     | Description |
+//        +--------------+----------+-------------+
+//        | 4            | U32      |  length     |
+//        +--------------+----------+-------------+
+//        | length       | U8 array | zlibData    |
+//        +--------------+----------+-------------+
+
+//    The zlibData when uncompressed represents tiles of 64x64 pixels in left-to-right, top-to-bottom order, similar to hextile.
+//    If the width of the rectangle is not an exact multiple of 64 then the width of the last tile in each row is smaller, and 
+//    if the height of the rectangle is not an exact multiple of 64 then the height of each tile in the final row is smaller.
+
+//    ZRLE makes use of a new type CPIXEL (compressed pixel). This is the same as a PIXEL for the agreed pixel format, except 
+//    where true-colour-flag is non-zero, bits-per-pixel is 32, depth is 24 or less and all of the bits making up the red, green
+//    and blue intensities fit in either the least significant 3 bytes or the most significant 3 bytes. In this case a CPIXEL is
+//    only 3 bytes long, and contains the least significant or the most significant 3 bytes as appropriate. bytesPerCPixel is the
+//    number of bytes in a CPIXEL.
+
+//    Note that for the corner case where bits-per-pixel is 32 and depth is 16 or less (this is a corner case, since the client
+//    is much better off using 16 or even 8 bits-per-pixels) a CPIXEL is still 3 bytes long. By convention, the three least
+//    significant bytes are used when both the three least and the three most significant bytes would cover the used bits.
+
+//    Each tile begins with a subencoding type byte. The top bit of this byte is set if the tile has been run-length encoded,
+//    clear otherwise. The bottom seven bits indicate the size of the palette used: zero means no palette, one means that the
+//    tile is of a single colour, 2 to 127 indicate a palette of that size. The possible values of subencoding are:
+
+//    0:  Raw pixel data. width * height pixel values follow (where width and height are the width and height of the tile):
+
+//        |  No. of bytes                   |  Type        |  Description |
+//        +---------------------------------+--------------+--------------+
+//        | width * height * bytesPerCPixel | CPIXEL array |    pixels    |
+//        ----------------------------------------------------------------+
+
+//    1:  A solid tile consisting of a single colour. The pixel value follows:
+
+//        |  No. of bytes  |  Type  |  Description     |
+//        +----------------+--------+------------------+
+//        | bytesPerCPixel | CPIXEL |    pixelValue    |
+//        +----------------+--------+------------------+
+
+//    2 to 16
+
+//        Packed palette types. Followed by the palette, consisting of paletteSize (=*subencoding*) pixel values. Then the packed
+//    pixels follow, each pixel represented as a bit field yielding an index into the palette (0 meaning the first palette entry).
+//    For paletteSize 2, a 1-bit field is used, for paletteSize 3 or 4 a 2-bit field is used and for paletteSize from 5 to 16 a 
+//    4-bit field is used. The bit fields are packed into bytes, the most significant bits representing the leftmost pixel (i.e. big
+//     endian). For tiles not a multiple of 8, 4 or 2 pixels wide (as appropriate), padding bits are used to align each row to an 
+//    exact number of bytes.
+
+//        |  No. of bytes                |  Type        |  Description     |
+//        +------------------------------+--------------+------------------+
+//        | paletteSize * bytesPerCPixel | CPIXEL array |    palette       |
+//        +------------------------------+--------------+------------------+
+//        |                            m |     U8 array |    packedPixels  |
+//        +------------------------------+--------------+------------------+
+
+//        where m is the number of bytes representing the packed pixels. 
+
+//        For paletteSize of 2 this is floor((width + 7) / 8) * height,
+//        for paletteSize of 3 or 4 this is floor((width + 3) / 4) * height, 
+//        for paletteSize of 5 to 16 this is floor((width + 1) / 2) * height.
+
+//    17 to 127
+//        Unused (no advantage over palette RLE).
+
+//    128
+
+//        Plain RLE. Consists of a number of runs, repeated until the tile is done. Runs may continue from the end of one row to
+//    the beginning of the next. Each run is a represented by a single pixel value followed by the length of the run. The length
+//    is represented as one or more bytes. The length is calculated as one more than the sum of all the bytes representing the
+//    length. Any byte value other than 255 indicates the final byte. So for example length 1 is represented as [0], 255 as [254],
+//    256 as [255,0], 257 as [255,1], 510 as [255,254], 511 as [255,255,0] and so on.
+
+//       | No. of bytes   | Type     | [Value] |      Description         |
+//       +----------------+----------+---------+--------------------------+
+//       | bytesPerCPixel | CPIXEL   |         |       pixelValue         |
+//       +----------------+----------+---------+--------------------------+
+//       |             r  | U8 array |   255   |                          |
+//       +----------------+----------+---------+--------------------------+
+//       |             1  |     U8   |         | (runLength - 1) % 255    |
+//       +----------------+----------+---------+--------------------------+
+
+//        Where r is floor((runLength - 1) / 255).
+
+//    129
+//        Unused.
+
+//    130 to 255
+
+//        Palette RLE. Followed by the palette, consisting of paletteSize = (subencoding - 128) pixel values:
+//        No. of bytes |Type |Description
+//        paletteSize * bytesPerCPixel |CPIXEL array |palette
+
+//        Then as with plain RLE, consists of a number of runs, repeated until the tile is done. A run of length one is
+//         represented simply by a palette index:
+
+//        | No. of bytes |Type | Description  |
+//        +--------------+-----+--------------+
+//        |            1 |  U8 | paletteIndex |
+//        +--------------+-----+--------------+
+
+//        A run of length more than one is represented by a palette index with the top bit set, followed by the length of the
+//        run as for plain RLE.
+
+//        | No. of bytes |     Type | [Value] |     Description       |
+//        +--------------+----------+---------+-----------------------+
+//        |            1 |       U8 |         | paletteIndex + 128    |
+//        +--------------+----------+---------+-----------------------+
+//        |            r | U8 array |     255 |                       |
+//        +--------------+----------+---------+-----------------------+
+//        |            1 |       U8 |         | (runLength - 1) % 255 |
+//        +--------------+----------+---------+-----------------------+
+
+//        Where r is floor((runLength - 1) / 255).
+
     struct ZRLEUpdateContext
     {
         uint8_t Bpp;
