@@ -218,7 +218,15 @@ namespace {
 void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...);
 
 #ifdef REDEMPTION_DECL_LOG_TEST
+# include <string>
 bool & LOG__REDEMPTION__AS__LOGPRINT();
+struct LOG__REDEMPTION__BUFFERED
+{
+    LOG__REDEMPTION__BUFFERED();
+    ~LOG__REDEMPTION__BUFFERED();
+    std::string const& buf() const;
+    void clear();
+};
 #endif
 
 namespace
