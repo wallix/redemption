@@ -39,37 +39,6 @@
 class Front_RDP_Qt_API : public FrontQtRDPGraphicAPI
 {
 
-// private:
-//     class ClipboardServerChannelDataSender : public VirtualChannelDataSender
-//     {
-//     public:
-//         mod_api        * _callback;
-//
-//         ClipboardServerChannelDataSender() = default;
-//
-//
-//         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
-//             //std::cout << "operator()  server " << (int)flags  << std::endl;
-//             InStream chunk(chunk_data, chunk_data_length);
-//             this->_callback->send_to_mod_channel(channel_names::cliprdr, chunk, total_length, flags);
-//         }
-//     };
-//
-//     class ClipboardClientChannelDataSender : public VirtualChannelDataSender
-//     {
-//     public:
-//         FrontAPI            * _front;
-//         CHANNELS::ChannelDef  _channel;
-//
-//         ClipboardClientChannelDataSender() = default;
-//
-//
-//         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
-//             //std::cout << "operator()  client " << (int)flags  << std::endl;
-//
-//             this->_front->send_to_channel(this->_channel, chunk_data, total_length, chunk_data_length, flags);
-//         }
-//     };
 
 public:
 
@@ -81,74 +50,26 @@ public:
         MAX_MONITOR_COUNT = GCC::UserData::CSMonitor::MAX_MONITOR_COUNT / 4
     };
 
-//     ClipboardServerChannelDataSender _to_server_sender;
-//     ClipboardClientChannelDataSender _to_client_sender;
-//     ClipboardVirtualChannel          clipboard_channel;
     int                  _monitorCount;
     Rect                 _screen_dimensions[MAX_MONITOR_COUNT];
     int                  _current_screen_index;
     bool                 _recv_disconnect_ultimatum;
-    bool                 enable_shared_clipboard;
-    bool                 enable_shared_virtual_disk;
 
 
-    struct ModRDPParamsData
-    {
-        bool enable_tls                      = false;
-        bool enable_nla                      = false;
-        bool enable_sound                    = false;
-    } modRDPParamsData;
+
 
 
     bool                 _monitorCountNegociated = false;
 
 
-//     struct CB_FilesList {
-//         struct CB_in_Files {
-//             int         size;
-//             std::string name;
-//         };
-//         uint32_t                 cItems = 0;
-//         uint32_t                 lindexToRequest = 0;
-//         int                      streamIDToRequest = 0;
-//         std::vector<CB_in_Files> itemslist;
-//         int                      lindex = 0;
-//
-//     }  _cb_filesList;
 
 
 
 
 
-    struct UserProfil {
-        int id;
-        std::string name;
 
-        UserProfil(int id, const char * name)
-          : id(id)
-          , name(name) {}
-    };
-    std::vector<UserProfil> userProfils;
-
-    struct KeyCustomDefinition {
-        int qtKeyID  = 0;
-        int scanCode = 0;
-        int ASCII8   = 0;
-        int extended = 0;
-
-        KeyCustomDefinition(int qtKeyID, int scanCode, int ASCII8, int extended)
-          : qtKeyID(qtKeyID)
-          , scanCode(scanCode)
-          , ASCII8(ASCII8)
-          , extended(extended) {}
-    };
-    std::vector<KeyCustomDefinition> keyCustomDefinitions;
-
-
-
-
-    Front_RDP_Qt_API( RDPVerbose verbose)
-    : FrontQtRDPGraphicAPI(verbose)
+    Front_RDP_Qt_API(char* argv[], int argc, RDPVerbose verbose)
+    : FrontQtRDPGraphicAPI(argv, argc, verbose)
 //      , clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [](){
 //             NullReportMessage reportMessage;
 //             ClipboardVirtualChannel::Params params(reportMessage);
@@ -169,8 +90,7 @@ public:
 //         }())
     , _current_screen_index(0)
     , _recv_disconnect_ultimatum(false)
-    , enable_shared_clipboard(false)
-    , enable_shared_virtual_disk(false)
+
 
 //     , clipbrdFormatsList()
 
@@ -178,9 +98,9 @@ public:
 //         this->_to_client_sender._front = this;
     }
 
-    virtual void setClientInfo() = 0;
-    virtual void setDefaultConfig() = 0;
-    virtual void writeClientInfo() = 0;
+//     virtual void setClientInfo() = 0;
+//     virtual void setDefaultConfig() = 0;
+//     virtual void writeClientInfo() = 0;
     virtual void deleteCurrentProtile() = 0;
 
     //  channel callbacks
@@ -238,7 +158,7 @@ public:
     QComboBox            profilComboBox;
     QLineEdit            profilLineEdit;
     QComboBox            _monitorCountComboBox;
-    QComboBox            _captureSnapFreqComboBox;
+//     QComboBox            _captureSnapFreqComboBox;
 
     QFormLayout        * _layoutView;
     QFormLayout        * _layoutConnection;
@@ -300,7 +220,7 @@ public:
         , profilComboBox(this)
         , profilLineEdit("", this)
         , _monitorCountComboBox(this)
-        , _captureSnapFreqComboBox(this)
+//         , _captureSnapFreqComboBox(this)
         , _layoutView(nullptr)
         , _layoutConnection(nullptr)
         , _layoutKeyboard(nullptr)
@@ -369,14 +289,14 @@ public:
         this->_layoutConnection->addRow(&(this->_labelRecording), &(this->_recordingCB));
         this->QObject::connect(&(this->_recordingCB), SIGNAL(stateChanged(int)), this, SLOT(recordingCheckChange(int)));
 
-        this->_captureSnapFreqComboBox.addItem("1"   , 1000000);
-        this->_captureSnapFreqComboBox.addItem("10"   , 1000000/10);
-        this->_captureSnapFreqComboBox.addItem("20"   , 1000000/20);
-        this->_captureSnapFreqComboBox.addItem("40"   , 1000000/40);
-        this->_captureSnapFreqComboBox.addItem("60"   , 1000000/60);
-        this->_captureSnapFreqComboBox.setStyleSheet("combobox-popup: 0;");
-        this->_layoutConnection->addRow(&(this->_labelCaptureFreq), &(this->_captureSnapFreqComboBox));
-        this->_captureSnapFreqComboBox.setEnabled(this->_front->is_recording);
+//         this->_captureSnapFreqComboBox.addItem("1"   , 1000000);
+//         this->_captureSnapFreqComboBox.addItem("10"   , 1000000/10);
+//         this->_captureSnapFreqComboBox.addItem("20"   , 1000000/20);
+//         this->_captureSnapFreqComboBox.addItem("40"   , 1000000/40);
+//         this->_captureSnapFreqComboBox.addItem("60"   , 1000000/60);
+//         this->_captureSnapFreqComboBox.setStyleSheet("combobox-popup: 0;");
+//         this->_layoutConnection->addRow(&(this->_labelCaptureFreq), &(this->_captureSnapFreqComboBox));
+//         this->_captureSnapFreqComboBox.setEnabled(this->_front->is_recording);
 
 
         this->_tlsBox.setCheckState(Qt::Unchecked);
@@ -621,10 +541,10 @@ private:
             this->_languageComboBox.setCurrentIndex(indexLanguage);
         }
 
-        int indexCaptureFreq = this->_captureSnapFreqComboBox.findData(this->_front->delta_time);
-        if ( indexCaptureFreq != -1 ) {
-            this->_captureSnapFreqComboBox.setCurrentIndex(indexCaptureFreq);
-        }
+//         int indexCaptureFreq = this->_captureSnapFreqComboBox.findData(this->_front->delta_time);
+//         if ( indexCaptureFreq != -1 ) {
+//             this->_captureSnapFreqComboBox.setCurrentIndex(indexCaptureFreq);
+//         }
 
         if (this->_front->is_recording) {
             this->_recordingCB.setCheckState(Qt::Checked);
@@ -795,7 +715,7 @@ public Q_SLOTS:
         this->_front->_monitorCount = this->_front->info.cs_monitor.monitorCount;
         this->_front->info.width   = this->_front->info.width * this->_front->_monitorCount;
         this->_front->info.height  = this->_front->info.height;
-        this->_front->delta_time   = this->_captureSnapFreqComboBox.itemData(this->_captureSnapFreqComboBox.currentIndex()).toInt();
+//         this->_front->delta_time   = this->_captureSnapFreqComboBox.itemData(this->_captureSnapFreqComboBox.currentIndex()).toInt();
 
         if (this->_clipboardCheckBox.isChecked()) {
             this->_front->enable_shared_clipboard = true;
@@ -908,12 +828,12 @@ public Q_SLOTS:
         }
     }
 
-    void recordingCheckChange(int state) {
-        if (state == Qt::Unchecked) {
-            this->_captureSnapFreqComboBox.setEnabled(false);
-        } else {
-            this->_captureSnapFreqComboBox.setEnabled(true);
-        }
+    void recordingCheckChange(int ) {
+//         if (state == Qt::Unchecked) {
+//             this->_captureSnapFreqComboBox.setEnabled(false);
+//         } else {
+//             this->_captureSnapFreqComboBox.setEnabled(true);
+//         }
     }
 
     void monitorCountkChange(int index) {
@@ -926,334 +846,334 @@ public Q_SLOTS:
 
 
 
-#include "core/RDP/clipboard.hpp"
-#include "utils/fileutils.hpp"
-
-class ClipBoard_Qt : public QObject
-{
-
-    Q_OBJECT
-
-public:
-
-    enum : uint16_t {
-          CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
-        , CF_QT_CLIENT_FILECONTENTS         = 48026
-    };
-
-    Front_RDP_Qt_API                  * _front;
-    QClipboard                * _clipboard;
-    bool                        _local_clipboard_stream;
-    size_t                      _cliboard_data_length;
-    std::unique_ptr<uint8_t[]>  _chunk;
-    QImage                    * _bufferImage;
-    uint16_t                    _bufferTypeID;
-    std::string                 _bufferTypeLongName;
-    int                         _cItems;
-    struct CB_out_File {
-        uint64_t     size;
-        std::string  name;
-        std::string  nameUTF8;
-        char *       chunk;
-
-        CB_out_File()
-          : size(0)
-          , name("")
-          , nameUTF8("")
-          , chunk(nullptr)
-        {}
-
-        ~CB_out_File() {
-            delete[] (chunk);
-        }
-    };
-    std::vector<CB_out_File *>  _items_list;
-    std::vector<std::string>    _temp_files_list;
-    bool server_use_long_format_names;
-
-
-
-    ClipBoard_Qt(Front_RDP_Qt_API * front, QWidget * parent)
-        : QObject(parent)
-        , _front(front)
-        , _clipboard(nullptr)
-        , _local_clipboard_stream(true)
-        , _cliboard_data_length(0)
-        , _bufferImage(nullptr)
-        , _bufferTypeID(0)
-        , _bufferTypeLongName("")
-        , _cItems(0)
-        , server_use_long_format_names(false)
-    {
-        this->clean_CB_temp_dir();
-        this->_clipboard = QApplication::clipboard();
-        this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
-    }
-
-    void write_clipboard_temp_file(std::string fileName, const uint8_t * data, size_t data_len) {
-        std::string filePath(this->_front->CB_TEMP_DIR + std::string("/") + fileName);
-        std::string filePath_mem(filePath);
-        this->_temp_files_list.push_back(filePath_mem);
-        std::ofstream oFile(filePath, std::ios::out | std::ios::binary | std::ios::app);
-        if(oFile.is_open()) {
-            oFile.write(reinterpret_cast<const char *>(data), data_len);
-            oFile.close();
-        }
-    }
-
-    void setClipboard_files(std::string & name) {           //std::vector<Front_RDP_Qt_API::CB_FilesList::CB_in_Files> items_list) {
-
-        /*QClipboard *cb = QApplication::clipboard();
-        QMimeData* newMimeData = new QMimeData();
-        const QMimeData* oldMimeData = cb->mimeData();
-        QStringList ll = oldMimeData->formats();
-        for (int i = 0; i < ll.size(); i++) {
-            newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
-        }
-        QList<QUrl> list;
-
-        const std::string delimiter = "\n";
-        uint32_t pos = 0;
-        std::string str = items_list[0].name;
-        while (pos <= str.size()) {
-            pos = str.find(delimiter);
-            std::string path = str.substr(0, pos);
-            str = str.substr(pos+1, str.size());
-            QString fileName(path.c_str());
-            newMimeData->setText(fileName);
-            list.append(QUrl::fromLocalFile(fileName));
-            QByteArray gnomeFormat = QByteArray("copy\n").append(QUrl::fromLocalFile(fileName).toEncoded());
-            newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
-        }
-
-        newMimeData->setUrls(list);
-        cb->setMimeData(newMimeData);*/
-
-
-//         QClipboard *cb = QApplication::clipboard();
+// #include "core/RDP/clipboard.hpp"
+// #include "utils/fileutils.hpp"
+//
+// class ClipBoard_Qt : public QObject
+// {
+//
+//     Q_OBJECT
+//
+// public:
+//
+//     enum : uint16_t {
+//           CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
+//         , CF_QT_CLIENT_FILECONTENTS         = 48026
+//     };
+//
+//     Front_RDP_Qt_API                  * _front;
+//     QClipboard                * _clipboard;
+//     bool                        _local_clipboard_stream;
+//     size_t                      _cliboard_data_length;
+//     std::unique_ptr<uint8_t[]>  _chunk;
+//     QImage                    * _bufferImage;
+//     uint16_t                    _bufferTypeID;
+//     std::string                 _bufferTypeLongName;
+//     int                         _cItems;
+//     struct CB_out_File {
+//         uint64_t     size;
+//         std::string  name;
+//         std::string  nameUTF8;
+//         char *       chunk;
+//
+//         CB_out_File()
+//           : size(0)
+//           , name("")
+//           , nameUTF8("")
+//           , chunk(nullptr)
+//         {}
+//
+//         ~CB_out_File() {
+//             delete[] (chunk);
+//         }
+//     };
+//     std::vector<CB_out_File *>  _items_list;
+//     std::vector<std::string>    _temp_files_list;
+//     bool server_use_long_format_names;
+//
+//
+//
+//     ClipBoard_Qt(Front_RDP_Qt_API * front, QWidget * parent)
+//         : QObject(parent)
+//         , _front(front)
+//         , _clipboard(nullptr)
+//         , _local_clipboard_stream(true)
+//         , _cliboard_data_length(0)
+//         , _bufferImage(nullptr)
+//         , _bufferTypeID(0)
+//         , _bufferTypeLongName("")
+//         , _cItems(0)
+//         , server_use_long_format_names(false)
+//     {
+//         this->clean_CB_temp_dir();
+//         this->_clipboard = QApplication::clipboard();
+//         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
+//     }
+//
+//     void write_clipboard_temp_file(std::string fileName, const uint8_t * data, size_t data_len) {
+//         std::string filePath(this->_front->CB_TEMP_DIR + std::string("/") + fileName);
+//         std::string filePath_mem(filePath);
+//         this->_temp_files_list.push_back(filePath_mem);
+//         std::ofstream oFile(filePath, std::ios::out | std::ios::binary | std::ios::app);
+//         if(oFile.is_open()) {
+//             oFile.write(reinterpret_cast<const char *>(data), data_len);
+//             oFile.close();
+//         }
+//     }
+//
+//     void setClipboard_files(std::string & name) {           //std::vector<Front_RDP_Qt_API::CB_FilesList::CB_in_Files> items_list) {
+//
+//         /*QClipboard *cb = QApplication::clipboard();
 //         QMimeData* newMimeData = new QMimeData();
 //         const QMimeData* oldMimeData = cb->mimeData();
 //         QStringList ll = oldMimeData->formats();
 //         for (int i = 0; i < ll.size(); i++) {
 //             newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
 //         }
-
-//         QByteArray gnomeFormat = QByteArray("copy\n");
-
-//         for (size_t i = 0; i < items_list.size(); i++) {
-
-            QClipboard *cb = QApplication::clipboard();
-            QMimeData* newMimeData = new QMimeData();
-            const QMimeData* oldMimeData = cb->mimeData();
-            QStringList ll = oldMimeData->formats();
-            for (int i = 0; i < ll.size(); i++) {
-                newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
-            }
-
-            QByteArray gnomeFormat = QByteArray("copy\n");
-
-            std::string path(this->_front->CB_TEMP_DIR + std::string("/") + name);
-            //std::cout <<  path <<  std::endl;
-            QString qpath(path.c_str());
-
-            //qDebug() << "QUrl" << QUrl::fromLocalFile(qpath);
-
-            gnomeFormat.append(QUrl::fromLocalFile(qpath).toEncoded());
-
-            newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
-            cb->setMimeData(newMimeData);
+//         QList<QUrl> list;
+//
+//         const std::string delimiter = "\n";
+//         uint32_t pos = 0;
+//         std::string str = items_list[0].name;
+//         while (pos <= str.size()) {
+//             pos = str.find(delimiter);
+//             std::string path = str.substr(0, pos);
+//             str = str.substr(pos+1, str.size());
+//             QString fileName(path.c_str());
+//             newMimeData->setText(fileName);
+//             list.append(QUrl::fromLocalFile(fileName));
+//             QByteArray gnomeFormat = QByteArray("copy\n").append(QUrl::fromLocalFile(fileName).toEncoded());
+//             newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
 //         }
-
-//         newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
-//         cb->setMimeData(newMimeData);
-    }
-
-    void setClipboard_text(std::string & str) {
-        this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
-    }
-
-    void setClipboard_image(const QImage & image) {               // Paste image to client
-        this->_clipboard->setImage(image, QClipboard::Clipboard);
-    }
-
-    void clean_CB_temp_dir() {
-        DIR *theFolder = opendir(this->_front->CB_TEMP_DIR.c_str());
-
-        if (theFolder) {
-            struct dirent *next_file;
-
-            while ( (next_file = readdir(theFolder)) != NULL )
-            {
-                std::string filepath(this->_front->CB_TEMP_DIR + std::string("/") + std::string(next_file->d_name));
-                remove(filepath.c_str());
-            }
-            closedir(theFolder);
-        }
-    }
-
-    void emptyBuffer() {
-        this->_bufferTypeID = 0;
-        this->_cliboard_data_length = 0;
-
-        this->clean_CB_temp_dir();
-
-        this->_temp_files_list.clear();
-        for (size_t i = 0; i < _items_list.size(); i++) {
-            delete(this->_items_list[i]);
-        }
-        this->_items_list.clear();
-    }
-
-
-
-
-public Q_SLOTS:
-
-    void mem_clipboard() {
-        if (this->_front->mod != nullptr && this->_local_clipboard_stream) {
-            const QMimeData * mimeData = this->_clipboard->mimeData();
-            mimeData->hasImage();
-
-            if (mimeData->hasImage()){
-            //==================
-            //    IMAGE COPY
-            //==================
-                this->emptyBuffer();
-
-                this->_bufferTypeID = RDPECLIP::CF_METAFILEPICT;
-                this->_bufferTypeLongName = std::string("\0\0", 2);
-                QImage bufferImageTmp(this->_clipboard->image());
-                if (bufferImageTmp.depth() > 24) {
-                    bufferImageTmp = bufferImageTmp.convertToFormat(QImage::Format_RGB888);
-                    bufferImageTmp = bufferImageTmp.rgbSwapped();
-                }
-                this->_bufferImage = new QImage(bufferImageTmp);
-
-                this->_cliboard_data_length = this->_bufferImage->byteCount();
-
-                this->_chunk = std::make_unique<uint8_t[]>(this->_cliboard_data_length + RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender::SIZE);
-                for (int i  = 0; i < this->_bufferImage->byteCount(); i++) {
-                    this->_chunk[i] = this->_bufferImage->bits()[i];
-                }
-                RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender ender;
-                ender.emit(this->_chunk.get(), this->_cliboard_data_length);
-
-                this->_front->clipboard_callback();
-            //==========================================================================
-
-
-
-            } else if (mimeData->hasText()){                //  File or Text copy
-
-                QString qstr = this->_clipboard->text(QClipboard::Clipboard);
-                if (qstr.size() > 0) {
-                    this->emptyBuffer();
-                    std::string str(qstr.toUtf8().constData());
-
-                    if (str.at(0) == '/') {
-                //==================
-                //    FILE COPY
-                //==================
-                        this->_bufferTypeID       = CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
-                        this->_bufferTypeLongName = std::string("F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0", 42);
-
-                        // retrieve each path
-                        const std::string delimiter = "\n";
-                        this->_cItems = 0;
-                        uint32_t pos = 0;
-                        while (pos <= str.size()) {
-                            pos = str.find(delimiter);
-                            std::string path = str.substr(0, pos);
-                            str = str.substr(pos+1, str.size());
-
-                            // double slash
-                            uint32_t posSlash(0);
-                            std::string slash = "/";
-                            bool stillSlash = true;
-                            while (stillSlash) {
-                                posSlash = path.find(slash, posSlash);
-                                if (posSlash < path.size()) {
-                                    path = path.substr(0, posSlash) + "//" + path.substr(posSlash+1, path.size());
-                                    posSlash += 2;
-                                } else {
-                                    path = path.substr(0, path.size());
-                                    stillSlash = false;
-                                }
-                            }
-
-                            // get file data
-                            uint64_t size(::filesize(path.c_str()));
-                            std::ifstream iFile(path.c_str(), std::ios::in | std::ios::binary);
-                            if (iFile.is_open()) {
-
-                                CB_out_File * file = new CB_out_File();
-                                file->size  = size;
-                                file->chunk = new char[file->size];
-                                iFile.read(file->chunk, file->size);
-                                iFile.close();
-
-                                int posName(path.size()-1);
-                                bool lookForName = true;
-                                while (posName >= 0 && lookForName) {
-                                    if (path.at(posName) == '/') {
-                                        lookForName = false;
-                                    }
-                                    posName--;
-                                }
-                                file->nameUTF8 = path.substr(posName+2, path.size());
-                                //std::string name = file->nameUTF8;
-                                int UTF8nameSize(file->nameUTF8.size() *2);
-                                if (UTF8nameSize > 520) {
-                                    UTF8nameSize = 520;
-                                }
-                                uint8_t UTF16nameData[520];
-                                int UTF16nameSize = ::UTF8toUTF16_CrLf(
-                                    reinterpret_cast<const uint8_t *>(file->nameUTF8.c_str())
-                                , UTF16nameData
-                                , UTF8nameSize);
-                                file->name = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
-                                this->_cItems++;
-                                this->_items_list.push_back(file);
-
-                            } else {
-                                LOG(LOG_WARNING, "Path \"%s\" not found.", path.c_str());
-                            }
-                        }
-
-                        this->_front->clipboard_callback();
-                //==========================================================================
-
-
-
-                    } else {
-                //==================
-                //    TEXT COPY
-                //==================
-                        this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
-                        this->_bufferTypeLongName = std::string("\0\0", 2);
-
-                        size_t size( ( str.length() * 4) + 2 );
-
-                        this->_chunk = std::make_unique<uint8_t[]>(size);
-
-                        // UTF8toUTF16_CrLf for linux install
-                        this->_cliboard_data_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size);
-
-                        RDPECLIP::FormatDataResponsePDU_Text::Ender ender;
-                        ender.emit(this->_chunk.get(), this->_cliboard_data_length);
-
-                        this->_cliboard_data_length += RDPECLIP::FormatDataResponsePDU_Text::Ender::SIZE;
-
-                        this->_front->clipboard_callback();
-                //==========================================================================
-                    }
-                }
-            }
-        }
-    }
-
-};
-
+//
+//         newMimeData->setUrls(list);
+//         cb->setMimeData(newMimeData);*/
+//
+//
+// //         QClipboard *cb = QApplication::clipboard();
+// //         QMimeData* newMimeData = new QMimeData();
+// //         const QMimeData* oldMimeData = cb->mimeData();
+// //         QStringList ll = oldMimeData->formats();
+// //         for (int i = 0; i < ll.size(); i++) {
+// //             newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
+// //         }
+//
+// //         QByteArray gnomeFormat = QByteArray("copy\n");
+//
+// //         for (size_t i = 0; i < items_list.size(); i++) {
+//
+//             QClipboard *cb = QApplication::clipboard();
+//             QMimeData* newMimeData = new QMimeData();
+//             const QMimeData* oldMimeData = cb->mimeData();
+//             QStringList ll = oldMimeData->formats();
+//             for (int i = 0; i < ll.size(); i++) {
+//                 newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
+//             }
+//
+//             QByteArray gnomeFormat = QByteArray("copy\n");
+//
+//             std::string path(this->_front->CB_TEMP_DIR + std::string("/") + name);
+//             //std::cout <<  path <<  std::endl;
+//             QString qpath(path.c_str());
+//
+//             //qDebug() << "QUrl" << QUrl::fromLocalFile(qpath);
+//
+//             gnomeFormat.append(QUrl::fromLocalFile(qpath).toEncoded());
+//
+//             newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
+//             cb->setMimeData(newMimeData);
+// //         }
+//
+// //         newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
+// //         cb->setMimeData(newMimeData);
+//     }
+//
+//     void setClipboard_text(std::string & str) {
+//         this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
+//     }
+//
+//     void setClipboard_image(const QImage & image) {               // Paste image to client
+//         this->_clipboard->setImage(image, QClipboard::Clipboard);
+//     }
+//
+//     void clean_CB_temp_dir() {
+//         DIR *theFolder = opendir(this->_front->CB_TEMP_DIR.c_str());
+//
+//         if (theFolder) {
+//             struct dirent *next_file;
+//
+//             while ( (next_file = readdir(theFolder)) != NULL )
+//             {
+//                 std::string filepath(this->_front->CB_TEMP_DIR + std::string("/") + std::string(next_file->d_name));
+//                 remove(filepath.c_str());
+//             }
+//             closedir(theFolder);
+//         }
+//     }
+//
+//     void emptyBuffer() {
+//         this->_bufferTypeID = 0;
+//         this->_cliboard_data_length = 0;
+//
+//         this->clean_CB_temp_dir();
+//
+//         this->_temp_files_list.clear();
+//         for (size_t i = 0; i < _items_list.size(); i++) {
+//             delete(this->_items_list[i]);
+//         }
+//         this->_items_list.clear();
+//     }
+//
+//
+//
+//
+// public Q_SLOTS:
+//
+//     void mem_clipboard() {
+//         if (this->_front->mod != nullptr && this->_local_clipboard_stream) {
+//             const QMimeData * mimeData = this->_clipboard->mimeData();
+//             mimeData->hasImage();
+//
+//             if (mimeData->hasImage()){
+//             //==================
+//             //    IMAGE COPY
+//             //==================
+//                 this->emptyBuffer();
+//
+//                 this->_bufferTypeID = RDPECLIP::CF_METAFILEPICT;
+//                 this->_bufferTypeLongName = std::string("\0\0", 2);
+//                 QImage bufferImageTmp(this->_clipboard->image());
+//                 if (bufferImageTmp.depth() > 24) {
+//                     bufferImageTmp = bufferImageTmp.convertToFormat(QImage::Format_RGB888);
+//                     bufferImageTmp = bufferImageTmp.rgbSwapped();
+//                 }
+//                 this->_bufferImage = new QImage(bufferImageTmp);
+//
+//                 this->_cliboard_data_length = this->_bufferImage->byteCount();
+//
+//                 this->_chunk = std::make_unique<uint8_t[]>(this->_cliboard_data_length + RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender::SIZE);
+//                 for (int i  = 0; i < this->_bufferImage->byteCount(); i++) {
+//                     this->_chunk[i] = this->_bufferImage->bits()[i];
+//                 }
+//                 RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender ender;
+//                 ender.emit(this->_chunk.get(), this->_cliboard_data_length);
+//
+//                 this->_front->clipboard_callback();
+//             //==========================================================================
+//
+//
+//
+//             } else if (mimeData->hasText()){                //  File or Text copy
+//
+//                 QString qstr = this->_clipboard->text(QClipboard::Clipboard);
+//                 if (qstr.size() > 0) {
+//                     this->emptyBuffer();
+//                     std::string str(qstr.toUtf8().constData());
+//
+//                     if (str.at(0) == '/') {
+//                 //==================
+//                 //    FILE COPY
+//                 //==================
+//                         this->_bufferTypeID       = CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
+//                         this->_bufferTypeLongName = std::string("F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0", 42);
+//
+//                         // retrieve each path
+//                         const std::string delimiter = "\n";
+//                         this->_cItems = 0;
+//                         uint32_t pos = 0;
+//                         while (pos <= str.size()) {
+//                             pos = str.find(delimiter);
+//                             std::string path = str.substr(0, pos);
+//                             str = str.substr(pos+1, str.size());
+//
+//                             // double slash
+//                             uint32_t posSlash(0);
+//                             std::string slash = "/";
+//                             bool stillSlash = true;
+//                             while (stillSlash) {
+//                                 posSlash = path.find(slash, posSlash);
+//                                 if (posSlash < path.size()) {
+//                                     path = path.substr(0, posSlash) + "//" + path.substr(posSlash+1, path.size());
+//                                     posSlash += 2;
+//                                 } else {
+//                                     path = path.substr(0, path.size());
+//                                     stillSlash = false;
+//                                 }
+//                             }
+//
+//                             // get file data
+//                             uint64_t size(::filesize(path.c_str()));
+//                             std::ifstream iFile(path.c_str(), std::ios::in | std::ios::binary);
+//                             if (iFile.is_open()) {
+//
+//                                 CB_out_File * file = new CB_out_File();
+//                                 file->size  = size;
+//                                 file->chunk = new char[file->size];
+//                                 iFile.read(file->chunk, file->size);
+//                                 iFile.close();
+//
+//                                 int posName(path.size()-1);
+//                                 bool lookForName = true;
+//                                 while (posName >= 0 && lookForName) {
+//                                     if (path.at(posName) == '/') {
+//                                         lookForName = false;
+//                                     }
+//                                     posName--;
+//                                 }
+//                                 file->nameUTF8 = path.substr(posName+2, path.size());
+//                                 //std::string name = file->nameUTF8;
+//                                 int UTF8nameSize(file->nameUTF8.size() *2);
+//                                 if (UTF8nameSize > 520) {
+//                                     UTF8nameSize = 520;
+//                                 }
+//                                 uint8_t UTF16nameData[520];
+//                                 int UTF16nameSize = ::UTF8toUTF16_CrLf(
+//                                     reinterpret_cast<const uint8_t *>(file->nameUTF8.c_str())
+//                                 , UTF16nameData
+//                                 , UTF8nameSize);
+//                                 file->name = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
+//                                 this->_cItems++;
+//                                 this->_items_list.push_back(file);
+//
+//                             } else {
+//                                 LOG(LOG_WARNING, "Path \"%s\" not found.", path.c_str());
+//                             }
+//                         }
+//
+//                         this->_front->clipboard_callback();
+//                 //==========================================================================
+//
+//
+//
+//                     } else {
+//                 //==================
+//                 //    TEXT COPY
+//                 //==================
+//                         this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
+//                         this->_bufferTypeLongName = std::string("\0\0", 2);
+//
+//                         size_t size( ( str.length() * 4) + 2 );
+//
+//                         this->_chunk = std::make_unique<uint8_t[]>(size);
+//
+//                         // UTF8toUTF16_CrLf for linux install
+//                         this->_cliboard_data_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size);
+//
+//                         RDPECLIP::FormatDataResponsePDU_Text::Ender ender;
+//                         ender.emit(this->_chunk.get(), this->_cliboard_data_length);
+//
+//                         this->_cliboard_data_length += RDPECLIP::FormatDataResponsePDU_Text::Ender::SIZE;
+//
+//                         this->_front->clipboard_callback();
+//                 //==========================================================================
+//                     }
+//                 }
+//             }
+//         }
+//     }
+//
+// };
+//
 
 
 // class Sound_Qt : public QObject

@@ -269,6 +269,8 @@ exe client_rdp_Qt$(qtversion) :
     src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
     src/qt_input_output_api/qt_output_sound.hpp
     src/qt_input_output_api/qt_input_output_clipboard.hpp
+    src/qt_input_output_api/qt_input_socket.hpp
+    src/qt_input_output_api/qt_graphics_components/qt_progress_bar_window.hpp
     src/rdp_client_qt_widget.hpp
     front_Qt$(qtversion)_rdp.o
     $(obj_list)

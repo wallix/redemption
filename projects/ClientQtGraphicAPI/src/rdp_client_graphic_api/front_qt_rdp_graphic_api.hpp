@@ -24,55 +24,12 @@
 
 #include "utils/log.hpp"
 
-#ifndef Q_MOC_RUN
-#include <stdio.h>
-#include <openssl/ssl.h>
-#include <iostream>
-#include <stdint.h>
-#include <unistd.h>
-#include <limits.h>
-#include <dirent.h>
-#include <algorithm>
-#include <fstream>
-#include <sstream>
-#include <string>
-
-#include <boost/algorithm/string.hpp>
-
-#include "core/report_message_api.hpp"
-#include "acl/auth_api.hpp"
-#include "utils/genfstat.hpp"
-#include "core/front_api.hpp"
-#include "mod/mod_api.hpp"
-#include "mod/rdp/rdp_log.hpp"
-#include "transport/socket_transport.hpp"
-#include "keymaps/qt_scancode_keymap.hpp"
-#include "core/client_info.hpp"
-#include "mod/internal/replay_mod.hpp"
-#include "configs/config.hpp"
-#include "utils/bitmap.hpp"
-#include "core/RDP/bitmapupdate.hpp"
-#include "utils/netutils.hpp"
-#include "utils/genrandom.hpp"
-#include "keyboard/keymap2.hpp"
-#include "transport/crypto_transport.hpp"
-
-#include "capture/full_video_params.hpp"
-#include "capture/video_params.hpp"
-#include "capture/capture.hpp"
-#include "core/RDP/MonitorLayoutPDU.hpp"
-#include "core/channel_list.hpp"
-
-
-#include "core/RDP/RDPDrawable.hpp"
-
+//
 #include <QtCore/QList>
 #include <QtCore/QTimer>
 #include <QtCore/QStringList>
-#include <QtCore/QMimeData>
-#include <QtCore/QSocketNotifier>
+// #include <QtCore/QSocketNotifier>
 #include <QtGui/QBitmap>
-#include <QtGui/QClipboard>
 #include <QtGui/QColor>
 #include <QtGui/QImage>
 #include <QtGui/QMouseEvent>
@@ -85,13 +42,9 @@
 #   include <QtCore/QByteArray>
 #   include <QtCore/QUrl>
 #   include <QtCore/QtGlobal>
-#include <phonon/AudioOutput>
-#include <phonon/MediaObject>
 #   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
 #else
 #   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtWidgets/name>
-#   include <Phonon/AudioOutput>
-#   include <Phonon/MediaObject>
 #endif
 
 #include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
@@ -104,7 +57,6 @@
 #include REDEMPTION_QT_INCLUDE_WIDGET(QGridLayout)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QLabel)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QLineEdit)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QProgressBar)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QPushButton)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QTabWidget)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QTableWidget)
@@ -115,452 +67,13 @@
 
 #include "../client_input_output_api.hpp"
 
-#endif
+#include "../qt_input_output_api/qt_graphics_components/qt_progress_bar_window.hpp"
 
-#define REPLAY_PATH "/replay"
-#define LOGINS_PATH "/config/login.config"
-#define WINODW_CONF_PATH "/config/windows_config.config"
-#define SHARE_PATH "/share"
-#define CB_FILE_TEMP_PATH "/clipboard_temp"
-#define KEY_SETTING_PATH "/config/keySetting.config"
-#define USER_CONF_PATH "/config/userConfig.config"
 
 
-#ifndef MAIN_PATH
-# error "undefined MAIN_PATH macro"
-# define MAIN_PATH ""
-#endif
 
 
 
-class ProgressBarWindow;
-
-
-class Front_Qt_API : public FrontAPI
-{
-
-public:
-    RDPVerbose        verbose;
-    ClientInfo        info;
-    CryptoContext     cctx;
-    std::string       user_name;
-    std::string       user_password;
-    std::string       target_IP;
-    int               port;
-    std::string       local_IP;
-    int               fps = 0;
-
-
-    int                        nbTry;
-    int                        retryDelay;
-    int                        delta_time;
-    mod_api                  * mod;
-    std::unique_ptr<ReplayMod> replay_mod;
-    bool                 is_recording;
-    bool                 is_replaying;
-    bool                 connected;
-
-
-    QImage::Format       imageFormatRGB;
-    QImage::Format       imageFormatARGB;
-    Qt_ScanCode_KeyMap   qtRDPKeymap;
-    ProgressBarWindow  * bar;
-    QPixmap            * cache;
-    QPixmap            * cache_replay;
-    SocketTransport    * socket;
-    TimeSystem           timeSystem;
-    NullAuthentifier    authentifier;
-    NullReportMessage  reportMessage;
-    bool                 is_spanning;
-    Fstat fstat;
-
-
-    const std::string    MAIN_DIR;
-    const std::string    REPLAY_DIR;
-    const std::string    USER_CONF_LOG;
-    const std::string    WINDOWS_CONF;
-    const std::string    CB_TEMP_DIR;
-    std::string          SHARE_DIR;
-    const std::string    USER_CONF_DIR;
-
-
-    std::string _movie_name;
-    std::string _movie_dir;
-
-    bool wab_diag_question;
-    int asked_color;
-
-    std::string close_box_extra_message_ref;
-
-
-
-    struct WindowsData {
-        int form_x = 0;
-        int form_y = 0;
-        int screen_x = 0;
-        int screen_y = 0;
-
-        bool no_data = true;
-
-        Front_Qt_API * front;
-
-        WindowsData(Front_Qt_API * front)
-          : front(front)
-        {}
-
-        void open() {
-            std::ifstream ifile(this->front->WINDOWS_CONF, std::ios::in);
-            if (ifile) {
-                this->no_data = false;
-
-                std::string line;
-                std::string delimiter = " ";
-
-                while(std::getline(ifile, line)) {
-                    auto pos(line.find(delimiter));
-                    std::string tag  = line.substr(0, pos);
-                    std::string info = line.substr(pos + delimiter.length(), line.length());
-
-                    if (tag.compare(std::string("form_x")) == 0) {
-                        this->form_x = std::stoi(info);
-                    } else
-                      if (tag.compare(std::string("form_y")) == 0) {
-                        this->form_y = std::stoi(info);
-                    } else
-                    if (tag.compare(std::string("screen_x")) == 0) {
-                        this->screen_x = std::stoi(info);
-                    } else
-                    if (tag.compare(std::string("screen_y")) == 0) {
-                        this->screen_y = std::stoi(info);
-                    }
-                }
-
-                ifile.close();
-            }
-        }
-
-        void write() {
-            std::ofstream ofile(this->front->WINDOWS_CONF, std::ios::out | std::ios::trunc);
-            if (ofile) {
-
-                ofile  << "form_x " << this->form_x <<  "\n";
-                ofile  << "form_y " << this->form_y <<  "\n";
-                ofile  << "screen_x " << this->screen_x <<  "\n";
-                ofile  << "screen_y " << this->screen_y <<  "\n";
-
-                ofile.close();
-            }
-        }
-
-    } windowsData;
-
-    int current_user_profil;
-
-    const int screen_max_width;
-    const int screen_max_height;
-
-
-    Front_Qt_API( RDPVerbose verbose)
-    : verbose(verbose)
-    , info()
-    , cctx()
-    , port(0)
-    , local_IP("unknow_local_IP")
-    , nbTry(3)
-    , retryDelay(1000)
-    , delta_time(1000000)
-    , mod(nullptr)
-    , replay_mod(nullptr)
-    , is_recording(false)
-    , is_replaying(false)
-    , connected(false)
-    , qtRDPKeymap()
-    , bar(nullptr)
-    , cache(nullptr)
-    , cache_replay(nullptr)
-    , socket(nullptr)
-    , is_spanning(false)
-    , MAIN_DIR(MAIN_PATH)
-    , REPLAY_DIR(MAIN_PATH REPLAY_PATH)
-    , USER_CONF_LOG(MAIN_PATH LOGINS_PATH)
-    , WINDOWS_CONF(MAIN_PATH WINODW_CONF_PATH)
-    , CB_TEMP_DIR(MAIN_DIR + std::string(CB_FILE_TEMP_PATH))
-    , SHARE_DIR(MAIN_DIR + std::string(SHARE_PATH))
-    , USER_CONF_DIR(MAIN_DIR + std::string(USER_CONF_PATH))
-    , wab_diag_question(false)
-    , asked_color(0)
-    , windowsData(this)
-    , current_user_profil(0)
-    , screen_max_width(QApplication::desktop()->width())
-    , screen_max_height(QApplication::desktop()->height())
-    , close_box_extra_message_ref("Close")
-    {
-        this->windowsData.open();
-        std::fill(std::begin(this->info.order_caps.orderSupport), std::end(this->info.order_caps.orderSupport), 1);
-        this->info.glyph_cache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_FULL;
-    }
-
-    void send_to_channel( const CHANNELS::ChannelDef & , uint8_t const *
-                        , std::size_t , std::size_t , int ) override {}
-
-    // CONTROLLER
-    virtual void connexionReleased() = 0;
-    virtual void closeFromScreen() = 0;
-    virtual void RefreshPressed() = 0;
-    virtual void CtrlAltDelPressed() = 0;
-    virtual void CtrlAltDelReleased() = 0;
-    virtual void disconnexionReleased() = 0;
-    virtual void setMainScreenOnTopRelease() = 0;
-    virtual void mousePressEvent(QMouseEvent *e, int screen_index) = 0;
-    virtual void mouseReleaseEvent(QMouseEvent *e, int screen_index) = 0;
-    virtual void keyPressEvent(QKeyEvent *e) = 0;
-    virtual void keyReleaseEvent(QKeyEvent *e) = 0;
-    virtual void wheelEvent(QWheelEvent *e) = 0;
-    virtual bool eventFilter(QObject *obj, QEvent *e, int screen_index) = 0;
-    virtual void disconnect(std::string const & txt) = 0;
-    virtual void dropScreen() = 0;
-    virtual bool is_no_win_data() = 0;
-    virtual void writeWindowsConf() = 0;
-
-    virtual void replay(std::string const & movie_dir, std::string const & movie_path) = 0;
-    virtual bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) = 0;
-    virtual void delete_replay_mod() = 0;
-    virtual void callback() = 0;
-
-    bool can_be_start_capture() override { return true; }
-
-    virtual void options() {
-        LOG(LOG_WARNING, "No options window implemented yet. Virtual function \"void options()\" must be override.");
-    }
-
-    virtual mod_api * init_mod() = 0;
-
-
-    virtual void clipboard_callback() = 0;
-};
-
-
-class ProgressBarWindow : public QWidget {
-
-Q_OBJECT
-
-public:
-    QProgressBar load_bar;
-    Front_Qt_API * front;
-
-    ProgressBarWindow(int maxVal, Front_Qt_API * front)
-        : QWidget()
-        , load_bar(this)
-        , front(front)
-    {
-        this->setWindowTitle("Loading Movie");
-        this->setAttribute(Qt::WA_DeleteOnClose);
-
-        QRect rect(QPoint(0,0),QSize(600, 50));
-        this->load_bar.setGeometry(rect);
-        this->load_bar.setRange(0, maxVal);
-
-        uint32_t centerW = 0;
-        uint32_t centerH = 0;
-        QDesktopWidget* desktop = QApplication::desktop();
-        centerW = (desktop->width()/2)  - 300;
-        centerH = (desktop->height()/2) - 25;
-        this->move(centerW, centerH);
-
-        this->show();
-    }
-
-    ~ProgressBarWindow() {}
-
-
-
-    void setValue(int val) {
-        this->load_bar.setValue(val);
-        if (val >= this->load_bar.maximum()) {
-            this->close();
-        }
-    }
-};
-
-
-class Mod_Qt : public QObject
-{
-
-Q_OBJECT
-
-public:
-    Front_Qt_API              * _front;
-    QSocketNotifier           * _sckRead;
-    mod_api                   * _callback;
-    SocketTransport           * _sck;
-    int                         _client_sck;
-    std::string error_message;
-
-    QTimer timer;
-
-
-    Mod_Qt(Front_Qt_API * front, QWidget * parent)
-        : QObject(parent)
-        , _front(front)
-        , _sckRead(nullptr)
-        , _callback(nullptr)
-        , _sck(nullptr)
-        , _client_sck(0)
-        , timer(this)
-    {}
-
-    ~Mod_Qt() {
-        this->disconnect(true);
-    }
-
-
-    void disconnect(bool is_pipe_ok) {
-
-        if (this->_sckRead != nullptr) {
-            delete (this->_sckRead);
-            this->_sckRead = nullptr;
-        }
-
-        if (this->_callback != nullptr) {
-            TimeSystem timeobj;
-            if (is_pipe_ok) {
-                this->_callback->disconnect(timeobj.get_time().tv_sec);
-            }
-//             delete (this->_callback);
-            this->_callback = nullptr;
-            this->_front->mod = nullptr;
-        }
-
-        if (this->_sck != nullptr) {
-            delete (this->_sck);
-            this->_sck = nullptr;
-            LOG(LOG_INFO, "Disconnected from [%s].", this->_front->target_IP.c_str());
-        }
-    }
-
-    bool connect() {
-        const char * name(this->_front->user_name.c_str());
-        const char * targetIP(this->_front->target_IP.c_str());
-        const std::string errorMsg("Cannot connect to [" + this->_front->target_IP +  "].");
-
-        unique_fd client_sck = ip_connect(targetIP, this->_front->port, this->_front->nbTry, this->_front->retryDelay);
-        this->_client_sck = client_sck.fd();
-
-        if (this->_client_sck > 0) {
-            try {
-
-                this->_sck = new SocketTransport( name
-                                                , std::move(client_sck)
-                                                , targetIP
-                                                , this->_front->port
-                                                , std::chrono::milliseconds(1000)
-                                                , to_verbose_flags(0)
-                                                //, SocketTransport::Verbose::dump
-                                                , &this->error_message
-                                                );
-
-                this->_front->socket = this->_sck;
-                LOG(LOG_INFO, "Connected to [%s].", targetIP);
-
-            } catch (const std::exception &) {
-                std::string windowErrorMsg(errorMsg+" Socket error.");
-                LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
-                this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
-                return false;
-            }
-
-        } else {
-            std::string windowErrorMsg(errorMsg+" Invalid ip or port.");
-            LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
-            this->_front->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
-            return false;
-        }
-
-        return true;
-    }
-
-    bool listen() {
-
-        this->_callback = this->_front->init_mod();
-
-        if (this->_callback !=  nullptr) {
-            this->_sckRead = new QSocketNotifier(this->_client_sck, QSocketNotifier::Read, this);
-            this->QObject::connect(this->_sckRead,   SIGNAL(activated(int)), this,  SLOT(call_draw_event_data()));
-            this->QObject::connect(&(this->timer),   SIGNAL(timeout()), this,  SLOT(call_draw_event_timer()));
-            if (this->_callback) {
-                if (this->_callback->get_event().is_trigger_time_set()) {
-                    struct timeval now = tvtime();
-                    int time_to_wake = (this->_callback->get_event().get_trigger_time().tv_usec - now.tv_usec) / 1000
-                    + (this->_callback->get_event().get_trigger_time().tv_sec - now.tv_sec) * 1000;
-//                     this->_callback->get_event().reset_trigger_time();
-
-                    if (time_to_wake < 0) {
-                        this->timer.stop();
-                    } else {
-
-                        this->timer.start( time_to_wake );
-                    }
-                }
-            } else {
-                const std::string errorMsg("Error: Mod Initialization failed.");
-                std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
-                this->_front->dropScreen();
-                this->_front->disconnect(labelErrorMsg);
-                return false;
-            }
-
-        } else {
-            const std::string errorMsg("Error: Mod Initialization failed.");
-            std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
-            this->_front->dropScreen();
-            this->_front->disconnect(labelErrorMsg);
-            return false;
-        }
-        return true;
-    }
-
-
-
-public Q_SLOTS:
-    void call_draw_event_data() {
-        this->_callback->get_event().set_waked_up_by_time(false);
-        this->call_draw_event();
-    }
-
-    void call_draw_event_timer() {
-        this->_callback->get_event().set_waked_up_by_time(true);
-        this->call_draw_event();
-    }
-
-    void call_draw_event() {
-        if (this->_front->mod) {
-
-            this->_front->callback();
-
-            if (this->_callback) {
-                if (this->_callback->get_event().is_trigger_time_set()) {
-                    struct timeval now = tvtime();
-                    int time_to_wake = ((this->_callback->get_event().get_trigger_time().tv_usec - now.tv_usec) / 1000)
-                    + ((this->_callback->get_event().get_trigger_time().tv_sec - now.tv_sec) * 1000);
-
-                    this->_callback->get_event().reset_trigger_time();
-
-                    if (time_to_wake < 0) {
-                        this->timer.stop();
-//                         LOG(LOG_INFO, "time_to_wake = %d", time_to_wake);
-//                         this->timer.start( 40 );
-                    } else {
-                        this->timer.start( time_to_wake );
-                    }
-                } else {
-                    this->timer.stop();
-                }
-            }
-        }
-    }
-
-
-};
 
 
 
@@ -574,7 +87,7 @@ public:
         MAX_ACCOUNT_DATA = 15
     };
 
-    Front_Qt_API       * _front;
+    ClientRedemptionIOAPI       * _front;
     const int            _width;
     const int            _height;
     QFormLayout          _formLayout;
@@ -606,7 +119,7 @@ public:
     int                  _lastTargetIndex;
 
 
-    Form_Qt(Front_Qt_API * front)
+    Form_Qt(ClientRedemptionIOAPI * front)
         : QWidget()
         , _front(front)
         , _width(400)
@@ -952,14 +465,14 @@ class Screen_Qt : public QWidget
 Q_OBJECT
 
 public:
-    Front_Qt_API  * _front;
-    int             _width;
-    int             _height;
-    QPushButton     _buttonCtrlAltDel;
-    QPushButton     _buttonRefresh;
-    QPushButton     _buttonDisconnexion;
-    QColor          _penColor;
-    QPixmap        _cache;
+    ClientRedemptionIOAPI * _front;
+    int            _width;
+    int            _height;
+    QPushButton    _buttonCtrlAltDel;
+    QPushButton    _buttonRefresh;
+    QPushButton    _buttonDisconnexion;
+    QColor         _penColor;
+    QPixmap      * _cache;
     QPainter       _cache_painter;
     QPixmap        _trans_cache;
     QPainter       _trans_cache_painter;
@@ -1007,7 +520,6 @@ public:
 
 
 
-private:
     static time_t get_movie_time_length(char const * mwrm_filename)
     {
         // TODO RZ: Support encrypted recorded file.
@@ -1037,7 +549,7 @@ private:
     }
 
 public:
-    Screen_Qt (Front_Qt_API * front, std::string const & movie_dir, std::string const & movie_name)
+    Screen_Qt (ClientRedemptionIOAPI * front, std::string const & movie_dir, std::string const & movie_name, QPixmap * cache)
         : QWidget()
         , _front(front)
         , _width(this->_front->info.width)
@@ -1046,8 +558,8 @@ public:
         , _buttonRefresh("Stop", this)
         , _buttonDisconnexion("Close", this)
         , _penColor(Qt::black)
-        , _cache(this->_width, this->_height)
-        , _cache_painter(&(this->_cache))
+        , _cache(cache)
+        , _cache_painter(this->_cache)
         , _trans_cache(this->_width, this->_height)
         , _trans_cache_painter(&(this->_trans_cache))
         , _match_pixmap(this->_width+2, this->_height+2)
@@ -1157,29 +669,30 @@ public:
 
     void pre_load_movie() {
 
-        long int movie_length = this->movie_time;
-        long int endin_frame = 0;
-        int i = 0;
-
-        while (endin_frame < movie_length) {
-            //timeval end_fram_time = {long int(endin_frame), 0};
-            this->_front->replay_mod->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
-
-            this->balises.push_back(nullptr);
-            this->balises[i] = new QPixmap(this->_cache);
-            endin_frame += BALISED_FRAME;
-            i++;
-            if (this->_front->bar) {
-                this->_front->bar->setValue(endin_frame);
-            }
-        }
+//         long int movie_length = this->movie_time;
+//         long int endin_frame = 0;
+//         int i = 0;
+//
+//         while (endin_frame < movie_length) {
+//             //timeval end_fram_time = {long int(endin_frame), 0};
+//             this->_front->replay_mod->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
+//
+//             this->balises.push_back(nullptr);
+//             this->balises[i] = new QPixmap(*(this->_cache));
+//             endin_frame += BALISED_FRAME;
+//             i++;
+// //             if (this->_front->bar) {
+// //                 this->_front->bar->setValue(endin_frame);
+// //             }
+//         }
+        this->_front->pre_load_movie();
 
         this->_front->load_replay_mod(this->_movie_dir, this->_movie_name, {this->begin, 0}, {0, 0});
     }
 
 
 
-    Screen_Qt (Front_Qt_API * front)
+    Screen_Qt (ClientRedemptionIOAPI * front, QPixmap * cache)
         : QWidget()
         , _front(front)
         , _width(this->_front->info.width)
@@ -1188,8 +701,8 @@ public:
         , _buttonRefresh("Refresh", this)
         , _buttonDisconnexion("Disconnection", this)
         , _penColor(Qt::black)
-        , _cache(this->_width, this->_height)
-        , _cache_painter(&(this->_cache))
+        , _cache(cache)
+        , _cache_painter(this->_cache)
         , _trans_cache(this->_width, this->_height)
         , _match_pixmap(this->_width, this->_height)
         , _connexionLasted(false)
@@ -1258,19 +771,16 @@ public:
         this->setFocusPolicy(Qt::StrongFocus);
     }
 
-     Screen_Qt (Front_Qt_API * front, int width, int height, int x, int y)
+     Screen_Qt (ClientRedemptionIOAPI * front, int width, int height, int x, int y, QPixmap * cache)
         : QWidget()
         , _front(front)
         , _width(width)
         , _height(height)
-//         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
-//         , _buttonRefresh("Refresh", this)
-//         , _buttonDisconnexion("Disconnection", this)
         , _penColor(Qt::black)
-        , _cache(this->_front->screen_max_width, this->_front->screen_max_height)
-        , _cache_painter(&(this->_cache))
+        , _cache(cache/*this->_front->screen_max_width, this->_front->screen_max_height*/)
+        , _cache_painter(this->_cache)
 //         , _trans_cache(this->_width, this->_height)
-        , _match_pixmap(this->_front->screen_max_width, this->_front->screen_max_height)
+        , _match_pixmap(cache->width(), cache->height())
         , _connexionLasted(false)
         , _screen_index(0)
         , _running(false)
@@ -1324,10 +834,10 @@ public:
         this->_front->windowsData.screen_x = points.x()-1;
         this->_front->windowsData.screen_y = points.y()-39;
         this->_front->writeWindowsConf();
+        this->balises.clear();
         if (!this->_connexionLasted) {
             this->_front->closeFromScreen();
         }
-        this->balises.clear();
     }
 
     void show_video_real_time() {
@@ -1418,7 +928,7 @@ public:
         pen.setWidth(1);
         pen.setBrush(this->_penColor);
         painter.setPen(pen);
-        painter.drawPixmap(QPoint(0, 0), this->_match_pixmap, QRect(this->x_pixmap_shift, this->y_pixmap_shift, this->_width, this->_height));
+        painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(this->x_pixmap_shift, this->y_pixmap_shift, this->_width, this->_height));
         painter.drawPixmap(QPoint(52, this->_height+4), this->readding_bar, QRect(0, 0, this->reading_bar_len+10, READING_BAR_H));
         painter.end();
     }
@@ -1446,7 +956,7 @@ public:
     }
 
     QPixmap * getCache() {
-        return &(this->_cache);
+        return this->_cache;
     }
 
     void setPenColor(QColor color) {
@@ -1536,24 +1046,73 @@ private:
             }
         } else {
 
-            this->_front->mousePressEvent(e, 0);
+            int flag(0);
+            switch (e->button()) {
+                case Qt::LeftButton:  flag = MOUSE_FLAG_BUTTON1; break;
+                case Qt::RightButton: flag = MOUSE_FLAG_BUTTON2; break;
+                case Qt::MidButton:   flag = MOUSE_FLAG_BUTTON4; break;
+                case Qt::XButton1:
+                case Qt::XButton2:
+                case Qt::NoButton:
+                case Qt::MouseButtonMask:
+
+                default: break;
+            }
+
+            int x = e->x();
+            int y = e->y();
+
+            if (this->_front->remoteapp) {
+                QPoint mouseLoc = QCursor::pos();
+                x = mouseLoc.x();
+                y = mouseLoc.y();
+            }
+
+            this->_front->mouseButtonEvent(x, y, flag | MOUSE_FLAG_DOWN);
         }
     }
 
     void mouseReleaseEvent(QMouseEvent *e) override {
-        this->_front->mouseReleaseEvent(e, 0);
+        int flag(0);
+        switch (e->button()) {
+
+            case Qt::LeftButton:  flag = MOUSE_FLAG_BUTTON1; break;
+            case Qt::RightButton: flag = MOUSE_FLAG_BUTTON2; break;
+            case Qt::MidButton:   flag = MOUSE_FLAG_BUTTON4; break;
+            case Qt::XButton1:
+            case Qt::XButton2:
+            case Qt::NoButton:
+            case Qt::MouseButtonMask:
+
+            default: break;
+        }
+
+        int x = e->x();
+        int y = e->y();
+
+        if (this->_front->remoteapp) {
+            QPoint mouseLoc = QCursor::pos();
+            x = mouseLoc.x();
+            y = mouseLoc.y();
+        }
+
+        this->_front->mouseButtonEvent(x, y, flag);
     }
 
     void keyPressEvent(QKeyEvent *e) override {
-        this->_front->keyPressEvent(e);
+        this->_front->keyPressEvent(e->key(), e->text().toStdString()[0]);
     }
 
     void keyReleaseEvent(QKeyEvent *e) override {
-        this->_front->keyReleaseEvent(e);
+        this->_front->keyReleaseEvent(e->key(), e->text().toStdString()[0]);
     }
 
     void wheelEvent(QWheelEvent *e) override {
-        this->_front->wheelEvent(e);
+//         int flag(MOUSE_FLAG_HWHEEL);
+//         if (e->delta() < 0) {
+//             flag = flag | MOUSE_FLAG_WHEEL_NEGATIVE;
+//         }
+        this->_front->wheelEvent(e->x(), e->y(), e->delta());
     }
 
     void enterEvent(QEvent *event) override {
@@ -1563,7 +1122,34 @@ private:
     }
 
     bool eventFilter(QObject *obj, QEvent *e) override {
-        this->_front->eventFilter(obj, e, 0);
+        Q_UNUSED(obj);
+        if (e->type() == QEvent::MouseMove)
+        {
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
+            int x = std::max(0, mouseEvent->x());
+            int y = std::max(0, mouseEvent->y());
+
+//             if (y > this->info.height) {
+//                 LOG(LOG_INFO, "eventFilter out");
+//                 this->screen->mouse_out = true;
+//             } else if (this->screen->mouse_out) {
+//                 this->screen->update_current_cursor();
+//                 this->screen->mouse_out = false;
+//             }
+
+//             if (this->mod != nullptr && this->mouse_data.y < this->info.height) {
+            if (this->_front->remoteapp) {
+                QPoint mouseLoc = QCursor::pos();
+                x = mouseLoc.x();
+                y = mouseLoc.y();
+
+            }
+
+//                 this->mod->rdp_input_mouse(MOUSE_FLAG_MOVE, this->mouse_data.x, this->mouse_data.y, &(this->keymap));
+//             }
+            this->_front->mouseMouveEvent(std::max(0, x), std::max(0, y) );
+        }
+
         return false;
     }
 
@@ -1631,21 +1217,21 @@ public Q_SLOTS:
     }
 
     void slotRepaint() {
-        QPainter match_painter(&(this->_match_pixmap));
-        match_painter.drawPixmap(QPoint(0, 0), this->_cache, QRect(0, 0, this->_cache.width(), this->_cache.height()));
+//         QPainter match_painter(&(this->_match_pixmap));
+//         match_painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(0, 0, this->_cache->width(), this->_cache->height()));
         //match_painter.drawPixmap(QPoint(0, 0), *(this->_trans_cache), QRect(0, 0, this->_width, this->_height));
         this->repaint();
     }
 
     void slotRepainMatch() {
-        QPainter match_painter(&(this->_match_pixmap));
-        match_painter.drawPixmap(QPoint(0, 0), this->_cache, QRect(0, 0, this->_width, this->_height));
-        match_painter.drawPixmap(QPoint(0, 0), this->_trans_cache, QRect(0, 0, this->_width, this->_height));
+//         QPainter match_painter(&(this->_match_pixmap));
+//         match_painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(0, 0, this->_width, this->_height));
+        //match_painter.drawPixmap(QPoint(0, 0), this->_trans_cache, QRect(0, 0, this->_width, this->_height));
         this->repaint();
     }
 
     void RefreshPressed() {
-        this->_front->RefreshPressed();
+        this->_front->refreshPressed();
     }
 
     void CtrlAltDelPressed() {
@@ -1688,7 +1274,7 @@ public Q_SLOTS:
 
 
 
-class FrontQtRDPGraphicAPI : public Front_Qt_API
+class FrontQtRDPGraphicAPI : public ClientRedemptionIOAPI
 {
     struct Snapshoter : gdi::CaptureApi
     {
@@ -1713,16 +1299,13 @@ public:
     BGRPalette           mod_palette;
     Form_Qt            * form;
     Screen_Qt          * screen;
-    Mod_Qt             * mod_qt;
-//     QPixmap            * cache;
-//     QPixmap            * trans_cache;
+//     Mod_Qt             * mod_qt;
+    QPixmap            * cache;
+    QPixmap            * trans_cache;
     gdi::GraphicApi    * graph_capture;
 
-    struct MouseData {
-        QImage cursor_image;
-        uint16_t x = 0;
-        uint16_t y = 0;
-    } mouse_data;
+    QImage cursor_image;
+
 
     // Connexion socket members
     int                  _timer;
@@ -1740,7 +1323,14 @@ public:
 
     bool is_pipe_ok;
 
-    bool remoteapp;
+    QImage::Format       imageFormatRGB;
+    QImage::Format       imageFormatARGB;
+
+    Qt_ScanCode_KeyMap   qtRDPKeymap;
+    ProgressBarWindow  * bar;
+
+    const int screen_max_width;
+    const int screen_max_height;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1748,30 +1338,32 @@ public:
     //      CONSTRUCTOR
     //------------------------
 
-    FrontQtRDPGraphicAPI( RDPVerbose verbose)
-      : Front_Qt_API(verbose)
+    FrontQtRDPGraphicAPI(char* argv[], int argc, RDPVerbose verbose)
+      : ClientRedemptionIOAPI(argv, argc, verbose)
       , snapshoter(*this)
       , mod_bpp(24)
       , mod_palette(BGRPalette::classic_332())
       , form(nullptr)
       , screen(nullptr)
-      , mod_qt(nullptr)
-//       , cache(nullptr)
-//       , trans_cache(nullptr)
+//       , mod_qt(nullptr)
+      , cache(nullptr)
+      , trans_cache(nullptr)
       , graph_capture(nullptr)
       , _timer(0)
       , _error("error")
       , keymap()
       , ctrl_alt_delete(false)
       , is_pipe_ok(true)
-      , remoteapp(false)
+//       , qtRDPKeymap()
+      , screen_max_width(QApplication::desktop()->width())
+      , screen_max_height(QApplication::desktop()->height())
     {
         SSL_load_error_strings();
         SSL_library_init();
 
         // Windows and socket contrainer
         this->form = new Form_Qt(this);
-        this->mod_qt = new Mod_Qt(this, this->form);
+//         this->mod_qt = new Mod_Qt(this, this->form);
 
         this->info.width  = 800;
         this->info.height = 600;
@@ -1788,6 +1380,8 @@ public:
 
         this->qtRDPKeymap.setKeyboardLayout(this->info.keylayout);
         this->keymap.init_layout(this->info.keylayout);
+
+        this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
 
         this->disconnect("");
     }
@@ -1845,9 +1439,9 @@ public:
 
         if (this->is_replaying) {
             this->screen->_trans_cache.fill(Qt::transparent);
-            QRect nrect(xPos, yPos, this->mouse_data.cursor_image.width(), this->mouse_data.cursor_image.height());
+            QRect nrect(xPos, yPos, this->cursor_image.width(), this->cursor_image.height());
 
-            this->screen->paintTransCache().drawImage(nrect, this->mouse_data.cursor_image);
+            this->screen->paintTransCache().drawImage(nrect, this->cursor_image);
         }
     }
 
@@ -1878,15 +1472,22 @@ public:
                     this->dropScreen();
                 }
 
+                delete(this->cache);
+
+                this->cache = new QPixmap(this->info.width, this->info.height);
+
                 if (this->is_replaying) {
-                    this->screen = new Screen_Qt(this, this->_movie_dir, this->_movie_name);
+
+                    this->screen = new Screen_Qt(this, this->_movie_dir, this->_movie_name, this->cache);
 
                 } else {
 
-                    this->screen = new Screen_Qt(this);
+                    this->screen = new Screen_Qt(this, this->cache);
                 }
 
-                this->screen->show();
+                if (!(this->remoteapp)) {
+                    this->screen->show();
+                }
             }
         }
 
@@ -1899,17 +1500,17 @@ public:
         QImage image_data(cursor.data, cursor.width, cursor.height, this->bpp_to_QFormat(24, false));
         QImage image_mask(cursor.mask, cursor.width, cursor.height, QImage::Format_Mono);
 
-//         if (cursor.mask[0x48] == 0xFF &&
-//             cursor.mask[0x49] == 0xFF &&
-//             cursor.mask[0x4A] == 0xFF &&
-//             cursor.mask[0x4B] == 0xFF) {
-//
-//             image_mask = image_data.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-//             image_data.invertPixels();
-//
-//         } else {
-        image_mask.invertPixels();
-//         }
+        if (cursor.mask[0x48] == 0xFF &&
+            cursor.mask[0x49] == 0xFF &&
+            cursor.mask[0x4A] == 0xFF &&
+            cursor.mask[0x4B] == 0xFF) {
+
+            image_mask = image_data.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+            image_data.invertPixels();
+
+        } else {
+            image_mask.invertPixels();
+        }
 
         image_data = image_data.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
         image_mask = image_mask.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
@@ -1927,7 +1528,7 @@ public:
         }
 
         if (this->is_replaying) {
-            this->mouse_data.cursor_image = QImage(static_cast<uchar *>(data), cursor.x, cursor.y, QImage::Format_ARGB32_Premultiplied);
+            this->cursor_image = QImage(static_cast<uchar *>(data), cursor.x, cursor.y, QImage::Format_ARGB32_Premultiplied);
 
         } else {
             this->screen->set_mem_cursor(static_cast<uchar *>(data), cursor.x, cursor.y);
@@ -1941,8 +1542,31 @@ public:
         }
     }
 
+    void pre_load_movie() {
+
+        long int movie_length = Screen_Qt::get_movie_time_length(this->replay_mod->get_mwrm_path().c_str());
+        long int endin_frame = 0;
+        int i = 0;
+
+
+        while (endin_frame < movie_length) {
+            //timeval end_fram_time = {long int(endin_frame), 0};
+            this->replay_mod.get()->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
+
+            this->screen->balises.push_back(nullptr);
+            this->screen->balises[i] = new QPixmap(*(this->cache));
+            endin_frame += Screen_Qt::BALISED_FRAME;
+            i++;
+            if (this->bar) {
+                this->bar->setValue(endin_frame);
+            }
+        }
+    }
+
     bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) override {
          try {
+
+
             this->replay_mod.reset(new ReplayMod( *this
                                                 , movie_dir.c_str() //(this->REPLAY_DIR + "/").c_str()
                                                 , movie_name.c_str()
@@ -1958,6 +1582,8 @@ public:
                                                 , to_verbose_flags(0)
                                                 ));
 
+
+
             //this->replay_mod->add_consumer(nullptr, &this->snapshoter, nullptr, nullptr, nullptr);
 
             return true;
@@ -1966,7 +1592,7 @@ public:
             LOG(LOG_ERR, "new ReplayMod error %s", err.errmsg());
         }
 
-        if (this->replay_mod == nullptr) {
+        if (this->replay_mod.get() == nullptr) {
             this->dropScreen();
             this->readError(movie_name);
             this->form->show();
@@ -2154,7 +1780,7 @@ public:
         QImage image(data, mincx, mincy, srcBitmapMirrored.format());
         QRect trect(drect.x, drect.y, mincx, mincy);
 
-        if (this->connected || this->is_replaying) {
+        if ((this->connected || this->is_replaying) && this->screen) {
              this->screen->paintCache().drawImage(trect, image);
         }
     }
@@ -2235,7 +1861,7 @@ public:
 
     void draw_RDPPatBlt(const Rect & rect, const QColor color, const QPainter::CompositionMode mode, const Qt::BrushStyle style) {
         QBrush brush(color, style);
-        if (this->connected || this->is_replaying) {
+        if ((this->connected || this->is_replaying) && this->screen) {
             this->screen->paintCache().setBrush(brush);
             this->screen->paintCache().setCompositionMode(mode);
             this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
@@ -2245,7 +1871,7 @@ public:
     }
 
     void draw_RDPPatBlt(const Rect & rect, const QPainter::CompositionMode mode) {
-        if (this->connected || this->is_replaying) {
+        if ((this->connected || this->is_replaying) && this->screen) {
             this->screen->paintCache().setCompositionMode(mode);
             this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
             this->screen->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
@@ -2259,7 +1885,7 @@ public:
     //       DRAW FUNCTIONS
     //-----------------------------
 
-    using Front_Qt_API::draw;
+    using ClientRedemptionIOAPI::draw;
 
     void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (bool(this->verbose & RDPVerbose::graphics)) {
@@ -2284,7 +1910,7 @@ public:
                 case 0x5A:
                     {
                         QBrush brush(backColor, Qt::Dense4Pattern);
-                        if (this->connected || this->is_replaying) {
+                        if ((this->connected || this->is_replaying) && this->screen) {
                             this->screen->paintCache().setBrush(brush);
                             this->screen->paintCache().setCompositionMode(QPainter::RasterOp_SourceXorDestination);
                             this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
@@ -2300,7 +1926,7 @@ public:
                 // +------+-------------------------------+
                 case 0xF0:
                     {
-                        if (this->connected || this->is_replaying) {
+                        if ((this->connected || this->is_replaying) && this->screen) {
                             QBrush brush(foreColor, Qt::Dense4Pattern);
                             this->screen->paintCache().setPen(Qt::NoPen);
                             this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
@@ -2318,7 +1944,7 @@ public:
             switch (cmd.rop) {
 
                 case 0x00: // blackness
-                    if (this->connected || this->is_replaying) {
+                    if ((this->connected || this->is_replaying) && this->screen) {
                         this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::black);
                     }
                     break;
@@ -2393,7 +2019,7 @@ public:
                     // |      | RPN: P                        |
                     // +------+-------------------------------+
                 case 0xF0:
-                    if (this->connected || this->is_replaying) {
+                    if ((this->connected || this->is_replaying) && this->screen) {
                         this->screen->paintCache().setPen(Qt::NoPen);
                         this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
                         this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
@@ -2415,7 +2041,7 @@ public:
                     break;
 
                 case 0xFF: // whiteness
-                    if (this->connected || this->is_replaying) {
+                    if ((this->connected || this->is_replaying) && this->screen) {
                         this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::white);
                     }
                     break;
@@ -2444,7 +2070,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        if ((this->connected || this->is_replaying) && this->screen != nullptr) {
+        if ((this->connected || this->is_replaying) && this->screen) {
             QColor qcolor(this->u32_to_qcolor(cmd.color, color_ctx));
             Rect rect(cmd.rect.intersect(clip));
 
@@ -2509,7 +2135,7 @@ public:
 
         qbitmap = qbitmap.mirrored(false, true);
         QRect trect(drect.x, drect.y, mincx, mincy);
-        if (this->connected || this->is_replaying) {
+        if ((this->connected || this->is_replaying) && this->screen) {
             this->screen->paintCache().drawImage(trect, qbitmap);
         }
 
@@ -2534,7 +2160,7 @@ public:
         }
 
         // TODO clipping
-        if (this->connected || this->is_replaying) {
+        if ((this->connected || this->is_replaying) && this->screen) {
             this->screen->setPenColor(this->u32_to_qcolor(cmd.back_color, color_ctx));
 
             this->screen->paintCache().drawLine(cmd.startx, cmd.starty, cmd.endx, cmd.endy);
@@ -2573,7 +2199,7 @@ public:
         switch (cmd.rop) {
 
             case 0x00:
-                if (this->connected || this->is_replaying) {
+                if ((this->connected || this->is_replaying) && this->screen) {
                     this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
                 }
                 break;
@@ -2588,7 +2214,7 @@ public:
                 break;
 
             case 0xFF:
-                if (this->connected || this->is_replaying) {
+                if ((this->connected || this->is_replaying) && this->screen) {
                     this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
                 }
                 break;
@@ -2624,7 +2250,7 @@ public:
         switch (cmd.rop) {
 
             case 0x00:
-                if (this->connected || this->is_replaying) {
+                if ((this->connected || this->is_replaying) && this->screen) {
                     this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
                 }
                 break;
@@ -2661,7 +2287,7 @@ public:
                 break;
 
             case 0xFF:
-                if (this->connected || this->is_replaying) {
+                if ((this->connected || this->is_replaying) && this->screen) {
                     this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
                 }
                 break;
@@ -2737,7 +2363,7 @@ public:
                         image = image.convertToFormat(this->imageFormatRGB);
                     }
                     QRect trect(drect.x, rowYCoord, mincx, 1);
-                    if (this->connected || this->is_replaying) {
+                    if ((this->connected || this->is_replaying) && this->screen) {
                         this->screen->paintCache().drawImage(trect, image);
                     }
                     rowYCoord--;
@@ -2773,7 +2399,7 @@ public:
 
         switch (cmd.rop) {
             case 0x00: // blackness
-                if (this->connected || this->is_replaying) {
+                if ((this->connected || this->is_replaying) && this->screen) {
                     this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
                 }
                 break;
@@ -2783,7 +2409,7 @@ public:
             case 0xAA: // change nothing
                 break;
             case 0xFF: // whiteness
-                if (this->connected || this->is_replaying) {
+                if ((this->connected || this->is_replaying) && this->screen) {
                     this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
                 }
                 break;
@@ -3071,116 +2697,21 @@ public:
     //      CONTROLLERS
     //------------------------
 
-    void mousePressEvent(QMouseEvent *e, int screen_shift) override {
-        if (this->mod != nullptr) {
-            int flag(0);
-            switch (e->button()) {
-                case Qt::LeftButton:  flag = MOUSE_FLAG_BUTTON1; break;
-                case Qt::RightButton: flag = MOUSE_FLAG_BUTTON2; break;
-                case Qt::MidButton:   flag = MOUSE_FLAG_BUTTON4; break;
-                case Qt::XButton1:
-                case Qt::XButton2:
-                case Qt::NoButton:
-                case Qt::MouseButtonMask:
 
-                default: break;
-            }
-
-            int x = e->x() + screen_shift;
-            int y = e->y();
-
-            if (remoteapp) {
-                QPoint mouseLoc = QCursor::pos();
-                x = mouseLoc.x();
-                y = mouseLoc.y();
-            }
-
-            this->mod->rdp_input_mouse(flag | MOUSE_FLAG_DOWN, x, y, &(this->keymap));
-        }
-    }
-
-    void mouseReleaseEvent(QMouseEvent *e, int screen_shift) override {
-        if (this->mod != nullptr) {
-            int flag(0);
-            switch (e->button()) {
-
-                case Qt::LeftButton:  flag = MOUSE_FLAG_BUTTON1; break;
-                case Qt::RightButton: flag = MOUSE_FLAG_BUTTON2; break;
-                case Qt::MidButton:   flag = MOUSE_FLAG_BUTTON4; break;
-                case Qt::XButton1:
-                case Qt::XButton2:
-                case Qt::NoButton:
-                case Qt::MouseButtonMask:
-
-                default: break;
-            }
-
-            int x = e->x() + screen_shift;
-            int y = e->y();
-
-            if (remoteapp) {
-                QPoint mouseLoc = QCursor::pos();
-                x = mouseLoc.x();
-                y = mouseLoc.y();
-            }
-
-
-            this->mod->rdp_input_mouse(flag, x, y, &(this->keymap));
-        }
-    }
-
-    void keyPressEvent(QKeyEvent *e) override {
-        this->qtRDPKeymap.keyEvent(0     , e);
+    void keyPressEvent(const int key, const char text) override {
+        this->qtRDPKeymap.keyEvent(0, key, text);
         if (this->qtRDPKeymap.scanCode != 0) {
             this->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
         }
     }
 
-    void keyReleaseEvent(QKeyEvent *e) override {
-        this->qtRDPKeymap.keyEvent(KBD_FLAG_UP, e);
+    void keyReleaseEvent(const int key, const char text) override {
+        this->qtRDPKeymap.keyEvent(KBD_FLAG_UP, key, text);
         if (this->qtRDPKeymap.scanCode != 0) {
             this->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
         }
     }
 
-    void wheelEvent(QWheelEvent *e) override {
-        int flag(MOUSE_FLAG_HWHEEL);
-        if (e->delta() < 0) {
-            flag = flag | MOUSE_FLAG_WHEEL_NEGATIVE;
-        }
-        if (this->mod != nullptr) {
-            //this->mod->rdp_input_mouse(flag, e->x(), e->y(), &(this->keymap));
-        }
-    }
-
-    bool eventFilter(QObject *, QEvent *e, int screen_shift) override {
-        if (e->type() == QEvent::MouseMove)
-        {
-            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
-            this->mouse_data.x = std::max(0, mouseEvent->x() + screen_shift);
-            this->mouse_data.y = std::max(0, mouseEvent->y());
-
-//             if (y > this->info.height) {
-//                 LOG(LOG_INFO, "eventFilter out");
-//                 this->screen->mouse_out = true;
-//             } else if (this->screen->mouse_out) {
-//                 this->screen->update_current_cursor();
-//                 this->screen->mouse_out = false;
-//             }
-
-            if (this->mod != nullptr && this->mouse_data.y < this->info.height) {
-                if (remoteapp) {
-                    QPoint mouseLoc = QCursor::pos();
-                    this->mouse_data.x = mouseLoc.x();
-                    this->mouse_data.y = mouseLoc.y();
-
-                }
-
-                this->mod->rdp_input_mouse(MOUSE_FLAG_MOVE, this->mouse_data.x, this->mouse_data.y, &(this->keymap));
-            }
-        }
-        return false;
-    }
 
     void connexionReleased() override {
         this->form->setCursor(Qt::WaitCursor);
@@ -3197,64 +2728,17 @@ public:
         //return res;
     }
 
-    void RefreshPressed() override {
-        Rect rect(0, 0, this->info.width, this->info.height);
-        this->mod->rdp_input_invalidate(rect);
-    }
-
-    void CtrlAltDelPressed() override {
-        int flag = Keymap2::KBDFLAGS_EXTENDED;
-
-        this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
-    }
-
-    void CtrlAltDelReleased() override {
-        int flag = Keymap2::KBDFLAGS_EXTENDED | KBD_FLAG_UP;
-
-        this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);
-        this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
-    }
-
     void disconnexionReleased() override{
         this->is_replaying = false;
-        this->dropScreen();
         this->disconnect("");
+        this->dropScreen();
         this->capture = nullptr;
         this->graph_capture = nullptr;
     }
 
     void setMainScreenOnTopRelease() override {
-        if (this->connected || this->is_replaying) {
+        if ((this->connected || this->is_replaying) && this->screen) {
             this->screen->activateWindow();
-        }
-    }
-
-    void send_rdp_scanCode(int keyCode, int flag) {
-        Keymap2::DecodedKeys decoded_keys = this->keymap.event(flag, keyCode, this->ctrl_alt_delete);
-        switch (decoded_keys.count)
-        {
-        case 2:
-            if (this->decoded_data.has_room(sizeof(uint32_t))) {
-                this->decoded_data.out_uint32_le(decoded_keys.uchars[0]);
-            }
-            if (this->decoded_data.has_room(sizeof(uint32_t))) {
-                this->decoded_data.out_uint32_le(decoded_keys.uchars[1]);
-            }
-            break;
-        case 1:
-            if (this->decoded_data.has_room(sizeof(uint32_t))) {
-                this->decoded_data.out_uint32_le(decoded_keys.uchars[0]);
-            }
-            break;
-        default:
-        case 0:
-            break;
-        }
-        if (this->mod != nullptr) {
-            this->mod->rdp_input_scancode(keyCode, 0, flag, this->_timer, &(this->keymap));
         }
     }
 
@@ -3271,6 +2755,8 @@ public:
 
         if (this->form != nullptr && this->connected) {
             this->form->close();
+            delete(this->cache);
+            this->cache = nullptr;
         }
     }
 
@@ -3279,6 +2765,10 @@ public:
             this->screen->disconnection();
             this->screen->close();
             this->screen = nullptr;
+        }
+
+        if (!(this->remoteapp)) {
+            delete(this->cache);
         }
     }
 
@@ -3294,11 +2784,14 @@ public:
             this->info.width = this->replay_mod->get_dim().w;
             this->info.height = this->replay_mod->get_dim().h;
 //             this->cache_replay = new QPixmap(this->info.width, this->info.height);
-            this->screen = new Screen_Qt(this, movie_dir_, movie_path_);
+            delete(this->cache);
+            this->cache = new QPixmap(this->info.width, this->info.height);
+
+            this->screen = new Screen_Qt(this, movie_dir_, movie_path_, this->cache);
             //this->connected = true;
             this->form->hide();
             if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
-                this->bar = new ProgressBarWindow(this->screen->movie_time, this);
+                this->bar = new ProgressBarWindow(this->screen->movie_time);
                 this->screen->pre_load_movie();
             }
             this->screen->show();
@@ -3314,147 +2807,6 @@ public:
     }
 
 
-    virtual void connect() {
-        this->is_pipe_ok = true;
-        if (this->mod_qt->connect()) {
-            this->qtRDPKeymap.setKeyboardLayout(this->info.keylayout);
-//             this->cache = new QPixmap(this->info.width, this->info.height);
-//             this->trans_cache = new QPixmap(this->info.width, this->info.height);
-//             this->trans_cache->fill(Qt::transparent);
-
-            this->screen = new Screen_Qt(this);
-
-            this->is_replaying = false;
-            if (this->is_recording && !this->is_replaying) {
-
-//                 this->start_capture();
-
-                   Inifile ini;
-                    ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
-                    ini.set<cfg::video::png_limit>(0);
-                    ini.set<cfg::video::disable_keyboard_log>(KeyboardLogFlags::none);
-                    ini.set<cfg::session_log::enable_session_log>(0);
-                    ini.set<cfg::session_log::keyboard_input_masking_level>(KeyboardInputMaskingLevel::unmasked);
-                    ini.set<cfg::context::pattern_kill>("");
-                    ini.set<cfg::context::pattern_notify>("");
-                    ini.set<cfg::debug::capture>(0xfffffff);
-                    ini.set<cfg::video::capture_groupid>(1);
-                    ini.set<cfg::video::record_tmp_path>(this->REPLAY_DIR);
-                    ini.set<cfg::video::record_path>(this->REPLAY_DIR);
-                    ini.set<cfg::video::hash_path>(this->REPLAY_DIR+std::string("/signatures"));
-                    time_t now;
-                    time(&now);
-                    std::string data(ctime(&now));
-                    std::string data_cut(data.c_str(), data.size()-1);
-                    std::string name("-Replay");
-                    std::string movie_name(data_cut+name);
-                    ini.set<cfg::globals::movie_path>(movie_name.c_str());
-                    ini.set<cfg::globals::trace_type>(TraceType::localfile);
-                    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
-                    ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned, std::ratio<1, 100>>(1));
-                    ini.set<cfg::video::break_interval>(std::chrono::seconds(600));
-
-                UdevRandom gen;
-
-                //NullReportMessage * reportMessage  = nullptr;
-                struct timeval time;
-                gettimeofday(&time, nullptr);
-                PngParams png_params = {0, 0, ini.get<cfg::video::png_interval>(), 100, 0, true, this->info.remote_program, ini.get<cfg::video::rt_display>()};
-                VideoParams videoParams = {Level::high, this->info.width, this->info.height, 0, 0, 0, std::string(""), true, true, false, ini.get<cfg::video::break_interval>(), 0};
-                OcrParams ocr_params = { ini.get<cfg::ocr::version>(),
-                                            static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
-                                            ini.get<cfg::ocr::on_title_bar_only>(),
-                                            ini.get<cfg::ocr::max_unrecog_char_rate>(),
-                                            ini.get<cfg::ocr::interval>(),
-                                            0
-                                        };
-
-                std::string record_path = this->REPLAY_DIR.c_str() + std::string("/");
-
-
-
-                WrmParams wrmParams(
-                      this->info.bpp
-                    , this->cctx
-                    , gen
-                    , this->fstat
-                    , ini.get<cfg::video::hash_path>().c_str()
-                    , std::chrono::duration<unsigned int, std::ratio<1l, 100l> >{60}
-                    , ini.get<cfg::video::break_interval>()
-                    , WrmCompressionAlgorithm::no_compression
-                    , 0
-                );
-
-                PatternParams patternCheckerParams {"", "", 0};
-                SequencedVideoParams sequenced_video_params {};
-                FullVideoParams full_video_params = { false };
-                MetaParams meta_params {
-                    MetaParams::EnableSessionLog::No,
-                    MetaParams::HideNonPrintable::No
-                };
-                KbdLogParams kbd_log_params {false, false, false, false};
-
-                CaptureParams captureParams;
-                captureParams.now = tvtime();
-                captureParams.basename = movie_name.c_str();
-                captureParams.record_tmp_path = record_path.c_str();
-                captureParams.record_path = record_path.c_str();
-                captureParams.groupid = 0;
-                captureParams.report_message = nullptr;
-
-                DrawableParams drawableParams;
-                drawableParams.width  = this->info.width;
-                drawableParams.height = this->info.height;
-                drawableParams.rdp_drawable = nullptr;
-
-                this->capture = std::make_unique<Capture>(captureParams
-                                                , drawableParams
-                                                , true, wrmParams
-                                                , false, png_params
-                                                , false, patternCheckerParams
-                                                , false, ocr_params
-                                                , false, sequenced_video_params
-                                                , false, full_video_params
-                                                , false, meta_params
-                                                , false, kbd_log_params
-                                                , videoParams
-                                                , nullptr
-                                                , Rect(0, 0, 0, 0)
-                                                );
-
-                this->capture.get()->gd_drawable->width();
-
-                this->graph_capture = this->capture.get()->get_graphic_api();
-            }
-
-            if (this->mod_qt->listen()) {
-                this->form->hide();
-                this->screen->show();
-                this->connected = true;
-
-            } else {
-                this->connected = false;
-            }
-        }
-    }
-
-    void disconnect(std::string const & error) override {
-
-        if (this->mod_qt) {
-            this->mod_qt->disconnect(true);
-        }
-
-        //this->must_be_stop_capture();
-        this->form->set_IPField(this->target_IP);
-        this->form->set_portField(this->port);
-        this->form->set_PWDField(this->user_password);
-        this->form->set_userNameField(this->user_name);
-        this->form->set_ErrorMsg(error);
-        this->form->show();
-
-        this->connected = false;
-    }
-
     const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
         return this->cl;
     }
@@ -3465,6 +2817,41 @@ public:
     //--------------------------------
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------
+
+     virtual void disconnect(std::string const & error) override {
+
+
+        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!! 1");
+
+//         if (this->clientInputSocketAPI != nullptr) {
+//             this->clientInputSocketAPI->disconnect();
+//         }
+
+        if (this->mod != nullptr) {
+            TimeSystem timeobj;
+            if (this->is_pipe_ok) {
+                this->mod->disconnect(timeobj.get_time().tv_sec);
+            };
+            this->mod = nullptr;
+        }
+
+        if (this->socket != nullptr) {
+            delete (this->socket);
+            this->socket = nullptr;
+            LOG(LOG_INFO, "Disconnected from [%s].", this->target_IP.c_str());
+        }
+
+        this->form->set_IPField(this->target_IP);
+        this->form->set_portField(this->port);
+        this->form->set_PWDField(this->user_password);
+        this->form->set_userNameField(this->user_name);
+        this->form->set_ErrorMsg(error);
+        this->form->show();
+
+        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!! 4");
+
+        this->connected = false;
+    }
 
     void callback() override {
 
@@ -3477,7 +2864,7 @@ public:
                     LOG(LOG_INFO, "%s", errorMsg.c_str());
                     std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
 
-                    this->mod_qt->disconnect(false);
+//                     this->mod_qt->disconnect(false);
                     this->disconnect(labelErrorMsg);
                 }
             } catch (const Error & e) {

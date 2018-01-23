@@ -41,6 +41,7 @@
 
 #include "qt_input_output_api/qt_output_sound.hpp"
 #include "qt_input_output_api/qt_input_output_clipboard.hpp"
+#include "qt_input_output_api/qt_input_socket.hpp"
 
 #pragma GCC diagnostic pop
 
@@ -89,13 +90,7 @@ public:
     ClipboardServerChannelDataSender _to_server_sender;
     ClipboardClientChannelDataSender _to_client_sender;
 
-    enum : int {
-        COMMAND_VALID = 15
-      , NAME_GOTTEN   = 1
-      , PWD_GOTTEN    = 2
-      , IP_GOTTEN     = 4
-      , PORT_GOTTEN   = 8
-    };
+
 
 
     enum : int {
@@ -107,17 +102,10 @@ public:
     };
 
 
-    struct MouseData {
-        QImage cursor_image;
-        uint16_t x = 0;
-        uint16_t y = 0;
-    } _mouse_data;
-
-
     // io API
-    ClientIOClipboardAPI * clientIOClipboardAPI;
-    ClientOutputSoundAPI * clientOutputSoundAPI;
-
+    ClientIOClipboardAPI  * clientIOClipboardAPI;
+    ClientOutputSoundAPI  * clientOutputSoundAPI;
+    ClientInputSocketAPI * clientInputSocketAPI;
 
 
     //  Channel managers
@@ -143,258 +131,13 @@ public:
     WindowListCaps windowListCaps;
     ClientExecute exe;
 
+    std::string error_message;
+
 
     void options() override {
         new DialogOptions_Qt(this, this->form);
     }
 
-    void setUserProfil() {
-        std::ifstream ifichier(this->USER_CONF_DIR);
-        if(ifichier) {
-            std::string ligne;
-            std::string delimiter = " ";
-            std::getline(ifichier, ligne);
-            auto pos(ligne.find(delimiter));
-            std::string tag  = ligne.substr(0, pos);
-            std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
-            if (tag.compare(std::string("current_user_profil_id")) == 0) {
-                this->current_user_profil = std::stoi(info);
-            }
-        }
-    }
-
-    void setClientInfo() override {
-
-        this->userProfils.clear();
-        this->userProfils.push_back({0, "Default"});
-
-        // file config
-        std::ifstream ifichier(this->USER_CONF_DIR);
-        if(ifichier) {
-            // get config from conf file
-            std::string ligne;
-            std::string delimiter = " ";
-            int read_id(-1);
-
-            while(std::getline(ifichier, ligne)) {
-                auto pos(ligne.find(delimiter));
-                std::string tag  = ligne.substr(0, pos);
-                std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
-
-                if (tag.compare(std::string("id")) == 0) {
-                    read_id = std::stoi(info);
-                } else
-                if (tag.compare(std::string("name")) == 0) {
-                    if (read_id) {
-                        this->userProfils.push_back({read_id, info.c_str()});
-                    }
-                } else
-                if (this->current_user_profil == read_id) {
-
-                    if (tag.compare(std::string("keylayout")) == 0) {
-                        this->info.keylayout = std::stoi(info);
-                    } else
-                    if (tag.compare(std::string("console_session")) == 0) {
-                        this->info.console_session = std::stoi(info);
-                    } else
-                    if (tag.compare(std::string("brush_cache_code")) == 0) {
-                        this->info.brush_cache_code = std::stoi(info);
-                    } else
-                    if (tag.compare(std::string("bpp")) == 0) {
-                        this->info.bpp = std::stoi(info);
-                    } else
-                    if (tag.compare(std::string("width")) == 0) {
-                        this->info.width      = std::stoi(info);
-                    } else
-                    if (tag.compare(std::string("height")) == 0) {
-                        this->info.height     = std::stoi(info);
-                    } else
-                    if (tag.compare(std::string("rdp5_performanceflags")) == 0) {
-                        this->info.rdp5_performanceflags = std::stoi(info);
-                    } else
-                    if (tag.compare(std::string("fps")) == 0) {
-                        this->fps = std::stoi(info);
-                    } else
-                    if (tag.compare(std::string("monitorCount")) == 0) {
-                        this->info.cs_monitor.monitorCount = std::stoi(info);
-                        this->_monitorCount                 = std::stoi(info);
-                    } else
-                    if (tag.compare(std::string("span")) == 0) {
-                        if (std::stoi(info)) {
-                            this->is_spanning = true;
-                        } else {
-                            this->is_spanning = false;
-                        }
-                    } else
-                    if (tag.compare(std::string("record")) == 0) {
-                        if (std::stoi(info)) {
-                            this->is_recording = true;
-                        } else {
-                            this->is_recording = false;
-                        }
-                    } else
-                    if (tag.compare(std::string("tls")) == 0) {
-                        if (std::stoi(info)) {
-                            this->modRDPParamsData.enable_tls = true;
-                        } else { this->modRDPParamsData.enable_tls = false; }
-                    } else
-                    if (tag.compare(std::string("nla")) == 0) {
-                        if (std::stoi(info)) {
-                            this->modRDPParamsData.enable_nla = true;
-                        } else { this->modRDPParamsData.enable_nla = false; }
-                    } else
-                    if (tag.compare(std::string("sound")) == 0) {
-                        if (std::stoi(info)) {
-                            this->modRDPParamsData.enable_sound = true;
-                        } else { this->modRDPParamsData.enable_sound = false; }
-                    } else
-                    if (tag.compare(std::string("delta_time")) == 0) {
-                        if (std::stoi(info)) {
-                            this->delta_time = std::stoi(info);
-                        }
-                    } else
-                    if (tag.compare(std::string("enable_shared_clipboard")) == 0) {
-                        if (std::stoi(info)) {
-                            this->enable_shared_clipboard = true;
-                        }
-                    } else
-                    if (tag.compare(std::string("enable_shared_virtual_disk")) == 0) {
-                        if (std::stoi(info)) {
-                            this->enable_shared_virtual_disk = true;
-                        }
-                    } else
-                    if (tag.compare(std::string("SHARE_DIR")) == 0) {
-                        this->SHARE_DIR                 = info;
-                        read_id = -1;
-                    }
-                }
-            }
-
-            ifichier.close();
-
-            this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
-        }
-
-        this->qtRDPKeymap.clearCustomKeyCode();
-        this->keyCustomDefinitions.clear();
-
-        std::ifstream iFileKeyData(this->MAIN_DIR + std::string(KEY_SETTING_PATH), std::ios::in);
-        if(iFileKeyData) {
-
-            std::string ligne;
-            std::string delimiter = " ";
-
-            while(getline(iFileKeyData, ligne)) {
-
-                int pos(ligne.find(delimiter));
-
-                if (strcmp(ligne.substr(0, pos).c_str(), "-") == 0) {
-
-                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-                    pos = ligne.find(delimiter);
-
-                    int qtKeyID  = std::stoi(ligne.substr(0, pos));
-                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-                    pos = ligne.find(delimiter);
-
-                    int scanCode = std::stoi(ligne.substr(0, pos));
-                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-                    pos = ligne.find(delimiter);
-
-                    int ASCII8   = std::stoi(ligne.substr(0, pos));
-                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-                    pos = ligne.find(delimiter);
-
-                    int extended = std::stoi(ligne.substr(0, pos));
-
-                    this->qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
-                    this->keyCustomDefinitions.push_back({qtKeyID, scanCode, ASCII8, extended});
-                }
-            }
-
-            iFileKeyData.close();
-        }
-    }
-
-    void writeClientInfo() override {
-        std::fstream ofichier(this->USER_CONF_DIR);
-        if(ofichier) {
-
-            ofichier << "current_user_profil_id " << this->current_user_profil << "\n";
-
-            std::string ligne;
-            const std::string delimiter = " ";
-
-            bool new_profil = true;
-            int read_id = -1;
-            auto pos(ligne.find(delimiter));
-            std::string tag  = ligne.substr(0, pos);
-            std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
-
-            while(std::getline(ofichier, ligne)) {
-                pos = ligne.find(delimiter);
-                tag  = ligne.substr(0, pos);
-                info = ligne.substr(pos + delimiter.length(), ligne.length());
-
-                if (tag == std::string("id")) {
-                    read_id = std::stoi(info);
-                    if (read_id == this->current_user_profil) {
-                        new_profil = false;
-                        break;
-                    }
-                }
-            }
-
-            if (new_profil) {
-                ofichier.close();
-                std::ofstream new_ofile(this->USER_CONF_DIR, std::ios::app | std::ios::out);
-                new_ofile << "\nid "     << this->userProfils[this->current_user_profil].id   << "\n";
-                new_ofile << "name "   << this->userProfils[this->current_user_profil].name << "\n";
-                new_ofile << "keylayout "             << this->info.keylayout               << "\n";
-                new_ofile << "console_session "       << this->info.console_session         << "\n";
-                new_ofile << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
-                new_ofile << "bpp "                   << this->info.bpp                     << "\n";
-                new_ofile << "width "                 << this->info.width                   << "\n";
-                new_ofile << "height "                << this->info.height                  << "\n";
-                new_ofile << "rdp5_performanceflags " << this->info.rdp5_performanceflags   << "\n";
-                new_ofile << "monitorCount "          << this->info.cs_monitor.monitorCount << "\n";
-                new_ofile << "span "                  << this->is_spanning                  << "\n";
-                new_ofile << "record "                << this->is_recording                 << "\n";
-                new_ofile << "tls "                   << this->modRDPParamsData.enable_tls  << "\n";
-                new_ofile << "nla "                   << this->modRDPParamsData.enable_nla  << "\n";
-                new_ofile << "sound "                 << this->modRDPParamsData.enable_sound << "\n";
-                new_ofile << "delta_time "            << this->delta_time << "\n";
-                new_ofile << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
-                new_ofile << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
-                new_ofile << "SHARE_DIR "                              << this->SHARE_DIR << std::endl;
-
-                new_ofile.close();
-
-            } else {
-                ofichier.seekp(ofichier.tellg());
-                ofichier << "name "   << this->userProfils[this->current_user_profil].name << "\n";
-                ofichier << "keylayout "             << this->info.keylayout               << "\n";
-                ofichier << "console_session "       << this->info.console_session         << "\n";
-                ofichier << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
-                ofichier << "bpp "                   << this->info.bpp                       << "\n";
-                ofichier << "width "                 << this->info.width                   << "\n";
-                ofichier << "height "                << this->info.height                  << "\n";
-                ofichier << "rdp5_performanceflags " << this->info.rdp5_performanceflags   << "\n";
-                ofichier << "monitorCount "          << this->info.cs_monitor.monitorCount << "\n";
-                ofichier << "span "                  << this->is_spanning                  << "\n";
-                ofichier << "record "                << this->is_recording                 << "\n";
-                ofichier << "tls "                   << this->modRDPParamsData.enable_tls  << "\n";
-                ofichier << "nla "                   << this->modRDPParamsData.enable_nla  << "\n";
-                ofichier << "sound "                 << this->modRDPParamsData.enable_sound << "\n";
-                ofichier << "delta_time "            << this->delta_time << "\n";
-                ofichier << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
-                ofichier << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
-                ofichier << "SHARE_DIR "                              << this->SHARE_DIR << std::endl;
-
-                ofichier.close();
-            }
-        }
-    }
 
     void deleteCurrentProtile() override {
         std::ifstream ifichier(this->USER_CONF_DIR, std::ios::in);
@@ -436,28 +179,7 @@ public:
         }
     }
 
-    void setDefaultConfig() override {
-        //this->current_user_profil = 0;
-        this->info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
-        this->info.console_session = 0;
-        this->info.brush_cache_code = 0;
-        this->info.bpp = 24;
-        this->mod_bpp = 24;
-        this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
-        this->info.width  = 800;
-        this->info.height = 600;
-        this->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-        this->info.cs_monitor.monitorCount = 1;
-        this->is_spanning = false;
-        this->is_recording = false;
-        this->modRDPParamsData.enable_tls = true;
-        this->modRDPParamsData.enable_nla = true;
-        this->delta_time = 40;
-        this->enable_shared_clipboard = true;
-        this->enable_shared_virtual_disk = true;
-        this->SHARE_DIR = std::string("/home");
-        //this->info.encryptionLevel = 1;
-    }
+
 
     void setScreenDimension() {
         if (!this->is_spanning) {
@@ -593,6 +315,8 @@ public:
 
                 if (this->remoteapp) {
 
+                    this->cache = new QPixmap(this->screen_max_width, this->screen_max_height);
+
                     std::string target_info = this->ini.get<cfg::context::target_str>();
                     target_info += ":";
                     target_info += this->ini.get<cfg::globals::primary_user_id>();
@@ -620,15 +344,20 @@ public:
     //------------------------
 
     RDPClientQtFront(char* argv[], int argc, RDPVerbose verbose,
-                    ClientOutputSoundAPI * clientOutputSoundAPI,
-                    ClientIOClipboardAPI * clientIOClipboardAPI)
-        : Front_RDP_Qt_API(verbose)
-        , clientIOClipboardAPI(new QtInputOutputClipboard(this, this->form))
-        , clientOutputSoundAPI(new QtOutputSound(this->form))
+                    ClientOutputSoundAPI  * clientOutputSoundAPI,
+                    ClientIOClipboardAPI  * clientIOClipboardAPI,
+                    ClientInputSocketAPI * clientInputSocketAPI)
+        : Front_RDP_Qt_API(argv, argc, verbose)
+
+        , clientIOClipboardAPI (new QtInputOutputClipboard(this, this->form))
+        , clientOutputSoundAPI (new QtOutputSound(this->form))
+        , clientInputSocketAPI(new QtInputSocket(this, this->form))
+
         , clientChannelRDPSNDManager(this->verbose, this, this->clientOutputSoundAPI)
         , clientChannelCLIPRDRManager(this->verbose, this, this->clientIOClipboardAPI)
         , clientChannelRDPDRManager(this->verbose, this)
         , clientChannelRemoteAppManager(this->verbose, this)
+
         , client_execute(*(this), this->info.window_list_caps, false)
         , vnc(false)
         , is_apple(true)
@@ -639,103 +368,48 @@ public:
         this->setUserProfil();
         this->setClientInfo();
 
-        uint8_t commandIsValid(0);
 
-        // TODO QCommandLineParser / program_options
-        for (int i = 0; i <  argc; i++) {
 
-            std::string word(argv[i]);
-
-            if (       word == "-n") {
-                if (i < argc-1) {
-                    this->user_name = std::string(argv[i+1]);
-                    commandIsValid += NAME_GOTTEN;
-                }
-            } else if (word == "-w") {
-                if (i < argc-1) {
-                    this->user_password = std::string(argv[i+1]);
-                    commandIsValid += PWD_GOTTEN;
-                }
-            } else if (word == "-i") {
-                if (i < argc-1) {
-                    this->target_IP = std::string(argv[i+1]);
-                    commandIsValid += IP_GOTTEN;
-                }
-            } else if (word == "-p") {
-                if (i < argc-1) {
-                    this->port = std::stoi(std::string(argv[i+1]));
-                    commandIsValid += PORT_GOTTEN;
-                }
-            } else if (word == "--rdpdr") {
-                this->verbose = RDPVerbose::rdpdr | this->verbose;
-                 std::cout << "--rdpdr rdpdr verbose on";
-            } else if (word == "--rdpsnd") {
-                this->verbose = RDPVerbose::rdpsnd | this->verbose;
-            } else if (word == "--cliprdr") {
-                this->verbose = RDPVerbose::cliprdr | this->verbose;
-            } else if (word == "--graphics") {
-                this->verbose = RDPVerbose::graphics | this->verbose;
-            } else if (word == "--printer") {
-                this->verbose = RDPVerbose::printer | this->verbose;
-            } else if (word == "--rdpdr_dump") {
-                this->verbose = RDPVerbose::rdpdr_dump | this->verbose;
-            } else if (word == "--cliprdr_dump") {
-                this->verbose = RDPVerbose::cliprdr_dump | this->verbose;
-            } else if (word == "--basic_trace") {
-                this->verbose = RDPVerbose::basic_trace | this->verbose;
-            } else if (word == "--connection") {
-                this->verbose = RDPVerbose::connection | this->verbose;
-            } else if (word == "--rail_order") {
-                this->verbose = RDPVerbose::rail_order | this->verbose;
-            } else if (word == "--asynchronous_task") {
-                this->verbose = RDPVerbose::asynchronous_task | this->verbose;
-            } else if (word == "--capabilities") {
-                this->verbose = RDPVerbose::capabilities | this->verbose;
-            } else if (word ==  "--keyboard") {
-                this->qtRDPKeymap._verbose = 1;
-            } else if (word ==  "--rail") {
-                this->verbose = RDPVerbose::rail | this->verbose;
-            } else if (word ==  "--rail_dump") {
-                this->verbose = RDPVerbose::rail_dump | this->verbose;
-            } else if (word ==  "--vnc") {
-                this->vnc = true;
-            }
-        }
-
-        this->clientChannelRDPSNDManager.verbose = this->verbose;
-        this->clientChannelCLIPRDRManager.verbose = this->verbose;
-        this->clientChannelRDPDRManager.verbose = this->verbose;
-        this->clientChannelRemoteAppManager.verbose = this->verbose;
+//         this->clientChannelRDPSNDManager.verbose = this->verbose;
+//         this->clientChannelCLIPRDRManager.verbose = this->verbose;
+//         this->clientChannelRDPDRManager.verbose = this->verbose;
+//         this->clientChannelRemoteAppManager.verbose = this->verbose;
 
 
         this->client_execute.set_verbose(bool( (RDPVerbose::rail & this->verbose) | (RDPVerbose::rail_dump & this->verbose) ));
 
 
 
-        if (commandIsValid == COMMAND_VALID) {
-            this->connect();
-
-        } else {
-            std::cout << "Argument(s) required to connect: ";
-            if (!(commandIsValid & NAME_GOTTEN)) {
-                std::cout << "-n [user_name] ";
-            }
-            if (!(commandIsValid & PWD_GOTTEN)) {
-                std::cout << "-w [password] ";
-            }
-            if (!(commandIsValid & IP_GOTTEN)) {
-                std::cout << "-i [ip_server] ";
-            }
-            if (!(commandIsValid & PORT_GOTTEN)) {
-                std::cout << "-p [port] ";
-            }
-            std::cout << std::endl;
-
-            this->disconnect("");
-        }
+//         if (commandIsValid == COMMAND_VALID) {
+//             this->connect();
+//
+//         } else {
+//             std::cout << "Argument(s) required to connect: ";
+//             if (!(commandIsValid & NAME_GOTTEN)) {
+//                 std::cout << "-n [user_name] ";
+//             }
+//             if (!(commandIsValid & PWD_GOTTEN)) {
+//                 std::cout << "-w [password] ";
+//             }
+//             if (!(commandIsValid & IP_GOTTEN)) {
+//                 std::cout << "-i [ip_server] ";
+//             }
+//             if (!(commandIsValid & PORT_GOTTEN)) {
+//                 std::cout << "-p [port] ";
+//             }
+//             std::cout << std::endl;
+//
+//             this->disconnect("");
+//         }
     }
 
     ~RDPClientQtFront() {}
+
+
+
+//     virtual void connect() override {
+//
+//     }
 
 
 
@@ -744,7 +418,7 @@ public:
     //      CONTROLLERS
     //------------------------
 
-    void connect() override {
+    virtual void connect() override {
 
         this->clientChannelRemoteAppManager.clear();
 
@@ -824,7 +498,172 @@ public:
 
         }
 
-        return FrontQtRDPGraphicAPI::connect();
+        this->is_pipe_ok = true;
+
+        const char * name(this->user_name.c_str());
+        const char * targetIP(this->target_IP.c_str());
+        const std::string errorMsg("Cannot connect to [" + target_IP +  "].");
+
+        unique_fd client_sck = ip_connect(targetIP,
+                                          this->port,
+                                          3,                //nbTry
+                                          1000             //retryDelay
+                                          );
+        this->client_sck = client_sck.fd();
+
+        if (this->client_sck > 0) {
+            try {
+
+                this->socket = new SocketTransport( name
+                                                , std::move(client_sck)
+                                                , targetIP
+                                                , this->port
+                                                , std::chrono::milliseconds(1000)
+                                                , to_verbose_flags(0)
+                                                //, SocketTransport::Verbose::dump
+                                                , &this->error_message
+                                                );
+
+                LOG(LOG_INFO, "Connected to [%s].", targetIP);
+
+            } catch (const std::exception &) {
+                std::string windowErrorMsg(errorMsg+" Socket error.");
+                LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
+                this->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
+                return;
+            }
+
+        } else {
+            std::string windowErrorMsg(errorMsg+" Invalid ip or port.");
+            LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
+            this->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
+            return;
+        }
+
+        this->qtRDPKeymap.setKeyboardLayout(this->info.keylayout);
+//             this->cache = new QPixmap(this->info.width, this->info.height);
+//             this->trans_cache = new QPixmap(this->info.width, this->info.height);
+//             this->trans_cache->fill(Qt::transparent);
+
+//         if (this->cache !=  nullptr) {
+//             delete(this->cache);
+//         }
+
+        this->cache = new QPixmap(this->info.width, this->info.height);
+
+        this->screen = new Screen_Qt(this, this->cache);
+
+        this->is_replaying = false;
+        if (this->is_recording && !this->is_replaying) {
+
+//                 this->start_capture();
+
+                Inifile ini;
+                ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
+                ini.set<cfg::video::png_limit>(0);
+                ini.set<cfg::video::disable_keyboard_log>(KeyboardLogFlags::none);
+                ini.set<cfg::session_log::enable_session_log>(0);
+                ini.set<cfg::session_log::keyboard_input_masking_level>(KeyboardInputMaskingLevel::unmasked);
+                ini.set<cfg::context::pattern_kill>("");
+                ini.set<cfg::context::pattern_notify>("");
+                ini.set<cfg::debug::capture>(0xfffffff);
+                ini.set<cfg::video::capture_groupid>(1);
+                ini.set<cfg::video::record_tmp_path>(this->REPLAY_DIR);
+                ini.set<cfg::video::record_path>(this->REPLAY_DIR);
+                ini.set<cfg::video::hash_path>(this->REPLAY_DIR+std::string("/signatures"));
+                time_t now;
+                time(&now);
+                std::string data(ctime(&now));
+                std::string data_cut(data.c_str(), data.size()-1);
+                std::string name("-Replay");
+                std::string movie_name(data_cut+name);
+                ini.set<cfg::globals::movie_path>(movie_name.c_str());
+                ini.set<cfg::globals::trace_type>(TraceType::localfile);
+                ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
+                ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned, std::ratio<1, 100>>(1));
+                ini.set<cfg::video::break_interval>(std::chrono::seconds(600));
+
+            UdevRandom gen;
+
+            //NullReportMessage * reportMessage  = nullptr;
+            struct timeval time;
+            gettimeofday(&time, nullptr);
+            PngParams png_params = {0, 0, ini.get<cfg::video::png_interval>(), 100, 0, true, this->info.remote_program, ini.get<cfg::video::rt_display>()};
+            VideoParams videoParams = {Level::high, this->info.width, this->info.height, 0, 0, 0, std::string(""), true, true, false, ini.get<cfg::video::break_interval>(), 0};
+            OcrParams ocr_params = { ini.get<cfg::ocr::version>(),
+                                        static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
+                                        ini.get<cfg::ocr::on_title_bar_only>(),
+                                        ini.get<cfg::ocr::max_unrecog_char_rate>(),
+                                        ini.get<cfg::ocr::interval>(),
+                                        0
+                                    };
+
+            std::string record_path = this->REPLAY_DIR.c_str() + std::string("/");
+
+
+
+            WrmParams wrmParams(
+                    this->info.bpp
+                , this->cctx
+                , gen
+                , this->fstat
+                , ini.get<cfg::video::hash_path>().c_str()
+                , std::chrono::duration<unsigned int, std::ratio<1l, 100l> >{60}
+                , ini.get<cfg::video::break_interval>()
+                , WrmCompressionAlgorithm::no_compression
+                , 0
+            );
+
+            PatternParams patternCheckerParams {"", "", 0};
+            SequencedVideoParams sequenced_video_params {};
+            FullVideoParams full_video_params = { false };
+            MetaParams meta_params {
+                MetaParams::EnableSessionLog::No,
+                MetaParams::HideNonPrintable::No
+            };
+            KbdLogParams kbd_log_params {false, false, false, false};
+
+            CaptureParams captureParams;
+            captureParams.now = tvtime();
+            captureParams.basename = movie_name.c_str();
+            captureParams.record_tmp_path = record_path.c_str();
+            captureParams.record_path = record_path.c_str();
+            captureParams.groupid = 0;
+            captureParams.report_message = nullptr;
+
+            DrawableParams drawableParams;
+            drawableParams.width  = this->info.width;
+            drawableParams.height = this->info.height;
+            drawableParams.rdp_drawable = nullptr;
+
+            this->capture = std::make_unique<Capture>(captureParams
+                                            , drawableParams
+                                            , true, wrmParams
+                                            , false, png_params
+                                            , false, patternCheckerParams
+                                            , false, ocr_params
+                                            , false, sequenced_video_params
+                                            , false, full_video_params
+                                            , false, meta_params
+                                            , false, kbd_log_params
+                                            , videoParams
+                                            , nullptr
+                                            , Rect(0, 0, 0, 0)
+                                            );
+
+            this->capture.get()->gd_drawable->width();
+
+            this->graph_capture = this->capture.get()->get_graphic_api();
+        }
+
+        if (this->clientInputSocketAPI->start_to_listen(this->client_sck)) {
+            this->form->hide();
+            this->screen->show();
+            this->connected = true;
+
+        } else {
+            this->connected = false;
+        }
     }
 
 
@@ -835,7 +674,7 @@ public:
     //      CHANNELS FUNCTIONS
     //--------------------------------
 
-    void clipboard_callback() override {
+    void send_clipboard_format() override {
         this->clientChannelCLIPRDRManager.send_FormatListPDU();
     }
 
@@ -942,21 +781,40 @@ public:
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------
 
-    void disconnect(std::string const & error) override {
-
-//         if( this->remoteapp && this->rail_mod.get()) {
-//             time_t  timev;
-//             time(&timev);
-//             this->rail_mod.get()->disconnect(timev);
-//             mod_api * rail_mod_ptr = this->rail_mod.release();
-//             delete (rail_mod_ptr);
-//             this->rail_mod.reset(nullptr);
-//             this->mod = this->rdp_mod.get();
-//             this->mod_qt->_callback = this->rdp_mod.get();
+//     virtual void disconnect(std::string const & error) override {
+//
+//
+//         LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!! 1");
+//
+//         if (this->clientInputSocketAPI != nullptr) {
+//             this->clientInputSocketAPI->disconnect();
 //         }
-
-        FrontQtRDPGraphicAPI::disconnect(error);
-    }
+//
+//         if (this->mod != nullptr) {
+//             TimeSystem timeobj;
+//             if (this->is_pipe_ok) {
+//                 this->mod->disconnect(timeobj.get_time().tv_sec);
+//             };
+//             this->mod = nullptr;
+//         }
+//
+//         if (this->socket != nullptr) {
+//             delete (this->socket);
+//             this->socket = nullptr;
+//             LOG(LOG_INFO, "Disconnected from [%s].", this->target_IP.c_str());
+//         }
+//
+//         this->form->set_IPField(this->target_IP);
+//         this->form->set_portField(this->port);
+//         this->form->set_PWDField(this->user_password);
+//         this->form->set_userNameField(this->user_name);
+//         this->form->set_ErrorMsg(error);
+//         this->form->show();
+//
+//         LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!! 4");
+//
+//         this->connected = false;
+//     }
 
     void callback() override {
         if (this->_recv_disconnect_ultimatum) {
@@ -1011,7 +869,7 @@ int main(int argc, char** argv){
     //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
     RDPVerbose verbose = to_verbose_flags(0);
 
-    RDPClientQtFront front_qt(argv, argc, verbose, nullptr, nullptr);
+    RDPClientQtFront front_qt(argv, argc, verbose, nullptr, nullptr, nullptr);
 
 
     app.exec();
