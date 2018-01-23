@@ -89,7 +89,7 @@ class REDEMPTION_CXX_NODISCARD ExecutorResult
     {
         Nothing,
         ReplaceAction,
-        ReplaceTimeout,
+        ReplaceTimer,
         ExitSuccess,
         ExitFailure,
     };
@@ -113,12 +113,11 @@ namespace detail
     };
 }
 
-struct ExecutorEvent
+struct AnyCtxPtr
 {
     class any {};
     struct real_deleter
     {
-        // merge with on_exit
         void (*deleter) (void*);
         void operator()(any* x) const
         {
@@ -126,21 +125,47 @@ struct ExecutorEvent
         }
     };
 
-    using CtxPtr = std::unique_ptr<any, real_deleter>;
-    using OnActionPtrFunc = ExecutorResult(*)(ExecutorBase&, any&);
-    using OnExitPtrFunc = ExecutorResult(*)(ExecutorBase&, bool success, any&);
+    explicit AnyCtxPtr() = default;
+
+    template<class T, class F>
+    explicit AnyCtxPtr(T* p, F f)
+      : p{reinterpret_cast<any*>(p), {f}}
+    {}
+
+    void* get() const
+    { return this->p.get(); }
+
+private:
+    std::unique_ptr<any, real_deleter> p;
+};
+
+struct REDEMPTION_CXX_NODISCARD ExecutorEvent
+{
+    using OnActionPtrFunc = ExecutorResult(*)(ExecutorBase&, AnyCtxPtr&);
+    using OnExitPtrFunc = ExecutorResult(*)(ExecutorBase&, bool success, AnyCtxPtr&);
 
     OnActionPtrFunc on_action;
     OnExitPtrFunc on_exit;
-    std::unique_ptr<any, real_deleter> ctx;
+    AnyCtxPtr ctx;
 
     ExecutorEvent() = delete;
 
-    ExecutorEvent(CtxPtr ctx)
+    ExecutorEvent(AnyCtxPtr ctx)
     : ctx(std::move(ctx))
     {}
+};
 
-    ExecutorEvent(any)
+struct REDEMPTION_CXX_NODISCARD TimerEvent
+{
+    using OnActionPtrFunc = ExecutorResult(*)(ExecutorBase&, AnyCtxPtr&);
+
+    OnActionPtrFunc on_action;
+    AnyCtxPtr ctx;
+
+    TimerEvent() = delete;
+
+    TimerEvent(AnyCtxPtr ctx)
+    : ctx(std::move(ctx))
     {}
 };
 
@@ -174,7 +199,7 @@ struct ExecutorContextConcept_
     template<class... Args> SubExecutorBuilderConcept_ sub_executor(Args&&...);
 };
 
-struct ExecutorTimeoutContextConcept_ : ExecutorContextConcept_
+struct ExecutorTimerContextConcept_ : ExecutorContextConcept_
 {
     template<class F> ExecutorResult next_timeout(F);
     template<class F> void set_action(F);
@@ -293,12 +318,19 @@ struct ExecutorBase
             this->create_ctx_events(static_cast<Args&&>(args)...)};
     }
 
+    template<class Ctx>
+    class TimerRefCtx;
+    class TimerRef;
+
+    template<class F, class... Args>
+    TimerRefCtx<detail::ctx_arg_type<Args...>> add_timeout(F, Args&&... args);
+
     template<class... Args>
     EventInitializer<detail::ctx_arg_type<Args...>> create_ctx_events(Args&&... args)
     {
         using Ctx = detail::ctx_arg_type<Args...>;
         this->events.emplace_back(
-            this->ctx_memory.template create<Ctx>(static_cast<Args&&>(args)...));
+            this->action_ctx_memory.template create<Ctx>(static_cast<Args&&>(args)...));
         return {this->events.back()};
     }
 
@@ -330,7 +362,7 @@ struct ExecutorBase
     {
         EventInitializer<Ctx>{this->events.back()}
           .init_on_action(static_cast<F&&>(f));
-        return this->events.back().on_action(*this, *this->events.back().ctx);
+        return this->events.back().on_action(*this, this->events.back().ctx);
     }
 
     template<class Ctx, class F1, class F2>
@@ -348,37 +380,30 @@ struct ExecutorBase
         return ExecutorResult::Nothing;
     }
 
-    using Event = ExecutorEvent;
-
     struct CtxMemory
     {
         template<class Ctx, class... Args>
-        Event::CtxPtr create(Args&&... args)
+        AnyCtxPtr create(Args&&... args)
         {
             REDEMPTION_DIAGNOSTIC_PUSH
             REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
             // TODO intrusive_list
             auto * p = new Ctx{static_cast<Args&&>(args)...};
             REDEMPTION_DIAGNOSTIC_POP
-            return Event::CtxPtr{
-                reinterpret_cast<Event::any*>(p),
-                Event::real_deleter{[](void* p){ delete static_cast<Ctx*>(p); }}
-            };
+            return AnyCtxPtr{p, [](void* p){ delete static_cast<Ctx*>(p); }};
         }
 
         template<class Ctx>
-        Event::CtxPtr create()
+        AnyCtxPtr create()
         {
-            return Event::CtxPtr{
-                reinterpret_cast<Event::any*>(this),
-                Event::real_deleter{[](void*){ }}
-            };
+            return AnyCtxPtr{};
         }
     };
 
-    std::vector<Event> events;
-    CtxMemory ctx_memory;
-    Event garbage {Event::any{}};
+    std::vector<ExecutorEvent> events;
+    std::vector<TimerEvent> timeouts;
+    CtxMemory action_ctx_memory;
+    CtxMemory timeout_ctx_memory;
 };
 
 struct Executor
@@ -387,6 +412,15 @@ struct Executor
     CXX_WARN_UNUSED_RESULT
     MakeInitialSubExecutorBuilder<Args...>
     initial_executor(Args&&... args)
+    {
+        return MakeInitialSubExecutorBuilder<Args...>{
+            this->base.create_ctx_events(static_cast<Args&&>(args)...)};
+    }
+
+    template<class... Args>
+    CXX_WARN_UNUSED_RESULT
+    MakeInitialSubExecutorBuilder<Args...>
+    add_timeout(Args&&... args)
     {
         return MakeInitialSubExecutorBuilder<Args...>{
             this->base.create_ctx_events(static_cast<Args&&>(args)...)};
@@ -445,7 +479,7 @@ protected:
 
 
 template<class Ctx>
-struct ExecutorTimeoutContext : ExecutorContext
+struct ExecutorTimerContext : ExecutorContext
 {
     template<class F>
     ExecutorResult next_timeout(F&& f)
@@ -459,7 +493,7 @@ struct ExecutorTimeoutContext : ExecutorContext
         this->executor.template set_action<Ctx>(static_cast<F&&>(f));
     }
 
-    explicit ExecutorTimeoutContext(ExecutorBase& executor) noexcept
+    explicit ExecutorTimerContext(ExecutorBase& executor) noexcept
       : ExecutorContext(executor)
     {}
 };
@@ -549,7 +583,7 @@ bool Executor::exec()
     auto process_exit = [this](bool status) {
         while (!this->base.events.empty()) {
             ExecutorResult r = this->base.events.back().on_exit(
-                this->base, status, *this->base.events.back().ctx);
+                this->base, status, this->base.events.back().ctx);
             switch (r.process) {
                 case ExecutorResult::ExitSuccess:
                     status = true;
@@ -560,7 +594,7 @@ bool Executor::exec()
                     this->base.events.pop_back();
                     break;
                 case ExecutorResult::ReplaceAction:
-                case ExecutorResult::ReplaceTimeout:
+                case ExecutorResult::ReplaceTimer:
                 case ExecutorResult::Nothing:
                     return;
             }
@@ -568,7 +602,7 @@ bool Executor::exec()
     };
 
     ExecutorResult r = this->base.events.back().on_action(
-        this->base, *this->base.events.back().ctx);
+        this->base, this->base.events.back().ctx);
     switch (r.process) {
         case ExecutorResult::ExitSuccess:
             process_exit(true);
@@ -577,7 +611,7 @@ bool Executor::exec()
             process_exit(false);
             break;
         case ExecutorResult::ReplaceAction:
-        case ExecutorResult::ReplaceTimeout:
+        case ExecutorResult::ReplaceTimer:
         case ExecutorResult::Nothing:
             break;
     }
@@ -597,10 +631,10 @@ F make_lambda() noexcept
 }
 
 template<class Ctx, class F>
-auto make_on_action()
+auto make_on_action() noexcept
 {
-    return [](ExecutorBase& executor, ExecutorEvent::any& any){
-        return reinterpret_cast<Ctx&>(any).invoke(
+    return [](ExecutorBase& executor, AnyCtxPtr& any){
+        return reinterpret_cast<Ctx*>(any.get())->invoke(
             make_lambda<F>(), ExecutorActionContext<Ctx>(executor));
     };
 }
@@ -610,7 +644,7 @@ ExecutorResult ExecutorBase::result_exec_action2(F1&& f1, F2)
 {
     EventInitializer<Ctx>{this->events.back()}
         .init_on_action(static_cast<F1&&>(f1));
-    return make_on_action<Ctx, F2>()(*this, *this->events.back().ctx);
+    return make_on_action<Ctx, F2>()(*this, this->events.back().ctx);
 }
 
 
@@ -625,8 +659,84 @@ template<class Ctx>
 template<class F>
 void EventInitializer<Ctx>::init_on_exit(F)
 {
-    this->executor_event.on_exit = [](ExecutorBase& executor, bool success, ExecutorEvent::any& any){
-        return reinterpret_cast<Ctx&>(any).invoke(
+    this->executor_event.on_exit = [](ExecutorBase& executor, bool success, AnyCtxPtr& any){
+        return reinterpret_cast<Ctx*>(any.get())->invoke(
             make_lambda<F>(), ExecutorExitContext<Ctx>(executor), success);
     };
+}
+
+
+struct ExecutorBase::TimerRef
+{
+    TimerEvent::OnActionPtrFunc on_action;
+    ExecutorBase* executor;
+
+    TimerRef(TimerRef const&) = delete;
+    TimerRef& operator=(TimerRef const&) = delete;
+
+    TimerRef(TimerRef&& other) noexcept
+      : on_action(std::exchange(other.on_action, nullptr))
+      , executor(other.executor)
+    {}
+
+    TimerRef& operator=(TimerRef&& other) noexcept
+    {
+        assert(this != &other);
+        this->on_action = std::exchange(other.on_action, nullptr);
+        this->executor = other.executor;
+        return *this;
+    }
+
+    ~TimerRef()
+    {
+        this->reset();
+    }
+
+    void reset() noexcept
+    {
+        this->executor->timeouts.erase(this->timer_it());
+        this->on_action = nullptr;
+    }
+
+private:
+    std::vector<TimerEvent>::iterator timer_it()
+    {
+        return std::find_if(this->executor->timeouts.begin(), this->executor->timeouts.end(),
+            [this](auto& timer) { return timer.on_action == this->on_action; });
+    }
+};
+
+template<class Ctx>
+struct ExecutorBase::TimerRefCtx : TimerRef
+{
+    template<class F>
+    void set_action(F) noexcept
+    {
+        this->on_action = make_on_action<Ctx, F>();
+    }
+
+    using TimerRef::reset;
+
+    template<class F, class... Args>
+    void reset(F, Args&&... args)
+    {
+        auto it = this->timer_it();
+        it->ctx = this->executor
+          ->timeout_ctx_memory.template create<Ctx>(static_cast<Args&&>(args)...);
+        this->on_action
+          = this->timeouts.back().on_action
+          = make_on_action<Ctx, F>();
+    }
+};
+
+template<class F, class... Args>
+ExecutorBase::TimerRefCtx<detail::ctx_arg_type<Args...>>
+ExecutorBase::add_timeout(F, Args&&... args)
+{
+    using Ctx = detail::ctx_arg_type<Args...>;
+    this->timeouts.emplace_back(
+        this->timeout_ctx_memory.template create<Ctx>(static_cast<Args&&>(args)...));
+    auto& on_action = this->timeouts.back().on_action;
+    on_action = make_on_action<Ctx, F>();
+    return {on_action, this};
 }
