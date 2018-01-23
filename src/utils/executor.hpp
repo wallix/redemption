@@ -25,46 +25,13 @@ Author(s): Jonathan Poelen
 
 #include <vector>
 #include <type_traits>
+#include <utility>
 #include <functional> // std::reference_wrapper
 #include <cassert>
 
 namespace detail
 {
-    template<int...>
-    class seq_int {};
-
-    template<class, class>
-    struct cat_seq;
-
-    template<int... i1, int... i2>
-    struct cat_seq<seq_int<i1...>, seq_int<i2...>>
-    {
-        using type = seq_int<i1..., sizeof...(i1)+i2...>;
-    };
-
-    template<int n>
-    struct make_seq_int_impl
-    : cat_seq<
-        typename make_seq_int_impl<n/2>::type,
-        typename make_seq_int_impl<n - n/2>::type
-    >{};
-
-    template<>
-    struct make_seq_int_impl<0>
-    {
-        using type = seq_int<>;
-    };
-
-    template<>
-    struct make_seq_int_impl<1>
-    {
-        using type = seq_int<0>;
-    };
-
-    template<int n>
-    using make_seq_int = typename make_seq_int_impl<n>::type;
-
-    template<int, class T>
+    template<size_t, class T>
     struct tuple_elem
     {
         T x;
@@ -73,8 +40,8 @@ namespace detail
     template<class Ints, class... Ts>
     struct tuple_impl;
 
-    template<int... ints, class... Ts>
-    struct tuple_impl<seq_int<ints...>, Ts...>
+    template<std::size_t... ints, class... Ts>
+    struct tuple_impl<std::integer_sequence<size_t, ints...>, Ts...>
     : tuple_elem<ints, Ts>...
     {
         template<class F, class... Args>
@@ -88,45 +55,16 @@ namespace detail
 
     protected:
         using tuple_base = tuple_impl;
-
-//         template<class... Args>
-//         tuple_impl(Args&&... args)
-//         : tuple_elem<ints, Ts>{static_cast<Args&&>(args)}...
-//         {}
-//
-//         tuple_impl(tuple_impl &&) = default;
-//         tuple_impl(tuple_impl const &) = default;
-//         tuple_impl& operator=(tuple_impl &&) = default;
-//         tuple_impl& operator=(tuple_impl const &) = default;
     };
-
-//     template<class... Ts>
-//     using tuple = tuple_impl<make_seq_int<int(sizeof...(Ts))>, Ts...>;
 
     template<class... Ts>
-    struct tuple : tuple_impl<make_seq_int<int(sizeof...(Ts))>, Ts...>
-    {
-//         template<class... Args>
-//         tuple(Args&&... args)
-//         : tuple::tuple_base{static_cast<Args&&>(args)...}
-//         {}
-//
-//         tuple(tuple &&) = default;
-//         tuple(tuple const &) = default;
-//         tuple& operator=(tuple &&) = default;
-//         tuple& operator=(tuple const &) = default;
-    };
-
-    template<class T>
-    struct decay_and_strip
-      : std::decay<T>
+    struct tuple : tuple_impl<std::make_index_sequence<sizeof...(Ts)>, Ts...>
     {};
 
+    template<class T> struct decay_and_strip { using type = T; };
+    template<class T> struct decay_and_strip<T&> : decay_and_strip<T>{};
+    template<class T> struct decay_and_strip<T const> : decay_and_strip<T>{};
     template<class T> struct decay_and_strip<std::reference_wrapper<T>> { using type = T&; };
-    template<class T> struct decay_and_strip<std::reference_wrapper<T>&> { using type = T&; };
-    template<class T> struct decay_and_strip<std::reference_wrapper<T>&&> { using type = T&; };
-    template<class T> struct decay_and_strip<std::reference_wrapper<T>const&> { using type = T&; };
-    template<class T> struct decay_and_strip<std::reference_wrapper<T>const&&> { using type = T&; };
 
     template<class... Args>
     using ctx_arg_type = detail::tuple<typename decay_and_strip<Args>::type...>;
@@ -180,6 +118,7 @@ struct ExecutorEvent
     class any {};
     struct real_deleter
     {
+        // merge with on_exit
         void (*deleter) (void*);
         void operator()(any* x) const
         {
@@ -189,11 +128,9 @@ struct ExecutorEvent
 
     using CtxPtr = std::unique_ptr<any, real_deleter>;
     using OnActionPtrFunc = ExecutorResult(*)(ExecutorBase&, any&);
-    using OnTimeoutPtrFunc = ExecutorResult(*)(ExecutorBase&, any&);
     using OnExitPtrFunc = ExecutorResult(*)(ExecutorBase&, bool success, any&);
 
     OnActionPtrFunc on_action;
-    OnTimeoutPtrFunc on_timeout;
     OnExitPtrFunc on_exit;
     std::unique_ptr<any, real_deleter> ctx;
 
@@ -214,7 +151,6 @@ struct EventInitializer
 
     template<class F> void init_on_action(F f);
     template<class F> void init_on_exit(F f);
-    template<class F> void init_on_timeout(F f);
 };
 
 enum class ExitStatus { Error, Success, };
@@ -223,7 +159,6 @@ enum class ExitStatus { Error, Success, };
 struct SubExecutorBuilderConcept_
 {
     template<class F> SubExecutorBuilderConcept_ on_action (F&&) && { return *this; }
-    template<class F> SubExecutorBuilderConcept_ on_timeout(F&&) && { return *this; }
     template<class F> SubExecutorBuilderConcept_ on_exit   (F&&) && { return *this; }
 
     template<class T> SubExecutorBuilderConcept_(T const &) noexcept;
@@ -273,20 +208,11 @@ struct REDEMPTION_CXX_NODISCARD SetSubExecutorBuilder
 
     template<class F>
     SetSubExecutorBuilder<EventCtx, Initial, Mask | 2>
-    on_timeout(F&& f) &&
-    {
-        static_assert(!(Mask & 2), "on_timeout already set");
-        this->event_initializer.init_on_timeout(static_cast<F&&>(f));
-        return SetSubExecutorBuilder<EventCtx, Initial, Mask | 2>{this->event_initializer};
-    }
-
-    template<class F>
-    SetSubExecutorBuilder<EventCtx, Initial, Mask | 4>
     on_exit(F&& f) &&
     {
-        static_assert(!(Mask & 4), "on_exit already set");
+        static_assert(!(Mask & 2), "on_exit already set");
         this->event_initializer.init_on_exit(static_cast<F&&>(f));
-        return SetSubExecutorBuilder<EventCtx, Initial, Mask | 4>{this->event_initializer};
+        return SetSubExecutorBuilder<EventCtx, Initial, Mask | 2>{this->event_initializer};
     }
 
     explicit SetSubExecutorBuilder(EventInitializer<EventCtx> event_initializer) noexcept
@@ -337,9 +263,8 @@ class ExecutorCompleted {};
         EventInitializer<EventCtx> event_initializer;                                \
     }
 
-MK_SubExecutorBuilderFinal(6/*0b110*/, on_action);
-MK_SubExecutorBuilderFinal(5/*0b101*/, on_timeout);
-MK_SubExecutorBuilderFinal(3/*0b011*/, on_exit);
+MK_SubExecutorBuilderFinal(0b10, on_action);
+MK_SubExecutorBuilderFinal(0b01, on_exit);
 
 #undef MK_SubExecutorBuilderFinal
 
@@ -412,25 +337,10 @@ struct ExecutorBase
     ExecutorResult result_exec_action2(F1&& f1, F2);
 
     template<class Ctx, class F>
-    ExecutorResult result_replace_timeout(F&& f)
-    {
-        EventInitializer<Ctx>{this->events.back()}
-          .init_on_timeout(static_cast<F&&>(f));
-        return ExecutorResult::ReplaceTimeout;
-    }
-
-    template<class Ctx, class F>
     void set_action(F&& f)
     {
         EventInitializer<Ctx>{this->events.back()}
           .init_on_action(static_cast<F&&>(f));
-    }
-
-    template<class Ctx, class F>
-    void set_timeout(F&& f)
-    {
-        EventInitializer<Ctx>{this->events.back()}
-          .init_on_timeout(static_cast<F&&>(f));
     }
 
     ExecutorResult retry()
@@ -557,12 +467,16 @@ struct ExecutorTimeoutContext : ExecutorContext
 template<class T, class U>
 struct is_context_convertible;
 
+template<class T, class U>
+struct check_is_context_arg_convertible
+{
+    static constexpr bool value = (typename std::is_convertible<T, U>::type{} = std::true_type{});
+};
+
 template<class... Ts, class... Us>
 struct is_context_convertible<detail::tuple<Ts...>, detail::tuple<Us...>>
-  : std::integral_constant<bool, (... && std::is_convertible<Ts, Us>::value)>
 {
-    using seq_is_convertible = detail::seq_int<int(std::is_convertible<Ts, Us>::value)...>;
-    using seq_true = detail::seq_int<((void)static_cast<std::void_t<Ts>*>(nullptr), 1)...>;
+    static constexpr bool value = (..., (check_is_context_arg_convertible<Ts, Us>::value));
 };
 
 template<class Ctx>
@@ -572,8 +486,7 @@ struct ExecutorActionContext : ExecutorContext
     ExecutorActionContext(ExecutorActionContext<PreviousCtx> other)
       : ExecutorContext(other)
     {
-        using Is = is_context_convertible<PreviousCtx, Ctx>;
-        typename Is::seq_true{} = typename Is::seq_is_convertible{};
+        static_assert(is_context_convertible<PreviousCtx, Ctx>::value);
     }
 
     ExecutorActionContext(ExecutorActionContext &&) = default;
@@ -678,7 +591,7 @@ F make_lambda() noexcept
     static_assert(
         std::is_empty<F>::value,
         "F must be an empty class or a lambda expression convertible to pointer of function");
-    // big hack :)
+    // big hack for a lambda default constructible before C++20 :)
     alignas(F) char const f[sizeof(F)]{}; // same as `char f`
     return reinterpret_cast<F const&>(f);
 }
@@ -715,15 +628,5 @@ void EventInitializer<Ctx>::init_on_exit(F)
     this->executor_event.on_exit = [](ExecutorBase& executor, bool success, ExecutorEvent::any& any){
         return reinterpret_cast<Ctx&>(any).invoke(
             make_lambda<F>(), ExecutorExitContext<Ctx>(executor), success);
-    };
-}
-
-template<class Ctx>
-template<class F>
-void EventInitializer<Ctx>::init_on_timeout(F)
-{
-    this->executor_event.on_timeout = [](ExecutorBase& executor, ExecutorEvent::any& any){
-        return reinterpret_cast<Ctx&>(any).invoke(
-            make_lambda<F>(), ExecutorTimeoutContext<Ctx>(executor));
     };
 }

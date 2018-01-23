@@ -802,10 +802,6 @@ RED_AUTO_TEST_CASE(TestNego)
             TRACE;
             return nego.exec_recv_data(ctx);
         })
-        .on_timeout([](auto ctx, NewRdpNego&, TpduBuffer&, Transport&, ServerCert const&) {
-            TRACE;
-            return ctx.exit_on_success();
-        })
         .on_exit([](auto ctx, bool b, NewRdpNego&, TpduBuffer&, Transport&, ServerCert const&) {
             TRACE;
             RED_CHECK(b);
