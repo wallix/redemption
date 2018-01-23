@@ -91,7 +91,7 @@ class Zcompressor
 };
 
 
-template <size_t outsize = 65536>
+template <size_t outsize = 131072>
 class Zdecompressor
 {
     size_t offset;

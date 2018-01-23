@@ -53,6 +53,7 @@
 #include "utils/sugar/strutils.hpp"
 #include "utils/utf.hpp"
 #include "utils/verbose_flags.hpp"
+#include "utils/zlib.hpp"
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -215,6 +216,8 @@ private:
 
     ClientExecute* client_execute = nullptr;
 
+    Zdecompressor<> zd;
+
 public:
     mod_vnc( Transport & t
            , const char * username
@@ -266,7 +269,7 @@ public:
     , server_is_apple(server_is_apple)
     , keylayout(keylayout)
     , client_execute(client_execute)
-    , frame_buffer_update_ctx(verbose)
+    , frame_buffer_update_ctx(this->zd, verbose)
     , clipboard_data_ctx(verbose)
     {
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
@@ -2215,7 +2218,6 @@ private:
         LOG(LOG_INFO, "lib_framebuffer_update_zrle %zu", uncompressed_data_buffer.in_remain());
 
         uint8_t         tile_data[2*16384];    // max size with 16 bpp
-
         uint8_t const * remaining_data        = nullptr;
         uint16_t        remaining_data_length = 0;
 
@@ -2243,11 +2245,11 @@ private:
                 uint8_t   subencoding = uncompressed_data_buffer.in_uint8();
 
                 if (bool(this->verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO, "VNC Encoding: ZRLE, subencoding = %d",
-                        subencoding);
+                    LOG(LOG_INFO, "VNC Encoding: ZRLE, subencoding = %u",  subencoding);
                 }
 
-                if (!subencoding)
+                switch (subencoding) {
+                case 0:
                 {
                     if (bool(this->verbose & Verbose::basic_trace)) {
                         LOG(LOG_INFO, "VNC Encoding: ZRLE, Raw pixel data");
@@ -2260,7 +2262,14 @@ private:
 
                     tile_data_p = uncompressed_data_buffer.in_uint8p(tile_data_length);
                 }
-                else if (subencoding == 1)
+                break;
+                //    1:  A solid tile consisting of a single colour. The pixel value follows:
+
+                //        |  No. of bytes  |  Type  |  Description     |
+                //        +----------------+--------+------------------+
+                //        | bytesPerCPixel | CPIXEL |    pixelValue    |
+                //        +----------------+--------+------------------+
+                case 1:
                 {
                     if (bool(this->verbose & Verbose::basic_trace)) {
                         LOG(LOG_INFO,
@@ -2284,7 +2293,30 @@ private:
                     for (int i = 1; i < tile_cy; i++, tmp_tile_data += line_size)
                         memcpy(tmp_tile_data, tile_data, line_size);
                 }
-                else if ((subencoding >= 2) && (subencoding <= 16))
+                break;
+                case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9:
+                case 10: case 11: case 12: case 13: case 14: case 15: case 16:
+                //    2 to 16
+
+                //        Packed palette types. Followed by the palette, consisting of paletteSize (=*subencoding*) pixel values. Then the packed
+                //    pixels follow, each pixel represented as a bit field yielding an index into the palette (0 meaning the first palette entry).
+                //    For paletteSize 2, a 1-bit field is used, for paletteSize 3 or 4 a 2-bit field is used and for paletteSize from 5 to 16 a 
+                //    4-bit field is used. The bit fields are packed into bytes, the most significant bits representing the leftmost pixel (i.e. big
+                //     endian). For tiles not a multiple of 8, 4 or 2 pixels wide (as appropriate), padding bits are used to align each row to an 
+                //    exact number of bytes.
+
+                //        |  No. of bytes                |  Type        |  Description     |
+                //        +------------------------------+--------------+------------------+
+                //        | paletteSize * bytesPerCPixel | CPIXEL array |    palette       |
+                //        +------------------------------+--------------+------------------+
+                //        |                            m |     U8 array |    packedPixels  |
+                //        +------------------------------+--------------+------------------+
+
+                //        where m is the number of bytes representing the packed pixels. 
+
+                //        For paletteSize of 2 this is floor((width + 7) / 8) * height,
+                //        for paletteSize of 3 or 4 this is floor((width + 3) / 4) * height, 
+                //        for paletteSize of 5 to 16 this is floor((width + 1) / 2) * height.
                 {
                     if (bool(this->verbose & Verbose::basic_trace)) {
                         LOG(LOG_INFO,
@@ -2394,12 +2426,47 @@ private:
                         tile_data_length_remain -= update_context.Bpp;
                     }
                 }
-                else if ((subencoding >= 17) && (subencoding <= 127))
+                break;
+                           case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
+                case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D: case 0x1E: case 0x1F:
+                case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
+                case 0x28: case 0x29: case 0x2A: case 0x2B: case 0x2C: case 0x2D: case 0x2E: case 0x2F:
+                case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
+                case 0x38: case 0x39: case 0x3A: case 0x3B: case 0x3C: case 0x3D: case 0x3E: case 0x3F:
+                case 0x40: case 0x41: case 0x42: case 0x43: case 0x44: case 0x45: case 0x46: case 0x47:
+                case 0x48: case 0x49: case 0x4A: case 0x4B: case 0x4C: case 0x4D: case 0x4E: case 0x4F:
+                case 0x50: case 0x51: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56: case 0x57:
+                case 0x58: case 0x59: case 0x5A: case 0x5B: case 0x5C: case 0x5D: case 0x5E: case 0x5F:
+                case 0x60: case 0x61: case 0x62: case 0x63: case 0x64: case 0x65: case 0x66: case 0x67:
+                case 0x68: case 0x69: case 0x6A: case 0x6B: case 0x6C: case 0x6D: case 0x6E: case 0x6F:
+                case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x76: case 0x77:
+                case 0x78: case 0x79: case 0x7A: case 0x7B: case 0x7C: case 0x7D: case 0x7E: case 0x7F:
+                //    17 to 127
+                //        Unused (no advantage over palette RLE).
                 {
                     LOG(LOG_ERR, "VNC Encoding: ZRLE, unused");
                     throw Error(ERR_VNC_ZRLE_PROTOCOL);
                 }
-                else if (subencoding == 128)
+                break;
+                //    128
+
+                //        Plain RLE. Consists of a number of runs, repeated until the tile is done. Runs may continue from the end of one row to
+                //    the beginning of the next. Each run is a represented by a single pixel value followed by the length of the run. The length
+                //    is represented as one or more bytes. The length is calculated as one more than the sum of all the bytes representing the
+                //    length. Any byte value other than 255 indicates the final byte. So for example length 1 is represented as [0], 255 as [254],
+                //    256 as [255,0], 257 as [255,1], 510 as [255,254], 511 as [255,255,0] and so on.
+
+                //       | No. of bytes   | Type     | [Value] |      Description         |
+                //       +----------------+----------+---------+--------------------------+
+                //       | bytesPerCPixel | CPIXEL   |         |       pixelValue         |
+                //       +----------------+----------+---------+--------------------------+
+                //       |             r  | U8 array |   255   |                          |
+                //       +----------------+----------+---------+--------------------------+
+                //       |             1  |     U8   |         | (runLength - 1) % 255    |
+                //       +----------------+----------+---------+--------------------------+
+
+                //        Where r is floor((runLength - 1) / 255).
+                case 128:
                 {
                     if (bool(this->verbose & Verbose::basic_trace)) {
                         LOG(LOG_INFO, "VNC Encoding: ZRLE, Plain RLE");
@@ -2454,12 +2521,43 @@ private:
                     assert(!run_length);
                     assert(!tile_data_length_remain);
                 }
-                else if (subencoding == 129)
+                break;
+                case 129:
+                //    129
+                //        Unused.
                 {
                     LOG(LOG_ERR, "VNC Encoding: ZRLE, unused");
                     throw Error(ERR_VNC_ZRLE_PROTOCOL);
                 }
-                else
+                break;
+                default:
+                //    130 to 255
+
+                //        Palette RLE. Followed by the palette, consisting of paletteSize = (subencoding - 128) pixel values:
+                //        No. of bytes |Type |Description
+                //        paletteSize * bytesPerCPixel |CPIXEL array |palette
+
+                //        Then as with plain RLE, consists of a number of runs, repeated until the tile is done. A run of length one is
+                //         represented simply by a palette index:
+
+                //        | No. of bytes |Type | Description  |
+                //        +--------------+-----+--------------+
+                //        |            1 |  U8 | paletteIndex |
+                //        +--------------+-----+--------------+
+
+                //        A run of length more than one is represented by a palette index with the top bit set, followed by the length of the
+                //        run as for plain RLE.
+
+                //        | No. of bytes |     Type | [Value] |     Description       |
+                //        +--------------+----------+---------+-----------------------+
+                //        |            1 |       U8 |         | paletteIndex + 128    |
+                //        +--------------+----------+---------+-----------------------+
+                //        |            r | U8 array |     255 |                       |
+                //        +--------------+----------+---------+-----------------------+
+                //        |            1 |       U8 |         | (runLength - 1) % 255 |
+                //        +--------------+----------+---------+-----------------------+
+
+                //        Where r is floor((runLength - 1) / 255).
                 {
                     if (bool(this->verbose & Verbose::basic_trace)) {
                         LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE");
@@ -2528,6 +2626,8 @@ private:
                     assert(!run_length);
                     assert(!tile_data_length_remain);
                 }
+                break;
+                } // switch subencoding
 
                 this->front.begin_update();
                 this->draw_tile(Rect(update_context.tile_x, update_context.tile_y,
@@ -2546,8 +2646,8 @@ private:
                     update_context.tile_x =  update_context.x;
                     update_context.tile_y += tile_cy;
                 }
-            }
-        }
+            } // while
+        } // try
         catch (Error const& e)
         {
             if (e.id != ERR_VNC_NEED_MORE_DATA)
@@ -2573,23 +2673,23 @@ private:
 
         using Result = BasicResult<State>;
 
-        FrameBufferUpdateCtx(Verbose verbose)
-          : zstrm{}
+        FrameBufferUpdateCtx(Zdecompressor<> & zd, Verbose verbose)
+          : zd{zd}
           , verbose(verbose)
         {
-            REDEMPTION_DIAGNOSTIC_PUSH
-            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
-            if (inflateInit(&this->zstrm) != Z_OK)
-            REDEMPTION_DIAGNOSTIC_POP
-            {
-                LOG(LOG_ERR, "vnc zlib initialization failed");
-                throw Error(ERR_VNC_ZLIB_INITIALIZATION);
-            }
+//            REDEMPTION_DIAGNOSTIC_PUSH
+//            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+////            if (inflateInit(&this->zstrm) != Z_OK)
+//            REDEMPTION_DIAGNOSTIC_POP
+//            {
+//                LOG(LOG_ERR, "vnc zlib initialization failed");
+//                throw Error(ERR_VNC_ZLIB_INITIALIZATION);
+//            }
         }
 
         ~FrameBufferUpdateCtx()
         {
-            inflateEnd(&this->zstrm);
+//            inflateEnd(&this->zstrm);
         }
 
         void start(uint8_t Bpp)
@@ -2631,8 +2731,18 @@ private:
                         r = this->read_data_rre(buf); 
                     break;
                     case ZRLE_ENCODING: /* ZRLE */
+                    {
                         LOG(LOG_INFO, "ZRLE_ENCODING");
-                        r = this->read_data_zrle(buf); 
+                        const size_t sz = sizeof(uint32_t);
+                        if (buf.remaining() < sz) { return false; }
+                        this->zlib_compressed_data_length = Parse(buf.av().data()).in_uint32_be();
+                        if (bool(this->verbose & Verbose::basic_trace))
+                        {
+                            LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u remaining=%zu", this->zlib_compressed_data_length, buf.remaining());
+                        }
+                        buf.advance(sz);
+                        r = Result::ok(State::ZrleData);
+                    }
                     break;
                     case CURSOR_PSEUDO_ENCODING: /* (-239) cursor */
                         LOG(LOG_INFO, "CURSOR_PSEUDO_ENCODING");
@@ -2650,7 +2760,11 @@ private:
                         throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
                     }
                     break;
-                case State::ZrleData: r = this->read_data_zrle_data(buf, vnc, drawable); break;
+                case State::ZrleData:
+                {
+                     r = this->read_data_zrle_data(buf, vnc, drawable); 
+                }
+                break;
                 case State::RreData: r = this->read_data_rre_data(buf, vnc, drawable); break;
                 }
 
@@ -2679,7 +2793,7 @@ private:
         uint32_t number_of_subrectangles_remain;
         std::unique_ptr<uint8_t[]> rre_raw;
 
-        z_stream zstrm;
+        Zdecompressor<> & zd;
 
         Verbose verbose;
 
@@ -2879,28 +2993,6 @@ private:
             return Result::ok(State::RreData);
         }
 
-        Result read_data_zrle(Buf64k & buf)
-        {
-            LOG(LOG_INFO, "read_data_zrle %zu", buf.remaining());
-            const size_t sz = 4;
-
-            if (buf.remaining() < sz)
-            {
-                return Result::fail();
-            }
-
-            this->zlib_compressed_data_length = Parse(buf.av().data()).in_uint32_be();
-
-            if (bool(this->verbose & Verbose::basic_trace))
-            {
-                LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u",
-                    this->zlib_compressed_data_length);
-            }
-
-            buf.advance(sz);
-
-            return Result::ok(State::ZrleData);
-        }
 
         Result read_data_zrle_data(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
@@ -2910,7 +3002,12 @@ private:
                 return Result::fail();
             }
 
+            hexdump(buf.av().data(), this->zlib_compressed_data_length);
+
             ZRLEUpdateContext zrle_update_context;
+
+            LOG(LOG_INFO, "zrle_update_context Bpp=%u x=%u cx=%u cx_remain=%u, cy_remain=%u tile_x=%u tile_y=%u", 
+                Bpp, x, cx, cx, cy, x, y);
 
             zrle_update_context.Bpp       = Bpp;
             zrle_update_context.x         = x;
@@ -2920,55 +3017,40 @@ private:
             zrle_update_context.tile_x    = x;
             zrle_update_context.tile_y    = y;
 
-            this->zstrm.avail_in = this->zlib_compressed_data_length;
-            this->zstrm.next_in  = buf.av().data();
+            uint8_t data[2000000];
+            size_t data_ready = 0;
+            size_t consumed = 0;
+            while (this->zlib_compressed_data_length > 0){
+                // TODO: see in Zdecompresssor class, ensure some exception is raised if decompressor fails
+                size_t res = this->zd.update(buf.av().data() + consumed, this->zlib_compressed_data_length);
+                consumed += res;
+                // TODO: check we made progress
+                this->zlib_compressed_data_length -= res;
 
-            while (this->zstrm.avail_in > 0)
-            {
-                constexpr std::size_t reserved_leading_space = 10*16384;
-                constexpr std::size_t total_size = 10*49152;
-                constexpr std::size_t data_size = total_size - reserved_leading_space;
-
-                uint8_t zlib_uncompressed_data_buffer[total_size];
-
-                uint8_t * data = zlib_uncompressed_data_buffer + reserved_leading_space;
-
-                this->zstrm.avail_out = data_size;
-                this->zstrm.next_out  = data;
-
-                int zlib_result = inflate(&this->zstrm, Z_NO_FLUSH);
-
-                if (zlib_result != Z_OK)
-                {
-                    LOG(LOG_ERR, "vnc zlib decompression failed (%d)", zlib_result);
-                    throw Error(ERR_VNC_ZLIB_INFLATE);
+                // TODO: what to do when boundary is reached ? Dynamic alloc ?
+                if (data_ready + this->zd.available() > sizeof(data)){
+                    LOG(LOG_INFO, "Overfull buffer in zrle");
                 }
-
-                InStream zlib_uncompressed_data_stream(data, data_size - this->zstrm.avail_out);
-
-                if (bool(this->verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO,
-                        "VNC Encoding: ZRLE, uncompressed length=%lu remaining data size=%lu",
-                        zlib_uncompressed_data_stream.in_remain(),
-                        zrle_update_context.data_remain.get_offset());
-                }
-
-                if (zrle_update_context.data_remain.get_offset())
-                {
-                    auto sz = zrle_update_context.data_remain.get_offset();
-                    data -= sz;
-                    memcpy(data, zrle_update_context.data_remain.get_data(), sz);
-                    zlib_uncompressed_data_stream = InStream(data, data_size - this->zstrm.avail_out + sz);
-
-                    zrle_update_context.data_remain.rewind();
-                }
-
-                vnc.lib_framebuffer_update_zrle(
-                    zlib_uncompressed_data_stream,
-                    zrle_update_context,
-                    drawable
-                );
+                data_ready += this->zd.flush_ready(&data[data_ready], sizeof(data) - data_ready);
             }
+            // TODO: I should be able to merge that loop with the previous one
+            while (this->zd.available()){
+                // TODO: what to do when boundary is reached ? Dynamic alloc ?
+                if (data_ready + this->zd.available() > sizeof(data)){
+                    LOG(LOG_INFO, "Overfull buffer in zrle");
+                }
+                data_ready += zd.flush_ready(&data[data_ready], sizeof(data)-data_ready);
+            }
+
+            InStream zlib_uncompressed_data_stream(data, data_ready);
+
+            LOG(LOG_INFO, "read_data_zrle_data data_ready %zu zlib_compressed_data_length", data_ready);
+
+            vnc.lib_framebuffer_update_zrle(
+                zlib_uncompressed_data_stream,
+                zrle_update_context,
+                drawable
+            );
 
             buf.advance(this->zlib_compressed_data_length);
 
