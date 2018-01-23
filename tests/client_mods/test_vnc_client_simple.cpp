@@ -34,8 +34,6 @@
 
 RED_AUTO_TEST_CASE(TestDecodePacket)
 {
-    RED_CHECK(1);
-
     ClientInfo info;
     info.keylayout = 0x04C;
     info.console_session = 0;
@@ -232,82 +230,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
 // Socket VNC Target (3) : closing connection
     };
-
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-    const bool is_socket_transport = false;
-
-    // To always get the same client random, in tests
-//    LCGRandom gen(0);
-
-    if (front_verbose > 2){
-        LOG(LOG_INFO, "--------- CREATION OF MOD VNC ------------------------");
-    }
-
-    Font font;
-
-    const VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop {};
-
-    NullReportMessage report_message;
-
-    mod_vnc mod(
-          t
-        , "10.10.3.103"
-        , "SecureLinux"
-        , front
-        , info.width
-        , info.height
-        , font
-        , "label message", "label pass"
-        , Theme()
-        , info.keylayout
-        , 0             /* key_flags */
-        , true          /* clipboard */
-        , true          /* clipboard */
-        , "0,1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
-        , false         /* allow authentification retries */
-        , is_socket_transport
-        , mod_vnc::ClipboardEncodingType::UTF8
-        , bogus_clipboard_infinite_loop
-        , report_message
-        , false
-        , nullptr
-        , vnc_verbose);
-    mod.get_event().set_trigger_time(wait_obj::NOW);
-
-    if (front_verbose > 2){
-        LOG(LOG_INFO, "========= CREATION OF MOD VNC DONE ====================\n\n");
-    }
-//    RED_CHECK(t.status);
-
-    mod.draw_event(time(nullptr), front);
-    mod.rdp_input_up_and_running();
-    mod.draw_event(time(nullptr), front);
-
-    RED_CHECK_EQUAL(front.info.width, 800);
-    RED_CHECK_EQUAL(front.info.height, 600);
-
-    t.disable_remaining_error();
-
-//    mod.draw_event(time(nullptr), front);
-//    mod.draw_event(time(nullptr), front);
-//    mod.draw_event(time(nullptr), front);
-}
-
-ED_AUTO_TEST_CASE(TestDecodePacket)
-{
-    RED_CHECK(1);
-
-    ClientInfo info;
-    info.keylayout = 0x04C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.bpp = 24;
-    info.width = 800;
-    info.height = 600;
-    auto vnc_verbose = mod_vnc::Verbose::none;
-    auto front_verbose = 0;
-
-    FakeFront front(info, front_verbose);
 
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
     const bool is_socket_transport = false;

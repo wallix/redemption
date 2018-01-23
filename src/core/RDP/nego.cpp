@@ -265,6 +265,8 @@ bool RdpNego::recv_next_data(TpduBuffer& buf, Transport& trans, ServerCert const
         case State::Final:
             return false;
     }
+
+    REDEMPTION_UNREACHABLE();
 }
 
 RdpNego::State RdpNego::recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerCert const& cert)

@@ -197,12 +197,6 @@ struct BGRPalette
     : palette{BGRColor(bgr_values)...}
     {}
 
-    static const BGRPalette & classic_332_rgb() noexcept
-    {
-        static const BGRPalette palette([](BGRColor c) { return BGRasRGBColor(c); }, 1);
-        return palette;
-    }
-
     static const BGRPalette & classic_332() noexcept
     {
         static const BGRPalette palette([](BGRColor c) { return c; }, 1);

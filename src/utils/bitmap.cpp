@@ -324,9 +324,9 @@ Bitmap::Bitmap(uint8_t out_bpp, const Bitmap & bmp)
             for (size_t y = 0; y < bmp.cy() ; y++) {
                 for (size_t x = 0; x < bmp.cx() ; x++) {
                     BGRColor pixel = dec(buf_to_color(src));
-                    constexpr bool enc_15_16 = enc.bpp == 15 || enc.bpp == 16;
-                    constexpr bool dec_15_16 = dec.bpp == 15 || dec.bpp == 16;
-                    if (enc_15_16 ^ dec_15_16) {
+                    constexpr bool enc_8_15_16 = enc.bpp == 8 || enc.bpp == 15 || enc.bpp == 16;
+                    constexpr bool dec_8_15_16 = dec.bpp == 8 || dec.bpp == 15 || dec.bpp == 16;
+                    if (enc_8_15_16 != dec_8_15_16) {
                         pixel = BGRasRGBColor(pixel);
                     }
                     color_to_buf(enc(pixel), dest);
@@ -374,6 +374,8 @@ Bitmap::Bitmap(uint8_t out_bpp, const Bitmap & bmp)
 
 Bitmap::operator ConstImageDataView() const
 {
+    // 8, 15, 16 = BGR
+    // 24 = RGB
     return ConstImageDataView{
         this->data(),
         this->cx(), this->cy(),

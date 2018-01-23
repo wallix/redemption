@@ -42,254 +42,272 @@
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/lcg_random.hpp"
 
-template<char... cs>
-struct string_c{};
-
-template<class...>
-struct list
-{};
-
-REDEMPTION_DIAGNOSTIC_PUSH
-REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
-template<class C, C... cs>
-string_c<cs...> operator ""_cs ()
-{ return {}; }
-REDEMPTION_DIAGNOSTIC_POP
-
-template<class S, class F>
-struct NamedFunction
-{
-    template<class... Args>
-    auto operator()(Args&&... args)
-    {
-        return make_lambda<F>()(static_cast<decltype(args)&&>(args)...);
-    }
-};
-
-
-template<class FL, class Scheduler, class Ctx, class F, class... Fs>
-struct SequenceCtx;
-
-template<class S, class L>
-struct JumpSequenceCtx;
-
-template<class S, class T, class... Ts>
-struct JumpSequenceCtx<S, list<T, Ts...>>
-: JumpSequenceCtx<S, list<Ts...>>
-{};
-
-template<class S, class T, class... Ts>
-struct JumpSequenceCtx<S, list<NamedFunction<S, T>, Ts...>>
-{
-    template<class... Us>
-    using make = SequenceCtx<Us..., NamedFunction<S, T>, Ts...>;
-};
-
-
-template<bool isRetryState, class FL, class Scheduler, class Ctx, class F, class... Fs>
-struct SequenceThenCtx;
-
-template<class FL, class Scheduler, class Ctx, class F, class... Fs>
-struct SequenceCtx : Ctx
-{
-    template<class... Args>
-    ExecutorResult next(Args&&... args)
-    {
-        auto& ctx = static_cast<SequenceThenCtx<0, FL, Scheduler, Ctx, F, Fs...>&>(static_cast<Ctx&>(*this));
-        return make_lambda<F>()(ctx, static_cast<Args&&>(args)...);
-    }
-
-    template<class NewScheduler>
-    ExecutorResult next_action(NewScheduler)
-    {
-        return Ctx::next_action([](auto ctx, auto&&... args){
-            auto& new_ctx = static_cast<Ctx&>(ctx);
-            return make_lambda<NewScheduler>()(
-                static_cast<SequenceCtx<FL, NewScheduler, Ctx, F, Fs...>&>(new_ctx),
-                static_cast<decltype(args)&&>(args)...
-            );
-        });
-    }
-};
-
-template<bool isRetryState, class FL, class Scheduler, class Ctx, class F, class... Fs>
-struct SequenceThenCtx : Ctx
-{
-    ExecutorResult exit(ExitStatus status)
-    {
-        return (status == ExitStatus::Success) ? this->exit_on_success() : this->exit_on_error();
-    }
-
-    ExecutorResult exit_on_error()
-    {
-        return this->executor.result_exit_failure();
-    }
-
-    ExecutorResult exit_on_success()
-    {
-        if constexpr (bool(sizeof...(Fs))) {
-            return Ctx::next_action([](auto ctx, auto&&... args){
-                auto& new_ctx = static_cast<Ctx&>(ctx);
-                return make_lambda<Scheduler>()(
-                    static_cast<SequenceCtx<FL, Scheduler, Ctx, Fs...>&>(new_ctx),
-                    static_cast<decltype(args)&&>(args)...
-                );
-            });
-        }
-        else {
-            return Ctx::exit_on_success();
-        }
-    }
-
-    template<class FF>
-    ExecutorResult next_action(FF)
-    {
-        return Ctx::next_action([](auto ctx, auto&&... args){
-            auto& new_ctx = static_cast<Ctx&>(ctx);
-            return make_lambda<Scheduler>()(
-                static_cast<SequenceCtx<FL, Scheduler, Ctx, FF, Fs...>&>(new_ctx),
-                static_cast<decltype(args)&&>(args)...
-            );
-        });
-    }
-
-    ExecutorResult retry()
-    {
-        if constexpr (isRetryState) {
-            return Ctx::retry();
-        }
-        else {
-            return Ctx::next_action([](auto ctx, auto&&... args){
-                auto& new_ctx = static_cast<SequenceThenCtx<1, FL, Scheduler, Ctx, F, Fs...>&>(static_cast<Ctx&>(ctx));
-                return make_lambda<F>()(new_ctx, static_cast<decltype(args)&&>(args)...);
-            });
-        }
-    }
-
-    ExecutorResult exit_success_sequence()
-    {
-        return this->executor.result_exit_success();
-    }
-
-    template<char... cs, class... Args>
-    ExecutorResult fallthrough(Args&&... args)
-    {
-        static_assert(sizeof...(Fs), "is last callback");
-
-        auto& new_ctx = static_cast<Ctx&>(*this);
-        return static_cast<SequenceCtx<FL, Scheduler, Ctx, Fs...>&>(new_ctx).next(
-            static_cast<decltype(args)&&>(args)...
-        );
-    }
-
-    template<char... cs, class... Args>
-    ExecutorResult fallthrough(string_c<cs...>, Args&&... args)
-    {
-        auto& new_ctx = static_cast<Ctx&>(*this);
-        return static_cast<
-            typename JumpSequenceCtx<string_c<cs...>, FL>
-            ::template make<FL, Scheduler, Ctx>&
-        >(new_ctx).next(
-            static_cast<decltype(args)&&>(args)...
-        );
-    }
-
-    template<char... cs>
-    ExecutorResult next_action(string_c<cs...>)
-    {
-        return Ctx::next_action([](auto ctx, auto&&... args){
-            auto& new_ctx = static_cast<Ctx&>(ctx);
-            return make_lambda<Scheduler>()(
-                static_cast<
-                    typename JumpSequenceCtx<string_c<cs...>, FL>
-                    ::template make<FL, Scheduler, Ctx>&
-                >(new_ctx),
-                static_cast<decltype(args)&&>(args)...
-            );
-        });
-    }
-
-    template<class FF, class... Args>
-    ExecutorResult try_action(FF, Args&&... args)
-    {
-        auto& new_ctx = static_cast<Ctx&>(*this);
-        Ctx::invoke(
-            make_lambda<FF>(),
-            static_cast<SequenceThenCtx<0, FL, Scheduler, Ctx, FF, Fs...>&>(new_ctx),
-            static_cast<decltype(args)&&>(args)...
-        );
-    }
-};
-
-#ifdef IN_IDE_PARSER
-template<class Scheduler, class... Fs>
-struct SequenceExecutor
-{
-    template<class F>
-    SequenceExecutor then(F) &&;
-
-    template<class CString, class F>
-    SequenceExecutor then(CString, F) &&;
-
-    auto to_function() &&
-    {
-        return [](auto&&...) { return detail::FriendExecutorResult::Nothing; };
-    }
-};
-#else
-template<class Scheduler, class... Fs>
-struct SequenceExecutor
-{
-    template<class F>
-    CXX_WARN_UNUSED_RESULT
-    SequenceExecutor<Scheduler, Fs..., F>
-    then(F) &&
-    {
-        return {};
-    }
-
-    template<char... cs, class F>
-    CXX_WARN_UNUSED_RESULT
-    SequenceExecutor<Scheduler, Fs..., NamedFunction<string_c<cs...>, F>>
-    then(string_c<cs...>, F) &&
-    {
-        return {};
-    }
-
-    CXX_WARN_UNUSED_RESULT
-    auto to_function() &&
-    {
-        return [](auto ctx, auto&&... args){
-            return SequenceExecutor{}(ctx, static_cast<decltype(args)&&>(args)...);
-        };
-    }
-
-    template<class Ctx, class... Args>
-    auto operator()(Ctx ctx, Args&&... args)
-    {
-        return make_lambda<Scheduler>()(
-            static_cast<SequenceCtx<list<Fs...>, Scheduler, decltype(ctx), Fs...>&>(ctx),
-            static_cast<decltype(args)&&>(args)...
-        );
-    }
-};
-#endif
-
-
-template<class Scheduler>
-SequenceExecutor<Scheduler> sequence_executor(Scheduler)
-{
-    return {};
-};
-
-inline auto sequence_executor()
-{
-    return sequence_executor([](auto ctx, auto&&... args){
-        return ctx.next(static_cast<decltype(args)&&>(args)...);
-    });
-};
+// template<char... cs>
+// struct string_c{};
+//
+// template<class...>
+// struct list
+// {};
+//
+// REDEMPTION_DIAGNOSTIC_PUSH
+// REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
+// template<class C, C... cs>
+// string_c<cs...> operator ""_cs ()
+// { return {}; }
+// REDEMPTION_DIAGNOSTIC_POP
+//
+// template<class S, class F>
+// struct NamedFunction
+// {
+//     template<class... Args>
+//     auto operator()(Args&&... args)
+//     {
+//         return make_lambda<F>()(static_cast<decltype(args)&&>(args)...);
+//     }
+// };
+//
+//
+// template<class FL, class Scheduler, class Ctx, class F, class... Fs>
+// struct SequenceCtx;
+//
+// template<class S, class L>
+// struct JumpSequenceCtx;
+//
+// template<class S, class T, class... Ts>
+// struct JumpSequenceCtx<S, list<T, Ts...>>
+// : JumpSequenceCtx<S, list<Ts...>>
+// {};
+//
+// template<class S, class T, class... Ts>
+// struct JumpSequenceCtx<S, list<NamedFunction<S, T>, Ts...>>
+// {
+//     template<class... Us>
+//     using make = SequenceCtx<Us..., NamedFunction<S, T>, Ts...>;
+// };
+//
+//
+// template<bool isRetryState, class FL, class Scheduler, class Ctx, class F, class... Fs>
+// struct SequenceThenCtx;
+//
+// template<class FL, class Scheduler, class Ctx, class F, class... Fs>
+// struct SequenceCtx : Ctx
+// {
+//     template<class... Args>
+//     static ExecutorResult next(Args&&... args)
+//     {
+//         auto& ctx = static_cast<SequenceThenCtx<0, FL, Scheduler, Ctx, F, Fs...>&>(static_cast<Ctx&>(*this));
+//         return make_lambda<F>()(ctx, static_cast<Args&&>(args)...);
+//     }
+//
+//     template<class NewScheduler>
+//     static ExecutorResult next_action(NewScheduler)
+//     {
+//         return Ctx::next_action([](auto ctx, auto&&... args){
+//             auto& new_ctx = static_cast<Ctx&>(ctx);
+//             return make_lambda<NewScheduler>()(
+//                 static_cast<SequenceCtx<FL, NewScheduler, Ctx, F, Fs...>&>(new_ctx),
+//                 static_cast<decltype(args)&&>(args)...
+//             );
+//         });
+//     }
+// };
+//
+// template<bool isRetryState, class FL, class Scheduler, class Ctx, class F, class... Fs>
+// struct SequenceThenCtx : Ctx
+// {
+//     static ExecutorResult exit(ExitStatus status)
+//     {
+//         return (status == ExitStatus::Success) ? this->exit_on_success() : this->exit_on_error();
+//     }
+//
+//     static ExecutorResult exit_on_error()
+//     {
+//         return this->executor.result_exit_failure();
+//     }
+//
+//     static ExecutorResult exit_on_success()
+//     {
+//         if constexpr (bool(sizeof...(Fs))) {
+//             return Ctx::next_action([](auto ctx, auto&&... args){
+//                 auto& new_ctx = static_cast<Ctx&>(ctx);
+//                 return make_lambda<Scheduler>()(
+//                     static_cast<SequenceCtx<FL, Scheduler, Ctx, Fs...>&>(new_ctx),
+//                     static_cast<decltype(args)&&>(args)...
+//                 );
+//             });
+//         }
+//         else {
+//             return Ctx::exit_on_success();
+//         }
+//     }
+//
+//     template<class FF>
+//     static ExecutorResult next_action(FF)
+//     {
+//         return Ctx::next_action([](auto ctx, auto&&... args){
+//             auto& new_ctx = static_cast<Ctx&>(ctx);
+//             return make_lambda<Scheduler>()(
+//                 static_cast<SequenceCtx<FL, Scheduler, Ctx, FF, Fs...>&>(new_ctx),
+//                 static_cast<decltype(args)&&>(args)...
+//             );
+//         });
+//     }
+//
+//     static ExecutorResult retry()
+//     {
+//         if constexpr (isRetryState) {
+//             return Ctx::retry();
+//         }
+//         else {
+//             return Ctx::next_action([](auto ctx, auto&&... args){
+//                 auto& new_ctx = static_cast<SequenceThenCtx<1, FL, Scheduler, Ctx, F, Fs...>&>(static_cast<Ctx&>(ctx));
+//                 return make_lambda<F>()(new_ctx, static_cast<decltype(args)&&>(args)...);
+//             });
+//         }
+//     }
+//
+//     static ExecutorResult exit_success_sequence()
+//     {
+//         return this->executor.result_exit_success();
+//     }
+//
+//     template<char... cs, class... Args>
+//     static ExecutorResult fallthrough(Args&&... args)
+//     {
+//         static_assert(sizeof...(Fs), "is last callback");
+//
+//         auto& new_ctx = static_cast<Ctx&>(*this);
+//         return static_cast<SequenceCtx<FL, Scheduler, Ctx, Fs...>&>(new_ctx).next(
+//             static_cast<decltype(args)&&>(args)...
+//         );
+//     }
+//
+//     template<char... cs, class... Args>
+//     static ExecutorResult fallthrough(string_c<cs...>, Args&&... args)
+//     {
+//         auto& new_ctx = static_cast<Ctx&>(*this);
+//         return static_cast<
+//             typename JumpSequenceCtx<string_c<cs...>, FL>
+//             ::template make<FL, Scheduler, Ctx>&
+//         >(new_ctx).next(
+//             static_cast<decltype(args)&&>(args)...
+//         );
+//     }
+//
+//     template<char... cs>
+//     static ExecutorResult next_action(string_c<cs...>)
+//     {
+//         return Ctx::next_action([](auto ctx, auto&&... args){
+//             auto& new_ctx = static_cast<Ctx&>(ctx);
+//             return make_lambda<Scheduler>()(
+//                 static_cast<
+//                     typename JumpSequenceCtx<string_c<cs...>, FL>
+//                     ::template make<FL, Scheduler, Ctx>&
+//                 >(new_ctx),
+//                 static_cast<decltype(args)&&>(args)...
+//             );
+//         });
+//     }
+//
+//     template<class FF, class... Args>
+//     static ExecutorResult try_action(FF, Args&&... args)
+//     {
+//         auto& new_ctx = static_cast<Ctx&>(*this);
+//         Ctx::invoke(
+//             make_lambda<FF>(),
+//             static_cast<SequenceThenCtx<0, FL, Scheduler, Ctx, FF, Fs...>&>(new_ctx),
+//             static_cast<decltype(args)&&>(args)...
+//         );
+//     }
+// };
+//
+// #ifdef IN_IDE_PARSER
+// template<class Scheduler, class... Fs>
+// struct SequenceExecutor
+// {
+//     template<class F>
+//     SequenceExecutor then(F) &&;
+//
+//     template<class CString, class F>
+//     SequenceExecutor then(CString, F) &&;
+//
+//     auto to_function() &&
+//     {
+//         return [](auto&&...) { return detail::FriendExecutorResult::Nothing; };
+//     }
+// };
+// #else
+// template<class Scheduler, class... Fs>
+// struct SequenceExecutor
+// {
+//     template<class F>
+//     CXX_WARN_UNUSED_RESULT
+//     SequenceExecutor<Scheduler, Fs..., F>
+//     then(F) &&
+//     {
+//         return {};
+//     }
+//
+//     template<char... cs, class F>
+//     CXX_WARN_UNUSED_RESULT
+//     SequenceExecutor<Scheduler, Fs..., NamedFunction<string_c<cs...>, F>>
+//     then(string_c<cs...>, F) &&
+//     {
+//         return {};
+//     }
+//
+//     CXX_WARN_UNUSED_RESULT
+//     auto to_function() &&
+//     {
+//         return [](auto ctx, auto&&... args){
+//             return SequenceExecutor{}(ctx, static_cast<decltype(args)&&>(args)...);
+//         };
+//     }
+//
+//     template<class Ctx, class... Args>
+//     auto operator()(Ctx ctx, Args&&... args)
+//     {
+//         return make_lambda<Scheduler>()(
+//             static_cast<SequenceCtx<list<Fs...>, Scheduler, decltype(ctx), Fs...>&>(ctx),
+//             static_cast<decltype(args)&&>(args)...
+//         );
+//     }
+// };
+// #endif
+//
+//
+// template<class Scheduler>
+// SequenceExecutor<Scheduler> sequence_executor(Scheduler)
+// {
+//     return {};
+// };
+//
+// inline auto sequence_executor()
+// {
+//     return sequence_executor([](auto ctx, auto&&... args){
+//         return ctx.next(static_cast<decltype(args)&&>(args)...);
+//     });
+// };
 
 #include "core/RDP/nla/nla.hpp"
+
+template<auto f>
+struct fun_t
+{
+    template<class Ctx, class T, class... Args>
+    ExecutorResult operator()(Ctx&& ctx, T&& o, Args&&... args) const
+    {
+        if constexpr (std::is_member_function_pointer<decltype(f)>::value) {
+            return (o.*f)(ctx, static_cast<Args&&>(args)...);
+        }
+        else {
+            return f(ctx, static_cast<T&&>(o), static_cast<Args&&>(args)...);
+        }
+    }
+};
+
+template<auto mf>
+constexpr auto fun = fun_t<mf>{};
 
 struct NewRdpNego
 {
@@ -359,14 +377,6 @@ public:
         ServerNotifier&     notifier;
     };
 
-    enum class REDEMPTION_CXX_NODISCARD State
-    {
-        Negociate,
-        SslHybrid,
-        Tls,
-        Credssp,
-        Final,
-    };
 
     NewRdpNego(
         const bool tls, const char * username, bool nla,
@@ -421,11 +431,6 @@ public:
         }
     }
 
-    State get_state() const
-    {
-        return this->state;
-    }
-
     void send_negotiation_request(OutTransport trans)
     {
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu");
@@ -455,163 +460,112 @@ public:
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
     }
 
-    /// \return false if terminal state
-    REDEMPTION_CXX_NODISCARD
-    bool recv_next_data(TpduBuffer& buf, Transport& trans, ServerCert const& cert)
+    using ActionCtx = ExecutorActionContext<detail::tuple<
+        NewRdpNego&, TpduBuffer&, Transport&, ServerCert>>;
+
+    static ExecutorResult exec_recv_data(ActionCtx ctx)
     {
-        State new_state;
-        switch (this->state) {
-            case State::Negociate:
-//             printf("state neg\n");
-                buf.load_data(trans);
-                if (!buf.next_pdu()) {
-                    return true;
-                }
-                do {
-                    this->state = this->recv_connection_confirm(trans, InStream(buf.current_pdu_buffer()), cert);
-                } while (this->state == State::Negociate && buf.next_pdu());
-                return true;
-            case State::SslHybrid:
-//             printf("state hyb\n");
-                assert(0 == buf.remaining());
-                this->state = this->activate_ssl_hybrid(trans, cert);
-                return this->state != State::Final;
-            case State::Tls:
-//             printf("state tls\n");
-                assert(0 == buf.remaining());
-                this->state = this->activate_ssl_tls(trans, cert);
-                return this->state != State::Final;
-            case State::Credssp:
-//             printf("state cred\n");
-                try {
-                    buf.load_data(trans);
-                }
-                catch (Error const &) {
-                    this->state = this->fallback_to_tls(trans);
-                    return true;
-                }
-
-                while (buf.next_credssp() &&this->state == State::Credssp ) {
-                    this->state = this->recv_credssp(trans, InStream(buf.current_pdu_buffer()));
-                }
-
-                while (this->state == State::Negociate && buf.next_pdu()) {
-                    this->state = this->recv_connection_confirm(trans, InStream(buf.current_pdu_buffer()), cert);
-                }
-                return this->state != State::Final;
-            case State::Final:
-                return false;
-        }
+        return ctx.exec_action2(fun<&state_negociate>, fun<&state_recv_connection_confirm>);
     }
 
 private:
-    State state = State::Negociate;
-
-    State fallback_to_tls(OutTransport trans)
+    static ExecutorResult state_negociate(
+        ActionCtx ctx, NewRdpNego& nego, TpduBuffer& buf, Transport& trans, ServerCert const& cert)
     {
-        trans.disconnect();
-
-        if (!trans.connect()){
-            LOG(LOG_ERR, "Failed to disconnect transport");
-            throw Error(ERR_SOCKET_CONNECT_FAILED);
-        }
-
-        this->current_password += (strlen(reinterpret_cast<char*>(this->current_password)) + 1);
-
-        if (*this->current_password) {
-            LOG(LOG_INFO, "try next password");
-            this->send_negotiation_request(trans);
-        }
-        else {
-            LOG(LOG_INFO, "Can't activate NLA");
-            LOG(LOG_INFO, "falling back to SSL only");
-            this->enabled_protocols = RdpNegoProtocols::Tls | RdpNegoProtocols::Rdp;
-            this->send_negotiation_request(trans);
-            return State::Negociate;
-        }
-        return State::Credssp;
+        LOG(LOG_INFO, "RdpNego::NEGO_STATE_%s",
+                                (nego.nla) ? "NLA" :
+                                (nego.tls) ? "TLS" :
+                                              "RDP");
+        buf.load_data(trans);
+        return nego.state_recv_connection_confirm(ctx, nego, buf, trans, cert);
     }
 
-    State recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerCert const& cert)
+    static ExecutorResult state_recv_connection_confirm(
+        ActionCtx ctx, NewRdpNego& nego, TpduBuffer& buf, OutTransport trans, ServerCert const& /*cert*/)
     {
-        LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
+        while (buf.next_pdu()) {
+            LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
 
-        X224::CC_TPDU_Recv x224(x224_stream);
+            InStream x224_stream(buf.current_pdu_buffer());
+            X224::CC_TPDU_Recv x224(x224_stream);
 
-        if (x224.rdp_neg_type == X224::RDP_NEG_NONE){
-            this->enabled_protocols = RdpNegoProtocols::Rdp;
-            LOG(LOG_INFO, "RdpNego::recv_connection_confirm done (legacy, no TLS)");
-            return State::Final;
+            if (x224.rdp_neg_type == X224::RDP_NEG_NONE){
+                nego.enabled_protocols = RdpNegoProtocols::Rdp;
+                LOG(LOG_INFO, "RdpNego::recv_connection_confirm done (legacy, no TLS)");
+                return ctx.exit_on_success();
+            }
+
+            nego.selected_protocol = x224.rdp_neg_code;
+
+            if (x224.rdp_neg_type == X224::RDP_NEG_RSP)
+            {
+                if (x224.rdp_neg_code == X224::PROTOCOL_HYBRID)
+                {
+                    LOG(LOG_INFO, "activating SSL");
+                    return ctx.exec_action(fun<&state_activate_ssl_hybrid>);
+                }
+
+                if (x224.rdp_neg_code == X224::PROTOCOL_TLS)
+                {
+                    LOG(LOG_INFO, "activating SSL");
+                    return ctx.exec_action(fun<&NewRdpNego::state_activate_ssl_tls>);
+                }
+
+                if (x224.rdp_neg_code == X224::PROTOCOL_RDP)
+                {
+                    return ctx.exit_on_success();
+                }
+            }
+            else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE)
+            {
+                if (x224.rdp_neg_code == X224::HYBRID_REQUIRED_BY_SERVER)
+                {
+                    LOG(LOG_INFO, "Enable NLA is probably required");
+
+                    if (!nego.nla_tried) {
+                        nego.extra_message = " ";
+                        nego.extra_message.append(TR(trkeys::err_nla_required, nego.lang));
+                    }
+                    trans.disconnect();
+
+                    nego.error = Error(nego.nla_tried
+                        ? ERR_NLA_AUTHENTICATION_FAILED
+                        : ERR_NEGO_HYBRID_REQUIRED_BY_SERVER);
+                    return ctx.exit_on_error();
+                }
+
+                if (x224.rdp_neg_code == X224::SSL_REQUIRED_BY_SERVER) {
+                    LOG(LOG_INFO, "Enable TLS is probably required");
+
+                    if (!nego.tls) {
+                        nego.extra_message = " ";
+                        nego.extra_message.append(TR(trkeys::err_tls_required, nego.lang));
+                    }
+                    trans.disconnect();
+
+                    nego.error = Error(ERR_NEGO_SSL_REQUIRED_BY_SERVER);
+                    return ctx.exit_on_error();
+                }
+
+                if (x224.rdp_neg_code == X224::SSL_NOT_ALLOWED_BY_SERVER
+                || x224.rdp_neg_code == X224::SSL_CERT_NOT_ON_SERVER) {
+                    LOG(LOG_INFO, "Can't activate SSL, falling back to RDP legacy encryption");
+
+                    trans.disconnect();
+                    if (!trans.connect()){
+                        throw Error(ERR_SOCKET_CONNECT_FAILED);
+                    }
+                    nego.enabled_protocols = RdpNegoProtocols::Rdp;
+                    nego.send_negotiation_request(trans);
+                }
+            }
+            else {
+                LOG(LOG_INFO, "RdpNego::recv_connection_confirm done");
+                return ctx.exit_on_success();
+            }
         }
 
-        this->selected_protocol = x224.rdp_neg_code;
-
-        if (x224.rdp_neg_type == X224::RDP_NEG_RSP)
-        {
-            if (x224.rdp_neg_code == X224::PROTOCOL_HYBRID)
-            {
-                LOG(LOG_INFO, "activating SSL");
-                return this->activate_ssl_hybrid(trans, cert);
-            }
-
-            if (x224.rdp_neg_code == X224::PROTOCOL_TLS)
-            {
-                LOG(LOG_INFO, "activating SSL");
-                return this->activate_ssl_tls(trans, cert);
-            }
-
-            if (x224.rdp_neg_code == X224::PROTOCOL_RDP)
-            {
-                return State::Final;
-            }
-        }
-        else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE)
-        {
-            if (x224.rdp_neg_code == X224::HYBRID_REQUIRED_BY_SERVER)
-            {
-                LOG(LOG_INFO, "Enable NLA is probably required");
-
-                if (!this->nla_tried) {
-                    this->extra_message = " ";
-                    this->extra_message.append(TR(trkeys::err_nla_required, this->lang));
-                }
-                trans.disconnect();
-
-                this->error = Error(this->nla_tried
-                    ? ERR_NLA_AUTHENTICATION_FAILED
-                    : ERR_NEGO_HYBRID_REQUIRED_BY_SERVER);
-                return State::Final;
-            }
-
-            if (x224.rdp_neg_code == X224::SSL_REQUIRED_BY_SERVER) {
-                LOG(LOG_INFO, "Enable TLS is probably required");
-
-                if (!this->tls) {
-                    this->extra_message = " ";
-                    this->extra_message.append(TR(trkeys::err_tls_required, this->lang));
-                }
-                trans.disconnect();
-
-                this->error = Error(ERR_NEGO_SSL_REQUIRED_BY_SERVER);
-                return State::Final;
-            }
-
-            if (x224.rdp_neg_code == X224::SSL_NOT_ALLOWED_BY_SERVER
-             || x224.rdp_neg_code == X224::SSL_CERT_NOT_ON_SERVER) {
-                LOG(LOG_INFO, "Can't activate SSL, falling back to RDP legacy encryption");
-
-                trans.disconnect();
-                if (!trans.connect()){
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
-                }
-                this->enabled_protocols = RdpNegoProtocols::Rdp;
-                this->send_negotiation_request(trans);
-                return State::Negociate;
-            }
-        }
-
-        LOG(LOG_INFO, "RdpNego::recv_connection_confirm done");
-        return State::Final;
+        return ctx.retry();
     }
 
     bool enable_client_tls(OutTransport trans, ServerCert const& cert)
@@ -628,63 +582,104 @@ private:
         return true;
     }
 
-    State activate_ssl_tls(OutTransport trans, ServerCert const& cert)
+    ExecutorResult state_activate_ssl_tls(
+        ActionCtx ctx, TpduBuffer& /*buf*/, Transport& trans, ServerCert const& cert)
     {
         if (!this->enable_client_tls(trans, cert)) {
-            return State::Tls;
+            return ctx.retry();
         }
-        return State::Final;
+        return ctx.exit_on_success();
     }
 
-    State activate_ssl_hybrid(OutTransport trans, ServerCert const& cert)
+    static ExecutorResult state_activate_ssl_hybrid(
+        ActionCtx ctx, NewRdpNego& nego, TpduBuffer& /*buf*/, Transport& trans, ServerCert const& cert)
     {
         // if (x224.rdp_neg_flags & X224::RESTRICTED_ADMIN_MODE_SUPPORTED) {
         //     LOG(LOG_INFO, "Restricted Admin Mode Supported");
-        //     this->restricted_admin_mode = true;
+        //     nego.restricted_admin_mode = true;
         // }
-        if (!this->enable_client_tls(trans, cert)) {
-            return State::SslHybrid;
+        if (!nego.enable_client_tls(trans, cert)) {
+            return ctx.retry();
         }
 
-        this->nla_tried = true;
+        nego.nla_tried = true;
 
         LOG(LOG_INFO, "activating CREDSSP");
-        this->credssp.reset(new rdpCredsspClient(
-            trans, this->user,
-            // this->domain, this->password,
-            this->domain, this->current_password,
-            this->hostname, this->target_host,
-            this->krb, this->restricted_admin_mode,
-            this->rand, this->timeobj, this->extra_message, this->lang,
-            bool(this->verbose & Verbose::credssp)
+        nego.credssp.reset(new rdpCredsspClient(
+            trans, nego.user,
+            // nego.domain, nego.password,
+            nego.domain, nego.current_password,
+            nego.hostname, nego.target_host,
+            nego.krb, nego.restricted_admin_mode,
+            nego.rand, nego.timeobj, nego.extra_message, nego.lang,
+            bool(nego.verbose & Verbose::credssp)
         ));
 
-        if (!this->credssp->credssp_client_authenticate_init())
+        if (!nego.credssp->credssp_client_authenticate_init())
         {
             LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (1)");
-            (void)this->fallback_to_tls(trans);
-            return State::Negociate;
+            nego.fallback_to_tls(trans);
+            return ctx.exec_action2(fun<&state_negociate>, fun<&state_recv_connection_confirm>);
         }
 
-        return State::Credssp;
+        return ctx.next_action(fun<&state_credssp>);
     }
 
-    State recv_credssp(OutTransport trans, InStream stream)
-    {
-        // LOG(LOG_INFO, "RdpNego::recv_credssp");
+    void fallback_to_tls(OutTransport trans){
+        trans.disconnect();
 
-        switch (credssp->credssp_client_authenticate_next(stream))
-        {
-            case rdpCredsspClient::State::Cont:
-                break;
-            case rdpCredsspClient::State::Err:
-                LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (2)");
-                return this->fallback_to_tls(trans);
-            case rdpCredsspClient::State::Finish:
-                this->credssp.reset();
-                return State::Final;
+        if (!trans.connect()){
+            LOG(LOG_ERR, "Failed to disconnect transport");
+            throw Error(ERR_SOCKET_CONNECT_FAILED);
         }
-        return State::Credssp;
+
+        this->current_password += (strlen(reinterpret_cast<char*>(this->current_password)) + 1);
+
+        if (*this->current_password) {
+            LOG(LOG_INFO, "try next password");
+        }
+        else {
+            LOG(LOG_INFO, "Can't activate NLA");
+            LOG(LOG_INFO, "falling back to SSL only");
+            this->enabled_protocols = RdpNegoProtocols::Tls | RdpNegoProtocols::Rdp;
+        }
+
+        this->send_negotiation_request(trans);
+    }
+
+    static ExecutorResult state_credssp(
+        ActionCtx ctx, NewRdpNego& nego, TpduBuffer& buf, Transport& trans, ServerCert const& /*cert*/)
+    {
+        try {
+            buf.load_data(trans);
+        }
+        catch (Error const &) {
+            nego.fallback_to_tls(trans);
+            return ctx.retry();
+        }
+
+        LOG(LOG_INFO, "RdpNego::recv_credssp");
+
+        while (buf.next_credssp()) {
+            InStream stream(buf.current_pdu_buffer());
+            switch (nego.credssp->credssp_client_authenticate_next(stream))
+            {
+                case rdpCredsspClient::State::Cont:
+                    continue;
+                case rdpCredsspClient::State::Err:
+                    LOG(LOG_INFO, "NLA/CREDSSP Authentication Failed (2)");
+                    nego.fallback_to_tls(trans);
+                    if (not *nego.current_password) {
+                        return ctx.exec_action2(fun<&state_negociate>, fun<&state_recv_connection_confirm>);
+                    }
+                    break;
+                case rdpCredsspClient::State::Finish:
+                    nego.credssp.reset();
+                    return ctx.exit_on_success();
+            }
+        }
+
+        return ctx.retry();
     }
 };
 
@@ -763,14 +758,14 @@ RED_AUTO_TEST_CASE(TestNego)
 /* 0020 */ "\x45\x3d\x1b\x05\x15\xce\x56\x0a\x54\xa1\xf1"                     //E=....V.T..
 
         ;
-    struct : TestTransport {
+    TestTransport/*struct : TestTransport {
         using TestTransport::TestTransport;
 
         size_t do_partial_read(uint8_t* buffer, size_t len) override
         {
             return TestTransport::do_partial_read(buffer, 1);
         }
-    } logtrans(server, sizeof(server)-1, client, sizeof(client)-1);
+    }*/ logtrans(server, sizeof(server)-1, client, sizeof(client)-1);
     logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
     char user[] = "Ulysse";
     char domain[] = "Ithaque";
@@ -792,23 +787,35 @@ RED_AUTO_TEST_CASE(TestNego)
 
     logtrans.disable_remaining_error();
 
-    for (int i = 0;
-        nego.recv_next_data(
-            buf, logtrans,
-            ServerCert{
-                server_cert_store,
-                ServerCertCheck::always_succeed,
-                "/tmp/certif",
-                null_server_notifier
-            }
-        );
-        ++i
-    ){
-        RED_REQUIRE_LT(i, 1000);
-    }
+
+    Executor executor;
+
+    executor.initial_executor(
+        std::ref(nego), std::ref(buf), std::ref(logtrans), ServerCert{
+            server_cert_store,
+            ServerCertCheck::always_succeed,
+            "/tmp/certif",
+            null_server_notifier
+        }
+    )
+        .on_action([](auto ctx, NewRdpNego& nego, auto&&...){
+            TRACE;
+            return nego.exec_recv_data(ctx);
+        })
+        .on_timeout([](auto ctx, NewRdpNego&, TpduBuffer&, Transport&, ServerCert const&) {
+            TRACE;
+            return ctx.exit_on_success();
+        })
+        .on_exit([](auto ctx, bool b, NewRdpNego&, TpduBuffer&, Transport&, ServerCert const&) {
+            TRACE;
+            RED_CHECK(b);
+            return ctx.exit_on_success();
+        })
+    ;
+
+    executor.exec_all();
 
     buf.consume_current_packet();
-    RED_CHECK_EQ(nego.get_state(), NewRdpNego::State::Final);
     RED_CHECK_EQUAL(0, buf.remaining());
 }
 

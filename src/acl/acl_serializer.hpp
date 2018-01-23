@@ -854,7 +854,9 @@ public:
                 }
             }
             else {
-                LOG(LOG_WARNING, "Unexpected receving '%s'", key);
+                auto val = reader.get_val();
+                LOG(LOG_WARNING, "Unexpected receving '%s' - '%.*s'",
+                    key, int(val.size()), val.data());
             }
         }
     }

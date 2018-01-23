@@ -23,22 +23,20 @@
 #define RED_TEST_MODULE GraphicsOSD
 #include "system/redemption_unit_tests.hpp"
 
-
-
-#include <memory>
-
-#include "utils/png.hpp"
-#include "utils/drawable.hpp"
-#include "utils/difftimeval.hpp"
-#include "transport/transport.hpp"
-#include "transport/out_filename_sequence_transport.hpp"
-#include "gdi/capture_api.hpp"
-#include "gdi/protected_graphics.hpp"
 #include "core/RDP/RDPDrawable.hpp"
+#include "gdi/protected_graphics.hpp"
+#include "transport/out_filename_sequence_transport.hpp"
+#include "transport/transport.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/png.hpp"
 #include "utils/timestamp_tracer.hpp"
 #include "test_only/check_sig.hpp"
+
+#include <chrono>
+
+#include <sys/time.h>
+
 
 RED_AUTO_TEST_CASE(TestModOSD)
 {
@@ -49,42 +47,17 @@ RED_AUTO_TEST_CASE(TestModOSD)
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test", ".png", groupid, ReportError{});
 
-    class ImageCaptureLocal
-    {
-        Transport & trans;
-        const Drawable & drawable;
-        timeval start_capture;
-
-        TimestampTracer timestamp_tracer;
-
-    public:
-        ImageCaptureLocal(const Drawable & drawable, Transport & trans)
-        : trans(trans)
-        , drawable(drawable)
-        , timestamp_tracer(gdi::get_mutable_image_view(const_cast<Drawable&>(drawable)))
-        {}
-
-        std::chrono::microseconds do_snapshot(const timeval & now)
-        {
-            const_cast<Drawable&>(this->drawable).trace_mouse();
-            tm ptm;
-            localtime_r(&now.tv_sec, &ptm);
-            this->timestamp_tracer.trace(ptm);
-            this->dump24();
-            this->trans.next();
-            this->timestamp_tracer.clear();
-            this->start_capture = now;
-            const_cast<Drawable&>(this->drawable).clear_mouse();
-            return std::chrono::microseconds::zero();
-        }
-
-        void dump24() const {
-            ::dump_png24(this->trans, this->drawable, true);
-        }
+    auto do_snapshot = [](RDPDrawable& drawable, Transport& trans, timeval const& now){
+        drawable.trace_mouse();
+        tm ptm;
+        localtime_r(&now.tv_sec, &ptm);
+        TimestampTracer timestamp_tracer(gdi::get_mutable_image_view(drawable.impl()));
+        timestamp_tracer.trace(ptm);
+        ::dump_png24(trans, drawable, true);
+        trans.next();
+        timestamp_tracer.clear();
+        drawable.clear_mouse();
     };
-
-
-    ImageCaptureLocal consumer(drawable.impl(), trans);
 
     drawable.show_mouse_cursor(false);
 
@@ -104,7 +77,7 @@ RED_AUTO_TEST_CASE(TestModOSD)
         drawable.draw(RDPMemBlt(0, bmp_rect, 0xCC, 0, 0, 0), rect, bmp);
 
         now.tv_sec++;
-        consumer.do_snapshot(now);
+        do_snapshot(drawable, trans, now);
 
         struct OSD : gdi::ProtectedGraphics
         {
@@ -112,11 +85,14 @@ RED_AUTO_TEST_CASE(TestModOSD)
             : gdi::ProtectedGraphics(drawable, rect)
             {}
 
-            void refresh_rects(array_view<Rect const>) override {}
+            void refresh_rects(array_view<Rect const>) override
+            {
+                RED_FAIL("refresh_rects is called");
+            }
         } osd(drawable, rect);
         osd.draw(RDPOpaqueRect(Rect(100, 100, 200, 200), encode_color24()(GREEN)), screen_rect, color_cxt);
         now.tv_sec++;
-        consumer.do_snapshot(now);
+        do_snapshot(drawable, trans, now);
     }
 
     trans.disconnect();

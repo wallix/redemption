@@ -706,7 +706,6 @@ RED_AUTO_TEST_CASE(TestScaleImage)
 
 RED_AUTO_TEST_CASE(TestBogusBitmap)
 {
-    RED_CHECK(1);
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, ReportError{});
     Rect scr(0, 0, 800, 600);
@@ -832,7 +831,6 @@ RED_AUTO_TEST_CASE(TestBogusBitmap)
 
 RED_AUTO_TEST_CASE(TestBogusBitmap2)
 {
-    RED_CHECK(1);
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, ReportError{});
     Rect scr(0, 0, 800, 600);

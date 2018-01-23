@@ -211,7 +211,6 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     acl.send_acl_data();
 }
 
-
 RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
 {
     Inifile ini;
@@ -253,6 +252,40 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
     acl.incoming();
 
     RED_REQUIRE_EQUAL(ini.get<cfg::context::rejected>(), result);
+}
+
+RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
+{
+    Inifile ini;
+    ini.clear_send_index();
+
+    std::string s("----abcd\n!something\nefg\n!other something\n");
+    OutStream(&s[0], 4).out_uint32_be(s.size() - 4u);
+
+    LCGRandom rnd(0);
+    Fstat fstat;
+    CryptoContext cctx;
+    init_keys(cctx);
+
+    GeneratorTransport trans(s.data(), s.size());
+    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
+
+    RED_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), false);
+    RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
+
+    ini.ask<cfg::context::opt_bpp>();
+    ini.set_acl<cfg::context::reporting>("didier");
+
+    {
+        LOG__REDEMPTION__BUFFERED logbuf;
+        acl.incoming();
+        RED_CHECK_EQ(logbuf.buf(),
+            "WARNING - Unexpected receving 'abcd' - 'something'\n"
+            "WARNING - Unexpected receving 'efg' - 'other something'\n");
+    }
+
+    RED_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), true);
+    RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "didier");
 }
 
 
