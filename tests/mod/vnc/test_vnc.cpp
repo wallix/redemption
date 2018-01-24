@@ -86,3 +86,7 @@ RED_AUTO_TEST_CASE(TestVncMouse)
     mouse.move(t, 15, 17);
     mouse.click(t, 15, 18, 2, 0);
 }
+
+RED_AUTO_TEST_CASE(TestZrle)
+{
+}

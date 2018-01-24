@@ -45,6 +45,7 @@
 #include "mod/internal/widget/flat_vnc_authentification.hpp"
 #include "mod/internal/widget/notify_api.hpp"
 #include "utils/diffiehellman.hpp"
+#include "utils/hexdump.hpp"
 #include "utils/d3des.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/log.hpp"
@@ -2738,6 +2739,8 @@ private:
                         this->zlib_compressed_data_length = Parse(buf.av().data()).in_uint32_be();
                         this->accumulator.clear();
                         this->accumulator.reserve(this->zlib_compressed_data_length);
+                        this->accumulator_uncompressed.reserve(200000);
+                        this->accumulator_uncompressed.clear();
                         if (bool(this->verbose & Verbose::basic_trace))
                         {
                             LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u remaining=%zu", this->zlib_compressed_data_length, buf.remaining());
@@ -2791,6 +2794,7 @@ private:
         int32_t encoding;
 
         std::vector<uint8_t> accumulator;
+        std::vector<uint8_t> accumulator_uncompressed;
         uint32_t zlib_compressed_data_length;
 
         uint32_t number_of_subrectangles_remain;
@@ -2814,7 +2818,7 @@ private:
             this->num_recs = stream.in_uint16_be();
 
             LOG(LOG_INFO, "FrameBufferUpdate: HEADER (%u)", this->num_recs);
-            hexdump(buf.av(sz).data(), sz);
+            hexdump_d(buf.av(sz).data(), sz);
 
             buf.advance(sz);
             return Result::ok(State::Encoding);
@@ -2865,7 +2869,7 @@ private:
             this->encoding = stream.in_sint32_be();
 
             LOG(LOG_INFO, "Encoding: %u (%u, %u, %u, %u) : %d", this->num_recs, this->x, this->y, this->cx, this->cy, this->encoding);
-            hexdump(buf.av(sz).data(), sz);
+            hexdump_d(buf.av(sz).data(), sz);
 
             --this->num_recs;
             buf.advance(sz);
@@ -3012,7 +3016,7 @@ private:
             this->accumulator.insert(this->accumulator.end(), av.begin(), av.end());
             buf.advance(interesting_part);
 
-            hexdump(this->accumulator.data(), this->zlib_compressed_data_length);
+            hexdump_d(this->accumulator.data(), this->zlib_compressed_data_length);
 
             ZRLEUpdateContext zrle_update_context;
 
@@ -3027,7 +3031,6 @@ private:
             zrle_update_context.tile_x    = x;
             zrle_update_context.tile_y    = y;
 
-            uint8_t data[2000000];
             size_t data_ready = 0;
             size_t consumed = 0;
             while (this->zlib_compressed_data_length > 0){
@@ -3037,22 +3040,22 @@ private:
                 // TODO: check we made progress
                 this->zlib_compressed_data_length -= res;
 
-                // TODO: what to do when boundary is reached ? Dynamic alloc ?
-                if (data_ready + this->zd.available() > sizeof(data)){
-                    LOG(LOG_INFO, "Overfull buffer in zrle");
+                if (data_ready + this->zd.available() > this->accumulator_uncompressed.capacity()){
+                    // if we don't have room enough, make room
+                    this->accumulator_uncompressed.reserve(this->accumulator_uncompressed.capacity()+65536);
                 }
-                data_ready += this->zd.flush_ready(&data[data_ready], sizeof(data) - data_ready);
+                data_ready += this->zd.flush_ready(&this->accumulator_uncompressed[data_ready], this->accumulator_uncompressed.capacity() - data_ready);
             }
             // TODO: I should be able to merge that loop with the previous one
             while (this->zd.available()){
-                // TODO: what to do when boundary is reached ? Dynamic alloc ?
-                if (data_ready + this->zd.available() > sizeof(data)){
-                    LOG(LOG_INFO, "Overfull buffer in zrle");
+                if (data_ready + this->zd.available() > this->accumulator_uncompressed.capacity()){
+                    // if we don't have room enough, make room
+                    this->accumulator_uncompressed.reserve(this->accumulator_uncompressed.capacity()+65536);
                 }
-                data_ready += zd.flush_ready(&data[data_ready], sizeof(data)-data_ready);
+                data_ready += zd.flush_ready(&this->accumulator_uncompressed[data_ready], this->accumulator_uncompressed.capacity()-data_ready);
             }
 
-            InStream zlib_uncompressed_data_stream(data, data_ready);
+            InStream zlib_uncompressed_data_stream(this->accumulator_uncompressed.data(), data_ready);
 
             LOG(LOG_INFO, "read_data_zrle_data data_ready %zu zlib_compressed_data_length", data_ready);
 

@@ -25,7 +25,7 @@ Author(s): Christophe Grosjean, Jonathan Poelen
 #include <cstddef>
 
 
-// hexdump for humain
+// hexdump for humans
 void hexdump(const_byte_ptr data, size_t size, unsigned line_length = 16);
 
 /**
