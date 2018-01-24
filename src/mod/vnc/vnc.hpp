@@ -2736,6 +2736,8 @@ private:
                         const size_t sz = sizeof(uint32_t);
                         if (buf.remaining() < sz) { return false; }
                         this->zlib_compressed_data_length = Parse(buf.av().data()).in_uint32_be();
+                        this->accumulator.clear();
+                        this->accumulator.reserve(this->zlib_compressed_data_length);
                         if (bool(this->verbose & Verbose::basic_trace))
                         {
                             LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u remaining=%zu", this->zlib_compressed_data_length, buf.remaining());
@@ -2788,6 +2790,7 @@ private:
         uint16_t cy;
         int32_t encoding;
 
+        std::vector<uint8_t> accumulator;
         uint32_t zlib_compressed_data_length;
 
         uint32_t number_of_subrectangles_remain;
@@ -2997,12 +3000,19 @@ private:
         Result read_data_zrle_data(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             LOG(LOG_INFO, "read_data_zrle_data %zu", buf.remaining());
-            if (buf.remaining() < this->zlib_compressed_data_length)
+            if (this->accumulator.size() + buf.remaining() < this->zlib_compressed_data_length)
             {
+                auto av = buf.av(buf.remaining());
+                this->accumulator.insert(this->accumulator.end(), av.begin(), av.end());
+                buf.advance(buf.remaining());
                 return Result::fail();
             }
+            size_t interesting_part = this->zlib_compressed_data_length - this->accumulator.size();
+            auto av = buf.av(interesting_part);
+            this->accumulator.insert(this->accumulator.end(), av.begin(), av.end());
+            buf.advance(interesting_part);
 
-            hexdump(buf.av().data(), this->zlib_compressed_data_length);
+            hexdump(this->accumulator.data(), this->zlib_compressed_data_length);
 
             ZRLEUpdateContext zrle_update_context;
 
@@ -3022,7 +3032,7 @@ private:
             size_t consumed = 0;
             while (this->zlib_compressed_data_length > 0){
                 // TODO: see in Zdecompresssor class, ensure some exception is raised if decompressor fails
-                size_t res = this->zd.update(buf.av().data() + consumed, this->zlib_compressed_data_length);
+                size_t res = this->zd.update(this->accumulator.data() + consumed, this->zlib_compressed_data_length);
                 consumed += res;
                 // TODO: check we made progress
                 this->zlib_compressed_data_length -= res;
@@ -3052,8 +3062,7 @@ private:
                 drawable
             );
 
-            buf.advance(this->zlib_compressed_data_length);
-
+            this->accumulator.clear();
             return Result::ok(State::Encoding);
         }
 
