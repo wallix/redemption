@@ -38,6 +38,9 @@ namespace
             height_max = std::max(height_max, font_item.height);
         }
         height = height_max;
+        if (font.spark_view_specific_glyph_width()) {
+            width += 1;
+        }
     }
 }
 

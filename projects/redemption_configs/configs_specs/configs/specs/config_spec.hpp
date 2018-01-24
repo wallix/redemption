@@ -188,6 +188,9 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(advanced_in_gui, sesman_to_proxy, type_<types::range<std::chrono::milliseconds, 100, 10000>>{}, "mod_recv_timeout", set(1000));
+        W.sep();
+
+        W.member(advanced_in_gui, no_sesman, type_<bool>(), "spark_view_specific_glyph_width", set(false));
     });
 
     W.section("session_log", [&]

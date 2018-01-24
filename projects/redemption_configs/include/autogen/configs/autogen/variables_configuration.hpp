@@ -640,6 +640,18 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1000};
     };
+    /// type: bool <br/>
+    /// value{0} <br/>
+    struct globals::spark_view_specific_glyph_width {
+        static constexpr bool is_sesman_to_proxy() { return 0; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "globals"; }
+        static constexpr char const * name() { return "spark_view_specific_glyph_width"; }
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{0};
+    };
 
     /// type: bool <br/>
     /// value{1} <br/>
@@ -4357,6 +4369,7 @@ struct globals
 , cfg::globals::large_pointer_support
 , cfg::globals::unicode_keyboard_event_support
 , cfg::globals::mod_recv_timeout
+, cfg::globals::spark_view_specific_glyph_width
 { static constexpr bool is_section = true; };
 
 struct session_log
