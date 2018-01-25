@@ -25,6 +25,12 @@
 
 #include <cstring>
 
+class PartialReaderAPI {
+public:
+    virtual size_t partial_read(byte_ptr buffer, size_t len) = 0;
+    virtual ~PartialReaderAPI() {}
+};
+
 struct Buf64k
 {
     REDEMPTION_NON_COPYABLE(Buf64k);
@@ -93,6 +99,23 @@ struct Buf64k
             this->len += trans.partial_read(this->buf + this->len, max_len - this->len);
         }
     }
+
+    void read_from(PartialReaderAPI & trans)
+    {
+        if (this->idx == this->len) {
+            this->len = trans.partial_read(this->buf, max_len);
+            this->idx = 0;
+        }
+        else {
+            if (this->idx) {
+                std::memmove(this->buf, this->buf + this->idx, this->remaining());
+                this->len -= this->idx;
+                this->idx = 0;
+            }
+            this->len += trans.partial_read(this->buf + this->len, max_len - this->len);
+        }
+    }
+
 
 private:
     static constexpr std::size_t max_len = uint16_t(~uint16_t{});

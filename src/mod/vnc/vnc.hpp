@@ -3004,6 +3004,8 @@ private:
         Result read_data_zrle_data(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             LOG(LOG_INFO, "read_data_zrle_data %zu", buf.remaining());
+            hexdump_d(buf.av().data(), buf.remaining());
+
             if (this->accumulator.size() + buf.remaining() < this->zlib_compressed_data_length)
             {
                 auto av = buf.av(buf.remaining());
@@ -3015,6 +3017,8 @@ private:
             auto av = buf.av(interesting_part);
             this->accumulator.insert(this->accumulator.end(), av.begin(), av.end());
             buf.advance(interesting_part);
+
+            LOG(LOG_INFO, "Got enough data for compressed zrle %u", this->zlib_compressed_data_length);
 
             hexdump_d(this->accumulator.data(), this->zlib_compressed_data_length);
 

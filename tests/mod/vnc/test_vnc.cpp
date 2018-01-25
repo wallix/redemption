@@ -87,6 +87,20 @@ RED_AUTO_TEST_CASE(TestVncMouse)
     mouse.click(t, 15, 18, 2, 0);
 }
 
+
+
 RED_AUTO_TEST_CASE(TestZrle)
 {
+    const uint8_t b1[] = {0, 1, 2};
+//    const_byte_array ba2({3, 4, 5});
+//    const_byte_array ba3({6, 7, 8, 9, 10});
+
+    const_byte_array datas[3] = { make_array_view(b1)};
+
+    for (auto t: datas){
+        hexdump_c(t.data(), t.size());
+
+    }
 }
+
+
