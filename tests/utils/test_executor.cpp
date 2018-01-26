@@ -29,7 +29,7 @@
 
 #include <iostream>
 
-#define TRACE_n(n) std::cout << "\x1b[32m" << n << "\x1b[0m\n"
+// #define TRACE_n(n) std::cout << "\x1b[32m" << n << "\x1b[0m\n"
 #define TRACE_II(x) std::cout << "\x1b[31m" #x "\x1b[0m\n"
 #define TRACE_I(x) TRACE_II(x)
 #define TRACE TRACE_I(__LINE__)
@@ -787,10 +787,75 @@ RED_AUTO_TEST_CASE(TestNego)
 
     logtrans.disable_remaining_error();
 
+    Reactor reactor;
+    reactor.create_executor(0, std::ref(nego), std::ref(buf), std::ref(logtrans), ServerCert{
+        server_cert_store,
+        ServerCertCheck::always_succeed,
+        "/tmp/certif",
+        null_server_notifier
+    })
+        .on_action([](auto ctx, /*NewRdpNego& nego, */auto&&...){
+            TRACE;
+            return ctx.exit_on_success();
+            //return nego.exec_recv_data(ctx);
+        })
+        .on_exit([](auto ctx, ExecutorError error, NewRdpNego&, TpduBuffer&, Transport&, ServerCert const&) {
+            TRACE;
+            RED_CHECK_EQ(error, ExecutorError::no_error);
+            return ctx.exit_on_success();
+        })
+        .on_timeout([](auto ctx, auto&&...) {
+            TRACE;
+            return ctx.exit_on_success();
+        })
+        .exec_all()
+    ;
+
+    std::cout << "-----\n";
+
+    auto&& ee = reactor.create_executor(0, std::ref(nego), std::ref(buf), std::ref(logtrans), ServerCert{
+        server_cert_store,
+        ServerCertCheck::always_succeed,
+        "/tmp/certif",
+        null_server_notifier
+    })
+        .on_action([](auto ctx, /*NewRdpNego& nego, */auto&&...){
+            TRACE;
+            return ctx.exec_sub_executor(0)
+                .on_action([](auto ctx, int& i){
+                    TRACE;
+                    if (++i < 2) {
+                        return ctx.retry();
+                    }
+                    return ctx.exit_on_success();
+                    //return nego.exec_recv_data(ctx);
+                })
+                .on_exit([](auto ctx, ExecutorError error, int) {
+                    TRACE;
+                    RED_CHECK_EQ(error, ExecutorError::no_error);
+                    return ctx.exit_on_success();
+                })
+            ;
+        })
+        .on_exit([](auto ctx, ExecutorError error, NewRdpNego&, TpduBuffer&, Transport&, ServerCert const&) {
+            TRACE;
+            RED_CHECK_EQ(error, ExecutorError::no_error);
+            return ctx.exit_on_success();
+        })
+        .on_timeout([](auto ctx, auto&&...) {
+            TRACE;
+            return ctx.exit_on_success();
+        })
+    ;
+    ee.exec_all();
+    std::cout << "-----\n";
+    ee.exec_all();
+
+    std::cout << "-----\n";
 
     Executor executor;
 
-    executor.initial_executor(
+    executor.create_executor(
         std::ref(nego), std::ref(buf), std::ref(logtrans), ServerCert{
             server_cert_store,
             ServerCertCheck::always_succeed,
@@ -840,7 +905,7 @@ RED_AUTO_TEST_CASE(TestNego)
 //
 //     Executor executor;
 //
-// //     executor.initial_executor(std::ref(nego), std::ref(buf), std::ref(trans), std::ref(cert))
+// //     executor.create_executor(std::ref(nego), std::ref(buf), std::ref(trans), std::ref(cert))
 // //         .on_action([](auto ctx, NewRdpNego& nego, TpduBuffer& buf, Transport& trans, ServerCert const& cert){
 // //             TRACE;
 // //             if (nego.recv_data(buf, trans, cert)) {
@@ -864,7 +929,7 @@ RED_AUTO_TEST_CASE(TestNego)
 // //     executor.exec_all();
 //
 //
-//     executor.initial_executor(1, 2)
+//     executor.create_executor(1, 2)
 //         .on_action([](auto ctx, int, int){
 //             TRACE;
 //             return ctx.sub_executor(0)
@@ -898,7 +963,7 @@ RED_AUTO_TEST_CASE(TestNego)
 //     executor.exec_all();
 //
 //
-//     executor.initial_executor(0)
+//     executor.create_executor(0)
 //         .on_action(
 //             sequence_executor([](auto ctx, int& n){
 //                 ++n;
