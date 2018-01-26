@@ -161,7 +161,7 @@ typename std::enable_if<
 >::type
 operator<<(std::basic_ostream<Ch, Tr> & out, E const & e)
 {
-    return out << underlying_cast(e);
+    return out << +underlying_cast(e); // '+' for transform u8/s8 to int
 }
 
 #include "cxx/cxx.hpp"
