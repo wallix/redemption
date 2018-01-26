@@ -541,7 +541,7 @@ public:
 
         if (bool(this->verbose & RDPVerbose::sesprobe_repetitive)) {
             LOG(LOG_INFO,
-                "SessionProbeVirtualChannel::process_event: "
+                "SessionProbeVirtualChannel::request_keep_alive: "
                     "Session Probe keep alive requested");
         }
 
@@ -1373,7 +1373,7 @@ public:
                  this->mod.disable_input_event_and_graphics_update(
                      disable_input_event, disable_graphics_update);
 
-                 std::string string_message;
+                std::string string_message;
                 this->mod.display_osd_message(string_message);
 
                 this->mod.rdp_input_invalidate(Rect(0, 0,
