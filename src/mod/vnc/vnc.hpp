@@ -2713,7 +2713,32 @@ private:
                     if (0 == this->num_recs) {
                         return true;
                     }
-                    r = this->read_encoding(buf);
+                    {
+                        const size_t sz = 12;
+
+                        if (buf.remaining() < sz)
+                        {
+                            r = Result::fail();
+                        }
+                        else {
+                            InStream stream(buf.av(sz));
+                            this->x = stream.in_uint16_be();
+                            this->y = stream.in_uint16_be();
+                            this->cx = stream.in_uint16_be();
+                            this->cy = stream.in_uint16_be();
+                            this->encoding = stream.in_sint32_be();
+
+                            LOG(LOG_INFO, "Encoding: %u (%u, %u, %u, %u) : %d", this->num_recs, this->x, this->y, this->cx, this->cy, this->encoding);
+                            hexdump_d(buf.av(sz).data(), sz);
+
+                            --this->num_recs;
+                            buf.advance(sz);
+
+                            // TODO see why we get these empty rects ?
+                            // return State::Encoding;
+                            r = Result::ok(State::Data);
+                        }
+                    }
                     break;
                 case State::Data:
 

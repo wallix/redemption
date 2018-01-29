@@ -88,18 +88,79 @@ RED_AUTO_TEST_CASE(TestVncMouse)
 }
 
 
+namespace VNC {
+    namespace Encoder {
+        class Zrle {
+        public:
+            
+        };
+    }
+}
+
+#include "vnc_zrle_slice1_0_34.hpp"
 
 RED_AUTO_TEST_CASE(TestZrle)
 {
-    const uint8_t b1[] = {0, 1, 2};
-//    const_byte_array ba2({3, 4, 5});
-//    const_byte_array ba3({6, 7, 8, 9, 10});
 
-    const_byte_array datas[3] = { make_array_view(b1)};
+    const uint8_t rect1_header[] = {/* 0000 */ 0x00, 0x00, 0x00, 0x00, 0x07, 0x80, 0x00, 0x22, 0x00, 0x00, 0x00, 0x10,};
+    const_byte_array datas[4] = {
+         make_array_view(rect1_header),
+         make_array_view(slice1_0_34_p1),
+         make_array_view(slice1_0_34_p2),
+         make_array_view(slice1_0_34_p3)
+    };
+    Buf64k buf;
+    class BlockWrap : public PartialReaderAPI
+    {
+        const_byte_array & t;
+        size_t pos;
+    public:
+        BlockWrap(const_byte_array & t) : t(t), pos(0) {}
+        
+        size_t partial_read(byte_ptr buffer, size_t len) override
+        {
+            const size_t available = this->t.size() - this->pos;
+            if (len >= available){
+                std::memcpy(&buffer[0], &this->t[this->pos], available);
+                this->pos += available;
+                return available;
+            }
+            std::memcpy(&buffer[0], &this->t[this->pos], len);
+            this->pos += len;
+            return len;
+        }
+        bool empty() const {
+            return this->t.size() == this->pos;
+        }
+    };
 
+    int state = 0;
     for (auto t: datas){
-        hexdump_c(t.data(), t.size());
-
+        BlockWrap bw(t);
+                
+        while (!bw.empty()){
+            buf.read_from(bw);
+            switch (state){
+                default:
+                    LOG(LOG_INFO, "ignoring %zu\n", buf.av().size());
+                    buf.advance(buf.av().size());
+                    break;
+                case 0:
+                {
+                    const size_t sz = 12;
+                    InStream stream(buf.av(sz));
+                    uint16_t x = stream.in_uint16_be();
+                    uint16_t y = stream.in_uint16_be();
+                    uint16_t cx = stream.in_uint16_be();
+                    uint16_t cy = stream.in_uint16_be();
+                    int32_t encoding = stream.in_sint32_be();
+                    LOG(LOG_INFO, "Encoding: (%u, %u, %u, %u) : %d", x, y, cx, cy, encoding);
+                    buf.advance(sz);
+                    state = 1;
+                    break;
+                }
+            }
+        }
     }
 }
 
