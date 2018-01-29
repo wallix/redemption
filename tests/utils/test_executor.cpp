@@ -460,8 +460,7 @@ public:
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
     }
 
-    using ActionCtx = ExecutorActionContext<detail::tuple<
-        NewRdpNego&, TpduBuffer&, Transport&, ServerCert>>;
+    using ActionCtx = Executor2ActionContext<NewRdpNego&, TpduBuffer&, Transport&, ServerCert>;
 
     static ExecutorResult exec_recv_data(ActionCtx ctx)
     {
@@ -853,10 +852,8 @@ RED_AUTO_TEST_CASE(TestNego)
 
     std::cout << "-----\n";
 
-    Executor executor;
-
-    executor.create_executor(
-        std::ref(nego), std::ref(buf), std::ref(logtrans), ServerCert{
+    reactor.create_executor(
+        0, std::ref(nego), std::ref(buf), std::ref(logtrans), ServerCert{
             server_cert_store,
             ServerCertCheck::always_succeed,
             "/tmp/certif",
@@ -867,14 +864,16 @@ RED_AUTO_TEST_CASE(TestNego)
             TRACE;
             return nego.exec_recv_data(ctx);
         })
-        .on_exit([](auto ctx, bool b, NewRdpNego&, TpduBuffer&, Transport&, ServerCert const&) {
+        .on_exit([](auto ctx, ExecutorError error, NewRdpNego&, TpduBuffer&, Transport&, ServerCert const&) {
             TRACE;
-            RED_CHECK(b);
+            RED_CHECK_EQ(ExecutorError::no_error, error);
             return ctx.exit_on_success();
         })
-    ;
-
-    executor.exec_all();
+        .on_timeout([](auto ctx, auto&&...){
+            TRACE;
+            return ctx.exit_on_success();
+        })
+    .exec_all();
 
     buf.consume_current_packet();
     RED_CHECK_EQUAL(0, buf.remaining());
