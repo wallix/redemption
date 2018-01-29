@@ -126,6 +126,9 @@
 "#_advanced\n"
 "mod_recv_timeout = integer(min=100, max=10000, default=1000)\n\n"
 
+"#_advanced\n"
+"spark_view_specific_glyph_width = boolean(default=False)\n\n"
+
 "[session_log]\n\n"
 
 "enable_session_log = boolean(default=True)\n\n"

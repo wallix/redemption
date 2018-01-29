@@ -91,9 +91,10 @@ public:
                 close(incoming_sck);
 
                 Inifile ini;
-                ini.set<cfg::font>(Font(app_path(AppPath::DefaultFontFile)));
-                ini.set<cfg::debug::config>(this->debug_config);
+
                 configuration_load(ini.configuration_holder(), this->config_filename);
+                ini.set<cfg::font>(Font(app_path(AppPath::DefaultFontFile), ini.get<cfg::globals::spark_view_specific_glyph_width>()));
+                ini.set<cfg::debug::config>(this->debug_config);
 
                 if (ini.get<cfg::debug::session>()){
                     LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
