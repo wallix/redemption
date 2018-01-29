@@ -29,6 +29,7 @@ Author(s): Jonathan Poelen
 #include <functional> // std::reference_wrapper
 #include <chrono>
 #include <cassert>
+#include <new>
 
 namespace detail
 {
@@ -185,9 +186,11 @@ namespace detail
     struct GetExecutor
     {
         template<class T>
-        static auto& get_executor(T& x)
+        auto& operator()(T& x) const
         { return x.executor; }
     };
+
+    constexpr GetExecutor get_executor {};
 }
 
 
@@ -306,11 +309,11 @@ struct REDEMPTION_CXX_NODISCARD Executor2ActionContext
 
     template<class... PreviousTs>
     Executor2ActionContext(Executor2ActionContext<PreviousTs...> const& other) noexcept
-      : executor(reinterpret_cast<Executor2Impl<Ts...>&>(
-          detail::GetExecutor::get_executor(other)))
+      : executor(reinterpret_cast<Executor2Impl<Ts...>&>(detail::get_executor(other)))
     {
         // TODO strip arguments support (PreviousTs=(int, int), Ts=(int))
         static_assert((..., check_is_context_arg_convertible<PreviousTs, Ts>::value));
+        static_assert(sizeof(Executor2Impl<Ts...>) == sizeof(detail::get_executor(other)));
     }
 
     explicit Executor2ActionContext(Executor2Impl<Ts...>& executor) noexcept
@@ -361,7 +364,7 @@ struct REDEMPTION_CXX_NODISCARD Executor2ActionContext
     ExecExecutorBuilder<Args...> exec_sub_executor(Args&&... args)
     {
         auto builder = executor.create_sub_executor(static_cast<Args&&>(args)...);
-        auto& sub_executor = detail::GetExecutor::get_executor(builder);
+        auto& sub_executor = detail::get_executor(builder);
         return {sub_executor};
     }
 
@@ -369,7 +372,7 @@ struct REDEMPTION_CXX_NODISCARD Executor2ActionContext
     ExecExecutorBuilder<Ts..., Args...> exec_nested_executor(Args&&... args)
     {
         auto builder = executor.create_nested_executor(static_cast<Args&&>(args)...);
-        auto& sub_executor = detail::GetExecutor::get_executor(builder);
+        auto& sub_executor = detail::get_executor(builder);
         return {sub_executor};
     }
 
@@ -432,7 +435,7 @@ struct Executor2Impl : public BasicExecutor
     SubExecutorBuilder<Args...> create_sub_executor(Args&&... args)
     {
         auto builder = this->reactor.create_sub_executor(static_cast<Args&&>(args)...);
-        auto& sub_executor = detail::GetExecutor::get_executor(builder);
+        auto& sub_executor = detail::get_executor(builder);
         sub_executor.current = this->current;
         sub_executor.prev = this;
         this->current->current = &sub_executor;
@@ -466,7 +469,7 @@ struct REDEMPTION_CXX_NODISCARD Executor2TimeoutContext : Executor2ActionContext
     Executor2ActionContext<Ts...> set_timeout_action(F f) noexcept
     {
         auto executor_action = static_cast<Executor2ActionContext<Ts...>*>(this);
-        detail::GetExecutor::get_executor(executor_action)->set_on_timeout(f);
+        detail::get_executor(executor_action)->set_on_timeout(f);
         return *executor_action;
     }
 
@@ -478,29 +481,44 @@ struct REDEMPTION_CXX_NODISCARD Executor2TimeoutContext : Executor2ActionContext
     }
 };
 
+struct TimeoutInfo
+{
+    using OnTimeoutPtrFunc = ExecutorResult(*)(BasicExecutor&);
+    OnTimeoutPtrFunc on_timeout;
+    std::chrono::milliseconds ms;
+};
+
+template<class Executor>
+struct TimoutWithExecutor
+{
+    TimeoutInfo timeout;
+    Executor executor;
+
+    void delete_self()
+    {
+        this->executor.delete_self();
+    }
+};
+
 template<class... Ts>
 struct TopExecutorImpl : public Executor2Impl<Ts...>
 {
     using Executor2Impl<Ts...>::Executor2Impl;
 
-    using OnTimeoutPtrFunc = ExecutorResult(*)(BasicExecutor&);
-    OnTimeoutPtrFunc on_timeout;
-    std::chrono::milliseconds ms;
-
     void set_timeout(std::chrono::milliseconds ms)
     {
-        this->ms = ms;
+        this->get_timeout_data(this).ms = ms;
     }
 
     ExecutorResult exec_timeout()
     {
-        return this->on_timeout(*this);
+        return this->get_timeout_data(*this).on_timeout(*this);
     }
 
     template<class F>
     void set_on_timeout(F) noexcept
     {
-        this->on_timeout = [](BasicExecutor& executor) {
+        this->get_timeout_data(*this).on_timeout = [](BasicExecutor& executor) {
             auto& self = static_cast<TopExecutorImpl&>(executor);
             // TODO ExecutorTimeoutContext
             return self.ctx.invoke(make_lambda<F>(), Executor2TimeoutContext<Ts...>(self));
@@ -514,6 +532,27 @@ struct TopExecutorImpl : public Executor2Impl<Ts...>
     TopExecutorImpl(Reactor& reactor, Args&&... args)
       : Executor2Impl<Ts...>(reactor, static_cast<Args&&>(args)...)
     {}
+
+    static TimeoutInfo& get_timeout_data(TopExecutorImpl& self)
+    {
+        constexpr auto pad = sizeof(TimeoutInfo) % alignof(BasicExecutor);
+        return *reinterpret_cast<TimeoutInfo*>(
+            reinterpret_cast<uint8_t*>(&self) - pad - sizeof(TimeoutInfo));
+    }
+
+    template<class... Args>
+    static TimoutWithExecutor<TopExecutorImpl>* New(Reactor& reactor, Args&&... args)
+    {
+        auto* p = new TimoutWithExecutor<TopExecutorImpl>{
+            {}, {reactor, static_cast<Args&&>(args)...}};
+        p->executor.deleter = [](void* p) {
+            auto& d = get_timeout_data(*static_cast<TopExecutorImpl*>(p));
+            delete reinterpret_cast<TimoutWithExecutor<TopExecutorImpl>*>(&d);
+        };
+        assert(static_cast<void*>(&get_timeout_data(p->executor)) == static_cast<void*>(&p->timeout));
+        assert(static_cast<void*>(p) == static_cast<void*>(&p->timeout));
+        return p;
+    }
 };
 
 template<class... Ts>
@@ -669,6 +708,12 @@ struct Container
         return *static_cast<Tpl<Args...>*>(this->xs.emplace_back(p).get());
     }
 
+    template<class T>
+    T& emplace_back(T* p)
+    {
+        return *static_cast<T*>(this->xs.emplace_back(p).get());
+    }
+
     std::vector<UniquePtr> xs;
 };
 
@@ -677,7 +722,10 @@ struct Reactor
     template<class... Args>
     TopExecutorBuilder<Args...> create_executor(int /*fd*/, Args&&... args)
     {
-        return {this->executors.emplace_back<TopExecutor2>(*this, static_cast<Args&&>(args)...)};
+        auto* p = TopExecutor2<Args...>::New(*this, static_cast<Args&&>(args)...);
+        this->executors.emplace_back(reinterpret_cast<TimoutWithExecutor<BasicExecutor>*>(p));
+        return {p->executor};
+        //return {this->executors.emplace_back<TopExecutor2>(*this, static_cast<Args&&>(args)...)};
     }
 
     template<class... Args>
@@ -694,7 +742,7 @@ struct Reactor
     }
 
 private:
-    Container<BasicExecutor> executors;
+    Container<TimoutWithExecutor<BasicExecutor>> executors;
     Container<BasicTimer> timers;
 };
 
