@@ -84,6 +84,10 @@ struct Buf64k
         return av;
     }
 
+    // TODO: read_from interface is slightly annoying. It will be a problem when compiling code to js with emscripten
+    // because the input buffer will have to be filled from outside by websocket code.
+    // web socket implementation also suggest it is risky to copy data from a part of buffer to another
+    // (because of asynchronous access). And should we find a way to lock len and idx ?
     void read_from(InTransport trans)
     {
         if (this->idx == this->len) {

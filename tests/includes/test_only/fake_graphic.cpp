@@ -20,11 +20,9 @@
    Fake Graphic class for Unit Testing
 */
 
-#include "test_only/front/fake_front.hpp"
+#include "test_only/fake_graphic.hpp"
 #include "utils/log.hpp"
 #include "utils/png.hpp"
-#include "core/front_api.hpp"
-#include "core/channel_list.hpp"
 #include "core/client_info.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
@@ -73,151 +71,151 @@ namespace
     }
 }
 
-void FakeFront::draw(RDP::FrameMarker    const & cmd)
+void FakeGraphic::draw(RDP::FrameMarker    const & cmd)
 {
     draw_impl(this->gd, this->verbose, cmd);
 }
 
-void FakeFront::draw(RDPDestBlt          const & cmd, Rect clip)
+void FakeGraphic::draw(RDPDestBlt          const & cmd, Rect clip)
 {
     draw_impl(this->gd, this->verbose, cmd, clip);
 }
 
-void FakeFront::draw(RDPMultiDstBlt      const & cmd, Rect clip)
+void FakeGraphic::draw(RDPMultiDstBlt      const & cmd, Rect clip)
 {
     draw_impl(this->gd, this->verbose, cmd, clip);
 }
 
-void FakeFront::draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void FakeGraphic::draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
     draw_impl(this->gd, this->verbose, cmd, clip, color_ctx);
 }
 
-void FakeFront::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void FakeGraphic::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
     draw_impl(this->gd, this->verbose, cmd, clip, color_ctx);
 }
 
-void FakeFront::draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void FakeGraphic::draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
     draw_impl(this->gd, this->verbose, cmd, clip, color_ctx);
 }
 
-void FakeFront::draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void FakeGraphic::draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
     draw_impl(this->gd, this->verbose, cmd, clip, color_ctx);
 }
 
-void FakeFront::draw(RDPScrBlt           const & cmd, Rect clip)
+void FakeGraphic::draw(RDPScrBlt           const & cmd, Rect clip)
 {
     draw_impl(this->gd, this->verbose, cmd, clip);
 }
 
-void FakeFront::draw(RDP::RDPMultiScrBlt const & cmd, Rect clip)
+void FakeGraphic::draw(RDP::RDPMultiScrBlt const & cmd, Rect clip)
 {
     draw_impl(this->gd, this->verbose, cmd, clip);
 }
 
-void FakeFront::draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void FakeGraphic::draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
     draw_impl(this->gd, this->verbose, cmd, clip, color_ctx);
 }
 
-void FakeFront::draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void FakeGraphic::draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
     draw_impl(this->gd, this->verbose, cmd, clip, color_ctx);
 }
 
-void FakeFront::draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void FakeGraphic::draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
     draw_impl(this->gd, this->verbose, cmd, clip, color_ctx);
 }
 
-void FakeFront::draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void FakeGraphic::draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
     draw_impl(this->gd, this->verbose, cmd, clip, color_ctx);
 }
 
-void FakeFront::draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void FakeGraphic::draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
     draw_impl(this->gd, this->verbose, cmd, clip, color_ctx);
 }
 
-void FakeFront::draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void FakeGraphic::draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
     draw_impl(this->gd, this->verbose, cmd, clip, color_ctx);
 }
 
-void FakeFront::draw(RDPBitmapData       const & cmd, Bitmap const & bmp)
+void FakeGraphic::draw(RDPBitmapData       const & cmd, Bitmap const & bmp)
 {
     draw_impl(this->gd, this->verbose, cmd, bmp);
 }
 
-void FakeFront::draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp)
+void FakeGraphic::draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp)
 {
     draw_impl(this->gd, this->verbose, cmd, clip, bmp);
 }
 
-void FakeFront::draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp)
+void FakeGraphic::draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp)
 {
     draw_impl(this->gd, this->verbose, cmd, clip, color_ctx, bmp);
 }
 
-void FakeFront::draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache)
+void FakeGraphic::draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache)
 {
     draw_impl(this->gd, this->verbose, cmd, clip, color_ctx, gly_cache);
 }
 
-void FakeFront::draw(const RDP::RAIL::NewOrExistingWindow            & cmd)
+void FakeGraphic::draw(const RDP::RAIL::NewOrExistingWindow            & cmd)
 {
     draw_impl(this->gd, this->verbose, cmd);
 }
-void FakeFront::draw(const RDP::RAIL::WindowIcon                     & cmd)
-{
-    draw_impl(this->gd, this->verbose, cmd);
-}
-
-void FakeFront::draw(const RDP::RAIL::CachedIcon                     & cmd)
+void FakeGraphic::draw(const RDP::RAIL::WindowIcon                     & cmd)
 {
     draw_impl(this->gd, this->verbose, cmd);
 }
 
-void FakeFront::draw(const RDP::RAIL::DeletedWindow                  & cmd)
+void FakeGraphic::draw(const RDP::RAIL::CachedIcon                     & cmd)
 {
     draw_impl(this->gd, this->verbose, cmd);
 }
 
-void FakeFront::draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd)
+void FakeGraphic::draw(const RDP::RAIL::DeletedWindow                  & cmd)
 {
     draw_impl(this->gd, this->verbose, cmd);
 }
 
-void FakeFront::draw(const RDP::RAIL::DeletedNotificationIcons       & cmd)
+void FakeGraphic::draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd)
 {
     draw_impl(this->gd, this->verbose, cmd);
 }
 
-void FakeFront::draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd)
+void FakeGraphic::draw(const RDP::RAIL::DeletedNotificationIcons       & cmd)
 {
     draw_impl(this->gd, this->verbose, cmd);
 }
 
-void FakeFront::draw(const RDP::RAIL::NonMonitoredDesktop            & cmd)
+void FakeGraphic::draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd)
 {
     draw_impl(this->gd, this->verbose, cmd);
 }
 
-void FakeFront::draw(RDPColCache   const & cmd)
+void FakeGraphic::draw(const RDP::RAIL::NonMonitoredDesktop            & cmd)
 {
     draw_impl(this->gd, this->verbose, cmd);
 }
 
-void FakeFront::draw(RDPBrushCache const & cmd)
+void FakeGraphic::draw(RDPColCache   const & cmd)
 {
     draw_impl(this->gd, this->verbose, cmd);
 }
 
-void FakeFront::set_palette(const BGRPalette &)
+void FakeGraphic::draw(RDPBrushCache const & cmd)
+{
+    draw_impl(this->gd, this->verbose, cmd);
+}
+
+void FakeGraphic::set_palette(const BGRPalette &)
 {
     if (this->verbose > 10) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -226,7 +224,7 @@ void FakeFront::set_palette(const BGRPalette &)
     }
 }
 
-void FakeFront::set_pointer(const Pointer & cursor)
+void FakeGraphic::set_pointer(const Pointer & cursor)
 {
     if (this->verbose > 10) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -237,7 +235,7 @@ void FakeFront::set_pointer(const Pointer & cursor)
     this->gd.set_pointer(cursor);
 }
 
-void FakeFront::sync()
+void FakeGraphic::sync()
 {
     if (this->verbose > 10) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -246,18 +244,7 @@ void FakeFront::sync()
     }
 }
 
-void FakeFront::send_to_channel(
-    const CHANNELS::ChannelDef &, uint8_t const * /*data*/, size_t /*length*/,
-    size_t /*chunk_size*/, int /*flags*/)
-{
-    if (this->verbose > 10) {
-        LOG(LOG_INFO, "--------- FRONT ------------------------");
-        LOG(LOG_INFO, "send_to_channel");
-        LOG(LOG_INFO, "========================================\n");
-    }
-}
-
-void FakeFront::begin_update()
+void FakeGraphic::begin_update()
 {
     //if (this->verbose > 10) {
     //    LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -266,7 +253,7 @@ void FakeFront::begin_update()
     //}
 }
 
-void FakeFront::end_update()
+void FakeGraphic::end_update()
 {
     //if (this->verbose > 10) {
     //    LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -275,19 +262,7 @@ void FakeFront::end_update()
     //}
 }
 
-FakeFront::ResizeResult FakeFront::server_resize(int width, int height, int bpp)
-{
-    this->mod_bpp = bpp;
-    this->info.bpp = bpp;
-    if (this->verbose > 10) {
-        LOG(LOG_INFO, "--------- FRONT ------------------------");
-        LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
-        LOG(LOG_INFO, "========================================\n");
-    }
-    return ResizeResult::done;
-}
-
-void FakeFront::dump_png(const char * prefix)
+void FakeGraphic::dump_png(const char * prefix)
 {
     char tmpname[128];
     sprintf(tmpname, "%sXXXXXX.png", prefix);
@@ -297,14 +272,14 @@ void FakeFront::dump_png(const char * prefix)
     ::fclose(f);
 }
 
-void FakeFront::save_to_png(const char * filename)
+void FakeGraphic::save_to_png(const char * filename)
 {
     std::FILE * file = fopen(filename, "w+");
     dump_png24(file, this->gd, true);
     fclose(file);
 }
 
-FakeFront::FakeFront(ClientInfo & info, uint32_t verbose)
+FakeGraphic::FakeGraphic(ClientInfo & info, uint32_t verbose)
 : verbose(verbose)
 , info(info)
 , mod_bpp(info.bpp)
