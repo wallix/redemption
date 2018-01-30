@@ -21,6 +21,7 @@ To compile ReDemPtion you need the following packages:
 - libboost-test-dev (unit-test dependency)
 - libssl-dev
 - libkrb5-dev
+- libgssglue-dev
 - libsnappy-dev
 - libpng12-dev
 - libffmpeg-dev (see below)

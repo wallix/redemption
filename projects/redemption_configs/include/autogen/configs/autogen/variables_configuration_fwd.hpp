@@ -53,6 +53,7 @@ namespace cfg {
         struct large_pointer_support;
         struct unicode_keyboard_event_support;
         struct mod_recv_timeout;
+        struct spark_view_specific_glyph_width;
     };
 
     struct session_log {
