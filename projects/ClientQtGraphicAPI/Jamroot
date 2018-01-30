@@ -259,19 +259,19 @@ obj front_Qt$(qtversion)_Demo.o : src/frontDemoQtClient.cpp :
     $(EXE_DEPENDENCIES)
 ;
 
-obj front_Qt$(qtversion)_rdp.o : src/rdp_client_qt_front.cpp :
+obj front_Qt$(qtversion)_rdp.o : src/main_qt_client_redemption.cpp :
     <define>REDEMPTION_DECL_LOG_TEST
     $(EXE_DEPENDENCIES)
 ;
 
 exe client_rdp_Qt$(qtversion) :
-    src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp
-    src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
     src/qt_input_output_api/qt_output_sound.hpp
     src/qt_input_output_api/qt_input_output_clipboard.hpp
     src/qt_input_output_api/qt_input_socket.hpp
     src/qt_input_output_api/qt_graphics_components/qt_progress_bar_window.hpp
-    src/rdp_client_qt_widget.hpp
+    src/qt_input_output_api/qt_graphics_components/qt_options_window.hpp
+    src/qt_input_output_api/qt_graphics_components/qt_screen_window.hpp
+    src/qt_input_output_api/qt_graphics_components/qt_form_window.hpp
     front_Qt$(qtversion)_rdp.o
     $(obj_list)
     $(lib_list)

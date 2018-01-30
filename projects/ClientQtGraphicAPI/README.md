@@ -88,8 +88,8 @@ Pour compiler avec la bibliothèque Qt5:
 
 ## Utilisation du client Qt RDP
 
-Le client Qt RDP contient une implementation de `mod_rdp` ainsi qu'une boite de dialogue
-pour renseigner les options de la session RDP.
+//Le client Qt RDP contient une implementation de `mod_rdp` ainsi qu'une boite de dialogue
+//pour renseigner les options de la session RDP.
 
 
 ### Virtual channels
@@ -128,6 +128,8 @@ Commandes verbose:
 	--keyboard     affiche les logs des entrées claviers.
 	--rail         affiche les logs du cannal rail.
 	--rail_dump    affiche les logs du cannal rail ainsi que le contenu brute des rail PDU.
+	--remote_app
+	--VNC
 
 
 ## Boite de dialogue des options du client Qt RDP
@@ -162,19 +164,19 @@ ainsi que le scan code ou le code ascii de la touche.
 	
 
 
-## Implementation d'un client à partir de la couche graphique Qt
+//## Implementation d'un client à partir de la couche graphique Qt
 
-L'API consiste à créer des clients composés de deux élément principaux:
+//L'API consiste à créer des clients composés de deux élément principaux:
 
-- La partie front qui implémente le front de l'API graphique Qt en RDP.
-- La partie mod qui implémente un mod de connexion à la cible de redemption.
+//- La partie front qui implémente le front de l'API graphique Qt en RDP.
+//- La partie mod qui implémente un mod de connexion à la cible de redemption.
 
 
-### Implémentation du Front
+//### Implémentation du Front
 
-Il faut créer une classe front qui inclue dans un fichier
-    `redemption/project/ClientQtGraphicAPI/src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp`
-et hérite de la classe `FrontQtRDPGraphicAPI`.
+//Il faut créer une classe front qui inclue dans un fichier
+    //`redemption/project/ClientQtGraphicAPI/src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp`
+//et hérite de la classe `FrontQtRDPGraphicAPI`.
 
 La fonction `mod_api * init_mod() override` doit être réimplémenté pour initialisé et retourner la variable `mod` (utiliser le mod de redemption de votre choix).
 

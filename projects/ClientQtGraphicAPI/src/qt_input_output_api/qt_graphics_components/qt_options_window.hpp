@@ -29,47 +29,39 @@
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
 
+#include "../keymaps/qt_scancode_keymap.hpp"
 
 
-#include "rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp"
+#if REDEMPTION_QT_VERSION == 4
+#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
+#else
+#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtWidgets/name>
+#endif
 
+#include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QCheckBox)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QComboBox)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QDesktopWidget)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QDialog)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QFileDialog)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QFormLayout)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QGridLayout)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QLabel)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QLineEdit)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QPushButton)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QTabWidget)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QTableWidget)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QToolTip)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
 
+#undef REDEMPTION_QT_INCLUDE_WIDGET
 
-
-class Front_RDP_Qt_API : public FrontQtRDPGraphicAPI
-{
-
-
-public:
-
-    enum : int {
-        BUTTON_HEIGHT = 20
-    };
-
-    enum : int {
-        MAX_MONITOR_COUNT = GCC::UserData::CSMonitor::MAX_MONITOR_COUNT / 4
-    };
-
-    int                  _monitorCount;
-    Rect                 _screen_dimensions[MAX_MONITOR_COUNT];
-    int                  _current_screen_index;
-    bool                 _recv_disconnect_ultimatum;
-
-
-
-
-
-    bool                 _monitorCountNegociated = false;
+#include "../../client_input_output_api.hpp"
 
 
 
 
 
-
-
-
-    Front_RDP_Qt_API(char* argv[], int argc, RDPVerbose verbose)
-    : FrontQtRDPGraphicAPI(argv, argc, verbose)
 //      , clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [](){
 //             NullReportMessage reportMessage;
 //             ClipboardVirtualChannel::Params params(reportMessage);
@@ -88,30 +80,9 @@ public:
 //
 //             return params;
 //         }())
-    , _current_screen_index(0)
-    , _recv_disconnect_ultimatum(false)
 
 
-//     , clipbrdFormatsList()
 
-    {
-//         this->_to_client_sender._front = this;
-    }
-
-//     virtual void setClientInfo() = 0;
-//     virtual void setDefaultConfig() = 0;
-//     virtual void writeClientInfo() = 0;
-    virtual void deleteCurrentProtile() = 0;
-
-    //  channel callbacks
-//     virtual void clipboard_callback() = 0;
-
-    // CHANNELS
-//     virtual void send_FormatListPDU(uint32_t const * formatIDs, const uint16_t ** formatListDataShortName, const std::size_t * size_names, std::size_t formatIDs_size) = 0;
-//     virtual void empty_buffer() = 0;
-//     virtual void emptyLocalBuffer() = 0;
-
-};
 
 
 
@@ -121,7 +92,7 @@ class DialogOptions_Qt : public QDialog
 Q_OBJECT
 
 public:
-    Front_RDP_Qt_API   * _front;
+    ClientRedemptionIOAPI   * _front;
     const int            _width;
     const int            _height;
 
@@ -157,7 +128,7 @@ public:
     QComboBox            _languageComboBox;
     QComboBox            profilComboBox;
     QLineEdit            profilLineEdit;
-    QComboBox            _monitorCountComboBox;
+//     QComboBox            _monitorCountComboBox;
 //     QComboBox            _captureSnapFreqComboBox;
 
     QFormLayout        * _layoutView;
@@ -171,12 +142,12 @@ public:
     QLabel               _labelSpan;
     QLabel               _labelLanguage;
     QLabel               _labelProfil;
-    QLabel               _labelScreen;
+//     QLabel               _labelScreen;
     QLabel               _labelRecording;
     QLabel               _labelTls;
     QLabel               _labelNla;
     QLabel               _labelSound;
-    QLabel               _labelCaptureFreq;
+//     QLabel               _labelCaptureFreq;
     QLabel               _labelClipboard;
     QLabel               _labelShare;
     QLabel               _labelSharePath;
@@ -186,7 +157,7 @@ public:
     const int            _tableKeySettingMaxHeight;
 
 
-    DialogOptions_Qt(Front_RDP_Qt_API * front, QWidget * parent)
+    DialogOptions_Qt(ClientRedemptionIOAPI * front, QWidget * parent)
         : QDialog(parent)
         , _front(front)
         , _width(400)
@@ -219,7 +190,7 @@ public:
         , _languageComboBox(this)
         , profilComboBox(this)
         , profilLineEdit("", this)
-        , _monitorCountComboBox(this)
+//         , _monitorCountComboBox(this)
 //         , _captureSnapFreqComboBox(this)
         , _layoutView(nullptr)
         , _layoutConnection(nullptr)
@@ -230,12 +201,12 @@ public:
         , _labelSpan("Span screen :", this)
         , _labelLanguage("Keyboard Language :", this)
         , _labelProfil("Options Profil:", this)
-        , _labelScreen("Screen :", this)
+//         , _labelScreen("Screen :", this)
         , _labelRecording("Record movie :", this)
         , _labelTls("TLS :", this)
         , _labelNla("NLA :", this)
         , _labelSound("Sound :",  this)
-        , _labelCaptureFreq("Capture per second :", this)
+//         , _labelCaptureFreq("Capture per second :", this)
         , _labelClipboard("Shared Clipboard :", this)
         , _labelShare("Shared Virtual Disk :", this)
         , _labelSharePath("Shared Path :", this)
@@ -335,12 +306,12 @@ public:
         this->QObject::connect(&(this->_spanCheckBox), SIGNAL(stateChanged(int)), this, SLOT(spanCheckChange(int)));
 
 
-        for (int i = 1; i <= Front_RDP_Qt_API::MAX_MONITOR_COUNT; i++) {
-            this->_monitorCountComboBox.addItem(std::to_string(i).c_str(), i);
-        }
-        this->_monitorCountComboBox.setStyleSheet("combobox-popup: 0;");
-        this->_layoutView->addRow(&(this->_labelScreen), &(this->_monitorCountComboBox));
-        this->QObject::connect(&(this->_monitorCountComboBox), SIGNAL(currentIndexChanged(int)), this, SLOT(monitorCountkChange(int)));
+//         for (int i = 1; i <= FrontQtRDPGraphicAPI::MAX_MONITOR_COUNT; i++) {
+//             this->_monitorCountComboBox.addItem(std::to_string(i).c_str(), i);
+//         }
+//         this->_monitorCountComboBox.setStyleSheet("combobox-popup: 0;");
+//         this->_layoutView->addRow(&(this->_labelScreen), &(this->_monitorCountComboBox));
+//         this->QObject::connect(&(this->_monitorCountComboBox), SIGNAL(currentIndexChanged(int)), this, SLOT(monitorCountkChange(int)));
 
 
         this->_layoutView->addRow(&(this->_labelPerf), &(this->_perfCheckBox));
@@ -524,7 +495,7 @@ private:
             this->_resolutionComboBox.setCurrentIndex(indexResolution);
         }
 
-        this->_monitorCountComboBox.setCurrentIndex(this->_front->info.cs_monitor.monitorCount-1);
+//         this->_monitorCountComboBox.setCurrentIndex(this->_front->info.cs_monitor.monitorCount-1);
 
         if (this->_front->is_spanning) {
             this->_spanCheckBox.setCheckState(Qt::Checked);
@@ -673,8 +644,6 @@ public Q_SLOTS:
         }
 
         this->_front->info.bpp = this->_bppComboBox.currentText().toInt();
-        this->_front->imageFormatRGB  = this->_front->bpp_to_QFormat(this->_front->info.bpp, false);
-        this->_front->imageFormatARGB = this->_front->bpp_to_QFormat(this->_front->info.bpp, true);
         std::string delimiter = " * ";
         std::string resolution( this->_resolutionComboBox.currentText().toStdString());
         int pos(resolution.find(delimiter));
@@ -692,6 +661,7 @@ public Q_SLOTS:
         }
         if (this->_recordingCB.isChecked()) {
             this->_front->is_recording = true;
+            LOG(LOG_INFO, "recording checked!!!!!!!!!!!!!");
         } else {
             this->_front->is_recording = false;
         }
@@ -711,9 +681,10 @@ public Q_SLOTS:
             this->_front->modRDPParamsData.enable_sound = false;
         }
         this->_front->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
-        this->_front->info.cs_monitor.monitorCount = this->_monitorCountComboBox.itemData(this->_monitorCountComboBox.currentIndex()).toInt();
-        this->_front->_monitorCount = this->_front->info.cs_monitor.monitorCount;
-        this->_front->info.width   = this->_front->info.width * this->_front->_monitorCount;
+        this->_front->update_keylayout();
+//         this->_front->info.cs_monitor.monitorCount = this->_monitorCountComboBox.itemData(this->_monitorCountComboBox.currentIndex()).toInt();
+//         this->_front->_monitorCount = this->_front->info.cs_monitor.monitorCount;
+        this->_front->info.width   = this->_front->info.width;
         this->_front->info.height  = this->_front->info.height;
 //         this->_front->delta_time   = this->_captureSnapFreqComboBox.itemData(this->_captureSnapFreqComboBox.currentIndex()).toInt();
 
@@ -733,44 +704,44 @@ public Q_SLOTS:
 
         this->_front->writeClientInfo();
 
-        remove((this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH)).c_str());
-        this->_front->qtRDPKeymap.clearCustomKeyCode();
+//         remove((this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH)).c_str());
+//         this->_front->qtRDPKeymap.clearCustomKeyCode();
 
-        std::ofstream ofichier(this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH), std::ios::out | std::ios::trunc);
-        if(ofichier) {
-
-            ofichier << "Key Setting" << std::endl << std::endl;
-
-            const int row_count = this->_tableKeySetting->rowCount();
-
-            for (int i = 0; i < row_count; i++) {
-                int qtKeyID(0);
-                if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
-                    qtKeyID = this->_tableKeySetting->item(i, 0)->text().toInt();
-                }
-
-                if (qtKeyID != 0) {
-                    int scanCode(0);
-                    if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
-                        scanCode = this->_tableKeySetting->item(i, 1)->text().toInt();
-                    }
-                    int ASCII8(0);
-                    if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
-                        ASCII8 = this->_tableKeySetting->item(i, 2)->text().toInt();
-                    }
-                    int extended(static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(i, 3))->currentIndex());
-
-                    this->_front->qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
-
-                    ofichier << "- ";
-                    ofichier << qtKeyID  << " ";
-                    ofichier << scanCode << " ";
-                    ofichier << ASCII8   << " ";
-                    ofichier << extended << std::endl;
-                }
-            }
-            ofichier.close();
-        }
+//         std::ofstream ofichier(this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH), std::ios::out | std::ios::trunc);
+//         if(ofichier) {
+//
+//             ofichier << "Key Setting" << std::endl << std::endl;
+//
+//             const int row_count = this->_tableKeySetting->rowCount();
+//
+//             for (int i = 0; i < row_count; i++) {
+//                 int qtKeyID(0);
+//                 if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
+//                     qtKeyID = this->_tableKeySetting->item(i, 0)->text().toInt();
+//                 }
+//
+//                 if (qtKeyID != 0) {
+//                     int scanCode(0);
+//                     if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
+//                         scanCode = this->_tableKeySetting->item(i, 1)->text().toInt();
+//                     }
+//                     int ASCII8(0);
+//                     if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
+//                         ASCII8 = this->_tableKeySetting->item(i, 2)->text().toInt();
+//                     }
+//                     int extended(static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(i, 3))->currentIndex());
+//
+//                     this->_front->qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
+//
+//                     ofichier << "- ";
+//                     ofichier << qtKeyID  << " ";
+//                     ofichier << scanCode << " ";
+//                     ofichier << ASCII8   << " ";
+//                     ofichier << extended << std::endl;
+//                 }
+//             }
+//             ofichier.close();
+//         }
 
         this->close();
     }
@@ -824,7 +795,7 @@ public Q_SLOTS:
 
     void spanCheckChange(int state) {
         if (state == Qt::Unchecked) {
-            this->_monitorCountComboBox.setCurrentIndex(0);
+//             this->_monitorCountComboBox.setCurrentIndex(0);
         }
     }
 
@@ -861,7 +832,7 @@ public Q_SLOTS:
 //         , CF_QT_CLIENT_FILECONTENTS         = 48026
 //     };
 //
-//     Front_RDP_Qt_API                  * _front;
+//     FrontQtRDPGraphicAPI                  * _front;
 //     QClipboard                * _clipboard;
 //     bool                        _local_clipboard_stream;
 //     size_t                      _cliboard_data_length;
@@ -893,7 +864,7 @@ public Q_SLOTS:
 //
 //
 //
-//     ClipBoard_Qt(Front_RDP_Qt_API * front, QWidget * parent)
+//     ClipBoard_Qt(FrontQtRDPGraphicAPI * front, QWidget * parent)
 //         : QObject(parent)
 //         , _front(front)
 //         , _clipboard(nullptr)
@@ -921,7 +892,7 @@ public Q_SLOTS:
 //         }
 //     }
 //
-//     void setClipboard_files(std::string & name) {           //std::vector<Front_RDP_Qt_API::CB_FilesList::CB_in_Files> items_list) {
+//     void setClipboard_files(std::string & name) {           //std::vector<FrontQtRDPGraphicAPI::CB_FilesList::CB_in_Files> items_list) {
 //
 //         /*QClipboard *cb = QApplication::clipboard();
 //         QMimeData* newMimeData = new QMimeData();
