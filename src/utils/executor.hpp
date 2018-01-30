@@ -310,7 +310,7 @@ struct REDEMPTION_CXX_NODISCARD Executor2ActionContext
       : executor(reinterpret_cast<Executor2Impl<Ts...>&>(detail::get_executor(other)))
     {
         // TODO strip arguments support (PreviousTs=(int, int), Ts=(int))
-        static_assert((..., check_is_context_arg_convertible<PreviousTs, Ts>::value));
+        static_assert((true && ... && check_is_context_arg_convertible<PreviousTs, Ts>::value));
         static_assert(sizeof(Executor2Impl<Ts...>) == sizeof(detail::get_executor(other)));
     }
 

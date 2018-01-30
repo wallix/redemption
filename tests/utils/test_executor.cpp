@@ -786,6 +786,16 @@ RED_AUTO_TEST_CASE(TestNego)
 
     logtrans.disable_remaining_error();
 
+#if defined(__GNUC__) && ! defined(__clang__)
+    #define PP_CAT_I(a, b) a##b
+    #define PP_CAT(a, b) PP_CAT_I(a, b)
+    // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=71332
+    #define UNUSED_VARIADIC() [[maybe_unused]] auto&&... \
+        PP_CAT(auto_variadic_, PP_CAT(__LINE__, PP_CAT(_, __COUNTER__)))
+#else
+    #define UNUSED_VARIADIC() auto&&...
+#endif
+
     Reactor reactor;
     reactor.create_executor(0, std::ref(nego), std::ref(buf), std::ref(logtrans), ServerCert{
         server_cert_store,
@@ -793,17 +803,16 @@ RED_AUTO_TEST_CASE(TestNego)
         "/tmp/certif",
         null_server_notifier
     })
-        .on_action([](auto ctx, /*NewRdpNego& nego, */auto&&...){
+        .on_action([](auto ctx, UNUSED_VARIADIC()){
             TRACE;
             return ctx.exit_on_success();
-            //return nego.exec_recv_data(ctx);
         })
-        .on_exit([](auto ctx, ExecutorError error, NewRdpNego&, TpduBuffer&, Transport&, ServerCert const&) {
+        .on_exit([](auto ctx, ExecutorError error, UNUSED_VARIADIC()) {
             TRACE;
             RED_CHECK_EQ(error, ExecutorError::no_error);
             return ctx.exit_on_success();
         })
-        .on_timeout([](auto ctx, auto&&...) {
+        .on_timeout([](auto ctx, UNUSED_VARIADIC()) {
             TRACE;
             return ctx.exit_on_success();
         })
@@ -818,7 +827,7 @@ RED_AUTO_TEST_CASE(TestNego)
         "/tmp/certif",
         null_server_notifier
     })
-        .on_action([](auto ctx, /*NewRdpNego& nego, */auto&&...){
+        .on_action([](auto ctx, UNUSED_VARIADIC()){
             TRACE;
             return ctx.exec_sub_executor(0)
                 .on_action([](auto ctx, int& i){
@@ -836,12 +845,12 @@ RED_AUTO_TEST_CASE(TestNego)
                 })
             ;
         })
-        .on_exit([](auto ctx, ExecutorError error, NewRdpNego&, TpduBuffer&, Transport&, ServerCert const&) {
+        .on_exit([](auto ctx, ExecutorError error, UNUSED_VARIADIC()) {
             TRACE;
             RED_CHECK_EQ(error, ExecutorError::no_error);
             return ctx.exit_on_success();
         })
-        .on_timeout([](auto ctx, auto&&...) {
+        .on_timeout([](auto ctx, UNUSED_VARIADIC()) {
             TRACE;
             return ctx.exit_on_success();
         })
@@ -860,16 +869,16 @@ RED_AUTO_TEST_CASE(TestNego)
             null_server_notifier
         }
     )
-        .on_action([](auto ctx, NewRdpNego& nego, auto&&...){
+        .on_action([](auto ctx, NewRdpNego& nego, UNUSED_VARIADIC()){
             TRACE;
             return nego.exec_recv_data(ctx);
         })
-        .on_exit([](auto ctx, ExecutorError error, NewRdpNego&, TpduBuffer&, Transport&, ServerCert const&) {
+        .on_exit([](auto ctx, ExecutorError error, UNUSED_VARIADIC()) {
             TRACE;
             RED_CHECK_EQ(ExecutorError::no_error, error);
             return ctx.exit_on_success();
         })
-        .on_timeout([](auto ctx, auto&&...){
+        .on_timeout([](auto ctx, UNUSED_VARIADIC()){
             TRACE;
             return ctx.exit_on_success();
         })
