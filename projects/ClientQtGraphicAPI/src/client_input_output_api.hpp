@@ -59,9 +59,6 @@
 #include "keyboard/keymap2.hpp"
 #include "transport/crypto_transport.hpp"
 
-// #include "capture/full_video_params.hpp"
-// #include "capture/video_params.hpp"
-// #include "capture/capture.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
 #include "gdi/graphic_api.hpp"

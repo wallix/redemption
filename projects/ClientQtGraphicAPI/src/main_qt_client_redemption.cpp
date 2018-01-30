@@ -39,35 +39,7 @@
 
 
 
-///////////////////////////////
-// APPLICATION
 int main(int argc, char** argv){
-
-    //" -name QA\\administrateur -pwd '' -ip 10.10.46.88 -p 3389";
-
-    // sudo python ./sesman/sesmanlink/WABRDPAuthentifier
-
-    // sudo nano /etc/rdpproxy/rdpproxy.ini
-
-    // /etc/rdpproxy/cert
-
-    // bjam san -j4 rdpproxy
-
-    // sudo bin/gcc-4.9.2/san/rdpproxy -nf
-
-    // sudo bin/gcc-4.9.2/release/link-static/rdpproxy -nf
-
-    //bjam -s qt=4 debug client_rdp_Qt4 && bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4
-
-    // sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' &&
-
-    // ../../tools/c++-analyzer/bt  bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4
-
-    // ../packager/packager.py --version 1.0.0 --no-entry-changelog --build-package
-
-    // sudo dpkg -i /home/qa/Desktop/redemption_0.9.740bjessie_amd64.deb
-
-
 
     QApplication app(argc, argv);
 
@@ -85,9 +57,4 @@ int main(int argc, char** argv){
 
 
     app.exec();
-
-    // scp -P 22 -r cmoroldo@10.10.43.46:/home/cmoroldo/Bureau/redemption_test_charge/movie.wrm /home/qa/Desktop/movie_sample_data/
-
-
-    //  xfreerdp /u:x /p: /port:3389 /v:10.10.43.46 /multimon /monitors:2
 }
