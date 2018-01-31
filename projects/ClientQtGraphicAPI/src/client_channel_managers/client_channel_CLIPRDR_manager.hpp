@@ -1001,7 +1001,7 @@ public:
             format_size_name = 2;
         }
 
-        const uint16_t * formatListDataName[] = { reinterpret_cast<const uint16_t *>(reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[index].data()))};
+        const uint16_t * formatListDataName[] = {reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[index].data())};
         const size_t size_names[] = {format_size_name};
 
         this->send_FormatListPDU(formatIDs, formatListDataName, size_names, 1);
