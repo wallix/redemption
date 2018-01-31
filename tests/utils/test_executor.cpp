@@ -797,6 +797,26 @@ RED_AUTO_TEST_CASE(TestNego)
 #endif
 
     Reactor reactor;
+
+    {
+        using namespace std::chrono_literals;
+        TopExecutor2<> executor(reactor);
+        executor.set_timeout(10ms);
+        auto& timer1 = executor.create_timer()
+            .on_action(2ms, [](auto ctx){
+                TRACE;
+                return ctx.retry();
+            });
+        auto& timer2 = executor.create_timer()
+            .on_action(3ms, [](auto ctx){
+                TRACE;
+                return ctx.retry();
+            });
+        RED_CHECK_EQ(executor.get_next_timeout().count(), 2);
+    }
+
+
+
     reactor.create_executor(0, std::ref(nego), std::ref(buf), std::ref(logtrans), ServerCert{
         server_cert_store,
         ServerCertCheck::always_succeed,
@@ -817,7 +837,7 @@ RED_AUTO_TEST_CASE(TestNego)
             RED_CHECK_EQ(error, ExecutorError::NoError);
             return ctx.exit_on_success();
         })
-        .on_timeout([](auto ctx, UNUSED_VARIADIC()) {
+        .on_timeout({}, [](auto ctx, UNUSED_VARIADIC()) {
             TRACE;
             return ctx.exit_on_success();
         })
@@ -872,7 +892,7 @@ RED_AUTO_TEST_CASE(TestNego)
             RED_CHECK_EQ(error, ExecutorError::NoError);
             return ctx.exit_on_success();
         })
-        .on_timeout([](auto ctx, UNUSED_VARIADIC()) {
+        .on_timeout({}, [](auto ctx, UNUSED_VARIADIC()) {
             TRACE;
             return ctx.exit_on_success();
         })
@@ -900,7 +920,7 @@ RED_AUTO_TEST_CASE(TestNego)
             RED_CHECK_EQ(ExecutorError::NoError, error);
             return ctx.exit_on_success();
         })
-        .on_timeout([](auto ctx, UNUSED_VARIADIC()){
+        .on_timeout({}, [](auto ctx, UNUSED_VARIADIC()){
             TRACE;
             return ctx.exit_on_success();
         })

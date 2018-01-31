@@ -174,15 +174,6 @@ enum class ExecutorError : uint8_t
 
 struct BasicExecutor
 {
-    using OnActionPtrFunc = ExecutorResult(*)(BasicExecutor&);
-    using OnExitPtrFunc = ExecutorResult(*)(BasicExecutor&, ExecutorError error);
-
-    OnActionPtrFunc on_action;
-    OnExitPtrFunc on_exit;
-    BasicExecutor* current = this;
-    BasicExecutor* prev = nullptr;
-    void (*deleter) (void*);
-
     ExecutorResult exec_action()
     {
         return this->on_action(*this);
@@ -211,12 +202,23 @@ struct BasicExecutor
     bool exit_with(ExecutorError);
 
 protected:
-    BasicExecutor() = default;
+    using OnActionPtrFunc = ExecutorResult(*)(BasicExecutor&);
+    using OnExitPtrFunc = ExecutorResult(*)(BasicExecutor&, ExecutorError error);
 
-    BasicExecutor& basic_executor()
+    OnActionPtrFunc on_action = [](BasicExecutor&){ return ExecutorResult::Nothing; };
+    OnExitPtrFunc on_exit = [](BasicExecutor&, ExecutorError){ return ExecutorResult::Nothing; };
+    BasicExecutor* current = this;
+    BasicExecutor* prev = nullptr;
+    void (*deleter) (void*) = [](void*){};
+
+    void set_next_executor(BasicExecutor& other) noexcept
     {
-        return *this;
+        other.current = this->current;
+        other.prev = this;
+        this->current->current = &other;
     }
+
+    BasicExecutor() = default;
 };
 
 namespace detail
@@ -310,9 +312,10 @@ namespace detail { namespace
         }
 
         template<class F>
-        decltype(auto) on_timeout(F f) && noexcept
+        decltype(auto) on_timeout(std::chrono::milliseconds ms, F f) && noexcept
         {
             static_assert(!(Mask & 0b100), "on_timeout already set");
+            this->executor.set_timeout(ms);
             this->executor.set_on_timeout(f);
             return select_return<0b100>();
         }
@@ -461,7 +464,7 @@ struct REDEMPTION_CXX_NODISCARD Executor2ActionContext
     template<class... Args>
     auto create_timer(Args&&... args)
     {
-        return executor.top_executor.timeout.create_timer(static_cast<Args&&>(args)...);
+        return executor.top_executor.create_timer(static_cast<Args&&>(args)...);
     }
 
     template<class... Args>
@@ -528,6 +531,7 @@ protected:
     Executor2Impl<Ts...>& executor;
 };
 
+
 template<class... Ts>
 struct Executor2Impl : public BasicExecutor
 {
@@ -556,9 +560,7 @@ struct Executor2Impl : public BasicExecutor
     SubExecutorBuilder<Args...> create_sub_executor(Args&&... args)
     {
         auto* sub_executor = Executor2<Args...>::New(this->top_executor, static_cast<Args&&>(args)...);
-        sub_executor->current = this->current;
-        sub_executor->prev = this;
-        this->current->current = sub_executor;
+        this->set_next_executor(*sub_executor);
         return {*sub_executor};
     }
 
@@ -587,9 +589,14 @@ struct Executor2Impl : public BasicExecutor
         return p;
     }
 
-// private:
+protected:
     detail::tuple<Ts...> ctx;
+
+private:
     TopExecutorBase& top_executor;
+
+private:
+    void *operator new(size_t n) { return ::operator new(n); }
 };
 
 
@@ -616,29 +623,160 @@ struct REDEMPTION_CXX_NODISCARD Executor2TimeoutContext : Executor2ActionContext
 
 struct BasicTimer
 {
-    using OnTimerPtrFunc = ExecutorResult(*)(BasicTimer&);
-
-    std::chrono::milliseconds ms;
-    OnTimerPtrFunc on_timer;
-    void (*deleter) (void*);
-
 //     ExecutorResult exec_action()
 //     {
 //         return this->on_action(*this);
 //     }
+
+    void delete_self()
+    {
+        return this->deleter(this);
+    }
+
+    std::chrono::milliseconds time()
+    {
+        return this->ms;
+    }
+
+protected:
+    friend class TopExecutorTimers;
+
+    using OnTimerPtrFunc = ExecutorResult(*)(BasicTimer&);
+    std::chrono::milliseconds ms;
+    OnTimerPtrFunc on_timer = [](BasicTimer&){ return ExecutorResult::Nothing; };
+    void (*deleter) (void*) = [](void*){};
 
     void set_time(std::chrono::milliseconds ms)
     {
         this->ms = ms;
     }
 
-    void delete_self()
-    {
-        return this->deleter(this);
-    }
+    BasicTimer() = default;
 };
 
+
+template<class Base>
+struct Container
+{
+    struct Deleter
+    {
+        void operator()(Base* p) const
+        {
+            p->delete_self();
+        }
+    };
+
+    template<class T, class... Args>
+    T& emplace_back(Args&&... args)
+    {
+        auto* p = T::New(static_cast<Args&&>(args)...);
+        this->xs.emplace_back(&p->base());
+        return *p;
+    }
+
+    using UniquePtr = std::unique_ptr<Base, Deleter>;
+    std::vector<UniquePtr> xs;
+};
+
+namespace detail
+{
+    template<class Timer>
+    struct REDEMPTION_CXX_NODISCARD TimerBuilder
+    {
+        template<class F>
+        Timer& on_action(std::chrono::milliseconds ms, F f) && noexcept
+        {
+            this->timer.set_on_action(f);
+            this->timer.update_time(ms);
+            return this->timer;
+        }
+
+        TimerBuilder(Timer& timer) noexcept
+        : timer(timer)
+        {}
+
+    private:
+        Timer& timer;
+    };
+}
+
+template<class... Args>
+using Timer2 = Timer2Impl<typename detail::decay_and_strip<Args>::type...>;
+
+template<class... Args>
+using TimerBuilder = detail::TimerBuilder<Timer2<Args...>>;
+
 class TopExecutorBase;
+
+struct TopExecutorTimers
+{
+    template<class... Args>
+    TimerBuilder<Args...> create_timer(Args&&... args)
+    {
+        return {this->timers.emplace_back<Timer2<Args...>>(
+            *reinterpret_cast<TopExecutorBase*>(this),
+            static_cast<Args&&>(args)...)};
+    }
+
+    void update_time(BasicTimer& timer, std::chrono::milliseconds ms)
+    {
+        (void)timer;
+        (void)ms;
+    }
+
+    void erase(BasicTimer& timer)
+    {
+        this->timers.xs.erase(
+            std::find_if(this->timers.xs.begin(), this->timers.xs.end(), [&timer](auto& p){
+                return p.get() == &timer;
+            }),
+            this->timers.xs.end()
+        );
+    }
+
+    void set_timeout(std::chrono::milliseconds ms)
+    {
+        this->ms = ms;
+    }
+
+    std::chrono::milliseconds get_next_timeout() const noexcept
+    {
+        std::chrono::milliseconds r = this->ms;
+        for (auto& timer : this->timers.xs) {
+            r = std::min(r, timer->ms);
+        }
+        return r;
+    }
+
+    void exec_timeout(BasicExecutor& top_executor)
+    {
+        this->on_timeout(top_executor);
+    }
+
+protected:
+    using OnTimeoutPtrFunc = ExecutorResult(*)(BasicExecutor&);
+    OnTimeoutPtrFunc on_timeout;
+
+private:
+    std::chrono::milliseconds ms;
+    Container<BasicTimer> timers;
+    // std::chrono::milliseconds next_timeout;
+};
+
+struct TopExecutorBase : TopExecutorTimers
+{
+    BasicExecutor base_executor;
+
+    void delete_self()
+    {
+        this->base_executor.delete_self();
+    }
+
+    ExecutorResult exec_timeout()
+    {
+        return this->on_timeout(this->base_executor);
+    }
+};
 
 template<class... Ts>
 struct Timer2Impl : BasicTimer
@@ -655,7 +793,7 @@ struct Timer2Impl : BasicTimer
     void update_time(std::chrono::milliseconds ms)
     {
         this->set_time(ms);
-        this->top_executor.timeout.update_time(ms);
+        this->top_executor.update_time(*this, ms);
     }
 
     Timer2Impl(Timer2Impl const&) = delete;
@@ -683,130 +821,34 @@ struct Timer2Impl : BasicTimer
         return p;
     }
 
-// private:
+protected:
     detail::tuple<Ts...> ctx;
+
+private:
     TopExecutorBase& top_executor;
-};
 
-template<class Base>
-struct Container
-{
-    struct Deleter
-    {
-        void operator()(Base* p) const
-        {
-            p->delete_self();
-        }
-    };
-
-    template<class T, class... Args>
-    T& emplace_back(Args&&... args)
-    {
-        auto* p = T::New(static_cast<Args&&>(args)...);
-        this->xs.emplace_back(&p->base());
-        return *p;
-    }
-
-    using UniquePtr = std::unique_ptr<Base, Deleter>;
-    std::vector<UniquePtr> xs;
-};
-
-
-namespace detail
-{
-    template<class Timer>
-    struct REDEMPTION_CXX_NODISCARD TimerBuilder
-    {
-        template<class F>
-        Timer& on_action(std::chrono::milliseconds ms, F f) && noexcept
-        {
-            this->timer.set_on_action(f);
-            this->timer.set_time(ms);
-            return this->timer;
-        }
-
-        Timer& timer;
-    };
-}
-
-template<class... Args>
-using Timer2 = Timer2Impl<typename detail::decay_and_strip<Args>::type...>;
-
-template<class... Args>
-using TimerBuilder = detail::TimerBuilder<Timer2<Args...>>;
-
-class TopExecutorBase;
-
-struct TimeoutInfo
-{
-    using OnTimeoutPtrFunc = ExecutorResult(*)(BasicExecutor&);
-    OnTimeoutPtrFunc on_timeout;
-    std::chrono::milliseconds ms;
-    Container<BasicTimer> timers;
-    // std::chrono::milliseconds next_timeout;
-
-    template<class... Args>
-    TimerBuilder<Args...> create_timer(Args&&... args)
-    {
-        return {this->timers.emplace_back<Timer2<Args...>>(
-            *reinterpret_cast<TopExecutorBase*>(this),
-            static_cast<Args&&>(args)...)};
-    }
-
-    void update_time(std::chrono::milliseconds /*ms*/)
-    {
-
-    }
-
-    void erase(BasicTimer& timer)
-    {
-        this->timers.xs.erase(
-            std::find_if(this->timers.xs.begin(), this->timers.xs.end(), [&timer](auto& p){
-                return p.get() == &timer;
-            }),
-            this->timers.xs.end()
-        );
-    }
-
-    std::chrono::milliseconds get_timeout() const noexcept
-    {
-        std::chrono::milliseconds r = this->ms;
-        for (auto& timer : this->timers.xs) {
-            r = std::min(r, timer->ms);
-        }
-        return r;
-    }
-};
-
-struct TopExecutorBase
-{
-    TimeoutInfo timeout;                                    // TODO inherit
-    BasicExecutor base_executor;
-
-    void delete_self()
-    {
-        this->base_executor.delete_self();
-    }
-
-    ExecutorResult exec_timeout()
-    {
-        return this->timeout.on_timeout(this->base_executor);
-    }
+private:
+    void *operator new(size_t n) { return ::operator new(n); }
 };
 
 template<class... Ts>
-struct TopExecutorImpl : TimeoutInfo, Executor2Impl<Ts...>
+struct TopExecutorImpl : TopExecutorTimers, Executor2Impl<Ts...>
 {
     using Executor2Impl<Ts...>::Executor2Impl;
-
-    void set_timeout(std::chrono::milliseconds ms)
-    {
-        this->get_timeout_data(this).ms = ms;
-    }
 
     ExecutorResult exec_timeout()
     {
         return this->timeout.on_timeout(*this);
+    }
+
+    template<class... Args>
+    SubExecutorBuilder<Args...> create_sub_executor(BasicExecutor& from, Args&&... args)
+    {
+        auto* sub_executor = Executor2<Args...>::New(*this, static_cast<Args&&>(args)...);
+        sub_executor->current = from.current;
+        sub_executor->prev = &from;
+        from.current->current = sub_executor;
+        return {*sub_executor};
     }
 
     template<class F>
@@ -834,8 +876,8 @@ struct TopExecutorImpl : TimeoutInfo, Executor2Impl<Ts...>
 
     static TopExecutorImpl* get_top_executor_from_executor(Executor2Impl<Ts...>* p) noexcept
     {
-        constexpr auto pad = sizeof(TimeoutInfo) % alignof(decltype(*p));
-        void* d = reinterpret_cast<uint8_t*>(p) - pad - sizeof(TimeoutInfo);
+        constexpr auto pad = sizeof(TopExecutorTimers) % alignof(decltype(*p));
+        void* d = reinterpret_cast<uint8_t*>(p) - pad - sizeof(TopExecutorTimers);
         return static_cast<TopExecutorImpl*>(d);
     }
 
@@ -850,6 +892,9 @@ struct TopExecutorImpl : TimeoutInfo, Executor2Impl<Ts...>
 
         return p;
     }
+
+private:
+    void *operator new(size_t n) { return ::operator new(n); }
 };
 
 struct Reactor
@@ -860,14 +905,6 @@ struct Reactor
         return {this->executors.emplace_back<TopExecutor2<Args...>>(
             *this, static_cast<Args&&>(args)...)};
     }
-
-//     template<class... Args>
-//     TimerIdBuilder<Args...> create_timer(std::chrono::milliseconds ms, Args&&... args)
-//     {
-//         auto* p = TimerId<Args...>::New(*this, ms, static_cast<Args&&>(args)...);
-//         this->timers.xs.emplace_back(&p->base());
-//         return {*p};
-//     }
 
 private:
     Container<TopExecutorBase> executors;
