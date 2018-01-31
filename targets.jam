@@ -4272,7 +4272,6 @@ obj src/utils/pattutils.o : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp ;
 obj src/utils/png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
 obj src/utils/rle.o : $(REDEMPTION_SRC_PATH)/utils/rle.cpp ;
 obj src/utils/set_exception_handler_pretty_message.o : $(REDEMPTION_SRC_PATH)/utils/set_exception_handler_pretty_message.cpp ;
-obj tests/includes/test_only/fake_Graphic.o : $(REDEMPTION_TEST_PATH)/includes/test_only/fake_Graphic.cpp ;
 obj tests/includes/test_only/fake_graphic.o : $(REDEMPTION_TEST_PATH)/includes/test_only/fake_graphic.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 

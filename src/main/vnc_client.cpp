@@ -139,7 +139,7 @@ int main(int argc, char** argv)
       , report_message
       , false
       , nullptr
-      , to_verbose_flags(verbose)|mod_vnc::Verbose::connection | mod_vnc::Verbose::basic_trace);
+      , to_verbose_flags(verbose)|VNCVerbose::connection | VNCVerbose::basic_trace);
     mod.get_event().set_trigger_time(wait_obj::NOW);
 
     using Ms = std::chrono::milliseconds;

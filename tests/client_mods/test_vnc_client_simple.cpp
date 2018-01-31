@@ -41,7 +41,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     info.bpp = 24;
     info.width = 800;
     info.height = 600;
-    auto vnc_verbose = mod_vnc::Verbose::none;
+    auto vnc_verbose = VNCVerbose::none;
     auto front_verbose = 0;
 
     FakeFront front(info, front_verbose);
