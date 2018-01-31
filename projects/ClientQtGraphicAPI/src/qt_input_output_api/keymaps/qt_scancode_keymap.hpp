@@ -173,13 +173,13 @@ private:
     }
 
 
-    void showkey(const int keyStatusFlag, const QKeyEvent *e) {
-        int abc(e->text().toStdString()[0]);
+    void showkey(const int keyStatusFlag, const int key, const char text) {
+        int abc(text);
         std::string keyStatus;
         if (keyStatusFlag == 0) {
-            std::cout << std::hex << "keyPressed=0x" << e->key() << " scanCode=0x" << this->scanCode << " text=\'" << e->text().toStdString() << "\' text(hexa)=0x" << abc << "." << std::endl;
+            std::cout << std::hex << "keyPressed=0x" << key << " scanCode=0x" << this->scanCode << " text=\'" << text << "\' text(hexa)=0x" << abc << "." << std::endl;
         } else {
-            std::cout << std::hex << "keyRelease=0x" << e->key() << " scanCode=0x" << this->scanCode << " text=\'" << e->text().toStdString() << "\' text(hexa)=0x" << abc << "." << std::endl;
+            std::cout << std::hex << "keyRelease=0x" << key << " scanCode=0x" << this->scanCode << " text=\'" << text << "\' text(hexa)=0x" << abc << "." << std::endl;
         }
     }
 
@@ -201,7 +201,7 @@ private:
     //===================
     //    Characters
     //===================
-    void getKeyChar(const QKeyEvent *e) {
+    void getKeyChar(const char text) {
 
         switch (scanCode) {
             case Qt::Key_Eacute      : this->scanCode = 0xE9; break; /*é*/
@@ -222,7 +222,7 @@ private:
                 }
                 break;
 
-            default: this->scanCode = e->text().toStdString()[0]; break;
+            default: this->scanCode = text; break;
         }
 
         //-----------------------------
@@ -634,10 +634,10 @@ public:
     }
 
 
-    void keyEvent(const uint16_t keyStatusFlag, const QKeyEvent *keyEvent) {
+    void keyEvent(const uint16_t keyStatusFlag, const int key, const char text) {
         this->flag = keyStatusFlag;
-        this->scanCode = keyEvent->key();
-        int keyCode(keyEvent->key());
+        this->scanCode = key;
+        int keyCode(key);
         this->_deadKeys = false;
         this->_unvalidScanCode = false;
 
@@ -655,7 +655,7 @@ public:
                     //--------------------------------------
                     //             CHARACTERS
                     //--------------------------------------
-                    this->getKeyChar(keyEvent);
+                    this->getKeyChar(text);
                 }
             } else {
 
@@ -686,7 +686,7 @@ public:
                             //--------------------------
                             if (!this->getCustomKeysExtendedKeylayoutApplied()) {
                                 if (!this->getCustomKeysExtended()) {
-                                    this->showkey(keyStatusFlag, keyEvent);
+                                    this->showkey(keyStatusFlag, key, text);
                                     std::cout << "Error: Key(0x" << keyCode << ") unknown key code." << std::endl;
                                 }
                             }
@@ -697,7 +697,7 @@ public:
         }
 
         if (this->_verbose > 0) {
-            this->showkey(keyStatusFlag, keyEvent);
+            this->showkey(keyStatusFlag, key, text);
         }
         if (this->_unvalidScanCode) {
          this->scanCode = 0;
