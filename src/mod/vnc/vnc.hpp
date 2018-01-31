@@ -8,7 +8,7 @@
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
-
+h
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -2720,7 +2720,7 @@ private:
                             this->encoding = stream.in_sint32_be();
 
                             LOG(LOG_INFO, "Encoding: %u (%u, %u, %u, %u) : %d", this->num_recs, this->x, this->y, this->cx, this->cy, this->encoding);
-                            hexdump_d(buf.av(sz).data(), sz);
+//                            hexdump_d(buf.av(sz).data(), sz);
 
                             --this->num_recs;
                             buf.advance(sz);
@@ -2834,7 +2834,7 @@ private:
             this->num_recs = stream.in_uint16_be();
 
             LOG(LOG_INFO, "FrameBufferUpdate: HEADER (%u)", this->num_recs);
-            hexdump_d(buf.av(sz).data(), sz);
+//            hexdump_d(buf.av(sz).data(), sz);
 
             buf.advance(sz);
             return Result::ok(State::Encoding);
@@ -2885,7 +2885,7 @@ private:
             this->encoding = stream.in_sint32_be();
 
             LOG(LOG_INFO, "Encoding: %u (%u, %u, %u, %u) : %d", this->num_recs, this->x, this->y, this->cx, this->cy, this->encoding);
-            hexdump_d(buf.av(sz).data(), sz);
+//            hexdump_d(buf.av(sz).data(), sz);
 
             --this->num_recs;
             buf.advance(sz);
@@ -3020,7 +3020,7 @@ private:
         Result read_data_zrle_data(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             LOG(LOG_INFO, "read_data_zrle_data %zu", buf.remaining());
-            hexdump_d(buf.av().data(), buf.remaining());
+//            hexdump_d(buf.av().data(), buf.remaining());
 
             if (this->accumulator.size() + buf.remaining() < this->zlib_compressed_data_length)
             {
@@ -3036,7 +3036,7 @@ private:
 
             LOG(LOG_INFO, "Got enough data for compressed zrle %u", this->zlib_compressed_data_length);
 
-            hexdump_d(this->accumulator.data(), this->zlib_compressed_data_length);
+//            hexdump_d(this->accumulator.data(), this->zlib_compressed_data_length);
 
             ZRLEUpdateContext zrle_update_context;
 
@@ -3540,7 +3540,7 @@ private:
                     "mod_vnc::lib_clip_data: to_rdp_clipboard_data_is_utf8_encoded=%s",
                     (this->to_rdp_clipboard_data_is_utf8_encoded ? "yes" : "no"));
                 if (this->data_length <= 64) {
-                    hexdump_c(this->to_rdp_clipboard_data.get_data(), this->data_length);
+//                    hexdump_c(this->to_rdp_clipboard_data.get_data(), this->data_length);
                 }
             }
 

@@ -137,6 +137,7 @@ namespace VNC {
             // return is false if the encoder is waiting for more data
             bool consume(Buf64k & buf, gdi::GraphicApi & drawable)
             {
+                LOG(LOG_INFO, "consuming buffer '%u bytes'", buf.remaining());
                 switch (this->state) {
                 case ZrleState::Header:
                 {
@@ -147,18 +148,20 @@ namespace VNC {
                     this->accumulator.reserve(this->zlib_compressed_data_length);
                     this->accumulator_uncompressed.reserve(200000);
                     this->accumulator_uncompressed.clear();
+                    buf.advance(sz);
                     if (bool(this->verbose & VNCVerbose::basic_trace))
                     {
                         LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u remaining=%zu", this->zlib_compressed_data_length, buf.remaining());
                     }
-                    buf.advance(sz);
                     this->state = ZrleState::Data;
                 }
+                break;
                 case ZrleState::Data:
                 {
                     LOG(LOG_INFO, "read_data_zrle_data %zu", buf.remaining());
-                    hexdump_d(buf.av().data(), buf.remaining());
+//                    hexdump_d(buf.av().data(), buf.remaining());
 
+                    LOG(LOG_INFO, "accumulator has %zu", this->accumulator.size());
                     if (this->accumulator.size() + buf.remaining() < this->zlib_compressed_data_length)
                     {
                         auto av = buf.av(buf.remaining());
@@ -173,7 +176,7 @@ namespace VNC {
 
                     LOG(LOG_INFO, "Got enough data for compressed zrle %u", this->zlib_compressed_data_length);
 
-                    hexdump_d(this->accumulator.data(), this->zlib_compressed_data_length);
+//                    hexdump_d(this->accumulator.data(), this->zlib_compressed_data_length);
 
                     ZRLEUpdateContext2 zrle_update_context(this->verbose);
 
@@ -860,8 +863,10 @@ RED_AUTO_TEST_CASE(TestZrle)
     Zdecompressor<> zd;
 
     const uint8_t rect1_header[] = {/* 0000 */ 0x00, 0x00, 0x00, 0x00, 0x07, 0x80, 0x00, 0x22, 0x00, 0x00, 0x00, 0x10,};
-    const_byte_array datas[4] = {
+    const uint8_t compressed_len1[] = { 0x00, 0x00, 0xff, 0xad};
+    const_byte_array datas[5] = {
          make_array_view(rect1_header),
+         make_array_view(compressed_len1),
          make_array_view(slice1_0_34_p1),
          make_array_view(slice1_0_34_p2),
          make_array_view(slice1_0_34_p3)
@@ -895,9 +900,9 @@ RED_AUTO_TEST_CASE(TestZrle)
     info.keylayout = 0x040C;
     info.console_session = 0;
     info.brush_cache_code = 0;
-    info.bpp = 24;
-    info.width = 800;
-    info.height = 600;
+    info.bpp = 16;
+    info.width = 1920;
+    info.height = 34;
 
     FakeGraphic drawable(info, 0);
 
@@ -934,12 +939,17 @@ RED_AUTO_TEST_CASE(TestZrle)
                 case VNC::Encoder::State::Data:
                 {
                         // Pre Assertion: we have an encoder
-                        encoder->consume(buf, drawable); 
-                        state = VNC::Encoder::State::Exit;
+                        if (encoder->consume(buf, drawable)){
+                            // consume returns true if encoder is finished (ready to be resetted)
+                            state = VNC::Encoder::State::Exit;
+                            LOG(LOG_INFO, "End of encoder");
+                        }
                 }
                 break;
             }
         }
+        LOG(LOG_INFO, "All data consumed");
+        drawable.save_to_png("vnc_first_len.png");
     }
 }
 

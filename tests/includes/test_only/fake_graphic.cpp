@@ -40,9 +40,7 @@ namespace
     void draw_impl(RDPDrawable & gd, int verbose, const RDPBitmapData & cmd, const Bitmap & bmp)
     {
         if (verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO);
-            LOG(LOG_INFO, "========================================\n");
         }
 
         gd.draw(cmd, bmp);
@@ -51,9 +49,7 @@ namespace
     template<class Cmd, class... Ts>
     void draw_impl(RDPDrawable & gd, int verbose, Cmd const & cmd, Rect clip, Ts const & ... args) {
         if (verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
         }
 
         gd.draw(cmd, clip, args...);
@@ -62,9 +58,7 @@ namespace
     template<class Cmd, class... Ts>
     void draw_impl(RDPDrawable & gd, int verbose, Cmd const & cmd) {
         if (verbose > 10) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
             cmd.log(LOG_INFO);
-            LOG(LOG_INFO, "========================================\n");
         }
 
         gd.draw(cmd);
