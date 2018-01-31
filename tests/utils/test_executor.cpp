@@ -805,11 +805,16 @@ RED_AUTO_TEST_CASE(TestNego)
     })
         .on_action([](auto ctx, UNUSED_VARIADIC()){
             TRACE;
+            ctx.create_timer()
+                .on_action(std::chrono::milliseconds{}, [](auto ctx){
+                    TRACE;
+                    return ctx.retry();
+                });
             return ctx.exit_on_success();
         })
         .on_exit([](auto ctx, ExecutorError error, UNUSED_VARIADIC()) {
             TRACE;
-            RED_CHECK_EQ(error, ExecutorError::no_error);
+            RED_CHECK_EQ(error, ExecutorError::NoError);
             return ctx.exit_on_success();
         })
         .on_timeout([](auto ctx, UNUSED_VARIADIC()) {
@@ -818,6 +823,23 @@ RED_AUTO_TEST_CASE(TestNego)
         })
         .exec_all()
     ;
+
+    std::cout << "-----\n";
+
+    {
+        auto* executor = TopExecutor2<>::New(reactor);
+        executor->set_on_action([](auto ctx, UNUSED_VARIADIC()){
+            TRACE;
+            return ctx.exit_on_success();
+        });
+        executor->set_on_exit([](auto ctx, ExecutorError error, UNUSED_VARIADIC()) {
+            TRACE;
+            RED_CHECK_EQ(error, ExecutorError::NoError);
+            return ctx.exit_on_success();
+        });
+        executor->exec_all();
+        executor->delete_self();
+    }
 
     std::cout << "-----\n";
 
@@ -840,14 +862,14 @@ RED_AUTO_TEST_CASE(TestNego)
                 })
                 .on_exit([](auto ctx, ExecutorError error, int) {
                     TRACE;
-                    RED_CHECK_EQ(error, ExecutorError::no_error);
+                    RED_CHECK_EQ(error, ExecutorError::NoError);
                     return ctx.exit_on_success();
                 })
             ;
         })
         .on_exit([](auto ctx, ExecutorError error, UNUSED_VARIADIC()) {
             TRACE;
-            RED_CHECK_EQ(error, ExecutorError::no_error);
+            RED_CHECK_EQ(error, ExecutorError::NoError);
             return ctx.exit_on_success();
         })
         .on_timeout([](auto ctx, UNUSED_VARIADIC()) {
@@ -875,7 +897,7 @@ RED_AUTO_TEST_CASE(TestNego)
         })
         .on_exit([](auto ctx, ExecutorError error, UNUSED_VARIADIC()) {
             TRACE;
-            RED_CHECK_EQ(ExecutorError::no_error, error);
+            RED_CHECK_EQ(ExecutorError::NoError, error);
             return ctx.exit_on_success();
         })
         .on_timeout([](auto ctx, UNUSED_VARIADIC()){
