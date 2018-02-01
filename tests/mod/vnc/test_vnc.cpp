@@ -182,7 +182,6 @@ namespace VNC {
                     LOG(LOG_INFO, "zrle_update_context Bpp=%u x=%zu cx=%zu cx_remain=%zu, cy_remain=%zu tile_x=%zu tile_y=%zu", 
                         Bpp, x, cx, cx, cy, x, y);
 
-                    this->zuc_x         = this->x;
                     this->zuc_cx        = this->cx;
                     this->zuc_cx_remain = this->cx;
                     this->zuc_cy_remain = this->cy;
@@ -353,7 +352,6 @@ namespace VNC {
     //        Where r is floor((runLength - 1) / 255).
 
     private:
-            uint16_t zuc_x;
             uint16_t zuc_cx;
 
             uint16_t zuc_cx_remain;
@@ -460,7 +458,7 @@ namespace VNC {
                                 this->zuc_cx_remain =  this->zuc_cx;
                                 this->zuc_cy_remain -= tile_cy;
 
-                                this->zuc_tile_x =  this->zuc_x;
+                                this->zuc_tile_x =  this->x;
                                 this->zuc_tile_y += tile_cy;
                             }
                         }
@@ -510,7 +508,7 @@ namespace VNC {
                                 this->zuc_cx_remain =  this->zuc_cx;
                                 this->zuc_cy_remain -= tile_cy;
 
-                                this->zuc_tile_x =  this->zuc_x;
+                                this->zuc_tile_x =  this->x;
                                 this->zuc_tile_y += tile_cy;
                             }
 
@@ -661,7 +659,7 @@ namespace VNC {
                                 this->zuc_cx_remain =  this->zuc_cx;
                                 this->zuc_cy_remain -= tile_cy;
 
-                                this->zuc_tile_x =  this->zuc_x;
+                                this->zuc_tile_x =  this->x;
                                 this->zuc_tile_y += tile_cy;
                             }
 
@@ -774,7 +772,7 @@ namespace VNC {
                                 this->zuc_cx_remain =  this->zuc_cx;
                                 this->zuc_cy_remain -= tile_cy;
 
-                                this->zuc_tile_x =  this->zuc_x;
+                                this->zuc_tile_x =  this->x;
                                 this->zuc_tile_y += tile_cy;
                             }
                         }
@@ -898,7 +896,7 @@ namespace VNC {
                                 this->zuc_cx_remain =  this->zuc_cx;
                                 this->zuc_cy_remain -= tile_cy;
 
-                                this->zuc_tile_x =  this->zuc_x;
+                                this->zuc_tile_x =  this->x;
                                 this->zuc_tile_y += tile_cy;
                             }
                         }
