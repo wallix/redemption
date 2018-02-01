@@ -385,21 +385,6 @@ namespace VNC {
                 {
                     while (uncompressed_data_buffer.in_remain())
                     {
-                        const uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
-                        const uint16_t tile_cy = std::min<uint16_t>(this->cy_remain, 64);
-                        uint8_t         tile_data[2*16384];    // max size with 16 bpp
-                        const uint8_t * tile_data_p = tile_data;
-                        const uint16_t tile_data_length = tile_cx * tile_cy * this->Bpp;
-                        
-                        // TODO: this case should not be possible
-                        if (tile_data_length > sizeof(tile_data))
-                        {
-                            LOG(LOG_ERR,
-                                "VNC Encoding: ZRLE, tile buffer too small (%zu < %" PRIu16 ")",
-                                sizeof(tile_data), tile_data_length);
-                            throw Error(ERR_BUFFER_TOO_SMALL);
-                        }
-
                         uint8_t   subencoding = uncompressed_data_buffer.in_uint8();
 
                         if (bool(this->verbose & VNCVerbose::basic_trace)) {
@@ -417,6 +402,21 @@ namespace VNC {
                         {
                             if (bool(this->verbose & VNCVerbose::basic_trace)) {
                                 LOG(LOG_INFO, "VNC Encoding: ZRLE, Raw pixel data");
+                            }
+
+                            const uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
+                            const uint16_t tile_cy = std::min<uint16_t>(this->cy_remain, 64);
+                            uint8_t         tile_data[2*16384];    // max size with 16 bpp
+                            const uint8_t * tile_data_p = tile_data;
+                            const uint16_t tile_data_length = tile_cx * tile_cy * this->Bpp;
+                            
+                            // TODO: this case should not be possible
+                            if (tile_data_length > sizeof(tile_data))
+                            {
+                                LOG(LOG_ERR,
+                                    "VNC Encoding: ZRLE, tile buffer too small (%zu < %" PRIu16 ")",
+                                    sizeof(tile_data), tile_data_length);
+                                throw Error(ERR_BUFFER_TOO_SMALL);
                             }
 
                             if (uncompressed_data_buffer.in_remain() < tile_data_length)
@@ -455,6 +455,21 @@ namespace VNC {
                             if (bool(this->verbose & VNCVerbose::basic_trace)) {
                                 LOG(LOG_INFO,
                                     "VNC Encoding: ZRLE, Solid tile (single color)");
+                            }
+
+                            const uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
+                            const uint16_t tile_cy = std::min<uint16_t>(this->cy_remain, 64);
+                            uint8_t         tile_data[2*16384];    // max size with 16 bpp
+                            const uint8_t * tile_data_p = tile_data;
+                            const uint16_t tile_data_length = tile_cx * tile_cy * this->Bpp;
+                            
+                            // TODO: this case should not be possible
+                            if (tile_data_length > sizeof(tile_data))
+                            {
+                                LOG(LOG_ERR,
+                                    "VNC Encoding: ZRLE, tile buffer too small (%zu < %" PRIu16 ")",
+                                    sizeof(tile_data), tile_data_length);
+                                throw Error(ERR_BUFFER_TOO_SMALL);
                             }
 
                             if (uncompressed_data_buffer.in_remain() < this->Bpp)
@@ -524,6 +539,21 @@ namespace VNC {
                                     "VNC Encoding: ZRLE, Packed palette types, "
                                         "palette size=%d",
                                     subencoding);
+                            }
+
+                            const uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
+                            const uint16_t tile_cy = std::min<uint16_t>(this->cy_remain, 64);
+                            uint8_t         tile_data[2*16384];    // max size with 16 bpp
+                            const uint8_t * tile_data_p = tile_data;
+                            const uint16_t tile_data_length = tile_cx * tile_cy * this->Bpp;
+                            
+                            // TODO: this case should not be possible
+                            if (tile_data_length > sizeof(tile_data))
+                            {
+                                LOG(LOG_ERR,
+                                    "VNC Encoding: ZRLE, tile buffer too small (%zu < %" PRIu16 ")",
+                                    sizeof(tile_data), tile_data_length);
+                                throw Error(ERR_BUFFER_TOO_SMALL);
                             }
 
                             const uint8_t    palette_count = subencoding;
@@ -681,6 +711,21 @@ namespace VNC {
                                 LOG(LOG_INFO, "VNC Encoding: ZRLE, Plain RLE");
                             }
 
+                            const uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
+                            const uint16_t tile_cy = std::min<uint16_t>(this->cy_remain, 64);
+                            uint8_t         tile_data[2*16384];    // max size with 16 bpp
+                            const uint8_t * tile_data_p = tile_data;
+                            const uint16_t tile_data_length = tile_cx * tile_cy * this->Bpp;
+                            
+                            // TODO: this case should not be possible
+                            if (tile_data_length > sizeof(tile_data))
+                            {
+                                LOG(LOG_ERR,
+                                    "VNC Encoding: ZRLE, tile buffer too small (%zu < %" PRIu16 ")",
+                                    sizeof(tile_data), tile_data_length);
+                                throw Error(ERR_BUFFER_TOO_SMALL);
+                            }
+
                             uint16_t   tile_data_length_remain = tile_data_length;
 
                             uint16_t   run_length    = 0;
@@ -789,7 +834,21 @@ namespace VNC {
                                 LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE");
                             }
 
-                            const uint8_t  * palette;
+                            const uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
+                            const uint16_t tile_cy = std::min<uint16_t>(this->cy_remain, 64);
+                            uint8_t         tile_data[2*16384];    // max size with 16 bpp
+                            const uint8_t * tile_data_p = tile_data;
+                            const uint16_t tile_data_length = tile_cx * tile_cy * this->Bpp;
+                            
+                            // TODO: this case should not be possible
+                            if (tile_data_length > sizeof(tile_data))
+                            {
+                                LOG(LOG_ERR,
+                                    "VNC Encoding: ZRLE, tile buffer too small (%zu < %" PRIu16 ")",
+                                    sizeof(tile_data), tile_data_length);
+                                throw Error(ERR_BUFFER_TOO_SMALL);
+                            }
+
                             const uint8_t    palette_count = subencoding - 128;
                             const uint16_t   palette_size  = palette_count * this->Bpp;
 
@@ -799,7 +858,7 @@ namespace VNC {
                                 throw Error(ERR_VNC_NEED_MORE_DATA);
                             }
 
-                            palette = uncompressed_data_buffer.in_uint8p(palette_size);
+                            const uint8_t * palette = uncompressed_data_buffer.in_uint8p(palette_size);
 
                             uint16_t   tile_data_length_remain = tile_data_length;
 
