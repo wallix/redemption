@@ -441,6 +441,12 @@ namespace VNC {
                             }
 
                             switch (subencoding) {
+                            //    0:  Raw pixel data. width * height pixel values follow (where width and height are the width and height of the tile):
+
+                            //        |  No. of bytes                   |  Type        |  Description |
+                            //        +---------------------------------+--------------+--------------+
+                            //        | width * height * bytesPerCPixel | CPIXEL array |    pixels    |
+                            //        ----------------------------------------------------------------+
                             case 0:
                             {
                                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
@@ -453,6 +459,23 @@ namespace VNC {
                                 }
 
                                 tile_data_p = uncompressed_data_buffer.in_uint8p(tile_data_length);
+
+                                {            
+                                    update_lock<gdi::GraphicApi> lock(drawable);
+                                    this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                }
+
+                                this->cx_remain -= tile_cx;
+                                this->tile_x    += tile_cx;
+
+                                if (!this->cx_remain)
+                                {
+                                    this->cx_remain =  this->cx;
+                                    this->cy_remain -= tile_cy;
+
+                                    this->tile_x =  this->x;
+                                    this->tile_y += tile_cy;
+                                }
                             }
                             break;
                             //    1:  A solid tile consisting of a single colour. The pixel value follows:
@@ -477,13 +500,33 @@ namespace VNC {
 
                                 uint8_t * tmp_tile_data = tile_data;
 
-                                for (int i = 0; i < tile_cx; i++, tmp_tile_data += this->Bpp)
+                                for (int i = 0; i < tile_cx; i++, tmp_tile_data += this->Bpp){
                                     memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
+                                }
 
                                 uint16_t line_size = tile_cx * this->Bpp;
 
-                                for (int i = 1; i < tile_cy; i++, tmp_tile_data += line_size)
+                                for (int i = 1; i < tile_cy; i++, tmp_tile_data += line_size){
                                     memcpy(tmp_tile_data, tile_data, line_size);
+                                }
+
+                                {            
+                                    update_lock<gdi::GraphicApi> lock(drawable);
+                                    this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                }
+
+                                this->cx_remain -= tile_cx;
+                                this->tile_x    += tile_cx;
+
+                                if (!this->cx_remain)
+                                {
+                                    this->cx_remain =  this->cx;
+                                    this->cy_remain -= tile_cy;
+
+                                    this->tile_x =  this->x;
+                                    this->tile_y += tile_cy;
+                                }
+
                             }
                             break;
                             case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9:
@@ -617,6 +660,24 @@ namespace VNC {
                                     tmp_tile_data           += this->Bpp;
                                     tile_data_length_remain -= this->Bpp;
                                 }
+
+                                {            
+                                    update_lock<gdi::GraphicApi> lock(drawable);
+                                    this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                }
+
+                                this->cx_remain -= tile_cx;
+                                this->tile_x    += tile_cx;
+
+                                if (!this->cx_remain)
+                                {
+                                    this->cx_remain =  this->cx;
+                                    this->cy_remain -= tile_cy;
+
+                                    this->tile_x =  this->x;
+                                    this->tile_y += tile_cy;
+                                }
+
                             }
                             break;
                                        case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
@@ -712,6 +773,23 @@ namespace VNC {
 
                                 assert(!run_length);
                                 assert(!tile_data_length_remain);
+
+                                {            
+                                    update_lock<gdi::GraphicApi> lock(drawable);
+                                    this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                }
+
+                                this->cx_remain -= tile_cx;
+                                this->tile_x    += tile_cx;
+
+                                if (!this->cx_remain)
+                                {
+                                    this->cx_remain =  this->cx;
+                                    this->cy_remain -= tile_cy;
+
+                                    this->tile_x =  this->x;
+                                    this->tile_y += tile_cy;
+                                }
                             }
                             break;
                             case 129:
@@ -817,28 +895,27 @@ namespace VNC {
 
                                 assert(!run_length);
                                 assert(!tile_data_length_remain);
+
+                                {            
+                                    update_lock<gdi::GraphicApi> lock(drawable);
+                                    this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                }
+
+                                this->cx_remain -= tile_cx;
+                                this->tile_x    += tile_cx;
+
+                                if (!this->cx_remain)
+                                {
+                                    this->cx_remain =  this->cx;
+                                    this->cy_remain -= tile_cy;
+
+                                    this->tile_x =  this->x;
+                                    this->tile_y += tile_cy;
+                                }
                             }
                             break;
                             } // switch subencoding
 
-                            {            
-                                update_lock<gdi::GraphicApi> lock(drawable);
-                                this->draw_tile(Rect(this->tile_x, this->tile_y,
-                                                     tile_cx, tile_cy),
-                                                tile_data_p, drawable);
-                            }
-
-                            this->cx_remain -= tile_cx;
-                            this->tile_x    += tile_cx;
-
-                            if (!this->cx_remain)
-                            {
-                                this->cx_remain =  this->cx;
-                                this->cy_remain -= tile_cy;
-
-                                this->tile_x =  this->x;
-                                this->tile_y += tile_cy;
-                            }
                         } // while
                     } // try
                     catch (Error const& e)
@@ -930,7 +1007,7 @@ RED_AUTO_TEST_CASE(TestZrle)
                     uint16_t cx = stream.in_uint16_be();
                     uint16_t cy = stream.in_uint16_be();
                     int32_t encoding = stream.in_sint32_be();
-                    encoder = new VNC::Encoder::Zrle(2 /* Bpp */, x, y, cx, cy, zd, VNCVerbose::basic_trace);
+                    encoder = new VNC::Encoder::Zrle(nbbytes(info.bpp), x, y, cx, cy, zd, VNCVerbose::basic_trace);
                     LOG(LOG_INFO, "Encoding: (%u, %u, %u, %u) : %d", x, y, cx, cy, encoding);
                     buf.advance(sz);
                     // Post Assertion: we have an encoder
