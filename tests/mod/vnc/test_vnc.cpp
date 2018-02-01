@@ -184,13 +184,13 @@ namespace VNC {
                     LOG(LOG_INFO, "zrle_update_context Bpp=%u x=%zu cx=%zu cx_remain=%zu, cy_remain=%zu tile_x=%zu tile_y=%zu", 
                         Bpp, x, cx, cx, cy, x, y);
 
-                    zrle_update_context.Bpp       = this->Bpp;
-                    zrle_update_context.x         = this->x;
-                    zrle_update_context.cx        = this->cx;
-                    zrle_update_context.cx_remain = this->cx;
-                    zrle_update_context.cy_remain = this->cy;
-                    zrle_update_context.tile_x    = this->x;
-                    zrle_update_context.tile_y    = this->y;
+                    zrle_update_context.zuc_Bpp       = this->Bpp;
+                    zrle_update_context.zuc_x         = this->x;
+                    zrle_update_context.zuc_cx        = this->cx;
+                    zrle_update_context.zuc_cx_remain = this->cx;
+                    zrle_update_context.zuc_cy_remain = this->cy;
+                    zrle_update_context.zuc_tile_x    = this->x;
+                    zrle_update_context.zuc_tile_y    = this->y;
 
                     size_t data_ready = 0;
                     size_t consumed = 0;
@@ -360,24 +360,24 @@ namespace VNC {
 
             struct ZRLEUpdateContext2
             {
-                uint8_t Bpp;
+                uint8_t zuc_Bpp;
 
-                uint16_t x;
-                uint16_t cx;
+                uint16_t zuc_x;
+                uint16_t zuc_cx;
 
-                uint16_t cx_remain;
-                uint16_t cy_remain;
+                uint16_t zuc_cx_remain;
+                uint16_t zuc_cy_remain;
 
-                uint16_t tile_x;
-                uint16_t tile_y;
+                uint16_t zuc_tile_x;
+                uint16_t zuc_tile_y;
 
-                StaticOutStream<16384> data_remain;
+                StaticOutStream<16384> zuc_data_remain;
 
-                VNCVerbose verbose;
+                VNCVerbose zuc_verbose;
 
-                ZRLEUpdateContext2(VNCVerbose verbose) : verbose(verbose) {}
+                ZRLEUpdateContext2(VNCVerbose verbose) : zuc_verbose(verbose) {}
 
-                bool is_first_membelt = true;
+                bool zuc_is_first_membelt = true;
 
                 void draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawable)
                 {
@@ -396,9 +396,9 @@ namespace VNC {
                             const Rect dst_tile(rect.x + x, rect.y + y, cx, cy);
                             const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
                             /// NOTE force resize cliping with rdesktop...
-                            if (this->is_first_membelt && dst_tile.cx != 1 && dst_tile.cy != 1) {
+                            if (this->zuc_is_first_membelt && dst_tile.cx != 1 && dst_tile.cy != 1) {
                                 drawable.draw(cmd2, Rect(dst_tile.x,dst_tile.y,1,1), tiled_bmp);
-                                this->is_first_membelt = false;
+                                this->zuc_is_first_membelt = false;
                             }
                             drawable.draw(cmd2, dst_tile, tiled_bmp);
                         }
@@ -417,12 +417,12 @@ namespace VNC {
                     {
                         while (uncompressed_data_buffer.in_remain())
                         {
-                            uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
-                            uint16_t tile_cy = std::min<uint16_t>(this->cy_remain, 64);
+                            uint16_t tile_cx = std::min<uint16_t>(this->zuc_cx_remain, 64);
+                            uint16_t tile_cy = std::min<uint16_t>(this->zuc_cy_remain, 64);
 
                             const uint8_t * tile_data_p = tile_data;
 
-                            uint16_t tile_data_length = tile_cx * tile_cy * this->Bpp;
+                            uint16_t tile_data_length = tile_cx * tile_cy * this->zuc_Bpp;
                             if (tile_data_length > sizeof(tile_data))
                             {
                                 LOG(LOG_ERR,
@@ -436,7 +436,7 @@ namespace VNC {
 
                             uint8_t   subencoding = uncompressed_data_buffer.in_uint8();
 
-                            if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                            if (bool(this->zuc_verbose & VNCVerbose::basic_trace)) {
                                 LOG(LOG_INFO, "VNC Encoding: ZRLE, subencoding = %u",  subencoding);
                             }
 
@@ -449,7 +449,7 @@ namespace VNC {
                             //        ----------------------------------------------------------------+
                             case 0:
                             {
-                                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                                if (bool(this->zuc_verbose & VNCVerbose::basic_trace)) {
                                     LOG(LOG_INFO, "VNC Encoding: ZRLE, Raw pixel data");
                                 }
 
@@ -462,19 +462,19 @@ namespace VNC {
 
                                 {            
                                     update_lock<gdi::GraphicApi> lock(drawable);
-                                    this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                    this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
                                 }
 
-                                this->cx_remain -= tile_cx;
-                                this->tile_x    += tile_cx;
+                                this->zuc_cx_remain -= tile_cx;
+                                this->zuc_tile_x    += tile_cx;
 
-                                if (!this->cx_remain)
+                                if (!this->zuc_cx_remain)
                                 {
-                                    this->cx_remain =  this->cx;
-                                    this->cy_remain -= tile_cy;
+                                    this->zuc_cx_remain =  this->zuc_cx;
+                                    this->zuc_cy_remain -= tile_cy;
 
-                                    this->tile_x =  this->x;
-                                    this->tile_y += tile_cy;
+                                    this->zuc_tile_x =  this->zuc_x;
+                                    this->zuc_tile_y += tile_cy;
                                 }
                             }
                             break;
@@ -486,25 +486,25 @@ namespace VNC {
                             //        +----------------+--------+------------------+
                             case 1:
                             {
-                                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                                if (bool(this->zuc_verbose & VNCVerbose::basic_trace)) {
                                     LOG(LOG_INFO,
                                         "VNC Encoding: ZRLE, Solid tile (single color)");
                                 }
 
-                                if (uncompressed_data_buffer.in_remain() < this->Bpp)
+                                if (uncompressed_data_buffer.in_remain() < this->zuc_Bpp)
                                 {
                                     throw Error(ERR_VNC_NEED_MORE_DATA);
                                 }
 
-                                const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->Bpp);
+                                const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->zuc_Bpp);
 
                                 uint8_t * tmp_tile_data = tile_data;
 
-                                for (int i = 0; i < tile_cx; i++, tmp_tile_data += this->Bpp){
-                                    memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
+                                for (int i = 0; i < tile_cx; i++, tmp_tile_data += this->zuc_Bpp){
+                                    memcpy(tmp_tile_data, cpixel_pattern, this->zuc_Bpp);
                                 }
 
-                                uint16_t line_size = tile_cx * this->Bpp;
+                                uint16_t line_size = tile_cx * this->zuc_Bpp;
 
                                 for (int i = 1; i < tile_cy; i++, tmp_tile_data += line_size){
                                     memcpy(tmp_tile_data, tile_data, line_size);
@@ -512,19 +512,19 @@ namespace VNC {
 
                                 {            
                                     update_lock<gdi::GraphicApi> lock(drawable);
-                                    this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                    this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
                                 }
 
-                                this->cx_remain -= tile_cx;
-                                this->tile_x    += tile_cx;
+                                this->zuc_cx_remain -= tile_cx;
+                                this->zuc_tile_x    += tile_cx;
 
-                                if (!this->cx_remain)
+                                if (!this->zuc_cx_remain)
                                 {
-                                    this->cx_remain =  this->cx;
-                                    this->cy_remain -= tile_cy;
+                                    this->zuc_cx_remain =  this->zuc_cx;
+                                    this->zuc_cy_remain -= tile_cy;
 
-                                    this->tile_x =  this->x;
-                                    this->tile_y += tile_cy;
+                                    this->zuc_tile_x =  this->zuc_x;
+                                    this->zuc_tile_y += tile_cy;
                                 }
 
                             }
@@ -553,7 +553,7 @@ namespace VNC {
                             //        for paletteSize of 3 or 4 this is floor((width + 3) / 4) * height, 
                             //        for paletteSize of 5 to 16 this is floor((width + 1) / 2) * height.
                             {
-                                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                                if (bool(this->zuc_verbose & VNCVerbose::basic_trace)) {
                                     LOG(LOG_INFO,
                                         "VNC Encoding: ZRLE, Packed palette types, "
                                             "palette size=%d",
@@ -562,7 +562,7 @@ namespace VNC {
 
                                 const uint8_t  * palette;
                                 const uint8_t    palette_count = subencoding;
-                                const uint16_t   palette_size  = palette_count * this->Bpp;
+                                const uint16_t   palette_size  = palette_count * this->zuc_Bpp;
 
                                 if (uncompressed_data_buffer.in_remain() < palette_size)
                                 {
@@ -604,7 +604,7 @@ namespace VNC {
 
                                 uint8_t palette_index;
 
-                                while (tile_data_length_remain >= this->Bpp)
+                                while (tile_data_length_remain >= this->zuc_Bpp)
                                 {
                                     pixel_remain--;
 
@@ -653,29 +653,29 @@ namespace VNC {
                                         pixel_remain = tile_cx;
                                     }
 
-                                    const uint8_t * cpixel_pattern = palette + palette_index * this->Bpp;
+                                    const uint8_t * cpixel_pattern = palette + palette_index * this->zuc_Bpp;
 
-                                    memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
+                                    memcpy(tmp_tile_data, cpixel_pattern, this->zuc_Bpp);
 
-                                    tmp_tile_data           += this->Bpp;
-                                    tile_data_length_remain -= this->Bpp;
+                                    tmp_tile_data           += this->zuc_Bpp;
+                                    tile_data_length_remain -= this->zuc_Bpp;
                                 }
 
                                 {            
                                     update_lock<gdi::GraphicApi> lock(drawable);
-                                    this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                    this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
                                 }
 
-                                this->cx_remain -= tile_cx;
-                                this->tile_x    += tile_cx;
+                                this->zuc_cx_remain -= tile_cx;
+                                this->zuc_tile_x    += tile_cx;
 
-                                if (!this->cx_remain)
+                                if (!this->zuc_cx_remain)
                                 {
-                                    this->cx_remain =  this->cx;
-                                    this->cy_remain -= tile_cy;
+                                    this->zuc_cx_remain =  this->zuc_cx;
+                                    this->zuc_cy_remain -= tile_cy;
 
-                                    this->tile_x =  this->x;
-                                    this->tile_y += tile_cy;
+                                    this->zuc_tile_x =  this->zuc_x;
+                                    this->zuc_tile_y += tile_cy;
                                 }
 
                             }
@@ -721,7 +721,7 @@ namespace VNC {
                             //        Where r is floor((runLength - 1) / 255).
                             case 128:
                             {
-                                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                                if (bool(this->zuc_verbose & VNCVerbose::basic_trace)) {
                                     LOG(LOG_INFO, "VNC Encoding: ZRLE, Plain RLE");
                                 }
 
@@ -730,15 +730,15 @@ namespace VNC {
                                 uint16_t   run_length    = 0;
                                 uint8_t  * tmp_tile_data = tile_data;
 
-                                while (tile_data_length_remain >= this->Bpp)
+                                while (tile_data_length_remain >= this->zuc_Bpp)
                                 {
 
-                                    if (uncompressed_data_buffer.in_remain() < this->Bpp)
+                                    if (uncompressed_data_buffer.in_remain() < this->zuc_Bpp)
                                     {
                                         throw Error(ERR_VNC_NEED_MORE_DATA);
                                     }
 
-                                    const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->Bpp);
+                                    const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->zuc_Bpp);
 
                                     run_length = 1;
 
@@ -758,12 +758,12 @@ namespace VNC {
 
                                     // LOG(LOG_INFO, "VNC Encoding: ZRLE, run length=%u", run_length);
 
-                                    while ((tile_data_length_remain >= this->Bpp) && run_length)
+                                    while ((tile_data_length_remain >= this->zuc_Bpp) && run_length)
                                     {
-                                        memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
+                                        memcpy(tmp_tile_data, cpixel_pattern, this->zuc_Bpp);
 
-                                        tmp_tile_data           += this->Bpp;
-                                        tile_data_length_remain -= this->Bpp;
+                                        tmp_tile_data           += this->zuc_Bpp;
+                                        tile_data_length_remain -= this->zuc_Bpp;
 
                                         run_length--;
                                     }
@@ -776,19 +776,19 @@ namespace VNC {
 
                                 {            
                                     update_lock<gdi::GraphicApi> lock(drawable);
-                                    this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                    this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
                                 }
 
-                                this->cx_remain -= tile_cx;
-                                this->tile_x    += tile_cx;
+                                this->zuc_cx_remain -= tile_cx;
+                                this->zuc_tile_x    += tile_cx;
 
-                                if (!this->cx_remain)
+                                if (!this->zuc_cx_remain)
                                 {
-                                    this->cx_remain =  this->cx;
-                                    this->cy_remain -= tile_cy;
+                                    this->zuc_cx_remain =  this->zuc_cx;
+                                    this->zuc_cy_remain -= tile_cy;
 
-                                    this->tile_x =  this->x;
-                                    this->tile_y += tile_cy;
+                                    this->zuc_tile_x =  this->zuc_x;
+                                    this->zuc_tile_y += tile_cy;
                                 }
                             }
                             break;
@@ -829,16 +829,17 @@ namespace VNC {
 
                             //        Where r is floor((runLength - 1) / 255).
                             {
-                                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                                if (bool(this->zuc_verbose & VNCVerbose::basic_trace)) {
                                     LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE");
                                 }
 
                                 const uint8_t  * palette;
                                 const uint8_t    palette_count = subencoding - 128;
-                                const uint16_t   palette_size  = palette_count * this->Bpp;
+                                const uint16_t   palette_size  = palette_count * this->zuc_Bpp;
 
                                 if (uncompressed_data_buffer.in_remain() < palette_size)
                                 {
+                                    LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE : need more data (1)");                                    
                                     throw Error(ERR_VNC_NEED_MORE_DATA);
                                 }
 
@@ -849,15 +850,16 @@ namespace VNC {
                                 uint16_t   run_length    = 0;
                                 uint8_t  * tmp_tile_data = tile_data;
 
-                                while (tile_data_length_remain >= this->Bpp)
+                                while (tile_data_length_remain >= this->zuc_Bpp)
                                 {
                                     if (uncompressed_data_buffer.in_remain() < 1)
                                     {
+                                        LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE : need more data (2)");                                    
                                         throw Error(ERR_VNC_NEED_MORE_DATA);
                                     }
 
                                     uint8_t         palette_index  = uncompressed_data_buffer.in_uint8();
-                                    const uint8_t * cpixel_pattern = palette + (palette_index & 0x7F) * this->Bpp;
+                                    const uint8_t * cpixel_pattern = palette + (palette_index & 0x7F) * this->zuc_Bpp;
 
                                     run_length = 1;
 
@@ -880,37 +882,37 @@ namespace VNC {
 
                                     // LOG(LOG_INFO, "VNC Encoding: ZRLE, run length=%u", run_length);
 
-                                    while ((tile_data_length_remain >= this->Bpp) && run_length)
+                                    while ((tile_data_length_remain >= this->zuc_Bpp) && run_length)
                                     {
-                                        memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
+                                        memcpy(tmp_tile_data, cpixel_pattern, this->zuc_Bpp);
 
-                                        tmp_tile_data           += this->Bpp;
-                                        tile_data_length_remain -= this->Bpp;
+                                        tmp_tile_data           += this->zuc_Bpp;
+                                        tile_data_length_remain -= this->zuc_Bpp;
 
                                         run_length--;
                                     }
                                 }
 
-                                // LOG(LOG_INFO, "VNC Encoding: ZRLE, run_length=%u", run_length);
+                                LOG(LOG_INFO, "VNC Encoding: ZRLE, run_length=%u", run_length);
 
                                 assert(!run_length);
                                 assert(!tile_data_length_remain);
 
                                 {            
                                     update_lock<gdi::GraphicApi> lock(drawable);
-                                    this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                    this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
                                 }
 
-                                this->cx_remain -= tile_cx;
-                                this->tile_x    += tile_cx;
+                                this->zuc_cx_remain -= tile_cx;
+                                this->zuc_tile_x    += tile_cx;
 
-                                if (!this->cx_remain)
+                                if (!this->zuc_cx_remain)
                                 {
-                                    this->cx_remain =  this->cx;
-                                    this->cy_remain -= tile_cy;
+                                    this->zuc_cx_remain =  this->zuc_cx;
+                                    this->zuc_cy_remain -= tile_cy;
 
-                                    this->tile_x =  this->x;
-                                    this->tile_y += tile_cy;
+                                    this->zuc_tile_x =  this->zuc_x;
+                                    this->zuc_tile_y += tile_cy;
                                 }
                             }
                             break;
@@ -925,7 +927,7 @@ namespace VNC {
                         }
                         else
                         {
-                            this->data_remain.out_copy_bytes(remaining_data, remaining_data_length);
+                            this->zuc_data_remain.out_copy_bytes(remaining_data, remaining_data_length);
                         }
                     }
                 }
@@ -1026,15 +1028,16 @@ RED_AUTO_TEST_CASE(TestZrle)
                 break;
             }
         }
-        LOG(LOG_INFO, "All data consumed");
-        drawable.save_to_png("vnc_first_len.png");
-        char message[4096] = {};
-        if (!redemption_unit_test__::check_sig(drawable.gd, message,
-                                "\xd6\x38\xee\x6a\xa7\x49\x9e\x06\xa3\x6d\x08\xd1\xf3\x82\x8d\x63\xad\x23\x9d\x2f")){
-            LOG(LOG_INFO, "signature mismatch: %s", message);
-            BOOST_CHECK(false);
-        }
     }
+    LOG(LOG_INFO, "All data consumed");
+    drawable.save_to_png("vnc_first_len.png");
+    char message[4096] = {};
+    if (!redemption_unit_test__::check_sig(drawable.gd, message,
+                            "\xd6\x38\xee\x6a\xa7\x49\x9e\x06\xa3\x6d\x08\xd1\xf3\x82\x8d\x63\xad\x23\x9d\x2f")){
+        LOG(LOG_INFO, "signature mismatch: %s", message);
+        BOOST_CHECK(false);
+    }
+
 }
 
 
