@@ -172,7 +172,7 @@ class OutFilenameSequenceTransport : public Transport
             if (fd < 0) {
                 throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
             }
-            LOG(LOG_INFO, "pngcapture=%s\n", this->current_filename_);
+            // LOG(LOG_INFO, "pngcapture=%s\n", this->current_filename_);
             // TODO PERF used fchmod
             if (chmod(this->current_filename_, this->groupid_ ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
                 LOG( LOG_ERR, "can't set file %s mod to %s : %s [%d]"

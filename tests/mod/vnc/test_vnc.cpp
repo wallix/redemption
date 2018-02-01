@@ -904,7 +904,7 @@ RED_AUTO_TEST_CASE(TestZrle)
     info.width = 1920;
     info.height = 34;
 
-    FakeGraphic drawable(info, 0);
+    FakeGraphic drawable(info, 20);
 
 
     auto state = VNC::Encoder::State::Encoding;
@@ -950,6 +950,7 @@ RED_AUTO_TEST_CASE(TestZrle)
         }
         LOG(LOG_INFO, "All data consumed");
         drawable.save_to_png("vnc_first_len.png");
+        check_sign(drawable, "Bitmap signature changed", "");
     }
 }
 

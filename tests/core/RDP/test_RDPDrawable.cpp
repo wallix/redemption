@@ -521,6 +521,7 @@ RED_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
     trans.next();
 
     dump_png24(trans, drawable, true);
+    trans.next();
 
     const char * filename;
 
@@ -659,6 +660,7 @@ RED_AUTO_TEST_CASE(TestSmallImage)
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), encode_color24()(BLUE)), scr, color_cxt);
     drawable.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), encode_color24()(WHITE)), scr, color_cxt);
     dump_png24(trans, drawable, true);
+    trans.next();
     const char * filename = trans.seqgen()->get(0);
     RED_CHECK_EQUAL(107, ::filesize(filename));
     ::unlink(filename);
@@ -697,6 +699,7 @@ RED_AUTO_TEST_CASE(TestScaleImage)
         trans, scaled_buffer.get(),
         scaled_width, scaled_height,
         scaled_width * 3, false);
+    trans.next();
 
     // TODO "check this: BGR/RGB problem i changed 8176 to 8162 to fix test"
     const char * filename = trans.seqgen()->get(0);
@@ -824,6 +827,7 @@ RED_AUTO_TEST_CASE(TestBogusBitmap)
 //     dump_png24("/tmp/test_bmp.png", drawable, true);
 
     dump_png24(trans, drawable, true);
+    trans.next();
     const char * filename = trans.seqgen()->get(0);
     RED_CHECK_EQUAL(4094, ::filesize(filename));
     ::unlink(filename);
@@ -873,6 +877,7 @@ RED_AUTO_TEST_CASE(TestBogusBitmap2)
     drawable.draw(RDPMemBlt(0, Rect(100, 100, bloc32x1.cx(), bloc32x1.cy()), 0xCC, 0, 0, 0), scr, bloc32x1);
 
     dump_png24(trans, drawable, true);
+    trans.next();
     const char * filename = trans.seqgen()->get(0);
     RED_CHECK_EQUAL(2913, ::filesize(filename));
     ::unlink(filename);
