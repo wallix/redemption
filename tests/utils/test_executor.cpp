@@ -802,12 +802,12 @@ RED_AUTO_TEST_CASE(TestNego)
         using namespace std::chrono_literals;
         TopExecutor2<> executor(reactor);
         executor.set_timeout(10ms);
-        auto& timer1 = executor.create_timer()
+        auto timer1 = executor.create_timer()
             .on_action(2ms, [](auto ctx){
                 TRACE;
                 return ctx.retry();
             });
-        auto& timer2 = executor.create_timer()
+        auto timer2 = executor.create_timer()
             .on_action(3ms, [](auto ctx){
                 TRACE;
                 return ctx.retry();
