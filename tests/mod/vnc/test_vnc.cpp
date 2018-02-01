@@ -358,8 +358,6 @@ namespace VNC {
 
             StaticOutStream<16384> data_remain;
 
-            bool is_first_membelt = true;
-
             void draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawable)
             {
                 const uint16_t TILE_CX = 32;
@@ -376,11 +374,6 @@ namespace VNC {
                         const Bitmap tiled_bmp(raw, rect.cx, rect.cy, 16, src_tile);
                         const Rect dst_tile(rect.x + x, rect.y + y, cx, cy);
                         const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
-                        /// NOTE force resize cliping with rdesktop...
-                        if (this->is_first_membelt && dst_tile.cx != 1 && dst_tile.cy != 1) {
-                            drawable.draw(cmd2, Rect(dst_tile.x,dst_tile.y,1,1), tiled_bmp);
-                            this->is_first_membelt = false;
-                        }
                         drawable.draw(cmd2, dst_tile, tiled_bmp);
                     }
                 }

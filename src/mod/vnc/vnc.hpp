@@ -183,7 +183,6 @@ private:
 
     bool allow_authentification_retries;
 
-    bool is_first_membelt = true;
     bool left_ctrl_pressed = false;
 
     bool     clipboard_requesting_for_data_is_delayed = false;
@@ -1999,8 +1998,6 @@ private:
 
                 this->state = WAIT_CLIENT_UP_AND_RUNNING;
                 this->event.set_trigger_time(wait_obj::NOW);
-
-                this->is_first_membelt = true;
                 break;
             case FrontAPI::ResizeResult::fail:
                 // resizing failed
@@ -4224,11 +4221,6 @@ private:
                 const Bitmap tiled_bmp(raw, rect.cx, rect.cy, this->bpp, src_tile);
                 const Rect dst_tile(rect.x + x, rect.y + y, cx, cy);
                 const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
-                /// NOTE force resize cliping with rdesktop...
-                if (this->is_first_membelt && dst_tile.cx != 1 && dst_tile.cy != 1) {
-                    drawable.draw(cmd2, Rect(dst_tile.x,dst_tile.y,1,1), tiled_bmp);
-                    this->is_first_membelt = false;
-                }
                 drawable.draw(cmd2, dst_tile, tiled_bmp);
             }
         }
