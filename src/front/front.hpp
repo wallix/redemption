@@ -632,6 +632,8 @@ private:
     bool session_resized = false;
 
 public:
+    bool ignore_rdesktop_bogus_clip = false;
+
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
     void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
     void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
@@ -651,8 +653,8 @@ public:
     void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override {
         // TODO: check if this is still necessary with current rdesktop (likely not)
         /// NOTE force resize cliping with rdesktop...
-        if (this->is_first_memblt){
-            this->draw_impl.draw(cmd, Rect(clip.x,clip.y,1,1), bmp);
+        if (this->is_first_memblt && !this->ignore_rdesktop_bogus_clip){
+            this->draw_impl(cmd, Rect(clip.x,clip.y,1,1), bmp);
             this->is_first_memblt = false;
         }
         this->draw_impl(cmd, clip, bmp);

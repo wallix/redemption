@@ -82,11 +82,11 @@ class ClientRedemption : public ClientRedemptionIOAPI
 
 public:
     // io API
-    ClientOutputGraphicAPI      * implClientOutputGraphic;
-    ClientIOClipboardAPI        * implClientIOClipboard;
-    ClientOutputSoundAPI        * implClientOutputSound;
-    ClientInputSocketAPI        * implClientInputSocket;
-    ClientInputMouseKeyboardAPI * implClientInputMouseKeyboard;
+    ClientOutputGraphicAPI      * impl_graphic;
+    ClientIOClipboardAPI        * impl_clipboard;
+    ClientOutputSoundAPI        * impl_sSound;
+    ClientInputSocketAPI        * impl_socket_listener;
+    ClientInputMouseKeyboardAPI * impl_mouse_keyboard;
 
 
 
@@ -102,7 +102,6 @@ public:
     Inifile ini;
     ClientExecute client_execute;
     std::unique_ptr<mod_api> unique_mod;
-
 
     enum : int {
         CHANID_CLIPDRD = 1601,
@@ -140,34 +139,35 @@ public:
     //------------------------
 
     ClientRedemption(char* argv[], int argc, RDPVerbose verbose,
-                    ClientOutputGraphicAPI *implClientOutputGraphic,
-                    ClientIOClipboardAPI * implClientIOClipboard,
-                    ClientOutputSoundAPI * implClientOutputSound,
-                    ClientInputSocketAPI * implClientInputSocket,
-                    ClientInputMouseKeyboardAPI * implClientInputMouseKeyboard)
+                    ClientOutputGraphicAPI *impl_graphic,
+                    ClientIOClipboardAPI * impl_clipboard,
+                    ClientOutputSoundAPI * impl_sSound,
+                    ClientInputSocketAPI * impl_socket_listener,
+                    ClientInputMouseKeyboardAPI * impl_mouse_keyboard)
         : ClientRedemptionIOAPI(argv, argc, verbose)
 
-        , implClientOutputGraphic( implClientOutputGraphic)
-        , implClientIOClipboard (implClientIOClipboard)
-        , implClientOutputSound (implClientOutputSound)
-        , implClientInputSocket (implClientInputSocket)
-        , implClientInputMouseKeyboard(implClientInputMouseKeyboard)
-
-        , clientChannelRDPSNDManager(this->verbose, this, this->implClientOutputSound)
-        , clientChannelCLIPRDRManager(this->verbose, this, this->implClientIOClipboard)
-        , clientChannelRDPDRManager(this->verbose, this)
-        , clientChannelRemoteAppManager(this->verbose, this, this->implClientOutputGraphic, this->implClientInputMouseKeyboard)
+        , impl_graphic( impl_graphic)
+        , impl_clipboard (impl_clipboard)
+        , impl_sSound (impl_sSound)
+        , impl_socket_listener (impl_socket_listener)
+        , impl_mouse_keyboard(impl_mouse_keyboard)
 
         , client_execute(*(this), this->info.window_list_caps, false)
+
+        , clientChannelRDPSNDManager(this->verbose, this, this->impl_sSound)
+        , clientChannelCLIPRDRManager(this->verbose, this, this->impl_clipboard)
+        , clientChannelRDPDRManager(this->verbose, this)
+        , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
+
         , is_apple(true)
         , exe_vnc(*(this),  this->windowListCaps,  false)
 
     {
-        this->implClientIOClipboard->set_client(this);
-        this->implClientOutputSound->set_client(this);
-        this->implClientInputSocket->set_client(this);
-        this->implClientInputMouseKeyboard->set_client(this);
-        this->implClientOutputGraphic->set_drawn_client(this);
+        this->impl_clipboard->set_client(this);
+        this->impl_sSound->set_client(this);
+        this->impl_socket_listener->set_client(this);
+        this->impl_mouse_keyboard->set_client(this);
+        this->impl_graphic->set_drawn_client(this);
 
         this->client_execute.set_verbose(bool( (RDPVerbose::rail & this->verbose) | (RDPVerbose::rail_dump & this->verbose) ));
 
@@ -202,7 +202,7 @@ public:
 
 
     virtual void update_keylayout() override {
-        this->implClientInputMouseKeyboard->update_keylayout();
+        this->impl_mouse_keyboard->update_keylayout();
         this->keymap.init_layout(this->info.keylayout);
     }
 
@@ -220,7 +220,7 @@ public:
 //     }
 
     void closeFromScreen() override {
-        this->implClientOutputGraphic->closeFromScreen();
+        this->impl_graphic->closeFromScreen();
     }
 
 
@@ -250,7 +250,7 @@ public:
         }
 
         if (this->replay_mod.get() == nullptr) {
-            this->implClientOutputGraphic->dropScreen();
+            this->impl_graphic->dropScreen();
             const std::string errorMsg("Cannot read movie \""+movie_name+ "\".");
             LOG(LOG_INFO, "%s", errorMsg.c_str());
             std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
@@ -261,7 +261,7 @@ public:
 
     void replay(std::string const & movie_dir_, std::string const & movie_path_) override {
         if (movie_path_.empty()) {
-             //this->implClientOutputGraphic->readError(movie_path_);
+             //this->impl_graphic->readError(movie_path_);
             return;
         }
 
@@ -271,16 +271,16 @@ public:
             this->info.width = this->replay_mod->get_dim().w;
             this->info.height = this->replay_mod->get_dim().h;
 
-            this->implClientOutputGraphic->reset_cache(this->info.width, this->info.height);
+            this->impl_graphic->reset_cache(this->info.width, this->info.height);
 
-            this->implClientOutputGraphic->create_screen(movie_dir_, movie_path_);
+            this->impl_graphic->create_screen(movie_dir_, movie_path_);
 
             //this->connected = true;
 
             if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
-                this->implClientInputMouseKeyboard->pre_load_movie();
+                this->impl_mouse_keyboard->pre_load_movie();
             }
-            this->implClientOutputGraphic->show_screen();
+            this->impl_graphic->show_screen();
         }
     }
 
@@ -292,10 +292,8 @@ public:
             this->mod = nullptr;
         }
 
-        if (this->implClientInputSocket != nullptr) {
-
-            this->implClientInputSocket->disconnect();
-            ;
+        if (this->impl_socket_listener != nullptr) {
+            this->impl_socket_listener->disconnect();
         }
 
         if (this->socket != nullptr) {
@@ -304,9 +302,8 @@ public:
             LOG(LOG_INFO, "Disconnected from [%s].", this->target_IP.c_str());
         }
 
-
-        this->implClientInputMouseKeyboard->set_ErrorMsg(error);
-        this->implClientInputMouseKeyboard->init_form();
+        this->impl_graphic->set_ErrorMsg(error);
+        this->impl_mouse_keyboard->init_form();
     }
 
 
@@ -398,8 +395,8 @@ public:
                     mod_rdp_params.use_client_provided_remoteapp = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
                     mod_rdp_params.use_session_probe_to_launch_remote_program = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
 
-                    this->info.width = this->implClientOutputGraphic->screen_max_width;
-                    this->info.height = this->implClientOutputGraphic->screen_max_height;
+                    this->info.width = this->impl_graphic->screen_max_width;
+                    this->info.height = this->impl_graphic->screen_max_height;
 
                     this->unique_mod.reset(new mod_rdp( *(this->socket)
                                                 , *(this)
@@ -522,6 +519,8 @@ public:
 
     virtual void connect() override {
 
+        this->mod_state = MOD_RDP_REMOTE_APP;
+
         this->clientChannelRemoteAppManager.clear();
         this->cl.clear_channels();
 
@@ -607,20 +606,21 @@ public:
 //             this->trans_cache->fill(Qt::transparent);
 
         if (this->mod_state != MOD_RDP_REMOTE_APP) {
-            this->implClientOutputGraphic->reset_cache(this->info.width, this->info.height);
+            this->impl_graphic->reset_cache(this->info.width, this->info.height);
+            this->impl_graphic->create_screen();
         } else {
-            this->implClientOutputGraphic->reset_cache(this->implClientOutputGraphic->screen_max_width, this->implClientOutputGraphic->screen_max_height);
+            this->impl_graphic->reset_cache(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
         }
-        this->implClientOutputGraphic->create_screen();
+
 
 
 
         if (this->init_mod()) {
 
-             if (this->implClientInputSocket->start_to_listen(this->client_sck, this->mod)) {
-//                 this->implClientOutputGraphic->form->hide();
+             if (this->impl_socket_listener->start_to_listen(this->client_sck, this->mod)) {
+//                 this->impl_graphic->form->hide();
                 if (mod_state != MOD_RDP_REMOTE_APP) {
-                    this->implClientOutputGraphic->show_screen();
+                    this->impl_graphic->show_screen();
                 }
                 this->connected = true;
 
@@ -630,14 +630,14 @@ public:
 
         const std::string errorMsgfail("Error: Mod Initialization failed.");
         std::string labelErrorMsg("<font color='Red'>"+errorMsgfail+"</font>");
-        this->implClientOutputGraphic->dropScreen();
+        this->impl_graphic->dropScreen();
         this->disconnect(labelErrorMsg);
     }
 
     void disconnexionReleased() override{
         this->is_replaying = false;
         this->connected = false;
-        this->implClientOutputGraphic->dropScreen();
+        this->impl_graphic->dropScreen();
         this->disconnect("");
 
     }
@@ -801,46 +801,62 @@ public:
 
 
     void draw(const RDP::RAIL::ActivelyMonitoredDesktop  & cmd) {
-        LOG(LOG_INFO, "RDP::RAIL::ActivelyMonitoredDesktop");
+        if (bool(this->verbose & RDPVerbose::rail_order)) {
+            LOG(LOG_INFO, "RDP::RAIL::ActivelyMonitoredDesktop");
+        }
         //cmd.log(LOG_INFO);
 
         this->clientChannelRemoteAppManager.draw(cmd);
     }
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) {
-        LOG(LOG_INFO, "RDP::RAIL::NewOrExistingWindow");
+        if (bool(this->verbose & RDPVerbose::rail_order)) {
+            LOG(LOG_INFO, "RDP::RAIL::NewOrExistingWindow");
+        }
 
         this->clientChannelRemoteAppManager.draw(cmd);
     }
 
     void draw(const RDP::RAIL::DeletedWindow            & cmd) {
-        LOG(LOG_INFO, "RDP::RAIL::DeletedWindow");
+        if (bool(this->verbose & RDPVerbose::rail_order)) {
+            LOG(LOG_INFO, "RDP::RAIL::DeletedWindow");
+        }
         //cmd.log(LOG_INFO);
         this->clientChannelRemoteAppManager.draw(cmd);
     }
 
     void draw(const RDP::RAIL::WindowIcon            & ) {
-        LOG(LOG_INFO, "RDP::RAIL::WindowIcon");
+        if (bool(this->verbose & RDPVerbose::rail_order)) {
+            LOG(LOG_INFO, "RDP::RAIL::WindowIcon");
+        }
 //         cmd.log(LOG_INFO);
     }
 
     void draw(const RDP::RAIL::CachedIcon            & ) {
-        LOG(LOG_INFO, "RDP::RAIL::CachedIcon");
+        if (bool(this->verbose & RDPVerbose::rail_order)) {
+            LOG(LOG_INFO, "RDP::RAIL::CachedIcon");
+        }
 //         cmd.log(LOG_INFO);
     }
 
     void draw(const RDP::RAIL::NewOrExistingNotificationIcons            & cmd) {
-        LOG(LOG_INFO, "RDP::RAIL::NewOrExistingNotificationIcons");
+        if (bool(this->verbose & RDPVerbose::rail_order)) {
+            LOG(LOG_INFO, "RDP::RAIL::NewOrExistingNotificationIcons");
+        }
         cmd.log(LOG_INFO);
     }
 
     void draw(const RDP::RAIL::DeletedNotificationIcons            & cmd) {
-        LOG(LOG_INFO, "RDP::RAIL::DeletedNotificationIcons");
+        if (bool(this->verbose & RDPVerbose::rail_order)) {
+            LOG(LOG_INFO, "RDP::RAIL::DeletedNotificationIcons");
+        }
         cmd.log(LOG_INFO);
     }
 
     void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) {
-        LOG(LOG_INFO, "RDP::RAIL::NonMonitoredDesktop");
+        if (bool(this->verbose & RDPVerbose::rail_order)) {
+            LOG(LOG_INFO, "RDP::RAIL::NonMonitoredDesktop");
+        }
         cmd.log(LOG_INFO);
     }
 
@@ -854,12 +870,9 @@ public:
     void callback() override {
 
         if (this->_recv_disconnect_ultimatum) {
-            this->implClientOutputGraphic->dropScreen();
+            this->impl_graphic->dropScreen();
             std::string labelErrorMsg("<font color='Red'>Disconnected by server</font>");
             this->disconnect(labelErrorMsg);
-//             delete(this->cache);
-//             this->cache = nullptr;
-//             this->trans_cache = nullptr;
             this->capture = nullptr;
             this->graph_capture = nullptr;
             this->_recv_disconnect_ultimatum = false;
@@ -870,7 +883,7 @@ public:
                 this->mod->draw_event(time(nullptr), *(this));
 
             } catch (const Error & e) {
-                this->implClientOutputGraphic->dropScreen();
+                this->impl_graphic->dropScreen();
                 const std::string errorMsg("Error: Connection to [" + this->target_IP +  "] is closed. Error "+ e.errmsg());
                 LOG(LOG_INFO, "%s", errorMsg.c_str());
                 std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
@@ -895,7 +908,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->implClientOutputGraphic->draw(cmd, clip, color_ctx);
+        this->impl_graphic->draw(cmd, clip, color_ctx);
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette));
@@ -913,7 +926,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->implClientOutputGraphic->draw(cmd, clip, color_ctx);
+        this->impl_graphic->draw(cmd, clip, color_ctx);
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette));
@@ -932,7 +945,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->implClientOutputGraphic->draw(bitmap_data, bmp);
+        this->impl_graphic->draw(bitmap_data, bmp);
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(bitmap_data, bmp);
@@ -950,7 +963,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->implClientOutputGraphic->draw(cmd, clip, color_ctx);
+        this->impl_graphic->draw(cmd, clip, color_ctx);
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette));
@@ -968,7 +981,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->implClientOutputGraphic->draw(cmd, clip);
+        this->impl_graphic->draw(cmd, clip);
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip);
@@ -986,7 +999,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
          }
 
-        this->implClientOutputGraphic->draw(cmd, clip, bitmap);
+        this->impl_graphic->draw(cmd, clip, bitmap);
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip, bitmap);
@@ -1004,7 +1017,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->implClientOutputGraphic->draw(cmd, clip, color_ctx, bitmap);
+        this->impl_graphic->draw(cmd, clip, color_ctx, bitmap);
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette), bitmap);
@@ -1026,7 +1039,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->implClientOutputGraphic->draw(cmd, clip);
+        this->impl_graphic->draw(cmd, clip);
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip);
@@ -1085,7 +1098,7 @@ public:
             LOG(LOG_INFO, "========================================\n");
          }
 
-        this->implClientOutputGraphic->draw(cmd, clip, color_ctx, gly_cache);
+        this->impl_graphic->draw(cmd, clip, color_ctx, gly_cache);
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette), gly_cache);
@@ -1174,7 +1187,7 @@ public:
     }
 
     void set_pointer(Pointer const & cursor) override {
-        this->implClientOutputGraphic->set_pointer(cursor);
+        this->impl_graphic->set_pointer(cursor);
     }
 
 //     void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
@@ -1188,14 +1201,14 @@ public:
 //     }
 
     ResizeResult server_resize(int width, int height, int bpp) override {
-        return this->implClientOutputGraphic->server_resize(width, height, bpp);
+        return this->impl_graphic->server_resize(width, height, bpp);
     }
 
     void end_update() override {
 
         if ((this->connected || this->is_replaying)) {
 
-            this->implClientOutputGraphic->end_update();
+            this->impl_graphic->end_update();
 
             if (this->is_recording && !this->is_replaying) {
                 this->graph_capture->end_update();

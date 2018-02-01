@@ -63,10 +63,7 @@ public:
     QPushButton    _buttonDisconnexion;
     QColor         _penColor;
     QPixmap      * _cache;
-    QPainter       _cache_painter;
-//     QPixmap        _trans_cache;
-//     QPainter       _trans_cache_painter;
-//     QPixmap        _match_pixmap;
+
     bool           _connexionLasted;
     QTimer         _timer;
     QTimer         _timer_replay;
@@ -150,7 +147,7 @@ public:
         , _buttonDisconnexion("Close", this)
         , _penColor(Qt::black)
         , _cache(cache)
-        , _cache_painter(this->_cache)
+//         , _cache_painter(this->_cache)
 //         , _trans_cache(this->_width, this->_height)
 //         , _trans_cache_painter(&(this->_trans_cache))
 //         , _match_pixmap(this->_width+2, this->_height+2)
@@ -178,7 +175,7 @@ public:
         this->setWindowTitle(QString(title.c_str()));
         this->setAttribute(Qt::WA_DeleteOnClose);
 //         this->_trans_cache.fill(Qt::transparent);
-        this->paintCache().fillRect(0, 0, this->_width, this->_height, {0, 0, 0});
+//         this->paintCache().fillRect(0, 0, this->_width, this->_height, {0, 0, 0});
 
         if (this->_front->is_spanning) {
             this->setWindowState(Qt::WindowFullScreen);
@@ -272,7 +269,7 @@ public:
         , _buttonDisconnexion("Disconnection", this)
         , _penColor(Qt::black)
         , _cache(cache)
-        , _cache_painter(this->_cache)
+//         , _cache_painter(this->_cache)
 //         , _trans_cache(this->_width, this->_height)
 //         , _match_pixmap(this->_width, this->_height)
         , _connexionLasted(false)
@@ -349,7 +346,7 @@ public:
         , _height(height)
         , _penColor(Qt::black)
         , _cache(cache/*this->_front->screen_max_width, this->_front->screen_max_height*/)
-        , _cache_painter(this->_cache)
+//         , _cache_painter(this->_cache)
 //         , _trans_cache(this->_width, this->_height)
 //         , _match_pixmap(cache->width(), cache->height())
         , _connexionLasted(false)
@@ -383,7 +380,7 @@ public:
             this->setFixedSize(this->_width, this->_height);
         }
 
-        this->paintCache().fillRect(0, 0, this->_width, this->_height, Qt::red/*{0, 0, 0}*/);
+//         this->paintCache().fillRect(0, 0, this->_width, this->_height, Qt::red/*{0, 0, 0}*/);
 
 //         QPainter painter(&(this->readding_bar));
 //         painter.fillRect(0, 0, this->reading_bar_len+12, READING_BAR_H, this->palette().color(QWidget::backgroundRole()));
@@ -473,22 +470,14 @@ public:
 
     void disconnection() {
         this->_connexionLasted = true;
+        this->close();
     }
-
-    QPainter & paintCache() {
-        return this->_cache_painter;
-    }
-
-//     QPainter & paintTransCache() {
-//         return this->_trans_cache_painter;
-//     }
 
     void paintEvent(QPaintEvent * event) override {
         Q_UNUSED(event);
 
         QPen                 pen;
-        QPainter             painter;
-        painter.begin(this);
+        QPainter             painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
         pen.setWidth(1);
         pen.setBrush(this->_penColor);
@@ -520,9 +509,9 @@ public:
         this->slotRepaint();
     }
 
-    QPixmap * getCache() {
-        return this->_cache;
-    }
+//     QPixmap * getCache() {
+//         return this->_cache;
+//     }
 
     void setPenColor(QColor color) {
         this->_penColor = color;
@@ -568,7 +557,7 @@ private:
                 this->_running = true;
                 this->is_paused = false;
 
-                this->_cache_painter.fillRect(0, 0, this->_width, this->_height, Qt::black);
+//                 this->_cache_painter.fillRect(0, 0, this->_width, this->_height, Qt::black);
                 this->_buttonCtrlAltDel.setText("Pause");
                 this->movie_status.setText("  Play ");
                 this->barRepaint(this->reading_bar_len, QColor(Qt::black));
@@ -593,7 +582,10 @@ private:
                     {
                         int last_balised = (this->begin/ BALISED_FRAME);
                         if (this->_front->load_replay_mod(this->_movie_dir, this->_movie_name, {last_balised * BALISED_FRAME, 0}, {0, 0})) {
-                            this->_cache_painter.drawPixmap(QPoint(0, 0), *(this->balises[last_balised]), QRect(0, 0, this->_width, this->_height));
+                            QPainter painter;
+                            painter.begin(this);
+                             painter.drawPixmap(QPoint(0, 0), *(this->balises[last_balised]), QRect(0, 0, this->_width, this->_height));
+                             painter.end();
                             this->_front->replay_mod->instant_play_client(std::chrono::microseconds(this->begin*1000000));
                             this->slotRepainMatch();
 
@@ -665,10 +657,12 @@ private:
     }
 
     void keyPressEvent(QKeyEvent *e) override {
+        //LOG(LOG_INFO, "loooooooooooooool keyPressEvent");
         this->impl_input->keyPressEvent(e->key(), e->text().toStdString()[0]);
     }
 
     void keyReleaseEvent(QKeyEvent *e) override {
+        //LOG(LOG_INFO, "loooooooooooooool keyReleaseEvent");
         this->impl_input->keyReleaseEvent(e->key(), e->text().toStdString()[0]);
     }
 
@@ -712,6 +706,7 @@ private:
 
 //                 this->mod->rdp_input_mouse(MOUSE_FLAG_MOVE, this->mouse_data.x, this->mouse_data.y, &(this->keymap));
 //             }
+//             LOG(LOG_INFO, "loooooooooooooool mouse move");
             this->_front->mouseMouveEvent(std::max(0, x), std::max(0, y) );
         }
 
@@ -823,13 +818,13 @@ public Q_SLOTS:
         this->show_video_real_time_hms();
 
         if (this->_front->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0})) {
-            this->_cache_painter.fillRect(0, 0, this->_width, this->_height, Qt::black);
+//             this->_cache_painter.fillRect(0, 0, this->_width, this->_height, Qt::black);
             this->slotRepainMatch();
         }
     }
 
     void disconnexionRelease(){
-        this->paintCache().end();
+//         this->paintCache().end();
         this->_front->disconnexionReleased();
     }
 

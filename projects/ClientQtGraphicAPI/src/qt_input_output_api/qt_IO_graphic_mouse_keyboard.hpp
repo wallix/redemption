@@ -88,12 +88,14 @@ public:
     Form_Qt            * form;
     Screen_Qt          * screen;
     QPixmap              cache;
+    ProgressBarWindow  * bar;
+    QPainter             painter;
     QImage cursor_image;
     std::map<uint32_t, Screen_Qt *> remote_app_screen_map;
     //     QPixmap            * trans_cache;
 
     Qt_ScanCode_KeyMap   qtRDPKeymap;
-    ProgressBarWindow  * bar;
+
 
 
 
@@ -111,12 +113,10 @@ public:
       , form(nullptr)
       , screen(nullptr)
 //       , trans_cache(nullptr)
-//       , _timer(0)
       , qtRDPKeymap()
 
     {
         this->form = new Form_Qt(this);
-
     }
 
     virtual void set_drawn_client(ClientRedemptionIOAPI * client) override {
@@ -138,7 +138,9 @@ public:
     }
 
     virtual void reset_cache(int w,  int h) override {
+            this->painter.end();
             this->cache = QPixmap(w, h);
+            this->painter.begin(&(this->cache));
     }
 
     virtual void create_screen() override {
@@ -157,10 +159,10 @@ public:
         new DialogOptions_Qt(this->drawn_client, this->form);
     }
 
-     void dropScreen() override {
+    void dropScreen() override {
         if (this->screen != nullptr) {
             this->screen->disconnection();
-            this->screen->close();
+//             this->screen->close();
             this->screen = nullptr;
         }
     }
@@ -188,7 +190,6 @@ public:
         this->form->set_PWDField(this->client->user_password);
         this->form->set_userNameField(this->client->user_name);
         this->form->show();
-
     }
 
 
@@ -252,7 +253,6 @@ public:
     void dropScreen(uint32_t id) override {
         if (this->remote_app_screen_map[id] != nullptr) {
             this->remote_app_screen_map[id]->disconnection();
-            this->remote_app_screen_map[id]->close();
             this->remote_app_screen_map[id] = nullptr;
         }
 
@@ -264,13 +264,12 @@ public:
         for (std::map<uint32_t, Screen_Qt *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
             if (it->second) {
                 it->second->disconnection();
-                it->second->close();
+                it->second = nullptr;
             }
         }
         this->remote_app_screen_map.clear();
 
-        this->screen->disconnection();
-        this->screen->close();
+        this->form->show();
     }
 
 
@@ -356,7 +355,6 @@ public:
                 this->client->info.width = width;
                 this->client->info.height = height;
                 if (this->screen) {
-                    this->screen->disconnection();
                     this->dropScreen();
                 }
 
@@ -406,6 +404,7 @@ public:
         uint8_t data[Pointer::DATA_SIZE*4];
 
         for (int i = 0; i < Pointer::DATA_SIZE; i += 4) {
+//             LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!   %d", i );
             data[i  ] = data_data[i+2];
             data[i+1] = data_data[i+1];
             data[i+2] = data_data[i  ];
@@ -422,8 +421,7 @@ public:
                         it->second->set_mem_cursor(static_cast<uchar *>(data), cursor.x, cursor.y);
                     }
                 }
-            }
-            if (this->screen) {
+            } else if (this->screen) {
                 this->screen->set_mem_cursor(static_cast<uchar *>(data), cursor.x, cursor.y);
             }
         }
@@ -456,7 +454,7 @@ public:
     }
 
 //     void answer_question(int color) {
-//         QImage image = this->screen->getCache()->toImage();
+//         QImage image = this->cache.toImage();
 //
 //         QRgb asked(color);
 //
@@ -596,7 +594,7 @@ public:
         if (this->screen) {
             QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
             QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
-            QImage dstBitmap(this->screen->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
+            QImage dstBitmap(this->cache.toImage().copy(drect.x, drect.y, mincx, mincy));
 
             if (bitmap.bpp() == 24) {
                 srcBitmap = srcBitmap.rgbSwapped();
@@ -624,8 +622,8 @@ public:
             QImage image(data, mincx, mincy, srcBitmapMirrored.format());
             QRect trect(drect.x, drect.y, mincx, mincy);
 
-            if ((this->client->connected || this->client->is_replaying) && this->screen) {
-                this->screen->paintCache().drawImage(trect, image);
+            if (this->client->connected || this->client->is_replaying) {
+                this->painter.drawImage(trect, image);
             }
 
             delete[](data);
@@ -657,20 +655,20 @@ public:
         }
 
         const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-        if ((this->client->connected || this->client->is_replaying) && this->screen) {
-             this->screen->paintCache().drawImage(trect, qbitmap);
+        if (this->client->connected || this->client->is_replaying) {
+             this->painter.drawImage(trect, qbitmap);
         }
     }
 
 
     void draw_RDPScrBlt(int srcx, int srcy, const Rect & drect, bool invert) {
-        QImage qbitmap(this->screen->getCache()->toImage().copy(srcx, srcy, drect.cx, drect.cy));
+        QImage qbitmap(this->cache.toImage().copy(srcx, srcy, drect.cx, drect.cy));
         if (invert) {
             qbitmap.invertPixels();
         }
         const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-        if ((this->client->connected || this->client->is_replaying) && this->screen) {
-            this->screen->paintCache().drawImage(trect, qbitmap);
+        if (this->client->connected || this->client->is_replaying) {
+            this->painter.drawImage(trect, qbitmap);
         }
     }
 
@@ -703,20 +701,20 @@ public:
 
     void draw_RDPPatBlt(const Rect & rect, const QColor color, const QPainter::CompositionMode mode, const Qt::BrushStyle style) {
         QBrush brush(color, style);
-        if ((this->client->connected || this->client->is_replaying) && this->screen) {
-            this->screen->paintCache().setBrush(brush);
-            this->screen->paintCache().setCompositionMode(mode);
-            this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-            this->screen->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
-            this->screen->paintCache().setBrush(Qt::SolidPattern);
+        if (this->client->connected || this->client->is_replaying) {
+            this->painter.setBrush(brush);
+            this->painter.setCompositionMode(mode);
+            this->painter.drawRect(rect.x, rect.y, rect.cx, rect.cy);
+            this->painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+            this->painter.setBrush(Qt::SolidPattern);
         }
     }
 
     void draw_RDPPatBlt(const Rect & rect, const QPainter::CompositionMode mode) {
-        if ((this->client->connected || this->client->is_replaying) && this->screen) {
-            this->screen->paintCache().setCompositionMode(mode);
-            this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-            this->screen->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
+        if (this->client->connected || this->client->is_replaying) {
+            this->painter.setCompositionMode(mode);
+            this->painter.drawRect(rect.x, rect.y, rect.cx, rect.cy);
+            this->painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
         }
     }
 
@@ -747,12 +745,12 @@ public:
                 case 0x5A:
                     {
                         QBrush brush(backColor, Qt::Dense4Pattern);
-                        if ((this->client->connected || this->client->is_replaying) && this->screen) {
-                            this->screen->paintCache().setBrush(brush);
-                            this->screen->paintCache().setCompositionMode(QPainter::RasterOp_SourceXorDestination);
-                            this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-                            this->screen->paintCache().setCompositionMode(QPainter::CompositionMode_SourceOver);
-                            this->screen->paintCache().setBrush(Qt::SolidPattern);
+                        if (this->client->connected || this->client->is_replaying) {
+                            this->painter.setBrush(brush);
+                            this->painter.setCompositionMode(QPainter::RasterOp_SourceXorDestination);
+                            this->painter.drawRect(rect.x, rect.y, rect.cx, rect.cy);
+                            this->painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+                            this->painter.setBrush(Qt::SolidPattern);
                         }
                     }
                     break;
@@ -763,13 +761,13 @@ public:
                 // +------+-------------------------------+
                 case 0xF0:
                     {
-                        if ((this->client->connected || this->client->is_replaying) && this->screen) {
+                        if (this->client->connected || this->client->is_replaying) {
                             QBrush brush(foreColor, Qt::Dense4Pattern);
-                            this->screen->paintCache().setPen(Qt::NoPen);
-                            this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
-                            this->screen->paintCache().setBrush(brush);
-                            this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
-                            this->screen->paintCache().setBrush(Qt::SolidPattern);
+                            this->painter.setPen(Qt::NoPen);
+                            this->painter.fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
+                            this->painter.setBrush(brush);
+                            this->painter.drawRect(rect.x, rect.y, rect.cx, rect.cy);
+                            this->painter.setBrush(Qt::SolidPattern);
                         }
                     }
                     break;
@@ -781,8 +779,8 @@ public:
             switch (cmd.rop) {
 
                 case 0x00: // blackness
-                    if ((this->client->connected || this->client->is_replaying) && this->screen) {
-                        this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::black);
+                    if (this->client->connected || this->client->is_replaying) {
+                        this->painter.fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::black);
                     }
                     break;
                     // +------+-------------------------------+
@@ -856,10 +854,10 @@ public:
                     // |      | RPN: P                        |
                     // +------+-------------------------------+
                 case 0xF0:
-                    if ((this->client->connected || this->client->is_replaying) && this->screen) {
-                        this->screen->paintCache().setPen(Qt::NoPen);
-                        this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
-                        this->screen->paintCache().drawRect(rect.x, rect.y, rect.cx, rect.cy);
+                    if (this->client->connected || this->client->is_replaying) {
+                        this->painter.setPen(Qt::NoPen);
+                        this->painter.fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
+                        this->painter.drawRect(rect.x, rect.y, rect.cx, rect.cy);
                     }
                     break;
                     // +------+-------------------------------+
@@ -878,8 +876,8 @@ public:
                     break;
 
                 case 0xFF: // whiteness
-                    if ((this->client->connected || this->client->is_replaying) && this->screen) {
-                        this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::white);
+                    if (this->client->connected || this->client->is_replaying) {
+                        this->painter.fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::white);
                     }
                     break;
                 default: LOG(LOG_WARNING, "RDPPatBlt rop = %x", cmd.rop);
@@ -891,17 +889,16 @@ public:
 
     void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
 
-        if ((this->client->connected || this->client->is_replaying) && this->screen) {
+        if (this->client->connected || this->client->is_replaying) {
             QColor qcolor(this->u32_to_qcolor(cmd.color, color_ctx));
             Rect rect(cmd.rect.intersect(clip));
 
-            this->screen->paintCache().fillRect(rect.x, rect.y, rect.cx, rect.cy, qcolor);
+            this->painter.fillRect(rect.x, rect.y, rect.cx, rect.cy, qcolor);
         }
     }
 
 
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
-        //std::cout << "RDPBitmapData" << std::endl;
         if (!bmp.is_valid()){
             return;
         }
@@ -933,8 +930,8 @@ public:
 
         qbitmap = qbitmap.mirrored(false, true);
         QRect trect(drect.x, drect.y, mincx, mincy);
-        if ((this->client->connected || this->client->is_replaying) && this->screen) {
-            this->screen->paintCache().drawImage(trect, qbitmap);
+        if (this->client->connected || this->client->is_replaying) {
+            this->painter.drawImage(trect, qbitmap);
         }
 
     }
@@ -944,10 +941,10 @@ public:
         (void) clip;
 
         // TODO clipping
-        if ((this->client->connected || this->client->is_replaying) && this->screen) {
+        if (this->client->connected || this->client->is_replaying) {
             this->screen->setPenColor(this->u32_to_qcolor(cmd.back_color, color_ctx));
 
-            this->screen->paintCache().drawLine(cmd.startx, cmd.starty, cmd.endx, cmd.endy);
+            this->painter.drawLine(cmd.startx, cmd.starty, cmd.endx, cmd.endy);
         }
 
     }
@@ -968,8 +965,8 @@ public:
         switch (cmd.rop) {
 
             case 0x00:
-                if ((this->client->connected || this->client->is_replaying) && this->screen) {
-                    this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
+                if (this->client->connected || this->client->is_replaying) {
+                    this->painter.fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
                 }
                 break;
 
@@ -983,8 +980,8 @@ public:
                 break;
 
             case 0xFF:
-                if ((this->client->connected || this->client->is_replaying) && this->screen) {
-                    this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
+                if (this->client->connected || this->client->is_replaying) {
+                    this->painter.fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
                 }
                 break;
             default: LOG(LOG_WARNING, "DEFAULT: RDPScrBlt rop = %x", cmd.rop);
@@ -1004,8 +1001,8 @@ public:
         switch (cmd.rop) {
 
             case 0x00:
-                if ((this->client->connected || this->client->is_replaying) && this->screen) {
-                    this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
+                if (this->client->connected || this->client->is_replaying) {
+                    this->painter.fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
                 }
                 break;
 
@@ -1041,8 +1038,8 @@ public:
                 break;
 
             case 0xFF:
-                if ((this->client->connected || this->client->is_replaying) && this->screen) {
-                    this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
+                if (this->client->connected || this->client->is_replaying) {
+                    this->painter.fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
                 }
                 break;
 
@@ -1078,8 +1075,8 @@ public:
                 int rowYCoord(drect.y + drect.cy-1);
                 const QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), true));
 
-                if ((this->client->connected || this->client->is_replaying) && this->screen) {
-                    QImage dstBitmap(this->screen->getCache()->toImage().copy(drect.x, drect.y, mincx, mincy));
+                if (this->client->connected || this->client->is_replaying) {
+                    QImage dstBitmap(this->cache.toImage().copy(drect.x, drect.y, mincx, mincy));
                     QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
                     srcBitmap = srcBitmap.convertToFormat(QImage::Format_RGB888);
                     dstBitmap = dstBitmap.convertToFormat(QImage::Format_RGB888);
@@ -1104,7 +1101,7 @@ public:
                         }
                         QRect trect(drect.x, rowYCoord, mincx, 1);
 
-                        this->screen->paintCache().drawImage(trect, image);
+                        this->painter.drawImage(trect, image);
 
                         rowYCoord--;
                     }
@@ -1125,8 +1122,8 @@ public:
 
         switch (cmd.rop) {
             case 0x00: // blackness
-                if ((this->client->connected || this->client->is_replaying) && this->screen) {
-                    this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
+                if (this->client->connected || this->client->is_replaying) {
+                    this->painter.fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
                 }
                 break;
             case 0x55:                                         // inversion
@@ -1135,8 +1132,8 @@ public:
             case 0xAA: // change nothing
                 break;
             case 0xFF: // whiteness
-                if ((this->client->connected || this->client->is_replaying) && this->screen) {
-                    this->screen->paintCache().fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
+                if (this->client->connected || this->client->is_replaying) {
+                    this->painter.fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
 
                 }
                 break;
@@ -1169,6 +1166,8 @@ public:
     }
 
     void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override {
+        (void) cmd;
+        (void) clip;
 
         LOG(LOG_WARNING, "DEFAULT: RDPMultiScrBlt");
     }
@@ -1192,8 +1191,8 @@ public:
             if ((ajusted.cx > 1) && (ajusted.cy > 1)) {
                 ajusted.cy--;
                 ajusted = ajusted.intersect(screen_rect);
-                 if ((this->client->connected || this->client->is_replaying) && this->screen) {
-                    this->screen->paintCache().fillRect(ajusted.x, ajusted.y, ajusted.cx, ajusted.cy, this->u32_to_qcolor(cmd.fore_color, color_ctx));
+                 if (this->client->connected || this->client->is_replaying) {
+                    this->painter.fillRect(ajusted.x, ajusted.y, ajusted.cx, ajusted.cy, this->u32_to_qcolor(cmd.fore_color, color_ctx));
                  }
             }
         }
@@ -1256,8 +1255,8 @@ public:
                                 if (clip.contains_pt(x + fc.offset + xx, y + fc.baseline + yy)
                                 && (fc_bit_mask & *fc_data))
                                 {
-                                    if ((this->client->connected || this->client->is_replaying) && this->screen) {
-                                        this->screen->paintCache().fillRect(x + fc.offset + xx, y + fc.baseline + yy, 1, 1, color);
+                                    if (this->client->connected || this->client->is_replaying) {
+                                        this->painter.fillRect(x + fc.offset + xx, y + fc.baseline + yy, 1, 1, color);
                                     }
                                 }
                                 fc_bit_mask >>= 1;
@@ -1348,7 +1347,7 @@ public:
         LOG(LOG_INFO, "DEFAULT: FrameMarker");
     }
 
-    void draw(RDPNineGrid const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {
+    virtual void draw(RDPNineGrid const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {
         LOG(LOG_INFO, "DEFAULT: RDPNineGrid");
     }
 

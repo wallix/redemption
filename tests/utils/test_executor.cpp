@@ -29,7 +29,7 @@
 
 #include <iostream>
 
-#define TRACE_n(n) std::cout << "\x1b[32m" << n << "\x1b[0m\n"
+// #define TRACE_n(n) std::cout << "\x1b[32m" << n << "\x1b[0m\n"
 #define TRACE_II(x) std::cout << "\x1b[31m" #x "\x1b[0m\n"
 #define TRACE_I(x) TRACE_II(x)
 #define TRACE TRACE_I(__LINE__)
@@ -460,8 +460,7 @@ public:
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
     }
 
-    using ActionCtx = ExecutorActionContext<detail::tuple<
-        NewRdpNego&, TpduBuffer&, Transport&, ServerCert>>;
+    using ActionCtx = Executor2ActionContext<NewRdpNego&, TpduBuffer&, Transport&, ServerCert>;
 
     static ExecutorResult exec_recv_data(ActionCtx ctx)
     {
@@ -787,29 +786,145 @@ RED_AUTO_TEST_CASE(TestNego)
 
     logtrans.disable_remaining_error();
 
+#if defined(__GNUC__) && ! defined(__clang__)
+    #define PP_CAT_I(a, b) a##b
+    #define PP_CAT(a, b) PP_CAT_I(a, b)
+    // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=71332
+    #define UNUSED_VARIADIC() [[maybe_unused]] auto&&... \
+        PP_CAT(auto_variadic_, PP_CAT(__LINE__, PP_CAT(_, __COUNTER__)))
+#else
+    #define UNUSED_VARIADIC() auto&&...
+#endif
 
-    Executor executor;
+    Reactor reactor;
 
-    executor.initial_executor(
-        std::ref(nego), std::ref(buf), std::ref(logtrans), ServerCert{
+    {
+        using namespace std::chrono_literals;
+        TopExecutor2<> executor(reactor);
+        executor.set_timeout(10ms);
+        auto& timer1 = executor.create_timer()
+            .on_action(2ms, [](auto ctx){
+                TRACE;
+                return ctx.retry();
+            });
+        auto& timer2 = executor.create_timer()
+            .on_action(3ms, [](auto ctx){
+                TRACE;
+                return ctx.retry();
+            });
+        RED_CHECK_EQ(executor.get_next_timeout().count(), 2);
+    }
+
+
+
+    reactor.create_executor(0, std::ref(nego), std::ref(buf), std::ref(logtrans), ServerCert{
+        server_cert_store,
+        ServerCertCheck::always_succeed,
+        "/tmp/certif",
+        null_server_notifier
+    })
+        .on_action([](auto ctx, UNUSED_VARIADIC()){
+            TRACE;
+            ctx.create_timer()
+                .on_action(std::chrono::milliseconds{}, [](auto ctx){
+                    TRACE;
+                    return ctx.retry();
+                });
+            return ctx.exit_on_success();
+        })
+        .on_exit([](auto ctx, ExecutorError error, UNUSED_VARIADIC()) {
+            TRACE;
+            RED_CHECK_EQ(error, ExecutorError::NoError);
+            return ctx.exit_on_success();
+        })
+        .on_timeout({}, [](auto ctx, UNUSED_VARIADIC()) {
+            TRACE;
+            return ctx.exit_on_success();
+        })
+        .exec_all()
+    ;
+
+    std::cout << "-----\n";
+
+    {
+        auto* executor = TopExecutor2<>::New(reactor);
+        executor->set_on_action([](auto ctx, UNUSED_VARIADIC()){
+            TRACE;
+            return ctx.exit_on_success();
+        });
+        executor->set_on_exit([](auto ctx, ExecutorError error, UNUSED_VARIADIC()) {
+            TRACE;
+            RED_CHECK_EQ(error, ExecutorError::NoError);
+            return ctx.exit_on_success();
+        });
+        executor->exec_all();
+        executor->delete_self();
+    }
+
+    std::cout << "-----\n";
+
+    auto&& ee = reactor.create_executor(0, std::ref(nego), std::ref(buf), std::ref(logtrans), ServerCert{
+        server_cert_store,
+        ServerCertCheck::always_succeed,
+        "/tmp/certif",
+        null_server_notifier
+    })
+        .on_action([](auto ctx, UNUSED_VARIADIC()){
+            TRACE;
+            return ctx.exec_sub_executor(0)
+                .on_action([](auto ctx, int& i){
+                    TRACE;
+                    if (++i < 2) {
+                        return ctx.retry();
+                    }
+                    return ctx.exit_on_success();
+                    //return nego.exec_recv_data(ctx);
+                })
+                .on_exit([](auto ctx, ExecutorError error, int) {
+                    TRACE;
+                    RED_CHECK_EQ(error, ExecutorError::NoError);
+                    return ctx.exit_on_success();
+                })
+            ;
+        })
+        .on_exit([](auto ctx, ExecutorError error, UNUSED_VARIADIC()) {
+            TRACE;
+            RED_CHECK_EQ(error, ExecutorError::NoError);
+            return ctx.exit_on_success();
+        })
+        .on_timeout({}, [](auto ctx, UNUSED_VARIADIC()) {
+            TRACE;
+            return ctx.exit_on_success();
+        })
+    ;
+    ee.exec_all();
+    std::cout << "-----\n";
+    ee.exec_all();
+
+    std::cout << "-----\n";
+
+    reactor.create_executor(
+        0, std::ref(nego), std::ref(buf), std::ref(logtrans), ServerCert{
             server_cert_store,
             ServerCertCheck::always_succeed,
             "/tmp/certif",
             null_server_notifier
         }
     )
-        .on_action([](auto ctx, NewRdpNego& nego, auto&&...){
+        .on_action([](auto ctx, NewRdpNego& nego, UNUSED_VARIADIC()){
             TRACE;
             return nego.exec_recv_data(ctx);
         })
-        .on_exit([](auto ctx, bool b, NewRdpNego&, TpduBuffer&, Transport&, ServerCert const&) {
+        .on_exit([](auto ctx, ExecutorError error, UNUSED_VARIADIC()) {
             TRACE;
-            RED_CHECK(b);
+            RED_CHECK_EQ(ExecutorError::NoError, error);
             return ctx.exit_on_success();
         })
-    ;
-
-    executor.exec_all();
+        .on_timeout({}, [](auto ctx, UNUSED_VARIADIC()){
+            TRACE;
+            return ctx.exit_on_success();
+        })
+    .exec_all();
 
     buf.consume_current_packet();
     RED_CHECK_EQUAL(0, buf.remaining());
@@ -840,7 +955,7 @@ RED_AUTO_TEST_CASE(TestNego)
 //
 //     Executor executor;
 //
-// //     executor.initial_executor(std::ref(nego), std::ref(buf), std::ref(trans), std::ref(cert))
+// //     executor.create_executor(std::ref(nego), std::ref(buf), std::ref(trans), std::ref(cert))
 // //         .on_action([](auto ctx, NewRdpNego& nego, TpduBuffer& buf, Transport& trans, ServerCert const& cert){
 // //             TRACE;
 // //             if (nego.recv_data(buf, trans, cert)) {
@@ -864,7 +979,7 @@ RED_AUTO_TEST_CASE(TestNego)
 // //     executor.exec_all();
 //
 //
-//     executor.initial_executor(1, 2)
+//     executor.create_executor(1, 2)
 //         .on_action([](auto ctx, int, int){
 //             TRACE;
 //             return ctx.sub_executor(0)
@@ -898,7 +1013,7 @@ RED_AUTO_TEST_CASE(TestNego)
 //     executor.exec_all();
 //
 //
-//     executor.initial_executor(0)
+//     executor.create_executor(0)
 //         .on_action(
 //             sequence_executor([](auto ctx, int& n){
 //                 ++n;

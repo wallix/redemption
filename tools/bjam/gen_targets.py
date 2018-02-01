@@ -36,6 +36,7 @@ src_requirements = dict((
     #('libscytale', '<library>log_print.o'),
     ('tests/includes/test_only/front/fake_front.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'),
     ('tests/includes/test_only/fake_graphic.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'),
+    ('src/capture/video_recorder.cpp', '<cxxflags>-Wno-deprecated-declarations'),
 ))
 
 target_requirements = dict((
@@ -43,6 +44,7 @@ target_requirements = dict((
     ('libredrec', '<library>log.o'),
 ))
 
+# because include a .cpp file...
 remove_requirements = dict((
     ('tests/capture/test_capture.cpp', '<library>src/capture/capture.o'),
     ('tests/utils/test_rle.cpp', '<library>src/utils/rle.o'),
@@ -100,25 +102,21 @@ user_lib_prefix = (
     ('ppocr/', 'ppocr'),
 )
 
-def get_system_lib(inc):
-    if inc in sys_lib_assoc:
-        return sys_lib_assoc[inc]
+def get_lib(inc, lib_assoc, lib_prefix):
+    if inc in lib_assoc:
+        return lib_assoc[inc]
 
-    for t in sys_lib_prefix:
+    for t in lib_prefix:
         if start_with(inc, t[0]):
             return t[1]
 
     return None
+
+def get_system_lib(inc):
+    return get_lib(inc, sys_lib_assoc, sys_lib_prefix)
 
 def get_user_lib(inc):
-    if inc in user_lib_assoc:
-        return user_lib_assoc[inc]
-
-    for t in user_lib_prefix:
-        if start_with(inc, t[0]):
-            return t[1]
-
-    return None
+    return get_lib(inc, user_lib_assoc, user_lib_prefix)
 
 
 class File:
@@ -135,6 +133,7 @@ class File:
         self.all_source_deps = None # then set()
         self.all_lib_deps = None # then set()
         self.have_coverage = False
+        self.used = False #
 
 
 ###
@@ -391,6 +390,7 @@ app_path_cpp = all_files['src/core/app_path.cpp']
 def get_sources_deps(f, cat, exclude):
     a = []
     for pf in f.all_source_deps:
+        pf.used = True
         if pf == app_path_cpp:
             if cat == 'test-run':
                 a.append('<library>app_path_test.o')
@@ -420,6 +420,7 @@ def mark_target(target, dep = None):
 
 def generate(type, files, requirements, get_target_cb = get_target):
     for f in files:
+        f.used = True
         src = f.path
         target = get_target_cb(f)
         deps = get_sources_deps(f, type, f)
@@ -535,3 +536,15 @@ for target,dep in all_targets:
     if -1 != target.find("/sashimi/") or (dep and -1 != dep.find("/sashimi/")):
         print(' ', target)
 print(';')
+
+import sys
+for f in all_files.values():
+    if f.type == 'C' and not f.used and \
+    f.path != 'src/capture/ocr/display_learning.cc' and \
+    f.path != 'src/capture/ocr/extract_text.cc' and \
+    f.path != 'src/capture/ocr/learning.cc' and \
+    f.path != 'src/capture/ocr/ppocr_extract_text.cpp':
+        if not start_with(f.path, 'src/sashimi/'):
+            print('\x1B[1;31m', f.path, ' is unused\x1B[0m', file=sys.stderr, sep='')
+        else:
+            print(f.path, 'is unused', file=sys.stderr)

@@ -108,6 +108,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     const bool mem3blt_support  = false;
     NullReportMessage report_message;
     Front front( front_trans, gen, ini, cctx, report_message, fastpath_support, mem3blt_support, now);
+    front.ignore_rdesktop_bogus_clip = true;
     null_mod no_mod;
 
     while (front.up_and_running == 0) {

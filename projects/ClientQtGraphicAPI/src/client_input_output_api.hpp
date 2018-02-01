@@ -896,6 +896,8 @@ public:
       , _cItems(0)
       {}
 
+    virtual ~ClientIOClipboardAPI() = default;
+
     // control state
     virtual void emptyBuffer() = 0;
 
@@ -972,7 +974,7 @@ public:
     virtual void setData(const uint8_t * data, size_t size) = 0;
     virtual void play() = 0;
 
-//     virtual ~ClientOutputSoundAPI();
+    virtual ~ClientOutputSoundAPI() = default;
 
 };
 
@@ -990,7 +992,7 @@ public:
     virtual bool start_to_listen(int client_sck, mod_api * mod) = 0;
     virtual void disconnect() = 0;
 
-//     virtual ~ClientInputSocketAPI();
+    virtual ~ClientInputSocketAPI() = default;
 };
 
 
@@ -999,6 +1001,10 @@ class ClientInputMouseKeyboardAPI : public ClientIODiskAPI {
 
 
 public:
+
+    ClientInputMouseKeyboardAPI() = default;
+
+    virtual ~ClientInputMouseKeyboardAPI() = default;
 
 
     virtual ClientRedemptionIOAPI * get_client() {
@@ -1011,7 +1017,7 @@ public:
 
     virtual void pre_load_movie() = 0;
 
-    virtual void set_ErrorMsg(std::string const & movie_path) = 0;
+
 
 
     // CONTROLLER
@@ -1074,9 +1080,13 @@ public:
       , screen_max_height(max_height) {
     }
 
+    virtual ~ClientOutputGraphicAPI() = default;
+
     virtual void set_drawn_client(ClientRedemptionIOAPI * client) {
         this->drawn_client = client;
     }
+
+    virtual void set_ErrorMsg(std::string const & movie_path) = 0;
 
     virtual void dropScreen() = 0;
 
@@ -1126,7 +1136,7 @@ public:
 
     virtual FrontAPI::ResizeResult server_resize(int width, int height, int bpp) = 0;
 
-    virtual void set_pointer(Pointer      const &) = 0;
+    virtual void set_pointer(Pointer      const &) {}
 //     virtual void set_palette(BGRPalette   const &) {}
 
     virtual void draw(RDP::FrameMarker    const & cmd) = 0;
@@ -1153,8 +1163,8 @@ public:
 
 
     // TODO The 2 methods below should not exist and cache access be done before calling drawing orders
-    virtual void draw(RDPColCache   const &) {}
-    virtual void draw(RDPBrushCache const &) {}
+//     virtual void draw(RDPColCache   const &) {}
+//     virtual void draw(RDPBrushCache const &) {}
 
     virtual void begin_update() {}
     virtual void end_update() {}
