@@ -383,7 +383,6 @@ namespace VNC {
             {
                 LOG(LOG_INFO, "lib_framebuffer_update_zrle %zu", uncompressed_data_buffer.in_remain());
 
-                uint8_t         tile_data[2*16384];    // max size with 16 bpp
                 uint8_t const * remaining_data        = nullptr;
                 uint16_t        remaining_data_length = 0;
 
@@ -393,10 +392,11 @@ namespace VNC {
                     {
                         const uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
                         const uint16_t tile_cy = std::min<uint16_t>(this->cy_remain, 64);
-
+                        uint8_t         tile_data[2*16384];    // max size with 16 bpp
                         const uint8_t * tile_data_p = tile_data;
-
-                        uint16_t tile_data_length = tile_cx * tile_cy * this->Bpp;
+                        const uint16_t tile_data_length = tile_cx * tile_cy * this->Bpp;
+                        
+                        // TODO: this case should not be possible
                         if (tile_data_length > sizeof(tile_data))
                         {
                             LOG(LOG_ERR,
