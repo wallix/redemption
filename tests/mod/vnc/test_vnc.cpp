@@ -356,8 +356,6 @@ namespace VNC {
             uint16_t tile_x;
             uint16_t tile_y;
 
-            StaticOutStream<16384> data_remain;
-
             void draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawable)
             {
                 const uint16_t TILE_CX = 32;
@@ -383,9 +381,6 @@ namespace VNC {
             {
                 LOG(LOG_INFO, "lib_framebuffer_update_zrle %zu", uncompressed_data_buffer.in_remain());
 
-                uint8_t const * remaining_data        = nullptr;
-                uint16_t        remaining_data_length = 0;
-
                 try
                 {
                     while (uncompressed_data_buffer.in_remain())
@@ -404,9 +399,6 @@ namespace VNC {
                                 sizeof(tile_data), tile_data_length);
                             throw Error(ERR_BUFFER_TOO_SMALL);
                         }
-
-                        remaining_data        = uncompressed_data_buffer.get_current();
-                        remaining_data_length = uncompressed_data_buffer.in_remain();
 
                         uint8_t   subencoding = uncompressed_data_buffer.in_uint8();
 
@@ -818,7 +810,7 @@ namespace VNC {
                             {
                                 if (uncompressed_data_buffer.in_remain() < 1)
                                 {
-                                    LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE : need more data (2)");                                    
+                                    LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE : need more data (2)");
                                     throw Error(ERR_VNC_NEED_MORE_DATA);
                                 }
 
@@ -889,10 +881,7 @@ namespace VNC {
                     if (e.id != ERR_VNC_NEED_MORE_DATA){
                         throw;
                     }
-                    else
-                    {
-                        this->data_remain.out_copy_bytes(remaining_data, remaining_data_length);
-                    }
+                    // TODO: see how we can manage other errors
                 }
             }
         }; // class Zrle
