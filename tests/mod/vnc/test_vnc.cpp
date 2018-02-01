@@ -179,18 +179,15 @@ namespace VNC {
 
 //                    hexdump_d(this->accumulator.data(), this->zlib_compressed_data_length);
 
-                    ZRLEUpdateContext2 zrle_update_context(this->verbose);
-
                     LOG(LOG_INFO, "zrle_update_context Bpp=%u x=%zu cx=%zu cx_remain=%zu, cy_remain=%zu tile_x=%zu tile_y=%zu", 
                         Bpp, x, cx, cx, cy, x, y);
 
-                    zrle_update_context.zuc_Bpp       = this->Bpp;
-                    zrle_update_context.zuc_x         = this->x;
-                    zrle_update_context.zuc_cx        = this->cx;
-                    zrle_update_context.zuc_cx_remain = this->cx;
-                    zrle_update_context.zuc_cy_remain = this->cy;
-                    zrle_update_context.zuc_tile_x    = this->x;
-                    zrle_update_context.zuc_tile_y    = this->y;
+                    this->zuc_x         = this->x;
+                    this->zuc_cx        = this->cx;
+                    this->zuc_cx_remain = this->cx;
+                    this->zuc_cy_remain = this->cy;
+                    this->zuc_tile_x    = this->x;
+                    this->zuc_tile_y    = this->y;
 
                     size_t data_ready = 0;
                     size_t consumed = 0;
@@ -220,10 +217,7 @@ namespace VNC {
 
                     LOG(LOG_INFO, "read_data_zrle_data data_ready %zu zlib_compressed_data_length", data_ready);
 
-                    zrle_update_context.lib_framebuffer_update_zrle(
-                        zlib_uncompressed_data_stream,
-                        drawable
-                    );
+                    this->lib_framebuffer_update_zrle(zlib_uncompressed_data_stream, drawable);
 
                     this->accumulator.clear();
                     this->state = ZrleState::Exit;
@@ -358,390 +352,506 @@ namespace VNC {
 
     //        Where r is floor((runLength - 1) / 255).
 
-            struct ZRLEUpdateContext2
+    private:
+            uint16_t zuc_x;
+            uint16_t zuc_cx;
+
+            uint16_t zuc_cx_remain;
+            uint16_t zuc_cy_remain;
+
+            uint16_t zuc_tile_x;
+            uint16_t zuc_tile_y;
+
+            StaticOutStream<16384> zuc_data_remain;
+
+            bool zuc_is_first_membelt = true;
+
+            void draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawable)
             {
-                uint8_t zuc_Bpp;
+                const uint16_t TILE_CX = 32;
+                const uint16_t TILE_CY = 32;
 
-                uint16_t zuc_x;
-                uint16_t zuc_cx;
+                for (int y = 0; y < rect.cy ; y += TILE_CY) {
+                    uint16_t cy = std::min(TILE_CY, uint16_t(rect.cy - y));
 
-                uint16_t zuc_cx_remain;
-                uint16_t zuc_cy_remain;
+                    for (int x = 0; x < rect.cx ; x += TILE_CX) {
+                        uint16_t cx = std::min(TILE_CX, uint16_t(rect.cx - x));
 
-                uint16_t zuc_tile_x;
-                uint16_t zuc_tile_y;
-
-                StaticOutStream<16384> zuc_data_remain;
-
-                VNCVerbose zuc_verbose;
-
-                ZRLEUpdateContext2(VNCVerbose verbose) : zuc_verbose(verbose) {}
-
-                bool zuc_is_first_membelt = true;
-
-                void draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawable)
-                {
-                    const uint16_t TILE_CX = 32;
-                    const uint16_t TILE_CY = 32;
-
-                    for (int y = 0; y < rect.cy ; y += TILE_CY) {
-                        uint16_t cy = std::min(TILE_CY, uint16_t(rect.cy - y));
-
-                        for (int x = 0; x < rect.cx ; x += TILE_CX) {
-                            uint16_t cx = std::min(TILE_CX, uint16_t(rect.cx - x));
-
-                            const Rect src_tile(x, y, cx, cy);
-                            // TODO: fix here magic number 16 is vnc.bpp
-                            const Bitmap tiled_bmp(raw, rect.cx, rect.cy, 16, src_tile);
-                            const Rect dst_tile(rect.x + x, rect.y + y, cx, cy);
-                            const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
-                            /// NOTE force resize cliping with rdesktop...
-                            if (this->zuc_is_first_membelt && dst_tile.cx != 1 && dst_tile.cy != 1) {
-                                drawable.draw(cmd2, Rect(dst_tile.x,dst_tile.y,1,1), tiled_bmp);
-                                this->zuc_is_first_membelt = false;
-                            }
-                            drawable.draw(cmd2, dst_tile, tiled_bmp);
+                        const Rect src_tile(x, y, cx, cy);
+                        // TODO: fix here magic number 16 is vnc.bpp
+                        const Bitmap tiled_bmp(raw, rect.cx, rect.cy, 16, src_tile);
+                        const Rect dst_tile(rect.x + x, rect.y + y, cx, cy);
+                        const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
+                        /// NOTE force resize cliping with rdesktop...
+                        if (this->zuc_is_first_membelt && dst_tile.cx != 1 && dst_tile.cy != 1) {
+                            drawable.draw(cmd2, Rect(dst_tile.x,dst_tile.y,1,1), tiled_bmp);
+                            this->zuc_is_first_membelt = false;
                         }
+                        drawable.draw(cmd2, dst_tile, tiled_bmp);
                     }
                 }
+            }
 
-                void lib_framebuffer_update_zrle(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
+            void lib_framebuffer_update_zrle(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
+            {
+                LOG(LOG_INFO, "lib_framebuffer_update_zrle %zu", uncompressed_data_buffer.in_remain());
+
+                uint8_t         tile_data[2*16384];    // max size with 16 bpp
+                uint8_t const * remaining_data        = nullptr;
+                uint16_t        remaining_data_length = 0;
+
+                try
                 {
-                    LOG(LOG_INFO, "lib_framebuffer_update_zrle %zu", uncompressed_data_buffer.in_remain());
-
-                    uint8_t         tile_data[2*16384];    // max size with 16 bpp
-                    uint8_t const * remaining_data        = nullptr;
-                    uint16_t        remaining_data_length = 0;
-
-                    try
+                    while (uncompressed_data_buffer.in_remain())
                     {
-                        while (uncompressed_data_buffer.in_remain())
+                        uint16_t tile_cx = std::min<uint16_t>(this->zuc_cx_remain, 64);
+                        uint16_t tile_cy = std::min<uint16_t>(this->zuc_cy_remain, 64);
+
+                        const uint8_t * tile_data_p = tile_data;
+
+                        uint16_t tile_data_length = tile_cx * tile_cy * this->Bpp;
+                        if (tile_data_length > sizeof(tile_data))
                         {
-                            uint16_t tile_cx = std::min<uint16_t>(this->zuc_cx_remain, 64);
-                            uint16_t tile_cy = std::min<uint16_t>(this->zuc_cy_remain, 64);
+                            LOG(LOG_ERR,
+                                "VNC Encoding: ZRLE, tile buffer too small (%zu < %" PRIu16 ")",
+                                sizeof(tile_data), tile_data_length);
+                            throw Error(ERR_BUFFER_TOO_SMALL);
+                        }
 
-                            const uint8_t * tile_data_p = tile_data;
+                        remaining_data        = uncompressed_data_buffer.get_current();
+                        remaining_data_length = uncompressed_data_buffer.in_remain();
 
-                            uint16_t tile_data_length = tile_cx * tile_cy * this->zuc_Bpp;
-                            if (tile_data_length > sizeof(tile_data))
-                            {
-                                LOG(LOG_ERR,
-                                    "VNC Encoding: ZRLE, tile buffer too small (%zu < %" PRIu16 ")",
-                                    sizeof(tile_data), tile_data_length);
-                                throw Error(ERR_BUFFER_TOO_SMALL);
+                        uint8_t   subencoding = uncompressed_data_buffer.in_uint8();
+
+                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                            LOG(LOG_INFO, "VNC Encoding: ZRLE, subencoding = %u",  subencoding);
+                        }
+
+                        switch (subencoding) {
+                        //    0:  Raw pixel data. width * height pixel values follow (where width and height are the width and height of the tile):
+
+                        //        |  No. of bytes                   |  Type        |  Description |
+                        //        +---------------------------------+--------------+--------------+
+                        //        | width * height * bytesPerCPixel | CPIXEL array |    pixels    |
+                        //        ----------------------------------------------------------------+
+                        case 0:
+                        {
+                            if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                                LOG(LOG_INFO, "VNC Encoding: ZRLE, Raw pixel data");
                             }
 
-                            remaining_data        = uncompressed_data_buffer.get_current();
-                            remaining_data_length = uncompressed_data_buffer.in_remain();
-
-                            uint8_t   subencoding = uncompressed_data_buffer.in_uint8();
-
-                            if (bool(this->zuc_verbose & VNCVerbose::basic_trace)) {
-                                LOG(LOG_INFO, "VNC Encoding: ZRLE, subencoding = %u",  subencoding);
+                            if (uncompressed_data_buffer.in_remain() < tile_data_length)
+                            {
+                                throw Error(ERR_VNC_NEED_MORE_DATA);
                             }
 
-                            switch (subencoding) {
-                            //    0:  Raw pixel data. width * height pixel values follow (where width and height are the width and height of the tile):
+                            tile_data_p = uncompressed_data_buffer.in_uint8p(tile_data_length);
 
-                            //        |  No. of bytes                   |  Type        |  Description |
-                            //        +---------------------------------+--------------+--------------+
-                            //        | width * height * bytesPerCPixel | CPIXEL array |    pixels    |
-                            //        ----------------------------------------------------------------+
-                            case 0:
-                            {
-                                if (bool(this->zuc_verbose & VNCVerbose::basic_trace)) {
-                                    LOG(LOG_INFO, "VNC Encoding: ZRLE, Raw pixel data");
-                                }
-
-                                if (uncompressed_data_buffer.in_remain() < tile_data_length)
-                                {
-                                    throw Error(ERR_VNC_NEED_MORE_DATA);
-                                }
-
-                                tile_data_p = uncompressed_data_buffer.in_uint8p(tile_data_length);
-
-                                {            
-                                    update_lock<gdi::GraphicApi> lock(drawable);
-                                    this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
-                                }
-
-                                this->zuc_cx_remain -= tile_cx;
-                                this->zuc_tile_x    += tile_cx;
-
-                                if (!this->zuc_cx_remain)
-                                {
-                                    this->zuc_cx_remain =  this->zuc_cx;
-                                    this->zuc_cy_remain -= tile_cy;
-
-                                    this->zuc_tile_x =  this->zuc_x;
-                                    this->zuc_tile_y += tile_cy;
-                                }
+                            {            
+                                update_lock<gdi::GraphicApi> lock(drawable);
+                                this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
                             }
-                            break;
-                            //    1:  A solid tile consisting of a single colour. The pixel value follows:
 
-                            //        |  No. of bytes  |  Type  |  Description     |
-                            //        +----------------+--------+------------------+
-                            //        | bytesPerCPixel | CPIXEL |    pixelValue    |
-                            //        +----------------+--------+------------------+
-                            case 1:
+                            this->zuc_cx_remain -= tile_cx;
+                            this->zuc_tile_x    += tile_cx;
+
+                            if (!this->zuc_cx_remain)
                             {
-                                if (bool(this->zuc_verbose & VNCVerbose::basic_trace)) {
-                                    LOG(LOG_INFO,
-                                        "VNC Encoding: ZRLE, Solid tile (single color)");
-                                }
+                                this->zuc_cx_remain =  this->zuc_cx;
+                                this->zuc_cy_remain -= tile_cy;
 
-                                if (uncompressed_data_buffer.in_remain() < this->zuc_Bpp)
-                                {
-                                    throw Error(ERR_VNC_NEED_MORE_DATA);
-                                }
-
-                                const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->zuc_Bpp);
-
-                                uint8_t * tmp_tile_data = tile_data;
-
-                                for (int i = 0; i < tile_cx; i++, tmp_tile_data += this->zuc_Bpp){
-                                    memcpy(tmp_tile_data, cpixel_pattern, this->zuc_Bpp);
-                                }
-
-                                uint16_t line_size = tile_cx * this->zuc_Bpp;
-
-                                for (int i = 1; i < tile_cy; i++, tmp_tile_data += line_size){
-                                    memcpy(tmp_tile_data, tile_data, line_size);
-                                }
-
-                                {            
-                                    update_lock<gdi::GraphicApi> lock(drawable);
-                                    this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
-                                }
-
-                                this->zuc_cx_remain -= tile_cx;
-                                this->zuc_tile_x    += tile_cx;
-
-                                if (!this->zuc_cx_remain)
-                                {
-                                    this->zuc_cx_remain =  this->zuc_cx;
-                                    this->zuc_cy_remain -= tile_cy;
-
-                                    this->zuc_tile_x =  this->zuc_x;
-                                    this->zuc_tile_y += tile_cy;
-                                }
-
+                                this->zuc_tile_x =  this->zuc_x;
+                                this->zuc_tile_y += tile_cy;
                             }
-                            break;
-                            case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9:
-                            case 10: case 11: case 12: case 13: case 14: case 15: case 16:
-                            //    2 to 16
+                        }
+                        break;
+                        //    1:  A solid tile consisting of a single colour. The pixel value follows:
 
-                            //        Packed palette types. Followed by the palette, consisting of paletteSize (=*subencoding*) pixel values. Then the packed
-                            //    pixels follow, each pixel represented as a bit field yielding an index into the palette (0 meaning the first palette entry).
-                            //    For paletteSize 2, a 1-bit field is used, for paletteSize 3 or 4 a 2-bit field is used and for paletteSize from 5 to 16 a 
-                            //    4-bit field is used. The bit fields are packed into bytes, the most significant bits representing the leftmost pixel (i.e. big
-                            //     endian). For tiles not a multiple of 8, 4 or 2 pixels wide (as appropriate), padding bits are used to align each row to an 
-                            //    exact number of bytes.
+                        //        |  No. of bytes  |  Type  |  Description     |
+                        //        +----------------+--------+------------------+
+                        //        | bytesPerCPixel | CPIXEL |    pixelValue    |
+                        //        +----------------+--------+------------------+
+                        case 1:
+                        {
+                            if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                                LOG(LOG_INFO,
+                                    "VNC Encoding: ZRLE, Solid tile (single color)");
+                            }
 
-                            //        |  No. of bytes                |  Type        |  Description     |
-                            //        +------------------------------+--------------+------------------+
-                            //        | paletteSize * bytesPerCPixel | CPIXEL array |    palette       |
-                            //        +------------------------------+--------------+------------------+
-                            //        |                            m |     U8 array |    packedPixels  |
-                            //        +------------------------------+--------------+------------------+
-
-                            //        where m is the number of bytes representing the packed pixels. 
-
-                            //        For paletteSize of 2 this is floor((width + 7) / 8) * height,
-                            //        for paletteSize of 3 or 4 this is floor((width + 3) / 4) * height, 
-                            //        for paletteSize of 5 to 16 this is floor((width + 1) / 2) * height.
+                            if (uncompressed_data_buffer.in_remain() < this->Bpp)
                             {
-                                if (bool(this->zuc_verbose & VNCVerbose::basic_trace)) {
-                                    LOG(LOG_INFO,
-                                        "VNC Encoding: ZRLE, Packed palette types, "
-                                            "palette size=%d",
-                                        subencoding);
-                                }
+                                throw Error(ERR_VNC_NEED_MORE_DATA);
+                            }
 
-                                const uint8_t  * palette;
-                                const uint8_t    palette_count = subencoding;
-                                const uint16_t   palette_size  = palette_count * this->zuc_Bpp;
+                            const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->Bpp);
 
-                                if (uncompressed_data_buffer.in_remain() < palette_size)
+                            uint8_t * tmp_tile_data = tile_data;
+
+                            for (int i = 0; i < tile_cx; i++, tmp_tile_data += this->Bpp){
+                                memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
+                            }
+
+                            uint16_t line_size = tile_cx * this->Bpp;
+
+                            for (int i = 1; i < tile_cy; i++, tmp_tile_data += line_size){
+                                memcpy(tmp_tile_data, tile_data, line_size);
+                            }
+
+                            {            
+                                update_lock<gdi::GraphicApi> lock(drawable);
+                                this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                            }
+
+                            this->zuc_cx_remain -= tile_cx;
+                            this->zuc_tile_x    += tile_cx;
+
+                            if (!this->zuc_cx_remain)
+                            {
+                                this->zuc_cx_remain =  this->zuc_cx;
+                                this->zuc_cy_remain -= tile_cy;
+
+                                this->zuc_tile_x =  this->zuc_x;
+                                this->zuc_tile_y += tile_cy;
+                            }
+
+                        }
+                        break;
+                        case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9:
+                        case 10: case 11: case 12: case 13: case 14: case 15: case 16:
+                        //    2 to 16
+
+                        //        Packed palette types. Followed by the palette, consisting of paletteSize (=*subencoding*) pixel values. Then the packed
+                        //    pixels follow, each pixel represented as a bit field yielding an index into the palette (0 meaning the first palette entry).
+                        //    For paletteSize 2, a 1-bit field is used, for paletteSize 3 or 4 a 2-bit field is used and for paletteSize from 5 to 16 a 
+                        //    4-bit field is used. The bit fields are packed into bytes, the most significant bits representing the leftmost pixel (i.e. big
+                        //     endian). For tiles not a multiple of 8, 4 or 2 pixels wide (as appropriate), padding bits are used to align each row to an 
+                        //    exact number of bytes.
+
+                        //        |  No. of bytes                |  Type        |  Description     |
+                        //        +------------------------------+--------------+------------------+
+                        //        | paletteSize * bytesPerCPixel | CPIXEL array |    palette       |
+                        //        +------------------------------+--------------+------------------+
+                        //        |                            m |     U8 array |    packedPixels  |
+                        //        +------------------------------+--------------+------------------+
+
+                        //        where m is the number of bytes representing the packed pixels. 
+
+                        //        For paletteSize of 2 this is floor((width + 7) / 8) * height,
+                        //        for paletteSize of 3 or 4 this is floor((width + 3) / 4) * height, 
+                        //        for paletteSize of 5 to 16 this is floor((width + 1) / 2) * height.
+                        {
+                            if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                                LOG(LOG_INFO,
+                                    "VNC Encoding: ZRLE, Packed palette types, "
+                                        "palette size=%d",
+                                    subencoding);
+                            }
+
+                            const uint8_t  * palette;
+                            const uint8_t    palette_count = subencoding;
+                            const uint16_t   palette_size  = palette_count * this->Bpp;
+
+                            if (uncompressed_data_buffer.in_remain() < palette_size)
+                            {
+                                throw Error(ERR_VNC_NEED_MORE_DATA);
+                            }
+
+                            palette = uncompressed_data_buffer.in_uint8p(palette_size);
+
+                            uint16_t   packed_pixels_length;
+
+                            if (palette_count == 2)
+                            {
+                                packed_pixels_length = (tile_cx + 7) / 8 * tile_cy;
+                            }
+                            else if ((palette_count == 3) || (palette_count == 4))
+                            {
+                                packed_pixels_length = (tile_cx + 3) / 4 * tile_cy;
+                            }
+                            else// if ((palette_count >= 5) && (palette_count <= 16))
+                            {
+                                packed_pixels_length = (tile_cx + 1) / 2 * tile_cy;
+                            }
+
+                            if (uncompressed_data_buffer.in_remain() < packed_pixels_length)
+                            {
+                                throw Error(ERR_VNC_NEED_MORE_DATA);
+                            }
+
+                            const uint8_t * packed_pixels = uncompressed_data_buffer.in_uint8p(packed_pixels_length);
+
+                            uint8_t * tmp_tile_data = tile_data;
+
+                            uint16_t  tile_data_length_remain = tile_data_length;
+
+                            uint8_t         pixel_remain         = tile_cx;
+                            const uint8_t * packed_pixels_remain = packed_pixels;
+                            uint8_t         current              = 0;
+                            uint8_t         index                = 0;
+
+                            uint8_t palette_index;
+
+                            while (tile_data_length_remain >= this->Bpp)
+                            {
+                                pixel_remain--;
+
+                                if (!index)
                                 {
-                                    throw Error(ERR_VNC_NEED_MORE_DATA);
+                                    current = *packed_pixels_remain;
+                                    packed_pixels_remain++;
                                 }
-
-                                palette = uncompressed_data_buffer.in_uint8p(palette_size);
-
-                                uint16_t   packed_pixels_length;
 
                                 if (palette_count == 2)
                                 {
-                                    packed_pixels_length = (tile_cx + 7) / 8 * tile_cy;
+                                    palette_index = (current & 0x80) >> 7;
+                                    current <<= 1;
+                                    index++;
+
+                                    if (!pixel_remain || (index > 7))
+                                    {
+                                        index = 0;
+                                    }
                                 }
                                 else if ((palette_count == 3) || (palette_count == 4))
                                 {
-                                    packed_pixels_length = (tile_cx + 3) / 4 * tile_cy;
+                                    palette_index = (current & 0xC0) >> 6;
+                                    current <<= 2;
+                                    index++;
+
+                                    if (!pixel_remain || (index > 3))
+                                    {
+                                        index = 0;
+                                    }
                                 }
                                 else// if ((palette_count >= 5) && (palette_count <= 16))
                                 {
-                                    packed_pixels_length = (tile_cx + 1) / 2 * tile_cy;
+                                    palette_index = (current & 0xF0) >> 4;
+                                    current <<= 4;
+                                    index++;
+
+                                    if (!pixel_remain || (index > 1))
+                                    {
+                                        index = 0;
+                                    }
                                 }
 
-                                if (uncompressed_data_buffer.in_remain() < packed_pixels_length)
+                                if (!pixel_remain)
+                                {
+                                    pixel_remain = tile_cx;
+                                }
+
+                                const uint8_t * cpixel_pattern = palette + palette_index * this->Bpp;
+
+                                memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
+
+                                tmp_tile_data           += this->Bpp;
+                                tile_data_length_remain -= this->Bpp;
+                            }
+
+                            {            
+                                update_lock<gdi::GraphicApi> lock(drawable);
+                                this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                            }
+
+                            this->zuc_cx_remain -= tile_cx;
+                            this->zuc_tile_x    += tile_cx;
+
+                            if (!this->zuc_cx_remain)
+                            {
+                                this->zuc_cx_remain =  this->zuc_cx;
+                                this->zuc_cy_remain -= tile_cy;
+
+                                this->zuc_tile_x =  this->zuc_x;
+                                this->zuc_tile_y += tile_cy;
+                            }
+
+                        }
+                        break;
+                                   case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
+                        case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D: case 0x1E: case 0x1F:
+                        case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
+                        case 0x28: case 0x29: case 0x2A: case 0x2B: case 0x2C: case 0x2D: case 0x2E: case 0x2F:
+                        case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
+                        case 0x38: case 0x39: case 0x3A: case 0x3B: case 0x3C: case 0x3D: case 0x3E: case 0x3F:
+                        case 0x40: case 0x41: case 0x42: case 0x43: case 0x44: case 0x45: case 0x46: case 0x47:
+                        case 0x48: case 0x49: case 0x4A: case 0x4B: case 0x4C: case 0x4D: case 0x4E: case 0x4F:
+                        case 0x50: case 0x51: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56: case 0x57:
+                        case 0x58: case 0x59: case 0x5A: case 0x5B: case 0x5C: case 0x5D: case 0x5E: case 0x5F:
+                        case 0x60: case 0x61: case 0x62: case 0x63: case 0x64: case 0x65: case 0x66: case 0x67:
+                        case 0x68: case 0x69: case 0x6A: case 0x6B: case 0x6C: case 0x6D: case 0x6E: case 0x6F:
+                        case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x76: case 0x77:
+                        case 0x78: case 0x79: case 0x7A: case 0x7B: case 0x7C: case 0x7D: case 0x7E: case 0x7F:
+                        //    17 to 127
+                        //        Unused (no advantage over palette RLE).
+                        {
+                            LOG(LOG_ERR, "VNC Encoding: ZRLE, unused");
+                            throw Error(ERR_VNC_ZRLE_PROTOCOL);
+                        }
+                        break;
+                        //    128
+
+                        //        Plain RLE. Consists of a number of runs, repeated until the tile is done. Runs may continue from the end of one row to
+                        //    the beginning of the next. Each run is a represented by a single pixel value followed by the length of the run. The length
+                        //    is represented as one or more bytes. The length is calculated as one more than the sum of all the bytes representing the
+                        //    length. Any byte value other than 255 indicates the final byte. So for example length 1 is represented as [0], 255 as [254],
+                        //    256 as [255,0], 257 as [255,1], 510 as [255,254], 511 as [255,255,0] and so on.
+
+                        //       | No. of bytes   | Type     | [Value] |      Description         |
+                        //       +----------------+----------+---------+--------------------------+
+                        //       | bytesPerCPixel | CPIXEL   |         |       pixelValue         |
+                        //       +----------------+----------+---------+--------------------------+
+                        //       |             r  | U8 array |   255   |                          |
+                        //       +----------------+----------+---------+--------------------------+
+                        //       |             1  |     U8   |         | (runLength - 1) % 255    |
+                        //       +----------------+----------+---------+--------------------------+
+
+                        //        Where r is floor((runLength - 1) / 255).
+                        case 128:
+                        {
+                            if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                                LOG(LOG_INFO, "VNC Encoding: ZRLE, Plain RLE");
+                            }
+
+                            uint16_t   tile_data_length_remain = tile_data_length;
+
+                            uint16_t   run_length    = 0;
+                            uint8_t  * tmp_tile_data = tile_data;
+
+                            while (tile_data_length_remain >= this->Bpp)
+                            {
+
+                                if (uncompressed_data_buffer.in_remain() < this->Bpp)
                                 {
                                     throw Error(ERR_VNC_NEED_MORE_DATA);
                                 }
 
-                                const uint8_t * packed_pixels = uncompressed_data_buffer.in_uint8p(packed_pixels_length);
+                                const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->Bpp);
 
-                                uint8_t * tmp_tile_data = tile_data;
+                                run_length = 1;
 
-                                uint16_t  tile_data_length_remain = tile_data_length;
-
-                                uint8_t         pixel_remain         = tile_cx;
-                                const uint8_t * packed_pixels_remain = packed_pixels;
-                                uint8_t         current              = 0;
-                                uint8_t         index                = 0;
-
-                                uint8_t palette_index;
-
-                                while (tile_data_length_remain >= this->zuc_Bpp)
+                                while (true)
                                 {
-                                    pixel_remain--;
-
-                                    if (!index)
-                                    {
-                                        current = *packed_pixels_remain;
-                                        packed_pixels_remain++;
-                                    }
-
-                                    if (palette_count == 2)
-                                    {
-                                        palette_index = (current & 0x80) >> 7;
-                                        current <<= 1;
-                                        index++;
-
-                                        if (!pixel_remain || (index > 7))
-                                        {
-                                            index = 0;
-                                        }
-                                    }
-                                    else if ((palette_count == 3) || (palette_count == 4))
-                                    {
-                                        palette_index = (current & 0xC0) >> 6;
-                                        current <<= 2;
-                                        index++;
-
-                                        if (!pixel_remain || (index > 3))
-                                        {
-                                            index = 0;
-                                        }
-                                    }
-                                    else// if ((palette_count >= 5) && (palette_count <= 16))
-                                    {
-                                        palette_index = (current & 0xF0) >> 4;
-                                        current <<= 4;
-                                        index++;
-
-                                        if (!pixel_remain || (index > 1))
-                                        {
-                                            index = 0;
-                                        }
-                                    }
-
-                                    if (!pixel_remain)
-                                    {
-                                        pixel_remain = tile_cx;
-                                    }
-
-                                    const uint8_t * cpixel_pattern = palette + palette_index * this->zuc_Bpp;
-
-                                    memcpy(tmp_tile_data, cpixel_pattern, this->zuc_Bpp);
-
-                                    tmp_tile_data           += this->zuc_Bpp;
-                                    tile_data_length_remain -= this->zuc_Bpp;
-                                }
-
-                                {            
-                                    update_lock<gdi::GraphicApi> lock(drawable);
-                                    this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
-                                }
-
-                                this->zuc_cx_remain -= tile_cx;
-                                this->zuc_tile_x    += tile_cx;
-
-                                if (!this->zuc_cx_remain)
-                                {
-                                    this->zuc_cx_remain =  this->zuc_cx;
-                                    this->zuc_cy_remain -= tile_cy;
-
-                                    this->zuc_tile_x =  this->zuc_x;
-                                    this->zuc_tile_y += tile_cy;
-                                }
-
-                            }
-                            break;
-                                       case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
-                            case 0x18: case 0x19: case 0x1A: case 0x1B: case 0x1C: case 0x1D: case 0x1E: case 0x1F:
-                            case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
-                            case 0x28: case 0x29: case 0x2A: case 0x2B: case 0x2C: case 0x2D: case 0x2E: case 0x2F:
-                            case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
-                            case 0x38: case 0x39: case 0x3A: case 0x3B: case 0x3C: case 0x3D: case 0x3E: case 0x3F:
-                            case 0x40: case 0x41: case 0x42: case 0x43: case 0x44: case 0x45: case 0x46: case 0x47:
-                            case 0x48: case 0x49: case 0x4A: case 0x4B: case 0x4C: case 0x4D: case 0x4E: case 0x4F:
-                            case 0x50: case 0x51: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56: case 0x57:
-                            case 0x58: case 0x59: case 0x5A: case 0x5B: case 0x5C: case 0x5D: case 0x5E: case 0x5F:
-                            case 0x60: case 0x61: case 0x62: case 0x63: case 0x64: case 0x65: case 0x66: case 0x67:
-                            case 0x68: case 0x69: case 0x6A: case 0x6B: case 0x6C: case 0x6D: case 0x6E: case 0x6F:
-                            case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x76: case 0x77:
-                            case 0x78: case 0x79: case 0x7A: case 0x7B: case 0x7C: case 0x7D: case 0x7E: case 0x7F:
-                            //    17 to 127
-                            //        Unused (no advantage over palette RLE).
-                            {
-                                LOG(LOG_ERR, "VNC Encoding: ZRLE, unused");
-                                throw Error(ERR_VNC_ZRLE_PROTOCOL);
-                            }
-                            break;
-                            //    128
-
-                            //        Plain RLE. Consists of a number of runs, repeated until the tile is done. Runs may continue from the end of one row to
-                            //    the beginning of the next. Each run is a represented by a single pixel value followed by the length of the run. The length
-                            //    is represented as one or more bytes. The length is calculated as one more than the sum of all the bytes representing the
-                            //    length. Any byte value other than 255 indicates the final byte. So for example length 1 is represented as [0], 255 as [254],
-                            //    256 as [255,0], 257 as [255,1], 510 as [255,254], 511 as [255,255,0] and so on.
-
-                            //       | No. of bytes   | Type     | [Value] |      Description         |
-                            //       +----------------+----------+---------+--------------------------+
-                            //       | bytesPerCPixel | CPIXEL   |         |       pixelValue         |
-                            //       +----------------+----------+---------+--------------------------+
-                            //       |             r  | U8 array |   255   |                          |
-                            //       +----------------+----------+---------+--------------------------+
-                            //       |             1  |     U8   |         | (runLength - 1) % 255    |
-                            //       +----------------+----------+---------+--------------------------+
-
-                            //        Where r is floor((runLength - 1) / 255).
-                            case 128:
-                            {
-                                if (bool(this->zuc_verbose & VNCVerbose::basic_trace)) {
-                                    LOG(LOG_INFO, "VNC Encoding: ZRLE, Plain RLE");
-                                }
-
-                                uint16_t   tile_data_length_remain = tile_data_length;
-
-                                uint16_t   run_length    = 0;
-                                uint8_t  * tmp_tile_data = tile_data;
-
-                                while (tile_data_length_remain >= this->zuc_Bpp)
-                                {
-
-                                    if (uncompressed_data_buffer.in_remain() < this->zuc_Bpp)
+                                    if (uncompressed_data_buffer.in_remain() < 1)
                                     {
                                         throw Error(ERR_VNC_NEED_MORE_DATA);
                                     }
 
-                                    const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->zuc_Bpp);
+                                    uint8_t byte_value = uncompressed_data_buffer.in_uint8();
+                                    run_length += byte_value;
 
-                                    run_length = 1;
+                                    if (byte_value != 255)
+                                        break;
+                                }
 
+                                // LOG(LOG_INFO, "VNC Encoding: ZRLE, run length=%u", run_length);
+
+                                while ((tile_data_length_remain >= this->Bpp) && run_length)
+                                {
+                                    memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
+
+                                    tmp_tile_data           += this->Bpp;
+                                    tile_data_length_remain -= this->Bpp;
+
+                                    run_length--;
+                                }
+                            }
+
+                            // LOG(LOG_INFO, "VNC Encoding: ZRLE, run_length=%u", run_length);
+
+                            assert(!run_length);
+                            assert(!tile_data_length_remain);
+
+                            {            
+                                update_lock<gdi::GraphicApi> lock(drawable);
+                                this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                            }
+
+                            this->zuc_cx_remain -= tile_cx;
+                            this->zuc_tile_x    += tile_cx;
+
+                            if (!this->zuc_cx_remain)
+                            {
+                                this->zuc_cx_remain =  this->zuc_cx;
+                                this->zuc_cy_remain -= tile_cy;
+
+                                this->zuc_tile_x =  this->zuc_x;
+                                this->zuc_tile_y += tile_cy;
+                            }
+                        }
+                        break;
+                        case 129:
+                        //    129
+                        //        Unused.
+                        {
+                            LOG(LOG_ERR, "VNC Encoding: ZRLE, unused");
+                            throw Error(ERR_VNC_ZRLE_PROTOCOL);
+                        }
+                        break;
+                        default:
+                        //    130 to 255
+
+                        //        Palette RLE. Followed by the palette, consisting of paletteSize = (subencoding - 128) pixel values:
+                        //        No. of bytes |Type |Description
+                        //        paletteSize * bytesPerCPixel |CPIXEL array |palette
+
+                        //        Then as with plain RLE, consists of a number of runs, repeated until the tile is done. A run of length one is
+                        //         represented simply by a palette index:
+
+                        //        | No. of bytes |Type | Description  |
+                        //        +--------------+-----+--------------+
+                        //        |            1 |  U8 | paletteIndex |
+                        //        +--------------+-----+--------------+
+
+                        //        A run of length more than one is represented by a palette index with the top bit set, followed by the length of the
+                        //        run as for plain RLE.
+
+                        //        | No. of bytes |     Type | [Value] |     Description       |
+                        //        +--------------+----------+---------+-----------------------+
+                        //        |            1 |       U8 |         | paletteIndex + 128    |
+                        //        +--------------+----------+---------+-----------------------+
+                        //        |            r | U8 array |     255 |                       |
+                        //        +--------------+----------+---------+-----------------------+
+                        //        |            1 |       U8 |         | (runLength - 1) % 255 |
+                        //        +--------------+----------+---------+-----------------------+
+
+                        //        Where r is floor((runLength - 1) / 255).
+                        {
+                            if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                                LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE");
+                            }
+
+                            const uint8_t  * palette;
+                            const uint8_t    palette_count = subencoding - 128;
+                            const uint16_t   palette_size  = palette_count * this->Bpp;
+
+                            if (uncompressed_data_buffer.in_remain() < palette_size)
+                            {
+                                LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE : need more data (1)");                                    
+                                throw Error(ERR_VNC_NEED_MORE_DATA);
+                            }
+
+                            palette = uncompressed_data_buffer.in_uint8p(palette_size);
+
+                            uint16_t   tile_data_length_remain = tile_data_length;
+
+                            uint16_t   run_length    = 0;
+                            uint8_t  * tmp_tile_data = tile_data;
+
+                            while (tile_data_length_remain >= this->Bpp)
+                            {
+                                if (uncompressed_data_buffer.in_remain() < 1)
+                                {
+                                    LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE : need more data (2)");                                    
+                                    throw Error(ERR_VNC_NEED_MORE_DATA);
+                                }
+
+                                uint8_t         palette_index  = uncompressed_data_buffer.in_uint8();
+                                const uint8_t * cpixel_pattern = palette + (palette_index & 0x7F) * this->Bpp;
+
+                                run_length = 1;
+
+                                if (palette_index & 0x80)
+                                {
                                     while (true)
                                     {
                                         if (uncompressed_data_buffer.in_remain() < 1)
@@ -755,183 +865,59 @@ namespace VNC {
                                         if (byte_value != 255)
                                             break;
                                     }
-
-                                    // LOG(LOG_INFO, "VNC Encoding: ZRLE, run length=%u", run_length);
-
-                                    while ((tile_data_length_remain >= this->zuc_Bpp) && run_length)
-                                    {
-                                        memcpy(tmp_tile_data, cpixel_pattern, this->zuc_Bpp);
-
-                                        tmp_tile_data           += this->zuc_Bpp;
-                                        tile_data_length_remain -= this->zuc_Bpp;
-
-                                        run_length--;
-                                    }
                                 }
 
-                                // LOG(LOG_INFO, "VNC Encoding: ZRLE, run_length=%u", run_length);
+                                // LOG(LOG_INFO, "VNC Encoding: ZRLE, run length=%u", run_length);
 
-                                assert(!run_length);
-                                assert(!tile_data_length_remain);
-
-                                {            
-                                    update_lock<gdi::GraphicApi> lock(drawable);
-                                    this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
-                                }
-
-                                this->zuc_cx_remain -= tile_cx;
-                                this->zuc_tile_x    += tile_cx;
-
-                                if (!this->zuc_cx_remain)
+                                while ((tile_data_length_remain >= this->Bpp) && run_length)
                                 {
-                                    this->zuc_cx_remain =  this->zuc_cx;
-                                    this->zuc_cy_remain -= tile_cy;
+                                    memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
 
-                                    this->zuc_tile_x =  this->zuc_x;
-                                    this->zuc_tile_y += tile_cy;
+                                    tmp_tile_data           += this->Bpp;
+                                    tile_data_length_remain -= this->Bpp;
+
+                                    run_length--;
                                 }
                             }
-                            break;
-                            case 129:
-                            //    129
-                            //        Unused.
+
+                            LOG(LOG_INFO, "VNC Encoding: ZRLE, run_length=%u", run_length);
+
+                            assert(!run_length);
+                            assert(!tile_data_length_remain);
+
+                            {            
+                                update_lock<gdi::GraphicApi> lock(drawable);
+                                this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                            }
+
+                            this->zuc_cx_remain -= tile_cx;
+                            this->zuc_tile_x    += tile_cx;
+
+                            if (!this->zuc_cx_remain)
                             {
-                                LOG(LOG_ERR, "VNC Encoding: ZRLE, unused");
-                                throw Error(ERR_VNC_ZRLE_PROTOCOL);
+                                this->zuc_cx_remain =  this->zuc_cx;
+                                this->zuc_cy_remain -= tile_cy;
+
+                                this->zuc_tile_x =  this->zuc_x;
+                                this->zuc_tile_y += tile_cy;
                             }
-                            break;
-                            default:
-                            //    130 to 255
+                        }
+                        break;
+                        } // switch subencoding
 
-                            //        Palette RLE. Followed by the palette, consisting of paletteSize = (subencoding - 128) pixel values:
-                            //        No. of bytes |Type |Description
-                            //        paletteSize * bytesPerCPixel |CPIXEL array |palette
-
-                            //        Then as with plain RLE, consists of a number of runs, repeated until the tile is done. A run of length one is
-                            //         represented simply by a palette index:
-
-                            //        | No. of bytes |Type | Description  |
-                            //        +--------------+-----+--------------+
-                            //        |            1 |  U8 | paletteIndex |
-                            //        +--------------+-----+--------------+
-
-                            //        A run of length more than one is represented by a palette index with the top bit set, followed by the length of the
-                            //        run as for plain RLE.
-
-                            //        | No. of bytes |     Type | [Value] |     Description       |
-                            //        +--------------+----------+---------+-----------------------+
-                            //        |            1 |       U8 |         | paletteIndex + 128    |
-                            //        +--------------+----------+---------+-----------------------+
-                            //        |            r | U8 array |     255 |                       |
-                            //        +--------------+----------+---------+-----------------------+
-                            //        |            1 |       U8 |         | (runLength - 1) % 255 |
-                            //        +--------------+----------+---------+-----------------------+
-
-                            //        Where r is floor((runLength - 1) / 255).
-                            {
-                                if (bool(this->zuc_verbose & VNCVerbose::basic_trace)) {
-                                    LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE");
-                                }
-
-                                const uint8_t  * palette;
-                                const uint8_t    palette_count = subencoding - 128;
-                                const uint16_t   palette_size  = palette_count * this->zuc_Bpp;
-
-                                if (uncompressed_data_buffer.in_remain() < palette_size)
-                                {
-                                    LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE : need more data (1)");                                    
-                                    throw Error(ERR_VNC_NEED_MORE_DATA);
-                                }
-
-                                palette = uncompressed_data_buffer.in_uint8p(palette_size);
-
-                                uint16_t   tile_data_length_remain = tile_data_length;
-
-                                uint16_t   run_length    = 0;
-                                uint8_t  * tmp_tile_data = tile_data;
-
-                                while (tile_data_length_remain >= this->zuc_Bpp)
-                                {
-                                    if (uncompressed_data_buffer.in_remain() < 1)
-                                    {
-                                        LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE : need more data (2)");                                    
-                                        throw Error(ERR_VNC_NEED_MORE_DATA);
-                                    }
-
-                                    uint8_t         palette_index  = uncompressed_data_buffer.in_uint8();
-                                    const uint8_t * cpixel_pattern = palette + (palette_index & 0x7F) * this->zuc_Bpp;
-
-                                    run_length = 1;
-
-                                    if (palette_index & 0x80)
-                                    {
-                                        while (true)
-                                        {
-                                            if (uncompressed_data_buffer.in_remain() < 1)
-                                            {
-                                                throw Error(ERR_VNC_NEED_MORE_DATA);
-                                            }
-
-                                            uint8_t byte_value = uncompressed_data_buffer.in_uint8();
-                                            run_length += byte_value;
-
-                                            if (byte_value != 255)
-                                                break;
-                                        }
-                                    }
-
-                                    // LOG(LOG_INFO, "VNC Encoding: ZRLE, run length=%u", run_length);
-
-                                    while ((tile_data_length_remain >= this->zuc_Bpp) && run_length)
-                                    {
-                                        memcpy(tmp_tile_data, cpixel_pattern, this->zuc_Bpp);
-
-                                        tmp_tile_data           += this->zuc_Bpp;
-                                        tile_data_length_remain -= this->zuc_Bpp;
-
-                                        run_length--;
-                                    }
-                                }
-
-                                LOG(LOG_INFO, "VNC Encoding: ZRLE, run_length=%u", run_length);
-
-                                assert(!run_length);
-                                assert(!tile_data_length_remain);
-
-                                {            
-                                    update_lock<gdi::GraphicApi> lock(drawable);
-                                    this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
-                                }
-
-                                this->zuc_cx_remain -= tile_cx;
-                                this->zuc_tile_x    += tile_cx;
-
-                                if (!this->zuc_cx_remain)
-                                {
-                                    this->zuc_cx_remain =  this->zuc_cx;
-                                    this->zuc_cy_remain -= tile_cy;
-
-                                    this->zuc_tile_x =  this->zuc_x;
-                                    this->zuc_tile_y += tile_cy;
-                                }
-                            }
-                            break;
-                            } // switch subencoding
-
-                        } // while
-                    } // try
-                    catch (Error const& e)
+                    } // while
+                } // try
+                catch (Error const& e)
+                {
+                    if (e.id != ERR_VNC_NEED_MORE_DATA){
+                        throw;
+                    }
+                    else
                     {
-                        if (e.id != ERR_VNC_NEED_MORE_DATA){
-                            throw;
-                        }
-                        else
-                        {
-                            this->zuc_data_remain.out_copy_bytes(remaining_data, remaining_data_length);
-                        }
+                        this->zuc_data_remain.out_copy_bytes(remaining_data, remaining_data_length);
                     }
                 }
-            }; // struct ZrleUpdateContext
+            }
         }; // class Zrle
     } // namespace Encoder
 } // namespace VNC
