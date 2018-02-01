@@ -391,8 +391,8 @@ namespace VNC {
                 {
                     while (uncompressed_data_buffer.in_remain())
                     {
-                        uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
-                        uint16_t tile_cy = std::min<uint16_t>(this->cy_remain, 64);
+                        const uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
+                        const uint16_t tile_cy = std::min<uint16_t>(this->cy_remain, 64);
 
                         const uint8_t * tile_data_p = tile_data;
 
@@ -534,7 +534,6 @@ namespace VNC {
                                     subencoding);
                             }
 
-                            const uint8_t  * palette;
                             const uint8_t    palette_count = subencoding;
                             const uint16_t   palette_size  = palette_count * this->Bpp;
 
@@ -543,22 +542,13 @@ namespace VNC {
                                 throw Error(ERR_VNC_NEED_MORE_DATA);
                             }
 
-                            palette = uncompressed_data_buffer.in_uint8p(palette_size);
+                            const uint8_t  * palette = uncompressed_data_buffer.in_uint8p(palette_size);
 
-                            uint16_t   packed_pixels_length;
-
-                            if (palette_count == 2)
-                            {
-                                packed_pixels_length = (tile_cx + 7) / 8 * tile_cy;
-                            }
-                            else if ((palette_count == 3) || (palette_count == 4))
-                            {
-                                packed_pixels_length = (tile_cx + 3) / 4 * tile_cy;
-                            }
-                            else// if ((palette_count >= 5) && (palette_count <= 16))
-                            {
-                                packed_pixels_length = (tile_cx + 1) / 2 * tile_cy;
-                            }
+                            uint16_t   packed_pixels_length =  (
+                                   (palette_count == 2)                               ? (tile_cx + 7) / 8
+                                : ((palette_count == 3) || (palette_count == 4))      ? (tile_cx + 3) / 4
+                                /* ((palette_count >= 5) && (palette_count <= 16)) */ : (tile_cx + 1) / 2
+                            ) * tile_cy;
 
                             if (uncompressed_data_buffer.in_remain() < packed_pixels_length)
                             {
