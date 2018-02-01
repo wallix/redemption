@@ -182,10 +182,10 @@ namespace VNC {
                     LOG(LOG_INFO, "zrle_update_context Bpp=%u x=%zu cx=%zu cx_remain=%zu, cy_remain=%zu tile_x=%zu tile_y=%zu", 
                         Bpp, x, cx, cx, cy, x, y);
 
-                    this->zuc_cx_remain = this->cx;
-                    this->zuc_cy_remain = this->cy;
-                    this->zuc_tile_x    = this->x;
-                    this->zuc_tile_y    = this->y;
+                    this->cx_remain = this->cx;
+                    this->cy_remain = this->cy;
+                    this->tile_x    = this->x;
+                    this->tile_y    = this->y;
 
                     size_t data_ready = 0;
                     size_t consumed = 0;
@@ -351,15 +351,14 @@ namespace VNC {
     //        Where r is floor((runLength - 1) / 255).
 
     private:
-            uint16_t zuc_cx_remain;
-            uint16_t zuc_cy_remain;
+            uint16_t cx_remain;
+            uint16_t cy_remain;
+            uint16_t tile_x;
+            uint16_t tile_y;
 
-            uint16_t zuc_tile_x;
-            uint16_t zuc_tile_y;
+            StaticOutStream<16384> data_remain;
 
-            StaticOutStream<16384> zuc_data_remain;
-
-            bool zuc_is_first_membelt = true;
+            bool is_first_membelt = true;
 
             void draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawable)
             {
@@ -378,9 +377,9 @@ namespace VNC {
                         const Rect dst_tile(rect.x + x, rect.y + y, cx, cy);
                         const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
                         /// NOTE force resize cliping with rdesktop...
-                        if (this->zuc_is_first_membelt && dst_tile.cx != 1 && dst_tile.cy != 1) {
+                        if (this->is_first_membelt && dst_tile.cx != 1 && dst_tile.cy != 1) {
                             drawable.draw(cmd2, Rect(dst_tile.x,dst_tile.y,1,1), tiled_bmp);
-                            this->zuc_is_first_membelt = false;
+                            this->is_first_membelt = false;
                         }
                         drawable.draw(cmd2, dst_tile, tiled_bmp);
                     }
@@ -399,8 +398,8 @@ namespace VNC {
                 {
                     while (uncompressed_data_buffer.in_remain())
                     {
-                        uint16_t tile_cx = std::min<uint16_t>(this->zuc_cx_remain, 64);
-                        uint16_t tile_cy = std::min<uint16_t>(this->zuc_cy_remain, 64);
+                        uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
+                        uint16_t tile_cy = std::min<uint16_t>(this->cy_remain, 64);
 
                         const uint8_t * tile_data_p = tile_data;
 
@@ -444,19 +443,19 @@ namespace VNC {
 
                             {            
                                 update_lock<gdi::GraphicApi> lock(drawable);
-                                this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
                             }
 
-                            this->zuc_cx_remain -= tile_cx;
-                            this->zuc_tile_x    += tile_cx;
+                            this->cx_remain -= tile_cx;
+                            this->tile_x    += tile_cx;
 
-                            if (!this->zuc_cx_remain)
+                            if (!this->cx_remain)
                             {
-                                this->zuc_cx_remain =  this->cx;
-                                this->zuc_cy_remain -= tile_cy;
+                                this->cx_remain =  this->cx;
+                                this->cy_remain -= tile_cy;
 
-                                this->zuc_tile_x =  this->x;
-                                this->zuc_tile_y += tile_cy;
+                                this->tile_x =  this->x;
+                                this->tile_y += tile_cy;
                             }
                         }
                         break;
@@ -494,19 +493,19 @@ namespace VNC {
 
                             {            
                                 update_lock<gdi::GraphicApi> lock(drawable);
-                                this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
                             }
 
-                            this->zuc_cx_remain -= tile_cx;
-                            this->zuc_tile_x    += tile_cx;
+                            this->cx_remain -= tile_cx;
+                            this->tile_x    += tile_cx;
 
-                            if (!this->zuc_cx_remain)
+                            if (!this->cx_remain)
                             {
-                                this->zuc_cx_remain =  this->cx;
-                                this->zuc_cy_remain -= tile_cy;
+                                this->cx_remain =  this->cx;
+                                this->cy_remain -= tile_cy;
 
-                                this->zuc_tile_x =  this->x;
-                                this->zuc_tile_y += tile_cy;
+                                this->tile_x =  this->x;
+                                this->tile_y += tile_cy;
                             }
 
                         }
@@ -645,19 +644,19 @@ namespace VNC {
 
                             {            
                                 update_lock<gdi::GraphicApi> lock(drawable);
-                                this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
                             }
 
-                            this->zuc_cx_remain -= tile_cx;
-                            this->zuc_tile_x    += tile_cx;
+                            this->cx_remain -= tile_cx;
+                            this->tile_x    += tile_cx;
 
-                            if (!this->zuc_cx_remain)
+                            if (!this->cx_remain)
                             {
-                                this->zuc_cx_remain =  this->cx;
-                                this->zuc_cy_remain -= tile_cy;
+                                this->cx_remain =  this->cx;
+                                this->cy_remain -= tile_cy;
 
-                                this->zuc_tile_x =  this->x;
-                                this->zuc_tile_y += tile_cy;
+                                this->tile_x =  this->x;
+                                this->tile_y += tile_cy;
                             }
 
                         }
@@ -758,19 +757,19 @@ namespace VNC {
 
                             {            
                                 update_lock<gdi::GraphicApi> lock(drawable);
-                                this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
                             }
 
-                            this->zuc_cx_remain -= tile_cx;
-                            this->zuc_tile_x    += tile_cx;
+                            this->cx_remain -= tile_cx;
+                            this->tile_x    += tile_cx;
 
-                            if (!this->zuc_cx_remain)
+                            if (!this->cx_remain)
                             {
-                                this->zuc_cx_remain =  this->cx;
-                                this->zuc_cy_remain -= tile_cy;
+                                this->cx_remain =  this->cx;
+                                this->cy_remain -= tile_cy;
 
-                                this->zuc_tile_x =  this->x;
-                                this->zuc_tile_y += tile_cy;
+                                this->tile_x =  this->x;
+                                this->tile_y += tile_cy;
                             }
                         }
                         break;
@@ -882,19 +881,19 @@ namespace VNC {
 
                             {            
                                 update_lock<gdi::GraphicApi> lock(drawable);
-                                this->draw_tile(Rect(this->zuc_tile_x, this->zuc_tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
                             }
 
-                            this->zuc_cx_remain -= tile_cx;
-                            this->zuc_tile_x    += tile_cx;
+                            this->cx_remain -= tile_cx;
+                            this->tile_x    += tile_cx;
 
-                            if (!this->zuc_cx_remain)
+                            if (!this->cx_remain)
                             {
-                                this->zuc_cx_remain =  this->cx;
-                                this->zuc_cy_remain -= tile_cy;
+                                this->cx_remain =  this->cx;
+                                this->cy_remain -= tile_cy;
 
-                                this->zuc_tile_x =  this->x;
-                                this->zuc_tile_y += tile_cy;
+                                this->tile_x =  this->x;
+                                this->tile_y += tile_cy;
                             }
                         }
                         break;
@@ -909,7 +908,7 @@ namespace VNC {
                     }
                     else
                     {
-                        this->zuc_data_remain.out_copy_bytes(remaining_data, remaining_data_length);
+                        this->data_remain.out_copy_bytes(remaining_data, remaining_data_length);
                     }
                 }
             }
