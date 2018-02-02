@@ -460,7 +460,7 @@ public:
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
     }
 
-    using ActionCtx = Executor2ActionContext<NewRdpNego&, TpduBuffer&, Transport&, ServerCert>;
+    using ActionCtx = Executor2ActionContext<prefix_args<>, NewRdpNego&, TpduBuffer&, Transport&, ServerCert>;
 
     static ExecutorResult exec_recv_data(ActionCtx ctx)
     {
@@ -796,26 +796,26 @@ RED_AUTO_TEST_CASE(TestNego)
     #define UNUSED_VARIADIC() auto&&...
 #endif
 
-    Reactor reactor;
-
     {
+        TopExecutorTimers<prefix_args<>> top_timers;
         using namespace std::chrono_literals;
-        TopExecutor2<> executor(reactor);
+        TopExecutor2<prefix_args<>> executor(top_timers);
         executor.set_timeout(10ms);
-        auto timer1 = executor.create_timer()
+        auto timer1 = top_timers.create_timer()
             .on_action(2ms, [](auto ctx){
                 TRACE;
                 return ctx.retry();
             });
-        auto timer2 = executor.create_timer()
+        auto timer2 = top_timers.create_timer()
             .on_action(3ms, [](auto ctx){
                 TRACE;
                 return ctx.retry();
             });
-        RED_CHECK_EQ(executor.get_next_timeout().count(), 2);
+        RED_CHECK_EQ(top_timers.get_next_timeout().count(), 2);
     }
 
 
+    Reactor<> reactor;
 
     reactor.create_executor(0, std::ref(nego), std::ref(buf), std::ref(logtrans), ServerCert{
         server_cert_store,
@@ -847,7 +847,8 @@ RED_AUTO_TEST_CASE(TestNego)
     std::cout << "-----\n";
 
     {
-        auto* executor = TopExecutor2<>::New(reactor);
+        TopExecutorTimers<prefix_args<>> top_timers;
+        auto* executor = TopExecutor2<prefix_args<>>::New(top_timers);
         executor->set_on_action([](auto ctx, UNUSED_VARIADIC()){
             TRACE;
             return ctx.exit_on_success();
