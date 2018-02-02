@@ -1741,7 +1741,9 @@ private:
 //                     drive_name, absolute_directory_path.c_str());
 //             }
 
-            LOG(LOG_INFO, "lOOOOOOOOOOOOOOOOOOOOOl    %s", relative_directory_path);
+            if (bool(verbose & RDPVerbose::fsdrvmgr)) {
+                LOG(LOG_INFO, "relative directory path: %s", relative_directory_path);
+            }
 
             drive_id = this->next_managed_drive_id++;
 
