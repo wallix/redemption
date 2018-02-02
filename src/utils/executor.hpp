@@ -115,7 +115,7 @@ namespace detail
     template<class Result, class BaseType, class...Ts, class...Us>
     struct make_func_ptr<Result, BaseType, prefix_args<Ts...>, Us...>
     {
-        using type = Result(*)(BaseType&, Ts..., Us...);
+        using type = Result(*)(BaseType&, Us..., Ts...);
     };
 }
 
@@ -135,6 +135,8 @@ class ExecutorActionContext;
 enum class REDEMPTION_CXX_NODISCARD ExecutorResult : uint8_t
 {
     Nothing,
+    NeedMoreData,
+    Ready,
     ExitSuccess,
     ExitFailure,
     Terminate,
@@ -153,7 +155,7 @@ struct SubExecutorBuilderConcept_
 
 struct ExecutorActionContextConcept_
 {
-    ExecutorResult retry();
+    ExecutorResult need_more_data();
     ExecutorResult exit(ExitStatus status);
     ExecutorResult exit_on_error();
     ExecutorResult exit_on_success();
@@ -194,14 +196,16 @@ class TopExecutorTimers;
 template<class PrefixArgs>
 struct BasicExecutor
 {
-    ExecutorResult exec_action()
+    template<class... Args>
+    ExecutorResult exec_action(Args&&... args)
     {
-        return this->on_action(*this);
+        return this->on_action(*this, static_cast<Args&&>(args)...);
     }
 
-    ExecutorResult exec_exit(ExecutorError error)
+    template<class... Args>
+    ExecutorResult exec_exit(ExecutorError error, Args&&... args)
     {
-        return this->on_exit(*this, error);
+        return this->on_exit(*this, error, static_cast<Args&&>(args)...);
     }
 
     void delete_self()
@@ -209,17 +213,21 @@ struct BasicExecutor
         return this->deleter(this);
     }
 
-    void terminate();
+    template<class... Args>
+    void terminate(Args&&... args);
 
-    bool exec();
+    template<class... Args>
+    bool exec(Args&&... args);
 
-    void exec_all()
+    template<class... Args>
+    void exec_all(Args&&... args)
     {
-        while (this->exec()) {
+        while (this->exec(static_cast<Args&&>(args)...)) {
         }
     }
 
-    bool exit_with(ExecutorError);
+    template<class... Args>
+    bool exit_with(ExecutorError, Args&&... args);
 
     BasicExecutor(TopExecutorTimers<PrefixArgs>& top_executor_timers) noexcept
     : top_executor_timers(top_executor_timers)
@@ -234,7 +242,7 @@ protected:
     BasicExecutor* current = this;
     BasicExecutor* prev = nullptr;
     TopExecutorTimers<PrefixArgs>& top_executor_timers;
-    void (*deleter) (void*) = [](void*){};
+    void (*deleter) (BasicExecutor*) = [](BasicExecutor*){};
 
     void set_next_executor(BasicExecutor& other) noexcept
     {
@@ -307,7 +315,7 @@ namespace detail { namespace
                     return ExecutorResult::Nothing;
                 }
                 else if constexpr (ExecutorType::Exec == type) {
-                    return this->executor.exec_action();
+                    return this->executor;
                 }
                 else {
                     return this->executor;
@@ -466,9 +474,14 @@ struct REDEMPTION_CXX_NODISCARD Executor2ActionContext
     Executor2ActionContext(Executor2ActionContext const&) = default;
     Executor2ActionContext& operator=(Executor2ActionContext const&) = delete;
 
-    ExecutorResult retry() noexcept
+    ExecutorResult need_more_data() noexcept
     {
         return ExecutorResult::Nothing;
+    }
+
+    ExecutorResult ready() noexcept
+    {
+        return ExecutorResult::Ready;
     }
 
     ExecutorResult terminate() noexcept
@@ -575,7 +588,7 @@ struct Executor2Impl : public BasicExecutor<PrefixArgs>
             return self.ctx.invoke(
                 make_lambda<F>(),
                 Executor2ActionContext<PrefixArgs, Ts...>(self),
-                prefix_args...);
+                static_cast<decltype(prefix_args)&&>(prefix_args)...);
         };
     }
 
@@ -588,7 +601,7 @@ struct Executor2Impl : public BasicExecutor<PrefixArgs>
             return self.ctx.invoke(
                 make_lambda<F>(),
                 Executor2ActionContext<PrefixArgs, Ts...>(self),
-                prefix_args...);
+                static_cast<decltype(prefix_args)&&>(prefix_args)...);
         };
     }
 
@@ -621,7 +634,7 @@ struct Executor2Impl : public BasicExecutor<PrefixArgs>
     static Executor2Impl* New(TopExecutorTimers<PrefixArgs>& top_executor_timers, Args&&... args)
     {
         auto* p = new Executor2Impl(top_executor_timers, static_cast<Args&&>(args)...);
-        p->deleter = [](void* p) { delete static_cast<Executor2Impl*>(p); };
+        p->deleter = [](auto* base) { delete static_cast<Executor2Impl*>(base); };
         return p;
     }
 
@@ -657,9 +670,10 @@ struct REDEMPTION_CXX_NODISCARD Executor2TimeoutContext : Executor2ActionContext
 template<class PrefixArgs>
 struct BasicTimer
 {
-    ExecutorResult exec_timer()
+    template<class... Args>
+    ExecutorResult exec_timer(Args&&... args)
     {
-        return this->on_timer(*this);
+        return this->on_timer(*this, static_cast<Args&&>(args)...);
     }
 
     void delete_self()
@@ -708,7 +722,7 @@ struct BasicTimer
 // protected:
     friend class TopExecutorTimers<PrefixArgs>;
 
-    using OnTimerPtrFunc = ExecutorResult(*)(BasicTimer<PrefixArgs>&);
+    using OnTimerPtrFunc = MakeFuncPtr<ExecutorResult, BasicTimer&, PrefixArgs>;
     std::chrono::milliseconds ms;
     std::chrono::milliseconds elapsed_ms = std::chrono::milliseconds::zero();
     OnTimerPtrFunc on_timer = [](BasicTimer&, [[maybe_unused]] auto... external_args){ return ExecutorResult::Nothing; };
@@ -796,9 +810,7 @@ struct TopExecutorTimers
     {
         using TimerType = Timer2<PrefixArgs, Args...>;
         using UniqueTimerPtr = UniquePtr<BasicTimer<PrefixArgs>, TimerType>;
-        UniqueTimerPtr uptr(TimerType::New(
-            *reinterpret_cast<TopExecutorBase<PrefixArgs>*>(this),
-            static_cast<Args&&>(args)...));
+        UniqueTimerPtr uptr(TimerType::New(*this, static_cast<Args&&>(args)...));
         this->timers.emplace_back(uptr.get());
         return std::move(uptr);
     }
@@ -837,7 +849,8 @@ struct TopExecutorTimers
         return r;
     }
 
-    void exec_timeout();
+    template<class... Args>
+    void exec_timeout(Args&&... args);
 
 private:
     std::vector<BasicTimer<PrefixArgs>*> timers;
@@ -856,13 +869,14 @@ struct TopExecutorBase : TopExecutorTimers<PrefixArgs>
 };
 
 template<class PrefixArgs>
-void TopExecutorTimers<PrefixArgs>::exec_timeout()
+template<class... Args>
+void TopExecutorTimers<PrefixArgs>::exec_timeout(Args&&... args)
 {
     auto ms = this->get_next_timeout();
     for (std::size_t i = 0; i < this->timers.size(); ) {
         auto* timer = this->timers[i];
         if (timer->consume(ms)) {
-            switch (timer->exec_timer()) {
+            switch (timer->exec_timer(static_cast<Args&&>(args)...)) {
                 case ExecutorResult::ExitSuccess:
                 case ExecutorResult::ExitFailure:
                     this->timers.erase(this->timers.begin() + i);
@@ -870,6 +884,8 @@ void TopExecutorTimers<PrefixArgs>::exec_timeout()
                 case ExecutorResult::Terminate:
                     break;
                 case ExecutorResult::Nothing:
+                case ExecutorResult::NeedMoreData:
+                case ExecutorResult::Ready:
                     ++i;
                     break;
             }
@@ -891,7 +907,7 @@ struct Timer2Impl : BasicTimer<PrefixArgs>
             return self.ctx.invoke(
                 make_lambda<F>(),
                 Executor2TimerContext<PrefixArgs, Ts...>(self),
-                prefix_args...);
+                static_cast<decltype(prefix_args)&&>(prefix_args)...);
         };
     }
 
@@ -927,8 +943,8 @@ struct Timer2Impl : BasicTimer<PrefixArgs>
     static Timer2Impl* New(TopExecutorTimers<PrefixArgs>& top_executor_timers, Args&&... args)
     {
         auto* p = new Timer2Impl(top_executor_timers, static_cast<Args&&>(args)...);
-        p->deleter = [](void* p) {
-            auto* timer_ptr = static_cast<Timer2Impl*>(p);
+        p->deleter = [](auto* base) {
+            auto* timer_ptr = static_cast<Timer2Impl*>(base);
             timer_ptr->top_executor_timers.detach_timer(*timer_ptr);
             delete timer_ptr;
         };
@@ -945,6 +961,18 @@ private:
     void *operator new(size_t n) { return ::operator new(n); }
 };
 
+namespace detail
+{
+    template<class Before, class T>
+    constexpr std::size_t get_offset = sizeof(Before) + sizeof(Before) % alignof(T);
+
+    template<class Real, class Before = Real, class T>
+    Real& get_before(T& x)
+    {
+        return *reinterpret_cast<Real*>(reinterpret_cast<uint8_t*>(&x) - get_offset<Before, T>);
+    }
+}
+
 template<class PrefixArgs, class... Ts>
 struct TopExecutorImpl : Executor2Impl<PrefixArgs, Ts...>
 {
@@ -955,14 +983,12 @@ struct TopExecutorImpl : Executor2Impl<PrefixArgs, Ts...>
     {
         this->timeout.on_timer = [](BasicTimer<PrefixArgs>& timer, auto... prefix_args) {
             auto& timer_mem = static_cast<Timer2Impl<PrefixArgs>&>(timer);
-            auto offset_mem = sizeof(Executor2Impl<PrefixArgs, Ts...>) + sizeof(Executor2Impl<PrefixArgs, Ts...>) % alignof(Timer2Impl<PrefixArgs>);
-            auto& self = *reinterpret_cast<TopExecutorImpl*>(
-                reinterpret_cast<uint8_t*>(&timer_mem) - offset_mem);
+            auto& self = detail::get_before<TopExecutorImpl, Executor2Impl<PrefixArgs, Ts...>>(timer_mem);
             // TODO ExecutorTimeoutContext
             return self.ctx.invoke(
                 make_lambda<F>(),
                 Executor2TimeoutContext<PrefixArgs, Ts...>(self),
-                prefix_args...);
+                static_cast<decltype(prefix_args)&&>(prefix_args)...);
         };
     }
 
@@ -986,7 +1012,7 @@ struct TopExecutorImpl : Executor2Impl<PrefixArgs, Ts...>
     static TopExecutorImpl* New(TopExecutorTimers<PrefixArgs>& top_executor_timers, Args&&... args)
     {
         auto* p = new TopExecutorImpl{top_executor_timers, static_cast<Args&&>(args)...};
-        p->deleter = [](void* p) { delete static_cast<Executor2Impl<PrefixArgs, Ts...>*>(p); };
+        p->deleter = [](auto* base) { delete static_cast<TopExecutorImpl*>(base); };
         return p;
     }
 
@@ -996,14 +1022,130 @@ private:
     Timer2Impl<PrefixArgs> timeout;
 };
 
+template<class Data>
+struct DataExecutor
+{
+    Data data;
+
+    template<class PrefixArgs>
+    static Data& get_data_from(BasicExecutor<PrefixArgs>& executor)
+    {
+        return detail::get_before<DataExecutor<Data>>(executor).data;
+    }
+};
+
+template<class Data, class PrefixArgs, class... Ts>
+struct TopExecutorWithDataImpl : DataExecutor<Data>, TopExecutorImpl<PrefixArgs, Ts...>
+{
+    TopExecutorWithDataImpl(TopExecutorWithDataImpl const&) = delete;
+    TopExecutorWithDataImpl& operator=(TopExecutorWithDataImpl const&) = delete;
+
+    template<std::size_t... ints, class... DataTs, class... Args>
+    TopExecutorWithDataImpl(
+        detail::tuple_impl<std::integer_sequence<size_t, ints...>, DataTs...> data_arg,
+        TopExecutorTimers<PrefixArgs>& top_executor_timers,
+        Args&&... args)
+      : DataExecutor<Data>{{static_cast<detail::tuple_elem<ints, DataTs>&>(data_arg).x.get()...}}
+      , TopExecutorImpl<PrefixArgs, Ts...>(top_executor_timers, static_cast<Args&&>(args)...)
+    {}
+
+    template<class... DataArg, class... Args>
+    static TopExecutorWithDataImpl* New(detail::tuple_impl<DataArg...> data_args, TopExecutorTimers<PrefixArgs>& top_executor_timers, Args&&... args)
+    {
+        auto* p = new TopExecutorWithDataImpl{data_args, top_executor_timers, static_cast<Args&&>(args)...};
+        p->deleter = [](auto* base) { delete static_cast<TopExecutorWithDataImpl*>(base); };
+        return p;
+    }
+
+private:
+    void *operator new(size_t n) { return ::operator new(n); }
+};
+
+template<class DataType, class PrefixArgs, class... Args>
+using TopExecutorWithData =
+    TopExecutorWithDataImpl<DataType, PrefixArgs, typename detail::decay_and_strip<Args>::type...>;
+
+template<class DataType, class PrefixArgs, class... Args>
+using TopExecutorWithDataBuilder = detail::ExecutorBuilder<
+    TopExecutorWithData<DataType, PrefixArgs, Args...>, detail::ExecutorType::Normal>;
+
+namespace detail
+{
+    template<class T>
+    struct data_arg
+    {
+        T& x;
+        T&& get() { return static_cast<T&&>(x); }
+    };
+
+    template<class DataType, class DataArgsExecutor, class... Ts>
+    struct REDEMPTION_CXX_NODISCARD BuilderDataExecutor
+    {
+        template<class... Args>
+        REDEMPTION_CXX_NODISCARD
+        TopExecutorWithDataBuilder<DataType, prefix_args<Ts...>, Args...>
+        create_executor(int /*fd*/, Args&&... args)
+        {
+            return {
+                this->reactor.executors.template emplace_back<
+                    TopExecutorWithData<DataType, prefix_args<Ts...>, Args...>
+                >(this->data_args, this->reactor.timers, static_cast<Args&&>(args)...)
+            };
+        }
+
+        DataArgsExecutor data_args;
+        Reactor<Ts...>& reactor;
+    };
+}
+
 template<class... Ts>
 struct Reactor
 {
     template<class... Args>
-    TopExecutorBuilder<prefix_args<Ts...>, Args...> create_executor(int /*fd*/, Args&&... args)
+    TopExecutorBuilder<prefix_args<Ts...>, Args...>
+    create_executor(int /*fd*/, Args&&... args)
     {
-        return {this->executors.template emplace_back<TopExecutor2<prefix_args<Ts...>, Args...>>(
-            this->timers, static_cast<Args&&>(args)...)};
+        return {
+            this->executors.template emplace_back<
+                TopExecutor2<prefix_args<Ts...>, Args...>
+            >(this->timers, static_cast<Args&&>(args)...)
+        };
+    }
+
+    template<class DataType, class... Args>
+    auto set_data_executor(Args&&... args)
+    {
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
+        return detail::BuilderDataExecutor<
+            DataType,
+            detail::tuple<detail::data_arg<Args>...>,
+            Ts...
+        >{{detail::data_arg<Args>{args}...}, *this};
+        REDEMPTION_DIAGNOSTIC_POP
+    }
+
+    template<class Data>
+    auto set_data_executor(Data&& data)
+    {
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
+        return detail::BuilderDataExecutor<
+            Data,
+            detail::tuple<detail::data_arg<Data>>,
+            Ts...
+        >{{detail::data_arg<Data>{data}}, *this};
+        REDEMPTION_DIAGNOSTIC_POP
+    }
+
+    template<class Data, class... Us>
+    auto set_data_executor(detail::emplace_type<Data, Us...> e)
+    {
+        return detail::BuilderDataExecutor<
+            Data,
+            detail::tuple<Us...>,
+            Ts...
+        >{e.t, *this};
     }
 
 // private:
@@ -1022,18 +1164,21 @@ namespace detail { namespace {
 } }
 
 template<class PrefixArgs>
-bool BasicExecutor<PrefixArgs>::exec()
+template<class... Args>
+bool BasicExecutor<PrefixArgs>::exec(Args&&... args)
 {
-    switch (this->current->exec_action()) {
+    switch (this->current->exec_action(static_cast<Args&&>(args)...)) {
         case ExecutorResult::ExitSuccess:
-            return this->exit_with(ExecutorError::NoError);
+            return this->exit_with(ExecutorError::NoError, static_cast<Args&&>(args)...);
         case ExecutorResult::ExitFailure:
-            return this->exit_with(ExecutorError::ActionError);
+            return this->exit_with(ExecutorError::ActionError, static_cast<Args&&>(args)...);
         case ExecutorResult::Terminate:
-            this->terminate();
+            this->terminate(static_cast<Args&&>(args)...);
             return false;
             break;
         case ExecutorResult::Nothing:
+        case ExecutorResult::NeedMoreData:
+        case ExecutorResult::Ready:
             break;
     }
 
@@ -1041,23 +1186,25 @@ bool BasicExecutor<PrefixArgs>::exec()
 }
 
 template<class PrefixArgs>
-void BasicExecutor<PrefixArgs>::terminate()
+template<class... Args>
+void BasicExecutor<PrefixArgs>::terminate(Args&&... args)
 {
     while (this->current != this) {
-        (void)this->current->exec_exit(ExecutorError::Terminate);
+        (void)this->current->exec_exit(ExecutorError::Terminate, static_cast<Args&&>(args)...);
         std::exchange(this->current, this->current->prev)->delete_self();
     }
-    (void)this->current->exec_exit(ExecutorError::Terminate);
+    (void)this->current->exec_exit(ExecutorError::Terminate, static_cast<Args&&>(args)...);
     this->on_action = detail::terminate_callee;
     this->on_exit = detail::terminate_callee;
     //TODO this->on_timeout = detail::terminate_callee;
 }
 
 template<class PrefixArgs>
-bool BasicExecutor<PrefixArgs>::exit_with(ExecutorError error)
+template<class... Args>
+bool BasicExecutor<PrefixArgs>::exit_with(ExecutorError error, Args&&... args)
 {
     do {
-        switch (this->current->exec_exit(error)) {
+        switch (this->current->exec_exit(error, static_cast<Args&&>(args)...)) {
             case ExecutorResult::ExitSuccess:
                 if (this->current == this) {
                     this->on_action = detail::terminate_callee;
@@ -1077,10 +1224,12 @@ bool BasicExecutor<PrefixArgs>::exit_with(ExecutorError error)
                 error = ExecutorError::ActionError;
                 break;
             case ExecutorResult::Terminate:
-                this->terminate();
+                this->terminate(static_cast<Args&&>(args)...);
                 return false;
                 break;
             case ExecutorResult::Nothing:
+            case ExecutorResult::NeedMoreData:
+            case ExecutorResult::Ready:
                 return true;
         }
     } while (this->current);

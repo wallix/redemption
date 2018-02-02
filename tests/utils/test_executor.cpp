@@ -564,7 +564,7 @@ private:
             }
         }
 
-        return ctx.retry();
+        return ctx.ready();
     }
 
     bool enable_client_tls(OutTransport trans, ServerCert const& cert)
@@ -585,7 +585,7 @@ private:
         ActionCtx ctx, TpduBuffer& /*buf*/, Transport& trans, ServerCert const& cert)
     {
         if (!this->enable_client_tls(trans, cert)) {
-            return ctx.retry();
+            return ctx.ready();
         }
         return ctx.exit_on_success();
     }
@@ -598,7 +598,7 @@ private:
         //     nego.restricted_admin_mode = true;
         // }
         if (!nego.enable_client_tls(trans, cert)) {
-            return ctx.retry();
+            return ctx.ready();
         }
 
         nego.nla_tried = true;
@@ -654,7 +654,7 @@ private:
         }
         catch (Error const &) {
             nego.fallback_to_tls(trans);
-            return ctx.retry();
+            return ctx.ready();
         }
 
         LOG(LOG_INFO, "RdpNego::recv_credssp");
@@ -678,7 +678,7 @@ private:
             }
         }
 
-        return ctx.retry();
+        return ctx.ready();
     }
 };
 
@@ -817,6 +817,22 @@ RED_AUTO_TEST_CASE(TestNego)
 
     Reactor<> reactor;
 
+    {
+        using namespace std::chrono_literals;
+        struct S{int a, b; };
+        auto& top_executor = reactor.set_data_executor<S>(1, 2)
+        .create_executor(0)
+        .on_action([](auto ctx, auto&&...){ return ctx.exit_on_success(); })
+        .on_exit([](auto ctx, auto&&...){ return ctx.exit_on_success(); })
+        .on_timeout(1s, [](auto ctx, auto&&...){ return ctx.exit_on_success(); })
+        ;
+        auto& base = top_executor.base();
+        auto& data = top_executor.get_data_from(base);
+        RED_CHECK_EQ(data.a, 1);
+        RED_CHECK_EQ(data.b, 2);
+        RED_CHECK_EQ(static_cast<void*>(&top_executor.data), static_cast<void*>(&data));
+    }
+
     reactor.create_executor(0, std::ref(nego), std::ref(buf), std::ref(logtrans), ServerCert{
         server_cert_store,
         ServerCertCheck::always_succeed,
@@ -876,7 +892,7 @@ RED_AUTO_TEST_CASE(TestNego)
                 .on_action([](auto ctx, int& i){
                     TRACE;
                     if (++i < 2) {
-                        return ctx.retry();
+                        return ctx.ready();
                     }
                     return ctx.exit_on_success();
                     //return nego.exec_recv_data(ctx);
@@ -886,6 +902,7 @@ RED_AUTO_TEST_CASE(TestNego)
                     RED_CHECK_EQ(error, ExecutorError::NoError);
                     return ctx.exit_on_success();
                 })
+                .exec_action();
             ;
         })
         .on_exit([](auto ctx, ExecutorError error, UNUSED_VARIADIC()) {
