@@ -27,11 +27,13 @@ h
 #include "utils/verbose_flags.hpp"
 #include "utils/zlib.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
+#include "mod/vnc/encoder/encoder_api.hpp"
 
 namespace VNC {
     namespace Encoder {
 
-        class Zrle {
+        class Zrle : public EncoderApi {
+            const uint8_t bpp;
             const uint8_t Bpp;
             const size_t x;
             const size_t y;
@@ -54,8 +56,8 @@ namespace VNC {
 
             VNCVerbose verbose;
 
-            Zrle(uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy, Zdecompressor<> & zd, VNCVerbose verbose) 
-                : Bpp(Bpp), x(x), y(y), cx(cx), cy(cy)
+            Zrle(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy, Zdecompressor<> & zd, VNCVerbose verbose) 
+                : bpp(bpp), Bpp(Bpp), x(x), y(y), cx(cx), cy(cy)
                 , zd(zd)
                 , state(ZrleState::Header)
                 , zlib_compressed_data_length(0), accumulator{}, accumulator_uncompressed{}
@@ -63,9 +65,11 @@ namespace VNC {
             {
             }
 
+            virtual ~Zrle(){}
+
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
-            bool consume(Buf64k & buf, gdi::GraphicApi & drawable)
+            bool consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
                 LOG(LOG_INFO, "consuming buffer '%u bytes'", buf.remaining());
                 switch (this->state) {
@@ -297,8 +301,7 @@ namespace VNC {
                         uint16_t cx = std::min(TILE_CX, uint16_t(rect.cx - x));
 
                         const Rect src_tile(x, y, cx, cy);
-                        // TODO: fix here magic number 16 is vnc.bpp
-                        const Bitmap tiled_bmp(raw, rect.cx, rect.cy, 16, src_tile);
+                        const Bitmap tiled_bmp(raw, rect.cx, rect.cy, this->bpp, src_tile);
                         const Rect dst_tile(rect.x + x, rect.y + y, cx, cy);
                         const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
                         drawable.draw(cmd2, dst_tile, tiled_bmp);

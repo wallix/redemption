@@ -178,7 +178,7 @@ RED_AUTO_TEST_CASE(TestZrle)
                     uint16_t cx = stream.in_uint16_be();
                     uint16_t cy = stream.in_uint16_be();
                     int32_t encoding = stream.in_sint32_be();
-                    encoder = new VNC::Encoder::Zrle(nbbytes(info.bpp), x, y, cx, cy, zd, VNCVerbose::basic_trace);
+                    encoder = new VNC::Encoder::Zrle(info.bpp, nbbytes(info.bpp), x, y, cx, cy, zd, VNCVerbose::basic_trace);
                     LOG(LOG_INFO, "Encoding: (%u, %u, %u, %u) : %d", x, y, cx, cy, encoding);
                     buf.advance(sz);
                     // Post Assertion: we have an encoder

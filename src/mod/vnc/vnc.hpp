@@ -57,7 +57,9 @@ h
 #include "utils/zlib.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 
+#include "mod/vnc/encoder/encoder_api.hpp"
 #include "mod/vnc/encoder/zrle.hpp"
+#include "mod/vnc/encoder/raw.hpp"
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -1480,7 +1482,7 @@ protected:
                 switch (this->message_type)
                 {
                     case 0: /* framebuffer update */
-                        vnc.frame_buffer_update_ctx.start(/*Bpp = */nbbytes(vnc.bpp));
+                        vnc.frame_buffer_update_ctx.start(vnc.bpp, nbbytes(vnc.bpp));
                         this->state = State::FrameBufferupdate;
                         return vnc.lib_frame_buffer_update(drawable, buf);
                     case 1: /* palette */
@@ -2094,8 +2096,9 @@ private:
 //            inflateEnd(&this->zstrm);
         }
 
-        void start(uint8_t Bpp)
+        void start(uint8_t bpp, uint8_t Bpp)
         {
+            this->bpp = bpp;
             this->Bpp = Bpp;
             this->state = State::Header;
         }
@@ -2136,8 +2139,11 @@ private:
                             switch (this->encoding){
                             default:
                             break;
+                            case RAW_ENCODING:  /* raw */
+                                this->encoder = new VNC::Encoder::Raw(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
+                            break;
                             case ZRLE_ENCODING: /* ZRLE */
-                                this->encoder = new VNC::Encoder::Zrle(this->Bpp, this->x, this->y, this->cx, this->cy, this->zd, VNCVerbose::basic_trace);
+                                this->encoder = new VNC::Encoder::Zrle(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, this->zd, VNCVerbose::basic_trace);
                             break;
                             }
                             buf.advance(sz);
@@ -2152,21 +2158,18 @@ private:
 
                     switch (this->encoding)
                     {
-                    case RAW_ENCODING:  /* raw */       
-                        LOG(LOG_INFO, "RAW_ENCODING %zu", buf.remaining());
-                        r = this->read_data_raw(buf, vnc, drawable); 
-                    break;
                     case COPYRECT_ENCODING:  /* copy rect */ 
                         LOG(LOG_INFO, "COPYRECT_ENCODING");
                         r = this->read_data_copy_rect(buf, vnc, drawable); 
                     break;
-                    case RRE_ENCODING:  /* RRE */       
+                    case RRE_ENCODING:  /* RRE */
                         LOG(LOG_INFO, "RRE_ENCODING");
                         r = this->read_data_rre(buf); 
                     break;
+                    case RAW_ENCODING:  /* raw */
                     case ZRLE_ENCODING: /* ZRLE */
                     {
-                        LOG(LOG_INFO, "ZRLE_ENCODING");
+                        LOG(LOG_INFO, "%s", (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" : "ZRLE_ENCODING");
                         // Pre Assertion: we have an encoder
                         if (encoder->consume(buf, drawable)){
                             // consume returns true if encoder is finished (ready to be resetted)
@@ -2206,6 +2209,7 @@ private:
         }
 
     private:
+        uint8_t bpp;
         uint8_t Bpp;
 
         State state;
@@ -2222,7 +2226,7 @@ private:
         std::vector<uint8_t> accumulator_uncompressed;
         uint32_t zlib_compressed_data_length;
         
-        VNC::Encoder::Zrle * encoder = nullptr;
+        VNC::Encoder::EncoderApi * encoder = nullptr;
 
 
         uint32_t number_of_subrectangles_remain;
@@ -2305,31 +2309,6 @@ private:
             // TODO see why we get these empty rects ?
             // return State::Encoding;
             return Result::ok(State::Data);
-        }
-
-
-        Result read_data_raw(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
-        {
-            size_t const line_size = this->cx * this->Bpp;
-
-            if (buf.remaining() < line_size) {
-                return Result::fail();
-            }
-
-            auto const cy = std::min<size_t>(buf.remaining() / line_size, this->cy);
-            auto const new_av = buf.av(cy * line_size);
-
-            Rect rect(this->x, this->y, this->cx, cy);
-
-            update_lock<gdi::GraphicApi> lock(drawable);
-            vnc.draw_tile(rect, new_av.data(), drawable);
-
-            this->y += cy;
-            this->cy -= cy;
-
-            LOG(LOG_INFO, "Send %d lines, remains %d", y, this->cy);
-            buf.advance(new_av.size());
-            return Result::ok(this->cy ? State::Data : State::Encoding);
         }
 
         Result read_data_copy_rect(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
