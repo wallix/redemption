@@ -94,8 +94,7 @@ namespace VNC {
                             uint16_t cx = std::min(TILE_CX, uint16_t(rect.cx - x));
 
                             const Rect src_tile(x, y, cx, cy);
-                            // TODO: fix here magic number 16 is vnc.bpp
-                            const Bitmap tiled_bmp(raw, rect.cx, rect.cy, 16, src_tile);
+                            const Bitmap tiled_bmp(raw, rect.cx, rect.cy, this->bpp, src_tile);
                             const Rect dst_tile(rect.x + x, rect.y + y, cx, cy);
                             const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
                             drawable.draw(cmd2, dst_tile, tiled_bmp);

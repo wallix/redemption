@@ -60,6 +60,7 @@ h
 #include "mod/vnc/encoder/encoder_api.hpp"
 #include "mod/vnc/encoder/zrle.hpp"
 #include "mod/vnc/encoder/raw.hpp"
+#include "mod/vnc/encoder/rre.hpp"
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -2072,7 +2073,6 @@ private:
             Header,
             Encoding,
             Data,
-            RreData,
         };
 
         using Result = BasicResult<State>;
@@ -2145,6 +2145,9 @@ private:
                             case ZRLE_ENCODING: /* ZRLE */
                                 this->encoder = new VNC::Encoder::Zrle(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, this->zd, VNCVerbose::basic_trace);
                             break;
+                            case RRE_ENCODING: /* RRE */
+                                this->encoder = new VNC::Encoder::RRE(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
+                            break;
                             }
                             buf.advance(sz);
 
@@ -2162,14 +2165,14 @@ private:
                         LOG(LOG_INFO, "COPYRECT_ENCODING");
                         r = this->read_data_copy_rect(buf, vnc, drawable); 
                     break;
-                    case RRE_ENCODING:  /* RRE */
-                        LOG(LOG_INFO, "RRE_ENCODING");
-                        r = this->read_data_rre(buf); 
                     break;
+                    case RRE_ENCODING:  /* RRE */
                     case RAW_ENCODING:  /* raw */
                     case ZRLE_ENCODING: /* ZRLE */
                     {
-                        LOG(LOG_INFO, "%s", (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" : "ZRLE_ENCODING");
+                        LOG(LOG_INFO, "%s", (this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
+                                            (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" :
+                                             "ZRLE_ENCODING");
                         // Pre Assertion: we have an encoder
                         if (encoder->consume(buf, drawable)){
                             // consume returns true if encoder is finished (ready to be resetted)
@@ -2198,7 +2201,6 @@ private:
                     }
                     break;
                 break;
-                case State::RreData: r = this->read_data_rre_data(buf, vnc, drawable); break;
                 }
 
                 if (!r) {
@@ -2230,7 +2232,6 @@ private:
 
 
         uint32_t number_of_subrectangles_remain;
-        std::unique_ptr<uint8_t[]> rre_raw;
 
         Zdecompressor<> & zd;
 
@@ -2333,78 +2334,6 @@ private:
             );
 
             return Result::ok(State::Encoding);
-        }
-
-        Result read_data_rre(Buf64k & buf)
-        {
-            const size_t sz = 4 + this->Bpp;
-
-            if (buf.remaining() < sz)
-            {
-                return Result::fail();
-            }
-
-            InStream stream_rre(buf.av(sz));
-            this->number_of_subrectangles_remain = stream_rre.in_uint32_be();
-
-            //LOG(LOG_INFO, "VNC Encoding: RRE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
-            this->rre_raw.reset(new(std::nothrow) uint8_t[cx * cy * Bpp]);
-            if (!this->rre_raw) {
-                LOG(LOG_ERR, "Memory allocation failed for RRE buffer in VNC");
-                throw Error(ERR_VNC_MEMORY_ALLOCATION_FAILED);
-            }
-
-            for (uint8_t * point_cur = this->rre_raw.get(), * point_end = point_cur + cx * cy * Bpp;
-                    point_cur < point_end; point_cur += Bpp) {
-                memcpy(point_cur, stream_rre.get_current(), Bpp);
-            }
-
-            buf.advance(sz);
-
-            return Result::ok(State::RreData);
-        }
-
-        Result read_data_rre_data(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
-        {
-            if (!this->number_of_subrectangles_remain) {
-                // TODO use MultiRect
-                update_lock<gdi::GraphicApi> lock(drawable);
-                vnc.draw_tile(Rect(this->x, this->y, this->cx, this->cy), this->rre_raw.get(), drawable);
-                this->rre_raw.reset();
-                return Result::ok(State::Encoding);
-            }
-
-            const size_t sz = 8 + this->Bpp;
-
-            if (buf.remaining() < sz)
-            {
-                return Result::fail();
-            }
-
-            --this->number_of_subrectangles_remain;
-
-            InStream subrectangles(buf.av(sz));
-            auto bytes_per_pixel = subrectangles.get_current();
-            subrectangles.in_skip_bytes(Bpp);
-            auto subrec_x        = subrectangles.in_uint16_be();
-            auto subrec_y        = subrectangles.in_uint16_be();
-            auto subrec_width    = subrectangles.in_uint16_be();
-            auto subrec_height   = subrectangles.in_uint16_be();
-
-            auto ling_boundary = cx * Bpp;
-            auto point_line_cur = this->rre_raw.get() + subrec_y * ling_boundary;
-            auto point_line_end = point_line_cur + subrec_height * ling_boundary;
-            for (; point_line_cur < point_line_end; point_line_cur += ling_boundary) {
-                for (uint8_t * point_cur = point_line_cur + subrec_x * Bpp,
-                        * point_end = point_cur + subrec_width * Bpp;
-                        point_cur < point_end; point_cur += Bpp) {
-                    memcpy(point_cur, bytes_per_pixel, Bpp);
-                }
-            }
-
-            buf.advance(sz);
-
-            return Result::ok(State::RreData);
         }
 
         Result read_data_cursor(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)

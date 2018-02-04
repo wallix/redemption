@@ -28,5 +28,59 @@ h
 
 namespace VNC {
     namespace Encoder {
+        class CopyRect : public EncoderApi {
+            const uint8_t bpp;
+            const uint8_t Bpp;
+            const size_t x;
+            size_t y;
+            const size_t cx;
+            size_t cy;
+
+            enum class CopyrectState {
+                Header,
+                Data,
+                Exit
+            } state;
+        
+        public:
+            VNCVerbose verbose;
+
+            CopyRect(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy, VNCVerbose verbose) 
+                : bpp(bpp), Bpp(Bpp), x(x), y(y), cx(cx), cy(cy)
+                , state(RawState::Header)
+                , verbose(verbose)
+            {
+            }
+            
+            virtual ~CopyRect(){}
+            
+            // return is true if the Encoder has finished working (can be reset or deleted),
+            // return is false if the encoder is waiting for more data
+            bool consume(Buf64k & buf, gdi::GraphicApi & drawable) override
+            {
+                return true; // finished decoding
+            }
+            
+            public:
+                void draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawable)
+                {
+                    const uint16_t TILE_CX = 32;
+                    const uint16_t TILE_CY = 32;
+
+                    for (int y = 0; y < rect.cy ; y += TILE_CY) {
+                        uint16_t cy = std::min(TILE_CY, uint16_t(rect.cy - y));
+
+                        for (int x = 0; x < rect.cx ; x += TILE_CX) {
+                            uint16_t cx = std::min(TILE_CX, uint16_t(rect.cx - x));
+
+                            const Rect src_tile(x, y, cx, cy);
+                            const Bitmap tiled_bmp(raw, rect.cx, rect.cy, this->bpp, src_tile);
+                            const Rect dst_tile(rect.x + x, rect.y + y, cx, cy);
+                            const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
+                            drawable.draw(cmd2, dst_tile, tiled_bmp);
+                        }
+                    }
+                }
+        };
     } // namespace encoder
 } // namespace VNC
