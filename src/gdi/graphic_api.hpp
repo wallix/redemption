@@ -236,7 +236,8 @@ inline BGRColor color_decode(const RDPColor color, Depth depth, const BGRPalette
     return color_decode(color, ColorCtx{depth, palette});
 }
 
-
+// TODO: why doesn't GraphicApi give information on drawing surface size ?
+// in vnc copyrect we need that to clip to the whole screen
 struct GraphicApi : private noncopyable
 {
     GraphicApi() {}

@@ -61,6 +61,7 @@ h
 #include "mod/vnc/encoder/zrle.hpp"
 #include "mod/vnc/encoder/raw.hpp"
 #include "mod/vnc/encoder/rre.hpp"
+#include "mod/vnc/encoder/copyrect.hpp"
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -2139,6 +2140,10 @@ private:
                             switch (this->encoding){
                             default:
                             break;
+                            case COPYRECT_ENCODING:  /* raw */
+								// TODO: front_width and front_height should not be necessary
+                                this->encoder = new VNC::Encoder::CopyRect(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.front_width, vnc.front_height, VNCVerbose::basic_trace);
+                            break;
                             case RAW_ENCODING:  /* raw */
                                 this->encoder = new VNC::Encoder::Raw(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
                             break;
@@ -2162,15 +2167,12 @@ private:
                     switch (this->encoding)
                     {
                     case COPYRECT_ENCODING:  /* copy rect */ 
-                        LOG(LOG_INFO, "COPYRECT_ENCODING");
-                        r = this->read_data_copy_rect(buf, vnc, drawable); 
-                    break;
-                    break;
                     case RRE_ENCODING:  /* RRE */
                     case RAW_ENCODING:  /* raw */
                     case ZRLE_ENCODING: /* ZRLE */
                     {
-                        LOG(LOG_INFO, "%s", (this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
+                        LOG(LOG_INFO, "%s", (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
+											(this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
                                             (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" :
                                              "ZRLE_ENCODING");
                         // Pre Assertion: we have an encoder
@@ -2310,30 +2312,6 @@ private:
             // TODO see why we get these empty rects ?
             // return State::Encoding;
             return Result::ok(State::Data);
-        }
-
-        Result read_data_copy_rect(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
-        {
-            const size_t sz = 4;
-
-            if (buf.remaining() < sz)
-            {
-                return Result::fail();
-            }
-
-            InStream stream_copy_rect(buf.av(sz));
-            uint16_t const srcx = stream_copy_rect.in_uint16_be();
-            uint16_t const srcy = stream_copy_rect.in_uint16_be();
-
-            buf.advance(sz);
-
-            update_lock<gdi::GraphicApi> lock(drawable);
-            drawable.draw(
-                RDPScrBlt(Rect(this->x, this->y, this->cx, this->cy), 0xCC, srcx, srcy),
-                Rect(0, 0, vnc.front_width, vnc.front_height)
-            );
-
-            return Result::ok(State::Encoding);
         }
 
         Result read_data_cursor(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
