@@ -1600,7 +1600,7 @@ public:
                 );
         }
 
-        LOG(LOG_INFO, "RDP mod contructed");
+        LOG(LOG_INFO, "RDP mod built");
     }   // mod_rdp
 
     ~mod_rdp() override {

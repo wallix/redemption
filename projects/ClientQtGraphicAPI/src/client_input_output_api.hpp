@@ -993,15 +993,52 @@ class ClientInputSocketAPI : public ClientIODiskAPI {
 public:
     mod_api * _callback = nullptr;
 
-//     void set_mod(mod_api * mod) {
-//         this->_callback = mod;
-//     }
-
     virtual bool start_to_listen(int client_sck, mod_api * mod) = 0;
     virtual void disconnect() = 0;
 
     virtual ~ClientInputSocketAPI() = default;
 };
+
+// class ClientInputSocketRunner : public ClientInputSocketAPI {
+//
+//     bool connected = false;
+//
+//     virtual bool start_to_listen(int client_sck, mod_api * mod) {
+//          auto & mod = *mod;
+//
+//         while (front.is_connected())
+//         {
+//             if (mod.logged_on == mod_api::CLIENT_LOGGED) {
+//                 mod.logged_on = mod_api::CLIENT_UNLOGGED;
+//
+//                 std::cout << " RDP Session Log On." << std::endl;
+//                 if (quick_connection_test) {
+//                     std::cout << "quick_connection_test" <<  std::endl;
+//                     return 0;
+//                 }
+//                 break;
+//             }
+//
+//             if (time_set_connection_test) {
+//                 if (time_stop > tvtime()) {
+//                     //std::cerr <<  " Exit timeout (timeout = " << time_out_response.tv_sec << " sec " <<  time_out_response.tv_usec << " µsec)" << std::endl;
+//                     return 8;
+//                 }
+//             }
+//
+//             if (int err = front.wait_and_draw_event(sck, mod, front, time_mark)) {
+//                 return err;
+//             }
+//
+//             front.send_key_to_keep_alive();
+//         }
+//
+//     }
+//
+//     virtual void disconnect() = 0;
+//
+//
+// };
 
 
 

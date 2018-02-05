@@ -254,10 +254,6 @@ else
     lib libphonon : : <name>phonon4qt5 <link>shared ;
 }
 
-obj front_Qt$(qtversion)_Demo.o : src/frontDemoQtClient.cpp :
-    <define>REDEMPTION_DECL_LOG_TEST
-    $(EXE_DEPENDENCIES)
-;
 
 obj front_Qt$(qtversion)_rdp.o : src/main_qt_client_redemption.cpp :
     <define>REDEMPTION_DECL_LOG_TEST
