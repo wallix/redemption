@@ -117,7 +117,7 @@ public:
         , _pwdCheckBoxChecked(false)
         , _lastTargetIndex(0)
     {
-        this->setWindowTitle("Remote Desktop Player");
+        this->setWindowTitle("ReDemPtion Client");
         this->setAttribute(Qt::WA_DeleteOnClose);
         this->setFixedSize(this->_width, this->_height);
 

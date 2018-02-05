@@ -878,9 +878,9 @@ int main(int argc, char** argv)
         //             Scripted Events
         //===========================================
 
-        if (script_on) {
-            front.set_event_list(script_file_path.c_str());
-        }
+//         if (script_on) {
+//             front.set_event_list(script_file_path.c_str());
+//         }
 
         if ((input_connection_data_complete & RDPHeadlessFront::LOG_COMPLETE) || quick_connection_test) {
             try {
