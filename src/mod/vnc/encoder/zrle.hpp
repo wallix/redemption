@@ -8,7 +8,7 @@
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
-h
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -18,7 +18,7 @@ h
    Author(s): Christophe Grosjean, Javier Caverni, Clément Moroldo
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
-   Vnc module
+   Vnc module for zrle encoder
 */
 
 #pragma once

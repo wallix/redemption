@@ -34,13 +34,15 @@
 
 #include <QtCore/QMimeData>
 #include <QtGui/QClipboard>
+#include <QtCore/QUrl>
 
 #if REDEMPTION_QT_VERSION == 4
-#   include <QtCore/QUrl>
 #   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
 #else
 #   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtWidgets/name>
 #endif
+
+
 #include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QDesktopWidget)

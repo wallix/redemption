@@ -26,7 +26,13 @@
 #include "utils/log.hpp"
 #include "../client_input_output_api.hpp"
 
-#include <QtGui/QWidget>
+#if REDEMPTION_QT_VERSION == 4
+#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
+#else
+#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtWidgets/name>
+#endif
+
+#include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
 #include <QtCore/QSocketNotifier>
 #include <QtCore/QTimer>
 
