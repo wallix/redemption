@@ -460,7 +460,7 @@ public:
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
     }
 
-    using ActionCtx = Executor2ActionContext<NewRdpNego&, TpduBuffer&, Transport&, ServerCert>;
+    using ActionCtx = Executor2ActionContext<prefix_args<>, NewRdpNego&, TpduBuffer&, Transport&, ServerCert>;
 
     static ExecutorResult exec_recv_data(ActionCtx ctx)
     {
@@ -564,7 +564,7 @@ private:
             }
         }
 
-        return ctx.retry();
+        return ctx.ready();
     }
 
     bool enable_client_tls(OutTransport trans, ServerCert const& cert)
@@ -585,7 +585,7 @@ private:
         ActionCtx ctx, TpduBuffer& /*buf*/, Transport& trans, ServerCert const& cert)
     {
         if (!this->enable_client_tls(trans, cert)) {
-            return ctx.retry();
+            return ctx.ready();
         }
         return ctx.exit_on_success();
     }
@@ -598,7 +598,7 @@ private:
         //     nego.restricted_admin_mode = true;
         // }
         if (!nego.enable_client_tls(trans, cert)) {
-            return ctx.retry();
+            return ctx.ready();
         }
 
         nego.nla_tried = true;
@@ -654,7 +654,7 @@ private:
         }
         catch (Error const &) {
             nego.fallback_to_tls(trans);
-            return ctx.retry();
+            return ctx.ready();
         }
 
         LOG(LOG_INFO, "RdpNego::recv_credssp");
@@ -678,7 +678,7 @@ private:
             }
         }
 
-        return ctx.retry();
+        return ctx.ready();
     }
 };
 
@@ -796,26 +796,42 @@ RED_AUTO_TEST_CASE(TestNego)
     #define UNUSED_VARIADIC() auto&&...
 #endif
 
-    Reactor reactor;
-
     {
+        TopExecutorTimers<prefix_args<>> top_timers;
         using namespace std::chrono_literals;
-        TopExecutor2<> executor(reactor);
+        TopExecutor2<prefix_args<>> executor(top_timers);
         executor.set_timeout(10ms);
-        auto& timer1 = executor.create_timer()
+        auto timer1 = top_timers.create_timer()
             .on_action(2ms, [](auto ctx){
                 TRACE;
                 return ctx.retry();
             });
-        auto& timer2 = executor.create_timer()
+        auto timer2 = top_timers.create_timer()
             .on_action(3ms, [](auto ctx){
                 TRACE;
                 return ctx.retry();
             });
-        RED_CHECK_EQ(executor.get_next_timeout().count(), 2);
+        RED_CHECK_EQ(top_timers.get_next_timeout().count(), 2);
     }
 
 
+    Reactor<> reactor;
+
+    {
+        using namespace std::chrono_literals;
+        struct S{int a, b; };
+        auto& top_executor = reactor.set_data_executor<S>(1, 2)
+        .create_executor(0)
+        .on_action([](auto ctx, auto&&...){ return ctx.exit_on_success(); })
+        .on_exit([](auto ctx, auto&&...){ return ctx.exit_on_success(); })
+        .on_timeout(1s, [](auto ctx, auto&&...){ return ctx.exit_on_success(); })
+        ;
+        auto& base = top_executor.base();
+        auto& data = top_executor.get_data_from(base);
+        RED_CHECK_EQ(data.a, 1);
+        RED_CHECK_EQ(data.b, 2);
+        RED_CHECK_EQ(static_cast<void*>(&top_executor.data), static_cast<void*>(&data));
+    }
 
     reactor.create_executor(0, std::ref(nego), std::ref(buf), std::ref(logtrans), ServerCert{
         server_cert_store,
@@ -847,7 +863,8 @@ RED_AUTO_TEST_CASE(TestNego)
     std::cout << "-----\n";
 
     {
-        auto* executor = TopExecutor2<>::New(reactor);
+        TopExecutorTimers<prefix_args<>> top_timers;
+        auto* executor = TopExecutor2<prefix_args<>>::New(top_timers);
         executor->set_on_action([](auto ctx, UNUSED_VARIADIC()){
             TRACE;
             return ctx.exit_on_success();
@@ -875,7 +892,7 @@ RED_AUTO_TEST_CASE(TestNego)
                 .on_action([](auto ctx, int& i){
                     TRACE;
                     if (++i < 2) {
-                        return ctx.retry();
+                        return ctx.ready();
                     }
                     return ctx.exit_on_success();
                     //return nego.exec_recv_data(ctx);
@@ -885,6 +902,7 @@ RED_AUTO_TEST_CASE(TestNego)
                     RED_CHECK_EQ(error, ExecutorError::NoError);
                     return ctx.exit_on_success();
                 })
+                .exec_action();
             ;
         })
         .on_exit([](auto ctx, ExecutorError error, UNUSED_VARIADIC()) {
