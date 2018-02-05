@@ -56,9 +56,9 @@ namespace VNC {
             
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
-            bool consume(Buf64k & buf, gdi::GraphicApi & drawable) override
+            EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
-                return true; // finished decoding
+                return EncoderState::Exit; // finished decoding
             }
             
             public:

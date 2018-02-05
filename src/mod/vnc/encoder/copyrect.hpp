@@ -36,8 +36,8 @@ namespace VNC {
             const size_t cx;
             size_t cy;
 
-			const uint16_t width;
-			const uint16_t height;
+            const uint16_t width;
+            const uint16_t height;
 
             enum class CopyrectState {
                 Header,
@@ -59,25 +59,25 @@ namespace VNC {
             
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
-            bool consume(Buf64k & buf, gdi::GraphicApi & drawable) override
+            EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
-		        const size_t sz = 4;
+                const size_t sz = 4;
 
-		        if (buf.remaining() < sz) { return false; }
+                if (buf.remaining() < sz) { return EncoderState::NeedMoreData;  }
 
-		        InStream stream_copy_rect(buf.av(sz));
-		        uint16_t const srcx = stream_copy_rect.in_uint16_be();
-		        uint16_t const srcy = stream_copy_rect.in_uint16_be();
+                InStream stream_copy_rect(buf.av(sz));
+                uint16_t const srcx = stream_copy_rect.in_uint16_be();
+                uint16_t const srcy = stream_copy_rect.in_uint16_be();
 
-		        buf.advance(sz);
+                buf.advance(sz);
 
-		        update_lock<gdi::GraphicApi> lock(drawable);
-		        drawable.draw(
-		            RDPScrBlt(Rect(this->x, this->y, this->cx, this->cy), 0xCC, srcx, srcy),
-		            Rect(0, 0, this->width, this->height)
-		        );
+                update_lock<gdi::GraphicApi> lock(drawable);
+                drawable.draw(
+                    RDPScrBlt(Rect(this->x, this->y, this->cx, this->cy), 0xCC, srcx, srcy),
+                    Rect(0, 0, this->width, this->height)
+                );
 
-                return true; // finished decoding
+                return EncoderState::Exit; // finished decoding
             }           
         };
     } // namespace encoder

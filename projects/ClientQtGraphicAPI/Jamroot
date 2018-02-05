@@ -76,7 +76,7 @@ rule disable-buggy-warn ( properties * )
 
     local flags ;
 
-    if $(toolset) = gcc && !  $(version) <= 05.00
+    if $(toolset) = gcc && ! ( $(version) <= 05.00 )
     {
         flags += <cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant ;
     }
@@ -254,11 +254,6 @@ else
     lib libphonon : : <name>phonon4qt5 <link>shared ;
 }
 
-obj front_Qt$(qtversion)_Demo.o : src/frontDemoQtClient.cpp :
-    <define>REDEMPTION_DECL_LOG_TEST
-    $(EXE_DEPENDENCIES)
-;
-
 obj front_Qt$(qtversion)_rdp.o : src/main_qt_client_redemption.cpp :
     <define>REDEMPTION_DECL_LOG_TEST
     $(EXE_DEPENDENCIES)
@@ -285,5 +280,4 @@ exe client_rdp_Qt$(qtversion) :
     <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
 ;
 
-alias client_vnc_Qt : client_vnc_Qt$(qtversion) ;
 alias client_rdp_Qt : client_rdp_Qt$(qtversion) ;

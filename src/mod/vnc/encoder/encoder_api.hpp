@@ -31,9 +31,14 @@ h
 
 namespace VNC {
     namespace Encoder {
+        enum class EncoderState {
+            Ready,
+            NeedMoreData,
+            Exit
+        };
         class EncoderApi {
         public:
-            virtual bool consume(Buf64k & buf, gdi::GraphicApi & drawable) = 0;
+            virtual EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) = 0;
             virtual ~EncoderApi() {}
         };
     } // namespace encoder

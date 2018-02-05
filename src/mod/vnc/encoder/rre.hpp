@@ -88,14 +88,14 @@ namespace VNC {
             
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
-            bool consume(Buf64k & buf, gdi::GraphicApi & drawable) override
+            EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
                 switch (this->state){
                 case RREState::Header:
                 {
                     const size_t sz = 4 + this->Bpp;
 
-                    if (buf.remaining() < sz){ return false; }
+                    if (buf.remaining() < sz){ return EncoderState::NeedMoreData; }
 
                     // TODO: fix that, no need to perform double copy!
                     // we should be able to read number of subrect only
@@ -110,25 +110,26 @@ namespace VNC {
                     }
                     buf.advance(sz);
 
-                    this->state =RREState::Data;
-                    return false;
+                    this->state = RREState::Data;
+                    return EncoderState::Ready;
                 }
                 break;
                 case RREState::Data:
                 {
                     if (!this->number_of_subrectangles_remain) {
                         // TODO: why are we sending the tiles that way
-						// TODO: using MultiDestBlt should be better
+                        // TODO: using MultiDestBlt should be better
                         // TODO use MultiRect
                         update_lock<gdi::GraphicApi> lock(drawable);
                         this->draw_tile(Rect(this->x, this->y, this->cx, this->cy), this->rre_raw.data(), drawable);
                         this->rre_raw.clear();
-                        return true;
+                        this->state = RREState::Header;
+                        return EncoderState::Exit;
                     }
 
                     const size_t sz = 8 + this->Bpp;
 
-                    if (buf.remaining() < sz){return false;}
+                    if (buf.remaining() < sz){ return EncoderState::NeedMoreData;}
 
                     --this->number_of_subrectangles_remain;
 
@@ -144,7 +145,7 @@ namespace VNC {
                     auto point_line_cur = this->rre_raw.data() + subrec_y * ling_boundary;
                     auto point_line_end = point_line_cur + subrec_height * ling_boundary;
                     for (; point_line_cur < point_line_end; point_line_cur += ling_boundary) {
-						uint8_t * point_cur = point_line_cur + subrec_x * Bpp;
+                        uint8_t * point_cur = point_line_cur + subrec_x * Bpp;
                         uint8_t * point_end = point_cur + subrec_width * Bpp;
                         for (; point_cur < point_end; point_cur += Bpp) {
                             memcpy(point_cur, bytes_per_pixel, Bpp);
@@ -152,14 +153,14 @@ namespace VNC {
                     }
 
                     buf.advance(sz);
-                    return false;
+                    return EncoderState::Ready;
                 }
                 break;
                 case RREState::Exit:
                 default:
                 break;
                 }
-                return true; // finished decoding
+                return EncoderState::Exit; // finished decoding
             }
             
             public:

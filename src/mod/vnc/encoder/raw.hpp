@@ -57,12 +57,12 @@ namespace VNC {
             
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
-            bool consume(Buf64k & buf, gdi::GraphicApi & drawable) override
+            EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
                 size_t const line_size = this->cx * this->Bpp;
 
                 if (buf.remaining() < line_size) {
-                    return false;
+                    return EncoderState::NeedMoreData; 
                 }
 
                 auto const cy = std::min<size_t>(buf.remaining() / line_size, this->cy);
@@ -78,7 +78,10 @@ namespace VNC {
 
                 LOG(LOG_INFO, "Send %zu lines, remains %zu", y, this->cy);
                 buf.advance(new_av.size());
-                return this->cy == 0;
+                if (this->cy == 0){
+                    return EncoderState::Exit; 
+                }
+                return EncoderState::Ready; 
             }
             
             public:

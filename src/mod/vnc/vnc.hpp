@@ -763,6 +763,9 @@ public:
         if (bool(this->verbose & VNCVerbose::connection)) {
             LOG(LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
         }
+        
+        
+        
         // set almost null cursor, this is the little dot cursor
         Pointer cursor;
         cursor.x = 3;
@@ -774,8 +777,15 @@ public:
         memset(cursor.data + 30 * (32 * 3), 0xff, 9);
         memset(cursor.data + 29 * (32 * 3), 0xff, 9);
         memset(cursor.mask, 0xff, 32 * (32 / 8));
+        
+        LOG(LOG_INFO, "update cursor");
         cursor.update_bw();
-        this->front.set_pointer(cursor);
+
+        LOG(LOG_INFO, "front set_pointer");
+
+        // this->front.set_pointer(cursor);
+
+        LOG(LOG_INFO, "log5");
 
         this->report_message.log5("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"");
 
@@ -1526,6 +1536,7 @@ protected:
 public:
     void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override
     {
+        LOG(LOG_INFO, "draw_event...");
         if (bool(this->verbose & VNCVerbose::draw_event)) {
             LOG(LOG_INFO, "vnc::draw_event");
         }
@@ -2116,6 +2127,7 @@ private:
                 break;
                 case State::Encoding:
                     if (0 == this->num_recs) {
+                        this->state = State::Header;
                         return true;
                     }
                     {
@@ -2138,20 +2150,25 @@ private:
 
                             --this->num_recs;
                             switch (this->encoding){
-                            default:
-                            break;
                             case COPYRECT_ENCODING:  /* raw */
-								// TODO: front_width and front_height should not be necessary
+                                LOG(LOG_INFO, "copyrect encoding");
+                                // TODO: front_width and front_height should not be necessary
                                 this->encoder = new VNC::Encoder::CopyRect(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.front_width, vnc.front_height, VNCVerbose::basic_trace);
                             break;
                             case RAW_ENCODING:  /* raw */
+                                LOG(LOG_INFO, "raw encoding");
                                 this->encoder = new VNC::Encoder::Raw(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
                             break;
                             case ZRLE_ENCODING: /* ZRLE */
+                                LOG(LOG_INFO, "zrle encoding");                            
                                 this->encoder = new VNC::Encoder::Zrle(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, this->zd, VNCVerbose::basic_trace);
                             break;
                             case RRE_ENCODING: /* RRE */
+                                LOG(LOG_INFO, "rre encoding");                            
                                 this->encoder = new VNC::Encoder::RRE(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
+                                break;
+                            default:
+                                LOG(LOG_INFO, "other encoding");                            
                             break;
                             }
                             buf.advance(sz);
@@ -2163,6 +2180,7 @@ private:
                     }
                     break;
                 case State::Data:
+                    LOG(LOG_INFO, "state Data");                            
 
                     switch (this->encoding)
                     {
@@ -2172,21 +2190,28 @@ private:
                     case ZRLE_ENCODING: /* ZRLE */
                     {
                         LOG(LOG_INFO, "%s", (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
-											(this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
+                                            (this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
                                             (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" :
                                              "ZRLE_ENCODING");
                         // Pre Assertion: we have an encoder
-                        if (encoder->consume(buf, drawable)){
+                        switch (encoder->consume(buf, drawable)){
+                            case VNC::Encoder::EncoderState::Ready:
+                                r = Result::ok(State::Data);
+                            break;
+                            case VNC::Encoder::EncoderState::NeedMoreData:
+                                r = Result::fail();
+                            break;
+                            case VNC::Encoder::EncoderState::Exit:
                             // consume returns true if encoder is finished (ready to be resetted)
                             r = Result::ok(State::Encoding);
                             delete encoder;
                             encoder = nullptr;
                             break;
                         }
-                        r = Result::fail();
                     }
                     break;
                     case CURSOR_PSEUDO_ENCODING: /* (-239) cursor */
+                        LOG(LOG_INFO, "Cursor Pseudo");                            
                         LOG(LOG_INFO, "CURSOR_PSEUDO_ENCODING");
                         r = this->read_data_cursor(buf, vnc, drawable); 
                     break;
@@ -2226,14 +2251,7 @@ private:
         uint16_t cy;
         int32_t encoding;
 
-        std::vector<uint8_t> accumulator;
-        std::vector<uint8_t> accumulator_uncompressed;
-        uint32_t zlib_compressed_data_length;
-        
         VNC::Encoder::EncoderApi * encoder = nullptr;
-
-
-        uint32_t number_of_subrectangles_remain;
 
         Zdecompressor<> & zd;
 
@@ -2438,10 +2456,12 @@ private:
 
     bool lib_frame_buffer_update(gdi::GraphicApi & drawable, Buf64k & buf)
     {
+        LOG(LOG_INFO, "lib_frame_buffer_update");
         if (!this->frame_buffer_update_ctx.run(buf, *this, drawable)) {
             return false;
         }
 
+        LOG(LOG_INFO, "lib_frame_buffer_update asking update (%zu, %zu)", this->width, this->height);
         this->update_screen(Rect(0, 0, this->width, this->height));
         return true;
     } // lib_frame_buffer_update

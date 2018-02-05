@@ -444,7 +444,7 @@ public:
                                                     , 0
                                                     , true
                                                     , true
-                                                    , "0,1,-239"
+                                                    , "16,0,1,-239"
                                                     , false
                                                     , true
                                                     , mod_vnc::ClipboardEncodingType::UTF8

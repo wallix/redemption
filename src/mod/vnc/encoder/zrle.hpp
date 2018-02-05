@@ -69,14 +69,18 @@ namespace VNC {
 
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
-            bool consume(Buf64k & buf, gdi::GraphicApi & drawable) override
+            EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
                 LOG(LOG_INFO, "consuming buffer '%u bytes'", buf.remaining());
                 switch (this->state) {
                 case ZrleState::Header:
                 {
+                    LOG(LOG_INFO, "read_data_zrle_header %zu", buf.remaining());
                     const size_t sz = sizeof(uint32_t);
-                    if (buf.remaining() < sz){ return false; }
+                    if (buf.remaining() < sz){ 
+                        LOG(LOG_INFO, "early exit read_data_zrle_header %s", (buf.remaining() < sz)?"true":"false");
+                        return EncoderState::NeedMoreData; 
+                    }
                     this->zlib_compressed_data_length = Parse(buf.av().data()).in_uint32_be();
                     this->accumulator.clear();
                     this->accumulator.reserve(this->zlib_compressed_data_length);
@@ -88,6 +92,7 @@ namespace VNC {
                         LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u remaining=%zu", this->zlib_compressed_data_length, buf.remaining());
                     }
                     this->state = ZrleState::Data;
+                    return EncoderState::Ready; 
                 }
                 break;
                 case ZrleState::Data:
@@ -101,7 +106,8 @@ namespace VNC {
                         auto av = buf.av(buf.remaining());
                         this->accumulator.insert(this->accumulator.end(), av.begin(), av.end());
                         buf.advance(buf.remaining());
-                        return false;
+                        LOG(LOG_INFO, "need more data for zrle_data %zu", buf.remaining());
+                        return EncoderState::NeedMoreData; 
                     }
                     size_t interesting_part = this->zlib_compressed_data_length - this->accumulator.size();
                     auto av = buf.av(interesting_part);
@@ -152,13 +158,14 @@ namespace VNC {
 
                     this->accumulator.clear();
                     this->state = ZrleState::Exit;
-                    return true;
+                    LOG(LOG_INFO, "after consuming buffer '%u bytes'", buf.remaining());
+                    return EncoderState::Exit; 
                 }
                 default:
                     LOG(LOG_INFO, "Unexpected case, should not happen");
                     break;
                 }
-                return false;
+                return EncoderState::Exit; 
             }
 
     //    7.6.9   ZRLE Encoding
