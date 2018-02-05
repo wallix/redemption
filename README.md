@@ -132,6 +132,15 @@ Or run `./tools/bjam/gen_targets.py > targets.jam`
 Specific deps (libs, header, cpp, etc) in `./tools/bjam/gen_targets.py`.
 
 
+Packaging
+=========
+
+    ./tools/packager.py --build-package
+
+- `--force-target target`: target is a file in packaging/targets
+- `--force-build`
+
+
 FAQ
 ===
 

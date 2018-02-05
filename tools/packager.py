@@ -301,7 +301,7 @@ def check_matching_version_changelog():
   out = readall("include/main/version.hpp")
   out = out.split('\n')
   for line in out:
-    res = re.match('^[#]define\sVERSION\s["](((\d+)[.](\d+)[.](\d+))(-?[a-z]*)*)["]\s*$', line)
+    res = re.match('^[#]define\sVERSION\s"(([-a-zA-Z]*(\d+)[.](\d+)[.](\d+))(-?[a-z]*)*)"\s*$', line)
     if res:
       red_source_version = res.group(1)
       red_num_ver = res.group(2)
@@ -313,11 +313,14 @@ def check_matching_version_changelog():
   if not found:
     raise Exception('Source Version not found in file include/main/version.hpp')
 
+  if opts.force_build:
+    return red_source_version
+
   found = False
   out = readall("%s/changelog" % opts.packagetemp)
   out = out.split('\n')
   for line in out:
-    res = re.match('^redemption\s*[(](((\d+)[.](\d+)[.](\d+))(-?[a-z]*)*)(.*)[)].*$', line)
+    res = re.match('^redemption\s*[(](([-a-zA-Z]*(\d+)[.](\d+)[.](\d+))(-?[a-z]*)*)(.*)[)].*$', line)
     if res:
       changelog_red_source_version = res.group(1)
       changelog_red_num_ver = res.group(2)
@@ -435,9 +438,13 @@ try:
                                "debian/redemption.install")
 
     # write redemption.postinst
-    copy_and_replace_dict_file("%s/redemption.postinst" % opts.packagetemp,
-                               opts.config,
-                               "debian/redemption.postinst")
+    try:
+      copy_and_replace_dict_file("%s/redemption.postinst" % opts.packagetemp,
+                                 opts.config,
+                                 "debian/redemption.postinst")
+    except IOError, e:
+      if e.errno != 2:
+        raise e
 
     # write rules
     if opts.debug:
