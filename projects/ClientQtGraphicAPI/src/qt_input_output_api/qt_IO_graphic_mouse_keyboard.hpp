@@ -1345,25 +1345,25 @@ public:
     //------------------------
 
     void keyPressEvent(const uint16_t key, const uint16_t text) override {
-        if (this->client->mod_state ==  ClientRedemptionIOAPI::MOD_VNC) {
-            this->client->send_rdp_unicode(text, 0);
-        } else {
+//         if (this->client->mod_state ==  ClientRedemptionIOAPI::MOD_VNC) {
+//             this->client->send_rdp_unicode(text, 0);
+//         } else {
             this->qtRDPKeymap.keyEvent(0, key, text);
             if (this->qtRDPKeymap.scanCode != 0) {
                 this->client->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
             }
-        }
+//         }
     }
 
     void keyReleaseEvent(const uint16_t key, const uint16_t text) override {
-         if (this->client->mod_state ==  ClientRedemptionIOAPI::MOD_VNC) {
-            this->client->send_rdp_unicode(text, KBD_FLAG_UP);
-        } else {
+//          if (this->client->mod_state ==  ClientRedemptionIOAPI::MOD_VNC) {
+//             this->client->send_rdp_unicode(text, KBD_FLAG_UP);
+//         } else {
             this->qtRDPKeymap.keyEvent(KBD_FLAG_UP, key, text);
             if (this->qtRDPKeymap.scanCode != 0) {
                 this->client->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
             }
-        }
+//         }
     }
 
     void connexionReleased() {
