@@ -861,6 +861,10 @@ public:
         }
     }
 
+    void send_rdp_unicode(uint16_t unicode, uint16_t flag) {
+        this->mod->rdp_input_unicode(unicode, flag);
+    }
+
 };
 
 
@@ -940,7 +944,7 @@ public:
     virtual uint8_t * get_image_buffer_data() = 0;
     virtual int get_image_buffer_depth() = 0;
 
-        // files data
+        // files data (file index to identify a file among a files group descriptor)
     virtual std::string get_file_item_name(int index) = 0;
     virtual int get_file_item_size(int index) = 0;
     virtual char * get_file_item_data(int index) = 0;
@@ -1053,11 +1057,11 @@ public:
         return this->client->mouseMouveEvent(x, y);
     }
 
-    void virtual keyPressEvent(const int key, const char text)  = 0;
+    void virtual keyPressEvent(const uint16_t key, const uint16_t text)  = 0;
 //         this->client->keyPressEvent(key, text);
 //     }
 //
-    void virtual keyReleaseEvent(const int key, const char text)  = 0;
+    void virtual keyReleaseEvent(const uint16_t key, const uint16_t text)  = 0;
 //         this->client->keyReleaseEvent(key, text);
 //     }
 

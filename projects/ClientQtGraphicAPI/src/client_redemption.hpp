@@ -530,6 +530,9 @@ public:
             this->set_capture();
         }
 
+        if (this->port ==  5900) {
+            this->mod_state = MOD_VNC;
+        }
 
         if (this->mod_state != MOD_VNC) {
 
