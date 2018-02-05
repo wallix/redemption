@@ -39,7 +39,7 @@
 
 
 
-int main(int argc, char** argv){
+int main(int argc, char** argv) {
 
     QApplication app(argc, argv);
 
@@ -53,8 +53,16 @@ int main(int argc, char** argv){
     //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
     RDPVerbose verbose = to_verbose_flags(0);
 
-    ClientRedemption front_qt(argv, argc, verbose, graphic_control_api, clipboard_api, sound_api, socket_api, graphic_control_api);
-
+    ClientRedemption front_qt(argv, argc, verbose
+                            , graphic_control_api
+                            , clipboard_api
+                            , nullptr                       // no sound implementation
+                            , socket_api
+                            , graphic_control_api);
 
     app.exec();
+
+    delete(graphic_control_api);
 }
+
+

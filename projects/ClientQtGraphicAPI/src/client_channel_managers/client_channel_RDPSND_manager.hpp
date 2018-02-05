@@ -33,7 +33,7 @@ class ClientChannelRDPSNDManager {
 
     RDPVerbose verbose;
 
-    ClientOutputSoundAPI * clientOutputSoundAPI;
+    ClientOutputSoundAPI * impl_sound;
 
     ClientRedemptionIOAPI * client;
 
@@ -42,9 +42,9 @@ class ClientChannelRDPSNDManager {
 
 
 public:
-    ClientChannelRDPSNDManager(RDPVerbose verbose, ClientRedemptionIOAPI * client, ClientOutputSoundAPI * clientOutputSoundAPI)
+    ClientChannelRDPSNDManager(RDPVerbose verbose, ClientRedemptionIOAPI * client, ClientOutputSoundAPI * impl_sound)
       : verbose(verbose)
-      , clientOutputSoundAPI(clientOutputSoundAPI)
+      , impl_sound(impl_sound)
       , client(client)
       {}
 
@@ -63,7 +63,9 @@ public:
                 this->last_PDU_is_WaveInfo = false;
             }
 
-            this->clientOutputSoundAPI->setData(chunk.get_current(), chunk.in_remain());
+            if (this->impl_sound) {
+                this->impl_sound->setData(chunk.get_current(), chunk.in_remain());
+            }
 
             if (!(this->wave_data_to_wait)) {
 
@@ -72,7 +74,9 @@ public:
                 }
                 //this->sound_qt->setData(uint8_t('\0'), 1);
 
-                this->clientOutputSoundAPI->play();
+                if (this->impl_sound) {
+                    this->impl_sound->play();
+                }
 
     //                     msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
     //                     header_out.log();
@@ -118,12 +122,12 @@ public:
 
                         if (format.wFormatTag == rdpsnd::WAVE_FORMAT_PCM) {
                             format.emit(out_stream);
-                            if (this->clientOutputSoundAPI) {
-                                this->clientOutputSoundAPI->n_sample_per_sec = format.nSamplesPerSec;
-                                this->clientOutputSoundAPI->bit_per_sample = format.wBitsPerSample;
-                                this->clientOutputSoundAPI->n_channels = format.nChannels;
-                                this->clientOutputSoundAPI->n_block_align = format.nBlockAlign;
-                                this->clientOutputSoundAPI->bit_per_sec = format.nSamplesPerSec * (format.wBitsPerSample/8) * format.nChannels;
+                            if (this->impl_sound) {
+                                this->impl_sound->n_sample_per_sec = format.nSamplesPerSec;
+                                this->impl_sound->bit_per_sample = format.wBitsPerSample;
+                                this->impl_sound->n_channels = format.nChannels;
+                                this->impl_sound->n_block_align = format.nBlockAlign;
+                                this->impl_sound->bit_per_sec = format.nSamplesPerSec * (format.wBitsPerSample/8) * format.nChannels;
                             } else {
                                 LOG(LOG_WARNING, "No Sound System module found");
                             }
@@ -218,9 +222,10 @@ public:
                     this->wave_data_to_wait = header.BodySize - 8;
                     rdpsnd::WaveInfoPDU wi;
                     wi.receive(chunk);
-                    this->clientOutputSoundAPI->init(header.BodySize - 12);
-                    this->clientOutputSoundAPI->setData(wi.Data, 4);
-
+                    if (this->impl_sound) {
+                        this->impl_sound->init(header.BodySize - 12);
+                        this->impl_sound->setData(wi.Data, 4);
+                    }
                     this->last_PDU_is_WaveInfo = true;
                     }
                     break;
@@ -277,9 +282,10 @@ public:
                     this->wave_data_to_wait = header.BodySize - 12;
                     rdpsnd::Wave2PDU w2;
                     w2.receive(chunk);
-
-                    this->clientOutputSoundAPI->init(header.BodySize - 12);
-                    this->clientOutputSoundAPI->setData(chunk.get_current(), chunk.in_remain());
+                    if (this->impl_sound) {
+                        this->impl_sound->init(header.BodySize - 12);
+                        this->impl_sound->setData(chunk.get_current(), chunk.in_remain());
+                    }
 
                     this->last_PDU_is_WaveInfo = true;
                     }

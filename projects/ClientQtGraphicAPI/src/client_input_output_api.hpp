@@ -93,13 +93,7 @@
 class ClientRedemptionIOAPI : public FrontAPI
 {
 
-    enum : int {
-        COMMAND_VALID = 15
-      , NAME_GOTTEN   = 1
-      , PWD_GOTTEN    = 2
-      , IP_GOTTEN     = 4
-      , PORT_GOTTEN   = 8
-    };
+
 
 public:
     RDPVerbose        verbose;
@@ -274,6 +268,16 @@ public:
     bool                 _recv_disconnect_ultimatum;
     BGRPalette           mod_palette;
 
+    uint8_t commandIsValid;
+
+     enum : int {
+        COMMAND_VALID = 15
+      , NAME_GOTTEN   = 1
+      , PWD_GOTTEN    = 2
+      , IP_GOTTEN     = 4
+      , PORT_GOTTEN   = 8
+    };
+
 
 
     ClientRedemptionIOAPI(char* argv[], int argc, RDPVerbose verbose)
@@ -308,6 +312,7 @@ public:
     , close_box_extra_message_ref("Close")
     , _recv_disconnect_ultimatum(false)
     , mod_palette(BGRPalette::classic_332())
+    , commandIsValid(0)
     {
         SSL_load_error_strings();
         SSL_library_init();
@@ -357,7 +362,6 @@ public:
         std::fill(std::begin(this->info.order_caps.orderSupport), std::end(this->info.order_caps.orderSupport), 1);
         this->info.glyph_cache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_FULL;
 
-        uint8_t commandIsValid(0);
 
         // TODO QCommandLineParser / program_options
         for (int i = 0; i <  argc; i++) {
@@ -367,22 +371,22 @@ public:
             if (       word == "-n") {
                 if (i < argc-1) {
                     this->user_name = std::string(argv[i+1]);
-                    commandIsValid += NAME_GOTTEN;
+                    this->commandIsValid += NAME_GOTTEN;
                 }
             } else if (word == "-w") {
                 if (i < argc-1) {
                     this->user_password = std::string(argv[i+1]);
-                    commandIsValid += PWD_GOTTEN;
+                    this->commandIsValid += PWD_GOTTEN;
                 }
             } else if (word == "-i") {
                 if (i < argc-1) {
                     this->target_IP = std::string(argv[i+1]);
-                    commandIsValid += IP_GOTTEN;
+                    this->commandIsValid += IP_GOTTEN;
                 }
             } else if (word == "-p") {
                 if (i < argc-1) {
                     this->port = std::stoi(std::string(argv[i+1]));
-                    commandIsValid += PORT_GOTTEN;
+                    this->commandIsValid += PORT_GOTTEN;
                 }
             } else if (word == "--rdpdr") {
                 this->verbose = RDPVerbose::rdpdr | this->verbose;

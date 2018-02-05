@@ -57,7 +57,6 @@ class ClientRedemption : public ClientRedemptionIOAPI
 
 
         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
-            //std::cout << "operator()  server " << (int)flags  << std::endl;
             InStream chunk(chunk_data, chunk_data_length);
             this->_callback->send_to_mod_channel(channel_names::cliprdr, chunk, total_length, flags);
         }
@@ -73,7 +72,6 @@ class ClientRedemption : public ClientRedemptionIOAPI
 
 
         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
-            //std::cout << "operator()  client " << (int)flags  << std::endl;
 
             this->_front->send_to_channel(this->_channel, chunk_data, total_length, chunk_data_length, flags);
         }
@@ -84,7 +82,7 @@ public:
     // io API
     ClientOutputGraphicAPI      * impl_graphic;
     ClientIOClipboardAPI        * impl_clipboard;
-    ClientOutputSoundAPI        * impl_sSound;
+    ClientOutputSoundAPI        * impl_sound;
     ClientInputSocketAPI        * impl_socket_listener;
     ClientInputMouseKeyboardAPI * impl_mouse_keyboard;
 
@@ -141,65 +139,81 @@ public:
     ClientRedemption(char* argv[], int argc, RDPVerbose verbose,
                     ClientOutputGraphicAPI *impl_graphic,
                     ClientIOClipboardAPI * impl_clipboard,
-                    ClientOutputSoundAPI * impl_sSound,
+                    ClientOutputSoundAPI * impl_sound,
                     ClientInputSocketAPI * impl_socket_listener,
                     ClientInputMouseKeyboardAPI * impl_mouse_keyboard)
         : ClientRedemptionIOAPI(argv, argc, verbose)
 
         , impl_graphic( impl_graphic)
         , impl_clipboard (impl_clipboard)
-        , impl_sSound (impl_sSound)
+        , impl_sound (impl_sound)
         , impl_socket_listener (impl_socket_listener)
         , impl_mouse_keyboard(impl_mouse_keyboard)
 
         , client_execute(*(this), this->info.window_list_caps, false)
 
-        , clientChannelRDPSNDManager(this->verbose, this, this->impl_sSound)
+        , clientChannelRDPSNDManager(this->verbose, this, this->impl_sound)
         , clientChannelCLIPRDRManager(this->verbose, this, this->impl_clipboard)
         , clientChannelRDPDRManager(this->verbose, this)
         , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
 
         , is_apple(true)
         , exe_vnc(*(this),  this->windowListCaps,  false)
-
     {
-        this->impl_clipboard->set_client(this);
-        this->impl_sSound->set_client(this);
-        this->impl_socket_listener->set_client(this);
-        this->impl_mouse_keyboard->set_client(this);
-        this->impl_graphic->set_drawn_client(this);
+        if (this->impl_clipboard) {
+            this->impl_clipboard->set_client(this);
+        } else {
+            LOG(LOG_WARNING, "No clipoard IO implementation.");
+        }
+        if (this->impl_sound) {
+            this->impl_sound->set_client(this);
+        } else {
+            LOG(LOG_WARNING, "No sound output implementation.");
+        }
+        if (this->impl_socket_listener) {
+            this->impl_socket_listener->set_client(this);
+        } else {
+            LOG(LOG_WARNING, "No socket lister event input implementation.");
+        }
+        if (this->impl_mouse_keyboard) {
+            this->impl_mouse_keyboard->set_client(this);
+        } else {
+            LOG(LOG_WARNING, "No keyboard and mouse input controller implementation.");
+        }
+        if (this->impl_graphic) {
+            this->impl_graphic->set_drawn_client(this);
+        } else {
+            LOG(LOG_WARNING, "No graphic output implementation.");
+        }
 
         this->client_execute.set_verbose(bool( (RDPVerbose::rail & this->verbose) | (RDPVerbose::rail_dump & this->verbose) ));
 
         this->disconnect("");
 
-//         if (commandIsValid == COMMAND_VALID) {
-//             this->connect();
-//
-//         } else {
-//             std::cout << "Argument(s) required to connect: ";
-//             if (!(commandIsValid & NAME_GOTTEN)) {
-//                 std::cout << "-n [user_name] ";
-//             }
-//             if (!(commandIsValid & PWD_GOTTEN)) {
-//                 std::cout << "-w [password] ";
-//             }
-//             if (!(commandIsValid & IP_GOTTEN)) {
-//                 std::cout << "-i [ip_server] ";
-//             }
-//             if (!(commandIsValid & PORT_GOTTEN)) {
-//                 std::cout << "-p [port] ";
-//             }
-//             std::cout << std::endl;
-//
-//             this->disconnect("");
-//         }
+        if (this->commandIsValid == COMMAND_VALID) {
+            this->connect();
+
+        } else {
+            std::cout << "Argument(s) required to connect: ";
+            if (!(this->commandIsValid & NAME_GOTTEN)) {
+                std::cout << "-n [user_name] ";
+            }
+            if (!(this->commandIsValid & PWD_GOTTEN)) {
+                std::cout << "-w [password] ";
+            }
+            if (!(this->commandIsValid & IP_GOTTEN)) {
+                std::cout << "-i [ip_server] ";
+            }
+            if (!(this->commandIsValid & PORT_GOTTEN)) {
+                std::cout << "-p [port] ";
+            }
+            std::cout << std::endl;
+
+            this->disconnect("");
+        }
     }
 
     ~ClientRedemption() {}
-
-
-
 
     virtual void update_keylayout() override {
         this->impl_mouse_keyboard->update_keylayout();
@@ -226,7 +240,6 @@ public:
 
     bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) override {
          try {
-
 
             this->replay_mod.reset(new ReplayMod( *this
                                                 , movie_dir.c_str() //(this->REPLAY_DIR + "/").c_str()
@@ -274,8 +287,6 @@ public:
             this->impl_graphic->reset_cache(this->info.width, this->info.height);
 
             this->impl_graphic->create_screen(movie_dir_, movie_path_);
-
-            //this->connected = true;
 
             if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
                 this->impl_mouse_keyboard->pre_load_movie();
@@ -354,7 +365,6 @@ public:
                                                 , this->reportMessage
                                                 , this->ini
                                                 ));
-
                 }
                     break;
 
@@ -415,7 +425,6 @@ public:
                     target_info += this->ini.get<cfg::globals::primary_user_id>();
 
                     this->client_execute.set_target_info(target_info.c_str());
-
             }
                 break;
 
@@ -506,20 +515,12 @@ public:
 
 
 
-
-
-
-
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //------------------------
     //      CONTROLLERS
     //------------------------
 
-
-
     virtual void connect() override {
-
-        this->mod_state = MOD_RDP_REMOTE_APP;
 
         this->clientChannelRemoteAppManager.clear();
         this->cl.clear_channels();
@@ -599,12 +600,6 @@ public:
 
         }
 
-        this->init_socket();
-
-        this->update_keylayout();
-//             this->trans_cache = new QPixmap(this->info.width, this->info.height);
-//             this->trans_cache->fill(Qt::transparent);
-
         if (this->mod_state != MOD_RDP_REMOTE_APP) {
             this->impl_graphic->reset_cache(this->info.width, this->info.height);
             this->impl_graphic->create_screen();
@@ -612,17 +607,18 @@ public:
             this->impl_graphic->reset_cache(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
         }
 
+        this->init_socket();
 
-
+        this->update_keylayout();
 
         if (this->init_mod()) {
+             this->connected = true;
 
              if (this->impl_socket_listener->start_to_listen(this->client_sck, this->mod)) {
-//                 this->impl_graphic->form->hide();
+
                 if (mod_state != MOD_RDP_REMOTE_APP) {
                     this->impl_graphic->show_screen();
                 }
-                this->connected = true;
 
                 return;
              }
@@ -639,7 +635,6 @@ public:
         this->connected = false;
         this->impl_graphic->dropScreen();
         this->disconnect("");
-
     }
 
     virtual void set_capture() {
@@ -738,7 +733,6 @@ public:
 
             this->graph_capture = this->capture.get()->get_graphic_api();
     }
-
 
 
 
@@ -894,6 +888,7 @@ public:
     }
 
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //-----------------------------
     //       DRAW FUNCTIONS
@@ -1047,7 +1042,6 @@ public:
             gettimeofday(&time, nullptr);
             this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
-
     }
 
     void draw(const RDPMultiDstBlt & cmd, Rect clip) override {
@@ -1056,8 +1050,6 @@ public:
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
-
-
     }
 
     void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
@@ -1068,7 +1060,6 @@ public:
         }
 
         (void) color_ctx;
-
     }
 
     void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
@@ -1078,7 +1069,6 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
         (void) color_ctx;
-
     }
 
     void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override {
@@ -1087,8 +1077,6 @@ public:
             cmd.log(LOG_INFO, clip);
             LOG(LOG_INFO, "========================================\n");
         }
-
-
     }
 
     void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
@@ -1117,7 +1105,6 @@ public:
         (void) cmd;
         (void) clip;
         (void) color_ctx;
-
     }
 
     void draw(const RDPPolygonCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
@@ -1129,7 +1116,6 @@ public:
         (void) cmd;
         (void) clip;
         (void) color_ctx;
-
     }
 
     void draw(const RDPPolyline & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
@@ -1139,7 +1125,6 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
         (void) color_ctx;
-
     }
 
     void draw(const RDPEllipseSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
@@ -1151,7 +1136,6 @@ public:
         (void) cmd;
         (void) clip;
         (void) color_ctx;
-
     }
 
     void draw(const RDPEllipseCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
@@ -1163,7 +1147,6 @@ public:
         (void) cmd;
         (void) clip;
         (void) color_ctx;
-
     }
 
     void draw(const RDP::FrameMarker & order) override {
@@ -1179,7 +1162,6 @@ public:
             gettimeofday(&time, nullptr);
             this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
         }
-
     }
 
     void draw(RDPNineGrid const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {
@@ -1220,14 +1202,6 @@ public:
     }
 
     bool must_be_stop_capture() override {
-//         this->is_pipe_ok = false;
-//         if (this->capture) {
-//             this->capture.reset(nullptr);
-//             this->graph_capture = nullptr;
-//             this->drawn_client->is_recording = false;
-//
-//             return true;
-//         }
         return false;
     }
 

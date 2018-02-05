@@ -147,10 +147,6 @@ public:
         , _buttonDisconnexion("Close", this)
         , _penColor(Qt::black)
         , _cache(cache)
-//         , _cache_painter(this->_cache)
-//         , _trans_cache(this->_width, this->_height)
-//         , _trans_cache_painter(&(this->_trans_cache))
-//         , _match_pixmap(this->_width+2, this->_height+2)
         , _connexionLasted(false)
         , _timer_replay(this)
         , _screen_index(0)
@@ -171,11 +167,9 @@ public:
         , current_time_movie(0)
         , real_time_record(this->_front->replay_mod->get_real_time_movie_begin())
     {
-        std::string title = "Remote Desktop Player " + this->_movie_name;
+        std::string title = "ReDemPtion Client " + this->_movie_name;
         this->setWindowTitle(QString(title.c_str()));
         this->setAttribute(Qt::WA_DeleteOnClose);
-//         this->_trans_cache.fill(Qt::transparent);
-//         this->paintCache().fillRect(0, 0, this->_width, this->_height, {0, 0, 0});
 
         if (this->_front->is_spanning) {
             this->setWindowState(Qt::WindowFullScreen);
@@ -269,9 +263,6 @@ public:
         , _buttonDisconnexion("Disconnection", this)
         , _penColor(Qt::black)
         , _cache(cache)
-//         , _cache_painter(this->_cache)
-//         , _trans_cache(this->_width, this->_height)
-//         , _match_pixmap(this->_width, this->_height)
         , _connexionLasted(false)
         , _screen_index(0)
         , _running(false)
@@ -289,9 +280,8 @@ public:
         this->setMouseTracking(true);
         this->installEventFilter(this);
         this->setAttribute(Qt::WA_DeleteOnClose);
-        std::string title = "Remote Desktop Player connected to [" + this->_front->target_IP +  "].";
+        std::string title = "ReDemPtion Client connected to [" + this->_front->target_IP +  "].";
         this->setWindowTitle(QString(title.c_str()));
-//         this->_trans_cache.fill(Qt::transparent);
 
         if (this->_front->is_spanning) {
             this->setWindowState(Qt::WindowFullScreen);
@@ -345,10 +335,7 @@ public:
         , _width(width)
         , _height(height)
         , _penColor(Qt::black)
-        , _cache(cache/*this->_front->screen_max_width, this->_front->screen_max_height*/)
-//         , _cache_painter(this->_cache)
-//         , _trans_cache(this->_width, this->_height)
-//         , _match_pixmap(cache->width(), cache->height())
+        , _cache(cache)
         , _connexionLasted(false)
         , _screen_index(0)
         , _running(false)
@@ -368,11 +355,8 @@ public:
         this->setMouseTracking(true);
         this->installEventFilter(this);
         this->setAttribute(Qt::WA_DeleteOnClose);
-        std::string title = "Remote Desktop Player connected to [" + this->_front->target_IP +  "].";
-        this->setWindowTitle(QString(title.c_str()));
         setWindowFlags( Qt::FramelessWindowHint );
         //this->setAttribute(Qt::WA_OutsideWSRange);
-//         this->_trans_cache.fill(Qt::transparent);
 
         if (this->_front->is_spanning) {
             this->setWindowState(Qt::WindowFullScreen);
@@ -380,13 +364,7 @@ public:
             this->setFixedSize(this->_width, this->_height);
         }
 
-//         this->paintCache().fillRect(0, 0, this->_width, this->_height, Qt::red/*{0, 0, 0}*/);
-
-//         QPainter painter(&(this->readding_bar));
-//         painter.fillRect(0, 0, this->reading_bar_len+12, READING_BAR_H, this->palette().color(QWidget::backgroundRole()));
-
         this->move(this->x_pixmap_shift, this->y_pixmap_shift);
-
         this->setFocusPolicy(Qt::StrongFocus);
     }
 
@@ -657,28 +635,17 @@ private:
     }
 
     void keyPressEvent(QKeyEvent *e) override {
-        //LOG(LOG_INFO, "loooooooooooooool keyPressEvent");
         this->impl_input->keyPressEvent(e->key(), e->text().toStdString()[0]);
     }
 
     void keyReleaseEvent(QKeyEvent *e) override {
-        //LOG(LOG_INFO, "loooooooooooooool keyReleaseEvent");
         this->impl_input->keyReleaseEvent(e->key(), e->text().toStdString()[0]);
     }
 
     void wheelEvent(QWheelEvent *e) override {
-//         int flag(MOUSE_FLAG_HWHEEL);
-//         if (e->delta() < 0) {
-//             flag = flag | MOUSE_FLAG_WHEEL_NEGATIVE;
-//         }
         this->_front->wheelEvent(e->x(), e->y(), e->delta());
     }
 
-    void enterEvent(QEvent *event) override {
-        Q_UNUSED(event);
-        //this->update_current_cursor();
-        //this->_front->_current_screen_index =  this->_screen_index;
-    }
 
     bool eventFilter(QObject *obj, QEvent *e) override {
         Q_UNUSED(obj);
@@ -688,25 +655,12 @@ private:
             int x = std::max(0, mouseEvent->x());
             int y = std::max(0, mouseEvent->y());
 
-//             if (y > this->info.height) {
-//                 LOG(LOG_INFO, "eventFilter out");
-//                 this->screen->mouse_out = true;
-//             } else if (this->screen->mouse_out) {
-//                 this->screen->update_current_cursor();
-//                 this->screen->mouse_out = false;
-//             }
-
-//             if (this->mod != nullptr && this->mouse_data.y < this->info.height) {
             if (this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
                 QPoint mouseLoc = QCursor::pos();
                 x = mouseLoc.x();
                 y = mouseLoc.y();
-
             }
 
-//                 this->mod->rdp_input_mouse(MOUSE_FLAG_MOVE, this->mouse_data.x, this->mouse_data.y, &(this->keymap));
-//             }
-//             LOG(LOG_INFO, "loooooooooooooool mouse move");
             this->_front->mouseMouveEvent(std::max(0, x), std::max(0, y) );
         }
 
@@ -811,24 +765,19 @@ public Q_SLOTS:
         this->_running = false;
         this->is_paused = false;
 
-        this->_buttonCtrlAltDel.setText("Replay");
+        this->_buttonCtrlAltDel.setText("Play");
         this->movie_status.setText("  Stop ");
         this->barRepaint(this->reading_bar_len, QColor(Qt::black));
         this->current_time_movie = 0;
         this->show_video_real_time_hms();
 
         if (this->_front->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0})) {
-//             this->_cache_painter.fillRect(0, 0, this->_width, this->_height, Qt::black);
             this->slotRepainMatch();
         }
     }
 
     void disconnexionRelease(){
-//         this->paintCache().end();
         this->_front->disconnexionReleased();
     }
 
-//     void setMainScreenOnTopRelease() {
-//         this->_front->setMainScreenOnTopRelease();
-//     }
 };

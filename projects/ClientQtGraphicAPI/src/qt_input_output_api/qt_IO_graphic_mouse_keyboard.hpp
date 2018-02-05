@@ -65,25 +65,8 @@
 
 class QtIOGraphicMouseKeyboard : public ClientOutputGraphicAPI, public ClientInputMouseKeyboardAPI
 {
-//     struct Snapshoter : gdi::CaptureApi
-//     {
-//         ClientRedemptionIOAPI & front;
-//
-//         Snapshoter(ClientRedemptionIOAPI & front) : front(front) {}
-//
-//         Microseconds periodic_snapshot(
-//             const timeval& /*now*/, int cursor_x, int cursor_y, bool /*ignore_frame_in_timeval*/
-//         ) override {
-//             this->front.update_pointer_position(cursor_x, cursor_y);
-//             std::chrono::microseconds res(1);
-//             return res;
-//         }
-//     };
-//     Snapshoter snapshoter;
 
 public:
-
-    // Graphic members
     int                  mod_bpp;
     Form_Qt            * form;
     Screen_Qt          * screen;
@@ -93,10 +76,7 @@ public:
     QImage cursor_image;
     std::map<uint32_t, Screen_Qt *> remote_app_screen_map;
     //     QPixmap            * trans_cache;
-
     Qt_ScanCode_KeyMap   qtRDPKeymap;
-
-
 
 
 
@@ -108,7 +88,6 @@ public:
     QtIOGraphicMouseKeyboard()
       : ClientOutputGraphicAPI(QApplication::desktop()->width(), QApplication::desktop()->height())
       , ClientInputMouseKeyboardAPI()
-//       , snapshoter(*this)
       , mod_bpp(24)
       , form(nullptr)
       , screen(nullptr)
@@ -118,6 +97,13 @@ public:
     {
         this->form = new Form_Qt(this);
     }
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //-----------------------------
+    // WINDOW MANAGEMENT FUNCTIONS
+    //-----------------------------
 
     virtual void set_drawn_client(ClientRedemptionIOAPI * client) override {
         this->drawn_client = client;
@@ -138,17 +124,23 @@ public:
     }
 
     virtual void reset_cache(int w,  int h) override {
+
+        if (this->painter.isActive()) {
             this->painter.end();
-            this->cache = QPixmap(w, h);
-            this->painter.begin(&(this->cache));
+        }
+        this->cache = QPixmap(w, h);
+        this->painter.begin(&(this->cache));
+        this->painter.fillRect(0, 0, w, h, Qt::black);
     }
 
     virtual void create_screen() override {
-        this->screen = new Screen_Qt(this->drawn_client, this, &(this->cache));
+        QPixmap * map = &(this->cache);
+        this->screen = new Screen_Qt(this->drawn_client, this, map);
     }
 
     virtual void create_screen(std::string const & movie_dir, std::string const & movie_path) override {
-        this->screen = new Screen_Qt(this->drawn_client, this, movie_dir, movie_path, &(this->cache));
+        QPixmap * map = &(this->cache);
+        this->screen = new Screen_Qt(this->drawn_client, this, movie_dir, movie_path, map);
     }
 
     QWidget * get_static_qwidget() {
@@ -162,7 +154,6 @@ public:
     void dropScreen() override {
         if (this->screen != nullptr) {
             this->screen->disconnection();
-//             this->screen->close();
             this->screen = nullptr;
         }
     }
@@ -274,7 +265,6 @@ public:
 
 
 
-
 //      void setScreenDimension() {
 //         if (!this->is_spanning) {
 //             this->_screen_dimensions[0].cx = this->client->info.width;
@@ -335,8 +325,6 @@ public:
 
     }
 
-
-
     FrontAPI::ResizeResult server_resize(int width, int height, int bpp) override {
 
         if (this->client->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
@@ -349,7 +337,6 @@ public:
 
         if ((this->client->connected || this->client->is_replaying) && this->screen != nullptr) {
             this->client->info.bpp = bpp;
-//             this->imageFormatRGB  = this->bpp_to_QFormat(this->client->info.bpp, false);
 
             if (this->client->info.width != width || this->client->info.height != height) {
                 this->client->info.width = width;
@@ -404,7 +391,6 @@ public:
         uint8_t data[Pointer::DATA_SIZE*4];
 
         for (int i = 0; i < Pointer::DATA_SIZE; i += 4) {
-//             LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!   %d", i );
             data[i  ] = data_data[i+2];
             data[i+1] = data_data[i+1];
             data[i+2] = data_data[i  ];
@@ -1381,18 +1367,15 @@ public:
         this->client->user_password = this->form->get_PWDField();
         this->client->port          = this->form->get_portField();
 
-        //bool res(false);
         if (!this->client->target_IP.empty()){
             this->client->connect();
         }
         this->form->setCursor(Qt::ArrowCursor);
-        //return res;
     }
 
     void closeFromScreen() {
 
         this->disconnexionReleased();
-
 
         if (this->form != nullptr && this->client->connected) {
             this->form->close();
