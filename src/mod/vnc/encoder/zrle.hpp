@@ -395,6 +395,43 @@ namespace VNC {
             // +---------------------------------+--------------+--------------+
             // | width * height * bytesPerCPixel | CPIXEL array |    pixels    |
             // +---------------------------------+--------------+--------------+
+            
+//  zrle_update_context Bpp=2 x=1834 cx=12 cx_remain=12, cy_remain=19 tile_x=1834 tile_y=0
+//  lib_framebuffer_update_zrle 457
+//  VNC Encoding: ZRLE, Raw pixel data
+//  /* 0000 */ 0x02, 0x00, 0x25, 0x21, 0xab, 0x4a, 0x08, 0x3a, 0x29, 0x3a, 0xe8, 0x39, 0x25, 0x21, 0x82, 0x08,  // ..%!.J.:):.9%!..
+//  /* 0010 */ 0xe4, 0x18, 0x83, 0x08, 0x25, 0x21, 0xab, 0x52, 0x22, 0x00, 0x83, 0x08, 0x4a, 0x42, 0x6a, 0x4a,  // ....%!.R"...JBjJ
+//  /* 0020 */ 0x08, 0x3a, 0xe8, 0x39, 0x25, 0x21, 0x83, 0x08, 0xe4, 0x18, 0x83, 0x10, 0xe4, 0x18, 0x08, 0x3a,  // .:.9%!.........:
+//  /* 0030 */ 0x22, 0x00, 0xff, 0xff, 0xc4, 0x10, 0x08, 0x3a, 0xc7, 0x31, 0xe8, 0x39, 0x25, 0x21, 0x62, 0x08,  // "......:.1.9%!b.
+//  /* 0040 */ 0xa3, 0x10, 0x83, 0x08, 0xc4, 0x18, 0xc8, 0x39, 0x22, 0x00, 0xff, 0xff, 0xff, 0xff, 0xa4, 0x10,  // .......9".......
+//  /* 0050 */ 0x66, 0x29, 0xe8, 0x39, 0x45, 0x21, 0x82, 0x08, 0x82, 0x08, 0x62, 0x08, 0xe4, 0x18, 0x08, 0x3a,  // f).9E!....b....:
+//  /* 0060 */ 0x22, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x83, 0x08, 0x25, 0x21, 0x04, 0x19, 0xc3, 0x10,  // ".........%!....
+//  /* 0070 */ 0xc3, 0x10, 0x83, 0x08, 0xe4, 0x18, 0xe8, 0x39, 0x42, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  // .......9B.......
+//  /* 0080 */ 0xff, 0xff, 0x42, 0x00, 0x62, 0x08, 0xc4, 0x10, 0x04, 0x19, 0xc3, 0x10, 0xc3, 0x10, 0xc7, 0x31,  // ..B.b..........1
+//  /* 0090 */ 0x42, 0x08, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x22, 0x00, 0xa3, 0x08,  // B..........."...
+//  /* 00a0 */ 0xe4, 0x10, 0xc4, 0x10, 0xc4, 0x18, 0xa7, 0x31, 0x42, 0x08, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  // .......1B.......
+//  /* 00b0 */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x42, 0x00, 0x62, 0x08, 0xa3, 0x10, 0xc4, 0x18, 0x66, 0x29,  // ......B.b.....f)
+//  /* 00c0 */ 0x42, 0x08, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xdf, 0xff,  // B...............
+//  /* 00d0 */ 0x22, 0x00, 0x83, 0x08, 0xc4, 0x10, 0x05, 0x21, 0x42, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  // "......!B.......
+//  /* 00e0 */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x9e, 0xf7, 0x22, 0x00, 0xa3, 0x10, 0x05, 0x19,  // ..........".....
+//  /* 00f0 */ 0x42, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  // B...............
+//  /* 0100 */ 0xff, 0xff, 0x5d, 0xef, 0x22, 0x00, 0xa3, 0x10, 0x42, 0x08, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  // ..]."...B.......
+//  /* 0110 */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x1c, 0xe7, 0x22, 0x00,  // ..............".
+//  /* 0120 */ 0x42, 0x08, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xbe, 0xf7, 0xff, 0xff, 0xff, 0xff, 0x42, 0x00,  // B.............B.
+//  /* 0130 */ 0x22, 0x00, 0x22, 0x00, 0x42, 0x00, 0x42, 0x00, 0x22, 0x00, 0xff, 0xff, 0xff, 0xff, 0xbe, 0xf7,  // ".".B.B.".......
+//  /* 0140 */ 0x01, 0x00, 0xb7, 0xb5, 0xff, 0xff, 0x42, 0x00, 0xa3, 0x08, 0xa3, 0x10, 0xc4, 0x10, 0xe4, 0x18,  // ......B.........
+//  /* 0150 */ 0x22, 0x00, 0xff, 0xff, 0xbe, 0xf7, 0x02, 0x00, 0x66, 0x29, 0x22, 0x00, 0xff, 0xff, 0x1c, 0xe7,  // ".......f)".....
+//  /* 0160 */ 0x22, 0x00, 0xa3, 0x10, 0xc3, 0x10, 0xe4, 0x18, 0x22, 0x00, 0xbe, 0xf7, 0x01, 0x00, 0x46, 0x21,  // ".......".....F!
+//  /* 0170 */ 0xa7, 0x29, 0x63, 0x08, 0x19, 0xc6, 0xff, 0xff, 0x63, 0x08, 0x83, 0x08, 0xc3, 0x10, 0x04, 0x19,  // .)c.....c.......
+//  /* 0180 */ 0x62, 0x08, 0x01, 0x00, 0x66, 0x29, 0x66, 0x29, 0x66, 0x29, 0x25, 0x19, 0x22, 0x00, 0xff, 0xff,  // b...f)f)f)%."...
+//  /* 0190 */ 0xbb, 0xd6, 0x22, 0x00, 0xe4, 0x18, 0xe4, 0x18, 0x25, 0x21, 0x46, 0x29, 0x86, 0x29, 0x66, 0x29,  // ..".....%!F).)f)
+//  /* 01a0 */ 0x45, 0x21, 0x04, 0x19, 0x43, 0x08, 0xbb, 0xd6, 0xff, 0xff, 0x22, 0x00, 0x25, 0x21, 0x25, 0x21,  // E!..C.....".%!%!
+//  /* 01b0 */ 0x05, 0x19, 0x46, 0x29, 0x46, 0x29, 0x66, 0x29, 0x66, 0x29, 0x45, 0x21, 0xa3, 0x10, 0x22, 0x00,  // ..F)F)f)f)E!..".
+//  /* 01c0 */ 0x42, 0x00, 0xa3, 0x10, 0xe4, 0x18, 0x05, 0x19,                                                  // B.......
+//  after consuming buffer '0 bytes'
+//  lib_frame_buffer_update asking update (1920, 1080)
+           
+            
             void rawTile(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
             {
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
@@ -454,25 +491,8 @@ namespace VNC {
                     memcpy(tmp_tile_data, tile_data, line_size);
                 }
 
-                {
-                    update_lock<gdi::GraphicApi> lock(drawable);
-                    const Rect rect(this->tile_x, this->tile_y, tile_cx, tile_cy);
-                    const Bitmap bmp(tile_data_p, tile_cx, tile_cy, this->bpp, Rect(0, 0, tile_cx, tile_cy));
-                    const RDPMemBlt cmd(0, rect, 0xCC, 0, 0, 0);
-                    drawable.draw(cmd, rect, bmp);
-                }
-
-                this->cx_remain -= tile_cx;
-                this->tile_x    += tile_cx;
-
-                if (!this->cx_remain)
-                {
-                    this->cx_remain =  this->cx;
-                    this->cy_remain -= tile_cy;
-
-                    this->tile_x =  this->x;
-                    this->tile_y += tile_cy;
-                }
+                this->draw_tile(tile_data_p, tile_cx, tile_cy, drawable);
+                this->next_tile(tile_cx, tile_cy);
 
             }
 
@@ -538,6 +558,8 @@ namespace VNC {
 
                 const uint8_t  * palette = uncompressed_data_buffer.in_uint8p(palette_size);
 
+//                hexdump_d(palette, palette_size);
+
                 uint16_t   packed_pixels_length =  (
                        (palette_count == 2)                               ? (tile_cx + 7) / 8
                     : ((palette_count == 3) || (palette_count == 4))      ? (tile_cx + 3) / 4
@@ -550,6 +572,8 @@ namespace VNC {
                 }
 
                 const uint8_t * packed_pixels = uncompressed_data_buffer.in_uint8p(packed_pixels_length);
+
+//                hexdump_d(packed_pixels, packed_pixels_length);
 
                 uint8_t * tmp_tile_data = tile_data;
 
@@ -619,25 +643,8 @@ namespace VNC {
                     tile_data_length_remain -= this->Bpp;
                 }
 
-                {            
-                    update_lock<gdi::GraphicApi> lock(drawable);
-                    const Rect rect(this->tile_x, this->tile_y, tile_cx, tile_cy);
-                    const Bitmap bmp(tile_data_p, tile_cx, tile_cy, this->bpp, Rect(0, 0, tile_cx, tile_cy));
-                    const RDPMemBlt cmd(0, rect, 0xCC, 0, 0, 0);
-                    drawable.draw(cmd, rect, bmp);
-                }
-
-                this->cx_remain -= tile_cx;
-                this->tile_x    += tile_cx;
-
-                if (!this->cx_remain)
-                {
-                    this->cx_remain =  this->cx;
-                    this->cy_remain -= tile_cy;
-
-                    this->tile_x =  this->x;
-                    this->tile_y += tile_cy;
-                }
+                this->draw_tile(tile_data_p, tile_cx, tile_cy, drawable);
+                this->next_tile(tile_cx, tile_cy);
 
             }
 
@@ -717,25 +724,8 @@ namespace VNC {
                 assert(!run_length);
                 assert(!tile_data_length_remain);
 
-                {            
-                    update_lock<gdi::GraphicApi> lock(drawable);
-                    const Rect rect(this->tile_x, this->tile_y, tile_cx, tile_cy);
-                    const Bitmap bmp(tile_data_p, tile_cx, tile_cy, this->bpp, Rect(0, 0, tile_cx, tile_cy));
-                    const RDPMemBlt cmd(0, rect, 0xCC, 0, 0, 0);
-                    drawable.draw(cmd, rect, bmp);
-                }
-
-                this->cx_remain -= tile_cx;
-                this->tile_x    += tile_cx;
-
-                if (!this->cx_remain)
-                {
-                    this->cx_remain =  this->cx;
-                    this->cy_remain -= tile_cy;
-
-                    this->tile_x =  this->x;
-                    this->tile_y += tile_cy;
-                }
+                this->draw_tile(tile_data_p, tile_cx, tile_cy, drawable);
+                this->next_tile(tile_cx, tile_cy);
             }
 
             //    130 to 255
@@ -843,25 +833,8 @@ namespace VNC {
                 assert(!run_length);
                 assert(!tile_data_length_remain);
 
-                {
-                    update_lock<gdi::GraphicApi> lock(drawable);
-                    const Rect rect(this->tile_x, this->tile_y, tile_cx, tile_cy);
-                    const Bitmap bmp(tile_data_p, tile_cx, tile_cy, this->bpp, Rect(0, 0, tile_cx, tile_cy));
-                    const RDPMemBlt cmd(0, rect, 0xCC, 0, 0, 0);
-                    drawable.draw(cmd, rect, bmp);
-                }
-
-                this->cx_remain -= tile_cx;
-                this->tile_x    += tile_cx;
-
-                if (!this->cx_remain)
-                {
-                    this->cx_remain =  this->cx;
-                    this->cy_remain -= tile_cy;
-
-                    this->tile_x =  this->x;
-                    this->tile_y += tile_cy;
-                }
+                this->draw_tile(tile_data_p, tile_cx, tile_cy, drawable);
+                this->next_tile(tile_cx, tile_cy);
             }
 
 
