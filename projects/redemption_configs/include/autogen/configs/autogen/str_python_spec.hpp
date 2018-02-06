@@ -449,6 +449,9 @@
 "#_advanced\n"
 "session_probe_allow_multiple_handshake = boolean(default=False)\n\n"
 
+"#_advanced\n"
+"session_probe_enable_crash_dump = boolean(default=False)\n\n"
+
 "# Keep known server certificates on WAB\n"
 "#_hidden\n"
 "server_cert_store = boolean(default=True)\n\n"

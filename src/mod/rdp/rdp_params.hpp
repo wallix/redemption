@@ -91,6 +91,8 @@ struct ModRDPParams {
 
     bool                         session_probe_allow_multiple_handshake = false;
 
+    bool                         session_probe_enable_crash_dump = false;
+
     bool         enable_transparent_mode = false;
     const char * output_filename = "";
     Transport  * persistent_key_list_transport = nullptr;
@@ -271,6 +273,8 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_short_delay);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_allow_multiple_handshake);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_enable_crash_dump);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_syslog);
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_wrm);
