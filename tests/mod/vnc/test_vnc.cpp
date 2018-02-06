@@ -188,10 +188,14 @@ RED_AUTO_TEST_CASE(TestZrle)
                 case VNC::Encoder::State::Data:
                 {
                         // Pre Assertion: we have an encoder
-                        if (encoder->consume(buf, drawable)){
-                            // consume returns true if encoder is finished (ready to be resetted)
-                            state = VNC::Encoder::State::Exit;
+                        switch (encoder->consume(buf, drawable)){
+                        case VNC::Encoder::EncoderState::Ready:
+                        break;
+                        case VNC::Encoder::EncoderState::NeedMoreData:
+                        break;
+                        case VNC::Encoder::EncoderState::Exit:
                             LOG(LOG_INFO, "End of encoder");
+                        break;
                         }
                 }
                 break;

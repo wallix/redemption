@@ -298,28 +298,9 @@ namespace VNC {
 
             void draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawable)
             {
-                LOG(LOG_INFO, "%s", rect);
                 const Bitmap bmp(raw, rect.cx, rect.cy, this->bpp, Rect(0, 0, rect.cx, rect.cy));
-                
                 const RDPMemBlt cmd(0, rect, 0xCC, 0, 0, 0);
                 drawable.draw(cmd, rect, bmp);
-
-//                const uint16_t TILE_CX = 32;
-//                const uint16_t TILE_CY = 32;
-
-//                for (int y = 0; y < rect.cy ; y += TILE_CY) {
-//                    uint16_t cy = std::min(TILE_CY, uint16_t(rect.cy - y));
-
-//                    for (int x = 0; x < rect.cx ; x += TILE_CX) {
-//                        uint16_t cx = std::min(TILE_CX, uint16_t(rect.cx - x));
-
-//                        const Rect src_tile(x, y, cx, cy);
-//                        const Bitmap tiled_bmp(raw, rect.cx, rect.cy, this->bpp, src_tile);
-//                        const Rect dst_tile(rect.x + x, rect.y + y, cx, cy);
-//                        const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
-//                        drawable.draw(cmd2, dst_tile, tiled_bmp);
-//                    }
-//                }
             }
 
             void lib_framebuffer_update_zrle(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
