@@ -722,136 +722,8 @@ namespace VNC {
                         break;
                         default:
                         //    130 to 255
+                            this->paletteRLE(subencoding, uncompressed_data_buffer, drawable);
 
-                        //        Palette RLE. Followed by the palette, consisting of paletteSize = (subencoding - 128) pixel values:
-                        //        No. of bytes |Type |Description
-                        //        paletteSize * bytesPerCPixel |CPIXEL array |palette
-
-                        //        Then as with plain RLE, consists of a number of runs, repeated until the tile is done. A run of length one is
-                        //         represented simply by a palette index:
-
-                        //        | No. of bytes |Type | Description  |
-                        //        +--------------+-----+--------------+
-                        //        |            1 |  U8 | paletteIndex |
-                        //        +--------------+-----+--------------+
-
-                        //        A run of length more than one is represented by a palette index with the top bit set, followed by the length of the
-                        //        run as for plain RLE.
-
-                        //        | No. of bytes |     Type | [Value] |     Description       |
-                        //        +--------------+----------+---------+-----------------------+
-                        //        |            1 |       U8 |         | paletteIndex + 128    |
-                        //        +--------------+----------+---------+-----------------------+
-                        //        |            r | U8 array |     255 |                       |
-                        //        +--------------+----------+---------+-----------------------+
-                        //        |            1 |       U8 |         | (runLength - 1) % 255 |
-                        //        +--------------+----------+---------+-----------------------+
-
-                        //        Where r is floor((runLength - 1) / 255).
-                        {
-                            if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                                LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE");
-                            }
-
-                            const uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
-                            const uint16_t tile_cy = std::min<uint16_t>(this->cy_remain, 64);
-                            uint8_t         tile_data[2*16384];    // max size with 16 bpp
-                            const uint8_t * tile_data_p = tile_data;
-                            const uint16_t tile_data_length = tile_cx * tile_cy * this->Bpp;
-                            
-                            // TODO: this case should not be possible
-                            if (tile_data_length > sizeof(tile_data))
-                            {
-                                LOG(LOG_ERR,
-                                    "VNC Encoding: ZRLE, tile buffer too small (%zu < %" PRIu16 ")",
-                                    sizeof(tile_data), tile_data_length);
-                                throw Error(ERR_BUFFER_TOO_SMALL);
-                            }
-
-                            const uint8_t    palette_count = subencoding - 128;
-                            const uint16_t   palette_size  = palette_count * this->Bpp;
-
-                            if (uncompressed_data_buffer.in_remain() < palette_size)
-                            {
-                                LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE : need more data (1)");                                    
-                                throw Error(ERR_VNC_NEED_MORE_DATA);
-                            }
-
-                            const uint8_t * palette = uncompressed_data_buffer.in_uint8p(palette_size);
-
-                            uint16_t   tile_data_length_remain = tile_data_length;
-
-                            uint16_t   run_length    = 0;
-                            uint8_t  * tmp_tile_data = tile_data;
-
-                            while (tile_data_length_remain >= this->Bpp)
-                            {
-                                if (uncompressed_data_buffer.in_remain() < 1)
-                                {
-                                    LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE : need more data (2)");
-                                    throw Error(ERR_VNC_NEED_MORE_DATA);
-                                }
-
-                                uint8_t         palette_index  = uncompressed_data_buffer.in_uint8();
-                                const uint8_t * cpixel_pattern = palette + (palette_index & 0x7F) * this->Bpp;
-
-                                run_length = 1;
-
-                                if (palette_index & 0x80)
-                                {
-                                    while (true)
-                                    {
-                                        if (uncompressed_data_buffer.in_remain() < 1)
-                                        {
-                                            throw Error(ERR_VNC_NEED_MORE_DATA);
-                                        }
-
-                                        uint8_t byte_value = uncompressed_data_buffer.in_uint8();
-                                        run_length += byte_value;
-
-                                        if (byte_value != 255)
-                                            break;
-                                    }
-                                }
-
-                                // LOG(LOG_INFO, "VNC Encoding: ZRLE, run length=%u", run_length);
-
-                                while ((tile_data_length_remain >= this->Bpp) && run_length)
-                                {
-                                    memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
-
-                                    tmp_tile_data           += this->Bpp;
-                                    tile_data_length_remain -= this->Bpp;
-
-                                    run_length--;
-                                }
-                            }
-
-                            LOG(LOG_INFO, "VNC Encoding: ZRLE, run_length=%u", run_length);
-
-                            assert(!run_length);
-                            assert(!tile_data_length_remain);
-
-                            {
-                                update_lock<gdi::GraphicApi> lock(drawable);
-                                const Rect rect(this->tile_x, this->tile_y, tile_cx, tile_cy);
-                                const Bitmap bmp(tile_data_p, tile_cx, tile_cy, this->bpp, Rect(0, 0, tile_cx, tile_cy));
-                                const RDPMemBlt cmd(0, rect, 0xCC, 0, 0, 0);
-                                drawable.draw(cmd, rect, bmp);
-                            }
-
-                            this->cx_remain -= tile_cx;
-                            this->tile_x    += tile_cx;
-
-                            if (!this->cx_remain)
-                            {
-                                this->cx_remain =  this->cx;
-                                this->cy_remain -= tile_cy;
-
-                                this->tile_x =  this->x;
-                                this->tile_y += tile_cy;
-                            }
-                        }
                         break;
                         } // switch subencoding
 
@@ -865,6 +737,134 @@ namespace VNC {
                     // TODO: see how we can manage other errors
                 }
             }
+
+            //    130 to 255
+            //        Palette RLE. 
+            
+            //        Followed by the palette, consisting of paletteSize = (subencoding - 128) pixel values:
+
+            //        | No. of bytes                 | Type         | Description  |
+            //        +------------------------------+--------------+--------------+
+            //        | paletteSize * bytesPerCPixel | CPIXEL array | palette      |
+            //        +------------------------------+--------------+--------------+
+
+            //        Then as with plain RLE, consists of a number of runs, repeated until the tile is done. A run of length one is
+            //         represented simply by a palette index:
+
+            //        | No. of bytes |Type | Description  |
+            //        +--------------+-----+--------------+
+            //        |            1 |  U8 | paletteIndex |
+            //        +--------------+-----+--------------+
+
+            //        A run of length more than one is represented by a palette index with the top bit set, followed by the length of the
+            //        run as for plain RLE.
+
+            //        | No. of bytes |     Type | [Value] |     Description       |
+            //        +--------------+----------+---------+-----------------------+
+            //        |            1 |       U8 |         | paletteIndex + 128    |
+            //        +--------------+----------+---------+-----------------------+
+            //        |            r | U8 array |     255 |                       |
+            //        +--------------+----------+---------+-----------------------+
+            //        |            1 |       U8 |         | (runLength - 1) % 255 |
+            //        +--------------+----------+---------+-----------------------+
+
+            //        Where r is floor((runLength - 1) / 255).
+
+            void paletteRLE(uint8_t subencoding, InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
+            {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                    LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE");
+                }
+
+                const uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
+                const uint16_t tile_cy = std::min<uint16_t>(this->cy_remain, 64);
+                uint8_t         tile_data[4*16384];    // max size with 32 bpp
+                const uint8_t * tile_data_p = tile_data;
+                const uint16_t tile_data_length = tile_cx * tile_cy * this->Bpp;
+                const uint8_t    palette_count = subencoding - 128;
+                const uint16_t   palette_size  = palette_count * this->Bpp;
+
+                if (uncompressed_data_buffer.in_remain() < palette_size)
+                {
+                    LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE : need more data (1)");                                    
+                    throw Error(ERR_VNC_NEED_MORE_DATA);
+                }
+
+                const uint8_t * palette = uncompressed_data_buffer.in_uint8p(palette_size);
+                uint16_t   tile_data_length_remain = tile_data_length;
+                uint16_t   run_length    = 0;
+                uint8_t  * tmp_tile_data = tile_data;
+
+                while (tile_data_length_remain >= this->Bpp)
+                {
+                    if (uncompressed_data_buffer.in_remain() < 1)
+                    {
+                        LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE : need more data (2)");
+                        throw Error(ERR_VNC_NEED_MORE_DATA);
+                    }
+
+                    uint8_t         palette_index  = uncompressed_data_buffer.in_uint8();
+                    const uint8_t * cpixel_pattern = palette + (palette_index & 0x7F) * this->Bpp;
+
+                    run_length = 1;
+
+                    if (palette_index & 0x80)
+                    {
+                        while (true)
+                        {
+                            if (uncompressed_data_buffer.in_remain() < 1)
+                            {
+                                throw Error(ERR_VNC_NEED_MORE_DATA);
+                            }
+
+                            uint8_t byte_value = uncompressed_data_buffer.in_uint8();
+                            run_length += byte_value;
+
+                            if (byte_value != 255)
+                                break;
+                        }
+                    }
+
+                    // LOG(LOG_INFO, "VNC Encoding: ZRLE, run length=%u", run_length);
+
+                    while ((tile_data_length_remain >= this->Bpp) && run_length)
+                    {
+                        memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
+
+                        tmp_tile_data           += this->Bpp;
+                        tile_data_length_remain -= this->Bpp;
+
+                        run_length--;
+                    }
+                }
+
+                LOG(LOG_INFO, "VNC Encoding: ZRLE, run_length=%u", run_length);
+
+                assert(!run_length);
+                assert(!tile_data_length_remain);
+
+                {
+                    update_lock<gdi::GraphicApi> lock(drawable);
+                    const Rect rect(this->tile_x, this->tile_y, tile_cx, tile_cy);
+                    const Bitmap bmp(tile_data_p, tile_cx, tile_cy, this->bpp, Rect(0, 0, tile_cx, tile_cy));
+                    const RDPMemBlt cmd(0, rect, 0xCC, 0, 0, 0);
+                    drawable.draw(cmd, rect, bmp);
+                }
+
+                this->cx_remain -= tile_cx;
+                this->tile_x    += tile_cx;
+
+                if (!this->cx_remain)
+                {
+                    this->cx_remain =  this->cx;
+                    this->cy_remain -= tile_cy;
+
+                    this->tile_x =  this->x;
+                    this->tile_y += tile_cy;
+                }
+            }
+
+
         }; // class Zrle
     } // namespace Encoder
 } // namespace VNC
