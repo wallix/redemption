@@ -147,7 +147,7 @@ public:
         return this->form;
     }
 
-    virtual void open_options() {
+    virtual void open_options() override {
         new DialogOptions_Qt(this->drawn_client, this->form);
     }
 
@@ -1366,7 +1366,7 @@ public:
 //         }
     }
 
-    void connexionReleased() {
+    void connexionReleased() override {
         this->form->setCursor(Qt::WaitCursor);
         this->client->user_name     = this->form->get_userNameField();
         this->client->target_IP     = this->form->get_IPField();
@@ -1379,7 +1379,7 @@ public:
         this->form->setCursor(Qt::ArrowCursor);
     }
 
-    void closeFromScreen() {
+    void closeFromScreen() override {
 
         this->disconnexionReleased();
 
