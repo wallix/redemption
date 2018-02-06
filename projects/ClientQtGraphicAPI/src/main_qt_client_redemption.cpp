@@ -28,41 +28,96 @@
 #include "client_redemption.hpp"
 
 
+#ifndef _NO_QT
+
+#ifndef _NO_SOUND
 #include "qt_input_output_api/qt_output_sound.hpp"
+#endif
+
+#ifndef _NO_CLIPBOARD
 #include "qt_input_output_api/qt_input_output_clipboard.hpp"
-#include "qt_input_output_api/qt_input_socket.hpp"
+#endif
+
+#ifndef _NO_GRAPHICS
 #include "qt_input_output_api/qt_IO_graphic_mouse_keyboard.hpp"
+#endif
+
+#include "qt_input_output_api/qt_input_socket.hpp"
+
+#endif
 
 #pragma GCC diagnostic pop
 
 
-
+// #define _NO_QT
+// #define _NO_GRAPHICS
+// #define _NO_CLIPBOARD
+// #define _NO_SOUND
 
 
 int main(int argc, char** argv) {
 
+
+#ifndef _NO_QT
     QApplication app(argc, argv);
+#endif
 
-    QtIOGraphicMouseKeyboard * graphic_control_api = new QtIOGraphicMouseKeyboard();
-    QtInputOutputClipboard * clipboard_api = new QtInputOutputClipboard(graphic_control_api->get_static_qwidget());
-    QtOutputSound          * sound_api = new QtOutputSound(graphic_control_api->get_static_qwidget());
-    QtInputSocket          * socket_api = new QtInputSocket(graphic_control_api->get_static_qwidget());
+    ClientOutputGraphicAPI      * graphic_api = nullptr;
+    ClientIOClipboardAPI        * clipboard_api =nullptr;
+    ClientOutputSoundAPI        * sound_api = nullptr;
+    ClientInputSocketAPI        * socket_api = nullptr;
+    ClientInputMouseKeyboardAPI * control_api = nullptr;
+
+#ifndef _NO_QT
+
+    QWidget * qwidget_parent = nullptr;
+
+#ifndef _NO_GRAPHICS
+    QtIOGraphicMouseKeyboard * graphic_control_qt = new QtIOGraphicMouseKeyboard();
+    graphic_api = graphic_control_qt;
+    control_api = graphic_control_qt;
+    qwidget_parent = graphic_control_qt->get_static_qwidget();
+#endif
 
 
-    // RDPVerbose::rdpdr_dump | RDPVerbose::cliprdr;
-    //RDPVerbose::graphics | RDPVerbose::cliprdr | RDPVerbose::rdpdr;
+#ifndef _NO_CLIPBOARD
+    QtInputOutputClipboard * clipboard_qt = new QtInputOutputClipboard(qwidget_parent);
+    clipboard_api = clipboard_qt;
+#endif
+
+
+#ifndef _NO_SOUND
+    QtOutputSound          * sound_qt= new QtOutputSound(qwidget_parent);
+    sound_api = sound_qt;
+#endif
+
+    QtInputSocket          * socket_qt= new QtInputSocket(qwidget_parent);
+    socket_api = socket_qt;
+
+#endif
+
+
     RDPVerbose verbose = to_verbose_flags(0);
 
     ClientRedemption front_qt(argv, argc, verbose
-                            , graphic_control_api
+                            , graphic_api
                             , clipboard_api
-                            , nullptr                       // no sound implementation
+                            , sound_api
                             , socket_api
-                            , graphic_control_api);
+                            , control_api);
 
+#ifndef _NO_QT
     app.exec();
+#endif
 
-    delete(graphic_control_api);
+#ifndef _NO_GRAPHICS
+    delete(graphic_api);
+#else
+    delete(clipboard_api);
+    delete(sound_api);
+    delete(socket_api);
+#endif
+
 }
 
 

@@ -169,6 +169,7 @@ public:
     }
 
     void receive(InStream & chunk, int flags) {
+        if (clientIOClipboardAPI) {
         InStream chunk_series = chunk.clone();
 
         if (!chunk.in_check_rem(2  /*msgType(2)*/ )) {
@@ -685,7 +686,7 @@ public:
                 }
                 this->process_server_clipboard_indata(flags, chunk_series, this->_cb_buffers, this->_cb_filesList);
             }
-
+        }
     }
 
     void process_server_clipboard_indata(int flags, InStream & chunk, CB_Buffers & cb_buffers, CB_FilesList & cb_filesList) {

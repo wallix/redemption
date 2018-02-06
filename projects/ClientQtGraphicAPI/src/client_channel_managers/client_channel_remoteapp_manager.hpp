@@ -217,6 +217,7 @@ public:
 
 
     void receive(InStream & stream) {
+        if (this->impl_graphic && this->impl_input) {
         RAILPDUHeader header;
         header.receive(stream);
 
@@ -664,6 +665,8 @@ public:
                     LOG(LOG_WARNING, "SERVER >> RAIL CHANNEL DEFAULT 0x%04x %s", header.orderType(), get_RAIL_orderType_name(header.orderType()));
                 }
                 break;
+        }
+
         }
 
     }

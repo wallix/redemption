@@ -861,6 +861,10 @@ public:
         }
     }
 
+    void send_rdp_unicode(uint16_t unicode, uint16_t flag) {
+        this->mod->rdp_input_unicode(unicode, flag);
+    }
+
 };
 
 
@@ -940,7 +944,7 @@ public:
     virtual uint8_t * get_image_buffer_data() = 0;
     virtual int get_image_buffer_depth() = 0;
 
-        // files data
+        // files data (file index to identify a file among a files group descriptor)
     virtual std::string get_file_item_name(int index) = 0;
     virtual int get_file_item_size(int index) = 0;
     virtual char * get_file_item_data(int index) = 0;
@@ -989,15 +993,52 @@ class ClientInputSocketAPI : public ClientIODiskAPI {
 public:
     mod_api * _callback = nullptr;
 
-//     void set_mod(mod_api * mod) {
-//         this->_callback = mod;
-//     }
-
     virtual bool start_to_listen(int client_sck, mod_api * mod) = 0;
     virtual void disconnect() = 0;
 
     virtual ~ClientInputSocketAPI() = default;
 };
+
+// class ClientInputSocketRunner : public ClientInputSocketAPI {
+//
+//     bool connected = false;
+//
+//     virtual bool start_to_listen(int client_sck, mod_api * mod) {
+//          auto & mod = *mod;
+//
+//         while (front.is_connected())
+//         {
+//             if (mod.logged_on == mod_api::CLIENT_LOGGED) {
+//                 mod.logged_on = mod_api::CLIENT_UNLOGGED;
+//
+//                 std::cout << " RDP Session Log On." << std::endl;
+//                 if (quick_connection_test) {
+//                     std::cout << "quick_connection_test" <<  std::endl;
+//                     return 0;
+//                 }
+//                 break;
+//             }
+//
+//             if (time_set_connection_test) {
+//                 if (time_stop > tvtime()) {
+//                     //std::cerr <<  " Exit timeout (timeout = " << time_out_response.tv_sec << " sec " <<  time_out_response.tv_usec << " µsec)" << std::endl;
+//                     return 8;
+//                 }
+//             }
+//
+//             if (int err = front.wait_and_draw_event(sck, mod, front, time_mark)) {
+//                 return err;
+//             }
+//
+//             front.send_key_to_keep_alive();
+//         }
+//
+//     }
+//
+//     virtual void disconnect() = 0;
+//
+//
+// };
 
 
 
@@ -1053,11 +1094,11 @@ public:
         return this->client->mouseMouveEvent(x, y);
     }
 
-    void virtual keyPressEvent(const int key, const char text)  = 0;
+    void virtual keyPressEvent(const uint16_t key, const uint16_t text)  = 0;
 //         this->client->keyPressEvent(key, text);
 //     }
 //
-    void virtual keyReleaseEvent(const int key, const char text)  = 0;
+    void virtual keyReleaseEvent(const uint16_t key, const uint16_t text)  = 0;
 //         this->client->keyReleaseEvent(key, text);
 //     }
 

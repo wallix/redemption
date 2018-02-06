@@ -173,12 +173,12 @@ public:
         if (this->impl_socket_listener) {
             this->impl_socket_listener->set_client(this);
         } else {
-            LOG(LOG_WARNING, "No socket lister event input implementation.");
+            LOG(LOG_WARNING, "No socket lister implementation.");
         }
         if (this->impl_mouse_keyboard) {
             this->impl_mouse_keyboard->set_client(this);
         } else {
-            LOG(LOG_WARNING, "No keyboard and mouse input controller implementation.");
+            LOG(LOG_WARNING, "No keyboard and mouse input implementation.");
         }
         if (this->impl_graphic) {
             this->impl_graphic->set_drawn_client(this);
@@ -216,7 +216,9 @@ public:
     ~ClientRedemption() {}
 
     virtual void update_keylayout() override {
-        this->impl_mouse_keyboard->update_keylayout();
+        if (this->impl_mouse_keyboard) {
+            this->impl_mouse_keyboard->update_keylayout();
+        }
         this->keymap.init_layout(this->info.keylayout);
     }
 
@@ -234,7 +236,9 @@ public:
 //     }
 
     void closeFromScreen() override {
-        this->impl_graphic->closeFromScreen();
+        if (impl_graphic) {
+            this->impl_graphic->closeFromScreen();
+        }
     }
 
 
@@ -263,7 +267,9 @@ public:
         }
 
         if (this->replay_mod.get() == nullptr) {
-            this->impl_graphic->dropScreen();
+            if (impl_graphic) {
+                this->impl_graphic->dropScreen();
+            }
             const std::string errorMsg("Cannot read movie \""+movie_name+ "\".");
             LOG(LOG_INFO, "%s", errorMsg.c_str());
             std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
@@ -284,14 +290,20 @@ public:
             this->info.width = this->replay_mod->get_dim().w;
             this->info.height = this->replay_mod->get_dim().h;
 
-            this->impl_graphic->reset_cache(this->info.width, this->info.height);
-
-            this->impl_graphic->create_screen(movie_dir_, movie_path_);
+            if (impl_graphic) {
+                this->impl_graphic->reset_cache(this->info.width, this->info.height);
+                this->impl_graphic->create_screen(movie_dir_, movie_path_);
+            }
 
             if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
-                this->impl_mouse_keyboard->pre_load_movie();
+                if (this->impl_mouse_keyboard) {
+                    this->impl_mouse_keyboard->pre_load_movie();
+                }
             }
-            this->impl_graphic->show_screen();
+
+            if (impl_graphic) {
+                this->impl_graphic->show_screen();
+            }
         }
     }
 
@@ -303,7 +315,7 @@ public:
             this->mod = nullptr;
         }
 
-        if (this->impl_socket_listener != nullptr) {
+        if (this->impl_socket_listener) {
             this->impl_socket_listener->disconnect();
         }
 
@@ -313,8 +325,12 @@ public:
             LOG(LOG_INFO, "Disconnected from [%s].", this->target_IP.c_str());
         }
 
-        this->impl_graphic->set_ErrorMsg(error);
-        this->impl_mouse_keyboard->init_form();
+        if (this->impl_graphic) {
+            this->impl_graphic->set_ErrorMsg(error);
+        }
+        if (this->impl_mouse_keyboard) {
+            this->impl_mouse_keyboard->init_form();
+        }
     }
 
 
@@ -405,8 +421,10 @@ public:
                     mod_rdp_params.use_client_provided_remoteapp = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
                     mod_rdp_params.use_session_probe_to_launch_remote_program = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
 
-                    this->info.width = this->impl_graphic->screen_max_width;
-                    this->info.height = this->impl_graphic->screen_max_height;
+                    if (impl_graphic) {
+                        this->info.width = this->impl_graphic->screen_max_width;
+                        this->info.height = this->impl_graphic->screen_max_height;
+                    }
 
                     this->unique_mod.reset(new mod_rdp( *(this->socket)
                                                 , *(this)
@@ -530,6 +548,9 @@ public:
             this->set_capture();
         }
 
+        if (this->port ==  5900) {
+            this->mod_state = MOD_VNC;
+        }
 
         if (this->mod_state != MOD_VNC) {
 
@@ -600,11 +621,13 @@ public:
 
         }
 
-        if (this->mod_state != MOD_RDP_REMOTE_APP) {
-            this->impl_graphic->reset_cache(this->info.width, this->info.height);
-            this->impl_graphic->create_screen();
-        } else {
-            this->impl_graphic->reset_cache(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
+        if (this->impl_graphic) {
+            if (this->mod_state != MOD_RDP_REMOTE_APP) {
+                this->impl_graphic->reset_cache(this->info.width, this->info.height);
+                this->impl_graphic->create_screen();
+            } else {
+                this->impl_graphic->reset_cache(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
+            }
         }
 
         this->init_socket();
@@ -614,26 +637,34 @@ public:
         if (this->init_mod()) {
              this->connected = true;
 
-             if (this->impl_socket_listener->start_to_listen(this->client_sck, this->mod)) {
+            if (this->impl_socket_listener) {
+                if (this->impl_socket_listener->start_to_listen(this->client_sck, this->mod)) {
 
-                if (mod_state != MOD_RDP_REMOTE_APP) {
-                    this->impl_graphic->show_screen();
+                    if (mod_state != MOD_RDP_REMOTE_APP) {
+                        if (this->impl_graphic) {
+                            this->impl_graphic->show_screen();
+                        }
+                    }
+
+                    return;
                 }
-
-                return;
-             }
+            }
         }
 
         const std::string errorMsgfail("Error: Mod Initialization failed.");
         std::string labelErrorMsg("<font color='Red'>"+errorMsgfail+"</font>");
-        this->impl_graphic->dropScreen();
+        if (this->impl_graphic) {
+            this->impl_graphic->dropScreen();
+        }
         this->disconnect(labelErrorMsg);
     }
 
     void disconnexionReleased() override{
         this->is_replaying = false;
         this->connected = false;
-        this->impl_graphic->dropScreen();
+        if (this->impl_graphic) {
+            this->impl_graphic->dropScreen();
+        }
         this->disconnect("");
     }
 
@@ -864,7 +895,9 @@ public:
     void callback() override {
 
         if (this->_recv_disconnect_ultimatum) {
-            this->impl_graphic->dropScreen();
+            if (this->impl_graphic) {
+                this->impl_graphic->dropScreen();
+            }
             std::string labelErrorMsg("<font color='Red'>Disconnected by server</font>");
             this->disconnect(labelErrorMsg);
             this->capture = nullptr;
@@ -877,7 +910,9 @@ public:
                 this->mod->draw_event(time(nullptr), *(this));
 
             } catch (const Error & e) {
-                this->impl_graphic->dropScreen();
+                if (this->impl_graphic) {
+                    this->impl_graphic->dropScreen();
+                }
                 const std::string errorMsg("Error: Connection to [" + this->target_IP +  "] is closed. Error "+ e.errmsg());
                 LOG(LOG_INFO, "%s", errorMsg.c_str());
                 std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
@@ -903,7 +938,9 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->impl_graphic->draw(cmd, clip, color_ctx);
+        if (this->impl_graphic) {
+            this->impl_graphic->draw(cmd, clip, color_ctx);
+        }
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette));
@@ -921,7 +958,9 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->impl_graphic->draw(cmd, clip, color_ctx);
+        if (this->impl_graphic) {
+            this->impl_graphic->draw(cmd, clip, color_ctx);
+        }
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette));
@@ -940,7 +979,9 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->impl_graphic->draw(bitmap_data, bmp);
+        if (this->impl_graphic) {
+            this->impl_graphic->draw(bitmap_data, bmp);
+        }
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(bitmap_data, bmp);
@@ -958,7 +999,9 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->impl_graphic->draw(cmd, clip, color_ctx);
+        if (this->impl_graphic) {
+            this->impl_graphic->draw(cmd, clip, color_ctx);
+        }
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette));
@@ -976,7 +1019,9 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->impl_graphic->draw(cmd, clip);
+        if (this->impl_graphic) {
+            this->impl_graphic->draw(cmd, clip);
+        }
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip);
@@ -994,7 +1039,9 @@ public:
             LOG(LOG_INFO, "========================================\n");
          }
 
-        this->impl_graphic->draw(cmd, clip, bitmap);
+        if (this->impl_graphic) {
+            this->impl_graphic->draw(cmd, clip, bitmap);
+        }
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip, bitmap);
@@ -1012,7 +1059,9 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->impl_graphic->draw(cmd, clip, color_ctx, bitmap);
+        if (this->impl_graphic) {
+            this->impl_graphic->draw(cmd, clip, color_ctx, bitmap);
+        }
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette), bitmap);
@@ -1034,7 +1083,9 @@ public:
             LOG(LOG_INFO, "========================================\n");
         }
 
-        this->impl_graphic->draw(cmd, clip);
+        if (this->impl_graphic) {
+            this->impl_graphic->draw(cmd, clip);
+        }
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip);
@@ -1086,7 +1137,9 @@ public:
             LOG(LOG_INFO, "========================================\n");
          }
 
-        this->impl_graphic->draw(cmd, clip, color_ctx, gly_cache);
+        if (this->impl_graphic) {
+            this->impl_graphic->draw(cmd, clip, color_ctx, gly_cache);
+        }
 
         if (this->is_recording && !this->is_replaying) {
             this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette), gly_cache);
@@ -1169,7 +1222,9 @@ public:
     }
 
     void set_pointer(Pointer const & cursor) override {
-        this->impl_graphic->set_pointer(cursor);
+        if (this->impl_graphic) {
+            this->impl_graphic->set_pointer(cursor);
+        }
     }
 
 //     void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
@@ -1183,14 +1238,19 @@ public:
 //     }
 
     ResizeResult server_resize(int width, int height, int bpp) override {
-        return this->impl_graphic->server_resize(width, height, bpp);
+        if (this->impl_graphic) {
+            return this->impl_graphic->server_resize(width, height, bpp);
+        }
+        return ResizeResult::instant_done;
     }
 
     void end_update() override {
 
         if ((this->connected || this->is_replaying)) {
 
-            this->impl_graphic->end_update();
+            if (this->impl_graphic) {
+                this->impl_graphic->end_update();
+            }
 
             if (this->is_recording && !this->is_replaying) {
                 this->graph_capture->end_update();

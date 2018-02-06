@@ -63,7 +63,7 @@ public:
         , CF_QT_CLIENT_FILECONTENTS         = 48026
     };
 
-    ClientRedemptionIOAPI              * _front;
+    ClientRedemptionIOAPI     * _front;
     QClipboard                * _clipboard;
     std::unique_ptr<uint8_t[]>  _chunk;
     QImage                      _bufferImage;
