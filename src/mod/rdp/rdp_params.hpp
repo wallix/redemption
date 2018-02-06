@@ -149,6 +149,7 @@ struct ModRDPParams {
     bool bogus_refresh_rect = true;
 
     const char * proxy_managed_drives = "";
+    const char * proxy_managed_drive_prefix = "";
 
     Translation::language_t lang = Translation::EN;
 

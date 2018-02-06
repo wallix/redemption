@@ -1096,7 +1096,8 @@ public:
         }
 
         if (mod_rdp_params.proxy_managed_drives && (*mod_rdp_params.proxy_managed_drives)) {
-            this->configure_proxy_managed_drives(mod_rdp_params.proxy_managed_drives);
+            this->configure_proxy_managed_drives(mod_rdp_params.proxy_managed_drives,
+                                                 mod_rdp_params.proxy_managed_drive_prefix);
         }
 
         if (mod_rdp_params.transparent_recorder_transport) {
@@ -2004,41 +2005,36 @@ public:
         }
     }   // configure_extra_orders
 
-    void configure_proxy_managed_drives(const char * proxy_managed_drives) {
+    void configure_proxy_managed_drives(const char * proxy_managed_drives, const char * proxy_managed_drive_prefix) {
         if (bool(this->verbose & RDPVerbose::connection)) {
             LOG(LOG_INFO, "Proxy managed drives=\"%s\"", proxy_managed_drives);
         }
 
         std::string drive;
+        std::size_t prefix_end_pos = 0;
+        if (proxy_managed_drive_prefix) {
+            drive = proxy_managed_drive_prefix;
+            if (drive.size() && drive.back() != '/') {
+                drive += '/';
+            }
+            prefix_end_pos = drive.size();
+        }
+
         for (auto & r : get_line(proxy_managed_drives, ',')) {
             auto trimmed_range = trim(r);
 
             if (trimmed_range.empty()) continue;
 
-            drive.assign(begin(trimmed_range), end(trimmed_range));
+            drive.append(begin(trimmed_range), end(trimmed_range));
 
             if (bool(this->verbose & RDPVerbose::connection)) {
                 LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive);
             }
             this->file_system_drive_manager.EnableDrive(drive.c_str(), this->verbose);
+
+            drive.resize(prefix_end_pos);
         }
     }   // configure_proxy_managed_drives
-
-    void configure_proxy_managed_drives_client(const char * proxy_managed_drives) {
-         std::string drive;
-        for (auto & r : get_line(proxy_managed_drives, ',')) {
-            auto trimmed_range = trim(r);
-
-            if (trimmed_range.empty()) continue;
-
-            drive.assign(begin(trimmed_range), end(trimmed_range));
-
-            if (bool(this->verbose & RDPVerbose::connection)) {
-                LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive);
-            }
-            this->file_system_drive_manager.EnableDriveClient(drive.c_str(), this->verbose);
-        }
-    }
 
     void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 *) override {
         if ((UP_AND_RUNNING == this->connection_finalization_state) &&
