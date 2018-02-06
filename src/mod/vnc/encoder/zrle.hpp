@@ -296,13 +296,6 @@ namespace VNC {
             uint16_t tile_x;
             uint16_t tile_y;
 
-            void draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawable)
-            {
-                const Bitmap bmp(raw, rect.cx, rect.cy, this->bpp, Rect(0, 0, rect.cx, rect.cy));
-                const RDPMemBlt cmd(0, rect, 0xCC, 0, 0, 0);
-                drawable.draw(cmd, rect, bmp);
-            }
-
             void lib_framebuffer_update_zrle(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
             {
                 LOG(LOG_INFO, "lib_framebuffer_update_zrle %zu", uncompressed_data_buffer.in_remain());
@@ -343,7 +336,9 @@ namespace VNC {
 
                             {            
                                 update_lock<gdi::GraphicApi> lock(drawable);
-                                this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                const Bitmap bmp(tile_data_p, tile_cx, tile_cy, this->bpp, Rect(0, 0, tile_cx, tile_cy));
+                                const RDPMemBlt cmd(0, Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), 0xCC, 0, 0, 0);
+                                drawable.draw(cmd, Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), bmp);
                             }
 
                             this->cx_remain -= tile_cx;
@@ -406,9 +401,12 @@ namespace VNC {
                                 memcpy(tmp_tile_data, tile_data, line_size);
                             }
 
-                            {            
+                            {
                                 update_lock<gdi::GraphicApi> lock(drawable);
-                                this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                const Rect rect(this->tile_x, this->tile_y, tile_cx, tile_cy);
+                                const Bitmap bmp(tile_data_p, tile_cx, tile_cy, this->bpp, Rect(0, 0, tile_cx, tile_cy));
+                                const RDPMemBlt cmd(0, rect, 0xCC, 0, 0, 0);
+                                drawable.draw(cmd, rect, bmp);
                             }
 
                             this->cx_remain -= tile_cx;
@@ -564,7 +562,10 @@ namespace VNC {
 
                             {            
                                 update_lock<gdi::GraphicApi> lock(drawable);
-                                this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                const Rect rect(this->tile_x, this->tile_y, tile_cx, tile_cy);
+                                const Bitmap bmp(tile_data_p, tile_cx, tile_cy, this->bpp, Rect(0, 0, tile_cx, tile_cy));
+                                const RDPMemBlt cmd(0, rect, 0xCC, 0, 0, 0);
+                                drawable.draw(cmd, rect, bmp);
                             }
 
                             this->cx_remain -= tile_cx;
@@ -692,7 +693,10 @@ namespace VNC {
 
                             {            
                                 update_lock<gdi::GraphicApi> lock(drawable);
-                                this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                const Rect rect(this->tile_x, this->tile_y, tile_cx, tile_cy);
+                                const Bitmap bmp(tile_data_p, tile_cx, tile_cy, this->bpp, Rect(0, 0, tile_cx, tile_cy));
+                                const RDPMemBlt cmd(0, rect, 0xCC, 0, 0, 0);
+                                drawable.draw(cmd, rect, bmp);
                             }
 
                             this->cx_remain -= tile_cx;
@@ -828,9 +832,12 @@ namespace VNC {
                             assert(!run_length);
                             assert(!tile_data_length_remain);
 
-                            {            
+                            {
                                 update_lock<gdi::GraphicApi> lock(drawable);
-                                this->draw_tile(Rect(this->tile_x, this->tile_y, tile_cx, tile_cy), tile_data_p, drawable);
+                                const Rect rect(this->tile_x, this->tile_y, tile_cx, tile_cy);
+                                const Bitmap bmp(tile_data_p, tile_cx, tile_cy, this->bpp, Rect(0, 0, tile_cx, tile_cy));
+                                const RDPMemBlt cmd(0, rect, 0xCC, 0, 0, 0);
+                                drawable.draw(cmd, rect, bmp);
                             }
 
                             this->cx_remain -= tile_cx;
