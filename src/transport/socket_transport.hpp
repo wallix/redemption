@@ -51,6 +51,7 @@ public:
 
     std::string * error_message;
     std::unique_ptr<TLSContext> tls;
+    enum class TLSState { Uninit, Want, Ok, } tls_state = TLSState::Uninit;
 
     std::chrono::milliseconds recv_timeout;
 

@@ -115,43 +115,54 @@ Transport::TlsResult SocketTransport::enable_client_tls(bool server_cert_store,
                                                         ServerNotifier & server_notifier,
                                                         const char * certif_path)
 {
-    if (this->tls != nullptr) {
-        // TODO this should be an error, no need to commute two times to TLS
-        return Transport::TlsResult::Fail;
+    Transport::TlsResult ret;
+
+    switch (this->tls_state) {
+        case TLSState::Uninit:
+            LOG(LOG_INFO, "Client TLS start");
+            this->tls.reset(new TLSContext());
+            if (!this->tls->enable_client_tls_start(this->sck, this->error_message)) {
+                return Transport::TlsResult::Fail;
+            }
+            this->tls_state = TLSState::Want;
+            REDEMPTION_CXX_FALLTHROUGH;
+        case TLSState::Want:
+            ret = this->tls->enable_client_tls_loop(this->error_message);
+            if (ret == Transport::TlsResult::Ok) {
+                try {
+                    bool ensure_server_certificate_match =
+                        (server_cert_check == ServerCertCheck::fails_if_no_match_or_missing)
+                      ||(server_cert_check == ServerCertCheck::fails_if_no_match_and_succeed_if_no_know);
+
+                    bool ensure_server_certificate_exists =
+                        (server_cert_check == ServerCertCheck::fails_if_no_match_or_missing)
+                      ||(server_cert_check == ServerCertCheck::succeed_if_exists_and_fails_if_missing);
+
+                    ret = this->tls->check_certificate(server_cert_store,
+                                                       ensure_server_certificate_match,
+                                                       ensure_server_certificate_exists,
+                                                       server_notifier,
+                                                       certif_path,
+                                                       this->error_message,
+                                                       this->ip_address,
+                                                       this->port);
+                    assert(ret != Transport::TlsResult::Want);
+                }
+                catch (...) {
+                    this->tls_state = TLSState::Uninit;
+                    // Disconnect tls if needed
+                    this->tls.reset();
+                    LOG(LOG_ERR, "SocketTransport::enable_client_tls() failed");
+                    throw;
+                }
+                LOG(LOG_INFO, "SocketTransport::enable_client_tls() done");
+                this->tls_state = TLSState::Ok;
+            }
+            return ret;
+        case TLSState::Ok:
+            // TODO this should be an error, no need to commute two times to TLS
+            return Transport::TlsResult::Fail;
     }
-
-    this->tls.reset(new TLSContext());
-
-    LOG(LOG_INFO, "Client TLS start");
-    bool ensure_server_certificate_match =
-        (server_cert_check == ServerCertCheck::fails_if_no_match_or_missing)
-       ||(server_cert_check == ServerCertCheck::fails_if_no_match_and_succeed_if_no_know);
-
-    bool ensure_server_certificate_exists =
-        (server_cert_check == ServerCertCheck::fails_if_no_match_or_missing)
-       ||(server_cert_check == ServerCertCheck::succeed_if_exists_and_fails_if_missing);
-
-    try {
-        return this->tls->enable_client_tls(this->sck,
-           server_cert_store,
-           ensure_server_certificate_match,
-           ensure_server_certificate_exists,
-           server_notifier,
-           certif_path,
-           this->error_message,
-           &this->ip_address[0],
-           this->port);
-    }
-    catch (...) {
-        // Disconnect tls if needed
-        this->tls.reset();
-
-        LOG(LOG_ERR, "SocketTransport::enable_client_tls() failed");
-        throw;
-    }
-
-    LOG(LOG_INFO, "SocketTransport::enable_client_tls() done");
-    return Transport::TlsResult::Ok;
 }
 
 bool SocketTransport::disconnect()
