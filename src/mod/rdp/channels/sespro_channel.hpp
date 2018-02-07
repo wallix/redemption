@@ -40,6 +40,10 @@
 #include <cstring>
 #include <cinttypes> // PRId64, ...
 
+enum {
+    INVALID_RECONNECTION_COOKIE = 0xFFFFFFFF
+};
+
 
 class ExtraSystemProcesses
 {
@@ -316,6 +320,8 @@ private:
 
     const bool param_allow_multiple_handshake;
 
+    const bool param_enable_crash_dump;
+
     FrontAPI& front;
 
     mod_api& mod;
@@ -341,6 +347,10 @@ private:
 
     bool start_application_query_processed = false;
     bool start_application_started         = false;
+
+    Random & gen;
+
+    uint32_t reconnection_cookie = INVALID_RECONNECTION_COOKIE;
 
 public:
     struct Params : public BaseVirtualChannel::Params {
@@ -377,6 +387,8 @@ public:
 
         bool session_probe_allow_multiple_handshake;
 
+        bool session_probe_enable_crash_dump;
+
         Translation::language_t lang;
 
         bool bogus_refresh_rect_ex;
@@ -392,6 +404,7 @@ public:
         mod_api& mod,
         rdp_api& rdp,
         FileSystemVirtualChannel& file_system_virtual_channel,
+        Random & gen,
         const Params& params)
     : BaseVirtualChannel(nullptr,
                          to_server_sender_,
@@ -427,6 +440,7 @@ public:
     , param_bogus_refresh_rect_ex(params.bogus_refresh_rect_ex)
     , param_show_maximized(params.show_maximized)
     , param_allow_multiple_handshake(params.session_probe_allow_multiple_handshake)
+    , param_enable_crash_dump(params.session_probe_enable_crash_dump)
     , front(front)
     , mod(mod)
     , rdp(rdp)
@@ -436,6 +450,7 @@ public:
           params.session_probe_outbound_connection_monitoring_rules)
     , process_monitor_rules(
           params.session_probe_process_monitoring_rules)
+    , gen(gen)
     {
         if (bool(this->verbose & RDPVerbose::sesprobe)) {
             LOG(LOG_INFO,
@@ -712,31 +727,50 @@ public:
         const char ExecuteResult[] = "ExecuteResult=";
         const char Log[]           = "Log=";
 
-        if (!this->server_message.compare(request_hello)) {
+        if (!this->server_message.compare(
+                     0,
+                     sizeof(request_hello) - 1,
+                     request_hello)) {
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
                         "Session Probe is ready.");
             }
 
-            error_type err_id = NO_ERROR;
-
-            if (this->session_probe_stop_launch_sequence_notifier) {
-                this->session_probe_stop_launch_sequence_notifier->stop(true, err_id);
-                this->session_probe_stop_launch_sequence_notifier = nullptr;
+            uint32_t remote_reconnection_cookie = INVALID_RECONNECTION_COOKIE;
+            if (*(this->server_message.c_str() + sizeof(request_hello) - 1) == '\x01')
+            {
+                remote_reconnection_cookie =
+                    ::strtoul(this->server_message.c_str() + sizeof(request_hello), 0, 10);
             }
+            if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                LOG(LOG_INFO,
+                    "SessionProbeVirtualChannel::process_server_message: "
+                        "LocalCookie=0x%X RemoteCookie=0x%X",
+                    this->reconnection_cookie, remote_reconnection_cookie);
+            }
+
+            error_type err_id = NO_ERROR;
 
             if (this->session_probe_ready) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
                         "Session Probe reconnection detect.");
 
-                if (!this->param_allow_multiple_handshake) {
+                if (!this->param_allow_multiple_handshake &&
+                    (this->reconnection_cookie != remote_reconnection_cookie)) {
                     this->report_message.report("SESSION_PROBE_RECONNECTION", "");
                 }
             }
+            else
+            {
+                if (this->session_probe_stop_launch_sequence_notifier) {
+                    this->session_probe_stop_launch_sequence_notifier->stop(true, err_id);
+                    this->session_probe_stop_launch_sequence_notifier = nullptr;
+                }
 
-            this->session_probe_ready = true;
+                this->session_probe_ready = true;
+            }
 
             this->front.session_probe_started(true);
 
@@ -937,6 +971,72 @@ public:
                     std::snprintf(cstr, sizeof(cstr), "%" PRId64,
                         this->param_session_probe_idle_session_limit.count());
                     out_s.out_copy_bytes(cstr, strlen(cstr));
+                }
+
+                out_s.out_clear_bytes(1);   // Null-terminator.
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset -
+                        sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_message_to_server(out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    out_s.get_data(), out_s.get_offset());
+            }
+
+            {
+                this->reconnection_cookie = this->gen.rand32();
+                if (INVALID_RECONNECTION_COOKIE == this->reconnection_cookie)
+                    this->reconnection_cookie &= ~(0x80000000);
+
+                StaticOutStream<1024> out_s;
+
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_skip_bytes(sizeof(uint16_t));
+
+                {
+                    const char cstr[] = "ReconnectionCookie=";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                {
+                    char cstr[128];
+                    std::snprintf(cstr, sizeof(cstr), "%u",
+                        this->reconnection_cookie);
+                    out_s.out_copy_bytes(cstr, strlen(cstr));
+                }
+
+                out_s.out_clear_bytes(1);   // Null-terminator.
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset -
+                        sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_message_to_server(out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    out_s.get_data(), out_s.get_offset());
+            }
+
+            {
+                StaticOutStream<1024> out_s;
+
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_skip_bytes(sizeof(uint16_t));
+
+                {
+                    const char cstr[] = "EnableCrashDump=";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                if (this->param_enable_crash_dump) {
+                    const char cstr[] = "Yes";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+                else {
+                    const char cstr[] = "No";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                 }
 
                 out_s.out_clear_bytes(1);   // Null-terminator.

@@ -375,6 +375,9 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "session_probe_allow_multiple_handshake", set(false));
         W.sep();
 
+        W.member(advanced_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_enable_crash_dump", set(false));
+        W.sep();
+
         W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true));
         W.member(hidden_in_gui, sesman_to_proxy, type_<ServerCertCheck>(), "server_cert_check", set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know));
 
