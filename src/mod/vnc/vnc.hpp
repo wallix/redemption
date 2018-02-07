@@ -269,7 +269,9 @@ public:
     , frame_buffer_update_ctx(this->zd, verbose)
     , clipboard_data_ctx(verbose)
     {
-        LOG(LOG_INFO, "Creation of new mod 'VNC'");
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+            LOG(LOG_INFO, "Creation of new mod 'VNC'");
+        }
 
         // Clear client screen
         this->invoke_asynchronous_graphic_task(AsynchronousGraphicTask::clear_screen);
@@ -288,7 +290,6 @@ public:
         std::snprintf(this->username, sizeof(this->username), "%s", username);
         std::snprintf(this->password, sizeof(this->password), "%s", password);
 
-        LOG(LOG_INFO, "Creation of new mod 'VNC' done");
     } // Constructor
 
     ~mod_vnc() override {
@@ -764,8 +765,6 @@ public:
             LOG(LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
         }
         
-        
-        
         // set almost null cursor, this is the little dot cursor
         Pointer cursor;
         cursor.x = 3;
@@ -778,18 +777,11 @@ public:
         memset(cursor.data + 29 * (32 * 3), 0xff, 9);
         memset(cursor.mask, 0xff, 32 * (32 / 8));
         
-        LOG(LOG_INFO, "update cursor");
         cursor.update_bw();
 
-        LOG(LOG_INFO, "front set_pointer");
-
-        // this->front.set_pointer(cursor);
-
-        LOG(LOG_INFO, "log5");
+//        this->front.set_pointer(cursor);
 
         this->report_message.log5("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"");
-
-        LOG(LOG_INFO, "VNC connection complete, connected ok\n");
 
         Rect const screen_rect(0, 0, this->width, this->height);
 
@@ -813,8 +805,12 @@ public:
             this->server_use_long_format_names?RDPECLIP::CB_USE_LONG_FORMAT_NAMES:0);
 
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
-            LOG(LOG_INFO, "Server use %s format name",
-                (this->server_use_long_format_names ? "long" : "short"));
+            if (this->server_use_long_format_names){
+                LOG(LOG_INFO, "Server use long format name");
+            }
+            else {
+                LOG(LOG_INFO, "Server use short format name");
+            }
         }
 
         RDPECLIP::ClipboardCapabilitiesPDU clip_cap_pdu(
@@ -1511,7 +1507,7 @@ protected:
                         this->state = State::ServerCutText;
                         return vnc.lib_clip_data(buf);
                     default:
-                        LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", message_type);
+                        LOG(LOG_ERR, "unknown message type in vnc %d\n", message_type);
                         throw Error(ERR_VNC);
                 }
                 break;
@@ -1536,7 +1532,6 @@ protected:
 public:
     void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override
     {
-        LOG(LOG_INFO, "draw_event...");
         if (bool(this->verbose & VNCVerbose::draw_event)) {
             LOG(LOG_INFO, "vnc::draw_event");
         }
@@ -1806,7 +1801,7 @@ private:
 
         case WAIT_SECURITY_TYPES_INVALID_AUTH:
             {
-                LOG(LOG_INFO, "VNC INVALID Auth");
+                LOG(LOG_ERR, "VNC INVALID Auth");
 
                 if (!this->invalid_auth_ctx.run(buf, [](array_view_u8 av){
                     hexdump_c(av.data(), av.size());
@@ -2019,7 +2014,7 @@ private:
             case FrontAPI::ResizeResult::fail:
                 // resizing failed
                 // thow an Error ?
-                LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
+                LOG(LOG_WARNING, "Older RDP client can't resize resolution from server, disconnecting");
                 throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
             }
             return true;
@@ -2145,30 +2140,29 @@ private:
                             this->cy = stream.in_uint16_be();
                             this->encoding = stream.in_sint32_be();
 
-                            LOG(LOG_INFO, "Encoding: %u (%u, %u, %u, %u) : %d", this->num_recs, this->x, this->y, this->cx, this->cy, this->encoding);
-//                            hexdump_d(buf.av(sz).data(), sz);
+                            if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                                LOG(LOG_INFO, "Encoding: %u (%u, %u, %u, %u) : %d", this->num_recs, this->x, this->y, this->cx, this->cy, this->encoding);
+                            }
 
                             --this->num_recs;
                             switch (this->encoding){
                             case COPYRECT_ENCODING:  /* raw */
-                                LOG(LOG_INFO, "copyrect encoding");
                                 // TODO: front_width and front_height should not be necessary
                                 this->encoder = new VNC::Encoder::CopyRect(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.front_width, vnc.front_height, VNCVerbose::basic_trace);
                             break;
                             case RAW_ENCODING:  /* raw */
-                                LOG(LOG_INFO, "raw encoding");
                                 this->encoder = new VNC::Encoder::Raw(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
                             break;
                             case ZRLE_ENCODING: /* ZRLE */
-                                LOG(LOG_INFO, "zrle encoding");                            
                                 this->encoder = new VNC::Encoder::Zrle(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, this->zd, VNCVerbose::basic_trace);
                             break;
                             case RRE_ENCODING: /* RRE */
-                                LOG(LOG_INFO, "rre encoding");                            
                                 this->encoder = new VNC::Encoder::RRE(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
                                 break;
                             default:
-                                LOG(LOG_INFO, "other encoding");                            
+                            //TODO: until we have specific encoder for every supported encoding do not uncomment
+//                                LOG(LOG_INFO, "Received unsupported VNC encoding %u", this->encoding);
+//                                  throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
                             break;
                             }
                             buf.advance(sz);
@@ -2180,8 +2174,6 @@ private:
                     }
                     break;
                 case State::Data:
-                    LOG(LOG_INFO, "state Data");                            
-
                     switch (this->encoding)
                     {
                     case COPYRECT_ENCODING:  /* copy rect */ 
@@ -2189,10 +2181,12 @@ private:
                     case RAW_ENCODING:  /* raw */
                     case ZRLE_ENCODING: /* ZRLE */
                     {
-                        LOG(LOG_INFO, "%s", (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
-                                            (this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
-                                            (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" :
-                                             "ZRLE_ENCODING");
+                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                            LOG(LOG_INFO, "%s", (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
+                                                (this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
+                                                (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" :
+                                                 "ZRLE_ENCODING");
+                        }
                         // Pre Assertion: we have an encoder
                         switch (encoder->consume(buf, drawable)){
                             case VNC::Encoder::EncoderState::Ready:
@@ -2211,15 +2205,13 @@ private:
                     }
                     break;
                     case CURSOR_PSEUDO_ENCODING: /* (-239) cursor */
-                        LOG(LOG_INFO, "Cursor Pseudo");                            
-                        LOG(LOG_INFO, "CURSOR_PSEUDO_ENCODING");
                         r = this->read_data_cursor(buf, vnc, drawable); 
                     break;
                     case HEXTILE_ENCODING: /* Hextile */ // TODO unimplemented
-                        LOG(LOG_INFO, "HEXTILE_ENCODING");
-                        LOG(LOG_INFO,
-                            "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u",
-                            this->Bpp, this->x, this->y, this->cx, this->cy);
+                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                            LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u",
+                                this->Bpp, this->x, this->y, this->cx, this->cy);
+                        }
                         r = Result::ok(State::Encoding);
                         break;
                     default:
@@ -2270,9 +2262,6 @@ private:
             stream.in_skip_bytes(1);
             this->num_recs = stream.in_uint16_be();
 
-            LOG(LOG_INFO, "FrameBufferUpdate: HEADER (%u)", this->num_recs);
-//            hexdump_d(buf.av(sz).data(), sz);
-
             buf.advance(sz);
             return Result::ok(State::Encoding);
         }
@@ -2320,9 +2309,6 @@ private:
             this->cx = stream.in_uint16_be();
             this->cy = stream.in_uint16_be();
             this->encoding = stream.in_sint32_be();
-
-            LOG(LOG_INFO, "Encoding: %u (%u, %u, %u, %u) : %d", this->num_recs, this->x, this->y, this->cx, this->cy, this->encoding);
-//            hexdump_d(buf.av(sz).data(), sz);
 
             --this->num_recs;
             buf.advance(sz);
@@ -2456,12 +2442,10 @@ private:
 
     bool lib_frame_buffer_update(gdi::GraphicApi & drawable, Buf64k & buf)
     {
-        LOG(LOG_INFO, "lib_frame_buffer_update");
         if (!this->frame_buffer_update_ctx.run(buf, *this, drawable)) {
             return false;
         }
 
-        LOG(LOG_INFO, "lib_frame_buffer_update asking update (%zu, %zu)", this->width, this->height);
         this->update_screen(Rect(0, 0, this->width, this->height));
         return true;
     } // lib_frame_buffer_update
@@ -2628,7 +2612,7 @@ private:
                                        );
         }
         else {
-            LOG(LOG_INFO, "Clipboard Channel Redirection unavailable");
+            LOG(LOG_ERR, "Clipboard Channel Redirection unavailable");
         }
     } // lib_open_clip_channel
 
@@ -2852,7 +2836,7 @@ private:
             this->clipboard_requesting_for_data_is_delayed = false;
         }
         else {
-            LOG(LOG_INFO, "mod_vnc::lib_clip_data: Clipboard Channel Redirection unavailable");
+            LOG(LOG_WARNING, "mod_vnc::lib_clip_data: Clipboard Channel Redirection unavailable");
         }
 
         return true;
@@ -3478,7 +3462,7 @@ public:
     void disconnect(time_t now) override {
 
         double seconds = ::difftime(now, this->beginning);
-        LOG(LOG_INFO, "Client disconnect");
+        LOG(LOG_INFO, "Client disconnect from VNC module");
 
         char extra[1024];
         snprintf(extra, sizeof(extra), "%02d:%02d:%02d",

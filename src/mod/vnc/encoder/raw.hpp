@@ -76,7 +76,6 @@ namespace VNC {
                 this->y += cy;
                 this->cy -= cy;
 
-                LOG(LOG_INFO, "Send %zu lines, remains %zu", y, this->cy);
                 buf.advance(new_av.size());
                 if (this->cy == 0){
                     return EncoderState::Exit; 

@@ -71,14 +71,11 @@ namespace VNC {
             // return is false if the encoder is waiting for more data
             EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
-                LOG(LOG_INFO, "consuming buffer '%u bytes'", buf.remaining());
                 switch (this->state) {
                 case ZrleState::Header:
                 {
-                    LOG(LOG_INFO, "read_data_zrle_header %zu", buf.remaining());
                     const size_t sz = sizeof(uint32_t);
                     if (buf.remaining() < sz){ 
-                        LOG(LOG_INFO, "early exit read_data_zrle_header %s", (buf.remaining() < sz)?"true":"false");
                         return EncoderState::NeedMoreData; 
                     }
                     this->zlib_compressed_data_length = Parse(buf.av().data()).in_uint32_be();
@@ -87,8 +84,7 @@ namespace VNC {
                     this->accumulator_uncompressed.reserve(200000);
                     this->accumulator_uncompressed.clear();
                     buf.advance(sz);
-                    if (bool(this->verbose & VNCVerbose::basic_trace))
-                    {
+                    if (bool(this->verbose & VNCVerbose::basic_trace)) {
                         LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u remaining=%zu", this->zlib_compressed_data_length, buf.remaining());
                     }
                     this->state = ZrleState::Data;
@@ -97,29 +93,17 @@ namespace VNC {
                 break;
                 case ZrleState::Data:
                 {
-                    LOG(LOG_INFO, "read_data_zrle_data %zu", buf.remaining());
-//                    hexdump_d(buf.av().data(), buf.remaining());
-
-                    LOG(LOG_INFO, "accumulator has %zu", this->accumulator.size());
                     if (this->accumulator.size() + buf.remaining() < this->zlib_compressed_data_length)
                     {
                         auto av = buf.av(buf.remaining());
                         this->accumulator.insert(this->accumulator.end(), av.begin(), av.end());
                         buf.advance(buf.remaining());
-                        LOG(LOG_INFO, "need more data for zrle_data %zu", buf.remaining());
                         return EncoderState::NeedMoreData; 
                     }
                     size_t interesting_part = this->zlib_compressed_data_length - this->accumulator.size();
                     auto av = buf.av(interesting_part);
                     this->accumulator.insert(this->accumulator.end(), av.begin(), av.end());
                     buf.advance(interesting_part);
-
-                    LOG(LOG_INFO, "Got enough data for compressed zrle %u", this->zlib_compressed_data_length);
-
-//                    hexdump_d(this->accumulator.data(), this->zlib_compressed_data_length);
-
-                    LOG(LOG_INFO, "zrle_update_context Bpp=%u x=%zu cx=%zu cx_remain=%zu, cy_remain=%zu tile_x=%zu tile_y=%zu", 
-                        Bpp, x, cx, cx, cy, x, y);
 
                     this->cx_remain = this->cx;
                     this->cy_remain = this->cy;
@@ -156,11 +140,10 @@ namespace VNC {
 
                     this->accumulator.clear();
                     this->state = ZrleState::Exit;
-                    LOG(LOG_INFO, "after consuming buffer '%u bytes'", buf.remaining());
                     return EncoderState::Exit; 
                 }
                 default:
-                    LOG(LOG_INFO, "Unexpected case, should not happen");
+                    LOG(LOG_ERR, "Unexpected state in ZrleEncoder (%u), should not happen", static_cast<unsigned>(this->state));
                     break;
                 }
                 return EncoderState::Exit; 
@@ -296,8 +279,6 @@ namespace VNC {
 
             void lib_framebuffer_update_zrle(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
             {
-                LOG(LOG_INFO, "lib_framebuffer_update_zrle %zu", uncompressed_data_buffer.in_remain());
-
                 try
                 {
                     while (uncompressed_data_buffer.in_remain())
@@ -329,31 +310,21 @@ namespace VNC {
                         case 0x68: case 0x69: case 0x6A: case 0x6B: case 0x6C: case 0x6D: case 0x6E: case 0x6F:
                         case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x76: case 0x77:
                         case 0x78: case 0x79: case 0x7A: case 0x7B: case 0x7C: case 0x7D: case 0x7E: case 0x7F:
-                        //    17 to 127
-                        //        Unused (no advantage over palette RLE).
+                        case 129:
+                        // 17 to 127 Unused (no advantage over palette RLE).
+                        // 129 Unused
                         {
-                            LOG(LOG_ERR, "VNC Encoding: ZRLE, unused");
+                            LOG(LOG_ERR, "VNC Encoding: ZRLE, unused subencoding %u", subencoding);
                             throw Error(ERR_VNC_ZRLE_PROTOCOL);
                         }
                         break;
                         case 128:
                             this->plainRLE(uncompressed_data_buffer, drawable);
                         break;
-                        case 129:
-                        //    129
-                        //        Unused.
-                        {
-                            LOG(LOG_ERR, "VNC Encoding: ZRLE, unused");
-                            throw Error(ERR_VNC_ZRLE_PROTOCOL);
-                        }
-                        break;
-                        default:
-                        //    130 to 255
+                        default: // 130 to 255
                             this->paletteRLE(subencoding, uncompressed_data_buffer, drawable);
-
                         break;
                         } // switch subencoding
-
                     } // while
                 } // try
                 catch (Error const& e)
@@ -462,8 +433,7 @@ namespace VNC {
             void solidTile(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
             {
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                    LOG(LOG_INFO,
-                        "VNC Encoding: ZRLE, Solid tile (single color)");
+                    LOG(LOG_INFO, "VNC Encoding: ZRLE, Solid tile (single color)");
                 }
 
                 const uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
@@ -527,10 +497,7 @@ namespace VNC {
             void packedPalette(uint8_t subencoding, InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
             {
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                    LOG(LOG_INFO,
-                        "VNC Encoding: ZRLE, Packed palette types, "
-                            "palette size=%d",
-                        subencoding);
+                    LOG(LOG_INFO, "VNC Encoding: ZRLE, Packed palette types, palette size=%d", subencoding);
                 }
 
                 const uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
@@ -542,9 +509,7 @@ namespace VNC {
                 // TODO: this case should not be possible
                 if (tile_data_length > sizeof(tile_data))
                 {
-                    LOG(LOG_ERR,
-                        "VNC Encoding: ZRLE, tile buffer too small (%zu < %" PRIu16 ")",
-                        sizeof(tile_data), tile_data_length);
+                    LOG(LOG_ERR, "VNC Encoding: ZRLE, tile buffer too small (%zu < %" PRIu16 ")", sizeof(tile_data), tile_data_length);
                     throw Error(ERR_BUFFER_TOO_SMALL);
                 }
 
@@ -706,8 +671,6 @@ namespace VNC {
                             break;
                     }
 
-                    // LOG(LOG_INFO, "VNC Encoding: ZRLE, run length=%u", run_length);
-
                     while ((tile_data_length_remain >= this->Bpp) && run_length)
                     {
                         memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
@@ -718,8 +681,6 @@ namespace VNC {
                         run_length--;
                     }
                 }
-
-                // LOG(LOG_INFO, "VNC Encoding: ZRLE, run_length=%u", run_length);
 
                 assert(!run_length);
                 assert(!tile_data_length_remain);
@@ -815,8 +776,6 @@ namespace VNC {
                         }
                     }
 
-                    // LOG(LOG_INFO, "VNC Encoding: ZRLE, run length=%u", run_length);
-
                     while ((tile_data_length_remain >= this->Bpp) && run_length)
                     {
                         memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
@@ -827,8 +786,6 @@ namespace VNC {
                         run_length--;
                     }
                 }
-
-                LOG(LOG_INFO, "VNC Encoding: ZRLE, run_length=%u", run_length);
 
                 assert(!run_length);
                 assert(!tile_data_length_remain);
