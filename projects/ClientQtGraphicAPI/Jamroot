@@ -162,7 +162,7 @@ add_src core/app_path.cpp :
     <conditional>@defines
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)$(MAIN_PATH)\"'
-;
+    ;
 add_src capture/capture.cpp ;
 add_src capture/file_to_graphic.cpp ;
 add_src capture/rdp_ppocr/get_ocr_constants.cpp ;
@@ -221,6 +221,22 @@ constant lib_list :
     snappy
 ;
 
+#local no_qt = [ os.environ no_qt ] ;
+
+local EXE_QT_INCLUDE_CONFIG ;
+
+#rule add_define ( src * )
+#{
+ #   EXE_QT_INCLUDE_CONFIG += <define> $(src) ;
+#}
+
+#if $(no_qt)
+#{
+ #   EXE_QT_INCLUDE_CONFIG :
+ #       <define>_NO_QT
+ #   ;
+#}
+
 constant EXE_DEPENDENCIES :
     <define>MAIN_PATH='\"$(MAIN_PATH)\"'
     <define>REDEMPTION_QT_VERSION=$(qtversion)
@@ -278,6 +294,8 @@ exe client_rdp_Qt$(qtversion) :
 :
     $(EXE_DEPENDENCIES)
     <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
+
+    $(EXE_QT_INCLUDE_CONFIG)
 ;
 
 alias client_rdp_Qt : client_rdp_Qt$(qtversion) ;
