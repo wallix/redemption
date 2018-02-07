@@ -26,6 +26,99 @@ h
 #include "utils/verbose_flags.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 
+//    7.6.5   Hextile Encoding
+
+//    Hextile is a variation on the RRE idea. Rectangles are split up into 16x16 tiles,
+// allowing the dimensions of the subrectangles to be specified in 4 bits each, 16 bits in total.
+// The rectangle is split into tiles starting at the top left going in left-to-right,
+// top-to-bottom order. The encoded contents of the tiles simply follow one another in the
+// predetermined order. If the width of the whole rectangle is not an exact multiple of 16
+// then the width of the last tile in each row will be correspondingly smaller. Similarly
+// if the height of the whole rectangle is not an exact multiple of 16 then the height of
+// each tile in the final row will also be smaller.
+
+//    Each tile is either encoded as raw pixel data, or as a variation on RRE. Each tile has a
+// background pixel value, as before. The background pixel value does not need to be explicitly
+// specified for a given tile if it is the same as the background of the previous tile. However
+// the background pixel value may not be carried over if the previous tile was raw. If all of the
+// subrectangles of a tile have the same pixel value, this can be specified once as a foreground
+// pixel value for the whole tile. As with the background, the foreground pixel value can be left
+// unspecified, meaning it is carried over from the previous tile. The foreground pixel value may
+// not be carried over if the previous tile was raw or had the SubrectsColored bit set. It may,
+// however, be carried over from a previous tile with the AnySubrects bit clear, as long as that
+// tile itself carried over a valid foreground from its previous tile.
+
+//    So the data consists of each tile encoded in order. Each tile begins with a subencoding
+// type byte, which is a mask made up of a number of bits:
+
+//    No. of bytes      Type
+//    1                  U8      
+
+//    subencoding-mask:
+//      1   Raw
+//      2   BackgroundSpecified
+//      4   ForegroundSpecified
+//      8   AnySubrects
+//      16  SubrectsColoured
+
+//    If the Raw bit is set then the other bits are irrelevant; 
+// width * height pixel values follow (where width and height are the width
+// and height of the tile). 
+
+// Otherwise the other bits in the mask are as follows:
+
+//    BackgroundSpecified
+
+//        If set, a pixel value follows which specifies the background colour for this tile:
+//        No. of bytes      Type          Description
+//        bytesPerPixel     PIXEL       background-pixel-value
+
+//        The first non-raw tile in a rectangle must have this bit set. 
+// If this bit isn't set then the background is the same as the last tile.
+
+//    ForegroundSpecified
+
+//        If set, a pixel value follows which specifies the foreground colour
+//        to be used for all subrectangles in this tile:
+
+//        No. of bytes      Type        Description
+//        bytesPerPixel     PIXEL   foreground-pixel-value
+
+//        If this bit is set then the SubrectsColoured bit must be zero
+.
+//    AnySubrects
+
+//        If set, a single byte follows giving the number of subrectangles following:
+//        No. of bytes      Type        Description
+//        1                 U8      number-of-subrectangles
+
+//        If not set, there are no subrectangles (i.e. the whole tile is just solid
+//        background colour).
+
+//    SubrectsColoured
+
+//        If set then each subrectangle is preceded by a pixel value giving the colour of
+//        that subrectangle, so a subrectangle is:
+
+//        No. of bytes      Type        Description
+//        bytesPerPixel     PIXEL   subrect-pixel-value
+//        1                 U8      x-and-y-position
+//        1                 U8      width-and-height
+
+//        If not set, all subrectangles are the same colour, the foreground colour; if the
+// ForegroundSpecified bit wasn't set then the foreground is the same as the last tile.
+
+// A subrectangle is:
+//        No. of bytes 	Type 	Description
+//        1 	U8 	x-and-y-position
+//        1 	U8 	width-and-height
+
+//    The position and size of each subrectangle is specified in two bytes,
+// x-and-y-position and width-and-height. The most-significant four bits
+// of x-and-y-position specify the X position, the least-significant specify
+// the Y position. The most-significant four bits of width-and-height specify
+// the width minus one, the least-significant specify the height minus one.
+
 namespace VNC {
     namespace Encoder {
         class Hextile : public EncoderApi {
