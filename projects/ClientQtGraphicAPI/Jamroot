@@ -14,6 +14,7 @@ include $(JAM_INCLUDE_PATH)/includes.jam ;
 ## @{
 import os ;
 local qtversion = [ os.environ qtversion ] ;
+
 if ! $(qtversion)
 {
     qtversion = [ os.environ qt ] ;
@@ -255,6 +256,7 @@ obj front_Qt$(qtversion)_rdp.o : src/main_qt_client_redemption.cpp :
     $(EXE_DEPENDENCIES)
 ;
 
+
 exe client_rdp_Qt$(qtversion) :
     src/qt_input_output_api/qt_output_sound.hpp
     src/qt_input_output_api/qt_input_output_clipboard.hpp
@@ -275,5 +277,26 @@ exe client_rdp_Qt$(qtversion) :
     $(EXE_DEPENDENCIES)
     <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
 ;
+
+obj front_rdp.o : src/main_qt_client_redemption.cpp :
+    <define>REDEMPTION_DECL_LOG_TEST
+    $(EXE_DEPENDENCIES)
+;
+
+exe client_rdp :
+    front_rdp.o
+    $(obj_list)
+    $(lib_list)
+    $(obj_list_VNC)
+    config.o
+    hexdump.o
+    libqtclient
+    libphonon
+:
+    $(EXE_DEPENDENCIES)
+    <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
+    
+;
+
 
 alias client_rdp_Qt : client_rdp_Qt$(qtversion) ;
