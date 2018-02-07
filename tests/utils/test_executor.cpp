@@ -93,14 +93,14 @@
 // struct SequenceCtx : Ctx
 // {
 //     template<class... Args>
-//     static ExecutorResult next(Args&&... args)
+//     static jln::ExecutorResult next(Args&&... args)
 //     {
 //         auto& ctx = static_cast<SequenceThenCtx<0, FL, Scheduler, Ctx, F, Fs...>&>(static_cast<Ctx&>(*this));
 //         return make_lambda<F>()(ctx, static_cast<Args&&>(args)...);
 //     }
 //
 //     template<class NewScheduler>
-//     static ExecutorResult next_action(NewScheduler)
+//     static jln::ExecutorResult next_action(NewScheduler)
 //     {
 //         return Ctx::next_action([](auto ctx, auto&&... args){
 //             auto& new_ctx = static_cast<Ctx&>(ctx);
@@ -115,17 +115,17 @@
 // template<bool isRetryState, class FL, class Scheduler, class Ctx, class F, class... Fs>
 // struct SequenceThenCtx : Ctx
 // {
-//     static ExecutorResult exit(ExitStatus status)
+//     static jln::ExecutorResult exit(ExitStatus status)
 //     {
 //         return (status == ExitStatus::Success) ? this->exit_on_success() : this->exit_on_error();
 //     }
 //
-//     static ExecutorResult exit_on_error()
+//     static jln::ExecutorResult exit_on_error()
 //     {
 //         return this->executor.result_exit_failure();
 //     }
 //
-//     static ExecutorResult exit_on_success()
+//     static jln::ExecutorResult exit_on_success()
 //     {
 //         if constexpr (bool(sizeof...(Fs))) {
 //             return Ctx::next_action([](auto ctx, auto&&... args){
@@ -142,7 +142,7 @@
 //     }
 //
 //     template<class FF>
-//     static ExecutorResult next_action(FF)
+//     static jln::ExecutorResult next_action(FF)
 //     {
 //         return Ctx::next_action([](auto ctx, auto&&... args){
 //             auto& new_ctx = static_cast<Ctx&>(ctx);
@@ -153,7 +153,7 @@
 //         });
 //     }
 //
-//     static ExecutorResult retry()
+//     static jln::ExecutorResult retry()
 //     {
 //         if constexpr (isRetryState) {
 //             return Ctx::retry();
@@ -166,13 +166,13 @@
 //         }
 //     }
 //
-//     static ExecutorResult exit_success_sequence()
+//     static jln::ExecutorResult exit_success_sequence()
 //     {
 //         return this->executor.result_exit_success();
 //     }
 //
 //     template<char... cs, class... Args>
-//     static ExecutorResult fallthrough(Args&&... args)
+//     static jln::ExecutorResult fallthrough(Args&&... args)
 //     {
 //         static_assert(sizeof...(Fs), "is last callback");
 //
@@ -183,7 +183,7 @@
 //     }
 //
 //     template<char... cs, class... Args>
-//     static ExecutorResult fallthrough(string_c<cs...>, Args&&... args)
+//     static jln::ExecutorResult fallthrough(string_c<cs...>, Args&&... args)
 //     {
 //         auto& new_ctx = static_cast<Ctx&>(*this);
 //         return static_cast<
@@ -195,7 +195,7 @@
 //     }
 //
 //     template<char... cs>
-//     static ExecutorResult next_action(string_c<cs...>)
+//     static jln::ExecutorResult next_action(string_c<cs...>)
 //     {
 //         return Ctx::next_action([](auto ctx, auto&&... args){
 //             auto& new_ctx = static_cast<Ctx&>(ctx);
@@ -210,7 +210,7 @@
 //     }
 //
 //     template<class FF, class... Args>
-//     static ExecutorResult try_action(FF, Args&&... args)
+//     static jln::ExecutorResult try_action(FF, Args&&... args)
 //     {
 //         auto& new_ctx = static_cast<Ctx&>(*this);
 //         Ctx::invoke(
@@ -233,7 +233,7 @@
 //
 //     auto to_function() &&
 //     {
-//         return [](auto&&...) { return detail::FriendExecutorResult::Nothing; };
+//         return [](auto&&...) { return detail::Friendjln::ExecutorResult::Nothing; };
 //     }
 // };
 // #else
@@ -295,7 +295,7 @@ template<auto f>
 struct fun_t
 {
     template<class Ctx, class T, class... Args>
-    ExecutorResult operator()(Ctx&& ctx, T&& o, Args&&... args) const
+    jln::ExecutorResult operator()(Ctx&& ctx, T&& o, Args&&... args) const
     {
         if constexpr (std::is_member_function_pointer<decltype(f)>::value) {
             return (o.*f)(ctx, static_cast<Args&&>(args)...);
@@ -460,15 +460,15 @@ public:
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
     }
 
-    using ActionCtx = Executor2ActionContext<prefix_args<>, NewRdpNego&, TpduBuffer&, Transport&, ServerCert>;
+    using ActionCtx = jln::Executor2ActionContext<jln::prefix_args<>, NewRdpNego&, TpduBuffer&, Transport&, ServerCert>;
 
-    static ExecutorResult exec_recv_data(ActionCtx ctx)
+    static jln::ExecutorResult exec_recv_data(ActionCtx ctx)
     {
         return ctx.exec_action2(fun<&state_negociate>, fun<&state_recv_connection_confirm>);
     }
 
 private:
-    static ExecutorResult state_negociate(
+    static jln::ExecutorResult state_negociate(
         ActionCtx ctx, NewRdpNego& nego, TpduBuffer& buf, Transport& trans, ServerCert const& cert)
     {
         LOG(LOG_INFO, "RdpNego::NEGO_STATE_%s",
@@ -479,7 +479,7 @@ private:
         return nego.state_recv_connection_confirm(ctx, nego, buf, trans, cert);
     }
 
-    static ExecutorResult state_recv_connection_confirm(
+    static jln::ExecutorResult state_recv_connection_confirm(
         ActionCtx ctx, NewRdpNego& nego, TpduBuffer& buf, OutTransport trans, ServerCert const& /*cert*/)
     {
         while (buf.next_pdu()) {
@@ -581,7 +581,7 @@ private:
         return true;
     }
 
-    ExecutorResult state_activate_ssl_tls(
+    jln::ExecutorResult state_activate_ssl_tls(
         ActionCtx ctx, TpduBuffer& /*buf*/, Transport& trans, ServerCert const& cert)
     {
         if (!this->enable_client_tls(trans, cert)) {
@@ -590,7 +590,7 @@ private:
         return ctx.exit_on_success();
     }
 
-    static ExecutorResult state_activate_ssl_hybrid(
+    static jln::ExecutorResult state_activate_ssl_hybrid(
         ActionCtx ctx, NewRdpNego& nego, TpduBuffer& /*buf*/, Transport& trans, ServerCert const& cert)
     {
         // if (x224.rdp_neg_flags & X224::RESTRICTED_ADMIN_MODE_SUPPORTED) {
@@ -646,7 +646,7 @@ private:
         this->send_negotiation_request(trans);
     }
 
-    static ExecutorResult state_credssp(
+    static jln::ExecutorResult state_credssp(
         ActionCtx ctx, NewRdpNego& nego, TpduBuffer& buf, Transport& trans, ServerCert const& /*cert*/)
     {
         try {
@@ -797,9 +797,9 @@ RED_AUTO_TEST_CASE(TestNego)
 #endif
 
     {
-        TopExecutorTimers<prefix_args<>> top_timers;
+        jln::TopExecutorTimers<> top_timers;
         using namespace std::chrono_literals;
-        TopExecutor2<prefix_args<>> executor(top_timers);
+        jln::TopExecutor2<jln::prefix_args<>> executor(top_timers);
         executor.set_timeout(10ms);
         auto timer1 = top_timers.create_timer()
             .on_action(2ms, [](auto ctx){
@@ -815,7 +815,7 @@ RED_AUTO_TEST_CASE(TestNego)
     }
 
 
-    Reactor<> reactor;
+    jln::Reactor<> reactor;
 
     {
         using namespace std::chrono_literals;
@@ -848,9 +848,9 @@ RED_AUTO_TEST_CASE(TestNego)
                 });
             return ctx.exit_on_success();
         })
-        .on_exit([](auto ctx, ExecutorError error, UNUSED_VARIADIC()) {
+        .on_exit([](auto ctx, jln::ExecutorError error, UNUSED_VARIADIC()) {
             TRACE;
-            RED_CHECK_EQ(error, ExecutorError::NoError);
+            RED_CHECK_EQ(error, jln::ExecutorError::NoError);
             return ctx.exit_on_success();
         })
         .on_timeout({}, [](auto ctx, UNUSED_VARIADIC()) {
@@ -863,15 +863,15 @@ RED_AUTO_TEST_CASE(TestNego)
     std::cout << "-----\n";
 
     {
-        TopExecutorTimers<prefix_args<>> top_timers;
-        auto* executor = TopExecutor2<prefix_args<>>::New(top_timers);
+        jln::TopExecutorTimers<> top_timers;
+        auto* executor = jln::TopExecutor2<jln::prefix_args<>>::New(top_timers);
         executor->set_on_action([](auto ctx, UNUSED_VARIADIC()){
             TRACE;
             return ctx.exit_on_success();
         });
-        executor->set_on_exit([](auto ctx, ExecutorError error, UNUSED_VARIADIC()) {
+        executor->set_on_exit([](auto ctx, jln::ExecutorError error, UNUSED_VARIADIC()) {
             TRACE;
-            RED_CHECK_EQ(error, ExecutorError::NoError);
+            RED_CHECK_EQ(error, jln::ExecutorError::NoError);
             return ctx.exit_on_success();
         });
         executor->exec_all();
@@ -897,17 +897,17 @@ RED_AUTO_TEST_CASE(TestNego)
                     return ctx.exit_on_success();
                     //return nego.exec_recv_data(ctx);
                 })
-                .on_exit([](auto ctx, ExecutorError error, int) {
+                .on_exit([](auto ctx, jln::ExecutorError error, int) {
                     TRACE;
-                    RED_CHECK_EQ(error, ExecutorError::NoError);
+                    RED_CHECK_EQ(error, jln::ExecutorError::NoError);
                     return ctx.exit_on_success();
                 })
                 .exec_action();
             ;
         })
-        .on_exit([](auto ctx, ExecutorError error, UNUSED_VARIADIC()) {
+        .on_exit([](auto ctx, jln::ExecutorError error, UNUSED_VARIADIC()) {
             TRACE;
-            RED_CHECK_EQ(error, ExecutorError::NoError);
+            RED_CHECK_EQ(error, jln::ExecutorError::NoError);
             return ctx.exit_on_success();
         })
         .on_timeout({}, [](auto ctx, UNUSED_VARIADIC()) {
@@ -933,9 +933,9 @@ RED_AUTO_TEST_CASE(TestNego)
             TRACE;
             return nego.exec_recv_data(ctx);
         })
-        .on_exit([](auto ctx, ExecutorError error, UNUSED_VARIADIC()) {
+        .on_exit([](auto ctx, jln::ExecutorError error, UNUSED_VARIADIC()) {
             TRACE;
-            RED_CHECK_EQ(ExecutorError::NoError, error);
+            RED_CHECK_EQ(jln::ExecutorError::NoError, error);
             return ctx.exit_on_success();
         })
         .on_timeout({}, [](auto ctx, UNUSED_VARIADIC()){

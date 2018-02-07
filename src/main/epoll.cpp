@@ -32,6 +32,7 @@ constexpr struct
 int main()
 {
     using namespace std::chrono_literals;
+    using namespace jln;
 
     struct Buffer
     {

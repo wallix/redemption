@@ -22,6 +22,7 @@ Author(s): Jonathan Poelen
 
 #include "cxx/cxx.hpp"
 #include "cxx/diagnostic.hpp"
+#include "utils/sugar/std_stream_proto.hpp"
 
 #include <vector>
 #include <type_traits>
@@ -30,6 +31,9 @@ Author(s): Jonathan Poelen
 #include <chrono>
 #include <cassert>
 #include <memory>
+
+namespace jln
+{
 
 namespace detail
 {
@@ -214,7 +218,7 @@ namespace detail
 template<class BaseType, class PrefixArgs, class...Ts>
 using MakeFuncPtr = typename detail::make_func_ptr<BaseType, PrefixArgs, Ts...>::type;
 
-constexpr auto default_function() noexcept
+constexpr auto default_action_function() noexcept
 {
     return []([[maybe_unused]] auto... args){
         return ExecutorResult::Nothing;
@@ -241,7 +245,10 @@ namespace
 }
 
 template<class PrefixArgs>
-class TopExecutorTimers;
+class TopExecutorTimersImpl;
+
+template<class... Ts>
+using TopExecutorTimers = TopExecutorTimersImpl<prefix_args<Ts...>>;
 
 template<class PrefixArgs>
 struct BasicExecutorImpl
@@ -279,7 +286,7 @@ struct BasicExecutorImpl
     template<class... Args>
     bool exit_with(ExecutorError, Args&&... args);
 
-    BasicExecutorImpl(TopExecutorTimers<PrefixArgs>& top_executor_timers) noexcept
+    BasicExecutorImpl(TopExecutorTimersImpl<PrefixArgs>& top_executor_timers) noexcept
     : top_executor_timers(top_executor_timers)
     {}
 
@@ -287,11 +294,11 @@ protected:
     using OnActionPtrFunc = MakeFuncPtr<BasicExecutorImpl&, PrefixArgs>;
     using OnExitPtrFunc = MakeFuncPtr<BasicExecutorImpl&, PrefixArgs, ExecutorError>;
 
-    OnActionPtrFunc on_action = default_function();
-    OnExitPtrFunc on_exit = default_function();
+    OnActionPtrFunc on_action = default_action_function();
+    OnExitPtrFunc on_exit = default_action_function();
     BasicExecutorImpl* current = this;
     BasicExecutorImpl* prev = nullptr;
-    TopExecutorTimers<PrefixArgs>& top_executor_timers;
+    TopExecutorTimersImpl<PrefixArgs>& top_executor_timers;
     void (*deleter) (BasicExecutorImpl*) = [](BasicExecutorImpl*){};
 
     void set_next_executor(BasicExecutorImpl& other) noexcept
@@ -340,8 +347,6 @@ template<class PrefixArgs, class... Ts>
 struct Executor2Impl;
 template<class PrefixArgs, class... Ts>
 struct TopExecutorImpl;
-template<class PrefixArgs>
-class TopExecutorBase;
 
 namespace detail { namespace
 {
@@ -683,7 +688,7 @@ struct Executor2Impl : public BasicExecutorImpl<PrefixArgs>
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
     template<class... Args>
-    Executor2Impl(TopExecutorTimers<PrefixArgs>& top_executor_timers, Args&&... args)
+    Executor2Impl(TopExecutorTimersImpl<PrefixArgs>& top_executor_timers, Args&&... args)
       : BasicExecutorImpl<PrefixArgs>(top_executor_timers)
       , ctx{static_cast<Args&&>(args)...}
     {}
@@ -695,7 +700,7 @@ struct Executor2Impl : public BasicExecutorImpl<PrefixArgs>
     }
 
     template<class... Args>
-    static Executor2Impl* New(TopExecutorTimers<PrefixArgs>& top_executor_timers, Args&&... args)
+    static Executor2Impl* New(TopExecutorTimersImpl<PrefixArgs>& top_executor_timers, Args&&... args)
     {
         auto* p = new Executor2Impl(top_executor_timers, static_cast<Args&&>(args)...);
         p->deleter = [](BasicExecutorImpl<PrefixArgs>* base) {
@@ -786,12 +791,12 @@ struct BasicTimer
     }
 
 // protected:
-    friend class TopExecutorTimers<PrefixArgs>;
+    friend class TopExecutorTimersImpl<PrefixArgs>;
 
     using OnTimerPtrFunc = MakeFuncPtr<BasicTimer&, PrefixArgs>;
     std::chrono::milliseconds ms;
     std::chrono::milliseconds elapsed_ms = std::chrono::milliseconds::zero();
-    OnTimerPtrFunc on_timer = default_function();
+    OnTimerPtrFunc on_timer = default_action_function();
     void (*deleter) (BasicTimer*) = [](BasicTimer*){};
 
     BasicTimer() = default;
@@ -854,6 +859,17 @@ namespace detail
     };
 }
 
+
+// template<class PrefixArgs>
+// struct TopExecutorBase : TopExecutorTimersImpl<PrefixArgs>
+// {
+//     BasicExecutorImpl<PrefixArgs> base_executor;
+//
+//     void delete_self()
+//     {
+//         this->base_executor.delete_self();
+//     }
+// };
 // template<class... Ts>
 // struct TimedExecutor : Executor2Impl<Ts...>, BasicTimer
 // {
@@ -878,7 +894,7 @@ template<class PrefixArgs, class... Args>
 using TimerBuilder = detail::TimerBuilder<UniquePtr<BasicTimer<PrefixArgs>, Timer2<PrefixArgs, Args...>>>;
 
 template<class PrefixArgs>
-struct TopExecutorTimers
+struct TopExecutorTimersImpl
 {
     template<class... Args>
     TimerBuilder<PrefixArgs, Args...> create_timer(Args&&... args)
@@ -932,20 +948,12 @@ private:
     // std::chrono::milliseconds next_timeout;
 };
 
-template<class PrefixArgs>
-struct TopExecutorBase : TopExecutorTimers<PrefixArgs>
-{
-    BasicExecutorImpl<PrefixArgs> base_executor;
-
-    void delete_self()
-    {
-        this->base_executor.delete_self();
-    }
-};
+template<class... Ts>
+using TopExecutorTimers = TopExecutorTimersImpl<prefix_args<Ts...>>;
 
 template<class PrefixArgs>
 template<class... Args>
-void TopExecutorTimers<PrefixArgs>::exec_timeout(Args&&... args)
+void TopExecutorTimersImpl<PrefixArgs>::exec_timeout(Args&&... args)
 {
     auto ms = this->get_next_timeout();
     for (std::size_t i = 0; i < this->timers.size(); ) {
@@ -1003,7 +1011,7 @@ struct Timer2Impl : BasicTimer<PrefixArgs>
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
     template<class... Args>
-    Timer2Impl(TopExecutorTimers<PrefixArgs>& top_executor_timers, Args&&... args)
+    Timer2Impl(TopExecutorTimersImpl<PrefixArgs>& top_executor_timers, Args&&... args)
       : ctx{static_cast<Args&&>(args)...}
       , top_executor_timers(top_executor_timers)
     {}
@@ -1015,7 +1023,7 @@ struct Timer2Impl : BasicTimer<PrefixArgs>
     }
 
     template<class... Args>
-    static Timer2Impl* New(TopExecutorTimers<PrefixArgs>& top_executor_timers, Args&&... args)
+    static Timer2Impl* New(TopExecutorTimersImpl<PrefixArgs>& top_executor_timers, Args&&... args)
     {
         auto* p = new Timer2Impl(top_executor_timers, static_cast<Args&&>(args)...);
         p->deleter = [](BasicTimer<PrefixArgs>* base) {
@@ -1030,7 +1038,7 @@ protected:
     detail::tuple<Ts...> ctx;
 
 private:
-    TopExecutorTimers<PrefixArgs>& top_executor_timers;
+    TopExecutorTimersImpl<PrefixArgs>& top_executor_timers;
 
 private:
     void *operator new(size_t n) { return ::operator new(n); }
@@ -1076,7 +1084,7 @@ struct TopExecutorImpl : Executor2Impl<PrefixArgs, Ts...>
     TopExecutorImpl& operator=(TopExecutorImpl const&) = delete;
 
     template<class... Args>
-    TopExecutorImpl(TopExecutorTimers<PrefixArgs>& top_executor_timers, Args&&... args)
+    TopExecutorImpl(TopExecutorTimersImpl<PrefixArgs>& top_executor_timers, Args&&... args)
       : Executor2Impl<PrefixArgs, Ts...>(top_executor_timers, static_cast<Args&&>(args)...)
       , timeout(top_executor_timers)
     {
@@ -1084,7 +1092,7 @@ struct TopExecutorImpl : Executor2Impl<PrefixArgs, Ts...>
     }
 
     template<class... Args>
-    static TopExecutorImpl* New(TopExecutorTimers<PrefixArgs>& top_executor_timers, Args&&... args)
+    static TopExecutorImpl* New(TopExecutorTimersImpl<PrefixArgs>& top_executor_timers, Args&&... args)
     {
         auto* p = new TopExecutorImpl{top_executor_timers, static_cast<Args&&>(args)...};
         p->deleter = [](BasicExecutorImpl<PrefixArgs>* base) {
@@ -1126,14 +1134,14 @@ struct TopExecutorWithDataImpl : DataExecutor<Data>, TopExecutorImpl<PrefixArgs,
     template<class DataArgs, class... Args>
     TopExecutorWithDataImpl(
         DataArgs data_arg,
-        TopExecutorTimers<PrefixArgs>& top_executor_timers,
+        TopExecutorTimersImpl<PrefixArgs>& top_executor_timers,
         Args&&... args)
       : DataExecutor<Data>{data_arg}
       , TopExecutorImpl<PrefixArgs, Ts...>(top_executor_timers, static_cast<Args&&>(args)...)
     {}
 
     template<class DataArgs, class... Args>
-    static TopExecutorWithDataImpl* New(DataArgs data_args, TopExecutorTimers<PrefixArgs>& top_executor_timers, Args&&... args)
+    static TopExecutorWithDataImpl* New(DataArgs data_args, TopExecutorTimersImpl<PrefixArgs>& top_executor_timers, Args&&... args)
     {
         auto* p = new TopExecutorWithDataImpl{data_args, top_executor_timers, static_cast<Args&&>(args)...};
         p->deleter = [](BasicExecutorImpl<PrefixArgs>* base) {
@@ -1238,7 +1246,7 @@ struct Reactor
 
 // private:
     Container<BasicExecutorImpl<prefix_args<Ts...>>> executors;
-    TopExecutorTimers<prefix_args<Ts...>> timers;
+    TopExecutorTimers<Ts...> timers;
 };
 
 
@@ -1322,4 +1330,9 @@ bool BasicExecutorImpl<PrefixArgs>::exit_with(ExecutorError error, Args&&... arg
         }
     } while (this->current);
     return false;
+}
+
+REDEMPTION_OSTREAM(out, ExecutorError e) { return out << int(e); }
+REDEMPTION_OSTREAM(out, ExecutorResult e) { return out << int(e); }
+
 }
