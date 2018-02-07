@@ -270,7 +270,7 @@ exe client_rdp_Qt$(qtversion) :
     config.o
     hexdump.o
     libqtclient
-    libphonon
+#    libphonon
 :
     $(EXE_DEPENDENCIES)
     <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
