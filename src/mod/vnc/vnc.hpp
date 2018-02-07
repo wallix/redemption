@@ -62,6 +62,8 @@ h
 #include "mod/vnc/encoder/raw.hpp"
 #include "mod/vnc/encoder/rre.hpp"
 #include "mod/vnc/encoder/copyrect.hpp"
+#include "mod/vnc/encoder/cursor.hpp"
+#include "mod/vnc/encoder/hextile.hpp"
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -2147,8 +2149,15 @@ private:
                             --this->num_recs;
                             switch (this->encoding){
                             case COPYRECT_ENCODING:  /* raw */
-                                // TODO: front_width and front_height should not be necessary
                                 this->encoder = new VNC::Encoder::CopyRect(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.front_width, vnc.front_height, VNCVerbose::basic_trace);
+                            break;
+//                            case HEXTILE_ENCODING:  /* hextile */
+//                                this->encoder = new VNC::Encoder::Hextile(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
+//                            break;
+                            case CURSOR_PSEUDO_ENCODING:  /* cursor */
+                                this->encoder = new VNC::Encoder::Cursor(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, 
+                                                                         vnc.red_shift, vnc.red_max, vnc.green_shift, vnc.green_max, vnc.blue_shift, vnc.blue_max,
+                                                                         VNCVerbose::basic_trace);
                             break;
                             case RAW_ENCODING:  /* raw */
                                 this->encoder = new VNC::Encoder::Raw(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
@@ -2176,13 +2185,18 @@ private:
                 case State::Data:
                     switch (this->encoding)
                     {
+                    case CURSOR_PSEUDO_ENCODING: /* (-239) cursor */
+//                    case HEXTILE_ENCODING: /* Hextile */
                     case COPYRECT_ENCODING:  /* copy rect */ 
                     case RRE_ENCODING:  /* RRE */
                     case RAW_ENCODING:  /* raw */
                     case ZRLE_ENCODING: /* ZRLE */
                     {
                         if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                            LOG(LOG_INFO, "%s", (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
+                        
+                            LOG(LOG_INFO, "%s", (this->encoding == HEXTILE_ENCODING) ? "HEXTILE_ENCODING" :
+                                                (this->encoding == CURSOR_PSEUDO_ENCODING) ? "CURSOR_PSEUDO_ENCODING" :
+                                                (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
                                                 (this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
                                                 (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" :
                                                  "ZRLE_ENCODING");
@@ -2203,9 +2217,6 @@ private:
                             break;
                         }
                     }
-                    break;
-                    case CURSOR_PSEUDO_ENCODING: /* (-239) cursor */
-                        r = this->read_data_cursor(buf, vnc, drawable); 
                     break;
                     case HEXTILE_ENCODING: /* Hextile */ // TODO unimplemented
                         if (bool(this->verbose & VNCVerbose::basic_trace)) {
@@ -2318,125 +2329,7 @@ private:
             return Result::ok(State::Data);
         }
 
-        Result read_data_cursor(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
-        {
-            // TODO see why we get these empty rects ?
-            if (this->cx <= 0 && this->cy <= 0) {
-                return Result::ok(State::Encoding);
-            }
 
-            // 7.7.2   Cursor Pseudo-encoding
-            // ------------------------------
-
-            // A client which requests the Cursor pseudo-encoding is
-            // declaring that it is capable of drawing a mouse cursor
-            // locally. This can significantly improve perceived performance
-            // over slow links.
-
-            // The server sets the cursor shape by sending a pseudo-rectangle
-            // with the Cursor pseudo-encoding as part of an update.
-
-            // x, y : The pseudo-rectangle's x-position and y-position
-            // indicate the hotspot of the cursor,
-
-            // cx, cy : width and height indicate the width and height of
-            // the cursor in pixels.
-
-            // The data consists of width * height pixel values followed by
-            // a bitmask.
-
-            // PIXEL array : width * height * bytesPerPixel
-            // bitmask     : floor((width + 7) / 8) * height
-
-            // The bitmask consists of left-to-right, top-to-bottom
-            // scanlines, where each scanline is padded to a whole number of
-            // bytes. Within each byte the most significant bit represents
-            // the leftmost pixel, with a 1-bit meaning the corresponding
-            // pixel in the cursor is valid.
-
-            const int sz_pixel_array = this->cx * this->cy * this->Bpp;
-            const int sz_bitmask = nbbytes(this->cx) * this->cy;
-
-            if (sz_pixel_array + sz_bitmask > 65536)
-            {
-                LOG(LOG_ERR,
-                    "VNC Encoding: Cursor, data buffer too small (65536 < %d)",
-                    sz_pixel_array + sz_bitmask);
-                throw Error(ERR_BUFFER_TOO_SMALL);
-            }
-
-            if (buf.remaining() < sz_pixel_array + sz_bitmask)
-            {
-                return Result::fail();
-            }
-
-            auto cursor_buf = buf.av(sz_pixel_array + sz_bitmask).data();
-            const uint8_t * vnc_pointer_data = cursor_buf;
-            const uint8_t * vnc_pointer_mask = cursor_buf + sz_pixel_array;
-
-            Pointer cursor;
-            //LOG(LOG_INFO, "Cursor x=%u y=%u", x, y);
-            cursor.x = x;
-            cursor.y = y;
-            // cursor.bpp = 24;
-            cursor.width = 32;
-            cursor.height = 32;
-            // a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead
-            if (cx == 1 && cy == 1) {
-                // TODO Appearence of this 1x1 cursor looks broken, check what we actually get
-                memset(cursor.data, 0, sizeof(cursor.data));
-                cursor.data[2883] = 0xFF;
-                cursor.data[2884] = 0xFF;
-                cursor.data[2885] = 0xFF;
-                memset(cursor.mask, 0xFF, sizeof(cursor.mask));
-                cursor.mask[116] = 0x1F;
-                cursor.mask[120] = 0x1F;
-                cursor.mask[124] = 0x1F;
-            }
-            else {
-                // clear target cursor mask
-                for (size_t tmpy = 0; tmpy < 32; tmpy++) {
-                    for (size_t mask_x = 0; mask_x < nbbytes(32); mask_x++) {
-                        cursor.mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
-                    }
-                }
-                // TODO The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask used is 1 bit per pixel arrays
-                // copy vnc pointer and mask to rdp pointer and mask
-
-                for (int yy = 0; yy < cy; yy++) {
-                    for (int xx = 0 ; xx < cx ; xx++){
-                        if (vnc_pointer_mask[yy * nbbytes(cx) + xx / 8 ] & (0x80 >> (xx&7))){
-                            if ((yy < 32) && (xx < 32)){
-                                cursor.mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
-                                int pixel = 0;
-                                for (int tt = 0 ; tt < Bpp; tt++){
-                                    pixel += vnc_pointer_data[(yy * cx + xx) * Bpp + tt] << (8 * tt);
-                                }
-                                // TODO temporary: force black cursor
-                                int red   = (pixel >> vnc.red_shift) & vnc.red_max;
-                                int green = (pixel >> vnc.green_shift) & vnc.green_max;
-                                int blue  = (pixel >> vnc.blue_shift) & vnc.blue_max;
-                                cursor.data[((31-yy) * 32 + xx) * 3 + 0] = (red << 3) | (red >> 2);
-                                cursor.data[((31-yy) * 32 + xx) * 3 + 1] = (green << 2) | (green >> 4);
-                                cursor.data[((31-yy) * 32 + xx) * 3 + 2] = (blue << 3) | (blue >> 2);
-                            }
-                        }
-                    }
-                }
-                /* keep these in 32x32, vnc cursor can be alot bigger */
-                /* (anyway hotspot is usually 0, 0)                   */
-                //if (x > 31) { x = 31; }
-                //if (y > 31) { y = 31; }
-            }
-            cursor.update_bw();
-            // TODO we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation
-            drawable.begin_update();
-            drawable.set_pointer(cursor);
-            drawable.end_update();
-
-            buf.advance(sz_pixel_array + sz_bitmask);
-            return Result::ok(State::Encoding);
-        }
     };
     FrameBufferUpdateCtx frame_buffer_update_ctx;
 

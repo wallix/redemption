@@ -47,7 +47,7 @@ namespace VNC {
 
             Hextile(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy, VNCVerbose verbose) 
                 : bpp(bpp), Bpp(Bpp), x(x), y(y), cx(cx), cy(cy)
-                , state(RawState::Header)
+                , state(HextileState::Header)
                 , verbose(verbose)
             {
             }
