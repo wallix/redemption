@@ -32,11 +32,12 @@
 #include "mod/mod_api.hpp"
 #include "mod/vnc/vnc.hpp"
 #include "program_options/program_options.hpp"
+#include "utils/verbose_flags.hpp"
 
 
 int main(int argc, char** argv)
 {
-    uint64_t verbose = 16;
+    uint64_t verbose = 0;
     std::string target_device;
     int target_port = 5900;
     int nbretry = 3;
@@ -130,7 +131,7 @@ int main(int argc, char** argv)
       , 0             /* key_flags */
       , true          /* clipboard */
       , true          /* clipboard */
-      , "2, 0, 1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
+      , "16, 2, 0, 1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
       , false         /* allow authentification retries */
       , is_socket_transport
       , mod_vnc::ClipboardEncodingType::UTF8
@@ -138,7 +139,7 @@ int main(int argc, char** argv)
       , report_message
       , false
       , nullptr
-      , to_verbose_flags(verbose));
+      , to_verbose_flags(verbose)|VNCVerbose::connection | VNCVerbose::basic_trace);
     mod.get_event().set_trigger_time(wait_obj::NOW);
 
     using Ms = std::chrono::milliseconds;

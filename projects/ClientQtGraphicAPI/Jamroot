@@ -76,7 +76,7 @@ rule disable-buggy-warn ( properties * )
 
     local flags ;
 
-    if $(toolset) = gcc && !  $(version) <= 05.00
+    if $(toolset) = gcc && ! ( $(version) <= 05.00 )
     {
         flags += <cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant ;
     }
@@ -156,7 +156,7 @@ add_src core/app_path.cpp :
     <conditional>@defines
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)$(MAIN_PATH)\"'
-;
+    ;
 add_src capture/capture.cpp ;
 add_src capture/file_to_graphic.cpp ;
 add_src capture/rdp_ppocr/get_ocr_constants.cpp ;
@@ -263,7 +263,7 @@ exe client_rdp_Qt$(qtversion) :
     src/qt_input_output_api/qt_graphics_components/qt_options_window.hpp
     src/qt_input_output_api/qt_graphics_components/qt_screen_window.hpp
     src/qt_input_output_api/qt_graphics_components/qt_form_window.hpp
-    #front_Qt$(qtversion)_rdp.o
+    front_Qt$(qtversion)_rdp.o
     $(obj_list)
     $(lib_list)
     $(obj_list_VNC)

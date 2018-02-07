@@ -3370,6 +3370,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>tests/includes/test_only/fake_graphic.o
   <library>z
 ;
 test-run tests/mod/xup/test_xup :
@@ -4170,6 +4171,13 @@ test-run tests/utils/test_word_identification :
 :
   <covfile>src/utils/word_identification.hpp
 ;
+test-run tests/utils/test_zlib :
+  $(REDEMPTION_TEST_PATH)/utils/test_zlib.cpp
+:
+  <covfile>src/utils/zlib.hpp
+  <library>src/utils/hexdump.o
+  <library>z
+;
 test-run tests/utils/winpr/test_pattern :
   $(REDEMPTION_TEST_PATH)/utils/winpr/test_pattern.cpp
 :
@@ -4264,6 +4272,7 @@ obj src/utils/pattutils.o : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp ;
 obj src/utils/png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
 obj src/utils/rle.o : $(REDEMPTION_SRC_PATH)/utils/rle.cpp ;
 obj src/utils/set_exception_handler_pretty_message.o : $(REDEMPTION_SRC_PATH)/utils/set_exception_handler_pretty_message.cpp ;
+obj tests/includes/test_only/fake_graphic.o : $(REDEMPTION_TEST_PATH)/includes/test_only/fake_graphic.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 
 obj src/main/do_recorder.o : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp ;
@@ -4912,6 +4921,8 @@ alias test_utf : tests/utils/test_utf ;
 alias test_utf.coverage : tests/utils/test_utf.coverage ;
 alias test_word_identification : tests/utils/test_word_identification ;
 alias test_word_identification.coverage : tests/utils/test_word_identification.coverage ;
+alias test_zlib : tests/utils/test_zlib ;
+alias test_zlib.coverage : tests/utils/test_zlib.coverage ;
 alias test_pattern : tests/utils/winpr/test_pattern ;
 alias test_pattern.coverage : tests/utils/winpr/test_pattern.coverage ;
 explicit tests/acl ;
@@ -5373,6 +5384,7 @@ alias tests/utils :
   tests/utils/test_translation
   tests/utils/test_utf
   tests/utils/test_word_identification
+  tests/utils/test_zlib
 ;
 explicit tests/utils/winpr ;
 alias tests/utils/winpr :

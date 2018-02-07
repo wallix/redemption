@@ -211,6 +211,10 @@ struct SCCore {
             }
             return;
         }
+        if (!stream.in_check_rem(4)) {
+            LOG(LOG_ERR, "SC_CORE short header (2)");
+            throw Error(ERR_GCC);
+        }
         this->clientRequestedProtocols = stream.in_uint32_le();
         if (this->length < 16) {
             if (this->length != 12) {
@@ -218,6 +222,10 @@ struct SCCore {
                 throw Error(ERR_GCC);
             }
             return;
+        }
+        if (!stream.in_check_rem(4)) {
+            LOG(LOG_ERR, "SC_CORE short header (3)");
+            throw Error(ERR_GCC);
         }
         this->earlyCapabilityFlags = stream.in_uint32_le();
         if (this->length != 16) {

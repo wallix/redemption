@@ -25,6 +25,12 @@
 
 #include <cstring>
 
+class PartialReaderAPI {
+public:
+    virtual size_t partial_read(byte_ptr buffer, size_t len) = 0;
+    virtual ~PartialReaderAPI() {}
+};
+
 struct Buf64k
 {
     REDEMPTION_NON_COPYABLE(Buf64k);
@@ -78,6 +84,10 @@ struct Buf64k
         return av;
     }
 
+    // TODO: read_from interface is slightly annoying. It will be a problem when compiling code to js with emscripten
+    // because the input buffer will have to be filled from outside by websocket code.
+    // web socket implementation also suggest it is risky to copy data from a part of buffer to another
+    // (because of asynchronous access). And should we find a way to lock len and idx ?
     void read_from(InTransport trans)
     {
         if (this->idx == this->len) {
@@ -93,6 +103,23 @@ struct Buf64k
             this->len += trans.partial_read(this->buf + this->len, max_len - this->len);
         }
     }
+
+    void read_from(PartialReaderAPI & trans)
+    {
+        if (this->idx == this->len) {
+            this->len = trans.partial_read(this->buf, max_len);
+            this->idx = 0;
+        }
+        else {
+            if (this->idx) {
+                std::memmove(this->buf, this->buf + this->idx, this->remaining());
+                this->len -= this->idx;
+                this->idx = 0;
+            }
+            this->len += trans.partial_read(this->buf + this->len, max_len - this->len);
+        }
+    }
+
 
 private:
     static constexpr std::size_t max_len = uint16_t(~uint16_t{});

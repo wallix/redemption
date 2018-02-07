@@ -56,8 +56,6 @@
 #include "gdi/graphic_api.hpp"
 #include "gdi/image_frame_api.hpp"
 
-// orders provided to RDPDrawable *MUST* be 24 bits
-// drawable also only support 24 bits orders
 class RDPDrawable
 : public gdi::GraphicApi, public gdi::ImageFrameApi
 {

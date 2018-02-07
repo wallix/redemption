@@ -168,6 +168,60 @@ public:
         this->empty_buffer();
     }
 
+// MS-RDPECLIP
+
+// 2.2.1 Clipboard PDU Header (CLIPRDR_HEADER)
+
+// The CLIPRDR_HEADER structure is present in all clipboard PDUs. It is used to identify the PDU type,
+//  specify the length of the PDU, and convey message flags.
+
+// msgType : 16 bits
+// msgFlags : 16 bits
+// dataLen : 32 bits integer
+
+//             Value                    Description
+// ------------------------------------+-------------------------------
+//    CB_MONITOR_READY         0x0001  |   Monitor Ready PDU
+// ------------------------------------+-------------------------------
+//    CB_FORMAT_LIST           0x0002  |   Format List PDU
+// ------------------------------------+-------------------------------
+//    CB_FORMAT_LIST_RESPONSE  0x0003  |   Format List Response PDU
+// ------------------------------------+-------------------------------
+//    CB_FORMAT_DATA_REQUEST   0x0004  |   Format Data Request PDU
+// ------------------------------------+-------------------------------
+//    CB_FORMAT_DATA_RESPONSE  0x0005  |   Format Data Response PDU
+// ------------------------------------+-------------------------------
+//    CB_TEMP_DIRECTORY        0x0006  |   Temporary Directory PDU
+// ------------------------------------+-------------------------------
+//    CB_CLIP_CAPS             0x0007  |   Clipboard Capabilities PDU
+// ------------------------------------+-------------------------------
+//    CB_FILECONTENTS_REQUEST  0x0008  |   File Contents Request PDU
+// ------------------------------------+-------------------------------
+//    CB_FILECONTENTS_RESPONSE 0x0009  |   File Contents Response PDU
+// ------------------------------------+-------------------------------
+//    CB_LOCK_CLIPDATA         0x000A  |  Lock Clipboard Data PDU
+// ------------------------------------+-------------------------------
+//    CB_UNLOCK_CLIPDATA       0x000B  |  Unlock Clipboard Data PDU
+// ------------------------------------+-------------------------------
+
+// msgFlags (2 bytes): An unsigned, 16-bit integer that indicates message flags.
+
+//    CB_RESPONSE_OK      0x0001        Used by the Format List Response PDU, Format Data Response PDU, 
+//                                      and File Contents Response PDU to indicate that the associated 
+//                                      request Format List PDU, Format Data Request PDU, and File 
+//                                      Contents Request PDU were processed successfully.
+
+//    CB_RESPONSE_FAIL    0x0002        Used by the Format List Response PDU, Format Data Response PDU,
+//                                      and File Contents Response PDU to indicate that the associated
+//                                      Format List PDU, Format Data Request PDU, and File Contents 
+//                                      Request PDU were not processed successfully.
+
+//    CB_ASCII_NAMES      0x0004        Used by the Short Format Name variant of the Format List Response
+//                                      PDU to indicate that the format names are in ASCII 8.
+
+// dataLen (4 bytes): An unsigned, 32-bit integer that specifies the size, in bytes, of the data which 
+//  follows the Clipboard PDU Header.<1>
+
     void receive(InStream & chunk, int flags) {
         if (clientIOClipboardAPI) {
         InStream chunk_series = chunk.clone();
@@ -199,6 +253,16 @@ public:
 
                     break;
 
+
+//    2.2.2.2 Server Monitor Ready PDU (CLIPRDR_MONITOR_READY)
+
+//    The Monitor Ready PDU is sent from the server to the client to indicate that the server is 
+//    initialized and ready. This PDU is transmitted by the server after it has sent the Clipboard
+//    Capabilities PDU to the client. 
+//    
+//    clipHeader (8 bytes):  A Clipboard PDU Header. The msgType field of the Clipboard PDU Header 
+//    MUST be set to CB_MONITOR_READY (0x0001), while the msgFlags field MUST be set to 0x0000.
+
                     case RDPECLIP::CB_MONITOR_READY:
                         if (bool(this->verbose & RDPVerbose::cliprdr)) {
                             LOG(LOG_INFO, "SERVER >> CB Channel: Monitor Ready PDU");
@@ -225,6 +289,7 @@ public:
                                                                 , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST
                                                                 |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                                 );
+                                                                
                             if (bool(this->verbose & RDPVerbose::cliprdr)) {
                                 LOG(LOG_INFO, "CLIENT >> CB Channel: Clipboard Capabilities PDU");
                             }
@@ -247,6 +312,9 @@ public:
                             }*/
 //                             this->client->_monitorCountNegociated = true;
                         }
+                        
+                        // TODO: check this, dangerous, we don't know how many formats are really available
+                        // sizes array seems to be the length of names, this should no be managed separately from names
                         if (this->server_use_long_format_names) {
                             const uint16_t * names[] = {
                                         reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[0].data()),
@@ -256,7 +324,7 @@ public:
                                         //reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[4].data())
                                                        };
 
-                            size_t sizes[] = {26, 42, 2, 2, 2};
+                            size_t sizes[] = {26, 42, 2, 2, /*2*/};
 
                             this->send_FormatListPDU(this->clipbrdFormatsList.IDs, names, sizes, ClipbrdFormatsList::CLIPBRD_FORMAT_COUNT);
                         } else {
@@ -266,16 +334,28 @@ public:
                                         //reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[4].data())
                                                        };
 
-                            size_t sizes[] = {2, 2, 2};
+                            size_t sizes[] = {2, 2, /*2*/};
 
+                            // TODO: check documentation, what are we setting from IDs array ?
+                            //       before In changed IDs array size, there was no IDs[4]!!!!
                             uint32_t ids[] = { this->clipbrdFormatsList.IDs[2]
                                              , this->clipbrdFormatsList.IDs[3]
-                                             , this->clipbrdFormatsList.IDs[4]};
+//                                             , this->clipbrdFormatsList.IDs[4]
+                                             };
                             LOG(LOG_INFO, "short format to send");
-                            this->send_FormatListPDU(ids, names, sizes, 3);
+                            this->send_FormatListPDU(ids, names, sizes, 2);
                         }
 
                     break;
+                    
+    // 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
+    
+    // The Format List Response PDU is sent as a reply to the Format List PDU. It is used to indicate
+    // whether processing of the Format List PDU was successful.
+    
+    // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the Clipboard PDU Header MUST
+    // be set to CB_FORMAT_LIST_RESPONSE (0x0003). The CB_RESPONSE_OK (0x0001) or CB_RESPONSE_FAIL (0x0002)
+    // flag MUST be set in the msgFlags field of the Clipboard PDU Header.
 
                     case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
                         if (bool(this->verbose & RDPVerbose::cliprdr)) {
@@ -287,6 +367,22 @@ public:
                         }
 
                     break;
+
+    // 2.2.3.1 Format List PDU (CLIPRDR_FORMAT_LIST)
+    
+    // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the Clipboard PDU Header MUST be
+    // set to CB_FORMAT_LIST (0x0002), while the msgFlags field MUST be set to 0x0000 or CB_ASCII_NAMES (0x0004)
+    // depending on the type of data present in the formatListData field.
+
+    // formatListData (variable): An array consisting solely of either Short Format Names or Long Format Names. 
+    // The type of structure used in the array is determined by the presence of the CB_USE_LONG_FORMAT_NAMES (0x00000002)
+    // flag in the generalFlags field of the General Capability Set (section 2.2.2.1.1.1). 
+    
+    // Each array holds a list of the Clipboard Format ID and name pairs available on the local system clipboard 
+    // of the sender. 
+    
+    // If Short Format Names are being used, and the embedded Clipboard Format names are in ASCII 8 format, then 
+    // the msgFlags field of the clipHeader must contain the CB_ASCII_NAMES (0x0004) flag.
 
                     case RDPECLIP::CB_FORMAT_LIST:
                         {
