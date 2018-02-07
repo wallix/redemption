@@ -47,30 +47,23 @@ REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
 #endif
 
-extern "C" {
-    inline int openssl_print_fp(const char *str, size_t len, void * error_message)
+namespace
+{
+    bool print_error(char const* error_msg, std::string* error_message)
     {
-        if (error_message) {
-            std::string* error = reinterpret_cast<std::string*>(error_message);
-            error->append(str, len);
+        LOG(LOG_ERR, "TLSContext::enable_client_tls: %s", error_msg);
+        unsigned long error;
+        char buf[1024];
+        while ((error = ERR_get_error()) != 0) {
+            ERR_error_string_n(error, buf, sizeof(buf));
+            LOG(LOG_ERR, "%s", buf);
+            if (error_message) {
+                *error_message += buf;
+            }
         }
-        return 0;
-    }
-
-    inline int password_cb0(char *buf, int num, int rwflag, void *userdata)
-    {
-        (void)rwflag;
-        const char * pass = static_cast<const char*>(userdata);
-        size_t pass_len = strlen(pass);
-        if(num < static_cast<int>(pass_len+1u)) {
-          return 0;
-        }
-
-        strcpy(buf, pass);
-        return pass_len;
+        return false;
     }
 }
-
 
 class TLSContext
 {
@@ -158,53 +151,14 @@ public:
         return fp_buffer;
     }
 
-
-    Transport::TlsResult enable_client_tls(
-            int sck,
-            bool server_cert_store,
-            bool ensure_server_certificate_match,
-            bool ensure_server_certificate_exists,
-            ServerNotifier & server_notifier,
-            const char * certif_path,
-            std::string * error_message,
-            const char * ip_address,
-            int port
-            )
+    bool enable_client_tls_start(int sck, std::string* error_message)
     {
-        // SSL_CTX_new - create a new SSL_CTX object as framework for TLS/SSL enabled functions
-        // ------------------------------------------------------------------------------------
-
-        // SSL_CTX_new() creates a new SSL_CTX object as framework to establish TLS/SSL enabled
-        // connections.
-
-        // The SSL_CTX data structure is the global context structure which is created by a server
-        // or client *once* per program life-time and which holds mainly default values for the SSL
-        // structures which are later created for the connections.
-
-        // Various options regarding certificates, algorithms, etc. can be set in this object.
-
-        // SSL_CTX_new() receive a data structure of type SSL_METHOD (SSL Method), which is
-        // a dispatch structure describing the internal ssl library methods/functions which
-        // implement the various protocol versions (SSLv1, SSLv2 and TLSv1). An SSL_METHOD
-        // is necessary to create an SSL_CTX.
-
-        // The SSL_CTX object uses method as connection method. The methods exist in a generic
-        // type (for client and server use), a server only type, and a client only type. method
-        // can be of several types (server, client, generic, support SSLv2, TLSv1, TLSv1.1, etc.)
-
-        // TLSv1_client_method(void): A TLS/SSL connection established with this methods will
-        // only understand the TLSv1 protocol. A client will send out TLSv1 client hello messages
-        // and will indicate that it only understands TLSv1.
-
         SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
 
         if (ctx == nullptr) {
-            LOG(LOG_ERR, "Error : SSL_CTX_new returned NULL\n");
-            ERR_print_errors_cb(openssl_print_fp, static_cast<void*>(error_message));
-
-            return Transport::TlsResult::Fail;
+            return print_error("SSL_CTX_new returned NULL", error_message);
         }
-        // TODO: This should be wrapped in some abstract layer
+
         this->allocated_ctx = ctx;
 
         /*
@@ -216,174 +170,15 @@ public:
          * won't recognize it and will disconnect you after sending a TLS alert.
          */
 
-        // SSL_CTX_set_options() adds the options set via bitmask in options to ctx.
-        // Options already set before are not cleared!
-
-         // During a handshake, the option settings of the SSL object are used. When
-         // a new SSL object is created from a context using SSL_new(), the current
-         // option setting is copied. Changes to ctx do not affect already created
-         // SSL objects. SSL_clear() does not affect the settings.
-
-         // The following bug workaround options are available:
-
-         // SSL_OP_MICROSOFT_SESS_ID_BUG
-
-         // www.microsoft.com - when talking SSLv2, if session-id reuse is performed,
-         // the session-id passed back in the server-finished message is different
-         // from the one decided upon.
-
-         // SSL_OP_NETSCAPE_CHALLENGE_BUG
-
-         // Netscape-Commerce/1.12, when talking SSLv2, accepts a 32 byte challenge
-         // but then appears to only use 16 bytes when generating the encryption keys.
-         // Using 16 bytes is ok but it should be ok to use 32. According to the SSLv3
-         // spec, one should use 32 bytes for the challenge when operating in SSLv2/v3
-         // compatibility mode, but as mentioned above, this breaks this server so
-         // 16 bytes is the way to go.
-
-         // SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG
-
-         // As of OpenSSL 0.9.8q and 1.0.0c, this option has no effect.
-
-        // SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG
-
-        //  ...
-
-        // SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER
-
-        // ...
-
-        // SSL_OP_MSIE_SSLV2_RSA_PADDING
-
-        // As of OpenSSL 0.9.7h and 0.9.8a, this option has no effect.
-
-        // SSL_OP_SSLEAY_080_CLIENT_DH_BUG
-        // ...
-
-        // SSL_OP_TLS_D5_BUG
-        //    ...
-
-        // SSL_OP_TLS_BLOCK_PADDING_BUG
-        //   ...
-
-        // SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
-
-        // Disables a countermeasure against a SSL 3.0/TLS 1.0 protocol vulnerability
-        // affecting CBC ciphers, which cannot be handled by some broken SSL implementations.
-        // This option has no effect for connections using other ciphers.
-
-        // SSL_OP_ALL
-        // All of the above bug workarounds.
-
-        // It is usually safe to use SSL_OP_ALL to enable the bug workaround options if
-        // compatibility with somewhat broken implementations is desired.
-
-        // The following modifying options are available:
-
-        // SSL_OP_TLS_ROLLBACK_BUG
-
-        // Disable version rollback attack detection.
-
-        // During the client key exchange, the client must send the same information about
-        // acceptable SSL/TLS protocol levels as during the first hello. Some clients violate
-        // this rule by adapting to the server's answer. (Example: the client sends a SSLv2
-        // hello and accepts up to SSLv3.1=TLSv1, the server only understands up to SSLv3.
-        // In this case the client must still use the same SSLv3.1=TLSv1 announcement. Some
-        // clients step down to SSLv3 with respect to the server's answer and violate the
-        // version rollback protection.)
-
-        // SSL_OP_SINGLE_DH_USE
-
-        // Always create a new key when using temporary/ephemeral DH parameters (see
-        // SSL_CTX_set_tmp_dh_callback(3)). This option must be used to prevent small subgroup
-        // attacks, when the DH parameters were not generated using ``strong'' primes (e.g.
-        // when using DSA-parameters, see dhparam(1)). If ``strong'' primes were used, it is
-        // not strictly necessary to generate a new DH key during each handshake but it is
-        // also recommended. SSL_OP_SINGLE_DH_USE should therefore be enabled whenever
-        // temporary/ephemeral DH parameters are used.
-
-        // SSL_OP_EPHEMERAL_RSA
-
-        // Always use ephemeral (temporary) RSA key when doing RSA operations (see
-        // SSL_CTX_set_tmp_rsa_callback(3)). According to the specifications this is only done,
-        // when a RSA key can only be used for signature operations (namely under export ciphers
-        // with restricted RSA keylength). By setting this option, ephemeral RSA keys are always
-        // used. This option breaks compatibility with the SSL/TLS specifications and may lead
-        // to interoperability problems with clients and should therefore never be used. Ciphers
-        // with EDH (ephemeral Diffie-Hellman) key exchange should be used instead.
-
-        // SSL_OP_CIPHER_SERVER_PREFERENCE
-
-        // When choosing a cipher, use the server's preferences instead of the client preferences.
-        // When not set, the SSL server will always follow the clients preferences. When set, the
-        // SSLv3/TLSv1 server will choose following its own preferences. Because of the different
-        // protocol, for SSLv2 the server will send its list of preferences to the client and the
-        // client chooses.
-
-        // SSL_OP_PKCS1_CHECK_1
-        //  ...
-
-        // SSL_OP_PKCS1_CHECK_2
-        //  ...
-
-        // SSL_OP_NETSCAPE_CA_DN_BUG
-        // If we accept a netscape connection, demand a client cert, have a non-this-signed CA
-        // which does not have its CA in netscape, and the browser has a cert, it will crash/hang.
-        // Works for 3.x and 4.xbeta
-
-        // SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG
-        //    ...
-
-        // SSL_OP_NO_SSLv2
-        // Do not use the SSLv2 protocol.
-
-        // SSL_OP_NO_SSLv3
-        // Do not use the SSLv3 protocol.
-
-        // SSL_OP_NO_TLSv1
-
-        // Do not use the TLSv1 protocol.
-        // SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
-
-        // When performing renegotiation as a server, always start a new session (i.e., session
-        // resumption requests are only accepted in the initial handshake). This option is not
-        // needed for clients.
-
-        // SSL_OP_NO_TICKET
-        // Normally clients and servers will, where possible, transparently make use of RFC4507bis
-        // tickets for stateless session resumption.
-
-        // If this option is set this functionality is disabled and tickets will not be used by
-        // clients or servers.
-
-        // SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
-
-        // Allow legacy insecure renegotiation between OpenSSL and unpatched clients or servers.
-        // See the SECURE RENEGOTIATION section for more details.
-
-        // SSL_OP_LEGACY_SERVER_CONNECT
-        // Allow legacy insecure renegotiation between OpenSSL and unpatched servers only: this option
-        // is currently set by default. See the SECURE RENEGOTIATION section for more details.
-
-    //        LOG(LOG_INFO, "TLSContext::SSL_CTX_set_options()");
+        // LOG(LOG_INFO, "TLSContext::SSL_CTX_set_options()");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
 
-        // -------- End of system wide SSL_Ctx option ----------------------------------
+        SSL* ssl = SSL_new(ctx);
 
-        // --------Start of session specific init code ---------------------------------
+        if (ctx == nullptr) {
+            return print_error("SSL_new returned NULL", error_message);
+        }
 
-        // SSL_new() creates a new SSL structure which is needed to hold the data for a TLS/SSL
-        // connection. The new structure inherits the settings of the underlying context ctx:
-        // - connection method (SSLv2/v3/TLSv1),
-        // - options,
-        // - verification settings,
-        // - timeout settings.
-
-        // return value: nullptr: The creation of a new SSL structure failed. Check the error stack
-        // to find out the reason.
-        // TODO add error management
-        SSL * ssl = SSL_new(ctx);
-        // TODO: this should be wrapped in some abstraction layer
         this->allocated_ssl = ssl;
 
         // TODO I should probably not be doing that here ? Is it really necessary
@@ -391,103 +186,55 @@ public:
         int flags = fcntl(sck, F_GETFL);
         fcntl(sck, F_SETFL, flags & ~(O_NONBLOCK));
 
-        // SSL_set_fd - connect the SSL object with a file descriptor
-        // ==========================================================
-
-        // SSL_set_fd() sets the file descriptor fd as the input/output facility for the TLS/SSL (encrypted)
-        // side of ssl. fd will typically be the socket file descriptor of a network connection.
-
-        // When performing the operation, a socket BIO is automatically created to interface between the ssl
-        // and fd. The BIO and hence the SSL engine inherit the behaviour of fd. If fd is non-blocking, the ssl
-        // will also have non-blocking behaviour.
-
-        // If there was already a BIO connected to ssl, BIO_free() will be called (for both the reading and
-        // writing side, if different).
-
-        // SSL_set_rfd() and SSL_set_wfd() perform the respective action, but only for the read channel or the
-        //  write channel, which can be set independently.
-
-        // The following return values can occur:
-        // 0 : The operation failed. Check the error stack to find out why.
-        // 1 : The operation succeeded.
-
-        // TODO add error management
-        SSL_set_fd(ssl, sck);
+        if (0 == SSL_set_fd(ssl, sck)) {
+            return print_error("SSL_set_fd failed", error_message);
+        }
 
         LOG(LOG_INFO, "SSL_connect()");
 
-        // SSL_connect - initiate the TLS/SSL handshake with an TLS/SSL server
-        // -------------------------------------------------------------------
+        return true;
+    }
 
-        // SSL_connect() initiates the TLS/SSL handshake with a server. The
-        // communication channel must already have been set and assigned to the
-        // ssl by setting an underlying BIO.
-
-        // The behaviour of SSL_connect() depends on the underlying BIO.
-
-        // If the underlying BIO is blocking, SSL_connect() will only return once
-        // the handshake has been finished or an error occurred.
-
-        // If the underlying BIO is non-blocking, SSL_connect() will also return
-        // when the underlying BIO could not satisfy the needs of SSL_connect()
-        // to continue the handshake, indicating the problem by the return value -1.
-        // In this case a call to SSL_get_error() with the return value of SSL_connect()
-        // will yield SSL_ERROR_WANT_READ or SSL_ERROR_WANT_WRITE. The calling process
-        // then must repeat the call after taking appropriate action to satisfy the needs
-        // of SSL_connect(). The action depends on the underlying BIO. When using a
-        // non-blocking socket, nothing is to be done, but select() can be used to check
-        // for the required condition. When using a buffering BIO, like a BIO pair,
-        // data must be written into or retrieved out of the BIO before being able to
-        // continue.
-
-        // RETURN VALUES, The following return values can occur:
-        // - 0 : The TLS/SSL handshake was not successful but was shut down controlled
-        // and by the specifications of the TLS/SSL protocol. Call SSL_get_error()
-        // with the return value ret to find out the reason.
-        // - 1 : The TLS/SSL handshake was successfully completed, a TLS/SSL connection
-        // has been established.
-        // - <0 : The TLS/SSL handshake was not successful, because a fatal error occurred
-        // either at the protocol level or a connection failure occurred. The shutdown
-        // was not clean. It can also occur if action is need to continue the operation
-        // for non-blocking BIOs. Call SSL_get_error() with the return value ret to find
-        // out the reason
-
-        int const connection_status = SSL_connect(ssl);
+    Transport::TlsResult enable_client_tls_loop(std::string* error_message)
+    {
+        int const connection_status = SSL_connect(this->allocated_ssl);
         if (connection_status <= 0) {
-            unsigned long error;
-
-            switch (SSL_get_error(ssl, connection_status))
+            char const* error_msg;
+            switch (SSL_get_error(this->allocated_ssl, connection_status))
             {
                 case SSL_ERROR_WANT_READ:
                 case SSL_ERROR_WANT_WRITE:
                     return Transport::TlsResult::Want;
-
                 case SSL_ERROR_ZERO_RETURN:
-                    LOG(LOG_WARNING, "Server closed TLS connection\n");
-                    return Transport::TlsResult::Fail;
-
+                    error_msg = "Server closed TLS connection";
+                    break;
                 case SSL_ERROR_SYSCALL:
-                    LOG(LOG_WARNING, "I/O error\n");
-                    while ((error = ERR_get_error()) != 0)
-                        LOG(LOG_WARNING, "%s\n", ERR_error_string(error, nullptr));
-                    return Transport::TlsResult::Fail;
-
+                    error_msg = "I/O error";
+                    break;
                 case SSL_ERROR_SSL:
-                    LOG(LOG_WARNING, "Failure in SSL library (protocol error?)\n");
-                    while ((error = ERR_get_error()) != 0)
-                        LOG(LOG_WARNING, "%s\n", ERR_error_string(error, nullptr));
-                    return Transport::TlsResult::Fail;
-
+                    error_msg = "Failure in SSL library (protocol error?)";
+                    break;
                 default:
-                    LOG(LOG_WARNING, "Unknown error\n");
-                    while ((error = ERR_get_error()) != 0){
-                        LOG(LOG_WARNING, "%s\n", ERR_error_string(error, nullptr));
-                    }
-                    LOG(LOG_WARNING, "tls::tls_print_error %s [%d]", strerror(errno), errno);
-                    return Transport::TlsResult::Fail;
+                    error_msg = "Unknown error";
+                    break;
             }
+            print_error("Unknown error", error_message);
+            return Transport::TlsResult::Fail;
         }
 
+        return Transport::TlsResult::Ok;
+    }
+
+    Transport::TlsResult check_certificate(
+        bool server_cert_store,
+        bool ensure_server_certificate_match,
+        bool ensure_server_certificate_exists,
+        ServerNotifier& server_notifier,
+        const char* certif_path,
+        std::string* error_message,
+        const char* ip_address,
+        int port)
+    {
         LOG(LOG_INFO, "SSL_get_peer_certificate()");
 
         // SSL_get_peer_certificate - get the X509 certificate of the peer
@@ -516,7 +263,7 @@ public:
         // Pointer to an X509 certificate : the return value points to the certificate
         // presented by the peer.
 
-        X509 * px509 = SSL_get_peer_certificate(ssl);
+        X509 * px509 = SSL_get_peer_certificate(this->allocated_ssl);
         if (!px509) {
             LOG(LOG_WARNING, "SSL_get_peer_certificate() failed");
             server_notifier.server_cert_error(strerror(errno));
@@ -857,15 +604,13 @@ public:
            X509_free(px509);
 
            // TODO: Probably to be set by caller if everything successfull
-           this->io = ssl;
+           this->io = this->allocated_ssl;
            this->tls = true;
 
         }
 
-        if (!certificate_exists && ensure_server_certificate_exists){
-            throw Error(checking_exception);
-        }
-        if (certificate_exists && !certificate_matches && ensure_server_certificate_match){
+        if ((!certificate_exists && ensure_server_certificate_exists)
+         || ( certificate_exists && ensure_server_certificate_match && !certificate_matches)) {
             throw Error(checking_exception);
         }
 
@@ -1093,7 +838,19 @@ public:
             exit(128);
         }
 
-        SSL_CTX_set_default_passwd_cb(ctx, password_cb0);
+        SSL_CTX_set_default_passwd_cb(
+            ctx, [](char *buf, int num, int rwflag, void *userdata) {
+                (void)rwflag;
+                const char * pass = static_cast<const char*>(userdata);
+                size_t pass_len = strlen(pass);
+                if(num < static_cast<int>(pass_len+1u)) {
+                    return 0;
+                }
+
+                strcpy(buf, pass);
+                return int(pass_len);
+            }
+        );
         SSL_CTX_set_default_passwd_cb_userdata(ctx, const_cast<void*>(static_cast<const void*>(certificate_password)));
         if(!(SSL_CTX_use_PrivateKey_file(ctx, app_path(AppPath::CfgKey), SSL_FILETYPE_PEM)))
         {

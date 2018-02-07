@@ -1722,27 +1722,18 @@ private:
         return drive_id;
     }
 
-    uint32_t EnableDriveClient(const char * drive_name, const char * relative_directory_path,
+    uint32_t EnableDriveClient(const char * drive_name, const char * directory_path,
                          RDPVerbose verbose) {
         uint32_t drive_id = INVALID_MANAGED_DRIVE_ID;
 
-//         std::string absolute_directory_path = app_path(AppPath::DriveRedirection);
-//         absolute_directory_path += '/';
-//         absolute_directory_path += relative_directory_path;
+        struct stat sb;
 
-//         struct stat sb;
-
-//         if (((::stat(relative_directory_path.c_str(), &sb) == 0) &&
-//              S_ISDIR(sb.st_mode))) {
-//             if (bool(verbose & RDPVerbose::fsdrvmgr)) {
-//                 LOG(LOG_INFO,
-//                     "FileSystemDriveManager::EnableDrive: "
-//                         "drive_name=\"%s\" directory_path=\"%s\"",
-//                     drive_name, absolute_directory_path.c_str());
-//             }
-
+        if (((::stat(directory_path, &sb) == 0) && S_ISDIR(sb.st_mode))) {
             if (bool(verbose & RDPVerbose::fsdrvmgr)) {
-                LOG(LOG_INFO, "relative directory path: %s", relative_directory_path);
+                LOG(LOG_INFO,
+                    "FileSystemDriveManager::EnableDrive: "
+                        "drive_name=\"%s\" directory_path=\"%s\"",
+                    drive_name, directory_path);
             }
 
             drive_id = this->next_managed_drive_id++;
@@ -1750,16 +1741,16 @@ private:
             this->managed_drives.push_back({
                 drive_id,
                 drive_name,
-                relative_directory_path,
+                directory_path,
                 O_RDWR
             });
-//         }
-//         else {
-//             LOG(LOG_WARNING,
-//                 "FileSystemDriveManager::EnableDrive: "
-//                     "Directory path \"%s\" is not accessible!",
-//                 absolute_directory_path.c_str());
-//         }
+        }
+        else {
+            LOG(LOG_WARNING,
+                "FileSystemDriveManager::EnableDrive: "
+                    "Directory path \"%s\" is not accessible!",
+                directory_path);
+        }
 
         return drive_id;
     }

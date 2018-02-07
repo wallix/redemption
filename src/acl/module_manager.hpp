@@ -1413,6 +1413,8 @@ public:
                 mod_rdp_params.session_probe_allow_multiple_handshake
                                                                    = this->ini.get<cfg::mod_rdp::session_probe_allow_multiple_handshake>();
 
+                mod_rdp_params.session_probe_enable_crash_dump     = this->ini.get<cfg::mod_rdp::session_probe_enable_crash_dump>();
+
                 mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
                 mod_rdp_params.auth_channel                        = CHANNELS::ChannelNameId(this->ini.get<cfg::mod_rdp::auth_channel>());
                 mod_rdp_params.alternate_shell                     = this->ini.get<cfg::mod_rdp::alternate_shell>().c_str();
@@ -1452,6 +1454,7 @@ public:
                 mod_rdp_params.bogus_refresh_rect                  = this->ini.get<cfg::globals::bogus_refresh_rect>();
 
                 mod_rdp_params.proxy_managed_drives                = this->ini.get<cfg::mod_rdp::proxy_managed_drives>().c_str();
+                mod_rdp_params.proxy_managed_drive_prefix          = app_path(AppPath::DriveRedirection);
 
                 mod_rdp_params.lang                                = language(this->ini);
 
