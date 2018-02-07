@@ -28,7 +28,7 @@ if ! $(qtversion)
     }
 }
 
-if $(qtversion) != 4 && $(qtversion) != 5 && $(qtversion) != 6
+if $(qtversion) != 0 && $(qtversion) != 4 && $(qtversion) != 5 && $(qtversion) != 6
 {
     echo "Unknown Qt$(qtversion)." ;
     qtversion = ;
@@ -125,12 +125,6 @@ install install-bin
     : <location>$(INSTALLDIR)/usr/local/bin
     ;
 
-install install-bin
-    : client_demo_Qt4
-    : <install-type>EXE <install-dependencies>on
-    : <location>$(INSTALLDIR)/usr/local/bin
-    ;
-
 obj config.o : ../redemption_configs/redemption_src/configs/config.cpp ;
 
 obj hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp : ;
@@ -221,21 +215,6 @@ constant lib_list :
     snappy
 ;
 
-#local no_qt = [ os.environ no_qt ] ;
-
-local EXE_QT_INCLUDE_CONFIG ;
-
-#rule add_define ( src * )
-#{
- #   EXE_QT_INCLUDE_CONFIG += <define> $(src) ;
-#}
-
-#if $(no_qt)
-#{
- #   EXE_QT_INCLUDE_CONFIG :
- #       <define>_NO_QT
- #   ;
-#}
 
 constant EXE_DEPENDENCIES :
     <define>MAIN_PATH='\"$(MAIN_PATH)\"'
@@ -270,10 +249,6 @@ else
     lib libphonon : : <name>phonon4qt5 <link>shared ;
 }
 
-obj front_Qt$(qtversion)_Demo.o : src/frontDemoQtClient.cpp :
-    <define>REDEMPTION_DECL_LOG_TEST
-    $(EXE_DEPENDENCIES)
-;
 
 obj front_Qt$(qtversion)_rdp.o : src/main_qt_client_redemption.cpp :
     <define>REDEMPTION_DECL_LOG_TEST
@@ -288,7 +263,7 @@ exe client_rdp_Qt$(qtversion) :
     src/qt_input_output_api/qt_graphics_components/qt_options_window.hpp
     src/qt_input_output_api/qt_graphics_components/qt_screen_window.hpp
     src/qt_input_output_api/qt_graphics_components/qt_form_window.hpp
-    front_Qt$(qtversion)_rdp.o
+    #front_Qt$(qtversion)_rdp.o
     $(obj_list)
     $(lib_list)
     $(obj_list_VNC)
@@ -299,9 +274,6 @@ exe client_rdp_Qt$(qtversion) :
 :
     $(EXE_DEPENDENCIES)
     <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
-
-    $(EXE_QT_INCLUDE_CONFIG)
 ;
 
-alias client_vnc_Qt : client_vnc_Qt$(qtversion) ;
 alias client_rdp_Qt : client_rdp_Qt$(qtversion) ;
