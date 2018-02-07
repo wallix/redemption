@@ -221,6 +221,22 @@ constant lib_list :
     snappy
 ;
 
+#local no_qt = [ os.environ no_qt ] ;
+
+local EXE_QT_INCLUDE_CONFIG ;
+
+#rule add_define ( src * )
+#{
+ #   EXE_QT_INCLUDE_CONFIG += <define> $(src) ;
+#}
+
+#if $(no_qt)
+#{
+ #   EXE_QT_INCLUDE_CONFIG :
+ #       <define>_NO_QT
+ #   ;
+#}
+
 constant EXE_DEPENDENCIES :
     <define>MAIN_PATH='\"$(MAIN_PATH)\"'
     <define>REDEMPTION_QT_VERSION=$(qtversion)
@@ -254,6 +270,10 @@ else
     lib libphonon : : <name>phonon4qt5 <link>shared ;
 }
 
+obj front_Qt$(qtversion)_Demo.o : src/frontDemoQtClient.cpp :
+    <define>REDEMPTION_DECL_LOG_TEST
+    $(EXE_DEPENDENCIES)
+;
 
 obj front_Qt$(qtversion)_rdp.o : src/main_qt_client_redemption.cpp :
     <define>REDEMPTION_DECL_LOG_TEST
@@ -279,6 +299,8 @@ exe client_rdp_Qt$(qtversion) :
 :
     $(EXE_DEPENDENCIES)
     <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
+
+    $(EXE_QT_INCLUDE_CONFIG)
 ;
 
 alias client_vnc_Qt : client_vnc_Qt$(qtversion) ;
