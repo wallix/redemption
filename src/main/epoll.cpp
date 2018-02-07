@@ -66,9 +66,16 @@ int main()
     int const epfd = E | epoll_create(1);
     Reactor<Buffer&> reactor;
 
+    struct Data
+    {
+        Buffer buf;
+    };
+
     int fd = 0;
 
-    auto& top_executor = reactor.create_executor(fd)
+    auto& top_executor = reactor
+        .set_data_executor<Data>()
+        .create_executor(fd)
         .on_action([](auto ctx, Buffer& buf){
             std::cout << "--> read" << std::endl;
             if (buf.size() < 3)
@@ -93,6 +100,7 @@ int main()
                             return ctx.exit_on_success();
                         }
                     }
+                    buf.reset();
                     return ctx.need_more_data();
                 })
                 .on_exit([](auto ctx, ExecutorError error, Buffer& /*buf*/){
@@ -185,8 +193,6 @@ int main()
     event.data.ptr = &top_executor;
     E | epoll_ctl(epfd, EPOLL_CTL_ADD, 0, &event);
 
-    Buffer buffer;
-
     while (reactor.executors.xs.size())
     {
         epoll_event events[2] {};
@@ -194,13 +200,15 @@ int main()
         //std::cout << "timeout: " << ms << " ms" << std::endl;
         int count = E | epoll_wait(epfd, events, 2, ms);
         if (count) {
-            buffer.read();
-            if (!buffer.size()) {
-                break;
-            }
             for (int i = 0; i < count; ++i) {
                 auto& executor = *static_cast<BasicExecutor<Buffer&>*>(events[i].data.ptr);
-                if (!executor.exec(buffer)) {
+                auto& data = DataExecutor<Data>::get_data_from(executor);
+                data.buf.read();
+                if (!data.buf.size()) {
+                    break;
+                }
+                // std::cout << "["; std::cout.write(data.buf.data(), data.buf.size()) << "]" << std::endl;
+                if (!executor.exec(data.buf)) {
                     reactor.executors.remove(executor);
                 }
             }
@@ -210,7 +218,8 @@ int main()
             break;
         }
         else {
-            (void)reactor.timers.exec_timeout(buffer);
+            Buffer dummy;
+            (void)reactor.timers.exec_timeout(dummy);
         }
     }
 }
