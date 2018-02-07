@@ -96,43 +96,16 @@ namespace detail
     template<class T> struct decay_and_strip<T const> : decay_and_strip<T>{};
     template<class T> struct decay_and_strip<std::reference_wrapper<T>> { using type = T&; };
     template<class T, class... Ts> struct decay_and_strip<emplace_type<T, Ts...>> { using type = T; };
-
-    template<class... Args>
-    using ctx_arg_type = detail::tuple<typename decay_and_strip<Args>::type...>;
 }
 
 template<class T>
 constexpr auto emplace = detail::emplace_type<T>{};
 
+// TODO namespace detail
 template<class...>
 struct prefix_args;
 
-namespace detail
-{
-    template<class Result, class BaseType, class PrefixArgs, class...Ts>
-    struct make_func_ptr;
-
-    template<class Result, class BaseType, class...Ts, class...Us>
-    struct make_func_ptr<Result, BaseType, prefix_args<Ts...>, Us...>
-    {
-        using type = Result(*)(BaseType&, Us..., Ts...);
-    };
-}
-
-template<class Result, class BaseType, class PrefixArgs, class...Ts>
-using MakeFuncPtr = typename detail::make_func_ptr<
-    Result, BaseType, PrefixArgs, Ts...>::type;
-
-
-// #define CXX_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
-#define CXX_WARN_UNUSED_RESULT [[nodiscard]]
-
-class ExecutorBase;
-class Executor;
-template<class Ctx>
-class ExecutorActionContext;
-
-enum class REDEMPTION_CXX_NODISCARD ExecutorResult : uint8_t
+enum class REDEMPTION_CXX_NODISCARD ExecutorResult : int8_t
 {
     Nothing,
     NeedMoreData,
@@ -142,31 +115,116 @@ enum class REDEMPTION_CXX_NODISCARD ExecutorResult : uint8_t
     Terminate,
 };
 
-enum class ExitStatus { Error, Success, };
+enum class ExitStatus : bool {
+    Error,
+    Success,
+};
+
+enum class ExecutorError : int8_t
+{
+    NoError,
+    ActionError,
+    Terminate,
+    ExternalExit,
+};
 
 #ifdef IN_IDE_PARSER
+struct BasicExecutorConcept_
+{
+    template<class... Args> ExecutorResult exec_action(Args&&... args);
+    template<class... Args> ExecutorResult exec_exit(ExecutorError error, Args&&... args);
+    void delete_self();
+};
+
+struct TopExecutorBuilderConcept_
+{
+    template<class F> TopExecutorBuilderConcept_ on_action (F&&) &&;
+    template<class F> TopExecutorBuilderConcept_ on_exit   (F&&) &&;
+    template<class F> TopExecutorBuilderConcept_ on_timeout(std::chrono::milliseconds, F&&) &&;
+
+    template<class T> TopExecutorBuilderConcept_(T const&) noexcept;
+};
+
 struct SubExecutorBuilderConcept_
 {
-    template<class F> SubExecutorBuilderConcept_ on_action(F&&) && { return *this; }
-    template<class F> SubExecutorBuilderConcept_ on_exit  (F&&) && { return *this; }
+    template<class F> SubExecutorBuilderConcept_ on_action(F&&) &&;
+    template<class F> SubExecutorBuilderConcept_ on_exit  (F&&) &&;
 
     template<class T> SubExecutorBuilderConcept_(T const&) noexcept;
 };
 
 struct ExecutorActionContextConcept_
 {
+    ExecutorResult ready();
     ExecutorResult need_more_data();
+    ExecutorResult terminate();
     ExecutorResult exit(ExitStatus status);
     ExecutorResult exit_on_error();
     ExecutorResult exit_on_success();
     template<class F> ExecutorResult next_action(F);
     template<class F> ExecutorResult exec_action(F);
     template<class F1, class F2> ExecutorResult exec_action2(F1, F2);
-    template<class... Args> SubExecutorBuilderConcept_ sub_executor(Args&&... args);
-    template<class F> ExecutorActionContextConcept_ set_exit_action(F f);
+
+    template<class... Args> auto create_timer(Args&&...);
+    template<class... Args> SubExecutorBuilderConcept_ create_sub_executor(Args&&...);
+    BasicExecutorConcept_& get_basic_executor();
+    template<class... Args> SubExecutorBuilderConcept_ create_nested_executor(Args&&...);
+    template<class... Args> SubExecutorBuilderConcept_ exec_sub_executor(Args&&...);
+    template<class... Args> SubExecutorBuilderConcept_ exec_nested_executor(Args&&...);
+    template<class F> ExecutorActionContextConcept_ set_exit_action(F);
+    template<class... Args> SubExecutorBuilderConcept_ sub_executor(Args&&...);
+};
+
+struct ExecutorTimeoutContextConcept_ : ExecutorActionContextConcept_
+{
+    template<class F> ExecutorActionContextConcept_ set_timeout_action(F);
+    ExecutorTimeoutContextConcept_ set_timeout(std::chrono::milliseconds ms);
+};
+
+struct ExecutorTimerContextConcept_
+{
+    ExecutorResult terminate();
+    ExecutorResult exit(ExitStatus status);
+    ExecutorResult exit_on_error();
+    ExecutorResult exit_on_success();
+    template<class F> ExecutorResult next_action(F f);
+    template<class F> ExecutorResult exec_action(F f);
+    template<class F1, class F2> ExecutorResult exec_action2(F1 f1, F2 f2);
+
+    ExecutorResult detach_timer();
+    ExecutorResult retry();
+    ExecutorResult retry_until(std::chrono::milliseconds ms);
+    ExecutorTimerContextConcept_ set_time(std::chrono::milliseconds ms);
 };
 #endif
 
+
+namespace detail
+{
+    template<class BaseType, class PrefixArgs, class...Ts>
+    struct make_func_ptr;
+
+    template<class BaseType, class...Ts, class...Us>
+    struct make_func_ptr<BaseType, prefix_args<Ts...>, Us...>
+    {
+        using type = ExecutorResult(*)(BaseType&, Us..., Ts...);
+    };
+}
+
+template<class BaseType, class PrefixArgs, class...Ts>
+using MakeFuncPtr = typename detail::make_func_ptr<BaseType, PrefixArgs, Ts...>::type;
+
+constexpr auto default_function() noexcept
+{
+    return []([[maybe_unused]] auto... args){
+        return ExecutorResult::Nothing;
+    };
+}
+
+class ExecutorBase;
+class Executor;
+template<class PrefixArgs, class... Ts>
+struct REDEMPTION_CXX_NODISCARD Executor2ActionContext;
 
 namespace
 {
@@ -181,14 +239,6 @@ namespace
         return reinterpret_cast<F const&>(f);
     }
 }
-
-enum class ExecutorError : uint8_t
-{
-    NoError,
-    ActionError,
-    Terminate,
-    ExternalExit,
-};
 
 template<class PrefixArgs>
 class TopExecutorTimers;
@@ -234,11 +284,11 @@ struct BasicExecutorImpl
     {}
 
 protected:
-    using OnActionPtrFunc = MakeFuncPtr<ExecutorResult, BasicExecutorImpl&, PrefixArgs>;
-    using OnExitPtrFunc = MakeFuncPtr<ExecutorResult, BasicExecutorImpl&, PrefixArgs, ExecutorError>;
+    using OnActionPtrFunc = MakeFuncPtr<BasicExecutorImpl&, PrefixArgs>;
+    using OnExitPtrFunc = MakeFuncPtr<BasicExecutorImpl&, PrefixArgs, ExecutorError>;
 
-    OnActionPtrFunc on_action = [](BasicExecutorImpl&, [[maybe_unused]] auto... external_args){ return ExecutorResult::Nothing; };
-    OnExitPtrFunc on_exit = [](BasicExecutorImpl&, [[maybe_unused]] auto... external_args){ return ExecutorResult::Nothing; };
+    OnActionPtrFunc on_action = default_function();
+    OnExitPtrFunc on_exit = default_function();
     BasicExecutorImpl* current = this;
     BasicExecutorImpl* prev = nullptr;
     TopExecutorTimers<PrefixArgs>& top_executor_timers;
@@ -267,23 +317,23 @@ namespace detail
     };
 
     constexpr GetExecutor get_executor {};
+
+
+    template<class T, class U>
+    struct is_context_convertible;
+
+    template<class T, class U>
+    struct check_is_context_arg_convertible
+    {
+        static constexpr bool value = (typename std::is_convertible<T, U>::type{} = std::true_type{});
+    };
+
+    template<class... Ts, class... Us>
+    struct is_context_convertible<detail::tuple<Ts...>, detail::tuple<Us...>>
+    {
+        static constexpr bool value = (..., (check_is_context_arg_convertible<Ts, Us>::value));
+    };
 }
-
-
-template<class T, class U>
-struct is_context_convertible;
-
-template<class T, class U>
-struct check_is_context_arg_convertible
-{
-    static constexpr bool value = (typename std::is_convertible<T, U>::type{} = std::true_type{});
-};
-
-template<class... Ts, class... Us>
-struct is_context_convertible<detail::tuple<Ts...>, detail::tuple<Us...>>
-{
-    static constexpr bool value = (..., (check_is_context_arg_convertible<Ts, Us>::value));
-};
 
 
 template<class PrefixArgs, class... Ts>
@@ -302,6 +352,15 @@ namespace detail { namespace
         Exec
     };
 
+    template<template<class...> class Tpl, class T>
+    struct rewrap;
+
+    template<template<class...> class NewTpl, template<class...> class Tpl, class... Ts>
+    struct rewrap<NewTpl, Tpl<Ts...>>
+    {
+        using type = NewTpl<Ts...>;
+    };
+
     template<class Executor, ExecutorType type, int Mask = 0>
     struct REDEMPTION_CXX_NODISCARD ExecutorBuilder
     {
@@ -318,6 +377,9 @@ namespace detail { namespace
                     return this->executor;
                 }
                 else {
+                    // TODO Executor2ActionContext
+                    // return typename rewrap<Executor2ActionContext, Executor>::type{
+                    //    this->executor};
                     return this->executor;
                 }
             }
@@ -387,7 +449,7 @@ struct REDEMPTION_CXX_NODISCARD Executor2TimerContext
       : timer(reinterpret_cast<Timer2Impl<PrefixArgs, Ts...>&>(detail::get_executor(other)))
     {
         // TODO strip arguments support (PreviousTs=(int, int), Ts=(int))
-        static_assert((true && ... && check_is_context_arg_convertible<PreviousTs, Ts>::value));
+        static_assert((true && ... && detail::check_is_context_arg_convertible<PreviousTs, Ts>::value));
         static_assert(sizeof(Timer2Impl<PrefixArgs, Ts...>) == sizeof(detail::get_executor(other)));
     }
 
@@ -402,6 +464,7 @@ struct REDEMPTION_CXX_NODISCARD Executor2TimerContext
 
     ExecutorResult detach_timer() noexcept
     {
+        this->timer.detach_timer();
         return ExecutorResult::ExitSuccess;
     }
 
@@ -419,6 +482,7 @@ struct REDEMPTION_CXX_NODISCARD Executor2TimerContext
 
     ExecutorResult terminate() noexcept
     {
+        this->timer.detach_timer();
         return ExecutorResult::Terminate;
     }
 
@@ -463,7 +527,7 @@ struct REDEMPTION_CXX_NODISCARD Executor2ActionContext
       : executor(reinterpret_cast<Executor2Impl<PrefixArgs, Ts...>&>(detail::get_executor(other)))
     {
         // TODO strip arguments support (PreviousTs=(int, int), Ts=(int))
-        static_assert((true && ... && check_is_context_arg_convertible<PreviousTs, Ts>::value));
+        static_assert((true && ... && detail::check_is_context_arg_convertible<PreviousTs, Ts>::value));
         static_assert(sizeof(Executor2Impl<PrefixArgs, Ts...>) == sizeof(detail::get_executor(other)));
     }
 
@@ -634,7 +698,9 @@ struct Executor2Impl : public BasicExecutorImpl<PrefixArgs>
     static Executor2Impl* New(TopExecutorTimers<PrefixArgs>& top_executor_timers, Args&&... args)
     {
         auto* p = new Executor2Impl(top_executor_timers, static_cast<Args&&>(args)...);
-        p->deleter = [](auto* base) { delete static_cast<Executor2Impl*>(base); };
+        p->deleter = [](BasicExecutorImpl<PrefixArgs>* base) {
+            delete static_cast<Executor2Impl*>(base);
+        };
         return p;
     }
 
@@ -722,11 +788,11 @@ struct BasicTimer
 // protected:
     friend class TopExecutorTimers<PrefixArgs>;
 
-    using OnTimerPtrFunc = MakeFuncPtr<ExecutorResult, BasicTimer&, PrefixArgs>;
+    using OnTimerPtrFunc = MakeFuncPtr<BasicTimer&, PrefixArgs>;
     std::chrono::milliseconds ms;
     std::chrono::milliseconds elapsed_ms = std::chrono::milliseconds::zero();
-    OnTimerPtrFunc on_timer = [](BasicTimer&, [[maybe_unused]] auto... external_args){ return ExecutorResult::Nothing; };
-    void (*deleter) (void*) = [](void*){};
+    OnTimerPtrFunc on_timer = default_function();
+    void (*deleter) (BasicTimer*) = [](BasicTimer*){};
 
     BasicTimer() = default;
 };
@@ -800,7 +866,7 @@ namespace detail
 //     static TimedExecutor* New(TopExecutorBase& top_executor, Args&&... args)
 //     {
 //         auto* p = new TimedExecutor{top_executor, static_cast<Args&&>(args)...};
-//         p->deleter = [](void* p) { delete static_cast<TimedExecutor<Ts...>*>(p); };
+//         p->deleter = [](BasicTimer* p) { delete static_cast<TimedExecutor<Ts...>*>(p); };
 //         return p;
 //     }
 // };
@@ -922,7 +988,7 @@ struct Timer2Impl : BasicTimer<PrefixArgs>
 
     void detach_timer()
     {
-        this->top_executor.detach_timer(*this);
+        this->top_executor_timers.detach_timer(*this);
     }
 
     void update_time(std::chrono::milliseconds ms)
@@ -952,7 +1018,7 @@ struct Timer2Impl : BasicTimer<PrefixArgs>
     static Timer2Impl* New(TopExecutorTimers<PrefixArgs>& top_executor_timers, Args&&... args)
     {
         auto* p = new Timer2Impl(top_executor_timers, static_cast<Args&&>(args)...);
-        p->deleter = [](auto* base) {
+        p->deleter = [](BasicTimer<PrefixArgs>* base) {
             auto* timer_ptr = static_cast<Timer2Impl*>(base);
             timer_ptr->top_executor_timers.detach_timer(*timer_ptr);
             delete timer_ptr;
@@ -1021,7 +1087,9 @@ struct TopExecutorImpl : Executor2Impl<PrefixArgs, Ts...>
     static TopExecutorImpl* New(TopExecutorTimers<PrefixArgs>& top_executor_timers, Args&&... args)
     {
         auto* p = new TopExecutorImpl{top_executor_timers, static_cast<Args&&>(args)...};
-        p->deleter = [](auto* base) { delete static_cast<TopExecutorImpl*>(base); };
+        p->deleter = [](BasicExecutorImpl<PrefixArgs>* base) {
+            delete static_cast<TopExecutorImpl*>(base);
+        };
         return p;
     }
 
@@ -1068,7 +1136,9 @@ struct TopExecutorWithDataImpl : DataExecutor<Data>, TopExecutorImpl<PrefixArgs,
     static TopExecutorWithDataImpl* New(DataArgs data_args, TopExecutorTimers<PrefixArgs>& top_executor_timers, Args&&... args)
     {
         auto* p = new TopExecutorWithDataImpl{data_args, top_executor_timers, static_cast<Args&&>(args)...};
-        p->deleter = [](auto* base) { delete static_cast<TopExecutorWithDataImpl*>(base); };
+        p->deleter = [](BasicExecutorImpl<PrefixArgs>* base) {
+            delete static_cast<TopExecutorWithDataImpl*>(base);
+        };
         return p;
     }
 
