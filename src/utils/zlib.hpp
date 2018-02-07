@@ -40,7 +40,7 @@ class Zcompressor
         this->offset = 0;
         this->z.next_out = &this->out[this->offset];
         this->z.avail_out = sizeof(this->out) - this->offset;
-    };
+    }
 
     ~Zcompressor()
     {
@@ -107,7 +107,7 @@ class Zdecompressor
         this->offset = 0;
         this->z.next_out = &this->out[this->offset];
         this->z.avail_out = sizeof(this->out) - this->offset;
-    };
+    }
 
     ~Zdecompressor()
     {

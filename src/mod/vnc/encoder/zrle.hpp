@@ -85,7 +85,7 @@ namespace VNC {
                     this->accumulator_uncompressed.clear();
                     buf.advance(sz);
                     if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                        LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u remaining=%zu", this->zlib_compressed_data_length, buf.remaining());
+                        LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u remaining=%hu", this->zlib_compressed_data_length, buf.remaining());
                     }
                     this->state = ZrleState::Data;
                     return EncoderState::Ready; 
@@ -440,7 +440,6 @@ namespace VNC {
                 const uint16_t tile_cy = std::min<uint16_t>(this->cy_remain, 64);
                 uint8_t         tile_data[4*16384];    // max size with 16 bpp
                 const uint8_t * tile_data_p = tile_data;
-                const uint16_t tile_data_length = tile_cx * tile_cy * this->Bpp;
                 
                 if (uncompressed_data_buffer.in_remain() < this->Bpp)
                 {

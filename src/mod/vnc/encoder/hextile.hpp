@@ -29,26 +29,27 @@ h
 namespace VNC {
     namespace Encoder {
         class Hextile : public EncoderApi {
-            const uint8_t bpp;
-            const uint8_t Bpp;
-            const size_t x;
-            size_t y;
-            const size_t cx;
-            size_t cy;
+//             const uint8_t bpp;
+//             const uint8_t Bpp;
+//             const size_t x;
+//             size_t y;
+//             const size_t cx;
+//             size_t cy;
 
-            enum class HextileState {
-                Header,
-                Data,
-                Exit
-            } state;
+//             enum class HextileState {
+//                 Header,
+//                 Data,
+//                 Exit
+//             } state;
         
         public:
-            VNCVerbose verbose;
+//             VNCVerbose verbose;
 
-            Hextile(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy, VNCVerbose verbose) 
-                : bpp(bpp), Bpp(Bpp), x(x), y(y), cx(cx), cy(cy)
-                , state(HextileState::Header)
-                , verbose(verbose)
+            Hextile(uint8_t /*bpp*/, uint8_t /*Bpp*/, size_t /*x*/, size_t /*y*/, size_t /*cx*/, size_t /*cy*/, VNCVerbose /*verbose*/)
+//             Hextile(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy, VNCVerbose verbose)
+//                 : bpp(bpp), Bpp(Bpp), x(x), y(y), cx(cx), cy(cy)
+//                 , state(HextileState::Header)
+//                 , verbose(verbose)
             {
             }
             
@@ -56,9 +57,9 @@ namespace VNC {
             
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
-            EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
+            EncoderState consume(Buf64k & /*buf*/, gdi::GraphicApi & /*drawable*/) override
             {
-                return EncoderState::Exit;; // finished decoding
+                return EncoderState::Exit; // finished decoding
             }
             
             public:
