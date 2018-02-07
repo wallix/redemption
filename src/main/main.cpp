@@ -108,8 +108,10 @@ inline void daemonize(const char * pid_file)
 }
 
 
-inline int shutdown(const char * pid_file)
+inline int shutdown()
 {
+    const char * pid_file = app_path(AppPath::LockFile);
+
     std::cout << "stopping rdpproxy\nlooking if pid_file " << pid_file << " exists\n";
     /* read the rdpproxy.pid file */
     unique_fd fd = invalid_fd();
@@ -160,14 +162,14 @@ inline int shutdown(const char * pid_file)
     unlink(pid_file);
 
     // remove all other pid files
-    DIR * d = opendir("/var/run/redemption");
+    DIR * d = opendir(app_path(AppPath::LockDir));
     if (d){
-        const std::string path("/var/run/redemption/");
+        const std::string path = app_path_s(AppPath::LockDir);
         for (dirent * entryp = readdir(d) ; entryp ; entryp = readdir(d)) {
             if ((0 == strcmp(entryp->d_name, ".")) || (0 == strcmp(entryp->d_name, ".."))){
                 continue;
             }
-            const std::string pidpath = path + std::string(entryp->d_name);
+            const std::string pidpath = path + entryp->d_name;
             struct stat st;
             if (stat(pidpath.c_str(), &st) < 0){
                 LOG(LOG_ERR, "Failed to read pid directory %s [%d: %s]",
@@ -184,7 +186,7 @@ inline int shutdown(const char * pid_file)
     }
     else {
         LOG(LOG_ERR, "Failed to open dynamic configuration directory %s [%d: %s]",
-            "/var/run/redemption" , errno, strerror(errno));
+            app_path(AppPath::LockDir) , errno, strerror(errno));
     }
 
     return 0;
@@ -242,7 +244,7 @@ int main(int argc, char** argv)
     auto options = program_options::parse_command_line(argc, argv, desc);
 
     if (options.count("kill")) {
-        int status = shutdown(app_path(AppPath::LockFile));
+        int status = shutdown();
         if (status){
             // TODO check the real error that occured
             std::clog << "problem opening " << app_path(AppPath::LockFile) << "."
@@ -340,7 +342,7 @@ int main(int argc, char** argv)
     }
 
     if (options.count("force")){
-        shutdown(app_path(AppPath::LockFile));
+        shutdown();
     }
 
     if (0 == access(app_path(AppPath::LockFile), F_OK)) {

@@ -1825,7 +1825,6 @@ test-run tests/core/test_check_files :
 :
   <covfile>src/core/check_files.hpp
   <library>app_path_test.o
-  <library>src/core/font.o
 ;
 test-run tests/core/test_client_info :
   $(REDEMPTION_TEST_PATH)/core/test_client_info.cpp

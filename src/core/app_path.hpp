@@ -36,7 +36,7 @@ enum class AppPath
     Persistent,
     PersistentRdp,
     DriveRedirection,
-    Pid,
+    PidParent,
     Share,
     Cfg,
     LoginWabBlue,
