@@ -63,6 +63,7 @@ namespace VNC {
                 , zlib_compressed_data_length(0), accumulator{}, accumulator_uncompressed{}
                 , verbose(verbose)
             {
+                LOG(LOG_INFO, "New zrle compressor %zu (%zu %zu %zu %zu)", bpp, x,y, cx, cy);
             }
 
             virtual ~Zrle(){}
@@ -71,6 +72,8 @@ namespace VNC {
             // return is false if the encoder is waiting for more data
             EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
+                LOG(LOG_INFO, "zrle consuming data  %zu", buf.av().size());
+                hexdump_d(buf.av().data(), buf.av().size());
                 switch (this->state) {
                 case ZrleState::Header:
                 {
@@ -88,6 +91,7 @@ namespace VNC {
                         LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u remaining=%hu", this->zlib_compressed_data_length, buf.remaining());
                     }
                     this->state = ZrleState::Data;
+                    LOG(LOG_INFO, "EncoderReady::zrle consumed data  %zu", buf.av().size());
                     return EncoderState::Ready; 
                 }
                 break;
@@ -98,6 +102,7 @@ namespace VNC {
                         auto av = buf.av(buf.remaining());
                         this->accumulator.insert(this->accumulator.end(), av.begin(), av.end());
                         buf.advance(buf.remaining());
+                    LOG(LOG_INFO, "EncoderNeedMoreData::zrle consumed data  %zu", buf.av().size());
                         return EncoderState::NeedMoreData; 
                     }
                     size_t interesting_part = this->zlib_compressed_data_length - this->accumulator.size();
@@ -140,13 +145,16 @@ namespace VNC {
 
                     this->accumulator.clear();
                     this->state = ZrleState::Exit;
+                    LOG(LOG_INFO, "EncoderExit::zrle (1) remaining  %zu", buf.av().size());
                     return EncoderState::Exit; 
                 }
                 default:
                     LOG(LOG_ERR, "Unexpected state in ZrleEncoder (%u), should not happen", static_cast<unsigned>(this->state));
                     break;
                 }
-                return EncoderState::Exit; 
+                LOG(LOG_INFO, "EncoderExit::zrle remaining  %zu", buf.av().size());
+                LOG(LOG_ERR, "VNC Encoding: ZRLE, unexpected encoding stream exit");
+                throw Error(ERR_VNC_ZRLE_PROTOCOL);
             }
 
     //    7.6.9   ZRLE Encoding
