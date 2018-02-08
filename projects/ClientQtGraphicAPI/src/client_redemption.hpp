@@ -192,7 +192,7 @@ public:
 
         this->client_execute.set_verbose(bool( (RDPVerbose::rail & this->verbose) | (RDPVerbose::rail_dump & this->verbose) ));
 
-        this->disconnect("");
+        this->disconnect("", false);
 
         if (this->commandIsValid == COMMAND_VALID) {
             this->connect();
@@ -213,7 +213,7 @@ public:
             }
             std::cout << std::endl;
 
-            this->disconnect("");
+            this->disconnect("", false);
         }
     }
 
@@ -277,7 +277,7 @@ public:
             const std::string errorMsg("Cannot read movie \""+movie_name+ "\".");
             LOG(LOG_INFO, "%s", errorMsg.c_str());
             std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
-            this->disconnect(labelErrorMsg);
+            this->disconnect(labelErrorMsg, false);
         }
         return false;
     }
@@ -312,10 +312,12 @@ public:
     }
 
 
-    virtual void  disconnect(std::string const & error) override {
+    virtual void  disconnect(std::string const & error, bool pipe_broken) override {
         if (this->mod != nullptr) {
-            TimeSystem timeobj;
-            this->mod->disconnect(timeobj.get_time().tv_sec);
+            if (!pipe_broken) {
+                TimeSystem timeobj;
+                this->mod->disconnect(timeobj.get_time().tv_sec);
+            }
             this->mod = nullptr;
         }
 
@@ -522,7 +524,7 @@ public:
                 const std::string errorMsg("Cannot connect to [" + target_IP +  "].");
                 std::string windowErrorMsg(errorMsg+" Socket error.");
                 LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
-                this->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
+                this->disconnect("<font color='Red'>"+windowErrorMsg+"</font>", false);
                 return;
             }
 
@@ -530,7 +532,7 @@ public:
             const std::string errorMsg("Cannot connect to [" + target_IP +  "].");
             std::string windowErrorMsg(errorMsg+" Invalid ip or port.");
             LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
-            this->disconnect("<font color='Red'>"+windowErrorMsg+"</font>");
+            this->disconnect("<font color='Red'>"+windowErrorMsg+"</font>", false);
             return;
         }
     }
@@ -660,7 +662,7 @@ public:
         if (this->impl_graphic) {
             this->impl_graphic->dropScreen();
         }
-        this->disconnect(labelErrorMsg);
+        this->disconnect(labelErrorMsg, false);
     }
 
     void disconnexionReleased() override{
@@ -669,7 +671,7 @@ public:
         if (this->impl_graphic) {
             this->impl_graphic->dropScreen();
         }
-        this->disconnect("");
+        this->disconnect("", false);
     }
 
     virtual void set_capture() {
@@ -903,7 +905,7 @@ public:
                 this->impl_graphic->dropScreen();
             }
             std::string labelErrorMsg("<font color='Red'>Disconnected by server</font>");
-            this->disconnect(labelErrorMsg);
+            this->disconnect(labelErrorMsg, false);
             this->capture = nullptr;
             this->graph_capture = nullptr;
             this->_recv_disconnect_ultimatum = false;
@@ -921,7 +923,7 @@ public:
                 LOG(LOG_INFO, "%s", errorMsg.c_str());
                 std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
 
-                this->disconnect(labelErrorMsg);
+                this->disconnect(labelErrorMsg, true);
             }
         }
     }

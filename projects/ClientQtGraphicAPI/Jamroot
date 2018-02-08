@@ -13,7 +13,7 @@ include $(JAM_INCLUDE_PATH)/includes.jam ;
 # select best Qt version
 ## @{
 import os ;
-#local qtversion = [ os.environ qtversion ] ;
+local qtversion = [ os.environ qtversion ] ;
 
 if ! $(qtversion)
 {
@@ -38,7 +38,7 @@ if $(qtversion) && $(qtversion) != 4 && $(qtversion) != 5 && $(qtversion) != 6
 
 if ! $(qtversion)
 {
-    echo "No valid Qt version found" ;
+    
 }
 ## @}
 
@@ -284,6 +284,7 @@ if $(qtversion) {
 
 
 } else {
+    echo "No valid Qt version found" ;
 
     obj front_rdp.o : src/main_client_redemption.cpp :
         <define>REDEMPTION_DECL_LOG_TEST
