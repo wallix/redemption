@@ -549,6 +549,12 @@ protected:
 
 public:
     void session_update(timeval const & now, array_view_const_char message) override {
+        this->last_sent_timer = this->timer;
+
+        if (this->keyboard_buffer_32.get_offset()) {
+            this->send_timestamp_chunk();
+        }
+
         uint16_t message_length = message.size() + 1;       // Null-terminator is included.
 
         StaticOutStream<16> payload;
@@ -559,11 +565,13 @@ public:
         this->trans.send(payload.get_data(), payload.get_offset());
         this->trans.send(message.data(), message.size());
         this->trans.send("\0", 1);
-
-        this->last_sent_timer = this->timer;
     }
 
     void possible_active_window_change() override {
+        if (this->keyboard_buffer_32.get_offset()) {
+            this->send_timestamp_chunk();
+        }
+
         wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::POSSIBLE_ACTIVE_WINDOW_CHANGE, 0, 0);
     }
 

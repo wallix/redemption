@@ -231,6 +231,73 @@ namespace redemption_unit_test__
 # define RED_CHECK_MEM_AA(mem, memref) RED_CHECK_MEM(make_array_view(mem), make_array_view(memref))
 # endif
 
+
+
+namespace redemption_unit_test__
+{
+    struct xsarray
+    {
+        const_byte_array sig;
+
+        std::size_t size() const
+        {
+            return sig.size();
+        }
+
+        bool operator == (xsarray const & other) const
+        {
+            return other.sig.size() == other.sig.size()
+                && std::equal(sig.begin(), sig.end(), other.sig.begin());
+        }
+    };
+
+    inline std::ostream & operator<<(std::ostream & out, xsarray const & x)
+    {
+        out << "\"";
+        char const * hex_table = "0123456789abcdef";
+        for (unsigned c : x.sig) {
+            if ((c >= 0x20) && (c <= 127)) {
+                out << char(c);
+            }
+            else {
+                out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
+            }
+        }
+        return out << "\"";
+    }
+}
+
+#define RED_CHECK_SMEM(mem, memref)                  \
+    do {                                             \
+        [](                                          \
+            redemption_unit_test__::xsarray mem__,   \
+            redemption_unit_test__::xsarray memref__ \
+        ){                                           \
+            RED_CHECK_OP_VAR_MESSAGE(                \
+                ==, mem__.size(), memref__.size(),   \
+                mem.size(), memref.size());          \
+            RED_CHECK_OP_VAR_MESSAGE(                \
+                ==, mem__, memref__,                 \
+                mem, memref);                        \
+        }(                                           \
+            redemption_unit_test__::xsarray{mem},    \
+            redemption_unit_test__::xsarray{memref}  \
+        );                                           \
+    } while (0)
+
+#ifdef IN_IDE_PARSER
+# define RED_CHECK_SMEM_C(mem, memref) void(mem), void("" memref)
+# define RED_CHECK_SMEM_AC(mem, memref) void(mem), void("" memref)
+# define RED_CHECK_SMEM_AA(mem, memref) void(mem), void(memref)
+#else
+# define RED_CHECK_SMEM_C(mem, memref) RED_CHECK_SMEM(mem, cstr_array_view("" memref))
+# define RED_CHECK_SMEM_AC(mem, memref) RED_CHECK_SMEM(make_array_view(mem), cstr_array_view("" memref))
+# define RED_CHECK_SMEM_AA(mem, memref) RED_CHECK_SMEM(make_array_view(mem), make_array_view(memref))
+# endif
+
+
+
+
 // require #include "utils/fileutils.hpp"
 #define RED_CHECK_FILE_SIZE_AND_CLEAN(filename, sz) \
     RED_CHECK_EQUAL(filesize(filename), sz);        \
