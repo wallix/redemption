@@ -23,8 +23,6 @@
 #define RED_TEST_MODULE GraphicsApi
 #include "system/redemption_unit_tests.hpp"
 
-
-
 #include "gdi/graphic_api.hpp"
 #include "core/font.hpp"
 

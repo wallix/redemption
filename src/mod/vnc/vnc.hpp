@@ -2123,83 +2123,72 @@ private:
                     r = this->read_header(buf); 
                 break;
                 case State::Encoding:
+                {
                     if (0 == this->num_recs) {
                         this->state = State::Header;
                         return true;
                     }
+                    const size_t sz = 12;
+
+                    if (buf.remaining() < sz)
                     {
-                        const size_t sz = 12;
-
-                        if (buf.remaining() < sz)
-                        {
-                            r = Result::fail();
-                        }
-                        else {
-                            InStream stream(buf.av(sz));
-                            this->x = stream.in_uint16_be();
-                            this->y = stream.in_uint16_be();
-                            this->cx = stream.in_uint16_be();
-                            this->cy = stream.in_uint16_be();
-                            this->encoding = stream.in_sint32_be();
-
-                            if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                                LOG(LOG_INFO, "Encoding: %u (%u, %u, %u, %u) : %d", this->num_recs, this->x, this->y, this->cx, this->cy, this->encoding);
-                            }
-
-                            --this->num_recs;
-                            switch (this->encoding){
-                            case COPYRECT_ENCODING:  /* raw */
-                                this->encoder = new VNC::Encoder::CopyRect(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.front_width, vnc.front_height, VNCVerbose::basic_trace);
-                            break;
-//                            case HEXTILE_ENCODING:  /* hextile */
-//                                this->encoder = new VNC::Encoder::Hextile(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
-//                            break;
-                            case CURSOR_PSEUDO_ENCODING:  /* cursor */
-                                this->encoder = new VNC::Encoder::Cursor(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, 
-                                                                         vnc.red_shift, vnc.red_max, vnc.green_shift, vnc.green_max, vnc.blue_shift, vnc.blue_max,
-                                                                         VNCVerbose::basic_trace);
-                            break;
-                            case RAW_ENCODING:  /* raw */
-                                this->encoder = new VNC::Encoder::Raw(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
-                            break;
-                            case ZRLE_ENCODING: /* ZRLE */
-                                this->encoder = new VNC::Encoder::Zrle(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, this->zd, VNCVerbose::basic_trace);
-                            break;
-                            case RRE_ENCODING: /* RRE */
-                                this->encoder = new VNC::Encoder::RRE(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
-                                break;
-                            default:
-                            //TODO: until we have specific encoder for every supported encoding do not uncomment
-//                                LOG(LOG_INFO, "Received unsupported VNC encoding %u", this->encoding);
-//                                  throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
-                            break;
-                            }
-                            buf.advance(sz);
-
-                            // TODO see why we get these empty rects ?
-                            // return State::Encoding;
-                            r = Result::ok(State::Data);
-                        }
+                        r = Result::fail();
                     }
-                    break;
+                    else {
+                        InStream stream(buf.av(sz));
+                        this->x = stream.in_uint16_be();
+                        this->y = stream.in_uint16_be();
+                        this->cx = stream.in_uint16_be();
+                        this->cy = stream.in_uint16_be();
+                        this->encoding = stream.in_sint32_be();
+
+                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                            LOG(LOG_INFO, "Encoding: %u (%u, %u, %u, %u) : %d", this->num_recs, this->x, this->y, this->cx, this->cy, this->encoding);
+                        }
+
+                        --this->num_recs;
+                        switch (this->encoding){
+                        case COPYRECT_ENCODING:  /* raw */
+                            this->encoder = new VNC::Encoder::CopyRect(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.front_width, vnc.front_height, VNCVerbose::basic_trace);
+                        break;
+                        case HEXTILE_ENCODING:  /* hextile */
+                            this->encoder = new VNC::Encoder::Hextile(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
+                        break;
+                        case CURSOR_PSEUDO_ENCODING:  /* cursor */
+                            this->encoder = new VNC::Encoder::Cursor(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, 
+                                                                     vnc.red_shift, vnc.red_max, vnc.green_shift, vnc.green_max, vnc.blue_shift, vnc.blue_max,
+                                                                     VNCVerbose::basic_trace);
+                        break;
+                        case RAW_ENCODING:  /* raw */
+                            this->encoder = new VNC::Encoder::Raw(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
+                        break;
+                        case ZRLE_ENCODING: /* ZRLE */
+                            this->encoder = new VNC::Encoder::Zrle(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, this->zd, VNCVerbose::basic_trace);
+                        break;
+                        case RRE_ENCODING: /* RRE */
+                            this->encoder = new VNC::Encoder::RRE(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
+                            break;
+                        default:
+                            LOG(LOG_ERR, "unexpected VNC encoding %d", encoding);
+                            throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
+                        break;
+                        }
+                        buf.advance(sz);
+                        r = Result::ok(State::Data);
+                    }
+                }
+                break;
                 case State::Data:
-                    switch (this->encoding)
-                    {
-                    case CURSOR_PSEUDO_ENCODING: /* (-239) cursor */
-//                    case HEXTILE_ENCODING: /* Hextile */
-                    case COPYRECT_ENCODING:  /* copy rect */ 
-                    case RRE_ENCODING:  /* RRE */
-                    case RAW_ENCODING:  /* raw */
-                    case ZRLE_ENCODING: /* ZRLE */
                     {
                         if (bool(this->verbose & VNCVerbose::basic_trace)) {
                         
-                            LOG(LOG_INFO, "%s", (this->encoding == HEXTILE_ENCODING) ? "HEXTILE_ENCODING" :
-                                                (this->encoding == CURSOR_PSEUDO_ENCODING) ? "CURSOR_PSEUDO_ENCODING" :
-                                                (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
-                                                (this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
-                                                (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" :
-                                                 "ZRLE_ENCODING");
+                            LOG(LOG_INFO, "%s", 
+                        (this->encoding == HEXTILE_ENCODING) ? "HEXTILE_ENCODING" :
+                        (this->encoding == CURSOR_PSEUDO_ENCODING) ? "CURSOR_PSEUDO_ENCODING" :
+                        (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
+                        (this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
+                        (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" :
+                         "ZRLE_ENCODING");
                         }
                         // Pre Assertion: we have an encoder
                         switch (encoder->consume(buf, drawable)){
@@ -2217,22 +2206,7 @@ private:
                             break;
                         }
                     }
-                    break;
-                    case HEXTILE_ENCODING: /* Hextile */ // TODO unimplemented
-                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                            LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u",
-                                this->Bpp, this->x, this->y, this->cx, this->cy);
-                        }
-                        r = Result::ok(State::Encoding);
-                        break;
-                    default:
-                        LOG(LOG_ERR, "unexpected encoding %d in lib_frame_buffer", encoding);
-                        throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
-                    }
-                    break;
-                break;
                 }
-
                 if (!r) {
                     return false;
                 }

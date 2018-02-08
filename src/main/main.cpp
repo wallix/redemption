@@ -110,9 +110,14 @@ inline void daemonize(const char * pid_file)
 
 inline int shutdown()
 {
-    const char * pid_file = app_path(AppPath::LockFile);
+    const char * const pid_file = app_path(AppPath::LockFile);
+    const char * const pid_dir = app_path(AppPath::LockDir);
 
-    std::cout << "stopping rdpproxy\nlooking if pid_file " << pid_file << " exists\n";
+    std::cout <<
+      "Stopping rdpproxy\n"
+      "Looking if pid_file " << pid_file << " exists\n"
+    ;
+
     /* read the rdpproxy.pid file */
     unique_fd fd = invalid_fd();
     if ((0 == access(pid_file, F_OK))) {
@@ -123,59 +128,80 @@ inline int shutdown()
         }
     }
     if (!fd) {
+        std::cerr << "Failed to read pid file. " << strerror(errno) << ".\n";
         return 1; // file does not exist.
     }
 
     try {
-        std::cout << "reading pid_file " << pid_file << "\n";
+        std::cout << "Reading pid_file " << pid_file << "\n";
         char text[256];
-        memset(text, 0, 32);
 
-        InFileTransport(std::move(fd)).recv_boom(text, 31);
+        text[InFileTransport(std::move(fd)).partial_read(text, sizeof(text)-1)] = 0;
 
         int pid = atoi(text);
-        std::cout << "stopping process id " << pid << "\n";
+        std::cout << "Stopping process id " << pid << "\n";
+
+        // check name of pid
+        if (pid > 0)
+        {
+            bool is_proxy = true;
+            char path[64];
+            std::sprintf(path, "/proc/%d/cmdline", pid);
+            unique_fd fd(open(path, O_RDONLY));
+            if (!fd.is_open()) {
+                std::cerr << path << ": " << strerror(errno) << "\n";
+                pid = 0;
+            }
+            else {
+                try {
+                    text[InFileTransport(std::move(fd)).partial_read(text, sizeof(text)-1)] = 0;
+                    if (!strstr(text, "/rdpproxy")) {
+                        is_proxy = false;
+                    }
+                }
+                catch (...) {
+                    is_proxy = false;
+                }
+
+                if (!is_proxy) {
+                    std::cerr << "Error process id " << pid << " is not a rdpproxy\n";
+                    pid = 0;
+                }
+            }
+        }
+
         if (pid > 0) {
             int res = kill(pid, SIGTERM);
-            if (res != -1){
-                sleep(2);
-                res = kill(pid,0);
-            }
-            if ((errno != ESRCH) || (res == 0)){
-                // errno != ESRCH, pid is still running
-                std::cout << "process " << pid << " is still running, let's send a KILL signal\n";
-                res = kill(pid, SIGKILL);
-                if (res != -1){
-                    sleep(1);
-                    res = kill(pid,0);
+            if (res != 0) {
+                if (errno != ESRCH) {
+                    int err = errno;
+                    std::cerr << "Error stopping process id " << pid << ": " << strerror(err) << "\n";
                 }
-                if ((errno != ESRCH) || (res == 0)){
-                    // if errno != ESRCH, pid is still running
-                    std::cerr << "Error stopping process id " << pid << "\n";
+                else {
+                    // errno != ESRCH, pid is still running
+                    std::cout << "Process " << pid << " is still running, let's send a KILL signal\n";
+                    res = kill(pid, SIGKILL);
+                    if (res != 0){
+                        std::cerr << "Error stopping process id " << pid << "\n";
+                    }
                 }
             }
         }
     }
     catch (Error const&) {
-        std::cerr << "failed to read pid file\n";
+        std::cerr << "Failed to read pid file. " << strerror(errno) << "\n";
     }
     unlink(pid_file);
 
     // remove all other pid files
-    DIR * d = opendir(app_path(AppPath::LockDir));
+    DIR * d = opendir(pid_dir);
     if (d){
-        const std::string path = app_path_s(AppPath::LockDir);
+        const std::string path = pid_dir;
         for (dirent * entryp = readdir(d) ; entryp ; entryp = readdir(d)) {
             if ((0 == strcmp(entryp->d_name, ".")) || (0 == strcmp(entryp->d_name, ".."))){
                 continue;
             }
-            const std::string pidpath = path + entryp->d_name;
-            struct stat st;
-            if (stat(pidpath.c_str(), &st) < 0){
-                LOG(LOG_ERR, "Failed to read pid directory %s [%d: %s]",
-                    pidpath.c_str(), errno, strerror(errno));
-                continue;
-            }
+            const std::string pidpath = path + "/" + entryp->d_name;
             LOG(LOG_INFO, "removing old pid file %s", pidpath.c_str());
             if (unlink(pidpath.c_str()) < 0){
                 LOG(LOG_ERR, "Failed to remove old session pid file %s [%d: %s]",
@@ -186,7 +212,7 @@ inline int shutdown()
     }
     else {
         LOG(LOG_ERR, "Failed to open dynamic configuration directory %s [%d: %s]",
-            app_path(AppPath::LockDir) , errno, strerror(errno));
+            pid_dir, errno, strerror(errno));
     }
 
     return 0;

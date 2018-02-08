@@ -58,7 +58,7 @@ h
 namespace VNC {
     namespace Encoder {
         class Cursor : public EncoderApi {
-            const uint8_t bpp;
+//             const uint8_t bpp;
             const uint8_t Bpp;
             const size_t x;
             size_t y;
@@ -74,10 +74,10 @@ namespace VNC {
         public:
             VNCVerbose verbose;
 
-            Cursor(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy, 
+            Cursor(uint8_t /*bpp*/, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy,
                    int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max, 
                    VNCVerbose verbose) 
-                : bpp(bpp), Bpp(Bpp), x(x), y(y), cx(cx), cy(cy), 
+                : /*bpp(bpp), */Bpp(Bpp), x(x), y(y), cx(cx), cy(cy),
                   red_shift(red_shift), red_max(red_max), 
                   green_shift(green_shift), green_max(green_max), 
                   blue_shift(blue_shift), blue_max(blue_max)
@@ -145,8 +145,8 @@ namespace VNC {
                     // TODO The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask used is 1 bit per pixel arrays
                     // copy vnc pointer and mask to rdp pointer and mask
 
-                    for (int yy = 0; yy < cy; yy++) {
-                        for (int xx = 0 ; xx < cx ; xx++){
+                    for (int yy = 0; size_t(yy) < cy; yy++) {
+                        for (int xx = 0 ; size_t(xx) < cx ; xx++){
                             if (vnc_pointer_mask[yy * nbbytes(cx) + xx / 8 ] & (0x80 >> (xx&7))){
                                 if ((yy < 32) && (xx < 32)){
                                     cursor.mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));

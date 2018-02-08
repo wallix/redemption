@@ -37,18 +37,11 @@ namespace VNC {
             const size_t cx;
             size_t cy;
 
-            enum class RawState {
-                Header,
-                Data,
-                Exit
-            } state;
-        
         public:
             VNCVerbose verbose;
 
             Raw(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy, VNCVerbose verbose) 
                 : bpp(bpp), Bpp(Bpp), x(x), y(y), cx(cx), cy(cy)
-                , state(RawState::Header)
                 , verbose(verbose)
             {
             }

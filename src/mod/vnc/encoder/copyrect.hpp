@@ -29,8 +29,8 @@ h
 namespace VNC {
     namespace Encoder {
         class CopyRect : public EncoderApi {
-            const uint8_t bpp;
-            const uint8_t Bpp;
+//             const uint8_t bpp;
+//             const uint8_t Bpp;
             const size_t x;
             size_t y;
             const size_t cx;
@@ -39,19 +39,19 @@ namespace VNC {
             const uint16_t width;
             const uint16_t height;
 
-            enum class CopyrectState {
-                Header,
-                Data,
-                Exit
-            } state;
+//             enum class CopyrectState {
+//                 Header,
+//                 Data,
+//                 Exit
+//             } state;
         
         public:
-            VNCVerbose verbose;
+//             VNCVerbose verbose;
 
-            CopyRect(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy, uint16_t width, uint16_t height, VNCVerbose verbose) 
-                : bpp(bpp), Bpp(Bpp), x(x), y(y), cx(cx), cy(cy), width(width), height(height)
-                , state(CopyrectState::Header)
-                , verbose(verbose)
+            CopyRect(uint8_t /*bpp*/, uint8_t /*Bpp*/, size_t x, size_t y, size_t cx, size_t cy, uint16_t width, uint16_t height, VNCVerbose /*verbose*/)
+                : /*bpp(bpp), Bpp(Bpp), */x(x), y(y), cx(cx), cy(cy), width(width), height(height)
+//                 , state(CopyrectState::Header)
+//                 , verbose(verbose)
             {
             }
             

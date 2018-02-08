@@ -741,7 +741,7 @@ public:
             if (*(this->server_message.c_str() + sizeof(request_hello) - 1) == '\x01')
             {
                 remote_reconnection_cookie =
-                    ::strtoul(this->server_message.c_str() + sizeof(request_hello), 0, 10);
+                    ::strtoul(this->server_message.c_str() + sizeof(request_hello), nullptr, 10);
             }
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO,
