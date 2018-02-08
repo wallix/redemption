@@ -97,7 +97,7 @@ class ClientRedemptionIOAPI : public FrontAPI
 
 public:
     RDPVerbose        verbose;
-    
+
     ClientInfo        info;
     CryptoContext     cctx;
 
@@ -203,6 +203,10 @@ public:
         MOD_VNC            = 2,
         MOD_RDP_REMOTE_APP = 3,
         MOD_RDP_REPLAY     = 4
+    };
+
+    enum : int {
+        BALISED_FRAME = 15
     };
 
     uint8_t mod_state;

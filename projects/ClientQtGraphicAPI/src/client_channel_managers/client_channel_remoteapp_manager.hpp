@@ -28,7 +28,7 @@
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 
-#include "../qt_input_output_api/qt_IO_graphic_mouse_keyboard.hpp"
+#include "../client_input_output_api.hpp"
 
 
 
@@ -52,10 +52,10 @@ class ClientChannelRemoteAppManager {
 
         std::vector<uint32_t> z_order;
 
-
         int build_number = 0;
 
     } rail_channel_data;
+
 
 public:
     ClientChannelRemoteAppManager(RDPVerbose verbose,
@@ -95,7 +95,6 @@ public:
 
                                 this->impl_graphic->create_remote_app_screen(win_id, cmd.WindowWidth(), cmd.WindowHeight(), cmd.WindowOffsetX(), cmd.WindowOffsetY());
                                 this->impl_input->refreshPressed();
-
                         }
                     }
 
@@ -104,7 +103,6 @@ public:
                             this->impl_graphic->show_screen(win_id);
                         }
                     }
-                   // }
                 } else {
                     if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET) {
 

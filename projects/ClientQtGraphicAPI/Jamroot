@@ -29,15 +29,16 @@ if ! $(qtversion)
     }
 }
 
-if $(qtversion) != 0 && $(qtversion) != 4 && $(qtversion) != 5 && $(qtversion) != 6
+if $(qtversion) && $(qtversion) != 4 && $(qtversion) != 5 && $(qtversion) != 6
 {
     echo "Unknown Qt$(qtversion)." ;
     qtversion = ;
+    exit "Please set a valid Qt version (4 or 5) with `bjam -s qt=4`." ;
 }
 
 if ! $(qtversion)
 {
-    exit "Please set a valid Qt version (4 or 5) with `bjam -s qt=4`." ;
+    exit "No valid Qt version found" ;
 }
 ## @}
 
@@ -49,7 +50,8 @@ if $(qtversion) = 4
 
     constant QT_INCLUDES : $(QT4_INCLUDE) ;
 }
-else
+
+if $(qtversion) = 5
 {
     # Need packages qttools5-dev libphonon4qt5-dev
     # TODO search include qt5 directory
@@ -120,8 +122,15 @@ explicit install instexe install-bin ;
 alias instexe : install-bin ;
 alias install : install-bin ;
 
+local version_name = "no_qt" ;
+
+if $(qtversion) = 4 || $(qtversion) = 5
+{
+    version_name = "_Qt$(qtversion)" ;
+}
+
 install install-bin
-    : client_rdp_Qt4
+    : client_rdp
     : <install-type>EXE <install-dependencies>on
     : <location>$(INSTALLDIR)/usr/local/bin
     ;
@@ -252,53 +261,56 @@ else
 }
 
 
-obj front_Qt$(qtversion)_rdp.o : src/main_qt_client_redemption.cpp :
-    <define>REDEMPTION_DECL_LOG_TEST
-    $(EXE_DEPENDENCIES)
-;
+if $(qtversion) {
+
+   obj front_Qt$(qtversion)_rdp.o : src/main_qt_client_redemption.cpp :
+        <define>REDEMPTION_DECL_LOG_TEST
+        $(EXE_DEPENDENCIES)
+    ;
+
+    exe client_rdp :
+        src/qt_input_output_api/qt_output_sound.hpp
+        src/qt_input_output_api/qt_input_output_clipboard.hpp
+        src/qt_input_output_api/qt_input_socket.hpp
+        src/qt_input_output_api/qt_graphics_components/qt_progress_bar_window.hpp
+        src/qt_input_output_api/qt_graphics_components/qt_options_window.hpp
+        src/qt_input_output_api/qt_graphics_components/qt_screen_window.hpp
+        src/qt_input_output_api/qt_graphics_components/qt_form_window.hpp
+        front_Qt$(qtversion)_rdp.o
+        $(obj_list)
+        $(lib_list)
+        $(obj_list_VNC)
+        config.o
+        hexdump.o
+        libqtclient
+        # TODO: disable phonon requirement when compiling with -D_NO_SOUND
+        libphonon
+    :
+        $(EXE_DEPENDENCIES)
+        <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
+    ;
 
 
-exe client_rdp_Qt$(qtversion) :
-    src/qt_input_output_api/qt_output_sound.hpp
-    src/qt_input_output_api/qt_input_output_clipboard.hpp
-    src/qt_input_output_api/qt_input_socket.hpp
-    src/qt_input_output_api/qt_graphics_components/qt_progress_bar_window.hpp
-    src/qt_input_output_api/qt_graphics_components/qt_options_window.hpp
-    src/qt_input_output_api/qt_graphics_components/qt_screen_window.hpp
-    src/qt_input_output_api/qt_graphics_components/qt_form_window.hpp
-    front_Qt$(qtversion)_rdp.o
-    $(obj_list)
-    $(lib_list)
-    $(obj_list_VNC)
-    config.o
-    hexdump.o
-    libqtclient
-    # TODO: disable phonon requirement when compiling with -D_NO_SOUND
-    libphonon
-:
-    $(EXE_DEPENDENCIES)
-    <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
-;
+} else {
 
-obj front_rdp.o : src/main_qt_client_redemption.cpp :
-    <define>REDEMPTION_DECL_LOG_TEST
-    $(EXE_DEPENDENCIES)
-;
+    obj front_rdp.o : src/main_client_redemption.cpp :
+        <define>REDEMPTION_DECL_LOG_TEST
+        $(EXE_DEPENDENCIES)
+    ;
 
-exe client_rdp :
-    front_rdp.o
-    $(obj_list)
-    $(lib_list)
-    $(obj_list_VNC)
-    config.o
-    hexdump.o
-    libqtclient
-    libphonon
-:
-    $(EXE_DEPENDENCIES)
-    <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
+    exe client_rdp :
+        front_rdp.o
+        $(obj_list)
+        $(lib_list)
+        $(obj_list_VNC)
+        config.o
+        hexdump.o
+    :
+        $(EXE_DEPENDENCIES)
+        <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
     
-;
+    ;
+}
 
 
-alias client_rdp_Qt : client_rdp_Qt$(qtversion) ;
+

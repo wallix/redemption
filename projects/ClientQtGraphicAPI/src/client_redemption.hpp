@@ -27,6 +27,10 @@
 #include "core/channel_names.hpp"
 #include "configs/autogen/enums.hpp"
 
+#include "capture/full_video_params.hpp"
+#include "capture/video_params.hpp"
+#include "capture/capture.hpp"
+
 #include "mod/rdp/rdp.hpp"
 #include "mod/vnc/vnc.hpp"
 
@@ -255,7 +259,7 @@ public:
                                                 , true
                                                 , begin_read
                                                 , end_read
-                                                , Screen_Qt::BALISED_FRAME
+                                                , BALISED_FRAME
                                                 //, FileToGraphic::Verbose::rdp_orders
                                                 , to_verbose_flags(0)
                                                 ));
@@ -1217,8 +1221,11 @@ public:
         }
     }
 
-    void draw(RDPNineGrid const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {
-
+    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
+        (void) cmd;
+        (void) clip;
+        (void) color_ctx;
+        (void) bmp;
     }
 
     void set_pointer(Pointer const & cursor) override {
