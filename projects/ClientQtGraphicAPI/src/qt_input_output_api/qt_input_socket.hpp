@@ -60,7 +60,6 @@ public:
 
 
     virtual void disconnect() override {
-
         if (this->_sckListener != nullptr) {
             delete (this->_sckListener);
             this->_sckListener = nullptr;

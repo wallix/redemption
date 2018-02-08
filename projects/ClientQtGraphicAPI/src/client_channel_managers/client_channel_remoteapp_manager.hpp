@@ -204,7 +204,7 @@ public:
 
         if ( this->rail_channel_data.z_order.size() == 0) {
             this->impl_graphic->clear_remote_app_screen();
-            this->client->disconnect("");
+            this->client->disconnect("", false);
 
         } else {
 

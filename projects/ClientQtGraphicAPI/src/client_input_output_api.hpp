@@ -760,7 +760,7 @@ public:
     // CONTROLLER
     virtual void connect() = 0;
 //     virtual void setMainScreenOnTopRelease() = 0;
-    virtual void disconnect(std::string const & txt) = 0;
+    virtual void disconnect(std::string const & txt, bool pipe_broken) = 0;
 //     virtual void dropScreen() = 0;
 //     virtual bool is_no_win_data() = 0;
 //     virtual void writeWindowsConf() = 0;

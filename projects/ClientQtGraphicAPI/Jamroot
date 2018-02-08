@@ -38,7 +38,7 @@ if $(qtversion) && $(qtversion) != 4 && $(qtversion) != 5 && $(qtversion) != 6
 
 if ! $(qtversion)
 {
-    exit "No valid Qt version found" ;
+    
 }
 ## @}
 
@@ -121,13 +121,6 @@ explicit install instexe install-bin ;
 
 alias instexe : install-bin ;
 alias install : install-bin ;
-
-local version_name = "no_qt" ;
-
-if $(qtversion) = 4 || $(qtversion) = 5
-{
-    version_name = "_Qt$(qtversion)" ;
-}
 
 install install-bin
     : client_rdp
@@ -292,6 +285,7 @@ if $(qtversion) {
 
 
 } else {
+    echo "No valid Qt version found" ;
 
     obj front_rdp.o : src/main_client_redemption.cpp :
         <define>REDEMPTION_DECL_LOG_TEST
