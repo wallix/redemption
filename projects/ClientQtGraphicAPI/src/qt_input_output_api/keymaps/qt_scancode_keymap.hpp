@@ -100,15 +100,7 @@
 
 #include <iostream>
 #include "keyboard/reversed_keymaps/keylayouts_r.hpp"
-//#include <QtGui/QKeyEvent>
-
-#if REDEMPTION_QT_VERSION == 4
-#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
-#else
-#   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtWidgets/name>
-#endif
-
-#include REDEMPTION_QT_INCLUDE_WIDGET(QKeyEvent)
+#include <QtGui/QKeyEvent>
 
 class Qt_ScanCode_KeyMap
 {
