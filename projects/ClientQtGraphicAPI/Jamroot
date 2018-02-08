@@ -272,7 +272,8 @@ exe client_rdp_Qt$(qtversion) :
     config.o
     hexdump.o
     libqtclient
-#    libphonon
+    # TODO: disable phonon requirement when compiling with -D_NO_SOUND
+    libphonon
 :
     $(EXE_DEPENDENCIES)
     <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast

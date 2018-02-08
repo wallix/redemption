@@ -85,7 +85,7 @@ h
 //        bytesPerPixel     PIXEL   foreground-pixel-value
 
 //        If this bit is set then the SubrectsColoured bit must be zero
-.
+
 //    AnySubrects
 
 //        If set, a single byte follows giving the number of subrectangles following:
