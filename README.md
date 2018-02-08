@@ -60,7 +60,7 @@ And set environment variable (optionally)
 
 ## Environment variable setting
 
-List with `grep '\[ setvar' jam/defines.jam`
+List with `sed -E '/\[ setvar/!d;s/.*\[ setvar ([^ ]+).*/\1/' jam/defines.jam`
 
 
 Compilation
@@ -73,6 +73,11 @@ Just run (as user):
 $ `bjam` or `bjam toolset=gcc`, `bjam toolset=clang` or `bjam toolset=your-compiler` (see http://www.boost.org/build/doc/html/bbv2/overview/configuration.html)
 
 Verbose tests:
+
+$ `export REDEMPTION_LOG_PRINT=1`\
+$ `bjam tests`
+
+or
 
 $ `REDEMPTION_LOG_PRINT=1 bjam tests`
 
@@ -95,6 +100,8 @@ To test it, executes:
 $ `python tools/passthrough/passthrough.py`
 
 \# `/usr/local/bin/rdpproxy -nf`
+<!-- \# `./bin/${BJAM_TOOLSET_NAME}/${BJAM_MODE}/rdpproxy -nf` -->
+
 
 Now, at that point you'll just have two servers waiting for connections
 not much fun. You still have to run some RDP client to connect to proxy. Choose

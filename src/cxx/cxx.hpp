@@ -24,9 +24,10 @@
 
 #include "cxx/compiler_version.hpp"
 
-
-#define REDEMPTION_CXX_STD_11 201103
-#define REDEMPTION_CXX_STD_14 201402
+#define REDEMPTION_CXX_STD_03 199711L // 1998/2003
+#define REDEMPTION_CXX_STD_11 201103L
+#define REDEMPTION_CXX_STD_14 201402L
+#define REDEMPTION_CXX_STD_17 201703L
 
 #ifdef __has_include
 # define REDEMPTION_HAS_INCLUDE(path) __has_include(path)

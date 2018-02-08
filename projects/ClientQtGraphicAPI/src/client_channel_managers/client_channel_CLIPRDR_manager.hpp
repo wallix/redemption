@@ -206,20 +206,20 @@ public:
 
 // msgFlags (2 bytes): An unsigned, 16-bit integer that indicates message flags.
 
-//    CB_RESPONSE_OK      0x0001        Used by the Format List Response PDU, Format Data Response PDU, 
-//                                      and File Contents Response PDU to indicate that the associated 
-//                                      request Format List PDU, Format Data Request PDU, and File 
+//    CB_RESPONSE_OK      0x0001        Used by the Format List Response PDU, Format Data Response PDU,
+//                                      and File Contents Response PDU to indicate that the associated
+//                                      request Format List PDU, Format Data Request PDU, and File
 //                                      Contents Request PDU were processed successfully.
 
 //    CB_RESPONSE_FAIL    0x0002        Used by the Format List Response PDU, Format Data Response PDU,
 //                                      and File Contents Response PDU to indicate that the associated
-//                                      Format List PDU, Format Data Request PDU, and File Contents 
+//                                      Format List PDU, Format Data Request PDU, and File Contents
 //                                      Request PDU were not processed successfully.
 
 //    CB_ASCII_NAMES      0x0004        Used by the Short Format Name variant of the Format List Response
 //                                      PDU to indicate that the format names are in ASCII 8.
 
-// dataLen (4 bytes): An unsigned, 32-bit integer that specifies the size, in bytes, of the data which 
+// dataLen (4 bytes): An unsigned, 32-bit integer that specifies the size, in bytes, of the data which
 //  follows the Clipboard PDU Header.<1>
 
     void receive(InStream & chunk, int flags) {
@@ -256,11 +256,11 @@ public:
 
 //    2.2.2.2 Server Monitor Ready PDU (CLIPRDR_MONITOR_READY)
 
-//    The Monitor Ready PDU is sent from the server to the client to indicate that the server is 
+//    The Monitor Ready PDU is sent from the server to the client to indicate that the server is
 //    initialized and ready. This PDU is transmitted by the server after it has sent the Clipboard
-//    Capabilities PDU to the client. 
-//    
-//    clipHeader (8 bytes):  A Clipboard PDU Header. The msgType field of the Clipboard PDU Header 
+//    Capabilities PDU to the client.
+//
+//    clipHeader (8 bytes):  A Clipboard PDU Header. The msgType field of the Clipboard PDU Header
 //    MUST be set to CB_MONITOR_READY (0x0001), while the msgFlags field MUST be set to 0x0000.
 
                     case RDPECLIP::CB_MONITOR_READY:
@@ -289,7 +289,7 @@ public:
                                                                 , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST
                                                                 |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                                                 );
-                                                                
+
                             if (bool(this->verbose & RDPVerbose::cliprdr)) {
                                 LOG(LOG_INFO, "CLIENT >> CB Channel: Clipboard Capabilities PDU");
                             }
@@ -312,7 +312,7 @@ public:
                             }*/
 //                             this->client->_monitorCountNegociated = true;
                         }
-                        
+
                         // TODO: check this, dangerous, we don't know how many formats are really available
                         // sizes array seems to be the length of names, this should no be managed separately from names
                         if (this->server_use_long_format_names) {
@@ -347,12 +347,12 @@ public:
                         }
 
                     break;
-                    
+
     // 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
-    
+
     // The Format List Response PDU is sent as a reply to the Format List PDU. It is used to indicate
     // whether processing of the Format List PDU was successful.
-    
+
     // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the Clipboard PDU Header MUST
     // be set to CB_FORMAT_LIST_RESPONSE (0x0003). The CB_RESPONSE_OK (0x0001) or CB_RESPONSE_FAIL (0x0002)
     // flag MUST be set in the msgFlags field of the Clipboard PDU Header.
@@ -369,19 +369,19 @@ public:
                     break;
 
     // 2.2.3.1 Format List PDU (CLIPRDR_FORMAT_LIST)
-    
+
     // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the Clipboard PDU Header MUST be
     // set to CB_FORMAT_LIST (0x0002), while the msgFlags field MUST be set to 0x0000 or CB_ASCII_NAMES (0x0004)
     // depending on the type of data present in the formatListData field.
 
-    // formatListData (variable): An array consisting solely of either Short Format Names or Long Format Names. 
+    // formatListData (variable): An array consisting solely of either Short Format Names or Long Format Names.
     // The type of structure used in the array is determined by the presence of the CB_USE_LONG_FORMAT_NAMES (0x00000002)
-    // flag in the generalFlags field of the General Capability Set (section 2.2.2.1.1.1). 
-    
-    // Each array holds a list of the Clipboard Format ID and name pairs available on the local system clipboard 
-    // of the sender. 
-    
-    // If Short Format Names are being used, and the embedded Clipboard Format names are in ASCII 8 format, then 
+    // flag in the generalFlags field of the General Capability Set (section 2.2.2.1.1.1).
+
+    // Each array holds a list of the Clipboard Format ID and name pairs available on the local system clipboard
+    // of the sender.
+
+    // If Short Format Names are being used, and the embedded Clipboard Format names are in ASCII 8 format, then
     // the msgFlags field of the clipHeader must contain the CB_ASCII_NAMES (0x0004) flag.
 
                     case RDPECLIP::CB_FORMAT_LIST:

@@ -166,6 +166,8 @@ public:
         , readding_bar(this->reading_bar_len+10, READING_BAR_H)
         , current_time_movie(0)
         , real_time_record(this->_front->replay_mod->get_real_time_movie_begin())
+        , x_pixmap_shift(0)
+        , y_pixmap_shift(0)
     {
         std::string title = "ReDemPtion Client " + this->_movie_name;
         this->setWindowTitle(QString(title.c_str()));
@@ -276,6 +278,8 @@ public:
         , readding_bar(this->reading_bar_len+12, READING_BAR_H)
         , current_time_movie(0)
         , real_time_record(0)
+        , x_pixmap_shift(0)
+        , y_pixmap_shift(0)
     {
         this->setMouseTracking(true);
         this->installEventFilter(this);

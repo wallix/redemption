@@ -97,15 +97,15 @@ class ClientRedemptionIOAPI : public FrontAPI
 
 public:
     RDPVerbose        verbose;
+    
     ClientInfo        info;
     CryptoContext     cctx;
 
 
     mod_api            * mod;
-
     SocketTransport    * socket;
     TimeSystem           timeSystem;
-    NullAuthentifier    authentifier;
+    NullAuthentifier   authentifier;
     NullReportMessage  reportMessage;
 
     Keymap2              keymap;

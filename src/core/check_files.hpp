@@ -28,7 +28,6 @@
 #include <cstdio>
 #include <sys/types.h>
 #include "utils/log.hpp"
-#include "core/font.hpp" //DEFAULT_FONT_NAME
 #include "core/app_path.hpp"
 
 // TODO merge that with find and unlink
@@ -65,13 +64,13 @@ static CheckFileList euser_check_file_list[] =
     { "",                 app_path(AppPath::Certif),            false, true,  false, false },
     { "",                 app_path(AppPath::Persistent),        false, true,  false, false },
     { "",                 app_path(AppPath::DriveRedirection),  false, true,  false, false },
-    { "",                 app_path(AppPath::Pid),               false, true,  false, false },
+    { "",                 app_path(AppPath::PidParent),         false, true,  false, false },
 
     //  Files
     { DEFAULT_FONT_NAME,  app_path(AppPath::Share),             true,  false, false, false },
     { REDEMPTION_LOGO24,  app_path(AppPath::Share),             true,  false, false, false },
     { LOGIN_WAB_BLUE,     app_path(AppPath::Share),             true,  false, false, false },
-    { LOCKFILE,           app_path(AppPath::Pid),               true,  false, false, false },
+    { LOCKFILE,           app_path(AppPath::PidParent),         true,  false, false, false },
     { RDPPROXY_INI,       app_path(AppPath::Cfg),               true,  false, false, false },
 //     { LOGO_PNG,           CFG_THEMES_PATH, true,  false, false, false },
 //     { LOGO_BMP,           CFG_THEMES_PATH, true,  false, false, false },

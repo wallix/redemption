@@ -28,12 +28,6 @@
 #include "client_redemption.hpp"
 
 
-#include "qt_input_output_api/qt_output_sound.hpp"
-#include "qt_input_output_api/qt_input_output_clipboard.hpp"
-#include "qt_input_output_api/qt_IO_graphic_mouse_keyboard.hpp"
-#include "qt_input_output_api/qt_input_socket.hpp"
-
-
 #pragma GCC diagnostic pop
 
 
@@ -42,29 +36,15 @@
 int main(int argc, char** argv) {
 
 
-    QApplication app(argc, argv);
-
-    QtIOGraphicMouseKeyboard * graphic_control_qt = new QtIOGraphicMouseKeyboard();
-    QWidget * qwidget_parent = graphic_control_qt->get_static_qwidget();
-
-    ClientIOClipboardAPI  * clipboard_api = new QtInputOutputClipboard(qwidget_parent);
-    ClientOutputSoundAPI  * sound_api     = new QtOutputSound(qwidget_parent);
-    ClientInputSocketAPI  * socket_api    = new QtInputSocket(qwidget_parent);
-
 
     RDPVerbose verbose = to_verbose_flags(0);
 
-    ClientRedemption client_qt(argv, argc, verbose
-                              , graphic_control_qt
-                              , clipboard_api
-                              , sound_api
-                              , socket_api
-                              , graphic_control_qt);
-
-    app.exec();
-
-    delete(graphic_control_qt);
-
+    ClientRedemption client(argv, argc, verbose
+                           , nullptr
+                           , nullptr
+                           , nullptr
+                           , nullptr
+                           , nullptr);
 }
 
 

@@ -173,7 +173,7 @@ bool SocketTransport::disconnect()
     }
     // Disconnect tls if needed
     this->tls.reset();
-    shutdown(this->sck, 2);
+    shutdown(this->sck, 2); // 2 = SHUT_RDWR
     close(this->sck);
     this->sck = 0;
     return true;

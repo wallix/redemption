@@ -25,7 +25,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #include <zlib.h>
-#include "utils/log.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/zlib.hpp"
 
@@ -56,13 +55,11 @@ RED_AUTO_TEST_CASE(TestZLIB0)
     unsigned char out[CHUNK];
 
     /* allocate deflate state */
-    strm.zalloc = Z_NULL;
-    strm.zfree = Z_NULL;
-    strm.opaque = Z_NULL;
+    strm.zalloc = nullptr;
+    strm.zfree = nullptr;
+    strm.opaque = nullptr;
     int ret = deflateInit(&strm, 9);
-    if (ret != Z_OK){
-        RED_ERROR("deflateInit failed");
-    }
+    RED_REQUIRE_EQ(ret, Z_OK);
 
     /* compress until end of data */
     size_t total_compressed_size = 0;
@@ -131,13 +128,11 @@ RED_AUTO_TEST_CASE(TestZLIB1)
     unsigned char out[CHUNK];
 
     /* allocate deflate state */
-    strm.zalloc = Z_NULL;
-    strm.zfree = Z_NULL;
-    strm.opaque = Z_NULL;
+    strm.zalloc = nullptr;
+    strm.zfree = nullptr;
+    strm.opaque = nullptr;
     int ret = deflateInit(&strm, 9);
-    if (ret != Z_OK){
-        RED_ERROR("deflateInit failed");
-    }
+    RED_REQUIRE_EQ(ret, Z_OK);
 
     /* compress until end of data */
     size_t total_compressed_size = 0;

@@ -60,7 +60,7 @@ char const * app_path(AppPath k) noexcept
         case AppPath::Persistent: return PERSISTENT_PATH;
         case AppPath::PersistentRdp: return PERSISTENT_PATH "/mod_rdp";
         case AppPath::DriveRedirection: return DRIVE_REDIRECTION_PATH;
-        case AppPath::Pid: return PID_PATH;
+        case AppPath::PidParent: return PID_PATH;
         case AppPath::Share: return SHARE_PATH;
         case AppPath::Cfg: return CFG_PATH;
         case AppPath::LoginWabBlue: return SHARE_PATH "/" LOGIN_WAB_BLUE;
