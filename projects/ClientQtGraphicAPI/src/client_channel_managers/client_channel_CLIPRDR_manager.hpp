@@ -60,6 +60,8 @@ class ClientChannelCLIPRDRManager {
               CLIPBRD_FORMAT_COUNT = 4
         };
 
+        size_t size = 0;
+
         const std::string FILECONTENTS;
         const std::string FILEGROUPDESCRIPTORW;
         uint32_t          IDs[CLIPBRD_FORMAT_COUNT];
@@ -79,10 +81,10 @@ class ClientChannelCLIPRDRManager {
         {}
 
         void add_format(uint32_t ID, const std::string & name) {
-            if (index < CLIPBRD_FORMAT_COUNT) {
-                IDs[index]   = ID;
-                names[index] = name;
-                index++;
+            if (this->size < CLIPBRD_FORMAT_COUNT) {
+                this->IDs[size]   = ID;
+                this->names[size] = name;
+                this->size++;
             }
         }
 
@@ -326,7 +328,7 @@ public:
 
                             size_t sizes[] = {26, 42, 2, 2, /*2*/};
 
-                            this->send_FormatListPDU(this->clipbrdFormatsList.IDs, names, sizes, ClipbrdFormatsList::CLIPBRD_FORMAT_COUNT);
+                            this->send_FormatListPDU(this->clipbrdFormatsList.IDs, names, sizes, this->clipbrdFormatsList.size);
                         } else {
                             const uint16_t * names[] = {
                                         reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[2].data()),

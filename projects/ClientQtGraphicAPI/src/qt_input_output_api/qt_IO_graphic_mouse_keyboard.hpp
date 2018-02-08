@@ -23,15 +23,11 @@
 #pragma once
 
 #include "utils/log.hpp"
-#include "capture/full_video_params.hpp"
-#include "capture/video_params.hpp"
-#include "capture/capture.hpp"
 
 
 
 #include "../client_input_output_api.hpp"
 #include "keymaps/qt_scancode_keymap.hpp"
-
 #include "qt_graphics_components/qt_progress_bar_window.hpp"
 #include "qt_graphics_components/qt_options_window.hpp"
 #include "qt_graphics_components/qt_screen_window.hpp"

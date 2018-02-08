@@ -163,46 +163,14 @@ ainsi que la résolution.
 ainsi que le scan code ou le code ascii de la touche.
 	
 
+### Implémentation du client
 
-//## Implementation d'un client à partir de la couche graphique Qt
-
-//L'API consiste à créer des clients composés de deux élément principaux:
-
-//- La partie front qui implémente le front de l'API graphique Qt en RDP.
-//- La partie mod qui implémente un mod de connexion à la cible de redemption.
-
-
-//### Implémentation du Front
-
-//Il faut créer une classe front qui inclue dans un fichier
-    //`redemption/project/ClientQtGraphicAPI/src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp`
-//et hérite de la classe `FrontQtRDPGraphicAPI`.
-
-La fonction `mod_api * init_mod() override` doit être réimplémenté pour initialisé et retourner la variable `mod` (utiliser le mod de redemption de votre choix).
-
-En option il est possible de reimplémenter les fonctions suivantes:
-
-    void callback() override {
-        FrontQtRDPGraphicAPI::callback();
-    }
-	
-`callback()` est appelée quand il y a un event socket, il est nécessaire de continuer
-à appeler l'implémentation `FrontQtRDPGraphicAPI::callback()` dans l'override.
-
-    void connect() override {
-        FrontQtRDPGraphicAPI::connect();
-    }
-
-`connect()` est appelée quand le bouton `[Connection]` est pressé, il est nécessaire
-de continuer à appeler l'implémentation `FrontQtRDPGraphicAPI::connect()` dans l'override.
-
-    void options() override {}
-
-`options()` est appelée quand le bouton `[Options]` est pressé, l'appel à l'implémentation
-de la classe mère n'est pas nécessaire.
-
-Il y a un exemple d'implémentation avec `mod_vnc` dans
-    `redemption/project/ClientQtGraphicAPiI/src/frontDemoQtClient.cpp`
+	ClientRedemption client_qt(argv, argc, verbose
+		              , graphic_control_qt
+		              , clipboard_api
+		              , sound_api
+		              , socket_api
+		              , graphic_control_qt);
 
 
 ### La fonction "main" avec Qt
@@ -217,7 +185,7 @@ Exemple:
 
     int main(int argc, char** argv) {
 
-        QApplication app(argc, argv);
+	QApplication app(argc, argv);
 
         VotreFront votreFront();
 
@@ -232,19 +200,24 @@ Dans le fichier
 
 Ajouter les lignes suivantes:
 
+    obj [votre_fichier_main].o : [votre_fichier_main].cpp :
+        <define>REDEMPTION_DECL_LOG_TEST
+        $(EXE_DEPENDENCIES)
+    ;
+
     exe votre_client_exe_Qt$(qtversion) :
-        src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp
-        src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
+
+	[votre_fichier_main].o
 
         [Optionnel: chemins vers les fichiers .hpp contenant des classes dérivées de QObject si vous en avez ajouté]
         [nom_du_fichier_qui_contient_votre_class_front.hpp]
 
         $(obj_list)
+        $(lib_list)
         $(obj_list_VNC) # si necessaire
         config.o
         hexdump.o
 
-        $(lib_list)
         libqtclient
     :
         $(EXE_DEPENDENCIES)
