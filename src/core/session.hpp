@@ -40,7 +40,7 @@
 #include "acl/authentifier.hpp"
 #include "core/server.hpp"
 #include "core/wait_obj.hpp"
-#include "core/session_reactor.hpp"
+// #include "core/session_reactor.hpp"
 #include "front/front.hpp"
 #include "mod/mod_api.hpp"
 #include "system/ssl_calls.hpp"
