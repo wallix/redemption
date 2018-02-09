@@ -372,3 +372,11 @@ test-run test_executor :
   <library>src/utils/hexdump.o
 ;
 explicit test_executor ;
+
+
+exe epoll :
+  $(REDEMPTION_SRC_PATH)/main/epoll.cpp
+:
+  <cxxflags>-std=c++1z
+;
+explicit epoll ;
