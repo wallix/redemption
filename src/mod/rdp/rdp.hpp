@@ -1096,7 +1096,8 @@ public:
         }
 
         if (this->enable_session_probe) {
-            this->file_system_drive_manager.EnableSessionProbeDrive(this->verbose);
+            this->file_system_drive_manager.EnableSessionProbeDrive(
+                mod_rdp_params.proxy_managed_drive_prefix, this->verbose);
         }
 
         if (mod_rdp_params.proxy_managed_drives && (*mod_rdp_params.proxy_managed_drives)) {
@@ -2017,29 +2018,19 @@ public:
             LOG(LOG_INFO, "Proxy managed drives=\"%s\"", proxy_managed_drives);
         }
 
-        std::string drive;
-        std::size_t prefix_end_pos = 0;
-        if (proxy_managed_drive_prefix) {
-            drive = proxy_managed_drive_prefix;
-            if (drive.size() && drive.back() != '/') {
-                drive += '/';
-            }
-            prefix_end_pos = drive.size();
-        }
-
         for (auto & r : get_line(proxy_managed_drives, ',')) {
-            auto trimmed_range = trim(r);
+            auto const trimmed_range = trim(r);
 
             if (trimmed_range.empty()) continue;
 
-            drive.append(begin(trimmed_range), end(trimmed_range));
-
             if (bool(this->verbose & RDPVerbose::connection)) {
-                LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive);
+                LOG(LOG_INFO, "Proxy managed drive=\"%.*s\"",
+                    int(trimmed_range.size()), trimmed_range.begin());
             }
-            this->file_system_drive_manager.EnableDrive(drive.c_str(), this->verbose);
 
-            drive.resize(prefix_end_pos);
+            this->file_system_drive_manager.EnableDrive(
+                array_view_const_char{trimmed_range.begin(), trimmed_range.end()},
+                proxy_managed_drive_prefix, this->verbose);
         }
     }   // configure_proxy_managed_drives
 

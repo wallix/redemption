@@ -64,7 +64,7 @@ namespace VNC {
                 , verbose(verbose)
             {
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "New zrle compressor %zu (%zu %zu %zu %zu)", bpp, x,y, cx, cy);
+                    LOG(LOG_INFO, "New zrle compressor %hhu (%zu %zu %zu %zu)", bpp, x,y, cx, cy);
                 }
             }
 

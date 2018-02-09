@@ -34,6 +34,9 @@
 
 #include "test_only/front/fake_front.hpp"
 
+#include <sys/stat.h>
+#include <sys/types.h>
+
 
 class TestToClientSender : public VirtualChannelDataSender {
     Transport& transport;
@@ -129,12 +132,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
 
     FileSystemDriveManager file_system_drive_manager;
 
-    bool ignore_existence_check__for_test_only = true;
-
-    file_system_drive_manager.EnableDrive("export", verbose,
-        ignore_existence_check__for_test_only);
-    file_system_drive_manager.EnableDrive("share", verbose,
-        ignore_existence_check__for_test_only);
+    mkdir("/tmp/EXPORT", 0664); file_system_drive_manager.EnableDrive("export", "/tmp", verbose);
+    mkdir("/tmp/SHARE", 0664); file_system_drive_manager.EnableDrive("share", "/tmp", verbose);
 
     #include "fixtures/test_rdpdr_channel.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
@@ -241,12 +240,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
 
     FileSystemDriveManager file_system_drive_manager;
 
-    bool ignore_existence_check__for_test_only = true;
-
-    file_system_drive_manager.EnableDrive("export", verbose,
-        ignore_existence_check__for_test_only);
-    file_system_drive_manager.EnableDrive("share", verbose,
-        ignore_existence_check__for_test_only);
+    mkdir("/tmp/EXPORT", 0664); file_system_drive_manager.EnableDrive("export", "/tmp", verbose);
+    mkdir("/tmp/SHARE", 0664); file_system_drive_manager.EnableDrive("share", "/tmp", verbose);
 
     #include "fixtures/test_rdpdr_channel_no_drive.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
@@ -353,12 +348,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
 
     FileSystemDriveManager file_system_drive_manager;
 
-    bool ignore_existence_check__for_test_only = true;
-
-    file_system_drive_manager.EnableDrive("export", verbose,
-        ignore_existence_check__for_test_only);
-    file_system_drive_manager.EnableDrive("share", verbose,
-        ignore_existence_check__for_test_only);
+    mkdir("/tmp/EXPORT", 0664); file_system_drive_manager.EnableDrive("export", "/tmp", verbose);
+    mkdir("/tmp/SHARE", 0664); file_system_drive_manager.EnableDrive("share", "/tmp", verbose);
 
     #include "fixtures/test_rdpdr_channel_no_print.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
@@ -465,12 +456,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
 
     FileSystemDriveManager file_system_drive_manager;
 
-    bool ignore_existence_check__for_test_only = true;
-
-    file_system_drive_manager.EnableDrive("export", verbose,
-        ignore_existence_check__for_test_only);
-    file_system_drive_manager.EnableDrive("share", verbose,
-        ignore_existence_check__for_test_only);
+    mkdir("/tmp/EXPORT", 0664); file_system_drive_manager.EnableDrive("export", "/tmp", verbose);
+    mkdir("/tmp/SHARE", 0664); file_system_drive_manager.EnableDrive("share", "/tmp", verbose);
 
     #include "fixtures/test_rdpdr_channel_no_drive_no_print.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
@@ -577,12 +564,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
 
     FileSystemDriveManager file_system_drive_manager;
 
-    bool ignore_existence_check__for_test_only = true;
-
-    file_system_drive_manager.EnableDrive("export", verbose,
-        ignore_existence_check__for_test_only);
-    file_system_drive_manager.EnableDrive("share", verbose,
-        ignore_existence_check__for_test_only);
+    mkdir("/tmp/EXPORT", 0664); file_system_drive_manager.EnableDrive("export", "/tmp", verbose);
+    mkdir("/tmp/SHARE", 0664); file_system_drive_manager.EnableDrive("share", "/tmp", verbose);
 
     #include "fixtures/test_rdpdr_channel_device_remove.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
@@ -689,12 +672,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
 
     FileSystemDriveManager file_system_drive_manager;
 
-    bool ignore_existence_check__for_test_only = true;
-
-    file_system_drive_manager.EnableDrive("export", verbose,
-        ignore_existence_check__for_test_only);
-    file_system_drive_manager.EnableDrive("share", verbose,
-        ignore_existence_check__for_test_only);
+    mkdir("/tmp/EXPORT", 0664); file_system_drive_manager.EnableDrive("export", "/tmp", verbose);
+    mkdir("/tmp/SHARE", 0664); file_system_drive_manager.EnableDrive("share", "/tmp", verbose);
 
     #include "fixtures/test_rdpdr_channel_fragmented_header.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
