@@ -196,25 +196,15 @@ private:
     bool     clipboard_requesting_for_data_is_delayed = false;
     int      clipboard_requested_format_id            = 0;
     std::chrono::microseconds clipboard_last_client_data_timestamp = std::chrono::microseconds{};
-
     ClipboardEncodingType clipboard_server_encoding_type;
-
     bool clipboard_owned_by_client = true;
-
     VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop = VncBogusClipboardInfiniteLoop::delayed;
-
     uint32_t clipboard_general_capability_flags = 0;
-
     ReportMessageApi & report_message;
-
     time_t beginning;
-
     bool server_is_apple;
-
     int keylayout;
-
     ClientExecute* client_execute = nullptr;
-
     Zdecompressor<> zd;
 
 public:
@@ -670,6 +660,35 @@ public:
     // TODO not yet supported
     // If the Tight Security Type is activated, the server init
     // message is extended with an interaction capabilities section.
+
+
+//    7.4.7   EnableContinuousUpdates
+
+//    This message informs the server to switch between only sending FramebufferUpdate messages as a result of a 
+//    FramebufferUpdateRequest message, or sending FramebufferUpdate messages continuously.
+
+//    Note that there is currently no way to determine if the server supports this message except for using the 
+//       Tight Security Type authentication.
+
+//    No. of bytes       Type     [Value]     Description
+//            1           U8       150       message-type
+//            1           U8                 enable-flag
+//            2           U16                x-position
+//            2           U16                y-position
+//            2           U16                width
+//            2           U16                height
+
+//    If enable-flag is non-zero, then the server can start sending FramebufferUpdate messages as needed for the area
+// specified by x-position, y-position, width, and height. If continuous updates are already active, then they must
+// remain active active and the coordinates must be replaced with the last message seen.
+
+//    If enable-flag is zero, then the server must only send FramebufferUpdate messages as a result of receiving 
+// FramebufferUpdateRequest messages. The server must also immediately send out a EndOfContinuousUpdates message.
+// This message must be sent out even if continuous updates were already disabled.
+
+//    The server must ignore all incremental update requests (FramebufferUpdateRequest with incremental set to
+// non-zero) as long as continuous updates are active. Non-incremental update requests must however be honored,
+// even if the area in such a request does not overlap the area specified for continuous updates.
 
     class ServerInitCtx
     {

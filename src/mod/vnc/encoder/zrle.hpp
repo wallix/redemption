@@ -124,8 +124,6 @@ namespace VNC {
                     this->tile_y    = this->y;
 
                     size_t data_ready = 0;
-                    size_t consumed = 0;
-
                     const size_t step = 32768;
                     for (size_t q = 0 ; q < this->zlib_compressed_data_length ; 
                                         q += this->zd.update(&this->accumulator[q], std::min(step, this->zlib_compressed_data_length-q))){
