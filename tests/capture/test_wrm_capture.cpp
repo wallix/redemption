@@ -702,6 +702,6 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
             "check " << x.size << " == filesize(\"" << x.filename
             << "\") failed [" << x.size << " != " << fsize << "]"
         );
-//        ::unlink(x.filename);
+       ::unlink(x.filename);
     }
 }
