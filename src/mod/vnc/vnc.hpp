@@ -2131,6 +2131,32 @@ private:
             this->state = State::Header;
         }
 
+
+//  7.5.1   FramebufferUpdate (part 2 : rectangles)
+// ----------------------------------
+
+//  FrameBufferUpdate message is followed by number-of-rectangles 
+// of pixel data. Each rectangle consists of:
+
+//     No. of bytes | Type   |  Description
+// ---------------------------------------------
+//         2        |  U16   |  x-position
+//         2        |  U16   |  y-position
+//         2        |  U16   |  width
+//         2        |  U16   |  height
+//         4        |  S32   |  encoding-type
+
+//  followed by the pixel data in the specified encoding. See Encodings for the format of the data for each encoding
+// and Pseudo-encodings for the meaning of pseudo-encodings.
+
+// Note that a framebuffer update marks a transition from one valid framebuffer state to another. That
+// means that a single update handles all received FramebufferUpdateRequest up to the point where th
+// e update is sent out.
+
+// However, because there is no strong connection between a FramebufferUpdateRequest and a subsequent 
+// FramebufferUpdate, a client that has more than one FramebufferUpdateRequest pending at any given 
+// time cannot be sure that it has received all framebuffer updates.
+
         bool run(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             Result r = Result::fail();
@@ -2139,7 +2165,22 @@ private:
                 switch (this->state)
                 {
                 case State::Header:
-                    r = this->read_header(buf); 
+                {
+                    const size_t sz = 3;
+
+                    if (buf.remaining() < sz)
+                    {
+                        r = Result::fail();
+                        break;
+                    }
+
+                    InStream stream(buf.av(sz));
+                    stream.in_skip_bytes(1);
+                    this->num_recs = stream.in_uint16_be();
+
+                    buf.advance(sz);
+                    r = Result::ok(State::Encoding);
+                }
                 break;
                 case State::Encoding:
                 {
@@ -2252,76 +2293,6 @@ private:
         Zdecompressor<> & zd;
 
         VNCVerbose verbose;
-
-        Result read_header(Buf64k & buf) noexcept
-        {
-            const size_t sz = 3;
-
-            if (buf.remaining() < sz)
-            {
-                return Result::fail();
-            }
-
-            InStream stream(buf.av(sz));
-            stream.in_skip_bytes(1);
-            this->num_recs = stream.in_uint16_be();
-
-            buf.advance(sz);
-            return Result::ok(State::Encoding);
-        }
-
-
-//  7.5.1   FramebufferUpdate (part 2 : rectangles)
-// ----------------------------------
-
-//  FrameBufferUpdate message is followed by number-of-rectangles 
-// of pixel data. Each rectangle consists of:
-
-//     No. of bytes | Type   |  Description
-// ---------------------------------------------
-//         2        |  U16   |  x-position
-//         2        |  U16   |  y-position
-//         2        |  U16   |  width
-//         2        |  U16   |  height
-//         4        |  S32   |  encoding-type
-
-//  followed by the pixel data in the specified encoding. See Encodings for the format of the data for each encoding
-// and Pseudo-encodings for the meaning of pseudo-encodings.
-
-// Note that a framebuffer update marks a transition from one valid framebuffer state to another. That
-// means that a single update handles all received FramebufferUpdateRequest up to the point where th
-// e update is sent out.
-
-// However, because there is no strong connection between a FramebufferUpdateRequest and a subsequent 
-// FramebufferUpdate, a client that has more than one FramebufferUpdateRequest pending at any given 
-// time cannot be sure that it has received all framebuffer updates.
-
-
-        Result read_encoding(Buf64k & buf) noexcept
-        {
-
-            const size_t sz = 12;
-
-            if (buf.remaining() < sz)
-            {
-                return Result::fail();
-            }
-
-            InStream stream(buf.av(sz));
-            this->x = stream.in_uint16_be();
-            this->y = stream.in_uint16_be();
-            this->cx = stream.in_uint16_be();
-            this->cy = stream.in_uint16_be();
-            this->encoding = stream.in_sint32_be();
-
-            --this->num_recs;
-            buf.advance(sz);
-
-            // TODO see why we get these empty rects ?
-            // return State::Encoding;
-            return Result::ok(State::Data);
-        }
-
 
     };
     FrameBufferUpdateCtx frame_buffer_update_ctx;
