@@ -40,6 +40,7 @@
 #include "acl/authentifier.hpp"
 #include "core/server.hpp"
 #include "core/wait_obj.hpp"
+#include "core/session_reactor.hpp"
 #include "front/front.hpp"
 #include "mod/mod_api.hpp"
 #include "system/ssl_calls.hpp"
@@ -437,7 +438,7 @@ public:
                         }
                     }
                 } catch (Error const& e) {
-                    LOG(LOG_INFO, "Session::Session exception = %u!\n", e.id);
+                    LOG(LOG_INFO, "Session::Session exception = %s\n", e.errmsg());
                     time_t now = time(nullptr);
                     mm.invoke_close_box(local_err_msg(e, language(this->ini)), signal, now, authentifier, authentifier);
                 };
