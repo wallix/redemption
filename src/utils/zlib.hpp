@@ -131,13 +131,8 @@ class Zdecompressor
         return sizeof(this->out) - this->offset - this->z.avail_out;
     }
 
-    // TODO: we could return a pair buffer/size pointing to inner buffer
-    // TODO: we mau also use a vector for that
     size_t flush_ready(uint8_t * data, size_t data_size){
-        LOG(LOG_INFO, "flush_ready!!!");
-        LOG(LOG_INFO, "flush_ready: %zu", data_size);
         size_t to_send = (data_size >= this->available()) ? this->available() : data_size;
-        LOG(LOG_INFO, "to_send: %zu", to_send);
         memcpy(data, &this->out[this->offset], to_send);
         if (to_send < this->available()){
             this->offset += to_send;
@@ -148,6 +143,18 @@ class Zdecompressor
         this->z.next_out = &this->out[0];
         return to_send;
     }
+
+    size_t flush_ready(std::vector<uint8_t> & vec){
+        const size_t data_ready = vec.size();
+        const size_t to_send = this->available();
+        vec.resize(data_ready+to_send);
+        memcpy(&vec[data_ready], &this->out[this->offset], to_send);
+        this->offset = 0;
+        this->z.avail_out = sizeof(this->out);
+        this->z.next_out = &this->out[0];
+        return to_send;
+    }
+
 
     bool full(){
         return this->z.avail_out == 0;

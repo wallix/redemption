@@ -130,13 +130,11 @@ namespace VNC {
                     for (size_t q = 0 ; q < this->zlib_compressed_data_length ; 
                                         q += this->zd.update(&this->accumulator[q], std::min(step, this->zlib_compressed_data_length-q))){
                         if (this->zd.full()) {
-                            this->accumulator_uncompressed.resize(data_ready + this->zd.available());
-                            data_ready += this->zd.flush_ready(&this->accumulator_uncompressed[data_ready], this->accumulator_uncompressed.size()-data_ready);
+                            data_ready += this->zd.flush_ready(this->accumulator_uncompressed);
                         }
                     }
                     while (!this->zd.finish() && this->zd.available()){
-                        this->accumulator_uncompressed.resize(data_ready + this->zd.available());
-                        data_ready += this->zd.flush_ready(&this->accumulator_uncompressed[data_ready], this->accumulator_uncompressed.size()-data_ready);
+                        data_ready += this->zd.flush_ready(this->accumulator_uncompressed);
                     }
                     
                     InStream zlib_uncompressed_data_stream(this->accumulator_uncompressed.data(), data_ready);
