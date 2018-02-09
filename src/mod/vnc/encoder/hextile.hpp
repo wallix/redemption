@@ -124,10 +124,8 @@ namespace VNC {
         class Hextile : public EncoderApi {
              const uint8_t bpp;
              const uint8_t Bpp;
-             const size_t x;
-             size_t y;
-             const size_t cx;
-             size_t cy;
+             const Rect r;
+             Rect tile;
 
 //             enum class HextileState {
 //                 Header,
@@ -139,18 +137,130 @@ namespace VNC {
              VNCVerbose verbose;
 
             Hextile(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy, VNCVerbose verbose)
-                 : bpp(bpp), Bpp(Bpp), x(x), y(y), cx(cx), cy(cy)
+                 : bpp(bpp), Bpp(Bpp), r(x, y, cx, cy)
 //                 , state(HextileState::Header)
                  , verbose(verbose)
             {
+                this->tile = Rect(this->r.x, this->r.y, std::min<size_t>(this->r.cx, 16), std::min<size_t>(this->r.y, 16));
             }
             
             virtual ~Hextile(){}
+
+//#define PIXEL_T rdr::CONCAT2E(U,BPP)
+//#define READ_PIXEL CONCAT2E(readOpaque,BPP)
+//#define HEXTILE_DECODE CONCAT2E(hextileDecode,BPP)
+
+//static void HEXTILE_DECODE (const Rect& r, rdr::InStream* is,
+//                            const PixelFormat& pf,
+//                            ModifiablePixelBuffer* pb)
+//{
+//  Rect t;
+//  PIXEL_T bg = 0;
+//  PIXEL_T fg = 0;
+//  PIXEL_T buf[16 * 16];
+
+//  for (t.tl.y = r.tl.y; t.tl.y < r.br.y; t.tl.y += 16) {
+
+//    t.br.y = __rfbmin(r.br.y, t.tl.y + 16);
+
+//    for (t.tl.x = r.tl.x; t.tl.x < r.br.x; t.tl.x += 16) {
+
+//      t.br.x = __rfbmin(r.br.x, t.tl.x + 16);
+
+//      int tileType = is->readU8();
+
+//      if (tileType & hextileRaw) {
+//        is->readBytes(buf, t.area() * (BPP/8));
+//        pb->imageRect(pf, t, buf);
+//        continue;
+//      }
+
+//      if (tileType & hextileBgSpecified)
+//        bg = is->READ_PIXEL();
+
+//      int len = t.area();
+//      PIXEL_T* ptr = buf;
+//      while (len-- > 0) *ptr++ = bg;
+
+//      if (tileType & hextileFgSpecified)
+//        fg = is->READ_PIXEL();
+
+//      if (tileType & hextileAnySubrects) {
+//        int nSubrects = is->readU8();
+
+//        for (int i = 0; i < nSubrects; i++) {
+
+//          if (tileType & hextileSubrectsColoured)
+//            fg = is->READ_PIXEL();
+
+//          int xy = is->readU8();
+//          int wh = is->readU8();
+
+//          int x = ((xy >> 4) & 15);
+//          int y = (xy & 15);
+//          int w = ((wh >> 4) & 15) + 1;
+//          int h = (wh & 15) + 1;
+//          if (x + w > 16 || y + h > 16) {
+//            throw rfb::Exception("HEXTILE_DECODE: Hextile out of bounds");
+//          }
+//          PIXEL_T* ptr = buf + y * t.width() + x;
+//          int rowAdd = t.width() - w;
+//          while (h-- > 0) {
+//            int len = w;
+//            while (len-- > 0) *ptr++ = fg;
+//            ptr += rowAdd;
+//          }
+//        }
+//      }
+//      pb->imageRect(pf, t, buf);
+//    }
+//  }
+//}
+
+//#undef PIXEL_T
+//#undef READ_PIXEL
+//#undef HEXTILE_DECODE
             
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
-            EncoderState consume(Buf64k & /*buf*/, gdi::GraphicApi & /*drawable*/) override
+            EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
+//                  for (t.tl.y = r.tl.y; t.tl.y < r.br.y; t.tl.y += 16) {
+
+//                    t.br.y = __rfbmin(r.br.y, t.tl.y + 16);
+
+//                    for (t.tl.x = r.tl.x; t.tl.x < r.br.x; t.tl.x += 16) {
+//                      rdr::U8 tileType;
+
+//                      t.br.x = __rfbmin(r.br.x, t.tl.x + 16);
+
+//                      tileType = is->readU8();
+//                      os->writeU8(tileType);
+
+//                      if (tileType & hextileRaw) {
+//                        os->copyBytes(is, t.area() * this->Bpp);
+//                        continue;
+//                      }
+
+//                      if (tileType & hextileBgSpecified)
+//                        os->copyBytes(is, this->Bpp);
+
+//                      if (tileType & hextileFgSpecified)
+//                        os->copyBytes(is, bytesPerPixel);
+
+//                      if (tileType & hextileAnySubrects) {
+//                        rdr::U8 nSubrects;
+
+//                        nSubrects = is->readU8();
+//                        os->writeU8(nSubrects);
+
+//                        if (tileType & hextileSubrectsColoured)
+//                          os->copyBytes(is, nSubrects * (this->Bpp + 2));
+//                        else
+//                          os->copyBytes(is, nSubrects * 2);
+//                      }
+//                    }
+//                  }            
                 return EncoderState::Exit; // finished decoding
             }
             
