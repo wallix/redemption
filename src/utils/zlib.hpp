@@ -127,13 +127,17 @@ class Zdecompressor
 
     // return the amount of compressed data available for emission
     size_t available() const {
+        LOG(LOG_INFO, "available=%zu", sizeof(this->out) - this->offset - this->z.avail_out);
         return sizeof(this->out) - this->offset - this->z.avail_out;
     }
 
     // TODO: we could return a pair buffer/size pointing to inner buffer
     // TODO: we mau also use a vector for that
     size_t flush_ready(uint8_t * data, size_t data_size){
-        size_t to_send = data_size >= this->available() ? this->available() : data_size;
+        LOG(LOG_INFO, "flush_ready!!!");
+        LOG(LOG_INFO, "flush_ready: %zu", data_size);
+        size_t to_send = (data_size >= this->available()) ? this->available() : data_size;
+        LOG(LOG_INFO, "to_send: %zu", to_send);
         memcpy(data, &this->out[this->offset], to_send);
         if (to_send < this->available()){
             this->offset += to_send;
