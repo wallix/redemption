@@ -257,33 +257,31 @@ namespace VNC {
                         buf.advance(raw_length + 1);
                     }
 
-//                    t.br.x = __rfbmin(r.br.x, t.tl.x + 16);
+// Keep a 16x16 tiledata buffer for the current tile
 
-//                    tileType = is->readU8();
-//                    os->writeU8(tileType);
-
-//                    if (tileType & hextileRaw) {
-//                    os->copyBytes(is, t.area() * this->Bpp);
-//                    continue;
+//                   switch (this->Bpp){
+//                    default: // 16 bits, Bpp = 2
+//                    if (tileType & hextileBgSpecified){
+//                        this->bgPixel = 0;
 //                    }
 
-//                    if (tileType & hextileBgSpecified)
-//                    os->copyBytes(is, this->Bpp);
-
-//                    if (tileType & hextileFgSpecified)
-//                    os->copyBytes(is, bytesPerPixel);
+//                    if (tileType & hextileFgSpecified){
+////                    os->copyBytes(is, bytesPerPixel);
+//                        this->fgPixel = 0;
+//                    }
 
 //                    if (tileType & hextileAnySubrects) {
-//                    rdr::U8 nSubrects;
-
-//                    nSubrects = is->readU8();
-//                    os->writeU8(nSubrects);
-
-//                    if (tileType & hextileSubrectsColoured)
-//                      os->copyBytes(is, nSubrects * (this->Bpp + 2));
-//                    else
-//                      os->copyBytes(is, nSubrects * 2);
+//                        this->nSubrects = buf.av().data()[q+5];;
 //                    }
+
+//                    if (tileType & hextileSubrectsColoured){
+//                        uint32_t pixel = 
+////                      os->copyBytes(is, nSubrects * (this->Bpp + 2));
+//                    }
+//                    else {
+////                        os->copyBytes(is, nSubrects * 2);
+//                    }
+                    }
                 }
                 return EncoderState::NeedMoreData; // finished decoding
             }
