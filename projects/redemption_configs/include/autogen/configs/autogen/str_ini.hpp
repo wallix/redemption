@@ -741,78 +741,103 @@
 "[debug]\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#x224 = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#mcs = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#sec = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#rdp = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#primary_orders = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#secondary_orders = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#bitmap_update = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#bitmap = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#capture = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#auth = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#session = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#front = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#mod_rdp = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#mod_vnc = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#mod_internal = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#mod_xup = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#widget = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#input = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#password = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#compression = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#cache = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#performance = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#pass_dialog_box = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#ocr = 0\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "#ffmpeg = 0\n\n"
 
 "#_advanced\n"
