@@ -236,18 +236,6 @@ constexpr auto default_action_function() noexcept
     };
 }
 
-constexpr auto default_action_function_noexcept() noexcept
-{
-    return []([[maybe_unused]] auto... args) noexcept {
-        return ExecutorResult::Nothing;
-    };
-}
-
-class ExecutorBase;
-class Executor;
-template<class PrefixArgs, class... Ts>
-struct REDEMPTION_CXX_NODISCARD Executor2ActionContext;
-
 template<class F>
 F make_lambda() noexcept
 {
@@ -259,11 +247,73 @@ F make_lambda() noexcept
     return reinterpret_cast<F const&>(f);
 }
 
-template<class PrefixArgs>
-class TopExecutorTimersImpl;
 
-template<class... Ts>
-using TopExecutorTimers = TopExecutorTimersImpl<prefix_args<Ts...>>;
+template<class PrefixArgs>
+struct ActionBase
+{
+    void delete_self() noexcept
+    {
+        return this->deleter(this);
+    }
+
+    template<class... Args>
+    ExecutorResult exec_event(Args&&... args)
+    {
+        return this->on_action(*this, static_cast<Args&&>(args)...);
+    }
+
+    using OnEventPtrFunc = MakeFuncPtr<ActionBase, PrefixArgs>;
+
+    OnEventPtrFunc on_action = default_action_function();
+    void  (*deleter) (ActionBase*) noexcept = [](ActionBase*) noexcept {};
+    ActionBase() = default;
+};
+
+template<class PrefixArgs>
+struct BasicTimer
+{
+    void delete_self() noexcept
+    {
+        return this->deleter(this);
+    }
+
+    void reset_time() noexcept
+    {
+        this->tv = addusectimeval(this->delay, tvtime());
+    }
+
+    timeval time() const noexcept
+    {
+        return this->tv;
+    }
+
+    void set_time(std::chrono::milliseconds ms) noexcept
+    {
+        this->delay = std::chrono::duration_cast<std::chrono::microseconds>(ms);
+        this->tv = addusectimeval(this->delay, tvtime());
+    }
+
+    void set_time(timeval const& tv) noexcept
+    {
+        this->delay = std::chrono::microseconds(-1);
+        this->tv = tv;
+    }
+
+    template<class... Args>
+    ExecutorResult exec_timer(Args&&... args)
+    {
+        return this->on_action(*this, static_cast<Args&&>(args)...);
+    }
+
+    using OnTimerPtrFunc = MakeFuncPtr<BasicTimer&, PrefixArgs>;
+
+    timeval tv {};
+    OnTimerPtrFunc on_action = default_action_function();
+    void (*deleter) (BasicTimer*) noexcept = [](BasicTimer*) noexcept {};
+    std::chrono::microseconds delay;
+
+    BasicTimer() = default;
+};
 
 template<class PrefixArgs>
 struct BasicExecutorImpl
@@ -301,10 +351,6 @@ struct BasicExecutorImpl
     template<class... Args>
     bool exit_with(ExecutorError, Args&&... args);
 
-    BasicExecutorImpl(TopExecutorTimersImpl<PrefixArgs>& top_executor_timers) noexcept
-    : top_executor_timers(top_executor_timers)
-    {}
-
 protected:
     using OnActionPtrFunc = MakeFuncPtr<BasicExecutorImpl&, PrefixArgs>;
     using OnExitPtrFunc = MakeFuncPtr<BasicExecutorImpl&, PrefixArgs, ExecutorError>;
@@ -313,8 +359,7 @@ protected:
     OnExitPtrFunc on_exit = default_action_function();
     BasicExecutorImpl* current = this;
     BasicExecutorImpl* prev = nullptr;
-    TopExecutorTimersImpl<PrefixArgs>& top_executor_timers;
-    void (*deleter) (BasicExecutorImpl*) = [](BasicExecutorImpl*){};
+    void (*deleter) (BasicExecutorImpl*) noexcept = [](BasicExecutorImpl*) noexcept {};
 
     void set_next_executor(BasicExecutorImpl& other) noexcept
     {
@@ -325,6 +370,14 @@ protected:
 
     BasicExecutorImpl() = default;
 };
+
+
+
+template<class PrefixArgs>
+class TopExecutorTimersImpl;
+
+template<class... Ts>
+using TopExecutorTimers = TopExecutorTimersImpl<prefix_args<Ts...>>;
 
 template<class... Args>
 using BasicExecutor = BasicExecutorImpl<prefix_args<Args...>>;
@@ -339,6 +392,15 @@ namespace detail
     };
 
     constexpr GetExecutor get_executor {};
+
+    struct GetEvent
+    {
+        template<class T>
+        auto& operator()(T& x) const
+        { return x.event; }
+    };
+
+    constexpr GetEvent get_event {};
 
 
     template<class T, class U>
@@ -461,44 +523,27 @@ using ExecExecutorBuilder = detail::ExecutorBuilder<
 template<class PrefixArgs, class... Ts>
 struct Timer2Impl;
 
-template<class PrefixArgs, class... Ts>
-struct REDEMPTION_CXX_NODISCARD Executor2TimerContext
+template<class Event>
+struct REDEMPTION_CXX_NODISCARD BasicContext
 {
-    template<class... PreviousTs>
-    Executor2TimerContext(Executor2TimerContext<PrefixArgs, PreviousTs...> const& other) noexcept
-      : timer(reinterpret_cast<Timer2Impl<PrefixArgs, Ts...>&>(detail::get_executor(other)))
+    template<class OtherEvent>
+    BasicContext(BasicContext<OtherEvent> const& other) noexcept
+      : event(reinterpret_cast<Event&>(detail::get_event(other)))
     {
         // TODO strip arguments support (PreviousTs=(int, int), Ts=(int))
-        static_assert((true && ... && detail::check_is_context_arg_convertible<PreviousTs, Ts>::value));
-        static_assert(sizeof(Timer2Impl<PrefixArgs, Ts...>) == sizeof(detail::get_executor(other)));
+        static_assert(detail::is_context_convertible<
+            typename Event::tuple_context, typename OtherEvent::tuple_context>::value);
+        static_assert(sizeof(Event) == sizeof(detail::get_event(other)));
     }
 
-    explicit Executor2TimerContext(Timer2Impl<PrefixArgs, Ts...>& timer) noexcept
-      : timer{timer}
+    explicit BasicContext(Event& event) noexcept
+      : event{event}
     {}
 
-    Executor2TimerContext(Executor2TimerContext const&) = default;
-    Executor2TimerContext& operator=(Executor2TimerContext const&) = delete;
+    BasicContext(BasicContext const&) = default;
+    BasicContext& operator=(BasicContext const&) = delete;
 
-    friend detail::GetExecutor;
-
-    ExecutorResult detach_timer() noexcept
-    {
-        this->timer.detach_timer();
-        return ExecutorResult::ExitSuccess;
-    }
-
-    ExecutorResult ready() noexcept
-    {
-        this->timer.reset_time();
-        return ExecutorResult::Nothing;
-    }
-
-    ExecutorResult ready_until(std::chrono::milliseconds ms)
-    {
-        this->timer.update_time(ms);
-        return ExecutorResult::Nothing;
-    }
+    friend detail::GetEvent;
 
     ExecutorResult terminate() noexcept
     {
@@ -508,15 +553,15 @@ struct REDEMPTION_CXX_NODISCARD Executor2TimerContext
     template<class F>
     ExecutorResult next_action(F f) noexcept
     {
-        this->timer.set_on_action(f);
+        this->event.set_on_action(f);
         return ExecutorResult::Nothing;
     }
 
     template<class F1, class F2>
     ExecutorResult exec_action2(F1 f1, F2 f2)
     {
-        this->timer.set_on_action(f1);
-        return this->timer.ctx.invoke(f2, Executor2TimerContext{this->timer});
+        this->event.set_on_action(f1);
+        return this->event.ctx.invoke(f2, BasicContext{this->event});
     }
 
     template<class F>
@@ -525,38 +570,46 @@ struct REDEMPTION_CXX_NODISCARD Executor2TimerContext
         return this->exec_action2(f, f);
     }
 
-    Executor2TimerContext set_time(std::chrono::milliseconds ms)
-    {
-        this->timer.update_time(ms);
-        return *this;
-    }
+    friend detail::GetExecutor;
 
 protected:
-    Timer2Impl<PrefixArgs, Ts...>& timer;
+    Event& event;
+};
+
+template<class Timer>
+struct REDEMPTION_CXX_NODISCARD Executor2TimerContext : BasicContext<Timer>
+{
+    using BasicContext<Timer>::BasicContext;
+
+    ExecutorResult detach_timer() noexcept
+    {
+        this->event.detach_timer();
+        return ExecutorResult::ExitSuccess;
+    }
+
+    ExecutorResult ready() noexcept
+    {
+        this->event.reset_time();
+        return ExecutorResult::Nothing;
+    }
+
+    ExecutorResult ready_until(std::chrono::milliseconds ms)
+    {
+        this->event.update_time(ms);
+        return ExecutorResult::Nothing;
+    }
+
+    Executor2TimerContext set_time(std::chrono::milliseconds ms)
+    {
+        this->event.update_time(ms);
+        return *this;
+    }
 };
 
 
-template<class PrefixArgs, class... Ts>
-struct REDEMPTION_CXX_NODISCARD Executor2ActionContext
+template<class Executor>
+struct REDEMPTION_CXX_NODISCARD Executor2ActionContext : BasicContext<Executor>
 {
-    friend detail::GetExecutor;
-
-    template<class... PreviousTs>
-    Executor2ActionContext(Executor2ActionContext<PrefixArgs, PreviousTs...> const& other) noexcept
-      : executor(reinterpret_cast<Executor2Impl<PrefixArgs, Ts...>&>(detail::get_executor(other)))
-    {
-        // TODO strip arguments support (PreviousTs=(int, int), Ts=(int))
-        static_assert((true && ... && detail::check_is_context_arg_convertible<PreviousTs, Ts>::value));
-        static_assert(sizeof(Executor2Impl<PrefixArgs, Ts...>) == sizeof(detail::get_executor(other)));
-    }
-
-    explicit Executor2ActionContext(Executor2Impl<PrefixArgs, Ts...>& executor) noexcept
-      : executor{executor}
-    {}
-
-    Executor2ActionContext(Executor2ActionContext const&) = default;
-    Executor2ActionContext& operator=(Executor2ActionContext const&) = delete;
-
     ExecutorResult need_more_data() noexcept
     {
         return ExecutorResult::Nothing;
@@ -565,11 +618,6 @@ struct REDEMPTION_CXX_NODISCARD Executor2ActionContext
     ExecutorResult ready() noexcept
     {
         return ExecutorResult::Ready;
-    }
-
-    ExecutorResult terminate() noexcept
-    {
-        return ExecutorResult::Terminate;
     }
 
     ExecutorResult exit(ExitStatus status) noexcept
@@ -590,78 +638,55 @@ struct REDEMPTION_CXX_NODISCARD Executor2ActionContext
     template<class... Args>
     auto create_timer(Args&&... args)
     {
-        return executor.top_executor_timers.create_timer(static_cast<Args&&>(args)...);
+        return this->event.top_executor_timers.create_timer(static_cast<Args&&>(args)...);
     }
 
-    template<class... Args>
-    SubExecutorBuilder<PrefixArgs, Args...> create_sub_executor(Args&&... args)
-    {
-        return executor.create_sub_executor(static_cast<Args&&>(args)...);
-    }
-
-    BasicExecutorImpl<PrefixArgs>& get_basic_executor() noexcept
-    {
-        return this->executor;
-    }
-
-    template<class... Args>
-    SubExecutorBuilder<PrefixArgs, Ts..., Args...> create_nested_executor(Args&&... args)
-    {
-        return executor.create_nested_executor(static_cast<Args&&>(args)...);
-    }
-
-    template<class... Args>
-    ExecExecutorBuilder<PrefixArgs, Args...> exec_sub_executor(Args&&... args)
-    {
-        auto builder = executor.create_sub_executor(static_cast<Args&&>(args)...);
-        auto& sub_executor = detail::get_executor(builder);
-        return {sub_executor};
-    }
-
-    template<class... Args>
-    ExecExecutorBuilder<PrefixArgs, Ts..., Args...> exec_nested_executor(Args&&... args)
-    {
-        auto builder = executor.create_nested_executor(static_cast<Args&&>(args)...);
-        auto& sub_executor = detail::get_executor(builder);
-        return {sub_executor};
-    }
-
-    template<class F>
-    ExecutorResult next_action(F f) noexcept
-    {
-        executor.set_on_action(f);
-        return ExecutorResult::Nothing;
-    }
-
-    template<class F1, class F2>
-    ExecutorResult exec_action2(F1 f1, F2 f2)
-    {
-        executor.set_on_action(f1);
-        return executor.ctx.invoke(f2, Executor2ActionContext{this->executor});
-    }
-
-    template<class F>
-    ExecutorResult exec_action(F f)
-    {
-        return this->exec_action2(f, f);
-    }
+//     template<class... Args>
+//     SubExecutorBuilder2<Executor> create_sub_executor(Args&&... args)
+//     {
+//         return this->event.create_sub_executor(static_cast<Args&&>(args)...);
+//     }
+//
+//     BasicExecutorImpl<PrefixArgs>& get_basic_executor() noexcept
+//     {
+//         return this->executor;
+//     }
+//
+//     template<class... Args>
+//     SubExecutorBuilder2<Executor, Args...> create_nested_executor(Args&&... args)
+//     {
+//         return this->event.create_nested_executor(static_cast<Args&&>(args)...);
+//     }
+//
+//     template<class... Args>
+//     ExecExecutorBuilder2<Executor, Args...> exec_sub_executor(Args&&... args)
+//     {
+//         auto builder = this->event.create_sub_executor(static_cast<Args&&>(args)...);
+//         auto& sub_executor = detail::get_executor(builder);
+//         return {sub_executor};
+//     }
+//
+//     template<class... Args>
+//     ExecExecutorBuilder2<Executor, Args...> exec_nested_executor(Args&&... args)
+//     {
+//         auto builder = this->event.create_nested_executor(static_cast<Args&&>(args)...);
+//         auto& sub_executor = detail::get_executor(builder);
+//         return {sub_executor};
+//     }
 
     template<class F>
     Executor2ActionContext set_exit_action(F f) noexcept
     {
-        executor.set_on_exit(f);
+        this->event.set_on_exit(f);
         return *this;
     }
-
-protected:
-    Executor2Impl<PrefixArgs, Ts...>& executor;
 };
 
 
 template<class PrefixArgs, class... Ts>
 struct Executor2Impl : public BasicExecutorImpl<PrefixArgs>
 {
-    friend Executor2ActionContext<PrefixArgs, Ts...>;
+    friend Executor2ActionContext<Executor2Impl>;
 
     template<class F>
     void set_on_action(F) noexcept
@@ -670,7 +695,7 @@ struct Executor2Impl : public BasicExecutorImpl<PrefixArgs>
             auto& self = static_cast<Executor2Impl&>(executor);
             return self.ctx.invoke(
                 make_lambda<F>(),
-                Executor2ActionContext<PrefixArgs, Ts...>(self),
+                Executor2ActionContext<Executor2Impl>(self),
                 static_cast<decltype(prefix_args)&&>(prefix_args)...);
         };
     }
@@ -683,7 +708,7 @@ struct Executor2Impl : public BasicExecutorImpl<PrefixArgs>
             // TODO ExecutorExitContext
             return self.ctx.invoke(
                 make_lambda<F>(),
-                Executor2ActionContext<PrefixArgs, Ts...>(self),
+                Executor2ActionContext<Executor2Impl>(self),
                 static_cast<decltype(prefix_args)&&>(prefix_args)...);
         };
     }
@@ -731,203 +756,36 @@ private:
 };
 
 
-template<class PrefixArgs, class... Ts>
-struct REDEMPTION_CXX_NODISCARD Executor2TimeoutContext : Executor2ActionContext<PrefixArgs, Ts...>
+template<class Executor>
+struct REDEMPTION_CXX_NODISCARD Executor2TimeoutContext : Executor2ActionContext<Executor>
 {
-    using Executor2ActionContext<PrefixArgs, Ts...>::Executor2ActionContext;
+    using Executor2ActionContext<Executor>::Executor2ActionContext;
 
     template<class F>
-    Executor2ActionContext<PrefixArgs, Ts...> set_timeout_action(F f) noexcept
+    Executor2ActionContext<Executor> set_timeout_action(F f) noexcept
     {
-        auto executor_action = static_cast<Executor2ActionContext<PrefixArgs, Ts...>*>(this);
+        auto executor_action = static_cast<Executor2ActionContext<Executor>*>(this);
         detail::get_executor(executor_action)->set_on_timeout(f);
         return *executor_action;
     }
 
     Executor2TimeoutContext set_timeout(std::chrono::milliseconds ms) noexcept
     {
-        auto& executor = static_cast<TopExecutorImpl<Ts...>&>(this->executor);
+        auto& executor = static_cast<Executor&>(this->executor);
         executor.set_timeout(ms);
         return *this;
     }
 };
 
-template<class PrefixArgs>
-struct EventBase
+template<class Event>
+struct REDEMPTION_CXX_NODISCARD Executor2EventContext : BasicContext<Event>
 {
-    using event_base = EventBase;
-
-    using OnEventPtrFunc = MakeFuncPtr<EventBase, PrefixArgs>;
-
-    OnEventPtrFunc on_event = default_action_function();
-    void  (*deleter) (EventBase*) = [](EventBase*){};
-    EventBase() = default;
-
-    void delete_self() noexcept
-    {
-        return this->deleter(this);
-    }
-
-    template<class... Args>
-    ExecutorResult exec_event(Args&&... args)
-    {
-        return this->on_event(*this, static_cast<Args&&>(args)...);
-    }
-};
-
-template<class PrefixArgs, class... Ts>
-struct EventImpl;
-
-template<class PrefixArgs, class... Ts>
-struct REDEMPTION_CXX_NODISCARD Executor2EventContext
-{
-    template<class... PreviousTs>
-    Executor2EventContext(Executor2EventContext<PrefixArgs, PreviousTs...> const& other) noexcept
-      : event(reinterpret_cast<EventImpl<PrefixArgs, Ts...>&>(detail::get_executor(other)))
-    {
-        // TODO strip arguments support (PreviousTs=(int, int), Ts=(int))
-        static_assert((true && ... && detail::check_is_context_arg_convertible<PreviousTs, Ts>::value));
-        static_assert(sizeof(EventImpl<PrefixArgs, Ts...>) == sizeof(detail::get_executor(other)));
-    }
-
-    explicit Executor2EventContext(EventImpl<PrefixArgs, Ts...>& event) noexcept
-      : event{event}
-    {}
-
-    Executor2EventContext(Executor2EventContext const&) = default;
-    Executor2EventContext& operator=(Executor2EventContext const&) = delete;
-
-    friend detail::GetExecutor;
+    using BasicContext<Event>::BasicContext;
 
     ExecutorResult ready() noexcept
     {
-        this->event.reset_time();
         return ExecutorResult::Nothing;
     }
-
-    ExecutorResult terminate() noexcept
-    {
-        return ExecutorResult::Terminate;
-    }
-
-    template<class F>
-    ExecutorResult next_action(F f) noexcept
-    {
-        this->event.set_on_action(f);
-        return ExecutorResult::Nothing;
-    }
-
-    template<class F1, class F2>
-    ExecutorResult exec_action2(F1 f1, F2 f2)
-    {
-        this->event.set_on_action(f1);
-        return this->event.ctx.invoke(f2, Executor2EventContext{this->event});
-    }
-
-    template<class F>
-    ExecutorResult exec_action(F f)
-    {
-        return this->exec_action2(f, f);
-    }
-
-protected:
-    EventImpl<PrefixArgs, Ts...>& event;
-};
-
-template<class PrefixArgs, class... Ts>
-struct EventImpl : EventBase<PrefixArgs>
-{
-    template<class F>
-    void set_on_action(F) noexcept
-    {
-        this->on_event = [](EventBase<PrefixArgs>& event, auto... prefix_args) {
-            auto& self = static_cast<EventImpl&>(event);
-            return self.ctx.invoke(
-                make_lambda<F>(),
-                Executor2EventContext<PrefixArgs, Ts...>(self),
-                static_cast<decltype(prefix_args)&&>(prefix_args)...);
-            return ExecutorResult::Terminate;
-        };
-    }
-
-    EventImpl(EventImpl const&) = delete;
-    EventImpl& operator=(EventImpl const&) = delete;
-
-    REDEMPTION_DIAGNOSTIC_PUSH
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
-    template<class EventContainer, class... Args>
-    EventImpl(EventContainer& event_container, Args&&... args)
-      : ctx{static_cast<Args&&>(args)...}
-    {
-        event_container.push_back(this);                    // TODO add_event
-    }
-    REDEMPTION_DIAGNOSTIC_POP
-
-    template<class EventContainer, class... Args>
-    static EventImpl* New(EventContainer& event_container, Args&&... args)
-    {
-        auto* p = new EventImpl(event_container, static_cast<Args&&>(args)...);
-        p->deleter = [](EventBase<PrefixArgs>* base) {
-            delete static_cast<EventImpl*>(base);
-        };
-        return p;
-    }
-
-protected:
-    detail::tuple<Ts...> ctx;
-
-private:
-    void *operator new(size_t n) { return ::operator new(n); }
-};
-
-template<class PrefixArgs>
-struct BasicTimer
-{
-    void delete_self() noexcept
-    {
-        return this->deleter(this);
-    }
-
-    void reset_time() noexcept
-    {
-        this->tv = addusectimeval(this->delay, tvtime());
-    }
-
-    timeval time() const noexcept
-    {
-        return this->tv;
-    }
-
-    void set_time(std::chrono::milliseconds ms) noexcept
-    {
-        this->delay = std::chrono::duration_cast<std::chrono::microseconds>(ms);
-        this->tv = addusectimeval(this->delay, tvtime());
-    }
-
-    void set_time(timeval const& tv) noexcept
-    {
-        this->delay = std::chrono::microseconds(-1);
-        this->tv = tv;
-    }
-
-    template<class... Args>
-    ExecutorResult exec_timer(Args&&... args)
-    {
-        return this->on_timer(*this, static_cast<Args&&>(args)...);
-    }
-
-// protected:
-    friend class TopExecutorTimersImpl<PrefixArgs>;
-
-    using OnTimerPtrFunc = MakeFuncPtr<BasicTimer&, PrefixArgs>;
-
-    timeval tv {};
-    OnTimerPtrFunc on_timer = default_action_function();
-    // TODO noexcept
-    void (*deleter) (BasicTimer*) noexcept = [](BasicTimer*) noexcept {};
-    std::chrono::microseconds delay;
-
-    BasicTimer() = default;
 };
 
 template<class Base>
@@ -1064,6 +922,12 @@ struct TopExecutorTimersImpl
         this->timers.emplace_back(&timer);
     }
 
+    void attach(BasicTimer<PrefixArgs>& timer)
+    {
+        assert(this->timers.end() == this->get_timer_iterator(timer));
+        this->timers.emplace_back(&timer);
+    }
+
     auto get_timer_iterator(BasicTimer<PrefixArgs>& timer)
     {
         return std::find_if(this->timers.begin(), this->timers.end(), [&timer](auto* p){
@@ -1079,6 +943,11 @@ struct TopExecutorTimersImpl
     }
 
     void detach_timer(BasicTimer<PrefixArgs>& timer)
+    {
+        this->timers.erase(this->get_timer_iterator(timer), this->timers.end());
+    }
+
+    void detach(BasicTimer<PrefixArgs>& timer)
     {
         this->timers.erase(this->get_timer_iterator(timer), this->timers.end());
     }
@@ -1130,71 +999,115 @@ void TopExecutorTimersImpl<PrefixArgs>::exec_timeout(timeval const& end_tv, Args
     }
 }
 
-template<class PrefixArgs, class... Ts>
-struct Timer2Impl : BasicTimer<PrefixArgs>
+template<
+    class Inherit,
+    class EventContainerType,
+    class BaseType,
+    template<class...> class EventCtxArg,
+    class... Ts>
+struct BasicEvent : BaseType
 {
-    template<class F>
-    void set_on_action(F) noexcept
-    {
-        this->on_timer = [](BasicTimer<PrefixArgs>& timer, auto... prefix_args) {
-            auto& self = static_cast<Timer2Impl&>(timer);
-            return self.ctx.invoke(
-                make_lambda<F>(),
-                Executor2TimerContext<PrefixArgs, Ts...>(self),
-                static_cast<decltype(prefix_args)&&>(prefix_args)...);
-        };
-    }
+    using executor_context = EventCtxArg<Inherit>;
+    using base_type = BaseType;
+    using event_container_type = EventContainerType;
+    using basic_event = BasicEvent;
+    using tuple_context = detail::tuple<Ts...>;
 
-    void detach_timer()
-    {
-        this->top_executor_timers.detach_timer(*this);
-    }
-
-    void update_time(std::chrono::milliseconds ms)
-    {
-        this->set_time(ms);
-        this->top_executor_timers.update_time(*this, ms);
-    }
-
-    Timer2Impl(Timer2Impl const&) = delete;
-    Timer2Impl& operator=(Timer2Impl const&) = delete;
+    BasicEvent(BasicEvent const&) = delete;
+    BasicEvent& operator=(BasicEvent const&) = delete;
 
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
-    template<class... Args>
-    Timer2Impl(TopExecutorTimersImpl<PrefixArgs>& top_executor_timers, Args&&... args)
+    template<class Cont, class... Args>
+    BasicEvent(Cont&& event_container, Args&&... args)
       : ctx{static_cast<Args&&>(args)...}
-      , top_executor_timers(top_executor_timers)
-    {
-        top_executor_timers.add_timer(*this);
-    }
+      , event_container(static_cast<Cont&&>(event_container))
+    {}
     REDEMPTION_DIAGNOSTIC_POP
 
-    BasicTimer<PrefixArgs>& base() noexcept
+    ~BasicEvent()
+    {
+        this->detach();
+    }
+
+    void detach() noexcept
+    {
+        this->event_container.detach(*this);
+    }
+
+    void attach() noexcept
+    {
+        this->event_container.attach(*this);
+    }
+
+    base_type& base() noexcept
     {
         return *this;
     }
 
-    template<class... Args>
-    static Timer2Impl* New(TopExecutorTimersImpl<PrefixArgs>& top_executor_timers, Args&&... args)
+    template<class F>
+    void set_on_action(F) noexcept
     {
-        auto* p = new Timer2Impl(top_executor_timers, static_cast<Args&&>(args)...);
-        p->deleter = [](BasicTimer<PrefixArgs>* base) noexcept {
-            auto* timer_ptr = static_cast<Timer2Impl*>(base);
-            timer_ptr->top_executor_timers.detach_timer(*timer_ptr);
-            delete timer_ptr;
+        this->on_action = [](base_type& base, auto... prefix_args) {
+            auto& self = static_cast<Inherit&>(base);
+            return self.ctx.invoke(
+                make_lambda<F>(),
+                executor_context{self},
+                static_cast<decltype(prefix_args)&&>(prefix_args)...);
         };
-        return p;
     }
 
 protected:
-    detail::tuple<Ts...> ctx;
-
-private:
-    TopExecutorTimersImpl<PrefixArgs>& top_executor_timers;
+    tuple_context ctx;
+    event_container_type event_container;
 
 private:
     void *operator new(size_t n) { return ::operator new(n); }
+
+public:
+    void *operator new(size_t n, char const*) { return ::operator new(n); }
+};
+
+
+template<class Event, class... Args>
+static std::unique_ptr<Event, DeleteSelf<typename Event::base_type>>
+new_event(Args&&... args)
+{
+    using Base = typename Event::base_type;
+    auto* p = new("") Event(static_cast<Args&&>(args)...);
+    p->deleter = [](Base* base) noexcept { delete static_cast<Event*>(base); };
+    std::unique_ptr<Event, DeleteSelf<Base>> uptr(p);
+    p->attach();
+    return uptr;
+}
+
+
+template<class PrefixArgs, class... Ts>
+struct Timer2Impl : BasicEvent<
+    Timer2Impl<PrefixArgs, Ts...>,
+    TopExecutorTimersImpl<PrefixArgs>&,
+    BasicTimer<PrefixArgs>,
+    Executor2TimerContext,
+    Ts...>
+{
+    using Timer2Impl::basic_event::basic_event;
+
+    void update_time(std::chrono::milliseconds ms)
+    {
+        this->set_time(ms);
+        this->event_container.update_time(*this, ms);
+    }
+};
+
+template<class EventContainer, class PrefixArgs, class... Ts>
+struct ActionImpl : BasicEvent<
+    ActionImpl<EventContainer, PrefixArgs, Ts...>,
+    EventContainer,
+    ActionBase<PrefixArgs>,
+    Executor2EventContext,
+    Ts...>
+{
+    using ActionImpl::basic_event::basic_event;
 };
 
 namespace detail
@@ -1214,19 +1127,19 @@ struct TopExecutorImpl : Executor2Impl<PrefixArgs, Ts...>
 {
     using Executor2Impl<PrefixArgs, Ts...>::Executor2Impl;
 
-    template<class F>
-    void set_on_timeout(F) noexcept
-    {
-        this->timeout.on_timer = [](BasicTimer<PrefixArgs>& timer, auto... prefix_args) {
-            auto& timer_mem = static_cast<Timer2Impl<PrefixArgs>&>(timer);
-            auto& self = detail::get_before<TopExecutorImpl, Executor2Impl<PrefixArgs, Ts...>>(timer_mem);
-            // TODO ExecutorTimeoutContext
-            return self.ctx.invoke(
-                make_lambda<F>(),
-                Executor2TimeoutContext<PrefixArgs, Ts...>(self),
-                static_cast<decltype(prefix_args)&&>(prefix_args)...);
-        };
-    }
+//     template<class F>
+//     void set_on_timeout(F) noexcept
+//     {
+//         this->timeout.on_timer = [](BasicTimer<PrefixArgs>& timer, auto... prefix_args) {
+//             auto& timer_mem = static_cast<Timer2Impl<PrefixArgs>&>(timer);
+//             auto& self = detail::get_before<TopExecutorImpl, Executor2Impl<PrefixArgs, Ts...>>(timer_mem);
+//             // TODO ExecutorTimeoutContext
+//             return self.ctx.invoke(
+//                 make_lambda<F>(),
+//                 Executor2TimeoutContext<PrefixArgs, Ts...>(self),
+//                 static_cast<decltype(prefix_args)&&>(prefix_args)...);
+//         };
+//     }
 
     void set_timeout(std::chrono::milliseconds ms) noexcept
     {
@@ -1248,7 +1161,7 @@ struct TopExecutorImpl : Executor2Impl<PrefixArgs, Ts...>
     static TopExecutorImpl* New(TopExecutorTimersImpl<PrefixArgs>& top_executor_timers, Args&&... args)
     {
         auto* p = new TopExecutorImpl{top_executor_timers, static_cast<Args&&>(args)...};
-        p->deleter = [](BasicExecutorImpl<PrefixArgs>* base) {
+        p->deleter = [](BasicExecutorImpl<PrefixArgs>* base) noexcept {
             delete static_cast<TopExecutorImpl*>(base);
         };
         return p;
@@ -1297,7 +1210,7 @@ struct TopExecutorWithDataImpl : DataExecutor<Data>, TopExecutorImpl<PrefixArgs,
     static TopExecutorWithDataImpl* New(DataArgs data_args, TopExecutorTimersImpl<PrefixArgs>& top_executor_timers, Args&&... args)
     {
         auto* p = new TopExecutorWithDataImpl{data_args, top_executor_timers, static_cast<Args&&>(args)...};
-        p->deleter = [](BasicExecutorImpl<PrefixArgs>* base) {
+        p->deleter = [](BasicExecutorImpl<PrefixArgs>* base) noexcept {
             delete static_cast<TopExecutorWithDataImpl*>(base);
         };
         return p;

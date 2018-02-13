@@ -85,38 +85,39 @@ struct SessionReactor
 
     using BasicTimerPtr = jln::UniquePtr<jln::BasicTimer<PrefixArgs>>;
 
+    struct Container
+    {
+        template<class T> Container(T&) {}
+        template<class T> void detach(T&) {}
+        template<class T> void attach(T&) {}
+    };
+
     template<class... Args>
     jln::TimerBuilder<PrefixArgs, Args...>
     create_timer(Args&&... args)
     {
-        using Timer = jln::Timer2Impl<PrefixArgs, Args...>;
-        using TimerPtr = jln::UniquePtr2<Timer, jln::BasicTimer<PrefixArgs>>;
-        TimerPtr ptr(Timer::New(this->timers, static_cast<Args&&>(args)...));
-        return std::move(ptr);
+        using Timer = jln::Timer2<PrefixArgs, Args...>;
+        return {jln::new_event<Timer>(this->timers, static_cast<Args&&>(args)...)};
     }
 
-    using CallbackEvent = jln::EventBase<jln::prefix_args<Callback&>>;
+    using CallbackEvent = jln::ActionBase<jln::prefix_args<Callback&>>;
     using CallbackEventPtr = jln::UniquePtr<CallbackEvent>;
 
     template<class... Args>
     auto create_callback_event(Args&&... args)
     {
-        using Event = jln::EventImpl<jln::prefix_args<Callback&>, Args...>;
-        using EventPtr = jln::UniquePtr2<Event, typename Event::event_base>;
-        EventPtr ptr(Event::New(this->front_events, static_cast<Args&&>(args)...));
-        return ptr;
+        using Event = jln::ActionImpl<Container, jln::prefix_args<Callback&>, Args...>;
+        return jln::new_event<Event>(this->front_events, static_cast<Args&&>(args)...);
     }
 
-    using GraphicEvent = jln::EventBase<jln::prefix_args<Callback&>>;
+    using GraphicEvent = jln::ActionBase<jln::prefix_args<Callback&>>;
     using GraphicEventPtr = jln::UniquePtr<GraphicEvent>;
 
     template<class... Args>
     auto create_graphic_event(Args&&... args)
     {
-        using Event = jln::EventImpl<jln::prefix_args<gdi::GraphicApi&>, Args...>;
-        using EventPtr = jln::UniquePtr2<Event, typename Event::event_base>;
-        EventPtr ptr(Event::New(this->graphic_events, static_cast<Args&&>(args)...));
-        return ptr;
+        using Event = jln::ActionImpl<Container, jln::prefix_args<gdi::GraphicApi&>, Args...>;
+        return jln::new_event<Event>(this->graphic_events, static_cast<Args&&>(args)...);
     }
 
     std::vector<std::unique_ptr<Context>> contexts;
