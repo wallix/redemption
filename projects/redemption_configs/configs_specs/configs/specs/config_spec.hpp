@@ -522,35 +522,35 @@ void config_spec_definition(Writer && W)
 
     W.section("debug", [&]
     {
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "x224");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "mcs");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "sec");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "rdp");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "x224");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "mcs");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "sec");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "rdp");
 
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "primary_orders");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "secondary_orders");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "bitmap_update");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "primary_orders");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "secondary_orders");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "bitmap_update");
 
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "bitmap");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "capture");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "auth");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "session");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "front");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "bitmap");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "capture");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "auth");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "session");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "front");
 
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "mod_rdp");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "mod_vnc");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "mod_internal");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "mod_xup");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "mod_rdp");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "mod_vnc");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "mod_internal");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "mod_xup");
 
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "widget");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "input");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "password");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "compression");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "cache");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "performance");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "pass_dialog_box");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "ocr");
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "ffmpeg");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "widget");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "input");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "password");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "compression");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "cache");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "performance");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "pass_dialog_box");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "ocr");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "ffmpeg");
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<unsigned>(), spec::type_<bool>(), "config", set(2));
     });

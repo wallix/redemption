@@ -247,6 +247,7 @@ else
         /qt5//QtGui
         /qt5//QtNetwork
         /qt5//QtWidgets
+        /qt5//QtCore
     ;
 
     lib libphonon : : <name>phonon4qt5 <link>shared ;

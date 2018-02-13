@@ -63,6 +63,9 @@ namespace VNC {
                 , zlib_compressed_data_length(0), accumulator{}, accumulator_uncompressed{}
                 , verbose(verbose)
             {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                    LOG(LOG_INFO, "New zrle compressor %hhu (%zu %zu %zu %zu)", bpp, x,y, cx, cy);
+                }
             }
 
             virtual ~Zrle(){}
@@ -71,6 +74,10 @@ namespace VNC {
             // return is false if the encoder is waiting for more data
             EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                    LOG(LOG_INFO, "zrle consuming data  %zu", buf.av().size());
+                }
+//                hexdump_d(buf.av().data(), buf.av().size());
                 switch (this->state) {
                 case ZrleState::Header:
                 {
@@ -88,6 +95,9 @@ namespace VNC {
                         LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u remaining=%hu", this->zlib_compressed_data_length, buf.remaining());
                     }
                     this->state = ZrleState::Data;
+                    if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                        LOG(LOG_INFO, "Zrle::EncoderReady::zrle remaining data  %zu", buf.av().size());
+                    }
                     return EncoderState::Ready; 
                 }
                 break;
@@ -98,6 +108,9 @@ namespace VNC {
                         auto av = buf.av(buf.remaining());
                         this->accumulator.insert(this->accumulator.end(), av.begin(), av.end());
                         buf.advance(buf.remaining());
+                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                            LOG(LOG_INFO, "Zrle::Encoder::NeedMoreData::zrle remaining data  %zu", buf.av().size());
+                        }
                         return EncoderState::NeedMoreData; 
                     }
                     size_t interesting_part = this->zlib_compressed_data_length - this->accumulator.size();
@@ -111,42 +124,37 @@ namespace VNC {
                     this->tile_y    = this->y;
 
                     size_t data_ready = 0;
-                    size_t consumed = 0;
-                    while (this->zlib_compressed_data_length > 0){
-                        // TODO: see in Zdecompresssor class, ensure some exception is raised if decompressor fails
-                        size_t res = this->zd.update(this->accumulator.data() + consumed, this->zlib_compressed_data_length);
-                        consumed += res;
-                        // TODO: check we made progress
-                        this->zlib_compressed_data_length -= res;
-
-                        if (data_ready + this->zd.available() > this->accumulator_uncompressed.capacity()){
-                            // if we don't have room enough, make room
-                            this->accumulator_uncompressed.reserve(this->accumulator_uncompressed.capacity()+65536);
+                    const size_t step = 32768;
+                    for (size_t q = 0 ; q < this->zlib_compressed_data_length ; 
+                                        q += this->zd.update(&this->accumulator[q], std::min(step, this->zlib_compressed_data_length-q))){
+                        if (this->zd.full()) {
+                            data_ready += this->zd.flush_ready(this->accumulator_uncompressed);
                         }
-                        data_ready += this->zd.flush_ready(&this->accumulator_uncompressed[data_ready], this->accumulator_uncompressed.capacity() - data_ready);
                     }
-                    // TODO: I should be able to merge that loop with the previous one
-                    while (this->zd.available()){
-                        if (data_ready + this->zd.available() > this->accumulator_uncompressed.capacity()){
-                            // if we don't have room enough, make room
-                            this->accumulator_uncompressed.reserve(this->accumulator_uncompressed.capacity()+65536);
-                        }
-                        data_ready += zd.flush_ready(&this->accumulator_uncompressed[data_ready], this->accumulator_uncompressed.capacity()-data_ready);
+                    while (!this->zd.finish() && this->zd.available()){
+                        data_ready += this->zd.flush_ready(this->accumulator_uncompressed);
                     }
-
+                    
                     InStream zlib_uncompressed_data_stream(this->accumulator_uncompressed.data(), data_ready);
 
                     this->lib_framebuffer_update_zrle(zlib_uncompressed_data_stream, drawable);
 
                     this->accumulator.clear();
                     this->state = ZrleState::Exit;
+                    if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                        LOG(LOG_INFO, "Zrle::Encoder::Exit remaining data  %zu", buf.av().size());
+                    }
                     return EncoderState::Exit; 
                 }
                 default:
                     LOG(LOG_ERR, "Unexpected state in ZrleEncoder (%u), should not happen", static_cast<unsigned>(this->state));
                     break;
                 }
-                return EncoderState::Exit; 
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                    LOG(LOG_INFO, "Zrle::Encoder Error remaining data  %zu", buf.av().size());
+                }
+                LOG(LOG_ERR, "VNC Encoding: ZRLE, unexpected encoding stream exit");
+                throw Error(ERR_VNC_ZRLE_PROTOCOL);
             }
 
     //    7.6.9   ZRLE Encoding

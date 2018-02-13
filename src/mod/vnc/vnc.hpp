@@ -196,25 +196,15 @@ private:
     bool     clipboard_requesting_for_data_is_delayed = false;
     int      clipboard_requested_format_id            = 0;
     std::chrono::microseconds clipboard_last_client_data_timestamp = std::chrono::microseconds{};
-
     ClipboardEncodingType clipboard_server_encoding_type;
-
     bool clipboard_owned_by_client = true;
-
     VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop = VncBogusClipboardInfiniteLoop::delayed;
-
     uint32_t clipboard_general_capability_flags = 0;
-
     ReportMessageApi & report_message;
-
     time_t beginning;
-
     bool server_is_apple;
-
     int keylayout;
-
     ClientExecute* client_execute = nullptr;
-
     Zdecompressor<> zd;
 
 public:
@@ -670,6 +660,35 @@ public:
     // TODO not yet supported
     // If the Tight Security Type is activated, the server init
     // message is extended with an interaction capabilities section.
+
+
+//    7.4.7   EnableContinuousUpdates
+
+//    This message informs the server to switch between only sending FramebufferUpdate messages as a result of a 
+//    FramebufferUpdateRequest message, or sending FramebufferUpdate messages continuously.
+
+//    Note that there is currently no way to determine if the server supports this message except for using the 
+//       Tight Security Type authentication.
+
+//    No. of bytes       Type     [Value]     Description
+//            1           U8       150       message-type
+//            1           U8                 enable-flag
+//            2           U16                x-position
+//            2           U16                y-position
+//            2           U16                width
+//            2           U16                height
+
+//    If enable-flag is non-zero, then the server can start sending FramebufferUpdate messages as needed for the area
+// specified by x-position, y-position, width, and height. If continuous updates are already active, then they must
+// remain active active and the coordinates must be replaced with the last message seen.
+
+//    If enable-flag is zero, then the server must only send FramebufferUpdate messages as a result of receiving 
+// FramebufferUpdateRequest messages. The server must also immediately send out a EndOfContinuousUpdates message.
+// This message must be sent out even if continuous updates were already disabled.
+
+//    The server must ignore all incremental update requests (FramebufferUpdateRequest with incremental set to
+// non-zero) as long as continuous updates are active. Non-incremental update requests must however be honored,
+// even if the area in such a request does not overlap the area specified for continuous updates.
 
     class ServerInitCtx
     {
@@ -2112,6 +2131,32 @@ private:
             this->state = State::Header;
         }
 
+
+//  7.5.1   FramebufferUpdate (part 2 : rectangles)
+// ----------------------------------
+
+//  FrameBufferUpdate message is followed by number-of-rectangles 
+// of pixel data. Each rectangle consists of:
+
+//     No. of bytes | Type   |  Description
+// ---------------------------------------------
+//         2        |  U16   |  x-position
+//         2        |  U16   |  y-position
+//         2        |  U16   |  width
+//         2        |  U16   |  height
+//         4        |  S32   |  encoding-type
+
+//  followed by the pixel data in the specified encoding. See Encodings for the format of the data for each encoding
+// and Pseudo-encodings for the meaning of pseudo-encodings.
+
+// Note that a framebuffer update marks a transition from one valid framebuffer state to another. That
+// means that a single update handles all received FramebufferUpdateRequest up to the point where th
+// e update is sent out.
+
+// However, because there is no strong connection between a FramebufferUpdateRequest and a subsequent 
+// FramebufferUpdate, a client that has more than one FramebufferUpdateRequest pending at any given 
+// time cannot be sure that it has received all framebuffer updates.
+
         bool run(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             Result r = Result::fail();
@@ -2120,7 +2165,22 @@ private:
                 switch (this->state)
                 {
                 case State::Header:
-                    r = this->read_header(buf); 
+                {
+                    const size_t sz = 3;
+
+                    if (buf.remaining() < sz)
+                    {
+                        r = Result::fail();
+                        break;
+                    }
+
+                    InStream stream(buf.av(sz));
+                    stream.in_skip_bytes(1);
+                    this->num_recs = stream.in_uint16_be();
+
+                    buf.advance(sz);
+                    r = Result::ok(State::Encoding);
+                }
                 break;
                 case State::Encoding:
                 {
@@ -2233,76 +2293,6 @@ private:
         Zdecompressor<> & zd;
 
         VNCVerbose verbose;
-
-        Result read_header(Buf64k & buf) noexcept
-        {
-            const size_t sz = 3;
-
-            if (buf.remaining() < sz)
-            {
-                return Result::fail();
-            }
-
-            InStream stream(buf.av(sz));
-            stream.in_skip_bytes(1);
-            this->num_recs = stream.in_uint16_be();
-
-            buf.advance(sz);
-            return Result::ok(State::Encoding);
-        }
-
-
-//  7.5.1   FramebufferUpdate (part 2 : rectangles)
-// ----------------------------------
-
-//  FrameBufferUpdate message is followed by number-of-rectangles 
-// of pixel data. Each rectangle consists of:
-
-//     No. of bytes | Type   |  Description
-// ---------------------------------------------
-//         2        |  U16   |  x-position
-//         2        |  U16   |  y-position
-//         2        |  U16   |  width
-//         2        |  U16   |  height
-//         4        |  S32   |  encoding-type
-
-//  followed by the pixel data in the specified encoding. See Encodings for the format of the data for each encoding
-// and Pseudo-encodings for the meaning of pseudo-encodings.
-
-// Note that a framebuffer update marks a transition from one valid framebuffer state to another. That
-// means that a single update handles all received FramebufferUpdateRequest up to the point where th
-// e update is sent out.
-
-// However, because there is no strong connection between a FramebufferUpdateRequest and a subsequent 
-// FramebufferUpdate, a client that has more than one FramebufferUpdateRequest pending at any given 
-// time cannot be sure that it has received all framebuffer updates.
-
-
-        Result read_encoding(Buf64k & buf) noexcept
-        {
-
-            const size_t sz = 12;
-
-            if (buf.remaining() < sz)
-            {
-                return Result::fail();
-            }
-
-            InStream stream(buf.av(sz));
-            this->x = stream.in_uint16_be();
-            this->y = stream.in_uint16_be();
-            this->cx = stream.in_uint16_be();
-            this->cy = stream.in_uint16_be();
-            this->encoding = stream.in_sint32_be();
-
-            --this->num_recs;
-            buf.advance(sz);
-
-            // TODO see why we get these empty rects ?
-            // return State::Encoding;
-            return Result::ok(State::Data);
-        }
-
 
     };
     FrameBufferUpdateCtx frame_buffer_update_ctx;

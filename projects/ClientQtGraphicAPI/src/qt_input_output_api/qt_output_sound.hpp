@@ -34,8 +34,6 @@
 
 #include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
 
-#ifndef _NO_SOUND
-
 #if REDEMPTION_QT_VERSION == 4
 #include <phonon/AudioOutput>
 #include <phonon/MediaObject>
@@ -131,39 +129,4 @@ private Q_SLOTS:
     }
 
 };
-#else
-class QtOutputSound : public QObject, public ClientOutputSoundAPI
-{
 
-Q_OBJECT
-
-    int current_wav_index;
-    int total_wav_files;
-    std::string wave_file_to_write;
-
-
-public:
-    QtOutputSound(QWidget * parent)
-      : QObject(parent), ClientOutputSoundAPI()
-      , current_wav_index(0)
-      , total_wav_files(0)
-    {
-    }
-
-    void init(size_t raw_total_size) override {
-    }
-
-    void setData(const uint8_t * data, size_t size) override {
-    }
-
-    void play() override {
-    }
-
-private Q_SLOTS:
-    void call_playback_over() {
-    }
-
-};
-
-
-#endif

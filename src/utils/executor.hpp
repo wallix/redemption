@@ -49,10 +49,13 @@ namespace detail
         tuple<Ts...> t;
 
         template<class... Us>
-        auto operator()(Us&&... xs)
+        auto operator()(Us&&... xs) const
         {
             static_assert(0 == sizeof...(Ts));
+            REDEMPTION_DIAGNOSTIC_PUSH
+            REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
             return emplace_type<T, Us&&...>{{xs...}};
+            REDEMPTION_DIAGNOSTIC_POP
         }
     };
 
@@ -94,6 +97,12 @@ namespace detail
     template<class... Ts>
     struct tuple : tuple_impl<std::make_index_sequence<sizeof...(Ts)>, Ts...>
     {};
+
+    template<std::size_t i, class T>
+    T& get(tuple_elem<i, T>& e) noexcept
+    {
+        return e.x;
+    }
 
     template<class T> struct decay_and_strip { using type = T; };
     template<class T> struct decay_and_strip<T&> : decay_and_strip<T>{};
@@ -230,18 +239,15 @@ class Executor;
 template<class PrefixArgs, class... Ts>
 struct REDEMPTION_CXX_NODISCARD Executor2ActionContext;
 
-namespace
+template<class F>
+F make_lambda() noexcept
 {
-    template<class F>
-    F make_lambda() noexcept
-    {
-        static_assert(
-            std::is_empty<F>::value,
-            "F must be an empty class or a lambda expression convertible to pointer of function");
-        // big hack for a lambda not default constructible before C++20 :)
-        alignas(F) char const f[sizeof(F)]{}; // same as `char f`
-        return reinterpret_cast<F const&>(f);
-    }
+    static_assert(
+        std::is_empty<F>::value,
+        "F must be an empty class or a lambda expression convertible to pointer of function");
+    // big hack for a lambda not default constructible before C++20 :)
+    alignas(F) char const f[sizeof(F)]{}; // same as `char f`
+    return reinterpret_cast<F const&>(f);
 }
 
 template<class PrefixArgs>
@@ -709,7 +715,7 @@ struct Executor2Impl : public BasicExecutorImpl<PrefixArgs>
         return p;
     }
 
-protected:
+// protected:
     detail::tuple<Ts...> ctx;
 
 private:
@@ -1250,14 +1256,15 @@ struct Reactor
 };
 
 
-namespace detail { namespace {
+namespace detail
+{
     template<class... Ts>
     static ExecutorResult terminate_callee(Ts...)
     {
         assert("call a executor marked 'Terminate'");
         return ExecutorResult::Terminate;
     }
-} }
+}
 
 template<class PrefixArgs>
 template<class... Args>

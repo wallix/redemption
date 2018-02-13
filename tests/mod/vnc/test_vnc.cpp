@@ -158,9 +158,10 @@ RED_AUTO_TEST_CASE(TestZrle)
 
     auto state = VNC::Encoder::State::Encoding;
     VNC::Encoder::Zrle * encoder = nullptr;
+    bool need_more_data = true;
     for (auto t: datas){
         BlockWrap bw(t);
-                
+
         while (!bw.empty()){
             buf.read_from(bw);
             switch (state){
@@ -192,6 +193,7 @@ RED_AUTO_TEST_CASE(TestZrle)
                         case VNC::Encoder::EncoderState::Ready:
                         break;
                         case VNC::Encoder::EncoderState::NeedMoreData:
+                            need_more_data = true;
                         break;
                         case VNC::Encoder::EncoderState::Exit:
                             LOG(LOG_INFO, "End of encoder");
