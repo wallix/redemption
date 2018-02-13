@@ -560,6 +560,10 @@
 "#_hidden\n"
 "on_end_of_data = boolean(default=False)\n\n"
 
+"# 0 - replay once, 1 - loop replay\n"
+"#_hidden\n"
+"replay_on_loop = boolean(default=False)\n\n"
+
 "[ocr]\n\n"
 
 "#   1: v1\n"

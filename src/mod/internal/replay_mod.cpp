@@ -69,6 +69,7 @@ ReplayMod::ReplayMod(
   , timeval const & begin_read
   , timeval const & end_read
   , time_t balise_time_frame
+  , bool replay_on_loop
   , Verbose debug_capture)
 : InternalMod(front, width, height, font, Theme{}, true)
 , auth_error_message(auth_error_message)
@@ -90,6 +91,7 @@ ReplayMod::ReplayMod(
 , wait_for_escape(wait_for_escape)
 , balise_time_frame(balise_time_frame)
 , sync_setted(false)
+, replay_on_loop(replay_on_loop)
 {
     switch (this->front.server_resize( this->reader->info_width
                                      , this->reader->info_height
@@ -240,17 +242,68 @@ void ReplayMod::draw_event(time_t now, gdi::GraphicApi & drawable)
 
             if (this->reader->next_order()) {
                 this->reader->interpret_order();
-            }
-            else {
-                this->end_of_data = true;
-                this->disconnect(tvtime().tv_sec);
-                this->front.sync();
 
-                if (!this->wait_for_escape) {
-                    this->event.signal = BACK_EVENT_STOP;
+            } else {
+                if (this->replay_on_loop) {
+
+                    this->in_trans.reset(new InMetaSequenceTransport(
+                                            this->cctx,
+                                            this->movie_path.prefix,
+                                            this->movie_path.extension,
+                                            InCryptoTransport::EncryptionMode::NotEncrypted,
+                                            this->fstat));
+
+                    timeval const begin_read = {0, 0};
+                    time_t begin_file_read = begin_read.tv_sec+this->in_trans->get_meta_line().start_time - this->balise_time_frame;
+                    this->in_trans->set_begin_time(begin_file_read);
+                    this->sync_setted = false;
+
+                    this->reader.reset(new FileToGraphic(
+                                            *this->in_trans,
+                                            begin_read, {0, 0},
+                                            true,
+                                            to_verbose_flags(0)));
+
+
+                    switch (this->front.server_resize( this->reader->info_width
+                                     , this->reader->info_height
+                                     , this->reader->info_bpp)) {
+                    case FrontAPI::ResizeResult::no_need:
+                        // no resizing needed
+                        break;
+                    case FrontAPI::ResizeResult::instant_done:
+                    case FrontAPI::ResizeResult::remoteapp:
+                    case FrontAPI::ResizeResult::done:
+                        // resizing done;
+                        this->front_width  = this->reader->info_width;
+                        this->front_height = this->reader->info_height;
+
+                        this->screen.set_wh(this->reader->info_width, this->reader->info_height);
+
+                        break;
+                    case FrontAPI::ResizeResult::fail:
+                        // resizing failed
+                        // thow an Error ?
+                        LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
+                        throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
+                    }
+
+                    this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
+
+                    this->front.can_be_start_capture();
+
+                } else {
+
+                    this->end_of_data = true;
+                    this->disconnect(tvtime().tv_sec);
+                    this->front.sync();
+
+                    if (!this->wait_for_escape) {
+                        this->event.signal = BACK_EVENT_STOP;
+                    }
+
+                    break;
                 }
-
-                break;
             }
         }
 

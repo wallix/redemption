@@ -1602,6 +1602,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_replay::on_end_of_data&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "replay_on_loop")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_replay::replay_on_loop&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_replay::replay_on_loop&>(this->variables)
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

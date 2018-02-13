@@ -26,6 +26,7 @@
 #include <type_traits>
 #include <string>
 #include <unordered_map>
+#include <memory>
 
 
 namespace cfg_generators {

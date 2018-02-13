@@ -168,6 +168,7 @@ namespace cfg {
 
     struct mod_replay {
         struct on_end_of_data;
+        struct replay_on_loop;
     };
 
     struct ocr {
