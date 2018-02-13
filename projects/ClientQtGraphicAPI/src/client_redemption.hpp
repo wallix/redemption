@@ -334,6 +334,7 @@ public:
         if (this->impl_graphic) {
             this->impl_graphic->set_ErrorMsg(error);
         }
+
         if (this->impl_mouse_keyboard) {
             this->impl_mouse_keyboard->init_form();
         }
@@ -497,7 +498,7 @@ public:
          return true;
     }
 
-    void init_socket() {
+    bool init_socket() {
         unique_fd client_sck = ip_connect(this->target_IP.c_str(),
                                           this->port,
                                           3,                //nbTry
@@ -524,17 +525,19 @@ public:
                 const std::string errorMsg("Cannot connect to [" + target_IP +  "].");
                 std::string windowErrorMsg(errorMsg+" Socket error.");
                 LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
-                this->disconnect("<font color='Red'>"+windowErrorMsg+"</font>", false);
-                return;
+                this->disconnect("<font color='Red'>"+windowErrorMsg+"</font>", true);
+                return false;
             }
 
         } else {
             const std::string errorMsg("Cannot connect to [" + target_IP +  "].");
             std::string windowErrorMsg(errorMsg+" Invalid ip or port.");
             LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
-            this->disconnect("<font color='Red'>"+windowErrorMsg+"</font>", false);
-            return;
+            this->disconnect("<font color='Red'>"+windowErrorMsg+"</font>", true);
+            return false;
         }
+
+        return true;
     }
 
 
@@ -636,33 +639,36 @@ public:
             }
         }
 
-        this->init_socket();
+        if (this->init_socket()) {
 
-        this->update_keylayout();
+            this->update_keylayout();
 
-        if (this->init_mod()) {
-             this->connected = true;
+            if (this->init_mod()) {
+                this->connected = true;
 
-            if (this->impl_socket_listener) {
-                if (this->impl_socket_listener->start_to_listen(this->client_sck, this->mod)) {
+                if (this->impl_socket_listener) {
+                    if (this->impl_socket_listener->start_to_listen(this->client_sck, this->mod)) {
 
-                    if (mod_state != MOD_RDP_REMOTE_APP) {
-                        if (this->impl_graphic) {
-                            this->impl_graphic->show_screen();
+                        if (mod_state != MOD_RDP_REMOTE_APP) {
+                            if (this->impl_graphic) {
+                                this->impl_graphic->show_screen();
+                            }
                         }
-                    }
 
-                    return;
+                        return;
+                    }
                 }
             }
+
+            const std::string errorMsgfail("Error: Mod Initialization failed.");
+            std::string labelErrorMsg("<font color='Red'>"+errorMsgfail+"</font>");
+            if (this->impl_graphic) {
+                this->impl_graphic->dropScreen();
+            }
+            this->disconnect(labelErrorMsg, false);
         }
 
-        const std::string errorMsgfail("Error: Mod Initialization failed.");
-        std::string labelErrorMsg("<font color='Red'>"+errorMsgfail+"</font>");
-        if (this->impl_graphic) {
-            this->impl_graphic->dropScreen();
-        }
-        this->disconnect(labelErrorMsg, false);
+
     }
 
     void disconnexionReleased() override{
