@@ -127,7 +127,6 @@ class Zdecompressor
 
     // return the amount of compressed data available for emission
     size_t available() const {
-        LOG(LOG_INFO, "available=%zu", sizeof(this->out) - this->offset - this->z.avail_out);
         return sizeof(this->out) - this->offset - this->z.avail_out;
     }
 

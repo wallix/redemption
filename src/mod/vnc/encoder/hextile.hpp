@@ -137,6 +137,11 @@ namespace VNC {
              // cursor used for next tile
              size_t cx_remain;
              size_t cy_remain;
+             uint8_t tile_data[16*16*4];
+             uint8_t tileType;
+             uint8_t nSubRects;
+             uint32_t fgPixel;
+             uint32_t bgPixel;
 
             enum {
                 hextileRaw = 1,
@@ -156,6 +161,10 @@ namespace VNC {
                       std::min<size_t>(this->r.cy, 16)))
                  , cx_remain{0}
                  , cy_remain{0}
+                 , tileType{0}
+                 , nSubRects{0}
+                 , fgPixel{0}
+                 , bgPixel{0}
                  , verbose(verbose)
             {
                  this->cx_remain = (this->r.cx < 16)?this->r.cx:this->r.cx-16;
@@ -164,123 +173,75 @@ namespace VNC {
             
             virtual ~Hextile(){}
 
-//#define PIXEL_T rdr::CONCAT2E(U,BPP)
-//#define READ_PIXEL CONCAT2E(readOpaque,BPP)
-//#define HEXTILE_DECODE CONCAT2E(hextileDecode,BPP)
-
-//static void HEXTILE_DECODE (const Rect& r, rdr::InStream* is,
-//                            const PixelFormat& pf,
-//                            ModifiablePixelBuffer* pb)
-//{
-//  Rect t;
-//  PIXEL_T bg = 0;
-//  PIXEL_T fg = 0;
-//  PIXEL_T buf[16 * 16];
-
-//  for (t.tl.y = r.tl.y; t.tl.y < r.br.y; t.tl.y += 16) {
-
-//    t.br.y = __rfbmin(r.br.y, t.tl.y + 16);
-
-//    for (t.tl.x = r.tl.x; t.tl.x < r.br.x; t.tl.x += 16) {
-
-//      t.br.x = __rfbmin(r.br.x, t.tl.x + 16);
-
-//      int tileType = is->readU8();
-
-//      if (tileType & hextileRaw) {
-//        is->readBytes(buf, t.area() * (BPP/8));
-//        pb->imageRect(pf, t, buf);
-//        continue;
-//      }
-
-//      if (tileType & hextileBgSpecified)
-//        bg = is->READ_PIXEL();
-
-//      int len = t.area();
-//      PIXEL_T* ptr = buf;
-//      while (len-- > 0) *ptr++ = bg;
-
-//      if (tileType & hextileFgSpecified)
-//        fg = is->READ_PIXEL();
-
-//      if (tileType & hextileAnySubrects) {
-//        int nSubrects = is->readU8();
-
-//        for (int i = 0; i < nSubrects; i++) {
-
-//          if (tileType & hextileSubrectsColoured)
-//            fg = is->READ_PIXEL();
-
-//          int xy = is->readU8();
-//          int wh = is->readU8();
-
-//          int x = ((xy >> 4) & 15);
-//          int y = (xy & 15);
-//          int w = ((wh >> 4) & 15) + 1;
-//          int h = (wh & 15) + 1;
-//          if (x + w > 16 || y + h > 16) {
-//            throw rfb::Exception("HEXTILE_DECODE: Hextile out of bounds");
-//          }
-//          PIXEL_T* ptr = buf + y * t.width() + x;
-//          int rowAdd = t.width() - w;
-//          while (h-- > 0) {
-//            int len = w;
-//            while (len-- > 0) *ptr++ = fg;
-//            ptr += rowAdd;
-//          }
-//        }
-//      }
-//      pb->imageRect(pf, t, buf);
-//    }
-//  }
-//}
-
-//#undef PIXEL_T
-//#undef READ_PIXEL
-//#undef HEXTILE_DECODE
-            
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
             EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
                 while (buf.remaining()){
-                    uint8_t tileType = buf.av().data()[0];
-                    if (tileType & hextileRaw){
-                        size_t raw_length = this->tile.cx * this->tile.cy * this->Bpp;
-                        if (buf.remaining() < raw_length + 1){
-                            break;
+                    Parse parser(buf.av().data());
+                    if (!this->nSubRects){
+                        this->tileType = parser.in_uint8();
+                        if (tileType & hextileRaw){
+                            size_t raw_length = this->tile.cx * this->tile.cy * this->Bpp;
+                            if (buf.remaining() < raw_length + 1){
+                                break;
+                            }
+                            this->draw_tile(parser.in_uint8p(raw_length), drawable);
+                            this->next_tile();
+                            buf.advance(raw_length + 1);
                         }
-                        uint8_t * tile_data_p = buf.av().data()+1;
+                        // Keep a 16x16 tiledata buffer for the current tile
+                        if (this->tileType & hextileBackgroundSpecified){
+                            this->bgPixel = parser.in_bytes_le(this->Bpp);
+                            buf.advance(this->Bpp);
+                        }
 
-                        this->draw_tile(tile_data_p, drawable);
-                        this->next_tile();
-                        buf.advance(raw_length + 1);
+                        if (this->tileType & hextileForegroundSpecified){
+                            this->fgPixel = parser.in_bytes_le(this->Bpp);
+                            buf.advance(this->Bpp);
+                        }
+
+                        if (this->tileType & hextileAnySubrects) {
+                            this->nSubRects = parser.in_uint8();
+                            buf.advance(1);
+                        }
+                        uint8_t * ptr = &this->tile_data[0];
+                        for (uint8_t h = 0 ; h < 16 ; h++) {
+                            for (uint8_t w = 0 ; h < 16 ; w++) {
+                                memcpy(ptr, &this->bgPixel, this->Bpp); 
+                                ptr += this->Bpp;
+                            }
+                        }
                     }
+                    else {
+                        if (tileType & hextileSubrectsColoured){
+                            this->fgPixel = parser.in_bytes_le(this->Bpp);
+                            buf.advance(this->Bpp);
+                        }
+                        uint8_t xy = parser.in_uint8();
+                        uint8_t wh = parser.in_uint8();
+                        buf.advance(2);
 
-// Keep a 16x16 tiledata buffer for the current tile
-
-//                   switch (this->Bpp){
-//                    default: // 16 bits, Bpp = 2
-//                    if (tileType & hextileBgSpecified){
-//                        this->bgPixel = 0;
-//                    }
-
-//                    if (tileType & hextileFgSpecified){
-////                    os->copyBytes(is, bytesPerPixel);
-//                        this->fgPixel = 0;
-//                    }
-
-//                    if (tileType & hextileAnySubrects) {
-//                        this->nSubrects = buf.av().data()[q+5];;
-//                    }
-
-//                    if (tileType & hextileSubrectsColoured){
-//                        uint32_t pixel = 
-////                      os->copyBytes(is, nSubrects * (this->Bpp + 2));
-//                    }
-//                    else {
-////                        os->copyBytes(is, nSubrects * 2);
-//                    }
+                        int x = ((xy >> 4) & 15);
+                        int y = (xy & 15);
+                        int w = ((wh >> 4) & 15) + 1;
+                        int h = (wh & 15) + 1;
+                        if (x + w > 16 || y + h > 16) {
+                            throw Error(ERR_VNC_ZRLE_PROTOCOL);
+                        }
+                        uint8_t * ptr = &this->tile_data[y * 16 * this->Bpp + x];
+                        uint8_t rowoffset = 16 - w;
+                        while (h-- > 0) {
+                            while (w-- > 0) {
+                                memcpy(ptr, &this->fgPixel, this->Bpp); ptr += Bpp;
+                            }
+                            ptr += rowoffset * this->Bpp;
+                        }
+                        this->nSubRects--;
+                        if (!this->nSubRects){
+                            this->draw_tile(this->tile_data, drawable);
+                            this->next_tile();
+                        }
                     }
                 }
                 return EncoderState::NeedMoreData; // finished decoding
@@ -289,7 +250,7 @@ namespace VNC {
             void draw_tile(const uint8_t * raw, gdi::GraphicApi & drawable)
             {            
                 update_lock<gdi::GraphicApi> lock(drawable);
-                const Bitmap bmp(raw, this->tile.cx, this->tile.cy, this->bpp, Rect(0, 0, this->tile.cx, this->tile.cy));
+                const Bitmap bmp(raw, this->tile.cx, this->tile.cy, this->bpp, Rect(0, 0, 16, 16));
                 const RDPMemBlt cmd(0, this->tile, 0xCC, 0, 0, 0);
                 drawable.draw(cmd, this->tile, bmp);
             }
