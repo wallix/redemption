@@ -113,7 +113,7 @@ public:
         CHANID_RAIL    = 1605
     };
 
-    //  RDP Channel managers
+        //  RDP Channel managers
     ClientChannelRDPSNDManager    clientChannelRDPSNDManager;
     ClientChannelCLIPRDRManager   clientChannelCLIPRDRManager;
     ClientChannelRDPDRManager     clientChannelRDPDRManager;
@@ -919,8 +919,9 @@ public:
                 if (this->impl_graphic) {
                     this->impl_graphic->dropScreen();
                 }
-                const std::string errorMsg("Error: Connection to [" + this->target_IP +  "] is closed. Error "+ e.errmsg());
-                LOG(LOG_INFO, "%s", errorMsg.c_str());
+                const std::string errorMsg("[" + this->target_IP +  "] lost: pipe broken");
+                const std::string errorMsgLog(errorMsg+" "+e.errmsg());
+                LOG(LOG_INFO, "%s", errorMsgLog.c_str());
                 std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
 
                 this->disconnect(labelErrorMsg, true);

@@ -2528,9 +2528,7 @@ public:
                 if (bool(this->verbose & RDPVerbose::security)) {
                     cs_core.log("Sending to Server");
                 }
-                LOG(LOG_INFO, "before cs_core.emit(stream);");
                 cs_core.emit(stream);
-                LOG(LOG_INFO, "after cs_core.emit(stream);");
                 // ------------------------------------------------------------
 
                 GCC::UserData::CSCluster cs_cluster;
