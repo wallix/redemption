@@ -40,7 +40,7 @@
 #include "acl/authentifier.hpp"
 #include "core/server.hpp"
 #include "core/wait_obj.hpp"
-// #include "core/session_reactor.hpp"
+#include "core/session_reactor.hpp"
 #include "front/front.hpp"
 #include "mod/mod_api.hpp"
 #include "system/ssl_calls.hpp"
@@ -95,6 +95,8 @@ public:
     {
         TRANSLATIONCONF.set_ini(&ini);
 
+        SessionReactor session_reactor;
+
         SocketTransport front_trans(
             "RDP Client", std::move(sck), "", 0, std::chrono::milliseconds(ini.get<cfg::client::recv_timeout>()),
             to_verbose_flags(this->ini.get<cfg::debug::front>())
@@ -106,7 +108,7 @@ public:
         time_t now = time(nullptr);
 
         Front front(
-            front_trans, rnd, this->ini, cctx, authentifier,
+            session_reactor, front_trans, rnd, this->ini, cctx, authentifier,
             this->ini.get<cfg::client::fast_path>(), mem3blt_support, now
         );
 
@@ -158,7 +160,10 @@ public:
                 timeval timeout = time_mark;
 
                 if (mm.mod->is_up_and_running() || !front.up_and_running) {
-                    front.get_event().wait_on_fd(front_trans.sck, rfds, max, timeout);
+                    if (front_trans.sck > INVALID_SOCKET) {
+                        io_fd_set(front_trans.sck, rfds);
+                        max = std::max(static_cast<unsigned>(front_trans.sck), max);
+                    }
                     if (front.capture) {
                         front.capture->get_capture_event().wait_on_timeout(timeout);
                     }
@@ -183,6 +188,17 @@ public:
                     timeout = {0, 0};
                 }
 
+                auto tv = session_reactor.timers.get_next_timeout();
+                auto tv_now = tvtime();
+                if (tv.tv_sec >= 0 && tv < timeout + tv_now) {
+                    if (tv < tv_now) {
+                        timeout = {0, 0};
+                    }
+                    else {
+                        timeout = tv - tv_now;
+                    }
+                }
+
                 int num = select(max + 1, &rfds, nullptr/*&wfds*/, nullptr, &timeout);
 
                 if (num < 0) {
@@ -204,7 +220,30 @@ public:
                     this->write_performance_log(now);
                 }
 
-                if (front_trans.is_set(front.get_event(), rfds)) {
+                if (num == 0) {
+                    auto end_tv = tvtime() + timeout;
+                    session_reactor.timers.exec_timeout(end_tv);
+                }
+
+                for (std::size_t i = 0; i < session_reactor.front_events.size(); ) {
+                    auto& event = session_reactor.front_events[i];
+                    switch (event->exec_event(mm.get_callback())) {
+                        case jln::ExecutorResult::ExitSuccess:
+                        case jln::ExecutorResult::ExitFailure:
+                            assert(false);
+                        case jln::ExecutorResult::Terminate:
+                            session_reactor.front_events.erase(session_reactor.front_events.begin() + i);
+                            break;
+                        case jln::ExecutorResult::NeedMoreData:
+                            assert(false);
+                        case jln::ExecutorResult::Nothing:
+                        case jln::ExecutorResult::Ready:
+                            ++i;
+                            break;
+                    }
+                }
+
+                if (session_reactor.front_events.size() || io_fd_isset(front_trans.sck, rfds)) {
                     try {
                         front.incoming(mm.get_callback(), now);
                     } catch (Error const& e) {

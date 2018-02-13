@@ -29,6 +29,11 @@ Author(s): Jonathan Poelen
 #include "utils/sugar/unique_fd.hpp"
 
 class mod_api;
+class Callback;
+namespace gdi
+{
+    class GraphicApi;
+};
 
 struct SessionReactor
 {
@@ -38,6 +43,13 @@ struct SessionReactor
 
     template<class... Ts>
     using TopExecutor = jln::TopExecutor2<PrefixArgs, Ts...>;
+
+    enum class EventType : int8_t
+    {
+        Timeout,
+        Callback,
+        Mod,
+    };
 
     struct Context
     {
@@ -58,19 +70,57 @@ struct SessionReactor
         }
     };
 
-    Context& create_socket(
-        const char * name, unique_fd sck, const char* ip_address, int port,
-        std::chrono::milliseconds recv_timeout,
-        SocketTransport::Verbose verbose, std::string* error_message)
+//     Context& create_socket(
+//         const char * name, unique_fd sck, const char* ip_address, int port,
+//         std::chrono::milliseconds recv_timeout,
+//         SocketTransport::Verbose verbose, std::string* error_message)
+//     {
+//         return *this->contexts.emplace_back(std::unique_ptr<Context>(new Context{
+//             *this,
+//             {name, std::move(sck), ip_address, port, recv_timeout, verbose, error_message},
+//             {},
+//             {}
+//         }));
+//     }
+
+    using BasicTimerPtr = jln::UniquePtr<jln::BasicTimer<PrefixArgs>>;
+
+    template<class... Args>
+    jln::TimerBuilder<PrefixArgs, Args...>
+    create_timer(Args&&... args)
     {
-        return *this->contexts.emplace_back(std::unique_ptr<Context>(new Context{
-            *this,
-            {name, std::move(sck), ip_address, port, recv_timeout, verbose, error_message},
-            {},
-            {}
-        }));
+        using Timer = jln::Timer2Impl<PrefixArgs, Args...>;
+        using TimerPtr = jln::UniquePtr2<Timer, jln::BasicTimer<PrefixArgs>>;
+        TimerPtr ptr(Timer::New(this->timers, static_cast<Args&&>(args)...));
+        return std::move(ptr);
+    }
+
+    using CallbackEvent = jln::EventBase<jln::prefix_args<Callback&>>;
+    using CallbackEventPtr = jln::UniquePtr<CallbackEvent>;
+
+    template<class... Args>
+    auto create_callback_event(Args&&... args)
+    {
+        using Event = jln::EventImpl<jln::prefix_args<Callback&>, Args...>;
+        using EventPtr = jln::UniquePtr2<Event, typename Event::event_base>;
+        EventPtr ptr(Event::New(this->front_events, static_cast<Args&&>(args)...));
+        return ptr;
+    }
+
+    using GraphicEvent = jln::EventBase<jln::prefix_args<Callback&>>;
+    using GraphicEventPtr = jln::UniquePtr<GraphicEvent>;
+
+    template<class... Args>
+    auto create_graphic_event(Args&&... args)
+    {
+        using Event = jln::EventImpl<jln::prefix_args<gdi::GraphicApi&>, Args...>;
+        using EventPtr = jln::UniquePtr2<Event, typename Event::event_base>;
+        EventPtr ptr(Event::New(this->graphic_events, static_cast<Args&&>(args)...));
+        return ptr;
     }
 
     std::vector<std::unique_ptr<Context>> contexts;
+    std::vector<CallbackEvent*> front_events;
+    std::vector<GraphicEvent*> graphic_events;
     jln::TopExecutorTimersImpl<PrefixArgs> timers;
 };

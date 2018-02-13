@@ -31,6 +31,8 @@
 
 #include "configs/config.hpp"
 
+#include "core/session_reactor.hpp"
+
 #include "core/RDP/GraphicUpdatePDU.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/PersistentKeyListPDU.hpp"
@@ -104,7 +106,6 @@
 #include "utils/log.hpp"
 #include "utils/rect.hpp"
 #include "utils/stream.hpp"
-#include "utils/timeout.hpp"
 
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
@@ -127,7 +128,6 @@ class Front : public FrontAPI
     bool nomouse;
     int mouse_x = 0;
     int mouse_y = 0;
-    wait_obj event;
 
 public:
     bool has_user_activity = true;
@@ -547,7 +547,7 @@ protected:
     CHANNELS::ChannelDefArray channel_list;
 
 public:
-    int up_and_running;
+    bool up_and_running;
 
 private:
     int share_id;
@@ -622,14 +622,15 @@ private:
 
     bool session_probe_started_ = false;
 
-    Timeout timeout;
-
     bool is_client_disconnected = false;
 
     bool client_support_monitor_layout_pdu = false;
 
     bool is_first_memblt = true;
-    bool session_resized = false;
+
+    SessionReactor& session_reactor;
+    SessionReactor::BasicTimerPtr handshake_timeout;
+    SessionReactor::CallbackEventPtr incoming_event;
 
 public:
     bool ignore_rdesktop_bogus_clip = false;
@@ -679,17 +680,18 @@ public:
     BGRPalette const & get_palette() const { return this->mod_palette_rgb; }
 
 public:
-    Front(  Transport & trans
-          , Random & gen
-          , Inifile & ini
-          , CryptoContext & cctx
-          , ReportMessageApi & report_message
-          , bool fp_support // If true, fast-path must be supported
-          , bool mem3blt_support
-          , time_t now
-          , std::string server_capabilities_filename = {}
-          , Transport * persistent_key_list_transport = nullptr
-          )
+    Front( SessionReactor& session_reactor
+         , Transport & trans
+         , Random & gen
+         , Inifile & ini
+         , CryptoContext & cctx
+         , ReportMessageApi & report_message
+         , bool fp_support // If true, fast-path must be supported
+         , bool mem3blt_support
+         , time_t /*now*/
+         , std::string server_capabilities_filename = {}
+         , Transport * persistent_key_list_transport = nullptr
+         )
     : nomouse(ini.get<cfg::globals::nomouse>())
     , capture(nullptr)
     , verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
@@ -716,8 +718,18 @@ public:
     , persistent_key_list_transport(persistent_key_list_transport)
     , report_message(report_message)
     , auth_info_sent(false)
-    , timeout(now, this->ini.get<cfg::globals::handshake_timeout>().count())
+    , session_reactor(session_reactor)
     {
+        if (this->ini.get<cfg::globals::handshake_timeout>().count()) {
+            this->handshake_timeout = session_reactor.create_timer()
+            .set_delay(this->ini.get<cfg::globals::handshake_timeout>())
+            .on_action([](auto ctx){
+                LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
+                throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
+                return ctx.ready();
+            });
+        }
+
         // init TLS
         // --------------------------------------------------------
 
@@ -778,8 +790,6 @@ public:
             this->encrypt.encryptionMethod = 2; /* 128 bits */
         break;
         }
-
-        this->event.set_trigger_time(500000);
     }
 
     ~Front() override {
@@ -790,14 +800,6 @@ public:
         }
 
         delete this->capture;
-    }
-
-    wait_obj& get_event() {
-        if (this->session_resized) {
-            this->event.set_trigger_time(wait_obj::NOW);
-        }
-
-        return this->event;
     }
 
     ResizeResult server_resize(int width, int height, int bpp) override
@@ -858,7 +860,12 @@ public:
                 }
             }
             else {
-                this->session_resized = true;
+                auto timer = this->session_reactor.create_callback_event(std::ref(*this));
+                timer->set_on_action([](auto ctx, Callback& cb, Front& front){
+                    cb.refresh(Rect(0, 0, front.client_info.width, front.client_info.height));
+                    return ctx.terminate();
+                });
+                this->incoming_event = std::move(timer);
                 res = ResizeResult::remoteapp;
             }
         }
@@ -1236,35 +1243,11 @@ public:
     TpduBuffer buf;
     size_t channel_list_index = 0;
 
-    void incoming(Callback & cb, time_t now)
+    void incoming(Callback & cb, time_t /*now*/)
     {
         if (bool(this->verbose & Verbose::basic_trace3)) {
             LOG(LOG_INFO, "Front::incoming");
         }
-
-        bool is_waked_up_by_time__save = this->event.is_waked_up_by_time();
-
-        switch(this->timeout.check(now)) {
-        case Timeout::TIMEOUT_REACHED:
-            LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
-            throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
-            break;
-        case Timeout::TIMEOUT_NOT_REACHED:
-            this->event.set_trigger_time(500000);
-            break;
-        default:
-        case Timeout::TIMEOUT_INACTIVE:
-            this->event.reset_trigger_time();
-            break;
-        }
-
-        if (this->session_resized) {
-            cb.refresh(Rect(0, 0, this->client_info.width, this->client_info.height));
-
-            this->session_resized = false;
-        }
-
-        if (is_waked_up_by_time__save) return;
 
         buf.load_data(this->trans);
         while (buf.next_pdu())
@@ -3985,7 +3968,7 @@ private:
                 this->set_gd(this->orders.graphics_update_pdu());
 
                 this->up_and_running = 1;
-                this->timeout.cancel_timeout();
+                this->handshake_timeout.reset();
                 cb.rdp_input_up_and_running();
                 // TODO we should use accessors to set that, also not sure it's the right place to set it
                 this->ini.set_acl<cfg::context::opt_width>(this->client_info.width);
