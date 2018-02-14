@@ -133,7 +133,7 @@ struct Listen {
     }
 
     // TODO Some values (server, timeout) become only necessary when calling check
-    void run() {
+    void run(bool forkable) {
         bool loop_listener = true;
         while (loop_listener) {
             fd_set rfds;
@@ -162,7 +162,7 @@ struct Listen {
             break;
             case 1:
             {
-                Server::Server_status res = this->server.start(this->sck);
+                Server::Server_status res = this->server.start(this->sck, forkable);
                 if (Server::START_WANT_STOP == res){
                     loop_listener = false;
                 }
