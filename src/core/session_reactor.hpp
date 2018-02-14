@@ -51,24 +51,24 @@ struct SessionReactor
         Mod,
     };
 
-    struct Context
-    {
-        SessionReactor& session_reactor;
-        SocketTransport socket_transport;
-        void* first_data;
-        jln::UniquePtr<BasicExecutor> executor;
-
-        template<class... Args>
-        jln::TopExecutorBuilder<PrefixArgs, Args...>
-        init_executor(Args&&... args)
-        {
-            auto* p = TopExecutor<Args...>::New(
-                this->session_reactor.timers, static_cast<Args&&>(args)...);
-            this->first_data = &jln::detail::get<0>(p->ctx);
-            this->executor.reset(p);
-            return {*p};
-        }
-    };
+//     struct Context
+//     {
+//         SessionReactor& session_reactor;
+//         SocketTransport socket_transport;
+//         void* first_data;
+//         jln::UniquePtr<BasicExecutor> executor;
+//
+//         template<class... Args>
+//         jln::TopExecutorBuilder<PrefixArgs, Args...>
+//         init_executor(Args&&... args)
+//         {
+//             auto* p = TopExecutor<Args...>::New(
+//                 this->session_reactor.timers, static_cast<Args&&>(args)...);
+//             this->first_data = &jln::detail::get<0>(p->ctx);
+//             this->executor.reset(p);
+//             return {*p};
+//         }
+//     };
 
 //     Context& create_socket(
 //         const char * name, unique_fd sck, const char* ip_address, int port,
@@ -83,21 +83,107 @@ struct SessionReactor
 //         }));
 //     }
 
-    using BasicTimerPtr = jln::UniquePtr<jln::BasicTimer<PrefixArgs>>;
-
+    template<class Base>
     struct Container
     {
-        template<class T> Container(T&) {}
-        template<class T> void detach(T&) {}
-        template<class T> void attach(T&) {}
+        void attach(Base& elem)
+        {
+            assert(this->elements.end() == this->get_elem_iterator(elem));
+            this->elements.emplace_back(&elem);
+        }
+
+        void detach(Base& elem)
+        {
+            this->elements.erase(this->get_elem_iterator(elem), this->elements.end());
+        }
+
+//     private:
+        auto get_elem_iterator(Base& elem)
+        {
+            return std::find(this->elements.begin(), this->elements.end(), &elem);
+        }
+
+        template<class... Args>
+        void exec(Args&&... args)
+        {
+            this->exec_impl(
+                [](auto&){ return std::true_type{}; },
+                static_cast<Args&&>(args)...
+            );
+        }
+
+        template<class Predicate, class... Args>
+        void exec_impl(Predicate pred, Args&&... args)
+        {
+            for (std::size_t i = 0; i < this->elements.size(); ) {
+                auto* elem = this->elements[i];
+                if (pred(*elem)) {
+                    switch (elem->exec_action(static_cast<Args&&>(args)...)) {
+                        case jln::ExecutorResult::ExitSuccess:
+                        case jln::ExecutorResult::ExitFailure:
+                            assert(false);
+                        case jln::ExecutorResult::Terminate:
+                            this->elements.erase(this->elements.begin() + i);
+                            break;
+                        case jln::ExecutorResult::Nothing:
+                        case jln::ExecutorResult::NeedMoreData:
+                            assert(false);
+                        case jln::ExecutorResult::Ready:
+                            ++i;
+                            break;
+                    }
+                }
+                else {
+                    ++i;
+                }
+            }
+        }
+
+        std::vector<Base*> elements;
     };
 
+    using BasicTimer = jln::BasicTimer<jln::prefix_args<>>;
+    using BasicTimerPtr = jln::UniquePtr<BasicTimer>;
+
+    struct TimerContainer : Container<BasicTimer>
+    {
+        void update_time(BasicTimer& timer, std::chrono::milliseconds ms)
+        {
+            assert(this->elements.end() != this->get_elem_iterator(timer));
+            (void)timer;
+            (void)ms;
+        }
+
+        timeval get_next_timeout() const noexcept
+        {
+            auto it = std::min_element(
+                this->elements.begin(), this->elements.end(),
+                [](auto& a, auto& b) { return a->time() < b->time(); });
+            return it == this->elements.end() ? timeval{-1, -1} : (*it)->time();
+        }
+
+        template<class... Args>
+        void exec(timeval const& end_tv, Args&&... args)
+        {
+            this->exec_impl(
+                [&](BasicTimer const& timer){ return timer.time() <= end_tv; },
+                static_cast<Args&&>(args)...
+            );
+        }
+
+        template<class... Args>
+        using Timer = jln::Timer<TimerContainer&, jln::prefix_args<>, Args...>;
+    };
+
+    template<class T>
+    using OwnerPtr = std::unique_ptr<T, jln::DeleteSelf<typename T::base_type>>;
+
     template<class... Args>
-    jln::TimerBuilder<PrefixArgs, Args...>
+    jln::TimerBuilder<OwnerPtr<TimerContainer::Timer<Args...>>>
     create_timer(Args&&... args)
     {
-        using Timer = jln::Timer2<PrefixArgs, Args...>;
-        return {jln::new_event<Timer>(this->timers, static_cast<Args&&>(args)...)};
+        using Timer = TimerContainer::Timer<Args...>;
+        return {jln::new_event<Timer>(this->timers_events_, static_cast<Args&&>(args)...)};
     }
 
     using CallbackEvent = jln::ActionBase<jln::prefix_args<Callback&>>;
@@ -106,8 +192,8 @@ struct SessionReactor
     template<class... Args>
     auto create_callback_event(Args&&... args)
     {
-        using Event = jln::ActionImpl<Container, jln::prefix_args<Callback&>, Args...>;
-        return jln::new_event<Event>(this->front_events, static_cast<Args&&>(args)...);
+        using Event = jln::ActionImpl<decltype((this->front_events_)), jln::prefix_args<Callback&>, Args...>;
+        return jln::new_event<Event>(this->front_events_, static_cast<Args&&>(args)...);
     }
 
     using GraphicEvent = jln::ActionBase<jln::prefix_args<Callback&>>;
@@ -116,12 +202,22 @@ struct SessionReactor
     template<class... Args>
     auto create_graphic_event(Args&&... args)
     {
-        using Event = jln::ActionImpl<Container, jln::prefix_args<gdi::GraphicApi&>, Args...>;
-        return jln::new_event<Event>(this->graphic_events, static_cast<Args&&>(args)...);
+        using Event = jln::ActionImpl<decltype((this->graphic_events_)), jln::prefix_args<gdi::GraphicApi&>, Args...>;
+        return jln::new_event<Event>(this->graphic_events_, static_cast<Args&&>(args)...);
     }
 
-    std::vector<std::unique_ptr<Context>> contexts;
-    std::vector<CallbackEvent*> front_events;
-    std::vector<GraphicEvent*> graphic_events;
-    jln::TopExecutorTimersImpl<PrefixArgs> timers;
+    //std::vector<std::unique_ptr<Context>> contexts;
+    Container<CallbackEvent> front_events_;
+    Container<GraphicEvent> graphic_events_;
+    TimerContainer timers_events_;
+
+    std::vector<CallbackEvent*> front_events()
+    {
+        return this->front_events_.elements;
+    }
+
+    std::vector<GraphicEvent*> graphic_events()
+    {
+        return this->graphic_events_.elements;
+    }
 };

@@ -257,7 +257,7 @@ struct ActionBase
     }
 
     template<class... Args>
-    ExecutorResult exec_event(Args&&... args)
+    ExecutorResult exec_action(Args&&... args)
     {
         return this->on_action(*this, static_cast<Args&&>(args)...);
     }
@@ -301,6 +301,12 @@ struct BasicTimer
 
     template<class... Args>
     ExecutorResult exec_timer(Args&&... args)
+    {
+        return this->on_action(*this, static_cast<Args&&>(args)...);
+    }
+
+    template<class... Args>
+    ExecutorResult exec_action(Args&&... args)
     {
         return this->on_action(*this, static_cast<Args&&>(args)...);
     }
@@ -825,45 +831,42 @@ struct Container
     std::vector<UniquePtr<Base>> xs;
 };
 
-namespace detail
+template<class TimerPtr, int Mask = 0>
+struct REDEMPTION_CXX_NODISCARD TimerBuilder
 {
-    template<class TimerPtr, int Mask = 0>
-    struct REDEMPTION_CXX_NODISCARD TimerBuilder
+    template<int Mask2>
+    decltype(auto) select_return() noexcept
     {
-        template<int Mask2>
-        decltype(auto) select_return()
-        {
-            if constexpr (Mask == (~Mask2 & 0b11)) {
-                return static_cast<TimerPtr&&>(this->timer_ptr);
-            }
-            else {
-                return TimerBuilder<TimerPtr, Mask | Mask2>(std::move(this->timer_ptr));
-            }
+        if constexpr (Mask == (~Mask2 & 0b11)) {
+            return static_cast<TimerPtr&&>(this->timer_ptr);
         }
-
-        template<class F>
-        decltype(auto) on_action(F f) && noexcept
-        {
-            static_assert(!(Mask & 0b01), "on_action already set");
-            this->timer_ptr->set_on_action(f);
-            return this->select_return<0b01>();
+        else {
+            return TimerBuilder<TimerPtr, Mask | Mask2>(std::move(this->timer_ptr));
         }
+    }
 
-        decltype(auto) set_delay(std::chrono::milliseconds ms) && noexcept
-        {
-            static_assert(!(Mask & 0b10), "set_delay already set");
-            this->timer_ptr->set_time(ms);
-            return this->select_return<0b10>();
-        }
+    template<class F>
+    REDEMPTION_CXX_NODISCARD decltype(auto) on_action(F f) && noexcept
+    {
+        static_assert(!(Mask & 0b01), "on_action already set");
+        this->timer_ptr->set_on_action(f);
+        return this->select_return<0b01>();
+    }
 
-        TimerBuilder(TimerPtr&& timer_ptr) noexcept
-        : timer_ptr(static_cast<TimerPtr&&>(timer_ptr))
-        {}
+    REDEMPTION_CXX_NODISCARD decltype(auto) set_delay(std::chrono::milliseconds ms) && noexcept
+    {
+        static_assert(!(Mask & 0b10), "set_delay already set");
+        this->timer_ptr->set_time(ms);
+        return this->select_return<0b10>();
+    }
 
-    private:
-        TimerPtr timer_ptr;
-    };
-}
+    TimerBuilder(TimerPtr&& timer_ptr) noexcept
+    : timer_ptr(static_cast<TimerPtr&&>(timer_ptr))
+    {}
+
+private:
+    TimerPtr timer_ptr;
+};
 
 
 // template<class PrefixArgs>
@@ -892,112 +895,6 @@ namespace detail
 //         return p;
 //     }
 // };
-
-template<class PrefixArgs, class... Args>
-using Timer2 = Timer2Impl<PrefixArgs, typename detail::decay_and_strip<Args>::type...>;
-
-template<class PrefixArgs, class... Args>
-using TimerBuilder = detail::TimerBuilder<UniquePtr<BasicTimer<PrefixArgs>, Timer2<PrefixArgs, Args...>>>;
-
-template<class PrefixArgs>
-struct TopExecutorTimersImpl
-{
-    template<class... Args>
-    TimerBuilder<PrefixArgs, Args...> create_timer(Args&&... args)
-    {
-        using TimerType = Timer2<PrefixArgs, Args...>;
-        using UniqueTimerPtr = UniquePtr<BasicTimer<PrefixArgs>, TimerType>;
-        UniqueTimerPtr uptr(TimerType::New(*this, static_cast<Args&&>(args)...));
-        this->timers.emplace_back(uptr.get());
-        return std::move(uptr);
-    }
-
-//     template<class... Args>
-//     TimedExecutorBuilder<Args...> create_timed_executor(Args&&... args)
-//     {}
-
-    void add_timer(BasicTimer<PrefixArgs>& timer)
-    {
-        assert(this->timers.end() == this->get_timer_iterator(timer));
-        this->timers.emplace_back(&timer);
-    }
-
-    void attach(BasicTimer<PrefixArgs>& timer)
-    {
-        assert(this->timers.end() == this->get_timer_iterator(timer));
-        this->timers.emplace_back(&timer);
-    }
-
-    auto get_timer_iterator(BasicTimer<PrefixArgs>& timer)
-    {
-        return std::find_if(this->timers.begin(), this->timers.end(), [&timer](auto* p){
-            return p == &timer;
-        });
-    }
-
-    void update_time(BasicTimer<PrefixArgs>& timer, std::chrono::milliseconds ms)
-    {
-        assert(this->timers.end() != this->get_timer_iterator(timer));
-        (void)timer;
-        (void)ms;
-    }
-
-    void detach_timer(BasicTimer<PrefixArgs>& timer)
-    {
-        this->timers.erase(this->get_timer_iterator(timer), this->timers.end());
-    }
-
-    void detach(BasicTimer<PrefixArgs>& timer)
-    {
-        this->timers.erase(this->get_timer_iterator(timer), this->timers.end());
-    }
-
-    timeval get_next_timeout() const noexcept
-    {
-        auto it = std::min_element(
-            this->timers.begin(), this->timers.end(),
-            [](auto& a, auto& b) { return a->time() < b->time(); });
-        return it == this->timers.end() ? timeval{-1, -1} : (*it)->time();
-    }
-
-    template<class... Args>
-    void exec_timeout(timeval const& end_tv, Args&&... args);
-
-// private:
-    std::vector<BasicTimer<PrefixArgs>*> timers;
-    // std::chrono::milliseconds next_timeout;
-};
-
-template<class... Ts>
-using TopExecutorTimers = TopExecutorTimersImpl<prefix_args<Ts...>>;
-
-template<class PrefixArgs>
-template<class... Args>
-void TopExecutorTimersImpl<PrefixArgs>::exec_timeout(timeval const& end_tv, Args&&... args)
-{
-    for (std::size_t i = 0; i < this->timers.size(); ) {
-        auto* timer = this->timers[i];
-        if (timer->time() <= end_tv) {
-            switch (timer->exec_timer(static_cast<Args&&>(args)...)) {
-                case ExecutorResult::ExitSuccess:
-                case ExecutorResult::ExitFailure:
-                    assert(false);
-                case ExecutorResult::Terminate:
-                    this->timers.erase(this->timers.begin() + i);
-                    break;
-                case ExecutorResult::Nothing:
-                case ExecutorResult::NeedMoreData:
-                    assert(false);
-                case ExecutorResult::Ready:
-                    ++i;
-                    break;
-            }
-        }
-        else {
-            ++i;
-        }
-    }
-}
 
 template<
     class Inherit,
@@ -1081,16 +978,15 @@ new_event(Args&&... args)
     return uptr;
 }
 
-
-template<class PrefixArgs, class... Ts>
-struct Timer2Impl : BasicEvent<
-    Timer2Impl<PrefixArgs, Ts...>,
-    TopExecutorTimersImpl<PrefixArgs>&,
+template<class EventContainer, class PrefixArgs, class... Ts>
+struct TimerImpl : BasicEvent<
+    TimerImpl<EventContainer, PrefixArgs, Ts...>,
+    EventContainer,
     BasicTimer<PrefixArgs>,
     Executor2TimerContext,
     Ts...>
 {
-    using Timer2Impl::basic_event::basic_event;
+    using TimerImpl::basic_event::basic_event;
 
     void update_time(std::chrono::milliseconds ms)
     {
@@ -1098,6 +994,10 @@ struct Timer2Impl : BasicEvent<
         this->event_container.update_time(*this, ms);
     }
 };
+
+template<class EventContainer, class PrefixArgs, class... Args>
+using Timer = TimerImpl<EventContainer, PrefixArgs,
+    typename detail::decay_and_strip<Args>::type...>;
 
 template<class EventContainer, class PrefixArgs, class... Ts>
 struct ActionImpl : BasicEvent<

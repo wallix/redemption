@@ -188,7 +188,7 @@ public:
                     timeout = {0, 0};
                 }
 
-                auto tv = session_reactor.timers.get_next_timeout();
+                auto tv = session_reactor.timers_events_.get_next_timeout();
                 auto tv_now = tvtime();
                 if (tv.tv_sec >= 0 && tv < timeout + tv_now) {
                     if (tv < tv_now) {
@@ -222,28 +222,12 @@ public:
 
                 if (num == 0) {
                     auto end_tv = tvtime() + timeout;
-                    session_reactor.timers.exec_timeout(end_tv);
+                    session_reactor.timers_events_.exec(end_tv);
                 }
 
-                for (std::size_t i = 0; i < session_reactor.front_events.size(); ) {
-                    auto& event = session_reactor.front_events[i];
-                    switch (event->exec_event(mm.get_callback())) {
-                        case jln::ExecutorResult::ExitSuccess:
-                        case jln::ExecutorResult::ExitFailure:
-                            assert(false);
-                        case jln::ExecutorResult::Terminate:
-                            session_reactor.front_events.erase(session_reactor.front_events.begin() + i);
-                            break;
-                        case jln::ExecutorResult::NeedMoreData:
-                            assert(false);
-                        case jln::ExecutorResult::Nothing:
-                        case jln::ExecutorResult::Ready:
-                            ++i;
-                            break;
-                    }
-                }
+                session_reactor.front_events_.exec(mm.get_callback());
 
-                if (session_reactor.front_events.size() || io_fd_isset(front_trans.sck, rfds)) {
+                if (session_reactor.front_events().size() || io_fd_isset(front_trans.sck, rfds)) {
                     try {
                         front.incoming(mm.get_callback(), now);
                     } catch (Error const& e) {
