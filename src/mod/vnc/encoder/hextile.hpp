@@ -174,13 +174,19 @@ namespace VNC {
             {
                 size_t last_remaining = 0;
                 while (buf.remaining()){
+                    LOG(LOG_INFO, "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
                     assert(buf.remaining() != last_remaining);
                     last_remaining = buf.remaining();
                     LOG(LOG_INFO, "Hextile encoding data=%u", buf.remaining());
+                    hexdump(buf.av().data(), std::min<uint16_t>(buf.remaining(), 1024));
                     Parse parser(buf.av().data());
 
                     uint8_t tileType = parser.in_uint8();
                     LOG(LOG_INFO, "Hextile::tyleType=%.2X", tileType);
+//                    if (!((tileType & hextileRaw)!=0 || (tileType & ~0x1E)==0)){
+//                        LOG(LOG_INFO, "Hextile::tyleType=%.2X : bad tile type", tileType);
+//                        throw Error(ERR_VNC_HEXTILE_PROTOCOL);
+//                    }
 
                     if (tileType & hextileRaw){
                         size_t raw_length = this->tile.cx * this->tile.cy * this->Bpp;
@@ -201,6 +207,7 @@ namespace VNC {
                         LOG(LOG_INFO, "next tile");
                         buf.advance(raw_length + 1);
                         if (not this->next_tile()){
+                            LOG(LOG_INFO, "Last Tile");
                             return EncoderState::Exit;
                         }
                         continue;
@@ -214,15 +221,16 @@ namespace VNC {
 
                     const size_t header_bytes = type_bytes + any_subrect_bytes + hextile_bg_bytes + hextile_fg_bytes;
                     if (buf.remaining() < header_bytes){
+                        LOG(LOG_INFO, "Not enough data (hextile header) : %zu, need %zu", buf.remaining(), header_bytes);
                         return EncoderState::NeedMoreData;
                     }
 
                     if (tileType & hextileBackgroundSpecified){
-                        this->bgPixel = parser.in_bytes_le(this->Bpp);
+                        this->bgPixel = parser.in_bytes_be(this->Bpp);
                     }
 
                     if (tileType & hextileForegroundSpecified){
-                        this->fgPixel = parser.in_bytes_le(this->Bpp);
+                        this->fgPixel = parser.in_bytes_be(this->Bpp);
                     }
 
                     uint8_t nSubRects = 0;
@@ -234,7 +242,7 @@ namespace VNC {
                     const size_t tile_bytes = header_bytes + subrects_bytes;
 
                     if (buf.remaining() < tile_bytes){
-                        LOG(LOG_INFO, "Not enough data : %zu, need %zu", buf.remaining(), tile_bytes);
+                        LOG(LOG_INFO, "Not enough data (hextile subrec) : %zu, need %zu", buf.remaining(), tile_bytes);
                         return EncoderState::NeedMoreData; // finished decoding
                     }
 
@@ -243,7 +251,7 @@ namespace VNC {
                     uint8_t * ptr = &tile_data[0];
                     for (uint8_t h = 0 ; h < 16 ; h++) {
                         for (uint8_t w = 0 ; w < 16 ; w++) {
-                            memcpy(ptr, &this->fgPixel, this->Bpp); 
+                            memcpy(ptr, &this->bgPixel, this->Bpp); 
                             ptr += this->Bpp;
                         }
                     }
@@ -251,7 +259,7 @@ namespace VNC {
                     for (size_t q = 0 ; q < nSubRects ; q++){
                         if (tileType & hextileSubrectsColoured){
                             LOG(LOG_INFO, "SubrectsColoured");
-                            this->fgPixel = parser.in_bytes_le(this->Bpp);
+                            this->fgPixel = parser.in_bytes_be(this->Bpp);
                         }
                         uint8_t xy = parser.in_uint8();
                         uint8_t wh = parser.in_uint8();
@@ -261,16 +269,17 @@ namespace VNC {
                         uint8_t w = ((wh >> 4) & 15) + 1;
                         uint8_t h = (wh & 15) + 1;
                         if (x + w > 16 || y + h > 16) {
-                            throw Error(ERR_VNC_ZRLE_PROTOCOL);
+                            LOG(LOG_INFO, "Hextile::subrect (%d, %d, %d, %d) : bad subrect coordinates", x, y, w, h);
+                            throw Error(ERR_VNC_HEXTILE_PROTOCOL);
                         }
                         uint8_t * ptr = &tile_data[y * 16 * this->Bpp + x];
-                        uint8_t rowoffset = (16 - w)%16;
                         LOG(LOG_INFO, "Smalltile (%u,%u,%u,%u)", x,y,w,h);
-                        while (h-- > 0) {
-                            while (w-- > 0) {
-                                memcpy(ptr, &this->fgPixel, this->Bpp); ptr += Bpp;
+                        for (uint8_t hi = y ; hi < y + h ; hi++) {
+                            for (uint8_t wi = x ; wi < x + w ; wi++) {
+                                memcpy(ptr, &this->fgPixel, this->Bpp); 
+                                ptr += this->Bpp;
                             }
-                            ptr += rowoffset * this->Bpp;
+                            ptr += 16 - x - w;
                         }
                         LOG(LOG_INFO, "Smalltile (%u,%u,%u,%u) done", x,y,w,h);
                     }
@@ -279,8 +288,10 @@ namespace VNC {
                     buf.advance(tile_bytes);
 
                     if (not this->next_tile()){
+                        LOG(LOG_INFO, "Last Tile");
                         return EncoderState::Exit;
                     }
+                    LOG(LOG_INFO, "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
                 }
                 return EncoderState::Ready; // finished decoding
             }
@@ -296,19 +307,21 @@ namespace VNC {
             // return false if there is no next tile any more
             bool next_tile()
             {
-                if (this->cy_remain == 0){
-                    return false;
-                }
-                this->tile.cy = std::min<size_t>(this->cy_remain, 16);
-
-                if (this->cx_remain <= 16){
+                if (this->cx_remain < 16){
+                    if (this->cx_remain == 0 && this->cy_remain == 0){
+                        return false;
+                    }
                     this->tile.x = this->r.x;
-                    this->tile.cx = this->cx_remain;
-                    this->cx_remain = this->tile.cx;
+                    this->tile.cx = this->cx_remain?this->cx_remain:16;
+                    this->cx_remain = (this->r.cx < 16)?this->r.cx:this->r.cx-16;
                     this->tile.y += 16;
+                    if (this->tile.y >= this->r.y + this->r.cy){
+                        return false;
+                    }
                     if (this->cy_remain < 16){
                         this->tile.cy = this->cy_remain;
                         this->cy_remain = 0;
+                        return true;
                     }
                     this->tile.cy = 16;
                     this->cy_remain -= 16;
