@@ -251,6 +251,8 @@ F make_lambda() noexcept
 template<class PrefixArgs>
 struct ActionBase
 {
+    using prefix_args = PrefixArgs;
+
     void delete_self() noexcept
     {
         return this->deleter(this);
@@ -272,6 +274,8 @@ struct ActionBase
 template<class PrefixArgs>
 struct BasicTimer
 {
+    using prefix_args = PrefixArgs;
+
     void delete_self() noexcept
     {
         return this->deleter(this);
@@ -324,6 +328,8 @@ struct BasicTimer
 template<class PrefixArgs>
 struct BasicExecutorImpl
 {
+    using prefix_args = PrefixArgs;
+
     template<class... Args>
     ExecutorResult exec_action(Args&&... args)
     {
@@ -868,6 +874,24 @@ private:
     TimerPtr timer_ptr;
 };
 
+template<class ActionPtr>
+struct REDEMPTION_CXX_NODISCARD ActionBuilder
+{
+    template<class F>
+    REDEMPTION_CXX_NODISCARD ActionPtr on_action(F f) && noexcept
+    {
+        this->action_ptr->set_on_action(f);
+        return std::move(this->action_ptr);
+    }
+
+    ActionBuilder(ActionPtr&& action_ptr) noexcept
+    : action_ptr(static_cast<ActionPtr&&>(action_ptr))
+    {}
+
+private:
+    ActionPtr action_ptr;
+};
+
 
 // template<class PrefixArgs>
 // struct TopExecutorBase : TopExecutorTimersImpl<PrefixArgs>
@@ -1009,6 +1033,48 @@ struct ActionImpl : BasicEvent<
 {
     using ActionImpl::basic_event::basic_event;
 };
+
+template<class EventContainer, class PrefixArgs, class... Args>
+using Action = ActionImpl<EventContainer, PrefixArgs,
+    typename detail::decay_and_strip<Args>::type...>;
+
+template<class F>
+auto one_shot(F) noexcept
+{
+    return [](auto ctx, auto&&... xs){
+        make_lambda<F>(static_cast<decltype(xs)&&>(xs)...);
+        return ctx.terminate();
+    };
+}
+
+namespace detail
+{
+    template<auto f, class T, class... Args>
+    void invoke(T&& o, Args&&... args)
+    {
+        if constexpr (std::is_member_function_pointer<decltype(f)>::value) {
+            (o.*f)(static_cast<Args&&>(args)...);
+        }
+        else {
+            f(static_cast<T&&>(o), static_cast<Args&&>(args)...);
+        }
+    }
+
+    template<auto f>
+    void invoke()
+    {
+        f();
+    }
+}
+
+template<auto f>
+auto one_shot() noexcept
+{
+    return [](auto ctx, auto&&... xs){
+        detail::invoke<f>(static_cast<decltype(xs)&&>(xs)...);
+        return ctx.terminate();
+    };
+}
 
 namespace detail
 {

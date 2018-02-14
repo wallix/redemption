@@ -72,6 +72,28 @@ private:
     int fd_;
 };
 
+// TODO to another file
+inline void gdi_clear_screen(gdi::GraphicApi& drawable, Dimension const& dim)
+{
+    Rect const r(0, 0, dim.w, dim.h);
+    RDPOpaqueRect cmd(r, color_encode(BLACK, 24));
+    drawable.begin_update();
+    drawable.draw(cmd, r, gdi::ColorCtx::depth24());
+    drawable.end_update();
+}
+// TODO to another file
+inline void gdi_freeze_screen(gdi::GraphicApi& drawable, Dimension const& dim)
+{
+    Rect const r(0, 0, dim.w, dim.h);
+    RDPPatBlt cmd(
+        r, 0xA0, color_encode(BLACK, 24), color_encode(WHITE, 24),
+        RDPBrush(0, 0, 3, 0xaa, cbyte_ptr("\x55\xaa\x55\xaa\x55\xaa\x55"))
+    );
+    drawable.begin_update();
+    drawable.draw(cmd, r, gdi::ColorCtx::depth24());
+    drawable.end_update();
+}
+
 class mod_api : public Callback
 {
 protected:

@@ -172,17 +172,17 @@ struct SessionReactor
         }
 
         template<class... Args>
-        using Timer = jln::Timer<TimerContainer&, jln::prefix_args<>, Args...>;
+        using Elem = jln::Timer<TimerContainer&, BasicTimer::prefix_args, Args...>;
     };
 
     template<class T>
     using OwnerPtr = std::unique_ptr<T, jln::DeleteSelf<typename T::base_type>>;
 
     template<class... Args>
-    jln::TimerBuilder<OwnerPtr<TimerContainer::Timer<Args...>>>
+    jln::TimerBuilder<OwnerPtr<TimerContainer::Elem<Args...>>>
     create_timer(Args&&... args)
     {
-        using Timer = TimerContainer::Timer<Args...>;
+        using Timer = TimerContainer::Elem<Args...>;
         return {jln::new_event<Timer>(this->timers_events_, static_cast<Args&&>(args)...)};
     }
 
@@ -192,23 +192,30 @@ struct SessionReactor
     template<class... Args>
     auto create_callback_event(Args&&... args)
     {
-        using Event = jln::ActionImpl<decltype((this->front_events_)), jln::prefix_args<Callback&>, Args...>;
+        using Event = jln::Action<decltype((this->front_events_)), jln::prefix_args<Callback&>, Args...>;
         return jln::new_event<Event>(this->front_events_, static_cast<Args&&>(args)...);
     }
 
-    using GraphicEvent = jln::ActionBase<jln::prefix_args<Callback&>>;
-    using GraphicEventPtr = jln::UniquePtr<GraphicEvent>;
+
+    using GraphicEvent = jln::ActionBase<jln::prefix_args<gdi::GraphicApi&>>;
+
+    struct GraphicContainer : Container<GraphicEvent>
+    {
+        template<class... Args>
+        using Elem = jln::Action<GraphicContainer&, GraphicEvent::prefix_args, Args...>;
+    };
 
     template<class... Args>
-    auto create_graphic_event(Args&&... args)
+    jln::ActionBuilder<OwnerPtr<GraphicContainer::Elem<Args...>>>
+    create_graphic_event(Args&&... args)
     {
-        using Event = jln::ActionImpl<decltype((this->graphic_events_)), jln::prefix_args<gdi::GraphicApi&>, Args...>;
-        return jln::new_event<Event>(this->graphic_events_, static_cast<Args&&>(args)...);
+        using Action = GraphicContainer::Elem<Args...>;
+        return {jln::new_event<Action>(this->graphic_events_, static_cast<Args&&>(args)...)};
     }
 
     //std::vector<std::unique_ptr<Context>> contexts;
     Container<CallbackEvent> front_events_;
-    Container<GraphicEvent> graphic_events_;
+    GraphicContainer graphic_events_;
     TimerContainer timers_events_;
 
     std::vector<CallbackEvent*> front_events()

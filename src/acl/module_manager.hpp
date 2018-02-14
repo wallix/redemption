@@ -24,36 +24,39 @@
 
 #pragma once
 
-#include "transport/socket_transport.hpp"
-#include "configs/config.hpp"
-#include "utils/netutils.hpp"
-#include "mod/mod_api.hpp"
-#include "acl/mm_api.hpp"
 #include "acl/auth_api.hpp"
-#include "mod/null/null.hpp"
-#include "mod/rdp/windowing_api.hpp"
-#include "mod/rdp/rdp.hpp"
-#include "mod/rdp/rdp_api.hpp"
-#include "mod/vnc/vnc.hpp"
-#include "mod/xup/xup.hpp"
+#include "acl/mm_api.hpp"
+#include "configs/config.hpp"
+#include "core/session_reactor.hpp"
+#include "front/front.hpp"
+#include "gdi/protected_graphics.hpp"
+
 #include "mod/internal/bouncer2_mod.hpp"
 #include "mod/internal/client_execute.hpp"
-#include "mod/internal/test_card_mod.hpp"
-#include "mod/internal/replay_mod.hpp"
-#include "front/front.hpp"
-#include "utils/translation.hpp"
-#include "utils/sugar/scope_exit.hpp"
-
-#include "mod/internal/flat_login_mod.hpp"
-#include "mod/internal/selector_mod.hpp"
-#include "mod/internal/flat_wab_close_mod.hpp"
 #include "mod/internal/flat_dialog_mod.hpp"
+#include "mod/internal/flat_login_mod.hpp"
+#include "mod/internal/flat_wab_close_mod.hpp"
 #include "mod/internal/flat_wait_mod.hpp"
 #include "mod/internal/interactive_target_mod.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
+#include "mod/internal/replay_mod.hpp"
+#include "mod/internal/selector_mod.hpp"
+#include "mod/internal/test_card_mod.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 
-#include "gdi/protected_graphics.hpp"
+#include "mod/mod_api.hpp"
+#include "mod/null/null.hpp"
+#include "mod/rdp/rdp.hpp"
+#include "mod/rdp/rdp_api.hpp"
+#include "mod/rdp/windowing_api.hpp"
+#include "mod/vnc/vnc.hpp"
+#include "mod/xup/xup.hpp"
+
+#include "transport/socket_transport.hpp"
+
+#include "utils/netutils.hpp"
+#include "utils/sugar/scope_exit.hpp"
+#include "utils/translation.hpp"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -816,8 +819,10 @@ private:
 
     SocketTransport * socket_transport = nullptr;
 
+    SessionReactor& session_reactor;
+
 public:
-    ModuleManager(Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
+    ModuleManager(SessionReactor& session_reactor, Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
         : MMIni(ini)
         , front(front)
         , no_mod()
@@ -827,6 +832,7 @@ public:
         , client_execute(front, this->front.client_info.window_list_caps,
                          ini.get<cfg::debug::mod_internal>() & 1)
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
+        , session_reactor(session_reactor)
     {
         this->no_mod.get_event().reset_trigger_time();
         this->mod = &this->no_mod;
@@ -1490,6 +1496,7 @@ public:
                         this->ini.get<cfg::debug::mod_rdp>(),
                         &this->ini.get_ref<cfg::context::auth_error_message>(),
                         sock_mod_barrier(),
+                        this->session_reactor,
                         this->front,
                         client_info,
                         ini.get_ref<cfg::mod_rdp::redir_info>(),

@@ -24,76 +24,76 @@
 
 #pragma once
 
-#include "mod/rdp/rdp_orders.hpp"
-
-#include "utils/stream.hpp"
-#include "system/ssl_calls.hpp"
-#include "mod/mod_api.hpp"
 #include "acl/auth_api.hpp"
-#include "core/report_message_api.hpp"
-#include "core/front_api.hpp"
 
-#include "core/server_notifier_api.hpp"
-#include "core/RDP/x224.hpp"
-#include "core/RDP/nego.hpp"
-#include "core/RDP/mcs.hpp"
-#include "core/RDP/lic.hpp"
-#include "core/RDP/logon.hpp"
-#include "core/channel_list.hpp"
-#include "core/RDP/gcc.hpp"
-#include "core/RDP/sec.hpp"
-#include "utils/colors.hpp"
-#include "core/RDP/autoreconnect.hpp"
-#include "core/RDP/ServerRedirection.hpp"
-#include "core/RDP/bitmapupdate.hpp"
-#include "core/RDP/clipboard.hpp"
-#include "core/RDP/fastpath.hpp"
-#include "core/RDP/PersistentKeyListPDU.hpp"
-#include "core/RDP/protocol.hpp"
-#include "core/RDP/RefreshRectPDU.hpp"
-#include "core/RDP/SaveSessionInfoPDU.hpp"
-#include "core/RDP/SuppressOutputPDU.hpp"
-#include "core/RDP/pointer.hpp"
-#include "core/RDP/mppc.hpp"
-#include "core/RDP/capabilities/cap_bitmap.hpp"
-#include "core/RDP/capabilities/order.hpp"
-#include "core/RDP/capabilities/cap_bmpcache.hpp"
-#include "core/RDP/capabilities/bmpcache2.hpp"
-#include "core/RDP/capabilities/colcache.hpp"
-#include "core/RDP/capabilities/activate.hpp"
-#include "core/RDP/capabilities/control.hpp"
-#include "core/RDP/capabilities/pointer.hpp"
-#include "core/RDP/capabilities/cap_share.hpp"
-#include "core/RDP/capabilities/input.hpp"
-#include "core/RDP/capabilities/cap_sound.hpp"
-#include "core/RDP/capabilities/cap_font.hpp"
-#include "core/RDP/capabilities/cap_glyphcache.hpp"
-#include "core/RDP/capabilities/rail.hpp"
-#include "core/RDP/capabilities/window.hpp"
-#include "core/RDP/capabilities/largepointer.hpp"
-#include "core/RDP/capabilities/multifragmentupdate.hpp"
-#include "core/RDP/capabilities/drawninegridcache.hpp"
-#include "core/RDP/capabilities/drawgdiplus.hpp"
-#include "core/RDP/capabilities/bitmapcachehostsupport.hpp"
-#include "core/RDP/capabilities/surfacecommands.hpp"
-#include "core/RDP/capabilities/bitmapcodecs.hpp"
-#include "core/RDP/capabilities/frameacknowledge.hpp"
-#include "core/RDP/capabilities/compdesk.hpp"
-#include "core/RDP/channels/rdpdr.hpp"
-#include "core/RDPEA/audio_output.hpp"
-#include "core/RDP/MonitorLayoutPDU.hpp"
-#include "core/RDP/remote_programs.hpp"
-#include "core/RDP/tpdu_buffer.hpp"
 #include "capture/transparentrecorder.hpp"
 
-#include "core/client_info.hpp"
-#include "utils/genrandom.hpp"
-#include "utils/authorization_channels.hpp"
-#include "utils/sugar/scope_exit.hpp"
-#include "core/channel_names.hpp"
-
 #include "core/FSCC/FileInformation.hpp"
+
+#include "core/RDP/MonitorLayoutPDU.hpp"
+#include "core/RDP/PersistentKeyListPDU.hpp"
+#include "core/RDP/RefreshRectPDU.hpp"
+#include "core/RDP/SaveSessionInfoPDU.hpp"
+#include "core/RDP/ServerRedirection.hpp"
+#include "core/RDP/SuppressOutputPDU.hpp"
+#include "core/RDP/autoreconnect.hpp"
+#include "core/RDP/bitmapupdate.hpp"
+
+#include "core/RDP/capabilities/activate.hpp"
+#include "core/RDP/capabilities/bitmapcachehostsupport.hpp"
+#include "core/RDP/capabilities/bitmapcodecs.hpp"
+#include "core/RDP/capabilities/bmpcache2.hpp"
+#include "core/RDP/capabilities/cap_bitmap.hpp"
+#include "core/RDP/capabilities/cap_bmpcache.hpp"
+#include "core/RDP/capabilities/cap_font.hpp"
+#include "core/RDP/capabilities/cap_glyphcache.hpp"
+#include "core/RDP/capabilities/cap_share.hpp"
+#include "core/RDP/capabilities/cap_sound.hpp"
+#include "core/RDP/capabilities/colcache.hpp"
+#include "core/RDP/capabilities/compdesk.hpp"
+#include "core/RDP/capabilities/control.hpp"
+#include "core/RDP/capabilities/drawgdiplus.hpp"
+#include "core/RDP/capabilities/drawninegridcache.hpp"
+#include "core/RDP/capabilities/frameacknowledge.hpp"
+#include "core/RDP/capabilities/input.hpp"
+#include "core/RDP/capabilities/largepointer.hpp"
+#include "core/RDP/capabilities/multifragmentupdate.hpp"
+#include "core/RDP/capabilities/order.hpp"
+#include "core/RDP/capabilities/pointer.hpp"
+#include "core/RDP/capabilities/rail.hpp"
+#include "core/RDP/capabilities/surfacecommands.hpp"
+#include "core/RDP/capabilities/window.hpp"
+
+#include "core/RDP/channels/rdpdr.hpp"
+
+#include "core/RDP/clipboard.hpp"
+#include "core/RDP/fastpath.hpp"
+#include "core/RDP/gcc.hpp"
+#include "core/RDP/lic.hpp"
+#include "core/RDP/logon.hpp"
+#include "core/RDP/mcs.hpp"
+#include "core/RDP/mppc.hpp"
+#include "core/RDP/nego.hpp"
+#include "core/RDP/pointer.hpp"
+#include "core/RDP/protocol.hpp"
+#include "core/RDP/remote_programs.hpp"
+#include "core/RDP/sec.hpp"
+#include "core/RDP/tpdu_buffer.hpp"
+#include "core/RDP/x224.hpp"
+
+#include "core/RDPEA/audio_output.hpp"
+
+#include "core/channel_list.hpp"
+#include "core/channel_names.hpp"
+#include "core/client_info.hpp"
+#include "core/front_api.hpp"
+#include "core/report_message_api.hpp"
+#include "core/server_notifier_api.hpp"
+#include "core/session_reactor.hpp"
+
 #include "mod/internal/client_execute.hpp"
+#include "mod/mod_api.hpp"
+
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/drdynvc_channel.hpp"
 #include "mod/rdp/channels/rail_channel.hpp"
@@ -103,9 +103,18 @@
 #include "mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
 #include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
+#include "mod/rdp/rdp_orders.hpp"
 #include "mod/rdp/rdp_params.hpp"
+
+#include "system/ssl_calls.hpp"
+
+#include "utils/authorization_channels.hpp"
+#include "utils/colors.hpp"
+#include "utils/genrandom.hpp"
+#include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/cast.hpp"
+#include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/splitter.hpp"
 #include "utils/timeout.hpp"
 
@@ -876,6 +885,8 @@ protected:
 
     InfoPacketFlags info_packet_extra_flags;
 
+    SessionReactor& session_reactor;
+
 public:
     using Verbose = RDPVerbose;
 
@@ -884,6 +895,7 @@ public:
     GCC::UserData::CSSecurity cs_security;
 
     mod_rdp( Transport & trans
+           , SessionReactor& session_reactor
            , FrontAPI & front
            , const ClientInfo & info
            , RedirectionInfo & redir_info
@@ -1061,6 +1073,7 @@ public:
         , load_balance_info(mod_rdp_params.load_balance_info)
         , vars(vars)
         , info_packet_extra_flags(info.has_sound_code ? INFO_REMOTECONSOLEAUDIO : InfoPacketFlags{})
+        , session_reactor(session_reactor)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -1081,7 +1094,9 @@ public:
         }
 
         // Clear client screen
-        this->invoke_asynchronous_graphic_task(AsynchronousGraphicTask::clear_screen);
+        this->session_reactor.create_graphic_event(this->get_dim())
+        .on_action(jln::one_shot<gdi_clear_screen>())
+        .release();
 
         this->beginning = timeobj.get_time().tv_sec;
 
@@ -2141,8 +2156,6 @@ private:
 
 public:
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
-        mod_api::get_event_handlers(out_event_handlers);
-
         if (!this->asynchronous_tasks.empty()) {
             out_event_handlers.emplace_back(
                 &this->asynchronous_task_event,
@@ -4264,10 +4277,7 @@ public:
             this->remote_programs_session_manager->set_drawable(&drawable_);
         }
 
-        if (AsynchronousGraphicTask::none != this->asynchronous_graphic_task) {
-            this->perform_asynchronous_graphic_task(drawable_);
-            return;
-        }
+        assert(AsynchronousGraphicTask::none == this->asynchronous_graphic_task);
 
         bool run = true;
         bool waked_up_by_time = this->event.is_waked_up_by_time();

@@ -128,7 +128,7 @@ public:
 
         try {
             TimeSystem timeobj;
-            ModuleManager mm(front, this->ini, rnd, timeobj);
+            ModuleManager mm(session_reactor, front, this->ini, rnd, timeobj);
 
             BackEvent_t signal       = BACK_EVENT_NONE;
             BackEvent_t front_signal = BACK_EVENT_NONE;
@@ -234,11 +234,12 @@ public:
                     session_reactor.timers_events_.exec(end_tv);
                 }
 
-                session_reactor.front_events_.exec(mm.get_callback());
-
                 if (session_reactor.front_events().size() || sck_is_set(front_trans, rfds)) {
                     try {
-                        front.incoming(mm.get_callback(), now);
+                        session_reactor.front_events_.exec(mm.get_callback());
+                        if (sck_is_set(front_trans, rfds)) {
+                            front.incoming(mm.get_callback(), now);
+                        }
                     } catch (Error const& e) {
                         if (ERR_DISCONNECT_BY_USER == e.id) {
                             front_signal = BACK_EVENT_NEXT;
@@ -274,32 +275,14 @@ public:
 
                         try
                         {
-                            bool call_draw_event = false;
-                            for (EventHandler& event_handler : event_handlers) {
-                                if (BACK_EVENT_NONE != signal) {
-                                    break;
-                                }
-
-                                wait_obj& event = event_handler.get_event();
-
-                                if (event.is_set(event_handler.get_fd(), rfds)) {
-                                    event_handler(now, mm.get_graphic_wrapper(front));
-
-                                    if (BACK_EVENT_CALL_DRAW_EVENT == event.signal) {
-                                        call_draw_event = true;
-                                        event.reset_trigger_time();
-                                    }
-                                    else if (BACK_EVENT_NONE != event.signal) {
-                                        signal = event.signal;
-                                        event.reset_trigger_time();
-                                    }
-                                }
-                            }
-
+                            bool const has_graphic_event = session_reactor.graphic_events().size();
+                            bool const has_fd_event = (BACK_EVENT_NONE == signal && mm.is_set_event(rfds));
                             // Process incoming module trafic
-                            if (((BACK_EVENT_NONE == signal) && mm.is_set_event(rfds)) ||
-                                call_draw_event) {
-                                mm.mod->draw_event(now, mm.get_graphic_wrapper(front));
+                            if (has_fd_event || has_graphic_event) {
+                                session_reactor.graphic_events_.exec(mm.get_graphic_wrapper(front));
+                                if (has_fd_event) {
+                                    mm.mod->draw_event(now, mm.get_graphic_wrapper(front));
+                                }
 
                                 if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
                                     signal = mm.mod->get_event().signal;
