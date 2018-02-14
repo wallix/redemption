@@ -62,7 +62,6 @@ class Session
     struct Acl
     {
         SocketTransport auth_trans;
-        wait_obj        auth_event;
         AclSerializer   acl_serial;
 
         Acl(Inifile & ini, unique_fd client_sck, time_t now,
@@ -85,6 +84,19 @@ class Session
           FILE   * perf_file;
 
     static const time_t select_timeout_tv_sec = 3;
+
+    static void wait_on_sck(SocketTransport& sck, fd_set& rfds, unsigned& max)
+    {
+        if (sck.sck > INVALID_SOCKET) {
+            io_fd_set(sck.sck, rfds);
+            max = std::max(static_cast<unsigned>(sck.sck), max);
+        }
+    }
+
+    static bool sck_is_set(SocketTransport& sck, fd_set& rfds)
+    {
+        return sck.has_pending_data() || io_fd_isset(sck.sck, rfds);
+    }
 
 public:
     Session(unique_fd sck, Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat)
@@ -160,17 +172,14 @@ public:
                 timeval timeout = time_mark;
 
                 if (mm.mod->is_up_and_running() || !front.up_and_running) {
-                    if (front_trans.sck > INVALID_SOCKET) {
-                        io_fd_set(front_trans.sck, rfds);
-                        max = std::max(static_cast<unsigned>(front_trans.sck), max);
-                    }
+                    wait_on_sck(front_trans, rfds, max);
                     if (front.capture) {
                         front.capture->get_capture_event().wait_on_timeout(timeout);
                     }
                 }
 
                 if (acl) {
-                    acl->auth_event.wait_on_fd(acl->auth_trans.sck, rfds, max, timeout);
+                    wait_on_sck(acl->auth_trans, rfds, max);
                 }
 
                 mm.mod->get_event().wait_on_fd(mm.mod->get_fd(), rfds, max, timeout);
@@ -227,7 +236,7 @@ public:
 
                 session_reactor.front_events_.exec(mm.get_callback());
 
-                if (session_reactor.front_events().size() || io_fd_isset(front_trans.sck, rfds)) {
+                if (session_reactor.front_events().size() || sck_is_set(front_trans, rfds)) {
                     try {
                         front.incoming(mm.get_callback(), now);
                     } catch (Error const& e) {
@@ -413,7 +422,7 @@ public:
                                 }
                             }
                         }
-                        else if (acl->auth_trans.is_set(acl->auth_event, rfds)) {
+                        else if (sck_is_set(acl->auth_trans, rfds)) {
                             // authentifier received updated values
                             acl->acl_serial.receive();
                         }
