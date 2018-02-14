@@ -21,6 +21,7 @@
 
 #pragma once
 
+
 #include "utils/log.hpp"
 
 #include "core/channel_list.hpp"
@@ -1300,7 +1301,7 @@ public:
 
     // sudo bin/gcc-4.9.2/release/link-static/rdpproxy -nf
 
-    //bjam -s qt=4 debug client_rdp_Qt4 && bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4
+    //bjam -s qt=4 debug client_rdp && bin/gcc-4.9.2/debug/threading-multi/client_rdp
 
     // sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' &&
 
