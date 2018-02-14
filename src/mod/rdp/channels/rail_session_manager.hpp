@@ -131,8 +131,7 @@ public:
         Font const & font, Theme const & theme, AuthApi & authentifier,
         char const * session_probe_window_title,
         not_null_ptr<ClientExecute> client_execute,
-        // TODO std::chrono::milliseconds
-        unsigned rail_disconnect_message_delay,
+        std::chrono::milliseconds rail_disconnect_message_delay,
         RDPVerbose verbose)
     : front(front)
     , mod(mod)
