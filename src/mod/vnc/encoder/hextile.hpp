@@ -308,20 +308,19 @@ namespace VNC {
             // return false if there is no next tile any more
             bool next_tile()
             {
-                if (this->cx_remain < 16){
+                if (this->cx_remain <= 16){
                     if (this->cy_remain < 16){
                         return false;
                     }
                     this->cx_remain = this->r.cx;
                     this->cy_remain -= 16;
-                    this->tile.x = this->r.x;
-                    this->tile.cx = std::min<size_t>(16, this->cx_remain);
-                    this->tile.y += 16;
-                    this->tile.cy = std::min<size_t>(16, this->cy_remain);
+                    this->tile = Rect(this->r.x, this->tile.y + 16,
+                                    std::min<size_t>(16, this->cx_remain),
+                                    std::min<size_t>(16, this->cy_remain));
                     return true;
                 }
-                this->tile.x += 16;
                 this->cx_remain -= 16;
+                this->tile.x += 16;
                 this->tile.cx = std::min<size_t>(16, this->cx_remain);
                 return true;
             }
