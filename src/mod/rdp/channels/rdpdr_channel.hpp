@@ -884,6 +884,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
     SessionReactor& session_reactor;
 
+    SessionReactor::BasicTimerPtr initialization_timeout_event;
+
 public:
     struct Params : public BaseVirtualChannel::Params
     {
@@ -2739,8 +2741,7 @@ public:
         this->session_probe_device_announce_responded_notifier = launcher;
     }
 
-    SessionReactor::BasicTimerPtr initialization_timeout_event;
-
+private:
     void process_event() {
         this->initialization_timeout_event.reset();
 

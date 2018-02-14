@@ -20,10 +20,11 @@
 
 #pragma once
 
+#include "core/RDP/remote_programs.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "core/front_api.hpp"
-#include "core/RDP/remote_programs.hpp"
+#include "core/session_reactor.hpp"
 #include "gdi/clip_from_cmd.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/protected_graphics.hpp"
@@ -86,9 +87,11 @@ class RemoteProgramsSessionManager final
 
     bool currently_without_window = false;
 
-    unsigned rail_disconnect_message_delay = 0;
+    std::chrono::milliseconds rail_disconnect_message_delay {};
 
-    wait_obj event;
+    SessionReactor& session_reactor;
+
+    SessionReactor::BasicTimerPtr waiting_screen_event;
 
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
@@ -122,12 +125,15 @@ public:
         }
     }
 
-    RemoteProgramsSessionManager(FrontAPI& front, mod_api& mod, Translation::language_t lang,
-                                 Font const & font, Theme const & theme, AuthApi & authentifier,
-                                 char const * session_probe_window_title,
-                                 not_null_ptr<ClientExecute> client_execute,
-                                 unsigned rail_disconnect_message_delay,
-                                 RDPVerbose verbose)
+    RemoteProgramsSessionManager(
+        SessionReactor& session_reactor,
+        FrontAPI& front, mod_api& mod, Translation::language_t lang,
+        Font const & font, Theme const & theme, AuthApi & authentifier,
+        char const * session_probe_window_title,
+        not_null_ptr<ClientExecute> client_execute,
+        // TODO std::chrono::milliseconds
+        unsigned rail_disconnect_message_delay,
+        RDPVerbose verbose)
     : front(front)
     , mod(mod)
     , lang(lang)
@@ -138,6 +144,7 @@ public:
     , session_probe_window_title(session_probe_window_title)
     , client_execute(client_execute)
     , rail_disconnect_message_delay(rail_disconnect_message_delay)
+    , session_reactor(session_reactor)
     {}
 
     void begin_update() override
@@ -472,7 +479,18 @@ public:
 
             this->currently_without_window = true;
 
-            this->event.set_trigger_time(rail_disconnect_message_delay * 1000);
+            this->waiting_screen_event = this->session_reactor.create_timer(std::ref(*this))
+            .set_delay(this->rail_disconnect_message_delay)
+            // this->process_event()
+            .on_action(jln::one_shot([](RemoteProgramsSessionManager& self){
+                if (self.currently_without_window /*
+                 && (DialogBoxType::NONE == self.dialog_box_type)
+                 && self.has_previous_window*/) {
+                    assert(DialogBoxType::NONE == self.dialog_box_type);
+                    self.dialog_box_create(DialogBoxType::WAITING_SCREEN);
+                    self.waiting_screen_draw(0);
+                }
+            }));
         }
 
         if (has_window) {
@@ -799,27 +817,5 @@ public:
         }
 
         this->auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
-    }
-
-    wait_obj* get_event() {
-        if (this->currently_without_window &&
-            (DialogBoxType::NONE == this->dialog_box_type) &&
-            this->has_previous_window) {
-            return &this->event;
-        }
-
-        return nullptr;
-    }
-
-    void process_event() {
-        if (this->currently_without_window) {
-            assert(DialogBoxType::NONE == this->dialog_box_type);
-
-            if (this->currently_without_window) {
-                this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
-
-                this->waiting_screen_draw(0);
-            }
-        }
     }
 };  // class RemoteProgramsSessionManager

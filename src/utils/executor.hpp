@@ -1042,7 +1042,7 @@ template<class F>
 auto one_shot(F) noexcept
 {
     return [](auto ctx, auto&&... xs){
-        make_lambda<F>(static_cast<decltype(xs)&&>(xs)...);
+        make_lambda<F>()(static_cast<decltype(xs)&&>(xs)...);
         return ctx.terminate();
     };
 }
