@@ -579,6 +579,7 @@ protected:
 
             this->file_system_virtual_channel =
                 std::make_unique<FileSystemVirtualChannel>(
+                    this->session_reactor,
                     this->file_system_to_client_sender.get(),
                     this->file_system_to_server_sender.get(),
                     this->file_system_drive_manager,
@@ -837,19 +838,6 @@ protected:
         }
     } remote_program_session_manager_event_handler;
 
-    class FileSystemVirtualChannelEventHandler : public EventHandler::CB {
-        mod_rdp& mod_;
-
-    public:
-        FileSystemVirtualChannelEventHandler(mod_rdp& mod)
-        : mod_(mod)
-        {}
-
-        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
-            this->mod_.process_file_system_virtual_channel_event(now, event, drawable);
-        }
-    } file_system_virtual_channel_event_handler;
-
     bool clean_up_32_bpp_cursor;
     bool large_pointer_support;
 
@@ -1053,7 +1041,6 @@ public:
         , session_probe_launcher_event_handler(*this)
         , session_probe_virtual_channel_event_handler(*this)
         , remote_program_session_manager_event_handler(*this)
-        , file_system_virtual_channel_event_handler(*this)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
         , client_large_pointer_caps(info.large_pointer_caps)
@@ -2148,12 +2135,6 @@ private:
         }
     }
 
-    void process_file_system_virtual_channel_event(time_t, wait_obj& /*event*/, gdi::GraphicApi&) {
-        if (this->file_system_virtual_channel) {
-            this->file_system_virtual_channel->process_event();
-        }
-    }
-
 public:
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
         if (!this->asynchronous_tasks.empty()) {
@@ -2189,16 +2170,6 @@ public:
                 out_event_handlers.emplace_back(
                     event,
                     &this->remote_program_session_manager_event_handler,
-                    INVALID_SOCKET
-                );
-            }
-        }
-
-        if (this->file_system_virtual_channel) {
-            if (wait_obj* event = this->file_system_virtual_channel->get_event()) {
-                out_event_handlers.emplace_back(
-                    event,
-                    &this->file_system_virtual_channel_event_handler,
                     INVALID_SOCKET
                 );
             }

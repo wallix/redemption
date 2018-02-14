@@ -275,10 +275,31 @@ public:
 
                         try
                         {
-                            bool const has_graphic_event = session_reactor.graphic_events().size();
+                            bool call_draw_event = false;
+                            for (EventHandler& event_handler : event_handlers) {
+                                if (BACK_EVENT_NONE != signal) {
+                                    break;
+                                }
+
+                                wait_obj& event = event_handler.get_event();
+
+                                if (event.is_set(event_handler.get_fd(), rfds)) {
+                                    event_handler(now, mm.get_graphic_wrapper(front));
+
+                                    if (BACK_EVENT_CALL_DRAW_EVENT == event.signal) {
+                                        call_draw_event = true;
+                                        event.reset_trigger_time();
+                                    }
+                                    else if (BACK_EVENT_NONE != event.signal) {
+                                        signal = event.signal;
+                                        event.reset_trigger_time();
+                                    }
+                                }
+                            }
+
                             bool const has_fd_event = (BACK_EVENT_NONE == signal && mm.is_set_event(rfds));
                             // Process incoming module trafic
-                            if (has_fd_event || has_graphic_event) {
+                            if (has_fd_event || call_draw_event) {
                                 session_reactor.graphic_events_.exec(mm.get_graphic_wrapper(front));
                                 if (has_fd_event) {
                                     mm.mod->draw_event(now, mm.get_graphic_wrapper(front));

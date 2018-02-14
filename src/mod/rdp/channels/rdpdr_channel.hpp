@@ -24,6 +24,7 @@
 #include <deque>
 
 #include "core/front_api.hpp"
+#include "core/session_reactor.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
@@ -881,6 +882,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         cont.pop_back();
     }
 
+    SessionReactor& session_reactor;
+
 public:
     struct Params : public BaseVirtualChannel::Params
     {
@@ -903,6 +906,7 @@ public:
     };
 
     FileSystemVirtualChannel(
+        SessionReactor& session_reactor,
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
         FileSystemDriveManager& file_system_drive_manager,
@@ -934,7 +938,9 @@ public:
           params.smart_card_authorized,
           CHANNELS::CHANNEL_CHUNK_LENGTH,
           params.verbose)
-    , front(front) {}
+    , front(front)
+    , session_reactor(session_reactor)
+    {}
 
     ~FileSystemVirtualChannel() override
     {
@@ -1912,7 +1918,7 @@ public:
                     client_announce_reply.log(LOG_INFO);
                 }
 
-                this->initialization_timeout_event.reset_trigger_time();
+                this->initialization_timeout_event.reset();
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENT_NAME:
@@ -2070,10 +2076,9 @@ public:
 
         // Virtual channel is opened at client side and is authorized.
         if (this->has_valid_to_client_sender()) {
-            this->initialization_timeout_event.set_trigger_time(
-                std::chrono::duration_cast<std::chrono::microseconds>(
-                    this->initialization_timeout).count());
-
+            this->initialization_timeout_event = session_reactor.create_timer(this)
+            .set_delay(this->initialization_timeout)
+            .on_action(jln::one_shot<&FileSystemVirtualChannel::process_event>());
             return true;
         }
 
@@ -2734,19 +2739,10 @@ public:
         this->session_probe_device_announce_responded_notifier = launcher;
     }
 
-    wait_obj initialization_timeout_event;
-
-    wait_obj* get_event()
-    {
-        if (this->initialization_timeout_event.is_trigger_time_set()) {
-            return &this->initialization_timeout_event;
-        }
-
-        return nullptr;
-    }
+    SessionReactor::BasicTimerPtr initialization_timeout_event;
 
     void process_event() {
-        this->initialization_timeout_event.reset_trigger_time();
+        this->initialization_timeout_event.reset();
 
         uint8_t message_buffer[1024];
 

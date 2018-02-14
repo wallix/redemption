@@ -1053,7 +1053,13 @@ namespace detail
     void invoke(T&& o, Args&&... args)
     {
         if constexpr (std::is_member_function_pointer<decltype(f)>::value) {
-            (o.*f)(static_cast<Args&&>(args)...);
+            if constexpr (std::is_pointer<std::remove_reference_t<decltype(o)>>::value) {
+                assert(o);
+                (o->*f)(static_cast<Args&&>(args)...);
+            }
+            else {
+                (o.*f)(static_cast<Args&&>(args)...);
+            }
         }
         else {
             f(static_cast<T&&>(o), static_cast<Args&&>(args)...);
