@@ -3338,6 +3338,36 @@ test-run tests/mod/test_mod_api :
 :
   <covfile>src/mod/mod_api.hpp
 ;
+test-run tests/mod/vnc/encoder/test_hextile :
+  $(REDEMPTION_TEST_PATH)/mod/vnc/encoder/test_hextile.cpp
+:
+  <covfile>src/mod/vnc/encoder/hextile.hpp
+  <library>crypto
+  <library>png
+  <library>src/core/RDP/mppc.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>tests/includes/test_only/fake_graphic.o
+;
+test-run tests/mod/vnc/encoder/test_zrle :
+  $(REDEMPTION_TEST_PATH)/mod/vnc/encoder/test_zrle.cpp
+:
+  <covfile>src/mod/vnc/encoder/zrle.hpp
+  <library>crypto
+  <library>png
+  <library>src/core/RDP/mppc.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>tests/includes/test_only/fake_graphic.o
+;
 test-run tests/mod/vnc/test_vnc :
   $(REDEMPTION_TEST_PATH)/mod/vnc/test_vnc.cpp
 :
@@ -4718,6 +4748,10 @@ alias test_rdp_params : tests/mod/rdp/test_rdp_params ;
 alias test_rdp_params.coverage : tests/mod/rdp/test_rdp_params.coverage ;
 alias test_mod_api : tests/mod/test_mod_api ;
 alias test_mod_api.coverage : tests/mod/test_mod_api.coverage ;
+alias test_hextile : tests/mod/vnc/encoder/test_hextile ;
+alias test_hextile.coverage : tests/mod/vnc/encoder/test_hextile.coverage ;
+alias test_zrle : tests/mod/vnc/encoder/test_zrle ;
+alias test_zrle.coverage : tests/mod/vnc/encoder/test_zrle.coverage ;
 alias test_vnc : tests/mod/vnc/test_vnc ;
 alias test_vnc.coverage : tests/mod/vnc/test_vnc.coverage ;
 alias test_xup : tests/mod/xup/test_xup ;
@@ -5243,6 +5277,11 @@ explicit tests/mod ;
 alias tests/mod :
   tests/mod/test_mod_api
 ;
+explicit tests/mod/vnc/encoder ;
+alias tests/mod/vnc/encoder :
+  tests/mod/vnc/encoder/test_hextile
+  tests/mod/vnc/encoder/test_zrle
+;
 explicit tests/mod/vnc ;
 alias tests/mod/vnc :
   tests/mod/vnc/test_vnc
@@ -5423,6 +5462,7 @@ alias tests.full :
   tests/mod/rdp/channels
   tests/mod/rdp
   tests/mod
+  tests/mod/vnc/encoder
   tests/mod/vnc
   tests/mod/xup
   tests/regex

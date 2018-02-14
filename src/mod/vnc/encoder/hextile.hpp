@@ -162,8 +162,9 @@ namespace VNC {
                  , bgPixel{0}
                  , verbose(verbose)
             {
-                 this->cx_remain = (this->r.cx < 16)?this->r.cx:this->r.cx-16;
-                 this->cy_remain = (this->r.cy < 16)?0:this->r.cy-16;
+                // remaining part of rect to draw, including current tile
+                 this->cx_remain = this->r.cx;
+                 this->cy_remain = this->r.cy;
             }
             
             virtual ~Hextile(){}
@@ -308,31 +309,27 @@ namespace VNC {
             bool next_tile()
             {
                 if (this->cx_remain < 16){
-                    if (this->cx_remain == 0 && this->cy_remain == 0){
-                        return false;
-                    }
-                    this->tile.x = this->r.x;
-                    this->tile.cx = this->cx_remain?this->cx_remain:16;
-                    this->cx_remain = (this->r.cx < 16)?this->r.cx:this->r.cx-16;
-                    this->tile.y += 16;
-                    if (this->tile.y >= this->r.y + this->r.cy){
-                        return false;
-                    }
                     if (this->cy_remain < 16){
-                        this->tile.cy = this->cy_remain;
-                        this->cy_remain = 0;
-                        return true;
+                        return false;
                     }
-                    this->tile.cy = 16;
+                    this->cx_remain = this->r.cx;
                     this->cy_remain -= 16;
+                    this->tile.x = this->r.x;
+                    this->tile.cx = std::min<size_t>(16, this->cx_remain);
+                    this->tile.y += 16;
+                    this->tile.cy = std::min<size_t>(16, this->cy_remain);
                     return true;
                 }
                 this->tile.x += 16;
-                this->tile.cx = 16;
                 this->cx_remain -= 16;
+                this->tile.cx = std::min<size_t>(16, this->cx_remain);
                 return true;
             }
- 
+        
+            const Rect current_tile() const
+            {
+                return this->tile;
+            }
         };    
     } // namespace encoder
 } // namespace VNC
