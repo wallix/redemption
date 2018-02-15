@@ -29,8 +29,6 @@ class SessionProbeLauncher {
 public:
     virtual ~SessionProbeLauncher() = default;
 
-    virtual wait_obj* get_event() = 0;
-
     virtual bool on_clipboard_initialize() = 0;
 
     virtual bool on_clipboard_monitor_ready() = 0;

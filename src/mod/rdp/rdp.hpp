@@ -799,19 +799,6 @@ protected:
         }
     } asynchronous_task_event_handler;
 
-    class SessionProbeLauncherEventHandler : public EventHandler::CB {
-        mod_rdp& mod_;
-
-    public:
-        SessionProbeLauncherEventHandler(mod_rdp& mod)
-        : mod_(mod)
-        {}
-
-        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
-            this->mod_.process_session_probe_launcher_event(now, event, drawable);
-        }
-    } session_probe_launcher_event_handler;
-
     class SessionProbeVirtualChannelEventHandler : public EventHandler::CB {
         mod_rdp& mod_;
 
@@ -1025,7 +1012,6 @@ public:
         , use_client_provided_remoteapp(mod_rdp_params.use_client_provided_remoteapp)
         , should_ignore_first_client_execute(mod_rdp_params.should_ignore_first_client_execute)
         , asynchronous_task_event_handler(*this)
-        , session_probe_launcher_event_handler(*this)
         , session_probe_virtual_channel_event_handler(*this)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
@@ -1516,6 +1502,7 @@ public:
                         if (this->session_probe_use_clipboard_based_launcher) {
                             this->session_probe_launcher =
                                 std::make_unique<SessionProbeClipboardBasedLauncher>(
+                                    this->session_reactor,
                                     *this, alternate_shell.c_str(),
                                     this->session_probe_clipboard_based_launcher_clipboard_initialization_delay,
                                     this->session_probe_clipboard_based_launcher_long_delay,
@@ -2087,12 +2074,6 @@ private:
         }
     }
 
-    void process_session_probe_launcher_event(time_t, wait_obj& /*event*/, gdi::GraphicApi&) {
-        if (this->session_probe_launcher) {
-            this->session_probe_launcher->on_event();
-        }
-    }
-
     void process_session_probe_virtual_channel_event(time_t, wait_obj& event, gdi::GraphicApi&) {
         //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event() ...");
         try{
@@ -2123,16 +2104,6 @@ public:
                 &this->asynchronous_task_event_handler,
                 this->asynchronous_tasks.front()->get_file_descriptor()
             );
-        }
-
-        if (this->session_probe_launcher) {
-            if (wait_obj* event = this->session_probe_launcher->get_event()) {
-                out_event_handlers.emplace_back(
-                    event,
-                    &this->session_probe_launcher_event_handler,
-                    INVALID_SOCKET
-                );
-            }
         }
 
         if (this->session_probe_virtual_channel_p) {

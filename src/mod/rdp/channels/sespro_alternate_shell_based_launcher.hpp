@@ -43,8 +43,6 @@ public:
     : verbose(verbose)
     {}
 
-    wait_obj* get_event() override { return nullptr; }
-
     bool on_clipboard_initialize() override { return false; }
 
     bool on_clipboard_monitor_ready() override { return false; }
