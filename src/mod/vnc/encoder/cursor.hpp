@@ -93,7 +93,7 @@ namespace VNC {
             {
                 // TODO see why we get these empty rects ?
                 if (this->cx <= 0 && this->cy <= 0) {
-                    return EncoderState::Exit; 
+                    LOG(LOG_INFO, "empty rect %s", Rect(this->x, this->y, this->cx, this->cy));
                 }
 
                 const int sz_pixel_array = this->cx * this->cy * this->Bpp;
@@ -117,14 +117,18 @@ namespace VNC {
                 const uint8_t * vnc_pointer_mask = cursor_buf + sz_pixel_array;
 
                 Pointer cursor;
-                //LOG(LOG_INFO, "Cursor x=%u y=%u", x, y);
+                LOG(LOG_INFO, "Cursor x=%zu y=%zu", x, y);
                 cursor.x = x;
                 cursor.y = y;
                 // cursor.bpp = 24;
                 cursor.width = 32;
                 cursor.height = 32;
                 // a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead
-                if (cx == 1 && cy == 1) {
+                if (this->cx == 0 || this->cy == 0) {
+                    buf.advance(sz_pixel_array + sz_bitmask);
+                    return EncoderState::Exit; 
+                }
+                else if (this->cx == 1 && this->cy == 1) {
                     // TODO Appearence of this 1x1 cursor looks broken, check what we actually get
                     memset(cursor.data, 0, sizeof(cursor.data));
                     cursor.data[2883] = 0xFF;
@@ -145,14 +149,14 @@ namespace VNC {
                     // TODO The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask used is 1 bit per pixel arrays
                     // copy vnc pointer and mask to rdp pointer and mask
 
-                    for (int yy = 0; size_t(yy) < cy; yy++) {
-                        for (int xx = 0 ; size_t(xx) < cx ; xx++){
-                            if (vnc_pointer_mask[yy * nbbytes(cx) + xx / 8 ] & (0x80 >> (xx&7))){
+                    for (int yy = 0; size_t(yy) < this->cy; yy++) {
+                        for (int xx = 0 ; size_t(xx) < this->cx ; xx++){
+                            if (vnc_pointer_mask[yy * nbbytes(this->cx) + xx / 8 ] & (0x80 >> (xx&7))){
                                 if ((yy < 32) && (xx < 32)){
                                     cursor.mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
                                     int pixel = 0;
                                     for (int tt = 0 ; tt < Bpp; tt++){
-                                        pixel += vnc_pointer_data[(yy * cx + xx) * Bpp + tt] << (8 * tt);
+                                        pixel += vnc_pointer_data[(yy * this->cx + xx) * Bpp + tt] << (8 * tt);
                                     }
                                     // TODO temporary: force black cursor
                                     int red   = (pixel >> this->red_shift) & this->red_max;
@@ -173,7 +177,7 @@ namespace VNC {
                 cursor.update_bw();
                 // TODO we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation
                 drawable.begin_update();
-                drawable.set_pointer(cursor);
+//                drawable.set_pointer(cursor);
                 drawable.end_update();
 
                 buf.advance(sz_pixel_array + sz_bitmask);

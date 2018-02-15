@@ -178,8 +178,14 @@ namespace VNC {
                     LOG(LOG_INFO, "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
                     assert(buf.remaining() != last_remaining);
                     last_remaining = buf.remaining();
-                    LOG(LOG_INFO, "Hextile encoding data=%u", buf.remaining());
-                    hexdump(buf.av().data(), std::min<uint16_t>(buf.remaining(), 1024));
+
+//                    LOG(LOG_INFO, "Hextile encoding data=%u", buf.remaining());
+//                    hexdump(buf.av().data(), std::min<uint16_t>(buf.remaining(), 1024));
+
+//                    uint8_t tile_data[16*16*4];
+//                    InStream stream(buf.av(buf.remaining()));
+//                    this->parse_tile(stream, tile_data);
+
                     Parse parser(buf.av().data());
 
                     uint8_t tileType = parser.in_uint8();
@@ -196,16 +202,24 @@ namespace VNC {
                             LOG(LOG_INFO, "Hextile::hexTileraw need more data");
                             return EncoderState::NeedMoreData;
                         }
-                        uint8_t * raw = buf.av().data();
+                        const uint8_t * raw(buf.av().data()+1);
+
                         LOG(LOG_INFO, "Hextile::hexTileraw");
                         {
+                            uint8_t tile_data[16*16*4] = {};
+                            for (size_t q = 0 ; q < raw_length ; q += this->Bpp){
+                                for (size_t b = 0 ; b < this->Bpp ; b++){
+                                    tile_data[q+this->Bpp-b-1] = raw[q+b];
+                                }
+                            }
                             update_lock<gdi::GraphicApi> lock(drawable);
-                            LOG(LOG_INFO, "drawing tile");
                             const Bitmap bmp(raw, this->tile.cx, this->tile.cy, this->bpp, Rect(0, 0, this->tile.cx, this->tile.cy));
                             const RDPMemBlt cmd(0, this->tile, 0xCC, 0, 0, 0);
                             drawable.draw(cmd, this->tile, bmp);
+//                            const RDPOpaqueRect cmd2(this->tile, color_encode(YELLOW,this->bpp));
+//                            drawable.draw(cmd2, this->tile, gdi::ColorCtx::from_bpp(this->bpp, nullptr));
+                            
                         }
-                        LOG(LOG_INFO, "next tile");
                         buf.advance(raw_length + 1);
                         if (not this->next_tile()){
                             LOG(LOG_INFO, "Last Tile");
@@ -227,11 +241,11 @@ namespace VNC {
                     }
 
                     if (tileType & hextileBackgroundSpecified){
-                        this->bgPixel = parser.in_bytes_be(this->Bpp);
+                        this->bgPixel = parser.in_bytes_le(this->Bpp);
                     }
 
                     if (tileType & hextileForegroundSpecified){
-                        this->fgPixel = parser.in_bytes_be(this->Bpp);
+                        this->fgPixel = parser.in_bytes_le(this->Bpp);
                     }
 
                     uint8_t nSubRects = 0;
@@ -252,6 +266,9 @@ namespace VNC {
                     uint8_t * ptr = &tile_data[0];
                     for (uint8_t h = 0 ; h < 16 ; h++) {
                         for (uint8_t w = 0 ; w < 16 ; w++) {
+//                            for (size_t b = 0 ; b < this->Bpp ; b++){
+//                                ptr[this->Bpp-b-1] = reinterpret_cast<uint8_t *>(&this->bgPixel)[b];
+//                            }
                             memcpy(ptr, &this->bgPixel, this->Bpp); 
                             ptr += this->Bpp;
                         }
@@ -260,7 +277,7 @@ namespace VNC {
                     for (size_t q = 0 ; q < nSubRects ; q++){
                         if (tileType & hextileSubrectsColoured){
                             LOG(LOG_INFO, "SubrectsColoured");
-                            this->fgPixel = parser.in_bytes_be(this->Bpp);
+                            this->fgPixel = parser.in_bytes_le(this->Bpp);
                         }
                         uint8_t xy = parser.in_uint8();
                         uint8_t wh = parser.in_uint8();
@@ -277,6 +294,9 @@ namespace VNC {
                         LOG(LOG_INFO, "Smalltile (%u,%u,%u,%u)", x,y,w,h);
                         for (uint8_t hi = y ; hi < y + h ; hi++) {
                             for (uint8_t wi = x ; wi < x + w ; wi++) {
+//                                for (size_t b = 0 ; b < this->Bpp ; b++){
+//                                    ptr[this->Bpp-b-1] = reinterpret_cast<uint8_t *>(&this->fgPixel)[b];
+//                                }
                                 memcpy(ptr, &this->fgPixel, this->Bpp); 
                                 ptr += this->Bpp;
                             }
