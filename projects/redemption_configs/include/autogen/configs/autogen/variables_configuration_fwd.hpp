@@ -143,6 +143,8 @@ namespace cfg {
         struct session_probe_clipboard_based_launcher_short_delay;
         struct session_probe_allow_multiple_handshake;
         struct session_probe_enable_crash_dump;
+        struct session_probe_handle_usage_limit;
+        struct session_probe_memory_usage_limit;
         struct server_cert_store;
         struct server_cert_check;
         struct server_access_allowed_message;

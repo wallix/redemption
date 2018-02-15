@@ -452,6 +452,12 @@
 "#_advanced\n"
 "#session_probe_enable_crash_dump = 0\n\n"
 
+"#_advanced\n"
+"#session_probe_handle_usage_limit = 0\n\n"
+
+"#_advanced\n"
+"#session_probe_memory_usage_limit = 0\n\n"
+
 "# Keep known server certificates on WAB\n"
 "#_hidden\n"
 "#server_cert_store = 1\n\n"
