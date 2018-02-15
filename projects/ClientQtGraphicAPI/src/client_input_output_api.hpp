@@ -195,8 +195,8 @@ public:
     } windowsData;
 
 
-    bool remoteapp;
-    bool vnc;
+//     bool remoteapp;
+//     bool vnc;
 
     enum : uint8_t {
         MOD_RDP            = 1,
@@ -1098,11 +1098,11 @@ public:
         return this->client->mouseMouveEvent(x, y);
     }
 
-    void virtual keyPressEvent(const uint16_t key, const uint16_t text)  = 0;
+    void virtual keyPressEvent(const int key, const uint16_t text)  = 0;
 //         this->client->keyPressEvent(key, text);
 //     }
 //
-    void virtual keyReleaseEvent(const uint16_t key, const uint16_t text)  = 0;
+    void virtual keyReleaseEvent(const int key, const uint16_t text)  = 0;
 //         this->client->keyReleaseEvent(key, text);
 //     }
 

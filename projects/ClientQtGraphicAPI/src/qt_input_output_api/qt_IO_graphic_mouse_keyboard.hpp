@@ -70,7 +70,7 @@ public:
     ProgressBarWindow  * bar;
     QPainter             painter;
     QImage cursor_image;
-    std::map<uint32_t, Screen_Qt *> remote_app_screen_map;
+    std::map<uint32_t, RemoteAppQtScreen *> remote_app_screen_map;
     //     QPixmap            * trans_cache;
     Qt_ScanCode_KeyMap   qtRDPKeymap;
 
@@ -186,8 +186,8 @@ public:
     //////////////////////////
 
     virtual void create_remote_app_screen(uint32_t id, int w, int h, int x, int y) override {
-        this->remote_app_screen_map.insert(std::pair<uint32_t, Screen_Qt *>(id, nullptr));
-        this->remote_app_screen_map[id] = new Screen_Qt(this->drawn_client, this, w, h, x, y, &(this->cache));
+        this->remote_app_screen_map.insert(std::pair<uint32_t, RemoteAppQtScreen *>(id, nullptr));
+        this->remote_app_screen_map[id] = new RemoteAppQtScreen(this->drawn_client, this, w, h, x, y, &(this->cache));
     }
 
     virtual void show_screen(uint32_t id) override {
@@ -243,12 +243,12 @@ public:
             this->remote_app_screen_map[id] = nullptr;
         }
 
-        std::map<uint32_t, Screen_Qt *>::iterator it = remote_app_screen_map.find(id);
+        std::map<uint32_t, RemoteAppQtScreen *>::iterator it = remote_app_screen_map.find(id);
         remote_app_screen_map.erase (it);
     }
 
     virtual void clear_remote_app_screen() override {
-        for (std::map<uint32_t, Screen_Qt *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
+        for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
             if (it->second) {
                 it->second->disconnection();
                 it->second = nullptr;
@@ -308,7 +308,7 @@ public:
 
     void end_update() override {
         if (this->drawn_client->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
-            for (std::map<uint32_t, Screen_Qt *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
+            for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
                 if (it->second) {
                     it->second->update_view();
                 }
@@ -398,7 +398,7 @@ public:
 
         } else {
             if (this->drawn_client->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
-                 for (std::map<uint32_t, Screen_Qt *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
+                 for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
                     if (it->second) {
                         it->second->set_mem_cursor(static_cast<uchar *>(data), cursor.x, cursor.y);
                     }
@@ -1340,7 +1340,7 @@ public:
     //      CONTROLLERS
     //------------------------
 
-    void keyPressEvent(const uint16_t key, const uint16_t text) override {
+    void keyPressEvent(const int key, const uint16_t text) override {
 //         if (this->client->mod_state ==  ClientRedemptionIOAPI::MOD_VNC) {
 //             this->client->send_rdp_unicode(text, 0);
 //         } else {
@@ -1351,7 +1351,7 @@ public:
 //         }
     }
 
-    void keyReleaseEvent(const uint16_t key, const uint16_t text) override {
+    void keyReleaseEvent(const int key, const uint16_t text) override {
 //          if (this->client->mod_state ==  ClientRedemptionIOAPI::MOD_VNC) {
 //             this->client->send_rdp_unicode(text, KBD_FLAG_UP);
 //         } else {
