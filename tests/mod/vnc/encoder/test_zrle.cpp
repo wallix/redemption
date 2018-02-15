@@ -25,7 +25,7 @@
 
 #include "core/client_info.hpp"
 #include "core/font.hpp"
-##include "mod/vnc/vnc.hpp"
+#include "mod/vnc/vnc.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "mod/vnc/encoder/zrle.hpp"
 
