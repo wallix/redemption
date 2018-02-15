@@ -550,8 +550,8 @@ public:
     //------------------------
 
     virtual void connect() override {
-
-        this->mod_state = MOD_RDP_REMOTE_APP;
+/*
+        this->mod_state = MOD_RDP_REMOTE_APP;*/
 
         this->clientChannelRemoteAppManager.clear();
         this->cl.clear_channels();
