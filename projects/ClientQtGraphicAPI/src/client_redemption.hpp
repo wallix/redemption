@@ -426,7 +426,7 @@ public:
                     this->client_execute.enable_remote_program(true);
                     mod_rdp_params.remote_program = true;
                     mod_rdp_params.client_execute = &(this->client_execute);
-                    mod_rdp_params.remote_program_enhanced = INFO_HIDEF_RAIL_SUPPORTED;
+                    mod_rdp_params.remote_program_enhanced = INFO_HIDEF_RAIL_SUPPORTED != 0;
                     mod_rdp_params.use_client_provided_remoteapp = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
                     mod_rdp_params.use_session_probe_to_launch_remote_program = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
 
@@ -471,7 +471,7 @@ public:
                                                     , 0
                                                     , true
                                                     , true
-                                                    , "16,0,1,-239"
+                                                    , "5,0,1,-239"
                                                     , false
                                                     , true
                                                     , mod_vnc::ClipboardEncodingType::UTF8

@@ -209,6 +209,7 @@
     f(ERR_VNC_ZLIB_INFLATE)                                      \
     f(ERR_VNC_ZRLE_DATA_TRUNCATED)                               \
     f(ERR_VNC_ZRLE_PROTOCOL)                                     \
+    f(ERR_VNC_HEXTILE_PROTOCOL)                                  \
     f(ERR_VNC_NEED_MORE_DATA)                                    \
                                                                  \
     fv(ERR_XUP_BAD_BPP, 11000)                                   \

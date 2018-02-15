@@ -1781,10 +1781,7 @@ private:
             drive_id = this->next_managed_drive_id++;
 
             this->managed_drives.push_back({
-                drive_id,
-                drive_name.upper_name(),
-                std::string(directory_drive_path),
-                (read_only ? O_RDONLY : O_RDWR)
+                drive_id, drive_name.upper_name(), directory_drive_path, (read_only ? O_RDONLY : O_RDWR)
             });
         }
         else {
