@@ -30,19 +30,6 @@
 #include "core/channel_names.hpp"
 #include "core/session_reactor.hpp"
 
-template<char... cs>
-struct string_c
-{
-    static inline char const value[sizeof...(cs)+1]{cs..., '\0'};
-};
-#include "cxx/diagnostic.hpp"
-REDEMPTION_DIAGNOSTIC_PUSH
-REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
-template<class C, C... cs>
-string_c<cs...> operator ""_c ()
-{ return {}; }
-REDEMPTION_DIAGNOSTIC_POP
-
 class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
     enum class State {
         START,                          // 0
@@ -195,136 +182,6 @@ public:
 
         return false;
     }
-
-    template<auto x>
-    static constexpr auto value = std::integral_constant<decltype(x), x>{};
-
-    template<class i, class F>
-    struct indexed_type
-    {
-        using type = F;
-    };
-
-    template<std::size_t i, class F>
-    using make_indexed = indexed_type<std::integral_constant<std::size_t, i>, F>;
-
-    template<class... Fs>
-    struct FunSequence
-    {
-        template<class Fn>
-        FunSequence<make_indexed<0, Fn>> then(Fn) noexcept
-        {
-            return {};
-        }
-    };
-
-    template<class i, class F>
-    static F get_fun(indexed_type<i, F>)
-    {
-        return jln::make_lambda<F>();
-    }
-
-    template<class i, class Sequenced, class Ctx>
-    struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
-    {
-        constexpr static bool is_final_sequence() noexcept
-        {
-            return i::value == Sequenced::sequence_size;
-        }
-
-        constexpr static size_t index() noexcept
-        {
-            return i::value;
-        }
-
-        jln::ExecutorResult sequence_next() noexcept
-        {
-            return this->sequence_at<i::value+1>();
-        }
-
-        jln::ExecutorResult sequence_previous() noexcept
-        {
-            return this->sequence_at<i::value-1>();
-        }
-
-        template<std::size_t I>
-        jln::ExecutorResult sequence_at() noexcept
-        {
-            return this->next_action(this->get_sequence_at<I>());
-        }
-
-        template<class I>
-        jln::ExecutorResult sequence_at(I) noexcept
-        {
-            return this->sequence_at<I::value>();
-        }
-
-        template<std::size_t I>
-        jln::ExecutorResult exec_sequence_at() noexcept
-        {
-            return this->exec_action(this->get_sequence_at<I>());
-        }
-
-        template<class I>
-        jln::ExecutorResult exec_sequence_at(I) noexcept
-        {
-            return this->sequence_at<I::value>();
-        }
-
-        template<std::size_t I>
-        auto get_sequence_at() noexcept
-        {
-            using index = std::integral_constant<std::size_t, I>;
-            return [](auto ctx, auto&&... xs){
-                return get_fun<index>(Sequenced{})(
-                    static_cast<FunSequencerExecutorCtx&>(ctx),
-                    static_cast<decltype(xs)&&>(xs)...);
-            };
-        }
-
-        FunSequencerExecutorCtx set_time(std::chrono::milliseconds ms)
-        {
-            return static_cast<FunSequencerExecutorCtx&&>(Ctx::set_time(ms));
-        }
-    };
-
-    template<class i, class Sequenced>
-    struct FunSequencerExecutor
-    {
-        template<class Ctx, class... Ts>
-        jln::ExecutorResult operator()(Ctx ctx, Ts&&... xs)
-        {
-            using NewCtx = FunSequencerExecutorCtx<i, Sequenced, Ctx>;
-            return get_fun<i>(Sequenced{})(
-                static_cast<NewCtx&>(ctx), static_cast<Ts&&>(xs)...);
-        }
-    };
-
-    template<class F, class... Fs>
-    struct FunSequence<F, Fs...> : F, Fs...
-    {
-        static constexpr std::size_t sequence_size = sizeof...(Fs)+1;
-
-        template<class Fn>
-        FunSequence<F, Fs..., make_indexed<1+sizeof...(Fs), Fn>> then(Fn) noexcept
-        {
-            return {};
-        }
-
-        template<class... Ts>
-        jln::ExecutorResult operator()(Ts&&... xs)
-        {
-            return this->to_function()(static_cast<Ts&&>(xs)...);
-        }
-
-        auto to_function() noexcept
-        {
-            return FunSequencerExecutor<std::integral_constant<std::size_t, 0>, FunSequence>{};
-        }
-    };
-
-    static FunSequence<> sequence() noexcept
-    { return {}; }
 
     bool on_event() override
     {
@@ -481,11 +338,11 @@ public:
 
         this->state = State::RUN;
 
-        auto send_scancode = [](auto s, auto param1, auto device_flags){
+        auto send_scancode = [](auto param1, auto device_flags){
             return [](auto ctx, SessionProbeClipboardBasedLauncher& self){
                 if (bool(self.verbose & RDPVerbose::sesprobe_launcher)) {
                     LOG(LOG_INFO, "SessionProbeClipboardBasedLauncher :=> on_event - %s",
-                        decltype(s)::value);
+                        ctx.sequence_name());
                 }
 
                 self.mod.send_input(
@@ -507,38 +364,40 @@ public:
             };
         };
 
+        using jln::value;
+        using namespace jln::literals;
+
         this->event = this->session_reactor.create_timer(std::ref(*this))
         .set_delay(this->short_delay)
-        .on_action(sequence()
-        .then(send_scancode("Windows (down)"_c,    value<91>, value<SlowPath::KBDFLAGS_EXTENDED>))
-        .then(send_scancode("d (down)"_c,          value<32>, value<0>))
-        .then(send_scancode("d (up)"_c,            value<32>, value<SlowPath::KBDFLAGS_RELEASE>))
-        .then(send_scancode("Windows (up)"_c,      value<91>, value<SlowPath::KBDFLAGS_EXTENDED |
-                                                                    SlowPath::KBDFLAGS_RELEASE>))
-        .then(send_scancode("Windows (down)"_c,    value<91>, value<SlowPath::KBDFLAGS_EXTENDED>))
-        .then(send_scancode("r (down)"_c,          value<19>, value<0>))
-        .then(send_scancode("r (up)"_c,            value<19>, value<SlowPath::KBDFLAGS_RELEASE>))
-        .then(send_scancode("Windows (up)"_c,      value<91>, value<SlowPath::KBDFLAGS_EXTENDED |
-                                                                    SlowPath::KBDFLAGS_RELEASE>))
-        .then(send_scancode("Ctrl (down)"_c,       value<29>, value<0>))
-        .then(send_scancode("a (down)"_c,          value<16>, value<0>))
-        .then(send_scancode("a (up)"_c,            value<16>, value<SlowPath::KBDFLAGS_RELEASE>))
-        .then(send_scancode("Ctrl (up)"_c,         value<29>, value<SlowPath::KBDFLAGS_RELEASE>))
-        .then(send_scancode("Ctrl (down)"_c,       value<29>, value<0>))
-        .then(send_scancode("v (down)"_c,          value<47>, value<0>))
-        .then(send_scancode("v (up)"_c,            value<47>, value<SlowPath::KBDFLAGS_RELEASE>))
-        .then(send_scancode("Ctrl (up)"_c,         value<29>, value<SlowPath::KBDFLAGS_RELEASE>))
-        .then([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
-            if (!self.format_data_requested) {
-                return ctx.set_time(self.short_delay)
-                .template exec_sequence_at<0>();
-            }
-            return jln::make_lambda<decltype(send_scancode)>()
-                           ("Enter (down)"_c,      value<28>, value<0>)(ctx, self);
-        })
-        .then(send_scancode("Enter (up)"_c,        value<28>, value<SlowPath::KBDFLAGS_RELEASE>))
-        .to_function())
-        ;
+        .on_action(jln::funcsequencer(
+            "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>)),
+            "d (down)"_f        (send_scancode(value<32>, value<0>)),
+            "d (up)"_f          (send_scancode(value<32>, value<SlowPath::KBDFLAGS_RELEASE>)),
+            "Windows (up)"_f    (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED |
+                                                                SlowPath::KBDFLAGS_RELEASE>)),
+            "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>)),
+            "r (down)"_f        (send_scancode(value<19>, value<0>)),
+            "r (up)"_f          (send_scancode(value<19>, value<SlowPath::KBDFLAGS_RELEASE>)),
+            "Windows (up)"_f    (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED |
+                                                                SlowPath::KBDFLAGS_RELEASE>)),
+            "Ctrl (down)"_f     (send_scancode(value<29>, value<0>)),
+            "a (down)"_f        (send_scancode(value<16>, value<0>)),
+            "a (up)"_f          (send_scancode(value<16>, value<SlowPath::KBDFLAGS_RELEASE>)),
+            "Ctrl (up)"_f       (send_scancode(value<29>, value<SlowPath::KBDFLAGS_RELEASE>)),
+
+            "Ctrl (down)"_f     (send_scancode(value<29>, value<0>)),
+            "v (down)"_f        (send_scancode(value<47>, value<0>)),
+            "v (up)"_f          (send_scancode(value<47>, value<SlowPath::KBDFLAGS_RELEASE>)),
+            "Ctrl (up)"_f       (send_scancode(value<29>, value<SlowPath::KBDFLAGS_RELEASE>)),
+
+            "Enter (down)"_f    ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
+                if (!self.format_data_requested) {
+                    return ctx.set_time(self.short_delay).template get_sequence_at<0>()(ctx, self);
+                }
+                return jln::make_lambda<decltype(send_scancode)>()(value<28>, value<0>)(ctx, self);
+            }),
+            "Enter (up)"_f      (send_scancode(value<28>, value<SlowPath::KBDFLAGS_RELEASE>))
+        ));
 
         return false;
     }
@@ -613,7 +472,6 @@ public:
         }
 
         this->state = State::STOP;
-
         this->event.reset();
 
         if (!bLaunchSuccessful) {
@@ -710,4 +568,3 @@ public:
         return (this->state == State::STOP);
     }
 };  // class SessionProbeClipboardBasedLauncher
-

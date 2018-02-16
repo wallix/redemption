@@ -1082,6 +1082,240 @@ auto one_shot() noexcept
     };
 }
 
+template<char... cs>
+struct string_c
+{
+    static inline char const value[sizeof...(cs)+1]{cs..., '\0'};
+
+    constexpr char const* c_str() const noexcept { return value; }
+};
+
+namespace literals
+{
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
+    template<class C, C... cs>
+    string_c<cs...> operator ""_c () noexcept
+    { return {}; }
+    REDEMPTION_DIAGNOSTIC_POP
+}
+
+namespace detail
+{
+    template<class S, class F>
+    struct named_type {};
+
+    template<char... cs>
+    struct named_function
+    {
+        template<class F>
+        named_type<string_c<cs...>, F> operator()(F) const noexcept
+        {
+            return {};
+        }
+    };
+}
+
+namespace literals
+{
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
+    template<class C, C... cs>
+    detail::named_function<cs...> operator ""_f () noexcept
+    { return {}; }
+    REDEMPTION_DIAGNOSTIC_POP
+}
+
+template<auto x>
+constexpr auto value = std::integral_constant<decltype(x), x>{};
+
+namespace detail
+{
+    struct unamed{};
+
+    template<class i, class S, class F>
+    struct indexed_type
+    {
+        static F func() noexcept { return jln::make_lambda<F>(); }
+        static S name() noexcept { return S{}; }
+    };
+
+    template<std::size_t i, class S, class F>
+    using indexed_c = indexed_type<std::integral_constant<std::size_t, i>, S, F>;
+
+    template<class i, class S, class F>
+    auto value_at(indexed_type<i, S, F> x) noexcept
+    {
+        return x;
+    }
+
+    template<class S, class i, class F>
+    auto value_by_name(indexed_type<i, S, F> x) noexcept
+    {
+        return x;
+    }
+}
+
+template<class i, class Sequenced, class Ctx>
+struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
+{
+    // ExecutorResult terminate() noexcept
+    // {
+    //     if constexpr (is_sequencer<Ctx>) {
+    //         return Ctx::sequence_next();
+    //     }
+    //     else {
+    //         Ctx::terminate();
+    //     }
+    // }
+
+    constexpr static bool is_final_sequence() noexcept
+    {
+        return i::value == Sequenced::sequence_size;
+    }
+
+    constexpr static size_t index() noexcept
+    {
+        return i::value;
+    }
+
+    constexpr static auto sequence_name() noexcept
+    {
+        return detail::value_at<i>(Sequenced{}).name();
+    }
+
+    jln::ExecutorResult sequence_next() noexcept
+    {
+        return this->sequence_at<i::value+1>();
+    }
+
+    jln::ExecutorResult sequence_previous() noexcept
+    {
+        return this->sequence_at<i::value-1>();
+    }
+
+    template<std::size_t I>
+    jln::ExecutorResult sequence_at() noexcept
+    {
+        return this->next_action(this->get_sequence_at<I>());
+    }
+
+    template<class I>
+    jln::ExecutorResult sequence_at(I) noexcept
+    {
+        return this->sequence_at<I::value>();
+    }
+
+    template<std::size_t I>
+    jln::ExecutorResult exec_sequence_at() noexcept
+    {
+        return this->exec_action(this->get_sequence_at<I>());
+    }
+
+    template<class I>
+    jln::ExecutorResult exec_sequence_at(I) noexcept
+    {
+        return this->sequence_at<I::value>();
+    }
+
+    template<std::size_t I>
+    auto get_sequence_at() noexcept
+    {
+        using index = std::integral_constant<std::size_t, I>;
+        return [](auto ctx, auto&&... xs){
+            return detail::value_at<index>(Sequenced{}).func()(
+                static_cast<FunSequencerExecutorCtx&>(ctx),
+                static_cast<decltype(xs)&&>(xs)...
+            );
+        };
+    }
+
+    template<class S>
+    auto get_sequence_name() noexcept
+    {
+        return [](auto ctx, auto&&... xs){
+            return detail::value_by_name<S>(Sequenced{}).func()(
+                static_cast<FunSequencerExecutorCtx&>(ctx),
+                static_cast<decltype(xs)&&>(xs)...
+            );
+        };
+    }
+
+    // Only with Executor2TimerContext
+    FunSequencerExecutorCtx set_time(std::chrono::milliseconds ms)
+    {
+        return static_cast<FunSequencerExecutorCtx&&>(Ctx::set_time(ms));
+    }
+};
+
+template<class... Fs>
+struct FunSequencer : Fs...
+{
+    static constexpr std::size_t sequence_size = sizeof...(Fs);
+
+    template<class Fn>
+    FunSequencer<Fs..., detail::indexed_c<sizeof...(Fs), detail::unamed, Fn>>
+    then(Fn) noexcept
+    {
+        return {};
+    }
+
+    template<char... Ch, class Fn>
+    FunSequencer<Fs..., detail::indexed_c<sizeof...(Fs), string_c<Ch...>, Fn>>
+    then(string_c<Ch...>, Fn) noexcept
+    {
+        return {};
+    }
+
+    template<class Ctx, class... Ts>
+    jln::ExecutorResult operator()(Ctx ctx, Ts&&... xs)
+    {
+        using i = std::integral_constant<std::size_t, 0>;
+        using NewCtx = FunSequencerExecutorCtx<i, FunSequencer, Ctx>;
+        return detail::value_at<i>(*this).func()(
+            static_cast<NewCtx&>(ctx),
+            static_cast<Ts&&>(xs)...
+        );
+    }
+};
+
+namespace detail
+{
+    template<class i, class F>
+    struct function_to_indexed_type
+    {
+        using type = indexed_type<i, unamed, F>;
+    };
+
+    template<class i, class S, class F>
+    struct function_to_indexed_type<i, named_type<S, F>>
+    {
+        using type = indexed_type<i, S, F>;
+    };
+
+    template<class, class...>
+    struct cases_to_fun_sequencer;
+
+    template<std::size_t... Ints, class... Fs>
+    struct cases_to_fun_sequencer<std::integer_sequence<std::size_t, Ints...>, Fs...>
+    {
+        using type = FunSequencer<typename function_to_indexed_type<
+            std::integral_constant<std::size_t, Ints>,  Fs>::type...>;
+    };
+}
+
+template<class S, class F>
+detail::named_type<S, F> named(S, F)
+{ return {}; }
+
+template<class... Fs>
+inline auto funcsequencer(Fs...) noexcept
+{
+    return typename detail::cases_to_fun_sequencer<
+        std::index_sequence_for<Fs...>, Fs...>::type{};
+}
+
+
 namespace detail
 {
     template<class Before, class T>
