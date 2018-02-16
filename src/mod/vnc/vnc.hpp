@@ -2162,6 +2162,7 @@ private:
 
         bool run(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
+            update_lock<gdi::GraphicApi> lock(drawable);
             Result r = Result::fail();
 
             for (;;) {

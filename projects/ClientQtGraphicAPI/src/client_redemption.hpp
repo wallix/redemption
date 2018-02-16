@@ -471,7 +471,8 @@ public:
                                                     , 0
                                                     , true
                                                     , true
-                                                    , "5,0,1,-239"
+                                                    , "5,16,0,1,-239"
+//                                                    , "0,1,-239"
                                                     , false
                                                     , true
                                                     , mod_vnc::ClipboardEncodingType::UTF8
@@ -1262,8 +1263,16 @@ public:
         return ResizeResult::instant_done;
     }
 
-    void end_update() override {
+    void begin_update() override {
+        if (this->impl_graphic) {
+            this->impl_graphic->begin_update();
+        }
+        if (this->is_recording && !this->is_replaying) {
+            this->graph_capture->begin_update();
+        }
+    }
 
+    void end_update() override {
         if ((this->connected || this->is_replaying)) {
 
             if (this->impl_graphic) {
