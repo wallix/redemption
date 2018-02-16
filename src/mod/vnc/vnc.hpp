@@ -2240,16 +2240,16 @@ private:
                 break;
                 case State::Data:
                     {
-                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                        
-                            LOG(LOG_INFO, "%s", 
-                        (this->encoding == HEXTILE_ENCODING) ? "HEXTILE_ENCODING" :
-                        (this->encoding == CURSOR_PSEUDO_ENCODING) ? "CURSOR_PSEUDO_ENCODING" :
-                        (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
-                        (this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
-                        (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" :
-                         "ZRLE_ENCODING");
-                        }
+//                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+//                        
+//                            LOG(LOG_INFO, "%s", 
+//                        (this->encoding == HEXTILE_ENCODING) ? "HEXTILE_ENCODING" :
+//                        (this->encoding == CURSOR_PSEUDO_ENCODING) ? "CURSOR_PSEUDO_ENCODING" :
+//                        (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
+//                        (this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
+//                        (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" :
+//                         "ZRLE_ENCODING");
+//                        }
                         // Pre Assertion: we have an encoder
                         switch (encoder->consume(buf, drawable)){
                             case VNC::Encoder::EncoderState::Ready:
