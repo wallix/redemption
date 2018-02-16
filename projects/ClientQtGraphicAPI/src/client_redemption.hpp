@@ -480,7 +480,8 @@ public:
                                                     , this->reportMessage
                                                     , this->is_apple
                                                     , &(this->exe_vnc)
-                                                    , to_verbose_flags(0xfffffffd)
+//                                                    , to_verbose_flags(0xfffffffd)
+                                                    , to_verbose_flags(0)
                                                    )
                                         );
             }

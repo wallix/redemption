@@ -800,7 +800,7 @@ public:
         
         cursor.update_bw();
 
-//        this->front.set_pointer(cursor);
+        this->front.set_pointer(cursor);
 
         this->report_message.log5("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"");
 
@@ -2160,6 +2160,8 @@ private:
 // FramebufferUpdate, a client that has more than one FramebufferUpdateRequest pending at any given 
 // time cannot be sure that it has received all framebuffer updates.
 
+        size_t last_avail = 0;
+
         bool run(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
             update_lock<gdi::GraphicApi> lock(drawable);
@@ -2224,24 +2226,24 @@ private:
 
                         switch (this->encoding){
                         case COPYRECT_ENCODING:  /* raw */
-                            this->encoder = new VNC::Encoder::CopyRect(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.front_width, vnc.front_height, VNCVerbose::basic_trace);
+                            this->encoder = new VNC::Encoder::CopyRect(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.front_width, vnc.front_height, vnc.verbose);
                         break;
                         case HEXTILE_ENCODING:  /* hextile */
-                            this->encoder = new VNC::Encoder::Hextile(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
+                            this->encoder = new VNC::Encoder::Hextile(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
                         break;
                         case CURSOR_PSEUDO_ENCODING:  /* cursor */
                             this->encoder = new VNC::Encoder::Cursor(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, 
                                                                      vnc.red_shift, vnc.red_max, vnc.green_shift, vnc.green_max, vnc.blue_shift, vnc.blue_max,
-                                                                     VNCVerbose::basic_trace);
+                                                                     vnc.verbose);
                         break;
                         case RAW_ENCODING:  /* raw */
-                            this->encoder = new VNC::Encoder::Raw(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
+                            this->encoder = new VNC::Encoder::Raw(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
                         break;
                         case ZRLE_ENCODING: /* ZRLE */
-                            this->encoder = new VNC::Encoder::Zrle(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, this->zd, VNCVerbose::basic_trace);
+                            this->encoder = new VNC::Encoder::Zrle(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, this->zd, vnc.verbose);
                         break;
                         case RRE_ENCODING: /* RRE */
-                            this->encoder = new VNC::Encoder::RRE(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
+                            this->encoder = new VNC::Encoder::RRE(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
                             break;
                         default:
                             LOG(LOG_ERR, "unexpected VNC encoding %d", encoding);
@@ -2256,7 +2258,9 @@ private:
                 case State::Data:
                     {
                         if (last == VNC::Encoder::EncoderState::NeedMoreData){
-                            LOG(LOG_INFO, "new call without more data");
+                            if (this->last_avail == buf.remaining()){
+                                LOG(LOG_INFO, "new call without more data");
+                            }
                         }
                         if (encoder == nullptr){
                             LOG(LOG_INFO, "call with null encoder");
@@ -2270,6 +2274,7 @@ private:
                             break;
                             case VNC::Encoder::EncoderState::NeedMoreData:
                                 r = Result::fail();
+                                this->last_avail = buf.remaining();
                                 this->last = VNC::Encoder::EncoderState::NeedMoreData;
                             break;
                             case VNC::Encoder::EncoderState::Exit:

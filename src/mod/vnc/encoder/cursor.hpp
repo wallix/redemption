@@ -117,7 +117,7 @@ namespace VNC {
                 const uint8_t * vnc_pointer_mask = cursor_buf + sz_pixel_array;
 
                 Pointer cursor;
-                LOG(LOG_INFO, "Cursor x=%zu y=%zu", x, y);
+//                LOG(LOG_INFO, "Cursor x=%zu y=%zu", x, y);
                 cursor.x = x;
                 cursor.y = y;
                 // cursor.bpp = 24;
