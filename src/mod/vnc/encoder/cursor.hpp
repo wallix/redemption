@@ -58,7 +58,7 @@ h
 namespace VNC {
     namespace Encoder {
         class Cursor : public EncoderApi {
-//             const uint8_t bpp;
+            const uint8_t bpp;
             const uint8_t Bpp;
             const size_t x;
             size_t y;
@@ -74,10 +74,10 @@ namespace VNC {
         public:
             VNCVerbose verbose;
 
-            Cursor(uint8_t /*bpp*/, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy,
+            Cursor(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy,
                    int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max, 
                    VNCVerbose verbose) 
-                : /*bpp(bpp), */Bpp(Bpp), x(x), y(y), cx(cx), cy(cy),
+                : bpp(bpp), Bpp(Bpp), x(x), y(y), cx(cx), cy(cy),
                   red_shift(red_shift), red_max(red_max), 
                   green_shift(green_shift), green_max(green_max), 
                   blue_shift(blue_shift), blue_max(blue_max)
@@ -155,8 +155,8 @@ namespace VNC {
                                 if ((yy < 32) && (xx < 32)){
                                     cursor.mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
                                     int pixel = 0;
-                                    for (int tt = 0 ; tt < Bpp; tt++){
-                                        pixel += vnc_pointer_data[(yy * this->cx + xx) * Bpp + tt] << (8 * tt);
+                                    for (int tt = 0 ; tt < this->Bpp; tt++){
+                                        pixel += vnc_pointer_data[(yy * this->cx + xx) * this->Bpp + tt] << (8 * tt);
                                     }
                                     // TODO temporary: force black cursor
                                     int red   = (pixel >> this->red_shift) & this->red_max;
@@ -177,7 +177,7 @@ namespace VNC {
                 cursor.update_bw();
                 // TODO we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation
                 drawable.begin_update();
-//                drawable.set_pointer(cursor);
+                drawable.set_pointer(cursor);
                 drawable.end_update();
 
                 buf.advance(sz_pixel_array + sz_bitmask);

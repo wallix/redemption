@@ -173,11 +173,13 @@ namespace VNC {
             // return is false if the encoder is waiting for more data
             EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
-                size_t last_remaining = 0;
+//                size_t last_remaining = 0;
                 while (buf.remaining()){
 //                    LOG(LOG_INFO, "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
-                    assert(buf.remaining() != last_remaining);
-                    last_remaining = buf.remaining();
+//                    if (buf.remaining() == last_remaining){
+                        LOG(LOG_INFO, "remaining=%zu", buf.remaining());
+//                    }
+//                    last_remaining = buf.remaining();
 
                     Parse parser(buf.av().data());
 
@@ -289,7 +291,7 @@ namespace VNC {
                         return EncoderState::Exit;
                     }
                 }
-                return EncoderState::Ready; // finished decoding
+                return EncoderState::NeedMoreData; // finished decoding
             }
 
             void draw_tile(const uint8_t * raw, gdi::GraphicApi & drawable)

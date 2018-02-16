@@ -363,50 +363,66 @@ public:
 
     virtual void set_pointer(Pointer const & cursor) override {
 
+        LOG(LOG_INFO, "width=%d height=%d", cursor.width, cursor.height);
         QImage image_data(cursor.data, cursor.width, cursor.height, this->bpp_to_QFormat(24, false));
         QImage image_mask(cursor.mask, cursor.width, cursor.height, QImage::Format_Mono);
 
+        LOG(LOG_INFO, "set_pointer 1");
         if (cursor.mask[0x48] == 0xFF &&
             cursor.mask[0x49] == 0xFF &&
             cursor.mask[0x4A] == 0xFF &&
             cursor.mask[0x4B] == 0xFF) {
+            LOG(LOG_INFO, "set_pointer 2");
 
-            image_mask = image_data.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+            image_data = image_data.convertToFormat(QImage::Format_ARGB32_Premultiplied);
             image_data.invertPixels();
 
         } else {
+            LOG(LOG_INFO, "set_pointer 3");
             image_mask.invertPixels();
         }
+        LOG(LOG_INFO, "set_pointer 4");
 
         image_data = image_data.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
         image_mask = image_mask.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
 
         const uchar * data_data = image_data.bits();
         const uchar * mask_data = image_mask.bits();
-
+        
         uint8_t data[Pointer::DATA_SIZE*4];
 
-        for (int i = 0; i < Pointer::DATA_SIZE; i += 4) {
+        LOG(LOG_INFO, "set_pointer 5 %zu data(%zu,%zu) mask(%zu, %zu)", sizeof(data), image_data.width(), image_data.height(), image_mask.width(), image_mask.height());
+
+        for (int i = 0; i < std::min<int>(Pointer::DATA_SIZE * 4, cursor.width * cursor.height * 4); i += 4) {
             data[i  ] = data_data[i+2];
             data[i+1] = data_data[i+1];
             data[i+2] = data_data[i  ];
             data[i+3] = mask_data[i+0];
         }
 
+        LOG(LOG_INFO, "set_pointer 6");
+
         if (this->client->is_replaying) {
             this->cursor_image = QImage(static_cast<uchar *>(data), cursor.x, cursor.y, QImage::Format_ARGB32_Premultiplied);
-
+            LOG(LOG_INFO, "set_pointer 7");
         } else {
+            LOG(LOG_INFO, "set_pointer 11");
+
             if (this->drawn_client->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
+                LOG(LOG_INFO, "set_pointer 8");
                  for (std::map<uint32_t, Screen_Qt *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
                     if (it->second) {
+                        LOG(LOG_INFO, "set_pointer 9");
                         it->second->set_mem_cursor(static_cast<uchar *>(data), cursor.x, cursor.y);
                     }
                 }
             } else if (this->screen) {
+                LOG(LOG_INFO, "set_pointer 10");
                 this->screen->set_mem_cursor(static_cast<uchar *>(data), cursor.x, cursor.y);
             }
+            LOG(LOG_INFO, "set_pointer 12");
         }
+        LOG(LOG_INFO, "set_pointer 13");
     }
 
     void pre_load_movie() override {
