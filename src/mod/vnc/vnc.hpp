@@ -2105,6 +2105,8 @@ private:
 
         using Result = BasicResult<State>;
 
+        VNC::Encoder::EncoderState last;
+
         FrameBufferUpdateCtx(Zdecompressor<> & zd, VNCVerbose verbose)
           : zd{zd}
           , verbose(verbose)
@@ -2117,6 +2119,7 @@ private:
 //                LOG(LOG_ERR, "vnc zlib initialization failed");
 //                throw Error(ERR_VNC_ZLIB_INITIALIZATION);
 //            }
+            this->last = VNC::Encoder::EncoderState::Ready;
         }
 
         ~FrameBufferUpdateCtx()
@@ -2207,6 +2210,17 @@ private:
                         }
 
                         --this->num_recs;
+
+                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                            LOG(LOG_INFO, "%s", 
+                                (this->encoding == HEXTILE_ENCODING) ? "HEXTILE_ENCODING" :
+                                (this->encoding == CURSOR_PSEUDO_ENCODING) ? "CURSOR_PSEUDO_ENCODING" :
+                                (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
+                                (this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
+                                (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" :
+                                 "ZRLE_ENCODING");
+                        }
+
                         switch (this->encoding){
                         case COPYRECT_ENCODING:  /* raw */
                             this->encoder = new VNC::Encoder::CopyRect(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.front_width, vnc.front_height, VNCVerbose::basic_trace);
@@ -2240,29 +2254,29 @@ private:
                 break;
                 case State::Data:
                     {
-//                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
-//                        
-//                            LOG(LOG_INFO, "%s", 
-//                        (this->encoding == HEXTILE_ENCODING) ? "HEXTILE_ENCODING" :
-//                        (this->encoding == CURSOR_PSEUDO_ENCODING) ? "CURSOR_PSEUDO_ENCODING" :
-//                        (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
-//                        (this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
-//                        (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" :
-//                         "ZRLE_ENCODING");
-//                        }
+                        if (last == VNC::Encoder::EncoderState::NeedMoreData){
+                            LOG(LOG_INFO, "new call without more data");
+                        }
+                        if (encoder == nullptr){
+                            LOG(LOG_INFO, "call with null encoder");
+                        }
+
                         // Pre Assertion: we have an encoder
                         switch (encoder->consume(buf, drawable)){
                             case VNC::Encoder::EncoderState::Ready:
                                 r = Result::ok(State::Data);
+                                this->last = VNC::Encoder::EncoderState::Ready;
                             break;
                             case VNC::Encoder::EncoderState::NeedMoreData:
                                 r = Result::fail();
+                                this->last = VNC::Encoder::EncoderState::NeedMoreData;
                             break;
                             case VNC::Encoder::EncoderState::Exit:
                             // consume returns true if encoder is finished (ready to be resetted)
                             r = Result::ok(State::Encoding);
                             delete encoder;
                             encoder = nullptr;
+                            this->last = VNC::Encoder::EncoderState::NeedMoreData;
                             break;
                         }
                     }
