@@ -65,12 +65,12 @@ class QtIOGraphicMouseKeyboard : public ClientOutputGraphicAPI, public ClientInp
 public:
     int                  mod_bpp;
     Form_Qt            * form;
-    Screen_Qt          * screen;
+    QtScreen           * screen;
     QPixmap              cache;
     ProgressBarWindow  * bar;
     QPainter             painter;
     QImage cursor_image;
-    std::map<uint32_t, Screen_Qt *> remote_app_screen_map;
+    std::map<uint32_t, RemoteAppQtScreen *> remote_app_screen_map;
     //     QPixmap            * trans_cache;
     Qt_ScanCode_KeyMap   qtRDPKeymap;
 
@@ -131,12 +131,12 @@ public:
 
     virtual void create_screen() override {
         QPixmap * map = &(this->cache);
-        this->screen = new Screen_Qt(this->drawn_client, this, map);
+        this->screen = new RDPQtScreen(this->drawn_client, this, map);
     }
 
     virtual void create_screen(std::string const & movie_dir, std::string const & movie_path) override {
         QPixmap * map = &(this->cache);
-        this->screen = new Screen_Qt(this->drawn_client, this, movie_dir, movie_path, map);
+        this->screen = new ReplayQtScreen(this->drawn_client, this, movie_dir, movie_path, map);
     }
 
     QWidget * get_static_qwidget() {
@@ -186,8 +186,8 @@ public:
     //////////////////////////
 
     virtual void create_remote_app_screen(uint32_t id, int w, int h, int x, int y) override {
-        this->remote_app_screen_map.insert(std::pair<uint32_t, Screen_Qt *>(id, nullptr));
-        this->remote_app_screen_map[id] = new Screen_Qt(this->drawn_client, this, w, h, x, y, &(this->cache));
+        this->remote_app_screen_map.insert(std::pair<uint32_t, RemoteAppQtScreen *>(id, nullptr));
+        this->remote_app_screen_map[id] = new RemoteAppQtScreen(this->drawn_client, this, w, h, x, y, &(this->cache));
     }
 
     virtual void show_screen(uint32_t id) override {
@@ -243,12 +243,12 @@ public:
             this->remote_app_screen_map[id] = nullptr;
         }
 
-        std::map<uint32_t, Screen_Qt *>::iterator it = remote_app_screen_map.find(id);
+        std::map<uint32_t, RemoteAppQtScreen *>::iterator it = remote_app_screen_map.find(id);
         remote_app_screen_map.erase (it);
     }
 
     virtual void clear_remote_app_screen() override {
-        for (std::map<uint32_t, Screen_Qt *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
+        for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
             if (it->second) {
                 it->second->disconnection();
                 it->second = nullptr;
@@ -317,7 +317,7 @@ public:
         }
 
         if (this->drawn_client->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
-            for (std::map<uint32_t, Screen_Qt *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
+            for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
                 if (it->second) {
                     it->second->update_view();
                 }
@@ -353,11 +353,11 @@ public:
 
                 if (this->client->is_replaying) {
 
-                    this->screen = new Screen_Qt(this->drawn_client, this, this->client->_movie_dir, this->client->_movie_name, &(this->cache));
+                    this->screen = new ReplayQtScreen(this->drawn_client, this, this->client->_movie_dir, this->client->_movie_name, &(this->cache));
 
                 } else {
 
-                    this->screen = new Screen_Qt(this->drawn_client, this, &(this->cache));
+                    this->screen = new RDPQtScreen(this->drawn_client, this, &(this->cache));
                 }
 
                 if (this->client->mod_state != ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
@@ -404,7 +404,7 @@ public:
             this->cursor_image = QImage(static_cast<uchar *>(data), cursor.x, cursor.y, QImage::Format_ARGB32_Premultiplied);
         } else {
             if (this->drawn_client->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
-                 for (std::map<uint32_t, Screen_Qt *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
+                 for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
                     if (it->second) {
                         it->second->set_mem_cursor(static_cast<uchar *>(data), cursor.x, cursor.y);
                     }
@@ -417,9 +417,11 @@ public:
 
     void pre_load_movie() override {
 
-        long int movie_length = Screen_Qt::get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str());
+        ReplayQtScreen * replay_screen = static_cast<ReplayQtScreen * >(this->screen);
+
+        long int movie_length = ReplayQtScreen::get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str());
         this->form->hide();
-        this->bar = new ProgressBarWindow(this->screen->movie_time);
+        this->bar = new ProgressBarWindow(movie_length);
         long int endin_frame = 0;
         int i = 0;
 
@@ -427,10 +429,10 @@ public:
             //timeval end_fram_time = {long int(endin_frame), 0};
             this->client->replay_mod.get()->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
 
-            if (this->screen) {
-                this->screen->balises.push_back(nullptr);
-                this->screen->balises[i] = new QPixmap(this->cache);
-                endin_frame += Screen_Qt::BALISED_FRAME;
+            if (replay_screen) {
+                replay_screen->balises.push_back(nullptr);
+                replay_screen->balises[i] = new QPixmap(this->cache);
+                endin_frame += ReplayQtScreen::BALISED_FRAME;
                 i++;
                 if (this->bar) {
                     this->bar->setValue(endin_frame);
@@ -438,7 +440,7 @@ public:
             }
         }
 
-        this->screen->stopRelease();
+        replay_screen->stopRelease();
     }
 
 //     void answer_question(int color) {
@@ -629,9 +631,7 @@ public:
         const unsigned char * row = bitmap.data();
 
         QImage qbitmap(row, mincx, mincy, this->bpp_to_QFormat(bitmap.bpp(), false));
-
         qbitmap = qbitmap.mirrored(false, true);
-
         qbitmap = qbitmap.copy(srcx, srcy, drect.cx, drect.cy);
 
         if (invert) {
@@ -1346,7 +1346,7 @@ public:
     //      CONTROLLERS
     //------------------------
 
-    void keyPressEvent(const uint16_t key, const uint16_t text) override {
+    void keyPressEvent(const int key, const uint16_t text) override {
 //         if (this->client->mod_state ==  ClientRedemptionIOAPI::MOD_VNC) {
 //             this->client->send_rdp_unicode(text, 0);
 //         } else {
@@ -1357,7 +1357,7 @@ public:
 //         }
     }
 
-    void keyReleaseEvent(const uint16_t key, const uint16_t text) override {
+    void keyReleaseEvent(const int key, const uint16_t text) override {
 //          if (this->client->mod_state ==  ClientRedemptionIOAPI::MOD_VNC) {
 //             this->client->send_rdp_unicode(text, KBD_FLAG_UP);
 //         } else {

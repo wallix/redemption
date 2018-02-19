@@ -322,6 +322,9 @@ private:
 
     const bool param_enable_crash_dump;
 
+    const uint32_t param_handle_usage_limit;
+    const uint32_t param_memory_usage_limit;
+
     FrontAPI& front;
 
     mod_api& mod;
@@ -389,6 +392,9 @@ public:
 
         bool session_probe_enable_crash_dump;
 
+        uint32_t session_probe_handle_usage_limit;
+        uint32_t session_probe_memory_usage_limit;
+
         Translation::language_t lang;
 
         bool bogus_refresh_rect_ex;
@@ -441,6 +447,8 @@ public:
     , param_show_maximized(params.show_maximized)
     , param_allow_multiple_handshake(params.session_probe_allow_multiple_handshake)
     , param_enable_crash_dump(params.session_probe_enable_crash_dump)
+    , param_handle_usage_limit(params.session_probe_handle_usage_limit)
+    , param_memory_usage_limit(params.session_probe_memory_usage_limit)
     , front(front)
     , mod(mod)
     , rdp(rdp)
@@ -1037,6 +1045,37 @@ public:
                 else {
                     const char cstr[] = "No";
                     out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                out_s.out_clear_bytes(1);   // Null-terminator.
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset -
+                        sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_message_to_server(out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    out_s.get_data(), out_s.get_offset());
+            }
+
+            {
+                StaticOutStream<1024> out_s;
+
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_skip_bytes(sizeof(uint16_t));
+
+                {
+                    const char cstr[] = "Bushido=";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                {
+                    char cstr[128];
+                    std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%u",
+                        this->param_handle_usage_limit,
+                        this->param_memory_usage_limit);
+                    out_s.out_copy_bytes(cstr, strlen(cstr));
                 }
 
                 out_s.out_clear_bytes(1);   // Null-terminator.
