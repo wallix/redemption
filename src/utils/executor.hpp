@@ -1090,26 +1090,16 @@ struct string_c
     constexpr char const* c_str() const noexcept { return value; }
 };
 
-namespace literals
-{
-    REDEMPTION_DIAGNOSTIC_PUSH
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
-    template<class C, C... cs>
-    string_c<cs...> operator ""_c () noexcept
-    { return {}; }
-    REDEMPTION_DIAGNOSTIC_POP
-}
-
 namespace detail
 {
     template<class S, class F>
     struct named_type {};
 
-    template<char... cs>
+    template<class S>
     struct named_function
     {
         template<class F>
-        named_type<string_c<cs...>, F> operator()(F) const noexcept
+        named_type<S, F> operator()(F) const noexcept
         {
             return {};
         }
@@ -1121,7 +1111,11 @@ namespace literals
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
     template<class C, C... cs>
-    detail::named_function<cs...> operator ""_f () noexcept
+    string_c<cs...> operator ""_c () noexcept
+    { return {}; }
+
+    template<class C, C... cs>
+    detail::named_function<string_c<cs...>> operator ""_f () noexcept
     { return {}; }
     REDEMPTION_DIAGNOSTIC_POP
 }
