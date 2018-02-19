@@ -1964,6 +1964,21 @@ private:
             // Note that this means the client must assume that the server
             // does not support the extension until it gets some extension-
             // -specific confirmation from the server.
+            
+            // See Encodings for a description of each encoding and Pseudo-encodings for the meaning of pseudo-encodings.
+            // No. of bytes     Type     [Value]     Description
+            // -------------+---------+-----------+---------------------
+            //         1    |    U8   |     2     |  message-type
+            //         1    |         |           |    padding
+            //         2    |    U16  |           | number-of-encodings
+            //
+            // followed by number-of-encodings repetitions of the following:
+            //
+            // No. of bytes     Type     Description
+            // ----------------------------------------
+            //         4         S32     encoding-type
+
+            
             {
                 const char * encodings           = this->encodings.c_str();
                 uint16_t     number_of_encodings = 0;
@@ -1984,11 +1999,13 @@ private:
                         LOG(LOG_WARNING, "mdo_vnc: using default encoding types - RRE(2),Raw(0),CopyRect(1),Cursor pseudo-encoding(-239)");
                     }
 
-                    stream.out_uint32_be(0);            // raw
-                    stream.out_uint32_be(1);            // copy rect
-                    stream.out_uint32_be(2);            // RRE
-                    stream.out_uint32_be(0xffffff11);   // (-239) cursor
-                    number_of_encodings = 4;
+                    stream.out_uint32_be(ZRLE_ENCODING);            // (16) Zrle
+                    stream.out_uint32_be(HEXTILE_ENCODING);         // (5) Hextile
+                    stream.out_uint32_be(RAW_ENCODING);             // raw
+                    stream.out_uint32_be(COPYRECT_ENCODING);        // copy rect
+                    stream.out_uint32_be(RRE_ENCODING);             // RRE
+                    stream.out_uint32_be(CURSOR_PSEUDO_ENCODING);   // (-239) cursor
+                    number_of_encodings = 6;
                 }
 
                 stream.set_out_uint16_be(number_of_encodings, number_of_encodings_offset);
