@@ -39,8 +39,6 @@ public:
 
     virtual bool on_device_announce_responded() = 0;
 
-    virtual bool on_event() = 0;
-
     virtual bool on_image_read(uint64_t offset, uint32_t length) = 0;
 
     virtual bool on_server_format_data_request() = 0;

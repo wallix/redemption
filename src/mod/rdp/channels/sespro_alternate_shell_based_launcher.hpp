@@ -92,8 +92,6 @@ public:
         return false;
     }
 
-    bool on_event() override { return false; }
-
     bool on_image_read(uint64_t offset, uint32_t length) override {
         (void)offset;
         (void)length;

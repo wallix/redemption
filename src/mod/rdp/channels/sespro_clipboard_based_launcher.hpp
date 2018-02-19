@@ -183,7 +183,7 @@ public:
         return false;
     }
 
-    bool on_event() override
+    bool on_event()
     {
         if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
             LOG(LOG_INFO, "SessionProbeClipboardBasedLauncher :=> on_event - %d",
