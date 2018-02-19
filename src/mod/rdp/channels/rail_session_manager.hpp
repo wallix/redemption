@@ -482,10 +482,10 @@ public:
             .set_delay(this->rail_disconnect_message_delay)
             // this->process_event()
             .on_action(jln::one_shot([](RemoteProgramsSessionManager& self){
-                if (self.currently_without_window /*
+                if (self.currently_without_window
                  && (DialogBoxType::NONE == self.dialog_box_type)
-                 && self.has_previous_window*/) {
-                    assert(DialogBoxType::NONE == self.dialog_box_type);
+                 && self.has_previous_window
+                ) {
                     self.dialog_box_create(DialogBoxType::WAITING_SCREEN);
                     self.waiting_screen_draw(0);
                 }
