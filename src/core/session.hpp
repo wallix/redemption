@@ -197,7 +197,7 @@ public:
                     timeout = {0, 0};
                 }
 
-                auto tv = session_reactor.timers_events_.get_next_timeout();
+                auto tv = session_reactor.timer_events_.get_next_timeout();
                 auto tv_now = tvtime();
                 if (tv.tv_sec >= 0 && tv < timeout + tv_now) {
                     if (tv < tv_now) {
@@ -231,7 +231,7 @@ public:
 
                 if (num == 0) {
                     auto end_tv = tvtime() + timeout;
-                    session_reactor.timers_events_.exec(end_tv);
+                    session_reactor.timer_events_.exec(end_tv);
                 }
 
                 if (session_reactor.front_events().size() || sck_is_set(front_trans, rfds)) {

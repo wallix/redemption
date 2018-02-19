@@ -2078,7 +2078,7 @@ public:
 
         // Virtual channel is opened at client side and is authorized.
         if (this->has_valid_to_client_sender()) {
-            this->initialization_timeout_event = session_reactor.create_timer(this)
+            this->initialization_timeout_event = this->session_reactor.create_timer(this)
             .set_delay(this->initialization_timeout)
             .on_action(jln::one_shot<&FileSystemVirtualChannel::process_event>());
             return true;

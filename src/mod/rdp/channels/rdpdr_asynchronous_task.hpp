@@ -26,6 +26,7 @@
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
 #include "core/wait_obj.hpp"
+#include "core/session_reactor.hpp"
 #include "mod/rdp/rdp_log.hpp"
 
 #include <sys/types.h>
@@ -74,6 +75,9 @@ class RdpdrDriveReadTask final : public AsynchronousTask
 
     VirtualChannelDataSender & to_server_sender;
 
+    SessionReactor::TopFdPtr fdobject;
+//     SessionReactor::BasicFdPtr fd_ptr;
+
     const RDPVerbose verbose;
 
 public:
@@ -95,21 +99,26 @@ public:
     , verbose(verbose)
     {}
 
-    void configure_wait_object(wait_obj & wait_object) const override {
-        assert(!wait_object.is_waked_up_by_time());
-
-        wait_object.set_trigger_time(1000000);
+    void configure_event(SessionReactor& session_reactor) override
+    {
+        assert(!this->fdobject);
+        this->fdobject = session_reactor.create_fd_event(this->file_descriptor, std::ref(*this))
+        .on_action([](auto ctx, RdpdrDriveReadTask& self) {
+            return self.run() ? ctx.ready() : ctx.terminate();
+        })
+        .on_exit([](auto ctx, jln::ExecutorError, RdpdrDriveReadTask&) {
+            return ctx.exit_on_success();
+        })
+        .set_timeout(std::chrono::milliseconds(1000))
+        .on_timeout([](auto ctx, RdpdrDriveReadTask& self){
+            LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!",
+                self.file_descriptor);
+            return ctx.ready();
+        });
     }
 
-    int get_file_descriptor() const override { return this->file_descriptor; }
-
-    bool run(const wait_obj & wait_object) override {
-        if (wait_object.is_waked_up_by_time()) {
-            LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!",
-                this->file_descriptor);
-            return true;
-        }
-
+    bool run()
+    {
         StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream;
 
         uint32_t out_flags = 0;
@@ -187,6 +196,8 @@ class RdpdrSendDriveIOResponseTask final : public AsynchronousTask {
 
     VirtualChannelDataSender & to_server_sender;
 
+    SessionReactor::BasicTimerPtr timer_ptr;
+
 public:
     RdpdrSendDriveIOResponseTask(uint32_t flags,
                                  const uint8_t * data,
@@ -202,13 +213,19 @@ public:
         ::memcpy(this->data.get(), data, data_length);
     }
 
-    void configure_wait_object(wait_obj & wait_object) const override {
-        assert(!wait_object.is_waked_up_by_time());
-
-        wait_object.set_trigger_time(1000); // 1 ms
+    void configure_event(SessionReactor& session_reactor) override
+    {
+        assert(!this->timer_ptr);
+        // TODO create_yield_event
+        this->timer_ptr = session_reactor.create_timer(std::ref(*this))
+        .set_delay(std::chrono::milliseconds(1))
+        .on_action([](auto ctx, RdpdrSendDriveIOResponseTask& self){
+            return self.run() ? ctx.ready() : ctx.terminate();
+        });
     }
 
-    bool run(const wait_obj &) override {
+    bool run()
+    {
         if (this->data_length <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
             this->to_server_sender(this->data_length, this->flags, this->data.get(), this->data_length);
 
@@ -251,29 +268,39 @@ class RdpdrSendClientMessageTask final : public AsynchronousTask {
 
     VirtualChannelDataSender & to_server_sender;
 
+    SessionReactor::BasicTimerPtr timer_ptr;
+
 public:
-    RdpdrSendClientMessageTask(size_t total_length,
-                               uint32_t flags,
-                               const uint8_t * chunked_data,
-                               size_t chunked_data_length,
-                               VirtualChannelDataSender & to_server_sender,
-                               RDPVerbose verbose)
+    RdpdrSendClientMessageTask(
+        size_t total_length,
+        uint32_t flags,
+        const uint8_t * chunked_data,
+        size_t chunked_data_length,
+        VirtualChannelDataSender & to_server_sender,
+        RDPVerbose verbose)
     : total_length(total_length)
     , flags(flags)
     , chunked_data(std::make_unique<uint8_t[]>(chunked_data_length))
     , chunked_data_length(chunked_data_length)
-    , to_server_sender(to_server_sender.SynchronousSender()) {
+    , to_server_sender(to_server_sender.SynchronousSender())
+    {
+        assert(chunked_data_length <= CHANNELS::CHANNEL_CHUNK_LENGTH);
         (void)verbose;
+
         ::memcpy(this->chunked_data.get(), chunked_data, chunked_data_length);
     }
 
-    void configure_wait_object(wait_obj & wait_object) const override {
-        assert(!wait_object.is_waked_up_by_time());
-
-        wait_object.set_trigger_time(1000); // 1 ms
+    void configure_event(SessionReactor& session_reactor) override
+    {
+        assert(!this->timer_ptr);
+        // TODO create_yield_event
+        this->timer_ptr = session_reactor.create_timer(std::ref(*this))
+        .set_delay(std::chrono::milliseconds(1))
+        .on_action(jln::one_shot<&RdpdrSendClientMessageTask::run>());
     }
 
-    bool run(const wait_obj &) override {
+    bool run()
+    {
         assert(this->chunked_data_length <=
             CHANNELS::CHANNEL_CHUNK_LENGTH);
 

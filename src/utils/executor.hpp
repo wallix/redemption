@@ -291,6 +291,7 @@ struct BasicTimer
         return this->tv;
     }
 
+    // TODO set_delay
     void set_time(std::chrono::milliseconds ms) noexcept
     {
         this->delay = std::chrono::duration_cast<std::chrono::microseconds>(ms);
@@ -363,7 +364,7 @@ struct BasicExecutorImpl
     template<class... Args>
     bool exit_with(ExecutorError, Args&&... args);
 
-protected:
+// protected:
     using OnActionPtrFunc = MakeFuncPtr<BasicExecutorImpl&, PrefixArgs>;
     using OnExitPtrFunc = MakeFuncPtr<BasicExecutorImpl&, PrefixArgs, ExecutorError>;
 
@@ -800,6 +801,67 @@ struct REDEMPTION_CXX_NODISCARD Executor2EventContext : BasicContext<Event>
     }
 };
 
+template<class Event>
+struct REDEMPTION_CXX_NODISCARD Executor2FdContext : BasicContext<Event>
+{
+    using BasicContext<Event>::BasicContext;
+
+    ExecutorResult need_more_data() noexcept
+    {
+        return ExecutorResult::Nothing;
+    }
+
+    ExecutorResult ready() noexcept
+    {
+        return ExecutorResult::Ready;
+    }
+
+    ExecutorResult exit(ExitStatus status) noexcept
+    {
+        return (status == ExitStatus::Success) ? this->exit_on_success() : this->exit_on_error();
+    }
+
+    ExecutorResult exit_on_error() noexcept
+    {
+        return ExecutorResult::ExitFailure;
+    }
+
+    ExecutorResult exit_on_success() noexcept
+    {
+        return ExecutorResult::ExitSuccess;
+    }
+
+    template<class F>
+    Executor2FdContext set_exit_action(F f) noexcept
+    {
+        this->event.set_on_exit(f);
+        return *this;
+    }
+};
+
+template<class Event>
+struct REDEMPTION_CXX_NODISCARD Executor2FdTimeoutContext : BasicContext<Event>
+{
+    using BasicContext<Event>::BasicContext;
+
+    ExecutorResult ready() noexcept
+    {
+        return ExecutorResult::Ready;
+    }
+
+    template<class F>
+    Executor2FdTimeoutContext set_timeout_action(F f) noexcept
+    {
+        this->event.set_on_timeout(f);
+    }
+
+    Executor2FdTimeoutContext set_timeout(std::chrono::milliseconds ms) noexcept
+    {
+        this->event.set_timeout(ms);
+        return *this;
+    }
+};
+
 template<class Base>
 struct DeleteSelf
 {
@@ -859,6 +921,7 @@ struct REDEMPTION_CXX_NODISCARD TimerBuilder
         return this->select_return<0b01>();
     }
 
+    // TODO add set_time
     REDEMPTION_CXX_NODISCARD decltype(auto) set_delay(std::chrono::milliseconds ms) && noexcept
     {
         static_assert(!(Mask & 0b10), "set_delay already set");
@@ -920,6 +983,19 @@ private:
 //     }
 // };
 
+template<class F, class T, template<class...> class Ctx>
+auto wrap_fn()
+{
+    return [](auto& executor, auto... prefix_args) {
+        auto& self = static_cast<T&>(executor);
+        // TODO ExecutorExitContext
+        return self.ctx.invoke(
+            make_lambda<F>(),
+            Ctx<T>(self),
+            static_cast<decltype(prefix_args)&&>(prefix_args)...);
+    };
+}
+
 template<
     class Inherit,
     class EventContainerType,
@@ -969,17 +1045,11 @@ struct BasicEvent : BaseType
     template<class F>
     void set_on_action(F) noexcept
     {
-        this->on_action = [](base_type& base, auto... prefix_args) {
-            auto& self = static_cast<Inherit&>(base);
-            return self.ctx.invoke(
-                make_lambda<F>(),
-                executor_context{self},
-                static_cast<decltype(prefix_args)&&>(prefix_args)...);
-        };
+        this->on_action = wrap_fn<F, Inherit, EventCtxArg>();
     }
 
-protected:
     tuple_context ctx;
+protected:
     event_container_type event_container;
 
 private:
@@ -996,7 +1066,7 @@ new_event(Args&&... args)
 {
     using Base = typename Event::base_type;
     auto* p = new("") Event(static_cast<Args&&>(args)...);
-    p->deleter = [](Base* base) noexcept { delete static_cast<Event*>(base); };
+    p->deleter = [](auto* base) noexcept { delete static_cast<Event*>(base); };
     std::unique_ptr<Event, DeleteSelf<Base>> uptr(p);
     p->attach();
     return uptr;
@@ -1036,6 +1106,25 @@ struct ActionImpl : BasicEvent<
 
 template<class EventContainer, class PrefixArgs, class... Args>
 using Action = ActionImpl<EventContainer, PrefixArgs,
+    typename detail::decay_and_strip<Args>::type...>;
+
+template<class EventContainer, class PrefixArgs, class... Ts>
+struct FdImpl : BasicEvent<
+    FdImpl<EventContainer, PrefixArgs, Ts...>,
+    EventContainer,
+    BasicExecutorImpl<PrefixArgs>,
+    Executor2FdContext,
+    Ts...>
+{
+    using FdImpl::basic_event::basic_event;
+};
+
+template<class EventContainer, class PrefixArgs, class... Args>
+using Fd = FdImpl<EventContainer, PrefixArgs,
+    typename detail::decay_and_strip<Args>::type...>;
+
+template<class EventContainer, class PrefixArgs, class... Args>
+using Fd = FdImpl<EventContainer, PrefixArgs,
     typename detail::decay_and_strip<Args>::type...>;
 
 template<class F>
@@ -1519,7 +1608,7 @@ struct Reactor
 namespace detail
 {
     template<class... Ts>
-    static ExecutorResult terminate_callee(Ts...)
+    ExecutorResult terminate_callee(Ts...)
     {
         assert("call a executor marked 'Terminate'");
         return ExecutorResult::Terminate;

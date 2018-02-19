@@ -22,15 +22,12 @@
 #pragma once
 
 class wait_obj;
+class SessionReactor;
 
 class AsynchronousTask {
 public:
     virtual ~AsynchronousTask() = default;
 
-    virtual void configure_wait_object(wait_obj & wait_object) const = 0;
-
-    virtual int get_file_descriptor() const { return -1; }
-
-    virtual bool run(const wait_obj & wait_object) = 0;
+    virtual void configure_event(SessionReactor&) = 0;
 };
 

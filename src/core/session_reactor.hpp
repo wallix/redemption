@@ -41,8 +41,8 @@ struct SessionReactor
 
     using BasicExecutor = jln::BasicExecutorImpl<PrefixArgs>;
 
-    template<class... Ts>
-    using TopExecutor = jln::TopExecutor2<PrefixArgs, Ts...>;
+//     template<class... Ts>
+//     using TopExecutor = jln::TopExecutor2<PrefixArgs, Ts...>;
 
     enum class EventType : int8_t
     {
@@ -183,7 +183,7 @@ struct SessionReactor
     create_timer(Args&&... args)
     {
         using Timer = TimerContainer::Elem<Args...>;
-        return {jln::new_event<Timer>(this->timers_events_, static_cast<Args&&>(args)...)};
+        return {jln::new_event<Timer>(this->timer_events_, static_cast<Args&&>(args)...)};
     }
 
     using CallbackEvent = jln::ActionBase<jln::prefix_args<Callback&>>;
@@ -214,10 +214,135 @@ struct SessionReactor
         return {jln::new_event<Action>(this->graphic_events_, static_cast<Args&&>(args)...)};
     }
 
+    using BasicFd = jln::BasicExecutorImpl<PrefixArgs>;
+
+    struct TopFd : BasicFd
+    {
+        void set_timeout(std::chrono::milliseconds ms) noexcept
+        {
+            this->timeout.set_time(ms);
+        }
+
+        void set_timeout(timeval const& tv) noexcept
+        {
+            this->timeout.set_time(tv);
+        }
+
+        using OnTimerPtrFunc = jln::MakeFuncPtr<TopFd&, PrefixArgs>;
+        OnTimerPtrFunc on_timeout = jln::default_action_function();
+
+        BasicTimer timeout;
+        int fd;
+    };
+
+    template<class EventContainer, class PrefixArgs_, class... Ts>
+    struct FdImpl : jln::BasicEvent<
+        FdImpl<EventContainer, PrefixArgs_, Ts...>,
+        EventContainer,
+        TopFd,
+        jln::Executor2FdContext,
+        Ts...>
+    {
+        template<class... Args>
+        FdImpl(int fd, Args&&... args)
+        : FdImpl::basic_event(static_cast<Args&&>(args)...)
+        {
+            this->fd = fd;
+        }
+
+        template<class F>
+        void set_on_exit(F) noexcept
+        {
+            this->on_exit = jln::wrap_fn<F, FdImpl, jln::Executor2FdContext>();
+        }
+
+        template<class F>
+        void set_on_timeout(F) noexcept
+        {
+            this->on_timeout = jln::wrap_fn<F, FdImpl, jln::Executor2FdTimeoutContext>();
+        }
+    };
+
+    template<class EventContainer, class PrefixArgs_, class... Args>
+    using Fd = FdImpl<EventContainer, PrefixArgs_,
+        typename jln::detail::decay_and_strip<Args>::type...>;
+
+    using TopFdPtr = jln::UniquePtr<TopFd>;
+
+    struct TopFdContainer : Container<TopFd>
+    {
+        template<class... Args>
+        using Elem = Fd<TopFdContainer&, TopFd::prefix_args, Args...>;
+    };
+
+    template<class FdPtr, int Mask = 0>
+    struct TopFdBuilder
+    {
+        template<int Mask2>
+        decltype(auto) select_return()
+        {
+            if constexpr (Mask == (~Mask2 & 0b1111)) {
+                return std::move(this->fd_ptr);
+            }
+            else {
+                return TopFdBuilder<FdPtr, Mask | Mask2>{std::move(this->fd_ptr)};
+            }
+        }
+
+        template<class F>
+        decltype(auto) on_action(F f) && noexcept
+        {
+            static_assert(!(Mask & 0b001), "on_action already set");
+            this->fd_ptr->set_on_action(f);
+            return select_return<0b001>();
+        }
+
+        template<class F>
+        decltype(auto) on_exit(F f) && noexcept
+        {
+            static_assert(!(Mask & 0b010), "on_exit already set");
+            this->fd_ptr->set_on_exit(f);
+            return select_return<0b010>();
+        }
+
+        template<class F>
+        decltype(auto) on_timeout(F f) && noexcept
+        {
+            static_assert(!(Mask & 0b100), "on_timeout already set");
+            this->fd_ptr->set_on_timeout(f);
+            return select_return<0b100>();
+        }
+
+        decltype(auto) set_timeout(std::chrono::milliseconds ms) && noexcept
+        {
+            static_assert(!(Mask & 0b1000), "set_timeout already set");
+            this->fd_ptr->set_timeout(ms);
+            return select_return<0b1000>();
+        }
+
+        TopFdBuilder(FdPtr&& fd_ptr) noexcept
+        : fd_ptr(static_cast<FdPtr&&>(fd_ptr))
+        {}
+
+    private:
+        FdPtr fd_ptr;
+    };
+
+
+    template<class... Args>
+    TopFdBuilder<OwnerPtr<TopFdContainer::Elem<Args...>>>
+    create_fd_event(int fd, Args&&... args)
+    {
+        using EventFd = TopFdContainer::Elem<Args...>;
+        return {jln::new_event<EventFd>(fd, this->fd_events_, static_cast<Args&&>(args)...)};
+    }
+
+
     //std::vector<std::unique_ptr<Context>> contexts;
     Container<CallbackEvent> front_events_;
     GraphicContainer graphic_events_;
-    TimerContainer timers_events_;
+    TimerContainer timer_events_;
+    TopFdContainer fd_events_;
 
     std::vector<CallbackEvent*> front_events()
     {
@@ -227,5 +352,11 @@ struct SessionReactor
     std::vector<GraphicEvent*> graphic_events()
     {
         return this->graphic_events_.elements;
+    }
+
+    void set_event_next(/*BackEvent_t*/int)
+    {
+        // assert(is not already set)
+        // TODO unimplemented
     }
 };

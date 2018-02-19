@@ -632,7 +632,8 @@ public:
 
                 if (!this->disconnection_reconnection_required) {
                     if (this->session_probe_ending_in_progress) {
-                        throw Error(ERR_SESSION_PROBE_ENDING_IN_PROGRESS);
+                        this->rdp.sespro_ending_in_progress();
+                        return ;
                     }
 
                     if (SessionProbeOnKeepaliveTimeout::disconnect_user ==

@@ -455,8 +455,10 @@ protected:
     std::string real_alternate_shell;
     std::string real_working_dir;
 
+    std::vector<SessionReactor::BasicTimerPtr> timers;
+
+    // TODO BUG never pop_front(), only push_back() :/
     std::deque<std::unique_ptr<AsynchronousTask>> asynchronous_tasks;
-    wait_obj                                      asynchronous_task_event;
 
     Translation::language_t lang;
 
@@ -477,24 +479,20 @@ protected:
     {
         std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender;
 
-        std::deque<std::unique_ptr<AsynchronousTask>> & asynchronous_tasks;
-
-        wait_obj & asynchronous_task_event;
+        std::deque<std::unique_ptr<AsynchronousTask>>& asynchronous_tasks;
+        SessionReactor& session_reactor;
 
         RDPVerbose verbose;
 
     public:
         ToServerAsynchronousSender(
-            std::unique_ptr<VirtualChannelDataSender> &
-                to_server_synchronous_sender,
-            std::deque<std::unique_ptr<AsynchronousTask>> &
-                asynchronous_tasks,
-            wait_obj & asynchronous_task_event,
+            std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender,
+            std::deque<std::unique_ptr<AsynchronousTask>>& asynchronous_tasks,
+            SessionReactor& session_reactor,
             RDPVerbose verbose)
-        : to_server_synchronous_sender(
-            std::move(to_server_synchronous_sender))
+        : to_server_synchronous_sender(std::move(to_server_synchronous_sender))
         , asynchronous_tasks(asynchronous_tasks)
-        , asynchronous_task_event(asynchronous_task_event)
+        , session_reactor(session_reactor)
         , verbose(verbose)
         {}
 
@@ -502,23 +500,15 @@ protected:
             return *(to_server_synchronous_sender.get());
         }
 
-        void operator()(uint32_t total_length, uint32_t flags,
-            const uint8_t* chunk_data, uint32_t chunk_data_length)
-                override {
-            std::unique_ptr<AsynchronousTask> asynchronous_task =
-                std::make_unique<RdpdrSendClientMessageTask>(
-                    total_length, flags, chunk_data, chunk_data_length,
-                    *(this->to_server_synchronous_sender.get()),
-                    this->verbose);
-
-            if (this->asynchronous_tasks.empty()) {
-                this->asynchronous_task_event.full_reset();
-
-                asynchronous_task->configure_wait_object(
-                    this->asynchronous_task_event);
-            }
-
-            this->asynchronous_tasks.push_back(std::move(asynchronous_task));
+        void operator()(
+            uint32_t total_length, uint32_t flags,
+            const uint8_t* chunk_data, uint32_t chunk_data_length) override
+        {
+            this->asynchronous_tasks.push_back(std::make_unique<RdpdrSendClientMessageTask>(
+                total_length, flags, chunk_data, chunk_data_length,
+                *this->to_server_synchronous_sender.get(),
+                this->verbose));
+            this->asynchronous_tasks.back()->configure_event(this->session_reactor);
         }
     };
 
@@ -786,19 +776,6 @@ protected:
     rdpdr::RdpDrStatus rdpdrLogStatus;
     RDPECLIP::CliprdrLogState cliprdrLogStatus;
 
-    class AsynchronousTaskEventHandler : public EventHandler::CB {
-        mod_rdp& mod_;
-
-    public:
-        AsynchronousTaskEventHandler(mod_rdp& mod)
-        : mod_(mod)
-        {}
-
-        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
-            this->mod_.process_asynchronous_task_event(now, event, drawable);
-        }
-    } asynchronous_task_event_handler;
-
     class SessionProbeVirtualChannelEventHandler : public EventHandler::CB {
         mod_rdp& mod_;
 
@@ -1011,7 +988,6 @@ public:
         , cs_monitor(info.cs_monitor)
         , use_client_provided_remoteapp(mod_rdp_params.use_client_provided_remoteapp)
         , should_ignore_first_client_execute(mod_rdp_params.should_ignore_first_client_execute)
-        , asynchronous_task_event_handler(*this)
         , session_probe_virtual_channel_event_handler(*this)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
@@ -1673,19 +1649,11 @@ protected:
                 std::move(to_server_sender));
         }
 
-        std::unique_ptr<VirtualChannelDataSender>
-            virtual_channel_data_sender(std::move(to_server_sender));
-
-        std::unique_ptr<ToServerAsynchronousSender>
-            to_server_asynchronous_sender =
-                std::make_unique<ToServerAsynchronousSender>(
-                    virtual_channel_data_sender,
-                    this->asynchronous_tasks,
-                    this->asynchronous_task_event,
-                    this->verbose);
-
-        return std::unique_ptr<VirtualChannelDataSender>(
-            std::move(to_server_asynchronous_sender));
+        return std::make_unique<ToServerAsynchronousSender>(
+            std::move(to_server_sender),
+            this->asynchronous_tasks,
+            this->session_reactor,
+            this->verbose);
     }
 
     const ClipboardVirtualChannel::Params
@@ -2062,50 +2030,16 @@ public:
     }
 
 private:
-    void process_asynchronous_task_event(time_t, wait_obj& /* event*/, gdi::GraphicApi&) {
-        if (!this->asynchronous_tasks.front()->run(this->asynchronous_task_event)) {
-            this->asynchronous_tasks.pop_front();
-        }
-
-        this->asynchronous_task_event.full_reset();
-
-        if (!this->asynchronous_tasks.empty()) {
-            this->asynchronous_tasks.front()->configure_wait_object(this->asynchronous_task_event);
-        }
-    }
-
-    void process_session_probe_virtual_channel_event(time_t, wait_obj& event, gdi::GraphicApi&) {
+    void process_session_probe_virtual_channel_event(time_t, wait_obj& /*event*/, gdi::GraphicApi&) {
         //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event() ...");
-        try{
-            if (this->session_probe_virtual_channel_p) {
-                this->session_probe_virtual_channel_p->process_event();
-            }
-        }
-        catch (Error const & e) {
-            if (e.id != ERR_SESSION_PROBE_ENDING_IN_PROGRESS)
-                throw;
-
-            this->end_session_reason.clear();
-            this->end_session_message.clear();
-
-            this->authentifier.disconnect_target();
-            this->authentifier.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
-
-            event.signal = BACK_EVENT_NEXT;
+        if (this->session_probe_virtual_channel_p) {
+            this->session_probe_virtual_channel_p->process_event();
         }
         //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event() done.");
     }
 
 public:
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
-        if (!this->asynchronous_tasks.empty()) {
-            out_event_handlers.emplace_back(
-                &this->asynchronous_task_event,
-                &this->asynchronous_task_event_handler,
-                this->asynchronous_tasks.front()->get_file_descriptor()
-            );
-        }
-
         if (this->session_probe_virtual_channel_p) {
             if (wait_obj* event = this->session_probe_virtual_channel_p->get_event()) {
                 out_event_handlers.emplace_back(
@@ -7733,12 +7667,7 @@ private:
             out_asynchronous_task);
 
         if (out_asynchronous_task) {
-            if (this->asynchronous_tasks.empty()) {
-                this->asynchronous_task_event.full_reset();
-
-                out_asynchronous_task->configure_wait_object(this->asynchronous_task_event);
-            }
-
+            out_asynchronous_task->configure_event(this->session_reactor);
             this->asynchronous_tasks.push_back(std::move(out_asynchronous_task));
         }
     }
@@ -7777,12 +7706,7 @@ private:
             out_asynchronous_task);
 
         if (out_asynchronous_task) {
-            if (this->asynchronous_tasks.empty()) {
-                this->asynchronous_task_event.full_reset();
-
-                out_asynchronous_task->configure_wait_object(this->asynchronous_task_event);
-            }
-
+            out_asynchronous_task->configure_event(this->session_reactor);
             this->asynchronous_tasks.push_back(std::move(out_asynchronous_task));
         }
     }
@@ -7927,5 +7851,16 @@ private:
         else {
             LOG(LOG_WARNING, "mod_rdp::sespro_rail_exec_result(): Current session has no Remote Program Virtual Channel");
         }
+    }
+
+    void sespro_ending_in_progress() override
+    {
+        this->end_session_reason.clear();
+        this->end_session_message.clear();
+
+        this->authentifier.disconnect_target();
+        this->authentifier.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
+
+        this->session_reactor.set_event_next(BACK_EVENT_NEXT);
     }
 };
