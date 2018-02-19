@@ -1413,6 +1413,43 @@ protected:
         XCURSOR_PSEUDO_ENCODING      = -240,
     };
 
+    // VNC Client to Server Messages
+    enum VNC_client_to_server_messages {
+        VNC_CS_MSG_SET_PIXEL_FORMAT              = 0,
+        VNC_CS_MSG_SET_ENCODINGS                 = 2,
+        VNC_CS_MSG_FRAME_BUFFER_UPDATE_REQUEST   = 3,
+        VNC_CS_MSG_KEY_EVENT                     = 4,
+        VNC_CS_MSG_POINTER_EVENT                 = 5,
+        VNC_CS_MSG_CLIENT_CUT_TEXT               = 6,
+        // Optional Messages
+        VNC_CS_MSG_FILE_TRANSFER                  = 7,
+        VNC_CS_MSG_SET_SCALE                      = 8,
+        VNC_CS_MSG_SET_SERVER_INPUT               = 9,
+        VNC_CS_MSG_SET_SW                         = 10,
+        VNC_CS_MSG_TEXT_CHAT                      = 11,
+        VNC_CS_MSG_KEY_FRAME_REQUEST              = 12,
+        VNC_CS_MSG_KEEP_ALIVE                     = 13,
+        VNC_CS_MSG_ULTRA_VNC_RESERVED1            = 14,
+        VNC_CS_MSG_SET_SCALE_FACTOR               = 15,
+        VNC_CS_MSG_ULTRA_VNC_RESERVED2            = 16,
+        VNC_CS_MSG_ULTRA_VNC_RESERVED3            = 17,
+        VNC_CS_MSG_ULTRA_VNC_RESERVED4            = 18,
+        VNC_CS_MSG_ULTRA_VNC_RESERVED5            = 19,
+        VNC_CS_MSG_REQUEST_SESSION                = 20,
+        VNC_CS_MSG_SET_SESSION                    = 21,
+        VNC_CS_MSG_NOTIFY_PLUGIN_STREAMING        = 80,
+        VNC_CS_MSG_VMWARE1                        = 127,
+        VNC_CS_MSG_CAR_CONNECTIVITY               = 128,
+        VNC_CS_MSG_ENABLE_CONTINUOUS_UPDATE       = 150,
+        VNC_CS_MSG_CLIENT_FENCE                   = 248,
+        VNC_CS_MSG_OLIVE_CALL_CONTROL             = 249,
+        VNC_CS_MSG_XVP_CLIENT_MESSAGE             = 250,
+        VNC_CS_MSG_SET_DESKTOP_SIZE               = 251, 
+        VNC_CS_MSG_TIGHT                          = 252,
+        VNC_CS_MSG_GII_CLIENT_MESSAGE             = 253,
+        VNC_CS_MSG_VMWARE2                        = 254,
+        VNC_CS_MSG_QEMU_CLIENT_MESSAGE            = 255,
+    };
 
     static void fill_encoding_types_buffer(const char * encodings, OutStream & stream, uint16_t & number_of_encodings, VNCVerbose verbose)
     {
@@ -1966,6 +2003,7 @@ private:
             // -specific confirmation from the server.
             
             // See Encodings for a description of each encoding and Pseudo-encodings for the meaning of pseudo-encodings.
+            
             // No. of bytes     Type     [Value]     Description
             // -------------+---------+-----------+---------------------
             //         1    |    U8   |     2     |  message-type
@@ -1977,7 +2015,6 @@ private:
             // No. of bytes     Type     Description
             // ----------------------------------------
             //         4         S32     encoding-type
-
             
             {
                 const char * encodings           = this->encodings.c_str();
