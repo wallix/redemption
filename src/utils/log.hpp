@@ -166,8 +166,20 @@ log_array_02x_format(uint8_t const (&d)[n])
 # define LOG_UNCHECKED_FORMAT 1
 
 #else
-#  define LOG(priority, ...) do {                                \
+# ifdef NDEBUG
+#   define LOG_FILENAME(priority)
+# else
+#   define LOG_FILENAME(priority) if (priority != LOG_INFO) { \
+        LOG__REDEMPTION__INTERNAL(                            \
+            priority, "%s (%d/%d) --  In %s:%d",              \
+            __FILE__, __LINE__                                \
+        );                                                    \
+    }
+# endif
+
+# define LOG(priority, ...) do {                                 \
     using ::log_value;                                           \
+    LOG_FILENAME(priority)                                       \
     LOGCHECK__REDEMPTION__INTERNAL((                             \
         LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__),                \
         LOG__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- "     \
