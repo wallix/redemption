@@ -902,17 +902,6 @@ struct Container
 template<class TimerPtr, int Mask = 0>
 struct REDEMPTION_CXX_NODISCARD TimerBuilder
 {
-    template<int Mask2>
-    decltype(auto) select_return() noexcept
-    {
-        if constexpr (Mask == (~Mask2 & 0b11)) {
-            return static_cast<TimerPtr&&>(this->timer_ptr);
-        }
-        else {
-            return TimerBuilder<TimerPtr, Mask | Mask2>(std::move(this->timer_ptr));
-        }
-    }
-
     template<class F>
     REDEMPTION_CXX_NODISCARD decltype(auto) on_action(F f) && noexcept
     {
@@ -934,6 +923,17 @@ struct REDEMPTION_CXX_NODISCARD TimerBuilder
     {}
 
 private:
+    template<int Mask2>
+    decltype(auto) select_return() noexcept
+    {
+        if constexpr (Mask == (~Mask2 & 0b11)) {
+            return static_cast<TimerPtr&&>(this->timer_ptr);
+        }
+        else {
+            return TimerBuilder<TimerPtr, Mask | Mask2>(std::move(this->timer_ptr));
+        }
+    }
+
     TimerPtr timer_ptr;
 };
 
@@ -953,6 +953,59 @@ struct REDEMPTION_CXX_NODISCARD ActionBuilder
 
 private:
     ActionPtr action_ptr;
+};
+
+template<class FdPtr, int Mask = 0>
+struct TopFdBuilder
+{
+    template<int Mask2>
+    decltype(auto) select_return()
+    {
+        if constexpr (Mask == (~Mask2 & 0b1111)) {
+            return std::move(this->fd_ptr);
+        }
+        else {
+            return TopFdBuilder<FdPtr, Mask | Mask2>{std::move(this->fd_ptr)};
+        }
+    }
+
+    template<class F>
+    decltype(auto) on_action(F f) && noexcept
+    {
+        static_assert(!(Mask & 0b001), "on_action already set");
+        this->fd_ptr->set_on_action(f);
+        return select_return<0b001>();
+    }
+
+    template<class F>
+    decltype(auto) on_exit(F f) && noexcept
+    {
+        static_assert(!(Mask & 0b010), "on_exit already set");
+        this->fd_ptr->set_on_exit(f);
+        return select_return<0b010>();
+    }
+
+    template<class F>
+    decltype(auto) on_timeout(F f) && noexcept
+    {
+        static_assert(!(Mask & 0b100), "on_timeout already set");
+        this->fd_ptr->set_on_timeout(f);
+        return select_return<0b100>();
+    }
+
+    decltype(auto) set_timeout(std::chrono::milliseconds ms) && noexcept
+    {
+        static_assert(!(Mask & 0b1000), "set_timeout already set");
+        this->fd_ptr->set_timeout(ms);
+        return select_return<0b1000>();
+    }
+
+    TopFdBuilder(FdPtr&& fd_ptr) noexcept
+    : fd_ptr(static_cast<FdPtr&&>(fd_ptr))
+    {}
+
+private:
+    FdPtr fd_ptr;
 };
 
 
@@ -1123,9 +1176,6 @@ template<class EventContainer, class PrefixArgs, class... Args>
 using Fd = FdImpl<EventContainer, PrefixArgs,
     typename detail::decay_and_strip<Args>::type...>;
 
-template<class EventContainer, class PrefixArgs, class... Args>
-using Fd = FdImpl<EventContainer, PrefixArgs,
-    typename detail::decay_and_strip<Args>::type...>;
 
 template<class F>
 auto one_shot(F) noexcept
