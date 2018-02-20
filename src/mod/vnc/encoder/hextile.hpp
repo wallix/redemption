@@ -176,7 +176,10 @@ namespace VNC {
                 size_t last_remaining = 0;
                 while (buf.remaining()){
 //                    LOG(LOG_INFO, "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
-                    assert(buf.remaining() != last_remaining);
+                    if (buf.remaining() == last_remaining){
+                        LOG(LOG_ERR, "Stalled: Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
+                        assert(buf.remaining() != last_remaining);
+                    }
                     last_remaining = buf.remaining();
 
                     Parse parser(buf.av().data());
@@ -186,7 +189,7 @@ namespace VNC {
                     if (tileType & hextileRaw){
                         size_t raw_length = this->tile.cx * this->tile.cy * this->Bpp;
                         if (buf.remaining() < raw_length + 1){
-                            LOG(LOG_INFO, "Hextile::hexTileraw need more data %u (has %u)", raw_length+1, buf.remaining());
+                            LOG(LOG_INFO, "Hextile::hexTileraw need more data %zu (has %u)", raw_length+1, buf.remaining());
                             return EncoderState::NeedMoreData;
                         }
                         const uint8_t * raw(buf.av().data()+1);
@@ -206,7 +209,7 @@ namespace VNC {
 
                     const size_t header_bytes = type_bytes + any_subrect_bytes + hextile_bg_bytes + hextile_fg_bytes;
                     if (buf.remaining() < header_bytes){
-                        LOG(LOG_INFO, "Hextile::hexTileraw need more data %u (has %u)", header_bytes, buf.remaining());
+                        LOG(LOG_INFO, "Hextile::hexTileraw need more data %zu (has %zu)", header_bytes, buf.remaining());
                         return EncoderState::NeedMoreData;
                     }
 
@@ -231,7 +234,7 @@ namespace VNC {
 
                     if (buf.remaining() < tile_bytes){
 //                        LOG(LOG_INFO, "Not enough data (hextile subrec) : %zu, need %zu", buf.remaining(), tile_bytes);
-                        LOG(LOG_INFO, "Hextile::hexTileraw need more data %u (has %u)", tile_bytes, buf.remaining());
+                        LOG(LOG_INFO, "Hextile::hexTileraw need more data %zu (has %u)", tile_bytes, buf.remaining());
                         return EncoderState::NeedMoreData; // finished decoding
                     }
 

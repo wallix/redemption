@@ -813,7 +813,7 @@ public:
 
         this->state = UP_AND_RUNNING;
         this->front.can_be_start_capture();
-        this->update_screen(screen_rect);
+        this->update_screen(screen_rect, 1);
         this->lib_open_clip_channel();
 
         this->event.reset_trigger_time();
@@ -1451,6 +1451,20 @@ protected:
         VNC_CS_MSG_QEMU_CLIENT_MESSAGE            = 255,
     };
 
+    // VNC Client to Server Messages
+    enum VNC_server_to_client_messages {
+        VNC_SC_MSG_FRAMEBUFFER_UPDATE             = 0,
+        VNC_SC_MSG_SET_COLOUR_MAP_ENTRIES         = 1,
+        VNC_SC_MSG_BELL                           = 2,
+        VNC_SC_MSG_SERVER_CUT_TEXT                = 3,
+        VNC_SC_MSG_END_OF_CONTINUOUS_UPDATE       = 150,
+        VNC_SC_MSG_SERVER_STATE                   = 173,
+        VNC_SC_MSG_SERVER_FENCE                   = 248,
+        VNC_SC_MSG_XVP                            = 250,
+        VNC_SC_MSG_TIGHT                          = 252,
+        VNC_SC_MSG_GII                            = 253,
+    };
+
     static void fill_encoding_types_buffer(const char * encodings, OutStream & stream, uint16_t & number_of_encodings, VNCVerbose verbose)
     {
         if (bool(verbose & VNCVerbose::basic_trace)) {
@@ -1541,31 +1555,32 @@ protected:
                     return false;
                 }
 
-                this->message_type = buf.av()[0];
+                this->message_type = VNC_server_to_client_messages(buf.av()[0]);
 
                 buf.advance(1);
 
+
                 switch (this->message_type)
                 {
-                    case 0: /* framebuffer update */
+                    case VNC_SC_MSG_FRAMEBUFFER_UPDATE: /* framebuffer update */
                         vnc.frame_buffer_update_ctx.start(vnc.bpp, nbbytes(vnc.bpp));
                         this->state = State::FrameBufferupdate;
                         return vnc.lib_frame_buffer_update(drawable, buf);
-                    case 1: /* palette */
+                    case VNC_SC_MSG_SET_COLOUR_MAP_ENTRIES: /* palette */
                         vnc.palette_update_ctx.start();
                         this->state = State::Palette;
                         return vnc.lib_palette_update(drawable, buf);
-                    case 2: /* bell */
+                    case VNC_SC_MSG_BELL: /* bell */
                         // TODO bell
                         return true;
-                    case 3: /* clipboard */ /* ServerCutText */
+                    case VNC_SC_MSG_SERVER_CUT_TEXT: /* clipboard */ /* ServerCutText */
                         vnc.clipboard_data_ctx.start(
                             vnc.enable_clipboard_down
                          && vnc.get_channel_by_name(channel_names::cliprdr));
                         this->state = State::ServerCutText;
                         return vnc.lib_clip_data(buf);
                     default:
-                        LOG(LOG_ERR, "unknown message type in vnc %d\n", message_type);
+                        LOG(LOG_ERR, "unknown message type in vnc %u\n", message_type);
                         throw Error(ERR_VNC);
                 }
                 break;
@@ -1580,7 +1595,7 @@ protected:
 
     private:
         State state = State::Header;
-        uint8_t message_type;
+        VNC_server_to_client_messages message_type;
     };
 
     UpAndRunningCtx up_and_running_ctx;
@@ -1683,7 +1698,7 @@ private:
                 }
             }
             else {
-                this->update_screen(Rect(0, 0, this->width, this->height));
+                this->update_screen(Rect(0, 0, this->width, this->height), 1);
             }
             return false;
 
@@ -2377,7 +2392,7 @@ private:
             return false;
         }
 
-        this->update_screen(Rect(0, 0, this->width, this->height));
+        this->update_screen(Rect(0, 0, this->width, this->height), 1);
         return true;
     } // lib_frame_buffer_update
 
