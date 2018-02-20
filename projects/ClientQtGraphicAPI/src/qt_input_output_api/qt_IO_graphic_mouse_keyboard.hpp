@@ -370,7 +370,6 @@ public:
     }
 
     virtual void set_pointer(Pointer const & cursor) override {
-        return;
 
         QImage image_data(cursor.data, cursor.width, cursor.height, this->bpp_to_QFormat(24, false));
         QImage image_mask(cursor.mask, cursor.width, cursor.height, QImage::Format_Mono);

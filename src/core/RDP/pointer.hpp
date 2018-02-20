@@ -55,6 +55,7 @@ public:
         , MASK_SIZE = MAX_WIDTH * MAX_HEIGHT * 1 / 8
     };
 
+private:
 //    unsigned bpp;
     unsigned width;
     unsigned height;
@@ -63,6 +64,7 @@ public:
     /* hotspot */
     int x;
     int y;
+
 
     uint8_t data[DATA_SIZE];
     uint8_t mask[MASK_SIZE];

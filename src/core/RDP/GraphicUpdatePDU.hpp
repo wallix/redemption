@@ -887,8 +887,7 @@ protected:
 
     void send_pointer(int cache_idx, const Pointer & cursor) override {
         if (bool(this->verbose & Verbose::pointer)) {
-            LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer(cache_idx=%d x=%d y=%d)",
-                cache_idx, cursor.x, cursor.y);
+            LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer(cache_idx=%d)", cache_idx);
         }
 
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
