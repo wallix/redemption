@@ -195,9 +195,6 @@ public:
     } windowsData;
 
 
-//     bool remoteapp;
-//     bool vnc;
-
     enum : uint8_t {
         MOD_RDP            = 1,
         MOD_VNC            = 2,
@@ -530,12 +527,7 @@ public:
                         if (std::stoi(info)) {
                             this->modRDPParamsData.enable_sound = true;
                         } else { this->modRDPParamsData.enable_sound = false; }
-                    } /*else
-                    if (tag.compare(std::string("delta_time")) == 0) {
-                        if (std::stoi(info)) {
-                            this->delta_time = std::stoi(info);
-                        }
-                    }*/ else
+                    } else
                     if (tag.compare(std::string("enable_shared_clipboard")) == 0) {
                         if (std::stoi(info)) {
                             this->enable_shared_clipboard = true;
@@ -654,8 +646,6 @@ public:
         this->info.console_session = 0;
         this->info.brush_cache_code = 0;
         this->info.bpp = 24;
-//         this->mod_bpp = 24;
-//         this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
         this->info.width  = 800;
         this->info.height = 600;
         this->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
@@ -664,7 +654,6 @@ public:
         this->is_recording = false;
         this->modRDPParamsData.enable_tls = true;
         this->modRDPParamsData.enable_nla = true;
-//         this->delta_time = 40;
         this->enable_shared_clipboard = true;
         this->enable_shared_virtual_disk = true;
         this->SHARE_DIR = std::string("/home");
@@ -759,15 +748,12 @@ public:
 
     // CONTROLLER
     virtual void connect() = 0;
-//     virtual void setMainScreenOnTopRelease() = 0;
     virtual void disconnect(std::string const & txt, bool pipe_broken) = 0;
-//     virtual void dropScreen() = 0;
-//     virtual bool is_no_win_data() = 0;
-//     virtual void writeWindowsConf() = 0;
     virtual void replay(std::string const & movie_dir, std::string const & movie_path) = 0;
     virtual bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) = 0;
     virtual void delete_replay_mod() = 0;
     virtual void callback() = 0;
+    virtual void draw_frame(int ) {}
 
     virtual void update_keylayout() = 0;
 
@@ -777,10 +763,7 @@ public:
         LOG(LOG_WARNING, "No options window implemented yet. Virtual function \"void options()\" must be override.");
     }
 
-//     virtual mod_api * init_mod() = 0;
-
     // CONTROLLER
-//     virtual void connexionReleased() = 0;
     virtual void closeFromScreen() = 0;
     virtual void disconnexionReleased() = 0;
 
@@ -833,10 +816,6 @@ public:
 
         return false;
     }
-
-//     void virtual keyPressEvent(const int key, const char text) = 0;
-//
-//     void virtual keyReleaseEvent(const int key, const char text) = 0;
 
     void send_rdp_scanCode(int keyCode, int flag) {
         bool tsk_switch_shortcuts = false;
@@ -925,7 +904,6 @@ public:
     virtual void setClipboard_text(std::string & str) = 0;
     virtual void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const int bpp) = 0;
     virtual void setClipboard_files(std::string & name) = 0;
-
     virtual void write_clipboard_temp_file(std::string fileName, const uint8_t * data, size_t data_len) = 0;
 
 
@@ -963,17 +941,17 @@ public:
 
 
 
-class ClientIODiskAPI : public ClientIOAPI {
-//     ClientRedemptionIOAPI * client;
-//
-//     void set_client(ClientRedemptionIOAPI * client) {
-//         this->client = client;
-//     }
-};
+// class ClientIODiskAPI : public ClientIOAPI {
+// //     ClientRedemptionIOAPI * client;
+// //
+// //     void set_client(ClientRedemptionIOAPI * client) {
+// //         this->client = client;
+// //     }
+// };
 
 
 
-class ClientOutputSoundAPI : public ClientIODiskAPI {
+class ClientOutputSoundAPI : public ClientIOAPI {
 
 public:
     uint32_t n_sample_per_sec = 0;
@@ -992,7 +970,7 @@ public:
 
 
 
-class ClientInputSocketAPI : public ClientIODiskAPI {
+class ClientInputSocketAPI : public ClientIOAPI {
 
 public:
     mod_api * _callback = nullptr;
@@ -1003,50 +981,9 @@ public:
     virtual ~ClientInputSocketAPI() = default;
 };
 
-// class ClientInputSocketRunner : public ClientInputSocketAPI {
-//
-//     bool connected = false;
-//
-//     virtual bool start_to_listen(int client_sck, mod_api * mod) {
-//          auto & mod = *mod;
-//
-//         while (front.is_connected())
-//         {
-//             if (mod.logged_on == mod_api::CLIENT_LOGGED) {
-//                 mod.logged_on = mod_api::CLIENT_UNLOGGED;
-//
-//                 std::cout << " RDP Session Log On." << std::endl;
-//                 if (quick_connection_test) {
-//                     std::cout << "quick_connection_test" <<  std::endl;
-//                     return 0;
-//                 }
-//                 break;
-//             }
-//
-//             if (time_set_connection_test) {
-//                 if (time_stop > tvtime()) {
-//                     //std::cerr <<  " Exit timeout (timeout = " << time_out_response.tv_sec << " sec " <<  time_out_response.tv_usec << " µsec)" << std::endl;
-//                     return 8;
-//                 }
-//             }
-//
-//             if (int err = front.wait_and_draw_event(sck, mod, front, time_mark)) {
-//                 return err;
-//             }
-//
-//             front.send_key_to_keep_alive();
-//         }
-//
-//     }
-//
-//     virtual void disconnect() = 0;
-//
-//
-// };
 
 
-
-class ClientInputMouseKeyboardAPI : public ClientIODiskAPI {
+class ClientInputMouseKeyboardAPI : public ClientIOAPI {
 
 
 public:
@@ -1064,7 +1001,7 @@ public:
 
     virtual void init_form() = 0;
 
-    virtual void pre_load_movie() = 0;
+    virtual void pre_load_movie() {}
 
 
 
@@ -1099,18 +1036,14 @@ public:
     }
 
     void virtual keyPressEvent(const int key, const uint16_t text)  = 0;
-//         this->client->keyPressEvent(key, text);
-//     }
-//
+
     void virtual keyReleaseEvent(const int key, const uint16_t text)  = 0;
-//         this->client->keyReleaseEvent(key, text);
-//     }
 
     void virtual refreshPressed() {
         this->client->refreshPressed();
     }
 
-    virtual void open_options() = 0;
+    virtual void open_options() {}
 
 };
 
@@ -1145,40 +1078,43 @@ public:
 
     virtual void create_screen() = 0;
 
-    virtual void create_screen(std::string const & movie_dir, std::string const & movie_path) = 0;
-
     virtual void closeFromScreen() = 0;
 
     virtual void set_screen_size(int x, int y) = 0;
 
 
+    // replay mod
+
+    virtual void create_screen(std::string const & , std::string const & ) {};
+
+    virtual void draw_frame(int ) {}
 
 
     // remote app
 
-    virtual void create_remote_app_screen(uint32_t id, int w, int h, int x, int y) = 0;
+    virtual void create_remote_app_screen(uint32_t , int , int , int , int ) {};
 
-    virtual void move_screen(uint32_t id, int x, int y) = 0;
+    virtual void move_screen(uint32_t , int , int ) {};
 
-    virtual void set_screen_size(uint32_t id, int x, int y) = 0;
+    virtual void set_screen_size(uint32_t , int , int ) {};
 
-    virtual void set_pixmap_shift(uint32_t id, int x, int y) = 0;
+    virtual void set_pixmap_shift(uint32_t , int , int ) {};
 
-    virtual int get_visible_width(uint32_t id) = 0;
+    virtual int get_visible_width(uint32_t ) {return 0;};
 
-    virtual int get_visible_height(uint32_t id) = 0;
+    virtual int get_visible_height(uint32_t ) {return 0;};
 
-    virtual int get_mem_width(uint32_t id) = 0;
+    virtual int get_mem_width(uint32_t ) {return 0;};
 
-    virtual int get_mem_height(uint32_t id) = 0;
+    virtual int get_mem_height(uint32_t ) {return 0;};
 
-    virtual void set_mem_size(uint32_t id, int w, int h) = 0;
+    virtual void set_mem_size(uint32_t , int , int ) {};
 
-    virtual void show_screen(uint32_t id) = 0;
+    virtual void show_screen(uint32_t ) {};
 
-    virtual void dropScreen(uint32_t id) = 0;
+    virtual void dropScreen(uint32_t ) {};
 
-    virtual void clear_remote_app_screen() = 0;
+    virtual void clear_remote_app_screen() {};
 
 
 
@@ -1186,7 +1122,6 @@ public:
     virtual FrontAPI::ResizeResult server_resize(int width, int height, int bpp) = 0;
 
     virtual void set_pointer(Pointer      const &) {}
-//     virtual void set_palette(BGRPalette   const &) {}
 
     virtual void draw(RDP::FrameMarker    const & cmd) = 0;
     virtual void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) = 0;

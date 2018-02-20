@@ -59,7 +59,6 @@ public:
         MAX_ACCOUNT_DATA = 15
     };
 
-//     ClientRedemptionIOAPI       * _front;
     ClientInputMouseKeyboardAPI       * controllers;
     const int            _width;
     const int            _height;
@@ -94,7 +93,6 @@ public:
 
     Form_Qt(ClientInputMouseKeyboardAPI * controllers)
         : QWidget()
-//         , _front(front)
         , controllers(controllers)
         , _width(400)
         , _height(300)
@@ -430,7 +428,6 @@ private Q_SLOTS:
                 }
                 ofichier.close();
             }
-
         }
     }
 
