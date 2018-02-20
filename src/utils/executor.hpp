@@ -1269,6 +1269,7 @@ namespace detail
     template<class i, class S, class F>
     struct indexed_type
     {
+        using index = i;
         static F func() noexcept { return jln::make_lambda<F>(); }
         static S name() noexcept { return S{}; }
     };
@@ -1289,7 +1290,7 @@ namespace detail
     }
 }
 
-template<class i, class Sequenced, class Ctx>
+template<class i, class Sequencer, class Ctx>
 struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
 {
     // ExecutorResult terminate() noexcept
@@ -1304,7 +1305,7 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
 
     constexpr static bool is_final_sequence() noexcept
     {
-        return i::value == Sequenced::sequence_size;
+        return i::value == Sequencer::sequence_size - 1;
     }
 
     constexpr static size_t index() noexcept
@@ -1314,7 +1315,7 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
 
     constexpr static auto sequence_name() noexcept
     {
-        return detail::value_at<i>(Sequenced{}).name();
+        return detail::value_at<i>(Sequencer{}).name();
     }
 
     jln::ExecutorResult sequence_next() noexcept
@@ -1355,9 +1356,10 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
     auto get_sequence_at() noexcept
     {
         using index = std::integral_constant<std::size_t, I>;
+        using NewSequencer = FunSequencerExecutorCtx<index, Sequencer, Ctx>;
         return [](auto ctx, auto&&... xs){
-            return detail::value_at<index>(Sequenced{}).func()(
-                static_cast<FunSequencerExecutorCtx&>(ctx),
+            return detail::value_at<index>(Sequencer{}).func()(
+                static_cast<NewSequencer&>(static_cast<Ctx&>(ctx)),
                 static_cast<decltype(xs)&&>(xs)...
             );
         };
@@ -1367,8 +1369,11 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
     auto get_sequence_name() noexcept
     {
         return [](auto ctx, auto&&... xs){
-            return detail::value_by_name<S>(Sequenced{}).func()(
-                static_cast<FunSequencerExecutorCtx&>(ctx),
+            auto x = detail::value_by_name<S>(Sequencer{});
+            using index = typename decltype(x)::index;
+            using NewSequencer = FunSequencerExecutorCtx<index, Sequencer, Ctx>;
+            return x.func()(
+                static_cast<NewSequencer&>(static_cast<Ctx&>(ctx)),
                 static_cast<decltype(xs)&&>(xs)...
             );
         };

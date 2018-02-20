@@ -169,11 +169,12 @@ log_array_02x_format(uint8_t const (&d)[n])
 # ifdef NDEBUG
 #   define LOG_FILENAME(priority)
 # else
-#   define LOG_FILENAME(priority) if (priority != LOG_INFO) { \
-        LOG__REDEMPTION__INTERNAL(                            \
-            priority, "%s (%d/%d) --  In %s:%d",              \
-            __FILE__, __LINE__                                \
-        );                                                    \
+#   define LOG_FILENAME(priority)                        \
+    if (priority != LOG_INFO && priority != LOG_DEBUG) { \
+        LOG__REDEMPTION__INTERNAL(                       \
+            priority, "%s (%d/%d) --  In %s:%d",         \
+            __FILE__, __LINE__                           \
+        );                                               \
     }
 # endif
 

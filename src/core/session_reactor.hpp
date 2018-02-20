@@ -94,7 +94,11 @@ struct SessionReactor
 
         void detach(Base& elem)
         {
-            this->elements.erase(this->get_elem_iterator(elem), this->elements.end());
+            auto it = this->get_elem_iterator(elem);
+            if (it != this->elements.end()) {
+                *it = std::move(this->elements.back());
+                this->elements.pop_back();
+            }
         }
 
 //     private:
@@ -121,13 +125,14 @@ struct SessionReactor
                     switch (elem->exec_action(static_cast<Args&&>(args)...)) {
                         case jln::ExecutorResult::ExitSuccess:
                         case jln::ExecutorResult::ExitFailure:
-                            assert(false);
+                            assert(false && "Exit");
                         case jln::ExecutorResult::Terminate:
                             this->elements.erase(this->elements.begin() + i);
                             break;
                         case jln::ExecutorResult::Nothing:
+                            break;
                         case jln::ExecutorResult::NeedMoreData:
-                            assert(false);
+                            assert(false && "NeedMoreData");
                         case jln::ExecutorResult::Ready:
                             ++i;
                             break;
@@ -169,6 +174,14 @@ struct SessionReactor
                 [&](BasicTimer const& timer){ return timer.time() <= end_tv; },
                 static_cast<Args&&>(args)...
             );
+        }
+
+        void info(timeval const& end_tv) {
+            for (auto& timer : this->elements) {
+                auto const tv = timer->time();
+                LOG(LOG_DEBUG, "%p: %ld %ld %ld",
+                    static_cast<void*>(timer), tv.tv_sec, tv.tv_usec, difftimeval(tv, end_tv).count());
+            }
         }
 
         template<class... Args>

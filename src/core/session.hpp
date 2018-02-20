@@ -198,6 +198,7 @@ public:
                 }
 
                 auto tv = session_reactor.timer_events_.get_next_timeout();
+                // LOG(LOG_DEBUG, "%ld %ld", tv.tv_sec, tv.tv_usec);
                 auto tv_now = tvtime();
                 if (tv.tv_sec >= 0 && tv < timeout + tv_now) {
                     if (tv < tv_now) {
@@ -229,10 +230,11 @@ public:
                     this->write_performance_log(now);
                 }
 
+                auto const end_tv = tvtime() + timeout;
                 if (num == 0) {
-                    auto end_tv = tvtime() + timeout;
                     session_reactor.timer_events_.exec(end_tv);
                 }
+                // session_reactor.timer_events_.info(end_tv);
 
                 if (session_reactor.front_events().size() || sck_is_set(front_trans, rfds)) {
                     try {
