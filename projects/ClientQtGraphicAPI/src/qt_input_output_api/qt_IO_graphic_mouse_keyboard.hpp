@@ -301,50 +301,59 @@ public:
 //         }
 //     }
 
-    void setClip(int x, int y, int w, int h) {
-
-        if (this->screen) {
-
-            if (this->screen->clip.x() == -1) {
-                this->screen->clip.setX(x);
-                this->screen->clip.setY(y);
-                this->screen->clip.setWidth(w);
-                this->screen->clip.setHeight(h);
-            } else {
-                const int ori_x = this->screen->clip.x();
-                const int ori_y = this->screen->clip.y();
-
-                if (x <= ori_x) {
-                    this->screen->clip.setX(x);
-                }
-
-                if (y <= ori_y) {
-                    this->screen->clip.setY(y);
-                }
-
-                if ( (x+w) > (ori_x + this->screen->clip.width()) ) {
-                    this->screen->clip.setWidth(x+w-this->screen->clip.x());
-                }
-
-                if ( (y+h) > (ori_y + this->screen->clip.height()) ) {
-                    this->screen->clip.setHeight(y+h-this->screen->clip.y());
-                }
-            }
-        }
-    }
+//     void setClip(int x, int y, int w, int h) {
+//
+//         if (this->screen) {
+//
+//             if (this->screen->clip.x() == -1) {
+//                 this->screen->clip.setX(x);
+//                 this->screen->clip.setY(y);
+//                 this->screen->clip.setWidth(w);
+//                 this->screen->clip.setHeight(h);
+//             } else {
+//                 const int ori_x = this->screen->clip.x();
+//                 const int ori_y = this->screen->clip.y();
+//
+//                 if (x <= ori_x) {
+//                     this->screen->clip.setX(x);
+//                 }
+//
+//                 if (y <= ori_y) {
+//                     this->screen->clip.setY(y);
+//                 }
+//
+//                 if ( (x+w) > (ori_x + this->screen->clip.width()) ) {
+//                     this->screen->clip.setWidth(x+w-this->screen->clip.x());
+//                 }
+//
+//                 if ( (y+h) > (ori_y + this->screen->clip.height()) ) {
+//                     this->screen->clip.setHeight(y+h-this->screen->clip.y());
+//                 }
+//             }
+//         }
+//     }
 
     void begin_update() override {
-        if (this->screen) {
-            this->screen->clip.setX(-1);
-            this->screen->clip.setY(-1);
-            this->screen->clip.setWidth(0);
-            this->screen->clip.setHeight(0);
-            LOG(LOG_INFO, "begin_update  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        }
 
+        this->update_counter++;
+//         if (this->screen) {
+//             this->screen->clip.setX(-1);
+//             this->screen->clip.setY(-1);
+//             this->screen->clip.setWidth(0);
+//             this->screen->clip.setHeight(0);
+//         }
     }
 
+private:
+    size_t update_counter = 0;
+
     void end_update() override {
+        assert(this->update_counter);
+        this->update_counter--;
+        if (this->update_counter != 0){
+            return;
+        }
+
         if (this->drawn_client->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
             for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
                 if (it->second) {
@@ -399,6 +408,7 @@ public:
     }
 
     virtual void set_pointer(Pointer const & cursor) override {
+        return;
 
         QImage image_data(cursor.data, cursor.width, cursor.height, this->bpp_to_QFormat(24, false));
         QImage image_mask(cursor.mask, cursor.width, cursor.height, QImage::Format_Mono);
@@ -414,7 +424,6 @@ public:
         } else {
             image_mask.invertPixels();
         }
-
         image_data = image_data.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
         image_mask = image_mask.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
 
@@ -423,16 +432,16 @@ public:
 
         uint8_t data[Pointer::DATA_SIZE*4];
 
-        for (int i = 0; i < Pointer::DATA_SIZE; i += 4) {
+        for (int i = 0; i < std::min<int>(Pointer::DATA_SIZE * 4, cursor.width * cursor.height * 4); i += 4) {
             data[i  ] = data_data[i+2];
             data[i+1] = data_data[i+1];
             data[i+2] = data_data[i  ];
             data[i+3] = mask_data[i+0];
         }
+        LOG(LOG_INFO, "drawing cursor");
 
         if (this->client->is_replaying) {
             this->cursor_image = QImage(static_cast<uchar *>(data), cursor.x, cursor.y, QImage::Format_ARGB32_Premultiplied);
-
         } else {
             if (this->drawn_client->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
                  for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {

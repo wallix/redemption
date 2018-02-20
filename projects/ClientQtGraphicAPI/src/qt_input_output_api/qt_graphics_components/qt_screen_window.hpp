@@ -74,7 +74,7 @@ public:
     int cursorHotx;
     int cursorHoty;
 
-    QRect clip;
+//     QRect clip;
 
 
     QtScreen(ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * impl_input, QPixmap * cache, int w, int h)
@@ -88,7 +88,7 @@ public:
     , _connexionLasted(false)
     , cursorHotx(0)
     , cursorHoty(0)
-    , clip(-1, -1, 0, 0)
+//     , clip(-1, -1, 0, 0)
 
     {
         this->setAttribute(Qt::WA_DeleteOnClose);
@@ -293,9 +293,6 @@ public:
     QPushButton    _buttonRefresh;
     QPushButton    _buttonDisconnexion;
 
-//     QPen                 pen;
-//     QPainter             painter;
-
     RDPQtScreen (ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * impl_input, QPixmap * cache)
         : QtScreen(front, impl_input, cache, front->info.width, front->info.height)
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
@@ -358,9 +355,9 @@ public:
         pen.setWidth(1);
         pen.setBrush(this->_penColor);
         painter.setPen(pen);
-        //painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(0, 0, this->_width, this->_height));
-        painter.drawPixmap(QPoint(this->clip.x(), this->clip.y()), *(this->_cache), this->clip/*QRect(0, 0, this->_width, this->_height)*/);
-        LOG(LOG_INFO, "x=%d, y=%d, w=%d, h=%d  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", this->clip.x(), this->clip.y(), this->clip.width(), this->clip.height());
+        painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(0, 0, this->_width, this->_height));
+        //painter.drawPixmap(QPoint(this->clip.x(), this->clip.y()), *(this->_cache), this->clip/*QRect(0, 0, this->_width, this->_height)*/);
+        //LOG(LOG_INFO, "x=%d, y=%d, w=%d, h=%d  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", this->clip.x(), this->clip.y(), this->clip.width(), this->clip.height());
         painter.end();
     }
 

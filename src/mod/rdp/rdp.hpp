@@ -379,6 +379,9 @@ protected:
 
     const bool                        session_probe_enable_crash_dump;
 
+    const uint32_t                    session_probe_handle_usage_limit;
+    const uint32_t                    session_probe_memory_usage_limit;
+
     const bool                        bogus_ios_rdpdr_virtual_channel;
 
     const bool                        enable_rdpdr_data_analysis;
@@ -976,6 +979,8 @@ public:
         , session_probe_clipboard_based_launcher_short_delay(mod_rdp_params.session_probe_clipboard_based_launcher_short_delay)
         , session_probe_allow_multiple_handshake(mod_rdp_params.session_probe_allow_multiple_handshake)
         , session_probe_enable_crash_dump(mod_rdp_params.session_probe_enable_crash_dump)
+        , session_probe_handle_usage_limit(mod_rdp_params.session_probe_handle_usage_limit)
+        , session_probe_memory_usage_limit(mod_rdp_params.session_probe_memory_usage_limit)
         , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
         , enable_rdpdr_data_analysis(mod_rdp_params.enable_rdpdr_data_analysis)
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
@@ -1839,6 +1844,11 @@ protected:
 
         session_probe_virtual_channel_params.session_probe_enable_crash_dump        =
             this->session_probe_enable_crash_dump;
+
+        session_probe_virtual_channel_params.session_probe_handle_usage_limit        =
+            this->session_probe_handle_usage_limit;
+        session_probe_virtual_channel_params.session_probe_memory_usage_limit        =
+            this->session_probe_memory_usage_limit;
 
         session_probe_virtual_channel_params.real_alternate_shell                   =
             this->real_alternate_shell.c_str();

@@ -161,7 +161,7 @@ public:
 
         , is_apple(true)
         , exe_vnc(*(this),  this->windowListCaps,  false)
-        , vnc_encodings("5,0,1,-239")
+        , vnc_encodings("5,16,0,1,-239")
     {
         if (this->impl_clipboard) {
             this->impl_clipboard->set_client(this);
@@ -471,7 +471,8 @@ public:
                                                     , this->reportMessage
                                                     , this->is_apple
                                                     , &(this->exe_vnc)
-                                                    , to_verbose_flags(0xfffffffd)
+//                                                    , to_verbose_flags(0xfffffffd)
+                                                    , to_verbose_flags(0)
                                                    )
                                         );
             }
@@ -1272,8 +1273,8 @@ public:
         }
     }
 
-    void end_update() override {
 
+    void end_update() override {
         if ((this->connected || this->is_replaying)) {
 
             if (this->impl_graphic) {

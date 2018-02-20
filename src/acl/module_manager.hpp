@@ -1365,6 +1365,9 @@ public:
 
                 mod_rdp_params.session_probe_enable_crash_dump     = this->ini.get<cfg::mod_rdp::session_probe_enable_crash_dump>();
 
+                mod_rdp_params.session_probe_handle_usage_limit    = this->ini.get<cfg::mod_rdp::session_probe_handle_usage_limit>();
+                mod_rdp_params.session_probe_memory_usage_limit    = this->ini.get<cfg::mod_rdp::session_probe_memory_usage_limit>();
+
                 mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
                 mod_rdp_params.auth_channel                        = CHANNELS::ChannelNameId(this->ini.get<cfg::mod_rdp::auth_channel>());
                 mod_rdp_params.alternate_shell                     = this->ini.get<cfg::mod_rdp::alternate_shell>().c_str();
