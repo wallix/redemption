@@ -70,6 +70,9 @@ h
 
 class mod_vnc : public InternalMod, private NotifyApi
 {
+
+    bool ongoing_framebuffer_update = false;
+        
     static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
 
     FlatVNCAuthentification challenge;
@@ -1697,9 +1700,9 @@ private:
                     this->event.set_trigger_time(1000);
                 }
             }
-            else {
-                this->update_screen(Rect(0, 0, this->width, this->height), 1);
-            }
+//            else {
+//                this->update_screen(Rect(0, 0, this->width, this->height), 1);
+//            }
             return false;
 
         case WAIT_PASSWORD:
@@ -2252,6 +2255,7 @@ private:
                     InStream stream(buf.av(sz));
                     stream.in_skip_bytes(1);
                     this->num_recs = stream.in_uint16_be();
+                    vnc.ongoing_framebuffer_update = this->num_recs != 0;
 
                     buf.advance(sz);
                     r = Result::ok(State::Encoding);
@@ -2260,6 +2264,7 @@ private:
                 case State::Encoding:
                 {
                     if (0 == this->num_recs) {
+                        vnc.ongoing_framebuffer_update = false;
                         this->state = State::Header;
                         return true;
                     }
@@ -2392,7 +2397,9 @@ private:
             return false;
         }
 
-        this->update_screen(Rect(0, 0, this->width, this->height), 1);
+        if (!this->ongoing_framebuffer_update){
+            this->update_screen(Rect(0, 0, this->width, this->height), 1);
+        }
         return true;
     } // lib_frame_buffer_update
 

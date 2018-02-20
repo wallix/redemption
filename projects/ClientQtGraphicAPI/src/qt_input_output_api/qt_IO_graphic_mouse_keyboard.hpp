@@ -370,6 +370,7 @@ public:
     }
 
     virtual void set_pointer(Pointer const & cursor) override {
+        return;
 
         QImage image_data(cursor.data, cursor.width, cursor.height, this->bpp_to_QFormat(24, false));
         QImage image_mask(cursor.mask, cursor.width, cursor.height, QImage::Format_Mono);
@@ -399,6 +400,7 @@ public:
             data[i+2] = data_data[i  ];
             data[i+3] = mask_data[i+0];
         }
+        LOG(LOG_INFO, "drawing cursor");
 
         if (this->client->is_replaying) {
             this->cursor_image = QImage(static_cast<uchar *>(data), cursor.x, cursor.y, QImage::Format_ARGB32_Premultiplied);
