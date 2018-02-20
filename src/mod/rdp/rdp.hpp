@@ -455,8 +455,6 @@ protected:
     std::string real_alternate_shell;
     std::string real_working_dir;
 
-    std::vector<SessionReactor::BasicTimerPtr> timers;
-
     // TODO BUG never pop_front(), only push_back() :/
     std::deque<std::unique_ptr<AsynchronousTask>> asynchronous_tasks;
 
@@ -592,6 +590,7 @@ protected:
 
             this->session_probe_virtual_channel =
                 std::make_unique<SessionProbeVirtualChannel>(
+                    this->session_reactor,
                     this->session_probe_to_server_sender.get(),
                     this->front,
                     *this,
@@ -775,19 +774,6 @@ protected:
 
     rdpdr::RdpDrStatus rdpdrLogStatus;
     RDPECLIP::CliprdrLogState cliprdrLogStatus;
-
-    class SessionProbeVirtualChannelEventHandler : public EventHandler::CB {
-        mod_rdp& mod_;
-
-    public:
-        SessionProbeVirtualChannelEventHandler(mod_rdp& mod)
-        : mod_(mod)
-        {}
-
-        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
-            this->mod_.process_session_probe_virtual_channel_event(now, event, drawable);
-        }
-    } session_probe_virtual_channel_event_handler;
 
     bool clean_up_32_bpp_cursor;
     bool large_pointer_support;
@@ -988,7 +974,6 @@ public:
         , cs_monitor(info.cs_monitor)
         , use_client_provided_remoteapp(mod_rdp_params.use_client_provided_remoteapp)
         , should_ignore_first_client_execute(mod_rdp_params.should_ignore_first_client_execute)
-        , session_probe_virtual_channel_event_handler(*this)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
         , client_large_pointer_caps(info.large_pointer_caps)
@@ -2029,26 +2014,7 @@ public:
         }
     }
 
-private:
-    void process_session_probe_virtual_channel_event(time_t, wait_obj& /*event*/, gdi::GraphicApi&) {
-        //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event() ...");
-        if (this->session_probe_virtual_channel_p) {
-            this->session_probe_virtual_channel_p->process_event();
-        }
-        //LOG(LOG_INFO, "mod_rdp::process_session_probe_virtual_channel_event() done.");
-    }
-
-public:
-    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
-        if (this->session_probe_virtual_channel_p) {
-            if (wait_obj* event = this->session_probe_virtual_channel_p->get_event()) {
-                out_event_handlers.emplace_back(
-                    event,
-                    &this->session_probe_virtual_channel_event_handler,
-                    INVALID_SOCKET
-                );
-            }
-        }
+    void get_event_handlers(std::vector<EventHandler>& /*out_event_handlers*/) override {
     }
 
     void send_to_mod_channel(
