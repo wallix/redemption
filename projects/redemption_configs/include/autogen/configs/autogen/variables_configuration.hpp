@@ -1342,6 +1342,19 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "*";
     };
+    /// Authentication channel used by other scripts. No default name. Keep empty to disable virtual channel. <br/>
+    /// type: char[8] <br/>
+    /// value = "" <br/>
+    struct mod_rdp::checkout_channel {
+        static constexpr bool is_sesman_to_proxy() { return 0; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "mod_rdp"; }
+        static constexpr char const * name() { return "checkout_channel"; }
+        using type = char[8];
+        using sesman_and_spec_type = ::configs::spec_types::fixed_string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "";
+    };
     /// AUTHID_MOD_RDP_ALTERNATE_SHELL <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
@@ -4506,6 +4519,7 @@ struct mod_rdp
 , cfg::mod_rdp::proxy_managed_drives
 , cfg::mod_rdp::ignore_auth_channel
 , cfg::mod_rdp::auth_channel
+, cfg::mod_rdp::checkout_channel
 , cfg::mod_rdp::alternate_shell
 , cfg::mod_rdp::shell_arguments
 , cfg::mod_rdp::shell_working_directory
