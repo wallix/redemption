@@ -60,8 +60,7 @@ public:
         assert((index >= 0) && (index < MAX_POINTER_COUNT));
         this->Pointers[index].x = cursor.x;
         this->Pointers[index].y = cursor.y;
-        this->Pointers[index].width = cursor.width;
-        this->Pointers[index].height = cursor.height;
+        this->Pointers[index].set_dimensions(cursor.get_dimensions());
 //        this->Pointers[index].bpp = cursor.bpp;
         memcpy(this->Pointers[index].data, cursor.data, cursor.data_size());
         memcpy(this->Pointers[index].mask, cursor.mask, cursor.mask_size());
@@ -73,6 +72,9 @@ public:
     /* check if the pointer is in the cache or not and if it should be sent      */
     int add_pointer(const Pointer & cursor, int & cache_idx)
     {
+        auto dimensions = cursor.get_dimensions();
+
+
         int i;
         int oldest = 0x7fffffff;
         int index = 0;
@@ -80,10 +82,12 @@ public:
         this->pointer_stamp++;
         /* look for match */
         for (i = 0; i < this->pointer_cache_entries; i++) {
+            auto dimensions_i = this->Pointers[i].get_dimensions();
+        
             if (this->Pointers[i].x == cursor.x
             &&  this->Pointers[i].y == cursor.y
-            &&  this->Pointers[i].width == cursor.width
-            &&  this->Pointers[i].height == cursor.height
+            &&  dimensions_i.width == dimensions.width
+            &&  dimensions_i.height == dimensions.height
 //            &&  this->Pointers[i].bpp == cursor.bpp
             &&  (memcmp(this->Pointers[i].data, cursor.data, cursor.data_size()) == 0)
             &&  (memcmp(this->Pointers[i].mask, cursor.mask, cursor.mask_size()) == 0)) {

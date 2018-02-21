@@ -730,8 +730,9 @@ void FileToGraphic::interpret_order()
             this->statistics.CachePointer.count++;
             auto * const p = this->stream.get_current();
             Pointer cursor(Pointer::POINTER_NULL);
-            cursor.width = 32;
-            cursor.height = 32;
+            
+            Pointer::CursorSize dimensions(32, 32);
+            cursor.set_dimensions(dimensions);
             cursor.x = this->stream.in_uint8();
             cursor.y = this->stream.in_uint8();
             stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
@@ -749,8 +750,7 @@ void FileToGraphic::interpret_order()
             auto * const p = this->stream.get_current();
             Pointer & pi = this->ptr_cache.Pointers[cache_idx];
             Pointer cursor(Pointer::POINTER_NULL);
-            cursor.width = pi.width;
-            cursor.height = pi.height;
+            cursor.set_dimensions(pi.get_dimensions());
             cursor.x = pi.x;
             cursor.y = pi.y;
             memcpy(cursor.data, pi.data, sizeof(pi.data));
@@ -780,8 +780,10 @@ void FileToGraphic::interpret_order()
 
         Pointer cursor(Pointer::POINTER_NULL);
 
-        cursor.width    = this->stream.in_uint8();
-        cursor.height   = this->stream.in_uint8();
+        uint8_t width    = this->stream.in_uint8();
+        uint8_t height   = this->stream.in_uint8();
+        Pointer::CursorSize dimensions(width, height);
+        cursor.set_dimensions(dimensions);
         /* cursor.bpp   = this->stream.in_uint8();*/
         this->stream.in_skip_bytes(1);
 

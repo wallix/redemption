@@ -55,10 +55,22 @@ public:
         , MASK_SIZE = MAX_WIDTH * MAX_HEIGHT * 1 / 8
     };
 
+   
+
+public:
+    struct CursorSize {
+        unsigned width;
+        unsigned height;
+        CursorSize(int w, int h) : width(w), height(h) {}
+        CursorSize(const CursorSize & cs) : width(cs.width), height(cs.height) {}
+    };
+
 private:
 //    unsigned bpp;
-    unsigned width;
-    unsigned height;
+    
+    CursorSize dimensions;
+    
+public:
     uint8_t  pointer_type;
 
     /* hotspot */
@@ -71,17 +83,29 @@ private:
 
     bool only_black_white = false;
 
+    CursorSize get_dimensions() const
+    {
+        return this->dimensions;
+    }
+
+    void set_dimensions(const CursorSize & dimensions)
+    {
+        this->dimensions = dimensions;
+    }
+
+
 public:
     explicit Pointer(uint8_t pointer_type = POINTER_NULL)
-    : pointer_type(pointer_type)
+    :   dimensions{0, 0}
+    ,   pointer_type(pointer_type)
     {
         switch (pointer_type) {
             default:
             case POINTER_NULL:
                 {
 //                    this->bpp              = 24;
-                    this->width            = 32;
-                    this->height           = 32;
+                    this->dimensions.width            = 32;
+                    this->dimensions.height           = 32;
                     this->x                = 0;
                     this->y                = 0;
                     this->only_black_white = true;
@@ -93,8 +117,8 @@ public:
             case POINTER_NORMAL:
                 {
 //                    this->bpp              = 24;
-                    this->width            = 32;
-                    this->height           = 32;
+                    this->dimensions.width            = 32;
+                    this->dimensions.height           = 32;
                     this->x                = 0; /* hotspot */
                     this->y                = 0;
                     this->only_black_white = true;
@@ -133,7 +157,7 @@ public:
                         /* 0ba0 */ "X..............................."
                         ;
                     uint8_t * tmp = this->data;
-                    for (size_t i = 0 ; i < this->width * this->height ; i++) {
+                    for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
                         uint8_t v = (data_cursor0[i] == 'X') ? 0xFF : 0;
                         tmp[0] = tmp[1] = tmp[2] = v;
                         tmp += 3;
@@ -173,15 +197,15 @@ public:
                         /* 0078 */ "\x3f\xff\xff\xff"
                                    "\x7f\xff\xff\xff"
                         ;
-                    ::memcpy(this->mask, mask_cursor0, this->width * this->height / 8);
+                    ::memcpy(this->mask, mask_cursor0, this->dimensions.width * this->dimensions.height / 8);
                 }
                 break;  // case POINTER_NORMAL:
 
             case POINTER_EDIT:
                 {
 //                    this->bpp                = 24;
-                    this->width              = 32;
-                    this->height             = 32;
+                    this->dimensions.width              = 32;
+                    this->dimensions.height             = 32;
                     this->x                  = 15; /* hotspot */
                     this->y                  = 16;
                     this->only_black_white = true;
@@ -220,7 +244,7 @@ public:
                         /* 0ba0 */ "................................"
                         ;
                     uint8_t * tmp = this->data;
-                    for (size_t i = 0 ; i < this->width * this->height ; i++) {
+                    for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
                         uint8_t v = (data_cursor1[i] == 'X') ? 0xFF : 0;
                         tmp[0] = tmp[1] = tmp[2] = v;
                         tmp += 3;
@@ -259,15 +283,15 @@ public:
                         /* 0078 */ "\xff\xff\xff\xff"
                                    "\xff\xff\xff\xff"
                         ;
-                    ::memcpy(this->mask, mask_cursor1, this->width * this->height / 8);
+                    ::memcpy(this->mask, mask_cursor1, this->dimensions.width * this->dimensions.height / 8);
                 }
                 break;  // case POINTER_EDIT:
 
             case POINTER_DRAWABLE_DEFAULT:
                 {
 //                    this->bpp              = 24;
-                    this->width            = 32;
-                    this->height           = 32;
+                    this->dimensions.width            = 32;
+                    this->dimensions.height           = 32;
                     this->x                = 0; /* hotspot */
                     this->y                = 0;
                     this->only_black_white = true;
@@ -306,7 +330,7 @@ public:
                         /* 0ba0 */ "X..............................."
                         ;
                     uint8_t * tmp = this->data;
-                    for (size_t i = 0 ; i < this->width * this->height ; i++) {
+                    for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
                         uint8_t v = (data_cursor2[i] == 'X') ? 0 : 0xFF;
                         tmp[0] = tmp[1] = tmp[2] = v;
                         tmp += 3;
@@ -346,15 +370,15 @@ public:
                         /* 0078 */ "\x3f\xff\xff\xff"
                                    "\x7f\xff\xff\xff"
                         ;
-                    ::memcpy(this->mask, mask_cursor2, this->width * this->height / 8);
+                    ::memcpy(this->mask, mask_cursor2, this->dimensions.width * this->dimensions.height / 8);
                 }
                 break;  // case POINTER_DRAWABLE_DEFAULT:
 
             case POINTER_SYSTEM_DEFAULT:
                 {
 //                    this->bpp              = 24;
-                    this->width            = 32;
-                    this->height           = 32;
+                    this->dimensions.width = 32;
+                    this->dimensions.height           = 32;
                     this->x                = 10; /* hotspot */
                     this->y                = 10;
                     this->only_black_white = true;
@@ -393,7 +417,7 @@ public:
                         /* 0ba0 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
                         ;
                     uint8_t * tmp = this->data;
-                    for (size_t i = 0 ; i < this->width * this->height ; i++) {
+                    for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
                         uint8_t v = (data_cursor3[i] == 'X') ? 0 : 0xFF;
                         tmp[0] = tmp[1] = tmp[2] = v;
                         tmp += 3;
@@ -433,15 +457,15 @@ public:
                         /* 0078 */ "\xff\xff\xff\xff"
                                    "\xff\xff\xff\xff"
                         ;
-                    ::memcpy(this->mask, mask_cursor3, this->width * this->height / 8);
+                    ::memcpy(this->mask, mask_cursor3, this->dimensions.width * this->dimensions.height / 8);
                 }
                 break;  // case POINTER_SYSTEM_DEFAULT:
 
             case POINTER_SIZENS:
                 {
 //                    this->bpp              = 24;
-                    this->width            = 32;
-                    this->height           = 32;
+                    this->dimensions.width = 32;
+                    this->dimensions.height           = 32;
                     this->x                = 10; /* hotspot */
                     this->y                = 10;
                     this->only_black_white = true;
@@ -480,7 +504,7 @@ public:
                         /* 0ba0 */ "..........X....................."
                         ;
                     uint8_t * tmp = this->data;
-                    for (size_t i = 0 ; i < this->width * this->height ; i++) {
+                    for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
                         uint8_t v = (data_cursor4[i] == 'X') ? 0xFF : 0;
                         tmp[0] = tmp[1] = tmp[2] = v;
                         tmp += 3;
@@ -520,15 +544,15 @@ public:
                         /* 0078 */ "\xff\x8f\xff\xff"
                                    "\xff\xdf\xff\xff"
                         ;
-                    ::memcpy(this->mask, mask_cursor4, this->width * this->height / 8);
+                    ::memcpy(this->mask, mask_cursor4, this->dimensions.width * this->dimensions.height / 8);
                 }
                 break;  // case POINTER_SIZENS:
 
             case POINTER_SIZENESW:
                 {
 //                    this->bpp              = 24;
-                    this->width            = 32;
-                    this->height           = 32;
+                    this->dimensions.width            = 32;
+                    this->dimensions.height           = 32;
                     this->x                = 10; /* hotspot */
                     this->y                = 10;
                     this->only_black_white = true;
@@ -567,7 +591,7 @@ public:
                         /* 0ba0 */ "................................"
                         ;
                     uint8_t * tmp = this->data;
-                    for (size_t i = 0 ; i < this->width * this->height ; i++) {
+                    for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
                         uint8_t v = (data_cursor5[i] == 'X') ? 0xFF : 0;
                         tmp[0] = tmp[1] = tmp[2] = v;
                         tmp += 3;
@@ -607,15 +631,15 @@ public:
                         /* 0078 */ "\xff\xff\xff\xff"
                                    "\xff\xff\xff\xff"
                         ;
-                    ::memcpy(this->mask, mask_cursor5, this->width * this->height / 8);
+                    ::memcpy(this->mask, mask_cursor5, this->dimensions.width * this->dimensions.height / 8);
                 }
                 break;  // case POINTER_SIZENESW:
 
             case POINTER_SIZENWSE:
                 {
 //                    this->bpp              = 24;
-                    this->width            = 32;
-                    this->height           = 32;
+                    this->dimensions.width            = 32;
+                    this->dimensions.height           = 32;
                     this->x                = 10; /* hotspot */
                     this->y                = 10;
                     this->only_black_white = true;
@@ -654,7 +678,7 @@ public:
                         /* 0ba0 */ "................................"
                         ;
                     uint8_t * tmp = this->data;
-                    for (size_t i = 0 ; i < this->width * this->height ; i++) {
+                    for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
                         uint8_t v = (data_cursor6[i] == 'X') ? 0xFF : 0;
                         tmp[0] = tmp[1] = tmp[2] = v;
                         tmp += 3;
@@ -694,15 +718,15 @@ public:
                         /* 0078 */ "\xff\xff\xff\xff"
                                    "\xff\xff\xff\xff"
                         ;
-                    ::memcpy(this->mask, mask_cursor6, this->width * this->height / 8);
+                    ::memcpy(this->mask, mask_cursor6, this->dimensions.width * this->dimensions.height / 8);
                 }
                 break;  // case POINTER_SIZENWSE:
 
             case POINTER_SIZEWE:
                 {
 //                    this->bpp              = 24;
-                    this->width            = 32;
-                    this->height           = 32;
+                    this->dimensions.width            = 32;
+                    this->dimensions.height           = 32;
                     this->x                = 10; /* hotspot */
                     this->y                = 10;
                     this->only_black_white = true;
@@ -741,7 +765,7 @@ public:
                         /* 0ba0 */ "................................"
                         ;
                     uint8_t * tmp = this->data;
-                    for (size_t i = 0 ; i < this->width * this->height ; i++) {
+                    for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
                         uint8_t v = (data_cursor7[i] == 'X') ? 0xFF : 0;
                         tmp[0] = tmp[1] = tmp[2] = v;
                         tmp += 3;
@@ -781,7 +805,7 @@ public:
                         /* 0078 */ "\xff\xff\xff\xff"
                                    "\xff\xff\xff\xff"
                         ;
-                    ::memcpy(this->mask, mask_cursor7, this->width * this->height / 8);
+                    ::memcpy(this->mask, mask_cursor7, this->dimensions.width * this->dimensions.height / 8);
                 }
                 break;  // case POINTER_SIZEWE:
         }   // switch (pointer_type)
@@ -790,8 +814,8 @@ public:
     void initialize(/*unsigned bpp, */unsigned width, unsigned height, int x, int y, uint8_t * data, size_t data_size,
         uint8_t * mask, size_t mask_size) {
 //        this->bpp    = bpp;
-        this->width  = width;
-        this->height = height;
+        this->dimensions.width  = width;
+        this->dimensions.height = height;
         this->x      = x;
         this->y      = y;
 
@@ -804,8 +828,8 @@ public:
     //bool is_same(const Pointer & other) {
     //  return (
     //         (this->bpp    == other.bpp)
-    //      && (this->width  == other.width)
-    //      && (this->height == other.height)
+    //      && (this->dimensions.width  == other.dimensions.width)
+    //      && (this->dimensions.height == other.dimensions.height)
     //      && (this->x      == other.x)
     //      && (this->y      == other.y)
     //      && (memcmp(this->data, other.data, this->data_size()) == 0)
@@ -814,39 +838,39 @@ public:
     //}
 
     unsigned data_size() const {
-        const unsigned int xor_line_length_in_byte = this->width * 3;
+        const unsigned int xor_line_length_in_byte = this->dimensions.width * 3;
         const unsigned int xor_padded_line_length_in_byte =
             ((xor_line_length_in_byte % 2) ?
              xor_line_length_in_byte + 1 :
              xor_line_length_in_byte);
 
-        return (xor_padded_line_length_in_byte * this->height);
+        return (xor_padded_line_length_in_byte * this->dimensions.height);
     }
 
     unsigned mask_size() const {
-        const unsigned int remainder = (this->width % 8);
-        const unsigned int and_line_length_in_byte = this->width / 8 + (remainder ? 1 : 0);
+        const unsigned int remainder = (this->dimensions.width % 8);
+        const unsigned int and_line_length_in_byte = this->dimensions.width / 8 + (remainder ? 1 : 0);
         const unsigned int and_padded_line_length_in_byte =
             ((and_line_length_in_byte % 2) ?
              and_line_length_in_byte + 1 :
              and_line_length_in_byte);
 
-        return (and_padded_line_length_in_byte * this->height);
+        return (and_padded_line_length_in_byte * this->dimensions.height);
     }
 
     bool is_valid() const {
-        return (this->width && this->height/* && this->bpp*/);
+        return (this->dimensions.width && this->dimensions.height/* && this->bpp*/);
     }
 
     void update_bw() {
-        const unsigned int xor_line_length_in_byte = this->width * 3;
+        const unsigned int xor_line_length_in_byte = this->dimensions.width * 3;
         const unsigned int xor_padded_line_length_in_byte =
             ((xor_line_length_in_byte % 2) ?
              xor_line_length_in_byte + 1 :
              xor_line_length_in_byte);
-        for (unsigned int h = 0; h < this->height; ++h) {
-            const uint8_t* xorMask = this->data + (this->height - h - 1) * xor_padded_line_length_in_byte;
-            for (unsigned int w = 0; w < this->width; ++w) {
+        for (unsigned int h = 0; h < this->dimensions.height; ++h) {
+            const uint8_t* xorMask = this->data + (this->dimensions.height - h - 1) * xor_padded_line_length_in_byte;
+            for (unsigned int w = 0; w < this->dimensions.width; ++w) {
                 if (((*xorMask) > 0) && ((*xorMask) < 255)) { this->only_black_white = false; return; }
                 xorMask++;
                 if (((*xorMask) > 0) && ((*xorMask) < 255)) { this->only_black_white = false; return; }

@@ -794,8 +794,8 @@ public:
         cursor.x = 3;
         cursor.y = 3;
         // cursor.bpp = 24;
-        cursor.width = 32;
-        cursor.height = 32;
+        Pointer::CursorSize dimensions(32, 32);
+        cursor.set_dimensions(dimensions);
         memset(cursor.data + 31 * (32 * 3), 0xff, 9);
         memset(cursor.data + 30 * (32 * 3), 0xff, 9);
         memset(cursor.data + 29 * (32 * 3), 0xff, 9);

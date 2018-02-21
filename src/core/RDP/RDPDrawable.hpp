@@ -921,7 +921,8 @@ public:
     void draw(const RDP::RAIL::NonMonitoredDesktop            &) override {}
 
     void set_pointer(const Pointer & cursor) override {
-        this->drawable.use_pointer(cursor.x, cursor.y, cursor.width, cursor.height, cursor.data, cursor.mask);
+        auto dimensions = cursor.get_dimensions();
+        this->drawable.use_pointer(cursor.x, cursor.y, dimensions.width, dimensions.height, cursor.data, cursor.mask);
     }
 
     void set_palette(const BGRPalette & palette) override {

@@ -656,6 +656,8 @@ protected:
 
     void GenerateColorPointerUpdateData(OutStream & stream, int cache_idx, const Pointer & cursor)
     {
+        const auto dimensions = cursor.get_dimensions();
+    
 //    cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
 //      entry in the pointer cache in which to store the pointer image. The
 //      number of cache entries is negotiated using the Pointer Capability Set
@@ -683,12 +685,12 @@ protected:
 //    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in
 //      pixels (the maximum allowed pointer width is 32 pixels).
 
-        stream.out_uint16_le(cursor.width);
+        stream.out_uint16_le(dimensions.width);
 
 //    height (2 bytes): A 16-bit, unsigned integer. The height of the pointer
 //      in pixels (the maximum allowed pointer height is 32 pixels).
 
-        stream.out_uint16_le(cursor.height);
+        stream.out_uint16_le(dimensions.height);
 
 //    lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
 //      the andMaskData field.
@@ -722,6 +724,8 @@ protected:
 
     void GenerateNewPointerUpdateData(OutStream & stream, int cache_idx, const Pointer & cursor)
     {
+        const auto dimensions = cursor.get_dimensions();
+
 //    xorBpp (2 bytes): A 16-bit, unsigned integer. The color depth in bits-per-pixel of the XOR mask
 //      contained in the colorPtrAttr field.
         stream.out_uint16_le(cursor.only_black_white ? 1 : 32);
@@ -748,33 +752,33 @@ protected:
 //    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in
 //      pixels (the maximum allowed pointer width is 32 pixels).
 
-        stream.out_uint16_le(cursor.width);
+        stream.out_uint16_le(dimensions.width);
 
 //    height (2 bytes): A 16-bit, unsigned integer. The height of the pointer
 //      in pixels (the maximum allowed pointer height is 32 pixels).
 
-        stream.out_uint16_le(cursor.height);
+        stream.out_uint16_le(dimensions.height);
 
 
-        const unsigned int remainder = (cursor.width % 8);
-        const unsigned int and_line_length_in_byte = cursor.width / 8 + (remainder ? 1 : 0);
+        const unsigned int remainder = (dimensions.width % 8);
+        const unsigned int and_line_length_in_byte = dimensions.width / 8 + (remainder ? 1 : 0);
         const unsigned int and_padded_line_length_in_byte =
             ((and_line_length_in_byte % 2) ?
              and_line_length_in_byte + 1 :
              and_line_length_in_byte);
 
-        const unsigned int xor_padded_line_length_in_byte = (cursor.only_black_white ? and_padded_line_length_in_byte : cursor.width * 4);
+        const unsigned int xor_padded_line_length_in_byte = (cursor.only_black_white ? and_padded_line_length_in_byte : dimensions.width * 4);
 
 
 //    lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
 //      the andMaskData field.
 
-        stream.out_uint16_le(and_padded_line_length_in_byte * cursor.height);
+        stream.out_uint16_le(and_padded_line_length_in_byte * dimensions.height);
 
 //    lengthXorMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
 //      the xorMaskData field.
 
-        stream.out_uint16_le(xor_padded_line_length_in_byte * cursor.height);
+        stream.out_uint16_le(xor_padded_line_length_in_byte * dimensions.height);
 
 //    xorMaskData (variable): Variable number of bytes: Contains the 24-bpp,
 //      bottom-up XOR mask scan-line data. The XOR mask is padded to a 2-byte
@@ -783,7 +787,7 @@ protected:
 //      scan-line multiplied by 3 bpp, rounded up to the next even number of
 //      bytes).
 
-        const unsigned int source_xor_line_length_in_byte = cursor.width * 3;
+        const unsigned int source_xor_line_length_in_byte = dimensions.width * 3;
         const unsigned int source_xor_padded_line_length_in_byte =
             ((source_xor_line_length_in_byte % 2) ?
              source_xor_line_length_in_byte + 1 :
@@ -792,14 +796,14 @@ protected:
         if (cursor.only_black_white) {
             uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8] = { 0 };
 
-            for (unsigned int h = 0; h < cursor.height; ++h) {
+            for (unsigned int h = 0; h < dimensions.height; ++h) {
                 const uint8_t * psource = cursor.data
-                    + (cursor.height - h - 1) * source_xor_padded_line_length_in_byte;
+                    + (dimensions.height - h - 1) * source_xor_padded_line_length_in_byte;
                 uint8_t * pdest   = xorMaskData + h * xor_padded_line_length_in_byte;
                 uint8_t xor_bit_mask_generation = 7;
                 uint8_t xor_byte = 0;
 
-                for (unsigned int w = 0; w < cursor.width; ++w) {
+                for (unsigned int w = 0; w < dimensions.width; ++w) {
                     if ((*psource) || (*(psource + 1)) || (*(psource + 2))) {
                         xor_byte |= (1 << xor_bit_mask_generation);
                     }
@@ -818,20 +822,20 @@ protected:
                 }
             }
 
-            stream.out_copy_bytes(xorMaskData, xor_padded_line_length_in_byte * cursor.height);
+            stream.out_copy_bytes(xorMaskData, xor_padded_line_length_in_byte * dimensions.height);
         }
         else {
             uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 4] = { 0 };
 
-            for (unsigned int h = 0; h < cursor.height; ++h) {
-                const uint8_t* psource = cursor.data + (cursor.height - h - 1) * source_xor_padded_line_length_in_byte;
-                      uint8_t* pdest   = xorMaskData + (cursor.height - h - 1) * xor_padded_line_length_in_byte;
+            for (unsigned int h = 0; h < dimensions.height; ++h) {
+                const uint8_t* psource = cursor.data + (dimensions.height - h - 1) * source_xor_padded_line_length_in_byte;
+                      uint8_t* pdest   = xorMaskData + (dimensions.height - h - 1) * xor_padded_line_length_in_byte;
 
-                const uint8_t* andMask = cursor.mask + (cursor.height - h - 1) * and_padded_line_length_in_byte;
+                const uint8_t* andMask = cursor.mask + (dimensions.height - h - 1) * and_padded_line_length_in_byte;
                 unsigned char and_bit_extraction_mask = 7;
 
 
-                for (unsigned int w = 0; w < cursor.width; ++w) {
+                for (unsigned int w = 0; w < dimensions.width; ++w) {
                     * pdest      = * psource;
                     *(pdest + 1) = *(psource + 1);
                     *(pdest + 2) = *(psource + 2);
@@ -855,7 +859,7 @@ protected:
                 }
             }
 
-            stream.out_copy_bytes(xorMaskData, xor_padded_line_length_in_byte * cursor.height);
+            stream.out_copy_bytes(xorMaskData, xor_padded_line_length_in_byte * dimensions.height);
         }
 
 //    andMaskData (variable): Variable number of bytes: Contains the 1-bpp,
@@ -868,14 +872,14 @@ protected:
         if (cursor.only_black_white) {
             uint8_t andMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8] = { 0 };
 
-            for (unsigned int h = 0; h < cursor.height; ++h) {
-                const uint8_t* psource = cursor.mask + (cursor.height - h - 1) * and_padded_line_length_in_byte;
+            for (unsigned int h = 0; h < dimensions.height; ++h) {
+                const uint8_t* psource = cursor.mask + (dimensions.height - h - 1) * and_padded_line_length_in_byte;
                       uint8_t* pdest   = andMaskData + h * and_padded_line_length_in_byte;
 
                 memcpy(pdest, psource, and_padded_line_length_in_byte);
             }
 
-            stream.out_copy_bytes(andMaskData, and_padded_line_length_in_byte * cursor.height); /* mask */
+            stream.out_copy_bytes(andMaskData, and_padded_line_length_in_byte * dimensions.height); /* mask */
         }
         else {
             stream.out_copy_bytes(cursor.mask, cursor.mask_size()); /* mask */

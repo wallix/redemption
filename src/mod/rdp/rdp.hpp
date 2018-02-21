@@ -6808,9 +6808,9 @@ public:
         memset(&cursor, 0, sizeof(Pointer));
         cursor.x      = stream.in_uint16_le();
         cursor.y      = stream.in_uint16_le();
-        cursor.width  = stream.in_uint16_le();
-        cursor.height = stream.in_uint16_le();
-
+        uint16_t width = stream.in_uint16_le();
+        uint16_t height = stream.in_uint16_le();
+        cursor.set_dimensions(Pointer::CursorSize(width, height));
         unsigned mlen = stream.in_uint16_le(); /* mask length */
         unsigned dlen = stream.in_uint16_le(); /* data length */
 
@@ -7147,34 +7147,34 @@ public:
         memset(&cursor, 0, sizeof(Pointer));
         cursor.x                = stream.in_uint16_le();
         cursor.y                = stream.in_uint16_le();
-        cursor.width            = stream.in_uint16_le();
-        cursor.height           = stream.in_uint16_le();
+        uint16_t width            = stream.in_uint16_le(); 
+        uint16_t height            = stream.in_uint16_le(); 
+        Pointer::CursorSize dimensions(width, height);
+        cursor.set_dimensions(dimensions);
         cursor.only_black_white = (data_bpp == 1);
 
         uint16_t mlen = stream.in_uint16_le(); /* mask length */
         uint16_t dlen = stream.in_uint16_le(); /* data length */
 
-        if (cursor.width > Pointer::MAX_WIDTH){
-            LOG(LOG_ERR, "mod_rdp::process_new_pointer_pdu pointer width overflow (%u)", cursor.width);
+        if (width > Pointer::MAX_WIDTH){
+            LOG(LOG_ERR, "mod_rdp::process_new_pointer_pdu pointer width overflow (%u)", width);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
-        if (cursor.height > Pointer::MAX_HEIGHT){
-            LOG(LOG_ERR, "mod_rdp::process_new_pointer_pdu pointer height overflow (%u)", cursor.height);
+        if (height > Pointer::MAX_HEIGHT){
+            LOG(LOG_ERR, "mod_rdp::process_new_pointer_pdu pointer height overflow (%u)", height);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
 
         //LOG(LOG_INFO,
         //    "mod_rdp::process_new_pointer_pdu width=%u height=%u",
-        //    cursor.width, cursor.height);
+        //    width, height);
 
-        if (static_cast<unsigned>(cursor.x) >= cursor.width){
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot x out of pointer (%d >= %u)", cursor.x, cursor.width);
-            cursor.x = 0;
+        if (static_cast<unsigned>(cursor.x) >= width){
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot x out of pointer (%d >= %u)", cursor.x, width);
         }
 
-        if (static_cast<unsigned>(cursor.y) >= cursor.height){
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot y out of pointer (%d >= %u)", cursor.y, cursor.height);
-            cursor.y = 0;
+        if (static_cast<unsigned>(cursor.y) >= height){
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot y out of pointer (%d >= %u)", cursor.y, height);
         }
 
         if (!stream.in_check_rem(dlen)){
@@ -7204,36 +7204,36 @@ public:
             }
 
             // TODO move that into cursor
-            this->to_regular_pointer(data_data, dlen, cursor.width, cursor.height, 1, cursor.data);
-            this->to_regular_mask(mask_data, mlen, cursor.width, cursor.height, 1, cursor.mask);
+            this->to_regular_pointer(data_data, dlen, width, height, 1, cursor.data);
+            this->to_regular_mask(mask_data, mlen, width, height, 1, cursor.mask);
         }
         else {
             // TODO move that into cursor
-            this->to_regular_pointer(stream.get_current(), dlen, cursor.width, cursor.height, data_bpp, cursor.data);
+            this->to_regular_pointer(stream.get_current(), dlen, width, height, data_bpp, cursor.data);
             stream.in_skip_bytes(dlen);
-            this->to_regular_mask(stream.get_current(), mlen, cursor.width, cursor.height, data_bpp, cursor.mask);
+            this->to_regular_mask(stream.get_current(), mlen, width, height, data_bpp, cursor.mask);
             stream.in_skip_bytes(mlen);
         }
 
         if ((data_bpp == 32) && this->clean_up_32_bpp_cursor) {
-            const unsigned int xor_line_length_in_byte = cursor.width * 3;
+            const unsigned int xor_line_length_in_byte = width * 3;
             const unsigned int xor_padded_line_length_in_byte =
                 ((xor_line_length_in_byte % 2) ?
                  xor_line_length_in_byte + 1 :
                  xor_line_length_in_byte);
-            const unsigned int remainder = (cursor.width % 8);
-            const unsigned int and_line_length_in_byte = cursor.width / 8 + (remainder ? 1 : 0);
+            const unsigned int remainder = (width % 8);
+            const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
             const unsigned int and_padded_line_length_in_byte =
                 ((and_line_length_in_byte % 2) ?
                  and_line_length_in_byte + 1 :
                  and_line_length_in_byte);
-            for (unsigned int i0 = 0; i0 < cursor.height; ++i0) {
-                uint8_t* xorMask = const_cast<uint8_t*>(cursor.data) + (cursor.height - i0 - 1) * xor_padded_line_length_in_byte;
+            for (unsigned int i0 = 0; i0 < height; ++i0) {
+                uint8_t* xorMask = const_cast<uint8_t*>(cursor.data) + (height - i0 - 1) * xor_padded_line_length_in_byte;
 
-                const uint8_t* andMask = cursor.mask + (cursor.height - i0 - 1) * and_padded_line_length_in_byte;
+                const uint8_t* andMask = cursor.mask + (height - i0 - 1) * and_padded_line_length_in_byte;
                 unsigned char and_bit_extraction_mask = 7;
 
-                for (unsigned int i1 = 0; i1 < cursor.width; ++i1) {
+                for (unsigned int i1 = 0; i1 < width; ++i1) {
                     if ((*andMask) & (1 << and_bit_extraction_mask)) {
                         *xorMask         = 0;
                         *(xorMask + 1)   = 0;

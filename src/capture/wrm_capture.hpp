@@ -465,7 +465,8 @@ public:
 
 protected:
     void send_pointer(int cache_idx, const Pointer & cursor) override {
-        if ((cursor.width != 32) || (cursor.height != 32)) {
+        auto const dimensions = cursor.get_dimensions();
+        if ((dimensions.width != 32) || (dimensions.height != 32)) {
             this->send_pointer2(cache_idx, cursor);
             return;
         }
@@ -493,6 +494,8 @@ protected:
     }
 
     void send_pointer2(int cache_idx, const Pointer & cursor) {
+        auto const dimensions = cursor.get_dimensions();
+
         size_t size =   2                   // mouse x
                       + 2                   // mouse y
                       + 1                   // cache index
@@ -517,8 +520,8 @@ protected:
         payload.out_uint16_le(this->mouse_y);
         payload.out_uint8(cache_idx);
 
-        payload.out_uint8(cursor.width);
-        payload.out_uint8(cursor.height);
+        payload.out_uint8(dimensions.width);
+        payload.out_uint8(dimensions.height);
         payload.out_uint8(24);
 
         payload.out_uint8(cursor.x);

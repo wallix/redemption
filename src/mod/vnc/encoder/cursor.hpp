@@ -121,8 +121,8 @@ namespace VNC {
                 cursor.x = x;
                 cursor.y = y;
                 // cursor.bpp = 24;
-                cursor.width = 32;
-                cursor.height = 32;
+                Pointer::CursorSize dimensions(32, 32);
+                cursor.set_dimensions(dimensions);
                 // a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead
                 if (this->cx == 0 || this->cy == 0) {
                     buf.advance(sz_pixel_array + sz_bitmask);
