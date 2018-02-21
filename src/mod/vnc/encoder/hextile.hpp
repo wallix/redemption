@@ -209,7 +209,7 @@ namespace VNC {
 
                     const size_t header_bytes = type_bytes + any_subrect_bytes + hextile_bg_bytes + hextile_fg_bytes;
                     if (buf.remaining() < header_bytes){
-                        LOG(LOG_INFO, "Hextile::hexTileraw need more data %zu (has %zu)", header_bytes, buf.remaining());
+                        LOG(LOG_INFO, "Hextile::hexTileraw need more data %zu (has %hu)", header_bytes, buf.remaining());
                         return EncoderState::NeedMoreData;
                     }
 
