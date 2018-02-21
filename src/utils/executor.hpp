@@ -1204,7 +1204,9 @@ struct UniquePtrEventWithUPtr
     template<class InheritEvent>
     UniquePtrEventWithUPtr& operator=(UniquePtrEventWithUPtr<InheritEvent>&& other) noexcept
     {
-        this->p = std::move(detail::UniquePtrEventWithUPtrAccess::p(other));
+        // don't use this->p = std:move(detail::UniquePtrEventWithUPtrAccess::p(other))
+        // because a temporay unique_ptr is created and uptr_in_event become invalid
+        this->p.reset(detail::UniquePtrEventWithUPtrAccess::p(other).release());
         this->uptr_in_event = reinterpret_cast<UniquePtr**>(
             detail::UniquePtrEventWithUPtrAccess::uptr_in_event(other));
         *this->uptr_in_event = &p;
@@ -1214,6 +1216,11 @@ struct UniquePtrEventWithUPtr
     explicit operator bool () const noexcept
     {
         return bool(this->p);
+    }
+
+    Event* get() const noexcept
+    {
+        return this->p.get();
     }
 
     Event* operator->() const noexcept
@@ -1251,9 +1258,11 @@ new_event(Args&&... args)
     auto* p = new("") NewEvent(static_cast<Args&&>(args)...);
     p->deleter = [](auto* base) noexcept {
         auto* e = static_cast<NewEvent*>(base);
-        e->deleter = [](auto*) noexcept {};
+# ifndef NDEBUG
+        e->deleter = [](auto*) noexcept { assert(!"already delete"); };
+# endif
         // jln::make_lambda<DeleteEvent>()(ctx...);
-        assert(e->uptr->get() == base);
+        assert(e->uptr->get() == nullptr || e->uptr->get() == base);
         e->uptr->release();
         delete e;
     };
