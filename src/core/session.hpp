@@ -209,6 +209,12 @@ public:
                     }
                 }
 
+                for (auto& top_fd : session_reactor.fd_events_.elements) {
+                    LOG(LOG_DEBUG, "set fd: %d", top_fd->fd);
+                    io_fd_set(top_fd->fd, rfds);
+                    max = std::max(max, unsigned(top_fd->fd));
+                }
+
                 int num = select(max + 1, &rfds, nullptr/*&wfds*/, nullptr, &timeout);
 
                 if (num < 0) {
@@ -235,6 +241,21 @@ public:
                     session_reactor.timer_events_.exec(end_tv);
                 }
                 // session_reactor.timer_events_.info(end_tv);
+
+                {
+                    auto& c = session_reactor.fd_events_.elements;
+                    for (std::size_t i = 0; i < c.size(); ){
+                        LOG(LOG_DEBUG, "is set fd: %d %d", c[i]->fd, io_fd_isset(c[i]->fd, rfds));
+                        if (io_fd_isset(c[i]->fd, rfds) && !c[i]->exec()) {
+                            LOG(LOG_DEBUG, "delete fd: %d", c[i]->fd);
+                            session_reactor.timer_events_.detach(*c[i]);
+                            c.erase(c.begin() + i);
+                        }
+                        else {
+                            ++i;
+                        }
+                    }
+                }
 
                 if (session_reactor.front_events().size() || sck_is_set(front_trans, rfds)) {
                     try {

@@ -495,7 +495,7 @@ protected:
 
 public:
     void give_additional_launch_time() {
-        if (!this->session_probe_ready) {
+        if (!this->session_probe_ready && this->session_probe_timer) {
             this->session_probe_timer->set_time(this->session_probe_effective_launch_timeout);
 
             if (bool(this->verbose & RDPVerbose::sesprobe)) {

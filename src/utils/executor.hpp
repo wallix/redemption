@@ -106,6 +106,23 @@ namespace detail
         return e.x;
     }
 
+    template<std::size_t i, class T>
+    T&& get(tuple_elem<i, T>&& e) noexcept
+    {
+        return static_cast<T&&>(e.x);
+    }
+
+    template<std::size_t i, class T>
+    T const& get(tuple_elem<i, T> const& e) noexcept
+    {
+        return e.x;
+    }
+
+    template<class T> struct tuple_size;
+    template<class... Ts> struct tuple_size<tuple<Ts...>>
+    : std::integral_constant<std::size_t, sizeof...(Ts)>
+    {};
+
     template<class T> struct decay_and_strip { using type = T; };
     template<class T> struct decay_and_strip<T&> : decay_and_strip<T>{};
     template<class T> struct decay_and_strip<T const> : decay_and_strip<T>{};
@@ -785,6 +802,7 @@ struct REDEMPTION_CXX_NODISCARD Executor2TimeoutContext : Executor2ActionContext
     Executor2TimeoutContext set_timeout(std::chrono::milliseconds ms) noexcept
     {
         auto& executor = static_cast<Executor&>(this->executor);
+        // TODO update_timeout
         executor.set_timeout(ms);
         return *this;
     }
@@ -857,7 +875,7 @@ struct REDEMPTION_CXX_NODISCARD Executor2FdTimeoutContext : BasicContext<Event>
 
     Executor2FdTimeoutContext set_timeout(std::chrono::milliseconds ms) noexcept
     {
-        this->event.set_timeout(ms);
+        this->event.update_timeout(ms);
         return *this;
     }
 };
@@ -1039,8 +1057,8 @@ private:
 template<class F, class T, template<class...> class Ctx>
 auto wrap_fn()
 {
-    return [](auto& executor, auto... prefix_args) {
-        auto& self = static_cast<T&>(executor);
+    return [](auto& e, auto... prefix_args) {
+        auto& self = static_cast<T&>(e);
         // TODO ExecutorExitContext
         return self.ctx.invoke(
             make_lambda<F>(),
@@ -1048,6 +1066,8 @@ auto wrap_fn()
             static_cast<decltype(prefix_args)&&>(prefix_args)...);
     };
 }
+
+class propagate_to_base_t {};
 
 template<
     class Inherit,
@@ -1071,7 +1091,29 @@ struct BasicEvent : BaseType
     template<class Cont, class... Args>
     BasicEvent(Cont&& event_container, Args&&... args)
       : ctx{static_cast<Args&&>(args)...}
-      , event_container(static_cast<Cont&&>(event_container))
+      , event_container{static_cast<Cont&&>(event_container)}
+    {}
+    REDEMPTION_DIAGNOSTIC_POP
+
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
+    template<class Tuple, class Cont, class... Args>
+    BasicEvent(propagate_to_base_t, Tuple&& tuple, Cont&& event_container, Args&&... args)
+    : BasicEvent(
+        std::make_index_sequence<detail::tuple_size<std::remove_reference_t<Tuple>>::value>(),
+        static_cast<Tuple&&>(tuple),
+        static_cast<Cont&&>(event_container),
+        static_cast<Args&&>(args)...)
+    {}
+    REDEMPTION_DIAGNOSTIC_POP
+
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
+    template<std::size_t... ints, class Tuple, class Cont, class... Args>
+    BasicEvent(std::integer_sequence<size_t, ints...>, Tuple&& tuple, Cont&& event_container, Args&&... args)
+      : BaseType{detail::get<ints>(static_cast<Tuple&&>(tuple))...}
+      , ctx{static_cast<Args&&>(args)...}
+      , event_container{static_cast<Cont&&>(event_container)}
     {}
     REDEMPTION_DIAGNOSTIC_POP
 

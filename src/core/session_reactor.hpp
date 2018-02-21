@@ -229,64 +229,120 @@ struct SessionReactor
 
     using BasicFd = jln::BasicExecutorImpl<PrefixArgs>;
 
-    struct TopFd : BasicFd
+    struct TopFd : BasicTimer, BasicFd
     {
+        using prefix_args = typename BasicFd::prefix_args;
+
+        static_assert(std::is_same<
+            typename BasicFd::prefix_args,
+            typename BasicTimer::prefix_args
+        >::value);
+
+        using BasicFd::delete_self;
+        using BasicFd::deleter;
+        using BasicFd::on_action;
+
+        BasicTimer& timer() noexcept { return *this; }
+
         void set_timeout(std::chrono::milliseconds ms) noexcept
         {
-            this->timeout.set_time(ms);
+            this->timeout = ms;
+            this->set_time(ms);
         }
 
-        void set_timeout(timeval const& tv) noexcept
+        void update_timeout(std::chrono::milliseconds ms) noexcept
         {
-            this->timeout.set_time(tv);
+            this->timeout = ms;
+            this->set_time(ms);
         }
 
-        using OnTimerPtrFunc = jln::MakeFuncPtr<TopFd&, PrefixArgs>;
-        OnTimerPtrFunc on_timeout = jln::default_action_function();
+        void restart_timeout()
+        {
+            this->set_time(this->timeout);
+        }
 
-        // TODO do no attached
-        BasicTimer timeout;
         int fd;
+        std::chrono::milliseconds timeout;
     };
 
-    template<class EventContainer, class PrefixArgs_, class... Ts>
-    struct FdImpl : jln::BasicEvent<
-        FdImpl<EventContainer, PrefixArgs_, Ts...>,
-        EventContainer,
-        TopFd,
-        jln::Executor2FdContext,
-        Ts...>
+    template<class PrefixArgs_, class... Ts>
+    struct FdImpl : TopFd
     {
+        using base_type = TopFd;
+
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
         template<class... Args>
-        FdImpl(int fd, Args&&... args)
-        : FdImpl::basic_event(static_cast<Args&&>(args)...)
+        FdImpl(int fd, SessionReactor& session_reactor, Args&&... args)
+        : ctx{static_cast<Args&&>(args)...}
+        , session_reactor(session_reactor)
         {
             this->fd = fd;
+            this->session_reactor.timer_events_.attach(this->timer());
+        }
+        REDEMPTION_DIAGNOSTIC_POP
+
+        ~FdImpl()
+        {
+            this->session_reactor.timer_events_.detach(this->timer());
+            this->detach();
+        }
+
+        void detach() noexcept
+        {
+            this->session_reactor.fd_events_.detach(*this);
+        }
+
+        void attach() noexcept
+        {
+            this->session_reactor.fd_events_.attach(*this);
+        }
+
+        template<class F>
+        void set_on_action(F) noexcept
+        {
+            this->on_action = wrap_fn<F, jln::Executor2FdContext>();
         }
 
         template<class F>
         void set_on_exit(F) noexcept
         {
-            this->on_exit = jln::wrap_fn<F, FdImpl, jln::Executor2FdContext>();
+            this->on_exit = wrap_fn<F, jln::Executor2FdContext>();
         }
 
         template<class F>
         void set_on_timeout(F) noexcept
         {
-            this->on_timeout = jln::wrap_fn<F, FdImpl, jln::Executor2FdTimeoutContext>();
+            this->timer().on_action = wrap_fn<F, jln::Executor2FdTimeoutContext>();
         }
+
+    private:
+        template<class F, template<class...> class Ctx>
+        static auto wrap_fn() noexcept
+        {
+            return [](auto& e, auto... prefix_args){
+                static_cast<FdImpl&>(e).restart_timeout();
+                return jln::wrap_fn<F, FdImpl, Ctx>()(
+                    e, static_cast<decltype(prefix_args)&&>(prefix_args)...);
+            };
+        }
+
+    public:
+        jln::detail::tuple<Ts...> ctx;
+        SessionReactor& session_reactor;
+
+        void *operator new(size_t n, char const*) { return ::operator new(n); }
     };
 
-    template<class EventContainer, class PrefixArgs_, class... Args>
-    using Fd = FdImpl<EventContainer, PrefixArgs_,
-        typename jln::detail::decay_and_strip<Args>::type...>;
+    template<class PrefixArgs_, class... Args>
+    using Fd = FdImpl<PrefixArgs_, typename jln::detail::decay_and_strip<Args>::type...>;
 
     using TopFdPtr = jln::UniquePtr<TopFd>;
 
     struct TopFdContainer : Container<TopFd>
     {
         template<class... Args>
-        using Elem = Fd<TopFdContainer&, TopFd::prefix_args, Args...>;
+        using Elem = Fd<TopFd::prefix_args, Args...>;
     };
 
     template<class... Args>
@@ -294,7 +350,7 @@ struct SessionReactor
     create_fd_event(int fd, Args&&... args)
     {
         using EventFd = TopFdContainer::Elem<Args...>;
-        return {jln::new_event<EventFd>(fd, this->fd_events_, static_cast<Args&&>(args)...)};
+        return {jln::new_event<EventFd>(fd, *this, static_cast<Args&&>(args)...)};
     }
 
 

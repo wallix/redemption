@@ -391,6 +391,7 @@ public:
             "Ctrl (up)"_f       (send_scancode(value<29>, value<SlowPath::KBDFLAGS_RELEASE>)),
 
             "Enter (down)"_f    ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
+                ++self.copy_paste_loop_counter;
                 if (!self.format_data_requested) {
                     return ctx.set_time(self.short_delay).template get_sequence_at<0>()(ctx, self);
                 }
