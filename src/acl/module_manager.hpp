@@ -941,6 +941,7 @@ public:
                 this->ini.get_ref<cfg::context::auth_error_message>(),
                 this->ini.get<cfg::font>(),
                 !this->ini.get<cfg::mod_replay::on_end_of_data>(),
+                this->ini.get<cfg::mod_replay::replay_on_loop>(),
                 to_verbose_flags(this->ini.get<cfg::debug::capture>())
             ));
             if (bool(this->verbose & Verbose::new_mod)) {
@@ -1369,6 +1370,9 @@ public:
                                                                    = this->ini.get<cfg::mod_rdp::session_probe_allow_multiple_handshake>();
 
                 mod_rdp_params.session_probe_enable_crash_dump     = this->ini.get<cfg::mod_rdp::session_probe_enable_crash_dump>();
+
+                mod_rdp_params.session_probe_handle_usage_limit    = this->ini.get<cfg::mod_rdp::session_probe_handle_usage_limit>();
+                mod_rdp_params.session_probe_memory_usage_limit    = this->ini.get<cfg::mod_rdp::session_probe_memory_usage_limit>();
 
                 mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
                 mod_rdp_params.auth_channel                        = CHANNELS::ChannelNameId(this->ini.get<cfg::mod_rdp::auth_channel>());

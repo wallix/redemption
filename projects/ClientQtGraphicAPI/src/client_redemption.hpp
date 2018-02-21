@@ -21,6 +21,7 @@
 
 #pragma once
 
+
 #include "utils/log.hpp"
 
 #include "core/channel_list.hpp"
@@ -91,7 +92,6 @@ public:
     ClientInputMouseKeyboardAPI * impl_mouse_keyboard;
 
 
-
     // RDP
     ClipboardServerChannelDataSender _to_server_sender;
     ClipboardClientChannelDataSender _to_client_sender;
@@ -112,13 +112,11 @@ public:
         CHANID_RDPSND  = 1604,
         CHANID_RAIL    = 1605
     };
-
-    //  RDP Channel managers
+        //  RDP Channel managers
     ClientChannelRDPSNDManager    clientChannelRDPSNDManager;
     ClientChannelCLIPRDRManager   clientChannelCLIPRDRManager;
     ClientChannelRDPDRManager     clientChannelRDPDRManager;
     ClientChannelRemoteAppManager clientChannelRemoteAppManager;
-
 
 
     // VNC mod
@@ -126,7 +124,7 @@ public:
     Theme      theme;
     WindowListCaps windowListCaps;
     ClientExecute exe_vnc;
-
+    std::string vnc_encodings;
 
 
     // replay mod
@@ -163,6 +161,7 @@ public:
 
         , is_apple(true)
         , exe_vnc(*(this),  this->windowListCaps,  false)
+        , vnc_encodings("5,16,0,1,-239")
     {
         if (this->impl_clipboard) {
             this->impl_clipboard->set_client(this);
@@ -226,7 +225,6 @@ public:
         this->keymap.init_layout(this->info.keylayout);
     }
 
-
     const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
         return this->cl;
     }
@@ -245,7 +243,6 @@ public:
         }
     }
 
-
     bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) override {
          try {
 
@@ -260,6 +257,7 @@ public:
                                                 , begin_read
                                                 , end_read
                                                 , BALISED_FRAME
+                                                , false
                                                 //, FileToGraphic::Verbose::rdp_orders
                                                 , to_verbose_flags(0)
                                                 ));
@@ -311,7 +309,6 @@ public:
         }
     }
 
-
     virtual void  disconnect(std::string const & error, bool pipe_broken) override {
         if (this->mod != nullptr) {
             if (!pipe_broken) {
@@ -334,12 +331,11 @@ public:
         if (this->impl_graphic) {
             this->impl_graphic->set_ErrorMsg(error);
         }
+
         if (this->impl_mouse_keyboard) {
             this->impl_mouse_keyboard->init_form();
         }
     }
-
-
 
     bool init_mod()  {
 
@@ -390,9 +386,8 @@ public:
                 }
                     break;
 
-            case MOD_RDP_REMOTE_APP:
-            {
-
+                case MOD_RDP_REMOTE_APP:
+                {
                     ModRDPParams mod_rdp_params( this->user_name.c_str()
                                     , this->user_password.c_str()
                                     , this->target_IP.c_str()
@@ -423,7 +418,7 @@ public:
                     this->client_execute.enable_remote_program(true);
                     mod_rdp_params.remote_program = true;
                     mod_rdp_params.client_execute = &(this->client_execute);
-                    mod_rdp_params.remote_program_enhanced = INFO_HIDEF_RAIL_SUPPORTED;
+                    mod_rdp_params.remote_program_enhanced = INFO_HIDEF_RAIL_SUPPORTED != 0;
                     mod_rdp_params.use_client_provided_remoteapp = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
                     mod_rdp_params.use_session_probe_to_launch_remote_program = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
 
@@ -449,8 +444,8 @@ public:
                     target_info += this->ini.get<cfg::globals::primary_user_id>();
 
                     this->client_execute.set_target_info(target_info.c_str());
-            }
-                break;
+                }
+                    break;
 
             case MOD_VNC:
             {
@@ -468,7 +463,7 @@ public:
                                                     , 0
                                                     , true
                                                     , true
-                                                    , "16,0,1,-239"
+                                                    , this->vnc_encodings.c_str()
                                                     , false
                                                     , true
                                                     , mod_vnc::ClipboardEncodingType::UTF8
@@ -476,7 +471,8 @@ public:
                                                     , this->reportMessage
                                                     , this->is_apple
                                                     , &(this->exe_vnc)
-                                                    , to_verbose_flags(0xfffffffd)
+//                                                    , to_verbose_flags(0xfffffffd)
+                                                    , to_verbose_flags(0)
                                                    )
                                         );
             }
@@ -497,7 +493,7 @@ public:
          return true;
     }
 
-    void init_socket() {
+    bool init_socket() {
         unique_fd client_sck = ip_connect(this->target_IP.c_str(),
                                           this->port,
                                           3,                //nbTry
@@ -524,17 +520,19 @@ public:
                 const std::string errorMsg("Cannot connect to [" + target_IP +  "].");
                 std::string windowErrorMsg(errorMsg+" Socket error.");
                 LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
-                this->disconnect("<font color='Red'>"+windowErrorMsg+"</font>", false);
-                return;
+                this->disconnect("<font color='Red'>"+windowErrorMsg+"</font>", true);
+                return false;
             }
 
         } else {
             const std::string errorMsg("Cannot connect to [" + target_IP +  "].");
             std::string windowErrorMsg(errorMsg+" Invalid ip or port.");
             LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
-            this->disconnect("<font color='Red'>"+windowErrorMsg+"</font>", false);
-            return;
+            this->disconnect("<font color='Red'>"+windowErrorMsg+"</font>", true);
+            return false;
         }
+
+        return true;
     }
 
 
@@ -545,6 +543,8 @@ public:
     //------------------------
 
     virtual void connect() override {
+/*
+        this->mod_state = MOD_RDP_REMOTE_APP;*/
 
         this->clientChannelRemoteAppManager.clear();
         this->cl.clear_channels();
@@ -636,33 +636,34 @@ public:
             }
         }
 
-        this->init_socket();
+        if (this->init_socket()) {
 
-        this->update_keylayout();
+            this->update_keylayout();
 
-        if (this->init_mod()) {
-             this->connected = true;
+            if (this->init_mod()) {
+                this->connected = true;
 
-            if (this->impl_socket_listener) {
-                if (this->impl_socket_listener->start_to_listen(this->client_sck, this->mod)) {
+                if (this->impl_socket_listener) {
+                    if (this->impl_socket_listener->start_to_listen(this->client_sck, this->mod)) {
 
-                    if (mod_state != MOD_RDP_REMOTE_APP) {
-                        if (this->impl_graphic) {
-                            this->impl_graphic->show_screen();
+                        if (mod_state != MOD_RDP_REMOTE_APP) {
+                            if (this->impl_graphic) {
+                                this->impl_graphic->show_screen();
+                            }
                         }
-                    }
 
-                    return;
+                        return;
+                    }
                 }
             }
-        }
 
-        const std::string errorMsgfail("Error: Mod Initialization failed.");
-        std::string labelErrorMsg("<font color='Red'>"+errorMsgfail+"</font>");
-        if (this->impl_graphic) {
-            this->impl_graphic->dropScreen();
+            const std::string errorMsgfail("Error: Mod Initialization failed.");
+            std::string labelErrorMsg("<font color='Red'>"+errorMsgfail+"</font>");
+            if (this->impl_graphic) {
+                this->impl_graphic->dropScreen();
+            }
+            this->disconnect(labelErrorMsg, false);
         }
-        this->disconnect(labelErrorMsg, false);
     }
 
     void disconnexionReleased() override{
@@ -829,8 +830,6 @@ public:
         }
     }
 
-
-
     void draw(const RDP::RAIL::ActivelyMonitoredDesktop  & cmd) override {
         if (bool(this->verbose & RDPVerbose::rail_order)) {
             LOG(LOG_INFO, "RDP::RAIL::ActivelyMonitoredDesktop");
@@ -919,8 +918,9 @@ public:
                 if (this->impl_graphic) {
                     this->impl_graphic->dropScreen();
                 }
-                const std::string errorMsg("Error: Connection to [" + this->target_IP +  "] is closed. Error "+ e.errmsg());
-                LOG(LOG_INFO, "%s", errorMsg.c_str());
+                const std::string errorMsg("[" + this->target_IP +  "] lost: pipe broken");
+                const std::string errorMsgLog(errorMsg+" "+e.errmsg());
+                LOG(LOG_INFO, "%s", errorMsgLog.c_str());
                 std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
 
                 this->disconnect(labelErrorMsg, true);
@@ -1236,6 +1236,10 @@ public:
         }
     }
 
+    void draw_frame(int frame_index) override {
+        this->impl_graphic->draw_frame(frame_index);
+    }
+
 //     void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
 //
 //         if (this->is_replaying) {
@@ -1253,8 +1257,24 @@ public:
         return ResizeResult::instant_done;
     }
 
-    void end_update() override {
+    void begin_update() override {
+        if ((this->connected || this->is_replaying)) {
 
+            if (this->impl_graphic) {
+                this->impl_graphic->begin_update();
+            }
+
+            if (this->is_recording && !this->is_replaying) {
+                this->graph_capture->begin_update();
+                struct timeval time;
+                gettimeofday(&time, nullptr);
+                this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+            }
+        }
+    }
+
+
+    void end_update() override {
         if ((this->connected || this->is_replaying)) {
 
             if (this->impl_graphic) {
@@ -1292,7 +1312,7 @@ public:
 
     // sudo bin/gcc-4.9.2/release/link-static/rdpproxy -nf
 
-    //bjam -s qt=4 debug client_rdp_Qt4 && bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4
+    //bjam -s qt=4 debug client_rdp && bin/gcc-4.9.2/debug/threading-multi/client_rdp
 
     // sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' &&
 

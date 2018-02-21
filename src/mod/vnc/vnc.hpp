@@ -70,6 +70,9 @@ h
 
 class mod_vnc : public InternalMod, private NotifyApi
 {
+
+    bool ongoing_framebuffer_update = false;
+
     static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
 
     FlatVNCAuthentification challenge;
@@ -196,25 +199,15 @@ private:
     bool     clipboard_requesting_for_data_is_delayed = false;
     int      clipboard_requested_format_id            = 0;
     std::chrono::microseconds clipboard_last_client_data_timestamp = std::chrono::microseconds{};
-
     ClipboardEncodingType clipboard_server_encoding_type;
-
     bool clipboard_owned_by_client = true;
-
     VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop = VncBogusClipboardInfiniteLoop::delayed;
-
     uint32_t clipboard_general_capability_flags = 0;
-
     ReportMessageApi & report_message;
-
     time_t beginning;
-
     bool server_is_apple;
-
     int keylayout;
-
     ClientExecute* client_execute = nullptr;
-
     Zdecompressor<> zd;
 
 public:
@@ -671,6 +664,35 @@ public:
     // If the Tight Security Type is activated, the server init
     // message is extended with an interaction capabilities section.
 
+
+//    7.4.7   EnableContinuousUpdates
+
+//    This message informs the server to switch between only sending FramebufferUpdate messages as a result of a
+//    FramebufferUpdateRequest message, or sending FramebufferUpdate messages continuously.
+
+//    Note that there is currently no way to determine if the server supports this message except for using the
+//       Tight Security Type authentication.
+
+//    No. of bytes       Type     [Value]     Description
+//            1           U8       150       message-type
+//            1           U8                 enable-flag
+//            2           U16                x-position
+//            2           U16                y-position
+//            2           U16                width
+//            2           U16                height
+
+//    If enable-flag is non-zero, then the server can start sending FramebufferUpdate messages as needed for the area
+// specified by x-position, y-position, width, and height. If continuous updates are already active, then they must
+// remain active active and the coordinates must be replaced with the last message seen.
+
+//    If enable-flag is zero, then the server must only send FramebufferUpdate messages as a result of receiving
+// FramebufferUpdateRequest messages. The server must also immediately send out a EndOfContinuousUpdates message.
+// This message must be sent out even if continuous updates were already disabled.
+
+//    The server must ignore all incremental update requests (FramebufferUpdateRequest with incremental set to
+// non-zero) as long as continuous updates are active. Non-incremental update requests must however be honored,
+// even if the area in such a request does not overlap the area specified for continuous updates.
+
     class ServerInitCtx
     {
         enum class State
@@ -766,7 +788,7 @@ public:
         if (bool(this->verbose & VNCVerbose::connection)) {
             LOG(LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
         }
-        
+
         // set almost null cursor, this is the little dot cursor
         Pointer cursor;
         cursor.x = 3;
@@ -778,10 +800,10 @@ public:
         memset(cursor.data + 30 * (32 * 3), 0xff, 9);
         memset(cursor.data + 29 * (32 * 3), 0xff, 9);
         memset(cursor.mask, 0xff, 32 * (32 / 8));
-        
+
         cursor.update_bw();
 
-//        this->front.set_pointer(cursor);
+        this->front.set_pointer(cursor);
 
         this->report_message.log5("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"");
 
@@ -794,7 +816,7 @@ public:
 
         this->state = UP_AND_RUNNING;
         this->front.can_be_start_capture();
-        this->update_screen(screen_rect);
+        this->update_screen(screen_rect, 1);
         this->lib_open_clip_channel();
 
         this->event.reset_trigger_time();
@@ -1394,6 +1416,57 @@ protected:
         XCURSOR_PSEUDO_ENCODING      = -240,
     };
 
+    // VNC Client to Server Messages
+    enum VNC_client_to_server_messages {
+        VNC_CS_MSG_SET_PIXEL_FORMAT              = 0,
+        VNC_CS_MSG_SET_ENCODINGS                 = 2,
+        VNC_CS_MSG_FRAME_BUFFER_UPDATE_REQUEST   = 3,
+        VNC_CS_MSG_KEY_EVENT                     = 4,
+        VNC_CS_MSG_POINTER_EVENT                 = 5,
+        VNC_CS_MSG_CLIENT_CUT_TEXT               = 6,
+        // Optional Messages
+        VNC_CS_MSG_FILE_TRANSFER                  = 7,
+        VNC_CS_MSG_SET_SCALE                      = 8,
+        VNC_CS_MSG_SET_SERVER_INPUT               = 9,
+        VNC_CS_MSG_SET_SW                         = 10,
+        VNC_CS_MSG_TEXT_CHAT                      = 11,
+        VNC_CS_MSG_KEY_FRAME_REQUEST              = 12,
+        VNC_CS_MSG_KEEP_ALIVE                     = 13,
+        VNC_CS_MSG_ULTRA_VNC_RESERVED1            = 14,
+        VNC_CS_MSG_SET_SCALE_FACTOR               = 15,
+        VNC_CS_MSG_ULTRA_VNC_RESERVED2            = 16,
+        VNC_CS_MSG_ULTRA_VNC_RESERVED3            = 17,
+        VNC_CS_MSG_ULTRA_VNC_RESERVED4            = 18,
+        VNC_CS_MSG_ULTRA_VNC_RESERVED5            = 19,
+        VNC_CS_MSG_REQUEST_SESSION                = 20,
+        VNC_CS_MSG_SET_SESSION                    = 21,
+        VNC_CS_MSG_NOTIFY_PLUGIN_STREAMING        = 80,
+        VNC_CS_MSG_VMWARE1                        = 127,
+        VNC_CS_MSG_CAR_CONNECTIVITY               = 128,
+        VNC_CS_MSG_ENABLE_CONTINUOUS_UPDATE       = 150,
+        VNC_CS_MSG_CLIENT_FENCE                   = 248,
+        VNC_CS_MSG_OLIVE_CALL_CONTROL             = 249,
+        VNC_CS_MSG_XVP_CLIENT_MESSAGE             = 250,
+        VNC_CS_MSG_SET_DESKTOP_SIZE               = 251,
+        VNC_CS_MSG_TIGHT                          = 252,
+        VNC_CS_MSG_GII_CLIENT_MESSAGE             = 253,
+        VNC_CS_MSG_VMWARE2                        = 254,
+        VNC_CS_MSG_QEMU_CLIENT_MESSAGE            = 255,
+    };
+
+    // VNC Client to Server Messages
+    enum VNC_server_to_client_messages {
+        VNC_SC_MSG_FRAMEBUFFER_UPDATE             = 0,
+        VNC_SC_MSG_SET_COLOUR_MAP_ENTRIES         = 1,
+        VNC_SC_MSG_BELL                           = 2,
+        VNC_SC_MSG_SERVER_CUT_TEXT                = 3,
+        VNC_SC_MSG_END_OF_CONTINUOUS_UPDATE       = 150,
+        VNC_SC_MSG_SERVER_STATE                   = 173,
+        VNC_SC_MSG_SERVER_FENCE                   = 248,
+        VNC_SC_MSG_XVP                            = 250,
+        VNC_SC_MSG_TIGHT                          = 252,
+        VNC_SC_MSG_GII                            = 253,
+    };
 
     static void fill_encoding_types_buffer(const char * encodings, OutStream & stream, uint16_t & number_of_encodings, VNCVerbose verbose)
     {
@@ -1485,31 +1558,32 @@ protected:
                     return false;
                 }
 
-                this->message_type = buf.av()[0];
+                this->message_type = VNC_server_to_client_messages(buf.av()[0]);
 
                 buf.advance(1);
 
+
                 switch (this->message_type)
                 {
-                    case 0: /* framebuffer update */
+                    case VNC_SC_MSG_FRAMEBUFFER_UPDATE: /* framebuffer update */
                         vnc.frame_buffer_update_ctx.start(vnc.bpp, nbbytes(vnc.bpp));
                         this->state = State::FrameBufferupdate;
                         return vnc.lib_frame_buffer_update(drawable, buf);
-                    case 1: /* palette */
+                    case VNC_SC_MSG_SET_COLOUR_MAP_ENTRIES: /* palette */
                         vnc.palette_update_ctx.start();
                         this->state = State::Palette;
                         return vnc.lib_palette_update(drawable, buf);
-                    case 2: /* bell */
+                    case VNC_SC_MSG_BELL: /* bell */
                         // TODO bell
                         return true;
-                    case 3: /* clipboard */ /* ServerCutText */
+                    case VNC_SC_MSG_SERVER_CUT_TEXT: /* clipboard */ /* ServerCutText */
                         vnc.clipboard_data_ctx.start(
                             vnc.enable_clipboard_down
                          && vnc.get_channel_by_name(channel_names::cliprdr));
                         this->state = State::ServerCutText;
                         return vnc.lib_clip_data(buf);
                     default:
-                        LOG(LOG_ERR, "unknown message type in vnc %d\n", message_type);
+                        LOG(LOG_ERR, "unknown message type in vnc %u\n", message_type);
                         throw Error(ERR_VNC);
                 }
                 break;
@@ -1524,7 +1598,7 @@ protected:
 
     private:
         State state = State::Header;
-        uint8_t message_type;
+        VNC_server_to_client_messages message_type;
     };
 
     UpAndRunningCtx up_and_running_ctx;
@@ -1626,9 +1700,9 @@ private:
                     this->event.set_trigger_time(1000);
                 }
             }
-            else {
-                this->update_screen(Rect(0, 0, this->width, this->height));
-            }
+//            else {
+//                this->update_screen(Rect(0, 0, this->width, this->height), 1);
+//            }
             return false;
 
         case WAIT_PASSWORD:
@@ -1945,6 +2019,21 @@ private:
             // Note that this means the client must assume that the server
             // does not support the extension until it gets some extension-
             // -specific confirmation from the server.
+
+            // See Encodings for a description of each encoding and Pseudo-encodings for the meaning of pseudo-encodings.
+
+            // No. of bytes     Type     [Value]     Description
+            // -------------+---------+-----------+---------------------
+            //         1    |    U8   |     2     |  message-type
+            //         1    |         |           |    padding
+            //         2    |    U16  |           | number-of-encodings
+            //
+            // followed by number-of-encodings repetitions of the following:
+            //
+            // No. of bytes     Type     Description
+            // ----------------------------------------
+            //         4         S32     encoding-type
+
             {
                 const char * encodings           = this->encodings.c_str();
                 uint16_t     number_of_encodings = 0;
@@ -1965,11 +2054,13 @@ private:
                         LOG(LOG_WARNING, "mdo_vnc: using default encoding types - RRE(2),Raw(0),CopyRect(1),Cursor pseudo-encoding(-239)");
                     }
 
-                    stream.out_uint32_be(0);            // raw
-                    stream.out_uint32_be(1);            // copy rect
-                    stream.out_uint32_be(2);            // RRE
-                    stream.out_uint32_be(0xffffff11);   // (-239) cursor
-                    number_of_encodings = 4;
+                    stream.out_uint32_be(ZRLE_ENCODING);            // (16) Zrle
+                    stream.out_uint32_be(HEXTILE_ENCODING);         // (5) Hextile
+                    stream.out_uint32_be(RAW_ENCODING);             // raw
+                    stream.out_uint32_be(COPYRECT_ENCODING);        // copy rect
+                    stream.out_uint32_be(RRE_ENCODING);             // RRE
+                    stream.out_uint32_be(CURSOR_PSEUDO_ENCODING);   // (-239) cursor
+                    number_of_encodings = 6;
                 }
 
                 stream.set_out_uint16_be(number_of_encodings, number_of_encodings_offset);
@@ -2086,6 +2177,8 @@ private:
 
         using Result = BasicResult<State>;
 
+        VNC::Encoder::EncoderState last;
+
         FrameBufferUpdateCtx(Zdecompressor<> & zd, VNCVerbose verbose)
           : zd{zd}
           , verbose(verbose)
@@ -2098,6 +2191,7 @@ private:
 //                LOG(LOG_ERR, "vnc zlib initialization failed");
 //                throw Error(ERR_VNC_ZLIB_INITIALIZATION);
 //            }
+            this->last = VNC::Encoder::EncoderState::Ready;
         }
 
         ~FrameBufferUpdateCtx()
@@ -2112,19 +2206,67 @@ private:
             this->state = State::Header;
         }
 
+
+//  7.5.1   FramebufferUpdate (part 2 : rectangles)
+// ----------------------------------
+
+//  FrameBufferUpdate message is followed by number-of-rectangles
+// of pixel data. Each rectangle consists of:
+
+//     No. of bytes | Type   |  Description
+// ---------------------------------------------
+//         2        |  U16   |  x-position
+//         2        |  U16   |  y-position
+//         2        |  U16   |  width
+//         2        |  U16   |  height
+//         4        |  S32   |  encoding-type
+
+//  followed by the pixel data in the specified encoding. See Encodings for the format of the data for each encoding
+// and Pseudo-encodings for the meaning of pseudo-encodings.
+
+// Note that a framebuffer update marks a transition from one valid framebuffer state to another. That
+// means that a single update handles all received FramebufferUpdateRequest up to the point where th
+// e update is sent out.
+
+// However, because there is no strong connection between a FramebufferUpdateRequest and a subsequent
+// FramebufferUpdate, a client that has more than one FramebufferUpdateRequest pending at any given
+// time cannot be sure that it has received all framebuffer updates.
+
+        size_t last_avail = 0;
+
         bool run(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
+            update_lock<gdi::GraphicApi> lock(drawable);
             Result r = Result::fail();
 
             for (;;) {
                 switch (this->state)
                 {
                 case State::Header:
-                    r = this->read_header(buf); 
+                {
+                    const size_t sz = 3;
+
+                    if (buf.remaining() < sz)
+                    {
+                        r = Result::fail();
+                        break;
+                    }
+
+                    InStream stream(buf.av(sz));
+                    stream.in_skip_bytes(1);
+                    this->num_recs = stream.in_uint16_be();
+                    drawable.begin_update();
+                    vnc.ongoing_framebuffer_update = this->num_recs != 0;
+
+                    buf.advance(sz);
+                    r = Result::ok(State::Encoding);
+                }
                 break;
                 case State::Encoding:
                 {
                     if (0 == this->num_recs) {
+                        vnc.ongoing_framebuffer_update = false;
+                        drawable.end_update();
                         this->state = State::Header;
                         return true;
                     }
@@ -2147,26 +2289,37 @@ private:
                         }
 
                         --this->num_recs;
+
+                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                            LOG(LOG_INFO, "%s",
+                                (this->encoding == HEXTILE_ENCODING) ? "HEXTILE_ENCODING" :
+                                (this->encoding == CURSOR_PSEUDO_ENCODING) ? "CURSOR_PSEUDO_ENCODING" :
+                                (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
+                                (this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
+                                (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" :
+                                 "ZRLE_ENCODING");
+                        }
+
                         switch (this->encoding){
                         case COPYRECT_ENCODING:  /* raw */
-                            this->encoder = new VNC::Encoder::CopyRect(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.front_width, vnc.front_height, VNCVerbose::basic_trace);
+                            this->encoder = new VNC::Encoder::CopyRect(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.front_width, vnc.front_height, vnc.verbose);
                         break;
                         case HEXTILE_ENCODING:  /* hextile */
-                            this->encoder = new VNC::Encoder::Hextile(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
+                            this->encoder = new VNC::Encoder::Hextile(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
                         break;
                         case CURSOR_PSEUDO_ENCODING:  /* cursor */
-                            this->encoder = new VNC::Encoder::Cursor(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, 
+                            this->encoder = new VNC::Encoder::Cursor(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy,
                                                                      vnc.red_shift, vnc.red_max, vnc.green_shift, vnc.green_max, vnc.blue_shift, vnc.blue_max,
-                                                                     VNCVerbose::basic_trace);
+                                                                     vnc.verbose);
                         break;
                         case RAW_ENCODING:  /* raw */
-                            this->encoder = new VNC::Encoder::Raw(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
+                            this->encoder = new VNC::Encoder::Raw(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
                         break;
                         case ZRLE_ENCODING: /* ZRLE */
-                            this->encoder = new VNC::Encoder::Zrle(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, this->zd, VNCVerbose::basic_trace);
+                            this->encoder = new VNC::Encoder::Zrle(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, this->zd, vnc.verbose);
                         break;
                         case RRE_ENCODING: /* RRE */
-                            this->encoder = new VNC::Encoder::RRE(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, VNCVerbose::basic_trace);
+                            this->encoder = new VNC::Encoder::RRE(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
                             break;
                         default:
                             LOG(LOG_ERR, "unexpected VNC encoding %d", encoding);
@@ -2180,29 +2333,32 @@ private:
                 break;
                 case State::Data:
                     {
-                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                        
-                            LOG(LOG_INFO, "%s", 
-                        (this->encoding == HEXTILE_ENCODING) ? "HEXTILE_ENCODING" :
-                        (this->encoding == CURSOR_PSEUDO_ENCODING) ? "CURSOR_PSEUDO_ENCODING" :
-                        (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
-                        (this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
-                        (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" :
-                         "ZRLE_ENCODING");
+                        if (last == VNC::Encoder::EncoderState::NeedMoreData){
+                            if (this->last_avail == buf.remaining()){
+                                LOG(LOG_INFO, "new call without more data");
+                            }
                         }
+                        if (encoder == nullptr){
+                            LOG(LOG_INFO, "call with null encoder");
+                        }
+
                         // Pre Assertion: we have an encoder
                         switch (encoder->consume(buf, drawable)){
                             case VNC::Encoder::EncoderState::Ready:
                                 r = Result::ok(State::Data);
+                                this->last = VNC::Encoder::EncoderState::Ready;
                             break;
                             case VNC::Encoder::EncoderState::NeedMoreData:
                                 r = Result::fail();
+                                this->last_avail = buf.remaining();
+                                this->last = VNC::Encoder::EncoderState::NeedMoreData;
                             break;
                             case VNC::Encoder::EncoderState::Exit:
                             // consume returns true if encoder is finished (ready to be resetted)
                             r = Result::ok(State::Encoding);
                             delete encoder;
                             encoder = nullptr;
+                            this->last = VNC::Encoder::EncoderState::NeedMoreData;
                             break;
                         }
                     }
@@ -2234,76 +2390,6 @@ private:
 
         VNCVerbose verbose;
 
-        Result read_header(Buf64k & buf) noexcept
-        {
-            const size_t sz = 3;
-
-            if (buf.remaining() < sz)
-            {
-                return Result::fail();
-            }
-
-            InStream stream(buf.av(sz));
-            stream.in_skip_bytes(1);
-            this->num_recs = stream.in_uint16_be();
-
-            buf.advance(sz);
-            return Result::ok(State::Encoding);
-        }
-
-
-//  7.5.1   FramebufferUpdate (part 2 : rectangles)
-// ----------------------------------
-
-//  FrameBufferUpdate message is followed by number-of-rectangles 
-// of pixel data. Each rectangle consists of:
-
-//     No. of bytes | Type   |  Description
-// ---------------------------------------------
-//         2        |  U16   |  x-position
-//         2        |  U16   |  y-position
-//         2        |  U16   |  width
-//         2        |  U16   |  height
-//         4        |  S32   |  encoding-type
-
-//  followed by the pixel data in the specified encoding. See Encodings for the format of the data for each encoding
-// and Pseudo-encodings for the meaning of pseudo-encodings.
-
-// Note that a framebuffer update marks a transition from one valid framebuffer state to another. That
-// means that a single update handles all received FramebufferUpdateRequest up to the point where th
-// e update is sent out.
-
-// However, because there is no strong connection between a FramebufferUpdateRequest and a subsequent 
-// FramebufferUpdate, a client that has more than one FramebufferUpdateRequest pending at any given 
-// time cannot be sure that it has received all framebuffer updates.
-
-
-        Result read_encoding(Buf64k & buf) noexcept
-        {
-
-            const size_t sz = 12;
-
-            if (buf.remaining() < sz)
-            {
-                return Result::fail();
-            }
-
-            InStream stream(buf.av(sz));
-            this->x = stream.in_uint16_be();
-            this->y = stream.in_uint16_be();
-            this->cx = stream.in_uint16_be();
-            this->cy = stream.in_uint16_be();
-            this->encoding = stream.in_sint32_be();
-
-            --this->num_recs;
-            buf.advance(sz);
-
-            // TODO see why we get these empty rects ?
-            // return State::Encoding;
-            return Result::ok(State::Data);
-        }
-
-
     };
     FrameBufferUpdateCtx frame_buffer_update_ctx;
 
@@ -2313,7 +2399,9 @@ private:
             return false;
         }
 
-        this->update_screen(Rect(0, 0, this->width, this->height));
+        if (!this->ongoing_framebuffer_update){
+            this->update_screen(Rect(0, 0, this->width, this->height), 1);
+        }
         return true;
     } // lib_frame_buffer_update
 

@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
 
     RDPVerbose verbose = to_verbose_flags(0);
 
-    ClientRedemption client_qt(argv, argc, verbose
+    ClientRedemption client_qt( argv, argc, verbose
                               , graphic_control_qt
                               , clipboard_api
                               , sound_api

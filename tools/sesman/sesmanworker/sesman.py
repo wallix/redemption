@@ -1907,7 +1907,10 @@ class Sesman():
                 u'session_probe_enable_log_rotation' : 'enable_log_rotation',
                 u'session_probe_smart_launcher_clipboard_initialization_delay' : 'smart_launcher_clipboard_initialization_delay',
                 u'session_probe_smart_launcher_long_delay' : 'smart_launcher_long_delay',
-                u'session_probe_smart_launcher_short_delay' : 'smart_launcher_short_delay'
+                u'session_probe_smart_launcher_short_delay' : 'smart_launcher_short_delay',
+                u'session_probe_enable_crash_dump' : 'enable_crash_dump',
+                u'session_probe_handle_usage_limit' : 'handle_usage_limit',
+                u'session_probe_memory_usage_limit' : 'memory_usage_limit'
                 },
             'server_cert': {
                 u'server_cert_store' : 'server_cert_store',

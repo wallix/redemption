@@ -452,6 +452,12 @@
 "#_advanced\n"
 "session_probe_enable_crash_dump = boolean(default=False)\n\n"
 
+"#_advanced\n"
+"session_probe_handle_usage_limit = integer(min=0, default=0)\n\n"
+
+"#_advanced\n"
+"session_probe_memory_usage_limit = integer(min=0, default=0)\n\n"
+
 "# Keep known server certificates on WAB\n"
 "#_hidden\n"
 "server_cert_store = boolean(default=True)\n\n"
@@ -559,6 +565,10 @@
 "# 0 - Wait for Escape, 1 - End session\n"
 "#_hidden\n"
 "on_end_of_data = boolean(default=False)\n\n"
+
+"# 0 - replay once, 1 - loop replay\n"
+"#_hidden\n"
+"replay_on_loop = boolean(default=False)\n\n"
 
 "[ocr]\n\n"
 
@@ -741,78 +751,103 @@
 "[debug]\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "x224 = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "mcs = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "sec = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "rdp = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "primary_orders = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "secondary_orders = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "bitmap_update = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "bitmap = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "capture = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "auth = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "session = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "front = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "mod_rdp = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "mod_vnc = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "mod_internal = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "mod_xup = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "widget = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "input = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "password = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "compression = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "cache = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "performance = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "pass_dialog_box = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "ocr = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
+"#_hex\n"
 "ffmpeg = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
