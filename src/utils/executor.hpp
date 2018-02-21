@@ -269,6 +269,7 @@ template<class PrefixArgs>
 struct ActionBase
 {
     using prefix_args = PrefixArgs;
+    using base_type = ActionBase;
 
     void delete_self() noexcept
     {
@@ -292,6 +293,7 @@ template<class PrefixArgs>
 struct BasicTimer
 {
     using prefix_args = PrefixArgs;
+    using base_type = BasicTimer;
 
     void delete_self() noexcept
     {
@@ -347,6 +349,7 @@ template<class PrefixArgs>
 struct BasicExecutorImpl
 {
     using prefix_args = PrefixArgs;
+    using base_type = BasicExecutorImpl;
 
     template<class... Args>
     ExecutorResult exec_action(Args&&... args)
@@ -1078,7 +1081,6 @@ template<
 struct BasicEvent : BaseType
 {
     using executor_context = EventCtxArg<Inherit>;
-    using base_type = BaseType;
     using event_container_type = EventContainerType;
     using basic_event = BasicEvent;
     using tuple_context = detail::tuple<Ts...>;
@@ -1132,11 +1134,6 @@ struct BasicEvent : BaseType
         this->event_container.attach(*this);
     }
 
-    base_type& base() noexcept
-    {
-        return *this;
-    }
-
     template<class F>
     void set_on_action(F) noexcept
     {
@@ -1154,15 +1151,113 @@ public:
     void *operator new(size_t n, char const*) { return ::operator new(n); }
 };
 
+template<class Event>
+struct UniquePtrEventWithUPtr;
+
+namespace detail
+{
+    template<class Event>
+    struct event_with_uptr : Event
+    {
+        using Event::Event;
+
+        std::unique_ptr<Event, DeleteSelf<typename Event::base_type>>* uptr;
+    };
+
+    struct UniquePtrEventWithUPtrAccess
+    {
+        template<class UEvent>
+        static typename UEvent::UniquePtr& p(UEvent& x)
+        {
+            return x.p;
+        }
+
+        template<class UEvent>
+        static typename UEvent::UniquePtr**& uptr_in_event(UEvent& x)
+        {
+            return x.uptr_in_event;
+        }
+    };
+}
+
+template<class Event>
+struct UniquePtrEventWithUPtr
+{
+    UniquePtrEventWithUPtr() noexcept = default;
+
+    UniquePtrEventWithUPtr(detail::event_with_uptr<Event>* e) noexcept
+    : p(e)
+    , uptr_in_event(&e->uptr)
+    {
+        *this->uptr_in_event = &p;
+    }
+
+    template<class InheritEvent>
+    UniquePtrEventWithUPtr(UniquePtrEventWithUPtr<InheritEvent>&& other) noexcept
+    : p(std::move(detail::UniquePtrEventWithUPtrAccess::p(other)))
+    , uptr_in_event(reinterpret_cast<UniquePtr**>(
+        detail::UniquePtrEventWithUPtrAccess::uptr_in_event(other)))
+    {
+        *this->uptr_in_event = &p;
+    }
+
+    template<class InheritEvent>
+    UniquePtrEventWithUPtr& operator=(UniquePtrEventWithUPtr<InheritEvent>&& other) noexcept
+    {
+        this->p = std::move(detail::UniquePtrEventWithUPtrAccess::p(other));
+        this->uptr_in_event = reinterpret_cast<UniquePtr**>(
+            detail::UniquePtrEventWithUPtrAccess::uptr_in_event(other));
+        *this->uptr_in_event = &p;
+        return *this;
+    }
+
+    explicit operator bool () const noexcept
+    {
+        return bool(this->p);
+    }
+
+    Event* operator->() const noexcept
+    {
+        return this->p.get();
+    }
+
+    Event& operator*() const noexcept
+    {
+        return *this->p;
+    }
+
+    void reset() noexcept
+    {
+        this->p.reset();
+    }
+
+    Event* release() noexcept
+    {
+        return this->p.release();
+    }
+
+private:
+    friend detail::UniquePtrEventWithUPtrAccess;
+    using UniquePtr = std::unique_ptr<Event, DeleteSelf<typename Event::base_type>>;
+    UniquePtr p;
+    UniquePtr** uptr_in_event; // pointer on event_with_uptr::uptr
+};
 
 template<class Event, class... Args>
-static std::unique_ptr<Event, DeleteSelf<typename Event::base_type>>
+static UniquePtrEventWithUPtr<Event>
 new_event(Args&&... args)
 {
-    using Base = typename Event::base_type;
-    auto* p = new("") Event(static_cast<Args&&>(args)...);
-    p->deleter = [](auto* base) noexcept { delete static_cast<Event*>(base); };
-    std::unique_ptr<Event, DeleteSelf<Base>> uptr(p);
+    using NewEvent = detail::event_with_uptr<Event>;
+    auto* p = new("") NewEvent(static_cast<Args&&>(args)...);
+    p->deleter = [](auto* base) noexcept {
+        auto* e = static_cast<NewEvent*>(base);
+        e->deleter = [](auto*) noexcept {};
+        // jln::make_lambda<DeleteEvent>()(ctx...);
+        assert(e->uptr->get() == base);
+        e->uptr->release();
+        delete e;
+    };
+    UniquePtrEventWithUPtr<Event> uptr(p);
     p->attach();
     return uptr;
 }

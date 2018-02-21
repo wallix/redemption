@@ -148,7 +148,7 @@ struct SessionReactor
     };
 
     using BasicTimer = jln::BasicTimer<jln::prefix_args<>>;
-    using BasicTimerPtr = jln::UniquePtr<BasicTimer>;
+    using BasicTimerPtr = jln::UniquePtrEventWithUPtr<BasicTimer>;
 
     struct TimerContainer : Container<BasicTimer>
     {
@@ -188,11 +188,8 @@ struct SessionReactor
         using Elem = jln::Timer<TimerContainer&, BasicTimer::prefix_args, Args...>;
     };
 
-    template<class T>
-    using OwnerPtr = std::unique_ptr<T, jln::DeleteSelf<typename T::base_type>>;
-
     template<class... Args>
-    jln::TimerBuilder<OwnerPtr<TimerContainer::Elem<Args...>>>
+    jln::TimerBuilder<jln::UniquePtrEventWithUPtr<TimerContainer::Elem<Args...>>>
     create_timer(Args&&... args)
     {
         using Timer = TimerContainer::Elem<Args...>;
@@ -200,7 +197,7 @@ struct SessionReactor
     }
 
     using CallbackEvent = jln::ActionBase<jln::prefix_args<Callback&>>;
-    using CallbackEventPtr = jln::UniquePtr<CallbackEvent>;
+    using CallbackEventPtr = jln::UniquePtrEventWithUPtr<CallbackEvent>;
 
     template<class... Args>
     auto create_callback_event(Args&&... args)
@@ -211,7 +208,7 @@ struct SessionReactor
 
 
     using GraphicEvent = jln::ActionBase<jln::prefix_args<gdi::GraphicApi&>>;
-    using GraphicEventPtr = jln::UniquePtr<GraphicEvent>;
+    using GraphicEventPtr = jln::UniquePtrEventWithUPtr<GraphicEvent>;
 
     struct GraphicContainer : Container<GraphicEvent>
     {
@@ -220,7 +217,7 @@ struct SessionReactor
     };
 
     template<class... Args>
-    jln::ActionBuilder<OwnerPtr<GraphicContainer::Elem<Args...>>>
+    jln::ActionBuilder<jln::UniquePtrEventWithUPtr<GraphicContainer::Elem<Args...>>>
     create_graphic_event(Args&&... args)
     {
         using Action = GraphicContainer::Elem<Args...>;
@@ -232,6 +229,7 @@ struct SessionReactor
     struct TopFd : BasicTimer, BasicFd
     {
         using prefix_args = typename BasicFd::prefix_args;
+        using base_type = TopFd;
 
         static_assert(std::is_same<
             typename BasicFd::prefix_args,
@@ -268,8 +266,6 @@ struct SessionReactor
     template<class PrefixArgs_, class... Ts>
     struct FdImpl : TopFd
     {
-        using base_type = TopFd;
-
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
         template<class... Args>
@@ -337,7 +333,7 @@ struct SessionReactor
     template<class PrefixArgs_, class... Args>
     using Fd = FdImpl<PrefixArgs_, typename jln::detail::decay_and_strip<Args>::type...>;
 
-    using TopFdPtr = jln::UniquePtr<TopFd>;
+    using TopFdPtr = jln::UniquePtrEventWithUPtr<TopFd>;
 
     struct TopFdContainer : Container<TopFd>
     {
@@ -346,7 +342,7 @@ struct SessionReactor
     };
 
     template<class... Args>
-    jln::TopFdBuilder<OwnerPtr<TopFdContainer::Elem<Args...>>>
+    jln::TopFdBuilder<jln::UniquePtrEventWithUPtr<TopFdContainer::Elem<Args...>>>
     create_fd_event(int fd, Args&&... args)
     {
         using EventFd = TopFdContainer::Elem<Args...>;
