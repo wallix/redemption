@@ -72,7 +72,7 @@ class mod_vnc : public InternalMod, private NotifyApi
 {
 
     bool ongoing_framebuffer_update = false;
-        
+
     static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
 
     FlatVNCAuthentification challenge;
@@ -667,10 +667,10 @@ public:
 
 //    7.4.7   EnableContinuousUpdates
 
-//    This message informs the server to switch between only sending FramebufferUpdate messages as a result of a 
+//    This message informs the server to switch between only sending FramebufferUpdate messages as a result of a
 //    FramebufferUpdateRequest message, or sending FramebufferUpdate messages continuously.
 
-//    Note that there is currently no way to determine if the server supports this message except for using the 
+//    Note that there is currently no way to determine if the server supports this message except for using the
 //       Tight Security Type authentication.
 
 //    No. of bytes       Type     [Value]     Description
@@ -685,7 +685,7 @@ public:
 // specified by x-position, y-position, width, and height. If continuous updates are already active, then they must
 // remain active active and the coordinates must be replaced with the last message seen.
 
-//    If enable-flag is zero, then the server must only send FramebufferUpdate messages as a result of receiving 
+//    If enable-flag is zero, then the server must only send FramebufferUpdate messages as a result of receiving
 // FramebufferUpdateRequest messages. The server must also immediately send out a EndOfContinuousUpdates message.
 // This message must be sent out even if continuous updates were already disabled.
 
@@ -788,7 +788,7 @@ public:
         if (bool(this->verbose & VNCVerbose::connection)) {
             LOG(LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
         }
-        
+
         // set almost null cursor, this is the little dot cursor
         Pointer cursor;
         Pointer::Hotspot hotspot(3, 3);
@@ -800,7 +800,7 @@ public:
         memset(cursor.data + 30 * (32 * 3), 0xff, 9);
         memset(cursor.data + 29 * (32 * 3), 0xff, 9);
         memset(cursor.mask, 0xff, 32 * (32 / 8));
-        
+
         cursor.update_bw();
 
         this->front.set_pointer(cursor);
@@ -1447,7 +1447,7 @@ protected:
         VNC_CS_MSG_CLIENT_FENCE                   = 248,
         VNC_CS_MSG_OLIVE_CALL_CONTROL             = 249,
         VNC_CS_MSG_XVP_CLIENT_MESSAGE             = 250,
-        VNC_CS_MSG_SET_DESKTOP_SIZE               = 251, 
+        VNC_CS_MSG_SET_DESKTOP_SIZE               = 251,
         VNC_CS_MSG_TIGHT                          = 252,
         VNC_CS_MSG_GII_CLIENT_MESSAGE             = 253,
         VNC_CS_MSG_VMWARE2                        = 254,
@@ -2019,9 +2019,9 @@ private:
             // Note that this means the client must assume that the server
             // does not support the extension until it gets some extension-
             // -specific confirmation from the server.
-            
+
             // See Encodings for a description of each encoding and Pseudo-encodings for the meaning of pseudo-encodings.
-            
+
             // No. of bytes     Type     [Value]     Description
             // -------------+---------+-----------+---------------------
             //         1    |    U8   |     2     |  message-type
@@ -2033,7 +2033,7 @@ private:
             // No. of bytes     Type     Description
             // ----------------------------------------
             //         4         S32     encoding-type
-            
+
             {
                 const char * encodings           = this->encodings.c_str();
                 uint16_t     number_of_encodings = 0;
@@ -2210,7 +2210,7 @@ private:
 //  7.5.1   FramebufferUpdate (part 2 : rectangles)
 // ----------------------------------
 
-//  FrameBufferUpdate message is followed by number-of-rectangles 
+//  FrameBufferUpdate message is followed by number-of-rectangles
 // of pixel data. Each rectangle consists of:
 
 //     No. of bytes | Type   |  Description
@@ -2228,8 +2228,8 @@ private:
 // means that a single update handles all received FramebufferUpdateRequest up to the point where th
 // e update is sent out.
 
-// However, because there is no strong connection between a FramebufferUpdateRequest and a subsequent 
-// FramebufferUpdate, a client that has more than one FramebufferUpdateRequest pending at any given 
+// However, because there is no strong connection between a FramebufferUpdateRequest and a subsequent
+// FramebufferUpdate, a client that has more than one FramebufferUpdateRequest pending at any given
 // time cannot be sure that it has received all framebuffer updates.
 
         size_t last_avail = 0;
@@ -2255,6 +2255,7 @@ private:
                     InStream stream(buf.av(sz));
                     stream.in_skip_bytes(1);
                     this->num_recs = stream.in_uint16_be();
+                    drawable.begin_update();
                     vnc.ongoing_framebuffer_update = this->num_recs != 0;
 
                     buf.advance(sz);
@@ -2265,6 +2266,7 @@ private:
                 {
                     if (0 == this->num_recs) {
                         vnc.ongoing_framebuffer_update = false;
+                        drawable.end_update();
                         this->state = State::Header;
                         return true;
                     }
@@ -2289,7 +2291,7 @@ private:
                         --this->num_recs;
 
                         if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                            LOG(LOG_INFO, "%s", 
+                            LOG(LOG_INFO, "%s",
                                 (this->encoding == HEXTILE_ENCODING) ? "HEXTILE_ENCODING" :
                                 (this->encoding == CURSOR_PSEUDO_ENCODING) ? "CURSOR_PSEUDO_ENCODING" :
                                 (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
@@ -2306,7 +2308,7 @@ private:
                             this->encoder = new VNC::Encoder::Hextile(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
                         break;
                         case CURSOR_PSEUDO_ENCODING:  /* cursor */
-                            this->encoder = new VNC::Encoder::Cursor(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, 
+                            this->encoder = new VNC::Encoder::Cursor(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy,
                                                                      vnc.red_shift, vnc.red_max, vnc.green_shift, vnc.green_max, vnc.blue_shift, vnc.blue_max,
                                                                      vnc.verbose);
                         break;

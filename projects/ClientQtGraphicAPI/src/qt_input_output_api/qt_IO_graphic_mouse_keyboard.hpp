@@ -136,7 +136,7 @@ public:
 
     virtual void create_screen(std::string const & movie_dir, std::string const & movie_path) override {
         QPixmap * map = &(this->cache);
-        this->screen = new ReplayQtScreen(this->drawn_client, this, movie_dir, movie_path, map);
+        this->screen = new ReplayQtScreen(this->drawn_client, this, movie_dir, movie_path, map, this->get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str()));
     }
 
     QWidget * get_static_qwidget() {
@@ -301,13 +301,51 @@ public:
 //         }
 //     }
 
+//     void setClip(int x, int y, int w, int h) {
+//
+//         if (this->screen) {
+//
+//             if (this->screen->clip.x() == -1) {
+//                 this->screen->clip.setX(x);
+//                 this->screen->clip.setY(y);
+//                 this->screen->clip.setWidth(w);
+//                 this->screen->clip.setHeight(h);
+//             } else {
+//                 const int ori_x = this->screen->clip.x();
+//                 const int ori_y = this->screen->clip.y();
+//
+//                 if (x <= ori_x) {
+//                     this->screen->clip.setX(x);
+//                 }
+//
+//                 if (y <= ori_y) {
+//                     this->screen->clip.setY(y);
+//                 }
+//
+//                 if ( (x+w) > (ori_x + this->screen->clip.width()) ) {
+//                     this->screen->clip.setWidth(x+w-this->screen->clip.x());
+//                 }
+//
+//                 if ( (y+h) > (ori_y + this->screen->clip.height()) ) {
+//                     this->screen->clip.setHeight(y+h-this->screen->clip.y());
+//                 }
+//             }
+//         }
+//     }
+
+    void begin_update() override {
+
+        this->update_counter++;
+//         if (this->screen) {
+//             this->screen->clip.setX(-1);
+//             this->screen->clip.setY(-1);
+//             this->screen->clip.setWidth(0);
+//             this->screen->clip.setHeight(0);
+//         }
+    }
+
 private:
     size_t update_counter = 0;
-
-public:
-    void begin_update() override {
-        this->update_counter++;
-    }
 
     void end_update() override {
         assert(this->update_counter);
@@ -353,7 +391,7 @@ public:
 
                 if (this->client->is_replaying) {
 
-                    this->screen = new ReplayQtScreen(this->drawn_client, this, this->client->_movie_dir, this->client->_movie_name, &(this->cache));
+                    this->screen = new ReplayQtScreen(this->drawn_client, this, this->client->_movie_dir, this->client->_movie_name, &(this->cache), this->get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str()));
 
                 } else {
 
@@ -391,7 +429,7 @@ public:
 
         const uchar * data_data = image_data.bits();
         const uchar * mask_data = image_mask.bits();
-        
+
         uint8_t data[Pointer::DATA_SIZE*4];
 
         for (int i = 0; i < std::min<int>(Pointer::DATA_SIZE * 4, dimensions.width * dimensions.height * 4); i += 4) {
@@ -419,24 +457,49 @@ public:
         }
     }
 
+    static time_t get_movie_time_length(char const * mwrm_filename) {
+        // TODO RZ: Support encrypted recorded file.
+        CryptoContext cctx;
+        Fstat fsats;
+        InCryptoTransport trans(cctx, InCryptoTransport::EncryptionMode::NotEncrypted, fsats);
+        MwrmReader mwrm_reader(trans);
+        MetaLine meta_line;
+
+        time_t start_time = 0;
+        time_t stop_time = 0;
+
+        trans.open(mwrm_filename);
+        mwrm_reader.read_meta_headers();
+
+        Transport::Read read_stat = mwrm_reader.read_meta_line(meta_line);
+        if (read_stat == Transport::Read::Ok) {
+            start_time = meta_line.start_time;
+            stop_time = meta_line.stop_time;
+            while (read_stat == Transport::Read::Ok) {
+                stop_time = meta_line.stop_time;
+                read_stat = mwrm_reader.read_meta_line(meta_line);
+            }
+        }
+
+        return stop_time - start_time;
+    }
+
     void pre_load_movie() override {
 
         ReplayQtScreen * replay_screen = static_cast<ReplayQtScreen * >(this->screen);
 
-        long int movie_length = ReplayQtScreen::get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str());
+        long int movie_length = this->get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str());
         this->form->hide();
         this->bar = new ProgressBarWindow(movie_length);
         long int endin_frame = 0;
         int i = 0;
 
         while (endin_frame < movie_length) {
-            //timeval end_fram_time = {long int(endin_frame), 0};
             this->client->replay_mod.get()->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
 
             if (replay_screen) {
-                replay_screen->balises.push_back(nullptr);
-                replay_screen->balises[i] = new QPixmap(this->cache);
-                endin_frame += ReplayQtScreen::BALISED_FRAME;
+                replay_screen->balises.push_back(this->cache);
+                endin_frame += ClientRedemptionIOAPI::BALISED_FRAME;
                 i++;
                 if (this->bar) {
                     this->bar->setValue(endin_frame);
@@ -444,7 +507,7 @@ public:
             }
         }
 
-        replay_screen->stopRelease();
+        this->screen->stopRelease();
     }
 
 //     void answer_question(int color) {
@@ -648,6 +711,7 @@ public:
 
         const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
         if (this->client->connected || this->client->is_replaying) {
+
              this->painter.drawImage(trect, qbitmap);
         }
     }
@@ -710,6 +774,12 @@ public:
         }
     }
 
+    void draw_frame(int frame_index) override {
+        if (this->client->is_replaying) {
+            this->painter.drawPixmap(QPoint(0, 0), static_cast<ReplayQtScreen * >(this->screen)->balises[frame_index], QRect(0, 0, this->screen->_width, this->screen->_height));
+        }
+    }
+
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -722,6 +792,7 @@ public:
     void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
 
         const Rect rect = clip.intersect(this->client->info.width, this->client->info.height).intersect(cmd.rect);
+        this->setClip(rect.x, rect.y, rect.cx, rect.cy);
 
         QColor backColor = this->u32_to_qcolor(cmd.back_color, color_ctx);
         QColor foreColor = this->u32_to_qcolor(cmd.fore_color, color_ctx);
@@ -884,6 +955,7 @@ public:
         if (this->client->connected || this->client->is_replaying) {
             QColor qcolor(this->u32_to_qcolor(cmd.color, color_ctx));
             Rect rect(cmd.rect.intersect(clip));
+            this->setClip(rect.x, rect.y, rect.cx, rect.cy);
 
             this->painter.fillRect(rect.x, rect.y, rect.cx, rect.cy, qcolor);
         }
@@ -923,6 +995,7 @@ public:
         qbitmap = qbitmap.mirrored(false, true);
         QRect trect(drect.x, drect.y, mincx, mincy);
         if (this->client->connected || this->client->is_replaying) {
+            this->setClip(trect.x(), trect.y(), trect.width(), trect.height());
             this->painter.drawImage(trect, qbitmap);
         }
 
@@ -935,7 +1008,7 @@ public:
         // TODO clipping
         if (this->client->connected || this->client->is_replaying) {
             this->screen->setPenColor(this->u32_to_qcolor(cmd.back_color, color_ctx));
-
+            this->setClip(clip.x, clip.y, clip.cx, clip.cy);
             this->painter.drawLine(cmd.startx, cmd.starty, cmd.endx, cmd.endy);
         }
 
@@ -950,6 +1023,7 @@ public:
         if (drect.isempty()) {
             return;
         }
+        this->setClip(drect.x, drect.y, drect.cx, drect.cy);
 
         int srcx(drect.x + cmd.srcx - cmd.rect.x);
         int srcy(drect.y + cmd.srcy - cmd.rect.y);
@@ -989,6 +1063,8 @@ public:
         if (drect.isempty()){
             return ;
         }
+
+        this->setClip(drect.x, drect.y, drect.cx, drect.cy);
 
         switch (cmd.rop) {
 
@@ -1048,6 +1124,8 @@ public:
         if (drect.isempty()){
             return ;
         }
+
+        this->setClip(drect.x, drect.y, drect.cx, drect.cy);
 
         switch (cmd.rop) {
             case 0xB8:
@@ -1111,6 +1189,7 @@ public:
     void draw(const RDPDestBlt & cmd, Rect clip) override {
 
         const Rect drect = clip.intersect(this->client->info.width, this->client->info.height).intersect(cmd.rect);
+        this->setClip(drect.x, drect.y, drect.cx, drect.cy);
 
         switch (cmd.rop) {
             case 0x00: // blackness
@@ -1170,12 +1249,12 @@ public:
         if (screen_rect.isempty()){
             return ;
         }
+        this->setClip(screen_rect.x, screen_rect.y, screen_rect.cx, screen_rect.cy);
 
         Rect const clipped_glyph_fragment_rect = cmd.bk.intersect(screen_rect);
         if (clipped_glyph_fragment_rect.isempty()) {
             return;
         }
-        //std::cout << "RDPGlyphIndex " << std::endl;
 
         // set a background color
         {

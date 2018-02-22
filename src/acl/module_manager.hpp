@@ -1370,6 +1370,7 @@ public:
 
                 mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
                 mod_rdp_params.auth_channel                        = CHANNELS::ChannelNameId(this->ini.get<cfg::mod_rdp::auth_channel>());
+                mod_rdp_params.checkout_channel                    = CHANNELS::ChannelNameId(this->ini.get<cfg::mod_rdp::checkout_channel>());
                 mod_rdp_params.alternate_shell                     = this->ini.get<cfg::mod_rdp::alternate_shell>().c_str();
                 mod_rdp_params.shell_arguments                     = this->ini.get<cfg::mod_rdp::shell_arguments>().c_str();
                 mod_rdp_params.shell_working_dir                   = this->ini.get<cfg::mod_rdp::shell_working_directory>().c_str();

@@ -92,7 +92,6 @@ public:
     ClientInputMouseKeyboardAPI * impl_mouse_keyboard;
 
 
-
     // RDP
     ClipboardServerChannelDataSender _to_server_sender;
     ClipboardClientChannelDataSender _to_client_sender;
@@ -113,7 +112,6 @@ public:
         CHANID_RDPSND  = 1604,
         CHANID_RAIL    = 1605
     };
-
         //  RDP Channel managers
     ClientChannelRDPSNDManager    clientChannelRDPSNDManager;
     ClientChannelCLIPRDRManager   clientChannelCLIPRDRManager;
@@ -121,13 +119,12 @@ public:
     ClientChannelRemoteAppManager clientChannelRemoteAppManager;
 
 
-
     // VNC mod
     bool is_apple;
     Theme      theme;
     WindowListCaps windowListCaps;
     ClientExecute exe_vnc;
-
+    std::string vnc_encodings;
 
 
     // replay mod
@@ -164,6 +161,7 @@ public:
 
         , is_apple(true)
         , exe_vnc(*(this),  this->windowListCaps,  false)
+        , vnc_encodings("5,16,0,1,-239")
     {
         if (this->impl_clipboard) {
             this->impl_clipboard->set_client(this);
@@ -227,7 +225,6 @@ public:
         this->keymap.init_layout(this->info.keylayout);
     }
 
-
     const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
         return this->cl;
     }
@@ -245,7 +242,6 @@ public:
             this->impl_graphic->closeFromScreen();
         }
     }
-
 
     bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) override {
          try {
@@ -313,7 +309,6 @@ public:
         }
     }
 
-
     virtual void  disconnect(std::string const & error, bool pipe_broken) override {
         if (this->mod != nullptr) {
             if (!pipe_broken) {
@@ -341,8 +336,6 @@ public:
             this->impl_mouse_keyboard->init_form();
         }
     }
-
-
 
     bool init_mod()  {
 
@@ -393,9 +386,8 @@ public:
                 }
                     break;
 
-            case MOD_RDP_REMOTE_APP:
-            {
-
+                case MOD_RDP_REMOTE_APP:
+                {
                     ModRDPParams mod_rdp_params( this->user_name.c_str()
                                     , this->user_password.c_str()
                                     , this->target_IP.c_str()
@@ -452,8 +444,8 @@ public:
                     target_info += this->ini.get<cfg::globals::primary_user_id>();
 
                     this->client_execute.set_target_info(target_info.c_str());
-            }
-                break;
+                }
+                    break;
 
             case MOD_VNC:
             {
@@ -471,8 +463,7 @@ public:
                                                     , 0
                                                     , true
                                                     , true
-                                                    , "5,16,0,1,-239"
-//                                                    , "0,1,-239"
+                                                    , this->vnc_encodings.c_str()
                                                     , false
                                                     , true
                                                     , mod_vnc::ClipboardEncodingType::UTF8
@@ -673,8 +664,6 @@ public:
             }
             this->disconnect(labelErrorMsg, false);
         }
-
-
     }
 
     void disconnexionReleased() override{
@@ -840,8 +829,6 @@ public:
                 break;*/
         }
     }
-
-
 
     void draw(const RDP::RAIL::ActivelyMonitoredDesktop  & cmd) override {
         if (bool(this->verbose & RDPVerbose::rail_order)) {
@@ -1249,6 +1236,10 @@ public:
         }
     }
 
+    void draw_frame(int frame_index) override {
+        this->impl_graphic->draw_frame(frame_index);
+    }
+
 //     void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
 //
 //         if (this->is_replaying) {
@@ -1267,13 +1258,21 @@ public:
     }
 
     void begin_update() override {
-        if (this->impl_graphic) {
-            this->impl_graphic->begin_update();
-        }
-        if (this->is_recording && !this->is_replaying) {
-            this->graph_capture->begin_update();
+        if ((this->connected || this->is_replaying)) {
+
+            if (this->impl_graphic) {
+                this->impl_graphic->begin_update();
+            }
+
+            if (this->is_recording && !this->is_replaying) {
+                this->graph_capture->begin_update();
+                struct timeval time;
+                gettimeofday(&time, nullptr);
+                this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+            }
         }
     }
+
 
     void end_update() override {
         if ((this->connected || this->is_replaying)) {
