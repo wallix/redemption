@@ -657,6 +657,7 @@ protected:
     void GenerateColorPointerUpdateData(OutStream & stream, int cache_idx, const Pointer & cursor)
     {
         const auto dimensions = cursor.get_dimensions();
+        const auto hotspot = cursor.get_hotspot();
     
 //    cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
 //      entry in the pointer cache in which to store the pointer image. The
@@ -675,12 +676,13 @@ protected:
 //            xPos (2 bytes): A 16-bit, unsigned integer. The x-coordinate
 //              relative to the top-left corner of the server's desktop.
 
-        stream.out_uint16_le(cursor.hotspot.x);
+
+        stream.out_uint16_le(hotspot.x);
 
 //            yPos (2 bytes): A 16-bit, unsigned integer. The y-coordinate
 //              relative to the top-left corner of the server's desktop.
 
-        stream.out_uint16_le(cursor.hotspot.y);
+        stream.out_uint16_le(hotspot.y);
 
 //    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in
 //      pixels (the maximum allowed pointer width is 32 pixels).
@@ -725,6 +727,7 @@ protected:
     void GenerateNewPointerUpdateData(OutStream & stream, int cache_idx, const Pointer & cursor)
     {
         const auto dimensions = cursor.get_dimensions();
+        const auto hotspot = cursor.get_hotspot();
 
 //    xorBpp (2 bytes): A 16-bit, unsigned integer. The color depth in bits-per-pixel of the XOR mask
 //      contained in the colorPtrAttr field.
@@ -742,12 +745,12 @@ protected:
 //            xPos (2 bytes): A 16-bit, unsigned integer. The x-coordinate
 //              relative to the top-left corner of the server's desktop.
 
-        stream.out_uint16_le(cursor.hotspot.x);
+        stream.out_uint16_le(hotspot.x);
 
 //            yPos (2 bytes): A 16-bit, unsigned integer. The y-coordinate
 //              relative to the top-left corner of the server's desktop.
 
-        stream.out_uint16_le(cursor.hotspot.y);
+        stream.out_uint16_le(hotspot.y);
 
 //    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in
 //      pixels (the maximum allowed pointer width is 32 pixels).

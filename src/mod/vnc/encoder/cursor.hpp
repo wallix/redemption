@@ -118,8 +118,8 @@ namespace VNC {
 
                 Pointer cursor;
 //                LOG(LOG_INFO, "Cursor x=%zu y=%zu", x, y);
-                cursor.hotspot.x = x;
-                cursor.hotspot.y = y;
+                Pointer::Hotspot hotspot(x, y);
+                cursor.set_hotspot(hotspot);
                 // cursor.bpp = 24;
                 Pointer::CursorSize dimensions(32, 32);
                 cursor.set_dimensions(dimensions);

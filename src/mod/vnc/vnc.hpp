@@ -791,8 +791,8 @@ public:
         
         // set almost null cursor, this is the little dot cursor
         Pointer cursor;
-        cursor.hotspot.x = 3;
-        cursor.hotspot.y = 3;
+        Pointer::Hotspot hotspot(3, 3);
+        cursor.set_hotspot(hotspot);
         // cursor.bpp = 24;
         Pointer::CursorSize dimensions(32, 32);
         cursor.set_dimensions(dimensions);

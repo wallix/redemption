@@ -733,8 +733,10 @@ void FileToGraphic::interpret_order()
             
             Pointer::CursorSize dimensions(32, 32);
             cursor.set_dimensions(dimensions);
-            cursor.hotspot.x = this->stream.in_uint8();
-            cursor.hotspot.y = this->stream.in_uint8();
+            auto hotspot_x = this->stream.in_uint8();
+            auto hotspot_y = this->stream.in_uint8();
+            Pointer::Hotspot hotspot(hotspot_x, hotspot_y);
+            cursor.set_hotspot(hotspot);
             stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
             stream.in_copy_bytes(cursor.mask, 128);
             this->statistics.CachePointer.total_len += this->stream.get_current() - p;
@@ -751,8 +753,7 @@ void FileToGraphic::interpret_order()
             Pointer & pi = this->ptr_cache.Pointers[cache_idx];
             Pointer cursor(Pointer::POINTER_NULL);
             cursor.set_dimensions(pi.get_dimensions());
-            cursor.hotspot.x = pi.hotspot.x;
-            cursor.hotspot.y = pi.hotspot.y;
+            cursor.set_hotspot(pi.get_hotspot());
             memcpy(cursor.data, pi.data, sizeof(pi.data));
             memcpy(cursor.mask, pi.mask, sizeof(pi.mask));
             this->statistics.PointerIndex.total_len += this->stream.get_current() - p;
@@ -787,8 +788,10 @@ void FileToGraphic::interpret_order()
         /* cursor.bpp   = this->stream.in_uint8();*/
         this->stream.in_skip_bytes(1);
 
-        cursor.hotspot.x = this->stream.in_uint8();
-        cursor.hotspot.y = this->stream.in_uint8();
+        auto hotspot_x = this->stream.in_uint8();
+        auto hotspot_y = this->stream.in_uint8();
+        Pointer::Hotspot hotspot(hotspot_x, hotspot_y);
+        cursor.set_hotspot(hotspot);
 
         uint16_t data_size = this->stream.in_uint16_le();
         assert(data_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 3);

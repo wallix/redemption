@@ -58,8 +58,7 @@ public:
 
     void add_pointer_static(const Pointer & cursor, int index) {
         assert((index >= 0) && (index < MAX_POINTER_COUNT));
-        this->Pointers[index].hotspot.x = cursor.hotspot.x;
-        this->Pointers[index].hotspot.y = cursor.hotspot.y;
+        this->Pointers[index].set_hotspot(cursor.get_hotspot());
         this->Pointers[index].set_dimensions(cursor.get_dimensions());
 //        this->Pointers[index].bpp = cursor.bpp;
         memcpy(this->Pointers[index].data, cursor.data, cursor.data_size());
@@ -72,7 +71,8 @@ public:
     /* check if the pointer is in the cache or not and if it should be sent      */
     int add_pointer(const Pointer & cursor, int & cache_idx)
     {
-        auto dimensions = cursor.get_dimensions();
+        const auto dimensions = cursor.get_dimensions();
+        const auto hotspot = cursor.get_hotspot();
 
 
         int i;
@@ -82,12 +82,11 @@ public:
         this->pointer_stamp++;
         /* look for match */
         for (i = 0; i < this->pointer_cache_entries; i++) {
-            auto dimensions_i = this->Pointers[i].get_dimensions();
+            const auto dimensions_i = this->Pointers[i].get_dimensions();
+            const auto hotspot_i = this->Pointers[i].get_hotspot();
         
-            if (this->Pointers[i].hotspot.x == cursor.hotspot.x
-            &&  this->Pointers[i].hotspot.y == cursor.hotspot.y
-            &&  dimensions_i.width == dimensions.width
-            &&  dimensions_i.height == dimensions.height
+            if (hotspot_i.x == hotspot.x &&  hotspot_i.y == hotspot.y
+            &&  dimensions_i.width == dimensions.width && dimensions_i.height == dimensions.height
 //            &&  this->Pointers[i].bpp == cursor.bpp
             &&  (memcmp(this->Pointers[i].data, cursor.data, cursor.data_size()) == 0)
             &&  (memcmp(this->Pointers[i].mask, cursor.mask, cursor.mask_size()) == 0)) {

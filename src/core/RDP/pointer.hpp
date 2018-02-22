@@ -80,7 +80,7 @@ private:
 public:
     uint8_t  pointer_type;
 
-//private:
+private:
     Hotspot hotspot;
 
 public:
@@ -99,6 +99,15 @@ public:
         this->dimensions = dimensions;
     }
 
+    Hotspot get_hotspot() const
+    {
+        return this->hotspot;
+    }
+
+    void set_hotspot(const Hotspot & hotspot)
+    {
+        this->hotspot = hotspot;
+    }
 
 public:
     explicit Pointer(uint8_t pointer_type = POINTER_NULL)

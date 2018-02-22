@@ -466,6 +466,8 @@ public:
 protected:
     void send_pointer(int cache_idx, const Pointer & cursor) override {
         auto const dimensions = cursor.get_dimensions();
+        auto const hotspot = cursor.get_hotspot();
+
         if ((dimensions.width != 32) || (dimensions.height != 32)) {
             this->send_pointer2(cache_idx, cursor);
             return;
@@ -485,8 +487,9 @@ protected:
         payload.out_uint16_le(this->mouse_x);
         payload.out_uint16_le(this->mouse_y);
         payload.out_uint8(cache_idx);
-        payload.out_uint8(cursor.hotspot.x);
-        payload.out_uint8(cursor.hotspot.y);
+        
+        payload.out_uint8(hotspot.x);
+        payload.out_uint8(hotspot.y);
         this->trans.send(payload.get_data(), payload.get_offset());
 
         this->trans.send(cursor.data, cursor.data_size());
@@ -495,6 +498,7 @@ protected:
 
     void send_pointer2(int cache_idx, const Pointer & cursor) {
         auto const dimensions = cursor.get_dimensions();
+        auto const hotspot = cursor.get_hotspot();
 
         size_t size =   2                   // mouse x
                       + 2                   // mouse y
@@ -524,8 +528,8 @@ protected:
         payload.out_uint8(dimensions.height);
         payload.out_uint8(24);
 
-        payload.out_uint8(cursor.hotspot.x);
-        payload.out_uint8(cursor.hotspot.y);
+        payload.out_uint8(hotspot.x);
+        payload.out_uint8(hotspot.y);
 
         payload.out_uint16_le(cursor.data_size());
         payload.out_uint16_le(cursor.mask_size());
