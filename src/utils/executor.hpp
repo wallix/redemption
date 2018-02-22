@@ -940,25 +940,28 @@ struct REDEMPTION_CXX_NODISCARD TimerBuilder
     }
 
     TimerBuilder(TimerPtr&& timer_ptr) noexcept
-    : timer_ptr(static_cast<TimerPtr&&>(timer_ptr))
+    : timer_ptr(std::move(timer_ptr))
     {}
+
+protected:
+    decltype(auto) internal_value() noexcept { return this->timer_ptr; }
 
 private:
     template<int Mask2>
     decltype(auto) select_return() noexcept
     {
         if constexpr (Mask == (~Mask2 & 0b11)) {
-            return static_cast<TimerPtr&&>(this->timer_ptr);
+            return std::move(this->timer_ptr);
         }
         else {
             return TimerBuilder<TimerPtr, Mask | Mask2>(std::move(this->timer_ptr));
         }
     }
 
-    TimerPtr timer_ptr;
+    TimerPtr&& timer_ptr;
 };
 
-template<class ActionPtr>
+template<class ActionPtr, int = 0>
 struct REDEMPTION_CXX_NODISCARD ActionBuilder
 {
     template<class F>
@@ -969,11 +972,14 @@ struct REDEMPTION_CXX_NODISCARD ActionBuilder
     }
 
     ActionBuilder(ActionPtr&& action_ptr) noexcept
-    : action_ptr(static_cast<ActionPtr&&>(action_ptr))
+    : action_ptr(std::move(action_ptr))
     {}
 
+protected:
+    decltype(auto) internal_value() noexcept { return this->action_ptr; }
+
 private:
-    ActionPtr action_ptr;
+    ActionPtr&& action_ptr;
 };
 
 template<class FdPtr, int Mask = 0>
@@ -1022,11 +1028,14 @@ struct TopFdBuilder
     }
 
     TopFdBuilder(FdPtr&& fd_ptr) noexcept
-    : fd_ptr(static_cast<FdPtr&&>(fd_ptr))
+    : fd_ptr(std::move(fd_ptr))
     {}
 
+protected:
+    decltype(auto) internal_value() noexcept { return this->fd_ptr; }
+
 private:
-    FdPtr fd_ptr;
+    FdPtr&& fd_ptr;
 };
 
 
@@ -1156,14 +1165,6 @@ struct UniquePtrEventWithUPtr;
 
 namespace detail
 {
-    template<class Event>
-    struct event_with_uptr : Event
-    {
-        using Event::Event;
-
-        std::unique_ptr<Event, DeleteSelf<typename Event::base_type>>* uptr;
-    };
-
     struct UniquePtrEventWithUPtrAccess
     {
         template<class UEvent>
@@ -1181,19 +1182,12 @@ namespace detail
 }
 
 template<class Event>
-struct UniquePtrEventWithUPtr
+struct UniquePtrWithNotifyDelete
 {
-    UniquePtrEventWithUPtr() noexcept = default;
-
-    UniquePtrEventWithUPtr(detail::event_with_uptr<Event>* e) noexcept
-    : p(e)
-    , uptr_in_event(&e->uptr)
-    {
-        *this->uptr_in_event = &p;
-    }
+    UniquePtrWithNotifyDelete() noexcept = default;
 
     template<class InheritEvent>
-    UniquePtrEventWithUPtr(UniquePtrEventWithUPtr<InheritEvent>&& other) noexcept
+    UniquePtrWithNotifyDelete(UniquePtrWithNotifyDelete<InheritEvent>&& other) noexcept
     : p(std::move(detail::UniquePtrEventWithUPtrAccess::p(other)))
     , uptr_in_event(reinterpret_cast<UniquePtr**>(
         detail::UniquePtrEventWithUPtrAccess::uptr_in_event(other)))
@@ -1202,7 +1196,7 @@ struct UniquePtrEventWithUPtr
     }
 
     template<class InheritEvent>
-    UniquePtrEventWithUPtr& operator=(UniquePtrEventWithUPtr<InheritEvent>&& other) noexcept
+    UniquePtrWithNotifyDelete& operator=(UniquePtrWithNotifyDelete<InheritEvent>&& other) noexcept
     {
         // don't use this->p = std:move(detail::UniquePtrEventWithUPtrAccess::p(other))
         // because a temporay unique_ptr is created and uptr_in_event become invalid
@@ -1247,29 +1241,64 @@ private:
     friend detail::UniquePtrEventWithUPtrAccess;
     using UniquePtr = std::unique_ptr<Event, DeleteSelf<typename Event::base_type>>;
     UniquePtr p;
-    UniquePtr** uptr_in_event; // pointer on event_with_uptr::uptr
+    UniquePtr** uptr_in_event; // pointer on EventPrivate::uptr
+
+protected:
+    UniquePtrWithNotifyDelete(Event* e, UniquePtr** event_uptr_ref) noexcept
+    : p(e)
+    , uptr_in_event(event_uptr_ref)
+    {
+        *this->uptr_in_event = &this->p;
+    }
 };
 
-template<class Event, class... Args>
-static UniquePtrEventWithUPtr<Event>
-new_event(Args&&... args)
+template<class Event>
+struct UniquePtrEventWithUPtr : UniquePtrWithNotifyDelete<Event>
 {
-    using NewEvent = detail::event_with_uptr<Event>;
-    auto* p = new("") NewEvent(static_cast<Args&&>(args)...);
-    p->deleter = [](auto* base) noexcept {
-        auto* e = static_cast<NewEvent*>(base);
+    using UniquePtrWithNotifyDelete<Event>::UniquePtrWithNotifyDelete;
+    using UniquePtrWithNotifyDelete<Event>::operator=;
+
+    struct EventPrivate : Event
+    {
+        using Event::Event;
+
+        template<class NotifyDelete>
+        void set_deleter(NotifyDelete) noexcept
+        {
+            this->deleter = [](auto* base) noexcept {
+                auto* e = static_cast<EventPrivate*>(base);
 # ifndef NDEBUG
-        e->deleter = [](auto*) noexcept { assert(!"already delete"); };
+                e->deleter = [](auto*) noexcept { assert(!"already delete"); };
 # endif
-        // jln::make_lambda<DeleteEvent>()(ctx...);
-        assert(e->uptr->get() == nullptr || e->uptr->get() == base);
-        e->uptr->release();
-        delete e;
+                if constexpr (!std::is_same<std::nullptr_t, NotifyDelete>::value) {
+                    e->ctx.invoke(jln::make_lambda<NotifyDelete>());
+                }
+                assert(e->uptr->get() == nullptr || e->uptr->get() == base);
+                e->uptr->release();
+                delete e;
+            };
+        }
+
+        std::unique_ptr<Event, DeleteSelf<typename Event::base_type>>* uptr;
     };
-    UniquePtrEventWithUPtr<Event> uptr(p);
-    p->attach();
-    return uptr;
-}
+
+    template<class... Args>
+    static UniquePtrEventWithUPtr New(Args&&... args)
+    {
+        using NewEvent = EventPrivate;
+        auto* p = new("") NewEvent(static_cast<Args&&>(args)...);
+        p->set_deleter(nullptr);
+        UniquePtrEventWithUPtr<Event> uptr(p, &p->uptr);
+        p->attach();
+        return uptr;
+    }
+
+    template<class NotifyDelete>
+    void set_deleter(NotifyDelete d)
+    {
+        this->p->set_deleter(d);
+    }
+};
 
 template<class EventContainer, class PrefixArgs, class... Ts>
 struct TimerImpl : BasicEvent<

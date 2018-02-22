@@ -148,7 +148,7 @@ struct SessionReactor
     };
 
     using BasicTimer = jln::BasicTimer<jln::prefix_args<>>;
-    using BasicTimerPtr = jln::UniquePtrEventWithUPtr<BasicTimer>;
+    using BasicTimerPtr = jln::UniquePtrWithNotifyDelete<BasicTimer>;
 
     struct TimerContainer : Container<BasicTimer>
     {
@@ -188,27 +188,51 @@ struct SessionReactor
         using Elem = jln::Timer<TimerContainer&, BasicTimer::prefix_args, Args...>;
     };
 
+
+    template<class Builder>
+    struct NotifyDeleterBuilderWrapper : Builder
+    {
+        using Builder::Builder;
+
+        template<class NotifyDeleter>
+        Builder&& set_deleter(NotifyDeleter d) && noexcept
+        {
+            this->internal_value().set_deleter(d);
+            return static_cast<Builder&&>(*this);
+        }
+    };
+
+
     template<class... Args>
-    jln::TimerBuilder<jln::UniquePtrEventWithUPtr<TimerContainer::Elem<Args...>>>
+    NotifyDeleterBuilderWrapper<jln::TimerBuilder<jln::UniquePtrEventWithUPtr<TimerContainer::Elem<Args...>>>>
     create_timer(Args&&... args)
     {
         using Timer = TimerContainer::Elem<Args...>;
-        return {jln::new_event<Timer>(this->timer_events_, static_cast<Args&&>(args)...)};
+        return {jln::UniquePtrEventWithUPtr<Timer>
+            ::New(this->timer_events_, static_cast<Args&&>(args)...)};
     }
 
     using CallbackEvent = jln::ActionBase<jln::prefix_args<Callback&>>;
-    using CallbackEventPtr = jln::UniquePtrEventWithUPtr<CallbackEvent>;
+    using CallbackEventPtr = jln::UniquePtrWithNotifyDelete<CallbackEvent>;
+
+    struct CallbackContainer : Container<CallbackEvent>
+    {
+        template<class... Args>
+        using Elem = jln::Action<CallbackContainer&, CallbackEvent::prefix_args, Args...>;
+    };
 
     template<class... Args>
-    auto create_callback_event(Args&&... args)
+    NotifyDeleterBuilderWrapper<jln::ActionBuilder<jln::UniquePtrEventWithUPtr<CallbackContainer::Elem<Args...>>>>
+    create_callback_event(Args&&... args)
     {
-        using Event = jln::Action<decltype((this->front_events_)), jln::prefix_args<Callback&>, Args...>;
-        return jln::new_event<Event>(this->front_events_, static_cast<Args&&>(args)...);
+        using Action = CallbackContainer::Elem<Args...>;
+        return {jln::UniquePtrEventWithUPtr<Action>
+            ::New(this->front_events_, static_cast<Args&&>(args)...)};
     }
 
 
     using GraphicEvent = jln::ActionBase<jln::prefix_args<gdi::GraphicApi&>>;
-    using GraphicEventPtr = jln::UniquePtrEventWithUPtr<GraphicEvent>;
+    using GraphicEventPtr = jln::UniquePtrWithNotifyDelete<GraphicEvent>;
 
     struct GraphicContainer : Container<GraphicEvent>
     {
@@ -217,11 +241,12 @@ struct SessionReactor
     };
 
     template<class... Args>
-    jln::ActionBuilder<jln::UniquePtrEventWithUPtr<GraphicContainer::Elem<Args...>>>
+    NotifyDeleterBuilderWrapper<jln::ActionBuilder<jln::UniquePtrEventWithUPtr<GraphicContainer::Elem<Args...>>>>
     create_graphic_event(Args&&... args)
     {
         using Action = GraphicContainer::Elem<Args...>;
-        return {jln::new_event<Action>(this->graphic_events_, static_cast<Args&&>(args)...)};
+        return {jln::UniquePtrEventWithUPtr<Action>
+            ::New(this->graphic_events_, static_cast<Args&&>(args)...)};
     }
 
     using BasicFd = jln::BasicExecutorImpl<PrefixArgs>;
@@ -333,7 +358,7 @@ struct SessionReactor
     template<class PrefixArgs_, class... Args>
     using Fd = FdImpl<PrefixArgs_, typename jln::detail::decay_and_strip<Args>::type...>;
 
-    using TopFdPtr = jln::UniquePtrEventWithUPtr<TopFd>;
+    using TopFdPtr = jln::UniquePtrWithNotifyDelete<TopFd>;
 
     struct TopFdContainer : Container<TopFd>
     {
@@ -342,16 +367,17 @@ struct SessionReactor
     };
 
     template<class... Args>
-    jln::TopFdBuilder<jln::UniquePtrEventWithUPtr<TopFdContainer::Elem<Args...>>>
+    NotifyDeleterBuilderWrapper<jln::TopFdBuilder<jln::UniquePtrEventWithUPtr<TopFdContainer::Elem<Args...>>>>
     create_fd_event(int fd, Args&&... args)
     {
         using EventFd = TopFdContainer::Elem<Args...>;
-        return {jln::new_event<EventFd>(fd, *this, static_cast<Args&&>(args)...)};
+        return {jln::UniquePtrEventWithUPtr<EventFd>
+            ::New(fd, *this, static_cast<Args&&>(args)...)};
     }
 
 
     //std::vector<std::unique_ptr<Context>> contexts;
-    Container<CallbackEvent> front_events_;
+    CallbackContainer front_events_;
     GraphicContainer graphic_events_;
     TimerContainer timer_events_;
     TopFdContainer fd_events_;
