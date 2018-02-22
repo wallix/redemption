@@ -168,12 +168,14 @@ public:
                         /* 0b40 */ "XX.............................."
                         /* 0ba0 */ "X..............................."
                         ;
+                    const char * data_cursor = data_cursor0;
                     uint8_t * tmp = this->data;
+                    memset(this->mask, 0, this->dimensions.width * this->dimensions.height / 8);
                     for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
-                        uint8_t v = (data_cursor0[i] == 'X') ? 0xFF : 0;
+                        uint8_t v = (data_cursor[i] == 'X') ? 0xFF : 0;
                         tmp[0] = tmp[1] = tmp[2] = v;
                         tmp += 3;
-                        mask[i/8]|= (data_cursor0[i] == '.')?(i%8 == 0)?0x80:(0x80 >> (i%8)):0;
+                        this->mask[i/8]|= (data_cursor[i] == '.')?(0x80 >> (i%8)):0;
                     }
                 }
                 break;  // case POINTER_NORMAL:
@@ -220,14 +222,14 @@ public:
                         /* 0b40 */ "................................"
                         /* 0ba0 */ "................................"
                         ;
+                    const char * data_cursor = data_cursor1;
                     uint8_t * tmp = this->data;
-                    memset(this->mask, this->dimensions.width * this->dimensions.height / 8, 0);
+                    memset(this->mask, 0, this->dimensions.width * this->dimensions.height / 8);
                     for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
-                        uint8_t v = (data_cursor1[i] == 'X') ? 0xFF : 0;
+                        uint8_t v = (data_cursor[i] == 'X') ? 0xFF : 0;
                         tmp[0] = tmp[1] = tmp[2] = v;
                         tmp += 3;
-                        this->mask[i/8]|= (data_cursor1[i] == '.')?(0x80 >> (i%8)):0;
-                        LOG(LOG_INFO, "%d %.2x", i, this->mask[i/8]); 
+                        this->mask[i/8]|= (data_cursor[i] == '.')?(0x80 >> (i%8)):0;
                     }
                 }
                 break;  // case POINTER_EDIT:
