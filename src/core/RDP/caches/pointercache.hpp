@@ -58,8 +58,8 @@ public:
 
     void add_pointer_static(const Pointer & cursor, int index) {
         assert((index >= 0) && (index < MAX_POINTER_COUNT));
-        this->Pointers[index].x = cursor.x;
-        this->Pointers[index].y = cursor.y;
+        this->Pointers[index].hotspot.x = cursor.hotspot.x;
+        this->Pointers[index].hotspot.y = cursor.hotspot.y;
         this->Pointers[index].set_dimensions(cursor.get_dimensions());
 //        this->Pointers[index].bpp = cursor.bpp;
         memcpy(this->Pointers[index].data, cursor.data, cursor.data_size());
@@ -84,8 +84,8 @@ public:
         for (i = 0; i < this->pointer_cache_entries; i++) {
             auto dimensions_i = this->Pointers[i].get_dimensions();
         
-            if (this->Pointers[i].x == cursor.x
-            &&  this->Pointers[i].y == cursor.y
+            if (this->Pointers[i].hotspot.x == cursor.hotspot.x
+            &&  this->Pointers[i].hotspot.y == cursor.hotspot.y
             &&  dimensions_i.width == dimensions.width
             &&  dimensions_i.height == dimensions.height
 //            &&  this->Pointers[i].bpp == cursor.bpp

@@ -403,16 +403,16 @@ public:
         LOG(LOG_INFO, "drawing cursor");
 
         if (this->client->is_replaying) {
-            this->cursor_image = QImage(static_cast<uchar *>(data), cursor.x, cursor.y, QImage::Format_ARGB32_Premultiplied);
+            this->cursor_image = QImage(static_cast<uchar *>(data), cursor.hotspot.x, cursor.hotspot.y, QImage::Format_ARGB32_Premultiplied);
         } else {
             if (this->drawn_client->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
                  for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
                     if (it->second) {
-                        it->second->set_mem_cursor(static_cast<uchar *>(data), cursor.x, cursor.y);
+                        it->second->set_mem_cursor(static_cast<uchar *>(data), cursor.hotspot.x, cursor.hotspot.y);
                     }
                 }
             } else if (this->screen) {
-                this->screen->set_mem_cursor(static_cast<uchar *>(data), cursor.x, cursor.y);
+                this->screen->set_mem_cursor(static_cast<uchar *>(data), cursor.hotspot.x, cursor.hotspot.y);
             }
         }
     }

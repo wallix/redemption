@@ -65,6 +65,13 @@ public:
         CursorSize(const CursorSize & cs) : width(cs.width), height(cs.height) {}
     };
 
+    struct Hotspot {
+        unsigned x;
+        unsigned y;
+        Hotspot(int x, int y) : x(x), y(y) {}
+        Hotspot(const Hotspot & hs) : x(hs.x), y(hs.y) {}
+    };
+
 private:
 //    unsigned bpp;
     
@@ -73,11 +80,10 @@ private:
 public:
     uint8_t  pointer_type;
 
-    /* hotspot */
-    int x;
-    int y;
+//private:
+    Hotspot hotspot;
 
-
+public:
     uint8_t data[DATA_SIZE];
     uint8_t mask[MASK_SIZE];
 
@@ -98,6 +104,7 @@ public:
     explicit Pointer(uint8_t pointer_type = POINTER_NULL)
     :   dimensions{0, 0}
     ,   pointer_type(pointer_type)
+    ,   hotspot{0, 0}
     {
         switch (pointer_type) {
             default:
@@ -106,8 +113,8 @@ public:
 //                    this->bpp              = 24;
                     this->dimensions.width            = 32;
                     this->dimensions.height           = 32;
-                    this->x                = 0;
-                    this->y                = 0;
+                    this->hotspot.x                = 0;
+                    this->hotspot.y                = 0;
                     this->only_black_white = true;
                     ::memset(this->data, 0, DATA_SIZE);
                     ::memset(this->mask, 0xFF, MASK_SIZE);
@@ -119,8 +126,8 @@ public:
 //                    this->bpp              = 24;
                     this->dimensions.width            = 32;
                     this->dimensions.height           = 32;
-                    this->x                = 0; /* hotspot */
-                    this->y                = 0;
+                    this->hotspot.x                = 0; /* hotspot */
+                    this->hotspot.y                = 0;
                     this->only_black_white = true;
                     const char * data_cursor0 =
                         /* 0000 */ "................................"
@@ -206,8 +213,8 @@ public:
 //                    this->bpp                = 24;
                     this->dimensions.width              = 32;
                     this->dimensions.height             = 32;
-                    this->x                  = 15; /* hotspot */
-                    this->y                  = 16;
+                    this->hotspot.x                  = 15; /* hotspot */
+                    this->hotspot.y                  = 16;
                     this->only_black_white = true;
                     const char * data_cursor1 =
                         /* 0000 */ "................................"
@@ -292,8 +299,8 @@ public:
 //                    this->bpp              = 24;
                     this->dimensions.width            = 32;
                     this->dimensions.height           = 32;
-                    this->x                = 0; /* hotspot */
-                    this->y                = 0;
+                    this->hotspot.x                = 0; /* hotspot */
+                    this->hotspot.y                = 0;
                     this->only_black_white = true;
                     const char * data_cursor2 =
                         /* 0000 */ "................................"
@@ -379,8 +386,8 @@ public:
 //                    this->bpp              = 24;
                     this->dimensions.width = 32;
                     this->dimensions.height           = 32;
-                    this->x                = 10; /* hotspot */
-                    this->y                = 10;
+                    this->hotspot.x                = 10; /* hotspot */
+                    this->hotspot.y                = 10;
                     this->only_black_white = true;
                     const char * data_cursor3 =
                         /* 0000 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
@@ -466,8 +473,8 @@ public:
 //                    this->bpp              = 24;
                     this->dimensions.width = 32;
                     this->dimensions.height           = 32;
-                    this->x                = 10; /* hotspot */
-                    this->y                = 10;
+                    this->hotspot.x                = 10; /* hotspot */
+                    this->hotspot.y                = 10;
                     this->only_black_white = true;
                     const char * data_cursor4 =
                         /* 0000 */ "................................"
@@ -553,8 +560,8 @@ public:
 //                    this->bpp              = 24;
                     this->dimensions.width            = 32;
                     this->dimensions.height           = 32;
-                    this->x                = 10; /* hotspot */
-                    this->y                = 10;
+                    this->hotspot.x                = 10; /* hotspot */
+                    this->hotspot.y                = 10;
                     this->only_black_white = true;
                     const char * data_cursor5 =
                         /* 0000 */ "................................"
@@ -640,8 +647,8 @@ public:
 //                    this->bpp              = 24;
                     this->dimensions.width            = 32;
                     this->dimensions.height           = 32;
-                    this->x                = 10; /* hotspot */
-                    this->y                = 10;
+                    this->hotspot.x                = 10; /* hotspot */
+                    this->hotspot.y                = 10;
                     this->only_black_white = true;
                     const char * data_cursor6 =
                         /* 0000 */ "................................"
@@ -727,8 +734,8 @@ public:
 //                    this->bpp              = 24;
                     this->dimensions.width            = 32;
                     this->dimensions.height           = 32;
-                    this->x                = 10; /* hotspot */
-                    this->y                = 10;
+                    this->hotspot.x                = 10; /* hotspot */
+                    this->hotspot.y                = 10;
                     this->only_black_white = true;
                     const char * data_cursor7 =
                         /* 0000 */ "................................"
@@ -816,8 +823,8 @@ public:
 //        this->bpp    = bpp;
         this->dimensions.width  = width;
         this->dimensions.height = height;
-        this->x      = x;
-        this->y      = y;
+        this->hotspot.x      = x;
+        this->hotspot.y      = y;
 
         assert(data_size == sizeof(this->data));
         ::memcpy(this->data, data, std::min(data_size, sizeof(this->data)));
@@ -830,8 +837,8 @@ public:
     //         (this->bpp    == other.bpp)
     //      && (this->dimensions.width  == other.dimensions.width)
     //      && (this->dimensions.height == other.dimensions.height)
-    //      && (this->x      == other.x)
-    //      && (this->y      == other.y)
+    //      && (this->hotspot.x      == other.x)
+    //      && (this->hotspot.y      == other.y)
     //      && (memcmp(this->data, other.data, this->data_size()) == 0)
     //      && (memcmp(this->mask, other.mask, this->mask_size()) == 0)
     //      );

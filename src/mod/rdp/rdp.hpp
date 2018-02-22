@@ -6806,8 +6806,8 @@ public:
         Pointer & cursor = this->cursors[pointer_cache_idx];
 
         memset(&cursor, 0, sizeof(Pointer));
-        cursor.x      = stream.in_uint16_le();
-        cursor.y      = stream.in_uint16_le();
+        cursor.hotspot.x      = stream.in_uint16_le();
+        cursor.hotspot.y      = stream.in_uint16_le();
         uint16_t width = stream.in_uint16_le();
         uint16_t height = stream.in_uint16_le();
         cursor.set_dimensions(Pointer::CursorSize(width, height));
@@ -7145,8 +7145,8 @@ public:
 
         Pointer & cursor = this->cursors[pointer_idx];
         memset(&cursor, 0, sizeof(Pointer));
-        cursor.x                = stream.in_uint16_le();
-        cursor.y                = stream.in_uint16_le();
+        cursor.hotspot.x                = stream.in_uint16_le();
+        cursor.hotspot.y                = stream.in_uint16_le();
         uint16_t width            = stream.in_uint16_le(); 
         uint16_t height            = stream.in_uint16_le(); 
         Pointer::CursorSize dimensions(width, height);
@@ -7169,12 +7169,12 @@ public:
         //    "mod_rdp::process_new_pointer_pdu width=%u height=%u",
         //    width, height);
 
-        if (static_cast<unsigned>(cursor.x) >= width){
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot x out of pointer (%d >= %u)", cursor.x, width);
+        if (cursor.hotspot.x >= width){
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot x out of pointer (%u >= %u)", cursor.hotspot.x, width);
         }
 
-        if (static_cast<unsigned>(cursor.y) >= height){
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot y out of pointer (%d >= %u)", cursor.y, height);
+        if (cursor.hotspot.y >= height){
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot y out of pointer (%u >= %u)", cursor.hotspot.y, height);
         }
 
         if (!stream.in_check_rem(dlen)){

@@ -323,8 +323,8 @@ enum {
                     case 19:
                     {
                         Pointer cursor;
-                        cursor.x = stream.in_sint16_le();
-                        cursor.y = stream.in_sint16_le();
+                        cursor.hotspot.x = stream.in_sint16_le();
+                        cursor.hotspot.y = stream.in_sint16_le();
                         stream.in_copy_bytes(cursor.data, 32 * (32 * 3));
                         stream.in_copy_bytes(cursor.mask, 32 * (32 / 8));
                         this->front.set_pointer(cursor);

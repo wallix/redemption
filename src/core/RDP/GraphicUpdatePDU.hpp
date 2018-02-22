@@ -675,12 +675,12 @@ protected:
 //            xPos (2 bytes): A 16-bit, unsigned integer. The x-coordinate
 //              relative to the top-left corner of the server's desktop.
 
-        stream.out_uint16_le(cursor.x);
+        stream.out_uint16_le(cursor.hotspot.x);
 
 //            yPos (2 bytes): A 16-bit, unsigned integer. The y-coordinate
 //              relative to the top-left corner of the server's desktop.
 
-        stream.out_uint16_le(cursor.y);
+        stream.out_uint16_le(cursor.hotspot.y);
 
 //    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in
 //      pixels (the maximum allowed pointer width is 32 pixels).
@@ -742,12 +742,12 @@ protected:
 //            xPos (2 bytes): A 16-bit, unsigned integer. The x-coordinate
 //              relative to the top-left corner of the server's desktop.
 
-        stream.out_uint16_le(cursor.x);
+        stream.out_uint16_le(cursor.hotspot.x);
 
 //            yPos (2 bytes): A 16-bit, unsigned integer. The y-coordinate
 //              relative to the top-left corner of the server's desktop.
 
-        stream.out_uint16_le(cursor.y);
+        stream.out_uint16_le(cursor.hotspot.y);
 
 //    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in
 //      pixels (the maximum allowed pointer width is 32 pixels).

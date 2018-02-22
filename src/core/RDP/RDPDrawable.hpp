@@ -922,7 +922,7 @@ public:
 
     void set_pointer(const Pointer & cursor) override {
         auto dimensions = cursor.get_dimensions();
-        this->drawable.use_pointer(cursor.x, cursor.y, dimensions.width, dimensions.height, cursor.data, cursor.mask);
+        this->drawable.use_pointer(cursor.hotspot.x, cursor.hotspot.y, dimensions.width, dimensions.height, cursor.data, cursor.mask);
     }
 
     void set_palette(const BGRPalette & palette) override {
