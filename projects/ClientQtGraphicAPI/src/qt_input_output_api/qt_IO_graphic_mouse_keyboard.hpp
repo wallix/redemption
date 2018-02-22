@@ -371,8 +371,9 @@ public:
 
     virtual void set_pointer(Pointer const & cursor) override {
 
-        QImage image_data(cursor.data, cursor.width, cursor.height, this->bpp_to_QFormat(24, false));
-        QImage image_mask(cursor.mask, cursor.width, cursor.height, QImage::Format_Mono);
+        auto dimensions = cursor.get_dimensions();
+        QImage image_data(cursor.data, dimensions.width, dimensions.height, this->bpp_to_QFormat(24, false));
+        QImage image_mask(cursor.mask, dimensions.width, dimensions.height, QImage::Format_Mono);
 
         if (cursor.mask[0x48] == 0xFF &&
             cursor.mask[0x49] == 0xFF &&
@@ -393,7 +394,7 @@ public:
         
         uint8_t data[Pointer::DATA_SIZE*4];
 
-        for (int i = 0; i < std::min<int>(Pointer::DATA_SIZE * 4, cursor.width * cursor.height * 4); i += 4) {
+        for (int i = 0; i < std::min<int>(Pointer::DATA_SIZE * 4, dimensions.width * dimensions.height * 4); i += 4) {
             data[i  ] = data_data[i+2];
             data[i+1] = data_data[i+1];
             data[i+2] = data_data[i  ];
