@@ -1106,6 +1106,7 @@ test-run tests/core/RDP/caches/test_pointercache :
   $(REDEMPTION_TEST_PATH)/core/RDP/caches/test_pointercache.cpp
 :
   <covfile>src/core/RDP/caches/pointercache.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/capabilities/test_activate :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_activate.cpp
@@ -1722,15 +1723,16 @@ test-run tests/core/RDP/test_out_per_bstream :
   <library>crypto
   <library>src/utils/hexdump.o
 ;
-test-run tests/core/RDP/test_pointer :
-  $(REDEMPTION_TEST_PATH)/core/RDP/test_pointer.cpp
-:
-  <covfile>src/core/RDP/pointer.hpp
-;
 test-run tests/core/RDP/test_protocol :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_protocol.cpp
 :
   <covfile>src/core/RDP/protocol.hpp
+;
+test-run tests/core/RDP/test_rdp_pointer :
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_rdp_pointer.cpp
+:
+  <covfile>src/core/RDP/rdp_pointer.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_remote_programs :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_remote_programs.cpp
@@ -3342,31 +3344,71 @@ test-run tests/mod/vnc/encoder/test_hextile :
   $(REDEMPTION_TEST_PATH)/mod/vnc/encoder/test_hextile.cpp
 :
   <covfile>src/mod/vnc/encoder/hextile.hpp
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymapSym.o
+  <library>src/mod/internal/client_execute.o
+  <library>src/mod/internal/internal_mod.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/edit.o
+  <library>src/mod/internal/widget/edit_valid.o
+  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/flat_vnc_authentification.o
+  <library>src/mod/internal/widget/image.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/password.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/d3des.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/fake_graphic.o
+  <library>z
 ;
 test-run tests/mod/vnc/encoder/test_zrle :
   $(REDEMPTION_TEST_PATH)/mod/vnc/encoder/test_zrle.cpp
 :
   <covfile>src/mod/vnc/encoder/zrle.hpp
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymapSym.o
+  <library>src/mod/internal/client_execute.o
+  <library>src/mod/internal/internal_mod.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/edit.o
+  <library>src/mod/internal/widget/edit_valid.o
+  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/flat_vnc_authentification.o
+  <library>src/mod/internal/widget/image.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/password.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/d3des.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/fake_graphic.o
+  <library>z
 ;
 test-run tests/mod/vnc/test_vnc :
   $(REDEMPTION_TEST_PATH)/mod/vnc/test_vnc.cpp
@@ -3411,6 +3453,7 @@ test-run tests/mod/xup/test_xup :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
 ;
 test-run tests/regex/test_regex :
@@ -4561,10 +4604,10 @@ alias test_non_null_terminated_utf16_from_utf8 : tests/core/RDP/test_non_null_te
 alias test_non_null_terminated_utf16_from_utf8.coverage : tests/core/RDP/test_non_null_terminated_utf16_from_utf8.coverage ;
 alias test_out_per_bstream : tests/core/RDP/test_out_per_bstream ;
 alias test_out_per_bstream.coverage : tests/core/RDP/test_out_per_bstream.coverage ;
-alias test_rdp_pointer : tests/core/RDP/test_pointer ;
-alias test_rdp_pointer.coverage : tests/core/RDP/test_pointer.coverage ;
 alias test_protocol : tests/core/RDP/test_protocol ;
 alias test_protocol.coverage : tests/core/RDP/test_protocol.coverage ;
+alias test_rdp_pointer : tests/core/RDP/test_rdp_pointer ;
+alias test_rdp_pointer.coverage : tests/core/RDP/test_rdp_pointer.coverage ;
 alias test_remote_programs : tests/core/RDP/test_remote_programs ;
 alias test_remote_programs.coverage : tests/core/RDP/test_remote_programs.coverage ;
 alias test_sec : tests/core/RDP/test_sec ;
@@ -5140,8 +5183,8 @@ alias tests/core/RDP :
   tests/core/RDP/test_nego
   tests/core/RDP/test_non_null_terminated_utf16_from_utf8
   tests/core/RDP/test_out_per_bstream
-  tests/core/RDP/test_pointer
   tests/core/RDP/test_protocol
+  tests/core/RDP/test_rdp_pointer
   tests/core/RDP/test_remote_programs
   tests/core/RDP/test_sec
   tests/core/RDP/test_share

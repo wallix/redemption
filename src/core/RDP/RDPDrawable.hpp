@@ -26,7 +26,7 @@
 #include "core/font.hpp"
 
 #include "core/RDP/bitmapupdate.hpp"
-#include "core/RDP/pointer.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 
 #include "core/RDP/caches/glyphcache.hpp"
 

@@ -31,7 +31,7 @@
 #include <errno.h>
 
 /* include "ther h files */
-#include "core/RDP/pointer.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"

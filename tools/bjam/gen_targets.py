@@ -56,8 +56,9 @@ dir_requirements = dict((
     ('tests/sashimi', '<cxxflags>-Wno-format <cxxflags>-Wno-format-security'),
 ))
 
+# This is usefull if several source files have the same name to disambiguate tests
 target_pre_renames = dict((
-    ('tests/core/RDP/test_pointer.cpp', 'test_rdp_pointer'),
+#    ('tests/core/RDP/test_pointer.cpp', 'test_rdp_pointer'),
 ))
 
 target_renames = dict((

@@ -24,7 +24,7 @@
 
 #include "utils/sugar/noncopyable.hpp"
 
-#include "core/RDP/pointer.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 
 
 enum {

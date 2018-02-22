@@ -36,7 +36,7 @@ h
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "core/RDP/pointer.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 #include "core/report_message_api.hpp"
 #include "keyboard/keymapSym.hpp"
 #include "main/version.hpp"

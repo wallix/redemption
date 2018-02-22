@@ -53,7 +53,7 @@
 #include "core/RDP/RefreshRectPDU.hpp"
 #include "core/RDP/SaveSessionInfoPDU.hpp"
 #include "core/RDP/SuppressOutputPDU.hpp"
-#include "core/RDP/pointer.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 #include "core/RDP/mppc.hpp"
 #include "core/RDP/capabilities/cap_bitmap.hpp"
 #include "core/RDP/capabilities/order.hpp"
