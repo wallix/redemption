@@ -99,18 +99,19 @@ public:
     , verbose(verbose)
     {}
 
-    void configure_event(SessionReactor& session_reactor) override
+    void configure_event(SessionReactor& session_reactor, DeleterFunction f) override
     {
         assert(!this->fdobject);
-        this->fdobject = session_reactor.create_fd_event(this->file_descriptor, std::ref(*this))
-        .on_action([](auto ctx, RdpdrDriveReadTask& self) {
+        this->fdobject = session_reactor.create_fd_event(this->file_descriptor, std::ref(*this), f)
+        .set_notify_delete([](RdpdrDriveReadTask& self, DeleterFunction& f){ f(self); })
+        .on_action([](auto ctx, RdpdrDriveReadTask& self, DeleterFunction&) {
             return self.run() ? ctx.ready() : ctx.terminate();
         })
-        .on_exit([](auto ctx, jln::ExecutorError, RdpdrDriveReadTask&) {
+        .on_exit([](auto ctx, jln::ExecutorError, RdpdrDriveReadTask&, DeleterFunction&) {
             return ctx.exit_on_success();
         })
         .set_timeout(std::chrono::milliseconds(1000))
-        .on_timeout([](auto ctx, RdpdrDriveReadTask& self){
+        .on_timeout([](auto ctx, RdpdrDriveReadTask& self, DeleterFunction&){
             LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!",
                 self.file_descriptor);
             return ctx.ready();
@@ -213,13 +214,14 @@ public:
         ::memcpy(this->data.get(), data, data_length);
     }
 
-    void configure_event(SessionReactor& session_reactor) override
+    void configure_event(SessionReactor& session_reactor, DeleterFunction f) override
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
-        this->timer_ptr = session_reactor.create_timer(std::ref(*this))
+        this->timer_ptr = session_reactor.create_timer(std::ref(*this), f)
+        .set_notify_delete([](RdpdrSendDriveIOResponseTask& self, DeleterFunction& f){ f(self); })
         .set_delay(std::chrono::milliseconds(1))
-        .on_action([](auto ctx, RdpdrSendDriveIOResponseTask& self){
+        .on_action([](auto ctx, RdpdrSendDriveIOResponseTask& self, DeleterFunction&){
             return self.run() ? ctx.ready() : ctx.terminate();
         });
     }
@@ -290,13 +292,17 @@ public:
         ::memcpy(this->chunked_data.get(), chunked_data, chunked_data_length);
     }
 
-    void configure_event(SessionReactor& session_reactor) override
+    void configure_event(SessionReactor& session_reactor, DeleterFunction f) override
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
-        this->timer_ptr = session_reactor.create_timer(std::ref(*this))
+        this->timer_ptr = session_reactor.create_timer(std::ref(*this), f)
+        .set_notify_delete([](RdpdrSendClientMessageTask& self, DeleterFunction& f){ f(self); })
         .set_delay(std::chrono::milliseconds(1))
-        .on_action(jln::one_shot<&RdpdrSendClientMessageTask::run>());
+        .on_action([](auto ctx, RdpdrSendClientMessageTask& self, DeleterFunction&){
+            self.run();
+            return ctx.terminate();
+        });
     }
 
     bool run()

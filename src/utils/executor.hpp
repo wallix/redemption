@@ -944,7 +944,7 @@ struct REDEMPTION_CXX_NODISCARD TimerBuilder
     {}
 
 protected:
-    decltype(auto) internal_value() noexcept { return this->timer_ptr; }
+    TimerPtr& internal_value() noexcept { return this->timer_ptr; }
 
 private:
     template<int Mask2>
@@ -958,7 +958,7 @@ private:
         }
     }
 
-    TimerPtr&& timer_ptr;
+    TimerPtr timer_ptr;
 };
 
 template<class ActionPtr, int = 0>
@@ -976,10 +976,10 @@ struct REDEMPTION_CXX_NODISCARD ActionBuilder
     {}
 
 protected:
-    decltype(auto) internal_value() noexcept { return this->action_ptr; }
+    ActionPtr& internal_value() noexcept { return this->action_ptr; }
 
 private:
-    ActionPtr&& action_ptr;
+    ActionPtr action_ptr;
 };
 
 template<class FdPtr, int Mask = 0>
@@ -1032,10 +1032,10 @@ struct TopFdBuilder
     {}
 
 protected:
-    decltype(auto) internal_value() noexcept { return this->fd_ptr; }
+    FdPtr& internal_value() noexcept { return this->fd_ptr; }
 
 private:
-    FdPtr&& fd_ptr;
+    FdPtr fd_ptr;
 };
 
 
@@ -1192,6 +1192,7 @@ struct UniquePtrWithNotifyDelete
     , uptr_in_event(reinterpret_cast<UniquePtr**>(
         detail::UniquePtrEventWithUPtrAccess::uptr_in_event(other)))
     {
+        LOG(LOG_DEBUG, "mv:: %p %p", static_cast<void*>(get()), static_cast<void*>(uptr_in_event));
         *this->uptr_in_event = &p;
     }
 
@@ -1200,10 +1201,13 @@ struct UniquePtrWithNotifyDelete
     {
         // don't use this->p = std:move(detail::UniquePtrEventWithUPtrAccess::p(other))
         // because a temporay unique_ptr is created and uptr_in_event become invalid
-        this->p.reset(detail::UniquePtrEventWithUPtrAccess::p(other).release());
+        LOG(LOG_DEBUG, "op = %p %p %p = %p %p %p", static_cast<void*>(get()), static_cast<void*>(uptr_in_event), static_cast<void*>(uptr_in_event ? (*uptr_in_event)->get() : nullptr), static_cast<void*>(other.get()), static_cast<void*>(detail::UniquePtrEventWithUPtrAccess::uptr_in_event(other)), static_cast<void*>((*detail::UniquePtrEventWithUPtrAccess::uptr_in_event(other))->get()));
+        auto* tmp = detail::UniquePtrEventWithUPtrAccess::p(other).release();
+        this->p.reset();
+        this->p.reset(tmp);
         this->uptr_in_event = reinterpret_cast<UniquePtr**>(
             detail::UniquePtrEventWithUPtrAccess::uptr_in_event(other));
-        *this->uptr_in_event = &p;
+        *this->uptr_in_event = &this->p;
         return *this;
     }
 
@@ -1241,7 +1245,7 @@ private:
     friend detail::UniquePtrEventWithUPtrAccess;
     using UniquePtr = std::unique_ptr<Event, DeleteSelf<typename Event::base_type>>;
     UniquePtr p;
-    UniquePtr** uptr_in_event; // pointer on EventPrivate::uptr
+    UniquePtr** uptr_in_event = nullptr; // pointer on EventPrivate::uptr
 
 protected:
     UniquePtrWithNotifyDelete(Event* e, UniquePtr** event_uptr_ref) noexcept
@@ -1249,6 +1253,7 @@ protected:
     , uptr_in_event(event_uptr_ref)
     {
         *this->uptr_in_event = &this->p;
+        LOG(LOG_DEBUG, "ctor: %p %p", static_cast<void*>(get()), static_cast<void*>(uptr_in_event));
     }
 };
 
@@ -1270,11 +1275,12 @@ struct UniquePtrEventWithUPtr : UniquePtrWithNotifyDelete<Event>
 # ifndef NDEBUG
                 e->deleter = [](auto*) noexcept { assert(!"already delete"); };
 # endif
+                LOG(LOG_DEBUG, "del: %p %p %p", static_cast<void*>(base), static_cast<void*>(&e->uptr), static_cast<void*>(e->uptr->get()));
+                assert(e->uptr->get() == nullptr || e->uptr->get() == base);
+                e->uptr->release();
                 if constexpr (!std::is_same<std::nullptr_t, NotifyDelete>::value) {
                     e->ctx.invoke(jln::make_lambda<NotifyDelete>());
                 }
-                assert(e->uptr->get() == nullptr || e->uptr->get() == base);
-                e->uptr->release();
                 delete e;
             };
         }
@@ -1289,14 +1295,15 @@ struct UniquePtrEventWithUPtr : UniquePtrWithNotifyDelete<Event>
         auto* p = new("") NewEvent(static_cast<Args&&>(args)...);
         p->set_deleter(nullptr);
         UniquePtrEventWithUPtr<Event> uptr(p, &p->uptr);
+        LOG(LOG_DEBUG, "alloc: %p %p %p", static_cast<void*>(p), static_cast<void*>(&p->uptr), static_cast<void*>(p->uptr->get()));
         p->attach();
         return uptr;
     }
 
     template<class NotifyDelete>
-    void set_deleter(NotifyDelete d)
+    void set_notify_delete(NotifyDelete d)
     {
-        this->p->set_deleter(d);
+        static_cast<EventPrivate*>(this->get())->set_deleter(d);
     }
 };
 

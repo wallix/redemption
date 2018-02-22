@@ -195,9 +195,9 @@ struct SessionReactor
         using Builder::Builder;
 
         template<class NotifyDeleter>
-        Builder&& set_deleter(NotifyDeleter d) && noexcept
+        Builder&& set_notify_delete(NotifyDeleter d) && noexcept
         {
-            this->internal_value().set_deleter(d);
+            this->internal_value().set_notify_delete(d);
             return static_cast<Builder&&>(*this);
         }
     };

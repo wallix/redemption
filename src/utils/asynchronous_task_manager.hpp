@@ -28,6 +28,27 @@ class AsynchronousTask {
 public:
     virtual ~AsynchronousTask() = default;
 
-    virtual void configure_event(SessionReactor&) = 0;
+    struct DeleterFunction
+    {
+        using ptr_function = void(*)(void* data, AsynchronousTask&) noexcept;
+
+        template<class T, class F>
+        DeleterFunction(T* p, F f)
+        : data(p)
+        , f(reinterpret_cast<ptr_function>(
+            static_cast<void(*)(T* data, AsynchronousTask&) noexcept>(f)))
+        {}
+
+        void operator()(AsynchronousTask& self) noexcept
+        {
+            this->f(this->data, self);
+        }
+
+    private:
+        void* data;
+        ptr_function  f;
+    };
+
+    virtual void configure_event(SessionReactor&, DeleterFunction) = 0;
 };
 
