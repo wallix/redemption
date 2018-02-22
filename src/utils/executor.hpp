@@ -1172,12 +1172,21 @@ namespace detail
         {
             return x.p;
         }
+    };
 
-        template<class UEvent>
-        static typename UEvent::UniquePtr**& uptr_in_event(UEvent& x)
+    template<class Base>
+    struct UniquePtrWithNotifyDeleteDeleter
+    {
+        void operator()(Base* p) const noexcept
         {
-            return x.uptr_in_event;
+            p->delete_self();
         }
+
+        UniquePtrWithNotifyDeleteDeleter(void** p = nullptr) noexcept
+        : uptr_in_event(p)
+        {}
+
+        void** uptr_in_event; // pointer on UniquePtrEventWithUPtr::EventPrivate::uptr
     };
 }
 
@@ -1189,25 +1198,17 @@ struct UniquePtrWithNotifyDelete
     template<class InheritEvent>
     UniquePtrWithNotifyDelete(UniquePtrWithNotifyDelete<InheritEvent>&& other) noexcept
     : p(std::move(detail::UniquePtrEventWithUPtrAccess::p(other)))
-    , uptr_in_event(reinterpret_cast<UniquePtr**>(
-        detail::UniquePtrEventWithUPtrAccess::uptr_in_event(other)))
     {
-        LOG(LOG_DEBUG, "mv:: %p %p", static_cast<void*>(get()), static_cast<void*>(uptr_in_event));
-        *this->uptr_in_event = &p;
+        *this->p.get_deleter().uptr_in_event = &p;
     }
 
     template<class InheritEvent>
     UniquePtrWithNotifyDelete& operator=(UniquePtrWithNotifyDelete<InheritEvent>&& other) noexcept
     {
-        // don't use this->p = std:move(detail::UniquePtrEventWithUPtrAccess::p(other))
-        // because a temporay unique_ptr is created and uptr_in_event become invalid
-        LOG(LOG_DEBUG, "op = %p %p %p = %p %p %p", static_cast<void*>(get()), static_cast<void*>(uptr_in_event), static_cast<void*>(uptr_in_event ? (*uptr_in_event)->get() : nullptr), static_cast<void*>(other.get()), static_cast<void*>(detail::UniquePtrEventWithUPtrAccess::uptr_in_event(other)), static_cast<void*>((*detail::UniquePtrEventWithUPtrAccess::uptr_in_event(other))->get()));
-        auto* tmp = detail::UniquePtrEventWithUPtrAccess::p(other).release();
-        this->p.reset();
-        this->p.reset(tmp);
-        this->uptr_in_event = reinterpret_cast<UniquePtr**>(
-            detail::UniquePtrEventWithUPtrAccess::uptr_in_event(other));
-        *this->uptr_in_event = &this->p;
+        this->p = std::move(detail::UniquePtrEventWithUPtrAccess::p(other));
+        this->p.get_deleter().uptr_in_event
+          = detail::UniquePtrEventWithUPtrAccess::p(other).get_deleter().uptr_in_event;
+        *this->p.get_deleter().uptr_in_event = &this->p;
         return *this;
     }
 
@@ -1241,20 +1242,19 @@ struct UniquePtrWithNotifyDelete
         return this->p.release();
     }
 
-private:
-    friend detail::UniquePtrEventWithUPtrAccess;
-    using UniquePtr = std::unique_ptr<Event, DeleteSelf<typename Event::base_type>>;
-    UniquePtr p;
-    UniquePtr** uptr_in_event = nullptr; // pointer on EventPrivate::uptr
-
 protected:
-    UniquePtrWithNotifyDelete(Event* e, UniquePtr** event_uptr_ref) noexcept
-    : p(e)
-    , uptr_in_event(event_uptr_ref)
+    friend detail::UniquePtrEventWithUPtrAccess;
+    using UniquePtr = std::unique_ptr<Event,
+        detail::UniquePtrWithNotifyDeleteDeleter<typename Event::base_type>>;
+
+    UniquePtrWithNotifyDelete(Event* e, void** event_uptr_ref) noexcept
+    : p(e, event_uptr_ref)
     {
-        *this->uptr_in_event = &this->p;
-        LOG(LOG_DEBUG, "ctor: %p %p", static_cast<void*>(get()), static_cast<void*>(uptr_in_event));
+        *this->p.get_deleter().uptr_in_event = &this->p;
     }
+
+private:
+    UniquePtr p;
 };
 
 template<class Event>
@@ -1285,7 +1285,7 @@ struct UniquePtrEventWithUPtr : UniquePtrWithNotifyDelete<Event>
             };
         }
 
-        std::unique_ptr<Event, DeleteSelf<typename Event::base_type>>* uptr;
+        typename UniquePtrWithNotifyDelete<Event>::UniquePtr* uptr;
     };
 
     template<class... Args>
@@ -1294,7 +1294,7 @@ struct UniquePtrEventWithUPtr : UniquePtrWithNotifyDelete<Event>
         using NewEvent = EventPrivate;
         auto* p = new("") NewEvent(static_cast<Args&&>(args)...);
         p->set_deleter(nullptr);
-        UniquePtrEventWithUPtr<Event> uptr(p, &p->uptr);
+        UniquePtrEventWithUPtr<Event> uptr(p, reinterpret_cast<void**>(&p->uptr));
         LOG(LOG_DEBUG, "alloc: %p %p %p", static_cast<void*>(p), static_cast<void*>(&p->uptr), static_cast<void*>(p->uptr->get()));
         p->attach();
         return uptr;
