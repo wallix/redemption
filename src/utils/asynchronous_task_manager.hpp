@@ -21,7 +21,6 @@
 
 #pragma once
 
-class wait_obj;
 class SessionReactor;
 
 class AsynchronousTask {

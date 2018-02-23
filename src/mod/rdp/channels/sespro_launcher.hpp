@@ -22,8 +22,12 @@
 #pragma once
 
 #include "core/error.hpp"
-#include "core/wait_obj.hpp"
-#include "mod/rdp/channels/base_channel.hpp"
+
+#include <cstdint>
+
+
+class BaseVirtualChannel;
+class InStream;
 
 class SessionProbeLauncher {
 public:

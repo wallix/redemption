@@ -2063,8 +2063,7 @@ public:
         }
     }
 
-    void get_event_handlers(std::vector<EventHandler>& /*out_event_handlers*/) override {
-    }
+    void get_event_handlers(std::vector<EventHandler>& /*out_event_handlers*/) override {}
 
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name,

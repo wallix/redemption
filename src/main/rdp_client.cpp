@@ -31,7 +31,6 @@
 
 #include "core/client_info.hpp"
 #include "transport/socket_transport.hpp"
-#include "core/wait_obj.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/rdp.hpp"

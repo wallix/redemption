@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "core/wait_obj.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
