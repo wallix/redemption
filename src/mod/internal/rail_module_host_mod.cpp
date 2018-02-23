@@ -24,6 +24,7 @@
 #include "core/front_api.hpp"
 
 RailModuleHostMod::RailModuleHostMod(
+    SessionReactor& session_reactor,
     RailModuleHostModVariables vars,
     FrontAPI& front, uint16_t width, uint16_t height,
     Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
@@ -40,6 +41,7 @@ RailModuleHostMod::RailModuleHostMod(
 , can_resize_hosted_desktop(can_resize_hosted_desktop)
 , managed_mod_event_handler(*this)
 , client_execute(client_execute)
+, session_reactor(session_reactor)
 {
     this->screen.add_widget(&this->rail_module_host);
 
@@ -121,15 +123,6 @@ void RailModuleHostMod::get_event_handlers(std::vector<EventHandler>& out_event_
         mod.get_fd()
     );
 
-    if (this->disconnection_reconnection_required &&
-        mod.is_auto_reconnectable()) {
-        out_event_handlers.emplace_back(
-            &this->disconnection_reconnection_event,
-            &this->disconnection_reconnection_event_handler,
-            INVALID_SOCKET
-        );
-    }
-
     LocallyIntegrableMod::get_event_handlers(out_event_handlers);
 }
 
@@ -149,9 +142,20 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
 
     if (dim.w && dim.h && ((dim.w != width) || (dim.h != height)) &&
         this->client_execute.is_resizing_hosted_desktop_enabled()) {
-        this->disconnection_reconnection_required = true;
-
-        this->disconnection_reconnection_event.set_trigger_time(1000000);
+        if (this->disconnection_reconnection_timer) {
+            this->disconnection_reconnection_timer->set_time(std::chrono::seconds(1));
+        }
+        else {
+            this->disconnection_reconnection_timer = this->session_reactor
+            .create_timer(std::ref(*this))
+            .set_delay(std::chrono::seconds(1))
+            .on_action([](auto ctx, RailModuleHostMod& self){
+                if (self.rail_module_host.get_managed_mod().is_auto_reconnectable()) {
+                    throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
+                }
+                return ctx.terminate();
+            });
+        }
     }
 }
 

@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "core/session_reactor.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget/rail_module_host.hpp"
 #include "mod/mod_api.hpp"
@@ -41,6 +42,7 @@ class RailModuleHostMod : public LocallyIntegrableMod, public NotifyApi
 {
 public:
     RailModuleHostMod(
+        SessionReactor& session_reactor,
         RailModuleHostModVariables vars,
         FrontAPI& front, uint16_t width, uint16_t height,
         Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
@@ -117,18 +119,8 @@ private:
         }
     } managed_mod_event_handler;
 
-    wait_obj disconnection_reconnection_event;
-
-    bool disconnection_reconnection_required = false;   // Window resize
-
-    class DisconnectionReconnectionEventHandler : public EventHandler::CB
-    {
-    public:
-        void operator()(time_t/* now*/, wait_obj&/* event*/, gdi::GraphicApi&/* drawable*/) override
-        {
-            throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
-        }
-    } disconnection_reconnection_event_handler;
+    SessionReactor::BasicTimerPtr disconnection_reconnection_timer; // Window resize
 
     ClientExecute& client_execute;
+    SessionReactor& session_reactor;
 };
