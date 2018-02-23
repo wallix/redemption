@@ -204,14 +204,19 @@ namespace redemption_unit_test__
 
     inline std::ostream & operator<<(std::ostream & out, xarray_color const & x)
     {
-        out << "\"";
+        if (x.size() == 0){
+            return out << "\"\"\n";
+        }
         char const * hex_table = "0123456789abcdef";
         size_t q = 0;
         for (unsigned c : x.sig) {
+            if (q%16 == 0){ out << "\""; } 
             if (q++ == x.res){ out << "\x1b[31m";}
             out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
+            if (q%16 == 0){ out << "\"\n"; } 
         }
-        return out << "\x1b[0m\"";
+        if (q%8 != 0){ out << "\"\n"; } 
+        return out << "\x1b[0m";
     }
 
     inline std::ostream & operator<<(std::ostream & out, xarray const & x)
