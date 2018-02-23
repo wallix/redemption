@@ -293,7 +293,7 @@ public:
                         /* 01e0 */ "XXXXXXXXXXXXXXXXX..XXXXXXXXXXXXX"
                         /* 0240 */ "XXXXXXXXXXXXXXXX..XXXXXXXXXXXXXX"
                         /* 02a0 */ "XXXXXXXXXXX.XXXX..XXXXXXXXXXXXXX"
-                        /* 0300 */ "XXXXXXXXXXX..XX..XXXXXXXXXXXXXXX"
+                        /* 0300 */ "XXXXXXXXXX+..XX..XXXXXXXXXXXXXXX"
                         /* 0360 */ "XXXXXXXXXXX...X..XXXXXXXXXXXXXXX"
                         /* 03c0 */ "XXXXXXXXXXX......XXXXXXXXXXXXXXX"
                         /* 0420 */ "XXXXXXXXXXX.........XXXXXXXXXXXX"
@@ -318,7 +318,15 @@ public:
                         /* 0b40 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
                         /* 0ba0 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
                         ;
-                    this->store_data_cursor(data_cursor3);
+                        const char * cursor = data_cursor3;
+                        uint8_t * tmp = this->data;
+                        memset(this->mask, 0, this->dimensions.width * this->dimensions.height / 8);
+                        for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
+                            uint8_t v = (cursor[i] != '.') ? 0xFF : 0;
+                            tmp[0] = tmp[1] = tmp[2] = v;
+                            tmp += 3;
+                            this->mask[i/8]|= (cursor[i] == 'X')?(0x80 >> (i%8)):0;
+                        }
                 }
                 break;  // case POINTER_SYSTEM_DEFAULT:
 
