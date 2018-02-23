@@ -127,7 +127,9 @@ struct SessionReactor
                         case jln::ExecutorResult::ExitFailure:
                             assert(false && "Exit");
                         case jln::ExecutorResult::Terminate:
-                            this->elements.erase(this->elements.begin() + i);
+                            this->elements[i] = std::move(this->elements.back());
+                            this->elements.pop_back();
+                            elem->delete_self(jln::DeleteFrom::Observer);
                             break;
                         case jln::ExecutorResult::Nothing:
                             break;

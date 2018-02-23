@@ -468,20 +468,22 @@ protected:
         void add(SessionReactor& session_reactor, std::unique_ptr<AsynchronousTask>&& task)
         {
             auto remover = [](AsynchronousTaskContainer* pself, AsynchronousTask& task) noexcept {
-//                 if (pself->tasks.size() == 1) {
-//                     assert(pself->tasks.front().get() == &task);
-//                     pself->tasks.clear();
-//                 }
-//                 else {
-//                     auto it = std::find_if(
-//                         pself->tasks.begin(),
-//                         pself->tasks.end(),
-//                         [&task](auto& uptr){ return uptr.get() == &task; }
-//                     );
-//                     *it = std::move(pself->tasks.back());
-//                     pself->tasks.pop_back();
-//                 }
+                if (pself->tasks.size() == 1) {
+                    assert(pself->tasks.front().get() == &task);
+                    pself->tasks.clear();
+                }
+                else {
+                    auto it = std::find_if(
+                        pself->tasks.begin(),
+                        pself->tasks.end(),
+                        [&task](auto& uptr){ return uptr.get() == &task; }
+                    );
+                    *it = std::move(pself->tasks.back());
+                    pself->tasks.pop_back();
+                }
+                LOG(LOG_DEBUG, "remover: %p", static_cast<void*>(&task));
             };
+                LOG(LOG_DEBUG, "add: %p", static_cast<void*>(task.get()));
             this->tasks.emplace_back(std::move(task))
             ->configure_event(session_reactor, {this, remover});
         }
@@ -848,6 +850,8 @@ protected:
 
     SessionReactor& session_reactor;
 
+    SessionReactor::GraphicEventPtr clear_client_screen;
+
 public:
     using Verbose = RDPVerbose;
 
@@ -1053,9 +1057,9 @@ public:
         }
 
         // Clear client screen
-        this->session_reactor.create_graphic_event(this->get_dim())
-        .on_action(jln::one_shot<gdi_clear_screen>())
-        .release();
+        // TODO detached
+        this->clear_client_screen = this->session_reactor.create_graphic_event(this->get_dim())
+        .on_action(jln::one_shot<gdi_clear_screen>());
 
         this->beginning = timeobj.get_time().tv_sec;
 

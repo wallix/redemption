@@ -165,7 +165,7 @@ struct BasicExecutorConcept_
 {
     template<class... Args> ExecutorResult exec_action(Args&&... args);
     template<class... Args> ExecutorResult exec_exit(ExecutorError error, Args&&... args);
-    void delete_self();
+    void delete_self(DeleteFrom from) noexcept;
 };
 
 struct TopExecutorBuilderConcept_
@@ -253,6 +253,11 @@ constexpr auto default_action_function() noexcept
     };
 }
 
+constexpr auto default_delete_function() noexcept
+{
+    return []([[maybe_unused]] auto... args) noexcept {};
+}
+
 template<class F>
 F make_lambda() noexcept
 {
@@ -264,6 +269,12 @@ F make_lambda() noexcept
     return reinterpret_cast<F const&>(f);
 }
 
+enum class DeleteFrom : bool
+{
+    Owner,
+    Observer,
+};
+
 
 template<class PrefixArgs>
 struct ActionBase
@@ -271,9 +282,9 @@ struct ActionBase
     using prefix_args = PrefixArgs;
     using base_type = ActionBase;
 
-    void delete_self() noexcept
+    void delete_self(DeleteFrom from) noexcept
     {
-        return this->deleter(this);
+        this->deleter(this, from);
     }
 
     template<class... Args>
@@ -285,7 +296,7 @@ struct ActionBase
     using OnEventPtrFunc = MakeFuncPtr<ActionBase, PrefixArgs>;
 
     OnEventPtrFunc on_action = default_action_function();
-    void  (*deleter) (ActionBase*) noexcept = [](ActionBase*) noexcept {};
+    void  (*deleter) (ActionBase*, DeleteFrom) noexcept = default_delete_function();
     ActionBase() = default;
 };
 
@@ -295,9 +306,9 @@ struct BasicTimer
     using prefix_args = PrefixArgs;
     using base_type = BasicTimer;
 
-    void delete_self() noexcept
+    void delete_self(DeleteFrom from) noexcept
     {
-        return this->deleter(this);
+        this->deleter(this, from);
     }
 
     void reset_time() noexcept
@@ -339,7 +350,7 @@ struct BasicTimer
 
     timeval tv {};
     OnTimerPtrFunc on_action = default_action_function();
-    void (*deleter) (BasicTimer*) noexcept = [](BasicTimer*) noexcept {};
+    void (*deleter) (BasicTimer*, DeleteFrom) noexcept = default_delete_function();
     std::chrono::microseconds delay;
 
     BasicTimer() = default;
@@ -363,9 +374,9 @@ struct BasicExecutorImpl
         return this->on_exit(*this, error, static_cast<Args&&>(args)...);
     }
 
-    void delete_self()
+    void delete_self(DeleteFrom from) noexcept
     {
-        return this->deleter(this);
+        this->deleter(this, from);
     }
 
     template<class... Args>
@@ -392,7 +403,7 @@ struct BasicExecutorImpl
     OnExitPtrFunc on_exit = default_action_function();
     BasicExecutorImpl* current = this;
     BasicExecutorImpl* prev = nullptr;
-    void (*deleter) (BasicExecutorImpl*) noexcept = [](BasicExecutorImpl*) noexcept {};
+    void (*deleter) (BasicExecutorImpl*, DeleteFrom) noexcept = default_delete_function();
 
     void set_next_executor(BasicExecutorImpl& other) noexcept
     {
@@ -888,7 +899,7 @@ struct DeleteSelf
 {
     void operator()(Base* p) const
     {
-        p->delete_self();
+        p->delete_self(DeleteFrom::Owner);
     }
 };
 
@@ -1044,7 +1055,7 @@ private:
 // {
 //     BasicExecutorImpl<PrefixArgs> base_executor;
 //
-//     void delete_self()
+//     void delete_self(DeleteFrom from) noexcept
 //     {
 //         this->base_executor.delete_self();
 //     }
@@ -1179,7 +1190,7 @@ namespace detail
     {
         void operator()(Base* p) const noexcept
         {
-            p->delete_self();
+            p->delete_self(DeleteFrom::Owner);
         }
 
         UniquePtrWithNotifyDeleteDeleter(void** p = nullptr) noexcept
@@ -1199,12 +1210,28 @@ struct UniquePtrWithNotifyDelete
     UniquePtrWithNotifyDelete(UniquePtrWithNotifyDelete<InheritEvent>&& other) noexcept
     : p(std::move(detail::UniquePtrEventWithUPtrAccess::p(other)))
     {
+        LOG(LOG_DEBUG, "mvctor: %p %p(u) -> %p",
+            static_cast<void*>(get()),
+            static_cast<void*>(&detail::UniquePtrEventWithUPtrAccess::p(other)),
+            static_cast<void*>(&this->p));
         *this->p.get_deleter().uptr_in_event = &p;
+    }
+
+    ~UniquePtrWithNotifyDelete()
+    {
+        LOG(LOG_DEBUG, "dtor: %p %p(u)",
+            static_cast<void*>(get()),
+            static_cast<void*>(&this->p));
     }
 
     template<class InheritEvent>
     UniquePtrWithNotifyDelete& operator=(UniquePtrWithNotifyDelete<InheritEvent>&& other) noexcept
     {
+        LOG(LOG_DEBUG, "op=: %p %p(u) = %p %p(u)",
+            static_cast<void*>(get()),
+            static_cast<void*>(&this->p),
+            static_cast<void*>(detail::UniquePtrEventWithUPtrAccess::p(other).get()),
+            static_cast<void*>(&detail::UniquePtrEventWithUPtrAccess::p(other)));
         this->p = std::move(detail::UniquePtrEventWithUPtrAccess::p(other));
         this->p.get_deleter().uptr_in_event
           = detail::UniquePtrEventWithUPtrAccess::p(other).get_deleter().uptr_in_event;
@@ -1234,11 +1261,18 @@ struct UniquePtrWithNotifyDelete
 
     void reset() noexcept
     {
+        LOG(LOG_DEBUG, "reset %p %p(u)",
+            static_cast<void*>(get()),
+            static_cast<void*>(&this->p));
         this->p.reset();
     }
 
+    // TODO removed
     Event* release() noexcept
     {
+        LOG(LOG_DEBUG, "release %p %p(u)",
+            static_cast<void*>(get()),
+            static_cast<void*>(&this->p));
         return this->p.release();
     }
 
@@ -1270,14 +1304,22 @@ struct UniquePtrEventWithUPtr : UniquePtrWithNotifyDelete<Event>
         template<class NotifyDelete>
         void set_deleter(NotifyDelete) noexcept
         {
-            this->deleter = [](auto* base) noexcept {
+            this->deleter = [](auto* base, DeleteFrom from) noexcept {
                 auto* e = static_cast<EventPrivate*>(base);
+                // TODO detach here if removed_by_owner = true
 # ifndef NDEBUG
-                e->deleter = [](auto*) noexcept { assert(!"already delete"); };
+                e->deleter = [](auto*, DeleteFrom) noexcept { assert(!"already delete"); };
 # endif
-                LOG(LOG_DEBUG, "del: %p %p %p", static_cast<void*>(base), static_cast<void*>(&e->uptr), static_cast<void*>(e->uptr->get()));
+                LOG(LOG_DEBUG, "del: %p %p(u) %p", static_cast<void*>(base), static_cast<void*>(e->uptr), static_cast<void*>(e->uptr->get()));
                 assert(e->uptr->get() == nullptr || e->uptr->get() == base);
-                e->uptr->release();
+                switch (from) {
+                    case DeleteFrom::Owner:
+                        e->detach();
+                        break;
+                    case DeleteFrom::Observer:
+                        e->uptr->release();
+                        break;
+                }
                 if constexpr (!std::is_same<std::nullptr_t, NotifyDelete>::value) {
                     e->ctx.invoke(jln::make_lambda<NotifyDelete>());
                 }
@@ -1295,7 +1337,7 @@ struct UniquePtrEventWithUPtr : UniquePtrWithNotifyDelete<Event>
         auto* p = new("") NewEvent(static_cast<Args&&>(args)...);
         p->set_deleter(nullptr);
         UniquePtrEventWithUPtr<Event> uptr(p, reinterpret_cast<void**>(&p->uptr));
-        LOG(LOG_DEBUG, "alloc: %p %p %p", static_cast<void*>(p), static_cast<void*>(&p->uptr), static_cast<void*>(p->uptr->get()));
+        LOG(LOG_DEBUG, "alloc: %p %p(u) %p", static_cast<void*>(p), static_cast<void*>(p->uptr), static_cast<void*>(p->uptr->get()));
         p->attach();
         return uptr;
     }
@@ -1887,7 +1929,7 @@ void BasicExecutorImpl<PrefixArgs>::terminate(Args&&... args)
 {
     while (this->current != this) {
         (void)this->current->exec_exit(ExecutorError::Terminate, static_cast<Args&&>(args)...);
-        std::exchange(this->current, this->current->prev)->delete_self();
+        std::exchange(this->current, this->current->prev)->delete_self(DeleteFrom::Owner);
     }
     (void)this->current->exec_exit(ExecutorError::Terminate, static_cast<Args&&>(args)...);
     this->on_action = detail::terminate_callee;
@@ -1907,7 +1949,7 @@ bool BasicExecutorImpl<PrefixArgs>::exit_with(ExecutorError error, Args&&... arg
                     this->on_exit = detail::terminate_callee;
                     return false;
                 }
-                std::exchange(this->current, this->current->prev)->delete_self();
+                std::exchange(this->current, this->current->prev)->delete_self(DeleteFrom::Owner);
                 error = ExecutorError::NoError;
                 break;
             case ExecutorResult::ExitFailure:
@@ -1916,7 +1958,7 @@ bool BasicExecutorImpl<PrefixArgs>::exit_with(ExecutorError error, Args&&... arg
                     this->on_exit = detail::terminate_callee;
                     return false;
                 }
-                std::exchange(this->current, this->current->prev)->delete_self();
+                std::exchange(this->current, this->current->prev)->delete_self(DeleteFrom::Owner);
                 error = ExecutorError::ActionError;
                 break;
             case ExecutorResult::Terminate:

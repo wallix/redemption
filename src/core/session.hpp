@@ -249,7 +249,9 @@ public:
                         if (io_fd_isset(c[i]->fd, rfds) && !c[i]->exec()) {
                             // LOG(LOG_DEBUG, "delete fd: %d", c[i]->fd);
                             session_reactor.timer_events_.detach(*c[i]);
-                            c.erase(c.begin() + i);
+                            c[i]->delete_self(jln::DeleteFrom::Observer);
+                            c[i] = std::move(c.back());
+                            c.pop_back();
                         }
                         else {
                             ++i;
