@@ -23,29 +23,18 @@
 #include "core/RDP/slowpath.hpp"
 #include "mod/internal/client_execute.hpp"
 
-void LocallyIntegrableMod::FirstClickDownEventHandler
-  ::operator()(time_t /*now*/, wait_obj& /*event*/, gdi::GraphicApi& /*drawable*/)
-{
-    assert(this->mod_.rail_enabled);
-
-    if (this->mod_.first_click_down_event.is_trigger_time_set() &&
-        this->mod_.first_click_down_event.is_waked_up_by_time()) {
-        this->mod_.cancel_double_click_detection();
-    }
-}
-
-
 LocallyIntegrableMod::LocallyIntegrableMod(
-    FrontAPI & front, uint16_t front_width, uint16_t front_height,
+    SessionReactor& session_reactor, FrontAPI & front,
+    uint16_t front_width, uint16_t front_height,
     Font const & font, ClientExecute & client_execute,
     Theme const & theme)
 : InternalMod(front, front_width, front_height, font, theme, false)
 , client_execute(client_execute)
 , dvc_manager(false)
 , dc_state(DCState::Wait)
-, first_click_down_event_handler(*this)
 , rail_enabled(client_execute.is_rail_enabled())
 , current_mouse_owner(MouseOwner::WidgetModule)
+, session_reactor(session_reactor)
 {}
 
 LocallyIntegrableMod::~LocallyIntegrableMod()
@@ -56,14 +45,6 @@ LocallyIntegrableMod::~LocallyIntegrableMod()
 void LocallyIntegrableMod::get_event_handlers(std::vector<EventHandler>& out_event_handlers)
 {
     if (this->rail_enabled) {
-        if (this->first_click_down_event.is_trigger_time_set()) {
-            out_event_handlers.emplace_back(
-                &this->first_click_down_event,
-                &this->first_click_down_event_handler,
-                INVALID_SOCKET
-            );
-        }
-
         this->client_execute.get_event_handlers(out_event_handlers);
     }
 
@@ -101,7 +82,18 @@ void LocallyIntegrableMod::rdp_input_mouse(int device_flags, int x, int y, Keyma
                     if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
                         this->dc_state = DCState::FirstClickDown;
 
-                        this->first_click_down_event.set_trigger_time(1000000);
+                        if (this->first_click_down_timer) {
+                            this->first_click_down_timer->set_time(std::chrono::seconds(1));
+                        }
+                        else {
+                            this->first_click_down_timer = this->session_reactor
+                            .create_timer(std::ref(*this))
+                            .set_delay(std::chrono::seconds(1))
+                            .on_action([](auto ctx, LocallyIntegrableMod& self){
+                                self.dc_state = DCState::Wait;
+                                return ctx.terminate();
+                            });
+                        }
                     }
                 break;
 
@@ -236,7 +228,7 @@ void LocallyIntegrableMod::cancel_double_click_detection()
 {
     assert(this->rail_enabled);
 
-    this->first_click_down_event.reset_trigger_time();
+    this->first_click_down_timer.reset();
 
     this->dc_state = DCState::Wait;
 }
