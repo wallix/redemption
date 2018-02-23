@@ -50,13 +50,15 @@
 #define INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH  640
 #define INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT 480
 
-ClientExecute::ClientExecute(FrontAPI & front, WindowListCaps const & window_list_caps, bool verbose)
+ClientExecute::ClientExecute(
+    SessionReactor& session_reactor, FrontAPI & front,
+    WindowListCaps const & window_list_caps, bool verbose)
 : front_(&front)
 , wallix_icon_min(bitmap_from_file(app_path(AppPath::WallixIconMin)))
 , window_title(INTERNAL_MODULE_WINDOW_TITLE)
 , window_level_supported_ex(window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX)
-, button_1_down_event_handler(*this)
 , verbose(verbose)
+, session_reactor(session_reactor)
 {
 }   // ClientExecute
 
@@ -76,26 +78,7 @@ void ClientExecute::enable_remote_program(bool enable)
     this->rail_enabled = enable;
 }
 
-void ClientExecute::get_event_handlers(std::vector<EventHandler>& out_event_handlers)
-{
-    if (bool(*this) && this->button_1_down_event.is_trigger_time_set()) {
-        out_event_handlers.emplace_back(
-            &this->button_1_down_event,
-            &this->button_1_down_event_handler,
-            INVALID_SOCKET
-        );
-    }
-}
-
-void ClientExecute::process_button_1_down_event(time_t, wait_obj &, gdi::GraphicApi&)
-{
-    assert(bool(*this));
-
-    this->initialize_move_size(this->button_1_down_x, this->button_1_down_y,
-        this->button_1_down);
-
-    this->button_1_down_event.reset_trigger_time();
-}
+void ClientExecute::get_event_handlers(std::vector<EventHandler>& out_event_handlers) {}
 
 Rect ClientExecute::adjust_rect(Rect rect)
 {
@@ -665,13 +648,13 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
     //    "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u pressed_mouse_button=%d",
     //    pointerFlags, xPos, yPos, this->pressed_mouse_button);
 
-    if (this->button_1_down_event.is_trigger_time_set()) {
+    if (this->button_1_down_timer) {
         if (SlowPath::PTRFLAGS_BUTTON1 != pointerFlags) {
             this->initialize_move_size(this->button_1_down_x, this->button_1_down_y,
                 this->button_1_down);
         }
 
-        this->button_1_down_event.reset_trigger_time();
+        this->button_1_down_timer.reset();
     }
 
     // Mouse pointer managment
@@ -774,7 +757,16 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button)) {
                     this->button_1_down = this->pressed_mouse_button;
 
-                    this->button_1_down_event.set_trigger_time(400000);
+                    this->button_1_down_timer = this->session_reactor
+                    .create_timer(std::ref(*this))
+                    .set_delay(std::chrono::milliseconds(400))
+                    .on_action(jln::one_shot([](ClientExecute& self){
+                        assert(bool(self));
+                        self.initialize_move_size(
+                            self.button_1_down_x,
+                            self.button_1_down_y,
+                            self.button_1_down);
+                    }));
 
                     this->button_1_down_x = xPos;
                     this->button_1_down_y = yPos;

@@ -20,9 +20,9 @@
 
 #pragma once
 
+#include "core/session_reactor.hpp"
 #include "core/misc.hpp"
 #include "core/RDP/pointer.hpp"
-#include "core/wait_obj.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/windowing_api.hpp"
@@ -143,26 +143,12 @@ class ClientExecute : public windowing_api
 
     int current_mouse_pointer_type = Pointer::POINTER_NULL;
 
-    wait_obj button_1_down_event;
+    SessionReactor::BasicTimerPtr button_1_down_timer;
 
     int button_1_down_x = 0;
     int button_1_down_y = 0;
 
     int button_1_down = MOUSE_BUTTON_PRESSED_NONE;
-
-    class TitleBarButton1DownEventHandler : public EventHandler::CB
-    {
-        ClientExecute& client_execute_;
-
-    public:
-        TitleBarButton1DownEventHandler(ClientExecute& client_execute)
-        : client_execute_(client_execute)
-        {}
-
-        void operator()(time_t now, wait_obj & event, gdi::GraphicApi& drawable) override {
-            this->client_execute_.process_button_1_down_event(now, event, drawable);
-        }
-    } button_1_down_event_handler;
 
     bool rail_enabled = false;
 
@@ -173,8 +159,12 @@ class ClientExecute : public windowing_api
 
     bool verbose;
 
+    SessionReactor& session_reactor;
+
 public:
-    ClientExecute(FrontAPI & front, WindowListCaps const & window_list_caps, bool verbose);
+    ClientExecute(
+        SessionReactor& session_reactor, FrontAPI & front,
+        WindowListCaps const & window_list_caps, bool verbose);
 
     ~ClientExecute();
 
@@ -183,8 +173,6 @@ public:
     void enable_remote_program(bool enable);
 
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers);
-
-    void process_button_1_down_event(time_t, wait_obj &, gdi::GraphicApi&);
 
     Rect adjust_rect(Rect rect);
 

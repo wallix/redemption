@@ -89,10 +89,9 @@ void LocallyIntegrableMod::rdp_input_mouse(int device_flags, int x, int y, Keyma
                             this->first_click_down_timer = this->session_reactor
                             .create_timer(std::ref(*this))
                             .set_delay(std::chrono::seconds(1))
-                            .on_action([](auto ctx, LocallyIntegrableMod& self){
+                            .on_action(jln::one_shot([](LocallyIntegrableMod& self){
                                 self.dc_state = DCState::Wait;
-                                return ctx.terminate();
-                            });
+                            }));
                         }
                     }
                 break;
