@@ -1139,17 +1139,12 @@ struct BasicEvent : BaseType
     {}
     REDEMPTION_DIAGNOSTIC_POP
 
-    ~BasicEvent()
-    {
-        this->detach();
-    }
-
     void detach() noexcept
     {
         this->event_container.detach(*this);
     }
 
-    void attach() noexcept
+    void attach()
     {
         this->event_container.attach(*this);
     }
@@ -1210,28 +1205,28 @@ struct UniquePtrWithNotifyDelete
     UniquePtrWithNotifyDelete(UniquePtrWithNotifyDelete<InheritEvent>&& other) noexcept
     : p(std::move(detail::UniquePtrEventWithUPtrAccess::p(other)))
     {
-        LOG(LOG_DEBUG, "mvctor: %p %p(u) -> %p",
-            static_cast<void*>(get()),
-            static_cast<void*>(&detail::UniquePtrEventWithUPtrAccess::p(other)),
-            static_cast<void*>(&this->p));
+        // LOG(LOG_DEBUG, "mvctor: %p %p(u) -> %p",
+        //    static_cast<void*>(get()),
+        //    static_cast<void*>(&detail::UniquePtrEventWithUPtrAccess::p(other)),
+        //    static_cast<void*>(&this->p));
         *this->p.get_deleter().uptr_in_event = &p;
     }
 
     ~UniquePtrWithNotifyDelete()
     {
-        LOG(LOG_DEBUG, "dtor: %p %p(u)",
-            static_cast<void*>(get()),
-            static_cast<void*>(&this->p));
+        // LOG(LOG_DEBUG, "dtor: %p %p(u)",
+        //     static_cast<void*>(get()),
+        //     static_cast<void*>(&this->p));
     }
 
     template<class InheritEvent>
     UniquePtrWithNotifyDelete& operator=(UniquePtrWithNotifyDelete<InheritEvent>&& other) noexcept
     {
-        LOG(LOG_DEBUG, "op=: %p %p(u) = %p %p(u)",
-            static_cast<void*>(get()),
-            static_cast<void*>(&this->p),
-            static_cast<void*>(detail::UniquePtrEventWithUPtrAccess::p(other).get()),
-            static_cast<void*>(&detail::UniquePtrEventWithUPtrAccess::p(other)));
+        // LOG(LOG_DEBUG, "op=: %p %p(u) = %p %p(u)",
+        //     static_cast<void*>(get()),
+        //     static_cast<void*>(&this->p),
+        //     static_cast<void*>(detail::UniquePtrEventWithUPtrAccess::p(other).get()),
+        //     static_cast<void*>(&detail::UniquePtrEventWithUPtrAccess::p(other)));
         this->p = std::move(detail::UniquePtrEventWithUPtrAccess::p(other));
         this->p.get_deleter().uptr_in_event
           = detail::UniquePtrEventWithUPtrAccess::p(other).get_deleter().uptr_in_event;
@@ -1265,15 +1260,6 @@ struct UniquePtrWithNotifyDelete
             static_cast<void*>(get()),
             static_cast<void*>(&this->p));
         this->p.reset();
-    }
-
-    // TODO removed
-    Event* release() noexcept
-    {
-        LOG(LOG_DEBUG, "release %p %p(u)",
-            static_cast<void*>(get()),
-            static_cast<void*>(&this->p));
-        return this->p.release();
     }
 
 protected:
@@ -1310,7 +1296,7 @@ struct UniquePtrEventWithUPtr : UniquePtrWithNotifyDelete<Event>
 # ifndef NDEBUG
                 e->deleter = [](auto*, DeleteFrom) noexcept { assert(!"already delete"); };
 # endif
-                LOG(LOG_DEBUG, "del: %p %p(u) %p", static_cast<void*>(base), static_cast<void*>(e->uptr), static_cast<void*>(e->uptr->get()));
+                // LOG(LOG_DEBUG, "del: %p %p(u) %p", static_cast<void*>(base), static_cast<void*>(e->uptr), static_cast<void*>(e->uptr->get()));
                 assert(e->uptr->get() == nullptr || e->uptr->get() == base);
                 switch (from) {
                     case DeleteFrom::Owner:
@@ -1337,7 +1323,7 @@ struct UniquePtrEventWithUPtr : UniquePtrWithNotifyDelete<Event>
         auto* p = new("") NewEvent(static_cast<Args&&>(args)...);
         p->set_deleter(nullptr);
         UniquePtrEventWithUPtr<Event> uptr(p, reinterpret_cast<void**>(&p->uptr));
-        LOG(LOG_DEBUG, "alloc: %p %p(u) %p", static_cast<void*>(p), static_cast<void*>(p->uptr), static_cast<void*>(p->uptr->get()));
+        // LOG(LOG_DEBUG, "alloc: %p %p(u) %p", static_cast<void*>(p), static_cast<void*>(p->uptr), static_cast<void*>(p->uptr->get()));
         p->attach();
         return uptr;
     }

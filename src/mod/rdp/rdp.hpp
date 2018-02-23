@@ -481,9 +481,7 @@ protected:
                     *it = std::move(pself->tasks.back());
                     pself->tasks.pop_back();
                 }
-                LOG(LOG_DEBUG, "remover: %p", static_cast<void*>(&task));
             };
-                LOG(LOG_DEBUG, "add: %p", static_cast<void*>(task.get()));
             this->tasks.emplace_back(std::move(task))
             ->configure_event(session_reactor, {this, remover});
         }
