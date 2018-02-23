@@ -57,7 +57,7 @@ class FlatWabCloseMod : public LocallyIntegrableMod, public NotifyApi
 
 public:
     FlatWabCloseMod(
-        FlatWabCloseModVariables vars,
+        FlatWabCloseModVariables vars, SessionReactor& session_reactor,
         FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect,
         time_t now, ClientExecute & client_execute, bool showtimer = false,
         bool back_selector = false);

@@ -829,7 +829,7 @@ public:
         , mod_osd(*this)
         , gen(gen)
         , timeobj(timeobj)
-        , client_execute(front, this->front.client_info.window_list_caps,
+        , client_execute(session_reactor, front, this->front.client_info.window_list_caps,
                          ini.get<cfg::debug::mod_internal>() & 1)
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
         , session_reactor(session_reactor)
@@ -981,6 +981,7 @@ public:
 
             this->set_mod(new SelectorMod(
                 this->ini,
+                this->session_reactor,
                 this->front,
                 this->front.client_info.width,
                 this->front.client_info.height,
@@ -1004,6 +1005,7 @@ public:
                 }
                 this->set_mod(new FlatWabCloseMod(
                     this->ini,
+                    this->session_reactor,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
@@ -1028,6 +1030,7 @@ public:
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'INTERNAL::CloseBack'");
                 this->set_mod(new FlatWabCloseMod(
                     this->ini,
+                    this->session_reactor,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
@@ -1049,6 +1052,7 @@ public:
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Interactive Target'");
                 this->set_mod(new InteractiveTargetMod(
                     this->ini,
+                    this->session_reactor,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
@@ -1071,6 +1075,7 @@ public:
                 const char * caption = "Information";
                 this->set_mod(new FlatDialogMod(
                     this->ini,
+                    this->session_reactor,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
@@ -1097,6 +1102,7 @@ public:
                 const char * caption = "Information";
                 this->set_mod(new FlatDialogMod(
                     this->ini,
+                    this->session_reactor,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
@@ -1128,6 +1134,7 @@ public:
                 this->ini.ask<cfg::context::password>();
                 this->set_mod(new FlatDialogMod(
                     this->ini,
+                    this->session_reactor,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
@@ -1156,6 +1163,7 @@ public:
                 uint flag = this->ini.get<cfg::context::formflag>();
                 this->set_mod(new FlatWaitMod(
                     this->ini,
+                    this->session_reactor,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
@@ -1206,6 +1214,7 @@ public:
 
             this->set_mod(new FlatLoginMod(
                 this->ini,
+                this->session_reactor,
                 accounts.username,
                 accounts.password,
                 this->front,
@@ -1528,20 +1537,21 @@ public:
                         this->client_execute.set_target_info(target_info.c_str());
 
                         this->set_mod(
-                                new RailModuleHostMod(
-                                        this->ini,
-                                        this->front,
-                                        this->front.client_info.width,
-                                        this->front.client_info.height,
-                                        adjusted_client_execute_rect,
-                                        std::move(managed_mod),
-                                        this->client_execute,
-                                        this->front.client_info.cs_monitor,
-                                        !this->ini.get<cfg::globals::is_rec>()
-                                    ),
-                                nullptr,
-                                &this->client_execute
-                            );
+                            new RailModuleHostMod(
+                                this->ini,
+                                this->session_reactor,
+                                this->front,
+                                this->front.client_info.width,
+                                this->front.client_info.height,
+                                adjusted_client_execute_rect,
+                                std::move(managed_mod),
+                                this->client_execute,
+                                this->front.client_info.cs_monitor,
+                                !this->ini.get<cfg::globals::is_rec>()
+                            ),
+                            nullptr,
+                            &this->client_execute
+                        );
                         LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
                     }
                     else {
@@ -1634,16 +1644,17 @@ public:
                         this->client_execute.set_target_info(target_info.c_str());
 
                         this->set_mod(new RailModuleHostMod(
-                                this->ini,
-                                this->front,
-                                this->front.client_info.width,
-                                this->front.client_info.height,
-                                adjusted_client_execute_rect,
-                                std::move(managed_mod),
-                                this->client_execute,
-                                this->front.client_info.cs_monitor,
-                                false
-                            ));
+                            this->ini,
+                            this->session_reactor,
+                            this->front,
+                            this->front.client_info.width,
+                            this->front.client_info.height,
+                            adjusted_client_execute_rect,
+                            std::move(managed_mod),
+                            this->client_execute,
+                            this->front.client_info.cs_monitor,
+                            false
+                        ));
                         LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
                     }
                     else {

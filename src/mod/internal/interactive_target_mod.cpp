@@ -27,11 +27,12 @@
 
 
 InteractiveTargetMod::InteractiveTargetMod(
-    InteractiveTargetModVariables vars, FrontAPI & front,
+    InteractiveTargetModVariables vars,
+    SessionReactor& session_reactor, FrontAPI & front,
     uint16_t width, uint16_t height, Rect const widget_rect,
     ClientExecute & client_execute
 )
-    : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
+    : LocallyIntegrableMod(session_reactor, front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
     , ask_device(vars.is_asked<cfg::context::target_host>())
     , ask_login(vars.is_asked<cfg::globals::target_user>())
     , ask_password((this->ask_login || vars.is_asked<cfg::context::target_password>()))

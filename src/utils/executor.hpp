@@ -1256,9 +1256,9 @@ struct UniquePtrWithNotifyDelete
 
     void reset() noexcept
     {
-        LOG(LOG_DEBUG, "reset %p %p(u)",
-            static_cast<void*>(get()),
-            static_cast<void*>(&this->p));
+        // LOG(LOG_DEBUG, "reset %p %p(u)",
+        //     static_cast<void*>(get()),
+        //     static_cast<void*>(&this->p));
         this->p.reset();
     }
 

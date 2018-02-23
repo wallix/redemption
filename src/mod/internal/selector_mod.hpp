@@ -70,7 +70,8 @@ class SelectorMod : public LocallyIntegrableMod, public NotifyApi
 
 public:
     SelectorMod(
-        SelectorModVariables vars, FrontAPI & front, uint16_t width, uint16_t height,
+        SelectorModVariables vars, SessionReactor& session_reactor,
+        FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & client_execute);
 
     ~SelectorMod() override
