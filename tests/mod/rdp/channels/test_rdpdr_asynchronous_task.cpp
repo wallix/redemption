@@ -84,7 +84,11 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     {
         wait_obj event;
 
-        rdpdr_drive_read_task.configure_wait_object(event);
+        SessionReactor session_reactor;
+        rdpdr_drive_read_task.configure_event(
+            session_reactor, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
+                *b = false;
+            }});
 
         unsigned max = 0;
         fd_set rfds;
@@ -93,7 +97,7 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
         timeval timeout = { 3, 0 };
 
-        event.wait_on_fd(rdpdr_drive_read_task.get_file_descriptor(), rfds, max, timeout);
+        event.wait_on_fd(fd, rfds, max, timeout);
 
         int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
 
@@ -106,9 +110,10 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
             run_task = false;
         }
         else {
-            if (event.is_set(rdpdr_drive_read_task.get_file_descriptor(), rfds)) {
-                if (!rdpdr_drive_read_task.run(event)) {
-                    run_task = false;
+            if (event.is_set(fd, rfds)) {
+                auto& c = session_reactor.fd_events_.elements;
+                if (!c[0]->exec()) {
+                    c.erase(c.begin());
                 }
             }
         }
@@ -151,7 +156,11 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
         LOG(LOG_INFO, "do");
         wait_obj event;
 
-        rdpdr_send_drive_io_response_task.configure_wait_object(event);
+        SessionReactor session_reactor;
+        rdpdr_send_drive_io_response_task.configure_event(
+            session_reactor, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
+                *b = false;
+            }});
 
         unsigned max = 0;
         fd_set rfds;
@@ -160,7 +169,7 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
         timeval timeout = { 3, 0 };
 
-        event.wait_on_fd(rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds, max, timeout);
+        event.wait_on_fd(INVALID_SOCKET, rfds, max, timeout);
 
         int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
 
@@ -173,10 +182,8 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
             run_task = false;
         }
         else {
-            if (event.is_set(rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds)) {
-                if (!rdpdr_send_drive_io_response_task.run(event)) {
-                    run_task = false;
-                }
+            if (event.is_set(INVALID_SOCKET, rfds)) {
+                session_reactor.timer_events_.exec(timeout);
             }
         }
     }

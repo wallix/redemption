@@ -24,6 +24,7 @@
 #include "core/front_api.hpp"
 #include "mod/rdp/rdp_api.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
+#include "utils/genrandom.hpp"
 #include "utils/stream.hpp"
 #include "utils/translation.hpp"
 #include "utils/sugar/algostring.hpp"

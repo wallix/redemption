@@ -135,7 +135,8 @@ int main(int argc, char** argv)
     NullReportMessage report_message;
 
     /* mod_api */
-    mod_rdp mod( mod_trans, front, client_info, redir_info, gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
+    SessionReactor session_reactor;
+    mod_rdp mod(mod_trans, session_reactor, front, client_info, redir_info, gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
     using Ms = std::chrono::milliseconds;
     return run_test_client(

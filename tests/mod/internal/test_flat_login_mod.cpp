@@ -43,7 +43,8 @@ RED_AUTO_TEST_CASE(TestDialogMod)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(front, window_list_caps, 0);
+    SessionReactor session_reactor;
+    ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
 
@@ -51,7 +52,7 @@ RED_AUTO_TEST_CASE(TestDialogMod)
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    FlatLoginMod d(ini, "user", "pass", front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000), client_execute);
+    FlatLoginMod d(ini, session_reactor, "user", "pass", front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000), client_execute);
     d.draw_event(100001, front);
 
     RED_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);
@@ -74,7 +75,8 @@ RED_AUTO_TEST_CASE(TestDialogMod1)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(front, window_list_caps, 0);
+    SessionReactor session_reactor;
+    ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
 
@@ -82,7 +84,7 @@ RED_AUTO_TEST_CASE(TestDialogMod1)
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    FlatLoginMod d(ini, "user", "pass", front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000), client_execute);
+    FlatLoginMod d(ini, session_reactor, "user", "pass", front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000), client_execute);
     d.draw_event(100001, front);
 
     RED_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);
@@ -104,7 +106,8 @@ RED_AUTO_TEST_CASE(TestDialogMod2)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(front, window_list_caps, 0);
+    SessionReactor session_reactor;
+    ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
 
@@ -112,7 +115,7 @@ RED_AUTO_TEST_CASE(TestDialogMod2)
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    FlatLoginMod d(ini, "user", "pass", front, 2048, 1536, Rect(1024, 768, 1023, 767), static_cast<time_t>(100000), client_execute);
+    FlatLoginMod d(ini, session_reactor, "user", "pass", front, 2048, 1536, Rect(1024, 768, 1023, 767), static_cast<time_t>(100000), client_execute);
     d.draw_event(100001, front);
 
     RED_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);

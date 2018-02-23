@@ -53,7 +53,7 @@ namespace dump2008_PatBlt {
 }
 
 
-class MyFront : public Front
+class MyFront : SessionReactor, public Front
 {
 public:
     bool can_be_start_capture() override { return false; }
@@ -70,7 +70,8 @@ public:
             , const char * server_capabilities_filename = ""
             , Transport * persistent_key_list_transport = nullptr
             )
-    : Front( trans
+    : Front( *this
+            , trans
             , gen
             , ini
             , cctx

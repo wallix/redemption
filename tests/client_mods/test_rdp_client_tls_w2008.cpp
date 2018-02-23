@@ -124,7 +124,8 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     LCGTime timeobj;
     NullAuthentifier authentifier;
     NullReportMessage report_message;
-    mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
+    SessionReactor session_reactor;
+    mod_rdp mod(t, session_reactor, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
         gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
     if (verbose > 2) {
@@ -221,7 +222,8 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     LCGTime timeobj;
     NullAuthentifier authentifier;
     NullReportMessage report_message;
-    mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
+    SessionReactor session_reactor;
+    mod_rdp mod(t, session_reactor, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
         gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
     if (verbose > 2) {

@@ -53,7 +53,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
     class ServerOnce : public Server
     {
         public:
-        Server_status start(int) override { return START_WANT_STOP; }
+        Server_status start(int, bool forkable) override { return START_WANT_STOP; }
     } dummy;
 
     Listen listener(dummy, inet_addr("127.0.0.1"), 4444, true, 25, false); // 25 seconds to connect, or timeout

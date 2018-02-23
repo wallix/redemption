@@ -148,7 +148,7 @@ int main(int argc, char * argv[]) {
            this->ip_source[0] = 0;
         }
 
-        Server_status start(int incoming_sck) override {
+        Server_status start(int incoming_sck, bool /*forkable*/) override {
             union {
                 struct sockaddr s;
                 struct sockaddr_storage ss;
@@ -164,7 +164,7 @@ int main(int argc, char * argv[]) {
         }
     } one_shot_server;
     Listen listener(one_shot_server, 0, 3389, true, 5);  // 25 seconds to connect, or timeout
-    listener.run();
+    listener.run(true);
 
     Inifile ini;
     configuration_load(ini.configuration_holder(), config_filename);
@@ -206,7 +206,8 @@ int main(int argc, char * argv[]) {
 
     NullReportMessage report_message;
 
-    Front front(front_trans, gen, ini, cctx, report_message,
+    SessionReactor session_reactor;
+    Front front(session_reactor, front_trans, gen, ini, cctx, report_message,
         fastpath_support, mem3blt_support, now, std::move(input_filename),
         persistent_key_list_oft.get());
     null_mod no_mod;
@@ -298,7 +299,8 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.deny_channels                       = &(ini.get<cfg::mod_rdp::deny_channels>());
 
             NullAuthentifier authentifier;
-            mod_rdp mod(mod_trans, front, client_info, ini.get_ref<cfg::mod_rdp::redir_info>(),
+            SessionReactor session_reactor;
+            mod_rdp mod(mod_trans, session_reactor, front, client_info, ini.get_ref<cfg::mod_rdp::redir_info>(),
                         gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
             run_mod(mod, front, front_event, &mod_trans, &front_trans);

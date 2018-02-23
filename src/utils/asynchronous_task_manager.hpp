@@ -31,6 +31,8 @@ public:
     {
         using ptr_function = void(*)(void* data, AsynchronousTask&) noexcept;
 
+        explicit DeleterFunction() = default;
+
         template<class T, class F>
         DeleterFunction(T* p, F f)
         : data(p)
@@ -44,8 +46,8 @@ public:
         }
 
     private:
-        void* data;
-        ptr_function  f;
+        void* data = nullptr;
+        ptr_function  f = [](void*, AsynchronousTask&) noexcept {};
     };
 
     virtual void configure_event(SessionReactor&, DeleterFunction) = 0;
