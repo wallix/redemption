@@ -106,6 +106,17 @@ public:
         this->hotspot = hotspot;
     }
 
+    void store_data_cursor(const char * cursor){ 
+            uint8_t * tmp = this->data;
+            memset(this->mask, 0, this->dimensions.width * this->dimensions.height / 8);
+            for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
+                uint8_t v = (cursor[i] == 'X') ? 0xFF : 0;
+                tmp[0] = tmp[1] = tmp[2] = v;
+                tmp += 3;
+                this->mask[i/8]|= (cursor[i] == '.')?(0x80 >> (i%8)):0;
+            }
+    }
+
 public:
     explicit Pointer(uint8_t pointer_type = POINTER_NULL)
     :   dimensions{0, 0}
@@ -168,15 +179,7 @@ public:
                         /* 0b40 */ "XX.............................."
                         /* 0ba0 */ "X..............................."
                         ;
-                    const char * data_cursor = data_cursor0;
-                    uint8_t * tmp = this->data;
-                    memset(this->mask, 0, this->dimensions.width * this->dimensions.height / 8);
-                    for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
-                        uint8_t v = (data_cursor[i] == 'X') ? 0xFF : 0;
-                        tmp[0] = tmp[1] = tmp[2] = v;
-                        tmp += 3;
-                        this->mask[i/8]|= (data_cursor[i] == '.')?(0x80 >> (i%8)):0;
-                    }
+                    this->store_data_cursor(data_cursor0);
                 }
                 break;  // case POINTER_NORMAL:
 
@@ -222,15 +225,7 @@ public:
                         /* 0b40 */ "................................"
                         /* 0ba0 */ "................................"
                         ;
-                    const char * data_cursor = data_cursor1;
-                    uint8_t * tmp = this->data;
-                    memset(this->mask, 0, this->dimensions.width * this->dimensions.height / 8);
-                    for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
-                        uint8_t v = (data_cursor[i] == 'X') ? 0xFF : 0;
-                        tmp[0] = tmp[1] = tmp[2] = v;
-                        tmp += 3;
-                        this->mask[i/8]|= (data_cursor[i] == '.')?(0x80 >> (i%8)):0;
-                    }
+                    this->store_data_cursor(data_cursor1);
                 }
                 break;  // case POINTER_EDIT:
 
@@ -258,66 +253,26 @@ public:
                         /* 0480 */ "................................"
                         /* 04e0 */ "................................"
                         /* 0540 */ "................................"
-                        /* 05a0 */ ".X....X..X......................"
-                        /* 0600 */ "X.X..X..X......................."
-                        /* 0660 */ "X..X.X..X......................."
-                        /* 06c0 */ "X...X..X........................"
-                        /* 0720 */ "X......XXXXX...................."
-                        /* 0780 */ "X..........X...................."
-                        /* 07e0 */ "X.........X....................."
-                        /* 0840 */ "X........X......................"
-                        /* 08a0 */ "X.......X......................."
-                        /* 0900 */ "X......X........................"
-                        /* 0960 */ "X.....X........................."
-                        /* 09c0 */ "X....X.........................."
-                        /* 0a20 */ "X...X..........................."
-                        /* 0a80 */ "X..X............................"
-                        /* 0ae0 */ "X.X............................."
+                        /* 05a0 */ ".X....X++X......................"
+                        /* 0600 */ "X+X..X++X......................."
+                        /* 0660 */ "X++X.X++X......................."
+                        /* 06c0 */ "X+++X++X........................"
+                        /* 0720 */ "X++++++XXXXX...................."
+                        /* 0780 */ "X++++++++++X...................."
+                        /* 07e0 */ "X+++++++++X....................."
+                        /* 0840 */ "X++++++++X......................"
+                        /* 08a0 */ "X+++++++X......................."
+                        /* 0900 */ "X++++++X........................"
+                        /* 0960 */ "X+++++X........................."
+                        /* 09c0 */ "X++++X.........................."
+                        /* 0a20 */ "X+++X..........................."
+                        /* 0a80 */ "X++X............................"
+                        /* 0ae0 */ "X+X............................."
                         /* 0b40 */ "XX.............................."
                         /* 0ba0 */ "X..............................."
                         ;
-                    uint8_t * tmp = this->data;
-                    for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
-                        uint8_t v = (data_cursor2[i] == 'X') ? 0 : 0xFF;
-                        tmp[0] = tmp[1] = tmp[2] = v;
-                        tmp += 3;
-                    }
+                    this->store_data_cursor(data_cursor2);
 
-                    const char * mask_cursor2 =
-                        /* 0000 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0008 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0010 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0018 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0020 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0028 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0030 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0038 */ "\xff\xff\xff\xff"
-                                   "\xbc\x3f\xff\xff"
-                        /* 0040 */ "\x18\x7f\xff\xff"
-                                   "\x08\x7f\xff\xff"
-                        /* 0048 */ "\x00\xff\xff\xff"
-                                   "\x00\x0f\xff\xff"
-                        /* 0050 */ "\x00\x0f\xff\xff"
-                                   "\x00\x1f\xff\xff"
-                        /* 0058 */ "\x00\x3f\xff\xff"
-                                   "\x00\x7f\xff\xff"
-                        /* 0060 */ "\x00\xff\xff\xff"
-                                   "\x01\xff\xff\xff"
-                        /* 0068 */ "\x03\xff\xff\xff"
-                                   "\x07\xff\xff\xff"
-                        /* 0070 */ "\x0f\xff\xff\xff"
-                                   "\x1f\xff\xff\xff"
-                        /* 0078 */ "\x3f\xff\xff\xff"
-                                   "\x7f\xff\xff\xff"
-                        ;
-                    ::memcpy(this->mask, mask_cursor2, this->dimensions.width * this->dimensions.height / 8);
                 }
                 break;  // case POINTER_DRAWABLE_DEFAULT:
 
@@ -363,48 +318,7 @@ public:
                         /* 0b40 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
                         /* 0ba0 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
                         ;
-                    uint8_t * tmp = this->data;
-                    for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
-                        uint8_t v = (data_cursor3[i] == 'X') ? 0 : 0xFF;
-                        tmp[0] = tmp[1] = tmp[2] = v;
-                        tmp += 3;
-                    }
-
-                    const char * mask_cursor3 =
-                        /* 0000 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xcf\xff"
-                        /* 0008 */ "\xff\xff\x87\xff"
-                                   "\xff\xff\x87\xff"
-                        /* 0010 */ "\xff\xff\x0f\xff"
-                                   "\xff\xdf\x0f\xff"
-                        /* 0018 */ "\xff\xce\x1f\xff"
-                                   "\xff\xc6\x1f\xff"
-                        /* 0020 */ "\xff\xc0\x3f\xff"
-                                   "\xff\xc0\x3f\xff"
-                        /* 0028 */ "\xff\xc0\x03\xff"
-                                   "\xff\xc0\x07\xff"
-                        /* 0030 */ "\xff\xc0\x0f\xff"
-                                   "\xff\xc0\x1f\xff"
-                        /* 0038 */ "\xff\xc0\x3f\xff"
-                                   "\xff\xc0\x7f\xff"
-                        /* 0040 */ "\xff\xc0\xff\xff"
-                                   "\xff\xc1\xff\xff"
-                        /* 0048 */ "\xff\xc3\xff\xff"
-                                   "\xff\xc7\xff\xff"
-                        /* 0050 */ "\xff\xcf\xff\xff"
-                                   "\xff\xdf\xff\xff"
-                        /* 0058 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0060 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0068 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0070 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0078 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        ;
-                    ::memcpy(this->mask, mask_cursor3, this->dimensions.width * this->dimensions.height / 8);
+                    this->store_data_cursor(data_cursor3);
                 }
                 break;  // case POINTER_SYSTEM_DEFAULT:
 
@@ -450,48 +364,7 @@ public:
                         /* 0b40 */ ".........X.X...................."
                         /* 0ba0 */ "..........X....................."
                         ;
-                    uint8_t * tmp = this->data;
-                    for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
-                        uint8_t v = (data_cursor4[i] == 'X') ? 0xFF : 0;
-                        tmp[0] = tmp[1] = tmp[2] = v;
-                        tmp += 3;
-                    }
-
-                    const char * mask_cursor4 =
-                        /* 0000 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0008 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0010 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0018 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0020 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0028 */ "\xff\xff\xff\xff"
-                                   "\xff\xdf\xff\xff"
-                        /* 0030 */ "\xff\x8f\xff\xff"
-                                   "\xff\x07\xff\xff"
-                        /* 0038 */ "\xfe\x03\xff\xff"
-                                   "\xfc\x01\xff\xff"
-                        /* 0040 */ "\xfc\x01\xff\xff"
-                                   "\xff\x8f\xff\xff"
-                        /* 0048 */ "\xff\x8f\xff\xff"
-                                   "\xff\x8f\xff\xff"
-                        /* 0050 */ "\xff\x8f\xff\xff"
-                                   "\xff\x8f\xff\xff"
-                        /* 0058 */ "\xff\x8f\xff\xff"
-                                   "\xff\x8f\xff\xff"
-                        /* 0060 */ "\xff\x8f\xff\xff"
-                                   "\xff\x8f\xff\xff"
-                        /* 0068 */ "\xfc\x01\xff\xff"
-                                   "\xfc\x01\xff\xff"
-                        /* 0070 */ "\xfe\x03\xff\xff"
-                                   "\xff\x07\xff\xff"
-                        /* 0078 */ "\xff\x8f\xff\xff"
-                                   "\xff\xdf\xff\xff"
-                        ;
-                    ::memcpy(this->mask, mask_cursor4, this->dimensions.width * this->dimensions.height / 8);
+                    this->store_data_cursor(data_cursor4);
                 }
                 break;  // case POINTER_SIZENS:
 
@@ -537,48 +410,7 @@ public:
                         /* 0b40 */ "................................"
                         /* 0ba0 */ "................................"
                         ;
-                    uint8_t * tmp = this->data;
-                    for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
-                        uint8_t v = (data_cursor5[i] == 'X') ? 0xFF : 0;
-                        tmp[0] = tmp[1] = tmp[2] = v;
-                        tmp += 3;
-                    }
-
-                    const char * mask_cursor5 =
-                        /* 0000 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0008 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0010 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0018 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0020 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0028 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0030 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0038 */ "\xe0\x3f\xff\xff"
-                                   "\xe0\x3f\xff\xff"
-                        /* 0040 */ "\xe0\x7f\xff\xff"
-                                   "\xe0\xff\xff\xff"
-                        /* 0048 */ "\xe0\x7f\xff\xff"
-                                   "\xe2\x3f\xff\xff"
-                        /* 0050 */ "\xe7\x1f\xff\xff"
-                                   "\xff\x8f\xff\xff"
-                        /* 0058 */ "\xff\xc7\x3f\xff"
-                                   "\xff\xe2\x3f\xff"
-                        /* 0060 */ "\xff\xf0\x3f\xff"
-                                   "\xff\xf8\x3f\xff"
-                        /* 0068 */ "\xff\xf0\x3f\xff"
-                                   "\xff\xe0\x3f\xff"
-                        /* 0070 */ "\xff\xe0\x3f\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0078 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        ;
-                    ::memcpy(this->mask, mask_cursor5, this->dimensions.width * this->dimensions.height / 8);
+                    this->store_data_cursor(data_cursor5);
                 }
                 break;  // case POINTER_SIZENESW:
 
@@ -624,48 +456,7 @@ public:
                         /* 0b40 */ "................................"
                         /* 0ba0 */ "................................"
                         ;
-                    uint8_t * tmp = this->data;
-                    for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
-                        uint8_t v = (data_cursor6[i] == 'X') ? 0xFF : 0;
-                        tmp[0] = tmp[1] = tmp[2] = v;
-                        tmp += 3;
-                    }
-
-                    const char * mask_cursor6 =
-                        /* 0000 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0008 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0010 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0018 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0020 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0028 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0030 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0038 */ "\xff\xe0\x3f\xff"
-                                   "\xff\xe0\x3f\xff"
-                        /* 0040 */ "\xff\xf0\x3f\xff"
-                                   "\xff\xf8\x3f\xff"
-                        /* 0048 */ "\xff\xf0\x3f\xff"
-                                   "\xff\xe2\x3f\xff"
-                        /* 0050 */ "\xff\xc7\x3f\xff"
-                                   "\xff\x8f\xff\xff"
-                        /* 0058 */ "\xe7\x1f\xff\xff"
-                                   "\xe2\x3f\xff\xff"
-                        /* 0060 */ "\xe0\x7f\xff\xff"
-                                   "\xe0\xff\xff\xff"
-                        /* 0068 */ "\xe0\x7f\xff\xff"
-                                   "\xe0\x3f\xff\xff"
-                        /* 0070 */ "\xe0\x3f\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0078 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        ;
-                    ::memcpy(this->mask, mask_cursor6, this->dimensions.width * this->dimensions.height / 8);
+                    this->store_data_cursor(data_cursor6);
                 }
                 break;  // case POINTER_SIZENWSE:
 
@@ -711,48 +502,7 @@ public:
                         /* 0b40 */ "................................"
                         /* 0ba0 */ "................................"
                         ;
-                    uint8_t * tmp = this->data;
-                    for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
-                        uint8_t v = (data_cursor7[i] == 'X') ? 0xFF : 0;
-                        tmp[0] = tmp[1] = tmp[2] = v;
-                        tmp += 3;
-                    }
-
-                    const char * mask_cursor7 =
-                        /* 0000 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0008 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0010 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0018 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0020 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0028 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0030 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0038 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0040 */ "\xff\xff\xff\xff"
-                                   "\xf3\xfe\x7f\xff"
-                        /* 0048 */ "\xe3\xfe\x3f\xff"
-                                   "\xc3\xfe\x1f\xff"
-                        /* 0050 */ "\x80\x00\x0f\xff"
-                                   "\x00\x00\x07\xff"
-                        /* 0058 */ "\x80\x00\x0f\xff"
-                                   "\xc3\xfe\x1f\xff"
-                        /* 0060 */ "\xe3\xfe\x3f\xff"
-                                   "\xf3\xfe\x7f\xff"
-                        /* 0068 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0070 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        /* 0078 */ "\xff\xff\xff\xff"
-                                   "\xff\xff\xff\xff"
-                        ;
-                    ::memcpy(this->mask, mask_cursor7, this->dimensions.width * this->dimensions.height / 8);
+                    this->store_data_cursor(data_cursor7);
                 }
                 break;  // case POINTER_SIZEWE:
         }   // switch (pointer_type)

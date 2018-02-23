@@ -185,6 +185,35 @@ namespace redemption_unit_test__
         }
     };
 
+    struct xarray_color
+    {
+        int & res;
+        const_byte_array sig;
+
+        std::size_t size() const
+        {
+            return sig.size();
+        }
+
+        bool operator == (xarray_color const & other) const
+        {
+            this->res = std::abs(memcmp(sig.begin(), other.sig.begin(), std::min(sig.size(), other.sig.size())));
+            return res == 0 && this->sig.size() == other.sig.size();
+        }
+    };
+
+    inline std::ostream & operator<<(std::ostream & out, xarray_color const & x)
+    {
+        out << "\"";
+        char const * hex_table = "0123456789abcdef";
+        int q = 0;
+        for (unsigned c : x.sig) {
+            out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
+            if (q++ == x.res-1){ out << "\x1b[31m";}
+        }
+        return out << "\x1b[0m\"";
+    }
+
     inline std::ostream & operator<<(std::ostream & out, xarray const & x)
     {
         out << "\"";
@@ -205,9 +234,10 @@ namespace redemption_unit_test__
 
 #define RED_CHECK_MEM(mem, memref)                  \
     do {                                            \
+        int res__ = 0;                              \
         [](                                         \
-            redemption_unit_test__::xarray mem__,   \
-            redemption_unit_test__::xarray memref__ \
+            redemption_unit_test__::xarray_color mem__,   \
+            redemption_unit_test__::xarray_color memref__ \
         ){                                          \
             RED_CHECK_OP_VAR_MESSAGE(               \
                 ==, mem__.size(), memref__.size(),  \
@@ -216,8 +246,8 @@ namespace redemption_unit_test__
                 ==, mem__, memref__,                \
                 mem, memref);                       \
         }(                                          \
-            redemption_unit_test__::xarray{mem},    \
-            redemption_unit_test__::xarray{memref}  \
+            redemption_unit_test__::xarray_color{res__,mem},    \
+            redemption_unit_test__::xarray_color{res__,memref}  \
         );                                          \
     } while (0)
 
