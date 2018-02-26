@@ -83,8 +83,9 @@ private:
 
 public:
     uint8_t data[DATA_SIZE];
+private:
     uint8_t mask[MASK_SIZE];
-
+public:
     bool only_black_white = false;
 
     CursorSize get_dimensions() const
@@ -119,6 +120,22 @@ public:
     }
 
 public:
+    explicit Pointer(Dimensions d, Hotspot hs, array_view_const_u8 & av_xor, array_view_const_u8 & av_and)
+        : dimensions(d)
+        , hotspot(hs)
+    {
+        memcpy(this->mask, av_and.data(), av_and.size());
+        memcpy(this->data, av_xor.data(), av_xor.size());
+
+        if ((av_xor.size() > this->bit_mask_size()) || (av_and.size() > sizeof(this->xor_mask_size()))) {
+            LOG(LOG_ERR, "mod_rdp::process_color_pointer_pdu: "
+                "bad length for color pointer mask_len=%u data_len=%u",
+                av_and.size(), av_and.size());
+            throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
+        }
+
+    }
+
     explicit Pointer(uint8_t pointer_type = POINTER_NULL)
     :   dimensions{0, 0}
     ,   hotspot{0, 0}
@@ -580,7 +597,7 @@ public:
     }
 
     unsigned xor_mask_size() const {
-        return this->dimensions.width * this->dimensions.height * ::nbbytes(24);
+        return (this->dimensions.width * 3)+(((this->dimensions.width * 3)&1)?1:0) * this->dimensions.height;
     }
 
     bool is_valid() const {

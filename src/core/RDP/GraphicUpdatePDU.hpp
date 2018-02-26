@@ -545,6 +545,189 @@ protected:
         }
     }
 
+// 2.2.9.1.2.1 Fast-Path Update (TS_FP_UPDATE)
+// ==========================================
+
+// The TS_FP_UPDATE structure is used to describe and encapsulate the data for a fast-path update sent from server to client. 
+// All fast-path updates conform to this basic structure (sections 2.2.9.1.2.1.1 to 2.2.9.1.2.1.10). 
+
+// updateHeader (1 byte):  An 8-bit, unsigned integer. Three pieces of information are collapsed into this byte:
+
+//    Fast-path update type
+//    Fast-path fragment sequencing
+//    Compression usage indication
+
+//    The format of the updateHeader byte is described by the following bitmask diagram.
+
+// 2.2.9.1.2.1.1 Fast-Path Palette Update (TS_FP_UPDATE_PALETTE)
+// =============================================================
+
+
+// The TS_FP_UPDATE_PALETTE structure is the fast-path variant of the TS_UPDATE_PALETTE (section 2.2.9.1.1.3.1.1) structure.
+
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field, 
+// specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set to FASTPATH_UPDATETYPE_PALETTE (2).
+
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) is 
+// the same as the compressionFlags field specified in the Fast-Path Update structure.
+
+// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same as the 
+// size field specified in the Fast-Path Update structure.
+
+// paletteUpdateData (variable): Variable-length palette data. Both slow-path and fast-path utilize the same data format, 
+// a Palette Update Data (section 2.2.9.1.1.3.1.1.1) structure, to represent this information.
+
+// 2.2.9.1.2.1.2 Fast-Path Bitmap Update (TS_FP_UPDATE_BITMAP)
+// ==========================================================
+
+// The TS_FP_UPDATE_BITMAP structure is the fast-path variant of the TS_UPDATE_BITMAP (section 2.2.9.1.1.3.1.2) structure.
+
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field 
+// specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set 
+// to FASTPATH_UPDATETYPE_BITMAP (1).
+
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) 
+// is the same as the compressionFlags field specified in the Fast-Path Update structure.
+
+// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same 
+// as the size field specified in the Fast-Path Update structure.
+
+// bitmapUpdateData (variable):  Variable-length bitmap data. Both slow-path and fast-path utilize the same data format, 
+// a Bitmap Update Data (section 2.2.9.1.1.3.1.2.1) structure, to represent this information.
+
+// 2.2.9.1.2.1.3 Fast-Path Synchronize Update (TS_FP_UPDATE_SYNCHRONIZE)
+// =====================================================================
+
+// The TS_FP_UPDATE_SYNCHRONIZE structure is the fast-path variant of the TS_UPDATE_SYNCHRONIZE_PDU_DATA 
+// (section 2.2.9.1.1.3.1.3) structure.
+
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field
+//  described in the Fast-Path Update (section 2.2.9.1.2.1). The updateCode bitfield (4 bits in size) MUST be set 
+// to FASTPATH_UPDATETYPE_SYNCHRONIZE (3).
+
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) 
+// is the same as the compressionFlags field described in the Fast-Path Update structure.
+
+// size (2 bytes): A 16-bit, unsigned integer. This field MUST be set to zero.
+
+// 2.2.9.1.2.1.4 Fast-Path Pointer Position Update (TS_FP_POINTERPOSATTRIBUTE)
+// ===========================================================================
+
+// The TS_FP_POINTERPOSATTRIBUTE structure is the fast-path variant of the TS_POINTERPOSATTRIBUTE structure (section 2.2.9.1.1.4.2).
+
+// updateHeader (1 byte): The format of this field is the same as the updateHeader byte field specified in the Fast-Path Update
+// (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set to FASTPATH_UPDATETYPE_PTR_POSITION (8).
+
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) 
+// is the same as the compressionFlags field specified in the Fast-Path Update structure.
+
+// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same as the
+// size field specified in the Fast-Path Update structure.
+
+// pointerPositionUpdateData (4 bytes): Pointer coordinates. Both slow-path and fast-path utilize the same data format, 
+// a Pointer Position Update (section 2.2.9.1.1.4.2) structure, to represent this information.
+
+// 2.2.9.1.2.1.5 Fast-Path System Pointer Hidden Update (TS_FP_SYSTEMPOINTERHIDDENATTRIBUTE)
+// =========================================================================================
+
+// The TS_FP_SYSTEMPOINTERHIDDENATTRIBUTE structure is used to hide the pointer.
+
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field
+//  specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be 
+// set to FASTPATH_UPDATETYPE_PTR_NULL (5).
+
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) 
+// is the same as the compressionFlags field specified in the Fast-Path Update structure.
+
+// size (2 bytes): A 16-bit, unsigned integer. This field MUST be set to zero.
+
+// 2.2.9.1.2.1.6 Fast-Path System Pointer Default Update (TS_FP_SYSTEMPOINTERDEFAULTATTRIBUTE)
+// ===========================================================================================
+
+// The TS_FP_SYSTEMPOINTERDEFAULTATTRIBUTE structure is used to set the shape of the pointer to the operating system default.
+
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field 
+// specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set 
+// to FASTPATH_UPDATETYPE_PTR_DEFAULT (6).
+
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) 
+// is the same as the compressionFlags field specified in the Fast-Path Update structure.
+
+// size (2 bytes): A 16-bit, unsigned integer. This field MUST be set to zero.
+
+// 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE)
+// =========================================================================
+
+// The TS_FP_COLORPOINTERATTRIBUTE structure is the fast-path variant of the TS_COLORPOINTERATTRIBUTE (section 2.2.9.1.1.4.4) 
+// structure.
+
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field 
+// specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set 
+// to FASTPATH_UPDATETYPE_COLOR (9).
+
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) 
+// is the same as the compressionFlags field specified in the Fast-Path Update structure.
+
+// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same as 
+// the size field specified in the Fast-Path Update structure.
+
+// colorPointerUpdateData (variable): Color pointer data. Both slow-path and fast-path utilize the same data format, 
+// a Color Pointer Update (section 2.2.9.1.1.4.4) structure, to represent this information.
+
+// 2.2.9.1.2.1.8 Fast-Path New Pointer Update (TS_FP_POINTERATTRIBUTE)
+// ===================================================================
+
+// The TS_FP_POINTERATTRIBUTE structure is the fast-path variant of the TS_POINTERATTRIBUTE (section 2.2.9.1.1.4.5) structure.
+
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field
+// specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set to FASTPATH_UPDATETYPE_POINTER (11).
+
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) 
+// is the same as the compressionFlags field specified in the Fast-Path Update structure.
+
+// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same as the size
+// field specified in the Fast-Path Update structure.
+
+// newPointerUpdateData (variable): Color pointer data at arbitrary color depth. Both slow-path and fast-path utilize the same 
+// data format, a New Pointer Update (section 2.2.9.1.1.4.5) structure, to represent this information.
+
+// 2.2.9.1.2.1.9 Fast-Path Cached Pointer Update (TS_FP_CACHEDPOINTERATTRIBUTE)
+// ============================================================================
+
+// The TS_FP_CACHEDPOINTERATTRIBUTE structure is the fast-path variant of the TS_CACHEDPOINTERATTRIBUTE (section 2.2.9.1.1.4.6) 
+// structure.
+
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field 
+// specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set to FASTPATH_UPDATETYPE_CACHED (10).
+
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) 
+// is the same as the compressionFlags field specified in the Fast-Path Update structure.
+
+// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same as 
+// the size field specified in the Fast-Path Update structure.
+
+// cachedPointerUpdateData (2 bytes):  Cached pointer data. Both slow-path and fast-path utilize the same data format,
+// a Cached Pointer Update (section 2.2.9.1.1.4.6) structure, to represent this information.
+
+// 2.2.9.1.2.1.10 Fast-Path Surface Commands Update (TS_FP_SURFCMDS)
+// =================================================================
+
+// The TS_FP_SURFCMDS structure encapsulates one or more Surface Command (section 2.2.9.1.2.1.10.1) structures.
+
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field 
+// specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set 
+// to FASTPATH_UPDATETYPE_SURFCMDS (4).
+
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) 
+// is the same as the compressionFlags field specified in the Fast-Path Update (section 2.2.9.1.2.1) structure.
+
+// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same as 
+// the size field specified in the Fast-Path Update structure.
+
+// surfaceCommands (variable): An array of Surface Command (section 2.2.9.1.2.1.10.1) structures containing a collection 
+// of commands to be processed by the client.
+
+
 //    2.2.9.1.1.4     Server Pointer Update PDU (TS_POINTER_PDU)
 //    ----------------------------------------------------------
 //    The Pointer Update PDU is sent from server to client and is used to convey
@@ -697,12 +880,15 @@ protected:
 //    lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
 //      the andMaskData field.
 
-        stream.out_uint16_le(cursor.mask_size());
+        auto av_mask = cursor.get_monochrome_and_mask();
+        auto av_data = cursor.get_24bits_xor_mask();
+
+        stream.out_uint16_le(av_mask.size());
 
 //    lengthXorMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
 //      the xorMaskData field.
 
-        stream.out_uint16_le(cursor.data_size());
+        stream.out_uint16_le(av_data.size());
 
 //    xorMaskData (variable): Variable number of bytes: Contains the 24-bpp,
 //      bottom-up XOR mask scan-line data. The XOR mask is padded to a 2-byte
@@ -710,7 +896,7 @@ protected:
 //      is being sent, then each scan-line will consume 10 bytes (3 pixels per
 //      scan-line multiplied by 3 bpp, rounded up to the next even number of
 //      bytes).
-        stream.out_copy_bytes(cursor.data, cursor.data_size());
+        stream.out_copy_bytes(av_data.data(), av_data.size());
 
 //    andMaskData (variable): Variable number of bytes: Contains the 1-bpp,
 //      bottom-up AND mask scan-line data. The AND mask is padded to a 2-byte
@@ -718,10 +904,11 @@ protected:
 //      is being sent, then each scan-line will consume 2 bytes (7 pixels per
 //      scan-line multiplied by 1 bpp, rounded up to the next even number of
 //      bytes).
-        stream.out_copy_bytes(cursor.mask, cursor.mask_size()); /* mask */
+        stream.out_copy_bytes(av_mask.data(), av_mask.size()); /* mask */
 
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
+        // TODO: why isn't this padding byte sent ?
     }
 
     void GenerateNewPointerUpdateData(OutStream & stream, int cache_idx, const Pointer & cursor)
@@ -828,13 +1015,15 @@ protected:
             stream.out_copy_bytes(xorMaskData, xor_padded_line_length_in_byte * dimensions.height);
         }
         else {
+            auto av_and = cursor.get_monochrome_and_mask();
+            
             uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 4] = { 0 };
 
             for (unsigned int h = 0; h < dimensions.height; ++h) {
                 const uint8_t* psource = cursor.data + (dimensions.height - h - 1) * source_xor_padded_line_length_in_byte;
                       uint8_t* pdest   = xorMaskData + (dimensions.height - h - 1) * xor_padded_line_length_in_byte;
 
-                const uint8_t* andMask = cursor.mask + (dimensions.height - h - 1) * and_padded_line_length_in_byte;
+                const uint8_t* andMask = av_and.data()[(dimensions.height - h - 1) * and_padded_line_length_in_byte];
                 unsigned char and_bit_extraction_mask = 7;
 
 
@@ -873,10 +1062,11 @@ protected:
 //      bytes).
 
         if (cursor.only_black_white) {
+            auto av = cursor.get_monochrome_and_mask();
             uint8_t andMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8] = { 0 };
 
             for (unsigned int h = 0; h < dimensions.height; ++h) {
-                const uint8_t* psource = cursor.mask + (dimensions.height - h - 1) * and_padded_line_length_in_byte;
+                const uint8_t* psource = av_and.data()[(dimensions.height - h - 1) * and_padded_line_length_in_byte];
                       uint8_t* pdest   = andMaskData + h * and_padded_line_length_in_byte;
 
                 memcpy(pdest, psource, and_padded_line_length_in_byte);
@@ -885,7 +1075,8 @@ protected:
             stream.out_copy_bytes(andMaskData, and_padded_line_length_in_byte * dimensions.height); /* mask */
         }
         else {
-            stream.out_copy_bytes(cursor.mask, cursor.mask_size()); /* mask */
+            auto av = cursor.get_monochrome_and_mask();
+            stream.out_copy_bytes(av.data(), av.size()); /* mask */
         }
 
 //    colorPointerData (1 byte): Single byte representing unused padding.

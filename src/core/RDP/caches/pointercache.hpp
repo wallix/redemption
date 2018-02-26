@@ -62,7 +62,8 @@ public:
         this->Pointers[index].set_dimensions(cursor.get_dimensions());
 //        this->Pointers[index].bpp = cursor.bpp;
         memcpy(this->Pointers[index].data, cursor.data, cursor.data_size());
-        memcpy(this->Pointers[index].mask, cursor.mask, cursor.mask_size());
+        auto av = cursor.get_monochrome_and_mask();
+        memcpy(this->Pointers[index].mask, av.data(), av.size());
         this->stamps[index] = this->pointer_stamp;
 
         this->cached[index] = true;
@@ -89,7 +90,8 @@ public:
             &&  dimensions_i.width == dimensions.width && dimensions_i.height == dimensions.height
 //            &&  this->Pointers[i].bpp == cursor.bpp
             &&  (memcmp(this->Pointers[i].data, cursor.data, cursor.data_size()) == 0)
-            &&  (memcmp(this->Pointers[i].mask, cursor.mask, cursor.mask_size()) == 0)) {
+            auto av = cursor.get_monochrome_and_mask();
+            &&  (memcmp(this->Pointers[i].mask, av.data(), av.size()) == 0)) {
                 this->stamps[i] = this->pointer_stamp;
                 cache_idx = i;
                 return POINTER_ALLREADY_SENT;
