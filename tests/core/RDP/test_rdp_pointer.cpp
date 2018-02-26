@@ -92,7 +92,7 @@ RED_AUTO_TEST_CASE(TestPointerNormal)
         /* 0078 */ 0x3F, 0xFF, 0xFF, 0xFF,
                    0x7F, 0xFF, 0xFF, 0xFF,
     };
-    RED_CHECK_MEM(make_array_view(expected, sizeof(expected)), make_array_view(p.mask, p.bit_mask_size()));
+    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected, sizeof(expected)));
 }
 
 RED_AUTO_TEST_CASE(TestPointerEdit)
@@ -135,7 +135,7 @@ RED_AUTO_TEST_CASE(TestPointerEdit)
         /* 0078 */  ,0xff ,0xff ,0xff ,0xff
                     ,0xff ,0xff ,0xff ,0xff
     };
-    RED_CHECK_MEM(make_array_view(expected, sizeof(expected)), make_array_view(p.mask, p.bit_mask_size()));
+    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected, sizeof(expected)));
 }
 
 RED_AUTO_TEST_CASE(TestPointerDrawableDefault)
@@ -178,7 +178,7 @@ RED_AUTO_TEST_CASE(TestPointerDrawableDefault)
         /* 0078 */ , 0x3f, 0xff, 0xFF, 0xFF
                    , 0x7f, 0xff, 0xFF, 0xFF
     };
-    RED_CHECK_MEM(make_array_view(expected, sizeof(expected)), make_array_view(p.mask, p.bit_mask_size()));
+    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected, sizeof(expected)));
 }
 
 RED_AUTO_TEST_CASE(TestPointerSystemDefault)
@@ -222,7 +222,7 @@ RED_AUTO_TEST_CASE(TestPointerSystemDefault)
         /* 0078 */ , 0xFF, 0xFF, 0xFF, 0xFF
                    , 0xFF, 0xFF, 0xFF, 0xFF
     };
-    RED_CHECK_MEM(make_array_view(expected, sizeof(expected)), make_array_view(p.mask, p.bit_mask_size()));
+    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected, sizeof(expected)));
 
 }
 
@@ -267,7 +267,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNS)
         /* 0078 */ , 0xFF, 0x8f, 0xFF, 0xFF
                    , 0xFF, 0xdf, 0xFF, 0xFF
     };
-    RED_CHECK_MEM(make_array_view(expected, sizeof(expected)), make_array_view(p.mask, p.bit_mask_size()));
+    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected, sizeof(expected)));
 }
 
 RED_AUTO_TEST_CASE(TestPointerSizeNESW)
@@ -311,7 +311,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNESW)
         /* 0078 */ , 0xFF, 0xFF, 0xFF, 0xFF
                    , 0xFF, 0xFF, 0xFF, 0xFF
     };
-    RED_CHECK_MEM(make_array_view(expected, sizeof(expected)), make_array_view(p.mask, p.bit_mask_size()));
+    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected, sizeof(expected)));
 
 }
 
@@ -356,7 +356,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNWSE)
         /* 0078 */ , 0xFF, 0xFF, 0xFF, 0xFF
                    , 0xFF, 0xFF, 0xFF, 0xFF
     };
-    RED_CHECK_MEM(make_array_view(expected, sizeof(expected)), make_array_view(p.mask, p.bit_mask_size()));
+    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected, sizeof(expected)));
 }
 
 RED_AUTO_TEST_CASE(TestPointerSizeWE)
@@ -399,5 +399,5 @@ RED_AUTO_TEST_CASE(TestPointerSizeWE)
         /* 0078 */ , 0xFF, 0xFF, 0xFF, 0xFF
                    , 0xFF, 0xFF, 0xFF, 0xFF
     };
-    RED_CHECK_MEM(make_array_view(expected, sizeof(expected)), make_array_view(p.mask, p.bit_mask_size()));
+    RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected, sizeof(expected)));
 }

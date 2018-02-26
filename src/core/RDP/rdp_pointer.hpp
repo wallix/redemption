@@ -28,6 +28,7 @@
 #include <cstring>
 #include "utils/log.hpp"
 #include "utils/hexdump.hpp"
+#include "utils/sugar/array_view.hpp"
 
 struct Pointer {
     enum  {
@@ -541,6 +542,11 @@ public:
     //      && (memcmp(this->mask, other.mask, this->mask_size()) == 0)
     //      );
     //}
+
+    array_view_const_u8 get_monochrome_and_mask()
+    {
+        return {this->mask, bit_mask_size()};
+    }
 
     unsigned data_size() const {
         const unsigned int xor_line_length_in_byte = this->dimensions.width * 3;
