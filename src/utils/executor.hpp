@@ -1292,7 +1292,6 @@ struct UniquePtrEventWithUPtr : UniquePtrWithNotifyDelete<Event>
         {
             this->deleter = [](auto* base, DeleteFrom from) noexcept {
                 auto* e = static_cast<EventPrivate*>(base);
-                // TODO detach here if removed_by_owner = true
 # ifndef NDEBUG
                 e->deleter = [](auto*, DeleteFrom) noexcept { assert(!"already delete"); };
 # endif

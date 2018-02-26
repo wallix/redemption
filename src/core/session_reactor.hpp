@@ -308,7 +308,6 @@ struct SessionReactor
         ~FdImpl()
         {
             this->session_reactor.timer_events_.detach(this->timer());
-            this->detach();
         }
 
         void detach() noexcept

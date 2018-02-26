@@ -719,7 +719,23 @@ public:
               , to_verbose_flags(this->_verbose)
               );
         } else {
-            auto rdp = std::make_unique<mod_rdp>(
+            struct Rdp : SessionReactor, mod_rdp
+            {
+                Rdp( Transport & trans
+                   , FrontAPI & front
+                   , const ClientInfo & info
+                   , RedirectionInfo & redir_info
+                   , Random & gen
+                   , TimeObj & timeobj
+                   , const ModRDPParams & mod_rdp_params
+                   , AuthApi & authentifier
+                   , ReportMessageApi & report_message
+                   , ModRdpVariables vars)
+                : mod_rdp(trans, *this, front, info, redir_info, gen,
+                    timeobj, mod_rdp_params, authentifier, report_message, vars)
+                {}
+            };
+            auto rdp = std::make_unique<Rdp>(
                 *this->socket
               , *this
               , this->_info

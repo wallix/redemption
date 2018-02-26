@@ -248,7 +248,6 @@ public:
                         // LOG(LOG_DEBUG, "is set fd: %d %d", c[i]->fd, io_fd_isset(c[i]->fd, rfds));
                         if (io_fd_isset(c[i]->fd, rfds) && !c[i]->exec()) {
                             // LOG(LOG_DEBUG, "delete fd: %d", c[i]->fd);
-                            session_reactor.timer_events_.detach(*c[i]);
                             c[i]->delete_self(jln::DeleteFrom::Observer);
                             c[i] = std::move(c.back());
                             c.pop_back();

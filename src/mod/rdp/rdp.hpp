@@ -478,6 +478,7 @@ protected:
                         pself->tasks.end(),
                         [&task](auto& uptr){ return uptr.get() == &task; }
                     );
+                    assert(it != pself->tasks.end());
                     *it = std::move(pself->tasks.back());
                     pself->tasks.pop_back();
                 }
