@@ -25,7 +25,6 @@
 #include "configs/config_access.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget/flat_wab_close.hpp"
-#include "utils/timeout.hpp"
 
 using FlatWabCloseModVariables = vcfg::variables<
     vcfg::var<cfg::globals::auth_user,          vcfg::accessmode::get | vcfg::accessmode::is_asked>,

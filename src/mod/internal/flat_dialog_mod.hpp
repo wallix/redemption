@@ -26,7 +26,6 @@
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget/flat_dialog.hpp"
 #include "mod/internal/widget/language_button.hpp"
-#include "utils/timeout.hpp"
 
 
 using FlatDialogModVariables = vcfg::variables<

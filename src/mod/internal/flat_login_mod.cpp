@@ -26,7 +26,6 @@
 #include "configs/config_access.hpp"
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"
-#include "utils/timeout.hpp"
 
 
 FlatLoginMod::FlatLoginMod(

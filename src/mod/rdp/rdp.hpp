@@ -116,7 +116,6 @@
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/splitter.hpp"
-#include "utils/timeout.hpp"
 
 #include <cstdlib>
 
@@ -419,7 +418,7 @@ protected:
     const bool                 disconnect_on_logon_user_change;
     const std::chrono::seconds open_session_timeout;
 
-    Timeout open_session_timeout_checker;
+    SessionReactor::BasicTimerPtr open_session_timeout_checker_timer;
 
     std::string output_filename;
 
@@ -965,7 +964,6 @@ public:
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , open_session_timeout(mod_rdp_params.open_session_timeout)
-        , open_session_timeout_checker(0)
         , output_filename(mod_rdp_params.output_filename)
         , server_cert_store(mod_rdp_params.server_cert_store)
         , server_cert_check(mod_rdp_params.server_cert_check)
@@ -4361,37 +4359,8 @@ public:
 
         //LOG(LOG_INFO, "mod_rdp::draw_event() session timeout check count=%u",
         //        static_cast<unsigned>(this->open_session_timeout.count()));
-        if (this->open_session_timeout.count()) {
-            LOG(LOG_INFO, "mod_rdp::draw_event() session timeout check switch");
-            switch(this->open_session_timeout_checker.check(now)) {
-            case Timeout::TIMEOUT_REACHED:
-                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_REACHED");
-                if (this->error_message) {
-                    *this->error_message = "Logon timer expired!";
-                }
-
-                this->report_message.report("CONNECTION_FAILED", "Logon timer expired.");
-
-                if (this->enable_session_probe) {
-                    const bool disable_input_event     = false;
-                    const bool disable_graphics_update = false;
-                    this->disable_input_event_and_graphics_update(
-                        disable_input_event, disable_graphics_update);
-                }
-
-                LOG(LOG_ERR,
-                    "Logon timer expired on %s. The session will be disconnected.",
-                    this->hostname);
-                throw Error(ERR_RDP_OPEN_SESSION_TIMEOUT);
-            break;
-            case Timeout::TIMEOUT_NOT_REACHED:
-                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_NOT_REACHED");
-                this->event.set_trigger_time(1000000);
-            break;
-            case Timeout::TIMEOUT_INACTIVE:
-                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_INACTIVE");
-            break;
-            }
+        if (this->open_session_timeout_checker_timer) {
+            this->open_session_timeout_checker_timer->set_time(std::chrono::seconds(1));
         }
 
 /*
@@ -5858,8 +5827,7 @@ public:
         this->end_session_message = "OK.";
 
         if (this->open_session_timeout.count()) {
-            this->open_session_timeout_checker.cancel_timeout();
-
+            this->open_session_timeout_checker_timer.reset();
             this->event.reset_trigger_time();
         }
 
@@ -7410,7 +7378,7 @@ private:
         }
     }   // process_bitmap_updates
 
-    void send_client_info_pdu(const time_t & now) {
+    void send_client_info_pdu(const time_t & /*now*/) {
         if (bool(this->verbose & RDPVerbose::basic_trace)){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu");
         }
@@ -7511,10 +7479,31 @@ private:
         }
 
         if (this->open_session_timeout.count()) {
-            this->open_session_timeout_checker.restart_timeout(
-                now, this->open_session_timeout.count());
-            this->event.set_trigger_time(1000000);
+            this->open_session_timeout_checker_timer = this->session_reactor
+            .create_timer(std::ref(*this))
+            .set_delay(std::chrono::seconds(1))
+            .on_action(jln::one_shot([](mod_rdp& self){
+                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_REACHED");
+                if (self.error_message) {
+                    *self.error_message = "Logon timer expired!";
+                }
+
+                self.report_message.report("CONNECTION_FAILED", "Logon timer expired.");
+
+                if (self.enable_session_probe) {
+                    const bool disable_input_event     = false;
+                    const bool disable_graphics_update = false;
+                    self.disable_input_event_and_graphics_update(
+                        disable_input_event, disable_graphics_update);
+                }
+
+                LOG(LOG_ERR,
+                    "Logon timer expired on %s. The session will be disconnected.",
+                    self.hostname);
+                throw Error(ERR_RDP_OPEN_SESSION_TIMEOUT);
+            }));
         }
+
         if (bool(this->verbose & RDPVerbose::basic_trace)){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu done");
         }

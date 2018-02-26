@@ -28,7 +28,6 @@
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget/flat_wait.hpp"
 #include "mod/internal/widget/language_button.hpp"
-#include "utils/timeout.hpp"
 
 
 using FlatWaitModVariables = vcfg::variables<
