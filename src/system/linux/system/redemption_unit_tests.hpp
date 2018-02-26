@@ -209,7 +209,7 @@ namespace redemption_unit_test__
         }
         char const * hex_table = "0123456789abcdef";
         size_t q = 0;
-        size_t split = 4;
+        size_t split = 96;
         for (unsigned c : x.sig) {
             if (q%split == 0){ out << "\""; } 
             if (q++ == x.res){ out << "\x1b[31m";}

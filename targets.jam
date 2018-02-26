@@ -1732,6 +1732,7 @@ test-run tests/core/RDP/test_rdp_pointer :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_rdp_pointer.cpp
 :
   <covfile>src/core/RDP/rdp_pointer.hpp
+  <library>crypto
   <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_remote_programs :

@@ -545,8 +545,14 @@ public:
 
     array_view_const_u8 get_monochrome_and_mask()
     {
-        return {this->mask, bit_mask_size()};
+        return {this->mask, this->bit_mask_size()};
     }
+
+    array_view_const_u8 get_24bits_xor_mask()
+    {
+        return {this->data, this->xor_mask_size()};
+    }
+
 
     unsigned data_size() const {
         const unsigned int xor_line_length_in_byte = this->dimensions.width * 3;
@@ -573,6 +579,9 @@ public:
         return ::nbbytes(this->dimensions.width) * this->dimensions.height;
     }
 
+    unsigned xor_mask_size() const {
+        return this->dimensions.width * this->dimensions.height * ::nbbytes(24);
+    }
 
     bool is_valid() const {
         return (this->dimensions.width && this->dimensions.height/* && this->bpp*/);
