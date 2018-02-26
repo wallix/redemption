@@ -52,7 +52,7 @@ class FlatLoginMod : public LocallyIntegrableMod, public NotifyApi
     LanguageButton language_button;
 
     FlatLogin login;
-    Timeout timeout;
+    SessionReactor::BasicTimerPtr timeout_timer;
 
     CopyPaste copy_paste;
 

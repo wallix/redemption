@@ -51,7 +51,8 @@ class FlatWaitMod : public LocallyIntegrableMod, public NotifyApi
     FlatWait wait_widget;
 
     FlatWaitModVariables vars;
-    Timeout timeout;
+
+    SessionReactor::BasicTimerPtr timeout_timer;
 
     CopyPaste copy_paste;
 

@@ -48,7 +48,7 @@ class FlatDialogMod : public LocallyIntegrableMod, public NotifyApi
     FlatDialog dialog_widget;
 
     FlatDialogModVariables vars;
-    Timeout timeout;
+    SessionReactor::BasicTimerPtr timeout_timer;
 
     CopyPaste copy_paste;
 

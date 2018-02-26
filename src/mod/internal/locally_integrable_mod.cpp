@@ -35,7 +35,21 @@ LocallyIntegrableMod::LocallyIntegrableMod(
 , rail_enabled(client_execute.is_rail_enabled())
 , current_mouse_owner(MouseOwner::WidgetModule)
 , session_reactor(session_reactor)
-{}
+{
+    if (this->rail_enabled) {
+        this->graphic_event = session_reactor.create_graphic_event(std::ref(*this))
+        .on_action(jln::one_shot([](gdi::GraphicApi&, LocallyIntegrableMod& self){
+            if (false == static_cast<bool>(self.client_execute)/* &&
+                self.event.is_waked_up_by_time()*/) {
+                self.client_execute.ready(
+                    self, self.front_width, self.front_height, self.font(),
+                    self.is_resizing_hosted_desktop_allowed());
+
+                self.dvc_manager.ready(self.front);
+            }
+        }));
+    }
+}
 
 LocallyIntegrableMod::~LocallyIntegrableMod()
 {
@@ -71,12 +85,12 @@ void LocallyIntegrableMod::rdp_input_mouse(int device_flags, int x, int y, Keyma
         this->old_mouse_y = y;
     }
 
-    bool out_mouse_captured = false;
-
-    if (!this->rail_enabled ||
-        !this->client_execute.input_mouse(device_flags, x, y, out_mouse_captured)) {
-
-        if (this->rail_enabled) {
+    if (!this->rail_enabled) {
+        InternalMod::rdp_input_mouse(device_flags, x, y, keymap);
+    }
+    else {
+        bool out_mouse_captured = false;
+        if (!this->client_execute.input_mouse(device_flags, x, y, out_mouse_captured)) {
             switch (this->dc_state) {
                 case DCState::Wait:
                     if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
@@ -156,7 +170,7 @@ void LocallyIntegrableMod::rdp_input_mouse(int device_flags, int x, int y, Keyma
 
         InternalMod::rdp_input_mouse(device_flags, x, y, keymap);
 
-        if (this->rail_enabled && out_mouse_captured) {
+        if (out_mouse_captured) {
             this->allow_mouse_pointer_change(true);
         }
     }
@@ -195,17 +209,8 @@ void LocallyIntegrableMod::refresh(Rect r)
     }
 }
 
-void LocallyIntegrableMod::draw_event(time_t, gdi::GraphicApi &)
-{
-    if (this->rail_enabled &&
-        (false == static_cast<bool>(this->client_execute))/* &&
-        this->event.is_waked_up_by_time()*/) {
-        this->client_execute.ready(*this, this->front_width, this->front_height, this->font(),
-            this->is_resizing_hosted_desktop_allowed());
-
-        this->dvc_manager.ready(this->front);
-    }
-}
+// TODO remove
+void LocallyIntegrableMod::draw_event(time_t, gdi::GraphicApi &) {}
 
 void LocallyIntegrableMod::send_to_mod_channel(
     CHANNELS::ChannelNameId front_channel_name, InStream& chunk,
