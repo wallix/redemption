@@ -37,8 +37,6 @@ public:
 
     ~LocallyIntegrableMod() override;
 
-    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override;
-
     void rdp_input_invalidate(Rect r) override;
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override;

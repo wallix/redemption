@@ -151,8 +151,6 @@ private:
 
         int get_fd() const override;
 
-        void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override;
-
         bool is_up_and_running() override;
 
         bool is_auto_reconnectable() override;

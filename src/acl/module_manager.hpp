@@ -630,9 +630,6 @@ private:
         wait_obj & get_event() override
         { return this->mm.internal_mod->get_event(); }
 
-        void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override
-        { return this->mm.internal_mod->get_event_handlers(out_event_handlers); }
-
         void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name,
             uint8_t const * data, size_t length, size_t chunk_size, int flags) override
         { this->mm.internal_mod->send_to_front_channel(mod_channel_name, data, length, chunk_size, flags); }
@@ -1600,6 +1597,7 @@ public:
                         this->ini.get<cfg::debug::mod_vnc>(),
                         nullptr,
                         sock_mod_barrier(),
+                        this->session_reactor,
                         this->ini.get<cfg::globals::target_user>().c_str(),
                         this->ini.get<cfg::context::target_password>().c_str(),
                         this->front,

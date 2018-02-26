@@ -56,15 +56,6 @@ LocallyIntegrableMod::~LocallyIntegrableMod()
     this->client_execute.reset(true);
 }
 
-void LocallyIntegrableMod::get_event_handlers(std::vector<EventHandler>& out_event_handlers)
-{
-    if (this->rail_enabled) {
-        this->client_execute.get_event_handlers(out_event_handlers);
-    }
-
-    InternalMod::get_event_handlers(out_event_handlers);
-}
-
 void LocallyIntegrableMod::rdp_input_invalidate(Rect r)
 {
     InternalMod::rdp_input_invalidate(r);

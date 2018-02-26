@@ -1055,7 +1055,8 @@ public:
 
         // Clear client screen
         // TODO detached
-        this->clear_client_screen = this->session_reactor.create_graphic_event(this->get_dim())
+        this->clear_client_screen = this->session_reactor
+        .create_graphic_event(this->get_dim())
         .on_action(jln::one_shot<gdi_clear_screen>());
 
         this->beginning = timeobj.get_time().tv_sec;
@@ -2061,8 +2062,6 @@ public:
             this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
         }
     }
-
-    void get_event_handlers(std::vector<EventHandler>& /*out_event_handlers*/) override {}
 
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name,
@@ -4173,7 +4172,7 @@ public:
             this->remote_programs_session_manager->set_drawable(&drawable_);
         }
 
-        assert(AsynchronousGraphicTask::none == this->asynchronous_graphic_task);
+        assert(!this->clear_client_screen);
 
         bool run = true;
         bool waked_up_by_time = this->event.is_waked_up_by_time();

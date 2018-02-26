@@ -152,8 +152,6 @@ public:
             unsigned osd_state = OSD_STATE_NOT_YET_COMPUTED;
             const bool enable_osd = this->ini.get<cfg::globals::enable_osd>();
 
-            std::vector<EventHandler> event_handlers;
-
             // TODO: we should define some select object to wrap rfds, wfds and timeouts
             // and hide events inside modules managing sockets (or timers)
             // this should help in the future to generalise architecture
@@ -183,13 +181,6 @@ public:
                 }
 
                 mm.mod->get_event().wait_on_fd(mm.mod->get_fd(), rfds, max, timeout);
-
-                event_handlers.clear();
-                mm.mod->get_event_handlers(event_handlers);
-                for (EventHandler& event_handler : event_handlers) {
-                    const int fd = event_handler.get_fd();
-                    event_handler.get_event().wait_on_fd(fd, rfds, max, timeout);
-                }
 
                 if (front_trans.has_pending_data()
                  || mm.has_pending_data()
@@ -299,31 +290,10 @@ public:
 
                         try
                         {
-                            bool call_draw_event = false;
-                            for (EventHandler& event_handler : event_handlers) {
-                                if (BACK_EVENT_NONE != signal) {
-                                    break;
-                                }
-
-                                wait_obj& event = event_handler.get_event();
-
-                                if (event.is_set(event_handler.get_fd(), rfds)) {
-                                    event_handler(now, mm.get_graphic_wrapper(front));
-
-                                    if (BACK_EVENT_CALL_DRAW_EVENT == event.signal) {
-                                        call_draw_event = true;
-                                        event.reset_trigger_time();
-                                    }
-                                    else if (BACK_EVENT_NONE != event.signal) {
-                                        signal = event.signal;
-                                        event.reset_trigger_time();
-                                    }
-                                }
-                            }
-
-                            bool const has_fd_event = (BACK_EVENT_NONE == signal && mm.is_set_event(rfds));
+                            bool const has_fd_event = (BACK_EVENT_NONE == session_reactor.signal && mm.is_set_event(rfds));
+                            session_reactor.set_event_next(0);
                             // Process incoming module trafic
-                            if (has_fd_event || call_draw_event) {
+                            if (has_fd_event) {
                                 session_reactor.graphic_events_.exec(mm.get_graphic_wrapper(front));
                                 if (has_fd_event) {
                                     mm.mod->draw_event(now, mm.get_graphic_wrapper(front));

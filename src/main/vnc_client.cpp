@@ -117,8 +117,10 @@ int main(int argc, char** argv)
     NullReportMessage report_message;
 
     /* mod_api */
+    SessionReactor session_reactor;
     mod_vnc mod(
         mod_trans
+      , session_reactor
       , username.c_str()
       , password.c_str()
       , front

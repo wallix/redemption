@@ -393,8 +393,10 @@ struct SessionReactor
         return this->graphic_events_.elements;
     }
 
-    void set_event_next(/*BackEvent_t*/int)
+    int signal = 0;
+    void set_event_next(/*BackEvent_t*/int signal)
     {
+        this->signal = signal;
         // assert(is not already set)
         // TODO unimplemented
     }

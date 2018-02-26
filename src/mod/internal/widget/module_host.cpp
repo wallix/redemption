@@ -114,16 +114,6 @@ int WidgetModuleHost::ModuleHolder::get_fd() const
     return INVALID_SOCKET;
 }
 
-void WidgetModuleHost::ModuleHolder::get_event_handlers(
-    std::vector<EventHandler>& out_event_handlers)
-
-{
-    if (this->managed_mod)
-    {
-        this->managed_mod->get_event_handlers(out_event_handlers);
-    }
-}
-
 bool WidgetModuleHost::ModuleHolder::is_up_and_running()
 {
     if (this->managed_mod)

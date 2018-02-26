@@ -40,7 +40,6 @@ RailModuleHostMod::RailModuleHostMod(
                    vars.get<cfg::font>(), cs_monitor, width, height)
 , vars(vars)
 , can_resize_hosted_desktop(can_resize_hosted_desktop)
-, managed_mod_event_handler(*this)
 , client_execute(client_execute)
 , session_reactor(session_reactor)
 {
@@ -110,21 +109,6 @@ void RailModuleHostMod::draw_event(time_t now, gdi::GraphicApi& gapi)
     LocallyIntegrableMod::draw_event(now, gapi);
 
     this->event.reset_trigger_time();
-}
-
-void RailModuleHostMod::get_event_handlers(std::vector<EventHandler>& out_event_handlers)
-{
-    mod_api& mod = this->rail_module_host.get_managed_mod();
-
-    mod.get_event_handlers(out_event_handlers);
-
-    out_event_handlers.emplace_back(
-        &mod.get_event(),
-        &this->managed_mod_event_handler,
-        mod.get_fd()
-    );
-
-    LocallyIntegrableMod::get_event_handlers(out_event_handlers);
 }
 
 bool RailModuleHostMod::is_up_and_running()

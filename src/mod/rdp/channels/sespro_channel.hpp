@@ -355,6 +355,7 @@ private:
 
     SessionReactor& session_reactor;
     SessionReactor::BasicTimerPtr session_probe_timer;
+    SessionReactor::GraphicEventPtr freeze_mod_screen;
 
 public:
     struct Params : public BaseVirtualChannel::Params {
@@ -628,7 +629,9 @@ public:
 
                         this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
 
-                        this->mod.invoke_asynchronous_graphic_task(mod_api::AsynchronousGraphicTask::freeze_screen);
+                        this->freeze_mod_screen = this->session_reactor
+                        .create_graphic_event(mod.get_dim())
+                        .on_action(jln::one_shot<gdi_freeze_screen>());
                     }
                     this->request_keep_alive();
                     this->mod.display_osd_message("No keep alive received from Session Probe!");

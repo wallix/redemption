@@ -172,8 +172,6 @@ public:
 
     void enable_remote_program(bool enable);
 
-    void get_event_handlers(std::vector<EventHandler>& out_event_handlers);
-
     Rect adjust_rect(Rect rect);
 
     Rect get_current_work_area_rect() const;

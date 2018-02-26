@@ -84,8 +84,6 @@ public:
 
     void draw_event(time_t now, gdi::GraphicApi& gapi) override;
 
-    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override;
-
     bool is_up_and_running() override;
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width,
@@ -101,22 +99,6 @@ private:
     RailModuleHostModVariables vars;
 
     bool can_resize_hosted_desktop = false;
-
-    class ManagedModEventHandler : public EventHandler::CB
-    {
-        RailModuleHostMod& mod_;
-
-    public:
-        ManagedModEventHandler(RailModuleHostMod& mod)
-        : mod_(mod)
-        {}
-
-        void operator()(time_t now, wait_obj& /*event*/, gdi::GraphicApi& drawable) override
-        {
-            mod_api& mod = this->mod_.rail_module_host.get_managed_mod();
-            mod.draw_event(now, drawable);
-        }
-    } managed_mod_event_handler;
 
     SessionReactor::BasicTimerPtr disconnection_reconnection_timer; // Window resize
 

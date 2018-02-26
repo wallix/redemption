@@ -247,8 +247,10 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     NullReportMessage report_message;
 
+    SessionReactor session_reactor;
     mod_vnc mod(
           t
+        , session_reactor
         , "10.10.3.103"
         , "SecureLinux"
         , front

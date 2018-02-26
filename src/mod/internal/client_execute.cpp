@@ -78,8 +78,6 @@ void ClientExecute::enable_remote_program(bool enable)
     this->rail_enabled = enable;
 }
 
-void ClientExecute::get_event_handlers(std::vector<EventHandler>& /*out_event_handlers*/) {}
-
 Rect ClientExecute::adjust_rect(Rect rect)
 {
     if (!this->rail_enabled) {

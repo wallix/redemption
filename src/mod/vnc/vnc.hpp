@@ -38,6 +38,7 @@ h
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "core/RDP/pointer.hpp"
 #include "core/report_message_api.hpp"
+#include "core/session_reactor.hpp"
 #include "keyboard/keymapSym.hpp"
 #include "main/version.hpp"
 #include "mod/internal/client_execute.hpp"
@@ -210,8 +211,13 @@ private:
     ClientExecute* client_execute = nullptr;
     Zdecompressor<> zd;
 
+    SessionReactor& session_reactor;
+
+    SessionReactor::GraphicEventPtr clear_client_screen;
+
 public:
     mod_vnc( Transport & t
+           , SessionReactor& session_reactor
            , const char * username
            , const char * password
            , FrontAPI & front
@@ -261,6 +267,7 @@ public:
     , server_is_apple(server_is_apple)
     , keylayout(keylayout)
     , client_execute(client_execute)
+    , session_reactor(session_reactor)
     , frame_buffer_update_ctx(this->zd, verbose)
     , clipboard_data_ctx(verbose)
     {
@@ -269,7 +276,9 @@ public:
         }
 
         // Clear client screen
-        this->invoke_asynchronous_graphic_task(AsynchronousGraphicTask::clear_screen);
+        this->clear_client_screen = this->session_reactor
+        .create_graphic_event(this->get_dim())
+        .on_action(jln::one_shot<gdi_clear_screen>());
 
         ::time(&this->beginning);
 
@@ -1610,11 +1619,6 @@ public:
     {
         if (bool(this->verbose & VNCVerbose::draw_event)) {
             LOG(LOG_INFO, "vnc::draw_event");
-        }
-
-        if (AsynchronousGraphicTask::none != this->asynchronous_graphic_task) {
-            this->perform_asynchronous_graphic_task(drawable);
-            return;
         }
 
         if (!this->event.is_waked_up_by_time()) {
@@ -3435,9 +3439,5 @@ public:
 
     Dimension get_dim() const override
     { return Dimension(this->width, this->height); }
-
-    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
-        mod_api::get_event_handlers(out_event_handlers);
-    }
 };
 
