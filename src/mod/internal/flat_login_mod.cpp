@@ -94,12 +94,12 @@ void FlatLoginMod::notify(Widget* sender, notify_event_t event)
         this->vars.ask<cfg::globals::target_device>();
         this->vars.ask<cfg::context::target_protocol>();
         this->vars.set_acl<cfg::context::password>(this->login.password_edit.get_text());
-        this->event.signal = BACK_EVENT_NEXT;
-        this->event.set_trigger_time(wait_obj::NOW);
+// TODO        this->event.signal = BACK_EVENT_NEXT;
+// TODO        this->event.set_trigger_time(wait_obj::NOW);
         break;
     case NOTIFY_CANCEL:
-        this->event.signal = BACK_EVENT_STOP;
-        this->event.set_trigger_time(wait_obj::NOW);
+// TODO        this->event.signal = BACK_EVENT_STOP;
+// TODO        this->event.set_trigger_time(wait_obj::NOW);
         break;
     case NOTIFY_PASTE: case NOTIFY_COPY: case NOTIFY_CUT:
         if (this->copy_paste) {
@@ -114,7 +114,8 @@ void FlatLoginMod::draw_event(time_t now, gdi::GraphicApi & gapi)
 {
     LocallyIntegrableMod::draw_event(now, gapi);
 
-    if (!this->copy_paste && this->event.is_waked_up_by_time()) {
+// TODO    if (!this->copy_paste && this->event.is_waked_up_by_time()) {
+    if (!this->copy_paste) {
         this->copy_paste.ready(this->front);
     }
 }

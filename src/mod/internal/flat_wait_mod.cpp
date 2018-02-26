@@ -87,31 +87,32 @@ void FlatWaitMod::confirm()
     this->vars.set_acl<cfg::context::comment>(this->wait_widget.form.comment_edit.get_text());
     this->vars.set_acl<cfg::context::ticket>(this->wait_widget.form.ticket_edit.get_text());
     this->vars.set_acl<cfg::context::duration>(this->wait_widget.form.duration_edit.get_text());
-    this->event.signal = BACK_EVENT_NEXT;
-    this->event.set_trigger_time(wait_obj::NOW);
+// TODO    this->event.signal = BACK_EVENT_NEXT;
+// TODO    this->event.set_trigger_time(wait_obj::NOW);
 }
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
 void FlatWaitMod::accepted()
 {
     this->vars.set_acl<cfg::context::waitinforeturn>("backselector");
-    this->event.signal = BACK_EVENT_NEXT;
-    this->event.set_trigger_time(wait_obj::NOW);
+// TODO    this->event.signal = BACK_EVENT_NEXT;
+// TODO    this->event.set_trigger_time(wait_obj::NOW);
 }
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
 void FlatWaitMod::refused()
 {
     this->vars.set_acl<cfg::context::waitinforeturn>("exit");
-    this->event.signal = BACK_EVENT_NEXT;
-    this->event.set_trigger_time(wait_obj::NOW);
+// TODO    this->event.signal = BACK_EVENT_NEXT;
+// TODO    this->event.set_trigger_time(wait_obj::NOW);
 }
 
 void FlatWaitMod::draw_event(time_t now, gdi::GraphicApi & gapi)
 {
     LocallyIntegrableMod::draw_event(now, gapi);
 
-    if (!this->copy_paste && this->event.is_waked_up_by_time()) {
+// TODO    if (!this->copy_paste && this->event.is_waked_up_by_time()) {
+    if (!this->copy_paste) {
         this->copy_paste.ready(this->front);
     }
 }

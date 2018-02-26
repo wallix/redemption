@@ -77,6 +77,7 @@ enum {
     RDPPen pen;
 
     xup_mod( Transport & t
+           , SessionReactor& session_reactor
            , FrontAPI & front
            , uint16_t /*front_width*/
            , uint16_t /*front_height*/
@@ -84,7 +85,8 @@ enum {
            , int context_height
            , int context_bpp
            )
-    : front(front)
+    : mod_api(session_reactor)
+    , front(front)
     , width(context_width)
     , height(context_height)
     , bpp(context_bpp)
@@ -108,8 +110,6 @@ enum {
     }
 
     ~xup_mod() override {}
-
-    int get_fd() const override { return this->t.get_fd(); }
 
     enum {
         XUPWM_INVALIDATE = 200
@@ -337,7 +337,7 @@ enum {
             }
         }
         catch(...){
-            this->event.signal = BACK_EVENT_NEXT;
+// TODO            this->event.signal = BACK_EVENT_NEXT;
             this->front.must_be_stop_capture();
         }
     }

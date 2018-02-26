@@ -631,7 +631,9 @@ public:
 
                         this->freeze_mod_screen = this->session_reactor
                         .create_graphic_event(mod.get_dim())
-                        .on_action(jln::one_shot<gdi_freeze_screen>());
+                        .on_action(jln::one_shot([](time_t, gdi::GraphicApi& drawable, Dimension const& dim){
+                            gdi_freeze_screen(drawable, dim);
+                        }));
                     }
                     this->request_keep_alive();
                     this->mod.display_osd_message("No keep alive received from Session Probe!");

@@ -180,7 +180,7 @@ public:
                     wait_on_sck(acl->auth_trans, rfds, max);
                 }
 
-                mm.mod->get_event().wait_on_fd(mm.mod->get_fd(), rfds, max, timeout);
+// TODO                mm.mod->get_event().wait_on_fd(mm.mod->get_fd(), rfds, max, timeout);
 
                 if (front_trans.has_pending_data()
                  || mm.has_pending_data()
@@ -294,15 +294,15 @@ public:
                             session_reactor.set_event_next(0);
                             // Process incoming module trafic
                             if (has_fd_event) {
-                                session_reactor.graphic_events_.exec(mm.get_graphic_wrapper(front));
+                                session_reactor.graphic_events_.exec(now, mm.get_graphic_wrapper(front));
                                 if (has_fd_event) {
                                     mm.mod->draw_event(now, mm.get_graphic_wrapper(front));
                                 }
 
-                                if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
-                                    signal = mm.mod->get_event().signal;
-                                    mm.mod->get_event().reset_trigger_time();
-                                }
+// TODO                                if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
+// TODO                                    signal = mm.mod->get_event().signal;
+// TODO                                    mm.mod->get_event().reset_trigger_time();
+// TODO                                }
                             }
                         }
                         catch (Error const & e) {
@@ -322,7 +322,7 @@ public:
                                     this->ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
 
                                     signal = BACK_EVENT_RETRY_CURRENT;
-                                    mm.mod->get_event().reset_trigger_time();
+// TODO                                    mm.mod->get_event().reset_trigger_time();
                                 }
                                 else if (acl) {
                                     this->ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(this->ini)));
@@ -340,13 +340,13 @@ public:
                                 }
 
                                 signal = BACK_EVENT_RETRY_CURRENT;
-                                mm.mod->get_event().reset_trigger_time();
+// TODO                                mm.mod->get_event().reset_trigger_time();
                             }
                             else if (e.id == ERR_RAIL_NOT_ENABLED) {
                                 this->ini.get_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
 
                                 signal = BACK_EVENT_RETRY_CURRENT;
-                                mm.mod->get_event().reset_trigger_time();
+// TODO                                mm.mod->get_event().reset_trigger_time();
                             }
                             else if ((e.id == ERR_RDP_SERVER_REDIR) &&
                                      this->ini.get<cfg::mod_rdp::server_redirection_support>()) {
@@ -375,7 +375,7 @@ public:
                                 authentifier.report("SERVER_REDIRECTION", message);
 
                                 signal = BACK_EVENT_RETRY_CURRENT;
-                                mm.mod->get_event().reset_trigger_time();
+// TODO                                mm.mod->get_event().reset_trigger_time();
                             }
                             else {
                                 throw;
@@ -459,7 +459,7 @@ public:
                             );
                         }
                         else if (signal == BACK_EVENT_STOP) {
-                            mm.mod->get_event().reset_trigger_time();
+// TODO                            mm.mod->get_event().reset_trigger_time();
                             run_session = false;
                         }
                         if (mm.last_module) {

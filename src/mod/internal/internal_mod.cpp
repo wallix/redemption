@@ -24,10 +24,12 @@
 
 
 InternalMod::InternalMod(
+    SessionReactor& session_reactor,
     FrontAPI & front, uint16_t front_width, uint16_t front_height,
     Font const & font, Theme const & theme, bool dont_resize
 )
-    : front_width(front_width)
+    : mod_api(session_reactor)
+    , front_width(front_width)
     , front_height(front_height)
     , front(front)
     , screen(front, font, nullptr, theme)

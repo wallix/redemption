@@ -103,8 +103,8 @@ void InteractiveTargetMod::accepted()
         this->vars.set_acl<cfg::context::target_password>(this->challenge.password_edit.get_text());
     }
     this->vars.set_acl<cfg::context::display_message>(true);
-    this->event.signal = BACK_EVENT_NEXT;
-    this->event.set_trigger_time(wait_obj::NOW);
+// TODO    this->event.signal = BACK_EVENT_NEXT;
+// TODO    this->event.set_trigger_time(wait_obj::NOW);
 }
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
@@ -112,19 +112,20 @@ void InteractiveTargetMod::refused()
 {
     this->vars.set_acl<cfg::context::target_password>("");
     this->vars.set_acl<cfg::context::display_message>(false);
-    this->event.signal = BACK_EVENT_NEXT;
-    this->event.set_trigger_time(wait_obj::NOW);
+// TODO    this->event.signal = BACK_EVENT_NEXT;
+// TODO    this->event.set_trigger_time(wait_obj::NOW);
 }
 
 void InteractiveTargetMod::draw_event(time_t now, gdi::GraphicApi & gapi)
 {
     LocallyIntegrableMod::draw_event(now, gapi);
 
-    if (!this->copy_paste && this->event.is_waked_up_by_time()) {
+// TODO    if (!this->copy_paste && this->event.is_waked_up_by_time()) {
+    if (!this->copy_paste) {
         this->copy_paste.ready(this->front);
     }
 
-    this->event.reset_trigger_time();
+// TODO    this->event.reset_trigger_time();
 }
 
 void InteractiveTargetMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)

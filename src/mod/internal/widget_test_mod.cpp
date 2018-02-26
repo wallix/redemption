@@ -35,8 +35,9 @@
 class WidgetTestMod::WidgetTestModPrivate {};
 
 WidgetTestMod::WidgetTestMod(
+    SessionReactor& session_reactor,
     FrontAPI & front, uint16_t width, uint16_t height, Font const & font)
-: InternalMod(front, width, height, font, Theme{}, false)
+: InternalMod(session_reactor, front, width, height, font, Theme{}, false)
 {
     front.server_resize(width, height, 8);
 }
@@ -57,8 +58,8 @@ void WidgetTestMod::rdp_input_scancode(
 {
     if (keymap->nb_kevent_available() > 0
         && keymap->get_kevent() == Keymap2::KEVENT_ENTER) {
-        this->event.signal = BACK_EVENT_STOP;
-        this->event.set_trigger_time(wait_obj::NOW);
+// TODO        this->event.signal = BACK_EVENT_STOP;
+// TODO        this->event.set_trigger_time(wait_obj::NOW);
     }
 }
 
@@ -134,5 +135,5 @@ void WidgetTestMod::draw_event(time_t, gdi::GraphicApi& gd)
     draw_text(0, 2, "yellow palette");
     draw_text(1, 2, "yellow palette");
 
-    this->event.set_trigger_time(std::chrono::seconds(3));
+// TODO    this->event.set_trigger_time(std::chrono::seconds(3));
 }

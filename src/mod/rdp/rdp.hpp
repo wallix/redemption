@@ -846,8 +846,6 @@ protected:
 
     InfoPacketFlags info_packet_extra_flags;
 
-    SessionReactor& session_reactor;
-
     SessionReactor::GraphicEventPtr clear_client_screen;
 
 public:
@@ -869,7 +867,8 @@ public:
            , ReportMessageApi & report_message
            , ModRdpVariables vars
            )
-        : front_width(info.width - (info.width % 4))
+        : mod_api(session_reactor)
+        , front_width(info.width - (info.width % 4))
         , front_height(info.height)
         , front(front)
         , authorization_channels(
@@ -1033,7 +1032,6 @@ public:
         , load_balance_info(mod_rdp_params.load_balance_info)
         , vars(vars)
         , info_packet_extra_flags(info.has_sound_code ? INFO_REMOTECONSOLEAUDIO : InfoPacketFlags{})
-        , session_reactor(session_reactor)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -1057,7 +1055,9 @@ public:
         // TODO detached
         this->clear_client_screen = this->session_reactor
         .create_graphic_event(this->get_dim())
-        .on_action(jln::one_shot<gdi_clear_screen>());
+        .on_action(jln::one_shot([](time_t, gdi::GraphicApi& drawable, Dimension const& dim){
+            gdi_clear_screen(drawable, dim);
+        }));
 
         this->beginning = timeobj.get_time().tv_sec;
 
@@ -1621,8 +1621,6 @@ public:
             this->redir_info.reset();
         }
     }
-
-    int get_fd() const override { return this->trans.get_fd(); }
 
 protected:
     std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
@@ -2340,11 +2338,6 @@ private:
     }
 
 public:
-    wait_obj& get_event() override {
-        return this->event;
-    }
-
-
     // Basic Settings Exchange
     // -----------------------
 
@@ -3873,7 +3866,7 @@ public:
                                 this->do_enable_session_probe();
 
                                 if (this->open_session_timeout.count() > 0) {
-                                    this->event.set_trigger_time(wait_obj::NOW);
+// TODO                                    this->event.set_trigger_time(wait_obj::NOW);
                                 }
 
                                 this->already_upped_and_running = true;
@@ -4175,12 +4168,13 @@ public:
         assert(!this->clear_client_screen);
 
         bool run = true;
-        bool waked_up_by_time = this->event.is_waked_up_by_time();
+// TODO        bool waked_up_by_time = this->event.is_waked_up_by_time();
+        bool waked_up_by_time = false;
 
         if (this->state == MOD_RDP_NEGO_INITIATE) {
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
             this->nego.send_negotiation_request(this->trans);
-            this->event.reset_trigger_time();
+// TODO            this->event.reset_trigger_time();
             this->state = MOD_RDP_NEGO;
             run = false;
         }
@@ -4195,9 +4189,9 @@ public:
                 this->send_connectInitialPDUwithGccConferenceCreateRequest();
             }
         }
-        else if (!waked_up_by_time) {
-            this->buf.load_data(this->trans);
-        }
+// TODO        else if (!waked_up_by_time) {
+// TODO            this->buf.load_data(this->trans);
+// TODO        }
 
         if (run && !waked_up_by_time) {
             while (this->buf.next_pdu()) {
@@ -4294,7 +4288,7 @@ public:
                         LOG(LOG_INFO, "Connection to server Already closed: error=%u", e.id);
                     };
 
-                    this->event.signal = BACK_EVENT_NEXT;
+// TODO                    this->event.signal = BACK_EVENT_NEXT;
 
                     if (this->enable_session_probe) {
                         const bool disable_input_event     = false;
@@ -5827,7 +5821,7 @@ public:
 
         if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker_timer.reset();
-            this->event.reset_trigger_time();
+// TODO            this->event.reset_trigger_time();
         }
 
         if (this->enable_session_probe) {
@@ -6433,7 +6427,7 @@ public:
 public:
 
     BackEvent_t get_signal_event() {
-        return this->event.signal;
+// TODO        return this->event.signal;
     }
 
     void send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2) {

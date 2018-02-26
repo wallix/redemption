@@ -222,7 +222,8 @@ int main(int argc, char * argv[]) {
 
     try {
         if (target_device.empty()) {
-            TransparentReplayMod mod(front, play_filename.c_str(),
+            SessionReactor session_reactor;
+            TransparentReplayMod mod(session_reactor, front, play_filename.c_str(),
                 front.client_info.width, front.client_info.height, nullptr, ini.get<cfg::font>());
 
             run_mod(mod, front, front_event, nullptr, &front_trans);
@@ -337,12 +338,12 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
             struct timeval timeout = time_mark;
 
             front_event.wait_on_fd(st_front?st_front->sck:INVALID_SOCKET, rfds, max, timeout);
-            mod.get_event().wait_on_fd(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
+// TODO            mod.get_event().wait_on_fd(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
 
-            if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
-                timeout.tv_sec  = 0;
-                timeout.tv_usec = 0;
-            }
+// TODO            if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
+// TODO                timeout.tv_sec  = 0;
+// TODO                timeout.tv_usec = 0;
+// TODO            }
 
             int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
 
@@ -368,19 +369,17 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
             }
 
             if (front.up_and_running) {
-                if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
-                    mod.get_event().reset_trigger_time();
-                    mod.draw_event(time(nullptr), front);
-                    if (mod.get_event().signal != BACK_EVENT_NONE) {
-                        mod_event_signal = mod.get_event().signal;
-                    }
-
-                    if (mod_event_signal == BACK_EVENT_NEXT) {
-                        run_session = false;
-                    }
-                }
-            }
-            else {
+// TODO                if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
+// TODO                    mod.get_event().reset_trigger_time();
+// TODO                    mod.draw_event(time(nullptr), front);
+// TODO                    if (mod.get_event().signal != BACK_EVENT_NONE) {
+// TODO                        mod_event_signal = mod.get_event().signal;
+// TODO                    }
+// TODO
+// TODO                    if (mod_event_signal == BACK_EVENT_NEXT) {
+// TODO                        run_session = false;
+// TODO                    }
+// TODO                }
             }
         } catch (Error const& e) {
             LOG(LOG_ERR, "Session::Session exception = %u!\n", e.id);

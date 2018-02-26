@@ -103,5 +103,4 @@ private:
     SessionReactor::BasicTimerPtr disconnection_reconnection_timer; // Window resize
 
     ClientExecute& client_execute;
-    SessionReactor& session_reactor;
 };

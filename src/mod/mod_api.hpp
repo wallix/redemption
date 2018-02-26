@@ -27,50 +27,10 @@
 #include "core/callback.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "core/session_reactor.hpp"
 #include "core/wait_obj.hpp"
 #include "gdi/graphic_api.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
-
-class EventHandler
-{
-public:
-    class CB
-    {
-    public:
-        virtual ~CB() = default;
-
-        virtual void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) = 0;
-    };
-
-public:
-    EventHandler(not_null_ptr<wait_obj> event, not_null_ptr<CB> cb, int fd = INVALID_SOCKET)
-    : event_(event)
-    , cb_(cb.get())
-    , fd_(fd)
-    {}
-
-    void operator()(time_t now, gdi::GraphicApi& drawable)
-    {
-        (*this->cb_)(now, *this->event_, drawable);
-    }
-
-    wait_obj & get_event() const
-    {
-        return *this->event_;
-    }
-
-    int get_fd() const
-    {
-        return this->fd_;
-    }
-
-private:
-    wait_obj* event_;
-
-    CB* cb_;
-
-    int fd_;
-};
 
 // TODO to another file
 inline void gdi_clear_screen(gdi::GraphicApi& drawable, Dimension const& dim)
@@ -97,7 +57,8 @@ inline void gdi_freeze_screen(gdi::GraphicApi& drawable, Dimension const& dim)
 class mod_api : public Callback
 {
 protected:
-    wait_obj event;
+    SessionReactor& session_reactor;
+    SessionReactor::GraphicEventPtr now_graphic_event;
 
 public:
     enum : bool {
@@ -106,16 +67,15 @@ public:
     };
     bool logged_on = CLIENT_UNLOGGED; // TODO suspicious
 
-    mod_api()
+    mod_api(SessionReactor& session_reactor)
+    : session_reactor(session_reactor)
     {
-        this->event.set_trigger_time(wait_obj::NOW);
+        this->now_graphic_event = session_reactor
+        .create_graphic_event(std::ref(*this))
+        .on_action(jln::one_shot([](time_t time, gdi::GraphicApi& gd, mod_api& self){
+            self.draw_event(time, gd);
+        }));
     }
-
-    ~mod_api() override {}
-
-    virtual wait_obj& get_event() { return this->event; }
-
-    virtual int get_fd() const { return INVALID_SOCKET; }
 
     virtual void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name,
         uint8_t const * data, size_t length, size_t chunk_size, int flags) = 0;

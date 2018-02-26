@@ -33,9 +33,10 @@
 #include <string>
 
 TestCardMod::TestCardMod(
+    SessionReactor& session_reactor,
     FrontAPI & front, uint16_t width, uint16_t height,
     Font const & font, bool unit_test)
-: InternalMod(front, width, height, font, Theme{}, false)
+: InternalMod(session_reactor, front, width, height, font, Theme{}, false)
 , palette332(BGRPalette::classic_332())
 , font(font)
 , unit_test(unit_test)
@@ -47,8 +48,8 @@ void TestCardMod::rdp_input_scancode(
 {
     if (keymap->nb_kevent_available() > 0
         && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
-        this->event.signal = BACK_EVENT_STOP;
-        this->event.set_trigger_time(wait_obj::NOW);
+// TODO        this->event.signal = BACK_EVENT_STOP;
+// TODO        this->event.set_trigger_time(wait_obj::NOW);
     }
 }
 

@@ -842,8 +842,8 @@ public:
 
         io_fd_zero(rfds);
 
-        auto & event = mod.get_event();
-        event.wait_on_fd(sck, rfds, max, timeout);
+// TODO        auto & event = mod.get_event();
+// TODO        event.wait_on_fd(sck, rfds, max, timeout);
 
         int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
         // std::cout << "RDP CLIENT :: select num = " <<  num << "\n";
@@ -858,9 +858,9 @@ public:
             return 9;
         }
 
-        if (event.is_set(sck, rfds)) {
-            mod.draw_event(time(nullptr), front);
-        }
+// TODO        if (event.is_set(sck, rfds)) {
+// TODO            mod.draw_event(time(nullptr), front);
+// TODO        }
 
         return 0;
     }

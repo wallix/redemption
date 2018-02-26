@@ -129,8 +129,8 @@ void SelectorMod::ask_page()
     this->vars.ask<cfg::globals::target_user>();
     this->vars.ask<cfg::globals::target_device>();
     this->vars.ask<cfg::context::selector>();
-    this->event.signal = BACK_EVENT_REFRESH;
-    this->event.set_trigger_time(wait_obj::NOW);
+// TODO    this->event.signal = BACK_EVENT_REFRESH;
+// TODO    this->event.set_trigger_time(wait_obj::NOW);
 }
 
 void SelectorMod::notify(Widget* widget, notify_event_t event)
@@ -145,8 +145,8 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
         this->vars.ask<cfg::globals::auth_user>();
         this->vars.ask<cfg::context::password>();
         this->vars.set<cfg::context::selector>(false);
-        this->event.signal = BACK_EVENT_NEXT;
-        this->event.set_trigger_time(wait_obj::NOW);
+// TODO        this->event.signal = BACK_EVENT_NEXT;
+// TODO        this->event.set_trigger_time(wait_obj::NOW);
 
         this->waiting_for_next_module = true;
     } break;
@@ -170,8 +170,8 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
             this->vars.ask<cfg::globals::target_device>();
             this->vars.ask<cfg::context::target_protocol>();
 
-            this->event.signal = BACK_EVENT_NEXT;
-            this->event.set_trigger_time(wait_obj::NOW);
+// TODO            this->event.signal = BACK_EVENT_NEXT;
+// TODO            this->event.set_trigger_time(wait_obj::NOW);
 
             this->waiting_for_next_module = true;
         }
@@ -239,7 +239,7 @@ void SelectorMod::refresh_context()
 
     this->selector.current_page.rdp_input_invalidate(this->selector.current_page.get_rect());
     this->selector.number_page.rdp_input_invalidate(this->selector.number_page.get_rect());
-    this->event.reset_trigger_time();
+// TODO    this->event.reset_trigger_time();
 }
 
 void SelectorMod::refresh_device()
@@ -349,11 +349,12 @@ void SelectorMod::draw_event(time_t now, gdi::GraphicApi & gapi)
 {
     LocallyIntegrableMod::draw_event(now, gapi);
 
-    if (!this->copy_paste && this->event.is_waked_up_by_time()) {
+// TODO    if (!this->copy_paste && this->event.is_waked_up_by_time()) {
+    if (!this->copy_paste) {
         this->copy_paste.ready(this->front);
     }
 
-    this->event.reset_trigger_time();
+// TODO    this->event.reset_trigger_time();
 }
 
 void SelectorMod::send_to_mod_channel(

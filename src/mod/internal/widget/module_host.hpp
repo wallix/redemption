@@ -32,12 +32,14 @@
 class WidgetModuleHost : public WidgetParent, public gdi::GraphicApi
 {
 public:
-    WidgetModuleHost(gdi::GraphicApi& drawable, Widget& parent,
-                     NotifyApi* notifier,
-                     std::unique_ptr<mod_api> managed_mod, Font const & font,
-                     const GCC::UserData::CSMonitor& cs_monitor,
-                     uint16_t front_width, uint16_t front_height,
-                     int group_id = 0);
+    WidgetModuleHost(
+        SessionReactor& session_reactor,
+        gdi::GraphicApi& drawable, Widget& parent,
+        NotifyApi* notifier,
+        std::unique_ptr<mod_api> managed_mod, Font const & font,
+        const GCC::UserData::CSMonitor& cs_monitor,
+        uint16_t front_width, uint16_t front_height,
+        int group_id = 0);
 
     void draw(RDP::FrameMarker    const & cmd) override;
     void draw(RDPDestBlt          const & cmd, Rect clip) override;
@@ -134,7 +136,9 @@ private:
         std::unique_ptr<mod_api> managed_mod;
 
     public:
-        ModuleHolder(WidgetModuleHost& host, std::unique_ptr<mod_api> managed_mod);
+        ModuleHolder(
+            SessionReactor& session_reactor,
+            WidgetModuleHost& host, std::unique_ptr<mod_api> managed_mod);
 
         // Callback
         void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name,
@@ -146,10 +150,6 @@ private:
         // mod_api
 
         void draw_event(time_t now, gdi::GraphicApi& drawable) override;
-
-        wait_obj& get_event() override;
-
-        int get_fd() const override;
 
         bool is_up_and_running() override;
 

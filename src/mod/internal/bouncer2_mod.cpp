@@ -26,9 +26,11 @@
 #include "keyboard/keymap2.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
-Bouncer2Mod::Bouncer2Mod(FrontAPI & front, uint16_t width, uint16_t height,
-            Font const & font, bool dont_resize)
-: InternalMod(front, width, height, font, Theme{}, dont_resize)
+Bouncer2Mod::Bouncer2Mod(
+    SessionReactor& session_reactor,
+    FrontAPI & front, uint16_t width, uint16_t height,
+    Font const & font, bool dont_resize)
+: InternalMod(session_reactor, front, width, height, font, Theme{}, dont_resize)
 , dancing_rect(0,0,100,100)
 {}
 
@@ -42,8 +44,8 @@ void Bouncer2Mod::rdp_input_scancode(
 {
     if (keymap->nb_kevent_available() > 0
         && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
-        this->event.signal = BACK_EVENT_STOP;
-        this->event.set_trigger_time(wait_obj::NOW);
+// TODO        this->event.signal = BACK_EVENT_STOP;
+// TODO        this->event.set_trigger_time(wait_obj::NOW);
         return ;
     }
 
@@ -126,7 +128,7 @@ void Bouncer2Mod::draw_event(time_t /*now*/, gdi::GraphicApi & drawable)
     drawable.end_update();
 
     // Final with setting next idle time
-    this->event.set_trigger_time(33333);    // 0.03s is 30fps
+// TODO    this->event.set_trigger_time(33333);    // 0.03s is 30fps
 }
 
 void Bouncer2Mod::wipe(

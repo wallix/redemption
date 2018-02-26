@@ -144,9 +144,9 @@ struct Select
 
     Res next_event(timeval & timeout)
     {
-        auto & event = mod.get_event();
-        event.wait_on_timeout(timeout);
-        io_fd_set(sck_fd, rfds);
+// TODO        auto & event = mod.get_event();
+// TODO        event.wait_on_timeout(timeout);
+// TODO        io_fd_set(sck_fd, rfds);
 
         int num = select(sck_fd + 1, &rfds, nullptr, nullptr, &timeout);
 
@@ -159,11 +159,11 @@ struct Select
             return Res::Error;
         }
 
-        if (event.is_set(sck_fd, rfds)) {
-            LOG(LOG_INFO, "%s CLIENT :: draw_event", type);
-            mod.draw_event(time(nullptr), gd);
-            return Res::Ok;
-        }
+// TODO        if (event.is_set(sck_fd, rfds)) {
+// TODO            LOG(LOG_INFO, "%s CLIENT :: draw_event", type);
+// TODO            mod.draw_event(time(nullptr), gd);
+// TODO            return Res::Ok;
+// TODO        }
 
         return Res::Timeout;
     }

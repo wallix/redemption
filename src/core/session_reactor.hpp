@@ -233,7 +233,7 @@ struct SessionReactor
     }
 
 
-    using GraphicEvent = jln::ActionBase<jln::prefix_args<gdi::GraphicApi&>>;
+    using GraphicEvent = jln::ActionBase<jln::prefix_args<time_t, gdi::GraphicApi&>>;
     using GraphicEventPtr = jln::UniquePtrWithNotifyDelete<GraphicEvent>;
 
     struct GraphicContainer : Container<GraphicEvent>

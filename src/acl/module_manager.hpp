@@ -320,8 +320,8 @@ public:
     void check_module() override {
         if (this->ini.get<cfg::context::forcemodule>() &&
             !this->is_connected()) {
-            this->mod->get_event().signal = BACK_EVENT_NEXT;
-            this->mod->get_event().set_trigger_time(wait_obj::NOW);
+// TODO            this->mod->get_event().signal = BACK_EVENT_NEXT;
+// TODO            this->mod->get_event().set_trigger_time(wait_obj::NOW);
             this->ini.set<cfg::context::forcemodule>(false);
             // Do not send back the value to sesman.
         }
@@ -379,8 +379,9 @@ private:
         bool bogus_refresh_rect_ex;
 
     public:
-        explicit ModOSD(ModuleManager & mm)
-        : gdi::ProtectedGraphics(mm.front, Rect{})
+        explicit ModOSD(SessionReactor& session_reactor, ModuleManager & mm)
+        : mod_api(session_reactor)
+        , gdi::ProtectedGraphics(mm.front, Rect{})
         , mm(mm)
         {}
 
@@ -627,9 +628,6 @@ private:
         void send_auth_channel_data(const char * data) override
         { this->mm.internal_mod->send_auth_channel_data(data); }
 
-        wait_obj & get_event() override
-        { return this->mm.internal_mod->get_event(); }
-
         void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name,
             uint8_t const * data, size_t length, size_t chunk_size, int flags) override
         { this->mm.internal_mod->send_to_front_channel(mod_channel_name, data, length, chunk_size, flags); }
@@ -823,7 +821,7 @@ public:
         : MMIni(ini)
         , front(front)
         , no_mod()
-        , mod_osd(*this)
+        , mod_osd(session_reactor, *this)
         , gen(gen)
         , timeobj(timeobj)
         , client_execute(session_reactor, front, this->front.client_info.window_list_caps,
@@ -831,7 +829,6 @@ public:
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
         , session_reactor(session_reactor)
     {
-        this->no_mod.get_event().reset_trigger_time();
         this->mod = &this->no_mod;
     }
 
@@ -842,11 +839,12 @@ public:
 
     bool is_set_event(fd_set & rfds) const
     {
-        wait_obj & obj = this->mod->get_event();
-        if (this->socket_transport) {
-            return this->socket_transport->is_set(obj, rfds);
-        }
-        return obj.is_set(INVALID_SOCKET, rfds);
+        return false;
+// TODO        wait_obj & obj = this->mod->get_event();
+// TODO        if (this->socket_transport) {
+// TODO            return this->socket_transport->is_set(obj, rfds);
+// TODO        }
+// TODO        return obj.is_set(INVALID_SOCKET, rfds);
     }
 
     void remove_mod() override {
@@ -917,6 +915,7 @@ public:
         case MODULE_INTERNAL_BOUNCER2:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'bouncer2_mod'");
             this->set_mod(new Bouncer2Mod(
+                this->session_reactor,
                 this->front,
                 this->front.client_info.width,
                 this->front.client_info.height,
@@ -930,6 +929,7 @@ public:
         case MODULE_INTERNAL_TEST:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test'");
             this->set_mod(new ReplayMod(
+                this->session_reactor,
                 this->front,
                 this->ini.get<cfg::video::replay_path>().c_str(),
                 this->ini.get<cfg::context::movie>().c_str(),
@@ -949,6 +949,7 @@ public:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
                 this->set_mod(new WidgetTestMod(
+                    this->session_reactor,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
@@ -960,6 +961,7 @@ public:
         case MODULE_INTERNAL_CARD:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test_card'");
             this->set_mod(new TestCardMod(
+                this->session_reactor,
                 this->front,
                 this->front.client_info.width,
                 this->front.client_info.height,
@@ -1246,6 +1248,7 @@ public:
                     this->ini.get<cfg::debug::mod_xup>(),
                     nullptr,
                     sock_mod_barrier(),
+                    this->session_reactor,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,

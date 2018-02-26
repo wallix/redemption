@@ -37,7 +37,10 @@ class TestCardMod : public InternalMod
     bool unit_test;
 
 public:
-    TestCardMod(FrontAPI & front, uint16_t width, uint16_t height, Font const & font, bool unit_test = true);
+    TestCardMod(
+        SessionReactor& session_reactor,
+        FrontAPI & front, uint16_t width, uint16_t height,
+        Font const & font, bool unit_test = true);
 
     void rdp_input_invalidate(Rect /*rect*/) override
     {}
@@ -61,7 +64,7 @@ public:
     {
         (void)now;
         this->draw(drawable);
-        this->event.reset_trigger_time();
+// TODO        this->event.reset_trigger_time();
     }
 
     bool is_up_and_running() override

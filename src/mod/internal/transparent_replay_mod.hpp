@@ -34,13 +34,14 @@ private:
     TransparentPlayer player;
 
 public:
-    TransparentReplayMod( FrontAPI & front
+    TransparentReplayMod( SessionReactor& session_reactor
+                        , FrontAPI & front
                         , const char * replay_path
                         , uint16_t width
                         , uint16_t height
                         , std::string * auth_error_message
                         , Font const & font)
-    : InternalMod(front, width, height, font, Theme{}, false)
+    : InternalMod(session_reactor, front, width, height, font, Theme{}, false)
     , auth_error_message(auth_error_message)
     , ift(unique_fd{[&]() {
         const int fd = ::open(replay_path, O_RDWR);
@@ -57,10 +58,10 @@ public:
         (void)now;
         try {
             if (!this->player.interpret_chunk()) {
-                this->event.signal = /*BACK_EVENT_STOP*/BACK_EVENT_NEXT;
+// TODO                this->event.signal = /*BACK_EVENT_STOP*/BACK_EVENT_NEXT;
             }
 
-            this->event.set_trigger_time(wait_obj::NOW);
+// TODO            this->event.set_trigger_time(wait_obj::NOW);
         }
         catch (Error const & e) {
             if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
@@ -68,8 +69,8 @@ public:
                     *this->auth_error_message = "The recorded file is inaccessible or corrupted!";
                 }
 
-                this->event.signal = BACK_EVENT_NEXT;
-                this->event.set_trigger_time(wait_obj::NOW);
+// TODO                this->event.signal = BACK_EVENT_NEXT;
+// TODO                this->event.set_trigger_time(wait_obj::NOW);
             }
             else {
                 throw;

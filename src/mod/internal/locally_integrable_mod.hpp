@@ -85,6 +85,5 @@ private:
     int old_mouse_x = 0;
     int old_mouse_y = 0;
 
-    SessionReactor& session_reactor;
     SessionReactor::GraphicEventPtr graphic_event;
 };

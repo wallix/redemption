@@ -129,8 +129,8 @@ void FlatWabCloseMod::notify(Widget* sender, notify_event_t event)
 {
     (void)sender;
     if (NOTIFY_CANCEL == event) {
-        this->event.signal = BACK_EVENT_STOP;
-        this->event.set_trigger_time(wait_obj::NOW);
+// TODO        this->event.signal = BACK_EVENT_STOP;
+// TODO        this->event.set_trigger_time(wait_obj::NOW);
     }
     else if (NOTIFY_SUBMIT == event) {
         LOG(LOG_INFO, "asking for selector");
@@ -138,8 +138,8 @@ void FlatWabCloseMod::notify(Widget* sender, notify_event_t event)
         this->vars.ask<cfg::globals::target_user>();
         this->vars.ask<cfg::globals::target_device>();
         this->vars.ask<cfg::context::target_protocol>();
-        this->event.signal = BACK_EVENT_NEXT;
-        this->event.set_trigger_time(wait_obj::NOW);
+// TODO        this->event.signal = BACK_EVENT_NEXT;
+// TODO        this->event.set_trigger_time(wait_obj::NOW);
     }
 }
 
