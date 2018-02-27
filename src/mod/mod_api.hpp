@@ -23,6 +23,7 @@
 
 #include <ctime>
 #include <vector>
+#include <typeinfo>
 
 #include "core/callback.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
@@ -67,14 +68,18 @@ public:
     };
     bool logged_on = CLIENT_UNLOGGED; // TODO suspicious
 
-    mod_api(SessionReactor& session_reactor)
+    mod_api(SessionReactor& session_reactor, bool enable_event = true)
     : session_reactor(session_reactor)
     {
-        this->now_graphic_event = session_reactor
-        .create_graphic_event(std::ref(*this))
-        .on_action(jln::one_shot([](time_t time, gdi::GraphicApi& gd, mod_api& self){
-            self.draw_event(time, gd);
-        }));
+        LOG(LOG_DEBUG, "mod_api %d", enable_event);
+        if (enable_event) {
+            this->now_graphic_event = session_reactor
+            .create_graphic_event(std::ref(*this))
+            .on_action(jln::one_shot([](time_t time, gdi::GraphicApi& gd, mod_api& self){
+                LOG(LOG_DEBUG, "mod_api action %s", typeid(self).name());
+                self.draw_event(time, gd);
+            }));
+        }
     }
 
     virtual void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name,

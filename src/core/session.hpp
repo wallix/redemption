@@ -290,8 +290,9 @@ public:
 
                         try
                         {
-                            bool const has_fd_event = (BACK_EVENT_NONE == session_reactor.signal && mm.is_set_event(rfds));
-                            session_reactor.set_event_next(0);
+// TODO                            bool const has_fd_event = (BACK_EVENT_NONE == session_reactor.signal && mm.is_set_event(rfds));
+                            bool const has_fd_event = (BACK_EVENT_NONE == session_reactor.signal);
+// TODO                            session_reactor.set_event_next(0);
                             // Process incoming module trafic
                             if (has_fd_event) {
                                 session_reactor.graphic_events_.exec(now, mm.get_graphic_wrapper(front));
@@ -321,7 +322,7 @@ public:
                                     SessionProbeOnLaunchFailure::retry_without_session_probe) {
                                     this->ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
 
-                                    signal = BACK_EVENT_RETRY_CURRENT;
+                                    session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
 // TODO                                    mm.mod->get_event().reset_trigger_time();
                                 }
                                 else if (acl) {
@@ -339,13 +340,13 @@ public:
                                     this->ini.set<cfg::context::perform_automatic_reconnection>(true);
                                 }
 
-                                signal = BACK_EVENT_RETRY_CURRENT;
+                                session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
 // TODO                                mm.mod->get_event().reset_trigger_time();
                             }
                             else if (e.id == ERR_RAIL_NOT_ENABLED) {
                                 this->ini.get_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
 
-                                signal = BACK_EVENT_RETRY_CURRENT;
+                                session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
 // TODO                                mm.mod->get_event().reset_trigger_time();
                             }
                             else if ((e.id == ERR_RDP_SERVER_REDIR) &&
@@ -413,10 +414,13 @@ public:
                                         ini, std::move(client_sck), now, cctx, rnd, fstat
                                     ));
                                     authentifier.set_acl_serial(&acl->acl_serial);
-                                    signal = BACK_EVENT_NEXT;
+                                    session_reactor.set_next_event(BACK_EVENT_NEXT);
                                 }
                                 catch (...) {
-                                    mm.invoke_close_box("No authentifier available",signal, now, authentifier, authentifier);
+                                    signal = BackEvent_t(session_reactor.signal);
+                                    session_reactor.signal = 0;
+                                    mm.invoke_close_box("No authentifier available", signal, now, authentifier, authentifier);
+                                    session_reactor.signal = signal;
                                 }
                             }
                         }
@@ -424,6 +428,7 @@ public:
                             // authentifier received updated values
                             acl->acl_serial.receive();
                         }
+
                         if (enable_osd) {
                             const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
                             if (enddate && mm.is_up_and_running()) {
@@ -453,10 +458,13 @@ public:
                         }
 
                         if (acl) {
+                            signal = BackEvent_t(session_reactor.signal);
+                            session_reactor.signal = 0;
                             run_session = acl->acl_serial.check(
                                 authentifier, authentifier, mm,
                                 now, signal, front_signal, front.has_user_activity
                             );
+                            session_reactor.signal = signal;
                         }
                         else if (signal == BACK_EVENT_STOP) {
 // TODO                            mm.mod->get_event().reset_trigger_time();

@@ -27,6 +27,7 @@ Author(s): Jonathan Poelen
 #include "transport/socket_transport.hpp"
 #include "utils/executor.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/log.hpp"
 
 class mod_api;
 class Callback;
@@ -394,10 +395,16 @@ struct SessionReactor
     }
 
     int signal = 0;
-    void set_event_next(/*BackEvent_t*/int signal)
+    void set_next_event(/*BackEvent_t*/int signal)
     {
+        LOG(LOG_DEBUG, "SessionReactor::set_next_event %d", signal);
+        assert(!this->signal);
         this->signal = signal;
         // assert(is not already set)
         // TODO unimplemented
+    }
+    void set_event_next(/*BackEvent_t*/int signal)
+    {
+        this->set_next_event(signal);
     }
 };

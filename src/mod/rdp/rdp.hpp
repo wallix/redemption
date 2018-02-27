@@ -6428,6 +6428,7 @@ public:
 
     BackEvent_t get_signal_event() {
 // TODO        return this->event.signal;
+        return {};
     }
 
     void send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2) {

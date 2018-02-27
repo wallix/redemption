@@ -33,7 +33,7 @@ public:
                          FrontAPI & front,
                          uint16_t front_width, uint16_t front_height,
                          Font const & font, ClientExecute & client_execute,
-                         Theme const & theme);
+                         Theme const & theme, bool enable_event = true);
 
     ~LocallyIntegrableMod() override;
 

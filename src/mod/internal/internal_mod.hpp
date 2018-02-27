@@ -39,7 +39,8 @@ public:
     InternalMod(
         SessionReactor& session_reactor,
         FrontAPI & front, uint16_t front_width, uint16_t front_height,
-        Font const & font, Theme const & theme, bool dont_resize);
+        Font const & font, Theme const & theme,
+        /*TODO preferred enum class*/bool dont_resize, bool enable_event = true);
 
     Font const & font() const
     {
@@ -50,9 +51,6 @@ public:
     {
         return this->screen.theme;
     }
-
-    ~InternalMod() override
-    {}
 
     Rect get_screen_rect() const
     {

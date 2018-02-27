@@ -169,10 +169,12 @@ class MMIni : public MMApi
 {
 protected:
     Inifile & ini;
+    SessionReactor& session_reactor;
 
 public:
-    explicit MMIni(Inifile & ini_)
+    explicit MMIni(SessionReactor& session_reactor, Inifile & ini_)
     : ini(ini_)
+    , session_reactor(session_reactor)
     {}
 
     ~MMIni() override {}
@@ -318,8 +320,8 @@ public:
     }
 
     void check_module() override {
-        if (this->ini.get<cfg::context::forcemodule>() &&
-            !this->is_connected()) {
+        if (this->ini.get<cfg::context::forcemodule>() && !this->is_connected()) {
+            this->session_reactor.set_event_next(BACK_EVENT_NEXT);
 // TODO            this->mod->get_event().signal = BACK_EVENT_NEXT;
 // TODO            this->mod->get_event().set_trigger_time(wait_obj::NOW);
             this->ini.set<cfg::context::forcemodule>(false);
@@ -380,8 +382,8 @@ private:
 
     public:
         explicit ModOSD(SessionReactor& session_reactor, ModuleManager & mm)
-        : mod_api(session_reactor)
-        , gdi::ProtectedGraphics(mm.front, Rect{})
+        : gdi::ProtectedGraphics(mm.front, Rect{})
+        , mod_api(session_reactor)
         , mm(mm)
         {}
 
@@ -818,7 +820,7 @@ private:
 
 public:
     ModuleManager(SessionReactor& session_reactor, Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
-        : MMIni(ini)
+        : MMIni(session_reactor, ini)
         , front(front)
         , no_mod()
         , mod_osd(session_reactor, *this)

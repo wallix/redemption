@@ -411,8 +411,8 @@ public:
         AuthApi & authentifier, ReportMessageApi & report_message, MMApi & mm,
         time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity
     ) {
-        //LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u",
-        //    (unsigned)now, static_cast<unsigned>(signal));
+        LOG(LOG_DEBUG, "================> ACL check: now=%u, signal=%u, front_signal=%u",
+          static_cast<unsigned>(now), static_cast<unsigned>(signal), static_cast<unsigned>(front_signal));
         if (signal == BACK_EVENT_STOP) {
             // here, mm.last_module should be false only when we are in login box
 // TODO            mm.mod->get_event().reset_trigger_time();

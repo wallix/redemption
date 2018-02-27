@@ -57,7 +57,7 @@ SelectorMod::SelectorMod(
     : LocallyIntegrableMod(
         session_reactor,
         front, width, height, vars.get<cfg::font>(),
-        client_execute, vars.get<cfg::theme>())
+        client_execute, vars.get<cfg::theme>(), false)
 
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>().c_str(),
@@ -116,6 +116,11 @@ SelectorMod::SelectorMod(
     this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
     this->ask_page();
     this->selector.rdp_input_invalidate(this->selector.get_rect());
+
+    this->started_copy_past_event = session_reactor.create_graphic_event(std::ref(*this))
+    .on_action(jln::one_shot([](time_t, gdi::GraphicApi&, SelectorMod& self){
+        self.copy_paste.ready(self.front);
+    }));
 }
 
 void SelectorMod::ask_page()
@@ -129,8 +134,7 @@ void SelectorMod::ask_page()
     this->vars.ask<cfg::globals::target_user>();
     this->vars.ask<cfg::globals::target_device>();
     this->vars.ask<cfg::context::selector>();
-// TODO    this->event.signal = BACK_EVENT_REFRESH;
-// TODO    this->event.set_trigger_time(wait_obj::NOW);
+    this->session_reactor.set_next_event(BACK_EVENT_REFRESH);
 }
 
 void SelectorMod::notify(Widget* widget, notify_event_t event)
@@ -145,8 +149,7 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
         this->vars.ask<cfg::globals::auth_user>();
         this->vars.ask<cfg::context::password>();
         this->vars.set<cfg::context::selector>(false);
-// TODO        this->event.signal = BACK_EVENT_NEXT;
-// TODO        this->event.set_trigger_time(wait_obj::NOW);
+        this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 
         this->waiting_for_next_module = true;
     } break;
@@ -170,8 +173,7 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
             this->vars.ask<cfg::globals::target_device>();
             this->vars.ask<cfg::context::target_protocol>();
 
-// TODO            this->event.signal = BACK_EVENT_NEXT;
-// TODO            this->event.set_trigger_time(wait_obj::NOW);
+            this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 
             this->waiting_for_next_module = true;
         }
@@ -239,7 +241,6 @@ void SelectorMod::refresh_context()
 
     this->selector.current_page.rdp_input_invalidate(this->selector.current_page.get_rect());
     this->selector.number_page.rdp_input_invalidate(this->selector.number_page.get_rect());
-// TODO    this->event.reset_trigger_time();
 }
 
 void SelectorMod::refresh_device()
@@ -348,13 +349,6 @@ void SelectorMod::rdp_input_scancode(
 void SelectorMod::draw_event(time_t now, gdi::GraphicApi & gapi)
 {
     LocallyIntegrableMod::draw_event(now, gapi);
-
-// TODO    if (!this->copy_paste && this->event.is_waked_up_by_time()) {
-    if (!this->copy_paste) {
-        this->copy_paste.ready(this->front);
-    }
-
-// TODO    this->event.reset_trigger_time();
 }
 
 void SelectorMod::send_to_mod_channel(
