@@ -7631,16 +7631,27 @@ private:
             return;
         }
 
+        {
+            const unsigned expected = 4;    // Version(2) + DataLength(2)
+            if (!stream.in_check_rem(expected)) {
+                LOG( LOG_ERR
+                   , "mod_rdp::process_checkout_event: data truncated (1), expected=%u remains=%zu"
+                   , expected, stream.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+        }
+
         uint16_t const version = stream.in_uint16_le();
         uint16_t const data_length = stream.in_uint16_le();
-        LOG(LOG_INFO, "Version=%u DataLength=%u", version, data_length);
+
+        LOG(LOG_INFO, "mod_rdp::process_checkout_event: Version=%u DataLength=%u", version, data_length);
 
         std::string checkout_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
 
         this->checkout_channel_flags  = flags;
         this->checkout_channel_chanid = checkout_channel.chanid;
 
-        LOG(LOG_INFO, "Checkout channel data=\"%s\"", checkout_channel_message);
+        LOG(LOG_INFO, "mod_rdp::process_checkout_event: Data=\"%s\"", checkout_channel_message);
 
         send_checkout_channel_data("{ \"ReturnCode\": 0, \"ReturnMessage\": \"Succeeded.\" }");
     }
