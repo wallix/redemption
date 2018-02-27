@@ -1906,6 +1906,7 @@ class Sesman():
                 u'session_probe_enable_log' : 'enable_log',
                 u'session_probe_enable_log_rotation' : 'enable_log_rotation',
                 u'session_probe_smart_launcher_clipboard_initialization_delay' : 'smart_launcher_clipboard_initialization_delay',
+                u'session_probe_smart_launcher_start_delay' : 'smart_launcher_start_delay',
                 u'session_probe_smart_launcher_long_delay' : 'smart_launcher_long_delay',
                 u'session_probe_smart_launcher_short_delay' : 'smart_launcher_short_delay',
                 u'session_probe_enable_crash_dump' : 'enable_crash_dump',
