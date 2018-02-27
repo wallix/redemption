@@ -83,7 +83,7 @@ int main(int argc, char** argv)
         std::cout <<
             "\n"
             "ReDemPtion Stand alone RDP Client.\n"
-            "Copyright (C) Wallix 2010-2015.\n"
+            "Copyright (C) Wallix 2010-2018.\n"
             "\n"
             "Usage: rdpproxy [options]\n\n"
             << desc << std::endl
