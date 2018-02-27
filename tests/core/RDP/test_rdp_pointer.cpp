@@ -97,6 +97,9 @@ RED_AUTO_TEST_CASE(TestPointerNormal)
     RED_CHECK_MEM(p.get_monochrome_and_mask(), make_array_view(expected, sizeof(expected)));
     const char * sig = "\x48\x58\x41\x28\xb0\xb4\x03\x27\x69\x31\x47\xc8\x2b\x43\x3e\xf3\x33\x80\x1c\xb2";
     auto av = p.get_24bits_xor_mask();
+    RED_CHECK_EQUAL(av.size(), 32*32*3);
+//    uint8_t expected_data[32*32*3] = {};
+//    RED_CHECK_MEM(av, make_array_view(expected_data, sizeof(expected_data)));
     RED_CHECK_SIG2(av.data(), av.size(), sig);
 
 }

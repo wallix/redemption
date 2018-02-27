@@ -58,47 +58,28 @@ public:
 
     void add_pointer_static(const Pointer & cursor, int index) {
         assert((index >= 0) && (index < MAX_POINTER_COUNT));
-        this->Pointers[index].set_hotspot(cursor.get_hotspot());
-        this->Pointers[index].set_dimensions(cursor.get_dimensions());
-//        this->Pointers[index].bpp = cursor.bpp;
-        memcpy(this->Pointers[index].data, cursor.data, cursor.data_size());
-        auto av = cursor.get_monochrome_and_mask();
-        memcpy(this->Pointers[index].mask, av.data(), av.size());
+        this->Pointers[index] = cursor;
         this->stamps[index] = this->pointer_stamp;
-
         this->cached[index] = true;
     }
 
     /* check if the pointer is in the cache or not and if it should be sent      */
     int add_pointer(const Pointer & cursor, int & cache_idx)
     {
-        const auto dimensions = cursor.get_dimensions();
-        const auto hotspot = cursor.get_hotspot();
-
-
-        int i;
         int oldest = 0x7fffffff;
         int index = 0;
 
         this->pointer_stamp++;
         /* look for match */
-        for (i = 0; i < this->pointer_cache_entries; i++) {
-            const auto dimensions_i = this->Pointers[i].get_dimensions();
-            const auto hotspot_i = this->Pointers[i].get_hotspot();
-        
-            if (hotspot_i.x == hotspot.x &&  hotspot_i.y == hotspot.y
-            &&  dimensions_i.width == dimensions.width && dimensions_i.height == dimensions.height
-//            &&  this->Pointers[i].bpp == cursor.bpp
-            &&  (memcmp(this->Pointers[i].data, cursor.data, cursor.data_size()) == 0)
-            auto av = cursor.get_monochrome_and_mask();
-            &&  (memcmp(this->Pointers[i].mask, av.data(), av.size()) == 0)) {
+        for (int i = 0; i < this->pointer_cache_entries; i++) {
+            if (this->Pointers[i] == cursor) {
                 this->stamps[i] = this->pointer_stamp;
                 cache_idx = i;
                 return POINTER_ALLREADY_SENT;
             }
         }
         /* look for oldest */
-        for (i = 0; i < this->pointer_cache_entries; i++) {
+        for (int i = 0; i < this->pointer_cache_entries; i++) {
             if (this->stamps[i] < oldest) {
                 oldest = this->stamps[i];
                 index  = i;

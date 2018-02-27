@@ -29,6 +29,10 @@
 #include "utils/log.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/sugar/array_view.hpp"
+#include "utils/colors.hpp"
+
+// TODO: in TS_SYSTEMPOINTERATTRIBUTE, POINTER_NULL and POINTER_NORMAL are attributed specific values
+// we could directly provide these to Pointer constructor instead of defining a switch on call site (rdp.hpp)
 
 struct Pointer {
     enum  {
@@ -120,7 +124,7 @@ public:
     }
 
 public:
-    explicit Pointer(Dimensions d, Hotspot hs, array_view_const_u8 & av_xor, array_view_const_u8 & av_and)
+    explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 & av_xor, array_view_const_u8 & av_and)
         : dimensions(d)
         , hotspot(hs)
     {
@@ -129,12 +133,32 @@ public:
 
         if ((av_xor.size() > this->bit_mask_size()) || (av_and.size() > sizeof(this->xor_mask_size()))) {
             LOG(LOG_ERR, "mod_rdp::process_color_pointer_pdu: "
-                "bad length for color pointer mask_len=%u data_len=%u",
+                "bad length for color pointer mask_len=%zu data_len=%zu",
                 av_and.size(), av_and.size());
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
         }
 
     }
+
+    explicit Pointer(const Pointer & other)
+    : dimensions(other.dimensions)
+    , hotspot(other.hotspot)
+    {
+        auto & av_and = other.get_monochrome_and_mask();
+        auto & av_xor = other.get_24bits_xor_mask();
+        memcpy(this->mask, av_and.data(), av_and.size());
+        memcpy(this->data, av_xor.data(), av_xor.size());
+    }
+
+    bool operator==(const Pointer & other) const {
+        return (other.hotspot.x == this->hotspot.x
+             && other.hotspot.y == this->hotspot.y
+             && other.dimensions.width == this->dimensions.width
+             && other.dimensions.height == this->dimensions.height
+             && (0 == memcmp(this->data, other.data, other.data_size()))
+             && (0 == memcmp(this->mask, other.mask, this->bit_mask_size())));
+    }
+
 
     explicit Pointer(uint8_t pointer_type = POINTER_NULL)
     :   dimensions{0, 0}
@@ -560,12 +584,12 @@ public:
     //      );
     //}
 
-    array_view_const_u8 get_monochrome_and_mask()
+    const array_view_const_u8 get_monochrome_and_mask() const
     {
         return {this->mask, this->bit_mask_size()};
     }
 
-    array_view_const_u8 get_24bits_xor_mask()
+    const array_view_const_u8 get_24bits_xor_mask() const
     {
         return {this->data, this->xor_mask_size()};
     }
@@ -597,7 +621,8 @@ public:
     }
 
     unsigned xor_mask_size() const {
-        return (this->dimensions.width * 3)+(((this->dimensions.width * 3)&1)?1:0) * this->dimensions.height;
+        size_t l_width = (this->dimensions.width * 3);
+        return this->dimensions.height * ((l_width&1) ?l_width+1:l_width);
     }
 
     bool is_valid() const {
@@ -624,4 +649,156 @@ public:
 
         this->only_black_white = true;
     }
+    
+    void to_regular_pointer(const uint8_t * indata, unsigned dlen, unsigned width, unsigned height, uint8_t bpp, const BGRPalette & global_palette) 
+    {
+        switch (bpp) {
+        case 1 :
+        {
+            const unsigned int remainder = (width % 8);
+            const unsigned int src_xor_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
+            const unsigned int src_xor_padded_line_length_in_byte =
+                ((src_xor_line_length_in_byte % 2) ?
+                 src_xor_line_length_in_byte + 1 :
+                 src_xor_line_length_in_byte);
+
+            const unsigned int dest_xor_line_length_in_byte        = width * 3;
+            const unsigned int dest_xor_padded_line_length_in_byte =
+                dest_xor_line_length_in_byte + ((dest_xor_line_length_in_byte % 2) ? 1 : 0);
+
+            for (unsigned int i = 0; i < height; ++i) {
+                const uint8_t* src  = indata + (height - i - 1) * src_xor_padded_line_length_in_byte;
+                      uint8_t* dest = this->data + i * dest_xor_padded_line_length_in_byte;
+
+                unsigned char and_bit_extraction_mask = 7;
+
+                for (unsigned int j = 0; j < width; ++j) {
+                    ::out_bytes_le(dest, 3, (((*src) & (1 << and_bit_extraction_mask)) ? 0xFFFFFF : 0));
+
+                    dest += 3;
+
+                    if (and_bit_extraction_mask) {
+                        and_bit_extraction_mask--;
+                    }
+                    else {
+                        src++;
+                        and_bit_extraction_mask = 7;
+                    }
+                }
+            }
+        }
+        break;
+        case 4 :
+        {
+            for (unsigned i = 0; i < dlen ; i++) {
+                const uint8_t px = indata[i];
+                // target cursor will receive 8 bits input at once
+                ::out_bytes_le(&(this->data[6 * i]),     3, global_palette[(px >> 4) & 0xF].to_u32());
+                ::out_bytes_le(&(this->data[6 * i + 3]), 3, global_palette[ px       & 0xF].to_u32());
+            }
+        }
+        break;
+        case 32: case 24: case 16: case 15: case 8:
+        {
+            uint8_t BPP = nbbytes(bpp);
+
+            const unsigned int src_xor_line_length_in_byte = width * BPP;
+            const unsigned int src_xor_padded_line_length_in_byte =
+                ((src_xor_line_length_in_byte % 2) ?
+                 src_xor_line_length_in_byte + 1 :
+                 src_xor_line_length_in_byte);
+
+            const unsigned int dest_xor_line_length_in_byte = width * 3;
+            const unsigned int dest_xor_padded_line_length_in_byte =
+                ((dest_xor_line_length_in_byte % 2) ?
+                 dest_xor_line_length_in_byte + 1 :
+                 dest_xor_line_length_in_byte);
+
+            for (unsigned int i0 = 0; i0 < height; ++i0) {
+                const uint8_t* src  = indata + (height - i0 - 1) * src_xor_padded_line_length_in_byte;
+                      uint8_t* dest = this->data + (height - i0 - 1) * dest_xor_padded_line_length_in_byte;
+
+                for (unsigned int i1 = 0; i1 < width; ++i1) {
+                    RDPColor px = RDPColor::from(in_uint32_from_nb_bytes_le(BPP, src));
+                    src += BPP;
+                    ::out_bytes_le(dest, 3, color_decode(px, bpp, global_palette).to_u32());
+                    dest += 3;
+                }
+            }
+        }
+        break;
+        default:
+            LOG(LOG_ERR, "Mouse pointer : color depth not supported %d, forcing green mouse (running in the grass ?)", bpp);
+            for (size_t x = 0 ; x < 1024 ; x++) {
+                ::out_bytes_le(this->data + x *3, 3, GREEN);
+            }
+            break;
+        }
+    }
+
+    void to_regular_mask(const uint8_t * indata, unsigned mlen, unsigned width, unsigned height, uint8_t bpp) {
+        /* TODO check code below: why do we revert mask and pointer when pointer is 1 BPP
+         * and not with other color depth ? Looks fishy, a mask and pointer should always
+         * be encoded in the same way, not depending on color depth difficult to see for
+         * symmetrical pointers... check documentation it may be more efficient to revert
+         * cursor after creating it instead of doing it on the fly */
+        switch (bpp) {
+        case 1 :
+        {
+            const unsigned int remainder = (width % 8);
+            const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
+            const unsigned int and_padded_line_length_in_byte =
+                ((and_line_length_in_byte % 2) ?
+                 and_line_length_in_byte + 1 :
+                 and_line_length_in_byte);
+            for (unsigned int i = 0; i < height; ++i) {
+                const uint8_t* src  = indata + (height - i - 1) * and_padded_line_length_in_byte;
+                      uint8_t* dest = this->mask + i * and_padded_line_length_in_byte;
+                ::memcpy(dest, src, and_padded_line_length_in_byte);
+            }
+        }
+        break;
+        default:
+            memcpy(this->mask, indata, mlen);
+        break;
+        }
+    }
+    
+    void cleanup_32_bpp_cursor(unsigned width, unsigned height) {
+        const unsigned int xor_line_length_in_byte = width * 3;
+        const unsigned int xor_padded_line_length_in_byte =
+            ((xor_line_length_in_byte % 2) ?
+             xor_line_length_in_byte + 1 :
+             xor_line_length_in_byte);
+        const unsigned int remainder = (width % 8);
+        const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
+        const unsigned int and_padded_line_length_in_byte =
+            ((and_line_length_in_byte % 2) ?
+             and_line_length_in_byte + 1 :
+             and_line_length_in_byte);
+        for (unsigned int i0 = 0; i0 < height; ++i0) {
+            uint8_t* xorMask = const_cast<uint8_t*>(this->data) + (height - i0 - 1) * xor_padded_line_length_in_byte;
+
+            const uint8_t* andMask = this->mask + (height - i0 - 1) * and_padded_line_length_in_byte;
+            unsigned char and_bit_extraction_mask = 7;
+
+            for (unsigned int i1 = 0; i1 < width; ++i1) {
+                if ((*andMask) & (1 << and_bit_extraction_mask)) {
+                    *xorMask         = 0;
+                    *(xorMask + 1)   = 0;
+                    *(xorMask + 2)   = 0;
+                }
+
+                xorMask += 3;
+                if (and_bit_extraction_mask) {
+                    and_bit_extraction_mask--;
+                }
+                else {
+                    and_bit_extraction_mask = 7;
+                    andMask++;
+                }
+            }
+        }
+    }
+    
 };

@@ -490,10 +490,11 @@ protected:
         
         payload.out_uint8(hotspot.x);
         payload.out_uint8(hotspot.y);
-        this->trans.send(payload.get_data(), payload.get_offset());
 
+        this->trans.send(payload.get_data(), payload.get_offset());
         this->trans.send(cursor.data, cursor.data_size());
-        this->trans.send(cursor.mask, cursor.mask_size());
+        auto av_and = cursor.get_monochrome_and_mask();
+        this->trans.send(av_and);
     }
 
     void send_pointer2(int cache_idx, const Pointer & cursor) {
@@ -537,7 +538,8 @@ protected:
         this->trans.send(payload.get_data(), payload.get_offset());
 
         this->trans.send(cursor.data, cursor.data_size());
-        this->trans.send(cursor.mask, cursor.mask_size());
+        auto av_and = cursor.get_monochrome_and_mask();
+        this->trans.send(av_and);
     }
 
     void set_pointer(int cache_idx) override {

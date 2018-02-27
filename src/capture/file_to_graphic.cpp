@@ -727,18 +727,24 @@ void FileToGraphic::interpret_order()
         cache_idx     = this->stream.in_uint8();
 
         if (  chunk_size - 8 /*header(8)*/ > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
-            this->statistics.CachePointer.count++;
             auto * const p = this->stream.get_current();
-            Pointer cursor(Pointer::POINTER_NULL);
-            
-            Pointer::CursorSize dimensions(32, 32);
-            cursor.set_dimensions(dimensions);
+            this->statistics.CachePointer.count++;
             auto hotspot_x = this->stream.in_uint8();
             auto hotspot_y = this->stream.in_uint8();
-            Pointer::Hotspot hotspot(hotspot_x, hotspot_y);
-            cursor.set_hotspot(hotspot);
-            stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
-            stream.in_copy_bytes(cursor.mask, 128);
+            uint8_t data[32*32*3] = {};
+            uint8_t mask[128] = {};
+            
+            stream.in_copy_bytes(data, sizeof(data));
+            stream.in_copy_bytes(mask, sizeof(mask));
+
+            array_view_const_u8 xor_mask{data, sizeof(data)};
+            array_view_const_u8 and_mask{mask, sizeof(mask)};
+            
+            Pointer cursor(Pointer::CursorSize(32, 32)
+                        , Pointer::Hotspot(hotspot_x, hotspot_y)
+                        , xor_mask
+                        , and_mask);
+
             this->statistics.CachePointer.total_len += this->stream.get_current() - p;
 
             this->ptr_cache.add_pointer_static(cursor, cache_idx);
@@ -748,20 +754,17 @@ void FileToGraphic::interpret_order()
             }
         }
         else {
-            this->statistics.PointerIndex.count++;
             auto * const p = this->stream.get_current();
-            Pointer & pi = this->ptr_cache.Pointers[cache_idx];
-            Pointer cursor(Pointer::POINTER_NULL);
-            cursor.set_dimensions(pi.get_dimensions());
-            cursor.set_hotspot(pi.get_hotspot());
-            memcpy(cursor.data, pi.data, sizeof(pi.data));
-            memcpy(cursor.mask, pi.mask, sizeof(pi.mask));
+            this->statistics.PointerIndex.count++;
+            Pointer cursor(this->ptr_cache.Pointers[cache_idx]);
             this->statistics.PointerIndex.total_len += this->stream.get_current() - p;
 
             for (gdi::GraphicApi * gd : this->graphic_consumers){
                 gd->set_pointer(cursor);
             }
         }
+
+
     }
     break;
     case WrmChunkType::POINTER2:
@@ -771,39 +774,37 @@ void FileToGraphic::interpret_order()
         }
 
         uint8_t cache_idx;
-
         this->mouse_x = this->stream.in_uint16_le();
         this->mouse_y = this->stream.in_uint16_le();
         cache_idx     = this->stream.in_uint8();
 
         this->statistics.CachePointer.count++;
         auto * const p = this->stream.get_current();
-
-        Pointer cursor(Pointer::POINTER_NULL);
-
         uint8_t width    = this->stream.in_uint8();
         uint8_t height   = this->stream.in_uint8();
-        Pointer::CursorSize dimensions(width, height);
-        cursor.set_dimensions(dimensions);
         /* cursor.bpp   = this->stream.in_uint8();*/
         this->stream.in_skip_bytes(1);
-
         auto hotspot_x = this->stream.in_uint8();
         auto hotspot_y = this->stream.in_uint8();
-        Pointer::Hotspot hotspot(hotspot_x, hotspot_y);
-        cursor.set_hotspot(hotspot);
 
+        uint8_t data[32*32*3] = {};
         uint16_t data_size = this->stream.in_uint16_le();
         assert(data_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 3);
+        stream.in_copy_bytes(data, std::min<size_t>(sizeof(data), data_size));
+        array_view_const_u8 xor_mask{data, sizeof(data)};
 
         uint16_t mask_size = this->stream.in_uint16_le();
+        uint8_t mask[128] = {};
         assert(mask_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8);
-
-        stream.in_copy_bytes(cursor.data, std::min<size_t>(sizeof(cursor.data), data_size));
-        stream.in_copy_bytes(cursor.mask, std::min<size_t>(sizeof(cursor.mask), mask_size));
+        stream.in_copy_bytes(mask, std::min<size_t>(sizeof(mask), mask_size));
+        array_view_const_u8 and_mask{mask, sizeof(mask)};
+        
+        Pointer cursor(Pointer::CursorSize(width, height)
+                    , Pointer::Hotspot(hotspot_x, hotspot_y)
+                    , xor_mask
+                    , and_mask);
 
         this->statistics.CachePointer.total_len += this->stream.get_current() - p;
-
         this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
         for (gdi::GraphicApi * gd : this->graphic_consumers){

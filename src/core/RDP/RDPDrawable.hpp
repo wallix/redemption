@@ -924,7 +924,8 @@ public:
         const auto dimensions = cursor.get_dimensions();
         const auto hotspot = cursor.get_hotspot();
 
-        this->drawable.use_pointer(hotspot.x, hotspot.y, dimensions.width, dimensions.height, cursor.data, cursor.mask);
+        auto av_and = cursor.get_monochrome_and_mask();
+        this->drawable.use_pointer(hotspot.x, hotspot.y, dimensions.width, dimensions.height, cursor.data, av_and.data());
     }
 
     void set_palette(const BGRPalette & palette) override {
