@@ -1104,6 +1104,57 @@ class Sesman():
             duration = 3600
         return duration
 
+    @staticmethod
+    def _get_tf_flags(ticketfields):
+        flag = 0
+        field = ticketfields.get("description")
+        if field is not None:
+            flag += 0x01
+            if field == APPREQ_REQUIRED:
+                flag += 0x02
+        field = ticketfields.get("ticket")
+        if field is not None:
+            flag += 0x04
+            if field == APPREQ_REQUIRED:
+                flag += 0x08
+        field = ticketfields.get("duration")
+        if field is not None:
+            flag += 0x10
+            if field == APPREQ_REQUIRED:
+                flag += 0x20
+        return flag
+
+    # 'request_fields':{
+    #     '<name>': {
+    #         'label': str, # translated field to be displayed by the clients
+    #         'type': 'str'|'int'|'datetime'|'duration',
+    #         'mandatory': bool,
+    #         'min': int,
+    #         'max': int
+    # }, ...}
+
+    MAP_FIELD_FLAG = {
+        'description': 0x01,
+        'ticket': 0x04,
+        'duration': 0x10
+    }
+
+    @staticmethod
+    def _get_rf_flags(request_fields):
+        flag = 0
+        if not request_fields:
+            return flag
+        for key, value in request_fields.iteritems():
+            bitset = Sesman.MAP_FIELD_FLAG.get(key)
+            if bitset is not None:
+                flag += bitset
+                flag += (bitset << 1) if value.get('mandatory') else 0
+        return flag
+
+    @staticmethod
+    def _get_rf_duration_max(request_fields):
+        return request_fields.get('duration', {}).get('max', 0)
+
     def interactive_display_waitinfo(self, status, infos):
         show_message = infos.get('message') or ''
         target = infos.get('target')
@@ -1114,28 +1165,20 @@ class Sesman():
                    u'display_message' : MAGICASK,
                    u'waitinforeturn' : MAGICASK
                    }
-        ticketfields = infos.get("ticket_fields")
         flag = 0
+        duration_max = infos.get("duration_max") or 0
+        ticketfields = infos.get("ticket_fields")
         if ticketfields:
-            field = ticketfields.get("description")
-            if field is not None:
-                flag += 0x01
-                if field == APPREQ_REQUIRED:
-                    flag += 0x02
-            field = ticketfields.get("ticket")
-            if field is not None:
-                flag += 0x04
-                if field == APPREQ_REQUIRED:
-                    flag += 0x08
-            field = ticketfields.get("duration")
-            if field is not None:
-                flag += 0x10
-                if field == APPREQ_REQUIRED:
-                    flag += 0x20
+            flag = self._get_tf_flags(ticketfields)
+        request_fields = infos.get('request_fields')
+        if request_fields:
+            flag = self._get_rf_flags(request_fields)
+            # duration_max is in minutes
+            duration_max =  self._get_rf_duration_max(request_fields) / 60
         if status == APPROVAL_NONE:
             tosend["showform"] = True
             tosend["formflag"] = flag
-            tosend["duration_max"] = infos.get("duration_max") or 0
+            tosend["duration_max"] = duration_max
         else:
             tosend["showform"] = False
         self.send_data(tosend)
