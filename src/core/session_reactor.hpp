@@ -31,6 +31,7 @@ Author(s): Jonathan Poelen
 
 class mod_api;
 class Callback;
+class Inifile;
 namespace gdi
 {
     class GraphicApi;
@@ -132,10 +133,9 @@ struct SessionReactor
                             this->elements.pop_back();
                             elem->delete_self(jln::DeleteFrom::Observer);
                             break;
-                        case jln::ExecutorResult::Nothing:
-                            break;
                         case jln::ExecutorResult::NeedMoreData:
                             assert(false && "NeedMoreData");
+                        case jln::ExecutorResult::Nothing:
                         case jln::ExecutorResult::Ready:
                             ++i;
                             break;
@@ -251,6 +251,26 @@ struct SessionReactor
         return {jln::UniquePtrEventWithUPtr<Action>
             ::New(this->graphic_events_, static_cast<Args&&>(args)...)};
     }
+
+
+    using SesmanEvent = jln::ActionBase<jln::prefix_args<Inifile&>>;
+    using SesmanEventPtr = jln::UniquePtrWithNotifyDelete<SesmanEvent>;
+
+    struct SesmanContainer : Container<SesmanEvent>
+    {
+        template<class... Args>
+        using Elem = jln::Action<SesmanContainer&, SesmanEvent::prefix_args, Args...>;
+    };
+
+    template<class... Args>
+    NotifyDeleterBuilderWrapper<jln::ActionBuilder<jln::UniquePtrEventWithUPtr<SesmanContainer::Elem<Args...>>>>
+    create_sesman_event(Args&&... args)
+    {
+        using Action = SesmanContainer::Elem<Args...>;
+        return {jln::UniquePtrEventWithUPtr<Action>
+            ::New(this->sesman_events_, static_cast<Args&&>(args)...)};
+    }
+
 
     using BasicFd = jln::BasicExecutorImpl<PrefixArgs>;
 
@@ -381,6 +401,7 @@ struct SessionReactor
     //std::vector<std::unique_ptr<Context>> contexts;
     CallbackContainer front_events_;
     GraphicContainer graphic_events_;
+    SesmanContainer sesman_events_;
     TimerContainer timer_events_;
     TopFdContainer fd_events_;
 

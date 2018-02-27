@@ -420,13 +420,16 @@ public:
                                     signal = BackEvent_t(session_reactor.signal);
                                     session_reactor.signal = 0;
                                     mm.invoke_close_box("No authentifier available", signal, now, authentifier, authentifier);
-                                    session_reactor.signal = signal;
+                                    if (!session_reactor.signal || signal) {
+                                        session_reactor.signal = signal;
+                                    }
                                 }
                             }
                         }
                         else if (sck_is_set(acl->auth_trans, rfds)) {
                             // authentifier received updated values
                             acl->acl_serial.receive();
+                            session_reactor.sesman_events_.exec(ini);
                         }
 
                         if (enable_osd) {
@@ -459,12 +462,28 @@ public:
 
                         if (acl) {
                             signal = BackEvent_t(session_reactor.signal);
-                            session_reactor.signal = 0;
-                            run_session = acl->acl_serial.check(
-                                authentifier, authentifier, mm,
-                                now, signal, front_signal, front.has_user_activity
-                            );
-                            session_reactor.signal = signal;
+                            int i = 0;
+                            do {
+                                if (++i == 11) {
+                                    LOG(LOG_ERR, "loop event error");
+                                    break;
+                                }
+                                session_reactor.signal = 0;
+                                run_session = acl->acl_serial.check(
+                                    authentifier, authentifier, mm,
+                                    now, signal, front_signal, front.has_user_activity
+                                );
+                                if (!session_reactor.signal) {
+                                    session_reactor.signal = signal;
+                                    break;
+                                }
+                                else if (signal) {
+                                    session_reactor.signal = signal;
+                                }
+                                else {
+                                    signal = BackEvent_t(session_reactor.signal);
+                                }
+                            } while (session_reactor.signal);
                         }
                         else if (signal == BACK_EVENT_STOP) {
 // TODO                            mm.mod->get_event().reset_trigger_time();

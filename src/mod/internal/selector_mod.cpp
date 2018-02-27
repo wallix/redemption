@@ -121,6 +121,12 @@ SelectorMod::SelectorMod(
     .on_action(jln::one_shot([](time_t, gdi::GraphicApi&, SelectorMod& self){
         self.copy_paste.ready(self.front);
     }));
+
+    this->sesman_event = session_reactor.create_sesman_event(std::ref(*this))
+    .on_action([](auto ctx, Inifile&, SelectorMod& self){
+        self.refresh_context();
+        return ctx.ready();
+    });
 }
 
 void SelectorMod::ask_page()
@@ -134,6 +140,7 @@ void SelectorMod::ask_page()
     this->vars.ask<cfg::globals::target_user>();
     this->vars.ask<cfg::globals::target_device>();
     this->vars.ask<cfg::context::selector>();
+
     this->session_reactor.set_next_event(BACK_EVENT_REFRESH);
 }
 
@@ -224,6 +231,8 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
 void SelectorMod::refresh_context()
 {
     char buffer[16];
+
+    LOG(LOG_DEBUG, "refresh_context");
 
     this->current_page = vars.get<cfg::context::selector_current_page>();
     snprintf(buffer, sizeof(buffer), "%d", this->current_page);
