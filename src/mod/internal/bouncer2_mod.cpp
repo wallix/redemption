@@ -30,9 +30,22 @@ Bouncer2Mod::Bouncer2Mod(
     SessionReactor& session_reactor,
     FrontAPI & front, uint16_t width, uint16_t height,
     Font const & font, bool dont_resize)
-: InternalMod(session_reactor, front, width, height, font, Theme{}, dont_resize)
+: InternalMod(session_reactor, front, width, height, font, Theme{}, dont_resize, false)
 , dancing_rect(0,0,100,100)
-{}
+{
+    this->timer = session_reactor.create_timer(std::ref(*this))
+    .set_delay(std::chrono::milliseconds(33))
+    .on_action([](auto ctx, Bouncer2Mod& self){
+        LOG(LOG_DEBUG, "time action");
+        self.graphic_event = self.session_reactor.create_graphic_event(std::ref(self))
+        .on_action([](auto ctx, time_t now, gdi::GraphicApi& gd, Bouncer2Mod& self){
+            LOG(LOG_DEBUG, "gd action");
+            self.draw_event(now, gd);
+            return ctx.ready();
+        });
+        return ctx.ready();
+    });
+}
 
 Bouncer2Mod::~Bouncer2Mod()
 {
@@ -42,10 +55,8 @@ Bouncer2Mod::~Bouncer2Mod()
 void Bouncer2Mod::rdp_input_scancode(
     long /*param1*/, long /*param2*/, long /*param3*/, long /*param4*/, Keymap2 * keymap)
 {
-    if (keymap->nb_kevent_available() > 0
-        && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
-// TODO        this->event.signal = BACK_EVENT_STOP;
-// TODO        this->event.set_trigger_time(wait_obj::NOW);
+    if (keymap->nb_kevent_available() > 0 && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
+        this->session_reactor.set_event_next(BACK_EVENT_STOP);
         return ;
     }
 
@@ -82,6 +93,10 @@ int Bouncer2Mod::interaction()
             this->speedy = -2;
         }
     }
+
+    this->timer->set_time(std::chrono::milliseconds(33));
+    this->graphic_event.reset();
+
     return 0;
 }
 
@@ -126,9 +141,6 @@ void Bouncer2Mod::draw_event(time_t /*now*/, gdi::GraphicApi & drawable)
     // And erase
     this->wipe(oldrect, this->dancing_rect, encode_color24()(GREEN), this->screen.get_rect(), drawable);
     drawable.end_update();
-
-    // Final with setting next idle time
-// TODO    this->event.set_trigger_time(33333);    // 0.03s is 30fps
 }
 
 void Bouncer2Mod::wipe(

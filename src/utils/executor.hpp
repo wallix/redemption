@@ -1227,6 +1227,9 @@ struct UniquePtrWithNotifyDelete
         //     static_cast<void*>(&this->p),
         //     static_cast<void*>(detail::UniquePtrEventWithUPtrAccess::p(other).get()),
         //     static_cast<void*>(&detail::UniquePtrEventWithUPtrAccess::p(other)));
+        assert(get() != other.get());
+        // don't p=std::move(other) directly
+        this->p.reset();
         this->p = std::move(detail::UniquePtrEventWithUPtrAccess::p(other));
         this->p.get_deleter().uptr_in_event
           = detail::UniquePtrEventWithUPtrAccess::p(other).get_deleter().uptr_in_event;

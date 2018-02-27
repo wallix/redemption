@@ -179,13 +179,13 @@ struct SessionReactor
             );
         }
 
-//         void info(timeval const& end_tv) {
-//             for (auto& timer : this->elements) {
-//                 auto const tv = timer->time();
-//                 LOG(LOG_DEBUG, "%p: %ld %ld %ld",
-//                     static_cast<void*>(timer), tv.tv_sec, tv.tv_usec, difftimeval(tv, end_tv).count());
-//             }
-//         }
+        void info(timeval const& end_tv) {
+            for (auto& timer : this->elements) {
+                auto const tv = timer->time();
+                LOG(LOG_DEBUG, "%p: %ld %ld %ld, delay=%ld",
+                    static_cast<void*>(timer), tv.tv_sec, tv.tv_usec, difftimeval(tv, end_tv).count(), timer->delay.count());
+            }
+        }
 
         template<class... Args>
         using Elem = jln::Timer<TimerContainer&, BasicTimer::prefix_args, Args...>;
@@ -419,7 +419,7 @@ struct SessionReactor
     void set_next_event(/*BackEvent_t*/int signal)
     {
         LOG(LOG_DEBUG, "SessionReactor::set_next_event %d", signal);
-        assert(!this->signal);
+        assert(!this->signal || this->signal == signal);
         this->signal = signal;
         // assert(is not already set)
         // TODO unimplemented

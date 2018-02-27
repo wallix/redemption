@@ -232,8 +232,6 @@ void SelectorMod::refresh_context()
 {
     char buffer[16];
 
-    LOG(LOG_DEBUG, "refresh_context");
-
     this->current_page = vars.get<cfg::context::selector_current_page>();
     snprintf(buffer, sizeof(buffer), "%d", this->current_page);
     this->selector.current_page.set_text(buffer);

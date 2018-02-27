@@ -189,8 +189,8 @@ public:
                 }
 
                 auto tv = session_reactor.timer_events_.get_next_timeout();
-                // LOG(LOG_DEBUG, "%ld %ld", tv.tv_sec, tv.tv_usec);
                 auto tv_now = tvtime();
+                // LOG(LOG_DEBUG, "%ld %ld - %ld %ld", tv.tv_sec, tv.tv_usec, tv_now.tv_sec, tv_now.tv_usec);
                 if (tv.tv_sec >= 0 && tv < timeout + tv_now) {
                     if (tv < tv_now) {
                         timeout = {0, 0};
@@ -199,6 +199,7 @@ public:
                         timeout = tv - tv_now;
                     }
                 }
+                // session_reactor.timer_events_.info(tv_now);
 
                 for (auto& top_fd : session_reactor.fd_events_.elements) {
                     // LOG(LOG_DEBUG, "set fd: %d", top_fd->fd);
@@ -290,12 +291,11 @@ public:
 
                         try
                         {
-// TODO                            bool const has_fd_event = (BACK_EVENT_NONE == session_reactor.signal && mm.is_set_event(rfds));
-                            bool const has_fd_event = (BACK_EVENT_NONE == session_reactor.signal);
+                            bool const has_fd_event = (BACK_EVENT_NONE == session_reactor.signal && mm.is_set_event(rfds));
 // TODO                            session_reactor.set_event_next(0);
                             // Process incoming module trafic
+                            session_reactor.graphic_events_.exec(now, mm.get_graphic_wrapper(front));
                             if (has_fd_event) {
-                                session_reactor.graphic_events_.exec(now, mm.get_graphic_wrapper(front));
                                 if (has_fd_event) {
                                     mm.mod->draw_event(now, mm.get_graphic_wrapper(front));
                                 }
@@ -429,7 +429,9 @@ public:
                         else if (sck_is_set(acl->auth_trans, rfds)) {
                             // authentifier received updated values
                             acl->acl_serial.receive();
-                            session_reactor.sesman_events_.exec(ini);
+                            if (!ini.changed_field_size()) {
+                                session_reactor.sesman_events_.exec(ini);
+                            }
                         }
 
                         if (enable_osd) {

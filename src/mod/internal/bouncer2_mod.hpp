@@ -37,6 +37,9 @@ class Bouncer2Mod : public InternalMod
     int mouse_x = 0;
     int mouse_y = 0;
 
+    SessionReactor::BasicTimerPtr timer;
+    SessionReactor::GraphicEventPtr graphic_event;
+
 public:
     Bouncer2Mod(
          SessionReactor& session_reactor,
