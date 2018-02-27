@@ -21,7 +21,7 @@ try:
     from wabengine.common.const import APPREQ_REQUIRED, APPREQ_OPTIONAL
     from wabengine.common.const import CRED_TYPE, CRED_TYPE_PASSWORD, CRED_TYPE_SSH_KEY
     from wabengine.common.const import CRED_DATA_PASSWORD, CRED_DATA_PRIVATE_KEY, \
-        CRED_DATA_PUBLIC_KEY
+        CRED_DATA_PUBLIC_KEY, CRED_DATA_SSH_CERTIFICATE
     from wabengine.common.const import PASSWORD_VAULT, PASSWORD_INTERACTIVE, \
         PUBKEY_VAULT, PUBKEY_AGENT_FORWARDING, KERBEROS_FORWARDING, \
         PASSWORD_MAPPING, SUPPORTED_AUTHENTICATION_METHODS
@@ -29,6 +29,7 @@ try:
     from wabx509 import AuthX509
     CRED_DATA_LOGIN = "login"
     CRED_DATA_ACCOUNT_UID = "account_uid"
+    CRED_INDEX = "credentials"
 except Exception, e:
     import traceback
     tracelog = traceback.format_exc(e)
@@ -953,6 +954,9 @@ class Engine(object):
             try:
                 Logger().debug("** CALL checkout_target")
                 creds = self.wabengine.checkout_target(target)
+                if type(creds) is tuple:
+                    status, infos = creds
+                    creds = infos.get(CRED_INDEX, {})
                 self.target_credentials[target_uid] = creds
             except AccountLocked as m:
                 Logger().info("Engine checkout_target failed: account locked")
@@ -972,20 +976,25 @@ class Engine(object):
         account = (account_name, domain_name, device_name)
         if account not in self.account_credentials:
             try:
-                Logger().debug("** CALL checkout_account")
-                creds = self.wabengine.checkout_account(
+                Logger().debug("** CALL checkout_scenario_account")
+                status, infos = self.wabengine.checkout_scenario_account(
                     account_name, domain_name, device_name)
-                if creds is None:
+                if CRED_INDEX not in infos:
+                    Logger().info("No credentials in scenario account")
                     return False, "No rights"
+                creds = infos[CRED_INDEX]
+                creds[CRED_DATA_ACCOUNT_UID] = infos[CRED_DATA_ACCOUNT_UID]
                 self.account_credentials[account] = creds
             except AccountLocked as m:
-                Logger().info("Engine checkout_account failed: account locked")
+                Logger().info("Engine checkout_scenario_account failed: "
+                              "account locked")
                 return False, "%s" % m
             except LicenseException as m:
-                Logger().info("Engine checkout_account failed: License Exception")
+                Logger().info("Engine checkout_scenario_account failed: "
+                              "License Exception")
                 return False, "%s" % m
             except Exception as e:
-                Logger().info("Engine checkout_account does not exist")
+                Logger().info("Engine checkout_scenario_account does not exist")
                 return False, "Error"
             Logger().debug("** END checkout_account")
         return True, "OK"
@@ -1005,10 +1014,9 @@ class Engine(object):
             from collections import namedtuple
             account_infos = namedtuple('account_infos', 'passwords login')
             a_infos = account_infos(
-                [ cred.data.get(CRED_DATA_PASSWORD) \
-                  for cred in creds.get(CRED_TYPE_PASSWORD, []) \
-                  if cred.data.get(CRED_DATA_PASSWORD) ],
-                creds.get(CRED_DATA_LOGIN, None))
+                creds.get(CRED_TYPE_PASSWORD, []),
+                creds.get(CRED_DATA_LOGIN, None)
+            )
             Logger().info("Engine get_account_infos done")
             return a_infos
         except Exception:
@@ -1021,9 +1029,7 @@ class Engine(object):
         target_uid = target_device['target_uid']
         try:
             target_credentials = self.target_credentials.get(target_uid, {})
-            passwords = [ cred.data.get(CRED_DATA_PASSWORD) \
-                          for cred in target_credentials.get(CRED_TYPE_PASSWORD, []) \
-                          if cred.data.get(CRED_DATA_PASSWORD) ]
+            passwords = target_credentials.get(CRED_TYPE_PASSWORD, [])
             Logger().info("Engine get_target_passwords done")
             return passwords
         except Exception, e:
@@ -1040,9 +1046,9 @@ class Engine(object):
         target_uid = target_device['target_uid']
         try:
             target_credentials = self.target_credentials.get(target_uid, {})
-            privkeys = [ (cred.data.get(CRED_DATA_PRIVATE_KEY),
-                          cred.data.get("passphrase", None),
-                          cred.data.get(CRED_DATA_PUBLIC_KEY)) \
+            privkeys = [ (cred.get(CRED_DATA_PRIVATE_KEY),
+                          cred.get("passphrase", None),
+                          cred.get(CRED_DATA_SSH_CERTIFICATE)) \
                          for cred in target_credentials.get(CRED_TYPE_SSH_KEY, []) ]
             Logger().info("Engine get_target_privkeys done")
             return privkeys
@@ -1075,18 +1081,20 @@ class Engine(object):
         account = (acc_name, dom_name, dev_name)
         if account in self.account_credentials:
             try:
-                Logger().debug("Engine release_account")
+                Logger().debug("Engine checkin_scenario_account")
                 try:
                     acc_creds = self.account_credentials.get(account)
-                    res = self.wabengine.release_account(
+                    res = self.wabengine.checkin_scenario_account(
                         acc_creds.get(CRED_DATA_ACCOUNT_UID))
                 except Exception, e:
-                    Logger().info(">>> Engine release_account does not exist")
+                    Logger().info(">>> Engine checkin_scenario_account"
+                                  " does not exist")
                 self.account_credentials.pop(account, None)
-                Logger().debug("Engine release_account done")
+                Logger().debug("Engine checkin_scenario_account done")
             except Exception, e:
                 import traceback
-                Logger().debug("Engine release_account failed: (((%s)))" % (traceback.format_exc(e)))
+                Logger().debug("Engine checkin_scenario_account failed: (%s)"
+                               % (traceback.format_exc(e)))
         return res
 
     def release_all_target(self):
@@ -1106,12 +1114,14 @@ class Engine(object):
         for account in self.account_credentials:
             try:
                 acc_creds = self.account_credentials.get(account)
-                res = self.wabengine.release_account(
+                Logger().debug("Engine checkin_scenario_account (%s)"
+                               % acc_creds.get(CRED_DATA_ACCOUNT_UID))
+                res = self.wabengine.checkin_scenario_account(
                     acc_creds.get(CRED_DATA_ACCOUNT_UID))
-                Logger().debug("Engine release_account res = %s" % res)
             except Exception, e:
                 import traceback
-                Logger().debug("Engine release_target failed: (((%s)))" % (traceback.format_exc(e)))
+                Logger().debug("Engine release_target failed: %s"
+                               % (traceback.format_exc(e)))
         Logger().debug("Engine release_all_account done")
         self.account_credentials.clear()
 
