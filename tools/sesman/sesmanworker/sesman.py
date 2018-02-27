@@ -1225,7 +1225,16 @@ class Sesman():
                         self.engine.reset_proxy_rights()
                         break
                     # [ CONNECT TO TARGET ]
-                    _status, _error = self.connect_to_target(selected_target)
+                    try:
+                        _status, _error = self.connect_to_target(selected_target)
+                    except Exception as e:
+                        Logger().info(
+                            "Unexpected Error on target connection "
+                            "(%s)" % e
+                        )
+                        _status, _error = False, "End of Session"
+                        self.engine.release_all_target()
+                        self.engine.stop_session()
                     self.reset_target_session_vars()
 
         if tries <= 0:
@@ -1353,6 +1362,8 @@ class Sesman():
         self.reporting_target  = None
         self.reporting_message = None
 
+        try_next = False
+        close_box = False
 
         if _status:
             for physical_target in self.engine.get_effective_target(selected_target):
@@ -1754,12 +1765,15 @@ class Sesman():
         Logger().info(u"Stop session done.")
         if self.shared.get(u"module") == u"close":
             if close_box and self.back_selector:
-                self.send_data({ u'module': u'close_back',
-                                 u'selector' : u'False' })
-                while True:
-                    _status, _error = self.receive_data()
-                    if _status and self.shared.get(u'selector') == MAGICASK:
-                        return None, "Go back to selector"
+                try:
+                    self.send_data({ u'module': u'close_back',
+                                     u'selector' : u'False' })
+                    while True:
+                        _status, _error = self.receive_data()
+                        if _status and self.shared.get(u'selector') == MAGICASK:
+                            return None, "Go back to selector"
+                except Exception:
+                    _status, _error = False, "End of Session"
             else:
                 self.send_data({u'module': u'close'})
         # Error
