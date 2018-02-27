@@ -77,7 +77,7 @@ int main(int argc, char** argv)
         std::cout <<
             "\n"
             "Stand alone VNC Client.\n"
-            "Copyright (C) Wallix 2010-2017.\n"
+            "Copyright (C) Wallix 2010-2018.\n"
             "\n"
             "Usage: vnc_client [options]\n\n"
             << desc << std::endl

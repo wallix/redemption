@@ -223,7 +223,7 @@ int main(int argc, char** argv)
 {
     const char * const copyright_notice =
         "Redemption " VERSION ": A Remote Desktop Protocol proxy.\n"
-        "Copyright (C) WALLIX 2010-2017.\n"
+        "Copyright (C) WALLIX 2010-2018.\n"
         "Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu,\n"
         "Martin Potier, Dominique Lafages, Jonathan Poelen, Raphael Zhou,\n"
         "Meng Tan, Clement Moroldo and Jennifer Inthavongh.";
