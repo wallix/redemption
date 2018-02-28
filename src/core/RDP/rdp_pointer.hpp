@@ -89,7 +89,7 @@ private:
 
 public:
     uint8_t data[DATA_SIZE];
-private:
+//private:
     uint8_t mask[MASK_SIZE];
 public:
     bool only_black_white = false;

@@ -1037,9 +1037,41 @@ RED_AUTO_TEST_CASE(TestAppRecorder)
     test_app_recorder_impl("--disable-bogus-vlc", 13451870, 1641583, 14978053);
 }
 
+inline void test_app_recorder_impl2(char const * opt_vlc, size_t sz1, size_t sz2, size_t sz3)
+{
+    LOG(LOG_INFO, "=================== TestAppRecorder =============");
+    char const * argv[] {
+        "recorder.py",
+        "redrec",
+        "-i",
+            FIXTURES_PATH "/verifier/recorded/"
+            "toto@10.10.43.13,Administrateur@QA@cible"
+            ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
+        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "-o",
+            "/tmp/recorder.1.flva",
+        "--video",
+        "--full",
+        "--video-break-interval", "500",
+        "--video-codec", "flv",
+        opt_vlc,
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    CoutBuf cout_buf;
+    int res = do_main(argc, argv, hmac_fn, trace_fn);
+    EVP_cleanup();
+    RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder.1.flva\".\n\n");
+    RED_CHECK_EQUAL(0, res);
+
+    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000000.flv", sz1);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000001.flv", sz2);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1.flv", sz3);
+}
+
 RED_AUTO_TEST_CASE(TestAppRecorderVlc)
 {
-    test_app_recorder_impl("--bogus-vlc", 62515277, 7555247, 70071213);
+    test_app_recorder_impl2("--bogus-vlc", 62515277, 7555247, 70071213);
 }
 
 RED_AUTO_TEST_CASE(TestAppRecorderChunk)
