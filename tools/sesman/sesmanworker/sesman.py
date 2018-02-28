@@ -1304,6 +1304,7 @@ class Sesman():
             kv[u'proto_dest'] = proto_info.protocol
             kv[u'target_str'] = target_login_info.get_target_str()
 
+            # Depecrated, credentials checkout is made by check_target
             _status, _error = self.engine.checkout_target(selected_target)
             if not _status:
                 self.send_data({
@@ -1419,13 +1420,13 @@ class Sesman():
                     physical_target = None
                     break
 
-                _status, _error = self.engine.checkout_target(physical_target)
-                if not _status:
-                    if _error is None:
-                        self.send_data({u'rejected': TR(u"start_session_failed")})
-                        Logger().info("License Error")
-                        break
-                    Logger().info("Account locked on jump server, %s." % _error)
+                cstatus, infos = self.engine.check_target(physical_target,
+                                                          self.pid,
+                                                          None)
+                if cstatus != APPROVAL_ACCEPTED:
+                    Logger().info("Jump server unavailable (%s)"
+                                  % infos.get('message'))
+                    _status = False
                     continue
 
                 physical_proto_info = self.engine.get_target_protocols(physical_target)
@@ -2058,12 +2059,12 @@ class Sesman():
         app_right = None
         Logger().debug("check_application: app rights len = %s" % len(app_rights))
         for ar in app_rights:
+            if not self.engine.check_effective_target(ar, effective_target):
+                Logger().debug("check_application: jump server not compatible")
+                continue
             _status, _infos = self.engine.check_target(ar, self.pid, None)
             if _status != APPROVAL_ACCEPTED:
                 Logger().debug("check_application: approval not accepted")
-                continue
-            if not self.engine.check_effective_target(ar, effective_target):
-                Logger().debug("check_application: jump server not compatible")
                 continue
             _deconnection_time = _infos.get('deconnection_time')
             if (_deconnection_time != u"-"
@@ -2073,11 +2074,8 @@ class Sesman():
                 _timeclose = int(mktime(_tt))
                 if _timeclose != self.shared.get('timeclose'):
                     Logger().debug("check_application: timeclose different")
+                    self.engine.release_target(ar)
                     continue
-            _status, _error = self.engine.checkout_target(ar)
-            if not _status:
-                Logger().debug("check_application: Checkout target failed")
-                continue
             app_params = self.engine.get_app_params(ar, effective_target)
             if app_params is None:
                 self.engine.release_target(ar)
