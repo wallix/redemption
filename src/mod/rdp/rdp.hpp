@@ -6861,7 +6861,8 @@ public:
         array_view_const_u8 av_and{data, dlen};
         array_view_const_u8 av_xor{mask, mlen};
         
-        Pointer cursor(Pointer::CursorSize(width, height), Pointer::Hotspot(hotspot_x, hotspot_y), av_and, av_xor);
+        const int DUMMY_CHECK = 1;
+        Pointer cursor(Pointer::CursorSize(width, height), Pointer::Hotspot(hotspot_x, hotspot_y), av_xor, av_and, DUMMY_CHECK);
 
         this->cursors[pointer_cache_idx] = cursor;
         
@@ -6998,6 +6999,7 @@ public:
                     LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - null");
                 }
                 Pointer cursor(Pointer::POINTER_NULL);
+                cursor.set_mask_to_FF();
                 drawable.set_pointer(cursor);
             }
             break;
@@ -7095,7 +7097,7 @@ public:
         const uint8_t * inmask = stream.in_uint8p(mlen);
         
         if (data_bpp == 1) {
-            uint8_t data_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8];
+            uint8_t data_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 4];
             uint8_t mask_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8];
             ::memcpy(data_data, indata, dlen);
             ::memcpy(mask_data, inmask, mlen);

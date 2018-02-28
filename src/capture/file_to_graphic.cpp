@@ -740,10 +740,11 @@ void FileToGraphic::interpret_order()
             array_view_const_u8 xor_mask{data, sizeof(data)};
             array_view_const_u8 and_mask{mask, sizeof(mask)};
             
+            const int DUMMY_CHECK = 1;
             Pointer cursor(Pointer::CursorSize(32, 32)
                         , Pointer::Hotspot(hotspot_x, hotspot_y)
                         , xor_mask
-                        , and_mask);
+                        , and_mask, DUMMY_CHECK);
 
             this->statistics.CachePointer.total_len += this->stream.get_current() - p;
 
@@ -799,10 +800,11 @@ void FileToGraphic::interpret_order()
         stream.in_copy_bytes(mask, std::min<size_t>(sizeof(mask), mask_size));
         array_view_const_u8 and_mask{mask, sizeof(mask)};
         
+        const int DUMMY_CHECK = 1;
         Pointer cursor(Pointer::CursorSize(width, height)
                     , Pointer::Hotspot(hotspot_x, hotspot_y)
                     , xor_mask
-                    , and_mask);
+                    , and_mask, DUMMY_CHECK);
 
         this->statistics.CachePointer.total_len += this->stream.get_current() - p;
         this->ptr_cache.add_pointer_static(cursor, cache_idx);

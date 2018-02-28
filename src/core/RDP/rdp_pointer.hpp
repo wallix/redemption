@@ -30,6 +30,7 @@
 #include "utils/hexdump.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/colors.hpp"
+#include "core/error.hpp"
 
 // TODO: in TS_SYSTEMPOINTERATTRIBUTE, POINTER_NULL and POINTER_NORMAL are attributed specific values
 // we could directly provide these to Pointer constructor instead of defining a switch on call site (rdp.hpp)
@@ -45,6 +46,7 @@ struct Pointer {
         POINTER_SIZENS           ,  // Double-pointed arrow pointing north and south
         POINTER_SIZENWSE         ,  // Double-pointed arrow pointing northwest and southeast
         POINTER_SIZEWE           ,  // Double-pointed arrow pointing west and east
+        POINTER_DOT              ,  // Little Dot of 5x5 pixels
 
         POINTER_CUSTOM
     };
@@ -124,10 +126,39 @@ public:
     }
 
 public:
-    explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 & av_xor, array_view_const_u8 & av_and)
+//    explicit Pointer(uint8_t bpp, CursorSize d, Hotspot hs, array_view_const_u8 & av_xor, array_view_const_u8 & av_and, vnc = false)
+//        : dimensions(d)
+//        , hotspot(hs)
+//    {
+//        for (sze_t yy = 0; yy < this->cy; yy++) {
+//            for (size_t xx = 0 ; xx < this->cx ; xx++){
+//                if (this->mask[yy * ::nbbytes(this->cx) + xx / 8 ] & (0x80 >> (xx&7))){
+//                    
+//                    if ((yy < 32) && (xx < 32)){
+//                        cursor.mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
+//                        int pixel = 0;
+//                        for (int tt = 0 ; tt < this->Bpp; tt++){
+//                            pixel += vnc_pointer_data[(yy * this->cx + xx) * this->Bpp + tt] << (8 * tt);
+//                        }
+//                        int red   = (pixel >> this->red_shift) & this->red_max;
+//                        int green = (pixel >> this->green_shift) & this->green_max;
+//                        int blue  = (pixel >> this->blue_shift) & this->blue_max;
+//                        cursor.data[((31-yy) * 32 + xx) * 3 + 0] = (red << 3) | (red >> 2);
+//                        cursor.data[((31-yy) * 32 + xx) * 3 + 1] = (green << 2) | (green >> 4);
+//                        cursor.data[((31-yy) * 32 + xx) * 3 + 2] = (blue << 3) | (blue >> 2);
+//                    }
+//                }
+//            }
+//        }
+//        cursor.update_bw();
+//    }
+
+
+    explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 & av_xor, array_view_const_u8 & av_and, int check)
         : dimensions(d)
         , hotspot(hs)
     {
+        (void)check;
         memcpy(this->mask, av_and.data(), av_and.size());
         memcpy(this->data, av_xor.data(), av_xor.size());
 
@@ -555,8 +586,59 @@ public:
                     this->store_data_cursor(data_cursor7);
                 }
                 break;  // case POINTER_SIZEWE:
+            case POINTER_DOT:
+                {
+//                    this->bpp              = 24;
+                    this->dimensions.width            = 32;
+                    this->dimensions.height           = 32;
+                    this->hotspot.x                = 2; /* hotspot */
+                    this->hotspot.y                = 2;
+                    this->only_black_white = true;
+                    const char * data_cursor8 =
+                        /* 0000 */ "................................"
+                        /* 0060 */ "................................"
+                        /* 00c0 */ "................................"
+                        /* 0120 */ "................................"
+                        /* 0180 */ "................................"
+                        /* 01e0 */ "................................"
+                        /* 0240 */ "................................"
+                        /* 02a0 */ "................................"
+                        /* 0300 */ "................................"
+                        /* 0360 */ "................................"
+                        /* 03c0 */ "................................"
+                        /* 0420 */ "................................"
+                        /* 0480 */ "................................"
+                        /* 04e0 */ "................................"
+                        /* 0540 */ "................................"
+                        /* 05a0 */ "................................"
+                        /* 0600 */ "................................"
+                        /* 0660 */ "................................"
+                        /* 06c0 */ "................................"
+                        /* 0720 */ "................................"
+                        /* 0780 */ "................................"
+                        /* 07e0 */ "................................"
+                        /* 0840 */ "................................"
+                        /* 08a0 */ "................................"
+                        /* 0900 */ "................................"
+                        /* 0960 */ "................................"
+                        /* 09c0 */ "................................"
+                        /* 0a20 */ "XXXXX..........................."
+                        /* 0a80 */ "X+++X..........................."
+                        /* 0ae0 */ "X+++X..........................."
+                        /* 0b40 */ "X+++X..........................."
+                        /* 0ba0 */ "XXXXX..........................."
+                        ;
+                    this->store_data_cursor(data_cursor8);
+                }
+                break;  // case POINTER_DOT:
+
         }   // switch (pointer_type)
     }   // Pointer(uint8_t pointer_type)
+
+
+    void set_mask_to_FF(void){
+        ::memset(this->mask, 0xFF, sizeof(this->mask));
+    }
 
     void initialize(/*unsigned bpp, */unsigned width, unsigned height, int x, int y, uint8_t * data, size_t data_size,
         uint8_t * mask, size_t mask_size) {
