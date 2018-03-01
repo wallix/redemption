@@ -816,8 +816,6 @@ private:
 
     SocketTransport * socket_transport = nullptr;
 
-    SessionReactor& session_reactor;
-
 public:
     ModuleManager(SessionReactor& session_reactor, Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
         : MMIni(session_reactor, ini)
@@ -829,7 +827,6 @@ public:
         , client_execute(session_reactor, front, this->front.client_info.window_list_caps,
                          ini.get<cfg::debug::mod_internal>() & 1)
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
-        , session_reactor(session_reactor)
     {
         this->mod = &this->no_mod;
     }

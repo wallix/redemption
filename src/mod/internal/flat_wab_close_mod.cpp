@@ -103,11 +103,10 @@ FlatWabCloseMod::FlatWabCloseMod(
         ){
             // TODO milliseconds += ctx.time() - previous_time
             ++seconds;
-            if (seconds < self.vars.get<cfg::globals::close_timeout>()) {
-                self.close_widget.refresh_timeleft(seconds.count());
-                return ctx.set_time(std::min(
-                    std::chrono::seconds{1},
-                    self.vars.get<cfg::globals::close_timeout>()))
+            auto const close_timeout = self.vars.get<cfg::globals::close_timeout>();
+            if (seconds < close_timeout) {
+                self.close_widget.refresh_timeleft((close_timeout - seconds).count());
+                return ctx.set_time(std::min(std::chrono::seconds{1}, close_timeout))
                 .ready();
             }
             else {
@@ -129,8 +128,7 @@ void FlatWabCloseMod::notify(Widget* sender, notify_event_t event)
 {
     (void)sender;
     if (NOTIFY_CANCEL == event) {
-// TODO        this->event.signal = BACK_EVENT_STOP;
-// TODO        this->event.set_trigger_time(wait_obj::NOW);
+        session_reactor.set_next_event(BACK_EVENT_STOP);
     }
     else if (NOTIFY_SUBMIT == event) {
         LOG(LOG_INFO, "asking for selector");
@@ -138,8 +136,7 @@ void FlatWabCloseMod::notify(Widget* sender, notify_event_t event)
         this->vars.ask<cfg::globals::target_user>();
         this->vars.ask<cfg::globals::target_device>();
         this->vars.ask<cfg::context::target_protocol>();
-// TODO        this->event.signal = BACK_EVENT_NEXT;
-// TODO        this->event.set_trigger_time(wait_obj::NOW);
+        session_reactor.set_next_event(BACK_EVENT_NEXT);
     }
 }
 

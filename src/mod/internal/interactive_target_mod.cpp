@@ -68,6 +68,11 @@ InteractiveTargetMod::InteractiveTargetMod(
             &this->challenge.password_edit, Widget::focus_reason_tabkey);
     }
     this->screen.rdp_input_invalidate(this->screen.get_rect());
+
+    this->started_copy_past_event = session_reactor.create_graphic_event(std::ref(*this))
+    .on_action(jln::one_shot([](time_t, gdi::GraphicApi&, InteractiveTargetMod& self){
+        self.copy_paste.ready(self.front);
+    }));
 }
 
 InteractiveTargetMod::~InteractiveTargetMod()
@@ -103,8 +108,7 @@ void InteractiveTargetMod::accepted()
         this->vars.set_acl<cfg::context::target_password>(this->challenge.password_edit.get_text());
     }
     this->vars.set_acl<cfg::context::display_message>(true);
-// TODO    this->event.signal = BACK_EVENT_NEXT;
-// TODO    this->event.set_trigger_time(wait_obj::NOW);
+    session_reactor.set_next_event(BACK_EVENT_NEXT);
 }
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
@@ -112,20 +116,12 @@ void InteractiveTargetMod::refused()
 {
     this->vars.set_acl<cfg::context::target_password>("");
     this->vars.set_acl<cfg::context::display_message>(false);
-// TODO    this->event.signal = BACK_EVENT_NEXT;
-// TODO    this->event.set_trigger_time(wait_obj::NOW);
+    session_reactor.set_next_event(BACK_EVENT_NEXT);
 }
 
 void InteractiveTargetMod::draw_event(time_t now, gdi::GraphicApi & gapi)
 {
     LocallyIntegrableMod::draw_event(now, gapi);
-
-// TODO    if (!this->copy_paste && this->event.is_waked_up_by_time()) {
-    if (!this->copy_paste) {
-        this->copy_paste.ready(this->front);
-    }
-
-// TODO    this->event.reset_trigger_time();
 }
 
 void InteractiveTargetMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)

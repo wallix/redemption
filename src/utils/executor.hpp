@@ -669,11 +669,13 @@ struct REDEMPTION_CXX_NODISCARD Executor2ActionContext : BasicContext<Executor>
         return (status == ExitStatus::Success) ? this->exit_on_success() : this->exit_on_error();
     }
 
+    // TODO exeit_with_error
     ExecutorResult exit_on_error() noexcept
     {
         return ExecutorResult::ExitFailure;
     }
 
+    // TODO exeit_with_success
     ExecutorResult exit_on_success() noexcept
     {
         return ExecutorResult::ExitSuccess;
@@ -1398,6 +1400,36 @@ auto one_shot(F) noexcept
     };
 }
 
+inline auto always_ready() noexcept
+{
+    return [](auto ctx, [[maybe_unused]] auto&&... xs){
+        return ctx.ready();
+    };
+}
+
+inline auto exit_with_success() noexcept
+{
+    return [](auto ctx, [[maybe_unused]] auto&&... xs){
+        return ctx.exit_on_success();
+    };
+}
+
+inline auto exit_with_error() noexcept
+{
+    return [](auto ctx, [[maybe_unused]] auto&&... xs){
+        return ctx.exit_on_error();
+    };
+}
+
+template<class F>
+auto always_ready(F) noexcept
+{
+    return [](auto ctx, auto&&... xs){
+        make_lambda<F>()(static_cast<decltype(xs)&&>(xs)...);
+        return ctx.ready();
+    };
+}
+
 namespace detail
 {
     template<auto f, class T, class... Args>
@@ -1426,6 +1458,15 @@ namespace detail
 
 template<auto f>
 auto one_shot() noexcept
+{
+    return [](auto ctx, auto&&... xs){
+        detail::invoke<f>(static_cast<decltype(xs)&&>(xs)...);
+        return ctx.ready();
+    };
+}
+
+template<auto f>
+auto always_ready() noexcept
 {
     return [](auto ctx, auto&&... xs){
         detail::invoke<f>(static_cast<decltype(xs)&&>(xs)...);

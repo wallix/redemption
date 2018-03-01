@@ -48,6 +48,7 @@ class FlatDialogMod : public LocallyIntegrableMod, public NotifyApi
 
     FlatDialogModVariables vars;
     SessionReactor::BasicTimerPtr timeout_timer;
+    SessionReactor::GraphicEventPtr started_copy_past_event;
 
     CopyPaste copy_paste;
 

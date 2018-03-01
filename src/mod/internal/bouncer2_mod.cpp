@@ -36,10 +36,8 @@ Bouncer2Mod::Bouncer2Mod(
     this->timer = session_reactor.create_timer(std::ref(*this))
     .set_delay(std::chrono::milliseconds(33))
     .on_action([](auto ctx, Bouncer2Mod& self){
-        LOG(LOG_DEBUG, "time action");
         self.graphic_event = self.session_reactor.create_graphic_event(std::ref(self))
         .on_action([](auto ctx, time_t now, gdi::GraphicApi& gd, Bouncer2Mod& self){
-            LOG(LOG_DEBUG, "gd action");
             self.draw_event(now, gd);
             return ctx.ready();
         });

@@ -32,6 +32,8 @@ private:
 
     InFileTransport   ift;
     TransparentPlayer player;
+    SessionReactor::TopFdPtr fd_event;
+    SessionReactor::GraphicEventPtr gd_event;
 
 public:
     TransparentReplayMod( SessionReactor& session_reactor
@@ -51,26 +53,34 @@ public:
         return fd;
     }()})
     , player(this->ift, this->front)
-    {}
+    {
+        this->fd_event = session_reactor.create_fd_event(this->ift.get_fd(), std::ref(*this))
+        .set_timeout(std::chrono::seconds{1})
+        .on_timeout(jln::always_ready())
+        .on_exit(jln::exit_with_success())
+        .on_action([](auto ctx, TransparentReplayMod& self){
+            self.gd_event = self.session_reactor.create_graphic_event(std::ref(self))
+            .on_action(jln::one_shot([](time_t now, gdi::GraphicApi& gd, TransparentReplayMod& self){
+                self.draw_event(now, gd);
+            }));
+            return ctx.ready();
+        });
+    }
 
     void draw_event(time_t now, gdi::GraphicApi &) override
     {
         (void)now;
         try {
             if (!this->player.interpret_chunk()) {
-// TODO                this->event.signal = /*BACK_EVENT_STOP*/BACK_EVENT_NEXT;
+                this->session_reactor.set_next_event(BACK_EVENT_NEXT);
             }
-
-// TODO            this->event.set_trigger_time(wait_obj::NOW);
         }
-        catch (Error const & e) {
+        catch (Error const& e) {
             if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
                 if (this->auth_error_message) {
                     *this->auth_error_message = "The recorded file is inaccessible or corrupted!";
                 }
-
-// TODO                this->event.signal = BACK_EVENT_NEXT;
-// TODO                this->event.set_trigger_time(wait_obj::NOW);
+                this->session_reactor.set_next_event(BACK_EVENT_NEXT);
             }
             else {
                 throw;

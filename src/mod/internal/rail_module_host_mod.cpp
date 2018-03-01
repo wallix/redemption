@@ -106,8 +106,6 @@ void RailModuleHostMod::send_auth_channel_data(const char * string_data)
 void RailModuleHostMod::draw_event(time_t now, gdi::GraphicApi& gapi)
 {
     LocallyIntegrableMod::draw_event(now, gapi);
-
-// TODO    this->event.reset_trigger_time();
 }
 
 bool RailModuleHostMod::is_up_and_running()

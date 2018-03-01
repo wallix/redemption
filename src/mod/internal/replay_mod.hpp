@@ -60,6 +60,8 @@ class ReplayMod : public InternalMod
     bool sync_setted;
 
     bool replay_on_loop;
+    SessionReactor::BasicTimerPtr timer;
+    SessionReactor::GraphicEventPtr gd_event;
 
 public:
     using Verbose = FileToGraphic::Verbose;
