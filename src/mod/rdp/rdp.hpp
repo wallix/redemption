@@ -419,6 +419,8 @@ protected:
     const std::chrono::seconds open_session_timeout;
 
     SessionReactor::BasicTimerPtr open_session_timeout_checker_timer;
+    SessionReactor::TopFdPtr fd_event;
+    SessionReactor::GraphicEventPtr gd_event;
 
     std::string output_filename;
 
@@ -867,7 +869,7 @@ public:
            , ReportMessageApi & report_message
            , ModRdpVariables vars
            )
-        : mod_api(session_reactor)
+        : mod_api(session_reactor, false)
         , front_width(info.width - (info.width % 4))
         , front_height(info.height)
         , front(front)
@@ -1050,14 +1052,6 @@ public:
 
             mod_rdp_params.log();
         }
-
-        // Clear client screen
-        // TODO detached
-        this->clear_client_screen = this->session_reactor
-        .create_graphic_event(this->get_dim())
-        .on_action(jln::one_shot([](time_t, gdi::GraphicApi& drawable, Dimension const& dim){
-            gdi_clear_screen(drawable, dim);
-        }));
 
         this->beginning = timeobj.get_time().tv_sec;
 
@@ -1585,6 +1579,41 @@ public:
                     this->verbose
                 );
         }
+
+        // Clear client screen
+        // TODO detached
+        // this->clear_client_screen = this->session_reactor
+        // .create_graphic_event(this->get_dim())
+        // .on_action(jln::one_shot([](time_t, gdi::GraphicApi& drawable, Dimension const& dim){
+        // }));
+
+        this->fd_event = this->session_reactor
+        .create_fd_event(this->trans.get_fd(), std::ref(*this))
+        .set_timeout(std::chrono::milliseconds(0))
+        .on_timeout(jln::always_ready([](mod_rdp& self){
+            LOG(LOG_DEBUG, "timer");
+            if (self.state == MOD_RDP_NEGO_INITIATE) {
+                LOG(LOG_DEBUG, "timer nego");
+                self.gd_event = self.session_reactor.create_graphic_event(std::ref(self))
+                .on_action(jln::one_shot([](time_t /*now*/, gdi::GraphicApi & gd, mod_rdp& self){
+                    LOG(LOG_DEBUG, "clear_client_screen");
+                    gdi_clear_screen(gd, self.get_dim());
+                }));
+                LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
+                self.nego.send_negotiation_request(self.trans);
+                self.state = MOD_RDP_NEGO;
+                // TODO merges with open_session_timeout_checker_timer
+                self.fd_event->update_timeout(std::chrono::hours(1));
+            }
+        }))
+        .on_exit(jln::exit_with_success())
+        .on_action(jln::always_ready([](mod_rdp& self){
+            LOG(LOG_DEBUG, "event socket");
+            self.gd_event = self.session_reactor.create_graphic_event(std::ref(self))
+            .on_action(jln::one_shot([](time_t now, gdi::GraphicApi & gd, mod_rdp& self){
+                self.draw_event(now, gd);
+            }));
+        }));
 
         LOG(LOG_INFO, "RDP mod built");
     }   // mod_rdp
@@ -4159,6 +4188,7 @@ public:
 
     void draw_event(time_t now, gdi::GraphicApi & drawable_) override
     {
+        LOG(LOG_DEBUG, "rdp draw_event");
         //LOG(LOG_INFO, "mod_rdp::draw_event()");
 
         if (this->remote_programs_session_manager) {
@@ -4188,6 +4218,9 @@ public:
             if (not run) {
                 this->send_connectInitialPDUwithGccConferenceCreateRequest();
             }
+        }
+        else {
+            this->buf.load_data(this->trans);
         }
 // TODO        else if (!waked_up_by_time) {
 // TODO            this->buf.load_data(this->trans);
@@ -4288,7 +4321,7 @@ public:
                         LOG(LOG_INFO, "Connection to server Already closed: error=%u", e.id);
                     };
 
-// TODO                    this->event.signal = BACK_EVENT_NEXT;
+                    this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 
                     if (this->enable_session_probe) {
                         const bool disable_input_event     = false;
@@ -6425,12 +6458,6 @@ public:
     }
 
 public:
-
-    BackEvent_t get_signal_event() {
-// TODO        return this->event.signal;
-        return {};
-    }
-
     void send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2) {
         if (bool(this->verbose & RDPVerbose::input)){
             LOG(LOG_INFO, "mod_rdp::send_input_slowpath");

@@ -836,16 +836,6 @@ public:
         return this->socket_transport && this->socket_transport->has_pending_data();
     }
 
-    bool is_set_event(fd_set & rfds) const
-    {
-        return false;
-// TODO        wait_obj & obj = this->mod->get_event();
-// TODO        if (this->socket_transport) {
-// TODO            return this->socket_transport->is_set(obj, rfds);
-// TODO        }
-// TODO        return obj.is_set(INVALID_SOCKET, rfds);
-    }
-
     void remove_mod() override {
         if (this->internal_mod != &this->no_mod) {
             this->clear_osd_message();

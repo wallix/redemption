@@ -291,13 +291,13 @@ public:
 
                         try
                         {
-                            bool const has_fd_event = (BACK_EVENT_NONE == session_reactor.signal && mm.is_set_event(rfds));
+                            bool const has_fd_event = (BACK_EVENT_NONE == session_reactor.signal/* && mm.is_set_event(rfds)*/);
 // TODO                            session_reactor.set_event_next(0);
                             // Process incoming module trafic
                             session_reactor.graphic_events_.exec(now, mm.get_graphic_wrapper(front));
                             if (has_fd_event) {
                                 if (has_fd_event) {
-                                    mm.mod->draw_event(now, mm.get_graphic_wrapper(front));
+                                    // mm.mod->draw_event(now, mm.get_graphic_wrapper(front));
                                 }
 
 // TODO                                if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
@@ -497,7 +497,7 @@ public:
                         }
                     }
                 } catch (Error const& e) {
-                    LOG(LOG_INFO, "Session::Session exception = %s\n", e.errmsg());
+                    LOG(LOG_ERR, "Session::Session exception = %s\n", e.errmsg());
                     time_t now = time(nullptr);
                     mm.invoke_close_box(local_err_msg(e, language(this->ini)), signal, now, authentifier, authentifier);
                 };

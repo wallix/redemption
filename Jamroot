@@ -5,7 +5,7 @@ include $(JAM_INCLUDE_PATH)/cxxflags.jam ;
 include $(JAM_INCLUDE_PATH)/defines.jam ;
 include $(JAM_INCLUDE_PATH)/includes.jam ;
 
-REDEMPTION_CXXFLAGS ?= <cxxflags>-std=c++14 ;
+REDEMPTION_CXXFLAGS ?= <cxxflags>-std=c++17 ;
 
 variant coverage : san : ;
 
