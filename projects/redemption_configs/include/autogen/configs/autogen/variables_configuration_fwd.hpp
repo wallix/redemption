@@ -139,6 +139,7 @@ namespace cfg {
         struct session_probe_exe_or_file;
         struct session_probe_arguments;
         struct session_probe_clipboard_based_launcher_clipboard_initialization_delay;
+        struct session_probe_clipboard_based_launcher_start_delay;
         struct session_probe_clipboard_based_launcher_long_delay;
         struct session_probe_clipboard_based_launcher_short_delay;
         struct session_probe_allow_multiple_handshake;

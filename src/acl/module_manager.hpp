@@ -1349,6 +1349,7 @@ public:
                 mod_rdp_params.session_probe_arguments             = this->ini.get<cfg::mod_rdp::session_probe_arguments>();
 
                 mod_rdp_params.session_probe_clipboard_based_launcher_clipboard_initialization_delay = this->ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay>();
+                mod_rdp_params.session_probe_clipboard_based_launcher_start_delay                    = this->ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay>();
                 mod_rdp_params.session_probe_clipboard_based_launcher_long_delay                     = this->ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay>();
                 mod_rdp_params.session_probe_clipboard_based_launcher_short_delay                    = this->ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay>();
 

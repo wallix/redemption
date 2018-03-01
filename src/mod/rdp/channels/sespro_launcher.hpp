@@ -43,6 +43,8 @@ public:
 
     virtual bool on_server_format_data_request() = 0;
 
+    virtual bool on_server_format_list() = 0;
+
     virtual bool on_server_format_list_response() = 0;
 
     // Returns false to prevent message to be sent to server.

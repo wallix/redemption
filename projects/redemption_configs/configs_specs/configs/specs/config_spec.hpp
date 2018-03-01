@@ -368,6 +368,7 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_clipboard_initialization_delay", sesman::name{"session_probe_smart_launcher_clipboard_initialization_delay"}, set(2000));
+        W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_start_delay", sesman::name{"session_probe_smart_launcher_start_delay"}, set(0));
         W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_long_delay", sesman::name{"session_probe_smart_launcher_long_delay"}, set(500));
         W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_short_delay", sesman::name{"session_probe_smart_launcher_short_delay"}, set(50));
         W.sep();

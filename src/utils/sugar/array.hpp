@@ -31,7 +31,7 @@
 namespace utils
 {
     namespace adl_barrier_ {
-#if __cplusplus < REDEMPTION_CXX_STD_17
+//#if __cplusplus < REDEMPTION_CXX_STD_17
         template<class T, std::size_t n>
         constexpr T * data(T (&a)[n]) noexcept
         { return a; }
@@ -51,10 +51,10 @@ namespace utils
         noexcept(noexcept(c.size()))
         -> decltype(c.size())
         { return c.size(); }
-# else
-        using std::data;
-        using std::size;
-# endif
+//# else
+//        using std::data;
+//        using std::size;
+//# endif
     }
 
     namespace detail_

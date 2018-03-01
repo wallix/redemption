@@ -86,6 +86,7 @@ struct ModRDPParams {
     bool                         session_probe_enable_log_rotation = true;
 
     std::chrono::milliseconds    session_probe_clipboard_based_launcher_clipboard_initialization_delay {};
+    std::chrono::milliseconds    session_probe_clipboard_based_launcher_start_delay {};
     std::chrono::milliseconds    session_probe_clipboard_based_launcher_long_delay {};
     std::chrono::milliseconds    session_probe_clipboard_based_launcher_short_delay {};
 
@@ -272,6 +273,7 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_enable_log_rotation);
 
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_clipboard_initialization_delay);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_start_delay);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_long_delay);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_short_delay);
 

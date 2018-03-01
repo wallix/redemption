@@ -116,6 +116,8 @@ public:
 
     bool on_server_format_data_request() override { return false; }
 
+    bool on_server_format_list() override { return false; }
+
     bool on_server_format_list_response() override { return false; }
 
     // Returns false to prevent message to be sent to server.
