@@ -74,7 +74,7 @@ public:
     int cursorHotx;
     int cursorHoty;
 
-//     QRect clip;
+     QRect clip;
 
 
     QtScreen(ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * impl_input, QPixmap * cache, int w, int h)
@@ -88,7 +88,7 @@ public:
     , _connexionLasted(false)
     , cursorHotx(0)
     , cursorHoty(0)
-//     , clip(-1, -1, 0, 0)
+    , clip(-1, -1, 0, 0)
 
     {
         this->setAttribute(Qt::WA_DeleteOnClose);
