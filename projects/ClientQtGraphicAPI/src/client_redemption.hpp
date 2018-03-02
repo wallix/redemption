@@ -346,7 +346,6 @@ public:
                 case MOD_RDP:
                 {
                 
-                    this->verbose = to_verbose_flags(0xFFFF);
                     ModRDPParams mod_rdp_params( this->user_name.c_str()
                                     , this->user_password.c_str()
                                     , this->target_IP.c_str()

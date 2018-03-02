@@ -408,53 +408,27 @@ private:
     }
 
     virtual void set_pointer(Pointer const & cursor) override {
-        return;
+//        LOG(LOG_INFO, "cursor size(%u, %u)", cursor.get_dimensions().width, cursor.get_dimensions().height);
+//        LOG(LOG_INFO, "cursor hotspot(%u, %u)", cursor.get_hotspot().x, cursor.get_hotspot().y);
+//        LOG(LOG_INFO, "cursor is bw(%s)", cursor.only_black_white?"BW":"COLOR");
+//        hexdump_d(cursor.mask, 32 * 32 / 8);
+//        hexdump_d(cursor.data, 32 * 32 * 3);
 
         auto dimensions = cursor.get_dimensions();
-        QImage image_data(cursor.data, dimensions.width, dimensions.height, this->bpp_to_QFormat(24, false));
-        QImage image_mask(cursor.mask, dimensions.width, dimensions.height, QImage::Format_Mono);
-
-        if (cursor.mask[0x48] == 0xFF &&
-            cursor.mask[0x49] == 0xFF &&
-            cursor.mask[0x4A] == 0xFF &&
-            cursor.mask[0x4B] == 0xFF) {
-
-            image_mask = image_data.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-            image_data.invertPixels();
-
-        } else {
-            image_mask.invertPixels();
-        }
-        image_data = image_data.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
-        image_mask = image_mask.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
-
-        const uchar * data_data = image_data.bits();
-        const uchar * mask_data = image_mask.bits();
-
-        uint8_t data[Pointer::DATA_SIZE*4];
-
-        for (int i = 0; i < std::min<int>(Pointer::DATA_SIZE * 4, dimensions.width * dimensions.height * 4); i += 4) {
-            data[i  ] = data_data[i+2];
-            data[i+1] = data_data[i+1];
-            data[i+2] = data_data[i  ];
-            data[i+3] = mask_data[i+0];
-        }
-        LOG(LOG_INFO, "drawing cursor");
-
         auto hotspot = cursor.get_hotspot();
 
-        if (this->client->is_replaying) {
-            this->cursor_image = QImage(static_cast<uchar *>(data), hotspot.x, hotspot.y, QImage::Format_ARGB32_Premultiplied);
-        } else {
-            if (this->drawn_client->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
-                 for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
-                    if (it->second) {
-                        it->second->set_mem_cursor(static_cast<uchar *>(data), hotspot.x, hotspot.y);
-                    }
+        // this->cursor_image is used when client is replaying
+        this->cursor_image = QImage(cursor.data, 32, 32, QImage::Format_RGB888);
+ 
+         ;
+        if (this->drawn_client->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
+            for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
+                if (it->second) {
+                    it->second->setCursor(QCursor(QPixmap::fromImage(this->cursor_image), hotspot.x, hotspot.x));
                 }
-            } else if (this->screen) {
-                this->screen->set_mem_cursor(static_cast<uchar *>(data), hotspot.x, hotspot.y);
             }
+        } else if (this->screen) {
+            this->screen->setCursor(QCursor(QPixmap::fromImage(this->cursor_image), hotspot.x, hotspot.x));
         }
     }
 

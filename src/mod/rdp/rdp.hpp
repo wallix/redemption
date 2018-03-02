@@ -7002,8 +7002,8 @@ public:
         uint16_t mlen = stream.in_uint16_le(); /* mask length */
         uint16_t dlen = stream.in_uint16_le(); /* data length */
         if (!stream.in_check_rem(mlen + dlen)){
-            LOG(LOG_ERR, "Not enough data for cursor (dlen=%u mlen=%u need=%" PRIu16 " remain=%zu)",
-                mlen, dlen, mlen+dlen, stream.in_remain());
+            LOG(LOG_ERR, "Not enough data for cursor (dlen=%u mlen=%u need=%u remain=%zu)",
+                mlen, dlen, static_cast<uint16_t>(mlen+dlen), stream.in_remain());
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
