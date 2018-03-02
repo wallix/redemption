@@ -6861,60 +6861,6 @@ public:
         cursor.update_bw();
         this->cursors[pointer_cache_idx] = cursor;
 
-        //const unsigned int xor_line_length_in_byte = cursor.width * 3;
-        //const unsigned int xor_padded_line_length_in_byte =
-        //    ((xor_line_length_in_byte % 2) ?
-        //     xor_line_length_in_byte + 1 :
-        //     xor_line_length_in_byte);
-        //const unsigned int remainder = (cursor.width % 8);
-        //const unsigned int and_line_length_in_byte = cursor.width / 8 + (remainder ? 1 : 0);
-        //const unsigned int and_padded_line_length_in_byte =
-        //    ((and_line_length_in_byte % 2) ?
-        //     and_line_length_in_byte + 1 :
-        //     and_line_length_in_byte);
-        //for (unsigned int i0 = 0; i0 < cursor.height; ++i0) {
-        //    printf("%02d  ", (cursor.height - i0 - 1));
-        //
-        //    const uint8_t* xorMask = cursor.data + (cursor.height - i0 - 1) * xor_padded_line_length_in_byte;
-        //
-        //    const uint8_t* andMask = cursor.mask + (cursor.height - i0 - 1) * and_padded_line_length_in_byte;
-        //    unsigned char and_bit_extraction_mask = 7;
-        //
-        //    for (unsigned int i1 = 0; i1 < cursor.width; ++i1) {
-        //        unsigned int color = 0;
-        //        color |=  *xorMask             ;
-        //        color |= (*(xorMask + 1) <<  8);
-        //        color |= (*(xorMask + 2) << 16);
-        //
-        //        if ((*andMask) & (1 << and_bit_extraction_mask)) {
-        //            printf(".");
-        //        }
-        //        else {
-        //            if (color == 0xFFFFFF) {
-        //                printf("W");
-        //            }
-        //            else if (color) {
-        //                printf("C");
-        //            }
-        //            else  {
-        //                printf("B");
-        //            }
-        //        }
-        //
-        //        xorMask += 3;
-        //        if (and_bit_extraction_mask) {
-        //            and_bit_extraction_mask--;
-        //        }
-        //        else {
-        //            and_bit_extraction_mask = 7;
-        //            andMask++;
-        //        }
-        //    }
-        //
-        //    printf("\n");
-        //}
-        //printf("\n");
-
         drawable.set_pointer(cursor);
         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu done");
@@ -6991,8 +6937,7 @@ public:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - null");
                 }
-                Pointer cursor;
-                memset(cursor.mask, 0xff, sizeof(cursor.mask));
+                Pointer cursor(Pointer::POINTER_NULL);
                 drawable.set_pointer(cursor);
             }
             break;
