@@ -6992,98 +6992,6 @@ public:
         }
     }
 
-    void to_regular_pointer(const uint8_t * indata, unsigned dlen, unsigned width, unsigned height, uint8_t bpp, uint8_t * data) {
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-            LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
-        }
-        switch (bpp) {
-        case 1 :
-        {
-            const unsigned int remainder = (width % 8);
-            const unsigned int src_xor_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
-            const unsigned int src_xor_padded_line_length_in_byte =
-                ((src_xor_line_length_in_byte % 2) ?
-                 src_xor_line_length_in_byte + 1 :
-                 src_xor_line_length_in_byte);
-
-            const unsigned int dest_xor_line_length_in_byte        = width * 3;
-            const unsigned int dest_xor_padded_line_length_in_byte =
-                dest_xor_line_length_in_byte + ((dest_xor_line_length_in_byte % 2) ? 1 : 0);
-
-            for (unsigned int i = 0; i < height; ++i) {
-                const uint8_t* src  = indata + (height - i - 1) * src_xor_padded_line_length_in_byte;
-                      uint8_t* dest = data + i * dest_xor_padded_line_length_in_byte;
-
-                unsigned char and_bit_extraction_mask = 7;
-
-                for (unsigned int j = 0; j < width; ++j) {
-                    ::out_bytes_le(dest, 3, (((*src) & (1 << and_bit_extraction_mask)) ? 0xFFFFFF : 0));
-
-                    dest += 3;
-
-                    if (and_bit_extraction_mask) {
-                        and_bit_extraction_mask--;
-                    }
-                    else {
-                        src++;
-                        and_bit_extraction_mask = 7;
-                    }
-                }
-            }
-        }
-        break;
-        case 4 :
-        {
-            for (unsigned i = 0; i < dlen ; i++) {
-                const uint8_t px = indata[i];
-                // target cursor will receive 8 bits input at once
-                ::out_bytes_le(&(data[6 * i]),     3, this->orders.global_palette[(px >> 4) & 0xF].to_u32());
-                ::out_bytes_le(&(data[6 * i + 3]), 3, this->orders.global_palette[ px       & 0xF].to_u32());
-            }
-        }
-        break;
-        case 32: case 24: case 16: case 15: case 8:
-        {
-            uint8_t BPP = nbbytes(bpp);
-
-            const unsigned int src_xor_line_length_in_byte = width * BPP;
-            const unsigned int src_xor_padded_line_length_in_byte =
-                ((src_xor_line_length_in_byte % 2) ?
-                 src_xor_line_length_in_byte + 1 :
-                 src_xor_line_length_in_byte);
-
-            const unsigned int dest_xor_line_length_in_byte = width * 3;
-            const unsigned int dest_xor_padded_line_length_in_byte =
-                ((dest_xor_line_length_in_byte % 2) ?
-                 dest_xor_line_length_in_byte + 1 :
-                 dest_xor_line_length_in_byte);
-
-            for (unsigned int i0 = 0; i0 < height; ++i0) {
-                const uint8_t* src  = indata + (height - i0 - 1) * src_xor_padded_line_length_in_byte;
-                      uint8_t* dest = data + (height - i0 - 1) * dest_xor_padded_line_length_in_byte;
-
-                for (unsigned int i1 = 0; i1 < width; ++i1) {
-                    RDPColor px = RDPColor::from(in_uint32_from_nb_bytes_le(BPP, src));
-                    src += BPP;
-                    ::out_bytes_le(dest, 3, color_decode(px, bpp, this->orders.global_palette).to_u32());
-                    dest += 3;
-                }
-            }
-        }
-        break;
-        default:
-            LOG(LOG_ERR, "Mouse pointer : color depth not supported %d, forcing green mouse (running in the grass ?)", bpp);
-            for (size_t x = 0 ; x < 1024 ; x++) {
-                ::out_bytes_le(data + x *3, 3, GREEN);
-            }
-            break;
-        }
-
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-            LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
-        }
-    }
-
     // [ referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
     // 2.2.9.1.1.4.5 New Pointer Update (TS_POINTERATTRIBUTE)
     // ------------------------------------------------------
@@ -7173,12 +7081,12 @@ public:
             }
 
             // TODO move that into cursor
-            this->to_regular_pointer(data_data, dlen, width, height, 1, cursor.data);
+            cursor.to_regular_pointer(data_data, dlen, width, height, 1, this->orders.global_palette);
             this->to_regular_mask(mask_data, mlen, width, height, 1, cursor.mask);
         }
         else {
             // TODO move that into cursor
-            this->to_regular_pointer(stream.get_current(), dlen, width, height, data_bpp, cursor.data);
+            cursor.to_regular_pointer(stream.get_current(), dlen, width, height, data_bpp, this->orders.global_palette);
             stream.in_skip_bytes(dlen);
             this->to_regular_mask(stream.get_current(), mlen, width, height, data_bpp, cursor.mask);
             stream.in_skip_bytes(mlen);
