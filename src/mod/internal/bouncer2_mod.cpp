@@ -92,7 +92,7 @@ int Bouncer2Mod::interaction()
         }
     }
 
-    this->timer->set_time(std::chrono::milliseconds(33));
+    this->timer->set_delay(std::chrono::milliseconds(33));
     this->graphic_event.reset();
 
     return 0;

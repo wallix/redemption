@@ -106,8 +106,7 @@ FlatWabCloseMod::FlatWabCloseMod(
             auto const close_timeout = self.vars.get<cfg::globals::close_timeout>();
             if (seconds < close_timeout) {
                 self.close_widget.refresh_timeleft((close_timeout - seconds).count());
-                return ctx.set_time(std::min(std::chrono::seconds{1}, close_timeout))
-                .ready();
+                return ctx.ready_to(std::min(std::chrono::seconds{1}, close_timeout));
             }
             else {
                 session_reactor.set_event_next(BACK_EVENT_STOP);

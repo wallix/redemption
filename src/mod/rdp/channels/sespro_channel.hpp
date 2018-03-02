@@ -489,7 +489,7 @@ public:
                 .set_delay(this->session_probe_effective_launch_timeout)
                 .on_action([](auto ctx, SessionProbeVirtualChannel& self){
                     self.process_event_launch();
-                    return ctx.set_time(self.session_probe_effective_launch_timeout).ready();
+                    return ctx.ready_to(self.session_probe_effective_launch_timeout);
                 });
                 this->session_probe_launch_timeout_timer_started = true;
             }
@@ -506,7 +506,7 @@ protected:
 public:
     void give_additional_launch_time() {
         if (!this->session_probe_ready && this->session_probe_timer) {
-            this->session_probe_timer->set_time(this->session_probe_effective_launch_timeout);
+            this->session_probe_timer->set_delay(this->session_probe_effective_launch_timeout);
 
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO,
@@ -551,7 +551,7 @@ public:
                     "Session Probe keep alive requested");
         }
 
-        this->session_probe_timer->set_time(this->param_session_probe_keepalive_timeout);
+        this->session_probe_timer->set_delay(this->param_session_probe_keepalive_timeout);
     }
 
     bool client_input_disabled_because_session_probe_keepalive_is_missing = false;
@@ -756,7 +756,7 @@ public:
                     .set_delay(this->param_session_probe_keepalive_timeout)
                     .on_action([](auto ctx, SessionProbeVirtualChannel& self){
                         self.process_event_ready();
-                        return ctx.set_time(self.param_session_probe_keepalive_timeout).ready();
+                        return ctx.ready_to(self.param_session_probe_keepalive_timeout);
                     });
                 }
                 this->session_probe_ready = true;
@@ -815,7 +815,7 @@ public:
                             "Session Probe keep alive requested");
                 }
 
-                this->session_probe_timer->set_time(this->param_session_probe_keepalive_timeout);
+                this->session_probe_timer->set_delay(this->param_session_probe_keepalive_timeout);
             }
             else {
                 this->session_probe_timer.reset();

@@ -226,7 +226,8 @@ struct ExecutorTimerContextConcept_
     ExecutorResult detach_timer();
     ExecutorResult retry();
     ExecutorResult retry_until(std::chrono::milliseconds ms);
-    ExecutorTimerContextConcept_ set_time(std::chrono::milliseconds ms);
+    ExecutorTimerContextConcept_ set_delay(std::chrono::milliseconds ms);
+    ExecutorTimerContextConcept_ set_time(timeval const& tv);
 };
 #endif
 
@@ -311,26 +312,18 @@ struct BasicTimer
         this->deleter(this, from);
     }
 
-    void reset_time() noexcept
-    {
-        this->tv = addusectimeval(this->delay, tvtime());
-    }
-
     timeval time() const noexcept
     {
         return this->tv;
     }
 
-    // TODO set_delay
-    void set_time(std::chrono::milliseconds ms) noexcept
+    void set_delay(std::chrono::milliseconds ms) noexcept
     {
         this->delay = std::chrono::duration_cast<std::chrono::microseconds>(ms);
-        this->tv = addusectimeval(this->delay, tvtime());
     }
 
     void set_time(timeval const& tv) noexcept
     {
-        this->delay = std::chrono::microseconds(-1);
         this->tv = tv;
     }
 
@@ -351,7 +344,7 @@ struct BasicTimer
     timeval tv {};
     OnTimerPtrFunc on_action = default_action_function();
     void (*deleter) (BasicTimer*, DeleteFrom) noexcept = default_delete_function();
-    std::chrono::microseconds delay;
+    std::chrono::microseconds delay = std::chrono::microseconds(-1);
 
     BasicTimer() = default;
 };
@@ -633,19 +626,31 @@ struct REDEMPTION_CXX_NODISCARD Executor2TimerContext : BasicContext<Timer>
 
     ExecutorResult ready() noexcept
     {
-        this->event.reset_time();
+        this->event.update_next_time();
         return ExecutorResult::Nothing;
     }
 
-    ExecutorResult ready_until(std::chrono::milliseconds ms)
+    ExecutorResult ready_to(std::chrono::milliseconds ms)
     {
-        this->event.update_time(ms);
+        this->event.update_delay(ms);
         return ExecutorResult::Nothing;
     }
 
-    Executor2TimerContext set_time(std::chrono::milliseconds ms)
+    ExecutorResult ready_at(timeval const& tv)
     {
-        this->event.update_time(ms);
+        this->event.update_time(tv);
+        return ExecutorResult::Nothing;
+    }
+
+    BasicContext<Timer> set_delay(std::chrono::milliseconds ms)
+    {
+        this->event.update_delay(ms);
+        return *this;
+    }
+
+    BasicContext<Timer> set_time(timeval const& tv)
+    {
+        this->event.update_time(tv);
         return *this;
     }
 };
@@ -944,11 +949,17 @@ struct REDEMPTION_CXX_NODISCARD TimerBuilder
         return this->select_return<0b01>();
     }
 
-    // TODO add set_time
     REDEMPTION_CXX_NODISCARD decltype(auto) set_delay(std::chrono::milliseconds ms) && noexcept
     {
-        static_assert(!(Mask & 0b10), "set_delay already set");
-        this->timer_ptr->set_time(ms);
+        static_assert(!(Mask & 0b10), "set_time/set_delay already set");
+        this->timer_ptr->set_delay(ms);
+        return this->select_return<0b10>();
+    }
+
+    REDEMPTION_CXX_NODISCARD decltype(auto) set_time(timeval const& tv) && noexcept
+    {
+        static_assert(!(Mask & 0b10), "set_time/set_delay already set");
+        this->timer_ptr->set_time(tv);
         return this->select_return<0b10>();
     }
 
@@ -1051,33 +1062,6 @@ private:
     FdPtr fd_ptr;
 };
 
-
-// template<class PrefixArgs>
-// struct TopExecutorBase : TopExecutorTimersImpl<PrefixArgs>
-// {
-//     BasicExecutorImpl<PrefixArgs> base_executor;
-//
-//     void delete_self(DeleteFrom from) noexcept
-//     {
-//         this->base_executor.delete_self();
-//     }
-// };
-// template<class... Ts>
-// struct TimedExecutor : Executor2Impl<Ts...>, BasicTimer
-// {
-//     BasicExecutorImpl& base() noexcept
-//     {
-//         return this->executor;
-//     }
-//
-//     template<class... Args>
-//     static TimedExecutor* New(TopExecutorBase& top_executor, Args&&... args)
-//     {
-//         auto* p = new TimedExecutor{top_executor, static_cast<Args&&>(args)...};
-//         p->deleter = [](BasicTimer* p) { delete static_cast<TimedExecutor<Ts...>*>(p); };
-//         return p;
-//     }
-// };
 
 template<class F, class T, template<class...> class Ctx>
 auto wrap_fn()
@@ -1349,10 +1333,36 @@ struct TimerImpl : BasicEvent<
 {
     using TimerImpl::basic_event::basic_event;
 
-    void update_time(std::chrono::milliseconds ms)
+    void set_delay(std::chrono::milliseconds ms) noexcept
     {
-        this->set_time(ms);
-        this->event_container.update_time(*this, ms);
+        TimerImpl::basic_event::set_delay(ms);
+        // TODO tvtime -> reactor.time()
+        TimerImpl::basic_event::set_time(addusectimeval(this->delay, tvtime()));
+    }
+
+    void set_time(timeval const& tv) noexcept
+    {
+        TimerImpl::basic_event::set_delay(std::chrono::microseconds(-1));
+        TimerImpl::basic_event::set_time(tv);
+    }
+
+    void update_delay(std::chrono::milliseconds ms)
+    {
+        this->set_delay(ms);
+        this->event_container.update_delay(*this, ms);
+    }
+
+    void update_time(timeval const& tv)
+    {
+        this->set_time(tv);
+        this->event_container.update_time(*this, tv);
+    }
+
+    void update_next_time() noexcept
+    {
+        assert(this->delay.count() > 0);
+        // TODO tvtime -> reactor.time()
+        this->tv = addusectimeval(this->delay, tvtime());
     }
 };
 
@@ -1640,9 +1650,15 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
     }
 
     // Only with Executor2TimerContext
-    FunSequencerExecutorCtx set_time(std::chrono::milliseconds ms)
+    FunSequencerExecutorCtx set_delay(std::chrono::milliseconds ms)
     {
-        return static_cast<FunSequencerExecutorCtx&&>(Ctx::set_time(ms));
+        return static_cast<FunSequencerExecutorCtx&&>(Ctx::set_delay(ms));
+    }
+
+    // Only with Executor2TimerContext
+    FunSequencerExecutorCtx set_time(timeval const& tv)
+    {
+        return static_cast<FunSequencerExecutorCtx&&>(Ctx::set_time(tv));
     }
 };
 
@@ -1745,9 +1761,14 @@ struct TopExecutorImpl : Executor2Impl<PrefixArgs, Ts...>
 //         };
 //     }
 
-    void set_timeout(std::chrono::milliseconds ms) noexcept
+    void set_timeout_delay(std::chrono::milliseconds ms) noexcept
     {
-        this->timeout.set_time(ms);
+        this->timeout.set_delay(ms);
+    }
+
+    void set_timeout(timeval const& tv) noexcept
+    {
+        this->timeout.set_time(tv);
     }
 
     TopExecutorImpl(TopExecutorImpl const&) = delete;

@@ -125,7 +125,7 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
     if (dim.w && dim.h && ((dim.w != width) || (dim.h != height)) &&
         this->client_execute.is_resizing_hosted_desktop_enabled()) {
         if (this->disconnection_reconnection_timer) {
-            this->disconnection_reconnection_timer->set_time(std::chrono::seconds(1));
+            this->disconnection_reconnection_timer->set_delay(std::chrono::seconds(1));
         }
         else {
             this->disconnection_reconnection_timer = this->session_reactor

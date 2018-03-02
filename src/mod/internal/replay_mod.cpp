@@ -221,7 +221,7 @@ void ReplayMod::draw_event(time_t now, gdi::GraphicApi & drawable)
     if (this->end_of_data) {
         timespec wtime = {1, 0};
         nanosleep(&wtime, nullptr);
-        this->timer->set_time(std::chrono::seconds(1));
+        this->timer->set_delay(std::chrono::seconds(1));
         return;
     }
 
@@ -313,7 +313,7 @@ void ReplayMod::draw_event(time_t now, gdi::GraphicApi & drawable)
             }
         }
 
-        this->timer->set_time(std::chrono::milliseconds{});
+        this->timer->set_delay(std::chrono::milliseconds{});
     }
     catch (Error const & e) {
         if (e.id == ERR_TRANSPORT_OPEN_FAILED) {

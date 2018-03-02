@@ -155,11 +155,18 @@ struct SessionReactor
 
     struct TimerContainer : Container<BasicTimer>
     {
-        void update_time(BasicTimer& timer, std::chrono::milliseconds ms)
+        void update_delay(BasicTimer& timer, std::chrono::milliseconds ms)
         {
             assert(this->elements.end() != this->get_elem_iterator(timer));
             (void)timer;
             (void)ms;
+        }
+
+        void update_time(BasicTimer& timer, timeval const& tv)
+        {
+            assert(this->elements.end() != this->get_elem_iterator(timer));
+            (void)timer;
+            (void)tv;
         }
 
         timeval get_next_timeout() const noexcept
@@ -292,23 +299,20 @@ struct SessionReactor
 
         void set_timeout(std::chrono::milliseconds ms) noexcept
         {
-            this->timeout = ms;
-            this->set_time(ms);
+            this->set_delay(ms);
         }
 
         void update_timeout(std::chrono::milliseconds ms) noexcept
         {
-            this->timeout = ms;
-            this->set_time(ms);
+            this->set_delay(ms);
         }
 
         void restart_timeout()
         {
-            this->set_time(this->timeout);
+            this->set_delay(std::chrono::duration_cast<std::chrono::milliseconds>(this->delay));
         }
 
         int fd;
-        std::chrono::milliseconds timeout;
     };
 
     template<class PrefixArgs_, class... Ts>

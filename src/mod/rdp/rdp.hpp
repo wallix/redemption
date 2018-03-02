@@ -4386,7 +4386,7 @@ public:
         //LOG(LOG_INFO, "mod_rdp::draw_event() session timeout check count=%u",
         //        static_cast<unsigned>(this->open_session_timeout.count()));
         if (this->open_session_timeout_checker_timer) {
-            this->open_session_timeout_checker_timer->set_time(std::chrono::seconds(1));
+            this->open_session_timeout_checker_timer->set_delay(std::chrono::seconds(1));
         }
 
 /*

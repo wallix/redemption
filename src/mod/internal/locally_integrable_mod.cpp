@@ -87,7 +87,7 @@ void LocallyIntegrableMod::rdp_input_mouse(int device_flags, int x, int y, Keyma
                         this->dc_state = DCState::FirstClickDown;
 
                         if (this->first_click_down_timer) {
-                            this->first_click_down_timer->set_time(std::chrono::seconds(1));
+                            this->first_click_down_timer->set_delay(std::chrono::seconds(1));
                         }
                         else {
                             this->first_click_down_timer = this->session_reactor
