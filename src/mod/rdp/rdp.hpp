@@ -847,8 +847,6 @@ protected:
 
     InfoPacketFlags info_packet_extra_flags;
 
-    SessionReactor::GraphicEventPtr clear_client_screen;
-
 public:
     using Verbose = RDPVerbose;
 
@@ -1579,31 +1577,24 @@ public:
                 );
         }
 
-        // Clear client screen
-        // TODO detached
-        // this->clear_client_screen = this->session_reactor
-        // .create_graphic_event(this->get_dim())
-        // .on_action(jln::one_shot([](time_t, gdi::GraphicApi& drawable, Dimension const& dim){
-        // }));
-
         this->fd_event = this->session_reactor
         .create_graphic_fd_event(this->trans.get_fd(), std::ref(*this))
         .set_timeout(std::chrono::milliseconds(0))
         .on_timeout([](auto ctx, time_t /*now*/, gdi::GraphicApi & gd, mod_rdp& self){
-            if (self.state == MOD_RDP_NEGO_INITIATE) {
-                gdi_clear_screen(gd, self.get_dim());
-                LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
-                self.nego.send_negotiation_request(self.trans);
-                self.state = MOD_RDP_NEGO;
-                // TODO merges with open_session_timeout_checker_timer
-                return ctx.set_timeout(std::chrono::hours(1)).ready();
-            }
-            return ctx.ready();
+            assert(self.state == MOD_RDP_NEGO_INITIATE);
+            gdi_clear_screen(gd, self.get_dim());
+            LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
+            self.nego.send_negotiation_request(self.trans);
+            self.state = MOD_RDP_NEGO;
+            // TODO return ctx.disable_timer()...
+            return ctx.set_timeout(std::chrono::hours(999))
+            .set_timeout_action(jln::always_ready())
+            .next_action(jln::always_ready([](time_t now, gdi::GraphicApi & gd, mod_rdp& self){
+                self.draw_event(now, gd);
+            }));
         })
         .on_exit(jln::exit_with_success())
-        .on_action(jln::always_ready([](time_t now, gdi::GraphicApi & gd, mod_rdp& self){
-            self.draw_event(now, gd);
-        }));
+        .on_action(jln::always_ready() /* set by on_timeout action*/);
 
         LOG(LOG_INFO, "RDP mod built");
     }   // mod_rdp
@@ -4178,23 +4169,18 @@ public:
 
     void draw_event(time_t now, gdi::GraphicApi & drawable_) override
     {
-        LOG(LOG_DEBUG, "rdp draw_event");
         //LOG(LOG_INFO, "mod_rdp::draw_event()");
 
         if (this->remote_programs_session_manager) {
             this->remote_programs_session_manager->set_drawable(&drawable_);
         }
 
-        assert(!this->clear_client_screen);
-
         bool run = true;
-// TODO        bool waked_up_by_time = this->event.is_waked_up_by_time();
         bool waked_up_by_time = false;
 
         if (this->state == MOD_RDP_NEGO_INITIATE) {
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
             this->nego.send_negotiation_request(this->trans);
-// TODO            this->event.reset_trigger_time();
             this->state = MOD_RDP_NEGO;
             run = false;
         }
@@ -4212,9 +4198,6 @@ public:
         else {
             this->buf.load_data(this->trans);
         }
-// TODO        else if (!waked_up_by_time) {
-// TODO            this->buf.load_data(this->trans);
-// TODO        }
 
         if (run && !waked_up_by_time) {
             while (this->buf.next_pdu()) {
@@ -4379,26 +4362,6 @@ public:
             this->open_session_timeout_checker_timer->set_delay(std::chrono::seconds(1));
         }
 
-/*
-        //LOG(LOG_INFO, "mod_rdp::draw_event() session_probe_virtual_channel_p");
-        try{
-            if (this->session_probe_virtual_channel_p) {
-                this->session_probe_virtual_channel_p->process_event();
-            }
-        }
-        catch (Error const & e) {
-            if (e.id != ERR_SESSION_PROBE_ENDING_IN_PROGRESS)
-                throw;
-
-            this->end_session_reason.clear();
-            this->end_session_message.clear();
-
-            this->authentifier.disconnect_target();
-            this->authentifier.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
-
-            this->event.signal = BACK_EVENT_NEXT;
-        }
-*/
         //LOG(LOG_INFO, "mod_rdp::draw_event() done");
     }   // draw_event
 
@@ -5844,7 +5807,6 @@ public:
 
         if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker_timer.reset();
-// TODO            this->event.reset_trigger_time();
         }
 
         if (this->enable_session_probe) {

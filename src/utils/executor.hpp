@@ -892,6 +892,7 @@ struct REDEMPTION_CXX_NODISCARD Executor2FdTimeoutContext : BasicContext<Event>
     Executor2FdTimeoutContext set_timeout_action(F f) noexcept
     {
         this->event.set_on_timeout(f);
+        return *this;
     }
 
     Executor2FdTimeoutContext set_timeout(std::chrono::milliseconds ms) noexcept
