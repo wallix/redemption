@@ -323,7 +323,6 @@ public:
                                     this->ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
 
                                     session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
-// TODO                                    mm.mod->get_event().reset_trigger_time();
                                 }
                                 else if (acl) {
                                     this->ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(this->ini)));
@@ -341,13 +340,11 @@ public:
                                 }
 
                                 session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
-// TODO                                mm.mod->get_event().reset_trigger_time();
                             }
                             else if (e.id == ERR_RAIL_NOT_ENABLED) {
                                 this->ini.get_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
 
                                 session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
-// TODO                                mm.mod->get_event().reset_trigger_time();
                             }
                             else if ((e.id == ERR_RDP_SERVER_REDIR) &&
                                      this->ini.get<cfg::mod_rdp::server_redirection_support>()) {
@@ -375,8 +372,7 @@ public:
                                 sprintf(message, "%s@%s", change_user, host);
                                 authentifier.report("SERVER_REDIRECTION", message);
 
-                                signal = BACK_EVENT_RETRY_CURRENT;
-// TODO                                mm.mod->get_event().reset_trigger_time();
+                                session_reactor.set_next_event(BACK_EVENT_RETRY_CURRENT);
                             }
                             else {
                                 throw;
