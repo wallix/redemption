@@ -279,17 +279,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
     {
         LOG__REDEMPTION__BUFFERED logbuf;
         acl.incoming();
-# ifdef NDEBUG
         RED_CHECK_EQ(logbuf.buf(),
             "WARNING - Unexpected receving 'abcd' - 'something'\n"
             "WARNING - Unexpected receving 'efg' - 'other something'\n");
-# else
-        RED_CHECK_EQ(logbuf.buf(),
-            "WARNING - In src/acl/acl_serializer.hpp:855\n"
-            "WARNING - Unexpected receving 'abcd' - 'something'\n"
-            "WARNING - In src/acl/acl_serializer.hpp:855\n"
-            "WARNING - Unexpected receving 'efg' - 'other something'\n");
-# endif
     }
 
     RED_CHECK_EQUAL(ini.is_asked<cfg::context::opt_bpp>(), true);
