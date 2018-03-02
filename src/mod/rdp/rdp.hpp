@@ -7030,105 +7030,25 @@ public:
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
 
-        Pointer & cursor = this->cursors[pointer_idx];
-        memset(&cursor, 0, sizeof(Pointer));
         auto hotspot_x      = stream.in_uint16_le();
         auto hotspot_y      = stream.in_uint16_le();
-        Pointer::Hotspot hotspot(hotspot_x, hotspot_y);
-        cursor.set_hotspot(hotspot);
-        uint16_t width            = stream.in_uint16_le(); 
-        uint16_t height            = stream.in_uint16_le(); 
-        Pointer::CursorSize dimensions(width, height);
-        cursor.set_dimensions(dimensions);
-        cursor.only_black_white = (data_bpp == 1);
+        auto width            = stream.in_uint16_le(); 
+        auto height            = stream.in_uint16_le(); 
 
         uint16_t mlen = stream.in_uint16_le(); /* mask length */
         uint16_t dlen = stream.in_uint16_le(); /* data length */
-
-        if ((width > Pointer::MAX_WIDTH) || (height > Pointer::MAX_HEIGHT)){
-            LOG(LOG_ERR, "mod_rdp::process_new_pointer_pdu pointer : pointer oversize (%u, %u)", dimensions.width, dimensions.height);
-            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
-        }
-
-        if ((hotspot.x >= dimensions.width)||(hotspot.y >= dimensions.height)){
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot(%u, %u) out of pointer(%u, %u)", hotspot.x, hotspot.y, dimensions.width, dimensions.height);
-        }
-
-        if (!stream.in_check_rem(dlen)){
-            LOG(LOG_ERR, "Not enough data for cursor pixels (need=%" PRIu16 " remain=%zu)",
-                dlen, stream.in_remain());
-            throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
-        }
         if (!stream.in_check_rem(mlen + dlen)){
-            LOG(LOG_ERR, "Not enough data for cursor mask (need=%" PRIu16 " remain=%zu)",
-                mlen, stream.in_remain() - dlen);
+            LOG(LOG_ERR, "Not enough data for cursor (dlen=%u mlen=%u need=%" PRIu16 " remain=%zu)",
+                mlen, dlen, mlen+dlen, stream.in_remain());
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
         const uint8_t * data = stream.in_uint8p(dlen);
         const uint8_t * mask = stream.in_uint8p(mlen);
 
-        if (data_bpp == 1) {
-            uint8_t data_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8];
-            uint8_t mask_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8];
-            ::memcpy(data_data, data, dlen);
-            ::memcpy(mask_data, mask, mlen);
+        Pointer cursor({width, height}, {hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor);
 
-            if (this->bogus_linux_cursor == BogusLinuxCursor::enable) {
-                for (unsigned i = 0 ; i < mlen; i++) {
-                    uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
-                    uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);
-                    data_data[i]    = new_data_data;
-                    mask_data[i]    = new_mask_data;
-                }
-            }
-
-            // TODO move that into cursor
-            cursor.to_regular_pointer(data_data, dlen, width, height, 1, this->orders.global_palette);
-            cursor.to_regular_mask(mask_data, mlen, width, height, 1);
-        }
-        else {
-            // TODO move that into cursor
-            cursor.to_regular_pointer(data, dlen, width, height, data_bpp, this->orders.global_palette);
-            cursor.to_regular_mask(mask, mlen, width, height, data_bpp);
-        }
-
-        if ((data_bpp == 32) && this->clean_up_32_bpp_cursor) {
-            const unsigned int xor_line_length_in_byte = width * 3;
-            const unsigned int xor_padded_line_length_in_byte =
-                ((xor_line_length_in_byte % 2) ?
-                 xor_line_length_in_byte + 1 :
-                 xor_line_length_in_byte);
-            const unsigned int remainder = (width % 8);
-            const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
-            const unsigned int and_padded_line_length_in_byte =
-                ((and_line_length_in_byte % 2) ?
-                 and_line_length_in_byte + 1 :
-                 and_line_length_in_byte);
-            for (unsigned int i0 = 0; i0 < height; ++i0) {
-                uint8_t* xorMask = const_cast<uint8_t*>(cursor.data) + (height - i0 - 1) * xor_padded_line_length_in_byte;
-
-                const uint8_t* andMask = cursor.mask + (height - i0 - 1) * and_padded_line_length_in_byte;
-                unsigned char and_bit_extraction_mask = 7;
-
-                for (unsigned int i1 = 0; i1 < width; ++i1) {
-                    if ((*andMask) & (1 << and_bit_extraction_mask)) {
-                        *xorMask         = 0;
-                        *(xorMask + 1)   = 0;
-                        *(xorMask + 2)   = 0;
-                    }
-
-                    xorMask += 3;
-                    if (and_bit_extraction_mask) {
-                        and_bit_extraction_mask--;
-                    }
-                    else {
-                        and_bit_extraction_mask = 7;
-                        andMask++;
-                    }
-                }
-            }
-        }
+        this->cursors[pointer_idx] = cursor;
 
         drawable.set_pointer(cursor);
         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {

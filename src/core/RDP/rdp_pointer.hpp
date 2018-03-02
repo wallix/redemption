@@ -154,6 +154,82 @@ public:
 //    }
 
 
+    explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, uint8_t data_bpp, const BGRPalette & palette, bool clean_up_32_bpp_cursor, BogusLinuxCursor bogus_linux_cursor)
+        : dimensions(d)
+        , hotspot(hs)
+    {
+        auto mlen = av_and.size();
+        auto dlen = av_xor.size();
+        auto data = av_xor.data();
+        auto mask = av_and.data();
+        
+        if (data_bpp == 1) {
+            uint8_t data_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8];
+            uint8_t mask_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8];
+            ::memcpy(data_data, data, dlen);
+            ::memcpy(mask_data, mask, mlen);
+
+            if (bogus_linux_cursor == BogusLinuxCursor::enable) {
+                for (unsigned i = 0 ; i < mlen; i++) {
+                    uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
+                    uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);
+                    data_data[i]    = new_data_data;
+                    mask_data[i]    = new_mask_data;
+                }
+            }
+
+            // TODO move that into cursor
+            this->to_regular_pointer(data_data, dlen, 1, palette);
+            this->to_regular_mask(mask_data, mlen, 1);
+            this->only_black_white = true;
+        }
+        else {
+            this->only_black_white = false;
+            // TODO move that into cursor
+            this->to_regular_pointer(data, dlen, data_bpp, palette);
+            this->to_regular_mask(mask, mlen, data_bpp);
+
+            if ((data_bpp == 32) && clean_up_32_bpp_cursor) {
+                const unsigned int xor_line_length_in_byte = this->dimensions.width * 3;
+                const unsigned int xor_padded_line_length_in_byte =
+                    ((xor_line_length_in_byte % 2) ?
+                     xor_line_length_in_byte + 1 :
+                     xor_line_length_in_byte);
+                const unsigned int remainder = (this->dimensions.width % 8);
+                const unsigned int and_line_length_in_byte = this->dimensions.width / 8 + (remainder ? 1 : 0);
+                const unsigned int and_padded_line_length_in_byte =
+                    ((and_line_length_in_byte % 2) ?
+                     and_line_length_in_byte + 1 :
+                     and_line_length_in_byte);
+                for (unsigned int i0 = 0; i0 < this->dimensions.height; ++i0) {
+                    uint8_t* xorMask = const_cast<uint8_t*>(this->data) + (this->dimensions.height - i0 - 1) * xor_padded_line_length_in_byte;
+
+                    const uint8_t* andMask = this->mask + (this->dimensions.height - i0 - 1) * and_padded_line_length_in_byte;
+                    unsigned char and_bit_extraction_mask = 7;
+
+                    for (unsigned int i1 = 0; i1 < this->dimensions.width; ++i1) {
+                        if ((*andMask) & (1 << and_bit_extraction_mask)) {
+                            *xorMask         = 0;
+                            *(xorMask + 1)   = 0;
+                            *(xorMask + 2)   = 0;
+                        }
+
+                        xorMask += 3;
+                        if (and_bit_extraction_mask) {
+                            and_bit_extraction_mask--;
+                        }
+                        else {
+                            and_bit_extraction_mask = 7;
+                            andMask++;
+                        }
+                    }
+                }
+            }
+
+        }
+    }
+
+
     explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, int check)
         : dimensions(d)
         , hotspot(hs)
@@ -736,29 +812,29 @@ public:
         this->only_black_white = true;
     }
     
-    void to_regular_pointer(const uint8_t * indata, unsigned dlen, unsigned width, unsigned height, uint8_t bpp, const BGRPalette & global_palette) 
+    void to_regular_pointer(const uint8_t * indata, unsigned dlen, uint8_t bpp, const BGRPalette & palette) 
     {
         switch (bpp) {
         case 1 :
         {
-            const unsigned int remainder = (width % 8);
-            const unsigned int src_xor_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
+            const unsigned int remainder = (this->dimensions.width % 8);
+            const unsigned int src_xor_line_length_in_byte = this->dimensions.width / 8 + (remainder ? 1 : 0);
             const unsigned int src_xor_padded_line_length_in_byte =
                 ((src_xor_line_length_in_byte % 2) ?
                  src_xor_line_length_in_byte + 1 :
                  src_xor_line_length_in_byte);
 
-            const unsigned int dest_xor_line_length_in_byte        = width * 3;
+            const unsigned int dest_xor_line_length_in_byte        = this->dimensions.width * 3;
             const unsigned int dest_xor_padded_line_length_in_byte =
                 dest_xor_line_length_in_byte + ((dest_xor_line_length_in_byte % 2) ? 1 : 0);
 
-            for (unsigned int i = 0; i < height; ++i) {
-                const uint8_t* src  = indata + (height - i - 1) * src_xor_padded_line_length_in_byte;
+            for (unsigned int i = 0; i < this->dimensions.height; ++i) {
+                const uint8_t* src  = indata + (this->dimensions.height - i - 1) * src_xor_padded_line_length_in_byte;
                       uint8_t* dest = this->data + i * dest_xor_padded_line_length_in_byte;
 
                 unsigned char and_bit_extraction_mask = 7;
 
-                for (unsigned int j = 0; j < width; ++j) {
+                for (unsigned int j = 0; j < this->dimensions.width; ++j) {
                     ::out_bytes_le(dest, 3, (((*src) & (1 << and_bit_extraction_mask)) ? 0xFFFFFF : 0));
 
                     dest += 3;
@@ -779,8 +855,8 @@ public:
             for (unsigned i = 0; i < dlen ; i++) {
                 const uint8_t px = indata[i];
                 // target cursor will receive 8 bits input at once
-                ::out_bytes_le(&(this->data[6 * i]),     3, global_palette[(px >> 4) & 0xF].to_u32());
-                ::out_bytes_le(&(this->data[6 * i + 3]), 3, global_palette[ px       & 0xF].to_u32());
+                ::out_bytes_le(&(this->data[6 * i]),     3, palette[(px >> 4) & 0xF].to_u32());
+                ::out_bytes_le(&(this->data[6 * i + 3]), 3, palette[ px       & 0xF].to_u32());
             }
         }
         break;
@@ -788,26 +864,26 @@ public:
         {
             uint8_t BPP = nbbytes(bpp);
 
-            const unsigned int src_xor_line_length_in_byte = width * BPP;
+            const unsigned int src_xor_line_length_in_byte = this->dimensions.width * BPP;
             const unsigned int src_xor_padded_line_length_in_byte =
                 ((src_xor_line_length_in_byte % 2) ?
                  src_xor_line_length_in_byte + 1 :
                  src_xor_line_length_in_byte);
 
-            const unsigned int dest_xor_line_length_in_byte = width * 3;
+            const unsigned int dest_xor_line_length_in_byte = this->dimensions.width * 3;
             const unsigned int dest_xor_padded_line_length_in_byte =
                 ((dest_xor_line_length_in_byte % 2) ?
                  dest_xor_line_length_in_byte + 1 :
                  dest_xor_line_length_in_byte);
 
-            for (unsigned int i0 = 0; i0 < height; ++i0) {
-                const uint8_t* src  = indata + (height - i0 - 1) * src_xor_padded_line_length_in_byte;
-                      uint8_t* dest = this->data + (height - i0 - 1) * dest_xor_padded_line_length_in_byte;
+            for (unsigned int i0 = 0; i0 < this->dimensions.height; ++i0) {
+                const uint8_t* src  = indata + (this->dimensions.height - i0 - 1) * src_xor_padded_line_length_in_byte;
+                      uint8_t* dest = this->data + (this->dimensions.height - i0 - 1) * dest_xor_padded_line_length_in_byte;
 
-                for (unsigned int i1 = 0; i1 < width; ++i1) {
+                for (unsigned int i1 = 0; i1 < this->dimensions.width; ++i1) {
                     RDPColor px = RDPColor::from(in_uint32_from_nb_bytes_le(BPP, src));
                     src += BPP;
-                    ::out_bytes_le(dest, 3, color_decode(px, bpp, global_palette).to_u32());
+                    ::out_bytes_le(dest, 3, color_decode(px, bpp, palette).to_u32());
                     dest += 3;
                 }
             }
@@ -822,7 +898,7 @@ public:
         }
     }
 
-    void to_regular_mask(const uint8_t * indata, unsigned mlen, unsigned width, unsigned height, uint8_t bpp) {
+    void to_regular_mask(const uint8_t * indata, unsigned mlen, uint8_t bpp) {
         /* TODO check code below: why do we revert mask and pointer when pointer is 1 BPP
          * and not with other color depth ? Looks fishy, a mask and pointer should always
          * be encoded in the same way, not depending on color depth difficult to see for
@@ -831,14 +907,14 @@ public:
         switch (bpp) {
         case 1 :
         {
-            const unsigned int remainder = (width % 8);
-            const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
+            const unsigned int remainder = (this->dimensions.width % 8);
+            const unsigned int and_line_length_in_byte = this->dimensions.width / 8 + (remainder ? 1 : 0);
             const unsigned int and_padded_line_length_in_byte =
                 ((and_line_length_in_byte % 2) ?
                  and_line_length_in_byte + 1 :
                  and_line_length_in_byte);
-            for (unsigned int i = 0; i < height; ++i) {
-                const uint8_t* src  = indata + (height - i - 1) * and_padded_line_length_in_byte;
+            for (unsigned int i = 0; i < this->dimensions.height; ++i) {
+                const uint8_t* src  = indata + (this->dimensions.height - i - 1) * and_padded_line_length_in_byte;
                       uint8_t* dest = this->mask + i * and_padded_line_length_in_byte;
                 ::memcpy(dest, src, and_padded_line_length_in_byte);
             }
