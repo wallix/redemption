@@ -728,19 +728,17 @@ void FileToGraphic::interpret_order()
 
         if (  chunk_size - 8 /*header(8)*/ > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
             this->statistics.CachePointer.count++;
-            auto * const p = this->stream.get_current();
-            Pointer cursor(Pointer::POINTER_NULL);
-            
-            Pointer::CursorSize dimensions(32, 32);
-            cursor.set_dimensions(dimensions);
+            uint16_t width = 32;
+            uint16_t height = 32;
             auto hotspot_x = this->stream.in_uint8();
             auto hotspot_y = this->stream.in_uint8();
-            Pointer::Hotspot hotspot(hotspot_x, hotspot_y);
-            cursor.set_hotspot(hotspot);
-            stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
-            stream.in_copy_bytes(cursor.mask, 128);
-            this->statistics.CachePointer.total_len += this->stream.get_current() - p;
+            uint16_t mlen = 128;
+            uint16_t dlen = 32*32*3;
+            auto data = stream.in_uint8p(dlen);
+            auto mask = stream.in_uint8p(mlen);
+            this->statistics.CachePointer.total_len += dlen + mlen + 2;
 
+            Pointer cursor({width, height}, {hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen}, 1);
             this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
             for (gdi::GraphicApi * gd : this->graphic_consumers){

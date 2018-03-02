@@ -6956,42 +6956,6 @@ public:
         }
     }
 
-    void to_regular_mask(const uint8_t * indata, unsigned mlen, unsigned width, unsigned height, uint8_t bpp, uint8_t * mask) {
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-            LOG(LOG_INFO, "mod_rdp::to_regular_mask");
-        }
-
-        /* TODO check code below: why do we revert mask and pointer when pointer is 1 BPP
-         * and not with other color depth ? Looks fishy, a mask and pointer should always
-         * be encoded in the same way, not depending on color depth difficult to see for
-         * symmetrical pointers... check documentation it may be more efficient to revert
-         * cursor after creating it instead of doing it on the fly */
-        switch (bpp) {
-        case 1 :
-        {
-            const unsigned int remainder = (width % 8);
-            const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
-            const unsigned int and_padded_line_length_in_byte =
-                ((and_line_length_in_byte % 2) ?
-                 and_line_length_in_byte + 1 :
-                 and_line_length_in_byte);
-            for (unsigned int i = 0; i < height; ++i) {
-                const uint8_t* src  = indata + (height - i - 1) * and_padded_line_length_in_byte;
-                      uint8_t* dest = mask + i * and_padded_line_length_in_byte;
-                ::memcpy(dest, src, and_padded_line_length_in_byte);
-            }
-        }
-        break;
-        default:
-            memcpy(mask, indata, mlen);
-        break;
-        }
-
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-            LOG(LOG_INFO, "mod_rdp::to_regular_mask");
-        }
-    }
-
     // [ referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
     // 2.2.9.1.1.4.5 New Pointer Update (TS_POINTERATTRIBUTE)
     // ------------------------------------------------------
@@ -7047,7 +7011,6 @@ public:
         const uint8_t * mask = stream.in_uint8p(mlen);
 
         Pointer cursor({width, height}, {hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor);
-
         this->cursors[pointer_idx] = cursor;
 
         drawable.set_pointer(cursor);
