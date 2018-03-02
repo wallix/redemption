@@ -419,8 +419,7 @@ protected:
     const std::chrono::seconds open_session_timeout;
 
     SessionReactor::BasicTimerPtr open_session_timeout_checker_timer;
-    SessionReactor::TopFdPtr fd_event;
-    SessionReactor::GraphicEventPtr gd_event;
+    SessionReactor::GraphicFdPtr fd_event;
 
     std::string output_filename;
 
@@ -1588,31 +1587,22 @@ public:
         // }));
 
         this->fd_event = this->session_reactor
-        .create_fd_event(this->trans.get_fd(), std::ref(*this))
+        .create_graphic_fd_event(this->trans.get_fd(), std::ref(*this))
         .set_timeout(std::chrono::milliseconds(0))
-        .on_timeout(jln::always_ready([](mod_rdp& self){
-            LOG(LOG_DEBUG, "timer");
+        .on_timeout([](auto ctx, time_t /*now*/, gdi::GraphicApi & gd, mod_rdp& self){
             if (self.state == MOD_RDP_NEGO_INITIATE) {
-                LOG(LOG_DEBUG, "timer nego");
-                self.gd_event = self.session_reactor.create_graphic_event(std::ref(self))
-                .on_action(jln::one_shot([](time_t /*now*/, gdi::GraphicApi & gd, mod_rdp& self){
-                    LOG(LOG_DEBUG, "clear_client_screen");
-                    gdi_clear_screen(gd, self.get_dim());
-                }));
+                gdi_clear_screen(gd, self.get_dim());
                 LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
                 self.nego.send_negotiation_request(self.trans);
                 self.state = MOD_RDP_NEGO;
                 // TODO merges with open_session_timeout_checker_timer
-                self.fd_event->update_timeout(std::chrono::hours(1));
+                return ctx.set_timeout(std::chrono::hours(1)).ready();
             }
-        }))
+            return ctx.ready();
+        })
         .on_exit(jln::exit_with_success())
-        .on_action(jln::always_ready([](mod_rdp& self){
-            LOG(LOG_DEBUG, "event socket");
-            self.gd_event = self.session_reactor.create_graphic_event(std::ref(self))
-            .on_action(jln::one_shot([](time_t now, gdi::GraphicApi & gd, mod_rdp& self){
-                self.draw_event(now, gd);
-            }));
+        .on_action(jln::always_ready([](time_t now, gdi::GraphicApi & gd, mod_rdp& self){
+            self.draw_event(now, gd);
         }));
 
         LOG(LOG_INFO, "RDP mod built");

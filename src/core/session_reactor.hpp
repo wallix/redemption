@@ -297,45 +297,30 @@ struct SessionReactor
             ::New(this->sesman_events_, static_cast<Args&&>(args)...)};
     }
 
-
-    using BasicFd = jln::BasicExecutorImpl<PrefixArgs>;
-
-    struct TopFd : BasicTimer, BasicFd
+    template<class PrefixArgs_>
+    struct BasicFd : jln::BasicTimer<PrefixArgs_>, jln::BasicExecutorImpl<PrefixArgs_>
     {
-        using prefix_args = typename BasicFd::prefix_args;
-        using base_type = TopFd;
+        using prefix_args = PrefixArgs_;
+        using base_type = BasicFd;
 
-        static_assert(std::is_same<
-            typename BasicFd::prefix_args,
-            typename BasicTimer::prefix_args
-        >::value);
+        using jln::BasicExecutorImpl<PrefixArgs_>::delete_self;
+        using jln::BasicExecutorImpl<PrefixArgs_>::deleter;
+        using jln::BasicExecutorImpl<PrefixArgs_>::on_action;
 
-        using BasicFd::delete_self;
-        using BasicFd::deleter;
-        using BasicFd::on_action;
-
-        BasicTimer& timer() noexcept { return *this; }
-
-        void set_timeout(std::chrono::milliseconds ms) noexcept
-        {
-            this->set_delay(ms);
-        }
-
-        void update_timeout(std::chrono::milliseconds ms) noexcept
-        {
-            this->set_delay(ms);
-        }
+        jln::BasicTimer<PrefixArgs_>& timer() noexcept { return *this; }
 
         void restart_timeout()
         {
-            this->set_delay(std::chrono::duration_cast<std::chrono::milliseconds>(this->delay));
+            assert(this->delay.count() > 0);
+            // TODO tvtime -> reactor.time()
+            this->tv = addusectimeval(this->delay, tvtime());
         }
 
         int fd;
     };
 
     template<class PrefixArgs_, class... Ts>
-    struct FdImpl : TopFd
+    struct FdImpl : BasicFd<PrefixArgs_>
     {
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
@@ -345,52 +330,78 @@ struct SessionReactor
         , session_reactor(session_reactor)
         {
             this->fd = fd;
-            this->session_reactor.timer_events_.attach(this->timer());
+            if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
+                this->session_reactor.timer_events_.attach(this->timer());
+            }
+            else {
+                this->session_reactor.graphic_timer_events_.attach(this->timer());
+            }
         }
         REDEMPTION_DIAGNOSTIC_POP
 
         ~FdImpl()
         {
-            this->session_reactor.timer_events_.detach(this->timer());
+            if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
+                this->session_reactor.timer_events_.detach(this->timer());
+            }
+            else {
+                this->session_reactor.graphic_timer_events_.detach(this->timer());
+            }
         }
 
         void detach() noexcept
         {
-            this->session_reactor.fd_events_.detach(*this);
+            if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
+                this->session_reactor.fd_events_.detach(*this);
+            }
+            else {
+                this->session_reactor.graphic_fd_events_.detach(*this);
+            }
         }
 
         void attach() noexcept
         {
-            this->session_reactor.fd_events_.attach(*this);
+            if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
+                this->session_reactor.fd_events_.attach(*this);
+            }
+            else {
+                this->session_reactor.graphic_fd_events_.attach(*this);
+            }
         }
 
         template<class F>
         void set_on_action(F) noexcept
         {
-            this->on_action = wrap_fn<F, jln::Executor2FdContext>();
+            this->on_action = jln::wrap_fn<F, FdImpl, jln::Executor2FdContext>();
         }
 
         template<class F>
         void set_on_exit(F) noexcept
         {
-            this->on_exit = wrap_fn<F, jln::Executor2FdContext>();
+            this->on_exit = jln::wrap_fn<F, FdImpl, jln::Executor2FdContext>();
         }
 
         template<class F>
         void set_on_timeout(F) noexcept
         {
-            this->timer().on_action = wrap_fn<F, jln::Executor2FdTimeoutContext>();
+            this->timer().on_action = jln::wrap_fn<F, FdImpl, jln::Executor2FdTimeoutContext>();
         }
 
-    private:
-        template<class F, template<class...> class Ctx>
-        static auto wrap_fn() noexcept
+        void set_timeout(std::chrono::milliseconds ms) noexcept
         {
-            return [](auto& e, auto... prefix_args){
-                static_cast<FdImpl&>(e).restart_timeout();
-                return jln::wrap_fn<F, FdImpl, Ctx>()(
-                    e, static_cast<decltype(prefix_args)&&>(prefix_args)...);
-            };
+            this->set_delay(ms);
+            this->set_time(addusectimeval(this->delay, tvtime()));
+            if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
+                this->session_reactor.timer_events_.update_delay(*this, ms);
+            }
+            else {
+                this->session_reactor.graphic_timer_events_.update_delay(*this, ms);
+            }
+        }
+
+        void update_timeout(std::chrono::milliseconds ms) noexcept
+        {
+            this->set_timeout(ms);
         }
 
     public:
@@ -403,6 +414,7 @@ struct SessionReactor
     template<class PrefixArgs_, class... Args>
     using Fd = FdImpl<PrefixArgs_, typename jln::detail::decay_and_strip<Args>::type...>;
 
+    using TopFd = BasicFd<PrefixArgs>;
     using TopFdPtr = jln::UniquePtrWithNotifyDelete<TopFd>;
 
     struct TopFdContainer : Container<TopFd>
@@ -421,6 +433,25 @@ struct SessionReactor
     }
 
 
+    using GraphicFd = BasicFd<jln::prefix_args<time_t, gdi::GraphicApi&>>;
+    using GraphicFdPtr = jln::UniquePtrWithNotifyDelete<GraphicFd>;
+
+    struct GraphicFdContainer : Container<GraphicFd>
+    {
+        template<class... Args>
+        using Elem = Fd<GraphicFd::prefix_args, Args...>;
+    };
+
+    template<class... Args>
+    NotifyDeleterBuilderWrapper<jln::TopFdBuilder<jln::UniquePtrEventWithUPtr<GraphicFdContainer::Elem<Args...>>>>
+    create_graphic_fd_event(int fd, Args&&... args)
+    {
+        using EventFd = GraphicFdContainer::Elem<Args...>;
+        return {jln::UniquePtrEventWithUPtr<EventFd>
+            ::New(fd, *this, static_cast<Args&&>(args)...)};
+    }
+
+
     //std::vector<std::unique_ptr<Context>> contexts;
     CallbackContainer front_events_;
     GraphicContainer graphic_events_;
@@ -428,6 +459,7 @@ struct SessionReactor
     TimerContainer timer_events_;
     GraphicTimerContainer graphic_timer_events_;
     TopFdContainer fd_events_;
+    GraphicFdContainer graphic_fd_events_;
 
     std::vector<CallbackEvent*> front_events()
     {
