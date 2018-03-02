@@ -36,20 +36,14 @@ struct WidgetTestMod::WidgetTestModPrivate
 {
     WidgetTestModPrivate(WidgetTestMod& mod)
     {
-        // TODO graphic_timer
-        this->timer = mod.session_reactor.create_timer(std::ref(mod))
+        this->timer = mod.session_reactor.create_graphic_timer(std::ref(mod))
         .set_delay(std::chrono::seconds(3))
-        .on_action([](auto ctx, WidgetTestMod& mod){
-            mod.d->gd_event = mod.session_reactor.create_graphic_event(std::ref(mod))
-            .on_action(jln::one_shot([](time_t now, gdi::GraphicApi& gd, WidgetTestMod& mod){
-                mod.draw_event(now, gd);
-            }));
-            return ctx.ready();
-        });
+        .on_action(jln::always_ready([](time_t now, gdi::GraphicApi& gd, WidgetTestMod& mod){
+            mod.draw_event(now, gd);
+        }));
     }
 
-    SessionReactor::BasicTimerPtr timer;
-    SessionReactor::GraphicEventPtr gd_event;
+    SessionReactor::GraphicTimerPtr timer;
 };
 
 WidgetTestMod::WidgetTestMod(

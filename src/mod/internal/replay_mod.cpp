@@ -122,13 +122,10 @@ ReplayMod::ReplayMod(
     this->in_trans->set_begin_time(begin_file_read);
     this->front.can_be_start_capture();
 
-    this->timer = session_reactor.create_timer(std::ref(*this))
+    this->timer = session_reactor.create_graphic_timer(std::ref(*this))
     .set_delay(std::chrono::seconds(1))
-    .on_action(jln::always_ready([](ReplayMod& self){
-        self.gd_event = self.session_reactor.create_graphic_event(std::ref(self))
-        .on_action(jln::one_shot([](time_t now, gdi::GraphicApi& gd, ReplayMod& self){
-            self.draw_event(now, gd);
-        }));
+    .on_action(jln::always_ready([](time_t now, gdi::GraphicApi& gd, ReplayMod& self){
+        self.draw_event(now, gd);
     }));
 }
 

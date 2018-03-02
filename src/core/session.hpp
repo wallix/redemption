@@ -189,6 +189,14 @@ public:
                 }
 
                 auto tv = session_reactor.timer_events_.get_next_timeout();
+                if (front.up_and_running) {
+                    if (tv.tv_sec >= 0) {
+                        tv = std::min(tv, session_reactor.graphic_timer_events_.get_next_timeout());
+                    }
+                    else {
+                        tv = session_reactor.graphic_timer_events_.get_next_timeout();
+                    }
+                }
                 auto tv_now = tvtime();
                 // LOG(LOG_DEBUG, "%ld %ld - %ld %ld", tv.tv_sec, tv.tv_usec, tv_now.tv_sec, tv_now.tv_usec);
                 if (tv.tv_sec >= 0 && tv < timeout + tv_now) {
@@ -231,6 +239,10 @@ public:
                 auto const end_tv = tvtime() + timeout;
                 if (num == 0) {
                     session_reactor.timer_events_.exec(end_tv);
+                    if (front.up_and_running) {
+                        session_reactor.graphic_timer_events_.exec(
+                            end_tv, end_tv.tv_sec, mm.get_graphic_wrapper(front));
+                    }
                 }
                 // session_reactor.timer_events_.info(end_tv);
 

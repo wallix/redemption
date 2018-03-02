@@ -33,16 +33,11 @@ Bouncer2Mod::Bouncer2Mod(
 : InternalMod(session_reactor, front, width, height, font, Theme{}, dont_resize, false)
 , dancing_rect(0,0,100,100)
 {
-    this->timer = session_reactor.create_timer(std::ref(*this))
+    this->timer = session_reactor.create_graphic_timer(std::ref(*this))
     .set_delay(std::chrono::milliseconds(33))
-    .on_action([](auto ctx, Bouncer2Mod& self){
-        self.graphic_event = self.session_reactor.create_graphic_event(std::ref(self))
-        .on_action([](auto ctx, time_t now, gdi::GraphicApi& gd, Bouncer2Mod& self){
-            self.draw_event(now, gd);
-            return ctx.ready();
-        });
-        return ctx.ready();
-    });
+    .on_action(jln::always_ready([](time_t now, gdi::GraphicApi& gd, Bouncer2Mod& self){
+        self.draw_event(now, gd);
+    }));
 }
 
 Bouncer2Mod::~Bouncer2Mod()
@@ -91,9 +86,6 @@ int Bouncer2Mod::interaction()
             this->speedy = -2;
         }
     }
-
-    this->timer->set_delay(std::chrono::milliseconds(33));
-    this->graphic_event.reset();
 
     return 0;
 }

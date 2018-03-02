@@ -150,19 +150,17 @@ struct SessionReactor
         std::vector<Base*> elements;
     };
 
-    using BasicTimer = jln::BasicTimer<jln::prefix_args<>>;
-    using BasicTimerPtr = jln::UniquePtrWithNotifyDelete<BasicTimer>;
-
-    struct TimerContainer : Container<BasicTimer>
+    template<class Timer>
+    struct BasicTimerContainer : Container<Timer>
     {
-        void update_delay(BasicTimer& timer, std::chrono::milliseconds ms)
+        void update_delay(Timer& timer, std::chrono::milliseconds ms)
         {
             assert(this->elements.end() != this->get_elem_iterator(timer));
             (void)timer;
             (void)ms;
         }
 
-        void update_time(BasicTimer& timer, timeval const& tv)
+        void update_time(Timer& timer, timeval const& tv)
         {
             assert(this->elements.end() != this->get_elem_iterator(timer));
             (void)timer;
@@ -181,7 +179,7 @@ struct SessionReactor
         void exec(timeval const& end_tv, Args&&... args)
         {
             this->exec_impl(
-                [&](BasicTimer const& timer){ return timer.time() <= end_tv; },
+                [&](Timer const& timer){ return timer.time() <= end_tv; },
                 static_cast<Args&&>(args)...
             );
         }
@@ -195,8 +193,13 @@ struct SessionReactor
         }
 
         template<class... Args>
-        using Elem = jln::Timer<TimerContainer&, BasicTimer::prefix_args, Args...>;
+        using Elem = jln::Timer<BasicTimerContainer&, typename Timer::prefix_args, Args...>;
     };
+
+    using BasicTimer = jln::BasicTimer<jln::prefix_args<>>;
+    using BasicTimerPtr = jln::UniquePtrWithNotifyDelete<BasicTimer>;
+
+    using TimerContainer = BasicTimerContainer<BasicTimer>;
 
 
     template<class Builder>
@@ -221,6 +224,22 @@ struct SessionReactor
         return {jln::UniquePtrEventWithUPtr<Timer>
             ::New(this->timer_events_, static_cast<Args&&>(args)...)};
     }
+
+
+    using GraphicTimer = jln::BasicTimer<jln::prefix_args<time_t, gdi::GraphicApi&>>;
+    using GraphicTimerPtr = jln::UniquePtrWithNotifyDelete<GraphicTimer>;
+
+    using GraphicTimerContainer = BasicTimerContainer<GraphicTimer>;
+
+    template<class... Args>
+    NotifyDeleterBuilderWrapper<jln::TimerBuilder<jln::UniquePtrEventWithUPtr<GraphicTimerContainer::Elem<Args...>>>>
+    create_graphic_timer(Args&&... args)
+    {
+        using Action = GraphicTimerContainer::Elem<Args...>;
+        return {jln::UniquePtrEventWithUPtr<Action>
+            ::New(this->graphic_timer_events_, static_cast<Args&&>(args)...)};
+    }
+
 
     using CallbackEvent = jln::ActionBase<jln::prefix_args<Callback&>>;
     using CallbackEventPtr = jln::UniquePtrWithNotifyDelete<CallbackEvent>;
@@ -407,6 +426,7 @@ struct SessionReactor
     GraphicContainer graphic_events_;
     SesmanContainer sesman_events_;
     TimerContainer timer_events_;
+    GraphicTimerContainer graphic_timer_events_;
     TopFdContainer fd_events_;
 
     std::vector<CallbackEvent*> front_events()
