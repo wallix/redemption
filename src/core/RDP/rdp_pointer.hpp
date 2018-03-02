@@ -174,10 +174,13 @@ public:
     explicit Pointer(const Pointer & other)
     : dimensions(other.dimensions)
     , hotspot(other.hotspot)
+    , only_black_white(other.only_black_white)
     {
         auto & av_and = other.get_monochrome_and_mask();
         auto & av_xor = other.get_24bits_xor_mask();
+        memset(this->mask, 0, sizeof(this->mask));
         memcpy(this->mask, av_and.data(), av_and.size());
+        memset(this->data, 0, sizeof(this->data));
         memcpy(this->data, av_xor.data(), av_xor.size());
     }
 
