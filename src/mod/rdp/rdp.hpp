@@ -6848,29 +6848,18 @@ public:
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_CACHE_NOT_OK);
         }
 
-        Pointer & cursor = this->cursors[pointer_cache_idx];
-
-        memset(&cursor, 0, sizeof(Pointer));
         auto hotspot_x      = stream.in_uint16_le();
         auto hotspot_y      = stream.in_uint16_le();
-        Pointer::Hotspot hotspot(hotspot_x, hotspot_y);
-        cursor.set_hotspot(hotspot);
-        uint16_t width = stream.in_uint16_le();
-        uint16_t height = stream.in_uint16_le();
-        cursor.set_dimensions(Pointer::CursorSize(width, height));
-        unsigned mlen = stream.in_uint16_le(); /* mask length */
-        unsigned dlen = stream.in_uint16_le(); /* data length */
+        auto width = stream.in_uint16_le();
+        auto height = stream.in_uint16_le();
+        auto mlen = stream.in_uint16_le(); /* mask length */
+        auto dlen = stream.in_uint16_le(); /* data length */
+        const uint8_t * data = stream.in_uint8p(dlen);
+        const uint8_t * mask = stream.in_uint8p(mlen);
 
-        if ((mlen > sizeof(cursor.mask)) || (dlen > sizeof(cursor.data))) {
-            LOG(LOG_ERR,
-                "mod_rdp::process_color_pointer_pdu: "
-                    "bad length for color pointer mask_len=%u data_len=%u",
-                mlen, dlen);
-            throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
-        }
-        // TODO this is modifiying cursor in place: we should not do that.
-        memcpy(cursor.data, stream.in_uint8p(dlen), dlen);
-        memcpy(cursor.mask, stream.in_uint8p(mlen), mlen);
+        Pointer cursor(Pointer::CursorSize{width, height}, Pointer::Hotspot{hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen}, 1);
+        cursor.update_bw();
+        this->cursors[pointer_cache_idx] = cursor;
 
         //const unsigned int xor_line_length_in_byte = cursor.width * 3;
         //const unsigned int xor_padded_line_length_in_byte =
@@ -6925,8 +6914,6 @@ public:
         //    printf("\n");
         //}
         //printf("\n");
-
-        cursor.update_bw();
 
         drawable.set_pointer(cursor);
         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {

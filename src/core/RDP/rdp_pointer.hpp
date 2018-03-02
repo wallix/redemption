@@ -154,20 +154,21 @@ public:
 //    }
 
 
-    explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 & av_xor, array_view_const_u8 & av_and, int check)
+    explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, int check)
         : dimensions(d)
         , hotspot(hs)
     {
         (void)check;
-        memcpy(this->mask, av_and.data(), av_and.size());
-        memcpy(this->data, av_xor.data(), av_xor.size());
-
-        if ((av_xor.size() > this->bit_mask_size()) || (av_and.size() > sizeof(this->xor_mask_size()))) {
+        if ((av_and.size() > this->bit_mask_size()) || (av_xor.size() > this->xor_mask_size())) {
             LOG(LOG_ERR, "mod_rdp::process_color_pointer_pdu: "
                 "bad length for color pointer mask_len=%zu data_len=%zu",
                 av_and.size(), av_and.size());
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
         }
+
+        memcpy(this->mask, av_and.data(), av_and.size());
+        memcpy(this->data, av_xor.data(), av_xor.size());
+
 
     }
 
@@ -707,7 +708,7 @@ public:
 
     unsigned xor_mask_size() const {
         size_t l_width = (this->dimensions.width * 3);
-        return this->dimensions.height * ((l_width&1) ?l_width+1:l_width);
+        return this->dimensions.height * (l_width+(l_width&1));
     }
 
     bool is_valid() const {
