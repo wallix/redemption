@@ -7065,11 +7065,14 @@ public:
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
+        const uint8_t * data = stream.in_uint8p(dlen);
+        const uint8_t * mask = stream.in_uint8p(mlen);
+
         if (data_bpp == 1) {
             uint8_t data_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8];
             uint8_t mask_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8];
-            stream.in_copy_bytes(data_data, dlen);
-            stream.in_copy_bytes(mask_data, mlen);
+            ::memcpy(data_data, data, dlen);
+            ::memcpy(mask_data, mask, mlen);
 
             if (this->bogus_linux_cursor == BogusLinuxCursor::enable) {
                 for (unsigned i = 0 ; i < mlen; i++) {
@@ -7082,14 +7085,12 @@ public:
 
             // TODO move that into cursor
             cursor.to_regular_pointer(data_data, dlen, width, height, 1, this->orders.global_palette);
-            this->to_regular_mask(mask_data, mlen, width, height, 1, cursor.mask);
+            cursor.to_regular_mask(mask_data, mlen, width, height, 1);
         }
         else {
             // TODO move that into cursor
-            cursor.to_regular_pointer(stream.get_current(), dlen, width, height, data_bpp, this->orders.global_palette);
-            stream.in_skip_bytes(dlen);
-            this->to_regular_mask(stream.get_current(), mlen, width, height, data_bpp, cursor.mask);
-            stream.in_skip_bytes(mlen);
+            cursor.to_regular_pointer(data, dlen, width, height, data_bpp, this->orders.global_palette);
+            cursor.to_regular_mask(mask, mlen, width, height, data_bpp);
         }
 
         if ((data_bpp == 32) && this->clean_up_32_bpp_cursor) {
@@ -7128,60 +7129,6 @@ public:
                 }
             }
         }
-
-        //const unsigned int xor_line_length_in_byte = cursor.width * 3;
-        //const unsigned int xor_padded_line_length_in_byte =
-        //    ((xor_line_length_in_byte % 2) ?
-        //     xor_line_length_in_byte + 1 :
-        //     xor_line_length_in_byte);
-        //const unsigned int remainder = (cursor.width % 8);
-        //const unsigned int and_line_length_in_byte = cursor.width / 8 + (remainder ? 1 : 0);
-        //const unsigned int and_padded_line_length_in_byte =
-        //    ((and_line_length_in_byte % 2) ?
-        //     and_line_length_in_byte + 1 :
-        //     and_line_length_in_byte);
-        //for (unsigned int i0 = 0; i0 < cursor.height; ++i0) {
-        //    printf("%02d  ", (cursor.height - i0 - 1));
-        //
-        //    const uint8_t* xorMask = cursor.data + (cursor.height - i0 - 1) * xor_padded_line_length_in_byte;
-        //
-        //    const uint8_t* andMask = cursor.mask + (cursor.height - i0 - 1) * and_padded_line_length_in_byte;
-        //    unsigned char and_bit_extraction_mask = 7;
-        //
-        //    for (unsigned int i1 = 0; i1 < cursor.width; ++i1) {
-        //        unsigned int color = 0;
-        //        color |=  *xorMask             ;
-        //        color |= (*(xorMask + 1) <<  8);
-        //        color |= (*(xorMask + 2) << 16);
-        //
-        //        if ((*andMask) & (1 << and_bit_extraction_mask)) {
-        //            printf(".");
-        //        }
-        //        else {
-        //            if (color == 0xFFFFFF) {
-        //                printf("W");
-        //            }
-        //            else if (color) {
-        //                printf("C");
-        //            }
-        //            else  {
-        //                printf("B");
-        //            }
-        //        }
-        //
-        //        xorMask += 3;
-        //        if (and_bit_extraction_mask) {
-        //            and_bit_extraction_mask--;
-        //        }
-        //        else {
-        //            and_bit_extraction_mask = 7;
-        //            andMask++;
-        //        }
-        //    }
-        //
-        //    printf("\n");
-        //}
-        //printf("\n");
 
         drawable.set_pointer(cursor);
         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
