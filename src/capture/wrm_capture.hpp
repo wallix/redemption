@@ -537,7 +537,8 @@ protected:
 
         this->trans.send(payload.get_data(), payload.get_offset());
 
-        this->trans.send(cursor.data, cursor.data_size());
+        auto av_xor = cursor.get_24bits_xor_mask();
+        this->trans.send(av_xor);
         auto av_and = cursor.get_monochrome_and_mask();
         this->trans.send(av_and);
     }
