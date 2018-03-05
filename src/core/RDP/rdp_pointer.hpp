@@ -87,7 +87,7 @@ private:
     
     Hotspot hotspot;
     
-    uint8_t alpha_q_data[DATA_SIZE*4];
+    uint8_t alpha_q_data[DATA_SIZE];
 
 public:
     uint8_t data[DATA_SIZE];
@@ -755,11 +755,11 @@ public:
 
     const array_view_const_u8 get_alpha_q()
     {
-        for (uint8_t y = this->height ; y > 0 ; y++){
-            for(uint8_t x = 0 ; x < this->width ; x++){
-                this->alpha_q_data[(this->height - y * this->width*4) + this->x*4+1] = this->mask[(y-1)*::nbbytes(this->width)+::nbbytes(x)]&(0x80>>(x&7))?0xFF:0x00;
+        for (uint8_t y = this->dimensions.height ; y > 0 ; y--){
+            for(uint8_t x = 0 ; x < this->dimensions.width ; x++){
+                this->alpha_q_data[(this->dimensions.height - y * this->dimensions.width*4) + x*4+1] = this->mask[(y-1)*::nbbytes(this->dimensions.width)+::nbbytes(x)]&(0x80>>(x&7))?0xFF:0x00;
                 for (uint8_t i = 0 ; i < 3 ; i++){
-                    this->alpha_q_data[(this->height - y * this->width*4) + this->x*4+1+i] = this->data[(y-1) * 3 * this->width + this->x*3 + i];
+                    this->alpha_q_data[(this->dimensions.height - y * this->dimensions.width*4) + x*4+1+i] = this->data[(y-1) * 3 * this->dimensions.width + x*3 + i];
                 }
             }
         }
