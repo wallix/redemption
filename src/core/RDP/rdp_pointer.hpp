@@ -229,6 +229,7 @@ public:
             }
 
         }
+//        this->compute_alpha_q();
     }
 
 
@@ -246,8 +247,7 @@ public:
 
         memcpy(this->mask, av_and.data(), av_and.size());
         memcpy(this->data, av_xor.data(), av_xor.size());
-
-
+//        this->compute_alpha_q();
     }
 
     explicit Pointer(const Pointer & other)
@@ -261,6 +261,7 @@ public:
         memcpy(this->mask, av_and.data(), av_and.size());
         memset(this->data, 0, sizeof(this->data));
         memcpy(this->data, av_xor.data(), av_xor.size());
+        memcpy(this->alpha_q_data, other.alpha_q_data, DATA_SIZE);
     }
 
     bool operator==(const Pointer & other) const {
@@ -715,6 +716,8 @@ public:
                 break;  // case POINTER_DOT:
 
         }   // switch (pointer_type)
+//        this->compute_alpha_q();
+
     }   // Pointer(uint8_t pointer_type)
 
 
@@ -753,8 +756,12 @@ public:
         return {this->mask, this->bit_mask_size()};
     }
 
-    const array_view_const_u8 get_alpha_q()
+    const array_view_const_u8 get_alpha_q() const
     {
+        return {this->alpha_q_data, sizeof(this->alpha_q_data)};
+    }
+
+    void compute_alpha_q(){
         for (uint8_t y = this->dimensions.height ; y > 0 ; y--){
             for(uint8_t x = 0 ; x < this->dimensions.width ; x++){
                 this->alpha_q_data[(this->dimensions.height - y * this->dimensions.width*4) + x*4+1] = this->mask[(y-1)*::nbbytes(this->dimensions.width)+::nbbytes(x)]&(0x80>>(x&7))?0xFF:0x00;
@@ -763,7 +770,6 @@ public:
                 }
             }
         }
-        return {this->alpha_q_data, sizeof(this->alpha_q_data)};
     }
 
 
