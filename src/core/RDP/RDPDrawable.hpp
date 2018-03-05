@@ -923,9 +923,9 @@ public:
     void set_pointer(const Pointer & cursor) override {
         const auto dimensions = cursor.get_dimensions();
         const auto hotspot = cursor.get_hotspot();
-
+        auto av_xor = cursor.get_24bits_xor_mask();
         auto av_and = cursor.get_monochrome_and_mask();
-        this->drawable.use_pointer(hotspot.x, hotspot.y, dimensions.width, dimensions.height, cursor.data, av_and.data());
+        this->drawable.use_pointer(hotspot.x, hotspot.y, dimensions.width, dimensions.height, av_xor.data(), av_and.data());
     }
 
     void set_palette(const BGRPalette & palette) override {
