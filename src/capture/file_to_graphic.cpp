@@ -728,6 +728,7 @@ void FileToGraphic::interpret_order()
             this->statistics.CachePointer.count++;
             uint16_t width  = 32;
             uint16_t height = 32;
+            uint8_t data_bpp = 24;
             auto hotspot_x  = this->stream.in_uint8();
             auto hotspot_y  = this->stream.in_uint8();
             uint16_t mlen   = 128;
@@ -736,7 +737,7 @@ void FileToGraphic::interpret_order()
             auto mask       = stream.in_uint8p(mlen);
             this->statistics.CachePointer.total_len += dlen + mlen + 2;
 
-            Pointer cursor({width, height}, {hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen}, 1);
+            Pointer cursor(data_bpp, {width, height}, {hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen});
             this->ptr_cache.add_pointer_static(cursor, cache_idx);
             for (gdi::GraphicApi * gd : this->graphic_consumers){
                 gd->set_pointer(cursor);
@@ -777,7 +778,7 @@ void FileToGraphic::interpret_order()
         auto mask = stream.in_uint8p(mlen);
         this->statistics.CachePointer.total_len += 9 + mlen + dlen;
 
-        Pointer cursor({width, height}, {hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen}, 1);
+        Pointer cursor(data_bpp, {width, height}, {hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen});
 
         this->ptr_cache.add_pointer_static(cursor, cache_idx);
         for (gdi::GraphicApi * gd : this->graphic_consumers){

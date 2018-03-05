@@ -233,11 +233,27 @@ public:
     }
 
 
-    explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, int check)
+    explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and)
         : dimensions(d)
         , hotspot(hs)
     {
-        (void)check;
+        if ((av_and.size() > this->bit_mask_size()) || (av_xor.size() > this->xor_mask_size())) {
+            LOG(LOG_ERR, "mod_rdp::process_color_pointer_pdu: "
+                "bad length for color pointer mask_len=%zu data_len=%zu",
+                av_and.size(), av_and.size());
+            throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
+        }
+
+        memcpy(this->mask, av_and.data(), av_and.size());
+        memcpy(this->data, av_xor.data(), av_xor.size());
+//        this->compute_alpha_q();
+    }
+
+    explicit Pointer(uint8_t data_bpp, CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and)
+        : dimensions(d)
+        , hotspot(hs)
+    {
+        (void)data_bpp;
         if ((av_and.size() > this->bit_mask_size()) || (av_xor.size() > this->xor_mask_size())) {
             LOG(LOG_ERR, "mod_rdp::process_color_pointer_pdu: "
                 "bad length for color pointer mask_len=%zu data_len=%zu",
@@ -270,7 +286,8 @@ public:
              && other.dimensions.width == this->dimensions.width
              && other.dimensions.height == this->dimensions.height
              && (0 == memcmp(this->data, other.data, other.data_size()))
-             && (0 == memcmp(this->mask, other.mask, this->bit_mask_size())));
+             && (0 == memcmp(this->mask, other.mask, this->bit_mask_size()))
+             && (0 == memcmp(this->alpha_q_data, other.alpha_q_data, DATA_SIZE)));
     }
 
 
