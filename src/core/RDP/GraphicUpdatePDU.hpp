@@ -985,9 +985,10 @@ protected:
 
         if (cursor.only_black_white) {
             uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8] = { 0 };
+            auto av_xor = cursor.get_24bits_xor_mask();
 
             for (unsigned int h = 0; h < dimensions.height; ++h) {
-                const uint8_t * psource = cursor.data
+                const uint8_t * psource = av_xor.data()
                     + (dimensions.height - h - 1) * source_xor_padded_line_length_in_byte;
                 uint8_t * pdest   = xorMaskData + h * xor_padded_line_length_in_byte;
                 uint8_t xor_bit_mask_generation = 7;
