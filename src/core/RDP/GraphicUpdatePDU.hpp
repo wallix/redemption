@@ -1018,9 +1018,10 @@ protected:
             auto av_and = cursor.get_monochrome_and_mask();
             
             uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 4] = { 0 };
+            auto av_xor = cursor.get_24bits_xor_mask();
 
             for (unsigned int h = 0; h < dimensions.height; ++h) {
-                const uint8_t* psource = cursor.data + (dimensions.height - h - 1) * source_xor_padded_line_length_in_byte;
+                const uint8_t* psource = av_xor.data() + (dimensions.height - h - 1) * source_xor_padded_line_length_in_byte;
                       uint8_t* pdest   = xorMaskData + (dimensions.height - h - 1) * xor_padded_line_length_in_byte;
                 const uint8_t* andMask = &(av_and.data()[(dimensions.height - h - 1) * and_padded_line_length_in_byte]);
                 unsigned char and_bit_extraction_mask = 7;
