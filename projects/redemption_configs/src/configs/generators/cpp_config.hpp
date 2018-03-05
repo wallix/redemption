@@ -207,7 +207,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
     template<class E>
     enable_if_enum_t<E>
     write_value(E const & e)
-    { this->out() << "{static_cast<type>(" << static_cast<unsigned long>(e) << ")}"; }
+    { this->out() << " = static_cast<type>(" << static_cast<unsigned long>(e) << ")"; }
 
     template<class T>
     disable_if_enum_t<T>
