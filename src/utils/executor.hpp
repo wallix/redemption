@@ -1350,9 +1350,9 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
         return i::value == Sequencer::sequence_size - 1;
     }
 
-    constexpr static size_t index() noexcept
+    constexpr static i index() noexcept
     {
-        return i::value;
+        return i();
     }
 
     constexpr static auto sequence_name() noexcept
@@ -1376,10 +1376,10 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
         return this->next_action(this->get_sequence_at<I>());
     }
 
-    template<class I>
-    jln::ExecutorResult sequence_at(I) noexcept
+    template<class S>
+    jln::ExecutorResult sequence_at(S) noexcept
     {
-        return this->sequence_at<I::value>();
+        return this->next_action(this->get_sequence_name<S>());
     }
 
     template<std::size_t I>
@@ -1388,10 +1388,10 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
         return this->exec_action(this->get_sequence_at<I>());
     }
 
-    template<class I>
-    jln::ExecutorResult exec_sequence_at(I) noexcept
+    template<class S>
+    jln::ExecutorResult exec_sequence_at(S) noexcept
     {
-        return this->sequence_at<I::value>();
+        return this->exec_action(this->get_sequence_name<S>());
     }
 
     template<std::size_t I>
@@ -1419,6 +1419,13 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
                 static_cast<decltype(xs)&&>(xs)...
             );
         };
+    }
+
+
+    template<class S>
+    auto get_sequence_at(S) noexcept
+    {
+        return get_sequence_name<S>();
     }
 
     // Only with Executor2TimerContext
