@@ -246,6 +246,7 @@ public:
 
         memcpy(this->mask, av_and.data(), av_and.size());
         memcpy(this->data, av_xor.data(), av_xor.size());
+        this->update_bw();
 //        this->compute_alpha_q();
     }
 
