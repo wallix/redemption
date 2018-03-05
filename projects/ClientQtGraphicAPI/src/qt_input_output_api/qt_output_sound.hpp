@@ -49,6 +49,7 @@ Q_OBJECT
 
     Phonon::MediaObject * media;
     Phonon::AudioOutput * audioOutput;
+    Phonon::Path audio_path;
 
     int current_wav_index;
     int total_wav_files;
@@ -65,16 +66,24 @@ public:
     {
         this->media = new Phonon::MediaObject(this);
         this->audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
-        Phonon::createPath(this->media, this->audioOutput);
+        this->audio_path = Phonon::createPath(this->media, this->audioOutput);
 
         this->QObject::connect(this->media, SIGNAL (finished()),  this, SLOT (call_playback_over()));
+    }
+
+    ~QtOutputSound() {
+        for (int i = 0; i <= total_wav_files; i++) {
+            std::string wav_file_name = this->path + std::string("/sound") + std::to_string(i) +std::string(".wav");
+            remove(wav_file_name.c_str());
+//             LOG(LOG_INFO, "delete wav: \"%s\"", wav_file_name);
+        }
     }
 
     void init(size_t raw_total_size) override {
 
         this->total_wav_files++;
 
-        this->wave_file_to_write = std::string("sound") + std::to_string(this->total_wav_files) +std::string(".wav");
+        this->wave_file_to_write = this->path + std::string("/sound") + std::to_string(this->total_wav_files) +std::string(".wav");
 
         StaticOutStream<64> out_stream;
         out_stream.out_copy_bytes("RIFF", 4);
@@ -109,9 +118,10 @@ public:
         if (this->media->state() == Phonon::StoppedState) {
 
             if (this->total_wav_files > this->current_wav_index) {
-
                 this->current_wav_index++;
-                std::string wav_file_name = std::string("sound") + std::to_string(this->current_wav_index) +std::string(".wav");
+
+                std::string wav_file_name =  std::string(":/DATA/sound_temp/sound") + std::to_string(this->current_wav_index) +std::string(".wav");
+                LOG(LOG_INFO, "play wav: \"%s\"", wav_file_name);
 
                 Phonon::MediaSource sources(QUrl(wav_file_name.c_str()));
                 this->media->setCurrentSource(sources);
@@ -122,7 +132,8 @@ public:
 
 private Q_SLOTS:
     void call_playback_over() {
-        std::string wav_file_name = std::string("sound") + std::to_string(this->current_wav_index) +std::string(".wav");
+        std::string wav_file_name = this->path + std::string("/sound") + std::to_string(this->current_wav_index) +std::string(".wav");
+        LOG(LOG_INFO, "remove wav: \"%s\"", wav_file_name);
         remove(wav_file_name.c_str());
 
         this->play();

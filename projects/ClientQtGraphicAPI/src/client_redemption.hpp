@@ -139,11 +139,11 @@ public:
     //------------------------
 
     ClientRedemption(char* argv[], int argc, RDPVerbose verbose,
-                    ClientOutputGraphicAPI *impl_graphic,
-                    ClientIOClipboardAPI * impl_clipboard,
-                    ClientOutputSoundAPI * impl_sound,
-                    ClientInputSocketAPI * impl_socket_listener,
-                    ClientInputMouseKeyboardAPI * impl_mouse_keyboard)
+                     ClientOutputGraphicAPI *impl_graphic,
+                     ClientIOClipboardAPI * impl_clipboard,
+                     ClientOutputSoundAPI * impl_sound,
+                     ClientInputSocketAPI * impl_socket_listener,
+                     ClientInputMouseKeyboardAPI * impl_mouse_keyboard)
         : ClientRedemptionIOAPI(argv, argc, verbose)
 
         , impl_graphic( impl_graphic)
@@ -170,6 +170,7 @@ public:
         }
         if (this->impl_sound) {
             this->impl_sound->set_client(this);
+            this->impl_sound->set_path(this->SOUND_TEMP_DIR);
         } else {
             LOG(LOG_WARNING, "No sound output implementation.");
         }
@@ -1316,7 +1317,7 @@ public:
 
     // sed '/usr\/include\/qt4\|threading-multi\/src\/Qt4\/\|in expansion of macro .*Q_OBJECT\|Wzero/,/\^/d' &&
 
-    // ../../tools/c++-analyzer/bt  bin/gcc-4.9.2/debug/threading-multi/client_rdp_Qt4
+    // ../../tools/c++-analyzer/bt  bin/gcc-4.9.2/debug/threading-multi/client_rdp
 
     // ../packager/packager.py --version 1.0.0 --no-entry-changelog --build-package
 

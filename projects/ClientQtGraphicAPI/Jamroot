@@ -302,9 +302,26 @@ if $(qtversion) {
     :
         $(EXE_DEPENDENCIES)
         <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
-    
     ;
 }
+
+#obj test_client.o : src/test_client_redemption.cpp :
+#    <define>REDEMPTION_DECL_LOG_TEST
+#    $(EXE_DEPENDENCIES)
+#;
+
+#exe test_client_rdp :
+#    test_client.o
+#    $(obj_list)
+#    $(lib_list)
+#    $(obj_list_VNC)
+#    config.o
+#    hexdump.o
+#:
+#    $(EXE_DEPENDENCIES)
+#    <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
+#    
+#;
 
 
 
