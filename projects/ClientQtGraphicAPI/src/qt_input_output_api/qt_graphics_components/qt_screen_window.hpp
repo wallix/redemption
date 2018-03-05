@@ -301,7 +301,7 @@ public:
     {
         this->setMouseTracking(true);
         this->installEventFilter(this);
-        this->setAttribute(Qt::WA_NoSystemBackground);
+//         this->setAttribute(Qt::WA_NoSystemBackground);
 
         std::string title = "ReDemPtion Client connected to [" + this->_front->target_IP +  "].";
         this->setWindowTitle(QString(title.c_str()));
@@ -317,7 +317,7 @@ public:
         this->_buttonCtrlAltDel.setGeometry(rectCtrlAltDel);
         this->_buttonCtrlAltDel.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (pressed()),  this, SLOT (CtrlAltDelPressed()));
-        this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));;
+        this->QObject::connect(&(this->_buttonCtrlAltDel)  , SIGNAL (released()), this, SLOT (CtrlAltDelReleased()));
         this->_buttonCtrlAltDel.setFocusPolicy(Qt::NoFocus);
 
         QRect rectRefresh(QPoint(this->_width/3, this->_height+1),QSize(this->_width/3, BUTTON_HEIGHT));
