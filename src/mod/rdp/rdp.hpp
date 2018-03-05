@@ -325,6 +325,10 @@ protected:
     int  auth_channel_flags;
     int  auth_channel_chanid;
 
+    CHANNELS::ChannelNameId checkout_channel;
+    int  checkout_channel_flags = 0;
+    int  checkout_channel_chanid = 0;
+
     AuthApi & authentifier;
     ReportMessageApi & report_message;
 
@@ -1124,6 +1128,8 @@ public:
             default:
                 this->auth_channel = mod_rdp_params.auth_channel;
         }
+
+        this->checkout_channel = mod_rdp_params.checkout_channel;
 
         memset(this->clientAddr, 0, sizeof(this->clientAddr));
         strncpy(this->clientAddr, mod_rdp_params.client_address, sizeof(this->clientAddr) - 1);
@@ -2357,6 +2363,26 @@ public:
     }
 
 private:
+    void send_checkout_channel_data(const char * string_data) {
+        CHANNELS::VirtualChannelPDU virtual_channel_pdu;
+
+        StaticOutStream<65536> stream_data;
+
+        uint32_t data_size = std::min(::strlen(string_data), stream_data.get_capacity());
+
+        stream_data.out_uint16_le(1);           // Version
+        stream_data.out_uint16_le(data_size);
+        stream_data.out_copy_bytes(string_data, data_size);
+
+        virtual_channel_pdu.send_to_server(
+            this->trans, this->encrypt, this->encryptionLevel
+          , this->userid, this->checkout_channel_chanid
+          , stream_data.get_offset()
+          , this->checkout_channel_flags
+          , stream_data.get_data()
+          , stream_data.get_offset());
+    }
+
     void send_to_channel(
         const CHANNELS::ChannelDef & channel,
         uint8_t const * chunk, std::size_t chunk_size,
@@ -2582,7 +2608,8 @@ public:
                 const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
                 size_t num_channels = channel_list.size();
                 if ((num_channels > 0) || this->enable_auth_channel ||
-                    this->file_system_drive_manager.HasManagedDrive()) {
+                    this->file_system_drive_manager.HasManagedDrive() ||
+                    this->checkout_channel.c_str()[0]) {
                     /* Here we need to put channel information in order
                     to redirect channel data
                     from client to server passing through the "proxy" */
@@ -2689,6 +2716,21 @@ public:
                             GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
                         CHANNELS::ChannelDef def;
                         def.name = this->auth_channel;
+                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                        if (bool(this->verbose & RDPVerbose::channels)){
+                            def.log(cs_net.channelCount);
+                        }
+                        this->mod_channel_list.push_back(def);
+                        cs_net.channelCount++;
+                    }
+
+                    // Inject a new channel for checkout_channel virtual channel
+                    if (this->checkout_channel.c_str()[0]) {
+                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->checkout_channel.c_str(), 8);
+                        cs_net.channelDefArray[cs_net.channelCount].options =
+                            GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
+                        CHANNELS::ChannelDef def;
+                        def.name = this->checkout_channel;
                         def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
                         if (bool(this->verbose & RDPVerbose::channels)){
                             def.log(cs_net.channelCount);
@@ -3793,6 +3835,9 @@ public:
             // If channel name is our virtual channel, then don't send data to front
                  if (mod_channel.name == this->auth_channel && this->enable_auth_channel) {
                 this->process_auth_event(mod_channel, sec.payload, length, flags, chunk_size);
+            }
+            else if (mod_channel.name == this->checkout_channel) {
+                this->process_checkout_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::sespro) {
                 this->process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size);
@@ -7731,6 +7776,46 @@ private:
             this->authentifier.set_auth_channel_target(
                 auth_channel_message.c_str());
         }
+    }
+
+    void process_checkout_event(
+        const CHANNELS::ChannelDef & checkout_channel,
+        InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size
+    ) {
+        (void)length;
+        (void)chunk_size;
+        assert(stream.in_remain() == chunk_size);
+
+        if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) !=
+            (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST))
+        {
+            LOG(LOG_WARNING, "mod_rdp::process_checkout_event: Chunked Virtual Channel Data ignored!");
+            return;
+        }
+
+        {
+            const unsigned expected = 4;    // Version(2) + DataLength(2)
+            if (!stream.in_check_rem(expected)) {
+                LOG( LOG_ERR
+                   , "mod_rdp::process_checkout_event: data truncated (1), expected=%u remains=%zu"
+                   , expected, stream.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+        }
+
+        uint16_t const version = stream.in_uint16_le();
+        uint16_t const data_length = stream.in_uint16_le();
+
+        LOG(LOG_INFO, "mod_rdp::process_checkout_event: Version=%u DataLength=%u", version, data_length);
+
+        std::string checkout_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
+
+        this->checkout_channel_flags  = flags;
+        this->checkout_channel_chanid = checkout_channel.chanid;
+
+        LOG(LOG_INFO, "mod_rdp::process_checkout_event: Data=\"%s\"", checkout_channel_message);
+
+        send_checkout_channel_data("{ \"ReturnCode\": 0, \"ReturnMessage\": \"Succeeded.\" }");
     }
 
     void process_session_probe_event(

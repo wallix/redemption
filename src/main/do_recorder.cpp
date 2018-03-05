@@ -1999,7 +1999,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     auto options = program_options::parse_command_line(argc, argv, desc);
 
     const char * copyright_notice = "ReDemPtion " VERSION ".\n"
-        "Copyright (C) Wallix 2010-2016.\n"
+        "Copyright (C) Wallix 2010-2018.\n"
         "Christophe Grosjean, Jonathan Poelen, Raphael Zhou.";
 
     if (options.count("help") > 0) {

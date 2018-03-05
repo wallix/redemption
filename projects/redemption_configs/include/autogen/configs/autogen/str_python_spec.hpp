@@ -335,6 +335,9 @@
 "# Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel.\n"
 "auth_channel = string(max=7, default='*')\n\n"
 
+"# Authentication channel used by other scripts. No default name. Keep empty to disable virtual channel.\n"
+"checkout_channel = string(max=7, default='')\n\n"
+
 "#_hidden\n"
 "alternate_shell = string(default='')\n\n"
 

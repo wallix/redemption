@@ -114,6 +114,7 @@ namespace cfg {
         struct proxy_managed_drives;
         struct ignore_auth_channel;
         struct auth_channel;
+        struct checkout_channel;
         struct alternate_shell;
         struct shell_arguments;
         struct shell_working_directory;
