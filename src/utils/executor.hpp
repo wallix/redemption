@@ -242,22 +242,30 @@ namespace detail
     {
         using type = ExecutorResult(*)(BaseType&, Us..., Ts...);
     };
+
+    template<class T> using ident = T;
 }
 
 template<class BaseType, class PrefixArgs, class...Ts>
 using MakeFuncPtr = typename detail::make_func_ptr<BaseType, PrefixArgs, Ts...>::type;
 
-constexpr auto default_action_function() noexcept
+struct default_action_function
 {
-    return []([[maybe_unused]] auto... args){
-        return ExecutorResult::Nothing;
-    };
-}
+    template<class R, class... Args>
+    operator detail::ident<R(*)(Args...)> () noexcept
+    {
+        return [](Args...) -> R { return jln::ExecutorResult::Nothing; };
+    }
+};
 
-constexpr auto default_delete_function() noexcept
+struct default_delete_function
 {
-    return []([[maybe_unused]] auto... args) noexcept {};
-}
+    template<class... Args>
+    operator detail::ident<void(*)(Args...)noexcept> () noexcept
+    {
+        return [](Args...) noexcept -> void {};
+    }
+};
 
 template<class F>
 F make_lambda() noexcept
@@ -1063,19 +1071,22 @@ private:
     FdPtr fd_ptr;
 };
 
-
 template<class F, class T, template<class...> class Ctx>
-auto wrap_fn()
+struct wrap_fn
 {
-    return [](auto& e, auto... prefix_args) {
-        auto& self = static_cast<T&>(e);
-        // TODO ExecutorExitContext
-        return self.ctx.invoke(
-            make_lambda<F>(),
-            Ctx<T>(self),
-            static_cast<decltype(prefix_args)&&>(prefix_args)...);
-    };
-}
+    template<class R, class E, class... Args>
+    operator detail::ident<R(*)(E, Args...)> () noexcept
+    {
+        return [](E& e, Args... prefix_args) -> R {
+            auto& self = static_cast<T&>(e);
+            // TODO ExecutorExitContext
+            return self.ctx.invoke(
+                make_lambda<F>(),
+                Ctx<T>(self),
+                static_cast<decltype(prefix_args)&&>(prefix_args)...);
+        };
+    }
+};
 
 class propagate_to_base_t {};
 
@@ -1526,6 +1537,9 @@ namespace literals
 template<auto x>
 constexpr auto value = std::integral_constant<decltype(x), x>{};
 
+template<class I, class Sequencer, class Ctx>
+struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx;
+
 namespace detail
 {
     struct unamed{};
@@ -1552,9 +1566,23 @@ namespace detail
     {
         return x;
     }
+
+    template<class Sequencer, class Ctx, class IndexedType>
+    auto create_sequence_ctx(IndexedType) noexcept
+    {
+        return [](auto ctx, auto&&... xs){
+            auto x = IndexedType{};
+            using index = typename IndexedType::index;
+            using NewSequencer = FunSequencerExecutorCtx<index, Sequencer, Ctx>;
+            return x.func()(
+                static_cast<NewSequencer&>(static_cast<Ctx&>(ctx)),
+                static_cast<decltype(xs)&&>(xs)...
+            );
+        };
+    }
 }
 
-template<class i, class Sequencer, class Ctx>
+template<class I, class Sequencer, class Ctx>
 struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
 {
     // ExecutorResult terminate() noexcept
@@ -1569,33 +1597,33 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
 
     constexpr static bool is_final_sequence() noexcept
     {
-        return i::value == Sequencer::sequence_size - 1;
+        return I::value == Sequencer::sequence_size - 1;
     }
 
-    constexpr static i index() noexcept
+    constexpr static I index() noexcept
     {
-        return i();
+        return I{};
     }
 
     constexpr static auto sequence_name() noexcept
     {
-        return detail::value_at<i>(Sequencer{}).name();
+        return detail::value_at<I>(Sequencer{}).name();
     }
 
     jln::ExecutorResult sequence_next() noexcept
     {
-        return this->sequence_at<i::value+1>();
+        return this->sequence_at<I::value+1>();
     }
 
     jln::ExecutorResult sequence_previous() noexcept
     {
-        return this->sequence_at<i::value-1>();
+        return this->sequence_at<I::value-1>();
     }
 
-    template<std::size_t I>
+    template<std::size_t i>
     jln::ExecutorResult sequence_at() noexcept
     {
-        return this->next_action(this->get_sequence_at<I>());
+        return this->next_action(this->get_sequence_at<i>());
     }
 
     template<class S>
@@ -1604,10 +1632,10 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
         return this->next_action(this->get_sequence_name<S>());
     }
 
-    template<std::size_t I>
+    template<std::size_t i>
     jln::ExecutorResult exec_sequence_at() noexcept
     {
-        return this->exec_action(this->get_sequence_at<I>());
+        return this->exec_action(this->get_sequence_at<i>());
     }
 
     template<class S>
@@ -1616,31 +1644,17 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
         return this->exec_action(this->get_sequence_name<S>());
     }
 
-    template<std::size_t I>
+    template<std::size_t i>
     auto get_sequence_at() noexcept
     {
-        using index = std::integral_constant<std::size_t, I>;
-        using NewSequencer = FunSequencerExecutorCtx<index, Sequencer, Ctx>;
-        return [](auto ctx, auto&&... xs){
-            return detail::value_at<index>(Sequencer{}).func()(
-                static_cast<NewSequencer&>(static_cast<Ctx&>(ctx)),
-                static_cast<decltype(xs)&&>(xs)...
-            );
-        };
+        using index = std::integral_constant<std::size_t, i>;
+        return detail::create_sequence_ctx<Sequencer, Ctx>(detail::value_at<index>(Sequencer{}));
     }
 
     template<class S>
     auto get_sequence_name() noexcept
     {
-        return [](auto ctx, auto&&... xs){
-            auto x = detail::value_by_name<S>(Sequencer{});
-            using index = typename decltype(x)::index;
-            using NewSequencer = FunSequencerExecutorCtx<index, Sequencer, Ctx>;
-            return x.func()(
-                static_cast<NewSequencer&>(static_cast<Ctx&>(ctx)),
-                static_cast<decltype(xs)&&>(xs)...
-            );
-        };
+        return detail::create_sequence_ctx<Sequencer, Ctx>(detail::value_by_name<S>(Sequencer{}));
     }
 
 

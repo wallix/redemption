@@ -5,7 +5,10 @@ include $(JAM_INCLUDE_PATH)/cxxflags.jam ;
 include $(JAM_INCLUDE_PATH)/defines.jam ;
 include $(JAM_INCLUDE_PATH)/includes.jam ;
 
-REDEMPTION_CXXFLAGS ?= <cxxflags>-std=c++17 ;
+REDEMPTION_CXXFLAGS ?=
+    <cxxflags>-std=c++17
+    <toolset>gcc:<cxxflags>-ftemplate-depth=524 # bjam force value to 128... è_é
+;
 
 variant coverage : san : ;
 

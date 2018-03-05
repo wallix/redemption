@@ -35,7 +35,7 @@ class Inifile;
 namespace gdi
 {
     class GraphicApi;
-};
+}
 
 struct SessionReactor
 {

@@ -218,7 +218,7 @@ public:
                     error_msg = "Unknown error";
                     break;
             }
-            print_error("Unknown error", error_message);
+            print_error(error_msg, error_message);
             return Transport::TlsResult::Fail;
         }
 
