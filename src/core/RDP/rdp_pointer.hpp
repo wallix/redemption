@@ -135,33 +135,6 @@ public:
     }
 
 public:
-//    explicit Pointer(uint8_t bpp, CursorSize d, Hotspot hs, array_view_const_u8 & av_xor, array_view_const_u8 & av_and, vnc = false)
-//        : dimensions(d)
-//        , hotspot(hs)
-//    {
-//        for (sze_t yy = 0; yy < this->cy; yy++) {
-//            for (size_t xx = 0 ; xx < this->cx ; xx++){
-//                if (this->mask[yy * ::nbbytes(this->cx) + xx / 8 ] & (0x80 >> (xx&7))){
-//                    
-//                    if ((yy < 32) && (xx < 32)){
-//                        cursor.mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
-//                        int pixel = 0;
-//                        for (int tt = 0 ; tt < this->Bpp; tt++){
-//                            pixel += vnc_pointer_data[(yy * this->cx + xx) * this->Bpp + tt] << (8 * tt);
-//                        }
-//                        int red   = (pixel >> this->red_shift) & this->red_max;
-//                        int green = (pixel >> this->green_shift) & this->green_max;
-//                        int blue  = (pixel >> this->blue_shift) & this->blue_max;
-//                        cursor.data[((31-yy) * 32 + xx) * 3 + 0] = (red << 3) | (red >> 2);
-//                        cursor.data[((31-yy) * 32 + xx) * 3 + 1] = (green << 2) | (green >> 4);
-//                        cursor.data[((31-yy) * 32 + xx) * 3 + 2] = (blue << 3) | (blue >> 2);
-//                    }
-//                }
-//            }
-//        }
-//        cursor.update_bw();
-//    }
-
 
     explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, uint8_t data_bpp, const BGRPalette & palette, bool clean_up_32_bpp_cursor, BogusLinuxCursor bogus_linux_cursor)
         : dimensions(d)
@@ -236,7 +209,7 @@ public:
             }
 
         }
-//        this->compute_alpha_q();
+        this->compute_alpha_q();
     }
 
 
@@ -254,7 +227,7 @@ public:
         memcpy(this->mask, av_and.data(), av_and.size());
         memcpy(this->data, av_xor.data(), av_xor.size());
         this->update_bw();
-//        this->compute_alpha_q();
+        this->compute_alpha_q();
     }
 
     explicit Pointer(uint8_t data_bpp, CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and)
@@ -271,7 +244,7 @@ public:
 
         memcpy(this->mask, av_and.data(), av_and.size());
         memcpy(this->data, av_xor.data(), av_xor.size());
-//        this->compute_alpha_q();
+        this->compute_alpha_q();
     }
 
     explicit Pointer(const Pointer & other)
@@ -286,6 +259,7 @@ public:
         memset(this->data, 0, sizeof(this->data));
         memcpy(this->data, av_xor.data(), av_xor.size());
         memcpy(this->alpha_q_data, other.alpha_q_data, DATA_SIZE);
+        this->compute_alpha_q();
     }
 
     bool operator==(const Pointer & other) const {
@@ -741,7 +715,7 @@ public:
                 break;  // case POINTER_DOT:
 
         }   // switch (pointer_type)
-//        this->compute_alpha_q();
+        this->compute_alpha_q();
 
     }   // Pointer(uint8_t pointer_type)
 
@@ -777,9 +751,13 @@ public:
     void compute_alpha_q(){
         for (uint8_t y = this->dimensions.height ; y > 0 ; y--){
             for(uint8_t x = 0 ; x < this->dimensions.width ; x++){
-                this->alpha_q_data[(this->dimensions.height - y * this->dimensions.width*4) + x*4+1] = this->mask[(y-1)*::nbbytes(this->dimensions.width)+::nbbytes(x)]&(0x80>>(x&7))?0xFF:0x00;
+                const size_t mask_offset = (y-1)*::nbbytes(this->dimensions.width)+::nbbytes(x);
+                const size_t data_offset = (y-1) * 3 * this->dimensions.width + x*3;
+                const size_t target_data_offset = ((this->dimensions.height - y) * this->dimensions.width*4) + x*4;
+//                LOG(LOG_INFO, "(x=%d/%u, y=%d/%u) mask_offset=%zu",x, this->dimensions.width, y, this->dimensions.height, mask_offset);
+                this->alpha_q_data[target_data_offset] = this->mask[mask_offset]&(0x80>>(x&7))?0xFF:0x00;
                 for (uint8_t i = 0 ; i < 3 ; i++){
-                    this->alpha_q_data[(this->dimensions.height - y * this->dimensions.width*4) + x*4+1+i] = this->data[(y-1) * 3 * this->dimensions.width + x*3 + i];
+                    this->alpha_q_data[target_data_offset+1+i] = this->data[data_offset+i];
                 }
             }
         }
