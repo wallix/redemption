@@ -544,7 +544,7 @@ protected:
         this->trans.send(av_and);
     }
 
-    void set_pointer(int cache_idx) override {
+    void cached_pointer_update(int cache_idx) override {
         size_t size =   2                   // mouse x
                       + 2                   // mouse y
                       + 1                   // cache index

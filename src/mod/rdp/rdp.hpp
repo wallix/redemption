@@ -3625,21 +3625,15 @@ public:
                 if (upd.fragmentation == FastPath::FASTPATH_FRAGMENT_FIRST) {
                     this->multifragment_update_data.rewind();
                 }
-
-                this->multifragment_update_data.out_copy_bytes(
-                    upd.payload.get_data(), upd.payload.get_capacity());
-
+                this->multifragment_update_data.out_copy_bytes(upd.payload.get_data(), upd.payload.get_capacity());
                 if (upd.fragmentation != FastPath::FASTPATH_FRAGMENT_LAST) {
                     continue;
                 }
             }
 
-            InStream fud(this->multifragment_update_data.get_data(),
-                this->multifragment_update_data.get_offset());
+            InStream fud(this->multifragment_update_data.get_data(), this->multifragment_update_data.get_offset());
 
-            InStream& stream =
-                ((upd.fragmentation == FastPath::FASTPATH_FRAGMENT_SINGLE) ?
-                upd.payload : fud);
+            InStream& stream = ((upd.fragmentation == FastPath::FASTPATH_FRAGMENT_SINGLE) ? upd.payload : fud);
 
             switch (static_cast<FastPath::UpdateType>(upd.updateCode)) {
             case FastPath::UpdateType::ORDERS:
@@ -3676,7 +3670,7 @@ public:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "Process pointer null (Fast)");
                 }
-                drawable.set_pointer(Pointer{});
+                drawable.set_pointer(Pointer(Pointer::POINTER_NULL));
                 break;
 
             case FastPath::UpdateType::PTR_DEFAULT:
@@ -5000,7 +4994,8 @@ public:
                 LOG(LOG_INFO, "Process pointer system");
             }
             // TODO: actually show mouse cursor or get back to default
-            this->process_system_pointer_pdu(stream, drawable);
+            int system_pointer_type = stream.in_uint32_le();
+            this->process_system_pointer_pdu(system_pointer_type, drawable);
             if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                 LOG(LOG_INFO, "Process pointer system done");
             }
@@ -6899,11 +6894,8 @@ public:
             drawable.set_pointer(cursor);
         }
         else {
-            LOG(LOG_WARNING,
-                "mod_rdp::process_cached_pointer_pdu: incalid cache cell index, use system default. index=%u",
+            LOG(LOG_WARNING,  "mod_rdp::process_cached_pointer_pdu: invalid cache cell index, use system default. index=%u",
                 pointer_idx);
-            Pointer cursor(Pointer::POINTER_NORMAL);
-            drawable.set_pointer(cursor);
         }
         if (bool(this->verbose & RDPVerbose::graphics_pointer)){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
@@ -6924,12 +6916,11 @@ public:
     // | SYSPTR_DEFAULT 0x00007F00 | The default system pointer. |
     // +---------------------------+-----------------------------+
 
-    void process_system_pointer_pdu(InStream & stream, gdi::GraphicApi & drawable)
+    void process_system_pointer_pdu(int system_pointer_type, gdi::GraphicApi & drawable)
     {
         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu");
         }
-        int system_pointer_type = stream.in_uint32_le();
         switch (system_pointer_type) {
         case RDP_NULL_POINTER:
             {

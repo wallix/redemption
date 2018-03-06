@@ -207,7 +207,7 @@ protected:
     virtual void flush_bitmaps() = 0;
 
     virtual void send_pointer(int cache_idx, const Pointer & cursor) = 0;
-    virtual void set_pointer(int cache_idx) = 0;
+    virtual void cached_pointer_update(int cache_idx) = 0;
 
 public:
     /*****************************************************************************/
@@ -791,7 +791,7 @@ public:
                 break;
             }
 
-            this->set_pointer(cache_idx);
+            this->cached_pointer_update(cache_idx);
         break;
         }
     }

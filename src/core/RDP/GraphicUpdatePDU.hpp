@@ -873,7 +873,7 @@ protected:
 //      cached using either the Color Pointer Update (section 2.2.9.1.1.4.4) or
 //      New Pointer Update (section 2.2.9.1.1.4.5).
 
-    void set_pointer(int cache_idx) override {
+    void cached_pointer_update(int cache_idx) override {
         if (bool(this->verbose & Verbose::pointer)) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer(cache_idx=%d)", cache_idx);
         }
@@ -889,7 +889,7 @@ protected:
         if (bool(this->verbose & Verbose::pointer)) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::set_pointer done");
         }
-    }   // void set_pointer(int cache_idx)
+    }   // void cached_pointer_update(int cache_idx)
 
 public:
     using RDPSerializer::set_pointer;

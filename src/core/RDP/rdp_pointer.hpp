@@ -764,18 +764,6 @@ public:
         ::memcpy(this->mask, mask, std::min(mask_size, sizeof(this->mask)));
     }
 
-    //bool is_same(const Pointer & other) {
-    //  return (
-    //         (this->bpp    == other.bpp)
-    //      && (this->dimensions.width  == other.dimensions.width)
-    //      && (this->dimensions.height == other.dimensions.height)
-    //      && (this->hotspot.x      == other.x)
-    //      && (this->hotspot.y      == other.y)
-    //      && (memcmp(this->data, other.data, this->data_size()) == 0)
-    //      && (memcmp(this->mask, other.mask, this->mask_size()) == 0)
-    //      );
-    //}
-
     const array_view_const_u8 get_monochrome_and_mask() const
     {
         return {this->mask, this->bit_mask_size()};
