@@ -831,95 +831,14 @@ protected:
 //    +---------------------------|------------------------------+
 
 
-//    2.2.9.1.1.4.4     Color Pointer Update (TS_COLORPOINTERATTRIBUTE)
-//    -----------------------------------------------------------------
-//    The TS_COLORPOINTERATTRIBUTE structure represents a regular T.128 24 bpp
-//    color pointer, as specified in [T128] section 8.14.3. This pointer update
-//    is used for both monochrome and color pointers in RDP.
-
-    void GenerateColorPointerUpdateData(OutStream & stream, int cache_idx, const Pointer & cursor)
-    {
-        const auto dimensions = cursor.get_dimensions();
-        const auto hotspot = cursor.get_hotspot();
-    
-//    cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
-//      entry in the pointer cache in which to store the pointer image. The
-//      number of cache entries is negotiated using the Pointer Capability Set
-//      (section 2.2.7.1.5).
-
-        stream.out_uint16_le(cache_idx);
-
-//    hotSpot (4 bytes): Point (section 2.2.9.1.1.4.1) structure containing the
-//      x-coordinates and y-coordinates of the pointer hotspot.
-//            2.2.9.1.1.4.1  Point (TS_POINT16)
-//            ---------------------------------
-//            The TS_POINT16 structure specifies a point relative to the
-//            top-left corner of the server's desktop.
-
-//            xPos (2 bytes): A 16-bit, unsigned integer. The x-coordinate
-//              relative to the top-left corner of the server's desktop.
-
-
-        stream.out_uint16_le(hotspot.x);
-
-//            yPos (2 bytes): A 16-bit, unsigned integer. The y-coordinate
-//              relative to the top-left corner of the server's desktop.
-
-        stream.out_uint16_le(hotspot.y);
-
-//    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in
-//      pixels (the maximum allowed pointer width is 32 pixels).
-
-        stream.out_uint16_le(dimensions.width);
-
-//    height (2 bytes): A 16-bit, unsigned integer. The height of the pointer
-//      in pixels (the maximum allowed pointer height is 32 pixels).
-
-        stream.out_uint16_le(dimensions.height);
-
-//    lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
-//      the andMaskData field.
-
-        auto av_mask = cursor.get_monochrome_and_mask();
-        auto av_data = cursor.get_24bits_xor_mask();
-
-        stream.out_uint16_le(av_mask.size());
-
-//    lengthXorMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
-//      the xorMaskData field.
-
-        stream.out_uint16_le(av_data.size());
-
-//    xorMaskData (variable): Variable number of bytes: Contains the 24-bpp,
-//      bottom-up XOR mask scan-line data. The XOR mask is padded to a 2-byte
-//      boundary for each encoded scan-line. For example, if a 3x3 pixel cursor
-//      is being sent, then each scan-line will consume 10 bytes (3 pixels per
-//      scan-line multiplied by 3 bpp, rounded up to the next even number of
-//      bytes).
-        stream.out_copy_bytes(av_data.data(), av_data.size());
-
-//    andMaskData (variable): Variable number of bytes: Contains the 1-bpp,
-//      bottom-up AND mask scan-line data. The AND mask is padded to a 2-byte
-//      boundary for each encoded scan-line. For example, if a 7x7 pixel cursor
-//      is being sent, then each scan-line will consume 2 bytes (7 pixels per
-//      scan-line multiplied by 1 bpp, rounded up to the next even number of
-//      bytes).
-        stream.out_copy_bytes(av_mask.data(), av_mask.size()); /* mask */
-
-//    colorPointerData (1 byte): Single byte representing unused padding.
-//      The contents of this byte should be ignored.
-        // TODO: why isn't this padding byte sent ?
-    }
-
     void send_pointer(int cache_idx, const Pointer & cursor) override {
         if (bool(this->verbose & Verbose::pointer)) {
             LOG(LOG_INFO, "GraphicsUpdatePDU::send_pointer(cache_idx=%d)", cache_idx);
         }
 
-        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
-
         if (this->send_new_pointer) {
-            GenerateNewPointerUpdateData(cache_idx, cursor).emit(stream.get_data_stream());
+            StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+            NewPointerUpdate(cache_idx, cursor).emit(stream.get_data_stream());
             ::send_server_update( this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel
                                 , this->encrypt, this->userid
@@ -927,7 +846,8 @@ protected:
                                 , 0, stream, underlying_cast(this->verbose));
         }
         else {
-            GenerateColorPointerUpdateData(stream.get_data_stream(), cache_idx, cursor);
+            StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+            ColorPointerUpdate(cache_idx, cursor).emit(stream.get_data_stream());
             ::send_server_update( this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel
                                 , this->encrypt, this->userid
@@ -940,24 +860,6 @@ protected:
         }
     }   // void send_pointer(int cache_idx, const Pointer & cursor)
 
-//    2.2.9.1.1.4.5    New Pointer Update (TS_POINTERATTRIBUTE)
-//    ---------------------------------------------------------
-//    The TS_POINTERATTRIBUTE structure is used to send pointer data at an
-//    arbitrary color depth. Support for the New Pointer Update is advertised
-//    in the Pointer Capability Set (section 2.2.7.1.5).
-
-//    xorBpp (2 bytes): A 16-bit, unsigned integer. The color depth in
-//      bits-per-pixel of the XOR mask contained in the colorPtrAttr field.
-
-//    colorPtrAttr (variable): Encapsulated Color Pointer Update (section
-//      2.2.9.1.1.4.4) structure which contains information about the pointer.
-//      The Color Pointer Update fields are all used, as specified in section
-//      2.2.9.1.1.4.4; however, the XOR mask data alignment packing is slightly
-//      different. For monochrome (1 bpp) pointers the XOR data is always padded
-//      to a 4-byte boundary per scan line, while color pointer XOR data is
-//      still packed on a 2-byte boundary. Color XOR data is presented in the
-///     color depth described in the xorBpp field (for 8 bpp, each byte contains
-//      one palette index; for 4 bpp, there are two palette indices per byte).
 
 //    2.2.9.1.1.4.6    Cached Pointer Update (TS_CACHEDPOINTERATTRIBUTE)
 //    ------------------------------------------------------------------
