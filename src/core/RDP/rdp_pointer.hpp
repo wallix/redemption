@@ -93,7 +93,9 @@ private:
     
     Hotspot hotspot;
     
-    uint8_t alpha_q_data[DATA_SIZE];
+    struct {
+        uint8_t data[DATA_SIZE];
+    } alpha_q;
 
     uint8_t data[DATA_SIZE];
 
@@ -258,7 +260,7 @@ public:
         memcpy(this->mask, av_and.data(), av_and.size());
         memset(this->data, 0, sizeof(this->data));
         memcpy(this->data, av_xor.data(), av_xor.size());
-        memcpy(this->alpha_q_data, other.alpha_q_data, DATA_SIZE);
+        memcpy(this->alpha_q.data, other.alpha_q.data, DATA_SIZE);
         this->compute_alpha_q();
     }
 
@@ -269,7 +271,7 @@ public:
              && other.dimensions.height == this->dimensions.height
              && (0 == memcmp(this->data, other.data, other.data_size()))
              && (0 == memcmp(this->mask, other.mask, this->bit_mask_size()))
-             && (0 == memcmp(this->alpha_q_data, other.alpha_q_data, DATA_SIZE)));
+             && (0 == memcmp(this->alpha_q.data, other.alpha_q.data, DATA_SIZE)));
     }
 
 
@@ -745,7 +747,7 @@ public:
 
     const array_view_const_u8 get_alpha_q() const
     {
-        return {this->alpha_q_data, sizeof(this->alpha_q_data)};
+        return {this->alpha_q.data, sizeof(this->alpha_q.data)};
     }
 
     void compute_alpha_q(){
@@ -755,9 +757,29 @@ public:
                 const size_t data_offset = (y-1) * 3 * this->dimensions.width + x*3;
                 const size_t target_data_offset = ((this->dimensions.height - y) * this->dimensions.width*4) + x*4;
 //                LOG(LOG_INFO, "(x=%d/%u, y=%d/%u) mask_offset=%zu",x, this->dimensions.width, y, this->dimensions.height, mask_offset);
-                this->alpha_q_data[target_data_offset] = this->mask[mask_offset]&(0x80>>(x&7))?0xFF:0x00;
+                uint8_t mask_value = this->mask[mask_offset]&(0x80>>(x&7))?0xFF:0x00;
+                this->alpha_q.data[target_data_offset+3] = mask_value;
                 for (uint8_t i = 0 ; i < 3 ; i++){
-                    this->alpha_q_data[target_data_offset+1+i] = this->data[data_offset+i];
+                    uint8_t value = this->data[data_offset+i];
+                    switch (i){
+                    case 0:
+                    {
+                        this->alpha_q.data[target_data_offset+i] = 0x00; // blue
+                    }
+                    break;
+                    case 1:
+                    {
+                        this->alpha_q.data[target_data_offset+i] = 0x00; // Green
+                    }
+                    break;
+                    case 2:
+                    {
+                        this->alpha_q.data[target_data_offset+i] = 0xFF; // red
+                    }
+                    break;
+                    default:
+                        this->alpha_q.data[target_data_offset+i] = (mask_value == 0)?0:value;
+                    }
                 }
             }
         }

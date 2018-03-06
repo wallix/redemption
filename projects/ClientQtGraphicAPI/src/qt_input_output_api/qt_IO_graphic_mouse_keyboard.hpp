@@ -419,9 +419,8 @@ private:
 
         auto av_alpha_q = cursor.get_alpha_q();
 
-
         // this->cursor_image is used when client is replaying
-        this->cursor_image = QImage(cursor.data, 32, 32, QImage::Format_RGB888);
+        this->cursor_image = QImage(av_alpha_q.data(), dimensions.width, dimensions.height, dimensions.width * 4, QImage::Format_ARGB32_Premultiplied);
  
          ;
         if (this->drawn_client->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
