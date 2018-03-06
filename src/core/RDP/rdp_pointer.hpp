@@ -30,12 +30,16 @@
 #include "utils/hexdump.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/colors.hpp"
+#include "utils/stream.hpp"
 #include "core/error.hpp"
 
+
+struct Pointer {
+
+    friend class GenerateNewPointerUpdateData;
 // TODO: in TS_SYSTEMPOINTERATTRIBUTE, POINTER_NULL and POINTER_NORMAL are attributed specific values
 // we could directly provide these to Pointer constructor instead of defining a switch on call site (rdp.hpp)
 
-struct Pointer {
     enum  {
         POINTER_NULL             ,
         POINTER_NORMAL           ,
@@ -89,12 +93,13 @@ private:
     
     uint8_t alpha_q_data[DATA_SIZE];
 
-public:
     uint8_t data[DATA_SIZE];
-//private:
+
     uint8_t mask[MASK_SIZE];
-public:
+
     bool only_black_white = false;
+
+public:
 
     CursorSize get_dimensions() const
     {
@@ -1004,3 +1009,189 @@ public:
     }
     
 };
+
+class GenerateNewPointerUpdateData
+{
+    int cache_idx;
+    const Pointer & cursor;
+
+public:
+    GenerateNewPointerUpdateData(int cache_idx, const Pointer & cursor)
+        : cache_idx(cache_idx)
+        , cursor(cursor)
+    {
+    }
+
+    void emit(OutStream & stream)
+    {
+        const auto dimensions = this->cursor.get_dimensions();
+        const auto hotspot = this->cursor.get_hotspot();
+
+//    xorBpp (2 bytes): A 16-bit, unsigned integer. The color depth in bits-per-pixel of the XOR mask
+//      contained in the colorPtrAttr field.
+        stream.out_uint16_le(this->cursor.only_black_white ? 1 : 32);
+
+        stream.out_uint16_le(this->cache_idx);
+
+//    hotSpot (4 bytes): Point (section 2.2.9.1.1.4.1) structure containing the
+//      x-coordinates and y-coordinates of the pointer hotspot.
+//            2.2.9.1.1.4.1  Point (TS_POINT16)
+//            ---------------------------------
+//            The TS_POINT16 structure specifies a point relative to the
+//            top-left corner of the server's desktop.
+
+//            xPos (2 bytes): A 16-bit, unsigned integer. The x-coordinate
+//              relative to the top-left corner of the server's desktop.
+
+        stream.out_uint16_le(hotspot.x);
+
+//            yPos (2 bytes): A 16-bit, unsigned integer. The y-coordinate
+//              relative to the top-left corner of the server's desktop.
+
+        stream.out_uint16_le(hotspot.y);
+
+//    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in
+//      pixels (the maximum allowed pointer width is 32 pixels).
+
+        stream.out_uint16_le(dimensions.width);
+
+//    height (2 bytes): A 16-bit, unsigned integer. The height of the pointer
+//      in pixels (the maximum allowed pointer height is 32 pixels).
+
+        stream.out_uint16_le(dimensions.height);
+
+
+        const unsigned int remainder = (dimensions.width % 8);
+        const unsigned int and_line_length_in_byte = dimensions.width / 8 + (remainder ? 1 : 0);
+        const unsigned int and_padded_line_length_in_byte =
+            ((and_line_length_in_byte % 2) ?
+             and_line_length_in_byte + 1 :
+             and_line_length_in_byte);
+
+        const unsigned int xor_padded_line_length_in_byte = (this->cursor.only_black_white ? and_padded_line_length_in_byte : dimensions.width * 4);
+
+
+//    lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
+//      the andMaskData field.
+
+        stream.out_uint16_le(and_padded_line_length_in_byte * dimensions.height);
+
+//    lengthXorMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
+//      the xorMaskData field.
+
+        stream.out_uint16_le(xor_padded_line_length_in_byte * dimensions.height);
+
+//    xorMaskData (variable): Variable number of bytes: Contains the 24-bpp,
+//      bottom-up XOR mask scan-line data. The XOR mask is padded to a 2-byte
+//      boundary for each encoded scan-line. For example, if a 3x3 pixel cursor
+//      is being sent, then each scan-line will consume 10 bytes (3 pixels per
+//      scan-line multiplied by 3 bpp, rounded up to the next even number of
+//      bytes).
+
+        const unsigned int source_xor_line_length_in_byte = dimensions.width * 3;
+        const unsigned int source_xor_padded_line_length_in_byte =
+            ((source_xor_line_length_in_byte % 2) ?
+             source_xor_line_length_in_byte + 1 :
+             source_xor_line_length_in_byte);
+
+        if (this->cursor.only_black_white) {
+            uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8] = { 0 };
+            auto av_xor = this->cursor.get_24bits_xor_mask();
+
+            for (unsigned int h = 0; h < dimensions.height; ++h) {
+                const uint8_t * psource = av_xor.data()
+                    + (dimensions.height - h - 1) * source_xor_padded_line_length_in_byte;
+                uint8_t * pdest   = xorMaskData + h * xor_padded_line_length_in_byte;
+                uint8_t xor_bit_mask_generation = 7;
+                uint8_t xor_byte = 0;
+
+                for (unsigned int w = 0; w < dimensions.width; ++w) {
+                    if ((*psource) || (*(psource + 1)) || (*(psource + 2))) {
+                        xor_byte |= (1 << xor_bit_mask_generation);
+                    }
+
+                    if (!xor_bit_mask_generation) {
+                        xor_bit_mask_generation = 8;
+                        *pdest = xor_byte;
+                        xor_byte = 0;
+                        pdest++;
+                    }
+                    xor_bit_mask_generation--;
+                    psource += 3;
+                }
+                if (xor_bit_mask_generation != 7) {
+                    *pdest = xor_byte;
+                }
+            }
+
+            stream.out_copy_bytes(xorMaskData, xor_padded_line_length_in_byte * dimensions.height);
+            
+
+            auto av_and = this->cursor.get_monochrome_and_mask();
+            uint8_t andMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8] = { 0 };
+
+            for (unsigned int h = 0; h < dimensions.height; ++h) {
+                const uint8_t* psource = &av_and.data()[(dimensions.height - h - 1) * and_padded_line_length_in_byte];
+                      uint8_t* pdest   = andMaskData + h * and_padded_line_length_in_byte;
+
+                memcpy(pdest, psource, and_padded_line_length_in_byte);
+            }
+
+            stream.out_copy_bytes(andMaskData, and_padded_line_length_in_byte * dimensions.height); /* mask */
+            
+        }
+        else {
+            auto av_and = this->cursor.get_monochrome_and_mask();
+            
+            uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 4] = { 0 };
+            auto av_xor = this->cursor.get_24bits_xor_mask();
+
+            for (unsigned int h = 0; h < dimensions.height; ++h) {
+                const uint8_t* psource = av_xor.data() + (dimensions.height - h - 1) * source_xor_padded_line_length_in_byte;
+                      uint8_t* pdest   = xorMaskData + (dimensions.height - h - 1) * xor_padded_line_length_in_byte;
+                const uint8_t* andMask = &(av_and.data()[(dimensions.height - h - 1) * and_padded_line_length_in_byte]);
+                unsigned char and_bit_extraction_mask = 7;
+
+
+                for (unsigned int w = 0; w < dimensions.width; ++w) {
+                    * pdest      = * psource;
+                    *(pdest + 1) = *(psource + 1);
+                    *(pdest + 2) = *(psource + 2);
+                    if ((*andMask) & (1 << and_bit_extraction_mask)) {
+                        *(pdest + 3) = 0x00;
+                    }
+                    else {
+                        *(pdest + 3) = 0xFF;
+                    }
+
+                    pdest   += 4;
+                    psource += 3;
+
+                    if (and_bit_extraction_mask) {
+                        and_bit_extraction_mask--;
+                    }
+                    else {
+                        and_bit_extraction_mask = 7;
+                        andMask++;
+                    }
+                }
+            }
+
+            stream.out_copy_bytes(xorMaskData, xor_padded_line_length_in_byte * dimensions.height);
+
+            auto av = this->cursor.get_monochrome_and_mask();
+            stream.out_copy_bytes(av.data(), av.size()); /* mask */
+        }
+
+//    andMaskData (variable): Variable number of bytes: Contains the 1-bpp,
+//      bottom-up AND mask scan-line data. The AND mask is padded to a 2-byte
+//      boundary for each encoded scan-line. For example, if a 7x7 pixel cursor
+//      is being sent, then each scan-line will consume 2 bytes (7 pixels per
+//      scan-line multiplied by 1 bpp, rounded up to the next even number of
+//      bytes).
+
+//    colorPointerData (1 byte): Single byte representing unused padding.
+//      The contents of this byte should be ignored.
+    }
+};
+
