@@ -758,29 +758,11 @@ public:
                 const size_t target_data_offset = ((this->dimensions.height - y) * this->dimensions.width*4) + x*4;
 //                LOG(LOG_INFO, "(x=%d/%u, y=%d/%u) mask_offset=%zu",x, this->dimensions.width, y, this->dimensions.height, mask_offset);
                 uint8_t mask_value = this->mask[mask_offset]&(0x80>>(x&7))?0xFF:0x00;
-                this->alpha_q.data[target_data_offset+3] = mask_value;
                 for (uint8_t i = 0 ; i < 3 ; i++){
                     uint8_t value = this->data[data_offset+i];
-                    switch (i){
-                    case 0:
-                    {
-                        this->alpha_q.data[target_data_offset+i] = 0x00; // blue
-                    }
-                    break;
-                    case 1:
-                    {
-                        this->alpha_q.data[target_data_offset+i] = 0x00; // Green
-                    }
-                    break;
-                    case 2:
-                    {
-                        this->alpha_q.data[target_data_offset+i] = 0xFF; // red
-                    }
-                    break;
-                    default:
-                        this->alpha_q.data[target_data_offset+i] = (mask_value == 0)?0:value;
-                    }
+                    this->alpha_q.data[target_data_offset+i] = (mask_value == 0)?0:value;
                 }
+                this->alpha_q.data[target_data_offset+3] = mask_value;
             }
         }
     }
