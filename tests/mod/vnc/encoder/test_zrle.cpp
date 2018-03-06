@@ -143,14 +143,9 @@ RED_AUTO_TEST_CASE(TestZrle)
         }
     }
     LOG(LOG_INFO, "All data consumed");
-    drawable.save_to_png("vnc_first_len.png");
-    char message[4096] = {};
-    if (!redemption_unit_test__::check_sig(drawable.gd, message,
-                            "\xd6\x38\xee\x6a\xa7\x49\x9e\x06\xa3\x6d\x08\xd1\xf3\x82\x8d\x63\xad\x23\x9d\x2f")){
-        LOG(LOG_INFO, "signature mismatch: %s", message);
-        BOOST_CHECK(false);
-    }
-
+    // drawable.save_to_png("vnc_first_len.png");
+    RED_CHECK_SIG(drawable.gd,
+        "\xd6\x38\xee\x6a\xa7\x49\x9e\x06\xa3\x6d\x08\xd1\xf3\x82\x8d\x63\xad\x23\x9d\x2f");
 }
 
 

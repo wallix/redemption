@@ -188,6 +188,8 @@ public:
                     timeout = {0, 0};
                 }
 
+                session_reactor.clear();
+
                 auto tv = session_reactor.timer_events_.get_next_timeout();
                 if (front.up_and_running) {
                     auto tv2 = session_reactor.graphic_timer_events_.get_next_timeout();
@@ -215,13 +217,17 @@ public:
 
                 for (auto& top_fd : session_reactor.fd_events_.elements) {
                     // LOG(LOG_DEBUG, "set fd: %d", top_fd->fd);
-                    io_fd_set(top_fd->fd, rfds);
-                    max = std::max(max, unsigned(top_fd->fd));
+                    if (top_fd->use_count > 1) {
+                        io_fd_set(top_fd->value.fd, rfds);
+                    }
+                    max = std::max(max, unsigned(top_fd->value.fd));
                 }
                 for (auto& top_fd : session_reactor.graphic_fd_events_.elements) {
                     // LOG(LOG_DEBUG, "set fd: %d", top_fd->fd);
-                    io_fd_set(top_fd->fd, rfds);
-                    max = std::max(max, unsigned(top_fd->fd));
+                    if (top_fd->use_count > 1) {
+                        io_fd_set(top_fd->value.fd, rfds);
+                    }
+                    max = std::max(max, unsigned(top_fd->value.fd));
                 }
 
                 int num = select(max + 1, &rfds, nullptr/*&wfds*/, nullptr, &timeout);
@@ -257,16 +263,13 @@ public:
 
                 {
                     auto& c = session_reactor.fd_events_.elements;
-                    for (std::size_t i = 0; i < c.size(); ){
+                    for (std::size_t i = 0; i < c.size(); ++i){
                         // LOG(LOG_DEBUG, "is set fd: %d %d", c[i]->fd, io_fd_isset(c[i]->fd, rfds));
-                        if (io_fd_isset(c[i]->fd, rfds) && !c[i]->exec()) {
-                            // LOG(LOG_DEBUG, "delete fd: %d", c[i]->fd);
-                            c[i]->delete_self(jln::DeleteFrom::Observer);
-                            c[i] = std::move(c.back());
-                            c.pop_back();
-                        }
-                        else {
-                            ++i;
+                        if (c[i]->use_count > 1
+                         && io_fd_isset(c[i]->value.fd, rfds)
+                         && !c[i]->value.exec()
+                        ) {
+                            c[i]->deleter(c[i]);
                         }
                     }
                 }
@@ -317,16 +320,13 @@ public:
                             // Process incoming module trafic
                             session_reactor.graphic_events_.exec(now, mm.get_graphic_wrapper(front));
                             auto& c = session_reactor.graphic_fd_events_.elements;
-                            for (std::size_t i = 0; i < c.size(); ){
+                            for (std::size_t i = 0; i < c.size(); ++i){
                                 // LOG(LOG_DEBUG, "is set fd: %d %d", c[i]->fd, io_fd_isset(c[i]->fd, rfds));
-                                if (io_fd_isset(c[i]->fd, rfds) && !c[i]->exec(end_tv.tv_sec, mm.get_graphic_wrapper(front))) {
-                                    // LOG(LOG_DEBUG, "delete fd: %d", c[i]->fd);
-                                    c[i]->delete_self(jln::DeleteFrom::Observer);
-                                    c[i] = std::move(c.back());
-                                    c.pop_back();
-                                }
-                                else {
-                                    ++i;
+                                if (c[i]->use_count > 1
+                                 && io_fd_isset(c[i]->value.fd, rfds)
+                                 && !c[i]->value.exec(end_tv.tv_sec, mm.get_graphic_wrapper(front))
+                                ) {
+                                    c[i]->deleter(c[i]);
                                 }
                             }
                             if (has_fd_event) {

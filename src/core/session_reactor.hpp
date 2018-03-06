@@ -23,9 +23,11 @@ Author(s): Jonathan Poelen
 #include <memory>
 #include <chrono>
 #include <string>
+#include <new>
 
 #include "transport/socket_transport.hpp"
 #include "utils/executor.hpp"
+#include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/log.hpp"
 
@@ -43,9 +45,6 @@ struct SessionReactor
 
     using BasicExecutor = jln::BasicExecutorImpl<PrefixArgs>;
 
-//     template<class... Ts>
-//     using TopExecutor = jln::TopExecutor2<PrefixArgs, Ts...>;
-
     enum class EventType : int8_t
     {
         Timeout,
@@ -53,60 +52,334 @@ struct SessionReactor
         Mod,
     };
 
-//     struct Context
-//     {
-//         SessionReactor& session_reactor;
-//         SocketTransport socket_transport;
-//         void* first_data;
-//         jln::UniquePtr<BasicExecutor> executor;
-//
-//         template<class... Args>
-//         jln::TopExecutorBuilder<PrefixArgs, Args...>
-//         init_executor(Args&&... args)
-//         {
-//             auto* p = TopExecutor<Args...>::New(
-//                 this->session_reactor.timers, static_cast<Args&&>(args)...);
-//             this->first_data = &jln::detail::get<0>(p->ctx);
-//             this->executor.reset(p);
-//             return {*p};
-//         }
-//     };
+    enum class EventState : bool
+    {
+        Alive,
+        Dead,
+    };
 
-//     Context& create_socket(
-//         const char * name, unique_fd sck, const char* ip_address, int port,
-//         std::chrono::milliseconds recv_timeout,
-//         SocketTransport::Verbose verbose, std::string* error_message)
-//     {
-//         return *this->contexts.emplace_back(std::unique_ptr<Context>(new Context{
-//             *this,
-//             {name, std::move(sck), ip_address, port, recv_timeout, verbose, error_message},
-//             {},
-//             {}
-//         }));
-//     }
+    /*
+     * Layout memory
+     *
+     * +-----------------------+------------+
+     * |    SharedDataBase     |   counter  | <._
+     * |                       |   deleter  | <-- internal
+     * +-----------------------+-+--------+-|
+     * |    SharedData<Base>   | |  base  | | <-- public
+     * +-----------------------+-|        |-+
+     * |     SharedData<T>     | |  value | | <-- private
+     * +-----------------------+-+--------+-+
+     */
+
+    struct SharedDataBase
+    {
+        int use_count;
+        void* uptr = nullptr;
+        void (*deleter) (SharedDataBase*) noexcept;
+    };
+
+    template<class T>
+    struct SharedData : SharedDataBase
+    {
+        T value;
+    };
+
+    template<class T>
+    struct SharedPtrBase
+    {
+        SharedPtrBase() = default;
+        SharedPtrBase(SharedPtrBase const&) = delete;
+        SharedPtrBase& operator=(SharedPtrBase const&) = delete;
+
+        template<class U>
+        SharedPtrBase(SharedPtrBase<U>&& ptr) noexcept
+          : p(reinterpret_cast<Data*>(std::exchange(ptr.p, nullptr)))
+        {
+            static_assert(std::is_base_of<T, U>::value);
+        }
+
+        // template<class U>
+        // SharedPtrBase(SharedPtrBase<U> const& ptr) noexcept
+        //   : p(reinterpret_cast<Data*>(ptr.p))
+        // {
+        //     static_assert(std::is_base_of<T, U>::value);
+        // }
+
+        template<class U>
+        SharedPtrBase& operator=(SharedPtrBase<U>&& other) noexcept
+        {
+            static_assert(std::is_base_of<T, U>::value);
+            this->p = reinterpret_cast<Data*>(std::exchange(other.p, nullptr));
+            return *this;
+        }
+
+        // template<class U>
+        // SharedPtrBase& operator=(SharedPtrBase<U> const& other) noexcept
+        // {
+        //     SharedPtrBase tmp(other);
+        //     tmp.swap(*this);
+        //     return *this;
+        // }
+
+        ~SharedPtrBase()
+        {
+            this->reset();
+        }
+
+        void swap(SharedPtrBase& other) noexcept
+        {
+            std::swap(other.p, this->p);
+        }
+
+        explicit operator bool () const noexcept
+        {
+            return bool(this->p);
+        }
+
+        T* get() const noexcept
+        {
+            assert(this->p);
+            return &this->p->value;
+        }
+
+        T* operator->() const noexcept
+        {
+            assert(this->p);
+            return &this->p->value;
+        }
+
+        T& operator*() const noexcept
+        {
+            assert(this->p);
+            return this->p->value;
+        }
+
+        void reset() noexcept
+        {
+            // if (this->p) {
+            //     --this->p->use_count;
+            //     this->p = nullptr;
+            // }
+        }
+
+        void set_deleter(decltype(SharedDataBase::deleter) f) noexcept
+        {
+            assert(this->p);
+            this->p->deleter = f;
+        }
+
+        void add_use() noexcept
+        {
+            assert(this->p);
+            ++this->p->use_count;
+        }
+
+        using Data = SharedData<T>;
+
+        SharedPtrBase(Data* ptr) noexcept
+          : p(ptr)
+        {}
+
+        Data* p = nullptr;
+    };
+
+    struct SharedPtrPrivateAccess
+    {
+        template<class T>
+        static auto& p(T& p_) noexcept
+        {
+            return p_.p;
+        }
+    };
+
+    template<class T>
+    class SharedPtrPrivate
+    {
+        using Data = typename SharedPtrBase<T>::Data;
+
+        SharedPtrBase<T> p;
+
+        SharedPtrPrivate(Data* p) noexcept
+          : p(p)
+        {}
+
+        friend SharedPtrPrivateAccess;
+
+    public:
+        SharedPtrPrivate(SharedPtrPrivate&&) = default;
+        SharedPtrPrivate& operator=(SharedPtrPrivate&&) = default;
+
+        explicit operator bool () const noexcept
+        {
+            return bool(this->p);
+        }
+
+        T* get() const noexcept
+        {
+            return this->p->get();
+        }
+
+        T* operator->() const noexcept
+        {
+            return this->p.operator->();
+        }
+
+        T& operator*() const noexcept
+        {
+            return *this->p;
+        }
+
+        template<class F>
+        void set_notify_delete(F f) noexcept
+        {
+            this->p.set_deleter(make_deleter(f));
+        }
+
+        template<class F>
+        static auto make_deleter(F = nullptr) noexcept
+        {
+            return [](SharedDataBase* base) noexcept -> void {
+                LOG(LOG_DEBUG, "dealloc %p %s", static_cast<void*>(base), typeid(T).name());
+                # ifndef NDEBUG
+                base->deleter = [](SharedDataBase* p) noexcept {
+                    LOG(LOG_DEBUG, "dealloc %p %s already delete", static_cast<void*>(p), typeid(T).name());
+                    assert(!"already delete");
+                };
+                # endif
+
+                auto* p = static_cast<Data*>(base);
+                assert(static_cast<void*>(p) == static_cast<void*>(base));
+                static_cast<SharedPtrBase<T>*>(p->uptr)->p = nullptr;
+                p->uptr = nullptr;
+                --p->use_count;
+                if constexpr (!std::is_same<F, std::nullptr_t>::value) {
+                    p->value.ctx.invoke(jln::make_lambda<F>());
+                }
+                p->value.~T();
+            };
+        }
+
+        template<int Use = 2, class C, class... Args>
+        static SharedPtrPrivate New(C& c, Args&&... args)
+        {
+            Data* p = static_cast<Data*>(::operator new(sizeof(Data)));
+            LOG(LOG_DEBUG, "new %p %s", static_cast<void*>(p), typeid(T).name());
+            p->deleter = SharedPtrPrivate::make_deleter(nullptr);
+            if constexpr (noexcept(T(c, static_cast<Args&&>(args)...))) {
+                new(&p->value) T(c, static_cast<Args&&>(args)...);
+            }
+            else {
+                bool failed = true;
+                SCOPE_EXIT(if (failed) {
+                    ::operator delete(p);
+                });
+                new(&p->value) T(c, static_cast<Args&&>(args)...);
+                failed = false;
+            }
+            c.attach(p);
+            p->use_count = Use;
+            return SharedPtrPrivate(p);
+        }
+    };
+
+    template<class T>
+    class SharedPtr
+    {
+        SharedPtrBase<T> p;
+
+    public:
+        using value_type = T;
+
+        SharedPtr() = default;
+        SharedPtr(SharedPtr&&) = default;
+        SharedPtr& operator=(SharedPtr&&) = default;
+
+        template<class U>
+        SharedPtr(SharedPtrPrivate<U>&& other) noexcept
+          : p(std::move(SharedPtrPrivateAccess::p(other)))
+        {
+            this->p.p->uptr = &this->p;
+        }
+
+        template<class U>
+        SharedPtr& operator=(SharedPtrPrivate<U>&& other) noexcept
+        {
+            this->p = std::move(SharedPtrPrivateAccess::p(other));
+            this->p.p->uptr = &this->p;
+            return *this;
+        }
+
+        ~SharedPtr()
+        {
+            this->reset();
+        }
+
+        explicit operator bool () const noexcept
+        {
+            return bool(this->p);
+        }
+
+        T* operator->() const noexcept
+        {
+            return this->p.operator->();
+        }
+
+        T& operator*() const noexcept
+        {
+            return *this->p;
+        }
+
+        void reset() noexcept
+        {
+            if (this->p) {
+                this->p.p->deleter(this->p.p);
+            }
+        }
+    };
+
 
     template<class Base>
     struct Container
     {
+        using Data = SharedData<Base>;
+
+        static Data* to_shared_data(Base& elem)
+        {
+            return reinterpret_cast<Data*>(
+                reinterpret_cast<uint8_t*>(&elem) - sizeof(SharedDataBase));
+        }
+
         void attach(Base& elem)
         {
-            assert(this->elements.end() == this->get_elem_iterator(elem));
-            this->elements.emplace_back(&elem);
+            auto* data = to_shared_data(elem);
+            assert(this->elements.end() == this->get_elem_iterator(data));
+            this->elements.emplace_back(data);
         }
 
-        void detach(Base& elem)
+        template<class U>
+        void attach(SharedData<U>* data_)
         {
-            auto it = this->get_elem_iterator(elem);
-            if (it != this->elements.end()) {
-                *it = std::move(this->elements.back());
-                this->elements.pop_back();
-            }
+            static_assert(std::is_base_of<Base, U>::value);
+            auto* data = reinterpret_cast<Data*>(data_);
+            assert(this->elements.end() == this->get_elem_iterator(data));
+            this->elements.emplace_back(data);
         }
+
+        // void detach(Base& elem)
+        // {
+        //     auto* data = to_shared_data(elem);
+        //     data->deleter(data);
+        // }
 
 //     private:
+        auto get_elem_iterator(Data* elem)
+        {
+            return std::find(this->elements.begin(), this->elements.end(), elem);
+        }
+
         auto get_elem_iterator(Base& elem)
         {
-            return std::find(this->elements.begin(), this->elements.end(), &elem);
+            return get_elem_iterator(to_shared_data(elem));
         }
 
         template<class... Args>
@@ -121,33 +394,29 @@ struct SessionReactor
         template<class Predicate, class... Args>
         void exec_impl(Predicate pred, Args&&... args)
         {
-            for (std::size_t i = 0; i < this->elements.size(); ) {
+            for (std::size_t i = 0; i < this->elements.size(); ++i) {
                 auto* elem = this->elements[i];
-                if (pred(*elem)) {
-                    switch (elem->exec_action(static_cast<Args&&>(args)...)) {
+                if (elem->use_count > 1 && pred(elem->value)) {
+                    switch (elem->value.exec_action(static_cast<Args&&>(args)...)) {
                         case jln::ExecutorResult::ExitSuccess:
                         case jln::ExecutorResult::ExitFailure:
                             assert(false && "Exit");
                         case jln::ExecutorResult::Terminate:
-                            this->elements[i] = this->elements.back();
-                            this->elements.pop_back();
-                            elem->delete_self(jln::DeleteFrom::Observer);
+                            assert(elem->use_count > 1);
+                            LOG(LOG_DEBUG, "f = %p %d", static_cast<void*>(elem), elem->use_count);
+                            elem->deleter(elem);
                             break;
                         case jln::ExecutorResult::NeedMoreData:
                             assert(false && "NeedMoreData");
                         case jln::ExecutorResult::Nothing:
                         case jln::ExecutorResult::Ready:
-                            ++i;
                             break;
                     }
-                }
-                else {
-                    ++i;
                 }
             }
         }
 
-        std::vector<Base*> elements;
+        std::vector<Data*> elements;
     };
 
     template<class Timer>
@@ -171,8 +440,8 @@ struct SessionReactor
         {
             auto it = std::min_element(
                 this->elements.begin(), this->elements.end(),
-                [](auto& a, auto& b) { return a->time() < b->time(); });
-            return it == this->elements.end() ? timeval{-1, -1} : (*it)->time();
+                [](auto& a, auto& b) { return a->value.time() < b->value.time(); });
+            return it == this->elements.end() ? timeval{-1, -1} : (*it)->value.time();
         }
 
         template<class... Args>
@@ -186,7 +455,7 @@ struct SessionReactor
 
         void info(timeval const& end_tv) {
             for (auto& timer : this->elements) {
-                auto const tv = timer->time();
+                auto const tv = timer->value.time();
                 LOG(LOG_DEBUG, "%p: %ld %ld %ld, delay=%ld",
                     static_cast<void*>(timer), tv.tv_sec, tv.tv_usec, difftimeval(tv, end_tv).count(), timer->delay.count());
             }
@@ -197,7 +466,7 @@ struct SessionReactor
     };
 
     using BasicTimer = jln::BasicTimer<jln::prefix_args<>>;
-    using BasicTimerPtr = jln::UniquePtrWithNotifyDelete<BasicTimer>;
+    using BasicTimerPtr = SharedPtr<BasicTimer>;
 
     using TimerContainer = BasicTimerContainer<BasicTimer>;
 
@@ -217,32 +486,32 @@ struct SessionReactor
 
 
     template<class... Args>
-    NotifyDeleterBuilderWrapper<jln::TimerBuilder<jln::UniquePtrEventWithUPtr<TimerContainer::Elem<Args...>>>>
+    NotifyDeleterBuilderWrapper<jln::TimerBuilder<SharedPtrPrivate<TimerContainer::Elem<Args...>>>>
     create_timer(Args&&... args)
     {
         using Timer = TimerContainer::Elem<Args...>;
-        return {jln::UniquePtrEventWithUPtr<Timer>
+        return {SharedPtrPrivate<Timer>
             ::New(this->timer_events_, static_cast<Args&&>(args)...)};
     }
 
 
     using GraphicTimer = jln::BasicTimer<jln::prefix_args<time_t, gdi::GraphicApi&>>;
-    using GraphicTimerPtr = jln::UniquePtrWithNotifyDelete<GraphicTimer>;
+    using GraphicTimerPtr = SharedPtr<GraphicTimer>;
 
     using GraphicTimerContainer = BasicTimerContainer<GraphicTimer>;
 
     template<class... Args>
-    NotifyDeleterBuilderWrapper<jln::TimerBuilder<jln::UniquePtrEventWithUPtr<GraphicTimerContainer::Elem<Args...>>>>
+    NotifyDeleterBuilderWrapper<jln::TimerBuilder<SharedPtrPrivate<GraphicTimerContainer::Elem<Args...>>>>
     create_graphic_timer(Args&&... args)
     {
         using Action = GraphicTimerContainer::Elem<Args...>;
-        return {jln::UniquePtrEventWithUPtr<Action>
+        return {SharedPtrPrivate<Action>
             ::New(this->graphic_timer_events_, static_cast<Args&&>(args)...)};
     }
 
 
     using CallbackEvent = jln::ActionBase<jln::prefix_args<Callback&>>;
-    using CallbackEventPtr = jln::UniquePtrWithNotifyDelete<CallbackEvent>;
+    using CallbackEventPtr = SharedPtr<CallbackEvent>;
 
     struct CallbackContainer : Container<CallbackEvent>
     {
@@ -251,17 +520,17 @@ struct SessionReactor
     };
 
     template<class... Args>
-    NotifyDeleterBuilderWrapper<jln::ActionBuilder<jln::UniquePtrEventWithUPtr<CallbackContainer::Elem<Args...>>>>
+    NotifyDeleterBuilderWrapper<jln::ActionBuilder<SharedPtrPrivate<CallbackContainer::Elem<Args...>>>>
     create_callback_event(Args&&... args)
     {
         using Action = CallbackContainer::Elem<Args...>;
-        return {jln::UniquePtrEventWithUPtr<Action>
+        return {SharedPtrPrivate<Action>
             ::New(this->front_events_, static_cast<Args&&>(args)...)};
     }
 
 
     using GraphicEvent = jln::ActionBase<jln::prefix_args<time_t, gdi::GraphicApi&>>;
-    using GraphicEventPtr = jln::UniquePtrWithNotifyDelete<GraphicEvent>;
+    using GraphicEventPtr = SharedPtr<GraphicEvent>;
 
     struct GraphicContainer : Container<GraphicEvent>
     {
@@ -270,17 +539,17 @@ struct SessionReactor
     };
 
     template<class... Args>
-    NotifyDeleterBuilderWrapper<jln::ActionBuilder<jln::UniquePtrEventWithUPtr<GraphicContainer::Elem<Args...>>>>
+    NotifyDeleterBuilderWrapper<jln::ActionBuilder<SharedPtrPrivate<GraphicContainer::Elem<Args...>>>>
     create_graphic_event(Args&&... args)
     {
         using Action = GraphicContainer::Elem<Args...>;
-        return {jln::UniquePtrEventWithUPtr<Action>
+        return {SharedPtrPrivate<Action>
             ::New(this->graphic_events_, static_cast<Args&&>(args)...)};
     }
 
 
     using SesmanEvent = jln::ActionBase<jln::prefix_args<Inifile&>>;
-    using SesmanEventPtr = jln::UniquePtrWithNotifyDelete<SesmanEvent>;
+    using SesmanEventPtr = SharedPtr<SesmanEvent>;
 
     struct SesmanContainer : Container<SesmanEvent>
     {
@@ -289,11 +558,11 @@ struct SessionReactor
     };
 
     template<class... Args>
-    NotifyDeleterBuilderWrapper<jln::ActionBuilder<jln::UniquePtrEventWithUPtr<SesmanContainer::Elem<Args...>>>>
+    NotifyDeleterBuilderWrapper<jln::ActionBuilder<SharedPtrPrivate<SesmanContainer::Elem<Args...>>>>
     create_sesman_event(Args&&... args)
     {
         using Action = SesmanContainer::Elem<Args...>;
-        return {jln::UniquePtrEventWithUPtr<Action>
+        return {SharedPtrPrivate<Action>
             ::New(this->sesman_events_, static_cast<Args&&>(args)...)};
     }
 
@@ -303,8 +572,8 @@ struct SessionReactor
         using prefix_args = PrefixArgs_;
         using base_type = BasicFd;
 
-        using jln::BasicExecutorImpl<PrefixArgs_>::delete_self;
-        using jln::BasicExecutorImpl<PrefixArgs_>::deleter;
+        // using jln::BasicExecutorImpl<PrefixArgs_>::delete_self;
+        // using jln::BasicExecutorImpl<PrefixArgs_>::deleter;
         using jln::BasicExecutorImpl<PrefixArgs_>::on_action;
 
         jln::BasicTimer<PrefixArgs_>& timer() noexcept { return *this; }
@@ -324,8 +593,8 @@ struct SessionReactor
     {
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
-        template<class... Args>
-        FdImpl(int fd, SessionReactor& session_reactor, Args&&... args)
+        template<class C, class... Args>
+        FdImpl(C&, int fd, SessionReactor& session_reactor, Args&&... args)
         : ctx{static_cast<Args&&>(args)...}
         , session_reactor(session_reactor)
         {
@@ -341,32 +610,32 @@ struct SessionReactor
 
         ~FdImpl()
         {
-            if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
-                this->session_reactor.timer_events_.detach(this->timer());
-            }
-            else {
-                this->session_reactor.graphic_timer_events_.detach(this->timer());
-            }
+            // if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
+            //     this->session_reactor.timer_events_.detach(this->timer());
+            // }
+            // else {
+            //     this->session_reactor.graphic_timer_events_.detach(this->timer());
+            // }
         }
 
         void detach() noexcept
         {
-            if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
-                this->session_reactor.fd_events_.detach(*this);
-            }
-            else {
-                this->session_reactor.graphic_fd_events_.detach(*this);
-            }
+            // if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
+            //     this->session_reactor.fd_events_.detach(*this);
+            // }
+            // else {
+            //     this->session_reactor.graphic_fd_events_.detach(*this);
+            // }
         }
 
         void attach() noexcept
         {
-            if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
-                this->session_reactor.fd_events_.attach(*this);
-            }
-            else {
-                this->session_reactor.graphic_fd_events_.attach(*this);
-            }
+            // if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
+            //     this->session_reactor.fd_events_.attach(*this);
+            // }
+            // else {
+            //     this->session_reactor.graphic_fd_events_.attach(*this);
+            // }
         }
 
         template<class F>
@@ -407,15 +676,13 @@ struct SessionReactor
     public:
         jln::detail::tuple<Ts...> ctx;
         SessionReactor& session_reactor;
-
-        void *operator new(size_t n, char const*) { return ::operator new(n); }
     };
 
     template<class PrefixArgs_, class... Args>
     using Fd = FdImpl<PrefixArgs_, typename jln::detail::decay_and_strip<Args>::type...>;
 
     using TopFd = BasicFd<PrefixArgs>;
-    using TopFdPtr = jln::UniquePtrWithNotifyDelete<TopFd>;
+    using TopFdPtr = SharedPtr<TopFd>;
 
     struct TopFdContainer : Container<TopFd>
     {
@@ -424,17 +691,17 @@ struct SessionReactor
     };
 
     template<class... Args>
-    NotifyDeleterBuilderWrapper<jln::TopFdBuilder<jln::UniquePtrEventWithUPtr<TopFdContainer::Elem<Args...>>>>
+    NotifyDeleterBuilderWrapper<jln::TopFdBuilder<SharedPtrPrivate<TopFdContainer::Elem<Args...>>>>
     create_fd_event(int fd, Args&&... args)
     {
         using EventFd = TopFdContainer::Elem<Args...>;
-        return {jln::UniquePtrEventWithUPtr<EventFd>
-            ::New(fd, *this, static_cast<Args&&>(args)...)};
+        return {SharedPtrPrivate<EventFd>
+            ::template New<3>(this->fd_events_, fd, *this, static_cast<Args&&>(args)...)};
     }
 
 
     using GraphicFd = BasicFd<jln::prefix_args<time_t, gdi::GraphicApi&>>;
-    using GraphicFdPtr = jln::UniquePtrWithNotifyDelete<GraphicFd>;
+    using GraphicFdPtr = SharedPtr<GraphicFd>;
 
     struct GraphicFdContainer : Container<GraphicFd>
     {
@@ -443,12 +710,12 @@ struct SessionReactor
     };
 
     template<class... Args>
-    NotifyDeleterBuilderWrapper<jln::TopFdBuilder<jln::UniquePtrEventWithUPtr<GraphicFdContainer::Elem<Args...>>>>
+    NotifyDeleterBuilderWrapper<jln::TopFdBuilder<SharedPtrPrivate<GraphicFdContainer::Elem<Args...>>>>
     create_graphic_fd_event(int fd, Args&&... args)
     {
         using EventFd = GraphicFdContainer::Elem<Args...>;
-        return {jln::UniquePtrEventWithUPtr<EventFd>
-            ::New(fd, *this, static_cast<Args&&>(args)...)};
+        return {SharedPtrPrivate<EventFd>
+            ::template New<3>(this->graphic_fd_events_, fd, *this, static_cast<Args&&>(args)...)};
     }
 
 
@@ -461,12 +728,77 @@ struct SessionReactor
     TopFdContainer fd_events_;
     GraphicFdContainer graphic_fd_events_;
 
-    std::vector<CallbackEvent*> front_events()
+    void clear()
+    {
+        auto remove_dead_state = [](auto& c){
+            c.elements.erase(std::remove_if(
+                c.elements.begin(), c.elements.end(),
+                [](auto& p){
+                    if (!p->uptr && p->use_count == 2) {
+                        LOG(LOG_DEBUG, "detach %p", static_cast<void*>(p));
+                        --p->use_count;
+                        return true;
+                    }
+                    return false;
+                }
+            ), c.elements.end());
+            auto e = c.elements.end();
+            auto it = std::find_if(
+                c.elements.begin(), e,
+                [](auto& p){ return p->use_count == 1; });
+            if (it != e) {
+                auto itprev = it;
+                ::operator delete(*it);
+                LOG(LOG_DEBUG, "delete %p", static_cast<void*>(*it));
+                ++it;
+                while (it != e) {
+                    if ((*it)->use_count == 1) {
+                        ::operator delete(*it);
+                        LOG(LOG_DEBUG, "delete %p", static_cast<void*>(*it));
+                    }
+                    else {
+                        *itprev = *it;
+                        ++itprev;
+                    }
+                    ++it;
+                }
+                c.elements.erase(itprev, e);
+            }
+        };
+
+        remove_dead_state(front_events_);
+        remove_dead_state(graphic_events_);
+        remove_dead_state(sesman_events_);
+        remove_dead_state(timer_events_);
+        remove_dead_state(graphic_timer_events_);
+        remove_dead_state(fd_events_);
+        remove_dead_state(graphic_fd_events_);
+    }
+
+    ~SessionReactor()
+    {
+        this->clear();
+        auto remove_dead_state = [](auto& c){
+            for (auto& p : c.elements) {
+                p->deleter(p);
+            }
+        };
+        remove_dead_state(front_events_);
+        remove_dead_state(graphic_events_);
+        remove_dead_state(sesman_events_);
+        remove_dead_state(timer_events_);
+        remove_dead_state(graphic_timer_events_);
+        remove_dead_state(fd_events_);
+        remove_dead_state(graphic_fd_events_);
+        this->clear();
+    }
+
+    auto& front_events()
     {
         return this->front_events_.elements;
     }
 
-    std::vector<GraphicEvent*> graphic_events()
+    auto& graphic_events()
     {
         return this->graphic_events_.elements;
     }
