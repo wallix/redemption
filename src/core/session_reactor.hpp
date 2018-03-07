@@ -451,6 +451,7 @@ struct SessionReactor
         }
 
         template<class... Args>
+        // TODO end_tv = get_current_time()
         void exec(timeval const& end_tv, Args&&... args)
         {
             this->exec_impl(
@@ -665,7 +666,7 @@ struct SessionReactor
     }
 
 
-    using GraphicTimer = jln::BasicTimer<jln::prefix_args<time_t, gdi::GraphicApi&>>;
+    using GraphicTimer = jln::BasicTimer<jln::prefix_args<gdi::GraphicApi&>>;
     using GraphicTimerPtr = SharedPtr<GraphicTimer>;
 
     using GraphicTimerContainer = BasicTimerContainer<GraphicTimer>;
@@ -691,7 +692,7 @@ struct SessionReactor
     }
 
 
-    using GraphicEvent = jln::ActionBase<jln::prefix_args<time_t, gdi::GraphicApi&>>;
+    using GraphicEvent = jln::ActionBase<jln::prefix_args<gdi::GraphicApi&>>;
     using GraphicEventPtr = SharedPtr<GraphicEvent>;
 
     using GraphicContainer = ActionContainer<GraphicEvent>;
@@ -731,7 +732,7 @@ struct SessionReactor
     }
 
 
-    using GraphicFd = BasicFd<jln::prefix_args<time_t, gdi::GraphicApi&>>;
+    using GraphicFd = BasicFd<jln::prefix_args<gdi::GraphicApi&>>;
     using GraphicFdPtr = SharedPtr<GraphicFd>;
 
     using GraphicFdContainer = FdContainer<GraphicFd>;
@@ -752,6 +753,20 @@ struct SessionReactor
     GraphicTimerContainer graphic_timer_events_;
     TopFdContainer fd_events_;
     GraphicFdContainer graphic_fd_events_;
+
+    timeval current_time {};
+
+    void set_current_time(timeval const& now)
+    {
+        assert(now >= this->current_time);
+        this->current_time = now;
+    }
+
+    timeval get_current_time() const noexcept
+    {
+        assert(this->current_time.tv_sec != 0);
+        return this->current_time;
+    }
 
     void clear()
     {

@@ -35,8 +35,8 @@ Bouncer2Mod::Bouncer2Mod(
 {
     this->timer = session_reactor.create_graphic_timer(std::ref(*this))
     .set_delay(std::chrono::milliseconds(33))
-    .on_action(jln::always_ready([](time_t now, gdi::GraphicApi& gd, Bouncer2Mod& self){
-        self.draw_event(now, gd);
+    .on_action(jln::always_ready([](gdi::GraphicApi& gd, Bouncer2Mod& self){
+        self.draw_event(0, gd);
     }));
 }
 

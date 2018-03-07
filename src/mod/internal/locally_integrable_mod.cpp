@@ -37,7 +37,7 @@ LocallyIntegrableMod::LocallyIntegrableMod(
 {
     if (this->rail_enabled) {
         this->graphic_event = session_reactor.create_graphic_event(std::ref(*this))
-        .on_action(jln::one_shot([](time_t, gdi::GraphicApi&, LocallyIntegrableMod& self){
+        .on_action(jln::one_shot([](gdi::GraphicApi&, LocallyIntegrableMod& self){
             if (false == static_cast<bool>(self.client_execute)/* &&
                 self.event.is_waked_up_by_time()*/) {
                 self.client_execute.ready(

@@ -275,7 +275,7 @@ public:
         // Clear client screen
         this->clear_client_screen = this->session_reactor
         .create_graphic_event(this->get_dim())
-        .on_action(jln::one_shot([](time_t, gdi::GraphicApi& drawable, Dimension const& dim){
+        .on_action(jln::one_shot([](gdi::GraphicApi& drawable, Dimension const& dim){
             gdi_clear_screen(drawable, dim);
         }));
 

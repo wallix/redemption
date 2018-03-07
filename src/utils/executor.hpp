@@ -600,6 +600,16 @@ struct REDEMPTION_CXX_NODISCARD BasicContext
         return this->exec_action2(f, f);
     }
 
+    timeval get_current_time() const noexcept
+    {
+        return this->event.get_reactor().get_current_time();
+    }
+
+    decltype(auto) get_reactor() noexcept
+    {
+        return this->event.get_reactor();
+    }
+
     friend detail::GetExecutor;
 
 protected:
@@ -1114,8 +1124,8 @@ struct TimerImpl : BasicEvent<
     void set_delay(std::chrono::milliseconds ms) noexcept
     {
         TimerImpl::basic_event::set_delay(ms);
-        // TODO tvtime -> reactor.time()
-        TimerImpl::basic_event::set_time(addusectimeval(this->delay, tvtime()));
+        TimerImpl::basic_event::set_time(addusectimeval(
+            this->delay, this->get_reactor().get_current_time()));
     }
 
     void set_time(timeval const& tv) noexcept
@@ -1139,8 +1149,7 @@ struct TimerImpl : BasicEvent<
     void update_next_time() noexcept
     {
         assert(this->delay.count() > 0);
-        // TODO tvtime -> reactor.time()
-        this->tv = addusectimeval(this->delay, tvtime());
+        this->tv = addusectimeval(this->delay, this->get_reactor().get_current_time());
     }
 };
 

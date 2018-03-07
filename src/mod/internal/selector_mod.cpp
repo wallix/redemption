@@ -118,7 +118,7 @@ SelectorMod::SelectorMod(
     this->selector.rdp_input_invalidate(this->selector.get_rect());
 
     this->started_copy_past_event = session_reactor.create_graphic_event(std::ref(*this))
-    .on_action(jln::one_shot([](time_t, gdi::GraphicApi&, SelectorMod& self){
+    .on_action(jln::one_shot([](gdi::GraphicApi&, SelectorMod& self){
         self.copy_paste.ready(self.front);
     }));
 

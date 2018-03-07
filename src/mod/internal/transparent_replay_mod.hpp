@@ -60,16 +60,15 @@ public:
         .on_exit(jln::exit_with_success())
         .on_action([](auto ctx, TransparentReplayMod& self){
             self.gd_event = self.session_reactor.create_graphic_event(std::ref(self))
-            .on_action(jln::one_shot([](time_t now, gdi::GraphicApi& gd, TransparentReplayMod& self){
-                self.draw_event(now, gd);
+            .on_action(jln::one_shot([](gdi::GraphicApi& gd, TransparentReplayMod& self){
+                self.draw_event(0, gd);
             }));
             return ctx.ready();
         });
     }
 
-    void draw_event(time_t now, gdi::GraphicApi &) override
+    void draw_event(time_t /*now*/, gdi::GraphicApi &) override
     {
-        (void)now;
         try {
             if (!this->player.interpret_chunk()) {
                 this->session_reactor.set_next_event(BACK_EVENT_NEXT);

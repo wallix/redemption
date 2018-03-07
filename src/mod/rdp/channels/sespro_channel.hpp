@@ -631,7 +631,7 @@ public:
 
                         this->freeze_mod_screen = this->session_reactor
                         .create_graphic_event(mod.get_dim())
-                        .on_action(jln::one_shot([](time_t, gdi::GraphicApi& drawable, Dimension const& dim){
+                        .on_action(jln::one_shot([](gdi::GraphicApi& drawable, Dimension const& dim){
                             gdi_freeze_screen(drawable, dim);
                         }));
                     }

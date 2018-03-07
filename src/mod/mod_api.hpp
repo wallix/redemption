@@ -75,10 +75,11 @@ public:
         if (enable_event) {
             this->now_graphic_event = session_reactor
             .create_graphic_event(std::ref(*this))
-            .on_action(jln::one_shot([](time_t time, gdi::GraphicApi& gd, mod_api& self){
+            .on_action([](auto ctx, gdi::GraphicApi& gd, mod_api& self){
                 LOG(LOG_DEBUG, "mod_api action %s", typeid(self).name());
-                self.draw_event(time, gd);
-            }));
+                self.draw_event(ctx.get_current_time().tv_sec, gd);
+                return ctx.terminate();
+            });
         }
     }
 

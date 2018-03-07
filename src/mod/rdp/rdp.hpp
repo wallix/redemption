@@ -1580,7 +1580,7 @@ public:
         this->fd_event = this->session_reactor
         .create_graphic_fd_event(this->trans.get_fd(), std::ref(*this))
         .set_timeout(std::chrono::milliseconds(0))
-        .on_timeout([](auto ctx, time_t /*now*/, gdi::GraphicApi & gd, mod_rdp& self){
+        .on_timeout([](auto ctx, gdi::GraphicApi& gd, mod_rdp& self){
             assert(self.state == MOD_RDP_NEGO_INITIATE);
             gdi_clear_screen(gd, self.get_dim());
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
@@ -1589,9 +1589,10 @@ public:
             // TODO return ctx.disable_timer()...
             return ctx.set_timeout(std::chrono::hours(999))
             .set_timeout_action(jln::always_ready())
-            .next_action(jln::always_ready([](time_t now, gdi::GraphicApi & gd, mod_rdp& self){
-                self.draw_event(now, gd);
-            }));
+            .next_action([](auto ctx, gdi::GraphicApi& gd, mod_rdp& self){
+                self.draw_event(ctx.get_current_time().tv_sec, gd);
+                return ctx.ready();
+            });
         })
         .on_exit(jln::exit_with_success())
         .on_action(jln::always_ready() /* set by on_timeout action*/);

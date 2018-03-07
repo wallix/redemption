@@ -117,7 +117,8 @@ public:
         const bool mem3blt_support = true;
 
         Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
-        time_t now = time(nullptr);
+        session_reactor.set_current_time(tvtime());
+        time_t now = session_reactor.get_current_time().tv_sec;
 
         Front front(
             session_reactor, front_trans, rnd, this->ini, cctx, authentifier,
@@ -246,17 +247,17 @@ public:
                     continue;
                 }
 
-                now = time(nullptr);
+                session_reactor.set_current_time(tvtime());
+                now = session_reactor.get_current_time().tv_sec;
                 if (this->ini.get<cfg::debug::performance>() & 0x8000) {
                     this->write_performance_log(now);
                 }
 
-                auto const end_tv = tvtime() + timeout;
+                auto const end_tv = session_reactor.get_current_time();
                 if (num == 0) {
                     session_reactor.timer_events_.exec(end_tv);
                     if (front.up_and_running) {
-                        session_reactor.graphic_timer_events_.exec(
-                            end_tv, end_tv.tv_sec, mm.get_graphic_wrapper(front));
+                        session_reactor.graphic_timer_events_.exec(end_tv, mm.get_graphic_wrapper(front));
                     }
                 }
                 // session_reactor.timer_events_.info(end_tv);
@@ -318,13 +319,13 @@ public:
                             bool const has_fd_event = (BACK_EVENT_NONE == session_reactor.signal/* && mm.is_set_event(rfds)*/);
 // TODO                            session_reactor.set_event_next(0);
                             // Process incoming module trafic
-                            session_reactor.graphic_events_.exec(now, mm.get_graphic_wrapper(front));
+                            session_reactor.graphic_events_.exec(mm.get_graphic_wrapper(front));
                             auto& c = session_reactor.graphic_fd_events_.elements;
                             for (std::size_t i = 0; i < c.size(); ++i){
                                 // LOG(LOG_DEBUG, "is set fd: %d %d", c[i]->fd, io_fd_isset(c[i]->fd, rfds));
                                 if (c[i]->alive()
                                  && io_fd_isset(c[i]->value.fd, rfds)
-                                 && !c[i]->value.exec(end_tv.tv_sec, mm.get_graphic_wrapper(front))
+                                 && !c[i]->value.exec(mm.get_graphic_wrapper(front))
                                 ) {
                                     c[i]->deleter(c[i]);
                                 }

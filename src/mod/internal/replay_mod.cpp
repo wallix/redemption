@@ -124,8 +124,8 @@ ReplayMod::ReplayMod(
 
     this->timer = session_reactor.create_graphic_timer(std::ref(*this))
     .set_delay(std::chrono::seconds(1))
-    .on_action(jln::always_ready([](time_t now, gdi::GraphicApi& gd, ReplayMod& self){
-        self.draw_event(now, gd);
+    .on_action(jln::always_ready([](gdi::GraphicApi& gd, ReplayMod& self){
+        self.draw_event(0, gd);
     }));
 }
 
@@ -205,9 +205,8 @@ time_t ReplayMod::get_real_time_movie_begin()
     return this->in_trans->get_meta_line().start_time;
 }
 
-void ReplayMod::draw_event(time_t now, gdi::GraphicApi & drawable)
+void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & drawable)
 {
-    (void)now;
     (void)drawable;
     // TODO use system constants for sizes
     if (!this->sync_setted) {

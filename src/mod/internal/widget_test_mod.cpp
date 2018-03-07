@@ -38,8 +38,8 @@ struct WidgetTestMod::WidgetTestModPrivate
     {
         this->timer = mod.session_reactor.create_graphic_timer(std::ref(mod))
         .set_delay(std::chrono::seconds(3))
-        .on_action(jln::always_ready([](time_t now, gdi::GraphicApi& gd, WidgetTestMod& mod){
-            mod.draw_event(now, gd);
+        .on_action(jln::always_ready([](gdi::GraphicApi& gd, WidgetTestMod& mod){
+            mod.draw_event(0, gd);
         }));
     }
 
