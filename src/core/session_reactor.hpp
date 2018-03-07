@@ -304,6 +304,8 @@ struct SessionReactor
         template<class U>
         SharedPtr& operator=(SharedPtrPrivate<U>&& other) noexcept
         {
+            assert(static_cast<SharedDataBase*>(SharedPtrPrivateAccess::p(other).p) != static_cast<SharedDataBase*>(this->p.p));
+            this->reset();
             this->p = std::move(SharedPtrPrivateAccess::p(other));
             this->p.p->uptr = &this->p;
             return *this;
