@@ -651,6 +651,21 @@ struct SessionReactor
             Cont c{*this, timers};
             return Ptr<Args...>::template New<2>(c, fd, r, static_cast<Args&&>(args)...);
         }
+
+        template<class... Args>
+        void exec(fd_set& rfds, Args&&... args)
+        {
+            for (std::size_t i = 0; i < this->elements.size(); ++i){
+                auto& e = *this->elements[i];
+                // LOG(LOG_DEBUG, "is set fd: %d %d", c[i]->fd, io_fd_isset(c[i]->fd, rfds));
+                if (e.alive()
+                    && io_fd_isset(e.value.fd, rfds)
+                    && !e.value.exec(static_cast<Args&&>(args)...)
+                ) {
+                    e.apply_deleter();
+                }
+            }
+        }
     };
 
     using BasicTimer = jln::BasicTimer<jln::prefix_args<>>;

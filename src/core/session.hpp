@@ -262,19 +262,7 @@ public:
                 }
                 // session_reactor.timer_events_.info(end_tv);
 
-                {
-                    auto& c = session_reactor.fd_events_.elements;
-                    for (std::size_t i = 0; i < c.size(); ++i){
-                        // LOG(LOG_DEBUG, "is set fd: %d %d", c[i]->fd, io_fd_isset(c[i]->fd, rfds));
-                        if (c[i]->alive()
-                         && io_fd_isset(c[i]->value.fd, rfds)
-                         && !c[i]->value.exec()
-                        ) {
-                            c[i]->deleter(c[i]);
-                        }
-                    }
-                }
-
+                session_reactor.fd_events_.exec(rfds);
                 if (session_reactor.front_events().size() || sck_is_set(front_trans, rfds)) {
                     try {
                         session_reactor.front_events_.exec(mm.get_callback());
@@ -320,16 +308,7 @@ public:
 // TODO                            session_reactor.set_event_next(0);
                             // Process incoming module trafic
                             session_reactor.graphic_events_.exec(mm.get_graphic_wrapper(front));
-                            auto& c = session_reactor.graphic_fd_events_.elements;
-                            for (std::size_t i = 0; i < c.size(); ++i){
-                                // LOG(LOG_DEBUG, "is set fd: %d %d", c[i]->fd, io_fd_isset(c[i]->fd, rfds));
-                                if (c[i]->alive()
-                                 && io_fd_isset(c[i]->value.fd, rfds)
-                                 && !c[i]->value.exec(mm.get_graphic_wrapper(front))
-                                ) {
-                                    c[i]->deleter(c[i]);
-                                }
-                            }
+                            session_reactor.graphic_fd_events_.exec(rfds, mm.get_graphic_wrapper(front));
                             if (has_fd_event) {
                                 if (has_fd_event) {
                                     // mm.mod->draw_event(now, mm.get_graphic_wrapper(front));
