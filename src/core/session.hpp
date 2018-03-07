@@ -217,14 +217,14 @@ public:
 
                 for (auto& top_fd : session_reactor.fd_events_.elements) {
                     // LOG(LOG_DEBUG, "set fd: %d", top_fd->fd);
-                    if (top_fd->use_count > 1) {
+                    if (top_fd->alive()) {
                         io_fd_set(top_fd->value.fd, rfds);
                     }
                     max = std::max(max, unsigned(top_fd->value.fd));
                 }
                 for (auto& top_fd : session_reactor.graphic_fd_events_.elements) {
                     // LOG(LOG_DEBUG, "set fd: %d", top_fd->fd);
-                    if (top_fd->use_count > 1) {
+                    if (top_fd->alive()) {
                         io_fd_set(top_fd->value.fd, rfds);
                     }
                     max = std::max(max, unsigned(top_fd->value.fd));
@@ -265,7 +265,7 @@ public:
                     auto& c = session_reactor.fd_events_.elements;
                     for (std::size_t i = 0; i < c.size(); ++i){
                         // LOG(LOG_DEBUG, "is set fd: %d %d", c[i]->fd, io_fd_isset(c[i]->fd, rfds));
-                        if (c[i]->use_count > 1
+                        if (c[i]->alive()
                          && io_fd_isset(c[i]->value.fd, rfds)
                          && !c[i]->value.exec()
                         ) {
@@ -322,7 +322,7 @@ public:
                             auto& c = session_reactor.graphic_fd_events_.elements;
                             for (std::size_t i = 0; i < c.size(); ++i){
                                 // LOG(LOG_DEBUG, "is set fd: %d %d", c[i]->fd, io_fd_isset(c[i]->fd, rfds));
-                                if (c[i]->use_count > 1
+                                if (c[i]->alive()
                                  && io_fd_isset(c[i]->value.fd, rfds)
                                  && !c[i]->value.exec(end_tv.tv_sec, mm.get_graphic_wrapper(front))
                                 ) {

@@ -61,15 +61,37 @@ struct SessionReactor
     /*
      * Layout memory
      *
-     * +-----------------------+------------+
-     * |    SharedDataBase     |  use_count | <._
-     * |                       | shared_ptr | <-- internal
-     * |                       |   deleter  | <-*
-     * +-----------------------+-+--------+-|
-     * |    SharedData<Base>   | |  base  | | <-- public
-     * +-----------------------+-|        |-+
-     * |     SharedData<T>     | |  value | | <-- private
-     * +-----------------------+-+--------+-+
+     *    +-------------------------------------------------------+
+     *    |  Builder<Ptr>                                         |
+     *    |   Ptr ptr =                                           |
+     *    |     +-----------------------+---------------------+   |
+     *    |     |  SharedPtrPrivate<T>  |  SharedPtrBase<T> p |   |
+     *    |     +-----------------------+---------------------+   |
+     *    |                                        ||             |
+     *    +-------------------------------------------------------+
+     *                                             ||
+     *                                            move
+     *                                             ||
+     *                                             \/
+     *   .----> +-----------------------+------------------------+ <-- public
+     *  /       |    SharedPtr<Base>    |  SharedPtrBase<Base> p |
+     *  |       +-----------------------+------------------------+
+     *  |    ______________________________________/
+     *  |   /
+     *  |   \__.+-----------------------+------------------------+
+     *  |       |  SharedPtrBase<Base>  | SharedData<Base>* data |
+     *  |       +-----------------------+------------------------+
+     *  |       _________________________________/
+     *  |      /
+     *  |      \__.+--------------------+--------------+
+     *  |          |   SharedDataBase   |   use_count  | <._
+     *  +----------| - - - - - - - - - -|- -shared_ptr | <-- internal
+     *             |                    |    deleter   | <-*
+     *             +--------------------+-+----------+-|
+     *             |  SharedData<Base>  | |   base   | | <-- public
+     *             +--------------------+-|     ^    |-+
+     *             |   SharedData<T>    | |   value  | | <-- private
+     *             +--------------------+-+----------+-+
      */
 
     struct SharedDataBase
@@ -77,9 +99,15 @@ struct SessionReactor
         int use_count;
         void* shared_ptr = nullptr;
         void (*deleter) (SharedDataBase*) noexcept;
+
         void apply_deleter() noexcept
         {
             this->deleter(this);
+        }
+
+        bool alive() const noexcept
+        {
+            return bool(this->shared_ptr);
         }
     };
 
@@ -371,13 +399,13 @@ struct SessionReactor
         {
             for (std::size_t i = 0; i < this->elements.size(); ++i) {
                 auto* elem = this->elements[i];
-                if (elem->use_count > 1 && pred(elem->value)) {
+                if (elem->alive() && pred(elem->value)) {
                     switch (elem->value.exec_action(static_cast<Args&&>(args)...)) {
                         case jln::ExecutorResult::ExitSuccess:
                         case jln::ExecutorResult::ExitFailure:
                             assert(false && "Exit");
                         case jln::ExecutorResult::Terminate:
-                            assert(elem->use_count > 1);
+                            assert(elem->alive());
                             LOG(LOG_DEBUG, "f = %p %d", static_cast<void*>(elem), elem->use_count);
                             elem->apply_deleter();
                             break;
@@ -582,36 +610,6 @@ struct SessionReactor
             }
         }
         REDEMPTION_DIAGNOSTIC_POP
-
-        ~FdImpl()
-        {
-            // if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
-            //     this->session_reactor.timer_events_.detach(this->timer());
-            // }
-            // else {
-            //     this->session_reactor.graphic_timer_events_.detach(this->timer());
-            // }
-        }
-
-        void detach() noexcept
-        {
-            // if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
-            //     this->session_reactor.fd_events_.detach(*this);
-            // }
-            // else {
-            //     this->session_reactor.graphic_fd_events_.detach(*this);
-            // }
-        }
-
-        void attach() noexcept
-        {
-            // if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
-            //     this->session_reactor.fd_events_.attach(*this);
-            // }
-            // else {
-            //     this->session_reactor.graphic_fd_events_.attach(*this);
-            // }
-        }
 
         template<class F>
         void set_on_action(F) noexcept

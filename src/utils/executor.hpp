@@ -227,7 +227,6 @@ struct ExecutorTimerContextConcept_
     template<class F> ExecutorResult exec_action(F f);
     template<class F1, class F2> ExecutorResult exec_action2(F1 f1, F2 f2);
 
-    ExecutorResult detach_timer();
     ExecutorResult retry();
     ExecutorResult retry_until(std::chrono::milliseconds ms);
     ExecutorTimerContextConcept_ set_delay(std::chrono::milliseconds ms);
@@ -611,12 +610,6 @@ template<class Timer>
 struct REDEMPTION_CXX_NODISCARD Executor2TimerContext : BasicContext<Timer>
 {
     using BasicContext<Timer>::BasicContext;
-
-    ExecutorResult detach_timer() noexcept
-    {
-        this->event.detach_timer();
-        return ExecutorResult::ExitSuccess;
-    }
 
     ExecutorResult ready() noexcept
     {
@@ -1084,16 +1077,6 @@ struct BasicEvent : BaseType
       , event_container{static_cast<Cont&&>(event_container)}
     {}
     REDEMPTION_DIAGNOSTIC_POP
-
-    void detach() noexcept
-    {
-        this->event_container.detach(*this);
-    }
-
-    void attach()
-    {
-        this->event_container.attach(*this);
-    }
 
     template<class F>
     void set_on_action(F) noexcept
