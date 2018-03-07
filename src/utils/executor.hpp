@@ -1019,29 +1019,22 @@ struct wrap_fn
 
 class propagate_to_base_t {};
 
-template<
-    class Inherit,
-    class EventContainerType,
-    class BaseType,
-    template<class...> class EventCtxArg,
-    class... Ts>
-struct BasicEvent : BaseType
+template<class EventContainer, class BaseType, class... Ts>
+struct ContextedEvent : BaseType
 {
-    using executor_context = EventCtxArg<Inherit>;
-    using event_container_type = EventContainerType;
-    using basic_event = BasicEvent;
+    using contexted_event = ContextedEvent;
     using tuple_context = detail::tuple<Ts...>;
 
-    BasicEvent(BasicEvent const&) = delete;
-    BasicEvent& operator=(BasicEvent const&) = delete;
+    ContextedEvent(ContextedEvent const&) = delete;
+    ContextedEvent& operator=(ContextedEvent const&) = delete;
 
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
     template<class Cont, class... Args>
-    BasicEvent(Cont&& event_container, Args&&... args)
+    ContextedEvent(Cont&& event_container, Args&&... args)
     noexcept(
         noexcept(tuple_context{static_cast<Args&&>(args)...})
-     && noexcept(event_container_type{static_cast<Cont&&>(event_container)}))
+     && noexcept(EventContainer{static_cast<Cont&&>(event_container)}))
     : ctx{static_cast<Args&&>(args)...}
     , event_container{static_cast<Cont&&>(event_container)}
     {}
@@ -1050,13 +1043,13 @@ struct BasicEvent : BaseType
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
     template<class Tuple, class Cont, class... Args>
-    BasicEvent(propagate_to_base_t, Tuple&& tuple, Cont&& event_container, Args&&... args)
-    noexcept(noexcept(BasicEvent(
+    ContextedEvent(propagate_to_base_t, Tuple&& tuple, Cont&& event_container, Args&&... args)
+    noexcept(noexcept(ContextedEvent(
         std::make_index_sequence<detail::tuple_size<std::remove_reference_t<Tuple>>::value>(),
         static_cast<Tuple&&>(tuple),
         static_cast<Cont&&>(event_container),
         static_cast<Args&&>(args)...)))
-    : BasicEvent(
+    : ContextedEvent(
         std::make_index_sequence<detail::tuple_size<std::remove_reference_t<Tuple>>::value>(),
         static_cast<Tuple&&>(tuple),
         static_cast<Cont&&>(event_container),
@@ -1067,26 +1060,45 @@ struct BasicEvent : BaseType
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
     template<std::size_t... ints, class Tuple, class Cont, class... Args>
-    BasicEvent(std::integer_sequence<size_t, ints...>, Tuple&& tuple, Cont&& event_container, Args&&... args)
+    ContextedEvent(std::integer_sequence<size_t, ints...>, Tuple&& tuple, Cont&& event_container, Args&&... args)
     noexcept(
         noexcept(BaseType{detail::get<ints>(static_cast<Tuple&&>(tuple))...})
      && noexcept(tuple_context{static_cast<Args&&>(args)...})
-     && noexcept(event_container_type{static_cast<Cont&&>(event_container)}))
+     && noexcept(EventContainer{static_cast<Cont&&>(event_container)}))
       : BaseType{detail::get<ints>(static_cast<Tuple&&>(tuple))...}
       , ctx{static_cast<Args&&>(args)...}
       , event_container{static_cast<Cont&&>(event_container)}
     {}
     REDEMPTION_DIAGNOSTIC_POP
 
+    decltype(auto) get_reactor() const noexcept
+    {
+        return this->event_container.get_reactor();
+    }
+
+    tuple_context ctx;
+protected:
+    EventContainer event_container;
+};
+
+// TODO obsolet
+template<
+    class Inherit,
+    class EventContainerType,
+    class BaseType,
+    template<class...> class EventCtxArg,
+    class... Ts>
+struct BasicEvent : ContextedEvent<EventContainerType, BaseType, Ts...>
+{
+    using basic_event = BasicEvent;
+
+    using BasicEvent::contexted_event::contexted_event;
+
     template<class F>
     void set_on_action(F) noexcept
     {
         this->on_action = wrap_fn<F, Inherit, EventCtxArg>();
     }
-
-    tuple_context ctx;
-protected:
-    event_container_type event_container;
 };
 
 template<class EventContainer, class PrefixArgs, class... Ts>

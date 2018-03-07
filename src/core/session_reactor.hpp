@@ -266,25 +266,25 @@ struct SessionReactor
             };
         }
 
-        template<int Use = 2, class C, class... Args>
+        template<int Use = 1, class C, class... Args>
         static SharedPtrPrivate New(C&& c, Args&&... args)
         {
             Data* data = static_cast<Data*>(::operator new(sizeof(Data)));
             LOG(LOG_DEBUG, "new %p %s", static_cast<void*>(data), typeid(T).name());
-            data->deleter = SharedPtrPrivate::make_deleter(nullptr);
-            if constexpr (noexcept(T(c, static_cast<Args&&>(args)...))) {
-                new(&data->value) T(c, static_cast<Args&&>(args)...);
+            if constexpr (noexcept(T(static_cast<Args&&>(args)...))) {
+                new(&data->value) T(static_cast<Args&&>(args)...);
             }
             else {
                 bool failed = true;
                 SCOPE_EXIT(if (failed) {
                     ::operator delete(data);
                 });
-                new(&data->value) T(c, static_cast<Args&&>(args)...);
+                new(&data->value) T(static_cast<Args&&>(args)...);
                 failed = false;
             }
             c.attach(data);
-            data->use_count = Use;
+            data->use_count = Use + 1;
+            data->deleter = SharedPtrPrivate::make_deleter(nullptr);
             return SharedPtrPrivate(data);
         }
     };
@@ -343,6 +343,20 @@ struct SessionReactor
             if (this->p) {
                 this->p.data->apply_deleter();
             }
+        }
+    };
+
+
+    template<class Builder>
+    struct NotifyDeleterBuilderWrapper : Builder
+    {
+        using Builder::Builder;
+
+        template<class NotifyDeleter>
+        Builder&& set_notify_delete(NotifyDeleter d) && noexcept
+        {
+            this->internal_value().set_notify_delete(d);
+            return static_cast<Builder&&>(*this);
         }
     };
 
@@ -453,110 +467,73 @@ struct SessionReactor
             }
         }
 
-        template<class... Args>
-        using Elem = jln::Timer<BasicTimerContainer&, typename Timer::prefix_args, Args...>;
-    };
+        template<class ReactorTimerWrapper, class... Args>
+        using Elem = jln::Timer<ReactorTimerWrapper, typename Timer::prefix_args, Args...>;
 
+        template<class ReactorTimerWrapper, class... Args>
+        using Ptr = SharedPtrPrivate<Elem<ReactorTimerWrapper, Args...>>;
 
-    template<class Builder>
-    struct NotifyDeleterBuilderWrapper : Builder
-    {
-        using Builder::Builder;
-
-        template<class NotifyDeleter>
-        Builder&& set_notify_delete(NotifyDeleter d) && noexcept
+        template<class ReactorTimerWrapper, class... Args>
+        NotifyDeleterBuilderWrapper<jln::TimerBuilder<Ptr<ReactorTimerWrapper, Args...>>>
+        create_shared_ptr(ReactorTimerWrapper r, Args&&... args)
         {
-            this->internal_value().set_notify_delete(d);
-            return static_cast<Builder&&>(*this);
+            return Ptr<ReactorTimerWrapper, Args...>::New(*this, r, static_cast<Args&&>(args)...);
         }
     };
 
-    using BasicTimer = jln::BasicTimer<jln::prefix_args<>>;
-    using BasicTimerPtr = SharedPtr<BasicTimer>;
 
-    using TimerContainer = BasicTimerContainer<BasicTimer>;
-
-
-    template<class... Args>
-    NotifyDeleterBuilderWrapper<jln::TimerBuilder<SharedPtrPrivate<TimerContainer::Elem<Args...>>>>
-    create_timer(Args&&... args)
+    struct ReactorWrapper
     {
-        using Timer = TimerContainer::Elem<Args...>;
-        return {SharedPtrPrivate<Timer>
-            ::New(this->timer_events_, static_cast<Args&&>(args)...)};
-    }
+        SessionReactor& get_reactor() const noexcept
+        {
+            return this->reactor;
+        }
 
-
-    using GraphicTimer = jln::BasicTimer<jln::prefix_args<time_t, gdi::GraphicApi&>>;
-    using GraphicTimerPtr = SharedPtr<GraphicTimer>;
-
-    using GraphicTimerContainer = BasicTimerContainer<GraphicTimer>;
-
-    template<class... Args>
-    NotifyDeleterBuilderWrapper<jln::TimerBuilder<SharedPtrPrivate<GraphicTimerContainer::Elem<Args...>>>>
-    create_graphic_timer(Args&&... args)
-    {
-        using Action = GraphicTimerContainer::Elem<Args...>;
-        return {SharedPtrPrivate<Action>
-            ::New(this->graphic_timer_events_, static_cast<Args&&>(args)...)};
-    }
-
-
-    using CallbackEvent = jln::ActionBase<jln::prefix_args<Callback&>>;
-    using CallbackEventPtr = SharedPtr<CallbackEvent>;
-
-    struct CallbackContainer : Container<CallbackEvent>
-    {
-        template<class... Args>
-        using Elem = jln::Action<CallbackContainer&, CallbackEvent::prefix_args, Args...>;
+        SessionReactor& reactor;
     };
 
-    template<class... Args>
-    NotifyDeleterBuilderWrapper<jln::ActionBuilder<SharedPtrPrivate<CallbackContainer::Elem<Args...>>>>
-    create_callback_event(Args&&... args)
-    {
-        using Action = CallbackContainer::Elem<Args...>;
-        return {SharedPtrPrivate<Action>
-            ::New(this->front_events_, static_cast<Args&&>(args)...)};
-    }
-
-
-    using GraphicEvent = jln::ActionBase<jln::prefix_args<time_t, gdi::GraphicApi&>>;
-    using GraphicEventPtr = SharedPtr<GraphicEvent>;
-
-    struct GraphicContainer : Container<GraphicEvent>
+    template<class Base>
+    struct ActionContainer : Container<Base>
     {
         template<class... Args>
-        using Elem = jln::Action<GraphicContainer&, GraphicEvent::prefix_args, Args...>;
-    };
+        using Elem = jln::Action<ReactorWrapper, typename Base::prefix_args, Args...>;
 
-    template<class... Args>
-    NotifyDeleterBuilderWrapper<jln::ActionBuilder<SharedPtrPrivate<GraphicContainer::Elem<Args...>>>>
-    create_graphic_event(Args&&... args)
-    {
-        using Action = GraphicContainer::Elem<Args...>;
-        return {SharedPtrPrivate<Action>
-            ::New(this->graphic_events_, static_cast<Args&&>(args)...)};
-    }
-
-
-    using SesmanEvent = jln::ActionBase<jln::prefix_args<Inifile&>>;
-    using SesmanEventPtr = SharedPtr<SesmanEvent>;
-
-    struct SesmanContainer : Container<SesmanEvent>
-    {
         template<class... Args>
-        using Elem = jln::Action<SesmanContainer&, SesmanEvent::prefix_args, Args...>;
+        using Ptr = SharedPtrPrivate<Elem<Args...>>;
+
+        template<class... Args>
+        using Builder = NotifyDeleterBuilderWrapper<jln::ActionBuilder<Ptr<Args...>>>;
+
+        template<class... Args>
+        Builder<Args...> create_shared_ptr(SessionReactor& r, Args&&... args)
+        {
+            return {Ptr<Args...>::New(*this, r, static_cast<Args&&>(args)...)};
+        }
     };
 
-    template<class... Args>
-    NotifyDeleterBuilderWrapper<jln::ActionBuilder<SharedPtrPrivate<SesmanContainer::Elem<Args...>>>>
-    create_sesman_event(Args&&... args)
+
+    template<auto timers>
+    struct ReactorTimerWrapper
     {
-        using Action = SesmanContainer::Elem<Args...>;
-        return {SharedPtrPrivate<Action>
-            ::New(this->sesman_events_, static_cast<Args&&>(args)...)};
-    }
+        SessionReactor& get_reactor() const noexcept
+        {
+            return this->reactor;
+        }
+
+        template<class Timer>
+        void update_delay(Timer& timer, std::chrono::milliseconds ms)
+        {
+            (this->reactor.*timers).update_delay(timer, ms);
+        }
+
+        template<class Timer>
+        void update_time(Timer& timer, timeval const& tv)
+        {
+            (this->reactor.*timers).update_time(timer, tv);
+        }
+
+        SessionReactor& reactor;
+    };
 
     template<class PrefixArgs_>
     struct BasicFd : jln::BasicTimer<PrefixArgs_>, jln::BasicExecutorImpl<PrefixArgs_>
@@ -577,7 +554,11 @@ struct SessionReactor
             this->tv = addusectimeval(this->delay, tvtime());
         }
 
-        int fd;
+        BasicFd(int fd) noexcept
+        : fd(fd)
+        {}
+
+        const int fd;
     };
 
     template<class PrefixArgs_, class... Ts>
@@ -585,13 +566,13 @@ struct SessionReactor
     {
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
-        template<class C, class... Args>
-        FdImpl(C&, int fd, SessionReactor& session_reactor, Args&&... args)
-        : ctx{static_cast<Args&&>(args)...}
+        template<class... Args>
+        FdImpl(int fd, SessionReactor& session_reactor, Args&&... args)
+        noexcept(noexcept(jln::detail::tuple<Ts...>{static_cast<Args&&>(args)...}))
+        : BasicFd<PrefixArgs_>(fd)
+        , ctx{static_cast<Args&&>(args)...}
         , session_reactor(session_reactor)
-        {
-            this->fd = fd;
-        }
+        {}
         REDEMPTION_DIAGNOSTIC_POP
 
         template<class F>
@@ -629,77 +610,141 @@ struct SessionReactor
             this->set_timeout(ms);
         }
 
+        SessionReactor& get_reactor() const noexcept
+        {
+            return this->session_reactor;
+        }
+
     public:
         jln::detail::tuple<Ts...> ctx;
+
+    private:
         SessionReactor& session_reactor;
     };
 
-    template<class PrefixArgs_, class... Args>
+    template<class EventContainer, class PrefixArgs_, class... Args>
     using Fd = FdImpl<PrefixArgs_, typename jln::detail::decay_and_strip<Args>::type...>;
+
+    template<class Base>
+    struct FdContainer : Container<Base>
+    {
+        template<class... Args>
+        using Elem = Fd<FdContainer, typename Base::prefix_args, Args...>;
+
+        template<class... Args>
+        using Ptr = SharedPtrPrivate<Elem<Args...>>;
+
+        template<class Timers, class... Args>
+        Ptr<Args...> create_shared_ptr(Timers& timers, int fd, SessionReactor& r, Args&&... args)
+        {
+            struct Cont
+            {
+                void attach(SharedData<Elem<Args...>>* p)
+                {
+                    this->fds.attach(p);
+                    this->timers.attach(p);
+                }
+                FdContainer& fds;
+                Timers& timers;
+            };
+            Cont c{*this, timers};
+            return Ptr<Args...>::template New<2>(c, fd, r, static_cast<Args&&>(args)...);
+        }
+    };
+
+    using BasicTimer = jln::BasicTimer<jln::prefix_args<>>;
+    using BasicTimerPtr = SharedPtr<BasicTimer>;
+
+    using TimerContainer = BasicTimerContainer<BasicTimer>;
+
+    template<class... Args>
+    auto create_timer(Args&&... args)
+    {
+        using W = ReactorTimerWrapper<&SessionReactor::timer_events_>;
+        return this->timer_events_.create_shared_ptr(W{*this}, static_cast<Args&&>(args)...);
+    }
+
+
+    using GraphicTimer = jln::BasicTimer<jln::prefix_args<time_t, gdi::GraphicApi&>>;
+    using GraphicTimerPtr = SharedPtr<GraphicTimer>;
+
+    using GraphicTimerContainer = BasicTimerContainer<GraphicTimer>;
+
+    template<class... Args>
+    auto create_graphic_timer(Args&&... args)
+    {
+        using W = ReactorTimerWrapper<&SessionReactor::graphic_timer_events_>;
+        return this->graphic_timer_events_.create_shared_ptr(W{*this}, static_cast<Args&&>(args)...);
+    }
+
+
+    using CallbackEvent = jln::ActionBase<jln::prefix_args<Callback&>>;
+    using CallbackEventPtr = SharedPtr<CallbackEvent>;
+
+    using CallbackContainer = ActionContainer<CallbackEvent>;
+
+    template<class... Args>
+    CallbackContainer::Builder<Args...>
+    create_callback_event(Args&&... args)
+    {
+        return this->front_events_.create_shared_ptr(*this, static_cast<Args&&>(args)...);
+    }
+
+
+    using GraphicEvent = jln::ActionBase<jln::prefix_args<time_t, gdi::GraphicApi&>>;
+    using GraphicEventPtr = SharedPtr<GraphicEvent>;
+
+    using GraphicContainer = ActionContainer<GraphicEvent>;
+
+    template<class... Args>
+    GraphicContainer::Builder<Args...>
+    create_graphic_event(Args&&... args)
+    {
+        return this->graphic_events_.create_shared_ptr(*this, static_cast<Args&&>(args)...);
+    }
+
+
+    using SesmanEvent = jln::ActionBase<jln::prefix_args<Inifile&>>;
+    using SesmanEventPtr = SharedPtr<SesmanEvent>;
+
+    using SesmanContainer = ActionContainer<SesmanEvent>;
+
+    template<class... Args>
+    SesmanContainer::Builder<Args...>
+    create_sesman_event(Args&&... args)
+    {
+        return this->sesman_events_.create_shared_ptr(*this, static_cast<Args&&>(args)...);
+    }
+
 
     using TopFd = BasicFd<PrefixArgs>;
     using TopFdPtr = SharedPtr<TopFd>;
 
-    struct TopFdContainer : Container<TopFd>
-    {
-        template<class... Args>
-        using Elem = Fd<TopFd::prefix_args, Args...>;
-    };
+    using TopFdContainer = FdContainer<TopFd>;
 
     template<class... Args>
-    NotifyDeleterBuilderWrapper<jln::TopFdBuilder<SharedPtrPrivate<TopFdContainer::Elem<Args...>>>>
+    NotifyDeleterBuilderWrapper<jln::TopFdBuilder<TopFdContainer::Ptr<Args...>>>
     create_fd_event(int fd, Args&&... args)
     {
-        using EventFd = TopFdContainer::Elem<Args...>;
-        struct C
-        {
-            void attach(SharedData<EventFd>* p)
-            {
-                this->fds.attach(p);
-                this->timers.attach(p);
-            }
-            decltype(fd_events_)& fds;
-            decltype(timer_events_)& timers;
-        };
-        return {SharedPtrPrivate<EventFd>
-            ::template New<3>(
-                C{this->fd_events_, this->timer_events_},
-                fd, *this, static_cast<Args&&>(args)...)};
+        return {this->fd_events_.create_shared_ptr(
+            this->timer_events_, fd, *this, static_cast<Args&&>(args)...)};
     }
 
 
     using GraphicFd = BasicFd<jln::prefix_args<time_t, gdi::GraphicApi&>>;
     using GraphicFdPtr = SharedPtr<GraphicFd>;
 
-    struct GraphicFdContainer : Container<GraphicFd>
-    {
-        template<class... Args>
-        using Elem = Fd<GraphicFd::prefix_args, Args...>;
-    };
+    using GraphicFdContainer = FdContainer<GraphicFd>;
 
     template<class... Args>
-    NotifyDeleterBuilderWrapper<jln::TopFdBuilder<SharedPtrPrivate<GraphicFdContainer::Elem<Args...>>>>
+    NotifyDeleterBuilderWrapper<jln::TopFdBuilder<GraphicFdContainer::Ptr<Args...>>>
     create_graphic_fd_event(int fd, Args&&... args)
     {
-        using EventFd = GraphicFdContainer::Elem<Args...>;
-        struct C
-        {
-            void attach(SharedData<EventFd>* p)
-            {
-                this->fds.attach(p);
-                this->timers.attach(p);
-            }
-            decltype(graphic_fd_events_)& fds;
-            decltype(graphic_timer_events_)& timers;
-        };
-        return {SharedPtrPrivate<EventFd>
-            ::template New<3>(
-                C{this->graphic_fd_events_, this->graphic_timer_events_},
-                fd, *this, static_cast<Args&&>(args)...)};
+        return {this->graphic_fd_events_.create_shared_ptr(
+            this->graphic_timer_events_, fd, *this, static_cast<Args&&>(args)...)};
     }
 
 
-    //std::vector<std::unique_ptr<Context>> contexts;
     CallbackContainer front_events_;
     GraphicContainer graphic_events_;
     SesmanContainer sesman_events_;
