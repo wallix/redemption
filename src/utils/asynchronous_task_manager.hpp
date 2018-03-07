@@ -21,13 +21,35 @@
 
 #pragma once
 
-class wait_obj;
 class SessionReactor;
 
 class AsynchronousTask {
 public:
     virtual ~AsynchronousTask() = default;
 
-    virtual void configure_event(SessionReactor&) = 0;
+    struct DeleterFunction
+    {
+        using ptr_function = void(*)(void* data, AsynchronousTask&) noexcept;
+
+        explicit DeleterFunction() = default;
+
+        template<class T, class F>
+        DeleterFunction(T* p, F f)
+        : data(p)
+        , f(reinterpret_cast<ptr_function>(
+            static_cast<void(*)(T* data, AsynchronousTask&) noexcept>(f)))
+        {}
+
+        void operator()(AsynchronousTask& self) noexcept
+        {
+            this->f(this->data, self);
+        }
+
+    private:
+        void* data = nullptr;
+        ptr_function  f = [](void*, AsynchronousTask&) noexcept {};
+    };
+
+    virtual void configure_event(SessionReactor&, DeleterFunction) = 0;
 };
 

@@ -18,6 +18,7 @@
     Author(s): Christophe Grosjean, Meng Tan, Jonathan Poelen, Raphael Zhou
 */
 
+#include "core/session_reactor.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
 #include "mod/internal/client_execute.hpp"
 #include "configs/config.hpp"
@@ -25,20 +26,20 @@
 
 RailModuleHostMod::RailModuleHostMod(
     RailModuleHostModVariables vars,
+    SessionReactor& session_reactor,
     FrontAPI& front, uint16_t width, uint16_t height,
     Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
     ClientExecute& client_execute,
     const GCC::UserData::CSMonitor& cs_monitor,
     bool can_resize_hosted_desktop)
-: LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(),
-                        client_execute, vars.get<cfg::theme>())
-, rail_module_host(front, widget_rect.x, widget_rect.y,
+: LocallyIntegrableMod(session_reactor, front, width, height, vars.get<cfg::font>(),
+                       client_execute, vars.get<cfg::theme>())
+, rail_module_host(session_reactor, front, widget_rect.x, widget_rect.y,
                    widget_rect.cx, widget_rect.cy,
                    this->screen, this, std::move(managed_mod),
                    vars.get<cfg::font>(), cs_monitor, width, height)
 , vars(vars)
 , can_resize_hosted_desktop(can_resize_hosted_desktop)
-, managed_mod_event_handler(*this)
 , client_execute(client_execute)
 {
     this->screen.add_widget(&this->rail_module_host);
@@ -105,32 +106,6 @@ void RailModuleHostMod::send_auth_channel_data(const char * string_data)
 void RailModuleHostMod::draw_event(time_t now, gdi::GraphicApi& gapi)
 {
     LocallyIntegrableMod::draw_event(now, gapi);
-
-    this->event.reset_trigger_time();
-}
-
-void RailModuleHostMod::get_event_handlers(std::vector<EventHandler>& out_event_handlers)
-{
-    mod_api& mod = this->rail_module_host.get_managed_mod();
-
-    mod.get_event_handlers(out_event_handlers);
-
-    out_event_handlers.emplace_back(
-        &mod.get_event(),
-        &this->managed_mod_event_handler,
-        mod.get_fd()
-    );
-
-    if (this->disconnection_reconnection_required &&
-        mod.is_auto_reconnectable()) {
-        out_event_handlers.emplace_back(
-            &this->disconnection_reconnection_event,
-            &this->disconnection_reconnection_event_handler,
-            INVALID_SOCKET
-        );
-    }
-
-    LocallyIntegrableMod::get_event_handlers(out_event_handlers);
 }
 
 bool RailModuleHostMod::is_up_and_running()
@@ -149,9 +124,20 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
 
     if (dim.w && dim.h && ((dim.w != width) || (dim.h != height)) &&
         this->client_execute.is_resizing_hosted_desktop_enabled()) {
-        this->disconnection_reconnection_required = true;
-
-        this->disconnection_reconnection_event.set_trigger_time(1000000);
+        if (this->disconnection_reconnection_timer) {
+            this->disconnection_reconnection_timer->set_delay(std::chrono::seconds(1));
+        }
+        else {
+            this->disconnection_reconnection_timer = this->session_reactor
+            .create_timer(std::ref(*this))
+            .set_delay(std::chrono::seconds(1))
+            .on_action([](auto ctx, RailModuleHostMod& self){
+                if (self.rail_module_host.get_managed_mod().is_auto_reconnectable()) {
+                    throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
+                }
+                return ctx.terminate();
+            });
+        }
     }
 }
 

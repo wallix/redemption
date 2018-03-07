@@ -103,6 +103,7 @@ public:
 
     virtual void set_drawn_client(ClientRedemptionIOAPI * client) override {
         this->drawn_client = client;
+        this->qtRDPKeymap._verbose = (this->drawn_client->verbose == RDPVerbose::input) ? 1 : 0;
         this->qtRDPKeymap.setKeyboardLayout(this->drawn_client->info.keylayout);
     }
 
@@ -790,7 +791,7 @@ private:
     void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
 
         const Rect rect = clip.intersect(this->client->info.width, this->client->info.height).intersect(cmd.rect);
-        this->setClip(rect.x, rect.y, rect.cx, rect.cy);
+        // this->setClip(rect.x, rect.y, rect.cx, rect.cy);
 
         QColor backColor = this->u32_to_qcolor(cmd.back_color, color_ctx);
         QColor foreColor = this->u32_to_qcolor(cmd.fore_color, color_ctx);
@@ -953,7 +954,7 @@ private:
         if (this->client->connected || this->client->is_replaying) {
             QColor qcolor(this->u32_to_qcolor(cmd.color, color_ctx));
             Rect rect(cmd.rect.intersect(clip));
-            this->setClip(rect.x, rect.y, rect.cx, rect.cy);
+            // this->setClip(rect.x, rect.y, rect.cx, rect.cy);
 
             this->painter.fillRect(rect.x, rect.y, rect.cx, rect.cy, qcolor);
         }
@@ -993,7 +994,7 @@ private:
         qbitmap = qbitmap.mirrored(false, true);
         QRect trect(drect.x, drect.y, mincx, mincy);
         if (this->client->connected || this->client->is_replaying) {
-            this->setClip(trect.x(), trect.y(), trect.width(), trect.height());
+            // this->setClip(trect.x(), trect.y(), trect.width(), trect.height());
             this->painter.drawImage(trect, qbitmap);
         }
 
@@ -1006,7 +1007,7 @@ private:
         // TODO clipping
         if (this->client->connected || this->client->is_replaying) {
             this->screen->setPenColor(this->u32_to_qcolor(cmd.back_color, color_ctx));
-            this->setClip(clip.x, clip.y, clip.cx, clip.cy);
+            // this->setClip(clip.x, clip.y, clip.cx, clip.cy);
             this->painter.drawLine(cmd.startx, cmd.starty, cmd.endx, cmd.endy);
         }
 
@@ -1021,7 +1022,7 @@ private:
         if (drect.isempty()) {
             return;
         }
-        this->setClip(drect.x, drect.y, drect.cx, drect.cy);
+        // // this->setClip(drect.x, drect.y, drect.cx, drect.cy);
 
         int srcx(drect.x + cmd.srcx - cmd.rect.x);
         int srcy(drect.y + cmd.srcy - cmd.rect.y);
@@ -1062,7 +1063,7 @@ private:
             return ;
         }
 
-        this->setClip(drect.x, drect.y, drect.cx, drect.cy);
+        // // this->setClip(drect.x, drect.y, drect.cx, drect.cy);
 
         switch (cmd.rop) {
 
@@ -1123,7 +1124,7 @@ private:
             return ;
         }
 
-        this->setClip(drect.x, drect.y, drect.cx, drect.cy);
+        // // this->setClip(drect.x, drect.y, drect.cx, drect.cy);
 
         switch (cmd.rop) {
             case 0xB8:
@@ -1187,7 +1188,7 @@ private:
     void draw(const RDPDestBlt & cmd, Rect clip) override {
 
         const Rect drect = clip.intersect(this->client->info.width, this->client->info.height).intersect(cmd.rect);
-        this->setClip(drect.x, drect.y, drect.cx, drect.cy);
+        // // this->setClip(drect.x, drect.y, drect.cx, drect.cy);
 
         switch (cmd.rop) {
             case 0x00: // blackness
@@ -1247,7 +1248,7 @@ private:
         if (screen_rect.isempty()){
             return ;
         }
-        this->setClip(screen_rect.x, screen_rect.y, screen_rect.cx, screen_rect.cy);
+        // this->setClip(screen_rect.x, screen_rect.y, screen_rect.cx, screen_rect.cy);
 
         Rect const clipped_glyph_fragment_rect = cmd.bk.intersect(screen_rect);
         if (clipped_glyph_fragment_rect.isempty()) {

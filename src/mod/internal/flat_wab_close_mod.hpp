@@ -25,7 +25,6 @@
 #include "configs/config_access.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget/flat_wab_close.hpp"
-#include "utils/timeout.hpp"
 
 using FlatWabCloseModVariables = vcfg::variables<
     vcfg::var<cfg::globals::auth_user,          vcfg::accessmode::get | vcfg::accessmode::is_asked>,
@@ -49,15 +48,13 @@ class FlatWabCloseMod : public LocallyIntegrableMod, public NotifyApi
 {
     FlatWabClose close_widget;
 
-    Timeout timeout;
-
     FlatWabCloseModVariables vars;
 
-    bool showtimer;
+    SessionReactor::BasicTimerPtr timeout_timer;
 
 public:
     FlatWabCloseMod(
-        FlatWabCloseModVariables vars,
+        FlatWabCloseModVariables vars, SessionReactor& session_reactor,
         FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect,
         time_t now, ClientExecute & client_execute, bool showtimer = false,
         bool back_selector = false);

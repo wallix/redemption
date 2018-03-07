@@ -152,8 +152,6 @@ public:
             unsigned osd_state = OSD_STATE_NOT_YET_COMPUTED;
             const bool enable_osd = this->ini.get<cfg::globals::enable_osd>();
 
-            std::vector<EventHandler> event_handlers;
-
             // TODO: we should define some select object to wrap rfds, wfds and timeouts
             // and hide events inside modules managing sockets (or timers)
             // this should help in the future to generalise architecture
@@ -182,14 +180,7 @@ public:
                     wait_on_sck(acl->auth_trans, rfds, max);
                 }
 
-                mm.mod->get_event().wait_on_fd(mm.mod->get_fd(), rfds, max, timeout);
-
-                event_handlers.clear();
-                mm.mod->get_event_handlers(event_handlers);
-                for (EventHandler& event_handler : event_handlers) {
-                    const int fd = event_handler.get_fd();
-                    event_handler.get_event().wait_on_fd(fd, rfds, max, timeout);
-                }
+// TODO                mm.mod->get_event().wait_on_fd(mm.mod->get_fd(), rfds, max, timeout);
 
                 if (front_trans.has_pending_data()
                  || mm.has_pending_data()
@@ -198,8 +189,19 @@ public:
                 }
 
                 auto tv = session_reactor.timer_events_.get_next_timeout();
-                // LOG(LOG_DEBUG, "%ld %ld", tv.tv_sec, tv.tv_usec);
+                if (front.up_and_running) {
+                    auto tv2 = session_reactor.graphic_timer_events_.get_next_timeout();
+                    if (tv.tv_sec >= 0) {
+                        if (tv2.tv_sec >= 0) {
+                            tv = std::min(tv, tv2);
+                        }
+                    }
+                    else {
+                        tv = tv2;
+                    }
+                }
                 auto tv_now = tvtime();
+                // LOG(LOG_DEBUG, "%ld %ld - %ld %ld", tv.tv_sec, tv.tv_usec, tv_now.tv_sec, tv_now.tv_usec);
                 if (tv.tv_sec >= 0 && tv < timeout + tv_now) {
                     if (tv < tv_now) {
                         timeout = {0, 0};
@@ -208,9 +210,16 @@ public:
                         timeout = tv - tv_now;
                     }
                 }
+                // LOG(LOG_DEBUG, "tv_now: %ld %ld", tv_now.tv_sec, tv_now.tv_usec);
+                // session_reactor.timer_events_.info(tv_now);
 
                 for (auto& top_fd : session_reactor.fd_events_.elements) {
-                    LOG(LOG_DEBUG, "set fd: %d", top_fd->fd);
+                    // LOG(LOG_DEBUG, "set fd: %d", top_fd->fd);
+                    io_fd_set(top_fd->fd, rfds);
+                    max = std::max(max, unsigned(top_fd->fd));
+                }
+                for (auto& top_fd : session_reactor.graphic_fd_events_.elements) {
+                    // LOG(LOG_DEBUG, "set fd: %d", top_fd->fd);
                     io_fd_set(top_fd->fd, rfds);
                     max = std::max(max, unsigned(top_fd->fd));
                 }
@@ -239,17 +248,22 @@ public:
                 auto const end_tv = tvtime() + timeout;
                 if (num == 0) {
                     session_reactor.timer_events_.exec(end_tv);
+                    if (front.up_and_running) {
+                        session_reactor.graphic_timer_events_.exec(
+                            end_tv, end_tv.tv_sec, mm.get_graphic_wrapper(front));
+                    }
                 }
                 // session_reactor.timer_events_.info(end_tv);
 
                 {
                     auto& c = session_reactor.fd_events_.elements;
                     for (std::size_t i = 0; i < c.size(); ){
-                        LOG(LOG_DEBUG, "is set fd: %d %d", c[i]->fd, io_fd_isset(c[i]->fd, rfds));
+                        // LOG(LOG_DEBUG, "is set fd: %d %d", c[i]->fd, io_fd_isset(c[i]->fd, rfds));
                         if (io_fd_isset(c[i]->fd, rfds) && !c[i]->exec()) {
-                            LOG(LOG_DEBUG, "delete fd: %d", c[i]->fd);
-                            session_reactor.timer_events_.detach(*c[i]);
-                            c.erase(c.begin() + i);
+                            // LOG(LOG_DEBUG, "delete fd: %d", c[i]->fd);
+                            c[i]->delete_self(jln::DeleteFrom::Observer);
+                            c[i] = std::move(c.back());
+                            c.pop_back();
                         }
                         else {
                             ++i;
@@ -298,40 +312,32 @@ public:
 
                         try
                         {
-                            bool call_draw_event = false;
-                            for (EventHandler& event_handler : event_handlers) {
-                                if (BACK_EVENT_NONE != signal) {
-                                    break;
+                            bool const has_fd_event = (BACK_EVENT_NONE == session_reactor.signal/* && mm.is_set_event(rfds)*/);
+// TODO                            session_reactor.set_event_next(0);
+                            // Process incoming module trafic
+                            session_reactor.graphic_events_.exec(now, mm.get_graphic_wrapper(front));
+                            auto& c = session_reactor.graphic_fd_events_.elements;
+                            for (std::size_t i = 0; i < c.size(); ){
+                                // LOG(LOG_DEBUG, "is set fd: %d %d", c[i]->fd, io_fd_isset(c[i]->fd, rfds));
+                                if (io_fd_isset(c[i]->fd, rfds) && !c[i]->exec(end_tv.tv_sec, mm.get_graphic_wrapper(front))) {
+                                    // LOG(LOG_DEBUG, "delete fd: %d", c[i]->fd);
+                                    c[i]->delete_self(jln::DeleteFrom::Observer);
+                                    c[i] = std::move(c.back());
+                                    c.pop_back();
                                 }
-
-                                wait_obj& event = event_handler.get_event();
-
-                                if (event.is_set(event_handler.get_fd(), rfds)) {
-                                    event_handler(now, mm.get_graphic_wrapper(front));
-
-                                    if (BACK_EVENT_CALL_DRAW_EVENT == event.signal) {
-                                        call_draw_event = true;
-                                        event.reset_trigger_time();
-                                    }
-                                    else if (BACK_EVENT_NONE != event.signal) {
-                                        signal = event.signal;
-                                        event.reset_trigger_time();
-                                    }
+                                else {
+                                    ++i;
                                 }
                             }
-
-                            bool const has_fd_event = (BACK_EVENT_NONE == signal && mm.is_set_event(rfds));
-                            // Process incoming module trafic
-                            if (has_fd_event || call_draw_event) {
-                                session_reactor.graphic_events_.exec(mm.get_graphic_wrapper(front));
+                            if (has_fd_event) {
                                 if (has_fd_event) {
-                                    mm.mod->draw_event(now, mm.get_graphic_wrapper(front));
+                                    // mm.mod->draw_event(now, mm.get_graphic_wrapper(front));
                                 }
 
-                                if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
-                                    signal = mm.mod->get_event().signal;
-                                    mm.mod->get_event().reset_trigger_time();
-                                }
+// TODO                                if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
+// TODO                                    signal = mm.mod->get_event().signal;
+// TODO                                    mm.mod->get_event().reset_trigger_time();
+// TODO                                }
                             }
                         }
                         catch (Error const & e) {
@@ -350,8 +356,7 @@ public:
                                     SessionProbeOnLaunchFailure::retry_without_session_probe) {
                                     this->ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
 
-                                    signal = BACK_EVENT_RETRY_CURRENT;
-                                    mm.mod->get_event().reset_trigger_time();
+                                    session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
                                 }
                                 else if (acl) {
                                     this->ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(this->ini)));
@@ -368,14 +373,12 @@ public:
                                     this->ini.set<cfg::context::perform_automatic_reconnection>(true);
                                 }
 
-                                signal = BACK_EVENT_RETRY_CURRENT;
-                                mm.mod->get_event().reset_trigger_time();
+                                session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
                             }
                             else if (e.id == ERR_RAIL_NOT_ENABLED) {
                                 this->ini.get_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
 
-                                signal = BACK_EVENT_RETRY_CURRENT;
-                                mm.mod->get_event().reset_trigger_time();
+                                session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
                             }
                             else if ((e.id == ERR_RDP_SERVER_REDIR) &&
                                      this->ini.get<cfg::mod_rdp::server_redirection_support>()) {
@@ -403,8 +406,7 @@ public:
                                 sprintf(message, "%s@%s", change_user, host);
                                 authentifier.report("SERVER_REDIRECTION", message);
 
-                                signal = BACK_EVENT_RETRY_CURRENT;
-                                mm.mod->get_event().reset_trigger_time();
+                                session_reactor.set_next_event(BACK_EVENT_RETRY_CURRENT);
                             }
                             else {
                                 throw;
@@ -442,17 +444,26 @@ public:
                                         ini, std::move(client_sck), now, cctx, rnd, fstat
                                     ));
                                     authentifier.set_acl_serial(&acl->acl_serial);
-                                    signal = BACK_EVENT_NEXT;
+                                    session_reactor.set_next_event(BACK_EVENT_NEXT);
                                 }
                                 catch (...) {
-                                    mm.invoke_close_box("No authentifier available",signal, now, authentifier, authentifier);
+                                    signal = BackEvent_t(session_reactor.signal);
+                                    session_reactor.signal = 0;
+                                    mm.invoke_close_box("No authentifier available", signal, now, authentifier, authentifier);
+                                    if (!session_reactor.signal || signal) {
+                                        session_reactor.signal = signal;
+                                    }
                                 }
                             }
                         }
                         else if (sck_is_set(acl->auth_trans, rfds)) {
                             // authentifier received updated values
                             acl->acl_serial.receive();
+                            if (!ini.changed_field_size()) {
+                                session_reactor.sesman_events_.exec(ini);
+                            }
                         }
+
                         if (enable_osd) {
                             const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
                             if (enddate && mm.is_up_and_running()) {
@@ -482,13 +493,32 @@ public:
                         }
 
                         if (acl) {
-                            run_session = acl->acl_serial.check(
-                                authentifier, authentifier, mm,
-                                now, signal, front_signal, front.has_user_activity
-                            );
+                            signal = BackEvent_t(session_reactor.signal);
+                            int i = 0;
+                            do {
+                                if (++i == 11) {
+                                    LOG(LOG_ERR, "loop event error");
+                                    break;
+                                }
+                                session_reactor.signal = 0;
+                                run_session = acl->acl_serial.check(
+                                    authentifier, authentifier, mm,
+                                    now, signal, front_signal, front.has_user_activity
+                                );
+                                if (!session_reactor.signal) {
+                                    session_reactor.signal = signal;
+                                    break;
+                                }
+                                else if (signal) {
+                                    session_reactor.signal = signal;
+                                }
+                                else {
+                                    signal = BackEvent_t(session_reactor.signal);
+                                }
+                            } while (session_reactor.signal);
                         }
                         else if (signal == BACK_EVENT_STOP) {
-                            mm.mod->get_event().reset_trigger_time();
+// TODO                            mm.mod->get_event().reset_trigger_time();
                             run_session = false;
                         }
                         if (mm.last_module) {
@@ -497,7 +527,7 @@ public:
                         }
                     }
                 } catch (Error const& e) {
-                    LOG(LOG_INFO, "Session::Session exception = %s\n", e.errmsg());
+                    LOG(LOG_ERR, "Session::Session exception = %s\n", e.errmsg());
                     time_t now = time(nullptr);
                     mm.invoke_close_box(local_err_msg(e, language(this->ini)), signal, now, authentifier, authentifier);
                 };

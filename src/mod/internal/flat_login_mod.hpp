@@ -27,7 +27,6 @@
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget/flat_login.hpp"
 #include "mod/internal/widget/language_button.hpp"
-#include "utils/timeout.hpp"
 
 
 using FlatLoginModVariables = vcfg::variables<
@@ -52,7 +51,8 @@ class FlatLoginMod : public LocallyIntegrableMod, public NotifyApi
     LanguageButton language_button;
 
     FlatLogin login;
-    Timeout timeout;
+    SessionReactor::BasicTimerPtr timeout_timer;
+    SessionReactor::GraphicEventPtr started_copy_past_event;
 
     CopyPaste copy_paste;
 
@@ -60,7 +60,7 @@ class FlatLoginMod : public LocallyIntegrableMod, public NotifyApi
 
 public:
     FlatLoginMod(
-        FlatLoginModVariables vars,
+        FlatLoginModVariables vars, SessionReactor& session_reactor,
         char const * username, char const * password,
         FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, time_t now,
         ClientExecute & client_execute

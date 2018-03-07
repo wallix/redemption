@@ -79,41 +79,25 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
         test_to_server_sender, to_verbose_flags(verbose));
 
     bool run_task = true;
+    SessionReactor session_reactor;
+    rdpdr_drive_read_task.configure_event(
+        session_reactor, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
+            *b = false;
+        }});
+    auto& timer_events = session_reactor.timer_events_.elements;
+    auto& fd_events = session_reactor.fd_events_.elements;
+    RED_REQUIRE_EQ(timer_events.size(), 1);
+    RED_REQUIRE_EQ(fd_events.size(), 1);
 
-    do
-    {
-        wait_obj event;
-
-        rdpdr_drive_read_task.configure_wait_object(event);
-
-        unsigned max = 0;
-        fd_set rfds;
-
-        FD_ZERO(&rfds);
-
-        timeval timeout = { 3, 0 };
-
-        event.wait_on_fd(rdpdr_drive_read_task.get_file_descriptor(), rfds, max, timeout);
-
-        int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
-
-        if (num < 0) {
-            if (errno == EINTR) {
-                continue;
-            }
-
-            LOG(LOG_ERR, "Task loop raised error %d : %s", errno, strerror(errno));
-            run_task = false;
-        }
-        else {
-            if (event.is_set(rdpdr_drive_read_task.get_file_descriptor(), rfds)) {
-                if (!rdpdr_drive_read_task.run(event)) {
-                    run_task = false;
-                }
-            }
+    for (int i = 0; i < 100 && !fd_events.empty(); ++i) {
+        if (!fd_events[0]->exec()) {
+            fd_events[0]->delete_self(jln::DeleteFrom::Observer);
+            fd_events.pop_back();
         }
     }
-    while (run_task);
+    RED_CHECK_EQ(fd_events.size(), 0);
+    RED_CHECK_EQ(timer_events.size(), 0);
+    RED_CHECK(!run_task);
 }
 
 RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
@@ -143,42 +127,22 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
         to_verbose_flags(verbose));
 
     LOG(LOG_INFO, "RdpdrSendDriveIOResponseTask");
-
     bool run_task = true;
+    SessionReactor session_reactor;
+    rdpdr_send_drive_io_response_task.configure_event(
+        session_reactor, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
+            *b = false;
+        }});
+    RED_CHECK_EQ(session_reactor.fd_events_.elements.size(), 0);
 
-    do
-    {
-        LOG(LOG_INFO, "do");
-        wait_obj event;
+    auto& timer_events = session_reactor.timer_events_.elements;
+    RED_CHECK_EQ(timer_events.size(), 1);
 
-        rdpdr_send_drive_io_response_task.configure_wait_object(event);
-
-        unsigned max = 0;
-        fd_set rfds;
-
-        FD_ZERO(&rfds);
-
-        timeval timeout = { 3, 0 };
-
-        event.wait_on_fd(rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds, max, timeout);
-
-        int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
-
-        if (num < 0) {
-            if (errno == EINTR) {
-                continue;
-            }
-
-            LOG(LOG_ERR, "Task loop raised error %d : %s", errno, strerror(errno));
-            run_task = false;
-        }
-        else {
-            if (event.is_set(rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds)) {
-                if (!rdpdr_send_drive_io_response_task.run(event)) {
-                    run_task = false;
-                }
-            }
-        }
+    timeval timeout = timer_events[0]->time();
+    for (int i = 0; i < 100 && !timer_events.empty(); ++i) {
+        session_reactor.timer_events_.exec(timeout);
+        ++timeout.tv_sec;
     }
-    while (run_task);
+    RED_CHECK_EQ(timer_events.size(), 0);
+    RED_CHECK(!run_task);
 }

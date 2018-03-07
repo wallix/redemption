@@ -37,7 +37,10 @@ class TestCardMod : public InternalMod
     bool unit_test;
 
 public:
-    TestCardMod(FrontAPI & front, uint16_t width, uint16_t height, Font const & font, bool unit_test = true);
+    TestCardMod(
+        SessionReactor& session_reactor,
+        FrontAPI & front, uint16_t width, uint16_t height,
+        Font const & font, bool unit_test = true);
 
     void rdp_input_invalidate(Rect /*rect*/) override
     {}
@@ -54,20 +57,10 @@ public:
     void refresh(Rect /*rect*/) override
     {}
 
-    // event from back end (draw event from remote or internal server)
-    // returns module continuation status, 0 if module want to continue
-    // non 0 if it wants to stop (to run another module)
-    void draw_event(time_t now, gdi::GraphicApi & drawable) override
-    {
-        (void)now;
-        this->draw(drawable);
-        this->event.reset_trigger_time();
-    }
+    void draw_event(time_t now, gdi::GraphicApi & drawable) override;
 
     bool is_up_and_running() override
     {
         return true;
     }
-
-    void draw(gdi::GraphicApi & drawable);
 };

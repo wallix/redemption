@@ -53,11 +53,12 @@ namespace
 }
 
 FlatWabCloseMod::FlatWabCloseMod(
-    FlatWabCloseModVariables vars, FrontAPI & front, uint16_t width, uint16_t height,
-    Rect const widget_rect, time_t now, ClientExecute & client_execute,
+    FlatWabCloseModVariables vars, SessionReactor& session_reactor,
+    FrontAPI & front, uint16_t width, uint16_t height,
+    Rect const widget_rect, time_t /*now*/, ClientExecute & client_execute,
     bool showtimer, bool back_selector
 )
-    : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
+    : LocallyIntegrableMod(session_reactor, front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
     , close_widget(
         front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy, this->screen, this,
         vars.get<cfg::context::auth_error_message>().c_str(),
@@ -73,9 +74,7 @@ FlatWabCloseMod::FlatWabCloseMod(
         vars.get<cfg::theme>(),
         language(vars),
         back_selector)
-    , timeout(now, vars.get<cfg::globals::close_timeout>().count())
     , vars(vars)
-    , showtimer(showtimer)
 {
     if (vars.get<cfg::globals::close_timeout>().count()) {
         LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds",
@@ -88,6 +87,33 @@ FlatWabCloseMod::FlatWabCloseMod(
     this->screen.set_widget_focus(&this->close_widget, Widget::focus_reason_tabkey);
 
     this->screen.rdp_input_invalidate(this->screen.get_rect());
+
+    if (vars.get<cfg::globals::close_timeout>().count()) {
+        std::chrono::seconds delay{1};
+        std::chrono::seconds start_timer{};
+        if (!showtimer) {
+            delay = vars.get<cfg::globals::close_timeout>();
+            start_timer = delay;
+        }
+        this->timeout_timer = session_reactor.create_timer(
+            std::ref(*this), std::ref(session_reactor), start_timer)
+        .set_delay(delay)
+        .on_action([](auto ctx,
+            FlatWabCloseMod& self, SessionReactor& session_reactor, std::chrono::seconds& seconds
+        ){
+            // TODO milliseconds += ctx.time() - previous_time
+            ++seconds;
+            auto const close_timeout = self.vars.get<cfg::globals::close_timeout>();
+            if (seconds < close_timeout) {
+                self.close_widget.refresh_timeleft((close_timeout - seconds).count());
+                return ctx.ready_to(std::min(std::chrono::seconds{1}, close_timeout));
+            }
+            else {
+                session_reactor.set_event_next(BACK_EVENT_STOP);
+                return ctx.terminate();
+            }
+        });
+    }
 }
 
 FlatWabCloseMod::~FlatWabCloseMod()
@@ -101,8 +127,7 @@ void FlatWabCloseMod::notify(Widget* sender, notify_event_t event)
 {
     (void)sender;
     if (NOTIFY_CANCEL == event) {
-        this->event.signal = BACK_EVENT_STOP;
-        this->event.set_trigger_time(wait_obj::NOW);
+        session_reactor.set_next_event(BACK_EVENT_STOP);
     }
     else if (NOTIFY_SUBMIT == event) {
         LOG(LOG_INFO, "asking for selector");
@@ -110,28 +135,8 @@ void FlatWabCloseMod::notify(Widget* sender, notify_event_t event)
         this->vars.ask<cfg::globals::target_user>();
         this->vars.ask<cfg::globals::target_device>();
         this->vars.ask<cfg::context::target_protocol>();
-        this->event.signal = BACK_EVENT_NEXT;
-        this->event.set_trigger_time(wait_obj::NOW);
+        session_reactor.set_next_event(BACK_EVENT_NEXT);
     }
 }
 
-void FlatWabCloseMod::draw_event(time_t now, gdi::GraphicApi & gapi)
-{
-    LocallyIntegrableMod::draw_event(now, gapi);
-
-    switch(this->timeout.check(now)) {
-    case Timeout::TIMEOUT_REACHED:
-        this->event.signal = BACK_EVENT_STOP;
-        this->event.set_trigger_time(wait_obj::NOW);
-        break;
-    case Timeout::TIMEOUT_NOT_REACHED:
-        if (this->showtimer) {
-            this->close_widget.refresh_timeleft(this->timeout.timeleft(now));
-        }
-        this->event.set_trigger_time(200000);
-        break;
-    case Timeout::TIMEOUT_INACTIVE:
-        this->event.reset_trigger_time();
-        break;
-    }
-}
+void FlatWabCloseMod::draw_event(time_t /*now*/, gdi::GraphicApi&) {}

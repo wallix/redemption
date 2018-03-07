@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "core/session_reactor.hpp"
 #include "mod/internal/internal_mod.hpp"
 #include "mod/internal/dvc_manager.hpp"
 
@@ -28,14 +29,13 @@ class ClientExecute;
 class LocallyIntegrableMod : public InternalMod
 {
 public:
-    LocallyIntegrableMod(FrontAPI & front,
+    LocallyIntegrableMod(SessionReactor& session_reactor,
+                         FrontAPI & front,
                          uint16_t front_width, uint16_t front_height,
                          Font const & font, ClientExecute & client_execute,
-                         Theme const & theme);
+                         Theme const & theme, bool enable_event = true);
 
     ~LocallyIntegrableMod() override;
-
-    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override;
 
     void rdp_input_invalidate(Rect r) override;
 
@@ -70,19 +70,7 @@ private:
 
     DCState dc_state;
 
-    wait_obj first_click_down_event;
-
-    class FirstClickDownEventHandler : public EventHandler::CB
-    {
-        LocallyIntegrableMod& mod_;
-
-    public:
-        FirstClickDownEventHandler(LocallyIntegrableMod& mod)
-        : mod_(mod)
-        {}
-
-        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override;
-    } first_click_down_event_handler;
+    SessionReactor::BasicTimerPtr first_click_down_timer;
 
     const bool rail_enabled;
 
@@ -96,4 +84,6 @@ private:
 
     int old_mouse_x = 0;
     int old_mouse_y = 0;
+
+    SessionReactor::GraphicEventPtr graphic_event;
 };

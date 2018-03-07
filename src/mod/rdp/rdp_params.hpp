@@ -111,6 +111,8 @@ struct ModRDPParams {
     bool         ignore_auth_channel = false;
     CHANNELS::ChannelNameId auth_channel;
 
+    CHANNELS::ChannelNameId checkout_channel;
+
     // Application Bastion
     const char * alternate_shell = "";
     const char * shell_arguments = "";
@@ -305,6 +307,8 @@ struct ModRDPParams {
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             ignore_auth_channel);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             auth_channel.c_str());
+
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             checkout_channel.c_str());
 
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             alternate_shell);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             shell_arguments);

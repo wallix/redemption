@@ -661,6 +661,18 @@ public:
         }
     }
 
+private:
+    template<class Mod>
+    struct ModWithReactor : SessionReactor, Mod
+    {
+        template<class... Args>
+        ModWithReactor(Transport& trans, Args&&... args)
+        : Mod(trans, *this, std::forward<Args>(args)...)
+        {}
+    };
+
+public:
+
     int connect(const char * ip, const char * userName, const char * userPwd, int port, bool protocol_is_VNC, ModRDPParams & mod_rdp_params, uint32_t encryptionMethods) {
 
         int const nbTry(3);
@@ -693,7 +705,7 @@ public:
         not_null_ptr<GCC::UserData::SCSecurity const> sc_sec1_ptr = &original_sc_sec1;
 
         if (protocol_is_VNC) {
-            this->_callback = std::make_unique<mod_vnc>(
+            this->_callback = std::make_unique<ModWithReactor<mod_vnc>>(
                 *this->socket
               , userName
               , userPwd
@@ -719,7 +731,7 @@ public:
               , to_verbose_flags(this->_verbose)
               );
         } else {
-            auto rdp = std::make_unique<mod_rdp>(
+            auto rdp = std::make_unique<ModWithReactor<mod_rdp>>(
                 *this->socket
               , *this
               , this->_info
@@ -830,8 +842,8 @@ public:
 
         io_fd_zero(rfds);
 
-        auto & event = mod.get_event();
-        event.wait_on_fd(sck, rfds, max, timeout);
+// TODO        auto & event = mod.get_event();
+// TODO        event.wait_on_fd(sck, rfds, max, timeout);
 
         int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
         // std::cout << "RDP CLIENT :: select num = " <<  num << "\n";
@@ -846,9 +858,9 @@ public:
             return 9;
         }
 
-        if (event.is_set(sck, rfds)) {
-            mod.draw_event(time(nullptr), front);
-        }
+// TODO        if (event.is_set(sck, rfds)) {
+// TODO            mod.draw_event(time(nullptr), front);
+// TODO        }
 
         return 0;
     }

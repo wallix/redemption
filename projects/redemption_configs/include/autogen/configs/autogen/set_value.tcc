@@ -1012,6 +1012,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::auth_channel&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "checkout_channel")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::checkout_channel&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::fixed_string>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_rdp::checkout_channel&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "alternate_shell")) {
             ::configs::parse_and_log(
                 context, key,

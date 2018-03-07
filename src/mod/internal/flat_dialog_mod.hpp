@@ -26,7 +26,6 @@
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget/flat_dialog.hpp"
 #include "mod/internal/widget/language_button.hpp"
-#include "utils/timeout.hpp"
 
 
 using FlatDialogModVariables = vcfg::variables<
@@ -48,13 +47,15 @@ class FlatDialogMod : public LocallyIntegrableMod, public NotifyApi
     FlatDialog dialog_widget;
 
     FlatDialogModVariables vars;
-    Timeout timeout;
+    SessionReactor::BasicTimerPtr timeout_timer;
+    SessionReactor::GraphicEventPtr started_copy_past_event;
 
     CopyPaste copy_paste;
 
 public:
     FlatDialogMod(
-        FlatDialogModVariables vars, FrontAPI & front, uint16_t width, uint16_t height,
+        FlatDialogModVariables vars, SessionReactor& session_reactor,
+        FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, const char * caption, const char * message,
         const char * cancel_text, time_t now, ClientExecute & client_execute,
         ChallengeOpt has_challenge = NO_CHALLENGE);

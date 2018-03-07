@@ -41,7 +41,8 @@ RED_AUTO_TEST_CASE(TestDialogMod)
 
     Font font;
 
-    WidgetTestMod d(front, 800, 600, font);
+    SessionReactor session_reactor;
+    WidgetTestMod d(session_reactor, front, 800, 600, font);
     d.draw_event(100001, front);
 /*
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate

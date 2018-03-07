@@ -26,11 +26,12 @@
 
 
 FlatWaitMod::FlatWaitMod(
-    FlatWaitModVariables vars, FrontAPI & front, uint16_t width, uint16_t height,
-    Rect const widget_rect, const char * caption, const char * message, time_t now,
+    FlatWaitModVariables vars, SessionReactor& session_reactor,
+    FrontAPI & front, uint16_t width, uint16_t height,
+    Rect const widget_rect, const char * caption, const char * message, time_t /*now*/,
     ClientExecute & client_execute, bool showform, uint32_t flag
 )
-    : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
+    : LocallyIntegrableMod(session_reactor, front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
     , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->wait_widget, front, front, this->font(), this->theme())
     , wait_widget(front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy, this->screen, this, caption, message, 0,
                     &this->language_button,
@@ -40,7 +41,6 @@ FlatWaitMod::FlatWaitMod(
                     showform, flag, vars.get<cfg::context::duration_max>()
                     )
     , vars(vars)
-    , timeout(now, 600)
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
 {
     this->screen.add_widget(&this->wait_widget);
@@ -52,6 +52,18 @@ FlatWaitMod::FlatWaitMod(
     }
     this->screen.set_widget_focus(&this->wait_widget, Widget::focus_reason_tabkey);
     this->screen.rdp_input_invalidate(this->screen.get_rect());
+
+    this->timeout_timer = session_reactor.create_timer(std::ref(*this))
+    .set_delay(std::chrono::seconds(600))
+    .on_action([](auto ctx, FlatWaitMod& self){
+        self.refused();
+        return ctx.terminate();
+    });
+
+    this->started_copy_past_event = session_reactor.create_graphic_event(std::ref(*this))
+    .on_action(jln::one_shot([](time_t, gdi::GraphicApi&, FlatWaitMod& self){
+        self.copy_paste.ready(self.front);
+    }));
 }
 
 FlatWaitMod::~FlatWaitMod()
@@ -80,45 +92,26 @@ void FlatWaitMod::confirm()
     this->vars.set_acl<cfg::context::comment>(this->wait_widget.form.comment_edit.get_text());
     this->vars.set_acl<cfg::context::ticket>(this->wait_widget.form.ticket_edit.get_text());
     this->vars.set_acl<cfg::context::duration>(this->wait_widget.form.duration_edit.get_text());
-    this->event.signal = BACK_EVENT_NEXT;
-    this->event.set_trigger_time(wait_obj::NOW);
+    session_reactor.set_next_event(BACK_EVENT_NEXT);
 }
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
 void FlatWaitMod::accepted()
 {
     this->vars.set_acl<cfg::context::waitinforeturn>("backselector");
-    this->event.signal = BACK_EVENT_NEXT;
-    this->event.set_trigger_time(wait_obj::NOW);
+    session_reactor.set_next_event(BACK_EVENT_NEXT);
 }
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
 void FlatWaitMod::refused()
 {
     this->vars.set_acl<cfg::context::waitinforeturn>("exit");
-    this->event.signal = BACK_EVENT_NEXT;
-    this->event.set_trigger_time(wait_obj::NOW);
+    session_reactor.set_next_event(BACK_EVENT_NEXT);
 }
 
 void FlatWaitMod::draw_event(time_t now, gdi::GraphicApi & gapi)
 {
     LocallyIntegrableMod::draw_event(now, gapi);
-
-    if (!this->copy_paste && this->event.is_waked_up_by_time()) {
-        this->copy_paste.ready(this->front);
-    }
-
-    switch(this->timeout.check(now)) {
-    case Timeout::TIMEOUT_REACHED:
-        this->refused();
-        break;
-    case Timeout::TIMEOUT_NOT_REACHED:
-        this->event.set_trigger_time(1000000);
-        break;
-    case Timeout::TIMEOUT_INACTIVE:
-        this->event.reset_trigger_time();
-        break;
-    }
 }
 
 void FlatWaitMod::send_to_mod_channel(

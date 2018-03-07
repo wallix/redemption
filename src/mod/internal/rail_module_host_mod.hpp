@@ -28,6 +28,7 @@
 
 #include <memory>
 
+class SessionReactor;
 
 using RailModuleHostModVariables = vcfg::variables<
     vcfg::var<cfg::translation::language,                        vcfg::accessmode::get>,
@@ -41,7 +42,7 @@ class RailModuleHostMod : public LocallyIntegrableMod, public NotifyApi
 {
 public:
     RailModuleHostMod(
-        RailModuleHostModVariables vars,
+        RailModuleHostModVariables vars, SessionReactor& session_reactor,
         FrontAPI& front, uint16_t width, uint16_t height,
         Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
         ClientExecute& client_execute, const GCC::UserData::CSMonitor& cs_monitor,
@@ -83,8 +84,6 @@ public:
 
     void draw_event(time_t now, gdi::GraphicApi& gapi) override;
 
-    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override;
-
     bool is_up_and_running() override;
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width,
@@ -101,34 +100,7 @@ private:
 
     bool can_resize_hosted_desktop = false;
 
-    class ManagedModEventHandler : public EventHandler::CB
-    {
-        RailModuleHostMod& mod_;
-
-    public:
-        ManagedModEventHandler(RailModuleHostMod& mod)
-        : mod_(mod)
-        {}
-
-        void operator()(time_t now, wait_obj& /*event*/, gdi::GraphicApi& drawable) override
-        {
-            mod_api& mod = this->mod_.rail_module_host.get_managed_mod();
-            mod.draw_event(now, drawable);
-        }
-    } managed_mod_event_handler;
-
-    wait_obj disconnection_reconnection_event;
-
-    bool disconnection_reconnection_required = false;   // Window resize
-
-    class DisconnectionReconnectionEventHandler : public EventHandler::CB
-    {
-    public:
-        void operator()(time_t/* now*/, wait_obj&/* event*/, gdi::GraphicApi&/* drawable*/) override
-        {
-            throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
-        }
-    } disconnection_reconnection_event_handler;
+    SessionReactor::BasicTimerPtr disconnection_reconnection_timer; // Window resize
 
     ClientExecute& client_execute;
 };

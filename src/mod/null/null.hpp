@@ -28,8 +28,19 @@
 
 struct null_mod : public mod_api
 {
+private:
+    struct temp_reactor
+    {
+        SessionReactor session_reactor_;
+        SessionReactor& get() { return session_reactor_; }
+    };
+
+public:
     explicit null_mod()
-    {}
+      : mod_api(temp_reactor{}.get())
+    {
+        this->now_graphic_event.reset();
+    }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *) override {
         (void)device_flags;

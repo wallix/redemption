@@ -32,11 +32,25 @@
 
 
 // Pimpl
-class WidgetTestMod::WidgetTestModPrivate {};
+struct WidgetTestMod::WidgetTestModPrivate
+{
+    WidgetTestModPrivate(WidgetTestMod& mod)
+    {
+        this->timer = mod.session_reactor.create_graphic_timer(std::ref(mod))
+        .set_delay(std::chrono::seconds(3))
+        .on_action(jln::always_ready([](time_t now, gdi::GraphicApi& gd, WidgetTestMod& mod){
+            mod.draw_event(now, gd);
+        }));
+    }
+
+    SessionReactor::GraphicTimerPtr timer;
+};
 
 WidgetTestMod::WidgetTestMod(
+    SessionReactor& session_reactor,
     FrontAPI & front, uint16_t width, uint16_t height, Font const & font)
-: InternalMod(front, width, height, font, Theme{}, false)
+: InternalMod(session_reactor, front, width, height, font, Theme{}, false)
+, d(std::make_unique<WidgetTestModPrivate>(*this))
 {
     front.server_resize(width, height, 8);
 }
@@ -57,8 +71,7 @@ void WidgetTestMod::rdp_input_scancode(
 {
     if (keymap->nb_kevent_available() > 0
         && keymap->get_kevent() == Keymap2::KEVENT_ENTER) {
-        this->event.signal = BACK_EVENT_STOP;
-        this->event.set_trigger_time(wait_obj::NOW);
+        this->session_reactor.set_next_event(BACK_EVENT_STOP);
     }
 }
 
@@ -73,7 +86,7 @@ void WidgetTestMod::draw_event(time_t, gdi::GraphicApi& gd)
 
     auto mono_palette = [&](BGRColor const& color) {
         BGRColor d[256];
-        for (auto & c : d) {
+        for (auto& c : d) {
             c = color;
         }
         return BGRPalette{d};
@@ -85,13 +98,8 @@ void WidgetTestMod::draw_event(time_t, gdi::GraphicApi& gd)
     const auto cx = clip.cx / 2;
     const auto cy = clip.cy / 3;
 
-//     auto send_mono_palette = [&](BGRColor const& color){
-//         this->front.sync();
-//         this->front.set_palette(mono_palette(color));
-//     };
-
     auto draw_rect = [&](int x, int y, BGRColor color){
-        this->front.draw(RDPOpaqueRect(Rect(x*cx, y*cy, cx, cy), encode_color(color)), clip, color_ctx);
+        gd.draw(RDPOpaqueRect(Rect(x*cx, y*cy, cx, cy), encode_color(color)), clip, color_ctx);
     };
 
     auto draw_text = [&](int x, int y, char const* txt){
@@ -99,7 +107,7 @@ void WidgetTestMod::draw_event(time_t, gdi::GraphicApi& gd)
     };
 
     auto draw_img = [&](int x, int y, int col, Bitmap const& bitmap){
-        this->front.draw(RDPMemBlt(col, Rect(x*cx, y*cy, cx, cy), 0xCC, 0, 0, 0), clip, bitmap);
+        gd.draw(RDPMemBlt(col, Rect(x*cx, y*cy, cx, cy), 0xCC, 0, 0, 0), clip, bitmap);
     };
 
     auto plain_img = [&](BGRColor const& color){
@@ -116,13 +124,13 @@ void WidgetTestMod::draw_event(time_t, gdi::GraphicApi& gd)
 
     draw_rect(0, 0, BLUE);
     draw_rect(1, 0, RED);
-    this->front.sync();
+    gd.sync();
     draw_img(0, 1, 0, img1);
     draw_img(1, 1, 1, img2);
-    this->front.sync();
-    this->front.draw(RDPColCache(0, mono_palette(WHITE)));
-    this->front.draw(RDPColCache(1, mono_palette(WHITE)));
-    this->front.sync();
+    gd.sync();
+    gd.draw(RDPColCache(0, mono_palette(WHITE)));
+    gd.draw(RDPColCache(1, mono_palette(WHITE)));
+    gd.sync();
     const auto img3 = plain_img(DARK_WABGREEN);
     const auto img4 = plain_img(BLUE);
     draw_img(0, 2, 0, img3);
@@ -133,6 +141,4 @@ void WidgetTestMod::draw_event(time_t, gdi::GraphicApi& gd)
     draw_text(1, 1, "pink img");
     draw_text(0, 2, "yellow palette");
     draw_text(1, 2, "yellow palette");
-
-    this->event.set_trigger_time(std::chrono::seconds(3));
 }

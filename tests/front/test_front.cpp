@@ -53,7 +53,7 @@ namespace dump2008_PatBlt {
 }
 
 
-class MyFront : public Front
+class MyFront : public SessionReactor, public Front
 {
 public:
     bool can_be_start_capture() override { return false; }
@@ -70,7 +70,8 @@ public:
             , const char * server_capabilities_filename = ""
             , Transport * persistent_key_list_transport = nullptr
             )
-    : Front( trans
+    : Front( *this
+            , trans
             , gen
             , ini
             , cctx
@@ -183,19 +184,11 @@ RED_AUTO_TEST_CASE(TestFront)
                     , now - ini.get<cfg::globals::handshake_timeout>().count());
     null_mod no_mod;
 
-//        front.get_event().waked_up_by_time = true;
-    front.get_event().set_trigger_time(wait_obj::NOW);
-    bool is_set = front.get_event().is_set();
-    RED_CHECK(true == is_set);
-    RED_CHECK(front.get_event().is_waked_up_by_time());
-
     while (front.up_and_running == 0) {
         front.incoming(no_mod, now);
-
-//            front.get_event().waked_up_by_time = false;
-        front.get_event().reset_trigger_time();
-        RED_CHECK(!front.get_event().is_waked_up_by_time());
+        RED_CHECK_EQ(front.timer_events_.elements.size(), 0);
     }
+    RED_CHECK_EQ(front.front_events_.elements.size(), 0);
 
     LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
@@ -252,7 +245,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     front.clear_channels();
     NullAuthentifier authentifier;
-    mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
+    mod_rdp mod(t, front, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
     RED_CHECK(true);
 
 
@@ -365,188 +358,177 @@ RED_AUTO_TEST_CASE(TestFrontGlyph24Bitmap)
 
 RED_AUTO_TEST_CASE(TestFront2)
 {
-    auto test = [&]{
-        ::unlink((app_path(AppPath::Record) + std::string("/redemption.mwrm")).c_str());
-        ::unlink((app_path(AppPath::Record) + std::string("/redemption-000000.mwrm")).c_str());
+    ::unlink((app_path(AppPath::Record) + std::string("/redemption.mwrm")).c_str());
+    ::unlink((app_path(AppPath::Record) + std::string("/redemption-000000.mwrm")).c_str());
 
-        ClientInfo info;
-        info.keylayout = 0x04C;
-        info.console_session = 0;
-        info.brush_cache_code = 0;
-        info.bpp = 24;
-        info.width = 800;
-        info.height = 600;
-        info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-        snprintf(info.hostname,sizeof(info.hostname),"test");
-        uint32_t verbose = 3;
+    ClientInfo info;
+    info.keylayout = 0x04C;
+    info.console_session = 0;
+    info.brush_cache_code = 0;
+    info.bpp = 24;
+    info.width = 800;
+    info.height = 600;
+    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname,sizeof(info.hostname),"test");
+    uint32_t verbose = 3;
 
-        Inifile ini;
-        ini.set<cfg::debug::front>(verbose);
-        ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
-        ini.set<cfg::client::cache_waiting_list>(true);
-        ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
-        ini.set<cfg::video::png_interval>(std::chrono::seconds{300});
-        ini.set<cfg::video::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth24);
-        ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
+    Inifile ini;
+    ini.set<cfg::debug::front>(verbose);
+    ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
+    ini.set<cfg::client::cache_waiting_list>(true);
+    ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
+    ini.set<cfg::video::png_interval>(std::chrono::seconds{300});
+    ini.set<cfg::video::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth24);
+    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
 
-        ini.set<cfg::crypto::key0>(
-            "\x00\x01\x02\x03\x04\x05\x06\x07"
-            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-            "\x10\x11\x12\x13\x14\x15\x16\x17"
-            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-        );
-        ini.set<cfg::crypto::key1>(
-            "\x00\x01\x02\x03\x04\x05\x06\x07"
-            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-            "\x10\x11\x12\x13\x14\x15\x16\x17"
-            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-        );
-
-
-        // Uncomment the code block below to generate testing data.
-        //int nodelay = 1;
-        //if (-1 == setsockopt( one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY
-        //                    , (char *)&nodelay, sizeof(nodelay))) {
-        //    LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
-        //}
-        //SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
-        //                           , ini.get<cfg::debug::front,>() 0);
-
-        time_t now = 1450864840;
-
-        // Comment the code block below to generate testing data.
-        #include "fixtures/trace_front_client.hpp"
-
-        // Comment the code block below to generate testing data.
-        GeneratorTransport front_trans(indata, sizeof(indata)-1);
-        front_trans.disable_remaining_error();
-
-        RED_CHECK(true);
-
-        LCGRandom gen1(0);
-        CryptoContext cctx;
-        const bool fastpath_support = false;
-        const bool mem3blt_support  = false;
-
-        ini.set<cfg::client::tls_support>(false);
-        ini.set<cfg::client::tls_fallback_legacy>(true);
-        ini.set<cfg::client::bogus_user_id>(false);
-        ini.set<cfg::client::rdp_compression>(RdpCompression::none);
-        ini.set<cfg::client::fast_path>(fastpath_support);
-        ini.set<cfg::globals::is_rec>(true);
-        ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
-
-        NullReportMessage report_message;
-        MyFront front( front_trans, gen1, ini
-                     , cctx, report_message, fastpath_support, mem3blt_support
-                     , now - ini.get<cfg::globals::handshake_timeout>().count() - 1);
-        null_mod no_mod;
-
-        front.get_event().set_trigger_time(wait_obj::NOW);
-        bool is_set = front.get_event().is_set();
-        RED_CHECK(true == is_set);
-        RED_CHECK(front.get_event().is_waked_up_by_time());
-
-        while (front.up_and_running == 0) {
-            front.incoming(no_mod, now);
-
-            front.get_event().reset_trigger_time();
-            RED_CHECK(!front.get_event().is_waked_up_by_time());
-        }
-
-        LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
-
-        // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000);
-        // std::string error_message;
-        // SocketTransport t( name
-        //                  , client_sck
-        //                  , "10.10.47.36"
-        //                  , 3389
-        //                  , verbose
-        //                  , &error_message
-        //                  );
-
-        GeneratorTransport t(dump2008::indata, sizeof(dump2008::indata)-1);
-
-        if (verbose > 2){
-            LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
-        }
-
-        RED_CHECK(true);
-
-        ModRDPParams mod_rdp_params( "administrateur"
-                                   , "S3cur3!1nux"
-                                   , "10.10.47.36"
-                                   , "10.10.43.33"
-                                   , 2
-                                   , ini.get<cfg::font>()
-                                   , ini.get<cfg::theme>()
-                                   , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
-                                   , ini.get_ref<cfg::context::close_box_extra_message>()
-                                   , to_verbose_flags(0)
-                                   );
-        mod_rdp_params.device_id                       = "device_id";
-        mod_rdp_params.enable_tls                      = false;
-        mod_rdp_params.enable_nla                      = false;
-        //mod_rdp_params.enable_krb                      = false;
-        //mod_rdp_params.enable_clipboard                = true;
-        mod_rdp_params.enable_fastpath                 = false;
-        mod_rdp_params.enable_mem3blt                  = false;
-        mod_rdp_params.enable_new_pointer              = false;
-        //mod_rdp_params.rdp_compression                 = 0;
-        //mod_rdp_params.error_message                   = nullptr;
-        //mod_rdp_params.disconnect_on_logon_user_change = false;
-        //mod_rdp_params.open_session_timeout            = 0;
-        //mod_rdp_params.certificate_change_action       = 0;
-        //mod_rdp_params.extra_orders                    = "";
-        mod_rdp_params.verbose = to_verbose_flags(verbose);
-
-        // To always get the same client random, in tests
-        LCGRandom gen2(0);
-        LCGTime timeobj;
-
-        RED_CHECK(true);
-
-        front.clear_channels();
-
-        NullAuthentifier authentifier;
-        mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
-        RED_CHECK(true);
+    ini.set<cfg::crypto::key0>(
+        "\x00\x01\x02\x03\x04\x05\x06\x07"
+        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        "\x10\x11\x12\x13\x14\x15\x16\x17"
+        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+    );
+    ini.set<cfg::crypto::key1>(
+        "\x00\x01\x02\x03\x04\x05\x06\x07"
+        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        "\x10\x11\x12\x13\x14\x15\x16\x17"
+        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+    );
 
 
-        if (verbose > 2){
-            LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
-        }
-        RED_CHECK_EQUAL(front.client_info.width, 800);
-        RED_CHECK_EQUAL(front.client_info.height, 600);
+    // Uncomment the code block below to generate testing data.
+    //int nodelay = 1;
+    //if (-1 == setsockopt( one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY
+    //                    , (char *)&nodelay, sizeof(nodelay))) {
+    //    LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
+    //}
+    //SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
+    //                           , ini.get<cfg::debug::front,>() 0);
 
-        while (!mod.is_up_and_running())
-            mod.draw_event(now, front);
+    time_t now = 1450864840;
 
-        // Force Front to be up and running after Deactivation-Reactivation
-        //  Sequence initiated by mod_rdp.
-        front.up_and_running = 1;
+    // Comment the code block below to generate testing data.
+    #include "fixtures/trace_front_client.hpp"
 
-        LOG(LOG_INFO, "Before Start Capture");
+    // Comment the code block below to generate testing data.
+    GeneratorTransport front_trans(indata, sizeof(indata)-1);
+    front_trans.disable_remaining_error();
 
-        front.can_be_start_capture();
+    RED_CHECK(true);
 
-        uint32_t count = 0;
-        BackEvent_t res = BACK_EVENT_NONE;
-        while (res == BACK_EVENT_NONE){
-            LOG(LOG_INFO, "===================> count = %u", count);
-            if (count++ >= 38) break;
-            mod.draw_event(now, front);
-            now++;
-            LOG(LOG_INFO, "Calling Snapshot");
-            front.periodic_snapshot();
-        }
+    LCGRandom gen1(0);
+    CryptoContext cctx;
+    const bool fastpath_support = false;
+    const bool mem3blt_support  = false;
 
-        front.must_be_stop_capture();
+    ini.set<cfg::client::tls_support>(false);
+    ini.set<cfg::client::tls_fallback_legacy>(true);
+    ini.set<cfg::client::bogus_user_id>(false);
+    ini.set<cfg::client::rdp_compression>(RdpCompression::none);
+    ini.set<cfg::client::fast_path>(fastpath_support);
+    ini.set<cfg::globals::is_rec>(true);
+    ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-    //    front.dump_png("trace_w2008_");
-    };
-    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_RDP_HANDSHAKE_TIMEOUT);
+    NullReportMessage report_message;
+    MyFront front( front_trans, gen1, ini
+                    , cctx, report_message, fastpath_support, mem3blt_support
+                    , now - ini.get<cfg::globals::handshake_timeout>().count() - 1);
+    null_mod no_mod;
+
+    RED_REQUIRE_EQ(front.timer_events_.elements.size(), 1);
+    RED_CHECK_EXCEPTION_ERROR_ID(
+        front.timer_events_.exec(front.timer_events_.elements[0]->time()),
+        ERR_RDP_HANDSHAKE_TIMEOUT);
+
+    // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
+    //
+    // // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000);
+    // // std::string error_message;
+    // // SocketTransport t( name
+    // //                  , client_sck
+    // //                  , "10.10.47.36"
+    // //                  , 3389
+    // //                  , verbose
+    // //                  , &error_message
+    // //                  );
+    //
+    // GeneratorTransport t(dump2008::indata, sizeof(dump2008::indata)-1);
+    //
+    // if (verbose > 2){
+    //     LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
+    // }
+    //
+    // RED_CHECK(true);
+    //
+    // ModRDPParams mod_rdp_params( "administrateur"
+    //                            , "S3cur3!1nux"
+    //                            , "10.10.47.36"
+    //                            , "10.10.43.33"
+    //                            , 2
+    //                            , ini.get<cfg::font>()
+    //                            , ini.get<cfg::theme>()
+    //                            , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
+    //                            , ini.get_ref<cfg::context::close_box_extra_message>()
+    //                            , to_verbose_flags(0)
+    //                            );
+    // mod_rdp_params.device_id                       = "device_id";
+    // mod_rdp_params.enable_tls                      = false;
+    // mod_rdp_params.enable_nla                      = false;
+    // //mod_rdp_params.enable_krb                      = false;
+    // //mod_rdp_params.enable_clipboard                = true;
+    // mod_rdp_params.enable_fastpath                 = false;
+    // mod_rdp_params.enable_mem3blt                  = false;
+    // mod_rdp_params.enable_new_pointer              = false;
+    // //mod_rdp_params.rdp_compression                 = 0;
+    // //mod_rdp_params.error_message                   = nullptr;
+    // //mod_rdp_params.disconnect_on_logon_user_change = false;
+    // //mod_rdp_params.open_session_timeout            = 0;
+    // //mod_rdp_params.certificate_change_action       = 0;
+    // //mod_rdp_params.extra_orders                    = "";
+    // mod_rdp_params.verbose = to_verbose_flags(verbose);
+    //
+    // // To always get the same client random, in tests
+    // LCGRandom gen2(0);
+    // LCGTime timeobj;
+    //
+    // RED_CHECK(true);
+    //
+    // front.clear_channels();
+    //
+    // NullAuthentifier authentifier;
+    // mod_rdp mod(t, front, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
+    // RED_CHECK(true);
+    //
+    // if (verbose > 2){
+    //     LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
+    // }
+    // RED_CHECK_EQUAL(front.client_info.width, 800);
+    // RED_CHECK_EQUAL(front.client_info.height, 600);
+    //
+    // while (!mod.is_up_and_running())
+    //     mod.draw_event(now, front);
+    //
+    // // Force Front to be up and running after Deactivation-Reactivation
+    // //  Sequence initiated by mod_rdp.
+    // front.up_and_running = 1;
+    //
+    // LOG(LOG_INFO, "Before Start Capture");
+    //
+    // front.can_be_start_capture();
+    //
+    // uint32_t count = 0;
+    // BackEvent_t res = BACK_EVENT_NONE;
+    // while (res == BACK_EVENT_NONE){
+    //     LOG(LOG_INFO, "===================> count = %u", count);
+    //     if (count++ >= 38) break;
+    //     mod.draw_event(now, front);
+    //     now++;
+    //     LOG(LOG_INFO, "Calling Snapshot");
+    //     front.periodic_snapshot();
+    // }
+    //
+    // front.must_be_stop_capture();
+
+//    front.dump_png("trace_w2008_");
 }
 
 /*
@@ -694,7 +676,7 @@ RED_AUTO_TEST_CASE(TestFront3)
     front.clear_channels();
 
     NullAuthentifier authentifier;
-    mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
+    mod_rdp mod(t, front, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
     RED_CHECK(true);
 
 

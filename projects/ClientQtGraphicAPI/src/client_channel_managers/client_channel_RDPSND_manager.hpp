@@ -72,9 +72,10 @@ public:
                 if (bool(this->verbose & RDPVerbose::rdpsnd)) {
                     LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU");
                 }
-                //this->sound_qt->setData(uint8_t('\0'), 1);
 
                 if (this->impl_sound) {
+                    uint8_t data[] = {'\0'};
+                    this->impl_sound->setData(data, 1);
                     this->impl_sound->play();
                 }
 

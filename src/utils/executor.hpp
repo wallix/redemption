@@ -165,7 +165,7 @@ struct BasicExecutorConcept_
 {
     template<class... Args> ExecutorResult exec_action(Args&&... args);
     template<class... Args> ExecutorResult exec_exit(ExecutorError error, Args&&... args);
-    void delete_self();
+    void delete_self(DeleteFrom from) noexcept;
 };
 
 struct TopExecutorBuilderConcept_
@@ -226,7 +226,8 @@ struct ExecutorTimerContextConcept_
     ExecutorResult detach_timer();
     ExecutorResult retry();
     ExecutorResult retry_until(std::chrono::milliseconds ms);
-    ExecutorTimerContextConcept_ set_time(std::chrono::milliseconds ms);
+    ExecutorTimerContextConcept_ set_delay(std::chrono::milliseconds ms);
+    ExecutorTimerContextConcept_ set_time(timeval const& tv);
 };
 #endif
 
@@ -241,17 +242,30 @@ namespace detail
     {
         using type = ExecutorResult(*)(BaseType&, Us..., Ts...);
     };
+
+    template<class T> using ident = T;
 }
 
 template<class BaseType, class PrefixArgs, class...Ts>
 using MakeFuncPtr = typename detail::make_func_ptr<BaseType, PrefixArgs, Ts...>::type;
 
-constexpr auto default_action_function() noexcept
+struct default_action_function
 {
-    return []([[maybe_unused]] auto... args){
-        return ExecutorResult::Nothing;
-    };
-}
+    template<class R, class... Args>
+    operator detail::ident<R(*)(Args...)> () noexcept
+    {
+        return [](Args...) -> R { return jln::ExecutorResult::Nothing; };
+    }
+};
+
+struct default_delete_function
+{
+    template<class... Args>
+    operator detail::ident<void(*)(Args...)noexcept> () noexcept
+    {
+        return [](Args...) noexcept -> void {};
+    }
+};
 
 template<class F>
 F make_lambda() noexcept
@@ -264,6 +278,12 @@ F make_lambda() noexcept
     return reinterpret_cast<F const&>(f);
 }
 
+enum class DeleteFrom : bool
+{
+    Owner,
+    Observer,
+};
+
 
 template<class PrefixArgs>
 struct ActionBase
@@ -271,9 +291,9 @@ struct ActionBase
     using prefix_args = PrefixArgs;
     using base_type = ActionBase;
 
-    void delete_self() noexcept
+    void delete_self(DeleteFrom from) noexcept
     {
-        return this->deleter(this);
+        this->deleter(this, from);
     }
 
     template<class... Args>
@@ -285,7 +305,7 @@ struct ActionBase
     using OnEventPtrFunc = MakeFuncPtr<ActionBase, PrefixArgs>;
 
     OnEventPtrFunc on_action = default_action_function();
-    void  (*deleter) (ActionBase*) noexcept = [](ActionBase*) noexcept {};
+    void  (*deleter) (ActionBase*, DeleteFrom) noexcept = default_delete_function();
     ActionBase() = default;
 };
 
@@ -295,14 +315,9 @@ struct BasicTimer
     using prefix_args = PrefixArgs;
     using base_type = BasicTimer;
 
-    void delete_self() noexcept
+    void delete_self(DeleteFrom from) noexcept
     {
-        return this->deleter(this);
-    }
-
-    void reset_time() noexcept
-    {
-        this->tv = addusectimeval(this->delay, tvtime());
+        this->deleter(this, from);
     }
 
     timeval time() const noexcept
@@ -310,16 +325,13 @@ struct BasicTimer
         return this->tv;
     }
 
-    // TODO set_delay
-    void set_time(std::chrono::milliseconds ms) noexcept
+    void set_delay(std::chrono::milliseconds ms) noexcept
     {
         this->delay = std::chrono::duration_cast<std::chrono::microseconds>(ms);
-        this->tv = addusectimeval(this->delay, tvtime());
     }
 
     void set_time(timeval const& tv) noexcept
     {
-        this->delay = std::chrono::microseconds(-1);
         this->tv = tv;
     }
 
@@ -339,8 +351,8 @@ struct BasicTimer
 
     timeval tv {};
     OnTimerPtrFunc on_action = default_action_function();
-    void (*deleter) (BasicTimer*) noexcept = [](BasicTimer*) noexcept {};
-    std::chrono::microseconds delay;
+    void (*deleter) (BasicTimer*, DeleteFrom) noexcept = default_delete_function();
+    std::chrono::microseconds delay = std::chrono::microseconds(-1);
 
     BasicTimer() = default;
 };
@@ -363,9 +375,9 @@ struct BasicExecutorImpl
         return this->on_exit(*this, error, static_cast<Args&&>(args)...);
     }
 
-    void delete_self()
+    void delete_self(DeleteFrom from) noexcept
     {
-        return this->deleter(this);
+        this->deleter(this, from);
     }
 
     template<class... Args>
@@ -392,7 +404,7 @@ struct BasicExecutorImpl
     OnExitPtrFunc on_exit = default_action_function();
     BasicExecutorImpl* current = this;
     BasicExecutorImpl* prev = nullptr;
-    void (*deleter) (BasicExecutorImpl*) noexcept = [](BasicExecutorImpl*) noexcept {};
+    void (*deleter) (BasicExecutorImpl*, DeleteFrom) noexcept = default_delete_function();
 
     void set_next_executor(BasicExecutorImpl& other) noexcept
     {
@@ -622,19 +634,31 @@ struct REDEMPTION_CXX_NODISCARD Executor2TimerContext : BasicContext<Timer>
 
     ExecutorResult ready() noexcept
     {
-        this->event.reset_time();
+        this->event.update_next_time();
         return ExecutorResult::Nothing;
     }
 
-    ExecutorResult ready_until(std::chrono::milliseconds ms)
+    ExecutorResult ready_to(std::chrono::milliseconds ms)
     {
-        this->event.update_time(ms);
+        this->event.update_delay(ms);
         return ExecutorResult::Nothing;
     }
 
-    Executor2TimerContext set_time(std::chrono::milliseconds ms)
+    ExecutorResult ready_at(timeval const& tv)
     {
-        this->event.update_time(ms);
+        this->event.update_time(tv);
+        return ExecutorResult::Nothing;
+    }
+
+    BasicContext<Timer> set_delay(std::chrono::milliseconds ms)
+    {
+        this->event.update_delay(ms);
+        return *this;
+    }
+
+    BasicContext<Timer> set_time(timeval const& tv)
+    {
+        this->event.update_time(tv);
         return *this;
     }
 };
@@ -658,11 +682,13 @@ struct REDEMPTION_CXX_NODISCARD Executor2ActionContext : BasicContext<Executor>
         return (status == ExitStatus::Success) ? this->exit_on_success() : this->exit_on_error();
     }
 
+    // TODO exeit_with_error
     ExecutorResult exit_on_error() noexcept
     {
         return ExecutorResult::ExitFailure;
     }
 
+    // TODO exeit_with_success
     ExecutorResult exit_on_success() noexcept
     {
         return ExecutorResult::ExitSuccess;
@@ -874,6 +900,7 @@ struct REDEMPTION_CXX_NODISCARD Executor2FdTimeoutContext : BasicContext<Event>
     Executor2FdTimeoutContext set_timeout_action(F f) noexcept
     {
         this->event.set_on_timeout(f);
+        return *this;
     }
 
     Executor2FdTimeoutContext set_timeout(std::chrono::milliseconds ms) noexcept
@@ -888,7 +915,7 @@ struct DeleteSelf
 {
     void operator()(Base* p) const
     {
-        p->delete_self();
+        p->delete_self(DeleteFrom::Owner);
     }
 };
 
@@ -931,24 +958,33 @@ struct REDEMPTION_CXX_NODISCARD TimerBuilder
         return this->select_return<0b01>();
     }
 
-    // TODO add set_time
     REDEMPTION_CXX_NODISCARD decltype(auto) set_delay(std::chrono::milliseconds ms) && noexcept
     {
-        static_assert(!(Mask & 0b10), "set_delay already set");
-        this->timer_ptr->set_time(ms);
+        static_assert(!(Mask & 0b10), "set_time/set_delay already set");
+        this->timer_ptr->set_delay(ms);
+        return this->select_return<0b10>();
+    }
+
+    REDEMPTION_CXX_NODISCARD decltype(auto) set_time(timeval const& tv) && noexcept
+    {
+        static_assert(!(Mask & 0b10), "set_time/set_delay already set");
+        this->timer_ptr->set_time(tv);
         return this->select_return<0b10>();
     }
 
     TimerBuilder(TimerPtr&& timer_ptr) noexcept
-    : timer_ptr(static_cast<TimerPtr&&>(timer_ptr))
+    : timer_ptr(std::move(timer_ptr))
     {}
+
+protected:
+    TimerPtr& internal_value() noexcept { return this->timer_ptr; }
 
 private:
     template<int Mask2>
     decltype(auto) select_return() noexcept
     {
         if constexpr (Mask == (~Mask2 & 0b11)) {
-            return static_cast<TimerPtr&&>(this->timer_ptr);
+            return std::move(this->timer_ptr);
         }
         else {
             return TimerBuilder<TimerPtr, Mask | Mask2>(std::move(this->timer_ptr));
@@ -958,7 +994,7 @@ private:
     TimerPtr timer_ptr;
 };
 
-template<class ActionPtr>
+template<class ActionPtr, int = 0>
 struct REDEMPTION_CXX_NODISCARD ActionBuilder
 {
     template<class F>
@@ -969,8 +1005,11 @@ struct REDEMPTION_CXX_NODISCARD ActionBuilder
     }
 
     ActionBuilder(ActionPtr&& action_ptr) noexcept
-    : action_ptr(static_cast<ActionPtr&&>(action_ptr))
+    : action_ptr(std::move(action_ptr))
     {}
+
+protected:
+    ActionPtr& internal_value() noexcept { return this->action_ptr; }
 
 private:
     ActionPtr action_ptr;
@@ -1022,53 +1061,32 @@ struct TopFdBuilder
     }
 
     TopFdBuilder(FdPtr&& fd_ptr) noexcept
-    : fd_ptr(static_cast<FdPtr&&>(fd_ptr))
+    : fd_ptr(std::move(fd_ptr))
     {}
+
+protected:
+    FdPtr& internal_value() noexcept { return this->fd_ptr; }
 
 private:
     FdPtr fd_ptr;
 };
 
-
-// template<class PrefixArgs>
-// struct TopExecutorBase : TopExecutorTimersImpl<PrefixArgs>
-// {
-//     BasicExecutorImpl<PrefixArgs> base_executor;
-//
-//     void delete_self()
-//     {
-//         this->base_executor.delete_self();
-//     }
-// };
-// template<class... Ts>
-// struct TimedExecutor : Executor2Impl<Ts...>, BasicTimer
-// {
-//     BasicExecutorImpl& base() noexcept
-//     {
-//         return this->executor;
-//     }
-//
-//     template<class... Args>
-//     static TimedExecutor* New(TopExecutorBase& top_executor, Args&&... args)
-//     {
-//         auto* p = new TimedExecutor{top_executor, static_cast<Args&&>(args)...};
-//         p->deleter = [](BasicTimer* p) { delete static_cast<TimedExecutor<Ts...>*>(p); };
-//         return p;
-//     }
-// };
-
 template<class F, class T, template<class...> class Ctx>
-auto wrap_fn()
+struct wrap_fn
 {
-    return [](auto& e, auto... prefix_args) {
-        auto& self = static_cast<T&>(e);
-        // TODO ExecutorExitContext
-        return self.ctx.invoke(
-            make_lambda<F>(),
-            Ctx<T>(self),
-            static_cast<decltype(prefix_args)&&>(prefix_args)...);
-    };
-}
+    template<class R, class E, class... Args>
+    operator detail::ident<R(*)(E, Args...)> () noexcept
+    {
+        return [](E& e, Args... prefix_args) -> R {
+            auto& self = static_cast<T&>(e);
+            // TODO ExecutorExitContext
+            return self.ctx.invoke(
+                make_lambda<F>(),
+                Ctx<T>(self),
+                static_cast<decltype(prefix_args)&&>(prefix_args)...);
+        };
+    }
+};
 
 class propagate_to_base_t {};
 
@@ -1119,17 +1137,12 @@ struct BasicEvent : BaseType
     {}
     REDEMPTION_DIAGNOSTIC_POP
 
-    ~BasicEvent()
-    {
-        this->detach();
-    }
-
     void detach() noexcept
     {
         this->event_container.detach(*this);
     }
 
-    void attach() noexcept
+    void attach()
     {
         this->event_container.attach(*this);
     }
@@ -1156,14 +1169,6 @@ struct UniquePtrEventWithUPtr;
 
 namespace detail
 {
-    template<class Event>
-    struct event_with_uptr : Event
-    {
-        using Event::Event;
-
-        std::unique_ptr<Event, DeleteSelf<typename Event::base_type>>* uptr;
-    };
-
     struct UniquePtrEventWithUPtrAccess
     {
         template<class UEvent>
@@ -1171,49 +1176,73 @@ namespace detail
         {
             return x.p;
         }
+    };
 
-        template<class UEvent>
-        static typename UEvent::UniquePtr**& uptr_in_event(UEvent& x)
+    template<class Base>
+    struct UniquePtrWithNotifyDeleteDeleter
+    {
+        void operator()(Base* p) const noexcept
         {
-            return x.uptr_in_event;
+            p->delete_self(DeleteFrom::Owner);
         }
+
+        UniquePtrWithNotifyDeleteDeleter(void** p = nullptr) noexcept
+        : uptr_in_event(p)
+        {}
+
+        void** uptr_in_event; // pointer on UniquePtrEventWithUPtr::EventPrivate::uptr
     };
 }
 
 template<class Event>
-struct UniquePtrEventWithUPtr
+struct UniquePtrWithNotifyDelete
 {
-    UniquePtrEventWithUPtr() noexcept = default;
-
-    UniquePtrEventWithUPtr(detail::event_with_uptr<Event>* e) noexcept
-    : p(e)
-    , uptr_in_event(&e->uptr)
-    {
-        *this->uptr_in_event = &p;
-    }
+    UniquePtrWithNotifyDelete() noexcept = default;
 
     template<class InheritEvent>
-    UniquePtrEventWithUPtr(UniquePtrEventWithUPtr<InheritEvent>&& other) noexcept
+    UniquePtrWithNotifyDelete(UniquePtrWithNotifyDelete<InheritEvent>&& other) noexcept
     : p(std::move(detail::UniquePtrEventWithUPtrAccess::p(other)))
-    , uptr_in_event(reinterpret_cast<UniquePtr**>(
-        detail::UniquePtrEventWithUPtrAccess::uptr_in_event(other)))
     {
-        *this->uptr_in_event = &p;
+        // LOG(LOG_DEBUG, "mvctor: %p %p(u) -> %p",
+        //    static_cast<void*>(get()),
+        //    static_cast<void*>(&detail::UniquePtrEventWithUPtrAccess::p(other)),
+        //    static_cast<void*>(&this->p));
+        *this->p.get_deleter().uptr_in_event = &p;
+    }
+
+    ~UniquePtrWithNotifyDelete()
+    {
+        // LOG(LOG_DEBUG, "dtor: %p %p(u)",
+        //     static_cast<void*>(get()),
+        //     static_cast<void*>(&this->p));
     }
 
     template<class InheritEvent>
-    UniquePtrEventWithUPtr& operator=(UniquePtrEventWithUPtr<InheritEvent>&& other) noexcept
+    UniquePtrWithNotifyDelete& operator=(UniquePtrWithNotifyDelete<InheritEvent>&& other) noexcept
     {
+        // LOG(LOG_DEBUG, "op=: %p %p(u) = %p %p(u)",
+        //     static_cast<void*>(get()),
+        //     static_cast<void*>(&this->p),
+        //     static_cast<void*>(detail::UniquePtrEventWithUPtrAccess::p(other).get()),
+        //     static_cast<void*>(&detail::UniquePtrEventWithUPtrAccess::p(other)));
+        assert(get() != other.get());
+        // don't p=std::move(other) directly
+        this->p.reset();
         this->p = std::move(detail::UniquePtrEventWithUPtrAccess::p(other));
-        this->uptr_in_event = reinterpret_cast<UniquePtr**>(
-            detail::UniquePtrEventWithUPtrAccess::uptr_in_event(other));
-        *this->uptr_in_event = &p;
+        this->p.get_deleter().uptr_in_event
+          = detail::UniquePtrEventWithUPtrAccess::p(other).get_deleter().uptr_in_event;
+        *this->p.get_deleter().uptr_in_event = &this->p;
         return *this;
     }
 
     explicit operator bool () const noexcept
     {
         return bool(this->p);
+    }
+
+    Event* get() const noexcept
+    {
+        return this->p.get();
     }
 
     Event* operator->() const noexcept
@@ -1228,39 +1257,83 @@ struct UniquePtrEventWithUPtr
 
     void reset() noexcept
     {
+        // LOG(LOG_DEBUG, "reset %p %p(u)",
+        //     static_cast<void*>(get()),
+        //     static_cast<void*>(&this->p));
         this->p.reset();
     }
 
-    Event* release() noexcept
+protected:
+    friend detail::UniquePtrEventWithUPtrAccess;
+    using UniquePtr = std::unique_ptr<Event,
+        detail::UniquePtrWithNotifyDeleteDeleter<typename Event::base_type>>;
+
+    UniquePtrWithNotifyDelete(Event* e, void** event_uptr_ref) noexcept
+    : p(e, event_uptr_ref)
     {
-        return this->p.release();
+        *this->p.get_deleter().uptr_in_event = &this->p;
     }
 
 private:
-    friend detail::UniquePtrEventWithUPtrAccess;
-    using UniquePtr = std::unique_ptr<Event, DeleteSelf<typename Event::base_type>>;
     UniquePtr p;
-    UniquePtr** uptr_in_event; // pointer on event_with_uptr::uptr
 };
 
-template<class Event, class... Args>
-static UniquePtrEventWithUPtr<Event>
-new_event(Args&&... args)
+template<class Event>
+struct UniquePtrEventWithUPtr : UniquePtrWithNotifyDelete<Event>
 {
-    using NewEvent = detail::event_with_uptr<Event>;
-    auto* p = new("") NewEvent(static_cast<Args&&>(args)...);
-    p->deleter = [](auto* base) noexcept {
-        auto* e = static_cast<NewEvent*>(base);
-        e->deleter = [](auto*) noexcept {};
-        // jln::make_lambda<DeleteEvent>()(ctx...);
-        assert(e->uptr->get() == base);
-        e->uptr->release();
-        delete e;
+    using UniquePtrWithNotifyDelete<Event>::UniquePtrWithNotifyDelete;
+    using UniquePtrWithNotifyDelete<Event>::operator=;
+
+    struct EventPrivate : Event
+    {
+        using Event::Event;
+
+        template<class NotifyDelete>
+        void set_deleter(NotifyDelete) noexcept
+        {
+            this->deleter = [](auto* base, DeleteFrom from) noexcept {
+                auto* e = static_cast<EventPrivate*>(base);
+# ifndef NDEBUG
+                e->deleter = [](auto*, DeleteFrom) noexcept { assert(!"already delete"); };
+# endif
+                // LOG(LOG_DEBUG, "del: %p %p(u) %p", static_cast<void*>(base), static_cast<void*>(e->uptr), static_cast<void*>(e->uptr->get()));
+                assert(e->uptr->get() == nullptr || e->uptr->get() == base);
+                switch (from) {
+                    case DeleteFrom::Owner:
+                        e->detach();
+                        break;
+                    case DeleteFrom::Observer:
+                        e->uptr->release();
+                        break;
+                }
+                if constexpr (!std::is_same<std::nullptr_t, NotifyDelete>::value) {
+                    e->ctx.invoke(jln::make_lambda<NotifyDelete>());
+                }
+                delete e;
+            };
+        }
+
+        typename UniquePtrWithNotifyDelete<Event>::UniquePtr* uptr;
     };
-    UniquePtrEventWithUPtr<Event> uptr(p);
-    p->attach();
-    return uptr;
-}
+
+    template<class... Args>
+    static UniquePtrEventWithUPtr New(Args&&... args)
+    {
+        using NewEvent = EventPrivate;
+        auto* p = new("") NewEvent(static_cast<Args&&>(args)...);
+        p->set_deleter(nullptr);
+        UniquePtrEventWithUPtr<Event> uptr(p, reinterpret_cast<void**>(&p->uptr));
+        // LOG(LOG_DEBUG, "alloc: %p %p(u) %p", static_cast<void*>(p), static_cast<void*>(p->uptr), static_cast<void*>(p->uptr->get()));
+        p->attach();
+        return uptr;
+    }
+
+    template<class NotifyDelete>
+    void set_notify_delete(NotifyDelete d)
+    {
+        static_cast<EventPrivate*>(this->get())->set_deleter(d);
+    }
+};
 
 template<class EventContainer, class PrefixArgs, class... Ts>
 struct TimerImpl : BasicEvent<
@@ -1272,10 +1345,36 @@ struct TimerImpl : BasicEvent<
 {
     using TimerImpl::basic_event::basic_event;
 
-    void update_time(std::chrono::milliseconds ms)
+    void set_delay(std::chrono::milliseconds ms) noexcept
     {
-        this->set_time(ms);
-        this->event_container.update_time(*this, ms);
+        TimerImpl::basic_event::set_delay(ms);
+        // TODO tvtime -> reactor.time()
+        TimerImpl::basic_event::set_time(addusectimeval(this->delay, tvtime()));
+    }
+
+    void set_time(timeval const& tv) noexcept
+    {
+        TimerImpl::basic_event::set_delay(std::chrono::microseconds(-1));
+        TimerImpl::basic_event::set_time(tv);
+    }
+
+    void update_delay(std::chrono::milliseconds ms)
+    {
+        this->set_delay(ms);
+        this->event_container.update_delay(*this, ms);
+    }
+
+    void update_time(timeval const& tv)
+    {
+        this->set_time(tv);
+        this->event_container.update_time(*this, tv);
+    }
+
+    void update_next_time() noexcept
+    {
+        assert(this->delay.count() > 0);
+        // TODO tvtime -> reactor.time()
+        this->tv = addusectimeval(this->delay, tvtime());
     }
 };
 
@@ -1323,6 +1422,36 @@ auto one_shot(F) noexcept
     };
 }
 
+inline auto always_ready() noexcept
+{
+    return [](auto ctx, [[maybe_unused]] auto&&... xs){
+        return ctx.ready();
+    };
+}
+
+inline auto exit_with_success() noexcept
+{
+    return [](auto ctx, [[maybe_unused]] auto&&... xs){
+        return ctx.exit_on_success();
+    };
+}
+
+inline auto exit_with_error() noexcept
+{
+    return [](auto ctx, [[maybe_unused]] auto&&... xs){
+        return ctx.exit_on_error();
+    };
+}
+
+template<class F>
+auto always_ready(F) noexcept
+{
+    return [](auto ctx, auto&&... xs){
+        make_lambda<F>()(static_cast<decltype(xs)&&>(xs)...);
+        return ctx.ready();
+    };
+}
+
 namespace detail
 {
     template<auto f, class T, class... Args>
@@ -1351,6 +1480,15 @@ namespace detail
 
 template<auto f>
 auto one_shot() noexcept
+{
+    return [](auto ctx, auto&&... xs){
+        detail::invoke<f>(static_cast<decltype(xs)&&>(xs)...);
+        return ctx.ready();
+    };
+}
+
+template<auto f>
+auto always_ready() noexcept
 {
     return [](auto ctx, auto&&... xs){
         detail::invoke<f>(static_cast<decltype(xs)&&>(xs)...);
@@ -1399,6 +1537,9 @@ namespace literals
 template<auto x>
 constexpr auto value = std::integral_constant<decltype(x), x>{};
 
+template<class I, class Sequencer, class Ctx>
+struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx;
+
 namespace detail
 {
     struct unamed{};
@@ -1425,9 +1566,23 @@ namespace detail
     {
         return x;
     }
+
+    template<class Sequencer, class Ctx, class IndexedType>
+    auto create_sequence_ctx(IndexedType) noexcept
+    {
+        return [](auto ctx, auto&&... xs){
+            auto x = IndexedType{};
+            using index = typename IndexedType::index;
+            using NewSequencer = FunSequencerExecutorCtx<index, Sequencer, Ctx>;
+            return x.func()(
+                static_cast<NewSequencer&>(static_cast<Ctx&>(ctx)),
+                static_cast<decltype(xs)&&>(xs)...
+            );
+        };
+    }
 }
 
-template<class i, class Sequencer, class Ctx>
+template<class I, class Sequencer, class Ctx>
 struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
 {
     // ExecutorResult terminate() noexcept
@@ -1442,33 +1597,33 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
 
     constexpr static bool is_final_sequence() noexcept
     {
-        return i::value == Sequencer::sequence_size - 1;
+        return I::value == Sequencer::sequence_size - 1;
     }
 
-    constexpr static i index() noexcept
+    constexpr static I index() noexcept
     {
-        return i();
+        return I{};
     }
 
     constexpr static auto sequence_name() noexcept
     {
-        return detail::value_at<i>(Sequencer{}).name();
+        return detail::value_at<I>(Sequencer{}).name();
     }
 
     jln::ExecutorResult sequence_next() noexcept
     {
-        return this->sequence_at<i::value+1>();
+        return this->sequence_at<I::value+1>();
     }
 
     jln::ExecutorResult sequence_previous() noexcept
     {
-        return this->sequence_at<i::value-1>();
+        return this->sequence_at<I::value-1>();
     }
 
-    template<std::size_t I>
+    template<std::size_t i>
     jln::ExecutorResult sequence_at() noexcept
     {
-        return this->next_action(this->get_sequence_at<I>());
+        return this->next_action(this->get_sequence_at<i>());
     }
 
     template<class S>
@@ -1477,10 +1632,10 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
         return this->next_action(this->get_sequence_name<S>());
     }
 
-    template<std::size_t I>
+    template<std::size_t i>
     jln::ExecutorResult exec_sequence_at() noexcept
     {
-        return this->exec_action(this->get_sequence_at<I>());
+        return this->exec_action(this->get_sequence_at<i>());
     }
 
     template<class S>
@@ -1489,31 +1644,17 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
         return this->exec_action(this->get_sequence_name<S>());
     }
 
-    template<std::size_t I>
+    template<std::size_t i>
     auto get_sequence_at() noexcept
     {
-        using index = std::integral_constant<std::size_t, I>;
-        using NewSequencer = FunSequencerExecutorCtx<index, Sequencer, Ctx>;
-        return [](auto ctx, auto&&... xs){
-            return detail::value_at<index>(Sequencer{}).func()(
-                static_cast<NewSequencer&>(static_cast<Ctx&>(ctx)),
-                static_cast<decltype(xs)&&>(xs)...
-            );
-        };
+        using index = std::integral_constant<std::size_t, i>;
+        return detail::create_sequence_ctx<Sequencer, Ctx>(detail::value_at<index>(Sequencer{}));
     }
 
     template<class S>
     auto get_sequence_name() noexcept
     {
-        return [](auto ctx, auto&&... xs){
-            auto x = detail::value_by_name<S>(Sequencer{});
-            using index = typename decltype(x)::index;
-            using NewSequencer = FunSequencerExecutorCtx<index, Sequencer, Ctx>;
-            return x.func()(
-                static_cast<NewSequencer&>(static_cast<Ctx&>(ctx)),
-                static_cast<decltype(xs)&&>(xs)...
-            );
-        };
+        return detail::create_sequence_ctx<Sequencer, Ctx>(detail::value_by_name<S>(Sequencer{}));
     }
 
 
@@ -1524,9 +1665,15 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
     }
 
     // Only with Executor2TimerContext
-    FunSequencerExecutorCtx set_time(std::chrono::milliseconds ms)
+    FunSequencerExecutorCtx set_delay(std::chrono::milliseconds ms)
     {
-        return static_cast<FunSequencerExecutorCtx&&>(Ctx::set_time(ms));
+        return static_cast<FunSequencerExecutorCtx&&>(Ctx::set_delay(ms));
+    }
+
+    // Only with Executor2TimerContext
+    FunSequencerExecutorCtx set_time(timeval const& tv)
+    {
+        return static_cast<FunSequencerExecutorCtx&&>(Ctx::set_time(tv));
     }
 };
 
@@ -1629,9 +1776,14 @@ struct TopExecutorImpl : Executor2Impl<PrefixArgs, Ts...>
 //         };
 //     }
 
-    void set_timeout(std::chrono::milliseconds ms) noexcept
+    void set_timeout_delay(std::chrono::milliseconds ms) noexcept
     {
-        this->timeout.set_time(ms);
+        this->timeout.set_delay(ms);
+    }
+
+    void set_timeout(timeval const& tv) noexcept
+    {
+        this->timeout.set_time(tv);
     }
 
     TopExecutorImpl(TopExecutorImpl const&) = delete;
@@ -1842,7 +1994,7 @@ void BasicExecutorImpl<PrefixArgs>::terminate(Args&&... args)
 {
     while (this->current != this) {
         (void)this->current->exec_exit(ExecutorError::Terminate, static_cast<Args&&>(args)...);
-        std::exchange(this->current, this->current->prev)->delete_self();
+        std::exchange(this->current, this->current->prev)->delete_self(DeleteFrom::Owner);
     }
     (void)this->current->exec_exit(ExecutorError::Terminate, static_cast<Args&&>(args)...);
     this->on_action = detail::terminate_callee;
@@ -1862,7 +2014,7 @@ bool BasicExecutorImpl<PrefixArgs>::exit_with(ExecutorError error, Args&&... arg
                     this->on_exit = detail::terminate_callee;
                     return false;
                 }
-                std::exchange(this->current, this->current->prev)->delete_self();
+                std::exchange(this->current, this->current->prev)->delete_self(DeleteFrom::Owner);
                 error = ExecutorError::NoError;
                 break;
             case ExecutorResult::ExitFailure:
@@ -1871,7 +2023,7 @@ bool BasicExecutorImpl<PrefixArgs>::exit_with(ExecutorError error, Args&&... arg
                     this->on_exit = detail::terminate_callee;
                     return false;
                 }
-                std::exchange(this->current, this->current->prev)->delete_self();
+                std::exchange(this->current, this->current->prev)->delete_self(DeleteFrom::Owner);
                 error = ExecutorError::ActionError;
                 break;
             case ExecutorResult::Terminate:

@@ -29,7 +29,8 @@ RED_AUTO_TEST_CASE(TestModuleManagerNextMod)
 {
     Inifile ini;
 
-    MMIni mm(ini);
+    SessionReactor session_reactor;
+    MMIni mm(session_reactor, ini);
     int res;
 
     ini.set_acl<cfg::context::module>("login");

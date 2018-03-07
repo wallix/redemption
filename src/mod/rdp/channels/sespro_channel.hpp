@@ -24,6 +24,7 @@
 #include "core/front_api.hpp"
 #include "mod/rdp/rdp_api.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
+#include "utils/genrandom.hpp"
 #include "utils/stream.hpp"
 #include "utils/translation.hpp"
 #include "utils/sugar/algostring.hpp"
@@ -354,6 +355,7 @@ private:
 
     SessionReactor& session_reactor;
     SessionReactor::BasicTimerPtr session_probe_timer;
+    SessionReactor::GraphicEventPtr freeze_mod_screen;
 
 public:
     struct Params : public BaseVirtualChannel::Params {
@@ -487,7 +489,7 @@ public:
                 .set_delay(this->session_probe_effective_launch_timeout)
                 .on_action([](auto ctx, SessionProbeVirtualChannel& self){
                     self.process_event_launch();
-                    return ctx.set_time(self.session_probe_effective_launch_timeout).ready();
+                    return ctx.ready_to(self.session_probe_effective_launch_timeout);
                 });
                 this->session_probe_launch_timeout_timer_started = true;
             }
@@ -504,7 +506,7 @@ protected:
 public:
     void give_additional_launch_time() {
         if (!this->session_probe_ready && this->session_probe_timer) {
-            this->session_probe_timer->set_time(this->session_probe_effective_launch_timeout);
+            this->session_probe_timer->set_delay(this->session_probe_effective_launch_timeout);
 
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO,
@@ -549,7 +551,7 @@ public:
                     "Session Probe keep alive requested");
         }
 
-        this->session_probe_timer->set_time(this->param_session_probe_keepalive_timeout);
+        this->session_probe_timer->set_delay(this->param_session_probe_keepalive_timeout);
     }
 
     bool client_input_disabled_because_session_probe_keepalive_is_missing = false;
@@ -627,7 +629,11 @@ public:
 
                         this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
 
-                        this->mod.invoke_asynchronous_graphic_task(mod_api::AsynchronousGraphicTask::freeze_screen);
+                        this->freeze_mod_screen = this->session_reactor
+                        .create_graphic_event(mod.get_dim())
+                        .on_action(jln::one_shot([](time_t, gdi::GraphicApi& drawable, Dimension const& dim){
+                            gdi_freeze_screen(drawable, dim);
+                        }));
                     }
                     this->request_keep_alive();
                     this->mod.display_osd_message("No keep alive received from Session Probe!");
@@ -750,7 +756,7 @@ public:
                     .set_delay(this->param_session_probe_keepalive_timeout)
                     .on_action([](auto ctx, SessionProbeVirtualChannel& self){
                         self.process_event_ready();
-                        return ctx.set_time(self.param_session_probe_keepalive_timeout).ready();
+                        return ctx.ready_to(self.param_session_probe_keepalive_timeout);
                     });
                 }
                 this->session_probe_ready = true;
@@ -809,7 +815,7 @@ public:
                             "Session Probe keep alive requested");
                 }
 
-                this->session_probe_timer->set_time(this->param_session_probe_keepalive_timeout);
+                this->session_probe_timer->set_delay(this->param_session_probe_keepalive_timeout);
             }
             else {
                 this->session_probe_timer.reset();

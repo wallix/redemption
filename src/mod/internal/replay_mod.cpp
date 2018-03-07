@@ -54,11 +54,12 @@ ReplayMod::TemporaryCtxPath::TemporaryCtxPath(const char * replay_path, const ch
         throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
     }
 
-    std::snprintf(this->prefix,  sizeof(this->prefix), "%s%s", path, basename);
+    std::snprintf(this->prefix, sizeof(this->prefix), "%s%s", path, basename);
 }
 
 ReplayMod::ReplayMod(
-    FrontAPI & front
+    SessionReactor& session_reactor
+  , FrontAPI & front
   , const char * replay_path
   , const char * movie
   , uint16_t width
@@ -71,7 +72,7 @@ ReplayMod::ReplayMod(
   , time_t balise_time_frame
   , bool replay_on_loop
   , Verbose debug_capture)
-: InternalMod(front, width, height, font, Theme{}, true)
+: InternalMod(session_reactor, front, width, height, font, Theme{}, true)
 , auth_error_message(auth_error_message)
 , movie_path(replay_path, movie)
 // TODO RZ: Support encrypted recorded file.
@@ -120,6 +121,12 @@ ReplayMod::ReplayMod(
     time_t begin_file_read = begin_read.tv_sec+this->in_trans->get_meta_line().start_time - this->balise_time_frame;
     this->in_trans->set_begin_time(begin_file_read);
     this->front.can_be_start_capture();
+
+    this->timer = session_reactor.create_graphic_timer(std::ref(*this))
+    .set_delay(std::chrono::seconds(1))
+    .on_action(jln::always_ready([](time_t now, gdi::GraphicApi& gd, ReplayMod& self){
+        self.draw_event(now, gd);
+    }));
 }
 
 ReplayMod::~ReplayMod()
@@ -179,8 +186,7 @@ void ReplayMod::rdp_input_scancode(
 {
     if (keymap->nb_kevent_available() > 0
         && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
-        this->event.signal = BACK_EVENT_STOP;
-        this->event.set_trigger_time(wait_obj::NOW);
+        this->session_reactor.set_next_event(BACK_EVENT_STOP);
     }
 }
 
@@ -199,9 +205,6 @@ time_t ReplayMod::get_real_time_movie_begin()
     return this->in_trans->get_meta_line().start_time;
 }
 
-// event from back end (draw event from remote or internal server)
-// returns module continuation status, 0 if module want to continue
-// non 0 if it wants to stop (to run another module)
 void ReplayMod::draw_event(time_t now, gdi::GraphicApi & drawable)
 {
     (void)now;
@@ -215,7 +218,7 @@ void ReplayMod::draw_event(time_t now, gdi::GraphicApi & drawable)
     if (this->end_of_data) {
         timespec wtime = {1, 0};
         nanosleep(&wtime, nullptr);
-        this->event.set_trigger_time(std::chrono::seconds(1));
+        this->timer->set_delay(std::chrono::seconds(1));
         return;
     }
 
@@ -299,7 +302,7 @@ void ReplayMod::draw_event(time_t now, gdi::GraphicApi & drawable)
                     this->front.sync();
 
                     if (!this->wait_for_escape) {
-                        this->event.signal = BACK_EVENT_STOP;
+                        this->session_reactor.set_next_event(BACK_EVENT_STOP);
                     }
 
                     break;
@@ -307,14 +310,12 @@ void ReplayMod::draw_event(time_t now, gdi::GraphicApi & drawable)
             }
         }
 
-        this->event.set_trigger_time(wait_obj::NOW);
+        this->timer->set_delay(std::chrono::milliseconds{});
     }
     catch (Error const & e) {
         if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
             this->auth_error_message = "The recorded file is inaccessible or corrupted!";
-
-            this->event.signal = BACK_EVENT_NEXT;
-            this->event.set_trigger_time(wait_obj::NOW);
+            this->session_reactor.set_next_event(BACK_EVENT_NEXT);
         }
         else {
             throw;

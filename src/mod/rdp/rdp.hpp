@@ -116,7 +116,6 @@
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/splitter.hpp"
-#include "utils/timeout.hpp"
 
 #include <cstdlib>
 
@@ -334,6 +333,10 @@ protected:
     int  auth_channel_flags;
     int  auth_channel_chanid;
 
+    CHANNELS::ChannelNameId checkout_channel;
+    int  checkout_channel_flags = 0;
+    int  checkout_channel_chanid = 0;
+
     AuthApi & authentifier;
     ReportMessageApi & report_message;
 
@@ -415,7 +418,8 @@ protected:
     const bool                 disconnect_on_logon_user_change;
     const std::chrono::seconds open_session_timeout;
 
-    Timeout open_session_timeout_checker;
+    SessionReactor::BasicTimerPtr open_session_timeout_checker_timer;
+    SessionReactor::GraphicFdPtr fd_event;
 
     std::string output_filename;
 
@@ -459,8 +463,34 @@ protected:
     std::string real_alternate_shell;
     std::string real_working_dir;
 
-    // TODO BUG never pop_front(), only push_back() :/
-    std::deque<std::unique_ptr<AsynchronousTask>> asynchronous_tasks;
+    struct AsynchronousTaskContainer
+    {
+        void add(SessionReactor& session_reactor, std::unique_ptr<AsynchronousTask>&& task)
+        {
+            auto remover = [](AsynchronousTaskContainer* pself, AsynchronousTask& task) noexcept {
+                if (pself->tasks.size() == 1) {
+                    assert(pself->tasks.front().get() == &task);
+                    pself->tasks.clear();
+                }
+                else {
+                    auto it = std::find_if(
+                        pself->tasks.begin(),
+                        pself->tasks.end(),
+                        [&task](auto& uptr){ return uptr.get() == &task; }
+                    );
+                    assert(it != pself->tasks.end());
+                    *it = std::move(pself->tasks.back());
+                    pself->tasks.pop_back();
+                }
+            };
+            this->tasks.emplace_back(std::move(task))
+            ->configure_event(session_reactor, {this, remover});
+        }
+
+    private:
+        std::vector<std::unique_ptr<AsynchronousTask>> tasks;
+    };
+    AsynchronousTaskContainer asynchronous_tasks;
 
     Translation::language_t lang;
 
@@ -481,7 +511,7 @@ protected:
     {
         std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender;
 
-        std::deque<std::unique_ptr<AsynchronousTask>>& asynchronous_tasks;
+        AsynchronousTaskContainer& asynchronous_tasks;
         SessionReactor& session_reactor;
 
         RDPVerbose verbose;
@@ -489,7 +519,7 @@ protected:
     public:
         ToServerAsynchronousSender(
             std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender,
-            std::deque<std::unique_ptr<AsynchronousTask>>& asynchronous_tasks,
+            AsynchronousTaskContainer& asynchronous_tasks,
             SessionReactor& session_reactor,
             RDPVerbose verbose)
         : to_server_synchronous_sender(std::move(to_server_synchronous_sender))
@@ -506,11 +536,14 @@ protected:
             uint32_t total_length, uint32_t flags,
             const uint8_t* chunk_data, uint32_t chunk_data_length) override
         {
-            this->asynchronous_tasks.push_back(std::make_unique<RdpdrSendClientMessageTask>(
-                total_length, flags, chunk_data, chunk_data_length,
-                *this->to_server_synchronous_sender.get(),
-                this->verbose));
-            this->asynchronous_tasks.back()->configure_event(this->session_reactor);
+            this->asynchronous_tasks.add(
+                this->session_reactor,
+                std::make_unique<RdpdrSendClientMessageTask>(
+                    total_length, flags, chunk_data, chunk_data_length,
+                    *this->to_server_synchronous_sender.get(),
+                    this->verbose
+                )
+            );
         }
     };
 
@@ -814,8 +847,6 @@ protected:
 
     InfoPacketFlags info_packet_extra_flags;
 
-    SessionReactor& session_reactor;
-
 public:
     using Verbose = RDPVerbose;
 
@@ -835,7 +866,8 @@ public:
            , ReportMessageApi & report_message
            , ModRdpVariables vars
            )
-        : front_width(info.width - (info.width % 4))
+        : mod_api(session_reactor, false)
+        , front_width(info.width - (info.width % 4))
         , front_height(info.height)
         , front(front)
         , authorization_channels(
@@ -930,7 +962,6 @@ public:
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , open_session_timeout(mod_rdp_params.open_session_timeout)
-        , open_session_timeout_checker(0)
         , output_filename(mod_rdp_params.output_filename)
         , server_cert_store(mod_rdp_params.server_cert_store)
         , server_cert_check(mod_rdp_params.server_cert_check)
@@ -1000,7 +1031,6 @@ public:
         , load_balance_info(mod_rdp_params.load_balance_info)
         , vars(vars)
         , info_packet_extra_flags(info.has_sound_code ? INFO_REMOTECONSOLEAUDIO : InfoPacketFlags{})
-        , session_reactor(session_reactor)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -1019,11 +1049,6 @@ public:
 
             mod_rdp_params.log();
         }
-
-        // Clear client screen
-        this->session_reactor.create_graphic_event(this->get_dim())
-        .on_action(jln::one_shot<gdi_clear_screen>())
-        .release();
 
         this->beginning = timeobj.get_time().tv_sec;
 
@@ -1061,6 +1086,8 @@ public:
             default:
                 this->auth_channel = mod_rdp_params.auth_channel;
         }
+
+        this->checkout_channel = mod_rdp_params.checkout_channel;
 
         memset(this->clientAddr, 0, sizeof(this->clientAddr));
         strncpy(this->clientAddr, mod_rdp_params.client_address, sizeof(this->clientAddr) - 1);
@@ -1550,6 +1577,25 @@ public:
                 );
         }
 
+        this->fd_event = this->session_reactor
+        .create_graphic_fd_event(this->trans.get_fd(), std::ref(*this))
+        .set_timeout(std::chrono::milliseconds(0))
+        .on_timeout([](auto ctx, time_t /*now*/, gdi::GraphicApi & gd, mod_rdp& self){
+            assert(self.state == MOD_RDP_NEGO_INITIATE);
+            gdi_clear_screen(gd, self.get_dim());
+            LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
+            self.nego.send_negotiation_request(self.trans);
+            self.state = MOD_RDP_NEGO;
+            // TODO return ctx.disable_timer()...
+            return ctx.set_timeout(std::chrono::hours(999))
+            .set_timeout_action(jln::always_ready())
+            .next_action(jln::always_ready([](time_t now, gdi::GraphicApi & gd, mod_rdp& self){
+                self.draw_event(now, gd);
+            }));
+        })
+        .on_exit(jln::exit_with_success())
+        .on_action(jln::always_ready() /* set by on_timeout action*/);
+
         LOG(LOG_INFO, "RDP mod built");
     }   // mod_rdp
 
@@ -1585,8 +1631,6 @@ public:
             this->redir_info.reset();
         }
     }
-
-    int get_fd() const override { return this->trans.get_fd(); }
 
 protected:
     std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
@@ -2027,9 +2071,6 @@ public:
         }
     }
 
-    void get_event_handlers(std::vector<EventHandler>& /*out_event_handlers*/) override {
-    }
-
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name,
         InStream & chunk, size_t length, uint32_t flags
@@ -2185,6 +2226,26 @@ public:
     }
 
 private:
+    void send_checkout_channel_data(const char * string_data) {
+        CHANNELS::VirtualChannelPDU virtual_channel_pdu;
+
+        StaticOutStream<65536> stream_data;
+
+        uint32_t data_size = std::min(::strlen(string_data), stream_data.get_capacity());
+
+        stream_data.out_uint16_le(1);           // Version
+        stream_data.out_uint16_le(data_size);
+        stream_data.out_copy_bytes(string_data, data_size);
+
+        virtual_channel_pdu.send_to_server(
+            this->trans, this->encrypt, this->encryptionLevel
+          , this->userid, this->checkout_channel_chanid
+          , stream_data.get_offset()
+          , this->checkout_channel_flags
+          , stream_data.get_data()
+          , stream_data.get_offset());
+    }
+
     void send_to_channel(
         const CHANNELS::ChannelDef & channel,
         uint8_t const * chunk, std::size_t chunk_size,
@@ -2287,11 +2348,6 @@ private:
     }
 
 public:
-    wait_obj& get_event() override {
-        return this->event;
-    }
-
-
     // Basic Settings Exchange
     // -----------------------
 
@@ -2410,7 +2466,8 @@ public:
                 const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
                 size_t num_channels = channel_list.size();
                 if ((num_channels > 0) || this->enable_auth_channel ||
-                    this->file_system_drive_manager.HasManagedDrive()) {
+                    this->file_system_drive_manager.HasManagedDrive() ||
+                    this->checkout_channel.c_str()[0]) {
                     /* Here we need to put channel information in order
                     to redirect channel data
                     from client to server passing through the "proxy" */
@@ -2517,6 +2574,21 @@ public:
                             GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
                         CHANNELS::ChannelDef def;
                         def.name = this->auth_channel;
+                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                        if (bool(this->verbose & RDPVerbose::channels)){
+                            def.log(cs_net.channelCount);
+                        }
+                        this->mod_channel_list.push_back(def);
+                        cs_net.channelCount++;
+                    }
+
+                    // Inject a new channel for checkout_channel virtual channel
+                    if (this->checkout_channel.c_str()[0]) {
+                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->checkout_channel.c_str(), 8);
+                        cs_net.channelDefArray[cs_net.channelCount].options =
+                            GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
+                        CHANNELS::ChannelDef def;
+                        def.name = this->checkout_channel;
                         def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
                         if (bool(this->verbose & RDPVerbose::channels)){
                             def.log(cs_net.channelCount);
@@ -3622,6 +3694,9 @@ public:
                  if (mod_channel.name == this->auth_channel && this->enable_auth_channel) {
                 this->process_auth_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
+            else if (mod_channel.name == this->checkout_channel) {
+                this->process_checkout_event(mod_channel, sec.payload, length, flags, chunk_size);
+            }
             else if (mod_channel.name == channel_names::sespro) {
                 this->process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
@@ -3801,7 +3876,7 @@ public:
                                 this->do_enable_session_probe();
 
                                 if (this->open_session_timeout.count() > 0) {
-                                    this->event.set_trigger_time(wait_obj::NOW);
+// TODO                                    this->event.set_trigger_time(wait_obj::NOW);
                                 }
 
                                 this->already_upped_and_running = true;
@@ -4100,15 +4175,12 @@ public:
             this->remote_programs_session_manager->set_drawable(&drawable_);
         }
 
-        assert(AsynchronousGraphicTask::none == this->asynchronous_graphic_task);
-
         bool run = true;
-        bool waked_up_by_time = this->event.is_waked_up_by_time();
+        bool waked_up_by_time = false;
 
         if (this->state == MOD_RDP_NEGO_INITIATE) {
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
             this->nego.send_negotiation_request(this->trans);
-            this->event.reset_trigger_time();
             this->state = MOD_RDP_NEGO;
             run = false;
         }
@@ -4123,7 +4195,7 @@ public:
                 this->send_connectInitialPDUwithGccConferenceCreateRequest();
             }
         }
-        else if (!waked_up_by_time) {
+        else {
             this->buf.load_data(this->trans);
         }
 
@@ -4222,7 +4294,7 @@ public:
                         LOG(LOG_INFO, "Connection to server Already closed: error=%u", e.id);
                     };
 
-                    this->event.signal = BACK_EVENT_NEXT;
+                    this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 
                     if (this->enable_session_probe) {
                         const bool disable_input_event     = false;
@@ -4286,59 +4358,10 @@ public:
 
         //LOG(LOG_INFO, "mod_rdp::draw_event() session timeout check count=%u",
         //        static_cast<unsigned>(this->open_session_timeout.count()));
-        if (this->open_session_timeout.count()) {
-            LOG(LOG_INFO, "mod_rdp::draw_event() session timeout check switch");
-            switch(this->open_session_timeout_checker.check(now)) {
-            case Timeout::TIMEOUT_REACHED:
-                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_REACHED");
-                if (this->error_message) {
-                    *this->error_message = "Logon timer expired!";
-                }
-
-                this->report_message.report("CONNECTION_FAILED", "Logon timer expired.");
-
-                if (this->enable_session_probe) {
-                    const bool disable_input_event     = false;
-                    const bool disable_graphics_update = false;
-                    this->disable_input_event_and_graphics_update(
-                        disable_input_event, disable_graphics_update);
-                }
-
-                LOG(LOG_ERR,
-                    "Logon timer expired on %s. The session will be disconnected.",
-                    this->hostname);
-                throw Error(ERR_RDP_OPEN_SESSION_TIMEOUT);
-            break;
-            case Timeout::TIMEOUT_NOT_REACHED:
-                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_NOT_REACHED");
-                this->event.set_trigger_time(1000000);
-            break;
-            case Timeout::TIMEOUT_INACTIVE:
-                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_INACTIVE");
-            break;
-            }
+        if (this->open_session_timeout_checker_timer) {
+            this->open_session_timeout_checker_timer->set_delay(std::chrono::seconds(1));
         }
 
-/*
-        //LOG(LOG_INFO, "mod_rdp::draw_event() session_probe_virtual_channel_p");
-        try{
-            if (this->session_probe_virtual_channel_p) {
-                this->session_probe_virtual_channel_p->process_event();
-            }
-        }
-        catch (Error const & e) {
-            if (e.id != ERR_SESSION_PROBE_ENDING_IN_PROGRESS)
-                throw;
-
-            this->end_session_reason.clear();
-            this->end_session_message.clear();
-
-            this->authentifier.disconnect_target();
-            this->authentifier.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
-
-            this->event.signal = BACK_EVENT_NEXT;
-        }
-*/
         //LOG(LOG_INFO, "mod_rdp::draw_event() done");
     }   // draw_event
 
@@ -5783,9 +5806,7 @@ public:
         this->end_session_message = "OK.";
 
         if (this->open_session_timeout.count()) {
-            this->open_session_timeout_checker.cancel_timeout();
-
-            this->event.reset_trigger_time();
+            this->open_session_timeout_checker_timer.reset();
         }
 
         if (this->enable_session_probe) {
@@ -6389,11 +6410,6 @@ public:
     }
 
 public:
-
-    BackEvent_t get_signal_event() {
-        return this->event.signal;
-    }
-
     void send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2) {
         if (bool(this->verbose & RDPVerbose::input)){
             LOG(LOG_INFO, "mod_rdp::send_input_slowpath");
@@ -7335,7 +7351,7 @@ private:
         }
     }   // process_bitmap_updates
 
-    void send_client_info_pdu(const time_t & now) {
+    void send_client_info_pdu(const time_t & /*now*/) {
         if (bool(this->verbose & RDPVerbose::basic_trace)){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu");
         }
@@ -7436,10 +7452,31 @@ private:
         }
 
         if (this->open_session_timeout.count()) {
-            this->open_session_timeout_checker.restart_timeout(
-                now, this->open_session_timeout.count());
-            this->event.set_trigger_time(1000000);
+            this->open_session_timeout_checker_timer = this->session_reactor
+            .create_timer(std::ref(*this))
+            .set_delay(std::chrono::seconds(1))
+            .on_action(jln::one_shot([](mod_rdp& self){
+                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_REACHED");
+                if (self.error_message) {
+                    *self.error_message = "Logon timer expired!";
+                }
+
+                self.report_message.report("CONNECTION_FAILED", "Logon timer expired.");
+
+                if (self.enable_session_probe) {
+                    const bool disable_input_event     = false;
+                    const bool disable_graphics_update = false;
+                    self.disable_input_event_and_graphics_update(
+                        disable_input_event, disable_graphics_update);
+                }
+
+                LOG(LOG_ERR,
+                    "Logon timer expired on %s. The session will be disconnected.",
+                    self.hostname);
+                throw Error(ERR_RDP_OPEN_SESSION_TIMEOUT);
+            }));
         }
+
         if (bool(this->verbose & RDPVerbose::basic_trace)){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu done");
         }
@@ -7558,6 +7595,46 @@ private:
         }
     }
 
+    void process_checkout_event(
+        const CHANNELS::ChannelDef & checkout_channel,
+        InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size
+    ) {
+        (void)length;
+        (void)chunk_size;
+        assert(stream.in_remain() == chunk_size);
+
+        if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) !=
+            (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST))
+        {
+            LOG(LOG_WARNING, "mod_rdp::process_checkout_event: Chunked Virtual Channel Data ignored!");
+            return;
+        }
+
+        {
+            const unsigned expected = 4;    // Version(2) + DataLength(2)
+            if (!stream.in_check_rem(expected)) {
+                LOG( LOG_ERR
+                   , "mod_rdp::process_checkout_event: data truncated (1), expected=%u remains=%zu"
+                   , expected, stream.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+        }
+
+        uint16_t const version = stream.in_uint16_le();
+        uint16_t const data_length = stream.in_uint16_le();
+
+        LOG(LOG_INFO, "mod_rdp::process_checkout_event: Version=%u DataLength=%u", version, data_length);
+
+        std::string checkout_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
+
+        this->checkout_channel_flags  = flags;
+        this->checkout_channel_chanid = checkout_channel.chanid;
+
+        LOG(LOG_INFO, "mod_rdp::process_checkout_event: Data=\"%s\"", checkout_channel_message);
+
+        send_checkout_channel_data("{ \"ReturnCode\": 0, \"ReturnMessage\": \"Succeeded.\" }");
+    }
+
     void process_session_probe_event(
         const CHANNELS::ChannelDef & session_probe_channel,
         InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size
@@ -7644,8 +7721,7 @@ private:
             out_asynchronous_task);
 
         if (out_asynchronous_task) {
-            out_asynchronous_task->configure_event(this->session_reactor);
-            this->asynchronous_tasks.push_back(std::move(out_asynchronous_task));
+            this->asynchronous_tasks.add(this->session_reactor, std::move(out_asynchronous_task));
         }
     }
 
@@ -7683,8 +7759,7 @@ private:
             out_asynchronous_task);
 
         if (out_asynchronous_task) {
-            out_asynchronous_task->configure_event(this->session_reactor);
-            this->asynchronous_tasks.push_back(std::move(out_asynchronous_task));
+            this->asynchronous_tasks.add(this->session_reactor, std::move(out_asynchronous_task));
         }
     }
 

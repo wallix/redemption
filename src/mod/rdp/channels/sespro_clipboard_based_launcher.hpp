@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "core/wait_obj.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
@@ -377,7 +376,7 @@ public:
                     0/*param2*/
                 );
 
-                return ctx.set_time(decltype(wait_for_short_delay)::value ? self.short_delay : self.long_delay)
+                return ctx.set_delay(decltype(wait_for_short_delay)::value ? self.short_delay : self.long_delay)
                 .sequence_next();
             };
         };
@@ -403,10 +402,10 @@ public:
 
                 if constexpr (ctx.is_final_sequence()) {
                     self.state = State::WAIT;
-                    return ctx.set_time(self.short_delay).template sequence_at<0>();
+                    return ctx.set_delay(self.short_delay).template sequence_at<0>();
                 }
                 else {
-                    return ctx.set_time(decltype(wait_for_short_delay)::value ? self.short_delay : self.long_delay)
+                    return ctx.set_delay(decltype(wait_for_short_delay)::value ? self.short_delay : self.long_delay)
                     .sequence_next();
                 }
             };
@@ -464,11 +463,11 @@ public:
                                                      | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
                     }
 
-                    return ctx.set_time(self.long_delay).sequence_next();
+                    return ctx.set_delay(self.long_delay).sequence_next();
                 }),
                 "Wait format list responsd"_f
                                     ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
-                    return ctx.set_time(self.long_delay).template sequence_at<ctx.index()>();
+                    return ctx.set_delay(self.long_delay).ready();
                 })
             ));
         };
@@ -490,7 +489,7 @@ public:
                 "Enter (down)"_f    ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
                     ++self.copy_paste_loop_counter;
                     if (!self.format_data_requested) {
-                        return ctx.set_time(self.short_delay).template get_sequence_at<0>()(ctx, self);
+                        return ctx.set_delay(self.short_delay).template get_sequence_at<0>()(ctx, self);
                     }
                     return jln::make_lambda<decltype(send_scancode)>()(value<28>, value<0>, value<true>, value<true>)(ctx, self);
                 }),
@@ -498,7 +497,7 @@ public:
 
                 // "Enter (down)"_f    ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
                 //     ++self.copy_paste_loop_counter;
-                //     return ctx.set_time(self.short_delay).template get_sequence_at("Windows (down)"_s)(ctx, self);
+                //     return ctx.set_delay(self.short_delay).template get_sequence_at("Windows (down)"_s)(ctx, self);
                 // }),
             ));
         };

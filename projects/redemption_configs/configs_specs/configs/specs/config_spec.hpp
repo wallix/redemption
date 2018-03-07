@@ -313,6 +313,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "ignore_auth_channel", set(false));
         W.member(ini_and_gui, no_sesman, type_<types::fixed_string<7>>(), "auth_channel", set("*"), desc{"Authentication channel used by Auto IT scripts. May be '*' to use default name. Keep empty to disable virtual channel."});
+        W.member(ini_and_gui, no_sesman, type_<types::fixed_string<7>>(), "checkout_channel", set(""), desc{"Authentication channel used by other scripts. No default name. Keep empty to disable virtual channel."});
         W.sep();
         W.member(hidden_in_gui, sesman_to_proxy, type_<std::string>(), "alternate_shell");
         W.member(hidden_in_gui, sesman_to_proxy, type_<std::string>(), "shell_arguments");
@@ -379,8 +380,8 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_enable_crash_dump", set(false));
         W.sep();
 
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "session_probe_handle_usage_limit", set(0));
-        W.member(advanced_in_gui, no_sesman, type_<types::u32>(), "session_probe_memory_usage_limit", set(0));
+        W.member(advanced_in_gui, sesman_to_proxy, type_<types::u32>(), "session_probe_handle_usage_limit", set(0));
+        W.member(advanced_in_gui, sesman_to_proxy, type_<types::u32>(), "session_probe_memory_usage_limit", set(0));
         W.sep();
 
         W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true));

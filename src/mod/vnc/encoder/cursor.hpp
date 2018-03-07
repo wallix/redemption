@@ -58,7 +58,6 @@ h
 namespace VNC {
     namespace Encoder {
         class Cursor : public EncoderApi {
-            const uint8_t bpp;
             const uint8_t Bpp;
             const size_t x;
             size_t y;
@@ -74,10 +73,10 @@ namespace VNC {
         public:
             VNCVerbose verbose;
 
-            Cursor(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy,
+            Cursor(uint8_t /*bpp*/, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy,
                    int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max, 
                    VNCVerbose verbose) 
-                : bpp(bpp), Bpp(Bpp), x(x), y(y), cx(cx), cy(cy),
+                : Bpp(Bpp), x(x), y(y), cx(cx), cy(cy),
                   red_shift(red_shift), red_max(red_max), 
                   green_shift(green_shift), green_max(green_max), 
                   blue_shift(blue_shift), blue_max(blue_max)

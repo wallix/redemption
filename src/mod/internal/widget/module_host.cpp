@@ -48,8 +48,10 @@
 
 
 WidgetModuleHost::ModuleHolder::ModuleHolder(
+    SessionReactor& session_reactor,
     WidgetModuleHost& host, std::unique_ptr<mod_api> managed_mod)
-: host(host)
+: mod_api(session_reactor)
+, host(host)
 , managed_mod(std::move(managed_mod))
 {
     assert(this->managed_mod);
@@ -91,36 +93,6 @@ void WidgetModuleHost::ModuleHolder::draw_event(time_t now, gdi::GraphicApi& dra
         this->managed_mod->draw_event(now, this->host);
 
         this->host.drawable_ptr = &this->host.drawable_ref;
-    }
-}
-
-wait_obj& WidgetModuleHost::ModuleHolder::get_event()
-{
-    if (this->managed_mod)
-    {
-        return this->managed_mod->get_event();
-    }
-
-    return mod_api::get_event();
-}
-
-int WidgetModuleHost::ModuleHolder::get_fd() const
-{
-    if (this->managed_mod)
-    {
-        return this->managed_mod->get_fd();
-    }
-
-    return INVALID_SOCKET;
-}
-
-void WidgetModuleHost::ModuleHolder::get_event_handlers(
-    std::vector<EventHandler>& out_event_handlers)
-
-{
-    if (this->managed_mod)
-    {
-        this->managed_mod->get_event_handlers(out_event_handlers);
     }
 }
 
@@ -395,6 +367,7 @@ void WidgetModuleHost::set_pointer(Pointer const & pointer)
 }
 
 WidgetModuleHost::WidgetModuleHost(
+    SessionReactor& session_reactor,
     gdi::GraphicApi& drawable, Widget& parent,
     NotifyApi* notifier,
     std::unique_ptr<mod_api> managed_mod, Font const & font,
@@ -402,7 +375,7 @@ WidgetModuleHost::WidgetModuleHost(
     uint16_t front_width, uint16_t front_height,
     int group_id)
 : WidgetParent(drawable, parent, notifier, group_id)
-, module_holder(*this, std::move(managed_mod))
+, module_holder(session_reactor, *this, std::move(managed_mod))
 , drawable_ptr(&drawable)
 , drawable_ref(drawable)
 , hscroll(drawable, *this, this, true, BLACK,

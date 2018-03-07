@@ -23,51 +23,36 @@
 #include "core/RDP/slowpath.hpp"
 #include "mod/internal/client_execute.hpp"
 
-void LocallyIntegrableMod::FirstClickDownEventHandler
-  ::operator()(time_t /*now*/, wait_obj& /*event*/, gdi::GraphicApi& /*drawable*/)
-{
-    assert(this->mod_.rail_enabled);
-
-    if (this->mod_.first_click_down_event.is_trigger_time_set() &&
-        this->mod_.first_click_down_event.is_waked_up_by_time()) {
-        this->mod_.cancel_double_click_detection();
-    }
-}
-
-
 LocallyIntegrableMod::LocallyIntegrableMod(
-    FrontAPI & front, uint16_t front_width, uint16_t front_height,
+    SessionReactor& session_reactor, FrontAPI & front,
+    uint16_t front_width, uint16_t front_height,
     Font const & font, ClientExecute & client_execute,
-    Theme const & theme)
-: InternalMod(front, front_width, front_height, font, theme, false)
+    Theme const & theme, bool enable_event)
+: InternalMod(session_reactor, front, front_width, front_height, font, theme, false, enable_event)
 , client_execute(client_execute)
 , dvc_manager(false)
 , dc_state(DCState::Wait)
-, first_click_down_event_handler(*this)
 , rail_enabled(client_execute.is_rail_enabled())
 , current_mouse_owner(MouseOwner::WidgetModule)
-{}
+{
+    if (this->rail_enabled) {
+        this->graphic_event = session_reactor.create_graphic_event(std::ref(*this))
+        .on_action(jln::one_shot([](time_t, gdi::GraphicApi&, LocallyIntegrableMod& self){
+            if (false == static_cast<bool>(self.client_execute)/* &&
+                self.event.is_waked_up_by_time()*/) {
+                self.client_execute.ready(
+                    self, self.front_width, self.front_height, self.font(),
+                    self.is_resizing_hosted_desktop_allowed());
+
+                self.dvc_manager.ready(self.front);
+            }
+        }));
+    }
+}
 
 LocallyIntegrableMod::~LocallyIntegrableMod()
 {
     this->client_execute.reset(true);
-}
-
-void LocallyIntegrableMod::get_event_handlers(std::vector<EventHandler>& out_event_handlers)
-{
-    if (this->rail_enabled) {
-        if (this->first_click_down_event.is_trigger_time_set()) {
-            out_event_handlers.emplace_back(
-                &this->first_click_down_event,
-                &this->first_click_down_event_handler,
-                INVALID_SOCKET
-            );
-        }
-
-        this->client_execute.get_event_handlers(out_event_handlers);
-    }
-
-    InternalMod::get_event_handlers(out_event_handlers);
 }
 
 void LocallyIntegrableMod::rdp_input_invalidate(Rect r)
@@ -90,18 +75,28 @@ void LocallyIntegrableMod::rdp_input_mouse(int device_flags, int x, int y, Keyma
         this->old_mouse_y = y;
     }
 
-    bool out_mouse_captured = false;
-
-    if (!this->rail_enabled ||
-        !this->client_execute.input_mouse(device_flags, x, y, out_mouse_captured)) {
-
-        if (this->rail_enabled) {
+    if (!this->rail_enabled) {
+        InternalMod::rdp_input_mouse(device_flags, x, y, keymap);
+    }
+    else {
+        bool out_mouse_captured = false;
+        if (!this->client_execute.input_mouse(device_flags, x, y, out_mouse_captured)) {
             switch (this->dc_state) {
                 case DCState::Wait:
                     if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
                         this->dc_state = DCState::FirstClickDown;
 
-                        this->first_click_down_event.set_trigger_time(1000000);
+                        if (this->first_click_down_timer) {
+                            this->first_click_down_timer->set_delay(std::chrono::seconds(1));
+                        }
+                        else {
+                            this->first_click_down_timer = this->session_reactor
+                            .create_timer(std::ref(*this))
+                            .set_delay(std::chrono::seconds(1))
+                            .on_action(jln::one_shot([](LocallyIntegrableMod& self){
+                                self.dc_state = DCState::Wait;
+                            }));
+                        }
                     }
                 break;
 
@@ -165,7 +160,7 @@ void LocallyIntegrableMod::rdp_input_mouse(int device_flags, int x, int y, Keyma
 
         InternalMod::rdp_input_mouse(device_flags, x, y, keymap);
 
-        if (this->rail_enabled && out_mouse_captured) {
+        if (out_mouse_captured) {
             this->allow_mouse_pointer_change(true);
         }
     }
@@ -204,17 +199,8 @@ void LocallyIntegrableMod::refresh(Rect r)
     }
 }
 
-void LocallyIntegrableMod::draw_event(time_t, gdi::GraphicApi &)
-{
-    if (this->rail_enabled &&
-        (false == static_cast<bool>(this->client_execute))/* &&
-        this->event.is_waked_up_by_time()*/) {
-        this->client_execute.ready(*this, this->front_width, this->front_height, this->font(),
-            this->is_resizing_hosted_desktop_allowed());
-
-        this->dvc_manager.ready(this->front);
-    }
-}
+// TODO remove
+void LocallyIntegrableMod::draw_event(time_t, gdi::GraphicApi &) {}
 
 void LocallyIntegrableMod::send_to_mod_channel(
     CHANNELS::ChannelNameId front_channel_name, InStream& chunk,
@@ -236,7 +222,7 @@ void LocallyIntegrableMod::cancel_double_click_detection()
 {
     assert(this->rail_enabled);
 
-    this->first_click_down_event.reset_trigger_time();
+    this->first_click_down_timer.reset();
 
     this->dc_state = DCState::Wait;
 }

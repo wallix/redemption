@@ -247,8 +247,10 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     NullReportMessage report_message;
 
+    SessionReactor session_reactor;
     mod_vnc mod(
           t
+        , session_reactor
         , "10.10.3.103"
         , "SecureLinux"
         , front
@@ -270,7 +272,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
         , false
         , nullptr
         , vnc_verbose);
-    mod.get_event().set_trigger_time(wait_obj::NOW);
+// TODO    mod.get_event().set_trigger_time(wait_obj::NOW);
 
     if (front_verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD VNC DONE ====================\n\n");
