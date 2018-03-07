@@ -61,6 +61,10 @@ namespace detail
         }
     };
 
+# define FALCON_RETURN_NOEXCEPT(expr)        \
+    noexcept(noexcept(decltype(expr)(expr))) \
+    { return expr; }
+
     template<size_t, class T>
     struct tuple_elem
     {
@@ -68,16 +72,19 @@ namespace detail
 
         template<std::size_t... ints, class... Ts>
         constexpr tuple_elem(int, tuple_impl<std::integer_sequence<size_t, ints...>, Ts...>& t)
+        noexcept(noexcept(T{static_cast<Ts&&>(static_cast<tuple_elem<ints, Ts>&>(t).x)...}))
           : x{static_cast<Ts&&>(static_cast<tuple_elem<ints, Ts>&>(t).x)...}
         {}
 
         template<class... Ts>
         constexpr tuple_elem(emplace_type<T, Ts...> e)
+        noexcept(noexcept(tuple_elem(1, e.t)))
           : tuple_elem(1, e.t)
         {}
 
         template<class U>
         constexpr tuple_elem(U&& x)
+        noexcept(noexcept(T(static_cast<U&&>(x))))
           : x(static_cast<U&&>(x))
         {}
     };
@@ -88,12 +95,10 @@ namespace detail
     {
         template<class F, class... Args>
         decltype(auto) invoke(F && f, Args&&... args)
-        {
-            return f(
-                static_cast<Args&&>(args)...,
-                static_cast<tuple_elem<ints, Ts>&>(*this).x...
-            );
-        }
+        FALCON_RETURN_NOEXCEPT(f(
+            static_cast<Args&&>(args)...,
+            static_cast<tuple_elem<ints, Ts>&>(*this).x...
+        ))
     };
 
     template<class... Ts>
@@ -768,6 +773,7 @@ struct Executor2Impl : public BasicExecutorImpl<PrefixArgs>
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
     template<class... Args>
     Executor2Impl(TopExecutorTimersImpl<PrefixArgs>& top_executor_timers, Args&&... args)
+    noexcept(noexcept(detail::tuple<Ts...>{static_cast<Args&&>(args)...}))
       : BasicExecutorImpl<PrefixArgs>(top_executor_timers)
       , ctx{static_cast<Args&&>(args)...}
     {}
@@ -949,7 +955,7 @@ template<class FdPtr, int Mask = 0>
 struct TopFdBuilder
 {
     template<int Mask2>
-    decltype(auto) select_return()
+    decltype(auto) select_return() noexcept
     {
         if constexpr (Mask == (~Mask2 & 0b1111)) {
             return std::move(this->fd_ptr);
@@ -1040,8 +1046,11 @@ struct BasicEvent : BaseType
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
     template<class Cont, class... Args>
     BasicEvent(Cont&& event_container, Args&&... args)
-      : ctx{static_cast<Args&&>(args)...}
-      , event_container{static_cast<Cont&&>(event_container)}
+    noexcept(
+        noexcept(tuple_context{static_cast<Args&&>(args)...})
+     && noexcept(event_container_type{static_cast<Cont&&>(event_container)}))
+    : ctx{static_cast<Args&&>(args)...}
+    , event_container{static_cast<Cont&&>(event_container)}
     {}
     REDEMPTION_DIAGNOSTIC_POP
 
@@ -1049,6 +1058,11 @@ struct BasicEvent : BaseType
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
     template<class Tuple, class Cont, class... Args>
     BasicEvent(propagate_to_base_t, Tuple&& tuple, Cont&& event_container, Args&&... args)
+    noexcept(noexcept(BasicEvent(
+        std::make_index_sequence<detail::tuple_size<std::remove_reference_t<Tuple>>::value>(),
+        static_cast<Tuple&&>(tuple),
+        static_cast<Cont&&>(event_container),
+        static_cast<Args&&>(args)...)))
     : BasicEvent(
         std::make_index_sequence<detail::tuple_size<std::remove_reference_t<Tuple>>::value>(),
         static_cast<Tuple&&>(tuple),
@@ -1061,6 +1075,10 @@ struct BasicEvent : BaseType
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
     template<std::size_t... ints, class Tuple, class Cont, class... Args>
     BasicEvent(std::integer_sequence<size_t, ints...>, Tuple&& tuple, Cont&& event_container, Args&&... args)
+    noexcept(
+        noexcept(BaseType{detail::get<ints>(static_cast<Tuple&&>(tuple))...})
+     && noexcept(tuple_context{static_cast<Args&&>(args)...})
+     && noexcept(event_container_type{static_cast<Cont&&>(event_container)}))
       : BaseType{detail::get<ints>(static_cast<Tuple&&>(tuple))...}
       , ctx{static_cast<Args&&>(args)...}
       , event_container{static_cast<Cont&&>(event_container)}

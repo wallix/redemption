@@ -62,8 +62,9 @@ struct SessionReactor
      * Layout memory
      *
      * +-----------------------+------------+
-     * |    SharedDataBase     |   counter  | <._
-     * |                       |   deleter  | <-- internal
+     * |    SharedDataBase     |  use_count | <._
+     * |                       | shared_ptr | <-- internal
+     * |                       |   deleter  | <-*
      * +-----------------------+-+--------+-|
      * |    SharedData<Base>   | |  base  | | <-- public
      * +-----------------------+-|        |-+
@@ -74,8 +75,12 @@ struct SessionReactor
     struct SharedDataBase
     {
         int use_count;
-        void* uptr = nullptr;
+        void* shared_ptr = nullptr;
         void (*deleter) (SharedDataBase*) noexcept;
+        void apply_deleter() noexcept
+        {
+            this->deleter(this);
+        }
     };
 
     template<class T>
@@ -93,94 +98,61 @@ struct SessionReactor
 
         template<class U>
         SharedPtrBase(SharedPtrBase<U>&& ptr) noexcept
-          : p(reinterpret_cast<Data*>(std::exchange(ptr.p, nullptr)))
+          : data(reinterpret_cast<Data*>(std::exchange(ptr.data, nullptr)))
         {
             static_assert(std::is_base_of<T, U>::value);
         }
-
-        // template<class U>
-        // SharedPtrBase(SharedPtrBase<U> const& ptr) noexcept
-        //   : p(reinterpret_cast<Data*>(ptr.p))
-        // {
-        //     static_assert(std::is_base_of<T, U>::value);
-        // }
 
         template<class U>
         SharedPtrBase& operator=(SharedPtrBase<U>&& other) noexcept
         {
             static_assert(std::is_base_of<T, U>::value);
-            this->p = reinterpret_cast<Data*>(std::exchange(other.p, nullptr));
+            this->data = reinterpret_cast<Data*>(std::exchange(other.data, nullptr));
             return *this;
-        }
-
-        // template<class U>
-        // SharedPtrBase& operator=(SharedPtrBase<U> const& other) noexcept
-        // {
-        //     SharedPtrBase tmp(other);
-        //     tmp.swap(*this);
-        //     return *this;
-        // }
-
-        ~SharedPtrBase()
-        {
-            this->reset();
-        }
-
-        void swap(SharedPtrBase& other) noexcept
-        {
-            std::swap(other.p, this->p);
         }
 
         explicit operator bool () const noexcept
         {
-            return bool(this->p);
+            return bool(this->data);
         }
 
         T* get() const noexcept
         {
-            assert(this->p);
-            return &this->p->value;
+            assert(this->data);
+            return &this->data->value;
         }
 
         T* operator->() const noexcept
         {
-            assert(this->p);
-            return &this->p->value;
+            assert(this->data);
+            return &this->data->value;
         }
 
         T& operator*() const noexcept
         {
-            assert(this->p);
-            return this->p->value;
-        }
-
-        void reset() noexcept
-        {
-            // if (this->p) {
-            //     --this->p->use_count;
-            //     this->p = nullptr;
-            // }
+            assert(this->data);
+            return this->data->value;
         }
 
         void set_deleter(decltype(SharedDataBase::deleter) f) noexcept
         {
-            assert(this->p);
-            this->p->deleter = f;
+            assert(this->data);
+            this->data->deleter = f;
         }
 
         void add_use() noexcept
         {
-            assert(this->p);
-            ++this->p->use_count;
+            assert(this->data);
+            ++this->data->use_count;
         }
 
         using Data = SharedData<T>;
 
         SharedPtrBase(Data* ptr) noexcept
-          : p(ptr)
+          : data(ptr)
         {}
 
-        Data* p = nullptr;
+        Data* data = nullptr;
     };
 
     struct SharedPtrPrivateAccess
@@ -208,6 +180,13 @@ struct SessionReactor
     public:
         SharedPtrPrivate(SharedPtrPrivate&&) = default;
         SharedPtrPrivate& operator=(SharedPtrPrivate&&) = default;
+
+#ifndef NDEBUG
+        ~SharedPtrPrivate()
+        {
+            assert(!this->p);
+        }
+#endif
 
         explicit operator bool () const noexcept
         {
@@ -247,38 +226,38 @@ struct SessionReactor
                 };
                 # endif
 
-                auto* p = static_cast<Data*>(base);
-                assert(static_cast<void*>(p) == static_cast<void*>(base));
-                static_cast<SharedPtrBase<T>*>(p->uptr)->p = nullptr;
-                p->uptr = nullptr;
-                --p->use_count;
+                auto* data = static_cast<Data*>(base);
+                assert(static_cast<void*>(data) == static_cast<void*>(base));
+                static_cast<SharedPtrBase<T>*>(data->shared_ptr)->data = nullptr;
+                data->shared_ptr = nullptr;
+                --data->use_count;
                 if constexpr (!std::is_same<F, std::nullptr_t>::value) {
-                    p->value.ctx.invoke(jln::make_lambda<F>());
+                    data->value.ctx.invoke(jln::make_lambda<F>());
                 }
-                p->value.~T();
+                data->value.~T();
             };
         }
 
         template<int Use = 2, class C, class... Args>
         static SharedPtrPrivate New(C& c, Args&&... args)
         {
-            Data* p = static_cast<Data*>(::operator new(sizeof(Data)));
-            LOG(LOG_DEBUG, "new %p %s", static_cast<void*>(p), typeid(T).name());
-            p->deleter = SharedPtrPrivate::make_deleter(nullptr);
+            Data* data = static_cast<Data*>(::operator new(sizeof(Data)));
+            LOG(LOG_DEBUG, "new %p %s", static_cast<void*>(data), typeid(T).name());
+            data->deleter = SharedPtrPrivate::make_deleter(nullptr);
             if constexpr (noexcept(T(c, static_cast<Args&&>(args)...))) {
-                new(&p->value) T(c, static_cast<Args&&>(args)...);
+                new(&data->value) T(c, static_cast<Args&&>(args)...);
             }
             else {
                 bool failed = true;
                 SCOPE_EXIT(if (failed) {
-                    ::operator delete(p);
+                    ::operator delete(data);
                 });
-                new(&p->value) T(c, static_cast<Args&&>(args)...);
+                new(&data->value) T(c, static_cast<Args&&>(args)...);
                 failed = false;
             }
-            c.attach(p);
-            p->use_count = Use;
-            return SharedPtrPrivate(p);
+            c.attach(data);
+            data->use_count = Use;
+            return SharedPtrPrivate(data);
         }
     };
 
@@ -298,16 +277,16 @@ struct SessionReactor
         SharedPtr(SharedPtrPrivate<U>&& other) noexcept
           : p(std::move(SharedPtrPrivateAccess::p(other)))
         {
-            this->p.p->uptr = &this->p;
+            this->p.data->shared_ptr = &this->p;
         }
 
         template<class U>
         SharedPtr& operator=(SharedPtrPrivate<U>&& other) noexcept
         {
-            assert(static_cast<SharedDataBase*>(SharedPtrPrivateAccess::p(other).p) != static_cast<SharedDataBase*>(this->p.p));
+            assert(static_cast<SharedDataBase*>(SharedPtrPrivateAccess::p(other).data) != static_cast<SharedDataBase*>(this->p.data));
             this->reset();
             this->p = std::move(SharedPtrPrivateAccess::p(other));
-            this->p.p->uptr = &this->p;
+            this->p.data->shared_ptr = &this->p;
             return *this;
         }
 
@@ -334,7 +313,7 @@ struct SessionReactor
         void reset() noexcept
         {
             if (this->p) {
-                this->p.p->deleter(this->p.p);
+                this->p.data->apply_deleter();
             }
         }
     };
@@ -366,12 +345,6 @@ struct SessionReactor
             assert(this->elements.end() == this->get_elem_iterator(data));
             this->elements.emplace_back(data);
         }
-
-        // void detach(Base& elem)
-        // {
-        //     auto* data = to_shared_data(elem);
-        //     data->deleter(data);
-        // }
 
 //     private:
         auto get_elem_iterator(Data* elem)
@@ -406,7 +379,7 @@ struct SessionReactor
                         case jln::ExecutorResult::Terminate:
                             assert(elem->use_count > 1);
                             LOG(LOG_DEBUG, "f = %p %d", static_cast<void*>(elem), elem->use_count);
-                            elem->deleter(elem);
+                            elem->apply_deleter();
                             break;
                         case jln::ExecutorResult::NeedMoreData:
                             assert(false && "NeedMoreData");
@@ -736,7 +709,7 @@ struct SessionReactor
             c.elements.erase(std::remove_if(
                 c.elements.begin(), c.elements.end(),
                 [](auto& p){
-                    if (!p->uptr && p->use_count == 2) {
+                    if (!p->shared_ptr && p->use_count == 2) {
                         LOG(LOG_DEBUG, "detach %p", static_cast<void*>(p));
                         --p->use_count;
                         return true;
