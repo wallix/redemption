@@ -267,7 +267,7 @@ struct SessionReactor
         }
 
         template<int Use = 2, class C, class... Args>
-        static SharedPtrPrivate New(C& c, Args&&... args)
+        static SharedPtrPrivate New(C&& c, Args&&... args)
         {
             Data* data = static_cast<Data*>(::operator new(sizeof(Data)));
             LOG(LOG_DEBUG, "new %p %s", static_cast<void*>(data), typeid(T).name());
@@ -352,37 +352,13 @@ struct SessionReactor
     {
         using Data = SharedData<Base>;
 
-        static Data* to_shared_data(Base& elem)
-        {
-            return reinterpret_cast<Data*>(
-                reinterpret_cast<uint8_t*>(&elem) - sizeof(SharedDataBase));
-        }
-
-        void attach(Base& elem)
-        {
-            auto* data = to_shared_data(elem);
-            assert(this->elements.end() == this->get_elem_iterator(data));
-            this->elements.emplace_back(data);
-        }
-
         template<class U>
-        void attach(SharedData<U>* data_)
+        void attach(SharedData<U>* data_) noexcept
         {
             static_assert(std::is_base_of<Base, U>::value);
             auto* data = reinterpret_cast<Data*>(data_);
-            assert(this->elements.end() == this->get_elem_iterator(data));
+            assert(this->elements.end() == std::find(this->elements.begin(), this->elements.end(), data));
             this->elements.emplace_back(data);
-        }
-
-//     private:
-        auto get_elem_iterator(Data* elem)
-        {
-            return std::find(this->elements.begin(), this->elements.end(), elem);
-        }
-
-        auto get_elem_iterator(Base& elem)
-        {
-            return get_elem_iterator(to_shared_data(elem));
         }
 
         template<class... Args>
@@ -419,7 +395,20 @@ struct SessionReactor
             }
         }
 
+        auto get_elem_iterator(Base& base)
+        {
+            return std::find_if(
+                this->elements.begin(), this->elements.end(),
+                [&](Data* data){ return &data->value == &base; });
+        }
+
         std::vector<Data*> elements;
+
+        template<template<class...> class Tpl, class... Args>
+        using Elem = Tpl<typename Base::prefix_args, Args...>;
+
+        template<template<class...> class Tpl, class... Args>
+        using Ptr = SharedPtrPrivate<Elem<Tpl, Args...>>;
     };
 
     template<class Timer>
@@ -468,11 +457,6 @@ struct SessionReactor
         using Elem = jln::Timer<BasicTimerContainer&, typename Timer::prefix_args, Args...>;
     };
 
-    using BasicTimer = jln::BasicTimer<jln::prefix_args<>>;
-    using BasicTimerPtr = SharedPtr<BasicTimer>;
-
-    using TimerContainer = BasicTimerContainer<BasicTimer>;
-
 
     template<class Builder>
     struct NotifyDeleterBuilderWrapper : Builder
@@ -486,6 +470,11 @@ struct SessionReactor
             return static_cast<Builder&&>(*this);
         }
     };
+
+    using BasicTimer = jln::BasicTimer<jln::prefix_args<>>;
+    using BasicTimerPtr = SharedPtr<BasicTimer>;
+
+    using TimerContainer = BasicTimerContainer<BasicTimer>;
 
 
     template<class... Args>
@@ -602,12 +591,6 @@ struct SessionReactor
         , session_reactor(session_reactor)
         {
             this->fd = fd;
-            if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
-                this->session_reactor.timer_events_.attach(this->timer());
-            }
-            else {
-                this->session_reactor.graphic_timer_events_.attach(this->timer());
-            }
         }
         REDEMPTION_DIAGNOSTIC_POP
 
@@ -668,8 +651,20 @@ struct SessionReactor
     create_fd_event(int fd, Args&&... args)
     {
         using EventFd = TopFdContainer::Elem<Args...>;
+        struct C
+        {
+            void attach(SharedData<EventFd>* p)
+            {
+                this->fds.attach(p);
+                this->timers.attach(p);
+            }
+            decltype(fd_events_)& fds;
+            decltype(timer_events_)& timers;
+        };
         return {SharedPtrPrivate<EventFd>
-            ::template New<3>(this->fd_events_, fd, *this, static_cast<Args&&>(args)...)};
+            ::template New<3>(
+                C{this->fd_events_, this->timer_events_},
+                fd, *this, static_cast<Args&&>(args)...)};
     }
 
 
@@ -687,8 +682,20 @@ struct SessionReactor
     create_graphic_fd_event(int fd, Args&&... args)
     {
         using EventFd = GraphicFdContainer::Elem<Args...>;
+        struct C
+        {
+            void attach(SharedData<EventFd>* p)
+            {
+                this->fds.attach(p);
+                this->timers.attach(p);
+            }
+            decltype(graphic_fd_events_)& fds;
+            decltype(graphic_timer_events_)& timers;
+        };
         return {SharedPtrPrivate<EventFd>
-            ::template New<3>(this->graphic_fd_events_, fd, *this, static_cast<Args&&>(args)...)};
+            ::template New<3>(
+                C{this->graphic_fd_events_, this->graphic_timer_events_},
+                fd, *this, static_cast<Args&&>(args)...)};
     }
 
 
