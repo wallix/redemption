@@ -328,12 +328,6 @@ struct BasicTimer
     }
 
     template<class... Args>
-    ExecutorResult exec_timer(Args&&... args)
-    {
-        return this->on_action(*this, static_cast<Args&&>(args)...);
-    }
-
-    template<class... Args>
     ExecutorResult exec_action(Args&&... args)
     {
         return this->on_action(*this, static_cast<Args&&>(args)...);
@@ -968,17 +962,6 @@ private:
 template<class FdPtr, int Mask = 0>
 struct TopFdBuilder
 {
-    template<int Mask2>
-    decltype(auto) select_return() noexcept
-    {
-        if constexpr (Mask == (~Mask2 & 0b1111)) {
-            return std::move(this->fd_ptr);
-        }
-        else {
-            return TopFdBuilder<FdPtr, Mask | Mask2>{std::move(this->fd_ptr)};
-        }
-    }
-
     template<class F>
     decltype(auto) on_action(F f) && noexcept
     {
@@ -1018,6 +1001,17 @@ protected:
     FdPtr& internal_value() noexcept { return this->fd_ptr; }
 
 private:
+    template<int Mask2>
+    decltype(auto) select_return() noexcept
+    {
+        if constexpr (Mask == (~Mask2 & 0b1111)) {
+            return std::move(this->fd_ptr);
+        }
+        else {
+            return TopFdBuilder<FdPtr, Mask | Mask2>{std::move(this->fd_ptr)};
+        }
+    }
+
     FdPtr fd_ptr;
 };
 
@@ -1102,47 +1096,23 @@ protected:
     EventContainer event_container;
 };
 
-// TODO obsolet
-template<
-    class Inherit,
-    class EventContainerType,
-    class BaseType,
-    template<class...> class EventCtxArg,
-    class... Ts>
-struct BasicEvent : ContextedEvent<EventContainerType, BaseType, Ts...>
-{
-    using basic_event = BasicEvent;
-
-    using BasicEvent::contexted_event::contexted_event;
-
-    template<class F>
-    void set_on_action(F) noexcept
-    {
-        this->on_action = wrap_fn<F, Inherit, EventCtxArg>();
-    }
-};
 
 template<class EventContainer, class PrefixArgs, class... Ts>
-struct TimerImpl : BasicEvent<
-    TimerImpl<EventContainer, PrefixArgs, Ts...>,
-    EventContainer,
-    BasicTimer<PrefixArgs>,
-    Executor2TimerContext,
-    Ts...>
+struct TimerImpl : ContextedEvent<EventContainer, BasicTimer<PrefixArgs>, Ts...>
 {
-    using TimerImpl::basic_event::basic_event;
+    using TimerImpl::contexted_event::contexted_event;
 
     void set_delay(std::chrono::milliseconds ms) noexcept
     {
-        TimerImpl::basic_event::set_delay(ms);
-        TimerImpl::basic_event::set_time(addusectimeval(
+        TimerImpl::contexted_event::set_delay(ms);
+        TimerImpl::contexted_event::set_time(addusectimeval(
             this->delay, this->get_reactor().get_current_time()));
     }
 
     void set_time(timeval const& tv) noexcept
     {
-        TimerImpl::basic_event::set_delay(std::chrono::microseconds(-1));
-        TimerImpl::basic_event::set_time(tv);
+        TimerImpl::contexted_event::set_delay(std::chrono::microseconds(-1));
+        TimerImpl::contexted_event::set_time(tv);
     }
 
     void update_delay(std::chrono::milliseconds ms)
@@ -1162,6 +1132,12 @@ struct TimerImpl : BasicEvent<
         assert(this->delay.count() > 0);
         this->tv = addusectimeval(this->delay, this->get_reactor().get_current_time());
     }
+
+    template<class F>
+    void set_on_action(F) noexcept
+    {
+        this->on_action = wrap_fn<F, TimerImpl, Executor2TimerContext>();
+    }
 };
 
 template<class EventContainer, class PrefixArgs, class... Args>
@@ -1169,14 +1145,15 @@ using Timer = TimerImpl<EventContainer, PrefixArgs,
     typename detail::decay_and_strip<Args>::type...>;
 
 template<class EventContainer, class PrefixArgs, class... Ts>
-struct ActionImpl : BasicEvent<
-    ActionImpl<EventContainer, PrefixArgs, Ts...>,
-    EventContainer,
-    ActionBase<PrefixArgs>,
-    Executor2EventContext,
-    Ts...>
+struct ActionImpl : ContextedEvent<EventContainer, ActionBase<PrefixArgs>, Ts...>
 {
-    using ActionImpl::basic_event::basic_event;
+    using ActionImpl::contexted_event::contexted_event;
+
+    template<class F>
+    void set_on_action(F) noexcept
+    {
+        this->on_action = wrap_fn<F, ActionImpl, Executor2EventContext>();
+    }
 };
 
 template<class EventContainer, class PrefixArgs, class... Args>
@@ -1184,14 +1161,15 @@ using Action = ActionImpl<EventContainer, PrefixArgs,
     typename detail::decay_and_strip<Args>::type...>;
 
 template<class EventContainer, class PrefixArgs, class... Ts>
-struct FdImpl : BasicEvent<
-    FdImpl<EventContainer, PrefixArgs, Ts...>,
-    EventContainer,
-    BasicExecutorImpl<PrefixArgs>,
-    Executor2FdContext,
-    Ts...>
+struct FdImpl : ContextedEvent<EventContainer, BasicExecutorImpl<PrefixArgs>, Ts...>
 {
-    using FdImpl::basic_event::basic_event;
+    using FdImpl::contexted_event::contexted_event;
+
+    template<class F>
+    void set_on_action(F) noexcept
+    {
+        this->on_action = wrap_fn<F, FdImpl, Executor2FdContext>();
+    }
 };
 
 template<class EventContainer, class PrefixArgs, class... Args>
@@ -1303,6 +1281,17 @@ namespace detail
         {
             return {};
         }
+
+        template<class F>
+        named_type<S, F> operator=(F) const noexcept
+        {
+            return {};
+        }
+
+        named_function& operator=(named_function const&) const noexcept
+        {
+            return {};
+        }
     };
 }
 
@@ -1366,6 +1355,22 @@ namespace detail
             );
         };
     }
+
+    template<class> struct name_or_index;
+
+    template<class i, class S, class F>
+    struct name_or_index<indexed_type<i, S, F>>
+    { using type = S; };
+
+    template<class i, class F>
+    struct name_or_index<indexed_type<i, unamed, F>>
+    { using type = i; };
+
+    template<class... Ts>
+    struct CheckUniqueName : name_or_index<Ts>::type...
+    {
+        static const bool value = true;
+    };
 }
 
 template<class I, class Sequencer, class Ctx>
@@ -1396,36 +1401,36 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
         return detail::value_at<I>(Sequencer{}).name();
     }
 
-    jln::ExecutorResult sequence_next() noexcept
+    ExecutorResult sequence_next() noexcept
     {
         return this->sequence_at<I::value+1>();
     }
 
-    jln::ExecutorResult sequence_previous() noexcept
+    ExecutorResult sequence_previous() noexcept
     {
         return this->sequence_at<I::value-1>();
     }
 
     template<std::size_t i>
-    jln::ExecutorResult sequence_at() noexcept
+    ExecutorResult sequence_at() noexcept
     {
         return this->next_action(this->get_sequence_at<i>());
     }
 
     template<class S>
-    jln::ExecutorResult sequence_at(S) noexcept
+    ExecutorResult sequence_at(S) noexcept
     {
         return this->next_action(this->get_sequence_name<S>());
     }
 
     template<std::size_t i>
-    jln::ExecutorResult exec_sequence_at() noexcept
+    ExecutorResult exec_sequence_at() noexcept
     {
         return this->exec_action(this->get_sequence_at<i>());
     }
 
     template<class S>
-    jln::ExecutorResult exec_sequence_at(S) noexcept
+    ExecutorResult exec_sequence_at(S) noexcept
     {
         return this->exec_action(this->get_sequence_name<S>());
     }
@@ -1485,6 +1490,8 @@ struct FunSequencer : Fs...
     template<class Ctx, class... Ts>
     jln::ExecutorResult operator()(Ctx ctx, Ts&&... xs)
     {
+        static_assert(detail::CheckUniqueName<Fs...>::value, "name duplicated");
+
         using i = std::integral_constant<std::size_t, 0>;
         using NewCtx = FunSequencerExecutorCtx<i, FunSequencer, Ctx>;
         return detail::value_at<i>(*this).func()(
