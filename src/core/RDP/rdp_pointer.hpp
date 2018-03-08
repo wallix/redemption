@@ -94,7 +94,7 @@ private:
     Hotspot hotspot;
     
     struct {
-        uint8_t data[DATA_SIZE];
+        alignas(4) uint8_t data[4*DATA_SIZE];
     } alpha_q;
 
     uint8_t data[DATA_SIZE];
@@ -747,17 +747,18 @@ public:
 
     const array_view_const_u8 get_alpha_q() const
     {
-        return {this->alpha_q.data, sizeof(this->alpha_q.data)};
+        return {this->alpha_q.data, this->dimensions.width * this->dimensions.height * 4};
     }
 
     void compute_alpha_q(){
-        for (uint8_t y = this->dimensions.height ; y > 0 ; y--){
+        for (uint8_t y = 0 ; y < this->dimensions.height ; y++){
             for(uint8_t x = 0 ; x < this->dimensions.width ; x++){
-                const size_t mask_offset = (y-1)*::nbbytes(this->dimensions.width)+::nbbytes(x);
-                const size_t data_offset = (y-1) * 3 * this->dimensions.width + x*3;
-                const size_t target_data_offset = ((this->dimensions.height - y) * this->dimensions.width*4) + x*4;
-//                LOG(LOG_INFO, "(x=%d/%u, y=%d/%u) mask_offset=%zu",x, this->dimensions.width, y, this->dimensions.height, mask_offset);
-                uint8_t mask_value = this->mask[mask_offset]&(0x80>>(x&7))?0xFF:0x00;
+                const size_t mask_offset = y*::nbbytes(this->dimensions.width)+::nbbytes(x+1)-1;
+                const size_t data_offset = y * 3 * this->dimensions.width + x*3;
+                const size_t target_data_offset = ((this->dimensions.height - y - 1) * this->dimensions.width*4) + x*4;
+                //LOG(LOG_INFO, "(x=%d/%u, y=%d/%u) mw=%zu mx=%zu, mask_offset=%zu data_offset=%zu target_offset%zu",x, this->dimensions.width, y, this->dimensions.height, 
+                //            size_t(::nbbytes(this->dimensions.width)), size_t(::nbbytes(x+1)), mask_offset, data_offset, target_data_offset);
+                uint8_t mask_value = (this->mask[mask_offset]&(0x80>>(x&7)))?0xFF:0x00;
                 for (uint8_t i = 0 ; i < 3 ; i++){
                     uint8_t value = this->data[data_offset+i];
                     this->alpha_q.data[target_data_offset+i] = (mask_value == 0)?0:value;
