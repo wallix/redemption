@@ -79,15 +79,10 @@ public:
             if (this->_callback) {
                 if (this->_callback->get_event().is_trigger_time_set()) {
                     struct timeval now = tvtime();
-                    int time_to_wake = (this->_callback->get_event().get_trigger_time().tv_usec - now.tv_usec) / 1000
-                    + (this->_callback->get_event().get_trigger_time().tv_sec - now.tv_sec) * 1000;
-//                     this->_callback->get_event().reset_trigger_time();
-
-                    if (time_to_wake < 0) {
-                        this->timer.stop();
-                    } else {
-
-                        this->timer.start( time_to_wake );
+                    wait_obj const& event = this->_callback->get_event();
+                    if (event.is_trigger_time_set()) {
+                        int time_to_wake = (event.get_trigger_time().tv_usec - now.tv_usec) / 1000 + (event.get_trigger_time().tv_sec - now.tv_sec) * 1000;
+                        this->timer.start(std::max(0, time_to_wake));
                     }
                 }
             } else {
@@ -117,6 +112,7 @@ public Q_SLOTS:
         if (this->client->mod) {
 
             this->client->callback();
+    LOG(LOG_DEBUG, "%s", __PRETTY_FUNCTION__);
 
             if (this->_callback) {
                 if (this->_callback->get_event().is_trigger_time_set()) {
