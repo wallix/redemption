@@ -92,21 +92,21 @@ void FlatWaitMod::confirm()
     this->vars.set_acl<cfg::context::comment>(this->wait_widget.form.comment_edit.get_text());
     this->vars.set_acl<cfg::context::ticket>(this->wait_widget.form.ticket_edit.get_text());
     this->vars.set_acl<cfg::context::duration>(this->wait_widget.form.duration_edit.get_text());
-    session_reactor.set_next_event(BACK_EVENT_NEXT);
+    this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 }
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
 void FlatWaitMod::accepted()
 {
     this->vars.set_acl<cfg::context::waitinforeturn>("backselector");
-    session_reactor.set_next_event(BACK_EVENT_NEXT);
+    this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 }
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
 void FlatWaitMod::refused()
 {
     this->vars.set_acl<cfg::context::waitinforeturn>("exit");
-    session_reactor.set_next_event(BACK_EVENT_NEXT);
+    this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 }
 
 void FlatWaitMod::draw_event(time_t now, gdi::GraphicApi & gapi)

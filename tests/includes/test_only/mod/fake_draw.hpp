@@ -28,11 +28,11 @@
 #include "mod/mod_api.hpp"
 #include "utils/png.hpp"
 
-struct TestDraw : private SessionReactor, mod_api
+struct TestDraw : mod_api
 {
     RDPDrawable gd;
 
-    TestDraw(uint16_t w, uint16_t h) : mod_api(static_cast<SessionReactor&>(*this)), gd(w, h) {}
+    TestDraw(uint16_t w, uint16_t h) : gd(w, h) {}
 
     void draw_event(time_t now, gdi::GraphicApi&) override { (void)now; }
     void rdp_input_invalidate(Rect) override {}

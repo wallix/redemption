@@ -33,7 +33,6 @@ class WidgetModuleHost : public WidgetParent, public gdi::GraphicApi
 {
 public:
     WidgetModuleHost(
-        SessionReactor& session_reactor,
         gdi::GraphicApi& drawable, Widget& parent,
         NotifyApi* notifier,
         std::unique_ptr<mod_api> managed_mod, Font const & font,
@@ -136,9 +135,7 @@ private:
         std::unique_ptr<mod_api> managed_mod;
 
     public:
-        ModuleHolder(
-            SessionReactor& session_reactor,
-            WidgetModuleHost& host, std::unique_ptr<mod_api> managed_mod);
+        ModuleHolder(WidgetModuleHost& host, std::unique_ptr<mod_api> managed_mod);
 
         // Callback
         void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name,

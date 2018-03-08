@@ -28,7 +28,6 @@
 #include "core/callback.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "core/session_reactor.hpp"
 #include "core/wait_obj.hpp"
 #include "gdi/graphic_api.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
@@ -57,31 +56,12 @@ inline void gdi_freeze_screen(gdi::GraphicApi& drawable, Dimension const& dim)
 
 class mod_api : public Callback
 {
-protected:
-    SessionReactor& session_reactor;
-    SessionReactor::GraphicEventPtr now_graphic_event;
-
 public:
     enum : bool {
         CLIENT_UNLOGGED,
         CLIENT_LOGGED
     };
     bool logged_on = CLIENT_UNLOGGED; // TODO suspicious
-
-    mod_api(SessionReactor& session_reactor/*, bool enable_event*/)
-    : session_reactor(session_reactor)
-    {
-        // LOG(LOG_DEBUG, "mod_api %d", enable_event);
-        // if (enable_event) {
-        //     this->now_graphic_event = session_reactor
-        //     .create_graphic_event(std::ref(*this))
-        //     .on_action([](auto ctx, gdi::GraphicApi& gd, mod_api& self){
-        //         LOG(LOG_DEBUG, "mod_api action %s", typeid(self).name());
-        //         self.draw_event(ctx.get_current_time().tv_sec, gd);
-        //         return ctx.terminate();
-        //     });
-        // }
-    }
 
     virtual void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name,
         uint8_t const * data, size_t length, size_t chunk_size, int flags) = 0;

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "mod/internal/internal_mod.hpp"
+#include "core/session_reactor.hpp"
 
 class BGRPalette;
 class Font;
@@ -36,6 +37,7 @@ class TestCardMod : public InternalMod
 
     bool unit_test;
 
+    SessionReactor& session_reactor;
     SessionReactor::GraphicEventPtr gd_event;
 
 public:

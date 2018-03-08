@@ -41,6 +41,8 @@
 #include "utils/stream.hpp"
 #include "utils/bitmap.hpp"
 
+class SessionReactor;
+
 struct xup_mod : public mod_api {
 
 enum {
@@ -77,7 +79,7 @@ enum {
     RDPPen pen;
 
     xup_mod( Transport & t
-           , SessionReactor& session_reactor
+           , SessionReactor& /*session_reactor*/
            , FrontAPI & front
            , uint16_t /*front_width*/
            , uint16_t /*front_height*/
@@ -85,8 +87,7 @@ enum {
            , int context_height
            , int context_bpp
            )
-    : mod_api(session_reactor)
-    , front(front)
+    : front(front)
     , width(context_width)
     , height(context_height)
     , bpp(context_bpp)

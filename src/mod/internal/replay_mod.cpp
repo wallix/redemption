@@ -24,6 +24,7 @@
 
 
 #include "core/app_path.hpp"
+#include "core/session_reactor.hpp"
 #include "mod/internal/replay_mod.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "core/front_api.hpp"
@@ -72,7 +73,7 @@ ReplayMod::ReplayMod(
   , time_t balise_time_frame
   , bool replay_on_loop
   , Verbose debug_capture)
-: InternalMod(session_reactor, front, width, height, font, Theme{}, true)
+: InternalMod(front, width, height, font, Theme{}, true)
 , auth_error_message(auth_error_message)
 , movie_path(replay_path, movie)
 // TODO RZ: Support encrypted recorded file.
@@ -93,6 +94,7 @@ ReplayMod::ReplayMod(
 , balise_time_frame(balise_time_frame)
 , sync_setted(false)
 , replay_on_loop(replay_on_loop)
+, session_reactor(session_reactor)
 {
     switch (this->front.server_resize( this->reader->info_width
                                      , this->reader->info_height

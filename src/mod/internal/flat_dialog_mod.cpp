@@ -104,7 +104,7 @@ void FlatDialogMod::accepted()
     else {
         this->vars.set_acl<cfg::context::display_message>(true);
     }
-    session_reactor.set_next_event(BACK_EVENT_NEXT);
+    this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 }
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
@@ -118,7 +118,7 @@ void FlatDialogMod::refused()
             this->vars.set_acl<cfg::context::display_message>(false);
         }
     }
-    session_reactor.set_next_event(BACK_EVENT_NEXT);
+    this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 }
 
 void FlatDialogMod::draw_event(time_t now, gdi::GraphicApi & gapi)

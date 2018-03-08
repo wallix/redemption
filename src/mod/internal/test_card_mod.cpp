@@ -35,10 +35,11 @@ TestCardMod::TestCardMod(
     SessionReactor& session_reactor,
     FrontAPI & front, uint16_t width, uint16_t height,
     Font const & font, bool unit_test)
-: InternalMod(session_reactor, front, width, height, font, Theme{}, false)
+: InternalMod(front, width, height, font, Theme{}, false)
 , palette332(BGRPalette::classic_332())
 , font(font)
 , unit_test(unit_test)
+, session_reactor(session_reactor)
 , gd_event(session_reactor.create_graphic_event(std::ref(*this))
     .on_action(jln::one_shot([](gdi::GraphicApi& gd, TestCardMod& mod){
         mod.draw_event(0, gd);

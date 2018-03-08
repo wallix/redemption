@@ -58,7 +58,8 @@ FlatWabCloseMod::FlatWabCloseMod(
     Rect const widget_rect, time_t /*now*/, ClientExecute & client_execute,
     bool showtimer, bool back_selector
 )
-    : LocallyIntegrableMod(session_reactor, front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
+    : LocallyIntegrableMod(session_reactor, front, width, height,
+        vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
     , close_widget(
         front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy, this->screen, this,
         vars.get<cfg::context::auth_error_message>().c_str(),
@@ -127,7 +128,7 @@ void FlatWabCloseMod::notify(Widget* sender, notify_event_t event)
 {
     (void)sender;
     if (NOTIFY_CANCEL == event) {
-        session_reactor.set_next_event(BACK_EVENT_STOP);
+        this->session_reactor.set_next_event(BACK_EVENT_STOP);
     }
     else if (NOTIFY_SUBMIT == event) {
         LOG(LOG_INFO, "asking for selector");
@@ -135,7 +136,7 @@ void FlatWabCloseMod::notify(Widget* sender, notify_event_t event)
         this->vars.ask<cfg::globals::target_user>();
         this->vars.ask<cfg::globals::target_device>();
         this->vars.ask<cfg::context::target_protocol>();
-        session_reactor.set_next_event(BACK_EVENT_NEXT);
+        this->session_reactor.set_next_event(BACK_EVENT_NEXT);
     }
 }
 

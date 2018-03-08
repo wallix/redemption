@@ -37,7 +37,7 @@ private:
 
 public:
     RailModuleHost(
-        SessionReactor& session_reactor, gdi::GraphicApi& drawable,
+        gdi::GraphicApi& drawable,
         int16_t left, int16_t top, int16_t width, int16_t height,
         Widget& parent, NotifyApi* notifier,
         std::unique_ptr<mod_api> managed_mod, Font const & font,

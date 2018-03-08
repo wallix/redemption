@@ -21,6 +21,7 @@
 #pragma once
 
 #include "mod/internal/internal_mod.hpp"
+class SessionReactor;
 
 class WidgetTestMod : public InternalMod
 {

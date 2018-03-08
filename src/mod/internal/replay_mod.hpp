@@ -27,6 +27,7 @@
 
 #include "transport/mwrm_reader.hpp"
 #include "capture/file_to_graphic.hpp" // FileToGraphic::Verbose
+#include "core/session_reactor.hpp"
 #include "mod/internal/internal_mod.hpp"
 #include "capture/cryptofile.hpp"
 #include "utils/genfstat.hpp"
@@ -60,6 +61,7 @@ class ReplayMod : public InternalMod
     bool sync_setted;
 
     bool replay_on_loop;
+    SessionReactor& session_reactor;
     SessionReactor::GraphicTimerPtr timer;
 
 public:

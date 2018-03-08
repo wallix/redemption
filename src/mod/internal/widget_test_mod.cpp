@@ -22,6 +22,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
+#include "core/session_reactor.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 #include "keyboard/keymap2.hpp"
 #include "utils/bitmap.hpp"
@@ -34,9 +35,10 @@
 // Pimpl
 struct WidgetTestMod::WidgetTestModPrivate
 {
-    WidgetTestModPrivate(WidgetTestMod& mod)
+    WidgetTestModPrivate(SessionReactor& session_reactor, WidgetTestMod& mod)
+      : session_reactor(session_reactor)
     {
-        this->timer = mod.session_reactor.create_graphic_timer(std::ref(mod))
+        this->timer = this->session_reactor.create_graphic_timer(std::ref(mod))
         .set_delay(std::chrono::seconds(0))
         .on_action([](auto ctx, gdi::GraphicApi& gd, WidgetTestMod& mod){
             mod.draw_event(0, gd);
@@ -48,14 +50,15 @@ struct WidgetTestMod::WidgetTestModPrivate
         });
     }
 
+    SessionReactor& session_reactor;
     SessionReactor::GraphicTimerPtr timer;
 };
 
 WidgetTestMod::WidgetTestMod(
     SessionReactor& session_reactor,
     FrontAPI & front, uint16_t width, uint16_t height, Font const & font)
-: InternalMod(session_reactor, front, width, height, font, Theme{}, false)
-, d(std::make_unique<WidgetTestModPrivate>(*this))
+: InternalMod(front, width, height, font, Theme{}, false)
+, d(std::make_unique<WidgetTestModPrivate>(session_reactor, *this))
 {
     front.server_resize(width, height, 8);
 }
@@ -76,7 +79,7 @@ void WidgetTestMod::rdp_input_scancode(
 {
     if (keymap->nb_kevent_available() > 0
         && keymap->get_kevent() == Keymap2::KEVENT_ENTER) {
-        this->session_reactor.set_next_event(BACK_EVENT_STOP);
+        this->d->session_reactor.set_next_event(BACK_EVENT_STOP);
     }
 }
 

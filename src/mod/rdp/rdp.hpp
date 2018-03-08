@@ -418,6 +418,7 @@ protected:
     const bool                 disconnect_on_logon_user_change;
     const std::chrono::seconds open_session_timeout;
 
+    SessionReactor& session_reactor;
     SessionReactor::BasicTimerPtr open_session_timeout_checker_timer;
     SessionReactor::GraphicFdPtr fd_event;
 
@@ -866,8 +867,7 @@ public:
            , ReportMessageApi & report_message
            , ModRdpVariables vars
            )
-        : mod_api(session_reactor)
-        , front_width(info.width - (info.width % 4))
+        : front_width(info.width - (info.width % 4))
         , front_height(info.height)
         , front(front)
         , authorization_channels(
@@ -962,6 +962,7 @@ public:
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , open_session_timeout(mod_rdp_params.open_session_timeout)
+        , session_reactor(session_reactor)
         , output_filename(mod_rdp_params.output_filename)
         , server_cert_store(mod_rdp_params.server_cert_store)
         , server_cert_check(mod_rdp_params.server_cert_check)

@@ -239,7 +239,7 @@ public:
            , ClientExecute* client_execute
            , VNCVerbose verbose
            )
-    : InternalMod(session_reactor, front, front_width, front_height, font, theme, false)
+    : InternalMod(front, front_width, front_height, font, theme, false)
     , challenge(front, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
                 "Redemption " VERSION, this->theme(), label_text_message, label_text_password,
                 this->font())
@@ -273,7 +273,7 @@ public:
         }
 
         // Clear client screen
-        this->clear_client_screen = this->session_reactor
+        this->clear_client_screen = session_reactor
         .create_graphic_event(this->get_dim())
         .on_action(jln::one_shot([](gdi::GraphicApi& drawable, Dimension const& dim){
             gdi_clear_screen(drawable, dim);

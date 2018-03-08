@@ -379,9 +379,8 @@ private:
         bool bogus_refresh_rect_ex;
 
     public:
-        explicit ModOSD(SessionReactor& session_reactor, ModuleManager & mm)
+        explicit ModOSD(ModuleManager & mm)
         : gdi::ProtectedGraphics(mm.front, Rect{})
-        , mod_api(session_reactor)
         , mm(mm)
         {}
 
@@ -819,7 +818,7 @@ public:
         : MMIni(session_reactor, ini)
         , front(front)
         , no_mod()
-        , mod_osd(session_reactor, *this)
+        , mod_osd(*this)
         , gen(gen)
         , timeobj(timeobj)
         , client_execute(session_reactor, front, this->front.client_info.window_list_caps,

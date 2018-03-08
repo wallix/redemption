@@ -28,12 +28,13 @@ LocallyIntegrableMod::LocallyIntegrableMod(
     uint16_t front_width, uint16_t front_height,
     Font const & font, ClientExecute & client_execute,
     Theme const & theme)
-: InternalMod(session_reactor, front, front_width, front_height, font, theme, false)
+: InternalMod(front, front_width, front_height, font, theme, false)
 , client_execute(client_execute)
 , dvc_manager(false)
 , dc_state(DCState::Wait)
 , rail_enabled(client_execute.is_rail_enabled())
 , current_mouse_owner(MouseOwner::WidgetModule)
+, session_reactor(session_reactor)
 {
     if (this->rail_enabled) {
         this->graphic_event = session_reactor.create_graphic_event(std::ref(*this))

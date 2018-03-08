@@ -37,7 +37,6 @@ protected:
 
 public:
     InternalMod(
-        SessionReactor& session_reactor,
         FrontAPI & front, uint16_t front_width, uint16_t front_height,
         Font const & font, Theme const & theme,
         /*TODO preferred enum class*/bool dont_resize);

@@ -34,7 +34,7 @@ RailModuleHostMod::RailModuleHostMod(
     bool can_resize_hosted_desktop)
 : LocallyIntegrableMod(session_reactor, front, width, height, vars.get<cfg::font>(),
                        client_execute, vars.get<cfg::theme>())
-, rail_module_host(session_reactor, front, widget_rect.x, widget_rect.y,
+, rail_module_host(front, widget_rect.x, widget_rect.y,
                    widget_rect.cx, widget_rect.cy,
                    this->screen, this, std::move(managed_mod),
                    vars.get<cfg::font>(), cs_monitor, width, height)

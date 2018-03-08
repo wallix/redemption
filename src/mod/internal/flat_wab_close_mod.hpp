@@ -23,6 +23,7 @@
 #pragma once
 
 #include "configs/config_access.hpp"
+#include "core/session_reactor.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget/flat_wab_close.hpp"
 

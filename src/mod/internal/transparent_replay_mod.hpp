@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "core/session_reactor.hpp"
 #include "transport/in_file_transport.hpp"
 #include "capture/transparentplayer.hpp"
 #include "mod/internal/internal_mod.hpp"
@@ -32,8 +33,8 @@ private:
 
     InFileTransport   ift;
     TransparentPlayer player;
-    SessionReactor::TopFdPtr fd_event;
-    SessionReactor::GraphicEventPtr gd_event;
+    SessionReactor& session_reactor;
+    SessionReactor::GraphicFdPtr fd_event;
 
 public:
     TransparentReplayMod( SessionReactor& session_reactor
@@ -43,7 +44,7 @@ public:
                         , uint16_t height
                         , std::string * auth_error_message
                         , Font const & font)
-    : InternalMod(session_reactor, front, width, height, font, Theme{}, false)
+    : InternalMod(front, width, height, font, Theme{}, false)
     , auth_error_message(auth_error_message)
     , ift(unique_fd{[&]() {
         const int fd = ::open(replay_path, O_RDWR);
@@ -53,18 +54,16 @@ public:
         return fd;
     }()})
     , player(this->ift, this->front)
+    , session_reactor(session_reactor)
     {
-        this->fd_event = session_reactor.create_fd_event(this->ift.get_fd(), std::ref(*this))
+        this->fd_event = session_reactor.create_graphic_fd_event(
+            this->ift.get_fd(), std::ref(*this))
         .set_timeout(std::chrono::seconds{1})
         .on_timeout(jln::always_ready())
         .on_exit(jln::exit_with_success())
-        .on_action([](auto ctx, TransparentReplayMod& self){
-            self.gd_event = self.session_reactor.create_graphic_event(std::ref(self))
-            .on_action(jln::one_shot([](gdi::GraphicApi& gd, TransparentReplayMod& self){
-                self.draw_event(0, gd);
-            }));
-            return ctx.ready();
-        });
+        .on_action(jln::always_ready([](gdi::GraphicApi& gd, TransparentReplayMod& self){
+            self.draw_event(0, gd);
+        }));
     }
 
     void draw_event(time_t /*now*/, gdi::GraphicApi &) override

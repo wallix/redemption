@@ -24,6 +24,7 @@
 #pragma once
 
 #include "mod/internal/internal_mod.hpp"
+#include "core/session_reactor.hpp"
 
 class Bouncer2Mod : public InternalMod
 {
@@ -37,6 +38,7 @@ class Bouncer2Mod : public InternalMod
     int mouse_x = 0;
     int mouse_y = 0;
 
+    SessionReactor& session_reactor;
     SessionReactor::GraphicTimerPtr timer;
 
 public:

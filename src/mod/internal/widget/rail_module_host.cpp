@@ -21,7 +21,6 @@
 #include "mod/internal/widget/rail_module_host.hpp"
 
 RailModuleHost::RailModuleHost(
-    SessionReactor& session_reactor,
     gdi::GraphicApi& drawable,
     int16_t left, int16_t top, int16_t width, int16_t height,
     Widget& parent, NotifyApi* notifier,
@@ -30,7 +29,7 @@ RailModuleHost::RailModuleHost(
     uint16_t front_width, uint16_t front_height
 )
 : WidgetParent(drawable, parent, notifier)
-, module_host(session_reactor, drawable, *this, this, std::move(managed_mod),
+, module_host(drawable, *this, this, std::move(managed_mod),
               font, cs_monitor, front_width, front_height)
 {
     this->impl = &composite_array;
