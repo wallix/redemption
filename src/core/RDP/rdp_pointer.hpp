@@ -758,7 +758,7 @@ public:
                 const size_t target_data_offset = ((this->dimensions.height - y - 1) * this->dimensions.width*4) + x*4;
                 //LOG(LOG_INFO, "(x=%d/%u, y=%d/%u) mw=%zu mx=%zu, mask_offset=%zu data_offset=%zu target_offset%zu",x, this->dimensions.width, y, this->dimensions.height, 
                 //            size_t(::nbbytes(this->dimensions.width)), size_t(::nbbytes(x+1)), mask_offset, data_offset, target_data_offset);
-                uint8_t mask_value = (this->mask[mask_offset]&(0x80>>(x&7)))?0xFF:0x00;
+                uint8_t mask_value = (this->mask[mask_offset]&(0x80>>(x&7)))?0x00:0xFF;
                 for (uint8_t i = 0 ; i < 3 ; i++){
                     uint8_t value = this->data[data_offset+i];
                     this->alpha_q.data[target_data_offset+i] = (mask_value == 0)?0:value;
