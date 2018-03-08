@@ -36,6 +36,8 @@ class TestCardMod : public InternalMod
 
     bool unit_test;
 
+    SessionReactor::GraphicEventPtr gd_event;
+
 public:
     TestCardMod(
         SessionReactor& session_reactor,

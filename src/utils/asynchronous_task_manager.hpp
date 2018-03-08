@@ -35,9 +35,18 @@ public:
 
         template<class T, class F>
         DeleterFunction(T* p, F f)
+        noexcept(noexcept(static_cast<void(*)(T*, AsynchronousTask&) noexcept>(f)))
         : data(p)
-        , f(reinterpret_cast<ptr_function>(
-            static_cast<void(*)(T* data, AsynchronousTask&) noexcept>(f)))
+        , f([](void* data, AsynchronousTask& t) noexcept {
+            char f[1]{};
+            reinterpret_cast<F&>(f)(static_cast<T*>(data), t);
+        })
+        {}
+
+        template<class T>
+        DeleterFunction(T* p, ptr_function f) noexcept
+        : data(p)
+        , f(f)
         {}
 
         void operator()(AsynchronousTask& self) noexcept

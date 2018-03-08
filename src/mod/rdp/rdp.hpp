@@ -866,7 +866,7 @@ public:
            , ReportMessageApi & report_message
            , ModRdpVariables vars
            )
-        : mod_api(session_reactor, false)
+        : mod_api(session_reactor)
         , front_width(info.width - (info.width % 4))
         , front_height(info.height)
         , front(front)

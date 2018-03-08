@@ -39,6 +39,10 @@ TestCardMod::TestCardMod(
 , palette332(BGRPalette::classic_332())
 , font(font)
 , unit_test(unit_test)
+, gd_event(session_reactor.create_graphic_event(std::ref(*this))
+    .on_action(jln::one_shot([](gdi::GraphicApi& gd, TestCardMod& mod){
+        mod.draw_event(0, gd);
+    })))
 {}
 
 void TestCardMod::rdp_input_scancode(
@@ -51,10 +55,8 @@ void TestCardMod::rdp_input_scancode(
     }
 }
 
-void TestCardMod::draw_event(time_t now, gdi::GraphicApi & drawable)
+void TestCardMod::draw_event(time_t /*now*/, gdi::GraphicApi & drawable)
 {
-    (void)now;
-
     update_lock<gdi::GraphicApi> lock(drawable);
 
     const Rect clip = this->get_screen_rect();

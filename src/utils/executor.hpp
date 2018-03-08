@@ -553,11 +553,11 @@ using ExecExecutorBuilder = detail::ExecutorBuilder<
 template<class PrefixArgs, class... Ts>
 struct Timer2Impl;
 
-template<class Event>
+template<class Event, class Ctx>
 struct REDEMPTION_CXX_NODISCARD BasicContext
 {
-    template<class OtherEvent>
-    BasicContext(BasicContext<OtherEvent> const& other) noexcept
+    template<class OtherEvent, class Ctx2>
+    BasicContext(BasicContext<OtherEvent, Ctx2> const& other) noexcept
       : event(reinterpret_cast<Event&>(detail::get_event(other)))
     {
         // TODO strip arguments support (PreviousTs=(int, int), Ts=(int))
@@ -591,7 +591,7 @@ struct REDEMPTION_CXX_NODISCARD BasicContext
     ExecutorResult exec_action2(F1 f1, F2 f2)
     {
         this->event.set_on_action(f1);
-        return this->event.ctx.invoke(f2, BasicContext{this->event});
+        return this->event.ctx.invoke(f2, Ctx{this->event});
     }
 
     template<class F>
@@ -614,12 +614,16 @@ struct REDEMPTION_CXX_NODISCARD BasicContext
 
 protected:
     Event& event;
+
+    using context_base = BasicContext;
 };
 
 template<class Timer>
-struct REDEMPTION_CXX_NODISCARD Executor2TimerContext : BasicContext<Timer>
+struct REDEMPTION_CXX_NODISCARD Executor2TimerContext
+  : BasicContext<Timer, Executor2TimerContext<Timer>>
 {
-    using BasicContext<Timer>::BasicContext;
+    using CtxBase = typename Executor2TimerContext::context_base;
+    using CtxBase::CtxBase;
 
     ExecutorResult ready() noexcept
     {
@@ -639,13 +643,13 @@ struct REDEMPTION_CXX_NODISCARD Executor2TimerContext : BasicContext<Timer>
         return ExecutorResult::Nothing;
     }
 
-    BasicContext<Timer> set_delay(std::chrono::milliseconds ms)
+    CtxBase set_delay(std::chrono::milliseconds ms)
     {
         this->event.update_delay(ms);
         return *this;
     }
 
-    BasicContext<Timer> set_time(timeval const& tv)
+    CtxBase set_time(timeval const& tv)
     {
         this->event.update_time(tv);
         return *this;
@@ -654,8 +658,12 @@ struct REDEMPTION_CXX_NODISCARD Executor2TimerContext : BasicContext<Timer>
 
 
 template<class Executor>
-struct REDEMPTION_CXX_NODISCARD Executor2ActionContext : BasicContext<Executor>
+struct REDEMPTION_CXX_NODISCARD Executor2ActionContext
+  : BasicContext<Executor, Executor2ActionContext<Executor>>
 {
+    using CtxBase = typename Executor2ActionContext::context_base;
+    using CtxBase::CtxBase;
+
     ExecutorResult need_more_data() noexcept
     {
         return ExecutorResult::Nothing;
@@ -814,9 +822,10 @@ struct REDEMPTION_CXX_NODISCARD Executor2TimeoutContext : Executor2ActionContext
 };
 
 template<class Event>
-struct REDEMPTION_CXX_NODISCARD Executor2EventContext : BasicContext<Event>
+struct REDEMPTION_CXX_NODISCARD Executor2EventContext
+  : BasicContext<Event, Executor2EventContext<Event>>
 {
-    using BasicContext<Event>::BasicContext;
+    using Executor2EventContext::context_base::context_base;
 
     ExecutorResult ready() noexcept
     {
@@ -825,9 +834,10 @@ struct REDEMPTION_CXX_NODISCARD Executor2EventContext : BasicContext<Event>
 };
 
 template<class Event>
-struct REDEMPTION_CXX_NODISCARD Executor2FdContext : BasicContext<Event>
+struct REDEMPTION_CXX_NODISCARD Executor2FdContext
+  : BasicContext<Event, Executor2FdContext<Event>>
 {
-    using BasicContext<Event>::BasicContext;
+    using Executor2FdContext::context_base::context_base;
 
     ExecutorResult need_more_data() noexcept
     {
@@ -863,9 +873,10 @@ struct REDEMPTION_CXX_NODISCARD Executor2FdContext : BasicContext<Event>
 };
 
 template<class Event>
-struct REDEMPTION_CXX_NODISCARD Executor2FdTimeoutContext : BasicContext<Event>
+struct REDEMPTION_CXX_NODISCARD Executor2FdTimeoutContext
+  : BasicContext<Event, Executor2FdTimeoutContext<Event>>
 {
-    using BasicContext<Event>::BasicContext;
+    using Executor2FdTimeoutContext::context_base::context_base;
 
     ExecutorResult ready() noexcept
     {

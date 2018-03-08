@@ -338,12 +338,6 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
             struct timeval timeout = time_mark;
 
             front_event.wait_on_fd(st_front?st_front->sck:INVALID_SOCKET, rfds, max, timeout);
-// TODO            mod.get_event().wait_on_fd(st_mod?st_mod->sck:INVALID_SOCKET, rfds, max, timeout);
-
-// TODO            if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
-// TODO                timeout.tv_sec  = 0;
-// TODO                timeout.tv_usec = 0;
-// TODO            }
 
             int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
 
@@ -369,17 +363,13 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
             }
 
             if (front.up_and_running) {
-// TODO                if (mod.get_event().is_set(st_mod?st_mod->sck:INVALID_SOCKET, rfds)) {
-// TODO                    mod.get_event().reset_trigger_time();
-// TODO                    mod.draw_event(time(nullptr), front);
-// TODO                    if (mod.get_event().signal != BACK_EVENT_NONE) {
-// TODO                        mod_event_signal = mod.get_event().signal;
-// TODO                    }
-// TODO
-// TODO                    if (mod_event_signal == BACK_EVENT_NEXT) {
-// TODO                        run_session = false;
-// TODO                    }
-// TODO                }
+// TODO        auto & event = mod.get_event();
+                // TODO missing session_reactor
+                LOG(LOG_ERR, "TODO: Unimplemented: %s line %d", __PRETTY_FUNCTION__, __LINE__);
+                // mod.draw_event(time(nullptr), front);
+                // if (session_reactor.signal == BACK_EVENT_NEXT) {
+                //     run_session = false;
+                // }
             }
         } catch (Error const& e) {
             LOG(LOG_ERR, "Session::Session exception = %u!\n", e.id);

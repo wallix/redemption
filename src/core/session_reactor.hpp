@@ -779,7 +779,7 @@ struct SessionReactor
 
     timeval get_current_time() const noexcept
     {
-        assert(this->current_time.tv_sec != 0);
+        //assert((this->current_time.tv_sec /*> -1*/) && "current_time is uninitialized. Used set_current_time");
         return this->current_time;
     }
 

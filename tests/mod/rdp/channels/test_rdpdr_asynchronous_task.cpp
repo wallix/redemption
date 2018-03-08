@@ -89,12 +89,13 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     RED_REQUIRE_EQ(timer_events.size(), 1);
     RED_REQUIRE_EQ(fd_events.size(), 1);
 
+    fd_set rfds;
+    io_fd_zero(rfds);
+    io_fd_set(fd_events[0]->value.fd, rfds);
     for (int i = 0; i < 100 && !fd_events.empty(); ++i) {
-        if (!fd_events[0]->exec()) {
-            fd_events[0]->delete_self(jln::DeleteFrom::Observer);
-            fd_events.pop_back();
-        }
+        session_reactor.fd_events_.exec(rfds);
     }
+    session_reactor.clear();
     RED_CHECK_EQ(fd_events.size(), 0);
     RED_CHECK_EQ(timer_events.size(), 0);
     RED_CHECK(!run_task);
@@ -138,11 +139,12 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     auto& timer_events = session_reactor.timer_events_.elements;
     RED_CHECK_EQ(timer_events.size(), 1);
 
-    timeval timeout = timer_events[0]->time();
+    timeval timeout = timer_events[0]->value.time();
     for (int i = 0; i < 100 && !timer_events.empty(); ++i) {
         session_reactor.timer_events_.exec(timeout);
         ++timeout.tv_sec;
     }
+    session_reactor.clear();
     RED_CHECK_EQ(timer_events.size(), 0);
     RED_CHECK(!run_task);
 }

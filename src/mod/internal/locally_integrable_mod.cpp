@@ -27,8 +27,8 @@ LocallyIntegrableMod::LocallyIntegrableMod(
     SessionReactor& session_reactor, FrontAPI & front,
     uint16_t front_width, uint16_t front_height,
     Font const & font, ClientExecute & client_execute,
-    Theme const & theme, bool enable_event)
-: InternalMod(session_reactor, front, front_width, front_height, font, theme, false, enable_event)
+    Theme const & theme)
+: InternalMod(session_reactor, front, front_width, front_height, font, theme, false)
 , client_execute(client_execute)
 , dvc_manager(false)
 , dc_state(DCState::Wait)

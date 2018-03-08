@@ -123,7 +123,7 @@ ReplayMod::ReplayMod(
     this->front.can_be_start_capture();
 
     this->timer = session_reactor.create_graphic_timer(std::ref(*this))
-    .set_delay(std::chrono::seconds(1))
+    .set_delay(std::chrono::seconds(0))
     .on_action(jln::always_ready([](gdi::GraphicApi& gd, ReplayMod& self){
         self.draw_event(0, gd);
     }));
@@ -217,7 +217,6 @@ void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & drawable)
     if (this->end_of_data) {
         timespec wtime = {1, 0};
         nanosleep(&wtime, nullptr);
-        this->timer->set_delay(std::chrono::seconds(1));
         return;
     }
 
@@ -297,6 +296,8 @@ void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & drawable)
                 } else {
 
                     this->end_of_data = true;
+                    this->timer->set_delay(std::chrono::seconds(1));
+
                     this->disconnect(tvtime().tv_sec);
                     this->front.sync();
 
@@ -308,8 +309,6 @@ void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & drawable)
                 }
             }
         }
-
-        this->timer->set_delay(std::chrono::milliseconds{});
     }
     catch (Error const & e) {
         if (e.id == ERR_TRANSPORT_OPEN_FAILED) {

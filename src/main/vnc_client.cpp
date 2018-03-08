@@ -142,7 +142,6 @@ int main(int argc, char** argv)
       , false
       , nullptr
       , to_verbose_flags(verbose)|VNCVerbose::connection | VNCVerbose::basic_trace);
-// TODO    mod.get_event().set_trigger_time(wait_obj::NOW);
 
     using Ms = std::chrono::milliseconds;
     return run_test_client(

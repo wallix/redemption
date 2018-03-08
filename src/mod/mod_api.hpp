@@ -68,19 +68,19 @@ public:
     };
     bool logged_on = CLIENT_UNLOGGED; // TODO suspicious
 
-    mod_api(SessionReactor& session_reactor, bool enable_event = true)
+    mod_api(SessionReactor& session_reactor/*, bool enable_event*/)
     : session_reactor(session_reactor)
     {
-        LOG(LOG_DEBUG, "mod_api %d", enable_event);
-        if (enable_event) {
-            this->now_graphic_event = session_reactor
-            .create_graphic_event(std::ref(*this))
-            .on_action([](auto ctx, gdi::GraphicApi& gd, mod_api& self){
-                LOG(LOG_DEBUG, "mod_api action %s", typeid(self).name());
-                self.draw_event(ctx.get_current_time().tv_sec, gd);
-                return ctx.terminate();
-            });
-        }
+        // LOG(LOG_DEBUG, "mod_api %d", enable_event);
+        // if (enable_event) {
+        //     this->now_graphic_event = session_reactor
+        //     .create_graphic_event(std::ref(*this))
+        //     .on_action([](auto ctx, gdi::GraphicApi& gd, mod_api& self){
+        //         LOG(LOG_DEBUG, "mod_api action %s", typeid(self).name());
+        //         self.draw_event(ctx.get_current_time().tv_sec, gd);
+        //         return ctx.terminate();
+        //     });
+        // }
     }
 
     virtual void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name,

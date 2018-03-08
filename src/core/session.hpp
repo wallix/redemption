@@ -181,8 +181,6 @@ public:
                     wait_on_sck(acl->auth_trans, rfds, max);
                 }
 
-// TODO                mm.mod->get_event().wait_on_fd(mm.mod->get_fd(), rfds, max, timeout);
-
                 if (front_trans.has_pending_data()
                  || mm.has_pending_data()
                  || (acl && acl->auth_trans.has_pending_data())) {
@@ -304,20 +302,10 @@ public:
 
                         try
                         {
-                            bool const has_fd_event = (BACK_EVENT_NONE == session_reactor.signal/* && mm.is_set_event(rfds)*/);
-// TODO                            session_reactor.set_event_next(0);
-                            // Process incoming module trafic
-                            session_reactor.graphic_events_.exec(mm.get_graphic_wrapper(front));
-                            session_reactor.graphic_fd_events_.exec(rfds, mm.get_graphic_wrapper(front));
-                            if (has_fd_event) {
-                                if (has_fd_event) {
-                                    // mm.mod->draw_event(now, mm.get_graphic_wrapper(front));
-                                }
-
-// TODO                                if (mm.mod->get_event().signal != BACK_EVENT_NONE) {
-// TODO                                    signal = mm.mod->get_event().signal;
-// TODO                                    mm.mod->get_event().reset_trigger_time();
-// TODO                                }
+                            if (BACK_EVENT_NONE == session_reactor.signal) {
+                                // Process incoming module trafic
+                                session_reactor.graphic_events_.exec(mm.get_graphic_wrapper(front));
+                                session_reactor.graphic_fd_events_.exec(rfds, mm.get_graphic_wrapper(front));
                             }
                         }
                         catch (Error const & e) {
@@ -498,7 +486,6 @@ public:
                             } while (session_reactor.signal);
                         }
                         else if (signal == BACK_EVENT_STOP) {
-// TODO                            mm.mod->get_event().reset_trigger_time();
                             run_session = false;
                         }
                         if (mm.last_module) {

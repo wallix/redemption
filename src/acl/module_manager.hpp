@@ -322,8 +322,6 @@ public:
     void check_module() override {
         if (this->ini.get<cfg::context::forcemodule>() && !this->is_connected()) {
             this->session_reactor.set_event_next(BACK_EVENT_NEXT);
-// TODO            this->mod->get_event().signal = BACK_EVENT_NEXT;
-// TODO            this->mod->get_event().set_trigger_time(wait_obj::NOW);
             this->ini.set<cfg::context::forcemodule>(false);
             // Do not send back the value to sesman.
         }

@@ -81,8 +81,7 @@ public:
             , now
             , server_capabilities_filename
             , persistent_key_list_transport)
-    {
-    }
+    {}
 
     void clear_channels()
     {
@@ -178,10 +177,10 @@ RED_AUTO_TEST_CASE(TestFront)
     ini.set<cfg::client::fast_path>(fastpath_support);
     ini.set<cfg::globals::is_rec>(true);
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
+    ini.set<cfg::globals::handshake_timeout>(std::chrono::seconds::zero());
 
     NullReportMessage report_message;
-    MyFront front( front_trans, gen1, ini , cctx, report_message, fastpath_support, mem3blt_support
-                    , now - ini.get<cfg::globals::handshake_timeout>().count());
+    MyFront front(front_trans, gen1, ini , cctx, report_message, fastpath_support, mem3blt_support, now);
     null_mod no_mod;
 
     while (front.up_and_running == 0) {
@@ -435,8 +434,9 @@ RED_AUTO_TEST_CASE(TestFront2)
     null_mod no_mod;
 
     RED_REQUIRE_EQ(front.timer_events_.elements.size(), 1);
+    front.set_current_time({ini.get<cfg::globals::handshake_timeout>().count(), 0});
     RED_CHECK_EXCEPTION_ERROR_ID(
-        front.timer_events_.exec(front.timer_events_.elements[0]->time()),
+        front.timer_events_.exec(front.get_current_time()),
         ERR_RDP_HANDSHAKE_TIMEOUT);
 
     // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);

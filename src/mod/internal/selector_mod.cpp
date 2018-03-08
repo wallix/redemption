@@ -57,7 +57,7 @@ SelectorMod::SelectorMod(
     : LocallyIntegrableMod(
         session_reactor,
         front, width, height, vars.get<cfg::font>(),
-        client_execute, vars.get<cfg::theme>(), false)
+        client_execute, vars.get<cfg::theme>())
 
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>().c_str(),
