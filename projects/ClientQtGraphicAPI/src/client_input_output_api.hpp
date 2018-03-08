@@ -76,6 +76,8 @@
 #define CB_FILE_TEMP_PATH "/DATA/clipboard_temp"
 #define KEY_SETTING_PATH "/DATA/config/keySetting.config"
 #define USER_CONF_PATH "/DATA/config/userConfig.config"
+#define SOUND_TEMP_PATH "DATA/sound_temp"
+
 
 #define DATA_PATH "/DATA"
 #define DATA_CONF_PATH "/DATA/config"
@@ -120,6 +122,7 @@ public:
     const std::string    CB_TEMP_DIR;
     std::string          SHARE_DIR;
     const std::string    USER_CONF_DIR;
+    const std::string    SOUND_TEMP_DIR;
     const std::string    DATA_DIR;
     const std::string    DATA_CONF_DIR;
 
@@ -296,13 +299,13 @@ public:
     , CB_TEMP_DIR(MAIN_DIR + std::string(CB_FILE_TEMP_PATH))
     , SHARE_DIR(MAIN_DIR + std::string(SHARE_PATH))
     , USER_CONF_DIR(MAIN_DIR + std::string(USER_CONF_PATH))
+    , SOUND_TEMP_DIR(std::string(SOUND_TEMP_PATH))
     , DATA_DIR(MAIN_DIR + std::string(DATA_PATH))
     , DATA_CONF_DIR(MAIN_DIR + std::string(DATA_CONF_PATH))
     , port(0)
     , local_IP("unknow_local_IP")
     , windowsData(this)
     , mod_state(MOD_RDP)
-//     , replay_mod(nullptr)
     , is_recording(false)
     , is_replaying(false)
     , connected(false)
@@ -324,34 +327,36 @@ public:
         this->info.console_session = 0;
         this->info.brush_cache_code = 0;
         this->info.bpp = 24;
-//         this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
-        if (this->info.bpp ==  32) {
-//             this->imageFormatARGB = this->bpp_to_QFormat(this->info.bpp, true);
-        }
         this->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
         this->info.cs_monitor.monitorCount = 1;
 
 
-        struct stat sb;
+        DIR *pDir;
 
-        stat(this->DATA_DIR.c_str(), &sb);
-        if (!(S_ISDIR(sb.st_mode))) {
-            mkdir(this->DATA_DIR.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        pDir = opendir (this->DATA_DIR.c_str());
+        if (!pDir) {
+            LOG(LOG_INFO, "Create file \"%s\".", this->DATA_DIR);
+            mkdir(this->DATA_DIR.c_str(), 0777);
         }
-
-        stat(this->REPLAY_DIR.c_str(), &sb);
-        if (!(S_ISDIR(sb.st_mode))) {
-            mkdir(this->REPLAY_DIR.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        pDir = opendir (this->REPLAY_DIR.c_str());
+        if (!pDir) {
+            LOG(LOG_INFO, "Create file \"%s\".", this->REPLAY_DIR);
+            mkdir(this->REPLAY_DIR.c_str(), 0777);
         }
-
-        stat(this->CB_TEMP_DIR.c_str(), &sb);
-        if (!(S_ISDIR(sb.st_mode))) {
-            mkdir(this->CB_TEMP_DIR.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        pDir = opendir (this->CB_TEMP_DIR.c_str());
+        if (!pDir) {
+            LOG(LOG_INFO, "Create file \"%s\".", this->CB_TEMP_DIR);
+            mkdir(this->CB_TEMP_DIR.c_str(), 0777);
         }
-
-        stat(this->DATA_CONF_DIR.c_str(), &sb);
-        if (!(S_ISDIR(sb.st_mode))) {
-            mkdir(this->DATA_CONF_DIR.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        pDir = opendir (this->DATA_CONF_DIR.c_str());
+        if (!pDir) {
+            LOG(LOG_INFO, "Create file \"%s\".", this->DATA_CONF_DIR);
+            mkdir(this->DATA_CONF_DIR.c_str(), 0777);
+        }
+        pDir = opendir (this->SOUND_TEMP_DIR.c_str());
+        if (!pDir) {
+            LOG(LOG_INFO, "Create file \"%s\".", this->SOUND_TEMP_DIR);
+            mkdir(this->SOUND_TEMP_DIR.c_str(), 0777);
         }
 
         this->setDefaultConfig();
@@ -391,7 +396,6 @@ public:
                 }
             } else if (word == "--rdpdr") {
                 this->verbose = RDPVerbose::rdpdr | this->verbose;
-                 std::cout << "--rdpdr rdpdr verbose on";
             } else if (word == "--rdpsnd") {
                 this->verbose = RDPVerbose::rdpsnd | this->verbose;
             } else if (word == "--cliprdr") {
@@ -414,8 +418,6 @@ public:
                 this->verbose = RDPVerbose::asynchronous_task | this->verbose;
             } else if (word == "--capabilities") {
                 this->verbose = RDPVerbose::capabilities | this->verbose;
-            } else if (word ==  "--keyboard") {
-                //this->qtRDPKeymap._verbose = 1;
             } else if (word ==  "--rail") {
                 this->verbose = RDPVerbose::rail | this->verbose;
             } else if (word ==  "--rail_dump") {
@@ -941,15 +943,6 @@ public:
 
 
 
-// class ClientIODiskAPI : public ClientIOAPI {
-// //     ClientRedemptionIOAPI * client;
-// //
-// //     void set_client(ClientRedemptionIOAPI * client) {
-// //         this->client = client;
-// //     }
-// };
-
-
 
 class ClientOutputSoundAPI : public ClientIOAPI {
 
@@ -959,6 +952,12 @@ public:
     uint16_t n_channels = 0;
     uint16_t n_block_align = 0;
     uint32_t bit_per_sec = 0;
+
+    std::string path;
+
+    void set_path(const std::string & path) {
+        this->path = path;
+    }
 
     virtual void init(size_t raw_total_size) = 0;
     virtual void setData(const uint8_t * data, size_t size) = 0;
@@ -1002,8 +1001,6 @@ public:
     virtual void init_form() = 0;
 
     virtual void pre_load_movie() {}
-
-
 
 
     // CONTROLLER
