@@ -1,6 +1,12 @@
 JAM_INCLUDE_PATH ?= [ SHELL "readlink -n -f ../../jam" ] ;
+#JAM_INCLUDE_PATH ?= ../../jam ;
 
 REDEMPTION_PUBLIC_PATH ?= [ SHELL "readlink -n -f ../.." ] ;
+#REDEMPTION_PUBLIC_PATH ?= ../.. ;
+
+REDEMPTION_PROJECT_PATH ?= [ SHELL "readlink -n -f .." ] ;
+#REDEMPTION_PROJECT_PATH ?= .. ;
+
 REDEMPTION_INCLUDE_PATH ?= $(REDEMPTION_PUBLIC_PATH)/include ;
 REDEMPTION_MODULES_SRC_PATH ?= $(REDEMPTION_PUBLIC_PATH)/modules ;
 
@@ -128,7 +134,7 @@ install install-bin
     : <location>$(INSTALLDIR)/usr/local/bin
     ;
 
-obj config.o : ../redemption_configs/redemption_src/configs/config.cpp ;
+obj config.o : $(REDEMPTION_PROJECT_PATH)/redemption_configs/redemption_src/configs/config.cpp ;
 
 obj hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp : ;
 
