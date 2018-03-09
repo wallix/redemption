@@ -626,6 +626,8 @@ public:
                 this->cl.push_back(channel_audio_output);
             }
 
+        } else {
+            this->port =  5900;
         }
 
         if (this->impl_graphic) {

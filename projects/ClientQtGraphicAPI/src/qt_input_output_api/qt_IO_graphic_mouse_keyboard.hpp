@@ -988,7 +988,7 @@ private:
 
         if (bmp.bpp() != this->client->info.bpp) {
             qbitmap = qbitmap.convertToFormat(this->bpp_to_QFormat(this->client->info.bpp, false));
-            LOG(LOG_INFO, "RDPBitmapData convertToFormat");
+            //LOG(LOG_INFO, "RDPBitmapData convertToFormat");
         }
 
         qbitmap = qbitmap.mirrored(false, true);

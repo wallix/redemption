@@ -81,10 +81,10 @@ public:
                     struct timeval now = tvtime();
                     int time_to_wake = (this->_callback->get_event().get_trigger_time().tv_usec - now.tv_usec) / 1000
                     + (this->_callback->get_event().get_trigger_time().tv_sec - now.tv_sec) * 1000;
-//                     this->_callback->get_event().reset_trigger_time();
 
                     if (time_to_wake < 0) {
-                        this->timer.stop();
+                        //this->timer.stop();
+                        this->call_draw_event_timer();
                     } else {
 
                         this->timer.start( time_to_wake );

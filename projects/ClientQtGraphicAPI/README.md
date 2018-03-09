@@ -165,12 +165,14 @@ ainsi que le scan code ou le code ascii de la touche.
 
 ### Implémentation du client
 
+Il suffit d'appeller le constructeur du client.
+
 	ClientRedemption client_qt(argv, argc, verbose
-		              , graphic_control_qt
-		              , clipboard_api
-		              , sound_api
-		              , socket_api
-		              , graphic_control_qt);
+		              , graphic_api_ptr
+		              , clipboard_api_ptr
+		              , sound_api_ptr
+		              , socket_api_ptr
+		              , control_api_ptr);
 
 
 ### La fonction "main" avec Qt
