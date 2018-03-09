@@ -20,6 +20,7 @@
  */
 
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/font.hpp"
 #include "mod/internal/widget/label.hpp"
 #include "gdi/graphic_api.hpp"
 #include "utils/sugar/cast.hpp"
@@ -115,7 +116,9 @@ void WidgetLabel::draw(
 Dimension WidgetLabel::get_optimal_dim()
 {
     gdi::TextMetrics tm(this->font, (this->buffer[0] ? this->buffer : "Édp"));
-    return Dimension(tm.width + this->x_text * 2, tm.height + this->y_text * 2);
+    return Dimension(
+        tm.width + this->x_text * 2 + (this->font.spark_view_specific_glyph_width() ? 2 : 0),
+        tm.height + this->y_text * 2);
 }
 
 Dimension WidgetLabel::get_optimal_dim(Font const & font, char const* text, int xtext, int ytext)
@@ -133,7 +136,9 @@ Dimension WidgetLabel::get_optimal_dim(Font const & font, char const* text, int 
     }
 
     gdi::TextMetrics tm(font, (buffer[0] ? buffer : "Édp"));
-    return Dimension(tm.width + xtext * 2, tm.height + ytext * 2);
+    return Dimension(
+        tm.width + xtext * 2 + (font.spark_view_specific_glyph_width() ? 2 : 0),
+        tm.height + ytext * 2);
 }
 
 bool WidgetLabel::shift_text(int pos_x)
