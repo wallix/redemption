@@ -1596,7 +1596,8 @@ public:
             });
         })
         .on_exit(jln::exit_with_success())
-        .on_action(jln::always_ready() /* set by on_timeout action*/);
+        // TODO RDP_PROTOCOL_ERROR
+        .on_action(jln::exit_with_error() /* set by on_timeout action*/);
 
         LOG(LOG_INFO, "RDP mod built");
     }   // mod_rdp
@@ -4187,6 +4188,7 @@ public:
             run = false;
         }
         else if (this->state == MOD_RDP_NEGO && !waked_up_by_time) {
+            // TODO this->fd_event.set_fd() if trans.disconnect() or trans.connect() is used
             run = this->nego.recv_next_data(this->buf, this->trans, RdpNego::ServerCert{
                 this->server_cert_store,
                 this->server_cert_check,
