@@ -112,7 +112,6 @@ public Q_SLOTS:
         if (this->client->mod) {
 
             this->client->callback();
-    LOG(LOG_DEBUG, "%s", __PRETTY_FUNCTION__);
 
             if (this->_callback) {
                 if (this->_callback->get_event().is_trigger_time_set()) {
@@ -124,8 +123,6 @@ public Q_SLOTS:
 
                     if (time_to_wake < 0) {
                         this->timer.stop();
-//                         LOG(LOG_INFO, "time_to_wake = %d", time_to_wake);
-//                         this->timer.start( 40 );
                     } else {
                         this->timer.start( time_to_wake );
                     }

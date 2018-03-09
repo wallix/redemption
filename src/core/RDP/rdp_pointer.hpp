@@ -237,7 +237,6 @@ public:
         : dimensions(d)
         , hotspot(hs)
     {
-        (void)data_bpp;
         if ((av_and.size() > this->bit_mask_size()) || (av_xor.size() > this->xor_mask_size())) {
             LOG(LOG_ERR, "mod_rdp::process_color_pointer_pdu: "
                 "bad length for color pointer mask_len=%zu data_len=%zu",
@@ -752,12 +751,14 @@ public:
     }
 
     void compute_alpha_q(){
-        return;
+        size_t mask_offset_line = 0;
+        size_t data_offset_line = 0;
+        size_t target_data_offset_line = ((this->dimensions.height - 1) * this->dimensions.width*4);
         for (uint8_t y = 0 ; y < this->dimensions.height ; y++){
             for(uint8_t x = 0 ; x < this->dimensions.width ; x++){
-                const size_t mask_offset = y*::nbbytes(this->dimensions.width)+::nbbytes(x+1)-1;
-                const size_t data_offset = y * 3 * this->dimensions.width + x*3;
-                const size_t target_data_offset = ((this->dimensions.height - y - 1) * this->dimensions.width*4) + x*4;
+                const size_t mask_offset = mask_offset_line +::nbbytes(x+1)-1; 
+                const size_t data_offset = data_offset_line + x*3; 
+                const size_t target_data_offset = target_data_offset_line + x*4;
                 //LOG(LOG_INFO, "(x=%d/%u, y=%d/%u) mw=%zu mx=%zu, mask_offset=%zu data_offset=%zu target_offset%zu",x, this->dimensions.width, y, this->dimensions.height, 
                 //            size_t(::nbbytes(this->dimensions.width)), size_t(::nbbytes(x+1)), mask_offset, data_offset, target_data_offset);
                 uint8_t mask_value = (this->mask[mask_offset]&(0x80>>(x&7)))?0x00:0xFF;
@@ -767,6 +768,9 @@ public:
                 }
                 this->alpha_q.data[target_data_offset+3] = mask_value;
             }
+            mask_offset_line += ::nbbytes(this->dimensions.width);
+            data_offset_line += 3 * this->dimensions.width;
+            target_data_offset_line -= this->dimensions.width*4;
         }
     }
 
