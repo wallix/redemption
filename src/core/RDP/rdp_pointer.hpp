@@ -94,7 +94,8 @@ private:
     Hotspot hotspot;
     
     struct {
-        alignas(4) uint8_t data[4*DATA_SIZE];
+        alignas(4) 
+        uint8_t data[DATA_SIZE];
     } alpha_q;
 
     uint8_t data[DATA_SIZE];
@@ -751,6 +752,7 @@ public:
     }
 
     void compute_alpha_q(){
+        return;
         for (uint8_t y = 0 ; y < this->dimensions.height ; y++){
             for(uint8_t x = 0 ; x < this->dimensions.width ; x++){
                 const size_t mask_offset = y*::nbbytes(this->dimensions.width)+::nbbytes(x+1)-1;
