@@ -127,7 +127,12 @@ namespace VNC {
 
                 // TODO: special dot cursor  if cx=1 cy=1 ? : a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead ?
 //                Pointer cursor(this->bpp, Pointer::CursorSize{this->cx, this->cy}, Pointer::Hotspot{this->x, this->y}, {this->mask.data(), this->mask.size()}, {this->data.data(), this->data.size()}, false);
-                Pointer cursor(Pointer::POINTER_DOT);
+                Pointer cursor(this->Bpp, 
+                                Pointer::CursorSize{static_cast<unsigned>(this->cx), static_cast<unsigned>(this->cy)}, 
+                                Pointer::Hotspot{static_cast<unsigned>(this->x), static_cast<unsigned>(this->y)}, 
+                                data, mask, 
+                                this->red_shift, this->red_max, this->green_shift, this->green_max, this->blue_shift, this->blue_max);
+//                Pointer cursor(Pointer::POINTER_DOT);
                 drawable.begin_update();
                 drawable.set_pointer(cursor);
                 drawable.end_update();

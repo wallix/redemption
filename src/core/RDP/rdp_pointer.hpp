@@ -26,6 +26,7 @@
 #include <algorithm> // std::min
 #include <cassert>
 #include <cstring>
+#include <vector>
 #include "utils/log.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/sugar/array_view.hpp"
@@ -75,14 +76,14 @@ public:
     struct CursorSize {
         unsigned width;
         unsigned height;
-        CursorSize(int w, int h) : width(w), height(h) {}
+        CursorSize(unsigned w, unsigned h) : width(w), height(h) {}
         CursorSize(const CursorSize & cs) : width(cs.width), height(cs.height) {}
     };
 
     struct Hotspot {
         unsigned x;
         unsigned y;
-        Hotspot(int x, int y) : x(x), y(y) {}
+        Hotspot(unsigned x, unsigned y) : x(x), y(y) {}
         Hotspot(const Hotspot & hs) : x(hs.x), y(hs.y) {}
     };
 
@@ -215,6 +216,63 @@ public:
         this->compute_alpha_q();
     }
 
+    Pointer(uint8_t Bpp, CursorSize d, Hotspot hs, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask, 
+                   int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max)
+        : dimensions(d)
+        , hotspot(hs)
+    {
+    // VNC Pointer format
+    // ==================
+    
+    // The data consists of width * height pixel values followed by
+    // a bitmask.
+
+    // PIXEL array : width * height * bytesPerPixel
+    // bitmask     : floor((width + 7) / 8) * height
+
+    // The bitmask consists of left-to-right, top-to-bottom
+    // scanlines, where each scanline is padded to a whole number of
+    // bytes. Within each byte the most significant bit represents
+    // the leftmost pixel, with a 1-bit meaning the corresponding
+    // pixel in the cursor is valid.
+
+       size_t minheight = std::min<size_t>(size_t(d.height), size_t(32));
+       size_t minwidth = std::min<size_t>(size_t(d.width), size_t(32));
+
+       uint8_t target_offset_line = 0;
+       uint8_t target_mask_offset_line = 0;
+       uint8_t source_offset_line = (minheight-1) * d.width * Bpp;
+       uint8_t source_mask_offset_line = (minheight-1) * ::nbbytes(d.width+1)-1;
+       for (size_t y = 0 ; y < minheight ; y++){
+            for (size_t x = 0 ; x < minwidth ; x++){
+                const uint8_t target_offset = target_offset_line +x*3;
+                const uint8_t source_offset = source_offset_line + x*Bpp;
+                unsigned pixel = 0;
+                for(size_t i = 0 ; i*8 < Bpp ; i++){
+                    pixel = (pixel<<8) + vncdata[source_offset+i];
+                }
+                const int red = (pixel >> red_shift) & red_max; 
+                const int green = (pixel >> green_shift) & green_max; 
+                const int blue = (pixel >> blue_shift) & blue_max;
+                (void)red; 
+                (void)green; 
+                (void)blue; 
+                this->data[target_offset] = 0xFF;
+                this->data[target_offset+1] = 0x00;
+                this->data[target_offset+2] = 0x00;
+            }
+            
+            for (size_t xx = 0 ; xx*8 < minwidth ; xx++){
+                this->mask[target_mask_offset_line+xx] = vncmask[source_mask_offset_line+xx];
+            }
+            target_offset_line += minwidth*3;
+            target_mask_offset_line += ::nbbytes(minwidth+1)-1;
+            source_offset_line -= d.width*Bpp;
+            source_mask_offset_line -= ::nbbytes(d.width+1)-1;
+        }
+        this->compute_alpha_q();
+    }
+
 
     explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and)
         : dimensions(d)
@@ -237,6 +295,7 @@ public:
         : dimensions(d)
         , hotspot(hs)
     {
+        (void)data_bpp;
         if ((av_and.size() > this->bit_mask_size()) || (av_xor.size() > this->xor_mask_size())) {
             LOG(LOG_ERR, "mod_rdp::process_color_pointer_pdu: "
                 "bad length for color pointer mask_len=%zu data_len=%zu",
