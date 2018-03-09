@@ -211,7 +211,8 @@ private:
     ClientExecute* client_execute = nullptr;
     Zdecompressor<> zd;
 
-    SessionReactor::GraphicEventPtr clear_client_screen;
+    SessionReactor& session_reactor;
+    SessionReactor::GraphicFdPtr fd_event;
 
 public:
     mod_vnc( Transport & t
@@ -265,19 +266,13 @@ public:
     , server_is_apple(server_is_apple)
     , keylayout(keylayout)
     , client_execute(client_execute)
+    , session_reactor(session_reactor)
     , frame_buffer_update_ctx(this->zd, verbose)
     , clipboard_data_ctx(verbose)
     {
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "Creation of new mod 'VNC'");
         }
-
-        // Clear client screen
-        this->clear_client_screen = session_reactor
-        .create_graphic_event(this->get_dim())
-        .on_action(jln::one_shot([](gdi::GraphicApi& drawable, Dimension const& dim){
-            gdi_clear_screen(drawable, dim);
-        }));
 
         ::time(&this->beginning);
 
@@ -293,6 +288,51 @@ public:
         std::snprintf(this->username, sizeof(this->username), "%s", username);
         std::snprintf(this->password, sizeof(this->password), "%s", password);
 
+        this->fd_event = session_reactor
+        .create_graphic_fd_event(this->t.get_fd(), std::ref(*this))
+        .set_timeout(std::chrono::milliseconds(0))
+        .on_timeout([](auto ctx, gdi::GraphicApi& gd, mod_vnc& self){
+            LOG(LOG_DEBUG, "gdi_clear_screen");
+            gdi_clear_screen(gd, self.get_dim());
+            // TODO return ctx.disable_timer()...
+            return ctx.set_timeout(std::chrono::hours(999))
+            .set_timeout_action([](auto ctx, gdi::GraphicApi& gd, mod_vnc& self){
+                LOG(LOG_DEBUG, "timeout");
+                while (self.state != UP_AND_RUNNING && self.draw_event_impl(gd)) {
+                }
+                if (self.state == UP_AND_RUNNING) {
+                    self.update_screen(Rect(0, 0, self.width, self.height), 1);
+                }
+                self.check_timeout();
+                return ctx.ready();
+            })
+            .ready();
+        })
+        .on_exit(jln::exit_with_success())
+        .on_action([](auto ctx, gdi::GraphicApi& gd, mod_vnc& self){
+            LOG(LOG_DEBUG, "on action");
+            self.buf.read_from(self.t);
+            while (self.state != UP_AND_RUNNING && self.draw_event_impl(gd)) {
+            }
+            if (self.state == UP_AND_RUNNING) {
+                try {
+                    while (self.up_and_running_ctx.run(self.buf, gd, self)) {
+                        self.up_and_running_ctx.restart();
+                    }
+                }
+                catch (const Error & e) {
+                    LOG(LOG_ERR, "VNC Stopped [reason id=%u]", e.id);
+                    self.session_reactor.set_event_next(BACK_EVENT_NEXT);
+                    self.front.must_be_stop_capture();
+                }
+                catch (...) {
+                    LOG(LOG_ERR, "unexpected exception raised in VNC");
+                    self.session_reactor.set_event_next(BACK_EVENT_NEXT);
+                    self.front.must_be_stop_capture();
+                }
+            }
+            return ctx.ready();
+        });
     } // Constructor
 
     ~mod_vnc() override {
@@ -1618,10 +1658,7 @@ public:
             LOG(LOG_INFO, "vnc::draw_event");
         }
 
-// TODO        if (!this->event.is_waked_up_by_time()) {
-// TODO            this->buf.read_from(this->t);
-// TODO        }
-
+        this->buf.read_from(this->t);
         while (this->draw_event_impl(drawable)) {
 
         }
@@ -1727,7 +1764,7 @@ private:
 
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     // protocol_version_len - zero terminal
-                    LOG(LOG_INFO, "Server Protocol Version=%.*s\n",
+                    LOG(LOG_INFO, "Server Protocol Version=%.*s",
                         int(protocol_version_len-1), buf.av().data());
                 }
 
@@ -1750,7 +1787,7 @@ private:
 
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "security level is %d "
-                        "(1 = none, 2 = standard, -6 = mslogon)\n",
+                        "(1 = none, 2 = standard, -6 = mslogon)",
                         security_level);
                 }
 
