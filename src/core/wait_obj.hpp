@@ -68,7 +68,7 @@ public:
         return this->waked_up_by_time;
     }
 
-    timeval get_trigger_time() {
+    timeval get_trigger_time() const {
         return this->trigger_time;
     }
 

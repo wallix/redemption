@@ -302,37 +302,37 @@ public:
 //         }
 //     }
 
-//     void setClip(int x, int y, int w, int h) {
-//
-//         if (this->screen) {
-//
-//             if (this->screen->clip.x() == -1) {
-//                 this->screen->clip.setX(x);
-//                 this->screen->clip.setY(y);
-//                 this->screen->clip.setWidth(w);
-//                 this->screen->clip.setHeight(h);
-//             } else {
-//                 const int ori_x = this->screen->clip.x();
-//                 const int ori_y = this->screen->clip.y();
-//
-//                 if (x <= ori_x) {
-//                     this->screen->clip.setX(x);
-//                 }
-//
-//                 if (y <= ori_y) {
-//                     this->screen->clip.setY(y);
-//                 }
-//
-//                 if ( (x+w) > (ori_x + this->screen->clip.width()) ) {
-//                     this->screen->clip.setWidth(x+w-this->screen->clip.x());
-//                 }
-//
-//                 if ( (y+h) > (ori_y + this->screen->clip.height()) ) {
-//                     this->screen->clip.setHeight(y+h-this->screen->clip.y());
-//                 }
-//             }
-//         }
-//     }
+     void setClip(int x, int y, int w, int h) {
+
+         if (this->screen) {
+
+             if (this->screen->clip.x() == -1) {
+                 this->screen->clip.setX(x);
+                 this->screen->clip.setY(y);
+                 this->screen->clip.setWidth(w);
+                 this->screen->clip.setHeight(h);
+             } else {
+                 const int ori_x = this->screen->clip.x();
+                 const int ori_y = this->screen->clip.y();
+
+                 if (x <= ori_x) {
+                     this->screen->clip.setX(x);
+                 }
+
+                 if (y <= ori_y) {
+                     this->screen->clip.setY(y);
+                 }
+
+                 if ( (x+w) > (ori_x + this->screen->clip.width()) ) {
+                     this->screen->clip.setWidth(x+w-this->screen->clip.x());
+                 }
+
+                 if ( (y+h) > (ori_y + this->screen->clip.height()) ) {
+                     this->screen->clip.setHeight(y+h-this->screen->clip.y());
+                 }
+             }
+         }
+     }
 
     void begin_update() override {
 
@@ -409,50 +409,29 @@ private:
     }
 
     virtual void set_pointer(Pointer const & cursor) override {
-        return;
+//        LOG(LOG_INFO, "cursor size(%u, %u)", cursor.get_dimensions().width, cursor.get_dimensions().height);
+//        LOG(LOG_INFO, "cursor hotspot(%u, %u)", cursor.get_hotspot().x, cursor.get_hotspot().y);
+//        LOG(LOG_INFO, "cursor is bw(%s)", cursor.only_black_white?"BW":"COLOR");
+//        hexdump_d(cursor.mask, 32 * 32 / 8);
+//        hexdump_d(cursor.data, 32 * 32 * 3);
 
-        QImage image_data(cursor.data, cursor.width, cursor.height, this->bpp_to_QFormat(24, false));
-        QImage image_mask(cursor.mask, cursor.width, cursor.height, QImage::Format_Mono);
+        auto dimensions = cursor.get_dimensions();
+        auto hotspot = cursor.get_hotspot();
 
-        if (cursor.mask[0x48] == 0xFF &&
-            cursor.mask[0x49] == 0xFF &&
-            cursor.mask[0x4A] == 0xFF &&
-            cursor.mask[0x4B] == 0xFF) {
+        auto av_alpha_q = cursor.get_alpha_q();
 
-            image_mask = image_data.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-            image_data.invertPixels();
-
-        } else {
-            image_mask.invertPixels();
-        }
-        image_data = image_data.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
-        image_mask = image_mask.mirrored(false, true).convertToFormat(QImage::Format_ARGB32_Premultiplied);
-
-        const uchar * data_data = image_data.bits();
-        const uchar * mask_data = image_mask.bits();
-
-        uint8_t data[Pointer::DATA_SIZE*4];
-
-        for (int i = 0; i < std::min<int>(Pointer::DATA_SIZE * 4, cursor.width * cursor.height * 4); i += 4) {
-            data[i  ] = data_data[i+2];
-            data[i+1] = data_data[i+1];
-            data[i+2] = data_data[i  ];
-            data[i+3] = mask_data[i+0];
-        }
-        LOG(LOG_INFO, "drawing cursor");
-
-        if (this->client->is_replaying) {
-            this->cursor_image = QImage(static_cast<uchar *>(data), cursor.x, cursor.y, QImage::Format_ARGB32_Premultiplied);
-        } else {
-            if (this->drawn_client->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
-                 for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
-                    if (it->second) {
-                        it->second->set_mem_cursor(static_cast<uchar *>(data), cursor.x, cursor.y);
-                    }
+        // this->cursor_image is used when client is replaying
+        this->cursor_image = QImage(av_alpha_q.data(), dimensions.width, dimensions.height, dimensions.width * 4, QImage::Format_ARGB32_Premultiplied);
+ 
+         ;
+        if (this->drawn_client->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
+            for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
+                if (it->second) {
+                    it->second->setCursor(QCursor(QPixmap::fromImage(this->cursor_image), hotspot.x, hotspot.x));
                 }
-            } else if (this->screen) {
-                this->screen->set_mem_cursor(static_cast<uchar *>(data), cursor.x, cursor.y);
             }
+        } else if (this->screen) {
+            this->screen->setCursor(QCursor(QPixmap::fromImage(this->cursor_image), hotspot.x, hotspot.x));
         }
     }
 

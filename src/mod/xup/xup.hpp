@@ -31,7 +31,7 @@
 #include <errno.h>
 
 /* include "ther h files */
-#include "core/RDP/pointer.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
@@ -323,11 +323,15 @@ enum {
                     break;
                     case 19:
                     {
-                        Pointer cursor;
-                        cursor.x = stream.in_sint16_le();
-                        cursor.y = stream.in_sint16_le();
-                        stream.in_copy_bytes(cursor.data, 32 * (32 * 3));
-                        stream.in_copy_bytes(cursor.mask, 32 * (32 / 8));
+//                        auto hotspot_x = stream.in_uint16_le();
+                        stream.in_skip_bytes(2);
+//                        auto hotspot_y = stream.in_uint16_le();
+                        stream.in_skip_bytes(2);
+//                        Pointer::Hotspot hotspot(hotspot_x, hotspot_y);
+                        stream.in_skip_bytes(32 * (32 * 3)); // data
+                        stream.in_skip_bytes(32 * (32 / 8)); // mask
+                        // TODO: we just ignore cursor data for now. Fix that later
+                        Pointer cursor(Pointer::POINTER_DOT);
                         this->front.set_pointer(cursor);
                     }
                     break;

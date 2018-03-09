@@ -49,7 +49,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
-#include "core/RDP/pointer.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 
 #include "core/channel_list.hpp"
 #include "core/client_info.hpp"
@@ -925,7 +925,8 @@ public:
 
     void set_pointer(Pointer const & cursor) override {
         if (this->_verbose & SHOW_CURSOR_STATE_CHANGE) {
-            std::cout <<  "server >> cursor=" << int(cursor.pointer_type) <<  std::endl;
+            // TODO: dump changes to the cursor (signature based ?)
+            std::cout <<  "server >> change cursor " <<  std::endl;
         }
     }
 

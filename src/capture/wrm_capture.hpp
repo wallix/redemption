@@ -465,7 +465,10 @@ public:
 
 protected:
     void send_pointer(int cache_idx, const Pointer & cursor) override {
-        if ((cursor.width != 32) || (cursor.height != 32)) {
+        auto const dimensions = cursor.get_dimensions();
+        auto const hotspot = cursor.get_hotspot();
+
+        if ((dimensions.width != 32) || (dimensions.height != 32)) {
             this->send_pointer2(cache_idx, cursor);
             return;
         }
@@ -484,15 +487,21 @@ protected:
         payload.out_uint16_le(this->mouse_x);
         payload.out_uint16_le(this->mouse_y);
         payload.out_uint8(cache_idx);
-        payload.out_uint8(cursor.x);
-        payload.out_uint8(cursor.y);
-        this->trans.send(payload.get_data(), payload.get_offset());
+        
+        payload.out_uint8(hotspot.x);
+        payload.out_uint8(hotspot.y);
 
-        this->trans.send(cursor.data, cursor.data_size());
-        this->trans.send(cursor.mask, cursor.mask_size());
+        this->trans.send(payload.get_data(), payload.get_offset());
+        auto av_xor = cursor.get_24bits_xor_mask();
+        this->trans.send(av_xor);
+        auto av_and = cursor.get_monochrome_and_mask();
+        this->trans.send(av_and);
     }
 
     void send_pointer2(int cache_idx, const Pointer & cursor) {
+        auto const dimensions = cursor.get_dimensions();
+        auto const hotspot = cursor.get_hotspot();
+
         size_t size =   2                   // mouse x
                       + 2                   // mouse y
                       + 1                   // cache index
@@ -517,23 +526,25 @@ protected:
         payload.out_uint16_le(this->mouse_y);
         payload.out_uint8(cache_idx);
 
-        payload.out_uint8(cursor.width);
-        payload.out_uint8(cursor.height);
+        payload.out_uint8(dimensions.width);
+        payload.out_uint8(dimensions.height);
         payload.out_uint8(24);
 
-        payload.out_uint8(cursor.x);
-        payload.out_uint8(cursor.y);
+        payload.out_uint8(hotspot.x);
+        payload.out_uint8(hotspot.y);
 
         payload.out_uint16_le(cursor.data_size());
         payload.out_uint16_le(cursor.mask_size());
 
         this->trans.send(payload.get_data(), payload.get_offset());
 
-        this->trans.send(cursor.data, cursor.data_size());
-        this->trans.send(cursor.mask, cursor.mask_size());
+        auto av_xor = cursor.get_24bits_xor_mask();
+        this->trans.send(av_xor);
+        auto av_and = cursor.get_monochrome_and_mask();
+        this->trans.send(av_and);
     }
 
-    void set_pointer(int cache_idx) override {
+    void cached_pointer_update(int cache_idx) override {
         size_t size =   2                   // mouse x
                       + 2                   // mouse y
                       + 1                   // cache index

@@ -720,43 +720,34 @@ void FileToGraphic::interpret_order()
             LOG(LOG_INFO, "POINTER2");
         }
 
-        uint8_t cache_idx;
-
-        this->mouse_x = this->stream.in_uint16_le();
-        this->mouse_y = this->stream.in_uint16_le();
-        cache_idx     = this->stream.in_uint8();
+        this->mouse_x         = this->stream.in_uint16_le();
+        this->mouse_y         = this->stream.in_uint16_le();
+        uint8_t cache_idx     = this->stream.in_uint8();
 
         if (  chunk_size - 8 /*header(8)*/ > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
             this->statistics.CachePointer.count++;
-            auto * const p = this->stream.get_current();
-            Pointer cursor(Pointer::POINTER_NULL);
-            cursor.width = 32;
-            cursor.height = 32;
-            cursor.x = this->stream.in_uint8();
-            cursor.y = this->stream.in_uint8();
-            stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
-            stream.in_copy_bytes(cursor.mask, 128);
-            this->statistics.CachePointer.total_len += this->stream.get_current() - p;
+            uint16_t width  = 32;
+            uint16_t height = 32;
+            uint8_t data_bpp = 24;
+            auto hotspot_x  = this->stream.in_uint8();
+            auto hotspot_y  = this->stream.in_uint8();
+            uint16_t mlen   = 128;
+            uint16_t dlen   = 32*32*3;
+            auto data       = stream.in_uint8p(dlen);
+            auto mask       = stream.in_uint8p(mlen);
+            this->statistics.CachePointer.total_len += dlen + mlen + 2;
 
+            Pointer cursor(data_bpp, {width, height}, {hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen});
             this->ptr_cache.add_pointer_static(cursor, cache_idx);
-
             for (gdi::GraphicApi * gd : this->graphic_consumers){
                 gd->set_pointer(cursor);
             }
         }
         else {
             this->statistics.PointerIndex.count++;
-            auto * const p = this->stream.get_current();
-            Pointer & pi = this->ptr_cache.Pointers[cache_idx];
-            Pointer cursor(Pointer::POINTER_NULL);
-            cursor.width = pi.width;
-            cursor.height = pi.height;
-            cursor.x = pi.x;
-            cursor.y = pi.y;
-            memcpy(cursor.data, pi.data, sizeof(pi.data));
-            memcpy(cursor.mask, pi.mask, sizeof(pi.mask));
-            this->statistics.PointerIndex.total_len += this->stream.get_current() - p;
-
+            Pointer cursor(this->ptr_cache.Pointers[cache_idx]);
+            this->statistics.PointerIndex.total_len += 0;
+            this->ptr_cache.Pointers[cache_idx] = cursor;
             for (gdi::GraphicApi * gd : this->graphic_consumers){
                 gd->set_pointer(cursor);
             }
@@ -769,38 +760,27 @@ void FileToGraphic::interpret_order()
             LOG(LOG_INFO, "POINTER2");
         }
 
-        uint8_t cache_idx;
-
         this->mouse_x = this->stream.in_uint16_le();
         this->mouse_y = this->stream.in_uint16_le();
-        cache_idx     = this->stream.in_uint8();
-
+        uint8_t cache_idx     = this->stream.in_uint8();
         this->statistics.CachePointer.count++;
-        auto * const p = this->stream.get_current();
 
-        Pointer cursor(Pointer::POINTER_NULL);
+        uint8_t width    = this->stream.in_uint8();
+        uint8_t height   = this->stream.in_uint8();
+        uint8_t data_bpp = this->stream.in_uint8();
+        uint8_t hotspot_x = this->stream.in_uint8();
+        uint8_t hotspot_y = this->stream.in_uint8();
+        uint16_t dlen = this->stream.in_uint16_le();
+        uint16_t mlen = this->stream.in_uint16_le();
+        assert(dlen <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 3);
+        assert(mlen <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8);
+        auto data = stream.in_uint8p(dlen);
+        auto mask = stream.in_uint8p(mlen);
+        this->statistics.CachePointer.total_len += 9 + mlen + dlen;
 
-        cursor.width    = this->stream.in_uint8();
-        cursor.height   = this->stream.in_uint8();
-        /* cursor.bpp   = this->stream.in_uint8();*/
-        this->stream.in_skip_bytes(1);
-
-        cursor.x = this->stream.in_uint8();
-        cursor.y = this->stream.in_uint8();
-
-        uint16_t data_size = this->stream.in_uint16_le();
-        assert(data_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 3);
-
-        uint16_t mask_size = this->stream.in_uint16_le();
-        assert(mask_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8);
-
-        stream.in_copy_bytes(cursor.data, std::min<size_t>(sizeof(cursor.data), data_size));
-        stream.in_copy_bytes(cursor.mask, std::min<size_t>(sizeof(cursor.mask), mask_size));
-
-        this->statistics.CachePointer.total_len += this->stream.get_current() - p;
+        Pointer cursor(data_bpp, {width, height}, {hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen});
 
         this->ptr_cache.add_pointer_static(cursor, cache_idx);
-
         for (gdi::GraphicApi * gd : this->graphic_consumers){
             gd->set_pointer(cursor);
         }

@@ -346,6 +346,7 @@ public:
             switch (this->mod_state) {
                 case MOD_RDP:
                 {
+                
                     ModRDPParams mod_rdp_params( this->user_name.c_str()
                                     , this->user_password.c_str()
                                     , this->target_IP.c_str()
@@ -1252,6 +1253,7 @@ public:
 //     }
 
     ResizeResult server_resize(int width, int height, int bpp) override {
+        LOG(LOG_INFO, "server_resize to (%d, %d, %d)", width, height, bpp);
         if (this->impl_graphic) {
             return this->impl_graphic->server_resize(width, height, bpp);
         }

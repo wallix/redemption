@@ -36,7 +36,7 @@ h
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "core/RDP/pointer.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 #include "core/report_message_api.hpp"
 #include "core/session_reactor.hpp"
 #include "keyboard/keymapSym.hpp"
@@ -836,18 +836,7 @@ public:
         }
 
         // set almost null cursor, this is the little dot cursor
-        Pointer cursor;
-        cursor.x = 3;
-        cursor.y = 3;
-        // cursor.bpp = 24;
-        cursor.width = 32;
-        cursor.height = 32;
-        memset(cursor.data + 31 * (32 * 3), 0xff, 9);
-        memset(cursor.data + 30 * (32 * 3), 0xff, 9);
-        memset(cursor.data + 29 * (32 * 3), 0xff, 9);
-        memset(cursor.mask, 0xff, 32 * (32 / 8));
-
-        cursor.update_bw();
+        Pointer cursor(Pointer::POINTER_DOT);
 
         this->front.set_pointer(cursor);
 
@@ -2365,13 +2354,16 @@ private:
                         break;
                         }
                         buf.advance(sz);
+                        // Note: it is important to immediately call State::Data as in some cases there won't be 
+                        // any trailing data to expect.
+                        this->last = VNC::Encoder::EncoderState::Ready;
                         r = Result::ok(State::Data);
                     }
                 }
                 break;
                 case State::Data:
                     {
-                        if (last == VNC::Encoder::EncoderState::NeedMoreData){
+                        if (this->last == VNC::Encoder::EncoderState::NeedMoreData){
                             if (this->last_avail == buf.remaining()){
                                 LOG(LOG_INFO, "new call without more data");
                             }

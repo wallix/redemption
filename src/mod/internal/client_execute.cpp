@@ -28,13 +28,10 @@
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "core/RDP/pointer.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "mod/internal/internal_mod.hpp"
-#include "mod/mod_api.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/windowing_api.hpp"
-#include "utils/bitmap.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "utils/stream.hpp"
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp" // msgdump_c
