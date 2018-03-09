@@ -550,7 +550,6 @@ public:
 
     void session_update(const timeval& /*now*/, array_view_const_char message) override {
         this->is_probe_enabled_session = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
-        this->flush();
     }
 
     void possible_active_window_change() override {
