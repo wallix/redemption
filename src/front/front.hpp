@@ -1013,6 +1013,7 @@ public:
 
         WrmParams wrm_params = wrm_params_from_ini(
             this->capture_bpp,
+            this->client_info.remote_program,
             this->cctx,
             this->gen,
             this->fstat,

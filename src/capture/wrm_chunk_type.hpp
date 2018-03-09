@@ -40,6 +40,7 @@ enum class WrmChunkType : uint16_t
     SESSION_UPDATE      = 0x1004,
 
     POSSIBLE_ACTIVE_WINDOW_CHANGE = 0x2000,
+    IMAGE_FRAME_RECT              = 0x2001,
 
     INVALID_CHUNK       = 0x8000
 };

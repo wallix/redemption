@@ -1681,6 +1681,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         WrmParams const wrm_params = wrm_params_from_ini(
                             wrm_color_depth,
+                            player.remote_app,
                             cctx,
                             rnd,
                             fstat,
