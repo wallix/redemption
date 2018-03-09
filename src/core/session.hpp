@@ -485,7 +485,7 @@ public:
                                 }
                             } while (session_reactor.signal);
                         }
-                        else if (signal == BACK_EVENT_STOP) {
+                        else if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
                             run_session = false;
                         }
                         if (mm.last_module) {
@@ -496,8 +496,12 @@ public:
                 } catch (Error const& e) {
                     LOG(LOG_ERR, "Session::Session exception = %s\n", e.errmsg());
                     time_t now = time(nullptr);
-                    mm.invoke_close_box(local_err_msg(e, language(this->ini)), signal, now, authentifier, authentifier);
-                };
+                    signal = BackEvent_t(session_reactor.signal);
+                    mm.invoke_close_box(
+                        local_err_msg(e, language(this->ini)),
+                        signal, now, authentifier, authentifier);
+                    session_reactor.signal = signal;
+                }
             }
             if (mm.mod) {
                 mm.mod->disconnect(time(nullptr));
