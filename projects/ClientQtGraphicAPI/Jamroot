@@ -1,6 +1,6 @@
-JAM_INCLUDE_PATH ?= ../../jam ;
+JAM_INCLUDE_PATH ?= [ SHELL "readlink -n -f ../../jam" ] ;
 
-REDEMPTION_PUBLIC_PATH ?= ../.. ;
+REDEMPTION_PUBLIC_PATH ?= [ SHELL "readlink -n -f ../.." ] ;
 REDEMPTION_INCLUDE_PATH ?= $(REDEMPTION_PUBLIC_PATH)/include ;
 REDEMPTION_MODULES_SRC_PATH ?= $(REDEMPTION_PUBLIC_PATH)/modules ;
 
