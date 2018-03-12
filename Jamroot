@@ -361,25 +361,3 @@ make tests/web_video/test.mp4 : generate_video : @run_web_video_mp4 ;
 
 alias test_web_video_mp4 : tests/web_video/test.mp4 ;
 ## } test_web_video_mp4
-
-test-run test_executor :
-  $(REDEMPTION_TEST_PATH)/utils/test_executor.cpp
-:
-#   <covfile>src/utils/executor.hpp
-  <cxxflags>-std=c++1z
-  <library>crypto
-  <library>gssapi_krb5
-  <library>krb5
-  <library>openssl
-  <library>src/core/RDP/nego.o
-  <library>src/utils/hexdump.o
-;
-explicit test_executor ;
-
-
-exe epoll :
-  $(REDEMPTION_SRC_PATH)/main/epoll.cpp
-:
-  <cxxflags>-std=c++1z
-;
-explicit epoll ;

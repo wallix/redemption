@@ -77,14 +77,12 @@ public:
         unsigned width;
         unsigned height;
         CursorSize(unsigned w, unsigned h) : width(w), height(h) {}
-        CursorSize(const CursorSize & cs) : width(cs.width), height(cs.height) {}
     };
 
     struct Hotspot {
         unsigned x;
         unsigned y;
         Hotspot(unsigned x, unsigned y) : x(x), y(y) {}
-        Hotspot(const Hotspot & hs) : x(hs.x), y(hs.y) {}
     };
 
 private:

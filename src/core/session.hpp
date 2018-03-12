@@ -187,20 +187,11 @@ public:
                     timeout = {0, 0};
                 }
 
+                SessionReactor::EnableGraphics enable_graphics{front.up_and_running};
+
                 session_reactor.clear();
 
-                auto tv = session_reactor.timer_events_.get_next_timeout();
-                if (front.up_and_running) {
-                    auto tv2 = session_reactor.graphic_timer_events_.get_next_timeout();
-                    if (tv.tv_sec >= 0) {
-                        if (tv2.tv_sec >= 0) {
-                            tv = std::min(tv, tv2);
-                        }
-                    }
-                    else {
-                        tv = tv2;
-                    }
-                }
+                auto const tv = session_reactor.get_next_timeout(enable_graphics);
                 auto tv_now = tvtime();
                 // LOG(LOG_DEBUG, "%ld %ld - %ld %ld", tv.tv_sec, tv.tv_usec, tv_now.tv_sec, tv_now.tv_usec);
                 if (tv.tv_sec >= 0 && tv < timeout + tv_now) {
@@ -214,20 +205,14 @@ public:
                 // LOG(LOG_DEBUG, "tv_now: %ld %ld", tv_now.tv_sec, tv_now.tv_usec);
                 // session_reactor.timer_events_.info(tv_now);
 
-                for (auto& top_fd : session_reactor.fd_events_.elements) {
-                    // LOG(LOG_DEBUG, "set fd: %d", top_fd->fd);
-                    if (top_fd->alive()) {
-                        io_fd_set(top_fd->value.fd, rfds);
+                session_reactor.for_each_fd(
+                    enable_graphics,
+                    [&](int fd, [[maybe_unused]] auto const& elem){
+                        // LOG(LOG_DEBUG, "%p set fd: %d", static_cast<void*>(elem), fd);
+                        io_fd_set(fd, rfds);
+                        max = std::max(max, unsigned(fd));
                     }
-                    max = std::max(max, unsigned(top_fd->value.fd));
-                }
-                for (auto& top_fd : session_reactor.graphic_fd_events_.elements) {
-                    // LOG(LOG_DEBUG, "set fd: %d", top_fd->fd);
-                    if (top_fd->alive()) {
-                        io_fd_set(top_fd->value.fd, rfds);
-                    }
-                    max = std::max(max, unsigned(top_fd->value.fd));
-                }
+                );
 
                 int num = select(max + 1, &rfds, nullptr/*&wfds*/, nullptr, &timeout);
 
@@ -251,13 +236,9 @@ public:
                     this->write_performance_log(now);
                 }
 
-                auto const end_tv = session_reactor.get_current_time();
-                if (num == 0) {
-                    session_reactor.timer_events_.exec(end_tv);
-                    if (front.up_and_running) {
-                        session_reactor.graphic_timer_events_.exec(end_tv, mm.get_graphic_wrapper(front));
-                    }
-                }
+                session_reactor.execute_timers(enable_graphics, [&]() -> gdi::GraphicApi& {
+                    return mm.get_graphic_wrapper(front);
+                });
                 // session_reactor.timer_events_.info(end_tv);
 
                 session_reactor.fd_events_.exec(rfds);
@@ -304,8 +285,8 @@ public:
                         {
                             if (BACK_EVENT_NONE == session_reactor.signal) {
                                 // Process incoming module trafic
-                                session_reactor.graphic_events_.exec(mm.get_graphic_wrapper(front));
-                                session_reactor.graphic_fd_events_.exec(rfds, mm.get_graphic_wrapper(front));
+                                session_reactor.execute_graphics(
+                                    rfds, mm.get_graphic_wrapper(front));
                             }
                         }
                         catch (Error const & e) {
@@ -428,7 +409,7 @@ public:
                             // authentifier received updated values
                             acl->acl_serial.receive();
                             if (!ini.changed_field_size()) {
-                                session_reactor.sesman_events_.exec(ini);
+                                session_reactor.execute_sesman(ini);
                             }
                         }
 

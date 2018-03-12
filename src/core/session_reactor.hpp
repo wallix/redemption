@@ -183,7 +183,7 @@ struct SessionReactor
         Data* data = nullptr;
     };
 
-    struct SharedPtrPrivateAccess
+    struct SharedPtrAccess
     {
         template<class T>
         static auto& p(T& p_) noexcept
@@ -193,127 +193,30 @@ struct SessionReactor
     };
 
     template<class T>
-    class SharedPtrPrivate
-    {
-        using Data = typename SharedPtrBase<T>::Data;
-
-        SharedPtrBase<T> p;
-
-        SharedPtrPrivate(Data* p) noexcept
-          : p(p)
-        {}
-
-        friend SharedPtrPrivateAccess;
-
-    public:
-        SharedPtrPrivate(SharedPtrPrivate&&) = default;
-        SharedPtrPrivate& operator=(SharedPtrPrivate&&) = default;
-
-#ifndef NDEBUG
-        ~SharedPtrPrivate()
-        {
-            assert(!this->p);
-        }
-#endif
-
-        explicit operator bool () const noexcept
-        {
-            return bool(this->p);
-        }
-
-        T* get() const noexcept
-        {
-            return this->p->get();
-        }
-
-        T* operator->() const noexcept
-        {
-            return this->p.operator->();
-        }
-
-        T& operator*() const noexcept
-        {
-            return *this->p;
-        }
-
-        template<class F>
-        void set_notify_delete(F f) noexcept
-        {
-            this->p.set_deleter(make_deleter(f));
-        }
-
-        template<class F>
-        static auto make_deleter(F = nullptr) noexcept
-        {
-            return [](SharedDataBase* base) noexcept -> void {
-                LOG(LOG_DEBUG, "dealloc %p %s", static_cast<void*>(base), typeid(T).name());
-                # ifndef NDEBUG
-                base->deleter = [](SharedDataBase* p) noexcept {
-                    LOG(LOG_DEBUG, "dealloc %p %s already delete", static_cast<void*>(p), typeid(T).name());
-                    assert(!"already delete");
-                };
-                # endif
-
-                auto* data = static_cast<Data*>(base);
-                assert(static_cast<void*>(data) == static_cast<void*>(base));
-                static_cast<SharedPtrBase<T>*>(data->shared_ptr)->data = nullptr;
-                data->shared_ptr = nullptr;
-                --data->use_count;
-                if constexpr (!std::is_same<F, std::nullptr_t>::value) {
-                    data->value.ctx.invoke(jln::make_lambda<F>());
-                }
-                data->value.~T();
-            };
-        }
-
-        template<int Use = 1, class C, class... Args>
-        static SharedPtrPrivate New(C&& c, Args&&... args)
-        {
-            Data* data = static_cast<Data*>(::operator new(sizeof(Data)));
-            LOG(LOG_DEBUG, "new %p %s", static_cast<void*>(data), typeid(T).name());
-            if constexpr (noexcept(T(static_cast<Args&&>(args)...))) {
-                new(&data->value) T(static_cast<Args&&>(args)...);
-            }
-            else {
-                bool failed = true;
-                SCOPE_EXIT(if (failed) {
-                    ::operator delete(data);
-                });
-                new(&data->value) T(static_cast<Args&&>(args)...);
-                failed = false;
-            }
-            c.attach(data);
-            data->use_count = Use + 1;
-            data->deleter = SharedPtrPrivate::make_deleter(nullptr);
-            return SharedPtrPrivate(data);
-        }
-    };
-
-    template<class T>
     class SharedPtr
     {
+    protected:
         SharedPtrBase<T> p;
+        friend SharedPtrAccess;
 
     public:
         using value_type = T;
 
         SharedPtr() = default;
-        SharedPtr(SharedPtr&&) = default;
-        SharedPtr& operator=(SharedPtr&&) = default;
 
         template<class U>
-        SharedPtr(SharedPtrPrivate<U>&& other) noexcept
-          : p(std::move(SharedPtrPrivateAccess::p(other)))
+        SharedPtr(SharedPtr<U>&& other) noexcept
+          : p(std::move(SharedPtrAccess::p(other)))
         {
             this->p.data->shared_ptr = &this->p;
         }
 
         template<class U>
-        SharedPtr& operator=(SharedPtrPrivate<U>&& other) noexcept
+        SharedPtr& operator=(SharedPtr<U>&& other) noexcept
         {
-            assert(static_cast<SharedDataBase*>(SharedPtrPrivateAccess::p(other).data) != static_cast<SharedDataBase*>(this->p.data));
+            assert(static_cast<SharedDataBase*>(SharedPtrAccess::p(other).data) != static_cast<SharedDataBase*>(this->p.data));
             this->reset();
-            this->p = std::move(SharedPtrPrivateAccess::p(other));
+            this->p = std::move(SharedPtrAccess::p(other));
             this->p.data->shared_ptr = &this->p;
             return *this;
         }
@@ -343,6 +246,76 @@ struct SessionReactor
             if (this->p) {
                 this->p.data->apply_deleter();
             }
+        }
+    };
+
+    template<class T>
+    class SharedPtrPrivate : public SharedPtr<T>
+    {
+        using Data = typename SharedPtrBase<T>::Data;
+
+        SharedPtrPrivate(Data* data) noexcept
+        {
+            this->p.data = data;
+            this->p.data->shared_ptr = &this->p;
+        }
+
+        friend SharedPtrAccess;
+
+    public:
+        template<class F>
+        void set_notify_delete(F f) noexcept
+        {
+            this->p.set_deleter(make_deleter(f));
+        }
+
+        template<class F>
+        static auto make_deleter(F = nullptr) noexcept
+        {
+            return [](SharedDataBase* base) noexcept -> void {
+                LOG(LOG_DEBUG, "dealloc %p %s", static_cast<void*>(base), typeid(T).name());
+                # ifndef NDEBUG
+                base->deleter = [](SharedDataBase* p) noexcept {
+                    LOG(LOG_DEBUG, "dealloc %p %s already delete", static_cast<void*>(p), typeid(T).name());
+                    assert(!"already delete");
+                };
+                # endif
+
+                static_cast<SharedPtrBase<T>*>(base->shared_ptr)->data = nullptr;
+                base->shared_ptr = nullptr;
+                --base->use_count;
+                auto* data = static_cast<Data*>(base);
+                assert(static_cast<void*>(data) == static_cast<void*>(base));
+                if constexpr (!std::is_same<F, std::nullptr_t>::value) {
+                    data->value.ctx.invoke(jln::make_lambda<F>());
+                }
+                data->value.~T();
+            };
+        }
+
+        template<int Use = 1, class C, class... Args>
+        static SharedPtrPrivate New(C&& c, Args&&... args)
+        {
+            Data* data = static_cast<Data*>(::operator new(sizeof(Data)));
+            LOG(LOG_DEBUG, "new %p %s", static_cast<void*>(data), typeid(T).name());
+            if constexpr (noexcept(T(static_cast<Args&&>(args)...))) {
+                new(&data->value) T(static_cast<Args&&>(args)...);
+            }
+            else {
+                bool failed = true;
+                SCOPE_EXIT(if (failed) {
+                    ::operator delete(data);
+                });
+                new(&data->value) T(static_cast<Args&&>(args)...);
+                failed = false;
+            }
+            c.attach(data);
+#ifndef NDEBUG
+            data->shared_ptr = nullptr;
+#endif
+            data->use_count = Use + 1;
+            data->deleter = SharedPtrPrivate::make_deleter(nullptr);
+            return SharedPtrPrivate(data);
         }
     };
 
@@ -781,6 +754,82 @@ struct SessionReactor
     {
         //assert((this->current_time.tv_sec /*> -1*/) && "current_time is uninitialized. Used set_current_time");
         return this->current_time;
+    }
+
+    struct EnableGraphics
+    {
+        explicit EnableGraphics(bool enable) noexcept
+          : enable(enable)
+        {}
+
+        explicit operator bool () const noexcept
+        {
+            return this->enable;
+        }
+
+        const bool enable;
+    };
+
+    timeval get_next_timeout(EnableGraphics enable_gd)
+    {
+        auto tv = this->timer_events_.get_next_timeout();
+        if (enable_gd) {
+            auto const tv2 = this->graphic_timer_events_.get_next_timeout();
+            if (tv.tv_sec < 0) {
+                tv = tv2;
+            }
+            else if (tv2.tv_sec >= 0) {
+                tv = std::min(tv, tv2);
+            }
+        }
+        return tv;
+    }
+
+    template<class F>
+    void for_each_fd(EnableGraphics enable_gd, F f)
+    {
+        for (auto& top_fd : this->fd_events_.elements) {
+            if (top_fd->alive()) {
+                assert(top_fd->value.fd != -1);
+                f(top_fd->value.fd, top_fd->value);
+            }
+        }
+        if (enable_gd) {
+            for (auto& top_fd : this->graphic_fd_events_.elements) {
+                if (top_fd->alive()) {
+                    assert(top_fd->value.fd != -1);
+                    f(top_fd->value.fd, top_fd->value);
+                }
+            }
+        }
+    }
+
+    template<class GetGd>
+    void execute_timers(EnableGraphics enable_gd, GetGd get_gd)
+    {
+        auto const end_tv = this->get_current_time();
+        this->timer_events_.exec(end_tv);
+        if (enable_gd) {
+            this->graphic_timer_events_.exec(end_tv, get_gd());
+        }
+    }
+
+    template<class GetGd>
+    void execute_timers_at(EnableGraphics enable_gd, timeval const& end_tv, GetGd get_gd)
+    {
+        this->set_current_time(end_tv);
+        this->execute_timers(enable_gd, get_gd);
+    }
+
+    void execute_graphics(fd_set& rfds, gdi::GraphicApi& gd)
+    {
+        this->graphic_events_.exec(gd);
+        this->graphic_fd_events_.exec(rfds, gd);
+    }
+
+    void execute_sesman(Inifile& ini)
+    {
+        this->sesman_events_.exec(ini);
     }
 
     void clear()

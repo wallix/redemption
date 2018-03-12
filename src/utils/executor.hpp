@@ -95,10 +95,15 @@ namespace detail
     {
         template<class F, class... Args>
         decltype(auto) invoke(F && f, Args&&... args)
-        FALCON_RETURN_NOEXCEPT(f(
+        noexcept(noexcept(f(
             static_cast<Args&&>(args)...,
-            static_cast<tuple_elem<ints, Ts>&>(*this).x...
-        ))
+            static_cast<tuple_elem<ints, Ts>*>(nullptr)->x...)))
+        {
+            return f(
+                static_cast<Args&&>(args)...,
+                static_cast<tuple_elem<ints, Ts>&>(*this).x...
+            );
+        }
     };
 
     template<class... Ts>
@@ -1015,12 +1020,30 @@ private:
     FdPtr fd_ptr;
 };
 
+#ifdef __clang__
+template<class IsInvocable, bool = IsInvocable::value>
+struct CheckProto{};
+
+template<class IsInvocable>
+struct CheckProto<IsInvocable, false>
+{
+    static_assert(IsInvocable::value);
+};
+#endif
+
 template<class F, class T, template<class...> class Ctx>
 struct wrap_fn
 {
     template<class R, class E, class... Args>
     operator detail::ident<R(*)(E, Args...)> () noexcept
     {
+#ifdef __clang__
+        struct Context : Ctx<T> {};
+        auto lbd = [](auto&&... args){
+            return std::is_invocable_r<R, F, Context, Args..., decltype(args)...>{};
+        };
+        (void)CheckProto<decltype(static_cast<decltype(T::ctx)*>(nullptr)->invoke(lbd))>{};
+#endif
         return [](E& e, Args... prefix_args) -> R {
             auto& self = static_cast<T&>(e);
             // TODO ExecutorExitContext

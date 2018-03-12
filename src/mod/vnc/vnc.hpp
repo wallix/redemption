@@ -164,7 +164,7 @@ private:
     bool client_use_long_format_names = false;
     bool server_use_long_format_names = true;
 
-    enum {
+    enum VncState {
         ASK_PASSWORD,
         DO_INITIAL_CLEAR_SCREEN,
         RETRY_CONNECTION,
@@ -191,7 +191,7 @@ public:
 private:
     std::string encodings;
 
-    int state;
+    VncState state;
 
     bool allow_authentification_retries;
 
