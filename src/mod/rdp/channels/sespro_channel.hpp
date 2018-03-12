@@ -472,6 +472,10 @@ public:
         }
     }
 
+    bool has_been_launched() const {
+        return this->session_probe_ready;
+    }
+
     void start_launch_timeout_timer()
     {
         if ((this->session_probe_effective_launch_timeout.count() > 0) &&
