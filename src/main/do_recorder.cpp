@@ -1205,6 +1205,13 @@ static void show_metadata(FileToGraphic const & player) {
         //cout << "Cache 4 size          : " << player.info_cache_4_size                            << endl;
         std::cout << "Compression algorithm : " << static_cast<int>(player.info_compression_algorithm) << '\n';
     }
+    if (!player.image_frame_rect.isempty()) {
+        std::cout << "Image frame rect      : (" <<
+            player.image_frame_rect.x << ", "  <<
+            player.image_frame_rect.y << ", "  <<
+            player.image_frame_rect.cx << ", "  <<
+            player.image_frame_rect.cy << ")"  << '\n';
+    }
     std::cout.flush();
 }
 
