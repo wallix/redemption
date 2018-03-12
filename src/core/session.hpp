@@ -244,7 +244,7 @@ public:
                 session_reactor.fd_events_.exec(rfds);
                 if (session_reactor.front_events().size() || sck_is_set(front_trans, rfds)) {
                     try {
-                        session_reactor.front_events_.exec(mm.get_callback());
+                        session_reactor.execute_callbacks(mm.get_callback());
                         if (sck_is_set(front_trans, rfds)) {
                             front.incoming(mm.get_callback(), now);
                         }

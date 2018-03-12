@@ -586,17 +586,17 @@ struct REDEMPTION_CXX_NODISCARD BasicContext
         return ExecutorResult::Nothing;
     }
 
-    template<class F1, class F2>
-    ExecutorResult exec_action2(F1 f1, F2 f2)
+    template<class F1, class F2, class... Args>
+    ExecutorResult exec_action2(F1 f1, F2 f2, Args&&... args)
     {
         this->event.set_on_action(f1);
-        return this->event.ctx.invoke(f2, Ctx{this->event});
+        return this->event.ctx.invoke(f2, Ctx{this->event}, static_cast<Args&&>(args)...);
     }
 
-    template<class F>
-    ExecutorResult exec_action(F f)
+    template<class F, class... Args>
+    ExecutorResult exec_action(F f, Args&&... args)
     {
-        return this->exec_action2(f, f);
+        return this->exec_action2(f, f, static_cast<Args&&>(args)...);
     }
 
     timeval get_current_time() const noexcept
@@ -1134,7 +1134,7 @@ struct TimerImpl : ContextedEvent<EventContainer, BasicTimer<PrefixArgs>, Ts...>
 
     void set_time(timeval const& tv) noexcept
     {
-        TimerImpl::contexted_event::set_delay(std::chrono::microseconds(-1));
+        TimerImpl::contexted_event::set_delay(std::chrono::milliseconds(-1));
         TimerImpl::contexted_event::set_time(tv);
     }
 
@@ -1288,7 +1288,7 @@ struct string_c
 {
     static inline char const value[sizeof...(cs)+1]{cs..., '\0'};
 
-    constexpr char const* c_str() const noexcept { return value; }
+    static constexpr char const* c_str() noexcept { return value; }
 };
 
 namespace detail
@@ -1324,6 +1324,10 @@ namespace literals
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
     template<class C, C... cs>
     string_c<cs...> operator ""_c () noexcept
+    { return {}; }
+
+    template<class C, C... cs>
+    string_c<cs...> operator ""_s () noexcept
     { return {}; }
 
     template<class C, C... cs>
@@ -1409,6 +1413,16 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
     //     }
     // }
 
+    ExecutorResult sequence_next_or_terminate() noexcept
+    {
+        if constexpr (I::value == Sequencer::sequence_size - 1) {
+            return this->terminate();
+        }
+        else {
+            return this->sequence_next();
+        }
+    }
+
     constexpr static bool is_final_sequence() noexcept
     {
         return I::value == Sequencer::sequence_size - 1;
@@ -1446,16 +1460,16 @@ struct REDEMPTION_CXX_NODISCARD FunSequencerExecutorCtx : Ctx
         return this->next_action(this->get_sequence_name<S>());
     }
 
-    template<std::size_t i>
-    ExecutorResult exec_sequence_at() noexcept
+    template<std::size_t i, class... Args>
+    ExecutorResult exec_sequence_at(Args&&... args) noexcept
     {
-        return this->exec_action(this->get_sequence_at<i>());
+        return this->exec_action(this->get_sequence_at<i>(), static_cast<Args&&>(args)...);
     }
 
-    template<class S>
-    ExecutorResult exec_sequence_at(S) noexcept
+    template<class S, class... Args>
+    ExecutorResult exec_sequence_at(S, Args&&... args) noexcept
     {
-        return this->exec_action(this->get_sequence_name<S>());
+        return this->exec_action(this->get_sequence_name<S>(), static_cast<Args&&>(args)...);
     }
 
     template<std::size_t i>

@@ -38,43 +38,236 @@ RED_AUTO_TEST_CASE(TestSessionExecutorTimer)
     std::string s;
 
     auto timer1 = session_reactor.create_timer(std::ref(s))
+    .set_notify_delete([](std::string& s){
+        s += "d1\n";
+    })
     .set_delay(std::chrono::seconds(1))
     .on_action(jln::one_shot([](std::string& s){
         s += "timer1\n";
     }));
+
     auto timer2 = session_reactor.create_timer(std::ref(s))
+    .set_notify_delete([](std::string& s){
+        s += "d2\n";
+    })
     .set_delay(std::chrono::seconds(2))
-    .on_action([](auto ctx, std::string& s){
+    .on_action(jln::always_ready([](std::string& s){
         s += "timer2\n";
-        return ctx.ready();
+    }));
+
+    auto timer3 = session_reactor.create_timer(std::ref(s), 'a')
+    .set_notify_delete([](std::string& s, char){
+        s += "d3\n";
+    })
+    .set_delay(std::chrono::seconds(1))
+    .on_action([](auto ctx, std::string& s, char& c){
+        s += "timer3\n";
+        return c++ == 'd' ? ctx.terminate() : ctx.ready();
     });
+
+    auto timer4 = session_reactor.create_graphic_timer(std::ref(s))
+    .set_time({16, 0})
+    .on_action(jln::one_shot([](gdi::GraphicApi&, std::string& s){
+        s += "timer4\n";
+    }));
 
     SessionReactor::EnableGraphics enable_gd{true};
     SessionReactor::EnableGraphics disable_gd{false};
 
-    session_reactor.execute_timers(enable_gd, &gdi::null_gd);
+    session_reactor.execute_timers(disable_gd, &gdi::null_gd);
     RED_CHECK_EQ(s, "");
 
-    session_reactor.execute_timers_at(enable_gd, {11, 222}, &gdi::null_gd);
-    RED_CHECK_EQ(s, "timer1\n");
+    // execute_timers_at or set_current_time + execute_timers
+    session_reactor.execute_timers_at(disable_gd, {11, 222}, &gdi::null_gd);
+    RED_CHECK_EQ(s, "timer1\nd1\ntimer3\n");
     RED_CHECK(!timer1);
     RED_CHECK(timer2);
 
-    session_reactor.execute_timers_at(enable_gd, {13, 0}, &gdi::null_gd);
-    RED_CHECK_EQ(s, "timer1\ntimer2\n");
+    session_reactor.execute_timers_at(disable_gd, {13, 0}, &gdi::null_gd);
+    RED_CHECK_EQ(s, "timer1\nd1\ntimer3\ntimer2\ntimer3\n");
     RED_CHECK(!timer1);
     RED_CHECK(timer2);
 
-    session_reactor.execute_timers_at(enable_gd, {14, 0}, &gdi::null_gd);
-    RED_CHECK_EQ(s, "timer1\ntimer2\n");
+    session_reactor.execute_timers_at(disable_gd, {14, 0}, &gdi::null_gd);
+    RED_CHECK_EQ(s, "timer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\n");
     RED_CHECK(timer2);
 
-    session_reactor.execute_timers_at(enable_gd, {15, 0}, &gdi::null_gd);
-    RED_CHECK_EQ(s, "timer1\ntimer2\ntimer2\n");
+    session_reactor.execute_timers_at(disable_gd, {15, 0}, &gdi::null_gd);
+    RED_CHECK_EQ(s, "timer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\ntimer2\ntimer3\nd3\n");
     RED_CHECK(timer2);
 
     timer2.reset();
-    session_reactor.execute_timers_at(enable_gd, {18, 0}, &gdi::null_gd);
-    RED_CHECK_EQ(s, "timer1\ntimer2\ntimer2\n");
     RED_CHECK(!timer2);
+    RED_CHECK_EQ(s, "timer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\ntimer2\ntimer3\nd3\nd2\n");
+
+    session_reactor.execute_timers_at(disable_gd, {16, 0}, &gdi::null_gd);
+    RED_CHECK_EQ(s, "timer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\ntimer2\ntimer3\nd3\nd2\n");
+
+    session_reactor.execute_timers_at(enable_gd, {16, 0}, &gdi::null_gd);
+    RED_CHECK_EQ(s, "timer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\ntimer2\ntimer3\nd3\nd2\ntimer4\n");
+}
+
+RED_AUTO_TEST_CASE(TestSessionExecutorSimpleEvent)
+{
+    SessionReactor session_reactor;
+
+    std::string s;
+
+    auto gd = session_reactor.create_graphic_event(std::ref(s))
+    .set_notify_delete([](std::string& s){
+        s += "~gd\n";
+    })
+    .on_action(jln::one_shot([](gdi::GraphicApi&, std::string& s){
+        s += "gd\n";
+    }));
+
+    auto callback = session_reactor.create_callback_event(std::ref(s))
+    .set_notify_delete([](std::string& s){
+        s += "~callback\n";
+    })
+    .on_action(jln::one_shot([](Callback&, std::string& s){
+        s += "callback\n";
+    }));
+
+    auto ini = session_reactor.create_sesman_event(std::ref(s))
+    .set_notify_delete([](std::string& s){
+        s += "~ini\n";
+    })
+    .on_action(jln::one_shot([](Inifile&, std::string& s){
+        s += "ini\n";
+    }));
+
+    fd_set rfds;
+    session_reactor.execute_graphics(rfds, gdi::null_gd());
+    RED_CHECK_EQ(s, "gd\n~gd\n");
+
+    char dummy;
+
+    session_reactor.execute_sesman(*reinterpret_cast<Inifile*>(&dummy));
+    RED_CHECK_EQ(s, "gd\n~gd\nini\n~ini\n");
+
+    session_reactor.execute_callbacks(*reinterpret_cast<Callback*>(&dummy));
+    RED_CHECK_EQ(s, "gd\n~gd\nini\n~ini\ncallback\n~callback\n");
+
+    RED_CHECK(!gd);
+    RED_CHECK(!ini);
+    RED_CHECK(!callback);
+}
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include "utils/select.hpp"
+#include "utils/sugar/scope_exit.hpp"
+
+RED_AUTO_TEST_CASE(TestSessionExecutorFd)
+{
+    SessionReactor session_reactor;
+
+    std::string s;
+
+    int fd1 = ::open("/tmp/execute_graphics.test", O_CREAT | O_RDONLY);
+    RED_REQUIRE_GT(fd1, 0);
+    SCOPE_EXIT(::close(fd1));
+
+    auto fd_event = session_reactor.create_fd_event(fd1, std::ref(s))
+    .set_notify_delete([](std::string& s){
+        s += "~fd1\n";
+    })
+    .on_action(jln::one_shot([](std::string& s){
+        s += "fd1\n";
+    }));
+
+    auto fd_gd_event = session_reactor.create_graphic_fd_event(fd1, std::ref(s))
+    .set_notify_delete([](std::string& s){
+        s += "~fd2\n";
+    })
+    .on_action(jln::one_shot([](gdi::GraphicApi&, std::string& s){
+        s += "fd2\n";
+    }));
+
+    fd_set rfds;
+    io_fd_zero(rfds);
+    io_fd_set(fd1, rfds);
+    session_reactor.execute_graphics(rfds, gdi::null_gd());
+    RED_CHECK_EQ(s, "fd2\n~fd2\n");
+
+    session_reactor.fd_events_.exec(rfds);
+    RED_CHECK_EQ(s, "fd2\n~fd2\nfd1\n~fd1\n");
+}
+
+RED_AUTO_TEST_CASE(TestSessionExecutorSequence)
+{
+    SessionReactor session_reactor;
+
+    std::string s;
+
+    using namespace jln::literals;
+    using jln::value;
+
+    auto trace = [](auto name){
+        return [](auto ctx, gdi::GraphicApi&, std::string& s){
+            s += decltype(name){}.c_str();
+            // or
+            // if constexpr (ctx.is_final_sequence()) return ctx.ready();
+            // else return ctx.sequence_next();
+            return ctx.sequence_next_or_terminate();
+        };
+    };
+
+    SessionReactor::GraphicEventPtr event = session_reactor.create_graphic_event(std::ref(s))
+    .on_action(jln::funcsequencer(
+        trace("a"_s),
+        trace("b"_s),
+        trace("c"_s),
+        trace("d"_s)
+    ));
+
+    fd_set rfds;
+    session_reactor.execute_graphics(rfds, gdi::null_gd());
+    RED_CHECK(event);
+    RED_CHECK_EQ(s, "a");
+    session_reactor.execute_graphics(rfds, gdi::null_gd());
+    RED_CHECK(event);
+    RED_CHECK_EQ(s, "ab");
+    session_reactor.execute_graphics(rfds, gdi::null_gd());
+    RED_CHECK(event);
+    RED_CHECK_EQ(s, "abc");
+    session_reactor.execute_graphics(rfds, gdi::null_gd());
+    RED_CHECK(!event);
+    RED_CHECK_EQ(s, "abcd");
+    s.clear();
+
+    auto trace2 = [](auto f){
+        return [](auto ctx, gdi::GraphicApi&, std::string& s){
+            s += ctx.sequence_name().c_str();
+            return jln::make_lambda<decltype(f)>()(ctx);
+        };
+    };
+
+    event = session_reactor.create_graphic_event(std::ref(s))
+    .on_action(jln::funcsequencer(
+        "a"_f = trace2([](auto ctx){ return ctx.sequence_next(); }),
+        "b"_f = trace2([](auto ctx){ return ctx.sequence_at("d"_s); }),
+        "c"_f = [](auto ctx, gdi::GraphicApi& gd, std::string& s){
+            s += ctx.sequence_name().c_str();
+            return ctx.exec_sequence_at("e"_s, gd);
+        },
+        "d"_f = trace2([](auto ctx){ return ctx.sequence_previous(); }),
+        "e"_f = trace2([](auto ctx){ return ctx.terminate(); })
+    ));
+
+    session_reactor.execute_graphics(rfds, gdi::null_gd());
+    RED_CHECK(event);
+    RED_CHECK_EQ(s, "a");
+    session_reactor.execute_graphics(rfds, gdi::null_gd());
+    RED_CHECK(event);
+    RED_CHECK_EQ(s, "ab");
+    session_reactor.execute_graphics(rfds, gdi::null_gd());
+    RED_CHECK(event);
+    RED_CHECK_EQ(s, "abd");
+    session_reactor.execute_graphics(rfds, gdi::null_gd());
+    RED_CHECK(!event);
+    RED_CHECK_EQ(s, "abdce");
 }

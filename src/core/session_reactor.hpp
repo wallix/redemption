@@ -832,6 +832,11 @@ struct SessionReactor
         this->sesman_events_.exec(ini);
     }
 
+    void execute_callbacks(Callback& callback)
+    {
+        this->front_events_.exec(callback);
+    }
+
     void clear()
     {
         auto remove_dead_state = [](auto& c){
