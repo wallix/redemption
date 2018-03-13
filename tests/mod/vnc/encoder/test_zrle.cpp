@@ -32,7 +32,7 @@
 #include "vnc_zrle_slice1_0_34.hpp"
 
 namespace VNC
-{ 
+{
     namespace Encoder {
         enum class State
         {
@@ -65,7 +65,7 @@ RED_AUTO_TEST_CASE(TestZrle)
         size_t pos;
     public:
         BlockWrap(const_byte_array & t) : t(t), pos(0) {}
-        
+
         size_t partial_read(byte_ptr buffer, size_t len) override
         {
             const size_t available = this->t.size() - this->pos;
@@ -135,6 +135,8 @@ RED_AUTO_TEST_CASE(TestZrle)
                         break;
                         case VNC::Encoder::EncoderState::Exit:
                             LOG(LOG_INFO, "End of encoder");
+                            delete encoder;
+                            encoder = nullptr;
                         break;
                         }
                 }
