@@ -189,8 +189,6 @@ public:
 
                 SessionReactor::EnableGraphics enable_graphics{front.up_and_running};
 
-                session_reactor.clear();
-
                 auto const tv = session_reactor.get_next_timeout(enable_graphics);
                 auto tv_now = tvtime();
                 // LOG(LOG_DEBUG, "%ld %ld - %ld %ld", tv.tv_sec, tv.tv_usec, tv_now.tv_sec, tv_now.tv_usec);

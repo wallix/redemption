@@ -23,12 +23,13 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#include "test_only/get_file_contents.hpp"
+#include "gdi/graphic_api.hpp"
 #include "transport/in_file_transport.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/make_unique.hpp"
 #include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "test_only/transport/test_transport.hpp"
+#include "test_only/get_file_contents.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -95,7 +96,7 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     for (int i = 0; i < 100 && !fd_events.empty(); ++i) {
         session_reactor.fd_events_.exec(rfds);
     }
-    session_reactor.clear();
+    session_reactor.execute_timers(SessionReactor::EnableGraphics{false}, &gdi::null_gd);
     RED_CHECK_EQ(fd_events.size(), 0);
     RED_CHECK_EQ(timer_events.size(), 0);
     RED_CHECK(!run_task);
@@ -144,7 +145,6 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
         session_reactor.timer_events_.exec(timeout);
         ++timeout.tv_sec;
     }
-    session_reactor.clear();
     RED_CHECK_EQ(timer_events.size(), 0);
     RED_CHECK(!run_task);
 }

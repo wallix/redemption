@@ -333,7 +333,6 @@ struct SessionReactor
         }
     };
 
-
     template<class Base>
     struct Container
     {
@@ -360,26 +359,81 @@ struct SessionReactor
         template<class Predicate, class... Args>
         void exec_impl(Predicate pred, Args&&... args)
         {
-            for (std::size_t i = 0; i < this->elements.size(); ++i) {
-                auto* elem = this->elements[i];
-                if (elem->alive() && pred(elem->value)) {
-                    switch (elem->value.exec_action(static_cast<Args&&>(args)...)) {
-                        case jln::ExecutorResult::ExitSuccess:
-                        case jln::ExecutorResult::ExitFailure:
-                            assert(false && "Exit");
-                        case jln::ExecutorResult::Terminate:
-                            assert(elem->alive());
-                            LOG(LOG_DEBUG, "f = %p %d", static_cast<void*>(elem), elem->use_count);
-                            elem->apply_deleter();
-                            break;
-                        case jln::ExecutorResult::NeedMoreData:
-                            assert(false && "NeedMoreData");
-                        case jln::ExecutorResult::Nothing:
-                        case jln::ExecutorResult::Ready:
-                            break;
+            auto run_element = [&](auto& elem){
+                if (!pred(elem.value)) {
+                    return true;
+                }
+                switch (elem.value.exec_action(static_cast<Args&&>(args)...)) {
+                    case jln::ExecutorResult::ExitSuccess:
+                    case jln::ExecutorResult::ExitFailure:
+                        assert(false && "Exit");
+                    case jln::ExecutorResult::Terminate:
+                        assert(elem.alive());
+                        LOG(LOG_DEBUG, "f = %p %d", static_cast<void*>(&elem), elem.use_count);
+                        elem.apply_deleter();
+                        return false;
+                    case jln::ExecutorResult::NeedMoreData:
+                        assert(false && "NeedMoreData");
+                    case jln::ExecutorResult::Nothing:
+                    case jln::ExecutorResult::Ready:
+                        return true;
+                }
+                return true;
+            };
+
+            this->run_elements(run_element);
+        }
+
+        template<class RunElement>
+        void run_elements(RunElement run_element)
+        {
+            auto& cont = this->elements;
+            for (std::size_t i = 0; i < cont.size(); ++i) {
+                auto* data_ptr = cont[i];
+                if (!data_ptr->alive() || !run_element(*data_ptr)) {
+                    auto alive_i = i;
+                    if (--data_ptr->use_count == 0) {
+                        ::operator delete(data_ptr);
                     }
+                    while (++i < cont.size()) {
+                        auto* data_ptr = cont[i];
+                        if (!data_ptr->alive() || run_element(*data_ptr)) {
+                            cont[alive_i] = data_ptr;
+                            ++alive_i;
+                        }
+                        else if (--data_ptr->use_count == 0) {
+                            ::operator delete(data_ptr);
+                        }
+                    }
+                    LOG(LOG_DEBUG, "dead: %zu", cont.size() - alive_i);
+                    cont.erase(cont.begin() + alive_i, cont.end());
+                    break;
                 }
             }
+        }
+
+        void clear()
+        {
+            for (auto* data_ptr : this->elements) {
+                switch (data_ptr->use_count) {
+                    case 3:
+                        assert(data_ptr->alive());
+                        --data_ptr->use_count;
+                        break;
+                    case 2:
+                        if (data_ptr->alive()) {
+                            data_ptr->apply_deleter();
+                        }
+                        else {
+                            --data_ptr->use_count;
+                        }
+                        break;
+                    case 1:
+                        ::operator delete(data_ptr);
+                        break;
+                }
+            }
+            this->elements.clear();
         }
 
         auto get_elem_iterator(Base& base)
@@ -389,6 +443,7 @@ struct SessionReactor
                 [&](Data* data){ return &data->value == &base; });
         }
 
+        // TODO CountedPointer
         std::vector<Data*> elements;
 
         template<template<class...> class Tpl, class... Args>
@@ -628,16 +683,17 @@ struct SessionReactor
         template<class... Args>
         void exec(fd_set& rfds, Args&&... args)
         {
-            for (std::size_t i = 0; i < this->elements.size(); ++i){
-                auto& e = *this->elements[i];
+            auto run_element = [&](auto& elem){
                 // LOG(LOG_DEBUG, "is set fd: %d %d", c[i]->fd, io_fd_isset(c[i]->fd, rfds));
-                if (e.alive()
-                    && io_fd_isset(e.value.fd, rfds)
-                    && !e.value.exec(static_cast<Args&&>(args)...)
-                ) {
-                    e.apply_deleter();
+                if (io_fd_isset(elem.value.fd, rfds)
+                 && !elem.value.exec(static_cast<Args&&>(args)...)) {
+                    elem.apply_deleter();
+                    return false;
                 }
-            }
+                return true;
+            };
+
+            this->run_elements(run_element);
         }
     };
 
@@ -837,69 +893,15 @@ struct SessionReactor
         this->front_events_.exec(callback);
     }
 
-    void clear()
-    {
-        auto remove_dead_state = [](auto& c){
-            c.elements.erase(std::remove_if(
-                c.elements.begin(), c.elements.end(),
-                [](auto& p){
-                    if (!p->shared_ptr && p->use_count == 2) {
-                        LOG(LOG_DEBUG, "detach %p", static_cast<void*>(p));
-                        --p->use_count;
-                        return true;
-                    }
-                    return false;
-                }
-            ), c.elements.end());
-            auto e = c.elements.end();
-            auto it = std::find_if(
-                c.elements.begin(), e,
-                [](auto& p){ return p->use_count == 1; });
-            if (it != e) {
-                auto itprev = it;
-                ::operator delete(*it);
-                LOG(LOG_DEBUG, "delete %p", static_cast<void*>(*it));
-                ++it;
-                while (it != e) {
-                    if ((*it)->use_count == 1) {
-                        ::operator delete(*it);
-                        LOG(LOG_DEBUG, "delete %p", static_cast<void*>(*it));
-                    }
-                    else {
-                        *itprev = *it;
-                        ++itprev;
-                    }
-                    ++it;
-                }
-                c.elements.erase(itprev, e);
-            }
-        };
-
-        remove_dead_state(front_events_);
-        remove_dead_state(graphic_events_);
-        remove_dead_state(sesman_events_);
-        remove_dead_state(timer_events_);
-        remove_dead_state(graphic_timer_events_);
-        remove_dead_state(fd_events_);
-        remove_dead_state(graphic_fd_events_);
-    }
-
     ~SessionReactor()
     {
-        this->clear();
-        auto remove_dead_state = [](auto& c){
-            for (auto& p : c.elements) {
-                p->deleter(p);
-            }
-        };
-        remove_dead_state(front_events_);
-        remove_dead_state(graphic_events_);
-        remove_dead_state(sesman_events_);
-        remove_dead_state(timer_events_);
-        remove_dead_state(graphic_timer_events_);
-        remove_dead_state(fd_events_);
-        remove_dead_state(graphic_fd_events_);
-        this->clear();
+        front_events_.clear();
+        graphic_events_.clear();
+        sesman_events_.clear();
+        timer_events_.clear();
+        graphic_timer_events_.clear();
+        fd_events_.clear();
+        graphic_fd_events_.clear();
     }
 
     auto& front_events()
