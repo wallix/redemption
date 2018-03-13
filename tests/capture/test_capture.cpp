@@ -2271,6 +2271,37 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
     }
 }
 
+RED_AUTO_TEST_CASE(TestKbdCapture2)
+{
+    struct : NullReportMessage {
+        std::string s;
+
+        void log5(const std::string &info) override {
+            s += info;
+        }
+    } report_message;
+
+    timeval const now = {0, 0};
+    SessionLogKbd kbd_capture(report_message);
+
+    {
+        kbd_capture.kbd_input(now, 't');
+
+        kbd_capture.session_update(now, cstr_array_view("INPUT_LANGUAGE=fr\x01xy\\z"));
+
+        RED_CHECK_EQUAL(report_message.s.size(), 0);
+
+        kbd_capture.kbd_input(now, 'o');
+
+        kbd_capture.kbd_input(now, 't');
+
+        kbd_capture.kbd_input(now, 'o');
+
+        kbd_capture.possible_active_window_change();
+
+        RED_CHECK_EQUAL("type=\"KBD_INPUT\" data=\"toto\"", report_message.s);
+    }
+}
 
 RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 {
