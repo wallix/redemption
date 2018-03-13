@@ -386,6 +386,7 @@ private Q_SLOTS:
 
                 }
             }
+
             if (!alreadySet && (this->_accountNB < MAX_ACCOUNT_DATA)) {
                 this->_accountData[this->_accountNB].title = title;
                 this->_accountData[this->_accountNB].IP    = this->get_IPField();

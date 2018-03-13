@@ -199,16 +199,16 @@ public:
 
         } else {
             std::cout << "Argument(s) required to connect: ";
-            if (!(this->commandIsValid & NAME_GOTTEN)) {
+            if (!(this->commandIsValid & NAME_GOT)) {
                 std::cout << "-n [user_name] ";
             }
-            if (!(this->commandIsValid & PWD_GOTTEN)) {
+            if (!(this->commandIsValid & PWD_GOT)) {
                 std::cout << "-w [password] ";
             }
-            if (!(this->commandIsValid & IP_GOTTEN)) {
+            if (!(this->commandIsValid & IP_GOT)) {
                 std::cout << "-i [ip_server] ";
             }
-            if (!(this->commandIsValid & PORT_GOTTEN)) {
+            if (!(this->commandIsValid & PORT_GOT)) {
                 std::cout << "-p [port] ";
             }
             std::cout << std::endl;
@@ -555,11 +555,7 @@ public:
         if (this->is_recording) {
             this->set_capture();
         }
-
-        if (this->port ==  5900) {
-            this->mod_state = MOD_VNC;
-        }
-
+        
         if (this->mod_state != MOD_VNC) {
 
             if (this->mod_state == MOD_RDP_REMOTE_APP) {
@@ -627,6 +623,8 @@ public:
                 this->cl.push_back(channel_audio_output);
             }
 
+        } else {
+            this->port =  5900;
         }
 
         if (this->impl_graphic) {
