@@ -115,6 +115,7 @@ public:
     void set_dimensions(const CursorSize & dimensions)
     {
         this->dimensions = dimensions;
+
     }
 
     Hotspot get_hotspot() const
@@ -208,6 +209,7 @@ public:
                             and_bit_extraction_mask = 7;
                             andMask++;
                         }
+
                     }
                 }
             }
@@ -239,37 +241,47 @@ public:
        size_t minheight = std::min<size_t>(size_t(d.height), size_t(32));
        size_t minwidth = std::min<size_t>(size_t(d.width), size_t(32));
 
-       uint8_t target_offset_line = 0;
-       uint8_t target_mask_offset_line = 0;
-       uint8_t source_offset_line = (minheight-1) * d.width * Bpp;
-       uint8_t source_mask_offset_line = (minheight-1) * ::nbbytes(d.width+1)-1;
+       size_t target_offset_line = 0;
+       size_t target_mask_offset_line = 0;
+       size_t source_offset_line = (minheight-1) * d.width * Bpp;
+       size_t source_mask_offset_line = (minheight-1) * ::nbbytes(d.width);
+       memset(this->data, 0xAA, sizeof(this->data));
+       
+//       LOG(LOG_INFO, "r%u rs<<%u g%u gs<<%u b%u bs<<%u", red_max, red_shift, green_max, green_shift, blue_max, blue_shift);
        for (size_t y = 0 ; y < minheight ; y++){
             for (size_t x = 0 ; x < minwidth ; x++){
-                const uint8_t target_offset = target_offset_line +x*3;
-                const uint8_t source_offset = source_offset_line + x*Bpp;
+                const size_t target_offset = target_offset_line +x*3;
+                const size_t source_offset = source_offset_line + x*Bpp;
                 unsigned pixel = 0;
-                for(size_t i = 0 ; i*8 < Bpp ; i++){
+                for(size_t i = 0 ; i < Bpp ; i++){
+//                    pixel = (pixel<<8) + vncdata[source_offset+Bpp-i-1];
                     pixel = (pixel<<8) + vncdata[source_offset+i];
                 }
-                const int red = (pixel >> red_shift) & red_max; 
-                const int green = (pixel >> green_shift) & green_max; 
-                const int blue = (pixel >> blue_shift) & blue_max;
-                (void)red; 
-                (void)green; 
-                (void)blue; 
-                this->data[target_offset] = 0xFF;
-                this->data[target_offset+1] = 0x00;
-                this->data[target_offset+2] = 0x00;
+                const unsigned red = (pixel >> red_shift) & red_max; 
+                const unsigned green = (pixel >> green_shift) & green_max; 
+                const unsigned blue = (pixel >> blue_shift) & blue_max;
+//               LOG(LOG_INFO, "pixel=%.2X (%.1X, %.1X, %.1X)", pixel, red, green, blue);
+                this->data[target_offset] = (red << 3) | (red >> 2);
+                this->data[target_offset+1] = (green << 2) | (green >> 4);
+                this->data[target_offset+2] = (blue << 3) | (blue >> 2);
             }
-            
             for (size_t xx = 0 ; xx*8 < minwidth ; xx++){
-                this->mask[target_mask_offset_line+xx] = vncmask[source_mask_offset_line+xx];
+//                LOG(LOG_INFO, "y=%u xx=%u source_mask_offset=%u target_mask_offset=%u")";
+                this->mask[target_mask_offset_line+xx] = 0xFF ^ vncmask[source_mask_offset_line+xx];
             }
-            target_offset_line += minwidth*3;
-            target_mask_offset_line += ::nbbytes(minwidth+1)-1;
+            if ((minwidth % 8) != 0){
+                this->mask[target_mask_offset_line+::nbbytes(minwidth)-1] |= (0xFF>>(minwidth % 8));
+            }
+
+            target_offset_line += (minwidth + (minwidth & 1))*3;
+            target_mask_offset_line += ::nbbytes(minwidth);
             source_offset_line -= d.width*Bpp;
-            source_mask_offset_line -= ::nbbytes(d.width+1)-1;
-        }
+            source_mask_offset_line -= ::nbbytes(d.width);
+       }
+       if (minwidth & 1){
+        this->dimensions.width++;
+       }
+        
         this->compute_alpha_q();
     }
 

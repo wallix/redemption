@@ -1963,6 +1963,11 @@ private:
                 // "\x01\x00\x1F\x00\x2F\x00\x1F\x0B\x05\x00"
                 // "\0\0\0"
 
+//                const char * pixel_format =  "\x20\x18\x00"
+//                                             "\x01\x00\xFF\x00\xFF\x00\xFF\x10\x08\x00"
+//                                             "\0\0\0" ;
+
+
                 const char * pixel_format =
                     "\x10" // bits per pixel  : 1 byte =  16
                     "\x10" // color depth     : 1 byte =  16
@@ -1975,6 +1980,7 @@ private:
                     "\x05" // green shift     : 1 bytes =  5
                     "\x00" // blue shift      : 1 bytes =  0
                     "\0\0\0"; // padding      : 3 bytes
+                    
                 stream.out_copy_bytes(pixel_format, 16);
                 this->t.send(stream.get_data(), stream.get_offset());
 

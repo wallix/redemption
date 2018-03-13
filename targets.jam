@@ -1733,7 +1733,14 @@ test-run tests/core/RDP/test_rdp_pointer :
 :
   <covfile>src/core/RDP/rdp_pointer.hpp
   <library>crypto
+  <library>png
+  <library>src/core/RDP/mppc.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/utils/bitmap.o
   <library>src/utils/hexdump.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
 ;
 test-run tests/core/RDP/test_remote_programs :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_remote_programs.cpp
