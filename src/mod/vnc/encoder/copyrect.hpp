@@ -26,6 +26,21 @@ h
 #include "utils/verbose_flags.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 
+// 7.6.2   CopyRect Encoding
+// =========================
+
+// The CopyRect (copy rectangle) encoding is a very simple and efficient encoding which can be used when the client
+// already has the same pixel data elsewhere in its framebuffer. The encoding on the wire simply consists of an X,Y
+// coordinate. This gives a position in the framebuffer from which the client can copy the rectangle of pixel data.
+// This can be used in a variety of situations, the most obvious of which are when the user moves a window across the
+// screen, and when the contents of a window are scrolled. A less obvious use is for optimising drawing of text or other
+// epeating patterns. An intelligent server may be able to send a pattern explicitly only once, and knowing the previous
+// position of the pattern in the framebuffer, send subsequent occurrences of the same pattern using the CopyRect encoding.
+
+// No. of bytes     Type    Description
+//      2           U16     src-x-position
+//      2           U16     src-y-position
+
 namespace VNC {
     namespace Encoder {
         class CopyRect : public EncoderApi {

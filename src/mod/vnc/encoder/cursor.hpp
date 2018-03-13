@@ -91,10 +91,6 @@ namespace VNC {
             // return is false if the encoder is waiting for more data
             EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
-                // TODO see why we get these empty rects ?
-                if (this->cx <= 0 && this->cy <= 0) {
-                    LOG(LOG_INFO, "empty rect %s", Rect(this->x, this->y, this->cx, this->cy));
-                }
                 if (this->cx == 0 || this->cy == 0) {
                     // TODO: empty Pointer: no cursor data to read. Should we set an invisible pointer ? If so we should have some flag to configure it
                     return EncoderState::Exit;

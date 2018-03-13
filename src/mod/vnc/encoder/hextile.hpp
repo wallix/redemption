@@ -173,6 +173,12 @@ namespace VNC {
             // return is false if the encoder is waiting for more data
             EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
+                if (this->r.isempty())
+                {
+                    LOG(LOG_INFO, "Hextile::hexTileraw Encoder done (empty)");
+                    return EncoderState::Exit;
+                }
+
                 size_t last_remaining = 0;
                 while (buf.remaining()){
 //                    LOG(LOG_INFO, "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
@@ -290,6 +296,7 @@ namespace VNC {
                     
 
                     if (not this->next_tile()){
+                        LOG(LOG_INFO, "Hextile::hexTileraw Encoder done");
                         return EncoderState::Exit;
                     }
                 }

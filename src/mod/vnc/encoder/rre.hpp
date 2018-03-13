@@ -29,16 +29,25 @@ h
 //  7.6.3   RRE Encoding
 //  ====================
 
-//    RRE stands for rise-and-run-length encoding and as its name implies, it is essentially a two-dimensional analogue of run-length encoding. RRE-encoded rectangles arrive at the client in a form which can be rendered immediately and efficiently by the simplest of graphics engines. RRE is not appropriate for complex desktops, but can be useful in some situations.
+//    RRE stands for rise-and-run-length encoding and as its name implies, it is essentially a two-dimensional analogue
+//    of run-length encoding. RRE-encoded rectangles arrive at the client in a form which can be rendered immediately and
+//    efficiently by the simplest of graphics engines. RRE is not appropriate for complex desktops, but can be useful in
+//    some situations.
 
-//    The basic idea behind RRE is the partitioning of a rectangle of pixel data into rectangular subregions (subrectangles) each of which consists of pixels of a single value and the union of which comprises the original rectangular region. The near-optimal partition of a given rectangle into such subrectangles is relatively easy to compute.
+//    The basic idea behind RRE is the partitioning of a rectangle of pixel data into rectangular subregions (subrectangles)
+//    each of which consists of pixels of a single value and the union of which comprises the original rectangular region.
+//    The near-optimal partition of a given rectangle into such subrectangles is relatively easy to compute.
 
-//    The encoding consists of a background pixel value, Vb (typically the most prevalent pixel value in the rectangle) and a count N, followed by a list of N subrectangles, each of which consists of a tuple <v, x, y, w, h> where v (!= Vb) is the pixel value, (x, y) are the coordinates of the subrectangle relative to the top-left corner of the rectangle, and (w, h) are the width and height of the subrectangle. The client can render the original rectangle by drawing a filled rectangle of the background pixel value and then drawing a filled rectangle corresponding to each subrectangle.
+//    The encoding consists of a background pixel value, Vb (typically the most prevalent pixel value in the rectangle)
+//    and a count N, followed by a list of N subrectangles, each of which consists of a tuple <v, x, y, w, h> where v (!= Vb)
+//    is the pixel value, (x, y) are the coordinates of the subrectangle relative to the top-left corner of the rectangle,
+//    and (w, h) are the width and height of the subrectangle. The client can render the original rectangle by drawing a filled
+//    rectangle of the background pixel value and then drawing a filled rectangle corresponding to each subrectangle.
 
 //    On the wire, the data begins with the header:
 
-//    No. of bytes     Type         Description
-//    4                 U32         number-of-subrectangles
+//    No. of bytes      Type            Description
+//         4             U32         number-of-subrectangles
 //    bytesPerPixel     PIXEL       background-pixel-value
 
 //    This is followed by number-of-subrectangles instances of the following structure:
