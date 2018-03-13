@@ -56,7 +56,7 @@ namespace detail
             static_assert(0 == sizeof...(Ts));
             REDEMPTION_DIAGNOSTIC_PUSH
             REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
-            return emplace_type<T, Us&&...>{{xs...}};
+            return emplace_type<T, Us&&...>{{static_cast<Us&&>(xs)...}};
             REDEMPTION_DIAGNOSTIC_POP
         }
     };
@@ -799,27 +799,6 @@ struct Executor2Impl : public BasicExecutorImpl<PrefixArgs>
 };
 
 
-template<class Executor>
-struct REDEMPTION_CXX_NODISCARD Executor2TimeoutContext : Executor2ActionContext<Executor>
-{
-    using Executor2ActionContext<Executor>::Executor2ActionContext;
-
-    template<class F>
-    Executor2ActionContext<Executor> set_timeout_action(F f) noexcept
-    {
-        auto executor_action = static_cast<Executor2ActionContext<Executor>*>(this);
-        detail::get_executor(executor_action)->set_on_timeout(f);
-        return *executor_action;
-    }
-
-    Executor2TimeoutContext set_timeout(std::chrono::milliseconds ms) noexcept
-    {
-        auto& executor = static_cast<Executor&>(this->executor);
-        executor.update_timeout(ms);
-        return *this;
-    }
-};
-
 template<class Event>
 struct REDEMPTION_CXX_NODISCARD Executor2EventContext
   : BasicContext<Event, Executor2EventContext<Event>>
@@ -869,6 +848,22 @@ struct REDEMPTION_CXX_NODISCARD Executor2FdContext
         this->event.set_on_exit(f);
         return *this;
     }
+
+    void set_fd(int fd) noexcept
+    {
+        this->event.set_fd(fd);
+    }
+
+    int get_fd() const noexcept
+    {
+        return this->event.get_fd();
+    }
+
+    Executor2FdContext disable_timeout()
+    {
+        this->event.disable_timeout();
+        return *this;
+    }
 };
 
 template<class Event>
@@ -893,6 +888,20 @@ struct REDEMPTION_CXX_NODISCARD Executor2FdTimeoutContext
     {
         this->event.update_timeout(ms);
         return *this;
+    }
+
+    Executor2FdTimeoutContext disable_timeout()
+    {
+        this->event.disable_timeout();
+        return *this;
+    }
+
+    template<class F>
+    Executor2FdTimeoutContext set_or_disable_timeout(std::chrono::milliseconds ms, F f) noexcept
+    {
+        return ms.count()
+            ? this->set_timeout(ms).set_timeout_action(f)
+            : this->disable_timeout();
     }
 };
 

@@ -167,6 +167,7 @@ Transport::TlsResult SocketTransport::enable_client_tls(bool server_cert_store,
 
 bool SocketTransport::disconnect()
 {
+    LOG(LOG_DEBUG, "fd close %d", this->sck);
     if (0 == strcmp("127.0.0.1", this->ip_address)){
         // silent trace in the case of watchdog
         LOG(LOG_INFO, "Socket %s (%d) : closing connection\n", this->name, this->sck);
@@ -184,6 +185,7 @@ bool SocketTransport::connect()
     if (this->sck <= 0){
         this->sck = ip_connect(this->ip_address, this->port, 3, 1000).release();
     }
+    LOG(LOG_DEBUG, "fd open %d", this->sck);
     return this->sck > 0;
 }
 

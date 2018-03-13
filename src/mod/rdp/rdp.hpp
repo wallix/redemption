@@ -1578,29 +1578,202 @@ public:
                 );
         }
 
+        LOG(LOG_INFO, "RDP mod built");
+
+        this->init_negociate_event(mod_rdp_params, gen, timeobj);
+    }   // mod_rdp
+
+    void init_negociate_event(ModRDPParams const& mod_rdp_params, Random & gen, TimeObj & timeobj)
+    {
+        enum class State : uint8_t {
+            NEGO_INITIATE,
+            NEGO,
+            BASIC_SETTINGS_EXCHANGE,
+            CHANNEL_CONNECTION_ATTACH_USER,
+            CHANNEL_JOIN_CONFIRME,
+            GET_LICENSE
+        };
+        struct D
+        {
+            RdpNego& nego;
+            RdpNego::ServerCert server_cert;
+            std::chrono::seconds open_session_timeout;
+            State state = State::NEGO_INITIATE;
+            mod_rdp& rdp;
+
+            D(  mod_rdp& rdp,
+                ModRDPParams const& mod_rdp_params,
+                Random& /*gen*/,
+                TimeObj& /*timeobj*/,
+                RdpNego::ServerCert server_cert)
+            : nego(rdp.nego)/*nego(
+                mod_rdp_params.enable_tls, mod_rdp_params.target_user
+              , mod_rdp_params.enable_nla, mod_rdp_params.target_host
+              , mod_rdp_params.enable_krb, gen, timeobj
+              , rdp.close_box_extra_message_ref, mod_rdp_params.lang
+              , static_cast<RdpNego::Verbose>(mod_rdp_params.verbose))*/
+            , server_cert(server_cert)
+            , open_session_timeout(mod_rdp_params.open_session_timeout)
+            , rdp(rdp)
+            {}
+
+            [[noreturn]] void log_error(Error const& e)
+            {
+                switch (e.id) {
+                    case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
+                    case ERR_TRANSPORT_TLS_CERTIFICATE_MISSED:
+                    case ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED:
+                    case ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE:
+                    case ERR_NLA_AUTHENTICATION_FAILED:
+                        throw e;
+                    default: break;
+                }
+
+                StaticOutStream<256> stream;
+                X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
+                try {
+                    this->rdp.trans.send(stream.get_data(), stream.get_offset());
+                    LOG(LOG_INFO, "Connection to server closed");
+                }
+                catch(Error const & ee){
+                    LOG(LOG_INFO, "Connection to server Already closed: error=%u", ee.id);
+                };
+
+                const char * statestr = "UNKNOWN_STATE";
+                const char * statedescr = "Unknow state.";
+                switch (this->state) {
+                    #define CASE(e, trkey)                                 \
+                        case State::e:                                     \
+                            statestr = "RDP_" #e;                          \
+                            statedescr = TR(trkey, rdp.lang);              \
+                            rdp.close_box_extra_message_ref += " ";        \
+                            rdp.close_box_extra_message_ref += statedescr; \
+                            rdp.close_box_extra_message_ref += " (";       \
+                            rdp.close_box_extra_message_ref += statestr;   \
+                            rdp.close_box_extra_message_ref += ")";        \
+                        break
+                    CASE(NEGO_INITIATE, trkeys::err_mod_rdp_nego);
+                    CASE(NEGO, trkeys::err_mod_rdp_nego);
+                    CASE(BASIC_SETTINGS_EXCHANGE, trkeys::err_mod_rdp_basic_settings_exchange);
+                    CASE(CHANNEL_CONNECTION_ATTACH_USER, trkeys::err_mod_rdp_channel_connection_attach_user);
+                    CASE(CHANNEL_JOIN_CONFIRME, trkeys::mod_rdp_channel_join_confirme);
+                    CASE(GET_LICENSE, trkeys::mod_rdp_get_license);
+                    #undef CASE
+                }
+
+                LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state. %s",
+                    statestr, statedescr);
+                throw Error(ERR_SESSION_UNKNOWN_BACKEND);
+            }
+        };
+
+        using namespace jln::literals;
         this->fd_event = this->session_reactor
-        .create_graphic_fd_event(this->trans.get_fd(), std::ref(*this))
+        .create_graphic_fd_event(this->trans.get_fd(), jln::emplace<D>(
+            *this, mod_rdp_params, gen, timeobj,
+            RdpNego::ServerCert{
+                this->server_cert_store,
+                this->server_cert_check,
+                this->certif_path.get(),
+                this->server_notifier
+            }
+        ))
         .set_timeout(std::chrono::milliseconds(0))
-        .on_timeout([](auto ctx, gdi::GraphicApi& gd, mod_rdp& self){
-            assert(self.state == MOD_RDP_NEGO_INITIATE);
-            gdi_clear_screen(gd, self.get_dim());
-            LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
-            self.nego.send_negotiation_request(self.trans);
-            self.state = MOD_RDP_NEGO;
-            // TODO return ctx.disable_timer()...
-            return ctx.set_timeout(std::chrono::hours(999))
-            .set_timeout_action(jln::always_ready())
-            .next_action([](auto ctx, gdi::GraphicApi& gd, mod_rdp& self){
-                self.draw_event(ctx.get_current_time().tv_sec, gd);
-                return ctx.ready();
+        .on_timeout([](auto ctx, gdi::GraphicApi& gd, D& d){
+            try {
+                gdi_clear_screen(gd, d.rdp.get_dim());
+                LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
+                d.nego.send_negotiation_request(d.rdp.trans);
+                d.state = State::NEGO;
+            }
+            catch (Error const& e) {
+                d.log_error(e);
+            }
+
+            return ctx.set_or_disable_timeout(d.open_session_timeout, jln::one_shot([](gdi::GraphicApi&, D& d){
+                mod_rdp& rdp = d.rdp;
+
+                if (rdp.error_message) {
+                    *rdp.error_message = "Logon timer expired!";
+                }
+
+                rdp.report_message.report("CONNECTION_FAILED", "Logon timer expired.");
+
+                if (rdp.enable_session_probe) {
+                    const bool disable_input_event     = false;
+                    const bool disable_graphics_update = false;
+                    rdp.disable_input_event_and_graphics_update(
+                        disable_input_event, disable_graphics_update);
+                }
+
+                LOG(LOG_ERR,
+                    "Logon timer expired on %s. The session will be disconnected.",
+                    rdp.hostname);
+                throw Error(ERR_RDP_OPEN_SESSION_TIMEOUT);
+            }))
+            .next_action([](auto ctx, gdi::GraphicApi&, D& d){
+                try {
+                        LOG(LOG_DEBUG, "nego %d", d.state);
+                    if (d.state == State::NEGO)
+                    {
+                        bool const run = d.nego.recv_next_data(
+                            d.rdp.buf, d.rdp.trans, d.server_cert);
+
+                        int const fd = d.rdp.trans.get_fd();
+                        if (fd >= 0) {
+                            ctx.set_fd(fd);
+                        }
+
+                        if (not run) {
+                            d.rdp.send_connectInitialPDUwithGccConferenceCreateRequest();
+                            d.state = State::BASIC_SETTINGS_EXCHANGE;
+                        }
+
+                        return ctx.need_more_data();
+                    }
+
+                    d.rdp.buf.load_data(d.rdp.trans);
+                    while (d.rdp.buf.next_pdu()) {
+                        InStream x224_data(d.rdp.buf.current_pdu_buffer());
+                        switch (d.state)
+                        {
+                            case State::BASIC_SETTINGS_EXCHANGE:
+                                if (d.rdp.basic_settings_exchange(x224_data)) {
+                                    d.state = State::CHANNEL_CONNECTION_ATTACH_USER;
+                                }
+                                break;
+                            case State::CHANNEL_CONNECTION_ATTACH_USER:
+                                if (d.rdp.channel_connection_attach_user(x224_data)){
+                                    d.state = State::CHANNEL_JOIN_CONFIRME;
+                                }
+                                break;
+                            case State::CHANNEL_JOIN_CONFIRME:
+                                if (d.rdp.channel_join_confirme(ctx.get_current_time().tv_sec, x224_data)){
+                                    d.state = State::GET_LICENSE;
+                                }
+                                break;
+                            default:
+                                if (d.rdp.get_license(x224_data)) {
+                                    return ctx.disable_timeout()
+                                      .next_action([](auto ctx, gdi::GraphicApi& gd, D& d){
+                                          d.rdp.draw_event(ctx.get_current_time().tv_sec, gd);
+                                          return ctx.ready();
+                                      });
+                                }
+                                break;
+                        }
+                    }
+                    return ctx.need_more_data();
+                }
+                catch (Error const& e) {
+                    d.log_error(e);
+                }
             });
         })
         .on_exit(jln::exit_with_success())
         // TODO RDP_PROTOCOL_ERROR
         .on_action(jln::exit_with_error() /* set by on_timeout action*/);
-
-        LOG(LOG_INFO, "RDP mod built");
-    }   // mod_rdp
+    }
 
     ~mod_rdp() override {
         if (this->enable_session_probe) {
@@ -2643,7 +2816,7 @@ public:
         this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
     }
 
-    void basic_settings_exchange(InStream & x224_data)
+    bool basic_settings_exchange(InStream & x224_data)
     {
         if (bool(this->verbose & RDPVerbose::security)){
             LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange");
@@ -2971,9 +3144,10 @@ public:
         if (bool(this->verbose & RDPVerbose::connection)){
             LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange end");
         }
+        return true;
     }
 
-    void channel_connection_attach_user(InStream & stream)
+    bool channel_connection_attach_user(InStream & stream)
     {
         if (bool(this->verbose & RDPVerbose::channels)){
             LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User");
@@ -3019,11 +3193,12 @@ public:
 
         this->state = MOD_RDP_CHANNEL_JOIN_CONFIRME;
         this->send_channel_index = 0;
+        return true;
     }
 
     size_t send_channel_index;
 
-    void channel_join_confirme(time_t now, InStream & x224_data)
+    bool channel_join_confirme(time_t now, InStream & x224_data)
     {
         {
             X224::DT_TPDU_Recv x224(x224_data);
@@ -3037,7 +3212,7 @@ public:
 
         ++this->send_channel_index;
         if (this->send_channel_index < this->mod_channel_list.size()+2) {
-            return ;
+            return false;
         }
 
         if (bool(this->verbose & RDPVerbose::channels)){
@@ -3110,13 +3285,17 @@ public:
 
         this->send_client_info_pdu(now);
         this->state = MOD_RDP_GET_LICENSE;
+        return true;
     }
 
-    void get_license(InStream & stream)
+    bool get_license(InStream & stream)
     {
         if (bool(this->verbose & RDPVerbose::license)){
             LOG(LOG_INFO, "mod_rdp::Licensing");
         }
+
+        bool r = false;
+
         // Licensing
         // ---------
 
@@ -3342,7 +3521,8 @@ public:
 
                     // TODO CGR: Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect.
                     // Not obvious files is the best choice to do that
-                        this->state = MOD_RDP_CONNECTED;
+                    this->state = MOD_RDP_CONNECTED;
+                    r = true;
 
                     LOG(LOG_WARNING, "New license not saved");
                 }
@@ -3366,12 +3546,14 @@ public:
                     if ((lic.validClientMessage.dwErrorCode == LIC::STATUS_VALID_CLIENT)
                         && (lic.validClientMessage.dwStateTransition == LIC::ST_NO_TRANSITION)){
                         this->state = MOD_RDP_CONNECTED;
+                        r = true;
                     }
                     else {
                         LOG(LOG_ERR, "RDP::License Alert: error=%u transition=%u",
                             lic.validClientMessage.dwErrorCode, lic.validClientMessage.dwStateTransition);
                     }
                     this->state = MOD_RDP_CONNECTED;
+                    r = true;
                 }
                 break;
             default:
@@ -3392,8 +3574,10 @@ public:
             hexdump(x224.payload.get_data(), x224.payload.get_capacity());
             //throw Error(ERR_SEC);
             this->state = MOD_RDP_CONNECTED;
+            r = true;
             hexdump(sec.payload.get_data(), sec.payload.get_capacity());
         }
+        return r;
     }
 
     // Capabilities Exchange
@@ -4172,194 +4356,116 @@ public:
             this->remote_programs_session_manager->set_drawable(&drawable_);
         }
 
-        bool run = true;
-        bool waked_up_by_time = false;
+        this->buf.load_data(this->trans);
+        while (this->buf.next_pdu()) {
+            InStream x224_data(this->buf.current_pdu_buffer());
 
-        if (this->state == MOD_RDP_NEGO_INITIATE) {
-            LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
-            this->nego.send_negotiation_request(this->trans);
-            this->state = MOD_RDP_NEGO;
-            run = false;
-        }
-        else if (this->state == MOD_RDP_NEGO && !waked_up_by_time) {
-            // TODO this->fd_event.set_fd() if trans.disconnect() or trans.connect() is used
-            run = this->nego.recv_next_data(this->buf, this->trans, RdpNego::ServerCert{
-                this->server_cert_store,
-                this->server_cert_check,
-                this->certif_path.get(),
-                this->server_notifier
-            });
-            if (not run) {
-                this->send_connectInitialPDUwithGccConferenceCreateRequest();
+            try{
+                gdi::GraphicApi & drawable =
+                    ( this->remote_programs_session_manager
+                    ? (*this->remote_programs_session_manager)
+                    : ( this->graphics_update_disabled
+                        ? gdi::null_gd()
+                        : drawable_
+                    ));
+                if (this->buf.current_pdu_is_fast_path()) {
+                    this->connected_fast_path(drawable, this->buf.current_pdu_buffer());
+                }
+                else {
+                    this->connected_slow_path(now, drawable, x224_data);
+                }
             }
-        }
-        else {
-            this->buf.load_data(this->trans);
-        }
+            catch(Error const & e){
+                LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception");
 
-        if (run && !waked_up_by_time) {
-            while (this->buf.next_pdu()) {
-                InStream x224_data(this->buf.current_pdu_buffer());
+                if (e.id == ERR_RDP_SERVER_REDIR) {
+                    this->front.must_be_stop_capture();
+                    throw;
+                }
 
-                try{
-                    //LOG(LOG_INFO, "mod_rdp::draw_event() state switch");
-                    switch (this->state){
-                    case MOD_RDP_NEGO_INITIATE:
-                    case MOD_RDP_NEGO:
-                        assert(false);
-                        break;
+                if (this->session_probe_virtual_channel_p &&
+                    this->session_probe_virtual_channel_p->is_disconnection_reconnection_required()) {
+                    throw Error(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION);
+                }
+                else {
+                    this->front.must_be_stop_capture();
+                }
 
-                    case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
-                        this->basic_settings_exchange(x224_data);
-                        break;
+                if (this->remote_apps_not_enabled) {
+                    throw Error(ERR_RAIL_NOT_ENABLED);
+                }
 
-                    case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
-                        this->channel_connection_attach_user(x224_data);
-                        break;
+                if (e.id != ERR_MCS_APPID_IS_MCS_DPUM)
+                {
+                    char const* reason =
+                        ((UP_AND_RUNNING == this->connection_finalization_state) ?
+                        "SESSION_EXCEPTION" : "SESSION_EXCEPTION_NO_RECORD");
 
-                    case MOD_RDP_CHANNEL_JOIN_CONFIRME:
-                        this->channel_join_confirme(now, x224_data);
-                        break;
+                    this->report_message.report(reason, e.errmsg());
 
-                    case MOD_RDP_GET_LICENSE:
-                        this->get_license(x224_data);
-                        break;
+                    this->end_session_reason.clear();
+                    this->end_session_message.clear();
+                }
 
-                    case MOD_RDP_CONNECTED:
-                        gdi::GraphicApi & drawable =
-                            ( this->remote_programs_session_manager
-                            ? (*this->remote_programs_session_manager)
-                            : ( this->graphics_update_disabled
-                                ? gdi::null_gd()
-                                : drawable_
-                            ));
-                        if (this->buf.current_pdu_is_fast_path()) {
-                            this->connected_fast_path(drawable, this->buf.current_pdu_buffer());
-                        }
-                        else {
-                            this->connected_slow_path(now, drawable, x224_data);
-                        }
-                        break;
-                    }
+                if ((e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_MISSED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED) ||
+                    (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE) ||
+                    (e.id == ERR_NLA_AUTHENTICATION_FAILED)) {
+                    throw;
+                }
+
+                StaticOutStream<256> stream;
+                X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
+                try {
+                    this->trans.send(stream.get_data(), stream.get_offset());
+                    LOG(LOG_INFO, "Connection to server closed");
                 }
                 catch(Error const & e){
-                    LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception");
+                    LOG(LOG_INFO, "Connection to server Already closed: error=%u", e.id);
+                };
 
-                    if (e.id == ERR_RDP_SERVER_REDIR) {
-                        this->front.must_be_stop_capture();
-                        throw;
-                    }
+                this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 
-                    if (this->session_probe_virtual_channel_p &&
-                        this->session_probe_virtual_channel_p->is_disconnection_reconnection_required()) {
-                        throw Error(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION);
-                    }
-                    else {
-                        this->front.must_be_stop_capture();
-                    }
+                if (this->enable_session_probe) {
+                    const bool disable_input_event     = false;
+                    const bool disable_graphics_update = false;
+                    this->disable_input_event_and_graphics_update(
+                        disable_input_event, disable_graphics_update);
+                }
 
-                    if (this->remote_apps_not_enabled) {
-                        throw Error(ERR_RAIL_NOT_ENABLED);
-                    }
+                if ((e.id == ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT) ||
+                    (e.id == ERR_RAIL_CLIENT_EXECUTE) ||
+                    (e.id == ERR_RAIL_STARTING_PROGRAM) ||
+                    (e.id == ERR_RAIL_UNAUTHORIZED_PROGRAM) ||
 
-                    if (e.id != ERR_MCS_APPID_IS_MCS_DPUM)
-                    {
-                        char const* reason =
-                            ((UP_AND_RUNNING == this->connection_finalization_state) ?
-                            "SESSION_EXCEPTION" : "SESSION_EXCEPTION_NO_RECORD");
+                    (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE) ||
+                    (e.id == ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS) ||
+                    (e.id == ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON) ||
+                    (e.id == ERR_SESSION_PROBE_CBBL_FSVC_UNAVAILABLE) ||
+                    (e.id == ERR_SESSION_PROBE_CBBL_CBVC_UNAVAILABLE) ||
+                    (e.id == ERR_SESSION_PROBE_CBBL_DRIVE_NOT_READY_YET) ||
+                    (e.id == ERR_SESSION_PROBE_CBBL_MAYBE_SOMETHING_BLOCKS) ||
+                    (e.id == ERR_SESSION_PROBE_CBBL_LAUNCH_CYCLE_INTERRUPTED) ||
+                    (e.id == ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG) ||
+                    (e.id == ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG) ||
 
-                        this->report_message.report(reason, e.errmsg());
+                    (e.id == ERR_SESSION_PROBE_LAUNCH)) {
+                    throw;
+                }
 
-                        this->end_session_reason.clear();
-                        this->end_session_message.clear();
-                    }
-
-                    if ((e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED) ||
-                        (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_MISSED) ||
-                        (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED) ||
-                        (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE) ||
-                        (e.id == ERR_NLA_AUTHENTICATION_FAILED)) {
-                        throw;
-                    }
-
-                    StaticOutStream<256> stream;
-                    X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
-                    try {
-                        this->trans.send(stream.get_data(), stream.get_offset());
-                        LOG(LOG_INFO, "Connection to server closed");
-                    }
-                    catch(Error const & e){
-                        LOG(LOG_INFO, "Connection to server Already closed: error=%u", e.id);
-                    };
-
-                    this->session_reactor.set_next_event(BACK_EVENT_NEXT);
-
-                    if (this->enable_session_probe) {
-                        const bool disable_input_event     = false;
-                        const bool disable_graphics_update = false;
-                        this->disable_input_event_and_graphics_update(
-                            disable_input_event, disable_graphics_update);
-                    }
-
-                    if ((e.id == ERR_LIC) ||
-                        (e.id == ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT) ||
-                        (e.id == ERR_RAIL_CLIENT_EXECUTE) ||
-                        (e.id == ERR_RAIL_STARTING_PROGRAM) ||
-                        (e.id == ERR_RAIL_UNAUTHORIZED_PROGRAM) ||
-
-                        (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE) ||
-                        (e.id == ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS) ||
-                        (e.id == ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON) ||
-                        (e.id == ERR_SESSION_PROBE_CBBL_FSVC_UNAVAILABLE) ||
-                        (e.id == ERR_SESSION_PROBE_CBBL_CBVC_UNAVAILABLE) ||
-                        (e.id == ERR_SESSION_PROBE_CBBL_DRIVE_NOT_READY_YET) ||
-                        (e.id == ERR_SESSION_PROBE_CBBL_MAYBE_SOMETHING_BLOCKS) ||
-                        (e.id == ERR_SESSION_PROBE_CBBL_LAUNCH_CYCLE_INTERRUPTED) ||
-                        (e.id == ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG) ||
-                        (e.id == ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG) ||
-
-                        (e.id == ERR_SESSION_PROBE_LAUNCH)) {
-                        throw;
-                    }
-
-                    if (UP_AND_RUNNING != this->connection_finalization_state &&
-                        !this->already_upped_and_running) {
-                        const char * statestr = "UNKNOWN_STATE";
-                        const char * statedescr = "Unknow state.";
-                        switch (this->state) {
-                            #define CASE(e, trkey)                                         \
-                                case e:                                                    \
-                                    statestr = #e + 4; statedescr = TR(trkey, this->lang); \
-                                    this->close_box_extra_message_ref += " ";              \
-                                    this->close_box_extra_message_ref += statedescr;       \
-                                    this->close_box_extra_message_ref += " (";             \
-                                    this->close_box_extra_message_ref += statestr;         \
-                                    this->close_box_extra_message_ref += ")";              \
-                                break
-                            CASE(MOD_RDP_NEGO_INITIATE, trkeys::err_mod_rdp_nego);
-                            CASE(MOD_RDP_NEGO, trkeys::err_mod_rdp_nego);
-                            CASE(MOD_RDP_BASIC_SETTINGS_EXCHANGE, trkeys::err_mod_rdp_basic_settings_exchange);
-                            CASE(MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER, trkeys::err_mod_rdp_channel_connection_attach_user);
-                            CASE(MOD_RDP_CHANNEL_JOIN_CONFIRME, trkeys::mod_rdp_channel_join_confirme);
-                            CASE(MOD_RDP_GET_LICENSE, trkeys::mod_rdp_get_license);
-                            CASE(MOD_RDP_CONNECTED, trkeys::err_mod_rdp_connected);
-                            #undef CASE
-                        }
-
-                        LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state. %s",
-                            statestr, statedescr);
-                        throw Error(ERR_SESSION_UNKNOWN_BACKEND);
-                    }
+                if (UP_AND_RUNNING != this->connection_finalization_state &&
+                    !this->already_upped_and_running) {
+                    const char * statedescr = TR(trkeys::err_mod_rdp_connected, this->lang);
+                    this->close_box_extra_message_ref += " ";
+                    this->close_box_extra_message_ref += statedescr;
+                    this->close_box_extra_message_ref += " (CONNECTED)";
+                    LOG(LOG_ERR, "Creation of new mod 'RDP' failed at CONNECTED state. %s",
+                        statedescr);
+                    throw Error(ERR_SESSION_UNKNOWN_BACKEND);
                 }
             }
         }
-
-        //LOG(LOG_INFO, "mod_rdp::draw_event() session timeout check count=%u",
-        //        static_cast<unsigned>(this->open_session_timeout.count()));
-        if (this->open_session_timeout_checker_timer) {
-            this->open_session_timeout_checker_timer->set_delay(std::chrono::seconds(1));
-        }
-
         //LOG(LOG_INFO, "mod_rdp::draw_event() done");
     }   // draw_event
 
@@ -7110,7 +7216,7 @@ private:
         if (this->open_session_timeout.count()) {
             this->open_session_timeout_checker_timer = this->session_reactor
             .create_timer(std::ref(*this))
-            .set_delay(std::chrono::seconds(1))
+            .set_delay(this->open_session_timeout)
             .on_action(jln::one_shot([](mod_rdp& self){
                 LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_REACHED");
                 if (self.error_message) {

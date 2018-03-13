@@ -393,6 +393,7 @@ struct SessionReactor
                 if (!data_ptr->alive() || !run_element(*data_ptr)) {
                     auto alive_i = i;
                     if (--data_ptr->use_count == 0) {
+                        LOG(LOG_DEBUG, "delete %p %s", static_cast<void*>(data_ptr), typeid(Base).name());
                         ::operator delete(data_ptr);
                     }
                     while (++i < cont.size()) {
@@ -402,10 +403,10 @@ struct SessionReactor
                             ++alive_i;
                         }
                         else if (--data_ptr->use_count == 0) {
+                            LOG(LOG_DEBUG, "delete %p %s", static_cast<void*>(data_ptr), typeid(Base).name());
                             ::operator delete(data_ptr);
                         }
                     }
-                    LOG(LOG_DEBUG, "dead: %zu", cont.size() - alive_i);
                     cont.erase(cont.begin() + alive_i, cont.end());
                     break;
                 }
@@ -415,20 +416,17 @@ struct SessionReactor
         void clear()
         {
             for (auto* data_ptr : this->elements) {
+                --data_ptr->use_count;
                 switch (data_ptr->use_count) {
-                    case 3:
-                        assert(data_ptr->alive());
-                        --data_ptr->use_count;
-                        break;
                     case 2:
+                        assert(data_ptr->alive());
+                        break;
+                    case 1:
                         if (data_ptr->alive()) {
                             data_ptr->apply_deleter();
                         }
-                        else {
-                            --data_ptr->use_count;
-                        }
                         break;
-                    case 1:
+                    case 0:
                         ::operator delete(data_ptr);
                         break;
                 }
@@ -587,7 +585,19 @@ struct SessionReactor
         : fd(fd)
         {}
 
-        const int fd;
+        void set_fd(int fd) noexcept
+        {
+            assert(fd >= 0);
+            this->fd = fd;
+        }
+
+        int get_fd() const noexcept
+        {
+            return this->fd;
+        }
+
+    private:
+        int fd;
     };
 
     template<class PrefixArgs_, class... Ts>
@@ -639,6 +649,12 @@ struct SessionReactor
             this->set_timeout(ms);
         }
 
+        void disable_timeout() noexcept
+        {
+            this->set_timeout(std::chrono::hours(9999));
+            this->set_on_timeout(jln::always_ready());
+        }
+
         SessionReactor& get_reactor() const noexcept
         {
             return this->session_reactor;
@@ -684,8 +700,8 @@ struct SessionReactor
         void exec(fd_set& rfds, Args&&... args)
         {
             auto run_element = [&](auto& elem){
-                // LOG(LOG_DEBUG, "is set fd: %d %d", c[i]->fd, io_fd_isset(c[i]->fd, rfds));
-                if (io_fd_isset(elem.value.fd, rfds)
+                // LOG(LOG_DEBUG, "is set fd: %d %d", elem.value.get_fd(), io_fd_isset(elem.value.get_fd(), rfds));
+                if (io_fd_isset(elem.value.get_fd(), rfds)
                  && !elem.value.exec(static_cast<Args&&>(args)...)) {
                     elem.apply_deleter();
                     return false;
@@ -846,15 +862,15 @@ struct SessionReactor
     {
         for (auto& top_fd : this->fd_events_.elements) {
             if (top_fd->alive()) {
-                assert(top_fd->value.fd != -1);
-                f(top_fd->value.fd, top_fd->value);
+                assert(top_fd->value.get_fd() != -1);
+                f(top_fd->value.get_fd(), top_fd->value);
             }
         }
         if (enable_gd) {
             for (auto& top_fd : this->graphic_fd_events_.elements) {
                 if (top_fd->alive()) {
-                    assert(top_fd->value.fd != -1);
-                    f(top_fd->value.fd, top_fd->value);
+                    assert(top_fd->value.get_fd() != -1);
+                    f(top_fd->value.get_fd(), top_fd->value);
                 }
             }
         }

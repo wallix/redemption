@@ -188,6 +188,7 @@ public:
                 }
 
                 SessionReactor::EnableGraphics enable_graphics{front.up_and_running};
+                // LOG(LOG_DEBUG, "front.up_and_running = %d", front.up_and_running);
 
                 auto const tv = session_reactor.get_next_timeout(enable_graphics);
                 auto tv_now = tvtime();
@@ -206,7 +207,7 @@ public:
                 session_reactor.for_each_fd(
                     enable_graphics,
                     [&](int fd, [[maybe_unused]] auto const& elem){
-                        // LOG(LOG_DEBUG, "%p set fd: %d", static_cast<void*>(elem), fd);
+                        // LOG(LOG_DEBUG, "%p set fd: %d", static_cast<void const*>(&elem), fd);
                         io_fd_set(fd, rfds);
                         max = std::max(max, unsigned(fd));
                     }

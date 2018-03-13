@@ -64,7 +64,6 @@ RdpNego::RdpNego(
 , state(State::Negociate)
 , verbose(verbose)
 {
-
     this->enabled_protocols = RdpNegoProtocols::Rdp
         | (this->tls ? RdpNegoProtocols::Tls : 0)
         | (this->nla ? RdpNegoProtocols::Nla : 0);
