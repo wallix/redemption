@@ -915,19 +915,9 @@ public:
         return this->nc.periodic_snapshot(now, x, y, ignore_frame_in_timeval);
     }
 
-    void new_or_existing_window_event(uint32_t /*window_id*/,
-        uint32_t fields_present_flags,
-        uint32_t /*style*/, uint8_t /*show_state*/,
-        int32_t /*visible_offset_x*/, int32_t /*visible_offset_y*/,
-        std::vector<RDP::RAIL::Rectangle> const & visibility_rects)
-            override
-    {
-        if (fields_present_flags & RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY) {
-            if (visibility_rects.size()) {
-                for (const RDP::RAIL::Rectangle& rectangle : visibility_rects) {
-                    this->image_frame_rect.disjunct(rectangle);
-                }
-            }
+    virtual void visibility_rects_event(Rect const & rect) {
+        if (!rect.isempty()) {
+            this->image_frame_rect = this->image_frame_rect.disjunct(rect);
         }
     }
 };

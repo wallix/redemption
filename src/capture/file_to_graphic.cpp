@@ -597,33 +597,32 @@ void FileToGraphic::interpret_order()
             this->info_cache_2_persistent    = false;
         }
         else {
-            if (this->info_version <= 4) {
-                this->info_number_of_cache       = this->stream.in_uint8();
-                this->info_use_waiting_list      = (this->stream.in_uint8() ? true : false);
+            this->info_number_of_cache       = this->stream.in_uint8();
+            this->info_use_waiting_list      = (this->stream.in_uint8() ? true : false);
 
-                this->info_cache_0_persistent    = (this->stream.in_uint8() ? true : false);
-                this->info_cache_1_persistent    = (this->stream.in_uint8() ? true : false);
-                this->info_cache_2_persistent    = (this->stream.in_uint8() ? true : false);
+            this->info_cache_0_persistent    = (this->stream.in_uint8() ? true : false);
+            this->info_cache_1_persistent    = (this->stream.in_uint8() ? true : false);
+            this->info_cache_2_persistent    = (this->stream.in_uint8() ? true : false);
 
-                this->info_cache_3_entries       = this->stream.in_uint16_le();
-                this->info_cache_3_size          = this->stream.in_uint16_le();
-                this->info_cache_3_persistent    = (this->stream.in_uint8() ? true : false);
+            this->info_cache_3_entries       = this->stream.in_uint16_le();
+            this->info_cache_3_size          = this->stream.in_uint16_le();
+            this->info_cache_3_persistent    = (this->stream.in_uint8() ? true : false);
 
-                this->info_cache_4_entries       = this->stream.in_uint16_le();
-                this->info_cache_4_size          = this->stream.in_uint16_le();
-                this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
+            this->info_cache_4_entries       = this->stream.in_uint16_le();
+            this->info_cache_4_size          = this->stream.in_uint16_le();
+            this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
 
-                this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
-                assert(is_valid_enum_value(this->info_compression_algorithm));
-                if (!is_valid_enum_value(this->info_compression_algorithm)) {
-                    this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
-                }
-
-                this->trans = &this->compression_builder.reset(
-                    *this->trans_source, this->info_compression_algorithm
-                );
+            this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
+            assert(is_valid_enum_value(this->info_compression_algorithm));
+            if (!is_valid_enum_value(this->info_compression_algorithm)) {
+                this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
             }
-            else {
+
+            this->trans = &this->compression_builder.reset(
+                *this->trans_source, this->info_compression_algorithm
+            );
+
+            if (this->info_version > 4) {
                 this->remote_app = (this->stream.in_uint8() ? true : false);
             }
         }

@@ -1212,6 +1212,19 @@ static void show_metadata(FileToGraphic const & player) {
             player.image_frame_rect.cx << ", "  <<
             player.image_frame_rect.cy << ")"  << '\n';
     }
+    std::cout << "RemoteApp session     : " << (player.remote_app ? "Yes" : "No") << '\n';
+    std::cout.flush();
+}
+
+inline
+static void show_metadata2(FileToGraphic const & player) {
+    if (!player.image_frame_rect.isempty()) {
+        std::cout << "Image frame rect      : (" <<
+            player.image_frame_rect.x << ", "  <<
+            player.image_frame_rect.y << ", "  <<
+            player.image_frame_rect.cx << ", "  <<
+            player.image_frame_rect.cy << ")"  << '\n';
+    }
     std::cout.flush();
 }
 
@@ -1820,6 +1833,10 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                     catch (Error const &) {
                         return_code = -1;
                     }
+                }
+
+                if (show_file_metadata) {
+                    show_metadata2(player);
                 }
 
                 if (show_statistics && return_code == 0) {
