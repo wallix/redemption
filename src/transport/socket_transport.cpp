@@ -171,6 +171,7 @@ bool SocketTransport::disconnect()
         // silent trace in the case of watchdog
         LOG(LOG_INFO, "Socket %s (%d) : closing connection\n", this->name, this->sck);
     }
+    this->tls_state = TLSState::Uninit;
     // Disconnect tls if needed
     this->tls.reset();
     shutdown(this->sck, 2); // 2 = SHUT_RDWR
