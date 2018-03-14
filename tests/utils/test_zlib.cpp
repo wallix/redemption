@@ -76,7 +76,7 @@ RED_AUTO_TEST_CASE(TestZLIB0)
             ret = deflate(&strm, Z_NO_FLUSH);
             total_compressed_size += CHUNK-strm.avail_out;
             
-            memcpy(&all_out[total_size], &strm.next_out[-last_avail_out+strm.avail_out], last_avail_out-strm.avail_out);
+            memcpy(&all_out[total_size], strm.next_out - last_avail_out + strm.avail_out, last_avail_out-strm.avail_out);
             total_size += last_avail_out - strm.avail_out;
             // or copy result
         } while (CHUNK != strm.avail_out);
@@ -88,7 +88,7 @@ RED_AUTO_TEST_CASE(TestZLIB0)
         ret = deflate(&strm, Z_FINISH);
         total_compressed_size += last_avail_out-strm.avail_out;
 
-        memcpy(&all_out[total_size], &strm.next_out[-last_avail_out+strm.avail_out], last_avail_out-strm.avail_out);
+        memcpy(&all_out[total_size], strm.next_out - last_avail_out + strm.avail_out, last_avail_out-strm.avail_out);
         total_size += last_avail_out - strm.avail_out;
 
     } while (CHUNK != strm.avail_out);
@@ -97,10 +97,10 @@ RED_AUTO_TEST_CASE(TestZLIB0)
 
     RED_CHECK_EQUAL(total_compressed_size, 262);
 
-   hexdump(&all_out[0], total_size); 
+    hexdump(&all_out[0], total_size);
 
-   RED_CHECK_EQUAL(total_size, 262);
- }
+    RED_CHECK_EQUAL(total_size, 262);
+}
 
 
 RED_AUTO_TEST_CASE(TestZLIB1)
@@ -150,7 +150,7 @@ RED_AUTO_TEST_CASE(TestZLIB1)
         }
         ret = deflate(&strm, Z_NO_FLUSH);
         total_compressed_size += last_avail_out-strm.avail_out;
-        memcpy(&all_out[total_size], &strm.next_out[-(last_avail_out - strm.avail_out)], last_avail_out - strm.avail_out);
+        memcpy(&all_out[total_size], strm.next_out - last_avail_out + strm.avail_out, last_avail_out - strm.avail_out);
         total_size += last_avail_out - strm.avail_out;
     }
     do {
@@ -158,15 +158,17 @@ RED_AUTO_TEST_CASE(TestZLIB1)
         strm.next_out = &out[0];
         ret = deflate(&strm, Z_FINISH);
         total_compressed_size += CHUNK-strm.avail_out;
-        memcpy(&all_out[total_size], &strm.next_out[-(last_avail_out - strm.avail_out)], last_avail_out - strm.avail_out);
+        memcpy(&all_out[total_size], strm.next_out - last_avail_out + strm.avail_out, last_avail_out - strm.avail_out);
         total_size += last_avail_out - strm.avail_out;
     } while (CHUNK != strm.avail_out);
     BOOST_CHECK_EQUAL(ret, Z_STREAM_END);
 
+    ret = deflateEnd(&strm);
+
     hexdump(&all_out[0], total_size); 
 
-   RED_CHECK_EQUAL(total_size, 262);
-   RED_CHECK_EQUAL(total_compressed_size, 262);
+    RED_CHECK_EQUAL(total_size, 262);
+    RED_CHECK_EQUAL(total_compressed_size, 262);
 }
 
 RED_AUTO_TEST_CASE(TestZLIB3)
@@ -221,6 +223,6 @@ RED_AUTO_TEST_CASE(TestZLIB3)
     }
     RED_CHECK_EQUAL(inflated_size, 70000);
 
-    hexdump(&decompressed[0], 200); 
+    hexdump(&decompressed[0], 200);
     RED_CHECK(0 == memcmp(decompressed, uncompressed, 70000));
 }
