@@ -903,7 +903,6 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>crypto
   <library>gssapi_krb5
   <library>krb5
-  <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
@@ -921,14 +920,12 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -939,7 +936,6 @@ test-run tests/client_mods/test_rdp_client_test_card :
   <covflag>nocover $(GCOV_NO_BUILD)
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
@@ -951,13 +947,10 @@ test-run tests/client_mods/test_rdp_client_test_card :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -970,7 +963,6 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>crypto
   <library>gssapi_krb5
   <library>krb5
-  <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
@@ -988,14 +980,12 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -1008,7 +998,6 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>crypto
   <library>gssapi_krb5
   <library>krb5
-  <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
@@ -1026,14 +1015,12 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -1044,7 +1031,6 @@ test-run tests/client_mods/test_vnc_client_simple :
   <covflag>nocover $(GCOV_NO_BUILD)
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
@@ -1064,14 +1050,11 @@ test-run tests/client_mods/test_vnc_client_simple :
   <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -2067,15 +2050,8 @@ test-run tests/core/test_session :
 test-run tests/core/test_session_executor :
   $(REDEMPTION_TEST_PATH)/core/test_session_executor.cpp
 :
-  <library>app_path_test.o
-  <library>crypto
-  <library>openssl
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/transport/socket_transport.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
 ;
 test-run tests/core/test_session_server :
   $(REDEMPTION_TEST_PATH)/core/test_session_server.cpp
@@ -2165,11 +2141,6 @@ test-run tests/core/test_session_server :
   <library>src/utils/rle.o
   <library>z
 ;
-test-run tests/core/test_wait_obj :
-  $(REDEMPTION_TEST_PATH)/core/test_wait_obj.cpp
-:
-  <covfile>src/core/wait_obj.hpp
-;
 test-run tests/front/test_front :
   $(REDEMPTION_TEST_PATH)/front/test_front.cpp
 :
@@ -2209,7 +2180,6 @@ test-run tests/front/test_front :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -2217,7 +2187,6 @@ test-run tests/front/test_front :
   <library>src/utils/confdescriptor.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -2322,9 +2291,7 @@ test-run tests/mod/internal/test_bouncer2_mod :
 :
   <covfile>src/mod/internal/bouncer2_mod.cpp
   <covfile>src/mod/internal/bouncer2_mod.hpp
-  <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
@@ -2336,12 +2303,9 @@ test-run tests/mod/internal/test_bouncer2_mod :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -2378,7 +2342,6 @@ test-run tests/mod/internal/test_flat_dialog_mod :
   <covfile>src/mod/internal/flat_dialog_mod.hpp
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
@@ -2402,13 +2365,11 @@ test-run tests/mod/internal/test_flat_dialog_mod :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -2420,7 +2381,6 @@ test-run tests/mod/internal/test_flat_login_mod :
   <covfile>src/mod/internal/flat_login_mod.hpp
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
@@ -2444,13 +2404,11 @@ test-run tests/mod/internal/test_flat_login_mod :
   <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -2462,7 +2420,6 @@ test-run tests/mod/internal/test_flat_wab_close_mod :
   <covfile>src/mod/internal/flat_wab_close_mod.hpp
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
@@ -2482,13 +2439,11 @@ test-run tests/mod/internal/test_flat_wab_close_mod :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -2506,7 +2461,6 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <covfile>src/mod/internal/interactive_target_mod.hpp
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
@@ -2530,13 +2484,11 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -2566,7 +2518,6 @@ test-run tests/mod/internal/test_replay_mod :
   <covfile>src/mod/internal/replay_mod.hpp
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>snappy
   <library>src/capture/file_to_graphic.o
@@ -2582,12 +2533,10 @@ test-run tests/mod/internal/test_replay_mod :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>z
@@ -2605,7 +2554,6 @@ test-run tests/mod/internal/test_test_card_mod :
   <covfile>src/mod/internal/test_card_mod.hpp
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
@@ -2617,13 +2565,10 @@ test-run tests/mod/internal/test_test_card_mod :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
 ;
@@ -2639,7 +2584,6 @@ test-run tests/mod/internal/test_widget_test_mod :
   <covfile>src/mod/internal/widget_test_mod.hpp
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
@@ -2652,13 +2596,10 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget_test_mod.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -3286,14 +3227,11 @@ test-run tests/mod/rdp/channels/test_rdpdr_asynchronous_task :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_rdpdr_asynchronous_task.cpp
 :
   <covfile>src/mod/rdp/channels/rdpdr_asynchronous_task.hpp
-  <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>src/core/RDP/mppc.o
-  <library>src/transport/socket_transport.o
-  <library>src/utils/fileutils.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
 ;
 test-run tests/mod/rdp/channels/test_rdpdr_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_rdpdr_channel.cpp
@@ -3301,16 +3239,13 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   <covfile>src/mod/rdp/channels/rdpdr_channel.hpp
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -3336,14 +3271,11 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   <covfile>src/mod/rdp/channels/sespro_clipboard_based_launcher.hpp
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
 ;
 test-run tests/mod/rdp/channels/test_sespro_launcher :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_launcher.cpp
@@ -3364,7 +3296,6 @@ test-run tests/mod/rdp/test_rdp :
   <library>crypto
   <library>gssapi_krb5
   <library>krb5
-  <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
@@ -3382,14 +3313,12 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -3428,7 +3357,6 @@ test-run tests/mod/vnc/encoder/test_hextile :
   <covfile>src/mod/vnc/encoder/hextile.hpp
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
@@ -3448,14 +3376,11 @@ test-run tests/mod/vnc/encoder/test_hextile :
   <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/fake_graphic.o
@@ -3467,7 +3392,6 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <covfile>src/mod/vnc/encoder/zrle.hpp
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
@@ -3487,14 +3411,11 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/fake_graphic.o
@@ -3506,7 +3427,6 @@ test-run tests/mod/vnc/test_vnc :
   <covfile>src/mod/vnc/vnc.hpp
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
@@ -3526,14 +3446,11 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/fake_graphic.o
@@ -3640,14 +3557,12 @@ test-run tests/server/test_mstsc_client :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/confdescriptor.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3688,14 +3603,12 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/confdescriptor.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3736,14 +3649,12 @@ test-run tests/server/test_rdesktop_client :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/confdescriptor.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -4754,8 +4665,6 @@ alias test_session.coverage : tests/core/test_session.coverage ;
 alias test_session_executor : tests/core/test_session_executor ;
 alias test_session_server : tests/core/test_session_server ;
 alias test_session_server.coverage : tests/core/test_session_server.coverage ;
-alias test_wait_obj : tests/core/test_wait_obj ;
-alias test_wait_obj.coverage : tests/core/test_wait_obj.coverage ;
 alias test_front : tests/front/test_front ;
 alias test_front.coverage : tests/front/test_front.coverage ;
 alias test_graphic_api : tests/gdi/test_graphic_api ;
@@ -5317,7 +5226,6 @@ alias tests/core :
   tests/core/test_session
   tests/core/test_session_executor
   tests/core/test_session_server
-  tests/core/test_wait_obj
 ;
 explicit tests/front ;
 alias tests/front :

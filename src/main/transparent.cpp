@@ -31,7 +31,7 @@
 #include "mod/internal/transparent_replay_mod.hpp"
 #include "program_options/program_options.hpp"
 
-void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTransport * st_mod, SocketTransport * st_front);
+void run_mod(mod_api & mod, Front & front, SocketTransport * st_mod, SocketTransport& st_front);
 
 int main(int argc, char * argv[]) {
     openlog("transparent", LOG_CONS | LOG_PERROR, LOG_USER);
@@ -177,7 +177,6 @@ int main(int argc, char * argv[]) {
     }
     SocketTransport front_trans( "RDP Client", unique_fd{one_shot_server.sck}, "0.0.0.0", 0, std::chrono::seconds(1)
                                , to_verbose_flags(ini.get<cfg::debug::front>()), nullptr);
-    wait_obj front_event;
 
     // Remove existing Persistent Key List file.
     unlink(persistent_key_list_filename.c_str());
@@ -226,7 +225,7 @@ int main(int argc, char * argv[]) {
             TransparentReplayMod mod(session_reactor, front, play_filename.c_str(),
                 front.client_info.width, front.client_info.height, nullptr, ini.get<cfg::font>());
 
-            run_mod(mod, front, front_event, nullptr, &front_trans);
+            run_mod(mod, front, nullptr, front_trans);
         }
         else {
             std::unique_ptr<OutFileTransport> record_oft;
@@ -304,7 +303,7 @@ int main(int argc, char * argv[]) {
             mod_rdp mod(mod_trans, session_reactor, front, client_info, ini.get_ref<cfg::mod_rdp::redir_info>(),
                         gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
-            run_mod(mod, front, front_event, &mod_trans, &front_trans);
+            run_mod(mod, front, &mod_trans, front_trans);
         }
     }   // try
     catch (Error const& e) {
@@ -322,7 +321,8 @@ int main(int argc, char * argv[]) {
     return 0;
 }
 
-void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTransport * st_mod, SocketTransport * st_front) {
+void run_mod(mod_api & mod, Front & front, SocketTransport * st_mod, SocketTransport& st_front)
+{
     struct      timeval time_mark = { 0, 50000 };
     bool        run_session       = true;
     BackEvent_t mod_event_signal  = BACK_EVENT_NONE;
@@ -331,15 +331,14 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
         try {
             unsigned max = 0;
             fd_set   rfds;
-            fd_set   wfds;
 
             io_fd_zero(rfds);
-            io_fd_zero(wfds);
             struct timeval timeout = time_mark;
 
-            front_event.wait_on_fd(st_front?st_front->sck:INVALID_SOCKET, rfds, max, timeout);
+            io_fd_set(st_front.sck, rfds);
+            max = std::max(static_cast<unsigned>(st_front.sck), max);
 
-            int num = select(max + 1, &rfds, &wfds, nullptr, &timeout);
+            int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
 
             if (num < 0) {
                 if (errno == EINTR) {
@@ -350,7 +349,7 @@ void run_mod(mod_api & mod, Front & front, wait_obj & front_event, SocketTranspo
                 break;
             }
 
-            if (front_event.is_set(st_front?st_front->sck:INVALID_SOCKET, rfds)) {
+            if (io_fd_isset(st_front.sck, rfds)) {
                 time_t now = time(nullptr);
 
                 try {

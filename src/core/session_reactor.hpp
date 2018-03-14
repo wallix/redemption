@@ -38,6 +38,15 @@ namespace gdi
     class GraphicApi;
 }
 
+enum BackEvent_t {
+    BACK_EVENT_NONE = 0,
+    BACK_EVENT_NEXT,
+    BACK_EVENT_STOP = 4,
+    BACK_EVENT_REFRESH,
+
+    BACK_EVENT_RETRY_CURRENT,
+};
+
 struct SessionReactor
 {
     using PrefixArgs = jln::prefix_args<>;

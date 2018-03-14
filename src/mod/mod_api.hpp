@@ -28,7 +28,6 @@
 #include "core/callback.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "core/wait_obj.hpp"
 #include "gdi/graphic_api.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
 

@@ -35,11 +35,11 @@
 #include <array>
 
 #include "utils/invalid_socket.hpp"
+#include "utils/select.hpp"
 #include "utils/verbose_flags.hpp"
 
 #include "acl/authentifier.hpp"
 #include "core/server.hpp"
-#include "core/wait_obj.hpp"
 #include "core/session_reactor.hpp"
 #include "front/front.hpp"
 #include "mod/mod_api.hpp"

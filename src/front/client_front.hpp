@@ -22,6 +22,8 @@
 
 #include "utils/log.hpp"
 #include "utils/png.hpp"
+#include "utils/select.hpp"
+#include "utils/difftimeval.hpp"
 #include "utils/sugar/scope_exit.hpp"
 
 #include "core/front_api.hpp"

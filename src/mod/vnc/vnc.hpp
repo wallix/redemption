@@ -854,7 +854,6 @@ public:
         this->update_screen(screen_rect, 1);
         this->lib_open_clip_channel();
 
-// TODO        this->event.reset_trigger_time();
         if (bool(this->verbose & VNCVerbose::connection)) {
             LOG(LOG_INFO, "VNC screen cleaning ok\n");
         }
@@ -1032,7 +1031,6 @@ public:
         stream.out_clear_bytes(2);
         stream.out_uint32_be(key);
         this->t.send(stream.get_data(), stream.get_offset());
-// TODO        this->event.set_trigger_time(1000);
     }
 
     void apple_keyboard_translation(int device_flags, long param1, uint8_t downflag) {
@@ -1276,8 +1274,6 @@ protected:
             stream.out_copy_bytes(str, str_len);    // text
 
             this->t.send(stream.get_data(), stream.get_offset());
-
-// TODO            this->event.set_trigger_time(1000);
         };
 
         if (this->state == UP_AND_RUNNING) {
@@ -1691,6 +1687,7 @@ private:
                     LOG(LOG_ERR, "VNC connection error");
                     throw Error(ERR_VNC_CONNECTION_ERROR);
                 }
+                this->fd_event->set_fd(this->t.get_fd());
             }
             catch (Error const &)
             {
@@ -1705,38 +1702,13 @@ private:
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
             }
 
-// TODO            if (!this->event.is_waked_up_by_time()) {
-// TODO                try {
-// TODO                    while (this->up_and_running_ctx.run(buf, drawable, *this)) {
-// TODO                        this->up_and_running_ctx.restart();
-// TODO                    }
-// TODO                    return false;
-// TODO                }
-// TODO                catch (const Error & e) {
-// TODO                    LOG(LOG_ERR, "VNC Stopped [reason id=%u]", e.id);
-// TODO                    this->event.signal = BACK_EVENT_NEXT;
-// TODO                    this->front.must_be_stop_capture();
-// TODO                }
-// TODO                catch (...) {
-// TODO                    LOG(LOG_ERR, "unexpected exception raised in VNC");
-// TODO                    this->event.signal = BACK_EVENT_NEXT;
-// TODO                    this->front.must_be_stop_capture();
-// TODO                }
-// TODO
-// TODO                if (this->event.signal != BACK_EVENT_NEXT) {
-// TODO                    this->event.set_trigger_time(1000);
-// TODO                }
-// TODO            }
-//            else {
-//                this->update_screen(Rect(0, 0, this->width, this->height), 1);
-//            }
+            assert(!"unreachable, see fd_event");
             return false;
 
         case WAIT_PASSWORD:
             if (bool(this->verbose & VNCVerbose::connection)) {
                 LOG(LOG_INFO, "state=WAIT_PASSWORD");
             }
-// TODO            this->event.reset_trigger_time();
             return false;
 
         case WAIT_SECURITY_TYPES:
@@ -1850,7 +1822,6 @@ private:
                             this->t.disconnect();
 
                             this->state = ASK_PASSWORD;
-// TODO                            this->event.set_trigger_time(wait_obj::NOW);
                         }
                         else
                         {
@@ -2101,7 +2072,6 @@ private:
                 }
                 // no resizing needed
                 this->state = DO_INITIAL_CLEAR_SCREEN;
-// TODO                this->event.set_trigger_time(wait_obj::NOW);
                 break;
             case FrontAPI::ResizeResult::remoteapp:
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
@@ -2118,7 +2088,6 @@ private:
                 }
                 // no resizing needed
                 this->state = DO_INITIAL_CLEAR_SCREEN;
-// TODO                this->event.set_trigger_time(wait_obj::NOW);
                 break;
             case FrontAPI::ResizeResult::done:
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
@@ -2129,7 +2098,6 @@ private:
                 this->front_height = this->height;
 
                 this->state = WAIT_CLIENT_UP_AND_RUNNING;
-// TODO                this->event.set_trigger_time(wait_obj::NOW);
                 break;
             case FrontAPI::ResizeResult::fail:
                 // resizing failed
@@ -2154,42 +2122,38 @@ private:
 private:
     void check_timeout()
     {
-// TODO        if (this->event.is_waked_up_by_time()) {
-// TODO            this->event.reset_trigger_time();
-// TODO
-// TODO            if (this->clipboard_requesting_for_data_is_delayed) {
-// TODO                //const uint64_t usnow = ustime();
-// TODO                //const uint64_t timeval_diff = usnow - this->clipboard_last_client_data_timestamp;
-// TODO                //LOG(LOG_INFO,
-// TODO                //    "usnow=%llu clipboard_last_client_data_timestamp=%llu timeval_diff=%llu",
-// TODO                //    usnow, this->clipboard_last_client_data_timestamp, timeval_diff);
-// TODO                if (bool(this->verbose & VNCVerbose::basic_trace)) {
-// TODO                    LOG(LOG_INFO,
-// TODO                        "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%u) (time)",
-// TODO                        RDPECLIP::CB_FORMAT_DATA_REQUEST);
-// TODO                }
-// TODO
-// TODO                // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_TEXT or CF_UNICODETEXT)
-// TODO                // 04 00 00 00 04 00 00 00 0? 00 00 00
-// TODO                // 00 00 00 00
-// TODO                RDPECLIP::FormatDataRequestPDU format_data_request_pdu(this->clipboard_requested_format_id);
-// TODO                StaticOutStream<256>           out_s;
-// TODO
-// TODO                format_data_request_pdu.emit(out_s);
-// TODO
-// TODO                size_t length     = out_s.get_offset();
-// TODO                size_t chunk_size = length;
-// TODO
-// TODO                this->clipboard_requesting_for_data_is_delayed = false;
-// TODO                this->send_to_front_channel( channel_names::cliprdr
-// TODO                                           , out_s.get_data()
-// TODO                                           , length
-// TODO                                           , chunk_size
-// TODO                                           , CHANNELS::CHANNEL_FLAG_FIRST
-// TODO                                           | CHANNELS::CHANNEL_FLAG_LAST
-// TODO                                           );
-// TODO            }
-// TODO        }
+        if (this->clipboard_requesting_for_data_is_delayed) {
+            //const uint64_t usnow = ustime();
+            //const uint64_t timeval_diff = usnow - this->clipboard_last_client_data_timestamp;
+            //LOG(LOG_INFO,
+            //    "usnow=%llu clipboard_last_client_data_timestamp=%llu timeval_diff=%llu",
+            //    usnow, this->clipboard_last_client_data_timestamp, timeval_diff);
+            if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                LOG(LOG_INFO,
+                    "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%u) (time)",
+                    RDPECLIP::CB_FORMAT_DATA_REQUEST);
+            }
+
+            // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_TEXT or CF_UNICODETEXT)
+            // 04 00 00 00 04 00 00 00 0? 00 00 00
+            // 00 00 00 00
+            RDPECLIP::FormatDataRequestPDU format_data_request_pdu(this->clipboard_requested_format_id);
+            StaticOutStream<256>           out_s;
+
+            format_data_request_pdu.emit(out_s);
+
+            size_t length     = out_s.get_offset();
+            size_t chunk_size = length;
+
+            this->clipboard_requesting_for_data_is_delayed = false;
+            this->send_to_front_channel( channel_names::cliprdr
+                                       , out_s.get_data()
+                                       , length
+                                       , chunk_size
+                                       , CHANNELS::CHANNEL_FLAG_FIRST
+                                       | CHANNELS::CHANNEL_FLAG_LAST
+                                       );
+        }
     }
 
 private:
@@ -3389,7 +3353,6 @@ public:
                 LOG(LOG_INFO, "Client up and running");
             }
             this->state = DO_INITIAL_CLEAR_SCREEN;
-// TODO            this->event.set_trigger_time(wait_obj::NOW);
         }
     }
 
@@ -3405,12 +3368,10 @@ public:
             this->password[sizeof(this->password) - 1] = 0;
 
             this->state = RETRY_CONNECTION;
-// TODO            this->event.set_trigger_time(wait_obj::NOW);
+            this->draw_event_impl(gdi::null_gd());
             break;
         case NOTIFY_CANCEL:
-// TODO            this->event.signal = BACK_EVENT_NEXT;
-// TODO            this->event.set_trigger_time(wait_obj::NOW);
-
+            this->session_reactor.set_next_event(BACK_EVENT_NEXT);
             this->screen.clear();
             break;
         default:

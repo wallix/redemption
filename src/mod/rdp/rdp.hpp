@@ -4043,11 +4043,6 @@ public:
 
                             if (!this->already_upped_and_running) {
                                 this->do_enable_session_probe();
-
-                                if (this->open_session_timeout.count() > 0) {
-// TODO                                    this->event.set_trigger_time(wait_obj::NOW);
-                                }
-
                                 this->already_upped_and_running = true;
                             }
 

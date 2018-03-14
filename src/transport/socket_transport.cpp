@@ -23,6 +23,8 @@
 #include "transport/socket_transport.hpp"
 #include "utils/netutils.hpp"
 #include "utils/hexdump.hpp"
+#include "utils/select.hpp"
+#include "utils/difftimeval.hpp"
 #include "system/openssl.hpp"
 
 #include <sys/types.h>
@@ -72,11 +74,6 @@ SocketTransport::~SocketTransport()
            , "%s (%d): total_received=%" PRIu64 ", total_sent=%" PRIu64
            , this->name, this->sck, this->total_received, this->total_sent);
     }
-}
-
-bool SocketTransport::is_set(wait_obj & obj, fd_set & rfds) const
-{
-    return this->has_pending_data() || obj.is_set(this->sck, rfds);
 }
 
 bool SocketTransport::has_pending_data() const

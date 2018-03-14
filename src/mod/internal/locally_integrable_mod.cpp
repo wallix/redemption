@@ -19,7 +19,6 @@
 */
 
 #include "mod/internal/locally_integrable_mod.hpp"
-#include "core/wait_obj.hpp"
 #include "core/RDP/slowpath.hpp"
 #include "mod/internal/client_execute.hpp"
 
