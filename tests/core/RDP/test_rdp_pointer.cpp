@@ -56,6 +56,12 @@ RED_AUTO_TEST_CASE(TestMaskSize)
     RED_CHECK_EQUAL(p.mask_size(), 14);
 }
 
+RED_AUTO_TEST_CASE(TestConstPointer)
+{
+    ConstPointer cursor;
+    RED_CHECK_EQUAL(cursor.get_dimensions().width, 0);
+}
+
 RED_AUTO_TEST_CASE(TestPointerNormal)
 {
     Pointer p(Pointer::POINTER_NORMAL);

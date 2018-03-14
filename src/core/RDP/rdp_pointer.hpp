@@ -48,7 +48,36 @@ struct Hotspot {
     Hotspot(const Hotspot & hs) : x(hs.x), y(hs.y) {}
 };
 
-struct Pointer {
+struct BasePointer {
+protected:
+    const CursorSize dimensions;
+    const Hotspot hotspot;
+public:
+    const CursorSize get_dimensions() const
+    {
+        return this->dimensions;
+    }
+
+    const Hotspot get_hotspot() const
+    {
+        return this->hotspot;
+    }
+
+    BasePointer(const CursorSize & dimensions, const Hotspot & hotspot)
+        : dimensions(dimensions)
+        , hotspot(hotspot)
+    {}
+};
+
+struct ConstPointer : public BasePointer {
+    const std::string data;
+    ConstPointer()
+        : BasePointer(CursorSize{0,0}, Hotspot{0,0})
+        , data{}
+    {}
+};
+
+struct Pointer : public BasePointer {
 
     friend class NewPointerUpdate;
     friend class ColorPointerUpdate;
@@ -87,10 +116,6 @@ public:
 private:
 //    unsigned bpp;
     
-    CursorSize dimensions;
-    
-    Hotspot hotspot;
-    
     struct {
         alignas(4) 
         uint8_t data[DATA_SIZE];
@@ -104,26 +129,6 @@ private:
 
 public:
 
-    CursorSize get_dimensions() const
-    {
-        return this->dimensions;
-    }
-
-    void set_dimensions(const CursorSize & dimensions)
-    {
-        this->dimensions = dimensions;
-
-    }
-
-    Hotspot get_hotspot() const
-    {
-        return this->hotspot;
-    }
-
-    void set_hotspot(const Hotspot & hotspot)
-    {
-        this->hotspot = hotspot;
-    }
 
     void store_data_cursor(const char * cursor){ 
             uint8_t * tmp = this->data;
@@ -138,9 +143,8 @@ public:
 
 public:
 
-    explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, uint8_t data_bpp, const BGRPalette & palette, bool clean_up_32_bpp_cursor, BogusLinuxCursor bogus_linux_cursor)
-        : dimensions(d)
-        , hotspot(hs)
+    explicit Pointer(const CursorSize & d, const Hotspot & hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, uint8_t data_bpp, const BGRPalette & palette, bool clean_up_32_bpp_cursor, BogusLinuxCursor bogus_linux_cursor)
+        : BasePointer(d, hs)
     {
         auto mlen = av_and.size();
         auto dlen = av_xor.size();
@@ -216,8 +220,7 @@ public:
 
     Pointer(uint8_t Bpp, CursorSize d, Hotspot hs, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask, 
                    int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max)
-        : dimensions(d)
-        , hotspot(hs)
+        : BasePointer(CursorSize(std::min<size_t>(size_t(d.width), size_t(32))+(std::min<size_t>(size_t(d.width), size_t(32))&1),d.height), hs)
     {
     // VNC Pointer format
     // ==================
@@ -268,22 +271,16 @@ public:
             if ((minwidth % 8) != 0){
                 this->mask[target_mask_offset_line+::nbbytes(minwidth)-1] |= (0xFF>>(minwidth % 8));
             }
-
             target_offset_line += (minwidth + (minwidth & 1))*3;
             target_mask_offset_line += ::nbbytes(minwidth);
             source_offset_line -= d.width*Bpp;
             source_mask_offset_line -= ::nbbytes(d.width);
        }
-       if (minwidth & 1){
-        this->dimensions.width++;
-       }
-        
     }
 
 
     explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and)
-        : dimensions(d)
-        , hotspot(hs)
+        : BasePointer(d, hs)
     {
         if ((av_and.size() > this->bit_mask_size()) || (av_xor.size() > this->xor_mask_size())) {
             LOG(LOG_ERR, "mod_rdp::process_color_pointer_pdu: "
@@ -298,8 +295,7 @@ public:
     }
 
     explicit Pointer(uint8_t data_bpp, CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and)
-        : dimensions(d)
-        , hotspot(hs)
+    : BasePointer(d, hs)
     {
         (void)data_bpp;
         if ((av_and.size() > this->bit_mask_size()) || (av_xor.size() > this->xor_mask_size())) {
@@ -314,8 +310,7 @@ public:
     }
 
     explicit Pointer(const Pointer & other)
-    : dimensions(other.dimensions)
-    , hotspot(other.hotspot)
+    : BasePointer(other.dimensions, other.hotspot)
     , only_black_white(other.only_black_white)
     {
         auto & av_and = other.get_monochrome_and_mask();
@@ -337,8 +332,7 @@ public:
 
 
     explicit Pointer(uint8_t pointer_type = POINTER_NULL)
-    :   dimensions{0, 0}
-    ,   hotspot{0, 0}
+    :   BasePointer(CursorSize(0, 0), Hotspot(0, 0))
     {
         switch (pointer_type) {
             default:
