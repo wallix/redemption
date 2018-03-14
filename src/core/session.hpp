@@ -240,7 +240,9 @@ public:
                 });
                 // session_reactor.timer_events_.info(end_tv);
 
-                session_reactor.fd_events_.exec(rfds);
+                session_reactor.fd_events_.exec([&rfds](int fd, auto& /*e*/){
+                    return io_fd_isset(fd, rfds);
+                });
                 if (session_reactor.front_events().size() || sck_is_set(front_trans, rfds)) {
                     try {
                         session_reactor.execute_callbacks(mm.get_callback());
@@ -284,8 +286,10 @@ public:
                         {
                             if (BACK_EVENT_NONE == session_reactor.signal) {
                                 // Process incoming module trafic
-                                session_reactor.execute_graphics(
-                                    rfds, mm.get_graphic_wrapper(front));
+                                auto& gd = mm.get_graphic_wrapper(front);
+                                session_reactor.execute_graphics([&rfds](int fd, auto& /*e*/){
+                                    return io_fd_isset(fd, rfds);
+                                }, gd);
                             }
                         }
                         catch (Error const & e) {

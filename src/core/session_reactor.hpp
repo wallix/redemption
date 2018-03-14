@@ -25,7 +25,6 @@ Author(s): Jonathan Poelen
 #include <string>
 #include <new>
 
-#include "transport/socket_transport.hpp"
 #include "utils/executor.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
@@ -581,8 +580,9 @@ struct SessionReactor
             this->tv = addusectimeval(this->delay, tvtime());
         }
 
-        BasicFd(int fd) noexcept
+        BasicFd(int fd, SessionReactor& session_reactor) noexcept
         : fd(fd)
+        , session_reactor(session_reactor)
         {}
 
         void set_fd(int fd) noexcept
@@ -596,8 +596,34 @@ struct SessionReactor
             return this->fd;
         }
 
+        void set_timeout(std::chrono::milliseconds ms) noexcept
+        {
+            this->set_delay(ms);
+            this->set_time(addusectimeval(this->delay, this->session_reactor.get_current_time()));
+            if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
+                this->session_reactor.timer_events_.update_delay(*this, ms);
+            }
+            else {
+                this->session_reactor.graphic_timer_events_.update_delay(*this, ms);
+            }
+        }
+
+        void disable_timeout() noexcept
+        {
+            this->set_timeout(std::chrono::hours(9999));
+            this->timer().on_action = [](auto&, [[maybe_unused]] auto... xs){
+                return jln::ExecutorResult::Ready;
+            };
+        }
+
+        SessionReactor& get_reactor() const noexcept
+        {
+            return this->session_reactor;
+        }
+
     private:
         int fd;
+        SessionReactor& session_reactor;
     };
 
     template<class PrefixArgs_, class... Ts>
@@ -608,9 +634,8 @@ struct SessionReactor
         template<class... Args>
         FdImpl(int fd, SessionReactor& session_reactor, Args&&... args)
         noexcept(noexcept(jln::detail::tuple<Ts...>{static_cast<Args&&>(args)...}))
-        : BasicFd<PrefixArgs_>(fd)
+        : BasicFd<PrefixArgs_>(fd, session_reactor)
         , ctx{static_cast<Args&&>(args)...}
-        , session_reactor(session_reactor)
         {}
         REDEMPTION_DIAGNOSTIC_POP
 
@@ -632,39 +657,13 @@ struct SessionReactor
             this->timer().on_action = jln::wrap_fn<F, FdImpl, jln::Executor2FdTimeoutContext>();
         }
 
-        void set_timeout(std::chrono::milliseconds ms) noexcept
-        {
-            this->set_delay(ms);
-            this->set_time(addusectimeval(this->delay, tvtime()));
-            if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
-                this->session_reactor.timer_events_.update_delay(*this, ms);
-            }
-            else {
-                this->session_reactor.graphic_timer_events_.update_delay(*this, ms);
-            }
-        }
-
         void update_timeout(std::chrono::milliseconds ms) noexcept
         {
             this->set_timeout(ms);
         }
 
-        void disable_timeout() noexcept
-        {
-            this->set_timeout(std::chrono::hours(9999));
-            this->set_on_timeout(jln::always_ready());
-        }
-
-        SessionReactor& get_reactor() const noexcept
-        {
-            return this->session_reactor;
-        }
-
     public:
         jln::detail::tuple<Ts...> ctx;
-
-    private:
-        SessionReactor& session_reactor;
     };
 
     template<class EventContainer, class PrefixArgs_, class... Args>
@@ -696,12 +695,12 @@ struct SessionReactor
             return Ptr<Args...>::template New<2>(c, fd, r, static_cast<Args&&>(args)...);
         }
 
-        template<class... Args>
-        void exec(fd_set& rfds, Args&&... args)
+        template<class IsSetElem, class... Args>
+        void exec(IsSetElem is_set, Args&&... args)
         {
             auto run_element = [&](auto& elem){
-                // LOG(LOG_DEBUG, "is set fd: %d %d", elem.value.get_fd(), io_fd_isset(elem.value.get_fd(), rfds));
-                if (io_fd_isset(elem.value.get_fd(), rfds)
+                // LOG(LOG_DEBUG, "is set fd: %d %d", elem.value.get_fd(), io_fd_isset(elem.value.get_fd(), rfds))
+                if (is_set(elem.value.get_fd(), elem.value)
                  && !elem.value.exec(static_cast<Args&&>(args)...)) {
                     elem.apply_deleter();
                     return false;
@@ -893,10 +892,11 @@ struct SessionReactor
         this->execute_timers(enable_gd, get_gd);
     }
 
-    void execute_graphics(fd_set& rfds, gdi::GraphicApi& gd)
+    template<class IsSetElem>
+    void execute_graphics(IsSetElem is_set, gdi::GraphicApi& gd)
     {
         this->graphic_events_.exec(gd);
-        this->graphic_fd_events_.exec(rfds, gd);
+        this->graphic_fd_events_.exec(is_set, gd);
     }
 
     void execute_sesman(Inifile& ini)

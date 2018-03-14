@@ -90,11 +90,9 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     RED_REQUIRE_EQ(timer_events.size(), 1);
     RED_REQUIRE_EQ(fd_events.size(), 1);
 
-    fd_set rfds;
-    io_fd_zero(rfds);
-    io_fd_set(fd_events[0]->value.fd, rfds);
+    auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };
     for (int i = 0; i < 100 && !fd_events.empty(); ++i) {
-        session_reactor.fd_events_.exec(rfds);
+        session_reactor.fd_events_.exec(fd_is_set);
     }
     session_reactor.execute_timers(SessionReactor::EnableGraphics{false}, &gdi::null_gd);
     RED_CHECK_EQ(fd_events.size(), 0);
