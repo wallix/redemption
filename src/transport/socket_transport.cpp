@@ -162,6 +162,9 @@ Transport::TlsResult SocketTransport::enable_client_tls(bool server_cert_store,
         case TLSState::Ok:
             // TODO this should be an error, no need to commute two times to TLS
             return Transport::TlsResult::Fail;
+        default:
+            LOG(LOG_ERR, "SocketTransport::%s() unhandled state for tls_state", __FUNCTION__);
+            return Transport::TlsResult::Fail;
     }
 }
 
