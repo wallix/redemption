@@ -419,7 +419,6 @@ protected:
     const std::chrono::seconds open_session_timeout;
 
     SessionReactor& session_reactor;
-    SessionReactor::BasicTimerPtr open_session_timeout_checker_timer;
     SessionReactor::GraphicFdPtr fd_event;
 
     std::string output_filename;
@@ -1629,16 +1628,6 @@ public:
                     default: break;
                 }
 
-                StaticOutStream<256> stream;
-                X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
-                try {
-                    this->rdp.trans.send(stream.get_data(), stream.get_offset());
-                    LOG(LOG_INFO, "Connection to server closed");
-                }
-                catch(Error const & ee){
-                    LOG(LOG_INFO, "Connection to server Already closed: error=%u", ee.id);
-                };
-
                 const char * statestr = "UNKNOWN_STATE";
                 const char * statedescr = "Unknow state.";
                 switch (this->state) {
@@ -1679,6 +1668,9 @@ public:
             }
         ))
         .set_timeout(std::chrono::milliseconds(0))
+        .on_exit(jln::exit_with_success())
+        // TODO RDP_PROTOCOL_ERROR
+        .on_action(jln::exit_with_error() /* set by on_timeout action*/)
         .on_timeout([](auto ctx, gdi::GraphicApi& gd, D& d){
             try {
                 gdi_clear_screen(gd, d.rdp.get_dim());
@@ -1713,7 +1705,6 @@ public:
             }))
             .next_action([](auto ctx, gdi::GraphicApi&, D& d){
                 try {
-                        LOG(LOG_DEBUG, "nego %d", d.state);
                     if (d.state == State::NEGO)
                     {
                         bool const run = d.nego.recv_next_data(
@@ -1769,10 +1760,7 @@ public:
                     d.log_error(e);
                 }
             });
-        })
-        .on_exit(jln::exit_with_success())
-        // TODO RDP_PROTOCOL_ERROR
-        .on_action(jln::exit_with_error() /* set by on_timeout action*/);
+        });
     }
 
     ~mod_rdp() override {
@@ -5910,9 +5898,7 @@ public:
         this->end_session_reason = "CLOSE_SESSION_SUCCESSFUL";
         this->end_session_message = "OK.";
 
-        if (this->open_session_timeout.count()) {
-            this->open_session_timeout_checker_timer.reset();
-        }
+        this->fd_event->disable_timeout();
 
         if (this->enable_session_probe) {
             const bool disable_input_event     = true;
@@ -7209,34 +7195,9 @@ private:
             },
             write_sec_send_fn{SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel}
         );
+
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             infoPacket.log("Send data request", this->password_printing_mode, !this->enable_session_probe);
-        }
-
-        if (this->open_session_timeout.count()) {
-            this->open_session_timeout_checker_timer = this->session_reactor
-            .create_timer(std::ref(*this))
-            .set_delay(this->open_session_timeout)
-            .on_action(jln::one_shot([](mod_rdp& self){
-                LOG(LOG_INFO, "mod_rdp::draw_event() Timeout::TIMEOUT_REACHED");
-                if (self.error_message) {
-                    *self.error_message = "Logon timer expired!";
-                }
-
-                self.report_message.report("CONNECTION_FAILED", "Logon timer expired.");
-
-                if (self.enable_session_probe) {
-                    const bool disable_input_event     = false;
-                    const bool disable_graphics_update = false;
-                    self.disable_input_event_and_graphics_update(
-                        disable_input_event, disable_graphics_update);
-                }
-
-                LOG(LOG_ERR,
-                    "Logon timer expired on %s. The session will be disconnected.",
-                    self.hostname);
-                throw Error(ERR_RDP_OPEN_SESSION_TIMEOUT);
-            }));
         }
 
         if (bool(this->verbose & RDPVerbose::basic_trace)){
