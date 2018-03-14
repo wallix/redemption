@@ -24,10 +24,9 @@
 #define RED_TEST_MODULE TestRdp
 #include "system/redemption_unit_tests.hpp"
 
-
-
 #include "configs/config.hpp"
 #include "test_only/transport/test_transport.hpp"
+#include "test_only/session_reactor_executor.hpp"
 #include "core/client_info.hpp"
 #include "mod/rdp/rdp.hpp"
 
@@ -206,15 +205,11 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     RED_CHECK_EQUAL(front.info.width, 800);
     RED_CHECK_EQUAL(front.info.height, 600);
 
-    uint32_t count = 0;
-    BackEvent_t res = BACK_EVENT_NONE;
-    while (res == BACK_EVENT_NONE){
+    execute_negociate_mod(session_reactor, mod, front);
+    for (int count = 0; count < 38; ++count) {
         LOG(LOG_INFO, "===================> count = %u", count);
-        if (count++ >= 38) break;
-        mod.draw_event(time(nullptr), front);
+        execute_graphics_event(session_reactor, front);
     }
-
-    t.disable_remaining_error();
 
     //front.dump_png("trace_w2008_");
 }

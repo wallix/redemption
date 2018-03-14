@@ -34,6 +34,7 @@
 // Uncomment the code block below to generate testing data.
 //include "transport/socket_transport.hpp"
 #include "test_only/transport/test_transport.hpp"
+#include "test_only/session_reactor_executor.hpp"
 #include "core/client_info.hpp"
 #include "mod/rdp/rdp.hpp"
 
@@ -136,12 +137,9 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     t.disable_remaining_error();
 
-    for (int count = 0; count < 70; ++count) {
-        LOG(LOG_INFO, "===================> count = %d", count);
-        mod.draw_event(time(nullptr), front);
-    }
+    execute_mod(session_reactor, mod, front, 70);
 
-    t.disable_remaining_error();
+    // t.disable_remaining_error();
     //front.dump_png("trace_w2008_tls_");
 }
 
@@ -235,11 +233,8 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
 
     t.disable_remaining_error();
 
-    for (int count = 0; count < 40; ++count) {
-        LOG(LOG_INFO, "===================> count = %d", count);
-        mod.draw_event(time(nullptr), front);
-    }
+    execute_mod(session_reactor, mod, front, 40);
 
-    t.disable_remaining_error();
+    // t.disable_remaining_error();
 //    front.dump_png("trace_w2008_tls_");
 }

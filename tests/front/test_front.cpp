@@ -30,6 +30,7 @@
 // Uncomment the code block below to generate testing data.
 //include "transport/socket_transport.hpp"
 #include "test_only/transport/test_transport.hpp"
+#include "test_only/session_reactor_executor.hpp"
 #include "core/client_info.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "utils/fileutils.hpp"
@@ -53,35 +54,13 @@ namespace dump2008_PatBlt {
 }
 
 
-class MyFront : public SessionReactor, public Front
+class MyFront : public Front
 {
 public:
     bool can_be_start_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
 
-    MyFront( Transport & trans
-            , Random & gen
-            , Inifile & ini
-            , CryptoContext & cctx
-            , ReportMessageApi & report_message
-            , bool fp_support // If true, fast-path must be supported
-            , bool mem3blt_support
-            , time_t now
-            , const char * server_capabilities_filename = ""
-            , Transport * persistent_key_list_transport = nullptr
-            )
-    : Front( *this
-            , trans
-            , gen
-            , ini
-            , cctx
-            , report_message
-            , fp_support
-            , mem3blt_support
-            , now
-            , server_capabilities_filename
-            , persistent_key_list_transport)
-    {}
+    using Front::Front;
 
     void clear_channels()
     {
@@ -179,15 +158,18 @@ RED_AUTO_TEST_CASE(TestFront)
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
     ini.set<cfg::globals::handshake_timeout>(std::chrono::seconds::zero());
 
+    SessionReactor session_reactor;
     NullReportMessage report_message;
-    MyFront front(front_trans, gen1, ini , cctx, report_message, fastpath_support, mem3blt_support, now);
+    MyFront front(
+        session_reactor, front_trans, gen1, ini , cctx,
+        report_message, fastpath_support, mem3blt_support, now);
     null_mod no_mod;
 
     while (front.up_and_running == 0) {
         front.incoming(no_mod, now);
-        RED_CHECK_EQ(front.timer_events_.elements.size(), 0);
+        RED_CHECK_EQ(session_reactor.timer_events_.elements.size(), 0);
     }
-    RED_CHECK_EQ(front.front_events_.elements.size(), 0);
+    RED_CHECK_EQ(session_reactor.front_events_.elements.size(), 0);
 
     LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
@@ -244,9 +226,9 @@ RED_AUTO_TEST_CASE(TestFront)
 
     front.clear_channels();
     NullAuthentifier authentifier;
-    mod_rdp mod(t, front, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
-    RED_CHECK(true);
-
+    mod_rdp mod(
+        t, session_reactor, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
+        gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -254,10 +236,6 @@ RED_AUTO_TEST_CASE(TestFront)
     // incoming connexion data
     RED_CHECK_EQUAL(front.client_info.width, 1024);
     RED_CHECK_EQUAL(front.client_info.height, 768);
-
-
-    while (!mod.is_up_and_running())
-        mod.draw_event(now, front);
 
     // Force Front to be up and running after Deactivation-Reactivation
     //  Sequence initiated by mod_rdp.
@@ -267,13 +245,10 @@ RED_AUTO_TEST_CASE(TestFront)
 
     front.can_be_start_capture();
 
-    uint32_t count = 0;
-    BackEvent_t res = BACK_EVENT_NONE;
-    while (res == BACK_EVENT_NONE){
+    execute_negociate_mod(session_reactor, mod, front);
+    for (int count = 0; count < 38; ++count) {
         LOG(LOG_INFO, "===================> count = %u", count);
-        if (count++ >= 38) break;
-        mod.draw_event(now, front);
-        now++;
+        execute_graphics_event(session_reactor, front);
         LOG(LOG_INFO, "Calling Snapshot");
         front.periodic_snapshot();
     }
@@ -427,16 +402,19 @@ RED_AUTO_TEST_CASE(TestFront2)
     ini.set<cfg::globals::is_rec>(true);
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
+    SessionReactor session_reactor;
     NullReportMessage report_message;
-    MyFront front( front_trans, gen1, ini
-                    , cctx, report_message, fastpath_support, mem3blt_support
-                    , now - ini.get<cfg::globals::handshake_timeout>().count() - 1);
+    MyFront front( session_reactor, front_trans, gen1, ini
+                 , cctx, report_message, fastpath_support, mem3blt_support
+                 , now - ini.get<cfg::globals::handshake_timeout>().count() - 1);
     null_mod no_mod;
 
-    RED_REQUIRE_EQ(front.timer_events_.elements.size(), 1);
-    front.set_current_time({ini.get<cfg::globals::handshake_timeout>().count(), 0});
+    RED_REQUIRE_EQ(session_reactor.timer_events_.elements.size(), 1);
     RED_CHECK_EXCEPTION_ERROR_ID(
-        front.timer_events_.exec(front.get_current_time()),
+        session_reactor.execute_timers_at(
+            SessionReactor::EnableGraphics{false},
+            {ini.get<cfg::globals::handshake_timeout>().count(), 0},
+            [&]{ return std::ref(front); }),
         ERR_RDP_HANDSHAKE_TIMEOUT);
 
     // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);

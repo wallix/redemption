@@ -29,6 +29,7 @@
 // Uncomment the code block below to generate testing data.
 
 #include "test_only/check_sig.hpp"
+#include "test_only/session_reactor_executor.hpp"
 #include "configs/config.hpp"
 // Comment the code block below to generate testing data.
 #include "test_only/transport/test_transport.hpp"
@@ -133,13 +134,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     time_t now = 1450864840;
 
-    while (!mod.is_up_and_running())
-            mod.draw_event(now, front);
-
-    for (int count = 0; count < 8; ++count) {
-        LOG(LOG_INFO, "===================> count = %d", count);
-        mod.draw_event(time(nullptr), front);
-    }
+    execute_mod(session_reactor, mod, front, 8);
 
     RED_CHECK_SIG(front.gd.impl(), "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29");
     //front.dump_png("trace_wab_");
