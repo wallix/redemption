@@ -34,6 +34,19 @@
 #include "utils/stream.hpp"
 #include "core/error.hpp"
 
+struct CursorSize {
+    unsigned width;
+    unsigned height;
+    CursorSize(unsigned w, unsigned h) : width(w), height(h) {}
+    CursorSize(const CursorSize & cs) : width(cs.width), height(cs.height) {}
+};
+
+struct Hotspot {
+    unsigned x;
+    unsigned y;
+    Hotspot(unsigned x, unsigned y) : x(x), y(y) {}
+    Hotspot(const Hotspot & hs) : x(hs.x), y(hs.y) {}
+};
 
 struct Pointer {
 
@@ -70,22 +83,6 @@ public:
         , MASK_SIZE = MAX_WIDTH * MAX_HEIGHT * 1 / 8
     };
 
-   
-
-public:
-    struct CursorSize {
-        unsigned width;
-        unsigned height;
-        CursorSize(unsigned w, unsigned h) : width(w), height(h) {}
-        CursorSize(const CursorSize & cs) : width(cs.width), height(cs.height) {}
-    };
-
-    struct Hotspot {
-        unsigned x;
-        unsigned y;
-        Hotspot(unsigned x, unsigned y) : x(x), y(y) {}
-        Hotspot(const Hotspot & hs) : x(hs.x), y(hs.y) {}
-    };
 
 private:
 //    unsigned bpp;
@@ -215,7 +212,6 @@ public:
             }
 
         }
-        this->compute_alpha_q();
     }
 
     Pointer(uint8_t Bpp, CursorSize d, Hotspot hs, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask, 
@@ -282,7 +278,6 @@ public:
         this->dimensions.width++;
        }
         
-        this->compute_alpha_q();
     }
 
 
@@ -300,7 +295,6 @@ public:
         memcpy(this->mask, av_and.data(), av_and.size());
         memcpy(this->data, av_xor.data(), av_xor.size());
         this->update_bw();
-        this->compute_alpha_q();
     }
 
     explicit Pointer(uint8_t data_bpp, CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and)
@@ -317,7 +311,6 @@ public:
 
         memcpy(this->mask, av_and.data(), av_and.size());
         memcpy(this->data, av_xor.data(), av_xor.size());
-        this->compute_alpha_q();
     }
 
     explicit Pointer(const Pointer & other)
@@ -331,8 +324,6 @@ public:
         memcpy(this->mask, av_and.data(), av_and.size());
         memset(this->data, 0, sizeof(this->data));
         memcpy(this->data, av_xor.data(), av_xor.size());
-        memcpy(this->alpha_q.data, other.alpha_q.data, DATA_SIZE);
-        this->compute_alpha_q();
     }
 
     bool operator==(const Pointer & other) const {
@@ -341,8 +332,7 @@ public:
              && other.dimensions.width == this->dimensions.width
              && other.dimensions.height == this->dimensions.height
              && (0 == memcmp(this->data, other.data, other.data_size()))
-             && (0 == memcmp(this->mask, other.mask, this->bit_mask_size()))
-             && (0 == memcmp(this->alpha_q.data, other.alpha_q.data, DATA_SIZE)));
+             && (0 == memcmp(this->mask, other.mask, this->bit_mask_size())));
     }
 
 
@@ -788,7 +778,6 @@ public:
                 break;  // case POINTER_DOT:
 
         }   // switch (pointer_type)
-        this->compute_alpha_q();
 
     }   // Pointer(uint8_t pointer_type)
 
@@ -815,36 +804,6 @@ public:
     {
         return {this->mask, this->bit_mask_size()};
     }
-
-    const array_view_const_u8 get_alpha_q() const
-    {
-        return {this->alpha_q.data, this->dimensions.width * this->dimensions.height * 4};
-    }
-
-    void compute_alpha_q(){
-        size_t mask_offset_line = 0;
-        size_t data_offset_line = 0;
-        size_t target_data_offset_line = ((this->dimensions.height - 1) * this->dimensions.width*4);
-        for (uint8_t y = 0 ; y < this->dimensions.height ; y++){
-            for(uint8_t x = 0 ; x < this->dimensions.width ; x++){
-                const size_t mask_offset = mask_offset_line +::nbbytes(x+1)-1; 
-                const size_t data_offset = data_offset_line + x*3; 
-                const size_t target_data_offset = target_data_offset_line + x*4;
-                //LOG(LOG_INFO, "(x=%d/%u, y=%d/%u) mw=%zu mx=%zu, mask_offset=%zu data_offset=%zu target_offset%zu",x, this->dimensions.width, y, this->dimensions.height, 
-                //            size_t(::nbbytes(this->dimensions.width)), size_t(::nbbytes(x+1)), mask_offset, data_offset, target_data_offset);
-                uint8_t mask_value = (this->mask[mask_offset]&(0x80>>(x&7)))?0x00:0xFF;
-                for (uint8_t i = 0 ; i < 3 ; i++){
-                    uint8_t value = this->data[data_offset+i];
-                    this->alpha_q.data[target_data_offset+i] = (mask_value == 0)?0:value;
-                }
-                this->alpha_q.data[target_data_offset+3] = mask_value;
-            }
-            mask_offset_line += ::nbbytes(this->dimensions.width);
-            data_offset_line += 3 * this->dimensions.width;
-            target_data_offset_line -= this->dimensions.width*4;
-        }
-    }
-
 
     const array_view_const_u8 get_24bits_xor_mask() const
     {
@@ -1384,6 +1343,58 @@ public:
 
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
+    }
+};
+
+struct ARGB32Pointer {
+    CursorSize dimensions;
+    Hotspot hotspot;
+
+    alignas(4) 
+    uint8_t data[Pointer::DATA_SIZE];
+
+    ARGB32Pointer(Pointer const & cursor)
+        : dimensions(cursor.get_dimensions())
+        , hotspot(cursor.get_hotspot())
+    {
+        const uint8_t * cursormask = cursor.get_monochrome_and_mask().data();
+        const uint8_t * cursordata = cursor.get_24bits_xor_mask().data();
+        size_t mask_offset_line = 0;
+        size_t data_offset_line = 0;
+        size_t target_data_offset_line = ((this->dimensions.height - 1) * this->dimensions.width*4);
+        for (uint8_t y = 0 ; y < this->dimensions.height ; y++){
+            for(uint8_t x = 0 ; x < this->dimensions.width ; x++){
+                const size_t mask_offset = mask_offset_line +::nbbytes(x+1)-1; 
+                const size_t data_offset = data_offset_line + x*3; 
+                const size_t target_data_offset = target_data_offset_line + x*4;
+                //LOG(LOG_INFO, "(x=%d/%u, y=%d/%u) mw=%zu mx=%zu, mask_offset=%zu data_offset=%zu target_offset%zu",x, this->dimensions.width, y, this->dimensions.height, 
+                //            size_t(::nbbytes(this->dimensions.width)), size_t(::nbbytes(x+1)), mask_offset, data_offset, target_data_offset);
+                uint8_t mask_value = (cursormask[mask_offset]&(0x80>>(x&7)))?0x00:0xFF;
+                for (uint8_t i = 0 ; i < 3 ; i++){
+                    uint8_t value = cursordata[data_offset+i];
+                    this->data[target_data_offset+i] = (mask_value == 0)?0:value;
+                }
+                this->data[target_data_offset+3] = mask_value;
+            }
+            mask_offset_line += ::nbbytes(this->dimensions.width);
+            data_offset_line += 3 * this->dimensions.width;
+            target_data_offset_line -= this->dimensions.width*4;
+        }
+    }
+
+    CursorSize get_dimensions() const
+    {
+        return this->dimensions;
+    }
+
+    Hotspot get_hotspot() const
+    {
+        return this->hotspot;
+    }
+
+    const array_view_const_u8 get_alpha_q() const
+    {
+        return {this->data, this->dimensions.width * this->dimensions.height * 4};
     }
 };
 

@@ -122,14 +122,14 @@ namespace VNC {
                 buf.advance(sz_pixel_array + sz_bitmask);
 
                 // TODO: special dot cursor  if cx=1 cy=1 ? : a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead ?
-//                Pointer cursor(this->bpp, Pointer::CursorSize{this->cx, this->cy}, Pointer::Hotspot{this->x, this->y}, {this->mask.data(), this->mask.size()}, {this->data.data(), this->data.size()}, false);
+//                Pointer cursor(this->bpp, Pointer::CursorSize{this->cx, this->cy}, Hotspot{this->x, this->y}, {this->mask.data(), this->mask.size()}, {this->data.data(), this->data.size()}, false);
 
-                LOG(LOG_INFO, "VNC Cursor(%u, %u, %u, %u) %u %u %u", this->x, this->y, this->cx, this->cy, this->Bpp, this->bpp, sz_pixel_array);
+                LOG(LOG_INFO, "VNC Cursor(%zu, %zu, %zu, %zu) %u %u %zu", this->x, this->y, this->cx, this->cy, this->Bpp, this->bpp, sz_pixel_array);
                 hexdump_d(data.data(), data.size());
                 hexdump_d(mask.data(), mask.size());
                 Pointer cursor(this->Bpp, 
-                                Pointer::CursorSize{static_cast<unsigned>(this->cx), static_cast<unsigned>(this->cy)}, 
-                                Pointer::Hotspot{static_cast<unsigned>(this->x), static_cast<unsigned>(this->y)}, 
+                                CursorSize{static_cast<unsigned>(this->cx), static_cast<unsigned>(this->cy)}, 
+                                Hotspot{static_cast<unsigned>(this->x), static_cast<unsigned>(this->y)}, 
                                 data, mask, 
                                 this->red_shift, this->red_max, this->green_shift, this->green_max, this->blue_shift, this->blue_max);
 //                Pointer cursor(Pointer::POINTER_DOT);

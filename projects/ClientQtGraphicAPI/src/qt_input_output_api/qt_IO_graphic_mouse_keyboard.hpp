@@ -409,16 +409,12 @@ private:
     }
 
     virtual void set_pointer(Pointer const & cursor) override {
-//        LOG(LOG_INFO, "cursor size(%u, %u)", cursor.get_dimensions().width, cursor.get_dimensions().height);
-//        LOG(LOG_INFO, "cursor hotspot(%u, %u)", cursor.get_hotspot().x, cursor.get_hotspot().y);
-//        LOG(LOG_INFO, "cursor is bw(%s)", cursor.only_black_white?"BW":"COLOR");
-//        hexdump_d(cursor.mask, 32 * 32 / 8);
-//        hexdump_d(cursor.data, 32 * 32 * 3);
 
         auto dimensions = cursor.get_dimensions();
         auto hotspot = cursor.get_hotspot();
 
-        auto av_alpha_q = cursor.get_alpha_q();
+        ARGB32Pointer vnccursor(cursor);
+        const auto av_alpha_q = vnccursor.get_alpha_q();
 
         // this->cursor_image is used when client is replaying
         this->cursor_image = QImage(av_alpha_q.data(), dimensions.width, dimensions.height, dimensions.width * 4, QImage::Format_ARGB32_Premultiplied);

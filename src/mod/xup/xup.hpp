@@ -326,7 +326,7 @@ enum {
                         stream.in_skip_bytes(2);
 //                        auto hotspot_y = stream.in_uint16_le();
                         stream.in_skip_bytes(2);
-//                        Pointer::Hotspot hotspot(hotspot_x, hotspot_y);
+//                      Hotspot hotspot(hotspot_x, hotspot_y);
                         stream.in_skip_bytes(32 * (32 * 3)); // data
                         stream.in_skip_bytes(32 * (32 / 8)); // mask
                         // TODO: we just ignore cursor data for now. Fix that later

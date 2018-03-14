@@ -6852,7 +6852,7 @@ public:
         const uint8_t * data = stream.in_uint8p(dlen);
         const uint8_t * mask = stream.in_uint8p(mlen);
 
-        Pointer cursor(Pointer::CursorSize{width, height}, Pointer::Hotspot{hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen});
+        Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen});
         this->cursors[pointer_cache_idx] = cursor;
 
         drawable.set_pointer(cursor);
