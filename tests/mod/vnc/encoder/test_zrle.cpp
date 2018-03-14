@@ -135,8 +135,7 @@ RED_AUTO_TEST_CASE(TestZrle)
                         break;
                         case VNC::Encoder::EncoderState::Exit:
                             LOG(LOG_INFO, "End of encoder");
-                            delete encoder;
-                            encoder = nullptr;
+                            encoder.reset();
                         break;
                         }
                 }
