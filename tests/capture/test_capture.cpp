@@ -23,8 +23,6 @@
 #define RED_TEST_MODULE TestCapture
 #include "system/redemption_unit_tests.hpp"
 
-
-
 #include "utils/log.hpp"
 
 #include <memory>

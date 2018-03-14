@@ -129,6 +129,7 @@ class Front : public FrontAPI
     int mouse_x = 0;
     int mouse_y = 0;
 
+    SessionReactor::BasicTimerPtr capture_timer;
 public:
     bool has_user_activity = true;
     Capture * capture;
@@ -1051,15 +1052,25 @@ public:
                                    , Rect()
                                    );
 
-
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }
-        this->capture->get_capture_event().set_trigger_time(wait_obj::NOW);
         if (this->capture->get_graphic_api()) {
             this->set_gd(this->capture->get_graphic_api());
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
+
+        this->capture_timer = this->session_reactor.create_timer(std::ref(*this))
+        .set_delay(std::chrono::milliseconds(0))
+        .on_action([](auto ctx, Front& self){
+            auto capture_ms = self.capture->periodic_snapshot(
+                ctx.get_current_time(),
+                self.mouse_x, self.mouse_y,
+                false  // ignore frame in time interval
+            );
+            return ctx.ready_to(
+                std::chrono::duration_cast<std::chrono::milliseconds>(capture_ms.ms()));
+        });
 
         this->update_keyboard_input_mask_state();
 
@@ -1075,6 +1086,7 @@ public:
         if (this->capture) {
             LOG(LOG_INFO, "---<>  Front::must_be_stop_capture  <>---");
             delete this->capture;
+            this->capture_timer.reset();
             this->capture = nullptr;
 
             this->set_gd(this->orders.graphics_update_pdu());
@@ -1088,19 +1100,6 @@ public:
             this->capture->update_config(enable_rt_display);
         }
     }
-
-    void periodic_snapshot()
-    {
-        //LOG(LOG_INFO, "Front::periodic_snapshot");
-        if (this->capture) {
-            struct timeval now = tvtime();
-            this->capture->periodic_snapshot(
-                now, this->mouse_x, this->mouse_y
-              , false  // ignore frame in time interval
-            );
-        }
-    }
-    // ===========================================================================
 
     static int get_appropriate_compression_type(int client_supported_type, int front_supported_type)
     {

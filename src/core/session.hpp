@@ -172,9 +172,6 @@ public:
 
                 if (mm.mod->is_up_and_running() || !front.up_and_running) {
                     wait_on_sck(front_trans, rfds, max);
-                    if (front.capture) {
-                        front.capture->get_capture_event().wait_on_timeout(timeout);
-                    }
                 }
 
                 if (acl) {
@@ -363,10 +360,6 @@ public:
                             else {
                                 throw;
                             }
-                        }
-
-                        if (front.capture && front.capture->get_capture_event().is_set(INVALID_SOCKET, rfds)) {
-                            front.periodic_snapshot();
                         }
 
                         // Incoming data from ACL, or opening authentifier

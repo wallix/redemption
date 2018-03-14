@@ -245,13 +245,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     front.can_be_start_capture();
 
-    execute_negociate_mod(session_reactor, mod, front);
-    for (int count = 0; count < 38; ++count) {
-        LOG(LOG_INFO, "===================> count = %u", count);
-        execute_graphics_event(session_reactor, front);
-        LOG(LOG_INFO, "Calling Snapshot");
-        front.periodic_snapshot();
-    }
+    execute_mod(session_reactor, mod, front, 38);
 
     front.must_be_stop_capture();
 

@@ -1570,7 +1570,6 @@ Capture::Capture(
 : is_replay_mod(!capture_params.report_message)
 , update_progress_data(update_progress_data)
 , mouse_info{capture_params.now, drawable_params.width / 2, drawable_params.height / 2}
-, capture_event{}
 , capture_drawable(capture_wrm || capture_video || capture_ocr || capture_png || capture_video_full)
 {
    //assert(report_message ? order_bpp == capture_bpp : true);
@@ -1818,8 +1817,6 @@ Capture::Microseconds Capture::periodic_snapshot(
     int cursor_x, int cursor_y,
     bool ignore_frame_in_timeval
 ) {
-    this->capture_event.reset_trigger_time();
-
     if (this->gd_drawable) {
         this->gd_drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
     }
@@ -1830,7 +1827,6 @@ Capture::Microseconds Capture::periodic_snapshot(
         for (gdi::CaptureApi & cap : this->caps) {
             time = std::min(time, cap.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval).ms());
         }
-        this->capture_event.update_trigger_time(time.count());
     }
     return time;
 }
