@@ -1592,17 +1592,11 @@ public:
                         this->front,
                         this->front.client_info.width,
                         this->front.client_info.height,
-                        this->ini.get<cfg::font>(),
-                        TR(trkeys::authentication_required, language(this->ini)),
-                        TR(trkeys::password, language(this->ini)),
-                        this->ini.get<cfg::theme>(),
                         this->front.client_info.keylayout,
                         this->front.keymap.key_flags,
                         this->ini.get<cfg::mod_vnc::clipboard_up>(),
                         this->ini.get<cfg::mod_vnc::clipboard_down>(),
                         this->ini.get<cfg::mod_vnc::encodings>().c_str(),
-                        this->ini.get<cfg::mod_vnc::allow_authentification_retries>(),
-                        true,
                         this->ini.get<cfg::mod_vnc::server_clipboard_encoding_type>()
                             != ClipboardEncodingType::latin1
                             ? mod_vnc::ClipboardEncodingType::UTF8

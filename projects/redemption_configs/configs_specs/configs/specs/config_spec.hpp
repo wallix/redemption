@@ -428,8 +428,6 @@ void config_spec_definition(Writer && W)
             "  -239 (0xFFFFFF11): Cursor pseudo-encoding"
         });
         W.sep();
-        W.member(advanced_in_gui, no_sesman, type_<bool>(), "allow_authentification_retries", set(false));
-        W.sep();
         W.member(advanced_in_gui, sesman_to_proxy, type_<ClipboardEncodingType>(), "server_clipboard_encoding_type", desc{
             "VNC server clipboard data encoding type."
         }, sesman::name{"vnc_server_clipboard_encoding_type"}, set(ClipboardEncodingType::latin1));

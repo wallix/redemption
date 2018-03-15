@@ -165,7 +165,6 @@ namespace cfg {
         struct clipboard_up;
         struct clipboard_down;
         struct encodings;
-        struct allow_authentification_retries;
         struct server_clipboard_encoding_type;
         struct bogus_clipboard_infinite_loop;
     };

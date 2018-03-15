@@ -232,7 +232,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     };
 
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-    const bool is_socket_transport = false;
 
     // To always get the same client random, in tests
 //    LCGRandom gen(0);
@@ -256,16 +255,11 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
         , front
         , info.width
         , info.height
-        , font
-        , "label message", "label pass"
-        , Theme()
         , info.keylayout
         , 0             /* key_flags */
         , true          /* clipboard */
         , true          /* clipboard */
         , "0,1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
-        , false         /* allow authentification retries */
-        , is_socket_transport
         , mod_vnc::ClipboardEncodingType::UTF8
         , bogus_clipboard_infinite_loop
         , report_message

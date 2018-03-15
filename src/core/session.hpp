@@ -204,7 +204,7 @@ public:
                 session_reactor.for_each_fd(
                     enable_graphics,
                     [&](int fd, [[maybe_unused]] auto const& elem){
-                        // LOG(LOG_DEBUG, "%p set fd: %d", static_cast<void const*>(&elem), fd);
+                        LOG(LOG_DEBUG, "%p set fd: %d", static_cast<void const*>(&elem), fd);
                         io_fd_set(fd, rfds);
                         max = std::max(max, unsigned(fd));
                     }

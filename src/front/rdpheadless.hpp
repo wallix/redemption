@@ -713,17 +713,11 @@ public:
               , *(this)
               , this->_info.width
               , this->_info.height
-              , ini.get<cfg::font>()
-              , ""
-              , ""
-              , this->theme
               , this->_info.keylayout
               , 0
               , true
               , true
               , "0,1,-239"
-              , false
-              , true
               , mod_vnc::ClipboardEncodingType::UTF8
               , VncBogusClipboardInfiniteLoop::delayed
               , this->report_message

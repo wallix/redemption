@@ -597,6 +597,7 @@ struct SessionReactor
         void set_fd(int fd) noexcept
         {
             assert(fd >= 0);
+            LOG(LOG_DEBUG, "set_fd %d -> %d", this->fd, fd);
             this->fd = fd;
         }
 
@@ -708,7 +709,7 @@ struct SessionReactor
         void exec(IsSetElem is_set, Args&&... args)
         {
             auto run_element = [&](auto& elem){
-                // LOG(LOG_DEBUG, "is set fd: %d %d", elem.value.get_fd(), io_fd_isset(elem.value.get_fd(), rfds))
+                LOG(LOG_DEBUG, "is set fd: %d", is_set(elem.value.get_fd(), elem.value));
                 if (is_set(elem.value.get_fd(), elem.value)
                  && !elem.value.exec(static_cast<Args&&>(args)...)) {
                     elem.apply_deleter();

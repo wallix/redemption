@@ -2139,18 +2139,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// type: bool <br/>
-    /// value{0} <br/>
-    struct mod_vnc::allow_authentification_retries {
-        static constexpr bool is_sesman_to_proxy() { return 0; }
-        static constexpr bool is_proxy_to_sesman() { return 0; }
-        static constexpr char const * section() { return "mod_vnc"; }
-        static constexpr char const * name() { return "allow_authentification_retries"; }
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value{0};
-    };
     /// VNC server clipboard data encoding type. <br/>
     /// AUTHID_MOD_VNC_SERVER_CLIPBOARD_ENCODING_TYPE <br/>
     /// type: ClipboardEncodingType <br/>
@@ -4580,7 +4568,6 @@ struct mod_vnc
 : cfg::mod_vnc::clipboard_up
 , cfg::mod_vnc::clipboard_down
 , cfg::mod_vnc::encodings
-, cfg::mod_vnc::allow_authentification_retries
 , cfg::mod_vnc::server_clipboard_encoding_type
 , cfg::mod_vnc::bogus_clipboard_infinite_loop
 { static constexpr bool is_section = true; };

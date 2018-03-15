@@ -554,9 +554,6 @@
 "#_advanced\n"
 "#encodings = \n\n"
 
-"#_advanced\n"
-"#allow_authentification_retries = 0\n\n"
-
 "# VNC server clipboard data encoding type.\n"
 "#_advanced\n"
 "#server_clipboard_encoding_type = latin1\n\n"

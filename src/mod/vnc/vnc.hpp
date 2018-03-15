@@ -42,9 +42,7 @@ h
 #include "keyboard/keymapSym.hpp"
 #include "main/version.hpp"
 #include "mod/internal/client_execute.hpp"
-#include "mod/internal/internal_mod.hpp"
-#include "mod/internal/widget/flat_vnc_authentification.hpp"
-#include "mod/internal/widget/notify_api.hpp"
+#include "mod/mod_api.hpp"
 #include "utils/diffiehellman.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/d3des.hpp"
@@ -69,19 +67,21 @@ h
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
 
-class mod_vnc : public InternalMod, private NotifyApi
+class mod_vnc : public mod_api
 {
 
     bool ongoing_framebuffer_update = false;
 
     static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
 
-    FlatVNCAuthentification challenge;
-
     /* mod data */
     char mod_name[256];
     char username[256];
     char password[256];
+
+    uint16_t front_width;
+    uint16_t front_height;
+    FrontAPI& front;
 
 public:
     struct Mouse {
@@ -165,11 +165,8 @@ private:
     bool server_use_long_format_names = true;
 
     enum VncState {
-        ASK_PASSWORD,
         DO_INITIAL_CLEAR_SCREEN,
-        RETRY_CONNECTION,
         UP_AND_RUNNING,
-        WAIT_PASSWORD,
         WAIT_SECURITY_TYPES,
         WAIT_SECURITY_TYPES_LEVEL,
         WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM,
@@ -192,8 +189,6 @@ private:
     std::string encodings;
 
     VncState state;
-
-    bool allow_authentification_retries;
 
     bool left_ctrl_pressed = false;
 
@@ -222,17 +217,11 @@ public:
            , FrontAPI & front
            , uint16_t front_width
            , uint16_t front_height
-           , Font const & font
-           , const char * label_text_message
-           , const char * label_text_password
-           , Theme const & theme
            , int keylayout
            , int key_flags
            , bool clipboard_up
            , bool clipboard_down
            , const char * encodings
-           , bool allow_authentification_retries
-           , bool /*TODO is_socket_transport*/
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
            , ReportMessageApi & report_message
@@ -240,13 +229,12 @@ public:
            , ClientExecute* client_execute
            , VNCVerbose verbose
            )
-    : InternalMod(front, front_width, front_height, font, theme, false)
-    , challenge(front, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
-                "Redemption " VERSION, this->theme(), label_text_message, label_text_password,
-                this->font())
-    , mod_name{0}
+    : mod_name{0}
     , username{0}
     , password{0}
+    , front_width(front_width)
+    , front_height(front_height)
+    , front(front)
     , t(t)
     , width(0)
     , height(0)
@@ -259,7 +247,6 @@ public:
     , enable_clipboard_down(clipboard_down)
     , encodings(encodings)
     , state(WAIT_SECURITY_TYPES)
-    , allow_authentification_retries(allow_authentification_retries || !(*password))
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , report_message(report_message)
@@ -291,53 +278,38 @@ public:
         this->fd_event = session_reactor
         .create_graphic_fd_event(this->t.get_fd(), std::ref(*this))
         .set_timeout(std::chrono::milliseconds(0))
+        .on_exit(jln::exit_with_success())
+        // TODO VNC_PROTOCOL_ERROR
+        .on_action(jln::exit_with_error() /* set by on_timeout action*/)
         .on_timeout([](auto ctx, gdi::GraphicApi& gd, mod_vnc& self){
             LOG(LOG_DEBUG, "gdi_clear_screen");
             gdi_clear_screen(gd, self.get_dim());
-            // TODO return ctx.disable_timer()...
-            return ctx.set_timeout(std::chrono::hours(999))
-            .set_timeout_action([](auto ctx, gdi::GraphicApi& gd, mod_vnc& self){
-                LOG(LOG_DEBUG, "timeout");
+            return ctx.disable_timeout()
+            .next_action(jln::always_ready([](gdi::GraphicApi& gd, mod_vnc& self){
+                LOG(LOG_DEBUG, "on action");
+                self.buf.read_from(self.t);
                 while (self.state != UP_AND_RUNNING && self.draw_event_impl(gd)) {
                 }
                 if (self.state == UP_AND_RUNNING) {
-                    self.update_screen(Rect(0, 0, self.width, self.height), 1);
-                }
-                self.check_timeout();
-                return ctx.ready();
-            })
-            .ready();
-        })
-        .on_exit(jln::exit_with_success())
-        .on_action([](auto ctx, gdi::GraphicApi& gd, mod_vnc& self){
-            LOG(LOG_DEBUG, "on action");
-            self.buf.read_from(self.t);
-            while (self.state != UP_AND_RUNNING && self.draw_event_impl(gd)) {
-            }
-            if (self.state == UP_AND_RUNNING) {
-                try {
-                    while (self.up_and_running_ctx.run(self.buf, gd, self)) {
-                        self.up_and_running_ctx.restart();
+                    try {
+                        while (self.up_and_running_ctx.run(self.buf, gd, self)) {
+                            self.up_and_running_ctx.restart();
+                        }
+                    }
+                    catch (const Error & e) {
+                        LOG(LOG_ERR, "VNC Stopped [reason id=%u]", e.id);
+                        self.session_reactor.set_event_next(BACK_EVENT_NEXT);
+                        self.front.must_be_stop_capture();
+                    }
+                    catch (...) {
+                        LOG(LOG_ERR, "unexpected exception raised in VNC");
+                        self.session_reactor.set_event_next(BACK_EVENT_NEXT);
+                        self.front.must_be_stop_capture();
                     }
                 }
-                catch (const Error & e) {
-                    LOG(LOG_ERR, "VNC Stopped [reason id=%u]", e.id);
-                    self.session_reactor.set_event_next(BACK_EVENT_NEXT);
-                    self.front.must_be_stop_capture();
-                }
-                catch (...) {
-                    LOG(LOG_ERR, "unexpected exception raised in VNC");
-                    self.session_reactor.set_event_next(BACK_EVENT_NEXT);
-                    self.front.must_be_stop_capture();
-                }
-            }
-            return ctx.ready();
+            }));
         });
     } // Constructor
-
-    ~mod_vnc() override {
-        this->screen.clear();
-    }
 
     template<std::size_t MaxLen>
     class MessageCtx
@@ -925,12 +897,7 @@ public:
     }
 
     // TODO It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?
-    void rdp_input_mouse( int device_flags, int x, int y, Keymap2 * keymap ) override {
-        if (this->state == WAIT_PASSWORD) {
-            this->screen.rdp_input_mouse(device_flags, x, y, keymap);
-            return;
-        }
-
+    void rdp_input_mouse( int device_flags, int x, int y, Keymap2 * /*keymap*/ ) override {
         if (this->state != UP_AND_RUNNING) {
             return;
         }
@@ -955,19 +922,9 @@ public:
         }
     } // rdp_input_mouse
 
-    //==============================================================================================================
-    void rdp_input_scancode( long param1
-                                   , long param2
-                                   , long device_flags
-                                   , long param4
-                                   , Keymap2 * keymap
-                                   ) override {
-    //==============================================================================================================
-        if (this->state == WAIT_PASSWORD) {
-            this->screen.rdp_input_scancode(param1, param2, device_flags, param4, keymap);
-            return;
-        }
-
+    void rdp_input_scancode(
+        long param1, long /*param2*/, long device_flags, long /*param4*/, Keymap2 * /*keymap*/
+    ) override {
         if (this->state != UP_AND_RUNNING) {
             return;
         }
@@ -994,6 +951,16 @@ public:
         LOG(LOG_WARNING, "mod_vnc::rdp_input_unicode: Unicode Keyboard Event is not yet supported");
     }
 
+    void send_to_front_channel(
+        CHANNELS::ChannelNameId mod_channel_name,
+        uint8_t const * data, size_t length, size_t chunk_size, int flags) override
+    {
+        const CHANNELS::ChannelDef * front_channel =
+            this->front.get_channel_list().get_by_name(mod_channel_name);
+        if (front_channel) {
+            this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
+        }
+    }
 
     void keyMapSym_event(int device_flags, long param1, uint8_t downflag) {
         this->keymapSym.event(device_flags, param1);
@@ -1337,13 +1304,9 @@ protected:
     }
 
 public:
-    //==============================================================================================================
-    void rdp_input_synchronize( uint32_t time
-                                      , uint16_t device_flags
-                                      , int16_t param1
-                                      , int16_t param2
-                                      ) override {
-    //==============================================================================================================
+    void rdp_input_synchronize(
+        uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2
+    ) override {
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG( LOG_INFO
                , "KeymapSym::synchronize(time=%u, device_flags=%08x, param1=%04x, param1=%04x"
@@ -1367,11 +1330,6 @@ private:
 
 public:
     void rdp_input_invalidate(Rect r) override {
-        if (this->state == WAIT_PASSWORD) {
-            this->screen.rdp_input_invalidate(r);
-            return;
-        }
-
         if (this->state != UP_AND_RUNNING) {
             return;
         }
@@ -1656,46 +1614,9 @@ private:
     {
         switch (this->state)
         {
-        case ASK_PASSWORD:
-            if (bool(this->verbose & VNCVerbose::connection)) {
-                LOG(LOG_INFO, "state=ASK_PASSWORD");
-            }
-            this->screen.add_widget(&this->challenge);
-
-            this->screen.set_widget_focus(&this->challenge, Widget::focus_reason_tabkey);
-
-            this->challenge.password_edit.set_text("");
-
-            this->challenge.set_widget_focus(&this->challenge.password_edit, Widget::focus_reason_tabkey);
-
-            this->screen.rdp_input_invalidate(this->screen.get_rect());
-
-            this->state = WAIT_PASSWORD;
-            return true;
-
         case DO_INITIAL_CLEAR_SCREEN:
             this->initial_clear_screen(drawable);
             return false;
-
-        case RETRY_CONNECTION:
-            if (bool(this->verbose & VNCVerbose::connection)) {
-                LOG(LOG_INFO, "state=RETRY_CONNECTION");
-            }
-            try
-            {
-                if (!this->t.connect()) {
-                    LOG(LOG_ERR, "VNC connection error");
-                    throw Error(ERR_VNC_CONNECTION_ERROR);
-                }
-                this->fd_event->set_fd(this->t.get_fd());
-            }
-            catch (Error const &)
-            {
-                throw Error(ERR_VNC_CONNECTION_ERROR);
-            }
-
-            this->state = WAIT_SECURITY_TYPES;
-            return true;
 
         case UP_AND_RUNNING:
             if (bool(this->verbose & VNCVerbose::draw_event)) {
@@ -1703,12 +1624,6 @@ private:
             }
 
             assert(!"unreachable, see fd_event");
-            return false;
-
-        case WAIT_PASSWORD:
-            if (bool(this->verbose & VNCVerbose::connection)) {
-                LOG(LOG_INFO, "state=WAIT_PASSWORD");
-            }
             return false;
 
         case WAIT_SECURITY_TYPES:
@@ -1816,17 +1731,7 @@ private:
                     else {
                         LOG(LOG_INFO, "vnc password failed. Reason: %.*s",
                             int(bytes.size()), bytes.to_charp());
-
-                        if (this->allow_authentification_retries)
-                        {
-                            this->t.disconnect();
-
-                            this->state = ASK_PASSWORD;
-                        }
-                        else
-                        {
-                            throw Error(ERR_VNC_CONNECTION_ERROR);
-                        }
+                        throw Error(ERR_VNC_CONNECTION_ERROR);
                     }
                 })) {
                     return false;
@@ -3353,29 +3258,6 @@ public:
                 LOG(LOG_INFO, "Client up and running");
             }
             this->state = DO_INITIAL_CLEAR_SCREEN;
-        }
-    }
-
-    void notify(Widget* sender, notify_event_t event) override {
-        (void)sender;
-        switch (event) {
-        case NOTIFY_SUBMIT:
-            this->screen.clear();
-
-            memset(this->password, 0, sizeof(this->password));
-            strncpy(this->password, this->challenge.password_edit.get_text(),
-                    sizeof(this->password) - 1);
-            this->password[sizeof(this->password) - 1] = 0;
-
-            this->state = RETRY_CONNECTION;
-            this->draw_event_impl(gdi::null_gd());
-            break;
-        case NOTIFY_CANCEL:
-            this->session_reactor.set_next_event(BACK_EVENT_NEXT);
-            this->screen.clear();
-            break;
-        default:
-            break;
         }
     }
 

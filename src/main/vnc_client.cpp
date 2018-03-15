@@ -111,7 +111,6 @@ int main(int argc, char** argv)
     ClientFront front(info, verbose);
     //VncFront front(mod_trans, gen, ini, cctx, authentifier, fastpath_support, mem3blt_support, now, input_filename.c_str(), nullptr);
 
-    const bool is_socket_transport = true;
     const VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop {};
     Font font;
     NullReportMessage report_message;
@@ -126,16 +125,11 @@ int main(int argc, char** argv)
       , front
       , client_info.width
       , client_info.height
-      , font
-      , "label message", "label pass"
-      , Theme()
       , client_info.keylayout
       , 0             /* key_flags */
       , true          /* clipboard */
       , true          /* clipboard */
       , "16, 2, 0, 1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
-      , false         /* allow authentification retries */
-      , is_socket_transport
       , mod_vnc::ClipboardEncodingType::UTF8
       , bogus_clipboard_infinite_loop
       , report_message

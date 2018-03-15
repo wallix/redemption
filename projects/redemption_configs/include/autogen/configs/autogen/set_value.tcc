@@ -1595,18 +1595,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_vnc::encodings&>(this->variables)
             );
         }
-        else if (0 == strcmp(key, "allow_authentification_retries")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::mod_vnc::allow_authentification_retries&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_vnc::allow_authentification_retries&>(this->variables)
-            );
-        }
         else if (0 == strcmp(key, "server_clipboard_encoding_type")) {
             ::configs::parse_and_log(
                 context, key,

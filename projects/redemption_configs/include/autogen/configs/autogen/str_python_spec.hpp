@@ -554,9 +554,6 @@
 "#_advanced\n"
 "encodings = string_list(default=list())\n\n"
 
-"#_advanced\n"
-"allow_authentification_retries = boolean(default=False)\n\n"
-
 "# VNC server clipboard data encoding type.\n"
 "#_advanced\n"
 "server_clipboard_encoding_type = option('utf-8', 'latin1', default='latin1')\n\n"
