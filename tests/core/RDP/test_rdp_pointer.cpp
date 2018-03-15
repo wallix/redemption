@@ -36,26 +36,6 @@ RED_AUTO_TEST_CASE(TestDataSize)
     RED_CHECK_EQUAL(p.data_size(), 32 * 32 * 3);
 }
 
-RED_AUTO_TEST_CASE(TestDataSize1)
-{
-    Pointer p;
-
-    const CursorSize dimensions(24, 24);
-    p.set_dimensions(dimensions);
-
-    RED_CHECK_EQUAL(p.data_size(), 24 * 24 * 3);
-}
-
-RED_AUTO_TEST_CASE(TestMaskSize)
-{
-    Pointer p;
- 
-    const CursorSize dimensions(7, 7);
-    p.set_dimensions(dimensions);
-
-    RED_CHECK_EQUAL(p.mask_size(), 14);
-}
-
 RED_AUTO_TEST_CASE(TestConstPointer)
 {
     ConstPointer cursor;

@@ -50,8 +50,8 @@ struct Hotspot {
 
 struct BasePointer {
 protected:
-    const CursorSize dimensions;
-    const Hotspot hotspot;
+    CursorSize dimensions;
+    Hotspot hotspot;
 public:
     const CursorSize get_dimensions() const
     {
@@ -63,7 +63,7 @@ public:
         return this->hotspot;
     }
 
-    BasePointer(const CursorSize & dimensions, const Hotspot & hotspot)
+    BasePointer(CursorSize dimensions, Hotspot hotspot)
         : dimensions(dimensions)
         , hotspot(hotspot)
     {}
@@ -332,17 +332,20 @@ public:
 
 
     explicit Pointer(uint8_t pointer_type = POINTER_NULL)
-    :   BasePointer(CursorSize(0, 0), Hotspot(0, 0))
+    :   BasePointer(CursorSize(32, 32),   (pointer_type==POINTER_DOT)              ? Hotspot(2, 2)
+                                        : (pointer_type==POINTER_EDIT)             ? Hotspot(15, 16)
+                                        : (pointer_type == POINTER_SYSTEM_DEFAULT) ? Hotspot(10, 10) 
+                                        : (pointer_type == POINTER_SIZENS)         ? Hotspot(10, 10) 
+                                        : (pointer_type == POINTER_SIZENESW)       ? Hotspot(10, 10) 
+                                        : (pointer_type == POINTER_SIZENWSE)       ? Hotspot(10, 10) 
+                                        : (pointer_type == POINTER_SIZEWE)         ? Hotspot(10, 10) 
+                                                        : Hotspot(0, 0))
     {
         switch (pointer_type) {
             default:
             case POINTER_NULL:
                 {
 //                    this->bpp              = 24;
-                    this->dimensions.width            = 32;
-                    this->dimensions.height           = 32;
-                    this->hotspot.x                = 0;
-                    this->hotspot.y                = 0;
                     this->only_black_white = true;
                     ::memset(this->data, 0, DATA_SIZE);
                     ::memset(this->mask, 0xFF, MASK_SIZE);
@@ -352,10 +355,6 @@ public:
             case POINTER_NORMAL:
                 {
 //                    this->bpp              = 24;
-                    this->dimensions.width            = 32;
-                    this->dimensions.height           = 32;
-                    this->hotspot.x                = 0; /* hotspot */
-                    this->hotspot.y                = 0;
                     this->only_black_white = true;
                     const char * data_cursor0 =
                         /* 0000 */ "................................"
@@ -398,10 +397,6 @@ public:
             case POINTER_EDIT:
                 {
 //                    this->bpp                = 24;
-                    this->dimensions.width              = 32;
-                    this->dimensions.height             = 32;
-                    this->hotspot.x                  = 15; /* hotspot */
-                    this->hotspot.y                  = 16;
                     this->only_black_white = true;
                     const char * data_cursor1 =
                         /* 0000 */ "................................"
@@ -444,10 +439,6 @@ public:
             case POINTER_DRAWABLE_DEFAULT:
                 {
 //                    this->bpp              = 24;
-                    this->dimensions.width            = 32;
-                    this->dimensions.height           = 32;
-                    this->hotspot.x                = 0; /* hotspot */
-                    this->hotspot.y                = 0;
                     this->only_black_white = true;
                     const char * data_cursor2 =
                         /* 0000 */ "................................"
@@ -491,10 +482,6 @@ public:
             case POINTER_SYSTEM_DEFAULT:
                 {
 //                    this->bpp              = 24;
-                    this->dimensions.width = 32;
-                    this->dimensions.height           = 32;
-                    this->hotspot.x                = 10; /* hotspot */
-                    this->hotspot.y                = 10;
                     this->only_black_white = true;
                     const char * data_cursor3 =
                         /* 0000 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
@@ -545,10 +532,6 @@ public:
             case POINTER_SIZENS:
                 {
 //                    this->bpp              = 24;
-                    this->dimensions.width = 32;
-                    this->dimensions.height           = 32;
-                    this->hotspot.x                = 10; /* hotspot */
-                    this->hotspot.y                = 10;
                     this->only_black_white = true;
                     const char * data_cursor4 =
                         /* 0000 */ "................................"
@@ -591,10 +574,6 @@ public:
             case POINTER_SIZENESW:
                 {
 //                    this->bpp              = 24;
-                    this->dimensions.width            = 32;
-                    this->dimensions.height           = 32;
-                    this->hotspot.x                = 10; /* hotspot */
-                    this->hotspot.y                = 10;
                     this->only_black_white = true;
                     const char * data_cursor5 =
                         /* 0000 */ "................................"
@@ -637,10 +616,6 @@ public:
             case POINTER_SIZENWSE:
                 {
 //                    this->bpp              = 24;
-                    this->dimensions.width            = 32;
-                    this->dimensions.height           = 32;
-                    this->hotspot.x                = 10; /* hotspot */
-                    this->hotspot.y                = 10;
                     this->only_black_white = true;
                     const char * data_cursor6 =
                         /* 0000 */ "................................"
@@ -683,10 +658,6 @@ public:
             case POINTER_SIZEWE:
                 {
 //                    this->bpp              = 24;
-                    this->dimensions.width            = 32;
-                    this->dimensions.height           = 32;
-                    this->hotspot.x                = 10; /* hotspot */
-                    this->hotspot.y                = 10;
                     this->only_black_white = true;
                     const char * data_cursor7 =
                         /* 0000 */ "................................"
@@ -728,10 +699,6 @@ public:
             case POINTER_DOT:
                 {
 //                    this->bpp              = 24;
-                    this->dimensions.width            = 32;
-                    this->dimensions.height           = 32;
-                    this->hotspot.x                = 2; /* hotspot */
-                    this->hotspot.y                = 2;
                     this->only_black_white = true;
                     const char * data_cursor8 =
                         /* 0000 */ "................................"
@@ -780,19 +747,19 @@ public:
         ::memset(this->mask, 0xFF, sizeof(this->mask));
     }
 
-    void initialize(/*unsigned bpp, */unsigned width, unsigned height, int x, int y, uint8_t * data, size_t data_size,
-        uint8_t * mask, size_t mask_size) {
-//        this->bpp    = bpp;
-        this->dimensions.width  = width;
-        this->dimensions.height = height;
-        this->hotspot.x      = x;
-        this->hotspot.y      = y;
+//    void initialize(/*unsigned bpp, */unsigned width, unsigned height, int x, int y, uint8_t * data, size_t data_size,
+//        uint8_t * mask, size_t mask_size) {
+////        this->bpp    = bpp;
+//        this->dimensions.width  = width;
+//        this->dimensions.height = height;
+//        this->hotspot.x      = x;
+//        this->hotspot.y      = y;
 
-        assert(data_size == sizeof(this->data));
-        ::memcpy(this->data, data, std::min(data_size, sizeof(this->data)));
-        assert(mask_size == sizeof(this->mask));
-        ::memcpy(this->mask, mask, std::min(mask_size, sizeof(this->mask)));
-    }
+//        assert(data_size == sizeof(this->data));
+//        ::memcpy(this->data, data, std::min(data_size, sizeof(this->data)));
+//        assert(mask_size == sizeof(this->mask));
+//        ::memcpy(this->mask, mask, std::min(mask_size, sizeof(this->mask)));
+//    }
 
     const array_view_const_u8 get_monochrome_and_mask() const
     {
