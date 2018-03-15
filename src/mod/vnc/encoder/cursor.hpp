@@ -96,8 +96,8 @@ namespace VNC {
                     return EncoderState::Exit;
                 }
 
-                const int sz_pixel_array = this->cx * this->cy * this->Bpp;
-                const int sz_bitmask = nbbytes(this->cx) * this->cy;
+                const size_t sz_pixel_array = this->cx * this->cy * this->Bpp;
+                const size_t sz_bitmask = nbbytes(this->cx) * this->cy;
 
                 if (sz_pixel_array + sz_bitmask > 65536)
                 {
