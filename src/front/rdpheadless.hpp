@@ -55,6 +55,8 @@
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"
 
+#include "front/execute_events.hpp"
+
 #include "keyboard/keymap2.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "mod/vnc/vnc.hpp"
@@ -821,53 +823,15 @@ public:
         return sck;
     }
 
-    int wait_and_draw_event(timeval timeout) {
-        unsigned max = 0;
-        fd_set   rfds;
-
-        io_fd_zero(rfds);
-
-        SessionReactor::EnableGraphics enable_graphics{true};
-
-        this->session_reactor.for_each_fd(
-            enable_graphics,
-            [&](int fd, auto const&){
-                io_fd_set(fd, rfds);
-                max = std::max(max, unsigned(fd));
-            }
-        );
-
-        this->session_reactor.set_current_time(tvtime());
-        auto const tv = this->session_reactor.get_next_timeout(enable_graphics);
-        auto const tv_now = this->session_reactor.get_current_time();
-        if (tv.tv_sec >= 0 && tv < timeout + tv_now) {
-            if (tv < tv_now) {
-                timeout = {0, 0};
-            }
-            else {
-                timeout = tv - tv_now;
-            }
-        }
-
-        int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
-        // std::cout << "RDP CLIENT :: select num = " <<  num << "\n";
-
-        if (num < 0) {
-            if (errno == EINTR) {
-                return 0;
-                //continue;
-            }
-
-            std::cerr << "RDP CLIENT :: errno = " <<  strerror(errno) << "\n";
+    int wait_and_draw_event(timeval timeout)
+    {
+        if (ExecuteEventsResult::Error == execute_events(
+            timeout, this->session_reactor, SessionReactor::EnableGraphics{true},
+            *this->_callback, *this
+        )) {
+            std::cerr << "RDP CLIENT :: errno = " << strerror(errno) << "\n";
             return 9;
         }
-
-        this->session_reactor.execute_timers(enable_graphics, [&]() -> gdi::GraphicApi& {
-            return *this;
-        });
-        auto fd_isset = [&rfds](int fd, auto& /*e*/){ return io_fd_isset(fd, rfds); };
-        this->session_reactor.execute_graphics(fd_isset, *this);
-
         return 0;
     }
 

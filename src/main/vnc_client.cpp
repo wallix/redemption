@@ -101,10 +101,13 @@ int main(int argc, char** argv)
     info.height = 600;
     info.build = 420;
 
+    auto sck = ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms);
+    if (!sck.is_open()) {
+        return 1;
+    }
     SocketTransport mod_trans(
-        "VNC Target", ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms),
-        target_device.c_str(), target_port, std::chrono::seconds(1),
-        to_verbose_flags(verbose), nullptr);
+        "VNC Target", std::move(sck), target_device.c_str(), target_port,
+        std::chrono::seconds(1), to_verbose_flags(verbose), nullptr);
     // mod_trans.connect();
 
     SSL_library_init();
@@ -139,6 +142,6 @@ int main(int argc, char** argv)
 
     using Ms = std::chrono::milliseconds;
     return run_test_client(
-        "VNC", mod_trans.sck, mod, front,
+        "VNC", session_reactor, mod, front,
         Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
 }

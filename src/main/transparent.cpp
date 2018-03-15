@@ -25,13 +25,14 @@
 
 #include "core/listen.hpp"
 #include "core/session.hpp"
+#include "front/execute_events.hpp"
 #include "transport/socket_transport.hpp"
 #include "utils/invalid_socket.hpp"
 #include "transport/out_file_transport.hpp"
 #include "mod/internal/transparent_replay_mod.hpp"
 #include "program_options/program_options.hpp"
 
-void run_mod(mod_api & mod, Front & front, SocketTransport * st_mod, SocketTransport& st_front);
+void run_mod(SessionReactor& session_reactor, mod_api& mod, Front& front);
 
 int main(int argc, char * argv[]) {
     openlog("transparent", LOG_CONS | LOG_PERROR, LOG_USER);
@@ -221,11 +222,10 @@ int main(int argc, char * argv[]) {
 
     try {
         if (target_device.empty()) {
-            SessionReactor session_reactor;
             TransparentReplayMod mod(session_reactor, front, play_filename.c_str(),
                 front.client_info.width, front.client_info.height, nullptr, ini.get<cfg::font>());
 
-            run_mod(mod, front, nullptr, front_trans);
+            run_mod(session_reactor, mod, front);
         }
         else {
             std::unique_ptr<OutFileTransport> record_oft;
@@ -299,11 +299,10 @@ int main(int argc, char * argv[]) {
             mod_rdp_params.deny_channels                       = &(ini.get<cfg::mod_rdp::deny_channels>());
 
             NullAuthentifier authentifier;
-            SessionReactor session_reactor;
             mod_rdp mod(mod_trans, session_reactor, front, client_info, ini.get_ref<cfg::mod_rdp::redir_info>(),
                         gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
-            run_mod(mod, front, &mod_trans, front_trans);
+            run_mod(session_reactor, mod, front);
         }
     }   // try
     catch (Error const& e) {
@@ -321,58 +320,18 @@ int main(int argc, char * argv[]) {
     return 0;
 }
 
-void run_mod(mod_api & mod, Front & front, SocketTransport * st_mod, SocketTransport& st_front)
+void run_mod(SessionReactor& session_reactor, mod_api& mod, Front& front)
 {
-    struct      timeval time_mark = { 0, 50000 };
-    bool        run_session       = true;
-    BackEvent_t mod_event_signal  = BACK_EVENT_NONE;
+    timeval const time_mark = { 0, 50000 };
 
-    while (run_session) {
-        try {
-            unsigned max = 0;
-            fd_set   rfds;
-
-            io_fd_zero(rfds);
-            struct timeval timeout = time_mark;
-
-            io_fd_set(st_front.sck, rfds);
-            max = std::max(static_cast<unsigned>(st_front.sck), max);
-
-            int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
-
-            if (num < 0) {
-                if (errno == EINTR) {
-                    continue;
-                }
-
-                // Socket error
-                break;
-            }
-
-            if (io_fd_isset(st_front.sck, rfds)) {
-                time_t now = time(nullptr);
-
-                try {
-                    front.incoming(mod, now);
-                }
-                catch (...) {
-                    run_session = false;
-                    continue;
-                };
-            }
-
-            if (front.up_and_running) {
-// TODO        auto & event = mod.get_event();
-                // TODO missing session_reactor
-                LOG(LOG_ERR, "TODO: Unimplemented: %s line %d", __PRETTY_FUNCTION__, __LINE__);
-                // mod.draw_event(time(nullptr), front);
-                // if (session_reactor.signal == BACK_EVENT_NEXT) {
-                //     run_session = false;
-                // }
-            }
-        } catch (Error const& e) {
-            LOG(LOG_ERR, "Session::Session exception = %u!\n", e.id);
-            run_session = false;
-        };
-    }   // while (run_session)
+    try {
+        while (ExecuteEventsResult::Error != execute_events(
+            time_mark, session_reactor,
+            SessionReactor::EnableGraphics{front.up_and_running},
+            mod, front
+        ))
+        {}
+    } catch (Error const& e) {
+        LOG(LOG_ERR, "Session::Session exception = %s!\n", e.errmsg());
+    };
 }
