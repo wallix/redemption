@@ -36,7 +36,7 @@
 // bjam debug rdpheadless && bin/gcc-4.9.2/debug/rdpheadless --user admin --pwd $mdp --ip 10.10.47.54 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
 
 
-int run_mod(not_null_ptr<mod_api>, RDPHeadlessFront &, int sck, bool, std::chrono::milliseconds, bool);
+int run_mod(not_null_ptr<mod_api>, RDPHeadlessFront &, bool, std::chrono::milliseconds, bool);
 
 namespace cli
 {
@@ -847,7 +847,7 @@ int main(int argc, char** argv)
     } report_message;
     NullAuthentifier authentifier;
     RDPHeadlessFront front(info, report_message, verbose,
-      RDPHeadlessFrontParams{std::move(out_path), index, keep_alive_frequence});
+    RDPHeadlessFrontParams{std::move(out_path), index, keep_alive_frequence});
     int main_return = 40;
 
     if (input_connection_data_complete & RDPHeadlessFront::IP) {
@@ -872,7 +872,7 @@ int main(int argc, char** argv)
             REDEMPTION_DIAGNOSTIC_POP
         }
 
-        int const sck = front.connect(ip.c_str(), userName.c_str(), userPwd.c_str(), port, protocol_is_VNC, mod_rdp_params, encryptionMethods);
+        front.connect(ip.c_str(), userName.c_str(), userPwd.c_str(), port, protocol_is_VNC, mod_rdp_params, encryptionMethods);
 
         //===========================================
         //             Scripted Events
@@ -884,7 +884,7 @@ int main(int argc, char** argv)
 
         if ((input_connection_data_complete & RDPHeadlessFront::LOG_COMPLETE) || quick_connection_test) {
             try {
-                main_return = run_mod(front.mod(), front, sck, quick_connection_test, time_out_response, time_set_connection_test);
+                main_return = run_mod(front.mod(), front, quick_connection_test, time_out_response, time_set_connection_test);
                 // std::cout << "RDP Headless end." <<  std::endl;
             }
             catch (Error const& e)
@@ -912,7 +912,7 @@ int main(int argc, char** argv)
 }
 
 
-int run_mod(not_null_ptr<mod_api> mod_ptr, RDPHeadlessFront & front, int sck, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test) {
+int run_mod(not_null_ptr<mod_api> mod_ptr, RDPHeadlessFront & front, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test) {
     const timeval time_stop = addusectimeval(time_out_response, tvtime());
     const timeval time_mark = { 0, 50000 };
 
@@ -938,7 +938,7 @@ int run_mod(not_null_ptr<mod_api> mod_ptr, RDPHeadlessFront & front, int sck, bo
             }
         }
 
-        if (int err = front.wait_and_draw_event(sck, mod, front, time_mark)) {
+        if (int err = front.wait_and_draw_event(time_mark)) {
             return err;
         }
 

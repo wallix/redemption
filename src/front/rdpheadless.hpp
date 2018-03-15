@@ -414,6 +414,7 @@ private:
     // Connexion socket members
     ClientInfo        _info;
     std::unique_ptr<mod_api> _callback;
+    SessionReactor session_reactor;
 
 public:
     // TODO enum class
@@ -662,18 +663,6 @@ public:
         }
     }
 
-private:
-    template<class Mod>
-    struct ModWithReactor : SessionReactor, Mod
-    {
-        template<class... Args>
-        ModWithReactor(Transport& trans, Args&&... args)
-        : Mod(trans, *this, std::forward<Args>(args)...)
-        {}
-    };
-
-public:
-
     int connect(const char * ip, const char * userName, const char * userPwd, int port, bool protocol_is_VNC, ModRDPParams & mod_rdp_params, uint32_t encryptionMethods) {
 
         int const nbTry(3);
@@ -706,8 +695,9 @@ public:
         not_null_ptr<GCC::UserData::SCSecurity const> sc_sec1_ptr = &original_sc_sec1;
 
         if (protocol_is_VNC) {
-            this->_callback = std::make_unique<ModWithReactor<mod_vnc>>(
+            this->_callback = std::make_unique<mod_vnc>(
                 *this->socket
+              , this->session_reactor
               , userName
               , userPwd
               , *(this)
@@ -726,8 +716,9 @@ public:
               , to_verbose_flags(this->_verbose)
               );
         } else {
-            auto rdp = std::make_unique<ModWithReactor<mod_rdp>>(
+            auto rdp = std::make_unique<mod_rdp>(
                 *this->socket
+              , this->session_reactor
               , *this
               , this->_info
               , ini.get_ref<cfg::mod_rdp::redir_info>()
@@ -751,7 +742,7 @@ public:
         try {
             while (!this->_callback->is_up_and_running()) {
                 // std::cout << " Early negociations...\n";
-                if (int err = this->wait_and_draw_event(sck, *this->_callback, *(this), {3, 0})) {
+                if (int err = this->wait_and_draw_event({3, 0})) {
                     return err;
                 }
             }
@@ -828,17 +819,35 @@ public:
         }
 
         return sck;
-
     }
 
-    int wait_and_draw_event(int sck, mod_api& mod, FrontAPI & front, timeval timeout) {
+    int wait_and_draw_event(timeval timeout) {
         unsigned max = 0;
         fd_set   rfds;
 
         io_fd_zero(rfds);
 
-// TODO        auto & event = mod.get_event();
-// TODO        event.wait_on_fd(sck, rfds, max, timeout);
+        SessionReactor::EnableGraphics enable_graphics{true};
+
+        this->session_reactor.for_each_fd(
+            enable_graphics,
+            [&](int fd, auto const&){
+                io_fd_set(fd, rfds);
+                max = std::max(max, unsigned(fd));
+            }
+        );
+
+        this->session_reactor.set_current_time(tvtime());
+        auto const tv = this->session_reactor.get_next_timeout(enable_graphics);
+        auto const tv_now = this->session_reactor.get_current_time();
+        if (tv.tv_sec >= 0 && tv < timeout + tv_now) {
+            if (tv < tv_now) {
+                timeout = {0, 0};
+            }
+            else {
+                timeout = tv - tv_now;
+            }
+        }
 
         int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
         // std::cout << "RDP CLIENT :: select num = " <<  num << "\n";
@@ -853,9 +862,11 @@ public:
             return 9;
         }
 
-// TODO        if (event.is_set(sck, rfds)) {
-// TODO            mod.draw_event(time(nullptr), front);
-// TODO        }
+        this->session_reactor.execute_timers(enable_graphics, [&]() -> gdi::GraphicApi& {
+            return *this;
+        });
+        auto fd_isset = [&rfds](int fd, auto& /*e*/){ return io_fd_isset(fd, rfds); };
+        this->session_reactor.execute_graphics(fd_isset, *this);
 
         return 0;
     }
