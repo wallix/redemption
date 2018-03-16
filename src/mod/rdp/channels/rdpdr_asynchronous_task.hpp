@@ -106,9 +106,7 @@ public:
         .on_action([](auto ctx, RdpdrDriveReadTask& self, DeleterFunction&) {
             return self.run() ? ctx.ready() : ctx.terminate();
         })
-        .on_exit([](auto ctx, jln::ExecutorError, RdpdrDriveReadTask&, DeleterFunction&) {
-            return ctx.exit_on_success();
-        })
+        .on_exit(jln::exit_with_success())
         .set_timeout(std::chrono::milliseconds(1000))
         .on_timeout([](auto ctx, RdpdrDriveReadTask& self, DeleterFunction&){
             LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!",

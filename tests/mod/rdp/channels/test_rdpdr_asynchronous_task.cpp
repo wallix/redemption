@@ -122,9 +122,7 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     RdpdrSendDriveIOResponseTask rdpdr_send_drive_io_response_task(
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
         reinterpret_cast<uint8_t const *>(contents.data()),
-        contents.size(),
-        test_to_server_sender,
-        to_verbose_flags(verbose));
+        contents.size(), test_to_server_sender, to_verbose_flags(verbose));
 
     LOG(LOG_INFO, "RdpdrSendDriveIOResponseTask");
     bool run_task = true;

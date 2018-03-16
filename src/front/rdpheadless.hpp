@@ -1249,7 +1249,7 @@ public:
     void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPOpaqueRect color=" << cmd.color.as_bgr().to_u32();
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << " clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1275,7 +1275,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPLineTo " << std::endl;
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1283,7 +1283,7 @@ public:
     void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPatBlt rop=" << int(cmd.rop);
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1292,7 +1292,7 @@ public:
         (void)bitmap;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMem3Blt rop=" << int(cmd.rop);
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1326,7 +1326,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMultiOpaqueRect " << std::endl;
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1335,7 +1335,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMultiPatBlt " << std::endl;
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1353,7 +1353,7 @@ public:
         (void)gly_cache;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPGlyphIndex " << std::endl;
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1362,7 +1362,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPolygonSC " << std::endl;
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1371,7 +1371,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPolygonCB " << std::endl;
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1380,7 +1380,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPolyline " << std::endl;
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1389,7 +1389,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPEllipseSC " << std::endl;
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1398,7 +1398,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPEllipseCB " << std::endl;
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }

@@ -425,6 +425,7 @@ struct SessionReactor
         {
             for (auto* data_ptr : this->elements) {
                 --data_ptr->use_count;
+                LOG(LOG_DEBUG, "%p %d", static_cast<void*>(data_ptr), data_ptr->use_count);
                 switch (data_ptr->use_count) {
                     case 2:
                         assert(data_ptr->alive());
@@ -434,9 +435,12 @@ struct SessionReactor
                             data_ptr->apply_deleter();
                         }
                         break;
-                    case 0:
-                        ::operator delete(data_ptr);
-                        break;
+                }
+            }
+            for (auto* data_ptr : this->elements) {
+                if (0 == data_ptr->use_count) {
+                    LOG(LOG_DEBUG, "delete %p %s", static_cast<void*>(data_ptr), typeid(Base).name());
+                    ::operator delete(data_ptr);
                 }
             }
             this->elements.clear();
@@ -853,6 +857,11 @@ struct SessionReactor
 
     timeval get_next_timeout(EnableGraphics enable_gd)
     {
+        if ((enable_gd && this->graphic_events_.elements.size())
+         || this->front_events_.elements.size()) {
+            return {0, 0};
+        }
+
         auto tv = this->timer_events_.get_next_timeout();
         if (enable_gd) {
             auto const tv2 = this->graphic_timer_events_.get_next_timeout();

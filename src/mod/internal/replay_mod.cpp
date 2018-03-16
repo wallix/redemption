@@ -22,41 +22,116 @@
    Use (implemented) basic RDP orders to draw some known test pattern
 */
 
-
+#include "capture/cryptofile.hpp"
 #include "core/app_path.hpp"
+#include "core/front_api.hpp"
 #include "core/session_reactor.hpp"
+#include "keyboard/keymap2.hpp"
 #include "mod/internal/replay_mod.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
-#include "core/front_api.hpp"
-#include "keyboard/keymap2.hpp"
+#include "transport/mwrm_reader.hpp"
+#include "utils/genfstat.hpp"
 
-ReplayMod::TemporaryCtxPath::TemporaryCtxPath(const char * replay_path, const char * movie)
+struct ReplayMod::Reader
 {
-    char path_movie[1024];
-    std::snprintf(path_movie, sizeof(path_movie)-1, "%s%s", replay_path, movie);
-    path_movie[sizeof(path_movie)-1] = 0;
-    LOG(LOG_INFO, "Playing %s", path_movie);
+    struct Path
+    {
+        char extension[128] {};
+        char prefix[4096] {};
 
-    char path[1024];
-    char basename[1024];
-    strcpy(path, app_path(AppPath::Record)); // default value, actual one should come from movie_path
-    strcpy(basename, "replay"); // default value actual one should come from movie_path
-    strcpy(this->extension, ".mwrm"); // extension is currently ignored
+        //TODO: should be generalized to some wide use FilePath object
+        // with basename, path, ext, etc. methods and use it for passing
+        // around all of redemption pathes.
+        Path(const char * replay_path, const char * movie)
+        {
+            char path_movie[1024];
+            std::snprintf(path_movie, sizeof(path_movie)-1, "%s%s", replay_path, movie);
+            path_movie[sizeof(path_movie)-1] = 0;
+            LOG(LOG_INFO, "Playing %s", path_movie);
 
-    const bool res = canonical_path(
-        path_movie,
-        path, sizeof(path),
-        basename, sizeof(basename),
-        this->extension, sizeof(this->extension)
-    );
+            char path[1024];
+            char basename[1024];
+            strcpy(path, app_path(AppPath::Record)); // default value, actual one should come from movie_path
+            strcpy(basename, "replay"); // default value actual one should come from movie_path
+            strcpy(this->extension, ".mwrm"); // extension is currently ignored
 
-    if (!res) {
-        LOG(LOG_ERR, "Buffer Overflowed: Path too long");
-        throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
+            const bool res = canonical_path(
+                path_movie,
+                path, sizeof(path),
+                basename, sizeof(basename),
+                this->extension, sizeof(this->extension)
+            );
+
+            if (!res) {
+                LOG(LOG_ERR, "Buffer Overflowed: Path too long");
+                throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
+            }
+
+            std::snprintf(this->prefix, sizeof(this->prefix), "%s%s", path, basename);
+        }
+    } movie_path;
+    CryptoContext cctx;
+    Fstat         fstat;
+
+    InMetaSequenceTransport in_trans;
+    FileToGraphic reader;
+    time_t balise_time_frame;
+
+    Verbose debug_capture;
+
+    Reader(
+        Path path, timeval const& begin_read, timeval const& end_read,
+        time_t balise_time_frame, Verbose debug_capture)
+    : movie_path(path)
+    // TODO RZ: Support encrypted recorded file.
+    , in_trans(
+        this->cctx,
+        this->movie_path.prefix,
+        this->movie_path.extension,
+        InCryptoTransport::EncryptionMode::NotEncrypted,
+        this->fstat)
+    , reader(
+        this->in_trans,
+        begin_read,
+        end_read,
+        true,
+        debug_capture)
+    , balise_time_frame(balise_time_frame)
+    , debug_capture(debug_capture)
+    {
+        time_t begin_file_read = begin_read.tv_sec + this->in_trans.get_meta_line().start_time - this->balise_time_frame;
+        this->in_trans.set_begin_time(begin_file_read);
     }
 
-    std::snprintf(this->prefix, sizeof(this->prefix), "%s%s", path, basename);
-}
+    REDEMPTION_CXX_NODISCARD
+    bool server_resize(FrontAPI& front, WidgetScreen& screen)
+    {
+        bool is_resized = false;
+        switch (front.server_resize(
+            this->reader.info_width , this->reader.info_height , this->reader.info_bpp)
+        ) {
+            case FrontAPI::ResizeResult::no_need:
+                // no resizing needed
+                break;
+            case FrontAPI::ResizeResult::instant_done:
+            case FrontAPI::ResizeResult::remoteapp:
+            case FrontAPI::ResizeResult::done:
+                // resizing done;
+                is_resized = true;
+                screen.set_wh(this->reader.info_width, this->reader.info_height);
+                break;
+            case FrontAPI::ResizeResult::fail:
+                // resizing failed
+                // thow an Error ?
+                LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
+                throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
+        }
+
+        this->reader.add_consumer(&front, nullptr, nullptr, nullptr, nullptr);
+        front.can_be_start_capture();
+        return is_resized;
+    }
+};
 
 ReplayMod::ReplayMod(
     SessionReactor& session_reactor
@@ -75,60 +150,25 @@ ReplayMod::ReplayMod(
   , Verbose debug_capture)
 : InternalMod(front, width, height, font, Theme{}, true)
 , auth_error_message(auth_error_message)
-, movie_path(replay_path, movie)
-// TODO RZ: Support encrypted recorded file.
-, in_trans(std::make_unique<InMetaSequenceTransport>(
-    this->cctx,
-    this->movie_path.prefix,
-    this->movie_path.extension,
-    InCryptoTransport::EncryptionMode::NotEncrypted,
-    this->fstat))
-, reader(std::make_unique<FileToGraphic>(
-    *this->in_trans,
-    begin_read,
-    end_read,
-    true,
-    debug_capture))
+, internal_reader(std::make_unique<Reader>(
+    Reader::Path{replay_path, movie}, begin_read, end_read, balise_time_frame, debug_capture))
 , end_of_data(false)
 , wait_for_escape(wait_for_escape)
-, balise_time_frame(balise_time_frame)
 , sync_setted(false)
 , replay_on_loop(replay_on_loop)
 , session_reactor(session_reactor)
 {
-    switch (this->front.server_resize( this->reader->info_width
-                                     , this->reader->info_height
-                                     , this->reader->info_bpp)) {
-    case FrontAPI::ResizeResult::no_need:
-        // no resizing needed
-        break;
-    case FrontAPI::ResizeResult::instant_done:
-    case FrontAPI::ResizeResult::remoteapp:
-    case FrontAPI::ResizeResult::done:
-        // resizing done;
-        this->front_width  = this->reader->info_width;
-        this->front_height = this->reader->info_height;
-
-        this->screen.set_wh(this->reader->info_width, this->reader->info_height);
-
-        break;
-    case FrontAPI::ResizeResult::fail:
-        // resizing failed
-        // thow an Error ?
-        LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
-        throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
+    if (this->internal_reader->server_resize(front, this->screen)) {
+        this->front_width  = this->internal_reader->reader.info_width;
+        this->front_height = this->internal_reader->reader.info_height;
     }
-
-    this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
-    time_t begin_file_read = begin_read.tv_sec+this->in_trans->get_meta_line().start_time - this->balise_time_frame;
-    this->in_trans->set_begin_time(begin_file_read);
-    this->front.can_be_start_capture();
 
     this->timer = session_reactor.create_graphic_timer(std::ref(*this))
     .set_delay(std::chrono::seconds(0))
-    .on_action(jln::always_ready([](gdi::GraphicApi& gd, ReplayMod& self){
+    .on_action([](auto ctx, gdi::GraphicApi& gd, ReplayMod& self){
         self.draw_event(0, gd);
-    }));
+        return ctx.ready_at(ctx.get_current_time());
+    });
 }
 
 ReplayMod::~ReplayMod()
@@ -143,7 +183,7 @@ void ReplayMod::add_consumer(
     gdi::CaptureProbeApi * capture_probe_ptr,
     gdi::ExternalCaptureApi * external_event_ptr
 ) {
-    this->reader->add_consumer(
+    this->internal_reader->reader.add_consumer(
         graphic_ptr,
         capture_ptr,
         kbd_input_ptr,
@@ -154,32 +194,32 @@ void ReplayMod::add_consumer(
 
 void ReplayMod::play()
 {
-    this->reader->play(false);
+    this->internal_reader->reader.play(false);
 }
 
 bool ReplayMod::play_client()
 {
-    return this->reader->play_client();
+    return this->internal_reader->reader.play_client();
 }
 
 void ReplayMod::set_sync()
 {
-    this->reader->set_sync();
+    this->internal_reader->reader.set_sync();
 }
 
-WrmVersion ReplayMod::get_wrm_version()
+WrmVersion ReplayMod::get_wrm_version() const
 {
-    return this->in_trans->get_wrm_version();
+    return this->internal_reader->in_trans.get_wrm_version();
 }
 
 bool ReplayMod::get_break_privplay_client()
 {
-    return this->reader->break_privplay_client;
+    return this->internal_reader->reader.break_privplay_client;
 }
 
 void ReplayMod::instant_play_client(std::chrono::microseconds endin_frame)
 {
-    this->reader->instant_play_client(endin_frame);
+    this->internal_reader->reader.instant_play_client(endin_frame);
 }
 
 void ReplayMod::rdp_input_scancode(
@@ -194,17 +234,17 @@ void ReplayMod::rdp_input_scancode(
 
 void ReplayMod::set_pause(timeval & time)
 {
-    this->reader->set_pause_client(time);
+    this->internal_reader->reader.set_pause_client(time);
 }
 
 void ReplayMod::set_wait_after_load_client(timeval & time)
 {
-    this->reader->set_wait_after_load_client(time);
+    this->internal_reader->reader.set_wait_after_load_client(time);
 }
 
 time_t ReplayMod::get_real_time_movie_begin()
 {
-    return this->in_trans->get_meta_line().start_time;
+    return this->internal_reader->in_trans.get_meta_line().start_time;
 }
 
 void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & drawable)
@@ -213,7 +253,7 @@ void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & drawable)
     // TODO use system constants for sizes
     if (!this->sync_setted) {
         this->sync_setted = true;
-        this->reader->set_sync();
+        this->internal_reader->reader.set_sync();
     }
 
     if (this->end_of_data) {
@@ -227,11 +267,11 @@ void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & drawable)
         // unnecessary loop
         for (int i = 0; i < 500; i++) {
             const std::chrono::microseconds elapsed
-                = difftimeval(tvtime(), this->reader->start_synctime_now);
+                = difftimeval(tvtime(), this->internal_reader->reader.start_synctime_now);
 
-            if (elapsed < this->reader->movie_elapsed_client) {
+            if (elapsed < this->internal_reader->reader.movie_elapsed_client) {
                 using std::chrono::duration_cast;
-                auto const diff_time = this->reader->movie_elapsed_client - elapsed;
+                auto const diff_time = this->internal_reader->reader.movie_elapsed_client - elapsed;
                 auto const sec_diff = duration_cast<std::chrono::seconds>(diff_time);
                 auto const microsec_diff = diff_time - sec_diff;
                 auto const nano_diff = duration_cast<std::chrono::nanoseconds>(microsec_diff);
@@ -243,60 +283,27 @@ void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & drawable)
                 }
             }
 
-            if (this->reader->next_order()) {
-                this->reader->interpret_order();
-
-            } else {
+            if (this->internal_reader->reader.next_order()) {
+                this->internal_reader->reader.interpret_order();
+            }
+            else {
                 if (this->replay_on_loop) {
-
-                    this->in_trans.reset(new InMetaSequenceTransport(
-                                            this->cctx,
-                                            this->movie_path.prefix,
-                                            this->movie_path.extension,
-                                            InCryptoTransport::EncryptionMode::NotEncrypted,
-                                            this->fstat));
-
                     timeval const begin_read = {0, 0};
-                    time_t begin_file_read = begin_read.tv_sec+this->in_trans->get_meta_line().start_time - this->balise_time_frame;
-                    this->in_trans->set_begin_time(begin_file_read);
-                    this->sync_setted = false;
+                    timeval const end_read = {0, 0};
+                    this->internal_reader = std::make_unique<Reader>(
+                        this->internal_reader->movie_path,
+                        begin_read, end_read,
+                        this->internal_reader->balise_time_frame,
+                        this->internal_reader->debug_capture);
 
-                    this->reader.reset(new FileToGraphic(
-                                            *this->in_trans,
-                                            begin_read, {0, 0},
-                                            true,
-                                            to_verbose_flags(0)));
-
-
-                    switch (this->front.server_resize( this->reader->info_width
-                                     , this->reader->info_height
-                                     , this->reader->info_bpp)) {
-                    case FrontAPI::ResizeResult::no_need:
-                        // no resizing needed
-                        break;
-                    case FrontAPI::ResizeResult::instant_done:
-                    case FrontAPI::ResizeResult::remoteapp:
-                    case FrontAPI::ResizeResult::done:
-                        // resizing done;
-                        this->front_width  = this->reader->info_width;
-                        this->front_height = this->reader->info_height;
-
-                        this->screen.set_wh(this->reader->info_width, this->reader->info_height);
-
-                        break;
-                    case FrontAPI::ResizeResult::fail:
-                        // resizing failed
-                        // thow an Error ?
-                        LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
-                        throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
+                    if (this->internal_reader->server_resize(this->front, this->screen)) {
+                        this->front_width  = this->internal_reader->reader.info_width;
+                        this->front_height = this->internal_reader->reader.info_height;
                     }
 
-                    this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
-
-                    this->front.can_be_start_capture();
-
-                } else {
-
+                    this->sync_setted = false;
+                }
+                else {
                     this->end_of_data = true;
                     this->timer->set_delay(std::chrono::seconds(1));
 
@@ -321,4 +328,11 @@ void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & drawable)
             throw;
         }
     }
+}
+
+std::string ReplayMod::get_mwrm_path() const
+{
+    std::string movie_path_str(this->internal_reader->movie_path.prefix);
+    movie_path_str += ".mwrm";
+    return movie_path_str;
 }
