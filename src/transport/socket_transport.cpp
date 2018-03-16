@@ -159,6 +159,9 @@ Transport::TlsResult SocketTransport::enable_client_tls(bool server_cert_store,
         case TLSState::Ok:
             // TODO this should be an error, no need to commute two times to TLS
             return Transport::TlsResult::Fail;
+        default:
+            LOG(LOG_ERR, "SocketTransport::%s() unhandled state for tls_state", __FUNCTION__);
+            return Transport::TlsResult::Fail;
     }
 }
 
@@ -169,6 +172,7 @@ bool SocketTransport::disconnect()
         // silent trace in the case of watchdog
         LOG(LOG_INFO, "Socket %s (%d) : closing connection\n", this->name, this->sck);
     }
+    this->tls_state = TLSState::Uninit;
     // Disconnect tls if needed
     this->tls.reset();
     shutdown(this->sck, 2); // 2 = SHUT_RDWR

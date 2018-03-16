@@ -636,7 +636,7 @@ private:
 public:
     bool ignore_rdesktop_bogus_clip = false;
 
-    void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
+    void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
     void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
     void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
@@ -1020,6 +1020,7 @@ public:
 
         WrmParams wrm_params = wrm_params_from_ini(
             this->capture_bpp,
+            this->client_info.remote_program,
             this->cctx,
             this->gen,
             this->fstat,

@@ -1205,6 +1205,26 @@ static void show_metadata(FileToGraphic const & player) {
         //cout << "Cache 4 size          : " << player.info_cache_4_size                            << endl;
         std::cout << "Compression algorithm : " << static_cast<int>(player.info_compression_algorithm) << '\n';
     }
+    if (!player.image_frame_rect.isempty()) {
+        std::cout << "Image frame rect      : (" <<
+            player.image_frame_rect.x << ", "  <<
+            player.image_frame_rect.y << ", "  <<
+            player.image_frame_rect.cx << ", "  <<
+            player.image_frame_rect.cy << ")"  << '\n';
+    }
+    std::cout << "RemoteApp session     : " << (player.remote_app ? "Yes" : "No") << '\n';
+    std::cout.flush();
+}
+
+inline
+static void show_metadata2(FileToGraphic const & player) {
+    if (!player.image_frame_rect.isempty()) {
+        std::cout << "Image frame rect      : (" <<
+            player.image_frame_rect.x << ", "  <<
+            player.image_frame_rect.y << ", "  <<
+            player.image_frame_rect.cx << ", "  <<
+            player.image_frame_rect.cy << ")"  << '\n';
+    }
     std::cout.flush();
 }
 
@@ -1681,6 +1701,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         WrmParams const wrm_params = wrm_params_from_ini(
                             wrm_color_depth,
+                            player.remote_app,
                             cctx,
                             rnd,
                             fstat,
@@ -1812,6 +1833,10 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                     catch (Error const &) {
                         return_code = -1;
                     }
+                }
+
+                if (show_file_metadata) {
+                    show_metadata2(player);
                 }
 
                 if (show_statistics && return_code == 0) {

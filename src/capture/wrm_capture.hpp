@@ -91,8 +91,10 @@ inline void wrmcapture_send_meta_chunk(
   , bool     info_cache_4_persistent
 
   , uint8_t  index_algorithm
+
+  , bool     remote_app
 ) {
-    StaticOutStream<36> payload;
+    StaticOutStream<40> payload;
     payload.out_uint16_le(wrm_format_version);
     payload.out_uint16_le(info_width);
     payload.out_uint16_le(info_height);
@@ -121,6 +123,10 @@ inline void wrmcapture_send_meta_chunk(
         payload.out_uint8(info_cache_4_persistent);
 
         payload.out_uint8(index_algorithm);
+
+        if (wrm_format_version > 4) {
+            payload.out_uint8(remote_app);
+        }
     }
 
     wrmcapture_send_wrm_chunk(t, WrmChunkType::META_FILE, payload.get_offset(), 1);
@@ -204,12 +210,15 @@ class GraphicToFile
 
     const uint8_t wrm_format_version;
 
+    const bool remote_app;
+
 public:
     enum class SendInput { NO, YES };
 
     GraphicToFile(const timeval & now
                 , Transport & trans
-                , const uint8_t  capture_bpp
+                , const uint8_t capture_bpp
+                , const bool remote_app
                 , BmpCache & bmp_cache
                 , GlyphCache & gly_cache
                 , PointerCache & ptr_cache
@@ -229,7 +238,8 @@ public:
     , send_input(send_input == SendInput::YES)
     , image_frame_api(image_frame_api)
     , keyboard_buffer_32(keyboard_buffer_32_buf)
-    , wrm_format_version(bool(this->compression_bullder.get_algorithm()) ? 4 : 3)
+    , wrm_format_version(remote_app ? 5 : (bool(this->compression_bullder.get_algorithm()) ? 4 : 3))
+    , remote_app(remote_app)
     {
         if (wrm_compression_algorithm != this->compression_bullder.get_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
@@ -314,6 +324,8 @@ public:
           , c4.persistent()
 
           , static_cast<unsigned>(this->compression_bullder.get_algorithm())
+
+          , this->remote_app
         );
     }
 
@@ -463,6 +475,18 @@ public:
         this->stream_bitmaps.rewind();
     }
 
+    void send_image_frame_rect_chunk(const Rect& image_frame_rect)
+    {
+        StaticOutStream<32> payload;
+        payload.out_sint16_le(image_frame_rect.x);
+        payload.out_sint16_le(image_frame_rect.y);
+        payload.out_uint16_le(image_frame_rect.cx);
+        payload.out_uint16_le(image_frame_rect.cy);
+
+        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::IMAGE_FRAME_RECT, payload.get_offset(), 0);
+        this->trans.send(payload.get_data(), payload.get_offset());
+    }
+
 protected:
     void send_pointer(int cache_idx, const Pointer & cursor) override {
         auto const dimensions = cursor.get_dimensions();
@@ -607,7 +631,8 @@ class WrmCaptureImpl :
     struct Serializer final : GraphicToFile {
         Serializer(const timeval & now
                 , Transport & trans
-                , const uint8_t  capture_bpp
+                , const uint8_t capture_bpp
+                , const bool remote_app
                 , BmpCache & bmp_cache
                 , GlyphCache & gly_cache
                 , PointerCache & ptr_cache
@@ -615,7 +640,7 @@ class WrmCaptureImpl :
                 , WrmCompressionAlgorithm wrm_compression_algorithm
                 , SendInput send_input
                 , GraphicToFile::Verbose verbose)
-            : GraphicToFile(now, trans, capture_bpp,
+            : GraphicToFile(now, trans, capture_bpp, remote_app,
                             bmp_cache, gly_cache, ptr_cache,
                             image_frame_api, wrm_compression_algorithm,
                             send_input, verbose)
@@ -661,7 +686,6 @@ class WrmCaptureImpl :
 
         ~Serializer() {
         }
-
     } graphic_to_file;
 
 public:
@@ -834,6 +858,8 @@ public:
 
     bool kbd_input_mask_enabled;
 
+    Rect image_frame_rect;
+
     WrmCaptureImpl(
         const CaptureParams & capture_params, const WrmParams & wrm_params,
         gdi::ImageFrameApi & image_frame_api, ConstImageDataView const & image_view)
@@ -856,7 +882,7 @@ public:
         capture_params.groupid,
         capture_params.report_message)
     , graphic_to_file(
-        capture_params.now, this->out, wrm_params.capture_bpp,
+        capture_params.now, this->out, wrm_params.capture_bpp, wrm_params.remote_app,
         this->bmp_cache, this->gly_cache, this->ptr_cache, image_frame_api,
         wrm_params.wrm_compression_algorithm, GraphicToFile::SendInput::YES,
         GraphicToFile::Verbose(wrm_params.wrm_verbose)
@@ -872,6 +898,13 @@ public:
         gdi::ImageFrameApi & image_frame_api)
     : WrmCaptureImpl(capture_params, wrm_params, image_frame_api, image_frame_api.get_image_view())
     {}
+
+    ~WrmCaptureImpl() override
+    {
+        if (!this->image_frame_rect.isempty()) {
+            this->graphic_to_file.send_image_frame_rect_chunk(this->image_frame_rect);
+        }
+    }
 
     // shadow text
     bool kbd_input(const timeval& now, uint32_t uchar) override {
@@ -891,5 +924,11 @@ public:
         const timeval & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
         return this->nc.periodic_snapshot(now, x, y, ignore_frame_in_timeval);
+    }
+
+    virtual void visibility_rects_event(Rect const & rect) {
+        if (!rect.isempty()) {
+            this->image_frame_rect = this->image_frame_rect.disjunct(rect);
+        }
     }
 };

@@ -559,15 +559,15 @@ public:
                     {
                     StaticOutStream<1600> out_stream;
 
-                    const char * source_of_ExeOrFile = "C:\\Windows\\system32\\notepad.exe";
+                    const char * source_of_ExeOrFile = this->client->source_of_ExeOrFile.c_str();
                     uint8_t unicode_ExeOrFile[500];
                     const size_t size_of_unicode_ExeOrFile = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(source_of_ExeOrFile), unicode_ExeOrFile, 500);
 
-                    const char * source_of_WorkingDir = "C:\\Users\\user1";
+                    const char * source_of_WorkingDir = this->client->source_of_WorkingDir.c_str();
                     uint8_t unicode_WorkingDir[500];
                     const size_t size_of_unicode_WorkingDir = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(source_of_WorkingDir), unicode_WorkingDir, 500);
 
-                    const char * source_of_Arguments = "";
+                    const char * source_of_Arguments = this->client->source_of_Arguments.c_str();
                     uint8_t unicode_Arguments[500];
                     const size_t size_of_unicode_Arguments = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(source_of_Arguments), unicode_Arguments, 500);
 

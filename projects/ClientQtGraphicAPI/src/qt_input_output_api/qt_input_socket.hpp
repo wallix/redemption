@@ -79,10 +79,15 @@ public:
             if (this->_callback) {
                 if (this->_callback->get_event().is_trigger_time_set()) {
                     struct timeval now = tvtime();
-                    wait_obj const& event = this->_callback->get_event();
-                    if (event.is_trigger_time_set()) {
-                        int time_to_wake = (event.get_trigger_time().tv_usec - now.tv_usec) / 1000 + (event.get_trigger_time().tv_sec - now.tv_sec) * 1000;
-                        this->timer.start(std::max(0, time_to_wake));
+                    int time_to_wake = (this->_callback->get_event().get_trigger_time().tv_usec - now.tv_usec) / 1000
+                    + (this->_callback->get_event().get_trigger_time().tv_sec - now.tv_sec) * 1000;
+
+                    if (time_to_wake < 0) {
+                        //this->timer.stop();
+                        this->call_draw_event_timer();
+                    } else {
+
+                        this->timer.start( time_to_wake );
                     }
                 }
             } else {

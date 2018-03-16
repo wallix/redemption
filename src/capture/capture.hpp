@@ -187,7 +187,7 @@ public:
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
     void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
 
-    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { LOG(LOG_INFO, "> > > > > Capture::NewOrExistingWindow"); this->draw_impl(cmd); }
     void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
     void draw(const RDP::RAIL::CachedIcon                     & cmd) override { this->draw_impl(cmd); }
     void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { this->draw_impl(cmd); }
@@ -313,6 +313,40 @@ private:
             }
         }
 
+        struct WindowRecord {
+            uint32_t window_id;
+            uint32_t fields_present_flags;
+            uint32_t style;
+            uint8_t show_state;
+            int32_t visible_offset_x;
+            int32_t visible_offset_y;
+
+            WindowRecord(uint32_t window_id, uint32_t fields_present_flags,
+                         uint32_t style, uint8_t show_state,
+                         int32_t visible_offset_x, int32_t visible_offset_y)
+            : window_id(window_id)
+            , fields_present_flags(fields_present_flags)
+            , style(style)
+            , show_state(show_state)
+            , visible_offset_x(visible_offset_x)
+            , visible_offset_y(visible_offset_y) {}
+        };
+
+        std::vector<WindowRecord> windows;
+
+        struct WindowVisibilityRectRecord {
+            uint32_t window_id;
+            Rect rect;
+
+            WindowVisibilityRectRecord(uint32_t window_id, Rect rect)
+            : window_id(window_id)
+            , rect(rect) {}
+        };
+
+        std::vector<WindowVisibilityRectRecord> window_visibility_rects;
+
+        Rect get_joint_visibility_rect() const;
+
         void draw_impl(RDP::FrameMarker const & cmd);
 
         void draw_impl(const RDP::RAIL::NewOrExistingWindow & cmd);
@@ -361,7 +395,6 @@ private:
     std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> ext_caps;
 
     bool capture_drawable = false;
-
 
 public:
     Capture(

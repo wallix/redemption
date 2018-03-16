@@ -88,6 +88,10 @@ public:
         stream.out_uint16_le(this->Bottom_);
     }
 
+    operator Rect() const {
+        return Rect(this->Left_, this->Top_, this->Right_ - this->Left_ + 1, this->Bottom_ - this->Top_ + 1);
+    }
+
     void receive(InStream & stream) {
         {
             const unsigned expected =

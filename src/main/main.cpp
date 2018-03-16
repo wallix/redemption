@@ -359,7 +359,7 @@ int main(int argc, char** argv)
     // don't check if it fails (proxy may be allready stopped)
     // and try to continue normal start process afterward
 
-    if (!file_exist(app_path(AppPath::LockDir)) && mkdir(app_path(AppPath::LockDir), 0700) < 0){
+    if (!file_exist(app_path(AppPath::LockDir)) && recursive_create_directory(app_path(AppPath::LockDir), 0700, egid) < 0){
         LOG(LOG_ERR, "Failed to create %s: %s", app_path(AppPath::LockDir), strerror(errno));
         return 1;
     }

@@ -709,6 +709,10 @@ private:
     }
 
 public:
+    bool is_keyboard_sequences_started() const override {
+        return (State::START != this->state);
+    }
+
     bool is_stopped() const override {
         return (this->state == State::STOP);
     }
