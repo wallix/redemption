@@ -624,10 +624,28 @@ struct SessionReactor
 
         void disable_timeout() noexcept
         {
-            this->set_timeout(std::chrono::hours(9999));
-            this->timer().on_action = [](auto&, [[maybe_unused]] auto... xs){
-                return jln::ExecutorResult::Ready;
+            if (this->timer_is_disabled) {
+                return;
+            }
+
+            auto disable = [this](auto& cont){
+                auto it = std::find_if(cont.begin(), cont.end(), [this](auto& p){
+                    return &p->value == this;
+                });
+                assert(it != cont.end());
+                --(*it)->use_count;
+                *it = std::move(cont.back());
+                cont.pop_back();
             };
+
+            if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
+                disable(this->session_reactor.timer_events_.elements);
+            }
+            else {
+                disable(this->session_reactor.graphic_timer_events_.elements);
+            }
+
+            this->timer_is_disabled = true;
         }
 
         SessionReactor& get_reactor() const noexcept
@@ -638,6 +656,7 @@ struct SessionReactor
     private:
         int fd;
         SessionReactor& session_reactor;
+        bool timer_is_disabled = false;
     };
 
     template<class PrefixArgs_, class... Ts>
