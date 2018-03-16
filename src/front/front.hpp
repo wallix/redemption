@@ -863,10 +863,9 @@ public:
             else {
                 this->incoming_event = this->session_reactor
                 .create_callback_event(std::ref(*this))
-                .on_action([](auto ctx, Callback& cb, Front& front){
+                .on_action(jln::one_shot([](Callback& cb, Front& front){
                     cb.refresh(Rect(0, 0, front.client_info.width, front.client_info.height));
-                    return ctx.terminate();
-                });
+                }));
                 res = ResizeResult::remoteapp;
             }
         }

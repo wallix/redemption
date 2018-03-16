@@ -240,10 +240,11 @@ public:
                 session_reactor.fd_events_.exec([&rfds](int fd, auto& /*e*/){
                     return io_fd_isset(fd, rfds);
                 });
-                if (session_reactor.front_events().size() || sck_is_set(front_trans, rfds)) {
+                bool const front_is_set = sck_is_set(front_trans, rfds);
+                if (session_reactor.front_events().size() || front_is_set) {
                     try {
                         session_reactor.execute_callbacks(mm.get_callback());
-                        if (sck_is_set(front_trans, rfds)) {
+                        if (front_is_set) {
                             front.incoming(mm.get_callback(), now);
                         }
                     } catch (Error const& e) {
