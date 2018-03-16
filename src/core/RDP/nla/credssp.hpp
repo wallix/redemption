@@ -30,7 +30,8 @@
  *     version    [0] INTEGER,
  *     negoTokens [1] NegoData OPTIONAL,
  *     authInfo   [2] OCTET STRING OPTIONAL,
- *     pubKeyAuth [3] OCTET STRING OPTIONAL
+ *     pubKeyAuth [3] OCTET STRING OPTIONAL,
+ *     errorCode  [4] INTEGER OPTIONAL
  * }
  *
  * NegoData ::= SEQUENCE OF NegoDataItem
@@ -117,12 +118,16 @@ struct TSRequest final {
     /* [3] pubKeyAuth (OCTET STRING) */
     Array pubKeyAuth;
     // BStream pubKeyAuth;
+    /* [4] errorCode (INTEGER OPTIONAL) */
+    uint32_t error_code;
+
 
     TSRequest()
-        : version(2)
+        : version(3)
         , negoTokens(0)
         , authInfo(0)
         , pubKeyAuth(0)
+        , error_code(0)
     {
     }
 
@@ -139,6 +144,10 @@ struct TSRequest final {
     int ber_sizeof(int length) {
         length += BER::sizeof_integer(this->version);
         length += BER::sizeof_contextual_tag(BER::sizeof_integer(this->version));
+        if (this->version >=3 && this->error_code != 0) {
+            length = BER::sizeof_integer(this->error_code);
+            length += BER::sizeof_contextual_tag(BER::sizeof_integer(this->error_code));
+        }
         return length;
     }
 
@@ -210,17 +219,24 @@ struct TSRequest final {
             assert(length == 0);
             (void)length;
         }
+        /* [4] errorCode (INTEGER) */
+        if (this->version >= 3 && this->error_code != 0) {
+            LOG(LOG_INFO, "Credssp: TSCredentials::emit() errorCode");
+            BER::write_contextual_tag(stream, 0, BER::sizeof_integer(this->error_code), true);
+            BER::write_integer(stream, this->error_code);
+        }
     }
 
     int recv(InStream & stream) {
         int length;
-        
+
         /* TSRequest */
         if(!BER::read_sequence_tag(stream, length) ||
            !BER::read_contextual_tag(stream, 0, length, true) ||
            !BER::read_integer(stream, this->version)) {
             return -1;
         }
+        LOG(LOG_INFO, "Credssp TSCredentials::recv() Version %u", this->version);
 
         /* [1] negoTokens (NegoData) */
         if (BER::read_contextual_tag(stream, 1, length, true) != false)        {
@@ -251,7 +267,7 @@ struct TSRequest final {
         }
 
         /* [3] pubKeyAuth (OCTET STRING) */
-        if (BER::read_contextual_tag(stream, 3, length, true) != false)        {
+        if (BER::read_contextual_tag(stream, 3, length, true) != false) {
             LOG(LOG_INFO, "Credssp TSCredentials::recv() PUBKEYAUTH");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
@@ -260,7 +276,14 @@ struct TSRequest final {
             this->pubKeyAuth.init(length);
             stream.in_copy_bytes(this->pubKeyAuth.get_data(), length);
         }
-
+        /* [4] errorCode (INTEGER) */
+        if (this->version >= 3 &&
+            BER::read_contextual_tag(stream, 4, length, true) != false) {
+            LOG(LOG_INFO, "Credssp TSCredentials::recv() ErrorCode");
+            if (!BER::read_integer(stream, this->error_code)) {
+                return -1;
+            }
+        }
         return 0;
     }
 

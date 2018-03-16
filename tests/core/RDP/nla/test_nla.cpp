@@ -32,7 +32,7 @@ RED_AUTO_TEST_CASE(TestNlaclient)
 {
     const char client[] =
         // negotiate
-/* 0000 */ "\x30\x37\xa0\x03\x02\x01\x02\xa1\x30\x30\x2e\x30\x2c\xa0\x2a\x04" //07......00.0,.*.
+/* 0000 */ "\x30\x37\xa0\x03\x02\x01\x03\xa1\x30\x30\x2e\x30\x2c\xa0\x2a\x04" //07......00.0,.*.
 /* 0010 */ "\x28\x4e\x54\x4c\x4d\x53\x53\x50\x00\x01\x00\x00\x00\xb7\x82\x08" //(NTLMSSP........
 /* 0020 */ "\xe2\x00\x00\x00\x00\x28\x00\x00\x00\x00\x00\x00\x00\x28\x00\x00" //.....(.......(..
 /* 0030 */ "\x00\x05\x01\x28\x0a\x00\x00\x00\x0f"                             //...(.....
@@ -192,4 +192,3 @@ RED_AUTO_TEST_CASE(TestNlaserver)
     int res = credssp.credssp_server_authenticate();
     RED_CHECK_EQUAL(res, 1);
 }
-
