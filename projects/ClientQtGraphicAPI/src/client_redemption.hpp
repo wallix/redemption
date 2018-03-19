@@ -554,7 +554,7 @@ public:
         if (this->is_recording) {
             this->set_capture();
         }
-        
+
         if (this->mod_state != MOD_VNC) {
 
             if (this->mod_state == MOD_RDP_REMOTE_APP) {
@@ -717,8 +717,10 @@ public:
 
             std::string record_path = this->REPLAY_DIR.c_str() + std::string("/");
 
+            bool const is_remoteapp = false;
             WrmParams wrmParams(
-                    this->info.bpp
+                  this->info.bpp
+                , is_remoteapp
                 , this->cctx
                 , gen
                 , this->fstat
