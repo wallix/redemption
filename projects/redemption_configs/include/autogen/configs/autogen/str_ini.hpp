@@ -743,6 +743,9 @@
 "#_advanced\n"
 "#h_qscale = 7\n\n"
 
+"#_hidden\n"
+"#smart_video_cropping = 0\n\n"
+
 "[crypto]\n\n"
 
 "#_hidden\n"

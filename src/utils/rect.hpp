@@ -105,6 +105,13 @@ struct Rect {
         return !(*this == other);
     }
 
+    void empty() {
+        this->x  = 0;
+        this->y  = 0;
+        this->cx = 0;
+        this->cy = 0;
+    }
+
     // Rect constructor ensures that any empty rect will be (0, 0, 0, 0)
     // hence testing cx or cy is enough
     bool isempty() const {

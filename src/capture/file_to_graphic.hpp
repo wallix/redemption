@@ -219,6 +219,9 @@ public:
 
         uint64_t total_read_len;
         uint64_t internal_order_read_len;
+
+        Order NewOrExistingWindow;
+        Order DeletedWindow;
     } statistics;
 
     bool break_privplay_client;

@@ -960,8 +960,11 @@ void FileToGraphic::process_window_information(
             break;
 
         case RDP::RAIL::WINDOW_ORDER_STATE_DELETED: {
+                this->statistics.DeletedWindow.count++;
+                auto * p = stream.get_current();
                 RDP::RAIL::DeletedWindow order;
                 order.receive(stream);
+                this->statistics.DeletedWindow.total_len += stream.get_current() - p;
                 order.log(LOG_INFO);
                 for (gdi::GraphicApi * gd : this->graphic_consumers){
                     gd->draw(order);
@@ -971,8 +974,11 @@ void FileToGraphic::process_window_information(
 
         case 0:
         case RDP::RAIL::WINDOW_ORDER_STATE_NEW: {
+                this->statistics.NewOrExistingWindow.count++;
+                auto * p = stream.get_current();
                 RDP::RAIL::NewOrExistingWindow order;
                 order.receive(stream);
+                this->statistics.NewOrExistingWindow.total_len += stream.get_current() - p;
                 order.log(LOG_INFO);
                 for (gdi::GraphicApi * gd : this->graphic_consumers){
                     gd->draw(order);

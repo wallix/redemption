@@ -505,6 +505,8 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, type_<unsigned>(), "h_height", desc{"Height for high quality."}, set(2048));
         W.member(advanced_in_gui, no_sesman, type_<unsigned>(), "h_width", desc{"Width for high quality."}, set(2048));
         W.member(advanced_in_gui, no_sesman, type_<unsigned>(), "h_qscale", desc{"Qscale (parameter given to ffmpeg) for high quality."}, set(7));
+        W.sep();
+        W.member(hidden_in_gui, no_sesman, type_<bool>(), "smart_video_cropping", set(false));
     });
 
     W.section("crypto", [&]

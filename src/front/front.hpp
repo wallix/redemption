@@ -1042,7 +1042,8 @@ public:
                                    , capture_kbd, kbd_log_params
                                    , video_params
                                    , nullptr
-                                   , Rect()
+                                   , ((this->client_info.remote_program && ini.get<cfg::video::smart_video_cropping>()) ?
+                                      Rect(0, 0, 640, 480) : Rect())
                                    );
 
 
@@ -1053,6 +1054,11 @@ public:
         if (this->capture->get_graphic_api()) {
             this->set_gd(this->capture->get_graphic_api());
             this->capture->add_graphic(this->orders.graphics_update_pdu());
+        }
+
+        if (this->client_info.remote_program && ini.get<cfg::video::smart_video_cropping>() &&
+            !this->rail_window_rect.isempty()) {
+            this->capture->visibility_rects_event(this->rail_window_rect);
         }
 
         this->update_keyboard_input_mask_state();
@@ -4265,6 +4271,36 @@ protected:
 
     void draw_impl(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) {
         this->priv_draw_and_update_cache_brush(cmd, clip, color_ctx);
+    }
+
+    Rect rail_window_rect;
+
+    void draw_impl(RDP::RAIL::NewOrExistingWindow const & cmd) {
+LOG(LOG_INFO, "> > > > > draw_impl(NewOrExistingWindow)");
+        this->graphics_update->draw(cmd);
+
+        if (!this->capture &&
+            (cmd.header.FieldsPresentFlags() & (RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET)) &&
+            (cmd.NumVisibilityRects() == 1)) {
+            this->rail_window_rect = static_cast<Rect>(cmd.VisibilityRects(0)).offset(
+                    cmd.VisibleOffsetX(), cmd.VisibleOffsetY()
+                );
+LOG(LOG_INFO, "> > > > > (1) rail_window_rect=%s", rail_window_rect);
+        }
+        else {
+            this->rail_window_rect.empty();
+
+LOG(LOG_INFO, "> > > > > (2) rail_window_rect=%s", rail_window_rect);
+        }
+    }
+
+    void draw_impl(RDP::RAIL::DeletedWindow const & cmd) {
+LOG(LOG_INFO, "> > > > > draw_impl(DeletedWindow)");
+        this->graphics_update->draw(cmd);
+
+        this->rail_window_rect.empty();
+
+LOG(LOG_INFO, "> > > > > (3) rail_window_rect=%s", rail_window_rect);
     }
 
 public:

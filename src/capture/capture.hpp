@@ -412,7 +412,7 @@ public:
         bool capture_kbd, const KbdLogParams /*kbd_log_params*/,
         const VideoParams video_params,
         UpdateProgressData * update_progress_data,
-        Rect crop_rect
+        Rect const & crop_rect
     );
 
     ~Capture();
@@ -462,6 +462,8 @@ public:
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
     ) override;
+
+    void visibility_rects_event(Rect const & rect) override;
 
 protected:
     template<class... Ts>

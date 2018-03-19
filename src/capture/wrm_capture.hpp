@@ -916,6 +916,7 @@ public:
     }
 
     virtual void visibility_rects_event(Rect const & rect) {
+LOG(LOG_INFO, "WrmCaptureImpl::visibility_rects_event rect=%s", rect);
         if (!rect.isempty()) {
             this->image_frame_rect = this->image_frame_rect.disjunct(rect);
         }

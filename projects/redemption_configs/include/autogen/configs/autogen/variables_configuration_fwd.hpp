@@ -216,6 +216,7 @@ namespace cfg {
         struct h_height;
         struct h_width;
         struct h_qscale;
+        struct smart_video_cropping;
     };
 
     struct crypto {
