@@ -821,7 +821,7 @@ public:
     }
 
     void ntlm_set_negotiate_flags_auth() {
-        uint32_t & negoFlag = this->NegotiateFlags;
+        uint32_t negoFlag = 0;
         if (this->NTLMv2) {
             negoFlag |= NTLMSSP_NEGOTIATE_56;
             if (this->SendVersionInfo) {
@@ -1210,4 +1210,3 @@ public:
         return status;
     }
 };
-
