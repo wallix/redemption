@@ -16,10 +16,10 @@ try:
         RDP_PATTERN_FOUND, RDP_PROCESS_FOUND, RDP_OUTCXN_FOUND, FILESYSTEM_FULL
     from wabconfig import Config
     from wabengine.client.sync_client import SynClient
-    from wabengine.common.const import PASSWORD_VAULT, PASSWORD_INTERACTIVE, \
+    from wallixconst.authentication import PASSWORD_VAULT, PASSWORD_INTERACTIVE, \
         PUBKEY_VAULT, PUBKEY_AGENT_FORWARDING, KERBEROS_FORWARDING, \
         PASSWORD_MAPPING, SUPPORTED_AUTHENTICATION_METHODS
-    from wabengine.common.const import AM_IL_DOMAIN
+    from wallixconst.account import AM_IL_DOMAIN
     from wabx509 import AuthX509
     CRED_DATA_LOGIN = "login"
     CRED_DATA_ACCOUNT_UID = "account_uid"
@@ -935,15 +935,15 @@ class Engine(object):
         return None
 
     def get_primary_password(self, target_device):
-        Logger().info("Engine get_primary_password ...")
+        Logger().debug("Engine get_primary_password ...")
         try:
-            password = self.wabengine.get_primary_password(target_device)
-            Logger().info("Engine get_primary_password done")
+            password = self.checkout.get_primary_password(target_device)
+            Logger().debug("Engine get_primary_password done")
             return password
         except Exception, e:
             import traceback
-            Logger().info("Engine get_primary_password failed")
-            Logger().debug("Engine get_primary_password failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().debug("Engine get_primary_password failed: "
+                           "(((%s)))" % (traceback.format_exc(e)))
         return None
 
     def checkout_target(self, target):
@@ -959,7 +959,7 @@ class Engine(object):
             return self.checkout.get_scenario_account_infos(
                 account_name, domain_name, device_name
             )
-        except Exception:
+        except Exception as e:
             import traceback
             Logger().debug("Engine get_account_infos failed:"
                            " %s" % (traceback.format_exc(e)))
