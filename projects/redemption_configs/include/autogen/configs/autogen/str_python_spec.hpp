@@ -563,6 +563,9 @@
 "#_advanced\n"
 "bogus_clipboard_infinite_loop = option(0, 1, 2, default=0)\n\n"
 
+"#_hidden\n"
+"server_is_apple = boolean(default=False)\n\n"
+
 "[mod_replay]\n\n"
 
 "# 0 - Wait for Escape, 1 - End session\n"

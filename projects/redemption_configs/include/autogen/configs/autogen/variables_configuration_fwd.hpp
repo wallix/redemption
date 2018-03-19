@@ -167,6 +167,7 @@ namespace cfg {
         struct allow_authentification_retries;
         struct server_clipboard_encoding_type;
         struct bogus_clipboard_infinite_loop;
+        struct server_is_apple;
     };
 
     struct mod_replay {
