@@ -746,7 +746,6 @@
 "#_advanced\n"
 "h_qscale = integer(min=0, default=7)\n\n"
 
-"#_hidden\n"
 "smart_video_cropping = boolean(default=False)\n\n"
 
 "[crypto]\n\n"
