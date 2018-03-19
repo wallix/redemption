@@ -915,8 +915,7 @@ public:
         return this->nc.periodic_snapshot(now, x, y, ignore_frame_in_timeval);
     }
 
-    virtual void visibility_rects_event(Rect const & rect) {
-LOG(LOG_INFO, "WrmCaptureImpl::visibility_rects_event rect=%s", rect);
+    void visibility_rects_event(Rect const & rect) override {
         if (!rect.isempty()) {
             this->image_frame_rect = this->image_frame_rect.disjunct(rect);
         }
