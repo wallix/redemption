@@ -1419,11 +1419,7 @@ inline int get_joint_visibility_rect(
       ? InMetaSequenceTransport::EncryptionMode::Encrypted
       : InMetaSequenceTransport::EncryptionMode::NotEncrypted;
 
-    timeval  begin_record = { 0, 0 };
-    timeval  end_record   = { 0, 0 };
-    unsigned file_count   = 0;
-    uint64_t total_wrm_file_len = 0;
-    unsigned count_wrm_file = 0;
+    unsigned file_count = 0;
     try {
         InCryptoTransport buf_meta(cctx, encryption_mode, fstat);
         MwrmReader mwrm_reader(buf_meta);
@@ -2042,7 +2038,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false};
+    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false, false};
     VideoParams video_params;
     FullVideoParams full_video_params;
 
