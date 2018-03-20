@@ -499,13 +499,6 @@ private:
         bool is_initialized = false;
     } orders;
 
-    struct write_x224_dt_tpdu_fn
-    {
-        void operator()(StreamSize<256>, OutStream & x224_header, std::size_t sz) const {
-            X224::DT_TPDU_Send(x224_header, sz);
-        }
-    };
-
     /// \param fn  Fn(MCS::ChannelJoinRequest_Recv &)
     template<class Fn>
     void channel_join_request_transmission(InStream & x224_data, Fn fn) {
@@ -525,7 +518,7 @@ private:
                     MCS::PER_ENCODING
                 );
             },
-            write_x224_dt_tpdu_fn{}
+            X224::write_x224_dt_tpdu_fn{}
         );
     }
 
@@ -1207,7 +1200,7 @@ public:
                 [](StreamSize<256>, OutStream & mcs_data) {
                     MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
                 },
-                write_x224_dt_tpdu_fn{}
+                X224::write_x224_dt_tpdu_fn{}
             );
         }
     }
@@ -1647,7 +1640,7 @@ public:
                     [](StreamSize<256>, OutStream & mcs_header, std::size_t packed_size) {
                         MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, packed_size, MCS::BER_ENCODING);
                     },
-                    write_x224_dt_tpdu_fn{}
+                    X224::write_x224_dt_tpdu_fn{}
                 );
             }
             this->state = CHANNEL_ATTACH_USER;
@@ -1730,7 +1723,7 @@ public:
                     [this](StreamSize<256>, OutStream & mcs_data) {
                         MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
                     },
-                    write_x224_dt_tpdu_fn{}
+                    X224::write_x224_dt_tpdu_fn{}
                 );
                 this->state = CHANNEL_JOIN_CONFIRM_USER_ID;
                 break;
@@ -2631,7 +2624,7 @@ public:
                 );
                 (void)mcs;
             },
-            write_x224_dt_tpdu_fn{}
+            X224::write_x224_dt_tpdu_fn{}
         );
     }
 

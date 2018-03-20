@@ -340,6 +340,7 @@ struct SCSecurity {
     uint16_t userDataType;
     uint16_t length;
 
+    // TODO use enum class
     uint32_t encryptionMethod;
 
     enum {
@@ -349,6 +350,7 @@ struct SCSecurity {
         ENCRYPTION_LEVEL_HIGH              = 0x00000003,
         ENCRYPTION_LEVEL_FIPS              = 0x00000004
     };
+    // TODO use enum class
     uint32_t encryptionLevel;
     uint32_t serverRandomLen;
     uint8_t serverRandom[SEC_RANDOM_SIZE];

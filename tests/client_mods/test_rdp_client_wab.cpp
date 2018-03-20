@@ -132,8 +132,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     RED_CHECK_EQUAL(front.info.width, 1024);
     RED_CHECK_EQUAL(front.info.height, 768);
 
-    time_t now = 1450864840;
-
     execute_mod(session_reactor, mod, front, 8);
 
     RED_CHECK_SIG(front.gd.impl(), "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29");

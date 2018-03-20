@@ -125,6 +125,19 @@
 class mod_rdp : public mod_api, public rdp_api
 {
 private:
+    /// shared with RdpNegociation
+    //@{
+    CHANNELS::ChannelDefArray mod_channel_list;
+    const AuthorizationChannels authorization_channels;
+    const CHANNELS::ChannelNameId auth_channel;
+    const CHANNELS::ChannelNameId checkout_channel;
+
+    CryptContext decrypt {};
+    CryptContext encrypt {};
+
+    const bool enable_auth_channel;
+    //@}
+
     FileSystemDriveManager file_system_drive_manager;
     RdpNegociation rdp_negociation;
     Transport& trans;
@@ -366,9 +379,9 @@ protected:
 
     SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
 
-    std::string session_probe_extra_system_processes;
-    std::string session_probe_outbound_connection_monitoring_rules;
-    std::string session_probe_process_monitoring_rules;
+    const std::string session_probe_extra_system_processes;
+    const std::string session_probe_outbound_connection_monitoring_rules;
+    const std::string session_probe_process_monitoring_rules;
 
     size_t recv_bmp_update;
 
@@ -612,26 +625,6 @@ protected:
         return *this->remote_programs_virtual_channel;
     }
 
-    // TODO duplicated code in front
-    struct write_x224_dt_tpdu_fn
-    {
-        void operator()(StreamSize<7>, OutStream & x224_header, std::size_t sz) const {
-            X224::DT_TPDU_Send(x224_header, sz);
-        }
-    };
-
-    struct write_sec_send_fn
-    {
-        uint32_t flags;
-        CryptContext & encrypt;
-        int encryption_level;
-
-        void operator()(StreamSize<256>, OutStream & sec_header, uint8_t * packet_data, std::size_t packet_size) const {
-            SEC::Sec_Send sec(sec_header, packet_data, packet_size, this->flags, this->encrypt, this->encryption_level);
-            (void)sec;
-        }
-    };
-
     std::unique_ptr<SessionProbeLauncher> session_probe_launcher;
 
     uint16_t    client_execute_flags = 0;
@@ -699,7 +692,27 @@ public:
            , ReportMessageApi & report_message
            , ModRdpVariables vars
            )
-        : rdp_negociation(
+        : authorization_channels(
+            mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
+            mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
+          )
+        , auth_channel([&]{
+            switch (mod_rdp_params.auth_channel) {
+                case CHANNELS::ChannelNameId():
+                case CHANNELS::ChannelNameId("*"):
+                    return CHANNELS::ChannelNameId("wablnch");
+                default:
+                    return mod_rdp_params.auth_channel;
+            }
+          }())
+        , checkout_channel(mod_rdp_params.checkout_channel)
+        , enable_auth_channel(mod_rdp_params.alternate_shell[0]
+                           && !mod_rdp_params.ignore_auth_channel)
+        , rdp_negociation(
+            this->authorization_channels, this->mod_channel_list,
+            this->auth_channel, this->checkout_channel,
+            this->decrypt, this->encrypt,
+            this->enable_auth_channel,
             trans, session_reactor, front, info, redir_info,
             gen, timeobj, mod_rdp_params, report_message, [&]{
                 if (mod_rdp_params.enable_session_probe) {
@@ -834,6 +847,9 @@ public:
 
             mod_rdp_params.log();
         }
+
+        this->decrypt.encryptionMethod = 2; /* 128 bits */
+        this->encrypt.encryptionMethod = 2; /* 128 bits */
 
         this->beginning = timeobj.get_time().tv_sec;
 
@@ -1244,7 +1260,7 @@ protected:
     std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
         CHANNELS::ChannelNameId channel_name) const
     {
-        if (!this->rdp_negociation.authorization_channels.is_authorized(channel_name))
+        if (!this->authorization_channels.is_authorized(channel_name))
         {
             return nullptr;
         }
@@ -1271,7 +1287,7 @@ protected:
         CHANNELS::ChannelNameId channel_name)
     {
         const CHANNELS::ChannelDef* channel =
-            this->rdp_negociation.mod_channel_list.get_by_name(channel_name);
+            this->mod_channel_list.get_by_name(channel_name);
         if (!channel)
         {
             return nullptr;
@@ -1280,7 +1296,7 @@ protected:
         std::unique_ptr<ToServerSender> to_server_sender =
             std::make_unique<ToServerSender>(
                 this->trans,
-                this->rdp_negociation.encrypt,
+                this->encrypt,
                 this->rdp_negociation.encryptionLevel,
                 this->rdp_negociation.userid,
                 channel_name,
@@ -1311,11 +1327,11 @@ protected:
         clipboard_virtual_channel_params.verbose                         =
             this->verbose;
         clipboard_virtual_channel_params.clipboard_down_authorized       =
-            this->rdp_negociation.authorization_channels.cliprdr_down_is_authorized();
+            this->authorization_channels.cliprdr_down_is_authorized();
         clipboard_virtual_channel_params.clipboard_up_authorized         =
-            this->rdp_negociation.authorization_channels.cliprdr_up_is_authorized();
+            this->authorization_channels.cliprdr_up_is_authorized();
         clipboard_virtual_channel_params.clipboard_file_authorized       =
-            this->rdp_negociation.authorization_channels.cliprdr_file_is_authorized();
+            this->authorization_channels.cliprdr_file_is_authorized();
         clipboard_virtual_channel_params.dont_log_data_into_syslog       =
             this->disable_clipboard_log_syslog;
         clipboard_virtual_channel_params.dont_log_data_into_wrm          =
@@ -1350,20 +1366,20 @@ protected:
         file_system_virtual_channel_params.client_name                     =
             this->client_name;
         file_system_virtual_channel_params.file_system_read_authorized     =
-            this->rdp_negociation.authorization_channels.rdpdr_drive_read_is_authorized();
+            this->authorization_channels.rdpdr_drive_read_is_authorized();
         file_system_virtual_channel_params.file_system_write_authorized    =
-            this->rdp_negociation.authorization_channels.rdpdr_drive_write_is_authorized();
+            this->authorization_channels.rdpdr_drive_write_is_authorized();
         file_system_virtual_channel_params.parallel_port_authorized        =
-            this->rdp_negociation.authorization_channels.rdpdr_type_is_authorized(
+            this->authorization_channels.rdpdr_type_is_authorized(
                 rdpdr::RDPDR_DTYP_PARALLEL);
         file_system_virtual_channel_params.print_authorized                =
-            this->rdp_negociation.authorization_channels.rdpdr_type_is_authorized(
+            this->authorization_channels.rdpdr_type_is_authorized(
                 rdpdr::RDPDR_DTYP_PRINT);
         file_system_virtual_channel_params.serial_port_authorized          =
-            this->rdp_negociation.authorization_channels.rdpdr_type_is_authorized(
+            this->authorization_channels.rdpdr_type_is_authorized(
                 rdpdr::RDPDR_DTYP_SERIAL);
         file_system_virtual_channel_params.smart_card_authorized           =
-            this->rdp_negociation.authorization_channels.rdpdr_type_is_authorized(
+            this->authorization_channels.rdpdr_type_is_authorized(
                 rdpdr::RDPDR_DTYP_SMARTCARD);
         file_system_virtual_channel_params.random_number                   =
             ::getpid();
@@ -1701,12 +1717,12 @@ public:
                 front_channel_name);
         }
 
-        const CHANNELS::ChannelDef * mod_channel = this->rdp_negociation.mod_channel_list.get_by_name(front_channel_name);
+        const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get_by_name(front_channel_name);
         if (!mod_channel) {
             return;
         }
         if (bool(this->verbose & RDPVerbose::channels)) {
-            mod_channel->log(unsigned(mod_channel - &this->rdp_negociation.mod_channel_list[0]));
+            mod_channel->log(unsigned(mod_channel - &this->mod_channel_list[0]));
         }
 
         switch (front_channel_name) {
@@ -1759,7 +1775,7 @@ private:
     void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
                                    InStream & chunk, size_t length, uint32_t flags) {
         if (!this->enable_rdpdr_data_analysis &&
-            this->rdp_negociation.authorization_channels.rdpdr_type_all_is_authorized() &&
+            this->authorization_channels.rdpdr_type_all_is_authorized() &&
             !this->file_system_drive_manager.HasManagedDrive()) {
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -1837,7 +1853,7 @@ public:
         stream_data.out_copy_bytes(string_data, data_size);
 
         virtual_channel_pdu.send_to_server(
-            this->trans, this->rdp_negociation.encrypt, this->rdp_negociation.encryptionLevel
+            this->trans, this->encrypt, this->rdp_negociation.encryptionLevel
           , this->rdp_negociation.userid, this->auth_channel_chanid
           , stream_data.get_offset()
           , this->auth_channel_flags
@@ -1858,7 +1874,7 @@ private:
         stream_data.out_copy_bytes(string_data, data_size);
 
         virtual_channel_pdu.send_to_server(
-            this->trans, this->rdp_negociation.encrypt, this->rdp_negociation.encryptionLevel
+            this->trans, this->encrypt, this->rdp_negociation.encryptionLevel
           , this->rdp_negociation.userid, this->checkout_channel_chanid
           , stream_data.get_offset()
           , this->checkout_channel_flags
@@ -1890,7 +1906,7 @@ private:
             CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
             virtual_channel_pdu.send_to_server(
-                this->trans, this->rdp_negociation.encrypt, this->rdp_negociation.encryptionLevel
+                this->trans, this->encrypt, this->rdp_negociation.encryptionLevel
               , this->rdp_negociation.userid, channel.chanid, length, flags, chunk, chunk_size);
         }
         else {
@@ -1919,7 +1935,7 @@ private:
                 LOG(LOG_INFO, "send to server");
 
                 virtual_channel_pdu.send_to_server(
-                    this->trans, this->rdp_negociation.encrypt,
+                    this->trans, this->encrypt,
                     this->rdp_negociation.encryptionLevel, this->rdp_negociation.userid, channel.chanid, length, get_channel_control_flags(
                         flags, length, remaining_data_length, virtual_channel_data_length
                     ), virtual_channel_data, virtual_channel_data_length);
@@ -1952,7 +1968,7 @@ private:
 
                 (void)mcs;
             },
-            write_x224_dt_tpdu_fn{}
+            X224::write_x224_dt_tpdu_fn{}
         );
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             LOG(LOG_INFO, "send data request done");
@@ -1964,7 +1980,7 @@ private:
         this->send_data_request(
             channelId,
             writer_data...,
-            write_sec_send_fn{0, this->rdp_negociation.encrypt, this->rdp_negociation.encryptionLevel}
+            SEC::write_sec_send_fn{0, this->encrypt, this->rdp_negociation.encryptionLevel}
         );
     }
 
@@ -2019,7 +2035,7 @@ public:
     void connected_fast_path(gdi::GraphicApi & drawable, array_view_u8 array)
     {
         InStream stream(array);
-        FastPath::ServerUpdatePDU_Recv su(stream, this->rdp_negociation.decrypt, array.data());
+        FastPath::ServerUpdatePDU_Recv su(stream, this->decrypt, array.data());
         if (this->enable_transparent_mode) {
             //total_data_received += su.payload.size();
             //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);
@@ -2239,19 +2255,19 @@ public:
 
 
         MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
-        SEC::Sec_Recv sec(mcs.payload, this->rdp_negociation.decrypt, this->rdp_negociation.encryptionLevel);
+        SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->rdp_negociation.encryptionLevel);
         if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL){
             if (bool(this->verbose & RDPVerbose::channels)) {
                 LOG(LOG_INFO, "received channel data on mcs.chanid=%u", mcs.channelId);
             }
 
-            int num_channel_src = this->rdp_negociation.mod_channel_list.get_index_by_id(mcs.channelId);
+            int num_channel_src = this->mod_channel_list.get_index_by_id(mcs.channelId);
             if (num_channel_src == -1) {
                 LOG(LOG_ERR, "mod::rdp::MOD_RDP_CONNECTED::Unknown Channel id=%d", mcs.channelId);
                 throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
             }
 
-            const CHANNELS::ChannelDef & mod_channel = this->rdp_negociation.mod_channel_list[num_channel_src];
+            const CHANNELS::ChannelDef & mod_channel = this->mod_channel_list[num_channel_src];
             if (bool(this->verbose & RDPVerbose::channels)) {
                 mod_channel.log(num_channel_src);
             }
@@ -2261,10 +2277,10 @@ public:
             size_t chunk_size = sec.payload.in_remain();
 
             // If channel name is our virtual channel, then don't send data to front
-                 if (mod_channel.name == this->rdp_negociation.auth_channel && this->rdp_negociation.enable_auth_channel) {
+                 if (mod_channel.name == this->auth_channel && this->enable_auth_channel) {
                 this->process_auth_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
-            else if (mod_channel.name == this->rdp_negociation.checkout_channel) {
+            else if (mod_channel.name == this->checkout_channel) {
                 this->process_checkout_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::sespro) {
@@ -4963,7 +4979,7 @@ public:
             [&](StreamSize<256>, OutStream & fastpath_header, uint8_t * packet_data, std::size_t packet_size) {
                 FastPath::ClientInputEventPDU_Send out_cie(
                     fastpath_header, packet_data, packet_size, 1,
-                    this->rdp_negociation.encrypt, this->rdp_negociation.encryptionLevel, this->rdp_negociation.encryptionMethod
+                    this->encrypt, this->rdp_negociation.encryptionLevel, this->rdp_negociation.encryptionMethod
                 );
                 (void)out_cie;
             }
@@ -4996,7 +5012,7 @@ public:
                 RDP::RefreshRectPDU rrpdu(this->share_id,
                                           this->rdp_negociation.userid,
                                           this->rdp_negociation.encryptionLevel,
-                                          this->rdp_negociation.encrypt);
+                                          this->encrypt);
 
                 rrpdu.addInclusiveRect(r.x, r.y, r.x + r.cx - 1, r.y + r.cy - 1);
 
@@ -5018,7 +5034,7 @@ public:
             RDP::RefreshRectPDU rrpdu(this->share_id,
                                       this->rdp_negociation.userid,
                                       this->rdp_negociation.encryptionLevel,
-                                      this->rdp_negociation.encrypt);
+                                      this->encrypt);
             for (Rect const & rect : vr) {
                 if (!rect.isempty()){
                     rrpdu.addInclusiveRect(rect.x, rect.y, rect.x + rect.cx - 1, rect.y + rect.cy - 1);
@@ -5562,7 +5578,7 @@ private:
             [](StreamSize<256>, OutStream & mcs_data) {
                 MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
             },
-            write_x224_dt_tpdu_fn{}
+            X224::write_x224_dt_tpdu_fn{}
         );
     }
 
@@ -5703,7 +5719,7 @@ private:
     void process_rdpdr_event(const CHANNELS::ChannelDef &,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         if (!this->enable_rdpdr_data_analysis &&
-            this->rdp_negociation.authorization_channels.rdpdr_type_all_is_authorized() &&
+            this->authorization_channels.rdpdr_type_all_is_authorized() &&
             !this->file_system_drive_manager.HasManagedDrive()) {
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {

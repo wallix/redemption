@@ -46,6 +46,9 @@
 #include "utils/redirection_info.hpp"
 #include "utils/sugar/strutils.hpp"
 
+#include <functional> // std::reference_wrapper
+
+
 class RdpNegociation
 {
 public:
@@ -165,28 +168,19 @@ private:
         }
     };
 
-
-    // TODO duplicated code in front
-    struct write_x224_dt_tpdu_fn
-    {
-        void operator()(StreamSize<7>, OutStream & x224_header, std::size_t sz) const {
-            X224::DT_TPDU_Send(x224_header, sz);
-        }
-    };
-    struct write_sec_send_fn
-    {
-        uint32_t flags;
-        CryptContext & encrypt;
-        int encryption_level;
-
-        void operator()(StreamSize<256>, OutStream & sec_header, uint8_t * packet_data, std::size_t packet_size) const {
-            SEC::Sec_Send sec(sec_header, packet_data, packet_size, this->flags, this->encrypt, this->encryption_level);
-            (void)sec;
-        }
-    };
-
 public:
     State state = State::NEGO_INITIATE;
+
+private:
+    CHANNELS::ChannelDefArray& mod_channel_list;
+    const AuthorizationChannels& authorization_channels;
+    const CHANNELS::ChannelNameId auth_channel;
+    const CHANNELS::ChannelNameId checkout_channel;
+
+    CryptContext& decrypt;
+    CryptContext& encrypt;
+
+    const bool enable_auth_channel;
 
 public:
     uint16_t front_width;
@@ -196,12 +190,6 @@ private:
     FrontAPI& front;
 
 public:
-    const AuthorizationChannels authorization_channels;
-
-    CHANNELS::ChannelDefArray mod_channel_list;
-    CHANNELS::ChannelNameId auth_channel;
-    CHANNELS::ChannelNameId checkout_channel;
-
     bool use_rdp5 = true;
 
 private:
@@ -219,22 +207,12 @@ private:
     uint32_t server_public_key_len = 0;
     uint8_t client_crypt_random[512] {};
 
-public:
-    CryptContext decrypt {};
-    CryptContext encrypt {};
-
-private:
     const bool console_session;
     const uint8_t front_bpp;
     const uint32_t performanceFlags;
     const ClientTimeZone client_time_zone;
     Random& gen;
     const RDPVerbose verbose;
-
-public:
-    const bool enable_auth_channel;
-
-private:
     const bool            server_cert_store;
     const ServerCertCheck server_cert_check;
     std::unique_ptr<char[]> certif_path;
@@ -279,7 +257,11 @@ private:
 public:
     char domain[256] = {};
     char hostname[HOST_NAME_MAX + 1] = {};
+
+private:
     char password[2048] = {};
+
+public:
     char username[128] = {};
 
 private:
@@ -294,6 +276,13 @@ private:
 
 public:
     RdpNegociation(
+        std::reference_wrapper<const AuthorizationChannels> authorization_channels,
+        CHANNELS::ChannelDefArray& mod_channel_list,
+        const CHANNELS::ChannelNameId auth_channel,
+        const CHANNELS::ChannelNameId checkout_channel,
+        CryptContext& decrypt,
+        CryptContext& encrypt,
+        bool enable_auth_channel,
         Transport& trans,
         SessionReactor& session_reactor,
         FrontAPI& front,
@@ -305,13 +294,16 @@ public:
         ReportMessageApi& report_message,
         bool has_managed_drive
     )
-        : front_width(info.width - (info.width % 4))
+        : mod_channel_list(mod_channel_list)
+        , authorization_channels(authorization_channels)
+        , auth_channel(auth_channel)
+        , checkout_channel(checkout_channel)
+        , decrypt(decrypt)
+        , encrypt(encrypt)
+        , enable_auth_channel(enable_auth_channel)
+        , front_width(info.width - (info.width % 4))
         , front_height(info.height)
         , front(front)
-        , authorization_channels(
-            mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
-            mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
-          )
         , cbAutoReconnectCookie(info.cbAutoReconnectCookie)
         , keylayout(info.keylayout)
         , console_session(info.console_session)
@@ -326,7 +318,6 @@ public:
         , client_time_zone(info.client_time_zone)
         , gen(gen)
         , verbose(mod_rdp_params.verbose)
-        , enable_auth_channel(mod_rdp_params.alternate_shell[0] && !mod_rdp_params.ignore_auth_channel)
         , server_cert_store(mod_rdp_params.server_cert_store)
         , server_cert_check(mod_rdp_params.server_cert_check)
         , certif_path([](const char* device_id){
@@ -393,17 +384,6 @@ public:
                 (this->enable_session_probe ? "yes" : "no"));
         }
 
-        switch (mod_rdp_params.auth_channel) {
-            case CHANNELS::ChannelNameId():
-            case CHANNELS::ChannelNameId("*"):
-                this->auth_channel = CHANNELS::ChannelNameId("wablnch");
-                break;
-            default:
-                this->auth_channel = mod_rdp_params.auth_channel;
-        }
-
-        this->checkout_channel = mod_rdp_params.checkout_channel;
-
         strncpy(this->clientAddr, mod_rdp_params.client_address, sizeof(this->clientAddr) - 1);
 
         // TODO CGR: license loading should be done before creating protocol layers
@@ -421,9 +401,6 @@ public:
                 }
             }
         }
-
-        this->decrypt.encryptionMethod = 2; /* 128 bits */
-        this->encrypt.encryptionMethod = 2; /* 128 bits */
 
         if (::strlen(info.hostname) >= sizeof(this->hostname)) {
             LOG(LOG_WARNING, "mod_rdp: hostname too long! %zu >= %zu", ::strlen(info.hostname), sizeof(this->hostname));
@@ -627,7 +604,7 @@ private:
                             sc_core.log("Received from server");
                         }
                         if (0x0080001 == sc_core.version){ // can't use rdp5
-                            this->use_rdp5 = 0;
+                            this->use_rdp5 = false;
                         }
                     }
                     break;
@@ -914,7 +891,7 @@ private:
                 );
                 (void)mcs;
             },
-            write_x224_dt_tpdu_fn{}
+            X224::write_x224_dt_tpdu_fn{}
         );
 
         if (bool(this->verbose & RDPVerbose::connection)){
@@ -926,7 +903,7 @@ private:
                 MCS::AttachUserRequest_Send mcs(mcs_data, MCS::PER_ENCODING);
                 (void)mcs;
             },
-            write_x224_dt_tpdu_fn{}
+            X224::write_x224_dt_tpdu_fn{}
         );
 
         if (bool(this->verbose & RDPVerbose::connection)){
@@ -968,7 +945,7 @@ private:
                 Rect primary_monitor_rect =
                     this->cs_monitor.get_primary_monitor_rect();
 
-                cs_core.version = this->use_rdp5?0x00080004:0x00080001;
+                cs_core.version = this->use_rdp5 ? 0x00080004 : 0x00080001;
                 const bool single_monitor =
                     (!this->allow_using_multiple_monitors ||
                      (this->cs_monitor.monitorCount < 2));
@@ -1219,7 +1196,7 @@ private:
                 MCS::CONNECT_INITIAL_Send mcs(mcs_header, packet_size, MCS::BER_ENCODING);
                 (void)mcs;
             },
-            write_x224_dt_tpdu_fn{}
+            X224::write_x224_dt_tpdu_fn{}
         );
     }
 
@@ -1258,7 +1235,7 @@ private:
                     );
                     (void)mcs;
                 },
-                write_x224_dt_tpdu_fn{}
+                X224::write_x224_dt_tpdu_fn{}
             );
         }
 
@@ -1510,7 +1487,7 @@ private:
                             rc4.crypt(LIC::LICENSE_HWID_SIZE, hwid, hwid);
 
                             LIC::ClientLicenseInfo_Send(
-                                lic_data, this->use_rdp5?3:2,
+                                lic_data, this->use_rdp5 ? 3 : 2,
                                 this->lic_layer_license_size,
                                 this->lic_layer_license_data.get(),
                                 hwid, signature
@@ -1518,11 +1495,11 @@ private:
                         }
                         else {
                             LIC::NewLicenseRequest_Send(
-                                lic_data, this->use_rdp5?3:2, username, hostname
+                                lic_data, this->use_rdp5 ? 3 : 2, username, hostname
                             );
                         }
                     },
-                    write_sec_send_fn{SEC::SEC_LICENSE_PKT, this->encrypt, 0}
+                    SEC::write_sec_send_fn{SEC::SEC_LICENSE_PKT, this->encrypt, 0}
                 );
                 break;
             case LIC::PLATFORM_CHALLENGE:
@@ -1575,10 +1552,10 @@ private:
                         GCC::MCS_GLOBAL_CHANNEL,
                         [&, this](StreamSize<65535 - 1024>, OutStream & lic_data) {
                             LIC::ClientPlatformChallengeResponse_Send(
-                                lic_data, this->use_rdp5?3:2, out_token, crypt_hwid, out_sig
+                                lic_data, this->use_rdp5 ? 3 : 2, out_token, crypt_hwid, out_sig
                             );
                         },
-                        write_sec_send_fn{SEC::SEC_LICENSE_PKT, this->encrypt, 0}
+                        SEC::write_sec_send_fn{SEC::SEC_LICENSE_PKT, this->encrypt, 0}
                     );
                 }
                 break;
@@ -1664,7 +1641,7 @@ private:
 
                 (void)mcs;
             },
-            write_x224_dt_tpdu_fn{}
+            X224::write_x224_dt_tpdu_fn{}
         );
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             LOG(LOG_INFO, "send data request done");
@@ -1766,7 +1743,7 @@ private:
                 infoPacket.emit(stream);
 
             },
-            write_sec_send_fn{SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel}
+            SEC::write_sec_send_fn{SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel}
         );
 
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
