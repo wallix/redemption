@@ -404,7 +404,8 @@ public:
         auto & AvPairsStream = this->CHALLENGE_MESSAGE.TargetInfo.buffer;
         // BStream AvPairsStream;
         // this->CHALLENGE_MESSAGE.AvPairList.emit(AvPairsStream);
-        size_t temp_size = 1 + 1 + 6 + 8 + 8 + 4 + AvPairsStream.size() + 4;
+        // size_t temp_size = 1 + 1 + 6 + 8 + 8 + 4 + AvPairsStream.size() + 4;
+        size_t temp_size = 1 + 1 + 6 + 8 + 8 + 4 + AvPairsStream.size();
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Compute response: AvPairs size %zu", AvPairsStream.size());
             LOG(LOG_INFO, "NTLMContext Compute response: temp size %zu", temp_size);
