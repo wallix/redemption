@@ -176,7 +176,7 @@ struct TSRequest final {
 
         /* [0] version */
         BER::write_contextual_tag(stream, 0, BER::sizeof_integer(this->version), true);
-        BER::write_integer(stream, this->version);
+        BER::write_integer(stream, 3);
 
         /* [1] negoTokens (NegoData) */
         if (nego_tokens_length > 0) {
@@ -283,6 +283,12 @@ struct TSRequest final {
             if (!BER::read_integer(stream, this->error_code)) {
                 return -1;
             }
+            LOG(LOG_INFO, "Credssp TSCredentials::recv() ErrorCode = %x",
+                this->error_code);
+            LOG(LOG_INFO, "Facility = %x, Code = %x",
+                (this->error_code >> 16) & 0x7FF,
+                (this->error_code & 0xFFFF)
+                );
         }
         return 0;
     }
