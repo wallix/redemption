@@ -127,9 +127,9 @@ namespace redemption_unit_test__
 struct GeneratorTransport : Transport
 {
     GeneratorTransport(const void * data, size_t len)
-    : len(len)
+    : data(new(std::nothrow) uint8_t[len])
+    , len(len)
     {
-        this->data.reset(new(std::nothrow) uint8_t[len]);
         if (!this->data) {
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
@@ -198,8 +198,8 @@ private:
         LOG(LOG_INFO, "Sent dumped on target (-1) %zu bytes", len);
     }
 
-    std::unique_ptr<uint8_t[]> data;
-    std::size_t len = 0;
+    const std::unique_ptr<uint8_t[]> data;
+    const std::size_t len = 0;
     std::size_t current = 0;
     bool remaining_is_error = true;
 };

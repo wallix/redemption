@@ -76,7 +76,7 @@ struct SessionReactor
      *    |     |  SharedPtrPrivate<T>  |  SharedPtrBase<T> p |   |
      *    |     +-----------------------+---------------------+   |
      *    |                                        ||             |
-     *    +-------------------------------------------------------+
+     *    +----------------------------------------||-------------+
      *                                             ||
      *                                            move
      *                                             ||
@@ -318,9 +318,7 @@ struct SessionReactor
                 failed = false;
             }
             c.attach(data);
-#ifndef NDEBUG
             data->shared_ptr = nullptr;
-#endif
             data->use_count = Use + 1;
             data->deleter = SharedPtrPrivate::make_deleter(nullptr);
             return SharedPtrPrivate(data);
