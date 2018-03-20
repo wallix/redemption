@@ -4223,8 +4223,8 @@ protected:
     void draw_impl(RDPScrBlt const & cmd, Rect clip) {
         Rect drect = clip.intersect(this->client_info.width, this->client_info.height).intersect(clip_from_cmd(cmd));
         if (!drect.isempty()) {
-            const signed int deltax = cmd.srcx - cmd.rect.x;
-            const signed int deltay = cmd.srcy - cmd.rect.y;
+            const signed int deltax = static_cast<int16_t>(cmd.srcx) - cmd.rect.x;
+            const signed int deltay = static_cast<int16_t>(cmd.srcy) - cmd.rect.y;
 
             int srcx = drect.x + deltax;
             int srcy = drect.y + deltay;
