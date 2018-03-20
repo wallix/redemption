@@ -728,6 +728,8 @@ class PngCaptureRT : public PngCapture
 
     bool enable_rt_display;
 
+    bool enable_smart_video_cropping;
+
 public:
     PngCaptureRT(
         const CaptureParams & capture_params, const PngParams & png_params,
@@ -736,6 +738,7 @@ public:
     , num_start(this->trans.get_seqno())
     , png_limit(png_params.png_limit)
     , enable_rt_display(png_params.rt_display)
+    , enable_smart_video_cropping(png_params.smart_video_cropping)
     {
     }
 
@@ -773,10 +776,9 @@ public:
     }
 
     void visibility_rects_event(Rect const & rect_) override {
-        if (!rect_.isempty()) {
-            Rect rect = rect_.expand(16).intersect(
+        if (this->enable_smart_video_cropping && !rect_.isempty()) {
+            Rect rect = rect_.intersect(
                 {0, 0, this->drawable.width(), this->drawable.height()});
-
 
             this->image_frame_api.reset(rect.x, rect.y, rect.cx, rect.cy);
         }
@@ -1364,52 +1366,9 @@ Rect Capture::Graphic::get_joint_visibility_rect() const
 
 void Capture::Graphic::draw_impl(const RDP::RAIL::NewOrExistingWindow & cmd)
 {
-LOG(LOG_INFO, "> > > > > Capture::Graphic::draw_impl(NewOrExistingWindow)");
     for (gdi::GraphicApi & gd : this->gds) {
         gd.draw(cmd);
     }
-
-/*
-    SubRegion sub_region;
-
-    std::for_each(
-            this->windows.cbegin(),
-            this->windows.cend(),
-            [&sub_region, this](const WindowRecord& window) {
-                std::for_each(
-                        this->window_visibility_rects.cbegin(),
-                        this->window_visibility_rects.cend(),
-                        [&sub_region, window](
-                                const WindowVisibilityRectRecord& window_visibility_rect) {
-                            if (window.window_id !=
-                                window_visibility_rect.window_id) {
-                                return;
-                            }
-
-                            assert(window.fields_present_flags &
-                                RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET);
-
-                            if (!(window.style & WS_ICONIC) &&
-                                ((window.style & WS_VISIBLE) ||
-                                 ((window.show_state != SW_FORCEMINIMIZE) &&
-                                  (window.show_state != SW_HIDE) &&
-                                  (window.show_state != SW_MINIMIZE)))) {
-LOG(LOG_INFO, "> > > > > add_rect=%s",
-        window_visibility_rect.rect.offset(
-            window.visible_offset_x,
-            window.visible_offset_y
-    ));
-                                    sub_region.add_rect(
-                                        window_visibility_rect.rect.offset(
-                                                window.visible_offset_x,
-                                                window.visible_offset_y
-                                            ));
-                            }
-                        }
-                    );
-            }
-        );
-*/
 
     uint32_t const fields_present_flags = cmd.header.FieldsPresentFlags();
     uint32_t const window_id            = cmd.header.WindowId();
@@ -1474,56 +1433,6 @@ LOG(LOG_INFO, "> > > > > add_rect=%s",
         }
     }
 
-/*
-    std::for_each(
-            this->windows.cbegin(),
-            this->windows.cend(),
-            [&sub_region, this](const WindowRecord& window) {
-                std::for_each(
-                        this->window_visibility_rects.cbegin(),
-                        this->window_visibility_rects.cend(),
-                        [&sub_region, window](
-                                const WindowVisibilityRectRecord& window_visibility_rect) {
-                            if (window.window_id !=
-                                window_visibility_rect.window_id) {
-                                return;
-                            }
-
-                            assert(window.fields_present_flags &
-                                RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET);
-
-                            if (!(window.style & WS_ICONIC) &&
-                                ((window.style & WS_VISIBLE) ||
-                                 ((window.show_state != SW_FORCEMINIMIZE) &&
-                                  (window.show_state != SW_HIDE) &&
-                                  (window.show_state != SW_MINIMIZE)))) {
-LOG(LOG_INFO, "> > > > > subtract_rect=%s",
-        window_visibility_rect.rect.offset(
-            window.visible_offset_x,
-            window.visible_offset_y
-    ));
-                                    sub_region.subtract_rect(
-                                        window_visibility_rect.rect.offset(
-                                                window.visible_offset_x,
-                                                window.visible_offset_y
-                                            ));
-                            }
-                        }
-                    );
-            }
-        );
-
-    auto const depth = gdi::ColorCtx::depth24();
-    for (Rect const & rect : sub_region.rects) {
-LOG(LOG_INFO, "> > > > > fill_rect=%s", rect);
-        RDPOpaqueRect order(rect, encode_color24()(RED));
-
-        for (gdi::GraphicApi & gd : this->gds) {
-            gd.draw(order, rect, depth);
-        }
-    }
-*/
-
     Rect joint_visibility_rect = this->get_joint_visibility_rect();
 
     for (gdi::CaptureApi & cap : this->caps) {
@@ -1536,42 +1445,6 @@ void Capture::Graphic::draw_impl(const RDP::RAIL::DeletedWindow & cmd)
     for (gdi::GraphicApi & gd : this->gds) {
         gd.draw(cmd);
     }
-
-/*
-    SubRegion sub_region;
-
-    std::for_each(
-            this->windows.cbegin(),
-            this->windows.cend(),
-            [&sub_region, this](const WindowRecord& window) {
-                std::for_each(
-                        this->window_visibility_rects.cbegin(),
-                        this->window_visibility_rects.cend(),
-                        [&sub_region, window](
-                                const WindowVisibilityRectRecord& window_visibility_rect) {
-                            if (window.window_id !=
-                                window_visibility_rect.window_id) {
-                                return;
-                            }
-
-                            assert(window.fields_present_flags &
-                                RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET);
-                            if (!(window.style & WS_ICONIC) &&
-                                ((window.style & WS_VISIBLE) ||
-                                 ((window.show_state != SW_FORCEMINIMIZE) &&
-                                  (window.show_state != SW_HIDE) &&
-                                  (window.show_state != SW_MINIMIZE)))) {
-                                    sub_region.add_rect(
-                                        window_visibility_rect.rect.offset(
-                                                window.visible_offset_x,
-                                                window.visible_offset_y
-                                            ));
-                            }
-                        }
-                    );
-            }
-        );
-*/
 
     uint32_t const window_id = cmd.header.WindowId();
 
@@ -1591,50 +1464,6 @@ void Capture::Graphic::draw_impl(const RDP::RAIL::DeletedWindow & cmd)
                     }),
             this->window_visibility_rects.end()
         );
-
-/*
-    std::for_each(
-            this->windows.cbegin(),
-            this->windows.cend(),
-            [&sub_region, this](const WindowRecord& window) {
-                std::for_each(
-                        this->window_visibility_rects.cbegin(),
-                        this->window_visibility_rects.cend(),
-                        [&sub_region, window](
-                                const WindowVisibilityRectRecord& window_visibility_rect) {
-                            if (window.window_id !=
-                                window_visibility_rect.window_id) {
-                                return;
-                            }
-
-                            assert(window.fields_present_flags &
-                                RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET);
-
-                            if (!(window.style & WS_ICONIC) &&
-                                ((window.style & WS_VISIBLE) ||
-                                 ((window.show_state != SW_FORCEMINIMIZE) &&
-                                  (window.show_state != SW_HIDE) &&
-                                  (window.show_state != SW_MINIMIZE)))) {
-                                    sub_region.subtract_rect(
-                                        window_visibility_rect.rect.offset(
-                                                window.visible_offset_x,
-                                                window.visible_offset_y
-                                            ));
-                            }
-                        }
-                    );
-            }
-        );
-
-    auto const depth = gdi::ColorCtx::depth24();
-    for (Rect const & rect : sub_region.rects) {
-        RDPOpaqueRect order(rect, encode_color24()(BLACK));
-
-        for (gdi::GraphicApi & gd : this->gds) {
-            gd.draw(order, rect, depth);
-        }
-    }
-*/
 
     Rect joint_visibility_rect = this->get_joint_visibility_rect();
 

@@ -979,7 +979,8 @@ public:
             ini.get<cfg::video::png_limit>(),
             true,
             this->client_info.remote_program,
-            ini.get<cfg::video::rt_display>()
+            ini.get<cfg::video::rt_display>(),
+            ini.get<cfg::video::smart_video_cropping>()
         };
         bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
 
