@@ -404,7 +404,7 @@ public:
         auto & AvPairsStream = this->CHALLENGE_MESSAGE.TargetInfo.buffer;
         // BStream AvPairsStream;
         // this->CHALLENGE_MESSAGE.AvPairList.emit(AvPairsStream);
-        size_t temp_size = 1 + 1 + 6 + 8 + 8 + 4 + AvPairsStream.size() + 4;
+        size_t temp_size = 1 + 1 + 6 + 8 + 8 + 4 + AvPairsStream.size();
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Compute response: AvPairs size %zu", AvPairsStream.size());
             LOG(LOG_INFO, "NTLMContext Compute response: temp size %zu", temp_size);
@@ -821,7 +821,7 @@ public:
     }
 
     void ntlm_set_negotiate_flags_auth() {
-        uint32_t & negoFlag = this->NegotiateFlags;
+        uint32_t negoFlag = 0;
         if (this->NTLMv2) {
             negoFlag |= NTLMSSP_NEGOTIATE_56;
             if (this->SendVersionInfo) {
@@ -860,7 +860,6 @@ public:
             this->version.ignore_version_info();
         }
 
-        this->NegotiateFlags = negoFlag;
         this->AUTHENTICATE_MESSAGE.negoFlags.flags = negoFlag;
     }
 
@@ -1210,4 +1209,3 @@ public:
         return status;
     }
 };
-

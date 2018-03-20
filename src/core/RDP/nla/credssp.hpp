@@ -167,7 +167,7 @@ struct TSRequest final {
 
         /* [0] version */
         BER::write_contextual_tag(stream, 0, BER::sizeof_integer(this->version), true);
-        BER::write_integer(stream, this->version);
+        BER::write_integer(stream, 2);
 
         /* [1] negoTokens (NegoData) */
         if (nego_tokens_length > 0) {
@@ -214,7 +214,7 @@ struct TSRequest final {
 
     int recv(InStream & stream) {
         int length;
-        
+
         /* TSRequest */
         if(!BER::read_sequence_tag(stream, length) ||
            !BER::read_contextual_tag(stream, 0, length, true) ||
