@@ -90,9 +90,7 @@ public:
 //       , trans_cache(nullptr)
       , qtRDPKeymap()
 
-    {
-        this->form = new Form_Qt(this);
-    }
+    {}
 
 
 
@@ -105,6 +103,7 @@ public:
         this->drawn_client = client;
         this->qtRDPKeymap._verbose = (this->drawn_client->verbose == RDPVerbose::input) ? 1 : 0;
         this->qtRDPKeymap.setKeyboardLayout(this->drawn_client->info.keylayout);
+        this->form = new Form_Qt(this, this->client);
     }
 
     virtual void show_screen() override {
@@ -145,7 +144,8 @@ public:
     }
 
     virtual void open_options() override {
-        new DialogOptions_Qt(this->drawn_client, this->form);
+//         new DialogOptions_Qt(this->drawn_client, this->form);
+        this->form->options();
     }
 
     void dropScreen() override {
