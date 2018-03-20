@@ -4221,18 +4221,29 @@ protected:
     }
 
     void draw_impl(RDPScrBlt const & cmd, Rect clip) {
-        Rect const drect = clip.intersect(this->client_info.width, this->client_info.height).intersect(clip_from_cmd(cmd));
+        Rect drect = clip.intersect(this->client_info.width, this->client_info.height).intersect(clip_from_cmd(cmd));
         if (!drect.isempty()) {
             const signed int deltax = cmd.srcx - cmd.rect.x;
             const signed int deltay = cmd.srcy - cmd.rect.y;
 
-            Rect const srect = Rect(drect.x + deltax, drect.y + deltay, drect.cx, drect.cy).intersect(this->client_info.width, this->client_info.height);
-            if (!srect.isempty())
-            {
-                const Rect adjusted_drect(drect.x, drect.y, srect.cx, srect.cy);
+            int srcx = drect.x + deltax;
+            int srcy = drect.y + deltay;
 
-                this->graphics_update->draw(RDPScrBlt(adjusted_drect, cmd.rop, srect.x, srect.y), clip);
+            if (srcx < 0) {
+                drect.x  -= srcx;
+                drect.cx += srcx;
+
+                srcx = 0;
             }
+            if (srcy < 0) {
+                drect.y  -= srcy;
+                drect.cy += srcy;
+
+                srcy = 0;
+            }
+
+RDPScrBlt(drect, cmd.rop, srcx, srcy).log(LOG_INFO, clip);
+            this->graphics_update->draw(RDPScrBlt(drect, cmd.rop, srcx, srcy), clip);
         }
     }
 
@@ -4293,7 +4304,6 @@ protected:
     Rect rail_window_rect;
 
     void draw_impl(RDP::RAIL::NewOrExistingWindow const & cmd) {
-LOG(LOG_INFO, "> > > > > draw_impl(NewOrExistingWindow)");
         this->graphics_update->draw(cmd);
 
         if (!this->capture &&
@@ -4302,22 +4312,16 @@ LOG(LOG_INFO, "> > > > > draw_impl(NewOrExistingWindow)");
             this->rail_window_rect = static_cast<Rect>(cmd.VisibilityRects(0)).offset(
                     cmd.VisibleOffsetX(), cmd.VisibleOffsetY()
                 );
-LOG(LOG_INFO, "> > > > > (1) rail_window_rect=%s", rail_window_rect);
         }
         else {
             this->rail_window_rect.empty();
-
-LOG(LOG_INFO, "> > > > > (2) rail_window_rect=%s", rail_window_rect);
         }
     }
 
     void draw_impl(RDP::RAIL::DeletedWindow const & cmd) {
-LOG(LOG_INFO, "> > > > > draw_impl(DeletedWindow)");
         this->graphics_update->draw(cmd);
 
         this->rail_window_rect.empty();
-
-LOG(LOG_INFO, "> > > > > (3) rail_window_rect=%s", rail_window_rect);
     }
 
 public:
