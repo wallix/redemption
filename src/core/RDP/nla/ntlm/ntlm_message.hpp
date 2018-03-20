@@ -22,6 +22,7 @@
 #pragma once
 
 #include "utils/stream.hpp"
+#include "utils/hexdump.hpp"
 
 // [MS-NLMP]
 
@@ -590,6 +591,12 @@ struct NtlmField {
 
     ~NtlmField() {}
 
+    void log(const char * name) {
+        LOG(LOG_DEBUG, "Field %s, len: %u, maxlen: %u, offset: %u",
+            name, this->len, this->maxLen, this->bufferOffset);
+        hexdump_d(this->buffer.get_data(), this->len);
+    }
+
     unsigned int emit(OutStream & stream, unsigned int currentOffset) /* TODO const*/ {
         this->len = this->buffer.size();
         this->maxLen = this->len;
@@ -708,5 +715,3 @@ struct NTLMSSPMessageSignatureESS {
     uint8_t  CheckSum[8];
     uint32_t SeqNum;
 };
-
-

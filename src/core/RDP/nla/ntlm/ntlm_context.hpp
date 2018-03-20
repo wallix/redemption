@@ -1167,7 +1167,9 @@ public:
         this->AUTHENTICATE_MESSAGE.emit(out_stream);
         output_buffer->Buffer.init(out_stream.get_offset());
         output_buffer->Buffer.copy(out_stream.get_data(), out_stream.get_offset());
-
+        if (this->verbose) {
+            this->AUTHENTICATE_MESSAGE.log();
+        }
         return SEC_I_COMPLETE_NEEDED;
     }
     SEC_STATUS read_authenticate(PSecBuffer input_buffer) {
