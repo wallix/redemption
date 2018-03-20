@@ -4220,6 +4220,22 @@ protected:
         }
     }
 
+    void draw_impl(RDPScrBlt const & cmd, Rect clip) {
+        Rect const drect = clip.intersect(this->client_info.width, this->client_info.height).intersect(clip_from_cmd(cmd));
+        if (!drect.isempty()) {
+            const signed int deltax = cmd.srcx - cmd.rect.x;
+            const signed int deltay = cmd.srcy - cmd.rect.y;
+
+            Rect const srect = Rect(drect.x + deltax, drect.y + deltay, drect.cx, drect.cy).intersect(this->client_info.width, this->client_info.height);
+            if (!srect.isempty())
+            {
+                const Rect adjusted_drect(drect.x, drect.y, srect.cx, srect.cy);
+
+                this->graphics_update->draw(RDPScrBlt(adjusted_drect, cmd.rop, srect.x, srect.y), clip);
+            }
+        }
+    }
+
     void draw_impl(RDPMemBlt const& cmd, Rect clip, Bitmap const & bitmap) {
         if (this->client_info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX]) {
             this->priv_draw_memblt(cmd, clip, bitmap);

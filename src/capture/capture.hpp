@@ -188,7 +188,7 @@ public:
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
     void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
 
-    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { LOG(LOG_INFO, "> > > > > Capture::NewOrExistingWindow"); this->draw_impl(cmd); }
+    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
     void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
     void draw(const RDP::RAIL::CachedIcon                     & cmd) override { this->draw_impl(cmd); }
     void draw(const RDP::RAIL::DeletedWindow                  & cmd) override { this->draw_impl(cmd); }

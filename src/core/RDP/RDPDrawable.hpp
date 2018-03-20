@@ -220,12 +220,7 @@ public:
         // adding delta move dest to source
         const signed int deltax = cmd.srcx - cmd.rect.x;
         const signed int deltay = cmd.srcy - cmd.rect.y;
-
-        const Rect srect = Rect(drect.x + deltax, drect.y + deltay, drect.cx, drect.cy).intersect(this->drawable.width(), this->drawable.height());
-
-        const Rect adjusted_drect(drect.x, drect.y, srect.cx, srect.cy);
-
-        this->drawable.scrblt(adjusted_drect.x + deltax, adjusted_drect.y + deltay, adjusted_drect, cmd.rop);
+        this->drawable.scrblt(drect.x + deltax, drect.y + deltay, drect, cmd.rop);
         this->last_update_index++;
     }
 
