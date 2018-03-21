@@ -1043,7 +1043,7 @@ public:
                                    , capture_kbd, kbd_log_params
                                    , video_params
                                    , nullptr
-                                   , ((this->client_info.remote_program && ini.get<cfg::video::smart_video_cropping>()) ?
+                                   , ((this->client_info.remote_program && (ini.get<cfg::video::smart_video_cropping>() != SmartVideoCropping::disable)) ?
                                       Rect(0, 0, 640, 480) : Rect())
                                    );
 
@@ -1057,7 +1057,7 @@ public:
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
-        if (this->client_info.remote_program && ini.get<cfg::video::smart_video_cropping>() &&
+        if (this->client_info.remote_program && (ini.get<cfg::video::smart_video_cropping>() != SmartVideoCropping::disable) &&
             !this->rail_window_rect.isempty()) {
             this->capture->visibility_rects_event(this->rail_window_rect);
         }
