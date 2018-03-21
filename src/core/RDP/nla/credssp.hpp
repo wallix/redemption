@@ -136,6 +136,7 @@ struct TSRequest final {
         : negoTokens(0)
         , authInfo(0)
         , pubKeyAuth(0)
+        , error_code(0)
     {
         this->recv(stream);
         // LOG(LOG_INFO, "TSRequest recv %d", res);
@@ -144,8 +145,8 @@ struct TSRequest final {
     int ber_sizeof(int length) {
         length += BER::sizeof_integer(this->version);
         length += BER::sizeof_contextual_tag(BER::sizeof_integer(this->version));
-        if (this->version >=3 && this->error_code != 0) {
-            length = BER::sizeof_integer(this->error_code);
+        if (this->version >= 3 && this->error_code != 0) {
+            length += BER::sizeof_integer(this->error_code);
             length += BER::sizeof_contextual_tag(BER::sizeof_integer(this->error_code));
         }
         return length;
