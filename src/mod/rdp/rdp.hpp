@@ -284,7 +284,9 @@ protected:
     int encryptionLevel;
     int encryptionMethod;
 
-    const int key_flags;
+    const int  key_flags;
+          int  last_key_flags_sent = 0;
+          bool first_scancode = true;
 
     uint32_t     server_public_key_len;
     uint8_t      client_crypt_random[512];
@@ -918,6 +920,7 @@ public:
         , userid(0)
         , encryptionLevel(0)
         , key_flags(mod_rdp_params.key_flags)
+        , last_key_flags_sent(key_flags)
         , server_public_key_len(0)
         , connection_finalization_state(EARLY)
         , state(MOD_RDP_NEGO_INITIATE)
@@ -2053,6 +2056,18 @@ public:
     void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 *) override {
         if ((UP_AND_RUNNING == this->connection_finalization_state) &&
             !this->input_event_disabled) {
+            if (this->first_scancode && !(device_flags & 0x8000) &&
+                (!this->enable_session_probe ||
+                 !this->session_probe_launcher->is_keyboard_sequences_started() ||
+                 this->get_session_probe_virtual_channel().has_been_launched())
+               ) {
+                LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: First Keyboard Event. Resend the Synchronize Event to server.");
+
+                this->first_scancode = false;
+
+                this->send_input(time, RDP_INPUT_SYNCHRONIZE, 0, this->last_key_flags_sent, 0);
+            }
+
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
 
             if (this->remote_programs_session_manager) {
@@ -6692,6 +6707,10 @@ public:
         }
         else {
             this->send_input_fastpath(time, message_type, device_flags, param1, param2);
+        }
+
+        if (message_type == RDP_INPUT_SYNCHRONIZE) {
+            this->last_key_flags_sent = param1;
         }
     }
 

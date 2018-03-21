@@ -1432,8 +1432,9 @@ class Sesman():
                 physical_proto_info = self.engine.get_target_protocols(physical_target)
                 application = self.engine.get_application(selected_target)
                 conn_opts = self.engine.get_target_conn_options(physical_target)
-                if physical_proto_info.protocol == u'RDP':
-                    kv[u'proxy_opt'] = ",".join(physical_proto_info.subprotocols)
+                if physical_proto_info.protocol == u'RDP' or physical_proto_info.protocol == u'VNC':
+                    if physical_proto_info.protocol == u'RDP':
+                        kv[u'proxy_opt'] = ",".join(physical_proto_info.subprotocols)
 
                     connectionpolicy_kv = self.fetch_connectionpolicy(conn_opts)
                     kv.update({k:v for (k, v) in connectionpolicy_kv.items() if v is not None})
@@ -1979,10 +1980,13 @@ class Sesman():
                 u'server_cert_success_message' : 'server_cert_success_message',
                 u'server_cert_failure_message' : 'server_cert_failure_message',
                 u'server_cert_error_message' : 'server_cert_error_message'
-            },
+                },
             'session': {
                 u'inactivity_timeout': 'inactivity_timeout'
-            }
+                },
+            'vnc': {
+                u'server_is_apple': 'server_is_apple'
+                }
         }
 
         connectionpolicy_kv = {}

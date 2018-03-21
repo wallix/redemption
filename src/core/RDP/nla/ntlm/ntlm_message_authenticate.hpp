@@ -333,6 +333,19 @@ struct NTLMAuthenticateMessage {
         memset(this->MIC, 0x00, 16);
     }
 
+    void log() {
+        this->LmChallengeResponse.log("LmChallengeResponse");
+        this->NtChallengeResponse.log("NtChallengeResponse");
+        this->DomainName.log("DomainName");
+        this->UserName.log("UserName");
+        this->Workstation.log("Workstation");
+        this->EncryptedRandomSessionKey.log("EncryptedRandomSessionKey");
+        this->negoFlags.log();
+        this->version.log();
+        LOG(LOG_DEBUG, "MIC");
+        hexdump_d(this->MIC, 16);
+    }
+
     void emit(OutStream & stream) /* TODO const*/ {
         uint32_t currentOffset = this->PayloadOffset;
         if (this->version.ignore_version) {
@@ -659,4 +672,3 @@ struct NTLMv2_Response {
     }
 
 };
-

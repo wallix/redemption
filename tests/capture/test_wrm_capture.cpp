@@ -128,6 +128,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
 
         WrmParams wrm_params(
             24,
+            false,
             cctx,
             rnd,
             fstat,
@@ -244,6 +245,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 
         WrmParams wrm_params(
             24,
+            false,
             cctx,
             rnd,
             fstat,
@@ -603,6 +605,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
 
         WrmParams wrm_params(
             24,
+            false,
             cctx,
             rnd,
             fstat,

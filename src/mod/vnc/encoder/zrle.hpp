@@ -68,8 +68,6 @@ namespace VNC {
                 }
             }
 
-            virtual ~Zrle(){}
-
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
             EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override

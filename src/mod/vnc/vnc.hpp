@@ -267,6 +267,9 @@ public:
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "Creation of new mod 'VNC'");
         }
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+            LOG(LOG_INFO, "server_is_apple=%s", (server_is_apple ? "yes" : "no"));
+        }
 
         // Clear client screen
         this->invoke_asynchronous_graphic_task(AsynchronousGraphicTask::clear_screen);

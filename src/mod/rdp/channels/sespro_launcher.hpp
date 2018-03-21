@@ -64,6 +64,8 @@ public:
 
     virtual void stop(bool bLaunchSuccessful, error_type& id_ref) = 0;
 
+    virtual bool is_keyboard_sequences_started() const = 0;
+
     virtual bool is_stopped() const = 0;
 };
 

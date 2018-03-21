@@ -175,6 +175,10 @@ private:
     bool ignore_frame_in_timeval;
 
 public:
+    bool remote_app;
+
+    Rect image_frame_rect;
+
     struct Statistics
     {
         struct Order
@@ -215,6 +219,9 @@ public:
 
         uint64_t total_read_len;
         uint64_t internal_order_read_len;
+
+        Order NewOrExistingWindow;
+        Order DeletedWindow;
     } statistics;
 
     bool break_privplay_client;

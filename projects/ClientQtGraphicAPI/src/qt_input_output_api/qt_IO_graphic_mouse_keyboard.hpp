@@ -90,9 +90,7 @@ public:
 //       , trans_cache(nullptr)
       , qtRDPKeymap()
 
-    {
-        this->form = new Form_Qt(this);
-    }
+    {}
 
 
 
@@ -105,12 +103,15 @@ public:
         this->drawn_client = client;
         this->qtRDPKeymap._verbose = (this->drawn_client->verbose == RDPVerbose::input) ? 1 : 0;
         this->qtRDPKeymap.setKeyboardLayout(this->drawn_client->info.keylayout);
+        this->form = new Form_Qt(this, this->client);
     }
 
     virtual void show_screen() override {
-         this->form->hide();
-        if (this->screen) {
-            this->screen->show();
+        if (this->form) {
+            this->form->hide();
+            if (this->screen) {
+                this->screen->show();
+            }
         }
     }
 
@@ -145,7 +146,10 @@ public:
     }
 
     virtual void open_options() override {
-        new DialogOptions_Qt(this->drawn_client, this->form);
+//         new DialogOptions_Qt(this->drawn_client, this->form);
+        if (this->form) {
+            this->form->options();
+        }
     }
 
     void dropScreen() override {
@@ -164,20 +168,26 @@ public:
         LOG(LOG_INFO, "%s", errorMsg.c_str());
         std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
 
-        this->form->set_ErrorMsg(labelErrorMsg);
+        if (this->form) {
+            this->form->set_ErrorMsg(labelErrorMsg);
+        }
     }
 
     virtual void set_ErrorMsg(std::string const & error_msg) override {
-        this->form->set_ErrorMsg(error_msg);
+        if (this->form) {
+            this->form->set_ErrorMsg(error_msg);
+        }
     }
 
     virtual void init_form() override {
-        this->form->init_form();
-        this->form->set_IPField(this->client->target_IP);
-        this->form->set_portField(this->client->port);
-        this->form->set_PWDField(this->client->user_password);
-        this->form->set_userNameField(this->client->user_name);
-        this->form->show();
+        if (this->form) {
+            this->form->init_form();
+            this->form->set_IPField(this->client->target_IP);
+            this->form->set_portField(this->client->port);
+            this->form->set_PWDField(this->client->user_password);
+            this->form->set_userNameField(this->client->user_name);
+            this->form->show();
+        }
     }
 
 
@@ -192,9 +202,11 @@ public:
     }
 
     virtual void show_screen(uint32_t id) override {
-        this->form->hide();
-        if (this->remote_app_screen_map[id]) {
-            this->remote_app_screen_map[id]->show();
+        if (this->form) {
+            this->form->hide();
+            if (this->remote_app_screen_map[id]) {
+                this->remote_app_screen_map[id]->show();
+            }
         }
     }
 
@@ -257,7 +269,9 @@ public:
         }
         this->remote_app_screen_map.clear();
 
-        this->form->show();
+        if (this->form) {
+            this->form->show();
+        }
     }
 
 
@@ -1426,16 +1440,18 @@ private:
     }
 
     void connexionReleased() override {
-        this->form->setCursor(Qt::WaitCursor);
-        this->client->user_name     = this->form->get_userNameField();
-        this->client->target_IP     = this->form->get_IPField();
-        this->client->user_password = this->form->get_PWDField();
-        this->client->port          = this->form->get_portField();
+        if (this->form) {
+            this->form->setCursor(Qt::WaitCursor);
+            this->client->user_name     = this->form->get_userNameField();
+            this->client->target_IP     = this->form->get_IPField();
+            this->client->user_password = this->form->get_PWDField();
+            this->client->port          = this->form->get_portField();
 
-        if (!this->client->target_IP.empty()){
-            this->client->connect();
+            if (!this->client->target_IP.empty()){
+                this->client->connect();
+            }
+            this->form->setCursor(Qt::ArrowCursor);
         }
-        this->form->setCursor(Qt::ArrowCursor);
     }
 
     void closeFromScreen() override {

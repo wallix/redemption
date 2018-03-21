@@ -62,36 +62,17 @@
 
 
 
-//      , clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [](){
-//             NullReportMessage reportMessage;
-//             ClipboardVirtualChannel::Params params(reportMessage);
-//
-//             params.exchanged_data_limit = ~decltype(params.exchanged_data_limit){};
-//             params.verbose = to_verbose_flags(0);
-//
-//             params.clipboard_down_authorized = true;
-//             params.clipboard_up_authorized = true;
-//             params.clipboard_file_authorized = true;
-//
-//             params.dont_log_data_into_syslog = true;
-//             params.dont_log_data_into_wrm = true;
-//
-// //            params.client_use_long_format_names = true;
-//
-//             return params;
-//         }())
-
-
-
-
-
-
-class DialogOptions_Qt : public QDialog
+class QtOptions : public QWidget
 {
 
 Q_OBJECT
 
 public:
+    enum : uint8_t {
+        RDP,
+        VNC
+    };
+    uint8_t protocol_type;
     ClientRedemptionIOAPI   * _front;
     const int            _width;
     const int            _height;
@@ -103,8 +84,6 @@ public:
     QWidget            * _keyboardTab;
 
     QGridLayout        * _layout;
-    QPushButton          _buttonSave;
-    QPushButton          _buttonCancel;
     QPushButton        * _buttonDeleteKey;
     QPushButton        * _buttonAddKey;
     QPushButton          _buttonRestorConfig;
@@ -128,8 +107,6 @@ public:
     QComboBox            _languageComboBox;
     QComboBox            profilComboBox;
     QLineEdit            profilLineEdit;
-//     QComboBox            _monitorCountComboBox;
-//     QComboBox            _captureSnapFreqComboBox;
 
     QFormLayout        * _layoutView;
     QFormLayout        * _layoutConnection;
@@ -142,12 +119,12 @@ public:
     QLabel               _labelSpan;
     QLabel               _labelLanguage;
     QLabel               _labelProfil;
-//     QLabel               _labelScreen;
+
     QLabel               _labelRecording;
     QLabel               _labelTls;
     QLabel               _labelNla;
     QLabel               _labelSound;
-//     QLabel               _labelCaptureFreq;
+
     QLabel               _labelClipboard;
     QLabel               _labelShare;
     QLabel               _labelSharePath;
@@ -157,19 +134,18 @@ public:
     const int            _tableKeySettingMaxHeight;
 
 
-    DialogOptions_Qt(ClientRedemptionIOAPI * front, QWidget * parent)
-        : QDialog(parent)
+    QtOptions(ClientRedemptionIOAPI * front, uint8_t protocol_type, QWidget * parent)
+        : QWidget(parent)
+        , protocol_type(protocol_type)
         , _front(front)
         , _width(400)
-        , _height(350)
+        , _height(330)
         , _emptyPanel(this)
         , _viewTab(nullptr)
         , _connectionTab(nullptr)
         , _servicesTab(nullptr)
         , _keyboardTab(nullptr)
         , _layout(nullptr)
-        , _buttonSave("Save", this)
-        , _buttonCancel("Cancel", this)
         , _buttonDeleteKey(nullptr)
         , _buttonAddKey(nullptr)
         , _buttonRestorConfig("Default configuration", this)
@@ -190,8 +166,6 @@ public:
         , _languageComboBox(this)
         , profilComboBox(this)
         , profilLineEdit("", this)
-//         , _monitorCountComboBox(this)
-//         , _captureSnapFreqComboBox(this)
         , _layoutView(nullptr)
         , _layoutConnection(nullptr)
         , _layoutKeyboard(nullptr)
@@ -201,12 +175,10 @@ public:
         , _labelSpan("Span screen :", this)
         , _labelLanguage("Keyboard Language :", this)
         , _labelProfil("Options Profil:", this)
-//         , _labelScreen("Screen :", this)
         , _labelRecording("Record movie :", this)
         , _labelTls("TLS :", this)
         , _labelNla("NLA :", this)
         , _labelSound("Sound :",  this)
-//         , _labelCaptureFreq("Capture per second :", this)
         , _labelClipboard("Shared Clipboard :", this)
         , _labelShare("Shared Virtual Disk :", this)
         , _labelSharePath("Shared Path :", this)
@@ -214,10 +186,7 @@ public:
         , _columnNumber(4)
         , _tableKeySettingMaxHeight((20*6)+11)
     {
-        this->setWindowTitle("Options");
-        this->setAttribute(Qt::WA_DeleteOnClose);
-        this->setFixedSize(this->_width, this->_height);
-        this->setModal(true);
+         this->setFixedSize(this->_width, this->_height);
 
         this->_front->setClientInfo();
 
@@ -234,7 +203,7 @@ public:
 
 
         // Connection config
-        const QString strConnection("General");
+        const QString strConnection(" General ");
         this->_layoutConnection = new QFormLayout(this->_connectionTab);
 
         this->profilComboBox.setLineEdit(&(this->profilLineEdit));
@@ -251,6 +220,7 @@ public:
         this->QObject::connect(&(this->_buttonRestorConfig) , SIGNAL (pressed()) , this, SLOT (restoreConfig()));
 
         this->_buttonDelConfProfil.setFixedSize(160, 20);
+
         this->_buttonDelConfProfil.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonDelConfProfil) , SIGNAL (pressed()) , this, SLOT (deleteCurrentProtile()));
 
@@ -259,15 +229,6 @@ public:
 
         this->_layoutConnection->addRow(&(this->_labelRecording), &(this->_recordingCB));
         this->QObject::connect(&(this->_recordingCB), SIGNAL(stateChanged(int)), this, SLOT(recordingCheckChange(int)));
-
-//         this->_captureSnapFreqComboBox.addItem("1"   , 1000000);
-//         this->_captureSnapFreqComboBox.addItem("10"   , 1000000/10);
-//         this->_captureSnapFreqComboBox.addItem("20"   , 1000000/20);
-//         this->_captureSnapFreqComboBox.addItem("40"   , 1000000/40);
-//         this->_captureSnapFreqComboBox.addItem("60"   , 1000000/60);
-//         this->_captureSnapFreqComboBox.setStyleSheet("combobox-popup: 0;");
-//         this->_layoutConnection->addRow(&(this->_labelCaptureFreq), &(this->_captureSnapFreqComboBox));
-//         this->_captureSnapFreqComboBox.setEnabled(this->_front->is_recording);
 
 
         this->_tlsBox.setCheckState(Qt::Unchecked);
@@ -304,14 +265,6 @@ public:
         this->_spanCheckBox.setCheckState(Qt::Unchecked);
         this->_layoutView->addRow(&(this->_labelSpan), &(this->_spanCheckBox));
         this->QObject::connect(&(this->_spanCheckBox), SIGNAL(stateChanged(int)), this, SLOT(spanCheckChange(int)));
-
-
-//         for (int i = 1; i <= FrontQtRDPGraphicAPI::MAX_MONITOR_COUNT; i++) {
-//             this->_monitorCountComboBox.addItem(std::to_string(i).c_str(), i);
-//         }
-//         this->_monitorCountComboBox.setStyleSheet("combobox-popup: 0;");
-//         this->_layoutView->addRow(&(this->_labelScreen), &(this->_monitorCountComboBox));
-//         this->QObject::connect(&(this->_monitorCountComboBox), SIGNAL(currentIndexChanged(int)), this, SLOT(monitorCountkChange(int)));
 
 
         this->_layoutView->addRow(&(this->_labelPerf), &(this->_perfCheckBox));
@@ -444,21 +397,21 @@ public:
 
 
         // Buttons
-        this->_layout->addWidget(&(this->_emptyPanel), 11, 0, 1, 2);
+//         this->_layout->addWidget(&(this->_emptyPanel), 11, 0, 1, 2);
 
-        this->_buttonSave.setToolTip(this->_buttonSave.text());
-        this->_buttonSave.setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(&(this->_buttonSave)   , SIGNAL (pressed()),  this, SLOT (savePressed()));
-        this->QObject::connect(&(this->_buttonSave)   , SIGNAL (released()), this, SLOT (saveReleased()));
-        this->_buttonSave.setFocusPolicy(Qt::StrongFocus);
-        this->_layout->addWidget(&(this->_buttonSave), 11, 2);
-
-        this->_buttonCancel.setToolTip(this->_buttonCancel.text());
-        this->_buttonCancel.setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(&(this->_buttonCancel) , SIGNAL (pressed()),  this, SLOT (cancelPressed()));
-        this->QObject::connect(&(this->_buttonCancel) , SIGNAL (released()), this, SLOT (cancelReleased()));
-        this->_buttonCancel.setFocusPolicy(Qt::StrongFocus);
-        this->_layout->addWidget(&(this->_buttonCancel), 11, 3);
+//         this->_buttonSave.setToolTip(this->_buttonSave.text());
+//         this->_buttonSave.setCursor(Qt::PointingHandCursor);
+//         this->QObject::connect(&(this->_buttonSave)   , SIGNAL (pressed()),  this, SLOT (savePressed()));
+//         this->QObject::connect(&(this->_buttonSave)   , SIGNAL (released()), this, SLOT (saveReleased()));
+//         this->_buttonSave.setFocusPolicy(Qt::StrongFocus);
+//         this->_layout->addWidget(&(this->_buttonSave), 11, 2);
+//
+//         this->_buttonCancel.setToolTip(this->_buttonCancel.text());
+//         this->_buttonCancel.setCursor(Qt::PointingHandCursor);
+//         this->QObject::connect(&(this->_buttonCancel) , SIGNAL (pressed()),  this, SLOT (cancelPressed()));
+//         this->QObject::connect(&(this->_buttonCancel) , SIGNAL (released()), this, SLOT (cancelReleased()));
+//         this->_buttonCancel.setFocusPolicy(Qt::StrongFocus);
+//         this->_layout->addWidget(&(this->_buttonCancel), 11, 3);
 
 
 
@@ -467,15 +420,11 @@ public:
 
         this->setConfigValues();
 
-        QDesktopWidget* desktop = QApplication::desktop();
-        int centerW = (desktop->width()/2)  - (this->_width/2);
-        int centerH = (desktop->height()/2) - (this->_height/2);
-        this->move(centerW, centerH);
-
-        this->show();
+//         QDesktopWidget* desktop = QApplication::desktop();
+//         int centerW = (desktop->width()/2)  - (this->_width/2);
+//         int centerH = (desktop->height()/2) - (this->_height/2);
+//         this->move(centerW, centerH);
     }
-
-    ~DialogOptions_Qt() {}
 
 
 private:
@@ -817,440 +766,4 @@ public Q_SLOTS:
 
 
 
-// #include "core/RDP/clipboard.hpp"
-// #include "utils/fileutils.hpp"
-//
-// class ClipBoard_Qt : public QObject
-// {
-//
-//     Q_OBJECT
-//
-// public:
-//
-//     enum : uint16_t {
-//           CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
-//         , CF_QT_CLIENT_FILECONTENTS         = 48026
-//     };
-//
-//     FrontQtRDPGraphicAPI                  * _front;
-//     QClipboard                * _clipboard;
-//     bool                        _local_clipboard_stream;
-//     size_t                      _cliboard_data_length;
-//     std::unique_ptr<uint8_t[]>  _chunk;
-//     QImage                    * _bufferImage;
-//     uint16_t                    _bufferTypeID;
-//     std::string                 _bufferTypeLongName;
-//     int                         _cItems;
-//     struct CB_out_File {
-//         uint64_t     size;
-//         std::string  name;
-//         std::string  nameUTF8;
-//         char *       chunk;
-//
-//         CB_out_File()
-//           : size(0)
-//           , name("")
-//           , nameUTF8("")
-//           , chunk(nullptr)
-//         {}
-//
-//         ~CB_out_File() {
-//             delete[] (chunk);
-//         }
-//     };
-//     std::vector<CB_out_File *>  _items_list;
-//     std::vector<std::string>    _temp_files_list;
-//     bool server_use_long_format_names;
-//
-//
-//
-//     ClipBoard_Qt(FrontQtRDPGraphicAPI * front, QWidget * parent)
-//         : QObject(parent)
-//         , _front(front)
-//         , _clipboard(nullptr)
-//         , _local_clipboard_stream(true)
-//         , _cliboard_data_length(0)
-//         , _bufferImage(nullptr)
-//         , _bufferTypeID(0)
-//         , _bufferTypeLongName("")
-//         , _cItems(0)
-//         , server_use_long_format_names(false)
-//     {
-//         this->clean_CB_temp_dir();
-//         this->_clipboard = QApplication::clipboard();
-//         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
-//     }
-//
-//     void write_clipboard_temp_file(std::string fileName, const uint8_t * data, size_t data_len) {
-//         std::string filePath(this->_front->CB_TEMP_DIR + std::string("/") + fileName);
-//         std::string filePath_mem(filePath);
-//         this->_temp_files_list.push_back(filePath_mem);
-//         std::ofstream oFile(filePath, std::ios::out | std::ios::binary | std::ios::app);
-//         if(oFile.is_open()) {
-//             oFile.write(reinterpret_cast<const char *>(data), data_len);
-//             oFile.close();
-//         }
-//     }
-//
-//     void setClipboard_files(std::string & name) {           //std::vector<FrontQtRDPGraphicAPI::CB_FilesList::CB_in_Files> items_list) {
-//
-//         /*QClipboard *cb = QApplication::clipboard();
-//         QMimeData* newMimeData = new QMimeData();
-//         const QMimeData* oldMimeData = cb->mimeData();
-//         QStringList ll = oldMimeData->formats();
-//         for (int i = 0; i < ll.size(); i++) {
-//             newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
-//         }
-//         QList<QUrl> list;
-//
-//         const std::string delimiter = "\n";
-//         uint32_t pos = 0;
-//         std::string str = items_list[0].name;
-//         while (pos <= str.size()) {
-//             pos = str.find(delimiter);
-//             std::string path = str.substr(0, pos);
-//             str = str.substr(pos+1, str.size());
-//             QString fileName(path.c_str());
-//             newMimeData->setText(fileName);
-//             list.append(QUrl::fromLocalFile(fileName));
-//             QByteArray gnomeFormat = QByteArray("copy\n").append(QUrl::fromLocalFile(fileName).toEncoded());
-//             newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
-//         }
-//
-//         newMimeData->setUrls(list);
-//         cb->setMimeData(newMimeData);*/
-//
-//
-// //         QClipboard *cb = QApplication::clipboard();
-// //         QMimeData* newMimeData = new QMimeData();
-// //         const QMimeData* oldMimeData = cb->mimeData();
-// //         QStringList ll = oldMimeData->formats();
-// //         for (int i = 0; i < ll.size(); i++) {
-// //             newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
-// //         }
-//
-// //         QByteArray gnomeFormat = QByteArray("copy\n");
-//
-// //         for (size_t i = 0; i < items_list.size(); i++) {
-//
-//             QClipboard *cb = QApplication::clipboard();
-//             QMimeData* newMimeData = new QMimeData();
-//             const QMimeData* oldMimeData = cb->mimeData();
-//             QStringList ll = oldMimeData->formats();
-//             for (int i = 0; i < ll.size(); i++) {
-//                 newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
-//             }
-//
-//             QByteArray gnomeFormat = QByteArray("copy\n");
-//
-//             std::string path(this->_front->CB_TEMP_DIR + std::string("/") + name);
-//             //std::cout <<  path <<  std::endl;
-//             QString qpath(path.c_str());
-//
-//             //qDebug() << "QUrl" << QUrl::fromLocalFile(qpath);
-//
-//             gnomeFormat.append(QUrl::fromLocalFile(qpath).toEncoded());
-//
-//             newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
-//             cb->setMimeData(newMimeData);
-// //         }
-//
-// //         newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
-// //         cb->setMimeData(newMimeData);
-//     }
-//
-//     void setClipboard_text(std::string & str) {
-//         this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
-//     }
-//
-//     void setClipboard_image(const QImage & image) {               // Paste image to client
-//         this->_clipboard->setImage(image, QClipboard::Clipboard);
-//     }
-//
-//     void clean_CB_temp_dir() {
-//         DIR *theFolder = opendir(this->_front->CB_TEMP_DIR.c_str());
-//
-//         if (theFolder) {
-//             struct dirent *next_file;
-//
-//             while ( (next_file = readdir(theFolder)) != NULL )
-//             {
-//                 std::string filepath(this->_front->CB_TEMP_DIR + std::string("/") + std::string(next_file->d_name));
-//                 remove(filepath.c_str());
-//             }
-//             closedir(theFolder);
-//         }
-//     }
-//
-//     void emptyBuffer() {
-//         this->_bufferTypeID = 0;
-//         this->_cliboard_data_length = 0;
-//
-//         this->clean_CB_temp_dir();
-//
-//         this->_temp_files_list.clear();
-//         for (size_t i = 0; i < _items_list.size(); i++) {
-//             delete(this->_items_list[i]);
-//         }
-//         this->_items_list.clear();
-//     }
-//
-//
-//
-//
-// public Q_SLOTS:
-//
-//     void mem_clipboard() {
-//         if (this->_front->mod != nullptr && this->_local_clipboard_stream) {
-//             const QMimeData * mimeData = this->_clipboard->mimeData();
-//             mimeData->hasImage();
-//
-//             if (mimeData->hasImage()){
-//             //==================
-//             //    IMAGE COPY
-//             //==================
-//                 this->emptyBuffer();
-//
-//                 this->_bufferTypeID = RDPECLIP::CF_METAFILEPICT;
-//                 this->_bufferTypeLongName = std::string("\0\0", 2);
-//                 QImage bufferImageTmp(this->_clipboard->image());
-//                 if (bufferImageTmp.depth() > 24) {
-//                     bufferImageTmp = bufferImageTmp.convertToFormat(QImage::Format_RGB888);
-//                     bufferImageTmp = bufferImageTmp.rgbSwapped();
-//                 }
-//                 this->_bufferImage = new QImage(bufferImageTmp);
-//
-//                 this->_cliboard_data_length = this->_bufferImage->byteCount();
-//
-//                 this->_chunk = std::make_unique<uint8_t[]>(this->_cliboard_data_length + RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender::SIZE);
-//                 for (int i  = 0; i < this->_bufferImage->byteCount(); i++) {
-//                     this->_chunk[i] = this->_bufferImage->bits()[i];
-//                 }
-//                 RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender ender;
-//                 ender.emit(this->_chunk.get(), this->_cliboard_data_length);
-//
-//                 this->_front->clipboard_callback();
-//             //==========================================================================
-//
-//
-//
-//             } else if (mimeData->hasText()){                //  File or Text copy
-//
-//                 QString qstr = this->_clipboard->text(QClipboard::Clipboard);
-//                 if (qstr.size() > 0) {
-//                     this->emptyBuffer();
-//                     std::string str(qstr.toUtf8().constData());
-//
-//                     if (str.at(0) == '/') {
-//                 //==================
-//                 //    FILE COPY
-//                 //==================
-//                         this->_bufferTypeID       = CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
-//                         this->_bufferTypeLongName = std::string("F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0", 42);
-//
-//                         // retrieve each path
-//                         const std::string delimiter = "\n";
-//                         this->_cItems = 0;
-//                         uint32_t pos = 0;
-//                         while (pos <= str.size()) {
-//                             pos = str.find(delimiter);
-//                             std::string path = str.substr(0, pos);
-//                             str = str.substr(pos+1, str.size());
-//
-//                             // double slash
-//                             uint32_t posSlash(0);
-//                             std::string slash = "/";
-//                             bool stillSlash = true;
-//                             while (stillSlash) {
-//                                 posSlash = path.find(slash, posSlash);
-//                                 if (posSlash < path.size()) {
-//                                     path = path.substr(0, posSlash) + "//" + path.substr(posSlash+1, path.size());
-//                                     posSlash += 2;
-//                                 } else {
-//                                     path = path.substr(0, path.size());
-//                                     stillSlash = false;
-//                                 }
-//                             }
-//
-//                             // get file data
-//                             uint64_t size(::filesize(path.c_str()));
-//                             std::ifstream iFile(path.c_str(), std::ios::in | std::ios::binary);
-//                             if (iFile.is_open()) {
-//
-//                                 CB_out_File * file = new CB_out_File();
-//                                 file->size  = size;
-//                                 file->chunk = new char[file->size];
-//                                 iFile.read(file->chunk, file->size);
-//                                 iFile.close();
-//
-//                                 int posName(path.size()-1);
-//                                 bool lookForName = true;
-//                                 while (posName >= 0 && lookForName) {
-//                                     if (path.at(posName) == '/') {
-//                                         lookForName = false;
-//                                     }
-//                                     posName--;
-//                                 }
-//                                 file->nameUTF8 = path.substr(posName+2, path.size());
-//                                 //std::string name = file->nameUTF8;
-//                                 int UTF8nameSize(file->nameUTF8.size() *2);
-//                                 if (UTF8nameSize > 520) {
-//                                     UTF8nameSize = 520;
-//                                 }
-//                                 uint8_t UTF16nameData[520];
-//                                 int UTF16nameSize = ::UTF8toUTF16_CrLf(
-//                                     reinterpret_cast<const uint8_t *>(file->nameUTF8.c_str())
-//                                 , UTF16nameData
-//                                 , UTF8nameSize);
-//                                 file->name = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
-//                                 this->_cItems++;
-//                                 this->_items_list.push_back(file);
-//
-//                             } else {
-//                                 LOG(LOG_WARNING, "Path \"%s\" not found.", path.c_str());
-//                             }
-//                         }
-//
-//                         this->_front->clipboard_callback();
-//                 //==========================================================================
-//
-//
-//
-//                     } else {
-//                 //==================
-//                 //    TEXT COPY
-//                 //==================
-//                         this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
-//                         this->_bufferTypeLongName = std::string("\0\0", 2);
-//
-//                         size_t size( ( str.length() * 4) + 2 );
-//
-//                         this->_chunk = std::make_unique<uint8_t[]>(size);
-//
-//                         // UTF8toUTF16_CrLf for linux install
-//                         this->_cliboard_data_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size);
-//
-//                         RDPECLIP::FormatDataResponsePDU_Text::Ender ender;
-//                         ender.emit(this->_chunk.get(), this->_cliboard_data_length);
-//
-//                         this->_cliboard_data_length += RDPECLIP::FormatDataResponsePDU_Text::Ender::SIZE;
-//
-//                         this->_front->clipboard_callback();
-//                 //==========================================================================
-//                     }
-//                 }
-//             }
-//         }
-//     }
-//
-// };
-//
-
-
-// class Sound_Qt : public QObject
-// {
-//
-// Q_OBJECT
-//
-//     Phonon::MediaObject * media;
-//     Phonon::AudioOutput * audioOutput;
-//
-// public:
-//     int wave_data_to_wait;
-//
-//     uint32_t n_sample_per_sec;
-//     uint16_t bit_per_sample;
-//     uint16_t n_channels;
-//     uint16_t n_block_align;
-//     uint32_t bit_per_sec;
-//
-//     bool last_PDU_is_WaveInfo;
-//
-//     std::string wave_file_to_write;
-//
-//     int current_wav_index;
-//     int total_wav_files;
-//
-//
-//
-//     Sound_Qt(QWidget * parent)
-//       : QObject(parent)
-//       , media(nullptr)
-//       , audioOutput(nullptr)
-//       , wave_data_to_wait(0)
-//       , n_sample_per_sec(0)
-//       , bit_per_sample(0)
-//       , n_channels(0)
-//       , n_block_align(0)
-//       , bit_per_sec(0)
-//       , last_PDU_is_WaveInfo(false)
-//       , current_wav_index(0)
-//       , total_wav_files(0)
-//     {
-//         this->media = new Phonon::MediaObject(this);
-//         this->audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
-//         Phonon::createPath(this->media, this->audioOutput);
-//
-//         this->QObject::connect(this->media, SIGNAL (finished()),  this, SLOT (call_playback_over()));
-//     }
-//
-//     void init(size_t raw_total_size) {
-//
-//         this->total_wav_files++;
-//
-//         this->wave_file_to_write = std::string("sound") + std::to_string(this->total_wav_files) +std::string(".wav");
-//
-//         StaticOutStream<64> out_stream;
-//         out_stream.out_copy_bytes("RIFF", 4);
-//         out_stream.out_uint32_le(raw_total_size + 36);
-//         out_stream.out_copy_bytes("WAVEfmt ", 8);
-//         out_stream.out_uint32_le(16);
-//         out_stream.out_uint16_le(1);
-//         out_stream.out_uint16_le(this->n_channels);
-//         out_stream.out_uint32_le(this->n_sample_per_sec);
-//         out_stream.out_uint32_le(this->bit_per_sec);
-//         out_stream.out_uint16_le(this->n_block_align);
-//         out_stream.out_uint16_le(this->bit_per_sample);
-//         out_stream.out_copy_bytes("data", 4);
-//         out_stream.out_uint32_le(raw_total_size);
-//
-//         std::ofstream file(this->wave_file_to_write.c_str(), std::ios::out| std::ios::binary);
-//         if (file.is_open()) {
-//             file.write(reinterpret_cast<const char *>(out_stream.get_data()), 44);
-//             file.close();
-//         }
-//     }
-//
-//     void setData(const uint8_t * data, size_t size) {
-//         std::ofstream file(this->wave_file_to_write.c_str(), std::ios::app | std::ios::out| std::ios::binary);
-//         if (file) {
-//             file.write(reinterpret_cast<const char *>(data), size);
-//             file.close();
-//         }
-//     }
-//
-//     void play() {
-//         if (this->media->state() == Phonon::StoppedState) {
-//
-//             if (this->total_wav_files > this->current_wav_index) {
-//
-//                 this->current_wav_index++;
-//                 std::string wav_file_name = std::string("sound") + std::to_string(this->current_wav_index) +std::string(".wav");
-//
-//                 Phonon::MediaSource sources(QUrl(wav_file_name.c_str()));
-//                 this->media->setCurrentSource(sources);
-//                 this->media->play();
-//             }
-//         }
-//     }
-//
-// private Q_SLOTS:
-//     void call_playback_over() {
-//         std::string wav_file_name = std::string("sound") + std::to_string(this->current_wav_index) +std::string(".wav");
-//         remove(wav_file_name.c_str());
-//
-//         this->play();
-//     }
-//
-// };
 

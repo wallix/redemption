@@ -32,27 +32,26 @@
 class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
     enum class State {
         START,                          // 0
-        RUN,
         RUN_WIN_D_WIN_DOWN,
         RUN_WIN_D_D_DOWN,
         RUN_WIN_D_D_UP,
-        RUN_WIN_D_WIN_UP,               // 5
-        RUN_WIN_R_WIN_DOWN,
+        RUN_WIN_D_WIN_UP,
+        RUN_WIN_R_WIN_DOWN,             // 5
         RUN_WIN_R_R_DOWN,
         RUN_WIN_R_R_UP,
         RUN_WIN_R_WIN_UP,
-        CLIPBOARD,                      // 10
-        CLIPBOARD_CTRL_A_CTRL_DOWN,
+        CLIPBOARD,
+        CLIPBOARD_CTRL_A_CTRL_DOWN,     // 10
         CLIPBOARD_CTRL_A_A_DOWN,
         CLIPBOARD_CTRL_A_A_UP,
         CLIPBOARD_CTRL_A_CTRL_UP,
-        CLIPBOARD_CTRL_V_CTRL_DOWN,     // 15
-        CLIPBOARD_CTRL_V_V_DOWN,
+        CLIPBOARD_CTRL_V_CTRL_DOWN,
+        CLIPBOARD_CTRL_V_V_DOWN,        // 15
         CLIPBOARD_CTRL_V_V_UP,
         CLIPBOARD_CTRL_V_CTRL_UP,
         ENTER,
-        ENTER_DOWN,                     // 20
-        ENTER_UP,
+        ENTER_DOWN,
+        ENTER_UP,                       // 20
         WAIT,
         STOP
     } state = State::START;
@@ -527,7 +526,6 @@ public:
                 this->event.reset_trigger_time();
             break;
 
-            case State::RUN:
             case State::WAIT:
             case State::STOP:
             default:
@@ -794,6 +792,10 @@ private:
     }
 
 public:
+    bool is_keyboard_sequences_started() const override {
+        return (State::START != this->state);
+    }
+
     bool is_stopped() const override {
         return (this->state == State::STOP);
     }

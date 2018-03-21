@@ -269,4 +269,10 @@ private:
 
     void process_client_window_move_pdu(
         uint32_t total_length, uint32_t flags, InStream& chunk);
+
+    Rect protocol_window_rect;
+
+    void on_new_or_existing_window(Rect const & window_rect);
+
+    void on_delete_window();
 };  // class ClientExecute

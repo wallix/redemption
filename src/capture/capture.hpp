@@ -314,6 +314,40 @@ private:
             }
         }
 
+        struct WindowRecord {
+            uint32_t window_id;
+            uint32_t fields_present_flags;
+            uint32_t style;
+            uint8_t show_state;
+            int32_t visible_offset_x;
+            int32_t visible_offset_y;
+
+            WindowRecord(uint32_t window_id, uint32_t fields_present_flags,
+                         uint32_t style, uint8_t show_state,
+                         int32_t visible_offset_x, int32_t visible_offset_y)
+            : window_id(window_id)
+            , fields_present_flags(fields_present_flags)
+            , style(style)
+            , show_state(show_state)
+            , visible_offset_x(visible_offset_x)
+            , visible_offset_y(visible_offset_y) {}
+        };
+
+        std::vector<WindowRecord> windows;
+
+        struct WindowVisibilityRectRecord {
+            uint32_t window_id;
+            Rect rect;
+
+            WindowVisibilityRectRecord(uint32_t window_id, Rect rect)
+            : window_id(window_id)
+            , rect(rect) {}
+        };
+
+        std::vector<WindowVisibilityRectRecord> window_visibility_rects;
+
+        Rect get_joint_visibility_rect() const;
+
         void draw_impl(RDP::FrameMarker const & cmd);
 
         void draw_impl(const RDP::RAIL::NewOrExistingWindow & cmd);
@@ -364,7 +398,6 @@ private:
 
     bool capture_drawable = false;
 
-
 public:
     Capture(
         const CaptureParams capture_params,
@@ -379,7 +412,7 @@ public:
         bool capture_kbd, const KbdLogParams /*kbd_log_params*/,
         const VideoParams video_params,
         UpdateProgressData * update_progress_data,
-        Rect crop_rect
+        Rect const & crop_rect
     );
 
     ~Capture();
@@ -429,6 +462,8 @@ public:
         int cursor_x, int cursor_y,
         bool ignore_frame_in_timeval
     ) override;
+
+    void visibility_rects_event(Rect const & rect) override;
 
 protected:
     template<class... Ts>
