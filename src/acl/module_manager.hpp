@@ -1289,6 +1289,7 @@ public:
                                            , this->front.keymap.key_flags
                                            , this->ini.get<cfg::font>()
                                            , this->ini.get<cfg::theme>()
+                                           // TODO move to member
                                            , this->ini.get_ref<cfg::context::server_auto_reconnect_packet>()
                                            , this->ini.get_ref<cfg::context::close_box_extra_message>()
                                            , to_verbose_flags(this->ini.get<cfg::debug::mod_rdp>())

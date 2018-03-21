@@ -49,6 +49,92 @@
 #include <functional> // std::reference_wrapper
 
 
+struct RdpNegociationResult
+{
+    uint16_t front_width = 0;
+    uint16_t front_height = 0;
+    bool use_rdp5 = true;
+    uint16_t userid = 0;
+    int encryptionLevel = 0;
+    int encryptionMethod = 0;
+};
+
+struct RdpLogonInfo
+{
+    RdpLogonInfo(char const* hostname, bool hide_client_name, char const* target_user) noexcept
+    {
+        if (::strlen(hostname) >= sizeof(this->_hostname)) {
+            LOG(LOG_WARNING, "mod_rdp: hostname too long! %zu >= %zu", ::strlen(hostname), sizeof(this->_hostname));
+        }
+        if (hide_client_name) {
+            ::gethostname(this->_hostname, sizeof(this->_hostname));
+            this->_hostname[sizeof(this->_hostname) - 1] = 0;
+            char* separator = strchr(this->_hostname, '.');
+            if (separator) *separator = 0;
+        }
+        else{
+            ::strncpy(this->_hostname, hostname, sizeof(this->_hostname) - 1);
+            this->_hostname[sizeof(this->_hostname) - 1] = 0;
+        }
+
+        const char * domain_pos   = nullptr;
+        size_t       domain_len   = 0;
+        const char * username_pos = nullptr;
+        size_t       username_len = 0;
+        const char * separator = strchr(target_user, '\\');
+        if (separator)
+        {
+            domain_pos   = target_user;
+            domain_len   = separator - target_user;
+            username_pos = ++separator;
+            username_len = strlen(username_pos);
+        }
+        else
+        {
+            separator = strchr(target_user, '@');
+            if (separator)
+            {
+                domain_pos   = separator + 1;
+                domain_len   = strlen(domain_pos);
+                username_pos = target_user;
+                username_len = separator - target_user;
+                LOG(LOG_INFO, "mod_rdp: username_len=%zu", username_len);
+            }
+            else
+            {
+                username_pos = target_user;
+                username_len = strlen(username_pos);
+            }
+        }
+
+        if (username_len >= sizeof(this->_username)) {
+            LOG(LOG_WARNING, "mod_rdp: username too long! %zu >= %zu", username_len, sizeof(this->_username));
+        }
+        size_t count = std::min(sizeof(this->_username) - 1, username_len);
+        strncpy(this->_username, username_pos, count);
+        this->_username[count] = 0;
+
+        if (domain_len >= sizeof(this->_domain)) {
+            LOG(LOG_WARNING, "mod_rdp: domain too long! %zu >= %zu", domain_len, sizeof(this->_domain));
+        }
+        count = std::min(sizeof(this->_domain) - 1, domain_len);
+        strncpy(this->_domain, domain_pos, count);
+        this->_domain[count] = 0;
+
+        LOG(LOG_INFO, "Remote RDP Server domain=\"%s\" login=\"%s\" host=\"%s\"",
+            this->_domain, this->_username, this->_hostname);
+    }
+
+    char const* username()  const noexcept { return this->_username; }
+    char const* domain()    const noexcept { return this->_domain; }
+    char const* hostname()  const noexcept { return this->_hostname; }
+
+private:
+    char _username[128] = {};
+    char _domain[256] = {};
+    char _hostname[HOST_NAME_MAX + 1] = {};
+};
+
 class RdpNegociation
 {
 public:
@@ -168,10 +254,9 @@ private:
         }
     };
 
-public:
+private:
     State state = State::NEGO_INITIATE;
 
-private:
     CHANNELS::ChannelDefArray& mod_channel_list;
     const AuthorizationChannels& authorization_channels;
     const CHANNELS::ChannelNameId auth_channel;
@@ -181,29 +266,18 @@ private:
     CryptContext& encrypt;
 
     const bool enable_auth_channel;
+    RedirectionInfo& redir_info;
+    const RdpLogonInfo logon_info;
 
-public:
-    uint16_t front_width;
-    uint16_t front_height;
-
-private:
     FrontAPI& front;
 
-public:
-    bool use_rdp5 = true;
+    RdpNegociationResult negociation_result;
 
-private:
     uint16_t cbAutoReconnectCookie = 0;
     uint8_t autoReconnectCookie[28] = { 0 };
 
-    int keylayout;
+    const int keylayout;
 
-public:
-    uint16_t userid = 0;
-    int encryptionLevel = 0;
-    int encryptionMethod;
-
-private:
     uint32_t server_public_key_len = 0;
     uint8_t client_crypt_random[512] {};
 
@@ -217,7 +291,7 @@ private:
     const ServerCertCheck server_cert_check;
     std::unique_ptr<char[]> certif_path;
     RDPServerNotifier server_notifier;
-    RdpNego::ServerCert server_cert;
+    const RdpNego::ServerCert server_cert;
     RdpNego nego;
 
     Transport& trans;
@@ -226,24 +300,14 @@ private:
     const bool session_probe_use_clipboard_based_launcher;
     const bool remote_program;
     const uint32_t password_printing_mode;
-
-public:
-    RedirectionInfo& redir_info;
-
-private:
     const bool bogus_sc_net_size;
 
-public:
     const bool allow_using_multiple_monitors;
     GCC::UserData::CSMonitor cs_monitor;
 
-private:
     const bool perform_automatic_reconnection;
+    const std::array<uint8_t, 28> server_auto_reconnect_packet_ref;
 
-public:
-    std::array<uint8_t, 28>& server_auto_reconnect_packet_ref;
-
-private:
     InfoPacketFlags info_packet_extra_flags;
 
     char clientAddr[512] = {};
@@ -254,17 +318,8 @@ private:
     char directory[512] = {};
     char program[512] = {};
 
-public:
-    char domain[256] = {};
-    char hostname[HOST_NAME_MAX + 1] = {};
-
-private:
     char password[2048] = {};
 
-public:
-    char username[128] = {};
-
-private:
     size_t send_channel_index;
 
     size_t lic_layer_license_size = 0;
@@ -282,9 +337,9 @@ public:
         const CHANNELS::ChannelNameId checkout_channel,
         CryptContext& decrypt,
         CryptContext& encrypt,
+        const RdpLogonInfo& logon_info,
         bool enable_auth_channel,
         Transport& trans,
-        SessionReactor& session_reactor,
         FrontAPI& front,
         const ClientInfo& info,
         RedirectionInfo& redir_info,
@@ -301,8 +356,8 @@ public:
         , decrypt(decrypt)
         , encrypt(encrypt)
         , enable_auth_channel(enable_auth_channel)
-        , front_width(info.width - (info.width % 4))
-        , front_height(info.height)
+        , redir_info(redir_info)
+        , logon_info(logon_info)
         , front(front)
         , cbAutoReconnectCookie(info.cbAutoReconnectCookie)
         , keylayout(info.keylayout)
@@ -366,7 +421,6 @@ public:
           )
         , remote_program(mod_rdp_params.remote_program)
         , password_printing_mode(mod_rdp_params.password_printing_mode)
-        , redir_info(redir_info)
         , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
         , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
         , cs_monitor(info.cs_monitor)
@@ -375,6 +429,9 @@ public:
         , info_packet_extra_flags(info.has_sound_code ? INFO_REMOTECONSOLEAUDIO : InfoPacketFlags{})
         , has_managed_drive(has_managed_drive)
     {
+        this->negociation_result.front_width = info.width - (info.width % 4);
+        this->negociation_result.front_height = info.height;
+
         if (this->cbAutoReconnectCookie) {
             ::memcpy(this->autoReconnectCookie, info.autoReconnectCookie, sizeof(this->autoReconnectCookie));
         }
@@ -402,71 +459,6 @@ public:
             }
         }
 
-        if (::strlen(info.hostname) >= sizeof(this->hostname)) {
-            LOG(LOG_WARNING, "mod_rdp: hostname too long! %zu >= %zu", ::strlen(info.hostname), sizeof(this->hostname));
-        }
-        if (mod_rdp_params.hide_client_name) {
-            ::gethostname(this->hostname, sizeof(this->hostname));
-            this->hostname[sizeof(this->hostname) - 1] = 0;
-            char* separator = strchr(this->hostname, '.');
-            if (separator) *separator = 0;
-        }
-        else{
-            ::strncpy(this->hostname, info.hostname, sizeof(this->hostname) - 1);
-            this->hostname[sizeof(this->hostname) - 1] = 0;
-        }
-
-        const char * domain_pos   = nullptr;
-        size_t       domain_len   = 0;
-        const char * username_pos = nullptr;
-        size_t       username_len = 0;
-        const char * separator = strchr(mod_rdp_params.target_user, '\\');
-        if (separator)
-        {
-            domain_pos   = mod_rdp_params.target_user;
-            domain_len   = separator - mod_rdp_params.target_user;
-            username_pos = ++separator;
-            username_len = strlen(username_pos);
-        }
-        else
-        {
-            separator = strchr(mod_rdp_params.target_user, '@');
-            if (separator)
-            {
-                domain_pos   = separator + 1;
-                domain_len   = strlen(domain_pos);
-                username_pos = mod_rdp_params.target_user;
-                username_len = separator - mod_rdp_params.target_user;
-                LOG(LOG_INFO, "mod_rdp: username_len=%zu", username_len);
-            }
-            else
-            {
-                username_pos = mod_rdp_params.target_user;
-                username_len = strlen(username_pos);
-            }
-        }
-
-        if (username_len >= sizeof(this->username)) {
-            LOG(LOG_WARNING, "mod_rdp: username too long! %zu >= %zu", username_len, sizeof(this->username));
-        }
-        size_t count = std::min(sizeof(this->username) - 1, username_len);
-        if (count > 0) {
-            strncpy(this->username, username_pos, count);
-        }
-        this->username[count] = 0;
-
-        if (domain_len >= sizeof(this->domain)) {
-            LOG(LOG_WARNING, "mod_rdp: domain too long! %zu >= %zu", domain_len, sizeof(this->domain));
-        }
-        count = std::min(sizeof(this->domain) - 1, domain_len);
-        if (count > 0) {
-            strncpy(this->domain, domain_pos, count);
-        }
-        this->domain[count] = 0;
-
-        LOG(LOG_INFO, "Remote RDP Server domain=\"%s\" login=\"%s\" host=\"%s\"",
-            this->domain, this->username, this->hostname);
-
         // Password is a multi-sz!
         // A multi-sz contains a sequence of null-terminated strings,
         //  terminated by an empty string (\0) so that the last two
@@ -475,10 +467,10 @@ public:
 
         LOG(LOG_INFO, "Server key layout is %x", unsigned(this->keylayout));
 
-        this->nego.set_identity(this->username,
-                                this->domain,
+        this->nego.set_identity(this->logon_info.username(),
+                                this->logon_info.domain(),
                                 this->password,
-                                this->hostname);
+                                this->logon_info.hostname());
 
         if (bool(this->verbose & RDPVerbose::connection)){
             this->redir_info.log(LOG_INFO, "Init with Redir_info");
@@ -517,10 +509,16 @@ public:
         }
     }
 
-    void set_program(char const* program, char const* directory)
+    void set_program(char const* program, char const* directory) noexcept
     {
         strcpy(this->program, program);
         strcpy(this->directory, directory);
+    }
+
+    RdpNegociationResult const& get_result() const noexcept
+    {
+        assert(this->state == State::GET_LICENSE);
+        return this->negociation_result;
     }
 
     void start_negociation()
@@ -529,18 +527,17 @@ public:
         this->state = State::NEGO;
     }
 
-    template<class Ctx>
-    bool recv_data(TpduBuffer& buf, Ctx ctx)
+    State get_state() const noexcept
+    {
+        return this->state;
+    }
+
+    bool recv_data(TpduBuffer& buf)
     {
         if (this->state == State::NEGO)
         {
             bool const run = this->nego.recv_next_data(
                 buf, this->trans, this->server_cert);
-
-            int const fd = this->trans.get_fd();
-            if (fd >= 0) {
-                ctx.set_fd(fd);
-            }
 
             if (not run) {
                 this->send_connectInitialPDUwithGccConferenceCreateRequest();
@@ -566,7 +563,7 @@ public:
                     }
                     break;
                 case State::CHANNEL_JOIN_CONFIRME:
-                    if (this->channel_join_confirme(ctx.get_current_time().tv_sec, x224_data)){
+                    if (this->channel_join_confirme(x224_data)){
                         this->state = State::GET_LICENSE;
                     }
                     break;
@@ -604,7 +601,7 @@ private:
                             sc_core.log("Received from server");
                         }
                         if (0x0080001 == sc_core.version){ // can't use rdp5
-                            this->use_rdp5 = false;
+                            this->negociation_result.use_rdp5 = false;
                         }
                     }
                     break;
@@ -617,8 +614,8 @@ private:
                             this->sc_sec1.log("Received from server");
                         }
 
-                        this->encryptionLevel = this->sc_sec1.encryptionLevel;
-                        this->encryptionMethod = this->sc_sec1.encryptionMethod;
+                        this->negociation_result.encryptionLevel = this->sc_sec1.encryptionLevel;
+                        this->negociation_result.encryptionMethod = this->sc_sec1.encryptionMethod;
 
                         if (this->sc_sec1.encryptionLevel == 0
                             &&  this->sc_sec1.encryptionMethod == 0) { /* no encryption */
@@ -933,7 +930,7 @@ private:
 
     void send_connectInitialPDUwithGccConferenceCreateRequest()
     {
-        char * hostname = this->hostname;
+        char const* hostname = this->logon_info.hostname();
 
         /* Generic Conference Control (T.124) ConferenceCreateRequest */
         write_packets(
@@ -945,12 +942,12 @@ private:
                 Rect primary_monitor_rect =
                     this->cs_monitor.get_primary_monitor_rect();
 
-                cs_core.version = this->use_rdp5 ? 0x00080004 : 0x00080001;
+                cs_core.version = this->negociation_result.use_rdp5 ? 0x00080004 : 0x00080001;
                 const bool single_monitor =
                     (!this->allow_using_multiple_monitors ||
                      (this->cs_monitor.monitorCount < 2));
-                cs_core.desktopWidth  = (single_monitor ? this->front_width : primary_monitor_rect.cx + 1);
-                cs_core.desktopHeight = (single_monitor ? this->front_height : primary_monitor_rect.cy + 1);
+                cs_core.desktopWidth  = (single_monitor ? this->negociation_result.front_width : primary_monitor_rect.cx + 1);
+                cs_core.desktopHeight = (single_monitor ? this->negociation_result.front_height : primary_monitor_rect.cy + 1);
                 //cs_core.highColorDepth = this->front_bpp;
                 cs_core.highColorDepth = ((this->front_bpp == 32)
                     ? uint16_t(GCC::UserData::HIGH_COLOR_24BPP) : this->front_bpp);
@@ -1210,13 +1207,13 @@ private:
         InStream & mcs_cjcf_data = x224.payload;
         MCS::AttachUserConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
         if (mcs.initiator_flag){
-            this->userid = mcs.initiator;
+            this->negociation_result.userid = mcs.initiator;
         }
 
         size_t const num_channels = this->mod_channel_list.size();
 
         uint16_t channels_id[CHANNELS::MAX_STATIC_VIRTUAL_CHANNELS + 2];
-        channels_id[0] = this->userid + GCC::MCS_USERCHANNEL_BASE;
+        channels_id[0] = this->negociation_result.userid + GCC::MCS_USERCHANNEL_BASE;
         channels_id[1] = GCC::MCS_GLOBAL_CHANNEL;
         for (size_t index = 0; index < num_channels; index++){
             channels_id[index+2] = this->mod_channel_list[index].chanid;
@@ -1230,7 +1227,7 @@ private:
                 this->trans,
                 [this, &channels_id, index](StreamSize<256>, OutStream & mcs_cjrq_data){
                     MCS::ChannelJoinRequest_Send mcs(
-                        mcs_cjrq_data, this->userid,
+                        mcs_cjrq_data, this->negociation_result.userid,
                         channels_id[index], MCS::PER_ENCODING
                     );
                     (void)mcs;
@@ -1247,7 +1244,7 @@ private:
         this->send_channel_index = 0;
         return true;
     }
-    bool channel_join_confirme(time_t now, InStream & x224_data)
+    bool channel_join_confirme(InStream & x224_data)
     {
         {
             X224::DT_TPDU_Recv x224(x224_data);
@@ -1301,7 +1298,7 @@ private:
             LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
         }
 
-        if (this->encryptionLevel){
+        if (this->negociation_result.encryptionLevel){
             if (bool(this->verbose & RDPVerbose::security)){
                 LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u",
                     this->server_public_key_len);
@@ -1332,7 +1329,7 @@ private:
             LOG(LOG_INFO, "mod_rdp::Secure Settings Exchange");
         }
 
-        this->send_client_info_pdu(now);
+        this->send_client_info_pdu();
         return true;
     }
 
@@ -1417,15 +1414,16 @@ private:
         // validClientLicenseData (variable): The actual contents of the License Error
         // (Valid Client) PDU, as specified in section 2.2.1.12.1.
 
-        const char * hostname = this->hostname;
+        const char * hostname = this->logon_info.hostname();
         const char * username;
         char username_a_domain[512];
-        if (this->domain[0]) {
-            snprintf(username_a_domain, sizeof(username_a_domain), "%s@%s", this->username, this->domain);
+        if (this->logon_info.domain()[0]) {
+            snprintf(username_a_domain, sizeof(username_a_domain), "%s@%s",
+                this->logon_info.username(), this->logon_info.domain());
             username = username_a_domain;
         }
         else {
-            username = this->username;
+            username = this->logon_info.username();
         }
         LOG(LOG_INFO, "Rdp::Get license: username=\"%s\"", username);
         // read tpktHeader (4 bytes = 3 0 len)
@@ -1435,7 +1433,7 @@ private:
         // TODO Shouldn't we use mcs_type to manage possible Deconnection Ultimatum here
         //int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
         MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
-        SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
+        SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->negociation_result.encryptionLevel);
 
         if (sec.flags & SEC::SEC_LICENSE_PKT) {
             LIC::RecvFactory flic(sec.payload);
@@ -1487,7 +1485,7 @@ private:
                             rc4.crypt(LIC::LICENSE_HWID_SIZE, hwid, hwid);
 
                             LIC::ClientLicenseInfo_Send(
-                                lic_data, this->use_rdp5 ? 3 : 2,
+                                lic_data, this->negociation_result.use_rdp5 ? 3 : 2,
                                 this->lic_layer_license_size,
                                 this->lic_layer_license_data.get(),
                                 hwid, signature
@@ -1495,7 +1493,8 @@ private:
                         }
                         else {
                             LIC::NewLicenseRequest_Send(
-                                lic_data, this->use_rdp5 ? 3 : 2, username, hostname
+                                lic_data, this->negociation_result.use_rdp5 ? 3 : 2,
+                                username, hostname
                             );
                         }
                     },
@@ -1552,7 +1551,8 @@ private:
                         GCC::MCS_GLOBAL_CHANNEL,
                         [&, this](StreamSize<65535 - 1024>, OutStream & lic_data) {
                             LIC::ClientPlatformChallengeResponse_Send(
-                                lic_data, this->use_rdp5 ? 3 : 2, out_token, crypt_hwid, out_sig
+                                lic_data, this->negociation_result.use_rdp5 ? 3 : 2,
+                                out_token, crypt_hwid, out_sig
                             );
                         },
                         SEC::write_sec_send_fn{SEC::SEC_LICENSE_PKT, this->encrypt, 0}
@@ -1635,7 +1635,7 @@ private:
             writer_data...,
             [this, channelId](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
                 MCS::SendDataRequest_Send mcs(
-                    static_cast<OutPerStream&>(mcs_header), this->userid,
+                    static_cast<OutPerStream&>(mcs_header), this->negociation_result.userid,
                     channelId, 1, 3, packet_size, MCS::PER_ENCODING
                 );
 
@@ -1648,15 +1648,15 @@ private:
         }
     }
 
-    void send_client_info_pdu(const time_t & /*now*/)
+    void send_client_info_pdu()
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu");
         }
 
-        InfoPacket infoPacket( this->use_rdp5
-                             , this->domain
-                             , this->username
+        InfoPacket infoPacket( this->negociation_result.use_rdp5
+                             , this->logon_info.domain()
+                             , this->logon_info.username()
                              , this->password
                              , this->program
                              , this->directory
@@ -1743,7 +1743,7 @@ private:
                 infoPacket.emit(stream);
 
             },
-            SEC::write_sec_send_fn{SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel}
+            SEC::write_sec_send_fn{SEC::SEC_INFO_PKT, this->encrypt, this->negociation_result.encryptionLevel}
         );
 
         if (bool(this->verbose & RDPVerbose::basic_trace)) {

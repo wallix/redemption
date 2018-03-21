@@ -136,7 +136,17 @@ private:
     CryptContext encrypt {};
 
     const bool enable_auth_channel;
+    RedirectionInfo & redir_info;
+
+    const RdpLogonInfo logon_info;
+
+    std::array<uint8_t, 28>& server_auto_reconnect_packet_ref;
     //@}
+
+    RdpNegociationResult negociation_result;
+
+    const bool allow_using_multiple_monitors; // TODO duplicate monitor_count ?
+    const uint32_t monitor_count;
 
     FileSystemDriveManager file_system_drive_manager;
     RdpNegociation rdp_negociation;
@@ -708,12 +718,17 @@ public:
         , checkout_channel(mod_rdp_params.checkout_channel)
         , enable_auth_channel(mod_rdp_params.alternate_shell[0]
                            && !mod_rdp_params.ignore_auth_channel)
+        , redir_info(redir_info)
+        , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user)
+        , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
+        , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
+        , monitor_count(info.cs_monitor.monitorCount)
         , rdp_negociation(
             this->authorization_channels, this->mod_channel_list,
             this->auth_channel, this->checkout_channel,
-            this->decrypt, this->encrypt,
+            this->decrypt, this->encrypt, this->logon_info,
             this->enable_auth_channel,
-            trans, session_reactor, front, info, redir_info,
+            trans, front, info, redir_info,
             gen, timeobj, mod_rdp_params, report_message, [&]{
                 if (mod_rdp_params.enable_session_probe) {
                     this->file_system_drive_manager.EnableSessionProbeDrive(
@@ -1034,74 +1049,76 @@ public:
                     std::move(alternate_shell), mod_rdp_params.shell_working_dir);
             }
         }
-        else if (this->remote_program) {
-            if (mod_rdp_params.use_client_provided_remoteapp
-             && mod_rdp_params.client_execute_exe_or_file
-             && *mod_rdp_params.client_execute_exe_or_file
+        else {
+            if (this->remote_program) {
+                if (mod_rdp_params.use_client_provided_remoteapp
+                && mod_rdp_params.client_execute_exe_or_file
+                && *mod_rdp_params.client_execute_exe_or_file
+                ) {
+                    if (this->enable_session_probe) {
+                        this->real_alternate_shell = "[None]";
+
+                        this->real_client_execute_flags       = mod_rdp_params.client_execute_flags;
+                        this->real_client_execute_exe_or_file = mod_rdp_params.client_execute_exe_or_file;
+                        this->real_client_execute_arguments   = mod_rdp_params.client_execute_arguments;
+                        this->real_client_execute_working_dir = mod_rdp_params.client_execute_working_dir;
+
+                        this->client_execute_exe_or_file = mod_rdp_params.session_probe_exe_or_file;
+                        this->client_execute_arguments   = session_probe_arguments;
+                        this->client_execute_working_dir = "%TMP%";
+                        this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
+
+                        this->session_probe_launcher =
+                            std::make_unique<SessionProbeAlternateShellBasedLauncher>(
+                                this->verbose);
+                    }
+                    else {
+                        this->client_execute_flags       = mod_rdp_params.client_execute_flags;
+                        this->client_execute_exe_or_file = mod_rdp_params.client_execute_exe_or_file;
+                        this->client_execute_arguments   = mod_rdp_params.client_execute_arguments;
+                        this->client_execute_working_dir = mod_rdp_params.client_execute_working_dir;
+                    }
+                }
+            }
+            else if (mod_rdp_params.use_client_provided_alternate_shell
+                    && info.alternate_shell[0] && !info.remote_program
             ) {
-                if (this->enable_session_probe) {
-                    this->real_alternate_shell = "[None]";
+                set_alternate_shell_program_and_directory(
+                    info.alternate_shell, info.working_dir);
+            }
+            else if (this->enable_session_probe) {
+                std::string alternate_shell(mod_rdp_params.session_probe_exe_or_file);
 
-                    this->real_client_execute_flags       = mod_rdp_params.client_execute_flags;
-                    this->real_client_execute_exe_or_file = mod_rdp_params.client_execute_exe_or_file;
-                    this->real_client_execute_arguments   = mod_rdp_params.client_execute_arguments;
-                    this->real_client_execute_working_dir = mod_rdp_params.client_execute_working_dir;
+                if (!::strncmp(alternate_shell.c_str(), "||", 2))
+                    alternate_shell.erase(0, 2);
 
-                    this->client_execute_exe_or_file = mod_rdp_params.session_probe_exe_or_file;
-                    this->client_execute_arguments   = session_probe_arguments;
-                    this->client_execute_working_dir = "%TMP%";
-                    this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
+                alternate_shell += " ";
+                alternate_shell += session_probe_arguments;
+
+                if (this->session_probe_use_clipboard_based_launcher) {
+                    this->session_probe_launcher =
+                        std::make_unique<SessionProbeClipboardBasedLauncher>(
+                            this->session_reactor,
+                            *this, alternate_shell.c_str(),
+                            this->session_probe_clipboard_based_launcher_clipboard_initialization_delay,
+                            this->session_probe_clipboard_based_launcher_start_delay,
+                            this->session_probe_clipboard_based_launcher_long_delay,
+                            this->session_probe_clipboard_based_launcher_short_delay,
+                            this->verbose);
+                }
+                else {
+                    strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
+                    program[sizeof(program) - 1] = 0;
+                    //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
+
+                    const char * session_probe_working_dir = "%TMP%";
+                    strncpy(directory, session_probe_working_dir, sizeof(directory) - 1);
+                    directory[sizeof(directory) - 1] = 0;
 
                     this->session_probe_launcher =
                         std::make_unique<SessionProbeAlternateShellBasedLauncher>(
                             this->verbose);
                 }
-                else {
-                    this->client_execute_flags       = mod_rdp_params.client_execute_flags;
-                    this->client_execute_exe_or_file = mod_rdp_params.client_execute_exe_or_file;
-                    this->client_execute_arguments   = mod_rdp_params.client_execute_arguments;
-                    this->client_execute_working_dir = mod_rdp_params.client_execute_working_dir;
-                }
-            }
-        }
-        else if (mod_rdp_params.use_client_provided_alternate_shell
-                && info.alternate_shell[0] && !info.remote_program
-        ) {
-            set_alternate_shell_program_and_directory(
-                info.alternate_shell, info.working_dir);
-        }
-        else if (this->enable_session_probe) {
-            std::string alternate_shell(mod_rdp_params.session_probe_exe_or_file);
-
-            if (!::strncmp(alternate_shell.c_str(), "||", 2))
-                alternate_shell.erase(0, 2);
-
-            alternate_shell += " ";
-            alternate_shell += session_probe_arguments;
-
-            if (this->session_probe_use_clipboard_based_launcher) {
-                this->session_probe_launcher =
-                    std::make_unique<SessionProbeClipboardBasedLauncher>(
-                        this->session_reactor,
-                        *this, alternate_shell.c_str(),
-                        this->session_probe_clipboard_based_launcher_clipboard_initialization_delay,
-                        this->session_probe_clipboard_based_launcher_start_delay,
-                        this->session_probe_clipboard_based_launcher_long_delay,
-                        this->session_probe_clipboard_based_launcher_short_delay,
-                        this->verbose);
-            }
-            else {
-                strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
-                program[sizeof(program) - 1] = 0;
-                //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
-
-                const char * session_probe_working_dir = "%TMP%";
-                strncpy(directory, session_probe_working_dir, sizeof(directory) - 1);
-                directory[sizeof(directory) - 1] = 0;
-
-                this->session_probe_launcher =
-                    std::make_unique<SessionProbeAlternateShellBasedLauncher>(
-                        this->verbose);
             }
         }
 
@@ -1121,10 +1138,10 @@ public:
 
         LOG(LOG_INFO, "RDP mod built");
 
-        this->init_negociate_event(mod_rdp_params, gen, timeobj);
+        this->init_negociate_event();
     }   // mod_rdp
 
-    void init_negociate_event(ModRDPParams const& mod_rdp_params, Random & gen, TimeObj & timeobj)
+    void init_negociate_event()
     {
         auto check_error = [](mod_rdp& rdp, auto f){
             try {
@@ -1144,7 +1161,7 @@ public:
 
                 const char * statestr = "UNKNOWN_STATE";
                 const char * statedescr = "Unknow state.";
-                switch (rdp.rdp_negociation.state) {
+                switch (rdp.rdp_negociation.get_state()) {
                     #define CASE(e, trkey)                                 \
                         case RdpNegociation::State::e:                     \
                             statestr = "RDP_" #e;                          \
@@ -1184,7 +1201,7 @@ public:
                 LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
                 rdp.rdp_negociation.start_negociation();
             });
-                    LOG(LOG_DEBUG, "timeout");
+            LOG(LOG_DEBUG, "timeout");
 
             return ctx.set_or_disable_timeout(rdp.open_session_timeout, jln::one_shot([](gdi::GraphicApi&, mod_rdp& rdp){
                 if (rdp.error_message) {
@@ -1202,13 +1219,20 @@ public:
 
                 LOG(LOG_ERR,
                     "Logon timer expired on %s. The session will be disconnected.",
-                    rdp.rdp_negociation.hostname);
+                    rdp.logon_info.hostname());
                 throw Error(ERR_RDP_OPEN_SESSION_TIMEOUT);
             }))
             .next_action([](auto ctx, gdi::GraphicApi&, mod_rdp& rdp){
                 return jln::make_lambda<check_error_fn>()(rdp, [&]{
                     LOG(LOG_DEBUG, "action");
-                    if (rdp.rdp_negociation.recv_data(rdp.buf, ctx)) {
+                    bool const is_finish = rdp.rdp_negociation.recv_data(rdp.buf);
+                    // RdpNego::recv_next_data set a new fd if tls
+                    int const fd = rdp.trans.get_fd();
+                    if (fd >= 0) {
+                        ctx.set_fd(fd);
+                    }
+                    if (is_finish) {
+                        rdp.negociation_result = rdp.rdp_negociation.get_result();
                         return ctx.disable_timeout()
                         .next_action([](auto ctx, gdi::GraphicApi& gd, mod_rdp& rdp){
                             rdp.draw_event(ctx.get_current_time().tv_sec, gd);
@@ -1252,7 +1276,7 @@ public:
         this->remote_programs_session_manager.reset();
 
         if (!this->server_redirection_packet_received) {
-            this->rdp_negociation.redir_info.reset();
+            this->redir_info.reset();
         }
     }
 
@@ -1297,8 +1321,8 @@ protected:
             std::make_unique<ToServerSender>(
                 this->trans,
                 this->encrypt,
-                this->rdp_negociation.encryptionLevel,
-                this->rdp_negociation.userid,
+                this->negociation_result.encryptionLevel,
+                this->negociation_result.userid,
                 channel_name,
                 channel->chanid,
                 (channel->flags &
@@ -1422,9 +1446,9 @@ protected:
             this->session_probe_target_informations.c_str();
 
         session_probe_virtual_channel_params.front_width                            =
-            this->rdp_negociation.front_width;
+            this->negociation_result.front_width;
         session_probe_virtual_channel_params.front_height                           =
-            this->rdp_negociation.front_height;
+            this->negociation_result.front_height;
 
         session_probe_virtual_channel_params.session_probe_disconnected_application_limit       =
             this->session_probe_disconnected_application_limit;
@@ -1467,8 +1491,8 @@ protected:
             this->lang;
 
         session_probe_virtual_channel_params.bogus_refresh_rect_ex                  =
-            (this->bogus_refresh_rect && this->rdp_negociation.allow_using_multiple_monitors &&
-             (this->rdp_negociation.cs_monitor.monitorCount > 1));
+            (this->bogus_refresh_rect && this->allow_using_multiple_monitors &&
+             (this->monitor_count > 1));
         session_probe_virtual_channel_params.show_maximized                         =
             (!this->remote_program);
 
@@ -1853,8 +1877,8 @@ public:
         stream_data.out_copy_bytes(string_data, data_size);
 
         virtual_channel_pdu.send_to_server(
-            this->trans, this->encrypt, this->rdp_negociation.encryptionLevel
-          , this->rdp_negociation.userid, this->auth_channel_chanid
+            this->trans, this->encrypt, this->negociation_result.encryptionLevel
+          , this->negociation_result.userid, this->auth_channel_chanid
           , stream_data.get_offset()
           , this->auth_channel_flags
           , stream_data.get_data()
@@ -1874,8 +1898,8 @@ private:
         stream_data.out_copy_bytes(string_data, data_size);
 
         virtual_channel_pdu.send_to_server(
-            this->trans, this->encrypt, this->rdp_negociation.encryptionLevel
-          , this->rdp_negociation.userid, this->checkout_channel_chanid
+            this->trans, this->encrypt, this->negociation_result.encryptionLevel
+          , this->negociation_result.userid, this->checkout_channel_chanid
           , stream_data.get_offset()
           , this->checkout_channel_flags
           , stream_data.get_data()
@@ -1906,8 +1930,8 @@ private:
             CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
             virtual_channel_pdu.send_to_server(
-                this->trans, this->encrypt, this->rdp_negociation.encryptionLevel
-              , this->rdp_negociation.userid, channel.chanid, length, flags, chunk, chunk_size);
+                this->trans, this->encrypt, this->negociation_result.encryptionLevel
+              , this->negociation_result.userid, channel.chanid, length, flags, chunk, chunk_size);
         }
         else {
             uint8_t const * virtual_channel_data = chunk;
@@ -1936,7 +1960,7 @@ private:
 
                 virtual_channel_pdu.send_to_server(
                     this->trans, this->encrypt,
-                    this->rdp_negociation.encryptionLevel, this->rdp_negociation.userid, channel.chanid, length, get_channel_control_flags(
+                    this->negociation_result.encryptionLevel, this->negociation_result.userid, channel.chanid, length, get_channel_control_flags(
                         flags, length, remaining_data_length, virtual_channel_data_length
                     ), virtual_channel_data, virtual_channel_data_length);
 
@@ -1962,7 +1986,7 @@ private:
             writer_data...,
             [this, channelId](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
                 MCS::SendDataRequest_Send mcs(
-                    static_cast<OutPerStream&>(mcs_header), this->rdp_negociation.userid,
+                    static_cast<OutPerStream&>(mcs_header), this->negociation_result.userid,
                     channelId, 1, 3, packet_size, MCS::PER_ENCODING
                 );
 
@@ -1980,7 +2004,7 @@ private:
         this->send_data_request(
             channelId,
             writer_data...,
-            SEC::write_sec_send_fn{0, this->encrypt, this->rdp_negociation.encryptionLevel}
+            SEC::write_sec_send_fn{0, this->encrypt, this->negociation_result.encryptionLevel}
         );
     }
 
@@ -2090,7 +2114,7 @@ public:
                 this->front.begin_update();
                 this->orders.process_orders(
                     stream, true, drawable,
-                    this->rdp_negociation.front_width, this->rdp_negociation.front_height);
+                    this->negociation_result.front_width, this->negociation_result.front_height);
                 this->front.end_update();
                 break;
 
@@ -2255,7 +2279,7 @@ public:
 
 
         MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
-        SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->rdp_negociation.encryptionLevel);
+        SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->negociation_result.encryptionLevel);
         if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL){
             if (bool(this->verbose & RDPVerbose::channels)) {
                 LOG(LOG_INFO, "received channel data on mcs.chanid=%u", mcs.channelId);
@@ -2386,25 +2410,25 @@ public:
                                     monitor_layout_pdu.log(
                                         "Rdp::receiving the server-to-client Monitor Layout PDU");
 
-                                    if (this->rdp_negociation.cs_monitor.monitorCount &&
+                                    if (this->monitor_count &&
                                         (monitor_layout_pdu.get_monitorCount() !=
-                                         this->rdp_negociation.cs_monitor.monitorCount)) {
+                                         this->monitor_count)) {
 
                                         LOG(LOG_ERR, "Server do not support the display monitor layout of the client");
                                         throw Error(ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT);
                                     }
                                 }
                                 else {
-                                    LOG(LOG_INFO, "Resizing to %ux%ux%u", this->rdp_negociation.front_width, this->rdp_negociation.front_height, this->orders.bpp);
+                                    LOG(LOG_INFO, "Resizing to %ux%ux%u", this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp);
 
 
                                     if (this->transparent_recorder) {
-                                        this->transparent_recorder->server_resize(this->rdp_negociation.front_width,
-                                            this->rdp_negociation.front_height, this->orders.bpp);
+                                        this->transparent_recorder->server_resize(this->negociation_result.front_width,
+                                            this->negociation_result.front_height, this->orders.bpp);
                                     }
 
 
-                                    if (FrontAPI::ResizeResult::fail == this->front.server_resize(this->rdp_negociation.front_width, this->rdp_negociation.front_height, this->orders.bpp)){
+                                    if (FrontAPI::ResizeResult::fail == this->front.server_resize(this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp)){
                                         LOG(LOG_ERR, "Resize not available on older clients,"
                                             " change client resolution to match server resolution");
                                         throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
@@ -2465,13 +2489,13 @@ public:
 
                             if (this->front.can_be_start_capture()) {
                                 if (this->bogus_refresh_rect
-                                 && this->rdp_negociation.allow_using_multiple_monitors
-                                 && this->rdp_negociation.cs_monitor.monitorCount > 1
+                                 && this->allow_using_multiple_monitors
+                                 && this->monitor_count > 1
                                 ) {
                                     this->rdp_suppress_display_updates();
-                                    this->rdp_allow_display_updates(0, 0, this->rdp_negociation.front_width, this->rdp_negociation.front_height);
+                                    this->rdp_allow_display_updates(0, 0, this->negociation_result.front_width, this->negociation_result.front_height);
                                 }
-                                this->rdp_input_invalidate(Rect(0, 0, this->rdp_negociation.front_width, this->rdp_negociation.front_height));
+                                this->rdp_input_invalidate(Rect(0, 0, this->negociation_result.front_width, this->negociation_result.front_height));
                             }
                             break;
                         case UP_AND_RUNNING:
@@ -2528,7 +2552,7 @@ public:
                                             if (bool(this->verbose & RDPVerbose::graphics)){ LOG(LOG_INFO, "RDP_UPDATE_ORDERS"); }
                                             this->front.begin_update();
                                             this->orders.process_orders(sdata.payload, false,
-                                                drawable, this->rdp_negociation.front_width, this->rdp_negociation.front_height);
+                                                drawable, this->negociation_result.front_width, this->negociation_result.front_height);
                                             this->front.end_update();
                                             break;
                                         case RDP_UPDATE_BITMAP:
@@ -2672,7 +2696,7 @@ public:
                             this->send_control(RDP_CTL_REQUEST_CONTROL);
 
                             /* Including RDP 5.0 capabilities */
-                            if (this->rdp_negociation.use_rdp5){
+                            if (this->negociation_result.use_rdp5){
                                 LOG(LOG_INFO, "use rdp5");
                                 if (this->enable_persistent_disk_bitmap_cache &&
                                     this->persist_bitmap_cache_on_disk) {
@@ -2723,11 +2747,11 @@ public:
                             ServerRedirectionPDU server_redirect;
                             server_redirect.receive(sctrl.payload);
                             sctrl.payload.in_skip_bytes(1);
-                            server_redirect.export_to_redirection_info(this->rdp_negociation.redir_info);
+                            server_redirect.export_to_redirection_info(this->redir_info);
                             this->server_redirection_packet_received = true;
                             if (bool(this->verbose & RDPVerbose::connection)){
                                 server_redirect.log(LOG_INFO, "Got Packet");
-                                this->rdp_negociation.redir_info.log(LOG_INFO, "RInfo Ini");
+                                this->redir_info.log(LOG_INFO, "RInfo Ini");
                             }
                             if (!server_redirect.Noredirect()) {
                                 LOG(LOG_ERR, "Server Redirection thrown");
@@ -2918,7 +2942,7 @@ public:
 
                 GeneralCaps general_caps;
                 general_caps.extraflags  =
-                    this->rdp_negociation.use_rdp5
+                    this->negociation_result.use_rdp5
                     ? NO_BITMAP_COMPRESSION_HDR | AUTORECONNECT_SUPPORTED | LONG_CREDENTIALS_SUPPORTED
                     : 0
                     ;
@@ -2940,8 +2964,8 @@ public:
                 // TODO Client SHOULD set this field to the color depth requested in the Client Core Data
                 bitmap_caps.preferredBitsPerPixel = this->orders.bpp;
                 //bitmap_caps.preferredBitsPerPixel = this->front_bpp;
-                bitmap_caps.desktopWidth          = this->rdp_negociation.front_width;
-                bitmap_caps.desktopHeight         = this->rdp_negociation.front_height;
+                bitmap_caps.desktopWidth          = this->negociation_result.front_width;
+                bitmap_caps.desktopHeight         = this->negociation_result.front_height;
                 bitmap_caps.bitmapCompressionFlag = 0x0001; // This field MUST be set to TRUE (0x0001).
                 //bitmap_caps.drawingFlags = DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY | DRAW_ALLOW_COLOR_SUBSAMPLING | DRAW_ALLOW_SKIP_ALPHA;
                 bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
@@ -3223,7 +3247,7 @@ public:
                 // containing information about the packet. The type subfield of the pduType
                 // field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
                 ShareControl_Send(sctrl_header, PDUTYPE_CONFIRMACTIVEPDU,
-                    this->rdp_negociation.userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
+                    this->negociation_result.userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
             }
         );
 
@@ -4278,11 +4302,11 @@ public:
         //    domain_username_format_0, domain_username_format_0);
 
         if (this->disconnect_on_logon_user_change &&
-            ((::strcasecmp(domain, this->rdp_negociation.domain) || ::strcasecmp(username, this->rdp_negociation.username)) &&
-             (this->rdp_negociation.domain[0] ||
-              (::strcasecmp(domain_username_format_0, this->rdp_negociation.username) &&
-               ::strcasecmp(domain_username_format_1, this->rdp_negociation.username) &&
-               ::strcasecmp(username, this->rdp_negociation.username))))) {
+            ((::strcasecmp(domain, this->logon_info.domain()) || ::strcasecmp(username, this->logon_info.username())) &&
+             (this->logon_info.domain()[0] ||
+              (::strcasecmp(domain_username_format_0, this->logon_info.username()) &&
+               ::strcasecmp(domain_username_format_1, this->logon_info.username()) &&
+               ::strcasecmp(username, this->logon_info.username()))))) {
             if (this->error_message) {
                 *this->error_message = "Unauthorized logon user change detected!";
             }
@@ -4293,10 +4317,10 @@ public:
             LOG(LOG_ERR,
                 "Unauthorized logon user change detected on %s (%s%s%s) -> (%s%s%s). "
                     "The session will be disconnected.",
-                this->rdp_negociation.hostname, this->rdp_negociation.domain,
-                (*this->rdp_negociation.domain ? "\\" : ""),
-                this->rdp_negociation.username, domain,
-                ((domain && (*domain)) ? "\\" : ""),
+                this->logon_info.hostname(), this->logon_info.domain(),
+                (*this->logon_info.domain() ? "\\" : ""),
+                this->logon_info.username(), domain,
+                ((domain && *domain) ? "\\" : ""),
                 username);
             throw Error(ERR_RDP_LOGON_USER_CHANGED);
         }
@@ -4382,8 +4406,8 @@ public:
                 auto_reconnect.log(LOG_INFO);
 
                 OutStream stream(
-                    this->rdp_negociation.server_auto_reconnect_packet_ref.data(),
-                    this->rdp_negociation.server_auto_reconnect_packet_ref.size());
+                    this->server_auto_reconnect_packet_ref.data(),
+                    this->server_auto_reconnect_packet_ref.size());
 
                 auto_reconnect.emit(stream);
 
@@ -4476,8 +4500,8 @@ public:
                         bitmap_caps.dump(output_file);
                     }
                     this->orders.bpp = bitmap_caps.preferredBitsPerPixel;
-                    this->rdp_negociation.front_width = bitmap_caps.desktopWidth;
-                    this->rdp_negociation.front_height = bitmap_caps.desktopHeight;
+                    this->negociation_result.front_width = bitmap_caps.desktopWidth;
+                    this->negociation_result.front_height = bitmap_caps.desktopHeight;
                 }
                 break;
             case CAPSTYPE_ORDER:
@@ -4694,7 +4718,7 @@ public:
                 sdata.emit_end();
             },
             [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
-                ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->rdp_negociation.userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
+                ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->negociation_result.userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
 
             }
         );
@@ -4733,7 +4757,7 @@ public:
             [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
                 ShareControl_Send(
                     sctrl_header, PDUTYPE_DATAPDU,
-                    this->rdp_negociation.userid + GCC::MCS_USERCHANNEL_BASE, packet_size
+                    this->negociation_result.userid + GCC::MCS_USERCHANNEL_BASE, packet_size
                 );
             }
         );
@@ -4979,7 +5003,7 @@ public:
             [&](StreamSize<256>, OutStream & fastpath_header, uint8_t * packet_data, std::size_t packet_size) {
                 FastPath::ClientInputEventPDU_Send out_cie(
                     fastpath_header, packet_data, packet_size, 1,
-                    this->encrypt, this->rdp_negociation.encryptionLevel, this->rdp_negociation.encryptionMethod
+                    this->encrypt, this->negociation_result.encryptionLevel, this->negociation_result.encryptionMethod
                 );
                 (void)out_cie;
             }
@@ -5010,8 +5034,8 @@ public:
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             if (!r.isempty()){
                 RDP::RefreshRectPDU rrpdu(this->share_id,
-                                          this->rdp_negociation.userid,
-                                          this->rdp_negociation.encryptionLevel,
+                                          this->negociation_result.userid,
+                                          this->negociation_result.encryptionLevel,
                                           this->encrypt);
 
                 rrpdu.addInclusiveRect(r.x, r.y, r.x + r.cx - 1, r.y + r.cy - 1);
@@ -5032,8 +5056,8 @@ public:
         if ((UP_AND_RUNNING == this->connection_finalization_state)
             && (vr.size() > 0)) {
             RDP::RefreshRectPDU rrpdu(this->share_id,
-                                      this->rdp_negociation.userid,
-                                      this->rdp_negociation.encryptionLevel,
+                                      this->negociation_result.userid,
+                                      this->negociation_result.encryptionLevel,
                                       this->encrypt);
             for (Rect const & rect : vr) {
                 if (!rect.isempty()){
@@ -5888,7 +5912,7 @@ public:
     }
 
     Dimension get_dim() const override
-    { return Dimension(this->rdp_negociation.front_width, this->rdp_negociation.front_height); }
+    { return Dimension(this->negociation_result.front_width, this->negociation_result.front_height); }
 
     bool is_auto_reconnectable() override {
         return (this->is_server_auto_reconnec_packet_received &&

@@ -278,6 +278,12 @@ struct SessionReactor
         }
 
         template<class F>
+        void initialize(F&& f)
+        {
+            this->p.data->ctx.invoke(static_cast<F&&>(f));
+        }
+
+        template<class F>
         static auto make_deleter(F = nullptr) noexcept
         {
             return [](SharedDataBase* base) noexcept -> void {
@@ -332,10 +338,17 @@ struct SessionReactor
         using Builder::Builder;
 
         template<class NotifyDeleter>
-        Builder&& set_notify_delete(NotifyDeleter d) && noexcept
+        NotifyDeleterBuilderWrapper set_notify_delete(NotifyDeleter d) && noexcept
         {
             this->internal_value().set_notify_delete(d);
-            return static_cast<Builder&&>(*this);
+            return std::move(*this);
+        }
+
+        template<class F>
+        NotifyDeleterBuilderWrapper initialize(F&& f) && noexcept
+        {
+            this->internal_value().initialize(static_cast<F&&>(f));
+            return std::move(*this);
         }
     };
 
@@ -587,8 +600,7 @@ struct SessionReactor
         void restart_timeout()
         {
             assert(this->delay.count() > 0);
-            // TODO tvtime -> reactor.time()
-            this->tv = addusectimeval(this->delay, tvtime());
+            this->tv = addusectimeval(this->delay, this->session_reactor.get_current_time());
         }
 
         BasicFd(int fd, SessionReactor& session_reactor) noexcept
