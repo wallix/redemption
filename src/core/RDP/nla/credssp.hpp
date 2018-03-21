@@ -31,7 +31,8 @@
  *     negoTokens [1] NegoData OPTIONAL,
  *     authInfo   [2] OCTET STRING OPTIONAL,
  *     pubKeyAuth [3] OCTET STRING OPTIONAL,
- *     errorCode  [4] INTEGER OPTIONAL
+ *     errorCode  [4] INTEGER OPTIONAL,
+ *     clientNonce[5] OCTET STRING OPTIONAL
  * }
  *
  * NegoData ::= SEQUENCE OF NegoDataItem
@@ -96,6 +97,12 @@ namespace CredSSP {
         return length;
     }
 
+    inline int sizeof_client_nonce(int length) {
+        length = BER::sizeof_octet_string(length);
+        length += BER::sizeof_contextual_tag(length);
+        return length;
+    }
+
     inline int sizeof_octet_string_seq(int length) {
         length = BER::sizeof_octet_string(length);
         length += BER::sizeof_contextual_tag(length);
@@ -120,6 +127,8 @@ struct TSRequest final {
     // BStream pubKeyAuth;
     /* [4] errorCode (INTEGER OPTIONAL) */
     uint32_t error_code;
+    /* [5] clientNonce (OCTET STRING OPTIONAL) */
+    Array clientNonce;
 
 
     TSRequest()
@@ -128,14 +137,18 @@ struct TSRequest final {
         , authInfo(0)
         , pubKeyAuth(0)
         , error_code(0)
+        , clientNonce(0)
     {
     }
 
 
     explicit TSRequest(InStream & stream)
-        : negoTokens(0)
+        : version(3)
+        , negoTokens(0)
         , authInfo(0)
         , pubKeyAuth(0)
+        , error_code(0)
+        , clientNonce(0)
     {
         this->recv(stream);
         // LOG(LOG_INFO, "TSRequest recv %d", res);
@@ -144,8 +157,10 @@ struct TSRequest final {
     int ber_sizeof(int length) {
         length += BER::sizeof_integer(this->version);
         length += BER::sizeof_contextual_tag(BER::sizeof_integer(this->version));
-        if (this->version >=3 && this->error_code != 0) {
-            length = BER::sizeof_integer(this->error_code);
+        if (this->version >= 3
+            && this->version != 5
+            && this->error_code != 0) {
+            length += BER::sizeof_integer(this->error_code);
             length += BER::sizeof_contextual_tag(BER::sizeof_integer(this->error_code));
         }
         return length;
@@ -157,6 +172,7 @@ struct TSRequest final {
         int nego_tokens_length;
         int pub_key_auth_length;
         int auth_info_length;
+        int client_nonce_length;
 
         nego_tokens_length = (this->negoTokens.size() > 0)
             ? CredSSP::sizeof_nego_tokens(this->negoTokens.size())
@@ -167,8 +183,23 @@ struct TSRequest final {
         auth_info_length = (this->authInfo.size() > 0)
             ? CredSSP::sizeof_auth_info(this->authInfo.size())
             : 0;
+        client_nonce_length = (this->version >= 5 && this->clientNonce.size() > 0)
+            ? CredSSP::sizeof_client_nonce(this->clientNonce.size())
+            : 0;
 
-        length = nego_tokens_length + pub_key_auth_length + auth_info_length;
+        if (this->version >= 3
+            && this->version != 5
+            && this->error_code != 0) {
+            nego_tokens_length = 0;
+            pub_key_auth_length = 0;
+            auth_info_length = 0;
+            client_nonce_length = 0;
+        }
+
+        length = nego_tokens_length
+            + pub_key_auth_length
+            + auth_info_length
+            + client_nonce_length;
         ts_request_length = this->ber_sizeof(length);
 
         /* TSRequest */
@@ -176,7 +207,9 @@ struct TSRequest final {
 
         /* [0] version */
         BER::write_contextual_tag(stream, 0, BER::sizeof_integer(this->version), true);
-        BER::write_integer(stream, 3);
+        BER::write_integer(stream, this->version);
+        LOG(LOG_INFO, "Credssp TSCredentials::emit() Local Version %u",
+            this->version);
 
         /* [1] negoTokens (NegoData) */
         if (nego_tokens_length > 0) {
@@ -220,23 +253,44 @@ struct TSRequest final {
             (void)length;
         }
         /* [4] errorCode (INTEGER) */
-        if (this->version >= 3 && this->error_code != 0) {
+        if (this->version >= 3
+            && this->version != 5
+            && this->error_code != 0) {
             LOG(LOG_INFO, "Credssp: TSCredentials::emit() errorCode");
             BER::write_contextual_tag(stream, 0, BER::sizeof_integer(this->error_code), true);
             BER::write_integer(stream, this->error_code);
+        }
+        /* [5] clientNonce (OCTET STRING) */
+        if (this->version >= 5
+            && client_nonce_length > 0) {
+            LOG(LOG_INFO, "Credssp: TSCredentials::emit() clientNonce");
+            length = client_nonce_length;
+            length -= BER::write_sequence_octet_string(stream, 5,
+                                                       this->clientNonce.get_data(),
+                                                       this->clientNonce.size());
+            assert(length == 0);
+            (void)length;
         }
     }
 
     int recv(InStream & stream) {
         int length;
+        uint32_t remote_version;
 
         /* TSRequest */
         if(!BER::read_sequence_tag(stream, length) ||
            !BER::read_contextual_tag(stream, 0, length, true) ||
-           !BER::read_integer(stream, this->version)) {
+           !BER::read_integer(stream, remote_version)) {
             return -1;
         }
-        LOG(LOG_INFO, "Credssp TSCredentials::recv() Version %u", this->version);
+        LOG(LOG_INFO, "Credssp TSCredentials::recv() Remote Version %u",
+            remote_version);
+
+        if (remote_version < this->version) {
+            this->version = remote_version;
+        }
+        LOG(LOG_INFO, "Credssp TSCredentials::recv() Local Version %u",
+            this->version);
 
         /* [1] negoTokens (NegoData) */
         if (BER::read_contextual_tag(stream, 1, length, true) != false)        {
@@ -277,8 +331,9 @@ struct TSRequest final {
             stream.in_copy_bytes(this->pubKeyAuth.get_data(), length);
         }
         /* [4] errorCode (INTEGER) */
-        if (this->version >= 3 &&
-            BER::read_contextual_tag(stream, 4, length, true) != false) {
+        if (remote_version >= 3
+            && remote_version != 5
+            && BER::read_contextual_tag(stream, 4, length, true) != false) {
             LOG(LOG_INFO, "Credssp TSCredentials::recv() ErrorCode");
             if (!BER::read_integer(stream, this->error_code)) {
                 return -1;
@@ -289,6 +344,17 @@ struct TSRequest final {
                 (this->error_code >> 16) & 0x7FF,
                 (this->error_code & 0xFFFF)
                 );
+        }
+        /* [5] clientNonce (OCTET STRING) */
+        if (remote_version >= 5
+            && BER::read_contextual_tag(stream, 5, length, true) != false) {
+            LOG(LOG_INFO, "Credssp TSCredentials::recv() CLIENTNONCE");
+            if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
+               !stream.in_check_rem(length)) {
+                return -1;
+            }
+            this->clientNonce.init(length);
+            stream.in_copy_bytes(this->clientNonce.get_data(), length);
         }
         return 0;
     }
