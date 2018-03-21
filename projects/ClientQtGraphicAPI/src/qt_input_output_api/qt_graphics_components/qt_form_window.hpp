@@ -38,6 +38,7 @@
 
 
 
+#include <QtGui/QPainter>
 #include <QtGui/QKeyEvent>
 
 #if REDEMPTION_QT_VERSION == 4
@@ -72,15 +73,6 @@
 
 
 
-struct AccountData {
-    std::string title;
-    std::string IP;
-    std::string name;
-    std::string pwd;
-    int port = 0;
-    int options_profil = 0;
-    int index = -1;
-};
 
 
 class FormReplay : public QWidget
@@ -135,25 +127,31 @@ private Q_SLOTS:
 };
 
 
-#include <QtGui/QPainter>
+struct AccountData {
+    std::string title;
+    std::string IP;
+    std::string name;
+    std::string pwd;
+    int port = 0;
+    int options_profil = 0;
+    int index = -1;
+};
 
 
-class FormRDPTabAPI : public QWidget
+
+class FormTabAPI : public QWidget
 {
 public:
-
      int account_index_to_drop;
 
-    FormRDPTabAPI(QWidget * parent)
+    FormTabAPI(QWidget * parent)
       : QWidget(parent)
       , account_index_to_drop(-1)
       {}
 
     virtual void targetPicked(int ) {}
-
     virtual void drop_account() {}
-
-    virtual ~FormRDPTabAPI() = default;
+    virtual ~FormTabAPI() = default;
 };
 
 
@@ -164,9 +162,11 @@ class ConnectionFormQt  : public QWidget
 Q_OBJECT
 
 public:
+    uint8_t protocol_type;
+
     QFormLayout line_edit_layout;
 
-    FormRDPTabAPI * main_panel;
+    FormTabAPI * main_panel;
 
     QComboBox  _IPCombobox;
 
@@ -181,25 +181,25 @@ public:
     QLabel    _portLabel;
 
 
-    ConnectionFormQt(FormRDPTabAPI * main_panel, QWidget * parent)
+    ConnectionFormQt(FormTabAPI * main_panel, uint8_t protocol_type, QWidget * parent)
       : QWidget(parent)
-        , line_edit_layout(this)
-        , main_panel(main_panel)
-        , _IPCombobox(this)
-        , _IPField("", this)
-        , _userNameField("", this)
-        , _PWDField("", this)
-        , _portField("", this)
-        , _IPLabel(      QString("IP server :"), this)
-        , _userNameLabel(QString("User name : "), this)
-        , _PWDLabel(     QString("Password :  "), this)
-        , _portLabel(    QString("Port :      "), this)
+      , protocol_type(protocol_type)
+      , line_edit_layout(this)
+      , main_panel(main_panel)
+      , _IPCombobox(this)
+      , _IPField("", this)
+      , _userNameField("", this)
+      , _PWDField("", this)
+      , _portField("", this)
+      , _IPLabel(      QString("IP server :"), this)
+      , _userNameLabel(QString("User name : "), this)
+      , _PWDLabel(     QString("Password :  "), this)
+      , _portLabel(    QString("Port :      "), this)
     {
         this->setFixedSize(240, 160);
         this->_IPCombobox.setFixedWidth(140);
         this->_IPCombobox.setLineEdit(&(this->_IPField));
         this->QObject::connect(&(this->_IPCombobox), SIGNAL(currentIndexChanged(int)) , this, SLOT(targetPicked(int)));
-        this->QObject::connect(&(this->_IPCombobox), SIGNAL(mouseReleaseEvent()) , this, SLOT(drop_account()));
 
         this->setLayout(&(this->line_edit_layout));
 
@@ -213,26 +213,19 @@ public:
         this->line_edit_layout.addRow(&(this->_userNameLabel), &(this->_userNameField));
         this->line_edit_layout.addRow(&(this->_PWDLabel)     , &(this->_PWDField));
         this->line_edit_layout.addRow(&(this->_portLabel)    , &(this->_portField));
-    }
 
-
-    void mouseReleaseEvent(QMouseEvent *e) override {
-
-        switch (e->button()) {
-            case Qt::LeftButton:
-            {
-
-                this->main_panel->drop_account();
-            }
-            default: break;
+        if (this->protocol_type == ClientRedemptionIOAPI::MOD_VNC) {
+            this->_userNameField.hide();
+            this->_userNameLabel.hide();
         }
     }
 
 private Q_SLOTS:
     void targetPicked(int index) {
-        this->main_panel->targetPicked(index);
+        if (this->main_panel) {
+            this->main_panel->targetPicked(index);
+        }
     }
-
 };
 
 
@@ -243,20 +236,21 @@ class IconAccountQt :  public QWidget
 Q_OBJECT
 
 public:
-    FormRDPTabAPI * main_tab;
+    FormTabAPI * main_tab;
     const AccountData accountData;
     QPixmap pixmap;
+    QRect drop_rect;
 
-    
 
-    IconAccountQt(FormRDPTabAPI * main_tab, const AccountData & accountData, QWidget * parent)
+
+    IconAccountQt(FormTabAPI * main_tab, const AccountData & accountData, QWidget * parent)
       : QWidget(parent)
       , main_tab(main_tab)
       , accountData(accountData)
       , pixmap(137, 50)
+      , drop_rect(24, 95, 240, 160)
     {
         this->setFixedSize(137, 50);
-//         this->repaint();
     }
 
     void draw_account() {
@@ -318,16 +312,20 @@ public:
 
         switch (e->button()) {
             case Qt::LeftButton:
-            {
-                this->main_tab->account_index_to_drop = this->accountData.index;
-                QImage image(this->pixmap.toImage().convertToFormat(QImage::Format_ARGB32));
-                QPixmap map = QPixmap::fromImage(image);
+                if (this->main_tab) {
 
-                QCursor qcursor(map, 10, 10);
+                    this->main_tab->account_index_to_drop = this->accountData.index;
+                    QImage image(this->pixmap.toImage().convertToFormat(QImage::Format_ARGB32));
+                    QPixmap map = QPixmap::fromImage(image);
 
-                this->main_tab->setCursor(qcursor);
-            }
-            default: break;
+                    QCursor qcursor(map, 10, 10);
+
+                    this->main_tab->setCursor(qcursor);
+                }
+                break;
+
+            default:
+                break;
         }
     }
 
@@ -335,15 +333,19 @@ public:
 
         switch (e->button()) {
             case Qt::LeftButton:
-            {
-                LOG(LOG_INFO, "x= %d   y=%d", e->x(), e->y());
-                this->main_tab->account_index_to_drop = -1;
-                this->main_tab->setCursor(Qt::ArrowCursor);
-            }
-            default: break;
+                if (this->main_tab) {
+                    if (this->drop_rect.contains(QPoint(e->globalX() - this->main_tab->nativeParentWidget()->x(), e->globalY() - this->main_tab->nativeParentWidget()->y()))) {
+                        this->main_tab->drop_account();
+                    }
+                    this->main_tab->account_index_to_drop = -1;
+                    this->main_tab->setCursor(Qt::ArrowCursor);
+                }
+                break;
+
+            default:
+                break;
         }
     }
-
 
     void paintEvent(QPaintEvent * event) override {
         Q_UNUSED(event);
@@ -358,7 +360,6 @@ public:
 
         painter.end();
     }
-
 
 };
 
@@ -376,17 +377,15 @@ public:
     const int nb_account;
 
 
-    AccountPanelQt(FormRDPTabAPI * main_tab, const AccountData * accountData, int nb_account, QWidget * parent)
+    AccountPanelQt(FormTabAPI * main_tab, const AccountData * accountData, int nb_account, QWidget * parent)
       : QWidget(parent)
       , lay(this)
       , accountData(accountData)
       , nb_account(nb_account < 15 ?  nb_account : 15)
     {
-        this->repaint();
         this->setMinimumHeight(160);
 
         for (int i = 0; i < this->nb_account; i++) {
-//             LOG(LOG_INFO, "ip=%s  name=%s", this->accountData[i].IP.c_str(), this->accountData[i].name.c_str());
             this->icons[i] = new IconAccountQt(main_tab, this->accountData[i], this);
             this->icons[i]->draw_account();
             this->lay.addRow(this->icons[i]);
@@ -394,7 +393,6 @@ public:
 
         this->setLayout(&(this->lay));
     }
-
 
     void paintEvent(QPaintEvent * event) override {
         Q_UNUSED(event);
@@ -412,7 +410,7 @@ public:
 
 
 
-class FormRDPTabQt : public FormRDPTabAPI
+class FormTabQt : public FormTabAPI
 {
 
 Q_OBJECT
@@ -422,8 +420,9 @@ public:
         MAX_ACCOUNT_DATA = 15
     };
 
-    ClientRedemptionIOAPI   * _front;
-    ClientInputMouseKeyboardAPI       * controllers;
+    uint8_t protocol_type;
+    ClientRedemptionIOAPI       * _front;
+    ClientInputMouseKeyboardAPI * controllers;
     const int            _width;
     const int            _height;
 
@@ -440,7 +439,7 @@ public:
     QPushButton          _buttonConnexion;
     QPushButton          _buttonOptions;
 
-    QtRDPOptions options;
+    QtOptions options;
 
     QScrollArea scroller;
 
@@ -450,20 +449,21 @@ public:
 
 
 
-    FormRDPTabQt(ClientInputMouseKeyboardAPI * controllers, ClientRedemptionIOAPI  * front, QWidget * parent)
-        : FormRDPTabAPI(parent)
+    FormTabQt(ClientInputMouseKeyboardAPI * controllers, ClientRedemptionIOAPI  * front, uint8_t protocol_type, QWidget * parent)
+        : FormTabAPI(parent)
+        , protocol_type(protocol_type)
         , _front(front)
         , controllers(controllers)
         , _width(400)
         , _height(600)
         , grid_layout(this)
         , _accountNB(0)
-        , line_edit_panel(this, this)
+        , line_edit_panel(this, protocol_type, this)
         , _errorLabel(   QString(""            ), this)
         , _pwdCheckBox(QString("Save password."), this)
         , _buttonConnexion("Connection", this)
         , _buttonOptions("Options", this)
-        , options(front, this)
+        , options(front, protocol_type, this)
         , scroller(this)
         , _pwdCheckBoxChecked(false)
         , _lastTargetIndex(0)
@@ -545,6 +545,7 @@ public:
                     } else
                     if (tag.compare(std::string("options_profil")) == 0) {
                         this->_accountData[accountNB].options_profil = std::stoi(info);
+                        this->_accountData[accountNB].index = accountNB+1;
                         accountNB++;
                         if (accountNB == MAX_ACCOUNT_DATA) {
                             this->_accountNB = MAX_ACCOUNT_DATA;
@@ -638,6 +639,13 @@ public:
         }
     }
 
+    void drop_account() override {
+        if (this->account_index_to_drop !=  -1) {
+            this->targetPicked(this->account_index_to_drop);
+            this->account_index_to_drop = -1;
+        }
+    }
+
     void targetPicked(int index) override {
         if (index < 0) {
             return;
@@ -665,15 +673,11 @@ public:
         this->_buttonConnexion.setFocus();
     }
 
-    void drop_account() override {
-        if (this->account_index_to_drop !=  -1) {
-            this->targetPicked(this->account_index_to_drop);
-            this->account_index_to_drop = -1;
-        }
-    }
-
 private Q_SLOTS:
     void connexionReleased() {
+
+        this->_front->mod_state = this->protocol_type;
+
         QPoint points = this->mapToGlobal({0, 0});
         this->controllers->client->windowsData.form_x = points.x()-14;
         this->controllers->client->windowsData.form_y = points.y()-85;
@@ -764,10 +768,12 @@ public:
     QFormLayout main_layout;
     QTabWidget  tabs;
 
-    FormRDPTabQt  RDP_tab;
-    QWidget       VNC_tab;
+    FormTabQt  RDP_tab;
+    FormTabQt  VNC_tab;
     FormReplay       replay_tab;
+
     bool is_option_open;
+    bool is_closing;
 
 
 
@@ -779,10 +785,11 @@ public:
         , _long_height(700)
         , main_layout(this)
         , tabs(this)
-        , RDP_tab(controllers, front, this)
-        , VNC_tab(this)
+        , RDP_tab(controllers, front, ClientRedemptionIOAPI::MOD_RDP, this)
+        , VNC_tab(controllers, front, ClientRedemptionIOAPI::MOD_VNC, this)
         , replay_tab(controllers, this)
         , is_option_open(false)
+        , is_closing(false)
     {
         this->setWindowTitle("ReDemPtion Client");
         this->setAttribute(Qt::WA_DeleteOnClose);
@@ -807,6 +814,7 @@ public:
         ;
 
         this->tabs.setStyleSheet( this->tabs.styleSheet().append(qss));
+        this->QObject::connect(&(this->tabs)   , SIGNAL(currentChanged(int)), this, SLOT (tab_changed(int)));
 
         const QString RDP_title("  RDP  ");
         this->tabs.addTab(&(this->RDP_tab), RDP_title);
@@ -826,43 +834,53 @@ public:
         this->controllers->client->windowsData.form_x = points.x()-1;
         this->controllers->client->windowsData.form_y = points.y()-39;
         this->controllers->client->writeWindowsConf();
+        this->is_closing = true;
+    }
+
+
+    FormTabQt * get_current_tab() {
+        switch (this->tabs.currentIndex()) {
+            case 0: return &(this->RDP_tab);
+            case 1: return &(this->VNC_tab);
+            default: return nullptr;
+        }
     }
 
 
     void set_ErrorMsg(std::string str) {
-        this->RDP_tab.set_ErrorMsg(str);
+        this->get_current_tab()->set_ErrorMsg(str);
     }
 
     void set_IPField(std::string str) {
-         this->RDP_tab.set_IPField(str);
+         this->get_current_tab()->set_IPField(str);
     }
 
     void set_userNameField(std::string str) {
-        this->RDP_tab.set_userNameField(str);
+        this->get_current_tab()->set_userNameField(str);
     }
 
     void set_PWDField(std::string str) {
-        this->RDP_tab.set_PWDField(str);
+        this->get_current_tab()->set_PWDField(str);
     }
 
     void set_portField(int str) {
-        this->RDP_tab.set_portField(str);
+        this->get_current_tab()->set_portField(str);
     }
 
     std::string get_IPField() {
-        return this->RDP_tab.get_IPField();
+        return this->get_current_tab()->get_IPField();
     }
 
     std::string get_userNameField() {
-        return this->RDP_tab.get_userNameField();
+        return this->get_current_tab()->get_userNameField();
     }
 
     std::string get_PWDField() {
-        return this->RDP_tab.get_PWDField();
+        return this->get_current_tab()->get_PWDField();
     }
 
     int get_portField() {
-        return this->RDP_tab.get_portField();
+        return this->get_current_tab()->get_portField();
     }
 
     void init_form() {
@@ -872,20 +890,32 @@ public:
             this->controllers->client->windowsData.form_y = (desktop->height()/2) - (this->_height/2);
         }
         this->move(this->controllers->client->windowsData.form_x, this->controllers->client->windowsData.form_y);
-        this->RDP_tab.setAccountData();
+        this->get_current_tab()->setAccountData();
     }
 
     void options() {
         if (this->is_option_open) {
-            this->RDP_tab.options.hide();
-            this->RDP_tab._buttonOptions.setText("Options v");
+            this->get_current_tab()->options.hide();
+            this->get_current_tab()->_buttonOptions.setText("Options v");
+            this->VNC_tab.options.hide();
+            this->VNC_tab._buttonOptions.setText("Options v");
             this->setFixedHeight(this->_height);
             this->is_option_open = false;
         } else {
             this->setFixedHeight(this->_long_height);
-            this->RDP_tab.options.show();
-            this->RDP_tab._buttonOptions.setText("Options ^");
+            this->get_current_tab()->options.show();
+            this->get_current_tab()->_buttonOptions.setText("Options ^");
+            this->VNC_tab.options.show();
+            this->VNC_tab._buttonOptions.setText("Options ^");
             this->is_option_open = true;
+        }
+    }
+
+private Q_SLOTS:
+    void tab_changed(int) {
+        this->setFixedHeight(this->_height);
+        if (!this->is_closing) {
+            this->get_current_tab()->options.hide();
         }
     }
 

@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
                               , sound_api
                               , socket_api
                               , control_qt);
-
+;
     app.exec();
 
 //     delete(graphic_control_qt);
