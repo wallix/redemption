@@ -942,7 +942,7 @@ void FileToGraphic::process_window_information(
         case RDP::RAIL::WINDOW_ORDER_ICON: {
                 RDP::RAIL::WindowIcon order;
                 order.receive(stream);
-                order.log(LOG_INFO);
+                //order.log(LOG_INFO);
                 for (gdi::GraphicApi * gd : this->graphic_consumers){
                     gd->draw(order);
                 }
@@ -952,7 +952,7 @@ void FileToGraphic::process_window_information(
         case RDP::RAIL::WINDOW_ORDER_CACHEDICON: {
                 RDP::RAIL::CachedIcon order;
                 order.receive(stream);
-                order.log(LOG_INFO);
+                //order.log(LOG_INFO);
                 for (gdi::GraphicApi * gd : this->graphic_consumers){
                     gd->draw(order);
                 }
@@ -965,7 +965,7 @@ void FileToGraphic::process_window_information(
                 RDP::RAIL::DeletedWindow order;
                 order.receive(stream);
                 this->statistics.DeletedWindow.total_len += stream.get_current() - p;
-                order.log(LOG_INFO);
+                //order.log(LOG_INFO);
                 for (gdi::GraphicApi * gd : this->graphic_consumers){
                     gd->draw(order);
                 }
@@ -979,7 +979,7 @@ void FileToGraphic::process_window_information(
                 RDP::RAIL::NewOrExistingWindow order;
                 order.receive(stream);
                 this->statistics.NewOrExistingWindow.total_len += stream.get_current() - p;
-                order.log(LOG_INFO);
+                //order.log(LOG_INFO);
                 for (gdi::GraphicApi * gd : this->graphic_consumers){
                     gd->draw(order);
                 }
@@ -1001,7 +1001,7 @@ void FileToGraphic::process_notification_icon_information(
         case RDP::RAIL::WINDOW_ORDER_STATE_DELETED: {
                 RDP::RAIL::DeletedNotificationIcons order;
                 order.receive(stream);
-                order.log(LOG_INFO);
+                //order.log(LOG_INFO);
                 for (gdi::GraphicApi * gd : this->graphic_consumers){
                     gd->draw(order);
                 }
@@ -1012,7 +1012,7 @@ void FileToGraphic::process_notification_icon_information(
         case RDP::RAIL::WINDOW_ORDER_STATE_NEW: {
                 RDP::RAIL::NewOrExistingNotificationIcons order;
                 order.receive(stream);
-                order.log(LOG_INFO);
+                //order.log(LOG_INFO);
                 for (gdi::GraphicApi * gd : this->graphic_consumers){
                     gd->draw(order);
                 }
@@ -1031,7 +1031,7 @@ void FileToGraphic::process_desktop_information(
     if (FieldsPresentFlags & RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_NONE) {
         RDP::RAIL::NonMonitoredDesktop order;
         order.receive(stream);
-        order.log(LOG_INFO);
+        //order.log(LOG_INFO);
         for (gdi::GraphicApi * gd : this->graphic_consumers){
             gd->draw(order);
         }
@@ -1039,7 +1039,7 @@ void FileToGraphic::process_desktop_information(
     else {
         RDP::RAIL::ActivelyMonitoredDesktop order;
         order.receive(stream);
-        order.log(LOG_INFO);
+        //order.log(LOG_INFO);
         for (gdi::GraphicApi * gd : this->graphic_consumers){
             gd->draw(order);
         }

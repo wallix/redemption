@@ -4242,7 +4242,6 @@ protected:
                 srcy = 0;
             }
 
-RDPScrBlt(drect, cmd.rop, srcx, srcy).log(LOG_INFO, clip);
             this->graphics_update->draw(RDPScrBlt(drect, cmd.rop, srcx, srcy), clip);
         }
     }
