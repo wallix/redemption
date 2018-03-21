@@ -34,4 +34,6 @@ struct PngParams
     bool real_time_image_capture;
     bool remote_program_session;
     bool rt_display;
+
+    bool smart_video_cropping;
 };

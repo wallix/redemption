@@ -22,6 +22,7 @@
 #pragma once
 
 #include "utils/stream.hpp"
+#include "utils/hexdump.hpp"
 
 // [MS-NLMP]
 
@@ -222,9 +223,13 @@ struct NtlmVersion {
 
     void ntlm_get_version_info() {
         this->ignore_version = false;
-        this->ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
+        // this->ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
+        // this->ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+	// this->ProductBuild        = 2600;
+        // this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+        this->ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
         this->ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-	this->ProductBuild        = 2600;
+	this->ProductBuild        = 7601;
         this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
     }
 
@@ -586,6 +591,12 @@ struct NtlmField {
 
     ~NtlmField() {}
 
+    void log(const char * name) {
+        LOG(LOG_DEBUG, "Field %s, len: %u, maxlen: %u, offset: %u",
+            name, this->len, this->maxLen, this->bufferOffset);
+        hexdump_d(this->buffer.get_data(), this->len);
+    }
+
     unsigned int emit(OutStream & stream, unsigned int currentOffset) /* TODO const*/ {
         this->len = this->buffer.size();
         this->maxLen = this->len;
@@ -704,5 +715,3 @@ struct NTLMSSPMessageSignatureESS {
     uint8_t  CheckSum[8];
     uint32_t SeqNum;
 };
-
-

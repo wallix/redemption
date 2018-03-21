@@ -35,6 +35,7 @@ class Fstat;
 struct WrmParams
 {
     uint8_t capture_bpp;
+    bool remote_app;
     CryptoContext & cctx;
     Random & rnd;
     Fstat & fstat;
@@ -45,6 +46,7 @@ struct WrmParams
     uint32_t wrm_verbose;
 
     WrmParams(uint8_t capture_bpp,
+              bool remote_app,
               CryptoContext & cctx,
               Random & rnd,
               Fstat & fstat,
@@ -55,6 +57,7 @@ struct WrmParams
               // TODO Verbose::WrmCapture
               uint32_t wrm_verbose)
     : capture_bpp(capture_bpp)
+    , remote_app(remote_app)
     , cctx(cctx)
     , rnd(rnd)
     , fstat(fstat)

@@ -634,7 +634,7 @@ private:
 public:
     bool ignore_rdesktop_bogus_clip = false;
 
-    void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
+    void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
     void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
     void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
@@ -979,7 +979,8 @@ public:
             ini.get<cfg::video::png_limit>(),
             true,
             this->client_info.remote_program,
-            ini.get<cfg::video::rt_display>()
+            ini.get<cfg::video::rt_display>(),
+            ini.get<cfg::video::smart_video_cropping>()
         };
         bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
 
@@ -1013,6 +1014,7 @@ public:
 
         WrmParams wrm_params = wrm_params_from_ini(
             this->capture_bpp,
+            this->client_info.remote_program,
             this->cctx,
             this->gen,
             this->fstat,
@@ -1041,7 +1043,8 @@ public:
                                    , capture_kbd, kbd_log_params
                                    , video_params
                                    , nullptr
-                                   , Rect()
+                                   , ((this->client_info.remote_program && ini.get<cfg::video::smart_video_cropping>()) ?
+                                      Rect(0, 0, 640, 480) : Rect())
                                    );
 
 
@@ -1052,6 +1055,11 @@ public:
         if (this->capture->get_graphic_api()) {
             this->set_gd(this->capture->get_graphic_api());
             this->capture->add_graphic(this->orders.graphics_update_pdu());
+        }
+
+        if (this->client_info.remote_program && ini.get<cfg::video::smart_video_cropping>() &&
+            !this->rail_window_rect.isempty()) {
+            this->capture->visibility_rects_event(this->rail_window_rect);
         }
 
         this->update_keyboard_input_mask_state();
@@ -4212,6 +4220,32 @@ protected:
         }
     }
 
+    void draw_impl(RDPScrBlt const & cmd, Rect clip) {
+        Rect drect = clip.intersect(this->client_info.width, this->client_info.height).intersect(clip_from_cmd(cmd));
+        if (!drect.isempty()) {
+            const signed int deltax = static_cast<int16_t>(cmd.srcx) - cmd.rect.x;
+            const signed int deltay = static_cast<int16_t>(cmd.srcy) - cmd.rect.y;
+
+            int srcx = drect.x + deltax;
+            int srcy = drect.y + deltay;
+
+            if (srcx < 0) {
+                drect.x  -= srcx;
+                drect.cx += srcx;
+
+                srcx = 0;
+            }
+            if (srcy < 0) {
+                drect.y  -= srcy;
+                drect.cy += srcy;
+
+                srcy = 0;
+            }
+
+            this->graphics_update->draw(RDPScrBlt(drect, cmd.rop, srcx, srcy), clip);
+        }
+    }
+
     void draw_impl(RDPMemBlt const& cmd, Rect clip, Bitmap const & bitmap) {
         if (this->client_info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX]) {
             this->priv_draw_memblt(cmd, clip, bitmap);
@@ -4264,6 +4298,29 @@ protected:
 
     void draw_impl(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) {
         this->priv_draw_and_update_cache_brush(cmd, clip, color_ctx);
+    }
+
+    Rect rail_window_rect;
+
+    void draw_impl(RDP::RAIL::NewOrExistingWindow const & cmd) {
+        this->graphics_update->draw(cmd);
+
+        if (!this->capture &&
+            (cmd.header.FieldsPresentFlags() & (RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET)) &&
+            (cmd.NumVisibilityRects() == 1)) {
+            this->rail_window_rect = static_cast<Rect>(cmd.VisibilityRects(0)).offset(
+                    cmd.VisibleOffsetX(), cmd.VisibleOffsetY()
+                );
+        }
+        else {
+            this->rail_window_rect.empty();
+        }
+    }
+
+    void draw_impl(RDP::RAIL::DeletedWindow const & cmd) {
+        this->graphics_update->draw(cmd);
+
+        this->rail_window_rect.empty();
     }
 
 public:

@@ -1205,6 +1205,26 @@ static void show_metadata(FileToGraphic const & player) {
         //cout << "Cache 4 size          : " << player.info_cache_4_size                            << endl;
         std::cout << "Compression algorithm : " << static_cast<int>(player.info_compression_algorithm) << '\n';
     }
+    if (!player.image_frame_rect.isempty()) {
+        std::cout << "Image frame rect      : (" <<
+            player.image_frame_rect.x << ", "  <<
+            player.image_frame_rect.y << ", "  <<
+            player.image_frame_rect.cx << ", "  <<
+            player.image_frame_rect.cy << ")"  << '\n';
+    }
+    std::cout << "RemoteApp session     : " << (player.remote_app ? "Yes" : "No") << '\n';
+    std::cout.flush();
+}
+
+inline
+static void show_metadata2(FileToGraphic const & player) {
+    if (!player.image_frame_rect.isempty()) {
+        std::cout << "Image frame rect      : (" <<
+            player.image_frame_rect.x << ", "  <<
+            player.image_frame_rect.y << ", "  <<
+            player.image_frame_rect.cx << ", "  <<
+            player.image_frame_rect.cy << ")"  << '\n';
+    }
     std::cout.flush();
 }
 
@@ -1352,6 +1372,9 @@ static void show_statistics(
     << "\nCachePointer          : " << f(statistics.CachePointer)
     << "\nPointerIndex          : " << f(statistics.PointerIndex)
     << "\n"
+    << "\nNewOrExistingWindow   : " << f(statistics.NewOrExistingWindow)
+    << "\nDeletedWindow         : " << f(statistics.DeletedWindow)
+    << "\n"
     << "\ngraphics_update_chunk : " << std::setw(count_field_len) << statistics.graphics_update_chunk
     << "\nbitmap_update_chunk   : " << std::setw(count_field_len) << statistics.bitmap_update_chunk
     << "\ntimestamp_chunk       : " << f(statistics.timestamp_chunk)
@@ -1376,6 +1399,130 @@ inline int is_encrypted_file(const char * input_filename, bool & infile_is_encry
     }
 
     return -1;
+}
+
+inline int get_joint_visibility_rect(
+                  Rect & out_rect,
+                  std::string & infile_path, std::string & input_basename, std::string & infile_extension,
+                  std::string & hash_path,
+                  UpdateProgressData::Format pgs_format,
+                  std::string & output_filename,
+                  bool infile_is_encrypted,
+                  Inifile & ini, CryptoContext & cctx,
+                  Fstat & fstat, uint32_t verbose)
+{
+    char infile_prefix[4096];
+    std::snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), input_basename.c_str());
+    ini.set<cfg::video::hash_path>(hash_path);
+
+    auto const encryption_mode = infile_is_encrypted
+      ? InMetaSequenceTransport::EncryptionMode::Encrypted
+      : InMetaSequenceTransport::EncryptionMode::NotEncrypted;
+
+    unsigned file_count = 0;
+    try {
+        InCryptoTransport buf_meta(cctx, encryption_mode, fstat);
+        MwrmReader mwrm_reader(buf_meta);
+        MetaLine meta_line;
+
+        buf_meta.open((infile_prefix + infile_extension).c_str());
+        mwrm_reader.read_meta_headers();
+
+        meta_line.start_time = 0;
+        meta_line.stop_time = 0;
+
+        if (Transport::Read::Ok == mwrm_reader.read_meta_line(meta_line)) {
+            while (Transport::Read::Ok == mwrm_reader.read_meta_line(meta_line)) {
+                file_count++;
+            }
+        }
+    }
+    catch (const Error & e) {
+        if (e.id == static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)) {
+            std::cerr << "Asked time not found in mwrm file\n";
+        }
+        else {
+            std::cerr << "Error: " << e.errmsg() << std::endl;
+        }
+        const bool msg_with_error_id = false;
+        raise_error(pgs_format, output_filename, e.id, e.errmsg(msg_with_error_id));
+        return -1;
+    };
+
+    InMetaSequenceTransport in_wrm_trans(
+        cctx, infile_prefix,
+        infile_extension.c_str(),
+        encryption_mode,
+        fstat
+    );
+
+    timeval begin_capture = {0, 0};
+    timeval end_capture = {0, 0};
+
+    int result = -1;
+    try {
+        for (unsigned i = 1; i < file_count ; i++) {
+            in_wrm_trans.next();
+        }
+
+        FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(verbose));
+
+        int return_code = 0;
+
+        {
+            try {
+                player.play(program_requested_to_shutdown);
+            }
+            catch (Error const &) {
+                return_code = -1;
+            }
+        }
+
+        if (player.remote_app) {
+            out_rect = player.image_frame_rect.intersect(Rect(0, 0, player.info_width, player.info_height));
+
+            bool     right         = true;
+            unsigned failure_count = 0;
+            while ((out_rect.cx & 3) && (failure_count < 2)) {
+                if (right) {
+                    if (out_rect.x + out_rect.cx < player.info_width) {
+                        out_rect.cx += 1;
+
+                        failure_count = 0;
+                    }
+                    else {
+                        failure_count++;
+                    }
+
+                    right = false;
+                }
+                else {
+                    if (out_rect.x > 0) {
+                        out_rect.x -=1;
+                        out_rect.cx += 1;
+
+                        failure_count = 0;
+                    }
+                    else {
+                        failure_count++;
+                    }
+
+                    right = true;
+                }
+            }
+            if (out_rect.cx & 3) {
+                out_rect.cx &= ~ 3;
+            }
+        }
+
+        result = return_code;
+    }
+    catch (const Error & e) {
+        const bool msg_with_error_id = false;
+        raise_error(pgs_format, output_filename, e.id, e.errmsg(msg_with_error_id));
+    }
+
+    return result;
 }
 
 inline int replay(std::string & infile_path, std::string & input_basename, std::string & infile_extension,
@@ -1404,6 +1551,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   uint32_t video_break_interval,
                   TraceType encryption_type,
                   Inifile & ini, CryptoContext & cctx,
+                  Rect const & crop_rect,
                   Random & rnd, Fstat & fstat,
                   uint32_t verbose)
 {
@@ -1681,6 +1829,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         WrmParams const wrm_params = wrm_params_from_ini(
                             wrm_color_depth,
+                            player.remote_app,
                             cctx,
                             rnd,
                             fstat,
@@ -1737,7 +1886,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 , capture_kbd, kbd_log_params
                                 , video_params
                                 , &update_progress_data
-                                , Rect()
+                                , crop_rect
                                 );
 
                             player.clear_consumer();
@@ -1814,6 +1963,10 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                     }
                 }
 
+                if (show_file_metadata) {
+                    show_metadata2(player);
+                }
+
                 if (show_statistics && return_code == 0) {
                     ::show_statistics(player.statistics, total_wrm_file_len, count_wrm_file);
                 }
@@ -1862,7 +2015,7 @@ struct RecorderParams {
     std::string input_filename;
     std::string input_basename;
     std::string infile_extension;
-    std::string config_filename;
+    std::string config_filename = app_path(AppPath::CfgIni);
     std::string mwrm_path;
     std::string hash_path;
     std::string full_path;
@@ -1885,7 +2038,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false};
+    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false, false};
     VideoParams video_params;
     FullVideoParams full_video_params;
 
@@ -2015,12 +2168,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         return ClRes::Exit;
     }
 
-    if (options.count("config-file") > 0) {
-        configuration_load(ini.configuration_holder(), recorder.config_filename);
-    }
-    else {
-        recorder.config_filename = app_path(AppPath::CfgIni);
-    }
+    configuration_load(ini.configuration_holder(), recorder.config_filename);
 
     if (options.count("quick") > 0) {
         recorder.quick_check = true;
@@ -2371,33 +2519,49 @@ extern "C" {
             // TODO also check if it contains any wrm at all and at wich one we should start depending on input time
             // TODO if start and stop time are outside wrm, userreplay(s should also be warned
 
+            Rect joint_visibility_rect;
+            if (ini.get<cfg::video::smart_video_cropping>()) {
+                res = get_joint_visibility_rect(
+                            joint_visibility_rect,
+                            rp.mwrm_path, rp.input_basename, rp.infile_extension,
+                            rp.hash_path,
+                            rp.json_pgs ? UpdateProgressData::JSON_FORMAT : UpdateProgressData::OLD_FORMAT,
+                            rp.output_filename,
+                            rp.infile_is_encrypted,
+                            ini, cctx, fstat,
+                            verbose);
+                if (res) {
+                    joint_visibility_rect.empty();
+                }
+            }
+
             res = replay(rp.mwrm_path, rp.input_basename, rp.infile_extension,
-                          rp.hash_path,
-                          rp.capture_flags,
-                          rp.json_pgs ? UpdateProgressData::JSON_FORMAT : UpdateProgressData::OLD_FORMAT,
-                          rp.chunk,
-                          rp.ocr_version,
-                          rp.output_filename,
-                          rp.begin_cap,
-                          rp.end_cap,
-                          rp.png_params,
-                          rp.video_params,
-                          rp.full_video_params,
-                          rp.wrm_color_depth,
-                          rp.wrm_frame_interval,
-                          rp.wrm_break_interval,
-                          rp.infile_is_encrypted,
-                          rp.order_count,
-                          rp.show_file_metadata,
-                          rp.show_statistics,
-                          rp.clear,
-                          rp.full_video,
-                          rp.remove_input_file,
-                          rp.wrm_compression_algorithm_,
-                          rp.video_break_interval,
-                          rp.encryption_type,
-                          ini, cctx, rnd, fstat,
-                          verbose);
+                         rp.hash_path,
+                         rp.capture_flags,
+                         rp.json_pgs ? UpdateProgressData::JSON_FORMAT : UpdateProgressData::OLD_FORMAT,
+                         rp.chunk,
+                         rp.ocr_version,
+                         rp.output_filename,
+                         rp.begin_cap,
+                         rp.end_cap,
+                         rp.png_params,
+                         rp.video_params,
+                         rp.full_video_params,
+                         rp.wrm_color_depth,
+                         rp.wrm_frame_interval,
+                         rp.wrm_break_interval,
+                         rp.infile_is_encrypted,
+                         rp.order_count,
+                         rp.show_file_metadata,
+                         rp.show_statistics,
+                         rp.clear,
+                         rp.full_video,
+                         rp.remove_input_file,
+                         rp.wrm_compression_algorithm_,
+                         rp.video_break_interval,
+                         rp.encryption_type,
+                         ini, cctx, joint_visibility_rect,
+                         rnd, fstat, verbose);
 
             } catch (const Error & e) {
                 std::cout << "decrypt failed: with id=" << e.id << std::endl;

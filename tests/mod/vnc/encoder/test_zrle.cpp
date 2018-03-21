@@ -32,7 +32,7 @@
 #include "vnc_zrle_slice1_0_34.hpp"
 
 namespace VNC
-{ 
+{
     namespace Encoder {
         enum class State
         {
@@ -65,7 +65,7 @@ RED_AUTO_TEST_CASE(TestZrle)
         size_t pos;
     public:
         BlockWrap(const_byte_array & t) : t(t), pos(0) {}
-        
+
         size_t partial_read(byte_ptr buffer, size_t len) override
         {
             const size_t available = this->t.size() - this->pos;
@@ -95,7 +95,7 @@ RED_AUTO_TEST_CASE(TestZrle)
 
 
     auto state = VNC::Encoder::State::Encoding;
-    VNC::Encoder::Zrle * encoder = nullptr;
+    std::unique_ptr<VNC::Encoder::Zrle> encoder;
     bool need_more_data = true;
     for (auto t: datas){
         BlockWrap bw(t);
@@ -117,7 +117,7 @@ RED_AUTO_TEST_CASE(TestZrle)
                     uint16_t cx = stream.in_uint16_be();
                     uint16_t cy = stream.in_uint16_be();
                     int32_t encoding = stream.in_sint32_be();
-                    encoder = new VNC::Encoder::Zrle(info.bpp, nbbytes(info.bpp), x, y, cx, cy, zd, VNCVerbose::basic_trace);
+                    encoder.reset(new VNC::Encoder::Zrle(info.bpp, nbbytes(info.bpp), x, y, cx, cy, zd, VNCVerbose::basic_trace));
                     LOG(LOG_INFO, "Encoding: (%u, %u, %u, %u) : %d", x, y, cx, cy, encoding);
                     buf.advance(sz);
                     // Post Assertion: we have an encoder
@@ -135,6 +135,7 @@ RED_AUTO_TEST_CASE(TestZrle)
                         break;
                         case VNC::Encoder::EncoderState::Exit:
                             LOG(LOG_INFO, "End of encoder");
+                            encoder.reset();
                         break;
                         }
                 }
