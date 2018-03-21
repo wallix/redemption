@@ -329,6 +329,7 @@ protected:
         this->negoToken.init(0);
         this->pubKeyAuth.init(0);
         this->authInfo.init(0);
+        this->ts_request.error_code = 0;
     }
 };
 
