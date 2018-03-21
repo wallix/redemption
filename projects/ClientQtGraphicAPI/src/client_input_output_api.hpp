@@ -58,6 +58,7 @@
 #include "utils/genrandom.hpp"
 #include "keyboard/keymap2.hpp"
 #include "transport/crypto_transport.hpp"
+#include "mod/internal/client_execute.hpp"
 
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
@@ -235,6 +236,9 @@ public:
     int client_sck;
 
 
+
+
+
     struct ModRDPParamsData
     {
         bool enable_tls                      = false;
@@ -286,6 +290,13 @@ public:
     std::string source_of_WorkingDir;
     std::string source_of_Arguments;
 
+    // VNC mod
+    bool is_apple;
+    Theme      theme;
+    WindowListCaps windowListCaps;
+    ClientExecute exe_vnc;
+    std::string vnc_encodings;
+
 
     ClientRedemptionIOAPI(char* argv[], int argc, RDPVerbose verbose)
     : verbose(verbose)
@@ -320,6 +331,9 @@ public:
     , _recv_disconnect_ultimatum(false)
     , mod_palette(BGRPalette::classic_332())
     , commandIsValid(0)
+    , is_apple(false)
+    , exe_vnc(*(this),  this->windowListCaps,  false)
+    , vnc_encodings("5,16,0,1,-239")
     {
         SSL_load_error_strings();
         SSL_library_init();
@@ -380,26 +394,18 @@ public:
 
             std::string word(argv[i]);
 
-            if (       word == "-n") {
-                if (i < argc-1) {
-                    this->user_name = std::string(argv[i+1]);
-                    this->commandIsValid += NAME_GOT;
-                }
-            } else if (word == "-w") {
-                if (i < argc-1) {
-                    this->user_password = std::string(argv[i+1]);
-                    this->commandIsValid += PWD_GOT;
-                }
-            } else if (word == "-i") {
-                if (i < argc-1) {
-                    this->target_IP = std::string(argv[i+1]);
-                    this->commandIsValid += IP_GOT;
-                }
-            } else if (word == "-p") {
-                if (i < argc-1) {
-                    this->port = std::stoi(std::string(argv[i+1]));
-                    this->commandIsValid += PORT_GOT;
-                }
+            if (       word == "-n" && i < argc-1) {
+                this->user_name = std::string(argv[i+1]);
+                this->commandIsValid += NAME_GOT;
+            } else if (word == "-w" && i < argc-1) {
+                this->user_password = std::string(argv[i+1]);
+                this->commandIsValid += PWD_GOT;
+            } else if (word == "-i" && i < argc-1) {
+                this->target_IP = std::string(argv[i+1]);
+                this->commandIsValid += IP_GOT;
+            } else if (word == "-p" && i < argc-1) {
+                this->port = std::stoi(std::string(argv[i+1]));
+                this->commandIsValid += PORT_GOT;
             } else if (word == "--rdpdr") {
                 this->verbose = RDPVerbose::rdpdr | this->verbose;
             } else if (word == "--rdpsnd") {
@@ -410,33 +416,37 @@ public:
                 this->verbose = RDPVerbose::graphics | this->verbose;
             } else if (word == "--printer") {
                 this->verbose = RDPVerbose::printer | this->verbose;
-            } else if (word == "--rdpdr_dump") {
+            } else if (word == "--rdpdr-dump") {
                 this->verbose = RDPVerbose::rdpdr_dump | this->verbose;
-            } else if (word == "--cliprdr_dump") {
+            } else if (word == "--cliprdr-dump") {
                 this->verbose = RDPVerbose::cliprdr_dump | this->verbose;
-            } else if (word == "--basic_trace") {
+            } else if (word == "--basic-trace") {
                 this->verbose = RDPVerbose::basic_trace | this->verbose;
             } else if (word == "--connection") {
                 this->verbose = RDPVerbose::connection | this->verbose;
-            } else if (word == "--rail_order") {
+            } else if (word == "--rail-order") {
                 this->verbose = RDPVerbose::rail_order | this->verbose;
-            } else if (word == "--asynchronous_task") {
+            } else if (word == "--asynchronous-task") {
                 this->verbose = RDPVerbose::asynchronous_task | this->verbose;
             } else if (word == "--capabilities") {
                 this->verbose = RDPVerbose::capabilities | this->verbose;
             } else if (word == "--rail") {
                 this->verbose = RDPVerbose::rail | this->verbose;
-            } else if (word == "--rail_dump") {
+            } else if (word == "--rail-dump") {
                 this->verbose = RDPVerbose::rail_dump | this->verbose;
             } else if (word == "--vnc") {
                 this->mod_state = MOD_VNC;
-            } else if (word == "--remote_app" && i < argc-1) {
+            } else if (word == "--remote-app") {
                 this->mod_state = MOD_RDP_REMOTE_APP;
-                this->source_of_ExeOrFile = std::string(argv[i+1]);
-            } else if (word == "--remote_dir" && i < argc-1) {
+            } else if (word == "--remote-exe" && i < argc-1) {
+                this->mod_state = MOD_RDP_REMOTE_APP;
+                std::string line(argv[i+1]);
+                std::string delimiter = " ";
+                auto pos(line.find(delimiter));
+                this->source_of_ExeOrFile = line.substr(0, pos);
+                this->source_of_Arguments = line.substr(pos + delimiter.length(), line.length());
+            } else if (word == "--remote-dir" && i < argc-1) {
                 this->source_of_WorkingDir = std::string(argv[i+1]);
-            } else if (word == "--remote_args" && i < argc-1) {
-                this->source_of_Arguments = std::string(argv[i+1]);
             } else if (word == "--width" && i < argc-1) {
                 this->info.width = std::stoi(std::string(argv[i+1]));
             } else if (word == "--height" && i < argc-1) {
@@ -447,27 +457,42 @@ public:
                 this->info.keylayout = std::stoi(std::string(argv[i+1]));
             } else if (word == "--record" && i < argc-1) {
                 this->is_recording = true;
-            } else if (word == "--share" && i < argc-1) {
+            } else if (word == "--share-dir" && i < argc-1) {
                 this->enable_shared_virtual_disk = true;
                 this->SHARE_DIR = std::string(argv[i+1]);
             } else if (word == "--span") {
                 this->is_spanning = true;
-            } else if (word == "--disable_share") {
+            } else if (word == "--disable-share") {
                 this->enable_shared_virtual_disk = false;
-            } else if (word == "--disable_clipboard") {
+            } else if (word == "--disable-clipboard") {
                 this->enable_shared_clipboard = false;
-            } else if (word == "--disable_nla") {
+            } else if (word == "--disable-nla") {
                 this->modRDPParamsData.enable_nla = false;
-            } else if (word == "--disable_tls") {
+            } else if (word == "--disable-tls") {
                 this->modRDPParamsData.enable_tls = false;
-            } else if (word == "--disable_sound") {
+            } else if (word == "--disable-sound") {
                 this->modRDPParamsData.enable_sound = false;
-            } else if (word == "--disable_windowdrag") {
-                this->info.rdp5_performanceflags |=  PERF_DISABLE_FULLWINDOWDRAG;
+            } else if (word == "--disable-windowdrag") {
+                this->info.rdp5_performanceflags |= PERF_DISABLE_FULLWINDOWDRAG;
+            } else if (word == "--enable-wallpaper") {
+                this->info.rdp5_performanceflags &= ~PERF_DISABLE_WALLPAPER;
+            } else if (word == "--disable-menuanimations") {
+                this->info.rdp5_performanceflags |=  PERF_DISABLE_MENUANIMATIONS;
+            } else if (word == "--disable-menuanimations") {
+                this->info.rdp5_performanceflags |=  PERF_DISABLE_THEMING;
+            } else if (word == "--disable-cursor-shadow") {
+                this->info.rdp5_performanceflags |=  PERF_DISABLE_CURSOR_SHADOW;
+            } else if (word == "--disable-cursorsettings") {
+                this->info.rdp5_performanceflags |=  PERF_DISABLE_CURSORSETTINGS;
+            } else if (word == "--disable-font-smoothing") {
+                this->info.rdp5_performanceflags |=  PERF_ENABLE_FONT_SMOOTHING;
+            } else if (word == "--disable-desktop-composition") {
+                this->info.rdp5_performanceflags |=  PERF_ENABLE_DESKTOP_COMPOSITION;
+            } else if (word == "--vnc-apple") {
+                this->is_apple = true;
             }
         }
     }
-
 
     void setUserProfil() {
         std::ifstream ifichier(this->USER_CONF_DIR);
@@ -532,10 +557,7 @@ public:
                     } else
                     if (tag.compare(std::string("rdp5_performanceflags")) == 0) {
                         this->info.rdp5_performanceflags = std::stoi(info);
-                    } /*else
-                    if (tag.compare(std::string("fps")) == 0) {
-                        this->fps = std::stoi(info);
-                    }*/ else
+                    } else
                     if (tag.compare(std::string("monitorCount")) == 0) {
                         this->info.cs_monitor.monitorCount = std::stoi(info);
 //                         this->_monitorCount                 = std::stoi(info);
