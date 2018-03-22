@@ -2801,12 +2801,6 @@ test-run tests/mod/internal/widget/test_flat_login :
   <library>src/utils/png.o
   <library>src/utils/rle.o
 ;
-test-run tests/mod/internal/widget/test_flat_vnc_authentification :
-  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_vnc_authentification.cpp
-:
-  <covfile>src/mod/internal/widget/flat_vnc_authentification.cpp
-  <covfile>src/mod/internal/widget/flat_vnc_authentification.hpp
-;
 test-run tests/mod/internal/widget/test_flat_wab_close :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_wab_close.cpp
 :
@@ -4282,7 +4276,6 @@ obj src/mod/internal/widget/flat_dialog.o : $(REDEMPTION_SRC_PATH)/mod/internal/
 obj src/mod/internal/widget/flat_form.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_form.cpp ;
 obj src/mod/internal/widget/flat_interactive_target.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_interactive_target.cpp ;
 obj src/mod/internal/widget/flat_login.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_login.cpp ;
-obj src/mod/internal/widget/flat_vnc_authentification.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_vnc_authentification.cpp ;
 obj src/mod/internal/widget/flat_wab_close.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_wab_close.cpp ;
 obj src/mod/internal/widget/flat_wait.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_wait.cpp ;
 obj src/mod/internal/widget/group_box.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/group_box.cpp ;
@@ -4698,8 +4691,6 @@ alias test_flat_interactive_target : tests/mod/internal/widget/test_flat_interac
 alias test_flat_interactive_target.coverage : tests/mod/internal/widget/test_flat_interactive_target.coverage ;
 alias test_flat_login : tests/mod/internal/widget/test_flat_login ;
 alias test_flat_login.coverage : tests/mod/internal/widget/test_flat_login.coverage ;
-alias test_flat_vnc_authentification : tests/mod/internal/widget/test_flat_vnc_authentification ;
-alias test_flat_vnc_authentification.coverage : tests/mod/internal/widget/test_flat_vnc_authentification.coverage ;
 alias test_flat_wab_close : tests/mod/internal/widget/test_flat_wab_close ;
 alias test_flat_wab_close.coverage : tests/mod/internal/widget/test_flat_wab_close.coverage ;
 alias test_flat_wait : tests/mod/internal/widget/test_flat_wait ;
@@ -5248,7 +5239,6 @@ alias tests/mod/internal/widget :
   tests/mod/internal/widget/test_flat_form
   tests/mod/internal/widget/test_flat_interactive_target
   tests/mod/internal/widget/test_flat_login
-  tests/mod/internal/widget/test_flat_vnc_authentification
   tests/mod/internal/widget/test_flat_wab_close
   tests/mod/internal/widget/test_flat_wait
   tests/mod/internal/widget/test_grid

@@ -771,7 +771,7 @@ public:
         return interval - duration % interval;
     }
 
-    virtual void visibility_rects_event(Rect const & rect_) {
+    void visibility_rects_event(Rect const & rect_) override {
         if (!rect_.isempty()) {
             Rect rect = rect_.expand(16).intersect(
                 {0, 0, this->drawable.width(), this->drawable.height()});
