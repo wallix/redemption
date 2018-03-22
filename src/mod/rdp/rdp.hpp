@@ -6955,7 +6955,7 @@ public:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - default");
                 }
-                Pointer cursor(Pointer::POINTER_NORMAL);
+                Pointer cursor(NormalPointer{});
                 drawable.set_pointer(cursor);
             }
             break;

@@ -724,9 +724,19 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
     }
 
     if (mouse_pointer_should_be_set && !this->move_size_initialized) {
-        Pointer cursor(this->current_mouse_pointer_type);
-
-        this->front_->set_pointer(cursor);
+        switch (this->current_mouse_pointer_type){
+        case Pointer::POINTER_NORMAL:
+        {
+            Pointer cursor(NormalPointer{});
+            this->front_->set_pointer(cursor);
+        }
+        break;
+        default:
+        {
+            Pointer cursor(this->current_mouse_pointer_type);
+            this->front_->set_pointer(cursor);
+        }
+        }            
     }
 
     // Mouse action managment

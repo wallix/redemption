@@ -391,6 +391,46 @@ struct DotPointer : public ConstPointer {
     {}
 };
 
+struct SystemDefaultPointer : public ConstPointer {
+    SystemDefaultPointer()
+        : ConstPointer(CursorSize{32,32}, Hotspot{2,2}, 
+    /* 0000 */ "--------------------------------"
+    /* 0060 */ "------------------XX------------"
+    /* 00c0 */ "-----------------X++X-----------"
+    /* 0120 */ "-----------------X++X-----------"
+    /* 0180 */ "----------------X++X------------"
+    /* 01e0 */ "----------X-----X++X------------"
+    /* 0240 */ "----------XX---X++X-------------"
+    /* 02a0 */ "----------X+X--X++X-------------"
+    /* 0300 */ "----------X++XX++X--------------"
+    /* 0360 */ "----------X+++X++X--------------"
+    /* 03c0 */ "----------X++++++XXXXX----------"
+    /* 0420 */ "----------X+++++++++X-----------"
+    /* 0480 */ "----------X++++++++X------------"
+    /* 04e0 */ "----------X+++++++X-------------"
+    /* 0540 */ "----------X++++++X--------------"
+    /* 05a0 */ "----------X+++++X---------------"
+    /* 0600 */ "----------X++++X----------------"
+    /* 0660 */ "----------X+++X-----------------"
+    /* 06c0 */ "----------X++X------------------"
+    /* 0720 */ "----------X+X-------------------"
+    /* 0780 */ "----------XX--------------------"
+    /* 07e0 */ "----------X---------------------"
+    /* 0840 */ "--------------------------------"
+    /* 08a0 */ "--------------------------------"
+    /* 0900 */ "--------------------------------"
+    /* 0960 */ "--------------------------------"
+    /* 09c0 */ "--------------------------------"
+    /* 0a20 */ "--------------------------------"
+    /* 0a80 */ "--------------------------------"
+    /* 0ae0 */ "--------------------------------"
+    /* 0b40 */ "--------------------------------"
+    /* 0ba0 */ "--------------------------------"
+    )
+    {}
+};
+
+
 struct Pointer : public BasePointer {
 
     friend class NewPointerUpdate;
@@ -448,10 +488,12 @@ public:
             uint8_t * tmp = this->data;
             memset(this->mask, 0, this->dimensions.width * this->dimensions.height / 8);
             for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
-                uint8_t v = (cursor[i] == 'X') ? 0xFF : 0;
+                // COLOR: X:1 .:0 +:0 -:1
+                // MASK:  X:0 .:1 +:0 -:1
+                uint8_t v = ((cursor[i] == 'X')||(cursor[i] == '-')) ? 0xFF : 0;
                 tmp[0] = tmp[1] = tmp[2] = v;
                 tmp += 3;
-                this->mask[i/8]|= (cursor[i] == '.')?(0x80 >> (i%8)):0;
+                this->mask[i/8]|= ((cursor[i] == '.')||(cursor[i] == '-'))?(0x80 >> (i%8)):0;
             }
     }
 
@@ -645,6 +687,14 @@ public:
     }
 
 
+    explicit Pointer(const ConstPointer & p)
+    :   BasePointer(p.get_dimensions(), p.get_hotspot())
+    {
+        this->only_black_white = true;
+        this->store_data_cursor(p.data);
+    }
+
+
     explicit Pointer(uint8_t pointer_type = POINTER_NULL)
     :   BasePointer(CursorSize(32, 32),   (pointer_type==POINTER_DOT)              ? Hotspot(2, 2)
                                         : (pointer_type==POINTER_EDIT)             ? Hotspot(15, 16)
@@ -698,49 +748,8 @@ public:
                 {
 //                    this->bpp              = 24;
                     this->only_black_white = true;
-                    const char * data_cursor3 =
-                        /* 0000 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                        /* 0060 */ "XXXXXXXXXXXXXXXXXX++XXXXXXXXXXXX"
-                        /* 00c0 */ "XXXXXXXXXXXXXXXXX+..+XXXXXXXXXXX"
-                        /* 0120 */ "XXXXXXXXXXXXXXXXX+..+XXXXXXXXXXX"
-                        /* 0180 */ "XXXXXXXXXXXXXXXX+..+XXXXXXXXXXXX"
-                        /* 01e0 */ "XXXXXXXXXX+XXXXX+..+XXXXXXXXXXXX"
-                        /* 0240 */ "XXXXXXXXXX++XXX+..+XXXXXXXXXXXXX"
-                        /* 02a0 */ "XXXXXXXXXX+.+XX+..+XXXXXXXXXXXXX"
-                        /* 0300 */ "XXXXXXXXXX+..++..+XXXXXXXXXXXXXX"
-                        /* 0360 */ "XXXXXXXXXX+...+..+XXXXXXXXXXXXXX"
-                        /* 03c0 */ "XXXXXXXXXX+......+++++XXXXXXXXXX"
-                        /* 0420 */ "XXXXXXXXXX+.........+XXXXXXXXXXX"
-                        /* 0480 */ "XXXXXXXXXX+........+XXXXXXXXXXXX"
-                        /* 04e0 */ "XXXXXXXXXX+.......+XXXXXXXXXXXXX"
-                        /* 0540 */ "XXXXXXXXXX+......+XXXXXXXXXXXXXX"
-                        /* 05a0 */ "XXXXXXXXXX+.....+XXXXXXXXXXXXXXX"
-                        /* 0600 */ "XXXXXXXXXX+....+XXXXXXXXXXXXXXXX"
-                        /* 0660 */ "XXXXXXXXXX+...+XXXXXXXXXXXXXXXXX"
-                        /* 06c0 */ "XXXXXXXXXX+..+XXXXXXXXXXXXXXXXXX"
-                        /* 0720 */ "XXXXXXXXXX+.+XXXXXXXXXXXXXXXXXXX"
-                        /* 0780 */ "XXXXXXXXXX++XXXXXXXXXXXXXXXXXXXX"
-                        /* 07e0 */ "XXXXXXXXXX+XXXXXXXXXXXXXXXXXXXXX"
-                        /* 0840 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                        /* 08a0 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                        /* 0900 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                        /* 0960 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                        /* 09c0 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                        /* 0a20 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                        /* 0a80 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                        /* 0ae0 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                        /* 0b40 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                        /* 0ba0 */ "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                        ;
-                        const char * cursor = data_cursor3;
-                        uint8_t * tmp = this->data;
-                        memset(this->mask, 0, this->dimensions.width * this->dimensions.height / 8);
-                        for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
-                            uint8_t v = (cursor[i] != '.') ? 0xFF : 0;
-                            tmp[0] = tmp[1] = tmp[2] = v;
-                            tmp += 3;
-                            this->mask[i/8]|= (cursor[i] == 'X')?(0x80 >> (i%8)):0;
-                        }
+                    SystemDefaultPointer p;
+                    this->store_data_cursor(p.data);
                 }
                 break;  // case POINTER_SYSTEM_DEFAULT:
 

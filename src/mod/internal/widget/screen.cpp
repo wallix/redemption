@@ -34,8 +34,8 @@ WidgetScreen::WidgetScreen(
     , theme(theme)
     , tooltip(nullptr)
     , current_over(nullptr)
-    , normal_pointer(Pointer::POINTER_NORMAL)
-    , edit_pointer(Pointer::POINTER_EDIT)
+    , normal_pointer(NormalPointer{})
+    , edit_pointer(EditPointer{})
     , font(font)
 {
     this->impl = &composite_array;
@@ -138,25 +138,42 @@ void WidgetScreen::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * key
 {
     Widget * w = this->last_widget_at_pos(x, y);
     if (this->current_over != w) {
-        const Pointer* pointer = &this->normal_pointer;
-
         if (nullptr != w) {
+            const Pointer* pointer = &this->normal_pointer;
             if (Pointer::POINTER_EDIT == w->pointer_flag) {
                 pointer = &this->edit_pointer;
+                if (this->allow_mouse_pointer_change_) {
+                    this->drawable.set_pointer(*pointer);
+                }
+                this->current_over = w;
             }
             else if (Pointer::POINTER_CUSTOM == w->pointer_flag) {
+                const Pointer* pointer = &this->normal_pointer;
                 const Pointer* temp_pointer = w->get_pointer();
                 if (temp_pointer) {
                     pointer = temp_pointer;
                 }
+                if (this->allow_mouse_pointer_change_) {
+                    this->drawable.set_pointer(*pointer);
+                }
+                this->current_over = w;
+            }
+            else {
+                const Pointer* pointer = &this->normal_pointer;
+                if (this->allow_mouse_pointer_change_) {
+                    this->drawable.set_pointer(*pointer);
+                }
+
+                this->current_over = w;
             }
         }
-
-        if (this->allow_mouse_pointer_change_) {
-            this->drawable.set_pointer(*pointer);
+        else {
+            const Pointer* pointer = &this->normal_pointer;
+            if (this->allow_mouse_pointer_change_) {
+                this->drawable.set_pointer(*pointer);
+            }
+            this->current_over = w;
         }
-
-        this->current_over = w;
     }
     if (this->tooltip) {
         if (device_flags & MOUSE_FLAG_MOVE) {
