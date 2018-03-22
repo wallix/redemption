@@ -96,11 +96,17 @@ video_recorder::video_recorder(
     write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,
     ConstImageDataView const & image_view, int bitrate,
     int frame_rate, int qscale, const char * codec_id,
-    const int target_width, const int target_height,
+    const int target_width_, const int target_height_,
     int log_level
 )
 : original_height(image_view.height())
 {
+    const int image_view_width = image_view.width();
+    const int image_view_height = image_view.height();
+
+    const int target_width = image_view_width;
+    const int target_height = image_view_height;
+
     /* initialize libavcodec, and register all codecs and formats */
     av_register_all();
 
@@ -149,8 +155,8 @@ video_recorder::video_recorder(
     this->video_st->codec->bit_rate = bitrate;
     this->video_st->codec->bit_rate_tolerance = bitrate;
     // resolution must be a multiple of 2
-    this->video_st->codec->width = target_width & ~1;
-    this->video_st->codec->height = target_height & ~1;
+    this->video_st->codec->width = image_view_width & ~1;
+    this->video_st->codec->height = image_view_height & ~1;
 
     // time base: this is the fundamental unit of time (in seconds)
     // in terms of which frame timestamps are represented.
@@ -223,7 +229,8 @@ video_recorder::video_recorder(
     // and allocate the necessary encode buffers
     // find the video encoder
 
-    int const video_outbuf_size = target_width * target_height * 3 * 5;
+//    int const video_outbuf_size = target_width * target_height * 3 * 5;
+    int const video_outbuf_size = image_view.width() * image_view.height() * 3 * 5;
 
     {
         struct AVDict {

@@ -506,6 +506,10 @@ void WidgetModuleHost::update_rects()
 
 void WidgetModuleHost::screen_copy(Rect old_rect, Rect new_rect)
 {
+    if (old_rect == new_rect) {
+        return;
+    }
+
     RDPScrBlt cmd(new_rect, 0xCC, old_rect.x, old_rect.y);
 
     Impl::get_drawable(*this).draw(cmd, new_rect);

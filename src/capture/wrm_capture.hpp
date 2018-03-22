@@ -475,13 +475,16 @@ public:
         this->stream_bitmaps.rewind();
     }
 
-    void send_image_frame_rect_chunk(const Rect& image_frame_rect)
+    void send_image_frame_rect_chunk(const Rect& max_image_frame_rect, const Dimension& min_image_frame_dim)
     {
         StaticOutStream<32> payload;
-        payload.out_sint16_le(image_frame_rect.x);
-        payload.out_sint16_le(image_frame_rect.y);
-        payload.out_uint16_le(image_frame_rect.cx);
-        payload.out_uint16_le(image_frame_rect.cy);
+        payload.out_sint16_le(max_image_frame_rect.x);
+        payload.out_sint16_le(max_image_frame_rect.y);
+        payload.out_uint16_le(max_image_frame_rect.cx);
+        payload.out_uint16_le(max_image_frame_rect.cy);
+
+        payload.out_uint16_le(min_image_frame_dim.w);
+        payload.out_uint16_le(min_image_frame_dim.h);
 
         wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::IMAGE_FRAME_RECT, payload.get_offset(), 0);
         this->trans.send(payload.get_data(), payload.get_offset());
@@ -858,7 +861,8 @@ public:
 
     bool kbd_input_mask_enabled;
 
-    Rect image_frame_rect;
+    Rect      max_image_frame_rect;
+    Dimension min_image_frame_dim;
 
     WrmCaptureImpl(
         const CaptureParams & capture_params, const WrmParams & wrm_params,
@@ -901,8 +905,8 @@ public:
 
     ~WrmCaptureImpl() override
     {
-        if (!this->image_frame_rect.isempty()) {
-            this->graphic_to_file.send_image_frame_rect_chunk(this->image_frame_rect);
+        if (!this->max_image_frame_rect.isempty()) {
+            this->graphic_to_file.send_image_frame_rect_chunk(this->max_image_frame_rect, this->min_image_frame_dim);
         }
     }
 
@@ -928,7 +932,10 @@ public:
 
     void visibility_rects_event(Rect const & rect) override {
         if (!rect.isempty()) {
-            this->image_frame_rect = this->image_frame_rect.disjunct(rect);
+            this->max_image_frame_rect = this->max_image_frame_rect.disjunct(rect);
+
+            this->min_image_frame_dim.w = std::max(this->min_image_frame_dim.w, rect.cx);
+            this->min_image_frame_dim.w = std::max(this->min_image_frame_dim.w, rect.cx);
         }
     }
 };

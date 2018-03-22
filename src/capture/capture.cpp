@@ -75,6 +75,7 @@
 #include "utils/recording_progress.hpp"
 #include "utils/sugar/underlying_cast.hpp"
 
+//#include "configs/config_access.hpp"
 
 class PatternSearcher
 {
@@ -727,6 +728,8 @@ class PngCaptureRT : public PngCapture
 
     bool enable_rt_display;
 
+    SmartVideoCropping smart_video_cropping;
+
 public:
     PngCaptureRT(
         const CaptureParams & capture_params, const PngParams & png_params,
@@ -735,6 +738,7 @@ public:
     , num_start(this->trans.get_seqno())
     , png_limit(png_params.png_limit)
     , enable_rt_display(png_params.rt_display)
+    , smart_video_cropping(png_params.smart_video_cropping)
     {
     }
 
@@ -772,10 +776,9 @@ public:
     }
 
     void visibility_rects_event(Rect const & rect_) override {
-        if (!rect_.isempty()) {
-            Rect rect = rect_.expand(16).intersect(
+        if ((this->smart_video_cropping != SmartVideoCropping::disable) && !rect_.isempty()) {
+            Rect rect = rect_.intersect(
                 {0, 0, this->drawable.width(), this->drawable.height()});
-
 
             this->image_frame_api.reset(rect.x, rect.y, rect.cx, rect.cy);
         }
@@ -1374,7 +1377,6 @@ void Capture::Graphic::draw_impl(const RDP::RAIL::NewOrExistingWindow & cmd)
     int32_t  const visible_offset_x     = cmd.VisibleOffsetX();
     int32_t  const visible_offset_y     = cmd.VisibleOffsetY();
 
-
     if (fields_present_flags &
         (RDP::RAIL::WINDOW_ORDER_FIELD_STYLE |
          RDP::RAIL::WINDOW_ORDER_FIELD_SHOW |
@@ -1511,7 +1513,7 @@ Capture::Capture(
     bool capture_kbd, const KbdLogParams kbd_log_params,
     const VideoParams video_params,
     UpdateProgressData * update_progress_data,
-    Rect crop_rect)
+    Rect const & crop_rect)
 : is_replay_mod(!capture_params.report_message)
 , update_progress_data(update_progress_data)
 , mouse_info{capture_params.now, drawable_params.width / 2, drawable_params.height / 2}
@@ -1775,6 +1777,13 @@ Capture::Microseconds Capture::periodic_snapshot(
     }
     return time;
 }
+
+void Capture::visibility_rects_event(Rect const & rect) {
+    for (gdi::CaptureApi & cap : this->caps) {
+        cap.visibility_rects_event(rect);
+    }
+}
+
 
 void Capture::set_pointer_display() {
     if (this->capture_drawable) {

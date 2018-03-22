@@ -1,14 +1,19 @@
 from logger import Logger
+import json
 try:
-    from wabengine.common.const import (
+    from wallixconst.approval import (
         APPROVAL_PENDING as S_PENDING,
         APPROVAL_NONE as S_NONE,
+    )
+    from wallixconst.misc import (
         OK as S_OK,
         ERROR as S_ERROR,
+    )
+    from wallixconst.chgpasswd import (
         CRED_TYPE_PASSWORD,
         CRED_TYPE_SSH_KEY,
         CRED_DATA_PRIVATE_KEY,
-        CRED_DATA_SSH_CERTIFICATE
+        CRED_DATA_SSH_CERTIFICATE,
     )
     CRED_DATA_LOGIN = "login"
     CRED_DATA_ACCOUNT_UID = "account_uid"
@@ -46,6 +51,7 @@ class CheckoutEngine(object):
         self.engine = engine
         self.session_credentials = {}
         self.scenario_credentials = {}
+        self.scenario_rights = None
 
     def get_target_login(self, right):
         # Logger().debug("CHECKOUTENGINE get_target_login")
@@ -56,6 +62,9 @@ class CheckoutEngine(object):
 
     def get_target_passwords(self, right):
         # Logger().debug("CHECKOUTENGINE get_target_passwords")
+        if right.get('is_am'):
+            # if is_am, password in credentials is from primary account
+            return []
         target_uid = right['target_uid']
         tright, credentials = self.session_credentials.get(target_uid, ({}, {}))
         passwords = credentials.get(CRED_TYPE_PASSWORD, [])
@@ -71,6 +80,19 @@ class CheckoutEngine(object):
                      for cred in credentials.get(CRED_TYPE_SSH_KEY, []) ]
         return privkeys
 
+    def get_primary_password(self, right):
+        # Logger().debug("CHECKOUTENGINE get_primary_password")
+        if not right.get('is_am'):
+            # if is_am, password in credentials is from primary account
+            return None
+        target_uid = right['target_uid']
+        tright, credentials = self.session_credentials.get(target_uid, ({}, {}))
+        passwords = credentials.get(CRED_TYPE_PASSWORD, [])
+        password = None
+        if passwords:
+            password = passwords[0]
+        return password
+
     def get_scenario_account_infos(self, account_name, domain_name, device_name):
         # Logger().debug("CHECKOUTENGINE get_scenario_account_infos")
         account = (account_name, domain_name, device_name)
@@ -79,7 +101,7 @@ class CheckoutEngine(object):
                                           device_name)
         if not res:
             return None
-        acc_uid, creds = self.scenario_credentials.get(account, (0, {}))
+        right, creds = self.scenario_credentials.get(account, (None, {}))
         if not creds:
             return None
         from collections import namedtuple
@@ -130,22 +152,64 @@ class CheckoutEngine(object):
         # Logger().debug("CHECKOUTENGINE check_scenario_account")
         account = (account_name, domain_name, device_name)
         if account not in self.scenario_credentials:
-            try:
-                Logger().debug("** CALL checkout_scenario_account")
-                status, infos = self.engine.checkout_scenario_account(
-                    account_name=account_name,
-                    domain_name=domain_name,
-                    device_name=device_name
-                )
-                Logger().debug("** END checkout_scenario_account")
-            except Exception as e:
-                Logger().debug("Engine checkin_scenario_account failed: %s" % e)
-            if CRED_INDEX not in infos or CRED_DATA_ACCOUNT_UID not in infos:
+            right, creds = self.checkout_scenario_account(
+                account_name=account_name,
+                domain_name=domain_name,
+                device_name=device_name
+            )
+            if right is None:
                 Logger().info("No credentials in scenario account")
                 return False
-            scenario_creds = (infos[CRED_DATA_ACCOUNT_UID], infos[CRED_INDEX])
-            self.scenario_credentials[account] = scenario_creds
+            self.scenario_credentials[account] = (right, creds)
         return True
+
+    def update_scenario_rights(self):
+        if self.scenario_rights is None:
+            try:
+                Logger().debug("** CALL get_user_rights_by_type")
+                rights = self.engine.get_user_rights_by_type('account',
+                                                             scenario=True)
+                Logger().debug("** END get_user_rights_by_type")
+                rights = map(json.loads, rights)
+                self.scenario_rights = rights
+            except Exception as e:
+                Logger().debug("Engine get_user_rights_by_type failed: %s" % e)
+
+    def checkout_scenario_account(self, account_name, domain_name, device_name):
+        self.update_scenario_rights()
+        if self.scenario_rights is None:
+            return None, {}
+
+        match_account_name = lambda x: (x['account_name'] == account_name)
+        match_domain_name = lambda x: (x['domain_cn'] == domain_name)
+        match_global_domain = lambda x: (not device_name
+                                         and x['device_cn'] is None
+                                         and x['application_cn'] is None)
+        match_local_domain = lambda x: (device_name is not None
+                                        and device_name in (x['device_cn'],
+                                                            x['application_cn']))
+        matched_rights = (
+            right for right in self.scenario_rights if (
+                match_account_name(right)
+                and match_domain_name(right)
+                and (match_global_domain(right)
+                     or match_local_domain(right))
+                )
+            )
+
+        for right in matched_rights:
+            try:
+                Logger().debug("** CALL checkout_account (scenario)")
+                status, infos = self.engine.checkout_account(right,
+                                                             session=True)
+                Logger().debug("** END checkout_account (scenario)")
+            except Exception as e:
+                Logger().debug("Engine checkout_account (scenario) failed: %s"
+                               % e)
+                continue
+            if status in STATUS_SUCCESS and CRED_INDEX in infos:
+                return right, infos[CRED_INDEX]
+        return None, {}
 
     def release_target(self, right):
         # Logger().debug("CHECKOUTENGINE release_target")
@@ -167,13 +231,14 @@ class CheckoutEngine(object):
         # Logger().debug("CHECKOUTENGINE release_scenario_account")
         account = (acc_name, dom_name, dev_name)
         if account in self.scenario_credentials:
-            acc_uid, creds = self.scenario_credentials.get(account)
+            sright, creds = self.scenario_credentials.get(account)
             try:
-                Logger().debug("** CALL checkin_scenario_account")
-                self.engine.checkin_scenario_account(
-                    account_uid=acc_uid
+                Logger().debug("** CALL checkin_account (scenario)")
+                self.engine.checkin_account(
+                    right=sright,
+                    session=True
                 )
-                Logger().debug("** END checkin_scenario_account")
+                Logger().debug("** END checkin_account (scenario)")
             except Exception as e:
                 Logger().debug("Engine checkin_scenario_account failed: %s" % e)
             self.scenario_credentials.pop(account, None)
@@ -193,13 +258,15 @@ class CheckoutEngine(object):
                 Logger().debug("Engine checkin_account failed: %s" % e)
         self.session_credentials.clear()
         for account in self.scenario_credentials:
-            acc_uid, creds = self.scenario_credentials.get(account)
+            sright, creds = self.scenario_credentials.get(account)
             try:
-                Logger().debug("** CALL checkin_scenario_account")
-                self.engine.checkin_scenario_account(
-                    account_uid=acc_uid
+                Logger().debug("** CALL checkin_account (scenario)")
+                self.engine.checkin_account(
+                    right=sright,
+                    session=True
                 )
-                Logger().debug("** END checkin_scenario_account")
+                Logger().debug("** END checkin_account (scenario)")
             except Exception as e:
                 Logger().debug("Engine checkin_scenario_account failed: %s" % e)
         self.scenario_credentials.clear()
+        self.scenario_rights = None

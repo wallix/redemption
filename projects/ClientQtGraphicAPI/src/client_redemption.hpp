@@ -119,14 +119,6 @@ public:
     ClientChannelRemoteAppManager clientChannelRemoteAppManager;
 
 
-    // VNC mod
-    bool is_apple;
-    Theme      theme;
-    WindowListCaps windowListCaps;
-    ClientExecute exe_vnc;
-    std::string vnc_encodings;
-
-
     // replay mod
     std::unique_ptr<Capture>  capture;
     gdi::GraphicApi    * graph_capture;
@@ -159,9 +151,7 @@ public:
         , clientChannelRDPDRManager(this->verbose, this)
         , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
 
-        , is_apple(true)
-        , exe_vnc(*(this),  this->windowListCaps,  false)
-        , vnc_encodings("5,16,0,1,-239")
+
     {
         if (this->impl_clipboard) {
             this->impl_clipboard->set_client(this);
@@ -555,7 +545,7 @@ public:
         if (this->is_recording) {
             this->set_capture();
         }
-        
+
         if (this->mod_state != MOD_VNC) {
 
             if (this->mod_state == MOD_RDP_REMOTE_APP) {
@@ -623,9 +613,9 @@ public:
                 this->cl.push_back(channel_audio_output);
             }
 
-        } else {
+        } /*else {
             this->port =  5900;
-        }
+        }*/
 
         if (this->impl_graphic) {
             if (this->mod_state != MOD_RDP_REMOTE_APP) {
@@ -718,8 +708,10 @@ public:
 
             std::string record_path = this->REPLAY_DIR.c_str() + std::string("/");
 
+            bool const is_remoteapp = false;
             WrmParams wrmParams(
-                    this->info.bpp
+                  this->info.bpp
+                , is_remoteapp
                 , this->cctx
                 , gen
                 , this->fstat

@@ -484,3 +484,23 @@ operator << (std::basic_ostream<Ch, Tr> & os, OcrVersion e)
 { return os << static_cast<unsigned long>(e); }
 
 
+enum class SmartVideoCropping {
+    disable = 1,
+    v1 = 2,
+};
+
+inline bool is_valid_enum_value(SmartVideoCropping e)
+{
+    auto const i = static_cast<unsigned long>(e);
+    return false
+     || i == 1
+     || i == 2
+    ;
+}
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, SmartVideoCropping e)
+{ return os << static_cast<unsigned long>(e); }
+
+

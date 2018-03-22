@@ -20,6 +20,8 @@
 
 #pragma once
 
+//#include "configs/config_access.hpp"
+
 #include <chrono>
 
 class ReportMessageApi;
@@ -34,4 +36,6 @@ struct PngParams
     bool real_time_image_capture;
     bool remote_program_session;
     bool rt_display;
+
+    SmartVideoCropping smart_video_cropping;
 };

@@ -564,6 +564,9 @@
 "#_advanced\n"
 "bogus_clipboard_infinite_loop = option(0, 1, 2, default=0)\n\n"
 
+"#_hidden\n"
+"server_is_apple = boolean(default=False)\n\n"
+
 "[mod_replay]\n\n"
 
 "# 0 - Wait for Escape, 1 - End session\n"
@@ -743,6 +746,10 @@
 "# Qscale (parameter given to ffmpeg) for high quality.\n"
 "#_advanced\n"
 "h_qscale = integer(min=0, default=7)\n\n"
+
+"#   1: disable\n"
+"#   2: v1\n"
+"smart_video_cropping = option(1, 2, default=1)\n\n"
 
 "[crypto]\n\n"
 
