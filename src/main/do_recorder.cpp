@@ -1480,38 +1480,15 @@ inline int get_joint_visibility_rect(
 
         if (player.remote_app) {
             out_rect = player.image_frame_rect.intersect(Rect(0, 0, player.info_width, player.info_height));
-
-            bool     right         = true;
-            unsigned failure_count = 0;
-            while ((out_rect.cx & 3) && (failure_count < 2)) {
-                if (right) {
-                    if (out_rect.x + out_rect.cx < player.info_width) {
-                        out_rect.cx += 1;
-
-                        failure_count = 0;
-                    }
-                    else {
-                        failure_count++;
-                    }
-
-                    right = false;
+            if (out_rect.cx & 1)
+            {
+                if (out_rect.x + out_rect.cx < player.info_width) {
+                    out_rect.cx += 1;
                 }
-                else {
-                    if (out_rect.x > 0) {
-                        out_rect.x -=1;
-                        out_rect.cx += 1;
-
-                        failure_count = 0;
-                    }
-                    else {
-                        failure_count++;
-                    }
-
-                    right = true;
+                else if (out_rect.x > 0) {
+                    out_rect.x  -=1;
+                    out_rect.cx += 1;
                 }
-            }
-            if (out_rect.cx & 3) {
-                out_rect.cx &= ~ 3;
             }
         }
 
@@ -2038,7 +2015,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false, false};
+    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false, SmartVideoCropping::disable};
     VideoParams video_params;
     FullVideoParams full_video_params;
 
@@ -2520,7 +2497,7 @@ extern "C" {
             // TODO if start and stop time are outside wrm, userreplay(s should also be warned
 
             Rect joint_visibility_rect;
-            if (ini.get<cfg::video::smart_video_cropping>()) {
+            if (ini.get<cfg::video::smart_video_cropping>() != SmartVideoCropping::disable) {
                 res = get_joint_visibility_rect(
                             joint_visibility_rect,
                             rp.mwrm_path, rp.input_basename, rp.infile_extension,
