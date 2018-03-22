@@ -1057,8 +1057,7 @@ public:
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
-        if (this->client_info.remote_program && (ini.get<cfg::video::smart_video_cropping>() != SmartVideoCropping::disable) &&
-            !this->rail_window_rect.isempty()) {
+        if (this->client_info.remote_program && !this->rail_window_rect.isempty()) {
             this->capture->visibility_rects_event(this->rail_window_rect);
         }
 
