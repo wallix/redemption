@@ -132,7 +132,7 @@ struct TSRequest final {
 
 
     TSRequest()
-        : version(3)
+        : version(6)
         , negoTokens(0)
         , authInfo(0)
         , pubKeyAuth(0)
@@ -143,7 +143,7 @@ struct TSRequest final {
 
 
     explicit TSRequest(InStream & stream)
-        : version(3)
+        : version(6)
         , negoTokens(0)
         , authInfo(0)
         , pubKeyAuth(0)
