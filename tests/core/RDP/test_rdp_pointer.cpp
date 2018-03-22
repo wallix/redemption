@@ -131,7 +131,7 @@ RED_AUTO_TEST_CASE(TestPointerNormal)
 
 RED_AUTO_TEST_CASE(TestPointerEdit)
 {
-    Pointer p(Pointer::POINTER_EDIT);
+    Pointer p(EditPointer{});
  
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
     
@@ -177,7 +177,7 @@ RED_AUTO_TEST_CASE(TestPointerEdit)
 
 RED_AUTO_TEST_CASE(TestPointerDrawableDefault)
 {
-    Pointer p(Pointer::POINTER_DRAWABLE_DEFAULT);
+    Pointer p(DrawableDefaultPointer{});
  
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -224,7 +224,7 @@ RED_AUTO_TEST_CASE(TestPointerDrawableDefault)
 RED_AUTO_TEST_CASE(TestPointerSystemDefault)
 {
 
-    Pointer p(Pointer::POINTER_SYSTEM_DEFAULT);
+    Pointer p(SystemDefaultPointer{});
  
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -271,7 +271,7 @@ RED_AUTO_TEST_CASE(TestPointerSystemDefault)
 RED_AUTO_TEST_CASE(TestPointerSizeNS)
 {
 
-    Pointer p(Pointer::POINTER_SIZENS);
+    Pointer p(SizeNSPointer{});
  
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -317,7 +317,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNS)
 
 RED_AUTO_TEST_CASE(TestPointerSizeNESW)
 {
-    Pointer p(Pointer::POINTER_SIZENESW);
+    Pointer p(SizeNESWPointer{});
  
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -364,7 +364,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNESW)
 
 RED_AUTO_TEST_CASE(TestPointerSizeNWSE)
 {
-    Pointer p(Pointer::POINTER_SIZENWSE);
+    Pointer p(SizeNWSEPointer{});
  
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -411,7 +411,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNWSE)
 
 RED_AUTO_TEST_CASE(TestPointerSizeWE)
 {
-    Pointer p(Pointer::POINTER_SIZEWE);
+    Pointer p(SizeWEPointer{});
  
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 

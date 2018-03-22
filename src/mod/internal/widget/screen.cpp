@@ -136,48 +136,10 @@ bool WidgetScreen::previous_focus()
 
 void WidgetScreen::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
 {
-    Widget * w = this->last_widget_at_pos(x, y);
-    if (this->current_over != w) {
-        if (nullptr != w) {
-            const Pointer* pointer = &this->normal_pointer;
-            if (Pointer::POINTER_EDIT == w->pointer_flag) {
-                pointer = &this->edit_pointer;
-                if (this->allow_mouse_pointer_change_) {
-                    this->drawable.set_pointer(*pointer);
-                }
-                this->current_over = w;
-            }
-            else if (Pointer::POINTER_CUSTOM == w->pointer_flag) {
-                const Pointer* pointer = &this->normal_pointer;
-                const Pointer* temp_pointer = w->get_pointer();
-                if (temp_pointer) {
-                    pointer = temp_pointer;
-                }
-                if (this->allow_mouse_pointer_change_) {
-                    this->drawable.set_pointer(*pointer);
-                }
-                this->current_over = w;
-            }
-            else {
-                const Pointer* pointer = &this->normal_pointer;
-                if (this->allow_mouse_pointer_change_) {
-                    this->drawable.set_pointer(*pointer);
-                }
-
-                this->current_over = w;
-            }
-        }
-        else {
-            const Pointer* pointer = &this->normal_pointer;
-            if (this->allow_mouse_pointer_change_) {
-                this->drawable.set_pointer(*pointer);
-            }
-            this->current_over = w;
-        }
-    }
+    this->redo_mouse_pointer_change(x, y);
     if (this->tooltip) {
         if (device_flags & MOUSE_FLAG_MOVE) {
-            if (w != this->tooltip->notifier) {
+            if (this->last_widget_at_pos(x, y) != this->tooltip->notifier) {
                 this->hide_tooltip();
             }
         }
@@ -212,25 +174,21 @@ void WidgetScreen::allow_mouse_pointer_change(bool allow)
 void WidgetScreen::redo_mouse_pointer_change(int x, int y)
 {
     Widget * w = this->last_widget_at_pos(x, y);
-    if (this->current_over != w) {
-        const Pointer* pointer = &this->normal_pointer;
-
-        if (nullptr != w) {
-            if (Pointer::POINTER_EDIT == w->pointer_flag) {
-                pointer = &this->edit_pointer;
-            }
-            else if (Pointer::POINTER_CUSTOM == w->pointer_flag) {
-                const Pointer* temp_pointer = w->get_pointer();
-                if (temp_pointer) {
-                    pointer = temp_pointer;
-                }
-            }
-        }
-
+    if (this->current_over != w){
         if (this->allow_mouse_pointer_change_) {
-            this->drawable.set_pointer(*pointer);
+            switch ( !w                                          ? (Pointer::POINTER_NULL) 
+                    :(w->pointer_flag == Pointer::POINTER_CUSTOM ? (w->get_pointer() ? Pointer::POINTER_CUSTOM:Pointer::POINTER_NORMAL)
+                    : w->pointer_flag) ){
+            case Pointer::POINTER_EDIT:
+                this->drawable.set_pointer(Pointer(EditPointer{}));
+            break;
+            case Pointer::POINTER_CUSTOM:
+                this->drawable.set_pointer(*w->get_pointer());
+            break;
+            default:
+                this->drawable.set_pointer(Pointer(NormalPointer{}));
+            }
         }
-
         this->current_over = w;
     }
 }

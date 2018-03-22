@@ -793,9 +793,7 @@ public:
         }
 
         // set almost null cursor, this is the little dot cursor
-        Pointer cursor(Pointer::POINTER_DOT);
-
-        this->front.set_pointer(cursor);
+        this->front.set_pointer(Pointer(DotPointer{}));
 
         this->report_message.log5("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"");
 

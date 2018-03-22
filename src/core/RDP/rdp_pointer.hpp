@@ -63,7 +63,7 @@ public:
         return this->hotspot;
     }
 
-    BasePointer(CursorSize dimensions, Hotspot hotspot)
+    explicit BasePointer(CursorSize dimensions, Hotspot hotspot)
         : dimensions(dimensions)
         , hotspot(hotspot)
     {}
@@ -71,7 +71,7 @@ public:
 
 struct ConstPointer : public BasePointer {
     const char * data;
-    ConstPointer(const CursorSize & d, const Hotspot & hs, const char * data) 
+    explicit ConstPointer(const CursorSize & d, const Hotspot & hs, const char * data) 
         : BasePointer(d, hs)
         , data(data)
     {}
@@ -391,9 +391,48 @@ struct DotPointer : public ConstPointer {
     {}
 };
 
+struct NullPointer : public ConstPointer {
+    NullPointer()
+        : ConstPointer(CursorSize{32,32}, Hotspot{2,2}, 
+    /* 0000 */ "................................"
+    /* 0060 */ "................................"
+    /* 00c0 */ "................................"
+    /* 0120 */ "................................"
+    /* 0180 */ "................................"
+    /* 01e0 */ "................................"
+    /* 0240 */ "................................"
+    /* 02a0 */ "................................"
+    /* 0300 */ "................................"
+    /* 0360 */ "................................"
+    /* 03c0 */ "................................"
+    /* 0420 */ "................................"
+    /* 0480 */ "................................"
+    /* 04e0 */ "................................"
+    /* 0540 */ "................................"
+    /* 05a0 */ "................................"
+    /* 0600 */ "................................"
+    /* 0660 */ "................................"
+    /* 06c0 */ "................................"
+    /* 0720 */ "................................"
+    /* 0780 */ "................................"
+    /* 07e0 */ "................................"
+    /* 0840 */ "................................"
+    /* 08a0 */ "................................"
+    /* 0900 */ "................................"
+    /* 0960 */ "................................"
+    /* 09c0 */ "................................"
+    /* 0a20 */ "................................"
+    /* 0a80 */ "................................"
+    /* 0ae0 */ "................................"
+    /* 0b40 */ "................................"
+    /* 0ba0 */ "................................"
+    )
+    {}
+};
+
 struct SystemDefaultPointer : public ConstPointer {
     SystemDefaultPointer()
-        : ConstPointer(CursorSize{32,32}, Hotspot{2,2}, 
+        : ConstPointer(CursorSize{32,32}, Hotspot{10,10}, 
     /* 0000 */ "--------------------------------"
     /* 0060 */ "------------------XX------------"
     /* 00c0 */ "-----------------X++X-----------"
@@ -665,17 +704,17 @@ public:
         memcpy(this->data, av_xor.data(), av_xor.size());
     }
 
-    explicit Pointer(const Pointer & other)
-    : BasePointer(other.dimensions, other.hotspot)
-    , only_black_white(other.only_black_white)
-    {
-        auto & av_and = other.get_monochrome_and_mask();
-        auto & av_xor = other.get_24bits_xor_mask();
-        memset(this->mask, 0, sizeof(this->mask));
-        memcpy(this->mask, av_and.data(), av_and.size());
-        memset(this->data, 0, sizeof(this->data));
-        memcpy(this->data, av_xor.data(), av_xor.size());
-    }
+//    explicit Pointer(const Pointer & other)
+//    : BasePointer(other.dimensions, other.hotspot)
+//    , only_black_white(other.only_black_white)
+//    {
+//        auto & av_and = other.get_monochrome_and_mask();
+//        auto & av_xor = other.get_24bits_xor_mask();
+//        memset(this->mask, 0, sizeof(this->mask));
+//        memcpy(this->mask, av_and.data(), av_and.size());
+//        memset(this->data, 0, sizeof(this->data));
+//        memcpy(this->data, av_xor.data(), av_xor.size());
+//    }
 
     bool operator==(const Pointer & other) const {
         return (other.hotspot.x == this->hotspot.x
@@ -687,138 +726,16 @@ public:
     }
 
 
-    explicit Pointer(const ConstPointer & p)
+    explicit Pointer(const ConstPointer & p = NullPointer{})
     :   BasePointer(p.get_dimensions(), p.get_hotspot())
     {
         this->only_black_white = true;
         this->store_data_cursor(p.data);
     }
 
-
-    explicit Pointer(uint8_t pointer_type = POINTER_NULL)
-    :   BasePointer(CursorSize(32, 32),   (pointer_type==POINTER_DOT)              ? Hotspot(2, 2)
-                                        : (pointer_type==POINTER_EDIT)             ? Hotspot(15, 16)
-                                        : (pointer_type == POINTER_SYSTEM_DEFAULT) ? Hotspot(10, 10) 
-                                        : (pointer_type == POINTER_SIZENS)         ? Hotspot(10, 10) 
-                                        : (pointer_type == POINTER_SIZENESW)       ? Hotspot(10, 10) 
-                                        : (pointer_type == POINTER_SIZENWSE)       ? Hotspot(10, 10) 
-                                        : (pointer_type == POINTER_SIZEWE)         ? Hotspot(10, 10) 
-                                        : Hotspot(0, 0))
-    {
-        switch (pointer_type) {
-            default:
-            case POINTER_NULL:
-                {
-//                    this->bpp              = 24;
-                    this->only_black_white = true;
-                    ::memset(this->data, 0, DATA_SIZE);
-                    ::memset(this->mask, 0xFF, MASK_SIZE);
-                }
-                break;
-
-            case POINTER_NORMAL:
-                {
-//                    this->bpp              = 24;
-                    this->only_black_white = true;
-                    NormalPointer p;
-                    this->store_data_cursor(p.data);
-                }
-                break;  // case POINTER_NORMAL:
-
-            case POINTER_EDIT:
-                {
-//                    this->bpp                = 24;
-                    this->only_black_white = true;
-                    EditPointer p;
-                    this->store_data_cursor(p.data);
-                }
-                break;  // case POINTER_EDIT:
-
-            case POINTER_DRAWABLE_DEFAULT:
-                {
-//                    this->bpp              = 24;
-                    this->only_black_white = true;
-                    DrawableDefaultPointer p;
-                    this->store_data_cursor(p.data);
-
-                }
-                break;  // case POINTER_DRAWABLE_DEFAULT:
-
-            case POINTER_SYSTEM_DEFAULT:
-                {
-//                    this->bpp              = 24;
-                    this->only_black_white = true;
-                    SystemDefaultPointer p;
-                    this->store_data_cursor(p.data);
-                }
-                break;  // case POINTER_SYSTEM_DEFAULT:
-
-            case POINTER_SIZENS:
-                {
-//                    this->bpp              = 24;
-                    this->only_black_white = true;
-                    SizeNSPointer p;
-                    this->store_data_cursor(p.data);
-                }
-                break;  // case POINTER_SIZENS:
-
-            case POINTER_SIZENESW:
-                {
-//                    this->bpp              = 24;
-                    this->only_black_white = true;
-                    SizeNESWPointer p;
-                    this->store_data_cursor(p.data);
-                }
-                break;  // case POINTER_SIZENESW:
-
-            case POINTER_SIZENWSE:
-                {
-//                    this->bpp              = 24;
-                    this->only_black_white = true;
-                    SizeNWSEPointer p;
-                    this->store_data_cursor(p.data);
-                }
-                break;  // case POINTER_SIZENWSE:
-
-            case POINTER_SIZEWE:
-                {
-//                    this->bpp              = 24;
-                    this->only_black_white = true;
-                    SizeWEPointer p;
-                    this->store_data_cursor(p.data);
-                }
-                break;  // case POINTER_SIZEWE:
-            case POINTER_DOT:
-                {
-//                    this->bpp              = 24;
-                    this->only_black_white = true;
-                    DotPointer p;
-                    this->store_data_cursor(p.data);
-                }
-                break;  // case POINTER_DOT:
-
-        }   // switch (pointer_type)
-
-    }   // Pointer(uint8_t pointer_type)
-
-
     void set_mask_to_FF(void){
         ::memset(this->mask, 0xFF, sizeof(this->mask));
     }
-
-//    void initialize(/*unsigned bpp, */unsigned width, unsigned height, int x, int y, uint8_t * data, size_t data_size,
-//        uint8_t * mask, size_t mask_size) {
-////        this->bpp    = bpp;
-//        this->dimensions.width  = width;
-//        this->dimensions.height = height;
-//        this->hotspot.x      = x;
-//        this->hotspot.y      = y;
-
-//        assert(data_size == sizeof(this->data));
-//        ::memcpy(this->data, data, std::min(data_size, sizeof(this->data)));
-//        assert(mask_size == sizeof(this->mask));
-//        ::memcpy(this->mask, mask, std::min(mask_size, sizeof(this->mask)));
-//    }
 
     const array_view_const_u8 get_monochrome_and_mask() const
     {

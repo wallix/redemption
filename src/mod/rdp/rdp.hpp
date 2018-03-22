@@ -3685,14 +3685,14 @@ public:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "Process pointer null (Fast)");
                 }
-                drawable.set_pointer(Pointer(Pointer::POINTER_NULL));
+                drawable.set_pointer(Pointer(NullPointer{}));
                 break;
 
             case FastPath::UpdateType::PTR_DEFAULT:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "Process pointer default (Fast)");
                 }
-                drawable.set_pointer(Pointer(Pointer::POINTER_SYSTEM_DEFAULT));
+                drawable.set_pointer(Pointer(SystemDefaultPointer{}));
                 break;
 
             case FastPath::UpdateType::PTR_POSITION:
@@ -6946,8 +6946,7 @@ public:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - null");
                 }
-                Pointer cursor(Pointer::POINTER_NULL);
-                drawable.set_pointer(cursor);
+                drawable.set_pointer(Pointer(NullPointer{}));
             }
             break;
         default:
