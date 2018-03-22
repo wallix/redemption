@@ -1,226 +1,158 @@
-#include "utils/executor.hpp"
+#include <functional>
+#include <memory>
+#include <cassert>
+
 #include <iostream>
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-
-#include <sys/epoll.h>
-#include <unistd.h>
-
-struct CheckError
+enum class R
 {
-    int i;
-    CheckError(int i) : i(i)
-    {
-        if (i == -1) {
-            perror(nullptr);
-            std::abort();
-        }
-    }
-    operator int () const { return i; }
+    Next,
+    Group,
+    ExitSuccess,
+    ExitError,
+    NeedMoreData,
 };
 
-constexpr struct
+
+struct Event
 {
-    int operator | (int i) const
+    std::function<R()> f;
+    std::unique_ptr<Event> next;
+    Event* end_next = nullptr;
+    std::unique_ptr<Event> group;
+
+    Event() = default;
+
+    template<class F>
+    void add(F f)
     {
-        return CheckError(i);
+        if (!this->end_next) {
+            this->end_next = this;
+        }
+        this->end_next->next = std::make_unique<Event>();
+        this->end_next = this->end_next->next.get();
+        this->end_next->f = f;
     }
-} E {};
+
+    void sub(Event e)
+    {
+        assert(bool(e.next));
+        auto p = std::make_unique<Event>(std::move(e));
+        p->group = std::move(this->group);
+        this->group = std::move(p);
+    }
+
+    R _exec_next()
+    {
+        std::cout << "n";
+        R r = this->next->f();
+        switch (r) {
+            case R::ExitError:
+            case R::ExitSuccess:
+            case R::NeedMoreData:
+                break;
+            case R::Next:
+                this->next = std::move(this->next->next);
+                r = (bool(this->next) ? R::NeedMoreData : R::ExitSuccess);
+                break;
+            case R::Group:
+                this->next = std::move(this->next->next);
+                r = R::NeedMoreData;
+                break;
+        }
+        return r;
+    }
+
+    R _exec()
+    {
+        if (this->group) {
+            std::cout << "g";
+            R r = this->group->_exec_next();
+            switch (r) {
+                case R::ExitError:
+                case R::ExitSuccess:
+                    this->group = std::move(this->group->group);
+                    while (this->group && !this->group->next) {
+                        this->group = std::move(this->group->group);
+                    }
+                    r = (bool(this->next) ? R::NeedMoreData : R::Next);
+                    break;
+                case R::NeedMoreData:
+                    break;
+                case R::Next:
+                case R::Group:
+                    assert(false);
+            }
+            return r;
+        }
+        else if (this->next) {
+            return this->_exec_next();
+        }
+        else {
+            std::cout << "f";
+            assert(false);
+            return this->f();
+        }
+    }
+
+    bool exec()
+    {
+        return this->_exec() == R::NeedMoreData;
+    }
+};
+
+#include <iostream>
 
 int main()
 {
-    using namespace std::chrono_literals;
-    using namespace jln;
-
-    struct Buffer
-    {
-        char data_[5];
-        int size_ = 0;
-
-        Buffer() = default;
-        Buffer(Buffer const&) = delete;
-        Buffer& operator=(Buffer const&) = delete;
-
-        void read()
+    Event e;
+    e.add([]{std::cout << "1\n"; return R::Next; });
+    e.add([&]{
+        std::cout << "2\n";
         {
-            this->size_ += E | ::read(0, this->data_ + this->size_, sizeof(this->data_) - this->size_);
+            Event sub;
+            sub.add([]{std::cout << "2.1\n"; return R::Next; });
+            sub.add([]{std::cout << "2.2\n"; return R::Next; });
+            e.sub(std::move(sub));
         }
-
-        void reset()
+        return R::Group;
+    });
+    e.add([&]{
+        std::cout << "3\n";
         {
-            this->size_ = 0;
-        }
-
-        char* data() noexcept
-        {
-            return this->data_;
-        }
-
-        int size() const noexcept
-        {
-            return this->size_;
-        }
-    };
-
-    int const epfd = E | epoll_create(1);
-    Reactor<Buffer&> reactor;
-
-    struct Data
-    {
-        Buffer buf;
-    };
-
-    int fd = 0;
-
-    auto& top_executor = reactor
-        .set_data_executor<Data>()
-        .create_executor(fd)
-        .on_action([](auto ctx, Buffer& buf){
-            std::cout << "--> read" << std::endl;
-            if (buf.size() < 3)
-            {
-                return ctx.need_more_data();
-            }
-            else if (!strncmp(buf.data(), "qui", 3))
-            {
-                return ctx.terminate();
-            }
-            else if (!strncmp(buf.data(), "msg", 3))
-            {
-                std::cout << "--> msg" << std::endl;
-                if (buf.size() > 3) {
-                    std::cout.write(buf.data() + 3, buf.size() - 3) << std::endl;
+            Event sub;
+            sub.add([&]{
+                std::cout << "3.1\n";
+                {
+                    Event sub;
+                    sub.add([]{std::cout << "3.1.1\n"; return R::Next; });
+                    sub.add([]{std::cout << "3.1.2\n"; return R::Next; });
+                    e.sub(std::move(sub));
                 }
-                return ctx.exec_sub_executor()
-                .on_action([](auto ctx, Buffer& buf){
-                    std::cout.write(buf.data(), buf.size()) << std::endl;
-                    for (int i = 0; i < buf.size(); ++i) {
-                        if (buf.data()[i] == ';') {
-                            return ctx.exit_on_success();
-                        }
-                    }
-                    buf.reset();
-                    return ctx.need_more_data();
-                })
-                .on_exit([](auto ctx, ExecutorError error, Buffer& /*buf*/){
-                    std::cout << "exit msg: " << int(error) << std::endl;
-                    return ctx.exit_on_success();
-                })
-                .exec_action(buf);
-            }
-            else if (!strncmp(buf.data(), "tim", 3))
-            {
-                std::cout << "--> tim" << std::endl;
-                auto timer = ctx.create_timer(0)
-                    .on_action(1s, [](auto ctx, Buffer& /*buf*/, int& i){
-                        std::cout << "timer " << ++i << std::endl;
-                        return ctx.retry_until(std::chrono::seconds(i/3));
-                    });
-                return ctx.create_sub_executor(std::move(timer))
-                    .on_action([](auto ctx, Buffer& /*buf*/, auto&&...){
-                        return ctx.exit_on_success();
-                    })
-                    .on_exit([](auto ctx, ExecutorError /*error*/, Buffer& /*buf*/, auto&&...){
-                        return ctx.exit_on_success();
-                    });
-            }
-            else if (!strncmp(buf.data(), "gam", 3))
-            {
-                std::cout << "--> gam" << std::endl;
-                buf.reset();
-                auto timer = ctx.create_timer(std::ref(ctx.get_basic_executor()))
-                .on_action(2s, [](auto ctx, auto& buf, auto& executor){
-                    std::cout << "timer" << std::endl;
-                    (void)ctx.detach_timer();
-                    executor.exit_with(ExecutorError::ExternalExit, buf);
-                    return ctx.terminate();
-                });
-                return ctx.create_sub_executor(std::move(timer))
-                .on_action([](auto ctx, auto& /*buf*/, auto& /*timer*/){
-                    // timer.disable(ExecutorResult::ExitFailure);
-                    std::cout << "good" << std::endl;
-                    return ctx.exit_on_success();
-                })
-                .on_exit([](auto ctx, ExecutorError error, auto& /*buf*/, auto& /*timer*/){
-                    std::cout << "exit gam: " << int(error) << std::endl;
-                    return ctx.exit_on_success();
-                });
-            }
-//             else if (!strncmp(buf.data(), "gam", 3))
-//             {
-//                 std::cout << "--> gam" << std::endl;
-//                 buf.reset();
-//                 auto timer = ctx.create_timed_executor()
-//                 .on_timer(2s, [](auto ctx){
-//                     std::cout << "timer" << std::endl;
-//                     return ctx.exit_on_success();
-//                 })
-//                 .on_action([](auto ctx){
-//                     // timer.disable(ExecutorResult::ExitFailure);
-//                     std::cout << "good" << std::endl;
-//                     return ctx.exit_on_success();
-//                 })
-//                 .on_exit([](auto ctx, ExecutorError error){
-//                     std::cout << "exit gam: " << int(error) << std::endl;
-//                     return ctx.exit_on_success();
-//                 });
-//             }
-            else if (!strncmp(buf.data(), "ext", 3))
-            {
-                std::cout << "--> ext" << std::endl;
-                buf.reset();
-                return ctx.exit_on_success();
-            }
-            else
-            {
-                buf.reset();
-                std::cout << "Unknow " << std::endl;
-                return ctx.need_more_data();
-            }
-        })
-        .on_exit([](auto ctx, ExecutorError error, Buffer& /*buf*/){
-            std::cout << "error: " << int(error) << std::endl;
-            return ctx.need_more_data();
-        })
-        .on_timeout(3s, [](auto ctx, Buffer& /*buf*/){
-            std::cout << "Timeout" << std::endl;
-            return ctx.need_more_data();
-        })
-        .base();
-
-    epoll_event event { EPOLLIN, {} };
-    event.data.ptr = &top_executor;
-    E | epoll_ctl(epfd, EPOLL_CTL_ADD, 0, &event);
-
-    while (reactor.executors.xs.size())
-    {
-        epoll_event events[2] {};
-        auto const ms = reactor.timers.get_next_timeout().count();
-        //std::cout << "timeout: " << ms << " ms" << std::endl;
-        int count = E | epoll_wait(epfd, events, 2, ms);
-        if (count) {
-            for (int i = 0; i < count; ++i) {
-                auto& executor = *static_cast<BasicExecutor<Buffer&>*>(events[i].data.ptr);
-                auto& data = DataExecutor<Data>::get_data_from(executor);
-                data.buf.read();
-                if (!data.buf.size()) {
-                    break;
-                }
-                // std::cout << "["; std::cout.write(data.buf.data(), data.buf.size()) << "]" << std::endl;
-                if (!executor.exec(data.buf)) {
-                    reactor.executors.remove(executor);
-                }
-            }
+                return R::Group;
+            });
+            e.sub(std::move(sub));
         }
-        else if (count < 0) {
-            std::cout << "count: " << count << std::endl;
+        return R::Group;
+    });
+    e.add([&]{
+        std::cout << "4\n";
+        {
+            Event sub;
+            sub.add([]{std::cout << "4.1\n"; return R::Next; });
+            sub.add([]{std::cout << "4.2\n"; return R::ExitSuccess; });
+            sub.add([]{std::cout << "4.3\n"; return R::Next; });
+            sub.add([]{std::cout << "4.4\n"; return R::Next; });
+            e.sub(std::move(sub));
+        }
+        return R::Group;
+    });
+    e.add([]{std::cout << "5\n"; return R::Next; });
+
+    for (int i = 0; i < 22; ++i) {
+        std::cout << ".";
+        if (!e.exec()) {
             break;
-        }
-        else {
-            Buffer dummy;
-            (void)reactor.timers.exec_timeout(dummy);
         }
     }
 }
