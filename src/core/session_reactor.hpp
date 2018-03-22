@@ -386,6 +386,7 @@ struct SessionReactor
                     case jln::ExecutorResult::ExitSuccess:
                     case jln::ExecutorResult::ExitFailure:
                         assert(false && "Exit");
+                        REDEMPTION_CXX_FALLTHROUGH;
                     case jln::ExecutorResult::Terminate:
                         assert(elem.alive());
                         LOG(LOG_DEBUG, "f = %p %d", static_cast<void*>(&elem), elem.use_count);
@@ -393,6 +394,7 @@ struct SessionReactor
                         return false;
                     case jln::ExecutorResult::NeedMoreData:
                         assert(false && "NeedMoreData");
+                        REDEMPTION_CXX_FALLTHROUGH;
                     case jln::ExecutorResult::Nothing:
                     case jln::ExecutorResult::Ready:
                         return true;
