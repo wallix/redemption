@@ -50,7 +50,6 @@
 #include "utils/fileutils.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/png.hpp"
-//#include "utils/region.hpp"
 #include "utils/stream.hpp"
 #include "utils/timestamp_tracer.hpp"
 
@@ -76,6 +75,7 @@
 #include "utils/recording_progress.hpp"
 #include "utils/sugar/underlying_cast.hpp"
 
+//#include "configs/config_access.hpp"
 
 class PatternSearcher
 {
@@ -728,7 +728,7 @@ class PngCaptureRT : public PngCapture
 
     bool enable_rt_display;
 
-    bool enable_smart_video_cropping;
+    SmartVideoCropping smart_video_cropping;
 
 public:
     PngCaptureRT(
@@ -738,7 +738,7 @@ public:
     , num_start(this->trans.get_seqno())
     , png_limit(png_params.png_limit)
     , enable_rt_display(png_params.rt_display)
-    , enable_smart_video_cropping(png_params.smart_video_cropping)
+    , smart_video_cropping(png_params.smart_video_cropping)
     {
     }
 
@@ -776,7 +776,7 @@ public:
     }
 
     void visibility_rects_event(Rect const & rect_) override {
-        if (this->enable_smart_video_cropping && !rect_.isempty()) {
+        if ((this->smart_video_cropping != SmartVideoCropping::disable) && !rect_.isempty()) {
             Rect rect = rect_.intersect(
                 {0, 0, this->drawable.width(), this->drawable.height()});
 

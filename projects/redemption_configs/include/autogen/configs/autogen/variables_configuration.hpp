@@ -2707,17 +2707,17 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{7};
     };
-    /// type: bool <br/>
-    /// value{0} <br/>
+    /// type: SmartVideoCropping <br/>
+    /// value{static_cast<type>(1)} <br/>
     struct video::smart_video_cropping {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
         static constexpr char const * section() { return "video"; }
         static constexpr char const * name() { return "smart_video_cropping"; }
-        using type = bool;
-        using sesman_and_spec_type = bool;
+        using type = SmartVideoCropping;
+        using sesman_and_spec_type = SmartVideoCropping;
         using mapped_type = sesman_and_spec_type;
-        type value{0};
+        type value{static_cast<type>(1)};
     };
 
     /// AUTHID_CRYPTO_KEY0 <br/>
