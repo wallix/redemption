@@ -67,7 +67,6 @@ exe rdpproxy :
   <library>src/mod/internal/widget/flat_form.o
   <library>src/mod/internal/widget/flat_interactive_target.o
   <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
   <library>src/mod/internal/widget/group_box.o
@@ -86,6 +85,7 @@ exe rdpproxy :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -130,6 +130,7 @@ exe rdpclient :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/socket_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
@@ -164,16 +165,12 @@ exe rdpheadless :
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/edit_valid.o
   <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
-  <library>src/mod/internal/widget/image.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/socket_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
@@ -254,7 +251,6 @@ exe rdptproxy :
   <library>src/mod/internal/widget/flat_form.o
   <library>src/mod/internal/widget/flat_interactive_target.o
   <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
   <library>src/mod/internal/widget/group_box.o
@@ -273,6 +269,7 @@ exe rdptproxy :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -343,7 +340,6 @@ exe vncclient :
   <library>src/mod/internal/widget/flat_form.o
   <library>src/mod/internal/widget/flat_interactive_target.o
   <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
   <library>src/mod/internal/widget/group_box.o
@@ -362,6 +358,7 @@ exe vncclient :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -491,7 +488,6 @@ test-run tests/acl/test_acl_serializer :
   <library>src/mod/internal/widget/flat_form.o
   <library>src/mod/internal/widget/flat_interactive_target.o
   <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
   <library>src/mod/internal/widget/group_box.o
@@ -510,6 +506,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -584,7 +581,6 @@ test-run tests/acl/test_authentifier :
   <library>src/mod/internal/widget/flat_form.o
   <library>src/mod/internal/widget/flat_interactive_target.o
   <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
   <library>src/mod/internal/widget/group_box.o
@@ -603,6 +599,7 @@ test-run tests/acl/test_authentifier :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -677,7 +674,6 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/internal/widget/flat_form.o
   <library>src/mod/internal/widget/flat_interactive_target.o
   <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
   <library>src/mod/internal/widget/group_box.o
@@ -696,6 +692,7 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -920,6 +917,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/negociation.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -980,6 +978,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/negociation.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -1015,6 +1014,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/negociation.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -1040,14 +1040,7 @@ test-run tests/client_mods/test_vnc_client_simple :
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
-  <library>src/mod/internal/widget/image.o
-  <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
@@ -1913,7 +1906,6 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/widget/flat_form.o
   <library>src/mod/internal/widget/flat_interactive_target.o
   <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
   <library>src/mod/internal/widget/group_box.o
@@ -1932,6 +1924,7 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -2011,7 +2004,6 @@ test-run tests/core/test_session :
   <library>src/mod/internal/widget/flat_form.o
   <library>src/mod/internal/widget/flat_interactive_target.o
   <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
   <library>src/mod/internal/widget/group_box.o
@@ -2030,6 +2022,7 @@ test-run tests/core/test_session :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -2105,7 +2098,6 @@ test-run tests/core/test_session_server :
   <library>src/mod/internal/widget/flat_form.o
   <library>src/mod/internal/widget/flat_interactive_target.o
   <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
   <library>src/mod/internal/widget/group_box.o
@@ -2124,6 +2116,7 @@ test-run tests/core/test_session_server :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -2178,6 +2171,7 @@ test-run tests/front/test_front :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/authorization_channels.o
@@ -3313,6 +3307,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/negociation.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -3366,14 +3361,7 @@ test-run tests/mod/vnc/encoder/test_hextile :
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
-  <library>src/mod/internal/widget/image.o
-  <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
@@ -3401,14 +3389,7 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
-  <library>src/mod/internal/widget/image.o
-  <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
@@ -3436,14 +3417,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
-  <library>src/mod/internal/widget/image.o
-  <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
@@ -4327,6 +4301,7 @@ obj src/mod/internal/widget/selector.o : $(REDEMPTION_SRC_PATH)/mod/internal/wid
 obj src/mod/internal/widget/tooltip.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/tooltip.cpp ;
 obj src/mod/internal/widget/widget_rect.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/widget_rect.cpp ;
 obj src/mod/internal/widget_test_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget_test_mod.cpp ;
+obj src/mod/rdp/negociation.o : $(REDEMPTION_SRC_PATH)/mod/rdp/negociation.cpp ;
 obj src/sashimi/channels.o : $(REDEMPTION_SRC_PATH)/sashimi/channels.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
 obj src/sashimi/channels_client.o : $(REDEMPTION_SRC_PATH)/sashimi/channels_client.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
 obj src/sashimi/channels_server.o : $(REDEMPTION_SRC_PATH)/sashimi/channels_server.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;

@@ -2000,7 +2000,7 @@ private:
     }
 
     template<class... WriterData>
-    void send_data_request_ex(uint16_t channelId, WriterData ... writer_data) {
+    void send_data_request_ex(uint16_t channelId, WriterData... writer_data) {
         this->send_data_request(
             channelId,
             writer_data...,
