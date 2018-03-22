@@ -33,6 +33,7 @@
 #include "transport/in_file_transport.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/sugar/make_unique.hpp"
+#include "utils/sugar/array_view.hpp"
 #include "utils/winpr/pattern.hpp"
 
 #include <sys/types.h>
@@ -1681,103 +1682,147 @@ public:
         }
     }
 
-private:
-    uint32_t EnableDrive(const char * drive_name, const char * relative_directory_path,
-                         bool read_only, RDPVerbose verbose,
-                         bool ignore_existence_check__for_test_only) {
-        uint32_t drive_id = INVALID_MANAGED_DRIVE_ID;
+    struct DriveName
+    {
+        DriveName()
+        {
+            this->name_[0] = 0;
+            this->upper_name_[0] = 0;
+        }
 
-        std::string absolute_directory_path = app_path(AppPath::DriveRedirection);
-        absolute_directory_path += '/';
-        absolute_directory_path += relative_directory_path;
+        DriveName(array_view_const_char name, bool reserved = false) noexcept
+        : read_only_(false)
+        {
+            if (name.size() && name[0] == '*') {
+                name = name.subarray(1);
+                this->read_only_ = true;
+            }
+
+            if (name.size() > 7) {
+                LOG(LOG_ERR,
+                    "FileSystemDriveManager::EnableDrive: "
+                        "Drive name \"%.*s\" too long.",
+                    int(name.size()), name.data());
+                this->name_[0] = 0;
+                return;
+            }
+
+            for (std::size_t i = 0; i < name.size(); ++i) {
+                this->name_[i] = name[i];
+                this->upper_name_[i] = name[i];
+                if (name[i] >= 'a' && name[i] <= 'z') {
+                    this->upper_name_[i] -= 0x20;
+                }
+            }
+            this->name_[name.size()] = 0;
+            this->upper_name_[name.size()] = 0;
+
+            if (!reserved
+             && (!strcmp("SESPRO", this->upper_name_)
+              || !strcmp("WABLNCH", this->upper_name_))
+            ){
+                LOG(LOG_WARNING,
+                    "FileSystemDriveManager::EnableDrive: "
+                        "Drive name \"%.*s\" is reserved!",
+                    int(name.size()), name.data());
+            }
+        }
+
+        DriveName(char const* name, bool reserved = false) noexcept
+        : DriveName({name, strlen(name)}, reserved)
+        {}
+
+        char const* upper_name() const noexcept
+        {
+            return this->upper_name_;
+        }
+
+        char const* name() const noexcept
+        {
+            return this->name_;
+        }
+
+        bool is_valid() const noexcept
+        {
+            return bool(this->name_[0]);
+        }
+
+        bool is_read_only() const noexcept
+        {
+            return this->read_only_;
+        }
+
+    private:
+        char name_[8];
+        char upper_name_[8];
+        bool read_only_;
+    };
+
+private:
+    uint32_t EnableDrive(DriveName drive_name, std::string directory_drive_path,
+                         bool read_only, RDPVerbose verbose) {
+        uint32_t drive_id = INVALID_MANAGED_DRIVE_ID;
 
         struct stat sb;
 
-        if (((::stat(absolute_directory_path.c_str(), &sb) == 0) &&
-             S_ISDIR(sb.st_mode)) ||
-            ignore_existence_check__for_test_only) {
+        if (directory_drive_path.size()) {
+            directory_drive_path += '/';
+        }
+        directory_drive_path += drive_name.name();
+
+        if (((::stat(directory_drive_path.c_str(), &sb) == 0) && S_ISDIR(sb.st_mode))) {
             if (bool(verbose & RDPVerbose::fsdrvmgr)) {
                 LOG(LOG_INFO,
                     "FileSystemDriveManager::EnableDrive: "
-                        "drive_name=\"%s\" directory_path=\"%s\"",
-                    drive_name, absolute_directory_path.c_str());
+                        "directory_path=\"%s\"",
+                    directory_drive_path);
             }
 
             drive_id = this->next_managed_drive_id++;
 
             this->managed_drives.push_back({
-                drive_id,
-                drive_name,
-                absolute_directory_path.c_str(),
-                (read_only ? O_RDONLY : O_RDWR)
+                drive_id, drive_name.upper_name(), directory_drive_path, (read_only ? O_RDONLY : O_RDWR)
             });
         }
         else {
             LOG(LOG_WARNING,
                 "FileSystemDriveManager::EnableDrive: "
                     "Directory path \"%s\" is not accessible!",
-                absolute_directory_path.c_str());
+                directory_drive_path);
         }
 
         return drive_id;
     }
 
 public:
-    bool EnableDrive(const char * relative_directory_path, RDPVerbose verbose,
-            bool ignore_existence_check__for_test_only = false) {
-        bool read_only = false;
-        if (*relative_directory_path == '*') {
-            read_only = true;
-            relative_directory_path++;
-        }
-
-        if (!::strcasecmp(relative_directory_path, "sespro") ||
-            !::strcasecmp(relative_directory_path, "wablnch")) {
-                LOG(LOG_WARNING,
-                    "FileSystemDriveManager::EnableDrive: "
-                        "Directory path \"%s\" is reserved!",
-                    relative_directory_path);
-
-            return false;
-        }
-
-        char drive_name[1024 * 16];
-        int result = snprintf(drive_name, sizeof(drive_name), "%s",
-            relative_directory_path);
-        if ((result < 0) || (result >= static_cast<int>(sizeof(drive_name)))) {
-            LOG(LOG_ERR,
-                "FileSystemDriveManager::EnableDrive: "
-                    "Failed to duplicate relative directory path. result=%d",
-                result);
-
-            return false;
-        }
-
-        const unsigned relative_directory_path_length = static_cast<unsigned>(result);
-        for (unsigned i = 0; i < relative_directory_path_length; i++) {
-            if ((drive_name[i] >= 0x61) && (drive_name[i] <= 0x7A)) {
-                drive_name[i] -= 0x20;
-            }
-        }
-
-        return (this->EnableDrive(
+    bool EnableDriveClient(DriveName drive_name, const char * directory_path, RDPVerbose verbose)
+    {
+        return drive_name.is_valid()
+            && this->EnableDrive(
                     drive_name,
-                    relative_directory_path,
-                    read_only,
-                    verbose,
-                    ignore_existence_check__for_test_only
+                    directory_path,
+                    false,
+                    verbose);
+    }
+
+    bool EnableDrive(DriveName const& drive_name, std::string directory_drive_path, RDPVerbose verbose) {
+        return drive_name.is_valid()
+            && (this->EnableDrive(
+                    drive_name,
+                    std::move(directory_drive_path),
+                    drive_name.is_read_only(),
+                    verbose
                 ) != INVALID_MANAGED_DRIVE_ID);
     }
 
-    bool EnableSessionProbeDrive(RDPVerbose verbose) {
+    bool EnableSessionProbeDrive(std::string directory, RDPVerbose verbose) {
         if (this->session_probe_drive_id == INVALID_MANAGED_DRIVE_ID) {
             this->session_probe_drive_id = this->EnableDrive(
-                    "SESPRO",
-                    "sespro",
-                    true,       // read-only
-                    verbose,
-                    false       // ignore existence check
-                );
+                DriveName("sespro", true),
+                std::move(directory),
+                true,       // read-only
+                verbose
+            );
         }
 
         return (this->session_probe_drive_id != INVALID_MANAGED_DRIVE_ID);

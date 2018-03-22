@@ -33,6 +33,7 @@
 #include <vector>
 #include <chrono>
 #include <unordered_map>
+#include <memory>
 
 #include <cerrno>
 #include <cstring>

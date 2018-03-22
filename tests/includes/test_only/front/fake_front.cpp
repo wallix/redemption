@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2010-2013
    Author(s): Christophe Grosjean
 
-   Fake Front class for Unit Testing
+   Fake Graphic class for Unit Testing
 */
 
 #include "test_only/front/fake_front.hpp"

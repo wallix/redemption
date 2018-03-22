@@ -184,6 +184,7 @@ inline int run_connection_test(char const * type, int sck_fd, mod_api & mod, gdi
     Select select(type, sck_fd, mod, gd);
 
     for (;;) {
+        LOG(LOG_INFO, "run_connection_test");
         timeval timeout = {5, 0};
 
         switch (select.next_event(timeout))

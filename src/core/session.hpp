@@ -40,6 +40,7 @@
 #include "acl/authentifier.hpp"
 #include "core/server.hpp"
 #include "core/wait_obj.hpp"
+// #include "core/session_reactor.hpp"
 #include "front/front.hpp"
 #include "mod/mod_api.hpp"
 #include "system/ssl_calls.hpp"
@@ -437,7 +438,7 @@ public:
                         }
                     }
                 } catch (Error const& e) {
-                    LOG(LOG_INFO, "Session::Session exception = %u!\n", e.id);
+                    LOG(LOG_INFO, "Session::Session exception = %s\n", e.errmsg());
                     time_t now = time(nullptr);
                     mm.invoke_close_box(local_err_msg(e, language(this->ini)), signal, now, authentifier, authentifier);
                 };
@@ -477,13 +478,13 @@ public:
         if (!this->ini.get<cfg::context::session_id>().empty()) {
             char new_session_file[256];
             snprintf( new_session_file, sizeof(new_session_file), "%s/session_%s.pid"
-                    , app_path(AppPath::Pid), this->ini.get<cfg::context::session_id>().c_str());
+                    , app_path(AppPath::LockDir), this->ini.get<cfg::context::session_id>().c_str());
             unlink(new_session_file);
         }
         else {
             int child_pid = getpid();
             char old_session_file[256];
-            sprintf(old_session_file, "%s/session_%d.pid", app_path(AppPath::Pid), child_pid);
+            sprintf(old_session_file, "%s/session_%d.pid", app_path(AppPath::LockDir), child_pid);
             unlink(old_session_file);
         }
     }

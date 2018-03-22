@@ -738,11 +738,10 @@ RED_AUTO_TEST_CASE(ServerDriveSetInformationRequestEmit)
 
 RED_AUTO_TEST_CASE(ServerDriveSetInformationRequestReceive)
 {
-    const size_t len = 32;
-    const char data[] =
+    const char data[32] =
             "\x01\x00\x00\x02\x03\x00\x00\x04";
 
-    InStream in_stream(data, len);
+    InStream in_stream(data);
     rdpdr::ServerDriveSetInformationRequest pdu;
     pdu.receive(in_stream);
 

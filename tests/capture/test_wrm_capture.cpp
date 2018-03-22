@@ -28,6 +28,7 @@
 #include <snappy-c.h>
 #include <memory>
 #include <cstring>
+#include <string>
 
 #include "core/app_path.hpp"
 #include "utils/png.hpp"
@@ -47,6 +48,8 @@
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/fake_stat.hpp"
+
+#include "capture/file_to_graphic.hpp"
 
 template<class Writer>
 void wrmcapture_write_meta_headers(Writer & writer, uint16_t width, uint16_t height, bool has_checksum)
@@ -125,6 +128,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
 
         WrmParams wrm_params(
             24,
+            false,
             cctx,
             rnd,
             fstat,
@@ -241,6 +245,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 
         WrmParams wrm_params(
             24,
+            false,
             cctx,
             rnd,
             fstat,
@@ -423,9 +428,9 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        
+
         cctx.set_trace_type(TraceType::localfile);
-        
+
         OutMetaSequenceTransport wrm_trans(cctx, rnd, fstat, "./", "./hash-", "xxx", now, 800, 600, groupid, nullptr);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
@@ -497,9 +502,9 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
         now.tv_sec = sec_start;
         now.tv_usec = 0;
         const int groupid = 0;
-        
+
         cctx.set_trace_type(TraceType::localfile_hashed);
-        
+
         OutMetaSequenceTransport wrm_trans(cctx, rnd, fstat, "./", "/tmp/", "xxx", now, 800, 600, groupid, nullptr);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
@@ -548,4 +553,158 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
     RED_CHECK_EQUAL(0, ::unlink("/tmp/xxx-000001.wrm"));
     RED_CHECK_EQUAL(160, filesize("/tmp/xxx.mwrm"));
     RED_CHECK_EQUAL(0, ::unlink("/tmp/xxx.mwrm"));
+}
+
+RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
+{
+    const struct CheckFiles {
+        const char * filename;
+        int size;
+    } fileinfos[] = {
+        {"./capture_kbd_input-000000.wrm", 292},
+        {"./capture_kbd_input.mwrm", 77},
+        {"/tmp/capture_kbd_input-000000.wrm", 50},
+        {"/tmp/capture_kbd_input.mwrm", 44},
+    };
+    for (auto const & d : fileinfos) {
+        unlink(d.filename);
+    }
+
+    {
+        // Timestamps are applied only when flushing
+        timeval now;
+        now.tv_usec = 0;
+        now.tv_sec = 1000;
+
+        Rect scr(0, 0, 800, 600);
+
+        LCGRandom rnd(0);
+        FakeFstat fstat;
+        CryptoContext cctx;
+
+        GraphicToFile::Verbose wrm_verbose = to_verbose_flags(0)
+    //     |GraphicToFile::Verbose::primary_orders)
+    //     |GraphicToFile::Verbose::secondary_orders)
+    //     |GraphicToFile::Verbose::bitmap_update)
+        ;
+
+        WrmCompressionAlgorithm wrm_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+        std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = std::chrono::seconds{1};
+        std::chrono::seconds wrm_break_interval = std::chrono::seconds{3};
+
+        const char * record_path = "./";
+        const int groupid = 0; // www-data
+        const char * hash_path = "/tmp/";
+
+        char basename[1024];
+        char extension[128];
+        strcpy(basename, "capture_kbd_input");
+        strcpy(extension, "");          // extension is currently ignored
+
+        cctx.set_trace_type(TraceType::localfile);
+
+        WrmParams wrm_params(
+            24,
+            false,
+            cctx,
+            rnd,
+            fstat,
+            hash_path,
+            wrm_frame_interval,
+            wrm_break_interval,
+            wrm_compression_algorithm,
+            int(wrm_verbose)
+        );
+
+        RDPDrawable gd_drawable(4, 1);
+
+        WrmCaptureImpl wrm(
+          CaptureParams{now, basename, "", record_path, groupid, nullptr},
+          wrm_params, gd_drawable);
+
+        bool ignore_frame_in_timeval = false;
+
+        wrm.send_timestamp_chunk(now, ignore_frame_in_timeval);
+
+        wrm.kbd_input(now, 'i');
+        wrm.kbd_input(now, 'p');
+        wrm.kbd_input(now, 'c');
+        wrm.kbd_input(now, 'o');
+        wrm.kbd_input(now, 'n');
+        wrm.kbd_input(now, 'f');
+        wrm.kbd_input(now, 'i');
+        now.tv_sec++;
+        wrm.send_timestamp_chunk(now, ignore_frame_in_timeval);
+
+        wrm.kbd_input(now, 'g');
+        wrm.kbd_input(now, '\r');
+
+        wrm.session_update(now, cstr_array_view("FOREGROUND_WINDOW_CHANGED=WINDOW\x01CLASS\x01COMMAND_LINE"));
+
+        wrm.send_timestamp_chunk(now, ignore_frame_in_timeval);
+    }
+
+    struct KbdInput : public gdi::KbdInputApi
+    {
+        KbdInput(std::string& output) : output(output) {
+
+        }
+
+        bool kbd_input(timeval const & /*now*/, uint32_t uchar) override
+        {
+            this->output += char(uchar);
+
+            return true;
+        }
+
+        void enable_kbd_input_mask(bool /*enable*/) override {}
+
+        std::string & output;
+    };
+
+    struct CaptureProbe : public gdi::CaptureProbeApi
+    {
+        CaptureProbe(std::string& output) : output(output) {
+
+        }
+
+        void session_update(timeval const & /*now*/, array_view_const_char message) override
+        {
+            output.append(message.data(), message.size());
+        }
+
+        void possible_active_window_change() override {}
+
+        std::string & output;
+    };
+
+    int fd = ::open(fileinfos[0].filename, O_RDONLY);
+    RED_REQUIRE_NE(fd, -1);
+    InFileTransport in_wrm_trans(unique_fd{fd});
+
+    FileToGraphic player(in_wrm_trans, {}, {}, false, to_verbose_flags(0));
+
+    std::string output;
+    KbdInput kbd_input(output);
+    CaptureProbe capture_probe(output);
+    player.add_consumer(nullptr, nullptr, &kbd_input, &capture_probe, nullptr);
+
+    while(player.next_order())
+    {
+        player.interpret_order();
+    }
+
+//    RED_CHECK_EQUAL(output, "FOREGROUND_WINDOW_CHANGED=WINDOW\x01CLASS\x01COMMAND_LINE");
+
+    RED_CHECK_SMEM_AC(output, "ipconfig\rFOREGROUND_WINDOW_CHANGED=WINDOW\x01CLASS\x01COMMAND_LINE\x00");
+
+    for (auto x : fileinfos) {
+        auto fsize = filesize(x.filename);
+        RED_CHECK_MESSAGE(
+            x.size == fsize,
+            "check " << x.size << " == filesize(\"" << x.filename
+            << "\") failed [" << x.size << " != " << fsize << "]"
+        );
+       ::unlink(x.filename);
+    }
 }

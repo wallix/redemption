@@ -59,6 +59,8 @@ class ReplayMod : public InternalMod
     time_t balise_time_frame;
     bool sync_setted;
 
+    bool replay_on_loop;
+
 public:
     using Verbose = FileToGraphic::Verbose;
 
@@ -70,10 +72,11 @@ public:
              , std::string & auth_error_message
              , Font const & font
              , bool wait_for_escape
+             , bool replay_on_loop
              , Verbose debug_capture)
     : ReplayMod(
         front, replay_path, movie, width, height, auth_error_message,
-        font, wait_for_escape, timeval{0, 0}, timeval{0, 0}, 0, debug_capture)
+        font, wait_for_escape, timeval{0, 0}, timeval{0, 0}, 0, replay_on_loop, debug_capture)
     {
     }
 
@@ -88,6 +91,7 @@ public:
              , timeval const & begin_read
              , timeval const & end_read
              , time_t balise_time_frame
+             , bool replay_on_loop
              , Verbose debug_capture);
 
     ~ReplayMod() override;

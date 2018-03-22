@@ -175,6 +175,10 @@ private:
     bool ignore_frame_in_timeval;
 
 public:
+    bool remote_app;
+
+    Rect image_frame_rect;
+
     struct Statistics
     {
         struct Order

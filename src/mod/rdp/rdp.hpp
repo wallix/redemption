@@ -284,7 +284,9 @@ protected:
     int encryptionLevel;
     int encryptionMethod;
 
-    const int key_flags;
+    const int  key_flags;
+          int  last_key_flags_sent = 0;
+          bool first_scancode = true;
 
     uint32_t     server_public_key_len;
     uint8_t      client_crypt_random[512];
@@ -324,6 +326,10 @@ protected:
     CHANNELS::ChannelNameId auth_channel;
     int  auth_channel_flags;
     int  auth_channel_chanid;
+
+    CHANNELS::ChannelNameId checkout_channel;
+    int  checkout_channel_flags = 0;
+    int  checkout_channel_chanid = 0;
 
     AuthApi & authentifier;
     ReportMessageApi & report_message;
@@ -376,6 +382,11 @@ protected:
     const std::chrono::milliseconds   session_probe_clipboard_based_launcher_short_delay;
 
     const bool                        session_probe_allow_multiple_handshake;
+
+    const bool                        session_probe_enable_crash_dump;
+
+    const uint32_t                    session_probe_handle_usage_limit;
+    const uint32_t                    session_probe_memory_usage_limit;
 
     const bool                        bogus_ios_rdpdr_virtual_channel;
 
@@ -595,6 +606,7 @@ protected:
                     *this,
                     *this,
                     file_system_virtual_channel,
+                    this->gen,
                     this->get_session_probe_virtual_channel_params());
         }
 
@@ -908,6 +920,7 @@ public:
         , userid(0)
         , encryptionLevel(0)
         , key_flags(mod_rdp_params.key_flags)
+        , last_key_flags_sent(key_flags)
         , server_public_key_len(0)
         , connection_finalization_state(EARLY)
         , state(MOD_RDP_NEGO_INITIATE)
@@ -972,6 +985,9 @@ public:
         , session_probe_clipboard_based_launcher_long_delay(mod_rdp_params.session_probe_clipboard_based_launcher_long_delay)
         , session_probe_clipboard_based_launcher_short_delay(mod_rdp_params.session_probe_clipboard_based_launcher_short_delay)
         , session_probe_allow_multiple_handshake(mod_rdp_params.session_probe_allow_multiple_handshake)
+        , session_probe_enable_crash_dump(mod_rdp_params.session_probe_enable_crash_dump)
+        , session_probe_handle_usage_limit(mod_rdp_params.session_probe_handle_usage_limit)
+        , session_probe_memory_usage_limit(mod_rdp_params.session_probe_memory_usage_limit)
         , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
         , enable_rdpdr_data_analysis(mod_rdp_params.enable_rdpdr_data_analysis)
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
@@ -1092,11 +1108,13 @@ public:
         }
 
         if (this->enable_session_probe) {
-            this->file_system_drive_manager.EnableSessionProbeDrive(this->verbose);
+            this->file_system_drive_manager.EnableSessionProbeDrive(
+                mod_rdp_params.proxy_managed_drive_prefix, this->verbose);
         }
 
         if (mod_rdp_params.proxy_managed_drives && (*mod_rdp_params.proxy_managed_drives)) {
-            this->configure_proxy_managed_drives(mod_rdp_params.proxy_managed_drives);
+            this->configure_proxy_managed_drives(mod_rdp_params.proxy_managed_drives,
+                                                 mod_rdp_params.proxy_managed_drive_prefix);
         }
 
         if (mod_rdp_params.transparent_recorder_transport) {
@@ -1113,6 +1131,8 @@ public:
             default:
                 this->auth_channel = mod_rdp_params.auth_channel;
         }
+
+        this->checkout_channel = mod_rdp_params.checkout_channel;
 
         memset(this->clientAddr, 0, sizeof(this->clientAddr));
         strncpy(this->clientAddr, mod_rdp_params.client_address, sizeof(this->clientAddr) - 1);
@@ -1600,7 +1620,7 @@ public:
                 );
         }
 
-        LOG(LOG_INFO, "RDP mod contructed");
+        LOG(LOG_INFO, "RDP mod built");
     }   // mod_rdp
 
     ~mod_rdp() override {
@@ -1831,6 +1851,14 @@ protected:
         session_probe_virtual_channel_params.session_probe_allow_multiple_handshake =
             this->session_probe_allow_multiple_handshake;
 
+        session_probe_virtual_channel_params.session_probe_enable_crash_dump        =
+            this->session_probe_enable_crash_dump;
+
+        session_probe_virtual_channel_params.session_probe_handle_usage_limit        =
+            this->session_probe_handle_usage_limit;
+        session_probe_virtual_channel_params.session_probe_memory_usage_limit        =
+            this->session_probe_memory_usage_limit;
+
         session_probe_virtual_channel_params.real_alternate_shell                   =
             this->real_alternate_shell.c_str();
         session_probe_virtual_channel_params.real_working_dir                       =
@@ -2004,29 +2032,42 @@ public:
         }
     }   // configure_extra_orders
 
-    void configure_proxy_managed_drives(const char * proxy_managed_drives) {
+    void configure_proxy_managed_drives(const char * proxy_managed_drives, const char * proxy_managed_drive_prefix) {
         if (bool(this->verbose & RDPVerbose::connection)) {
             LOG(LOG_INFO, "Proxy managed drives=\"%s\"", proxy_managed_drives);
         }
 
-        std::string drive;
         for (auto & r : get_line(proxy_managed_drives, ',')) {
-            auto trimmed_range = trim(r);
+            auto const trimmed_range = trim(r);
 
             if (trimmed_range.empty()) continue;
 
-            drive.assign(begin(trimmed_range), end(trimmed_range));
-
             if (bool(this->verbose & RDPVerbose::connection)) {
-                LOG(LOG_INFO, "Proxy managed drive=\"%s\"", drive);
+                LOG(LOG_INFO, "Proxy managed drive=\"%.*s\"",
+                    int(trimmed_range.size()), trimmed_range.begin());
             }
-            this->file_system_drive_manager.EnableDrive(drive.c_str(), this->verbose);
+
+            this->file_system_drive_manager.EnableDrive(
+                array_view_const_char{trimmed_range.begin(), trimmed_range.end()},
+                proxy_managed_drive_prefix, this->verbose);
         }
     }   // configure_proxy_managed_drives
 
     void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 *) override {
         if ((UP_AND_RUNNING == this->connection_finalization_state) &&
             !this->input_event_disabled) {
+            if (this->first_scancode && !(device_flags & 0x8000) &&
+                (!this->enable_session_probe ||
+                 !this->session_probe_launcher->is_keyboard_sequences_started() ||
+                 this->get_session_probe_virtual_channel().has_been_launched())
+               ) {
+                LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: First Keyboard Event. Resend the Synchronize Event to server.");
+
+                this->first_scancode = false;
+
+                this->send_input(time, RDP_INPUT_SYNCHRONIZE, 0, this->last_key_flags_sent, 0);
+            }
+
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
 
             if (this->remote_programs_session_manager) {
@@ -2337,6 +2378,26 @@ public:
     }
 
 private:
+    void send_checkout_channel_data(const char * string_data) {
+        CHANNELS::VirtualChannelPDU virtual_channel_pdu;
+
+        StaticOutStream<65536> stream_data;
+
+        uint32_t data_size = std::min(::strlen(string_data), stream_data.get_capacity());
+
+        stream_data.out_uint16_le(1);           // Version
+        stream_data.out_uint16_le(data_size);
+        stream_data.out_copy_bytes(string_data, data_size);
+
+        virtual_channel_pdu.send_to_server(
+            this->trans, this->encrypt, this->encryptionLevel
+          , this->userid, this->checkout_channel_chanid
+          , stream_data.get_offset()
+          , this->checkout_channel_flags
+          , stream_data.get_data()
+          , stream_data.get_offset());
+    }
+
     void send_to_channel(
         const CHANNELS::ChannelDef & channel,
         uint8_t const * chunk, std::size_t chunk_size,
@@ -2509,9 +2570,7 @@ public:
                 if (bool(this->verbose & RDPVerbose::security)) {
                     cs_core.log("Sending to Server");
                 }
-                LOG(LOG_INFO, "before cs_core.emit(stream);");
                 cs_core.emit(stream);
-                LOG(LOG_INFO, "after cs_core.emit(stream);");
                 // ------------------------------------------------------------
 
                 GCC::UserData::CSCluster cs_cluster;
@@ -2564,7 +2623,8 @@ public:
                 const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
                 size_t num_channels = channel_list.size();
                 if ((num_channels > 0) || this->enable_auth_channel ||
-                    this->file_system_drive_manager.HasManagedDrive()) {
+                    this->file_system_drive_manager.HasManagedDrive() ||
+                    this->checkout_channel.c_str()[0]) {
                     /* Here we need to put channel information in order
                     to redirect channel data
                     from client to server passing through the "proxy" */
@@ -2671,6 +2731,21 @@ public:
                             GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
                         CHANNELS::ChannelDef def;
                         def.name = this->auth_channel;
+                        def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
+                        if (bool(this->verbose & RDPVerbose::channels)){
+                            def.log(cs_net.channelCount);
+                        }
+                        this->mod_channel_list.push_back(def);
+                        cs_net.channelCount++;
+                    }
+
+                    // Inject a new channel for checkout_channel virtual channel
+                    if (this->checkout_channel.c_str()[0]) {
+                        memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->checkout_channel.c_str(), 8);
+                        cs_net.channelDefArray[cs_net.channelCount].options =
+                            GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
+                        CHANNELS::ChannelDef def;
+                        def.name = this->checkout_channel;
                         def.flags = cs_net.channelDefArray[cs_net.channelCount].options;
                         if (bool(this->verbose & RDPVerbose::channels)){
                             def.log(cs_net.channelCount);
@@ -3775,6 +3850,9 @@ public:
             // If channel name is our virtual channel, then don't send data to front
                  if (mod_channel.name == this->auth_channel && this->enable_auth_channel) {
                 this->process_auth_event(mod_channel, sec.payload, length, flags, chunk_size);
+            }
+            else if (mod_channel.name == this->checkout_channel) {
+                this->process_checkout_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::sespro) {
                 this->process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size);
@@ -6635,6 +6713,10 @@ public:
         else {
             this->send_input_fastpath(time, message_type, device_flags, param1, param2);
         }
+
+        if (message_type == RDP_INPUT_SYNCHRONIZE) {
+            this->last_key_flags_sent = param1;
+        }
     }
 
     void rdp_input_invalidate(Rect r) override {
@@ -7713,6 +7795,46 @@ private:
             this->authentifier.set_auth_channel_target(
                 auth_channel_message.c_str());
         }
+    }
+
+    void process_checkout_event(
+        const CHANNELS::ChannelDef & checkout_channel,
+        InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size
+    ) {
+        (void)length;
+        (void)chunk_size;
+        assert(stream.in_remain() == chunk_size);
+
+        if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) !=
+            (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST))
+        {
+            LOG(LOG_WARNING, "mod_rdp::process_checkout_event: Chunked Virtual Channel Data ignored!");
+            return;
+        }
+
+        {
+            const unsigned expected = 4;    // Version(2) + DataLength(2)
+            if (!stream.in_check_rem(expected)) {
+                LOG( LOG_ERR
+                   , "mod_rdp::process_checkout_event: data truncated (1), expected=%u remains=%zu"
+                   , expected, stream.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+        }
+
+        uint16_t const version = stream.in_uint16_le();
+        uint16_t const data_length = stream.in_uint16_le();
+
+        LOG(LOG_INFO, "mod_rdp::process_checkout_event: Version=%u DataLength=%u", version, data_length);
+
+        std::string checkout_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
+
+        this->checkout_channel_flags  = flags;
+        this->checkout_channel_chanid = checkout_channel.chanid;
+
+        LOG(LOG_INFO, "mod_rdp::process_checkout_event: Data=\"%s\"", checkout_channel_message);
+
+        send_checkout_channel_data("{ \"ReturnCode\": 0, \"ReturnMessage\": \"Succeeded.\" }");
     }
 
     void process_session_probe_event(

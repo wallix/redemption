@@ -82,6 +82,7 @@ FileToGraphic::FileToGraphic(Transport & trans, const timeval begin_capture, con
     , info_cache_4_persistent(false)
     , info_compression_algorithm(WrmCompressionAlgorithm::no_compression)
     , ignore_frame_in_timeval(false)
+    , remote_app(false)
     , statistics()
     , break_privplay_client(false)
     , movie_elapsed_client{}
@@ -620,6 +621,10 @@ void FileToGraphic::interpret_order()
             this->trans = &this->compression_builder.reset(
                 *this->trans_source, this->info_compression_algorithm
             );
+
+            if (this->info_version > 4) {
+                this->remote_app = (this->stream.in_uint8() ? true : false);
+            }
         }
 
         this->stream.in_skip_bytes(this->stream.in_remain());
@@ -870,6 +875,13 @@ void FileToGraphic::interpret_order()
         for (gdi::CaptureProbeApi * cap_probe : this->capture_probe_consumers){
             cap_probe->possible_active_window_change();
         }
+    break;
+
+    case WrmChunkType::IMAGE_FRAME_RECT:
+        this->image_frame_rect.x  = this->stream.in_sint16_le();
+        this->image_frame_rect.y  = this->stream.in_sint16_le();
+        this->image_frame_rect.cx = this->stream.in_uint16_le();
+        this->image_frame_rect.cy = this->stream.in_uint16_le();
     break;
     default:
         LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);

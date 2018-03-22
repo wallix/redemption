@@ -14,6 +14,7 @@ include $(JAM_INCLUDE_PATH)/includes.jam ;
 ## @{
 import os ;
 local qtversion = [ os.environ qtversion ] ;
+
 if ! $(qtversion)
 {
     qtversion = [ os.environ qt ] ;
@@ -28,15 +29,16 @@ if ! $(qtversion)
     }
 }
 
-if $(qtversion) != 4 && $(qtversion) != 5 && $(qtversion) != 6
+if $(qtversion) && $(qtversion) != 4 && $(qtversion) != 5 && $(qtversion) != 6
 {
     echo "Unknown Qt$(qtversion)." ;
     qtversion = ;
+    exit "Please set a valid Qt version (4 or 5) with `bjam -s qt=4`." ;
 }
 
 if ! $(qtversion)
 {
-    exit "Please set a valid Qt version (4 or 5) with `bjam -s qt=4`." ;
+    
 }
 ## @}
 
@@ -48,7 +50,8 @@ if $(qtversion) = 4
 
     constant QT_INCLUDES : $(QT4_INCLUDE) ;
 }
-else
+
+if $(qtversion) = 5
 {
     # Need packages qttools5-dev libphonon4qt5-dev
     # TODO search include qt5 directory
@@ -76,7 +79,7 @@ rule disable-buggy-warn ( properties * )
 
     local flags ;
 
-    if $(toolset) = gcc && !  $(version) <= 05.00
+    if $(toolset) = gcc && ! ( $(version) <= 05.00 )
     {
         flags += <cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant ;
     }
@@ -120,13 +123,7 @@ alias instexe : install-bin ;
 alias install : install-bin ;
 
 install install-bin
-    : client_rdp_Qt4
-    : <install-type>EXE <install-dependencies>on
-    : <location>$(INSTALLDIR)/usr/local/bin
-    ;
-
-install install-bin
-    : client_demo_Qt4
+    : client_rdp
     : <install-type>EXE <install-dependencies>on
     : <location>$(INSTALLDIR)/usr/local/bin
     ;
@@ -162,7 +159,7 @@ add_src core/app_path.cpp :
     <conditional>@defines
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)$(MAIN_PATH)\"'
-;
+    ;
 add_src capture/capture.cpp ;
 add_src capture/file_to_graphic.cpp ;
 add_src capture/rdp_ppocr/get_ocr_constants.cpp ;
@@ -221,6 +218,7 @@ constant lib_list :
     snappy
 ;
 
+
 constant EXE_DEPENDENCIES :
     <define>MAIN_PATH='\"$(MAIN_PATH)\"'
     <define>REDEMPTION_QT_VERSION=$(qtversion)
@@ -249,52 +247,81 @@ else
         /qt5//QtGui
         /qt5//QtNetwork
         /qt5//QtWidgets
+        /qt5//QtCore
     ;
 
     lib libphonon : : <name>phonon4qt5 <link>shared ;
 }
 
-obj front_Qt$(qtversion)_Demo.o : src/frontDemoQtClient.cpp :
-    <define>REDEMPTION_DECL_LOG_TEST
-    $(EXE_DEPENDENCIES)
-;
 
-obj front_Qt$(qtversion)_rdp.o : src/rdp_client_qt_front.cpp :
-    <define>REDEMPTION_DECL_LOG_TEST
-    $(EXE_DEPENDENCIES)
-;
+if $(qtversion) {
 
-exe client_vnc_Qt$(qtversion) :
-    src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp
-    src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
-    front_Qt$(qtversion)_Demo.o
-    $(obj_list)
-    $(lib_list)
-    config.o
-    hexdump.o
-    $(obj_list_VNC)
-    libqtclient
-:
-    $(EXE_DEPENDENCIES)
-    <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
-;
+   obj front_Qt$(qtversion)_rdp.o : src/main_qt_client_redemption.cpp :
+        <define>REDEMPTION_DECL_LOG_TEST
+        $(EXE_DEPENDENCIES)
+    ;
 
-exe client_rdp_Qt$(qtversion) :
-    src/rdp_client_graphic_api/front_qt_rdp_graphic_api.hpp
-    src/rdp_client_graphic_api/keymaps/qt_scancode_keymap.hpp
-    src/rdp_client_qt_widget.hpp
-    front_Qt$(qtversion)_rdp.o
-    $(obj_list)
-    $(lib_list)
-    $(obj_list_VNC)
-    config.o
-    hexdump.o
-    libqtclient
-    libphonon
-:
-    $(EXE_DEPENDENCIES)
-    <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
-;
+    exe client_rdp :
+        src/qt_input_output_api/qt_output_sound.hpp
+        src/qt_input_output_api/qt_input_output_clipboard.hpp
+        src/qt_input_output_api/qt_input_socket.hpp
+        src/qt_input_output_api/qt_graphics_components/qt_progress_bar_window.hpp
+        src/qt_input_output_api/qt_graphics_components/qt_options_window.hpp
+        src/qt_input_output_api/qt_graphics_components/qt_screen_window.hpp
+        src/qt_input_output_api/qt_graphics_components/qt_form_window.hpp
+        front_Qt$(qtversion)_rdp.o
+        $(obj_list)
+        $(lib_list)
+        $(obj_list_VNC)
+        config.o
+        hexdump.o
+        libqtclient
+        # TODO: disable phonon requirement when compiling with -D_NO_SOUND
+        libphonon
+    :
+        $(EXE_DEPENDENCIES)
+        <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
+    ;
 
-alias client_vnc_Qt : client_vnc_Qt$(qtversion) ;
-alias client_rdp_Qt : client_rdp_Qt$(qtversion) ;
+
+} else {
+    echo "No valid Qt version found" ;
+
+    obj front_rdp.o : src/main_client_redemption.cpp :
+        <define>REDEMPTION_DECL_LOG_TEST
+        $(EXE_DEPENDENCIES)
+    ;
+
+    exe client_rdp :
+        front_rdp.o
+        $(obj_list)
+        $(lib_list)
+        $(obj_list_VNC)
+        config.o
+        hexdump.o
+    :
+        $(EXE_DEPENDENCIES)
+        <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
+    ;
+}
+
+#obj test_client.o : src/test_client_redemption.cpp :
+#    <define>REDEMPTION_DECL_LOG_TEST
+#    $(EXE_DEPENDENCIES)
+#;
+
+#exe test_client_rdp :
+#    test_client.o
+#    $(obj_list)
+#    $(lib_list)
+#    $(obj_list_VNC)
+#    config.o
+#    hexdump.o
+#:
+#    $(EXE_DEPENDENCIES)
+#    <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
+#    
+#;
+
+
+

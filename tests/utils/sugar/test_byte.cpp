@@ -26,6 +26,7 @@
 #include "utils/sugar/byte.hpp"
 
 #include <type_traits>
+#include <vector>
 
 template<class T, class U>
 constexpr auto is_callable_impl(U & x, int)
@@ -47,6 +48,7 @@ RED_AUTO_TEST_CASE(TestBytesT)
     uint8_t ua[2]{};
     char const ca[2]{};
     uint8_t const cua[2]{};
+    std::vector<uint8_t> uv;
     char * s = a+1;
     uint8_t * us = ua;
     char const * cs = ca;
@@ -92,6 +94,7 @@ RED_AUTO_TEST_CASE(TestBytesT)
     RED_CHECK(bool(const_byte_ptr(a)));
     RED_CHECK(!bool(const_byte_ptr{}));
 
+    const_byte_array{uv};
 
     byte_ptr bs{s};
     const_byte_ptr cbs{cs};

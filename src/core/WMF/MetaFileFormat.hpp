@@ -481,7 +481,7 @@ enum : int {
             assert(this->size >=  METAFILE_WORDS_HEADER_SIZE);
             this->numberOfObjects = stream.in_uint16_le();
             this->maxRecord = stream.in_uint32_le();
-            assert(this->maxRecord >=  META_DIBSTRETCHBLT_HEADER_SIZE);
+            assert(this->maxRecord >= META_DIBSTRETCHBLT_HEADER_SIZE);
             this->numberOfMembers = stream.in_uint16_le();
             assert(this->numberOfMembers == 0);
         }

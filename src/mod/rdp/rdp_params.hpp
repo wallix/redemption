@@ -91,6 +91,11 @@ struct ModRDPParams {
 
     bool                         session_probe_allow_multiple_handshake = false;
 
+    bool                         session_probe_enable_crash_dump = false;
+
+    uint32_t                     session_probe_handle_usage_limit = 0;
+    uint32_t                     session_probe_memory_usage_limit = 0;
+
     bool         enable_transparent_mode = false;
     const char * output_filename = "";
     Transport  * persistent_key_list_transport = nullptr;
@@ -104,6 +109,8 @@ struct ModRDPParams {
 
     bool         ignore_auth_channel = false;
     CHANNELS::ChannelNameId auth_channel;
+
+    CHANNELS::ChannelNameId checkout_channel;
 
     // Application Bastion
     const char * alternate_shell = "";
@@ -149,6 +156,7 @@ struct ModRDPParams {
     bool bogus_refresh_rect = true;
 
     const char * proxy_managed_drives = "";
+    const char * proxy_managed_drive_prefix = "";
 
     Translation::language_t lang = Translation::EN;
 
@@ -271,6 +279,11 @@ struct ModRDPParams {
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_allow_multiple_handshake);
 
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_enable_crash_dump);
+
+        RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_handle_usage_limit);
+        RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_memory_usage_limit);
+
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_syslog);
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_wrm);
 
@@ -292,6 +305,8 @@ struct ModRDPParams {
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             ignore_auth_channel);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             auth_channel.c_str());
+
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             checkout_channel.c_str());
 
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             alternate_shell);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             shell_arguments);

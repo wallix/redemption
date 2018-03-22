@@ -2790,6 +2790,12 @@ enum {
     , FILE_SUPPORT_INTEGRITY_STREAMS    = 0x04000000
 };
 
+enum : uint32_t {
+    NEW_FILE_ATTRIBUTES =  fscc::FILE_SUPPORTS_USN_JOURNAL | fscc::FILE_SUPPORTS_OPEN_BY_FILE_ID | fscc::FILE_SUPPORTS_EXTENDED_ATTRIBUTES | fscc::FILE_SUPPORTS_HARD_LINKS | fscc::FILE_SUPPORTS_TRANSACTIONS | fscc::FILE_NAMED_STREAMS | fscc::FILE_SUPPORTS_ENCRYPTION | fscc::FILE_SUPPORTS_OBJECT_IDS | fscc::FILE_SUPPORTS_REPARSE_POINTS | fscc::FILE_SUPPORTS_SPARSE_FILES | fscc::FILE_VOLUME_QUOTAS | fscc::FILE_FILE_COMPRESSION | fscc::FILE_PERSISTENT_ACLS | fscc::FILE_UNICODE_ON_DISK | fscc::FILE_CASE_PRESERVED_NAMES | fscc::FILE_CASE_SENSITIVE_SEARCH // = 0 x03e700ff
+};
+
+
+
 // MaximumComponentNameLength (4 bytes): A 32-bit signed integer that
 //  contains the maximum file name component length, in bytes, supported by
 //  the specified file system. The value of this field MUST be greater than

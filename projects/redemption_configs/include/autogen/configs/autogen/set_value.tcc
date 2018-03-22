@@ -1012,6 +1012,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::auth_channel&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "checkout_channel")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::checkout_channel&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::fixed_string>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_rdp::checkout_channel&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "alternate_shell")) {
             ::configs::parse_and_log(
                 context, key,
@@ -1348,6 +1360,42 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_allow_multiple_handshake&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "session_probe_enable_crash_dump")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::session_probe_enable_crash_dump&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_rdp::session_probe_enable_crash_dump&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "session_probe_handle_usage_limit")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::session_probe_handle_usage_limit&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_rdp::session_probe_handle_usage_limit&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "session_probe_memory_usage_limit")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::session_probe_memory_usage_limit&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_rdp::session_probe_memory_usage_limit&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "server_cert_store")) {
             ::configs::parse_and_log(
                 context, key,
@@ -1588,6 +1636,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::post_set_value(
                 this->variables,
                 static_cast<cfg::mod_replay::on_end_of_data&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "replay_on_loop")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_replay::replay_on_loop&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_replay::replay_on_loop&>(this->variables)
             );
         }
 

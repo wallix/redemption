@@ -550,7 +550,6 @@ public:
 
     void session_update(const timeval& /*now*/, array_view_const_char message) override {
         this->is_probe_enabled_session = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
-        this->flush();
     }
 
     void possible_active_window_change() override {
@@ -772,193 +771,16 @@ public:
         return interval - duration % interval;
     }
 
-    struct WindowRecord {
-        uint32_t window_id;
-        uint32_t fields_present_flags;
-        uint32_t style;
-        uint8_t show_state;
-        int32_t visible_offset_x;
-        int32_t visible_offset_y;
-
-        WindowRecord(uint32_t window_id, uint32_t fields_present_flags,
-                     uint32_t style, uint8_t show_state,
-                     int32_t visible_offset_x, int32_t visible_offset_y)
-        : window_id(window_id)
-        , fields_present_flags(fields_present_flags)
-        , style(style)
-        , show_state(show_state)
-        , visible_offset_x(visible_offset_x)
-        , visible_offset_y(visible_offset_y) {}
-    };
-
-    std::vector<WindowRecord> windows;
-
-    struct VisibilityRectRecord {
-        uint32_t window_id;
-        Rect rect;
-
-        VisibilityRectRecord(uint32_t window_id, Rect rect)
-        : window_id(window_id)
-        , rect(rect) {}
-    };
-
-    std::vector<VisibilityRectRecord> windows_rects;
-
-    void new_or_existing_window_event(
-            uint32_t window_id, uint32_t fields_present_flags,
-            uint32_t style, uint8_t show_state,
-            int32_t visible_offset_x, int32_t visible_offset_y,
-            std::vector<RDP::RAIL::Rectangle> const & visibility_rects)
-            override {
-// LOG(LOG_INFO, "PngCaptureRT::new_or_existing_window_event");
-        if (fields_present_flags &
-            (RDP::RAIL::WINDOW_ORDER_FIELD_STYLE |
-             RDP::RAIL::WINDOW_ORDER_FIELD_SHOW |
-             RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET)) {
-            std::vector<WindowRecord>::iterator iter =
-                std::find_if(
-                        this->windows.begin(),
-                        this->windows.end(),
-                        [window_id](WindowRecord& window_record) -> bool {
-                            return (window_record.window_id == window_id);
-                        }
-                    );
-            if (iter != this->windows.end()) {
-                if (fields_present_flags &
-                    RDP::RAIL::WINDOW_ORDER_FIELD_STYLE) {
-                    iter->style = style;
-                    iter->fields_present_flags |= RDP::RAIL::WINDOW_ORDER_FIELD_STYLE;
-                }
-                if (fields_present_flags &
-                    RDP::RAIL::WINDOW_ORDER_FIELD_SHOW) {
-                    iter->show_state = show_state;
-                    iter->fields_present_flags |= RDP::RAIL::WINDOW_ORDER_FIELD_SHOW;
-                }
-                if (fields_present_flags &
-                    RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET) {
-                    iter->visible_offset_x = visible_offset_x;
-                    iter->visible_offset_y = visible_offset_y;
-                    iter->fields_present_flags |= RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET;
-                }
-            }
-            else {
-                this->windows.emplace_back(window_id,
-                    (fields_present_flags &
-                     (RDP::RAIL::WINDOW_ORDER_FIELD_STYLE |
-                      RDP::RAIL::WINDOW_ORDER_FIELD_SHOW |
-                      RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET)),
-                    style, show_state, visible_offset_x, visible_offset_y);
-            }
-        }
-
-        if (fields_present_flags & RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY) {
-            this->windows_rects.erase(
-                    std::remove_if(
-                        this->windows_rects.begin(),
-                        this->windows_rects.end(),
-                        [window_id](VisibilityRectRecord& window_rect_record) {
-// LOG(LOG_INFO, "remove_if: %s", ((window_rect_record.window_id == window_id) ? "true" : "false"));
-                                return (window_rect_record.window_id == window_id);
-                            }),
-                    this->windows_rects.end()
-                );
-
-            if (visibility_rects.size()) {
-                for (const RDP::RAIL::Rectangle& rectangle : visibility_rects) {
-                    this->windows_rects.emplace_back(
-                        window_id,
-                        Rect(rectangle.Left(), rectangle.Top(), rectangle.Width(), rectangle.Height()));
-                }
-            }
-        }
-
-        this->update_image_frame_rect();
-    }
-
-    void delete_window_event(uint32_t window_id) override {
-// LOG(LOG_INFO, "PngCaptureRT::delete_window_event");
-        this->windows.erase(
-                std::remove_if(this->windows.begin(), this->windows.end(),
-                    [window_id](WindowRecord& window_record) {
-// LOG(LOG_INFO, "remove_if(1): %s", ((window_record.window_id == window_id) ? "true" : "false"));
-                            return (window_record.window_id == window_id);
-                        }),
-                this->windows.end()
-            );
-
-        this->windows_rects.erase(
-                std::remove_if(this->windows_rects.begin(),
-                    this->windows_rects.end(),
-                    [window_id](VisibilityRectRecord& visibility_rect_record) {
-// LOG(LOG_INFO, "remove_if(2): %s", ((visibility_rect_record.window_id == window_id) ? "true" : "false"));
-                            return (visibility_rect_record.window_id == window_id);
-                        }),
-                this->windows_rects.end()
-            );
-
-        this->update_image_frame_rect();
-    }
-
-    void update_image_frame_rect() {
-// LOG(LOG_INFO, "");
-// LOG(LOG_INFO, "Widnows Rects Size: %zu", this->windows_rects.size());
-
-        Rect new_image_frame_rect;
-// new_image_frame_rect.log(LOG_INFO, "] ] ] ] ] NewImageFrameRect");
-
-        std::for_each(
-                this->windows.cbegin(),
-                this->windows.cend(),
-                [&new_image_frame_rect, this](const WindowRecord& window_record) {
-                    std::for_each(
-                            this->windows_rects.cbegin(),
-                            this->windows_rects.cend(),
-                            [&new_image_frame_rect, window_record](
-                                    const VisibilityRectRecord& visibility_rect_record) {
-                                if (window_record.window_id !=
-                                    visibility_rect_record.window_id) {
-                                    return;
-                                }
-
-                                assert(window_record.fields_present_flags &
-                                    RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET);
-
-// visibility_rect_record.rect.offset(
-//     window_record.visible_offset_x, window_record.visible_offset_y).log(
-//         LOG_INFO, "} } } } } VisibilityRect");
-
-                                if (!(window_record.style & WS_ICONIC) &&
-                                    ((window_record.style & WS_VISIBLE) ||
-                                     ((window_record.show_state != SW_FORCEMINIMIZE) &&
-                                      (window_record.show_state != SW_HIDE) &&
-                                      (window_record.show_state != SW_MINIMIZE)))) {
-                                        new_image_frame_rect =
-                                            new_image_frame_rect.disjunct(
-                                                visibility_rect_record.rect.offset(
-                                                        window_record.visible_offset_x,
-                                                        window_record.visible_offset_y
-                                                    ));
-// new_image_frame_rect.log(LOG_INFO, "] ] ] ] ] NewImageFrameRect");
-                                }
-                            }
-                        );
-                }
-            );
-
-        if (!new_image_frame_rect.isempty()) {
-            new_image_frame_rect = new_image_frame_rect.expand(16).intersect(
+    virtual void visibility_rects_event(Rect const & rect_) {
+        if (!rect_.isempty()) {
+            Rect rect = rect_.expand(16).intersect(
                 {0, 0, this->drawable.width(), this->drawable.height()});
 
 
-            this->image_frame_api.reset(
-                new_image_frame_rect.x, new_image_frame_rect.y,
-                new_image_frame_rect.cx, new_image_frame_rect.cy);
+            this->image_frame_api.reset(rect.x, rect.y, rect.cx, rect.cy);
         }
-
-// new_image_frame_rect.log(LOG_INFO, "> > > > > NewImageFrameRect");
     }
 };
-
 
 namespace {
     template<std::size_t N>
@@ -1498,19 +1320,121 @@ void Capture::Graphic::draw_impl(RDP::FrameMarker const & cmd)
     }
 }
 
+Rect Capture::Graphic::get_joint_visibility_rect() const
+{
+    Rect joint_visibility_rect;
+
+    std::for_each(
+            this->windows.cbegin(),
+            this->windows.cend(),
+            [&joint_visibility_rect, this](const WindowRecord& window) {
+                std::for_each(
+                        this->window_visibility_rects.cbegin(),
+                        this->window_visibility_rects.cend(),
+                        [&joint_visibility_rect, window](
+                                const WindowVisibilityRectRecord& window_visibility_rect) {
+                            if (window.window_id !=
+                                window_visibility_rect.window_id) {
+                                return;
+                            }
+
+                            assert(window.fields_present_flags &
+                                RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET);
+
+                            if (!(window.style & WS_ICONIC) &&
+                                ((window.style & WS_VISIBLE) ||
+                                 ((window.show_state != SW_FORCEMINIMIZE) &&
+                                  (window.show_state != SW_HIDE) &&
+                                  (window.show_state != SW_MINIMIZE)))) {
+                                    joint_visibility_rect =
+                                        joint_visibility_rect.disjunct(
+                                            window_visibility_rect.rect.offset(
+                                                    window.visible_offset_x,
+                                                    window.visible_offset_y
+                                                ));
+                            }
+                        }
+                    );
+            }
+        );
+
+    return joint_visibility_rect;
+}
+
 void Capture::Graphic::draw_impl(const RDP::RAIL::NewOrExistingWindow & cmd)
 {
     for (gdi::GraphicApi & gd : this->gds) {
         gd.draw(cmd);
     }
 
-    // cmd.log(LOG_INFO);
+    uint32_t const fields_present_flags = cmd.header.FieldsPresentFlags();
+    uint32_t const window_id            = cmd.header.WindowId();
+    uint32_t const style                = cmd.Style();
+    uint8_t  const show_state           = cmd.ShowState();
+    int32_t  const visible_offset_x     = cmd.VisibleOffsetX();
+    int32_t  const visible_offset_y     = cmd.VisibleOffsetY();
+
+
+    if (fields_present_flags &
+        (RDP::RAIL::WINDOW_ORDER_FIELD_STYLE |
+         RDP::RAIL::WINDOW_ORDER_FIELD_SHOW |
+         RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET)) {
+        std::vector<WindowRecord>::iterator iter =
+            std::find_if(
+                    this->windows.begin(),
+                    this->windows.end(),
+                    [window_id](WindowRecord& window) -> bool {
+                        return (window.window_id == window_id);
+                    }
+                );
+        if (iter != this->windows.end()) {
+            if (fields_present_flags & RDP::RAIL::WINDOW_ORDER_FIELD_STYLE) {
+                iter->style = style;
+                iter->fields_present_flags |= RDP::RAIL::WINDOW_ORDER_FIELD_STYLE;
+            }
+            if (fields_present_flags & RDP::RAIL::WINDOW_ORDER_FIELD_SHOW) {
+                iter->show_state = show_state;
+                iter->fields_present_flags |= RDP::RAIL::WINDOW_ORDER_FIELD_SHOW;
+            }
+            if (fields_present_flags & RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET) {
+                iter->visible_offset_x = visible_offset_x;
+                iter->visible_offset_y = visible_offset_y;
+                iter->fields_present_flags |= RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET;
+            }
+        }
+        else {
+            this->windows.emplace_back(window_id,
+                (fields_present_flags &
+                 (RDP::RAIL::WINDOW_ORDER_FIELD_STYLE |
+                  RDP::RAIL::WINDOW_ORDER_FIELD_SHOW |
+                  RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET)),
+                style, show_state, visible_offset_x, visible_offset_y);
+        }
+    }
+
+    if (fields_present_flags & RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY) {
+        this->window_visibility_rects.erase(
+                std::remove_if(
+                    this->window_visibility_rects.begin(),
+                    this->window_visibility_rects.end(),
+                    [window_id](WindowVisibilityRectRecord& window_visibility_rect) {
+                            return (window_visibility_rect.window_id == window_id);
+                        }),
+                this->window_visibility_rects.end()
+            );
+
+        if (cmd.NumVisibilityRects()) {
+            for (unsigned i = 0; i < cmd.NumVisibilityRects(); ++i) {
+                this->window_visibility_rects.emplace_back(
+                    window_id, cmd.VisibilityRects(i));
+            }
+        }
+    }
+
+    Rect joint_visibility_rect = this->get_joint_visibility_rect();
+
     for (gdi::CaptureApi & cap : this->caps) {
-        cap.new_or_existing_window_event(cmd.header.WindowId(),
-            cmd.header.FieldsPresentFlags(),
-            cmd.Style(), cmd.ShowState(),
-            cmd.VisibleOffsetX(), cmd.VisibleOffsetY(),
-            cmd.VisibilityRects());
+        cap.visibility_rects_event(joint_visibility_rect);
     }
 }
 
@@ -1520,8 +1444,29 @@ void Capture::Graphic::draw_impl(const RDP::RAIL::DeletedWindow & cmd)
         gd.draw(cmd);
     }
 
+    uint32_t const window_id = cmd.header.WindowId();
+
+    this->windows.erase(
+            std::remove_if(this->windows.begin(), this->windows.end(),
+                [window_id](WindowRecord& window) {
+                        return (window.window_id == window_id);
+                    }),
+            this->windows.end()
+        );
+
+    this->window_visibility_rects.erase(
+            std::remove_if(this->window_visibility_rects.begin(),
+                this->window_visibility_rects.end(),
+                [window_id](WindowVisibilityRectRecord& window_visibility_rect) {
+                        return (window_visibility_rect.window_id == window_id);
+                    }),
+            this->window_visibility_rects.end()
+        );
+
+    Rect joint_visibility_rect = this->get_joint_visibility_rect();
+
     for (gdi::CaptureApi & cap : this->caps) {
-        cap.delete_window_event(cmd.header.WindowId());
+        cap.visibility_rects_event(joint_visibility_rect);
     }
 }
 

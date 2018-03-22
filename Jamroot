@@ -317,7 +317,7 @@ make targets.jam : : @gen_targets ;
 actions test_libredrec
 {
     # check is loadable
-    ./tools/redrec rec $(>) -h > /dev/null && :> $(<)
+    $(TOOLS_PATH)/redrec rec $(>) -h > /dev/null && :> $(<)
 }
 
 make test_libredrec : libredrec : @test_libredrec
@@ -372,3 +372,11 @@ test-run test_executor :
   <library>src/utils/hexdump.o
 ;
 explicit test_executor ;
+
+
+exe epoll :
+  $(REDEMPTION_SRC_PATH)/main/epoll.cpp
+:
+  <cxxflags>-std=c++1z
+;
+explicit epoll ;

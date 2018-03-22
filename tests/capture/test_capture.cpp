@@ -185,7 +185,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
 
         cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
-        WrmParams const wrm_params = wrm_params_from_ini(24, cctx, rnd, fstat, hash_path, ini);
+        WrmParams const wrm_params = wrm_params_from_ini(24, false, cctx, rnd, fstat, hash_path, ini);
 
         CaptureParams capture_params{
             now,
@@ -399,7 +399,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
     cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
-    WrmParams const wrm_params = wrm_params_from_ini(24, cctx, rnd, fstat, hash_path, ini);
+    WrmParams const wrm_params = wrm_params_from_ini(24, false, cctx, rnd, fstat, hash_path, ini);
 
     CaptureParams capture_params{
         now,
@@ -1095,7 +1095,7 @@ RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
-    GraphicToFile consumer(now, trans, 24, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, 24, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
 
     consumer.draw(RDPOpaqueRect(screen_rect, encode_color24()(GREEN)), screen_rect, color_ctx);
@@ -1271,7 +1271,7 @@ RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
-    GraphicToFile consumer(now, trans, 24, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, 24, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
 
     consumer.draw(RDPOpaqueRect(screen_rect, encode_color24()(GREEN)), screen_rect, color_ctx);
@@ -1317,7 +1317,7 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
-    GraphicToFile consumer(now, trans, 24, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, 24, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
     RED_CHECK_EQUAL(0, 0);
     RDPOpaqueRect cmd0(screen_rect, encode_color24()(GREEN));
@@ -1466,7 +1466,7 @@ RED_AUTO_TEST_CASE(TestSaveCache)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, 24, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, 24, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
     consumer.timestamp(now);
 
@@ -1607,7 +1607,7 @@ RED_AUTO_TEST_CASE(TestSaveOrderStates)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, 24, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, 24, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_cxt = gdi::ColorCtx::depth24();
     consumer.timestamp(now);
 
@@ -1792,7 +1792,7 @@ RED_AUTO_TEST_CASE(TestImageChunk)
     PointerCache ptr_cache;
     GlyphCache gly_cache;
     RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, 24, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, 24, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
@@ -1866,7 +1866,7 @@ RED_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, 24, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, 24, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
@@ -1950,7 +1950,7 @@ RED_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, 24, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, 24, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
@@ -2271,6 +2271,37 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
     }
 }
 
+RED_AUTO_TEST_CASE(TestKbdCapture2)
+{
+    struct : NullReportMessage {
+        std::string s;
+
+        void log5(const std::string &info) override {
+            s += info;
+        }
+    } report_message;
+
+    timeval const now = {0, 0};
+    SessionLogKbd kbd_capture(report_message);
+
+    {
+        kbd_capture.kbd_input(now, 't');
+
+        kbd_capture.session_update(now, cstr_array_view("INPUT_LANGUAGE=fr\x01xy\\z"));
+
+        RED_CHECK_EQUAL(report_message.s.size(), 0);
+
+        kbd_capture.kbd_input(now, 'o');
+
+        kbd_capture.kbd_input(now, 't');
+
+        kbd_capture.kbd_input(now, 'o');
+
+        kbd_capture.possible_active_window_change();
+
+        RED_CHECK_EQUAL("type=\"KBD_INPUT\" data=\"toto\"", report_message.s);
+    }
+}
 
 RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 {
@@ -2380,7 +2411,7 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
 
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     GraphicToFile graphic_to_file(
-        player.record_now, out_wrm_trans, 24,
+        player.record_now, out_wrm_trans, 24, false,
         bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression
     );
     WrmCaptureImpl::NativeCaptureLocal wrm_recorder(graphic_to_file, player.record_now, std::chrono::seconds{1}, std::chrono::seconds{20});

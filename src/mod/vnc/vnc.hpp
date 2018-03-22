@@ -8,7 +8,7 @@
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
-
+h
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -45,6 +45,7 @@
 #include "mod/internal/widget/flat_vnc_authentification.hpp"
 #include "mod/internal/widget/notify_api.hpp"
 #include "utils/diffiehellman.hpp"
+#include "utils/hexdump.hpp"
 #include "utils/d3des.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/log.hpp"
@@ -53,12 +54,25 @@
 #include "utils/sugar/strutils.hpp"
 #include "utils/utf.hpp"
 #include "utils/verbose_flags.hpp"
+#include "utils/zlib.hpp"
+#include "mod/vnc/vnc_verbose.hpp"
+
+#include "mod/vnc/encoder/encoder_api.hpp"
+#include "mod/vnc/encoder/zrle.hpp"
+#include "mod/vnc/encoder/raw.hpp"
+#include "mod/vnc/encoder/rre.hpp"
+#include "mod/vnc/encoder/copyrect.hpp"
+#include "mod/vnc/encoder/cursor.hpp"
+#include "mod/vnc/encoder/hextile.hpp"
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
 
 class mod_vnc : public InternalMod, private NotifyApi
 {
+
+    bool ongoing_framebuffer_update = false;
+
     static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
 
     FlatVNCAuthentification challenge;
@@ -134,17 +148,7 @@ private:
     uint8_t blue_shift;
 
 public:
-    REDEMPTION_VERBOSE_FLAGS(private, verbose)
-    {
-        none,
-        basic_trace     = 0x0001,
-        keymap_stack    = 0x0002,
-        draw_event      = 0x0004,
-        input           = 0x0008,
-        connection      = 0x0010,
-
-        clipboard       = 0x0080,
-    };
+    VNCVerbose verbose;
 
 private:
     KeymapSym  keymapSym;
@@ -190,30 +194,21 @@ private:
 
     bool allow_authentification_retries;
 
-    bool is_first_membelt = true;
     bool left_ctrl_pressed = false;
 
     bool     clipboard_requesting_for_data_is_delayed = false;
     int      clipboard_requested_format_id            = 0;
     std::chrono::microseconds clipboard_last_client_data_timestamp = std::chrono::microseconds{};
-
     ClipboardEncodingType clipboard_server_encoding_type;
-
     bool clipboard_owned_by_client = true;
-
     VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop = VncBogusClipboardInfiniteLoop::delayed;
-
     uint32_t clipboard_general_capability_flags = 0;
-
     ReportMessageApi & report_message;
-
     time_t beginning;
-
     bool server_is_apple;
-
     int keylayout;
-
     ClientExecute* client_execute = nullptr;
+    Zdecompressor<> zd;
 
 public:
     mod_vnc( Transport & t
@@ -238,7 +233,7 @@ public:
            , ReportMessageApi & report_message
            , bool server_is_apple
            , ClientExecute* client_execute
-           , Verbose verbose
+           , VNCVerbose verbose
            )
     : InternalMod(front, front_width, front_height, font, theme, false)
     , challenge(front, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
@@ -266,10 +261,12 @@ public:
     , server_is_apple(server_is_apple)
     , keylayout(keylayout)
     , client_execute(client_execute)
-    , frame_buffer_update_ctx(verbose)
+    , frame_buffer_update_ctx(this->zd, verbose)
     , clipboard_data_ctx(verbose)
     {
-        LOG(LOG_INFO, "Creation of new mod 'VNC'");
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+            LOG(LOG_INFO, "Creation of new mod 'VNC'");
+        }
 
         // Clear client screen
         this->invoke_asynchronous_graphic_task(AsynchronousGraphicTask::clear_screen);
@@ -288,7 +285,6 @@ public:
         std::snprintf(this->username, sizeof(this->username), "%s", username);
         std::snprintf(this->password, sizeof(this->password), "%s", password);
 
-        LOG(LOG_INFO, "Creation of new mod 'VNC' done");
     } // Constructor
 
     ~mod_vnc() override {
@@ -553,7 +549,7 @@ public:
             return false;
         }
 
-        if (bool(this->verbose & Verbose::basic_trace)) {
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "MS-Logon with following values:");
             LOG(LOG_INFO, "Gen=%" PRIu64, this->ms_logon_ctx.gen);
             LOG(LOG_INFO, "Mod=%" PRIu64, this->ms_logon_ctx.mod);
@@ -668,6 +664,35 @@ public:
     // If the Tight Security Type is activated, the server init
     // message is extended with an interaction capabilities section.
 
+
+//    7.4.7   EnableContinuousUpdates
+
+//    This message informs the server to switch between only sending FramebufferUpdate messages as a result of a
+//    FramebufferUpdateRequest message, or sending FramebufferUpdate messages continuously.
+
+//    Note that there is currently no way to determine if the server supports this message except for using the
+//       Tight Security Type authentication.
+
+//    No. of bytes       Type     [Value]     Description
+//            1           U8       150       message-type
+//            1           U8                 enable-flag
+//            2           U16                x-position
+//            2           U16                y-position
+//            2           U16                width
+//            2           U16                height
+
+//    If enable-flag is non-zero, then the server can start sending FramebufferUpdate messages as needed for the area
+// specified by x-position, y-position, width, and height. If continuous updates are already active, then they must
+// remain active active and the coordinates must be replaced with the last message seen.
+
+//    If enable-flag is zero, then the server must only send FramebufferUpdate messages as a result of receiving
+// FramebufferUpdateRequest messages. The server must also immediately send out a EndOfContinuousUpdates message.
+// This message must be sent out even if continuous updates were already disabled.
+
+//    The server must ignore all incremental update requests (FramebufferUpdateRequest with incremental set to
+// non-zero) as long as continuous updates are active. Non-incremental update requests must however be honored,
+// even if the area in such a request does not overlap the area specified for continuous updates.
+
     class ServerInitCtx
     {
         enum class State
@@ -760,9 +785,10 @@ public:
 
     void initial_clear_screen(gdi::GraphicApi & drawable)
     {
-        if (bool(this->verbose & Verbose::connection)) {
+        if (bool(this->verbose & VNCVerbose::connection)) {
             LOG(LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
         }
+
         // set almost null cursor, this is the little dot cursor
         Pointer cursor;
         cursor.x = 3;
@@ -774,12 +800,12 @@ public:
         memset(cursor.data + 30 * (32 * 3), 0xff, 9);
         memset(cursor.data + 29 * (32 * 3), 0xff, 9);
         memset(cursor.mask, 0xff, 32 * (32 / 8));
+
         cursor.update_bw();
+
         this->front.set_pointer(cursor);
 
         this->report_message.log5("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"");
-
-        LOG(LOG_INFO, "VNC connection complete, connected ok\n");
 
         Rect const screen_rect(0, 0, this->width, this->height);
 
@@ -790,11 +816,11 @@ public:
 
         this->state = UP_AND_RUNNING;
         this->front.can_be_start_capture();
-        this->update_screen(screen_rect);
+        this->update_screen(screen_rect, 1);
         this->lib_open_clip_channel();
 
         this->event.reset_trigger_time();
-        if (bool(this->verbose & Verbose::connection)) {
+        if (bool(this->verbose & VNCVerbose::connection)) {
             LOG(LOG_INFO, "VNC screen cleaning ok\n");
         }
 
@@ -802,9 +828,13 @@ public:
             RDPECLIP::CB_CAPS_VERSION_1,
             this->server_use_long_format_names?RDPECLIP::CB_USE_LONG_FORMAT_NAMES:0);
 
-        if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "Server use %s format name",
-                (this->server_use_long_format_names ? "long" : "short"));
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+            if (this->server_use_long_format_names){
+                LOG(LOG_INFO, "Server use long format name");
+            }
+            else {
+                LOG(LOG_INFO, "Server use short format name");
+            }
         }
 
         RDPECLIP::ClipboardCapabilitiesPDU clip_cap_pdu(
@@ -820,7 +850,7 @@ public:
         size_t length     = out_s.get_offset();
         size_t chunk_size = length;
 
-        if (bool(this->verbose & Verbose::basic_trace)) {
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
                 RDPECLIP::get_msgType_name(clip_cap_pdu.header.msgType()),
                 clip_cap_pdu.header.msgType()
@@ -844,7 +874,7 @@ public:
         length     = out_s.get_offset();
         chunk_size = length;
 
-        if (bool(this->verbose & Verbose::basic_trace)) {
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
                 RDPECLIP::get_msgType_name(server_monitor_ready_pdu.header.msgType()),
                 server_monitor_ready_pdu.header.msgType()
@@ -913,7 +943,7 @@ public:
         // TODO detect if target is a Apple server and set layout to US before to call keymapSym::event()
 
         // TODO As down/up state is not stored in keymapSym, code below is quite dangerous
-        if (bool(this->verbose & Verbose::basic_trace)) {
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, param1=%ld)", device_flags, param1);
         }
 
@@ -958,7 +988,7 @@ public:
     }
 
     void send_keyevent(uint8_t down_flag, uint32_t key) {
-        if (bool(this->verbose & Verbose::basic_trace)) {
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "VNC Send KeyEvent Flag down: %d, key: 0x%x", down_flag, key);
         }
         StaticOutPerStream<8> stream;
@@ -1218,7 +1248,7 @@ protected:
         if (this->state == UP_AND_RUNNING) {
             if (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT) {
                 if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
-                    if (bool(this->verbose & Verbose::clipboard)) {
+                    if (bool(this->verbose & VNCVerbose::clipboard)) {
                         LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> UTF-8");
                     }
 
@@ -1232,7 +1262,7 @@ protected:
                     client_cut_text(::char_ptr_cast(utf8_data.get()));
                 }
                 else {
-                    if (bool(this->verbose & Verbose::clipboard)) {
+                    if (bool(this->verbose & VNCVerbose::clipboard)) {
                         LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_UNICODETEXT -> Latin-1");
                     }
 
@@ -1247,7 +1277,7 @@ protected:
             }
             else {
                 if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
-                    if (bool(this->verbose & Verbose::clipboard)) {
+                    if (bool(this->verbose & VNCVerbose::clipboard)) {
                         LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> UTF-8");
                     }
 
@@ -1261,7 +1291,7 @@ protected:
                     client_cut_text(::char_ptr_cast(utf8_data.get()));
                 }
                 else {
-                    if (bool(this->verbose & Verbose::clipboard)) {
+                    if (bool(this->verbose & VNCVerbose::clipboard)) {
                         LOG(LOG_INFO, "mod_vnc::rdp_input_clip_data: CF_TEXT -> Latin-1");
                     }
 
@@ -1283,7 +1313,7 @@ public:
                                       , int16_t param2
                                       ) override {
     //==============================================================================================================
-        if (bool(this->verbose & Verbose::basic_trace)) {
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG( LOG_INFO
                , "KeymapSym::synchronize(time=%u, device_flags=%08x, param1=%04x, param1=%04x"
                , time, device_flags, unsigned(param1), unsigned(param2));
@@ -1356,14 +1386,91 @@ protected:
 //    -312          |                | Fence Pseudo-encoding                           |
 //    -313          |                | ContinuousUpdates Pseudo-encoding               |
 //    -314          |                | Cursor With Alpha Pseudo-encoding               |
-//    -412 to -512  |                | JPEG Fine-Grained Quality Level Pseudo-encoding |                | 
+//    -412 to -512  |                | JPEG Fine-Grained Quality Level Pseudo-encoding |
 //    -763 to -768  |                | JPEG Subsampling Level Pseudo-encoding          |
 //    0xc0a1e5ce    |                | Extended Clipboard Pseudo-encoding              |
 
+    enum rfb_encodings {
+        RAW_ENCODING      = 0,
+        COPYRECT_ENCODING = 1,
+        RRE_ENCODING      = 2,
+        CORRE_ENCODING    = 4,
+        HEXTILE_ENCODING  = 5,
+        ZLIB_ENCODING     = 6,
+        TIGHT_ENCODING    = 7,
+        ZLIBHEX_ENCODING  = 8,
+        ZRLE_ENCODING     = 16,
+        JPEGQL1_PSEUDO_ENCODING      = -23,
+        JPEGQL2_PSEUDO_ENCODING      = -24,
+        JPEGQL3_PSEUDO_ENCODING      = -25,
+        JPEGQL4_PSEUDO_ENCODING      = -26,
+        JPEGQL5_PSEUDO_ENCODING      = -27,
+        JPEGQL6_PSEUDO_ENCODING      = -28,
+        JPEGQL7_PSEUDO_ENCODING      = -29,
+        JPEGQL8_PSEUDO_ENCODING      = -30,
+        JPEGQL9_PSEUDO_ENCODING      = -21,
+        JPEGQLA_PSEUDO_ENCODING      = -32,
+        DESKTOPSIZE_PSEUDO_ENCODING  = -223,
+        LASTRECT_PSEUDO_ENCODING     = -224,
+        CURSOR_PSEUDO_ENCODING       = -239,
+        XCURSOR_PSEUDO_ENCODING      = -240,
+    };
 
-    static void fill_encoding_types_buffer(const char * encodings, OutStream & stream, uint16_t & number_of_encodings, Verbose verbose)
+    // VNC Client to Server Messages
+    enum VNC_client_to_server_messages {
+        VNC_CS_MSG_SET_PIXEL_FORMAT              = 0,
+        VNC_CS_MSG_SET_ENCODINGS                 = 2,
+        VNC_CS_MSG_FRAME_BUFFER_UPDATE_REQUEST   = 3,
+        VNC_CS_MSG_KEY_EVENT                     = 4,
+        VNC_CS_MSG_POINTER_EVENT                 = 5,
+        VNC_CS_MSG_CLIENT_CUT_TEXT               = 6,
+        // Optional Messages
+        VNC_CS_MSG_FILE_TRANSFER                  = 7,
+        VNC_CS_MSG_SET_SCALE                      = 8,
+        VNC_CS_MSG_SET_SERVER_INPUT               = 9,
+        VNC_CS_MSG_SET_SW                         = 10,
+        VNC_CS_MSG_TEXT_CHAT                      = 11,
+        VNC_CS_MSG_KEY_FRAME_REQUEST              = 12,
+        VNC_CS_MSG_KEEP_ALIVE                     = 13,
+        VNC_CS_MSG_ULTRA_VNC_RESERVED1            = 14,
+        VNC_CS_MSG_SET_SCALE_FACTOR               = 15,
+        VNC_CS_MSG_ULTRA_VNC_RESERVED2            = 16,
+        VNC_CS_MSG_ULTRA_VNC_RESERVED3            = 17,
+        VNC_CS_MSG_ULTRA_VNC_RESERVED4            = 18,
+        VNC_CS_MSG_ULTRA_VNC_RESERVED5            = 19,
+        VNC_CS_MSG_REQUEST_SESSION                = 20,
+        VNC_CS_MSG_SET_SESSION                    = 21,
+        VNC_CS_MSG_NOTIFY_PLUGIN_STREAMING        = 80,
+        VNC_CS_MSG_VMWARE1                        = 127,
+        VNC_CS_MSG_CAR_CONNECTIVITY               = 128,
+        VNC_CS_MSG_ENABLE_CONTINUOUS_UPDATE       = 150,
+        VNC_CS_MSG_CLIENT_FENCE                   = 248,
+        VNC_CS_MSG_OLIVE_CALL_CONTROL             = 249,
+        VNC_CS_MSG_XVP_CLIENT_MESSAGE             = 250,
+        VNC_CS_MSG_SET_DESKTOP_SIZE               = 251,
+        VNC_CS_MSG_TIGHT                          = 252,
+        VNC_CS_MSG_GII_CLIENT_MESSAGE             = 253,
+        VNC_CS_MSG_VMWARE2                        = 254,
+        VNC_CS_MSG_QEMU_CLIENT_MESSAGE            = 255,
+    };
+
+    // VNC Client to Server Messages
+    enum VNC_server_to_client_messages {
+        VNC_SC_MSG_FRAMEBUFFER_UPDATE             = 0,
+        VNC_SC_MSG_SET_COLOUR_MAP_ENTRIES         = 1,
+        VNC_SC_MSG_BELL                           = 2,
+        VNC_SC_MSG_SERVER_CUT_TEXT                = 3,
+        VNC_SC_MSG_END_OF_CONTINUOUS_UPDATE       = 150,
+        VNC_SC_MSG_SERVER_STATE                   = 173,
+        VNC_SC_MSG_SERVER_FENCE                   = 248,
+        VNC_SC_MSG_XVP                            = 250,
+        VNC_SC_MSG_TIGHT                          = 252,
+        VNC_SC_MSG_GII                            = 253,
+    };
+
+    static void fill_encoding_types_buffer(const char * encodings, OutStream & stream, uint16_t & number_of_encodings, VNCVerbose verbose)
     {
-        if (bool(verbose & Verbose::basic_trace)) {
+        if (bool(verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "VNC Encodings=\"%s\"", encodings);
         }
 
@@ -1373,7 +1480,7 @@ protected:
         char const * p = encodings;
         for (int32_t encoding_type = std::strtol(p, &end, 0); p != end ; encoding_type = std::strtol(p, &end, 0))
         {
-            if (bool(verbose & Verbose::basic_trace)) {
+            if (bool(verbose & VNCVerbose::basic_trace)) {
                 LOG(LOG_INFO, "VNC Encoding type=0x%08X", unsigned(encoding_type));
             }
             stream.out_uint32_be(encoding_type);
@@ -1451,31 +1558,32 @@ protected:
                     return false;
                 }
 
-                this->message_type = buf.av()[0];
+                this->message_type = VNC_server_to_client_messages(buf.av()[0]);
 
                 buf.advance(1);
 
+
                 switch (this->message_type)
                 {
-                    case 0: /* framebuffer update */
-                        vnc.frame_buffer_update_ctx.start(/*Bpp = */nbbytes(vnc.bpp));
+                    case VNC_SC_MSG_FRAMEBUFFER_UPDATE: /* framebuffer update */
+                        vnc.frame_buffer_update_ctx.start(vnc.bpp, nbbytes(vnc.bpp));
                         this->state = State::FrameBufferupdate;
                         return vnc.lib_frame_buffer_update(drawable, buf);
-                    case 1: /* palette */
+                    case VNC_SC_MSG_SET_COLOUR_MAP_ENTRIES: /* palette */
                         vnc.palette_update_ctx.start();
                         this->state = State::Palette;
                         return vnc.lib_palette_update(drawable, buf);
-                    case 2: /* bell */
+                    case VNC_SC_MSG_BELL: /* bell */
                         // TODO bell
                         return true;
-                    case 3: /* clipboard */ /* ServerCutText */
+                    case VNC_SC_MSG_SERVER_CUT_TEXT: /* clipboard */ /* ServerCutText */
                         vnc.clipboard_data_ctx.start(
                             vnc.enable_clipboard_down
                          && vnc.get_channel_by_name(channel_names::cliprdr));
                         this->state = State::ServerCutText;
                         return vnc.lib_clip_data(buf);
                     default:
-                        LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", message_type);
+                        LOG(LOG_ERR, "unknown message type in vnc %u\n", message_type);
                         throw Error(ERR_VNC);
                 }
                 break;
@@ -1490,7 +1598,7 @@ protected:
 
     private:
         State state = State::Header;
-        uint8_t message_type;
+        VNC_server_to_client_messages message_type;
     };
 
     UpAndRunningCtx up_and_running_ctx;
@@ -1500,7 +1608,7 @@ protected:
 public:
     void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override
     {
-        if (bool(this->verbose & Verbose::draw_event)) {
+        if (bool(this->verbose & VNCVerbose::draw_event)) {
             LOG(LOG_INFO, "vnc::draw_event");
         }
 
@@ -1512,6 +1620,7 @@ public:
         if (!this->event.is_waked_up_by_time()) {
             this->buf.read_from(this->t);
         }
+
         while (this->draw_event_impl(drawable)) {
 
         }
@@ -1525,7 +1634,7 @@ private:
         switch (this->state)
         {
         case ASK_PASSWORD:
-            if (bool(this->verbose & Verbose::connection)) {
+            if (bool(this->verbose & VNCVerbose::connection)) {
                 LOG(LOG_INFO, "state=ASK_PASSWORD");
             }
             this->screen.add_widget(&this->challenge);
@@ -1546,7 +1655,7 @@ private:
             return false;
 
         case RETRY_CONNECTION:
-            if (bool(this->verbose & Verbose::connection)) {
+            if (bool(this->verbose & VNCVerbose::connection)) {
                 LOG(LOG_INFO, "state=RETRY_CONNECTION");
             }
             try
@@ -1565,7 +1674,7 @@ private:
             return true;
 
         case UP_AND_RUNNING:
-            if (bool(this->verbose & Verbose::draw_event)) {
+            if (bool(this->verbose & VNCVerbose::draw_event)) {
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
             }
 
@@ -1591,13 +1700,13 @@ private:
                     this->event.set_trigger_time(1000);
                 }
             }
-            else {
-                this->update_screen(Rect(0, 0, this->width, this->height));
-            }
+//            else {
+//                this->update_screen(Rect(0, 0, this->width, this->height), 1);
+//            }
             return false;
 
         case WAIT_PASSWORD:
-            if (bool(this->verbose & Verbose::connection)) {
+            if (bool(this->verbose & VNCVerbose::connection)) {
                 LOG(LOG_INFO, "state=WAIT_PASSWORD");
             }
             this->event.reset_trigger_time();
@@ -1605,7 +1714,7 @@ private:
 
         case WAIT_SECURITY_TYPES:
             {
-                if (bool(this->verbose & Verbose::connection)) {
+                if (bool(this->verbose & VNCVerbose::connection)) {
                     LOG(LOG_INFO, "state=WAIT_SECURITY_TYPES");
                 }
 
@@ -1615,7 +1724,7 @@ private:
                     return false;
                 }
 
-                if (bool(this->verbose & Verbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     // protocol_version_len - zero terminal
                     LOG(LOG_INFO, "Server Protocol Version=%.*s\n",
                         int(protocol_version_len-1), buf.av().data());
@@ -1638,7 +1747,7 @@ private:
                 int32_t const security_level = InStream(buf.av(4)).in_sint32_be();
                 buf.advance(4);
 
-                if (bool(this->verbose & Verbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "security level is %d "
                         "(1 = none, 2 = standard, -6 = mslogon)\n",
                         security_level);
@@ -1665,7 +1774,7 @@ private:
             return true;
 
         case WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM:
-            if (bool(this->verbose & Verbose::basic_trace)) {
+            if (bool(this->verbose & VNCVerbose::basic_trace)) {
                 LOG(LOG_INFO, "Receiving VNC Server Random");
             }
 
@@ -1684,7 +1793,7 @@ private:
                 rfbDes(random_buf, random_buf);
                 rfbDes(random_buf + 8, random_buf + 8);
 
-                if (bool(this->verbose & Verbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "Sending Password");
                 }
                 this->t.send(random_buf, 16);
@@ -1695,13 +1804,13 @@ private:
         case WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE:
             {
                 // sec result
-                if (bool(this->verbose & Verbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "Waiting for password ack");
                 }
 
                 if (!this->auth_response_ctx.run(buf, [this](bool status, byte_array bytes){
                     if (status) {
-                        if (bool(this->verbose & Verbose::basic_trace)) {
+                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
                             LOG(LOG_INFO, "vnc password ok\n");
                         }
                     }
@@ -1744,13 +1853,13 @@ private:
 
         case WAIT_SECURITY_TYPES_MS_LOGON_RESPONSE:
             {
-                if (bool(this->verbose & Verbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "Waiting for password ack");
                 }
 
                 if (!this->auth_response_ctx.run(buf, [this](bool status, byte_array bytes){
                     if (status) {
-                        if (bool(this->verbose & Verbose::basic_trace)) {
+                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
                             LOG(LOG_INFO, "MS LOGON password ok\n");
                         }
                     }
@@ -1768,7 +1877,7 @@ private:
 
         case WAIT_SECURITY_TYPES_INVALID_AUTH:
             {
-                LOG(LOG_INFO, "VNC INVALID Auth");
+                LOG(LOG_ERR, "VNC INVALID Auth");
 
                 if (!this->invalid_auth_ctx.run(buf, [](array_view_u8 av){
                     hexdump_c(av.data(), av.size());
@@ -1910,6 +2019,21 @@ private:
             // Note that this means the client must assume that the server
             // does not support the extension until it gets some extension-
             // -specific confirmation from the server.
+
+            // See Encodings for a description of each encoding and Pseudo-encodings for the meaning of pseudo-encodings.
+
+            // No. of bytes     Type     [Value]     Description
+            // -------------+---------+-----------+---------------------
+            //         1    |    U8   |     2     |  message-type
+            //         1    |         |           |    padding
+            //         2    |    U16  |           | number-of-encodings
+            //
+            // followed by number-of-encodings repetitions of the following:
+            //
+            // No. of bytes     Type     Description
+            // ----------------------------------------
+            //         4         S32     encoding-type
+
             {
                 const char * encodings           = this->encodings.c_str();
                 uint16_t     number_of_encodings = 0;
@@ -1926,15 +2050,17 @@ private:
 
                 if (!number_of_encodings)
                 {
-                    if (bool(this->verbose & Verbose::basic_trace)) {
+                    if (bool(this->verbose & VNCVerbose::basic_trace)) {
                         LOG(LOG_WARNING, "mdo_vnc: using default encoding types - RRE(2),Raw(0),CopyRect(1),Cursor pseudo-encoding(-239)");
                     }
 
-                    stream.out_uint32_be(0);            // raw
-                    stream.out_uint32_be(1);            // copy rect
-                    stream.out_uint32_be(2);            // RRE
-                    stream.out_uint32_be(0xffffff11);   // (-239) cursor
-                    number_of_encodings = 4;
+                    stream.out_uint32_be(ZRLE_ENCODING);            // (16) Zrle
+                    stream.out_uint32_be(HEXTILE_ENCODING);         // (5) Hextile
+                    stream.out_uint32_be(RAW_ENCODING);             // raw
+                    stream.out_uint32_be(COPYRECT_ENCODING);        // copy rect
+                    stream.out_uint32_be(RRE_ENCODING);             // RRE
+                    stream.out_uint32_be(CURSOR_PSEUDO_ENCODING);   // (-239) cursor
+                    number_of_encodings = 6;
                 }
 
                 stream.set_out_uint16_be(number_of_encodings, number_of_encodings_offset);
@@ -1943,7 +2069,7 @@ private:
 
             switch (this->front.server_resize(this->width, this->height, this->bpp)){
             case FrontAPI::ResizeResult::instant_done:
-                if (bool(this->verbose & Verbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "no resizing needed");
                 }
                 // no resizing needed
@@ -1951,7 +2077,7 @@ private:
                 this->event.set_trigger_time(wait_obj::NOW);
                 break;
             case FrontAPI::ResizeResult::remoteapp:
-                if (bool(this->verbose & Verbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "resizing remoteapp");
                 }
                 if (this->client_execute) {
@@ -1960,7 +2086,7 @@ private:
                 // RZ: Continue with FrontAPI::ResizeResult::no_need
                 REDEMPTION_CXX_FALLTHROUGH;
             case FrontAPI::ResizeResult::no_need:
-                if (bool(this->verbose & Verbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "no resizing needed");
                 }
                 // no resizing needed
@@ -1968,7 +2094,7 @@ private:
                 this->event.set_trigger_time(wait_obj::NOW);
                 break;
             case FrontAPI::ResizeResult::done:
-                if (bool(this->verbose & Verbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "resizing done");
                 }
                 // resizing done
@@ -1977,13 +2103,11 @@ private:
 
                 this->state = WAIT_CLIENT_UP_AND_RUNNING;
                 this->event.set_trigger_time(wait_obj::NOW);
-
-                this->is_first_membelt = true;
                 break;
             case FrontAPI::ResizeResult::fail:
                 // resizing failed
                 // thow an Error ?
-                LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
+                LOG(LOG_WARNING, "Older RDP client can't resize resolution from server, disconnecting");
                 throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
             }
             return true;
@@ -2012,7 +2136,7 @@ private:
                 //LOG(LOG_INFO,
                 //    "usnow=%llu clipboard_last_client_data_timestamp=%llu timeval_diff=%llu",
                 //    usnow, this->clipboard_last_client_data_timestamp, timeval_diff);
-                if (bool(this->verbose & Verbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO,
                         "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%u) (time)",
                         RDPECLIP::CB_FORMAT_DATA_REQUEST);
@@ -2042,372 +2166,6 @@ private:
     }
 
 private:
-    struct ZRLEUpdateContext
-    {
-        uint8_t Bpp;
-
-        uint16_t x;
-        uint16_t cx;
-
-        uint16_t cx_remain;
-        uint16_t cy_remain;
-
-        uint16_t tile_x;
-        uint16_t tile_y;
-
-        StaticOutStream<16384> data_remain;
-
-        ZRLEUpdateContext() {}
-    };
-
-    void lib_framebuffer_update_zrle(InStream & uncompressed_data_buffer, ZRLEUpdateContext & update_context, gdi::GraphicApi & drawable)
-    {
-        uint8_t         tile_data[16384];    // max size with 16 bpp
-
-        uint8_t const * remaining_data        = nullptr;
-        uint16_t        remaining_data_length = 0;
-
-        try
-        {
-            while (uncompressed_data_buffer.in_remain())
-            {
-                uint16_t tile_cx = std::min<uint16_t>(update_context.cx_remain, 64);
-                uint16_t tile_cy = std::min<uint16_t>(update_context.cy_remain, 64);
-
-                const uint8_t * tile_data_p = tile_data;
-
-                uint16_t tile_data_length = tile_cx * tile_cy * update_context.Bpp;
-                if (tile_data_length > sizeof(tile_data))
-                {
-                    LOG(LOG_ERR,
-                        "VNC Encoding: ZRLE, tile buffer too small (%zu < %" PRIu16 ")",
-                        sizeof(tile_data), tile_data_length);
-                    throw Error(ERR_BUFFER_TOO_SMALL);
-                }
-
-                remaining_data        = uncompressed_data_buffer.get_current();
-                remaining_data_length = uncompressed_data_buffer.in_remain();
-
-                uint8_t   subencoding = uncompressed_data_buffer.in_uint8();
-
-                if (bool(this->verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO, "VNC Encoding: ZRLE, subencoding = %d",
-                        subencoding);
-                }
-
-                if (!subencoding)
-                {
-                    if (bool(this->verbose & Verbose::basic_trace)) {
-                        LOG(LOG_INFO, "VNC Encoding: ZRLE, Raw pixel data");
-                    }
-
-                    if (uncompressed_data_buffer.in_remain() < tile_data_length)
-                    {
-                        throw Error(ERR_VNC_NEED_MORE_DATA);
-                    }
-
-                    tile_data_p = uncompressed_data_buffer.in_uint8p(tile_data_length);
-                }
-                else if (subencoding == 1)
-                {
-                    if (bool(this->verbose & Verbose::basic_trace)) {
-                        LOG(LOG_INFO,
-                            "VNC Encoding: ZRLE, Solid tile (single color)");
-                    }
-
-                    if (uncompressed_data_buffer.in_remain() < update_context.Bpp)
-                    {
-                        throw Error(ERR_VNC_NEED_MORE_DATA);
-                    }
-
-                    const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(update_context.Bpp);
-
-                    uint8_t * tmp_tile_data = tile_data;
-
-                    for (int i = 0; i < tile_cx; i++, tmp_tile_data += update_context.Bpp)
-                        memcpy(tmp_tile_data, cpixel_pattern, update_context.Bpp);
-
-                    uint16_t line_size = tile_cx * update_context.Bpp;
-
-                    for (int i = 1; i < tile_cy; i++, tmp_tile_data += line_size)
-                        memcpy(tmp_tile_data, tile_data, line_size);
-                }
-                else if ((subencoding >= 2) && (subencoding <= 16))
-                {
-                    if (bool(this->verbose & Verbose::basic_trace)) {
-                        LOG(LOG_INFO,
-                            "VNC Encoding: ZRLE, Packed palette types, "
-                                "palette size=%d",
-                            subencoding);
-                    }
-
-                    const uint8_t  * palette;
-                    const uint8_t    palette_count = subencoding;
-                    const uint16_t   palette_size  = palette_count * update_context.Bpp;
-
-                    if (uncompressed_data_buffer.in_remain() < palette_size)
-                    {
-                        throw Error(ERR_VNC_NEED_MORE_DATA);
-                    }
-
-                    palette = uncompressed_data_buffer.in_uint8p(palette_size);
-
-                    uint16_t   packed_pixels_length;
-
-                    if (palette_count == 2)
-                    {
-                        packed_pixels_length = (tile_cx + 7) / 8 * tile_cy;
-                    }
-                    else if ((palette_count == 3) || (palette_count == 4))
-                    {
-                        packed_pixels_length = (tile_cx + 3) / 4 * tile_cy;
-                    }
-                    else// if ((palette_count >= 5) && (palette_count <= 16))
-                    {
-                        packed_pixels_length = (tile_cx + 1) / 2 * tile_cy;
-                    }
-
-                    if (uncompressed_data_buffer.in_remain() < packed_pixels_length)
-                    {
-                        throw Error(ERR_VNC_NEED_MORE_DATA);
-                    }
-
-                    const uint8_t * packed_pixels = uncompressed_data_buffer.in_uint8p(packed_pixels_length);
-
-                    uint8_t * tmp_tile_data = tile_data;
-
-                    uint16_t  tile_data_length_remain = tile_data_length;
-
-                    uint8_t         pixel_remain         = tile_cx;
-                    const uint8_t * packed_pixels_remain = packed_pixels;
-                    uint8_t         current              = 0;
-                    uint8_t         index                = 0;
-
-                    uint8_t palette_index;
-
-                    while (tile_data_length_remain >= update_context.Bpp)
-                    {
-                        pixel_remain--;
-
-                        if (!index)
-                        {
-                            current = *packed_pixels_remain;
-                            packed_pixels_remain++;
-                        }
-
-                        if (palette_count == 2)
-                        {
-                            palette_index = (current & 0x80) >> 7;
-                            current <<= 1;
-                            index++;
-
-                            if (!pixel_remain || (index > 7))
-                            {
-                                index = 0;
-                            }
-                        }
-                        else if ((palette_count == 3) || (palette_count == 4))
-                        {
-                            palette_index = (current & 0xC0) >> 6;
-                            current <<= 2;
-                            index++;
-
-                            if (!pixel_remain || (index > 3))
-                            {
-                                index = 0;
-                            }
-                        }
-                        else// if ((palette_count >= 5) && (palette_count <= 16))
-                        {
-                            palette_index = (current & 0xF0) >> 4;
-                            current <<= 4;
-                            index++;
-
-                            if (!pixel_remain || (index > 1))
-                            {
-                                index = 0;
-                            }
-                        }
-
-                        if (!pixel_remain)
-                        {
-                            pixel_remain = tile_cx;
-                        }
-
-                        const uint8_t * cpixel_pattern = palette + palette_index * update_context.Bpp;
-
-                        memcpy(tmp_tile_data, cpixel_pattern, update_context.Bpp);
-
-                        tmp_tile_data           += update_context.Bpp;
-                        tile_data_length_remain -= update_context.Bpp;
-                    }
-                }
-                else if ((subencoding >= 17) && (subencoding <= 127))
-                {
-                    LOG(LOG_ERR, "VNC Encoding: ZRLE, unused");
-                    throw Error(ERR_VNC_ZRLE_PROTOCOL);
-                }
-                else if (subencoding == 128)
-                {
-                    if (bool(this->verbose & Verbose::basic_trace)) {
-                        LOG(LOG_INFO, "VNC Encoding: ZRLE, Plain RLE");
-                    }
-
-                    uint16_t   tile_data_length_remain = tile_data_length;
-
-                    uint16_t   run_length    = 0;
-                    uint8_t  * tmp_tile_data = tile_data;
-
-                    while (tile_data_length_remain >= update_context.Bpp)
-                    {
-
-                        if (uncompressed_data_buffer.in_remain() < update_context.Bpp)
-                        {
-                            throw Error(ERR_VNC_NEED_MORE_DATA);
-                        }
-
-                        const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(update_context.Bpp);
-
-                        run_length = 1;
-
-                        while (true)
-                        {
-                            if (uncompressed_data_buffer.in_remain() < 1)
-                            {
-                                throw Error(ERR_VNC_NEED_MORE_DATA);
-                            }
-
-                            uint8_t byte_value = uncompressed_data_buffer.in_uint8();
-                            run_length += byte_value;
-
-                            if (byte_value != 255)
-                                break;
-                        }
-
-                        // LOG(LOG_INFO, "VNC Encoding: ZRLE, run length=%u", run_length);
-
-                        while ((tile_data_length_remain >= update_context.Bpp) && run_length)
-                        {
-                            memcpy(tmp_tile_data, cpixel_pattern, update_context.Bpp);
-
-                            tmp_tile_data           += update_context.Bpp;
-                            tile_data_length_remain -= update_context.Bpp;
-
-                            run_length--;
-                        }
-                    }
-
-                    // LOG(LOG_INFO, "VNC Encoding: ZRLE, run_length=%u", run_length);
-
-                    assert(!run_length);
-                    assert(!tile_data_length_remain);
-                }
-                else if (subencoding == 129)
-                {
-                    LOG(LOG_ERR, "VNC Encoding: ZRLE, unused");
-                    throw Error(ERR_VNC_ZRLE_PROTOCOL);
-                }
-                else
-                {
-                    if (bool(this->verbose & Verbose::basic_trace)) {
-                        LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE");
-                    }
-
-                    const uint8_t  * palette;
-                    const uint8_t    palette_count = subencoding - 128;
-                    const uint16_t   palette_size  = palette_count * update_context.Bpp;
-
-                    if (uncompressed_data_buffer.in_remain() < palette_size)
-                    {
-                        throw Error(ERR_VNC_NEED_MORE_DATA);
-                    }
-
-                    palette = uncompressed_data_buffer.in_uint8p(palette_size);
-
-                    uint16_t   tile_data_length_remain = tile_data_length;
-
-                    uint16_t   run_length    = 0;
-                    uint8_t  * tmp_tile_data = tile_data;
-
-                    while (tile_data_length_remain >= update_context.Bpp)
-                    {
-                        if (uncompressed_data_buffer.in_remain() < 1)
-                        {
-                            throw Error(ERR_VNC_NEED_MORE_DATA);
-                        }
-
-                        uint8_t         palette_index  = uncompressed_data_buffer.in_uint8();
-                        const uint8_t * cpixel_pattern = palette + (palette_index & 0x7F) * update_context.Bpp;
-
-                        run_length = 1;
-
-                        if (palette_index & 0x80)
-                        {
-                            while (true)
-                            {
-                                if (uncompressed_data_buffer.in_remain() < 1)
-                                {
-                                    throw Error(ERR_VNC_NEED_MORE_DATA);
-                                }
-
-                                uint8_t byte_value = uncompressed_data_buffer.in_uint8();
-                                run_length += byte_value;
-
-                                if (byte_value != 255)
-                                    break;
-                            }
-                        }
-
-                        // LOG(LOG_INFO, "VNC Encoding: ZRLE, run length=%u", run_length);
-
-                        while ((tile_data_length_remain >= update_context.Bpp) && run_length)
-                        {
-                            memcpy(tmp_tile_data, cpixel_pattern, update_context.Bpp);
-
-                            tmp_tile_data           += update_context.Bpp;
-                            tile_data_length_remain -= update_context.Bpp;
-
-                            run_length--;
-                        }
-                    }
-
-                    // LOG(LOG_INFO, "VNC Encoding: ZRLE, run_length=%u", run_length);
-
-                    assert(!run_length);
-                    assert(!tile_data_length_remain);
-                }
-
-                this->front.begin_update();
-                this->draw_tile(Rect(update_context.tile_x, update_context.tile_y,
-                                     tile_cx, tile_cy),
-                                tile_data_p, drawable);
-                this->front.end_update();
-
-                update_context.cx_remain -= tile_cx;
-                update_context.tile_x    += tile_cx;
-
-                if (!update_context.cx_remain)
-                {
-                    update_context.cx_remain =  update_context.cx;
-                    update_context.cy_remain -= tile_cy;
-
-                    update_context.tile_x =  update_context.x;
-                    update_context.tile_y += tile_cy;
-                }
-            }
-        }
-        catch (Error const& e)
-        {
-            if (e.id != ERR_VNC_NEED_MORE_DATA)
-                throw;
-            else
-            {
-                update_context.data_remain.out_copy_bytes(remaining_data,
-                    remaining_data_length);
-            }
-        }
-    }
-
     struct FrameBufferUpdateCtx
     {
         enum class State
@@ -2415,86 +2173,196 @@ private:
             Header,
             Encoding,
             Data,
-            ZrleData,
-            RreData,
         };
 
         using Result = BasicResult<State>;
 
-        FrameBufferUpdateCtx(Verbose verbose)
-          : zstrm{}
+        VNC::Encoder::EncoderState last;
+
+        FrameBufferUpdateCtx(Zdecompressor<> & zd, VNCVerbose verbose)
+          : zd{zd}
           , verbose(verbose)
         {
-            REDEMPTION_DIAGNOSTIC_PUSH
-            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
-            if (inflateInit(&this->zstrm) != Z_OK)
-            REDEMPTION_DIAGNOSTIC_POP
-            {
-                LOG(LOG_ERR, "vnc zlib initialization failed");
-                throw Error(ERR_VNC_ZLIB_INITIALIZATION);
-            }
+//            REDEMPTION_DIAGNOSTIC_PUSH
+//            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+////            if (inflateInit(&this->zstrm) != Z_OK)
+//            REDEMPTION_DIAGNOSTIC_POP
+//            {
+//                LOG(LOG_ERR, "vnc zlib initialization failed");
+//                throw Error(ERR_VNC_ZLIB_INITIALIZATION);
+//            }
+            this->last = VNC::Encoder::EncoderState::Ready;
         }
 
         ~FrameBufferUpdateCtx()
         {
-            inflateEnd(&this->zstrm);
+//            inflateEnd(&this->zstrm);
         }
 
-        void start(uint8_t Bpp)
+        void start(uint8_t bpp, uint8_t Bpp)
         {
+            this->bpp = bpp;
             this->Bpp = Bpp;
             this->state = State::Header;
         }
 
+
+//  7.5.1   FramebufferUpdate (part 2 : rectangles)
+// ----------------------------------
+
+//  FrameBufferUpdate message is followed by number-of-rectangles
+// of pixel data. Each rectangle consists of:
+
+//     No. of bytes | Type   |  Description
+// ---------------------------------------------
+//         2        |  U16   |  x-position
+//         2        |  U16   |  y-position
+//         2        |  U16   |  width
+//         2        |  U16   |  height
+//         4        |  S32   |  encoding-type
+
+//  followed by the pixel data in the specified encoding. See Encodings for the format of the data for each encoding
+// and Pseudo-encodings for the meaning of pseudo-encodings.
+
+// Note that a framebuffer update marks a transition from one valid framebuffer state to another. That
+// means that a single update handles all received FramebufferUpdateRequest up to the point where th
+// e update is sent out.
+
+// However, because there is no strong connection between a FramebufferUpdateRequest and a subsequent
+// FramebufferUpdate, a client that has more than one FramebufferUpdateRequest pending at any given
+// time cannot be sure that it has received all framebuffer updates.
+
+        size_t last_avail = 0;
+
         bool run(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
+            update_lock<gdi::GraphicApi> lock(drawable);
             Result r = Result::fail();
 
             for (;;) {
                 switch (this->state)
                 {
                 case State::Header:
-                    r = this->read_header(buf); 
+                {
+                    const size_t sz = 3;
+
+                    if (buf.remaining() < sz)
+                    {
+                        r = Result::fail();
+                        break;
+                    }
+
+                    InStream stream(buf.av(sz));
+                    stream.in_skip_bytes(1);
+                    this->num_recs = stream.in_uint16_be();
+                    drawable.begin_update();
+                    vnc.ongoing_framebuffer_update = this->num_recs != 0;
+
+                    buf.advance(sz);
+                    r = Result::ok(State::Encoding);
+                }
                 break;
                 case State::Encoding:
+                {
                     if (0 == this->num_recs) {
+                        vnc.ongoing_framebuffer_update = false;
+                        drawable.end_update();
+                        this->state = State::Header;
                         return true;
                     }
-                    r = this->read_encoding(buf);
-                    break;
-                case State::Data:
-                    switch (this->encoding)
-                    {
-                    case 0:  /* raw */       
-                        r = this->read_data_raw(buf, vnc, drawable); 
-                    break;
-                    case 1:  /* copy rect */ 
-                        r = this->read_data_copy_rect(buf, vnc, drawable); 
-                    break;
-                    case 2:  /* RRE */       
-                        r = this->read_data_rre(buf); 
-                    break;
-                    case 16: /* ZRLE */
-                        r = this->read_data_zrle(buf); 
-                    break;
-                    case 0xffffff11: /* (-239) cursor */
-                        r = this->read_data_cursor(buf, vnc, drawable); 
-                    break;
-                    case 5: /* Hextile */ // TODO unimplemented
-                        LOG(LOG_INFO,
-                            "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u",
-                            this->Bpp, this->x, this->y, this->cx, this->cy);
-                        r = Result::ok(State::Encoding);
-                        break;
-                    default:
-                        LOG(LOG_ERR, "unexpected encoding %8x in lib_frame_buffer", encoding);
-                        throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
-                    }
-                    break;
-                case State::ZrleData: r = this->read_data_zrle_data(buf, vnc, drawable); break;
-                case State::RreData: r = this->read_data_rre_data(buf, vnc, drawable); break;
-                }
+                    const size_t sz = 12;
 
+                    if (buf.remaining() < sz)
+                    {
+                        r = Result::fail();
+                    }
+                    else {
+                        InStream stream(buf.av(sz));
+                        this->x = stream.in_uint16_be();
+                        this->y = stream.in_uint16_be();
+                        this->cx = stream.in_uint16_be();
+                        this->cy = stream.in_uint16_be();
+                        this->encoding = stream.in_sint32_be();
+
+                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                            LOG(LOG_INFO, "Encoding: %u (%u, %u, %u, %u) : %d", this->num_recs, this->x, this->y, this->cx, this->cy, this->encoding);
+                        }
+
+                        --this->num_recs;
+
+                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                            LOG(LOG_INFO, "%s",
+                                (this->encoding == HEXTILE_ENCODING) ? "HEXTILE_ENCODING" :
+                                (this->encoding == CURSOR_PSEUDO_ENCODING) ? "CURSOR_PSEUDO_ENCODING" :
+                                (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
+                                (this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
+                                (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" :
+                                 "ZRLE_ENCODING");
+                        }
+
+                        switch (this->encoding){
+                        case COPYRECT_ENCODING:  /* raw */
+                            this->encoder = new VNC::Encoder::CopyRect(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.front_width, vnc.front_height, vnc.verbose);
+                        break;
+                        case HEXTILE_ENCODING:  /* hextile */
+                            this->encoder = new VNC::Encoder::Hextile(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
+                        break;
+                        case CURSOR_PSEUDO_ENCODING:  /* cursor */
+                            this->encoder = new VNC::Encoder::Cursor(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy,
+                                                                     vnc.red_shift, vnc.red_max, vnc.green_shift, vnc.green_max, vnc.blue_shift, vnc.blue_max,
+                                                                     vnc.verbose);
+                        break;
+                        case RAW_ENCODING:  /* raw */
+                            this->encoder = new VNC::Encoder::Raw(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
+                        break;
+                        case ZRLE_ENCODING: /* ZRLE */
+                            this->encoder = new VNC::Encoder::Zrle(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, this->zd, vnc.verbose);
+                        break;
+                        case RRE_ENCODING: /* RRE */
+                            this->encoder = new VNC::Encoder::RRE(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
+                            break;
+                        default:
+                            LOG(LOG_ERR, "unexpected VNC encoding %d", encoding);
+                            throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
+                        break;
+                        }
+                        buf.advance(sz);
+                        r = Result::ok(State::Data);
+                    }
+                }
+                break;
+                case State::Data:
+                    {
+                        if (last == VNC::Encoder::EncoderState::NeedMoreData){
+                            if (this->last_avail == buf.remaining()){
+                                LOG(LOG_INFO, "new call without more data");
+                            }
+                        }
+                        if (encoder == nullptr){
+                            LOG(LOG_INFO, "call with null encoder");
+                        }
+
+                        // Pre Assertion: we have an encoder
+                        switch (encoder->consume(buf, drawable)){
+                            case VNC::Encoder::EncoderState::Ready:
+                                r = Result::ok(State::Data);
+                                this->last = VNC::Encoder::EncoderState::Ready;
+                            break;
+                            case VNC::Encoder::EncoderState::NeedMoreData:
+                                r = Result::fail();
+                                this->last_avail = buf.remaining();
+                                this->last = VNC::Encoder::EncoderState::NeedMoreData;
+                            break;
+                            case VNC::Encoder::EncoderState::Exit:
+                            // consume returns true if encoder is finished (ready to be resetted)
+                            r = Result::ok(State::Encoding);
+                            delete encoder;
+                            encoder = nullptr;
+                            this->last = VNC::Encoder::EncoderState::NeedMoreData;
+                            break;
+                        }
+                    }
+                }
                 if (!r) {
                     return false;
                 }
@@ -2503,6 +2371,7 @@ private:
         }
 
     private:
+        uint8_t bpp;
         uint8_t Bpp;
 
         State state;
@@ -2513,400 +2382,14 @@ private:
         uint16_t y;
         uint16_t cx;
         uint16_t cy;
-        uint32_t encoding;
+        int32_t encoding;
 
-        uint32_t zlib_compressed_data_length;
+        VNC::Encoder::EncoderApi * encoder = nullptr;
 
-        uint32_t number_of_subrectangles_remain;
-        std::unique_ptr<uint8_t[]> rre_raw;
+        Zdecompressor<> & zd;
 
-        z_stream zstrm;
+        VNCVerbose verbose;
 
-        Verbose verbose;
-
-        Result read_header(Buf64k & buf) noexcept
-        {
-            const size_t sz = 3;
-
-            if (buf.remaining() < sz)
-            {
-                return Result::fail();
-            }
-
-            InStream stream(buf.av(sz));
-            stream.in_skip_bytes(1);
-            this->num_recs = stream.in_uint16_be();
-
-            buf.advance(sz);
-            return Result::ok(State::Encoding);
-        }
-
-        Result read_encoding(Buf64k & buf) noexcept
-        {
-            const size_t sz = 12;
-
-            if (buf.remaining() < sz)
-            {
-                return Result::fail();
-            }
-
-            InStream stream(buf.av(sz));
-            this->x = stream.in_uint16_be();
-            this->y = stream.in_uint16_be();
-            this->cx = stream.in_uint16_be();
-            this->cy = stream.in_uint16_be();
-            this->encoding = stream.in_uint32_be();
-
-            --this->num_recs;
-            buf.advance(sz);
-
-            // TODO see why we get these empty rects ?
-            // return State::Encoding;
-            return Result::ok(State::Data);
-        }
-
-
-        Result read_data_raw(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
-        {
-            size_t const line_size = this->cx * this->Bpp;
-
-            if (buf.remaining() < line_size) {
-                return Result::fail();
-            }
-
-            auto const cy = std::min<size_t>(buf.remaining() / line_size, this->cy);
-            auto const new_av = buf.av(cy * line_size);
-
-            Rect rect(this->x, this->y, this->cx, cy);
-
-            update_lock<gdi::GraphicApi> lock(drawable);
-            vnc.draw_tile(rect, new_av.data(), drawable);
-
-            this->y += cy;
-            this->cy -= cy;
-
-            buf.advance(new_av.size());
-            return Result::ok(this->cy ? State::Data : State::Encoding);
-        }
-
-        Result read_data_copy_rect(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
-        {
-            const size_t sz = 4;
-
-            if (buf.remaining() < sz)
-            {
-                return Result::fail();
-            }
-
-            InStream stream_copy_rect(buf.av(sz));
-            uint16_t const srcx = stream_copy_rect.in_uint16_be();
-            uint16_t const srcy = stream_copy_rect.in_uint16_be();
-
-            buf.advance(sz);
-
-            update_lock<gdi::GraphicApi> lock(drawable);
-            drawable.draw(
-                RDPScrBlt(Rect(this->x, this->y, this->cx, this->cy), 0xCC, srcx, srcy),
-                Rect(0, 0, vnc.front_width, vnc.front_height)
-            );
-
-            return Result::ok(State::Encoding);
-        }
-
-        Result read_data_rre(Buf64k & buf)
-        {
-            const size_t sz = 4 + this->Bpp;
-
-            if (buf.remaining() < sz)
-            {
-                return Result::fail();
-            }
-
-            InStream stream_rre(buf.av(sz));
-            this->number_of_subrectangles_remain = stream_rre.in_uint32_be();
-
-            //LOG(LOG_INFO, "VNC Encoding: RRE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
-            this->rre_raw.reset(new(std::nothrow) uint8_t[cx * cy * Bpp]);
-            if (!this->rre_raw) {
-                LOG(LOG_ERR, "Memory allocation failed for RRE buffer in VNC");
-                throw Error(ERR_VNC_MEMORY_ALLOCATION_FAILED);
-            }
-
-            for (uint8_t * point_cur = this->rre_raw.get(), * point_end = point_cur + cx * cy * Bpp;
-                    point_cur < point_end; point_cur += Bpp) {
-                memcpy(point_cur, stream_rre.get_current(), Bpp);
-            }
-
-            buf.advance(sz);
-
-            return Result::ok(State::RreData);
-        }
-
-        Result read_data_rre_data(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
-        {
-            if (!this->number_of_subrectangles_remain) {
-                // TODO use MultiRect
-                update_lock<gdi::GraphicApi> lock(drawable);
-                vnc.draw_tile(Rect(this->x, this->y, this->cx, this->cy), this->rre_raw.get(), drawable);
-                this->rre_raw.reset();
-                return Result::ok(State::Encoding);
-            }
-
-            const size_t sz = 8 + this->Bpp;
-
-            if (buf.remaining() < sz)
-            {
-                return Result::fail();
-            }
-
-            --this->number_of_subrectangles_remain;
-
-            InStream subrectangles(buf.av(sz));
-            auto bytes_per_pixel = subrectangles.get_current();
-            subrectangles.in_skip_bytes(Bpp);
-            auto subrec_x        = subrectangles.in_uint16_be();
-            auto subrec_y        = subrectangles.in_uint16_be();
-            auto subrec_width    = subrectangles.in_uint16_be();
-            auto subrec_height   = subrectangles.in_uint16_be();
-
-            auto ling_boundary = cx * Bpp;
-            auto point_line_cur = this->rre_raw.get() + subrec_y * ling_boundary;
-            auto point_line_end = point_line_cur + subrec_height * ling_boundary;
-            for (; point_line_cur < point_line_end; point_line_cur += ling_boundary) {
-                for (uint8_t * point_cur = point_line_cur + subrec_x * Bpp,
-                        * point_end = point_cur + subrec_width * Bpp;
-                        point_cur < point_end; point_cur += Bpp) {
-                    memcpy(point_cur, bytes_per_pixel, Bpp);
-                }
-            }
-
-            buf.advance(sz);
-
-            return Result::ok(State::RreData);
-        }
-
-        Result read_data_zrle(Buf64k & buf)
-        {
-            const size_t sz = 4;
-
-            if (buf.remaining() < sz)
-            {
-                return Result::fail();
-            }
-
-            this->zlib_compressed_data_length = Parse(buf.av().data()).in_uint32_be();
-
-            if (bool(this->verbose & Verbose::basic_trace))
-            {
-                LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u",
-                    this->zlib_compressed_data_length);
-            }
-
-            if (this->zlib_compressed_data_length > 65536)
-            {
-                LOG(LOG_ERR,
-                    "VNC Encoding: ZRLE, compressed data buffer too small "
-                        "(65536 < %" PRIu32 ")",
-                    this->zlib_compressed_data_length);
-                throw Error(ERR_BUFFER_TOO_SMALL);
-            }
-
-            buf.advance(sz);
-
-            return Result::ok(State::ZrleData);
-        }
-
-        Result read_data_zrle_data(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
-        {
-            if (buf.remaining() < this->zlib_compressed_data_length)
-            {
-                return Result::fail();
-            }
-
-            ZRLEUpdateContext zrle_update_context;
-
-            zrle_update_context.Bpp       = Bpp;
-            zrle_update_context.x         = x;
-            zrle_update_context.cx        = cx;
-            zrle_update_context.cx_remain = cx;
-            zrle_update_context.cy_remain = cy;
-            zrle_update_context.tile_x    = x;
-            zrle_update_context.tile_y    = y;
-
-            this->zstrm.avail_in = this->zlib_compressed_data_length;
-            this->zstrm.next_in  = buf.av().data();
-
-            while (this->zstrm.avail_in > 0)
-            {
-                constexpr std::size_t reserved_leading_space = 16384;
-                constexpr std::size_t total_size = 49152;
-                constexpr std::size_t data_size = total_size - reserved_leading_space;
-
-                uint8_t zlib_uncompressed_data_buffer[total_size];
-
-                uint8_t * data = zlib_uncompressed_data_buffer + reserved_leading_space;
-
-                this->zstrm.avail_out = data_size;
-                this->zstrm.next_out  = data;
-
-                int zlib_result = inflate(&this->zstrm, Z_NO_FLUSH);
-
-                if (zlib_result != Z_OK)
-                {
-                    LOG(LOG_ERR, "vnc zlib decompression failed (%d)", zlib_result);
-                    throw Error(ERR_VNC_ZLIB_INFLATE);
-                }
-
-                InStream zlib_uncompressed_data_stream(data, data_size - this->zstrm.avail_out);
-
-                if (bool(this->verbose & Verbose::basic_trace)) {
-                    LOG(LOG_INFO,
-                        "VNC Encoding: ZRLE, uncompressed length=%lu remaining data size=%lu",
-                        zlib_uncompressed_data_stream.in_remain(),
-                        zrle_update_context.data_remain.get_offset());
-                }
-
-                if (zrle_update_context.data_remain.get_offset())
-                {
-                    auto sz = zrle_update_context.data_remain.get_offset();
-                    data -= sz;
-                    memcpy(data, zrle_update_context.data_remain.get_data(), sz);
-                    zlib_uncompressed_data_stream = InStream(data, data_size - this->zstrm.avail_out + sz);
-
-                    zrle_update_context.data_remain.rewind();
-                }
-
-                vnc.lib_framebuffer_update_zrle(
-                    zlib_uncompressed_data_stream,
-                    zrle_update_context,
-                    drawable
-                );
-            }
-
-            buf.advance(this->zlib_compressed_data_length);
-
-            return Result::ok(State::Encoding);
-        }
-
-        Result read_data_cursor(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
-        {
-            // TODO see why we get these empty rects ?
-            if (this->cx <= 0 && this->cy <= 0) {
-                return Result::ok(State::Encoding);
-            }
-
-            // 7.7.2   Cursor Pseudo-encoding
-            // ------------------------------
-
-            // A client which requests the Cursor pseudo-encoding is
-            // declaring that it is capable of drawing a mouse cursor
-            // locally. This can significantly improve perceived performance
-            // over slow links.
-
-            // The server sets the cursor shape by sending a pseudo-rectangle
-            // with the Cursor pseudo-encoding as part of an update.
-
-            // x, y : The pseudo-rectangle's x-position and y-position
-            // indicate the hotspot of the cursor,
-
-            // cx, cy : width and height indicate the width and height of
-            // the cursor in pixels.
-
-            // The data consists of width * height pixel values followed by
-            // a bitmask.
-
-            // PIXEL array : width * height * bytesPerPixel
-            // bitmask     : floor((width + 7) / 8) * height
-
-            // The bitmask consists of left-to-right, top-to-bottom
-            // scanlines, where each scanline is padded to a whole number of
-            // bytes. Within each byte the most significant bit represents
-            // the leftmost pixel, with a 1-bit meaning the corresponding
-            // pixel in the cursor is valid.
-
-            const int sz_pixel_array = this->cx * this->cy * this->Bpp;
-            const int sz_bitmask = nbbytes(this->cx) * this->cy;
-
-            if (sz_pixel_array + sz_bitmask > 65536)
-            {
-                LOG(LOG_ERR,
-                    "VNC Encoding: Cursor, data buffer too small (65536 < %d)",
-                    sz_pixel_array + sz_bitmask);
-                throw Error(ERR_BUFFER_TOO_SMALL);
-            }
-
-            if (buf.remaining() < sz_pixel_array + sz_bitmask)
-            {
-                return Result::fail();
-            }
-
-            auto cursor_buf = buf.av(sz_pixel_array + sz_bitmask).data();
-            const uint8_t * vnc_pointer_data = cursor_buf;
-            const uint8_t * vnc_pointer_mask = cursor_buf + sz_pixel_array;
-
-            Pointer cursor;
-            //LOG(LOG_INFO, "Cursor x=%u y=%u", x, y);
-            cursor.x = x;
-            cursor.y = y;
-            // cursor.bpp = 24;
-            cursor.width = 32;
-            cursor.height = 32;
-            // a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead
-            if (cx == 1 && cy == 1) {
-                // TODO Appearence of this 1x1 cursor looks broken, check what we actually get
-                memset(cursor.data, 0, sizeof(cursor.data));
-                cursor.data[2883] = 0xFF;
-                cursor.data[2884] = 0xFF;
-                cursor.data[2885] = 0xFF;
-                memset(cursor.mask, 0xFF, sizeof(cursor.mask));
-                cursor.mask[116] = 0x1F;
-                cursor.mask[120] = 0x1F;
-                cursor.mask[124] = 0x1F;
-            }
-            else {
-                // clear target cursor mask
-                for (size_t tmpy = 0; tmpy < 32; tmpy++) {
-                    for (size_t mask_x = 0; mask_x < nbbytes(32); mask_x++) {
-                        cursor.mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
-                    }
-                }
-                // TODO The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask used is 1 bit per pixel arrays
-                // copy vnc pointer and mask to rdp pointer and mask
-
-                for (int yy = 0; yy < cy; yy++) {
-                    for (int xx = 0 ; xx < cx ; xx++){
-                        if (vnc_pointer_mask[yy * nbbytes(cx) + xx / 8 ] & (0x80 >> (xx&7))){
-                            if ((yy < 32) && (xx < 32)){
-                                cursor.mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
-                                int pixel = 0;
-                                for (int tt = 0 ; tt < Bpp; tt++){
-                                    pixel += vnc_pointer_data[(yy * cx + xx) * Bpp + tt] << (8 * tt);
-                                }
-                                // TODO temporary: force black cursor
-                                int red   = (pixel >> vnc.red_shift) & vnc.red_max;
-                                int green = (pixel >> vnc.green_shift) & vnc.green_max;
-                                int blue  = (pixel >> vnc.blue_shift) & vnc.blue_max;
-                                cursor.data[((31-yy) * 32 + xx) * 3 + 0] = (red << 3) | (red >> 2);
-                                cursor.data[((31-yy) * 32 + xx) * 3 + 1] = (green << 2) | (green >> 4);
-                                cursor.data[((31-yy) * 32 + xx) * 3 + 2] = (blue << 3) | (blue >> 2);
-                            }
-                        }
-                    }
-                }
-                /* keep these in 32x32, vnc cursor can be alot bigger */
-                /* (anyway hotspot is usually 0, 0)                   */
-                //if (x > 31) { x = 31; }
-                //if (y > 31) { y = 31; }
-            }
-            cursor.update_bw();
-            // TODO we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation
-            drawable.begin_update();
-            drawable.set_pointer(cursor);
-            drawable.end_update();
-
-            buf.advance(sz_pixel_array + sz_bitmask);
-            return Result::ok(State::Encoding);
-        }
     };
     FrameBufferUpdateCtx frame_buffer_update_ctx;
 
@@ -2916,7 +2399,9 @@ private:
             return false;
         }
 
-        this->update_screen(Rect(0, 0, this->width, this->height));
+        if (!this->ongoing_framebuffer_update){
+            this->update_screen(Rect(0, 0, this->width, this->height), 1);
+        }
         return true;
     } // lib_frame_buffer_update
 
@@ -3082,7 +2567,7 @@ private:
                                        );
         }
         else {
-            LOG(LOG_INFO, "Clipboard Channel Redirection unavailable");
+            LOG(LOG_ERR, "Clipboard Channel Redirection unavailable");
         }
     } // lib_open_clip_channel
 
@@ -3104,7 +2589,7 @@ private:
         using Result = BasicResult<State>;
 
     public:
-        explicit ClipboardDataCtx(Verbose verbose)
+        explicit ClipboardDataCtx(VNCVerbose verbose)
           : verbose(verbose)
           , to_rdp_clipboard_data(this->to_rdp_clipboard_data_buffer)
           , to_rdp_clipboard_data_is_utf8_encoded(false)
@@ -3159,7 +2644,7 @@ private:
 
     private:
         State    state;
-        Verbose  verbose;
+        VNCVerbose  verbose;
 
         bool     clipboard_down_is_really_enabled;
 
@@ -3183,7 +2668,7 @@ private:
             this->remaining_data_length = this->data_length;
             buf.advance(7);
 
-            if (bool(this->verbose & Verbose::basic_trace)) {
+            if (bool(this->verbose & VNCVerbose::basic_trace)) {
                 LOG(LOG_INFO, "mod_vnc::lib_clip_data: clipboard_data_length=%u", this->data_length);
             }
 
@@ -3234,12 +2719,12 @@ private:
             this->to_rdp_clipboard_data_is_utf8_encoded =
                 ::is_utf8_string(this->to_rdp_clipboard_data.get_data(), this->data_length);
 
-            if (bool(this->verbose & Verbose::basic_trace)) {
+            if (bool(this->verbose & VNCVerbose::basic_trace)) {
                 LOG(LOG_INFO,
                     "mod_vnc::lib_clip_data: to_rdp_clipboard_data_is_utf8_encoded=%s",
                     (this->to_rdp_clipboard_data_is_utf8_encoded ? "yes" : "no"));
                 if (this->data_length <= 64) {
-                    hexdump_c(this->to_rdp_clipboard_data.get_data(), this->data_length);
+//                    hexdump_c(this->to_rdp_clipboard_data.get_data(), this->data_length);
                 }
             }
 
@@ -3275,7 +2760,7 @@ private:
         }
 
         if (this->clipboard_data_ctx.clipboard_is_enabled()) {
-            if (bool(this->verbose & Verbose::basic_trace)) {
+            if (bool(this->verbose & VNCVerbose::basic_trace)) {
                 LOG(LOG_INFO,
                     "mod_vnc::lib_clip_data: Sending Format List PDU (%u) to client.",
                     RDPECLIP::CB_FORMAT_LIST);
@@ -3306,7 +2791,7 @@ private:
             this->clipboard_requesting_for_data_is_delayed = false;
         }
         else {
-            LOG(LOG_INFO, "mod_vnc::lib_clip_data: Clipboard Channel Redirection unavailable");
+            LOG(LOG_WARNING, "mod_vnc::lib_clip_data: Clipboard Channel Redirection unavailable");
         }
 
         return true;
@@ -3318,7 +2803,7 @@ private:
         size_t length,
         uint32_t flags
     ) override {
-        if (bool(this->verbose & Verbose::basic_trace)) {
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::send_to_mod_channel");
         }
 
@@ -3329,7 +2814,7 @@ private:
         if (front_channel_name == channel_names::cliprdr) {
             this->clipboard_send_to_vnc(chunk, length, flags);
         }
-        if (bool(this->verbose & Verbose::basic_trace)) {
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::send_to_mod_channel done");
         }
     } // send_to_mod_channel
@@ -3337,7 +2822,7 @@ private:
 private:
     void clipboard_send_to_vnc(InStream & chunk, size_t length, uint32_t flags)
     {
-        if (bool(this->verbose & Verbose::basic_trace)) {
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG( LOG_INFO, "mod_vnc::clipboard_send_to_vnc:"
                            " length=%zu chunk_size=%zu flags=0x%08X"
                , length, chunk.get_capacity(), flags);
@@ -3390,7 +2875,7 @@ private:
             // msgType read is not a msgType, it's a part of data.
         }
 
-        if (bool(this->verbose & Verbose::basic_trace)) {
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc client clipboard PDU: msgType=%s(%d)",
                 RDPECLIP::get_msgType_name(msgType), msgType);
         }
@@ -3413,7 +2898,7 @@ private:
 
                 //---- Beginning of clipboard PDU Header ----------------------------
 
-                if (bool(this->verbose & Verbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=CB_FORMAT_LIST_RESPONSE(%u)",
                         RDPECLIP::CB_FORMAT_LIST_RESPONSE);
                 }
@@ -3461,7 +2946,7 @@ private:
                     //    "usnow=%llu clipboard_last_client_data_timestamp=%llu timeval_diff=%llu",
                     //    usnow, this->clipboard_last_client_data_timestamp, timeval_diff);
                     if ((timeval_diff > MINIMUM_TIMEVAL) || !this->clipboard_owned_by_client) {
-                        if (bool(this->verbose & Verbose::basic_trace)) {
+                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
                             LOG(LOG_INFO,
                                 "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%u)",
                                 RDPECLIP::CB_FORMAT_DATA_REQUEST);
@@ -3490,7 +2975,7 @@ private:
                     }
                     else {
                         if (this->bogus_clipboard_infinite_loop == VncBogusClipboardInfiniteLoop::delayed) {
-                            if (bool(this->verbose & Verbose::basic_trace)) {
+                            if (bool(this->verbose & VNCVerbose::basic_trace)) {
                                 LOG(LOG_INFO,
                                     "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%u) (delayed)",
                                     RDPECLIP::CB_FORMAT_DATA_REQUEST);
@@ -3503,7 +2988,7 @@ private:
                             != VncBogusClipboardInfiniteLoop::duplicated
                         && (this->clipboard_general_capability_flags
                             & RDPECLIP::CB_ALL_GENERAL_CAPABILITY_FLAGS)) {
-                            if (bool(this->verbose & Verbose::basic_trace)) {
+                            if (bool(this->verbose & VNCVerbose::basic_trace)) {
                                 LOG( LOG_INFO
                                    , "mod_vnc::clipboard_send_to_vnc: "
                                      "duplicated clipboard update event "
@@ -3512,7 +2997,7 @@ private:
                             }
                         }
                         else {
-                            if (bool(this->verbose & Verbose::basic_trace)) {
+                            if (bool(this->verbose & VNCVerbose::basic_trace)) {
                                 LOG(LOG_INFO,
                                     "mod_vnc server clipboard PDU: msgType=CB_FORMAT_LIST(%u) (preventive)",
                                     RDPECLIP::CB_FORMAT_LIST);
@@ -3559,7 +3044,7 @@ private:
                 // 04 00 00 00 04 00 00 00 0d 00 00 00 00 00 00 00
                 format_data_request_pdu.recv(chunk);
 
-                if (bool(this->verbose & Verbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG( LOG_INFO
                        , "mod_vnc::clipboard_send_to_vnc: CB_FORMAT_DATA_REQUEST(%u) msgFlags=0x%02x datalen=%u requestedFormatId=%s(%u)"
                        , RDPECLIP::CB_FORMAT_DATA_REQUEST
@@ -3597,7 +3082,7 @@ private:
                                                     chunk_size,
                                                     send_flags
                                                    );
-                        if (bool(this->verbose & Verbose::basic_trace)) {
+                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
                             LOG(LOG_INFO,
                                 "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_RESPONSE(%u) - chunk_size=%zu",
                                 RDPECLIP::CB_FORMAT_DATA_RESPONSE, chunk_size);
@@ -3659,7 +3144,7 @@ private:
 
                     send_format_data_response(out_stream);
 
-                    if (bool(this->verbose & Verbose::basic_trace)) {
+                    if (bool(this->verbose & VNCVerbose::basic_trace)) {
                         LOG(LOG_INFO,
                             "mod_vnc::clipboard_send_to_vnc: "
                                 "Sending Format Data Response PDU (CF_TEXT) done");
@@ -3706,7 +3191,7 @@ private:
 
                     send_format_data_response(out_stream);
 
-                    if (bool(this->verbose & Verbose::basic_trace)) {
+                    if (bool(this->verbose & VNCVerbose::basic_trace)) {
                         LOG(LOG_INFO,
                             "mod_vnc::clipboard_send_to_vnc: "
                                 "Sending Format Data Response PDU (CF_UNICODETEXT) done");
@@ -3753,7 +3238,7 @@ private:
                         this->to_vnc_clipboard_data_size      =
                         this->to_vnc_clipboard_data_remaining = format_data_response_pdu.header.dataLen();
 
-                        if (bool(this->verbose & Verbose::basic_trace)) {
+                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
                             LOG( LOG_INFO
                                , "mod_vnc::clipboard_send_to_vnc: virtual channel data span in multiple Virtual Channel PDUs: total=%u"
                                , this->to_vnc_clipboard_data_size);
@@ -3798,7 +3283,7 @@ private:
                 assert(this->to_vnc_clipboard_data_size);
 
                 // Virtual channel data span in multiple Virtual Channel PDUs.
-                if (bool(this->verbose & Verbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "mod_vnc::clipboard_send_to_vnc: an other trunk");
                 }
 
@@ -3807,7 +3292,7 @@ private:
                     throw Error(ERR_VNC);
                 }
 
-                // if (bool(this->verbose & Verbose::basic_trace)) {
+                // if (bool(this->verbose & VNCVerbose::basic_trace)) {
                 //     LOG( LOG_INFO, "mod_vnc::clipboard_send_to_vnc: trunk size=%u, capacity=%u"
                 //        , chunk.in_remain(), static_cast<unsigned>(this->to_vnc_clipboard_data.tailroom()));
                 // }
@@ -3849,19 +3334,19 @@ private:
                     if (general_caps.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES) {
                         this->client_use_long_format_names = true;
                     }
-                    if (bool(this->verbose & Verbose::basic_trace)) {
+                    if (bool(this->verbose & VNCVerbose::basic_trace)) {
                         LOG(LOG_INFO, "Client use %s format name",
                             (this->client_use_long_format_names ? "long" : "short"));
                     }
 
-                    if (bool(this->verbose & Verbose::basic_trace)) {
+                    if (bool(this->verbose & VNCVerbose::basic_trace)) {
                         general_caps.log(LOG_INFO);
                     }
                 }
             }
             break;
         }
-        if (bool(this->verbose & Verbose::basic_trace)) {
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::clipboard_send_to_vnc: done");
         }
     } // clipboard_send_to_vnc
@@ -3870,7 +3355,7 @@ private:
 public:
     void rdp_input_up_and_running() override {
         if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
-            if (bool(this->verbose & Verbose::basic_trace)) {
+            if (bool(this->verbose & VNCVerbose::basic_trace)) {
                 LOG(LOG_INFO, "Client up and running");
             }
             this->state = DO_INITIAL_CLEAR_SCREEN;
@@ -3923,11 +3408,6 @@ private:
                 const Bitmap tiled_bmp(raw, rect.cx, rect.cy, this->bpp, src_tile);
                 const Rect dst_tile(rect.x + x, rect.y + y, cx, cy);
                 const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
-                /// NOTE force resize cliping with rdesktop...
-                if (this->is_first_membelt && dst_tile.cx != 1 && dst_tile.cy != 1) {
-                    drawable.draw(cmd2, Rect(dst_tile.x,dst_tile.y,1,1), tiled_bmp);
-                    this->is_first_membelt = false;
-                }
                 drawable.draw(cmd2, dst_tile, tiled_bmp);
             }
         }
@@ -3937,7 +3417,7 @@ public:
     void disconnect(time_t now) override {
 
         double seconds = ::difftime(now, this->beginning);
-        LOG(LOG_INFO, "Client disconnect");
+        LOG(LOG_INFO, "Client disconnect from VNC module");
 
         char extra[1024];
         snprintf(extra, sizeof(extra), "%02d:%02d:%02d",

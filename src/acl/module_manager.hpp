@@ -22,7 +22,6 @@
   find out the next module to run from context reading
 */
 
-
 #pragma once
 
 #include "transport/socket_transport.hpp"
@@ -936,6 +935,7 @@ public:
                 this->ini.get_ref<cfg::context::auth_error_message>(),
                 this->ini.get<cfg::font>(),
                 !this->ini.get<cfg::mod_replay::on_end_of_data>(),
+                this->ini.get<cfg::mod_replay::replay_on_loop>(),
                 to_verbose_flags(this->ini.get<cfg::debug::capture>())
             ));
             if (bool(this->verbose & Verbose::new_mod)) {
@@ -1223,33 +1223,8 @@ public:
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
                 }
 
-                const char * ip = this->ini.get<cfg::context::target_host>().c_str();
-                char ip_addr[256] {};
-                in_addr s4_sin_addr;
-                int status = resolve_ipv4_address(ip, s4_sin_addr);
-                if (status){
-                    report_message.log5("type=\"CONNECTION_FAILED\"");
-
-                    this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
-                    // TODO: actually this is DNS Failure or invalid address
-                    LOG(LOG_ERR, "Failed to connect to remote TCP host (1)");
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
-                }
-
-                snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
-
-                unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 4, 1000);
-
-                if (!client_sck.is_open()){
-                    report_message.log5("type=\"CONNECTION_FAILED\"");
-
-                    this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
-                    LOG(LOG_ERR, "Failed to connect to remote TCP host (2)");
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
-                }
-
-                this->ini.set<cfg::context::auth_error_message>(TR(trkeys::authentification_x_fail, language(this->ini)));
-                this->ini.set<cfg::context::ip_target>(ip_addr);
+                unique_fd client_sck = this->connect_to_target_host(
+                    report_message, trkeys::authentification_x_fail);
 
                 this->set_mod(new ModWithSocket<xup_mod>(
                     *this,
@@ -1292,33 +1267,8 @@ public:
                 //    // default is "allow", do nothing special
                 //}
 
-                const char * ip = this->ini.get<cfg::context::target_host>().c_str();
-                char ip_addr[256] {};
-                in_addr s4_sin_addr;
-                int status = resolve_ipv4_address(ip, s4_sin_addr);
-                if (status){
-                    report_message.log5("type=\"CONNECTION_FAILED\"");
-
-                    this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
-                    // TODO: actually this is DNS Failure or invalid address
-                    LOG(LOG_ERR, "Failed to connect to remote TCP host (3)");
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
-                }
-
-                snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
-
-                unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
-
-                if (!client_sck.is_open()) {
-                    report_message.log5("type=\"CONNECTION_FAILED\"");
-
-                    this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
-                    LOG(LOG_ERR, "Failed to connect to remote TCP host (4)");
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
-                }
-
-                this->ini.set<cfg::context::auth_error_message>(TR(trkeys::authentification_rdp_fail, language(this->ini)));
-                this->ini.set<cfg::context::ip_target>(ip_addr);
+                unique_fd client_sck = this->connect_to_target_host(
+                    report_message, trkeys::authentification_rdp_fail);
 
                 // BEGIN READ PROXY_OPT
                 if (this->ini.get<cfg::globals::enable_wab_integration>()) {
@@ -1413,8 +1363,14 @@ public:
                 mod_rdp_params.session_probe_allow_multiple_handshake
                                                                    = this->ini.get<cfg::mod_rdp::session_probe_allow_multiple_handshake>();
 
+                mod_rdp_params.session_probe_enable_crash_dump     = this->ini.get<cfg::mod_rdp::session_probe_enable_crash_dump>();
+
+                mod_rdp_params.session_probe_handle_usage_limit    = this->ini.get<cfg::mod_rdp::session_probe_handle_usage_limit>();
+                mod_rdp_params.session_probe_memory_usage_limit    = this->ini.get<cfg::mod_rdp::session_probe_memory_usage_limit>();
+
                 mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
                 mod_rdp_params.auth_channel                        = CHANNELS::ChannelNameId(this->ini.get<cfg::mod_rdp::auth_channel>());
+                mod_rdp_params.checkout_channel                    = CHANNELS::ChannelNameId(this->ini.get<cfg::mod_rdp::checkout_channel>());
                 mod_rdp_params.alternate_shell                     = this->ini.get<cfg::mod_rdp::alternate_shell>().c_str();
                 mod_rdp_params.shell_arguments                     = this->ini.get<cfg::mod_rdp::shell_arguments>().c_str();
                 mod_rdp_params.shell_working_dir                   = this->ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
@@ -1452,6 +1408,7 @@ public:
                 mod_rdp_params.bogus_refresh_rect                  = this->ini.get<cfg::globals::bogus_refresh_rect>();
 
                 mod_rdp_params.proxy_managed_drives                = this->ini.get<cfg::mod_rdp::proxy_managed_drives>().c_str();
+                mod_rdp_params.proxy_managed_drive_prefix          = app_path(AppPath::DriveRedirection);
 
                 mod_rdp_params.lang                                = language(this->ini);
 
@@ -1611,34 +1568,8 @@ public:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'\n");
 
-                const char * ip = this->ini.get<cfg::context::target_host>().c_str();
-
-                char ip_addr[256] {};
-                in_addr s4_sin_addr;
-                int status = resolve_ipv4_address(ip, s4_sin_addr);
-                if (status){
-                    report_message.log5("type=\"CONNECTION_FAILED\"");
-
-                    this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
-                    // TODO: actually this is DNS Failure or invalid address
-                    LOG(LOG_ERR, "Failed to connect to remote TCP host (5)");
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
-                }
-
-                snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
-
-                unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
-
-                if (!client_sck.is_open()) {
-                    report_message.log5("type=\"CONNECTION_FAILED\"");
-
-                    this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
-                    LOG(LOG_ERR, "Failed to connect to remote TCP host (6)");
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
-                }
-
-                this->ini.set<cfg::context::auth_error_message>(TR(trkeys::authentification_vnc_fail, language(this->ini)));
-                this->ini.set<cfg::context::ip_target>(ip_addr);
+                unique_fd client_sck = this->connect_to_target_host(
+                    report_message, trkeys::authentification_vnc_fail);
 
                 try {
                     const char * const name = "VNC Target";
@@ -1733,5 +1664,39 @@ public:
 
     rdp_api* get_rdp_api() const override {
         return this->rdpapi;
+    }
+
+private:
+    unique_fd connect_to_target_host(ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail)
+    {
+        const char * ip = this->ini.get<cfg::context::target_host>().c_str();
+        char ip_addr[256] {};
+        in_addr s4_sin_addr;
+        int status = resolve_ipv4_address(ip, s4_sin_addr);
+        if (status){
+            report_message.log5("type=\"CONNECTION_FAILED\"");
+
+            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
+            // TODO: actually this is DNS Failure or invalid address
+            LOG(LOG_ERR, "Failed to connect to remote TCP host (1)");
+            throw Error(ERR_SOCKET_CONNECT_FAILED);
+        }
+
+        snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
+
+        unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
+
+        if (!client_sck.is_open()){
+            report_message.log5("type=\"CONNECTION_FAILED\"");
+
+            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
+            LOG(LOG_ERR, "Failed to connect to remote TCP host (2)");
+            throw Error(ERR_SOCKET_CONNECT_FAILED);
+        }
+
+        this->ini.set<cfg::context::auth_error_message>(TR(authentification_fail, language(this->ini)));
+        this->ini.set<cfg::context::ip_target>(ip_addr);
+
+        return client_sck;
     }
 };

@@ -628,10 +628,13 @@ private:
 
     bool client_support_monitor_layout_pdu = false;
 
+    bool is_first_memblt = true;
     bool session_resized = false;
 
 public:
-    void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
+    bool ignore_rdesktop_bogus_clip = false;
+
+    void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
     void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
     void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
@@ -647,7 +650,15 @@ public:
     void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
     void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
     void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override { this->draw_impl(cmd, bmp); }
-    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
+    void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override {
+        // TODO: check if this is still necessary with current rdesktop (likely not)
+        /// NOTE force resize cliping with rdesktop...
+        if (this->is_first_memblt && !this->ignore_rdesktop_bogus_clip){
+            this->draw_impl(cmd, Rect(clip.x,clip.y,1,1), bmp);
+            this->is_first_memblt = false;
+        }
+        this->draw_impl(cmd, clip, bmp);
+    }
     void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
 
@@ -842,6 +853,7 @@ public:
 
                     LOG(LOG_INFO, "Front::server_resize: ACTIVATED (resize)");
                     state = ACTIVATE_AND_PROCESS_DATA;
+                    this->is_first_memblt = true;
                     res = ResizeResult::done;
                 }
             }
@@ -1001,6 +1013,7 @@ public:
 
         WrmParams wrm_params = wrm_params_from_ini(
             this->capture_bpp,
+            this->client_info.remote_program,
             this->cctx,
             this->gen,
             this->fstat,

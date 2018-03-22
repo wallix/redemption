@@ -160,7 +160,7 @@ public:
                     // Create session file
                     int child_pid = getpid();
                     char session_file[256];
-                    sprintf(session_file, "%s/redemption/session_%d.pid", app_path(AppPath::Pid), child_pid);
+                    sprintf(session_file, "%s/session_%d.pid", app_path(AppPath::LockDir), child_pid);
                     int fd = open(session_file, O_WRONLY | O_CREAT, S_IRWXU);
                     if (fd == -1) {
                         LOG(LOG_ERR, "Writing process id to SESSION ID FILE failed. Maybe no rights ?:%d:%s\n", errno, strerror(errno));
@@ -169,7 +169,7 @@ public:
                     char text[256];
                     const size_t lg = snprintf(text, 255, "%d", child_pid);
                     if (write(fd, text, lg) == -1) {
-                        LOG(LOG_ERR, "Couldn't write pid to %s/redemption/session_<pid>.pid: %s", app_path(AppPath::Pid), strerror(errno));
+                        LOG(LOG_ERR, "Couldn't write pid to %s/session_<pid>.pid: %s", app_path(AppPath::LockDir), strerror(errno));
                         _exit(1);
                     }
                     close(fd);

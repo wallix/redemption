@@ -31,7 +31,7 @@ build:
 	# dh_testdir - test directory before building Debian package. It makes sure
 	# that debian/control exists also check Jamroot for redemption project.
 	dh_testdir Jamroot
-	bjam -q $(BJAM_EXTRA_INSTALL) build
+	bjam -q $(BJAM_EXTRA_INSTALL) exe libs
 
 install: build
 	dh_testdir Jamroot
