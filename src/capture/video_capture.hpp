@@ -282,6 +282,8 @@ public:
 
     gdi::ImageFrameApi & image_frame_api;
 
+    SmartVideoCropping smart_video_cropping;
+
 private:
     std::unique_ptr<uint8_t[]> ic_scaled_buffer;
 

@@ -2708,7 +2708,7 @@ namespace cfg {
         type value{7};
     };
     /// type: SmartVideoCropping <br/>
-    /// value{static_cast<type>(1)} <br/>
+    /// value{static_cast<type>(0)} <br/>
     struct video::smart_video_cropping {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -2717,7 +2717,7 @@ namespace cfg {
         using type = SmartVideoCropping;
         using sesman_and_spec_type = SmartVideoCropping;
         using mapped_type = sesman_and_spec_type;
-        type value{static_cast<type>(1)};
+        type value{static_cast<type>(0)};
     };
 
     /// AUTHID_CRYPTO_KEY0 <br/>

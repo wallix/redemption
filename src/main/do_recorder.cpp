@@ -1864,7 +1864,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 record_tmp_path,
                                 record_path,
                                 groupid,
-                                nullptr
+                                nullptr,
+                                ini.get<cfg::video::smart_video_cropping>()
                             };
                             auto * capture = new(storage.get_storage()) Capture(
                                   capture_params
@@ -2031,7 +2032,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false, SmartVideoCropping::disable};
+    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false};
     VideoParams video_params;
     FullVideoParams full_video_params;
 

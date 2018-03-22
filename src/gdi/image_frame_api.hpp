@@ -21,6 +21,7 @@
 #pragma once
 
 #include "utils/image_data_view.hpp"
+#include "utils/rect.hpp"
 
 namespace gdi {
 
@@ -43,10 +44,14 @@ struct ImageFrameApi
 
     virtual unsigned int get_last_update_index() const = 0;
 
-//    virtual void reset_to_origin() = 0;
+    void reset(Rect const & out_rect) {
+        this->reset(out_rect.x, out_rect.y, out_rect.cx, out_rect.cy);
+    }
 
     virtual void reset(unsigned int x, unsigned int y,
                unsigned int out_width, unsigned int out_height) = 0;
+
+    virtual Rect get() const = 0;
 };
 
 inline ImageFrameApi::ConstImageView get_image_view(ImageFrameApi const & image_frame)
