@@ -1385,6 +1385,14 @@ Capture::Capture(
         }
     }
 
+    if (capture_meta) {
+        this->meta_capture_obj.reset(new MetaCaptureImpl(
+            capture_params.now, meta_params,
+            capture_params.record_tmp_path, capture_params.basename,
+            report_error_from_reporter(capture_params.report_message)
+        ));
+    }
+
     if (capture_wrm || capture_video || capture_ocr || capture_png || capture_video_full) {
         if (drawable_params.rdp_drawable) {
             this->gd_drawable = drawable_params.rdp_drawable;
@@ -1442,14 +1450,6 @@ Capture::Capture(
         if (capture_wrm) {
             this->wrm_capture_obj.reset(new WrmCaptureImpl(
                 capture_params, wrm_params, *this->gd_drawable));
-        }
-
-        if (capture_meta) {
-            this->meta_capture_obj.reset(new MetaCaptureImpl(
-                capture_params.now, meta_params,
-                capture_params.record_tmp_path, capture_params.basename,
-                report_error_from_reporter(capture_params.report_message)
-            ));
         }
 
         if (capture_video) {
