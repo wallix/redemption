@@ -25,7 +25,7 @@
 #include "utils/log.hpp"
 
 
-#include "client_redemption.hpp"
+#include "client_redemption/client_redemption.hpp"
 
 
 #include "qt_input_output_api/qt_output_sound.hpp"

@@ -28,6 +28,9 @@
 
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
+#include "client_redemption/client_input_output_api.hpp"
+
+
 
 #include "../keymaps/qt_scancode_keymap.hpp"
 
@@ -56,7 +59,7 @@
 
 #undef REDEMPTION_QT_INCLUDE_WIDGET
 
-#include "../../client_input_output_api.hpp"
+
 
 
 

@@ -29,10 +29,10 @@
 #include "utils/log.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
+#include "client_redemption/client_input_output_api.hpp"
 
 
 
-#include "../../client_input_output_api.hpp"
 #include "../keymaps/qt_scancode_keymap.hpp"
 #include "qt_options_window.hpp"
 
@@ -683,6 +683,7 @@ class FormTabQt : public FormTabAPI
 {
 
 Q_OBJECT
+
 
 public:
     enum : int {
