@@ -103,6 +103,65 @@ exe rdpproxy :
   <library>src/utils/rle.o
   <library>z
 ;
+exe main_client_redemption :
+  $(REDEMPTION_SRC_PATH)/main/main_client_redemption.cpp
+:
+  $(EXE_DEPENDENCIES)
+  <library>app_path_exe.o
+  <library>crypto
+  <library>ffmpeg
+  <library>gssapi_krb5
+  <library>krb5
+  <library>openssl
+  <library>png
+  <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
+  <library>src/capture/capture.o
+  <library>src/capture/file_to_graphic.o
+  <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/utils/match_finder.o
+  <library>src/capture/video_capture.o
+  <library>src/capture/video_recorder.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/nego.o
+  <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
+  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymapSym.o
+  <library>src/mod/internal/client_execute.o
+  <library>src/mod/internal/internal_mod.o
+  <library>src/mod/internal/replay_mod.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/edit.o
+  <library>src/mod/internal/widget/edit_valid.o
+  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/flat_vnc_authentification.o
+  <library>src/mod/internal/widget/image.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/password.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
+  <library>src/utils/authorization_channels.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/d3des.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
+  <library>src/utils/pattutils.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>z
+;
 exe rdpclient :
   $(REDEMPTION_SRC_PATH)/main/rdp_client.cpp
 :
