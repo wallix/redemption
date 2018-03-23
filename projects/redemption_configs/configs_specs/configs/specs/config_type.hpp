@@ -168,8 +168,9 @@ inline void config_type_definition(type_enumerations & e)
     ;
 
     e.enumeration_set("SmartVideoCropping")
-      .value("disable", 1)
-      .value("v1", 2)
+      .value("disable", 0)
+      .value("v1", 1)
+      .value("v2", 2)
     ;
 }
 

@@ -147,6 +147,8 @@ public:
 //        this->reset(0, 0, this->in_width, this->in_height);
 //    }
 
+    using gdi::ImageFrameApi::reset;
+
     void reset(unsigned int x, unsigned int y,
                unsigned int out_width, unsigned int out_height) override {
         this->x = x;
@@ -168,5 +170,9 @@ public:
             this->x * VideoCropper::bytes_per_pixel;
 
         //LOG(LOG_INFO, "out_width=%u out_height=%u", out_width, out_height);
+    }
+
+    Rect get() const override {
+        return Rect(this->x, this->y, this->out_width, this->out_height);
     }
 };

@@ -485,14 +485,16 @@ operator << (std::basic_ostream<Ch, Tr> & os, OcrVersion e)
 
 
 enum class SmartVideoCropping {
-    disable = 1,
-    v1 = 2,
+    disable = 0,
+    v1 = 1,
+    v2 = 2,
 };
 
 inline bool is_valid_enum_value(SmartVideoCropping e)
 {
     auto const i = static_cast<unsigned long>(e);
     return false
+     || i == 0
      || i == 1
      || i == 2
     ;

@@ -422,6 +422,7 @@ inline parse_error parse(SmartVideoCropping & x, spec_type<SmartVideoCropping>, 
     return parse_enum_list(x, value, {
         SmartVideoCropping::disable,
         SmartVideoCropping::v1,
+        SmartVideoCropping::v2,
     });
 }
 

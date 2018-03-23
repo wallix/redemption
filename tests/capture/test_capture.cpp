@@ -193,7 +193,8 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
             record_tmp_path,
             record_path,
             groupid,
-            nullptr
+            nullptr,
+            SmartVideoCropping::disable
         };
 
         Capture capture(
@@ -407,7 +408,8 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         record_tmp_path,
         record_path,
         groupid,
-        nullptr
+        nullptr,
+        SmartVideoCropping::disable
     };
 
     Capture capture(

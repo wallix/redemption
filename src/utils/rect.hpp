@@ -332,6 +332,15 @@ struct Dimension {
         : w(w)
         , h(h)
     {}
+
+    void empty() {
+        this->w = 0;
+        this->h = 0;
+    }
+
+    bool isempty() const {
+        return (!this->w || !this->h);
+    }
 };
 
 inline auto log_value(Dimension const & dim)

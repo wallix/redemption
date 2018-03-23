@@ -979,8 +979,7 @@ public:
             ini.get<cfg::video::png_limit>(),
             true,
             this->client_info.remote_program,
-            ini.get<cfg::video::rt_display>(),
-            ini.get<cfg::video::smart_video_cropping>()
+            ini.get<cfg::video::rt_display>()
         };
         bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
 
@@ -1028,7 +1027,8 @@ public:
             record_tmp_path,
             record_path,
             groupid,
-            &this->report_message
+            &this->report_message,
+            ini.get<cfg::video::smart_video_cropping>()
         };
 
         this->capture = new Capture( capture_params
@@ -1057,8 +1057,7 @@ public:
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
-        if (this->client_info.remote_program && (ini.get<cfg::video::smart_video_cropping>() != SmartVideoCropping::disable) &&
-            !this->rail_window_rect.isempty()) {
+        if (this->client_info.remote_program && !this->rail_window_rect.isempty()) {
             this->capture->visibility_rects_event(this->rail_window_rect);
         }
 

@@ -232,6 +232,7 @@ public:
     RDPDrawable* gd_drawable = nullptr;
 
     std::unique_ptr<VideoCropper> video_cropper;
+    std::unique_ptr<VideoCropper> video_cropper_real_time;
 
 private:
     class Graphic final : public gdi::GraphicApi
@@ -314,45 +315,7 @@ private:
             }
         }
 
-        struct WindowRecord {
-            uint32_t window_id;
-            uint32_t fields_present_flags;
-            uint32_t style;
-            uint8_t show_state;
-            int32_t visible_offset_x;
-            int32_t visible_offset_y;
-
-            WindowRecord(uint32_t window_id, uint32_t fields_present_flags,
-                         uint32_t style, uint8_t show_state,
-                         int32_t visible_offset_x, int32_t visible_offset_y)
-            : window_id(window_id)
-            , fields_present_flags(fields_present_flags)
-            , style(style)
-            , show_state(show_state)
-            , visible_offset_x(visible_offset_x)
-            , visible_offset_y(visible_offset_y) {}
-        };
-
-        std::vector<WindowRecord> windows;
-
-        struct WindowVisibilityRectRecord {
-            uint32_t window_id;
-            Rect rect;
-
-            WindowVisibilityRectRecord(uint32_t window_id, Rect rect)
-            : window_id(window_id)
-            , rect(rect) {}
-        };
-
-        std::vector<WindowVisibilityRectRecord> window_visibility_rects;
-
-        Rect get_joint_visibility_rect() const;
-
         void draw_impl(RDP::FrameMarker const & cmd);
-
-        void draw_impl(const RDP::RAIL::NewOrExistingWindow & cmd);
-
-        void draw_impl(const RDP::RAIL::DeletedWindow & cmd);
 
     public:
         MouseTrace const & mouse;
@@ -397,6 +360,8 @@ private:
     std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> ext_caps;
 
     bool capture_drawable = false;
+
+    SmartVideoCropping smart_video_cropping;
 
 public:
     Capture(
@@ -472,6 +437,44 @@ protected:
             this->graphic_api->draw(args...);
         }
     }
+
+    void draw_impl(const RDP::RAIL::NewOrExistingWindow & cmd);
+
+    void draw_impl(const RDP::RAIL::DeletedWindow & cmd);
+
+    struct WindowRecord {
+        uint32_t window_id;
+        uint32_t fields_present_flags;
+        uint32_t style;
+        uint8_t show_state;
+        int32_t visible_offset_x;
+        int32_t visible_offset_y;
+
+        WindowRecord(uint32_t window_id, uint32_t fields_present_flags,
+                     uint32_t style, uint8_t show_state,
+                     int32_t visible_offset_x, int32_t visible_offset_y)
+        : window_id(window_id)
+        , fields_present_flags(fields_present_flags)
+        , style(style)
+        , show_state(show_state)
+        , visible_offset_x(visible_offset_x)
+        , visible_offset_y(visible_offset_y) {}
+    };
+
+    std::vector<WindowRecord> windows;
+
+    struct WindowVisibilityRectRecord {
+        uint32_t window_id;
+        Rect rect;
+
+        WindowVisibilityRectRecord(uint32_t window_id, Rect rect)
+        : window_id(window_id)
+        , rect(rect) {}
+    };
+
+    std::vector<WindowVisibilityRectRecord> window_visibility_rects;
+
+    Rect get_joint_visibility_rect() const;
 
 public:
     void set_pointer(const Pointer & cursor) override {

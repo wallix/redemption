@@ -746,9 +746,10 @@
 "#_advanced\n"
 "h_qscale = integer(min=0, default=7)\n\n"
 
-"#   1: disable\n"
-"#   2: v1\n"
-"smart_video_cropping = option(1, 2, default=1)\n\n"
+"#   0: disable\n"
+"#   1: v1\n"
+"#   2: v2\n"
+"smart_video_cropping = option(0, 1, 2, default=0)\n\n"
 
 "[crypto]\n\n"
 
