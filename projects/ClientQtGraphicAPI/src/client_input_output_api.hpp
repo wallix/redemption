@@ -911,6 +911,33 @@ public:
         this->mod->rdp_input_unicode(unicode, flag);
     }
 
+    static time_t get_movie_time_length(char const * mwrm_filename) {
+        // TODO RZ: Support encrypted recorded file.
+        CryptoContext cctx;
+        Fstat fsats;
+        InCryptoTransport trans(cctx, InCryptoTransport::EncryptionMode::NotEncrypted, fsats);
+        MwrmReader mwrm_reader(trans);
+        MetaLine meta_line;
+
+        time_t start_time = 0;
+        time_t stop_time = 0;
+
+        trans.open(mwrm_filename);
+        mwrm_reader.read_meta_headers();
+
+        Transport::Read read_stat = mwrm_reader.read_meta_line(meta_line);
+        if (read_stat == Transport::Read::Ok) {
+            start_time = meta_line.start_time;
+            stop_time = meta_line.stop_time;
+            while (read_stat == Transport::Read::Ok) {
+                stop_time = meta_line.stop_time;
+                read_stat = mwrm_reader.read_meta_line(meta_line);
+            }
+        }
+
+        return stop_time - start_time;
+    }
+
 };
 
 

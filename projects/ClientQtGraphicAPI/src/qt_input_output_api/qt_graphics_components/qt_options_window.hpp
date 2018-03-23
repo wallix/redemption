@@ -610,7 +610,6 @@ public Q_SLOTS:
         }
         if (this->_recordingCB.isChecked()) {
             this->_front->is_recording = true;
-            LOG(LOG_INFO, "recording checked!!!!!!!!!!!!!");
         } else {
             this->_front->is_recording = false;
         }

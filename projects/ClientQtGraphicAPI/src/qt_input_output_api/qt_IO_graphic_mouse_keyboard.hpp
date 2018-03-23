@@ -138,7 +138,7 @@ public:
 
     virtual void create_screen(std::string const & movie_dir, std::string const & movie_path) override {
         QPixmap * map = &(this->cache);
-        this->screen = new ReplayQtScreen(this->drawn_client, this, movie_dir, movie_path, map, this->get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str()));
+        this->screen = new ReplayQtScreen(this->drawn_client, this, movie_dir, movie_path, map, ClientRedemptionIOAPI::get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str()));
     }
 
     QWidget * get_static_qwidget() {
@@ -408,7 +408,7 @@ private:
 
                 if (this->client->is_replaying) {
 
-                    this->screen = new ReplayQtScreen(this->drawn_client, this, this->client->_movie_dir, this->client->_movie_name, &(this->cache), this->get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str()));
+                    this->screen = new ReplayQtScreen(this->drawn_client, this, this->client->_movie_dir, this->client->_movie_name, &(this->cache), ClientRedemptionIOAPI::get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str()));
 
                 } else {
 
@@ -434,7 +434,7 @@ private:
 
         // this->cursor_image is used when client is replaying
         this->cursor_image = QImage(av_alpha_q.data(), dimensions.width, dimensions.height, dimensions.width * 4, QImage::Format_ARGB32_Premultiplied);
- 
+
          ;
         if (this->drawn_client->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
             for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
@@ -447,38 +447,12 @@ private:
         }
     }
 
-    static time_t get_movie_time_length(char const * mwrm_filename) {
-        // TODO RZ: Support encrypted recorded file.
-        CryptoContext cctx;
-        Fstat fsats;
-        InCryptoTransport trans(cctx, InCryptoTransport::EncryptionMode::NotEncrypted, fsats);
-        MwrmReader mwrm_reader(trans);
-        MetaLine meta_line;
-
-        time_t start_time = 0;
-        time_t stop_time = 0;
-
-        trans.open(mwrm_filename);
-        mwrm_reader.read_meta_headers();
-
-        Transport::Read read_stat = mwrm_reader.read_meta_line(meta_line);
-        if (read_stat == Transport::Read::Ok) {
-            start_time = meta_line.start_time;
-            stop_time = meta_line.stop_time;
-            while (read_stat == Transport::Read::Ok) {
-                stop_time = meta_line.stop_time;
-                read_stat = mwrm_reader.read_meta_line(meta_line);
-            }
-        }
-
-        return stop_time - start_time;
-    }
 
     void pre_load_movie() override {
 
         ReplayQtScreen * replay_screen = static_cast<ReplayQtScreen * >(this->screen);
 
-        long int movie_length = this->get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str());
+        long int movie_length = ClientRedemptionIOAPI::get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str());
         this->form->hide();
         this->bar = new ProgressBarWindow(movie_length);
         long int endin_frame = 0;

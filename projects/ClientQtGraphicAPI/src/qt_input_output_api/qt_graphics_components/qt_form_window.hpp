@@ -89,6 +89,8 @@ public:
     std::string reso;
     std::string checksum;
 
+    long int movie_len;
+
 
     IconMovie(ClientInputMouseKeyboardAPI * controllers
       , std::string & name
@@ -96,6 +98,7 @@ public:
       , std::string & version,
         std::string & reso,
         std::string & checksum,
+        long int movie_len,
         QWidget * parent)
       : QWidget(parent)
       , controllers(controllers)
@@ -106,6 +109,7 @@ public:
       , version(version)
       , reso(reso)
       , checksum(checksum)
+      , movie_len(movie_len)
     {
         this->setFixedSize(385, 60);
     }
@@ -127,14 +131,14 @@ public:
 
         QString qname(this->name.c_str());
         QString qversion(this->version.c_str());
-        QString qreso(this->reso.c_str());
-        QString qchecksum(this->checksum.c_str());
+        std::string line(this->checksum+"   "+this->reso);
+        QString qchecksum(line.c_str());
+
 
         painter.drawText(QPoint(this->height()+6, 15), qname);
         painter.drawText(QPoint(this->height()+6, 25), qversion);
-        painter.drawText(QPoint(this->height()+6, 35), qreso);
-        painter.drawText(QPoint(this->height()+6, 45), qchecksum);
-
+        painter.drawText(QPoint(this->height()+6, 35), qchecksum);
+        painter.drawText(QPoint(this->height()+6, 45), toQStringData(this->movie_len));
 
         pen.setBrush(QColor(0xFF, 0x8C, 0x00));
         painter.setPen(pen);
@@ -143,6 +147,28 @@ public:
         painter.end();
 
         this->repaint();
+    }
+
+    QString toQStringData(long int time) {
+        long int s = time;
+        int h = s/3600;
+        s = s % 3600;
+        int m = s/60;
+        s = s % 60;
+        QString date_str;
+        if (h) {
+            date_str += QString(std::to_string(h).c_str()) + QString(":");
+        }
+        if (m < 10) {
+            date_str += QString("0");
+        }
+        date_str += QString(std::to_string(m).c_str()) + QString(":");
+        if (s < 10) {
+            date_str += QString("0");
+        }
+        date_str += QString(std::to_string(s).c_str());
+
+        return date_str;
     }
 
     void enterEvent(QEvent *ev) override {
@@ -256,11 +282,13 @@ public:
                                 std::string file_resolution;
                                 std::string file_checksum;
 
+                                long int movie_len = ClientRedemptionIOAPI::get_movie_time_length(file_path.c_str());
+
                                 std::getline(ofile, file_version);
                                 std::getline(ofile, file_resolution);
                                 std::getline(ofile, file_checksum);
 
-                                IconMovie* icon = new IconMovie(controllers, file_name, file_path, file_version, file_resolution, file_checksum, this);
+                                IconMovie* icon = new IconMovie(controllers, file_name, file_path, file_version, file_resolution, file_checksum, movie_len, this);
                                 this->icons.push_back(icon);
                                 icon->draw_account();
                                 this->lay.addRow(icon);
