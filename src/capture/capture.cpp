@@ -621,6 +621,7 @@ private:
 
     std::unique_ptr<uint8_t[]> scaled_buffer;
 
+protected:
     TimestampTracer timestamp_tracer;
 
 protected:
@@ -678,7 +679,7 @@ public:
 
      virtual void clear_old() {}
 
-     void clear_png_interval(uint32_t num_start, uint32_t num_end){
+     void clear_png_interval(uint32_t num_start, uint32_t num_end) {
         for(uint32_t num = num_start ; num < num_end ; num++) {
             // unlink may fail, for instance if file does not exist, just don't care
             ::unlink(this->trans.seqgen()->get(num));
@@ -776,11 +777,14 @@ public:
     }
 
     void visibility_rects_event(Rect const & rect_) override {
+LOG(LOG_INFO, "PngCaptureRT::visibility_rects_event");
         if ((this->smart_video_cropping != SmartVideoCropping::disable) && !rect_.isempty()) {
             Rect rect = rect_.intersect(
                 {0, 0, this->drawable.width(), this->drawable.height()});
 
-            this->image_frame_api.reset(rect.x, rect.y, rect.cx, rect.cy);
+            if (this->image_frame_api.reset(rect.x, rect.y, rect.cx, rect.cy)) {
+                this->timestamp_tracer = TimestampTracer(this->image_frame_api.get_mutable_image_view());
+            }
         }
     }
 };
@@ -1640,7 +1644,6 @@ void Capture::visibility_rects_event(Rect const & rect_) {
         cap.visibility_rects_event(rect_);
     }
 
-
     if ((this->smart_video_cropping == SmartVideoCropping::disable) ||
         (this->smart_video_cropping == SmartVideoCropping::v1)) {
         return;
@@ -1677,7 +1680,10 @@ void Capture::visibility_rects_event(Rect const & rect_) {
         new_image_frame_rect.y = (rect.y + rect.cy) - new_image_frame_rect.cy;
     }
 
-    this->video_cropper->reset(new_image_frame_rect);
+LOG(LOG_INFO, "> > > > > Capture::visibility_rects_event: new_image_frame_rect=%s", new_image_frame_rect);
+    bool const retval = this->video_cropper->reset(new_image_frame_rect);
+    assert(!retval);
+    (void)retval;
 }
 
 Rect Capture::get_joint_visibility_rect() const

@@ -1052,8 +1052,8 @@ public:
             this->capture->set_pointer_display();
         }
         this->capture->get_capture_event().set_trigger_time(wait_obj::NOW);
-        if (this->capture->get_graphic_api()) {
-            this->set_gd(this->capture->get_graphic_api());
+        if (this->capture->has_graphic_api()) {
+            this->set_gd(this->capture);
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 

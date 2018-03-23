@@ -412,8 +412,8 @@ public:
         }
     }
 
-    gdi::GraphicApi * get_graphic_api() const {
-        return this->graphic_api.get();
+    bool has_graphic_api() const {
+        return static_cast<bool>(this->graphic_api);
     }
 
     void add_graphic(gdi::GraphicApi & gd) {
