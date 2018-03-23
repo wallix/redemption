@@ -24,7 +24,7 @@
 #include "utils/rect.hpp"
 #include "utils/colors.hpp"
 #include "core/callback.hpp"
-#include "core/RDP/pointer.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 
 struct Keymap2;
 namespace gdi

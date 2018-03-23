@@ -142,7 +142,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         RDPDrawable gd_drawable(scr.cx, scr.cy);
 
         WrmCaptureImpl wrm(
-          CaptureParams{now, basename, "", record_path, groupid, nullptr},
+          CaptureParams{now, basename, "", record_path, groupid, nullptr, SmartVideoCropping::disable},
           wrm_params, gd_drawable);
 
         auto const color_cxt = gdi::ColorCtx::depth24();
@@ -261,7 +261,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         RDPDrawable gd_drawable(scr.cx, scr.cy);
 
         WrmCaptureImpl wrm(
-            CaptureParams{now, "capture", "", "./", 1000, nullptr},
+            CaptureParams{now, "capture", "", "./", 1000, nullptr, SmartVideoCropping::disable},
             wrm_params/* authentifier */, gd_drawable);
 
         RED_CHECK(true);
@@ -619,7 +619,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
         RDPDrawable gd_drawable(4, 1);
 
         WrmCaptureImpl wrm(
-          CaptureParams{now, basename, "", record_path, groupid, nullptr},
+          CaptureParams{now, basename, "", record_path, groupid, nullptr, SmartVideoCropping::disable},
           wrm_params, gd_drawable);
 
         bool ignore_frame_in_timeval = false;

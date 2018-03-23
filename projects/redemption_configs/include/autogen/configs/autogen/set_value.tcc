@@ -2124,7 +2124,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::video::smart_video_cropping&>(this->variables).value,
-                ::configs::spec_type<bool>{},
+                ::configs::spec_type<SmartVideoCropping>{},
                 av
             );
             ::configs::post_set_value(

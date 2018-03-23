@@ -53,7 +53,7 @@
 #include "core/RDP/RefreshRectPDU.hpp"
 #include "core/RDP/SaveSessionInfoPDU.hpp"
 #include "core/RDP/SuppressOutputPDU.hpp"
-#include "core/RDP/pointer.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 #include "core/RDP/mppc.hpp"
 #include "core/RDP/capabilities/cap_bitmap.hpp"
 #include "core/RDP/capabilities/order.hpp"
@@ -3640,21 +3640,15 @@ public:
                 if (upd.fragmentation == FastPath::FASTPATH_FRAGMENT_FIRST) {
                     this->multifragment_update_data.rewind();
                 }
-
-                this->multifragment_update_data.out_copy_bytes(
-                    upd.payload.get_data(), upd.payload.get_capacity());
-
+                this->multifragment_update_data.out_copy_bytes(upd.payload.get_data(), upd.payload.get_capacity());
                 if (upd.fragmentation != FastPath::FASTPATH_FRAGMENT_LAST) {
                     continue;
                 }
             }
 
-            InStream fud(this->multifragment_update_data.get_data(),
-                this->multifragment_update_data.get_offset());
+            InStream fud(this->multifragment_update_data.get_data(), this->multifragment_update_data.get_offset());
 
-            InStream& stream =
-                ((upd.fragmentation == FastPath::FASTPATH_FRAGMENT_SINGLE) ?
-                upd.payload : fud);
+            InStream& stream = ((upd.fragmentation == FastPath::FASTPATH_FRAGMENT_SINGLE) ? upd.payload : fud);
 
             switch (static_cast<FastPath::UpdateType>(upd.updateCode)) {
             case FastPath::UpdateType::ORDERS:
@@ -3691,14 +3685,14 @@ public:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "Process pointer null (Fast)");
                 }
-                drawable.set_pointer(Pointer{});
+                drawable.set_pointer(Pointer(NullPointer{}));
                 break;
 
             case FastPath::UpdateType::PTR_DEFAULT:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "Process pointer default (Fast)");
                 }
-                drawable.set_pointer(Pointer(Pointer::POINTER_SYSTEM_DEFAULT));
+                drawable.set_pointer(Pointer(SystemDefaultPointer{}));
                 break;
 
             case FastPath::UpdateType::PTR_POSITION:
@@ -5015,7 +5009,8 @@ public:
                 LOG(LOG_INFO, "Process pointer system");
             }
             // TODO: actually show mouse cursor or get back to default
-            this->process_system_pointer_pdu(stream, drawable);
+            int system_pointer_type = stream.in_uint32_le();
+            this->process_system_pointer_pdu(system_pointer_type, drawable);
             if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                 LOG(LOG_INFO, "Process pointer system done");
             }
@@ -6867,83 +6862,17 @@ public:
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_CACHE_NOT_OK);
         }
 
-        Pointer & cursor = this->cursors[pointer_cache_idx];
+        auto hotspot_x      = stream.in_uint16_le();
+        auto hotspot_y      = stream.in_uint16_le();
+        auto width = stream.in_uint16_le();
+        auto height = stream.in_uint16_le();
+        auto mlen = stream.in_uint16_le(); /* mask length */
+        auto dlen = stream.in_uint16_le(); /* data length */
+        const uint8_t * data = stream.in_uint8p(dlen);
+        const uint8_t * mask = stream.in_uint8p(mlen);
 
-        memset(&cursor, 0, sizeof(Pointer));
-        cursor.x      = stream.in_uint16_le();
-        cursor.y      = stream.in_uint16_le();
-        cursor.width  = stream.in_uint16_le();
-        cursor.height = stream.in_uint16_le();
-
-        unsigned mlen = stream.in_uint16_le(); /* mask length */
-        unsigned dlen = stream.in_uint16_le(); /* data length */
-
-        if ((mlen > sizeof(cursor.mask)) || (dlen > sizeof(cursor.data))) {
-            LOG(LOG_ERR,
-                "mod_rdp::process_color_pointer_pdu: "
-                    "bad length for color pointer mask_len=%u data_len=%u",
-                mlen, dlen);
-            throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
-        }
-        // TODO this is modifiying cursor in place: we should not do that.
-        memcpy(cursor.data, stream.in_uint8p(dlen), dlen);
-        memcpy(cursor.mask, stream.in_uint8p(mlen), mlen);
-
-        //const unsigned int xor_line_length_in_byte = cursor.width * 3;
-        //const unsigned int xor_padded_line_length_in_byte =
-        //    ((xor_line_length_in_byte % 2) ?
-        //     xor_line_length_in_byte + 1 :
-        //     xor_line_length_in_byte);
-        //const unsigned int remainder = (cursor.width % 8);
-        //const unsigned int and_line_length_in_byte = cursor.width / 8 + (remainder ? 1 : 0);
-        //const unsigned int and_padded_line_length_in_byte =
-        //    ((and_line_length_in_byte % 2) ?
-        //     and_line_length_in_byte + 1 :
-        //     and_line_length_in_byte);
-        //for (unsigned int i0 = 0; i0 < cursor.height; ++i0) {
-        //    printf("%02d  ", (cursor.height - i0 - 1));
-        //
-        //    const uint8_t* xorMask = cursor.data + (cursor.height - i0 - 1) * xor_padded_line_length_in_byte;
-        //
-        //    const uint8_t* andMask = cursor.mask + (cursor.height - i0 - 1) * and_padded_line_length_in_byte;
-        //    unsigned char and_bit_extraction_mask = 7;
-        //
-        //    for (unsigned int i1 = 0; i1 < cursor.width; ++i1) {
-        //        unsigned int color = 0;
-        //        color |=  *xorMask             ;
-        //        color |= (*(xorMask + 1) <<  8);
-        //        color |= (*(xorMask + 2) << 16);
-        //
-        //        if ((*andMask) & (1 << and_bit_extraction_mask)) {
-        //            printf(".");
-        //        }
-        //        else {
-        //            if (color == 0xFFFFFF) {
-        //                printf("W");
-        //            }
-        //            else if (color) {
-        //                printf("C");
-        //            }
-        //            else  {
-        //                printf("B");
-        //            }
-        //        }
-        //
-        //        xorMask += 3;
-        //        if (and_bit_extraction_mask) {
-        //            and_bit_extraction_mask--;
-        //        }
-        //        else {
-        //            and_bit_extraction_mask = 7;
-        //            andMask++;
-        //        }
-        //    }
-        //
-        //    printf("\n");
-        //}
-        //printf("\n");
-
-        cursor.update_bw();
+        Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen});
+        this->cursors[pointer_cache_idx] = cursor;
 
         drawable.set_pointer(cursor);
         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
@@ -6984,11 +6913,8 @@ public:
             drawable.set_pointer(cursor);
         }
         else {
-            LOG(LOG_WARNING,
-                "mod_rdp::process_cached_pointer_pdu: incalid cache cell index, use system default. index=%u",
+            LOG(LOG_WARNING,  "mod_rdp::process_cached_pointer_pdu: invalid cache cell index, use system default. index=%u",
                 pointer_idx);
-            Pointer cursor(Pointer::POINTER_NORMAL);
-            drawable.set_pointer(cursor);
         }
         if (bool(this->verbose & RDPVerbose::graphics_pointer)){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
@@ -7009,21 +6935,18 @@ public:
     // | SYSPTR_DEFAULT 0x00007F00 | The default system pointer. |
     // +---------------------------+-----------------------------+
 
-    void process_system_pointer_pdu(InStream & stream, gdi::GraphicApi & drawable)
+    void process_system_pointer_pdu(int system_pointer_type, gdi::GraphicApi & drawable)
     {
         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu");
         }
-        int system_pointer_type = stream.in_uint32_le();
         switch (system_pointer_type) {
         case RDP_NULL_POINTER:
             {
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - null");
                 }
-                Pointer cursor;
-                memset(cursor.mask, 0xff, sizeof(cursor.mask));
-                drawable.set_pointer(cursor);
+                drawable.set_pointer(Pointer(NullPointer{}));
             }
             break;
         default:
@@ -7031,141 +6954,13 @@ public:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - default");
                 }
-                Pointer cursor(Pointer::POINTER_NORMAL);
+                Pointer cursor(NormalPointer{});
                 drawable.set_pointer(cursor);
             }
             break;
         }
         if (bool(this->verbose & RDPVerbose::graphics_pointer)){
             LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu done");
-        }
-    }
-
-    void to_regular_mask(const uint8_t * indata, unsigned mlen, unsigned width, unsigned height, uint8_t bpp, uint8_t * mask) {
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-            LOG(LOG_INFO, "mod_rdp::to_regular_mask");
-        }
-
-        /* TODO check code below: why do we revert mask and pointer when pointer is 1 BPP
-         * and not with other color depth ? Looks fishy, a mask and pointer should always
-         * be encoded in the same way, not depending on color depth difficult to see for
-         * symmetrical pointers... check documentation it may be more efficient to revert
-         * cursor after creating it instead of doing it on the fly */
-        switch (bpp) {
-        case 1 :
-        {
-            const unsigned int remainder = (width % 8);
-            const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
-            const unsigned int and_padded_line_length_in_byte =
-                ((and_line_length_in_byte % 2) ?
-                 and_line_length_in_byte + 1 :
-                 and_line_length_in_byte);
-            for (unsigned int i = 0; i < height; ++i) {
-                const uint8_t* src  = indata + (height - i - 1) * and_padded_line_length_in_byte;
-                      uint8_t* dest = mask + i * and_padded_line_length_in_byte;
-                ::memcpy(dest, src, and_padded_line_length_in_byte);
-            }
-        }
-        break;
-        default:
-            memcpy(mask, indata, mlen);
-        break;
-        }
-
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-            LOG(LOG_INFO, "mod_rdp::to_regular_mask");
-        }
-    }
-
-    void to_regular_pointer(const uint8_t * indata, unsigned dlen, unsigned width, unsigned height, uint8_t bpp, uint8_t * data) {
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-            LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
-        }
-        switch (bpp) {
-        case 1 :
-        {
-            const unsigned int remainder = (width % 8);
-            const unsigned int src_xor_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
-            const unsigned int src_xor_padded_line_length_in_byte =
-                ((src_xor_line_length_in_byte % 2) ?
-                 src_xor_line_length_in_byte + 1 :
-                 src_xor_line_length_in_byte);
-
-            const unsigned int dest_xor_line_length_in_byte        = width * 3;
-            const unsigned int dest_xor_padded_line_length_in_byte =
-                dest_xor_line_length_in_byte + ((dest_xor_line_length_in_byte % 2) ? 1 : 0);
-
-            for (unsigned int i = 0; i < height; ++i) {
-                const uint8_t* src  = indata + (height - i - 1) * src_xor_padded_line_length_in_byte;
-                      uint8_t* dest = data + i * dest_xor_padded_line_length_in_byte;
-
-                unsigned char and_bit_extraction_mask = 7;
-
-                for (unsigned int j = 0; j < width; ++j) {
-                    ::out_bytes_le(dest, 3, (((*src) & (1 << and_bit_extraction_mask)) ? 0xFFFFFF : 0));
-
-                    dest += 3;
-
-                    if (and_bit_extraction_mask) {
-                        and_bit_extraction_mask--;
-                    }
-                    else {
-                        src++;
-                        and_bit_extraction_mask = 7;
-                    }
-                }
-            }
-        }
-        break;
-        case 4 :
-        {
-            for (unsigned i = 0; i < dlen ; i++) {
-                const uint8_t px = indata[i];
-                // target cursor will receive 8 bits input at once
-                ::out_bytes_le(&(data[6 * i]),     3, this->orders.global_palette[(px >> 4) & 0xF].to_u32());
-                ::out_bytes_le(&(data[6 * i + 3]), 3, this->orders.global_palette[ px       & 0xF].to_u32());
-            }
-        }
-        break;
-        case 32: case 24: case 16: case 15: case 8:
-        {
-            uint8_t BPP = nbbytes(bpp);
-
-            const unsigned int src_xor_line_length_in_byte = width * BPP;
-            const unsigned int src_xor_padded_line_length_in_byte =
-                ((src_xor_line_length_in_byte % 2) ?
-                 src_xor_line_length_in_byte + 1 :
-                 src_xor_line_length_in_byte);
-
-            const unsigned int dest_xor_line_length_in_byte = width * 3;
-            const unsigned int dest_xor_padded_line_length_in_byte =
-                ((dest_xor_line_length_in_byte % 2) ?
-                 dest_xor_line_length_in_byte + 1 :
-                 dest_xor_line_length_in_byte);
-
-            for (unsigned int i0 = 0; i0 < height; ++i0) {
-                const uint8_t* src  = indata + (height - i0 - 1) * src_xor_padded_line_length_in_byte;
-                      uint8_t* dest = data + (height - i0 - 1) * dest_xor_padded_line_length_in_byte;
-
-                for (unsigned int i1 = 0; i1 < width; ++i1) {
-                    RDPColor px = RDPColor::from(in_uint32_from_nb_bytes_le(BPP, src));
-                    src += BPP;
-                    ::out_bytes_le(dest, 3, color_decode(px, bpp, this->orders.global_palette).to_u32());
-                    dest += 3;
-                }
-            }
-        }
-        break;
-        default:
-            LOG(LOG_ERR, "Mouse pointer : color depth not supported %d, forcing green mouse (running in the grass ?)", bpp);
-            for (size_t x = 0 ; x < 1024 ; x++) {
-                ::out_bytes_le(data + x *3, 3, GREEN);
-            }
-            break;
-        }
-
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-            LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
     }
 
@@ -7207,168 +7002,24 @@ public:
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
 
-        Pointer & cursor = this->cursors[pointer_idx];
-        memset(&cursor, 0, sizeof(Pointer));
-        cursor.x                = stream.in_uint16_le();
-        cursor.y                = stream.in_uint16_le();
-        cursor.width            = stream.in_uint16_le();
-        cursor.height           = stream.in_uint16_le();
-        cursor.only_black_white = (data_bpp == 1);
+        auto hotspot_x      = stream.in_uint16_le();
+        auto hotspot_y      = stream.in_uint16_le();
+        auto width            = stream.in_uint16_le(); 
+        auto height            = stream.in_uint16_le(); 
 
         uint16_t mlen = stream.in_uint16_le(); /* mask length */
         uint16_t dlen = stream.in_uint16_le(); /* data length */
-
-        if (cursor.width > Pointer::MAX_WIDTH){
-            LOG(LOG_ERR, "mod_rdp::process_new_pointer_pdu pointer width overflow (%u)", cursor.width);
-            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
-        }
-        if (cursor.height > Pointer::MAX_HEIGHT){
-            LOG(LOG_ERR, "mod_rdp::process_new_pointer_pdu pointer height overflow (%u)", cursor.height);
-            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
-        }
-
-        //LOG(LOG_INFO,
-        //    "mod_rdp::process_new_pointer_pdu width=%u height=%u",
-        //    cursor.width, cursor.height);
-
-        if (static_cast<unsigned>(cursor.x) >= cursor.width){
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot x out of pointer (%d >= %u)", cursor.x, cursor.width);
-            cursor.x = 0;
-        }
-
-        if (static_cast<unsigned>(cursor.y) >= cursor.height){
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot y out of pointer (%d >= %u)", cursor.y, cursor.height);
-            cursor.y = 0;
-        }
-
-        if (!stream.in_check_rem(dlen)){
-            LOG(LOG_ERR, "Not enough data for cursor pixels (need=%" PRIu16 " remain=%zu)",
-                dlen, stream.in_remain());
-            throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
-        }
         if (!stream.in_check_rem(mlen + dlen)){
-            LOG(LOG_ERR, "Not enough data for cursor mask (need=%" PRIu16 " remain=%zu)",
-                mlen, stream.in_remain() - dlen);
+            LOG(LOG_ERR, "Not enough data for cursor (dlen=%u mlen=%u need=%u remain=%zu)",
+                mlen, dlen, static_cast<uint16_t>(mlen+dlen), stream.in_remain());
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
-        if (data_bpp == 1) {
-            uint8_t data_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8];
-            uint8_t mask_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8];
-            stream.in_copy_bytes(data_data, dlen);
-            stream.in_copy_bytes(mask_data, mlen);
+        const uint8_t * data = stream.in_uint8p(dlen);
+        const uint8_t * mask = stream.in_uint8p(mlen);
 
-            if (this->bogus_linux_cursor == BogusLinuxCursor::enable) {
-                for (unsigned i = 0 ; i < mlen; i++) {
-                    uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
-                    uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);
-                    data_data[i]    = new_data_data;
-                    mask_data[i]    = new_mask_data;
-                }
-            }
-
-            // TODO move that into cursor
-            this->to_regular_pointer(data_data, dlen, cursor.width, cursor.height, 1, cursor.data);
-            this->to_regular_mask(mask_data, mlen, cursor.width, cursor.height, 1, cursor.mask);
-        }
-        else {
-            // TODO move that into cursor
-            this->to_regular_pointer(stream.get_current(), dlen, cursor.width, cursor.height, data_bpp, cursor.data);
-            stream.in_skip_bytes(dlen);
-            this->to_regular_mask(stream.get_current(), mlen, cursor.width, cursor.height, data_bpp, cursor.mask);
-            stream.in_skip_bytes(mlen);
-        }
-
-        if ((data_bpp == 32) && this->clean_up_32_bpp_cursor) {
-            const unsigned int xor_line_length_in_byte = cursor.width * 3;
-            const unsigned int xor_padded_line_length_in_byte =
-                ((xor_line_length_in_byte % 2) ?
-                 xor_line_length_in_byte + 1 :
-                 xor_line_length_in_byte);
-            const unsigned int remainder = (cursor.width % 8);
-            const unsigned int and_line_length_in_byte = cursor.width / 8 + (remainder ? 1 : 0);
-            const unsigned int and_padded_line_length_in_byte =
-                ((and_line_length_in_byte % 2) ?
-                 and_line_length_in_byte + 1 :
-                 and_line_length_in_byte);
-            for (unsigned int i0 = 0; i0 < cursor.height; ++i0) {
-                uint8_t* xorMask = const_cast<uint8_t*>(cursor.data) + (cursor.height - i0 - 1) * xor_padded_line_length_in_byte;
-
-                const uint8_t* andMask = cursor.mask + (cursor.height - i0 - 1) * and_padded_line_length_in_byte;
-                unsigned char and_bit_extraction_mask = 7;
-
-                for (unsigned int i1 = 0; i1 < cursor.width; ++i1) {
-                    if ((*andMask) & (1 << and_bit_extraction_mask)) {
-                        *xorMask         = 0;
-                        *(xorMask + 1)   = 0;
-                        *(xorMask + 2)   = 0;
-                    }
-
-                    xorMask += 3;
-                    if (and_bit_extraction_mask) {
-                        and_bit_extraction_mask--;
-                    }
-                    else {
-                        and_bit_extraction_mask = 7;
-                        andMask++;
-                    }
-                }
-            }
-        }
-
-        //const unsigned int xor_line_length_in_byte = cursor.width * 3;
-        //const unsigned int xor_padded_line_length_in_byte =
-        //    ((xor_line_length_in_byte % 2) ?
-        //     xor_line_length_in_byte + 1 :
-        //     xor_line_length_in_byte);
-        //const unsigned int remainder = (cursor.width % 8);
-        //const unsigned int and_line_length_in_byte = cursor.width / 8 + (remainder ? 1 : 0);
-        //const unsigned int and_padded_line_length_in_byte =
-        //    ((and_line_length_in_byte % 2) ?
-        //     and_line_length_in_byte + 1 :
-        //     and_line_length_in_byte);
-        //for (unsigned int i0 = 0; i0 < cursor.height; ++i0) {
-        //    printf("%02d  ", (cursor.height - i0 - 1));
-        //
-        //    const uint8_t* xorMask = cursor.data + (cursor.height - i0 - 1) * xor_padded_line_length_in_byte;
-        //
-        //    const uint8_t* andMask = cursor.mask + (cursor.height - i0 - 1) * and_padded_line_length_in_byte;
-        //    unsigned char and_bit_extraction_mask = 7;
-        //
-        //    for (unsigned int i1 = 0; i1 < cursor.width; ++i1) {
-        //        unsigned int color = 0;
-        //        color |=  *xorMask             ;
-        //        color |= (*(xorMask + 1) <<  8);
-        //        color |= (*(xorMask + 2) << 16);
-        //
-        //        if ((*andMask) & (1 << and_bit_extraction_mask)) {
-        //            printf(".");
-        //        }
-        //        else {
-        //            if (color == 0xFFFFFF) {
-        //                printf("W");
-        //            }
-        //            else if (color) {
-        //                printf("C");
-        //            }
-        //            else  {
-        //                printf("B");
-        //            }
-        //        }
-        //
-        //        xorMask += 3;
-        //        if (and_bit_extraction_mask) {
-        //            and_bit_extraction_mask--;
-        //        }
-        //        else {
-        //            and_bit_extraction_mask = 7;
-        //            andMask++;
-        //        }
-        //    }
-        //
-        //    printf("\n");
-        //}
-        //printf("\n");
+        Pointer cursor({width, height}, {hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor);
+        this->cursors[pointer_idx] = cursor;
 
         drawable.set_pointer(cursor);
         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {

@@ -91,18 +91,22 @@ namespace VNC {
             // return is false if the encoder is waiting for more data
             EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
-                // TODO see why we get these empty rects ?
-                if (this->cx <= 0 && this->cy <= 0) {
-                    LOG(LOG_INFO, "empty rect %s", Rect(this->x, this->y, this->cx, this->cy));
+                if (this->cx == 0 || this->cy == 0) {
+                    // TODO: empty Pointer: no cursor data to read. Should we set an invisible pointer ? If so we should have some flag to configure it
+                    return EncoderState::Exit;
                 }
 
-                const int sz_pixel_array = this->cx * this->cy * this->Bpp;
-                const int sz_bitmask = nbbytes(this->cx) * this->cy;
+                const size_t sz_pixel_array = this->cx * this->cy * this->Bpp;
+                const size_t sz_bitmask = nbbytes(this->cx) * this->cy;
 
                 if (sz_pixel_array + sz_bitmask > 65536)
                 {
+                    // TODO: as cursor size is not limited by VNC protocol, this could actually happen
+                    // we should really copy cursor data into local cursor buffer whenever it's incoming
+                    // and consume buffer data. But it's a small matter as such large pointers are never
+                    // actually happening.
                     LOG(LOG_ERR,
-                        "VNC Encoding: Cursor, data buffer too small (65536 < %d)",
+                        "VNC Encoding: Cursor, data buffer too small (65536 < %zu)",
                         sz_pixel_array + sz_bitmask);
                     throw Error(ERR_BUFFER_TOO_SMALL);
                 }
@@ -113,74 +117,27 @@ namespace VNC {
                 }
 
                 auto cursor_buf = buf.av(sz_pixel_array + sz_bitmask).data();
-                const uint8_t * vnc_pointer_data = cursor_buf;
-                const uint8_t * vnc_pointer_mask = cursor_buf + sz_pixel_array;
+                std::vector<uint8_t> data(cursor_buf, cursor_buf + sz_pixel_array);
+                std::vector<uint8_t> mask(cursor_buf + sz_pixel_array, cursor_buf + sz_pixel_array + sz_bitmask);
+                buf.advance(sz_pixel_array + sz_bitmask);
 
-                Pointer cursor;
-//                LOG(LOG_INFO, "Cursor x=%zu y=%zu", x, y);
-                cursor.x = x;
-                cursor.y = y;
-                // cursor.bpp = 24;
-                cursor.width = 32;
-                cursor.height = 32;
-                // a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead
-                if (this->cx == 0 || this->cy == 0) {
-                    buf.advance(sz_pixel_array + sz_bitmask);
-                    return EncoderState::Exit; 
-                }
-                else if (this->cx == 1 && this->cy == 1) {
-                    // TODO Appearence of this 1x1 cursor looks broken, check what we actually get
-                    memset(cursor.data, 0, sizeof(cursor.data));
-                    cursor.data[2883] = 0xFF;
-                    cursor.data[2884] = 0xFF;
-                    cursor.data[2885] = 0xFF;
-                    memset(cursor.mask, 0xFF, sizeof(cursor.mask));
-                    cursor.mask[116] = 0x1F;
-                    cursor.mask[120] = 0x1F;
-                    cursor.mask[124] = 0x1F;
-                }
-                else {
-                    // clear target cursor mask
-                    for (size_t tmpy = 0; tmpy < 32; tmpy++) {
-                        for (size_t mask_x = 0; mask_x < nbbytes(32); mask_x++) {
-                            cursor.mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
-                        }
-                    }
-                    // TODO The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask used is 1 bit per pixel arrays
-                    // copy vnc pointer and mask to rdp pointer and mask
+                // TODO: special dot cursor  if cx=1 cy=1 ? : a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead ?
+//                Pointer cursor(this->bpp, Pointer::CursorSize{this->cx, this->cy}, Hotspot{this->x, this->y}, {this->mask.data(), this->mask.size()}, {this->data.data(), this->data.size()}, false);
 
-                    for (int yy = 0; size_t(yy) < this->cy; yy++) {
-                        for (int xx = 0 ; size_t(xx) < this->cx ; xx++){
-                            if (vnc_pointer_mask[yy * nbbytes(this->cx) + xx / 8 ] & (0x80 >> (xx&7))){
-                                if ((yy < 32) && (xx < 32)){
-                                    cursor.mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
-                                    int pixel = 0;
-                                    for (int tt = 0 ; tt < this->Bpp; tt++){
-                                        pixel += vnc_pointer_data[(yy * this->cx + xx) * this->Bpp + tt] << (8 * tt);
-                                    }
-                                    // TODO temporary: force black cursor
-                                    int red   = (pixel >> this->red_shift) & this->red_max;
-                                    int green = (pixel >> this->green_shift) & this->green_max;
-                                    int blue  = (pixel >> this->blue_shift) & this->blue_max;
-                                    cursor.data[((31-yy) * 32 + xx) * 3 + 0] = (red << 3) | (red >> 2);
-                                    cursor.data[((31-yy) * 32 + xx) * 3 + 1] = (green << 2) | (green >> 4);
-                                    cursor.data[((31-yy) * 32 + xx) * 3 + 2] = (blue << 3) | (blue >> 2);
-                                }
-                            }
-                        }
-                    }
-                    /* keep these in 32x32, vnc cursor can be alot bigger */
-                    /* (anyway hotspot is usually 0, 0)                   */
-                    //if (x > 31) { x = 31; }
-                    //if (y > 31) { y = 31; }
+                if (bool(this->verbose & VNCVerbose::cursor_encoder)) {
+                    LOG(LOG_INFO, "VNC Cursor(%zu, %zu, %zu, %zu) %u %u %zu", this->x, this->y, this->cx, this->cy, this->Bpp, this->bpp, sz_pixel_array);
+                    hexdump_d(data.data(), data.size());
+                    hexdump_d(mask.data(), mask.size());
                 }
-                cursor.update_bw();
-                // TODO we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation
+                Pointer cursor(this->Bpp, 
+                                CursorSize{static_cast<unsigned>(this->cx), static_cast<unsigned>(this->cy)}, 
+                                Hotspot{static_cast<unsigned>(this->x), static_cast<unsigned>(this->y)}, 
+                                data, mask, 
+                                this->red_shift, this->red_max, this->green_shift, this->green_max, this->blue_shift, this->blue_max);
                 drawable.begin_update();
                 drawable.set_pointer(cursor);
                 drawable.end_update();
 
-                buf.advance(sz_pixel_array + sz_bitmask);
                 return EncoderState::Exit; 
             }
         };

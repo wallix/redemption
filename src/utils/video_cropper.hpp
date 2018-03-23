@@ -44,7 +44,6 @@ private:
     unsigned int out_height;
 
     unsigned int out_rowsize;
-    unsigned int out_rowsize_4_bytes_aligned;
 
     std::unique_ptr<uint8_t[]> out_bmpdata;
 
@@ -66,7 +65,6 @@ private:
     , out_width(out_width)
     , out_height(out_height)
     , out_rowsize(this->out_width * VideoCropper::bytes_per_pixel)
-    , out_rowsize_4_bytes_aligned(align4(out_rowsize))
     , in_bmpdata_effective(
           this->in_bmpdata +
           this->y * this->in_rowsize +
@@ -74,7 +72,7 @@ private:
         //LOG(LOG_INFO, "out_width=%u out_height=%u", out_width, out_height);
         if ((this->out_width != this->in_width) ||
             (this->out_height != this->in_height)) {
-            this->out_bmpdata = std::make_unique<uint8_t[]>(this->out_rowsize_4_bytes_aligned * out_height);
+            this->out_bmpdata = std::make_unique<uint8_t[]>(this->out_rowsize * out_height);
         }
     }
 
@@ -100,7 +98,7 @@ private:
             data,
             static_cast<uint16_t>(this->out_width),
             static_cast<uint16_t>(this->out_height),
-            this->out_rowsize_4_bytes_aligned,
+            this->out_rowsize,
             ConstImageDataView::BytesPerPixel(this->bytes_per_pixel),
             ConstImageDataView::Storage::TopToBottom
         };
@@ -137,7 +135,7 @@ public:
             ::memcpy(out_bmpdata_tmp, in_bmpdata_tmp, this->out_rowsize);
 
             in_bmpdata_tmp  += this->in_rowsize;
-            out_bmpdata_tmp += this->out_rowsize_4_bytes_aligned;
+            out_bmpdata_tmp += this->out_rowsize;
         }
     }
 
@@ -149,6 +147,8 @@ public:
 //        this->reset(0, 0, this->in_width, this->in_height);
 //    }
 
+    using gdi::ImageFrameApi::reset;
+
     void reset(unsigned int x, unsigned int y,
                unsigned int out_width, unsigned int out_height) override {
         this->x = x;
@@ -156,10 +156,9 @@ public:
         this->out_width = out_width;
         this->out_height = out_height;
         this->out_rowsize = this->out_width * VideoCropper::bytes_per_pixel;
-        this->out_rowsize_4_bytes_aligned = align4(this->out_rowsize);
         if ((this->out_width != this->in_width) ||
             (this->out_height != this->in_height)) {
-            this->out_bmpdata = std::make_unique<uint8_t[]>(this->out_rowsize_4_bytes_aligned * out_height);
+            this->out_bmpdata = std::make_unique<uint8_t[]>(this->out_rowsize * out_height);
         }
         else {
             this->out_bmpdata = nullptr;
@@ -171,5 +170,9 @@ public:
             this->x * VideoCropper::bytes_per_pixel;
 
         //LOG(LOG_INFO, "out_width=%u out_height=%u", out_width, out_height);
+    }
+
+    Rect get() const override {
+        return Rect(this->x, this->y, this->out_width, this->out_height);
     }
 };

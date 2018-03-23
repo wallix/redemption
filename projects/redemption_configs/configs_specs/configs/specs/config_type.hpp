@@ -166,6 +166,12 @@ inline void config_type_definition(type_enumerations & e)
       .value("disconnect_user")
       .value("freeze_connection_and_wait")
     ;
+
+    e.enumeration_set("SmartVideoCropping")
+      .value("disable", 0)
+      .value("v1", 1)
+      .value("v2", 2)
+    ;
 }
 
 }

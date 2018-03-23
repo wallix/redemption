@@ -74,7 +74,7 @@ public:
     int cursorHotx;
     int cursorHoty;
 
-//     QRect clip;
+     QRect clip;
 
 
     QtScreen(ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * impl_input, QPixmap * cache, int w, int h)
@@ -88,7 +88,7 @@ public:
     , _connexionLasted(false)
     , cursorHotx(0)
     , cursorHoty(0)
-//     , clip(-1, -1, 0, 0)
+    , clip(-1, -1, 0, 0)
 
     {
         this->setAttribute(Qt::WA_DeleteOnClose);
@@ -143,23 +143,6 @@ public:
 
     void wheelEvent(QWheelEvent *e) override {
         this->_front->wheelEvent(e->x(), e->y(), e->delta());
-    }
-
-    void set_mem_cursor(const uchar * data, int x, int y) {
-        this->cursorHotx = x;
-        this->cursorHoty = y;
-        for (int i = 0; i < Pointer::DATA_SIZE*4; i++) {
-            this->cursor_data[i] = data[i];
-        }
-        this->update_current_cursor();
-    }
-
-    void update_current_cursor() {
-        QImage image(this->cursor_data, 32, 32, QImage::Format_ARGB32_Premultiplied);
-        QPixmap map = QPixmap::fromImage(image);
-        QCursor qcursor(map, this->cursorHotx, this->cursorHoty);
-
-        this->setCursor(qcursor);
     }
 
     void setPenColor(QColor color) {

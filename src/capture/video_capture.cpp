@@ -34,7 +34,6 @@
 #include "utils/difftimeval.hpp"
 #include "utils/log.hpp"
 
-
 #include <cerrno>
 #include <cstring>
 #include <cstddef>
@@ -731,6 +730,7 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
 , ic_zoom_factor(std::min(image_zoom, 100u))
 , ic_drawable(drawable)
 , image_frame_api(imageFrameApi)
+, smart_video_cropping(capture_params.smart_video_cropping)
 , video_sequencer(
     capture_params.now,
     (video_params.video_interval > std::chrono::microseconds(0))

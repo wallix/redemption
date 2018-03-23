@@ -1,8 +1,14 @@
-JAM_INCLUDE_PATH ?= ../../jam ;
+JAM_INCLUDE_PATH ?= [ SHELL "readlink -n -f ../../jam" ] ;
 
-REDEMPTION_PUBLIC_PATH ?= ../.. ;
+REDEMPTION_PUBLIC_PATH ?= [ SHELL "readlink -n -f ../.." ] ;
+
+ECHO $(REDEMPTION_PUBLIC_PATH) ;
+
+REDEMPTION_PROJECT_PATH ?= [ SHELL "readlink -n -f .." ] ;
+
 REDEMPTION_INCLUDE_PATH ?= $(REDEMPTION_PUBLIC_PATH)/include ;
 REDEMPTION_MODULES_SRC_PATH ?= $(REDEMPTION_PUBLIC_PATH)/modules ;
+
 
 include $(JAM_INCLUDE_PATH)/redemption-config.jam ;
 include $(JAM_INCLUDE_PATH)/cxxflags.jam ;
@@ -78,7 +84,7 @@ rule disable-buggy-warn ( properties * )
     local version = [ $(ps).get <toolset-$(toolset):version> ] ;
 
     local flags ;
-
+    
     if $(toolset) = gcc && ! ( $(version) <= 05.00 )
     {
         flags += <cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant ;
@@ -128,7 +134,7 @@ install install-bin
     : <location>$(INSTALLDIR)/usr/local/bin
     ;
 
-obj config.o : ../redemption_configs/redemption_src/configs/config.cpp ;
+obj config.o : $(REDEMPTION_PROJECT_PATH)/redemption_configs/redemption_src/configs/config.cpp ;
 
 obj hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp : ;
 

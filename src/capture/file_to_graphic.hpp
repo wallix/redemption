@@ -177,7 +177,8 @@ private:
 public:
     bool remote_app;
 
-    Rect image_frame_rect;
+    Rect      max_image_frame_rect;
+    Dimension min_image_frame_dim;
 
     struct Statistics
     {
