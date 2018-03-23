@@ -337,7 +337,7 @@ public:
             switch (this->mod_state) {
                 case MOD_RDP:
                 {
-                
+
                     ModRDPParams mod_rdp_params( this->user_name.c_str()
                                     , this->user_password.c_str()
                                     , this->target_IP.c_str()
@@ -697,7 +697,7 @@ public:
             //NullReportMessage * reportMessage  = nullptr;
             struct timeval time;
             gettimeofday(&time, nullptr);
-            PngParams png_params = {0, 0, ini.get<cfg::video::png_interval>(), 100, 0, true, this->info.remote_program, ini.get<cfg::video::rt_display>(), false};
+            PngParams png_params = {0, 0, ini.get<cfg::video::png_interval>(), 100, 0, true, this->info.remote_program, ini.get<cfg::video::rt_display>()};
             VideoParams videoParams = {Level::high, this->info.width, this->info.height, 0, 0, 0, std::string(""), true, true, false, ini.get<cfg::video::break_interval>(), 0};
             OcrParams ocr_params = { ini.get<cfg::ocr::version>(),
                                         static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
