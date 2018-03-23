@@ -911,7 +911,7 @@ struct SessionReactor
         void exec(IsSetElem is_set, Args&&... args)
         {
             auto run_element = [&](auto& elem){
-                LOG(LOG_DEBUG, "is set fd: %d", is_set(elem.value.get_fd(), elem.value));
+                // LOG(LOG_DEBUG, "is set fd: %d", is_set(elem.value.get_fd(), elem.value));
                 if (is_set(elem.value.get_fd(), elem.value)
                  && !elem.value.exec(static_cast<Args&&>(args)...)) {
                     elem.apply_deleter();

@@ -159,6 +159,7 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
         this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 
         this->waiting_for_next_module = true;
+        this->sesman_event.reset();
     } break;
     case NOTIFY_SUBMIT: {
         if (this->waiting_for_next_module) {
@@ -183,6 +184,7 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
             this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 
             this->waiting_for_next_module = true;
+            this->sesman_event.reset();
         }
         else if (widget->group_id == this->selector.apply.group_id) {
             this->ask_page();

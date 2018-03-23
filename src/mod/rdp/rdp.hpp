@@ -1138,6 +1138,8 @@ public:
 
         LOG(LOG_INFO, "RDP mod built");
 
+        this->negociation_result.front_width = info.width;
+        this->negociation_result.front_height = info.height;
         this->init_negociate_event();
     }   // mod_rdp
 

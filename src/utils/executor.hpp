@@ -1047,6 +1047,9 @@ struct wrap_fn
 {
     template<class R, class E, class... Args>
     operator detail::ident<R(*)(E, Args...)> () noexcept
+#ifdef IN_IDE_PARSER
+    ;
+#else
     {
 #ifdef __clang__
         struct Context : Ctx<T> {};
@@ -1064,6 +1067,7 @@ struct wrap_fn
                 static_cast<decltype(prefix_args)&&>(prefix_args)...);
         };
     }
+#endif
 };
 
 class propagate_to_base_t {};
