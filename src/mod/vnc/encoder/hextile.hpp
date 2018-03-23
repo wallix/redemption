@@ -131,6 +131,7 @@ namespace VNC {
         class Hextile : public EncoderApi {
              const uint8_t bpp;
              const uint8_t Bpp;
+             // rectangle we are refreshing
              const Rect r;
              // current tile
              Rect tile;
