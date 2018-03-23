@@ -296,13 +296,12 @@ namespace VNC {
                     // check if empty rect I exit immediately
                     if (not this->next_tile()){
                         if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                            LOG(LOG_INFO, "Hextile::hexTileraw Encoder done (raw)");
+                            LOG(LOG_INFO, "Hextile::hexTileraw Encoder done (raw) %zu", uncompressed_data_buffer.in_remain());
                         }
                         return;
                     }
                 
                     uint8_t   subencoding = uncompressed_data_buffer.in_uint8();
-                    LOG(LOG_INFO, "lib_framebuffer_update_zrle:: subencoding =%u", subencoding);
 
                     switch (subencoding) {
                     case 0:
@@ -313,6 +312,10 @@ namespace VNC {
                     break;
                     case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9:
                     case 10: case 11: case 12: case 13: case 14: case 15: case 16:
+                        if (bool(this->verbose & VNCVerbose::zrle_encoder)){
+                            LOG(LOG_INFO, "lib_framebuffer_update_zrle:: subencoding =%u", subencoding);
+                            hexdump_d(uncompressed_data_buffer.get_current(), 1024);
+                        }
                         this->packedPalette(subencoding, uncompressed_data_buffer, drawable);
                     break;
                                case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
@@ -338,9 +341,17 @@ namespace VNC {
                     }
                     break;
                     case 128:
+                        if (bool(this->verbose & VNCVerbose::zrle_encoder)){
+                            LOG(LOG_INFO, "lib_framebuffer_update_zrle:: subencoding =%u", subencoding);
+                            hexdump_d(uncompressed_data_buffer.get_current(), 1024);
+                        }
                         this->plainRLE(uncompressed_data_buffer, drawable);
                     break;
                     default: // 130 to 255
+                        if (bool(this->verbose & VNCVerbose::zrle_encoder)){
+                            LOG(LOG_INFO, "lib_framebuffer_update_zrle:: subencoding =%u", subencoding);
+                            hexdump_d(uncompressed_data_buffer.get_current(), 1024);
+                        }
                         this->paletteRLE(subencoding, uncompressed_data_buffer, drawable);
                     break;
                     } // switch subencoding
