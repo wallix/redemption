@@ -72,7 +72,228 @@
 #include <vector>
 
 
+class IconMovie :  public QWidget
+{
 
+Q_OBJECT
+
+public:
+    ClientInputMouseKeyboardAPI * controllers;
+
+    QPixmap pixmap;
+    QRect drop_rect;
+
+    std::string name;
+    std::string path;
+    std::string version;
+    std::string reso;
+    std::string checksum;
+
+
+    IconMovie(ClientInputMouseKeyboardAPI * controllers
+      , std::string & name
+      , std::string & path
+      , std::string & version,
+        std::string & reso,
+        std::string & checksum,
+        QWidget * parent)
+      : QWidget(parent)
+      , controllers(controllers)
+      , pixmap(385, 60)
+      , drop_rect(24, 95, 240, 160)
+      , name(name)
+      , path(path)
+      , version(version)
+      , reso(reso)
+      , checksum(checksum)
+    {
+        this->setFixedSize(385, 60);
+    }
+
+    void draw_account() {
+        QPen                 pen;
+        QPainter             painter(&(this->pixmap));
+        painter.setRenderHint(QPainter::Antialiasing);
+        pen.setWidth(1);
+        pen.setBrush(Qt::black);
+        painter.setPen(pen);
+        painter.fillRect(0, 0, this->width(), this->height(), Qt::white);
+        painter.fillRect(0, 0, this->width(), this->height(), Qt::transparent);
+        painter.drawRoundedRect(2, 2, this->height()-5, this->height()-5, 4, 4);
+
+        QFont font = painter.font();
+        font.setPixelSize(10);
+        painter.setFont(font);
+
+        QString qname(this->name.c_str());
+        QString qversion(this->version.c_str());
+        QString qreso(this->reso.c_str());
+        QString qchecksum(this->checksum.c_str());
+
+        painter.drawText(QPoint(this->height()+6, 15), qname);
+        painter.drawText(QPoint(this->height()+6, 25), qversion);
+        painter.drawText(QPoint(this->height()+6, 35), qreso);
+        painter.drawText(QPoint(this->height()+6, 45), qchecksum);
+
+
+        pen.setBrush(QColor(0xFF, 0x8C, 0x00));
+        painter.setPen(pen);
+        painter.drawRoundedRect(0, 0, this->width()-20, this->height()-1, 4, 4);
+
+        painter.end();
+
+        this->repaint();
+    }
+
+    void enterEvent(QEvent *ev) override {
+        Q_UNUSED(ev);
+        QPen                 pen;
+        QPainter             painter(&(this->pixmap));
+        painter.setRenderHint(QPainter::Antialiasing);
+        pen.setWidth(1);
+        pen.setBrush(QColor(0xFF, 0x8C, 0x00));
+        painter.setPen(pen);
+        painter.drawRoundedRect(0, 0, this->width()-20, this->height()-1, 4, 4);
+        painter.end();
+        this->repaint();
+    }
+
+    void leaveEvent(QEvent *ev) override {
+        Q_UNUSED(ev);
+        QPen                 pen;
+        QPainter             painter(&(this->pixmap));
+        painter.setRenderHint(QPainter::Antialiasing);
+        pen.setWidth(1);
+        pen.setBrush(Qt::white);
+        painter.setPen(pen);
+        painter.drawRoundedRect(0, 0, this->width()-20, this->height()-1, 4, 4);
+        painter.end();
+        this->repaint();
+    }
+
+    void mouseDoubleClickEvent( QMouseEvent * e ) override {
+        if ( e->button() == Qt::LeftButton )
+        {
+            auto const last_delimiter_it = std::find(path.rbegin(), path.rend(), '/');
+            int pos = path.size() - (last_delimiter_it - path.rbegin());
+
+            std::string const movie_name = (last_delimiter_it == path.rend())
+            ? path
+            : path.substr(path.size() - (last_delimiter_it - path.rbegin()));
+
+            std::string const movie_dir = path.substr(0, pos);
+
+            this->controllers->client->mod_state = ClientRedemptionIOAPI::MOD_RDP_REPLAY;
+            this->controllers->client->_movie_name = movie_name;
+            this->controllers->client->_movie_dir = movie_dir;
+            this->controllers->client->replay(movie_dir, movie_name);
+        }
+    }
+
+    void paintEvent(QPaintEvent * event) override {
+        Q_UNUSED(event);
+        QPen                 pen;
+        QPainter             painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+        pen.setWidth(1);
+        pen.setBrush(Qt::black);
+        painter.setPen(pen);
+
+        painter.drawPixmap(QPoint(0, 0), this->pixmap, QRect(0, 0, this->width(), this->height()));
+
+        painter.end();
+    }
+
+};
+
+
+#include <sys/ioctl.h>
+
+
+class MoviesPanelQt : public QWidget
+{
+
+Q_OBJECT
+
+public:
+    ClientInputMouseKeyboardAPI * controllers;
+    std::vector<IconMovie *> icons;
+    QFormLayout lay;
+
+
+    MoviesPanelQt(ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+      : QWidget(parent)
+      , controllers(controllers)
+      , lay(this)
+    {
+        this->setMinimumSize(395, 250);
+        this->setMaximumWidth(395);
+
+        DIR *dir;
+        struct dirent *ent;
+        std::string extension(".mwrm");
+
+        if ((dir = opendir (this->controllers->client->REPLAY_DIR.c_str())) != nullptr) {
+
+            try {
+                while ((ent = readdir (dir)) != nullptr) {
+
+                    std::string current_name = std::string (ent->d_name);
+
+                    if (current_name.length() > 5) {
+
+                        std::string file_path;
+
+                        std::string end_string(current_name.substr(current_name.length()-5, current_name.length()));
+                        if (end_string == extension) {
+
+                            file_path = this->controllers->client->REPLAY_DIR + "/"+current_name.c_str();
+
+                            std::fstream ofile(file_path.c_str(), std::ios::in);
+                            if(ofile) {
+                                std::string file_name(current_name.substr(0, current_name.length()-5));
+                                std::string file_version;
+                                std::string file_resolution;
+                                std::string file_checksum;
+
+                                std::getline(ofile, file_version);
+                                std::getline(ofile, file_resolution);
+                                std::getline(ofile, file_checksum);
+
+                                IconMovie* icon = new IconMovie(controllers, file_name, file_path, file_version, file_resolution, file_checksum, this);
+                                this->icons.push_back(icon);
+                                icon->draw_account();
+                                this->lay.addRow(icon);
+
+                            } else {
+                                LOG(LOG_INFO, "Can't open file \"%s\"", file_path);
+                            }
+
+                        }
+                    }
+                                    }
+            } catch (Error & e) {
+                LOG(LOG_WARNING, "readdir error: (%u) %s", e.id, e.errmsg());
+            }
+            closedir (dir);
+        }
+
+        this->setLayout(&(this->lay));
+    }
+
+    void paintEvent(QPaintEvent * event) override {
+        Q_UNUSED(event);
+        QPen                 pen;
+        QPainter             painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+        pen.setWidth(1);
+        pen.setBrush(Qt::black);
+        painter.setPen(pen);
+        painter.fillRect(0, 0, this->width(), this->height(), Qt::white);
+        painter.end();
+    }
+
+};
 
 
 class FormReplay : public QWidget
@@ -86,20 +307,33 @@ public:
     QFormLayout lay;
     QPushButton buttonReplay;
 
+    QScrollArea scroller;
+    MoviesPanelQt movie_panel;
+
 
     FormReplay(ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
     : QWidget(parent)
     , controllers(controllers)
     , lay(this)
     , buttonReplay("Select a mwrm file", this)
+    , scroller(this)
+    , movie_panel(controllers, this)
     {
-        QRect rectReplay(QPoint(10, 10), QSize(220, 24));
+
+        this->scroller.setFixedSize(410,  250);
+        this->scroller.setStyleSheet("background-color: #C4C4C3; border: 1px solid #FFFFFF;"
+            "border-bottom-color: #FF8C00;");
+        this->scroller.setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
+        this->scroller.setWidget(&(this->movie_panel));
+        this->lay.addRow(&(this->scroller));
+
         this->buttonReplay.setToolTip(this->buttonReplay.text());
-        this->buttonReplay.setGeometry(rectReplay);
+        this->buttonReplay.setFixedSize(220, 24);
         this->buttonReplay.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->buttonReplay)   , SIGNAL (pressed()),  this, SLOT (replayPressed()));
         this->buttonReplay.setFocusPolicy(Qt::StrongFocus);
         this->buttonReplay.setAutoDefault(true);
+        this->lay.addRow(&(this->buttonReplay));
     }
 
 private Q_SLOTS:
@@ -119,6 +353,7 @@ private Q_SLOTS:
 
         std::string const movie_dir = str_movie_path.substr(0, pos);
 
+        this->controllers->client->mod_state = ClientRedemptionIOAPI::MOD_RDP_REPLAY;
         this->controllers->client->_movie_name = movie_name;
         this->controllers->client->_movie_dir = movie_dir;
         this->controllers->client->replay(movie_dir, movie_name);
@@ -190,7 +425,7 @@ public:
       , _IPField("", this)
       , _userNameField("", this)
       , _PWDField("", this)
-      , _portField("", this)
+      , _portField((protocol_type == ClientRedemptionIOAPI::MOD_RDP) ? "389" : "5900", this)
       , _IPLabel(      QString("IP server :"), this)
       , _userNameLabel(QString("User name : "), this)
       , _PWDLabel(     QString("Password :  "), this)
@@ -217,6 +452,9 @@ public:
         if (this->protocol_type == ClientRedemptionIOAPI::MOD_VNC) {
             this->_userNameField.hide();
             this->_userNameLabel.hide();
+            this->_portField.setText("5900");
+        } else  {
+            this->_portField.setText("3389");
         }
     }
 
@@ -274,6 +512,9 @@ public:
         painter.drawText(QPoint(this->height()+6, 30), qname);
 
         pen.setBrush(QColor(0xFF, 0x8C, 0x00));
+        painter.setPen(pen);
+        painter.drawRoundedRect(0, 0, this->width()-1, this->height()-1, 4, 4);
+        pen.setBrush(Qt::white);
         painter.setPen(pen);
         painter.drawRoundedRect(0, 0, this->width()-1, this->height()-1, 4, 4);
 
@@ -848,6 +1089,7 @@ public:
 
 
     void set_ErrorMsg(std::string str) {
+
         this->get_current_tab()->set_ErrorMsg(str);
     }
 
@@ -895,16 +1137,16 @@ public:
 
     void options() {
         if (this->is_option_open) {
-            this->get_current_tab()->options.hide();
-            this->get_current_tab()->_buttonOptions.setText("Options v");
+            this->RDP_tab.options.hide();
+            this->RDP_tab._buttonOptions.setText("Options v");
             this->VNC_tab.options.hide();
             this->VNC_tab._buttonOptions.setText("Options v");
             this->setFixedHeight(this->_height);
             this->is_option_open = false;
         } else {
             this->setFixedHeight(this->_long_height);
-            this->get_current_tab()->options.show();
-            this->get_current_tab()->_buttonOptions.setText("Options ^");
+            this->RDP_tab.options.show();
+            this->RDP_tab._buttonOptions.setText("Options ^");
             this->VNC_tab.options.show();
             this->VNC_tab._buttonOptions.setText("Options ^");
             this->is_option_open = true;
@@ -914,7 +1156,7 @@ public:
 private Q_SLOTS:
     void tab_changed(int) {
         this->setFixedHeight(this->_height);
-        if (!this->is_closing) {
+        if (!this->is_closing && this->get_current_tab()) {
             this->get_current_tab()->options.hide();
         }
     }

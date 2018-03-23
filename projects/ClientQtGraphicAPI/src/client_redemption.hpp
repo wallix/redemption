@@ -319,10 +319,11 @@ public:
             LOG(LOG_INFO, "Disconnected from [%s].", this->target_IP.c_str());
         }
 
-        if (this->impl_graphic) {
-            this->impl_graphic->set_ErrorMsg(error);
+        if (this->mod_state != MOD_RDP_REPLAY) {
+            if (this->impl_graphic) {
+                this->impl_graphic->set_ErrorMsg(error);
+            }
         }
-
         if (this->impl_mouse_keyboard) {
             this->impl_mouse_keyboard->init_form();
         }
@@ -695,7 +696,7 @@ public:
             //NullReportMessage * reportMessage  = nullptr;
             struct timeval time;
             gettimeofday(&time, nullptr);
-            PngParams png_params = {0, 0, ini.get<cfg::video::png_interval>(), 100, 0, true, this->info.remote_program, ini.get<cfg::video::rt_display>()};
+            PngParams png_params = {0, 0, ini.get<cfg::video::png_interval>(), 100, 0, true, this->info.remote_program, ini.get<cfg::video::rt_display>(), false};
             VideoParams videoParams = {Level::high, this->info.width, this->info.height, 0, 0, 0, std::string(""), true, true, false, ini.get<cfg::video::break_interval>(), 0};
             OcrParams ocr_params = { ini.get<cfg::ocr::version>(),
                                         static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),

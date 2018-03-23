@@ -181,11 +181,13 @@ public:
 
     virtual void init_form() override {
         if (this->form) {
-            this->form->init_form();
-            this->form->set_IPField(this->client->target_IP);
-            this->form->set_portField(this->client->port);
-            this->form->set_PWDField(this->client->user_password);
-            this->form->set_userNameField(this->client->user_name);
+            if (this->client->mod_state != ClientRedemptionIOAPI::MOD_RDP_REPLAY) {
+                this->form->init_form();
+                this->form->set_IPField(this->client->target_IP);
+                this->form->set_portField(this->client->port);
+                this->form->set_PWDField(this->client->user_password);
+                this->form->set_userNameField(this->client->user_name);
+            }
             this->form->show();
         }
     }
