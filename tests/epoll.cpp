@@ -7,21 +7,20 @@
 enum class R
 {
     Next,
-    Group,
+    CreateGroup,
     ExitSuccess,
     ExitError,
     NeedMoreData,
 };
 
+struct TopEvent;
 
-struct Event
+struct EventBase
 {
     std::function<R()> f;
-    std::unique_ptr<Event> next;
-    Event* end_next = nullptr;
-    std::unique_ptr<Event> group;
+    std::unique_ptr<EventBase> next;
+    EventBase* end_next = nullptr;
 
-    Event() = default;
 
     template<class F>
     void add(F f)
@@ -29,15 +28,25 @@ struct Event
         if (!this->end_next) {
             this->end_next = this;
         }
-        this->end_next->next = std::make_unique<Event>();
+        this->end_next->next = std::make_unique<EventBase>();
         this->end_next = this->end_next->next.get();
         this->end_next->f = f;
     }
+};
 
-    void sub(Event e)
+struct TopEvent : EventBase
+{
+    std::unique_ptr<TopEvent> group;
+
+    TopEvent() = default;
+    TopEvent(EventBase&& e) noexcept
+      : EventBase(std::move(e))
+    {}
+
+    void sub(EventBase e)
     {
         assert(bool(e.next));
-        auto p = std::make_unique<Event>(std::move(e));
+        auto p = std::make_unique<TopEvent>(std::move(e));
         p->group = std::move(this->group);
         this->group = std::move(p);
     }
@@ -55,7 +64,7 @@ struct Event
                 this->next = std::move(this->next->next);
                 r = (bool(this->next) ? R::NeedMoreData : R::ExitSuccess);
                 break;
-            case R::Group:
+            case R::CreateGroup:
                 this->next = std::move(this->next->next);
                 r = R::NeedMoreData;
                 break;
@@ -75,12 +84,14 @@ struct Event
                     while (this->group && !this->group->next) {
                         this->group = std::move(this->group->group);
                     }
-                    r = (bool(this->next) ? R::NeedMoreData : R::Next);
+                    if (bool(this->next)) {
+                        r = R::NeedMoreData;
+                    }
                     break;
                 case R::NeedMoreData:
                     break;
                 case R::Next:
-                case R::Group:
+                case R::CreateGroup:
                     assert(false);
             }
             return r;
@@ -105,47 +116,47 @@ struct Event
 
 int main()
 {
-    Event e;
+    TopEvent e;
     e.add([]{std::cout << "1\n"; return R::Next; });
     e.add([&]{
         std::cout << "2\n";
         {
-            Event sub;
+            EventBase sub;
             sub.add([]{std::cout << "2.1\n"; return R::Next; });
             sub.add([]{std::cout << "2.2\n"; return R::Next; });
             e.sub(std::move(sub));
         }
-        return R::Group;
+        return R::CreateGroup;
     });
     e.add([&]{
         std::cout << "3\n";
         {
-            Event sub;
+            EventBase sub;
             sub.add([&]{
                 std::cout << "3.1\n";
                 {
-                    Event sub;
+                    EventBase sub;
                     sub.add([]{std::cout << "3.1.1\n"; return R::Next; });
                     sub.add([]{std::cout << "3.1.2\n"; return R::Next; });
                     e.sub(std::move(sub));
                 }
-                return R::Group;
+                return R::CreateGroup;
             });
             e.sub(std::move(sub));
         }
-        return R::Group;
+        return R::CreateGroup;
     });
     e.add([&]{
         std::cout << "4\n";
         {
-            Event sub;
+            EventBase sub;
             sub.add([]{std::cout << "4.1\n"; return R::Next; });
             sub.add([]{std::cout << "4.2\n"; return R::ExitSuccess; });
             sub.add([]{std::cout << "4.3\n"; return R::Next; });
             sub.add([]{std::cout << "4.4\n"; return R::Next; });
             e.sub(std::move(sub));
         }
-        return R::Group;
+        return R::CreateGroup;
     });
     e.add([]{std::cout << "5\n"; return R::Next; });
 

@@ -155,6 +155,8 @@ enum class REDEMPTION_CXX_NODISCARD ExecutorResult : int8_t
     ExitSuccess,
     ExitFailure,
     Terminate,
+    CreateGroup,
+    Next,
 };
 
 enum class ExitStatus : bool {
@@ -819,7 +821,7 @@ struct REDEMPTION_CXX_NODISCARD Executor2FdContext
 
     ExecutorResult need_more_data() noexcept
     {
-        return ExecutorResult::Nothing;
+        return ExecutorResult::NeedMoreData;
     }
 
     ExecutorResult ready() noexcept

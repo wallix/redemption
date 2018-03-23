@@ -1236,7 +1236,7 @@ public:
                         return ctx.disable_timeout()
                         .next_action([](auto ctx, gdi::GraphicApi& gd, mod_rdp& rdp){
                             rdp.draw_event(ctx.get_current_time().tv_sec, gd);
-                            return ctx.ready();
+                            return ctx.need_more_data();
                         });
                     }
                     else {

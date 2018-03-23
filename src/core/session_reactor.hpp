@@ -51,8 +51,6 @@ struct SessionReactor
 {
     using PrefixArgs = jln::prefix_args<>;
 
-    using BasicExecutor = jln::BasicExecutorImpl<PrefixArgs>;
-
     enum class EventType : int8_t
     {
         Timeout,
@@ -398,6 +396,9 @@ struct SessionReactor
                     case jln::ExecutorResult::Nothing:
                     case jln::ExecutorResult::Ready:
                         return true;
+                    case jln::ExecutorResult::CreateGroup:
+                    case jln::ExecutorResult::Next:
+                        ;
                 }
                 return true;
             };
@@ -587,15 +588,181 @@ struct SessionReactor
         SessionReactor& reactor;
     };
 
+    template<class PrefixArgs_, class... Ts>
+    struct BasicExecutorImpl;
+
+    template<class PrefixArgs_, class... Args>
+    using BasicExecutor = BasicExecutorImpl<
+        PrefixArgs_, typename jln::detail::decay_and_strip<Args>::type...>;
+
     template<class PrefixArgs_>
-    struct BasicFd : jln::BasicTimer<PrefixArgs_>, jln::BasicExecutorImpl<PrefixArgs_>
+    struct ExecutorBase
+    {
+        using OnActionFuncPtr = jln::MakeFuncPtr<ExecutorBase&, PrefixArgs_>;
+        using OnExitFuncPtr = jln::MakeFuncPtr<ExecutorBase&, PrefixArgs_, jln::ExecutorError>;
+
+        OnActionFuncPtr on_action = jln::default_action_function();
+        OnExitFuncPtr on_exit = jln::default_action_function();
+
+        std::unique_ptr<ExecutorBase> group;
+        std::unique_ptr<ExecutorBase> next;
+        ExecutorBase* end_next = nullptr;
+
+        ExecutorBase() = default;
+        ExecutorBase(ExecutorBase const&) = delete;
+        ExecutorBase& operator=(ExecutorBase const&) = delete;
+
+        template<class... Args>
+        BasicExecutor<PrefixArgs_, Args...>& add_sequence(Args... args)
+        {
+            if (!this->end_next) {
+                this->end_next = this;
+            }
+            using Executor = BasicExecutor<PrefixArgs_, Args...>;
+            this->end_next->next = std::make_unique<Executor>(
+                this->fd, static_cast<Args&&>(args)...);
+            this->end_next = this->end_next->next.get();
+            return *static_cast<Executor*>(this->end_next);
+        }
+
+        void add_subexecutor(std::unique_ptr<ExecutorBase> p)
+        {
+            assert(bool(p->next));
+            assert(!bool(p->group));
+            p->group = std::move(this->group);
+            this->group = std::move(p);
+        }
+
+        template<class... Args>
+        jln::ExecutorResult exec_action(Args&&... args)
+        {
+            return this->on_action(*this, static_cast<Args&&>(args)...);
+        }
+
+        template<class... Args>
+        jln::ExecutorResult exec_exit(jln::ExecutorError error, Args&&... args)
+        {
+            return this->on_exit(*this, error, static_cast<Args&&>(args)...);
+        }
+
+        template<class... Args>
+        void terminate(Args&&... /*args*/)
+        {
+            assert(false);
+        }
+
+        using R = jln::ExecutorResult;
+
+        template<class... Args>
+        R _exec_next(Args&&... args)
+        {
+            R r = this->next->exec_action(static_cast<Args&&>(args)...);
+            switch (r) {
+                case R::Nothing:
+                case R::Terminate:
+                case R::ExitFailure:
+                case R::ExitSuccess:
+                case R::NeedMoreData:
+                case R::Ready:
+                    break;
+                case R::Next:
+                case R::CreateGroup:
+                    this->next = std::move(this->next->next);
+                    r = (bool(this->next) ? R::Ready : R::ExitSuccess);
+                    break;
+            }
+            return r;
+        }
+
+        template<class... Args>
+        bool exec(Args&&... args)
+        {
+            for (;;) {
+                if (this->group) {
+                    R r = this->group->_exec_next(static_cast<Args&&>(args)...);
+                    switch (r) {
+                        case R::Terminate:
+                        case R::ExitFailure:
+                        case R::ExitSuccess:
+                            this->group = std::move(this->group->group);
+                            while (this->group && !this->group->next) {
+                                this->group = std::move(this->group->group);
+                            }
+                            if (!bool(this->next)) {
+                                return false;
+                            }
+                            r = R::Ready;
+                            break;
+                        case R::NeedMoreData:
+                            return true;
+                        case R::Ready:
+                            break;
+                        case R::Next:
+                        case R::CreateGroup:
+                        case R::Nothing:
+                            assert(false);
+                    }
+                }
+                else if (this->next) {
+                    R r = this->_exec_next(static_cast<Args&&>(args)...);
+                    switch (r) {
+                        case R::Terminate:
+                        case R::ExitFailure:
+                        case R::ExitSuccess:
+                            return false;
+                        case R::NeedMoreData:
+                            return true;
+                        case R::Ready:
+                            break;
+                        case R::Nothing:
+                        case R::Next:
+                        case R::CreateGroup:
+                            assert(false);
+                    }
+                }
+                else {
+                    // TODO group with next = nullptr ?
+                    R r = this->exec_action(static_cast<Args&&>(args)...);
+                    switch (r) {
+                        case R::Terminate:
+                        case R::ExitFailure:
+                        case R::ExitSuccess:
+                            return false;
+                        case R::NeedMoreData:
+                            return true;
+                        case R::Ready:
+                        case R::Nothing:
+                            break;
+                        case R::Next:
+                        case R::CreateGroup:
+                            assert(false);
+                    }
+                }
+            }
+            assert(false);
+            return false;
+        }
+
+        template<class... Args>
+        void exec_all(Args&&... args)
+        {
+            while (this->exec(static_cast<Args&&>(args)...)) {
+            }
+        }
+
+        template<class... Args>
+        bool exit_with(jln::ExecutorError, Args&&... args);
+    };
+
+    template<class PrefixArgs_>
+    struct BasicFd : jln::BasicTimer<PrefixArgs_>, ExecutorBase<PrefixArgs_>
     {
         using prefix_args = PrefixArgs_;
         using base_type = BasicFd;
 
         // using jln::BasicExecutorImpl<PrefixArgs_>::delete_self;
         // using jln::BasicExecutorImpl<PrefixArgs_>::deleter;
-        using jln::BasicExecutorImpl<PrefixArgs_>::on_action;
+        using ExecutorBase<PrefixArgs_>::on_action;
 
         jln::BasicTimer<PrefixArgs_>& timer() noexcept { return *this; }
 
