@@ -866,6 +866,18 @@ struct REDEMPTION_CXX_NODISCARD Executor2FdContext
         this->event.disable_timeout();
         return *this;
     }
+
+    template<class... Args>
+    auto create_sub_executor(Args&&... args)
+    {
+        return this->event.create_sub_executor(static_cast<Args&&>(args)...);
+    }
+
+    template<class Sub>
+    auto add_sub_executor(Sub&& sub)
+    {
+        return this->event.add_sub_executor(static_cast<Sub&&>(sub));
+    }
 };
 
 template<class Event>
@@ -904,6 +916,18 @@ struct REDEMPTION_CXX_NODISCARD Executor2FdTimeoutContext
         return ms.count()
             ? this->set_timeout(ms).set_timeout_action(f)
             : this->disable_timeout();
+    }
+
+    template<class... Args>
+    auto create_sub_executor(Args&&... args)
+    {
+        return this->event.create_sub_executor(static_cast<Args&&>(args)...);
+    }
+
+    template<class Sub>
+    auto add_sub_executor(Sub&& sub)
+    {
+        return this->event.add_sub_executor(static_cast<Sub&&>(sub));
     }
 };
 

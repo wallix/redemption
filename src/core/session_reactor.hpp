@@ -613,24 +613,29 @@ struct SessionReactor
         ExecutorBase& operator=(ExecutorBase const&) = delete;
 
         template<class... Args>
-        BasicExecutor<PrefixArgs_, Args...>& add_sequence(Args... args)
+        BasicExecutor<PrefixArgs_, Args...>& add_sequence(Args&&... args)
         {
             if (!this->end_next) {
                 this->end_next = this;
             }
             using Executor = BasicExecutor<PrefixArgs_, Args...>;
-            this->end_next->next = std::make_unique<Executor>(
-                this->fd, static_cast<Args&&>(args)...);
+            this->end_next->next = std::make_unique<Executor>(static_cast<Args&&>(args)...);
             this->end_next = this->end_next->next.get();
             return *static_cast<Executor*>(this->end_next);
         }
 
-        void add_subexecutor(std::unique_ptr<ExecutorBase> p)
+        void add_sub_executor(std::unique_ptr<ExecutorBase> p)
         {
             assert(bool(p->next));
             assert(!bool(p->group));
             p->group = std::move(this->group);
             this->group = std::move(p);
+        }
+
+        template<class... Ts>
+        auto create_sub_executor()
+        {
+            return std::make_unique<ExecutorBase>();
         }
 
         template<class... Args>
@@ -754,6 +759,34 @@ struct SessionReactor
         bool exit_with(jln::ExecutorError, Args&&... args);
     };
 
+    template<class PrefixArgs_, class... Ts>
+    struct BasicExecutorImpl : ExecutorBase<PrefixArgs_>
+    {
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
+        template<class... Args>
+        BasicExecutorImpl(Args&&... args)
+        noexcept(noexcept(jln::detail::tuple<Ts...>{static_cast<Args&&>(args)...}))
+        : ctx{static_cast<Args&&>(args)...}
+        {}
+        REDEMPTION_DIAGNOSTIC_POP
+
+        template<class F>
+        void set_on_action(F) noexcept
+        {
+            this->on_action = jln::wrap_fn<F, BasicExecutorImpl, jln::Executor2FdContext>();
+        }
+
+        template<class F>
+        void set_on_exit(F) noexcept
+        {
+            this->on_exit = jln::wrap_fn<F, BasicExecutorImpl, jln::Executor2FdContext>();
+        }
+
+    // private:
+        jln::detail::tuple<Ts...> ctx;
+    };
+
     template<class PrefixArgs_>
     struct BasicFd : jln::BasicTimer<PrefixArgs_>, ExecutorBase<PrefixArgs_>
     {
@@ -872,6 +905,15 @@ struct SessionReactor
         void update_timeout(std::chrono::milliseconds ms) noexcept
         {
             this->set_timeout(ms);
+        }
+
+        template<class... Args>
+        BasicExecutor<PrefixArgs_, Args...>*
+        create_sub_executor(Args&&... args)
+        {
+            auto p = new BasicExecutor<PrefixArgs_, Args...>(static_cast<Args&&>(args)...);
+            this->add_sub_executor(std::unique_ptr<ExecutorBase<PrefixArgs_>>(p));
+            return p;
         }
 
     public:
