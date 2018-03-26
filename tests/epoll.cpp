@@ -1,6 +1,7 @@
 #include <functional>
 #include <memory>
 #include <cassert>
+#include <exception>
 
 #include <iostream>
 
@@ -15,68 +16,74 @@ enum class [[nodiscard]] R : char
     Substitute,
 };
 
-struct TopEvent;
-struct EventBase;
-struct GroupEvent;
+struct ExitR {
+    enum class Status : char {
+        Error,
+        Success,
+        Exception,
+    };
+
+    Status status;
+    std::exception_ptr eptr;
+};
+
+struct TopExecutor;
+struct ExecutorBase;
+struct GroupExecutor;
 
 enum class ExitStatus : bool {
     Error,
     Success,
 };
 
-class [[nodiscard]] SubExecutorBuilder
+namespace detail
 {
-    struct D
+    template<bool setError, int stateInit>
+    struct [[nodiscard]] GroupExecutorBuilder
     {
-        D(TopEvent& top);
+        explicit GroupExecutorBuilder(TopExecutor& top) noexcept;
+        explicit GroupExecutorBuilder(TopExecutor& top, std::unique_ptr<GroupExecutor>&& g) noexcept;
 
-        TopEvent& top;
-        std::unique_ptr<GroupEvent> sub_executor;
-    };
+        template<class F>
+        auto then(F f);
 
-    struct [[nodiscard]] InitMore1
-    {
-        InitMore1(D d)
-        : d(std::move(d))
-        {}
+        template<class F>
+        GroupExecutorBuilder<1, stateInit> on_error(F f);
+        GroupExecutorBuilder<1, stateInit> propagate_error();
 
         operator R ();
 
-        template<class F>
-        InitMore1 then(F f);
-
     private:
-        D d;
+        TopExecutor& top;
+        std::unique_ptr<GroupExecutor> g;
     };
+}
 
-    struct [[nodiscard]] Init1
-    {
-        Init1(D d)
-        : d(std::move(d))
-        {}
+#ifdef IN_IDE_PARSER
+struct [[nodiscard]] GroupExecutorBuilder_Concept
+{
+    explicit GroupExecutorBuilder_Concept(TopExecutor&) noexcept;
 
-        operator R ();
-
-        template<class F>
-        InitMore1 then(F f);
-
-    private:
-        D d;
-    };
-
-public:
-    explicit SubExecutorBuilder(TopEvent& top);
+    template<class F> GroupExecutorBuilder_Concept then(F) { return *this; }
 
     template<class F>
-    Init1 then(F f);
+    GroupExecutorBuilder_Concept on_error(F) { return *this; }
+    GroupExecutorBuilder_Concept propagate_error() { return *this; }
 
-private:
-    D d;
+    operator R ();
 };
+template<bool setError, int stateInit>
+using GroupExecutorBuilder = GroupExecutorBuilder_Concept;
+#else
+using detail::GroupExecutorBuilder;
+#endif
 
 struct Context
 {
-    SubExecutorBuilder create_sub_executor();
+    GroupExecutorBuilder<0, 0> create_sub_executor() noexcept
+    {
+        return GroupExecutorBuilder<0, 0>(this->top);
+    }
 
     R need_more_data() noexcept { return R::NeedMoreData; }
     R terminate() noexcept { return R::Terminate; }
@@ -93,22 +100,27 @@ struct Context
     R replace_action(F f);
 
 private:
-    friend GroupEvent;
+    friend GroupExecutor;
 
-    Context(TopEvent& top, EventBase& current)
+    Context(TopExecutor& top, ExecutorBase& current)
     : top(top)
     , current(current)
     {}
 
-    TopEvent& top;
-    EventBase& current;
+    TopExecutor& top;
+    ExecutorBase& current;
 };
 
-struct EventBase
+inline R propagate_error(Context, ExitR)
+{
+    return R::ExitError;
+}
+
+struct ExecutorBase
 {
     std::function<R(Context)> f;
-    std::unique_ptr<EventBase> next;
-    EventBase* end_next = nullptr;
+    std::unique_ptr<ExecutorBase> next;
+    ExecutorBase* end_next = nullptr;
 
     template<class F>
     void then(F f)
@@ -116,12 +128,12 @@ struct EventBase
         if (!this->end_next) {
             this->end_next = this;
             if (this->f) {
-                this->end_next->next = std::make_unique<EventBase>();
+                this->end_next->next = std::make_unique<ExecutorBase>();
                 this->end_next = this->end_next->next.get();
                 this->end_next->f = this->f;
             }
         }
-        this->end_next->next = std::make_unique<EventBase>();
+        this->end_next->next = std::make_unique<ExecutorBase>();
         this->end_next = this->end_next->next.get();
         this->end_next->f = f;
     }
@@ -134,28 +146,35 @@ struct EventBase
     }
 };
 
-struct GroupEvent : EventBase
+struct GroupExecutor : ExecutorBase
 {
-    std::unique_ptr<GroupEvent> group;
+    std::unique_ptr<GroupExecutor> group;
+    std::function<R(Context, ExitR er)> on_error;
 
-    GroupEvent() = default;
-    GroupEvent(EventBase&& e) noexcept
-      : EventBase(std::move(e))
+    GroupExecutor() = default;
+    GroupExecutor(ExecutorBase&& e) noexcept
+      : ExecutorBase(std::move(e))
     {}
 
-    void add_sub_executor(std::unique_ptr<GroupEvent> g)
+    template<class F>
+    void set_on_error(F f)
+    {
+        this->on_error = f;
+    }
+
+    void add_group_executor(std::unique_ptr<GroupExecutor> g)
     {
         assert(bool(g->next));
         g->group = std::move(this->group);
         this->group = std::move(g);
     }
 
-    R exec_f(TopEvent& top, EventBase& e)
+    R exec_f(TopExecutor& top, ExecutorBase& e)
     {
         return e.f(Context{top, e});
     }
 
-    R _exec_next(TopEvent& top)
+    R _exec_next(TopExecutor& top)
     {
         std::cout << "n";
         R r = this->exec_f(top, *this->next);
@@ -180,7 +199,7 @@ struct GroupEvent : EventBase
         return r;
     }
 
-    R _exec(TopEvent& top)
+    R _exec(TopExecutor& top)
     {
         if (this->group) {
             std::cout << "g";
@@ -233,74 +252,74 @@ struct GroupEvent : EventBase
         }
     }
 
-    bool exec(TopEvent& top)
+    bool exec(TopExecutor& top)
     {
         return this->_exec(top) == R::NeedMoreData;
     }
 };
 
-struct TopEvent : GroupEvent
+struct TopExecutor : GroupExecutor
 {
-    TopEvent() = default;
-    TopEvent(EventBase&& e) noexcept
-      : GroupEvent(std::move(e))
+    TopExecutor() = default;
+    TopExecutor(ExecutorBase&& e) noexcept
+      : GroupExecutor(std::move(e))
     {}
 
     bool exec()
     {
-        return GroupEvent::exec(*this);
+        return GroupExecutor::exec(*this);
     }
 };
 
 
-SubExecutorBuilder::D::D(TopEvent& top)
+template<bool setError, int stateInit>
+detail::GroupExecutorBuilder<setError, stateInit>::GroupExecutorBuilder(
+    TopExecutor& top) noexcept
+: GroupExecutorBuilder(top, std::make_unique<GroupExecutor>())
+{}
+
+template<bool setError, int stateInit>
+detail::GroupExecutorBuilder<setError, stateInit>::GroupExecutorBuilder(
+    TopExecutor& top, std::unique_ptr<GroupExecutor>&& g) noexcept
 : top(top)
-, sub_executor(std::make_unique<GroupEvent>())
+, g(std::move(g))
 {}
 
-SubExecutorBuilder::SubExecutorBuilder(TopEvent& top)
-: d(top)
-{}
-
+template<bool setError, int stateInit>
 template<class F>
-SubExecutorBuilder::Init1 SubExecutorBuilder::then(F f)
+auto detail::GroupExecutorBuilder<setError, stateInit>::then(F f)
 {
-    this->d.sub_executor->then(f);
-    return {std::move(this->d)};
+    this->g->then(f);
+    return GroupExecutorBuilder<setError, (stateInit == 1 ? stateInit : stateInit+1)>{
+        this->top, std::move(this->g)};
 }
 
-SubExecutorBuilder::Init1::operator R()
+template<bool setError, int stateInit>
+template<class F>
+detail::GroupExecutorBuilder<1, stateInit>
+detail::GroupExecutorBuilder<setError, stateInit>::on_error(F f)
 {
-    // TODO static_assert prefered a no group context
-    this->d.top.add_sub_executor(std::move(this->d.sub_executor));
+    static_assert(!setError, "on_error is already used");
+    this->g->set_on_error(f);
+    return GroupExecutorBuilder<1, stateInit>{this->top, std::move(this->g)};
+}
+
+template<bool setError, int stateInit>
+detail::GroupExecutorBuilder<1, stateInit>
+detail::GroupExecutorBuilder<setError, stateInit>::propagate_error()
+{
+    return this->on_error(&::propagate_error);
+}
+
+template<bool setError, int stateInit>
+detail::GroupExecutorBuilder<setError, stateInit>::operator R()
+{
+    static_assert(stateInit >= 1, "empty group");
+    static_assert(setError, "missing builder.on_error(f) or builder.propagate_error()");
+    this->top.add_group_executor(std::move(this->g));
     return R::CreateGroup;
 }
 
-template<class F>
-SubExecutorBuilder::InitMore1 SubExecutorBuilder::Init1::then(F f)
-{
-    this->d.sub_executor->then(f);
-    return {std::move(this->d)};
-}
-
-SubExecutorBuilder::InitMore1::operator R()
-{
-    this->d.top.add_sub_executor(std::move(this->d.sub_executor));
-    return R::CreateGroup;
-}
-
-template<class F>
-SubExecutorBuilder::InitMore1 SubExecutorBuilder::InitMore1::then(F f)
-{
-    this->d.sub_executor->then(f);
-    return {std::move(this->d)};
-}
-
-
-SubExecutorBuilder Context::create_sub_executor()
-{
-    return SubExecutorBuilder(this->top);
-}
 
 template<class F>
 R Context::replace_action(F f)
@@ -314,13 +333,14 @@ R Context::replace_action(F f)
 
 int main()
 {
-    TopEvent e;
+    TopExecutor e;
     e.then([](Context ctx){std::cout << "1\n"; return ctx.next(); });
     e.then([](Context ctx){
         std::cout << "2\n";
         return ctx.create_sub_executor()
         .then([](Context ctx){std::cout << "2.1\n"; return ctx.next(); })
-        .then([](Context ctx){std::cout << "2.2\n"; return ctx.next(); });
+        .then([](Context ctx){std::cout << "2.2\n"; return ctx.next(); })
+        .propagate_error();
 
     });
     e.then([](Context ctx){
@@ -330,8 +350,10 @@ int main()
             std::cout << "3.1\n";
             return ctx.create_sub_executor()
             .then([](Context ctx){std::cout << "3.1.1\n"; return ctx.next(); })
-            .then([](Context ctx){std::cout << "3.1.2\n"; return ctx.next(); });
-        });
+            .then([](Context ctx){std::cout << "3.1.2\n"; return ctx.next(); })
+            .propagate_error();
+        })
+        .propagate_error();
     });
     e.then([&](Context ctx){
         std::cout << "4\n";
@@ -339,7 +361,8 @@ int main()
         .then([](Context ctx){std::cout << "4.1\n"; return ctx.next(); })
         .then([](Context ctx){std::cout << "4.2\n"; return ctx.exit_on_success(); })
         .then([](Context ctx){std::cout << "4.3\n"; return ctx.next(); })
-        .then([](Context ctx){std::cout << "4.4\n"; return ctx.next(); });
+        .then([](Context ctx){std::cout << "4.4\n"; return ctx.next(); })
+        .propagate_error();
     });
     e.then([](Context ctx){
         std::cout << "5\n";
