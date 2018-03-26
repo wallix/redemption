@@ -777,10 +777,46 @@ public:
     }
 
     void visibility_rects_event(Rect const & rect_) override {
-LOG(LOG_INFO, "PngCaptureRT::visibility_rects_event");
         if ((this->smart_video_cropping != SmartVideoCropping::disable) && !rect_.isempty()) {
             Rect rect = rect_.intersect(
                 {0, 0, this->drawable.width(), this->drawable.height()});
+
+
+
+            bool     right         = true;
+            unsigned failure_count = 0;
+            while ((rect.cx & 3) && (failure_count < 2)) {
+                if (right) {
+                    if (rect.x + rect.cx < this->drawable.width()) {
+                        rect.cx += 1;
+
+                        failure_count = 0;
+                    }
+                    else {
+                        failure_count++;
+                    }
+
+                    right = false;
+                }
+                else {
+                    if (rect.x > 0) {
+                        rect.x -=1;
+                        rect.cx += 1;
+
+                        failure_count = 0;
+                    }
+                    else {
+                        failure_count++;
+                    }
+
+                    right = true;
+                }
+            }
+            if (rect.cx & 3) {
+                rect.cx &= ~ 3;
+            }
+
+
 
             if (this->image_frame_api.reset(rect.x, rect.y, rect.cx, rect.cy)) {
                 this->timestamp_tracer = TimestampTracer(this->image_frame_api.get_mutable_image_view());
@@ -1658,8 +1694,6 @@ void Capture::visibility_rects_event(Rect const & rect_) {
 
     Rect const rect = Rect(0, 0, drawable_width, drawable_height).intersect(rect_);
 
-    assert((rect.cx <= image_frame_rect.cx) && (rect.cy <= image_frame_rect.cy));
-
     if (image_frame_rect.contains(rect)) {
         return;
     }
@@ -1680,7 +1714,6 @@ void Capture::visibility_rects_event(Rect const & rect_) {
         new_image_frame_rect.y = (rect.y + rect.cy) - new_image_frame_rect.cy;
     }
 
-LOG(LOG_INFO, "> > > > > Capture::visibility_rects_event: new_image_frame_rect=%s", new_image_frame_rect);
     bool const retval = this->video_cropper->reset(new_image_frame_rect);
     assert(!retval);
     (void)retval;

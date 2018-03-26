@@ -69,7 +69,6 @@ private:
           this->in_bmpdata +
           this->y * this->in_rowsize +
           this->x * VideoCropper::bytes_per_pixel) {
-        //LOG(LOG_INFO, "out_width=%u out_height=%u", out_width, out_height);
         if ((this->out_width != this->in_width) ||
             (this->out_height != this->in_height)) {
             this->out_bmpdata = std::make_unique<uint8_t[]>(this->out_rowsize * out_height);
@@ -163,8 +162,8 @@ public:
         this->out_height = out_height;
         this->out_rowsize = this->out_width * VideoCropper::bytes_per_pixel;
         if ((this->out_width != this->in_width) ||
-            (this->out_height != this->in_height)) {
-            if ((old_out_rowsize * old_out_height) < (this->out_rowsize * this->out_height)) {
+            (this->out_height != this->in_height) || !this->out_bmpdata) {
+            if (((old_out_rowsize * old_out_height) < (this->out_rowsize * this->out_height)) || !this->out_bmpdata) {
                 this->out_bmpdata = std::make_unique<uint8_t[]>(this->out_rowsize * this->out_height);
 
                 result = true;
