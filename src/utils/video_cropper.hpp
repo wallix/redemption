@@ -168,6 +168,9 @@ public:
 
                 result = true;
             }
+            else if (old_out_rowsize != this->out_rowsize) {
+                result = true;
+            }
         }
         else {
             this->out_bmpdata = nullptr;

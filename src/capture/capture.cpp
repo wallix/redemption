@@ -1744,7 +1744,8 @@ Rect Capture::get_joint_visibility_rect() const
                                 ((window.style & WS_VISIBLE) ||
                                  ((window.show_state != SW_FORCEMINIMIZE) &&
                                   (window.show_state != SW_HIDE) &&
-                                  (window.show_state != SW_MINIMIZE)))) {
+                                  (window.show_state != SW_MINIMIZE)) ||
+                                  ((!window.style && !window.show_state)))) {
                                     joint_visibility_rect =
                                         joint_visibility_rect.disjunct(
                                             window_visibility_rect.rect.offset(
