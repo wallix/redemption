@@ -180,7 +180,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     RED_CHECK_EQUAL(client_status, SEC_I_COMPLETE_NEEDED);
     RED_CHECK_EQUAL(output_buffer.Buffer.size(), 262);
-    // hexdump_c(output_buffer.Buffer.get_data(), 262);
+    // hexdump_c(output_buffer.Buffer.get_data(), 266);
 
 
     input_buffer_desc.ulVersion = SECBUFFER_VERSION;
