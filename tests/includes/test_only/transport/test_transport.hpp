@@ -152,14 +152,14 @@ struct GeneratorTransport : Transport
     {
         if (this->remaining_is_error && this->len != this->current) {
             this->remaining_is_error = false;
-            RED_CHECK_MESSAGE(this->len == this->current, (
-                redemption_unit_test__::hexdump_with_remaining{
+            RED_REQUIRE_MESSAGE(this->len == this->current, 
+                "\n~GeneratorTransport() remaining=" << (this->len-this->current) 
+                << " len=" << this->len << "\n"
+                << (redemption_unit_test__::hexdump_with_remaining{
                     "GeneratorTransport", this->data.get(), this->current, this->len
                 })
             );
-            std::ostringstream out;
-            out << "~GeneratorTransport() remaining=" << (this->len-this->current) << " len=" << this->len;
-            throw RemainingError{out.str()};
+            throw RemainingError{""};
         }
         return true;
     }
@@ -243,14 +243,14 @@ struct CheckTransport : Transport
     {
         if (this->remaining_is_error && this->len != this->current) {
             this->remaining_is_error = false;
-            RED_CHECK_MESSAGE(this->len == this->current, "check remaining == 0 failed\n" << (
-                redemption_unit_test__::hexdump_with_remaining{
+            RED_REQUIRE_MESSAGE(this->len == this->current, 
+                "\n~CheckTransport() reamining=0 failed, remaining=" << (this->len-this->current) 
+                << " len=" << this->len << "\n"
+                << (redemption_unit_test__::hexdump_with_remaining{
                     "CheckTransport", this->data.get(), this->current, this->len
                 })
             );
-            std::ostringstream out;
-            out << "~CheckTransport() remaining=" << (this->len-this->current) << " len=" << this->len;
-            throw RemainingError{out.str()};
+            throw RemainingError{""};
         }
         return true;
     }
@@ -259,24 +259,9 @@ private:
     void do_send(const uint8_t * const data, size_t len) override
     {
         const size_t available_len = std::min<size_t>(this->len - this->current, len);
-        if (0 != memcmp(data, this->data.get() + this->current, available_len)){
-            // data differs, find where
-            uint32_t differs = 0;
-            while (differs < available_len && data[differs] == this->data.get()[this->current+differs]) {
-                ++differs;
-            }
-            RED_CHECK_MESSAGE(false, "\n"
-                "=============== Common Part =======\n" <<
-                (redemption_unit_test__::hexdump{{data, differs}}) <<
-                "=============== Expected =======\n" <<
-                (redemption_unit_test__::hexdump{{this->data.get() + this->current + differs, available_len - differs}}) <<
-                "=============== Got =======\n" <<
-                (redemption_unit_test__::hexdump{{data + differs, available_len - differs}})
-            );
-            this->data.reset();
-            this->remaining_is_error = false;
-            throw Error(ERR_TRANSPORT_DIFFERS);
-        }
+        RED_REQUIRE_MEM(
+            make_array_view(this->data.get() + this->current, available_len),
+            make_array_view(data, available_len));
 
         this->current += available_len;
 

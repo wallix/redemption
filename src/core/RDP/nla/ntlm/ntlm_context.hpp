@@ -1041,6 +1041,8 @@ public:
             if (memcmp(this->MessageIntegrityCheck,
                        this->AUTHENTICATE_MESSAGE.MIC, 16)) {
                 LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
+                hexdump_c(this->MessageIntegrityCheck, 16);
+                hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
                 return SEC_E_MESSAGE_ALTERED;
             }
         }
