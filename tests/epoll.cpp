@@ -282,12 +282,13 @@ struct TopExecutor : GroupExecutor
         }
         catch (Error const& e) {
             this->error = e;
-            if (this->has_group()) {
-                return this->_exec_group_exit(*this, R::Exception) == R::NeedMoreData;
+            R const r = this->has_group()
+                ? this->_exec_group_exit(*this, R::Exception)
+                : this->_exec_exit(*this, R::Exception);
+            if (r == R::Exception) {
+                throw this->error;
             }
-            else {
-                return this->_exec_exit(*this, R::Exception) == R::NeedMoreData;
-            }
+            return (r == R::NeedMoreData);
         }
     }
 
