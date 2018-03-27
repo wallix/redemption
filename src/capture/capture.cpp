@@ -1442,7 +1442,8 @@ Capture::Capture(
 
         not_null_ptr<gdi::ImageFrameApi> image_frame_api_ptr = this->gd_drawable;
 
-        if (!crop_rect.isempty()) {
+        if (!crop_rect.isempty() &&
+            ((capture_png && !png_params.real_time_image_capture) || capture_video || capture_video_full)) {
             this->video_cropper.reset(new VideoCropper(
                     *this->gd_drawable,
                     crop_rect.x,
