@@ -31,9 +31,9 @@ struct ExitR {
     ::Error& error;
 };
 
-struct TopExecutor;
-struct GroupExecutor;
-struct NodeExecutor;
+template<class... Ts> struct TopExecutor;
+template<class... Ts> struct GroupExecutor;
+template<class... Ts> struct NodeExecutor;
 
 enum class ExitStatus : bool {
     Error,
@@ -42,10 +42,10 @@ enum class ExitStatus : bool {
 
 namespace detail
 {
-    template<bool setError, int stateInit, class Group>
+    template<bool setError, int stateInit, class Group, class... Ts>
     struct [[nodiscard]] GroupExecutorBuilderImpl
     {
-        explicit GroupExecutorBuilderImpl(TopExecutor& top, std::unique_ptr<Group>&& g) noexcept;
+        explicit GroupExecutorBuilderImpl(TopExecutor<Ts...>& top, std::unique_ptr<Group>&& g) noexcept;
 
         template<class F>
         auto then(F&& f);
@@ -57,14 +57,15 @@ namespace detail
         operator R ();
 
     private:
-        TopExecutor& top;
+        TopExecutor<Ts...>& top;
         std::unique_ptr<Group> g;
     };
 
 #ifdef IN_IDE_PARSER
     struct [[nodiscard]] GroupExecutorBuilder_Concept
     {
-        explicit GroupExecutorBuilder_Concept(TopExecutor&, std::unique_ptr<GroupExecutor>&& g) noexcept;
+        template<class... Ts>
+        explicit GroupExecutorBuilder_Concept(Ts&&...) noexcept;
 
         template<class F> GroupExecutorBuilder_Concept then(F) { return *this; }
         template<class F> GroupExecutorBuilder_Concept on_exit(F) { return *this; }
@@ -81,6 +82,7 @@ namespace detail
 #endif
 }
 
+template<class... Ts>
 struct Context
 {
     template<class... Xs>
@@ -106,17 +108,18 @@ struct Context
     R replace_action(F&& f);
 
 private:
-    friend GroupExecutor;
+    friend GroupExecutor<Ts...>;
 
-    Context(TopExecutor& top, NodeExecutor& current)
+    Context(TopExecutor<Ts...>& top, NodeExecutor<Ts...>& current)
     : top(top)
     , current(current)
     {}
 
-    TopExecutor& top;
-    NodeExecutor& current;
+    TopExecutor<Ts...>& top;
+    NodeExecutor<Ts...>& current;
 };
 
+template<class... Ts>
 struct ContextError
 {
 //     template<class... Xs>
@@ -141,23 +144,25 @@ struct ContextError
     // R replace_action(F&& f);
 
 private:
-    friend GroupExecutor;
+    friend GroupExecutor<Ts...>;
 
-    ContextError(TopExecutor& top)
+    ContextError(TopExecutor<Ts...>& top)
     : top(top)
     {}
 
-    TopExecutor& top;
+    TopExecutor<Ts...>& top;
 };
 
-inline R propagate_exit(ContextError, ExitR er) noexcept
+template<class... Ts>
+inline R propagate_exit(ContextError<Ts...>, ExitR er) noexcept
 {
     return static_cast<R>(er.status);
 }
 
+template<class... Ts>
 struct NodeExecutor
 {
-    std::function<R(Context)> f;
+    std::function<R(Context<Ts...>, Ts&...)> f;
     std::unique_ptr<NodeExecutor> next;
 
     template<class F>
@@ -168,6 +173,7 @@ struct NodeExecutor
     }
 };
 
+template<class... Ts>
 struct GroupExecutor
 {
     GroupExecutor() = default;
@@ -187,11 +193,11 @@ struct GroupExecutor
     void then(F&& f)
     {
         if (!this->end_next) {
-            this->next = NodeExecutor::create(static_cast<F&&>(f));
+            this->next = NodeExecutor<Ts...>::create(static_cast<F&&>(f));
             this->end_next = this->next.get();
         }
         else {
-            this->end_next->next = NodeExecutor::create(static_cast<F&&>(f));
+            this->end_next->next = NodeExecutor<Ts...>::create(static_cast<F&&>(f));
             this->end_next = this->end_next->next.get();
         }
     }
@@ -204,43 +210,41 @@ struct GroupExecutor
 
     void set_propagate_exit() noexcept
     {
-        this->on_exit = &::propagate_exit;
+        this->on_exit = &::propagate_exit<Ts...>;
     }
 
 protected:
     // TODO inner to TopExecutor
-    R _exec_next(TopExecutor& top);
-    R _exec(TopExecutor& top);
-    R _exec_exit(TopExecutor& top, R r);
-    R _exec_group_exit(TopExecutor& top, R r);
+    R _exec_next(TopExecutor<Ts...>& top, Ts&... xs);
+    R _exec(TopExecutor<Ts...>& top, Ts&... xs);
+    R _exec_exit(TopExecutor<Ts...>& top, R r, Ts&... xs);
+    R _exec_group_exit(TopExecutor<Ts...>& top, R r, Ts&... xs);
     bool has_group() const noexcept { return bool(this->group); }
 
 private:
-    std::unique_ptr<NodeExecutor> next;
-    NodeExecutor* end_next = nullptr;
+    std::unique_ptr<NodeExecutor<Ts...>> next;
+    NodeExecutor<Ts...>* end_next = nullptr;
     std::unique_ptr<GroupExecutor> group;
-    std::function<R(ContextError, ExitR er)> on_exit;
+    std::function<R(ContextError<Ts...>, ExitR er, Ts&...)> on_exit;
 };
 
-namespace jln {
-namespace detail
-{
-template<class... Ts>
-struct GroupExecutorWithValuesImpl : GroupExecutor, private tuple<Ts...>
+
+template<class Tuple, class... Ts>
+struct GroupExecutorWithValues : GroupExecutor<Ts...>, private Tuple
 {
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
     template<class... Us>
-    GroupExecutorWithValuesImpl(Us&&... xs)
-    noexcept(noexcept(tuple<Ts...>{static_cast<Us&&>(xs)...}))
-      : tuple<Ts...>{static_cast<Us&&>(xs)...}
+    GroupExecutorWithValues(Us&&... xs)
+    noexcept(noexcept(Tuple{static_cast<Us&&>(xs)...}))
+      : Tuple{static_cast<Us&&>(xs)...}
     {}
     REDEMPTION_DIAGNOSTIC_POP
 
     template<class F>
     void then(F&& f)
     {
-        this->GroupExecutor::then([f = static_cast<F&&>(f), this](Context ctx) -> R{
+        this->GroupExecutor<Ts...>::then([f = static_cast<F&&>(f), this](Context<Ts...> ctx) -> R{
             return this->invoke(f, ctx);
         });
     }
@@ -248,43 +252,37 @@ struct GroupExecutorWithValuesImpl : GroupExecutor, private tuple<Ts...>
     template<class F>
     void set_on_exit(F&& f)
     {
-        this->GroupExecutor::set_on_exit([f = static_cast<F&&>(f), this](
-            ContextError ctx, ExitR er) -> R
+        this->GroupExecutor<Ts...>::set_on_exit([f = static_cast<F&&>(f), this](
+            ContextError<Ts...> ctx, ExitR er) -> R
         {
             return this->invoke(f, ctx, er);
         });
     }
 
 private:
-    friend Context;
+    friend Context<Ts...>;
 };
 
-template<>
-struct GroupExecutorWithValuesImpl<> : GroupExecutor
-{};
-}
 template<class... Ts>
-using GroupExecutorWithValues = detail::GroupExecutorWithValuesImpl<
-    detail::decay_and_strip_t<Ts>...>;
-}
-
-using jln::GroupExecutorWithValues;
+struct GroupExecutorWithValues<jln::detail::tuple<>, Ts...> : GroupExecutor<Ts...>
+{};
 
 
-struct TopExecutor : GroupExecutor
+template<class... Ts>
+struct TopExecutor : GroupExecutor<Ts...>
 {
     TopExecutor() = default;
 
-    bool exec()
+    bool exec(Ts&... xs)
     {
         try {
-            return this->_exec(*this) == R::NeedMoreData;
+            return this->_exec(*this, xs...) == R::NeedMoreData;
         }
         catch (Error const& e) {
             this->error = e;
             R const r = this->has_group()
-                ? this->_exec_group_exit(*this, R::Exception)
-                : this->_exec_exit(*this, R::Exception);
+                ? this->_exec_group_exit(*this, R::Exception, xs...)
+                : this->_exec_exit(*this, R::Exception, xs...);
             if (r == R::Exception) {
                 throw this->error;
             }
@@ -295,11 +293,14 @@ struct TopExecutor : GroupExecutor
     Error error = Error(NO_ERROR);
 };
 
-R GroupExecutor::_exec_exit(TopExecutor& top, R r)
+
+template<class... Ts>
+R GroupExecutor<Ts...>::_exec_exit(TopExecutor<Ts...>& top, R r, Ts&... xs)
 {
     switch (R re = this->on_exit(
-        ContextError{top},
-        ExitR{static_cast<ExitR::Status>(r), top.error}
+        ContextError<Ts...>{top},
+        ExitR{static_cast<ExitR::Status>(r), top.error},
+        xs...
     )) {
         case R::ExitSuccess:
         case R::Exception:
@@ -316,12 +317,14 @@ R GroupExecutor::_exec_exit(TopExecutor& top, R r)
     REDEMPTION_UNREACHABLE();
 }
 
-R GroupExecutor::_exec_group_exit(TopExecutor& top, R r)
+template<class... Ts>
+R GroupExecutor<Ts...>::_exec_group_exit(TopExecutor<Ts...>& top, R r, Ts&... xs)
 {
     do {
         R const re = this->group->on_exit(
-            ContextError{top},
-            ExitR{static_cast<ExitR::Status>(r), top.error});
+            ContextError<Ts...>{top},
+            ExitR{static_cast<ExitR::Status>(r), top.error},
+            xs...);
         this->group = std::move(this->group->group);
         switch (re) {
             case R::ExitSuccess:
@@ -346,9 +349,10 @@ R GroupExecutor::_exec_group_exit(TopExecutor& top, R r)
     return r;
 }
 
-R GroupExecutor::_exec_next(TopExecutor& top)
+template<class... Ts>
+R GroupExecutor<Ts...>::_exec_next(TopExecutor<Ts...>& top, Ts&... xs)
 {
-    R const r = this->next->f(Context{top, *this->next});
+    R const r = this->next->f(Context<Ts...>{top, *this->next}, xs...);
     switch (r) {
         case R::Terminate:
         case R::Exception:
@@ -368,16 +372,17 @@ R GroupExecutor::_exec_next(TopExecutor& top)
     REDEMPTION_UNREACHABLE();
 }
 
-R GroupExecutor::_exec(TopExecutor& top)
+template<class... Ts>
+R GroupExecutor<Ts...>::_exec(TopExecutor<Ts...>& top, Ts&... xs)
 {
     if (this->group) {
-        R const r = this->group->_exec_next(top);
+        R const r = this->group->_exec_next(top, xs...);
         switch (r) {
             case R::Exception:
             case R::Terminate:
             case R::ExitError:
             case R::ExitSuccess:
-                return this->_exec_group_exit(top, r);
+                return this->_exec_group_exit(top, r, xs...);
             case R::NeedMoreData:
                 return r;
             case R::Next:
@@ -389,13 +394,13 @@ R GroupExecutor::_exec(TopExecutor& top)
     }
     else {
         assert(this->next);
-        R const r = this->_exec_next(top);
+        R const r = this->_exec_next(top, xs...);
         switch (r) {
             case R::Exception:
             case R::Terminate:
             case R::ExitError:
             case R::ExitSuccess:
-                return this->_exec_exit(top, r);
+                return this->_exec_exit(top, r, xs...);
             case R::NeedMoreData:
             case R::Next:
             case R::Substitute:
@@ -407,43 +412,44 @@ R GroupExecutor::_exec(TopExecutor& top)
 }
 
 
-template<bool setError, int stateInit, class Group>
-detail::GroupExecutorBuilderImpl<setError, stateInit, Group>::GroupExecutorBuilderImpl(
-    TopExecutor& top, std::unique_ptr<Group>&& g) noexcept
+template<bool setError, int stateInit, class Group, class... Ts>
+detail::GroupExecutorBuilderImpl<setError, stateInit, Group, Ts...>::GroupExecutorBuilderImpl(
+    TopExecutor<Ts...>& top, std::unique_ptr<Group>&& g) noexcept
 : top(top)
 , g(std::move(g))
 {}
 
-template<bool setError, int stateInit, class Group>
+template<bool setError, int stateInit, class Group, class... Ts>
 template<class F>
-auto detail::GroupExecutorBuilderImpl<setError, stateInit, Group>::then(F&& f)
+auto detail::GroupExecutorBuilderImpl<setError, stateInit, Group, Ts...>::then(F&& f)
 {
     this->g->then(static_cast<F&&>(f));
-    return GroupExecutorBuilderImpl<setError, (stateInit == 1 ? stateInit : stateInit+1), Group>{
-        this->top, std::move(this->g)};
+    return GroupExecutorBuilderImpl<
+        setError, (stateInit == 1 ? stateInit : stateInit+1), Group, Ts...>{
+            this->top, std::move(this->g)};
 }
 
-template<bool setError, int stateInit, class Group>
+template<bool setError, int stateInit, class Group, class... Ts>
 template<class F>
 detail::GroupExecutorBuilderImpl<1, stateInit, Group>
-detail::GroupExecutorBuilderImpl<setError, stateInit, Group>::on_exit(F&& f)
+detail::GroupExecutorBuilderImpl<setError, stateInit, Group, Ts...>::on_exit(F&& f)
 {
     static_assert(!setError, "on_error or propagate_exit is already used");
     this->g->set_on_exit(static_cast<F&&>(f));
-    return GroupExecutorBuilderImpl<1, stateInit, Group>{this->top, std::move(this->g)};
+    return GroupExecutorBuilderImpl<1, stateInit, Group, Ts...>{this->top, std::move(this->g)};
 }
 
-template<bool setError, int stateInit, class Group>
+template<bool setError, int stateInit, class Group, class... Ts>
 detail::GroupExecutorBuilderImpl<1, stateInit, Group>
-detail::GroupExecutorBuilderImpl<setError, stateInit, Group>::propagate_exit()
+detail::GroupExecutorBuilderImpl<setError, stateInit, Group, Ts...>::propagate_exit()
 {
     static_assert(!setError, "on_error or propagate_exit is already used");
     this->g->set_propagate_exit();
-    return GroupExecutorBuilderImpl<1, stateInit, Group>{this->top, std::move(this->g)};
+    return GroupExecutorBuilderImpl<1, stateInit, Group, Ts...>{this->top, std::move(this->g)};
 }
 
-template<bool setError, int stateInit, class Group>
-detail::GroupExecutorBuilderImpl<setError, stateInit, Group>::operator R()
+template<bool setError, int stateInit, class Group, class... Ts>
+detail::GroupExecutorBuilderImpl<setError, stateInit, Group, Ts...>::operator R()
 {
     static_assert(stateInit >= 1, "empty group");
     static_assert(setError, "missing builder.on_error(f) or builder.propagate_exit()");
@@ -452,26 +458,31 @@ detail::GroupExecutorBuilderImpl<setError, stateInit, Group>::operator R()
 }
 
 
-template<class... Xs>
+template<class... Ts>
 #ifdef IN_IDE_PARSER
-detail::GroupExecutorBuilder_Concept Context::create_sub_executor(Xs&&...)
+detail::GroupExecutorBuilder_Concept Context<Ts...>::create_sub_executor(Xs&&...)
 #else
-auto Context::create_sub_executor(Xs&&... xs)
+template<class... Xs>
+auto Context<Ts...>::create_sub_executor(Xs&&... xs)
 #endif
 {
-    using G = GroupExecutorWithValues<Xs...>;
+    using G = GroupExecutorWithValues<
+        jln::detail::tuple<jln::detail::decay_and_strip_t<Xs>...>,
+        Ts...>;
     return detail::GroupExecutorBuilder<G>{
         this->top, std::make_unique<G>(static_cast<Xs&&>(xs)...)};
 }
 
-R Context::exception(Error const& e) noexcept
+template<class... Ts>
+R Context<Ts...>::exception(Error const& e) noexcept
 {
     this->top.error = e;
     return R::Exception;
 }
 
+template<class... Ts>
 template<class F>
-R Context::replace_action(F&& f)
+R Context<Ts...>::replace_action(F&& f)
 {
     this->current.f = static_cast<F&&>(f);
     return R::Substitute;
@@ -482,7 +493,8 @@ R Context::replace_action(F&& f)
 
 int main()
 {
-    TopExecutor e;
+    using Context = ::Context<>;
+    TopExecutor<> e;
     e.set_propagate_exit();
     e.then([](Context ctx){std::cout << "1\n"; return ctx.next(); });
     e.then([](Context ctx){
