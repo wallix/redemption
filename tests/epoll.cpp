@@ -45,10 +45,10 @@ namespace detail
         explicit GroupExecutorBuilder(TopExecutor& top, std::unique_ptr<GroupExecutor>&& g) noexcept;
 
         template<class F>
-        auto then(F f);
+        auto then(F&& f);
 
         template<class F>
-        GroupExecutorBuilder<1, stateInit> on_error(F f);
+        GroupExecutorBuilder<1, stateInit> on_error(F&& f);
         GroupExecutorBuilder<1, stateInit> propagate_error();
 
         operator R ();
@@ -97,7 +97,7 @@ struct Context
     }
 
     template<class F>
-    R replace_action(F f);
+    R replace_action(F&& f);
 
 private:
     friend GroupExecutor;
@@ -120,6 +120,13 @@ struct NodeExecutor
 {
     std::function<R(Context)> f;
     std::unique_ptr<NodeExecutor> next;
+
+    template<class F>
+    static std::unique_ptr<NodeExecutor> create(F&& f)
+    {
+        return std::unique_ptr<NodeExecutor>(
+            new NodeExecutor{static_cast<F&&>(f), nullptr});
+    }
 };
 
 struct GroupExecutor
@@ -130,28 +137,29 @@ struct GroupExecutor
     std::function<R(Context, ExitR er)> on_error;
 
     GroupExecutor() = default;
+    GroupExecutor(GroupExecutor const&) = delete;
+    GroupExecutor& operator=(GroupExecutor const&) = delete;
 
     template<class F>
-    void then(F f)
+    void then(F&& f)
     {
         if (!this->end_next) {
-            this->next = std::make_unique<NodeExecutor>();
+            this->next = NodeExecutor::create(static_cast<F&&>(f));
             this->end_next = this->next.get();
         }
         else {
-            this->end_next->next = std::make_unique<NodeExecutor>();
+            this->end_next->next = NodeExecutor::create(static_cast<F&&>(f));
             this->end_next = this->end_next->next.get();
         }
-        this->end_next->f = f;
     }
 
     template<class F>
-    void set_on_error(F f)
+    void set_on_error(F&& f)
     {
-        this->on_error = f;
+        this->on_error = static_cast<F&&>(f);
     }
 
-    void add_group_executor(std::unique_ptr<GroupExecutor> g)
+    void add_group_executor(std::unique_ptr<GroupExecutor>&& g)
     {
         assert(bool(g->next));
         g->group = std::move(this->group);
@@ -252,9 +260,9 @@ detail::GroupExecutorBuilder<setError, stateInit>::GroupExecutorBuilder(
 
 template<bool setError, int stateInit>
 template<class F>
-auto detail::GroupExecutorBuilder<setError, stateInit>::then(F f)
+auto detail::GroupExecutorBuilder<setError, stateInit>::then(F&& f)
 {
-    this->g->then(f);
+    this->g->then(static_cast<F&&>(f));
     return GroupExecutorBuilder<setError, (stateInit == 1 ? stateInit : stateInit+1)>{
         this->top, std::move(this->g)};
 }
@@ -262,10 +270,10 @@ auto detail::GroupExecutorBuilder<setError, stateInit>::then(F f)
 template<bool setError, int stateInit>
 template<class F>
 detail::GroupExecutorBuilder<1, stateInit>
-detail::GroupExecutorBuilder<setError, stateInit>::on_error(F f)
+detail::GroupExecutorBuilder<setError, stateInit>::on_error(F&& f)
 {
     static_assert(!setError, "on_error is already used");
-    this->g->set_on_error(f);
+    this->g->set_on_error(static_cast<F&&>(f));
     return GroupExecutorBuilder<1, stateInit>{this->top, std::move(this->g)};
 }
 
@@ -287,9 +295,9 @@ detail::GroupExecutorBuilder<setError, stateInit>::operator R()
 
 
 template<class F>
-R Context::replace_action(F f)
+R Context::replace_action(F&& f)
 {
-    this->current.f = f;
+    this->current.f = static_cast<F&&>(f);
     return R::Substitute;
 }
 
