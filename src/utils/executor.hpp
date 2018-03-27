@@ -104,6 +104,20 @@ namespace detail
                 static_cast<tuple_elem<ints, Ts>&>(*this).x...
             );
         }
+
+        template<class F, class T, class... Args>
+        decltype(auto) invoke_fix(F && f, T&& x, Args&&... args)
+        noexcept(noexcept(f(
+            static_cast<T&&>(x),
+            static_cast<tuple_elem<ints, Ts>*>(nullptr)->x...,
+            static_cast<Args&&>(args)...)))
+        {
+            return f(
+                static_cast<T&&>(x),
+                static_cast<tuple_elem<ints, Ts>&>(*this).x...,
+                static_cast<Args&&>(args)...
+            );
+        }
     };
 
     template<class... Ts>
@@ -138,6 +152,9 @@ namespace detail
     template<class T> struct decay_and_strip<T const> : decay_and_strip<T>{};
     template<class T> struct decay_and_strip<std::reference_wrapper<T>> { using type = T&; };
     template<class T, class... Ts> struct decay_and_strip<emplace_type<T, Ts...>> { using type = T; };
+
+    template<class T>
+    using decay_and_strip_t = typename decay_and_strip<T>::type;
 }
 
 template<class T>
