@@ -156,7 +156,11 @@ struct GeneratorTransport : Transport
                 "\n~GeneratorTransport() remaining=" << (this->len-this->current) 
                 << " len=" << this->len << "\n"
                 << (redemption_unit_test__::hexdump_with_remaining{
+<<<<<<< HEAD
                     "GeneratorTransport", this->data.get() + this->current, this->current, this->len
+=======
+                    "GeneratorTransport", this->data.get(), this->current, this->len
+>>>>>>> 7e7352c48f08edc9584a83f760777e8659497328
                 })
             );
             throw RemainingError{""};
@@ -252,7 +256,7 @@ struct CheckTransport : Transport
                 "\n~CheckTransport() reamining=0 failed, remaining=" << (this->len-this->current) 
                 << " len=" << this->len << "\n"
                 << (redemption_unit_test__::hexdump_with_remaining{
-                    "CheckTransport", this->data.get() + this->current, this->current, this->len
+                    "CheckTransport", this->data.get(), this->current, this->len
                 })
             );
             throw RemainingError{""};
