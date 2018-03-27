@@ -228,7 +228,7 @@ namespace redemption_unit_test__
                 if (x.sig.size()>split) {
                     out << "\" //";
                     for (size_t v = 0 ; v < i ; v++){
-                        if ((tmpbuf[v] >= 0x20) && (tmpbuf[v] <= 127)) {
+                        if ((tmpbuf[v] >= 0x20) && (tmpbuf[v] < 127)) {
                             out << char(tmpbuf[v]);
                         }
                         else {

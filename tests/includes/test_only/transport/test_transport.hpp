@@ -156,7 +156,7 @@ struct GeneratorTransport : Transport
                 "\n~GeneratorTransport() remaining=" << (this->len-this->current) 
                 << " len=" << this->len << "\n"
                 << (redemption_unit_test__::hexdump_with_remaining{
-                    "GeneratorTransport", this->data.get(), this->current, this->len
+                    "GeneratorTransport", this->data.get() + this->current, this->current, this->len
                 })
             );
             throw RemainingError{""};
@@ -165,6 +165,7 @@ struct GeneratorTransport : Transport
     }
 
 private:
+
     Read do_atomic_read(uint8_t * buffer, size_t len) override
     {
         size_t const remaining = this->len - this->current;
@@ -230,6 +231,10 @@ struct CheckTransport : Transport
         memcpy(this->data.get(), data, len);
     }
 
+    size_t remaining() {
+        return this->len - this->current;
+    }
+
     void disable_remaining_error()
     {
         this->remaining_is_error = false;
@@ -247,7 +252,7 @@ struct CheckTransport : Transport
                 "\n~CheckTransport() reamining=0 failed, remaining=" << (this->len-this->current) 
                 << " len=" << this->len << "\n"
                 << (redemption_unit_test__::hexdump_with_remaining{
-                    "CheckTransport", this->data.get(), this->current, this->len
+                    "CheckTransport", this->data.get() + this->current, this->current, this->len
                 })
             );
             throw RemainingError{""};
@@ -261,11 +266,11 @@ private:
         const size_t available_len = std::min<size_t>(this->len - this->current, len);
         RED_REQUIRE_MEM(
             make_array_view(this->data.get() + this->current, available_len),
-            make_array_view(data, available_len));
+            make_array_view(data, len));
 
-        this->current += available_len;
+        this->current += len;
 
-        if (available_len != len){
+        if (available_len != len || len == 0){
             RED_CHECK_MESSAGE(available_len == len,
                 "check transport out of reference data available="
                     << available_len << " len=" << len << " failed\n"
@@ -296,6 +301,10 @@ struct TestTransport : public Transport
     , gen(indata, inlen)
     , public_key_length(0)
     {}
+
+    size_t remaining() {
+        return this->check.remaining();
+    }
 
     void disable_remaining_error()
     {

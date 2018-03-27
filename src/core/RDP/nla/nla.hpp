@@ -298,11 +298,11 @@ protected:
         Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
 
         Buffers[1].Buffer.init(public_key_length);
-        Buffers[1].Buffer.copy(public_key,
-                               Buffers[1].Buffer.size());
+        Buffers[1].Buffer.copy(public_key, Buffers[1].Buffer.size());
 
         if (this->server && version < 5) {
-            /* server echos the public key +1 */
+            // if we are server and protocol is 2,3,4
+            // then echos the public key +1
             this->ap_integer_increment_le(Buffers[1].Buffer.get_data(), Buffers[1].Buffer.size());
         }
 
@@ -360,6 +360,8 @@ protected:
         Buffers[0].Buffer.copy(this->pubKeyAuth.get_data(),
                                this->ContextSizes.cbMaxSignature);
 
+        LOG(LOG_INFO, "Buffer Size %u %u %u", length, this->ContextSizes.cbMaxSignature, length - this->ContextSizes.cbMaxSignature);
+
         Buffers[1].Buffer.init(length - this->ContextSizes.cbMaxSignature);
         Buffers[1].Buffer.copy(this->pubKeyAuth.get_data() + this->ContextSizes.cbMaxSignature,
                                Buffers[1].Buffer.size());
@@ -392,12 +394,13 @@ protected:
         public_key2 = Buffers[1].Buffer.get_data();
 
         if (Buffers[1].Buffer.size() != public_key_length) {
-            LOG(LOG_ERR, "Decrypted Pub Key length does not match !");
+            LOG(LOG_ERR, "Decrypted Pub Key length does not match ! (%u != %u)", Buffers[1].Buffer.size(), public_key_length);
             return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
         }
 
         if (!this->server && version < 5) {
-            /* server echos the public key +1 */
+            // if we are client and protocol is 2,3,4
+            // then get the public key minus one
             ap_integer_decrement_le(public_key2, public_key_length);
         }
         if (memcmp(public_key1, public_key2, public_key_length) != 0) {
@@ -875,12 +878,11 @@ public:
         length = this->authInfo.size();
 
         Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
-        Buffers[0].Buffer.copy(this->authInfo.get_data(),
-                               Buffers[0].Buffer.size());
+        Buffers[0].Buffer.copy(this->authInfo.get_data(), Buffers[0].Buffer.size());
 
+        LOG(LOG_INFO, "Buffer Size %u %u %u", length, this->ContextSizes.cbMaxSignature, length - this->ContextSizes.cbMaxSignature);
         Buffers[1].Buffer.init(length - this->ContextSizes.cbMaxSignature);
-        Buffers[1].Buffer.copy(this->authInfo.get_data() + this->ContextSizes.cbMaxSignature,
-                               Buffers[1].Buffer.size());
+        Buffers[1].Buffer.copy(this->authInfo.get_data() + this->ContextSizes.cbMaxSignature, Buffers[1].Buffer.size());
 
         Message.cBuffers = 2;
         Message.ulVersion = SECBUFFER_VERSION;

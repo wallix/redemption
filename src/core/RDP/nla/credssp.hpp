@@ -180,6 +180,7 @@ struct TSRequest final {
         pub_key_auth_length = (this->pubKeyAuth.size() > 0)
             ? CredSSP::sizeof_pub_key_auth(this->pubKeyAuth.size())
             : 0;
+        LOG(LOG_ERR, "pub_key_auth_length = %u", pub_key_auth_length);
         auth_info_length = (this->authInfo.size() > 0)
             ? CredSSP::sizeof_auth_info(this->authInfo.size())
             : 0;
