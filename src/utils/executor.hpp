@@ -104,20 +104,6 @@ namespace detail
                 static_cast<tuple_elem<ints, Ts>&>(*this).x...
             );
         }
-
-        template<class F, class T, class... Args>
-        decltype(auto) invoke_fix(F && f, T&& x, Args&&... args)
-        noexcept(noexcept(f(
-            static_cast<T&&>(x),
-            static_cast<tuple_elem<ints, Ts>*>(nullptr)->x...,
-            static_cast<Args&&>(args)...)))
-        {
-            return f(
-                static_cast<T&&>(x),
-                static_cast<tuple_elem<ints, Ts>&>(*this).x...,
-                static_cast<Args&&>(args)...
-            );
-        }
     };
 
     template<class... Ts>
