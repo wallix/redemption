@@ -1746,6 +1746,7 @@ Rect Capture::get_joint_visibility_rect() const
                                  ((window.show_state != SW_FORCEMINIMIZE) &&
                                   (window.show_state != SW_HIDE) &&
                                   (window.show_state != SW_MINIMIZE)) ||
+                                  // window is ctreated before recording starts
                                   ((!window.style && !window.show_state)))) {
                                     joint_visibility_rect =
                                         joint_visibility_rect.disjunct(
