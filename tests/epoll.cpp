@@ -28,8 +28,8 @@ struct ExitR {
 };
 
 struct TopExecutor;
-struct ExecutorBase;
 struct GroupExecutor;
+struct NodeExecutor;
 
 enum class ExitStatus : bool {
     Error,
@@ -57,33 +57,33 @@ namespace detail
         TopExecutor& top;
         std::unique_ptr<GroupExecutor> g;
     };
-}
 
 #ifdef IN_IDE_PARSER
-struct [[nodiscard]] GroupExecutorBuilder_Concept
-{
-    explicit GroupExecutorBuilder_Concept(TopExecutor&) noexcept;
+    struct [[nodiscard]] GroupExecutorBuilder_Concept
+    {
+        explicit GroupExecutorBuilder_Concept(TopExecutor&) noexcept;
 
-    template<class F> GroupExecutorBuilder_Concept then(F) { return *this; }
+        template<class F> GroupExecutorBuilder_Concept then(F) { return *this; }
 
-    template<class F>
-    GroupExecutorBuilder_Concept on_error(F) { return *this; }
-    GroupExecutorBuilder_Concept propagate_error() { return *this; }
+        template<class F>
+        GroupExecutorBuilder_Concept on_error(F) { return *this; }
+        GroupExecutorBuilder_Concept propagate_error() { return *this; }
 
-    operator R ();
-};
-template<bool setError, int stateInit>
-using GroupExecutorBuilder = GroupExecutorBuilder_Concept;
-#else
-using detail::GroupExecutorBuilder;
+        operator R ();
+    };
 #endif
+}
 
 struct Context
 {
-    GroupExecutorBuilder<0, 0> create_sub_executor() noexcept
+#ifdef IN_IDE_PARSER
+    detail::GroupExecutorBuilder_Concept create_sub_executor() noexcept;
+#else
+    detail::GroupExecutorBuilder<0, 0> create_sub_executor() noexcept
     {
-        return GroupExecutorBuilder<0, 0>(this->top);
+        return detail::GroupExecutorBuilder<0, 0>(this->top);
     }
+#endif
 
     R need_more_data() noexcept { return R::NeedMoreData; }
     R terminate() noexcept { return R::Terminate; }
@@ -102,13 +102,13 @@ struct Context
 private:
     friend GroupExecutor;
 
-    Context(TopExecutor& top, ExecutorBase& current)
+    Context(TopExecutor& top, NodeExecutor& current)
     : top(top)
     , current(current)
     {}
 
     TopExecutor& top;
-    ExecutorBase& current;
+    NodeExecutor& current;
 };
 
 inline R propagate_error(Context, ExitR)
@@ -116,45 +116,34 @@ inline R propagate_error(Context, ExitR)
     return R::ExitError;
 }
 
-struct ExecutorBase
+struct NodeExecutor
 {
     std::function<R(Context)> f;
-    std::unique_ptr<ExecutorBase> next;
-    ExecutorBase* end_next = nullptr;
+    std::unique_ptr<NodeExecutor> next;
+};
+
+struct GroupExecutor
+{
+    std::unique_ptr<NodeExecutor> next;
+    NodeExecutor* end_next = nullptr;
+    std::unique_ptr<GroupExecutor> group;
+    std::function<R(Context, ExitR er)> on_error;
+
+    GroupExecutor() = default;
 
     template<class F>
     void then(F f)
     {
         if (!this->end_next) {
-            this->end_next = this;
-            if (this->f) {
-                this->end_next->next = std::make_unique<ExecutorBase>();
-                this->end_next = this->end_next->next.get();
-                this->end_next->f = this->f;
-            }
+            this->next = std::make_unique<NodeExecutor>();
+            this->end_next = this->next.get();
         }
-        this->end_next->next = std::make_unique<ExecutorBase>();
-        this->end_next = this->end_next->next.get();
+        else {
+            this->end_next->next = std::make_unique<NodeExecutor>();
+            this->end_next = this->end_next->next.get();
+        }
         this->end_next->f = f;
     }
-
-    template<class F2>
-    void replace(F2 f)
-    {
-        assert(this->f);
-        this->f = f;
-    }
-};
-
-struct GroupExecutor : ExecutorBase
-{
-    std::unique_ptr<GroupExecutor> group;
-    std::function<R(Context, ExitR er)> on_error;
-
-    GroupExecutor() = default;
-    GroupExecutor(ExecutorBase&& e) noexcept
-      : ExecutorBase(std::move(e))
-    {}
 
     template<class F>
     void set_on_error(F f)
@@ -169,7 +158,7 @@ struct GroupExecutor : ExecutorBase
         this->group = std::move(g);
     }
 
-    R exec_f(TopExecutor& top, ExecutorBase& e)
+    R exec_f(TopExecutor& top, NodeExecutor& e)
     {
         return e.f(Context{top, e});
     }
@@ -225,30 +214,9 @@ struct GroupExecutor : ExecutorBase
             }
             return r;
         }
-        else if (this->next) {
-            return this->_exec_next(top);
-        }
         else {
-            std::cout << "f";
-            R r = this->exec_f(top, *this);
-            switch (r) {
-                case R::Terminate:
-                case R::ExitError:
-                case R::ExitSuccess:
-                case R::NeedMoreData:
-                    break;
-                case R::Substitute:
-                    r = R::NeedMoreData;
-                    break;
-                case R::CreateGroup:
-                    this->f = nullptr;
-                    r = R::NeedMoreData;
-                    break;
-                case R::Next:
-                    r = R::ExitSuccess;
-                    break;
-            }
-            return r;
+            assert(this->next);
+            return this->_exec_next(top);
         }
     }
 
@@ -261,9 +229,6 @@ struct GroupExecutor : ExecutorBase
 struct TopExecutor : GroupExecutor
 {
     TopExecutor() = default;
-    TopExecutor(ExecutorBase&& e) noexcept
-      : GroupExecutor(std::move(e))
-    {}
 
     bool exec()
     {
