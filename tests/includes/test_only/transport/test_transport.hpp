@@ -63,16 +63,15 @@ namespace redemption_unit_test__
         }
     };
 
-    struct hexdump_with_remaining
+    struct hexdump_trailing
     {
         char const * type;
         uint8_t const * p;
-        std::size_t cur;
         std::size_t len;
 
         std::size_t size() const
         {
-            return this->len - this->cur;
+            return this->len;
         }
 
         uint8_t const * data() const
@@ -115,11 +114,11 @@ namespace redemption_unit_test__
         return out;
     }
 
-    inline std::ostream & operator<<(std::ostream & out, hexdump_with_remaining const & x)
+    inline std::ostream & operator<<(std::ostream & out, hexdump_trailing const & x)
     {
         return out
             << hexdump{{x.data(), x.size()}} << '\n'
-            << "~" << x.type << "() remaining=" << x.size() << " len=" << x.len
+            << "~" << x.type << "() remaining=" << x.size()
         ;
     }
 }
@@ -155,12 +154,8 @@ struct GeneratorTransport : Transport
             RED_REQUIRE_MESSAGE(this->len == this->current, 
                 "\n~GeneratorTransport() remaining=" << (this->len-this->current) 
                 << " len=" << this->len << "\n"
-                << (redemption_unit_test__::hexdump_with_remaining{
-<<<<<<< HEAD
-                    "GeneratorTransport", this->data.get() + this->current, this->current, this->len
-=======
-                    "GeneratorTransport", this->data.get(), this->current, this->len
->>>>>>> 7e7352c48f08edc9584a83f760777e8659497328
+                << (redemption_unit_test__::hexdump_trailing{
+                    "GeneratorTransport", this->data.get() + this->current, this->len - this->current
                 })
             );
             throw RemainingError{""};
@@ -255,8 +250,8 @@ struct CheckTransport : Transport
             RED_REQUIRE_MESSAGE(this->len == this->current, 
                 "\n~CheckTransport() reamining=0 failed, remaining=" << (this->len-this->current) 
                 << " len=" << this->len << "\n"
-                << (redemption_unit_test__::hexdump_with_remaining{
-                    "CheckTransport", this->data.get(), this->current, this->len
+                << (redemption_unit_test__::hexdump_trailing{
+                    "CheckTransport", this->data.get() + this->current, this->len - this->current
                 })
             );
             throw RemainingError{""};
@@ -268,25 +263,48 @@ private:
     void do_send(const uint8_t * const data, size_t len) override
     {
         const size_t available_len = std::min<size_t>(this->len - this->current, len);
-        RED_REQUIRE_MEM(
-            make_array_view(this->data.get() + this->current, available_len),
-            make_array_view(data, len));
-
-        this->current += len;
-
-        if (available_len != len || len == 0){
-            RED_CHECK_MESSAGE(available_len == len,
-                "check transport out of reference data available="
-                    << available_len << " len=" << len << " failed\n"
-                "=============== Common Part =======\n" <<
-                (redemption_unit_test__::hexdump{{data, available_len}}) <<
-                "=============== Got Unexpected Data =======\n" <<
-                (redemption_unit_test__::hexdump{{data + available_len, len - available_len}})
-            );
+        
+        if (0 != memcmp(data, this->data.get() + this->current, available_len)){
+            // data differs, find where
+            uint32_t differs = 0;
+            while (differs < available_len && data[differs] == this->data.get()[this->current+differs]) {
+                ++differs;
+            }
+            RED_CHECK_MEM(
+                make_array_view(this->data.get() + this->current, available_len),
+                make_array_view(data, len));
+//            RED_CHECK_MESSAGE(false, "\n"
+//                "=============== Common Part =======\n" <<
+//                (redemption_unit_test__::hexdump{{data, differs}}) <<
+//                "=============== Expected =======\n" <<
+//                (redemption_unit_test__::hexdump{{this->data.get() + this->current + differs, available_len - differs}}) <<
+//                "=============== Got =======\n" <<
+//                (redemption_unit_test__::hexdump{{data + differs, available_len - differs}})
+//            );
             this->data.reset();
             this->remaining_is_error = false;
             throw Error(ERR_TRANSPORT_DIFFERS);
         }
+
+//        RED_REQUIRE_MEM(
+//            make_array_view(this->data.get() + this->current, available_len),
+//            make_array_view(data, len));
+
+        this->current += len;
+
+//        if (available_len != len || len == 0){
+//            RED_CHECK_MESSAGE(available_len == len,
+//                "check transport out of reference data available="
+//                    << available_len << " len=" << len << " failed\n"
+//                "=============== Common Part =======\n" <<
+//                (redemption_unit_test__::hexdump{{data, available_len}}) <<
+//                "=============== Got Unexpected Data =======\n" <<
+//                (redemption_unit_test__::hexdump{{data + available_len, len - available_len}})
+//            );
+//            this->data.reset();
+//            this->remaining_is_error = false;
+//            throw Error(ERR_TRANSPORT_DIFFERS);
+//        }
     }
 
     std::unique_ptr<uint8_t[]> data;

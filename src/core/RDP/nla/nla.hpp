@@ -360,8 +360,6 @@ protected:
         Buffers[0].Buffer.copy(this->pubKeyAuth.get_data(),
                                this->ContextSizes.cbMaxSignature);
 
-        LOG(LOG_INFO, "Buffer Size %u %u %u", length, this->ContextSizes.cbMaxSignature, length - this->ContextSizes.cbMaxSignature);
-
         Buffers[1].Buffer.init(length - this->ContextSizes.cbMaxSignature);
         Buffers[1].Buffer.copy(this->pubKeyAuth.get_data() + this->ContextSizes.cbMaxSignature,
                                Buffers[1].Buffer.size());
@@ -394,7 +392,7 @@ protected:
         public_key2 = Buffers[1].Buffer.get_data();
 
         if (Buffers[1].Buffer.size() != public_key_length) {
-            LOG(LOG_ERR, "Decrypted Pub Key length does not match ! (%u != %u)", Buffers[1].Buffer.size(), public_key_length);
+            LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", Buffers[1].Buffer.size(), size_t(public_key_length));
             return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
         }
 
@@ -880,7 +878,6 @@ public:
         Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
         Buffers[0].Buffer.copy(this->authInfo.get_data(), Buffers[0].Buffer.size());
 
-        LOG(LOG_INFO, "Buffer Size %u %u %u", length, this->ContextSizes.cbMaxSignature, length - this->ContextSizes.cbMaxSignature);
         Buffers[1].Buffer.init(length - this->ContextSizes.cbMaxSignature);
         Buffers[1].Buffer.copy(this->authInfo.get_data() + this->ContextSizes.cbMaxSignature, Buffers[1].Buffer.size());
 

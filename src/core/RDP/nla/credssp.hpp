@@ -167,24 +167,16 @@ struct TSRequest final {
     }
 
     void emit(OutStream & stream) /* TODO const*/ {
-        int length;
-        int ts_request_length;
-        int nego_tokens_length;
-        int pub_key_auth_length;
-        int auth_info_length;
-        int client_nonce_length;
-
-        nego_tokens_length = (this->negoTokens.size() > 0)
+        int nego_tokens_length = (this->negoTokens.size() > 0)
             ? CredSSP::sizeof_nego_tokens(this->negoTokens.size())
             : 0;
-        pub_key_auth_length = (this->pubKeyAuth.size() > 0)
+        int pub_key_auth_length = (this->pubKeyAuth.size() > 0)
             ? CredSSP::sizeof_pub_key_auth(this->pubKeyAuth.size())
             : 0;
-        LOG(LOG_ERR, "pub_key_auth_length = %u", pub_key_auth_length);
-        auth_info_length = (this->authInfo.size() > 0)
+        int auth_info_length = (this->authInfo.size() > 0)
             ? CredSSP::sizeof_auth_info(this->authInfo.size())
             : 0;
-        client_nonce_length = (this->version >= 5 && this->clientNonce.size() > 0)
+        int client_nonce_length = (this->version >= 5 && this->clientNonce.size() > 0)
             ? CredSSP::sizeof_client_nonce(this->clientNonce.size())
             : 0;
 
@@ -197,11 +189,11 @@ struct TSRequest final {
             client_nonce_length = 0;
         }
 
-        length = nego_tokens_length
+        int length = nego_tokens_length
             + pub_key_auth_length
             + auth_info_length
             + client_nonce_length;
-        ts_request_length = this->ber_sizeof(length);
+        int ts_request_length = this->ber_sizeof(length);
 
         /* TSRequest */
         BER::write_sequence_tag(stream, ts_request_length);
