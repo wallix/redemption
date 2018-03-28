@@ -1052,8 +1052,8 @@ public:
             this->capture->set_pointer_display();
         }
         this->capture->get_capture_event().set_trigger_time(wait_obj::NOW);
-        if (this->capture->get_graphic_api()) {
-            this->set_gd(this->capture->get_graphic_api());
+        if (this->capture->has_graphic_api()) {
+            this->set_gd(this->capture);
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
@@ -4225,6 +4225,8 @@ protected:
             const signed int deltax = static_cast<int16_t>(cmd.srcx) - cmd.rect.x;
             const signed int deltay = static_cast<int16_t>(cmd.srcy) - cmd.rect.y;
 
+
+
             int srcx = drect.x + deltax;
             int srcy = drect.y + deltay;
 
@@ -4240,6 +4242,13 @@ protected:
 
                 srcy = 0;
             }
+
+            Rect srect = Rect(srcx, srcy, drect.cx, drect.cy).intersect(this->client_info.width, this->client_info.height);
+
+            drect.cx = srect.cx;
+            drect.cy = srect.cy;
+
+
 
             this->graphics_update->draw(RDPScrBlt(drect, cmd.rop, srcx, srcy), clip);
         }

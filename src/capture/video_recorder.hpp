@@ -100,7 +100,6 @@ public:
         write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,
         ConstImageDataView const & image_view, int bitrate,
         int frame_rate, int qscale, const char * codec_id,
-        const int target_width, const int target_height,
         int log_level
     );
 

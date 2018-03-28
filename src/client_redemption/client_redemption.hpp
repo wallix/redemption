@@ -770,7 +770,7 @@ public:
 
             this->capture.get()->gd_drawable->width();
 
-            this->graph_capture = this->capture.get()->get_graphic_api();
+            this->graph_capture = this->capture.get();
     }
 
 

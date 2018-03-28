@@ -621,6 +621,7 @@ private:
 
     std::unique_ptr<uint8_t[]> scaled_buffer;
 
+protected:
     TimestampTracer timestamp_tracer;
 
 protected:
@@ -678,7 +679,7 @@ public:
 
      virtual void clear_old() {}
 
-     void clear_png_interval(uint32_t num_start, uint32_t num_end){
+     void clear_png_interval(uint32_t num_start, uint32_t num_end) {
         for(uint32_t num = num_start ; num < num_end ; num++) {
             // unlink may fail, for instance if file does not exist, just don't care
             ::unlink(this->trans.seqgen()->get(num));
@@ -780,7 +781,46 @@ public:
             Rect rect = rect_.intersect(
                 {0, 0, this->drawable.width(), this->drawable.height()});
 
-            this->image_frame_api.reset(rect.x, rect.y, rect.cx, rect.cy);
+
+
+            bool     right         = true;
+            unsigned failure_count = 0;
+            while ((rect.cx & 3) && (failure_count < 2)) {
+                if (right) {
+                    if (rect.x + rect.cx < this->drawable.width()) {
+                        rect.cx += 1;
+
+                        failure_count = 0;
+                    }
+                    else {
+                        failure_count++;
+                    }
+
+                    right = false;
+                }
+                else {
+                    if (rect.x > 0) {
+                        rect.x -=1;
+                        rect.cx += 1;
+
+                        failure_count = 0;
+                    }
+                    else {
+                        failure_count++;
+                    }
+
+                    right = true;
+                }
+            }
+            if (rect.cx & 3) {
+                rect.cx &= ~ 3;
+            }
+
+
+
+            if (this->image_frame_api.reset(rect.x, rect.y, rect.cx, rect.cy)) {
+                this->timestamp_tracer = TimestampTracer(this->image_frame_api.get_mutable_image_view());
+            }
         }
     }
 };
@@ -1381,6 +1421,14 @@ Capture::Capture(
         }
     }
 
+    if (capture_meta) {
+        this->meta_capture_obj.reset(new MetaCaptureImpl(
+            capture_params.now, meta_params,
+            capture_params.record_tmp_path, capture_params.basename,
+            report_error_from_reporter(capture_params.report_message)
+        ));
+    }
+
     if (capture_wrm || capture_video || capture_ocr || capture_png || capture_video_full) {
         if (drawable_params.rdp_drawable) {
             this->gd_drawable = drawable_params.rdp_drawable;
@@ -1394,7 +1442,8 @@ Capture::Capture(
 
         not_null_ptr<gdi::ImageFrameApi> image_frame_api_ptr = this->gd_drawable;
 
-        if (!crop_rect.isempty()) {
+        if (!crop_rect.isempty() &&
+            ((capture_png && !png_params.real_time_image_capture) || capture_video || capture_video_full)) {
             this->video_cropper.reset(new VideoCropper(
                     *this->gd_drawable,
                     crop_rect.x,
@@ -1438,14 +1487,6 @@ Capture::Capture(
         if (capture_wrm) {
             this->wrm_capture_obj.reset(new WrmCaptureImpl(
                 capture_params, wrm_params, *this->gd_drawable));
-        }
-
-        if (capture_meta) {
-            this->meta_capture_obj.reset(new MetaCaptureImpl(
-                capture_params.now, meta_params,
-                capture_params.record_tmp_path, capture_params.basename,
-                report_error_from_reporter(capture_params.report_message)
-            ));
         }
 
         if (capture_video) {
@@ -1640,7 +1681,6 @@ void Capture::visibility_rects_event(Rect const & rect_) {
         cap.visibility_rects_event(rect_);
     }
 
-
     if ((this->smart_video_cropping == SmartVideoCropping::disable) ||
         (this->smart_video_cropping == SmartVideoCropping::v1)) {
         return;
@@ -1654,8 +1694,6 @@ void Capture::visibility_rects_event(Rect const & rect_) {
     assert((image_frame_rect.cx <= drawable_width) && (image_frame_rect.cy <= drawable_height));
 
     Rect const rect = Rect(0, 0, drawable_width, drawable_height).intersect(rect_);
-
-    assert((rect.cx <= image_frame_rect.cx) && (rect.cy <= image_frame_rect.cy));
 
     if (image_frame_rect.contains(rect)) {
         return;
@@ -1677,7 +1715,9 @@ void Capture::visibility_rects_event(Rect const & rect_) {
         new_image_frame_rect.y = (rect.y + rect.cy) - new_image_frame_rect.cy;
     }
 
-    this->video_cropper->reset(new_image_frame_rect);
+    bool const retval = this->video_cropper->reset(new_image_frame_rect);
+    assert(!retval);
+    (void)retval;
 }
 
 Rect Capture::get_joint_visibility_rect() const
@@ -1705,7 +1745,9 @@ Rect Capture::get_joint_visibility_rect() const
                                 ((window.style & WS_VISIBLE) ||
                                  ((window.show_state != SW_FORCEMINIMIZE) &&
                                   (window.show_state != SW_HIDE) &&
-                                  (window.show_state != SW_MINIMIZE)))) {
+                                  (window.show_state != SW_MINIMIZE)) ||
+                                  // window is ctreated before recording starts
+                                  ((!window.style && !window.show_state)))) {
                                     joint_visibility_rect =
                                         joint_visibility_rect.disjunct(
                                             window_visibility_rect.rect.offset(

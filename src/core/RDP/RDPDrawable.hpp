@@ -938,9 +938,9 @@ public:
 
 //    void reset_to_origin() noexcept override {}
 
-    void reset(unsigned int /*x*/, unsigned int /*y*/,
+    bool reset(unsigned int /*x*/, unsigned int /*y*/,
         unsigned int /*out_width*/, unsigned int /*out_height*/) noexcept
-        override {}
+        override { return false; }
 
     Rect get() const override {
         return Rect(0, 0, this->drawable.width(), this->drawable.height());

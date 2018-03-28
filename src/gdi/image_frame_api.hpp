@@ -44,11 +44,13 @@ struct ImageFrameApi
 
     virtual unsigned int get_last_update_index() const = 0;
 
-    void reset(Rect const & out_rect) {
-        this->reset(out_rect.x, out_rect.y, out_rect.cx, out_rect.cy);
+    // returns true if size of image frame has changed
+    bool reset(Rect const & out_rect) {
+        return this->reset(out_rect.x, out_rect.y, out_rect.cx, out_rect.cy);
     }
 
-    virtual void reset(unsigned int x, unsigned int y,
+    // returns true if size of image frame has changed
+    virtual bool reset(unsigned int x, unsigned int y,
                unsigned int out_width, unsigned int out_height) = 0;
 
     virtual Rect get() const = 0;
