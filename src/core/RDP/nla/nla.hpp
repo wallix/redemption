@@ -26,6 +26,7 @@
 #include "core/RDP/nla/ntlm/ntlm.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/translation.hpp"
+#include "system/ssl_sha256.hpp"
 
 #ifndef __EMSCRIPTEN__
 #include "core/RDP/nla/kerberos/kerberos.hpp"
@@ -34,6 +35,14 @@
 #include "transport/transport.hpp"
 
 #define NLA_PKG_NAME NTLMSP_NAME
+
+/* CredSSP Client-To-Server Binding Hash\0 */
+static const uint8_t client_server_hash_magic[] =
+    "CredSSP Client-To-Server Binding Hash";
+/* CredSSP Server-To-Client Binding Hash\0 */
+static const uint8_t server_client_hash_magic[] =
+    "CredSSP Server-To-Client Binding Hash";
+static const size_t CLIENT_NONCE_LENTH = 32;
 
 class rdpCredsspBase : noncopyable
 {
@@ -47,7 +56,11 @@ protected:
     Array & negoToken;
     Array & pubKeyAuth;
     Array & authInfo;
+    Array & clientNonce;
+    uint8_t SavedClientNonce[CLIENT_NONCE_LENTH];
     Array PublicKey;
+    Array ClientServerHash;
+    Array ServerClientHash;
 
     Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
@@ -86,6 +99,8 @@ public:
         , negoToken(ts_request.negoTokens)
         , pubKeyAuth(ts_request.pubKeyAuth)
         , authInfo(ts_request.authInfo)
+        , clientNonce(ts_request.clientNonce)
+        , SavedClientNonce()
         , table(new SecurityFunctionTable)
         , RestrictedAdminMode(restricted_admin_mode)
         , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
@@ -201,6 +216,53 @@ protected:
         }
     }
 
+    void credssp_generate_client_nonce() {
+        LOG(LOG_DEBUG, "credssp generate client nonce");
+        this->rand.random(this->SavedClientNonce,
+                          CLIENT_NONCE_LENTH);
+        this->credssp_set_client_nonce();
+    }
+
+    void credssp_get_client_nonce() {
+        LOG(LOG_DEBUG, "credssp get client nonce");
+        if (this->clientNonce.size() == CLIENT_NONCE_LENTH) {
+            memcpy(this->SavedClientNonce,
+                   this->clientNonce.get_data(),
+                   CLIENT_NONCE_LENTH);
+        }
+    }
+    void credssp_set_client_nonce() {
+        LOG(LOG_DEBUG, "credssp set client nonce");
+        if (this->clientNonce.size() == 0) {
+            this->clientNonce.init(CLIENT_NONCE_LENTH);
+            memcpy(this->clientNonce.get_data(),
+                   this->SavedClientNonce,
+                   CLIENT_NONCE_LENTH);
+        }
+    }
+
+    void credssp_generate_public_key_hash(bool client_to_server) {
+        LOG(LOG_DEBUG, "generate credssp public key hash (%s)",
+            client_to_server ? "client->server" : "server->client");
+        Array & SavedHash = client_to_server
+            ? this->ClientServerHash
+            : this->ServerClientHash;
+        const uint8_t * magic_hash = client_to_server
+            ? client_server_hash_magic
+            : server_client_hash_magic;
+        size_t magic_hash_len = client_to_server
+            ? sizeof(client_server_hash_magic)
+            : sizeof(server_client_hash_magic);
+        SslSha256 sha256;
+        uint8_t hash[SslSha256::DIGEST_LENGTH];
+        sha256.update(magic_hash, magic_hash_len);
+        sha256.update(this->SavedClientNonce, CLIENT_NONCE_LENTH);
+        sha256.update(this->PublicKey.get_data(), this->PublicKey.size());
+        sha256.final(hash);
+        SavedHash.init(sizeof(hash));
+        memcpy(SavedHash.get_data(), hash, sizeof(hash));
+    }
+
     SEC_STATUS credssp_encrypt_public_key_echo() {
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspClient::encrypt_public_key_echo");
@@ -209,8 +271,26 @@ protected:
         SecBufferDesc Message;
         SEC_STATUS status;
         int public_key_length;
+        uint8_t * public_key;
+        uint32_t version = this->ts_request.version;
 
         public_key_length = this->PublicKey.size();
+        public_key = this->PublicKey.get_data();
+        if (version >= 5) {
+            bool client_to_server = !this->server;
+            if (client_to_server) {
+                this->credssp_generate_client_nonce();
+            } else {
+                this->credssp_get_client_nonce();
+            }
+            this->credssp_generate_public_key_hash(client_to_server);
+            public_key_length = client_to_server
+                ? this->ClientServerHash.size()
+                : this->ServerClientHash.size();
+            public_key = client_to_server
+                ? this->ClientServerHash.get_data()
+                : this->ServerClientHash.get_data();
+        }
 
         Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
         Buffers[1].BufferType = SECBUFFER_DATA;  /* TLS Public Key */
@@ -218,11 +298,11 @@ protected:
         Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
 
         Buffers[1].Buffer.init(public_key_length);
-        Buffers[1].Buffer.copy(this->PublicKey.get_data(),
-                               Buffers[1].Buffer.size());
+        Buffers[1].Buffer.copy(public_key, Buffers[1].Buffer.size());
 
-        if (this->server) {
-            /* server echos the public key +1 */
+        if (this->server && version < 5) {
+            // if we are server and protocol is 2,3,4
+            // then echos the public key +1
             this->ap_integer_increment_le(Buffers[1].Buffer.get_data(), Buffers[1].Buffer.size());
         }
 
@@ -255,6 +335,8 @@ protected:
         SecBuffer Buffers[2];
         SecBufferDesc Message;
         SEC_STATUS status;
+        uint32_t version = this->ts_request.version;
+
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspClient::decrypt_public_key_echo");
         }
@@ -270,8 +352,6 @@ protected:
             return SEC_E_INVALID_TOKEN;
         }
         length = this->pubKeyAuth.size();
-
-        public_key_length = this->PublicKey.size();
 
         Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
         Buffers[1].BufferType = SECBUFFER_DATA; /* Encrypted TLS Public Key */
@@ -295,16 +375,30 @@ protected:
             return status;
         }
 
+        public_key_length = this->PublicKey.size();
         public_key1 = this->PublicKey.get_data();
+        if (version >= 5) {
+            bool client_to_server = this->server;
+            this->credssp_get_client_nonce();
+            this->credssp_generate_public_key_hash(client_to_server);
+            public_key_length = client_to_server
+                ? this->ClientServerHash.size()
+                : this->ServerClientHash.size();
+            public_key1 = client_to_server
+                ? this->ClientServerHash.get_data()
+                : this->ServerClientHash.get_data();
+        }
+
         public_key2 = Buffers[1].Buffer.get_data();
 
         if (Buffers[1].Buffer.size() != public_key_length) {
-            LOG(LOG_ERR, "Decrypted Pub Key length does not match !");
+            LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", Buffers[1].Buffer.size(), size_t(public_key_length));
             return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
         }
 
-        if (!this->server) {
-            /* server echos the public key +1 */
+        if (!this->server && version < 5) {
+            // if we are client and protocol is 2,3,4
+            // then get the public key minus one
             ap_integer_decrement_le(public_key2, public_key_length);
         }
         if (memcmp(public_key1, public_key2, public_key_length) != 0) {
@@ -329,6 +423,8 @@ protected:
         this->negoToken.init(0);
         this->pubKeyAuth.init(0);
         this->authInfo.init(0);
+        this->clientNonce.init(0);
+        this->ts_request.error_code = 0;
     }
 };
 
@@ -780,12 +876,10 @@ public:
         length = this->authInfo.size();
 
         Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
-        Buffers[0].Buffer.copy(this->authInfo.get_data(),
-                               Buffers[0].Buffer.size());
+        Buffers[0].Buffer.copy(this->authInfo.get_data(), Buffers[0].Buffer.size());
 
         Buffers[1].Buffer.init(length - this->ContextSizes.cbMaxSignature);
-        Buffers[1].Buffer.copy(this->authInfo.get_data() + this->ContextSizes.cbMaxSignature,
-                               Buffers[1].Buffer.size());
+        Buffers[1].Buffer.copy(this->authInfo.get_data() + this->ContextSizes.cbMaxSignature, Buffers[1].Buffer.size());
 
         Message.cBuffers = 2;
         Message.ulVersion = SECBUFFER_VERSION;
