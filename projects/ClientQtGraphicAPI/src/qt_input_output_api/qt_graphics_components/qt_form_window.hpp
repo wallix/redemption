@@ -80,6 +80,9 @@ Q_OBJECT
 public:
     ClientInputMouseKeyboardAPI * controllers;
 
+    int _width;
+    int _height;
+
     QPixmap pixmap;
     QRect drop_rect;
 
@@ -102,7 +105,9 @@ public:
         QWidget * parent)
       : QWidget(parent)
       , controllers(controllers)
-      , pixmap(385, 60)
+      , _width(385)
+      , _height(60)
+      , pixmap(this->_width, this->_height)
       , drop_rect(24, 95, 240, 160)
       , name(name)
       , path(path)
@@ -111,7 +116,7 @@ public:
       , checksum(checksum)
       , movie_len(movie_len)
     {
-        this->setFixedSize(385, 60);
+        this->setFixedSize(this->_width, this->_height);
     }
 
     void draw_account() {
@@ -324,6 +329,7 @@ public:
 };
 
 
+
 class FormReplay : public QWidget
 {
 
@@ -347,7 +353,6 @@ public:
     , scroller(this)
     , movie_panel(controllers, this)
     {
-
         this->scroller.setFixedSize(410,  250);
         this->scroller.setStyleSheet("background-color: #C4C4C3; border: 1px solid #FFFFFF;"
             "border-bottom-color: #FF8C00;");
@@ -414,6 +419,7 @@ public:
 
     virtual void targetPicked(int ) {}
     virtual void drop_account() {}
+    virtual void check_password_box() {}
     virtual ~FormTabAPI() = default;
 };
 
@@ -616,6 +622,22 @@ public:
         }
     }
 
+    void mouseDoubleClickEvent( QMouseEvent * e ) override {
+        switch (e->button()) {
+            case Qt::LeftButton:
+                if (this->main_tab) {
+                    this->main_tab->account_index_to_drop = this->accountData.index;
+                    this->main_tab->drop_account();
+                    this->main_tab->account_index_to_drop = -1;
+                    this->main_tab->setCursor(Qt::ArrowCursor);
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+
     void paintEvent(QPaintEvent * event) override {
         Q_UNUSED(event);
         QPen                 pen;
@@ -679,98 +701,49 @@ public:
 
 
 
-class FormTabQt : public FormTabAPI
+class FormAccountConnectionPanel : public QWidget
 {
-
-Q_OBJECT
-
 
 public:
     enum : int {
         MAX_ACCOUNT_DATA = 15
     };
 
-    uint8_t protocol_type;
-    ClientRedemptionIOAPI       * _front;
     ClientInputMouseKeyboardAPI * controllers;
-    const int            _width;
-    const int            _height;
-
-    QGridLayout         grid_layout;
-    int                  _accountNB;
-
+    FormTabAPI * main_panel;
     ConnectionFormQt     line_edit_panel;
-
-    QLabel               _errorLabel;
-    QCheckBox            _pwdCheckBox;
-
     AccountPanelQt  *   account_panel;
-
-    QPushButton          _buttonConnexion;
-    QPushButton          _buttonOptions;
-
-    QtOptions options;
-
     QScrollArea scroller;
 
     AccountData          _accountData[MAX_ACCOUNT_DATA];
     bool                 _pwdCheckBoxChecked;
     int                  _lastTargetIndex;
+    int                  _accountNB;
 
 
-
-    FormTabQt(ClientInputMouseKeyboardAPI * controllers, ClientRedemptionIOAPI  * front, uint8_t protocol_type, QWidget * parent)
-        : FormTabAPI(parent)
-        , protocol_type(protocol_type)
-        , _front(front)
-        , controllers(controllers)
-        , _width(400)
-        , _height(600)
-        , grid_layout(this)
-        , _accountNB(0)
-        , line_edit_panel(this, protocol_type, this)
-        , _errorLabel(   QString(""            ), this)
-        , _pwdCheckBox(QString("Save password."), this)
-        , _buttonConnexion("Connection", this)
-        , _buttonOptions("Options", this)
-        , options(front, protocol_type, this)
-        , scroller(this)
-        , _pwdCheckBoxChecked(false)
-        , _lastTargetIndex(0)
+    FormAccountConnectionPanel(ClientInputMouseKeyboardAPI * controllers, FormTabAPI * main_panel,  uint8_t protocol_type)
+      : QWidget(main_panel)
+      , controllers(controllers)
+      , main_panel(main_panel)
+      , line_edit_panel(main_panel, protocol_type, this)
+      , scroller(this)
+      , _lastTargetIndex(0)
+      , _accountNB(0)
     {
         this->setAccountData();
+        this->account_panel = new AccountPanelQt(main_panel, this->_accountData, this->_accountNB, this);
 
-        this->grid_layout.addWidget(&(this->line_edit_panel), 0, 0, 1, 2);
-
-        this->account_panel = new AccountPanelQt(this, this->_accountData, this->_accountNB, this);
         this->scroller.setFixedSize(170,  160);
         this->scroller.setStyleSheet("/*background-color: #FFFFFF;*/ border: 1px solid #FFFFFF;"
-            "border-bottom-color: #FF8C00;");
+        "border-bottom-color: #FF8C00;");
         this->scroller.setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
         this->scroller.setWidget(this->account_panel);
-        this->grid_layout.addWidget(&(this->scroller), 0, 2, 1, 2);
 
-        this->grid_layout.addWidget(&(this->_pwdCheckBox), 1, 0, 1, 2);
-        this->_errorLabel.setFixedHeight(this->_errorLabel.height()+10);
-        this->grid_layout.addWidget(&(this->_errorLabel), 2, 0, 1, 4);
+        this->setFixedSize(this->scroller.width() + this->line_edit_panel.width(), this->scroller.height());
 
-        this->_buttonConnexion.setToolTip(this->_buttonConnexion.text());
-        this->_buttonConnexion.setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(&(this->_buttonConnexion)   , SIGNAL (released()), this, SLOT (connexionReleased()));
-        this->_buttonConnexion.setFocusPolicy(Qt::StrongFocus);
-        this->_buttonConnexion.setAutoDefault(true);
-        this->grid_layout.addWidget(&(this->_buttonConnexion), 3, 2, 1, 2);
+        this->line_edit_panel.setGeometry(QRect(0, 0, this->line_edit_panel.width(), this->line_edit_panel.height() ));
 
-        this->_buttonOptions.setToolTip(this->_buttonOptions.text());
-        this->_buttonOptions.setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(&(this->_buttonOptions)     , SIGNAL (released()), this, SLOT (optionsReleased()));
-        this->_buttonOptions.setFocusPolicy(Qt::StrongFocus);
-        this->grid_layout.addWidget(&(this->_buttonOptions), 3, 0, 1, 1);
-
-        this->grid_layout.addWidget(&(this->options), 4, 0, 1, 2);
-        this->options.hide();
-
-        this->setLayout(&(this->grid_layout));
+        this->scroller.setGeometry(QRect(this->line_edit_panel.width()+1, 0, this->scroller.width(), this->scroller.height() ));
     }
 
 
@@ -793,7 +766,7 @@ public:
                     if (tag.compare(std::string("save_pwd")) == 0) {
                         if (info.compare(std::string("true")) == 0) {
                             this->_pwdCheckBoxChecked = true;
-                            this->_pwdCheckBox.setCheckState(Qt::Checked);
+                             this->main_panel->check_password_box();
                         } else {
                             this->_pwdCheckBoxChecked = false;
                         }
@@ -848,59 +821,240 @@ public:
         }
     }
 
+};
+
+
+
+class FormTabQt : public FormTabAPI
+{
+
+Q_OBJECT
+
+
+public:
+
+
+    uint8_t protocol_type;
+    ClientRedemptionIOAPI       * _front;
+    ClientInputMouseKeyboardAPI * controllers;
+    const int            _width;
+    const int            _height;
+
+    QGridLayout         grid_layout;
+//     int                  _accountNB;
+
+
+//     ConnectionFormQt     line_edit_panel;
+//     AccountPanelQt  *   account_panel;
+//     QScrollArea scroller;
+
+    QLabel               _errorLabel;
+    QCheckBox            _pwdCheckBox;
+
+    FormAccountConnectionPanel formAccountConnectionPanel;
+
+    QPushButton          _buttonConnexion;
+    QPushButton          _buttonOptions;
+
+    QtOptions options;
+
+
+
+
+
+
+
+    FormTabQt(ClientInputMouseKeyboardAPI * controllers, ClientRedemptionIOAPI  * front, uint8_t protocol_type, QWidget * parent)
+        : FormTabAPI(parent)
+        , protocol_type(protocol_type)
+        , _front(front)
+        , controllers(controllers)
+        , _width(400)
+        , _height(600)
+        , grid_layout(this)
+//         , _accountNB(0)
+//         , line_edit_panel(this, protocol_type, this)
+//         , scroller(this)
+        , _errorLabel(   QString(""            ), this)
+        , _pwdCheckBox(QString("Save password."), this)
+        , formAccountConnectionPanel(this->controllers, this, this->protocol_type)
+        , _buttonConnexion("Connection", this)
+        , _buttonOptions("Options", this)
+        , options(front, protocol_type, this)
+//         , _pwdCheckBoxChecked(false)
+//         , _lastTargetIndex(0)
+    {
+//         this->setMinimumHeight(360);
+//         this->setAccountData();
+
+//         this->formAccountConnectionPanel = new F;
+        this->grid_layout.addWidget(&(this->formAccountConnectionPanel), 0, 0, 1, 3);
+
+//         this->grid_layout.addWidget(&(this->line_edit_panel), 0, 0, 1, 2);
+//
+//         this->account_panel = new AccountPanelQt(this, this->_accountData, this->_accountNB, this);
+//         this->scroller.setFixedSize(170,  160);
+//         this->scroller.setStyleSheet("/*background-color: #FFFFFF;*/ border: 1px solid #FFFFFF;"
+//             "border-bottom-color: #FF8C00;");
+//         this->scroller.setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
+//         this->scroller.setWidget(this->account_panel);
+//         this->grid_layout.addWidget(&(this->scroller), 0, 2, 1, 2);
+
+        this->grid_layout.addWidget(&(this->_pwdCheckBox), 1, 0, 1, 2);
+        this->_errorLabel.setFixedHeight(this->_errorLabel.height()+10);
+        this->grid_layout.addWidget(&(this->_errorLabel), 2, 0, 1, 4);
+
+        this->_buttonConnexion.setToolTip(this->_buttonConnexion.text());
+        this->_buttonConnexion.setCursor(Qt::PointingHandCursor);
+        this->QObject::connect(&(this->_buttonConnexion)   , SIGNAL (released()), this, SLOT (connexionReleased()));
+        this->_buttonConnexion.setFocusPolicy(Qt::StrongFocus);
+        this->_buttonConnexion.setAutoDefault(true);
+        this->grid_layout.addWidget(&(this->_buttonConnexion), 3, 2, 1, 2);
+
+        this->_buttonOptions.setToolTip(this->_buttonOptions.text());
+        this->_buttonOptions.setCursor(Qt::PointingHandCursor);
+        this->QObject::connect(&(this->_buttonOptions)     , SIGNAL (released()), this, SLOT (optionsReleased()));
+        this->_buttonOptions.setFocusPolicy(Qt::StrongFocus);
+        this->grid_layout.addWidget(&(this->_buttonOptions), 3, 0, 1, 1);
+
+        this->grid_layout.addWidget(&(this->options), 4, 0, 3, 3);
+        this->options.hide();
+
+        this->setLayout(&(this->grid_layout));
+    }
+
+
+//     void setAccountData() {
+//         if (this->controllers->client) {
+//             this->_accountNB = 0;
+//             std::ifstream ifichier(this->controllers->client->USER_CONF_LOG, std::ios::in);
+//
+//             if (ifichier) {
+//                 int accountNB(0);
+//                 std::string ligne;
+//                 const std::string delimiter = " ";
+//
+//                 while(std::getline(ifichier, ligne)) {
+//                     auto pos(ligne.find(delimiter));
+//                     std::string tag  = ligne.substr(0, pos);
+//                     std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
+//
+//
+//                     if (tag.compare(std::string("save_pwd")) == 0) {
+//                         if (info.compare(std::string("true")) == 0) {
+//                             this->_pwdCheckBoxChecked = true;
+//                             this->_pwdCheckBox.setCheckState(Qt::Checked);
+//                         } else {
+//                             this->_pwdCheckBoxChecked = false;
+//                         }
+//                     } else
+//                     if (tag.compare(std::string("last_target")) == 0) {
+//                         this->_lastTargetIndex = std::stoi(info);
+//                     } else
+//                     if (tag.compare(std::string("title")) == 0) {
+//                         this->_accountData[accountNB].title = info;
+//                     } else
+//                     if (tag.compare(std::string("IP")) == 0) {
+//                         this->_accountData[accountNB].IP = info;
+//                     } else
+//                     if (tag.compare(std::string("name")) == 0) {
+//                         this->_accountData[accountNB].name = info;
+//                     } else
+//                     if (tag.compare(std::string("pwd")) == 0) {
+//                         this->_accountData[accountNB].pwd = info;
+//                     } else
+//                     if (tag.compare(std::string("options_profil")) == 0) {
+//                         this->_accountData[accountNB].options_profil = std::stoi(info);
+//                         this->_accountData[accountNB].index = accountNB+1;
+//                         accountNB++;
+//                         if (accountNB == MAX_ACCOUNT_DATA) {
+//                             this->_accountNB = MAX_ACCOUNT_DATA;
+//                             accountNB = 0;
+//                         }
+//                     } else
+//                     if (tag.compare(std::string("port")) == 0) {
+//                         this->_accountData[accountNB].port = std::stoi(info);
+//                     }
+//                 }
+//
+//                 if (this->_accountNB < MAX_ACCOUNT_DATA) {
+//                     this->_accountNB = accountNB;
+//                 }
+//
+//                 this->formAccountConnectionPanel->line_edit_panel._IPCombobox.clear();
+//                 this->formAccountConnectionPanel->line_edit_panel._IPCombobox.addItem(QString(""), 0);
+//
+//                 QStringList stringList;
+//
+//                 for (int i = 0; i < this->_accountNB; i++) {
+//                     std::string title(this->_accountData[i].IP + std::string(" - ")+ this->_accountData[i].name);
+//                     this->formAccountConnectionPanel->line_edit_panel._IPCombobox.addItem(QString(title.c_str()), i+1);
+//                     stringList << title.c_str();
+//                 }
+//                 //this->_completer = new QCompleter(stringList, this);
+//             }else {
+//                 LOG(LOG_INFO, "can't open login config file");
+//             }
+//         }
+//     }
+
+    void check_password_box() override {
+        this->_pwdCheckBox.setCheckState(Qt::Checked);
+    }
+
     void set_ErrorMsg(std::string str) {
         this->_errorLabel.clear();
         this->_errorLabel.setText(QString(str.c_str()));
     }
 
     void set_IPField(std::string str) {
-        this->line_edit_panel._IPField.clear();
-        this->line_edit_panel._IPField.insert(QString(str.c_str()));
+        this->formAccountConnectionPanel.line_edit_panel._IPField.clear();
+        this->formAccountConnectionPanel.line_edit_panel._IPField.insert(QString(str.c_str()));
     }
 
     void set_userNameField(std::string str) {
-        this->line_edit_panel._userNameField.clear();
-        this->line_edit_panel._userNameField.insert(QString(str.c_str()));
+        this->formAccountConnectionPanel.line_edit_panel._userNameField.clear();
+        this->formAccountConnectionPanel.line_edit_panel._userNameField.insert(QString(str.c_str()));
     }
 
     void set_PWDField(std::string str) {
-        this->line_edit_panel._PWDField.clear();
-        this->line_edit_panel._PWDField.insert(QString(str.c_str()));
+        this->formAccountConnectionPanel.line_edit_panel._PWDField.clear();
+        this->formAccountConnectionPanel.line_edit_panel._PWDField.insert(QString(str.c_str()));
     }
 
     void set_portField(int str) {
-        this->line_edit_panel._portField.clear();
+        this->formAccountConnectionPanel.line_edit_panel._portField.clear();
         if (str == 0) {
-            this->line_edit_panel._portField.insert(QString(""));
+            this->formAccountConnectionPanel.line_edit_panel._portField.insert(QString(""));
         } else {
-            this->line_edit_panel._portField.insert(QString(std::to_string(str).c_str()));
+            this->formAccountConnectionPanel.line_edit_panel._portField.insert(QString(std::to_string(str).c_str()));
         }
     }
 
     std::string get_IPField() {
         std::string delimiter(" - ");
-        std::string ip_field_content = this->line_edit_panel._IPField.text().toStdString();
+        std::string ip_field_content = this->formAccountConnectionPanel.line_edit_panel._IPField.text().toStdString();
         auto pos(ip_field_content.find(delimiter));
         std::string IP  = ip_field_content.substr(0, pos);
         return IP;
     }
 
     std::string get_userNameField() {
-        if (this->line_edit_panel._userNameField.text().toStdString() !=  std::string(""))
-            return this->line_edit_panel._userNameField.text().toStdString();
+        if (this->formAccountConnectionPanel.line_edit_panel._userNameField.text().toStdString() !=  std::string(""))
+            return this->formAccountConnectionPanel.line_edit_panel._userNameField.text().toStdString();
 
         return std::string(" ");
     }
 
     std::string get_PWDField() {
-        if (this->line_edit_panel._PWDField.text().toStdString() !=  std::string(""))
-            return this->line_edit_panel._PWDField.text().toStdString();
+        if (this->formAccountConnectionPanel.line_edit_panel._PWDField.text().toStdString() !=  std::string(""))
+            return this->formAccountConnectionPanel.line_edit_panel._PWDField.text().toStdString();
 
         return std::string(" ");
     }
 
     int get_portField() {
-        return this->line_edit_panel._portField.text().toInt();
+        return this->formAccountConnectionPanel.line_edit_panel._portField.text().toInt();
     }
 
     void keyPressEvent(QKeyEvent *e) override {
@@ -925,22 +1079,22 @@ public:
              return;
         }
         if (index == 0) {
-            this->line_edit_panel._IPField.clear();
-            this->line_edit_panel._userNameField.clear();
-            this->line_edit_panel._PWDField.clear();
-            this->line_edit_panel._portField.clear();
+            this->formAccountConnectionPanel.line_edit_panel._IPField.clear();
+            this->formAccountConnectionPanel.line_edit_panel._userNameField.clear();
+            this->formAccountConnectionPanel.line_edit_panel._PWDField.clear();
+            this->formAccountConnectionPanel.line_edit_panel._portField.clear();
 
         } else {
             index--;
-            this->set_IPField(this->_accountData[index].IP);
-            this->set_userNameField(this->_accountData[index].name);
-            this->set_PWDField(this->_accountData[index].pwd);
-            this->set_portField(this->_accountData[index].port);
+            this->set_IPField(this->formAccountConnectionPanel._accountData[index].IP);
+            this->set_userNameField(this->formAccountConnectionPanel._accountData[index].name);
+            this->set_PWDField(this->formAccountConnectionPanel._accountData[index].pwd);
+            this->set_portField(this->formAccountConnectionPanel._accountData[index].port);
 
-            this->controllers->client->current_user_profil = this->_accountData[index].options_profil;
+            this->controllers->client->current_user_profil = this->formAccountConnectionPanel._accountData[index].options_profil;
         }
 
-        this->_buttonConnexion.setFocus();
+//         this->_buttonConnexion.setFocus();
     }
 
 private Q_SLOTS:
@@ -957,58 +1111,58 @@ private Q_SLOTS:
 
         if (this->controllers->client->connected && this->controllers->client->mod !=  nullptr) {
             bool alreadySet = false;
-            this->_pwdCheckBoxChecked = this->_pwdCheckBox.isChecked();
+            this->formAccountConnectionPanel._pwdCheckBoxChecked = this->_pwdCheckBox.isChecked();
 
             std::string title(this->get_IPField() + std::string(" - ")+ this->get_userNameField());
 
-            for (int i = 0; i < this->_accountNB; i++) {
-                if (this->_accountData[i].title.compare(title) == 0) {
+            for (int i = 0; i < this->formAccountConnectionPanel._accountNB; i++) {
+                if (this->formAccountConnectionPanel._accountData[i].title.compare(title) == 0) {
                     alreadySet = true;
-                    this->_lastTargetIndex = i;
-                    this->_accountData[i].pwd  = this->get_PWDField();
-                    this->_accountData[i].port = this->get_portField();
-                    this->_accountData[i].options_profil  = this->controllers->client->current_user_profil;
+                    this->formAccountConnectionPanel._lastTargetIndex = i;
+                    this->formAccountConnectionPanel._accountData[i].pwd  = this->get_PWDField();
+                    this->formAccountConnectionPanel._accountData[i].port = this->get_portField();
+                    this->formAccountConnectionPanel._accountData[i].options_profil  = this->controllers->client->current_user_profil;
                 }
             }
 
-            if (!alreadySet && (this->_accountNB < MAX_ACCOUNT_DATA)) {
-                this->_accountData[this->_accountNB].title = title;
-                this->_accountData[this->_accountNB].IP    = this->get_IPField();
-                this->_accountData[this->_accountNB].name  = this->get_userNameField();
-                this->_accountData[this->_accountNB].pwd   = this->get_PWDField();
-                this->_accountData[this->_accountNB].port  = this->get_portField();
-                this->_accountData[this->_accountNB].options_profil  = this->controllers->client->current_user_profil;
-                this->_accountNB++;
+            if (!alreadySet && (this->formAccountConnectionPanel._accountNB < FormAccountConnectionPanel::MAX_ACCOUNT_DATA)) {
+                this->formAccountConnectionPanel._accountData[this->formAccountConnectionPanel._accountNB].title = title;
+                this->formAccountConnectionPanel._accountData[this->formAccountConnectionPanel._accountNB].IP    = this->get_IPField();
+                this->formAccountConnectionPanel._accountData[this->formAccountConnectionPanel._accountNB].name  = this->get_userNameField();
+                this->formAccountConnectionPanel._accountData[this->formAccountConnectionPanel._accountNB].pwd   = this->get_PWDField();
+                this->formAccountConnectionPanel._accountData[this->formAccountConnectionPanel._accountNB].port  = this->get_portField();
+                this->formAccountConnectionPanel._accountData[this->formAccountConnectionPanel._accountNB].options_profil  = this->controllers->client->current_user_profil;
+                this->formAccountConnectionPanel._accountNB++;
 
-                if (this->_accountNB > MAX_ACCOUNT_DATA) {
-                    this->_accountNB = MAX_ACCOUNT_DATA;
+                if (this->formAccountConnectionPanel._accountNB > FormAccountConnectionPanel::MAX_ACCOUNT_DATA) {
+                    this->formAccountConnectionPanel._accountNB = FormAccountConnectionPanel::MAX_ACCOUNT_DATA;
                 }
-                this->_lastTargetIndex = this->_accountNB;
+                this->formAccountConnectionPanel._lastTargetIndex = this->formAccountConnectionPanel._accountNB;
             }
 
             std::ofstream ofichier(this->controllers->client->USER_CONF_LOG, std::ios::out | std::ios::trunc);
             if(ofichier) {
 
-                if (this->_pwdCheckBoxChecked) {
+                if (this->formAccountConnectionPanel._pwdCheckBoxChecked) {
                     ofichier << "save_pwd true" << "\n";
                 } else {
                     ofichier << "save_pwd false" << "\n";
                 }
-                ofichier << "last_target " <<  this->_lastTargetIndex << "\n";
+                ofichier << "last_target " <<  this->formAccountConnectionPanel._lastTargetIndex << "\n";
 
                 ofichier << "\n";
 
-                for (int i = 0; i < this->_accountNB; i++) {
-                    ofichier << "title " << this->_accountData[i].title << "\n";
-                    ofichier << "IP "    << this->_accountData[i].IP    << "\n";
-                    ofichier << "name "  << this->_accountData[i].name  << "\n";
-                    if (this->_pwdCheckBoxChecked) {
-                        ofichier << "pwd " << this->_accountData[i].pwd << "\n";
+                for (int i = 0; i < this->formAccountConnectionPanel._accountNB; i++) {
+                    ofichier << "title " << this->formAccountConnectionPanel._accountData[i].title << "\n";
+                    ofichier << "IP "    << this->formAccountConnectionPanel._accountData[i].IP    << "\n";
+                    ofichier << "name "  << this->formAccountConnectionPanel._accountData[i].name  << "\n";
+                    if (this->formAccountConnectionPanel._pwdCheckBoxChecked) {
+                        ofichier << "pwd " << this->formAccountConnectionPanel._accountData[i].pwd << "\n";
                     } else {
                         ofichier << "pwd " << "\n";
                     }
-                    ofichier << "port " << this->_accountData[i].port << "\n";
-                    ofichier << "options_profil " << this->_accountData[i].options_profil << "\n";
+                    ofichier << "port " << this->formAccountConnectionPanel._accountData[i].port << "\n";
+                    ofichier << "options_profil " << this->formAccountConnectionPanel._accountData[i].options_profil << "\n";
                     ofichier << "\n";
                 }
                 ofichier.close();
@@ -1051,8 +1205,8 @@ public:
         : QWidget()
         , controllers(controllers)
         , _width(460)
-        , _height(360)
-        , _long_height(700)
+        , _height(375)
+        , _long_height(690)
         , main_layout(this)
         , tabs(this)
         , RDP_tab(controllers, front, ClientRedemptionIOAPI::MOD_RDP, this)
@@ -1161,13 +1315,14 @@ public:
             this->controllers->client->windowsData.form_y = (desktop->height()/2) - (this->_height/2);
         }
         this->move(this->controllers->client->windowsData.form_x, this->controllers->client->windowsData.form_y);
-        this->get_current_tab()->setAccountData();
+        this->get_current_tab()->formAccountConnectionPanel.setAccountData();
     }
 
     void options() {
         if (this->is_option_open) {
             this->RDP_tab.options.hide();
             this->RDP_tab._buttonOptions.setText("Options v");
+//             this->RDP_tab.setMinimumHeight(this->_height-50);
             this->VNC_tab.options.hide();
             this->VNC_tab._buttonOptions.setText("Options v");
             this->setFixedHeight(this->_height);
@@ -1176,6 +1331,7 @@ public:
             this->setFixedHeight(this->_long_height);
             this->RDP_tab.options.show();
             this->RDP_tab._buttonOptions.setText("Options ^");
+//             this->RDP_tab.setMinimumHeight(this->_long_height-50);
             this->VNC_tab.options.show();
             this->VNC_tab._buttonOptions.setText("Options ^");
             this->is_option_open = true;

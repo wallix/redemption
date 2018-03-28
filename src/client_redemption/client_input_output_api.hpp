@@ -214,6 +214,7 @@ public:
     std::unique_ptr<ReplayMod> replay_mod;
     bool                 is_recording;
     bool                 is_replaying;
+    bool                 is_loading_replay_mod;
     bool                 connected;
 
 
@@ -290,11 +291,23 @@ public:
     std::string source_of_Arguments;
 
     // VNC mod
-    bool is_apple;
-    Theme      theme;
-    WindowListCaps windowListCaps;
-    ClientExecute exe_vnc;
-    std::string vnc_encodings;
+    struct Vnc_conf {
+        bool is_apple;
+        Theme      theme;
+        WindowListCaps windowListCaps;
+        ClientExecute exe_vnc;
+        std::string vnc_encodings;
+        int keylayout = 0x040C;
+        int width = 800;
+        int height = 600;
+
+        Vnc_conf(ClientRedemptionIOAPI * client)
+          : is_apple(false)
+          , exe_vnc(*(client),  this->windowListCaps,  false)
+          , vnc_encodings("5,16,0,1,-239")
+        {}
+    } vnc_conf;
+
 
 
     ClientRedemptionIOAPI(char* argv[], int argc, RDPVerbose verbose)
@@ -321,6 +334,7 @@ public:
     , mod_state(MOD_RDP)
     , is_recording(false)
     , is_replaying(false)
+    , is_loading_replay_mod(false)
     , connected(false)
     , is_spanning(false)
     , wab_diag_question(false)
@@ -330,9 +344,7 @@ public:
     , _recv_disconnect_ultimatum(false)
     , mod_palette(BGRPalette::classic_332())
     , commandIsValid(0)
-    , is_apple(false)
-    , exe_vnc(*(this),  this->windowListCaps,  false)
-    , vnc_encodings("5,16,0,1,-239")
+    , vnc_conf(this)
     {
         SSL_load_error_strings();
         SSL_library_init();
@@ -488,7 +500,7 @@ public:
             } else if (word == "--disable-desktop-composition") {
                 this->info.rdp5_performanceflags |=  PERF_ENABLE_DESKTOP_COMPOSITION;
             } else if (word == "--vnc-apple") {
-                this->is_apple = true;
+                this->vnc_conf.is_apple = true;
             }
         }
     }

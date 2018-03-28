@@ -212,6 +212,7 @@ public:
     }
 
 
+    virtual time_t get_current_time_movie() {return 0;}
 
     virtual void stopRelease() {}
 
@@ -276,7 +277,7 @@ public:
     QPushButton    _buttonDisconnexion;
 
     RDPQtScreen (ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * impl_input, QPixmap * cache)
-        : QtScreen(front, impl_input, cache, front->info.width, front->info.height)
+        : QtScreen(front, impl_input, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
         , _buttonRefresh("Refresh", this)
         , _buttonDisconnexion("Disconnection", this)
@@ -339,7 +340,6 @@ public:
         painter.setPen(pen);
         painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(0, 0, this->_width, this->_height));
         //painter.drawPixmap(QPoint(this->clip.x(), this->clip.y()), *(this->_cache), this->clip/*QRect(0, 0, this->_width, this->_height)*/);
-        //LOG(LOG_INFO, "x=%d, y=%d, w=%d, h=%d  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", this->clip.x(), this->clip.y(), this->clip.width(), this->clip.height());
         painter.end();
     }
 
@@ -395,13 +395,12 @@ public:
     QPixmap readding_bar;
     time_t current_time_movie;
     time_t real_time_record;
-    std::vector<QPixmap> balises;
 
 
 
 public:
-    ReplayQtScreen (ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * impl_input, std::string const & movie_dir, std::string const & movie_name, QPixmap * cache, time_t movie_time)
-        : QtScreen(front, impl_input, cache, front->info.width, front->info.height)
+    ReplayQtScreen (ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * impl_input, std::string const & movie_dir, std::string const & movie_name, QPixmap * cache, time_t movie_time, time_t current_time_movie)
+        : QtScreen(front, impl_input, cache, cache->width(), cache->height())
 
         , _buttonCtrlAltDel("Play", this)
         , _buttonRefresh("Stop", this)
@@ -418,7 +417,7 @@ public:
         , begin(0)
         , reading_bar_len(this->_width - 60)
         , readding_bar(this->reading_bar_len+10, READING_BAR_H)
-        , current_time_movie(0)
+        , current_time_movie(current_time_movie)
         , real_time_record(this->_front->replay_mod->get_real_time_movie_begin())
     {
         std::string title = "ReDemPtion Client " + this->_movie_name;
@@ -496,12 +495,10 @@ public:
         }
 
         this->QObject::connect(&(this->_timer_replay), SIGNAL (timeout()),  this, SLOT (playReplay()));
+
+        //this->barRepaint(this->current_time_movie, QColor(Qt::green));
     }
 
-    ~ReplayQtScreen() {
-
-        this->balises.clear();
-    }
 
     void show_video_real_time() {
 
@@ -550,7 +547,6 @@ public:
 
     void paintEvent(QPaintEvent * event) override {
         Q_UNUSED(event);
-
         QPen                 pen;
         QPainter             painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
@@ -644,7 +640,10 @@ private:
                 case WrmVersion::v2:
                 {
                     int last_balised = (this->begin/ ClientRedemptionIOAPI::BALISED_FRAME);
+                    this->_front->is_loading_replay_mod = true;
                     if (this->_front->load_replay_mod(this->_movie_dir, this->_movie_name, {last_balised * ClientRedemptionIOAPI::BALISED_FRAME, 0}, {0, 0})) {
+
+                        this->_front->is_loading_replay_mod = false;
 
                         this->_front->draw_frame(last_balised);
 
@@ -656,12 +655,17 @@ private:
                         timeval wait_duration = {this->movie_time_start.tv_sec - this->begin - waited_for_load.tv_sec, this->movie_time_start.tv_usec - waited_for_load.tv_usec};
                         this->_front->replay_mod->set_wait_after_load_client(wait_duration);
                     }
+                    this->_front->is_loading_replay_mod = false;
                 }
                     break;
             }
 
             this->_timer_replay.start(4);
         }
+    }
+
+    time_t get_current_time_movie() override {
+        return this->current_time_movie;
     }
 
 

@@ -278,19 +278,21 @@ public:
         }
 
         this->is_replaying = true;
+        this->is_loading_replay_mod = true;
         //this->setScreenDimension();
         if (this->load_replay_mod(movie_dir_, movie_path_, {0, 0}, {0, 0})) {
-            this->info.width = this->replay_mod->get_dim().w;
-            this->info.height = this->replay_mod->get_dim().h;
+
+            this->is_loading_replay_mod = false;
 
             if (impl_graphic) {
-                this->impl_graphic->reset_cache(this->info.width, this->info.height);
-                this->impl_graphic->create_screen(movie_dir_, movie_path_);
-            }
 
-            if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
-                if (this->impl_mouse_keyboard) {
-                    this->impl_mouse_keyboard->pre_load_movie();
+                this->impl_graphic->reset_cache(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
+                this->impl_graphic->create_screen(movie_dir_, movie_path_);
+
+                if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
+                    if (this->impl_mouse_keyboard) {
+                        this->impl_mouse_keyboard->pre_load_movie();
+                    }
                 }
             }
 
@@ -298,6 +300,8 @@ public:
                 this->impl_graphic->show_screen();
             }
         }
+
+        this->is_loading_replay_mod = false;
     }
 
     virtual void  disconnect(std::string const & error, bool pipe_broken) override {
@@ -446,24 +450,24 @@ public:
                                                     , this->user_name.c_str()
                                                     , this->user_password.c_str()
                                                     , *(this)
-                                                    , this->info.width
-                                                    , this->info.height
+                                                    , this->vnc_conf.width
+                                                    , this->vnc_conf.height
                                                     , this->ini.get<cfg::font>()
                                                     , nullptr
                                                     , nullptr
-                                                    , this->theme
-                                                    , this->info.keylayout
+                                                    , this->vnc_conf.theme
+                                                    , this->vnc_conf.keylayout
                                                     , 0
                                                     , true
                                                     , true
-                                                    , this->vnc_encodings.c_str()
+                                                    , this->vnc_conf.vnc_encodings.c_str()
                                                     , false
                                                     , true
                                                     , mod_vnc::ClipboardEncodingType::UTF8
                                                     , VncBogusClipboardInfiniteLoop::delayed
                                                     , this->reportMessage
-                                                    , this->is_apple
-                                                    , &(this->exe_vnc)
+                                                    , this->vnc_conf.is_apple
+                                                    , &(this->vnc_conf.exe_vnc)
 //                                                    , to_verbose_flags(0xfffffffd)
                                                     , to_verbose_flags(0)
                                                    )
@@ -519,7 +523,7 @@ public:
 
         } else {
             const std::string errorMsg("Cannot connect to [" + target_IP +  "].");
-            std::string windowErrorMsg(errorMsg+" Invalid ip or port.");
+            std::string windowErrorMsg(errorMsg+" Invalid IP or port.");
             LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
             this->disconnect("<font color='Red'>"+windowErrorMsg+"</font>", true);
             return false;
@@ -538,6 +542,8 @@ public:
     virtual void connect() override {
 /*
         this->mod_state = MOD_RDP_REMOTE_APP;*/
+
+
 
         this->clientChannelRemoteAppManager.clear();
         this->cl.clear_channels();
@@ -620,6 +626,7 @@ public:
 
         if (this->impl_graphic) {
             if (this->mod_state != MOD_RDP_REMOTE_APP) {
+
                 this->impl_graphic->reset_cache(this->info.width, this->info.height);
                 this->impl_graphic->create_screen();
             } else {
@@ -694,11 +701,12 @@ public:
 
             UdevRandom gen;
 
+
             //NullReportMessage * reportMessage  = nullptr;
             struct timeval time;
             gettimeofday(&time, nullptr);
             PngParams png_params = {0, 0, ini.get<cfg::video::png_interval>(), 100, 0, true, this->info.remote_program, ini.get<cfg::video::rt_display>()};
-            VideoParams videoParams = {Level::high, this->info.width, this->info.height, 0, 0, 0, std::string(""), true, true, false, ini.get<cfg::video::break_interval>(), 0};
+            VideoParams videoParams = {Level::high, this->replay_mod->get_dim().w, this->replay_mod->get_dim().h, 0, 0, 0, std::string(""), true, true, false, ini.get<cfg::video::break_interval>(), 0};
             OcrParams ocr_params = { ini.get<cfg::ocr::version>(),
                                         static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
                                         ini.get<cfg::ocr::on_title_bar_only>(),
@@ -741,8 +749,8 @@ public:
             captureParams.report_message = nullptr;
 
             DrawableParams drawableParams;
-            drawableParams.width  = this->info.width;
-            drawableParams.height = this->info.height;
+            drawableParams.width  = this->replay_mod->get_dim().w;
+            drawableParams.height = this->replay_mod->get_dim().h;
             drawableParams.rdp_drawable = nullptr;
 
             this->capture = std::make_unique<Capture>(captureParams

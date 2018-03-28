@@ -74,6 +74,10 @@ public:
     //     QPixmap            * trans_cache;
     Qt_ScanCode_KeyMap   qtRDPKeymap;
 
+    std::vector<QPixmap> balises;
+
+    bool is_pre_loading;
+
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -89,14 +93,14 @@ public:
       , screen(nullptr)
 //       , trans_cache(nullptr)
       , qtRDPKeymap()
-
+      , is_pre_loading(false)
     {}
 
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
     //-----------------------------
-    // WINDOW MANAGEMENT FUNCTIONS
+    // MAIN WINDOW MANAGEMENT FUNCTIONS
     //-----------------------------
 
     virtual void set_drawn_client(ClientRedemptionIOAPI * client) override {
@@ -128,6 +132,7 @@ public:
         }
         this->cache = QPixmap(w, h);
         this->painter.begin(&(this->cache));
+
         this->painter.fillRect(0, 0, w, h, Qt::black);
     }
 
@@ -138,7 +143,7 @@ public:
 
     virtual void create_screen(std::string const & movie_dir, std::string const & movie_path) override {
         QPixmap * map = &(this->cache);
-        this->screen = new ReplayQtScreen(this->drawn_client, this, movie_dir, movie_path, map, ClientRedemptionIOAPI::get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str()));
+        this->screen = new ReplayQtScreen(this->drawn_client, this, movie_dir, movie_path, map, ClientRedemptionIOAPI::get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str()), 0);
     }
 
     QWidget * get_static_qwidget() {
@@ -353,12 +358,6 @@ public:
     void begin_update() override {
 
         this->update_counter++;
-//         if (this->screen) {
-//             this->screen->clip.setX(-1);
-//             this->screen->clip.setY(-1);
-//             this->screen->clip.setWidth(0);
-//             this->screen->clip.setHeight(0);
-//         }
     }
 
 private:
@@ -386,40 +385,58 @@ private:
 
     FrontAPI::ResizeResult server_resize(int width, int height, int bpp) override {
 
-        if (this->client->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
-            return FrontAPI::ResizeResult::remoteapp;
-        }
-
         if (width == 0 || height == 0) {
             return FrontAPI::ResizeResult::fail;
         }
 
-        if ((this->client->connected || this->client->is_replaying) && this->screen != nullptr) {
-            this->client->info.bpp = bpp;
+        switch (this->client->mod_state) {
 
-            if (this->client->info.width != width || this->client->info.height != height) {
-                this->client->info.width = width;
-                this->client->info.height = height;
-                if (this->screen) {
-                    this->dropScreen();
+            case ClientRedemptionIOAPI::MOD_RDP:
+                if (this->client->info.width == width && this->client->info.height == height) {
+                    return FrontAPI::ResizeResult::instant_done;
                 }
+                    break;
 
-                this->reset_cache(this->client->info.width, this->client->info.height);
-
-                if (this->client->is_replaying) {
-
-                    this->screen = new ReplayQtScreen(this->drawn_client, this, this->client->_movie_dir, this->client->_movie_name, &(this->cache), ClientRedemptionIOAPI::get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str()));
-
+            case ClientRedemptionIOAPI::MOD_VNC:
+                if (this->client->vnc_conf.width == width && this->client->vnc_conf.height == height) {
+                    return FrontAPI::ResizeResult::instant_done;
                 } else {
-
-                    this->screen = new RDPQtScreen(this->drawn_client, this, &(this->cache));
+                    this->client->vnc_conf.width = width;
+                    this->client->vnc_conf.height = height;
                 }
+                    break;
 
-                if (this->client->mod_state != ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
-                    this->screen->show();
+            case ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP:
+                return FrontAPI::ResizeResult::instant_done;
+                    break;
+
+            case ClientRedemptionIOAPI::MOD_RDP_REPLAY:
+                if (!this->client->is_loading_replay_mod) {
+                    time_t current_time_movie = 0;
+
+                    if (!this->is_pre_loading) {
+                        current_time_movie = this->screen->get_current_time_movie();
+                        this->dropScreen();
+                    }
+
+                    this->reset_cache(width, height);
+
+                    if (!this->is_pre_loading) {
+                        this->screen = new ReplayQtScreen(this->drawn_client, this, this->client->_movie_dir, this->client->_movie_name, &(this->cache), ClientRedemptionIOAPI::get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str()), current_time_movie);
+
+                        this->screen->show();
+                    }
                 }
-            }
+                return FrontAPI::ResizeResult::instant_done;
+                    break;
         }
+
+        this->client->info.bpp = bpp;
+
+        this->dropScreen();
+        this->reset_cache(width, height);
+        this->screen = new RDPQtScreen(this->drawn_client, this, &(this->cache));
+        this->screen->show();
 
         return FrontAPI::ResizeResult::instant_done;
     }
@@ -450,28 +467,31 @@ private:
 
     void pre_load_movie() override {
 
-        ReplayQtScreen * replay_screen = static_cast<ReplayQtScreen * >(this->screen);
+        this->balises.clear();
 
         long int movie_length = ClientRedemptionIOAPI::get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str());
         this->form->hide();
         this->bar = new ProgressBarWindow(movie_length);
         long int endin_frame = 0;
-        int i = 0;
+
+        this->is_pre_loading = true;
 
         while (endin_frame < movie_length) {
+
             this->client->replay_mod.get()->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
 
-            if (replay_screen) {
-                replay_screen->balises.push_back(this->cache);
-                endin_frame += ClientRedemptionIOAPI::BALISED_FRAME;
-                i++;
-                if (this->bar) {
-                    this->bar->setValue(endin_frame);
-                }
+            this->balises.push_back(this->cache);
+            endin_frame += ClientRedemptionIOAPI::BALISED_FRAME;
+            if (this->bar) {
+                this->bar->setValue(endin_frame);
             }
-        }
+    }
 
-        this->screen->stopRelease();
+        this->is_pre_loading = false;
+
+        if (this->screen) {
+            this->screen->stopRelease();
+        }
     }
 
 //     void answer_question(int color) {
@@ -606,8 +626,8 @@ private:
 
     template<class Op>
     void draw_memblt_op(const Rect & drect, const Bitmap & bitmap) {
-        const uint16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->client->info.width - drect.x, drect.cx));
-        const uint16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->client->info.height - drect.y, drect.cy));
+        const uint16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->cache.width() - drect.x, drect.cx));
+        const uint16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->cache.height() - drect.y, drect.cy));
 
         if (mincx <= 0 || mincy <= 0) {
             return;
@@ -740,7 +760,7 @@ private:
 
     void draw_frame(int frame_index) override {
         if (this->client->is_replaying) {
-            this->painter.drawPixmap(QPoint(0, 0), static_cast<ReplayQtScreen * >(this->screen)->balises[frame_index], QRect(0, 0, this->screen->_width, this->screen->_height));
+            this->painter.drawPixmap(QPoint(0, 0), this->balises[frame_index], QRect(0, 0, this->cache.width(), this->cache.height()));
         }
     }
 
@@ -755,7 +775,7 @@ private:
 
     void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
 
-        const Rect rect = clip.intersect(this->client->info.width, this->client->info.height).intersect(cmd.rect);
+        const Rect rect = clip.intersect(this->cache.width(), this->cache.height()).intersect(cmd.rect);
         // this->setClip(rect.x, rect.y, rect.cx, rect.cy);
 
         QColor backColor = this->u32_to_qcolor(cmd.back_color, color_ctx);
@@ -934,11 +954,11 @@ private:
         Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top,
                                 (bitmap_data.dest_right - bitmap_data.dest_left + 1),
                                 (bitmap_data.dest_bottom - bitmap_data.dest_top + 1));
-        const Rect clipRect(0, 0, this->client->info.width, this->client->info.height);
+        const Rect clipRect(0, 0, this->cache.width(), this->cache.height());
         const Rect drect = rectBmp.intersect(clipRect);
 
-        const int16_t mincx = std::min<int16_t>(bmp.cx(), std::min<int16_t>(this->client->info.width - drect.x, drect.cx));
-        const int16_t mincy = std::min<int16_t>(bmp.cy(), std::min<int16_t>(this->client->info.height - drect.y, drect.cy));;
+        const int16_t mincx = std::min<int16_t>(bmp.cx(), std::min<int16_t>(this->cache.width() - drect.x, drect.cx));
+        const int16_t mincy = std::min<int16_t>(bmp.cy(), std::min<int16_t>(this->cache.height() - drect.y, drect.cy));;
 
         if (mincx <= 0 || mincy <= 0) {
             return;
@@ -983,7 +1003,7 @@ private:
 
         //std::cout << "RDPScrBlt" << std::endl;
 
-        const Rect drect = clip.intersect(this->client->info.width, this->client->info.height).intersect(cmd.rect);
+        const Rect drect = clip.intersect(this->cache.width(), this->cache.height()).intersect(cmd.rect);
         if (drect.isempty()) {
             return;
         }
@@ -1152,7 +1172,7 @@ private:
 
     void draw(const RDPDestBlt & cmd, Rect clip) override {
 
-        const Rect drect = clip.intersect(this->client->info.width, this->client->info.height).intersect(cmd.rect);
+        const Rect drect = clip.intersect(this->cache.width(), this->cache.height()).intersect(cmd.rect);
         // // this->setClip(drect.x, drect.y, drect.cx, drect.cy);
 
         switch (cmd.rop) {
@@ -1209,7 +1229,7 @@ private:
 
     void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
 
-        Rect screen_rect = clip.intersect(this->client->info.width, this->client->info.height);
+        Rect screen_rect = clip.intersect(this->cache.width(), this->cache.height());
         if (screen_rect.isempty()){
             return ;
         }
