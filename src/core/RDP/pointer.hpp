@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "core/RDP/rdp_pointer.hpp"
 #include "utils/bitfu.hpp"
 
 #include <algorithm> // std::min
@@ -70,6 +71,18 @@ public:
     bool only_black_white = false;
 
 public:
+    explicit Pointer(const NewPointer & p)
+        : width(p.get_dimensions().width)
+        , height(p.get_dimensions().height)
+        , pointer_type(POINTER_CUSTOM)
+        , x(p.get_hotspot().x)
+        , y(p.get_hotspot().y)
+    {
+        ::memcpy(this->data, p.get_24bits_xor_mask().data(), sizeof(data));
+        ::memcpy(this->mask, p.get_monochrome_and_mask().data(), sizeof(mask));
+    }
+
+
     explicit Pointer(uint8_t pointer_type = POINTER_NULL)
     : pointer_type(pointer_type)
     {

@@ -30,6 +30,9 @@ REDEMPTION_VERBOSE_FLAGS_DEF(VNCVerbose)
     draw_event      = 0x0004,
     input           = 0x0008,
     connection      = 0x0010,
+    hextile_encoder = 0x0020,
+    cursor_encoder  = 0x0040,
+    zrle_encoder    = 0x0100,
 
     clipboard       = 0x0080,
 };
