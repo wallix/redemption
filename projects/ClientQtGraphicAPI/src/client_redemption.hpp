@@ -718,7 +718,8 @@ public:
             std::string record_path = this->REPLAY_DIR.c_str() + std::string("/");
 
             WrmParams wrmParams(
-                    this->info.bpp
+                this->info.bpp
+                , false
                 , this->cctx
                 , gen
                 , this->fstat
