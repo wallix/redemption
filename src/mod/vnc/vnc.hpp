@@ -2031,37 +2031,85 @@ private:
             //         4         S32     encoding-type
 
             {
-                const char * encodings           = this->encodings.c_str();
-                uint16_t     number_of_encodings = 0;
-
                 // SetEncodings
                 StaticOutStream<32768> stream;
-                stream.out_uint8(2);
+
+                bool support_zrle_encoding          = true;
+                bool support_hextile_encoding       = false;
+                bool support_rre_encoding           = false;
+                bool support_raw_encoding           = true;
+                bool support_copyrect_encoding      = true;
+                bool support_cursor_pseudo_encoding = true;
+
+//                char const * p = this->encodings.c_str();
+//                if (p && *p){
+//                    for (;;){
+//                        while (*p && *p == ','){++p;}
+//                        char * end;
+//                        int32_t encoding_type = std::strtol(p, &end, 0);
+//                        if (p == end) { break; }
+//                        p = end;
+//                        switch (encoding_type){
+//                        case HEXTILE_ENCODING:
+//                            support_hextile_encoding = true;
+//                        break;
+//                        case ZRLE_ENCODING:
+//                            support_zrle_encoding = true;
+//                        break;
+//                        case RRE_ENCODING:
+//                            support_rre_encoding = true;
+//                        break;
+//                        default:
+//                        break;
+//                        }
+//                    }                    
+//                }
+//                else {
+////                    support_zrle_encoding          = true;
+////                    support_hextile_encoding       = true;
+////                    support_rre_encoding           = true;
+//                }
+                
+                uint16_t number_of_encodings =  support_zrle_encoding
+                                             +  support_hextile_encoding
+                                             +  support_raw_encoding
+                                             +  support_copyrect_encoding
+                                             +  support_rre_encoding
+                                             +  support_cursor_pseudo_encoding;
+
+                LOG(LOG_INFO, "number of encodings=%d", number_of_encodings);
+
+                stream.out_uint8(VNC_CS_MSG_SET_ENCODINGS);
                 stream.out_uint8(0);
+                stream.out_uint16_be(number_of_encodings);
+                if (support_zrle_encoding)          {
+                    LOG(LOG_INFO, "enable ZRLE encoding");
+                    stream.out_uint32_be(ZRLE_ENCODING);
+                }            // (16) Zrle
+                if (support_hextile_encoding)       {
+                    LOG(LOG_INFO, "enable hextile encoding");
+                    stream.out_uint32_be(HEXTILE_ENCODING);
+                }         // (5) Hextile
+                if (support_raw_encoding)           {
+                    LOG(LOG_INFO, "enable RAW encoding");
+                    stream.out_uint32_be(RAW_ENCODING);
+                }             // (0) raw
+                if (support_copyrect_encoding)      {
+                    LOG(LOG_INFO, "enable copyrect encoding");
+                    stream.out_uint32_be(COPYRECT_ENCODING);
+                }        // (1) copy rect
+                if (support_rre_encoding)           {
+                    LOG(LOG_INFO, "enable rre encoding");
+                    stream.out_uint32_be(RRE_ENCODING);
+                }             // (2) RRE
+                if (support_cursor_pseudo_encoding) {
+                    LOG(LOG_INFO, "enable cursor pseudo encoding");
+                    stream.out_uint32_be(CURSOR_PSEUDO_ENCODING);
+                }   // (-239) cursor
 
-                uint32_t number_of_encodings_offset = stream.get_offset();
-                stream.out_clear_bytes(2);
-
-                this->fill_encoding_types_buffer(encodings, stream, number_of_encodings, this->verbose);
-
-                if (!number_of_encodings)
-                {
-                    if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                        LOG(LOG_WARNING, "mdo_vnc: using default encoding types - RRE(2),Raw(0),CopyRect(1),Cursor pseudo-encoding(-239)");
-                    }
-
-                    stream.out_uint32_be(ZRLE_ENCODING);            // (16) Zrle
-                    stream.out_uint32_be(HEXTILE_ENCODING);         // (5) Hextile
-                    stream.out_uint32_be(RAW_ENCODING);             // raw
-                    stream.out_uint32_be(COPYRECT_ENCODING);        // copy rect
-                    stream.out_uint32_be(RRE_ENCODING);             // RRE
-                    stream.out_uint32_be(CURSOR_PSEUDO_ENCODING);   // (-239) cursor
-                    number_of_encodings = 6;
-                }
-
-                stream.set_out_uint16_be(number_of_encodings, number_of_encodings_offset);
                 this->t.send(stream.get_data(), 4 + number_of_encodings * 4);
             }
+
 
             switch (this->front.server_resize(this->width, this->height, this->bpp)){
             case FrontAPI::ResizeResult::instant_done:
