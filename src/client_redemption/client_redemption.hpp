@@ -150,8 +150,6 @@ public:
         , clientChannelCLIPRDRManager(this->verbose, this, this->impl_clipboard)
         , clientChannelRDPDRManager(this->verbose, this)
         , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
-
-
     {
         if (this->impl_clipboard) {
             this->impl_clipboard->set_client(this);
@@ -540,10 +538,6 @@ public:
     //------------------------
 
     virtual void connect() override {
-/*
-        this->mod_state = MOD_RDP_REMOTE_APP;*/
-
-
 
         this->clientChannelRemoteAppManager.clear();
         this->cl.clear_channels();
@@ -619,12 +613,24 @@ public:
                                                         };
                 this->cl.push_back(channel_audio_output);
             }
-
-        } /*else {
-            this->port =  5900;
-        }*/
+        }
 
         if (this->impl_graphic) {
+
+            switch (this->mod_state) {
+                case MOD_RDP:
+                    this->info.width = this->rdp_width;
+                    this->info.height = this->rdp_height;
+                    break;
+
+                case MOD_VNC:
+                    this->info.width = this->vnc_conf.width;
+                    this->info.height = this->vnc_conf.height;
+                    break;
+
+                default: break;
+            }
+
             if (this->mod_state != MOD_RDP_REMOTE_APP) {
 
                 this->impl_graphic->reset_cache(this->info.width, this->info.height);
