@@ -2034,41 +2034,45 @@ private:
                 // SetEncodings
                 StaticOutStream<32768> stream;
 
-                bool support_zrle_encoding          = true;
+                bool support_zrle_encoding          = false;
                 bool support_hextile_encoding       = false;
                 bool support_rre_encoding           = false;
                 bool support_raw_encoding           = true;
                 bool support_copyrect_encoding      = true;
                 bool support_cursor_pseudo_encoding = true;
 
-//                char const * p = this->encodings.c_str();
-//                if (p && *p){
-//                    for (;;){
-//                        while (*p && *p == ','){++p;}
-//                        char * end;
-//                        int32_t encoding_type = std::strtol(p, &end, 0);
-//                        if (p == end) { break; }
-//                        p = end;
-//                        switch (encoding_type){
-//                        case HEXTILE_ENCODING:
-//                            support_hextile_encoding = true;
-//                        break;
-//                        case ZRLE_ENCODING:
-//                            support_zrle_encoding = true;
-//                        break;
-//                        case RRE_ENCODING:
-//                            support_rre_encoding = true;
-//                        break;
-//                        default:
-//                        break;
-//                        }
-//                    }                    
-//                }
-//                else {
-////                    support_zrle_encoding          = true;
-////                    support_hextile_encoding       = true;
-////                    support_rre_encoding           = true;
-//                }
+                char const * p = this->encodings.c_str();
+                if (p && *p){
+                    for (;;){
+                        while (*p && *p == ','){++p;}
+                        char * end;
+                        int32_t encoding_type = std::strtol(p, &end, 0);
+                        if (p == end) { break; }
+                        p = end;
+                        switch (encoding_type){
+                        case HEXTILE_ENCODING:
+                            support_hextile_encoding = true;
+                        break;
+                        case ZRLE_ENCODING:
+                            support_zrle_encoding = true;
+                        break;
+                        case RRE_ENCODING:
+                            support_rre_encoding = true;
+                        break;
+                        default:
+                        break;
+                        }
+                    }                    
+                }
+                else {
+                    support_zrle_encoding          = true;
+                    support_hextile_encoding       = true;
+                    support_rre_encoding           = true;
+                }
+
+                    support_zrle_encoding          = false;
+                    support_hextile_encoding       = true;
+                    support_rre_encoding           = false;
                 
                 uint16_t number_of_encodings =  support_zrle_encoding
                                              +  support_hextile_encoding
