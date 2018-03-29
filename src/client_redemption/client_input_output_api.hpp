@@ -106,6 +106,7 @@ public:
 
     mod_api            * mod;
     SocketTransport    * socket;
+    int                  client_sck;
     TimeSystem           timeSystem;
     NullAuthentifier   authentifier;
     NullReportMessage  reportMessage;
@@ -225,18 +226,15 @@ public:
     std::string _movie_name;
     std::string _movie_dir;
 
+    int rdp_width;
+    int rdp_height;
+
     bool wab_diag_question;
     int asked_color;
 
     int current_user_profil;
 
     std::string close_box_extra_message_ref;
-
-
-    int client_sck;
-
-
-
 
 
     struct ModRDPParamsData
@@ -259,19 +257,19 @@ public:
     bool                 enable_shared_clipboard;
     bool                 enable_shared_virtual_disk;
 
-    struct KeyCustomDefinition {
-        int qtKeyID  = 0;
-        int scanCode = 0;
-        int ASCII8   = 0;
-        int extended = 0;
-
-        KeyCustomDefinition(int qtKeyID, int scanCode, int ASCII8, int extended)
-          : qtKeyID(qtKeyID)
-          , scanCode(scanCode)
-          , ASCII8(ASCII8)
-          , extended(extended) {}
-    };
-    std::vector<KeyCustomDefinition> keyCustomDefinitions;
+//     struct KeyCustomDefinition {
+//         int qtKeyID  = 0;
+//         int scanCode = 0;
+//         int ASCII8   = 0;
+//         int extended = 0;
+//
+//         KeyCustomDefinition(int qtKeyID, int scanCode, int ASCII8, int extended)
+//           : qtKeyID(qtKeyID)
+//           , scanCode(scanCode)
+//           , ASCII8(ASCII8)
+//           , extended(extended) {}
+//     };
+//     std::vector<KeyCustomDefinition> keyCustomDefinitions;
 
     bool                 _recv_disconnect_ultimatum;
     BGRPalette           mod_palette;
@@ -289,6 +287,8 @@ public:
     std::string source_of_ExeOrFile;
     std::string source_of_WorkingDir;
     std::string source_of_Arguments;
+
+    std::string full_cmd_line;
 
     // VNC mod
     struct Vnc_conf {
@@ -316,6 +316,7 @@ public:
     , cctx()
     , mod(nullptr)
     , socket(nullptr)
+    , client_sck(-1)
     , keymap()
     , _timer(0)
     , MAIN_DIR(CLIENT_REDEMPTION_MAIN_PATH)
@@ -337,6 +338,8 @@ public:
     , is_loading_replay_mod(false)
     , connected(false)
     , is_spanning(false)
+    , rdp_width(800)
+    , rdp_height(600)
     , wab_diag_question(false)
     , asked_color(0)
     , current_user_profil(0)
@@ -349,8 +352,8 @@ public:
         SSL_load_error_strings();
         SSL_library_init();
 
-        this->info.width  = 800;
-        this->info.height = 600;
+        this->info.width  = rdp_width;
+        this->info.height = rdp_height;
         this->info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
         this->info.console_session = 0;
         this->info.brush_cache_code = 0;
@@ -360,6 +363,8 @@ public:
 
         this->source_of_ExeOrFile = std::string("C:\\Windows\\system32\\notepad.exe");
         this->source_of_WorkingDir = std::string("C:\\Users\\user1");
+
+        this->full_cmd_line = this->source_of_ExeOrFile + " " + this->source_of_Arguments;
 
 
         DIR *pDir;
@@ -459,9 +464,9 @@ public:
             } else if (word == "--remote-dir" && i < argc-1) {
                 this->source_of_WorkingDir = std::string(argv[i+1]);
             } else if (word == "--width" && i < argc-1) {
-                this->info.width = std::stoi(std::string(argv[i+1]));
+                this->rdp_width = std::stoi(std::string(argv[i+1]));
             } else if (word == "--height" && i < argc-1) {
-                this->info.height = std::stoi(std::string(argv[i+1]));
+                this->rdp_height = std::stoi(std::string(argv[i+1]));
             } else if (word == "--bpp" && i < argc-1) {
                 this->info.bpp = std::stoi(std::string(argv[i+1]));
             } else if (word == "--keylayout" && i < argc-1) {
@@ -485,8 +490,6 @@ public:
                 this->modRDPParamsData.enable_sound = false;
             } else if (word == "--disable-windowdrag") {
                 this->info.rdp5_performanceflags |= PERF_DISABLE_FULLWINDOWDRAG;
-            } else if (word == "--enable-wallpaper") {
-                this->info.rdp5_performanceflags &= ~PERF_DISABLE_WALLPAPER;
             } else if (word == "--disable-menuanimations") {
                 this->info.rdp5_performanceflags |=  PERF_DISABLE_MENUANIMATIONS;
             } else if (word == "--disable-menuanimations") {
@@ -561,10 +564,10 @@ public:
                         this->info.bpp = std::stoi(info);
                     } else
                     if (tag.compare(std::string("width")) == 0) {
-                        this->info.width      = std::stoi(info);
+                        this->rdp_width     = std::stoi(info);
                     } else
                     if (tag.compare(std::string("height")) == 0) {
-                        this->info.height     = std::stoi(info);
+                        this->rdp_height     = std::stoi(info);
                     } else
                     if (tag.compare(std::string("rdp5_performanceflags")) == 0) {
                         this->info.rdp5_performanceflags = std::stoi(info);
@@ -720,8 +723,8 @@ public:
         this->info.console_session = 0;
         this->info.brush_cache_code = 0;
         this->info.bpp = 24;
-        this->info.width  = 800;
-        this->info.height = 600;
+        this->info.width  = this->rdp_width;
+        this->info.height = this->rdp_height;
         this->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
         this->info.cs_monitor.monitorCount = 1;
         this->is_spanning = false;
@@ -772,8 +775,8 @@ public:
                 new_ofile << "console_session "       << this->info.console_session         << "\n";
                 new_ofile << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
                 new_ofile << "bpp "                   << this->info.bpp                     << "\n";
-                new_ofile << "width "                 << this->info.width                   << "\n";
-                new_ofile << "height "                << this->info.height                  << "\n";
+                new_ofile << "width "                 << this->rdp_width                   << "\n";
+                new_ofile << "height "                << this->rdp_height                  << "\n";
                 new_ofile << "rdp5_performanceflags " << this->info.rdp5_performanceflags   << "\n";
                 new_ofile << "monitorCount "          << this->info.cs_monitor.monitorCount << "\n";
                 new_ofile << "span "                  << this->is_spanning                  << "\n";
@@ -795,8 +798,8 @@ public:
                 ofichier << "console_session "       << this->info.console_session         << "\n";
                 ofichier << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
                 ofichier << "bpp "                   << this->info.bpp                       << "\n";
-                ofichier << "width "                 << this->info.width                   << "\n";
-                ofichier << "height "                << this->info.height                  << "\n";
+                ofichier << "width "                 << this->rdp_width                   << "\n";
+                ofichier << "height "                << this->rdp_height                  << "\n";
                 ofichier << "rdp5_performanceflags " << this->info.rdp5_performanceflags   << "\n";
                 ofichier << "monitorCount "          << this->info.cs_monitor.monitorCount << "\n";
                 ofichier << "span "                  << this->is_spanning                  << "\n";

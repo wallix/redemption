@@ -1100,7 +1100,9 @@ public:
 private Q_SLOTS:
     void connexionReleased() {
 
-        this->_front->mod_state = this->protocol_type;
+        if (! (this->protocol_type == ClientRedemptionIOAPI::MOD_RDP && this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) ){
+            this->_front->mod_state = this->protocol_type;
+        }
 
         QPoint points = this->mapToGlobal({0, 0});
         this->controllers->client->windowsData.form_x = points.x()-14;
@@ -1322,7 +1324,6 @@ public:
         if (this->is_option_open) {
             this->RDP_tab.options.hide();
             this->RDP_tab._buttonOptions.setText("Options v");
-//             this->RDP_tab.setMinimumHeight(this->_height-50);
             this->VNC_tab.options.hide();
             this->VNC_tab._buttonOptions.setText("Options v");
             this->setFixedHeight(this->_height);
@@ -1331,7 +1332,6 @@ public:
             this->setFixedHeight(this->_long_height);
             this->RDP_tab.options.show();
             this->RDP_tab._buttonOptions.setText("Options ^");
-//             this->RDP_tab.setMinimumHeight(this->_long_height-50);
             this->VNC_tab.options.show();
             this->VNC_tab._buttonOptions.setText("Options ^");
             this->is_option_open = true;
