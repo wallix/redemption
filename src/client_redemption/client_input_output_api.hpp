@@ -727,6 +727,8 @@ public:
 //             this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
         }
 
+
+
 //         this->qtRDPKeymap.clearCustomKeyCode();
 //         this->keyCustomDefinitions.clear();
 //
@@ -766,6 +768,14 @@ public:
 //
 //             iFileKeyData.close();
 //         }
+    }
+
+    void set_remoteapp_cmd_line(const std::string & cmd) {
+        this->full_cmd_line = cmd;
+        const std::string delimiter = " ";
+        int pos = cmd.find(delimiter);
+        this->source_of_ExeOrFile = cmd.substr(0, pos);
+        this->source_of_Arguments = cmd.substr(pos + delimiter.length(), cmd.length());
     }
 
     bool is_no_win_data() {
