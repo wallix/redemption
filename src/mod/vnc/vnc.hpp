@@ -776,6 +776,7 @@ public:
 
     void initial_clear_screen(gdi::GraphicApi & drawable)
     {
+        LOG(LOG_INFO, "initial clear screen =================================== ");
         if (bool(this->verbose & VNCVerbose::connection)) {
             LOG(LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
         }
@@ -1587,8 +1588,8 @@ public:
         }
 
         while (this->draw_event_impl(drawable)) {
-
         }
+        LOG(LOG_INFO, "Remaining in buffer : %u", this->server_data_buf.remaining());
 
         this->check_timeout();
     }
@@ -1648,9 +1649,9 @@ private:
                     this->event.set_trigger_time(1000);
                 }
             }
-//            else {
-//                this->update_screen(Rect(0, 0, this->width, this->height), 1);
-//            }
+            else {
+                this->update_screen(Rect(0, 0, this->width, this->height), 1);
+            }
             return false;
 
         case WAIT_SECURITY_TYPES:
@@ -2010,9 +2011,9 @@ private:
                     support_rre_encoding           = true;
                 }
 
-//                    support_zrle_encoding          = true;
-//                    support_hextile_encoding       = false;
-//                    support_rre_encoding           = false;
+                    support_zrle_encoding          = false;
+                    support_hextile_encoding       = true;
+                    support_rre_encoding           = false;
                 
                 uint16_t number_of_encodings =  support_zrle_encoding
                                              +  support_hextile_encoding
@@ -2098,7 +2099,7 @@ private:
             return true;
 
         case WAIT_CLIENT_UP_AND_RUNNING:
-            LOG(LOG_WARNING, "Waiting for client be come up and running");
+            LOG(LOG_WARNING, "Waiting for client become up and running");
             break;
 
         default:

@@ -915,6 +915,7 @@ public:
 
     void callback() override {
 
+        LOG(LOG_INFO, "Socket Event callback");
         if (this->_recv_disconnect_ultimatum) {
             if (this->impl_graphic) {
                 this->impl_graphic->dropScreen();
