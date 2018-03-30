@@ -301,6 +301,15 @@ public:
         int width = 800;
         int height = 600;
 
+//         bool is_recording = false;
+        bool enable_tls = false;
+        bool enable_nla = false;
+        bool enable_sound = false;
+        bool enable_shared_clipboard = false;
+
+        std::vector<UserProfil> userProfils;
+        int current_user_profil = 0;
+
         Vnc_conf(ClientRedemptionIOAPI * client)
           : is_apple(false)
           , exe_vnc(*(client),  this->windowListCaps,  false)
@@ -569,7 +578,7 @@ public:
         LOG(LOG_INFO, "   --bpp [bit_per_pixel]           Set bit per pixel.");
         LOG(LOG_INFO, "   --keylayout [keylayout]         Set windows keylayout.");
         LOG(LOG_INFO, "   --record                        Enable session recording as .wrm movie.");
-        LOG(LOG_INFO, "   --share-dir [shared_dir_path]  Set directory path on local disk to share with your session.");
+        LOG(LOG_INFO, "   --share-dir [shared_dir_path]   Set directory path on local disk to share with your session.");
         LOG(LOG_INFO, "   --disable-share-disk            Disable local disk sharing.");
         LOG(LOG_INFO, "   --span                          Span the screen size on local screen.");
         LOG(LOG_INFO, "   --disable-clipboard             Disable clipboard sharing.");

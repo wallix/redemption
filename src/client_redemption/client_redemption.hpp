@@ -211,7 +211,16 @@ public:
         if (this->impl_mouse_keyboard) {
             this->impl_mouse_keyboard->update_keylayout();
         }
-        this->keymap.init_layout(this->info.keylayout);
+
+        switch (this->mod_state) {
+            case ClientRedemptionIOAPI::MOD_VNC:
+                this->keymap.init_layout(this->vnc_conf.keylayout);
+                break;
+
+            default: this->keymap.init_layout(this->info.keylayout);
+                break;
+
+        }
     }
 
     const CHANNELS::ChannelDefArray & get_channel_list(void) const override {

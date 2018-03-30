@@ -1261,6 +1261,10 @@ public:
         this->controllers->client->windowsData.form_y = points.y()-39;
         this->controllers->client->writeWindowsConf();
         this->is_closing = true;
+
+        if (this->is_option_open) {
+            this->options();
+        }
     }
 
 
@@ -1340,9 +1344,8 @@ public:
 
 private Q_SLOTS:
     void tab_changed(int) {
-        this->setFixedHeight(this->_height);
-        if (!this->is_closing && this->get_current_tab()) {
-            this->get_current_tab()->options.hide();
+        if (this->is_option_open) {
+            this->options();
         }
     }
 
