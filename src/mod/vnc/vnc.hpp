@@ -68,14 +68,12 @@ h
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
 
-class mod_vnc : public InternalMod, private NotifyApi
+class mod_vnc : public mod_api
 {
 
     bool ongoing_framebuffer_update = false;
 
     static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
-
-    FlatVNCAuthentification challenge;
 
     /* mod data */
     char mod_name[256];
@@ -168,7 +166,6 @@ private:
         DO_INITIAL_CLEAR_SCREEN,
         RETRY_CONNECTION,
         UP_AND_RUNNING,
-        WAIT_PASSWORD,
         WAIT_SECURITY_TYPES,
         WAIT_SECURITY_TYPES_LEVEL,
         WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM,
@@ -188,11 +185,10 @@ public:
     };
 
 private:
+    FrontAPI& front;
     std::string encodings;
 
     int state;
-
-    bool allow_authentification_retries;
 
     bool left_ctrl_pressed = false;
 
@@ -226,7 +222,7 @@ public:
            , bool clipboard_up
            , bool clipboard_down
            , const char * encodings
-           , bool allow_authentification_retries
+           , bool allow_authentification_retries // This field is deprecated and should be removed
            , bool /*TODO is_socket_transport*/
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
@@ -235,16 +231,12 @@ public:
            , ClientExecute* client_execute
            , VNCVerbose verbose
            )
-    : InternalMod(front, front_width, front_height, font, theme, false)
-    , challenge(front, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
-                "Redemption " VERSION, this->theme(), label_text_message, label_text_password,
-                this->font())
-    , mod_name{0}
+    : mod_name{0}
     , username{0}
     , password{0}
     , t(t)
-    , width(0)
-    , height(0)
+    , width(front_width)
+    , height(front_height)
     , bpp(0)
     , depth(0)
     , verbose(verbose)
@@ -252,9 +244,9 @@ public:
     , to_vnc_clipboard_data_size(0)
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)
+    , front(front)
     , encodings(encodings)
     , state(WAIT_SECURITY_TYPES)
-    , allow_authentification_retries(allow_authentification_retries || !(*password))
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , report_message(report_message)
@@ -270,9 +262,6 @@ public:
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "server_is_apple=%s", (server_is_apple ? "yes" : "no"));
         }
-
-        // Clear client screen
-        this->invoke_asynchronous_graphic_task(AsynchronousGraphicTask::clear_screen);
 
         ::time(&this->beginning);
 
@@ -291,7 +280,6 @@ public:
     } // Constructor
 
     ~mod_vnc() override {
-        this->screen.clear();
     }
 
     int get_fd() const override { return this->t.get_fd(); }
@@ -793,19 +781,20 @@ public:
         }
 
         // set almost null cursor, this is the little dot cursor
-        this->front.set_pointer(Pointer(DotPointer{}));
+        drawable.set_pointer(Pointer(DotPointer{}));
 
         this->report_message.log5("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"");
 
         Rect const screen_rect(0, 0, this->width, this->height);
 
-        this->front.begin_update();
+        drawable.begin_update();
         RDPOpaqueRect orect(screen_rect, RDPColor{});
         drawable.draw(orect, screen_rect, gdi::ColorCtx::from_bpp(this->bpp, this->palette_update_ctx.get_palette()));
-        this->front.end_update();
+        drawable.end_update();
 
         this->state = UP_AND_RUNNING;
         this->front.can_be_start_capture();
+        
         this->update_screen(screen_rect, 1);
         this->lib_open_clip_channel();
 
@@ -882,11 +871,6 @@ public:
 
     // TODO It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?
     void rdp_input_mouse( int device_flags, int x, int y, Keymap2 * keymap ) override {
-        if (this->state == WAIT_PASSWORD) {
-            this->screen.rdp_input_mouse(device_flags, x, y, keymap);
-            return;
-        }
-
         if (this->state != UP_AND_RUNNING) {
             return;
         }
@@ -919,11 +903,6 @@ public:
                                    , Keymap2 * keymap
                                    ) override {
     //==============================================================================================================
-        if (this->state == WAIT_PASSWORD) {
-            this->screen.rdp_input_scancode(param1, param2, device_flags, param4, keymap);
-            return;
-        }
-
         if (this->state != UP_AND_RUNNING) {
             return;
         }
@@ -1326,11 +1305,6 @@ private:
 
 public:
     void rdp_input_invalidate(Rect r) override {
-        if (this->state == WAIT_PASSWORD) {
-            this->screen.rdp_input_invalidate(r);
-            return;
-        }
-
         if (this->state != UP_AND_RUNNING) {
             return;
         }
@@ -1598,6 +1572,7 @@ protected:
 public:
     void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override
     {
+        LOG(LOG_INFO, "VNC draw_event");
         if (bool(this->verbose & VNCVerbose::draw_event)) {
             LOG(LOG_INFO, "vnc::draw_event");
         }
@@ -1623,23 +1598,6 @@ private:
     {
         switch (this->state)
         {
-        case ASK_PASSWORD:
-            if (bool(this->verbose & VNCVerbose::connection)) {
-                LOG(LOG_INFO, "state=ASK_PASSWORD");
-            }
-            this->screen.add_widget(&this->challenge);
-
-            this->screen.set_widget_focus(&this->challenge, Widget::focus_reason_tabkey);
-
-            this->challenge.password_edit.set_text("");
-
-            this->challenge.set_widget_focus(&this->challenge.password_edit, Widget::focus_reason_tabkey);
-
-            this->screen.rdp_input_invalidate(this->screen.get_rect());
-
-            this->state = WAIT_PASSWORD;
-            return true;
-
         case DO_INITIAL_CLEAR_SCREEN:
             this->initial_clear_screen(drawable);
             return false;
@@ -1693,13 +1651,6 @@ private:
 //            else {
 //                this->update_screen(Rect(0, 0, this->width, this->height), 1);
 //            }
-            return false;
-
-        case WAIT_PASSWORD:
-            if (bool(this->verbose & VNCVerbose::connection)) {
-                LOG(LOG_INFO, "state=WAIT_PASSWORD");
-            }
-            this->event.reset_trigger_time();
             return false;
 
         case WAIT_SECURITY_TYPES:
@@ -1807,18 +1758,7 @@ private:
                     else {
                         LOG(LOG_INFO, "vnc password failed. Reason: %.*s",
                             int(bytes.size()), bytes.to_charp());
-
-                        if (this->allow_authentification_retries)
-                        {
-                            this->t.disconnect();
-
-                            this->state = ASK_PASSWORD;
-                            this->event.set_trigger_time(wait_obj::NOW);
-                        }
-                        else
-                        {
                             throw Error(ERR_VNC_CONNECTION_ERROR);
-                        }
                     }
                 })) {
                     return false;
@@ -2146,9 +2086,6 @@ private:
                     LOG(LOG_INFO, "resizing done");
                 }
                 // resizing done
-                this->front_width  = this->width;
-                this->front_height = this->height;
-
                 this->state = WAIT_CLIENT_UP_AND_RUNNING;
                 this->event.set_trigger_time(wait_obj::NOW);
                 break;
@@ -2350,7 +2287,7 @@ private:
 
                         switch (this->encoding){
                         case COPYRECT_ENCODING:  /* raw */
-                            this->encoder = new VNC::Encoder::CopyRect(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.front_width, vnc.front_height, vnc.verbose);
+                            this->encoder = new VNC::Encoder::CopyRect(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.width, vnc.height, vnc.verbose);
                         break;
                         case HEXTILE_ENCODING:  /* hextile */
                             this->encoder = new VNC::Encoder::Hextile(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
@@ -2848,12 +2785,28 @@ private:
         return true;
     } // lib_clip_data
 
+    void send_to_front_channel(
+        CHANNELS::ChannelNameId mod_channel_name,
+        uint8_t const * data, size_t length, size_t chunk_size, int flags) override
+    {
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+            LOG(LOG_INFO, "mod_vnc::send_to_front_channel");
+        }
+
+        const CHANNELS::ChannelDef * front_channel =
+            this->front.get_channel_list().get_by_name(mod_channel_name);
+        if (front_channel) {
+            this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
+        }
+    }
+
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name,
         InStream & chunk,
         size_t length,
         uint32_t flags
-    ) override {
+    ) override 
+    {
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::send_to_mod_channel");
         }
@@ -3411,31 +3364,6 @@ public:
             }
             this->state = DO_INITIAL_CLEAR_SCREEN;
             this->event.set_trigger_time(wait_obj::NOW);
-        }
-    }
-
-    void notify(Widget* sender, notify_event_t event) override {
-        (void)sender;
-        switch (event) {
-        case NOTIFY_SUBMIT:
-            this->screen.clear();
-
-            memset(this->password, 0, sizeof(this->password));
-            strncpy(this->password, this->challenge.password_edit.get_text(),
-                    sizeof(this->password) - 1);
-            this->password[sizeof(this->password) - 1] = 0;
-
-            this->state = RETRY_CONNECTION;
-            this->event.set_trigger_time(wait_obj::NOW);
-            break;
-        case NOTIFY_CANCEL:
-            this->event.signal = BACK_EVENT_NEXT;
-            this->event.set_trigger_time(wait_obj::NOW);
-
-            this->screen.clear();
-            break;
-        default:
-            break;
         }
     }
 
