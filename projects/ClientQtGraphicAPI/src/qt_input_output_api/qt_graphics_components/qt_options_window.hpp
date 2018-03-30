@@ -98,6 +98,7 @@ public:
     QCheckBox            _tlsBox;
     QCheckBox            _nlaBox;
     QComboBox            _languageComboBox;
+    QCheckBox            keyboard_apple_compatibility_CB;
 
 
     QLabel               _labelProfil;
@@ -105,6 +106,7 @@ public:
     QLabel               _labelTls;
     QLabel               _labelNla;
     QLabel               _labelLanguage;
+    QLabel               keyboard_apple_compatibility_label;
 
 
 
@@ -187,12 +189,14 @@ public:
         , _tlsBox(this)
         , _nlaBox(this)
         , _languageComboBox(this)
+        , keyboard_apple_compatibility_CB(this)
 
         , _labelProfil("Options Profil:", this)
         , _labelRecording("Record movie :", this)
         , _labelTls("TLS :", this)
         , _labelNla("NLA :", this)
         , _labelLanguage("Keyboard Language :", this)
+        , keyboard_apple_compatibility_label("Apple server keyboard :", this)
 
 
         , _viewTab(nullptr)
@@ -226,12 +230,12 @@ public:
 
         , _clipboardCheckBox(this)
         , _shareCheckBox(this)
-        , _sharePath(this->_front->SHARE_DIR.c_str(), this)
+        , _sharePath("", this)
         , _buttonSharePath("Select a Directory", this)
         , _soundBox(this)
         , remoteappCheckBox(this)
-        , remoteapp_cmd(this->_front->full_cmd_line.c_str(), this)
-        , remoteapp_workin_dir(this->_front->source_of_WorkingDir.c_str(), this)
+        , remoteapp_cmd("", this)
+        , remoteapp_workin_dir("", this)
 
         , _labelClipboard("Shared Clipboard :", this)
         , _labelShare("Shared Virtual Disk :", this)
@@ -257,7 +261,9 @@ public:
 
 
         // Tab options
-        this->_viewTab = new QWidget(this);
+        if (this->protocol_type == ClientRedemptionIOAPI::MOD_RDP) {
+            this->_viewTab = new QWidget(this);
+        }
         this->_connectionTab = new QWidget(this);
         this->_servicesTab = new QWidget(this);
 // /*        this->_keyboardTab = new QWidget(this)*/;
@@ -301,81 +307,137 @@ public:
         this->_languageComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutConnection->addRow(&(this->_labelLanguage), &(this->_languageComboBox));
 
+        if (this->protocol_type == ClientRedemptionIOAPI::MOD_VNC) {
+            this->keyboard_apple_compatibility_CB.setCheckState(Qt::Unchecked);
+            this->_layoutConnection->addRow(&(this->keyboard_apple_compatibility_label), &(this->keyboard_apple_compatibility_CB));
+
+        } else if (this->protocol_type == ClientRedemptionIOAPI::MOD_RDP) {
+            this->keyboard_apple_compatibility_label.hide();
+            this->keyboard_apple_compatibility_CB.hide();
+        }
+
         this->_connectionTab->setLayout(this->_layoutConnection);
         this->_tabs->addTab(this->_connectionTab, strConnection);
 
 
 
         // VIEW TAB
-        const QString strView("View");
-        this->_layoutView = new QFormLayout(this->_viewTab);
+        if (this->protocol_type == ClientRedemptionIOAPI::MOD_RDP) {
+            const QString strView("View");
+            this->_layoutView = new QFormLayout(this->_viewTab);
 
-        this->_bppComboBox.addItem("15", 15);
-        this->_bppComboBox.addItem("16", 16);
-        this->_bppComboBox.addItem("24", 24);
-        this->_bppComboBox.setStyleSheet("combobox-popup: 0;");
-        this->_layoutView->addRow(&(this->_labelBpp), &(this->_bppComboBox));
+            this->_bppComboBox.addItem("15", 15);
+            this->_bppComboBox.addItem("16", 16);
+            this->_bppComboBox.addItem("24", 24);
+            this->_bppComboBox.setStyleSheet("combobox-popup: 0;");
+            this->_layoutView->addRow(&(this->_labelBpp), &(this->_bppComboBox));
 
-        this->_resolutionComboBox.addItem( "640 * 480", 640);
-        this->_resolutionComboBox.addItem( "800 * 600", 800);
-        this->_resolutionComboBox.addItem("1024 * 768", 1024);
-        this->_resolutionComboBox.addItem("1600 * 900", 1600);
-        this->_resolutionComboBox.setStyleSheet("combobox-popup: 0;");
-        this->_layoutView->addRow(&(this->_labelResolution), &(this->_resolutionComboBox));
+            this->_resolutionComboBox.addItem( "640 * 480", 640);
+            this->_resolutionComboBox.addItem( "800 * 600", 800);
+            this->_resolutionComboBox.addItem("1024 * 768", 1024);
+            this->_resolutionComboBox.addItem("1600 * 900", 1600);
+            this->_resolutionComboBox.setStyleSheet("combobox-popup: 0;");
+            this->_layoutView->addRow(&(this->_labelResolution), &(this->_resolutionComboBox));
 
-        this->_spanCheckBox.setCheckState(Qt::Unchecked);
-        this->_layoutView->addRow(&(this->_labelSpan), &(this->_spanCheckBox));
-        this->QObject::connect(&(this->_spanCheckBox), SIGNAL(stateChanged(int)), this, SLOT(spanCheckChange(int)));
+            this->_spanCheckBox.setCheckState(Qt::Unchecked);
+            this->_layoutView->addRow(&(this->_labelSpan), &(this->_spanCheckBox));
+            this->QObject::connect(&(this->_spanCheckBox), SIGNAL(stateChanged(int)), this, SLOT(spanCheckChange(int)));
 
-        this->_layoutView->addRow(&(this->_labelWallpaper), &(this->_wallpapperCheckBox));
-        this->_layoutView->addRow(&(this->windowdragLabel), &(this->windowdragCheckBox));
-        this->_layoutView->addRow(&(this->menuanimationsLabel), &(this->menuanimationsCheckBox));
-        this->_layoutView->addRow(&(this->cursorShadowLabel), &(this->cursorShadowCheckBox));
-        this->_layoutView->addRow(&(this->cursorsettingsLabel), &(this->cursorsettingsCheckBox));
-        this->_layoutView->addRow(&(this->fontSmoothingLabel), &(this->fontSmoothingCheckBox));
-        this->_layoutView->addRow(&(this->desktopCompositionLabel), &(this->desktopCompositionCheckBox));
+            this->_layoutView->addRow(&(this->_labelWallpaper), &(this->_wallpapperCheckBox));
+            this->_layoutView->addRow(&(this->windowdragLabel), &(this->windowdragCheckBox));
+            this->_layoutView->addRow(&(this->menuanimationsLabel), &(this->menuanimationsCheckBox));
+            this->_layoutView->addRow(&(this->cursorShadowLabel), &(this->cursorShadowCheckBox));
+            this->_layoutView->addRow(&(this->cursorsettingsLabel), &(this->cursorsettingsCheckBox));
+            this->_layoutView->addRow(&(this->fontSmoothingLabel), &(this->fontSmoothingCheckBox));
+            this->_layoutView->addRow(&(this->desktopCompositionLabel), &(this->desktopCompositionCheckBox));
 
-        this->_viewTab->setLayout(this->_layoutView);
-        this->_tabs->addTab(this->_viewTab, strView);
+            this->_viewTab->setLayout(this->_layoutView);
+            this->_tabs->addTab(this->_viewTab, strView);
+
+        } else if (this->protocol_type == ClientRedemptionIOAPI::MOD_VNC) {
+            this->_bppComboBox.hide();
+            this->_resolutionComboBox.hide();
+            this->_spanCheckBox.hide();
+            this->_wallpapperCheckBox.hide();
+            this->windowdragCheckBox.hide();
+            this->menuanimationsCheckBox.hide();
+            this->cursorShadowCheckBox.hide();
+            this->cursorsettingsCheckBox.hide();
+            this->fontSmoothingCheckBox.hide();
+            this->desktopCompositionCheckBox.hide();
+
+            this->_labelBpp.hide();
+            this->_labelResolution.hide();
+            this->_labelSpan.hide();
+            this->_labelWallpaper.hide();
+            this->windowdragLabel.hide();
+            this->menuanimationsLabel.hide();
+            this->cursorShadowLabel.hide();
+            this->cursorsettingsLabel.hide();
+            this->fontSmoothingLabel.hide();
+            this->desktopCompositionLabel.hide();
+
+//             this->_viewTab->hide();
+        }
 
 
 
         // Services tab
+
         const QString strServices("Services");
         this->_layoutServices = new QFormLayout(this->_servicesTab);
 
         this->_clipboardCheckBox.setCheckState(Qt::Unchecked);
         this->_layoutServices->addRow(&(this->_labelClipboard), &(this->_clipboardCheckBox));
 
-        this->_shareCheckBox.setCheckState(Qt::Unchecked);
-        this->QObject::connect(&(this->_shareCheckBox), SIGNAL(stateChanged(int)), this, SLOT(setEnableSharePath(int)));
-        this->_layoutServices->addRow(&(this->_labelShare), &(this->_shareCheckBox));
+        if (this->protocol_type == ClientRedemptionIOAPI::MOD_RDP) {
 
-        this->_sharePath.setEnabled(this->_front->enable_shared_virtual_disk);
-        this->_layoutServices->addRow(&(this->_labelSharePath), &(this->_sharePath));
+            this->_shareCheckBox.setCheckState(Qt::Unchecked);
+            this->QObject::connect(&(this->_shareCheckBox), SIGNAL(stateChanged(int)), this, SLOT(setEnableSharePath(int)));
+            this->_layoutServices->addRow(&(this->_labelShare), &(this->_shareCheckBox));
 
-        QRect rectPath(QPoint(190, 226),QSize(180, 24));
-        this->_buttonSharePath.setGeometry(rectPath);
-        this->_buttonSharePath.setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(&(this->_buttonSharePath) , SIGNAL (pressed()) , this, SLOT (dirPathPressed()));
-        QLabel dirButtonLabel("", this);
-        this->_layoutServices->addRow(&(dirButtonLabel), &(this->_buttonSharePath));
 
-        this->_soundBox.setCheckState(Qt::Unchecked);
-        this->_layoutServices->addRow(&(this->_labelSound), &(this->_soundBox));
+            this->_layoutServices->addRow(&(this->_labelSharePath), &(this->_sharePath));
 
-        this->remoteappCheckBox.setCheckState(Qt::Unchecked);
-        if (this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
-            this->remoteappCheckBox.setCheckState(Qt::Checked);
+            QRect rectPath(QPoint(190, 226),QSize(180, 24));
+            this->_buttonSharePath.setGeometry(rectPath);
+            this->_buttonSharePath.setCursor(Qt::PointingHandCursor);
+            this->QObject::connect(&(this->_buttonSharePath) , SIGNAL (pressed()) , this, SLOT (dirPathPressed()));
+            QLabel dirButtonLabel("", this);
+            this->_layoutServices->addRow(&(dirButtonLabel), &(this->_buttonSharePath));
+
+            this->_soundBox.setCheckState(Qt::Unchecked);
+            this->_layoutServices->addRow(&(this->_labelSound), &(this->_soundBox));
+
+            this->remoteappCheckBox.setCheckState(Qt::Unchecked);
+            this->QObject::connect(&(this->remoteappCheckBox), SIGNAL(stateChanged(int)), this, SLOT(setEnableRemoteApp(int)));
+            this->_layoutServices->addRow(&(this->remoteappLabel), &(this->remoteappCheckBox));
+
+
+            this->_layoutServices->addRow(&(this->remoteapp_cmd_label), &(this->remoteapp_cmd));
+
+            this->remoteapp_workin_dir.setEnabled(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
+            this->_layoutServices->addRow(&(this->remoteapp_workin_dir_label), &(this->remoteapp_workin_dir));
+
+        } else if (this->protocol_type == ClientRedemptionIOAPI::MOD_VNC) {
+
+            this->_shareCheckBox.hide();
+            this->_sharePath.hide();
+            this->_buttonSharePath.hide();
+            this->remoteappCheckBox.hide();
+            this->remoteapp_cmd.hide();
+            this->remoteapp_workin_dir.hide();
+
+            this->_labelShare.hide();
+            this->_labelSharePath.hide();
+            this->remoteappLabel.hide();
+            this->remoteapp_cmd_label.hide();
+            this->remoteapp_workin_dir_label.hide();
+
+            this->_soundBox.setCheckState(Qt::Unchecked);
+            this->_layoutServices->addRow(&(this->_labelSound), &(this->_soundBox));
+
         }
-        this->QObject::connect(&(this->remoteappCheckBox), SIGNAL(stateChanged(int)), this, SLOT(setEnableRemoteApp(int)));
-        this->_layoutServices->addRow(&(this->remoteappLabel), &(this->remoteappCheckBox));
-
-        this->remoteapp_cmd.setEnabled(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
-        this->_layoutServices->addRow(&(this->remoteapp_cmd_label), &(this->remoteapp_cmd));
-
-        this->remoteapp_workin_dir.setEnabled(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
-        this->_layoutServices->addRow(&(this->remoteapp_workin_dir_label), &(this->remoteapp_workin_dir));
 
         this->_servicesTab->setLayout(this->_layoutServices);
         this->_tabs->addTab(this->_servicesTab, strServices);
@@ -490,70 +552,158 @@ public:
 
 private:
     void setConfigValues() {
-        int indexProfil = this->profilComboBox.findData(this->_front->current_user_profil);
-        if ( indexProfil != -1 ) {
-            this->profilComboBox.setCurrentIndex(indexProfil);
-        }
 
-        int indexBpp = this->_bppComboBox.findData(this->_front->info.bpp);
-        if ( indexBpp != -1 ) {
-            this->_bppComboBox.setCurrentIndex(indexBpp);
-        }
-
-        int indexResolution = this->_resolutionComboBox.findData(this->_front->rdp_width);
-        if ( indexResolution != -1 ) {
-            this->_resolutionComboBox.setCurrentIndex(indexResolution);
-        }
-
-        if (this->_front->is_spanning) {
-            this->_spanCheckBox.setCheckState(Qt::Checked);
-        } else {
-            this->_spanCheckBox.setCheckState(Qt::Unchecked);
-        }
-
-        if (this->_front->info.rdp5_performanceflags == PERF_DISABLE_WALLPAPER) {
-            this->_wallpapperCheckBox.setCheckState(Qt::Checked);
-        }
-
-        int indexLanguage = this->_languageComboBox.findData(this->_front->info.keylayout);
-        if ( indexLanguage != -1 ) {
-            this->_languageComboBox.setCurrentIndex(indexLanguage);
-        }
-
+        // Connection tab
         if (this->_front->is_recording) {
             this->_recordingCB.setCheckState(Qt::Checked);
         } else {
             this->_recordingCB.setCheckState(Qt::Unchecked);
         }
 
-        if (this->_front->modRDPParamsData.enable_tls) {
-            this->_tlsBox.setCheckState(Qt::Checked);
-        } else {
-            this->_tlsBox.setCheckState(Qt::Unchecked);
+        if (this->protocol_type == ClientRedemptionIOAPI::MOD_RDP) {
+            int indexProfil = this->profilComboBox.findData(this->_front->current_user_profil);
+            if ( indexProfil != -1 ) {
+                this->profilComboBox.setCurrentIndex(indexProfil);
+            }
+
+            if (this->_front->modRDPParamsData.enable_tls) {
+                this->_tlsBox.setCheckState(Qt::Checked);
+            } else {
+                this->_tlsBox.setCheckState(Qt::Unchecked);
+            }
+
+            if (this->_front->modRDPParamsData.enable_nla) {
+                this->_nlaBox.setCheckState(Qt::Checked);
+            } else {
+                this->_nlaBox.setCheckState(Qt::Unchecked);
+            }
+
+            int indexLanguage = this->_languageComboBox.findData(this->_front->info.keylayout);
+            if ( indexLanguage != -1 ) {
+                this->_languageComboBox.setCurrentIndex(indexLanguage);
+            }
+
+        } else if (this->protocol_type == ClientRedemptionIOAPI::MOD_VNC) {
+
+                    int indexProfil = this->profilComboBox.findData(this->_front->vnc_conf.current_user_profil);
+            if ( indexProfil != -1 ) {
+                this->profilComboBox.setCurrentIndex(indexProfil);
+            }
+
+            if (this->_front->vnc_conf.enable_tls) {
+                this->_tlsBox.setCheckState(Qt::Checked);
+            } else {
+                this->_tlsBox.setCheckState(Qt::Unchecked);
+            }
+
+            if (this->_front->vnc_conf.enable_nla) {
+                this->_nlaBox.setCheckState(Qt::Checked);
+            } else {
+                this->_nlaBox.setCheckState(Qt::Unchecked);
+            }
+
+            int indexLanguage = this->_languageComboBox.findData(this->_front->vnc_conf.keylayout);
+            if ( indexLanguage != -1 ) {
+                this->_languageComboBox.setCurrentIndex(indexLanguage);
+            }
         }
 
-        if (this->_front->modRDPParamsData.enable_nla) {
-            this->_nlaBox.setCheckState(Qt::Checked);
-        } else {
-            this->_nlaBox.setCheckState(Qt::Unchecked);
+
+
+        if (this->protocol_type == ClientRedemptionIOAPI::MOD_RDP) {
+            int indexBpp = this->_bppComboBox.findData(this->_front->info.bpp);
+            if ( indexBpp != -1 ) {
+                this->_bppComboBox.setCurrentIndex(indexBpp);
+            }
+
+            int indexResolution = this->_resolutionComboBox.findData(this->_front->rdp_width);
+            if ( indexResolution != -1 ) {
+                this->_resolutionComboBox.setCurrentIndex(indexResolution);
+            }
+
+            if (this->_front->is_spanning) {
+                this->_spanCheckBox.setCheckState(Qt::Checked);
+            } else {
+                this->_spanCheckBox.setCheckState(Qt::Unchecked);
+            }
+
+            if (this->_front->info.rdp5_performanceflags & PERF_DISABLE_WALLPAPER) {
+                this->_wallpapperCheckBox.setCheckState(Qt::Checked);
+            }
+
+            if (this->_front->info.rdp5_performanceflags & PERF_DISABLE_FULLWINDOWDRAG) {
+                this->windowdragCheckBox.setCheckState(Qt::Checked);
+            }
+
+            if (this->_front->info.rdp5_performanceflags & PERF_DISABLE_MENUANIMATIONS) {
+                this->menuanimationsCheckBox.setCheckState(Qt::Checked);
+            }
+
+            if (this->_front->info.rdp5_performanceflags & PERF_DISABLE_CURSOR_SHADOW) {
+                this->cursorShadowCheckBox.setCheckState(Qt::Checked);
+            }
+
+            if (this->_front->info.rdp5_performanceflags & PERF_DISABLE_CURSORSETTINGS) {
+                this->cursorsettingsCheckBox.setCheckState(Qt::Checked);
+            }
+
+            if (this->_front->info.rdp5_performanceflags & PERF_ENABLE_FONT_SMOOTHING) {
+                this->fontSmoothingCheckBox.setCheckState(Qt::Checked);
+            }
+
+            if (this->_front->info.rdp5_performanceflags & PERF_ENABLE_DESKTOP_COMPOSITION) {
+                this->desktopCompositionCheckBox.setCheckState(Qt::Checked);
+            }
         }
 
-        if (this->_front->modRDPParamsData.enable_sound) {
-            this->_soundBox.setCheckState(Qt::Checked);
-        } else {
-            this->_soundBox.setCheckState(Qt::Unchecked);
-        }
 
-        if (this->_front->enable_shared_clipboard) {
-            this->_clipboardCheckBox.setCheckState(Qt::Checked);
-        } else {
-            this->_clipboardCheckBox.setCheckState(Qt::Unchecked);
-        }
 
-        if (this->_front->enable_shared_virtual_disk) {
-            this->_shareCheckBox.setCheckState(Qt::Checked);
-        } else {
-            this->_shareCheckBox.setCheckState(Qt::Unchecked);
+        if (this->protocol_type == ClientRedemptionIOAPI::MOD_RDP) {
+
+            if (this->_front->enable_shared_clipboard) {
+                this->_clipboardCheckBox.setCheckState(Qt::Checked);
+            } else {
+                this->_clipboardCheckBox.setCheckState(Qt::Unchecked);
+            }
+
+            if (this->_front->enable_shared_virtual_disk) {
+                this->_shareCheckBox.setCheckState(Qt::Checked);
+            } else {
+                this->_shareCheckBox.setCheckState(Qt::Unchecked);
+            }
+
+            this->_sharePath.setEnabled(this->_front->enable_shared_virtual_disk);
+            this->_sharePath.setText(this->_front->SHARE_DIR.c_str());
+
+            if (this->_front->modRDPParamsData.enable_sound) {
+                this->_soundBox.setCheckState(Qt::Checked);
+            } else {
+                this->_soundBox.setCheckState(Qt::Unchecked);
+            }
+
+            if (this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
+                this->remoteappCheckBox.setCheckState(Qt::Checked);
+            }
+
+            this->remoteapp_cmd.setEnabled(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
+            this->remoteapp_cmd.setText(this->_front->full_cmd_line.c_str());
+
+            this->remoteapp_workin_dir.setEnabled(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
+            this->remoteapp_workin_dir.setText(this->_front->source_of_WorkingDir.c_str());
+
+        } else if (this->protocol_type == ClientRedemptionIOAPI::MOD_VNC) {
+
+            if (this->_front->vnc_conf.enable_sound) {
+                this->_soundBox.setCheckState(Qt::Checked);
+            } else {
+                this->_soundBox.setCheckState(Qt::Unchecked);
+            }
+
+            if (this->_front->vnc_conf.enable_shared_clipboard) {
+                this->_clipboardCheckBox.setCheckState(Qt::Checked);
+            } else {
+                this->_clipboardCheckBox.setCheckState(Qt::Unchecked);
+            }
         }
     }
 
@@ -590,54 +740,96 @@ private:
 //         this->update();
 //     }
 
- void setConfigValues() {
+    void GetConfigValues() {
 
-        bool new_profil = true;
-        std::string text_profil = this->profilComboBox.currentText().toStdString();
-        for (size_t i = 0; i < this->_front->userProfils.size(); i++) {
-            if (this->_front->userProfils[i].name == text_profil) {
-                new_profil = false;
-            }
-        }
-
-        if (new_profil) {
-            this->_front->userProfils.push_back({int(this->_front->userProfils.size()), text_profil.c_str()});
-            this->_front->current_user_profil = this->_front->userProfils.size()-1;
-        } else {
-             this->_front->current_user_profil = this->profilComboBox.currentIndex();
-        }
-
-        this->_front->info.bpp = this->_bppComboBox.currentText().toInt();
-        std::string delimiter = " * ";
-        std::string resolution( this->_resolutionComboBox.currentText().toStdString());
-        int pos(resolution.find(delimiter));
-        this->_front->rdp_width  = std::stoi(resolution.substr(0, pos));
-        this->_front->rdp_height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
-        if (this->_wallpapperCheckBox.isChecked()) {
-            this->_front->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-        } else {
-            this->_front->info.rdp5_performanceflags = 0;
-        }
-        if (this->_spanCheckBox.isChecked()) {
-            this->_front->is_spanning = true;
-        } else {
-            this->_front->is_spanning = false;
-        }
+        //  Connection tab
         if (this->_recordingCB.isChecked()) {
             this->_front->is_recording = true;
         } else {
             this->_front->is_recording = false;
         }
-        if (this->_tlsBox.isChecked()) {
-            this->_front->modRDPParamsData.enable_tls = true;
-        } else {
-            this->_front->modRDPParamsData.enable_tls = false;
+
+        bool new_profil = true;
+        std::string text_profil = this->profilComboBox.currentText().toStdString();
+
+        if (this->protocol_type == ClientRedemptionIOAPI::MOD_RDP) {
+
+            for (size_t i = 0; i < this->_front->userProfils.size(); i++) {
+                if (this->_front->userProfils[i].name == text_profil) {
+                    new_profil = false;
+                }
+            }
+            if (new_profil) {
+                this->_front->userProfils.push_back({int(this->_front->userProfils.size()), text_profil.c_str()});
+
+                this->_front->current_user_profil = this->_front->userProfils.size()-1;
+            } else {
+                this->_front->current_user_profil = this->profilComboBox.currentIndex();
+            }
+
+             if (this->_tlsBox.isChecked()) {
+                this->_front->modRDPParamsData.enable_tls = true;
+            } else {
+                this->_front->modRDPParamsData.enable_tls = false;
+            }
+            if (this->_nlaBox.isChecked()) {
+                this->_front->modRDPParamsData.enable_nla = true;
+            } else {
+                this->_front->modRDPParamsData.enable_nla = false;
+            }
+
+        } else if (this->protocol_type == ClientRedemptionIOAPI::MOD_VNC) {
+
+            for (size_t i = 0; i < this->_front->vnc_conf.userProfils.size(); i++) {
+                if (this->_front->vnc_conf.userProfils[i].name == text_profil) {
+                    new_profil = false;
+                }
+            }
+            if (new_profil) {
+                this->_front->vnc_conf.userProfils.push_back({int(this->_front->vnc_conf.userProfils.size()), text_profil.c_str()});
+
+                this->_front->vnc_conf.current_user_profil = this->_front->vnc_conf.userProfils.size()-1;
+            } else {
+                this->_front->vnc_conf.current_user_profil = this->profilComboBox.currentIndex();
+            }
+
+            if (this->_tlsBox.isChecked()) {
+                this->_front->vnc_conf.enable_tls = true;
+            } else {
+                this->_front->vnc_conf.enable_tls = false;
+            }
+            if (this->_nlaBox.isChecked()) {
+                this->_front->vnc_conf.enable_nla = true;
+            } else {
+                this->_front->vnc_conf.enable_nla = false;
+            }
         }
-        if (this->_nlaBox.isChecked()) {
-            this->_front->modRDPParamsData.enable_nla = true;
-        } else {
-            this->_front->modRDPParamsData.enable_nla = false;
+
+
+        //  View tab
+        if (this->protocol_type == ClientRedemptionIOAPI::MOD_RDP) {
+            this->_front->info.bpp = this->_bppComboBox.currentText().toInt();
+
+            std::string delimiter = " * ";
+            std::string resolution( this->_resolutionComboBox.currentText().toStdString());
+            int pos(resolution.find(delimiter));
+            this->_front->rdp_width  = std::stoi(resolution.substr(0, pos));
+            this->_front->rdp_height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
+
+            if (this->_spanCheckBox.isChecked()) {
+                this->_front->is_spanning = true;
+            } else {
+                this->_front->is_spanning = false;
+            }
+            if (this->_wallpapperCheckBox.isChecked()) {
+                this->_front->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+            } else {
+                this->_front->info.rdp5_performanceflags = 0;
+            }
         }
+
+
+
         if (this->_soundBox.isChecked()) {
             this->_front->modRDPParamsData.enable_sound = true;
         } else {
