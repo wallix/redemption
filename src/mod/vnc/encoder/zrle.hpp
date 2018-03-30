@@ -64,8 +64,8 @@ namespace VNC {
                  , tile(Rect(this->r.x, this->r.y, 
                       std::min<size_t>(this->r.cx, 64), 
                       std::min<size_t>(this->r.cy, 64)))
-                 , cx_remain{0}
-                 , cy_remain{0}
+                 , cx_remain{cx}
+                 , cy_remain{cy}
                 , zd(zd)
                 , state(ZrleState::Header)
                 , zlib_compressed_data_length(0), accumulator{}, accumulator_uncompressed{}
@@ -74,15 +74,21 @@ namespace VNC {
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "New zrle compressor %hhu (%zu %zu %zu %zu)", bpp, x,y, cx, cy);
                 }
-                // remaining part of rect to draw, including current tile
-                 this->cx_remain = this->r.cx;
-                 this->cy_remain = this->r.cy;
             }
 
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
             EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
+            
+                if (this->r.isempty())
+                {
+                    if (bool(this->verbose & VNCVerbose::hextile_encoder)){
+                        LOG(LOG_INFO, "Hextile::zrle Encoder done (empty rect)");
+                    }
+                    return EncoderState::Exit;
+                }
+
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "zrle consuming data  %zu", buf.av().size());
                 }
@@ -286,19 +292,11 @@ namespace VNC {
     private:
             void lib_framebuffer_update_zrle(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
             {
-                LOG(LOG_INFO, "lib_framebuffer_update_zrle");
                 while (uncompressed_data_buffer.in_remain())
                 {
                     if (bool(this->verbose & VNCVerbose::zrle_encoder)){
                         LOG(LOG_INFO, "lib_framebuffer_update_zrle remaining %zu", uncompressed_data_buffer.in_remain());
                         LOG(LOG_INFO, "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
-                    }
-                    // check if empty rect I exit immediately
-                    if (not this->next_tile()){
-                        if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                            LOG(LOG_INFO, "Hextile::hexTileraw Encoder done (raw) %zu", uncompressed_data_buffer.in_remain());
-                        }
-                        return;
                     }
                 
                     uint8_t   subencoding = uncompressed_data_buffer.in_uint8();
@@ -355,7 +353,17 @@ namespace VNC {
                         this->paletteRLE(subencoding, uncompressed_data_buffer, drawable);
                     break;
                     } // switch subencoding
+
+                    if (not this->next_tile()){
+                        if (bool(this->verbose & VNCVerbose::hextile_encoder)){
+                            LOG(LOG_INFO, "Hextile::hexTileraw Encoder done (raw) %zu", uncompressed_data_buffer.in_remain());
+                        }
+                        return;
+                    }
                 } // while
+
+                LOG(LOG_ERR, "Compressed VNC::zrle stream truncated : not enough compressed data");
+                throw Error(ERR_VNC_ZRLE_PROTOCOL);
             }
            
             void draw_tile(const uint8_t * raw, gdi::GraphicApi & drawable)

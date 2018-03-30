@@ -2070,8 +2070,8 @@ private:
                     support_rre_encoding           = true;
                 }
 
-                    support_zrle_encoding          = false;
-                    support_hextile_encoding       = true;
+                    support_zrle_encoding          = true;
+                    support_hextile_encoding       = false;
                     support_rre_encoding           = false;
                 
                 uint16_t number_of_encodings =  support_zrle_encoding
