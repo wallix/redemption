@@ -323,37 +323,37 @@ public:
 //         }
 //     }
 
-     void setClip(int x, int y, int w, int h) {
-
-         if (this->screen) {
-
-             if (this->screen->clip.x() == -1) {
-                 this->screen->clip.setX(x);
-                 this->screen->clip.setY(y);
-                 this->screen->clip.setWidth(w);
-                 this->screen->clip.setHeight(h);
-             } else {
-                 const int ori_x = this->screen->clip.x();
-                 const int ori_y = this->screen->clip.y();
-
-                 if (x <= ori_x) {
-                     this->screen->clip.setX(x);
-                 }
-
-                 if (y <= ori_y) {
-                     this->screen->clip.setY(y);
-                 }
-
-                 if ( (x+w) > (ori_x + this->screen->clip.width()) ) {
-                     this->screen->clip.setWidth(x+w-this->screen->clip.x());
-                 }
-
-                 if ( (y+h) > (ori_y + this->screen->clip.height()) ) {
-                     this->screen->clip.setHeight(y+h-this->screen->clip.y());
-                 }
-             }
-         }
-     }
+//      void setClip(int x, int y, int w, int h) {
+//
+//          if (this->screen) {
+//
+//              if (this->screen->clip.x() == -1) {
+//                  this->screen->clip.setX(x);
+//                  this->screen->clip.setY(y);
+//                  this->screen->clip.setWidth(w);
+//                  this->screen->clip.setHeight(h);
+//              } else {
+//                  const int ori_x = this->screen->clip.x();
+//                  const int ori_y = this->screen->clip.y();
+//
+//                  if (x <= ori_x) {
+//                      this->screen->clip.setX(x);
+//                  }
+//
+//                  if (y <= ori_y) {
+//                      this->screen->clip.setY(y);
+//                  }
+//
+//                  if ( (x+w) > (ori_x + this->screen->clip.width()) ) {
+//                      this->screen->clip.setWidth(x+w-this->screen->clip.x());
+//                  }
+//
+//                  if ( (y+h) > (ori_y + this->screen->clip.height()) ) {
+//                      this->screen->clip.setHeight(y+h-this->screen->clip.y());
+//                  }
+//              }
+//          }
+//     }
 
     void begin_update() override {
 

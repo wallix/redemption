@@ -471,15 +471,17 @@ public:
                 this->info.bpp = std::stoi(std::string(argv[i+1]));
             } else if (word == "--keylayout" && i < argc-1) {
                 this->info.keylayout = std::stoi(std::string(argv[i+1]));
-            } else if (word == "--record" && i < argc-1) {
+            } else if (word == "--enable-record" && i < argc-1) {
                 this->is_recording = true;
+            } else if (word == "--disable-record" && i < argc-1) {
+                this->is_recording = false;
             } else if (word == "--share-dir" && i < argc-1) {
                 this->enable_shared_virtual_disk = true;
                 this->SHARE_DIR = std::string(argv[i+1]);
+            } else if (word == "--disable-share-disk") {
+                this->enable_shared_virtual_disk = false;
             } else if (word == "--span") {
                 this->is_spanning = true;
-            } else if (word == "--disable-share") {
-                this->enable_shared_virtual_disk = false;
             } else if (word == "--disable-clipboard") {
                 this->enable_shared_clipboard = false;
             } else if (word == "--disable-nla") {
@@ -488,11 +490,19 @@ public:
                 this->modRDPParamsData.enable_tls = false;
             } else if (word == "--disable-sound") {
                 this->modRDPParamsData.enable_sound = false;
-            } else if (word == "--disable-windowdrag") {
+            } else if (word == "--enable-clipboard") {
+                this->enable_shared_clipboard = false;
+            } else if (word == "--enable-nla") {
+                this->modRDPParamsData.enable_nla = false;
+            } else if (word == "--enable-tls") {
+                this->modRDPParamsData.enable_tls = false;
+            } else if (word == "--enable-sound") {
+                this->modRDPParamsData.enable_sound = false;
+            } else if (word == "--disable-fullwindowdrag") {
                 this->info.rdp5_performanceflags |= PERF_DISABLE_FULLWINDOWDRAG;
             } else if (word == "--disable-menuanimations") {
                 this->info.rdp5_performanceflags |=  PERF_DISABLE_MENUANIMATIONS;
-            } else if (word == "--disable-menuanimations") {
+            } else if (word == "--disable-theming") {
                 this->info.rdp5_performanceflags |=  PERF_DISABLE_THEMING;
             } else if (word == "--disable-cursor-shadow") {
                 this->info.rdp5_performanceflags |=  PERF_DISABLE_CURSOR_SHADOW;
@@ -502,10 +512,91 @@ public:
                 this->info.rdp5_performanceflags |=  PERF_ENABLE_FONT_SMOOTHING;
             } else if (word == "--disable-desktop-composition") {
                 this->info.rdp5_performanceflags |=  PERF_ENABLE_DESKTOP_COMPOSITION;
-            } else if (word == "--vnc-apple") {
+            } else if (word == "--enable-fullwindowdrag") {
+                this->info.rdp5_performanceflags &= ~PERF_DISABLE_FULLWINDOWDRAG;
+            } else if (word == "--enable-menuanimations") {
+                this->info.rdp5_performanceflags &= ~PERF_DISABLE_MENUANIMATIONS;
+            } else if (word == "--enable-theming") {
+                this->info.rdp5_performanceflags &= ~PERF_DISABLE_THEMING;
+            } else if (word == "--enable-cursor-shadow") {
+                this->info.rdp5_performanceflags &= ~PERF_DISABLE_CURSOR_SHADOW;
+            } else if (word == "--enable-cursorsettings") {
+                this->info.rdp5_performanceflags &= ~PERF_DISABLE_CURSORSETTINGS;
+            } else if (word == "--enable-font-smoothing") {
+                this->info.rdp5_performanceflags &= ~PERF_ENABLE_FONT_SMOOTHING;
+            } else if (word == "--enable-desktop-composition") {
+                this->info.rdp5_performanceflags &= ~PERF_ENABLE_DESKTOP_COMPOSITION;
+            } else if (word == "--vnc-applekeyboard") {
                 this->vnc_conf.is_apple = true;
+            } else if (word == "--disable-vnc-applekeyboard") {
+                this->vnc_conf.is_apple = false;
+            } else if (word == "-h") {
+                this->print_command_options();
             }
         }
+    }
+
+    void print_command_options() const {
+
+        LOG(LOG_INFO, "Client ReDemPtion Help menu: \n");
+
+        LOG(LOG_INFO, "   -h                              Show help menu.");
+        LOG(LOG_INFO, "   -n [user_name]                  Set target session user name.");
+        LOG(LOG_INFO, "   -w [password]                   Set target session user password.");
+        LOG(LOG_INFO, "   -P [target_port]                Set port to use on target");
+        LOG(LOG_INFO, "   -i [target_ip]                  Set target IP adress.");
+        LOG(LOG_INFO, "   --rdpdr                         Actives rdpdr logs.");
+        LOG(LOG_INFO, "   --rdpsnd                        Actives rdpsnd logs.");
+        LOG(LOG_INFO, "   --cliprdr                       Actives cliprdr logs.");
+        LOG(LOG_INFO, "   --graphics                      Actives graphics logs.");
+        LOG(LOG_INFO, "   --printer                       Actives printer logs.");
+        LOG(LOG_INFO, "   --rdpdr-dump                    Actives rdpdr logs and dump brute rdpdr PDU.");
+        LOG(LOG_INFO, "   --cliprdr-dump                  Actives cliprdr logs and dump brute cliprdr PDU");
+        LOG(LOG_INFO, "   --basic-trace                   Actives basic-trace  logs.");
+        LOG(LOG_INFO, "   --connection                    Actives connection logs.");
+        LOG(LOG_INFO, "   --rail-order                    Actives rail-order logs.");
+        LOG(LOG_INFO, "   --asynchronous-task             Actives asynchronous-task logs.");
+        LOG(LOG_INFO, "   --capabilities                  Actives capabilities logs.");
+        LOG(LOG_INFO, "   --rail                          Actives rail logs.");
+        LOG(LOG_INFO, "   --rail-dump                     Actives rail logs and dump brute rail PDU.");
+        LOG(LOG_INFO, "   --vnc                           Set connection mod to VNC.");
+        LOG(LOG_INFO, "   --remote-app                    Connection as remote application.");
+        LOG(LOG_INFO, "   --remote-exe [command]          Connection as remote application and set the line command.");
+        LOG(LOG_INFO, "   --remote-dir [directory]        Set remote application work directory.");
+        LOG(LOG_INFO, "   --width [width]                 Set screen width.");
+        LOG(LOG_INFO, "   --height [height]               Set screen height.");
+        LOG(LOG_INFO, "   --graphics                      Actives grapphics logs.");
+        LOG(LOG_INFO, "   --bpp [bit_per_pixel]           Set bit per pixel.");
+        LOG(LOG_INFO, "   --keylayout [keylayout]         Set windows keylayout.");
+        LOG(LOG_INFO, "   --record                        Enable session recording as .wrm movie.");
+        LOG(LOG_INFO, "   --share-dir [shared_dir_path]  Set directory path on local disk to share with your session.");
+        LOG(LOG_INFO, "   --disable-share-disk            Disable local disk sharing.");
+        LOG(LOG_INFO, "   --span                          Span the screen size on local screen.");
+        LOG(LOG_INFO, "   --disable-clipboard             Disable clipboard sharing.");
+        LOG(LOG_INFO, "   --disable-nla                   Disable NLA protocol.");
+        LOG(LOG_INFO, "   --disable-tls                   Disable TLS protocol.");
+        LOG(LOG_INFO, "   --disable-sound                 Disable sound.");
+        LOG(LOG_INFO, "   --disable-fullwindowdrag        Disable full window draging.");
+        LOG(LOG_INFO, "   --disable-menuanimations        Disable menu animations.");
+        LOG(LOG_INFO, "   --disable-theming               Disable theming.");
+        LOG(LOG_INFO, "   --disable-cursor-shadow         Disable cursor shadow.");
+        LOG(LOG_INFO, "   --disable-cursorsettings        Disable cursor settings.");
+        LOG(LOG_INFO, "   --disable-font-smoothing        Disable font soomthing.");
+        LOG(LOG_INFO, "   --disable-desktop-composition   Disable desktop composition.");
+        LOG(LOG_INFO, "   --enable-clipboard              Enable clipboard sharing.");
+        LOG(LOG_INFO, "   --enable-nla                    Entable NLA protocol");
+        LOG(LOG_INFO, "   --enable-tls                    Enable TLS protocol.");
+        LOG(LOG_INFO, "   --enable-sound                  Enable sound.");
+        LOG(LOG_INFO, "   --enable-fullwindowdrag         Enable full window draging.");
+        LOG(LOG_INFO, "   --enable-menuanimations         Enable menu animations.");
+        LOG(LOG_INFO, "   --enable-theming                Enable theming.");
+        LOG(LOG_INFO, "   --enable-cursor-shadow          Enable cursor shadow.");
+        LOG(LOG_INFO, "   --enable-cursorsettings         Enable cursor settings.");
+        LOG(LOG_INFO, "   --enable-font-smoothing         Enable font smoothing.");
+        LOG(LOG_INFO, "   --enable-desktop-composition    Enable desktop composition.");
+        LOG(LOG_INFO, "   --vnc-applekeyboard             Set keyboard compatibility mod with apple VNC server.");
+        LOG(LOG_INFO, "   --disable-vnc-applekeyboard     Unset keyboard compatibility mod with apple VNC server.");
+        LOG(LOG_INFO, " \n");
     }
 
     void setUserProfil() {
