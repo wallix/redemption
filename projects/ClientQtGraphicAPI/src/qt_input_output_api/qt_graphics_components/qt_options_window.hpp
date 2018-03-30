@@ -590,6 +590,79 @@ private:
 //         this->update();
 //     }
 
+ void setConfigValues() {
+
+        bool new_profil = true;
+        std::string text_profil = this->profilComboBox.currentText().toStdString();
+        for (size_t i = 0; i < this->_front->userProfils.size(); i++) {
+            if (this->_front->userProfils[i].name == text_profil) {
+                new_profil = false;
+            }
+        }
+
+        if (new_profil) {
+            this->_front->userProfils.push_back({int(this->_front->userProfils.size()), text_profil.c_str()});
+            this->_front->current_user_profil = this->_front->userProfils.size()-1;
+        } else {
+             this->_front->current_user_profil = this->profilComboBox.currentIndex();
+        }
+
+        this->_front->info.bpp = this->_bppComboBox.currentText().toInt();
+        std::string delimiter = " * ";
+        std::string resolution( this->_resolutionComboBox.currentText().toStdString());
+        int pos(resolution.find(delimiter));
+        this->_front->rdp_width  = std::stoi(resolution.substr(0, pos));
+        this->_front->rdp_height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
+        if (this->_wallpapperCheckBox.isChecked()) {
+            this->_front->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+        } else {
+            this->_front->info.rdp5_performanceflags = 0;
+        }
+        if (this->_spanCheckBox.isChecked()) {
+            this->_front->is_spanning = true;
+        } else {
+            this->_front->is_spanning = false;
+        }
+        if (this->_recordingCB.isChecked()) {
+            this->_front->is_recording = true;
+        } else {
+            this->_front->is_recording = false;
+        }
+        if (this->_tlsBox.isChecked()) {
+            this->_front->modRDPParamsData.enable_tls = true;
+        } else {
+            this->_front->modRDPParamsData.enable_tls = false;
+        }
+        if (this->_nlaBox.isChecked()) {
+            this->_front->modRDPParamsData.enable_nla = true;
+        } else {
+            this->_front->modRDPParamsData.enable_nla = false;
+        }
+        if (this->_soundBox.isChecked()) {
+            this->_front->modRDPParamsData.enable_sound = true;
+        } else {
+            this->_front->modRDPParamsData.enable_sound = false;
+        }
+        this->_front->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
+        this->_front->update_keylayout();
+
+        if (this->_clipboardCheckBox.isChecked()) {
+            this->_front->enable_shared_clipboard = true;
+        } else {
+            this->_front->enable_shared_clipboard = false;
+        }
+
+        if (this->_shareCheckBox.isChecked()) {
+            this->_front->enable_shared_virtual_disk = true;
+        } else {
+            this->_front->enable_shared_virtual_disk = false;
+        }
+
+        this->_front->SHARE_DIR = this->_sharePath.text().toStdString();
+
+        this->_front->writeClientInfo();
+    }
+
 
 public Q_SLOTS:
     void deleteCurrentProtile() {
