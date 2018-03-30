@@ -1567,7 +1567,7 @@ protected:
 
     UpAndRunningCtx up_and_running_ctx;
 
-    Buf64k buf;
+    Buf64k server_data_buf;
 
 public:
     void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override
@@ -1583,7 +1583,7 @@ public:
         }
 
         if (!this->event.is_waked_up_by_time()) {
-            this->buf.read_from(this->t);
+            this->server_data_buf.read_from(this->t);
         }
 
         while (this->draw_event_impl(drawable)) {
@@ -1628,7 +1628,7 @@ private:
 
             if (!this->event.is_waked_up_by_time()) {
                 try {
-                    while (this->up_and_running_ctx.run(buf, drawable, *this)) {
+                    while (this->up_and_running_ctx.run(this->server_data_buf, drawable, *this)) {
                         this->up_and_running_ctx.restart();
                     }
                     return false;
@@ -1661,17 +1661,17 @@ private:
 
                 size_t const protocol_version_len = 12;
 
-                if (buf.remaining() < protocol_version_len) {
+                if (this->server_data_buf.remaining() < protocol_version_len) {
                     return false;
                 }
 
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     // protocol_version_len - zero terminal
                     LOG(LOG_INFO, "Server Protocol Version=%.*s\n",
-                        int(protocol_version_len-1), buf.av().data());
+                        int(protocol_version_len-1), this->server_data_buf.av().data());
                 }
 
-                buf.advance(protocol_version_len);
+                this->server_data_buf.advance(protocol_version_len);
 
                 this->t.send("RFB 003.003\n", 12);
                 // sec type
@@ -1682,11 +1682,11 @@ private:
 
         case WAIT_SECURITY_TYPES_LEVEL:
             {
-                if (buf.remaining() < 4) {
+                if (this->server_data_buf.remaining() < 4) {
                     return false;
                 }
-                int32_t const security_level = InStream(buf.av(4)).in_sint32_be();
-                buf.advance(4);
+                int32_t const security_level = InStream(this->server_data_buf.av(4)).in_sint32_be();
+                this->server_data_buf.advance(4);
 
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "security level is %d "
@@ -1720,7 +1720,7 @@ private:
             }
 
             {
-                if (!this->password_ctx.run(this->buf)) {
+                if (!this->password_ctx.run(this->server_data_buf)) {
                     return false;
                 }
                 this->password_ctx.restart();
@@ -1749,7 +1749,7 @@ private:
                     LOG(LOG_INFO, "Waiting for password ack");
                 }
 
-                if (!this->auth_response_ctx.run(buf, [this](bool status, byte_array bytes){
+                if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, byte_array bytes){
                     if (status) {
                         if (bool(this->verbose & VNCVerbose::basic_trace)) {
                             LOG(LOG_INFO, "vnc password ok\n");
@@ -1773,7 +1773,7 @@ private:
             {
                 LOG(LOG_INFO, "VNC MS-LOGON Auth");
 
-                if (!this->ms_logon(buf)) {
+                if (!this->ms_logon(this->server_data_buf)) {
                     return false;
                 }
                 this->ms_logon_ctx.restart();
@@ -1787,7 +1787,7 @@ private:
                     LOG(LOG_INFO, "Waiting for password ack");
                 }
 
-                if (!this->auth_response_ctx.run(buf, [this](bool status, byte_array bytes){
+                if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, byte_array bytes){
                     if (status) {
                         if (bool(this->verbose & VNCVerbose::basic_trace)) {
                             LOG(LOG_INFO, "MS LOGON password ok\n");
@@ -1809,7 +1809,7 @@ private:
             {
                 LOG(LOG_ERR, "VNC INVALID Auth");
 
-                if (!this->invalid_auth_ctx.run(buf, [](array_view_u8 av){
+                if (!this->invalid_auth_ctx.run(this->server_data_buf, [](array_view_u8 av){
                     hexdump_c(av.data(), av.size());
                 })) {
                     return false;
@@ -1827,7 +1827,7 @@ private:
 
         case SERVER_INIT_RESPONSE:
             {
-                if (!this->server_init_ctx.run(buf, *this)) {
+                if (!this->server_init_ctx.run(this->server_data_buf, *this)) {
                     return false;
                 }
                 this->server_init_ctx.restart();

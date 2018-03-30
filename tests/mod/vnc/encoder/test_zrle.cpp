@@ -154,7 +154,7 @@ RED_AUTO_TEST_CASE(TestZrle)
     drawable.save_to_png("vnc_first_len.png");
     char message[4096] = {};
     if (!redemption_unit_test__::check_sig(drawable.gd, message,
-                            "\x72\x7e\x9b\xe5\xd0\x4f\x80\xde\x7e\x41\x4d\x9d\x17\xc8\x85\x40\x8a\xb4\x28\xf2")){
+        "\xd6\x38\xee\x6a\xa7\x49\x9e\x06\xa3\x6d\x08\xd1\xf3\x82\x8d\x63\xad\x23\x9d\x2f")){
         LOG(LOG_INFO, "signature mismatch: %s", message);
         BOOST_CHECK(false);
     }
