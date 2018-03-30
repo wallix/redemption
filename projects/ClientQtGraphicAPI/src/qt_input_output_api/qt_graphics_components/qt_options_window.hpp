@@ -376,8 +376,6 @@ public:
             this->cursorsettingsLabel.hide();
             this->fontSmoothingLabel.hide();
             this->desktopCompositionLabel.hide();
-
-//             this->_viewTab->hide();
         }
 
 
@@ -609,7 +607,7 @@ private:
         }
 
 
-
+        // View tab
         if (this->protocol_type == ClientRedemptionIOAPI::MOD_RDP) {
             int indexBpp = this->_bppComboBox.findData(this->_front->info.bpp);
             if ( indexBpp != -1 ) {
@@ -657,7 +655,7 @@ private:
         }
 
 
-
+        // Services tab
         if (this->protocol_type == ClientRedemptionIOAPI::MOD_RDP) {
 
             if (this->_front->enable_shared_clipboard) {
@@ -683,6 +681,8 @@ private:
 
             if (this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
                 this->remoteappCheckBox.setCheckState(Qt::Checked);
+            } else {
+                this->remoteappCheckBox.setCheckState(Qt::Unchecked);
             }
 
             this->remoteapp_cmd.setEnabled(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
@@ -778,6 +778,9 @@ private:
                 this->_front->modRDPParamsData.enable_nla = false;
             }
 
+            this->_front->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
+            this->_front->update_keylayout();
+
         } else if (this->protocol_type == ClientRedemptionIOAPI::MOD_VNC) {
 
             for (size_t i = 0; i < this->_front->vnc_conf.userProfils.size(); i++) {
@@ -792,7 +795,6 @@ private:
             } else {
                 this->_front->vnc_conf.current_user_profil = this->profilComboBox.currentIndex();
             }
-
             if (this->_tlsBox.isChecked()) {
                 this->_front->vnc_conf.enable_tls = true;
             } else {
@@ -803,6 +805,13 @@ private:
             } else {
                 this->_front->vnc_conf.enable_nla = false;
             }
+            if (this->keyboard_apple_compatibility_CB.isChecked()) {
+                this->_front->vnc_conf.is_apple = true;
+            } else {
+                this->_front->vnc_conf.is_apple = false;
+            }
+            this->_front->vnc_conf.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
+            this->_front->update_keylayout();
         }
 
 
@@ -821,36 +830,75 @@ private:
             } else {
                 this->_front->is_spanning = false;
             }
+
+            this->_front->info.rdp5_performanceflags = 0;
             if (this->_wallpapperCheckBox.isChecked()) {
-                this->_front->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-            } else {
-                this->_front->info.rdp5_performanceflags = 0;
+                this->_front->info.rdp5_performanceflags |= PERF_DISABLE_WALLPAPER;
+            }
+            if (this->windowdragCheckBox.isChecked()) {
+                this->_front->info.rdp5_performanceflags |= PERF_DISABLE_FULLWINDOWDRAG;
+            }
+            if (this->menuanimationsCheckBox.isChecked()) {
+                this->_front->info.rdp5_performanceflags |= PERF_DISABLE_MENUANIMATIONS;
+            }
+            if (this->cursorShadowCheckBox.isChecked()) {
+                this->_front->info.rdp5_performanceflags |= PERF_DISABLE_CURSOR_SHADOW;
+            }
+            if (this->cursorsettingsCheckBox.isChecked()) {
+                this->_front->info.rdp5_performanceflags |= PERF_DISABLE_CURSORSETTINGS;
+            }
+            if (this->fontSmoothingCheckBox.isChecked()) {
+                this->_front->info.rdp5_performanceflags |= PERF_ENABLE_FONT_SMOOTHING;
+            }
+            if (this->desktopCompositionCheckBox.isChecked()) {
+                this->_front->info.rdp5_performanceflags |= PERF_ENABLE_DESKTOP_COMPOSITION;
             }
         }
 
 
+        // Services tab
+        if (this->protocol_type == ClientRedemptionIOAPI::MOD_RDP) {
 
-        if (this->_soundBox.isChecked()) {
-            this->_front->modRDPParamsData.enable_sound = true;
-        } else {
-            this->_front->modRDPParamsData.enable_sound = false;
+            if (this->_clipboardCheckBox.isChecked()) {
+                this->_front->enable_shared_clipboard = true;
+            } else {
+                this->_front->enable_shared_clipboard = false;
+            }
+
+            if (this->_shareCheckBox.isChecked()) {
+                this->_front->enable_shared_virtual_disk = true;
+                this->_front->SHARE_DIR = this->_sharePath.text().toStdString();
+            } else {
+                this->_front->enable_shared_virtual_disk = false;
+            }
+
+            if (this->_soundBox.isChecked()) {
+                this->_front->modRDPParamsData.enable_sound = true;
+            } else {
+                this->_front->modRDPParamsData.enable_sound = false;
+            }
+
+            if (this->_soundBox.isChecked()) {
+                this->_front->mod_state = ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP;
+
+                this->_front->set_remoteapp_cmd_line(this->remoteapp_cmd.text().toStdString());
+                this->_front->source_of_WorkingDir = this->remoteapp_workin_dir.text().toStdString();
+            }
+
+        } else if (this->protocol_type == ClientRedemptionIOAPI::MOD_VNC) {
+
+             if (this->_clipboardCheckBox.isChecked()) {
+                this->_front->vnc_conf.enable_shared_clipboard = true;
+            } else {
+                this->_front->vnc_conf.enable_shared_clipboard = false;
+            }
+
+            if (this->_soundBox.isChecked()) {
+                this->_front->vnc_conf.enable_sound = true;
+            } else {
+                this->_front->vnc_conf.enable_sound = false;
+            }
         }
-        this->_front->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
-        this->_front->update_keylayout();
-
-        if (this->_clipboardCheckBox.isChecked()) {
-            this->_front->enable_shared_clipboard = true;
-        } else {
-            this->_front->enable_shared_clipboard = false;
-        }
-
-        if (this->_shareCheckBox.isChecked()) {
-            this->_front->enable_shared_virtual_disk = true;
-        } else {
-            this->_front->enable_shared_virtual_disk = false;
-        }
-
-        this->_front->SHARE_DIR = this->_sharePath.text().toStdString();
 
         this->_front->writeClientInfo();
     }
@@ -903,79 +951,79 @@ public Q_SLOTS:
         this->_sharePath.setText(filePath);
     }
 
-    void savePressed() {}
-
-    void saveReleased() {
-
-        bool new_profil = true;
-        std::string text_profil = this->profilComboBox.currentText().toStdString();
-        for (size_t i = 0; i < this->_front->userProfils.size(); i++) {
-            if (this->_front->userProfils[i].name == text_profil) {
-                new_profil = false;
-            }
-        }
-
-        if (new_profil) {
-            this->_front->userProfils.push_back({int(this->_front->userProfils.size()), text_profil.c_str()});
-            this->_front->current_user_profil = this->_front->userProfils.size()-1;
-        } else {
-             this->_front->current_user_profil = this->profilComboBox.currentIndex();
-        }
-
-        this->_front->info.bpp = this->_bppComboBox.currentText().toInt();
-        std::string delimiter = " * ";
-        std::string resolution( this->_resolutionComboBox.currentText().toStdString());
-        int pos(resolution.find(delimiter));
-        this->_front->rdp_width  = std::stoi(resolution.substr(0, pos));
-        this->_front->rdp_height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
-        if (this->_wallpapperCheckBox.isChecked()) {
-            this->_front->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-        } else {
-            this->_front->info.rdp5_performanceflags = 0;
-        }
-        if (this->_spanCheckBox.isChecked()) {
-            this->_front->is_spanning = true;
-        } else {
-            this->_front->is_spanning = false;
-        }
-        if (this->_recordingCB.isChecked()) {
-            this->_front->is_recording = true;
-        } else {
-            this->_front->is_recording = false;
-        }
-        if (this->_tlsBox.isChecked()) {
-            this->_front->modRDPParamsData.enable_tls = true;
-        } else {
-            this->_front->modRDPParamsData.enable_tls = false;
-        }
-        if (this->_nlaBox.isChecked()) {
-            this->_front->modRDPParamsData.enable_nla = true;
-        } else {
-            this->_front->modRDPParamsData.enable_nla = false;
-        }
-        if (this->_soundBox.isChecked()) {
-            this->_front->modRDPParamsData.enable_sound = true;
-        } else {
-            this->_front->modRDPParamsData.enable_sound = false;
-        }
-        this->_front->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
-        this->_front->update_keylayout();
-
-        if (this->_clipboardCheckBox.isChecked()) {
-            this->_front->enable_shared_clipboard = true;
-        } else {
-            this->_front->enable_shared_clipboard = false;
-        }
-
-        if (this->_shareCheckBox.isChecked()) {
-            this->_front->enable_shared_virtual_disk = true;
-        } else {
-            this->_front->enable_shared_virtual_disk = false;
-        }
-
-        this->_front->SHARE_DIR = this->_sharePath.text().toStdString();
-
-        this->_front->writeClientInfo();
+//     void savePressed() {}
+//
+//     void saveReleased() {
+//
+//         bool new_profil = true;
+//         std::string text_profil = this->profilComboBox.currentText().toStdString();
+//         for (size_t i = 0; i < this->_front->userProfils.size(); i++) {
+//             if (this->_front->userProfils[i].name == text_profil) {
+//                 new_profil = false;
+//             }
+//         }
+//
+//         if (new_profil) {
+//             this->_front->userProfils.push_back({int(this->_front->userProfils.size()), text_profil.c_str()});
+//             this->_front->current_user_profil = this->_front->userProfils.size()-1;
+//         } else {
+//              this->_front->current_user_profil = this->profilComboBox.currentIndex();
+//         }
+//
+//         this->_front->info.bpp = this->_bppComboBox.currentText().toInt();
+//         std::string delimiter = " * ";
+//         std::string resolution( this->_resolutionComboBox.currentText().toStdString());
+//         int pos(resolution.find(delimiter));
+//         this->_front->rdp_width  = std::stoi(resolution.substr(0, pos));
+//         this->_front->rdp_height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
+//         if (this->_wallpapperCheckBox.isChecked()) {
+//             this->_front->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+//         } else {
+//             this->_front->info.rdp5_performanceflags = 0;
+//         }
+//         if (this->_spanCheckBox.isChecked()) {
+//             this->_front->is_spanning = true;
+//         } else {
+//             this->_front->is_spanning = false;
+//         }
+//         if (this->_recordingCB.isChecked()) {
+//             this->_front->is_recording = true;
+//         } else {
+//             this->_front->is_recording = false;
+//         }
+//         if (this->_tlsBox.isChecked()) {
+//             this->_front->modRDPParamsData.enable_tls = true;
+//         } else {
+//             this->_front->modRDPParamsData.enable_tls = false;
+//         }
+//         if (this->_nlaBox.isChecked()) {
+//             this->_front->modRDPParamsData.enable_nla = true;
+//         } else {
+//             this->_front->modRDPParamsData.enable_nla = false;
+//         }
+//         if (this->_soundBox.isChecked()) {
+//             this->_front->modRDPParamsData.enable_sound = true;
+//         } else {
+//             this->_front->modRDPParamsData.enable_sound = false;
+//         }
+//         this->_front->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
+//         this->_front->update_keylayout();
+//
+//         if (this->_clipboardCheckBox.isChecked()) {
+//             this->_front->enable_shared_clipboard = true;
+//         } else {
+//             this->_front->enable_shared_clipboard = false;
+//         }
+//
+//         if (this->_shareCheckBox.isChecked()) {
+//             this->_front->enable_shared_virtual_disk = true;
+//         } else {
+//             this->_front->enable_shared_virtual_disk = false;
+//         }
+//
+//         this->_front->SHARE_DIR = this->_sharePath.text().toStdString();
+//
+//         this->_front->writeClientInfo();
 
 //         remove((this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH)).c_str());
 //         this->_front->qtRDPKeymap.clearCustomKeyCode();
@@ -1016,14 +1064,14 @@ public Q_SLOTS:
 //             ofichier.close();
 //         }
 
-        this->close();
-    }
+//         this->close();
+//     }
 
-    void cancelPressed() {}
-
-    void cancelReleased() {
-        this->close();
-    }
+//     void cancelPressed() {}
+//
+//     void cancelReleased() {
+//         this->close();
+//     }
 
 //     void addRow() {
 //         int rowNumber(this->_tableKeySetting->rowCount());
