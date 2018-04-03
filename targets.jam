@@ -4306,6 +4306,20 @@ test-run tests/utils/test_utf :
 :
   <covfile>src/utils/utf.hpp
 ;
+test-run tests/utils/test_video_cropper :
+  $(REDEMPTION_TEST_PATH)/utils/test_video_cropper.cpp
+:
+  <covfile>src/utils/video_cropper.hpp
+  <library>crypto
+  <library>png
+  <library>src/core/RDP/mppc.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+;
 test-run tests/utils/test_word_identification :
   $(REDEMPTION_TEST_PATH)/utils/test_word_identification.cpp
 :
@@ -5063,6 +5077,8 @@ alias test_translation : tests/utils/test_translation ;
 alias test_translation.coverage : tests/utils/test_translation.coverage ;
 alias test_utf : tests/utils/test_utf ;
 alias test_utf.coverage : tests/utils/test_utf.coverage ;
+alias test_video_cropper : tests/utils/test_video_cropper ;
+alias test_video_cropper.coverage : tests/utils/test_video_cropper.coverage ;
 alias test_word_identification : tests/utils/test_word_identification ;
 alias test_word_identification.coverage : tests/utils/test_word_identification.coverage ;
 alias test_zlib : tests/utils/test_zlib ;
@@ -5532,6 +5548,7 @@ alias tests/utils :
   tests/utils/test_timeval_ops
   tests/utils/test_translation
   tests/utils/test_utf
+  tests/utils/test_video_cropper
   tests/utils/test_word_identification
   tests/utils/test_zlib
 ;
