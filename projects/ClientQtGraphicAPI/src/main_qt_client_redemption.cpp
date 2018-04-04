@@ -46,7 +46,6 @@ int main(int argc, char** argv) {
 
     QtIOGraphicMouseKeyboard graphic_control_qt_obj;
 
-    //new QtIOGraphicMouseKeyboard();
     ClientOutputGraphicAPI      * graphic_qt = &graphic_control_qt_obj;
     ClientInputMouseKeyboardAPI * control_qt = &graphic_control_qt_obj;
     QWidget * qwidget_parent = graphic_control_qt_obj.get_static_qwidget();

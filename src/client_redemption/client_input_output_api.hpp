@@ -199,6 +199,8 @@ public:
     } windowsData;
 
 
+
+
     enum : uint8_t {
         MOD_RDP            = 1,
         MOD_VNC            = 2,
@@ -207,8 +209,24 @@ public:
     };
 
     enum : int {
-        BALISED_FRAME = 15
+        BALISED_FRAME = 15,
+        MAX_ACCOUNT_DATA = 15
     };
+
+    struct AccountData {
+        std::string title;
+        std::string IP;
+        std::string name;
+        std::string pwd;
+        int port = 0;
+        int options_profil = 0;
+        int index = -1;
+        int protocol = MOD_RDP;
+    }    _accountData[MAX_ACCOUNT_DATA];
+    int  _accountNB;
+    bool _save_password_account;
+    int  _last_target_index;
+
 
     uint8_t mod_state;
 
@@ -290,6 +308,8 @@ public:
 
     std::string full_cmd_line;
 
+
+
     // VNC mod
     struct Vnc_conf {
         bool is_apple;
@@ -341,6 +361,8 @@ public:
     , port(0)
     , local_IP("unknow_local_IP")
     , windowsData(this)
+    , _accountNB(0)
+    , _save_password_account(false)
     , mod_state(MOD_RDP)
     , is_recording(false)
     , is_replaying(false)
@@ -669,9 +691,6 @@ public:
                     if (tag.compare(std::string("height")) == 0) {
                         this->rdp_height     = std::stoi(info);
                     } else
-                    if (tag.compare(std::string("rdp5_performanceflags")) == 0) {
-                        this->info.rdp5_performanceflags = std::stoi(info);
-                    } else
                     if (tag.compare(std::string("monitorCount")) == 0) {
                         this->info.cs_monitor.monitorCount = std::stoi(info);
 //                         this->_monitorCount                 = std::stoi(info);
@@ -715,6 +734,24 @@ public:
                             this->enable_shared_virtual_disk = true;
                         }
                     } else
+                    if (tag.compare(std::string("mod")) == 0) {
+                        this->mod_state = std::stoi(info);
+                    } else
+                    if (tag.compare(std::string("remote-exe")) == 0) {
+                        this->full_cmd_line                = info;
+                    } else
+                    if (tag.compare(std::string("remote-dir")) == 0) {
+                        this->source_of_WorkingDir                = info;
+                    } else
+                    if (tag.compare(std::string("rdp5_performanceflags")) == 0) {
+                        this->info.rdp5_performanceflags |= std::stoi(info);
+                    } else
+
+                    if (tag.compare(std::string("vnc-applekeyboard ")) == 0) {
+                        if (std::stoi(info)) {
+                            this->vnc_conf.is_apple = true;
+                        }
+                    } else
                     if (tag.compare(std::string("SHARE_DIR")) == 0) {
                         this->SHARE_DIR                 = info;
                         read_id = -1;
@@ -726,6 +763,137 @@ public:
 
 //             this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
         }
+    }
+
+    void setAccountData() {
+        this->_accountNB = 0;
+        std::ifstream ifichier(this->USER_CONF_LOG, std::ios::in);
+
+        if (ifichier) {
+            int accountNB(0);
+            std::string ligne;
+            const std::string delimiter = " ";
+
+            while(std::getline(ifichier, ligne)) {
+                auto pos(ligne.find(delimiter));
+                std::string tag  = ligne.substr(0, pos);
+                std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
+
+
+                if (tag.compare(std::string("save_pwd")) == 0) {
+                    if (info.compare(std::string("true")) == 0) {
+                        this->_save_password_account = true;
+                            //this->main_panel->check_password_box();
+                    } else {
+                        this->_save_password_account = false;
+                    }
+                } else
+                if (tag.compare(std::string("last_target")) == 0) {
+                    this->_last_target_index = std::stoi(info);
+                } else
+                if (tag.compare(std::string("title")) == 0) {
+                    this->_accountData[accountNB].title = info;
+                } else
+                if (tag.compare(std::string("IP")) == 0) {
+                    this->_accountData[accountNB].IP = info;
+                } else
+                if (tag.compare(std::string("name")) == 0) {
+                    this->_accountData[accountNB].name = info;
+                } else if (tag.compare(std::string("protocol")) == 0) {
+                    this->_accountData[accountNB].protocol = std::stoi(info);
+                } else
+                if (tag.compare(std::string("pwd")) == 0) {
+                    this->_accountData[accountNB].pwd = info;
+                } else
+                if (tag.compare(std::string("options_profil")) == 0) {
+                    this->_accountData[accountNB].options_profil = std::stoi(info);
+                    this->_accountData[accountNB].index = accountNB+1;
+                    accountNB++;
+                    if (accountNB == MAX_ACCOUNT_DATA) {
+                        this->_accountNB = MAX_ACCOUNT_DATA;
+                        accountNB = 0;
+                    }
+                } else
+                if (tag.compare(std::string("port")) == 0) {
+                    this->_accountData[accountNB].port = std::stoi(info);
+                }
+            }
+
+            if (this->_accountNB < MAX_ACCOUNT_DATA) {
+                this->_accountNB = accountNB;
+            }
+
+            this->target_IP = this->_accountData[this->_last_target_index].IP;
+            this->user_name = this->_accountData[this->_last_target_index].name;
+            this->user_password = this->_accountData[this->_last_target_index].pwd;
+            this->port = this->_accountData[this->_last_target_index].port;
+        }
+    }
+
+
+
+    void writeAccoundData(const std::string ip, const std::string name, const std::string pwd, const int port) {
+        if (this->connected && this->mod !=  nullptr) {
+            bool alreadySet = false;
+
+            std::string title(ip + std::string(" - ")+ name);
+
+            for (int i = 0; i < this->_accountNB; i++) {
+                if (this->_accountData[i].title.compare(title) == 0) {
+                    alreadySet = true;
+                    this->_last_target_index = i;
+                    this->_accountData[i].pwd  = pwd;
+                    this->_accountData[i].port = port;
+                    this->_accountData[i].options_profil  = this->current_user_profil;
+                }
+            }
+
+            if (!alreadySet && (this->_accountNB < MAX_ACCOUNT_DATA)) {
+                this->_accountData[this->_accountNB].title = title;
+                this->_accountData[this->_accountNB].IP    = ip;
+                this->_accountData[this->_accountNB].name  = name;
+                this->_accountData[this->_accountNB].pwd   = pwd;
+                this->_accountData[this->_accountNB].port  = port;
+                this->_accountData[this->_accountNB].options_profil  = this->current_user_profil;
+                this->_accountData[this->_accountNB].protocol = this->mod_state;
+                this->_accountNB++;
+
+                if (this->_accountNB > MAX_ACCOUNT_DATA) {
+                    this->_accountNB = MAX_ACCOUNT_DATA;
+                }
+                this->_last_target_index = this->_accountNB;
+            }
+
+            std::ofstream ofichier(this->USER_CONF_LOG, std::ios::out | std::ios::trunc);
+            if(ofichier) {
+
+                if (this->_save_password_account) {
+                    ofichier << "save_pwd true" << "\n";
+                } else {
+                    ofichier << "save_pwd false" << "\n";
+                }
+                ofichier << "last_target " <<  this->_last_target_index << "\n";
+
+                ofichier << "\n";
+
+                for (int i = 0; i < this->_accountNB; i++) {
+                    ofichier << "title " << this->_accountData[i].title << "\n";
+                    ofichier << "IP "    << this->_accountData[i].IP    << "\n";
+                    ofichier << "name "  << this->_accountData[i].name  << "\n";
+                    ofichier << "protocol "  << this->_accountData[i].protocol  << "\n";
+                    if (this->_save_password_account) {
+                        ofichier << "pwd " << this->_accountData[i].pwd << "\n";
+                    } else {
+                        ofichier << "pwd " << "\n";
+                    }
+                    ofichier << "port " << this->_accountData[i].port << "\n";
+                    ofichier << "options_profil " << this->_accountData[i].options_profil << "\n";
+                    ofichier << "\n";
+                }
+                ofichier.close();
+            }
+        }
+    }
 
 
 
@@ -768,7 +936,6 @@ public:
 //
 //             iFileKeyData.close();
 //         }
-    }
 
     void set_remoteapp_cmd_line(const std::string & cmd) {
         this->full_cmd_line = cmd;
@@ -876,6 +1043,24 @@ public:
                 }
             }
 
+
+//                             LOG(LOG_INFO, "   --vnc                           Set connection mod to VNC.");
+//         LOG(LOG_INFO, "   --remote-app                    Connection as remote application.");
+//         LOG(LOG_INFO, "   --remote-exe [command]          Connection as remote application and set the line command.");
+//         LOG(LOG_INFO, "   --remote-dir [directory]        Set remote application work directory.");
+
+
+//         LOG(LOG_INFO, "   --disable-fullwindowdrag        Disable full window draging.");
+//         LOG(LOG_INFO, "   --disable-menuanimations        Disable menu animations.");
+//         LOG(LOG_INFO, "   --disable-theming               Disable theming.");
+//         LOG(LOG_INFO, "   --disable-cursor-shadow         Disable cursor shadow.");
+//         LOG(LOG_INFO, "   --disable-cursorsettings        Disable cursor settings.");
+//         LOG(LOG_INFO, "   --disable-font-smoothing        Disable font soomthing.");
+//         LOG(LOG_INFO, "   --disable-desktop-composition   Disable desktop composition.");
+//
+
+//         LOG(LOG_INFO, "   --vnc-applekeyboard             Set keyboard compatibility mod with apple VNC server.");
+
             if (new_profil) {
                 ofichier.close();
                 std::ofstream new_ofile(this->USER_CONF_DIR, std::ios::app | std::ios::out);
@@ -887,7 +1072,7 @@ public:
                 new_ofile << "bpp "                   << this->info.bpp                     << "\n";
                 new_ofile << "width "                 << this->rdp_width                   << "\n";
                 new_ofile << "height "                << this->rdp_height                  << "\n";
-                new_ofile << "rdp5_performanceflags " << this->info.rdp5_performanceflags   << "\n";
+                new_ofile << "rdp5_performanceflags " << static_cast<int>(this->info.rdp5_performanceflags) << "\n";
                 new_ofile << "monitorCount "          << this->info.cs_monitor.monitorCount << "\n";
                 new_ofile << "span "                  << this->is_spanning                  << "\n";
                 new_ofile << "record "                << this->is_recording                 << "\n";
@@ -898,6 +1083,10 @@ public:
                 new_ofile << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
                 new_ofile << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
                 new_ofile << "SHARE_DIR "                              << this->SHARE_DIR << std::endl;
+                new_ofile << "remote-exe"                              << this->full_cmd_line << std::endl;
+                new_ofile << "remote-dir"                              << this->source_of_WorkingDir << std::endl;
+                new_ofile << "vnc-applekeyboard"                       << this->vnc_conf.is_apple << std::endl;
+                new_ofile << "mod"                              << static_cast<int>(this->mod_state) << std::endl;
 
                 new_ofile.close();
 
@@ -921,6 +1110,10 @@ public:
                 ofichier << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
                 ofichier << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
                 ofichier << "SHARE_DIR "                              << this->SHARE_DIR << std::endl;
+                ofichier << "remote-exe "                              << this->full_cmd_line << std::endl;
+                ofichier << "remote-dir "                              << this->source_of_WorkingDir << std::endl;
+                ofichier << "vnc-applekeyboard "                       << this->vnc_conf.is_apple << std::endl;
+                ofichier << "mod "                              << static_cast<int>(this->mod_state) << std::endl;
 
                 ofichier.close();
             }

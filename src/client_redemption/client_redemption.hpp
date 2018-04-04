@@ -52,35 +52,35 @@
 class ClientRedemption : public ClientRedemptionIOAPI
 {
 
-    private:
-    class ClipboardServerChannelDataSender : public VirtualChannelDataSender
-    {
-    public:
-        mod_api        * _callback;
-
-        ClipboardServerChannelDataSender() = default;
-
-
-        void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
-            InStream chunk(chunk_data, chunk_data_length);
-            this->_callback->send_to_mod_channel(channel_names::cliprdr, chunk, total_length, flags);
-        }
-    };
-
-    class ClipboardClientChannelDataSender : public VirtualChannelDataSender
-    {
-    public:
-        FrontAPI            * _front;
-        CHANNELS::ChannelDef  _channel;
-
-        ClipboardClientChannelDataSender() = default;
-
-
-        void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
-
-            this->_front->send_to_channel(this->_channel, chunk_data, total_length, chunk_data_length, flags);
-        }
-    };
+//     private:
+//     class ClipboardServerChannelDataSender : public VirtualChannelDataSender
+//     {
+//     public:
+//         mod_api        * _callback;
+//
+//         ClipboardServerChannelDataSender() = default;
+//
+//
+//         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
+//             InStream chunk(chunk_data, chunk_data_length);
+//             this->_callback->send_to_mod_channel(channel_names::cliprdr, chunk, total_length, flags);
+//         }
+//     };
+//
+//     class ClipboardClientChannelDataSender : public VirtualChannelDataSender
+//     {
+//     public:
+//         FrontAPI            * _front;
+//         CHANNELS::ChannelDef  _channel;
+//
+//         ClipboardClientChannelDataSender() = default;
+//
+//
+//         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
+//
+//             this->_front->send_to_channel(this->_channel, chunk_data, total_length, chunk_data_length, flags);
+//         }
+//     };
 
 
 public:
@@ -93,8 +93,8 @@ public:
 
 
     // RDP
-    ClipboardServerChannelDataSender _to_server_sender;
-    ClipboardClientChannelDataSender _to_client_sender;
+//     ClipboardServerChannelDataSender _to_server_sender;
+//     ClipboardClientChannelDataSender _to_client_sender;
     CHANNELS::ChannelDefArray   cl;
     Font                 _font;
     std::string          _error;
@@ -602,7 +602,7 @@ public:
                                                     GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
                                                     , CHANID_CLIPDRD
                                                     };
-                this->_to_client_sender._channel = channel_cliprdr;
+//                 this->_to_client_sender._channel = channel_cliprdr;
                 this->cl.push_back(channel_cliprdr);
             }
 
@@ -721,7 +721,7 @@ public:
             struct timeval time;
             gettimeofday(&time, nullptr);
             PngParams png_params = {0, 0, ini.get<cfg::video::png_interval>(), 100, 0, true, this->info.remote_program, ini.get<cfg::video::rt_display>()};
-            VideoParams videoParams = {Level::high, this->replay_mod->get_dim().w, this->replay_mod->get_dim().h, 0, 0, 0, std::string(""), true, true, false, ini.get<cfg::video::break_interval>(), 0};
+            VideoParams videoParams = {Level::high, this->info.width, this->info.height, 0, 0, 0, std::string(""), true, true, false, ini.get<cfg::video::break_interval>(), 0};
             OcrParams ocr_params = { ini.get<cfg::ocr::version>(),
                                         static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
                                         ini.get<cfg::ocr::on_title_bar_only>(),
@@ -764,8 +764,8 @@ public:
             captureParams.report_message = nullptr;
 
             DrawableParams drawableParams;
-            drawableParams.width  = this->replay_mod->get_dim().w;
-            drawableParams.height = this->replay_mod->get_dim().h;
+            drawableParams.width  = this->info.width;
+            drawableParams.height = this->info.height;
             drawableParams.rdp_drawable = nullptr;
 
             this->capture = std::make_unique<Capture>(captureParams
@@ -783,7 +783,7 @@ public:
                                             , Rect(0, 0, 0, 0)
                                             );
 
-            this->capture.get()->gd_drawable->width();
+            //this->capture.get()->gd_drawable->width();
 
             this->graph_capture = this->capture.get();
     }
@@ -915,7 +915,7 @@ public:
 
     void callback() override {
 
-        LOG(LOG_INFO, "Socket Event callback");
+//         LOG(LOG_INFO, "Socket Event callback");
         if (this->_recv_disconnect_ultimatum) {
             if (this->impl_graphic) {
                 this->impl_graphic->dropScreen();

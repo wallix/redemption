@@ -64,7 +64,7 @@ class QtIOGraphicMouseKeyboard : public ClientOutputGraphicAPI, public ClientInp
 
 public:
     int                  mod_bpp;
-    Form_Qt            * form;
+    QtForm            * form;
     QtScreen           * screen;
     QPixmap              cache;
     ProgressBarWindow  * bar;
@@ -107,7 +107,7 @@ public:
         this->drawn_client = client;
         this->qtRDPKeymap._verbose = (this->drawn_client->verbose == RDPVerbose::input) ? 1 : 0;
         this->qtRDPKeymap.setKeyboardLayout(this->drawn_client->info.keylayout);
-        this->form = new Form_Qt(this, this->client);
+        this->form = new QtForm(this, this->client);
     }
 
     virtual void show_screen() override {

@@ -544,11 +544,9 @@ public:
 
 
         this->setConfigValues();
-
     }
 
 
-private:
     void setConfigValues() {
 
         // Connection tab
@@ -878,11 +876,12 @@ private:
                 this->_front->modRDPParamsData.enable_sound = false;
             }
 
-            if (this->_soundBox.isChecked()) {
+            if (this->remoteappCheckBox.isChecked()) {
                 this->_front->mod_state = ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP;
-
                 this->_front->set_remoteapp_cmd_line(this->remoteapp_cmd.text().toStdString());
                 this->_front->source_of_WorkingDir = this->remoteapp_workin_dir.text().toStdString();
+            } else {
+                this->_front->mod_state = ClientRedemptionIOAPI::MOD_RDP;
             }
 
         } else if (this->protocol_type == ClientRedemptionIOAPI::MOD_VNC) {
@@ -933,11 +932,11 @@ public Q_SLOTS:
     void setEnableRemoteApp(int value) {
         this->remoteapp_cmd.setEnabled(value);
         this->remoteapp_workin_dir.setEnabled(value);
-        if (value) {
-            this->_front->mod_state = ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP;
-        } else {
-            this->_front->mod_state = ClientRedemptionIOAPI::MOD_RDP;
-        }
+//         if (value) {
+//             this->_front->mod_state = ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP;
+//         } else {
+//             this->_front->mod_state = ClientRedemptionIOAPI::MOD_RDP;
+//         }
     }
 
 
