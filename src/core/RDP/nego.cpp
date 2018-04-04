@@ -45,14 +45,14 @@ struct RdpNegoProtocols
 };
 
 RdpNego::RdpNego(
-    const bool tls, const char * username, bool nla,
+    const bool tls, const char * username, bool nla, bool admin_mode,
     const char * target_host, const char krb, Random & rand, TimeObj & timeobj,
     std::string& extra_message, Translation::language_t lang,
     const Verbose verbose)
 : tls(nla || tls)
 , nla(nla)
 , krb(nla && krb)
-, restricted_admin_mode(false)
+, restricted_admin_mode(admin_mode)
 , selected_protocol(RdpNegoProtocols::Rdp)
 , target_host(target_host)
 , current_password(nullptr)
@@ -69,9 +69,10 @@ RdpNego::RdpNego(
         | (this->tls ? RdpNegoProtocols::Tls : 0)
         | (this->nla ? RdpNegoProtocols::Nla : 0);
 
-    LOG(LOG_INFO, "RdpNego: TLS=%s NLA=%s",
+    LOG(LOG_INFO, "RdpNego: TLS=%s NLA=%s adminMode=%s",
         ((this->enabled_protocols & RdpNegoProtocols::Tls) ? "Enabled" : "Disabled"),
-        ((this->enabled_protocols & RdpNegoProtocols::Nla) ? "Enabled" : "Disabled")
+        ((this->enabled_protocols & RdpNegoProtocols::Nla) ? "Enabled" : "Disabled"),
+		(this->restricted_admin_mode ? "Enabled" : "Disabled")
         );
 
     strncpy(this->username, username, 127);
@@ -275,7 +276,7 @@ RdpNego::State RdpNego::recv_connection_confirm(OutTransport trans, InStream x22
 
     X224::CC_TPDU_Recv x224(x224_stream);
 
-    if (x224.rdp_neg_type == X224::RDP_NEG_NONE){
+    if (x224.rdp_neg_type == X224::RDP_NEG_NONE) {
         this->enabled_protocols = RdpNegoProtocols::Rdp;
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm done (legacy, no TLS)");
         return State::Final;
@@ -497,9 +498,8 @@ void RdpNego::send_negotiation_request(OutTransport trans)
 
     StaticOutStream<65536> stream;
     X224::CR_TPDU_Send(stream, cookie_or_token,
-                       this->tls ? (X224::RDP_NEG_REQ) : (X224::RDP_NEG_NONE),
-                       // X224::RESTRICTED_ADMIN_MODE_REQUIRED,
-                       0,
+                       (this->tls || this->nla) ? (X224::RDP_NEG_REQ) : (X224::RDP_NEG_NONE),
+                       this->restricted_admin_mode ? X224::RESTRICTED_ADMIN_MODE_REQUIRED : 0,
                        rdp_neg_requestedProtocols);
     trans.send(stream.get_data(), stream.get_offset());
     LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");

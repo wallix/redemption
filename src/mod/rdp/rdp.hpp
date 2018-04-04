@@ -940,7 +940,8 @@ public:
         , report_message(report_message)
         , close_box_extra_message_ref(mod_rdp_params.close_box_extra_message_ref)
         , nego( mod_rdp_params.enable_tls, mod_rdp_params.target_user
-              , mod_rdp_params.enable_nla, mod_rdp_params.target_host
+              , mod_rdp_params.enable_nla, info.console_session
+			  , mod_rdp_params.target_host
               , mod_rdp_params.enable_krb, gen, timeobj
               , this->close_box_extra_message_ref, mod_rdp_params.lang
               , static_cast<RdpNego::Verbose>(mod_rdp_params.verbose))
@@ -2590,9 +2591,10 @@ public:
                         LOG(LOG_INFO, "Effective Redirection SessionId=%u",
                             cs_cluster.redirectedSessionID);
                     }
-                }
-                if (this->console_session) {
-                    cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID;
+                    if (this->console_session) {
+                        cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID;
+                        cs_cluster.redirectedSessionID = 0;
+                    }
                 }
                 // if (!this->nego.tls){
                 //     if (this->console_session){
@@ -3359,6 +3361,7 @@ public:
         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
         X224::DT_TPDU_Recv x224(stream);
+
         // TODO Shouldn't we use mcs_type to manage possible Deconnection Ultimatum here
         //int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
         MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
@@ -3388,6 +3391,7 @@ public:
                     [this, &hostname, &username](StreamSize<65535 - 1024>, OutStream & lic_data) {
                         if (this->lic_layer_license_size > 0) {
                             uint8_t hwid[LIC::LICENSE_HWID_SIZE];
+
                             buf_out_uint32(hwid, 2);
                             memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
 
@@ -3530,19 +3534,19 @@ public:
                 break;
             default:
                 {
-                    LOG(LOG_ERR, "Unexpected license tag sent from server (tag = %x)", flic.tag);
+                    LOG(LOG_ERR, "Unexpected license tag sent from server (tag = 0x%x)", flic.tag);
                     throw Error(ERR_SEC);
                 }
                 break;
             }
 
             if (sec.payload.get_current() != sec.payload.get_data_end()){
-                LOG(LOG_ERR, "all data should have been consumed %s:%d tag = %x", __FILE__, __LINE__, flic.tag);
+                LOG(LOG_ERR, "all data should have been consumed %s:%d tag = 0x%x", __FILE__, __LINE__, flic.tag);
                 throw Error(ERR_SEC);
             }
         }
         else {
-            LOG(LOG_WARNING, "Failed to get expected license negotiation PDU, sec.flags=%u", sec.flags);
+            LOG(LOG_WARNING, "Failed to get expected license negotiation PDU, sec.flags=0x%x", sec.flags);
             hexdump(x224.payload.get_data(), x224.payload.get_capacity());
             //throw Error(ERR_SEC);
             this->state = MOD_RDP_CONNECTED;

@@ -150,6 +150,7 @@ public:
         , clientChannelCLIPRDRManager(this->verbose, this, this->impl_clipboard)
         , clientChannelRDPDRManager(this->verbose, this)
         , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
+    	, graph_capture(nullptr)
     {
         if (this->impl_clipboard) {
             this->impl_clipboard->set_client(this);
@@ -348,7 +349,6 @@ public:
             switch (this->mod_state) {
                 case MOD_RDP:
                 {
-
                     ModRDPParams mod_rdp_params( this->user_name.c_str()
                                     , this->user_password.c_str()
                                     , this->target_IP.c_str()

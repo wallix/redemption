@@ -97,6 +97,7 @@ public:
     QCheckBox            _recordingCB;
     QCheckBox            _tlsBox;
     QCheckBox            _nlaBox;
+    QCheckBox			 _consoleBox;
     QComboBox            _languageComboBox;
     QCheckBox            keyboard_apple_compatibility_CB;
 
@@ -107,7 +108,6 @@ public:
     QLabel               _labelNla;
     QLabel               _labelLanguage;
     QLabel               keyboard_apple_compatibility_label;
-
 
 
     QWidget            * _viewTab;
@@ -149,6 +149,7 @@ public:
     QLineEdit            remoteapp_cmd;
     QLineEdit            remoteapp_workin_dir;
 
+    QLabel				 _labelConsole;
     QLabel               _labelClipboard;
     QLabel               _labelShare;
     QLabel               _labelSharePath;
@@ -173,7 +174,6 @@ public:
         , _width(400)
         , _height(330)
 
-
         , _tabs(nullptr)
         , _layout(nullptr)
 
@@ -188,7 +188,8 @@ public:
         , _recordingCB(this)
         , _tlsBox(this)
         , _nlaBox(this)
-        , _languageComboBox(this)
+    	, _consoleBox(this)
+    	, _languageComboBox(this)
         , keyboard_apple_compatibility_CB(this)
 
         , _labelProfil("Options Profil:", this)
@@ -224,7 +225,6 @@ public:
         , fontSmoothingLabel("Enable font smoothing :", this)
         , desktopCompositionLabel("Enable desktop composition :", this)
 
-
         , _servicesTab(nullptr)
         , _layoutServices(nullptr)
 
@@ -237,6 +237,7 @@ public:
         , remoteapp_cmd("", this)
         , remoteapp_workin_dir("", this)
 
+    	, _labelConsole("Console :", this)
         , _labelClipboard("Shared Clipboard :", this)
         , _labelShare("Shared Virtual Disk :", this)
         , _labelSharePath("Shared Path :", this)
@@ -306,6 +307,8 @@ public:
         }
         this->_languageComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutConnection->addRow(&(this->_labelLanguage), &(this->_languageComboBox));
+        this->_consoleBox.setCheckState(Qt::Unchecked);
+        this->_layoutConnection->addRow(&(this->_labelConsole), &(this->_consoleBox));
 
         if (this->protocol_type == ClientRedemptionIOAPI::MOD_VNC) {
             this->keyboard_apple_compatibility_CB.setCheckState(Qt::Unchecked);
@@ -552,11 +555,7 @@ private:
     void setConfigValues() {
 
         // Connection tab
-        if (this->_front->is_recording) {
-            this->_recordingCB.setCheckState(Qt::Checked);
-        } else {
-            this->_recordingCB.setCheckState(Qt::Unchecked);
-        }
+    	this->_recordingCB.setChecked(this->_front->is_recording);
 
         if (this->protocol_type == ClientRedemptionIOAPI::MOD_RDP) {
             int indexProfil = this->profilComboBox.findData(this->_front->current_user_profil);
@@ -564,17 +563,8 @@ private:
                 this->profilComboBox.setCurrentIndex(indexProfil);
             }
 
-            if (this->_front->modRDPParamsData.enable_tls) {
-                this->_tlsBox.setCheckState(Qt::Checked);
-            } else {
-                this->_tlsBox.setCheckState(Qt::Unchecked);
-            }
-
-            if (this->_front->modRDPParamsData.enable_nla) {
-                this->_nlaBox.setCheckState(Qt::Checked);
-            } else {
-                this->_nlaBox.setCheckState(Qt::Unchecked);
-            }
+            this->_tlsBox.setChecked(this->_front->modRDPParamsData.enable_tls);
+            this->_nlaBox.setChecked(this->_front->modRDPParamsData.enable_nla);
 
             int indexLanguage = this->_languageComboBox.findData(this->_front->info.keylayout);
             if ( indexLanguage != -1 ) {
@@ -582,23 +572,13 @@ private:
             }
 
         } else if (this->protocol_type == ClientRedemptionIOAPI::MOD_VNC) {
-
-                    int indexProfil = this->profilComboBox.findData(this->_front->vnc_conf.current_user_profil);
+        	int indexProfil = this->profilComboBox.findData(this->_front->vnc_conf.current_user_profil);
             if ( indexProfil != -1 ) {
                 this->profilComboBox.setCurrentIndex(indexProfil);
             }
 
-            if (this->_front->vnc_conf.enable_tls) {
-                this->_tlsBox.setCheckState(Qt::Checked);
-            } else {
-                this->_tlsBox.setCheckState(Qt::Unchecked);
-            }
-
-            if (this->_front->vnc_conf.enable_nla) {
-                this->_nlaBox.setCheckState(Qt::Checked);
-            } else {
-                this->_nlaBox.setCheckState(Qt::Unchecked);
-            }
+            this->_tlsBox.setChecked(this->_front->vnc_conf.enable_tls);
+            this->_nlaBox.setChecked(this->_front->vnc_conf.enable_nla);
 
             int indexLanguage = this->_languageComboBox.findData(this->_front->vnc_conf.keylayout);
             if ( indexLanguage != -1 ) {
@@ -619,11 +599,7 @@ private:
                 this->_resolutionComboBox.setCurrentIndex(indexResolution);
             }
 
-            if (this->_front->is_spanning) {
-                this->_spanCheckBox.setCheckState(Qt::Checked);
-            } else {
-                this->_spanCheckBox.setCheckState(Qt::Unchecked);
-            }
+            this->_spanCheckBox.setChecked(this->_front->is_spanning);
 
             if (this->_front->info.rdp5_performanceflags & PERF_DISABLE_WALLPAPER) {
                 this->_wallpapperCheckBox.setCheckState(Qt::Checked);
@@ -658,32 +634,15 @@ private:
         // Services tab
         if (this->protocol_type == ClientRedemptionIOAPI::MOD_RDP) {
 
-            if (this->_front->enable_shared_clipboard) {
-                this->_clipboardCheckBox.setCheckState(Qt::Checked);
-            } else {
-                this->_clipboardCheckBox.setCheckState(Qt::Unchecked);
-            }
-
-            if (this->_front->enable_shared_virtual_disk) {
-                this->_shareCheckBox.setCheckState(Qt::Checked);
-            } else {
-                this->_shareCheckBox.setCheckState(Qt::Unchecked);
-            }
+        	this->_clipboardCheckBox.setChecked(this->_front->enable_shared_clipboard);
+        	this->_shareCheckBox.setChecked(this->_front->enable_shared_virtual_disk);
 
             this->_sharePath.setEnabled(this->_front->enable_shared_virtual_disk);
             this->_sharePath.setText(this->_front->SHARE_DIR.c_str());
 
-            if (this->_front->modRDPParamsData.enable_sound) {
-                this->_soundBox.setCheckState(Qt::Checked);
-            } else {
-                this->_soundBox.setCheckState(Qt::Unchecked);
-            }
+            this->_soundBox.setChecked(this->_front->modRDPParamsData.enable_sound);
 
-            if (this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
-                this->remoteappCheckBox.setCheckState(Qt::Checked);
-            } else {
-                this->remoteappCheckBox.setCheckState(Qt::Unchecked);
-            }
+            this->remoteappCheckBox.setChecked(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
 
             this->remoteapp_cmd.setEnabled(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
             this->remoteapp_cmd.setText(this->_front->full_cmd_line.c_str());
@@ -692,18 +651,8 @@ private:
             this->remoteapp_workin_dir.setText(this->_front->source_of_WorkingDir.c_str());
 
         } else if (this->protocol_type == ClientRedemptionIOAPI::MOD_VNC) {
-
-            if (this->_front->vnc_conf.enable_sound) {
-                this->_soundBox.setCheckState(Qt::Checked);
-            } else {
-                this->_soundBox.setCheckState(Qt::Unchecked);
-            }
-
-            if (this->_front->vnc_conf.enable_shared_clipboard) {
-                this->_clipboardCheckBox.setCheckState(Qt::Checked);
-            } else {
-                this->_clipboardCheckBox.setCheckState(Qt::Unchecked);
-            }
+        	this->_soundBox.setChecked(this->_front->vnc_conf.enable_sound);
+        	this->_clipboardCheckBox.setChecked(this->_front->vnc_conf.enable_shared_clipboard);
         }
     }
 
@@ -767,16 +716,8 @@ private:
                 this->_front->current_user_profil = this->profilComboBox.currentIndex();
             }
 
-             if (this->_tlsBox.isChecked()) {
-                this->_front->modRDPParamsData.enable_tls = true;
-            } else {
-                this->_front->modRDPParamsData.enable_tls = false;
-            }
-            if (this->_nlaBox.isChecked()) {
-                this->_front->modRDPParamsData.enable_nla = true;
-            } else {
-                this->_front->modRDPParamsData.enable_nla = false;
-            }
+            this->_front->modRDPParamsData.enable_tls = this->_tlsBox.isChecked();
+            this->_front->modRDPParamsData.enable_nla = this->_nlaBox.isChecked();
 
             this->_front->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
             this->_front->update_keylayout();
@@ -795,21 +736,11 @@ private:
             } else {
                 this->_front->vnc_conf.current_user_profil = this->profilComboBox.currentIndex();
             }
-            if (this->_tlsBox.isChecked()) {
-                this->_front->vnc_conf.enable_tls = true;
-            } else {
-                this->_front->vnc_conf.enable_tls = false;
-            }
-            if (this->_nlaBox.isChecked()) {
-                this->_front->vnc_conf.enable_nla = true;
-            } else {
-                this->_front->vnc_conf.enable_nla = false;
-            }
-            if (this->keyboard_apple_compatibility_CB.isChecked()) {
-                this->_front->vnc_conf.is_apple = true;
-            } else {
-                this->_front->vnc_conf.is_apple = false;
-            }
+
+            this->_front->vnc_conf.enable_tls = this->_tlsBox.isChecked();
+            this->_front->vnc_conf.enable_nla = this->_nlaBox.isChecked();
+            this->_front->vnc_conf.is_apple = this->keyboard_apple_compatibility_CB.isChecked();
+
             this->_front->vnc_conf.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
             this->_front->update_keylayout();
         }
@@ -825,11 +756,7 @@ private:
             this->_front->rdp_width  = std::stoi(resolution.substr(0, pos));
             this->_front->rdp_height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
 
-            if (this->_spanCheckBox.isChecked()) {
-                this->_front->is_spanning = true;
-            } else {
-                this->_front->is_spanning = false;
-            }
+            this->_front->is_spanning = this->_spanCheckBox.isChecked();
 
             this->_front->info.rdp5_performanceflags = 0;
             if (this->_wallpapperCheckBox.isChecked()) {
@@ -853,17 +780,16 @@ private:
             if (this->desktopCompositionCheckBox.isChecked()) {
                 this->_front->info.rdp5_performanceflags |= PERF_ENABLE_DESKTOP_COMPOSITION;
             }
+
+            this->_front->info.console_session = this->_consoleBox.isChecked();
         }
+
 
 
         // Services tab
         if (this->protocol_type == ClientRedemptionIOAPI::MOD_RDP) {
 
-            if (this->_clipboardCheckBox.isChecked()) {
-                this->_front->enable_shared_clipboard = true;
-            } else {
-                this->_front->enable_shared_clipboard = false;
-            }
+        	this->_front->enable_shared_clipboard = this->_clipboardCheckBox.isChecked();
 
             if (this->_shareCheckBox.isChecked()) {
                 this->_front->enable_shared_virtual_disk = true;
@@ -872,11 +798,7 @@ private:
                 this->_front->enable_shared_virtual_disk = false;
             }
 
-            if (this->_soundBox.isChecked()) {
-                this->_front->modRDPParamsData.enable_sound = true;
-            } else {
-                this->_front->modRDPParamsData.enable_sound = false;
-            }
+            this->_front->modRDPParamsData.enable_sound = this->_soundBox.isChecked();
 
             if (this->_soundBox.isChecked()) {
                 this->_front->mod_state = ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP;
@@ -886,18 +808,8 @@ private:
             }
 
         } else if (this->protocol_type == ClientRedemptionIOAPI::MOD_VNC) {
-
-             if (this->_clipboardCheckBox.isChecked()) {
-                this->_front->vnc_conf.enable_shared_clipboard = true;
-            } else {
-                this->_front->vnc_conf.enable_shared_clipboard = false;
-            }
-
-            if (this->_soundBox.isChecked()) {
-                this->_front->vnc_conf.enable_sound = true;
-            } else {
-                this->_front->vnc_conf.enable_sound = false;
-            }
+        	this->_front->vnc_conf.enable_shared_clipboard = this->_clipboardCheckBox.isChecked();
+        	this->_front->vnc_conf.enable_sound = this->_soundBox.isChecked();
         }
 
         this->_front->writeClientInfo();
