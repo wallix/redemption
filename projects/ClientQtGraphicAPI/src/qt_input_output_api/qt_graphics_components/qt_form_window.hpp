@@ -86,22 +86,22 @@ public:
     QPixmap pixmap;
     QRect drop_rect;
 
-    std::string name;
-    std::string path;
-    std::string version;
-    std::string reso;
-    std::string checksum;
+    const std::string name;
+    const std::string path;
+    const std::string version;
+    const std::string reso;
+    const std::string checksum;
 
-    long int movie_len;
+    const long int movie_len;
 
 
     IconMovie(ClientInputMouseKeyboardAPI * controllers
-      , std::string & name
-      , std::string & path
-      , std::string & version,
-        std::string & reso,
-        std::string & checksum,
-        long int movie_len,
+      , const std::string & name
+      , const std::string & path
+      , const std::string & version,
+        const std::string & reso,
+        const std::string & checksum,
+        const long int movie_len,
         QWidget * parent)
       : QWidget(parent)
       , controllers(controllers)
@@ -260,55 +260,13 @@ public:
         this->setMinimumSize(395, 250);
         this->setMaximumWidth(395);
 
-        DIR *dir;
-        struct dirent *ent;
-        std::string extension(".mwrm");
+        std::vector<ClientRedemptionIOAPI::IconMovieData> iconData = this->controllers->client->get_icone_movie_data();
 
-        if ((dir = opendir (this->controllers->client->REPLAY_DIR.c_str())) != nullptr) {
-
-            try {
-                while ((ent = readdir (dir)) != nullptr) {
-
-                    std::string current_name = std::string (ent->d_name);
-
-                    if (current_name.length() > 5) {
-
-                        std::string file_path;
-
-                        std::string end_string(current_name.substr(current_name.length()-5, current_name.length()));
-                        if (end_string == extension) {
-
-                            file_path = this->controllers->client->REPLAY_DIR + "/"+current_name.c_str();
-
-                            std::fstream ofile(file_path.c_str(), std::ios::in);
-                            if(ofile) {
-                                std::string file_name(current_name.substr(0, current_name.length()-5));
-                                std::string file_version;
-                                std::string file_resolution;
-                                std::string file_checksum;
-
-                                long int movie_len = ClientRedemptionIOAPI::get_movie_time_length(file_path.c_str());
-
-                                std::getline(ofile, file_version);
-                                std::getline(ofile, file_resolution);
-                                std::getline(ofile, file_checksum);
-
-                                IconMovie* icon = new IconMovie(controllers, file_name, file_path, file_version, file_resolution, file_checksum, movie_len, this);
-                                this->icons.push_back(icon);
-                                icon->draw_account();
-                                this->lay.addRow(icon);
-
-                            } else {
-                                LOG(LOG_INFO, "Can't open file \"%s\"", file_path);
-                            }
-
-                        }
-                    }
-                                    }
-            } catch (Error & e) {
-                LOG(LOG_WARNING, "readdir error: (%u) %s", e.id, e.errmsg());
-            }
-            closedir (dir);
+        for (size_t i = 0; i < iconData.size(); i++) {
+            IconMovie* icon = new IconMovie(controllers, iconData[i].file_name, iconData[i].file_path, iconData[i].file_version, iconData[i].file_resolution, iconData[i].file_checksum, iconData[i].movie_len, this);
+            this->icons.push_back(icon);
+            icon->draw_account();
+            this->lay.addRow(icon);
         }
 
         this->setLayout(&(this->lay));

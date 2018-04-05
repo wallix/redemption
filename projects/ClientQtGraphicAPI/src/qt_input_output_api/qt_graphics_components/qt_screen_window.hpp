@@ -418,7 +418,7 @@ public:
         , reading_bar_len(this->_width - 60)
         , readding_bar(this->reading_bar_len+10, READING_BAR_H)
         , current_time_movie(current_time_movie)
-        , real_time_record(this->_front->replay_mod->get_real_time_movie_begin())
+        , real_time_record(this->_front->get_real_time_movie_begin())
     {
         std::string title = "ReDemPtion Client " + this->_movie_name;
         this->setWindowTitle(QString(title.c_str()));
@@ -629,37 +629,40 @@ private:
             this->barRepaint(this->current_time_movie, QColor(Qt::green));
             this->slotRepainMatch();
 
-            switch (this->_front->replay_mod->get_wrm_version()) {
+            //tvtime();
+            this->movie_time_start = this->_front->reload_replay_mod(this->begin, now_stop);
 
-                case WrmVersion::v1:
-                    if (this->_front->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0})) {
-                        this->_front->replay_mod->instant_play_client(std::chrono::microseconds(this->begin*1000000));
-                        this->movie_time_start = tvtime();
-                    }
-                    break;
-
-                case WrmVersion::v2:
-                {
-                    int last_balised = (this->begin/ ClientRedemptionIOAPI::BALISED_FRAME);
-                    this->_front->is_loading_replay_mod = true;
-                    if (this->_front->load_replay_mod(this->_movie_dir, this->_movie_name, {last_balised * ClientRedemptionIOAPI::BALISED_FRAME, 0}, {0, 0})) {
-
-                        this->_front->is_loading_replay_mod = false;
-
-                        this->_front->draw_frame(last_balised);
-
-                        this->_front->replay_mod->instant_play_client(std::chrono::microseconds(this->begin*1000000));
-                        this->slotRepainMatch();
-
-                        this->movie_time_start = tvtime();
-                        timeval waited_for_load = {this->movie_time_start.tv_sec - now_stop.tv_sec, this->movie_time_start.tv_usec - now_stop.tv_usec};
-                        timeval wait_duration = {this->movie_time_start.tv_sec - this->begin - waited_for_load.tv_sec, this->movie_time_start.tv_usec - waited_for_load.tv_usec};
-                        this->_front->replay_mod->set_wait_after_load_client(wait_duration);
-                    }
-                    this->_front->is_loading_replay_mod = false;
-                }
-                    break;
-            }
+//             switch (this->_front->replay_mod->get_wrm_version()) {
+//
+//                 case WrmVersion::v1:
+//                     if (this->_front->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0})) {
+//                         this->_front->replay_mod->instant_play_client(std::chrono::microseconds(this->begin*1000000));
+//                         this->movie_time_start = tvtime();
+//                     }
+//                     break;
+//
+//                 case WrmVersion::v2:
+//                 {
+//                     int last_balised = (this->begin/ ClientRedemptionIOAPI::BALISED_FRAME);
+//                     this->_front->is_loading_replay_mod = true;
+//                     if (this->_front->load_replay_mod(this->_movie_dir, this->_movie_name, {last_balised * ClientRedemptionIOAPI::BALISED_FRAME, 0}, {0, 0})) {
+//
+//                         this->_front->is_loading_replay_mod = false;
+//
+//                         this->_front->draw_frame(last_balised);
+//
+//                         this->_front->replay_mod->instant_play_client(std::chrono::microseconds(this->begin*1000000));
+//                         this->slotRepainMatch();
+//
+//                         this->movie_time_start = tvtime();
+//                         timeval waited_for_load = {this->movie_time_start.tv_sec - now_stop.tv_sec, this->movie_time_start.tv_usec - now_stop.tv_usec};
+//                         timeval wait_duration = {this->movie_time_start.tv_sec - this->begin - waited_for_load.tv_sec, this->movie_time_start.tv_usec - waited_for_load.tv_usec};
+//                         this->_front->replay_mod->set_wait_after_load_client(wait_duration);
+//                     }
+//                     this->_front->is_loading_replay_mod = false;
+//                 }
+//                     break;
+//             }
 
             this->_timer_replay.start(4);
         }
@@ -687,14 +690,14 @@ public Q_SLOTS:
                 timeval pause_duration = tvtime();
                 pause_duration = {pause_duration.tv_sec - this->movie_time_pause.tv_sec, pause_duration.tv_usec - this->movie_time_pause.tv_usec};
                 this->movie_time_start.tv_sec += pause_duration.tv_sec;
-                this->_front->replay_mod->set_pause(pause_duration);
+                this->_front->replay_set_pause(pause_duration);
 
                 this->is_paused = false;
             } else {
                 this->begin = 0;
                 this->barRepaint(this->reading_bar_len, QColor(Qt::black));
                 this->movie_time_start = tvtime();
-                this->_front->replay_mod->set_sync();
+                this->_front->replay_set_sync();
             }
             this->_buttonCtrlAltDel.setText("Pause");
             this->movie_status.setText("  Play ");
@@ -706,10 +709,8 @@ public Q_SLOTS:
     void playReplay() {
         this->show_video_real_time();
 
-        if (!this->_front->replay_mod->get_break_privplay_client()) {
-            if (!this->_front->replay_mod->play_client()) {
-                this->slotRepainMatch();
-            }
+        if (this->_front->is_replay_on()) {
+            this->slotRepainMatch();
         }
 
         if (this->current_time_movie >= this->movie_time) {

@@ -116,6 +116,14 @@ public:
 
     int                  _timer;
 
+    uint8_t commandIsValid;
+
+    std::string       user_name;
+    std::string       user_password;
+    std::string       target_IP;
+    int               port;
+    std::string       local_IP;
+
     const std::string    MAIN_DIR;
     const std::string    REPLAY_DIR;
     const std::string    USER_CONF_LOG;
@@ -127,16 +135,34 @@ public:
     const std::string    DATA_DIR;
     const std::string    DATA_CONF_DIR;
 
+    enum : int {
+        COMMAND_VALID = 15
+      , NAME_GOT      = 1
+      , PWD_GOT       = 2
+      , IP_GOT        = 4
+      , PORT_GOT      = 8
+    };
+
+    enum : uint8_t {
+        MOD_RDP            = 1,
+        MOD_VNC            = 2,
+        MOD_RDP_REMOTE_APP = 3,
+        MOD_RDP_REPLAY     = 4
+    };
+
+    enum : int {
+        BALISED_FRAME = 15,
+        MAX_ACCOUNT_DATA = 15
+    };
+
+
+
     struct MouseData {
         uint16_t x = 0;
         uint16_t y = 0;
     } mouse_data;
 
-    std::string       user_name;
-    std::string       user_password;
-    std::string       target_IP;
-    int               port;
-    std::string       local_IP;
+
 
     struct WindowsData {
         int form_x = 0;
@@ -199,20 +225,6 @@ public:
     } windowsData;
 
 
-
-
-    enum : uint8_t {
-        MOD_RDP            = 1,
-        MOD_VNC            = 2,
-        MOD_RDP_REMOTE_APP = 3,
-        MOD_RDP_REPLAY     = 4
-    };
-
-    enum : int {
-        BALISED_FRAME = 15,
-        MAX_ACCOUNT_DATA = 15
-    };
-
     struct AccountData {
         std::string title;
         std::string IP;
@@ -230,15 +242,12 @@ public:
 
     uint8_t mod_state;
 
-    std::unique_ptr<ReplayMod> replay_mod;
     bool                 is_recording;
     bool                 is_replaying;
     bool                 is_loading_replay_mod;
     bool                 connected;
-
-
     bool                 is_spanning;
-    Fstat fstat;
+//
 
 
     std::string _movie_name;
@@ -247,16 +256,18 @@ public:
     int rdp_width;
     int rdp_height;
 
-    bool wab_diag_question;
-    int asked_color;
+//     bool wab_diag_question;
+//     int asked_color;
 
     int current_user_profil;
 
-    std::string close_box_extra_message_ref;
+
 
 
     struct ModRDPParamsData
     {
+        int rdp_width;
+        int rdp_height;
         bool enable_tls                      = false;
         bool enable_nla                      = false;
         bool enable_sound                    = false;
@@ -289,39 +300,50 @@ public:
 //     };
 //     std::vector<KeyCustomDefinition> keyCustomDefinitions;
 
-    bool                 _recv_disconnect_ultimatum;
+//     bool                 _recv_disconnect_ultimatum;
     BGRPalette           mod_palette;
-
-    uint8_t commandIsValid;
-
-     enum : int {
-        COMMAND_VALID = 15
-      , NAME_GOT      = 1
-      , PWD_GOT       = 2
-      , IP_GOT        = 4
-      , PORT_GOT      = 8
-    };
 
     std::string source_of_ExeOrFile;
     std::string source_of_WorkingDir;
     std::string source_of_Arguments;
-
     std::string full_cmd_line;
 
 
+    struct IconMovieData {
+        const std::string file_name;
+        const std::string file_path;
+        const std::string file_version;
+        const std::string file_resolution;
+        const std::string file_checksum;
+        const long int movie_len = 0;
+
+        IconMovieData(const std::string & file_name,
+                       const std::string & file_path,
+                       const std::string & file_version,
+                       const std::string & file_resolution,
+                       const std::string & file_checksum,
+                       const long int movie_len)
+            : file_name(file_name)
+            , file_path(file_path)
+            , file_version(file_version)
+            , file_resolution(file_resolution)
+            , file_checksum(file_checksum)
+            , movie_len(movie_len)
+            {}
+    };
+
 
     // VNC mod
-    struct Vnc_conf {
+    struct ModVNCParamsData {
         bool is_apple;
         Theme      theme;
         WindowListCaps windowListCaps;
-        ClientExecute exe_vnc;
+        ClientExecute exe;
         std::string vnc_encodings;
         int keylayout = 0x040C;
         int width = 800;
         int height = 600;
 
-//         bool is_recording = false;
         bool enable_tls = false;
         bool enable_nla = false;
         bool enable_sound = false;
@@ -330,12 +352,13 @@ public:
         std::vector<UserProfil> userProfils;
         int current_user_profil = 0;
 
-        Vnc_conf(ClientRedemptionIOAPI * client)
+        ModVNCParamsData(ClientRedemptionIOAPI * client)
           : is_apple(false)
-          , exe_vnc(*(client),  this->windowListCaps,  false)
+          , exe(*(client),  this->windowListCaps,  false)
           , vnc_encodings("5,16,0,1,-239")
         {}
     } vnc_conf;
+    bool wab_diag_question;
 
 
 
@@ -348,6 +371,7 @@ public:
     , client_sck(-1)
     , keymap()
     , _timer(0)
+    , commandIsValid(0)
     , MAIN_DIR(CLIENT_REDEMPTION_MAIN_PATH)
     , REPLAY_DIR(CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_REPLAY_PATH)
     , USER_CONF_LOG(CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_LOGINS_PATH)
@@ -369,15 +393,11 @@ public:
     , is_loading_replay_mod(false)
     , connected(false)
     , is_spanning(false)
-    , rdp_width(800)
-    , rdp_height(600)
-    , wab_diag_question(false)
-    , asked_color(0)
+//     , wab_diag_question(false)
+//     , asked_color(0)
     , current_user_profil(0)
-    , close_box_extra_message_ref("Close")
-    , _recv_disconnect_ultimatum(false)
+//     , _recv_disconnect_ultimatum(false)
     , mod_palette(BGRPalette::classic_332())
-    , commandIsValid(0)
     , vnc_conf(this)
     {
         SSL_load_error_strings();
@@ -752,7 +772,7 @@ public:
                             this->vnc_conf.is_apple = true;
                         }
                     } else
-                    if (tag.compare(std::string("SHARE_DIR")) == 0) {
+                    if (tag.compare(std::string("share-dir")) == 0) {
                         this->SHARE_DIR                 = info;
                         read_id = -1;
                     }
@@ -783,7 +803,6 @@ public:
                 if (tag.compare(std::string("save_pwd")) == 0) {
                     if (info.compare(std::string("true")) == 0) {
                         this->_save_password_account = true;
-                            //this->main_panel->check_password_box();
                     } else {
                         this->_save_password_account = false;
                     }
@@ -937,6 +956,62 @@ public:
 //             iFileKeyData.close();
 //         }
 
+
+    std::vector<IconMovieData> get_icone_movie_data() {
+
+        std::vector<IconMovieData> vec;
+
+         DIR *dir;
+        struct dirent *ent;
+        std::string extension(".mwrm");
+
+        if ((dir = opendir (this->REPLAY_DIR.c_str())) != nullptr) {
+
+            try {
+                while ((ent = readdir (dir)) != nullptr) {
+
+                    std::string current_name = std::string (ent->d_name);
+
+                    if (current_name.length() > 5) {
+
+                        std::string file_path;
+
+                        std::string end_string(current_name.substr(current_name.length()-5, current_name.length()));
+                        if (end_string == extension) {
+
+                            file_path = this->REPLAY_DIR + "/"+current_name.c_str();
+
+                            std::fstream ofile(file_path.c_str(), std::ios::in);
+                            if(ofile) {
+                                std::string file_name(current_name.substr(0, current_name.length()-5));
+                                std::string file_version;
+                                std::string file_resolution;
+                                std::string file_checksum;
+
+                                long int movie_len = this->get_movie_time_length(file_path.c_str());
+
+                                std::getline(ofile, file_version);
+                                std::getline(ofile, file_resolution);
+                                std::getline(ofile, file_checksum);
+
+                                vec.emplace_back<IconMovieData>({file_name, file_path, file_version, file_resolution, file_checksum, movie_len});
+
+                            } else {
+                                LOG(LOG_INFO, "Can't open file \"%s\"", file_path);
+                            }
+                        }
+                    }
+                                    }
+            } catch (Error & e) {
+                LOG(LOG_WARNING, "readdir error: (%u) %s", e.id, e.errmsg());
+            }
+            closedir (dir);
+        }
+
+        return vec;
+    }
+
+
     void set_remoteapp_cmd_line(const std::string & cmd) {
         this->full_cmd_line = cmd;
         const std::string delimiter = " ";
@@ -1014,6 +1089,7 @@ public:
         //this->info.encryptionLevel = 1;
     }
 
+
     void writeClientInfo() {
         std::fstream ofichier(this->USER_CONF_DIR);
         if(ofichier) {
@@ -1043,24 +1119,6 @@ public:
                 }
             }
 
-
-//                             LOG(LOG_INFO, "   --vnc                           Set connection mod to VNC.");
-//         LOG(LOG_INFO, "   --remote-app                    Connection as remote application.");
-//         LOG(LOG_INFO, "   --remote-exe [command]          Connection as remote application and set the line command.");
-//         LOG(LOG_INFO, "   --remote-dir [directory]        Set remote application work directory.");
-
-
-//         LOG(LOG_INFO, "   --disable-fullwindowdrag        Disable full window draging.");
-//         LOG(LOG_INFO, "   --disable-menuanimations        Disable menu animations.");
-//         LOG(LOG_INFO, "   --disable-theming               Disable theming.");
-//         LOG(LOG_INFO, "   --disable-cursor-shadow         Disable cursor shadow.");
-//         LOG(LOG_INFO, "   --disable-cursorsettings        Disable cursor settings.");
-//         LOG(LOG_INFO, "   --disable-font-smoothing        Disable font soomthing.");
-//         LOG(LOG_INFO, "   --disable-desktop-composition   Disable desktop composition.");
-//
-
-//         LOG(LOG_INFO, "   --vnc-applekeyboard             Set keyboard compatibility mod with apple VNC server.");
-
             if (new_profil) {
                 ofichier.close();
                 std::ofstream new_ofile(this->USER_CONF_DIR, std::ios::app | std::ios::out);
@@ -1082,10 +1140,10 @@ public:
 //                 new_ofile << "delta_time "            << this->delta_time << "\n";
                 new_ofile << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
                 new_ofile << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
-                new_ofile << "SHARE_DIR "                              << this->SHARE_DIR << std::endl;
-                new_ofile << "remote-exe"                              << this->full_cmd_line << std::endl;
-                new_ofile << "remote-dir"                              << this->source_of_WorkingDir << std::endl;
-                new_ofile << "vnc-applekeyboard"                       << this->vnc_conf.is_apple << std::endl;
+                new_ofile << "share-dir "                              << this->SHARE_DIR << std::endl;
+                new_ofile << "remote-exe "                              << this->full_cmd_line << std::endl;
+                new_ofile << "remote-dir "                              << this->source_of_WorkingDir << std::endl;
+                new_ofile << "vnc- applekeyboard "                       << this->vnc_conf.is_apple << std::endl;
                 new_ofile << "mod"                              << static_cast<int>(this->mod_state) << std::endl;
 
                 new_ofile.close();
@@ -1109,7 +1167,7 @@ public:
 //                 ofichier << "delta_time "            << this->delta_time << "\n";
                 ofichier << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
                 ofichier << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
-                ofichier << "SHARE_DIR "                              << this->SHARE_DIR << std::endl;
+                ofichier << "share-dir "                              << this->SHARE_DIR << std::endl;
                 ofichier << "remote-exe "                              << this->full_cmd_line << std::endl;
                 ofichier << "remote-dir "                              << this->source_of_WorkingDir << std::endl;
                 ofichier << "vnc-applekeyboard "                       << this->vnc_conf.is_apple << std::endl;
@@ -1131,6 +1189,11 @@ public:
     virtual void disconnect(std::string const & txt, bool pipe_broken) = 0;
     virtual void replay(std::string const & movie_dir, std::string const & movie_path) = 0;
     virtual bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) = 0;
+    virtual timeval reload_replay_mod(int begin, timeval now_stop) = 0;
+    virtual void replay_set_pause(timeval pause_duration) = 0;
+    virtual void replay_set_sync() = 0;
+    virtual bool is_replay_on() =0;
+    virtual time_t get_real_time_movie_begin() = 0;
     virtual void delete_replay_mod() = 0;
     virtual void callback() = 0;
     virtual void draw_frame(int ) {}
@@ -1228,32 +1291,9 @@ public:
         this->mod->rdp_input_unicode(unicode, flag);
     }
 
-    static time_t get_movie_time_length(char const * mwrm_filename) {
-        // TODO RZ: Support encrypted recorded file.
-        CryptoContext cctx;
-        Fstat fsats;
-        InCryptoTransport trans(cctx, InCryptoTransport::EncryptionMode::NotEncrypted, fsats);
-        MwrmReader mwrm_reader(trans);
-        MetaLine meta_line;
+    virtual time_t get_movie_time_length(char const * mwrm_filename) = 0;
 
-        time_t start_time = 0;
-        time_t stop_time = 0;
-
-        trans.open(mwrm_filename);
-        mwrm_reader.read_meta_headers();
-
-        Transport::Read read_stat = mwrm_reader.read_meta_line(meta_line);
-        if (read_stat == Transport::Read::Ok) {
-            start_time = meta_line.start_time;
-            stop_time = meta_line.stop_time;
-            while (read_stat == Transport::Read::Ok) {
-                stop_time = meta_line.stop_time;
-                read_stat = mwrm_reader.read_meta_line(meta_line);
-            }
-        }
-
-        return stop_time - start_time;
-    }
+    virtual void instant_play_client(std::chrono::microseconds time) = 0;
 
 };
 
@@ -1483,6 +1523,8 @@ public:
     virtual void closeFromScreen() = 0;
 
     virtual void set_screen_size(int x, int y) = 0;
+
+    virtual void update_screen() = 0;
 
 
     // replay mod

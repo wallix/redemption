@@ -52,37 +52,6 @@
 class ClientRedemption : public ClientRedemptionIOAPI
 {
 
-//     private:
-//     class ClipboardServerChannelDataSender : public VirtualChannelDataSender
-//     {
-//     public:
-//         mod_api        * _callback;
-//
-//         ClipboardServerChannelDataSender() = default;
-//
-//
-//         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
-//             InStream chunk(chunk_data, chunk_data_length);
-//             this->_callback->send_to_mod_channel(channel_names::cliprdr, chunk, total_length, flags);
-//         }
-//     };
-//
-//     class ClipboardClientChannelDataSender : public VirtualChannelDataSender
-//     {
-//     public:
-//         FrontAPI            * _front;
-//         CHANNELS::ChannelDef  _channel;
-//
-//         ClipboardClientChannelDataSender() = default;
-//
-//
-//         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
-//
-//             this->_front->send_to_channel(this->_channel, chunk_data, total_length, chunk_data_length, flags);
-//         }
-//     };
-
-
 public:
     // io API
     ClientOutputGraphicAPI      * impl_graphic;
@@ -93,8 +62,6 @@ public:
 
 
     // RDP
-//     ClipboardServerChannelDataSender _to_server_sender;
-//     ClipboardClientChannelDataSender _to_client_sender;
     CHANNELS::ChannelDefArray   cl;
     Font                 _font;
     std::string          _error;
@@ -102,7 +69,11 @@ public:
     UdevRandom           gen;
     std::array<uint8_t, 28> server_auto_reconnect_packet_ref;
     Inifile ini;
+    std::string close_box_extra_message_ref;
+
+    //  Remote App
     ClientExecute client_execute;
+
     std::unique_ptr<mod_api> unique_mod;
 
     enum : int {
@@ -119,7 +90,11 @@ public:
     ClientChannelRemoteAppManager clientChannelRemoteAppManager;
 
 
-    // replay mod
+    // Replay Mod
+    std::unique_ptr<ReplayMod> replay_mod;
+
+    // Recorder
+    Fstat fstat;
     std::unique_ptr<Capture>  capture;
     gdi::GraphicApi    * graph_capture;
 
@@ -144,6 +119,7 @@ public:
         , impl_socket_listener (impl_socket_listener)
         , impl_mouse_keyboard(impl_mouse_keyboard)
 
+        , close_box_extra_message_ref("Close")
         , client_execute(*(this), this->info.window_list_caps, false)
 
         , clientChannelRDPSNDManager(this->verbose, this, this->impl_sound)
@@ -474,7 +450,7 @@ public:
                                                     , VncBogusClipboardInfiniteLoop::delayed
                                                     , this->reportMessage
                                                     , this->vnc_conf.is_apple
-                                                    , &(this->vnc_conf.exe_vnc)
+                                                    , &(this->vnc_conf.exe)
 //                                                    , to_verbose_flags(0xfffffffd)
                                                     , to_verbose_flags(0)
                                                    )
@@ -624,7 +600,17 @@ public:
             }
         }
 
+
+
         if (this->impl_graphic) {
+
+            if (this->is_spanning) {
+                this->rdp_width  = this->impl_graphic->screen_max_width;
+                this->rdp_height = this->impl_graphic->screen_max_height;
+
+                this->vnc_conf.width = this->impl_graphic->screen_max_width;
+                this->vnc_conf.height = this->impl_graphic->screen_max_height;
+            }
 
             switch (this->mod_state) {
                 case MOD_RDP:
@@ -677,6 +663,105 @@ public:
             }
             this->disconnect(labelErrorMsg, false);
         }
+    }
+
+    timeval reload_replay_mod(int begin, timeval now_stop) override {
+
+        timeval movie_time_start;
+
+        switch (this->replay_mod->get_wrm_version()) {
+
+                case WrmVersion::v1:
+                    if (this->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0})) {
+                        this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
+                        movie_time_start = tvtime();
+                    }
+                    break;
+
+                case WrmVersion::v2:
+                {
+                    int last_balised = (begin/ ClientRedemptionIOAPI::BALISED_FRAME);
+                    this->is_loading_replay_mod = true;
+                    if (this->load_replay_mod(this->_movie_dir, this->_movie_name, {last_balised * ClientRedemptionIOAPI::BALISED_FRAME, 0}, {0, 0})) {
+
+                        this->is_loading_replay_mod = false;
+
+                        this->draw_frame(last_balised);
+
+                        this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
+
+                        if (this->impl_graphic) {
+                            this->impl_graphic->update_screen();
+                        }
+
+                        movie_time_start = tvtime();
+                        timeval waited_for_load = {movie_time_start.tv_sec - now_stop.tv_sec, movie_time_start.tv_usec - now_stop.tv_usec};
+                        timeval wait_duration = {movie_time_start.tv_sec - begin - waited_for_load.tv_sec, movie_time_start.tv_usec - waited_for_load.tv_usec};
+                        this->replay_mod->set_wait_after_load_client(wait_duration);
+                    }
+                    this->is_loading_replay_mod = false;
+                }
+                    break;
+        }
+
+        return movie_time_start;
+    }
+
+    virtual void replay_set_pause(timeval pause_duration) override {
+        this->replay_mod->set_pause(pause_duration);
+    }
+
+    virtual void replay_set_sync() override {
+        this->replay_mod->set_sync();
+    }
+
+    bool is_replay_on() override {
+        if (!this->replay_mod->get_break_privplay_client()) {
+            if (!this->replay_mod->play_client()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    time_t get_real_time_movie_begin() override {
+        return this->replay_mod->get_real_time_movie_begin();
+    }
+
+    time_t get_movie_time_length(char const * mwrm_filename) override  {
+        // TODO RZ: Support encrypted recorded file.
+
+        if (mwrm_filename == nullptr) {
+            mwrm_filename = this->replay_mod->get_mwrm_path().c_str();
+        }
+
+        CryptoContext cctx;
+        Fstat fsats;
+        InCryptoTransport trans(cctx, InCryptoTransport::EncryptionMode::NotEncrypted, fsats);
+        MwrmReader mwrm_reader(trans);
+        MetaLine meta_line;
+
+        time_t start_time = 0;
+        time_t stop_time = 0;
+
+        trans.open(mwrm_filename);
+        mwrm_reader.read_meta_headers();
+
+        Transport::Read read_stat = mwrm_reader.read_meta_line(meta_line);
+        if (read_stat == Transport::Read::Ok) {
+            start_time = meta_line.start_time;
+            stop_time = meta_line.stop_time;
+            while (read_stat == Transport::Read::Ok) {
+                stop_time = meta_line.stop_time;
+                read_stat = mwrm_reader.read_meta_line(meta_line);
+            }
+        }
+
+        return stop_time - start_time;
+    }
+
+    void instant_play_client(std::chrono::microseconds time) override {
+        this->replay_mod.get()->instant_play_client(time);
     }
 
     void disconnexionReleased() override{
@@ -916,16 +1001,16 @@ public:
     void callback() override {
 
 //         LOG(LOG_INFO, "Socket Event callback");
-        if (this->_recv_disconnect_ultimatum) {
-            if (this->impl_graphic) {
-                this->impl_graphic->dropScreen();
-            }
-            std::string labelErrorMsg("<font color='Red'>Disconnected by server</font>");
-            this->disconnect(labelErrorMsg, false);
-            this->capture = nullptr;
-            this->graph_capture = nullptr;
-            this->_recv_disconnect_ultimatum = false;
-        }
+//         if (this->_recv_disconnect_ultimatum) {
+//             if (this->impl_graphic) {
+//                 this->impl_graphic->dropScreen();
+//             }
+//             std::string labelErrorMsg("<font color='Red'>Disconnected by server</font>");
+//             this->disconnect(labelErrorMsg, false);
+//             this->capture = nullptr;
+//             this->graph_capture = nullptr;
+//             this->_recv_disconnect_ultimatum = false;
+//         }
 
         if (this->mod != nullptr) {
             try {

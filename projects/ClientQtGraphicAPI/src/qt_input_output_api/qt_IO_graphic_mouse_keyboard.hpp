@@ -125,6 +125,12 @@ public:
         }
     }
 
+    virtual void update_screen() override {
+        if (this->screen) {
+            this->screen->slotRepainMatch();
+        }
+    }
+
     virtual void reset_cache(int w,  int h) override {
 
         if (this->painter.isActive()) {
@@ -143,7 +149,7 @@ public:
 
     virtual void create_screen(std::string const & movie_dir, std::string const & movie_path) override {
         QPixmap * map = &(this->cache);
-        this->screen = new ReplayQtScreen(this->drawn_client, this, movie_dir, movie_path, map, ClientRedemptionIOAPI::get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str()), 0);
+        this->screen = new ReplayQtScreen(this->drawn_client, this, movie_dir, movie_path, map, this->client->get_movie_time_length(nullptr), 0);
     }
 
     QWidget * get_static_qwidget() {
@@ -422,7 +428,7 @@ private:
                     this->reset_cache(width, height);
 
                     if (!this->is_pre_loading) {
-                        this->screen = new ReplayQtScreen(this->drawn_client, this, this->client->_movie_dir, this->client->_movie_name, &(this->cache), ClientRedemptionIOAPI::get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str()), current_time_movie);
+                        this->screen = new ReplayQtScreen(this->drawn_client, this, this->client->_movie_dir, this->client->_movie_name, &(this->cache), this->client->get_movie_time_length(nullptr), current_time_movie);
 
                         this->screen->show();
                     }
@@ -469,7 +475,7 @@ private:
 
         this->balises.clear();
 
-        long int movie_length = ClientRedemptionIOAPI::get_movie_time_length(this->client->replay_mod->get_mwrm_path().c_str());
+        long int movie_length = this->client->get_movie_time_length(nullptr);
         this->form->hide();
         this->bar = new ProgressBarWindow(movie_length);
         long int endin_frame = 0;
@@ -478,7 +484,7 @@ private:
 
         while (endin_frame < movie_length) {
 
-            this->client->replay_mod.get()->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
+            this->client->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
 
             this->balises.push_back(this->cache);
             endin_frame += ClientRedemptionIOAPI::BALISED_FRAME;
