@@ -20,10 +20,58 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define RED_TEST_MODULE TestXXXXXXXXXX
+#define RED_TEST_MODULE TestSesProChannel
 #include "system/redemption_unit_tests.hpp"
 
+#include "mod/rdp/channels/sespro_channel.hpp"
 
-RED_AUTO_TEST_CASE(TestXXXXXXXXX)
+RED_AUTO_TEST_CASE(TestParseServerMessage)
 {
+    std::string              order;
+    std::vector<std::string> parameters;
+
+    RED_CHECK_EQUAL(SessionProbeVirtualChannel::parse_server_message(
+            "Request=Hello\x01" "12345\x01" "67890",
+            order,
+            parameters
+        ), true);
+    RED_CHECK_EQUAL(order, "Request");
+    RED_CHECK_EQUAL(parameters.size(), 3);
+    RED_CHECK_EQUAL(parameters[0], "Hello");
+    RED_CHECK_EQUAL(parameters[1], "12345");
+    RED_CHECK_EQUAL(parameters[2], "67890");
+}
+
+RED_AUTO_TEST_CASE(TestParseServerMessage2)
+{
+    std::string              order;
+    std::vector<std::string> parameters;
+
+    RED_CHECK_EQUAL(SessionProbeVirtualChannel::parse_server_message(
+            "Request=Hello\x01" "\x01" "67890",
+            order,
+            parameters
+        ), true);
+    RED_CHECK_EQUAL(order, "Request");
+    RED_CHECK_EQUAL(parameters.size(), 3);
+    RED_CHECK_EQUAL(parameters[0], "Hello");
+    RED_CHECK_EQUAL(parameters[1], "");
+    RED_CHECK_EQUAL(parameters[2], "67890");
+}
+
+RED_AUTO_TEST_CASE(TestParseServerMessage3)
+{
+    std::string              order;
+    std::vector<std::string> parameters;
+
+    RED_CHECK_EQUAL(SessionProbeVirtualChannel::parse_server_message(
+            "Request=Hello\x01" "12345\x01",
+            order,
+            parameters
+        ), true);
+    RED_CHECK_EQUAL(order, "Request");
+    RED_CHECK_EQUAL(parameters.size(), 3);
+    RED_CHECK_EQUAL(parameters[0], "Hello");
+    RED_CHECK_EQUAL(parameters[1], "12345");
+    RED_CHECK_EQUAL(parameters[2], "");
 }
