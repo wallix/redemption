@@ -24,6 +24,7 @@
 #include "core/front_api.hpp"
 #include "mod/rdp/rdp_api.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
+#include "utils/genrandom.hpp"
 #include "utils/stream.hpp"
 #include "utils/translation.hpp"
 #include "utils/sugar/algostring.hpp"
@@ -677,6 +678,30 @@ public:
                 this->request_keep_alive();
             }
         }
+    }
+
+    static bool parse_server_message(const char * svr_msg, std::string & order_ref, std::vector<std::string> & parameters_ref) {
+        order_ref.clear();
+        parameters_ref.clear();
+
+        const char * separator = strchr(svr_msg, '=');
+
+        if (separator) {
+            order_ref.assign(svr_msg, separator - svr_msg);
+
+            const char * params = (separator + 1);
+
+            while (separator = ::strchr(params, '\x01')) {
+                parameters_ref.emplace_back(params, separator - params);
+
+                params = (separator + 1);
+            }
+            parameters_ref.emplace_back(params);
+
+            return true;
+        }
+
+        return false;
     }
 
     void process_server_message(uint32_t total_length,
