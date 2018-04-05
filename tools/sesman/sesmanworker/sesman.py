@@ -1970,7 +1970,10 @@ class Sesman():
                 u'session_probe_smart_launcher_short_delay' : 'smart_launcher_short_delay',
                 u'session_probe_enable_crash_dump' : 'enable_crash_dump',
                 u'session_probe_handle_usage_limit' : 'handle_usage_limit',
-                u'session_probe_memory_usage_limit' : 'memory_usage_limit'
+                u'session_probe_memory_usage_limit' : 'memory_usage_limit',
+
+                # Deprecated. For compatibility only.
+                u'enable_session_probe_launch_mask' : 'enable_launch_mask'
                 },
             'server_cert': {
                 u'server_cert_store' : 'server_cert_store',
