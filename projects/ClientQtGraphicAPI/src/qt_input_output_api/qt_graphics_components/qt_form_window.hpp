@@ -217,7 +217,7 @@ public:
             this->controllers->client->mod_state = ClientRedemptionIOAPI::MOD_RDP_REPLAY;
             this->controllers->client->_movie_name = movie_name;
             this->controllers->client->_movie_dir = movie_dir;
-            this->controllers->client->replay(movie_dir, movie_name);
+            this->controllers->client->replay();
         }
     }
 
@@ -260,7 +260,7 @@ public:
         this->setMinimumSize(395, 250);
         this->setMaximumWidth(395);
 
-        std::vector<ClientRedemptionIOAPI::IconMovieData> iconData = this->controllers->client->get_icone_movie_data();
+        std::vector<ClientRedemptionIOAPI::IconMovieData> iconData = this->controllers->client->get_icon_movie_data();
 
         for (size_t i = 0; i < iconData.size(); i++) {
             IconMovie* icon = new IconMovie(controllers, iconData[i].file_name, iconData[i].file_path, iconData[i].file_version, iconData[i].file_resolution, iconData[i].file_checksum, iconData[i].movie_len, this);
@@ -347,7 +347,7 @@ private Q_SLOTS:
         this->controllers->client->mod_state = ClientRedemptionIOAPI::MOD_RDP_REPLAY;
         this->controllers->client->_movie_name = movie_name;
         this->controllers->client->_movie_dir = movie_dir;
-        this->controllers->client->replay(movie_dir, movie_name);
+        this->controllers->client->replay();
     }
 
 };

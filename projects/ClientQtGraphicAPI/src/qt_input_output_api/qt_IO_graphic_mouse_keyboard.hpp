@@ -149,7 +149,7 @@ public:
 
     virtual void create_screen(std::string const & movie_dir, std::string const & movie_path) override {
         QPixmap * map = &(this->cache);
-        this->screen = new ReplayQtScreen(this->drawn_client, this, movie_dir, movie_path, map, this->client->get_movie_time_length(nullptr), 0);
+        this->screen = new ReplayQtScreen(this->drawn_client, this, movie_dir, movie_path, map, this->client->get_movie_time_length(this->client->get_mwrm_filename()), 0);
     }
 
     QWidget * get_static_qwidget() {
@@ -413,7 +413,7 @@ private:
                     break;
 
             case ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP:
-                return FrontAPI::ResizeResult::instant_done;
+                return FrontAPI::ResizeResult::remoteapp;
                     break;
 
             case ClientRedemptionIOAPI::MOD_RDP_REPLAY:
@@ -421,14 +421,16 @@ private:
                     time_t current_time_movie = 0;
 
                     if (!this->is_pre_loading) {
-                        current_time_movie = this->screen->get_current_time_movie();
+                        if (this->screen) {
+                            current_time_movie = this->screen->get_current_time_movie();
+                        }
                         this->dropScreen();
                     }
 
                     this->reset_cache(width, height);
 
                     if (!this->is_pre_loading) {
-                        this->screen = new ReplayQtScreen(this->drawn_client, this, this->client->_movie_dir, this->client->_movie_name, &(this->cache), this->client->get_movie_time_length(nullptr), current_time_movie);
+                        this->screen = new ReplayQtScreen(this->drawn_client, this, this->client->_movie_dir, this->client->_movie_name, &(this->cache), this->client->get_movie_time_length(this->client->get_mwrm_filename()), current_time_movie);
 
                         this->screen->show();
                     }
@@ -475,23 +477,26 @@ private:
 
         this->balises.clear();
 
-        long int movie_length = this->client->get_movie_time_length(nullptr);
+        long int movie_length = this->client->get_movie_time_length(this->client->get_mwrm_filename());
         this->form->hide();
         this->bar = new ProgressBarWindow(movie_length);
         long int endin_frame = 0;
 
         this->is_pre_loading = true;
 
-        while (endin_frame < movie_length) {
+        if (movie_length > ClientRedemptionIOAPI::BALISED_FRAME) {
 
-            this->client->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
+            while (endin_frame < movie_length) {
 
-            this->balises.push_back(this->cache);
-            endin_frame += ClientRedemptionIOAPI::BALISED_FRAME;
-            if (this->bar) {
-                this->bar->setValue(endin_frame);
+                this->client->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
+
+                this->balises.push_back(this->cache);
+                endin_frame += ClientRedemptionIOAPI::BALISED_FRAME;
+                if (this->bar) {
+                    this->bar->setValue(endin_frame);
+                }
             }
-    }
+        }
 
         this->is_pre_loading = false;
 

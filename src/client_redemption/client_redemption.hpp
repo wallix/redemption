@@ -219,7 +219,6 @@ public:
 
     bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) override {
          try {
-
             this->replay_mod.reset(new ReplayMod( *this
                                                 , movie_dir.c_str() //(this->REPLAY_DIR + "/").c_str()
                                                 , movie_name.c_str()
@@ -254,8 +253,9 @@ public:
         return false;
     }
 
-    void replay(std::string const & movie_dir_, std::string const & movie_path_) override {
-        if (movie_path_.empty()) {
+    void replay() override {
+
+        if (this->_movie_name.empty()) {
              //this->impl_graphic->readError(movie_path_);
             return;
         }
@@ -263,14 +263,13 @@ public:
         this->is_replaying = true;
         this->is_loading_replay_mod = true;
         //this->setScreenDimension();
-        if (this->load_replay_mod(movie_dir_, movie_path_, {0, 0}, {0, 0})) {
+        if (this->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0})) {
 
             this->is_loading_replay_mod = false;
 
             if (impl_graphic) {
-
                 this->impl_graphic->reset_cache(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
-                this->impl_graphic->create_screen(movie_dir_, movie_path_);
+                this->impl_graphic->create_screen(this->_movie_dir, this->_movie_name);
 
                 if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
                     if (this->impl_mouse_keyboard) {
@@ -675,6 +674,7 @@ public:
                     if (this->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0})) {
                         this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
                         movie_time_start = tvtime();
+                        return movie_time_start;
                     }
                     break;
 
@@ -700,6 +700,8 @@ public:
                         this->replay_mod->set_wait_after_load_client(wait_duration);
                     }
                     this->is_loading_replay_mod = false;
+
+                    return movie_time_start;
                 }
                     break;
         }
@@ -728,12 +730,13 @@ public:
         return this->replay_mod->get_real_time_movie_begin();
     }
 
+    char const * get_mwrm_filename() override {
+        this->_movie_full_path = this->_movie_dir + this->_movie_name;
+        return _movie_full_path.c_str();
+    }
+
     time_t get_movie_time_length(char const * mwrm_filename) override  {
         // TODO RZ: Support encrypted recorded file.
-
-        if (mwrm_filename == nullptr) {
-            mwrm_filename = this->replay_mod->get_mwrm_path().c_str();
-        }
 
         CryptoContext cctx;
         Fstat fsats;

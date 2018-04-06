@@ -252,6 +252,7 @@ public:
 
     std::string _movie_name;
     std::string _movie_dir;
+    std::string _movie_full_path;
 
     int rdp_width;
     int rdp_height;
@@ -331,6 +332,7 @@ public:
             , movie_len(movie_len)
             {}
     };
+    std::vector<IconMovieData> icons_movie_data;
 
 
     // VNC mod
@@ -372,6 +374,8 @@ public:
     , keymap()
     , _timer(0)
     , commandIsValid(0)
+    , port(0)
+    , local_IP("unknow_local_IP")
     , MAIN_DIR(CLIENT_REDEMPTION_MAIN_PATH)
     , REPLAY_DIR(CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_REPLAY_PATH)
     , USER_CONF_LOG(CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_LOGINS_PATH)
@@ -382,8 +386,7 @@ public:
     , SOUND_TEMP_DIR(std::string(CLIENT_REDEMPTION_SOUND_TEMP_PATH))
     , DATA_DIR(MAIN_DIR + std::string(CLIENT_REDEMPTION_DATA_PATH))
     , DATA_CONF_DIR(MAIN_DIR + std::string(CLIENT_REDEMPTION_DATA_CONF_PATH))
-    , port(0)
-    , local_IP("unknow_local_IP")
+
     , windowsData(this)
     , _accountNB(0)
     , _save_password_account(false)
@@ -957,11 +960,12 @@ public:
 //         }
 
 
-    std::vector<IconMovieData> get_icone_movie_data() {
+    std::vector<IconMovieData> get_icon_movie_data() {
 
-        std::vector<IconMovieData> vec;
 
-         DIR *dir;
+        this->icons_movie_data.clear();
+
+        DIR *dir;
         struct dirent *ent;
         std::string extension(".mwrm");
 
@@ -994,7 +998,11 @@ public:
                                 std::getline(ofile, file_resolution);
                                 std::getline(ofile, file_checksum);
 
-                                vec.emplace_back<IconMovieData>({file_name, file_path, file_version, file_resolution, file_checksum, movie_len});
+                                IconMovieData iconData = {file_name, file_path, file_version, file_resolution, file_checksum, movie_len};
+
+                                this->icons_movie_data.push_back(iconData);
+
+                                //this->vec.emplace_back<IconMovieData>({file_name, file_path, file_version, file_resolution, file_checksum, movie_len});
 
                             } else {
                                 LOG(LOG_INFO, "Can't open file \"%s\"", file_path);
@@ -1008,7 +1016,7 @@ public:
             closedir (dir);
         }
 
-        return vec;
+        return this->icons_movie_data;
     }
 
 
@@ -1187,12 +1195,13 @@ public:
     // CONTROLLER
     virtual void connect() = 0;
     virtual void disconnect(std::string const & txt, bool pipe_broken) = 0;
-    virtual void replay(std::string const & movie_dir, std::string const & movie_path) = 0;
+    virtual void replay() = 0;
     virtual bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) = 0;
     virtual timeval reload_replay_mod(int begin, timeval now_stop) = 0;
     virtual void replay_set_pause(timeval pause_duration) = 0;
     virtual void replay_set_sync() = 0;
     virtual bool is_replay_on() =0;
+    virtual char const * get_mwrm_filename() = 0;
     virtual time_t get_real_time_movie_begin() = 0;
     virtual void delete_replay_mod() = 0;
     virtual void callback() = 0;
