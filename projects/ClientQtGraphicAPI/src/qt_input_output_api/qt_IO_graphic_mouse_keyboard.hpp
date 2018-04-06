@@ -91,6 +91,7 @@ public:
       , mod_bpp(24)
       , form(nullptr)
       , screen(nullptr)
+      , bar(nullptr)
 //       , trans_cache(nullptr)
       , qtRDPKeymap()
       , is_pre_loading(false)
@@ -1453,6 +1454,7 @@ private:
             this->client->target_IP     = this->form->get_IPField();
             this->client->user_password = this->form->get_PWDField();
             this->client->port          = this->form->get_portField();
+            this->client->info.console_session = this->form->RDP_tab.options._consoleBox.isChecked();
 
             if (!this->client->target_IP.empty()){
                 this->client->connect();

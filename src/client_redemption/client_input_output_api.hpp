@@ -409,7 +409,7 @@ public:
         this->info.width  = rdp_width;
         this->info.height = rdp_height;
         this->info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
-        this->info.console_session = 0;
+        this->info.console_session = false;
         this->info.brush_cache_code = 0;
         this->info.bpp = 24;
         this->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
@@ -746,6 +746,9 @@ public:
                         if (std::stoi(info)) {
                             this->modRDPParamsData.enable_sound = true;
                         } else { this->modRDPParamsData.enable_sound = false; }
+                    } else
+                    if (tag.compare(std::string("console_mode")) == 0) {
+                    	this->info.console_session = (std::stoi(info) > 0);
                     } else
                     if (tag.compare(std::string("enable_shared_clipboard")) == 0) {
                         if (std::stoi(info)) {
@@ -1085,6 +1088,7 @@ public:
         this->info.bpp = 24;
         this->info.width  = this->rdp_width;
         this->info.height = this->rdp_height;
+        this->info.console_session = false;
         this->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
         this->info.cs_monitor.monitorCount = 1;
         this->is_spanning = false;
@@ -1145,6 +1149,7 @@ public:
                 new_ofile << "tls "                   << this->modRDPParamsData.enable_tls  << "\n";
                 new_ofile << "nla "                   << this->modRDPParamsData.enable_nla  << "\n";
                 new_ofile << "sound "                 << this->modRDPParamsData.enable_sound << "\n";
+                new_ofile << "console_mode "               << this->info.console_session << "\n";
 //                 new_ofile << "delta_time "            << this->delta_time << "\n";
                 new_ofile << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
                 new_ofile << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
@@ -1171,6 +1176,7 @@ public:
                 ofichier << "record "                << this->is_recording                 << "\n";
                 ofichier << "tls "                   << this->modRDPParamsData.enable_tls  << "\n";
                 ofichier << "nla "                   << this->modRDPParamsData.enable_nla  << "\n";
+                ofichier << "console_mode "               << this->info.console_session << "\n";
                 ofichier << "sound "                 << this->modRDPParamsData.enable_sound << "\n";
 //                 ofichier << "delta_time "            << this->delta_time << "\n";
                 ofichier << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
@@ -1509,7 +1515,8 @@ public:
     const int screen_max_height;
 
     ClientOutputGraphicAPI(int max_width, int max_height)
-      : screen_max_width(max_width)
+      : drawn_client(nullptr),
+		screen_max_width(max_width)
       , screen_max_height(max_height) {
     }
 
