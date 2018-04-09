@@ -99,6 +99,11 @@ namespace VNC {
             // return is false if the encoder is waiting for more data
             EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
+                if (this->cx == 0 || this->cy == 0)
+                {
+                    return EncoderState::Exit;
+                }
+
                 switch (this->state){
                 case RREState::Header:
                 {
