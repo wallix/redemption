@@ -75,3 +75,32 @@ RED_AUTO_TEST_CASE(TestParseServerMessage3)
     RED_CHECK_EQUAL(parameters[1], "12345");
     RED_CHECK_EQUAL(parameters[2], "");
 }
+
+RED_AUTO_TEST_CASE(TestParseServerMessage4)
+{
+    std::string              order;
+    std::vector<std::string> parameters;
+
+    RED_CHECK_EQUAL(SessionProbeVirtualChannel::parse_server_message(
+            "Request",
+            order,
+            parameters
+        ), true);
+    RED_CHECK_EQUAL(order, "Request");
+    RED_CHECK_EQUAL(parameters.size(), 0);
+}
+
+RED_AUTO_TEST_CASE(TestParseServerMessage5)
+{
+    std::string              order;
+    std::vector<std::string> parameters;
+
+    RED_CHECK_EQUAL(SessionProbeVirtualChannel::parse_server_message(
+            "=TOTO",
+            order,
+            parameters
+        ), false);
+    RED_CHECK_EQUAL(order, "");
+    RED_CHECK_EQUAL(parameters.size(), 1);
+    RED_CHECK_EQUAL(parameters[0], "TOTO");
+}
