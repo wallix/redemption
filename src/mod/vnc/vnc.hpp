@@ -1571,7 +1571,6 @@ protected:
 public:
     void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override
     {
-        LOG(LOG_INFO, "VNC draw_event");
         if (bool(this->verbose & VNCVerbose::draw_event)) {
             LOG(LOG_INFO, "vnc::draw_event");
         }
@@ -1587,7 +1586,9 @@ public:
 
         while (this->draw_event_impl(drawable)) {
         }
-        LOG(LOG_INFO, "Remaining in buffer : %u", this->server_data_buf.remaining());
+        if (bool(this->verbose & VNCVerbose::draw_event)) {
+            LOG(LOG_INFO, "Remaining in buffer : %u", this->server_data_buf.remaining());
+        }
 
         this->check_timeout();
     }
@@ -2272,14 +2273,14 @@ private:
                         --this->num_recs;
 
                         if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                            LOG(LOG_INFO, "%s %s (%d, %d, %d, %d)",
+                            LOG(LOG_INFO, "%s %d (%d, %d, %d, %d)",
                                 (this->encoding == HEXTILE_ENCODING) ? "HEXTILE_ENCODING" :
                                 (this->encoding == CURSOR_PSEUDO_ENCODING) ? "CURSOR_PSEUDO_ENCODING" :
                                 (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
                                 (this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
                                 (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" :
                                 (this->encoding == ZRLE_ENCODING) ? "ZRLE_ENCODING" :
-                                 "UNKNOWN_ENCODING", (unsigned)this->encoding
+                                 "UNKNOWN_ENCODING", this->encoding
                                 , this->x, this->y, this->cx, this->cy);
                         }
 
@@ -2299,7 +2300,7 @@ private:
                             this->encoder = new VNC::Encoder::Raw(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
                         break;
                         case ZRLE_ENCODING: /* ZRLE */
-                            this->encoder = new VNC::Encoder::Zrle(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, this->zd, vnc.verbose);
+                            this->encoder = new VNC::Encoder::Zrle(this->bpp, this->Bpp, Rect(this->x, this->y, this->cx, this->cy), this->zd, vnc.verbose);
                         break;
                         case RRE_ENCODING: /* RRE */
                             this->encoder = new VNC::Encoder::RRE(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
@@ -2322,11 +2323,13 @@ private:
                         update_lock<gdi::GraphicApi> lock(drawable);
                         if (this->last == VNC::Encoder::EncoderState::NeedMoreData){
                             if (this->last_avail == buf.remaining()){
-                                LOG(LOG_INFO, "new call without more data");
+                                LOG(LOG_ERR, "new call to vnc::mod without new data");
+                                throw Error(ERR_VNC);
                             }
                         }
                         if (encoder == nullptr){
-                            LOG(LOG_INFO, "call with null encoder");
+                            LOG(LOG_ERR, "Call to vnc::mod with null encoder");
+                            throw Error(ERR_VNC);
                         }
 
                         // Pre Assertion: we have an encoder

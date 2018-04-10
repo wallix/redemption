@@ -32,8 +32,17 @@ REDEMPTION_VERBOSE_FLAGS_DEF(VNCVerbose)
     connection      = 0x0010,
     hextile_encoder = 0x0020,
     cursor_encoder  = 0x0040,
-    zrle_encoder    = 0x0100,
-
     clipboard       = 0x0080,
+    zrle_encoder    = 0x0100,
+    zrle_trace      = 0x0200,
+    hextile_trace   = 0x0400,
+    cursor_trace    = 0x1000,
+    rre_encoder     = 0x2000,
+    rre_trace       = 0x4000,
+    raw_encoder     = 0x8000,
+    raw_trace       = 0x10000,
+    copyrect_encoder= 0x20000,
+    copyrect_trace  = 0x30000,
+
 };
 

@@ -59,20 +59,20 @@ namespace VNC {
 
             VNCVerbose verbose;
 
-            Zrle(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy, Zdecompressor<> & zd, VNCVerbose verbose) 
-                 : bpp(bpp), Bpp(Bpp), r(x, y, cx, cy)
+            Zrle(uint8_t bpp, uint8_t Bpp, Rect rect, Zdecompressor<> & zd, VNCVerbose verbose) 
+                 : bpp(bpp), Bpp(Bpp), r(rect)
                  , tile(Rect(this->r.x, this->r.y, 
                       std::min<size_t>(this->r.cx, 64), 
                       std::min<size_t>(this->r.cy, 64)))
-                 , cx_remain{cx}
-                 , cy_remain{cy}
+                 , cx_remain{r.cx}
+                 , cy_remain{r.cy}
                 , zd(zd)
                 , state(ZrleState::Header)
                 , zlib_compressed_data_length(0), accumulator{}, accumulator_uncompressed{}
                 , verbose(verbose)
             {
-                if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "New zrle compressor %hhu (%zu %zu %zu %zu)", bpp, x,y, cx, cy);
+                if (bool(this->verbose & VNCVerbose::zrle_trace)) {
+                    LOG(LOG_INFO, "New VNC::Encoder::ZRLE %d (%d %d %u %u)", bpp, r.x, r.y, r.cx, r.cy);
                 }
             }
 
@@ -105,14 +105,18 @@ namespace VNC {
                     this->accumulator.reserve(this->zlib_compressed_data_length);
                     this->accumulator_uncompressed.reserve(200000);
                     this->accumulator_uncompressed.clear();
+                    if (bool(this->verbose & VNCVerbose::zrle_trace)) {
+                        LOG(LOG_INFO, "ZRLE: consuming header data %zu bytes", sz);
+                        hexdump_d(buf.av().data(), sz);
+                    }
                     buf.advance(sz);
                     if (bool(this->verbose & VNCVerbose::basic_trace)) {
                         LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u remaining=%hu", this->zlib_compressed_data_length, buf.remaining());
                     }
-                    this->state = ZrleState::Data;
                     if (bool(this->verbose & VNCVerbose::basic_trace)) {
                         LOG(LOG_INFO, "Zrle::EncoderReady::zrle remaining data  %zu", buf.av().size());
                     }
+                    this->state = ZrleState::Data;
                     return EncoderState::Ready; 
                 }
                 break;
@@ -122,6 +126,10 @@ namespace VNC {
                     {
                         auto av = buf.av(buf.remaining());
                         this->accumulator.insert(this->accumulator.end(), av.begin(), av.end());
+                        if (bool(this->verbose & VNCVerbose::zrle_trace)) {
+                            LOG(LOG_INFO, "ZRLE: consuming compressed data %zu bytes", buf.remaining());
+                            hexdump_d(buf.av().data(), buf.remaining());
+                        }
                         buf.advance(buf.remaining());
                         if (bool(this->verbose & VNCVerbose::basic_trace)) {
                             LOG(LOG_INFO, "Zrle::Encoder::NeedMoreData::zrle remaining data  %zu", buf.av().size());
@@ -131,6 +139,10 @@ namespace VNC {
                     size_t interesting_part = this->zlib_compressed_data_length - this->accumulator.size();
                     auto av = buf.av(interesting_part);
                     this->accumulator.insert(this->accumulator.end(), av.begin(), av.end());
+                    if (bool(this->verbose & VNCVerbose::zrle_trace)) {
+                        LOG(LOG_INFO, "ZRLE: consuming end of compressed data block : %zu bytes", interesting_part);
+                        hexdump_d(buf.av().data(), interesting_part);
+                    }
                     buf.advance(interesting_part);
 
                     size_t data_ready = 0;
