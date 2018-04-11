@@ -471,12 +471,12 @@ RdpNego::State RdpNego::fallback_to_tls(OutTransport trans)
 // by a carriage-return (CR) and line-feed (LF) ANSI sequence. This text string
 // MUST be "Cookie: mstshash=IDENTIFIER", where IDENTIFIER is an ANSI string
 //(an example cookie string is shown in section 4.1.1). The length of the entire
-// cookie string and CR+LF sequence is include " in the X.224 Connection Request
+// cookie string and CR+LF sequence is included in the X.224 Connection Request
 // Length Indicator field. This field MUST NOT be present if the routingToken
 // field is present.
 
 // rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
-// structure. The length of this negotiation structure is include " in the X.224
+// structure. The length of this negotiation structure is included in the X.224
 // Connection Request Length Indicator field.
 
 void RdpNego::send_negotiation_request(OutTransport trans)

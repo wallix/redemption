@@ -193,7 +193,10 @@ public:
     }
 
     void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+//        LOG(LOG_INFO, "RDPDrawable width=%d height=%d", this->drawable.width(), this->drawable.height());
         const Rect trect = clip.intersect(this->drawable.width(), this->drawable.height()).intersect(cmd.rect);
+//        LOG(LOG_INFO, "RDPDrawable %d %d width=%d height=%d", cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy);
+//        LOG(LOG_INFO, "RDPDrawable %d %d width=%d height=%d", clip.x, clip.y, clip.cx, clip.cy);
         this->drawable.opaquerect(trect, this->u32rgb_to_color(color_ctx, cmd.color));
         this->last_update_index++;
     }

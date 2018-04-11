@@ -25,6 +25,7 @@
 
 #include "utils/log.hpp"
 #include "utils/verbose_flags.hpp"
+#include "utils/colors.hpp"
 #include "utils/zlib.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 #include "mod/vnc/encoder/encoder_api.hpp"
@@ -401,8 +402,11 @@ namespace VNC {
             // return false if there is no next tile any more
             bool next_tile()
             {
+                LOG(LOG_INFO, "Previous tile: rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
+
                 if (this->cx_remain <= 64){
                     if (this->cy_remain <= 64){
+                        LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
                         return false;
                     }
                     this->cx_remain = this->r.cx;
@@ -410,11 +414,13 @@ namespace VNC {
                     this->tile = Rect(this->r.x, this->tile.y + 64,
                                     std::min<size_t>(64, this->cx_remain),
                                     std::min<size_t>(64, this->cy_remain));
+                    LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
                     return true;
                 }
                 this->cx_remain -= 64;
                 this->tile.x += 64;
                 this->tile.cx = std::min<size_t>(64, this->cx_remain);
+                LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
                 return true;
             }
 
@@ -468,9 +474,7 @@ namespace VNC {
                     LOG(LOG_INFO, "VNC Encoding: ZRLE, Raw pixel data");
                 }
 
-                const uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
-                const uint16_t tile_cy = std::min<uint16_t>(this->cy_remain, 64);
-                const uint16_t tile_data_length = tile_cx * tile_cy * this->Bpp;
+                const uint16_t tile_data_length = this->tile.cx * this->tile.cy * this->Bpp;
                 
                 if (uncompressed_data_buffer.in_remain() < tile_data_length)
                 {
@@ -494,33 +498,13 @@ namespace VNC {
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "VNC Encoding: ZRLE, Solid tile (single color)");
                 }
-
-                const uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
-                const uint16_t tile_cy = std::min<uint16_t>(this->cy_remain, 64);
-                uint8_t         tile_data[4*16384];    // max size with 16 bpp
-                const uint8_t * tile_data_p = tile_data;
-                
-                if (uncompressed_data_buffer.in_remain() < this->Bpp)
-                {
-                    LOG(LOG_ERR, "Compressed VNC::zrle stream truncated (2)");
-                    throw Error(ERR_VNC_ZRLE_PROTOCOL);
-                }
-
                 const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->Bpp);
 
-                uint8_t * tmp_tile_data = tile_data;
-
-                for (int i = 0; i < tile_cx; i++, tmp_tile_data += this->Bpp){
-                    memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
-                }
-
-                uint16_t line_size = tile_cx * this->Bpp;
-
-                for (int i = 1; i < tile_cy; i++, tmp_tile_data += line_size){
-                    memcpy(tmp_tile_data, tile_data, line_size);
-                }
-
-                this->draw_tile(tile_data_p, drawable);
+                auto const color_context= gdi::ColorCtx::depth16();
+                auto pixel_color = RDPColor::from((cpixel_pattern[1]<<8)+cpixel_pattern[0]);
+                LOG(LOG_INFO, "%s", this->tile);
+                const RDPOpaqueRect cmd(this->tile, pixel_color);
+                drawable.draw(cmd, this->tile, color_context);
 
             }
 

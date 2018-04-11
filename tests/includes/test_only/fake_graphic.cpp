@@ -273,42 +273,10 @@ void FakeGraphic::save_to_png(const char * filename)
     fclose(file);
 }
 
-FakeGraphic::FakeGraphic(ClientInfo & info, uint32_t verbose)
+FakeGraphic::FakeGraphic(uint8_t bpp, size_t width, size_t height, uint32_t verbose)
 : verbose(verbose)
-, info(info)
-, mod_bpp(info.bpp)
+, mod_bpp(bpp)
 , mod_palette(BGRPalette::classic_332())
-, mouse_x(0)
-, mouse_y(0)
-, notimestamp(true)
-, nomouse(true)
-, gd(info.width, info.height)
+, gd(width, height)
 {
-    // -------- Start of system wide SSL_Ctx option ------------------------------
-
-    // ERR_load_crypto_strings() registers the error strings for all libcrypto
-    // functions. SSL_load_error_strings() does the same, but also registers the
-    // libssl error strings.
-
-    // One of these functions should be called before generating textual error
-    // messages. However, this is not required when memory usage is an issue.
-
-    // ERR_free_strings() frees all previously loaded error strings.
-
-    //SSL_load_error_strings();
-
-    // SSL_library_init() registers the available SSL/TLS ciphers and digests.
-    // OpenSSL_add_ssl_algorithms() and SSLeay_add_ssl_algorithms() are synonyms
-    // for SSL_library_init().
-
-    // - SSL_library_init() must be called before any other action takes place.
-    // - SSL_library_init() is not reentrant.
-    // - SSL_library_init() always returns "1", so it is safe to discard the return
-    // value.
-
-    // Note: OpenSSL 0.9.8o and 1.0.0a and later added SHA2 algorithms to
-    // SSL_library_init(). Applications which need to use SHA2 in earlier versions
-    // of OpenSSL should call OpenSSL_add_all_algorithms() as well.
-
-    //SSL_library_init();
 }

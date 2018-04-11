@@ -651,15 +651,7 @@ RED_AUTO_TEST_CASE(TestHextile2)
 
 RED_AUTO_TEST_CASE(TestHextile)
 {
-    ClientInfo info;
-    info.keylayout = 0x040C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.bpp = 16;
-    info.width = 1308;
-    info.height = 19;
-
-    FakeGraphic drawable(info, 20);
+    FakeGraphic drawable(16, 1308, 19, 20);
 
     const uint8_t tile[] = {
 /* 000 */ "\x01\x04\x19\xc3\x10\xe4\x18\xc3\x10\x25\x21\xe4\x18\x46\x29\x86"
