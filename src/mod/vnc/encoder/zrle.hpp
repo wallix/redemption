@@ -54,7 +54,6 @@ namespace VNC {
             std::vector<uint8_t> accumulator;
             std::vector<uint8_t> accumulator_uncompressed;
 
-
         public:
 
             VNCVerbose verbose;
@@ -74,6 +73,17 @@ namespace VNC {
                 if (bool(this->verbose & VNCVerbose::zrle_trace)) {
                     LOG(LOG_INFO, "New VNC::Encoder::ZRLE %d (%d %d %u %u)", bpp, r.x, r.y, r.cx, r.cy);
                 }
+            }
+
+            // this one is used only in tests to check decompression behavior without compression layer
+            // injection of compressed data in tests raise troubles because it depends of all the past history.
+
+            // We are currently providing complete Streams encoding all the expected tiling rects
+            // We can predict the number of expected rects (64x64 tiling of external rect is determinist)
+            // But we can't predict the size of each individual rect before decoding.
+            void rle_test_bypass(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
+            {
+                this->lib_framebuffer_update_zrle(uncompressed_data_buffer, drawable);
             }
 
             // return is true if the Encoder has finished working (can be reset or deleted),
@@ -175,6 +185,7 @@ namespace VNC {
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "Zrle::Encoder Error remaining data  %zu", buf.av().size());
                 }
+
                 LOG(LOG_ERR, "VNC Encoding: ZRLE, unexpected encoding stream exit");
                 throw Error(ERR_VNC_ZRLE_PROTOCOL);
             }

@@ -6635,22 +6635,6 @@ public:
     }
 };
 
-//Ready,
-//NeedMoreData,
-//Exit
-
-inline std::ostream & operator<<(std::ostream & out, VNC::Encoder::EncoderState x){
-    switch (x){
-        case VNC::Encoder::EncoderState::Ready:
-            return out << "READY";
-        case VNC::Encoder::EncoderState::NeedMoreData:
-            return out << "NeedMoreData";        
-        case VNC::Encoder::EncoderState::Exit:
-            return out << "Exit";
-    }
-    return out << "UNKNOWN";
-}
-
 RED_AUTO_TEST_CASE(TestZrle)
 {
     Zdecompressor<> zd;
@@ -6662,7 +6646,7 @@ RED_AUTO_TEST_CASE(TestZrle)
     info.brush_cache_code = 0;
     info.bpp = 16;
     info.width = 1920;
-    info.height = 34;
+    info.height = 55;
 
     FakeGraphic drawable(info, 0);
 
@@ -6705,98 +6689,99 @@ RED_AUTO_TEST_CASE(TestZrle)
         buf.read_from(z2b1);
         RED_CHECK(VNC::Encoder::EncoderState::Exit == encoder.consume(buf, drawable));
     }
-//(1910 0 10 19)
-//(0 19 1920 34)
-}
-//    const uint8_t rect1_header[] = {/* 0000 */ 0x00, 0x00, 0x00, 0x00, 0x07, 0x80, 0x00, 0x22, 0x00, 0x00, 0x00, 0x10,};
 
-
-//    const uint8_t compressed_len1[] = { 0x00, 0x00, 0xff, 0xad};
-//    const_byte_array datas[5] = {
-//         make_array_view(rect1_header),
-//         make_array_view(compressed_len1),
-//         make_array_view(slice1_0_34_p1),
-//         make_array_view(slice1_0_34_p2),
-//         make_array_view(slice1_0_34_p3)
-//    };
-
-
-//    ClientInfo info;
-//    info.keylayout = 0x040C;
-//    info.console_session = 0;
-//    info.brush_cache_code = 0;
-//    info.bpp = 16;
-//    info.width = 1920;
-//    info.height = 34;
-
-//    FakeGraphic drawable(info, 20);
-
-
-//    auto state = VNC::Encoder::State::Encoding;
-//    std::unique_ptr<VNC::Encoder::Zrle> encoder;
-//    bool need_more_data = true;
-//    for (auto t: datas){
-//        BlockWrap bw(t);
-
-//        while (!bw.empty()){
-//            buf.read_from(bw);
-//            switch (state){
-//                default:
-//                    LOG(LOG_INFO, "ignoring %zu\n", buf.av().size());
-//                    buf.advance(buf.av().size());
-//                    break;
-//                case VNC::Encoder::State::Encoding:
-//                {
-//                    const size_t sz = 12;
-//                    if (buf.remaining() < sz){ break; /* need more data */ }
-//                    InStream stream(buf.av(sz));
-//                    uint16_t x = stream.in_uint16_be();
-//                    uint16_t y = stream.in_uint16_be();
-//                    uint16_t cx = stream.in_uint16_be();
-//                    uint16_t cy = stream.in_uint16_be();
-//                    int32_t encoding = stream.in_sint32_be();
-//                    LOG(LOG_INFO, "Encoding: (%u, %u, %u, %u) : %d", x, y, cx, cy, encoding);
-//                    encoder.reset(new );
-//                    buf.advance(sz);
-//                    // Post Assertion: we have an encoder
-//                    state = VNC::Encoder::State::Data;
-//                    break;
-//                }
-//                case VNC::Encoder::State::Data:
-//                {
-//                    try {
-//                        // Pre Assertion: we have an encoder
-//                        switch (encoder->consume(buf, drawable)){
-//                        case VNC::Encoder::EncoderState::Ready:
-//                            LOG(LOG_INFO, "Ready");
-//                        break;
-//                        case VNC::Encoder::EncoderState::NeedMoreData:
-//                            LOG(LOG_INFO, "Need more data");
-//                        break;
-//                        case VNC::Encoder::EncoderState::Exit:
-//                            LOG(LOG_INFO, "End of encoder");
-//                            encoder.reset();
-//                        break;
-//                        }
-//                    }
-//                    catch(...){
-//                        LOG(LOG_INFO, "unexpected need more data");
-//                        break;
-//                    };
-//                }
-//                break;
-//            }
-//        }
-//    }
-//    LOG(LOG_INFO, "All data consumed");
 //    drawable.save_to_png("vnc_first_len.png");
-//    char message[4096] = {};
-//    if (!redemption_unit_test__::check_sig(drawable.gd, message,
-//                            "\x72\x7e\x9b\xe5\xd0\x4f\x80\xde\x7e\x41\x4d\x9d\x17\xc8\x85\x40\x8a\xb4\x28\xf2")){
-//        LOG(LOG_INFO, "signature mismatch: %s", message);
-//        BOOST_CHECK(false);
-//    }
+    char message[4096] = {};
+    if (!redemption_unit_test__::check_sig(drawable.gd, message,
+        "\x0b\x2e\x54\x86\x8d\x54\x43\x45\x0e\x8d\xcf\xc6\xe5\x72\x34\x83\xdb\x03\x63\xfb")){
+        LOG(LOG_INFO, "signature mismatch: %s", message);
+        BOOST_CHECK(false);
+    }
+}
 
-//}
 
+uint8_t raw0[] = {
+  /* 0000 */ 0x00, 0xcb, 0x52, 0xcb, 0x52, 0x6a, 0x4a, 0x08, 0x3a, 0x49, 0x42, 0x6a, 0x4a, 0x6a, 0x42, 0x29,  // ..R.RjJ.:IBjJjB)
+  /* 0010 */ 0x3a, 0xe8, 0x39, 0x6a, 0x4a, 0x6e, 0x6b, 0xcb, 0x52, 0x8a, 0x4a, 0x08, 0x3a, 0x29, 0x42, 0x29,  // :.9jJnk.R.J.:)B)
+  /* 0020 */ 0x42, 0x49, 0x42, 0x29, 0x42, 0xc7, 0x31, 0x29, 0x3a, 0x6e, 0x63, 0x49, 0x42, 0x49, 0x42, 0x29,  // BIB)B.1):ncIBIB)
+  /* 0030 */ 0x3a, 0x49, 0x42, 0x29, 0x42, 0x08, 0x3a, 0x29, 0x3a, 0x08, 0x3a, 0x49, 0x42, 0x0c, 0x5b, 0xe8,  // :IB)B.:):.:IB.[.
+  /* 0040 */ 0x39, 0xc7, 0x31, 0xe8, 0x39, 0x6a, 0x42, 0x29, 0x42, 0x08, 0x3a, 0x49, 0x42, 0x29, 0x42, 0x8a,  // 9.1.9jB)B.:IB)B.
+  /* 0050 */ 0x4a, 0x8a, 0x4a, 0x86, 0x29, 0x86, 0x29, 0xa7, 0x31, 0x08, 0x3a, 0x08, 0x3a, 0x08, 0x3a, 0x49,  // J.J.).).1.:.:.:I
+  /* 0060 */ 0x42, 0x29, 0x3a, 0x29, 0x42, 0xc7, 0x31, 0x45, 0x21, 0x66, 0x29, 0xa7, 0x29, 0x29, 0x42, 0x08,  // B):)B.1E!f).))B.
+  /* 0070 */ 0x3a, 0x08, 0x3a, 0x29, 0x42, 0xe8, 0x39, 0x08, 0x3a, 0x86, 0x29, 0x86, 0x29, 0x66, 0x29, 0xa7,  // :.:)B.9.:.).)f).
+  /* 0080 */ 0x29, 0x49, 0x42, 0x49, 0x42, 0x29, 0x42, 0x29, 0x42, 0x29, 0x3a, 0x8a, 0x4a, 0xa7, 0x29, 0xa7,  // )IBIB)B)B):.J.).
+  /* 0090 */ 0x29, 0x86, 0x29, 0x86, 0x29, 0x08, 0x3a, 0x49, 0x42, 0x8a, 0x4a, 0xab, 0x4a, 0x8a, 0x4a, 0xec,  // ).).).:IB.J.J.J.
+  /* 00a0 */ 0x52, 0xc7, 0x31, 0x86, 0x29, 0xa7, 0x29, 0xa7, 0x31, 0xc7, 0x31, 0x08, 0x3a, 0x8a, 0x4a, 0x08,  // R.1.).).1.1.:.J.
+  /* 00b0 */ 0x3a, 0x6a, 0x4a, 0xab, 0x4a, 0xe8, 0x39, 0xc7, 0x31, 0xa7, 0x31, 0x29, 0x3a, 0x08, 0x3a, 0xe8,  // :jJ.J.9.1.1):.:.
+  /* 00c0 */ 0x39, 0x08, 0x3a, 0xc7, 0x31, 0x6a, 0x42, 0xab, 0x52, 0x08, 0x3a, 0xe8, 0x39, 0x29, 0x42, 0xcb,  // 9.:.1jB.R.:.9)B.
+  /* 00d0 */ 0x52, 0x8a, 0x4a, 0x6a, 0x4a, 0x49, 0x42, 0x6a, 0x4a, 0xab, 0x52, 0xcb, 0x52, 0x08, 0x3a, 0x08,  // R.JjJIBjJ.R.R.:.
+  /* 00e0 */ 0x3a, 0x49, 0x42, 0xcb, 0x52, 0x49, 0x42, 0xcb, 0x52, 0xec, 0x52, 0x0c, 0x5b, 0xab, 0x52, 0x8a,  // :IB.RIB.R.R.[.R.
+  /* 00f0 */ 0x4a, 0x29, 0x42, 0x29, 0x42, 0x6a, 0x42, 0x8a, 0x4a, 0x49, 0x42, 0x4d, 0x63, 0x4d, 0x63, 0x2d,  // J)B)BjB.JIBMcMc-
+  /* 0100 */ 0x5b, 0xcb, 0x52, 0xec, 0x5a, 0x29, 0x42, 0xe8, 0x39, 0x29, 0x3a, 0x6a, 0x4a, 0x6a, 0x4a, 0x2d,  // [.R.Z)B.9):jJjJ-
+  /* 0110 */ 0x63, 0x0c, 0x5b, 0x8a, 0x4a, 0xab, 0x52, 0x4d, 0x63, 0x29, 0x42, 0xc7, 0x31, 0xc7, 0x31, 0x29,  // c.[.J.RMc)B.1.1)
+  /* 0120 */ 0x42, 0x49, 0x42, 0x8a, 0x4a, 0x8a, 0x4a, 0xe8, 0x31, 0x49, 0x42, 0xcb, 0x52, 0x6a, 0x42, 0x08,  // BIB.J.J.1IB.RjB.
+  /* 0130 */ 0x3a, 0x29, 0x3a, 0x8a, 0x4a, 0xab, 0x52, 0x8a, 0x4a, 0xec, 0x5a, 0x29, 0x42, 0x8a, 0x4a, 0x8a,  // :):.J.R.J.Z)B.J.
+  /* 0140 */ 0x4a, 0x29, 0x42, 0xc8, 0x39, 0x6a, 0x4a, 0xab, 0x52, 0x6a, 0x4a, 0x29, 0x42, 0xcb, 0x52, 0x0c,  // J)B.9jJ.RjJ)B.R.
+  /* 0150 */ 0x5b, 0x8a, 0x4a, 0x49, 0x42, 0x49, 0x42, 0x49, 0x42, 0x29, 0x42, 0xcb, 0x52, 0xec, 0x5a, 0xab,  // [.JIBIBIB)B.R.Z.
+  /* 0160 */ 0x52, 0xab, 0x52, 0x8a, 0x4a, 0x49, 0x42, 0x6a, 0x4a, 0x4a, 0x4a, 0x8a, 0x4a, 0x8b, 0x52, 0x4d,  // R.R.JIBjJJJ.J.RM
+  /* 0170 */ 0x63, 0x6e, 0x6b, 0x4d, 0x63, 0x0d, 0x63, 0xab, 0x52, 0x8a, 0x4a, 0xec, 0x5a,                    // cnkMc.c.R.J.Z
+};
+
+RED_AUTO_TEST_CASE(TestZrleRaw)
+{
+    Zdecompressor<> zd;
+
+    ClientInfo info;
+    info.keylayout = 0x040C;
+    info.console_session = 0;
+    info.brush_cache_code = 0;
+    info.bpp = 16;
+    info.width = 10;
+    info.height = 19;
+
+    FakeGraphic drawable(info, 0);
+
+    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 10, 19), zd, VNCVerbose::basic_trace);
+    InStream buffer(raw0, sizeof(raw0));
+    encoder.rle_test_bypass(buffer, drawable);
+//    drawable.save_to_png("vnc_first_len.png");
+    char message[4096] = {};
+    if (!redemption_unit_test__::check_sig(drawable.gd, message,
+        "\xea\xea\x2d\x11\x03\x1b\xd1\x9c\xd2\xe8\xae\xdc\x02\x75\xa5\xef\x4b\x43\x91\x71")){
+        LOG(LOG_INFO, "signature mismatch: %s", message);
+        BOOST_CHECK(false);
+    }
+}
+
+
+uint8_t solid0[] = {
+  /* 0000 */ 0x01, 0xFF, 0x00
+};
+
+RED_AUTO_TEST_CASE(TestZrleSolid)
+{
+    Zdecompressor<> zd;
+
+    ClientInfo info;
+    info.keylayout = 0x040C;
+    info.console_session = 0;
+    info.brush_cache_code = 0;
+    info.bpp = 16;
+    info.width = 10;
+    info.height = 19;
+
+    FakeGraphic drawable(info, 0);
+
+    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 64, 64), zd, VNCVerbose::basic_trace);
+    InStream buffer(solid0, sizeof(solid0));
+    encoder.rle_test_bypass(buffer, drawable);
+    drawable.save_to_png("vnc_first_len.png");
+    char message[4096] = {};
+    if (!redemption_unit_test__::check_sig(drawable.gd, message,
+        "\x1e\x4b\x4d\x4f\x9c\xce\x74\xc2\x43\x6f\xb1\xe2\x87\x94\x41\xcf\x0e\xc4\x99\xe3")){
+        LOG(LOG_INFO, "signature mismatch: %s", message);
+        BOOST_CHECK(false);
+    }
+
+}
 
