@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Clément Moroldo
+   Author(s): Clément Moroldo, David Fort
 */
 
 
@@ -287,21 +287,21 @@ public:
     bool                 enable_shared_clipboard;
     bool                 enable_shared_virtual_disk;
 
-//     struct KeyCustomDefinition {
-//         int qtKeyID  = 0;
-//         int scanCode = 0;
-//         int ASCII8   = 0;
-//         int extended = 0;
-//
-//         KeyCustomDefinition(int qtKeyID, int scanCode, int ASCII8, int extended)
-//           : qtKeyID(qtKeyID)
-//           , scanCode(scanCode)
-//           , ASCII8(ASCII8)
-//           , extended(extended) {}
-//     };
-//     std::vector<KeyCustomDefinition> keyCustomDefinitions;
+    struct KeyCustomDefinition {
+        int qtKeyID  = 0;
+        int scanCode = 0;
+        int ASCII8   = 0;
+        int extended = 0;
 
-//     bool                 _recv_disconnect_ultimatum;
+        KeyCustomDefinition(int qtKeyID, int scanCode, int ASCII8, int extended)
+          : qtKeyID(qtKeyID)
+          , scanCode(scanCode)
+          , ASCII8(ASCII8)
+          , extended(extended) {}
+    };
+    std::vector<KeyCustomDefinition> keyCustomDefinitions;
+
+    bool                 _recv_disconnect_ultimatum;
     BGRPalette           mod_palette;
 
     std::string source_of_ExeOrFile;
@@ -453,6 +453,7 @@ public:
         this->setUserProfil();
         this->setClientInfo();
         this->keymap.init_layout(this->info.keylayout);
+        this->setCustomKeyConfig();
 
         this->windowsData.open();
         std::fill(std::begin(this->info.order_caps.orderSupport), std::end(this->info.order_caps.orderSupport), 1);
@@ -665,6 +666,71 @@ public:
             if (tag.compare(std::string("current_user_profil_id")) == 0) {
                 this->current_user_profil = std::stoi(info);
             }
+        }
+    }
+
+    void setCustomKeyConfig() {
+        std::ifstream ifichier(this->MAIN_DIR + std::string(CLIENT_REDEMPTION_KEY_SETTING_PATH), std::ios::in);
+
+        if(ifichier) {
+            this->keyCustomDefinitions.clear();
+
+            std::string ligne;
+            std::string delimiter = " ";
+
+            while(getline(ifichier, ligne)) {
+
+                int pos(ligne.find(delimiter));
+
+                if (strcmp(ligne.substr(0, pos).c_str(), "-") == 0) {
+
+                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+                    pos = ligne.find(delimiter);
+
+                    int qtKeyID  = std::stoi(ligne.substr(0, pos));
+                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+                    pos = ligne.find(delimiter);
+
+                    int scanCode = std::stoi(ligne.substr(0, pos));
+                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+                    pos = ligne.find(delimiter);
+
+                    int ASCII8   = std::stoi(ligne.substr(0, pos));
+                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+                    pos = ligne.find(delimiter);
+
+                    int extended = std::stoi(ligne.substr(0, pos));
+
+                    KeyCustomDefinition keyCustomDefinition = {qtKeyID, scanCode, ASCII8, extended};
+
+                    this->keyCustomDefinitions.push_back(keyCustomDefinition);
+                }
+            }
+
+            ifichier.close();
+        }
+    }
+
+    void writeCustomKeyConfig() {
+
+        remove((this->MAIN_DIR + std::string(CLIENT_REDEMPTION_KEY_SETTING_PATH)).c_str());
+
+        std::ofstream ofichier(this->MAIN_DIR + std::string(CLIENT_REDEMPTION_KEY_SETTING_PATH), std::ios::out | std::ios::trunc);
+        if(ofichier) {
+
+            ofichier << "Key Setting" << std::endl << std::endl;
+
+            for (size_t i = 0; i < this->keyCustomDefinitions.size(); i++) {
+
+                KeyCustomDefinition & key = this->keyCustomDefinitions[i];
+                
+                    ofichier << "- ";
+                    ofichier << key.qtKeyID  << " ";
+                    ofichier << key.scanCode << " ";
+                    ofichier << key.ASCII8   << " ";
+                    ofichier << key.extended << std::endl;
+            }
+            ofichier.close();
         }
     }
 
@@ -922,6 +988,8 @@ public:
 
 
 
+
+
 //         this->qtRDPKeymap.clearCustomKeyCode();
 //         this->keyCustomDefinitions.clear();
 //
@@ -963,8 +1031,8 @@ public:
 //         }
 
 
-    std::vector<IconMovieData> get_icon_movie_data() {
 
+    std::vector<IconMovieData> get_icon_movie_data() {
 
         this->icons_movie_data.clear();
 
@@ -994,7 +1062,6 @@ public:
                                 std::string file_version;
                                 std::string file_resolution;
                                 std::string file_checksum;
-
                                 long int movie_len = this->get_movie_time_length(file_path.c_str());
 
                                 std::getline(ofile, file_version);
@@ -1004,8 +1071,6 @@ public:
                                 IconMovieData iconData = {file_name, file_path, file_version, file_resolution, file_checksum, movie_len};
 
                                 this->icons_movie_data.push_back(iconData);
-
-                                //this->vec.emplace_back<IconMovieData>({file_name, file_path, file_version, file_resolution, file_checksum, movie_len});
 
                             } else {
                                 LOG(LOG_INFO, "Can't open file \"%s\"", file_path);
@@ -1201,7 +1266,7 @@ public:
     // CONTROLLER
     virtual void connect() = 0;
     virtual void disconnect(std::string const & txt, bool pipe_broken) = 0;
-    virtual void replay() = 0;
+    virtual void replay(const std::string & movie_name, const std::string & movie_dir) = 0;
     virtual bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) = 0;
     virtual timeval reload_replay_mod(int begin, timeval now_stop) = 0;
     virtual void replay_set_pause(timeval pause_duration) = 0;

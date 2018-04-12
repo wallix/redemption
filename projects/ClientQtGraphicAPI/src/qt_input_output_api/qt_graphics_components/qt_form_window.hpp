@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Clément Moroldo
+   Author(s): Clément Moroldo, Jonathan Poelen
 
 */
 
@@ -215,9 +215,7 @@ public:
             std::string const movie_dir = path.substr(0, pos);
 
             this->controllers->client->mod_state = ClientRedemptionIOAPI::MOD_RDP_REPLAY;
-            this->controllers->client->_movie_name = movie_name;
-            this->controllers->client->_movie_dir = movie_dir;
-            this->controllers->client->replay();
+            this->controllers->client->replay(movie_name, movie_dir);
         }
     }
 
@@ -345,9 +343,7 @@ private Q_SLOTS:
         std::string const movie_dir = str_movie_path.substr(0, pos);
 
         this->controllers->client->mod_state = ClientRedemptionIOAPI::MOD_RDP_REPLAY;
-        this->controllers->client->_movie_name = movie_name;
-        this->controllers->client->_movie_dir = movie_dir;
-        this->controllers->client->replay();
+        this->controllers->client->replay(movie_name, movie_dir);
     }
 
 };

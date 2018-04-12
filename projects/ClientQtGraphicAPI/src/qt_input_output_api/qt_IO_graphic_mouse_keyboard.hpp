@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Christophe Grosjean, Clément Moroldo
+   Author(s): Clément Moroldo, Jonathan Poelen, Christophe Grosjean, David Fort
 */
 
 
@@ -108,6 +108,13 @@ public:
         this->drawn_client = client;
         this->qtRDPKeymap._verbose = (this->drawn_client->verbose == RDPVerbose::input) ? 1 : 0;
         this->qtRDPKeymap.setKeyboardLayout(this->drawn_client->info.keylayout);
+
+        this->qtRDPKeymap.clearCustomKeyCode();
+        for (size_t i = 0; i < this->drawn_client->keyCustomDefinitions.size(); i++) {
+            ClientRedemptionIOAPI::KeyCustomDefinition & key = this->drawn_client->keyCustomDefinitions[i];
+            this->qtRDPKeymap.setCustomKeyCode(key.qtKeyID, key.scanCode, key.ASCII8, key.extended);
+        }
+
         this->form = new QtForm(this, this->client);
     }
 

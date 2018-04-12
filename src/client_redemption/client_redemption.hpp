@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2016
-   Author(s): Clément Moroldo
+   Author(s): Clément Moroldo, David Fort
 */
 
 
@@ -254,7 +254,10 @@ public:
         return false;
     }
 
-    void replay() override {
+    void replay(const std::string & movie_name, const std::string & movie_dir) override {
+
+        this->_movie_name = movie_name;
+        this->_movie_dir = movie_dir;
 
         if (this->_movie_name.empty()) {
              //this->impl_graphic->readError(movie_path_);

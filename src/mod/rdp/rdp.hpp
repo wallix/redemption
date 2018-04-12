@@ -885,6 +885,19 @@ protected:
 
     InfoPacketFlags info_packet_extra_flags;
 
+    long int total_main_amount_data_rcv_from_client;
+    long int total_cliprdr_amount_data_rcv_from_client;
+    long int total_rail_amount_data_rcv_from_client;
+    long int total_rdpdr_amount_data_rcv_from_client;
+    long int total_drdynvc_amount_data_rcv_from_client;
+
+    long int total_main_amount_data_rcv_from_server;
+    long int total_cliprdr_amount_data_rcv_from_server;
+    long int total_rail_amount_data_rcv_from_server;
+    long int total_rdpdr_amount_data_rcv_from_server;
+    long int total_drdynvc_amount_data_rcv_from_server;
+
+
 public:
     using Verbose = RDPVerbose;
 
@@ -1074,6 +1087,16 @@ public:
         , load_balance_info(mod_rdp_params.load_balance_info)
         , vars(vars)
         , info_packet_extra_flags(info.has_sound_code ? INFO_REMOTECONSOLEAUDIO : InfoPacketFlags{})
+        , total_main_amount_data_rcv_from_client(0)
+        , total_cliprdr_amount_data_rcv_from_client(0)
+        , total_rail_amount_data_rcv_from_client(0)
+        , total_rdpdr_amount_data_rcv_from_client(0)
+        , total_drdynvc_amount_data_rcv_from_client(0)
+        , total_main_amount_data_rcv_from_server(0)
+        , total_cliprdr_amount_data_rcv_from_server(0)
+        , total_rail_amount_data_rcv_from_server(0)
+        , total_rdpdr_amount_data_rcv_from_server(0)
+        , total_drdynvc_amount_data_rcv_from_server(0)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -2233,7 +2256,6 @@ public:
                 "mod_rdp::send_to_mod_channel: front_channel_channel=\"%s\"",
                 front_channel_name);
         }
-
         const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get_by_name(front_channel_name);
         if (!mod_channel) {
             return;
@@ -2244,20 +2266,40 @@ public:
 
         switch (front_channel_name) {
             case channel_names::cliprdr:
+                this->total_cliprdr_amount_data_rcv_from_client += length;
                 this->send_to_mod_cliprdr_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::rail:
+                this->total_rail_amount_data_rcv_from_client += length;
                 this->send_to_mod_rail_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::rdpdr:
+                this->total_rdpdr_amount_data_rcv_from_client += length;
                 this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::drdynvc:
+                this->total_drdynvc_amount_data_rcv_from_client += length;
                 this->send_to_mod_drdynvc_channel(mod_channel, chunk, length, flags);
                 break;
             default:
+                this->total_main_amount_data_rcv_from_client += length;
                 this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
         }
+
+        if (bool(this->verbose & RDPVerbose::export_metrics)) {
+            this->log_metrics("Amount data receive from client by channels: ",
+                              this->total_main_amount_data_rcv_from_client,
+                              this->total_cliprdr_amount_data_rcv_from_client,
+                              this->total_rail_amount_data_rcv_from_client,
+                              this->total_rdpdr_amount_data_rcv_from_client,
+                              this->total_drdynvc_amount_data_rcv_from_client);
+        }
+    }
+
+    void log_metrics(const char * prefixe, long int main_amount_data, long int clipdr_amount_data,
+                     long int rail_amount_data, long int drdynvc_amount_data, long int main_amount_data) {
+        LOG(LOG_INFO, "%s main:%ld cliprdr:%ld  rail:%ld  rdpdr:%ld  drdynvc:%ld", prefixe,
+            main_amount_data, clipdr_amount_data, rail_amount_data, drdynvc_amount_data, main_amount_data);
     }
 
 private:
@@ -3857,15 +3899,19 @@ public:
             }
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
+                this->total_cliprdr_amount_data_rcv_from_server += length;
                 this->process_cliprdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::rail) {
+                this->total_rail_amount_data_rcv_from_server += length;
                 this->process_rail_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::rdpdr) {
+                this->total_rdpdr_amount_data_rcv_from_server += length;
                 this->process_rdpdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::drdynvc) {
+                this->total_drdynvc_amount_data_rcv_from_server += length;
                 this->process_drdynvc_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else {
@@ -3874,10 +3920,23 @@ public:
                     rdpsnd::streamLogServer(clone, flags);
                 }
 
+                this->total_main_amount_data_rcv_from_server += length;
+
                 this->send_to_front_channel(
                     mod_channel.name, sec.payload.get_current(), length, chunk_size, flags
                 );
             }
+
+            if (bool(this->verbose & RDPVerbose::export_metrics)) {
+                this->log_metrics("Amount data receive from server by channels: ",
+                                  this->total_main_amount_data_rcv_from_server,
+                                  this->total_cliprdr_amount_data_rcv_from_server,
+                                  this->total_rail_amount_data_rcv_from_server,
+                                  this->total_rdpdr_amount_data_rcv_from_server,
+                                  this->total_drdynvc_amount_data_rcv_from_server);
+            }
+
+
             sec.payload.in_skip_bytes(sec.payload.in_remain());
 
         }
@@ -7008,8 +7067,8 @@ public:
 
         auto hotspot_x      = stream.in_uint16_le();
         auto hotspot_y      = stream.in_uint16_le();
-        auto width            = stream.in_uint16_le(); 
-        auto height            = stream.in_uint16_le(); 
+        auto width            = stream.in_uint16_le();
+        auto height            = stream.in_uint16_le();
 
         uint16_t mlen = stream.in_uint16_le(); /* mask length */
         uint16_t dlen = stream.in_uint16_le(); /* data length */

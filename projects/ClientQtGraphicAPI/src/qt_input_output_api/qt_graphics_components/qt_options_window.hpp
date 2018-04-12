@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Clément Moroldo
+   Author(s): Clément Moroldo, Jonathan Poelen, David Fort
 
 */
 
@@ -158,13 +158,13 @@ public:
     QLabel               remoteapp_cmd_label;
     QLabel               remoteapp_workin_dir_label;
 
-//     QWidget            * _keyboardTab;
-//     QPushButton        * _buttonDeleteKey;
-//     QPushButton        * _buttonAddKey;
-//     QFormLayout        * _layoutKeyboard;
-//     QTableWidget       * _tableKeySetting;
-//     const int            _columnNumber;
-//     const int            _tableKeySettingMaxHeight;
+    QWidget            * _keyboardTab;
+    QPushButton        * _buttonDeleteKey;
+    QPushButton        * _buttonAddKey;
+    QFormLayout        * _layoutKeyboard;
+    QTableWidget       * _tableKeySetting;
+    const int            _columnNumber;
+    const int            _tableKeySettingMaxHeight;
 
 
     QtOptions(ClientRedemptionIOAPI * front, uint8_t protocol_type, QWidget * parent)
@@ -246,14 +246,14 @@ public:
         , remoteapp_cmd_label("Command line :", this)
         , remoteapp_workin_dir_label("Working direction :", this)
 
-//         , _keyboardTab(nullptr)
-//         , _buttonDeleteKey(nullptr)
-//         , _buttonAddKey(nullptr)
+        , _keyboardTab(nullptr)
+        , _buttonDeleteKey(nullptr)
+        , _buttonAddKey(nullptr)
 
-//         , _layoutKeyboard(nullptr)
-//         , _tableKeySetting(nullptr)
-//         , _columnNumber(4)
-//         , _tableKeySettingMaxHeight((20*6)+11)
+        , _layoutKeyboard(nullptr)
+        , _tableKeySetting(nullptr)
+        , _columnNumber(4)
+        , _tableKeySettingMaxHeight((20*6)+11)
     {
         this->setFixedSize(this->_width, this->_height);
         this->_front->setClientInfo();
@@ -267,7 +267,7 @@ public:
         }
         this->_connectionTab = new QWidget(this);
         this->_servicesTab = new QWidget(this);
-// /*        this->_keyboardTab = new QWidget(this)*/;
+        this->_keyboardTab = new QWidget(this);
         this->_tabs = new QTabWidget(this);
 
 
@@ -296,25 +296,34 @@ public:
         this->_layoutConnection->addRow(&(this->_labelRecording), &(this->_recordingCB));
         this->QObject::connect(&(this->_recordingCB), SIGNAL(stateChanged(int)), this, SLOT(recordingCheckChange(int)));
 
-        this->_tlsBox.setCheckState(Qt::Unchecked);
-        this->_layoutConnection->addRow(&(this->_labelTls), &(this->_tlsBox));
+//         for (int i = 0; i < KEYLAYOUTS_LIST_SIZE; i++) {
+//             this->_languageComboBox.addItem(keylayoutsList[i]->locale_name, keylayoutsList[i]->LCID);
+//         }
+//         this->_languageComboBox.setStyleSheet("combobox-popup: 0;");
+//         this->_layoutConnection->addRow(&(this->_labelLanguage), &(this->_languageComboBox));
 
-        this->_nlaBox.setCheckState(Qt::Unchecked);
-        this->_layoutConnection->addRow(&(this->_labelNla), &(this->_nlaBox));
-
-        for (int i = 0; i < KEYLAYOUTS_LIST_SIZE; i++) {
-            this->_languageComboBox.addItem(keylayoutsList[i]->locale_name, keylayoutsList[i]->LCID);
-        }
-        this->_languageComboBox.setStyleSheet("combobox-popup: 0;");
-        this->_layoutConnection->addRow(&(this->_labelLanguage), &(this->_languageComboBox));
-        this->_consoleBox.setCheckState(Qt::Unchecked);
-        this->_layoutConnection->addRow(&(this->_labelConsole), &(this->_consoleBox));
 
         if (this->protocol_type == ClientRedemptionIOAPI::MOD_VNC) {
             this->keyboard_apple_compatibility_CB.setCheckState(Qt::Unchecked);
             this->_layoutConnection->addRow(&(this->keyboard_apple_compatibility_label), &(this->keyboard_apple_compatibility_CB));
+            this->_tlsBox.hide();
+            this->_nlaBox.hide();
+            this->_labelTls.hide();
+            this->_labelNla.hide();
+            this->_labelConsole.hide();
+            this->_consoleBox.hide();
+
 
         } else if (this->protocol_type == ClientRedemptionIOAPI::MOD_RDP) {
+            this->_tlsBox.setCheckState(Qt::Unchecked);
+            this->_layoutConnection->addRow(&(this->_labelTls), &(this->_tlsBox));
+
+            this->_nlaBox.setCheckState(Qt::Unchecked);
+            this->_layoutConnection->addRow(&(this->_labelNla), &(this->_nlaBox));
+
+            this->_consoleBox.setCheckState(Qt::Unchecked);
+            this->_layoutConnection->addRow(&(this->_labelConsole), &(this->_consoleBox));
+
             this->keyboard_apple_compatibility_label.hide();
             this->keyboard_apple_compatibility_CB.hide();
         }
@@ -447,99 +456,54 @@ public:
 
 
         // Keyboard tab
-//         const QString strKeyboard("Keyboard");
-//         this->_layoutKeyboard = new QFormLayout(this->_keyboardTab);
+        const QString strKeyboard("Keyboard");
+        this->_layoutKeyboard = new QFormLayout(this->_keyboardTab);
 
-//         for (int i = 0; i < KEYLAYOUTS_LIST_SIZE; i++) {
-//             this->_languageComboBox.addItem(keylayoutsList[i]->locale_name, keylayoutsList[i]->LCID);
-//         }
-//         this->_languageComboBox.setStyleSheet("combobox-popup: 0;");
-//         this->_layoutKeyboard->addRow(new QLabel("", this));
-//         this->_layoutKeyboard->addRow(&(this->_labelLanguage), &(this->_languageComboBox));
+        for (int i = 0; i < KEYLAYOUTS_LIST_SIZE; i++) {
+            this->_languageComboBox.addItem(keylayoutsList[i]->locale_name, keylayoutsList[i]->LCID);
+        }
+        this->_languageComboBox.setStyleSheet("combobox-popup: 0;");
+        this->_layoutKeyboard->addRow(new QLabel("", this));
+        this->_layoutKeyboard->addRow(&(this->_labelLanguage), &(this->_languageComboBox));
 
-//         this->_tableKeySetting = new QTableWidget(0, this->_columnNumber, this);
-//         QList<QString> columnTitles;
-//         columnTitles << "Qt key ID" << "Scan Code" << "ASCII8" << "Extended";
-//         this->_tableKeySetting->setHorizontalHeaderLabels({columnTitles});
-//         this->_tableKeySetting->setColumnWidth(0 ,85);
-//         this->_tableKeySetting->setColumnWidth(1 ,84);
-//         this->_tableKeySetting->setColumnWidth(2 ,84);
-//         this->_tableKeySetting->setColumnWidth(3 ,74);
-
-
-//         for (size_t i = 0; i < this->_front->keyCustomDefinitions.size(); i++) {
-//             this->addRow();
-//             this->setRowValues(this->_front->keyCustomDefinitions[i].qtKeyID,
-//                                this->_front->keyCustomDefinitions[i].scanCode,
-//                                this->_front->keyCustomDefinitions[i].ASCII8,
-//                                this->_front->keyCustomDefinitions[i].extended);
-//
-//         }
+        this->_tableKeySetting = new QTableWidget(0, this->_columnNumber, this);
+        QList<QString> columnTitles;
+        columnTitles << "Qt key ID" << "Scan Code" << "ASCII8" << "Extended";
+        this->_tableKeySetting->setHorizontalHeaderLabels({columnTitles});
+        this->_tableKeySetting->setColumnWidth(0 ,85);
+        this->_tableKeySetting->setColumnWidth(1 ,84);
+        this->_tableKeySetting->setColumnWidth(2 ,84);
+        this->_tableKeySetting->setColumnWidth(3 ,74);
 
 
-//         std::ifstream ifichier(this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH), std::ios::in);
-//         if(ifichier) {
-//
-//             std::string ligne;
-//             std::string delimiter = " ";
-//
-//             while(getline(ifichier, ligne)) {
-//
-//                 int pos(ligne.find(delimiter));
-//
-//                 if (strcmp(ligne.substr(0, pos).c_str(), "-") == 0) {
-//
-//                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-//                     pos = ligne.find(delimiter);
-//
-//                     int qtKeyID  = std::stoi(ligne.substr(0, pos));
-//                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-//                     pos = ligne.find(delimiter);
-//
-//                     int scanCode = std::stoi(ligne.substr(0, pos));
-//                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-//                     pos = ligne.find(delimiter);
-//
-//                     int ASCII8   = std::stoi(ligne.substr(0, pos));
-//                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-//                     pos = ligne.find(delimiter);
-//
-//                     int extended = std::stoi(ligne.substr(0, pos));
-//
-//                     this->_front->qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
-//
-//                     this->addRow();
-//                     this->setRowValues(qtKeyID, scanCode, ASCII8, extended);
-//                 }
-//             }
-//
-//             ifichier.close();
-//         }
-//          this->addRow();
-//
-//
-//
-//         this->_layoutKeyboard->addRow(this->_tableKeySetting);
-//
-//         this->_keyboardTab->setLayout(this->_layoutKeyboard);
-//
-//
-//         this->_tabs->addTab(this->_keyboardTab, strKeyboard);
-//
-//         this->_buttonAddKey = new QPushButton("Add row", this->_keyboardTab);
-//         QRect rectAddKey(QPoint(110, 226),QSize(70, 24));
-//         this->_buttonAddKey->setToolTip(this->_buttonAddKey->text());
-//         this->_buttonAddKey->setGeometry(rectAddKey);
-//         this->_buttonAddKey->setCursor(Qt::PointingHandCursor);
-//         this->QObject::connect(this->_buttonAddKey    , SIGNAL (pressed()) , this, SLOT (addRow()));
-//
-//
-//         this->_buttonDeleteKey = new QPushButton("Delete selected row", this->_keyboardTab);
-//         QRect rectDeleteKey(QPoint(190, 226),QSize(180, 24));
-//         this->_buttonDeleteKey->setToolTip(this->_buttonDeleteKey->text());
-//         this->_buttonDeleteKey->setGeometry(rectDeleteKey);
-//         this->_buttonDeleteKey->setCursor(Qt::PointingHandCursor);
-//         this->QObject::connect(this->_buttonDeleteKey , SIGNAL (pressed()) , this, SLOT (deletePressed()));
+
+
+
+
+
+        this->addRow();
+
+        this->_layoutKeyboard->addRow(this->_tableKeySetting);
+
+        this->_keyboardTab->setLayout(this->_layoutKeyboard);
+
+
+        this->_tabs->addTab(this->_keyboardTab, strKeyboard);
+
+        this->_buttonAddKey = new QPushButton("Add row", this->_keyboardTab);
+        QRect rectAddKey(QPoint(110, 226),QSize(70, 24));
+        this->_buttonAddKey->setToolTip(this->_buttonAddKey->text());
+        this->_buttonAddKey->setGeometry(rectAddKey);
+        this->_buttonAddKey->setCursor(Qt::PointingHandCursor);
+        this->QObject::connect(this->_buttonAddKey    , SIGNAL (pressed()) , this, SLOT (addRow()));
+
+
+        this->_buttonDeleteKey = new QPushButton("Delete selected row", this->_keyboardTab);
+        QRect rectDeleteKey(QPoint(190, 226),QSize(180, 24));
+        this->_buttonDeleteKey->setToolTip(this->_buttonDeleteKey->text());
+        this->_buttonDeleteKey->setGeometry(rectDeleteKey);
+        this->_buttonDeleteKey->setCursor(Qt::PointingHandCursor);
+        this->QObject::connect(this->_buttonDeleteKey , SIGNAL (pressed()) , this, SLOT (deletePressed()));
 
         this->_layout->addWidget(this->_tabs, 0, 0, 9, 4);
 
@@ -564,10 +528,10 @@ public:
             this->_tlsBox.setChecked(this->_front->modRDPParamsData.enable_tls);
             this->_nlaBox.setChecked(this->_front->modRDPParamsData.enable_nla);
 
-            int indexLanguage = this->_languageComboBox.findData(this->_front->info.keylayout);
-            if ( indexLanguage != -1 ) {
-                this->_languageComboBox.setCurrentIndex(indexLanguage);
-            }
+//             int indexLanguage = this->_languageComboBox.findData(this->_front->info.keylayout);
+//             if ( indexLanguage != -1 ) {
+//                 this->_languageComboBox.setCurrentIndex(indexLanguage);
+//             }
 
         } else if (this->protocol_type == ClientRedemptionIOAPI::MOD_VNC) {
         	int indexProfil = this->profilComboBox.findData(this->_front->vnc_conf.current_user_profil);
@@ -578,10 +542,10 @@ public:
             this->_tlsBox.setChecked(this->_front->vnc_conf.enable_tls);
             this->_nlaBox.setChecked(this->_front->vnc_conf.enable_nla);
 
-            int indexLanguage = this->_languageComboBox.findData(this->_front->vnc_conf.keylayout);
-            if ( indexLanguage != -1 ) {
-                this->_languageComboBox.setCurrentIndex(indexLanguage);
-            }
+//             int indexLanguage = this->_languageComboBox.findData(this->_front->vnc_conf.keylayout);
+//             if ( indexLanguage != -1 ) {
+//                 this->_languageComboBox.setCurrentIndex(indexLanguage);
+//             }
         }
 
 
@@ -652,40 +616,96 @@ public:
         	this->_soundBox.setChecked(this->_front->vnc_conf.enable_sound);
         	this->_clipboardCheckBox.setChecked(this->_front->vnc_conf.enable_shared_clipboard);
         }
+
+
+
+        // Keyboard tab
+        int indexLanguage = this->_languageComboBox.findData(this->_front->info.keylayout);
+        if ( indexLanguage != -1 ) {
+            this->_languageComboBox.setCurrentIndex(indexLanguage);
+        }
+        for (size_t i = 0; i < this->_front->keyCustomDefinitions.size(); i++) {
+
+            ClientRedemptionIOAPI::KeyCustomDefinition & key = this->_front->keyCustomDefinitions[i];
+
+            this->setRowValues(key.qtKeyID, key.scanCode, key.ASCII8, key.extended);
+            this->addRow();
+        }
+
+//         remove((this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH)).c_str());
+//         this->_front->qtRDPKeymap.clearCustomKeyCode();
+//
+//         std::ofstream ofichier(this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH), std::ios::out | std::ios::trunc);
+//         if(ofichier) {
+//
+//             ofichier << "Key Setting" << std::endl << std::endl;
+//
+//             const int row_count = this->_tableKeySetting->rowCount();
+//
+//             for (int i = 0; i < row_count; i++) {
+//                 int qtKeyID(0);
+//                 if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
+//                     qtKeyID = this->_tableKeySetting->item(i, 0)->text().toInt();
+//                 }
+//
+//                 if (qtKeyID != 0) {
+//                     int scanCode(0);
+//                     if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
+//                         scanCode = this->_tableKeySetting->item(i, 1)->text().toInt();
+//                     }
+//                     int ASCII8(0);
+//                     if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
+//                         ASCII8 = this->_tableKeySetting->item(i, 2)->text().toInt();
+//                     }
+//                     int extended(static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(i, 3))->currentIndex());
+//
+//                     this->_front->qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
+//
+//                     ofichier << "- ";
+//                     ofichier << qtKeyID  << " ";
+//                     ofichier << scanCode << " ";
+//                     ofichier << ASCII8   << " ";
+//                     ofichier << extended << std::endl;
+//                 }
+//             }
+//             ofichier.close();
+//         }
+
+//         this->close();
     }
 
-//     void setRowValues(int qtKeyID, int scanCode, int ASCII8, int extended) {
-//         int row(this->_tableKeySetting->rowCount() - 1);
-//
-//         QTableWidgetItem * item1 = new QTableWidgetItem;
-//         item1->setText(std::to_string(qtKeyID).c_str());
-//         this->_tableKeySetting->setItem(row, 0, item1);
-//
-//         QTableWidgetItem * item2 = new QTableWidgetItem;
-//         item2->setText(std::to_string(scanCode).c_str());
-//         this->_tableKeySetting->setItem(row, 1, item2);
-//
-//         QTableWidgetItem * item3 = new QTableWidgetItem;
-//         item3->setText(std::to_string(ASCII8).c_str());
-//         this->_tableKeySetting->setItem(row, 2, item3);
-//
-//         static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(row, 3))->setCurrentIndex(extended);
-//     }
-//
-//     void updateKeySetting() {
-//         int tableKeySettingHeight((20*(this->_tableKeySetting->rowCount()+1))+11);
-//         if (tableKeySettingHeight > this->_tableKeySettingMaxHeight) {
-//             tableKeySettingHeight = this->_tableKeySettingMaxHeight;
-//         }
-//         this->_tableKeySetting->setFixedSize((80*this->_columnNumber)+40, tableKeySettingHeight);
-//         if (this->_tableKeySetting->rowCount() > 5) {
-//             this->_tableKeySetting->setColumnWidth(3 ,74);
-//         } else {
-//             this->_tableKeySetting->setColumnWidth(3 ,87);
-//         }
-//
-//         this->update();
-//     }
+    void setRowValues(int qtKeyID, int scanCode, int ASCII8, int extended) {
+        int row(this->_tableKeySetting->rowCount() - 1);
+
+        QTableWidgetItem * item1 = new QTableWidgetItem;
+        item1->setText(std::to_string(qtKeyID).c_str());
+        this->_tableKeySetting->setItem(row, 0, item1);
+
+        QTableWidgetItem * item2 = new QTableWidgetItem;
+        item2->setText(std::to_string(scanCode).c_str());
+        this->_tableKeySetting->setItem(row, 1, item2);
+
+        QTableWidgetItem * item3 = new QTableWidgetItem;
+        item3->setText(std::to_string(ASCII8).c_str());
+        this->_tableKeySetting->setItem(row, 2, item3);
+
+        static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(row, 3))->setCurrentIndex(extended);
+    }
+
+    void updateKeySetting() {
+        int tableKeySettingHeight((20*(this->_tableKeySetting->rowCount()+1))+11);
+        if (tableKeySettingHeight > this->_tableKeySettingMaxHeight) {
+            tableKeySettingHeight = this->_tableKeySettingMaxHeight;
+        }
+        this->_tableKeySetting->setFixedSize((80*this->_columnNumber)+40, tableKeySettingHeight);
+        if (this->_tableKeySetting->rowCount() > 5) {
+            this->_tableKeySetting->setColumnWidth(3 ,74);
+        } else {
+            this->_tableKeySetting->setColumnWidth(3 ,87);
+        }
+
+        this->update();
+    }
 
     void GetConfigValues() {
 
@@ -739,8 +759,7 @@ public:
             this->_front->vnc_conf.enable_nla = this->_nlaBox.isChecked();
             this->_front->vnc_conf.is_apple = this->keyboard_apple_compatibility_CB.isChecked();
 
-            this->_front->vnc_conf.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
-            this->_front->update_keylayout();
+
         }
 
 
@@ -811,6 +830,48 @@ public:
         	this->_front->vnc_conf.enable_sound = this->_soundBox.isChecked();
         }
 
+
+        // Keyboard tab
+        this->_front->vnc_conf.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
+
+        this->_front->keyCustomDefinitions.clear();
+
+
+
+        const int row_count = this->_tableKeySetting->rowCount();
+
+        for (int i = 0; i < row_count; i++) {
+
+            int qtKeyID(0);
+            int scanCode(0);
+            int ASCII8(0);
+            int extended(0);
+
+            if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
+                qtKeyID = this->_tableKeySetting->item(i, 0)->text().toInt();
+            }
+
+            if (qtKeyID != 0) {
+
+                if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
+                    scanCode = this->_tableKeySetting->item(i, 1)->text().toInt();
+                }
+
+                if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
+                    ASCII8 = this->_tableKeySetting->item(i, 2)->text().toInt();
+                }
+                extended = (static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(i, 3))->currentIndex());
+            }
+            LOG(LOG_INFO, "qtKeyID=%d, scanCode=%d, ASCII8=%d, extended=%d", qtKeyID, scanCode, ASCII8, extended);
+            ClientRedemptionIOAPI::KeyCustomDefinition keyCustomDefinition = {qtKeyID, scanCode, ASCII8, extended};
+            this->_front->keyCustomDefinitions.push_back(keyCustomDefinition);
+
+        }
+        this->_front->update_keylayout();
+
+        
+
+        this->_front->writeCustomKeyConfig();
         this->_front->writeClientInfo();
     }
 
@@ -862,166 +923,53 @@ public Q_SLOTS:
         this->_sharePath.setText(filePath);
     }
 
-//     void savePressed() {}
-//
-//     void saveReleased() {
-//
-//         bool new_profil = true;
-//         std::string text_profil = this->profilComboBox.currentText().toStdString();
-//         for (size_t i = 0; i < this->_front->userProfils.size(); i++) {
-//             if (this->_front->userProfils[i].name == text_profil) {
-//                 new_profil = false;
-//             }
-//         }
-//
-//         if (new_profil) {
-//             this->_front->userProfils.push_back({int(this->_front->userProfils.size()), text_profil.c_str()});
-//             this->_front->current_user_profil = this->_front->userProfils.size()-1;
-//         } else {
-//              this->_front->current_user_profil = this->profilComboBox.currentIndex();
-//         }
-//
-//         this->_front->info.bpp = this->_bppComboBox.currentText().toInt();
-//         std::string delimiter = " * ";
-//         std::string resolution( this->_resolutionComboBox.currentText().toStdString());
-//         int pos(resolution.find(delimiter));
-//         this->_front->rdp_width  = std::stoi(resolution.substr(0, pos));
-//         this->_front->rdp_height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
-//         if (this->_wallpapperCheckBox.isChecked()) {
-//             this->_front->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-//         } else {
-//             this->_front->info.rdp5_performanceflags = 0;
-//         }
-//         if (this->_spanCheckBox.isChecked()) {
-//             this->_front->is_spanning = true;
-//         } else {
-//             this->_front->is_spanning = false;
-//         }
-//         if (this->_recordingCB.isChecked()) {
-//             this->_front->is_recording = true;
-//         } else {
-//             this->_front->is_recording = false;
-//         }
-//         if (this->_tlsBox.isChecked()) {
-//             this->_front->modRDPParamsData.enable_tls = true;
-//         } else {
-//             this->_front->modRDPParamsData.enable_tls = false;
-//         }
-//         if (this->_nlaBox.isChecked()) {
-//             this->_front->modRDPParamsData.enable_nla = true;
-//         } else {
-//             this->_front->modRDPParamsData.enable_nla = false;
-//         }
-//         if (this->_soundBox.isChecked()) {
-//             this->_front->modRDPParamsData.enable_sound = true;
-//         } else {
-//             this->_front->modRDPParamsData.enable_sound = false;
-//         }
-//         this->_front->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
-//         this->_front->update_keylayout();
-//
-//         if (this->_clipboardCheckBox.isChecked()) {
-//             this->_front->enable_shared_clipboard = true;
-//         } else {
-//             this->_front->enable_shared_clipboard = false;
-//         }
-//
-//         if (this->_shareCheckBox.isChecked()) {
-//             this->_front->enable_shared_virtual_disk = true;
-//         } else {
-//             this->_front->enable_shared_virtual_disk = false;
-//         }
-//
-//         this->_front->SHARE_DIR = this->_sharePath.text().toStdString();
-//
-//         this->_front->writeClientInfo();
 
-//         remove((this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH)).c_str());
-//         this->_front->qtRDPKeymap.clearCustomKeyCode();
 
-//         std::ofstream ofichier(this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH), std::ios::out | std::ios::trunc);
-//         if(ofichier) {
-//
-//             ofichier << "Key Setting" << std::endl << std::endl;
-//
-//             const int row_count = this->_tableKeySetting->rowCount();
-//
-//             for (int i = 0; i < row_count; i++) {
-//                 int qtKeyID(0);
-//                 if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
-//                     qtKeyID = this->_tableKeySetting->item(i, 0)->text().toInt();
-//                 }
-//
-//                 if (qtKeyID != 0) {
-//                     int scanCode(0);
-//                     if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
-//                         scanCode = this->_tableKeySetting->item(i, 1)->text().toInt();
-//                     }
-//                     int ASCII8(0);
-//                     if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
-//                         ASCII8 = this->_tableKeySetting->item(i, 2)->text().toInt();
-//                     }
-//                     int extended(static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(i, 3))->currentIndex());
-//
-//                     this->_front->qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
-//
-//                     ofichier << "- ";
-//                     ofichier << qtKeyID  << " ";
-//                     ofichier << scanCode << " ";
-//                     ofichier << ASCII8   << " ";
-//                     ofichier << extended << std::endl;
-//                 }
-//             }
-//             ofichier.close();
-//         }
 
-//         this->close();
-//     }
 
 //     void cancelPressed() {}
-//
+
 //     void cancelReleased() {
 //         this->close();
 //     }
 
-//     void addRow() {
-//         int rowNumber(this->_tableKeySetting->rowCount());
-//         this->_tableKeySetting->insertRow(rowNumber);
-//         this->_tableKeySetting->setRowHeight(rowNumber ,20);
-//         QComboBox * combo = new QComboBox(this->_tableKeySetting);
-//         combo->addItem("No" , 0);
-//         combo->addItem("Yes", 1);
-//         this->_tableKeySetting->setCellWidget(rowNumber, 3, combo);
-//
-//         QTableWidgetItem * item1 = new QTableWidgetItem;
-//         item1->setText("");
-//         this->_tableKeySetting->setItem(rowNumber, 0, item1);
-//
-//         QTableWidgetItem * item2 = new QTableWidgetItem;
-//         item2->setText("");
-//         this->_tableKeySetting->setItem(rowNumber, 1, item2);
-//
-//         QTableWidgetItem * item3 = new QTableWidgetItem;
-//         item3->setText("");
-//         this->_tableKeySetting->setItem(rowNumber, 2, item3);
-//
-//
-//         this->updateKeySetting();
-//     }
+    void addRow() {
+        int rowNumber(this->_tableKeySetting->rowCount());
+        this->_tableKeySetting->insertRow(rowNumber);
+        this->_tableKeySetting->setRowHeight(rowNumber ,20);
+        QComboBox * combo = new QComboBox(this->_tableKeySetting);
+        combo->addItem("No" , 0);
+        combo->addItem("Yes", 1);
+        this->_tableKeySetting->setCellWidget(rowNumber, 3, combo);
 
-//     void deletePressed() {
-//        QModelIndexList indexes = this->_tableKeySetting->selectionModel()->selection().indexes();
-//        for (int i = 0; i < indexes.count(); ++i) {
-//            QModelIndex index = indexes.at(i);
-//            this->_tableKeySetting->removeRow(index.row());
-//        }
-//
-//        if (this->_tableKeySetting->rowCount() == 0) {
-//            this->addRow();
-//        }
-//
-//        this->updateKeySetting();
-//     }
+        QTableWidgetItem * item1 = new QTableWidgetItem;
+        item1->setText("");
+        this->_tableKeySetting->setItem(rowNumber, 0, item1);
+
+        QTableWidgetItem * item2 = new QTableWidgetItem;
+        item2->setText("");
+        this->_tableKeySetting->setItem(rowNumber, 1, item2);
+
+        QTableWidgetItem * item3 = new QTableWidgetItem;
+        item3->setText("");
+        this->_tableKeySetting->setItem(rowNumber, 2, item3);
+
+        this->updateKeySetting();
+    }
+
+    void deletePressed() {
+       QModelIndexList indexes = this->_tableKeySetting->selectionModel()->selection().indexes();
+       for (int i = 0; i < indexes.count(); ++i) {
+           QModelIndex index = indexes.at(i);
+           this->_tableKeySetting->removeRow(index.row());
+       }
+
+       if (this->_tableKeySetting->rowCount() == 0) {
+           this->addRow();
+       }
+
+       this->updateKeySetting();
+    }
 
     void deleteReleased() {}
 
