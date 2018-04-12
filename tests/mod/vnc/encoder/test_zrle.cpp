@@ -6805,6 +6805,46 @@ RED_AUTO_TEST_CASE(TestZrlePalette2)
         LOG(LOG_INFO, "signature mismatch: %s", message);
         BOOST_CHECK(false);
     }
-
 }
+
+//uint8_t palette13[] = {
+//  /* 0000 */ 0x0D, 
+//             0xFF, 0xFF, 0xF0, 0x00, 0x70, 0x00, 0x30, 0x00, 0x00, 0x00, 
+//             0xFF, 0xFF, 0xF0, 0x00, 0x70, 0x00, 0x30, 0x00, 0x00, 0x00,
+//             0xFF, 0xFF, 0xF0, 0x00, 0x70, 0x00, 
+//             0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
+//             0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 
+//             0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 
+//             0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 
+//             0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 
+//             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 
+//             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 
+//             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 
+//     // A small block of 3 pixels wide
+//             0x02, 0xFF, 0x00, 0xC0, 0x07, // Palette: Blue and Green
+//             0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60
+//};
+
+//// This one is testing both Palette2 and Tiling
+//RED_AUTO_TEST_CASE(TestZrlePalette13)
+//{
+//    Zdecompressor<> zd;
+
+//    FakeGraphic drawable(16, 128, 128, 0);
+//    auto const color_context= gdi::ColorCtx::depth24();
+//    auto pixel_color = RDPColor::from(PINK);
+//    const RDPOpaqueRect cmd(Rect(0,0,68,9), pixel_color);
+//    drawable.draw(cmd, Rect(0, 0, 68, 9), color_context);
+
+//    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 67, 8), zd, VNCVerbose::basic_trace);
+//    InStream buffer(palette2, sizeof(palette2));
+//    encoder.rle_test_bypass(buffer, drawable);
+//    drawable.save_to_png("vnc_first_len.png");
+//    char message[4096] = {};
+//    if (!redemption_unit_test__::check_sig(drawable.gd, message,
+//        "\x29\xac\x8d\xfe\xc3\x40\x90\xce\xbd\x3b\xf5\x0b\xd8\xdd\x2e\x7c\xd6\x6b\x0e\x95")){
+//        LOG(LOG_INFO, "signature mismatch: %s", message);
+//        BOOST_CHECK(false);
+//    }
+//}
 
