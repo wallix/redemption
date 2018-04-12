@@ -2282,25 +2282,28 @@ public:
                 this->send_to_mod_drdynvc_channel(mod_channel, chunk, length, flags);
                 break;
             default:
-                this->total_main_amount_data_rcv_from_client += length;
                 this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
         }
     }
 
+    // this->total_main_amount_data_rcv_from_client += length;
+    // this->total_main_amount_data_rcv_from_server += length;
     void log_metrics() override {
-        LOG(LOG_INFO, "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\" Client data received by channels - main:%ld cliprdr:%ld rail:%ld  rdpdr:%ld drdynvc:%ld", this->redir_info.session_id, this->username, this->nego.get_user_name(), this->nego.get_target_host()/*"user_account", "0.0.0.0"*/,
-                              this->total_main_amount_data_rcv_from_client,
-                              this->total_cliprdr_amount_data_rcv_from_client,
-                              this->total_rail_amount_data_rcv_from_client,
-                              this->total_rdpdr_amount_data_rcv_from_client,
-                              this->total_drdynvc_amount_data_rcv_from_client);
+        if (bool(this->verbose & RDPVerbose::export_metrics)) {
+            LOG(LOG_INFO, "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\" Client data received by channels - main:%ld cliprdr:%ld rail:%ld  rdpdr:%ld drdynvc:%ld", this->redir_info.session_id, this->username, this->nego.get_user_name(), this->nego.get_target_host()/*"user_account", "0.0.0.0"*/,
+                                this->total_main_amount_data_rcv_from_client,
+                                this->total_cliprdr_amount_data_rcv_from_client,
+                                this->total_rail_amount_data_rcv_from_client,
+                                this->total_rdpdr_amount_data_rcv_from_client,
+                                this->total_drdynvc_amount_data_rcv_from_client);
 
-        LOG(LOG_INFO, "Session_id=%u user=\"%s\" account=\"%s\"  target_host=\"%s\" Server data received by channels - main:%ld cliprdr:%ld rail:%ld  rdpdr:%ld drdynvc:%ld", this->redir_info.session_id, this->username, this->nego.get_user_name(), this->nego.get_target_host(),
-                              this->total_main_amount_data_rcv_from_server,
-                              this->total_cliprdr_amount_data_rcv_from_server,
-                              this->total_rail_amount_data_rcv_from_server,
-                              this->total_rdpdr_amount_data_rcv_from_server,
-                              this->total_drdynvc_amount_data_rcv_from_server);
+            LOG(LOG_INFO, "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\" Server data received by channels - main:%ld cliprdr:%ld rail:%ld  rdpdr:%ld drdynvc:%ld", this->redir_info.session_id, this->username, this->nego.get_user_name(), this->nego.get_target_host(),
+                                this->total_main_amount_data_rcv_from_server,
+                                this->total_cliprdr_amount_data_rcv_from_server,
+                                this->total_rail_amount_data_rcv_from_server,
+                                this->total_rdpdr_amount_data_rcv_from_server,
+                                this->total_drdynvc_amount_data_rcv_from_server);
+        }
     }
 
 private:
@@ -3647,6 +3650,7 @@ public:
     void connected_fast_path(gdi::GraphicApi & drawable, array_view_u8 array)
     {
         InStream stream(array);
+
         FastPath::ServerUpdatePDU_Recv su(stream, this->decrypt, array.data());
         if (this->enable_transparent_mode) {
             //total_data_received += su.payload.size();
@@ -3920,8 +3924,6 @@ public:
                     InStream clone = sec.payload.clone();
                     rdpsnd::streamLogServer(clone, flags);
                 }
-
-                this->total_main_amount_data_rcv_from_server += length;
 
                 this->send_to_front_channel(
                     mod_channel.name, sec.payload.get_current(), length, chunk_size, flags
@@ -6478,6 +6480,7 @@ public:
     template<class DataWriter>
     void send_pdu_type2(uint8_t pdu_type2, uint8_t stream_id, DataWriter data_writer) {
         using packet_size_t = decltype(details_::packet_size(data_writer));
+
         this->send_data_request_ex(
             GCC::MCS_GLOBAL_CHANNEL,
             [this, &data_writer, pdu_type2, stream_id](
