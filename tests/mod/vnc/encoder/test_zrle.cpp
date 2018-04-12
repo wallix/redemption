@@ -6723,7 +6723,7 @@ RED_AUTO_TEST_CASE(TestZrleRaw)
 {
     Zdecompressor<> zd;
 
-    FakeGraphic drawable(16, 10, 19, 0);
+    FakeGraphic drawable(16, 16, 19, 0);
 
     VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 10, 19), zd, VNCVerbose::basic_trace);
     InStream buffer(raw0, sizeof(raw0));
@@ -6731,7 +6731,7 @@ RED_AUTO_TEST_CASE(TestZrleRaw)
 //    drawable.save_to_png("vnc_first_len.png");
     char message[4096] = {};
     if (!redemption_unit_test__::check_sig(drawable.gd, message,
-        "\xea\xea\x2d\x11\x03\x1b\xd1\x9c\xd2\xe8\xae\xdc\x02\x75\xa5\xef\x4b\x43\x91\x71")){
+        "\x47\x03\x30\x8a\x6b\x2c\xb5\x3c\xe1\x8e\xef\xff\x60\x2a\x85\x12\x78\x74\x77\x04")){
         LOG(LOG_INFO, "signature mismatch: %s", message);
         BOOST_CHECK(false);
     }
@@ -6739,30 +6739,72 @@ RED_AUTO_TEST_CASE(TestZrleRaw)
 
 
 uint8_t solid0[] = {
-  /* 0000 */ 0x01, 0xFF, 0x00
+  /* 0000 */ 0x01, 0xFF, 0x00, // solid blue
+             0x01, 0xC0, 0x07, // solid green
+             0x01, 0xFF, 0xFF, // solid white
+             0x01, 0x00, 0x00, // solid black
 };
 
+// This one is testing both Solid and Tiling
 RED_AUTO_TEST_CASE(TestZrleSolid)
 {
     Zdecompressor<> zd;
 
-    FakeGraphic drawable(16, 6, 70, 0);
+    FakeGraphic drawable(16, 128, 128, 0);
     auto const color_context= gdi::ColorCtx::depth24();
     auto pixel_color = RDPColor::from(PINK);
-    const RDPOpaqueRect cmd(Rect(0,0,70,70), pixel_color);
-    drawable.draw(cmd, Rect(0,0,70,70), color_context);
+    const RDPOpaqueRect cmd(Rect(0,0,75,66), pixel_color);
+    drawable.draw(cmd, Rect(0,0,75,66), color_context);
 
+    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 74, 65), zd, VNCVerbose::basic_trace);
+    InStream buffer(solid0, sizeof(solid0));
+    encoder.rle_test_bypass(buffer, drawable);
+    drawable.save_to_png("vnc_first_len.png");
+    char message[4096] = {};
+    if (!redemption_unit_test__::check_sig(drawable.gd, message,
+        "\x29\xac\x8d\xfe\xc3\x40\x90\xce\xbd\x3b\xf5\x0b\xd8\xdd\x2e\x7c\xd6\x6b\x0e\x95")){
+        LOG(LOG_INFO, "signature mismatch: %s", message);
+        BOOST_CHECK(false);
+    }
 
-//    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 2, 64), zd, VNCVerbose::basic_trace);
-//    InStream buffer(solid0, sizeof(solid0));
-//    encoder.rle_test_bypass(buffer, drawable);
-//    drawable.save_to_png("vnc_first_len.png");
-//    char message[4096] = {};
-//    if (!redemption_unit_test__::check_sig(drawable.gd, message,
-//        "\xec\x68\x0f\x43\xb8\x2b\x16\x1e\x25\xec\x56\xe0\xd1\x5c\xd3\xd9\x9c\x12\x1d\x12")){
-//        LOG(LOG_INFO, "signature mismatch: %s", message);
-//        BOOST_CHECK(false);
-//    }
+}
+
+uint8_t palette2[] = {
+  /* 0000 */ 0x02, 0xFF, 0xFF, 0x00, 0x00, 
+             0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
+             0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 
+             0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 
+             0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 
+             0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 
+             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 
+             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 
+             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 
+     // A small block of 3 pixels wide
+             0x02, 0xFF, 0x00, 0xC0, 0x07, // Palette: Blue and Green
+             0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60
+};
+
+// This one is testing both Palette2 and Tiling
+RED_AUTO_TEST_CASE(TestZrlePalette2)
+{
+    Zdecompressor<> zd;
+
+    FakeGraphic drawable(16, 128, 128, 0);
+    auto const color_context= gdi::ColorCtx::depth24();
+    auto pixel_color = RDPColor::from(PINK);
+    const RDPOpaqueRect cmd(Rect(0,0,68,9), pixel_color);
+    drawable.draw(cmd, Rect(0, 0, 68, 9), color_context);
+
+    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 67, 8), zd, VNCVerbose::basic_trace);
+    InStream buffer(palette2, sizeof(palette2));
+    encoder.rle_test_bypass(buffer, drawable);
+    drawable.save_to_png("vnc_first_len.png");
+    char message[4096] = {};
+    if (!redemption_unit_test__::check_sig(drawable.gd, message,
+        "\x29\xac\x8d\xfe\xc3\x40\x90\xce\xbd\x3b\xf5\x0b\xd8\xdd\x2e\x7c\xd6\x6b\x0e\x95")){
+        LOG(LOG_INFO, "signature mismatch: %s", message);
+        BOOST_CHECK(false);
+    }
 
 }
 

@@ -279,4 +279,7 @@ FakeGraphic::FakeGraphic(uint8_t bpp, size_t width, size_t height, uint32_t verb
 , mod_palette(BGRPalette::classic_332())
 , gd(width, height)
 {
+    if (width % 4) {
+       LOG(LOG_ERR, "FakeGraphic only support image width that are multiple of 4 (drawable limitation)");
+    }
 }
