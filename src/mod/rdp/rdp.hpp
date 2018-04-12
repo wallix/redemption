@@ -944,7 +944,7 @@ public:
                               static_cast<uint32_t>(PERF_ENABLE_FONT_SMOOTHING) : 0)))
         , client_time_zone(info.client_time_zone)
         , gen(gen)
-        , verbose(RDPVerbose::export_metrics/*mod_rdp_params.verbose*/)
+        , verbose(/*RDPVerbose::export_metrics*/mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
         , enable_auth_channel(mod_rdp_params.alternate_shell[0] && !mod_rdp_params.ignore_auth_channel)
         , auth_channel_flags(0)
