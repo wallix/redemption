@@ -944,7 +944,7 @@ public:
                               static_cast<uint32_t>(PERF_ENABLE_FONT_SMOOTHING) : 0)))
         , client_time_zone(info.client_time_zone)
         , gen(gen)
-        , verbose(mod_rdp_params.verbose)
+        , verbose(RDPVerbose::export_metrics/*mod_rdp_params.verbose*/)
         , cache_verbose(mod_rdp_params.cache_verbose)
         , enable_auth_channel(mod_rdp_params.alternate_shell[0] && !mod_rdp_params.ignore_auth_channel)
         , auth_channel_flags(0)
@@ -2297,9 +2297,9 @@ public:
     }
 
     void log_metrics(const char * prefixe, long int main_amount_data, long int clipdr_amount_data,
-                     long int rail_amount_data, long int drdynvc_amount_data, long int main_amount_data) {
+                     long int rail_amount_data, long int rdpdr_amount_data, long int drdynvc_amount_data) {
         LOG(LOG_INFO, "%s main:%ld cliprdr:%ld  rail:%ld  rdpdr:%ld  drdynvc:%ld", prefixe,
-            main_amount_data, clipdr_amount_data, rail_amount_data, drdynvc_amount_data, main_amount_data);
+            main_amount_data, clipdr_amount_data, rail_amount_data, rdpdr_amount_data, drdynvc_amount_data);
     }
 
 private:
