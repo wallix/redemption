@@ -117,6 +117,14 @@ public:
         ServerNotifier&       notifier;
     };
 
+    const char * get_target_host() const {
+        return this->target_host;
+    }
+
+    const char * get_user_name() const {
+        return reinterpret_cast<const char *>(this->username);
+    }
+
     /// \return false if terminal state
     REDEMPTION_CXX_NODISCARD
     bool recv_next_data(TpduBuffer& buf, Transport& trans, ServerCert const& cert);

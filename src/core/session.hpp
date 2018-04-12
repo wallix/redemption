@@ -140,6 +140,9 @@ public:
 
             std::vector<EventHandler> event_handlers;
 
+            timeval alarm_log_metrics = tvtime();
+            alarm_log_metrics.tv_sec += 5;
+
             // TODO: we should define some select object to wrap rfds, wfds and timeouts
             // and hide events inside modules managing sockets (or timers)
             // this should help in the future to generalise architecture
@@ -442,6 +445,15 @@ public:
                     time_t now = time(nullptr);
                     mm.invoke_close_box(local_err_msg(e, language(this->ini)), signal, now, authentifier, authentifier);
                 };
+
+                if (mm.mod) {
+                    timeval wait_log_metrics = ::how_long_to_wait(alarm_log_metrics, tvtime());
+                    if (!wait_log_metrics.tv_sec && ! wait_log_metrics.tv_usec) {
+                        mm.mod->log_metrics();
+                        alarm_log_metrics = tvtime();
+                        alarm_log_metrics.tv_sec += 5;
+                    }
+                }
             }
             if (mm.mod) {
                 mm.mod->disconnect(time(nullptr));
