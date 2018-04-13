@@ -601,7 +601,7 @@ namespace VNC {
                                         break;
                                 }
                             }
-                            if (palette_index > subencoding){
+                            if (palette_index >= subencoding){
                                 LOG(LOG_WARNING, "VNC::zrle uncompressed stream palette entry overflow) limit=%u palette_index=%u", subencoding, palette_index);
                                 palette_index = 0;
                             }
