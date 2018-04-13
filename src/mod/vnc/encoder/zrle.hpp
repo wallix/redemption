@@ -363,7 +363,7 @@ namespace VNC {
                     }
                     break;
                     case 128:
-                        if (bool(this->verbose & VNCVerbose::zrle_encoder)){
+                        if (true||bool(this->verbose & VNCVerbose::zrle_encoder)){
                             LOG(LOG_INFO, "lib_framebuffer_update_zrle:: subencoding =%u", subencoding);
                             hexdump_d(uncompressed_data_buffer.get_current(), 1024);
                         }
@@ -637,57 +637,44 @@ namespace VNC {
                     LOG(LOG_INFO, "VNC Encoding: ZRLE, Plain RLE");
                 }
 
-                uint8_t         tile_data[4*16384];    // max size with 32 bpp
-                const uint8_t * tile_data_p = tile_data;
-                const uint16_t tile_data_length = tile.cx * tile.cy * this->Bpp;
-                
-                uint16_t   tile_data_length_remain = tile_data_length;
-                uint16_t   run_length    = 0;
+                uint8_t    tile_data[4*64*64];    // max size with 32 bpp
                 uint8_t  * tmp_tile_data = tile_data;
-
-                while (tile_data_length_remain >= this->Bpp)
-                {
-
-                    if (uncompressed_data_buffer.in_remain() < this->Bpp)
-                    {
-                        LOG(LOG_ERR, "Compressed VNC::zrle stream truncated (4)");
+                const uint8_t * cpixel_pattern = nullptr;
+                bool running = true;
+                while (running){
+                    if (uncompressed_data_buffer.in_remain() < this->Bpp+1){
+                        LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated (plainRLE)");
                         throw Error(ERR_VNC_ZRLE_PROTOCOL);
                     }
-
-                    const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->Bpp);
-
-                    run_length = 1;
-
-                    while (true)
-                    {
-                        if (uncompressed_data_buffer.in_remain() < 1)
-                        {
-                            LOG(LOG_ERR, "Compressed VNC::zrle stream truncated (4.1)");
+                    cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->Bpp);
+                    size_t length = uncompressed_data_buffer.in_uint8() + 1;
+                    if (length == 256){ // multi bytes length
+                        for(;;){
+                            if (uncompressed_data_buffer.in_remain() < 1){
+                                LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated (plainRLE) truncated length");
+                                throw Error(ERR_VNC_ZRLE_PROTOCOL);
+                            }
+                            uint8_t tmp = uncompressed_data_buffer.in_uint8();
+                            length += tmp + 1;
+                            if (tmp != 255){
+                                break;
+                            }
+                        }
+                    }
+                    for (size_t i = 0 ; i < length ; i++){
+                        if (tmp_tile_data == tile_data + this->tile.cx * this->tile.cy * this->Bpp){
+                            LOG(LOG_ERR, "VNC::zrle uncompressed stream, plainRLE out of bound");
                             throw Error(ERR_VNC_ZRLE_PROTOCOL);
                         }
-
-                        uint8_t byte_value = uncompressed_data_buffer.in_uint8();
-                        run_length += byte_value;
-
-                        if (byte_value != 255)
-                            break;
-                    }
-
-                    while ((tile_data_length_remain >= this->Bpp) && run_length)
-                    {
                         memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
-
-                        tmp_tile_data           += this->Bpp;
-                        tile_data_length_remain -= this->Bpp;
-
-                        run_length--;
+                        tmp_tile_data+=this->Bpp;
+                    }
+                    if (tmp_tile_data == tile_data + this->tile.cx * this->tile.cy * this->Bpp){
+                        break;
                     }
                 }
 
-                assert(!run_length);
-                assert(!tile_data_length_remain);
-
-                this->draw_tile(tile_data_p, drawable);
+                this->draw_tile(tile_data, drawable);
             }
 
             //    130 to 255
@@ -736,7 +723,7 @@ namespace VNC {
 
                 if (uncompressed_data_buffer.in_remain() < palette_size)
                 {
-                    LOG(LOG_ERR, "Compressed VNC::zrle stream truncated (5)");
+                    LOG(LOG_ERR, "VNC::zrle stream truncated (5)");
                     throw Error(ERR_VNC_ZRLE_PROTOCOL);
                 }
 

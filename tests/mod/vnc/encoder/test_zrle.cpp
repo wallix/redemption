@@ -6644,7 +6644,7 @@ RED_AUTO_TEST_CASE(TestZrle)
 
     // First rect
     {
-        VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 1898, 19), zd, VNCVerbose::basic_trace);
+        VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 1898, 19), zd, VNCVerbose::none);
 
         BlockRead z0b0(z0_block0, sizeof(z0_block0));
         buf.read_from(z0b0);
@@ -6660,7 +6660,7 @@ RED_AUTO_TEST_CASE(TestZrle)
     
     // Second rect
     {
-        VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(1910, 0, 10, 19), zd, VNCVerbose::basic_trace);
+        VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(1910, 0, 10, 19), zd, VNCVerbose::none);
 
         BlockRead z1b0(z1_block0, sizeof(z1_block0));
         buf.read_from(z1b0);
@@ -6670,7 +6670,7 @@ RED_AUTO_TEST_CASE(TestZrle)
     
     // Third rect
     {
-        VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 19, 1920, 34), zd, VNCVerbose::basic_trace);
+        VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 19, 1920, 34), zd, VNCVerbose::none);
 
         BlockRead z2b0(z2_block0, sizeof(z2_block0));
         buf.read_from(z2b0);
@@ -6725,7 +6725,7 @@ RED_AUTO_TEST_CASE(TestZrleRaw)
 
     FakeGraphic drawable(16, 16, 19, 0);
 
-    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 10, 19), zd, VNCVerbose::basic_trace);
+    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 10, 19), zd, VNCVerbose::none);
     InStream buffer(raw0, sizeof(raw0));
     encoder.rle_test_bypass(buffer, drawable);
 //    drawable.save_to_png("vnc_first_len.png");
@@ -6756,7 +6756,7 @@ RED_AUTO_TEST_CASE(TestZrleSolid)
     const RDPOpaqueRect cmd(Rect(0,0,75,66), pixel_color);
     drawable.draw(cmd, Rect(0,0,75,66), color_context);
 
-    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 74, 65), zd, VNCVerbose::basic_trace);
+    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 74, 65), zd, VNCVerbose::none);
     InStream buffer(solid0, sizeof(solid0));
     encoder.rle_test_bypass(buffer, drawable);
     drawable.save_to_png("vnc_first_len.png");
@@ -6795,7 +6795,7 @@ RED_AUTO_TEST_CASE(TestZrlePalette2)
     const RDPOpaqueRect cmd(Rect(0,0,68,9), pixel_color);
     drawable.draw(cmd, Rect(0, 0, 68, 9), color_context);
 
-    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 67, 8), zd, VNCVerbose::basic_trace);
+    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 67, 8), zd, VNCVerbose::none);
     InStream buffer(palette2, sizeof(palette2));
     encoder.rle_test_bypass(buffer, drawable);
 //    drawable.save_to_png("vnc_first_len.png");
@@ -6854,13 +6854,46 @@ RED_AUTO_TEST_CASE(TestZrlePalette13)
     const RDPOpaqueRect cmd(Rect(0,0,68,9), pixel_color);
     drawable.draw(cmd, Rect(0, 0, 68, 9), color_context);
 
-    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 67, 8), zd, VNCVerbose::basic_trace);
+    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 67, 8), zd, VNCVerbose::none);
     InStream buffer(palette13, sizeof(palette13));
     encoder.rle_test_bypass(buffer, drawable);
-    drawable.save_to_png("vnc.png");
+//    drawable.save_to_png("vnc.png");
     char message[4096] = {};
     if (!redemption_unit_test__::check_sig(drawable.gd, message,
         "\xb3\x68\xe5\x39\xf4\x4c\xbd\xa5\x1c\x4f\x4f\xda\x2b\xcb\x62\xa3\x57\x61\x23\xdf")){
+        LOG(LOG_INFO, "signature mismatch: %s", message);
+        BOOST_CHECK(false);
+    }
+}
+
+uint8_t plainrle[] = {
+  /* 0000 */ 0x80, 
+             0xE0, 0xFF, 63, // 64
+             0x00, 0x00, 95, // 96
+             0xE0, 0xFF, 31, // 32
+             0xE0, 0x07, 255, 63, // 5x64
+     // rle with blue
+             0x80, 0xFF, 0x00, 23
+};
+
+// This one is testing Palette13 and Tiling
+RED_AUTO_TEST_CASE(TestZrlePlainRLE)
+{
+    Zdecompressor<> zd;
+
+    FakeGraphic drawable(16, 128, 9, 0);
+    auto const color_context= gdi::ColorCtx::depth24();
+    auto pixel_color = RDPColor::from(PINK);
+    const RDPOpaqueRect cmd(Rect(0,0,68,9), pixel_color);
+    drawable.draw(cmd, Rect(0, 0, 68, 9), color_context);
+
+    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 67, 8), zd, VNCVerbose::basic_trace|VNCVerbose::zrle_encoder);
+    InStream buffer(plainrle, sizeof(plainrle));
+    encoder.rle_test_bypass(buffer, drawable);
+    drawable.save_to_png("vnc2.png");
+    char message[4096] = {};
+    if (!redemption_unit_test__::check_sig(drawable.gd, message,
+        "\x34\x00\xe0\x80\x92\x39\xf7\x99\xfa\x07\xb8\x35\x42\xa1\x06\x19\xc3\x36\xb9\x0f")){
         LOG(LOG_INFO, "signature mismatch: %s", message);
         BOOST_CHECK(false);
     }
