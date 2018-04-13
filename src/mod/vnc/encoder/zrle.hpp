@@ -363,7 +363,7 @@ namespace VNC {
                     }
                     break;
                     case 128:
-                        if (true||bool(this->verbose & VNCVerbose::zrle_encoder)){
+                        if (bool(this->verbose & VNCVerbose::zrle_encoder)){
                             LOG(LOG_INFO, "lib_framebuffer_update_zrle:: subencoding =%u", subencoding);
                             hexdump_d(uncompressed_data_buffer.get_current(), 1024);
                         }
@@ -402,11 +402,11 @@ namespace VNC {
             // return false if there is no next tile any more
             bool next_tile()
             {
-                LOG(LOG_INFO, "Previous tile: rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
+//                LOG(LOG_INFO, "Previous tile: rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
 
                 if (this->cx_remain <= 64){
                     if (this->cy_remain <= 64){
-                        LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
+//                        LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
                         return false;
                     }
                     this->cx_remain = this->r.cx;
@@ -414,13 +414,13 @@ namespace VNC {
                     this->tile = Rect(this->r.x, this->tile.y + 64,
                                     std::min<size_t>(64, this->cx_remain),
                                     std::min<size_t>(64, this->cy_remain));
-                    LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
+//                    LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
                     return true;
                 }
                 this->cx_remain -= 64;
                 this->tile.x += 64;
                 this->tile.cx = std::min<size_t>(64, this->cx_remain);
-                LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
+//                LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
                 return true;
             }
 
@@ -466,7 +466,6 @@ namespace VNC {
 
                 auto const color_context= gdi::ColorCtx::depth16();
                 auto pixel_color = RDPColor::from((cpixel_pattern[1]<<8)+cpixel_pattern[0]);
-                LOG(LOG_INFO, "%s", this->tile);
                 const RDPOpaqueRect cmd(this->tile, pixel_color);
                 drawable.draw(cmd, this->tile, color_context);
 
@@ -715,69 +714,59 @@ namespace VNC {
                     LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE");
                 }
 
-                uint8_t         tile_data[4*16384];    // max size with 32 bpp
-                const uint8_t * tile_data_p = tile_data;
-                const uint16_t tile_data_length = this->tile.cx * this->tile.cy * this->Bpp;
-                const uint8_t    palette_count = subencoding - 128;
-                const uint16_t   palette_size  = palette_count * this->Bpp;
+                const uint16_t   palette_size  = (subencoding & 0x7F) * this->Bpp;
 
-                if (uncompressed_data_buffer.in_remain() < palette_size)
-                {
-                    LOG(LOG_ERR, "VNC::zrle stream truncated (5)");
+                if (uncompressed_data_buffer.in_remain() < palette_size){
+                    LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated (missing palette)");
                     throw Error(ERR_VNC_ZRLE_PROTOCOL);
                 }
 
                 const uint8_t * palette = uncompressed_data_buffer.in_uint8p(palette_size);
-                uint16_t   tile_data_length_remain = tile_data_length;
-                uint16_t   run_length    = 0;
-                uint8_t  * tmp_tile_data = tile_data;
 
-                while (tile_data_length_remain >= this->Bpp)
-                {
-                    if (uncompressed_data_buffer.in_remain() < 1)
-                    {
-                        LOG(LOG_ERR, "Compressed VNC::zrle stream truncated (6)");
+                uint8_t    tile_data[4*64*64];    // max size with 32 bpp
+                uint8_t  * tmp_tile_data = tile_data;
+                for (;;){
+                    if (uncompressed_data_buffer.in_remain() < 1){
+                        LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated (paletteRLE)");
                         throw Error(ERR_VNC_ZRLE_PROTOCOL);
                     }
-
-                    uint8_t         palette_index  = uncompressed_data_buffer.in_uint8();
-                    const uint8_t * cpixel_pattern = palette + (palette_index & 0x7F) * this->Bpp;
-
-                    run_length = 1;
-
-                    if (palette_index & 0x80)
-                    {
-                        while (true)
-                        {
-                            if (uncompressed_data_buffer.in_remain() < 1)
-                            {
-                                LOG(LOG_ERR, "Compressed VNC::zrle stream truncated (7)");
-                                throw Error(ERR_VNC_ZRLE_PROTOCOL);
+                    uint8_t palette_index = uncompressed_data_buffer.in_uint8();
+                    size_t length = 1;
+                    if ((palette_index & 0x80) != 0){
+                        palette_index &= 0x7F;
+                        if (uncompressed_data_buffer.in_remain() < 1){
+                            LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated, length missing (paletteRLE)");
+                            throw Error(ERR_VNC_ZRLE_PROTOCOL);
+                        }
+                        length = uncompressed_data_buffer.in_uint8() + 1;
+                        if (length == 256){ // multi bytes length
+                            for(;;){
+                                if (uncompressed_data_buffer.in_remain() < 1){
+                                    LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated (paletteRLE) truncated length");
+                                    throw Error(ERR_VNC_ZRLE_PROTOCOL);
+                                }
+                                uint8_t tmp = uncompressed_data_buffer.in_uint8();
+                                length += tmp + 1;
+                                if (tmp != 255){
+                                    break;
+                                }
                             }
-
-                            uint8_t byte_value = uncompressed_data_buffer.in_uint8();
-                            run_length += byte_value;
-
-                            if (byte_value != 255)
-                                break;
                         }
                     }
-
-                    while ((tile_data_length_remain >= this->Bpp) && run_length)
-                    {
-                        memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
-
-                        tmp_tile_data           += this->Bpp;
-                        tile_data_length_remain -= this->Bpp;
-
-                        run_length--;
+//                    LOG(LOG_INFO, "paletteIndex=%u length=%u", palette_index, length);
+                    for (size_t i = 0 ; i < length ; i++){
+                        if (tmp_tile_data == tile_data + this->tile.cx * this->tile.cy * this->Bpp){
+                            LOG(LOG_ERR, "VNC::zrle uncompressed stream, plainRLE out of bound");
+                            throw Error(ERR_VNC_ZRLE_PROTOCOL);
+                        }
+                        memcpy(tmp_tile_data, palette+palette_index*this->Bpp, this->Bpp);
+                        tmp_tile_data+=this->Bpp;
+                    }
+                    if (tmp_tile_data == tile_data + this->tile.cx * this->tile.cy * this->Bpp){
+                        break;
                     }
                 }
-
-                assert(!run_length);
-                assert(!tile_data_length_remain);
-
-                this->draw_tile(tile_data_p, drawable);
+                this->draw_tile(tile_data, drawable);
             }
         }; // class Zrle
     } // namespace Encoder

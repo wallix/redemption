@@ -1431,31 +1431,6 @@ protected:
         VNC_SC_MSG_GII                            = 253,
     };
 
-    static void fill_encoding_types_buffer(const char * encodings, OutStream & stream, uint16_t & number_of_encodings, VNCVerbose verbose)
-    {
-        if (bool(verbose & VNCVerbose::basic_trace)) {
-            LOG(LOG_INFO, "VNC Encodings=\"%s\"", encodings);
-        }
-
-        auto stream_offset = stream.get_offset();
-
-        char * end;
-        char const * p = encodings;
-        for (int32_t encoding_type = std::strtol(p, &end, 0); p != end ; encoding_type = std::strtol(p, &end, 0))
-        {
-            if (bool(verbose & VNCVerbose::basic_trace)) {
-                LOG(LOG_INFO, "VNC Encoding type=0x%08X", unsigned(encoding_type));
-            }
-            stream.out_uint32_be(encoding_type);
-
-            p = end;
-            while (*p && (*p == ' ' || *p == '\t' || *p == ',')) {
-                ++p;
-            }
-        }
-        number_of_encodings = (stream.get_offset() - stream_offset) / 4;
-    }
-
     class PasswordCtx
     {
         enum class State
@@ -1974,7 +1949,7 @@ private:
                 // SetEncodings
                 StaticOutStream<32768> stream;
 
-                bool support_zrle_encoding          = false;
+                bool support_zrle_encoding          = true;
                 bool support_hextile_encoding       = false;
                 bool support_rre_encoding           = false;
                 bool support_raw_encoding           = true;
@@ -1983,6 +1958,7 @@ private:
 
                 char const * p = this->encodings.c_str();
                 if (p && *p){
+                    support_zrle_encoding          = false;
                     for (;;){
                         while (*p && *p == ','){++p;}
                         char * end;
@@ -2011,8 +1987,8 @@ private:
                 }
 
 //                    support_zrle_encoding          = false;
-//                    support_hextile_encoding       = false;
-//                    support_rre_encoding           = true;
+                    support_hextile_encoding       = false;
+                    support_rre_encoding           = false;
                 
                 uint16_t number_of_encodings =  support_zrle_encoding
                                              +  support_hextile_encoding

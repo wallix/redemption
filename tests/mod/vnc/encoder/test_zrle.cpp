@@ -6759,7 +6759,7 @@ RED_AUTO_TEST_CASE(TestZrleSolid)
     VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 74, 65), zd, VNCVerbose::none);
     InStream buffer(solid0, sizeof(solid0));
     encoder.rle_test_bypass(buffer, drawable);
-    drawable.save_to_png("vnc_first_len.png");
+//    drawable.save_to_png("vnc_first_len.png");
     char message[4096] = {};
     if (!redemption_unit_test__::check_sig(drawable.gd, message,
         "\x29\xac\x8d\xfe\xc3\x40\x90\xce\xbd\x3b\xf5\x0b\xd8\xdd\x2e\x7c\xd6\x6b\x0e\x95")){
@@ -6798,10 +6798,10 @@ RED_AUTO_TEST_CASE(TestZrlePalette2)
     VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 67, 8), zd, VNCVerbose::none);
     InStream buffer(palette2, sizeof(palette2));
     encoder.rle_test_bypass(buffer, drawable);
-//    drawable.save_to_png("vnc_first_len.png");
+//    drawable.save_to_png("vnc0.png");
     char message[4096] = {};
     if (!redemption_unit_test__::check_sig(drawable.gd, message,
-        "\x29\xac\x8d\xfe\xc3\x40\x90\xce\xbd\x3b\xf5\x0b\xd8\xdd\x2e\x7c\xd6\x6b\x0e\x95")){
+        "\x9e\x96\xf8\x4c\x03\xed\xdd\x2f\x08\xd1\xe3\x08\x7a\x73\xe1\xed\x8f\xc9\x96\x7a")){
         LOG(LOG_INFO, "signature mismatch: %s", message);
         BOOST_CHECK(false);
     }
@@ -6887,13 +6887,61 @@ RED_AUTO_TEST_CASE(TestZrlePlainRLE)
     const RDPOpaqueRect cmd(Rect(0,0,68,9), pixel_color);
     drawable.draw(cmd, Rect(0, 0, 68, 9), color_context);
 
-    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 67, 8), zd, VNCVerbose::basic_trace|VNCVerbose::zrle_encoder);
+    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 67, 8), zd, VNCVerbose::none);
     InStream buffer(plainrle, sizeof(plainrle));
     encoder.rle_test_bypass(buffer, drawable);
-    drawable.save_to_png("vnc2.png");
+//    drawable.save_to_png("vnc2.png");
     char message[4096] = {};
     if (!redemption_unit_test__::check_sig(drawable.gd, message,
         "\x34\x00\xe0\x80\x92\x39\xf7\x99\xfa\x07\xb8\x35\x42\xa1\x06\x19\xc3\x36\xb9\x0f")){
+        LOG(LOG_INFO, "signature mismatch: %s", message);
+        BOOST_CHECK(false);
+    }
+}
+
+uint8_t paletteRLE[] = {
+  /* 0000 */ 0x8D, 
+             0x00, 0x00, // black -> 0
+             0x00, 0xF8, // red  -> 1
+             0x00, 0x78, // drak red -> 2
+             0xE0, 0x07, // green  -> 3
+             0xE0, 0x01, // dark green -> 4
+             0x1F, 0x00, // blue -> 5
+             0x07, 0x00, // dark blue -> 6
+             0xE0, 0xFF, // yellow -> 7
+             0xFF, 0x07, // cyan -> 8
+             0xFF, 0xFF, // white -> 9
+             0x1F, 0xF8, // pink -> A
+             0xEF, 0x79, // gray  -> B
+             0xFF, 0xFF, // white -> C
+
+             0x87, 63, // 64 -> one yellow line
+             0x80, 92, // 96 -> one black line and nearly a half line
+             0x08, 0x08, 0x08, // -> 3 cyan pixels
+             0x87, 31, // 32 yellow pixels
+             0x83, 255, 63, // 5x64 -> end with 5 green lines
+     // rle with blue
+             0x80, 0xFF, 0x00, 23
+};
+
+// This one is testing Palette13 and Tiling
+RED_AUTO_TEST_CASE(TestZrlePaletteRLE)
+{
+    Zdecompressor<> zd;
+
+    FakeGraphic drawable(16, 128, 9, 0);
+    auto const color_context= gdi::ColorCtx::depth24();
+    auto pixel_color = RDPColor::from(PINK);
+    const RDPOpaqueRect cmd(Rect(0,0,68,9), pixel_color);
+    drawable.draw(cmd, Rect(0, 0, 68, 9), color_context);
+
+    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 67, 8), zd, VNCVerbose::none);
+    InStream buffer(paletteRLE, sizeof(paletteRLE));
+    encoder.rle_test_bypass(buffer, drawable);
+//    drawable.save_to_png("vnc3.png");
+    char message[4096] = {};
+    if (!redemption_unit_test__::check_sig(drawable.gd, message,
+        "\x98\xa8\x92\x83\x48\x50\x2e\x26\xbe\x4b\x1f\xcb\x53\x7a\xe9\x2b\x3c\x63\x2d\xc4")){
         LOG(LOG_INFO, "signature mismatch: %s", message);
         BOOST_CHECK(false);
     }
