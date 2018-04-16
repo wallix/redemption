@@ -288,7 +288,7 @@ public:
             LOG(LOG_DEBUG, "gdi_clear_screen");
             gdi_clear_screen(gd, self.get_dim());
             return ctx.disable_timeout()
-            .next_action(jln::always_ready([](gdi::GraphicApi& gd, mod_vnc& self){
+            .reset_action([](auto ctx, gdi::GraphicApi& gd, mod_vnc& self){
                 LOG(LOG_DEBUG, "on action");
                 self.buf.read_from(self.t);
                 while (self.state != UP_AND_RUNNING && self.draw_event_impl(gd)) {
@@ -310,7 +310,8 @@ public:
                         self.front.must_be_stop_capture();
                     }
                 }
-            }));
+                return ctx.need_more_data();
+            });
         });
     } // Constructor
 

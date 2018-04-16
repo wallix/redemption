@@ -598,6 +598,13 @@ struct REDEMPTION_CXX_NODISCARD BasicContext
         return this->event.ctx.invoke(f2, Ctx{this->event}, static_cast<Args&&>(args)...);
     }
 
+    template<class F1>
+    ExecutorResult reset_action(F1 f1)
+    {
+        (void)this->event.reset_action(f1);
+        return ExecutorResult::Nothing;
+    }
+
     template<class F, class... Args>
     ExecutorResult exec_action(F f, Args&&... args)
     {

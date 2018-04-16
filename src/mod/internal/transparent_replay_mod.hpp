@@ -61,9 +61,10 @@ public:
         .set_timeout(std::chrono::seconds{1})
         .on_timeout(jln::always_ready())
         .on_exit(jln::exit_with_success())
-        .on_action(jln::always_ready([](gdi::GraphicApi& gd, TransparentReplayMod& self){
+        .on_action([](auto ctx, gdi::GraphicApi& gd, TransparentReplayMod& self){
             self.draw_event(0, gd);
-        }));
+            return ctx.need_more_data();
+        });
     }
 
     void draw_event(time_t /*now*/, gdi::GraphicApi &) override

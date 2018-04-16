@@ -25,20 +25,27 @@ Author(s): Jonathan Poelen
 #include "mod/mod_api.hpp"
 #include "mod/mod_api.hpp"
 
+inline void execute_graphics_event(
+    SessionReactor& session_reactor, gdi::GraphicApi& gd)
+{
+    session_reactor.execute_graphics([](int /*fd*/, auto& /*e*/){ return true; }, gd);
+}
+
 inline void execute_negociate_mod(
     SessionReactor& session_reactor, mod_api& mod, gdi::GraphicApi& gd)
 {
     session_reactor.execute_timers(
         SessionReactor::EnableGraphics{true},
         [&]()->gdi::GraphicApi&{ return gd; });
-    while (!mod.is_up_and_running())
-        session_reactor.execute_graphics([](int /*fd*/, auto&){ return true; }, gd);
-}
-
-inline void execute_graphics_event(
-    SessionReactor& session_reactor, gdi::GraphicApi& gd)
-{
-    session_reactor.execute_graphics([](int /*fd*/, auto& /*e*/){ return true; }, gd);
+    int n = 0;
+    int const limit = 1000;
+    while (!mod.is_up_and_running()
+        && session_reactor.graphic_fd_events_.elements.size()
+        && ++n < limit
+    ) {
+        execute_graphics_event(session_reactor, gd);
+    }
+    RED_REQUIRE_LT(n, limit);
 }
 
 inline void execute_mod(SessionReactor& session_reactor, mod_api& mod, gdi::GraphicApi& gd, int n)

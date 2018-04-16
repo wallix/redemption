@@ -29,6 +29,740 @@ Author(s): Jonathan Poelen
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/log.hpp"
+#include "core/error.hpp"
+
+template<class>
+struct BasicFd;
+
+class SessionReactor;
+
+namespace jln2 {
+
+enum class [[nodiscard]] R : char
+{
+    Next,
+    Terminate,
+    ExitSuccess,
+    ExitError,
+    Exception,
+    CreateGroup,
+    NeedMoreData,
+    Substitute,
+};
+
+struct ExitR {
+    enum Status : char {
+        Error = char(R::ExitError),
+        Success = char(R::ExitSuccess),
+        Exception = char(R::Exception),
+        Terminate = char(R::Terminate),
+    };
+
+    Status status;
+    ::Error& error;
+};
+
+template<class... Ts> struct TopExecutor;
+template<class... Ts> struct GroupExecutor;
+template<class... Ts> struct NodeExecutor;
+
+using jln::ExitStatus;
+
+namespace detail
+{
+    template<bool setError, int stateInit, class Group, class... Ts>
+    struct [[nodiscard]] GroupExecutorBuilderImpl
+    {
+        explicit GroupExecutorBuilderImpl(TopExecutor<Ts...>& top, std::unique_ptr<Group>&& g) noexcept;
+
+        template<class F>
+        auto then(F&& f);
+
+        template<class F>
+        GroupExecutorBuilderImpl<1, stateInit, Group> on_exit(F&& f);
+        GroupExecutorBuilderImpl<1, stateInit, Group> propagate_exit();
+
+        operator R ();
+
+    private:
+        TopExecutor<Ts...>& top;
+        std::unique_ptr<Group> g;
+    };
+
+#ifdef IN_IDE_PARSER
+    struct [[nodiscard]] GroupExecutorBuilder_Concept
+    {
+        template<class... Ts>
+        explicit GroupExecutorBuilder_Concept(Ts&&...) noexcept;
+
+        template<class F> GroupExecutorBuilder_Concept then(F) { return *this; }
+        template<class F> GroupExecutorBuilder_Concept on_exit(F) { return *this; }
+        GroupExecutorBuilder_Concept propagate_exit();
+
+        operator R ();
+    };
+
+    template<class...>
+    using GroupExecutorBuilder = GroupExecutorBuilder_Concept;
+#else
+    template<class Group>
+    using GroupExecutorBuilder = GroupExecutorBuilderImpl<0, 0, Group>;
+#endif
+}
+
+template<class... Ts>
+struct Context
+{
+    template<class... Xs>
+#ifdef IN_IDE_PARSER
+    detail::GroupExecutorBuilder_Concept create_sub_executor(Xs&&...);
+#else
+    auto create_sub_executor(Xs&&...);
+#endif
+
+    R exception(Error const& e) noexcept;
+    R need_more_data() noexcept { return R::NeedMoreData; }
+    R terminate() noexcept { return R::Terminate; }
+    R next() noexcept { return R::Next; }
+    R exit_on_error() noexcept { return R::ExitError; }
+    R exit_on_success() noexcept { return R::ExitSuccess; }
+    R exit(ExitStatus status) noexcept {
+        return (status == ExitStatus::Success)
+            ? this->exit_on_success()
+            : this->exit_on_error();
+    }
+
+    template<class F>
+    R replace_action(F&& f);
+
+    template<class F>
+    R next_action(F&& f);
+
+    template<class F>
+    R exec_action(F&& f);
+
+    void set_fd(int fd) noexcept
+    {
+        this->basic_fd.set_fd(fd);
+    }
+
+    int get_fd() noexcept
+    {
+        return this->basic_fd.get_fd();
+    }
+    void set_timeout(std::chrono::milliseconds ms) noexcept
+    {
+        this->basic_fd.set_timeout(ms);
+    }
+
+    Context disable_timeout() noexcept
+    {
+        this->basic_fd.disable_timeout();
+        return *this;
+    }
+
+    void restart_timeout()
+    {
+        this->basic_fd.restart_timeout();
+    }
+
+    SessionReactor& get_reactor() const noexcept
+    {
+        return this->basic_fd.get_reactor();
+    }
+
+    timeval get_current_time() const noexcept
+    {
+        return this->get_reactor().get_current_time();
+    }
+
+private:
+    friend GroupExecutor<Ts...>;
+
+    explicit Context(TopExecutor<Ts...>& top, NodeExecutor<Ts...>& current, BasicFd<jln::prefix_args<Ts...>>& fd)
+    : top(top)
+    , current(current)
+    , basic_fd(fd)
+    {}
+
+    TopExecutor<Ts...>& top;
+    NodeExecutor<Ts...>& current;
+    BasicFd<jln::prefix_args<Ts...>>& basic_fd;
+};
+
+template<class... Ts>
+struct ContextError
+{
+//     template<class... Xs>
+// #ifdef IN_IDE_PARSER
+//     detail::GroupExecutorBuilder_Concept create_sub_executor(Xs&&...);
+// #else
+//     auto create_sub_executor(Xs&&...);
+// #endif
+
+    R need_more_data() noexcept { return R::NeedMoreData; }
+    R terminate() noexcept { return R::Terminate; }
+    R next() noexcept { return R::Next; }
+    R exit_on_error() noexcept { return R::ExitError; }
+    R exit_on_success() noexcept { return R::ExitSuccess; }
+    R exit(ExitStatus status) noexcept {
+        return (status == ExitStatus::Success)
+            ? this->exit_on_success()
+            : this->exit_on_error();
+    }
+
+    // template<class F>
+    // R replace_action(F&& f);
+
+private:
+    friend GroupExecutor<Ts...>;
+
+    explicit ContextError(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd)
+    : top(top)
+    , basic_fd(fd)
+    {}
+
+    TopExecutor<Ts...>& top;
+    BasicFd<jln::prefix_args<Ts...>>& basic_fd;
+};
+
+template<class... Ts>
+inline R propagate_exit(ContextError<Ts...>, ExitR er) noexcept
+{
+    return static_cast<R>(er.status);
+}
+
+template<class... Ts>
+struct NodeExecutor
+{
+    std::function<R(Context<Ts...>, Ts&...)> f;
+    std::unique_ptr<NodeExecutor> next;
+
+    template<class F>
+    static std::unique_ptr<NodeExecutor> create(F&& f)
+    {
+        return std::unique_ptr<NodeExecutor>(
+            new NodeExecutor{static_cast<F&&>(f), nullptr});
+    }
+};
+
+template<class... Ts>
+struct GroupExecutor
+{
+    GroupExecutor() = default;
+    GroupExecutor(GroupExecutor const&) = delete;
+    GroupExecutor& operator=(GroupExecutor const&) = delete;
+
+    virtual ~GroupExecutor() = default;
+
+    void add_group_executor(std::unique_ptr<GroupExecutor>&& g)
+    {
+        assert(bool(g->next));
+        g->group = std::move(this->group);
+        this->group = std::move(g);
+    }
+
+    template<class F>
+    void then(F&& f)
+    {
+        if (!this->end_next) {
+            this->next = NodeExecutor<Ts...>::create(static_cast<F&&>(f));
+            this->end_next = this->next.get();
+        }
+        else {
+            this->end_next->next = NodeExecutor<Ts...>::create(static_cast<F&&>(f));
+            this->end_next = this->end_next->next.get();
+        }
+    }
+
+    template<class F>
+    void set_on_exit(F&& f)
+    {
+        this->on_exit = static_cast<F&&>(f);
+    }
+
+    void set_propagate_exit() noexcept
+    {
+        this->on_exit = &jln2::propagate_exit<Ts...>;
+    }
+
+    template<class F>
+    void reset_action(F&& f)
+    {
+        assert(this->next);
+        this->next->f = static_cast<F&&>(f);
+        this->group.reset();
+    }
+
+protected:
+    // TODO inner to TopExecutor
+    R _exec_next(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd, Ts&... xs);
+    R _exec(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd, Ts&... xs);
+    R _exec_exit(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd, R r, Ts&... xs);
+    R _exec_group_exit(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd, R r, Ts&... xs);
+    bool has_group() const noexcept { return bool(this->group); }
+
+private:
+    std::unique_ptr<NodeExecutor<Ts...>> next;
+    NodeExecutor<Ts...>* end_next = nullptr;
+    std::unique_ptr<GroupExecutor> group;
+    std::function<R(ContextError<Ts...>, ExitR er, Ts&...)> on_exit;
+};
+
+
+template<class Tuple, class... Ts>
+struct GroupExecutorWithValues : GroupExecutor<Ts...>, private Tuple
+{
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
+    template<class... Us>
+    GroupExecutorWithValues(Us&&... xs)
+    noexcept(noexcept(Tuple{static_cast<Us&&>(xs)...}))
+      : Tuple{static_cast<Us&&>(xs)...}
+    {}
+    REDEMPTION_DIAGNOSTIC_POP
+
+    template<class F>
+    void then(F&& f)
+    {
+        this->GroupExecutor<Ts...>::then([f = static_cast<F&&>(f), this](Context<Ts...> ctx) -> R{
+            return this->invoke(f, ctx);
+        });
+    }
+
+    template<class F>
+    void set_on_exit(F&& f)
+    {
+        this->GroupExecutor<Ts...>::set_on_exit([f = static_cast<F&&>(f), this](
+            ContextError<Ts...> ctx, ExitR er) -> R
+        {
+            return this->invoke(f, ctx, er);
+        });
+    }
+
+private:
+    friend Context<Ts...>;
+};
+
+template<class... Ts>
+struct GroupExecutorWithValues<jln::detail::tuple<>, Ts...> : GroupExecutor<Ts...>
+{};
+
+
+template<class... Ts>
+struct TopExecutor : GroupExecutor<Ts...>
+{
+    TopExecutor() = default;
+
+    bool exec(BasicFd<jln::prefix_args<Ts...>>& fd, Ts&... xs)
+    {
+        R r;
+
+        try {
+            do {
+                switch ((r = this->_exec(*this, fd, xs...))) {
+                    case R::ExitSuccess:
+                    case R::Exception:
+                    case R::Terminate:
+                    case R::ExitError:
+                    case R::NeedMoreData:
+                        break;
+                    case R::Next:
+                    case R::CreateGroup:
+                    case R::Substitute:
+                        continue;
+                }
+            } while(0);
+        }
+        catch (Error const& e) {
+            this->error = e;
+            r = this->has_group()
+                ? this->_exec_group_exit(*this, fd, R::Exception, xs...)
+                : this->_exec_exit(*this, fd, R::Exception, xs...);
+            /*if (r == R::Exception)*/ {
+                throw this->error;
+            }
+        }
+
+        switch (r) {
+            case R::ExitSuccess:
+            case R::Exception:
+            case R::Terminate:
+            case R::ExitError:
+                return false;
+            case R::NeedMoreData:
+            case R::Next:
+            case R::CreateGroup:
+            case R::Substitute:
+                return true;
+        }
+        REDEMPTION_UNREACHABLE();
+        // try {
+        //     return this->_exec(*this, fd, xs...) == R::NeedMoreData;
+        // }
+        // catch (Error const& e) {
+        //     this->error = e;
+        //     R const r = this->has_group()
+        //         ? this->_exec_group_exit(*this, fd, R::Exception, xs...)
+        //         : this->_exec_exit(*this, fd, R::Exception, xs...);
+        //     if (r == R::Exception) {
+        //         throw this->error;
+        //     }
+        //     return (r == R::NeedMoreData);
+        // }
+    }
+
+    Error error = Error(NO_ERROR);
+};
+
+
+template<class... Ts>
+R GroupExecutor<Ts...>::_exec_exit(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd, R r, Ts&... xs)
+{
+    switch (R re = this->on_exit(
+        ContextError<Ts...>{top, fd},
+        ExitR{static_cast<ExitR::Status>(r), top.error},
+        xs...
+    )) {
+        case R::ExitSuccess:
+        case R::Exception:
+        case R::Terminate:
+        case R::ExitError:
+            return re;
+        case R::NeedMoreData:
+        case R::Next:
+            return bool(this->next) ? R::NeedMoreData : r;
+        case R::CreateGroup:
+        case R::Substitute:
+            return R::NeedMoreData;
+    }
+    REDEMPTION_UNREACHABLE();
+}
+
+template<class... Ts>
+R GroupExecutor<Ts...>::_exec_group_exit(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd, R r, Ts&... xs)
+{
+    do {
+        R const re = this->group->on_exit(
+            ContextError<Ts...>{top, fd},
+            ExitR{static_cast<ExitR::Status>(r), top.error},
+            xs...);
+        this->group = std::move(this->group->group);
+        switch (re) {
+            case R::ExitSuccess:
+                if (!this->group && this->next) {
+                    return R::NeedMoreData;
+                }
+                r = re;
+                break;
+            case R::Exception:
+            case R::Terminate:
+            case R::ExitError:
+                r = re;
+                break;
+            case R::NeedMoreData:
+            case R::Next:
+                return bool(this->next) ? R::NeedMoreData : r;
+            case R::CreateGroup:
+            case R::Substitute:
+                return R::NeedMoreData;
+        }
+    } while (this->group);
+    return r;
+}
+
+template<class... Ts>
+R GroupExecutor<Ts...>::_exec_next(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd, Ts&... xs)
+{
+    R const r = this->next->f(Context<Ts...>{top, *this->next, fd}, xs...);
+    switch (r) {
+        case R::Terminate:
+        case R::Exception:
+        case R::ExitError:
+        case R::ExitSuccess:
+        case R::NeedMoreData:
+            return r;
+        case R::Next:
+            this->next = std::move(this->next->next);
+            return (bool(this->next) ? R::NeedMoreData : R::ExitSuccess);
+        case R::CreateGroup:
+            this->next = std::move(this->next->next);
+            return R::NeedMoreData;
+        case R::Substitute:
+            return R::NeedMoreData;
+    }
+    REDEMPTION_UNREACHABLE();
+}
+
+template<class... Ts>
+R GroupExecutor<Ts...>::_exec(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd, Ts&... xs)
+{
+    if (this->group) {
+        R const r = this->group->_exec_next(top, fd, xs...);
+        switch (r) {
+            case R::Exception:
+            case R::Terminate:
+            case R::ExitError:
+            case R::ExitSuccess:
+                return this->_exec_group_exit(top, fd, r, xs...);
+            case R::NeedMoreData:
+                return r;
+            case R::Next:
+            case R::Substitute:
+            case R::CreateGroup:
+                assert(false);
+        }
+        REDEMPTION_UNREACHABLE();
+    }
+    else {
+        assert(this->next);
+        R const r = this->_exec_next(top, fd, xs...);
+        switch (r) {
+            case R::Exception:
+            case R::Terminate:
+            case R::ExitError:
+            case R::ExitSuccess:
+                return this->_exec_exit(top, fd, r, xs...);
+            case R::NeedMoreData:
+            case R::Next:
+            case R::Substitute:
+            case R::CreateGroup:
+                return r;
+        }
+        REDEMPTION_UNREACHABLE();
+    }
+}
+
+
+template<bool setError, int stateInit, class Group, class... Ts>
+detail::GroupExecutorBuilderImpl<setError, stateInit, Group, Ts...>::GroupExecutorBuilderImpl(
+    TopExecutor<Ts...>& top, std::unique_ptr<Group>&& g) noexcept
+: top(top)
+, g(std::move(g))
+{}
+
+template<bool setError, int stateInit, class Group, class... Ts>
+template<class F>
+auto detail::GroupExecutorBuilderImpl<setError, stateInit, Group, Ts...>::then(F&& f)
+{
+    this->g->then(static_cast<F&&>(f));
+    return GroupExecutorBuilderImpl<
+        setError, (stateInit == 1 ? stateInit : stateInit+1), Group, Ts...>{
+            this->top, std::move(this->g)};
+}
+
+template<bool setError, int stateInit, class Group, class... Ts>
+template<class F>
+detail::GroupExecutorBuilderImpl<1, stateInit, Group>
+detail::GroupExecutorBuilderImpl<setError, stateInit, Group, Ts...>::on_exit(F&& f)
+{
+    static_assert(!setError, "on_error or propagate_exit is already used");
+    this->g->set_on_exit(static_cast<F&&>(f));
+    return GroupExecutorBuilderImpl<1, stateInit, Group, Ts...>{this->top, std::move(this->g)};
+}
+
+template<bool setError, int stateInit, class Group, class... Ts>
+detail::GroupExecutorBuilderImpl<1, stateInit, Group>
+detail::GroupExecutorBuilderImpl<setError, stateInit, Group, Ts...>::propagate_exit()
+{
+    static_assert(!setError, "on_error or propagate_exit is already used");
+    this->g->set_propagate_exit();
+    return GroupExecutorBuilderImpl<1, stateInit, Group, Ts...>{this->top, std::move(this->g)};
+}
+
+template<bool setError, int stateInit, class Group, class... Ts>
+detail::GroupExecutorBuilderImpl<setError, stateInit, Group, Ts...>::operator R()
+{
+    static_assert(stateInit >= 1, "empty group");
+    static_assert(setError, "missing builder.on_error(f) or builder.propagate_exit()");
+    this->top.add_group_executor(std::move(this->g));
+    return R::CreateGroup;
+}
+
+
+template<class... Ts>
+#ifdef IN_IDE_PARSER
+detail::GroupExecutorBuilder_Concept Context<Ts...>::create_sub_executor(Xs&&...)
+#else
+template<class... Xs>
+auto Context<Ts...>::create_sub_executor(Xs&&... xs)
+#endif
+{
+    using G = GroupExecutorWithValues<
+        jln::detail::tuple<jln::detail::decay_and_strip_t<Xs>...>,
+        Ts...>;
+    return detail::GroupExecutorBuilder<G>{
+        this->top, std::make_unique<G>(static_cast<Xs&&>(xs)...)};
+}
+
+template<class... Ts>
+R Context<Ts...>::exception(Error const& e) noexcept
+{
+    this->top.error = e;
+    return R::Exception;
+}
+
+template<class... Ts>
+template<class F>
+R Context<Ts...>::replace_action(F&& f)
+{
+    this->current.f = static_cast<F&&>(f);
+    return R::Substitute;
+}
+
+template<class... Ts>
+template<class F>
+R Context<Ts...>::next_action(F&& f)
+{
+    this->current.f = static_cast<F&&>(f);
+    return R::NeedMoreData;
+}
+
+template<class... Ts>
+template<class F>
+R Context<Ts...>::exec_action(F&& f)
+{
+    return this->replace_action(static_cast<F&&>(f));
+}
+
+}
+
+
+template<class PrefixArgs_>
+struct TopExecutorAdapter;
+
+template<class... Ts>
+struct TopExecutorAdapter<jln::prefix_args<Ts...>>
+{
+    using type = jln2::TopExecutor<Ts...>;
+    using group = jln2::GroupExecutor<Ts...>;
+};
+
+template<class PrefixArgs_>
+struct BasicFd : jln::BasicTimer<PrefixArgs_>
+//, ExecutorBase<PrefixArgs_>
+//, TopExecutorAdapter<PrefixArgs_>::type
+{
+    using prefix_args = PrefixArgs_;
+    using base_type = BasicFd;
+
+    typename TopExecutorAdapter<PrefixArgs_>::type top_;
+
+    ///@{ BEGIN Top
+    void add_group_executor(
+        std::unique_ptr<typename TopExecutorAdapter<PrefixArgs_>::group>&& g)
+    {
+        this->top_.add_group_executor(std::move(g));
+    }
+
+    template<class F>
+    void then(F&& f)
+    {
+        this->top_.then(static_cast<F&&>(f));
+    }
+
+    template<class F>
+    void set_on_exit(F&& f)
+    {
+        this->top_.set_on_exit(static_cast<F&&>(f));
+    }
+
+    void set_propagate_exit() noexcept
+    {
+        this->top_.set_propagate_exit();
+    }
+
+    template<class... Us>
+    bool exec(Us&&... xs)
+    {
+        return this->top_.exec(*this, static_cast<Us&&>(xs)...);
+    }
+
+    template<class... Us>
+    bool exec_action(Us&&... xs) noexcept
+    {
+        return this->exec(static_cast<Us&&>(xs)...);
+    }
+    ///@} END Top
+
+    // using jln::BasicExecutorImpl<PrefixArgs_>::delete_self;
+    // using jln::BasicExecutorImpl<PrefixArgs_>::deleter;
+
+    // using ExecutorBase<PrefixArgs_>::on_action;
+
+    jln::BasicTimer<PrefixArgs_>& timer() noexcept { return *this; }
+
+    void restart_timeout()
+    {
+        assert(this->delay.count() > 0);
+        this->tv = addusectimeval(this->delay, this->session_reactor.get_current_time());
+    }
+
+    BasicFd(int fd, SessionReactor& session_reactor) noexcept
+    : fd(fd)
+    , session_reactor(session_reactor)
+    {}
+
+    void set_fd(int fd) noexcept
+    {
+        assert(fd >= 0);
+        LOG(LOG_DEBUG, "set_fd %d -> %d", this->fd, fd);
+        this->fd = fd;
+    }
+
+    int get_fd() const noexcept
+    {
+        return this->fd;
+    }
+
+    void set_timeout(std::chrono::milliseconds ms) noexcept
+    {
+        this->set_delay(ms);
+        this->set_time(addusectimeval(this->delay, this->session_reactor.get_current_time()));
+        if constexpr (std::is_same<jln::prefix_args<>, PrefixArgs_>::value) {
+            this->session_reactor.timer_events_.update_delay(*this, ms);
+        }
+        else {
+            this->session_reactor.graphic_timer_events_.update_delay(*this, ms);
+        }
+    }
+
+    void disable_timeout() noexcept
+    {
+        if (this->timer_is_disabled) {
+            return;
+        }
+
+        auto disable = [this](auto& cont){
+            auto it = std::find_if(cont.begin(), cont.end(), [this](auto& p){
+                return &p->value == this;
+            });
+            assert(it != cont.end());
+            --(*it)->use_count;
+            *it = std::move(cont.back());
+            cont.pop_back();
+        };
+
+        if constexpr (std::is_same<jln::prefix_args<>, PrefixArgs_>::value) {
+            disable(this->session_reactor.timer_events_.elements);
+        }
+        else {
+            disable(this->session_reactor.graphic_timer_events_.elements);
+        }
+
+        this->timer_is_disabled = true;
+    }
+
+    SessionReactor& get_reactor() const noexcept
+    {
+        return this->session_reactor;
+    }
+
+private:
+    int fd;
+    SessionReactor& session_reactor;
+    bool timer_is_disabled = false;
+};
 
 class mod_api;
 class Callback;
@@ -589,289 +1323,6 @@ struct SessionReactor
     };
 
     template<class PrefixArgs_, class... Ts>
-    struct BasicExecutorImpl;
-
-    template<class PrefixArgs_, class... Args>
-    using BasicExecutor = BasicExecutorImpl<
-        PrefixArgs_, typename jln::detail::decay_and_strip<Args>::type...>;
-
-    template<class PrefixArgs_>
-    struct ExecutorBase
-    {
-        using OnActionFuncPtr = jln::MakeFuncPtr<ExecutorBase&, PrefixArgs_>;
-        using OnExitFuncPtr = jln::MakeFuncPtr<ExecutorBase&, PrefixArgs_, jln::ExecutorError>;
-
-        OnActionFuncPtr on_action = jln::default_action_function();
-        OnExitFuncPtr on_exit = jln::default_action_function();
-
-        std::unique_ptr<ExecutorBase> group;
-        std::unique_ptr<ExecutorBase> next;
-        ExecutorBase* end_next = nullptr;
-
-        ExecutorBase() = default;
-        ExecutorBase(ExecutorBase const&) = delete;
-        ExecutorBase& operator=(ExecutorBase const&) = delete;
-
-        template<class... Args>
-        BasicExecutor<PrefixArgs_, Args...>& add_sequence(Args&&... args)
-        {
-            if (!this->end_next) {
-                this->end_next = this;
-            }
-            using Executor = BasicExecutor<PrefixArgs_, Args...>;
-            this->end_next->next = std::make_unique<Executor>(static_cast<Args&&>(args)...);
-            this->end_next = this->end_next->next.get();
-            return *static_cast<Executor*>(this->end_next);
-        }
-
-        void add_sub_executor(std::unique_ptr<ExecutorBase> p)
-        {
-            assert(bool(p->next));
-            assert(!bool(p->group));
-            p->group = std::move(this->group);
-            this->group = std::move(p);
-        }
-
-        template<class... Ts>
-        auto create_sub_executor()
-        {
-            return std::make_unique<ExecutorBase>();
-        }
-
-        template<class... Args>
-        jln::ExecutorResult exec_action(Args&&... args)
-        {
-            return this->on_action(*this, static_cast<Args&&>(args)...);
-        }
-
-        template<class... Args>
-        jln::ExecutorResult exec_exit(jln::ExecutorError error, Args&&... args)
-        {
-            return this->on_exit(*this, error, static_cast<Args&&>(args)...);
-        }
-
-        template<class... Args>
-        void terminate(Args&&... /*args*/)
-        {
-            assert(false);
-        }
-
-        using R = jln::ExecutorResult;
-
-        template<class... Args>
-        R _exec_next(Args&&... args)
-        {
-            R r = this->next->exec_action(static_cast<Args&&>(args)...);
-            switch (r) {
-                case R::Nothing:
-                case R::Terminate:
-                case R::ExitFailure:
-                case R::ExitSuccess:
-                case R::NeedMoreData:
-                case R::Ready:
-                    break;
-                case R::Next:
-                case R::CreateGroup:
-                    this->next = std::move(this->next->next);
-                    r = (bool(this->next) ? R::Ready : R::ExitSuccess);
-                    break;
-            }
-            return r;
-        }
-
-        template<class... Args>
-        bool exec(Args&&... args)
-        {
-            for (;;) {
-                if (this->group) {
-                    R r = this->group->_exec_next(static_cast<Args&&>(args)...);
-                    switch (r) {
-                        case R::Terminate:
-                        case R::ExitFailure:
-                        case R::ExitSuccess:
-                            this->group = std::move(this->group->group);
-                            while (this->group && !this->group->next) {
-                                this->group = std::move(this->group->group);
-                            }
-                            if (!bool(this->next)) {
-                                return false;
-                            }
-                            r = R::Ready;
-                            break;
-                        case R::NeedMoreData:
-                            return true;
-                        case R::Ready:
-                            break;
-                        case R::Next:
-                        case R::CreateGroup:
-                        case R::Nothing:
-                            assert(false);
-                    }
-                }
-                else if (this->next) {
-                    R r = this->_exec_next(static_cast<Args&&>(args)...);
-                    switch (r) {
-                        case R::Terminate:
-                        case R::ExitFailure:
-                        case R::ExitSuccess:
-                            return false;
-                        case R::NeedMoreData:
-                            return true;
-                        case R::Ready:
-                            break;
-                        case R::Nothing:
-                        case R::Next:
-                        case R::CreateGroup:
-                            assert(false);
-                    }
-                }
-                else {
-                    // TODO group with next = nullptr ?
-                    R r = this->exec_action(static_cast<Args&&>(args)...);
-                    switch (r) {
-                        case R::Terminate:
-                        case R::ExitFailure:
-                        case R::ExitSuccess:
-                            return false;
-                        case R::NeedMoreData:
-                            return true;
-                        case R::Ready:
-                        case R::Nothing:
-                            break;
-                        case R::Next:
-                        case R::CreateGroup:
-                            assert(false);
-                    }
-                }
-            }
-            assert(false);
-            return false;
-        }
-
-        template<class... Args>
-        void exec_all(Args&&... args)
-        {
-            while (this->exec(static_cast<Args&&>(args)...)) {
-            }
-        }
-
-        template<class... Args>
-        bool exit_with(jln::ExecutorError, Args&&... args);
-    };
-
-    template<class PrefixArgs_, class... Ts>
-    struct BasicExecutorImpl : ExecutorBase<PrefixArgs_>
-    {
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
-        template<class... Args>
-        BasicExecutorImpl(Args&&... args)
-        noexcept(noexcept(jln::detail::tuple<Ts...>{static_cast<Args&&>(args)...}))
-        : ctx{static_cast<Args&&>(args)...}
-        {}
-        REDEMPTION_DIAGNOSTIC_POP
-
-        template<class F>
-        void set_on_action(F) noexcept
-        {
-            this->on_action = jln::wrap_fn<F, BasicExecutorImpl, jln::Executor2FdContext>();
-        }
-
-        template<class F>
-        void set_on_exit(F) noexcept
-        {
-            this->on_exit = jln::wrap_fn<F, BasicExecutorImpl, jln::Executor2FdContext>();
-        }
-
-    // private:
-        jln::detail::tuple<Ts...> ctx;
-    };
-
-    template<class PrefixArgs_>
-    struct BasicFd : jln::BasicTimer<PrefixArgs_>, ExecutorBase<PrefixArgs_>
-    {
-        using prefix_args = PrefixArgs_;
-        using base_type = BasicFd;
-
-        // using jln::BasicExecutorImpl<PrefixArgs_>::delete_self;
-        // using jln::BasicExecutorImpl<PrefixArgs_>::deleter;
-        using ExecutorBase<PrefixArgs_>::on_action;
-
-        jln::BasicTimer<PrefixArgs_>& timer() noexcept { return *this; }
-
-        void restart_timeout()
-        {
-            assert(this->delay.count() > 0);
-            this->tv = addusectimeval(this->delay, this->session_reactor.get_current_time());
-        }
-
-        BasicFd(int fd, SessionReactor& session_reactor) noexcept
-        : fd(fd)
-        , session_reactor(session_reactor)
-        {}
-
-        void set_fd(int fd) noexcept
-        {
-            assert(fd >= 0);
-            LOG(LOG_DEBUG, "set_fd %d -> %d", this->fd, fd);
-            this->fd = fd;
-        }
-
-        int get_fd() const noexcept
-        {
-            return this->fd;
-        }
-
-        void set_timeout(std::chrono::milliseconds ms) noexcept
-        {
-            this->set_delay(ms);
-            this->set_time(addusectimeval(this->delay, this->session_reactor.get_current_time()));
-            if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
-                this->session_reactor.timer_events_.update_delay(*this, ms);
-            }
-            else {
-                this->session_reactor.graphic_timer_events_.update_delay(*this, ms);
-            }
-        }
-
-        void disable_timeout() noexcept
-        {
-            if (this->timer_is_disabled) {
-                return;
-            }
-
-            auto disable = [this](auto& cont){
-                auto it = std::find_if(cont.begin(), cont.end(), [this](auto& p){
-                    return &p->value == this;
-                });
-                assert(it != cont.end());
-                --(*it)->use_count;
-                *it = std::move(cont.back());
-                cont.pop_back();
-            };
-
-            if constexpr (std::is_same<PrefixArgs, PrefixArgs_>::value) {
-                disable(this->session_reactor.timer_events_.elements);
-            }
-            else {
-                disable(this->session_reactor.graphic_timer_events_.elements);
-            }
-
-            this->timer_is_disabled = true;
-        }
-
-        SessionReactor& get_reactor() const noexcept
-        {
-            return this->session_reactor;
-        }
-
-    private:
-        int fd;
-        SessionReactor& session_reactor;
-        bool timer_is_disabled = false;
-    };
-
-    template<class PrefixArgs_, class... Ts>
     struct FdImpl : BasicFd<PrefixArgs_>
     {
         REDEMPTION_DIAGNOSTIC_PUSH
@@ -881,20 +1332,38 @@ struct SessionReactor
         noexcept(noexcept(jln::detail::tuple<Ts...>{static_cast<Args&&>(args)...}))
         : BasicFd<PrefixArgs_>(fd, session_reactor)
         , ctx{static_cast<Args&&>(args)...}
-        {}
+        {
+            this->top_.set_on_exit([](auto ctx, jln2::ExitR er, auto&...){
+                return jln2::propagate_exit(ctx, er);
+            });
+        }
         REDEMPTION_DIAGNOSTIC_POP
 
         template<class F>
-        void set_on_action(F) noexcept
+        void set_on_action(F&& f) noexcept
         {
-            this->on_action = jln::wrap_fn<F, FdImpl, jln::Executor2FdContext>();
+            this->top_.then([f = static_cast<F&&>(f), this](auto ctx, auto&... xs){
+                return this->ctx.invoke([&](auto&&... xs){
+                    return f(ctx, xs...);
+                }, xs...);
+            });
         }
 
         template<class F>
-        void set_on_exit(F) noexcept
+        void reset_action(F&& f)
         {
-            this->on_exit = jln::wrap_fn<F, FdImpl, jln::Executor2FdContext>();
+            this->top_.reset_action([f = static_cast<F&&>(f), this](auto ctx, auto&... xs){
+                return this->ctx.invoke([&](auto&&... xs){
+                    return f(ctx, xs...);
+                }, xs...);
+            });
         }
+
+        // template<class F>
+        // void set_on_exit(F) noexcept
+        // {
+        //     this->on_exit = jln::wrap_fn<F, FdImpl, jln::Executor2FdContext>();
+        // }
 
         template<class F>
         void set_on_timeout(F) noexcept
@@ -907,14 +1376,14 @@ struct SessionReactor
             this->set_timeout(ms);
         }
 
-        template<class... Args>
-        BasicExecutor<PrefixArgs_, Args...>*
-        create_sub_executor(Args&&... args)
-        {
-            auto p = new BasicExecutor<PrefixArgs_, Args...>(static_cast<Args&&>(args)...);
-            this->add_sub_executor(std::unique_ptr<ExecutorBase<PrefixArgs_>>(p));
-            return p;
-        }
+        // template<class... Args>
+        // BasicExecutor<PrefixArgs_, Args...>*
+        // create_sub_executor(Args&&... args)
+        // {
+        //     auto p = new BasicExecutor<PrefixArgs_, Args...>(static_cast<Args&&>(args)...);
+        //     this->add_sub_executor(std::unique_ptr<ExecutorBase<PrefixArgs_>>(p));
+        //     return p;
+        // }
 
     public:
         jln::detail::tuple<Ts...> ctx;

@@ -104,7 +104,7 @@ public:
         this->fdobject = session_reactor.create_fd_event(this->file_descriptor, std::ref(*this), f)
         .set_notify_delete([](RdpdrDriveReadTask& self, DeleterFunction& f){ f(self); })
         .on_action([](auto ctx, RdpdrDriveReadTask& self, DeleterFunction&) {
-            return self.run() ? ctx.ready() : ctx.terminate();
+            return self.run() ? ctx.need_more_data() : ctx.terminate();
         })
         .on_exit(jln::exit_with_success())
         .set_timeout(std::chrono::milliseconds(1000))

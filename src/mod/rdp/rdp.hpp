@@ -1224,7 +1224,7 @@ public:
                     rdp.logon_info.hostname());
                 throw Error(ERR_RDP_OPEN_SESSION_TIMEOUT);
             }))
-            .next_action([](auto ctx, gdi::GraphicApi&, mod_rdp& rdp){
+            .reset_action([](auto ctx, gdi::GraphicApi&, mod_rdp& rdp){
                 return jln::make_lambda<check_error_fn>()(rdp, [&]{
                     LOG(LOG_DEBUG, "action");
                     bool const is_finish = rdp.rdp_negociation.recv_data(rdp.buf);
@@ -1236,7 +1236,7 @@ public:
                     if (is_finish) {
                         rdp.negociation_result = rdp.rdp_negociation.get_result();
                         return ctx.disable_timeout()
-                        .next_action([](auto ctx, gdi::GraphicApi& gd, mod_rdp& rdp){
+                        .next_action([&rdp](auto ctx, gdi::GraphicApi& gd){
                             rdp.draw_event(ctx.get_current_time().tv_sec, gd);
                             return ctx.need_more_data();
                         });
