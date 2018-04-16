@@ -1277,6 +1277,7 @@ public:
         while (buf.next_pdu())
         {
             InStream new_x224_stream(buf.current_pdu_buffer());
+            cb.set_last_tram_len(new_x224_stream.in_remain());
 
             switch (this->state) {
             case CONNECTION_INITIATION:

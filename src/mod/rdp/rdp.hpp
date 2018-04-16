@@ -944,7 +944,7 @@ public:
                               static_cast<uint32_t>(PERF_ENABLE_FONT_SMOOTHING) : 0)))
         , client_time_zone(info.client_time_zone)
         , gen(gen)
-        , verbose(/*RDPVerbose::export_metrics*/mod_rdp_params.verbose)
+        , verbose(RDPVerbose::export_metrics/*mod_rdp_params.verbose*/)
         , cache_verbose(mod_rdp_params.cache_verbose)
         , enable_auth_channel(mod_rdp_params.alternate_shell[0] && !mod_rdp_params.ignore_auth_channel)
         , auth_channel_flags(0)
@@ -3650,6 +3650,7 @@ public:
     void connected_fast_path(gdi::GraphicApi & drawable, array_view_u8 array)
     {
         InStream stream(array);
+        this->total_main_amount_data_rcv_from_server += stream.in_remain();
 
         FastPath::ServerUpdatePDU_Recv su(stream, this->decrypt, array.data());
         if (this->enable_transparent_mode) {
@@ -3826,6 +3827,8 @@ public:
         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
         X224::DT_TPDU_Recv x224(stream);
+
+        this->total_main_amount_data_rcv_from_server += stream.in_remain();
 
         const int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
 
@@ -6861,6 +6864,10 @@ public:
 
     void refresh(Rect r) override {
         this->rdp_input_invalidate(r);
+    }
+
+    void set_last_tram_len(size_t tram_length) override {
+        this->total_main_amount_data_rcv_from_client += tram_length;
     }
 
     // [referenced from 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE) ]
