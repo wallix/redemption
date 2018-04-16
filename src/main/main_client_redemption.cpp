@@ -25,7 +25,7 @@
 #include "utils/log.hpp"
 
 
-#include "client_redemption.hpp"
+#include "client_redemption/client_redemption.hpp"
 
 
 #pragma GCC diagnostic pop
@@ -33,13 +33,13 @@
 
 
 
-int main(int argc, char** argv) {
-
-
+int main(int argc, char** argv)
+{
+    SessionReactor session_reactor;
 
     RDPVerbose verbose = to_verbose_flags(0);
 
-    ClientRedemption client(argv, argc, verbose
+    ClientRedemption client(session_reactor, argv, argc, verbose
                            , nullptr
                            , nullptr
                            , nullptr

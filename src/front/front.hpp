@@ -979,8 +979,7 @@ public:
             ini.get<cfg::video::png_limit>(),
             true,
             this->client_info.remote_program,
-            ini.get<cfg::video::rt_display>(),
-            ini.get<cfg::video::smart_video_cropping>()
+            ini.get<cfg::video::rt_display>()
         };
         bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
 
@@ -1028,7 +1027,8 @@ public:
             record_tmp_path,
             record_path,
             groupid,
-            &this->report_message
+            &this->report_message,
+            ini.get<cfg::video::smart_video_cropping>()
         };
 
         this->capture = new Capture( capture_params
@@ -1050,8 +1050,8 @@ public:
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }
-        if (this->capture->get_graphic_api()) {
-            this->set_gd(this->capture->get_graphic_api());
+        if (this->capture->has_graphic_api()) {
+            this->set_gd(this->capture);
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
@@ -1251,6 +1251,7 @@ public:
         while (buf.next_pdu())
         {
             InStream new_x224_stream(buf.current_pdu_buffer());
+            cb.set_last_tram_len(new_x224_stream.in_remain());
 
             switch (this->state) {
             case CONNECTION_INITIATION:
@@ -4199,6 +4200,8 @@ protected:
             const signed int deltax = static_cast<int16_t>(cmd.srcx) - cmd.rect.x;
             const signed int deltay = static_cast<int16_t>(cmd.srcy) - cmd.rect.y;
 
+
+
             int srcx = drect.x + deltax;
             int srcy = drect.y + deltay;
 
@@ -4214,6 +4217,13 @@ protected:
 
                 srcy = 0;
             }
+
+            Rect srect = Rect(srcx, srcy, drect.cx, drect.cy).intersect(this->client_info.width, this->client_info.height);
+
+            drect.cx = srect.cx;
+            drect.cy = srect.cy;
+
+
 
             this->graphics_update->draw(RDPScrBlt(drect, cmd.rop, srcx, srcy), clip);
         }

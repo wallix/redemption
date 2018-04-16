@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2016
-   Author(s): Clément Moroldo
+   Author(s): Clément Moroldo, David Fort
 */
 
 
@@ -37,12 +37,12 @@
 
 
 
-#include "client_input_output_api.hpp"
+#include "client_redemption/client_input_output_api.hpp"
 
-#include "client_channel_managers/client_channel_RDPSND_manager.hpp"
-#include "client_channel_managers/client_channel_CLIPRDR_manager.hpp"
-#include "client_channel_managers/client_channel_RDPDR_manager.hpp"
-#include "client_channel_managers/client_channel_remoteapp_manager.hpp"
+#include "client_redemption/client_channel_managers/client_channel_RDPSND_manager.hpp"
+#include "client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp"
+#include "client_redemption/client_channel_managers/client_channel_RDPDR_manager.hpp"
+#include "client_redemption/client_channel_managers/client_channel_remoteapp_manager.hpp"
 
 
 
@@ -51,37 +51,8 @@
 
 class ClientRedemption : public ClientRedemptionIOAPI
 {
-
-    private:
-    class ClipboardServerChannelDataSender : public VirtualChannelDataSender
-    {
-    public:
-        mod_api        * _callback;
-
-        ClipboardServerChannelDataSender() = default;
-
-
-        void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
-            InStream chunk(chunk_data, chunk_data_length);
-            this->_callback->send_to_mod_channel(channel_names::cliprdr, chunk, total_length, flags);
-        }
-    };
-
-    class ClipboardClientChannelDataSender : public VirtualChannelDataSender
-    {
-    public:
-        FrontAPI            * _front;
-        CHANNELS::ChannelDef  _channel;
-
-        ClipboardClientChannelDataSender() = default;
-
-
-        void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
-
-            this->_front->send_to_channel(this->_channel, chunk_data, total_length, chunk_data_length, flags);
-        }
-    };
-
+    SessionReactor& session_reactor;
+    SessionReactor::GraphicEventPtr clear_screen_event;
 
 public:
     // io API
@@ -93,8 +64,6 @@ public:
 
 
     // RDP
-    ClipboardServerChannelDataSender _to_server_sender;
-    ClipboardClientChannelDataSender _to_client_sender;
     CHANNELS::ChannelDefArray   cl;
     Font                 _font;
     std::string          _error;
@@ -102,7 +71,11 @@ public:
     UdevRandom           gen;
     std::array<uint8_t, 28> server_auto_reconnect_packet_ref;
     Inifile ini;
+    std::string close_box_extra_message_ref;
+
+    //  Remote App
     ClientExecute client_execute;
+
     std::unique_ptr<mod_api> unique_mod;
 
     enum : int {
@@ -119,7 +92,11 @@ public:
     ClientChannelRemoteAppManager clientChannelRemoteAppManager;
 
 
-    // replay mod
+    // Replay Mod
+    std::unique_ptr<ReplayMod> replay_mod;
+
+    // Recorder
+    Fstat fstat;
     std::unique_ptr<Capture>  capture;
     gdi::GraphicApi    * graph_capture;
 
@@ -130,28 +107,29 @@ public:
     //      CONSTRUCTOR
     //------------------------
 
-    ClientRedemption(char* argv[], int argc, RDPVerbose verbose,
+    ClientRedemption(SessionReactor& session_reactor,
+                     char* argv[], int argc, RDPVerbose verbose,
                      ClientOutputGraphicAPI *impl_graphic,
                      ClientIOClipboardAPI * impl_clipboard,
                      ClientOutputSoundAPI * impl_sound,
                      ClientInputSocketAPI * impl_socket_listener,
                      ClientInputMouseKeyboardAPI * impl_mouse_keyboard)
-        : ClientRedemptionIOAPI(argv, argc, verbose)
-
+        : ClientRedemptionIOAPI(session_reactor, argv, argc, verbose)
+        , session_reactor(session_reactor)
         , impl_graphic( impl_graphic)
         , impl_clipboard (impl_clipboard)
         , impl_sound (impl_sound)
         , impl_socket_listener (impl_socket_listener)
         , impl_mouse_keyboard(impl_mouse_keyboard)
 
-        , client_execute(*(this), this->info.window_list_caps, false)
+        , close_box_extra_message_ref("Close")
+        , client_execute(session_reactor, *(this), this->info.window_list_caps, false)
 
         , clientChannelRDPSNDManager(this->verbose, this, this->impl_sound)
         , clientChannelCLIPRDRManager(this->verbose, this, this->impl_clipboard)
         , clientChannelRDPDRManager(this->verbose, this)
         , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
-
-
+    	, graph_capture(nullptr)
     {
         if (this->impl_clipboard) {
             this->impl_clipboard->set_client(this);
@@ -213,7 +191,16 @@ public:
         if (this->impl_mouse_keyboard) {
             this->impl_mouse_keyboard->update_keylayout();
         }
-        this->keymap.init_layout(this->info.keylayout);
+
+        switch (this->mod_state) {
+            case ClientRedemptionIOAPI::MOD_VNC:
+                this->keymap.init_layout(this->vnc_conf.keylayout);
+                break;
+
+            default: this->keymap.init_layout(this->info.keylayout);
+                break;
+
+        }
     }
 
     const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
@@ -236,8 +223,8 @@ public:
 
     bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) override {
          try {
-
-            this->replay_mod.reset(new ReplayMod( *this
+            this->replay_mod.reset(new ReplayMod( session_reactor
+                                                , *this
                                                 , movie_dir.c_str() //(this->REPLAY_DIR + "/").c_str()
                                                 , movie_name.c_str()
                                                 , 0             //this->info.width
@@ -271,26 +258,31 @@ public:
         return false;
     }
 
-    void replay(std::string const & movie_dir_, std::string const & movie_path_) override {
-        if (movie_path_.empty()) {
+    void replay(const std::string & movie_name, const std::string & movie_dir) override {
+
+        this->_movie_name = movie_name;
+        this->_movie_dir = movie_dir;
+
+        if (this->_movie_name.empty()) {
              //this->impl_graphic->readError(movie_path_);
             return;
         }
 
         this->is_replaying = true;
+        this->is_loading_replay_mod = true;
         //this->setScreenDimension();
-        if (this->load_replay_mod(movie_dir_, movie_path_, {0, 0}, {0, 0})) {
-            this->info.width = this->replay_mod->get_dim().w;
-            this->info.height = this->replay_mod->get_dim().h;
+        if (this->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0})) {
+
+            this->is_loading_replay_mod = false;
 
             if (impl_graphic) {
-                this->impl_graphic->reset_cache(this->info.width, this->info.height);
-                this->impl_graphic->create_screen(movie_dir_, movie_path_);
-            }
+                this->impl_graphic->reset_cache(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
+                this->impl_graphic->create_screen(this->_movie_dir, this->_movie_name);
 
-            if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
-                if (this->impl_mouse_keyboard) {
-                    this->impl_mouse_keyboard->pre_load_movie();
+                if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
+                    if (this->impl_mouse_keyboard) {
+                        this->impl_mouse_keyboard->pre_load_movie();
+                    }
                 }
             }
 
@@ -298,6 +290,8 @@ public:
                 this->impl_graphic->show_screen();
             }
         }
+
+        this->is_loading_replay_mod = false;
     }
 
     virtual void  disconnect(std::string const & error, bool pipe_broken) override {
@@ -319,10 +313,11 @@ public:
             LOG(LOG_INFO, "Disconnected from [%s].", this->target_IP.c_str());
         }
 
-        if (this->impl_graphic) {
-            this->impl_graphic->set_ErrorMsg(error);
+        if (this->mod_state != MOD_RDP_REPLAY) {
+            if (this->impl_graphic) {
+                this->impl_graphic->set_ErrorMsg(error);
+            }
         }
-
         if (this->impl_mouse_keyboard) {
             this->impl_mouse_keyboard->init_form();
         }
@@ -336,7 +331,6 @@ public:
             switch (this->mod_state) {
                 case MOD_RDP:
                 {
-                
                     ModRDPParams mod_rdp_params( this->user_name.c_str()
                                     , this->user_password.c_str()
                                     , this->target_IP.c_str()
@@ -364,8 +358,9 @@ public:
                     mod_rdp_params.deny_channels = nullptr;
                     mod_rdp_params.enable_rdpdr_data_analysis = false;
 
-                    this->unique_mod.reset(new mod_rdp( *(this->socket)
-                                                , *(this)
+                    this->unique_mod.reset(new mod_rdp( *this->socket
+                                                , session_reactor
+                                                , *this
                                                 , this->info
                                                 , ini.get_ref<cfg::mod_rdp::redir_info>()
                                                 , this->gen
@@ -420,6 +415,7 @@ public:
                     }
 
                     this->unique_mod.reset(new mod_rdp( *(this->socket)
+                                                , session_reactor
                                                 , *(this)
                                                 , this->info
                                                 , ini.get_ref<cfg::mod_rdp::redir_info>()
@@ -441,28 +437,23 @@ public:
 
             case MOD_VNC:
             {
-                 this->unique_mod.reset(new mod_vnc( *(this->socket)
+                 this->unique_mod.reset(new mod_vnc( *this->socket
+                                                    , session_reactor
                                                     , this->user_name.c_str()
                                                     , this->user_password.c_str()
-                                                    , *(this)
-                                                    , this->info.width
-                                                    , this->info.height
-                                                    , this->ini.get<cfg::font>()
-                                                    , nullptr
-                                                    , nullptr
-                                                    , this->theme
-                                                    , this->info.keylayout
+                                                    , *this
+                                                    , this->vnc_conf.width
+                                                    , this->vnc_conf.height
+                                                    , this->vnc_conf.keylayout
                                                     , 0
                                                     , true
                                                     , true
-                                                    , this->vnc_encodings.c_str()
-                                                    , false
-                                                    , true
+                                                    , this->vnc_conf.vnc_encodings.c_str()
                                                     , mod_vnc::ClipboardEncodingType::UTF8
                                                     , VncBogusClipboardInfiniteLoop::delayed
                                                     , this->reportMessage
-                                                    , this->is_apple
-                                                    , &(this->exe_vnc)
+                                                    , this->vnc_conf.is_apple
+                                                    , &this->vnc_conf.exe
 //                                                    , to_verbose_flags(0xfffffffd)
                                                     , to_verbose_flags(0)
                                                    )
@@ -474,9 +465,10 @@ public:
 
             this->mod = this->unique_mod.get();
 
-            this->mod->invoke_asynchronous_graphic_task(mod_api::AsynchronousGraphicTask::none);
-
-
+            this->clear_screen_event = this->session_reactor.create_graphic_event(std::ref(*this))
+            .on_action(jln::one_shot([](gdi::GraphicApi& gd, ClientRedemption& self){
+                gdi_clear_screen(gd, self.mod->get_dim());
+            }));
         } catch (const Error &) {
             this->mod = nullptr;
             return false;
@@ -518,7 +510,7 @@ public:
 
         } else {
             const std::string errorMsg("Cannot connect to [" + target_IP +  "].");
-            std::string windowErrorMsg(errorMsg+" Invalid ip or port.");
+            std::string windowErrorMsg(errorMsg+" Invalid IP or port.");
             LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
             this->disconnect("<font color='Red'>"+windowErrorMsg+"</font>", true);
             return false;
@@ -535,8 +527,6 @@ public:
     //------------------------
 
     virtual void connect() override {
-/*
-        this->mod_state = MOD_RDP_REMOTE_APP;*/
 
         this->clientChannelRemoteAppManager.clear();
         this->cl.clear_channels();
@@ -592,7 +582,7 @@ public:
                                                     GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
                                                     , CHANID_CLIPDRD
                                                     };
-                this->_to_client_sender._channel = channel_cliprdr;
+//                 this->_to_client_sender._channel = channel_cliprdr;
                 this->cl.push_back(channel_cliprdr);
             }
 
@@ -612,13 +602,36 @@ public:
                                                         };
                 this->cl.push_back(channel_audio_output);
             }
+        }
 
-        } /*else {
-            this->port =  5900;
-        }*/
+
 
         if (this->impl_graphic) {
+
+            if (this->is_spanning) {
+                this->rdp_width  = this->impl_graphic->screen_max_width;
+                this->rdp_height = this->impl_graphic->screen_max_height;
+
+                this->vnc_conf.width = this->impl_graphic->screen_max_width;
+                this->vnc_conf.height = this->impl_graphic->screen_max_height;
+            }
+
+            switch (this->mod_state) {
+                case MOD_RDP:
+                    this->info.width = this->rdp_width;
+                    this->info.height = this->rdp_height;
+                    break;
+
+                case MOD_VNC:
+                    this->info.width = this->vnc_conf.width;
+                    this->info.height = this->vnc_conf.height;
+                    break;
+
+                default: break;
+            }
+
             if (this->mod_state != MOD_RDP_REMOTE_APP) {
+
                 this->impl_graphic->reset_cache(this->info.width, this->info.height);
                 this->impl_graphic->create_screen();
             } else {
@@ -654,6 +667,109 @@ public:
             }
             this->disconnect(labelErrorMsg, false);
         }
+    }
+
+    timeval reload_replay_mod(int begin, timeval now_stop) override {
+
+        timeval movie_time_start;
+
+        switch (this->replay_mod->get_wrm_version()) {
+
+                case WrmVersion::v1:
+                    if (this->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0})) {
+                        this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
+                        movie_time_start = tvtime();
+                        return movie_time_start;
+                    }
+                    break;
+
+                case WrmVersion::v2:
+                {
+                    int last_balised = (begin/ ClientRedemptionIOAPI::BALISED_FRAME);
+                    this->is_loading_replay_mod = true;
+                    if (this->load_replay_mod(this->_movie_dir, this->_movie_name, {last_balised * ClientRedemptionIOAPI::BALISED_FRAME, 0}, {0, 0})) {
+
+                        this->is_loading_replay_mod = false;
+
+                        this->draw_frame(last_balised);
+
+                        this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
+
+                        if (this->impl_graphic) {
+                            this->impl_graphic->update_screen();
+                        }
+
+                        movie_time_start = tvtime();
+                        timeval waited_for_load = {movie_time_start.tv_sec - now_stop.tv_sec, movie_time_start.tv_usec - now_stop.tv_usec};
+                        timeval wait_duration = {movie_time_start.tv_sec - begin - waited_for_load.tv_sec, movie_time_start.tv_usec - waited_for_load.tv_usec};
+                        this->replay_mod->set_wait_after_load_client(wait_duration);
+                    }
+                    this->is_loading_replay_mod = false;
+
+                    return movie_time_start;
+                }
+                    break;
+        }
+
+        return movie_time_start;
+    }
+
+    virtual void replay_set_pause(timeval pause_duration) override {
+        this->replay_mod->set_pause(pause_duration);
+    }
+
+    virtual void replay_set_sync() override {
+        this->replay_mod->set_sync();
+    }
+
+    bool is_replay_on() override {
+        if (!this->replay_mod->get_break_privplay_client()) {
+            if (!this->replay_mod->play_client()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    time_t get_real_time_movie_begin() override {
+        return this->replay_mod->get_real_time_movie_begin();
+    }
+
+    char const * get_mwrm_filename() override {
+        this->_movie_full_path = this->_movie_dir + this->_movie_name;
+        return _movie_full_path.c_str();
+    }
+
+    time_t get_movie_time_length(char const * mwrm_filename) override  {
+        // TODO RZ: Support encrypted recorded file.
+
+        CryptoContext cctx;
+        Fstat fsats;
+        InCryptoTransport trans(cctx, InCryptoTransport::EncryptionMode::NotEncrypted, fsats);
+        MwrmReader mwrm_reader(trans);
+        MetaLine meta_line;
+
+        time_t start_time = 0;
+        time_t stop_time = 0;
+
+        trans.open(mwrm_filename);
+        mwrm_reader.read_meta_headers();
+
+        Transport::Read read_stat = mwrm_reader.read_meta_line(meta_line);
+        if (read_stat == Transport::Read::Ok) {
+            start_time = meta_line.start_time;
+            stop_time = meta_line.stop_time;
+            while (read_stat == Transport::Read::Ok) {
+                stop_time = meta_line.stop_time;
+                read_stat = mwrm_reader.read_meta_line(meta_line);
+            }
+        }
+
+        return stop_time - start_time;
+    }
+
+    void instant_play_client(std::chrono::microseconds time) override {
+        this->replay_mod.get()->instant_play_client(time);
     }
 
     void disconnexionReleased() override{
@@ -692,6 +808,7 @@ public:
             ini.set<cfg::video::break_interval>(std::chrono::seconds(600));
 
             UdevRandom gen;
+
 
             //NullReportMessage * reportMessage  = nullptr;
             struct timeval time;
@@ -759,9 +876,9 @@ public:
                                             , Rect(0, 0, 0, 0)
                                             );
 
-            this->capture.get()->gd_drawable->width();
+            //this->capture.get()->gd_drawable->width();
 
-            this->graph_capture = this->capture.get()->get_graphic_api();
+            this->graph_capture = this->capture.get();
     }
 
 
@@ -891,16 +1008,17 @@ public:
 
     void callback() override {
 
-        if (this->_recv_disconnect_ultimatum) {
-            if (this->impl_graphic) {
-                this->impl_graphic->dropScreen();
-            }
-            std::string labelErrorMsg("<font color='Red'>Disconnected by server</font>");
-            this->disconnect(labelErrorMsg, false);
-            this->capture = nullptr;
-            this->graph_capture = nullptr;
-            this->_recv_disconnect_ultimatum = false;
-        }
+//         LOG(LOG_INFO, "Socket Event callback");
+//         if (this->_recv_disconnect_ultimatum) {
+//             if (this->impl_graphic) {
+//                 this->impl_graphic->dropScreen();
+//             }
+//             std::string labelErrorMsg("<font color='Red'>Disconnected by server</font>");
+//             this->disconnect(labelErrorMsg, false);
+//             this->capture = nullptr;
+//             this->graph_capture = nullptr;
+//             this->_recv_disconnect_ultimatum = false;
+//         }
 
         if (this->mod != nullptr) {
             try {

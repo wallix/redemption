@@ -683,6 +683,18 @@ protected:
 
     ModRdpVariables vars;
 
+    long int total_main_amount_data_rcv_from_client;
+    long int total_cliprdr_amount_data_rcv_from_client;
+    long int total_rail_amount_data_rcv_from_client;
+    long int total_rdpdr_amount_data_rcv_from_client;
+    long int total_drdynvc_amount_data_rcv_from_client;
+
+    long int total_main_amount_data_rcv_from_server;
+    long int total_cliprdr_amount_data_rcv_from_server;
+    long int total_rail_amount_data_rcv_from_server;
+    long int total_rdpdr_amount_data_rcv_from_server;
+    long int total_drdynvc_amount_data_rcv_from_server;
+
 public:
     using Verbose = RDPVerbose;
 
@@ -747,7 +759,7 @@ public:
         , connection_finalization_state(EARLY)
         , state(MOD_RDP_NEGO_INITIATE)
         , gen(gen)
-        , verbose(mod_rdp_params.verbose)
+        , verbose(/*RDPVerbose::export_metrics*/mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
         , auth_channel_flags(0)
         , auth_channel_chanid(0)
@@ -844,6 +856,16 @@ public:
         , client_window_list_caps(info.window_list_caps)
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
         , vars(vars)
+        , total_main_amount_data_rcv_from_client(0)
+        , total_cliprdr_amount_data_rcv_from_client(0)
+        , total_rail_amount_data_rcv_from_client(0)
+        , total_rdpdr_amount_data_rcv_from_client(0)
+        , total_drdynvc_amount_data_rcv_from_client(0)
+        , total_main_amount_data_rcv_from_server(0)
+        , total_cliprdr_amount_data_rcv_from_server(0)
+        , total_rail_amount_data_rcv_from_server(0)
+        , total_rdpdr_amount_data_rcv_from_server(0)
+        , total_drdynvc_amount_data_rcv_from_server(0)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -1742,7 +1764,6 @@ public:
                 "mod_rdp::send_to_mod_channel: front_channel_channel=\"%s\"",
                 front_channel_name);
         }
-
         const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get_by_name(front_channel_name);
         if (!mod_channel) {
             return;
@@ -1753,19 +1774,47 @@ public:
 
         switch (front_channel_name) {
             case channel_names::cliprdr:
+                this->total_cliprdr_amount_data_rcv_from_client += length;
                 this->send_to_mod_cliprdr_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::rail:
+                this->total_rail_amount_data_rcv_from_client += length;
                 this->send_to_mod_rail_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::rdpdr:
+                this->total_rdpdr_amount_data_rcv_from_client += length;
                 this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::drdynvc:
+                this->total_drdynvc_amount_data_rcv_from_client += length;
                 this->send_to_mod_drdynvc_channel(mod_channel, chunk, length, flags);
                 break;
             default:
                 this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
+        }
+    }
+
+    // this->total_main_amount_data_rcv_from_client += length;
+    // this->total_main_amount_data_rcv_from_server += length;
+    void log_metrics() override {
+        if (bool(this->verbose & RDPVerbose::export_metrics)) {
+            LOG(LOG_INFO, "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\" Client data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld",
+                this->redir_info.session_id, this->logon_info.username(),
+                this->logon_info.domain(), this->logon_info.hostname()/*"user_account", "0.0.0.0"*/,
+                this->total_main_amount_data_rcv_from_client,
+                this->total_cliprdr_amount_data_rcv_from_client,
+                this->total_rail_amount_data_rcv_from_client,
+                this->total_rdpdr_amount_data_rcv_from_client,
+                this->total_drdynvc_amount_data_rcv_from_client);
+
+            LOG(LOG_INFO, "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\" Server data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld",
+                this->redir_info.session_id, this->logon_info.username(),
+                this->logon_info.domain(), this->logon_info.hostname(),
+                this->total_main_amount_data_rcv_from_server,
+                this->total_cliprdr_amount_data_rcv_from_server,
+                this->total_rail_amount_data_rcv_from_server,
+                this->total_rdpdr_amount_data_rcv_from_server,
+                this->total_drdynvc_amount_data_rcv_from_server);
         }
     }
 
@@ -1991,7 +2040,6 @@ private:
                     static_cast<OutPerStream&>(mcs_header), this->negociation_result.userid,
                     channelId, 1, 3, packet_size, MCS::PER_ENCODING
                 );
-
                 (void)mcs;
             },
             X224::write_x224_dt_tpdu_fn{}
@@ -2061,6 +2109,8 @@ public:
     void connected_fast_path(gdi::GraphicApi & drawable, array_view_u8 array)
     {
         InStream stream(array);
+        this->total_main_amount_data_rcv_from_server += stream.in_remain();
+
         FastPath::ServerUpdatePDU_Recv su(stream, this->decrypt, array.data());
         if (this->enable_transparent_mode) {
             //total_data_received += su.payload.size();
@@ -2146,14 +2196,14 @@ public:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "Process pointer null (Fast)");
                 }
-                drawable.set_pointer(Pointer(Pointer::POINTER_NULL));
+                drawable.set_pointer(Pointer(NullPointer{}));
                 break;
 
             case FastPath::UpdateType::PTR_DEFAULT:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "Process pointer default (Fast)");
                 }
-                drawable.set_pointer(Pointer(Pointer::POINTER_SYSTEM_DEFAULT));
+                drawable.set_pointer(Pointer(SystemDefaultPointer{}));
                 break;
 
             case FastPath::UpdateType::PTR_POSITION:
@@ -2237,6 +2287,8 @@ public:
 
         X224::DT_TPDU_Recv x224(stream);
 
+        this->total_main_amount_data_rcv_from_server += stream.in_remain();
+
         const int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
 
         if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
@@ -2314,15 +2366,19 @@ public:
             }
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
+                this->total_cliprdr_amount_data_rcv_from_server += length;
                 this->process_cliprdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::rail) {
+                this->total_rail_amount_data_rcv_from_server += length;
                 this->process_rail_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::rdpdr) {
+                this->total_rdpdr_amount_data_rcv_from_server += length;
                 this->process_rdpdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::drdynvc) {
+                this->total_drdynvc_amount_data_rcv_from_server += length;
                 this->process_drdynvc_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else {
@@ -2335,6 +2391,8 @@ public:
                     mod_channel.name, sec.payload.get_current(), length, chunk_size, flags
                 );
             }
+
+
             sec.payload.in_skip_bytes(sec.payload.in_remain());
 
         }
@@ -4743,6 +4801,7 @@ public:
     template<class DataWriter>
     void send_pdu_type2(uint8_t pdu_type2, uint8_t stream_id, DataWriter data_writer) {
         using packet_size_t = decltype(details_::packet_size(data_writer));
+
         this->send_data_request_ex(
             GCC::MCS_GLOBAL_CHANNEL,
             [this, &data_writer, pdu_type2, stream_id](
@@ -5120,6 +5179,10 @@ public:
         this->rdp_input_invalidate(r);
     }
 
+    void set_last_tram_len(size_t tram_length) override {
+        this->total_main_amount_data_rcv_from_client += tram_length;
+    }
+
     // [referenced from 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE) ]
     // [referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
     // 2.2.9.1.1.4.4 Color Pointer Update (TS_COLORPOINTERATTRIBUTE)
@@ -5186,7 +5249,7 @@ public:
         const uint8_t * data = stream.in_uint8p(dlen);
         const uint8_t * mask = stream.in_uint8p(mlen);
 
-        Pointer cursor(Pointer::CursorSize{width, height}, Pointer::Hotspot{hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen});
+        Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen});
         this->cursors[pointer_cache_idx] = cursor;
 
         drawable.set_pointer(cursor);
@@ -5261,8 +5324,7 @@ public:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - null");
                 }
-                Pointer cursor(Pointer::POINTER_NULL);
-                drawable.set_pointer(cursor);
+                drawable.set_pointer(Pointer(NullPointer{}));
             }
             break;
         default:
@@ -5270,7 +5332,7 @@ public:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - default");
                 }
-                Pointer cursor(Pointer::POINTER_NORMAL);
+                Pointer cursor(NormalPointer{});
                 drawable.set_pointer(cursor);
             }
             break;
@@ -5320,8 +5382,8 @@ public:
 
         auto hotspot_x      = stream.in_uint16_le();
         auto hotspot_y      = stream.in_uint16_le();
-        auto width            = stream.in_uint16_le(); 
-        auto height            = stream.in_uint16_le(); 
+        auto width            = stream.in_uint16_le();
+        auto height            = stream.in_uint16_le();
 
         uint16_t mlen = stream.in_uint16_le(); /* mask length */
         uint16_t dlen = stream.in_uint16_le(); /* data length */

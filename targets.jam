@@ -103,6 +103,61 @@ exe rdpproxy :
   <library>src/utils/rle.o
   <library>z
 ;
+exe main_client_redemption :
+  $(REDEMPTION_SRC_PATH)/main/main_client_redemption.cpp
+:
+  $(EXE_DEPENDENCIES)
+  <library>app_path_exe.o
+  <library>crypto
+  <library>ffmpeg
+  <library>gssapi_krb5
+  <library>krb5
+  <library>openssl
+  <library>png
+  <library>ppocr
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
+  <library>src/capture/capture.o
+  <library>src/capture/file_to_graphic.o
+  <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/utils/match_finder.o
+  <library>src/capture/video_capture.o
+  <library>src/capture/video_recorder.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/nego.o
+  <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
+  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymapSym.o
+  <library>src/mod/internal/client_execute.o
+  <library>src/mod/internal/internal_mod.o
+  <library>src/mod/internal/replay_mod.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/negociation.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
+  <library>src/utils/authorization_channels.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/d3des.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
+  <library>src/utils/pattutils.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>z
+;
 exe rdpclient :
   $(REDEMPTION_SRC_PATH)/main/rdp_client.cpp
 :
@@ -1025,34 +1080,6 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/utils/rle.o
   <library>tests/includes/test_only/front/fake_front.o
 ;
-test-run tests/client_mods/test_vnc_client_simple :
-  $(REDEMPTION_TEST_PATH)/client_mods/test_vnc_client_simple.cpp
-:
-  <covflag>nocover $(GCOV_NO_BUILD)
-  <library>app_path_test.o
-  <library>crypto
-  <library>png
-  <library>src/core/RDP/mppc.o
-  <library>src/core/font.o
-  <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
-  <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/d3des.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/png.o
-  <library>src/utils/rle.o
-  <library>tests/includes/test_only/front/fake_front.o
-  <library>z
-;
 test-run tests/core/FSCC/test_FileInformation :
   $(REDEMPTION_TEST_PATH)/core/FSCC/test_FileInformation.cpp
 :
@@ -1726,7 +1753,14 @@ test-run tests/core/RDP/test_rdp_pointer :
 :
   <covfile>src/core/RDP/rdp_pointer.hpp
   <library>crypto
+  <library>png
+  <library>src/core/RDP/mppc.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/utils/bitmap.o
   <library>src/utils/hexdump.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
 ;
 test-run tests/core/RDP/test_remote_programs :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_remote_programs.cpp
@@ -3252,6 +3286,13 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_channel.cpp
 :
   <covfile>src/mod/rdp/channels/sespro_channel.hpp
+  <library>app_path_test.o
+  <library>crypto
+  <library>src/core/RDP/mppc.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_clipboard_based_launcher.cpp
@@ -4213,6 +4254,20 @@ test-run tests/utils/test_utf :
 :
   <covfile>src/utils/utf.hpp
 ;
+test-run tests/utils/test_video_cropper :
+  $(REDEMPTION_TEST_PATH)/utils/test_video_cropper.cpp
+:
+  <covfile>src/utils/video_cropper.hpp
+  <library>crypto
+  <library>png
+  <library>src/core/RDP/mppc.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+;
 test-run tests/utils/test_word_identification :
   $(REDEMPTION_TEST_PATH)/utils/test_word_identification.cpp
 :
@@ -4361,7 +4416,6 @@ alias test_rdp_client_large_pointer : tests/client_mods/test_rdp_client_large_po
 alias test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card ;
 alias test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008 ;
 alias test_rdp_client_wab : tests/client_mods/test_rdp_client_wab ;
-alias test_vnc_client_simple : tests/client_mods/test_vnc_client_simple ;
 alias test_FileInformation : tests/core/FSCC/test_FileInformation ;
 alias test_FileInformation.coverage : tests/core/FSCC/test_FileInformation.coverage ;
 alias test_bmpcache : tests/core/RDP/caches/test_bmpcache ;
@@ -4965,6 +5019,8 @@ alias test_translation : tests/utils/test_translation ;
 alias test_translation.coverage : tests/utils/test_translation.coverage ;
 alias test_utf : tests/utils/test_utf ;
 alias test_utf.coverage : tests/utils/test_utf.coverage ;
+alias test_video_cropper : tests/utils/test_video_cropper ;
+alias test_video_cropper.coverage : tests/utils/test_video_cropper.coverage ;
 alias test_word_identification : tests/utils/test_word_identification ;
 alias test_word_identification.coverage : tests/utils/test_word_identification.coverage ;
 alias test_zlib : tests/utils/test_zlib ;
@@ -5007,7 +5063,6 @@ alias tests/client_mods :
   tests/client_mods/test_rdp_client_test_card
   tests/client_mods/test_rdp_client_tls_w2008
   tests/client_mods/test_rdp_client_wab
-  tests/client_mods/test_vnc_client_simple
 ;
 explicit tests/core/FSCC ;
 alias tests/core/FSCC :
@@ -5432,6 +5487,7 @@ alias tests/utils :
   tests/utils/test_timeval_ops
   tests/utils/test_translation
   tests/utils/test_utf
+  tests/utils/test_video_cropper
   tests/utils/test_word_identification
   tests/utils/test_zlib
 ;

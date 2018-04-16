@@ -69,7 +69,6 @@ private:
           this->in_bmpdata +
           this->y * this->in_rowsize +
           this->x * VideoCropper::bytes_per_pixel) {
-        //LOG(LOG_INFO, "out_width=%u out_height=%u", out_width, out_height);
         if ((this->out_width != this->in_width) ||
             (this->out_height != this->in_height)) {
             this->out_bmpdata = std::make_unique<uint8_t[]>(this->out_rowsize * out_height);
@@ -143,12 +142,16 @@ public:
         return this->last_update_index;
     }
 
-//    void reset_to_origin() override {
-//        this->reset(0, 0, this->in_width, this->in_height);
-//    }
+    using gdi::ImageFrameApi::reset;
 
-    void reset(unsigned int x, unsigned int y,
+    // returns true if size of image frame has changed
+    bool reset(unsigned int x, unsigned int y,
                unsigned int out_width, unsigned int out_height) override {
+        unsigned int const old_out_rowsize = this->out_rowsize;
+        unsigned int const old_out_height  = this->out_height;
+
+        bool result = false;
+
         this->x = x;
         this->y = y;
         this->out_width = out_width;
@@ -156,7 +159,14 @@ public:
         this->out_rowsize = this->out_width * VideoCropper::bytes_per_pixel;
         if ((this->out_width != this->in_width) ||
             (this->out_height != this->in_height)) {
-            this->out_bmpdata = std::make_unique<uint8_t[]>(this->out_rowsize * out_height);
+            if (((old_out_rowsize * old_out_height) < (this->out_rowsize * this->out_height)) || !this->out_bmpdata) {
+                this->out_bmpdata = std::make_unique<uint8_t[]>(this->out_rowsize * this->out_height);
+
+                result = true;
+            }
+            else if (old_out_rowsize != this->out_rowsize) {
+                result = true;
+            }
         }
         else {
             this->out_bmpdata = nullptr;
@@ -167,6 +177,10 @@ public:
             this->y * this->in_rowsize +
             this->x * VideoCropper::bytes_per_pixel;
 
-        //LOG(LOG_INFO, "out_width=%u out_height=%u", out_width, out_height);
+        return result;
+    }
+
+    Rect get() const override {
+        return Rect(this->x, this->y, this->out_width, this->out_height);
     }
 };

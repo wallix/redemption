@@ -1412,8 +1412,8 @@ inline int is_encrypted_file(const char * input_filename, bool & infile_is_encry
 }
 
 inline int get_joint_visibility_rect(
-                  Rect & out_rect,
-                  Dimension & out_dim,
+                  Rect & out_max_image_frame_rect,
+                  Rect & out_min_image_frame_rect,
                   std::string & infile_path, std::string & input_basename, std::string & infile_extension,
                   std::string & hash_path,
                   UpdateProgressData::Format pgs_format,
@@ -1490,21 +1490,26 @@ inline int get_joint_visibility_rect(
         }
 
         if (player.remote_app) {
-            out_rect = player.max_image_frame_rect.intersect(Rect(0, 0, player.info_width, player.info_height));
-            if (out_rect.cx & 1)
+            out_max_image_frame_rect = player.max_image_frame_rect.intersect(Rect(0, 0, player.info_width, player.info_height));
+            if (out_max_image_frame_rect.cx & 1)
             {
-                if (out_rect.x + out_rect.cx < player.info_width) {
-                    out_rect.cx += 1;
+                if (out_max_image_frame_rect.x + out_max_image_frame_rect.cx < player.info_width) {
+                    out_max_image_frame_rect.cx += 1;
                 }
-                else if (out_rect.x > 0) {
-                    out_rect.x  -=1;
-                    out_rect.cx += 1;
+                else if (out_max_image_frame_rect.x > 0) {
+                    out_max_image_frame_rect.x  -=1;
+                    out_max_image_frame_rect.cx += 1;
                 }
             }
 
-            out_dim = player.min_image_frame_dim;
-            if (out_dim.w & 1) {
-                out_dim.w++;
+            out_min_image_frame_rect = Rect(0, 0, player.min_image_frame_dim.w, player.min_image_frame_dim.h);
+            if (!out_min_image_frame_rect.isempty()) {
+                if (out_min_image_frame_rect.cx & 1) {
+                    out_min_image_frame_rect.cx++;
+                }
+
+                out_min_image_frame_rect.x = (player.info_width  - out_min_image_frame_rect.cx) / 2;
+                out_min_image_frame_rect.y = (player.info_height - out_min_image_frame_rect.cy) / 2;
             }
         }
 
@@ -1864,7 +1869,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 record_tmp_path,
                                 record_path,
                                 groupid,
-                                nullptr
+                                nullptr,
+                                ini.get<cfg::video::smart_video_cropping>()
                             };
                             auto * capture = new(storage.get_storage()) Capture(
                                   capture_params
@@ -2031,7 +2037,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false, SmartVideoCropping::disable};
+    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false};
     VideoParams video_params;
     FullVideoParams full_video_params;
 
@@ -2512,12 +2518,13 @@ extern "C" {
             // TODO also check if it contains any wrm at all and at wich one we should start depending on input time
             // TODO if start and stop time are outside wrm, userreplay(s should also be warned
 
-            Rect      max_joint_visibility_rect;
-            Dimension min_joint_visibility_dim;
+            Rect crop_rect;
             if (ini.get<cfg::video::smart_video_cropping>() != SmartVideoCropping::disable) {
+                Rect max_joint_visibility_rect;
+                Rect min_joint_visibility_rect;
                 res = get_joint_visibility_rect(
                             max_joint_visibility_rect,
-                            min_joint_visibility_dim,
+                            min_joint_visibility_rect,
                             rp.mwrm_path, rp.input_basename, rp.infile_extension,
                             rp.hash_path,
                             rp.json_pgs ? UpdateProgressData::JSON_FORMAT : UpdateProgressData::OLD_FORMAT,
@@ -2525,9 +2532,13 @@ extern "C" {
                             rp.infile_is_encrypted,
                             ini, cctx, fstat,
                             verbose);
-                if (res) {
-                    max_joint_visibility_rect.empty();
-                    min_joint_visibility_dim.empty();
+                if (!res) {
+                    if (ini.get<cfg::video::smart_video_cropping>() == SmartVideoCropping::v2) {
+                        crop_rect = min_joint_visibility_rect;
+                    }
+                    else {
+                        crop_rect = max_joint_visibility_rect;
+                    }
                 }
             }
 
@@ -2556,7 +2567,7 @@ extern "C" {
                          rp.wrm_compression_algorithm_,
                          rp.video_break_interval,
                          rp.encryption_type,
-                         ini, cctx, max_joint_visibility_rect,
+                         ini, cctx, crop_rect,
                          rnd, fstat, verbose);
 
             } catch (const Error & e) {

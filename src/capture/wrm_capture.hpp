@@ -935,7 +935,7 @@ public:
             this->max_image_frame_rect = this->max_image_frame_rect.disjunct(rect);
 
             this->min_image_frame_dim.w = std::max(this->min_image_frame_dim.w, rect.cx);
-            this->min_image_frame_dim.w = std::max(this->min_image_frame_dim.w, rect.cx);
+            this->min_image_frame_dim.h = std::max(this->min_image_frame_dim.h, rect.cy);
         }
     }
 };

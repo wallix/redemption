@@ -25,7 +25,7 @@
 #include "utils/log.hpp"
 
 
-#include "client_redemption.hpp"
+#include "client_redemption/client_redemption.hpp"
 
 
 #include "qt_input_output_api/qt_output_sound.hpp"
@@ -46,7 +46,6 @@ int main(int argc, char** argv) {
 
     QtIOGraphicMouseKeyboard graphic_control_qt_obj;
 
-    //new QtIOGraphicMouseKeyboard();
     ClientOutputGraphicAPI      * graphic_qt = &graphic_control_qt_obj;
     ClientInputMouseKeyboardAPI * control_qt = &graphic_control_qt_obj;
     QWidget * qwidget_parent = graphic_control_qt_obj.get_static_qwidget();
@@ -59,7 +58,7 @@ int main(int argc, char** argv) {
     ClientInputSocketAPI  * socket_api    = &socket_api_obj;
 
 
-    RDPVerbose verbose = to_verbose_flags(0x0);
+    RDPVerbose verbose = RDPVerbose::export_metrics;                        //to_verbose_flags(0x0);
 
     ClientRedemption client_qt( argv, argc, verbose
                               , graphic_qt

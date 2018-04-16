@@ -191,7 +191,8 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
             record_tmp_path,
             record_path,
             groupid,
-            nullptr
+            nullptr,
+            SmartVideoCropping::disable
         };
 
         Capture capture(
@@ -405,7 +406,8 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         record_tmp_path,
         record_path,
         groupid,
-        nullptr
+        nullptr,
+        SmartVideoCropping::disable
     };
 
     Capture capture(
@@ -424,8 +426,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , Rect()
                    );
     auto const color_cxt = gdi::ColorCtx::depth16();
-    Pointer pointer1(Pointer::POINTER_EDIT);
-    capture.set_pointer(pointer1);
+    capture.set_pointer(Pointer(EditPointer{}));
 
     bool ignore_frame_in_timeval = true;
 

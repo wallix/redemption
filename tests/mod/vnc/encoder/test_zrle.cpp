@@ -96,7 +96,6 @@ RED_AUTO_TEST_CASE(TestZrle)
 
     auto state = VNC::Encoder::State::Encoding;
     std::unique_ptr<VNC::Encoder::Zrle> encoder;
-    bool need_more_data = true;
     for (auto t: datas){
         BlockWrap bw(t);
 
@@ -117,8 +116,8 @@ RED_AUTO_TEST_CASE(TestZrle)
                     uint16_t cx = stream.in_uint16_be();
                     uint16_t cy = stream.in_uint16_be();
                     int32_t encoding = stream.in_sint32_be();
-                    encoder.reset(new VNC::Encoder::Zrle(info.bpp, nbbytes(info.bpp), x, y, cx, cy, zd, VNCVerbose::basic_trace));
                     LOG(LOG_INFO, "Encoding: (%u, %u, %u, %u) : %d", x, y, cx, cy, encoding);
+                    encoder.reset(new VNC::Encoder::Zrle(info.bpp, nbbytes(info.bpp), x, y, cx, cy, zd, VNCVerbose::basic_trace));
                     buf.advance(sz);
                     // Post Assertion: we have an encoder
                     state = VNC::Encoder::State::Data;
@@ -126,18 +125,25 @@ RED_AUTO_TEST_CASE(TestZrle)
                 }
                 case VNC::Encoder::State::Data:
                 {
+                    try {
                         // Pre Assertion: we have an encoder
                         switch (encoder->consume(buf, drawable)){
                         case VNC::Encoder::EncoderState::Ready:
+                            LOG(LOG_INFO, "Ready");
                         break;
                         case VNC::Encoder::EncoderState::NeedMoreData:
-                            need_more_data = true;
+                            LOG(LOG_INFO, "Need more data");
                         break;
                         case VNC::Encoder::EncoderState::Exit:
                             LOG(LOG_INFO, "End of encoder");
                             encoder.reset();
                         break;
                         }
+                    }
+                    catch(...){
+                        LOG(LOG_INFO, "unexpected need more data");
+                        break;
+                    };
                 }
                 break;
             }
@@ -148,5 +154,3 @@ RED_AUTO_TEST_CASE(TestZrle)
     RED_CHECK_SIG(drawable.gd,
         "\xd6\x38\xee\x6a\xa7\x49\x9e\x06\xa3\x6d\x08\xd1\xf3\x82\x8d\x63\xad\x23\x9d\x2f");
 }
-
-

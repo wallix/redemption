@@ -30,9 +30,9 @@
 #include <QtCore/QStringList>
 
 
-#ifndef MAIN_PATH
-# error "undefined MAIN_PATH macro"
-# define MAIN_PATH ""
+#ifndef CLIENT_REDMPTION_MAIN_PATH
+//# error "undefined MAIN_PATH macro"
+# define CLIENT_REDMPTION_MAIN_PATH ""
 #endif
 
 

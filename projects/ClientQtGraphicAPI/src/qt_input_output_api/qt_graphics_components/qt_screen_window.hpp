@@ -23,9 +23,8 @@
 
 
 #include "utils/log.hpp"
+#include "client_redemption/client_input_output_api.hpp"
 
-
-#include "../../client_input_output_api.hpp"
 
 
 #include <QtCore/QTimer>
@@ -97,8 +96,8 @@ public:
 
     ~QtScreen() {
         QPoint points = this->mapToGlobal({0, 0});
-        this->_front->windowsData.screen_x = points.x()-1;
-        this->_front->windowsData.screen_y = points.y()-39;
+        this->_front->windowsData.screen_x = points.x()-1;    //-1;
+        this->_front->windowsData.screen_y = points.y()-39;   //-39;
         this->_front->writeWindowsConf();
 
         if (!this->_connexionLasted) {
@@ -213,6 +212,7 @@ public:
     }
 
 
+    virtual time_t get_current_time_movie() {return 0;}
 
     virtual void stopRelease() {}
 
@@ -277,7 +277,7 @@ public:
     QPushButton    _buttonDisconnexion;
 
     RDPQtScreen (ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * impl_input, QPixmap * cache)
-        : QtScreen(front, impl_input, cache, front->info.width, front->info.height)
+        : QtScreen(front, impl_input, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
         , _buttonRefresh("Refresh", this)
         , _buttonDisconnexion("Disconnection", this)
@@ -340,7 +340,6 @@ public:
         painter.setPen(pen);
         painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(0, 0, this->_width, this->_height));
         //painter.drawPixmap(QPoint(this->clip.x(), this->clip.y()), *(this->_cache), this->clip/*QRect(0, 0, this->_width, this->_height)*/);
-        //LOG(LOG_INFO, "x=%d, y=%d, w=%d, h=%d  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", this->clip.x(), this->clip.y(), this->clip.width(), this->clip.height());
         painter.end();
     }
 
@@ -396,13 +395,12 @@ public:
     QPixmap readding_bar;
     time_t current_time_movie;
     time_t real_time_record;
-    std::vector<QPixmap> balises;
 
 
 
 public:
-    ReplayQtScreen (ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * impl_input, std::string const & movie_dir, std::string const & movie_name, QPixmap * cache, time_t movie_time)
-        : QtScreen(front, impl_input, cache, front->info.width, front->info.height)
+    ReplayQtScreen (ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * impl_input, std::string const & movie_dir, std::string const & movie_name, QPixmap * cache, time_t movie_time, time_t current_time_movie)
+        : QtScreen(front, impl_input, cache, cache->width(), cache->height())
 
         , _buttonCtrlAltDel("Play", this)
         , _buttonRefresh("Stop", this)
@@ -419,17 +417,17 @@ public:
         , begin(0)
         , reading_bar_len(this->_width - 60)
         , readding_bar(this->reading_bar_len+10, READING_BAR_H)
-        , current_time_movie(0)
-        , real_time_record(this->_front->replay_mod->get_real_time_movie_begin())
+        , current_time_movie(current_time_movie)
+        , real_time_record(this->_front->get_real_time_movie_begin())
     {
         std::string title = "ReDemPtion Client " + this->_movie_name;
         this->setWindowTitle(QString(title.c_str()));
 
-        if (this->_front->is_spanning) {
-            this->setWindowState(Qt::WindowFullScreen);
-        } else {
+//         if (this->_front->is_spanning) {
+//             //this->setWindowState(Qt::WindowFullScreen);
+//         } else {
             this->setFixedSize(this->_width+2, this->_height + BUTTON_HEIGHT+READING_PANEL);
-        }
+//         }
 
         QPainter painter(&(this->readding_bar));
         painter.fillRect(0, 0, this->reading_bar_len+12, READING_BAR_H, this->palette().color(QWidget::backgroundRole()));
@@ -485,24 +483,19 @@ public:
         painter.drawPath(path);
         this->repaint();
 
-        if (this->_front->is_spanning) {
-            this->move(0, 0);
-        } else {
-            if (this->_front->is_no_win_data()) {
-                QDesktopWidget* desktop = QApplication::desktop();
-                this->_front->windowsData.screen_x = (desktop->width()/2)  - (this->_width/2);
-                this->_front->windowsData.screen_y = (desktop->height()/2) - (this->_height/2);
-            }
-            this->move(this->_front->windowsData.screen_x, this->_front->windowsData.screen_y);
+
+        if (this->_front->is_no_win_data()) {
+            QDesktopWidget* desktop = QApplication::desktop();
+            this->_front->windowsData.screen_x = (desktop->width()/2)  - (this->_width/2);
+            this->_front->windowsData.screen_y = (desktop->height()/2) - (this->_height/2);
         }
+        this->move(this->_front->windowsData.screen_x, this->_front->windowsData.screen_y);
 
         this->QObject::connect(&(this->_timer_replay), SIGNAL (timeout()),  this, SLOT (playReplay()));
+
+        //this->barRepaint(this->current_time_movie, QColor(Qt::green));
     }
 
-    ~ReplayQtScreen() {
-
-        this->balises.clear();
-    }
 
     void show_video_real_time() {
 
@@ -551,7 +544,6 @@ public:
 
     void paintEvent(QPaintEvent * event) override {
         Q_UNUSED(event);
-
         QPen                 pen;
         QPainter             painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
@@ -633,36 +625,14 @@ private:
             this->barRepaint(this->current_time_movie, QColor(Qt::green));
             this->slotRepainMatch();
 
-            switch (this->_front->replay_mod->get_wrm_version()) {
-
-                case WrmVersion::v1:
-                    if (this->_front->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0})) {
-                        this->_front->replay_mod->instant_play_client(std::chrono::microseconds(this->begin*1000000));
-                        this->movie_time_start = tvtime();
-                    }
-                    break;
-
-                case WrmVersion::v2:
-                {
-                    int last_balised = (this->begin/ ClientRedemptionIOAPI::BALISED_FRAME);
-                    if (this->_front->load_replay_mod(this->_movie_dir, this->_movie_name, {last_balised * ClientRedemptionIOAPI::BALISED_FRAME, 0}, {0, 0})) {
-
-                        this->_front->draw_frame(last_balised);
-
-                        this->_front->replay_mod->instant_play_client(std::chrono::microseconds(this->begin*1000000));
-                        this->slotRepainMatch();
-
-                        this->movie_time_start = tvtime();
-                        timeval waited_for_load = {this->movie_time_start.tv_sec - now_stop.tv_sec, this->movie_time_start.tv_usec - now_stop.tv_usec};
-                        timeval wait_duration = {this->movie_time_start.tv_sec - this->begin - waited_for_load.tv_sec, this->movie_time_start.tv_usec - waited_for_load.tv_usec};
-                        this->_front->replay_mod->set_wait_after_load_client(wait_duration);
-                    }
-                }
-                    break;
-            }
+            this->movie_time_start = this->_front->reload_replay_mod(this->begin, now_stop);
 
             this->_timer_replay.start(4);
         }
+    }
+
+    time_t get_current_time_movie() override {
+        return this->current_time_movie;
     }
 
 
@@ -683,14 +653,14 @@ public Q_SLOTS:
                 timeval pause_duration = tvtime();
                 pause_duration = {pause_duration.tv_sec - this->movie_time_pause.tv_sec, pause_duration.tv_usec - this->movie_time_pause.tv_usec};
                 this->movie_time_start.tv_sec += pause_duration.tv_sec;
-                this->_front->replay_mod->set_pause(pause_duration);
+                this->_front->replay_set_pause(pause_duration);
 
                 this->is_paused = false;
             } else {
                 this->begin = 0;
                 this->barRepaint(this->reading_bar_len, QColor(Qt::black));
                 this->movie_time_start = tvtime();
-                this->_front->replay_mod->set_sync();
+                this->_front->replay_set_sync();
             }
             this->_buttonCtrlAltDel.setText("Pause");
             this->movie_status.setText("  Play ");
@@ -702,10 +672,8 @@ public Q_SLOTS:
     void playReplay() {
         this->show_video_real_time();
 
-        if (!this->_front->replay_mod->get_break_privplay_client()) {
-            if (!this->_front->replay_mod->play_client()) {
-                this->slotRepainMatch();
-            }
+        if (this->_front->is_replay_on()) {
+            this->slotRepainMatch();
         }
 
         if (this->current_time_movie >= this->movie_time) {
@@ -738,14 +706,14 @@ public Q_SLOTS:
         this->_running = false;
         this->is_paused = false;
 
-        this->_buttonCtrlAltDel.setText("Play");
+//         this->_buttonCtrlAltDel.setText("Play");
         this->movie_status.setText("  Stop ");
         this->barRepaint(this->reading_bar_len, QColor(Qt::black));
         this->current_time_movie = 0;
         this->show_video_real_time_hms();
 
         if (this->_front->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0})) {
-            this->slotRepainMatch();
+            //this->slotRepainMatch();
         }
     }
 

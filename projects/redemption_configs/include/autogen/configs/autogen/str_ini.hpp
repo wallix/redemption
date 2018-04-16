@@ -747,9 +747,10 @@
 "#_advanced\n"
 "#h_qscale = 7\n\n"
 
-"#   1: disable\n"
-"#   2: v1\n"
-"#smart_video_cropping = 1\n\n"
+"#   0: disable\n"
+"#   1: v1\n"
+"#   2: v2\n"
+"#smart_video_cropping = 0\n\n"
 
 "[crypto]\n\n"
 

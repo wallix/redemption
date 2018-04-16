@@ -131,6 +131,7 @@ namespace VNC {
         class Hextile : public EncoderApi {
              const uint8_t bpp;
              const uint8_t Bpp;
+             // rectangle we are refreshing
              const Rect r;
              // current tile
              Rect tile;
@@ -169,15 +170,25 @@ namespace VNC {
             
             virtual ~Hextile(){}
 
-            // return is true if the Encoder has finished working (can be reset or deleted),
-            // return is false if the encoder is waiting for more data
+            // return is EncoderState::Exit if the Encoder has finished working (can be reset or deleted),
+            // return is EncoderState::NeedMoreData if the encoder is waiting for more data
             EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
+                if (this->r.isempty())
+                {
+                    if (bool(this->verbose & VNCVerbose::hextile_encoder)){
+                        LOG(LOG_INFO, "Hextile::hexTileraw Encoder done (empty)");
+                    }
+                    return EncoderState::Exit;
+                }
+
                 size_t last_remaining = 0;
                 while (buf.remaining()){
-//                    LOG(LOG_INFO, "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
+                    if (bool(this->verbose & VNCVerbose::hextile_encoder)){
+                        LOG(LOG_INFO, "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
+                    }
                     if (buf.remaining() == last_remaining){
-                        LOG(LOG_ERR, "Stalled: Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
+                        LOG(LOG_ERR, "Hextile Stalled: Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
                         assert(buf.remaining() != last_remaining);
                     }
                     last_remaining = buf.remaining();
@@ -189,13 +200,21 @@ namespace VNC {
                     if (tileType & hextileRaw){
                         size_t raw_length = this->tile.cx * this->tile.cy * this->Bpp;
                         if (buf.remaining() < raw_length + 1){
-                            LOG(LOG_INFO, "Hextile::hexTileraw need more data %zu (has %u)", raw_length+1, buf.remaining());
+                            if (bool(this->verbose & VNCVerbose::hextile_encoder)){
+                                LOG(LOG_INFO, "Hextile::hexTileraw need more data %zu (has %u)", raw_length+1, buf.remaining());
+                            }
                             return EncoderState::NeedMoreData;
                         }
                         const uint8_t * raw(buf.av().data()+1);
                         this->draw_tile(raw, drawable);
+                        if (bool(this->verbose & VNCVerbose::hextile_encoder)){
+                            LOG(LOG_INFO, "consumed raw tile_bytes %zu", raw_length+1);
+                        }
                         buf.advance(raw_length + 1);
                         if (not this->next_tile()){
+                            if (bool(this->verbose & VNCVerbose::hextile_encoder)){
+                                LOG(LOG_INFO, "Hextile::hexTileraw Encoder done (raw)");
+                            }
                             return EncoderState::Exit;
                         }
                         continue;
@@ -209,36 +228,35 @@ namespace VNC {
 
                     const size_t header_bytes = type_bytes + any_subrect_bytes + hextile_bg_bytes + hextile_fg_bytes;
                     if (buf.remaining() < header_bytes){
-                        LOG(LOG_INFO, "Hextile::hexTileraw need more data %zu (has %hu)", header_bytes, buf.remaining());
+                        if (bool(this->verbose & VNCVerbose::hextile_encoder)){
+                            LOG(LOG_INFO, "Hextile::hexTileraw need more data %zu (has %hu)", header_bytes, buf.remaining());
+                        }
                         return EncoderState::NeedMoreData;
                     }
 
                     if (tileType & hextileBackgroundSpecified){
                         this->bgPixel = parser.in_bytes_le(this->Bpp);
-//                        LOG(LOG_INFO, "Background specified %u", this->bgPixel);
                     }
 
                     if (tileType & hextileForegroundSpecified){
                         this->fgPixel = parser.in_bytes_le(this->Bpp);
-//                        LOG(LOG_INFO, "ForeGround specified %u", this->bgPixel);
                     }
 
                     uint8_t nSubRects = 0;
                     if (tileType & hextileAnySubrects) {
                         nSubRects = parser.in_uint8();
-//                        LOG(LOG_INFO, "AnySubrects %u", nSubRects);
                     }
 
                     const size_t subrects_bytes = nSubRects * (2 +((tileType & hextileSubrectsColoured)?this->Bpp:0));
                     const size_t tile_bytes = header_bytes + subrects_bytes;
 
                     if (buf.remaining() < tile_bytes){
-//                        LOG(LOG_INFO, "Not enough data (hextile subrec) : %zu, need %zu", buf.remaining(), tile_bytes);
-                        LOG(LOG_INFO, "Hextile::hexTileraw need more data %zu (has %u)", tile_bytes, buf.remaining());
+                        if (bool(this->verbose & VNCVerbose::hextile_encoder)){
+                            LOG(LOG_INFO, "Hextile::hexTileraw need more data %zu (has %u)", tile_bytes, buf.remaining());
+                        }
                         return EncoderState::NeedMoreData; // finished decoding
                     }
 
-//                    LOG(LOG_INFO, "background tile");
                     uint8_t tile_data[16*16*4];
 
                     memcpy(&tile_data[0*this->Bpp], &this->bgPixel, this->Bpp);
@@ -251,7 +269,9 @@ namespace VNC {
                     memcpy(&tile_data[64*this->Bpp], tile_data, 64*this->Bpp);
                     memcpy(&tile_data[128*this->Bpp], tile_data, 128*this->Bpp);
 
-//                    LOG(LOG_INFO, "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
+                    if (bool(this->verbose & VNCVerbose::hextile_encoder)){
+                        LOG(LOG_INFO, "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
+                    }
 
                     for (size_t q = 0 ; q < nSubRects ; q++){
 
@@ -266,13 +286,17 @@ namespace VNC {
                         const uint8_t w = ((wh >> 4) & 0xF) + 1;
                         const uint8_t h = (wh & 0xF) + 1;
 
-//                        LOG(LOG_INFO, "Hextile::subrect (%d, %d, %d, %d) color=%u", x, y, w, h, this->fgPixel);
+                        if (bool(this->verbose & VNCVerbose::hextile_encoder)){
+                            LOG(LOG_INFO, "Hextile::subrect (%d, %d, %d, %d) color=%u", x, y, w, h, this->fgPixel);
+                        }
 
                         if (x + w > 16 || y + h > 16) {
-                            LOG(LOG_INFO, "Hextile::subrect (%d, %d, %d, %d) : bad subrect coordinates", x, y, w, h);
-                            LOG(LOG_INFO, "Hextile encoding type=%.2x data=%u", tileType, buf.remaining());
-                            LOG(LOG_INFO, "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
-                            hexdump(buf.av().data(), std::min<uint16_t>(buf.remaining(), 1024));
+                            LOG(LOG_ERR, "Hextile::subrect (%d, %d, %d, %d) : bad subrect coordinates", x, y, w, h);
+                            if (bool(this->verbose & VNCVerbose::hextile_encoder)){
+                                LOG(LOG_INFO, "Hextile encoding type=%.2x data=%u", tileType, buf.remaining());
+                                LOG(LOG_INFO, "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
+                                hexdump(buf.av().data(), std::min<uint16_t>(buf.remaining(), 1024));
+                            }
                             throw Error(ERR_VNC_HEXTILE_PROTOCOL);
                         }
                         uint8_t * ptr = &tile_data[(y * this->tile.cx + x) * this->Bpp];
@@ -285,13 +309,21 @@ namespace VNC {
                     }
 
                     this->draw_tile(tile_data, drawable);
-//                    LOG(LOG_INFO, "consumed tile_bytes %zu", tile_bytes);
+                    if (bool(this->verbose & VNCVerbose::hextile_encoder)){
+                        LOG(LOG_INFO, "consumed tile_bytes %zu", tile_bytes);
+                    }
                     buf.advance(tile_bytes);
                     
 
                     if (not this->next_tile()){
+                        if (bool(this->verbose & VNCVerbose::hextile_encoder)){
+                            LOG(LOG_INFO, "Hextile::hexTileraw Encoder done");
+                        }
                         return EncoderState::Exit;
                     }
+                }
+                if (bool(this->verbose & VNCVerbose::hextile_encoder)){
+                    LOG(LOG_INFO, "Hextile::hexTileraw need more data (has %hu)", buf.remaining());
                 }
                 return EncoderState::NeedMoreData; // finished decoding
             }

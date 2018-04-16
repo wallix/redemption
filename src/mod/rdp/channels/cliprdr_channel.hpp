@@ -99,7 +99,8 @@ public:
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
 
     , front(front)
-    , proxy_managed(to_client_sender_ == nullptr) {}
+    , proxy_managed(to_client_sender_ == nullptr) {
+    }
 
 protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const
@@ -371,9 +372,8 @@ private:
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 {
-                    const unsigned int expected = 10;   // msgFlags(2) +
-                                                        //     dataLen(4) +
-                                                        //     cItems(4)
+                    const unsigned int expected = 6;    // msgFlags(2) +
+                                                        //     dataLen(4)
                     if (!chunk.in_check_rem(expected)) {
                         LOG(LOG_ERR,
                             "ClipboardVirtualChannel::process_client_format_data_response_pdu: "
@@ -384,17 +384,20 @@ private:
                     }
                 }
 
-                chunk.in_skip_bytes(6 /* msgFlags(2) + dataLen(4) */);
+                const uint16_t msgFlags = chunk.in_uint16_le(); // msgFlags(2)
+                const uint32_t dataLen  = chunk.in_uint32_le(); // dataLen(4)
 
-                const uint32_t cItems = chunk.in_uint32_le();
+                if (!(msgFlags & RDPECLIP::CB_RESPONSE_FAIL) && (dataLen >= 4 /* cItems(4) */)) {
+                    const uint32_t cItems = chunk.in_uint32_le();
 
-                if (!this->param_dont_log_data_into_syslog) {
-                    LOG(LOG_INFO,
-                        "Sending %sFileGroupDescriptorW(%u) clipboard data to server. "
-                            "cItems=%u",
-                        ((flags & CHANNELS::CHANNEL_FLAG_LAST) ?
-                         "" : "(chunked) "),
-                        this->client_file_list_format_id, cItems);
+                    if (!this->param_dont_log_data_into_syslog) {
+                        LOG(LOG_INFO,
+                            "Sending %sFileGroupDescriptorW(%u) clipboard data to server. "
+                                "cItems=%u",
+                            ((flags & CHANNELS::CHANNEL_FLAG_LAST) ?
+                             "" : "(chunked) "),
+                            this->client_file_list_format_id, cItems);
+                    }
                 }
             }
             else if (this->file_descriptor_stream.get_offset()) {

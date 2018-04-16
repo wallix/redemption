@@ -34,7 +34,6 @@
 #include "utils/difftimeval.hpp"
 #include "utils/log.hpp"
 
-
 #include <cerrno>
 #include <cstring>
 #include <cstddef>
@@ -395,8 +394,6 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
     video_params.frame_rate,
     video_params.qscale,
     video_params.codec.c_str(),
-    video_params.target_width,
-    video_params.target_height,
     video_params.verbosity)
 {
     if (video_params.verbosity) {
@@ -603,8 +600,6 @@ void SequencedVideoCaptureImpl::VideoCapture::next_video()
         this->video_params.frame_rate,
         this->video_params.qscale,
         this->video_params.codec.c_str(),
-        this->video_params.target_width,
-        this->video_params.target_height,
         this->video_params.verbosity
     ));
     this->video_cap_ctx.next_video();
@@ -731,6 +726,7 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
 , ic_zoom_factor(std::min(image_zoom, 100u))
 , ic_drawable(drawable)
 , image_frame_api(imageFrameApi)
+, smart_video_cropping(capture_params.smart_video_cropping)
 , video_sequencer(
     capture_params.now,
     (video_params.video_interval > std::chrono::microseconds(0))

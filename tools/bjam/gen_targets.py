@@ -186,7 +186,8 @@ for d in (
     "regex",
     "sashimi",
     "transport",
-    "utils"
+    "utils",
+    "client_redemption"
 ):
     get_files(sources, 'src/'+d)
 get_files(sources, 'src/system/linux/system')

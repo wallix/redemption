@@ -288,8 +288,8 @@ RdpNegociation::RdpNegociation(
     }
     , nego(
         mod_rdp_params.enable_tls, mod_rdp_params.target_user,
-        mod_rdp_params.enable_nla, mod_rdp_params.target_host,
-        mod_rdp_params.enable_krb, gen, timeobj,
+        mod_rdp_params.enable_nla, info.console_session,
+        mod_rdp_params.target_host, mod_rdp_params.enable_krb, gen, timeobj,
         mod_rdp_params.close_box_extra_message_ref, mod_rdp_params.lang,
         static_cast<RdpNego::Verbose>(mod_rdp_params.verbose)
         )
@@ -865,9 +865,10 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                     LOG(LOG_INFO, "Effective Redirection SessionId=%u",
                         cs_cluster.redirectedSessionID);
                 }
-            }
-            if (this->console_session) {
-                cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID;
+                if (this->console_session) {
+                    cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID;
+                    cs_cluster.redirectedSessionID = 0;
+                }
             }
             // if (!this->nego.tls){
             //     if (this->console_session){
@@ -1474,17 +1475,17 @@ bool RdpNegociation::get_license(InStream & stream)
             }
             break;
         default:
-            LOG(LOG_ERR, "Unexpected license tag sent from server (tag = %x)", flic.tag);
+            LOG(LOG_ERR, "Unexpected license tag sent from server (tag = 0x%x)", flic.tag);
             throw Error(ERR_SEC);
         }
 
         if (sec.payload.get_current() != sec.payload.get_data_end()){
-            LOG(LOG_ERR, "all data should have been consumed %s:%d tag = %x", __FILE__, __LINE__, flic.tag);
+            LOG(LOG_ERR, "all data should have been consumed %s:%d tag = 0x%x", __FILE__, __LINE__, flic.tag);
             throw Error(ERR_SEC);
         }
     }
     else {
-        LOG(LOG_WARNING, "Failed to get expected license negotiation PDU, sec.flags=%u", sec.flags);
+        LOG(LOG_WARNING, "Failed to get expected license negotiation PDU, sec.flags=0x%x", sec.flags);
         hexdump(x224.payload.get_data(), x224.payload.get_capacity());
         //throw Error(ERR_SEC);
         r = true;

@@ -44,11 +44,11 @@ class TimestampTracer {
     char previous_timestamp[size_str_timestamp];
     uint8_t previous_timestamp_length;
 
-    const unsigned int width;
-    const unsigned int height;
-    const unsigned int bpp;
-          uint8_t*     pixels;
-    const unsigned int rowsize;
+    unsigned int width;
+    unsigned int height;
+    unsigned int bpp;
+    uint8_t*     pixels;
+    unsigned int rowsize;
 
 public:
     TimestampTracer(MutableImageDataView const & image_view)
@@ -630,7 +630,6 @@ public:
         snprintf(rawdate, timestamp_length + 1, "%4d-%02d-%02d %02d:%02d:%02d %s",
             now.tm_year + 1900, now.tm_mon + 1, now.tm_mday,
             now.tm_hour, now.tm_min, now.tm_sec, timezone);
-
         this->draw_12x7_digits(this->timestamp_data, ts_width, size_str_timestamp - 1, rawdate,
             this->previous_timestamp);
         memcpy(this->previous_timestamp, rawdate, size_str_timestamp);

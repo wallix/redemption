@@ -333,6 +333,11 @@ struct Dimension {
         , h(h)
     {}
 
+    bool operator==(Dimension const & other) const {
+        return (other.w == this->w
+             && other.h == this->h);
+    }
+
     void empty() {
         this->w = 0;
         this->h = 0;
@@ -340,6 +345,10 @@ struct Dimension {
 
     bool isempty() const {
         return (!this->w || !this->h);
+    }
+
+    REDEMPTION_FRIEND_OSTREAM(out, Dimension const & d) {
+        return out << "(" << d.w << ", " << d.h << ")";
     }
 };
 

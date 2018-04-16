@@ -893,7 +893,7 @@ public:
     void begin_update() override {}
     void end_update() override {}
 
-    void set_pointer(Pointer const & cursor) override {
+    void set_pointer(Pointer const & /*cursor*/) override {
         if (this->_verbose & SHOW_CURSOR_STATE_CHANGE) {
             // TODO: dump changes to the cursor (signature based ?)
             std::cout <<  "server >> change cursor " <<  std::endl;
