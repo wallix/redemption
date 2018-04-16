@@ -106,7 +106,7 @@ public:
 
     virtual void set_drawn_client(ClientRedemptionIOAPI * client) override {
         this->drawn_client = client;
-        this->qtRDPKeymap._verbose = (this->drawn_client->verbose == RDPVerbose::input) ? 1 : 0;
+        //this->qtRDPKeymap._verbose = (this->drawn_client->verbose == RDPVerbose::input) ? 1 : 0;
         this->qtRDPKeymap.setKeyboardLayout(this->drawn_client->info.keylayout);
 
         this->qtRDPKeymap.clearCustomKeyCode();

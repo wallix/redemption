@@ -862,14 +862,11 @@ public:
                 }
                 extended = (static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(i, 3))->currentIndex());
             }
-            LOG(LOG_INFO, "qtKeyID=%d, scanCode=%d, ASCII8=%d, extended=%d", qtKeyID, scanCode, ASCII8, extended);
             ClientRedemptionIOAPI::KeyCustomDefinition keyCustomDefinition = {qtKeyID, scanCode, ASCII8, extended};
             this->_front->keyCustomDefinitions.push_back(keyCustomDefinition);
 
         }
         this->_front->update_keylayout();
-
-        
 
         this->_front->writeCustomKeyConfig();
         this->_front->writeClientInfo();

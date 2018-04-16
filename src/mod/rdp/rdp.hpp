@@ -2290,14 +2290,14 @@ public:
     // this->total_main_amount_data_rcv_from_server += length;
     void log_metrics() override {
         if (bool(this->verbose & RDPVerbose::export_metrics)) {
-            LOG(LOG_INFO, "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\" Client data received by channels - main:%ld cliprdr:%ld rail:%ld  rdpdr:%ld drdynvc:%ld", this->redir_info.session_id, this->username, this->nego.get_user_name(), this->nego.get_target_host()/*"user_account", "0.0.0.0"*/,
+            LOG(LOG_INFO, "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\" Client data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld", this->redir_info.session_id, this->username, this->nego.get_user_name(), this->nego.get_target_host()/*"user_account", "0.0.0.0"*/,
                                 this->total_main_amount_data_rcv_from_client,
                                 this->total_cliprdr_amount_data_rcv_from_client,
                                 this->total_rail_amount_data_rcv_from_client,
                                 this->total_rdpdr_amount_data_rcv_from_client,
                                 this->total_drdynvc_amount_data_rcv_from_client);
 
-            LOG(LOG_INFO, "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\" Server data received by channels - main:%ld cliprdr:%ld rail:%ld  rdpdr:%ld drdynvc:%ld", this->redir_info.session_id, this->username, this->nego.get_user_name(), this->nego.get_target_host(),
+            LOG(LOG_INFO, "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\" Server data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld", this->redir_info.session_id, this->username, this->nego.get_user_name(), this->nego.get_target_host(),
                                 this->total_main_amount_data_rcv_from_server,
                                 this->total_cliprdr_amount_data_rcv_from_server,
                                 this->total_rail_amount_data_rcv_from_server,
