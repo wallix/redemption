@@ -207,7 +207,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     execute_negociate_mod(session_reactor, mod, front);
     for (int count = 0; count < 38; ++count) {
-        LOG(LOG_INFO, "===================> count = %u", count);
+        LOG(LOG_INFO, "===================> count = %d", count);
         execute_graphics_event(session_reactor, front);
     }
 

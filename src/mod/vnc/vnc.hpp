@@ -2063,7 +2063,7 @@ private:
             break;
 
         default:
-            LOG(LOG_ERR, "Unknown state=%d", this->state);
+            LOG(LOG_ERR, "Unknown state=%d", static_cast<int>(this->state));
             throw Error(ERR_VNC);
         }
 

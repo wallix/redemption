@@ -283,7 +283,9 @@ struct GroupExecutor
 
     void set_propagate_exit() noexcept
     {
-        this->on_exit = &jln2::propagate_exit<Ts...>;
+        this->on_exit = [](auto ctx, jln2::ExitR er, [[maybe_unused]] Ts&... xs){
+            return jln2::propagate_exit(ctx, er);
+        };
     }
 
     template<class F>
@@ -692,12 +694,6 @@ struct BasicFd : jln::BasicTimer<PrefixArgs_>
 
     jln::BasicTimer<PrefixArgs_>& timer() noexcept { return *this; }
 
-    void restart_timeout()
-    {
-        assert(this->delay.count() > 0);
-        this->tv = addusectimeval(this->delay, this->session_reactor.get_current_time());
-    }
-
     BasicFd(int fd, SessionReactor& session_reactor) noexcept
     : fd(fd)
     , session_reactor(session_reactor)
@@ -715,43 +711,9 @@ struct BasicFd : jln::BasicTimer<PrefixArgs_>
         return this->fd;
     }
 
-    void set_timeout(std::chrono::milliseconds ms) noexcept
-    {
-        this->set_delay(ms);
-        this->set_time(addusectimeval(this->delay, this->session_reactor.get_current_time()));
-        if constexpr (std::is_same<jln::prefix_args<>, PrefixArgs_>::value) {
-            this->session_reactor.timer_events_.update_delay(*this, ms);
-        }
-        else {
-            this->session_reactor.graphic_timer_events_.update_delay(*this, ms);
-        }
-    }
-
-    void disable_timeout() noexcept
-    {
-        if (this->timer_is_disabled) {
-            return;
-        }
-
-        auto disable = [this](auto& cont){
-            auto it = std::find_if(cont.begin(), cont.end(), [this](auto& p){
-                return &p->value == this;
-            });
-            assert(it != cont.end());
-            --(*it)->use_count;
-            *it = std::move(cont.back());
-            cont.pop_back();
-        };
-
-        if constexpr (std::is_same<jln::prefix_args<>, PrefixArgs_>::value) {
-            disable(this->session_reactor.timer_events_.elements);
-        }
-        else {
-            disable(this->session_reactor.graphic_timer_events_.elements);
-        }
-
-        this->timer_is_disabled = true;
-    }
+    void restart_timeout() noexcept;
+    void set_timeout(std::chrono::milliseconds ms) noexcept;
+    void disable_timeout() noexcept;
 
     SessionReactor& get_reactor() const noexcept
     {
@@ -1333,7 +1295,7 @@ struct SessionReactor
         : BasicFd<PrefixArgs_>(fd, session_reactor)
         , ctx{static_cast<Args&&>(args)...}
         {
-            this->top_.set_on_exit([](auto ctx, jln2::ExitR er, auto&...){
+            this->top_.set_on_exit([](auto ctx, jln2::ExitR er, [[maybe_unused]] auto&... xs){
                 return jln2::propagate_exit(ctx, er);
             });
         }
@@ -1672,3 +1634,51 @@ struct SessionReactor
         this->set_next_event(signal);
     }
 };
+
+
+template<class PrefixArgs_>
+void BasicFd<PrefixArgs_>::set_timeout(std::chrono::milliseconds ms) noexcept
+{
+    this->set_delay(ms);
+    this->set_time(addusectimeval(this->delay, this->session_reactor.get_current_time()));
+    if constexpr (std::is_same<jln::prefix_args<>, PrefixArgs_>::value) {
+        this->session_reactor.timer_events_.update_delay(*this, ms);
+    }
+    else {
+        this->session_reactor.graphic_timer_events_.update_delay(*this, ms);
+    }
+}
+
+template<class PrefixArgs_>
+void BasicFd<PrefixArgs_>::disable_timeout() noexcept
+{
+    if (this->timer_is_disabled) {
+        return;
+    }
+
+    auto disable = [this](auto& cont){
+        auto it = std::find_if(cont.begin(), cont.end(), [this](auto& p){
+            return &p->value == this;
+        });
+        assert(it != cont.end());
+        --(*it)->use_count;
+        *it = std::move(cont.back());
+        cont.pop_back();
+    };
+
+    if constexpr (std::is_same<jln::prefix_args<>, PrefixArgs_>::value) {
+        disable(this->session_reactor.timer_events_.elements);
+    }
+    else {
+        disable(this->session_reactor.graphic_timer_events_.elements);
+    }
+
+    this->timer_is_disabled = true;
+}
+
+template<class PrefixArgs_>
+void BasicFd<PrefixArgs_>::restart_timeout() noexcept
+{
+    assert(this->delay.count() > 0);
+    this->tv = addusectimeval(this->delay, this->session_reactor.get_current_time());
+}
