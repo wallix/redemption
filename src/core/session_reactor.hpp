@@ -177,7 +177,7 @@ struct Context
     }
 
 private:
-    friend GroupExecutor<Ts...>;
+    friend TopExecutor<Ts...>;
 
     explicit Context(TopExecutor<Ts...>& top, NodeExecutor<Ts...>& current, BasicFd<jln::prefix_args<Ts...>>& fd)
     : top(top)
@@ -215,7 +215,7 @@ struct ContextError
     // R replace_action(F&& f);
 
 private:
-    friend GroupExecutor<Ts...>;
+    friend TopExecutor<Ts...>;
 
     explicit ContextError(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd)
     : top(top)
@@ -297,11 +297,7 @@ struct GroupExecutor
     }
 
 protected:
-    // TODO inner to TopExecutor
-    R _exec_next(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd, Ts&... xs);
-    R _exec(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd, Ts&... xs);
-    R _exec_exit(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd, R r, Ts&... xs);
-    R _exec_group_exit(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd, R r, Ts&... xs);
+    friend TopExecutor<Ts...>;
     bool has_group() const noexcept { return bool(this->group); }
 
 private:
@@ -415,15 +411,22 @@ struct TopExecutor : GroupExecutor<Ts...>
     }
 
     Error error = Error(NO_ERROR);
+
+private:
+    using Fd = BasicFd<jln::prefix_args<Ts...>>;
+    R _exec_next(GroupExecutor<Ts...>& top, Fd& fd, Ts&... xs);
+    R _exec(GroupExecutor<Ts...>& top, Fd& fd, Ts&... xs);
+    R _exec_exit(GroupExecutor<Ts...>& top, Fd& fd, R r, Ts&... xs);
+    R _exec_group_exit(GroupExecutor<Ts...>& top, Fd& fd, R r, Ts&... xs);
 };
 
 
 template<class... Ts>
-R GroupExecutor<Ts...>::_exec_exit(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd, R r, Ts&... xs)
+R TopExecutor<Ts...>::_exec_exit(GroupExecutor<Ts...>& g, Fd& fd, R r, Ts&... xs)
 {
-    switch (R re = this->on_exit(
-        ContextError<Ts...>{top, fd},
-        ExitR{static_cast<ExitR::Status>(r), top.error},
+    switch (R re = g.on_exit(
+        ContextError<Ts...>{*this, fd},
+        ExitR{static_cast<ExitR::Status>(r), this->error},
         xs...
     )) {
         case R::ExitSuccess:
@@ -433,7 +436,7 @@ R GroupExecutor<Ts...>::_exec_exit(TopExecutor<Ts...>& top, BasicFd<jln::prefix_
             return re;
         case R::NeedMoreData:
         case R::Next:
-            return bool(this->next) ? R::NeedMoreData : r;
+            return bool(g.next) ? R::NeedMoreData : r;
         case R::CreateGroup:
         case R::Substitute:
             return R::NeedMoreData;
@@ -442,17 +445,17 @@ R GroupExecutor<Ts...>::_exec_exit(TopExecutor<Ts...>& top, BasicFd<jln::prefix_
 }
 
 template<class... Ts>
-R GroupExecutor<Ts...>::_exec_group_exit(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd, R r, Ts&... xs)
+R TopExecutor<Ts...>::_exec_group_exit(GroupExecutor<Ts...>& g, Fd& fd, R r, Ts&... xs)
 {
     do {
-        R const re = this->group->on_exit(
-            ContextError<Ts...>{top, fd},
-            ExitR{static_cast<ExitR::Status>(r), top.error},
+        R const re = g.group->on_exit(
+            ContextError<Ts...>{*this, fd},
+            ExitR{static_cast<ExitR::Status>(r), this->error},
             xs...);
-        this->group = std::move(this->group->group);
+        g.group = std::move(g.group->group);
         switch (re) {
             case R::ExitSuccess:
-                if (!this->group && this->next) {
+                if (!g.group && g.next) {
                     return R::NeedMoreData;
                 }
                 r = re;
@@ -464,19 +467,19 @@ R GroupExecutor<Ts...>::_exec_group_exit(TopExecutor<Ts...>& top, BasicFd<jln::p
                 break;
             case R::NeedMoreData:
             case R::Next:
-                return bool(this->next) ? R::NeedMoreData : r;
+                return bool(g.next) ? R::NeedMoreData : r;
             case R::CreateGroup:
             case R::Substitute:
                 return R::NeedMoreData;
         }
-    } while (this->group);
+    } while (g.group);
     return r;
 }
 
 template<class... Ts>
-R GroupExecutor<Ts...>::_exec_next(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd, Ts&... xs)
+R TopExecutor<Ts...>::_exec_next(GroupExecutor<Ts...>& g, Fd& fd, Ts&... xs)
 {
-    R const r = this->next->f(Context<Ts...>{top, *this->next, fd}, xs...);
+    R const r = g.next->f(Context<Ts...>{*this, *g.next, fd}, xs...);
     switch (r) {
         case R::Terminate:
         case R::Exception:
@@ -485,10 +488,10 @@ R GroupExecutor<Ts...>::_exec_next(TopExecutor<Ts...>& top, BasicFd<jln::prefix_
         case R::NeedMoreData:
             return r;
         case R::Next:
-            this->next = std::move(this->next->next);
-            return (bool(this->next) ? R::NeedMoreData : R::ExitSuccess);
+            g.next = std::move(g.next->next);
+            return (bool(g.next) ? R::NeedMoreData : R::ExitSuccess);
         case R::CreateGroup:
-            this->next = std::move(this->next->next);
+            g.next = std::move(g.next->next);
             return R::NeedMoreData;
         case R::Substitute:
             return R::NeedMoreData;
@@ -497,16 +500,16 @@ R GroupExecutor<Ts...>::_exec_next(TopExecutor<Ts...>& top, BasicFd<jln::prefix_
 }
 
 template<class... Ts>
-R GroupExecutor<Ts...>::_exec(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd, Ts&... xs)
+R TopExecutor<Ts...>::_exec(GroupExecutor<Ts...>& g, Fd& fd, Ts&... xs)
 {
-    if (this->group) {
-        R const r = this->group->_exec_next(top, fd, xs...);
+    if (g.group) {
+        R const r = this->_exec_next(*g.group, fd, xs...);
         switch (r) {
             case R::Exception:
             case R::Terminate:
             case R::ExitError:
             case R::ExitSuccess:
-                return this->_exec_group_exit(top, fd, r, xs...);
+                return this->_exec_group_exit(g, fd, r, xs...);
             case R::NeedMoreData:
                 return r;
             case R::Next:
@@ -517,14 +520,14 @@ R GroupExecutor<Ts...>::_exec(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<
         REDEMPTION_UNREACHABLE();
     }
     else {
-        assert(this->next);
-        R const r = this->_exec_next(top, fd, xs...);
+        assert(g.next);
+        R const r = this->_exec_next(g, fd, xs...);
         switch (r) {
             case R::Exception:
             case R::Terminate:
             case R::ExitError:
             case R::ExitSuccess:
-                return this->_exec_exit(top, fd, r, xs...);
+                return this->_exec_exit(g, fd, r, xs...);
             case R::NeedMoreData:
             case R::Next:
             case R::Substitute:
