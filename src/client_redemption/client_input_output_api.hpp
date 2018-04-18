@@ -290,10 +290,11 @@ public:
     struct KeyCustomDefinition {
         int qtKeyID  = 0;
         int scanCode = 0;
-        int ASCII8   = 0;
+        std::string ASCII8;
         int extended = 0;
+        std::string name;
 
-        KeyCustomDefinition(int qtKeyID, int scanCode, int ASCII8, int extended)
+        KeyCustomDefinition(int qtKeyID, int scanCode, std::string ASCII8, int extended)
           : qtKeyID(qtKeyID)
           , scanCode(scanCode)
           , ASCII8(ASCII8)
@@ -688,22 +689,31 @@ public:
                     pos = ligne.find(delimiter);
 
                     int qtKeyID  = std::stoi(ligne.substr(0, pos));
-                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-                    pos = ligne.find(delimiter);
 
-                    int scanCode = std::stoi(ligne.substr(0, pos));
-                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-                    pos = ligne.find(delimiter);
+                    if (qtKeyID !=  0) {
+                        ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+                        pos = ligne.find(delimiter);
 
-                    int ASCII8   = std::stoi(ligne.substr(0, pos));
-                    ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-                    pos = ligne.find(delimiter);
 
-                    int extended = std::stoi(ligne.substr(0, pos));
+                        int scanCode = 0;
+                        scanCode = std::stoi(ligne.substr(0, pos));
+                        ligne = ligne.substr(pos + delimiter.length(), ligne.length());
+                        pos = ligne.find(delimiter);
 
-                    KeyCustomDefinition keyCustomDefinition = {qtKeyID, scanCode, ASCII8, extended};
+                        std::string ASCII8 = ligne.substr(0, 1);
+                        int next_pos = 2;
+                        if (ASCII8 == " ") {
+                            ASCII8 = "";
+                            next_pos = 1;
+                        }
+                        ligne = ligne.substr(next_pos, ligne.length());
 
-                    this->keyCustomDefinitions.push_back(keyCustomDefinition);
+                        int extended = std::stoi(ligne.substr(0, 1));
+
+                        KeyCustomDefinition keyCustomDefinition = {qtKeyID, scanCode, ASCII8, extended};
+
+                        this->keyCustomDefinitions.push_back(keyCustomDefinition);
+                    }
                 }
             }
 
@@ -723,11 +733,12 @@ public:
             for (size_t i = 0; i < this->keyCustomDefinitions.size(); i++) {
 
                 KeyCustomDefinition & key = this->keyCustomDefinitions[i];
-                
+
                     ofichier << "- ";
                     ofichier << key.qtKeyID  << " ";
                     ofichier << key.scanCode << " ";
-                    ofichier << key.ASCII8   << " ";
+                    //int key_int = key.ASCII8.data()[0];
+                    ofichier << key.ASCII8 << " ";
                     ofichier << key.extended << std::endl;
             }
             ofichier.close();
@@ -1557,15 +1568,19 @@ public:
         return this->client->mouseMouveEvent(x, y);
     }
 
-    void virtual keyPressEvent(const int key, const uint16_t text)  = 0;
+    void virtual keyPressEvent(const int key, const std::string text)  = 0;
 
-    void virtual keyReleaseEvent(const int key, const uint16_t text)  = 0;
+    void virtual keyReleaseEvent(const int key, const std::string text)  = 0;
 
     void virtual refreshPressed() {
         this->client->refreshPressed();
     }
 
     virtual void open_options() {}
+
+    virtual ClientRedemptionIOAPI::KeyCustomDefinition get_key_info(int, std::string) {
+        return ClientRedemptionIOAPI::KeyCustomDefinition(0, 0, "", 0);
+    }
 
 };
 

@@ -133,11 +133,11 @@ public:
     }
 
     void keyPressEvent(QKeyEvent *e) override {
-        this->impl_input->keyPressEvent(e->key(), e->text().toStdString()[0]);
+        this->impl_input->keyPressEvent(e->key(), e->text().toStdString());
     }
 
     void keyReleaseEvent(QKeyEvent *e) override {
-        this->impl_input->keyReleaseEvent(e->key(), e->text().toStdString()[0]);
+        this->impl_input->keyReleaseEvent(e->key(), e->text().toStdString());
     }
 
     void wheelEvent(QWheelEvent *e) override {
@@ -222,6 +222,7 @@ public:
 
 class RemoteAppQtScreen : public QtScreen
 {
+    
 Q_OBJECT
 
 public:
@@ -706,7 +707,6 @@ public Q_SLOTS:
         this->_running = false;
         this->is_paused = false;
 
-//         this->_buttonCtrlAltDel.setText("Play");
         this->movie_status.setText("  Stop ");
         this->barRepaint(this->reading_bar_len, QColor(Qt::black));
         this->current_time_movie = 0;

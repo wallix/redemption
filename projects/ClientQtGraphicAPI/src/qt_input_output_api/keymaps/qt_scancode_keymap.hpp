@@ -197,26 +197,27 @@ private:
     //===================
     void getKeyChar(const char text) {
 
-        switch (scanCode) {
-            case Qt::Key_Eacute      : this->scanCode = 0xE9; break; /*é*/
-            case Qt::Key_Ccedilla    : this->scanCode = 0xE7; break; /*ç*/
-            case Qt::Key_Agrave      : this->scanCode = 0xE0; break; /*à*/
-            case Qt::Key_Ugrave      : this->scanCode = 0xF9; break; /*ù*/
-            case Qt::Key_Egrave      : this->scanCode = 0xE8; break; /*è*/
-            case Qt::Key_section     : this->scanCode = 0xA7; break; /*§*/
-            case Qt::Key_twosuperior : this->scanCode = 0xB2; break; // square
-            case Qt::Key_sterling    : this->scanCode = 0xA3; break; // £
-            case Qt::Key_currency    : this->scanCode = 0x1B; break; //
-            case Qt::Key_degree      : this->scanCode = 0xB0; break; // °
-            case Qt::Key_mu          : this->scanCode = 0xB5; break; /*µ*/
+        switch (this->qKeyCode) {
+            case Qt::Key_Eacute      : this->scanCode = 0xE9; this->qKeyName = std::string("Key_Eacute"); break; /*é*/
+            case Qt::Key_Ccedilla    : this->scanCode = 0xE7; this->qKeyName = std::string("Key_Ccedilla"); break; /*ç*/
+            case Qt::Key_Agrave      : this->scanCode = 0xE0; this->qKeyName = std::string("Key_Agrave"); break; /*à*/
+            case Qt::Key_Ugrave      : this->scanCode = 0xF9; this->qKeyName = std::string("Key_Ugrave"); break; /*ù*/
+            case Qt::Key_Egrave      : this->scanCode = 0xE8; this->qKeyName = std::string("Key_Egrave"); break; /*è*/
+            case Qt::Key_section     : this->scanCode = 0xA7; this->qKeyName = std::string("Key_section"); break; /*§*/
+            case Qt::Key_twosuperior : this->scanCode = 0xB2; this->qKeyName = std::string("Key_twosuperior"); break; // square
+            case Qt::Key_sterling    : this->scanCode = 0xA3; this->qKeyName = std::string("Key_sterling"); break; // £
+            case Qt::Key_currency    : this->scanCode = 0x1B; this->qKeyName = std::string("Key_currency"); break; //
+            case Qt::Key_degree      : this->scanCode = 0xB0; this->qKeyName = std::string("Key_degree"); break; // °
+            case Qt::Key_mu          : this->scanCode = 0xB5; this->qKeyName = std::string("Key_mu"); break; /*µ*/
             case Qt::Key_Slash    :
                 if (this->_keyboardMods == 0) {
-                    scanCode = 0x21;
+                    this->scanCode = 0x21;
                     this->flag = this->flag | KBD_FLAGS_EXTENDED;
+                    this->qKeyName = std::string("Key_Slash");
                 }
                 break;
 
-            default: this->scanCode = text; break;
+            default: this->scanCode = text; this->qKeyName = std::string(""); break;
         }
 
         //-----------------------------
@@ -231,43 +232,44 @@ private:
     //=====================
     void getCharShortCut() {
 
-        switch (scanCode) {
-            case Qt::Key_A          : this->scanCode = 'a';  break; /*A*/         case Qt::Key_1         : this->scanCode = '1';  break; /*1*/
-            case Qt::Key_Z          : this->scanCode = 'z';  break; /*Z*/         case Qt::Key_2         : this->scanCode = '2';  break; /*2*/
-            case Qt::Key_Y          : this->scanCode = 'y';  break; /*Y*/         case Qt::Key_3         : this->scanCode = '3';  break; /*3*/
-            case Qt::Key_X          : this->scanCode = 'x';  break; /*X*/         case Qt::Key_4         : this->scanCode = '4';  break; /*4*/
-            case Qt::Key_C          : this->scanCode = 'c';  break; /*C*/         case Qt::Key_5         : this->scanCode = '5';  break; /*5*/
-            case Qt::Key_V          : this->scanCode = 'v';  break; /*V*/         case Qt::Key_6         : this->scanCode = '6';  break; /*6*/
-            case Qt::Key_E          : this->scanCode = 'e';  break; /*E*/         case Qt::Key_7         : this->scanCode = '7';  break; /*7*/
-            case Qt::Key_R          : this->scanCode = 'r';  break; /*R*/         case Qt::Key_8         : this->scanCode = '8';  break; /*8*/
-            case Qt::Key_T          : this->scanCode = 't';  break; /*T*/         case Qt::Key_9         : this->scanCode = '9';  break; /*9*/
-            case Qt::Key_U          : this->scanCode = 'u';  break; /*U*/         case Qt::Key_Ampersand : this->scanCode = '&';  break; /*&*/
-            case Qt::Key_I          : this->scanCode = 'i';  break; /*I*/         case Qt::Key_Asterisk  : this->scanCode = '*';  break; /***/
-            case Qt::Key_B          : this->scanCode = 'b';  break; /*B*/         case Qt::Key_Underscore: this->scanCode = '_';  break; /*_*/
-            case Qt::Key_D          : this->scanCode = 'd';  break; /*D*/         case Qt::Key_QuoteDbl  : this->scanCode = '"';  break; /*"*/
-            case Qt::Key_F          : this->scanCode = 'f';  break; /*F*/         case Qt::Key_Apostrophe: this->scanCode = 39 ;  break; /*'*/
-            case Qt::Key_G          : this->scanCode = 'g';  break; /*G*/         case Qt::Key_Comma     : this->scanCode = ',';  break; /*,*/
-            case Qt::Key_H          : this->scanCode = 'h';  break; /*H*/         case Qt::Key_Plus      : this->scanCode = '+';  break; /*+*/
-            case Qt::Key_J          : this->scanCode = 'j';  break; /*J*/         case Qt::Key_Minus     : this->scanCode = '-';  break; /*-*/
-            case Qt::Key_K          : this->scanCode = 'k';  break; /*K*/         case Qt::Key_ParenLeft : this->scanCode = '(';  break; /*(*/
-            case Qt::Key_L          : this->scanCode = 'l';  break; /*L*/         case Qt::Key_ParenRight: this->scanCode = ')';  break; /*)*/
-            case Qt::Key_M          : this->scanCode = 'm';  break; /*M*/         case Qt::Key_Equal     : this->scanCode = '=';  break; /*=*/
-            case Qt::Key_N          : this->scanCode = 'n';  break; /*N*/         case Qt::Key_Exclam    : this->scanCode = '!';  break; /*!*/
-            case Qt::Key_O          : this->scanCode = 'o';  break; /*O*/         case Qt::Key_Colon     : this->scanCode = ':';  break; /*:*/
-            case Qt::Key_P          : this->scanCode = 'p';  break; /*P*/         case Qt::Key_Dollar    : this->scanCode = '$';  break; /*$*/
-            case Qt::Key_Q          : this->scanCode = 'q';  break; /*Q*/         case Qt::Key_multiply  : this->scanCode = '*';  break; /***/
-            case Qt::Key_S          : this->scanCode = 's';  break; /*S*/         case Qt::Key_Space     : this->scanCode = ' ';  break; /* */
-            case Qt::Key_W          : this->scanCode = 'w';  break; /*W*/         case Qt::Key_section   : this->scanCode = 0xA7; break; /*§*/
-            case Qt::Key_Eacute     : this->scanCode = 0xE;  break; /*é*/         case Qt::Key_degree    : this->scanCode = 0xB0; break; /*°*/
-            case Qt::Key_Ccedilla   : this->scanCode = 0xE7; break; /*ç*/
-            case Qt::Key_Agrave     : this->scanCode = 0xE0; break; /*à*/         //case Qt::Key_         : this->scanCode = '';  break; /**/
-            case Qt::Key_Ugrave     : this->scanCode = 0xF9; break; /*ù*/
-            case Qt::Key_Egrave     : this->scanCode = 0xE8; break; /*è*/
-            case Qt::Key_twosuperior: this->scanCode = 0xB2; break; // œ or square
+        switch (this->qKeyCode) {
+            case Qt::Key_A         : this->scanCode = 'a'; this->qKeyName = std::string("Key_A"); break; /*A*/         case Qt::Key_1         : this->scanCode = '1'; this->qKeyName = std::string("Key_1"); break; /*1*/
+            case Qt::Key_Z         : this->scanCode = 'z'; this->qKeyName = std::string("Key_Z"); break; /*Z*/         case Qt::Key_2         : this->scanCode = '2'; this->qKeyName = std::string("Key_2"); break; /*2*/
+            case Qt::Key_Y         : this->scanCode = 'y'; this->qKeyName = std::string("Key_Y"); break; /*Y*/         case Qt::Key_3         : this->scanCode = '3'; this->qKeyName = std::string("Key_3"); break; /*3*/
+            case Qt::Key_X         : this->scanCode = 'x'; this->qKeyName = std::string("Key_X"); break; /*X*/         case Qt::Key_4         : this->scanCode = '4'; this->qKeyName = std::string("Key_4"); break; /*4*/
+            case Qt::Key_C         : this->scanCode = 'c'; this->qKeyName = std::string("Key_C"); break; /*C*/         case Qt::Key_5         : this->scanCode = '5'; this->qKeyName = std::string("Key_5"); break; /*5*/
+            case Qt::Key_V         : this->scanCode = 'v'; this->qKeyName = std::string("Key_V"); break; /*V*/         case Qt::Key_6         : this->scanCode = '6'; this->qKeyName = std::string("Key_6"); break; /*6*/
+            case Qt::Key_E         : this->scanCode = 'e'; this->qKeyName = std::string("Key_E"); break; /*E*/         case Qt::Key_7         : this->scanCode = '7'; this->qKeyName = std::string("Key_7"); break; /*7*/
+            case Qt::Key_R         : this->scanCode = 'r'; this->qKeyName = std::string("Key_R"); break; /*R*/         case Qt::Key_8         : this->scanCode = '8'; this->qKeyName = std::string("Key_8"); break; /*8*/
+            case Qt::Key_T         : this->scanCode = 't'; this->qKeyName = std::string("Key_T"); break; /*T*/         case Qt::Key_9         : this->scanCode = '9'; this->qKeyName = std::string("Key_9"); break; /*9*/
+            case Qt::Key_U         : this->scanCode = 'u'; this->qKeyName = std::string("Key_U"); break; /*U*/         case Qt::Key_Ampersand : this->scanCode = '&'; this->qKeyName = std::string("Key_Ampersand"); break; /*&*/
+            case Qt::Key_I         : this->scanCode = 'i'; this->qKeyName = std::string("Key_I");         break; /*I*/         case Qt::Key_Asterisk  : this->scanCode = '*'; this->qKeyName = std::string("Key_Asterisk");  break; /***/
+            case Qt::Key_B         : this->scanCode = 'b'; this->qKeyName = std::string("Key_B");         break; /*B*/         case Qt::Key_Underscore: this->scanCode = '_'; this->qKeyName = std::string("Key_Underscore");break; /*_*/
+            case Qt::Key_D         : this->scanCode = 'd'; this->qKeyName = std::string("Key_D"); break; /*D*/         case Qt::Key_QuoteDbl  : this->scanCode = '"'; this->qKeyName = std::string("Key_QuoteDbl"); break; /*"*/
+            case Qt::Key_F         : this->scanCode = 'f'; this->qKeyName = std::string("Key_F"); break; /*F*/         case Qt::Key_Apostrophe: this->scanCode = 39 ; this->qKeyName = std::string("Key_Apostrophe"); break; /*'*/
+            case Qt::Key_G         : this->scanCode = 'g'; this->qKeyName = std::string("Key_G"); break; /*G*/         case Qt::Key_Comma     : this->scanCode = ','; this->qKeyName = std::string("Key_Comma"); break; /*,*/
+            case Qt::Key_H         : this->scanCode = 'h'; this->qKeyName = std::string("Key_H"); break; /*H*/         case Qt::Key_Plus      : this->scanCode = '+'; this->qKeyName = std::string("Key_Plus"); break; /*+*/
+            case Qt::Key_J         : this->scanCode = 'j'; this->qKeyName = std::string("Key_J"); break; /*J*/         case Qt::Key_Minus     : this->scanCode = '-'; this->qKeyName = std::string("Key_Minus"); break; /*-*/
+            case Qt::Key_K         : this->scanCode = 'k'; this->qKeyName = std::string("Key_K"); break; /*K*/         case Qt::Key_ParenLeft : this->scanCode = '('; this->qKeyName = std::string("Key_ParenLeft"); break; /*(*/
+            case Qt::Key_L         : this->scanCode = 'l'; this->qKeyName = std::string("Key_L"); break; /*L*/         case Qt::Key_ParenRight: this->scanCode = ')'; this->qKeyName = std::string("Key_ParenRight"); break; /*)*/
+            case Qt::Key_M         : this->scanCode = 'm'; this->qKeyName = std::string("Key_M"); break; /*M*/         case Qt::Key_Equal     : this->scanCode = '='; this->qKeyName = std::string("Key_Equal"); break; /*=*/
+            case Qt::Key_N         : this->scanCode = 'n'; this->qKeyName = std::string("Key_N"); break; /*N*/         case Qt::Key_Exclam    : this->scanCode = '!'; this->qKeyName = std::string("Key_Exclam"); break; /*!*/
+            case Qt::Key_O         : this->scanCode = 'o'; this->qKeyName = std::string("Key_O"); break; /*O*/         case Qt::Key_Colon     : this->scanCode = ':'; this->qKeyName = std::string("Key_Colon"); break; /*:*/
+            case Qt::Key_P         : this->scanCode = 'p'; this->qKeyName = std::string("Key_P"); break; /*P*/         case Qt::Key_Dollar    : this->scanCode = '$'; this->qKeyName = std::string("Key_Dollar"); break; /*$*/
+            case Qt::Key_Q         : this->scanCode = 'q'; this->qKeyName = std::string("Key_Q"); break; /*Q*/         case Qt::Key_multiply  : this->scanCode = '*'; this->qKeyName = std::string("Key_multiply"); break; /***/
+            case Qt::Key_S         : this->scanCode = 's'; this->qKeyName = std::string("Key_S"); break; /*S*/         case Qt::Key_Space     : this->scanCode = ' '; this->qKeyName = std::string("Key_Space"); break; /* */
+            case Qt::Key_W         : this->scanCode = 'w'; this->qKeyName = std::string("Key_W"); break; /*W*/         case Qt::Key_section   : this->scanCode = 0xA7; this->qKeyName = std::string("Key_section"); break; /*§*/
+            case Qt::Key_Eacute    : this->scanCode = 0x0E; this->qKeyName = std::string("Key_Eacute"); break; /*é*/         case Qt::Key_degree    : this->scanCode = 0xB0; this->qKeyName = std::string("Key_degree"); break; /*°*/
+            case Qt::Key_Ccedilla  : this->scanCode = 0xE7; this->qKeyName = std::string("Key_Ccedilla"); break; /*ç*/
+            case Qt::Key_Agrave    : this->scanCode = 0xE0; this->qKeyName = std::string("Key_Agrave"); break; /*à*/         //case Qt::Key_        : this->scanCode = ''; this->qKeyName = std::string("KEYNAME"); break; /**/
+            case Qt::Key_Ugrave    : this->scanCode = 0xF9; this->qKeyName = std::string("Key_Ugrave"); break; /*ù*/
+            case Qt::Key_Egrave    : this->scanCode = 0xE8; this->qKeyName = std::string("Key_Egrave"); break; /*è*/
+            case Qt::Key_twosuperior: this->scanCode = 0xB2; this->qKeyName = std::string("Key_twosuperior"); break; // œ or square
             case Qt::Key_Slash     :
                 if (this->_keyboardMods == 0) {
-                    scanCode = 0x21;
+                    this->scanCode = 0x21;
                     this->flag = this->flag | KBD_FLAGS_EXTENDED;
+                    this->qKeyName = std::string("Key_Slash");
                 }
                 break; /* / */
 
@@ -294,61 +296,61 @@ private:
     //===================
     //=======================================================================================================================
     void getNonCharKeys() {
-        switch (scanCode) {
+        switch (this->qKeyCode) {
 
         //------------------------------------------
         //    Not mod neither char keys Extended
         //------------------------------------------
-            case Qt::Key_Enter      : this->scanCode = 0x1C; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  ENTER KP
-            case Qt::Key_NumLock    : this->scanCode = 0x45; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  NUMLOCK
-            case Qt::Key_Insert     : this->scanCode = 0x52; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  INSERT
-            case Qt::Key_Delete     : this->scanCode = 0x53; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  DELETE
-            case Qt::Key_End        : this->scanCode = 0x4F; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  END
-            case Qt::Key_PageDown   : this->scanCode = 0x51; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  PG DN
-            case Qt::Key_PageUp     : this->scanCode = 0x49; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  PG UP
-            case Qt::Key_Up         : this->scanCode = 0x48; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  U ARROW
-            case Qt::Key_Left       : this->scanCode = 0x4B; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  L ARROW
-            case Qt::Key_Down       : this->scanCode = 0x50; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  D ARROW
-            case Qt::Key_Right      : this->scanCode = 0x4D; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  R ARROW
-            case Qt::Key_Meta       : this->scanCode = 0x5c; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  R WINDOW
-            case Qt::Key_Menu       : this->scanCode = 0x5D; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  MENU APPS
+            case Qt::Key_Enter      : this->scanCode = 0x1C; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Key_Enter"); break; //  ENTER KP
+            case Qt::Key_NumLock    : this->scanCode = 0x45; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Key_NumLock"); break; //  NUMLOCK
+            case Qt::Key_Insert     : this->scanCode = 0x52; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Key_Insert"); break; //  INSERT
+            case Qt::Key_Delete     : this->scanCode = 0x53; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Key_Delete"); break; //  DELETE
+            case Qt::Key_End        : this->scanCode = 0x4F; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Key_End"); break; //  END
+            case Qt::Key_PageDown   : this->scanCode = 0x51; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Key_PageDown"); break; //  PG DN
+            case Qt::Key_PageUp     : this->scanCode = 0x49; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Key_PageUp"); break; //  PG UP
+            case Qt::Key_Up         : this->scanCode = 0x48; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Key_Up"); break; //  U ARROW
+            case Qt::Key_Left       : this->scanCode = 0x4B; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Key_Left"); break; //  L ARROW
+            case Qt::Key_Down       : this->scanCode = 0x50; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Key_Down"); break; //  D ARROW
+            case Qt::Key_Right      : this->scanCode = 0x4D; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Key_Right"); break; //  R ARROW
+            case Qt::Key_Meta       : this->scanCode = 0x5c; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Key_Meta"); break; //  R WINDOW
+            case Qt::Key_Menu       : this->scanCode = 0x5D; this->flag = this->flag | KBD_FLAGS_EXTENDED; this->qKeyName = std::string("Key_Menu"); break; //  MENU APPS
     //------------------------------------------------------------------------------------------------------------------------
         //---------------------------------------------
         //    Not mod neither char keys NOT Extended
         //---------------------------------------------
-            case Qt::Key_Return               : this->scanCode = 0x1C; break; //  ENTER
-            case Qt::Key_Backspace            : this->scanCode = 0x0E; break; //  BKSP
-            case Qt::Key_Escape               : this->scanCode = 0x01; break; //  ESCAPE
-            case Qt::Key_F1                   : this->scanCode = 0x3B; break; //  F1
-            case Qt::Key_F2                   : this->scanCode = 0x3C; break; //  F2
-            case Qt::Key_F3                   : this->scanCode = 0x3D; break; //  F3
-            case Qt::Key_F4                   : this->scanCode = 0x3E; break; //  F4
-            case Qt::Key_F5                   : this->scanCode = 0x3F; break; //  F5
-            case Qt::Key_F6                   : this->scanCode = 0x40; break; //  F6
-            case Qt::Key_F7                   : this->scanCode = 0x41; break; //  F7
-            case Qt::Key_F8                   : this->scanCode = 0x42; break; //  F8
-            case Qt::Key_F9                   : this->scanCode = 0x43; break; //  F9
-            case Qt::Key_F10                  : this->scanCode = 0x44; break; //  F10
-            case Qt::Key_F11                  : this->scanCode = 0x57; break; //  F11
-            case Qt::Key_F12                  : this->scanCode = 0x58; break; //  F12
-            case Qt::Key_ScrollLock           : this->scanCode = 0x46; break; //  SCROLL
-            case Qt::Key_Pause                : this->scanCode = 0xE1; break; //  PAUSE
-            case Qt::Key_Tab                  : this->scanCode = 0x0F; break; //  TAB
-            case Qt::Key_Home                 : this->scanCode = 0x47; break; //  HOME
-            case Qt::Key_MediaStop            : this->scanCode = 0x24; break; //
-            case Qt::Key_MediaPrevious        : this->scanCode = 0x10; break; //
-            case Qt::Key_MediaNext            : this->scanCode = 0x19; break; //
-            case Qt::Key_MediaTogglePlayPause : this->scanCode = 0x22; break; //
-            case Qt::Key_LaunchMail           : this->scanCode = 0x47; break; //
-            case Qt::Key_Search               : this->scanCode = 0x47; break; //
-            case Qt::Key_Favorites            : this->scanCode = 0x66; break; //
-            case Qt::Key_HomePage             : this->scanCode = 0x32; break; //
-            case Qt::Key_VolumeDown           : this->scanCode = 0x2E; break; //
-            case Qt::Key_VolumeUp             : this->scanCode = 0x30; break; //
-            case Qt::Key_VolumeMute           : this->scanCode = 0x20; break; //
-            case Qt::Key_PowerOff             : this->scanCode = 0x5E; break; //
-            case Qt::Key_WakeUp               : this->scanCode = 0x63; break; //
-            case Qt::Key_Sleep                : this->scanCode = 0x5F; break; //
+            case Qt::Key_Return               : this->scanCode = 0x1C; this->qKeyName = std::string("Key_Return"); break; //  ENTER
+            case Qt::Key_Backspace            : this->scanCode = 0x0E; this->qKeyName = std::string("Key_Backspace"); break; //  BKSP
+            case Qt::Key_Escape               : this->scanCode = 0x01; this->qKeyName = std::string("Key_Escape"); break; //  ESCAPE
+            case Qt::Key_F1                   : this->scanCode = 0x3B; this->qKeyName = std::string("Key_F1"); break; //  F1
+            case Qt::Key_F2                   : this->scanCode = 0x3C; this->qKeyName = std::string("Key_F2"); break; //  F2
+            case Qt::Key_F3                   : this->scanCode = 0x3D; this->qKeyName = std::string("Key_F3"); break; //  F3
+            case Qt::Key_F4                   : this->scanCode = 0x3E; this->qKeyName = std::string("Key_F4"); break; //  F4
+            case Qt::Key_F5                   : this->scanCode = 0x3F; this->qKeyName = std::string("Key_F5"); break; //  F5
+            case Qt::Key_F6                   : this->scanCode = 0x40; this->qKeyName = std::string("Key_F6"); break; //  F6
+            case Qt::Key_F7                   : this->scanCode = 0x41; this->qKeyName = std::string("Key_F7"); break; //  F7
+            case Qt::Key_F8                   : this->scanCode = 0x42; this->qKeyName = std::string("Key_F8"); break; //  F8
+            case Qt::Key_F9                   : this->scanCode = 0x43; this->qKeyName = std::string("Key_F9"); break; //  F9
+            case Qt::Key_F10                  : this->scanCode = 0x44; this->qKeyName = std::string("Key_F10"); break; //  F10
+            case Qt::Key_F11                  : this->scanCode = 0x57; this->qKeyName = std::string("Key_F11"); break; //  F11
+            case Qt::Key_F12                  : this->scanCode = 0x58; this->qKeyName = std::string("Key_F12"); break; //  F12
+            case Qt::Key_ScrollLock           : this->scanCode = 0x46; this->qKeyName = std::string("Key_ScrollLock"); break; //  SCROLL
+            case Qt::Key_Pause                : this->scanCode = 0xE1; this->qKeyName = std::string("Key_Pause"); break; //  PAUSE
+            case Qt::Key_Tab                  : this->scanCode = 0x0F; this->qKeyName = std::string("Key_Tab"); break; //  TAB
+            case Qt::Key_Home                 : this->scanCode = 0x47; this->qKeyName = std::string("Key_Home"); break; //  HOME
+            case Qt::Key_MediaStop            : this->scanCode = 0x24; this->qKeyName = std::string("Key_MediaStop"); break; //
+            case Qt::Key_MediaPrevious        : this->scanCode = 0x10; this->qKeyName = std::string("Key_MediaPrevious"); break; //
+            case Qt::Key_MediaNext            : this->scanCode = 0x19; this->qKeyName = std::string("Key_MediaNext"); break; //
+            case Qt::Key_MediaTogglePlayPause : this->scanCode = 0x22; this->qKeyName = std::string("Key_MediaTogglePlayPause"); break; //
+            case Qt::Key_LaunchMail           : this->scanCode = 0x47; this->qKeyName = std::string("Key_LaunchMail"); break; //
+            case Qt::Key_Search               : this->scanCode = 0x47; this->qKeyName = std::string("Key_Search"); break; //
+            case Qt::Key_Favorites            : this->scanCode = 0x66; this->qKeyName = std::string("Key_Favorites"); break; //
+            case Qt::Key_HomePage             : this->scanCode = 0x32; this->qKeyName = std::string("Key_HomePage"); break; //
+            case Qt::Key_VolumeDown           : this->scanCode = 0x2E; this->qKeyName = std::string("Key_VolumeDown"); break; //
+            case Qt::Key_VolumeUp             : this->scanCode = 0x30; this->qKeyName = std::string("Key_VolumeUp"); break; //
+            case Qt::Key_VolumeMute           : this->scanCode = 0x20; this->qKeyName = std::string("Key_VolumeMute"); break; //
+            case Qt::Key_PowerOff             : this->scanCode = 0x5E; this->qKeyName = std::string("Key_PowerOff"); break; //
+            case Qt::Key_WakeUp               : this->scanCode = 0x63; this->qKeyName = std::string("Key_WakeUp"); break; //
+            case Qt::Key_Sleep                : this->scanCode = 0x5F; this->qKeyName = std::string("Key_Sleep"); break; //
     //----------------------------------------------------------------------
             //--------------------------
             //    keyboard modifiers
@@ -439,26 +441,26 @@ private:
     //===================
     void getDeadKeys() {
 
-        switch (scanCode) {
-            case Qt::Key_Dead_Circumflex       : this->scanCode = 0x5E; this->_deadKeys = true; break; //  ^
-            case Qt::Key_Dead_Grave            : this->scanCode = 0x60; this->_deadKeys = true; break; //  ` grave
-            case Qt::Key_Dead_Tilde            : this->scanCode = 0x7E; this->_deadKeys = true; break; //
-            case Qt::Key_Dead_Diaeresis        : this->scanCode = 0xA8; this->_deadKeys = true; break; // ¨
-            case Qt::Key_Dead_Acute            : this->scanCode = 0xB4; this->_deadKeys = true; break; //
-            case Qt::Key_Dead_Macron           : this->scanCode = 0xAF; this->_deadKeys = true; break; //
-            case Qt::Key_Dead_Cedilla          : this->scanCode = 0xB8; this->_deadKeys = true; break; //
-            //case Qt::Key_Dead_Breve            : this->scanCode = ''; this->_deadKeys = true; break; //
-            //case Qt::Key_Dead_Abovedot         : this->scanCode = ''; this->_deadKeys = true; break; //
-            //case Qt::Key_Dead_Abovering        : this->scanCode = ''; this->_deadKeys = true; break; //
-            //case Qt::Key_Dead_Doubleacute      : this->scanCode = ''; this->_deadKeys = true; break; //
-            //case Qt::Key_Dead_Caron            : this->scanCode = ''; this->_deadKeys = true; break;
-            //case Qt::Key_Dead_Ogonek           : this->scanCode = ''; this->_deadKeys = true; break;
-            //case Qt::Key_Dead_Iota             : this->scanCode = ''; this->_deadKeys = true; break;
-            //Case Qt::Key_Dead_Voiced_Sound     : this->scanCode = ''; this->_deadKeys = true; break;
-            //case Qt::Key_Dead_Semivoiced_Sound : this->scanCode = ''; this->_deadKeys = true; break;
-            //case Qt::Key_Dead_Belowdot         : this->scanCode = ''; this->_deadKeys = true; break;
-            //case Qt::Key_Dead_Hook             : this->scanCode = ''; this->_deadKeys = true; break;
-            //case Qt::Key_Dead_Horn             : this->scanCode = ''; this->_deadKeys = true; break;
+        switch (this->qKeyCode) {
+            case Qt::Key_Dead_Circumflex       : this->scanCode = 0x5E; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Circumflex"); break; //  ^
+            case Qt::Key_Dead_Grave            : this->scanCode = 0x60; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Grave"); break; //  ` grave
+            case Qt::Key_Dead_Tilde            : this->scanCode = 0x7E; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Tilde"); break; //
+            case Qt::Key_Dead_Diaeresis        : this->scanCode = 0xA8; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Diaeresis"); break; // ¨
+            case Qt::Key_Dead_Acute            : this->scanCode = 0xB4; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Acute"); break; //
+            case Qt::Key_Dead_Macron           : this->scanCode = 0xAF; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Macron"); break; //
+            case Qt::Key_Dead_Cedilla          : this->scanCode = 0xB8; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Cedilla"); break; //
+            //case Qt::Key_Dead_Breve            : this->scanCode = ''; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Breve"); break; //
+            //case Qt::Key_Dead_Abovedot         : this->scanCode = ''; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Abovedot"); break; //
+            //case Qt::Key_Dead_Abovering        : this->scanCode = ''; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Abovering"); break; //
+            //case Qt::Key_Dead_Doubleacute      : this->scanCode = ''; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Doubleacute"); break; //
+            //case Qt::Key_Dead_Caron            : this->scanCode = ''; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Caron"); break;
+            //case Qt::Key_Dead_Ogonek           : this->scanCode = ''; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Ogonek"); break;
+            //case Qt::Key_Dead_Iota             : this->scanCode = ''; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Iota"); break;
+            //Case Qt::Key_Dead_Voiced_Sound     : this->scanCode = ''; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Voiced_Sound"); break;
+            //case Qt::Key_Dead_Semivoiced_Sound : this->scanCode = ''; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Semivoiced_Sound"); break;
+            //case Qt::Key_Dead_Belowdot         : this->scanCode = ''; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Belowdot"); break;
+            //case Qt::Key_Dead_Hook             : this->scanCode = ''; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Hook"); break;
+            //case Qt::Key_Dead_Horn             : this->scanCode = ''; this->_deadKeys = true; this->qKeyName = std::string("Key_Dead_Horn"); break;
 
             default: break;
         }
@@ -475,11 +477,11 @@ private:
     //===========================
     bool getCustomKeysNoExtendedKeylayoutApplied() {
 
-        if (this->scanCode == 0) {
+        if (this->qKeyCode == 0) {
             return false;
         }
         try {
-            this->scanCode = this->_customNoExtendedKeylayoutApplied.at(this->scanCode);
+            this->scanCode = this->_customNoExtendedKeylayoutApplied.at(this->qKeyCode);
 
             //-----------------------------
             //    Keyboard Layout apply
@@ -492,11 +494,11 @@ private:
     }//------------------------------------------------------------------------
 
     bool getCustomKeysNoExtended() {
-        if (this->scanCode == 0) {
+        if (this->qKeyCode == 0) {
             return false;
         }
         try {
-            this->scanCode = this->_customNoExtended.at(this->scanCode);
+            this->scanCode = this->_customNoExtended.at(this->qKeyCode);
             return true;
         } catch (const std::exception &) {
             return false;
@@ -508,11 +510,11 @@ private:
     //   Custom Key EXTENDED
     //==========================
      bool getCustomKeysExtendedKeylayoutApplied() {
-        if (this->scanCode == 0) {
+        if (this->qKeyCode == 0) {
             return false;
         }
         try {
-            this->scanCode = this->_customExtendedKeylayoutApplied.at(this->scanCode);
+            this->scanCode = this->_customExtendedKeylayoutApplied.at(this->qKeyCode);
 
             //-----------------------------
             //    Keyboard Layout apply
@@ -527,11 +529,11 @@ private:
     }//------------------------------------------------------------------------------------------------------------
 
     bool getCustomKeysExtended() {
-        if (this->scanCode == 0) {
+        if (this->qKeyCode == 0) {
             return false;
         }
         try {
-            this->scanCode = this->_customExtended.at(this->scanCode);
+            this->scanCode = this->_customExtended.at(this->qKeyCode);
             this->flag = this->flag | KBD_FLAGS_EXTENDED;
             return true;
         } catch (const std::exception &) {
@@ -543,6 +545,11 @@ private:
 public:
     int scanCode;
     uint16_t flag;
+    std::string ascii;
+    int qKeyCode;
+
+    std::string qKeyName;
+
 
     //=================//
     //   CONSTRUCTOR   //
@@ -595,7 +602,8 @@ public:
     }
 
 
-    void setCustomKeyCode(int qt_key, int scan_Code, int ASCII8_Code, bool extended) {
+    void setCustomKeyCode(int qt_key, int scan_Code, std::string ASCII8, bool extended) {
+        int ASCII8_Code = ASCII8[0];
         if (qt_key != 0) {
             if (ASCII8_Code != 0) {
                 if (extended) {
@@ -628,12 +636,15 @@ public:
     }
 
 
-    void keyEvent(const uint16_t keyStatusFlag, const int key, const char text) {
+    void keyEvent(const uint16_t keyStatusFlag, const int key, const std::string text) {
         this->flag = keyStatusFlag;
-        this->scanCode = key;
+        //this->scanCode = key;
         int keyCode(key);
         this->_deadKeys = false;
         this->_unvalidScanCode = false;
+
+        this->ascii = text;
+        this->qKeyCode = key;
 
         if (keyCode != 0) {
 
@@ -649,7 +660,7 @@ public:
                     //--------------------------------------
                     //             CHARACTERS
                     //--------------------------------------
-                    this->getKeyChar(text);
+                    this->getKeyChar(text[0]);
                 }
             } else {
 
@@ -680,7 +691,7 @@ public:
                             //--------------------------
                             if (!this->getCustomKeysExtendedKeylayoutApplied()) {
                                 if (!this->getCustomKeysExtended()) {
-                                    this->showkey(keyStatusFlag, key, text);
+                                    this->showkey(keyStatusFlag, key, text[0]);
                                     std::cout << "Error: Key(0x" << keyCode << ") unknown key code." << std::endl;
                                 }
                             }
@@ -691,7 +702,7 @@ public:
         }
 
         if (this->_verbose > 0) {
-            this->showkey(keyStatusFlag, key, text);
+            this->showkey(keyStatusFlag, key, text[0]);
         }
         if (this->_unvalidScanCode) {
          this->scanCode = 0;

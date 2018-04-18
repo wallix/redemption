@@ -944,7 +944,7 @@ public:
                               static_cast<uint32_t>(PERF_ENABLE_FONT_SMOOTHING) : 0)))
         , client_time_zone(info.client_time_zone)
         , gen(gen)
-        , verbose(/*RDPVerbose::export_metrics*/mod_rdp_params.verbose)
+        , verbose(RDPVerbose::export_metrics/*mod_rdp_params.verbose*/)
         , cache_verbose(mod_rdp_params.cache_verbose)
         , enable_auth_channel(mod_rdp_params.alternate_shell[0] && !mod_rdp_params.ignore_auth_channel)
         , auth_channel_flags(0)
@@ -2288,16 +2288,16 @@ public:
 
     // this->total_main_amount_data_rcv_from_client += length;
     // this->total_main_amount_data_rcv_from_server += length;
-    void log_metrics() override {
+    void log_metrics(const char * premary_user) override {
         if (bool(this->verbose & RDPVerbose::export_metrics)) {
-            LOG(LOG_INFO, "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\" Client data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld", this->redir_info.session_id, this->username, this->nego.get_user_name(), this->nego.get_target_host()/*"user_account", "0.0.0.0"*/,
+            LOG(LOG_INFO, "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\" Client data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld", this->redir_info.session_id, premary_user,this->username, this->nego.get_target_host()/*"user_account", "0.0.0.0"*/,
                                 this->total_main_amount_data_rcv_from_client,
                                 this->total_cliprdr_amount_data_rcv_from_client,
                                 this->total_rail_amount_data_rcv_from_client,
                                 this->total_rdpdr_amount_data_rcv_from_client,
                                 this->total_drdynvc_amount_data_rcv_from_client);
 
-            LOG(LOG_INFO, "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\" Server data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld", this->redir_info.session_id, this->username, this->nego.get_user_name(), this->nego.get_target_host(),
+            LOG(LOG_INFO, "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\" Server data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld", this->redir_info.session_id, premary_user, this->username, this->nego.get_target_host(),
                                 this->total_main_amount_data_rcv_from_server,
                                 this->total_cliprdr_amount_data_rcv_from_server,
                                 this->total_rail_amount_data_rcv_from_server,

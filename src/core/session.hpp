@@ -86,6 +86,8 @@ class Session
 
     static const time_t select_timeout_tv_sec = 3;
 
+    static const time_t log_metrics_delay = 5;              // 5 seconds
+
 public:
     Session(unique_fd sck, Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat)
         : ini(ini)
@@ -141,7 +143,7 @@ public:
             std::vector<EventHandler> event_handlers;
 
             timeval alarm_log_metrics = tvtime();
-            alarm_log_metrics.tv_sec += 5;
+            alarm_log_metrics.tv_sec += this->log_metrics_delay;
 
             // TODO: we should define some select object to wrap rfds, wfds and timeouts
             // and hide events inside modules managing sockets (or timers)
@@ -449,9 +451,9 @@ public:
                 if (mm.mod) {
                     timeval wait_log_metrics = ::how_long_to_wait(alarm_log_metrics, tvtime());
                     if (!wait_log_metrics.tv_sec && ! wait_log_metrics.tv_usec) {
-                        mm.mod->log_metrics();
+                        mm.mod->log_metrics(this->ini.get<cfg::globals::auth_user>().c_str());
                         alarm_log_metrics = tvtime();
-                        alarm_log_metrics.tv_sec += 5;
+                        alarm_log_metrics.tv_sec += this->log_metrics_delay;
                     }
                 }
             }
@@ -502,6 +504,9 @@ public:
     }
 
 private:
+
+
+
     void write_performance_log(time_t now) {
         if (!this->perf_last_info_collect_time) {
             assert(!this->perf_file);
