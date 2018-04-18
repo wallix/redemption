@@ -889,8 +889,7 @@ public:
         capture_params.now, this->out, wrm_params.capture_bpp, wrm_params.remote_app,
         this->bmp_cache, this->gly_cache, this->ptr_cache, image_frame_api,
         wrm_params.wrm_compression_algorithm, GraphicToFile::SendInput::YES,
-        GraphicToFile::Verbose(wrm_params.wrm_verbose)
-    )
+        GraphicToFile::Verbose(wrm_params.wrm_verbose))
     , nc(this->graphic_to_file, capture_params.now,
         wrm_params.frame_interval, wrm_params.break_interval)
     , kbd_input_mask_enabled{false}
