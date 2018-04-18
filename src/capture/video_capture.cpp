@@ -296,7 +296,7 @@ FullVideoCaptureImpl::TmpFileTransport::TmpFileTransport(
     int const len = std::snprintf(
         this->final_filename,
         sizeof(this->final_filename),
-        "%s%s%s", prefix, filename, extension
+        "%s%s.%s", prefix, filename, extension
     );
     if (len > int(sizeof(this->final_filename))) {
         LOG(LOG_ERR, "%s", "Video path length is too large.");
@@ -379,7 +379,7 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
     RDPDrawable & drawable, gdi::ImageFrameApi & imageFrameApi,
     VideoParams const & video_params, FullVideoParams const & full_video_params)
 : trans_tmp_file(
-    capture_params.record_path, capture_params.basename, ("." + video_params.codec).c_str(),
+    capture_params.record_path, capture_params.basename, video_params.codec.c_str(),
     capture_params.groupid, capture_params.report_message)
 , video_cap_ctx(capture_params.now,
     video_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,

@@ -476,6 +476,7 @@ private:
             ll(stop)
         );
     }
+
     void write_hashs(HashArray const & qhash, HashArray const & fhash) noexcept
     {
         char * p = writer.mes + writer.len;
@@ -492,6 +493,7 @@ private:
 
         writer.len = p - writer.mes;
     }
+
     void write_newline() noexcept
     {
         writer.mes[writer.len++] = '\n';

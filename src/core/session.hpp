@@ -399,6 +399,7 @@ public:
                             // authentifier received updated values
                             acl->acl_serial.receive();
                         }
+
                         if (enable_osd) {
                             const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
                             if (enddate && mm.is_up_and_running()) {

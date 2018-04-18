@@ -31,12 +31,10 @@ from datetime   import datetime
 import socket
 from socket     import gethostname
 
-#TODO : remove these hardcoded strings
-RECORD_PATH = u'/var/wab/recorded/rdp/'
-
 from sesmanconf import TR, SESMANCONF
 import engine
 
+from engine import LOCAL_TRACE_PATH_RDP
 from engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
     APPROVAL_PENDING, APPROVAL_NONE
 from engine import APPREQ_REQUIRED, APPREQ_OPTIONAL
@@ -874,14 +872,14 @@ class Sesman():
 
     def create_record_path_directory(self):
         try:
-            os.stat(RECORD_PATH)
+            os.stat(LOCAL_TRACE_PATH_RDP)
         except OSError:
             try:
-                os.mkdir(RECORD_PATH)
+                os.mkdir(LOCAL_TRACE_PATH_RDP)
             except Exception:
-                Logger().info(u"Failed creating recording path (%s)" % RECORD_PATH)
+                Logger().info(u"Failed creating recording path (%s)" % LOCAL_TRACE_PATH_RDP)
                 self.send_data({u'rejected': TR(u'error_getting_record_path')})
-                return False, TR(u'error_getting_record_path %s') % RECORD_PATH
+                return False, TR(u'error_getting_record_path %s') % LOCAL_TRACE_PATH_RDP
         return True, u''
 
     def generate_record_filebase(self, session_id, user, account, start_time):
@@ -944,7 +942,7 @@ class Sesman():
         else:   # localfile_hashed
             data_to_send[u"trace_type"] = u'1'
 
-        self.full_path = os.path.join(RECORD_PATH, self.record_filebase)
+        self.full_path = os.path.join(LOCAL_TRACE_PATH_RDP, self.record_filebase)
 
         #TODO remove .flv extention and adapt ReDemPtion proxy code
         data_to_send[u'rec_path'] = u"%s.flv" % (self.full_path)
@@ -979,7 +977,7 @@ class Sesman():
         }
 
         self.full_log_path = os.path.join(
-            RECORD_PATH,
+            LOCAL_TRACE_PATH_RDP,
             self.record_filebase + u'.log'
         )
 
@@ -1644,7 +1642,7 @@ class Sesman():
                                     _status, _error = self.engine.write_trace(self.full_path)
                                     if not _status:
                                         _error = TR("Trace writer failed for %s") % self.full_path
-                                        Logger().info(u"Failed accessing recording path (%s)" % RECORD_PATH)
+                                        Logger().info(u"Failed accessing recording path (%s)" % LOCAL_TRACE_PATH_RDP)
                                         self.send_data({u'rejected': TR(u'error_getting_record_path')})
 
                                 if self.shared.get(u'reporting'):
