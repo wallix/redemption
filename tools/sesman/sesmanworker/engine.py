@@ -20,6 +20,7 @@ try:
         PUBKEY_VAULT, PUBKEY_AGENT_FORWARDING, KERBEROS_FORWARDING, \
         PASSWORD_MAPPING, SUPPORTED_AUTHENTICATION_METHODS
     from wallixconst.account import AM_IL_DOMAIN
+    from wallixconst.trace import LOCAL_TRACE_PATH_RDP
     from wabx509 import AuthX509
     CRED_DATA_LOGIN = "login"
     CRED_DATA_ACCOUNT_UID = "account_uid"
@@ -34,6 +35,7 @@ except Exception, e:
         Logger().info("================================")
         Logger().info("==== Load Fake PROXY ENGINE ====")
         Logger().info("================================")
+        LOCAL_TRACE_PATH_RDP = u'/var/wab/recorded/rdp/'
     except Exception, e:
         # Logger().info("FAKE LOADING FAILED>>>>>> %s" % traceback.format_exc(e))
         Logger().info("WABENGINE LOADING FAILED>>>>>> %s" % tracelog)
