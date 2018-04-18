@@ -77,6 +77,7 @@
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "core/client_info.hpp"
+#include "core/date_dir_from_filename.hpp"
 #include "core/error.hpp"
 #include "core/font.hpp"
 #include "core/front_api.hpp"
@@ -926,7 +927,30 @@ public:
         VideoParams video_params = video_params_from_ini(this->client_info.width, this->client_info.height, ini);
 
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-        const char * record_path = ini.get<cfg::video::record_path>().c_str();
+        std::string record_path = ini.get<cfg::video::record_path>().to_string();
+        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+        std::string hash_path = ini.get<cfg::video::hash_path>().to_string();
+        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
+
+        {
+            auto date_from_file = DateDirFromFilename::extract_date(movie_path);
+            if (date_from_file.has_error()) {
+                LOG(LOG_ERR, "Front::can_be_start_capture: failed to extract date");
+                throw Error(ERR_RECORDER_FAILED_TO_EXTRACT_DATE);
+            }
+
+            record_path.insert(record_path.end(), date_from_file.begin(), date_from_file.end());
+            hash_path.insert(hash_path.end(), date_from_file.begin(), date_from_file.end());
+        }
+
+        if (recursive_create_directory(record_path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+            LOG(LOG_ERR, "Front::can_be_start_capture: Failed to create directory: \"%s\"", record_path);
+        }
+
+        if (recursive_create_directory(hash_path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+            LOG(LOG_ERR, "Front::can_be_start_capture: Failed to create directory: \"%s\"", hash_path);
+        }
+
         const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
 
         bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
@@ -944,18 +968,6 @@ public:
         ;
 
         OcrParams const ocr_params = ocr_params_from_ini(ini);
-
-        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
-        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
-
-        if (recursive_create_directory(record_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
-            LOG(LOG_ERR, "Front::can_be_start_capture: Failed to create directory: \"%s\"", record_path);
-        }
-
-        if (recursive_create_directory(hash_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
-            LOG(LOG_ERR, "Front::can_be_start_capture: Failed to create directory: \"%s\"", hash_path);
-        }
 
         char path[1024];
         char basename[1024];
@@ -1017,7 +1029,7 @@ public:
             this->cctx,
             this->gen,
             this->fstat,
-            hash_path,
+            hash_path.c_str(),
             ini
         );
 
@@ -1025,7 +1037,7 @@ public:
             now,
             basename,
             record_tmp_path,
-            record_path,
+            record_path.c_str(),
             groupid,
             &this->report_message,
             ini.get<cfg::video::smart_video_cropping>()
