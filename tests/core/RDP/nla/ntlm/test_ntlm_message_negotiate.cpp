@@ -49,7 +49,8 @@ RED_AUTO_TEST_CASE(TestNegotiate)
     get_sig(s, sig);
 
     InStream in_s(s.get_data(), s.get_offset());
-    TSRequest ts_req(in_s);
+    TSRequest ts_req(3);
+    ts_req.recv(in_s);
 
     RED_CHECK_EQUAL(ts_req.version, 3);
 

@@ -154,19 +154,6 @@ struct TSRequest final {
     {
     }
 
-    explicit TSRequest(InStream & stream)
-        : version(6)
-        , use_version(this->version)
-        , negoTokens(0)
-        , authInfo(0)
-        , pubKeyAuth(0)
-        , error_code(0)
-        , clientNonce(0)
-    {
-        this->recv(stream);
-        // LOG(LOG_INFO, "TSRequest recv %d", res);
-    }
-
     int ber_sizeof(int length) {
         length += BER::sizeof_integer(this->version);
         length += BER::sizeof_contextual_tag(BER::sizeof_integer(this->version));

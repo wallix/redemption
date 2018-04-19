@@ -114,7 +114,8 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
     get_sig(s, sig);
 
     InStream in_s(s.get_data(), s.get_offset());
-    TSRequest ts_req3(in_s);
+    TSRequest ts_req3(3);
+    ts_req3.recv(in_s);
 
     RED_CHECK_EQUAL(ts_req3.version, 3);
 

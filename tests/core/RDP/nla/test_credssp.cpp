@@ -49,7 +49,8 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     get_sig(s, sig1);
 
     InStream in_s(s.get_data(), s.get_offset());
-    TSRequest ts_req(in_s);
+    TSRequest ts_req(3);
+    ts_req.recv(in_s);
 
     RED_CHECK_EQUAL(ts_req.version, 3);
 
@@ -99,7 +100,8 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     get_sig(s, sig2);
 
     in_s = InStream(s.get_data(), s.get_offset());
-    TSRequest ts_req2(in_s);
+    TSRequest ts_req2(3);
+    ts_req2.recv(in_s);
 
     RED_CHECK_EQUAL(ts_req2.version, 3);
 
@@ -202,7 +204,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     uint8_t sig3[SslSha1::DIGEST_LENGTH];
     get_sig(s, sig3);
 
-    TSRequest ts_req3;
+    TSRequest ts_req3(3);
 
     in_s = InStream(s.get_data(), s.get_offset());
     ts_req3.recv(in_s);
@@ -273,7 +275,8 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     get_sig(s, sig4);
 
     in_s = InStream(s.get_data(), s.get_offset());
-    TSRequest ts_req4(in_s);
+    TSRequest ts_req4(3);
+    ts_req4.recv(in_s);
 
     RED_CHECK_EQUAL(ts_req4.version, 3);
 
@@ -316,7 +319,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 //    "\x21\xbc\x8f\xa8\xd4\xe0\x5a\xa6\xff\xda\x09\x50"
 //    "\x24\x0d\x8f\x8f\xf4\x92\xfe\x49\x2a\x13\x52\xa6"
 //    "\x52\x75\x50\x8d\x3e\xe9\x6b\x57"
-//    
+//
 //    "\x30\x5a\xa0\x03\x02\x01\x03\xa2\x53\x04\x51\x01"
 //    "\x00\x00\x00\xb3\x2c\x3b\xa1\x36\xf6\x55\x71\x01"
 //    "\x00\x00\x00\xa8\x85\x7d\x11\xef\x92\xa0\xd6\xff"
@@ -325,8 +328,8 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 //    "\x21\xbc\x8f\xa8\xd4\xe0\x5a\xa6\xff\xda\x09\x50"
 //    "\x24\x0d\x8f\x8f\xf4\x92\xfe\x49\x2a\x13\x52\xa6"
 //    "\x52\x75\x50\x8d\x3e\xe9\x6b\x57"
-    
-    
+
+
     LOG(LOG_INFO, "=================================\n");
     s.rewind();
     s.out_copy_bytes(packet5, sizeof(packet5));
@@ -334,7 +337,8 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     get_sig(s, sig5);
 
     in_s = InStream(s.get_data(), s.get_offset());
-    TSRequest ts_req5(in_s);
+    TSRequest ts_req5(3);
+    ts_req5.recv(in_s);
 
     RED_CHECK_EQUAL(ts_req5.version, 3);
 
@@ -350,7 +354,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     RED_CHECK_EQUAL(to_send5.get_offset(), 0x5c);
 
     RED_CHECK_SIG(to_send5, sig5);
-    
+
 //    auto av = make_array_view(to_send5.get_data(), sizeof(packet5));
 //    RED_CHECK_MEM_AA(av, packet5);
 
