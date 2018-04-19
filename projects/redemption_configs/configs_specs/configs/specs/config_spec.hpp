@@ -285,8 +285,8 @@ void config_spec_definition(Writer && W)
             "  22: Polyline"
         }, set("15,16,17,18,22"));
         W.sep();
-        W.member(ini_and_gui, no_sesman, type_<bool>(), "enable_nla", desc{"NLA authentication in secondary target."}, set(true));
-        W.member(ini_and_gui, no_sesman, type_<bool>(), "enable_kerberos", desc{
+        W.member(ini_and_gui, sesman_to_proxy, type_<bool>(), "enable_nla", desc{"NLA authentication in secondary target."}, set(true));
+        W.member(ini_and_gui, sesman_to_proxy, type_<bool>(), "enable_kerberos", desc{
             "If enabled, NLA authentication will try Kerberos before NTLM.\n"
             "(if enable_nla is disabled, this value is ignored)."
         }, set(false));
