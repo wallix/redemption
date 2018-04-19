@@ -61,7 +61,8 @@ RED_AUTO_TEST_CASE(TestChallenge)
     get_sig(s, sig);
 
     InStream in_s(s.get_data(), s.get_offset());
-    TSRequest ts_req2(in_s);
+    TSRequest ts_req2(3);
+    ts_req2.recv(in_s);
 
     RED_CHECK_EQUAL(ts_req2.version, 3);
 
