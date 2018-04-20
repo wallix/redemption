@@ -48,7 +48,11 @@ public:
 
     virtual void random(void * dest, size_t size) = 0;
 
-    virtual uint32_t rand32() = 0;
+	virtual uint32_t rand32() {
+		uint32_t ret;
+		this->random(&ret, sizeof(ret));
+		return ret;
+	}
 
     uint64_t rand64()
     {
@@ -62,8 +66,7 @@ public:
 class UdevRandom : public Random
 {
    public:
-    UdevRandom()
-    {
+    UdevRandom() {
         // TODO See if it wouldn't be better to always leave random source open. Maybe another class with that behaviour, to use when we need many random numbers/many randoms block. Unlikely in our use case.
     }
 
@@ -124,12 +127,22 @@ class UdevRandom : public Random
         }
     }
 
-    uint32_t rand32() override
-    {
-        uint32_t result = 0;
-        char buffer[sizeof(result)];
-        this->random(buffer, sizeof(result));
-        memcpy(&result, buffer, sizeof(result));
-        return result;
-    }
+};
+
+/**
+ * @brief a random generator that always returns the same value, useful when you
+ * 		want to be able to replay scenarios (and so you need random that is not
+ * 		so randomized).
+ */
+class FixedRandom : public Random {
+public:
+	FixedRandom(uint8_t fixedByte = 0xff) : value(fixedByte) {
+	}
+
+	void random(void * dest, size_t size) override {
+		memset(dest, value, size);
+	}
+
+protected:
+	uint8_t value;
 };
