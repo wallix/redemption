@@ -2356,8 +2356,28 @@ public:
                             }
                             break;
 
-                            //case FastPath::FASTPATH_INPUT_EVENT_MOUSEX:
-                            //break;
+                            // XFreeRDP sends this message even if its support is not advertised in the Input Capability Set.
+                            case FastPath::FASTPATH_INPUT_EVENT_MOUSEX:
+                            {
+                                FastPath::MouseExEvent_Recv me(cfpie.payload, byte);
+
+                                LOG(LOG_WARNING,
+                                    "Front::Received unexpected fast-path PDU, extended mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
+                                    me.pointerFlags, me.xPos, me.yPos);
+
+                                if (this->up_and_running) {
+                                    this->has_user_activity = true;
+                                }
+
+                                if ((me.pointerFlags & (SlowPath::PTRXFLAGS_BUTTON1 |
+                                                        SlowPath::PTRXFLAGS_BUTTON2)) &&
+                                    !(me.pointerFlags & SlowPath::PTRXFLAGS_DOWN)) {
+                                    if (this->capture) {
+                                        this->capture->possible_active_window_change();
+                                    }
+                                }
+                            }
+                            break;
 
                             case FastPath::FASTPATH_INPUT_EVENT_SYNC:
                             {
@@ -3718,6 +3738,28 @@ private:
                                                     SlowPath::PTRFLAGS_BUTTON2 |
                                                     SlowPath::PTRFLAGS_BUTTON3)) &&
                                 !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
+                                if (this->capture) {
+                                    this->capture->possible_active_window_change();
+                                }
+                            }
+                        }
+                        break;
+
+                        // XFreeRDP sends this message even if its support is not advertised in the Input Capability Set.
+                        case SlowPath::INPUT_EVENT_MOUSEX:
+                        {
+                            SlowPath::ExtendedMouseEvent_Recv me(ie.payload);
+
+                            LOG(LOG_WARNING, "Front::process_data: Unexpected Slow-Path INPUT_EVENT_MOUSEX eventTime=%u pointerFlags=0x%04X, xPos=%u, yPos=%u)",
+                                ie.eventTime, me.pointerFlags, me.xPos, me.yPos);
+
+                            if (this->up_and_running) {
+                                this->has_user_activity = true;
+                            }
+
+                            if ((me.pointerFlags & (SlowPath::PTRXFLAGS_BUTTON1 |
+                                                    SlowPath::PTRXFLAGS_BUTTON2)) &&
+                                !(me.pointerFlags & SlowPath::PTRXFLAGS_DOWN)) {
                                 if (this->capture) {
                                     this->capture->possible_active_window_change();
                                 }
