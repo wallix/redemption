@@ -406,9 +406,9 @@ struct SharedPtr
 
     void reset() noexcept
     {
-        if (this->p) {
-            this->p->apply_deleter();
-        }
+        // if (this->p) {
+        //     this->p->apply_deleter();
+        // }
     }
 
     SharedData<T>* p;
@@ -429,7 +429,7 @@ struct SessionReactor
         using D = SharedData<FirstTop>;
         D* data_ptr = new D{fd};
         data_ptr->use_count = 1;
-        data_ptr->deleter = [](SharedDataBase*) noexcept {};
+        data_ptr->deleter = [](SharedDataBase* p) noexcept { delete static_cast<D*>(p); };
         data_ptr->shared_ptr = nullptr;
         data_ptr->next = this->node_executors;
         this->node_executors = data_ptr;
@@ -443,7 +443,6 @@ struct SessionReactor
         while (p) {
             next = p->next;
             p->apply_deleter();
-            delete p;
             p = next;
         }
     }
@@ -694,6 +693,7 @@ namespace jln2
 {
     template<class... Ts> class TopExecutor;
     template<class... Ts> class GroupExecutor;
+    template<class Tuple, class... Ts> struct GroupExecutorWithValues;
 
     enum class [[nodiscard]] R : char
     {
@@ -723,13 +723,10 @@ namespace jln2
 
     namespace detail
     {
-        template<bool HasAct, bool HasExit, class... Ts>
+        template<bool HasAct, bool HasExit, class Top, class Group>
         struct [[nodiscard]] GroupExecutorBuilderImpl
         {
-            explicit GroupExecutorBuilderImpl(
-                TopExecutor<Ts...>& top,
-                std::unique_ptr<GroupExecutor<Ts...>>&& g
-            ) noexcept;
+            explicit GroupExecutorBuilderImpl(Top& top, std::unique_ptr<Group>&& g) noexcept;
 
             template<class F>
             auto on_action(F&& f);
@@ -740,17 +737,14 @@ namespace jln2
             auto propagate_exit();
 
         private:
-            TopExecutor<Ts...>& top;
-            std::unique_ptr<GroupExecutor<Ts...>> g;
+            Top& top;
+            std::unique_ptr<Group> g;
         };
 
-        template<bool HasAct, bool HasExit, class... Ts>
+        template<bool HasAct, bool HasExit, class Top, class Group>
         struct [[nodiscard]] TopExecutorBuilderImpl
         {
-            explicit TopExecutorBuilderImpl(
-                TopExecutor<Ts...>& top,
-                std::unique_ptr<GroupExecutor<Ts...>>&& g
-            ) noexcept;
+            explicit TopExecutorBuilderImpl(Top& top, std::unique_ptr<Group>&& g) noexcept;
 
             template<class F>
             auto on_action(F&& f);
@@ -761,8 +755,8 @@ namespace jln2
             auto propagate_exit();
 
         private:
-            TopExecutor<Ts...>& top;
-            std::unique_ptr<GroupExecutor<Ts...>> g;
+            Top& top;
+            std::unique_ptr<Group> g;
         };
 
     #ifdef IN_IDE_PARSER
@@ -781,26 +775,22 @@ namespace jln2
             template<class... Ts>
             explicit TopExecutorBuilder_Concept(Ts&&...) noexcept;
 
-            template<class F> GroupExecutorBuilder_Concept on_action(F) { return *this; }
-            template<class F> GroupExecutorBuilder_Concept on_exit(F) { return *this; }
+            template<class F> TopExecutorBuilder_Concept on_action(F) { return *this; }
+            template<class F> TopExecutorBuilder_Concept on_exit(F) { return *this; }
             TopExecutorBuilder_Concept propagate_exit();
-
-            // TODO ptr
-            TopExecutor<>& done();
-            operator TopExecutor<>& ();
         };
 
-        template<class...>
+        template<class Top, class Group>
         using GroupExecutorBuilder = GroupExecutorBuilder_Concept;
 
-        template<class...>
+        template<class Top, class Group>
         using TopExecutorBuilder = TopExecutorBuilder_Concept;
     #else
-        template<class... Ts>
-        using GroupExecutorBuilder = GroupExecutorBuilderImpl<0, 0, Ts...>;
+        template<class Top, class Group>
+        using GroupExecutorBuilder = GroupExecutorBuilderImpl<0, 0, Top, Group>;
 
-        template<class... Ts>
-        using TopExecutorBuilder = TopExecutorBuilderImpl<0, 0, Ts...>;
+        template<class Top, class Group>
+        using TopExecutorBuilder = TopExecutorBuilderImpl<0, 0, Top, Group>;
     #endif
     }
 
@@ -811,14 +801,17 @@ namespace jln2
     template<class... Ts>
     struct Context
     {
-    #ifdef IN_IDE_PARSER
-        detail::GroupExecutorBuilder_Concept create_sub_executor();
-    #else
-        auto create_sub_executor();
-    #endif
+        Context(TopExecutor<Ts...>& top, GroupExecutor<Ts...>& current_group) noexcept
+        : top(top)
+        , current_group(current_group)
+        {}
 
-        template<class F>
-        R replace_action(F&& f);
+        template<class... Us>
+    #ifdef IN_IDE_PARSER
+        detail::GroupExecutorBuilder_Concept create_sub_executor(Us&&...);
+    #else
+        auto create_sub_executor(Us&&...);
+    #endif
 
         R exception(Error const& e) noexcept;
         R need_more_data() noexcept { return R::NeedMoreData; }
@@ -835,16 +828,16 @@ namespace jln2
         int get_fd() const noexcept;
         void set_fd(int fd) noexcept;
 
-    private:
-        friend TopExecutor<Ts...>;
-
-        Context(TopExecutor<Ts...>& top, GroupExecutor<Ts...>& current_group)
-        : top(top)
-        , current_group(current_group)
-        {}
-
+    protected:
         TopExecutor<Ts...>& top;
         GroupExecutor<Ts...>& current_group;
+    };
+
+    template<class Tuple, class... Ts>
+    struct ContextWithValues : Context<Ts...>
+    {
+        template<class F>
+        R replace_action(F&& f);
     };
 
     template<class... Ts>
@@ -860,15 +853,53 @@ namespace jln2
         std::function<R(ContextError<Ts...>, ExitR er, Ts...)> on_exit;
         NextMode next_mode = NextMode::ChildToNext;
         GroupExecutor* next;
+
+        // TODO replace by deleter function
+        virtual ~GroupExecutor() {}
+    };
+
+    template<class Tuple, class... Ts>
+    struct GroupExecutorWithValues : GroupExecutor<Ts...>
+    {
+        using Base = GroupExecutor<Ts...>;
+
+        template<class... Us>
+        GroupExecutorWithValues(Us&&... xs)
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
+        : t{static_cast<Us&&>(xs)...}
+        {}
+        REDEMPTION_DIAGNOSTIC_POP
+
+        template<class F>
+        void on_action(F&& f)
+        {
+            Base::on_action = [f, this](Context<Ts...> ctx, Ts... xs) mutable -> R {
+                return this->t.invoke(
+                    f, ContextWithValues<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
+            };
+        }
+
+        template<class F>
+        void on_exit(F&& f)
+        {
+            Base::on_exit = [f, this](ContextError<Ts...> ctx, ExitR er, Ts... xs) mutable -> R {
+                return this->t.invoke(f, ctx, er, static_cast<Ts&>(xs)...);
+            };
+        }
+
+        Tuple t;
     };
 
     template<class... Fs>
     auto sequencer(Fs&&... fs)
     {
-        return [=, i = 0](auto ctx, auto&... xs) mutable {
+        return [=, i = 0](auto ctx, auto&&... xs) mutable -> R {
             int nth = 0;
             R r = R::ExitError;
-            ((nth++ == i ? (void)(r = fs(ctx, xs...)) : void()), ...);
+            ((nth++ == i ? (void)(
+                r = fs(ctx, static_cast<decltype(xs)&&>(xs)...)
+            ) : void()), ...);
 
             switch (r) {
                 case R::Next:
@@ -1024,26 +1055,33 @@ namespace jln2
         #ifdef IN_IDE_PARSER
         detail::TopExecutorBuilder_Concept create_top_executor(int fd, Ts&&... xs)
         #else
-        auto create_top_executor(int fd, Ts&&... /*xs*/)
+        auto create_top_executor(int fd, Ts&&... xs)
         #endif
         {
-            this->top = std::make_unique<TopExecutor<decay_and_strip_t<Ts>...>>(fd);
-            return detail::TopExecutorBuilder<decay_and_strip_t<Ts>...>{
-                *this->top, std::make_unique<GroupExecutor<decay_and_strip_t<Ts>...>>()};
+            using Top = TopExecutor<>;
+            using Group = GroupExecutorWithValues<
+                jln::detail::tuple<decay_and_strip_t<Ts>...>>;
+            this->top = std::make_unique<Top>(fd);
+            return detail::TopExecutorBuilder<Top, Group>{
+                *this->top, std::make_unique<Group>(static_cast<Ts&&>(xs)...)};
         }
 
         std::unique_ptr<TopExecutor<>> top;
     };
 
     template<class... Ts>
+    template<class... Us>
     #ifdef IN_IDE_PARSER
-    detail::GroupExecutorBuilder_Concept Context<Ts...>::create_sub_executor()
+    detail::GroupExecutorBuilder_Concept Context<Ts...>::create_sub_executor(Us&&... xs)
     #else
-    auto Context<Ts...>::create_sub_executor()
+    auto Context<Ts...>::create_sub_executor(Us&&... xs)
     #endif
     {
-        return detail::GroupExecutorBuilder<decay_and_strip_t<Ts>...>{
-            this->top, std::make_unique<GroupExecutor<decay_and_strip_t<Ts>...>>()};
+        using Top = TopExecutor<Ts...>;
+        using Group = GroupExecutorWithValues<
+            jln::detail::tuple<decay_and_strip_t<Us>...>, Ts...>;
+        return detail::GroupExecutorBuilder<Top, Group>{
+            this->top, std::make_unique<Group>(static_cast<Us&&>(xs)...)};
     }
 
     template<class... Ts>
@@ -1051,16 +1089,6 @@ namespace jln2
     {
         this->top.error = e;
         return R::Exception;
-    }
-
-    template<class... Ts>
-    template<class F>
-    R Context<Ts...>::replace_action(F&& f)
-    {
-        auto g = std::make_unique<GroupExecutor<Ts...>>();
-        g->on_action = static_cast<F&&>(f);
-        this->top.sub_group(std::move(g));
-        return R::SubstituteAction;
     }
 
     template<class... Ts>
@@ -1075,93 +1103,108 @@ namespace jln2
         return this->top.set_fd(fd);
     }
 
+    template<class Tuple, class... Ts>
+    template<class F>
+    R ContextWithValues<Tuple, Ts...>::replace_action(F&& f)
+    {
+        auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(this->current_group);
+        auto g = std::make_unique<GroupExecutor<Ts...>>();
+        // TODO same in GroupExecutorWithValues
+        g->on_action = [f, &group](Context<Ts...> ctx, Ts... xs) mutable -> R {
+            return group.t.invoke(
+                f, ContextWithValues<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
+        };
+        this->top.sub_group(std::move(g));
+        return R::SubstituteAction;
+    }
 
-    template<bool HasAct, bool HasExit, class... Ts>
-    detail::GroupExecutorBuilderImpl<HasAct, HasExit, Ts...>::GroupExecutorBuilderImpl(
-        TopExecutor<Ts...>& top, std::unique_ptr<GroupExecutor<Ts...>>&& g) noexcept
+
+    template<bool HasAct, bool HasExit, class Top, class Group>
+    detail::GroupExecutorBuilderImpl<HasAct, HasExit, Top, Group>::GroupExecutorBuilderImpl(
+        Top& top, std::unique_ptr<Group>&& g) noexcept
     : top(top)
     , g(std::move(g))
     {}
 
-    template<bool HasAct, bool HasExit, class... Ts>
-    auto select_group_result(TopExecutor<Ts...>& top, std::unique_ptr<GroupExecutor<Ts...>>&& g)
+    template<bool HasAct, bool HasExit, class Top, class Group>
+    auto select_group_result(Top& top, std::unique_ptr<Group>&& g)
     {
         if constexpr (HasExit && HasAct) {
             top.sub_group(std::move(g));
             return R::CreateGroup;
         }
         else {
-            return detail::GroupExecutorBuilderImpl<HasAct, HasExit, Ts...>{top, std::move(g)};
+            return detail::GroupExecutorBuilderImpl<HasAct, HasExit, Top, Group>{top, std::move(g)};
         }
     }
 
-    template<bool HasAct, bool HasExit, class... Ts>
+    template<bool HasAct, bool HasExit, class Top, class Group>
     template<class F>
-    auto detail::GroupExecutorBuilderImpl<HasAct, HasExit, Ts...>::on_action(F&& f)
+    auto detail::GroupExecutorBuilderImpl<HasAct, HasExit, Top, Group>::on_action(F&& f)
     {
         static_assert(!HasAct, "on_action is already used");
-        this->g->on_action = static_cast<F&&>(f);
-        return select_group_result<1, HasExit, Ts...>(this->top, std::move(this->g));
+        this->g->on_action(static_cast<F&&>(f));
+        return select_group_result<1, HasExit, Top, Group>(this->top, std::move(this->g));
     }
 
-    template<bool HasAct, bool HasExit, class... Ts>
+    template<bool HasAct, bool HasExit, class Top, class Group>
     template<class F>
-    auto detail::GroupExecutorBuilderImpl<HasAct, HasExit, Ts...>::on_exit(F&& f)
+    auto detail::GroupExecutorBuilderImpl<HasAct, HasExit, Top, Group>::on_exit(F&& f)
     {
         static_assert(!HasExit, "on_exit or propagate_exit is already used");
-        this->g->on_exit = static_cast<F&&>(f);
-        return select_group_result<HasAct, 1, Ts...>(this->top, std::move(this->g));
+        this->g->on_exit(static_cast<F&&>(f));
+        return select_group_result<HasAct, 1, Top, Group>(this->top, std::move(this->g));
     }
 
-    template<bool HasAct, bool HasExit, class... Ts>
-    auto detail::GroupExecutorBuilderImpl<HasAct, HasExit, Ts...>::propagate_exit()
+    template<bool HasAct, bool HasExit, class Top, class Group>
+    auto detail::GroupExecutorBuilderImpl<HasAct, HasExit, Top, Group>::propagate_exit()
     {
-        return this->on_exit([](auto /*ctx*/, ExitR er, Ts...){
+        return this->on_exit([](auto /*ctx*/, ExitR er, [[maybe_unused]] auto&&... xs){
             return static_cast<R>(er.status);
         });
     }
 
 
-    template<bool HasAct, bool HasExit, class... Ts>
-    detail::TopExecutorBuilderImpl<HasAct, HasExit, Ts...>::TopExecutorBuilderImpl(
-        TopExecutor<Ts...>& top, std::unique_ptr<GroupExecutor<Ts...>>&& g) noexcept
+    template<bool HasAct, bool HasExit, class Top, class Group>
+    detail::TopExecutorBuilderImpl<HasAct, HasExit, Top, Group>::TopExecutorBuilderImpl(
+        Top& top, std::unique_ptr<Group>&& g) noexcept
     : top(top)
     , g(std::move(g))
     {}
 
-    template<bool HasAct, bool HasExit, class... Ts>
-    auto select_top_result(TopExecutor<Ts...>& top, std::unique_ptr<GroupExecutor<Ts...>>&& g)
+    template<bool HasAct, bool HasExit, class Top, class Group>
+    auto select_top_result(Top& top, std::unique_ptr<Group>&& g)
     {
         if constexpr (HasExit && HasAct) {
             top.add_group(std::move(g));
         }
         else {
-            return detail::TopExecutorBuilderImpl<HasAct, HasExit, Ts...>{top, std::move(g)};
+            return detail::TopExecutorBuilderImpl<HasAct, HasExit, Top, Group>{top, std::move(g)};
         }
     }
 
-    template<bool HasAct, bool HasExit, class... Ts>
+    template<bool HasAct, bool HasExit, class Top, class Group>
     template<class F>
-    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, Ts...>::on_action(F&& f)
+    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, Top, Group>::on_action(F&& f)
     {
         static_assert(!HasAct, "on_action is already used");
-        this->g->on_action = static_cast<F&&>(f);
-        return select_top_result<1, HasExit, Ts...>(this->top, std::move(this->g));
+        this->g->on_action(static_cast<F&&>(f));
+        return select_top_result<1, HasExit, Top, Group>(this->top, std::move(this->g));
     }
 
-    template<bool HasAct, bool HasExit, class... Ts>
+    template<bool HasAct, bool HasExit, class Top, class Group>
     template<class F>
-    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, Ts...>::on_exit(F&& f)
+    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, Top, Group>::on_exit(F&& f)
     {
         static_assert(!HasExit, "on_exit or propagate_exit is already used");
-        this->g->on_exit = static_cast<F&&>(f);
-        return select_top_result<HasAct, 1, Ts...>(this->top, std::move(this->g));
+        this->g->on_exit(static_cast<F&&>(f));
+        return select_top_result<HasAct, 1, Top, Group>(this->top, std::move(this->g));
     }
 
-    template<bool HasAct, bool HasExit, class... Ts>
-    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, Ts...>::propagate_exit()
+    template<bool HasAct, bool HasExit, class Top, class Group>
+    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, Top, Group>::propagate_exit()
     {
-        return this->on_exit([](auto /*ctx*/, ExitR er, Ts...){
+        return this->on_exit([](auto /*ctx*/, ExitR er, [[maybe_unused]] auto&&... xs){
             return static_cast<R>(er.status);
         });
     }
@@ -1335,7 +1378,7 @@ int main()
                 return ctx.create_sub_executor()
                 .on_action(jln2::sequencer(
                     [](Context ctx){std::cout << "5.1\n"; return ctx.next(); },
-                    [](Context ctx){
+                    [](auto ctx){
                         std::cout << "5.2\n";
                         return ctx.replace_action(
                             [](Context ctx){ std::cout << "5.2.1\n"; return ctx.next();
@@ -1351,12 +1394,12 @@ int main()
             ),
             jln2::sequencer(
                 [](Context ctx){ std::cout << "7.1\n";
-                    return ctx.create_sub_executor()
+                    return ctx.create_sub_executor(1)
                     .on_action(jln2::sequencer(
-                        [](Context ctx){std::cout << "7.1.1\n"; return ctx.next(); },
-                        [](Context ctx){std::cout << "7.1.2\n"; return ctx.next(); },
-                        [](Context ctx){std::cout << "7.1.3\n"; return ctx.next(); },
-                        [](Context ctx){std::cout << "7.1.4\n"; return ctx.next(); }
+                        [](Context ctx, int){std::cout << "7.1.1\n"; return ctx.next(); },
+                        [](Context ctx, int){std::cout << "7.1.2\n"; return ctx.next(); },
+                        [](Context ctx, int){std::cout << "7.1.3\n"; return ctx.next(); },
+                        [](Context ctx, int){std::cout << "7.1.4\n"; return ctx.next(); }
                     ))
                     .propagate_exit();
                 },
