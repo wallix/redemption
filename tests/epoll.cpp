@@ -2,6 +2,7 @@
 #include <memory>
 #include <cassert>
 #include <exception>
+#include <chrono>
 #include "cxx/diagnostic.hpp"
 #include "utils/executor.hpp"
 #include "core/error.hpp"
@@ -705,6 +706,7 @@ namespace jln2
         CreateGroup,
         NeedMoreData,
         SubstituteAction,
+        SubstituteExit,
         Ready,
         CreateContinuation,
     };
@@ -728,6 +730,13 @@ namespace jln2
         {
             explicit GroupExecutorBuilderImpl(Top& top, std::unique_ptr<Group>&& g) noexcept;
 
+#ifndef NDEBUG
+            ~GroupExecutorBuilderImpl()
+            {
+                assert(!this->g);
+            }
+#endif
+
             template<class F>
             auto on_action(F&& f);
 
@@ -741,16 +750,26 @@ namespace jln2
             std::unique_ptr<Group> g;
         };
 
-        template<bool HasAct, bool HasExit, class Top, class Group>
+        template<bool HasAct, bool HasExit, bool HasTimer, class Top, class Group>
         struct [[nodiscard]] TopExecutorBuilderImpl
         {
             explicit TopExecutorBuilderImpl(Top& top, std::unique_ptr<Group>&& g) noexcept;
+
+#ifndef NDEBUG
+            ~TopExecutorBuilderImpl()
+            {
+                assert(!this->g);
+            }
+#endif
 
             template<class F>
             auto on_action(F&& f);
 
             template<class F>
             auto on_exit(F&& f);
+
+            template<class F>
+            auto on_timeout(std::chrono::milliseconds ms, F&& f);
 
             auto propagate_exit();
 
@@ -775,6 +794,7 @@ namespace jln2
             template<class... Ts>
             explicit TopExecutorBuilder_Concept(Ts&&...) noexcept;
 
+            template<class F> TopExecutorBuilder_Concept on_timeout(std::chrono::milliseconds ms, F) { return *this; }
             template<class F> TopExecutorBuilder_Concept on_action(F) { return *this; }
             template<class F> TopExecutorBuilder_Concept on_exit(F) { return *this; }
             TopExecutorBuilder_Concept propagate_exit();
@@ -790,7 +810,7 @@ namespace jln2
         using GroupExecutorBuilder = GroupExecutorBuilderImpl<0, 0, Top, Group>;
 
         template<class Top, class Group>
-        using TopExecutorBuilder = TopExecutorBuilderImpl<0, 0, Top, Group>;
+        using TopExecutorBuilder = TopExecutorBuilderImpl<0, 0, 0, Top, Group>;
     #endif
     }
 
@@ -814,6 +834,7 @@ namespace jln2
     #endif
 
         R exception(Error const& e) noexcept;
+        R ready() noexcept { return R::Ready; }
         R need_more_data() noexcept { return R::NeedMoreData; }
         R terminate() noexcept { return R::Terminate; }
         R next() noexcept { return R::Next; }
@@ -838,19 +859,41 @@ namespace jln2
     {
         template<class F>
         R replace_action(F&& f);
+
+        template<class F>
+        R replace_exit(F&& f);
     };
 
     template<class... Ts>
-    struct ContextError
+    struct ContextExit
     {
         TopExecutor<Ts...>& top;
+        GroupExecutor<Ts...>& current_group;
+    };
+
+    template<class... Ts>
+    struct ContextTimer
+    {
+        R exception(Error const& e) noexcept;
+        R ready() noexcept { return R::Ready; }
+        R terminate() noexcept { return R::Terminate; }
+        R exit_on_error() noexcept { return R::ExitError; }
+        R exit_on_success() noexcept { return R::ExitSuccess; }
+        R exit(ExitStatus status) noexcept {
+            return (status == ExitStatus::Success)
+                ? this->exit_on_success()
+                : this->exit_on_error();
+        }
+
+        TopExecutor<Ts...>& top;
+        GroupExecutor<Ts...>& current_group;
     };
 
     template<class... Ts>
     struct GroupExecutor
     {
         std::function<R(Context<Ts...>, Ts...)> on_action;
-        std::function<R(ContextError<Ts...>, ExitR er, Ts...)> on_exit;
+        std::function<R(ContextExit<Ts...>, ExitR er, Ts...)> on_exit;
         NextMode next_mode = NextMode::ChildToNext;
         GroupExecutor* next;
 
@@ -863,10 +906,10 @@ namespace jln2
     {
         using Base = GroupExecutor<Ts...>;
 
-        template<class... Us>
-        GroupExecutorWithValues(Us&&... xs)
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
+        template<class... Us>
+        GroupExecutorWithValues(Us&&... xs)
         : t{static_cast<Us&&>(xs)...}
         {}
         REDEMPTION_DIAGNOSTIC_POP
@@ -883,12 +926,29 @@ namespace jln2
         template<class F>
         void on_exit(F&& f)
         {
-            Base::on_exit = [f, this](ContextError<Ts...> ctx, ExitR er, Ts... xs) mutable -> R {
+            Base::on_exit = [f, this](ContextExit<Ts...> ctx, ExitR er, Ts... xs) mutable -> R {
                 return this->t.invoke(f, ctx, er, static_cast<Ts&>(xs)...);
             };
         }
 
         Tuple t;
+    };
+
+    template<class Tuple, class... Ts>
+    struct GroupExecutorWithTimer : GroupExecutorWithValues<Tuple, Ts...>
+    {
+        template<class F>
+        void on_timeout(std::chrono::milliseconds ms, F&& f)
+        {
+            this->timeout_ = [f, this](ContextTimer<Ts...> ctx, Ts... xs) mutable -> R {
+                return this->t.invoke(f, ctx, static_cast<Ts&>(xs)...);
+            };
+            this->max_delay = ms;
+        }
+
+    private:
+        std::function<R(ContextTimer<Ts...>, Ts...)> timeout_;
+        std::chrono::milliseconds max_delay;
     };
 
     template<class... Fs>
@@ -992,8 +1052,10 @@ namespace jln2
                     this->loaded_group->next = this->group;
                     this->group = this->loaded_group.release();
                     return R::Ready;
-                // case R::SubstituteExit:
-                // TODO
+                case R::SubstituteExit:
+                    this->group->on_exit = std::move(this->loaded_group->on_exit);
+                    this->loaded_group.reset();
+                    return R::NeedMoreData;
                 case R::SubstituteAction:
                     this->group->on_action = std::move(this->loaded_group->on_action);
                     this->loaded_group.reset();
@@ -1006,7 +1068,7 @@ namespace jln2
         {
             do {
                 R const re = this->group->on_exit(
-                    ContextError<Ts...>{*this},
+                    ContextExit<Ts...>{*this, *this->group},
                     ExitR{static_cast<ExitR::Status>(r), this->error},
                     xs...);
                 NextMode next_mode;
@@ -1033,6 +1095,7 @@ namespace jln2
                     case R::NeedMoreData:
                         return re;
                     case R::CreateGroup:
+                    case R::SubstituteExit:
                     case R::SubstituteAction:
                         return R::Ready;
                     case R::CreateContinuation:
@@ -1059,7 +1122,7 @@ namespace jln2
         #endif
         {
             using Top = TopExecutor<>;
-            using Group = GroupExecutorWithValues<
+            using Group = GroupExecutorWithTimer<
                 jln::detail::tuple<decay_and_strip_t<Ts>...>>;
             this->top = std::make_unique<Top>(fd);
             return detail::TopExecutorBuilder<Top, Group>{
@@ -1118,6 +1181,28 @@ namespace jln2
         return R::SubstituteAction;
     }
 
+    template<class Tuple, class... Ts>
+    template<class F>
+    R ContextWithValues<Tuple, Ts...>::replace_exit(F&& f)
+    {
+        auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(this->current_group);
+        auto g = std::make_unique<GroupExecutor<Ts...>>();
+        // TODO same in GroupExecutorWithValues
+        g->on_exit = [f, &group](ContextExit<Ts...> ctx, ExitR er, Ts... xs) mutable -> R {
+            return group.t.invoke(
+                f, ContextWithValues<Tuple, Ts...>{ctx}, er, static_cast<Ts&>(xs)...);
+        };
+        this->top.sub_group(std::move(g));
+        return R::SubstituteAction;
+    }
+
+    template<class... Ts>
+    R ContextTimer<Ts...>::exception(Error const& e) noexcept
+    {
+        this->top.error = e;
+        return R::Exception;
+    }
+
 
     template<bool HasAct, bool HasExit, class Top, class Group>
     detail::GroupExecutorBuilderImpl<HasAct, HasExit, Top, Group>::GroupExecutorBuilderImpl(
@@ -1165,44 +1250,55 @@ namespace jln2
     }
 
 
-    template<bool HasAct, bool HasExit, class Top, class Group>
-    detail::TopExecutorBuilderImpl<HasAct, HasExit, Top, Group>::TopExecutorBuilderImpl(
+    template<bool HasAct, bool HasExit, bool HasTimer, class Top, class Group>
+    detail::TopExecutorBuilderImpl<HasAct, HasExit, HasTimer, Top, Group>::TopExecutorBuilderImpl(
         Top& top, std::unique_ptr<Group>&& g) noexcept
     : top(top)
     , g(std::move(g))
     {}
 
-    template<bool HasAct, bool HasExit, class Top, class Group>
-    auto select_top_result(Top& top, std::unique_ptr<Group>&& g)
+    template<bool HasAct, bool HasExit, bool HasTimer, class Top, class Group>
+    auto select_top_result(Top& top, std::unique_ptr<Group>& g)
     {
-        if constexpr (HasExit && HasAct) {
+        if constexpr (HasExit && HasAct && HasTimer) {
             top.add_group(std::move(g));
+            // TODO return TopRef
         }
         else {
-            return detail::TopExecutorBuilderImpl<HasAct, HasExit, Top, Group>{top, std::move(g)};
+            return detail::TopExecutorBuilderImpl<HasAct, HasExit, HasTimer, Top, Group>{top, std::move(g)};
         }
     }
 
-    template<bool HasAct, bool HasExit, class Top, class Group>
+    template<bool HasAct, bool HasExit, bool HasTimer, class Top, class Group>
     template<class F>
-    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, Top, Group>::on_action(F&& f)
+    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, HasTimer, Top, Group>::on_action(F&& f)
     {
         static_assert(!HasAct, "on_action is already used");
         this->g->on_action(static_cast<F&&>(f));
-        return select_top_result<1, HasExit, Top, Group>(this->top, std::move(this->g));
+        return select_top_result<1, HasExit, HasTimer, Top, Group>(this->top, this->g);
     }
 
-    template<bool HasAct, bool HasExit, class Top, class Group>
+    template<bool HasAct, bool HasExit, bool HasTimer, class Top, class Group>
     template<class F>
-    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, Top, Group>::on_exit(F&& f)
+    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, HasTimer, Top, Group>::on_exit(F&& f)
     {
         static_assert(!HasExit, "on_exit or propagate_exit is already used");
         this->g->on_exit(static_cast<F&&>(f));
-        return select_top_result<HasAct, 1, Top, Group>(this->top, std::move(this->g));
+        return select_top_result<HasAct, 1, HasTimer, Top, Group>(this->top, this->g);
     }
 
-    template<bool HasAct, bool HasExit, class Top, class Group>
-    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, Top, Group>::propagate_exit()
+    template<bool HasAct, bool HasExit, bool HasTimer, class Top, class Group>
+    template<class F>
+    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, HasTimer, Top, Group>::on_timeout(
+        std::chrono::milliseconds ms, F&& f)
+    {
+        static_assert(!HasExit, "on_timeout is already used");
+        this->g->on_timeout(ms, static_cast<F&&>(f));
+        return select_top_result<HasAct, HasExit, 1, Top, Group>(this->top, this->g);
+    }
+
+    template<bool HasAct, bool HasExit, bool HasTimer, class Top, class Group>
+    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, HasTimer, Top, Group>::propagate_exit()
     {
         return this->on_exit([](auto /*ctx*/, ExitR er, [[maybe_unused]] auto&&... xs){
             return static_cast<R>(er.status);
@@ -1337,6 +1433,7 @@ int main()
         jln2::Reactor reactor;
 
         reactor.create_top_executor(1)
+        .on_timeout({}, [](auto ctx){ return ctx.ready(); })
         .on_action(jln2::sequencer(
             [](Context ctx){ std::cout << "1\n"; return ctx.next(); },
             [](Context ctx){
@@ -1394,12 +1491,12 @@ int main()
             ),
             jln2::sequencer(
                 [](Context ctx){ std::cout << "7.1\n";
-                    return ctx.create_sub_executor(1)
+                    return ctx.create_sub_executor(0)
                     .on_action(jln2::sequencer(
-                        [](Context ctx, int){std::cout << "7.1.1\n"; return ctx.next(); },
-                        [](Context ctx, int){std::cout << "7.1.2\n"; return ctx.next(); },
-                        [](Context ctx, int){std::cout << "7.1.3\n"; return ctx.next(); },
-                        [](Context ctx, int){std::cout << "7.1.4\n"; return ctx.next(); }
+                        [](Context ctx, int& i){std::cout << "7.1." << ++i << "\n"; return ctx.next(); },
+                        [](Context ctx, int& i){std::cout << "7.1." << ++i << "\n"; return ctx.next(); },
+                        [](Context ctx, int& i){std::cout << "7.1." << ++i << "\n"; return ctx.next(); },
+                        [](Context ctx, int& i){std::cout << "7.1." << ++i << "\n"; return ctx.next(); }
                     ))
                     .propagate_exit();
                 },
