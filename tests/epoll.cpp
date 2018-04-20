@@ -419,7 +419,6 @@ struct SharedPtr
 struct SessionReactor
 {
     using FirstTop = TopExecutor<>;
-    using FirstTopPtr = SharedPtr<FirstTop>;
 
     #ifdef IN_IDE_PARSER
     detail::TopExecutorBuilder_Concept create_top_executor(int fd)
@@ -695,6 +694,7 @@ namespace jln2
     template<class... Ts> class TopExecutor;
     template<class... Ts> class GroupExecutor;
     template<class Tuple, class... Ts> struct GroupExecutorWithValues;
+    template<class T> class SharedData;
 
     enum class [[nodiscard]] R : char
     {
@@ -750,10 +750,10 @@ namespace jln2
             std::unique_ptr<Group> g;
         };
 
-        template<bool HasAct, bool HasExit, bool HasTimer, class Top, class Group>
+        template<bool HasAct, bool HasExit, bool HasTimer, class Top, class GroupPtr>
         struct [[nodiscard]] TopExecutorBuilderImpl
         {
-            explicit TopExecutorBuilderImpl(Top& top, std::unique_ptr<Group>&& g) noexcept;
+            explicit TopExecutorBuilderImpl(SharedData<Top>& top, GroupPtr&& g) noexcept;
 
 #ifndef NDEBUG
             ~TopExecutorBuilderImpl()
@@ -774,8 +774,8 @@ namespace jln2
             auto propagate_exit();
 
         private:
-            Top& top;
-            std::unique_ptr<Group> g;
+            SharedData<Top>& top;
+            GroupPtr g;
         };
 
     #ifdef IN_IDE_PARSER
@@ -809,8 +809,8 @@ namespace jln2
         template<class Top, class Group>
         using GroupExecutorBuilder = GroupExecutorBuilderImpl<0, 0, Top, Group>;
 
-        template<class Top, class Group>
-        using TopExecutorBuilder = TopExecutorBuilderImpl<0, 0, 0, Top, Group>;
+        template<class Top, class GroupPtr>
+        using TopExecutorBuilder = TopExecutorBuilderImpl<0, 0, 0, Top, GroupPtr>;
     #endif
     }
 
@@ -1112,8 +1112,114 @@ namespace jln2
         Error error = Error(NO_ERROR);
     };
 
+    class SharedPtr;
+
+    struct SharedDataBase
+    {
+        enum class FreeCat { Value, Self, };
+        int use_count;
+        SharedPtr* shared_ptr;
+        void (*deleter) (SharedDataBase*, FreeCat) noexcept;
+        SharedDataBase* next;
+        SharedDataBase* prev;
+
+        void free_value() noexcept
+        {
+            this->deleter(this, FreeCat::Value);
+        }
+
+        void delete_self() noexcept
+        {
+            this->deleter(this, FreeCat::Self);
+        }
+
+        bool alive() const noexcept
+        {
+            return bool(this->shared_ptr);
+        }
+    };
+
+    struct [[nodiscard]] SharedPtr
+    {
+        SharedPtr(SharedDataBase* p = nullptr) noexcept
+          : p(p)
+        {}
+
+        SharedPtr(SharedPtr&& other) noexcept
+        : p(std::exchange(other.p, nullptr))
+        {
+            this->p->shared_ptr = this;
+        }
+
+        SharedPtr& operator=(SharedPtr&& other) noexcept
+        {
+            assert(other.p != this->p);
+            this->reset();
+            this->p = std::exchange(other.p, nullptr);
+            this->p->shared_ptr = this;
+            return *this;
+        }
+
+        ~SharedPtr()
+        {
+            this->reset();
+        }
+
+        void reset() noexcept
+        {
+            if (this->p) {
+                this->p->shared_ptr = nullptr;
+                this->p->free_value();
+                this->p = nullptr;
+            }
+        }
+
+        SharedDataBase* p;
+    };
+
+    template<class T>
+    struct SharedData : SharedDataBase
+    {
+        template<class... Ts>
+        SharedData(Ts&&... xs)
+          : u()
+        {
+            new (&this->u.value) T(static_cast<Ts&&>(xs)...);
+            this->deleter = [](SharedDataBase* p, FreeCat cat) noexcept {
+                auto* self = static_cast<SharedData*>(p);
+                switch (cat) {
+                    case FreeCat::Value:
+                        self->u.value.~T();
+                        break;
+                    case FreeCat::Self:
+                        delete self;
+                        break;
+                }
+            };
+        }
+
+        T* operator->() { return &this->u.value; }
+        T& operator*() { return this->u.value; }
+
+        SharedPtr to_shared_ptr() noexcept
+        {
+            return SharedPtr(this);
+        }
+
+    private:
+        union U{
+            char dummy;
+            T value;
+
+            U() : dummy(){}
+            ~U() {}
+        } u;
+    };
+
     struct Reactor
     {
+        using Top = TopExecutor<>;
+
         template<class... Ts>
         #ifdef IN_IDE_PARSER
         detail::TopExecutorBuilder_Concept create_top_executor(int fd, Ts&&... xs)
@@ -1121,15 +1227,43 @@ namespace jln2
         auto create_top_executor(int fd, Ts&&... xs)
         #endif
         {
-            using Top = TopExecutor<>;
             using Group = GroupExecutorWithTimer<
                 jln::detail::tuple<decay_and_strip_t<Ts>...>>;
-            this->top = std::make_unique<Top>(fd);
-            return detail::TopExecutorBuilder<Top, Group>{
-                *this->top, std::make_unique<Group>(static_cast<Ts&&>(xs)...)};
+            using D = SharedData<Top>;
+            D* data_ptr = new D{fd};
+            data_ptr->use_count = 1;
+            data_ptr->shared_ptr = nullptr;
+            data_ptr->next = this->node_executors;
+            this->node_executors = data_ptr;
+            return detail::TopExecutorBuilder<Top, std::unique_ptr<Group>>{
+                *data_ptr, std::make_unique<Group>(static_cast<Ts&&>(xs)...)};
         }
 
-        std::unique_ptr<TopExecutor<>> top;
+        ~Reactor()
+        {
+            // while (this->node_executors) {
+                SharedDataBase* p = this->node_executors;
+                SharedDataBase* next;
+                while (p) {
+                    next = p->next;
+                    if (p->use_count) {
+                        --p->use_count;
+                        p->free_value();
+                    }
+                    else {
+                        p->delete_self();
+                    }
+                    p = next;
+                }
+            // }
+        }
+
+        Top& top() noexcept
+        {
+            return *static_cast<SharedData<Top>&>(*this->node_executors);
+        }
+
+        SharedDataBase* node_executors = nullptr;
     };
 
     template<class... Ts>
@@ -1250,55 +1384,54 @@ namespace jln2
     }
 
 
-    template<bool HasAct, bool HasExit, bool HasTimer, class Top, class Group>
-    detail::TopExecutorBuilderImpl<HasAct, HasExit, HasTimer, Top, Group>::TopExecutorBuilderImpl(
-        Top& top, std::unique_ptr<Group>&& g) noexcept
+    template<bool HasAct, bool HasExit, bool HasTimer, class Top, class GroupPtr>
+    detail::TopExecutorBuilderImpl<HasAct, HasExit, HasTimer, Top, GroupPtr>::TopExecutorBuilderImpl(SharedData<Top>& top, GroupPtr&& g) noexcept
     : top(top)
     , g(std::move(g))
     {}
 
-    template<bool HasAct, bool HasExit, bool HasTimer, class Top, class Group>
-    auto select_top_result(Top& top, std::unique_ptr<Group>& g)
+    template<bool HasAct, bool HasExit, bool HasTimer, class Top, class GroupPtr>
+    auto select_top_result(SharedData<Top>& top, GroupPtr& g)
     {
         if constexpr (HasExit && HasAct && HasTimer) {
-            top.add_group(std::move(g));
-            // TODO return TopRef
+            top->add_group(std::move(g));
+            return top.to_shared_ptr();
         }
         else {
-            return detail::TopExecutorBuilderImpl<HasAct, HasExit, HasTimer, Top, Group>{top, std::move(g)};
+            return detail::TopExecutorBuilderImpl<HasAct, HasExit, HasTimer, Top, GroupPtr>{top, std::move(g)};
         }
     }
 
-    template<bool HasAct, bool HasExit, bool HasTimer, class Top, class Group>
+    template<bool HasAct, bool HasExit, bool HasTimer, class Top, class GroupPtr>
     template<class F>
-    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, HasTimer, Top, Group>::on_action(F&& f)
+    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, HasTimer, Top, GroupPtr>::on_action(F&& f)
     {
         static_assert(!HasAct, "on_action is already used");
         this->g->on_action(static_cast<F&&>(f));
-        return select_top_result<1, HasExit, HasTimer, Top, Group>(this->top, this->g);
+        return select_top_result<1, HasExit, HasTimer, Top, GroupPtr>(this->top, this->g);
     }
 
-    template<bool HasAct, bool HasExit, bool HasTimer, class Top, class Group>
+    template<bool HasAct, bool HasExit, bool HasTimer, class Top, class GroupPtr>
     template<class F>
-    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, HasTimer, Top, Group>::on_exit(F&& f)
+    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, HasTimer, Top, GroupPtr>::on_exit(F&& f)
     {
         static_assert(!HasExit, "on_exit or propagate_exit is already used");
         this->g->on_exit(static_cast<F&&>(f));
-        return select_top_result<HasAct, 1, HasTimer, Top, Group>(this->top, this->g);
+        return select_top_result<HasAct, 1, HasTimer, Top, GroupPtr>(this->top, this->g);
     }
 
-    template<bool HasAct, bool HasExit, bool HasTimer, class Top, class Group>
+    template<bool HasAct, bool HasExit, bool HasTimer, class Top, class GroupPtr>
     template<class F>
-    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, HasTimer, Top, Group>::on_timeout(
+    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, HasTimer, Top, GroupPtr>::on_timeout(
         std::chrono::milliseconds ms, F&& f)
     {
         static_assert(!HasExit, "on_timeout is already used");
         this->g->on_timeout(ms, static_cast<F&&>(f));
-        return select_top_result<HasAct, HasExit, 1, Top, Group>(this->top, this->g);
+        return select_top_result<HasAct, HasExit, 1, Top, GroupPtr>(this->top, this->g);
     }
 
-    template<bool HasAct, bool HasExit, bool HasTimer, class Top, class Group>
-    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, HasTimer, Top, Group>::propagate_exit()
+    template<bool HasAct, bool HasExit, bool HasTimer, class Top, class GroupPtr>
+    auto detail::TopExecutorBuilderImpl<HasAct, HasExit, HasTimer, Top, GroupPtr>::propagate_exit()
     {
         return this->on_exit([](auto /*ctx*/, ExitR er, [[maybe_unused]] auto&&... xs){
             return static_cast<R>(er.status);
@@ -1432,7 +1565,7 @@ int main()
 
         jln2::Reactor reactor;
 
-        reactor.create_top_executor(1)
+        auto top = reactor.create_top_executor(1)
         .on_timeout({}, [](auto ctx){ return ctx.ready(); })
         .on_action(jln2::sequencer(
             [](Context ctx){ std::cout << "1\n"; return ctx.next(); },
@@ -1512,7 +1645,7 @@ int main()
                 break;
             }
             std::cout << ".";
-            if (!reactor.top->exec()) {
+            if (!reactor.top().exec()) {
                 break;
             }
         }
