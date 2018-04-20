@@ -527,8 +527,9 @@ for name,aliases in dir_tests.items():
     print('explicit', name, ';')
     print('alias ', mark_target(name), ' :\n  ', '\n  '.join(aliases), '\n;', sep='')
 
-print('explicit tests.full ;')
-print('alias tests.full :')
+# all tests
+print('explicit test ;')
+print('alias test :')
 for name in dir_tests.keys():
     print(' ', name)
 print(';')

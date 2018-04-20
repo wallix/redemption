@@ -75,11 +75,13 @@ $ `bjam` or `bjam toolset=gcc`, `bjam toolset=clang` or `bjam toolset=your-compi
 Verbose tests:
 
 $ `export REDEMPTION_LOG_PRINT=1`\
-$ `bjam tests`
+$ `bjam test`
 
 or
 
-$ `REDEMPTION_LOG_PRINT=1 bjam tests`
+$ `REDEMPTION_LOG_PRINT=1 bjam test`
+
+/!\ `bjam tests` execute files directly in tests directory, but not recursively.
 
 Compile executables without tests (as user):
 
@@ -100,7 +102,7 @@ To test it, executes:
 $ `python tools/passthrough/passthrough.py`
 
 \# `/usr/local/bin/rdpproxy -nf`
-<!-- \# `./bin/${BJAM_TOOLSET_NAME}/${BJAM_MODE}/rdpproxy -nf` -->
+<!-- $ `./bin/${BJAM_TOOLSET_NAME}/${BJAM_MODE}/rdpproxy -nf` -->
 
 
 Now, at that point you'll just have two servers waiting for connections

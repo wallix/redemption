@@ -5550,8 +5550,8 @@ explicit tests/utils/winpr ;
 alias tests/utils/winpr :
   tests/utils/winpr/test_pattern
 ;
-explicit tests.full ;
-alias tests.full :
+explicit test ;
+alias test :
   tests/acl
   tests/capture/ocr/locale
   tests/capture
