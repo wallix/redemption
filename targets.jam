@@ -3292,6 +3292,13 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_channel.cpp
 :
   <covfile>src/mod/rdp/channels/sespro_channel.hpp
+  <library>app_path_test.o
+  <library>crypto
+  <library>src/core/RDP/mppc.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_clipboard_based_launcher.cpp
@@ -5086,7 +5093,6 @@ alias tests/client_mods :
   tests/client_mods/test_rdp_client_tls_w2008
   tests/client_mods/test_rdp_client_wab
 ;
-
 explicit tests/core/FSCC ;
 alias tests/core/FSCC :
   tests/core/FSCC/test_FileInformation

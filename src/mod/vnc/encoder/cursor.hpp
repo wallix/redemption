@@ -25,6 +25,7 @@ h
 #include "utils/log.hpp"
 #include "utils/verbose_flags.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 
 // 7.7.2   Cursor Pseudo-encoding
 // ------------------------------

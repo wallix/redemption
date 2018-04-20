@@ -71,9 +71,7 @@ h
 class mod_vnc : public mod_api
 {
 
-    bool ongoing_framebuffer_update = false;
-
-    static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
+       static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
 
     /* mod data */
     char mod_name[256];
@@ -776,7 +774,6 @@ public:
 
     void initial_clear_screen(gdi::GraphicApi & drawable)
     {
-        LOG(LOG_INFO, "initial clear screen =================================== ");
         if (bool(this->verbose & VNCVerbose::connection)) {
             LOG(LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
         }
@@ -1295,7 +1292,7 @@ private:
     void update_screen(Rect r, uint8_t incr = 1) {
         StaticOutStream<10> stream;
         /* FramebufferUpdateRequest */
-        stream.out_uint8(3);
+        stream.out_uint8(VNC_CS_MSG_FRAME_BUFFER_UPDATE_REQUEST);
         stream.out_uint8(incr);
         stream.out_uint16_be(r.x);
         stream.out_uint16_be(r.y);
@@ -1433,31 +1430,6 @@ protected:
         VNC_SC_MSG_GII                            = 253,
     };
 
-    static void fill_encoding_types_buffer(const char * encodings, OutStream & stream, uint16_t & number_of_encodings, VNCVerbose verbose)
-    {
-        if (bool(verbose & VNCVerbose::basic_trace)) {
-            LOG(LOG_INFO, "VNC Encodings=\"%s\"", encodings);
-        }
-
-        auto stream_offset = stream.get_offset();
-
-        char * end;
-        char const * p = encodings;
-        for (int32_t encoding_type = std::strtol(p, &end, 0); p != end ; encoding_type = std::strtol(p, &end, 0))
-        {
-            if (bool(verbose & VNCVerbose::basic_trace)) {
-                LOG(LOG_INFO, "VNC Encoding type=0x%08X", unsigned(encoding_type));
-            }
-            stream.out_uint32_be(encoding_type);
-
-            p = end;
-            while (*p && (*p == ' ' || *p == '\t' || *p == ',')) {
-                ++p;
-            }
-        }
-        number_of_encodings = (stream.get_offset() - stream_offset) / 4;
-    }
-
     class PasswordCtx
     {
         enum class State
@@ -1573,7 +1545,6 @@ protected:
 public:
     void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override
     {
-        LOG(LOG_INFO, "VNC draw_event");
         if (bool(this->verbose & VNCVerbose::draw_event)) {
             LOG(LOG_INFO, "vnc::draw_event");
         }
@@ -1588,8 +1559,10 @@ public:
         }
 
         while (this->draw_event_impl(drawable)) {
+	}
+        if (bool(this->verbose & VNCVerbose::draw_event)) {
+            LOG(LOG_INFO, "Remaining in buffer : %u", this->server_data_buf.remaining());
         }
-        LOG(LOG_INFO, "Remaining in buffer : %u", this->server_data_buf.remaining());
 
         this->check_timeout();
     }
@@ -1632,6 +1605,7 @@ private:
                     while (this->up_and_running_ctx.run(this->server_data_buf, drawable, *this)) {
                         this->up_and_running_ctx.restart();
                     }
+                    this->update_screen(Rect(0, 0, this->width, this->height), 1);
                     return false;
                 }
                 catch (const Error & e) {
@@ -1975,7 +1949,7 @@ private:
                 // SetEncodings
                 StaticOutStream<32768> stream;
 
-                bool support_zrle_encoding          = false;
+                bool support_zrle_encoding          = true;
                 bool support_hextile_encoding       = false;
                 bool support_rre_encoding           = false;
                 bool support_raw_encoding           = true;
@@ -1984,6 +1958,7 @@ private:
 
                 char const * p = this->encodings.c_str();
                 if (p && *p){
+                    support_zrle_encoding          = false;
                     for (;;){
                         while (*p && *p == ','){++p;}
                         char * end;
@@ -2010,11 +1985,7 @@ private:
                     support_hextile_encoding       = true;
                     support_rre_encoding           = true;
                 }
-
-                    support_zrle_encoding          = false;
-                    support_hextile_encoding       = true;
-                    support_rre_encoding           = false;
-                
+              
                 uint16_t number_of_encodings =  support_zrle_encoding
                                              +  support_hextile_encoding
                                              +  support_raw_encoding
@@ -2022,7 +1993,7 @@ private:
                                              +  support_rre_encoding
                                              +  support_cursor_pseudo_encoding;
 
-                LOG(LOG_INFO, "number of encodings=%d", number_of_encodings);
+//                LOG(LOG_INFO, "number of encodings=%d", number_of_encodings);
 
                 stream.out_uint8(VNC_CS_MSG_SET_ENCODINGS);
                 stream.out_uint8(0);
@@ -2241,8 +2212,6 @@ private:
                     InStream stream(buf.av(sz));
                     stream.in_skip_bytes(1);
                     this->num_recs = stream.in_uint16_be();
-                    drawable.begin_update();
-                    vnc.ongoing_framebuffer_update = this->num_recs != 0;
 
                     buf.advance(sz);
                     r = Result::ok(State::Encoding);
@@ -2251,8 +2220,6 @@ private:
                 case State::Encoding:
                 {
                     if (0 == this->num_recs) {
-                        vnc.ongoing_framebuffer_update = false;
-                        drawable.end_update();
                         this->state = State::Header;
                         return true;
                     }
@@ -2277,13 +2244,15 @@ private:
                         --this->num_recs;
 
                         if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                            LOG(LOG_INFO, "%s",
+                            LOG(LOG_INFO, "%s %d (%d, %d, %d, %d)",
                                 (this->encoding == HEXTILE_ENCODING) ? "HEXTILE_ENCODING" :
                                 (this->encoding == CURSOR_PSEUDO_ENCODING) ? "CURSOR_PSEUDO_ENCODING" :
                                 (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
                                 (this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
                                 (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" :
-                                 "ZRLE_ENCODING");
+                                (this->encoding == ZRLE_ENCODING) ? "ZRLE_ENCODING" :
+                                 "UNKNOWN_ENCODING", this->encoding
+                                , this->x, this->y, this->cx, this->cy);
                         }
 
                         switch (this->encoding){
@@ -2302,7 +2271,7 @@ private:
                             this->encoder = new VNC::Encoder::Raw(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
                         break;
                         case ZRLE_ENCODING: /* ZRLE */
-                            this->encoder = new VNC::Encoder::Zrle(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, this->zd, vnc.verbose);
+                            this->encoder = new VNC::Encoder::Zrle(this->bpp, this->Bpp, Rect(this->x, this->y, this->cx, this->cy), this->zd, vnc.verbose);
                         break;
                         case RRE_ENCODING: /* RRE */
                             this->encoder = new VNC::Encoder::RRE(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
@@ -2322,13 +2291,16 @@ private:
                 break;
                 case State::Data:
                     {
+                        update_lock<gdi::GraphicApi> lock(drawable);
                         if (this->last == VNC::Encoder::EncoderState::NeedMoreData){
                             if (this->last_avail == buf.remaining()){
-                                LOG(LOG_INFO, "new call without more data");
+                                LOG(LOG_ERR, "new call to vnc::mod without new data");
+                                throw Error(ERR_VNC);
                             }
                         }
                         if (encoder == nullptr){
-                            LOG(LOG_INFO, "call with null encoder");
+                            LOG(LOG_ERR, "Call to vnc::mod with null encoder");
+                            throw Error(ERR_VNC);
                         }
 
                         // Pre Assertion: we have an encoder
@@ -2388,9 +2360,7 @@ private:
             return false;
         }
 
-        if (!this->ongoing_framebuffer_update){
-            this->update_screen(Rect(0, 0, this->width, this->height), 1);
-        }
+        this->update_screen(Rect(0, 0, this->width, this->height), 1);
         return true;
     } // lib_frame_buffer_update
 
