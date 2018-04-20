@@ -960,7 +960,7 @@ public:
         // TODO missing CaptureFlags::full_video
         bool capture_video_full = false;
         // TODO missing CaptureFlags::meta
-        bool capture_meta = ini.get<cfg::globals::is_rec>() && bool(capture_flags & CaptureFlags::ocr);
+        bool capture_meta = false /*bool(capture_flags & CaptureFlags::meta)*/;
         bool capture_kbd = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
           || ini.get<cfg::session_log::enable_session_log>()
           || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
