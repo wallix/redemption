@@ -623,7 +623,7 @@ public:
             }
 
         } else {
-            this->port =  5900;
+            this->port =  this->port ? this->port : 5900 ;
         }
 
         if (this->impl_graphic) {
