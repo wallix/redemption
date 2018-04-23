@@ -294,11 +294,13 @@ public:
         int extended = 0;
         std::string name;
 
-        KeyCustomDefinition(int qtKeyID, int scanCode, std::string ASCII8, int extended)
+        KeyCustomDefinition(int qtKeyID, int scanCode, std::string ASCII8, int extended, const std::string & name)
           : qtKeyID(qtKeyID)
           , scanCode(scanCode)
           , ASCII8(ASCII8)
-          , extended(extended) {}
+          , extended(extended)
+          , name(name)
+          {}
     };
     std::vector<KeyCustomDefinition> keyCustomDefinitions;
 
@@ -706,11 +708,18 @@ public:
                             ASCII8 = "";
                             next_pos = 1;
                         }
+
                         ligne = ligne.substr(next_pos, ligne.length());
-
                         int extended = std::stoi(ligne.substr(0, 1));
+                        if (extended) {
+                            extended = 0x0100;
+                        }
+                        pos = ligne.find(delimiter);
 
-                        KeyCustomDefinition keyCustomDefinition = {qtKeyID, scanCode, ASCII8, extended};
+                        std::string name = ligne.substr(pos, ligne.length());
+
+
+                        KeyCustomDefinition keyCustomDefinition = {qtKeyID, scanCode, ASCII8, extended, name};
 
                         this->keyCustomDefinitions.push_back(keyCustomDefinition);
                     }
@@ -1579,7 +1588,7 @@ public:
     virtual void open_options() {}
 
     virtual ClientRedemptionIOAPI::KeyCustomDefinition get_key_info(int, std::string) {
-        return ClientRedemptionIOAPI::KeyCustomDefinition(0, 0, "", 0);
+        return ClientRedemptionIOAPI::KeyCustomDefinition(0, 0, "", 0, "");
     }
 
 };
