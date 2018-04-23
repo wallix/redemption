@@ -447,7 +447,6 @@ namespace jln2
         SharedPtr* shared_ptr;
         void (*deleter) (SharedDataBase*, FreeCat) noexcept;
         SharedDataBase* next;
-        SharedDataBase* prev;
 
         void free_value() noexcept
         {
@@ -616,7 +615,6 @@ namespace jln2
 
         Reactor() noexcept
         {
-            this->node_executors.prev = nullptr;
             this->node_executors.next = nullptr;
         }
 
