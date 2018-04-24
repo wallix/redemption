@@ -69,7 +69,8 @@ public:
      : QWidget(parent)
      {}
 
-    virtual void callKeyPressEvent(QKeyEvent *e) = 0;
+//     virtual void callKeyPressEvent(QKeyEvent *e) = 0;
+//     virtual void keyPressedToSet(QKeyEvent *e) = 0;
 
 };
 
@@ -83,15 +84,19 @@ public:
     int q_key_code;
     QLabel label;
     QtKeyInputAPI * window;
+    bool key_assigned;
 
     QtKeyLabel(QtKeyInputAPI * parent)
       : QWidget(parent)
       , q_key_code(0)
-      , label("               ", this)
+      , label("Press a Key", this)
       , window(parent)
+      , key_assigned(false)
       {
-          qApp->installEventFilter(this);
-    }
+          //qApp->installEventFilter(this);
+
+          //this->installEventFilter(this);
+      }
 
     void set_key(int q_key_code, const std::string & q_key_name) {
         this->q_key_code = q_key_code;
@@ -99,14 +104,53 @@ public:
         this->label.setText(q_key_name.c_str());
     }
 
-    bool eventFilter(QObject *obj, QEvent *event) override {
-        Q_UNUSED(obj)
-        if (event->type() == QEvent::KeyPress) {
-            QKeyEvent * e = static_cast<QKeyEvent*>(event);
-            this->window->callKeyPressEvent(e);
-        }
-    }
+//     bool eventFilter(QObject *obj, QEvent *event) override {
+//         Q_UNUSED(obj)
+//         if (event->type() == QEvent::KeyPress) {
+//             QKeyEvent * e = static_cast<QKeyEvent*>(event);
+//             if (!(this->key_assigned)) {
+//                 this->key_assigned = true;
+//                 this->window->keyPressedToSet(e);
+//             } else {
+//                 this->window->callKeyPressEvent(e);
+//             }
+//             //qApp->installEventFilter(nullptr);
+//             return true;
+//         }
+//         return false;
+//     }
 };
+
+
+// class QtKeyInfo : QWidget {
+//
+// Q_OBJECT
+//
+// public:
+//     QtKeyInputAPI * window;
+//
+//     QtKeyConfigTab(QtKeyInputAPI * window)
+//       : QWidget(window)
+//       , window(window)
+//     {}
+// };
+//
+//
+//
+// class QtKeyConfigTab : public QWidget {
+//
+// Q_OBJECT
+//
+// public:
+//     QtKeyInputAPI * window;
+//
+//     QtKeyConfigTab(QtKeyInputAPI * parent)
+//       : QWidget(parent)
+//       , window(parent)
+//     {}
+//
+//
+// };
 
 
 
@@ -157,9 +201,13 @@ public:
     QPushButton        * _buttonDeleteKey;
     QPushButton        * _buttonAddKey;
     QFormLayout        * _layoutKeyboard;
+
     QTableWidget       * _tableKeySetting;
+//     QScrollArea          key_setting_scroller;
+
     const int            _columnNumber;
     const int            _tableKeySettingMaxHeight;
+//     bool                 key_editting;
 
 
     QtOptions(ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
@@ -203,8 +251,10 @@ public:
 
         , _layoutKeyboard(nullptr)
         , _tableKeySetting(nullptr)
+//         , key_setting_scroller(this)
         , _columnNumber(4)
         , _tableKeySettingMaxHeight((20*6)+11)
+//         , key_editting(true)/**/
     {
         this->setFixedSize(this->_width, this->_height);
         this->_front->setClientInfo();
@@ -269,6 +319,12 @@ public:
         this->_layoutKeyboard->addRow(new QLabel("", this));
         this->_layoutKeyboard->addRow(&(this->_labelLanguage), &(this->_languageComboBox));
 
+//         this->key_setting_scroller.setFixedSize(410,  250);
+// //         this->scroller.setStyleSheet("background-color: #C4C4C3; border: 1px solid #FFFFFF;"
+// //             "border-bottom-color: #FF8C00;");
+//         this->key_setting_scroller.setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
+        //this->key_setting_scroller.setWidget();
+
         this->_tableKeySetting = new QTableWidget(0, this->_columnNumber, this);
         QList<QString> columnTitles;
         columnTitles << "Qt key" << "Scan Code" << "ASCII8" << "Extended";
@@ -286,12 +342,12 @@ public:
 
         this->_tabs->addTab(this->_keyboardTab, strKeyboard);
 
-        this->_buttonAddKey = new QPushButton("Add row", this->_keyboardTab);
+        this->_buttonAddKey = new QPushButton(" Edit  ", this->_keyboardTab);
         QRect rectAddKey(QPoint(110, 226),QSize(70, 24));
         this->_buttonAddKey->setToolTip(this->_buttonAddKey->text());
         this->_buttonAddKey->setGeometry(rectAddKey);
         this->_buttonAddKey->setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(this->_buttonAddKey    , SIGNAL (pressed()) , this, SLOT (addRow()));
+        this->QObject::connect(this->_buttonAddKey    , SIGNAL (pressed()) , this, SLOT (pushEdit()));
 
         this->_buttonDeleteKey = new QPushButton("Delete selected row", this->_keyboardTab);
         QRect rectDeleteKey(QPoint(190, 226),QSize(180, 24));
@@ -299,6 +355,7 @@ public:
         this->_buttonDeleteKey->setGeometry(rectDeleteKey);
         this->_buttonDeleteKey->setCursor(Qt::PointingHandCursor);
         this->QObject::connect(this->_buttonDeleteKey , SIGNAL (pressed()) , this, SLOT (deletePressed()));
+        this->_buttonDeleteKey->setEnabled(false);
 
         this->_layout->addWidget(this->_tabs, 0, 0, 9, 4);
         this->setLayout(this->_layout);
@@ -327,7 +384,7 @@ public:
         static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(row, 0))->set_key(qtKeyID, name);
         this->_tableKeySetting->item(row, 1)->setText(std::to_string(scanCode).c_str());
         this->_tableKeySetting->item(row, 2)->setText(ASCII8.c_str());
-        int extended_val = extended >> 2;
+        int extended_val = extended >> 8;
         static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(row, 3))->setCurrentIndex(extended_val);
     }
 
@@ -385,13 +442,35 @@ public:
         this->_front->writeClientInfo();
     }
 
-    void callKeyPressEvent(QKeyEvent *e) override {
-        this->keyPressEvent(e);
-    }
+//     void keyPressedToSet(QKeyEvent *e) override {
+//         const ClientRedemptionIOAPI::KeyCustomDefinition & keyCustomDefinition =
+//         this->controllers->get_key_info(e->key(), e->text().toStdString());
+//         int count = this->_tableKeySetting->selectedItems().count();
+//         int row = 0;
+//         if (count >= 1) {
+//             QTableWidgetItem * focused = this->_tableKeySetting->selectedItems().at(0);
+//             if (focused) {
+//                 row = focused->row();
+//             }
+//         }
+//         if (row >= 0) {
+//             this->setRowValues(keyCustomDefinition.qtKeyID,
+//                                 keyCustomDefinition.scanCode,
+//                                 keyCustomDefinition.ASCII8,
+//                                 keyCustomDefinition.extended & 0x0100,
+//                                 row, keyCustomDefinition.name);
+//         }
+// //         this->keyPressEvent(e);
+//     }
+//
+//     void callKeyPressEvent(QKeyEvent *e) override {
+//         this->keyPressEvent(e);
+//     }
 
     void keyPressEvent(QKeyEvent *e) override {
+
         const ClientRedemptionIOAPI::KeyCustomDefinition & keyCustomDefinition =
-            this->controllers->get_key_info(e->key(), e->text().toStdString());
+        this->controllers->get_key_info(e->key(), e->text().toStdString());
         int count = this->_tableKeySetting->selectedItems().count();
         int row = 0;
         if (count >= 1) {
@@ -400,34 +479,18 @@ public:
                 row = focused->row();
             }
         }
-        if (row >= 0) {
-            this->setRowValues(keyCustomDefinition.qtKeyID,
-                                keyCustomDefinition.scanCode,
-                                keyCustomDefinition.ASCII8,
-                                keyCustomDefinition.extended & 0x0100,
-                                row, keyCustomDefinition.name);
+        if (!(static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(row, 0))->key_assigned)) {
+            static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(row, 0))->key_assigned = true;
+            if (row >= 0) {
+                this->setRowValues(keyCustomDefinition.qtKeyID,
+                                    keyCustomDefinition.scanCode,
+                                    keyCustomDefinition.ASCII8,
+                                    keyCustomDefinition.extended & 0x0100,
+                                    row, keyCustomDefinition.name);
+            }
+        } else {
+            QWidget::keyPressEvent(e);
         }
-    }
-
-
-public Q_SLOTS:
-    void deleteCurrentProtile() {
-        if (this->profilComboBox.currentIndex() != 0) {
-            this->_front->deleteCurrentProtile();
-            this->profilComboBox.removeItem(this->_front->current_user_profil);
-            this->changeProfil(0);
-        }
-    }
-
-    void restoreConfig() {
-        this->_front->setDefaultConfig();
-        this->setConfigValues();
-    }
-
-    void changeProfil(int index) {
-        this->_front->current_user_profil = this->profilComboBox.itemData(index).toInt();
-        this->_front->setClientInfo();
-        this->setConfigValues();
     }
 
     void addRow() {
@@ -458,6 +521,44 @@ public Q_SLOTS:
 
         this->updateKeySetting();
     }
+
+
+public Q_SLOTS:
+    void pushEdit() {
+//         if (this->key_editting) {                           //  set to add key
+//             this->key_editting = false;
+//             qApp->installEventFilter(nullptr);
+//             this->_buttonAddKey->setText("Add Key");
+//             this->_buttonDeleteKey->setEnabled(false);
+//         } else {
+//             this->key_editting = true;
+//             qApp->installEventFilter(this);
+//             this->_buttonAddKey->setText("Edit Key");
+//             this->_buttonDeleteKey->setEnabled(true);
+            this->addRow();
+//         }
+    }
+
+    void deleteCurrentProtile() {
+        if (this->profilComboBox.currentIndex() != 0) {
+            this->_front->deleteCurrentProtile();
+            this->profilComboBox.removeItem(this->_front->current_user_profil);
+            this->changeProfil(0);
+        }
+    }
+
+    void restoreConfig() {
+        this->_front->setDefaultConfig();
+        this->setConfigValues();
+    }
+
+    void changeProfil(int index) {
+        this->_front->current_user_profil = this->profilComboBox.itemData(index).toInt();
+        this->_front->setClientInfo();
+        this->setConfigValues();
+    }
+
+
 
     void deletePressed() {
        QModelIndexList indexes = this->_tableKeySetting->selectionModel()->selection().indexes();
@@ -633,7 +734,7 @@ public:
 
         this->_spanCheckBox.setCheckState(Qt::Unchecked);
         this->_layoutView->addRow(&(this->_labelSpan), &(this->_spanCheckBox));
-        this->QObject::connect(&(this->_spanCheckBox), SIGNAL(stateChanged(int)), this, SLOT(spanCheckChange(int)));
+        //this->QObject::connect(&(this->_spanCheckBox), SIGNAL(stateChanged(int)), this, SLOT(spanCheckChange(int)));
 
         this->_layoutView->addRow(&(this->_labelWallpaper), &(this->_wallpapperCheckBox));
         this->_layoutView->addRow(&(this->windowdragLabel), &(this->windowdragCheckBox));

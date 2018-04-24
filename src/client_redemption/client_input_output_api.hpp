@@ -298,7 +298,7 @@ public:
           : qtKeyID(qtKeyID)
           , scanCode(scanCode)
           , ASCII8(ASCII8)
-          , extended(extended)
+          , extended(extended ? 0x0100 : 0)
           , name(name)
           {}
     };
@@ -696,7 +696,6 @@ public:
                         ligne = ligne.substr(pos + delimiter.length(), ligne.length());
                         pos = ligne.find(delimiter);
 
-
                         int scanCode = 0;
                         scanCode = std::stoi(ligne.substr(0, pos));
                         ligne = ligne.substr(pos + delimiter.length(), ligne.length());
@@ -711,8 +710,9 @@ public:
 
                         ligne = ligne.substr(next_pos, ligne.length());
                         int extended = std::stoi(ligne.substr(0, 1));
+
                         if (extended) {
-                            extended = 0x0100;
+                            extended = 1;
                         }
                         pos = ligne.find(delimiter);
 
@@ -743,12 +743,12 @@ public:
 
                 KeyCustomDefinition & key = this->keyCustomDefinitions[i];
 
-                    ofichier << "- ";
-                    ofichier << key.qtKeyID  << " ";
-                    ofichier << key.scanCode << " ";
-                    //int key_int = key.ASCII8.data()[0];
-                    ofichier << key.ASCII8 << " ";
-                    ofichier << key.extended << std::endl;
+                ofichier << "- ";
+                ofichier << key.qtKeyID  << " ";
+                ofichier << key.scanCode << " ";
+                //int key_int = key.ASCII8.data()[0];
+                ofichier << key.ASCII8 << " ";
+                ofichier << key.extended << std::endl;
             }
             ofichier.close();
         }
@@ -870,10 +870,7 @@ public:
                     }
                 }
             }
-
             ifichier.close();
-
-//             this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
         }
     }
 
@@ -890,7 +887,6 @@ public:
                 auto pos(ligne.find(delimiter));
                 std::string tag  = ligne.substr(0, pos);
                 std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
-
 
                 if (tag.compare(std::string("save_pwd")) == 0) {
                     if (info.compare(std::string("true")) == 0) {
