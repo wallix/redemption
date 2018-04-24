@@ -873,6 +873,7 @@ namespace jln2
         {
             this->deleter = [](SharedDataBase* p, FreeCat cat) noexcept {
                 auto* self = static_cast<SharedData*>(p);
+                LOG(LOG_DEBUG, "deleter (%d) cat = %d", self->value().get_fd(), int(cat));
                 switch (cat) {
                     case FreeCat::Value:
                         self->release_shared_ptr();
@@ -1108,10 +1109,11 @@ namespace jln2
         bool exec_timeout(timeval const end_tv, Ts... xs)
         {
             auto predicate = [&](int /*fd*/, Top& top){
-                LOG(LOG_DEBUG, "%d %ld", top.timer_data.is_enabled, top.timer_data.tv.tv_sec);
+                LOG(LOG_DEBUG, "pred timeout: %d %ld", top.timer_data.is_enabled, top.timer_data.tv.tv_sec);
                 return top.timer_data.is_enabled && top.timer_data.tv <= end_tv;
             };
             return this->_exec(predicate, [&](Top& top) {
+                LOG(LOG_DEBUG, "exec timeout");
                 return top.exec_timeout(static_cast<Ts&>(xs)...);
             });
         }
@@ -1135,7 +1137,6 @@ namespace jln2
                         node = node->next;
                     }
                     else {
-                        LOG(LOG_DEBUG, "deleter (%d)", top.get_fd());
                         node->next = cur->next;
                         cur->free_value();
                         cur->delete_self();
@@ -1197,12 +1198,16 @@ namespace jln2
         auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(this->current_group);
         // TODO same in TopContainer::InitCtx
         this->top.set_timeout(ms);
+        LOG(LOG_DEBUG, "set_or_disable_timeout: %d", int(ms.count()));
         if (ms.count()) {
             this->top.on_timeout_switch = [f, &group](ContextTimer<Ts...> ctx, Ts... xs) mutable -> R {
                 return group.t.invoke(
                     f, TopContextTimer<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
             };
             return R::SubstituteTimeout;
+        }
+        else {
+            this->top.disable_timeout();
         }
         return R::Ready;
     }
