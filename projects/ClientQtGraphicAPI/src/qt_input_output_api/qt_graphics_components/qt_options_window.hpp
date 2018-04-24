@@ -122,36 +122,6 @@ public:
 };
 
 
-// class QtKeyInfo : QWidget {
-//
-// Q_OBJECT
-//
-// public:
-//     QtKeyInputAPI * window;
-//
-//     QtKeyConfigTab(QtKeyInputAPI * window)
-//       : QWidget(window)
-//       , window(window)
-//     {}
-// };
-//
-//
-//
-// class QtKeyConfigTab : public QWidget {
-//
-// Q_OBJECT
-//
-// public:
-//     QtKeyInputAPI * window;
-//
-//     QtKeyConfigTab(QtKeyInputAPI * parent)
-//       : QWidget(parent)
-//       , window(parent)
-//     {}
-//
-//
-// };
-
 
 
 class QtOptions : public QtKeyInputAPI
@@ -319,12 +289,6 @@ public:
         this->_layoutKeyboard->addRow(new QLabel("", this));
         this->_layoutKeyboard->addRow(&(this->_labelLanguage), &(this->_languageComboBox));
 
-//         this->key_setting_scroller.setFixedSize(410,  250);
-// //         this->scroller.setStyleSheet("background-color: #C4C4C3; border: 1px solid #FFFFFF;"
-// //             "border-bottom-color: #FF8C00;");
-//         this->key_setting_scroller.setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
-        //this->key_setting_scroller.setWidget();
-
         this->_tableKeySetting = new QTableWidget(0, this->_columnNumber, this);
         QList<QString> columnTitles;
         columnTitles << "Qt key" << "Scan Code" << "ASCII8" << "Extended";
@@ -342,7 +306,7 @@ public:
 
         this->_tabs->addTab(this->_keyboardTab, strKeyboard);
 
-        this->_buttonAddKey = new QPushButton(" Edit  ", this->_keyboardTab);
+        this->_buttonAddKey = new QPushButton("Add Key", this->_keyboardTab);
         QRect rectAddKey(QPoint(110, 226),QSize(70, 24));
         this->_buttonAddKey->setToolTip(this->_buttonAddKey->text());
         this->_buttonAddKey->setGeometry(rectAddKey);
@@ -442,30 +406,6 @@ public:
         this->_front->writeClientInfo();
     }
 
-//     void keyPressedToSet(QKeyEvent *e) override {
-//         const ClientRedemptionIOAPI::KeyCustomDefinition & keyCustomDefinition =
-//         this->controllers->get_key_info(e->key(), e->text().toStdString());
-//         int count = this->_tableKeySetting->selectedItems().count();
-//         int row = 0;
-//         if (count >= 1) {
-//             QTableWidgetItem * focused = this->_tableKeySetting->selectedItems().at(0);
-//             if (focused) {
-//                 row = focused->row();
-//             }
-//         }
-//         if (row >= 0) {
-//             this->setRowValues(keyCustomDefinition.qtKeyID,
-//                                 keyCustomDefinition.scanCode,
-//                                 keyCustomDefinition.ASCII8,
-//                                 keyCustomDefinition.extended & 0x0100,
-//                                 row, keyCustomDefinition.name);
-//         }
-// //         this->keyPressEvent(e);
-//     }
-//
-//     void callKeyPressEvent(QKeyEvent *e) override {
-//         this->keyPressEvent(e);
-//     }
 
     void keyPressEvent(QKeyEvent *e) override {
 
