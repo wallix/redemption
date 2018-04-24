@@ -172,26 +172,32 @@ RED_AUTO_TEST_CASE(TestSessionExecutorFd)
     RED_REQUIRE_GT(fd1, 0);
     SCOPE_EXIT(::close(fd1));
 
-    auto fd_event = session_reactor.create_fd_event(fd1, std::ref(s))
-    .set_notify_delete([](std::string& s){
-        s += "~fd1\n";
-    })
-    .on_action(jln::one_shot([](std::string& s){
+    SessionReactor::TopFdPtr fd_event = session_reactor.create_fd_event(fd1, std::ref(s))
+    .on_action([](auto ctx, std::string& s){
         s += "fd1\n";
-    }));
-
-    auto fd_gd_event = session_reactor.create_graphic_fd_event(fd1, std::ref(s))
-    .set_notify_delete([](std::string& s){
-        s += "~fd2\n";
+        return ctx.next();
     })
-    .on_action(jln::one_shot([](gdi::GraphicApi&, std::string& s){
+    .on_exit(jln2::propagate_exit([](std::string& s){
+        s += "~fd1\n";
+    }))
+    .set_timeout({})
+    .on_timeout([](auto ctx, std::string&){ return ctx.ready(); });
+
+    SessionReactor::GraphicFdPtr fd_gd_event = session_reactor.create_graphic_fd_event(fd1)
+    .on_action([&s](auto ctx, gdi::GraphicApi&){
         s += "fd2\n";
-    }));
+        return ctx.next();
+    })
+    .on_exit(jln2::propagate_exit([&s](gdi::GraphicApi&){
+        s += "~fd2\n";
+    }))
+    .set_timeout({})
+    .on_timeout([](auto ctx, gdi::GraphicApi&){ return ctx.ready(); });
 
     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
     RED_CHECK_EQ(s, "fd2\n~fd2\n");
 
-    session_reactor.fd_events_.exec(fd_is_set);
+    session_reactor.execute_events(fd_is_set);
     RED_CHECK_EQ(s, "fd2\n~fd2\nfd1\n~fd1\n");
 }
 

@@ -101,16 +101,18 @@ public:
     void configure_event(SessionReactor& session_reactor, DeleterFunction f) override
     {
         assert(!this->fdobject);
-        this->fdobject = session_reactor.create_fd_event(this->file_descriptor, std::ref(*this), f)
-        .set_notify_delete([](RdpdrDriveReadTask& self, DeleterFunction& f){ f(self); })
-        .on_action([](auto ctx, RdpdrDriveReadTask& self, DeleterFunction&) {
-            return self.run() ? ctx.need_more_data() : ctx.terminate();
+        this->fdobject = session_reactor.create_fd_event(this->file_descriptor)
+        .on_action([this](auto ctx) {
+            return this->run() ? ctx.need_more_data() : ctx.terminate();
         })
-        .on_exit(jln::exit_with_success())
+        .on_exit([this, f = std::move(f)](auto /*ctx*/, jln2::ExitR er) mutable {
+            f(*this);
+            return er.to_result();
+        })
         .set_timeout(std::chrono::milliseconds(1000))
-        .on_timeout([](auto ctx, RdpdrDriveReadTask& self, DeleterFunction&){
+        .on_timeout([this](auto ctx){
             LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!",
-                self.file_descriptor);
+                this->file_descriptor);
             return ctx.ready();
         });
     }

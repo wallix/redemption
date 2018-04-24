@@ -59,8 +59,8 @@ public:
         this->fd_event = session_reactor.create_graphic_fd_event(
             this->ift.get_fd(), std::ref(*this))
         .set_timeout(std::chrono::seconds{1})
-        .on_timeout(jln::always_ready())
-        .on_exit(jln::exit_with_success())
+        .disable_timeout()
+        .on_exit(jln2::propagate_exit())
         .on_action([](auto ctx, gdi::GraphicApi& gd, TransparentReplayMod& self){
             self.draw_event(0, gd);
             return ctx.need_more_data();

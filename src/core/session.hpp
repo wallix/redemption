@@ -207,7 +207,7 @@ public:
                 session_reactor.for_each_fd(
                     enable_graphics,
                     [&](int fd, [[maybe_unused]] auto const& elem){
-                        // LOG(LOG_DEBUG, "%p set fd: %d", static_cast<void const*>(&elem), fd);
+                        LOG(LOG_DEBUG, "%p set fd: %d", static_cast<void const*>(&elem), fd);
                         io_fd_set(fd, rfds);
                         max = std::max(max, unsigned(fd));
                     }
@@ -240,7 +240,7 @@ public:
                 });
                 // session_reactor.timer_events_.info(end_tv);
 
-                session_reactor.fd_events_.exec([&rfds](int fd, auto& /*e*/){
+                session_reactor.execute_events([&rfds](int fd, auto& /*e*/){
                     return io_fd_isset(fd, rfds);
                 });
                 bool const front_is_set = sck_is_set(front_trans, rfds);
@@ -289,6 +289,7 @@ public:
                                 // Process incoming module trafic
                                 auto& gd = mm.get_graphic_wrapper(front);
                                 session_reactor.execute_graphics([&rfds](int fd, auto& /*e*/){
+                                    LOG(LOG_DEBUG, "is_set(%d): %d", fd, io_fd_isset(fd, rfds));
                                     return io_fd_isset(fd, rfds);
                                 }, gd);
                             }

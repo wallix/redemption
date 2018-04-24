@@ -85,18 +85,15 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
         session_reactor, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
             *b = false;
         }});
-    auto& timer_events = session_reactor.timer_events_.elements;
-    auto& fd_events = session_reactor.fd_events_.elements;
-    RED_REQUIRE_EQ(timer_events.size(), 1);
-    RED_REQUIRE_EQ(fd_events.size(), 1);
 
+    RED_CHECK(!session_reactor.fd_events_.is_empty());
+    RED_CHECK(run_task);
     auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };
-    for (int i = 0; i < 100 && !fd_events.empty(); ++i) {
-        session_reactor.fd_events_.exec(fd_is_set);
+    for (int i = 0; i < 100 && !session_reactor.fd_events_.is_empty(); ++i) {
+        session_reactor.execute_events(fd_is_set);
     }
     session_reactor.execute_timers(SessionReactor::EnableGraphics{false}, &gdi::null_gd);
-    RED_CHECK_EQ(fd_events.size(), 0);
-    RED_CHECK_EQ(timer_events.size(), 0);
+    RED_CHECK(session_reactor.fd_events_.is_empty());
     RED_CHECK(!run_task);
 }
 
@@ -131,7 +128,7 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
         session_reactor, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
             *b = false;
         }});
-    RED_CHECK_EQ(session_reactor.fd_events_.elements.size(), 0);
+    RED_CHECK(session_reactor.fd_events_.is_empty());
 
     auto& timer_events = session_reactor.timer_events_.elements;
     RED_CHECK_EQ(timer_events.size(), 1);

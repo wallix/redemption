@@ -31,605 +31,1399 @@ Author(s): Jonathan Poelen
 #include "utils/log.hpp"
 #include "core/error.hpp"
 
+#include <functional>
+#include <memory>
+#include <cassert>
+#include <exception>
+#include <chrono>
+#include <utility>
+#include "cxx/diagnostic.hpp"
+#include "utils/executor.hpp"
+#include "core/error.hpp"
+
 template<class>
 struct BasicFd;
 
 class SessionReactor;
 
-namespace jln2 {
-
-enum class [[nodiscard]] R : char
+namespace jln2
 {
-    Next,
-    Terminate,
-    ExitSuccess,
-    ExitError,
-    Exception,
-    CreateGroup,
-    NeedMoreData,
-    Substitute,
-};
+    using Reactor = SessionReactor;
 
-struct ExitR {
-    enum Status : char {
-        Error = char(R::ExitError),
-        Success = char(R::ExitSuccess),
-        Exception = char(R::Exception),
-        Terminate = char(R::Terminate),
+    template<class... Ts> class TopExecutor;
+    template<class... Ts> class GroupExecutor;
+    template<class Tuple, class... Ts> struct GroupExecutorWithValues;
+    template<class T> class SharedData;
+    class SharedPtr;
+    template<class... Ts> class TopSharedPtr;
+
+    enum class [[nodiscard]] R : char
+    {
+        Next,
+        Terminate,
+        ExitSuccess,
+        ExitError,
+        Exception,
+        CreateGroup,
+        NeedMoreData,
+        SubstituteExit,
+        SubstituteAction,
+        SubstituteTimeout,
+        Ready,
+        CreateContinuation,
     };
 
-    Status status;
-    ::Error& error;
-};
-
-template<class... Ts> struct TopExecutor;
-template<class... Ts> struct GroupExecutor;
-template<class... Ts> struct NodeExecutor;
-
-using jln::ExitStatus;
-
-namespace detail
-{
-    template<bool setError, int stateInit, class Group, class... Ts>
-    struct [[nodiscard]] GroupExecutorBuilderImpl
+    struct ExitR
     {
-        explicit GroupExecutorBuilderImpl(TopExecutor<Ts...>& top, std::unique_ptr<Group>&& g) noexcept;
+        enum Status : char {
+            Error = char(R::ExitError),
+            Success = char(R::Next),
+            Exception = char(R::Exception),
+            Terminate = char(R::Terminate),
+        };
 
-        template<class F>
-        auto then(F&& f);
+        R to_result() const noexcept
+        {
+            return static_cast<R>(this->status);
+        }
 
-        template<class F>
-        GroupExecutorBuilderImpl<1, stateInit, Group> on_exit(F&& f);
-        GroupExecutorBuilderImpl<1, stateInit, Group> propagate_exit();
+        Status status;
+        ::Error& error;
+    };
 
-        operator R ();
+    enum class ExitStatus : bool {
+        Error,
+        Success,
+    };
 
-    private:
+    namespace detail
+    {
+        template<bool HasAct, bool HasExit, class Top, class Group>
+        struct [[nodiscard]] GroupExecutorBuilderImpl
+        {
+            explicit GroupExecutorBuilderImpl(Top& top, std::unique_ptr<Group>&& g) noexcept;
+
+#ifndef NDEBUG
+            ~GroupExecutorBuilderImpl()
+            {
+                assert(!this->g);
+            }
+#endif
+
+            template<class F>
+            auto on_action(F&& f) &&;
+
+            template<class F>
+            auto on_exit(F&& f) &&;
+
+            auto propagate_exit() &&;
+
+        private:
+            Top& top;
+            std::unique_ptr<Group> g;
+        };
+
+        struct BuilderInit
+        {
+            enum E
+            {
+                None,
+                Action = 1,
+                Exit = 2,
+                Timer = 4,
+                Timeout = 8,
+            };
+        };
+
+        template<BuilderInit::E Has, class InitCtx>
+        struct [[nodiscard]] TopExecutorBuilderImpl
+        {
+            explicit TopExecutorBuilderImpl(InitCtx&& init_ctx) noexcept;
+
+            template<class F>
+            auto on_action(F&& f) &&;
+
+            template<class F>
+            auto on_exit(F&& f) &&;
+
+            template<class F>
+            auto on_timeout(F&& f) &&;
+
+            auto set_timeout(std::chrono::milliseconds ms) &&;
+
+            auto disable_timeout() &&;
+
+            auto propagate_exit() &&;
+
+        private:
+            InitCtx init_ctx;
+        };
+
+    #ifdef IN_IDE_PARSER
+        struct Func
+        {
+            template<class F>
+            Func(F) {}
+        };
+
+        struct /*[[nodiscard]]*/ GroupExecutorBuilder_Concept
+        {
+            template<class... Ts>
+            explicit GroupExecutorBuilder_Concept(Ts&&...) noexcept;
+
+            GroupExecutorBuilder_Concept on_action(Func) { return *this; }
+            GroupExecutorBuilder_Concept on_exit(Func) { return *this; }
+            GroupExecutorBuilder_Concept propagate_exit();
+        };
+
+        struct /*[[nodiscard]]*/ TopExecutorBuilder_Concept
+        {
+            template<class... Ts>
+            explicit TopExecutorBuilder_Concept(Ts&&...) noexcept;
+
+            TopExecutorBuilder_Concept disable_timeout() { return *this; }
+            TopExecutorBuilder_Concept set_timeout(std::chrono::milliseconds) { return *this; }
+            TopExecutorBuilder_Concept on_timeout(Func) { return *this; }
+            TopExecutorBuilder_Concept on_action(Func) { return *this; }
+            TopExecutorBuilder_Concept on_exit(Func) { return *this; }
+            TopExecutorBuilder_Concept propagate_exit();
+
+            operator SharedPtr ();
+
+            template<class... Ts> operator TopSharedPtr<Ts...> ();
+        };
+
+        template<class Top, class Group>
+        using GroupExecutorBuilder = GroupExecutorBuilder_Concept;
+
+        template<class InitCtx>
+        using TopExecutorBuilder = TopExecutorBuilder_Concept;
+    #else
+        template<class Top, class Group>
+        using GroupExecutorBuilder = GroupExecutorBuilderImpl<0, 0, Top, Group>;
+
+        template<class InitCtx>
+        using TopExecutorBuilder = TopExecutorBuilderImpl<BuilderInit::None, InitCtx>;
+    #endif
+    }
+
+    using jln::detail::decay_and_strip_t;
+
+    enum class NextMode { ChildToNext, CreateContinuation, };
+
+    template<class... Ts>
+    struct GroupContext
+    {
+        GroupContext(TopExecutor<Ts...>& top, GroupExecutor<Ts...>& current_group) noexcept
+        : top(top)
+        , current_group(current_group)
+        {}
+
+        template<class... Us>
+    #ifdef IN_IDE_PARSER
+        detail::GroupExecutorBuilder_Concept create_sub_executor(Us&&...);
+    #else
+        auto create_sub_executor(Us&&...);
+    #endif
+
+        R exception(Error const& e) noexcept;
+        R ready() noexcept { return R::Ready; }
+        R need_more_data() noexcept { return R::NeedMoreData; }
+        R terminate() noexcept { return R::Terminate; }
+        R next() noexcept { return R::Next; }
+        R exit_on_error() noexcept { return R::ExitError; }
+        R exit_on_success() noexcept { return R::ExitSuccess; }
+        R exit(ExitStatus status) noexcept {
+            return (status == ExitStatus::Success)
+                ? this->exit_on_success()
+                : this->exit_on_error();
+        }
+
+        GroupContext& enable_timeout(bool enable = true) noexcept;
+        GroupContext& disable_timeout() noexcept
+        {
+            this->enable_timeout(false);
+            return *this;
+        }
+
+        int get_fd() const noexcept;
+        void set_fd(int fd) noexcept;
+
+        Reactor& get_reactor() const noexcept;
+
+        timeval get_current_time() const noexcept;
+
+        // void set_timeout(std::chrono::milliseconds ms) noexcept
+        // {
+        //     this->basic_fd.set_timeout(ms);
+        // }
+        //
+        // void restart_timeout()
+        // {
+        //     this->basic_fd.restart_timeout();
+        // }
+        //
+        // SessionReactor& get_reactor() const noexcept
+        // {
+        //     return this->basic_fd.get_reactor();
+        // }
+        //
+        // timeval get_current_time() const noexcept
+        // {
+        //     return this->get_reactor().get_current_time();
+        // }
+
+    protected:
         TopExecutor<Ts...>& top;
-        std::unique_ptr<Group> g;
+        GroupExecutor<Ts...>& current_group;
     };
 
-#ifdef IN_IDE_PARSER
-    struct [[nodiscard]] GroupExecutorBuilder_Concept
+    template<class Tuple, class... Ts>
+    struct TopContext : GroupContext<Ts...>
     {
-        template<class... Ts>
-        explicit GroupExecutorBuilder_Concept(Ts&&...) noexcept;
+        template<class F>
+        R replace_action(F&& f);
 
-        template<class F> GroupExecutorBuilder_Concept then(F) { return *this; }
-        template<class F> GroupExecutorBuilder_Concept on_exit(F) { return *this; }
-        GroupExecutorBuilder_Concept propagate_exit();
+        template<class F>
+        R replace_exit(F&& f);
 
-        operator R ();
+        TopContext& enable_timeout(bool enable = true) noexcept
+        {
+            this->GroupContext<Ts...>::enable_timeout(enable);
+            return *this;
+        }
+
+        TopContext& disable_timeout() noexcept
+        {
+            this->GroupContext<Ts...>::disable_timeout();
+            return *this;
+        }
     };
 
-    template<class...>
-    using GroupExecutorBuilder = GroupExecutorBuilder_Concept;
-#else
-    template<class Group>
-    using GroupExecutorBuilder = GroupExecutorBuilderImpl<0, 0, Group>;
-#endif
-}
-
-template<class... Ts>
-struct Context
-{
-    template<class... Xs>
-#ifdef IN_IDE_PARSER
-    detail::GroupExecutorBuilder_Concept create_sub_executor(Xs&&...);
-#else
-    auto create_sub_executor(Xs&&...);
-#endif
-
-    R exception(Error const& e) noexcept;
-    R need_more_data() noexcept { return R::NeedMoreData; }
-    R terminate() noexcept { return R::Terminate; }
-    R next() noexcept { return R::Next; }
-    R exit_on_error() noexcept { return R::ExitError; }
-    R exit_on_success() noexcept { return R::ExitSuccess; }
-    R exit(ExitStatus status) noexcept {
-        return (status == ExitStatus::Success)
-            ? this->exit_on_success()
-            : this->exit_on_error();
-    }
-
-    template<class F>
-    R replace_action(F&& f);
-
-    template<class F>
-    R next_action(F&& f);
-
-    template<class F>
-    R exec_action(F&& f);
-
-    void set_fd(int fd) noexcept
+    template<class... Ts>
+    struct ContextExit
     {
-        this->basic_fd.set_fd(fd);
-    }
+        TopExecutor<Ts...>& top;
+        GroupExecutor<Ts...>& current_group;
 
-    int get_fd() noexcept
+        // R need_more_data() noexcept { return R::NeedMoreData; }
+        // R terminate() noexcept { return R::Terminate; }
+        // R next() noexcept { return R::Next; }
+        // R exit_on_error() noexcept { return R::ExitError; }
+        // R exit_on_success() noexcept { return R::ExitSuccess; }
+        // R exit(ExitStatus status) noexcept {
+        //     return (status == ExitStatus::Success)
+        //         ? this->exit_on_success()
+        //         : this->exit_on_error();
+        // }
+
+        // template<class F>
+        // R replace_action(F&& f);
+    };
+
+    template<class... Ts>
+    struct ContextTimer
     {
-        return this->basic_fd.get_fd();
-    }
-    void set_timeout(std::chrono::milliseconds ms) noexcept
-    {
-        this->basic_fd.set_timeout(ms);
-    }
-
-    Context disable_timeout() noexcept
-    {
-        this->basic_fd.disable_timeout();
-        return *this;
-    }
-
-    void restart_timeout()
-    {
-        this->basic_fd.restart_timeout();
-    }
-
-    SessionReactor& get_reactor() const noexcept
-    {
-        return this->basic_fd.get_reactor();
-    }
-
-    timeval get_current_time() const noexcept
-    {
-        return this->get_reactor().get_current_time();
-    }
-
-private:
-    friend TopExecutor<Ts...>;
-
-    explicit Context(TopExecutor<Ts...>& top, NodeExecutor<Ts...>& current, BasicFd<jln::prefix_args<Ts...>>& fd)
-    : top(top)
-    , current(current)
-    , basic_fd(fd)
-    {}
-
-    TopExecutor<Ts...>& top;
-    NodeExecutor<Ts...>& current;
-    BasicFd<jln::prefix_args<Ts...>>& basic_fd;
-};
-
-template<class... Ts>
-struct ContextError
-{
-//     template<class... Xs>
-// #ifdef IN_IDE_PARSER
-//     detail::GroupExecutorBuilder_Concept create_sub_executor(Xs&&...);
-// #else
-//     auto create_sub_executor(Xs&&...);
-// #endif
-
-    R need_more_data() noexcept { return R::NeedMoreData; }
-    R terminate() noexcept { return R::Terminate; }
-    R next() noexcept { return R::Next; }
-    R exit_on_error() noexcept { return R::ExitError; }
-    R exit_on_success() noexcept { return R::ExitSuccess; }
-    R exit(ExitStatus status) noexcept {
-        return (status == ExitStatus::Success)
-            ? this->exit_on_success()
-            : this->exit_on_error();
-    }
-
-    // template<class F>
-    // R replace_action(F&& f);
-
-private:
-    friend TopExecutor<Ts...>;
-
-    explicit ContextError(TopExecutor<Ts...>& top, BasicFd<jln::prefix_args<Ts...>>& fd)
-    : top(top)
-    , basic_fd(fd)
-    {}
-
-    TopExecutor<Ts...>& top;
-    BasicFd<jln::prefix_args<Ts...>>& basic_fd;
-};
-
-template<class... Ts>
-inline R propagate_exit(ContextError<Ts...>, ExitR er) noexcept
-{
-    return static_cast<R>(er.status);
-}
-
-template<class... Ts>
-struct NodeExecutor
-{
-    std::function<R(Context<Ts...>, Ts&...)> f;
-    std::unique_ptr<NodeExecutor> next;
-
-    template<class F>
-    static std::unique_ptr<NodeExecutor> create(F&& f)
-    {
-        return std::unique_ptr<NodeExecutor>(
-            new NodeExecutor{static_cast<F&&>(f), nullptr});
-    }
-};
-
-template<class... Ts>
-struct GroupExecutor
-{
-    GroupExecutor() = default;
-    GroupExecutor(GroupExecutor const&) = delete;
-    GroupExecutor& operator=(GroupExecutor const&) = delete;
-
-    virtual ~GroupExecutor() = default;
-
-    void add_group_executor(std::unique_ptr<GroupExecutor>&& g)
-    {
-        assert(bool(g->next));
-        g->group = std::move(this->group);
-        this->group = std::move(g);
-    }
-
-    template<class F>
-    void then(F&& f)
-    {
-        if (!this->end_next) {
-            this->next = NodeExecutor<Ts...>::create(static_cast<F&&>(f));
-            this->end_next = this->next.get();
+        R exception(Error const& e) noexcept;
+        R ready() noexcept { return R::Ready; }
+        R terminate() noexcept { return R::Terminate; }
+        R exit_on_error() noexcept { return R::ExitError; }
+        R exit_on_success() noexcept { return R::ExitSuccess; }
+        R exit(ExitStatus status) noexcept {
+            return (status == ExitStatus::Success)
+                ? this->exit_on_success()
+                : this->exit_on_error();
         }
-        else {
-            this->end_next->next = NodeExecutor<Ts...>::create(static_cast<F&&>(f));
-            this->end_next = this->end_next->next.get();
+
+        ContextTimer& disable_timeout() noexcept;
+
+        int get_fd() const noexcept;
+        void set_fd(int fd) noexcept;
+
+        TopExecutor<Ts...>& top;
+        GroupExecutor<Ts...>& current_group;
+    };
+
+    template<class Tuple, class... Ts>
+    struct TopContextTimer : ContextTimer<Ts...>
+    {
+        template<class F>
+        TopContextTimer& replace_action(F&& f);
+
+        template<class F>
+        TopContextTimer& replace_exit(F&& f);
+
+        template<class F>
+        R set_or_disable_timeout(std::chrono::milliseconds ms, F&& f);
+
+        TopContextTimer& disable_timeout() noexcept
+        {
+            ContextTimer<Ts...>::disable_timeout();
+            return *this;
         }
-    }
+    };
 
-    template<class F>
-    void set_on_exit(F&& f)
+    template<class... Ts>
+    struct TimerData
     {
-        this->on_exit = static_cast<F&&>(f);
-    }
+        bool is_enabled = true;
+        timeval tv {};
+        std::chrono::milliseconds delay = std::chrono::milliseconds(-1);
+        std::function<R(ContextTimer<Ts...>, Ts...)> on_timeout;
 
-    void set_propagate_exit() noexcept
+        void initialize_delay(std::chrono::milliseconds ms)
+        {
+            // TODO initialize tv
+            this->delay = ms;
+        }
+    };
+
+    template<class... Ts>
+    struct GroupExecutor
     {
-        this->on_exit = [](auto ctx, jln2::ExitR er, [[maybe_unused]] Ts&... xs){
-            return jln2::propagate_exit(ctx, er);
+        std::function<R(GroupContext<Ts...>, Ts...)> on_action;
+        std::function<R(ContextExit<Ts...>, ExitR er, Ts...)> on_exit;
+        NextMode next_mode = NextMode::ChildToNext;
+        GroupExecutor* next;
+
+        // TODO replace by deleter function
+        virtual ~GroupExecutor() {}
+    };
+
+    template<class Tuple, class... Ts>
+    // TODO specialization for GroupExecutorWithValues<tuple<>, Ts...>
+    struct GroupExecutorWithValues : GroupExecutor<Ts...>
+    {
+        using Base = GroupExecutor<Ts...>;
+
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
+        template<class... Us>
+        GroupExecutorWithValues(Us&&... xs)
+        : t{static_cast<Us&&>(xs)...}
+        {}
+        REDEMPTION_DIAGNOSTIC_POP
+
+        template<class F>
+        void on_action(F&& f)
+        {
+            Base::on_action = [f, this](GroupContext<Ts...> ctx, Ts... xs) mutable /*-> R*/ {
+                return this->t.invoke(
+                    f, TopContext<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
+            };
+        }
+
+        template<class F>
+        void on_exit(F&& f)
+        {
+            Base::on_exit = [f, this](ContextExit<Ts...> ctx, ExitR er, Ts... xs) mutable /*-> R*/ {
+                return this->t.invoke(f, ctx, er, static_cast<Ts&>(xs)...);
+            };
+        }
+
+        Tuple t;
+    };
+
+    template<class... Fs>
+    auto sequencer(Fs&&... fs)
+    {
+        return [=, i = 0](auto ctx, auto&&... xs) mutable /*-> R*/ {
+            // TODO optimise switch
+            int nth = 0;
+            R r = R::ExitError;
+            ((nth++ == i ? (void)(
+                r = fs(ctx, static_cast<decltype(xs)&&>(xs)...)
+            ) : void()), ...);
+
+            switch (r) {
+                case R::Next:
+                    return i < int(sizeof...(fs)-1) ? ((void)++i, R::Ready) : R::Next;
+                case R::CreateGroup:
+                    ++i;
+                    return R::CreateContinuation;
+                case R::SubstituteTimeout:
+                case R::SubstituteAction:
+                case R::SubstituteExit:
+                    ++i;
+                    return r;
+                default:
+                    return r;
+            }
         };
     }
 
     template<class F>
-    void reset_action(F&& f)
+    auto propagate_exit(F&& f) noexcept
     {
-        assert(this->next);
-        this->next->f = static_cast<F&&>(f);
-        this->group.reset();
+        return [=](auto /*ctx*/, ExitR er, auto&&... xs) mutable /*-> R*/ {
+            f(static_cast<decltype(xs)&&>(xs)...);
+            return er.to_result();
+        };
     }
 
-protected:
-    friend TopExecutor<Ts...>;
-    bool has_group() const noexcept { return bool(this->group); }
-
-private:
-    std::unique_ptr<NodeExecutor<Ts...>> next;
-    NodeExecutor<Ts...>* end_next = nullptr;
-    std::unique_ptr<GroupExecutor> group;
-    std::function<R(ContextError<Ts...>, ExitR er, Ts&...)> on_exit;
-};
-
-
-template<class Tuple, class... Ts>
-struct GroupExecutorWithValues : GroupExecutor<Ts...>, private Tuple
-{
-    REDEMPTION_DIAGNOSTIC_PUSH
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
-    template<class... Us>
-    GroupExecutorWithValues(Us&&... xs)
-    noexcept(noexcept(Tuple{static_cast<Us&&>(xs)...}))
-      : Tuple{static_cast<Us&&>(xs)...}
-    {}
-    REDEMPTION_DIAGNOSTIC_POP
-
-    template<class F>
-    void then(F&& f)
+    inline auto propagate_exit() noexcept
     {
-        this->GroupExecutor<Ts...>::then([f = static_cast<F&&>(f), this](Context<Ts...> ctx) -> R{
-            return this->invoke(f, ctx);
-        });
+        return [](auto /*ctx*/, ExitR er, [[maybe_unused]] auto&&... xs) /*-> R*/ {
+            return er.to_result();
+        };
     }
 
-    template<class F>
-    void set_on_exit(F&& f)
+    template<error_type id, int errnum = 0>
+    inline auto exit_with_error()
     {
-        this->GroupExecutor<Ts...>::set_on_exit([f = static_cast<F&&>(f), this](
-            ContextError<Ts...> ctx, ExitR er) -> R
+        return [](auto ctx, [[maybe_unused]] auto&&... xs) /*-> R*/ {
+            return ctx.exception(Error{id, errnum});
+        };
+    }
+
+    template<class... Ts>
+    struct TopExecutor
+    {
+        TopExecutor(Reactor& reactor, int fd)
+        : fd(fd)
+        , reactor(reactor)
+        {}
+
+        ~TopExecutor()
         {
-            return this->invoke(f, ctx, er);
-        });
-    }
-
-private:
-    friend Context<Ts...>;
-};
-
-template<class... Ts>
-struct GroupExecutorWithValues<jln::detail::tuple<>, Ts...> : GroupExecutor<Ts...>
-{};
-
-
-template<class... Ts>
-struct TopExecutor : GroupExecutor<Ts...>
-{
-    TopExecutor() = default;
-
-    bool exec(BasicFd<jln::prefix_args<Ts...>>& fd, Ts&... xs)
-    {
-        R r;
-
-        try {
-            do {
-                switch ((r = this->_exec(*this, fd, xs...))) {
-                    case R::ExitSuccess:
-                    case R::Exception:
-                    case R::Terminate:
-                    case R::ExitError:
-                    case R::NeedMoreData:
-                        break;
-                    case R::Next:
-                    case R::CreateGroup:
-                    case R::Substitute:
-                        continue;
-                }
-            } while(0);
-        }
-        catch (Error const& e) {
-            this->error = e;
-            r = this->has_group()
-                ? this->_exec_group_exit(*this, fd, R::Exception, xs...)
-                : this->_exec_exit(*this, fd, R::Exception, xs...);
-            /*if (r == R::Exception)*/ {
-                throw this->error;
+            auto* p = this->group;
+            while (p) {
+                delete std::exchange(p, p->next);
             }
         }
 
-        switch (r) {
-            case R::ExitSuccess:
-            case R::Exception:
-            case R::Terminate:
-            case R::ExitError:
-                return false;
-            case R::NeedMoreData:
-            case R::Next:
-            case R::CreateGroup:
-            case R::Substitute:
-                return true;
+        void set_fd(int fd) noexcept
+        {
+            assert(fd >= 0);
+            this->fd = fd;
         }
-        REDEMPTION_UNREACHABLE();
-        // try {
-        //     return this->_exec(*this, fd, xs...) == R::NeedMoreData;
-        // }
-        // catch (Error const& e) {
-        //     this->error = e;
-        //     R const r = this->has_group()
-        //         ? this->_exec_group_exit(*this, fd, R::Exception, xs...)
-        //         : this->_exec_exit(*this, fd, R::Exception, xs...);
-        //     if (r == R::Exception) {
-        //         throw this->error;
-        //     }
-        //     return (r == R::NeedMoreData);
-        // }
-    }
 
-    Error error = Error(NO_ERROR);
+        int get_fd() const noexcept
+        {
+            return this->fd;
+        }
 
-private:
-    using Fd = BasicFd<jln::prefix_args<Ts...>>;
-    R _exec_next(GroupExecutor<Ts...>& top, Fd& fd, Ts&... xs);
-    R _exec(GroupExecutor<Ts...>& top, Fd& fd, Ts&... xs);
-    R _exec_exit(GroupExecutor<Ts...>& top, Fd& fd, R r, Ts&... xs);
-    R _exec_group_exit(GroupExecutor<Ts...>& top, Fd& fd, R r, Ts&... xs);
-};
+        Reactor& get_reactor() const noexcept
+        {
+            return this->reactor;
+        }
 
+        void set_timeout(std::chrono::milliseconds ms) noexcept;
 
-template<class... Ts>
-R TopExecutor<Ts...>::_exec_exit(GroupExecutor<Ts...>& g, Fd& fd, R r, Ts&... xs)
-{
-    switch (R re = g.on_exit(
-        ContextError<Ts...>{*this, fd},
-        ExitR{static_cast<ExitR::Status>(r), this->error},
-        xs...
-    )) {
-        case R::ExitSuccess:
-        case R::Exception:
-        case R::Terminate:
-        case R::ExitError:
-            return re;
-        case R::NeedMoreData:
-        case R::Next:
-            return bool(g.next) ? R::NeedMoreData : r;
-        case R::CreateGroup:
-        case R::Substitute:
-            return R::NeedMoreData;
-    }
-    REDEMPTION_UNREACHABLE();
-}
+        void update_next_time() noexcept;
 
-template<class... Ts>
-R TopExecutor<Ts...>::_exec_group_exit(GroupExecutor<Ts...>& g, Fd& fd, R r, Ts&... xs)
-{
-    do {
-        R const re = g.group->on_exit(
-            ContextError<Ts...>{*this, fd},
-            ExitR{static_cast<ExitR::Status>(r), this->error},
-            xs...);
-        g.group = std::move(g.group->group);
-        switch (re) {
-            case R::ExitSuccess:
-                if (!g.group && g.next) {
-                    return R::NeedMoreData;
+        void disable_timeout() noexcept
+        {
+            this->enable_timeout(false);
+        }
+
+        void enable_timeout(bool enable = true) noexcept
+        {
+            this->timer_data.is_enabled = enable;
+        }
+
+        void set_delay(std::chrono::milliseconds ms) noexcept
+        {
+            this->timer_data.delay = ms;
+        }
+
+        void set_time(timeval const& tv) noexcept
+        {
+            this->timer_data.tv = tv;
+        }
+
+        void add_group(std::unique_ptr<GroupExecutor<Ts...>>&& group)
+        {
+            group->next = this->group;
+            this->group = group.release();
+        }
+
+        void sub_group(std::unique_ptr<GroupExecutor<Ts...>>&& group)
+        {
+            this->loaded_group = std::move(group);
+        }
+
+        bool exec_timeout(Ts&... xs)
+        {
+            R r;
+
+            try {
+                auto& on_timeout = this->timer_data.on_timeout;
+                do {
+                    switch ((r = on_timeout(ContextTimer<Ts...>{*this, *this->group}, xs...))) {
+                        case R::Terminate:
+                        case R::Exception:
+                        case R::ExitError:
+                        case R::ExitSuccess:
+                        case R::Next:
+                            r = this->_exec_exit(r, xs...);
+                            break;
+                        case R::NeedMoreData:
+                        case R::Ready:
+                            break;
+                        case R::SubstituteTimeout:
+                            on_timeout = std::move(this->on_timeout_switch);
+                            r = R::Ready;
+                            break;
+                        case R::CreateContinuation:
+                            REDEMPTION_UNREACHABLE();
+                        case R::CreateGroup:
+                            REDEMPTION_UNREACHABLE();
+                        case R::SubstituteAction:
+                            REDEMPTION_UNREACHABLE();
+                        case R::SubstituteExit:
+                            REDEMPTION_UNREACHABLE();
+                    }
+                } while(0);
+            }
+            catch (Error const& e) {
+                this->error = e;
+                r = this->_exec_exit(R::Exception, xs...);
+            }
+
+            LOG(LOG_DEBUG, "exec_timeout %d", int(r));
+
+            switch (r) {
+                case R::Exception:
+                    throw this->error;
+                case R::ExitSuccess:
+                case R::Terminate:
+                case R::ExitError:
+                case R::Next:
+                    return false;
+                case R::NeedMoreData:
+                case R::Ready:
+                    return true;
+                case R::CreateGroup:
+                    REDEMPTION_UNREACHABLE();
+                case R::SubstituteTimeout:
+                    REDEMPTION_UNREACHABLE();
+                case R::SubstituteAction:
+                    REDEMPTION_UNREACHABLE();
+                case R::SubstituteExit:
+                    REDEMPTION_UNREACHABLE();
+                case R::CreateContinuation:
+                    REDEMPTION_UNREACHABLE();
+            }
+
+            REDEMPTION_UNREACHABLE();
+        }
+
+        bool exec_action(Ts&... xs)
+        {
+            R r;
+
+            try {
+                do {
+                    LOG(LOG_DEBUG, "exec_action");
+                    switch ((r = this->_exec_action(xs...))) {
+                        case R::ExitSuccess:
+                        case R::Exception:
+                        case R::Terminate:
+                        case R::ExitError:
+                        case R::NeedMoreData:
+                            LOG(LOG_DEBUG, "break");
+                            break;
+                        case R::Ready:
+                        case R::Next:
+                            LOG(LOG_DEBUG, "Ready or Next");
+                            continue;
+                        case R::CreateContinuation:
+                            REDEMPTION_UNREACHABLE();
+                        case R::CreateGroup:
+                            REDEMPTION_UNREACHABLE();
+                        case R::SubstituteTimeout:
+                            REDEMPTION_UNREACHABLE();
+                        case R::SubstituteAction:
+                            REDEMPTION_UNREACHABLE();
+                        case R::SubstituteExit:
+                            REDEMPTION_UNREACHABLE();
+                    }
+                } while(0);
+            }
+            catch (Error const& e) {
+                this->error = e;
+                r = this->_exec_exit(R::Exception, xs...);
+            }
+
+            LOG(LOG_DEBUG, "exec_action %d", int(r));
+
+            switch (r) {
+                case R::Exception:
+                    throw this->error;
+                case R::ExitSuccess:
+                case R::Terminate:
+                case R::ExitError:
+                case R::Next:
+                    return false;
+                case R::NeedMoreData:
+                case R::Ready:
+                    return true;
+                case R::CreateGroup:
+                    REDEMPTION_UNREACHABLE();
+                case R::SubstituteTimeout:
+                    REDEMPTION_UNREACHABLE();
+                case R::SubstituteAction:
+                    REDEMPTION_UNREACHABLE();
+                case R::SubstituteExit:
+                    REDEMPTION_UNREACHABLE();
+                case R::CreateContinuation:
+                    REDEMPTION_UNREACHABLE();
+            }
+
+            REDEMPTION_UNREACHABLE();
+        }
+
+    private:
+        R _exec_action(Ts&... xs)
+        {
+            R const r = this->group->on_action(GroupContext<Ts...>{*this, *this->group}, xs...);
+            switch (r) {
+                case R::Terminate:
+                case R::Exception:
+                case R::ExitError:
+                case R::ExitSuccess:
+                case R::Next:
+                    return this->_exec_exit(r, xs...);
+                case R::NeedMoreData:
+                case R::Ready:
+                    return r;
+                case R::CreateContinuation:
+                    this->loaded_group->next = this->group;
+                    this->group = this->loaded_group.release();
+                    this->group->next_mode = NextMode::CreateContinuation;
+                    return R::Ready;
+                case R::CreateGroup:
+                    this->loaded_group->next = this->group;
+                    this->group = this->loaded_group.release();
+                    return R::Ready;
+                case R::SubstituteExit:
+                    REDEMPTION_UNREACHABLE();
+                    // this->group->on_exit = std::move(this->loaded_group->on_exit);
+                    // this->loaded_group.reset();
+                    // return R::Ready;
+                case R::SubstituteAction:
+                    this->group->on_action = std::move(this->loaded_group->on_action);
+                    this->loaded_group.reset();
+                    return R::Ready;
+                case R::SubstituteTimeout:
+                    REDEMPTION_UNREACHABLE();
+                    // return R::Ready;
+            }
+            REDEMPTION_UNREACHABLE();
+        }
+
+        R _exec_exit(R r, Ts&... xs)
+        {
+            do {
+                R const re = this->group->on_exit(
+                    ContextExit<Ts...>{*this, *this->group},
+                    ExitR{static_cast<ExitR::Status>(r), this->error},
+                    xs...);
+                NextMode next_mode;
+                switch (re) {
+                    case R::ExitSuccess:
+                    case R::Next:
+                        next_mode = this->group->next_mode;
+                        delete std::exchange(this->group, this->group->next);
+                        switch (next_mode) {
+                            case NextMode::ChildToNext:
+                                r = re;
+                                break;
+                            case NextMode::CreateContinuation:
+                                return this->group ? R::Ready : R::Terminate;
+                        }
+                        break;
+                    case R::Exception:
+                    case R::Terminate:
+                    case R::ExitError:
+                        delete std::exchange(this->group, this->group->next);
+                        r = re;
+                        break;
+                    case R::Ready:
+                    case R::NeedMoreData:
+                        return re;
+                    case R::CreateGroup:
+                    case R::SubstituteExit:
+                    case R::SubstituteAction:
+                    case R::SubstituteTimeout:
+                        return R::Ready;
+                    case R::CreateContinuation:
+                        REDEMPTION_UNREACHABLE();
                 }
-                r = re;
-                break;
-            case R::Exception:
-            case R::Terminate:
-            case R::ExitError:
-                r = re;
-                break;
-            case R::NeedMoreData:
-            case R::Next:
-                return bool(g.next) ? R::NeedMoreData : r;
-            case R::CreateGroup:
-            case R::Substitute:
-                return R::NeedMoreData;
-        }
-    } while (g.group);
-    return r;
-}
+            } while (this->group);
 
-template<class... Ts>
-R TopExecutor<Ts...>::_exec_next(GroupExecutor<Ts...>& g, Fd& fd, Ts&... xs)
-{
-    R const r = g.next->f(Context<Ts...>{*this, *g.next, fd}, xs...);
-    switch (r) {
-        case R::Terminate:
-        case R::Exception:
-        case R::ExitError:
-        case R::ExitSuccess:
-        case R::NeedMoreData:
             return r;
-        case R::Next:
-            g.next = std::move(g.next->next);
-            return (bool(g.next) ? R::NeedMoreData : R::ExitSuccess);
-        case R::CreateGroup:
-            g.next = std::move(g.next->next);
-            return R::NeedMoreData;
-        case R::Substitute:
-            return R::NeedMoreData;
-    }
-    REDEMPTION_UNREACHABLE();
-}
-
-template<class... Ts>
-R TopExecutor<Ts...>::_exec(GroupExecutor<Ts...>& g, Fd& fd, Ts&... xs)
-{
-    if (g.group) {
-        R const r = this->_exec_next(*g.group, fd, xs...);
-        switch (r) {
-            case R::Exception:
-            case R::Terminate:
-            case R::ExitError:
-            case R::ExitSuccess:
-                return this->_exec_group_exit(g, fd, r, xs...);
-            case R::NeedMoreData:
-                return r;
-            case R::Next:
-            case R::Substitute:
-            case R::CreateGroup:
-                assert(false);
         }
-        REDEMPTION_UNREACHABLE();
-    }
-    else {
-        assert(g.next);
-        R const r = this->_exec_next(g, fd, xs...);
-        switch (r) {
-            case R::Exception:
-            case R::Terminate:
-            case R::ExitError:
-            case R::ExitSuccess:
-                return this->_exec_exit(g, fd, r, xs...);
-            case R::NeedMoreData:
-            case R::Next:
-            case R::Substitute:
-            case R::CreateGroup:
-                return r;
+
+        int fd;
+        GroupExecutor<Ts...>* group = nullptr;
+        std::unique_ptr<GroupExecutor<Ts...>> loaded_group;
+        Reactor& reactor;
+
+    public: // TODO to private
+        TimerData<Ts...> timer_data;
+
+    // private:
+        std::function<R(ContextTimer<Ts...>, Ts...)> on_timeout_switch;
+
+    public:
+        Error error = Error(NO_ERROR);
+    };
+
+    struct SharedDataBase
+    {
+        enum class FreeCat { Value, Self, };
+        SharedPtr* shared_ptr;
+        void (*deleter) (SharedDataBase*, FreeCat) noexcept;
+        SharedDataBase* next;
+
+        void free_value() noexcept
+        {
+            this->deleter(this, FreeCat::Value);
         }
-        REDEMPTION_UNREACHABLE();
+
+        void delete_self() noexcept
+        {
+            this->deleter(this, FreeCat::Self);
+        }
+
+        bool has_value() const noexcept
+        {
+            return bool(this->shared_ptr);
+        }
+
+    protected:
+        void release_shared_ptr() noexcept;
+    };
+
+    struct [[nodiscard]] SharedPtr
+    {
+        SharedPtr(SharedDataBase* p = nullptr) noexcept
+          : p(p)
+        {
+            assert(!p || !p->shared_ptr);
+
+            if (this->p) {
+                this->p->shared_ptr = this;
+            }
+        }
+
+        SharedPtr(SharedPtr const&) = delete;
+        SharedPtr& operator=(SharedPtr const&) = delete;
+
+        SharedPtr(SharedPtr&& other) noexcept
+        : p(std::exchange(other.p, nullptr))
+        {
+            this->p->shared_ptr = this;
+        }
+
+        SharedPtr& operator=(SharedPtr&& other) noexcept
+        {
+            assert(other.p != this->p);
+            this->reset();
+            this->p = std::exchange(other.p, nullptr);
+            this->p->shared_ptr = this;
+            return *this;
+        }
+
+        ~SharedPtr()
+        {
+            this->reset();
+        }
+
+        explicit operator bool() const noexcept
+        {
+            return bool(this->p);
+        }
+
+        void reset() noexcept
+        {
+            if (this->p) {
+                this->p->free_value();
+                this->p = nullptr;
+            }
+        }
+
+    private:
+        friend class SharedDataBase;
+
+        SharedDataBase* release() noexcept
+        {
+            return std::exchange(this->p, nullptr);
+        }
+
+    protected:
+        SharedDataBase* p;
+    };
+
+    inline void SharedDataBase::release_shared_ptr() noexcept
+    {
+        assert(this->shared_ptr);
+        this->shared_ptr->release();
+        this->shared_ptr = nullptr;
     }
-}
+
+    template<class T>
+    struct SharedData : SharedDataBase
+    {
+        template<class... Ts>
+        SharedData(Ts&&... xs)
+        : u(static_cast<Ts&&>(xs)...)
+        {
+            this->deleter = [](SharedDataBase* p, FreeCat cat) noexcept {
+                auto* self = static_cast<SharedData*>(p);
+                switch (cat) {
+                    case FreeCat::Value:
+                        self->release_shared_ptr();
+                        self->u.value.~T();
+                        break;
+                    case FreeCat::Self:
+                        delete self;
+                        break;
+                }
+            };
+        }
+
+        T* operator->() { return &this->u.value; }
+        T& operator*() { return this->u.value; }
+
+        T& value() { return this->u.value; }
+
+    private:
+        union U{
+            T value;
+
+            template<class... Ts>
+            U(Ts&&... xs) : value(static_cast<Ts&&>(xs)...){}
+            ~U() { /* removed by this->deleter */}
+        } u;
+    };
+
+    struct SharedDataDeleter
+    {
+        void operator()(SharedDataBase* p) const noexcept
+        {
+            p->free_value();
+            p->delete_self();
+        }
+    };
+
+    template<class... Ts>
+    class TopSharedPtr : public SharedPtr
+    {
+        using Top = TopExecutor<Ts...>;
+        using Data = SharedData<Top>;
+
+        struct PtrInterface : protected SharedPtr
+        {
+            friend class TopSharedPtr;
+
+            void update_timer(std::chrono::milliseconds ms) noexcept
+            {
+                this->top().delay = ms;
+            }
+
+            void set_time(timeval const& tv) noexcept
+            {
+                this->top().set_time(tv);
+            }
+
+            void set_delay(std::chrono::milliseconds ms) noexcept
+            {
+                this->top().set_delay(ms);
+            }
+
+            void disable_timeout() noexcept
+            {
+                this->top().disable_timeout();
+            }
+
+            void enable_timeout(bool enable = true) noexcept
+            {
+                this->top().enable_timeout(enable);
+            }
+
+        private:
+            Top& top() noexcept
+            {
+                return static_cast<Data*>(this->p)->value();
+            }
+        };
+
+    public:
+        TopSharedPtr(Data* p = nullptr) noexcept
+        : SharedPtr(p)
+        {}
+
+        PtrInterface* operator->() noexcept
+        {
+            return static_cast<PtrInterface*>(static_cast<SharedPtr*>(this));
+        }
+    };
 
 
-template<bool setError, int stateInit, class Group, class... Ts>
-detail::GroupExecutorBuilderImpl<setError, stateInit, Group, Ts...>::GroupExecutorBuilderImpl(
-    TopExecutor<Ts...>& top, std::unique_ptr<Group>&& g) noexcept
-: top(top)
-, g(std::move(g))
-{}
-
-template<bool setError, int stateInit, class Group, class... Ts>
-template<class F>
-auto detail::GroupExecutorBuilderImpl<setError, stateInit, Group, Ts...>::then(F&& f)
-{
-    this->g->then(static_cast<F&&>(f));
-    return GroupExecutorBuilderImpl<
-        setError, (stateInit == 1 ? stateInit : stateInit+1), Group, Ts...>{
-            this->top, std::move(this->g)};
-}
-
-template<bool setError, int stateInit, class Group, class... Ts>
-template<class F>
-detail::GroupExecutorBuilderImpl<1, stateInit, Group>
-detail::GroupExecutorBuilderImpl<setError, stateInit, Group, Ts...>::on_exit(F&& f)
-{
-    static_assert(!setError, "on_error or propagate_exit is already used");
-    this->g->set_on_exit(static_cast<F&&>(f));
-    return GroupExecutorBuilderImpl<1, stateInit, Group, Ts...>{this->top, std::move(this->g)};
-}
-
-template<bool setError, int stateInit, class Group, class... Ts>
-detail::GroupExecutorBuilderImpl<1, stateInit, Group>
-detail::GroupExecutorBuilderImpl<setError, stateInit, Group, Ts...>::propagate_exit()
-{
-    static_assert(!setError, "on_error or propagate_exit is already used");
-    this->g->set_propagate_exit();
-    return GroupExecutorBuilderImpl<1, stateInit, Group, Ts...>{this->top, std::move(this->g)};
-}
-
-template<bool setError, int stateInit, class Group, class... Ts>
-detail::GroupExecutorBuilderImpl<setError, stateInit, Group, Ts...>::operator R()
-{
-    static_assert(stateInit >= 1, "empty group");
-    static_assert(setError, "missing builder.on_error(f) or builder.propagate_exit()");
-    this->top.add_group_executor(std::move(this->g));
-    return R::CreateGroup;
-}
-
-
-template<class... Ts>
 #ifdef IN_IDE_PARSER
-detail::GroupExecutorBuilder_Concept Context<Ts...>::create_sub_executor(Xs&&...)
+# define REDEMPTION_JLN2_CONCEPT(C) C
 #else
-template<class... Xs>
-auto Context<Ts...>::create_sub_executor(Xs&&... xs)
+# define REDEMPTION_JLN2_CONCEPT(C) auto
 #endif
-{
-    using G = GroupExecutorWithValues<
-        jln::detail::tuple<jln::detail::decay_and_strip_t<Xs>...>,
-        Ts...>;
-    return detail::GroupExecutorBuilder<G>{
-        this->top, std::make_unique<G>(static_cast<Xs&&>(xs)...)};
-}
 
-template<class... Ts>
-R Context<Ts...>::exception(Error const& e) noexcept
-{
-    this->top.error = e;
-    return R::Exception;
-}
+    template<class... Ts>
+    struct TopContainer
+    {
+        using Top = TopExecutor<Ts...>;
+        using Group = GroupExecutor<Ts...>;
+        using Data = SharedData<Top>;
 
-template<class... Ts>
-template<class F>
-R Context<Ts...>::replace_action(F&& f)
-{
-    this->current.f = static_cast<F&&>(f);
-    return R::Substitute;
-}
+    public:
+        using Ptr = TopSharedPtr<Ts...>;
 
-template<class... Ts>
-template<class F>
-R Context<Ts...>::next_action(F&& f)
-{
-    this->current.f = static_cast<F&&>(f);
-    return R::NeedMoreData;
-}
+    private:
+        template<class Tuple>
+        struct InitContext
+        {
+            std::unique_ptr<GroupExecutorWithValues<Tuple, Ts...>> g;
+            std::unique_ptr<Data, SharedDataDeleter> data_ptr;
+            TopContainer& cont;
 
-template<class... Ts>
-template<class F>
-R Context<Ts...>::exec_action(F&& f)
-{
-    return this->replace_action(static_cast<F&&>(f));
-}
+            GroupExecutorWithValues<Tuple, Ts...>& group() noexcept
+            {
+                return *this->g;
+            }
 
+            Top& top() noexcept
+            {
+                return this->data_ptr->value();
+            }
+
+            template<class F>
+            void on_timeout(F&& f)
+            {
+                auto& g = *this->g.get();
+                this->top().timer_data.on_timeout = [f, &g](
+                    ContextTimer<Ts...> ctx, Ts... xs
+                ) mutable /*-> R*/ {
+                    return g.t.invoke(
+                        f, TopContextTimer<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
+                };
+            }
+
+            TopSharedPtr<Ts...> terminate_init()
+            {
+                assert(this->data_ptr);
+                this->top().add_group(std::move(this->g));
+                SharedDataBase* data_ptr = this->data_ptr.release();
+                data_ptr->next = std::exchange(this->cont.node_executors.next, data_ptr);
+                data_ptr->shared_ptr = nullptr;
+                return TopSharedPtr<Ts...>(static_cast<Data*>(data_ptr));
+            }
+        };
+
+    public:
+        template<class... Us>
+        REDEMPTION_JLN2_CONCEPT(detail::TopExecutorBuilder_Concept)
+        create_top_executor(Reactor& reactor, int fd, Us&&... xs)
+        {
+            using Tuple = jln::detail::tuple<decay_and_strip_t<Us>...>;
+            using Group = GroupExecutorWithValues<Tuple, Ts...>;
+            using InitCtx = InitContext<Tuple>;
+            auto* data = new Data{reactor, fd};
+            return detail::TopExecutorBuilder<InitCtx>{
+                InitCtx{
+                    std::make_unique<Group>(static_cast<Us&&>(xs)...),
+                    std::unique_ptr<Data, SharedDataDeleter>(data),
+                    *this
+                },
+            };
+        }
+
+        TopContainer() noexcept
+        {
+            this->node_executors.next = nullptr;
+        }
+
+        ~TopContainer()
+        {
+            this->clear();
+        }
+
+        void clear()
+        {
+            while (this->node_executors.next) {
+                SharedDataBase* p = &this->node_executors;
+                while (p->next) {
+                    SharedDataBase*const node = p->next;
+                    SharedDataBase*const next = p->next->next;
+                    if (node->has_value()) {
+                        // TODO static_cast<Data&>(*p)->external_exit();
+                        node->free_value();
+                        p = node;
+                    }
+                    else {
+                        p->next->delete_self();
+                        p->next = next;
+                    }
+                }
+            }
+        }
+
+    private:
+        template<class F>
+        static auto apply_f(F& f, SharedDataBase* node)
+        {
+            auto* data = static_cast<Data*>(node);
+            return f(data->value().get_fd(), data->value());
+        }
+
+    public:
+        template<class F>
+        void for_each(F&& f)
+        {
+            SharedDataBase* node = this->node_executors.next;
+            for (; node; node = node->next) {
+                if (node->shared_ptr) {
+                    apply_f(f, node);
+                }
+            }
+        }
+
+        bool is_empty() const noexcept
+        {
+            return !bool(this->node_executors.next);
+        }
+
+        template<class Predicate>
+        bool exec_action(Predicate&& predicate, Ts... xs)
+        {
+            auto pred = [&](int fd, auto& cur){
+                LOG(LOG_DEBUG, "pred(%d): %d", fd, predicate(fd, cur));
+                return predicate(fd, cur);
+            };
+            return this->_exec(pred, [&](Top& top) {
+                return top.exec_action(static_cast<Ts&>(xs)...);
+            });
+        }
+
+        bool exec_timeout(timeval const end_tv, Ts... xs)
+        {
+            auto predicate = [&](int /*fd*/, Top& top){
+                LOG(LOG_DEBUG, "%d %ld", top.timer_data.is_enabled, top.timer_data.tv.tv_sec);
+                return top.timer_data.is_enabled && top.timer_data.tv <= end_tv;
+            };
+            return this->_exec(predicate, [&](Top& top) {
+                return top.exec_timeout(static_cast<Ts&>(xs)...);
+            });
+        }
+
+        SharedDataBase node_executors;
+
+    private:
+        template<class Pred, class F>
+        bool _exec(Pred& predicate, F f)
+        {
+            SharedDataBase* node = &this->node_executors;
+            while (node->next) {
+                auto* cur = node->next;
+                if (cur->shared_ptr) {
+                    Top& top = static_cast<Data&>(*cur).value();
+                    if (!apply_f(predicate, cur)) {
+                        node = node->next;
+                    }
+                    else if (f(top)) {
+                        top.update_next_time();
+                        node = node->next;
+                    }
+                    else {
+                        LOG(LOG_DEBUG, "deleter (%d)", top.get_fd());
+                        node->next = cur->next;
+                        cur->free_value();
+                        cur->delete_self();
+                    }
+                }
+                else {
+                    node->next = cur->next;
+                    cur->delete_self();
+                }
+            }
+
+            return bool(this->node_executors.next);
+        }
+    };
+
+
+
+    template<class... Ts>
+    ContextTimer<Ts...>& ContextTimer<Ts...>::disable_timeout() noexcept
+    {
+        this->top.disable_timeout();
+        return *this;
+    }
+
+    template<class... Ts>
+    int ContextTimer<Ts...>::get_fd() const noexcept
+    {
+        return this->top.get_fd();
+    }
+
+    template<class... Ts>
+    void ContextTimer<Ts...>::set_fd(int fd) noexcept
+    {
+        this->top.set_fd(fd);
+    }
+
+    template<class Tuple, class... Ts>
+    template<class F>
+    TopContextTimer<Tuple, Ts...>& TopContextTimer<Tuple, Ts...>::replace_action(F&& f)
+    {
+        auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(this->current_group);
+        group.on_action(static_cast<F&&>(f));
+        return *this;
+    }
+
+    template<class Tuple, class... Ts>
+    template<class F>
+    TopContextTimer<Tuple, Ts...>& TopContextTimer<Tuple, Ts...>::replace_exit(F&& f)
+    {
+        auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(this->current_group);
+        group.on_exit(static_cast<F&&>(f));
+        return *this;
+    }
+
+    template<class Tuple, class... Ts>
+    template<class F>
+    R TopContextTimer<Tuple, Ts...>::set_or_disable_timeout(std::chrono::milliseconds ms, F&& f)
+    {
+        auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(this->current_group);
+        // TODO same in TopContainer::InitCtx
+        this->top.set_timeout(ms);
+        if (ms.count()) {
+            this->top.on_timeout_switch = [f, &group](ContextTimer<Ts...> ctx, Ts... xs) mutable -> R {
+                return group.t.invoke(
+                    f, TopContextTimer<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
+            };
+            return R::SubstituteTimeout;
+        }
+        return R::Ready;
+    }
+
+
+    template<class... Ts>
+    void TopExecutor<Ts...>::set_timeout(std::chrono::milliseconds ms) noexcept
+    {
+        this->timer_data.delay = ms;
+        this->update_next_time();
+    }
+
+    template<class... Ts>
+    void TopExecutor<Ts...>::update_next_time() noexcept
+    {
+        this->timer_data.tv = addusectimeval(
+            this->timer_data.delay, this->reactor.get_current_time());
+    }
+
+
+    template<class... Ts>
+    template<class... Us>
+    REDEMPTION_JLN2_CONCEPT(detail::GroupExecutorBuilder_Concept)
+    GroupContext<Ts...>::create_sub_executor(Us&&... xs)
+    {
+        using Top = TopExecutor<Ts...>;
+        using Group = GroupExecutorWithValues<
+            jln::detail::tuple<decay_and_strip_t<Us>...>, Ts...>;
+        return detail::GroupExecutorBuilder<Top, Group>{
+            this->top, std::make_unique<Group>(static_cast<Us&&>(xs)...)};
+    }
+
+    template<class... Ts>
+    R GroupContext<Ts...>::exception(Error const& e) noexcept
+    {
+        this->top.error = e;
+        return R::Exception;
+    }
+
+    template<class... Ts>
+    int GroupContext<Ts...>::get_fd() const noexcept
+    {
+        return this->top.get_fd();
+    }
+
+    template<class... Ts>
+    void GroupContext<Ts...>::set_fd(int fd) noexcept
+    {
+        return this->top.set_fd(fd);
+    }
+
+    template<class... Ts>
+    GroupContext<Ts...>& GroupContext<Ts...>::enable_timeout(bool enable) noexcept
+    {
+        this->top.enable_timeout(enable);
+        return *this;
+    }
+
+    template<class... Ts>
+    Reactor& GroupContext<Ts...>::get_reactor() const noexcept
+    {
+        return this->top.get_reactor();
+    }
+
+    template<class... Ts>
+    timeval GroupContext<Ts...>::get_current_time() const noexcept
+    {
+        return this->get_reactor().get_current_time();
+    }
+
+
+    template<class Tuple, class... Ts>
+    template<class F>
+    R TopContext<Tuple, Ts...>::replace_action(F&& f)
+    {
+        auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(this->current_group);
+        // TODO inefficient
+        auto g = std::make_unique<GroupExecutor<Ts...>>();
+        // TODO same in GroupExecutorWithValues
+        g->on_action = [f, &group](GroupContext<Ts...> ctx, Ts... xs) mutable -> R {
+            return group.t.invoke(
+                f, TopContext<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
+        };
+        this->top.sub_group(std::move(g));
+        return R::SubstituteAction;
+    }
+
+    template<class Tuple, class... Ts>
+    template<class F>
+    R TopContext<Tuple, Ts...>::replace_exit(F&& f)
+    {
+        auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(this->current_group);
+        group.on_exit(static_cast<F&&>(f));
+        return R::NeedMoreData;
+    }
+
+
+    template<class... Ts>
+    R ContextTimer<Ts...>::exception(Error const& e) noexcept
+    {
+        this->top.error = e;
+        return R::Exception;
+    }
+
+
+    template<bool HasAct, bool HasExit, class Top, class Group>
+    detail::GroupExecutorBuilderImpl<HasAct, HasExit, Top, Group>::GroupExecutorBuilderImpl(
+        Top& top, std::unique_ptr<Group>&& g) noexcept
+    : top(top)
+    , g(std::move(g))
+    {}
+
+    template<bool HasAct, bool HasExit, class Top, class Group>
+    auto select_group_result(Top& top, std::unique_ptr<Group>&& g)
+    {
+        if constexpr (HasExit && HasAct) {
+            top.sub_group(std::move(g));
+            return R::CreateGroup;
+        }
+        else {
+            return detail::GroupExecutorBuilderImpl<HasAct, HasExit, Top, Group>{top, std::move(g)};
+        }
+    }
+
+    template<bool HasAct, bool HasExit, class Top, class Group>
+    template<class F>
+    auto detail::GroupExecutorBuilderImpl<HasAct, HasExit, Top, Group>::on_action(F&& f) &&
+    {
+        static_assert(!HasAct, "on_action is already used");
+        this->g->on_action(static_cast<F&&>(f));
+        return select_group_result<1, HasExit, Top, Group>(this->top, std::move(this->g));
+    }
+
+    template<bool HasAct, bool HasExit, class Top, class Group>
+    template<class F>
+    auto detail::GroupExecutorBuilderImpl<HasAct, HasExit, Top, Group>::on_exit(F&& f) &&
+    {
+        static_assert(!HasExit, "on_exit or propagate_exit is already used");
+        this->g->on_exit(static_cast<F&&>(f));
+        return select_group_result<HasAct, 1, Top, Group>(this->top, std::move(this->g));
+    }
+
+    template<bool HasAct, bool HasExit, class Top, class Group>
+    auto detail::GroupExecutorBuilderImpl<HasAct, HasExit, Top, Group>::propagate_exit() &&
+    {
+        return this->on_exit([](auto /*ctx*/, ExitR er, [[maybe_unused]] auto&&... xs){
+            return static_cast<R>(er.status);
+        });
+    }
+
+
+    template<detail::BuilderInit::E Has, class InitCtx>
+    detail::TopExecutorBuilderImpl<Has, InitCtx>::TopExecutorBuilderImpl(
+        InitCtx&& init_ctx) noexcept
+    : init_ctx(std::move(init_ctx))
+    {}
+
+    template<int Has, class InitCtx>
+    auto select_top_result(InitCtx& init_ctx)
+    {
+        using E = detail::BuilderInit::E;
+        if constexpr (Has == (E::Action | E::Exit | E::Timer | E::Timeout)) {
+            return init_ctx.terminate_init();
+        }
+        else {
+            return detail::TopExecutorBuilderImpl<E(Has), InitCtx>{std::move(init_ctx)};
+        }
+    }
+
+    template<detail::BuilderInit::E Has, class InitCtx>
+    template<class F>
+    auto detail::TopExecutorBuilderImpl<Has, InitCtx>::on_action(F&& f) &&
+    {
+        static_assert(!(Has & detail::BuilderInit::Action), "on_action is already used");
+        this->init_ctx.group().on_action(static_cast<F&&>(f));
+        return select_top_result<Has | detail::BuilderInit::Action>(this->init_ctx);
+    }
+
+    template<detail::BuilderInit::E Has, class InitCtx>
+    template<class F>
+    auto detail::TopExecutorBuilderImpl<Has, InitCtx>::on_exit(F&& f) &&
+    {
+        static_assert(!(Has & detail::BuilderInit::Exit), "on_exit or propagate_exit is already used");
+        this->init_ctx.group().on_exit(static_cast<F&&>(f));
+        return select_top_result<Has | detail::BuilderInit::Exit>(this->init_ctx);
+    }
+
+    template<detail::BuilderInit::E Has, class InitCtx>
+    auto detail::TopExecutorBuilderImpl<Has, InitCtx>::set_timeout(std::chrono::milliseconds ms) &&
+    {
+        static_assert(!(Has & detail::BuilderInit::Timeout), "set_timeout is already used");
+        this->init_ctx.top().set_timeout(ms);
+        return select_top_result<Has | detail::BuilderInit::Timeout>(this->init_ctx);
+    }
+
+    template<detail::BuilderInit::E Has, class InitCtx>
+    auto detail::TopExecutorBuilderImpl<Has, InitCtx>::disable_timeout() &&
+    {
+        static_assert(!(Has & detail::BuilderInit::Timer), "disable_timeout or on_timeout are already used");
+        this->init_ctx.top().disable_timeout();
+        return select_top_result<
+            Has | detail::BuilderInit::Timer | detail::BuilderInit::Timeout
+        >(this->init_ctx);
+    }
+
+    template<detail::BuilderInit::E Has, class InitCtx>
+    template<class F>
+    auto detail::TopExecutorBuilderImpl<Has, InitCtx>::on_timeout(F&& f) &&
+    {
+        static_assert(!(Has & detail::BuilderInit::Timer), "disable_timeout or on_timeout are is already used");
+        this->init_ctx.on_timeout(static_cast<F&&>(f));
+        return select_top_result<Has | detail::BuilderInit::Timer>(this->init_ctx);
+    }
+
+    template<detail::BuilderInit::E Has, class InitCtx>
+    auto detail::TopExecutorBuilderImpl<Has, InitCtx>::propagate_exit() &&
+    {
+        return this->on_exit([](auto /*ctx*/, ExitR er, [[maybe_unused]] auto&&... xs){
+            return er.to_result();
+        });
+    }
 }
 
 
@@ -1203,7 +1997,7 @@ struct SessionReactor
 
         template<class... Args>
         // TODO end_tv = get_current_time()
-        void exec(timeval const& end_tv, Args&&... args)
+        void exec(timeval const end_tv, Args&&... args)
         {
             this->exec_impl(
                 [&](Timer const& timer){ return timer.time() <= end_tv; },
@@ -1287,119 +2081,6 @@ struct SessionReactor
         SessionReactor& reactor;
     };
 
-    template<class PrefixArgs_, class... Ts>
-    struct FdImpl : BasicFd<PrefixArgs_>
-    {
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
-        template<class... Args>
-        FdImpl(int fd, SessionReactor& session_reactor, Args&&... args)
-        noexcept(noexcept(jln::detail::tuple<Ts...>{static_cast<Args&&>(args)...}))
-        : BasicFd<PrefixArgs_>(fd, session_reactor)
-        , ctx{static_cast<Args&&>(args)...}
-        {
-            this->top_.set_on_exit([](auto ctx, jln2::ExitR er, [[maybe_unused]] auto&... xs){
-                return jln2::propagate_exit(ctx, er);
-            });
-        }
-        REDEMPTION_DIAGNOSTIC_POP
-
-        template<class F>
-        void set_on_action(F&& f) noexcept
-        {
-            this->top_.then([f = static_cast<F&&>(f), this](auto ctx, auto&... xs){
-                return this->ctx.invoke([&](auto&&... xs){
-                    return f(ctx, xs...);
-                }, xs...);
-            });
-        }
-
-        template<class F>
-        void reset_action(F&& f)
-        {
-            this->top_.reset_action([f = static_cast<F&&>(f), this](auto ctx, auto&... xs){
-                return this->ctx.invoke([&](auto&&... xs){
-                    return f(ctx, xs...);
-                }, xs...);
-            });
-        }
-
-        // template<class F>
-        // void set_on_exit(F) noexcept
-        // {
-        //     this->on_exit = jln::wrap_fn<F, FdImpl, jln::Executor2FdContext>();
-        // }
-
-        template<class F>
-        void set_on_timeout(F) noexcept
-        {
-            this->timer().on_action = jln::wrap_fn<F, FdImpl, jln::Executor2FdTimeoutContext>();
-        }
-
-        void update_timeout(std::chrono::milliseconds ms) noexcept
-        {
-            this->set_timeout(ms);
-        }
-
-        // template<class... Args>
-        // BasicExecutor<PrefixArgs_, Args...>*
-        // create_sub_executor(Args&&... args)
-        // {
-        //     auto p = new BasicExecutor<PrefixArgs_, Args...>(static_cast<Args&&>(args)...);
-        //     this->add_sub_executor(std::unique_ptr<ExecutorBase<PrefixArgs_>>(p));
-        //     return p;
-        // }
-
-    public:
-        jln::detail::tuple<Ts...> ctx;
-    };
-
-    template<class EventContainer, class PrefixArgs_, class... Args>
-    using Fd = FdImpl<PrefixArgs_, typename jln::detail::decay_and_strip<Args>::type...>;
-
-    template<class Base>
-    struct FdContainer : Container<Base>
-    {
-        template<class... Args>
-        using Elem = Fd<FdContainer, typename Base::prefix_args, Args...>;
-
-        template<class... Args>
-        using Ptr = SharedPtrPrivate<Elem<Args...>>;
-
-        template<class Timers, class... Args>
-        Ptr<Args...> create_shared_ptr(Timers& timers, int fd, SessionReactor& r, Args&&... args)
-        {
-            struct Cont
-            {
-                void attach(SharedData<Elem<Args...>>* p)
-                {
-                    this->fds.attach(p);
-                    this->timers.attach(p);
-                }
-                FdContainer& fds;
-                Timers& timers;
-            };
-            Cont c{*this, timers};
-            return Ptr<Args...>::template New<2>(c, fd, r, static_cast<Args&&>(args)...);
-        }
-
-        template<class IsSetElem, class... Args>
-        void exec(IsSetElem is_set, Args&&... args)
-        {
-            auto run_element = [&](auto& elem){
-                // LOG(LOG_DEBUG, "is set fd: %d", is_set(elem.value.get_fd(), elem.value));
-                if (is_set(elem.value.get_fd(), elem.value)
-                 && !elem.value.exec(static_cast<Args&&>(args)...)) {
-                    elem.apply_deleter();
-                    return false;
-                }
-                return true;
-            };
-
-            this->run_elements(run_element);
-        }
-    };
-
     using BasicTimer = jln::BasicTimer<jln::prefix_args<>>;
     using BasicTimerPtr = SharedPtr<BasicTimer>;
 
@@ -1465,31 +2146,27 @@ struct SessionReactor
     }
 
 
-    using TopFd = BasicFd<PrefixArgs>;
-    using TopFdPtr = SharedPtr<TopFd>;
-
-    using TopFdContainer = FdContainer<TopFd>;
+    using TopFdContainer = jln2::TopContainer<>;
+    using TopFdPtr = TopFdContainer::Ptr;
 
     template<class... Args>
-    NotifyDeleterBuilderWrapper<jln::TopFdBuilder<TopFdContainer::Ptr<Args...>>>
+    REDEMPTION_JLN2_CONCEPT(jln2::detail::TopExecutorBuilder_Concept)
     create_fd_event(int fd, Args&&... args)
     {
-        return {this->fd_events_.create_shared_ptr(
-            this->timer_events_, fd, *this, static_cast<Args&&>(args)...)};
+        return this->fd_events_.create_top_executor(
+            *this, fd, static_cast<Args&&>(args)...);
     }
 
 
-    using GraphicFd = BasicFd<jln::prefix_args<gdi::GraphicApi&>>;
-    using GraphicFdPtr = SharedPtr<GraphicFd>;
-
-    using GraphicFdContainer = FdContainer<GraphicFd>;
+    using GraphicFdContainer = jln2::TopContainer<gdi::GraphicApi&>;
+    using GraphicFdPtr = GraphicFdContainer::Ptr;
 
     template<class... Args>
-    NotifyDeleterBuilderWrapper<jln::TopFdBuilder<GraphicFdContainer::Ptr<Args...>>>
+    REDEMPTION_JLN2_CONCEPT(jln2::detail::TopExecutorBuilder_Concept)
     create_graphic_fd_event(int fd, Args&&... args)
     {
-        return {this->graphic_fd_events_.create_shared_ptr(
-            this->graphic_timer_events_, fd, *this, static_cast<Args&&>(args)...)};
+        return this->graphic_fd_events_.create_top_executor(
+            *this, fd, static_cast<Args&&>(args)...);
     }
 
 
@@ -1537,34 +2214,37 @@ struct SessionReactor
         }
 
         auto tv = this->timer_events_.get_next_timeout();
-        if (enable_gd) {
-            auto const tv2 = this->graphic_timer_events_.get_next_timeout();
+        auto update_tv = [&](timeval const& tv2){
             if (tv.tv_sec < 0) {
                 tv = tv2;
             }
             else if (tv2.tv_sec >= 0) {
                 tv = std::min(tv, tv2);
             }
+        };
+        auto top_update_tv = [&](int /*fd*/, auto& top){
+            update_tv(top.timer_data.tv);
+        };
+
+        this->fd_events_.for_each(top_update_tv);
+        if (enable_gd) {
+            update_tv(this->graphic_timer_events_.get_next_timeout());
+            this->graphic_fd_events_.for_each(top_update_tv);
         }
+
         return tv;
     }
 
     template<class F>
     void for_each_fd(EnableGraphics enable_gd, F f)
     {
-        for (auto& top_fd : this->fd_events_.elements) {
-            if (top_fd->alive()) {
-                assert(top_fd->value.get_fd() != -1);
-                f(top_fd->value.get_fd(), top_fd->value);
-            }
-        }
+        auto g = [&f](int fd, auto& top){
+            assert(fd != -1);
+            f(fd, top);
+        };
+        this->fd_events_.for_each(g);
         if (enable_gd) {
-            for (auto& top_fd : this->graphic_fd_events_.elements) {
-                if (top_fd->alive()) {
-                    assert(top_fd->value.get_fd() != -1);
-                    f(top_fd->value.get_fd(), top_fd->value);
-                }
-            }
+            this->graphic_fd_events_.for_each(g);
         }
     }
 
@@ -1573,8 +2253,10 @@ struct SessionReactor
     {
         auto const end_tv = this->get_current_time();
         this->timer_events_.exec(end_tv);
+        this->fd_events_.exec_timeout(end_tv);
         if (enable_gd) {
             this->graphic_timer_events_.exec(end_tv, get_gd());
+            this->graphic_fd_events_.exec_timeout(end_tv, get_gd());
         }
     }
 
@@ -1589,7 +2271,13 @@ struct SessionReactor
     void execute_graphics(IsSetElem is_set, gdi::GraphicApi& gd)
     {
         this->graphic_events_.exec(gd);
-        this->graphic_fd_events_.exec(is_set, gd);
+        this->graphic_fd_events_.exec_action(is_set, gd);
+    }
+
+    template<class IsSetElem>
+    void execute_events(IsSetElem is_set)
+    {
+        this->fd_events_.exec_action(is_set);
     }
 
     void execute_sesman(Inifile& ini)
@@ -1621,6 +2309,11 @@ struct SessionReactor
     auto& graphic_events()
     {
         return this->graphic_events_.elements;
+    }
+
+    bool has_graphics_event() const noexcept
+    {
+        return this->graphic_events_.elements.size() || !this->graphic_fd_events_.is_empty();
     }
 
     int signal = 0;

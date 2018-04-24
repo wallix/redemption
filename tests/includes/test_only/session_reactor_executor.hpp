@@ -40,7 +40,7 @@ inline void execute_negociate_mod(
     int n = 0;
     int const limit = 1000;
     while (!mod.is_up_and_running()
-        && session_reactor.graphic_fd_events_.elements.size()
+        && session_reactor.has_graphics_event()
         && ++n < limit
     ) {
         execute_graphics_event(session_reactor, gd);
@@ -52,7 +52,7 @@ inline void execute_mod(SessionReactor& session_reactor, mod_api& mod, gdi::Grap
 {
     execute_negociate_mod(session_reactor, mod, gd);
     int count = 0;
-    for (; count < n && session_reactor.graphic_fd_events_.elements.size(); ++count) {
+    for (; count < n && session_reactor.has_graphics_event(); ++count) {
         // LOG(LOG_INFO, "===================> count = %u", count);
         execute_graphics_event(session_reactor, gd);
     }

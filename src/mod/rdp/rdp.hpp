@@ -1216,18 +1216,40 @@ public:
         this->fd_event = this->session_reactor
         .create_graphic_fd_event(this->trans.get_fd(), std::ref(*this))
         .set_timeout(std::chrono::milliseconds(0))
-        .on_exit(jln::exit_with_success())
-        // TODO RDP_PROTOCOL_ERROR
-        .on_action(jln::exit_with_error() /* set by on_timeout action*/)
+        .on_exit(jln2::propagate_exit())
+        .on_action(jln2::exit_with_error<ERR_RDP_PROTOCOL>() /* replaced by on_timeout action*/)
         .on_timeout([](auto ctx, gdi::GraphicApi& gd, mod_rdp& rdp){
             jln::make_lambda<check_error_fn>()(rdp, [&]{
                 gdi_clear_screen(gd, rdp.get_dim());
                 LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
                 rdp.rdp_negociation.start_negociation();
             });
-            LOG(LOG_DEBUG, "timeout");
+            LOG(LOG_DEBUG, "timeout(%d)", ctx.get_fd());
 
-            return ctx.set_or_disable_timeout(rdp.open_session_timeout, jln::one_shot([](gdi::GraphicApi&, mod_rdp& rdp){
+            return ctx.replace_action([](auto ctx, gdi::GraphicApi&, mod_rdp& rdp){
+                return jln::make_lambda<check_error_fn>()(rdp, [&]{
+                    LOG(LOG_DEBUG, "action(%d)", ctx.get_fd());
+                    bool const is_finish = rdp.rdp_negociation.recv_data(rdp.buf);
+                    // RdpNego::recv_next_data set a new fd if tls
+                    int const fd = rdp.trans.get_fd();
+                    if (fd >= 0) {
+                        ctx.set_fd(fd);
+                    }
+                    if (is_finish) {
+                        rdp.negociation_result = rdp.rdp_negociation.get_result();
+                        return ctx.disable_timeout()
+                        .replace_action([](auto ctx, gdi::GraphicApi& gd, mod_rdp& rdp){
+                            LOG(LOG_DEBUG, "draw_event(%d)", ctx.get_fd());
+                            rdp.draw_event(ctx.get_current_time().tv_sec, gd);
+                            return ctx.need_more_data();
+                        });
+                    }
+                    else {
+                        return ctx.need_more_data();
+                    }
+                });
+            })
+            .set_or_disable_timeout(rdp.open_session_timeout, [](auto ctx, gdi::GraphicApi&, mod_rdp& rdp){
                 if (rdp.error_message) {
                     *rdp.error_message = "Logon timer expired!";
                 }
@@ -1244,29 +1266,7 @@ public:
                 LOG(LOG_ERR,
                     "Logon timer expired on %s. The session will be disconnected.",
                     rdp.logon_info.hostname());
-                throw Error(ERR_RDP_OPEN_SESSION_TIMEOUT);
-            }))
-            .reset_action([](auto ctx, gdi::GraphicApi&, mod_rdp& rdp){
-                return jln::make_lambda<check_error_fn>()(rdp, [&]{
-                    LOG(LOG_DEBUG, "action");
-                    bool const is_finish = rdp.rdp_negociation.recv_data(rdp.buf);
-                    // RdpNego::recv_next_data set a new fd if tls
-                    int const fd = rdp.trans.get_fd();
-                    if (fd >= 0) {
-                        ctx.set_fd(fd);
-                    }
-                    if (is_finish) {
-                        rdp.negociation_result = rdp.rdp_negociation.get_result();
-                        return ctx.disable_timeout()
-                        .next_action([&rdp](auto ctx, gdi::GraphicApi& gd){
-                            rdp.draw_event(ctx.get_current_time().tv_sec, gd);
-                            return ctx.need_more_data();
-                        });
-                    }
-                    else {
-                        return ctx.need_more_data();
-                    }
-                });
+                return ctx.exception(Error(ERR_RDP_OPEN_SESSION_TIMEOUT));
             });
         });
     }
