@@ -933,7 +933,8 @@ public:
         const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
 
         {
-            auto date_from_file = DateDirFromFilename::extract_date(movie_path);
+            auto date_from_file = DateDirFromFilename::extract_date(
+                ini.get<cfg::session_log::log_path>().c_str());
             if (date_from_file.has_error()) {
                 LOG(LOG_ERR, "Front::can_be_start_capture: failed to extract date");
                 throw Error(ERR_RECORDER_FAILED_TO_EXTRACT_DATE);
