@@ -120,8 +120,6 @@ namespace jln2
             template<class F>
             auto on_exit(F&& f) &&;
 
-            auto propagate_exit() &&;
-
         private:
             Top& top;
             std::unique_ptr<Group> g;
@@ -289,7 +287,7 @@ namespace jln2
         R replace_action(F&& f);
 
         template<class F>
-        R replace_exit(F&& f);
+        TopContext& replace_exit(F&& f);
 
         TopContext& enable_timeout(bool enable = true) noexcept
         {
@@ -1311,11 +1309,11 @@ namespace jln2
 
     template<class Tuple, class... Ts>
     template<class F>
-    R TopContext<Tuple, Ts...>::replace_exit(F&& f)
+    TopContext<Tuple, Ts...>& TopContext<Tuple, Ts...>::replace_exit(F&& f)
     {
         auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(this->current_group);
         group.on_exit(static_cast<F&&>(f));
-        return R::NeedMoreData;
+        return *this;
     }
 
 
@@ -1362,14 +1360,6 @@ namespace jln2
         static_assert(!HasExit, "on_exit or propagate_exit is already used");
         this->g->on_exit(static_cast<F&&>(f));
         return select_group_result<HasAct, 1, Top, Group>(this->top, std::move(this->g));
-    }
-
-    template<bool HasAct, bool HasExit, class Top, class Group>
-    auto detail::GroupExecutorBuilderImpl<HasAct, HasExit, Top, Group>::propagate_exit() &&
-    {
-        return this->on_exit([](auto /*ctx*/, ExitR er, [[maybe_unused]] auto&&... xs){
-            return static_cast<R>(er.status);
-        });
     }
 
 
