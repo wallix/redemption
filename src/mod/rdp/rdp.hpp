@@ -1224,11 +1224,9 @@ public:
                 LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
                 rdp.rdp_negociation.start_negociation();
             });
-            LOG(LOG_DEBUG, "timeout(%d)", ctx.get_fd());
 
             return ctx.replace_action([](auto ctx, gdi::GraphicApi&, mod_rdp& rdp){
                 return jln::make_lambda<check_error_fn>()(rdp, [&]{
-                    LOG(LOG_DEBUG, "action(%d)", ctx.get_fd());
                     bool const is_finish = rdp.rdp_negociation.recv_data(rdp.buf);
                     // RdpNego::recv_next_data set a new fd if tls
                     int const fd = rdp.trans.get_fd();
@@ -1239,7 +1237,6 @@ public:
                         rdp.negociation_result = rdp.rdp_negociation.get_result();
                         return ctx.disable_timeout()
                         .replace_action([](auto ctx, gdi::GraphicApi& gd, mod_rdp& rdp){
-                            LOG(LOG_DEBUG, "draw_event(%d)", ctx.get_fd());
                             rdp.draw_event(ctx.get_current_time().tv_sec, gd);
                             return ctx.need_more_data();
                         });

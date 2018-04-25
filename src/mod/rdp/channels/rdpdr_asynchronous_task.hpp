@@ -106,7 +106,8 @@ public:
             return this->run() ? ctx.need_more_data() : ctx.terminate();
         })
         .on_exit([this, f = std::move(f)](auto /*ctx*/, jln2::ExitR er) mutable {
-            f(*this);
+            this->fdobject.detach();
+            f(*this); // destroy this
             return er.to_result();
         })
         .set_timeout(std::chrono::milliseconds(1000))
@@ -187,7 +188,8 @@ public:
     }
 };  // RdpdrDriveReadTask
 
-class RdpdrSendDriveIOResponseTask final : public AsynchronousTask {
+class RdpdrSendDriveIOResponseTask final : public AsynchronousTask
+{
     const uint32_t flags;
     std::unique_ptr<uint8_t[]> data;
     const size_t data_length;

@@ -41,6 +41,13 @@ Author(s): Jonathan Poelen
 #include "utils/executor.hpp"
 #include "core/error.hpp"
 
+
+#ifndef NDEBUG
+# define REDEMPTION_DEBUG_ONLY(...) __VA_ARGS__
+#else
+# define REDEMPTION_DEBUG_ONLY(...)
+#endif
+
 template<class>
 struct BasicFd;
 
@@ -486,6 +493,8 @@ namespace jln2
 
         ~TopExecutor()
         {
+            assert(!this->exec_is_running);
+
             auto* p = this->group;
             while (p) {
                 delete std::exchange(p, p->next);
@@ -545,6 +554,8 @@ namespace jln2
 
         bool exec_timeout(Ts&... xs)
         {
+            REDEMPTION_DEBUG_ONLY(this->exec_is_running = true;)
+
             R r;
 
             try {
@@ -581,7 +592,7 @@ namespace jln2
                 r = this->_exec_exit(R::Exception, xs...);
             }
 
-            LOG(LOG_DEBUG, "exec_timeout %d", int(r));
+            REDEMPTION_DEBUG_ONLY(this->exec_is_running = false;)
 
             switch (r) {
                 case R::Exception:
@@ -611,22 +622,21 @@ namespace jln2
 
         bool exec_action(Ts&... xs)
         {
+            REDEMPTION_DEBUG_ONLY(this->exec_is_running = true;)
+
             R r;
 
             try {
                 do {
-                    LOG(LOG_DEBUG, "exec_action");
                     switch ((r = this->_exec_action(xs...))) {
                         case R::ExitSuccess:
                         case R::Exception:
                         case R::Terminate:
                         case R::ExitError:
                         case R::NeedMoreData:
-                            LOG(LOG_DEBUG, "break");
                             break;
                         case R::Ready:
                         case R::Next:
-                            LOG(LOG_DEBUG, "Ready or Next");
                             continue;
                         case R::CreateContinuation:
                             REDEMPTION_UNREACHABLE();
@@ -646,7 +656,7 @@ namespace jln2
                 r = this->_exec_exit(R::Exception, xs...);
             }
 
-            LOG(LOG_DEBUG, "exec_action %d", int(r));
+            REDEMPTION_DEBUG_ONLY(this->exec_is_running = false;)
 
             switch (r) {
                 case R::Exception:
@@ -761,6 +771,8 @@ namespace jln2
         std::unique_ptr<GroupExecutor<Ts...>> loaded_group;
         Reactor& reactor;
 
+        REDEMPTION_DEBUG_ONLY(bool exec_is_running = false;)
+
     public: // TODO to private
         TimerData<Ts...> timer_data;
 
@@ -845,6 +857,14 @@ namespace jln2
             }
         }
 
+        void detach() noexcept
+        {
+            if (this->p) {
+                this->p->shared_ptr = nullptr;
+                this->p = nullptr;
+            }
+        }
+
     private:
         friend class SharedDataBase;
 
@@ -859,9 +879,10 @@ namespace jln2
 
     inline void SharedDataBase::release_shared_ptr() noexcept
     {
-        assert(this->shared_ptr);
-        this->shared_ptr->release();
-        this->shared_ptr = nullptr;
+        if (this->shared_ptr) {
+            this->shared_ptr->release();
+            this->shared_ptr = nullptr;
+        }
     }
 
     template<class T>
@@ -873,13 +894,14 @@ namespace jln2
         {
             this->deleter = [](SharedDataBase* p, FreeCat cat) noexcept {
                 auto* self = static_cast<SharedData*>(p);
-                LOG(LOG_DEBUG, "deleter (%d) cat = %d", self->value().get_fd(), int(cat));
                 switch (cat) {
                     case FreeCat::Value:
+                        REDEMPTION_DEBUG_ONLY(self->is_deleted = true;)
                         self->release_shared_ptr();
                         self->u.value.~T();
                         break;
                     case FreeCat::Self:
+                        assert(self->is_deleted);
                         delete self;
                         break;
                 }
@@ -899,6 +921,8 @@ namespace jln2
             U(Ts&&... xs) : value(static_cast<Ts&&>(xs)...){}
             ~U() { /* removed by this->deleter */}
         } u;
+
+        REDEMPTION_DEBUG_ONLY(bool is_deleted = false;)
     };
 
     struct SharedDataDeleter
@@ -1097,11 +1121,7 @@ namespace jln2
         template<class Predicate>
         bool exec_action(Predicate&& predicate, Ts... xs)
         {
-            auto pred = [&](int fd, auto& cur){
-                LOG(LOG_DEBUG, "pred(%d): %d", fd, predicate(fd, cur));
-                return predicate(fd, cur);
-            };
-            return this->_exec(pred, [&](Top& top) {
+            return this->_exec(predicate, [&](Top& top) {
                 return top.exec_action(static_cast<Ts&>(xs)...);
             });
         }
@@ -1109,11 +1129,9 @@ namespace jln2
         bool exec_timeout(timeval const end_tv, Ts... xs)
         {
             auto predicate = [&](int /*fd*/, Top& top){
-                LOG(LOG_DEBUG, "pred timeout: %d %ld", top.timer_data.is_enabled, top.timer_data.tv.tv_sec);
                 return top.timer_data.is_enabled && top.timer_data.tv <= end_tv;
             };
             return this->_exec(predicate, [&](Top& top) {
-                LOG(LOG_DEBUG, "exec timeout");
                 return top.exec_timeout(static_cast<Ts&>(xs)...);
             });
         }
@@ -1198,7 +1216,6 @@ namespace jln2
         auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(this->current_group);
         // TODO same in TopContainer::InitCtx
         this->top.set_timeout(ms);
-        LOG(LOG_DEBUG, "set_or_disable_timeout: %d", int(ms.count()));
         if (ms.count()) {
             this->top.on_timeout_switch = [f, &group](ContextTimer<Ts...> ctx, Ts... xs) mutable -> R {
                 return group.t.invoke(
@@ -2326,7 +2343,7 @@ struct SessionReactor
     int signal = 0;
     void set_next_event(/*BackEvent_t*/int signal)
     {
-        LOG(LOG_DEBUG, "SessionReactor::set_next_event %d", signal);
+        // LOG(LOG_DEBUG, "SessionReactor::set_next_event %d", signal);
         assert(!this->signal || this->signal == signal);
         this->signal = signal;
         // assert(is not already set)

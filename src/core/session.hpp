@@ -206,14 +206,18 @@ public:
 
                 session_reactor.for_each_fd(
                     enable_graphics,
-                    [&](int fd, [[maybe_unused]] auto const& elem){
-                        LOG(LOG_DEBUG, "%p set fd: %d", static_cast<void const*>(&elem), fd);
+                    [&](int fd, auto const& /*elem*/){
                         io_fd_set(fd, rfds);
                         max = std::max(max, unsigned(fd));
                     }
                 );
 
+                // LOG(LOG_DEBUG, "timeout = %ld %ld", timeout.tv_sec, timeout.tv_usec);
                 int num = select(max + 1, &rfds, nullptr/*&wfds*/, nullptr, &timeout);
+
+                // for (unsigned i = 0; i <= max; ++i) {
+                //     LOG(LOG_DEBUG, "fd %u is set %d", i, io_fd_isset(i, rfds));
+                // }
 
                 if (num < 0) {
                     if (errno == EINTR) {
@@ -289,7 +293,6 @@ public:
                                 // Process incoming module trafic
                                 auto& gd = mm.get_graphic_wrapper(front);
                                 session_reactor.execute_graphics([&rfds](int fd, auto& /*e*/){
-                                    LOG(LOG_DEBUG, "is_set(%d): %d", fd, io_fd_isset(fd, rfds));
                                     return io_fd_isset(fd, rfds);
                                 }, gd);
                             }

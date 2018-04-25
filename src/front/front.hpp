@@ -129,7 +129,6 @@ class Front : public FrontAPI
     int mouse_x = 0;
     int mouse_y = 0;
 
-    SessionReactor::BasicTimerPtr capture_timer;
 public:
     bool has_user_activity = true;
     Capture * capture;
@@ -625,6 +624,7 @@ private:
     SessionReactor& session_reactor;
     SessionReactor::BasicTimerPtr handshake_timeout;
     SessionReactor::CallbackEventPtr incoming_event;
+    SessionReactor::BasicTimerPtr capture_timer;
 
 public:
     bool ignore_rdesktop_bogus_clip = false;
