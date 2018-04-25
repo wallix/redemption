@@ -94,9 +94,9 @@ namespace VNC {
             
                 if (this->r.isempty())
                 {
-//                    if (bool(this->verbose & VNCVerbose::hextile_encoder)){
+                    if (bool(this->verbose & VNCVerbose::hextile_encoder)){
                         LOG(LOG_INFO, "Hextile::zrle Encoder done (empty rect)");
-//                    }
+                    }
                     return EncoderState::Exit;
                 }
 
@@ -322,29 +322,31 @@ namespace VNC {
                 while (uncompressed_data_buffer.in_remain())
                 {                        
                 
-//                    if (bool(this->verbose & VNCVerbose::zrle_encoder)){
+                    if (bool(this->verbose & VNCVerbose::zrle_encoder)){
                         LOG(LOG_INFO, "lib_framebuffer_update_zrle remaining %zu", uncompressed_data_buffer.in_remain());
                         LOG(LOG_INFO, "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
-//                    }
 
-                    LOG(LOG_INFO, "beg=%p end=%p", beg, end);
-                    if (end != nullptr){
-                        end = uncompressed_data_buffer.get_current();
-                        if (beg[0] != 0){
-                            hexdump_c(beg, end - beg);
-                        }
-                        else {
-                            LOG(LOG_INFO, "=======================> %u raw dump of %zu bytes", beg[0], end - beg);
+                        if (bool(this->verbose & VNCVerbose::zrle_trace)){
+                            LOG(LOG_INFO, "beg=%p end=%p", beg, end);
+                            if (end != nullptr){
+                                end = uncompressed_data_buffer.get_current();
+                                if (beg[0] != 0){
+                                    LOG(LOG_INFO, "vnc::zrle:subencoding: %u dump of %zu bytes", beg[0], end - beg);
+                                    hexdump_c(beg, end - beg);
+                                }
+                                else {
+                                    LOG(LOG_INFO, "vnc::zrle:subencoding %u (raw) consumed %zu bytes", beg[0], end - beg);
+                                }
+                            }
+                            else {
+                                LOG(LOG_INFO, "end=nullptr");
+                                end = uncompressed_data_buffer.get_current();
+                            }
+                            beg = end;
                         }
                     }
-                    else {
-                        LOG(LOG_INFO, "end=nullptr");
-                        end = uncompressed_data_buffer.get_current();
-                    }
-                    beg = end;
-                
+
                     uint8_t   subencoding = uncompressed_data_buffer.in_uint8();
-                    LOG(LOG_INFO, "subencoding %u", subencoding);
 
                     switch (subencoding) {
                     case 0:
@@ -355,10 +357,6 @@ namespace VNC {
                     break;
                     case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9:
                     case 10: case 11: case 12: case 13: case 14: case 15: case 16:
-                        if (bool(this->verbose & VNCVerbose::zrle_encoder)){
-                            LOG(LOG_INFO, "lib_framebuffer_update_zrle:: subencoding =%u", subencoding);
-                            hexdump_d(uncompressed_data_buffer.get_current(), 1024);
-                        }
                         this->packedPalette(subencoding, uncompressed_data_buffer, drawable);
                     break;
                                case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
@@ -384,25 +382,17 @@ namespace VNC {
                     }
                     break;
                     case 128:
-                        if (bool(this->verbose & VNCVerbose::zrle_encoder)){
-                            LOG(LOG_INFO, "lib_framebuffer_update_zrle:: subencoding =%u", subencoding);
-                            hexdump_d(uncompressed_data_buffer.get_current(), 1024);
-                        }
                         this->plainRLE(uncompressed_data_buffer, drawable);
                     break;
                     default: // 130 to 255
-                        if (bool(this->verbose & VNCVerbose::zrle_encoder)){
-                            LOG(LOG_INFO, "lib_framebuffer_update_zrle:: subencoding =%u", subencoding);
-                            hexdump_d(uncompressed_data_buffer.get_current(), 1024);
-                        }
                         this->paletteRLE(subencoding, uncompressed_data_buffer, drawable);
                     break;
                     } // switch subencoding
 
                     if (not this->next_tile()){
-//                        if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                            LOG(LOG_INFO, "Hextile::hexTileraw Encoder done (raw) %zu", uncompressed_data_buffer.in_remain());
-//                        }
+                        if (bool(this->verbose & VNCVerbose::zrle_encoder)){
+                            LOG(LOG_INFO, "vnc::zrle Encoder done %zu", uncompressed_data_buffer.in_remain());
+                        }
                         return;
                     }
                 } // while
@@ -423,11 +413,8 @@ namespace VNC {
             // return false if there is no next tile any more
             bool next_tile()
             {
-//                LOG(LOG_INFO, "Previous tile: rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
-
                 if (this->cx_remain <= 64){
                     if (this->cy_remain <= 64){
-//                        LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
                         return false;
                     }
                     this->cx_remain = this->r.cx;
@@ -435,13 +422,11 @@ namespace VNC {
                     this->tile = Rect(this->r.x, this->tile.y + 64,
                                     std::min<size_t>(64, this->cx_remain),
                                     std::min<size_t>(64, this->cy_remain));
-//                    LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
                     return true;
                 }
                 this->cx_remain -= 64;
                 this->tile.x += 64;
                 this->tile.cx = std::min<size_t>(64, this->cx_remain);
-//                LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
                 return true;
             }
 
@@ -455,9 +440,9 @@ namespace VNC {
             
             void rawTile(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
             {
-//                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "VNC Encoding: ZRLE, Raw pixel data");
-//                }
+                }
 
                 const uint16_t tile_data_length = this->tile.cx * this->tile.cy * this->Bpp;
                 
@@ -480,9 +465,9 @@ namespace VNC {
             //        +----------------+--------+------------------+
             void solidTile(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
             {
-//                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "VNC Encoding: ZRLE, Solid tile (single color)");
-//                }
+                }
                 const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->Bpp);
 
                 auto const color_context= gdi::ColorCtx::depth16();
@@ -526,9 +511,9 @@ namespace VNC {
 
             void packedPalette(uint8_t subencoding, InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
             {
-//                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "VNC Encoding: ZRLE, Packed palette types, palette size=%d", subencoding);
-//                }
+                }
 
                 uint8_t         tile_data[64*64*4];    // max raw tile size with 32 bpp
                 const uint8_t * tile_data_p = tile_data;
@@ -653,9 +638,9 @@ namespace VNC {
             //        Where r is floor((runLength - 1) / 255).
             void plainRLE(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
             {
-//                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "VNC Encoding: ZRLE, Plain RLE");
-//                }
+                }
 
                 uint8_t    tile_data[4*64*64];    // max size with 32 bpp
                 uint8_t  * tmp_tile_data = tile_data;
@@ -685,7 +670,8 @@ namespace VNC {
                     }
                     for (size_t i = 0 ; i < length ; i++){
                         if (tmp_tile_data == tile_data + this->tile.cx * this->tile.cy * this->Bpp){
-                            LOG(LOG_ERR, "VNC::zrle uncompressed stream, plainRLE out of bound %u %u %u %u %u", i, length, this->tile.cx, this->tile.cy, this->Bpp);
+                            //TODO: here it would be cool to dump the frame that raised the condition (and maybe the previous one)
+                            LOG(LOG_ERR, "VNC::zrle uncompressed stream, plainRLE out of bound");
                             throw Error(ERR_VNC_ZRLE_PROTOCOL);
                         }
                         memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
@@ -733,9 +719,9 @@ namespace VNC {
 
             void paletteRLE(uint8_t subencoding, InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
             {
-//                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE");
-//                }
+                }
 
                 const uint16_t   palette_size  = (subencoding & 0x7F) * this->Bpp;
 
@@ -746,9 +732,6 @@ namespace VNC {
 
                 const uint8_t * palette = uncompressed_data_buffer.in_uint8p(palette_size);
                 
-                const uint8_t * start = palette;
-
-
                 uint8_t    tile_data[4*64*64];    // max size with 32 bpp
                 uint8_t  * tmp_tile_data = tile_data;
                 for (;;){
@@ -781,11 +764,9 @@ namespace VNC {
                             }
                         }
                     }
-//                    LOG(LOG_INFO, "paletteIndex=%u length=%u", palette_index, length);
                     for (size_t i = 0 ; i < length ; i++){
                         if (tmp_tile_data == tile_data + this->tile.cx * this->tile.cy * this->Bpp){
-                            LOG(LOG_ERR, "VNC::zrle uncompressed stream, paletteRLE out of bound %u %u %u %u %u %u %u", i, length, this->tile.cx, this->tile.cy, this->Bpp, subencoding, palette_index);
-//                            hexdump(start, 16384);
+                            LOG(LOG_ERR, "VNC::zrle uncompressed stream, paletteRLE out of bound");
                             throw Error(ERR_VNC_ZRLE_PROTOCOL);
                         }
                         memcpy(tmp_tile_data, palette+palette_index*this->Bpp, this->Bpp);
