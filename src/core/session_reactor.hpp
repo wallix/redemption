@@ -2228,7 +2228,9 @@ struct SessionReactor
             }
         };
         auto top_update_tv = [&](int /*fd*/, auto& top){
-            update_tv(top.timer_data.tv);
+            if (top.timer_data.is_enabled) {
+                update_tv(top.timer_data.tv);
+            }
         };
 
         this->fd_events_.for_each(top_update_tv);
