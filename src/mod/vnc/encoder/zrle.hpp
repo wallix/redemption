@@ -648,6 +648,7 @@ namespace VNC {
                     cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->Bpp);
                     size_t length = uncompressed_data_buffer.in_uint8() + 1;
                     if (length == 256){ // multi bytes length
+                        length -= 1;
                         for(;;){
                             if (uncompressed_data_buffer.in_remain() < 1){
                                 LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated (plainRLE) truncated length");
@@ -658,6 +659,7 @@ namespace VNC {
                             if (tmp != 255){
                                 break;
                             }
+                            length = length - 1;
                         }
                     }
                     for (size_t i = 0 ; i < length ; i++){
@@ -740,6 +742,7 @@ namespace VNC {
                         }
                         length = uncompressed_data_buffer.in_uint8() + 1;
                         if (length == 256){ // multi bytes length
+                            length = length - 1;
                             for(;;){
                                 if (uncompressed_data_buffer.in_remain() < 1){
                                     LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated (paletteRLE) truncated length");
@@ -750,6 +753,7 @@ namespace VNC {
                                 if (tmp != 255){
                                     break;
                                 }
+                                length = length - 1;
                             }
                         }
                     }

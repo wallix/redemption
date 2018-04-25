@@ -6871,9 +6871,10 @@ uint8_t plainrle[] = {
              0xE0, 0xFF, 63, // 64
              0x00, 0x00, 95, // 96
              0xE0, 0xFF, 31, // 32
-             0xE0, 0x07, 255, 63, // 5x64
-     // rle with blue
-             0x80, 0xFF, 0x00, 23
+             0xE0, 0x07, 255, 64, // 255+65 = 5x64
+     // rle with blue of 6x4
+             0x80, 
+             0xFF, 0x00, 23
 };
 
 // This one is testing Palette13 and Tiling
@@ -6919,7 +6920,7 @@ uint8_t paletteRLE[] = {
              0x80, 92, // 96 -> one black line and nearly a half line
              0x08, 0x08, 0x08, // -> 3 cyan pixels
              0x87, 31, // 32 yellow pixels
-             0x83, 255, 63, // 5x64 -> end with 5 green lines
+             0x83, 255, 64, // 255+65 pixels = 5x64 -> end with 5 green lines
      // rle with blue
              0x80, 0xFF, 0x00, 23
 };
@@ -6946,4 +6947,5 @@ RED_AUTO_TEST_CASE(TestZrlePaletteRLE)
         BOOST_CHECK(false);
     }
 }
+
 
