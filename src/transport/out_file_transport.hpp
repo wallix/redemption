@@ -192,7 +192,6 @@ struct OutFileTransport : Transport
         this->file.close();
     }
 
-private:
     void do_send(const uint8_t * data, size_t len) override
     {
         size_t total_sent = 0;
@@ -208,6 +207,7 @@ private:
         }
     }
 
+private:
     unique_fd file;
     ReportError report_error;
 };
