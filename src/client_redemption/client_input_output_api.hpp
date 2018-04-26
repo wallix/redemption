@@ -716,7 +716,7 @@ public:
                         }
                         pos = ligne.find(delimiter);
 
-                        std::string name = ligne.substr(pos, ligne.length());
+                        std::string name = ligne.substr(pos + delimiter.length(), ligne.length());
 
 
                         KeyCustomDefinition keyCustomDefinition = {qtKeyID, scanCode, ASCII8, extended, name};
@@ -743,16 +743,33 @@ public:
 
                 KeyCustomDefinition & key = this->keyCustomDefinitions[i];
 
-                ofichier << "- ";
-                ofichier << key.qtKeyID  << " ";
-                ofichier << key.scanCode << " ";
-                //int key_int = key.ASCII8.data()[0];
-                ofichier << key.ASCII8 << " ";
-                ofichier << key.extended << std::endl;
+                if (key.qtKeyID != 0) {
+                    ofichier << "- ";
+                    ofichier << key.qtKeyID  << " ";
+                    ofichier << key.scanCode << " ";
+                    //int key_int = key.ASCII8.data()[0];
+                    ofichier << key.ASCII8 << " ";
+                    ofichier << key.extended << " ";
+                    ofichier << key.name << std::endl;
+                }
             }
             ofichier.close();
         }
     }
+
+
+    void add_key_custom_definition(int qtKeyID, int scanCode, std::string ASCII8, int extended, const std::string & name) {
+
+        LOG(LOG_INFO, "qkey=%d scanCode=%d ascii=%s extended=%d name=%s !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", qtKeyID, scanCode, ASCII8, extended, name);
+        KeyCustomDefinition keyCustomDefinition = {qtKeyID, scanCode, ASCII8, extended, name};
+        this->keyCustomDefinitions.push_back(keyCustomDefinition);
+
+        const ClientRedemptionIOAPI::KeyCustomDefinition & key = this->keyCustomDefinitions[this->keyCustomDefinitions.size() - 1];
+
+        LOG(LOG_INFO, "qkey=%d scanCode=%d ascii=%s extended=%d name=%s", key.qtKeyID, key.scanCode, key.ASCII8, key.extended, key.name);
+    }
+
+
 
     void setClientInfo() {
 
@@ -980,7 +997,6 @@ public:
                     ofichier << "save_pwd false" << "\n";
                 }
                 ofichier << "last_target " <<  this->_last_target_index << "\n";
-
                 ofichier << "\n";
 
                 for (int i = 0; i < this->_accountNB; i++) {

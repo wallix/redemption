@@ -39,7 +39,43 @@
 constexpr long long WINDOWS_TICK = 10000000;
 constexpr long long SEC_TO_UNIX_EPOCH = 11644473600LL;
 
+// [MS-RDPEFS]: Rmote Desktop Protocol: File System Virtual Channel Extension
 
+// 1.3.1 Protocol Initialization
+
+// The following figure shows the initial packet sequence that initializes the protocol. The sequence of messages complies with the following set of rules. The first packet exchange, Server Announce Request/Client Announce Reply, simply consists of the client and server sides of the protocol exchanging version information that tells each side to which version it is speaking. The client sends a Client Name Request after sending a Client Announce Reply message. The Client Name Request contains a friendly display name for the client machine.
+//
+// The next exchange, Server Core Capability Request/Client Core Capability Response, is used to exchange capabilities between the client and the server to ensure that each side records what kinds of packets are supported by the remote side.
+//
+// After sending its Server Core Capability Request message, the server also sends a Server Client ID Confirm message confirming the client ID that was exchanged in the Server Announce Request/Client Announce Reply sequence.
+//
+// The last initialization message sequence is initiated by the client with the Client Device List Announce Request. This packet contains information for each device that is redirected. The packet contains all redirected devices, including non–file system devices. For example, it includes the list of printers (as specified in [MS-RDPEPC]), ports (as specified in [MS-RDPESP]), and smart cards (as specified in [MS-RDPESC]). Each client device is initialized separately. The server sends a Server Device Announce Response message that indicates success or failure for that initialization.
+
+// +-----------+                                                 +-----------+
+// | Server FS |                                                 | TS Client |
+// |  Driver   |                                                 |           |
+// +-----+-----+                                                 +-----+-----+
+//       |                                                             |
+//       +------------------Server Announce Request------------------> |
+//       |                                                             |
+//       +------------------Server Announce Request------------------> |
+//       |                                                             |
+//       +------------------Server Announce Request------------------> |
+//       |                                                             |
+//       +------------------Server Announce Request------------------> |
+//       |                                                             |
+//       +------------------Server Announce Request------------------> |
+//       |                                                             |
+//       +------------------Server Announce Request------------------> |
+//       |                                                             |
+//       +------------------Server Announce Request------------------> |
+//       |                                                             |
+//       +-------Server Device Announce Response (device #2)---------> |
+//       |                                                             |
+
+// Figure 1: Protocol initialization
+//
+// In general, there is no distinguishable difference between the initial connection of the protocol and subsequent reconnections. After every disconnection, the protocol is torn down and completely re-initialized on the next connection. However, there is one difference in the protocol initialization sequence upon reconnection: if a user is already logged on, the server sends a Server User Logged On message according to the rules specified in section 3.3.5.1.5.
 
 class ClientChannelRDPDRManager {
 

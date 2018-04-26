@@ -50,9 +50,7 @@ public:
 
     void receive(InStream & chunk) {
         if (this->wave_data_to_wait) {
-    //                 if (bool(this->verbose & RDPVerbose::rdpsnd)) {
-    //                     LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU size = %zu",  chunk_size);
-    //                 }
+            
             this->wave_data_to_wait -= chunk.in_remain();
             if (this->wave_data_to_wait < 0) {
                 this->wave_data_to_wait = 0;
@@ -78,10 +76,6 @@ public:
                     this->impl_sound->setData(data, 1);
                     this->impl_sound->play();
                 }
-
-    //                     msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
-    //                     header_out.log();
-    //                     wc.log();
             }
 
         } else {
@@ -147,9 +141,6 @@ public:
                     if (bool(this->verbose & RDPVerbose::rdpsnd)) {
                         LOG(LOG_INFO, "CLIENT >> RDPEA: Client Audio Formats and Version PDU");
                     }
-    //                         msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
-    //                         header_out.log();
-    //                         cafvh.log();
 
                     StaticOutStream<32> quality_stream;
 
@@ -171,9 +162,6 @@ public:
                     if (bool(this->verbose & RDPVerbose::rdpsnd)) {
                         LOG(LOG_INFO, "CLIENT >> RDPEA: Quality Mode PDU");
                     }
-    //                         msgdump_c(false, false, quality_stream.get_offset(), 0, quality_stream.get_data(), quality_stream.get_offset());
-    //                         header_out.log();
-    //                         qm.log();
                     }
                     break;
 
@@ -185,8 +173,6 @@ public:
 
                     rdpsnd::TrainingPDU train;
                     train.receive(chunk);
-    //                         header.log();
-    //                         train.log();
 
                     StaticOutStream<32> out_stream;
 
@@ -208,9 +194,6 @@ public:
                     if (bool(this->verbose & RDPVerbose::rdpsnd)) {
                         LOG(LOG_INFO, "CLIENT >> RDPEA: Training Confirm PDU");
                     }
-    //                         msgdump_c(false, false, out_stream.get_offset(), 0, out_stream.get_data(), out_stream.get_offset());
-    //                         header_quality.log();
-    //                         train_conf.log();
                     }
                     break;
 
