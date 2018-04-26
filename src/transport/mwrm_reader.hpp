@@ -51,10 +51,7 @@ struct MetaHeader
     MetaHeader() = default;
 
     MetaHeader(WrmVersion version, bool has_checksum)
-      : version(version)
-      , witdh(0)
-      , height(0)
-      , has_checksum(has_checksum)
+      : MetaHeader(version, 0, 0, has_checksum)
     {}
 
     MetaHeader(WrmVersion version, uint16_t witdh, uint16_t height, bool has_checksum)
