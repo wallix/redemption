@@ -48,17 +48,11 @@ public:
 
     virtual void random(void * dest, size_t size) = 0;
 
-	virtual uint32_t rand32() {
-		uint32_t ret;
-		this->random(&ret, sizeof(ret));
-		return ret;
-	}
-
-    uint64_t rand64()
+    uint32_t rand32()
     {
-        uint64_t p1 = this->rand32();
-        uint64_t p2 = this->rand32();
-        return (p1 << 32) | p2;
+        uint32_t ret;
+        this->random(&ret, sizeof(ret));
+        return ret;
     }
 };
 
@@ -131,18 +125,18 @@ class UdevRandom : public Random
 
 /**
  * @brief a random generator that always returns the same value, useful when you
- * 		want to be able to replay scenarios (and so you need random that is not
- * 		so randomized).
+ *         want to be able to replay scenarios (and so you need random that is not
+ *         so randomized).
  */
 class FixedRandom : public Random {
 public:
-	FixedRandom(uint8_t fixedByte = 0xff) : value(fixedByte) {
-	}
+    FixedRandom(uint8_t fixedByte = 0xff) : value(fixedByte) {
+    }
 
-	void random(void * dest, size_t size) override {
-		memset(dest, value, size);
-	}
+    void random(void * dest, size_t size) override {
+        memset(dest, value, size);
+    }
 
 protected:
-	uint8_t value;
+    uint8_t value;
 };
