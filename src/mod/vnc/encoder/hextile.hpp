@@ -190,6 +190,7 @@ namespace VNC {
                     if (buf.remaining() == last_remaining){
                         LOG(LOG_ERR, "Hextile Stalled: Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
                         assert(buf.remaining() != last_remaining);
+                        throw Error(ERR_VNC_HEXTILE_PROTOCOL);
                     }
                     last_remaining = buf.remaining();
 

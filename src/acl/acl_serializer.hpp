@@ -28,18 +28,19 @@
 
 #include <cinttypes>
 
-#include "utils/sugar/exchange.hpp"
-#include "utils/stream.hpp"
-#include "utils/key_qvalue_pairs.hpp"
-#include "configs/config.hpp"
-#include "core/authid.hpp"
-#include "transport/transport.hpp"
-#include "utils/translation.hpp"
-#include "utils/get_printable_password.hpp"
-#include "transport/crypto_transport.hpp"
-#include "utils/verbose_flags.hpp"
 #include "acl/mm_api.hpp"
 #include "acl/module_manager.hpp" // TODO only for MODULE_*
+#include "configs/config.hpp"
+#include "core/authid.hpp"
+#include "core/date_dir_from_filename.hpp"
+#include "transport/crypto_transport.hpp"
+#include "transport/transport.hpp"
+#include "utils/get_printable_password.hpp"
+#include "utils/key_qvalue_pairs.hpp"
+#include "utils/stream.hpp"
+#include "utils/sugar/exchange.hpp"
+#include "utils/translation.hpp"
+#include "utils/verbose_flags.hpp"
 
 #include <string>
 #include <ctime>
@@ -397,9 +398,29 @@ public:
 
     void start_session_log()
     {
-        this->log_file.open(
-            this->ini.get<cfg::session_log::log_path>(),
-            this->ini.get<cfg::video::hash_path>().to_string());
+        auto& log_path = this->ini.get<cfg::session_log::log_path>();
+        size_t base_len = 0;
+        char const * basename = basename_len(log_path.c_str(), base_len);
+
+        auto date_from_file = DateDirFromFilename::extract_date(basename);
+
+        if (date_from_file.has_error()) {
+            LOG(LOG_ERR, "AclSerializer::start_session_log: failed to extract date");
+            throw Error(ERR_RECORDER_FAILED_TO_EXTRACT_DATE);
+        }
+
+        const int groupid = ini.get<cfg::video::capture_groupid>();
+        auto const log_dir = log_path.substr(0, log_path.size() - base_len) + date_from_file.c_str();
+        auto const hash_dir = this->ini.get<cfg::video::hash_path>().to_string() + date_from_file.c_str();
+
+        for (auto* s : {&log_dir, &hash_dir}) {
+            if (recursive_create_directory(s->c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+                LOG(LOG_ERR,
+                    "AclSerializer::start_session_log: Failed to create directory: \"%s\"", *s);
+            }
+        }
+
+        this->log_file.open(log_dir + basename, hash_dir);
     }
 
     void close_session_log()
