@@ -1232,13 +1232,6 @@ namespace jln2
         this->update_next_time();
     }
 
-    template<class... Ts>
-    void TopExecutor<Ts...>::update_next_time() noexcept
-    {
-        this->timer_data.tv = addusectimeval(
-            this->timer_data.delay, this->reactor.get_current_time());
-    }
-
 
     template<class... Ts>
     template<class... Us>
@@ -2246,3 +2239,13 @@ struct SessionReactor
         this->set_next_event(signal);
     }
 };
+
+namespace jln2
+{
+    template<class... Ts>
+    void TopExecutor<Ts...>::update_next_time() noexcept
+    {
+        this->timer_data.tv = addusectimeval(
+            this->timer_data.delay, this->reactor.get_current_time());
+    }
+}
