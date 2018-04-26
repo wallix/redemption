@@ -574,16 +574,9 @@ public:
 
             if ((data_bpp == 32) && clean_up_32_bpp_cursor) {
                 const unsigned int xor_line_length_in_byte = this->dimensions.width * 3;
-                const unsigned int xor_padded_line_length_in_byte =
-                    ((xor_line_length_in_byte % 2) ?
-                     xor_line_length_in_byte + 1 :
-                     xor_line_length_in_byte);
-                const unsigned int remainder = (this->dimensions.width % 8);
-                const unsigned int and_line_length_in_byte = this->dimensions.width / 8 + (remainder ? 1 : 0);
-                const unsigned int and_padded_line_length_in_byte =
-                    ((and_line_length_in_byte % 2) ?
-                     and_line_length_in_byte + 1 :
-                     and_line_length_in_byte);
+                const unsigned int xor_padded_line_length_in_byte = ::even_pad_length(xor_line_length_in_byte);
+                const unsigned int and_line_length_in_byte = ::nbbytes(this->dimensions.width);
+                const unsigned int and_padded_line_length_in_byte = ::even_pad_length(and_line_length_in_byte);
                 for (unsigned int i0 = 0; i0 < this->dimensions.height; ++i0) {
                     uint8_t* xorMask = const_cast<uint8_t*>(this->data) + (this->dimensions.height - i0 - 1) * xor_padded_line_length_in_byte;
 
@@ -674,26 +667,45 @@ public:
     }
 
 
+    bool is_black_and_white(const uint8_t * data, const size_t width, const size_t height, const size_t row_length, const unsigned Bpp)
+    {
+        for (unsigned int h = 0; h < height; ++h) {
+            const uint8_t * row = data + h * row_length;
+            for (unsigned int w = 0; w < width; ++w) {
+                unsigned pixel = ::in_uint32_from_nb_bytes_le(Bpp, row + w*Bpp);
+                if ((pixel != 0) and (pixel != 0xFFFFFF)){
+                    return false;
+                }
+            }
+        }
+        return true;    
+    }
+
     explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and)
         : BasePointer(d, hs)
     {
-        if ((av_and.size() > this->bit_mask_size()) || (av_xor.size() > this->xor_mask_size())) {
+        if ((av_and.size() > this->bit_mask_size()) || (av_xor.size() > this->xor_data_size())) {
             LOG(LOG_ERR, "mod_rdp::process_color_pointer_pdu: "
                 "bad length for color pointer mask_len=%zu data_len=%zu",
                 av_and.size(), av_and.size());
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
         }
-
         memcpy(this->mask, av_and.data(), av_and.size());
         memcpy(this->data, av_xor.data(), av_xor.size());
-        this->update_bw();
+        
+        unsigned Bpp = 3;
+        this->only_black_white = this->is_black_and_white(av_xor.data(),
+                                                          this->dimensions.width,
+                                                          this->dimensions.height, 
+                                                          ::even_pad_length(this->dimensions.width * Bpp),
+                                                          Bpp);
     }
 
     explicit Pointer(uint8_t data_bpp, CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and)
     : BasePointer(d, hs)
     {
         (void)data_bpp;
-        if ((av_and.size() > this->bit_mask_size()) || (av_xor.size() > this->xor_mask_size())) {
+        if ((av_and.size() > this->bit_mask_size()) || (av_xor.size() > this->xor_data_size())) {
             LOG(LOG_ERR, "mod_rdp::process_color_pointer_pdu: "
                 "bad length for color pointer mask_len=%zu data_len=%zu",
                 av_and.size(), av_and.size());
@@ -704,24 +716,12 @@ public:
         memcpy(this->data, av_xor.data(), av_xor.size());
     }
 
-//    explicit Pointer(const Pointer & other)
-//    : BasePointer(other.dimensions, other.hotspot)
-//    , only_black_white(other.only_black_white)
-//    {
-//        auto & av_and = other.get_monochrome_and_mask();
-//        auto & av_xor = other.get_24bits_xor_mask();
-//        memset(this->mask, 0, sizeof(this->mask));
-//        memcpy(this->mask, av_and.data(), av_and.size());
-//        memset(this->data, 0, sizeof(this->data));
-//        memcpy(this->data, av_xor.data(), av_xor.size());
-//    }
-
     bool operator==(const Pointer & other) const {
         return (other.hotspot.x == this->hotspot.x
              && other.hotspot.y == this->hotspot.y
              && other.dimensions.width == this->dimensions.width
              && other.dimensions.height == this->dimensions.height
-             && (0 == memcmp(this->data, other.data, other.data_size()))
+             && (0 == memcmp(this->data, other.data, other.xor_data_size()))
              && (0 == memcmp(this->mask, other.mask, this->bit_mask_size())));
     }
 
@@ -744,80 +744,36 @@ public:
 
     const array_view_const_u8 get_24bits_xor_mask() const
     {
-        return {this->data, this->xor_mask_size()};
+        return {this->data, this->xor_data_size()};
     }
 
 
-    unsigned data_size() const {
-        const unsigned int xor_line_length_in_byte = this->dimensions.width * 3;
-        const unsigned int xor_padded_line_length_in_byte =
-            ((xor_line_length_in_byte % 2) ?
-             xor_line_length_in_byte + 1 :
-             xor_line_length_in_byte);
-
-        return (xor_padded_line_length_in_byte * this->dimensions.height);
-    }
-
-    unsigned mask_size() const {
-        const unsigned int remainder = (this->dimensions.width % 8);
-        const unsigned int and_line_length_in_byte = this->dimensions.width / 8 + (remainder ? 1 : 0);
-        const unsigned int and_padded_line_length_in_byte =
-            ((and_line_length_in_byte % 2) ?
-             and_line_length_in_byte + 1 :
-             and_line_length_in_byte);
-
-        return (and_padded_line_length_in_byte * this->dimensions.height);
+    unsigned mask_size_rows_padded_even() const {
+        return ::even_pad_length(::nbbytes(this->dimensions.width)) * this->dimensions.height;
     }
 
     unsigned bit_mask_size() const {
         return ::nbbytes(this->dimensions.width) * this->dimensions.height;
     }
 
-    unsigned xor_mask_size() const {
-        size_t l_width = (this->dimensions.width * 3);
-        return this->dimensions.height * (l_width+(l_width&1));
+    unsigned xor_data_size() const {
+        return this->dimensions.height * ::even_pad_length(this->dimensions.width * 3);
     }
 
     bool is_valid() const {
-        return (this->dimensions.width && this->dimensions.height/* && this->bpp*/);
+        return (this->dimensions.width != 0 && this->dimensions.height != 0/* && this->bpp*/);
     }
 
-    void update_bw() {
-        const unsigned int xor_line_length_in_byte = this->dimensions.width * 3;
-        const unsigned int xor_padded_line_length_in_byte =
-            ((xor_line_length_in_byte % 2) ?
-             xor_line_length_in_byte + 1 :
-             xor_line_length_in_byte);
-        for (unsigned int h = 0; h < this->dimensions.height; ++h) {
-            const uint8_t* xorMask = this->data + (this->dimensions.height - h - 1) * xor_padded_line_length_in_byte;
-            for (unsigned int w = 0; w < this->dimensions.width; ++w) {
-                if (((*xorMask) > 0) && ((*xorMask) < 255)) { this->only_black_white = false; return; }
-                xorMask++;
-                if (((*xorMask) > 0) && ((*xorMask) < 255)) { this->only_black_white = false; return; }
-                xorMask++;
-                if (((*xorMask) > 0) && ((*xorMask) < 255)) { this->only_black_white = false; return; }
-                xorMask++;
-            }
-        }
-
-        this->only_black_white = true;
-    }
-    
     void to_regular_pointer(const uint8_t * indata, unsigned dlen, uint8_t bpp, const BGRPalette & palette) 
     {
         switch (bpp) {
         case 1 :
         {
-            const unsigned int remainder = (this->dimensions.width % 8);
-            const unsigned int src_xor_line_length_in_byte = this->dimensions.width / 8 + (remainder ? 1 : 0);
-            const unsigned int src_xor_padded_line_length_in_byte =
-                ((src_xor_line_length_in_byte % 2) ?
-                 src_xor_line_length_in_byte + 1 :
-                 src_xor_line_length_in_byte);
+            const unsigned int src_xor_line_length_in_byte = ::nbbytes(this->dimensions.width);
+            const unsigned int src_xor_padded_line_length_in_byte = ::even_pad_length(src_xor_line_length_in_byte);
 
             const unsigned int dest_xor_line_length_in_byte        = this->dimensions.width * 3;
-            const unsigned int dest_xor_padded_line_length_in_byte =
-                dest_xor_line_length_in_byte + ((dest_xor_line_length_in_byte % 2) ? 1 : 0);
+            const unsigned int dest_xor_padded_line_length_in_byte = ::even_pad_length(dest_xor_line_length_in_byte);
 
             for (unsigned int i = 0; i < this->dimensions.height; ++i) {
                 const uint8_t* src  = indata + (this->dimensions.height - i - 1) * src_xor_padded_line_length_in_byte;
@@ -856,16 +812,10 @@ public:
             uint8_t BPP = nbbytes(bpp);
 
             const unsigned int src_xor_line_length_in_byte = this->dimensions.width * BPP;
-            const unsigned int src_xor_padded_line_length_in_byte =
-                ((src_xor_line_length_in_byte % 2) ?
-                 src_xor_line_length_in_byte + 1 :
-                 src_xor_line_length_in_byte);
+            const unsigned int src_xor_padded_line_length_in_byte = ::even_pad_length(src_xor_line_length_in_byte);
 
             const unsigned int dest_xor_line_length_in_byte = this->dimensions.width * 3;
-            const unsigned int dest_xor_padded_line_length_in_byte =
-                ((dest_xor_line_length_in_byte % 2) ?
-                 dest_xor_line_length_in_byte + 1 :
-                 dest_xor_line_length_in_byte);
+            const unsigned int dest_xor_padded_line_length_in_byte = ::even_pad_length(dest_xor_line_length_in_byte);
 
             for (unsigned int i0 = 0; i0 < this->dimensions.height; ++i0) {
                 const uint8_t* src  = indata + (this->dimensions.height - i0 - 1) * src_xor_padded_line_length_in_byte;
@@ -889,6 +839,42 @@ public:
         }
     }
 
+    void emit_pointer(OutStream & result, int cache_idx, uint16_t mouse_x, uint16_t mouse_y)
+    {
+        result.out_uint16_le(mouse_x);
+        result.out_uint16_le(mouse_y);
+        result.out_uint8(cache_idx);
+        result.out_uint8(this->get_hotspot().x);
+        result.out_uint8(this->get_hotspot().y);
+
+        auto av_xor = this->get_24bits_xor_mask();
+        result.out_copy_bytes(av_xor);
+        auto av_and = this->get_monochrome_and_mask();
+        result.out_copy_bytes(av_and);
+    }
+
+    void emit_pointer2(OutStream & result, int cache_idx, uint16_t mouse_x, uint16_t mouse_y)
+    {
+        result.out_uint16_le(mouse_x);
+        result.out_uint16_le(mouse_y);
+        result.out_uint8(cache_idx);
+
+        result.out_uint8(this->get_dimensions().width);
+        result.out_uint8(this->get_dimensions().height);
+        result.out_uint8(24);
+
+        result.out_uint8(this->get_hotspot().x);
+        result.out_uint8(this->get_hotspot().y);
+
+        result.out_uint16_le(this->xor_data_size());
+        result.out_uint16_le(this->mask_size_rows_padded_even());
+        
+        auto av_xor = this->get_24bits_xor_mask();
+        result.out_copy_bytes(av_xor);
+        auto av_and = this->get_monochrome_and_mask();
+        result.out_copy_bytes(av_and);
+    }
+
     void to_regular_mask(const uint8_t * indata, unsigned mlen, uint8_t bpp) {
         /* TODO check code below: why do we revert mask and pointer when pointer is 1 BPP
          * and not with other color depth ? Looks fishy, a mask and pointer should always
@@ -898,12 +884,8 @@ public:
         switch (bpp) {
         case 1 :
         {
-            const unsigned int remainder = (this->dimensions.width % 8);
-            const unsigned int and_line_length_in_byte = this->dimensions.width / 8 + (remainder ? 1 : 0);
-            const unsigned int and_padded_line_length_in_byte =
-                ((and_line_length_in_byte % 2) ?
-                 and_line_length_in_byte + 1 :
-                 and_line_length_in_byte);
+            const unsigned int and_line_length_in_byte = ::nbbytes(this->dimensions.width);
+            const unsigned int and_padded_line_length_in_byte = ::even_pad_length(and_line_length_in_byte);
             for (unsigned int i = 0; i < this->dimensions.height; ++i) {
                 const uint8_t* src  = indata + (this->dimensions.height - i - 1) * and_padded_line_length_in_byte;
                       uint8_t* dest = this->mask + i * and_padded_line_length_in_byte;
@@ -919,16 +901,9 @@ public:
     
     void cleanup_32_bpp_cursor(unsigned width, unsigned height) {
         const unsigned int xor_line_length_in_byte = width * 3;
-        const unsigned int xor_padded_line_length_in_byte =
-            ((xor_line_length_in_byte % 2) ?
-             xor_line_length_in_byte + 1 :
-             xor_line_length_in_byte);
-        const unsigned int remainder = (width % 8);
-        const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
-        const unsigned int and_padded_line_length_in_byte =
-            ((and_line_length_in_byte % 2) ?
-             and_line_length_in_byte + 1 :
-             and_line_length_in_byte);
+        const unsigned int xor_padded_line_length_in_byte = ::even_pad_length(xor_line_length_in_byte);
+        const unsigned int and_line_length_in_byte = ::nbbytes(width);
+        const unsigned int and_padded_line_length_in_byte = ::even_pad_length(and_line_length_in_byte);
         for (unsigned int i0 = 0; i0 < height; ++i0) {
             uint8_t* xorMask = const_cast<uint8_t*>(this->data) + (height - i0 - 1) * xor_padded_line_length_in_byte;
 
@@ -1149,13 +1124,8 @@ public:
         stream.out_uint16_le(dimensions.height);
 
 
-        const unsigned int remainder = (dimensions.width % 8);
-        const unsigned int and_line_length_in_byte = dimensions.width / 8 + (remainder ? 1 : 0);
-        const unsigned int and_padded_line_length_in_byte =
-            ((and_line_length_in_byte % 2) ?
-             and_line_length_in_byte + 1 :
-             and_line_length_in_byte);
-
+        const unsigned int and_line_length_in_byte = ::nbbytes(dimensions.width);
+        const unsigned int and_padded_line_length_in_byte = ::even_pad_length(and_line_length_in_byte);
         const unsigned int xor_padded_line_length_in_byte = (this->cursor.only_black_white ? and_padded_line_length_in_byte : dimensions.width * 4);
 
 
@@ -1177,10 +1147,7 @@ public:
 //      bytes).
 
         const unsigned int source_xor_line_length_in_byte = dimensions.width * 3;
-        const unsigned int source_xor_padded_line_length_in_byte =
-            ((source_xor_line_length_in_byte % 2) ?
-             source_xor_line_length_in_byte + 1 :
-             source_xor_line_length_in_byte);
+        const unsigned int source_xor_padded_line_length_in_byte = ::even_pad_length(source_xor_line_length_in_byte);
 
         if (this->cursor.only_black_white) {
             uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8] = { 0 };
