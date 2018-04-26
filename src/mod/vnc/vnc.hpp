@@ -275,6 +275,8 @@ public:
 
         std::snprintf(this->username, sizeof(this->username), "%s", username);
         std::snprintf(this->password, sizeof(this->password), "%s", password);
+        
+        this->event.set_trigger_time(wait_obj::NOW);
 
     } // Constructor
 
@@ -1555,9 +1557,14 @@ public:
             return;
         }
 
+//        LOG(LOG_INFO, "is_waked_up_by_time = %u buffer=%u", this->event.is_waked_up_by_time(), this->server_data_buf.remaining());
+
+
         if (!this->event.is_waked_up_by_time()) {
             this->server_data_buf.read_from(this->t);
+//            LOG(LOG_INFO, "read data) buffer=%u", this->server_data_buf.remaining());
         }
+
 
         while (this->draw_event_impl(drawable)) {}
         if (bool(this->verbose & VNCVerbose::draw_event)) {
@@ -1630,21 +1637,22 @@ private:
 
         case WAIT_SECURITY_TYPES:
             {
-                if (bool(this->verbose & VNCVerbose::connection)) {
+//                if (bool(this->verbose & VNCVerbose::connection)) {
                     LOG(LOG_INFO, "state=WAIT_SECURITY_TYPES");
-                }
+//                }
 
                 size_t const protocol_version_len = 12;
 
                 if (this->server_data_buf.remaining() < protocol_version_len) {
+                    LOG(LOG_INFO, "not enough data %u", this->server_data_buf.remaining());
                     return false;
                 }
 
-                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+//                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     // protocol_version_len - zero terminal
                     LOG(LOG_INFO, "Server Protocol Version=%.*s\n",
                         int(protocol_version_len-1), this->server_data_buf.av().data());
-                }
+//                }
 
                 this->server_data_buf.advance(protocol_version_len);
 
@@ -1663,11 +1671,11 @@ private:
                 int32_t const security_level = InStream(this->server_data_buf.av(4)).in_sint32_be();
                 this->server_data_buf.advance(4);
 
-                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+//                if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "security level is %d "
                         "(1 = none, 2 = standard, -6 = mslogon)\n",
                         security_level);
-                }
+//                }
 
                 switch (security_level){
                     case 1: // none

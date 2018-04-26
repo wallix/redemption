@@ -1684,7 +1684,7 @@ private:
 
         snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
 
-        unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
+        unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 20000);
 
         if (!client_sck.is_open()){
             report_message.log5("type=\"CONNECTION_FAILED\"");
