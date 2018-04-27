@@ -168,7 +168,7 @@ RED_AUTO_TEST_CASE(TestSessionExecutorFd)
 
     std::string s;
 
-    int fd1 = ::open("/tmp/execute_graphics.test", O_CREAT | O_RDONLY);
+    int fd1 = ::open("/tmp/execute_graphics.test", O_CREAT | O_RDONLY, 0777);
     RED_REQUIRE_GT(fd1, 0);
     SCOPE_EXIT(::close(fd1));
 
