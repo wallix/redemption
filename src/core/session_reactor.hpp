@@ -466,22 +466,38 @@ namespace jln2
     template<class... Ts>
     using GroupExecutorDefault = GroupExecutorWithValues<jln::detail::tuple<>, Ts...>;
 
+    namespace detail
+    {
+        template<std::size_t... Ints, class... Fs>
+        R switch_(unsigned i, std::integer_sequence<std::size_t, Ints...>, Fs&&... fs)
+        {
+            R r;
+            REDEMPTION_DIAGNOSTIC_PUSH
+            REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wparentheses")
+            REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-value")
+            (((i == Ints) && ((void)(r = fs()), true)) || ...)
+            || ((void)(r = R::ExitError), true);
+            REDEMPTION_DIAGNOSTIC_POP
+            return r;
+        }
+    }
 
     template<class... Fs>
     auto sequencer(Fs&&... fs)
     {
         static_assert(sizeof...(Fs));
-        return [=, i = 0](auto ctx, auto&&... xs) mutable /*-> R*/ {
-            // TODO optimise switch
-            int nth = 0;
-            R r = R::ExitError;
-            ((nth++ == i ? (void)(
-                r = fs(ctx, static_cast<decltype(xs)&&>(xs)...)
-            ) : void()), ...);
+        return [=, i = 0u](auto ctx, auto&&... xs) mutable /*-> R*/ {
+            auto wrap = [&](auto& f) {
+                return [&]() {
+                    return f(ctx, static_cast<decltype(xs)&&>(xs)...);
+                };
+            };
+            R const r = detail::switch_(
+                i, std::make_index_sequence<sizeof...(Fs)>{}, wrap(fs)...);
 
             switch (r) {
                 case R::Next:
-                    return i < int(sizeof...(fs)-1) ? ((void)++i, R::Ready) : R::Next;
+                    return i < sizeof...(fs)-1 ? ((void)++i, R::Ready) : R::Next;
                 case R::CreateGroup:
                     ++i;
                     return R::CreateContinuation;

@@ -27,6 +27,27 @@
 #include "core/session_reactor.hpp"
 #include "gdi/graphic_api.hpp"
 
+template<class> struct t_{};
+RED_AUTO_TEST_CASE(TestSequencer)
+{
+    using R = jln2::R;
+    struct Ctx {} ctx;
+    using Array = std::array<int, 5>;
+    Array a{};
+    auto sequencer = jln2::sequencer(
+        [&a](Ctx){ a[0] = 1; return R::Next; },
+        [&a](Ctx){ a[1] = 1; return R::Next; },
+        [&a](Ctx){ a[2] = 1; return R::Next; },
+        [&a](Ctx){ a[3] = 1; return R::Next; },
+        [&a](Ctx){ a[4] = 1; return R::Next; }
+    );
+    RED_CHECK(sequencer(ctx) == jln2::R::Ready); RED_CHECK_EQ_RANGES(a, (Array{{1, 0, 0, 0, 0}}));
+    RED_CHECK(sequencer(ctx) == jln2::R::Ready); RED_CHECK_EQ_RANGES(a, (Array{{1, 1, 0, 0, 0}}));
+    RED_CHECK(sequencer(ctx) == jln2::R::Ready); RED_CHECK_EQ_RANGES(a, (Array{{1, 1, 1, 0, 0}}));
+    RED_CHECK(sequencer(ctx) == jln2::R::Ready); RED_CHECK_EQ_RANGES(a, (Array{{1, 1, 1, 1, 0}}));
+    RED_CHECK(sequencer(ctx) == jln2::R::Next);  RED_CHECK_EQ_RANGES(a, (Array{{1, 1, 1, 1, 1}}));
+}
+
 constexpr auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };
 
 RED_AUTO_TEST_CASE(TestSessionExecutorTimer)
