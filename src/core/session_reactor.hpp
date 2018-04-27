@@ -39,6 +39,7 @@ Author(s): Jonathan Poelen
 #include <utility>
 #include "cxx/diagnostic.hpp"
 #include "utils/executor.hpp"
+#include "utils/sugar/scope_exit.hpp"
 #include "core/error.hpp"
 
 
@@ -56,10 +57,13 @@ namespace jln2
 
     template<class... Ts> class TopExecutor;
     template<class... Ts> class GroupExecutor;
-    template<class Tuple, class... Ts> struct GroupExecutorWithValues;
+    template<class... Ts> class ActionExecutor;
+    template<class... Ts> class TimerExecutor;
     template<class T> class SharedData;
     class SharedPtr;
     template<class... Ts> class TopSharedPtr;
+    template<class... Ts> class ActionSharedPtr;
+    template<class... Ts> class TimerSharedPtr;
 
     enum class [[nodiscard]] R : char
     {
@@ -161,6 +165,34 @@ namespace jln2
             InitCtx init_ctx;
         };
 
+        template<class InitCtx>
+        struct [[nodiscard]] TimerExecutorBuilderImpl
+        {
+            explicit TimerExecutorBuilderImpl(InitCtx&&) noexcept;
+
+            template<class F>
+            auto on_timeout(F&& f) &&;
+
+            auto set_timeout(std::chrono::milliseconds ms) &&;
+
+            auto disable_timeout() &&;
+
+        private:
+            InitCtx init_ctx;
+        };
+
+        template<class InitCtx>
+        struct [[nodiscard]] ActionExecutorBuilderImpl
+        {
+            explicit ActionExecutorBuilderImpl(InitCtx&& init_ctx) noexcept;
+
+            template<class F>
+            auto on_action(F&& f) &&;
+
+        private:
+            InitCtx init_ctx;
+        };
+
     #ifdef IN_IDE_PARSER
         struct Func
         {
@@ -173,9 +205,11 @@ namespace jln2
             template<class... Ts>
             explicit GroupExecutorBuilder_Concept(Ts&&...) noexcept;
 
-            GroupExecutorBuilder_Concept on_action(Func) { return *this; }
-            GroupExecutorBuilder_Concept on_exit(Func) { return *this; }
+            GroupExecutorBuilder_Concept on_action(Func);
+            GroupExecutorBuilder_Concept on_exit(Func);
             GroupExecutorBuilder_Concept propagate_exit();
+
+            operator R ();
         };
 
         struct /*[[nodiscard]]*/ TopExecutorBuilder_Concept
@@ -183,11 +217,11 @@ namespace jln2
             template<class... Ts>
             explicit TopExecutorBuilder_Concept(Ts&&...) noexcept;
 
-            TopExecutorBuilder_Concept disable_timeout() { return *this; }
-            TopExecutorBuilder_Concept set_timeout(std::chrono::milliseconds) { return *this; }
-            TopExecutorBuilder_Concept on_timeout(Func) { return *this; }
-            TopExecutorBuilder_Concept on_action(Func) { return *this; }
-            TopExecutorBuilder_Concept on_exit(Func) { return *this; }
+            TopExecutorBuilder_Concept disable_timeout();
+            TopExecutorBuilder_Concept set_timeout(std::chrono::milliseconds);
+            TopExecutorBuilder_Concept on_timeout(Func);
+            TopExecutorBuilder_Concept on_action(Func);
+            TopExecutorBuilder_Concept on_exit(Func);
             TopExecutorBuilder_Concept propagate_exit();
 
             operator SharedPtr ();
@@ -195,17 +229,47 @@ namespace jln2
             template<class... Ts> operator TopSharedPtr<Ts...> ();
         };
 
+        struct /*[[nodiscard]]*/ TimerExecutorBuilder_Concept
+        {
+            template<class... Ts>
+            explicit TimerExecutorBuilder_Concept(Ts&&...) noexcept;
+
+            TimerExecutorBuilder_Concept disable_timeout();
+            TimerExecutorBuilder_Concept set_timeout(std::chrono::milliseconds);
+            TimerExecutorBuilder_Concept on_timeout(Func);
+        };
+
+        struct /*[[nodiscard]]*/ ActionExecutorBuilder_Concept
+        {
+            template<class... Ts>
+            explicit ActionExecutorBuilder_Concept(Ts&&...) noexcept;
+
+            template<class... Ts> ActionSharedPtr<Ts...> on_action(Func);
+        };
+
         template<class Top, class Group>
         using GroupExecutorBuilder = GroupExecutorBuilder_Concept;
 
         template<class InitCtx>
         using TopExecutorBuilder = TopExecutorBuilder_Concept;
+
+        template<class InitCtx>
+        using TimerExecutorBuilder = TimerExecutorBuilder_Concept;
+
+        template<class InitCtx>
+        using ActionExecutorBuilder = ActionExecutorBuilder_Concept;
     #else
         template<class Top, class Group>
         using GroupExecutorBuilder = GroupExecutorBuilderImpl<0, 0, Top, Group>;
 
         template<class InitCtx>
         using TopExecutorBuilder = TopExecutorBuilderImpl<BuilderInit::None, InitCtx>;
+
+        template<class InitCtx>
+        using TimerExecutorBuilder = TimerExecutorBuilderImpl<InitCtx>;
+
+        template<class InitCtx>
+        using ActionExecutorBuilder = ActionExecutorBuilderImpl<InitCtx>;
     #endif
     }
 
@@ -290,6 +354,24 @@ namespace jln2
             this->GroupContext<Ts...>::disable_timeout();
             return *this;
         }
+    };
+
+    template<class... Ts>
+    struct TimerContext
+    {
+        TimerContext(TimerExecutor<Ts...>& timer) noexcept
+        : timer(timer)
+        {}
+
+    private:
+        TimerExecutor<Ts...>& timer;
+    };
+
+    template<class... Ts>
+    struct ActionContext
+    {
+        R ready() noexcept { return R::Ready; }
+        R terminate() noexcept { return R::Terminate; }
     };
 
     template<class... Ts>
@@ -435,15 +517,12 @@ namespace jln2
     {
         using Base = GroupExecutor<Ts...>;
 
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
         GroupExecutorWithValues() noexcept
         {
             this->deleter = [](GroupExecutor<Ts...>* p) noexcept{
                 delete static_cast<GroupExecutorWithValues*>(p);
             };
         }
-        REDEMPTION_DIAGNOSTIC_POP
 
         template<class F>
         void on_action(F&& f)
@@ -465,6 +544,144 @@ namespace jln2
 
     template<class... Ts>
     using GroupExecutorDefault = GroupExecutorWithValues<jln::detail::tuple<>, Ts...>;
+
+
+    template<class... Ts>
+    struct TimerExecutor
+    {
+        TimerData<Ts...> timer_data;
+
+        void delete_self() noexcept
+        {
+            this->deleter(this);
+        }
+
+    protected:
+        TimerExecutor() = default;
+
+        void (*deleter) (TimerExecutor*) noexcept REDEMPTION_DEBUG_ONLY(= nullptr);
+        ~TimerExecutor() = default;
+    };
+
+    template<class Tuple, class... Ts>
+    struct TimerExecutorWithValues final : TimerExecutor<Ts...>
+    {
+        using Base = TimerExecutor<Ts...>;
+
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
+        template<class... Us>
+        TimerExecutorWithValues(Us&&... xs)
+        : t{static_cast<Us&&>(xs)...}
+        {
+            this->deleter = [](TimerExecutor<Ts...>* p) noexcept{
+                delete static_cast<TimerExecutorWithValues*>(p);
+            };
+        }
+        REDEMPTION_DIAGNOSTIC_POP
+
+        template<class F>
+        void on_timeout(F&& f)
+        {
+            Base::on_timeout = [f, this](TimerContext<Ts...> ctx, Ts... xs) mutable /*-> R*/ {
+                return this->t.invoke(f, ctx, static_cast<Ts&>(xs)...);
+            };
+        }
+
+        Tuple t;
+
+    protected:
+        ~TimerExecutorWithValues() = default;
+    };
+
+
+    template<class... Ts>
+    struct ActionExecutor
+    {
+        std::function<R(ActionContext<Ts...>, Ts...)> on_action;
+
+        bool exec_action(Ts&... xs)
+        {
+            REDEMPTION_DEBUG_ONLY(
+                this->exec_is_running = true;
+                SCOPE_EXIT(this->exec_is_running = false);
+            )
+
+            R r;
+
+            while ((r = this->on_action(ActionContext<Ts...>{}, xs...)) == R::Ready) {
+            }
+
+            switch (r) {
+                case R::Terminate:
+                    return false;
+                case R::Ready:
+                    REDEMPTION_UNREACHABLE();
+                case R::Exception:
+                    REDEMPTION_UNREACHABLE();
+                case R::ExitSuccess:
+                    REDEMPTION_UNREACHABLE();
+                case R::ExitError:
+                    REDEMPTION_UNREACHABLE();
+                case R::Next:
+                    REDEMPTION_UNREACHABLE();
+                case R::NeedMoreData:
+                    REDEMPTION_UNREACHABLE();
+                case R::CreateGroup:
+                    REDEMPTION_UNREACHABLE();
+                case R::SubstituteTimeout:
+                    REDEMPTION_UNREACHABLE();
+                case R::SubstituteAction:
+                    REDEMPTION_UNREACHABLE();
+                case R::SubstituteExit:
+                    REDEMPTION_UNREACHABLE();
+                case R::CreateContinuation:
+                    REDEMPTION_UNREACHABLE();
+            }
+
+            REDEMPTION_UNREACHABLE();
+        }
+
+    private:
+        REDEMPTION_DEBUG_ONLY(bool exec_is_running = false;)
+    };
+
+    template<class Tuple, class... Ts>
+    struct ActionExecutorWithValues final : ActionExecutor<Ts...>
+    {
+        using Base = ActionExecutor<Ts...>;
+
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
+        template<class... Us>
+        ActionExecutorWithValues(Us&&... xs)
+        : t{static_cast<Us&&>(xs)...}
+        {}
+        REDEMPTION_DIAGNOSTIC_POP
+
+        template<class F>
+        void on_action(F&& f)
+        {
+            Base::on_action = [f, this](ActionContext<Ts...> ctx, Ts... xs) mutable /*-> R*/ {
+                return this->t.invoke(f, ctx, static_cast<Ts&>(xs)...);
+            };
+        }
+
+        Tuple t;
+    };
+
+    template<template<class...> class Tuple, class... Ts>
+    struct ActionExecutorWithValues<Tuple<>, Ts...> final : ActionExecutor<Ts...>
+    {
+        using Base = ActionExecutor<Ts...>;
+
+        template<class F>
+        void on_action(F&& f)
+        {
+            Base::on_action = static_cast<F&&>(f);
+        }
+    };
+
 
     namespace detail
     {
@@ -546,6 +763,24 @@ namespace jln2
     };
 
     template<class... Ts>
+    struct ActionDeleter
+    {
+        void operator()(ActionExecutor<Ts...>* p) noexcept
+        {
+            p->delete_self();
+        }
+    };
+
+    template<class... Ts>
+    struct TimerDeleter
+    {
+        void operator()(TimerExecutor<Ts...>* p) noexcept
+        {
+            p->delete_self();
+        }
+    };
+
+    template<class... Ts>
     struct TopExecutor
     {
         using GroupPtr = std::unique_ptr<GroupExecutor<Ts...>, GroupDeleter<Ts...>>;
@@ -618,7 +853,10 @@ namespace jln2
 
         bool exec_timeout(Ts&... xs)
         {
-            REDEMPTION_DEBUG_ONLY(this->exec_is_running = true;)
+            REDEMPTION_DEBUG_ONLY(
+                this->exec_is_running = true;
+                SCOPE_EXIT(this->exec_is_running = false);
+            )
 
             R r;
 
@@ -656,8 +894,6 @@ namespace jln2
                 r = this->_exec_exit(R::Exception, xs...);
             }
 
-            REDEMPTION_DEBUG_ONLY(this->exec_is_running = false;)
-
             switch (r) {
                 case R::Exception:
                     throw this->error;
@@ -686,7 +922,10 @@ namespace jln2
 
         bool exec_action(Ts&... xs)
         {
-            REDEMPTION_DEBUG_ONLY(this->exec_is_running = true;)
+            REDEMPTION_DEBUG_ONLY(
+                this->exec_is_running = true;
+                SCOPE_EXIT(this->exec_is_running = false);
+            )
 
             R r;
 
@@ -719,8 +958,6 @@ namespace jln2
                 this->error = e;
                 r = this->_exec_exit(R::Exception, xs...);
             }
-
-            REDEMPTION_DEBUG_ONLY(this->exec_is_running = false;)
 
             switch (r) {
                 case R::Exception:
@@ -1059,6 +1296,65 @@ namespace jln2
         }
     };
 
+    template<class... Ts>
+    class TimerSharedPtr : public SharedPtr
+    {
+        using Timer = TimerExecutor<Ts...>;
+        using Data = SharedData<Timer>;
+
+        struct PtrInterface : protected SharedPtr
+        {
+            friend class TimerSharedPtr;
+
+            void update_timer(std::chrono::milliseconds ms) noexcept
+            {
+                this->timer().delay = ms;
+            }
+
+            void set_time(timeval const& tv) noexcept
+            {
+                this->timer().set_time(tv);
+            }
+
+            void set_delay(std::chrono::milliseconds ms) noexcept
+            {
+                this->timer().set_delay(ms);
+            }
+
+            void disable_timeout() noexcept
+            {
+                this->timer().disable_timeout();
+            }
+
+            void enable_timeout(bool enable = true) noexcept
+            {
+                this->timer().enable_timeout(enable);
+            }
+
+        private:
+            Timer& timer() noexcept
+            {
+                return static_cast<Data*>(this->p)->value();
+            }
+        };
+
+    public:
+        TimerSharedPtr(Data* p = nullptr) noexcept
+        : SharedPtr(p)
+        {}
+
+        PtrInterface* operator->() noexcept
+        {
+            return static_cast<PtrInterface*>(static_cast<SharedPtr*>(this));
+        }
+    };
+
+    template<class... Ts>
+    class ActionSharedPtr : public SharedPtr
+    {
+        using SharedPtr::SharedPtr;
+    };
+
     namespace detail
     {
         template<class Tuple, class... Ts, class F>
@@ -1212,7 +1508,7 @@ namespace jln2
         bool exec_action(Predicate&& predicate, Ts... xs)
         {
             return this->_exec(predicate, [&](Top& top) {
-                return top.exec_action(static_cast<Ts&>(xs)...);
+                return top.exec_action(static_cast<Ts&&>(xs)...);
             });
         }
 
@@ -1222,7 +1518,7 @@ namespace jln2
                 return top.timer_data.is_enabled && top.timer_data.tv <= end_tv;
             };
             return this->_exec(predicate, [&](Top& top) {
-                return top.exec_timeout(static_cast<Ts&>(xs)...);
+                return top.exec_timeout(static_cast<Ts&&>(xs)...);
             });
         }
 
@@ -1258,6 +1554,289 @@ namespace jln2
 
             return bool(this->node_executors.next);
         }
+    };
+
+    template<class... Ts>
+    class TimerContainer
+    {
+    //     using Timer = TimerExecutor<Ts...>;
+    //     using Group = GroupExecutor<Ts...>;
+    //     using Data = SharedData<Timer>;
+    //
+    //     using GroupDeleter = ::jln2::GroupDeleter<Ts...>;
+    //
+    // public:
+    //     using Ptr = TimerSharedPtr<Ts...>;
+    //
+    // private:
+    //     template<class Tuple>
+    //     struct InitContext
+    //     {
+    //         std::unique_ptr<GroupExecutorWithValues<Tuple, Ts...>, GroupDeleter> g;
+    //         std::unique_ptr<Data, SharedDataDeleter> data_ptr;
+    //         TimerContainer& cont;
+    //
+    //         GroupExecutorWithValues<Tuple, Ts...>& group() noexcept
+    //         {
+    //             return *this->g;
+    //         }
+    //
+    //         Timer& top() noexcept
+    //         {
+    //             return this->data_ptr->value();
+    //         }
+    //
+    //         template<class F>
+    //         void on_timeout(F&& f)
+    //         {
+    //             this->top().timer_data.on_timeout = detail::create_on_timeout(
+    //                 *this->g.get(), static_cast<F&&>(f));
+    //         }
+    //
+    //         TimerSharedPtr<Ts...> terminate_init()
+    //         {
+    //             assert(this->data_ptr);
+    //             this->top().add_group(std::move(this->g));
+    //             SharedDataBase* data_ptr = this->data_ptr.release();
+    //             data_ptr->next = std::exchange(this->cont.node_executors.next, data_ptr);
+    //             data_ptr->shared_ptr = nullptr;
+    //             return TimerSharedPtr<Ts...>(static_cast<Data*>(data_ptr));
+    //         }
+    //     };
+    //
+    // public:
+    //     template<class... Us>
+    //     REDEMPTION_JLN2_CONCEPT(detail::TimerExecutorBuilder_Concept)
+    //     create_timer_executor(Reactor& reactor, Us&&... xs)
+    //     {
+    //         using Tuple = jln::detail::tuple<decay_and_strip_t<Us>...>;
+    //         using Group = GroupExecutorWithValues<Tuple, Ts...>;
+    //         using InitCtx = InitContext<Tuple>;
+    //         return detail::TimerExecutorBuilder<InitCtx>{
+    //             InitCtx{
+    //                 std::unique_ptr<Group, GroupDeleter>(new Group(static_cast<Us&&>(xs)...)),
+    //                 std::unique_ptr<Data, SharedDataDeleter>(new Data{reactor, fd}),
+    //                 *this
+    //             },
+    //         };
+    //     }
+    //
+    //     TimerContainer() noexcept
+    //     {
+    //         this->node_executors.next = nullptr;
+    //     }
+    //
+    //     ~TimerContainer()
+    //     {
+    //         this->clear();
+    //     }
+    //
+    //     void clear()
+    //     {
+    //         while (this->node_executors.next) {
+    //             SharedDataBase* p = &this->node_executors;
+    //             while (p->next) {
+    //                 SharedDataBase*const node = p->next;
+    //                 SharedDataBase*const next = p->next->next;
+    //                 if (node->has_value()) {
+    //                     // TODO static_cast<Data&>(*p)->external_exit();
+    //                     node->free_value();
+    //                     p = node;
+    //                 }
+    //                 else {
+    //                     p->next->delete_self();
+    //                     p->next = next;
+    //                 }
+    //             }
+    //         }
+    //     }
+    //
+    // private:
+    //     template<class F>
+    //     static auto apply_f(F& f, SharedDataBase* node)
+    //     {
+    //         auto* data = static_cast<Data*>(node);
+    //         return f(data->value().get_fd(), data->value());
+    //     }
+    //
+    // public:
+    //     template<class F>
+    //     void for_each(F&& f)
+    //     {
+    //         SharedDataBase* node = this->node_executors.next;
+    //         for (; node; node = node->next) {
+    //             if (node->shared_ptr) {
+    //                 apply_f(f, node);
+    //             }
+    //         }
+    //     }
+    //
+    //     bool is_empty() const noexcept
+    //     {
+    //         return !bool(this->node_executors.next);
+    //     }
+    //
+    //     template<class Predicate>
+    //     bool exec_action(Predicate&& predicate, Ts... xs)
+    //     {
+    //         return this->_exec(predicate, [&](Top& top) {
+    //             return top.exec_action(static_cast<Ts&>(xs)...);
+    //         });
+    //     }
+    //
+    //     bool exec_timeout(timeval const end_tv, Ts... xs)
+    //     {
+    //         auto predicate = [&](int /*fd*/, Top& top){
+    //             return top.timer_data.is_enabled && top.timer_data.tv <= end_tv;
+    //         };
+    //         return this->_exec(predicate, [&](Top& top) {
+    //             return top.exec_timeout(static_cast<Ts&>(xs)...);
+    //         });
+    //     }
+    //
+    //     SharedDataBase node_executors;
+    //
+    // private:
+    //     template<class Pred, class F>
+    //     bool _exec(Pred& predicate, F f)
+    //     {
+    //         SharedDataBase* node = &this->node_executors;
+    //         while (node->next) {
+    //             auto* cur = node->next;
+    //             if (cur->shared_ptr) {
+    //                 Top& top = static_cast<Data&>(*cur).value();
+    //                 if (!apply_f(predicate, cur)) {
+    //                     node = node->next;
+    //                 }
+    //                 else if (f(top)) {
+    //                     top.update_next_time();
+    //                     node = node->next;
+    //                 }
+    //                 else {
+    //                     node->next = cur->next;
+    //                     cur->free_value();
+    //                     cur->delete_self();
+    //                 }
+    //             }
+    //             else {
+    //                 node->next = cur->next;
+    //                 cur->delete_self();
+    //             }
+    //         }
+    //
+    //         return bool(this->node_executors.next);
+    //     }
+    };
+
+    template<class... Ts>
+    class ActionContainer
+    {
+        using Action = ActionExecutor<Ts...>;
+
+        using ActionDeleter = ::jln2::ActionDeleter<Ts...>;
+
+    public:
+        using Ptr = ActionSharedPtr<Ts...>;
+
+    private:
+        template<class Data, class Tuple>
+        struct InitContext
+        {
+            std::unique_ptr<Data, SharedDataDeleter> data_ptr;
+            ActionContainer& cont;
+
+            ActionExecutorWithValues<Tuple, Ts...>& action() noexcept
+            {
+                return this->data_ptr->value();
+            }
+
+            ActionSharedPtr<Ts...> terminate_init()
+            {
+                assert(this->data_ptr);
+                SharedDataBase* data_ptr = this->data_ptr.release();
+                data_ptr->next = std::exchange(this->cont.node_executors.next, data_ptr);
+                data_ptr->shared_ptr = nullptr;
+                return ActionSharedPtr<Ts...>(static_cast<Data*>(data_ptr));
+            }
+        };
+
+    public:
+        template<class... Us>
+        REDEMPTION_JLN2_CONCEPT(detail::ActionExecutorBuilder_Concept)
+        create_action_executor(Reactor& /*reactor*/, Us&&... xs)
+        {
+            using Tuple = jln::detail::tuple<decay_and_strip_t<Us>...>;
+            using Action = ActionExecutorWithValues<Tuple, Ts...>;
+            using Data = SharedData<Action>;
+            using InitCtx = InitContext<Data, Tuple>;
+            return detail::ActionExecutorBuilder<InitCtx>{
+                InitCtx{
+                    std::unique_ptr<Data, SharedDataDeleter>(
+                        new Data{/*reactor, */static_cast<Us&&>(xs)...}),
+                    *this}
+            };
+        }
+
+        ActionContainer() noexcept
+        {
+            this->node_executors.next = nullptr;
+        }
+
+        ~ActionContainer()
+        {
+            this->clear();
+        }
+
+        void clear()
+        {
+            while (this->node_executors.next) {
+                SharedDataBase* p = &this->node_executors;
+                while (p->next) {
+                    SharedDataBase*const node = p->next;
+                    SharedDataBase*const next = p->next->next;
+                    if (node->has_value()) {
+                        node->free_value();
+                        p = node;
+                    }
+                    else {
+                        p->next->delete_self();
+                        p->next = next;
+                    }
+                }
+            }
+        }
+
+        bool is_empty() const noexcept
+        {
+            return !bool(this->node_executors.next);
+        }
+
+        bool exec_action(Ts... xs)
+        {
+            SharedDataBase* node = &this->node_executors;
+            while (node->next) {
+                auto* cur = node->next;
+                if (cur->shared_ptr) {
+                    Action& action = static_cast<SharedData<Action>&>(*cur).value();
+                    if (action.exec_action(static_cast<Ts&&>(xs)...)) {
+                        node = node->next;
+                    }
+                    else {
+                        node->next = cur->next;
+                        cur->free_value();
+                        cur->delete_self();
+                    }
+                }
+                else {
+                    node->next = cur->next;
+                    cur->delete_self();
+                }
+            }
+
+            return bool(this->node_executors.next);
+        }
+
+        SharedDataBase node_executors;
     };
 
 
@@ -1522,6 +2101,21 @@ namespace jln2
         return this->on_exit([](auto /*ctx*/, ExitR er, [[maybe_unused]] auto&&... xs){
             return er.to_result();
         });
+    }
+
+
+    template<class InitCtx>
+    detail::ActionExecutorBuilderImpl<InitCtx>::ActionExecutorBuilderImpl(
+        InitCtx&& init_ctx) noexcept
+    : init_ctx(std::move(init_ctx))
+    {}
+
+    template<class InitCtx>
+    template<class F>
+    auto detail::ActionExecutorBuilderImpl<InitCtx>::on_action(F&& f) &&
+    {
+        this->init_ctx.action().on_action(static_cast<F&&>(f));
+        return this->init_ctx.terminate_init();
     }
 }
 
@@ -2137,16 +2731,14 @@ struct SessionReactor
     }
 
 
-    using SesmanEvent = jln::ActionBase<jln::prefix_args<Inifile&>>;
-    using SesmanEventPtr = SharedPtr<SesmanEvent>;
-
-    using SesmanContainer = ActionContainer<SesmanEvent>;
+    using SesmanContainer = jln2::ActionContainer<Inifile&>;
+    using SesmanPtr = SesmanContainer::Ptr;
 
     template<class... Args>
-    SesmanContainer::Builder<Args...>
+    REDEMPTION_JLN2_CONCEPT(jln2::detail::ActionExecutorBuilder_Concept)
     create_sesman_event(Args&&... args)
     {
-        return this->sesman_events_.create_shared_ptr(*this, static_cast<Args&&>(args)...);
+        return this->sesman_events_.create_action_executor(*this, static_cast<Args&&>(args)...);
     }
 
 
@@ -2288,7 +2880,7 @@ struct SessionReactor
 
     void execute_sesman(Inifile& ini)
     {
-        this->sesman_events_.exec(ini);
+        this->sesman_events_.exec_action(ini);
     }
 
     void execute_callbacks(Callback& callback)

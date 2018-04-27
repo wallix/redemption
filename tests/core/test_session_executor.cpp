@@ -153,12 +153,10 @@ RED_AUTO_TEST_CASE(TestSessionExecutorSimpleEvent)
     }));
 
     auto ini = session_reactor.create_sesman_event(std::ref(s))
-    .set_notify_delete([](std::string& s){
-        s += "~ini\n";
-    })
-    .on_action(jln::one_shot([](Inifile&, std::string& s){
+    .on_action([](auto ctx, Inifile&, std::string& s){
         s += "ini\n";
-    }));
+        return ctx.terminate();
+    });
 
     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
     RED_CHECK_EQ(s, "gd\n~gd\n");
@@ -166,10 +164,10 @@ RED_AUTO_TEST_CASE(TestSessionExecutorSimpleEvent)
     char dummy;
 
     session_reactor.execute_sesman(*reinterpret_cast<Inifile*>(&dummy));
-    RED_CHECK_EQ(s, "gd\n~gd\nini\n~ini\n");
+    RED_CHECK_EQ(s, "gd\n~gd\nini\n");
 
     session_reactor.execute_callbacks(*reinterpret_cast<Callback*>(&dummy));
-    RED_CHECK_EQ(s, "gd\n~gd\nini\n~ini\ncallback\n~callback\n");
+    RED_CHECK_EQ(s, "gd\n~gd\nini\ncallback\n~callback\n");
 
     RED_CHECK(!gd);
     RED_CHECK(!ini);
