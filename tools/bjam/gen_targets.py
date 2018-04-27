@@ -17,8 +17,6 @@ includes = (
 )
 
 disable_tests = (
-    'tests/epoll.cpp',
-    'tests/utils/test_executor.cpp',
     'tests/utils/crypto/test_ssl_mod_exp_direct.cpp',
     'src/system/linux/system/test_framework.cpp',
 )

@@ -361,6 +361,3 @@ make tests/web_video/test.mp4 : generate_video : @run_web_video_mp4 ;
 
 alias test_web_video_mp4 : tests/web_video/test.mp4 ;
 ## } test_web_video_mp4
-
-unit-test epoll : tests/epoll.cpp ;
-explicit epoll ;
