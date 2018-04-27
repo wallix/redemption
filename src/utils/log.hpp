@@ -52,10 +52,19 @@ namespace detail_ {
     };
 }
 
+// T* to void* for %p
+template<class T> detail_::vlog_wrap<void const*> log_value(T* p) noexcept { return {p}; }
+template<class T> detail_::vlog_wrap<void const*> log_value(T const* p) noexcept { return {p}; }
+inline detail_::vlog_wrap<char const*> log_value(char* p) noexcept { return {p}; }
+inline detail_::vlog_wrap<char const*> log_value(char const* p) noexcept { return {p}; }
+inline detail_::vlog_wrap<uint8_t const*> log_value(uint8_t* p) noexcept { return {p}; }
+inline detail_::vlog_wrap<uint8_t const*> log_value(uint8_t const* p) noexcept { return {p}; }
+
 // enum type
 template<class T, typename std::enable_if<std::is_enum<T>::value, bool>::type = 1>
 detail_::vlog_wrap<typename std::underlying_type<T>::type>
-log_value(T const & e) { return {static_cast<typename std::underlying_type<T>::type>(e)}; }
+log_value(T const & e) noexcept
+{ return {static_cast<typename std::underlying_type<T>::type>(e)}; }
 
 namespace detail_ {
     // has c_str() member
@@ -90,7 +99,7 @@ detail_::vlog_wrap<char const*> log_value(redemption_log_s<n> const & x)
 
 template<std::size_t n>
 redemption_log_s<n*2+1>
-log_array_02x_format(uint8_t const (&d)[n])
+log_array_02x_format(uint8_t const (&d)[n]) noexcept
 {
     redemption_log_s<n*2+1> r;
     char * p = r.data;
