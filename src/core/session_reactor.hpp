@@ -264,16 +264,6 @@ namespace jln2
         // {
         //     this->basic_fd.restart_timeout();
         // }
-        //
-        // SessionReactor& get_reactor() const noexcept
-        // {
-        //     return this->basic_fd.get_reactor();
-        // }
-        //
-        // timeval get_current_time() const noexcept
-        // {
-        //     return this->get_reactor().get_current_time();
-        // }
 
     protected:
         TopExecutor<Ts...>& top;
@@ -388,13 +378,20 @@ namespace jln2
         NextMode next_mode = NextMode::ChildToNext;
         GroupExecutor* next;
 
-        // TODO replace by deleter function
-        virtual ~GroupExecutor() {}
+        void delete_self() noexcept
+        {
+            this->deleter(this);
+        }
+
+    protected:
+        GroupExecutor() = default;
+
+        void (*deleter) (GroupExecutor*) noexcept REDEMPTION_DEBUG_ONLY(= nullptr);
+        ~GroupExecutor() = default;
     };
 
     template<class Tuple, class... Ts>
-    // TODO specialization for GroupExecutorWithValues<tuple<>, Ts...>
-    struct GroupExecutorWithValues : GroupExecutor<Ts...>
+    struct GroupExecutorWithValues final : GroupExecutor<Ts...>
     {
         using Base = GroupExecutor<Ts...>;
 
@@ -403,7 +400,11 @@ namespace jln2
         template<class... Us>
         GroupExecutorWithValues(Us&&... xs)
         : t{static_cast<Us&&>(xs)...}
-        {}
+        {
+            this->deleter = [](GroupExecutor<Ts...>* p) noexcept{
+                delete static_cast<GroupExecutorWithValues*>(p);
+            };
+        }
         REDEMPTION_DIAGNOSTIC_POP
 
         template<class F>
@@ -424,11 +425,52 @@ namespace jln2
         }
 
         Tuple t;
+
+    protected:
+        ~GroupExecutorWithValues() = default;
     };
+
+    template<template<class...> class Tuple, class... Ts>
+    struct GroupExecutorWithValues<Tuple<>, Ts...> final : GroupExecutor<Ts...>
+    {
+        using Base = GroupExecutor<Ts...>;
+
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
+        GroupExecutorWithValues() noexcept
+        {
+            this->deleter = [](GroupExecutor<Ts...>* p) noexcept{
+                delete static_cast<GroupExecutorWithValues*>(p);
+            };
+        }
+        REDEMPTION_DIAGNOSTIC_POP
+
+        template<class F>
+        void on_action(F&& f)
+        {
+            Base::on_action = [f](GroupContext<Ts...> ctx, Ts... xs) mutable /*-> R*/ {
+                return f(TopContext<Tuple<>, Ts...>{ctx}, static_cast<Ts&>(xs)...);
+            };
+        }
+
+        template<class F>
+        void on_exit(F&& f)
+        {
+            Base::on_exit = static_cast<F&&>(f);
+        }
+
+    protected:
+        ~GroupExecutorWithValues() = default;
+    };
+
+    template<class... Ts>
+    using GroupExecutorDefault = GroupExecutorWithValues<jln::detail::tuple<>, Ts...>;
+
 
     template<class... Fs>
     auto sequencer(Fs&&... fs)
     {
+        static_assert(sizeof...(Fs));
         return [=, i = 0](auto ctx, auto&&... xs) mutable /*-> R*/ {
             // TODO optimise switch
             int nth = 0;
@@ -479,8 +521,19 @@ namespace jln2
     }
 
     template<class... Ts>
+    struct GroupDeleter
+    {
+        void operator()(GroupExecutor<Ts...>* p) noexcept
+        {
+            p->delete_self();
+        }
+    };
+
+    template<class... Ts>
     struct TopExecutor
     {
+        using GroupPtr = std::unique_ptr<GroupExecutor<Ts...>, GroupDeleter<Ts...>>;
+
         TopExecutor(Reactor& reactor, int fd)
         : fd(fd)
         , reactor(reactor)
@@ -492,7 +545,7 @@ namespace jln2
 
             auto* p = this->group;
             while (p) {
-                delete std::exchange(p, p->next);
+                std::exchange(p, p->next)->delete_self();
             }
         }
 
@@ -536,13 +589,13 @@ namespace jln2
             this->timer_data.tv = tv;
         }
 
-        void add_group(std::unique_ptr<GroupExecutor<Ts...>>&& group)
+        void add_group(GroupPtr&& group)
         {
             group->next = this->group;
             this->group = group.release();
         }
 
-        void sub_group(std::unique_ptr<GroupExecutor<Ts...>>&& group)
+        void sub_group(GroupPtr&& group)
         {
             this->loaded_group = std::move(group);
         }
@@ -730,7 +783,7 @@ namespace jln2
                     case R::ExitSuccess:
                     case R::Next:
                         next_mode = this->group->next_mode;
-                        delete std::exchange(this->group, this->group->next);
+                        std::exchange(this->group, this->group->next)->delete_self();
                         switch (next_mode) {
                             case NextMode::ChildToNext:
                                 r = re;
@@ -742,7 +795,7 @@ namespace jln2
                     case R::Exception:
                     case R::Terminate:
                     case R::ExitError:
-                        delete std::exchange(this->group, this->group->next);
+                        std::exchange(this->group, this->group->next)->delete_self();
                         r = re;
                         break;
                     case R::Ready:
@@ -763,7 +816,7 @@ namespace jln2
 
         int fd;
         GroupExecutor<Ts...>* group = nullptr;
-        std::unique_ptr<GroupExecutor<Ts...>> loaded_group;
+        GroupPtr loaded_group;
         Reactor& reactor;
 
         REDEMPTION_DEBUG_ONLY(bool exec_is_running = false;)
@@ -782,7 +835,11 @@ namespace jln2
     {
         enum class FreeCat { Value, Self, };
         SharedPtr* shared_ptr;
+
+    protected:
         void (*deleter) (SharedDataBase*, FreeCat) noexcept;
+
+    public:
         SharedDataBase* next;
 
         void free_value() noexcept
@@ -802,6 +859,8 @@ namespace jln2
 
     protected:
         void release_shared_ptr() noexcept;
+
+        // TODO ~SharedDataBase() = default;
     };
 
     struct [[nodiscard]] SharedPtr
@@ -909,6 +968,8 @@ namespace jln2
         T& value() { return this->u.value; }
 
     private:
+        // TODO ~SharedData() = default;
+
         union U{
             T value;
 
@@ -982,6 +1043,28 @@ namespace jln2
         }
     };
 
+    namespace detail
+    {
+        template<class Tuple, class... Ts, class F>
+        auto create_on_timeout(GroupExecutorWithValues<Tuple, Ts...>& g, F&& f)
+        {
+            if constexpr (std::is_same<Tuple, jln::detail::tuple<>>::value) {
+                (void)g;
+                return [f](ContextTimer<Ts...> ctx, Ts... xs) mutable /*-> R*/ {
+                    return f(TopContextTimer<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
+                };
+            }
+            else {
+                return [f, &g](
+                    ContextTimer<Ts...> ctx, Ts... xs
+                ) mutable /*-> R*/ {
+                    return g.t.invoke(
+                        f, TopContextTimer<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
+                };
+            }
+        }
+    }
+
 
 #ifdef IN_IDE_PARSER
 # define REDEMPTION_JLN2_CONCEPT(C) C
@@ -990,11 +1073,13 @@ namespace jln2
 #endif
 
     template<class... Ts>
-    struct TopContainer
+    class TopContainer
     {
         using Top = TopExecutor<Ts...>;
         using Group = GroupExecutor<Ts...>;
         using Data = SharedData<Top>;
+
+        using GroupDeleter = ::jln2::GroupDeleter<Ts...>;
 
     public:
         using Ptr = TopSharedPtr<Ts...>;
@@ -1003,7 +1088,7 @@ namespace jln2
         template<class Tuple>
         struct InitContext
         {
-            std::unique_ptr<GroupExecutorWithValues<Tuple, Ts...>> g;
+            std::unique_ptr<GroupExecutorWithValues<Tuple, Ts...>, GroupDeleter> g;
             std::unique_ptr<Data, SharedDataDeleter> data_ptr;
             TopContainer& cont;
 
@@ -1020,13 +1105,8 @@ namespace jln2
             template<class F>
             void on_timeout(F&& f)
             {
-                auto& g = *this->g.get();
-                this->top().timer_data.on_timeout = [f, &g](
-                    ContextTimer<Ts...> ctx, Ts... xs
-                ) mutable /*-> R*/ {
-                    return g.t.invoke(
-                        f, TopContextTimer<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
-                };
+                this->top().timer_data.on_timeout = detail::create_on_timeout(
+                    *this->g.get(), static_cast<F&&>(f));
             }
 
             TopSharedPtr<Ts...> terminate_init()
@@ -1048,11 +1128,10 @@ namespace jln2
             using Tuple = jln::detail::tuple<decay_and_strip_t<Us>...>;
             using Group = GroupExecutorWithValues<Tuple, Ts...>;
             using InitCtx = InitContext<Tuple>;
-            auto* data = new Data{reactor, fd};
             return detail::TopExecutorBuilder<InitCtx>{
                 InitCtx{
-                    std::make_unique<Group>(static_cast<Us&&>(xs)...),
-                    std::unique_ptr<Data, SharedDataDeleter>(data),
+                    std::unique_ptr<Group, GroupDeleter>(new Group(static_cast<Us&&>(xs)...)),
+                    std::unique_ptr<Data, SharedDataDeleter>(new Data{reactor, fd}),
                     *this
                 },
             };
@@ -1209,13 +1288,9 @@ namespace jln2
     R TopContextTimer<Tuple, Ts...>::set_or_disable_timeout(std::chrono::milliseconds ms, F&& f)
     {
         auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(this->current_group);
-        // TODO same in TopContainer::InitCtx
         this->top.set_timeout(ms);
         if (ms.count()) {
-            this->top.on_timeout_switch = [f, &group](ContextTimer<Ts...> ctx, Ts... xs) mutable -> R {
-                return group.t.invoke(
-                    f, TopContextTimer<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
-            };
+            this->top.on_timeout_switch = detail::create_on_timeout(group, static_cast<F&&>(f));
             return R::SubstituteTimeout;
         }
         else {
@@ -1288,14 +1363,20 @@ namespace jln2
     template<class F>
     R TopContext<Tuple, Ts...>::replace_action(F&& f)
     {
-        auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(this->current_group);
         // TODO inefficient
-        auto g = std::make_unique<GroupExecutor<Ts...>>();
+        auto g = std::unique_ptr<GroupExecutorDefault<Ts...>, GroupDeleter<Ts...>>(
+            new GroupExecutorDefault<Ts...>);
         // TODO same in GroupExecutorWithValues
-        g->on_action = [f, &group](GroupContext<Ts...> ctx, Ts... xs) mutable -> R {
-            return group.t.invoke(
-                f, TopContext<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
-        };
+        if constexpr (std::is_same<Tuple, jln::detail::tuple<>>::value) {
+            g->on_action(static_cast<F&&>(f));
+        }
+        else {
+            auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(
+                this->current_group);
+            g->on_action([f, &group](TopContext<Ts...> ctx, Ts... xs) mutable /*-> R*/ {
+                return group.t.invoke(f, ctx, static_cast<Ts&>(xs)...);
+            });
+        }
         this->top.sub_group(std::move(g));
         return R::SubstituteAction;
     }
