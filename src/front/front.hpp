@@ -622,9 +622,9 @@ private:
     bool is_first_memblt = true;
 
     SessionReactor& session_reactor;
-    SessionReactor::BasicTimerPtr handshake_timeout;
+    SessionReactor::TimerPtr handshake_timeout;
     SessionReactor::CallbackEventPtr incoming_event;
-    SessionReactor::BasicTimerPtr capture_timer;
+    SessionReactor::TimerPtr capture_timer;
 
 public:
     bool ignore_rdesktop_bogus_clip = false;

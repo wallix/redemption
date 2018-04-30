@@ -884,7 +884,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
     SessionReactor& session_reactor;
 
-    SessionReactor::BasicTimerPtr initialization_timeout_event;
+    SessionReactor::TimerPtr initialization_timeout_event;
 
     struct NullVirtualChannelDataSender : VirtualChannelDataSender
     {

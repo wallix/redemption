@@ -143,7 +143,7 @@ class ClientExecute : public windowing_api
 
     int current_mouse_pointer_type = Pointer::POINTER_NULL;
 
-    SessionReactor::BasicTimerPtr button_1_down_timer;
+    SessionReactor::TimerPtr button_1_down_timer;
 
     int button_1_down_x = 0;
     int button_1_down_y = 0;

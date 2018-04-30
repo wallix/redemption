@@ -130,14 +130,16 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
         }});
     RED_CHECK(session_reactor.fd_events_.is_empty());
 
-    auto& timer_events = session_reactor.timer_events_.elements;
-    RED_CHECK_EQ(timer_events.size(), 1);
+    RED_CHECK(!session_reactor.timer_events_.is_empty());
 
-    timeval timeout = timer_events[0]->value.time();
-    for (int i = 0; i < 100 && !timer_events.empty(); ++i) {
-        session_reactor.timer_events_.exec(timeout);
+    timeval timeout = session_reactor.get_current_time();
+    for (int i = 0; i < 100 && !session_reactor.timer_events_.is_empty(); ++i) {
+        session_reactor.execute_timers(
+            SessionReactor::EnableGraphics{false},
+            []()->gdi::GraphicApi&{return gdi::null_gd(); });
+        session_reactor.set_current_time(timeout);
         ++timeout.tv_sec;
     }
-    RED_CHECK_EQ(timer_events.size(), 0);
+    RED_CHECK(session_reactor.timer_events_.is_empty());
     RED_CHECK(!run_task);
 }

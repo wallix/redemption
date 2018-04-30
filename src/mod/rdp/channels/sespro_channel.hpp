@@ -358,7 +358,7 @@ private:
     uint32_t reconnection_cookie = INVALID_RECONNECTION_COOKIE;
 
     SessionReactor& session_reactor;
-    SessionReactor::BasicTimerPtr session_probe_timer;
+    SessionReactor::TimerPtr session_probe_timer;
     SessionReactor::GraphicEventPtr freeze_mod_screen;
 
     uint32_t options = 0;

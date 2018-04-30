@@ -198,7 +198,7 @@ class RdpdrSendDriveIOResponseTask final : public AsynchronousTask
 
     VirtualChannelDataSender & to_server_sender;
 
-    SessionReactor::BasicTimerPtr timer_ptr;
+    SessionReactor::TimerPtr timer_ptr;
 
 public:
     RdpdrSendDriveIOResponseTask(uint32_t flags,
@@ -271,7 +271,7 @@ class RdpdrSendClientMessageTask final : public AsynchronousTask {
 
     VirtualChannelDataSender & to_server_sender;
 
-    SessionReactor::BasicTimerPtr timer_ptr;
+    SessionReactor::TimerPtr timer_ptr;
 
 public:
     RdpdrSendClientMessageTask(

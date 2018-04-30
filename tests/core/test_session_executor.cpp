@@ -272,12 +272,12 @@ RED_AUTO_TEST_CASE(TestSessionExecutorSequence)
     event = session_reactor.create_graphic_event(std::ref(s))
     .on_action(jln2::funcsequencer(
         "a"_f = trace2([](auto ctx){ return ctx.next(); }),
-        "b"_f = trace2([](auto ctx){ return ctx.at("d"_s); }),
+        "b"_f = trace2([](auto ctx){ return ctx.at("d"_s).ready(); }),
         "c"_f = [](auto ctx, gdi::GraphicApi& /*gd*/, std::string& s){
             s += ctx.sequence_name();
             return ctx.exec_at("e"_s);
         },
-        "d"_f = trace2([](auto ctx){ return ctx.previous(); }),
+        "d"_f = trace2([](auto ctx){ return ctx.previous().ready(); }),
         "e"_f = trace2([](auto ctx){ return ctx.terminate(); })
     ));
 

@@ -105,6 +105,18 @@ namespace jln2
         Success,
     };
 
+    template<class F>
+    F make_lambda() noexcept
+    {
+        static_assert(
+            std::is_empty<F>::value,
+            "F must be an empty class or a lambda expression convertible to pointer of function");
+        // big hack for a lambda not default constructible before C++20 :)
+        alignas(F) char const f[sizeof(F)]{}; // same as `char f`
+        return reinterpret_cast<F const&>(f);
+    }
+
+
     namespace detail
     {
         template<bool HasAct, bool HasExit, class Top, class Group>
@@ -390,6 +402,41 @@ namespace jln2
         R next() noexcept { return R::Next; }
         R ready() noexcept { return R::Ready; }
         R terminate() noexcept { return R::Terminate; }
+
+        TimerContext& set_delay(std::chrono::milliseconds ms) noexcept
+        {
+            timer.set_delay(ms);
+            return *this;
+        }
+
+        TimerContext& set_time(timeval tv) noexcept
+        {
+            timer.set_time(tv);
+            return *this;
+        }
+
+        R ready_to(std::chrono::milliseconds ms) noexcept
+        {
+            timer.set_delay(ms);
+            return R::Ready;
+        }
+
+        R ready_at(timeval tv) noexcept
+        {
+            timer.set_time(tv);
+            return R::Ready;
+        }
+
+        Reactor& get_reactor() const noexcept;
+
+        timeval get_current_time() const noexcept;
+
+        TimerContext(TimerExecutor<Ts...>& timer) noexcept
+        : timer(timer)
+        {}
+
+    private:
+        TimerExecutor<Ts...>& timer;
     };
 
     template<class... Ts>
@@ -587,6 +634,11 @@ namespace jln2
         : reactor(reactor)
         {}
 
+        Reactor& get_reactor() const noexcept
+        {
+            return this->reactor;
+        }
+
         void set_delay(std::chrono::milliseconds ms) noexcept;
 
         void set_time(timeval tv) noexcept
@@ -602,7 +654,7 @@ namespace jln2
                 SCOPE_EXIT(this->exec_is_running = false);
             )
 
-            switch (this->on_timer(TimerContext<Ts...>{}, xs...)) {
+            switch (this->on_timer(TimerContext<Ts...>{*this}, xs...)) {
                 case R::Terminate:
                 case R::Next:
                     return false;
@@ -786,7 +838,7 @@ namespace jln2
     template<class F>
     auto one_shot(F f)
     {
-        return [f](auto /*ctx*/, auto&&... xs) {
+        return [f](auto /*ctx*/, auto&&... xs) mutable {
             f(static_cast<decltype(xs)&&>(xs)...);
             return R::Terminate;
         };
@@ -795,7 +847,7 @@ namespace jln2
     template<class F>
     auto always_ready(F f)
     {
-        return [f](auto /*ctx*/, auto&&... xs) {
+        return [f](auto /*ctx*/, auto&&... xs) mutable {
             f(static_cast<decltype(xs)&&>(xs)...);
             return R::Ready;
         };
@@ -976,12 +1028,17 @@ namespace jln2
             return NamedIndexPack::strings[this->i];
         }
 
+        R ready() noexcept
+        {
+            return R::Ready;
+        }
+
         R next() noexcept
         {
             return this->ctx.next();
         }
 
-        R previous() noexcept
+        Ctx& previous() noexcept
         {
             return this->at(this->i-1);
         }
@@ -996,19 +1053,19 @@ namespace jln2
             return this->exec_at(this->i-1);
         }
 
-        R at(int i) noexcept
+        Ctx& at(int i) noexcept
         {
             // assert(i >= 0);
             assert(i < int{NamedIndexPack::count});
-            this->i = i-1;
-            return R::Next;
+            this->i = i;
+            return this->ctx;
         }
 
         template<char... cs>
-        R at(string_c<cs...>) noexcept
+        Ctx& at(string_c<cs...>) noexcept
         {
-            this->i = detail::named_indexed_by_name<string_c<cs...>>(NamedIndexPack{}).index() - 1;
-            return R::Next;
+            this->i = detail::named_indexed_by_name<string_c<cs...>>(NamedIndexPack{}).index();
+            return this->ctx;
         }
 
         R exec_at(int i) noexcept
@@ -1022,6 +1079,18 @@ namespace jln2
         {
             this->i = detail::named_indexed_by_name<string_c<cs...>>(NamedIndexPack{}).index();
             return R::ReRun;
+        }
+
+        FuncSequencerCtx& set_delay(std::chrono::milliseconds ms) noexcept
+        {
+            (void)this->ctx.set_delay(ms);
+            return *this;
+        }
+
+        FuncSequencerCtx& set_time(std::chrono::milliseconds ms) noexcept
+        {
+            (void)this->ctx.set_time(ms);
+            return *this;
         }
 
         FuncSequencerCtx(Ctx& ctx, unsigned& i) noexcept
@@ -2361,6 +2430,19 @@ namespace jln2
     }
 
 
+    template<class... Ts>
+    Reactor& TimerContext<Ts...>::get_reactor() const noexcept
+    {
+        return this->timer.get_reactor();
+    }
+
+    template<class... Ts>
+    timeval TimerContext<Ts...>::get_current_time() const noexcept
+    {
+        return this->get_reactor().get_current_time();
+    }
+
+
     template<bool HasAct, bool HasExit, class Top, class Group>
     detail::GroupExecutorBuilderImpl<HasAct, HasExit, Top, Group>::GroupExecutorBuilderImpl(
         Top& top, std::unique_ptr<Group>&& g) noexcept
@@ -2826,7 +2908,7 @@ namespace jln2
     template<class... Ts>
     void TimerExecutor<Ts...>::set_delay(std::chrono::milliseconds ms) noexcept
     {
-        assert(ms.count() > 0);
+        assert(ms.count() >= 0);
         this->delay = ms;
         this->tv = addusectimeval(this->delay, this->reactor.get_current_time());
     }

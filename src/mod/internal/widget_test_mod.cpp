@@ -42,11 +42,7 @@ struct WidgetTestMod::WidgetTestModPrivate
         .set_delay(std::chrono::seconds(0))
         .on_action([](auto ctx, gdi::GraphicApi& gd, WidgetTestMod& mod){
             mod.draw_event(0, gd);
-            return ctx
-                .set_delay(std::chrono::seconds(3))
-                .next_action(jln::always_ready([](gdi::GraphicApi& gd, WidgetTestMod& mod){
-                    mod.draw_event(0, gd);
-                }));
+            return ctx.set_delay(std::chrono::seconds(3)).ready();
         });
     }
 

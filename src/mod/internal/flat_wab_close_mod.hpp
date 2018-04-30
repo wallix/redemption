@@ -51,7 +51,7 @@ class FlatWabCloseMod : public LocallyIntegrableMod, public NotifyApi
 
     FlatWabCloseModVariables vars;
 
-    SessionReactor::BasicTimerPtr timeout_timer;
+    SessionReactor::TimerPtr timeout_timer;
 
 public:
     FlatWabCloseMod(

@@ -70,7 +70,7 @@ private:
 
     DCState dc_state;
 
-    SessionReactor::BasicTimerPtr first_click_down_timer;
+    SessionReactor::TimerPtr first_click_down_timer;
 
     const bool rail_enabled;
 

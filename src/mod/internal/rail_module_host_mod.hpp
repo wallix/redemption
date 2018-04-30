@@ -100,7 +100,7 @@ private:
 
     bool can_resize_hosted_desktop = false;
 
-    SessionReactor::BasicTimerPtr disconnection_reconnection_timer; // Window resize
+    SessionReactor::TimerPtr disconnection_reconnection_timer; // Window resize
 
     ClientExecute& client_execute;
 };

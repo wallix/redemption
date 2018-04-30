@@ -167,9 +167,9 @@ RED_AUTO_TEST_CASE(TestFront)
 
     while (front.up_and_running == 0) {
         front.incoming(no_mod, now);
-        RED_CHECK_EQ(session_reactor.timer_events_.elements.size(), 0);
+        RED_CHECK(session_reactor.timer_events_.is_empty());
     }
-    RED_CHECK_EQ(session_reactor.front_events_.elements.size(), 0);
+    RED_CHECK(session_reactor.front_events_.is_empty());
 
     LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
@@ -403,7 +403,7 @@ RED_AUTO_TEST_CASE(TestFront2)
                  , now - ini.get<cfg::globals::handshake_timeout>().count() - 1);
     null_mod no_mod;
 
-    RED_REQUIRE_EQ(session_reactor.timer_events_.elements.size(), 1);
+    RED_REQUIRE(!session_reactor.timer_events_.is_empty());
     RED_CHECK_EXCEPTION_ERROR_ID(
         session_reactor.execute_timers_at(
             SessionReactor::EnableGraphics{false},
