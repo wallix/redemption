@@ -4405,6 +4405,7 @@ obj src/sashimi/sftp.o : $(REDEMPTION_SRC_PATH)/sashimi/sftp.cpp : <cxxflags>-Wn
 obj src/sashimi/ssh_error.o : $(REDEMPTION_SRC_PATH)/sashimi/ssh_error.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
 obj src/transport/crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_transport.cpp ;
 obj src/transport/mwrm_reader.o : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
+obj src/transport/recorder_transport.o : $(REDEMPTION_SRC_PATH)/transport/recorder_transport.cpp ;
 obj src/transport/socket_transport.o : $(REDEMPTION_SRC_PATH)/transport/socket_transport.cpp ;
 obj src/utils/authorization_channels.o : $(REDEMPTION_SRC_PATH)/utils/authorization_channels.cpp ;
 obj src/utils/bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;

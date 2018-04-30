@@ -907,6 +907,13 @@ private Q_SLOTS:
         this->controllers->client->writeWindowsConf();
 
         this->options->getConfigValues();
+        this->_front->writeAccoundData(
+            this->get_IPField(),
+            this->get_userNameField(),
+            this->get_PWDField(),
+            this->get_portField()
+        );
+        this->_front->writeCustomKeyConfig();
 
         this->controllers->connexionReleased();
 
@@ -916,12 +923,7 @@ private Q_SLOTS:
             this->_front->_save_password_account = false;
         }
 
-        this->_front->writeAccoundData(
-            this->get_IPField(),
-            this->get_userNameField(),
-            this->get_PWDField(),
-            this->get_portField()
-        );
+
     }
 
     void optionsReleased() {
@@ -1091,6 +1093,10 @@ public:
             this->VNC_tab._buttonOptions.setText("Options ^");
             this->is_option_open = true;
         }
+    }
+
+    void call_add_row() {
+
     }
 
 private Q_SLOTS:

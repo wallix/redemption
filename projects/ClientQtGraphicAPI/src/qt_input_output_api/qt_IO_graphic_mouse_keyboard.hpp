@@ -208,6 +208,7 @@ public:
                 this->form->set_userNameField(this->client->user_name);
             }
             this->form->show();
+
         }
     }
 
@@ -1484,7 +1485,8 @@ private:
             this->qtRDPKeymap.qKeyCode,
             this->qtRDPKeymap.scanCode,
             this->qtRDPKeymap.ascii,
-            this->qtRDPKeymap.flag &0x0100 ? 0x0100: 0
+            this->qtRDPKeymap.flag &0x0100 ? 0x0100: 0,
+            this->qtRDPKeymap.qKeyName
           );
 
        // key_info.name = this->qtRDPKeymap.name;

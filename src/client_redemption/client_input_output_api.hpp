@@ -294,11 +294,13 @@ public:
         int extended = 0;
         std::string name;
 
-        KeyCustomDefinition(int qtKeyID, int scanCode, std::string ASCII8, int extended)
+        KeyCustomDefinition(int qtKeyID, int scanCode, std::string ASCII8, int extended, const std::string & name)
           : qtKeyID(qtKeyID)
           , scanCode(scanCode)
           , ASCII8(ASCII8)
-          , extended(extended) {}
+          , extended(extended ? 0x0100 : 0)
+          , name(name)
+          {}
     };
     std::vector<KeyCustomDefinition> keyCustomDefinitions;
 
@@ -694,7 +696,6 @@ public:
                         ligne = ligne.substr(pos + delimiter.length(), ligne.length());
                         pos = ligne.find(delimiter);
 
-
                         int scanCode = 0;
                         scanCode = std::stoi(ligne.substr(0, pos));
                         ligne = ligne.substr(pos + delimiter.length(), ligne.length());
@@ -706,11 +707,19 @@ public:
                             ASCII8 = "";
                             next_pos = 1;
                         }
-                        ligne = ligne.substr(next_pos, ligne.length());
 
+                        ligne = ligne.substr(next_pos, ligne.length());
                         int extended = std::stoi(ligne.substr(0, 1));
 
-                        KeyCustomDefinition keyCustomDefinition = {qtKeyID, scanCode, ASCII8, extended};
+                        if (extended) {
+                            extended = 1;
+                        }
+                        pos = ligne.find(delimiter);
+
+                        std::string name = ligne.substr(pos + delimiter.length(), ligne.length());
+
+
+                        KeyCustomDefinition keyCustomDefinition = {qtKeyID, scanCode, ASCII8, extended, name};
 
                         this->keyCustomDefinitions.push_back(keyCustomDefinition);
                     }
@@ -734,16 +743,33 @@ public:
 
                 KeyCustomDefinition & key = this->keyCustomDefinitions[i];
 
+                if (key.qtKeyID != 0) {
                     ofichier << "- ";
                     ofichier << key.qtKeyID  << " ";
                     ofichier << key.scanCode << " ";
                     //int key_int = key.ASCII8.data()[0];
                     ofichier << key.ASCII8 << " ";
-                    ofichier << key.extended << std::endl;
+                    ofichier << key.extended << " ";
+                    ofichier << key.name << std::endl;
+                }
             }
             ofichier.close();
         }
     }
+
+
+    void add_key_custom_definition(int qtKeyID, int scanCode, std::string ASCII8, int extended, const std::string & name) {
+
+        LOG(LOG_INFO, "qkey=%d scanCode=%d ascii=%s extended=%d name=%s !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", qtKeyID, scanCode, ASCII8, extended, name);
+        KeyCustomDefinition keyCustomDefinition = {qtKeyID, scanCode, ASCII8, extended, name};
+        this->keyCustomDefinitions.push_back(keyCustomDefinition);
+
+        const ClientRedemptionIOAPI::KeyCustomDefinition & key = this->keyCustomDefinitions[this->keyCustomDefinitions.size() - 1];
+
+        LOG(LOG_INFO, "qkey=%d scanCode=%d ascii=%s extended=%d name=%s", key.qtKeyID, key.scanCode, key.ASCII8, key.extended, key.name);
+    }
+
+
 
     void setClientInfo() {
 
@@ -861,10 +887,7 @@ public:
                     }
                 }
             }
-
             ifichier.close();
-
-//             this->imageFormatRGB  = this->bpp_to_QFormat(this->info.bpp, false);
         }
     }
 
@@ -881,7 +904,6 @@ public:
                 auto pos(ligne.find(delimiter));
                 std::string tag  = ligne.substr(0, pos);
                 std::string info = ligne.substr(pos + delimiter.length(), ligne.length());
-
 
                 if (tag.compare(std::string("save_pwd")) == 0) {
                     if (info.compare(std::string("true")) == 0) {
@@ -975,7 +997,6 @@ public:
                     ofichier << "save_pwd false" << "\n";
                 }
                 ofichier << "last_target " <<  this->_last_target_index << "\n";
-
                 ofichier << "\n";
 
                 for (int i = 0; i < this->_accountNB; i++) {
@@ -1579,7 +1600,7 @@ public:
     virtual void open_options() {}
 
     virtual ClientRedemptionIOAPI::KeyCustomDefinition get_key_info(int, std::string) {
-        return ClientRedemptionIOAPI::KeyCustomDefinition(0, 0, "", 0);
+        return ClientRedemptionIOAPI::KeyCustomDefinition(0, 0, "", 0, "");
     }
 
 };
