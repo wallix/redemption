@@ -52,6 +52,7 @@ constexpr auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };
 
 RED_AUTO_TEST_CASE(TestSessionExecutorTimer)
 {
+    using Ptr = jln2::SharedPtr;
     SessionReactor session_reactor;
 
     session_reactor.set_current_time(timeval{10, 222});
@@ -60,25 +61,25 @@ RED_AUTO_TEST_CASE(TestSessionExecutorTimer)
 
     std::string s;
 
-    auto timer1 = session_reactor.create_timer(std::ref(s))
+    Ptr timer1 = session_reactor.create_timer(std::ref(s))
     .set_notify_delete([](std::string& s){
         s += "d1\n";
     })
     .set_delay(std::chrono::seconds(1))
-    .on_action(jln::one_shot([](std::string& s){
+    .on_action(jln2::one_shot([](std::string& s){
         s += "timer1\n";
     }));
 
-    auto timer2 = session_reactor.create_timer(std::ref(s))
+    Ptr timer2 = session_reactor.create_timer(std::ref(s))
     .set_notify_delete([](std::string& s){
         s += "d2\n";
     })
     .set_delay(std::chrono::seconds(2))
-    .on_action(jln::always_ready([](std::string& s){
+    .on_action(jln2::always_ready([](std::string& s){
         s += "timer2\n";
     }));
 
-    auto timer3 = session_reactor.create_timer(std::ref(s), 'a')
+    Ptr timer3 = session_reactor.create_timer(std::ref(s), 'a')
     .set_notify_delete([](std::string& s, char){
         s += "d3\n";
     })
@@ -88,9 +89,9 @@ RED_AUTO_TEST_CASE(TestSessionExecutorTimer)
         return c++ == 'd' ? ctx.terminate() : ctx.ready();
     });
 
-    auto timer4 = session_reactor.create_graphic_timer(std::ref(s))
+    Ptr timer4 = session_reactor.create_graphic_timer(std::ref(s))
     .set_time({16, 0})
-    .on_action(jln::one_shot([](gdi::GraphicApi&, std::string& s){
+    .on_action(jln2::one_shot([](gdi::GraphicApi&, std::string& s){
         s += "timer4\n";
     }));
 
@@ -102,32 +103,32 @@ RED_AUTO_TEST_CASE(TestSessionExecutorTimer)
 
     // execute_timers_at or set_current_time + execute_timers
     session_reactor.execute_timers_at(disable_gd, {11, 222}, &gdi::null_gd);
-    RED_CHECK_EQ(s, "timer1\nd1\ntimer3\n");
+    RED_CHECK_EQ(s, "timer3\ntimer1\nd1\n");
     RED_CHECK(!timer1);
     RED_CHECK(timer2);
 
     session_reactor.execute_timers_at(disable_gd, {13, 0}, &gdi::null_gd);
-    RED_CHECK_EQ(s, "timer1\nd1\ntimer3\ntimer2\ntimer3\n");
+    RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\n");
     RED_CHECK(!timer1);
     RED_CHECK(timer2);
 
     session_reactor.execute_timers_at(disable_gd, {14, 0}, &gdi::null_gd);
-    RED_CHECK_EQ(s, "timer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\n");
+    RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\n");
     RED_CHECK(timer2);
 
     session_reactor.execute_timers_at(disable_gd, {15, 0}, &gdi::null_gd);
-    RED_CHECK_EQ(s, "timer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\ntimer2\ntimer3\nd3\n");
+    RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\n");
     RED_CHECK(timer2);
 
     timer2.reset();
     RED_CHECK(!timer2);
-    RED_CHECK_EQ(s, "timer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\ntimer2\ntimer3\nd3\nd2\n");
+    RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\nd2\n");
 
     session_reactor.execute_timers_at(disable_gd, {16, 0}, &gdi::null_gd);
-    RED_CHECK_EQ(s, "timer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\ntimer2\ntimer3\nd3\nd2\n");
+    RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\nd2\n");
 
     session_reactor.execute_timers_at(enable_gd, {16, 0}, &gdi::null_gd);
-    RED_CHECK_EQ(s, "timer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\ntimer2\ntimer3\nd3\nd2\ntimer4\n");
+    RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\nd2\ntimer4\n");
 }
 
 RED_AUTO_TEST_CASE(TestSessionExecutorSimpleEvent)
@@ -140,7 +141,7 @@ RED_AUTO_TEST_CASE(TestSessionExecutorSimpleEvent)
     .set_notify_delete([](std::string& s){
         s += "~gd\n";
     })
-    .on_action(jln::one_shot([](gdi::GraphicApi&, std::string& s){
+    .on_action(jln2::one_shot([](gdi::GraphicApi&, std::string& s){
         s += "gd\n";
     }));
 
@@ -148,7 +149,7 @@ RED_AUTO_TEST_CASE(TestSessionExecutorSimpleEvent)
     .set_notify_delete([](std::string& s){
         s += "~callback\n";
     })
-    .on_action(jln::one_shot([](Callback&, std::string& s){
+    .on_action(jln2::one_shot([](Callback&, std::string& s){
         s += "callback\n";
     }));
 
