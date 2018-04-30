@@ -221,76 +221,76 @@ RED_AUTO_TEST_CASE(TestSessionExecutorFd)
     RED_CHECK_EQ(s, "fd2\n~fd2\nfd1\n~fd1\n");
 }
 
-// RED_AUTO_TEST_CASE(TestSessionExecutorSequence)
-// {
-//     SessionReactor session_reactor;
-//
-//     std::string s;
-//
-//     using namespace jln::literals;
-//     using jln::value;
-//
-//     auto trace = [](auto name){
-//         return [](auto ctx, gdi::GraphicApi&, std::string& s){
-//             s += decltype(name){}.c_str();
-//             // or
-//             // if constexpr (ctx.is_final_sequence()) return ctx.ready();
-//             // else return ctx.sequence_next();
-//             return ctx.sequence_next_or_terminate();
-//         };
-//     };
-//
-//     SessionReactor::GraphicEventPtr event = session_reactor.create_graphic_event(std::ref(s))
-//     .on_action(jln::funcsequencer(
-//         trace("a"_s),
-//         trace("b"_s),
-//         trace("c"_s),
-//         trace("d"_s)
-//     ));
-//
-//     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
-//     RED_CHECK(event);
-//     RED_CHECK_EQ(s, "a");
-//     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
-//     RED_CHECK(event);
-//     RED_CHECK_EQ(s, "ab");
-//     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
-//     RED_CHECK(event);
-//     RED_CHECK_EQ(s, "abc");
-//     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
-//     RED_CHECK(!event);
-//     RED_CHECK_EQ(s, "abcd");
-//     s.clear();
-//
-//     auto trace2 = [](auto f){
-//         return [](auto ctx, gdi::GraphicApi&, std::string& s){
-//             s += ctx.sequence_name().c_str();
-//             return jln::make_lambda<decltype(f)>()(ctx);
-//         };
-//     };
-//
-//     event = session_reactor.create_graphic_event(std::ref(s))
-//     .on_action(jln::funcsequencer(
-//         "a"_f = trace2([](auto ctx){ return ctx.sequence_next(); }),
-//         "b"_f = trace2([](auto ctx){ return ctx.sequence_at("d"_s); }),
-//         "c"_f = [](auto ctx, gdi::GraphicApi& gd, std::string& s){
-//             s += ctx.sequence_name().c_str();
-//             return ctx.exec_sequence_at("e"_s, gd);
-//         },
-//         "d"_f = trace2([](auto ctx){ return ctx.sequence_previous(); }),
-//         "e"_f = trace2([](auto ctx){ return ctx.terminate(); })
-//     ));
-//
-//     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
-//     RED_CHECK(event);
-//     RED_CHECK_EQ(s, "a");
-//     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
-//     RED_CHECK(event);
-//     RED_CHECK_EQ(s, "ab");
-//     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
-//     RED_CHECK(event);
-//     RED_CHECK_EQ(s, "abd");
-//     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
-//     RED_CHECK(!event);
-//     RED_CHECK_EQ(s, "abdce");
-// }
+RED_AUTO_TEST_CASE(TestSessionExecutorSequence)
+{
+    SessionReactor session_reactor;
+
+    std::string s;
+
+    using namespace jln2::literals;
+    using jln2::value;
+
+    auto trace = [](auto name){
+        return [](auto ctx, gdi::GraphicApi&, std::string& s){
+            s += decltype(name){}.c_str();
+            // or
+            // if constexpr (ctx.is_final_sequence()) return ctx.ready();
+            // else return ctx.sequence_next();
+            return ctx.next();
+        };
+    };
+
+    SessionReactor::GraphicEventPtr event = session_reactor.create_graphic_event(std::ref(s))
+    .on_action(jln2::funcsequencer(
+        trace("a"_s),
+        trace("b"_s),
+        trace("c"_s),
+        trace("d"_s)
+    ));
+
+    session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
+    RED_CHECK(event);
+    RED_CHECK_EQ(s, "a");
+    session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
+    RED_CHECK(event);
+    RED_CHECK_EQ(s, "ab");
+    session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
+    RED_CHECK(event);
+    RED_CHECK_EQ(s, "abc");
+    session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
+    RED_CHECK(!event);
+    RED_CHECK_EQ(s, "abcd");
+    s.clear();
+
+    auto trace2 = [](auto f){
+        return [](auto ctx, gdi::GraphicApi&, std::string& s){
+            s += ctx.sequence_name();
+            return jln::make_lambda<decltype(f)>()(ctx);
+        };
+    };
+
+    event = session_reactor.create_graphic_event(std::ref(s))
+    .on_action(jln2::funcsequencer(
+        "a"_f = trace2([](auto ctx){ return ctx.next(); }),
+        "b"_f = trace2([](auto ctx){ return ctx.at("d"_s); }),
+        "c"_f = [](auto ctx, gdi::GraphicApi& /*gd*/, std::string& s){
+            s += ctx.sequence_name();
+            return ctx.exec_at("e"_s);
+        },
+        "d"_f = trace2([](auto ctx){ return ctx.previous(); }),
+        "e"_f = trace2([](auto ctx){ return ctx.terminate(); })
+    ));
+
+    session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
+    RED_CHECK(event);
+    RED_CHECK_EQ(s, "a");
+    session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
+    RED_CHECK(event);
+    RED_CHECK_EQ(s, "ab");
+    session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
+    RED_CHECK(event);
+    RED_CHECK_EQ(s, "abd");
+    session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
+    RED_CHECK(!event);
+    RED_CHECK_EQ(s, "abdce");
+}

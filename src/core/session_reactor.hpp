@@ -78,6 +78,7 @@ namespace jln2
         SubstituteAction,
         SubstituteTimeout,
         Ready,
+        ReRun,
         CreateContinuation,
     };
 
@@ -386,6 +387,7 @@ namespace jln2
     template<class... Ts>
     struct TimerContext
     {
+        R next() noexcept { return R::Next; }
         R ready() noexcept { return R::Ready; }
         R terminate() noexcept { return R::Terminate; }
     };
@@ -393,6 +395,7 @@ namespace jln2
     template<class... Ts>
     struct ActionContext
     {
+        R next() noexcept { return R::Next; }
         R ready() noexcept { return R::Ready; }
         R terminate() noexcept { return R::Terminate; }
     };
@@ -601,18 +604,19 @@ namespace jln2
 
             switch (this->on_timer(TimerContext<Ts...>{}, xs...)) {
                 case R::Terminate:
+                case R::Next:
                     return false;
                 case R::Ready:
                     assert(this->delay.count() >= 0);
                     this->set_delay(this->delay);
                     return true;
+                case R::ReRun:
+                    REDEMPTION_UNREACHABLE();
                 case R::Exception:
                     REDEMPTION_UNREACHABLE();
                 case R::ExitSuccess:
                     REDEMPTION_UNREACHABLE();
                 case R::ExitError:
-                    REDEMPTION_UNREACHABLE();
-                case R::Next:
                     REDEMPTION_UNREACHABLE();
                 case R::NeedMoreData:
                     REDEMPTION_UNREACHABLE();
@@ -698,16 +702,17 @@ namespace jln2
 
             switch (this->on_action(ActionContext<Ts...>{}, xs...)) {
                 case R::Terminate:
+                case R::Next:
                     return false;
                 case R::Ready:
                     return true;
+                case R::ReRun:
+                    REDEMPTION_UNREACHABLE();
                 case R::Exception:
                     REDEMPTION_UNREACHABLE();
                 case R::ExitSuccess:
                     REDEMPTION_UNREACHABLE();
                 case R::ExitError:
-                    REDEMPTION_UNREACHABLE();
-                case R::Next:
                     REDEMPTION_UNREACHABLE();
                 case R::NeedMoreData:
                     REDEMPTION_UNREACHABLE();
@@ -815,7 +820,8 @@ namespace jln2
     template<class... Fs>
     auto sequencer(Fs&&... fs)
     {
-        static_assert(sizeof...(Fs));
+        static_assert(sizeof...(Fs) > 1);
+
         return [=, i = 0u](auto ctx, auto&&... xs) mutable /*-> R*/ {
             auto wrap = [&](auto& f) {
                 return [&]() {
@@ -838,6 +844,261 @@ namespace jln2
                     return r;
                 default:
                     return r;
+            }
+        };
+    }
+
+
+    namespace detail
+    {
+        template<class S, class F>
+        struct named_function
+        {
+            F f;
+
+            template<class... Ts>
+            decltype(auto) operator()(Ts&&... xs)
+            {
+                return this->f(static_cast<Ts&&>(xs)...);
+            }
+
+            template<class... Ts>
+            decltype(auto) operator()(Ts&&... xs) const
+            {
+                return this->f(static_cast<Ts&&>(xs)...);
+            }
+        };
+
+        template<class S>
+        struct named_type
+        {
+            template<class F>
+            named_function<S, std::decay_t<F>> operator()(F&& f) const noexcept
+            {
+                return {static_cast<F&&>(f)};
+            }
+
+            template<class F>
+            named_function<S, std::decay_t<F>> operator=(F&& f) const noexcept
+            {
+                return {static_cast<F&&>(f)};
+            }
+
+            named_type const& operator=(named_type&) const noexcept { return *this; }
+            named_type const& operator=(named_type&&) const noexcept { return *this; }
+            named_type const& operator=(named_type const&) const noexcept { return *this; }
+        };
+
+        struct unamed{};
+
+        template<class I, class S>
+        struct named_indexed
+        {
+            static I index() noexcept { return I{}; }
+            static S name() noexcept { return S{}; }
+        };
+
+        template<class S, class I>
+        named_indexed<I, S> named_indexed_by_name(named_indexed<I, S> x) noexcept
+        {
+            return x;
+        }
+
+        template<class i, class F>
+        struct function_to_named_index
+        {
+            using type = named_indexed<i, unamed>;
+        };
+
+        template<class i, class S, class F>
+        struct function_to_named_index<i, named_function<S, F>>
+        {
+            using type = named_indexed<i, S>;
+        };
+    }
+
+    template<char... cs>
+    struct string_c
+    {
+        static inline char const value[sizeof...(cs)+1]{cs..., '\0'};
+
+        static constexpr char const* c_str() noexcept { return value; }
+    };
+
+    namespace literals
+    {
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
+        template<class C, C... cs>
+        string_c<cs...> operator ""_c () noexcept
+        { return {}; }
+
+        template<class C, C... cs>
+        string_c<cs...> operator ""_s () noexcept
+        { return {}; }
+
+        template<class C, C... cs>
+        detail::named_type<string_c<cs...>> operator ""_f () noexcept
+        { return {}; }
+        REDEMPTION_DIAGNOSTIC_POP
+    }
+
+    template<auto x>
+    constexpr auto value = std::integral_constant<decltype(x), x>{};
+
+    enum class IndexSequence : int;
+
+    template<class Ctx, class NamedIndexPack>
+    struct FuncSequencerCtx
+    {
+        Ctx& base() noexcept
+        {
+            return this->ctx;
+        }
+
+        R terminate() const noexcept
+        {
+            return R::Terminate;
+        }
+
+        bool is_final_sequence() const noexcept
+        {
+            return this->i == int{NamedIndexPack::count} - 1;
+        }
+
+        IndexSequence index() const noexcept
+        {
+            return IndexSequence(this->i);
+        }
+
+        char const* sequence_name() const noexcept
+        {
+            return NamedIndexPack::strings[this->i];
+        }
+
+        R next() noexcept
+        {
+            return this->ctx.next();
+        }
+
+        R previous() noexcept
+        {
+            return this->at(this->i-1);
+        }
+
+        R exec_next() noexcept
+        {
+            return this->exec_at(this->i+1);
+        }
+
+        R exec_previous() noexcept
+        {
+            return this->exec_at(this->i-1);
+        }
+
+        R at(int i) noexcept
+        {
+            // assert(i >= 0);
+            assert(i < int{NamedIndexPack::count});
+            this->i = i-1;
+            return R::Next;
+        }
+
+        template<char... cs>
+        R at(string_c<cs...>) noexcept
+        {
+            this->i = detail::named_indexed_by_name<string_c<cs...>>(NamedIndexPack{}).index() - 1;
+            return R::Next;
+        }
+
+        R exec_at(int i) noexcept
+        {
+            this->i = i;
+            return R::ReRun;
+        }
+
+        template<char... cs>
+        R exec_at(string_c<cs...>) noexcept
+        {
+            this->i = detail::named_indexed_by_name<string_c<cs...>>(NamedIndexPack{}).index();
+            return R::ReRun;
+        }
+
+        FuncSequencerCtx(Ctx& ctx, unsigned& i) noexcept
+        : ctx(ctx)
+        , i(i)
+        {}
+
+    private:
+        Ctx& ctx;
+        unsigned& i;
+    };
+
+    namespace detail
+    {
+        template<class... NamedIndexed>
+        struct named_indexed_pack : NamedIndexed...
+        {
+            static const std::size_t count = sizeof...(NamedIndexed);
+
+            static inline char const* const strings[sizeof...(NamedIndexed)]
+                = {NamedIndexed::name().c_str()...};
+        };
+
+        template<class Ints, class... Fs>
+        struct create_named_indexed_pack;
+
+        template<std::size_t... Ints, class... Fs>
+        struct create_named_indexed_pack<std::integer_sequence<std::size_t, Ints...>, Fs...>
+        {
+            using type = named_indexed_pack<typename function_to_named_index<
+                std::integral_constant<std::size_t, Ints>,  Fs>::type...>;
+        };
+    }
+
+    template<class S, class F>
+    detail::named_function<S, F> named(S, F)
+    { return {}; }
+
+    // TODO is `sequencer`
+    template<class... Fs>
+    auto funcsequencer(Fs&&... fs)
+    {
+        static_assert(sizeof...(Fs) > 1);
+
+        using Pack = typename detail::create_named_indexed_pack<
+            std::index_sequence_for<Fs...>, std::decay_t<Fs>...>::type;
+
+        return [=, i = 0u](auto ctx, auto&&... xs) mutable /*-> R*/ {
+            auto wrap = [&](auto& f) {
+                return [&]() {
+                    return f(
+                        FuncSequencerCtx<decltype(ctx), Pack>{ctx, i},
+                        static_cast<decltype(xs)&&>(xs)...
+                    );
+                };
+            };
+
+            for (;;) {
+                R const r = detail::switch_(
+                    i, std::make_index_sequence<sizeof...(Fs)>{}, wrap(fs)...);
+
+                switch (r) {
+                    case R::ReRun:
+                        break;
+                    case R::Next:
+                        return i < sizeof...(fs)-1 ? ((void)++i, R::Ready) : R::Next;
+                    case R::CreateGroup:
+                        ++i;
+                        return R::CreateContinuation;
+                    case R::SubstituteTimeout:
+                    case R::SubstituteAction:
+                    case R::SubstituteExit:
+                        ++i;
+                        return r;
+                    default:
+                        return r;
+                }
             }
         };
     }
@@ -991,6 +1252,8 @@ namespace jln2
                             on_timeout = std::move(this->on_timeout_switch);
                             r = R::Ready;
                             break;
+                        case R::ReRun:
+                            REDEMPTION_UNREACHABLE();
                         case R::CreateContinuation:
                             REDEMPTION_UNREACHABLE();
                         case R::CreateGroup:
@@ -1018,6 +1281,8 @@ namespace jln2
                 case R::NeedMoreData:
                 case R::Ready:
                     return true;
+                case R::ReRun:
+                    REDEMPTION_UNREACHABLE();
                 case R::CreateGroup:
                     REDEMPTION_UNREACHABLE();
                 case R::SubstituteTimeout:
@@ -1054,6 +1319,8 @@ namespace jln2
                         case R::Ready:
                         case R::Next:
                             continue;
+                        case R::ReRun:
+                            REDEMPTION_UNREACHABLE();
                         case R::CreateContinuation:
                             REDEMPTION_UNREACHABLE();
                         case R::CreateGroup:
@@ -1083,6 +1350,8 @@ namespace jln2
                 case R::NeedMoreData:
                 case R::Ready:
                     return true;
+                case R::ReRun:
+                    REDEMPTION_UNREACHABLE();
                 case R::CreateGroup:
                     REDEMPTION_UNREACHABLE();
                 case R::SubstituteTimeout:
@@ -1130,6 +1399,8 @@ namespace jln2
                     this->group->on_action = std::move(this->loaded_group->on_action);
                     this->loaded_group.reset();
                     return R::Ready;
+                case R::ReRun:
+                    REDEMPTION_UNREACHABLE();
                 case R::SubstituteTimeout:
                     REDEMPTION_UNREACHABLE();
                     // return R::Ready;
@@ -1172,6 +1443,8 @@ namespace jln2
                     case R::SubstituteAction:
                     case R::SubstituteTimeout:
                         return R::Ready;
+                    case R::ReRun:
+                        REDEMPTION_UNREACHABLE();
                     case R::CreateContinuation:
                         REDEMPTION_UNREACHABLE();
                 }
