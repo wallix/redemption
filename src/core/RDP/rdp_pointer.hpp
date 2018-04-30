@@ -748,10 +748,6 @@ public:
     }
 
 
-    unsigned mask_size_rows_padded_even() const {
-        return ::even_pad_length(::nbbytes(this->dimensions.width)) * this->dimensions.height;
-    }
-
     unsigned bit_mask_size() const {
         return ::nbbytes(this->dimensions.width) * this->dimensions.height;
     }
@@ -839,7 +835,7 @@ public:
         }
     }
 
-    void emit_pointer(OutStream & result, int cache_idx, uint16_t mouse_x, uint16_t mouse_y)
+    void emit_pointer(OutStream & result, int cache_idx, uint16_t mouse_x, uint16_t mouse_y) const
     {
         result.out_uint16_le(mouse_x);
         result.out_uint16_le(mouse_y);
@@ -847,13 +843,11 @@ public:
         result.out_uint8(this->get_hotspot().x);
         result.out_uint8(this->get_hotspot().y);
 
-        auto av_xor = this->get_24bits_xor_mask();
-        result.out_copy_bytes(av_xor);
-        auto av_and = this->get_monochrome_and_mask();
-        result.out_copy_bytes(av_and);
+        result.out_copy_bytes(this->get_24bits_xor_mask());
+        result.out_copy_bytes(this->get_monochrome_and_mask());
     }
 
-    void emit_pointer2(OutStream & result, int cache_idx, uint16_t mouse_x, uint16_t mouse_y)
+    void emit_pointer2(OutStream & result, int cache_idx, uint16_t mouse_x, uint16_t mouse_y) const
     {
         result.out_uint16_le(mouse_x);
         result.out_uint16_le(mouse_y);
@@ -867,12 +861,10 @@ public:
         result.out_uint8(this->get_hotspot().y);
 
         result.out_uint16_le(this->xor_data_size());
-        result.out_uint16_le(this->mask_size_rows_padded_even());
+        result.out_uint16_le(this->bit_mask_size());
         
-        auto av_xor = this->get_24bits_xor_mask();
-        result.out_copy_bytes(av_xor);
-        auto av_and = this->get_monochrome_and_mask();
-        result.out_copy_bytes(av_and);
+        result.out_copy_bytes(this->get_24bits_xor_mask());
+        result.out_copy_bytes(this->get_monochrome_and_mask());
     }
 
     void to_regular_mask(const uint8_t * indata, unsigned mlen, uint8_t bpp) {
