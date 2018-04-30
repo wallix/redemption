@@ -248,9 +248,11 @@ public:
                     return io_fd_isset(fd, rfds);
                 });
                 bool const front_is_set = sck_is_set(front_trans, rfds);
-                if (session_reactor.front_events().size() || front_is_set) {
+                if (session_reactor.has_front_event() || front_is_set) {
                     try {
-                        session_reactor.execute_callbacks(mm.get_callback());
+                        if (session_reactor.has_front_event()) {
+                            session_reactor.execute_callbacks(mm.get_callback());
+                        }
                         if (front_is_set) {
                             front.incoming(mm.get_callback(), now);
                         }

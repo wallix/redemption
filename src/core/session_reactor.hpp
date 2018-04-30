@@ -2785,16 +2785,14 @@ struct SessionReactor
     }
 
 
-    using CallbackEvent = jln::ActionBase<jln::prefix_args<Callback&>>;
-    using CallbackEventPtr = SharedPtr<CallbackEvent>;
-
-    using CallbackContainer = ActionContainer<CallbackEvent>;
+    using CallbackEventContainer = jln2::ActionContainer<Callback&>;
+    using CallbackEventPtr = CallbackEventContainer::Ptr;
 
     template<class... Args>
-    CallbackContainer::Builder<Args...>
+    REDEMPTION_JLN2_CONCEPT(jln2::detail::ActionExecutorBuilder_Concept)
     create_callback_event(Args&&... args)
     {
-        return this->front_events_.create_shared_ptr(*this, static_cast<Args&&>(args)...);
+        return this->front_events_.create_action_executor(*this, static_cast<Args&&>(args)...);
     }
 
 
@@ -2805,19 +2803,17 @@ struct SessionReactor
     REDEMPTION_JLN2_CONCEPT(jln2::detail::ActionExecutorBuilder_Concept)
     create_graphic_event(Args&&... args)
     {
-        return this->graphic_events_.create_action_executor(
-            *this, static_cast<Args&&>(args)...);
+        return this->graphic_events_.create_action_executor(*this, static_cast<Args&&>(args)...);
     }
 
-    using SesmanContainer = jln2::ActionContainer<Inifile&>;
-    using SesmanPtr = SesmanContainer::Ptr;
+    using SesmanEventContainer = jln2::ActionContainer<Inifile&>;
+    using SesmanEventPtr = SesmanEventContainer::Ptr;
 
     template<class... Args>
     REDEMPTION_JLN2_CONCEPT(jln2::detail::ActionExecutorBuilder_Concept)
     create_sesman_event(Args&&... args)
     {
-        return this->sesman_events_.create_action_executor(
-            *this, static_cast<Args&&>(args)...);
+        return this->sesman_events_.create_action_executor(*this, static_cast<Args&&>(args)...);
     }
 
 
@@ -2828,8 +2824,7 @@ struct SessionReactor
     REDEMPTION_JLN2_CONCEPT(jln2::detail::TopExecutorBuilder_Concept)
     create_fd_event(int fd, Args&&... args)
     {
-        return this->fd_events_.create_top_executor(
-            *this, fd, static_cast<Args&&>(args)...);
+        return this->fd_events_.create_top_executor(*this, fd, static_cast<Args&&>(args)...);
     }
 
 
@@ -2845,9 +2840,9 @@ struct SessionReactor
     }
 
 
-    CallbackContainer front_events_;
+    CallbackEventContainer front_events_;
     GraphicEventContainer graphic_events_;
-    SesmanContainer sesman_events_;
+    SesmanEventContainer sesman_events_;
     TimerContainer timer_events_;
     GraphicTimerContainer graphic_timer_events_;
     TopFdContainer fd_events_;
@@ -2884,7 +2879,7 @@ struct SessionReactor
     timeval get_next_timeout(EnableGraphics enable_gd)
     {
         if ((enable_gd && !this->graphic_events_.is_empty())
-         || this->front_events_.elements.size()) {
+         || !this->front_events_.is_empty()) {
             return {0, 0};
         }
 
@@ -2962,9 +2957,14 @@ struct SessionReactor
         this->sesman_events_.exec_action(ini);
     }
 
+    bool has_front_event() const noexcept
+    {
+        return !this->front_events_.is_empty();
+    }
+
     void execute_callbacks(Callback& callback)
     {
-        this->front_events_.exec(callback);
+        this->front_events_.exec_action(callback);
     }
 
     ~SessionReactor()
@@ -2976,11 +2976,6 @@ struct SessionReactor
         graphic_timer_events_.clear();
         fd_events_.clear();
         graphic_fd_events_.clear();
-    }
-
-    auto& front_events()
-    {
-        return this->front_events_.elements;
     }
 
     bool has_graphics_event() const noexcept
