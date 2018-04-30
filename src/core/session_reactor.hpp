@@ -134,10 +134,11 @@ namespace jln2
             enum E
             {
                 None,
-                Action = 1,
-                Exit = 2,
-                Timer = 4,
-                Timeout = 8,
+                Action = 1 << 0,
+                Exit = 1 << 1,
+                Timer = 1 << 2,
+                Timeout = 1 << 3,
+                NotifyDelete = 1 << 4,
             };
         };
 
@@ -161,6 +162,9 @@ namespace jln2
 
             auto propagate_exit() &&;
 
+            template<class F>
+            auto set_notify_delete(F&&) && noexcept;
+
         private:
             InitCtx init_ctx;
         };
@@ -177,17 +181,23 @@ namespace jln2
 
             auto disable_timeout() &&;
 
+            template<class F>
+            auto set_notify_delete(F&&) && noexcept;
+
         private:
             InitCtx init_ctx;
         };
 
-        template<class InitCtx>
+        template<BuilderInit::E Has, class InitCtx>
         struct [[nodiscard]] ActionExecutorBuilderImpl
         {
             explicit ActionExecutorBuilderImpl(InitCtx&& init_ctx) noexcept;
 
             template<class F>
             auto on_action(F&& f) &&;
+
+            template<class F>
+            auto set_notify_delete(F&&) && noexcept;
 
         private:
             InitCtx init_ctx;
@@ -209,6 +219,8 @@ namespace jln2
             GroupExecutorBuilder_Concept on_exit(Func);
             GroupExecutorBuilder_Concept propagate_exit();
 
+            GroupExecutorBuilder_Concept set_notify_delete(Func);
+
             operator R ();
         };
 
@@ -224,6 +236,8 @@ namespace jln2
             TopExecutorBuilder_Concept on_exit(Func);
             TopExecutorBuilder_Concept propagate_exit();
 
+            TopExecutorBuilder_Concept set_notify_delete(Func);
+
             operator SharedPtr ();
 
             template<class... Ts> operator TopSharedPtr<Ts...> ();
@@ -237,6 +251,8 @@ namespace jln2
             TimerExecutorBuilder_Concept disable_timeout();
             TimerExecutorBuilder_Concept set_timeout(std::chrono::milliseconds);
             TimerExecutorBuilder_Concept on_timeout(Func);
+
+            TimerExecutorBuilder_Concept set_notify_delete(Func);
         };
 
         struct /*[[nodiscard]]*/ ActionExecutorBuilder_Concept
@@ -245,6 +261,8 @@ namespace jln2
             explicit ActionExecutorBuilder_Concept(Ts&&...) noexcept;
 
             template<class... Ts> ActionSharedPtr<Ts...> on_action(Func);
+
+            ActionExecutorBuilder_Concept set_notify_delete(Func);
         };
 
         template<class Top, class Group>
@@ -269,7 +287,7 @@ namespace jln2
         using TimerExecutorBuilder = TimerExecutorBuilderImpl<InitCtx>;
 
         template<class InitCtx>
-        using ActionExecutorBuilder = ActionExecutorBuilderImpl<InitCtx>;
+        using ActionExecutorBuilder = ActionExecutorBuilderImpl<BuilderInit::None, InitCtx>;
     #endif
     }
 
@@ -452,6 +470,7 @@ namespace jln2
         }
     };
 
+
     template<class... Ts>
     struct GroupExecutor
     {
@@ -466,10 +485,13 @@ namespace jln2
         }
 
     protected:
-        GroupExecutor() = default;
+        using DeleterFun = void(*)(GroupExecutor*) noexcept;
 
-        void (*deleter) (GroupExecutor*) noexcept REDEMPTION_DEBUG_ONLY(= nullptr);
-        ~GroupExecutor() = default;
+        GroupExecutor(DeleterFun deleter) noexcept
+        : deleter(deleter)
+        {}
+
+        DeleterFun deleter;
     };
 
     template<class Tuple, class... Ts>
@@ -481,12 +503,11 @@ namespace jln2
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
         template<class... Us>
         GroupExecutorWithValues(Us&&... xs)
-        : t{static_cast<Us&&>(xs)...}
-        {
-            this->deleter = [](GroupExecutor<Ts...>* p) noexcept{
-                delete static_cast<GroupExecutorWithValues*>(p);
-            };
-        }
+        : GroupExecutor<Ts...>([](GroupExecutor<Ts...>* p) noexcept{
+            delete static_cast<GroupExecutorWithValues*>(p);
+        })
+        , t{static_cast<Us&&>(xs)...}
+        {}
         REDEMPTION_DIAGNOSTIC_POP
 
         template<class F>
@@ -518,11 +539,10 @@ namespace jln2
         using Base = GroupExecutor<Ts...>;
 
         GroupExecutorWithValues() noexcept
-        {
-            this->deleter = [](GroupExecutor<Ts...>* p) noexcept{
-                delete static_cast<GroupExecutorWithValues*>(p);
-            };
-        }
+        : GroupExecutor<Ts...>([](GroupExecutor<Ts...>* p) noexcept{
+            delete static_cast<GroupExecutorWithValues*>(p);
+        })
+        {}
 
         template<class F>
         void on_action(F&& f)
@@ -667,6 +687,14 @@ namespace jln2
             };
         }
 
+        template<class F, class... Args>
+        void invoke(F&& f, Args&&... args)
+        noexcept(noexcept(std::declval<Tuple&>().invoke(
+            static_cast<F&&>(f), static_cast<Args&&>(args)...)))
+        {
+            this->t.invoke(static_cast<F&&>(f), static_cast<Args&&>(args)...);
+        }
+
         Tuple t;
     };
 
@@ -680,6 +708,10 @@ namespace jln2
         {
             Base::on_action = static_cast<F&&>(f);
         }
+
+        template<class F, class... Args>
+        void invoke(F&& f, Args&&... args)
+        FALCON_RETURN_NOEXCEPT(static_cast<F&&>(f)(static_cast<Args&&>(args)...))
     };
 
 
@@ -1192,18 +1224,35 @@ namespace jln2
         }
     }
 
+    namespace detail
+    {
+        inline auto default_notify_delete() noexcept
+        {
+            return [](auto&)noexcept{};
+        }
+    }
+
     template<class T>
     struct SharedData : SharedDataBase
     {
+        using value_type = T;
+
         template<class... Ts>
         SharedData(Ts&&... xs)
         : u(static_cast<Ts&&>(xs)...)
+        {
+            this->set_notify_delete(detail::default_notify_delete());
+        }
+
+        template<class F>
+        void set_notify_delete(F)
         {
             this->deleter = [](SharedDataBase* p, FreeCat cat) noexcept {
                 auto* self = static_cast<SharedData*>(p);
                 switch (cat) {
                     case FreeCat::Value:
                         REDEMPTION_DEBUG_ONLY(self->is_deleted = true;)
+                        jln::make_lambda<F>()(self->u.value);
                         self->release_shared_ptr();
                         self->u.value.~T();
                         break;
@@ -1389,7 +1438,7 @@ namespace jln2
     {
         using Top = TopExecutor<Ts...>;
         using Group = GroupExecutor<Ts...>;
-        using Data = SharedData<Top>;
+        using TopData = SharedData<Top>;
 
         using GroupDeleter = ::jln2::GroupDeleter<Ts...>;
 
@@ -1401,7 +1450,7 @@ namespace jln2
         struct InitContext
         {
             std::unique_ptr<GroupExecutorWithValues<Tuple, Ts...>, GroupDeleter> g;
-            std::unique_ptr<Data, SharedDataDeleter> data_ptr;
+            std::unique_ptr<TopData, SharedDataDeleter> data_ptr;
             TopContainer& cont;
 
             GroupExecutorWithValues<Tuple, Ts...>& group() noexcept
@@ -1412,6 +1461,12 @@ namespace jln2
             Top& top() noexcept
             {
                 return this->data_ptr->value();
+            }
+
+            template<class F>
+            void set_notify_delete(F f) noexcept
+            {
+                this->data_ptr->set_notify_delete(f);
             }
 
             template<class F>
@@ -1428,7 +1483,7 @@ namespace jln2
                 SharedDataBase* data_ptr = this->data_ptr.release();
                 data_ptr->next = std::exchange(this->cont.node_executors.next, data_ptr);
                 data_ptr->shared_ptr = nullptr;
-                return TopSharedPtr<Ts...>(static_cast<Data*>(data_ptr));
+                return TopSharedPtr<Ts...>(static_cast<TopData*>(data_ptr));
             }
         };
 
@@ -1442,8 +1497,8 @@ namespace jln2
             using InitCtx = InitContext<Tuple>;
             return detail::TopExecutorBuilder<InitCtx>{
                 InitCtx{
-                    std::unique_ptr<Group, GroupDeleter>(new Group(static_cast<Us&&>(xs)...)),
-                    std::unique_ptr<Data, SharedDataDeleter>(new Data{reactor, fd}),
+                    std::unique_ptr<Group, GroupDeleter>(new Group{static_cast<Us&&>(xs)...}),
+                    std::unique_ptr<TopData, SharedDataDeleter>(new TopData{reactor, fd}),
                     *this
                 },
             };
@@ -1483,7 +1538,7 @@ namespace jln2
         template<class F>
         static auto apply_f(F& f, SharedDataBase* node)
         {
-            auto* data = static_cast<Data*>(node);
+            auto* data = static_cast<TopData*>(node);
             return f(data->value().get_fd(), data->value());
         }
 
@@ -1532,7 +1587,7 @@ namespace jln2
             while (node->next) {
                 auto* cur = node->next;
                 if (cur->shared_ptr) {
-                    Top& top = static_cast<Data&>(*cur).value();
+                    Top& top = static_cast<TopData&>(*cur).value();
                     if (!apply_f(predicate, cur)) {
                         node = node->next;
                     }
@@ -1739,15 +1794,23 @@ namespace jln2
         using Ptr = ActionSharedPtr<Ts...>;
 
     private:
-        template<class Data, class Tuple>
+        template<class ActionData, class Tuple>
         struct InitContext
         {
-            std::unique_ptr<Data, SharedDataDeleter> data_ptr;
+            std::unique_ptr<ActionData, SharedDataDeleter> data_ptr;
             ActionContainer& cont;
 
             ActionExecutorWithValues<Tuple, Ts...>& action() noexcept
             {
                 return this->data_ptr->value();
+            }
+
+            template<class F>
+            void set_notify_delete(F) noexcept
+            {
+                this->data_ptr->set_notify_delete([](auto& act) noexcept{
+                    act.invoke(jln::make_lambda<F>());
+                });
             }
 
             ActionSharedPtr<Ts...> terminate_init()
@@ -1756,7 +1819,7 @@ namespace jln2
                 SharedDataBase* data_ptr = this->data_ptr.release();
                 data_ptr->next = std::exchange(this->cont.node_executors.next, data_ptr);
                 data_ptr->shared_ptr = nullptr;
-                return ActionSharedPtr<Ts...>(static_cast<Data*>(data_ptr));
+                return ActionSharedPtr<Ts...>(static_cast<ActionData*>(data_ptr));
             }
         };
 
@@ -1767,12 +1830,12 @@ namespace jln2
         {
             using Tuple = jln::detail::tuple<decay_and_strip_t<Us>...>;
             using Action = ActionExecutorWithValues<Tuple, Ts...>;
-            using Data = SharedData<Action>;
-            using InitCtx = InitContext<Data, Tuple>;
+            using ActionData = SharedData<Action>;
+            using InitCtx = InitContext<ActionData, Tuple>;
             return detail::ActionExecutorBuilder<InitCtx>{
                 InitCtx{
-                    std::unique_ptr<Data, SharedDataDeleter>(
-                        new Data{/*reactor, */static_cast<Us&&>(xs)...}),
+                    std::unique_ptr<ActionData, SharedDataDeleter>(
+                        new ActionData{/*reactor, */static_cast<Us&&>(xs)...}),
                     *this}
             };
         }
@@ -2054,45 +2117,43 @@ namespace jln2
     template<class F>
     auto detail::TopExecutorBuilderImpl<Has, InitCtx>::on_action(F&& f) &&
     {
-        static_assert(!(Has & detail::BuilderInit::Action), "on_action is already used");
+        static_assert(!(Has & BuilderInit::Action), "on_action is already used");
         this->init_ctx.group().on_action(static_cast<F&&>(f));
-        return select_top_result<Has | detail::BuilderInit::Action>(this->init_ctx);
+        return select_top_result<Has | BuilderInit::Action>(this->init_ctx);
     }
 
     template<detail::BuilderInit::E Has, class InitCtx>
     template<class F>
     auto detail::TopExecutorBuilderImpl<Has, InitCtx>::on_exit(F&& f) &&
     {
-        static_assert(!(Has & detail::BuilderInit::Exit), "on_exit or propagate_exit is already used");
+        static_assert(!(Has & BuilderInit::Exit), "on_exit or propagate_exit is already used");
         this->init_ctx.group().on_exit(static_cast<F&&>(f));
-        return select_top_result<Has | detail::BuilderInit::Exit>(this->init_ctx);
+        return select_top_result<Has | BuilderInit::Exit>(this->init_ctx);
     }
 
     template<detail::BuilderInit::E Has, class InitCtx>
     auto detail::TopExecutorBuilderImpl<Has, InitCtx>::set_timeout(std::chrono::milliseconds ms) &&
     {
-        static_assert(!(Has & detail::BuilderInit::Timeout), "set_timeout is already used");
+        static_assert(!(Has & BuilderInit::Timeout), "set_timeout is already used");
         this->init_ctx.top().set_timeout(ms);
-        return select_top_result<Has | detail::BuilderInit::Timeout>(this->init_ctx);
+        return select_top_result<Has | BuilderInit::Timeout>(this->init_ctx);
     }
 
     template<detail::BuilderInit::E Has, class InitCtx>
     auto detail::TopExecutorBuilderImpl<Has, InitCtx>::disable_timeout() &&
     {
-        static_assert(!(Has & detail::BuilderInit::Timer), "disable_timeout or on_timeout are already used");
+        static_assert(!(Has & BuilderInit::Timer), "disable_timeout or on_timeout are already used");
         this->init_ctx.top().disable_timeout();
-        return select_top_result<
-            Has | detail::BuilderInit::Timer | detail::BuilderInit::Timeout
-        >(this->init_ctx);
+        return select_top_result<Has | BuilderInit::Timer | BuilderInit::Timeout>(this->init_ctx);
     }
 
     template<detail::BuilderInit::E Has, class InitCtx>
     template<class F>
     auto detail::TopExecutorBuilderImpl<Has, InitCtx>::on_timeout(F&& f) &&
     {
-        static_assert(!(Has & detail::BuilderInit::Timer), "disable_timeout or on_timeout are is already used");
+        static_assert(!(Has & BuilderInit::Timer), "disable_timeout or on_timeout are already used");
         this->init_ctx.on_timeout(static_cast<F&&>(f));
-        return select_top_result<Has | detail::BuilderInit::Timer>(this->init_ctx);
+        return select_top_result<Has | BuilderInit::Timer>(this->init_ctx);
     }
 
     template<detail::BuilderInit::E Has, class InitCtx>
@@ -2103,19 +2164,38 @@ namespace jln2
         });
     }
 
+    template<detail::BuilderInit::E Has, class InitCtx>
+    template<class F>
+    auto detail::TopExecutorBuilderImpl<Has, InitCtx>::set_notify_delete(F&& f) && noexcept
+    {
+        static_assert(!(Has & BuilderInit::NotifyDelete), "set_notify_delete is already used");
+        this->init_ctx.set_notify_delete(static_cast<F&&>(f));
+        return select_top_result<Has | BuilderInit::NotifyDelete>(this->init_ctx);
+    }
 
-    template<class InitCtx>
-    detail::ActionExecutorBuilderImpl<InitCtx>::ActionExecutorBuilderImpl(
+
+    template<detail::BuilderInit::E Has, class InitCtx>
+    detail::ActionExecutorBuilderImpl<Has, InitCtx>::ActionExecutorBuilderImpl(
         InitCtx&& init_ctx) noexcept
     : init_ctx(std::move(init_ctx))
     {}
 
-    template<class InitCtx>
+    template<detail::BuilderInit::E Has, class InitCtx>
     template<class F>
-    auto detail::ActionExecutorBuilderImpl<InitCtx>::on_action(F&& f) &&
+    auto detail::ActionExecutorBuilderImpl<Has, InitCtx>::on_action(F&& f) &&
     {
         this->init_ctx.action().on_action(static_cast<F&&>(f));
         return this->init_ctx.terminate_init();
+    }
+
+    template<detail::BuilderInit::E Has, class InitCtx>
+    template<class F>
+    auto detail::ActionExecutorBuilderImpl<Has, InitCtx>::set_notify_delete(F&& f) && noexcept
+    {
+        static_assert(!(Has & BuilderInit::NotifyDelete), "set_notify_delete is already used");
+        this->init_ctx.set_notify_delete(static_cast<F&&>(f));
+        return ActionExecutorBuilderImpl<
+            BuilderInit::E(Has | BuilderInit::NotifyDelete), InitCtx>(std::move(this->init_ctx));
     }
 }
 
@@ -2718,18 +2798,16 @@ struct SessionReactor
     }
 
 
-    using GraphicEvent = jln::ActionBase<jln::prefix_args<gdi::GraphicApi&>>;
-    using GraphicEventPtr = SharedPtr<GraphicEvent>;
-
-    using GraphicContainer = ActionContainer<GraphicEvent>;
+    using GraphicEventContainer = jln2::ActionContainer<gdi::GraphicApi&>;
+    using GraphicEventPtr = GraphicEventContainer::Ptr;
 
     template<class... Args>
-    GraphicContainer::Builder<Args...>
+    REDEMPTION_JLN2_CONCEPT(jln2::detail::ActionExecutorBuilder_Concept)
     create_graphic_event(Args&&... args)
     {
-        return this->graphic_events_.create_shared_ptr(*this, static_cast<Args&&>(args)...);
+        return this->graphic_events_.create_action_executor(
+            *this, static_cast<Args&&>(args)...);
     }
-
 
     using SesmanContainer = jln2::ActionContainer<Inifile&>;
     using SesmanPtr = SesmanContainer::Ptr;
@@ -2738,7 +2816,8 @@ struct SessionReactor
     REDEMPTION_JLN2_CONCEPT(jln2::detail::ActionExecutorBuilder_Concept)
     create_sesman_event(Args&&... args)
     {
-        return this->sesman_events_.create_action_executor(*this, static_cast<Args&&>(args)...);
+        return this->sesman_events_.create_action_executor(
+            *this, static_cast<Args&&>(args)...);
     }
 
 
@@ -2767,7 +2846,7 @@ struct SessionReactor
 
 
     CallbackContainer front_events_;
-    GraphicContainer graphic_events_;
+    GraphicEventContainer graphic_events_;
     SesmanContainer sesman_events_;
     TimerContainer timer_events_;
     GraphicTimerContainer graphic_timer_events_;
@@ -2804,7 +2883,7 @@ struct SessionReactor
 
     timeval get_next_timeout(EnableGraphics enable_gd)
     {
-        if ((enable_gd && this->graphic_events_.elements.size())
+        if ((enable_gd && !this->graphic_events_.is_empty())
          || this->front_events_.elements.size()) {
             return {0, 0};
         }
@@ -2868,7 +2947,7 @@ struct SessionReactor
     template<class IsSetElem>
     void execute_graphics(IsSetElem is_set, gdi::GraphicApi& gd)
     {
-        this->graphic_events_.exec(gd);
+        this->graphic_events_.exec_action(gd);
         this->graphic_fd_events_.exec_action(is_set, gd);
     }
 
@@ -2904,14 +2983,9 @@ struct SessionReactor
         return this->front_events_.elements;
     }
 
-    auto& graphic_events()
-    {
-        return this->graphic_events_.elements;
-    }
-
     bool has_graphics_event() const noexcept
     {
-        return this->graphic_events_.elements.size() || !this->graphic_fd_events_.is_empty();
+        return !this->graphic_events_.is_empty() || !this->graphic_fd_events_.is_empty();
     }
 
     int signal = 0;
