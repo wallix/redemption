@@ -493,82 +493,16 @@ public:
 protected:
     void send_pointer(int cache_idx, const Pointer & cursor) override {
         auto const dimensions = cursor.get_dimensions();
-        auto const hotspot = cursor.get_hotspot();
-
-        if ((dimensions.width != 32) || (dimensions.height != 32)) {
-            this->send_pointer2(cache_idx, cursor);
-            return;
+        StaticOutStream<32+108*96> payload;
+        bool pointer32x32 = ((dimensions.width == 32) && (dimensions.height == 32));
+        if (pointer32x32) {
+            cursor.emit_pointer(payload, cache_idx, this->mouse_x, this->mouse_y);
         }
-
-        size_t size =   2           // mouse x
-                      + 2           // mouse y
-                      + 1           // cache index
-                      + 1           // hotspot x
-                      + 1           // hotspot y
-                      + 32 * 32 * 3 // data
-                      + 128         // mask
-                      ;
-        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::POINTER, size, 0);
-
-        StaticOutStream<16> payload;
-        payload.out_uint16_le(this->mouse_x);
-        payload.out_uint16_le(this->mouse_y);
-        payload.out_uint8(cache_idx);
-        
-        payload.out_uint8(hotspot.x);
-        payload.out_uint8(hotspot.y);
-
-        this->trans.send(payload.get_data(), payload.get_offset());
-        auto av_xor = cursor.get_24bits_xor_mask();
-        this->trans.send(av_xor);
-        auto av_and = cursor.get_monochrome_and_mask();
-        this->trans.send(av_and);
-    }
-
-    void send_pointer2(int cache_idx, const Pointer & cursor) {
-        auto const dimensions = cursor.get_dimensions();
-        auto const hotspot = cursor.get_hotspot();
-
-        size_t size =   2                   // mouse x
-                      + 2                   // mouse y
-                      + 1                   // cache index
-
-                      + 1                   // mouse width
-                      + 1                   // mouse height
-                      + 1                   // mouse bpp
-
-                      + 1                   // hotspot x
-                      + 1                   // hotspot y
-
-                      + 2                   // data_size
-                      + 2                   // mask_size
-
-                      + cursor.data_size()  // data
-                      + cursor.mask_size()  // mask
-                      ;
-        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::POINTER2, size, 0);
-
-        StaticOutStream<32> payload;
-        payload.out_uint16_le(this->mouse_x);
-        payload.out_uint16_le(this->mouse_y);
-        payload.out_uint8(cache_idx);
-
-        payload.out_uint8(dimensions.width);
-        payload.out_uint8(dimensions.height);
-        payload.out_uint8(24);
-
-        payload.out_uint8(hotspot.x);
-        payload.out_uint8(hotspot.y);
-
-        payload.out_uint16_le(cursor.data_size());
-        payload.out_uint16_le(cursor.mask_size());
-
-        this->trans.send(payload.get_data(), payload.get_offset());
-
-        auto av_xor = cursor.get_24bits_xor_mask();
-        this->trans.send(av_xor);
-        auto av_and = cursor.get_monochrome_and_mask();
-        this->trans.send(av_and);
+        else {
+            cursor.emit_pointer2(payload, cache_idx, this->mouse_x, this->mouse_y);
+        }
+        wrmcapture_send_wrm_chunk(this->trans, (pointer32x32)?WrmChunkType::POINTER:WrmChunkType::POINTER2, payload.get_offset(), 0);
+        this->trans.send(payload.get_data(), payload.get_offset());    
     }
 
     void cached_pointer_update(int cache_idx) override {

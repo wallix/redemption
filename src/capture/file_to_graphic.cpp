@@ -722,7 +722,7 @@ void FileToGraphic::interpret_order()
     case WrmChunkType::POINTER:
     {
         if (bool(this->verbose & Verbose::rdp_orders)){
-            LOG(LOG_INFO, "POINTER2");
+            LOG(LOG_INFO, "POINTER");
         }
 
         this->mouse_x         = this->stream.in_uint16_le();

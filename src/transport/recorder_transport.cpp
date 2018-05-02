@@ -59,8 +59,8 @@ Transport::TlsResult RecorderTransport::enable_client_tls(bool server_cert_store
 		headers_stream.out_uint32_le(get_public_key_length());
 
 		//LOG(LOG_WARNING, "cert len=%lu", get_public_key_length());
-		file.do_send(headers_stream.get_data(), headers_stream.get_offset());
-		file.do_send(get_public_key(), get_public_key_length());
+		file.send(headers_stream.get_data(), headers_stream.get_offset());
+		file.send(get_public_key(), get_public_key_length());
 		headers_stream.rewind(0);
 	}
 	return ret;
@@ -72,8 +72,8 @@ Transport::TlsResult RecorderTransport::enable_client_tls(bool server_cert_store
 	headers_stream.out_uint8(RECORD_TYPE_DATA_OUT);
 	headers_stream.out_uint64_le(now.time_since_epoch().count() - start_time);
 	headers_stream.out_uint32_le(len);
-	file.do_send(headers_stream.get_data(), headers_stream.get_offset());
-	file.do_send(buffer, len);
+	file.send(headers_stream.get_data(), headers_stream.get_offset());
+	file.send(buffer, len);
 	headers_stream.rewind(0);
 
 	SocketTransport::do_send(buffer, len);
@@ -92,8 +92,8 @@ size_t RecorderTransport::do_partial_read(uint8_t * buffer, size_t len) {
 		headers_stream.out_uint32_le(ret);
 		// LOG(LOG_WARNING, "do_partial_read len=%lu", ret);
 
-		file.do_send(headers_stream.get_data(), headers_stream.get_offset());
-		file.do_send(buffer, ret);
+		file.send(headers_stream.get_data(), headers_stream.get_offset());
+		file.send(buffer, ret);
 		headers_stream.rewind(0);
 	}
 	return ret;
@@ -112,8 +112,8 @@ Transport::Read RecorderTransport::do_atomic_read(uint8_t * buffer, size_t len) 
 		// LOG(LOG_WARNING, "do_atomic_read len=%lu", len);
 
 
-		file.do_send(headers_stream.get_data(), headers_stream.get_offset());
-		file.do_send(buffer, len);
+		file.send(headers_stream.get_data(), headers_stream.get_offset());
+		file.send(buffer, len);
 		headers_stream.rewind(0);
 	}
 
