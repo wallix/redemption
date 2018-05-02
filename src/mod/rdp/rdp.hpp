@@ -4325,7 +4325,7 @@ public:
 
     void process_error_info(uint32_t errorInfo) {
         const char* errorInfo_name = get_error_info_name(errorInfo);
-        LOG(LOG_INFO, "process disconnect pdu : code=0x%08X error=%s", errorInfo, errorInfo_name);
+        LOG(LOG_INFO, "process error info pdu: code=0x%08X error=%s", errorInfo, errorInfo_name);
 
         if (errorInfo) {
             this->close_box_extra_message_ref += " (";
