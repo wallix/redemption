@@ -1539,9 +1539,19 @@ namespace jln2
         Error error = Error(NO_ERROR);
     };
 
+    enum class NotifyDeleteType
+    {
+        DeleteByDtor,
+        DeleteByAction,
+    };
+
     struct SharedDataBase
     {
-        enum class FreeCat { Value, Self, };
+        enum class FreeCat {
+            ValueByWrapper = int(NotifyDeleteType::DeleteByDtor),
+            Value = int(NotifyDeleteType::DeleteByAction),
+            Self,
+        };
         SharedPtr* shared_ptr;
 
     protected:
@@ -1553,6 +1563,11 @@ namespace jln2
         void free_value() noexcept
         {
             this->deleter(this, FreeCat::Value);
+        }
+
+        void free_by_wrapper() noexcept
+        {
+            this->deleter(this, FreeCat::ValueByWrapper);
         }
 
         void delete_self() noexcept
@@ -1594,7 +1609,7 @@ namespace jln2
 
         SharedPtr& operator=(SharedPtr&& other) noexcept
         {
-            assert(other.p != this->p);
+            assert(other.p != this->p && "unimplemented");
             this->reset();
             this->p = std::exchange(other.p, nullptr);
             this->p->shared_ptr = this;
@@ -1603,7 +1618,9 @@ namespace jln2
 
         ~SharedPtr()
         {
-            this->reset();
+            if (this->p) {
+                std::exchange(this->p, nullptr)->free_by_wrapper();
+            }
         }
 
         explicit operator bool() const noexcept
@@ -1614,8 +1631,7 @@ namespace jln2
         void reset() noexcept
         {
             if (this->p) {
-                this->p->free_value();
-                this->p = nullptr;
+                std::exchange(this->p, nullptr)->free_value();
             }
         }
 
@@ -1651,7 +1667,7 @@ namespace jln2
     {
         inline auto default_notify_delete() noexcept
         {
-            return [](auto&)noexcept{};
+            return [](NotifyDeleteType, auto&)noexcept{};
         }
     }
 
@@ -1673,10 +1689,12 @@ namespace jln2
             this->deleter = [](SharedDataBase* p, FreeCat cat) noexcept {
                 auto* self = static_cast<SharedData*>(p);
                 switch (cat) {
+                    case FreeCat::ValueByWrapper:
                     case FreeCat::Value:
+                        assert(!self->is_deleted);
                         REDEMPTION_DEBUG_ONLY(self->is_deleted = true;)
-                        jln::make_lambda<F>()(self->u.value);
                         self->release_shared_ptr();
+                        jln::make_lambda<F>()(static_cast<NotifyDeleteType>(cat), self->u.value);
                         self->u.value.~T();
                         break;
                     case FreeCat::Self:
@@ -2044,8 +2062,8 @@ namespace jln2
             template<class F>
             void set_notify_delete(F) noexcept
             {
-                this->data_ptr->set_notify_delete([](auto& act) noexcept{
-                    act.invoke(jln::make_lambda<F>());
+                this->data_ptr->set_notify_delete([](NotifyDeleteType t, auto& act) noexcept{
+                    act.invoke(jln::make_lambda<F>(), t);
                 });
             }
 
@@ -2181,8 +2199,8 @@ namespace jln2
             template<class F>
             void set_notify_delete(F) noexcept
             {
-                this->data_ptr->set_notify_delete([](auto& act) noexcept{
-                    act.invoke(jln::make_lambda<F>());
+                this->data_ptr->set_notify_delete([](NotifyDeleteType t, auto& act) noexcept{
+                    act.invoke(jln::make_lambda<F>(), t);
                 });
             }
 

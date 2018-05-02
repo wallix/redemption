@@ -19,7 +19,7 @@
 
 */
 
-#define RED_TEST_MODULE TestSessionExecutor
+#define RED_TEST_MODULE TestSessionReactor
 #include "system/redemption_unit_tests.hpp"
 
 #include <string>
@@ -50,9 +50,10 @@ RED_AUTO_TEST_CASE(TestSequencer)
 
 constexpr auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };
 
-RED_AUTO_TEST_CASE(TestSessionExecutorTimer)
+RED_AUTO_TEST_CASE(TestSessionReactorTimer)
 {
     using Ptr = jln2::SharedPtr;
+    using Dt = jln2::NotifyDeleteType;
     SessionReactor session_reactor;
 
     session_reactor.set_current_time(timeval{10, 222});
@@ -62,7 +63,7 @@ RED_AUTO_TEST_CASE(TestSessionExecutorTimer)
     std::string s;
 
     Ptr timer1 = session_reactor.create_timer(std::ref(s))
-    .set_notify_delete([](std::string& s){
+    .set_notify_delete([](Dt, std::string& s){
         s += "d1\n";
     })
     .set_delay(std::chrono::seconds(1))
@@ -71,7 +72,7 @@ RED_AUTO_TEST_CASE(TestSessionExecutorTimer)
     }));
 
     Ptr timer2 = session_reactor.create_timer(std::ref(s))
-    .set_notify_delete([](std::string& s){
+    .set_notify_delete([](Dt, std::string& s){
         s += "d2\n";
     })
     .set_delay(std::chrono::seconds(2))
@@ -80,7 +81,7 @@ RED_AUTO_TEST_CASE(TestSessionExecutorTimer)
     }));
 
     Ptr timer3 = session_reactor.create_timer(std::ref(s), 'a')
-    .set_notify_delete([](std::string& s, char){
+    .set_notify_delete([](Dt, std::string& s, char){
         s += "d3\n";
     })
     .set_delay(std::chrono::seconds(1))
@@ -131,14 +132,15 @@ RED_AUTO_TEST_CASE(TestSessionExecutorTimer)
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\nd2\ntimer4\n");
 }
 
-RED_AUTO_TEST_CASE(TestSessionExecutorSimpleEvent)
+RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
 {
     SessionReactor session_reactor;
+    using Dt = jln2::NotifyDeleteType;
 
     std::string s;
 
     auto gd = session_reactor.create_graphic_event(std::ref(s))
-    .set_notify_delete([](std::string& s){
+    .set_notify_delete([](Dt, std::string& s){
         s += "~gd\n";
     })
     .on_action(jln2::one_shot([](gdi::GraphicApi&, std::string& s){
@@ -146,7 +148,7 @@ RED_AUTO_TEST_CASE(TestSessionExecutorSimpleEvent)
     }));
 
     auto callback = session_reactor.create_callback_event(std::ref(s))
-    .set_notify_delete([](std::string& s){
+    .set_notify_delete([](Dt, std::string& s){
         s += "~callback\n";
     })
     .on_action(jln2::one_shot([](Callback&, std::string& s){
@@ -182,7 +184,7 @@ RED_AUTO_TEST_CASE(TestSessionExecutorSimpleEvent)
 #include "utils/select.hpp"
 #include "utils/sugar/scope_exit.hpp"
 
-RED_AUTO_TEST_CASE(TestSessionExecutorFd)
+RED_AUTO_TEST_CASE(TestSessionReactorFd)
 {
     SessionReactor session_reactor;
 
@@ -221,7 +223,7 @@ RED_AUTO_TEST_CASE(TestSessionExecutorFd)
     RED_CHECK_EQ(s, "fd2\n~fd2\nfd1\n~fd1\n");
 }
 
-RED_AUTO_TEST_CASE(TestSessionExecutorSequence)
+RED_AUTO_TEST_CASE(TestSessionReactorSequence)
 {
     SessionReactor session_reactor;
 
@@ -293,4 +295,45 @@ RED_AUTO_TEST_CASE(TestSessionExecutorSequence)
     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
     RED_CHECK(!event);
     RED_CHECK_EQ(s, "abdce");
+}
+
+RED_AUTO_TEST_CASE(TestSessionReactorDeleter)
+{
+    class S;
+
+    std::vector<std::unique_ptr<S>> v;
+    auto f = [&v](S&, jln2::NotifyDeleteType t){
+        RED_CHECK_EQ(v.size(), 1);
+        if (t == jln2::NotifyDeleteType::DeleteByAction) {
+            v.clear();
+        }
+    };
+
+    using F = decltype(f);
+
+    struct S
+    {
+        SessionReactor::GraphicEventPtr gd_ptr;
+
+        void foo(SessionReactor& session_reactor, F f)
+        {
+            this->gd_ptr = session_reactor.create_graphic_event(std::ref(*this), f)
+            .set_notify_delete([](jln2::NotifyDeleteType d, S& self, F f){ f(self, d); })
+            .on_action([](auto ctx, gdi::GraphicApi&, S&, F){
+                return ctx.terminate();
+            });
+        }
+    };
+
+    SessionReactor session_reactor;
+
+    v.emplace_back(std::make_unique<S>());
+    v.back()->foo(session_reactor, f);
+    RED_CHECK_EQ(v.size(), 1);
+    v.clear();
+
+    v.emplace_back(std::make_unique<S>());
+    v.back()->foo(session_reactor, f);
+    session_reactor.execute_graphics([](auto&&...){return false;}, gdi::null_gd());
+    RED_CHECK_EQ(v.size(), 0);
 }

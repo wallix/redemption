@@ -2074,9 +2074,10 @@ test-run tests/core/test_session :
   <library>src/utils/rle.o
   <library>z
 ;
-test-run tests/core/test_session_executor :
-  $(REDEMPTION_TEST_PATH)/core/test_session_executor.cpp
+test-run tests/core/test_session_reactor :
+  $(REDEMPTION_TEST_PATH)/core/test_session_reactor.cpp
 :
+  <covfile>src/core/session_reactor.hpp
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
 ;
@@ -4684,7 +4685,8 @@ alias test_server_notifier_api : tests/core/test_server_notifier_api ;
 alias test_server_notifier_api.coverage : tests/core/test_server_notifier_api.coverage ;
 alias test_session : tests/core/test_session ;
 alias test_session.coverage : tests/core/test_session.coverage ;
-alias test_session_executor : tests/core/test_session_executor ;
+alias test_session_reactor : tests/core/test_session_reactor ;
+alias test_session_reactor.coverage : tests/core/test_session_reactor.coverage ;
 alias test_session_server : tests/core/test_session_server ;
 alias test_session_server.coverage : tests/core/test_session_server.coverage ;
 alias test_front : tests/front/test_front ;
@@ -5245,7 +5247,7 @@ alias tests/core :
   tests/core/test_server
   tests/core/test_server_notifier_api
   tests/core/test_session
-  tests/core/test_session_executor
+  tests/core/test_session_reactor
   tests/core/test_session_server
 ;
 explicit tests/front ;

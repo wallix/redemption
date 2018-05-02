@@ -58,6 +58,18 @@ inline size_t rdpdr_in_file_read(int fd, uint8_t * buffer, size_t len)
     return len - remaining_len;
 }
 
+namespace detail
+{
+    inline auto create_notify_delete_task() noexcept
+    {
+        return [](jln2::NotifyDeleteType d, auto& self, AsynchronousTask::DeleterFunction& f){
+            if (d == jln2::NotifyDeleteType::DeleteByAction) {
+                f(self);
+            }
+        };
+    }
+}
+
 class RdpdrDriveReadTask final : public AsynchronousTask
 {
     const int file_descriptor;
@@ -101,19 +113,20 @@ public:
     void configure_event(SessionReactor& session_reactor, DeleterFunction f) override
     {
         assert(!this->fdobject);
-        this->fdobject = session_reactor.create_fd_event(this->file_descriptor)
-        .on_action([this](auto ctx) {
-            return this->run() ? ctx.need_more_data() : ctx.terminate();
+        this->fdobject = session_reactor.create_fd_event(
+            this->file_descriptor, std::ref(*this), std::move(f))
+        .on_action([](auto ctx, RdpdrDriveReadTask& self, DeleterFunction& f) {
+            self.fdobject.detach();
+            f(self); // detroy this
+            return self.run() ? ctx.need_more_data() : ctx.terminate();
         })
-        .on_exit([this, f = std::move(f)](auto /*ctx*/, jln2::ExitR er) mutable {
-            this->fdobject.detach();
-            f(*this); // destroy this
+        .on_exit([](auto /*ctx*/, jln2::ExitR er, RdpdrDriveReadTask&, DeleterFunction&) mutable {
             return er.to_result();
         })
         .set_timeout(std::chrono::milliseconds(1000))
-        .on_timeout([this](auto ctx){
+        .on_timeout([](auto ctx, RdpdrDriveReadTask& self, DeleterFunction&){
             LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!",
-                this->file_descriptor);
+                self.file_descriptor);
             return ctx.ready();
         });
     }
@@ -219,8 +232,8 @@ public:
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
-        this->timer_ptr = session_reactor.create_timer(std::ref(*this), f)
-        .set_notify_delete([](RdpdrSendDriveIOResponseTask& self, DeleterFunction& f){ f(self); })
+        this->timer_ptr = session_reactor.create_timer(std::ref(*this), std::move(f))
+        .set_notify_delete(detail::create_notify_delete_task())
         .set_delay(std::chrono::milliseconds(1))
         .on_action([](auto ctx, RdpdrSendDriveIOResponseTask& self, DeleterFunction&){
             return self.run() ? ctx.ready() : ctx.terminate();
@@ -297,8 +310,8 @@ public:
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
-        this->timer_ptr = session_reactor.create_timer(std::ref(*this), f)
-        .set_notify_delete([](RdpdrSendClientMessageTask& self, DeleterFunction& f){ f(self); })
+        this->timer_ptr = session_reactor.create_timer(std::ref(*this), std::move(f))
+        .set_notify_delete(detail::create_notify_delete_task())
         .set_delay(std::chrono::milliseconds(1))
         .on_action([](auto ctx, RdpdrSendClientMessageTask& self, DeleterFunction&){
             self.run();
