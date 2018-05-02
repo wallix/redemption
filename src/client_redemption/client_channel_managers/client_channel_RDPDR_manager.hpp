@@ -39,10 +39,12 @@
 constexpr long long WINDOWS_TICK = 10000000;
 constexpr long long SEC_TO_UNIX_EPOCH = 11644473600LL;
 
+
 // [MS-RDPEFS]: Rmote Desktop Protocol: File System Virtual Channel Extension
-
+//
+//
 // 1.3.1 Protocol Initialization
-
+//
 // The following figure shows the initial packet sequence that initializes the protocol. The sequence of messages complies with the following set of rules. The first packet exchange, Server Announce Request/Client Announce Reply, simply consists of the client and server sides of the protocol exchanging version information that tells each side to which version it is speaking. The client sends a Client Name Request after sending a Client Announce Reply message. The Client Name Request contains a friendly display name for the client machine.
 //
 // The next exchange, Server Core Capability Request/Client Core Capability Response, is used to exchange capabilities between the client and the server to ensure that each side records what kinds of packets are supported by the remote side.
@@ -50,38 +52,67 @@ constexpr long long SEC_TO_UNIX_EPOCH = 11644473600LL;
 // After sending its Server Core Capability Request message, the server also sends a Server Client ID Confirm message confirming the client ID that was exchanged in the Server Announce Request/Client Announce Reply sequence.
 //
 // The last initialization message sequence is initiated by the client with the Client Device List Announce Request. This packet contains information for each device that is redirected. The packet contains all redirected devices, including non–file system devices. For example, it includes the list of printers (as specified in [MS-RDPEPC]), ports (as specified in [MS-RDPESP]), and smart cards (as specified in [MS-RDPESC]). Each client device is initialized separately. The server sends a Server Device Announce Response message that indicates success or failure for that initialization.
-
+//
 // +-----------+                                                 +-----------+
 // | Server FS |                                                 | TS Client |
 // |  Driver   |                                                 |           |
 // +-----+-----+                                                 +-----+-----+
 //       |                                                             |
-//       +------------------Server Announce Request------------------> |
 //       |                                                             |
 //       +------------------Server Announce Request------------------> |
 //       |                                                             |
-//       +------------------Server Announce Request------------------> |
+//       | <-----------------Client Announce Reply---------------------+
 //       |                                                             |
-//       +------------------Server Announce Request------------------> |
+//       | <------------------Client name Request----------------------+
 //       |                                                             |
-//       +------------------Server Announce Request------------------> |
+//       +-----------------Server Capability Request-----------------> |
 //       |                                                             |
-//       +------------------Server Announce Request------------------> |
+//       +-----------------Server Client ID Confirm------------------> |
 //       |                                                             |
-//       +------------------Server Announce Request------------------> |
+//       | <------------Client Core Capability Response----------------+
 //       |                                                             |
-//       +-------Server Device Announce Response (device #2)---------> |
+//       | <---------Client Dev ice List Announce Request--------------+
 //       |                                                             |
-
+//       +--------Server Device Announce Response (device #1)--------> |
+//       |                                                             |
+//       +--------Server Device Announce Response (device #2)--------> |
+//       |                                                             |
+//
 // Figure 1: Protocol initialization
 //
 // In general, there is no distinguishable difference between the initial connection of the protocol and subsequent reconnections. After every disconnection, the protocol is torn down and completely re-initialized on the next connection. However, there is one difference in the protocol initialization sequence upon reconnection: if a user is already logged on, the server sends a Server User Logged On message according to the rules specified in section 3.3.5.1.5.
+//
+//
+// 1.3.2 Drive Redirection
+//
+// Drives can be announced or deleted at any point in time after the connection has been established. For example, Drive redirection sequence shows the sequence for adding and removing a file system drive. The first message pair, Client Device List Announce Request/Server Device Announce Response, is optional. If the device has been announced already in the Client Device List Announce as part of the protocol initialization, this pair is not required. But if the device has been discovered on the client after the initial sequence, this pair of messages is used to announce the device to the server. The client announces only one drive at a time in this case.
+//
+// The next pair of messages describes a series of I/O request messages exchanged between the client and the server. This set of messages describes the actual file system functionality redirection. Finally, the Client Drive Device List Remove message announces to the server that the file system drive has been removed from the client, and that all I/O to that device will fail in the future.
+//
+// +-----------+                                                 +-----------+
+// | Server FS |                                                 | TS Client |
+// |  Driver   |                                                 |           |
+// +-----+-----+                                                 +-----+-----+
+//       |                                                             |
+//       |                                                             |
+//       | <------------Client Drive Divece List Announce--------------+
+//       |                                                             |
+//       +---------------Server Device Announce Response-------------> |
+//       |                                                             |
+//       +------------------Server Drive I/O Request-----------------> |
+//       |                                                             |
+//       | <---------------Client Device I/O Response------------------+
+//       |                                                             |
+//       | <-------------Client Drive Device List Remove---------------+
+//       |                                                             |
+//
+// Figure 2: Drive redirection sequence
+
 
 class ClientChannelRDPDRManager {
 
     RDPVerbose verbose;
-
-    ClientRedemptionIOAPI * client;
+    ClientRedemptionAPI * client;
 
 
     struct FileSystemData {
@@ -120,7 +151,7 @@ class ClientChannelRDPDRManager {
 public:
 
 
-    ClientChannelRDPDRManager(RDPVerbose verbose, ClientRedemptionIOAPI * client)
+    ClientChannelRDPDRManager(RDPVerbose verbose, ClientRedemptionAPI * client)
       : verbose(verbose)
       , client(client)
       {

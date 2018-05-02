@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
     ClientInputSocketAPI  * socket_api    = &socket_api_obj;
 
 
-    RDPVerbose verbose = to_verbose_flags(0x0);
+    RDPVerbose verbose = RDPVerbose::cliprdr;          //to_verbose_flags(0x0);
 
     ClientRedemption client_qt( argv, argc, verbose
                               , graphic_qt
@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
                               , sound_api
                               , socket_api
                               , control_qt);
-;
+
     app.exec();
 
 //     delete(graphic_control_qt);

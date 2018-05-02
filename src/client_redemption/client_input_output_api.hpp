@@ -89,22 +89,92 @@
 
 
 
-
-
-
-class ClientRedemptionIOAPI : public FrontAPI
+class ClientRedemptionAPI : public FrontAPI
 {
 
+public:
+    const std::string    MAIN_DIR;
+    const std::string    REPLAY_DIR;
+    const std::string    USER_CONF_LOG;
+    const std::string    WINDOWS_CONF;
+    const std::string    CB_TEMP_DIR;
+    std::string          SHARE_DIR;
+    const std::string    USER_CONF_DIR;
+    const std::string    SOUND_TEMP_DIR;
+    const std::string    DATA_DIR;
+    const std::string    DATA_CONF_DIR;
 
+    mod_api            * mod;
+    ClientInfo           info;
+
+    //  Remote App
+    std::string source_of_ExeOrFile;
+    std::string source_of_WorkingDir;
+    std::string source_of_Arguments;
+    std::string full_cmd_line;
+
+
+
+    ClientRedemptionAPI()
+    : MAIN_DIR(CLIENT_REDEMPTION_MAIN_PATH)
+    , REPLAY_DIR(CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_REPLAY_PATH)
+    , USER_CONF_LOG(CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_LOGINS_PATH)
+    , WINDOWS_CONF(CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_WINODW_CONF_PATH)
+    , CB_TEMP_DIR(MAIN_DIR + std::string(CLIENT_REDEMPTION_CB_FILE_TEMP_PATH))
+    , SHARE_DIR(MAIN_DIR + std::string(CLIENT_REDEMPTION_SHARE_PATH))
+    , USER_CONF_DIR(MAIN_DIR + std::string(CLIENT_REDEMPTION_USER_CONF_PATH))
+    , SOUND_TEMP_DIR(std::string(CLIENT_REDEMPTION_SOUND_TEMP_PATH))
+    , DATA_DIR(MAIN_DIR + std::string(CLIENT_REDEMPTION_DATA_PATH))
+    , DATA_CONF_DIR(MAIN_DIR + std::string(CLIENT_REDEMPTION_DATA_CONF_PATH))
+    , mod(nullptr)
+    , info()
+    {}
+
+
+    virtual void send_clipboard_format() {}
+
+    virtual void send_to_channel( const CHANNELS::ChannelDef & , uint8_t const *
+                        , std::size_t , std::size_t , int ) override {}
+
+
+
+    // CONTROLLER
+    virtual void connect() {}
+    virtual void disconnect(std::string const &, bool) {}
+    virtual void replay(const std::string &, const std::string &) {}
+    virtual bool load_replay_mod(std::string const &, std::string const &, timeval, timeval) { return true; }
+    virtual timeval reload_replay_mod(int, timeval) { timeval val; return val; }
+    virtual bool is_replay_on() { return true; }
+    virtual char const * get_mwrm_filename() { return ""; }
+    virtual time_t get_real_time_movie_begin() {time_t val; return val;}
+    virtual void delete_replay_mod() {}
+    virtual void callback() {}
+    virtual void draw_frame(int ) {}
+    virtual void closeFromScreen() {}
+    virtual void disconnexionReleased() {}
+    virtual void replay_set_pause(timeval) {}
+    virtual void replay_set_sync() {}
+
+    virtual void update_keylayout() {}
+
+    bool can_be_start_capture() override { return true; }
+};
+
+
+
+
+
+class ClientRedemptionIOAPI : public ClientRedemptionAPI
+{
 
 public:
     RDPVerbose        verbose;
 
-    ClientInfo        info;
+
     CryptoContext     cctx;
 
 
-    mod_api            * mod;
+
     SocketTransport    * socket;
     int                  client_sck;
     TimeSystem           timeSystem;
@@ -124,16 +194,7 @@ public:
     int               port;
     std::string       local_IP;
 
-    const std::string    MAIN_DIR;
-    const std::string    REPLAY_DIR;
-    const std::string    USER_CONF_LOG;
-    const std::string    WINDOWS_CONF;
-    const std::string    CB_TEMP_DIR;
-    std::string          SHARE_DIR;
-    const std::string    USER_CONF_DIR;
-    const std::string    SOUND_TEMP_DIR;
-    const std::string    DATA_DIR;
-    const std::string    DATA_CONF_DIR;
+
 
     enum : int {
         COMMAND_VALID = 15
@@ -307,10 +368,7 @@ public:
     bool                 _recv_disconnect_ultimatum;
     BGRPalette           mod_palette;
 
-    std::string source_of_ExeOrFile;
-    std::string source_of_WorkingDir;
-    std::string source_of_Arguments;
-    std::string full_cmd_line;
+
 
 
     struct IconMovieData {
@@ -368,10 +426,9 @@ public:
 
 
     ClientRedemptionIOAPI(char* argv[], int argc, RDPVerbose verbose)
-    : verbose(verbose)
-    , info()
+    : ClientRedemptionAPI()
+    , verbose(verbose)
     , cctx()
-    , mod(nullptr)
     , socket(nullptr)
     , client_sck(-1)
     , keymap()
@@ -379,17 +436,6 @@ public:
     , commandIsValid(0)
     , port(0)
     , local_IP("unknow_local_IP")
-    , MAIN_DIR(CLIENT_REDEMPTION_MAIN_PATH)
-    , REPLAY_DIR(CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_REPLAY_PATH)
-    , USER_CONF_LOG(CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_LOGINS_PATH)
-    , WINDOWS_CONF(CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_WINODW_CONF_PATH)
-    , CB_TEMP_DIR(MAIN_DIR + std::string(CLIENT_REDEMPTION_CB_FILE_TEMP_PATH))
-    , SHARE_DIR(MAIN_DIR + std::string(CLIENT_REDEMPTION_SHARE_PATH))
-    , USER_CONF_DIR(MAIN_DIR + std::string(CLIENT_REDEMPTION_USER_CONF_PATH))
-    , SOUND_TEMP_DIR(std::string(CLIENT_REDEMPTION_SOUND_TEMP_PATH))
-    , DATA_DIR(MAIN_DIR + std::string(CLIENT_REDEMPTION_DATA_PATH))
-    , DATA_CONF_DIR(MAIN_DIR + std::string(CLIENT_REDEMPTION_DATA_CONF_PATH))
-
     , windowsData(this)
     , _accountNB(0)
     , _save_password_account(false)
@@ -1290,38 +1336,6 @@ public:
     }
 
 
-    virtual void send_clipboard_format() = 0;
-
-    void send_to_channel( const CHANNELS::ChannelDef & , uint8_t const *
-                        , std::size_t , std::size_t , int ) override {}
-
-    // CONTROLLER
-    virtual void connect() = 0;
-    virtual void disconnect(std::string const & txt, bool pipe_broken) = 0;
-    virtual void replay(const std::string & movie_name, const std::string & movie_dir) = 0;
-    virtual bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) = 0;
-    virtual timeval reload_replay_mod(int begin, timeval now_stop) = 0;
-    virtual void replay_set_pause(timeval pause_duration) = 0;
-    virtual void replay_set_sync() = 0;
-    virtual bool is_replay_on() =0;
-    virtual char const * get_mwrm_filename() = 0;
-    virtual time_t get_real_time_movie_begin() = 0;
-    virtual void delete_replay_mod() = 0;
-    virtual void callback() = 0;
-    virtual void draw_frame(int ) {}
-
-    virtual void update_keylayout() = 0;
-
-    bool can_be_start_capture() override { return true; }
-
-    virtual void options() {
-        LOG(LOG_WARNING, "No options window implemented yet. Virtual function \"void options()\" must be override.");
-    }
-
-    // CONTROLLER
-    virtual void closeFromScreen() = 0;
-    virtual void disconnexionReleased() = 0;
-
     virtual void refreshPressed() {
         if (this->mod != nullptr) {
             Rect rect(0, 0, this->info.width, this->info.height);
@@ -1480,15 +1494,15 @@ public:
     }
 
         // image data
-    virtual int get_image_buffer_width() = 0;
-    virtual int get_image_buffer_height() = 0;
-    virtual uint8_t * get_image_buffer_data() = 0;
-    virtual int get_image_buffer_depth() = 0;
+    virtual int get_image_buffer_width() {return 0;}
+    virtual int get_image_buffer_height() {return 0;}
+    virtual uint8_t * get_image_buffer_data() {return 0;}
+    virtual int get_image_buffer_depth() {return 0;}
 
         // files data (file index to identify a file among a files group descriptor)
-    virtual std::string get_file_item_name(int index) = 0;
-    virtual int get_file_item_size(int index) = 0;
-    virtual char * get_file_item_data(int index) = 0;
+    virtual std::string get_file_item_name(int index) {return std::string("");}
+    virtual int get_file_item_size(int index) {(void) index; return 0;}
+    virtual char * get_file_item_data(int index) {(void) index; return "";}
 
     int get_citems_number() {
         return this->_cItems;

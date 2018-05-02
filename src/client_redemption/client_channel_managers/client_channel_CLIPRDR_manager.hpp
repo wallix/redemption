@@ -29,14 +29,89 @@
 
 
 
+// [MS-RDPECLIP]: Remote Desktop Protocol: CLIpboard Virtual Channel Extension
+//
+//
+// 1.3.2.1 Initialization Sequence
+//
+// The goal of the Initialization Sequence is to establish the client and the server capabilities, exchange settings, and synchronize the initial state of the client and server clipboards.
+//
+// +-----------+                                                 +-----------+
+// |  Client   |                                                 |  Server   |
+// |           |                                                 |           |
+// +-----+-----+                                                 +-----+-----+
+//       |                                                             |
+//       |                                                             |
+//       | <------------Server Clipboard Capabilities PDU--------------+
+//       |                                                             |
+//       | <-------------------Monitor Ready PDU-----------------------+
+//       |                                                             |
+//       +--------------Client Clipboard Capabilities PDU------------> |
+//       |                                                             |
+//       +------------------Temporary Directroy PDU------------------> | (optional)
+//       |                                                             |
+//       +---------------------Format List PDU-----------------------> |
+//       |                                                             |
+//       | <----------------Format List Response PDU-------------------+
+//       |                                                             |
+//
+// Figure 1: Clipboard Redirection Initialization Sequence
+//
+//     The server sends a Clipboard Capabilities PDU to the client to advertise the capabilities that it supports.
+//
+//      The server sends a Monitor Ready PDU to the client.
+//
+//     Upon receiving the Monitor Ready PDU, the client transmits its capabilities to the server by using a Clipboard Capabilities PDU.
+//
+//     The client sends the Temporary Directory PDU to inform the server of a location on the client file system that can be used to deposit files being copied to the client. To make use of this location, the server has to be able to access it directly. At this point, the client and the server capability negotiation is complete.
+//
+//     The final stage of the Initialization Sequence involves synchronizing the Clipboard Formats on the server clipboard with the client. This is accomplished by effectively mimicking a copy operation on the client by forcing it to send a Format List PDU.
+//
+//     The server responds with a Format List Response PDU.
+//
+//
+// 1.3.2.2 Data Transfer Sequences
+//
+// The goal of the Data Transfer Sequences is to perform a copy or paste operation. The diagram that follows presents a possible data transfer sequence.
+//
+// +-----------+                                                 +-----------+
+// |  Shared   |                                                 |   Local   |
+// | Clipboard |                                                 | Clipboard |
+// |   Owner   |                                                 |   Owner   |
+// +-----+-----+                                                 +-----+-----+
+//       |                                                             |
+//       |                                                             |
+//       +------------------------Format List PDU--------------------> |
+//       |                                                             |
+//       | <-----------------Format List Response PDU------------------+
+//       |                                                             |
+//       | <------------Lock Clipboard Data PDU (Optional)-------------+
+//       |                                                             |
+//       | <-----------------Format Data Request PDU-------------------+
+//       |                                                             |
+//       +-------------------Format Data Response PDU----------------> |
+//       |                                                             |
+//       | <----------------File Contents Request PDU------------------+ (if file data)
+//       |                                                             |
+//       +-----------------File Contents Response PDU----------------> | (if file data)
+//       |                                                             |
+//       | <------------Unlock Clipboard Data PDU (Optional)-----------+
+//       |                                                             |
+//
+// Figure 2: Data transfer using the shared clipboard
+//
+//     The sequence of messages for a copy operation is the same for all format types, as specified in section 1.3.2.2.1.
+//
+//     However, the messages exchanged to transfer File Stream data during a paste operation differs from those used to transfer other format data, as specified in section 1.3.2.2.3.
+
+
 
 class ClientChannelCLIPRDRManager {
 
+public:
     RDPVerbose verbose;
-
     ClientIOClipboardAPI * clientIOClipboardAPI;
-
-    ClientRedemptionIOAPI * client;
+    ClientRedemptionAPI * client;
 
     enum : int {
        PDU_HEADER_SIZE =    8
@@ -124,8 +199,8 @@ class ClientChannelCLIPRDRManager {
     bool server_use_long_format_names;
 
 
-public:
-    ClientChannelCLIPRDRManager(RDPVerbose verbose, ClientRedemptionIOAPI * client, ClientIOClipboardAPI * clientIOClipboardAPI)
+
+    ClientChannelCLIPRDRManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientIOClipboardAPI * clientIOClipboardAPI)
       : verbose(verbose)
       , clientIOClipboardAPI(clientIOClipboardAPI)
       , client(client)
@@ -252,7 +327,6 @@ public:
                         pdu2.recv(chunk_series);
                         this->server_use_long_format_names = bool(pdu2.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
                         }
-
                     break;
 
 
@@ -295,24 +369,6 @@ public:
                             if (bool(this->verbose & RDPVerbose::cliprdr)) {
                                 LOG(LOG_INFO, "CLIENT >> CB Channel: Clipboard Capabilities PDU");
                             }
-
-//                             this->client->_monitorCount = this->info.cs_monitor.monitorCount;
-
-                            /*std::cout << "cs_monitor count negociated. MonitorCount=" << this->_monitorCount << std::endl;
-                            std::cout << "width=" <<  this->info.width <<  " " << "height=" << this->info.height <<  std::endl;*/
-
-                            //this->info.width  = (this->_width * this->_monitorCount);
-
-                            /*if (!this->_monitorCountNegociated) {
-                                for (int i = this->_monitorCount - 1; i >= 1; i--) {
-                                    this->_screen[i] = new Screen_Qt(this, i);
-                                    this->_screen[i]->show();
-                                }
-                                this->_screen[0]->activateWindow();
-                                this->_monitorCountNegociated = true;
-
-                            }*/
-//                             this->client->_monitorCountNegociated = true;
                         }
 
                         // TODO: check this, dangerous, we don't know how many formats are really available
@@ -961,20 +1017,20 @@ public:
                         }
                         this->clientIOClipboardAPI->set_local_clipboard_stream(true);
 
-                        RDPECLIP::UnlockClipboardDataPDU unlockClipboardDataPDU(0);
-                        StaticOutStream<32> out_stream_unlock;
-                        unlockClipboardDataPDU.emit(out_stream_unlock);
-                        InStream chunk_unlock(out_stream_unlock.get_data(), out_stream_unlock.get_offset());
-
-                        this->client->mod->send_to_mod_channel( channel_names::cliprdr
-                                                      , chunk_unlock
-                                                      , out_stream_unlock.get_offset()
-                                                      , CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
-                                                        CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                      );
-                        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                            LOG(LOG_INFO, "CLIENT >> CB channel: Unlock Clipboard Data PDU");
-                        }
+//                         RDPECLIP::UnlockClipboardDataPDU unlockClipboardDataPDU(0);
+//                         StaticOutStream<32> out_stream_unlock;
+//                         unlockClipboardDataPDU.emit(out_stream_unlock);
+//                         InStream chunk_unlock(out_stream_unlock.get_data(), out_stream_unlock.get_offset());
+//
+//                         this->client->mod->send_to_mod_channel( channel_names::cliprdr
+//                                                       , chunk_unlock
+//                                                       , out_stream_unlock.get_offset()
+//                                                       , CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
+//                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+//                                                       );
+//                         if (bool(this->verbose & RDPVerbose::cliprdr)) {
+//                             LOG(LOG_INFO, "CLIENT >> CB channel: Unlock Clipboard Data PDU");
+//                         }
 
                     } else {
                         cb_filesList.streamIDToRequest++;
@@ -1021,6 +1077,23 @@ public:
                     LOG(LOG_WARNING, "SERVER >> CB channel: unknow CB Format = %x", this->_requestedFormatId);
                 }
             break;
+        }
+
+        if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+            RDPECLIP::UnlockClipboardDataPDU unlockClipboardDataPDU(0);
+            StaticOutStream<32> out_stream_unlock;
+            unlockClipboardDataPDU.emit(out_stream_unlock);
+            InStream chunk_unlock(out_stream_unlock.get_data(), out_stream_unlock.get_offset());
+
+            this->client->mod->send_to_mod_channel( channel_names::cliprdr
+                                            , chunk_unlock
+                                            , out_stream_unlock.get_offset()
+                                            , CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
+                                            CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                            );
+            if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                LOG(LOG_INFO, "CLIENT >> CB channel: Unlock Clipboard Data PDU");
+            }
         }
     }
 
