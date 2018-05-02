@@ -2919,6 +2919,7 @@ namespace jln2
     template<class... Ts>
     void TopExecutor<Ts...>::update_next_time() noexcept
     {
+        assert(this->timer_data.delay.count() >= 0);
         this->timer_data.tv = addusectimeval(
             this->timer_data.delay, this->reactor.get_current_time());
     }

@@ -1055,16 +1055,18 @@ public:
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
-        this->capture_timer = this->session_reactor.create_timer(std::ref(*this))
+        this->capture_timer = this->session_reactor.create_timer()
         .set_delay(std::chrono::milliseconds(0))
-        .on_action([](auto ctx, Front& self){
-            auto capture_ms = self.capture->periodic_snapshot(
+        .on_action([this](auto ctx){
+            auto const capture_ms = this->capture->periodic_snapshot(
                 ctx.get_current_time(),
-                self.mouse_x, self.mouse_y,
+                this->mouse_x, this->mouse_y,
                 false  // ignore frame in time interval
-            );
-            return ctx.ready_to(
-                std::chrono::duration_cast<std::chrono::milliseconds>(capture_ms.ms()));
+            ).ms();
+            return (decltype(capture_ms)::max() == capture_ms)
+                ? ctx.terminate()
+                : ctx.ready_to(
+                    std::chrono::duration_cast<std::chrono::milliseconds>(capture_ms));
         });
 
         if (this->client_info.remote_program && !this->rail_window_rect.isempty()) {
