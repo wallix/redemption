@@ -719,7 +719,7 @@ RED_AUTO_TEST_CASE(TestPointerVNC_Color)
 
     Pointer vnccursor(2, CursorSize{23, 27}, Hotspot{0, 8}, vncdata, vncmask, 11, 31, 5, 63, 0, 31);
 
-    // When cursor Size is odd, then the next even width is used and mask is fixed accordingly to avoid soe annoying border cases
+    // When cursor Size is odd, then the next even width is used and mask is fixed accordingly to avoid some annoying border cases
     RED_CHECK_EQUAL(vnccursor.get_dimensions().width, 24);
     RED_CHECK_EQUAL(vnccursor.get_dimensions().height, 27);
     RED_CHECK_EQUAL(vnccursor.get_hotspot().x, 0);
