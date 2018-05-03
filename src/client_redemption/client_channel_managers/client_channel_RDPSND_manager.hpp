@@ -211,12 +211,17 @@ class ClientChannelRDPSNDManager {
     int wave_data_to_wait = 0;
     bool last_PDU_is_WaveInfo = 0;
 
+    uint16_t last_cBlockNo;
+    uint8_t last_wTimeStamp;
+
 
 public:
     ClientChannelRDPSNDManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientOutputSoundAPI * impl_sound)
       : verbose(verbose)
       , impl_sound(impl_sound)
       , client(client)
+      , last_cBlockNo(0)
+      , last_wTimeStamp(0)
       {}
 
     void receive(InStream & chunk) {
@@ -247,6 +252,24 @@ public:
                     this->impl_sound->setData(data, 1);
                     this->impl_sound->play();
                 }
+
+                StaticOutStream<16> out_stream;
+                rdpsnd::RDPSNDPDUHeader header(rdpsnd::SNDC_WAVECONFIRM, 4);
+                header.emit(out_stream);
+                rdpsnd::WaveConfirmPDU wc(this->last_wTimeStamp, this->last_cBlockNo);
+                wc.emit(out_stream);
+
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+
+                this->client->mod->send_to_mod_channel( channel_names::rdpsnd
+                                                      , chunk_to_send
+                                                      , out_stream.get_offset()
+                                                      , CHANNELS::CHANNEL_FLAG_LAST |
+                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                      );
+                if (bool(this->verbose & RDPVerbose::rdpsnd)) {
+                    LOG(LOG_INFO, "CLIENT >> RDPEA: Wave Confirm PDU");
+                }
             }
 
         } else {
@@ -263,8 +286,6 @@ public:
 
                     rdpsnd::ServerAudioFormatsandVersionHeader safsvh;
                     safsvh.receive(chunk);
-    //                         header.log();
-    //                         safsvh.log();
 
                     StaticOutStream<1024> out_stream;
 
@@ -295,7 +316,7 @@ public:
                                 this->impl_sound->n_block_align = format.nBlockAlign;
                                 this->impl_sound->bit_per_sec = format.nSamplesPerSec * (format.wBitsPerSample/8) * format.nChannels;
                             } else {
-                                LOG(LOG_WARNING, "No Sound System module found");
+                                //LOG(LOG_WARNING, "No Sound System module found");
                             }
                         }
                     }
@@ -315,7 +336,7 @@ public:
 
                     StaticOutStream<32> quality_stream;
 
-                    rdpsnd::RDPSNDPDUHeader header_quality(rdpsnd::SNDC_QUALITYMODE, 4);
+                    rdpsnd::RDPSNDPDUHeader header_quality(rdpsnd::SNDC_QUALITYMODE, 8);
                     header_quality.emit(quality_stream);
 
                     rdpsnd::QualityModePDU qm(rdpsnd::HIGH_QUALITY);
@@ -377,6 +398,9 @@ public:
                     this->wave_data_to_wait = header.BodySize - 8;
                     rdpsnd::WaveInfoPDU wi;
                     wi.receive(chunk);
+                    this->last_cBlockNo = wi.cBlockNo;
+                    this->last_wTimeStamp = wi.wTimeStamp;
+
                     if (this->impl_sound) {
                         this->impl_sound->init(header.BodySize - 12);
                         this->impl_sound->setData(wi.Data, 4);

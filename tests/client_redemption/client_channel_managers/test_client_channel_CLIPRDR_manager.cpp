@@ -60,7 +60,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
     RED_CHECK_EQUAL(client.get_total_stream_produced(), 2);
 
     RED_CHECK_EQUAL(client.get_next_pdu_type()/*clipboard_caps_pdu.header.msgType()*/, RDPECLIP::CB_CLIP_CAPS);
-;
+
     RED_CHECK_EQUAL(client.get_next_pdu_type(), RDPECLIP::CB_FORMAT_LIST);
 }
 
@@ -108,6 +108,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromServerToCLient)
 
     RED_CHECK_EQUAL(client.get_next_pdu_type(), RDPECLIP::CB_UNLOCK_CLIPDATA);
 }
+
 
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromClientToServer)

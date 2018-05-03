@@ -25,8 +25,10 @@
 #pragma once
 
 #include <sys/ioctl.h>
+#include <sys/statvfs.h>
 #include <linux/hdreg.h>
 #include <unordered_map>
+
 
 #include "utils/log.hpp"
 #include "core/FSCC/FileInformation.hpp"
@@ -154,40 +156,40 @@ public:
     ClientChannelRDPDRManager(RDPVerbose verbose, ClientRedemptionAPI * client)
       : verbose(verbose)
       , client(client)
-      {
-            std::string tmp(this->client->SHARE_DIR);
-            int pos(tmp.find("/"));
+    {
+        std::string tmp(this->client->SHARE_DIR);
+        int pos(tmp.find("/"));
 
-            this->fileSystemData.devicesCount = 0;
+        this->fileSystemData.devicesCount = 0;
 
-            while (pos != -1) {
-                tmp = tmp.substr(pos+1, tmp.length());
-                pos = tmp.find("/");
-            }
-            size_t size(tmp.size());
-            if (size > 7) {
-                size = 7;
-            }
-            for (size_t i = 0; i < size; i++) {
-                this->fileSystemData.devices[this->fileSystemData.devicesCount].name[i] = tmp.data()[i];
-            }
-            this->fileSystemData.devices[this->fileSystemData.devicesCount].ID = 1;
-            this->fileSystemData.devices[this->fileSystemData.devicesCount].type = rdpdr::RDPDR_DTYP_FILESYSTEM;
-            this->fileSystemData.devicesCount++;
+        while (pos != -1) {
+            tmp = tmp.substr(pos+1, tmp.length());
+            pos = tmp.find("/");
+        }
+        size_t size(tmp.size());
+        if (size > 7) {
+            size = 7;
+        }
+        for (size_t i = 0; i < size; i++) {
+            this->fileSystemData.devices[this->fileSystemData.devicesCount].name[i] = tmp.data()[i];
+        }
+        this->fileSystemData.devices[this->fileSystemData.devicesCount].ID = 1;
+        this->fileSystemData.devices[this->fileSystemData.devicesCount].type = rdpdr::RDPDR_DTYP_FILESYSTEM;
+        this->fileSystemData.devicesCount++;
 
 
-            std::string name_printer("printer");
-            const char * char_name_printer = name_printer.c_str();
-            size = name_printer.size();
-            if (size > 7) {
-                size = 7;
-            }
-            for (size_t i = 0; i < size; i++) {
-                this->fileSystemData.devices[this->fileSystemData.devicesCount].name[i] = char_name_printer[i];
-            }
-            this->fileSystemData.devices[this->fileSystemData.devicesCount].ID = 2;
-            this->fileSystemData.devices[this->fileSystemData.devicesCount].type = rdpdr::RDPDR_DTYP_PRINT;
-            this->fileSystemData.devicesCount++;
+        std::string name_printer("printer");
+        const char * char_name_printer = name_printer.c_str();
+        size = name_printer.size();
+        if (size > 7) {
+            size = 7;
+        }
+        for (size_t i = 0; i < size; i++) {
+            this->fileSystemData.devices[this->fileSystemData.devicesCount].name[i] = char_name_printer[i];
+        }
+        this->fileSystemData.devices[this->fileSystemData.devicesCount].ID = 2;
+        this->fileSystemData.devices[this->fileSystemData.devicesCount].type = rdpdr::RDPDR_DTYP_PRINT;
+        this->fileSystemData.devicesCount++;
     }
 
     ~ClientChannelRDPDRManager() {
@@ -299,7 +301,6 @@ public:
 
                     case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
                         {
-
                         uint16_t capa  = chunk.in_uint16_le();
                         chunk.in_skip_bytes(2);
                         bool driveEnable = false;
@@ -323,7 +324,6 @@ public:
                             }
                         }
                         }
-
                         break;
 
                     case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
@@ -339,8 +339,6 @@ public:
 
                         out_stream.out_uint16_le(5);    // 5 capabilities.
                         out_stream.out_clear_bytes(2);  // Padding(2)
-
-
 
                         // General capability set
                         out_stream.out_uint16_le(rdpdr::CAP_GENERAL_TYPE);

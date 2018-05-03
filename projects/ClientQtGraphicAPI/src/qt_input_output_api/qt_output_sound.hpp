@@ -121,7 +121,7 @@ public:
                 this->current_wav_index++;
 
                 std::string wav_file_name =  std::string(":/DATA/sound_temp/sound") + std::to_string(this->current_wav_index) +std::string(".wav");
-                LOG(LOG_INFO, "play wav: \"%s\"", wav_file_name);
+//                 LOG(LOG_INFO, "play wav: \"%s\"", wav_file_name);
 
                 Phonon::MediaSource sources(QUrl(wav_file_name.c_str()));
                 this->media->setCurrentSource(sources);
@@ -133,7 +133,7 @@ public:
 private Q_SLOTS:
     void call_playback_over() {
         std::string wav_file_name = this->path + std::string("/sound") + std::to_string(this->current_wav_index) +std::string(".wav");
-        LOG(LOG_INFO, "remove wav: \"%s\"", wav_file_name);
+//         LOG(LOG_INFO, "remove wav: \"%s\"", wav_file_name);
         remove(wav_file_name.c_str());
 
         this->play();
