@@ -443,7 +443,6 @@ protected:
         void add(SessionReactor& session_reactor, std::unique_ptr<AsynchronousTask>&& task)
         {
             auto remover = [](AsynchronousTaskContainer* pself, AsynchronousTask& task) noexcept {
-                LOG(LOG_DEBUG, "task:: %p (%s)", &task, typeid(task).name());
                 if (pself->tasks.size() == 1) {
                     assert(pself->tasks.front().get() == &task);
                     pself->tasks.clear();
@@ -461,7 +460,6 @@ protected:
             };
             this->tasks.emplace_back(std::move(task))
             ->configure_event(session_reactor, {this, remover});
-            this->tasks.clear();
         }
 
     private:

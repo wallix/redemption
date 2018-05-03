@@ -116,9 +116,10 @@ public:
         this->fdobject = session_reactor.create_fd_event(
             this->file_descriptor, std::ref(*this), std::move(f))
         .on_action([](auto ctx, RdpdrDriveReadTask& self, DeleterFunction& f) {
+            auto const r = self.run() ? ctx.need_more_data() : ctx.terminate();
             self.fdobject.detach();
             f(self); // detroy this
-            return self.run() ? ctx.need_more_data() : ctx.terminate();
+            return r;
         })
         .on_exit([](auto /*ctx*/, jln2::ExitR er, RdpdrDriveReadTask&, DeleterFunction&) mutable {
             return er.to_result();
