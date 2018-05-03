@@ -20,17 +20,28 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
+#include "utils/sugar/array_view.hpp"
+
+
 struct DateDirFromFilename
 {
-    char const* c_str() const noexcept;
-    char const* begin() const noexcept;
-    char const* end() const noexcept;
-    bool has_error() const noexcept;
+    DateDirFromFilename(array_view_const_char path) noexcept;
 
-    static DateDirFromFilename extract_date(char const* filename) noexcept;
+    bool has_date() const noexcept
+    {
+        return this->start_date_it != this->start_filename_it;
+    }
+
+    array_view_const_char full_path() const noexcept { return {this->start_path, this->end_path}; }
+    /// \return \a base_path() + \a dir_date_path()
+    array_view_const_char directory() const noexcept { return {this->start_path, this->start_filename_it}; }
+    array_view_const_char base_path() const noexcept { return {this->start_path, this->start_date_it}; }
+    array_view_const_char date_path() const noexcept { return {this->start_date_it, this->start_filename_it}; }
+    array_view_const_char filename() const noexcept { return {this->start_filename_it, this->end_path}; }
 
 private:
-    DateDirFromFilename() = default;
-
-    char str_date[12];
+    char const* start_path;
+    char const* start_date_it;
+    char const* start_filename_it;
+    char const* end_path;
 };

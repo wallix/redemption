@@ -933,23 +933,19 @@ public:
         const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
 
         {
-            auto date_from_file = DateDirFromFilename::extract_date(
-                ini.get<cfg::session_log::log_path>().c_str());
-            if (date_from_file.has_error()) {
-                LOG(LOG_ERR, "Front::can_be_start_capture: failed to extract date");
-                throw Error(ERR_RECORDER_FAILED_TO_EXTRACT_DATE);
+            DateDirFromFilename d(ini.get<cfg::session_log::log_path>());
+            if (!d.has_date()) {
+                LOG(LOG_WARNING, "Front::can_be_start_capture: failed to extract date");
             }
 
-            record_path.insert(record_path.end(), date_from_file.begin(), date_from_file.end());
-            hash_path.insert(hash_path.end(), date_from_file.begin(), date_from_file.end());
+            hash_path.append(d.date_path().begin(), d.date_path().end());
+            record_path.append(d.date_path().begin(), d.date_path().end());
         }
 
-        if (recursive_create_directory(record_path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
-            LOG(LOG_ERR, "Front::can_be_start_capture: Failed to create directory: \"%s\"", record_path);
-        }
-
-        if (recursive_create_directory(hash_path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
-            LOG(LOG_ERR, "Front::can_be_start_capture: Failed to create directory: \"%s\"", hash_path);
+        for (auto* s : {&record_path, &hash_path}) {
+            if (recursive_create_directory(s->c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+                LOG(LOG_ERR, "Front::can_be_start_capture: Failed to create directory: \"%s\"", *s);
+            }
         }
 
         const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
