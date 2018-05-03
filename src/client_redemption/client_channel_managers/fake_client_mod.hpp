@@ -120,6 +120,7 @@ public:
     }
 
         // image data
+    // TODO should be `ImageDataView get_image_view()`
     int get_image_buffer_width() override {return 0;}
     int get_image_buffer_height() override {return 0;}
     uint8_t * get_image_buffer_data() override {return 0;}
@@ -127,8 +128,9 @@ public:
 
         // files data (file index to identify a file among a files group descriptor)
     std::string get_file_item_name(int index) override {return std::string("");}
+    // TODO should be `array_view_const_char get_file_item_size(int index)`
     int get_file_item_size(int index) override {(void) index; return 0;}
-    char * get_file_item_data(int index) override {(void) index; return "";}
+    char * get_file_item_data(int index) override {(void) index; return const_cast<char*>("");}
 
 };
 
