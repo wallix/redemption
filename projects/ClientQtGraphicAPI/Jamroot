@@ -179,6 +179,8 @@ add_src mod/rdp/negociation.cpp ;
 add_src transport/crypto_transport.cpp ;
 add_src transport/mwrm_reader.cpp ;
 add_src transport/socket_transport.cpp ;
+add_src transport/recorder_transport.cpp ;
+add_src transport/replay_transport.cpp ;
 add_src utils/authorization_channels.cpp ;
 add_src utils/bitmap.cpp ;
 add_src utils/bitmap_from_file.cpp ;

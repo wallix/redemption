@@ -94,6 +94,8 @@ exe rdpproxy :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
+  <library>src/transport/recorder_transport.o
+  <library>src/transport/replay_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -152,6 +154,8 @@ exe main_client_redemption :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
+  <library>src/transport/recorder_transport.o
+  <library>src/transport/replay_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -195,6 +199,8 @@ exe rdpclient :
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/socket_transport.o
+  <library>src/transport/recorder_transport.o
+  <library>src/transport/replay_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -236,6 +242,8 @@ exe rdpheadless :
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/socket_transport.o
+  <library>src/transport/recorder_transport.o
+  <library>src/transport/replay_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -342,6 +350,8 @@ exe rdptproxy :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
+  <library>src/transport/recorder_transport.o
+  <library>src/transport/replay_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -436,6 +446,8 @@ exe vncclient :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
+  <library>src/transport/recorder_transport.o
+  <library>src/transport/replay_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -589,6 +601,8 @@ test-run tests/acl/test_acl_serializer :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
+  <library>src/transport/recorder_transport.o
+  <library>src/transport/replay_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -687,6 +701,8 @@ test-run tests/acl/test_authentifier :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
+  <library>src/transport/recorder_transport.o
+  <library>src/transport/replay_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -784,6 +800,8 @@ test-run tests/acl/test_module_manager :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
+  <library>src/transport/recorder_transport.o
+  <library>src/transport/replay_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -2083,6 +2101,8 @@ test-run tests/core/test_mainloop :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
+  <library>src/transport/recorder_transport.o
+  <library>src/transport/replay_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -2186,6 +2206,8 @@ test-run tests/core/test_session :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
+  <library>src/transport/recorder_transport.o
+  <library>src/transport/replay_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -4504,8 +4526,9 @@ obj src/sashimi/sftp.o : $(REDEMPTION_SRC_PATH)/sashimi/sftp.cpp : <cxxflags>-Wn
 obj src/sashimi/ssh_error.o : $(REDEMPTION_SRC_PATH)/sashimi/ssh_error.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
 obj src/transport/crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_transport.cpp ;
 obj src/transport/mwrm_reader.o : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
-obj src/transport/recorder_transport.o : $(REDEMPTION_SRC_PATH)/transport/recorder_transport.cpp ;
 obj src/transport/socket_transport.o : $(REDEMPTION_SRC_PATH)/transport/socket_transport.cpp ;
+obj src/transport/recorder_transport.o : $(REDEMPTION_SRC_PATH)/transport/recorder_transport.cpp ;
+obj src/transport/replay_transport.o : $(REDEMPTION_SRC_PATH)/transport/replay_transport.cpp ;
 obj src/utils/authorization_channels.o : $(REDEMPTION_SRC_PATH)/utils/authorization_channels.cpp ;
 obj src/utils/bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 obj src/utils/bitmap_from_file.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp ;

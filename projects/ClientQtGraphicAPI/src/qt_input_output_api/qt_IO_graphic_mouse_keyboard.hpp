@@ -1463,6 +1463,9 @@ private:
             this->client->user_password = this->form->get_PWDField();
             this->client->port          = this->form->get_portField();
 
+            this->client->is_full_capturing = true;
+            this->client->full_capture_file_name = "/tmp/capture.dump";
+
             if (!this->client->target_IP.empty()){
                 this->client->connect();
             }

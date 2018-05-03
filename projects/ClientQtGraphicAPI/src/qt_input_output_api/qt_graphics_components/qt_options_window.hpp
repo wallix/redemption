@@ -534,6 +534,10 @@ public:
 
     QCheckBox            _consoleBox;
     QLabel               _labelConsole;
+    QComboBox            _captureReplayCombo;
+    QLabel               _labelCaptureReplay;
+    QLineEdit            _captureFileEntry;
+    QLabel               _labelCaptureFile;
 
 
 
@@ -580,6 +584,11 @@ public:
         , remoteapp_workin_dir_label("Working direction :", this)
         , _consoleBox(this)
         , _labelConsole("Console :", this)
+    	, _captureReplayCombo(this)
+    	, _labelCaptureReplay("replay/capture :", this)
+    	, _captureFileEntry("/tmp/capture.dump", this)
+    	, _labelCaptureFile("capture file", this)
+
     {
 
         // General tab
@@ -589,6 +598,12 @@ public:
         this->_layoutConnection->addRow(&(this->_labelNla), &(this->_nlaBox));
         this->_consoleBox.setCheckState(Qt::Unchecked);
         this->_layoutConnection->addRow(&(this->_labelConsole), &(this->_consoleBox));
+        this->_captureReplayCombo.addItem("none", "none");
+        this->_captureReplayCombo.addItem("capture", "capture");
+        this->_captureReplayCombo.addItem("replay", "replay");
+        this->_layoutConnection->addRow(&this->_labelCaptureReplay, &(this->_captureReplayCombo));
+        //this->_captureFileEntry.setDisabled(true);
+        this->_layoutConnection->addRow(&(this->_labelCaptureFile), &(this->_captureFileEntry));
 
 
         // Services tab
@@ -730,14 +745,17 @@ public:
         } else {
             this->_front->current_user_profil = this->profilComboBox.currentIndex();
         }
-        this->_front->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
-        this->_front->update_keylayout();
-        this->_front->modRDPParamsData.enable_tls = this->_tlsBox.isChecked();
-        this->_front->modRDPParamsData.enable_nla = this->_nlaBox.isChecked();
-        this->_front->info.console_session = this->_consoleBox.isChecked();
+        _front->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
+        _front->update_keylayout();
+        _front->modRDPParamsData.enable_tls = this->_tlsBox.isChecked();
+        _front->modRDPParamsData.enable_nla = this->_nlaBox.isChecked();
+        _front->info.console_session = this->_consoleBox.isChecked();
+        _front->is_full_capturing = (this->_captureReplayCombo.currentText() == "capture");
+        _front->is_full_replaying = (this->_captureReplayCombo.currentText() == "replay");
+        _front->full_capture_file_name = this->_captureFileEntry.text().toStdString();
 
 
-        // Servirces tab
+        // Services tab
         this->_front->enable_shared_clipboard = this->_clipboardCheckBox.isChecked();
         if (this->_shareCheckBox.isChecked()) {
             this->_front->enable_shared_virtual_disk = true;

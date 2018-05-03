@@ -95,6 +95,7 @@ struct MetaLine
     , ctime{}
     , start_time{}
     , stop_time{}
+    , with_hash(false)
     , hash1{}
     , hash2{}
     {}
