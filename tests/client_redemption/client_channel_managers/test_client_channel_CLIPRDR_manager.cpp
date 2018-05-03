@@ -100,7 +100,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromServerToCLient)
     RDPECLIP::FormatDataResponsePDU_Text fdr(5);
     fdr.emit(out_FormatDataResponse);
     uint8_t data_resp[] = {97, 99, 97, 98};
-    out_FormatDataResponse.out_copy_bytes(data_resp, 5);
+    out_FormatDataResponse.out_copy_bytes(data_resp, sizeof(data_resp));
     InStream chunk_FormatDataResponse(out_FormatDataResponse.get_data(), out_FormatDataResponse.get_offset());
 
     clientChannelCLIPRDRManager.receive(chunk_FormatDataResponse, flag_channel);
