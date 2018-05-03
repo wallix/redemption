@@ -750,12 +750,14 @@ RED_AUTO_TEST_CASE(TestPointerVNC_Color)
 
 RED_AUTO_TEST_CASE(TestPointerIO)
 {
+        
 
-//    uint8_t data[] = {
-//    };
-
-////    InStream stream(data, sizeof(data)); 
-////    Pointer cursor(stream);
+        StaticOutStream<32+108*96> stream;
+        
+//        cursor.emit_pointer32x32(payload);
+//        
+//        array_view_const_u8 av = {payload.get_data(), payload.get_offset()};
+        
 //    
 //    Pointer p(EditPointer{});
 
