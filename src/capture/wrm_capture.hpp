@@ -495,11 +495,14 @@ protected:
         auto const dimensions = cursor.get_dimensions();
         StaticOutStream<32+108*96> payload;
         bool pointer32x32 = ((dimensions.width == 32) && (dimensions.height == 32));
+        payload.out_uint16_le(this->mouse_x);
+        payload.out_uint16_le(this->mouse_y);
+        payload.out_uint8(cache_idx);
         if (pointer32x32) {
-            cursor.emit_pointer(payload, cache_idx, this->mouse_x, this->mouse_y);
+            cursor.emit_pointer32x32(payload);
         }
         else {
-            cursor.emit_pointer2(payload, cache_idx, this->mouse_x, this->mouse_y);
+            cursor.emit_pointer2(payload);
         }
         wrmcapture_send_wrm_chunk(this->trans, (pointer32x32)?WrmChunkType::POINTER:WrmChunkType::POINTER2, payload.get_offset(), 0);
         this->trans.send(payload.get_data(), payload.get_offset());    
