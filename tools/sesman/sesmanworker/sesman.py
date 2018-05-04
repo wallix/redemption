@@ -944,8 +944,8 @@ class Sesman():
 
         self.full_path = os.path.join(rec_path, self.record_filebase)
 
-        #TODO remove .flv extention and adapt ReDemPtion proxy code
-        data_to_send[u'rec_path'] = self.full_path
+        #TODO remove .flv extension and adapt ReDemPtion proxy code (/!\ break the compatibility)
+        data_to_send[u'rec_path'] = u"%s.flv" % (self.full_path)
 
         record_warning = SESMANCONF[u'sesman'].get('record_warning', True)
         if record_warning:
