@@ -549,8 +549,6 @@ public:
 
         wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::POSSIBLE_ACTIVE_WINDOW_CHANGE, 0, 0);
     }
-
-    using RDPSerializer::set_pointer;
 };  // struct GraphicToFile
 
 
@@ -726,6 +724,8 @@ public:
 
     void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
 
+
+    // XXXXXXXXXXXXXX
     void set_pointer(Pointer const & ptr) override {
         this->graphic_to_file.set_pointer(ptr);
     }

@@ -271,6 +271,7 @@ private:
         void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
         void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
+        // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
         void set_pointer(Pointer    const & pointer) override {
             for (gdi::GraphicApi & gd : this->gds){
                 gd.set_pointer(pointer);

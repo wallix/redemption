@@ -28,6 +28,7 @@
 #include "utils/drawable.hpp"
 #include "utils/png.hpp"
 #include "core/RDP/rdp_pointer.hpp"
+#include "test_only/fake_graphic.hpp"
 
 RED_AUTO_TEST_CASE(TestDataSize)
 {
@@ -753,13 +754,26 @@ RED_AUTO_TEST_CASE(TestPointerIO)
         
 
         StaticOutStream<32+108*96> stream;
+        Pointer cursor(EditPointer{});  
+
+        uint16_t width = cursor.get_dimensions().width;
+        uint16_t height = cursor.get_dimensions().height;
         
+        FakeGraphic drawable(24, width, height, 0);
+        auto const color_context = gdi::ColorCtx::depth24();
+        auto pixel_color = RDPColor::from(PINK);
+        Rect rect(0,0,width,height);
+        drawable.draw(RDPOpaqueRect(rect, pixel_color), rect, color_context);
+        
+        auto av_xor = cursor.get_24bits_xor_mask();
+        Bitmap bmp(24, 24, nullptr, width, height, av_xor.data(), av_xor.size(), false);
+//        drawable.mem_blt(rect, bmp, 0, 0);
+//               
+//        drawable.save_to_png("./cursor.png");
+
 //        cursor.emit_pointer32x32(payload);
 //        
 //        array_view_const_u8 av = {payload.get_data(), payload.get_offset()};
-        
-//    
-//    Pointer p(EditPointer{});
 
 //    StaticOutStream<8192> result;
 //    

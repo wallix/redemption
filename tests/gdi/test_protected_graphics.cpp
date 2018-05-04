@@ -51,7 +51,7 @@ RED_AUTO_TEST_CASE(TestModOSD)
         drawable.trace_mouse();
         tm ptm;
         localtime_r(&now.tv_sec, &ptm);
-        TimestampTracer timestamp_tracer(gdi::get_mutable_image_view(drawable.impl()));
+        TimestampTracer timestamp_tracer(gdi::get_mutable_image_view(drawable));
         timestamp_tracer.trace(ptm);
         ::dump_png24(trans, drawable, true);
         trans.next();
@@ -115,21 +115,21 @@ RED_AUTO_TEST_CASE(TestModOSD2)
     class ImageCaptureLocal
     {
         Transport & trans;
-        const Drawable & drawable;
+        RDPDrawable & drawable;
         timeval start_capture;
-
         TimestampTracer timestamp_tracer;
 
     public:
-        ImageCaptureLocal(const Drawable & drawable, Transport & trans)
+        ImageCaptureLocal(RDPDrawable & drawable, Transport & trans)
         : trans(trans)
         , drawable(drawable)
-        , timestamp_tracer(gdi::get_mutable_image_view(const_cast<Drawable&>(drawable)))
-        {}
+        , timestamp_tracer(gdi::get_mutable_image_view(drawable))
+        {
+        }
 
         std::chrono::microseconds do_snapshot(const timeval & now)
         {
-            const_cast<Drawable&>(this->drawable).trace_mouse();
+            this->drawable.trace_mouse();
             tm ptm;
             localtime_r(&now.tv_sec, &ptm);
             this->timestamp_tracer.trace(ptm);
@@ -137,7 +137,7 @@ RED_AUTO_TEST_CASE(TestModOSD2)
             this->trans.next();
             this->timestamp_tracer.clear();
             this->start_capture = now;
-            const_cast<Drawable&>(this->drawable).clear_mouse();
+            this->drawable.clear_mouse();
             return std::chrono::microseconds::zero();
         }
 
@@ -147,7 +147,7 @@ RED_AUTO_TEST_CASE(TestModOSD2)
     };
 
 
-    ImageCaptureLocal consumer(drawable.impl(), trans);
+    ImageCaptureLocal consumer(drawable, trans);
 
     drawable.show_mouse_cursor(false);
 
@@ -206,21 +206,22 @@ RED_AUTO_TEST_CASE(TestModOSD3)
     class ImageCaptureLocal
     {
         Transport & trans;
-        const Drawable & drawable;
-        timeval start_capture;
+        RDPDrawable & drawable;
 
+        timeval start_capture;
         TimestampTracer timestamp_tracer;
 
     public:
-        ImageCaptureLocal(const Drawable & drawable, Transport & trans)
+        ImageCaptureLocal(RDPDrawable & drawable, Transport & trans)
         : trans(trans)
         , drawable(drawable)
-        , timestamp_tracer(gdi::get_mutable_image_view(const_cast<Drawable&>(drawable)))
-        {}
+        , timestamp_tracer(gdi::get_mutable_image_view(drawable))
+        {
+        }
 
         std::chrono::microseconds do_snapshot(const timeval & now)
         {
-            const_cast<Drawable&>(this->drawable).trace_mouse();
+            this->drawable.trace_mouse();
             tm ptm;
             localtime_r(&now.tv_sec, &ptm);
             this->timestamp_tracer.trace(ptm);
@@ -228,7 +229,7 @@ RED_AUTO_TEST_CASE(TestModOSD3)
             this->trans.next();
             this->timestamp_tracer.clear();
             this->start_capture = now;
-            const_cast<Drawable&>(this->drawable).clear_mouse();
+            this->drawable.clear_mouse();
             return std::chrono::microseconds::zero();
         }
 
@@ -238,7 +239,7 @@ RED_AUTO_TEST_CASE(TestModOSD3)
     };
 
 
-    ImageCaptureLocal consumer(drawable.impl(), trans);
+    ImageCaptureLocal consumer(drawable, trans);
 
     drawable.show_mouse_cursor(false);
 
