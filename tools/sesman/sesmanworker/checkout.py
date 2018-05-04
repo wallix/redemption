@@ -1,5 +1,8 @@
-from logger import Logger
 import json
+
+from logger import Logger
+
+
 try:
     from wallixconst.approval import (
         APPROVAL_PENDING as S_PENDING,
@@ -18,7 +21,7 @@ try:
     CRED_DATA_LOGIN = "login"
     CRED_DATA_ACCOUNT_UID = "account_uid"
     CRED_INDEX = "credentials"
-except Exception, e:
+except Exception as e:
     import traceback
     tracelog = traceback.format_exc(e)
     try:
@@ -35,7 +38,7 @@ except Exception, e:
             CRED_DATA_ACCOUNT_UID,
             CRED_INDEX,
         )
-    except Exception, e:
+    except Exception as e:
         Logger().info("Wabengine const LOADING FAILED %s" % tracelog)
 
 APPROVAL_ACCEPTED = "APPROVAL_ACCEPTED"
@@ -45,6 +48,7 @@ APPROVAL_NONE = "APPROVAL_NONE"
 STATUS_SUCCESS = [S_OK]
 STATUS_PENDING = [S_PENDING]
 STATUS_APPR_NEEDED = [S_NONE]
+
 
 class CheckoutEngine(object):
     def __init__(self, engine):
@@ -56,7 +60,8 @@ class CheckoutEngine(object):
     def get_target_login(self, right):
         # Logger().debug("CHECKOUTENGINE get_target_login")
         target_uid = right['target_uid']
-        tright, credentials = self.session_credentials.get(target_uid, ({}, {}))
+        tright, credentials = self.session_credentials.get(target_uid,
+                                                           ({}, {}))
         login = credentials.get(CRED_DATA_LOGIN)
         return login
 
@@ -66,18 +71,20 @@ class CheckoutEngine(object):
             # if is_am, password in credentials is from primary account
             return []
         target_uid = right['target_uid']
-        tright, credentials = self.session_credentials.get(target_uid, ({}, {}))
+        tright, credentials = self.session_credentials.get(target_uid,
+                                                           ({}, {}))
         passwords = credentials.get(CRED_TYPE_PASSWORD, [])
         return passwords
 
     def get_target_privkeys(self, right):
         # Logger().debug("CHECKOUTENGINE get_target_privkeys")
         target_uid = right['target_uid']
-        tright, credentials = self.session_credentials.get(target_uid, ({}, {}))
-        privkeys = [ (cred.get(CRED_DATA_PRIVATE_KEY),
-                      cred.get("passphrase"),
-                      cred.get(CRED_DATA_SSH_CERTIFICATE)) \
-                     for cred in credentials.get(CRED_TYPE_SSH_KEY, []) ]
+        tright, credentials = self.session_credentials.get(target_uid,
+                                                           ({}, {}))
+        privkeys = [(cred.get(CRED_DATA_PRIVATE_KEY),
+                     cred.get("passphrase"),
+                     cred.get(CRED_DATA_SSH_CERTIFICATE))
+                    for cred in credentials.get(CRED_TYPE_SSH_KEY, [])]
         return privkeys
 
     def get_primary_password(self, right):
@@ -86,14 +93,16 @@ class CheckoutEngine(object):
             # if is_am, password in credentials is from primary account
             return None
         target_uid = right['target_uid']
-        tright, credentials = self.session_credentials.get(target_uid, ({}, {}))
+        tright, credentials = self.session_credentials.get(target_uid,
+                                                           ({}, {}))
         passwords = credentials.get(CRED_TYPE_PASSWORD, [])
         password = None
         if passwords:
             password = passwords[0]
         return password
 
-    def get_scenario_account_infos(self, account_name, domain_name, device_name):
+    def get_scenario_account_infos(self, account_name,
+                                   domain_name, device_name):
         # Logger().debug("CHECKOUTENGINE get_scenario_account_infos")
         account = (account_name, domain_name, device_name)
         res = self.check_scenario_account(account_name,
@@ -170,32 +179,41 @@ class CheckoutEngine(object):
                 rights = self.engine.get_user_rights_by_type('account',
                                                              scenario=True)
                 Logger().debug("** END get_user_rights_by_type")
-                rights = map(json.loads, rights)
+                if rights and (type(rights[0]) == str):
+                    rights = map(json.loads, rights)
                 self.scenario_rights = rights
             except Exception as e:
                 Logger().debug("Engine get_user_rights_by_type failed: %s" % e)
 
-    def checkout_scenario_account(self, account_name, domain_name, device_name):
+    def checkout_scenario_account(self, account_name,
+                                  domain_name, device_name):
         self.update_scenario_rights()
         if self.scenario_rights is None:
             return None, {}
 
-        match_account_name = lambda x: (x['account_name'] == account_name)
-        match_domain_name = lambda x: (x['domain_cn'] == domain_name)
-        match_global_domain = lambda x: (not device_name
-                                         and x['device_cn'] is None
-                                         and x['application_cn'] is None)
-        match_local_domain = lambda x: (device_name is not None
-                                        and device_name in (x['device_cn'],
-                                                            x['application_cn']))
+        def match_account_name(x):
+            return x['account_name'] == account_name
+
+        def match_domain_name(x):
+            return x['domain_cn'] == domain_name
+
+        def match_global_domain(x):
+            return (not device_name
+                    and x['device_cn'] is None
+                    and x['application_cn'] is None)
+
+        def match_local_domain(x):
+            return (device_name is not None
+                    and device_name in (x['device_cn'], x['application_cn']))
+
         matched_rights = (
             right for right in self.scenario_rights if (
                 match_account_name(right)
                 and match_domain_name(right)
                 and (match_global_domain(right)
                      or match_local_domain(right))
-                )
             )
+        )
 
         for right in matched_rights:
             try:
@@ -204,8 +222,9 @@ class CheckoutEngine(object):
                                                              session=True)
                 Logger().debug("** END checkout_account (scenario)")
             except Exception as e:
-                Logger().debug("Engine checkout_account (scenario) failed: %s"
-                               % e)
+                Logger().debug(
+                    "Engine checkout_account (scenario) failed: %s" % e
+                )
                 continue
             if status in STATUS_SUCCESS and CRED_INDEX in infos:
                 return right, infos[CRED_INDEX]
@@ -240,7 +259,9 @@ class CheckoutEngine(object):
                 )
                 Logger().debug("** END checkin_account (scenario)")
             except Exception as e:
-                Logger().debug("Engine checkin_scenario_account failed: %s" % e)
+                Logger().debug(
+                    "Engine checkin_scenario_account failed: %s" % e
+                )
             self.scenario_credentials.pop(account, None)
 
     def release_all(self):
@@ -267,6 +288,8 @@ class CheckoutEngine(object):
                 )
                 Logger().debug("** END checkin_account (scenario)")
             except Exception as e:
-                Logger().debug("Engine checkin_scenario_account failed: %s" % e)
+                Logger().debug(
+                    "Engine checkin_scenario_account failed: %s" % e
+                )
         self.scenario_credentials.clear()
         self.scenario_rights = None
