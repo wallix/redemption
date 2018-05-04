@@ -298,7 +298,7 @@ RED_AUTO_TEST_CASE(TestSessionLogFile)
 {
     std::string const prefix_path = "/tmp/test_acl_dir/";
     std::string const hashdir = prefix_path + "hash/";
-    char const * const logname = "acl_log.txt";
+    std::string const logname = "acl_log.txt";
     std::string const filename = prefix_path + logname;
     std::string const hashname = hashdir + logname;
 
@@ -318,7 +318,7 @@ RED_AUTO_TEST_CASE(TestSessionLogFile)
 
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);          // for localtime
 
-    log_file.open(filename, hashdir);
+    log_file.open(filename, hashname, 0, logname);
     log_file.write_line(1512484183, cstr_array_view("test first"));
     log_file.write_line(1512484185, cstr_array_view("test second"));
     log_file.close();

@@ -29,16 +29,59 @@
 RED_AUTO_TEST_CASE(TestDateDirFromFilename)
 {
     {
-        auto date_from_file = DateDirFromFilename::extract_date("abc");
-        RED_CHECK(date_from_file.has_error());
+        auto s = cstr_array_view("abc");
+        DateDirFromFilename d(s);
+        RED_CHECK(!d.has_date());
+        RED_CHECK_SMEM(s, d.full_path());
+        RED_CHECK_SMEM(s, d.filename());
+        RED_CHECK_SMEM(array_view_char{}, d.base_path());
+        RED_CHECK_SMEM(array_view_char{}, d.directory());
+        RED_CHECK_SMEM(array_view_char{}, d.date_path());
     }
     {
-        auto date_from_file = DateDirFromFilename::extract_date("SESSIONID-0000,rec@127.0.0.1,Tester@PROXY@linux,2018041-104218,jpoelen-mini,5560.log");
-        RED_CHECK(date_from_file.has_error());
+        auto s = cstr_array_view("/var/recorder/SESSIONID-0000,rec@127.0.0.1,Tester@PROXY@linux,2018041-104218,jpoelen-mini,5560.log");
+        auto base = cstr_array_view("/var/recorder/");
+        DateDirFromFilename d(s);
+        RED_CHECK(!d.has_date());
+        RED_CHECK_SMEM(s, d.full_path());
+        RED_CHECK_SMEM(base, d.base_path());
+        RED_CHECK_SMEM(base, d.directory());
+        RED_CHECK_SMEM(s.subarray(base.size()), d.filename());
+        RED_CHECK_SMEM(array_view_char{}, d.date_path());
     }
     {
-        auto date_from_file = DateDirFromFilename::extract_date("SESSIONID-0000,rec@127.0.0.1,Tester@PROXY@linux,20180418-104218,jpoelen-mini,5560.log");
-        RED_CHECK(!date_from_file.has_error());
-        RED_CHECK_EQ(date_from_file.c_str(), "2018-04-18/");
+        auto s = cstr_array_view("/SESSIONID-0000,rec@127.0.0.1,Tester@PROXY@linux,2018041-104218,jpoelen-mini,5560.log");
+        auto base = cstr_array_view("/");
+        DateDirFromFilename d(s);
+        RED_CHECK(!d.has_date());
+        RED_CHECK_SMEM(s, d.full_path());
+        RED_CHECK_SMEM(base, d.base_path());
+        RED_CHECK_SMEM(base, d.directory());
+        RED_CHECK_SMEM(s.subarray(base.size()), d.filename());
+        RED_CHECK_SMEM(array_view_char{}, d.date_path());
+    }
+    {
+        auto s = cstr_array_view("2018-04-01/SESSIONID-0000,rec@127.0.0.1,Tester@PROXY@linux,2018041-104218,jpoelen-mini,5560.log");
+        auto date = cstr_array_view("2018-04-01/");
+        DateDirFromFilename d(s);
+        RED_CHECK(d.has_date());
+        RED_CHECK_SMEM(s, d.full_path());
+        RED_CHECK_SMEM(array_view_char{}, d.base_path());
+        RED_CHECK_SMEM(s.subarray(date.size()), d.filename());
+        RED_CHECK_SMEM(date, d.date_path());
+        RED_CHECK_SMEM(date, d.directory());
+    }
+    {
+        auto s = cstr_array_view("var/recorder/2018-04-01/SESSIONID-0000,rec@127.0.0.1,Tester@PROXY@linux,2018041-104218,jpoelen-mini,5560.log");
+        auto base = cstr_array_view("var/recorder/");
+        auto date = cstr_array_view("2018-04-01/");
+        auto dir = s.subarray(0, base.size()+date.size());
+        DateDirFromFilename d(s);
+        RED_CHECK(d.has_date());
+        RED_CHECK_SMEM(s, d.full_path());
+        RED_CHECK_SMEM(base, d.base_path());
+        RED_CHECK_SMEM(s.subarray(dir.size()), d.filename());
+        RED_CHECK_SMEM(date, d.date_path());
+        RED_CHECK_SMEM(dir, d.directory());
     }
 }

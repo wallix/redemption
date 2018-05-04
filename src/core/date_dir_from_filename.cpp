@@ -20,68 +20,45 @@ Author(s): Jonathan Poelen
 
 #include "core/date_dir_from_filename.hpp"
 
+#include <algorithm>
 #include <iterator>
 #include <cassert>
 
-
-char const* DateDirFromFilename::c_str() const noexcept
+// format: $directory '/' $year'-'$month'-'$day '/' $filename
+DateDirFromFilename::DateDirFromFilename(array_view_const_char path) noexcept
+: start_path(path.begin())
+, end_path(path.end())
 {
-    assert(!this->has_error());
-    return str_date;
-}
+    auto const e = path.end();
+    auto before_senti = path.begin();
+    auto date_senti = std::find(before_senti, e, '/');
 
-char const* DateDirFromFilename::begin() const noexcept
-{
-    assert(!this->has_error());
-    return std::begin(str_date);
-}
-
-char const* DateDirFromFilename::end() const noexcept
-{
-    assert(!this->has_error());
-    return std::end(str_date)-1;
-}
-
-bool DateDirFromFilename::has_error() const noexcept
-{
-    return !bool(*str_date);
-}
-
-// format: $id ',' $user ',' $target ',' $year$month$day '-' .....
-DateDirFromFilename DateDirFromFilename::extract_date(const char* filename) noexcept
-{
-    const char* start_date = filename;
-    for (int count = 0; count < 3 && *start_date; ++start_date) {
-        if (*start_date == ',') {
-            ++count;
+    if (date_senti != e) {
+        ++date_senti;
+        decltype(date_senti) it;
+        while (e != (it = std::find(date_senti, e, '/'))) {
+            before_senti = date_senti;
+            date_senti = it+1;
         }
-    }
 
-    DateDirFromFilename date_from_file;
-    char* str_date_end_pos = date_from_file.str_date;
-
-    auto copy_n = [&](int max_digit) {
-        for (int count = 0
-            ; count < max_digit && *start_date && '0' <= *start_date && *start_date <= '9'
-            ; ++count, ++str_date_end_pos, ++start_date
+        auto is_digit = [&](int i) { return '0' <= before_senti[i] && before_senti[i] <= '9'; };
+        if (date_senti - before_senti == 11
+         && is_digit(0) && is_digit(1) && is_digit(2) && is_digit(3)
+         && before_senti[4] == '-'
+         && is_digit(5) && is_digit(6)
+         && before_senti[4] == '-'
+         && is_digit(8) && is_digit(9)
+         && before_senti[10] == '/'
         ) {
-            *str_date_end_pos = *start_date;
+            this->start_date_it = before_senti;
         }
-    };
-
-    // year
-    copy_n(4); *str_date_end_pos++ = '-';
-    // month
-    copy_n(2); *str_date_end_pos++ = '-';
-    // day
-    copy_n(2); *str_date_end_pos++ = '/';
-    *str_date_end_pos = 0;
-
-    assert(str_date_end_pos <= std::end(date_from_file.str_date));
-
-    if (str_date_end_pos != date_from_file.end()) {
-        date_from_file.str_date[0] = 0;
+        else {
+            this->start_date_it = date_senti;
+        }
+        this->start_filename_it = date_senti;
     }
-
-    return date_from_file;
+    else {
+        this->start_date_it = this->start_path;
+        this->start_filename_it = this->start_path;
+    }
 }
