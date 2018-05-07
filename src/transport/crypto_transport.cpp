@@ -736,7 +736,7 @@ void OutCryptoTransport::open(const char * const finalname, const char * const h
     this->out_file.open(unique_fd(::mkostemps(this->tmpname, 4, O_WRONLY | O_CREAT)));
     if (not this->is_open()){
         int const err = errno;
-        LOG(LOG_ERR, "OutCryptoTransport::open : open failed (%s -> %s)", this->tmpname, finalname);
+        LOG(LOG_ERR, "OutCryptoTransport::open : open failed (%s -> %s): %s", this->tmpname, finalname, strerror(errno));
         throw Error(ERR_TRANSPORT_OPEN_FAILED, err);
     }
 

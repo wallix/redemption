@@ -28,15 +28,14 @@
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "core/RDP/pointer.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "mod/internal/internal_mod.hpp"
-#include "mod/mod_api.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/windowing_api.hpp"
-#include "utils/bitmap.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "utils/stream.hpp"
+#include "utils/region.hpp"
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp" // msgdump_c
 
 #define INTERNAL_MODULE_WINDOW_ID    40000
@@ -675,61 +674,54 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
     }
 
     // Mouse pointer managment
-
-    mouse_captured_ref = true;
-
-    bool mouse_pointer_should_be_set = false;
-
-            if (this->north.contains_pt(xPos, yPos) ||
-                this->south.contains_pt(xPos, yPos)) {
-        if (Pointer::POINTER_SIZENS != this->current_mouse_pointer_type) {
-            this->current_mouse_pointer_type = Pointer::POINTER_SIZENS;
-            mouse_pointer_should_be_set = true;
+    if (!this->move_size_initialized) {
+        if (this->north.contains_pt(xPos, yPos) 
+        ||  this->south.contains_pt(xPos, yPos)) {
+            if (Pointer::POINTER_SIZENS != this->current_mouse_pointer_type) {
+                    this->current_mouse_pointer_type = Pointer::POINTER_SIZENS;
+                    this->front_->set_pointer(Pointer(SizeNSPointer{}));
+            }
+        }
+        else if (this->north_west_north.contains_pt(xPos, yPos) 
+             ||  this->north_west_west.contains_pt(xPos, yPos) 
+             ||  this->south_east_south.contains_pt(xPos, yPos) 
+             ||  this->south_east_east.contains_pt(xPos, yPos)) {
+            if (Pointer::POINTER_SIZENWSE != this->current_mouse_pointer_type) {
+                    this->current_mouse_pointer_type = Pointer::POINTER_SIZENWSE;
+                    this->front_->set_pointer(Pointer(SizeNESWPointer{}));
+            }
+        }
+        else if (this->west.contains_pt(xPos, yPos) 
+             ||  this->east.contains_pt(xPos, yPos)) {
+            if (Pointer::POINTER_SIZEWE != this->current_mouse_pointer_type) {
+                    this->current_mouse_pointer_type = Pointer::POINTER_SIZEWE;
+                    this->front_->set_pointer(Pointer(SizeWEPointer{}));
+            }
+        }
+        else if (this->south_west_west.contains_pt(xPos, yPos) 
+             ||  this->south_west_south.contains_pt(xPos, yPos) 
+             ||  this->north_east_east.contains_pt(xPos, yPos) 
+             ||  this->north_east_north.contains_pt(xPos, yPos)) {
+            if (Pointer::POINTER_SIZENESW != this->current_mouse_pointer_type) {
+                    this->current_mouse_pointer_type = Pointer::POINTER_SIZENESW;
+                    this->front_->set_pointer(Pointer(SizeNESWPointer{}));
+            }
+        }
+        else if ((this->title_bar_rect.contains_pt(xPos, yPos)) 
+             ||  (this->enable_resizing_hosted_desktop_ && this->resize_hosted_desktop_box_rect.contains_pt(xPos, yPos)) 
+             ||  (this->minimize_box_rect.contains_pt(xPos, yPos)) 
+             ||  (this->maximize_box_rect.contains_pt(xPos, yPos)) 
+             ||  (this->close_box_rect.contains_pt(xPos, yPos))) {
+            if (Pointer::POINTER_NORMAL != this->current_mouse_pointer_type) {
+                this->current_mouse_pointer_type = Pointer::POINTER_NORMAL;
+                this->front_->set_pointer(Pointer(NormalPointer{}));
+            }
+        }
+        else {
+                this->current_mouse_pointer_type = Pointer::POINTER_NULL;
+                mouse_captured_ref = false;
         }
     }
-    else if (this->north_west_north.contains_pt(xPos, yPos) ||
-                this->north_west_west.contains_pt(xPos, yPos) ||
-                this->south_east_south.contains_pt(xPos, yPos) ||
-                this->south_east_east.contains_pt(xPos, yPos)) {
-        if (Pointer::POINTER_SIZENWSE != this->current_mouse_pointer_type) {
-            this->current_mouse_pointer_type = Pointer::POINTER_SIZENWSE;
-            mouse_pointer_should_be_set = true;
-        }
-    }
-    else if (this->west.contains_pt(xPos, yPos) ||
-                this->east.contains_pt(xPos, yPos)) {
-        if (Pointer::POINTER_SIZEWE != this->current_mouse_pointer_type) {
-            this->current_mouse_pointer_type = Pointer::POINTER_SIZEWE;
-            mouse_pointer_should_be_set = true;
-        }
-    }
-    else if (this->south_west_west.contains_pt(xPos, yPos) ||
-                this->south_west_south.contains_pt(xPos, yPos) ||
-                this->north_east_east.contains_pt(xPos, yPos) ||
-                this->north_east_north.contains_pt(xPos, yPos)) {
-        if (Pointer::POINTER_SIZENESW != this->current_mouse_pointer_type) {
-            this->current_mouse_pointer_type = Pointer::POINTER_SIZENESW;
-            mouse_pointer_should_be_set = true;
-        }
-    }
-    else if ((this->title_bar_rect.contains_pt(xPos, yPos)) ||
-                (this->enable_resizing_hosted_desktop_ &&
-                this->resize_hosted_desktop_box_rect.contains_pt(xPos, yPos)) ||
-                (this->minimize_box_rect.contains_pt(xPos, yPos)) ||
-                (this->maximize_box_rect.contains_pt(xPos, yPos)) ||
-                (this->close_box_rect.contains_pt(xPos, yPos))) {
-        if (Pointer::POINTER_NORMAL != this->current_mouse_pointer_type) {
-            this->current_mouse_pointer_type = Pointer::POINTER_NORMAL;
-            mouse_pointer_should_be_set = true;
-        }
-    }
-
-    if (mouse_pointer_should_be_set && !this->move_size_initialized) {
-        Pointer cursor(this->current_mouse_pointer_type);
-
-        this->front_->set_pointer(cursor);
-    }
-
     // Mouse action managment
 
     if ((SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1) == pointerFlags) {
@@ -1040,6 +1032,8 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                 this->front_->draw(order);
 
                 this->update_widget();
+
+                this->on_new_or_existing_window(adjusted_window_rect);
             }   // if (this->full_window_drag_enabled)
         }
         else if (this->allow_resize_hosted_desktop_ &&
@@ -1222,6 +1216,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                 }
 
                 this->front_->draw(order);
+                this->on_delete_window();
 
                 if (this->mod_) {
                     this->mod_->rdp_input_invalidate(
@@ -1344,9 +1339,9 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                 this->move_size_initialized = false;
             }   // if (0 != move_size_type)
 
-            {
-                const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+            const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
 
+            {
                 RDP::RAIL::NewOrExistingWindow order;
 
                 order.header.FieldsPresentFlags(
@@ -1388,6 +1383,8 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                 this->update_widget();
             }   // if (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button)
 
+            this->on_new_or_existing_window(adjusted_window_rect);
+
             if (0 != move_size_type) {
                 this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
             }
@@ -1402,9 +1399,9 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
 
             this->update_rects();
 
-            {
-                const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+            const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
 
+            {
                 RDP::RAIL::NewOrExistingWindow order;
 
                 order.header.FieldsPresentFlags(
@@ -1443,6 +1440,8 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             }
 
             this->update_widget();
+
+            this->on_new_or_existing_window(adjusted_window_rect);
         }   // if (this->south.contains_pt(xPos, yPos))
         else if (this->title_bar_rect.contains_pt(xPos, yPos)) {
             this->maximize_restore_window();
@@ -1452,12 +1451,6 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             throw Error(ERR_WIDGET);    // Title Bar Icon Double-clicked
         }   // else if (this->title_bar_icon_rect.contains_pt(xPos, yPos))
     }   // else if (PTRFLAGS_EX_DOUBLE_CLICK == pointerFlags)
-
-    if (!mouse_pointer_should_be_set && !this->move_size_initialized) {
-        this->current_mouse_pointer_type = Pointer::POINTER_NULL;
-
-        mouse_captured_ref = false;
-    }
 
     return false;
 }   // input_mouse
@@ -1486,9 +1479,9 @@ void ClientExecute::adjust_window_to_mod() {
 
     this->update_rects();
 
-    {
-        const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+    const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
 
+    {
         RDP::RAIL::NewOrExistingWindow order;
 
         order.header.FieldsPresentFlags(
@@ -1533,6 +1526,8 @@ void ClientExecute::adjust_window_to_mod() {
     }
 
     this->update_widget();
+
+    this->on_new_or_existing_window(adjusted_window_rect);
 }
 
 void ClientExecute::maximize_restore_window()
@@ -1563,9 +1558,9 @@ void ClientExecute::maximize_restore_window()
 
         this->update_rects();
 
-        {
-            const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+        const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
 
+        {
             RDP::RAIL::NewOrExistingWindow order;
 
             order.header.FieldsPresentFlags(
@@ -1610,6 +1605,8 @@ void ClientExecute::maximize_restore_window()
         }
 
         this->update_widget();
+
+        this->on_new_or_existing_window(adjusted_window_rect);
     }   // if (this->maximized)
     else {
         this->maximized = true;
@@ -1625,9 +1622,9 @@ void ClientExecute::maximize_restore_window()
 
         this->update_rects();
 
-        {
-            const Rect adjusted_window_rect = work_area_rect.offset(this->window_offset_x, this->window_offset_y);
+        const Rect adjusted_window_rect = work_area_rect.offset(this->window_offset_x, this->window_offset_y);
 
+        {
             RDP::RAIL::NewOrExistingWindow order;
 
             order.header.FieldsPresentFlags(
@@ -1672,6 +1669,8 @@ void ClientExecute::maximize_restore_window()
         }
 
         this->update_widget();
+
+        this->on_new_or_existing_window(adjusted_window_rect);
     }   // if (!this->maximized)
 }   // maximize_restore_window
 
@@ -1851,6 +1850,7 @@ void ClientExecute::reset(bool soft)
         }
 
         this->front_->draw(order);
+        this->on_delete_window();
 
         this->internal_module_window_created = false;
     }
@@ -2188,6 +2188,7 @@ void ClientExecute::process_client_system_command_pdu(uint32_t total_length,
                     }
 
                     this->front_->draw(order);
+                    this->on_delete_window();
                 }
 
                 if (this->mod_) {
@@ -2249,6 +2250,7 @@ void ClientExecute::process_client_system_command_pdu(uint32_t total_length,
                 }
 
                 this->front_->draw(order);
+                this->on_new_or_existing_window(adjusted_window_rect);
 
                 if (this->mod_) {
                     this->mod_->rdp_input_invalidate(
@@ -2263,6 +2265,39 @@ void ClientExecute::process_client_system_command_pdu(uint32_t total_length,
             break;
     }
 }   // process_client_system_command_pdu
+
+void ClientExecute::on_new_or_existing_window(Rect const & window_rect)
+{
+    if (!this->protocol_window_rect.isempty())
+    {
+        SubRegion sub_region;
+
+        sub_region.add_rect(this->protocol_window_rect);
+
+        sub_region.subtract_rect(window_rect);
+
+        auto const depth = gdi::ColorCtx::depth24();
+        for (Rect const & rect : sub_region.rects) {
+            RDPOpaqueRect order(rect, encode_color24()(BLACK));
+
+            this->front_->draw(order, rect, depth);
+        }
+    }
+
+    this->protocol_window_rect = window_rect;
+}   // on_new_or_existing_window
+
+void ClientExecute::on_delete_window()
+{
+    assert(!this->protocol_window_rect.isempty());
+
+    auto const depth = gdi::ColorCtx::depth24();
+    RDPOpaqueRect order(this->protocol_window_rect, encode_color24()(BLACK));
+
+    this->front_->draw(order, this->protocol_window_rect, depth);
+
+    this->protocol_window_rect.empty();
+}   // on_delete_window
 
 void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_length,
     uint32_t flags, InStream& chunk)
@@ -2380,6 +2415,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
             }
 
             this->front_->draw(order);
+            this->on_new_or_existing_window(adjusted_window_rect);
         }
 
         {
@@ -2696,9 +2732,9 @@ void ClientExecute::process_client_window_move_pdu(uint32_t total_length,
 
         this->update_rects();
 
-        {
-            const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
+        const Rect adjusted_window_rect = this->window_rect.offset(this->window_offset_x, this->window_offset_y);
 
+        {
             RDP::RAIL::NewOrExistingWindow order;
 
             order.header.FieldsPresentFlags(
@@ -2793,6 +2829,8 @@ void ClientExecute::process_client_window_move_pdu(uint32_t total_length,
         this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
 
         this->update_widget();
+
+        this->on_new_or_existing_window(adjusted_window_rect);
     }
 }   // process_client_window_move_pdu
 
@@ -3055,6 +3093,7 @@ void ClientExecute::create_auxiliary_window(Rect const window_rect_)
         }
 
         this->front_->draw(order);
+        this->on_new_or_existing_window(adjusted_window_rect);
     }
 
     this->auxiliary_window_rect = window_rect;
@@ -3081,6 +3120,7 @@ void ClientExecute::destroy_auxiliary_window()
         }
 
         this->front_->draw(order);
+        this->on_delete_window();
     }
 
     this->auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;

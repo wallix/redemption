@@ -24,7 +24,7 @@
 #include <fstream>
 
 #include "utils/log.hpp"
-#include "../client_input_output_api.hpp"
+#include "client_redemption/client_input_output_api.hpp"
 
 #if REDEMPTION_QT_VERSION == 4
 #   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
@@ -121,7 +121,7 @@ public:
                 this->current_wav_index++;
 
                 std::string wav_file_name =  std::string(":/DATA/sound_temp/sound") + std::to_string(this->current_wav_index) +std::string(".wav");
-                LOG(LOG_INFO, "play wav: \"%s\"", wav_file_name);
+//                 LOG(LOG_INFO, "play wav: \"%s\"", wav_file_name);
 
                 Phonon::MediaSource sources(QUrl(wav_file_name.c_str()));
                 this->media->setCurrentSource(sources);
@@ -133,7 +133,7 @@ public:
 private Q_SLOTS:
     void call_playback_over() {
         std::string wav_file_name = this->path + std::string("/sound") + std::to_string(this->current_wav_index) +std::string(".wav");
-        LOG(LOG_INFO, "remove wav: \"%s\"", wav_file_name);
+//         LOG(LOG_INFO, "remove wav: \"%s\"", wav_file_name);
         remove(wav_file_name.c_str());
 
         this->play();

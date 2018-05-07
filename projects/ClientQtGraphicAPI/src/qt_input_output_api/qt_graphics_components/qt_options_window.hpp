@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Clément Moroldo
+   Author(s): Clément Moroldo, Jonathan Poelen, David Fort
 
 */
 
@@ -28,6 +28,9 @@
 
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
+#include "client_redemption/client_input_output_api.hpp"
+
+
 
 #include "../keymaps/qt_scancode_keymap.hpp"
 
@@ -53,188 +56,165 @@
 #include REDEMPTION_QT_INCLUDE_WIDGET(QTableWidget)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QToolTip)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QHeaderView)
 
 #undef REDEMPTION_QT_INCLUDE_WIDGET
 
-#include "../../client_input_output_api.hpp"
 
 
 
-
-
-//      , clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [](){
-//             NullReportMessage reportMessage;
-//             ClipboardVirtualChannel::Params params(reportMessage);
-//
-//             params.exchanged_data_limit = ~decltype(params.exchanged_data_limit){};
-//             params.verbose = to_verbose_flags(0);
-//
-//             params.clipboard_down_authorized = true;
-//             params.clipboard_up_authorized = true;
-//             params.clipboard_file_authorized = true;
-//
-//             params.dont_log_data_into_syslog = true;
-//             params.dont_log_data_into_wrm = true;
-//
-// //            params.client_use_long_format_names = true;
-//
-//             return params;
-//         }())
-
-
-
-
-
-
-class DialogOptions_Qt : public QDialog
+class QtKeyLabel :  public QWidget
 {
 
 Q_OBJECT
 
 public:
+    int q_key_code;
+    QLabel label;
+    bool key_not_assigned;
+
+    QtKeyLabel(QWidget * parent)
+      : QWidget(parent)
+      , q_key_code(0)
+      , label("Press a Key", this)
+      , key_not_assigned(true)
+      {
+//           qApp->installEventFilter(this);
+
+          //this->installEventFilter(this);
+      }
+
+    void set_key(int q_key_code, const std::string & q_key_name) {
+//         LOG(LOG_INFO, "q_key_code=%d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", q_key_code);
+        this->q_key_code = q_key_code;
+        this->label.clear();
+        this->label.setText(q_key_name.c_str());
+       // LOG(LOG_INFO, "q_key_code=%d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", this->q_key_code);
+    }
+
+//     void print() {
+//         LOG(LOG_INFO, "internal q_key_code=%d", this->q_key_code);
+//     }
+};
+
+
+
+
+class QtOptions : public QWidget
+{
+
+Q_OBJECT
+
+public:
+    enum : uint8_t {
+        RDP,
+        VNC
+    };
     ClientRedemptionIOAPI   * _front;
+    ClientInputMouseKeyboardAPI * controllers;
     const int            _width;
     const int            _height;
 
-    QWidget              _emptyPanel;
-    QWidget            * _viewTab;
-    QWidget            * _connectionTab;
-    QWidget            * _servicesTab;
-    QWidget            * _keyboardTab;
-
-    QGridLayout        * _layout;
-    QPushButton          _buttonSave;
-    QPushButton          _buttonCancel;
-    QPushButton        * _buttonDeleteKey;
-    QPushButton        * _buttonAddKey;
-    QPushButton          _buttonRestorConfig;
-    QPushButton          _buttonDelConfProfil;
     QTabWidget         * _tabs;
+    QGridLayout        * _layout;
 
-    QComboBox            _bppComboBox;
-    QComboBox            _resolutionComboBox;
-    QCheckBox            _perfCheckBox;
-    QCheckBox            _spanCheckBox;
-    QCheckBox            _recordingCB;
-    QCheckBox            _tlsBox;
-    QCheckBox            _nlaBox;
-    QCheckBox            _soundBox;
-    QCheckBox            _clipboardCheckBox;
-    QCheckBox            _shareCheckBox;
+    QWidget            * _connectionTab;
+    QFormLayout        * _layoutConnection;
 
-    QLineEdit            _sharePath;
-    QPushButton          _buttonSharePath;
-
-    QComboBox            _languageComboBox;
     QComboBox            profilComboBox;
     QLineEdit            profilLineEdit;
-//     QComboBox            _monitorCountComboBox;
-//     QComboBox            _captureSnapFreqComboBox;
+    QPushButton          _buttonRestorConfig;
+    QPushButton          _buttonDelConfProfil;
+    QCheckBox            _recordingCB;
 
-    QFormLayout        * _layoutView;
-    QFormLayout        * _layoutConnection;
+    QComboBox            _languageComboBox;
+
+    QLabel               _labelProfil;
+    QLabel               _labelRecording;
+
+    QLabel               _labelLanguage;
+
+    QWidget            * _servicesTab;
     QFormLayout        * _layoutServices;
+
+    QCheckBox            _clipboardCheckBox;
+    QCheckBox            _soundBox;
+
+    QLabel               _labelClipboard;
+    QLabel               _labelSound;
+
+    QWidget            * _keyboardTab;
+    QPushButton        * _buttonDeleteKey;
+    QPushButton        * _buttonAddKey;
     QFormLayout        * _layoutKeyboard;
 
-    QLabel               _labelBpp;
-    QLabel               _labelResolution;
-    QLabel               _labelPerf;
-    QLabel               _labelSpan;
-    QLabel               _labelLanguage;
-    QLabel               _labelProfil;
-//     QLabel               _labelScreen;
-    QLabel               _labelRecording;
-    QLabel               _labelTls;
-    QLabel               _labelNla;
-    QLabel               _labelSound;
-//     QLabel               _labelCaptureFreq;
-    QLabel               _labelClipboard;
-    QLabel               _labelShare;
-    QLabel               _labelSharePath;
-
     QTableWidget       * _tableKeySetting;
+//     QScrollArea          key_setting_scroller;
+
     const int            _columnNumber;
     const int            _tableKeySettingMaxHeight;
+//     bool                 key_editting;
 
 
-    DialogOptions_Qt(ClientRedemptionIOAPI * front, QWidget * parent)
-        : QDialog(parent)
+    QtOptions(ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+        : QWidget(parent)
         , _front(front)
-        , _width(400)
-        , _height(350)
-        , _emptyPanel(this)
-        , _viewTab(nullptr)
-        , _connectionTab(nullptr)
-        , _servicesTab(nullptr)
-        , _keyboardTab(nullptr)
-        , _layout(nullptr)
-        , _buttonSave("Save", this)
-        , _buttonCancel("Cancel", this)
-        , _buttonDeleteKey(nullptr)
-        , _buttonAddKey(nullptr)
-        , _buttonRestorConfig("Default configuration", this)
-        , _buttonDelConfProfil("Delete current Profile", this)
+        , controllers(controllers)
+        , _width(410)
+        , _height(330)
+
         , _tabs(nullptr)
-        , _bppComboBox(this)
-        , _resolutionComboBox(this)
-        , _perfCheckBox(this)
-        , _spanCheckBox(this)
-        , _recordingCB(this)
-        , _tlsBox(this)
-        , _nlaBox(this)
-        , _soundBox(this)
-        , _clipboardCheckBox(this)
-        , _shareCheckBox(this)
-        , _sharePath(this->_front->SHARE_DIR.c_str(), this)
-        , _buttonSharePath("Select a Directory", this)
-        , _languageComboBox(this)
+        , _layout(nullptr)
+
+        , _connectionTab(nullptr)
+        , _layoutConnection(nullptr)
+
         , profilComboBox(this)
         , profilLineEdit("", this)
-//         , _monitorCountComboBox(this)
-//         , _captureSnapFreqComboBox(this)
-        , _layoutView(nullptr)
-        , _layoutConnection(nullptr)
-        , _layoutKeyboard(nullptr)
-        , _labelBpp("Color depth :", this)
-        , _labelResolution("Resolution :", this)
-        , _labelPerf("Disable wallaper :", this)
-        , _labelSpan("Span screen :", this)
-        , _labelLanguage("Keyboard Language :", this)
+        , _buttonRestorConfig("Default configuration", this)
+        , _buttonDelConfProfil("Delete current Profile", this)
+        , _recordingCB(this)
+
+    	, _languageComboBox(this)
+
         , _labelProfil("Options Profil:", this)
-//         , _labelScreen("Screen :", this)
         , _labelRecording("Record movie :", this)
-        , _labelTls("TLS :", this)
-        , _labelNla("NLA :", this)
-        , _labelSound("Sound :",  this)
-//         , _labelCaptureFreq("Capture per second :", this)
+
+        , _labelLanguage("Keyboard Language :", this)
+
+        , _servicesTab(nullptr)
+        , _layoutServices(nullptr)
+
+        , _clipboardCheckBox(this)
+        , _soundBox(this)
+
         , _labelClipboard("Shared Clipboard :", this)
-        , _labelShare("Shared Virtual Disk :", this)
-        , _labelSharePath("Shared Path :", this)
+        , _labelSound("Sound :",  this)
+
+        , _keyboardTab(nullptr)
+        , _buttonDeleteKey(nullptr)
+        , _buttonAddKey(nullptr)
+
+        , _layoutKeyboard(nullptr)
         , _tableKeySetting(nullptr)
+//         , key_setting_scroller(this)
         , _columnNumber(4)
         , _tableKeySettingMaxHeight((20*6)+11)
+//         , key_editting(true)/**/
     {
-        this->setWindowTitle("Options");
-        this->setAttribute(Qt::WA_DeleteOnClose);
         this->setFixedSize(this->_width, this->_height);
-        this->setModal(true);
-
         this->_front->setClientInfo();
-
         this->_layout = new QGridLayout(this);
 
 
-        // Tab options
-        this->_viewTab = new QWidget(this);
         this->_connectionTab = new QWidget(this);
         this->_servicesTab = new QWidget(this);
         this->_keyboardTab = new QWidget(this);
         this->_tabs = new QTabWidget(this);
 
 
-
         // Connection config
-        const QString strConnection("General");
+        const QString strConnection(" General ");
         this->_layoutConnection = new QFormLayout(this->_connectionTab);
 
         this->profilComboBox.setLineEdit(&(this->profilLineEdit));
@@ -245,7 +225,6 @@ public:
         this->_layoutConnection->addRow(&(this->_labelProfil), &(this->profilComboBox));
         this->QObject::connect(&(this->profilComboBox), SIGNAL(currentIndexChanged(int)), this, SLOT(changeProfil(int)));
 
-
         this->_buttonRestorConfig.setFixedSize(160, 20);
         this->_buttonRestorConfig.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonRestorConfig) , SIGNAL (pressed()) , this, SLOT (restoreConfig()));
@@ -253,71 +232,12 @@ public:
         this->_buttonDelConfProfil.setFixedSize(160, 20);
         this->_buttonDelConfProfil.setCursor(Qt::PointingHandCursor);
         this->QObject::connect(&(this->_buttonDelConfProfil) , SIGNAL (pressed()) , this, SLOT (deleteCurrentProtile()));
-
-
         this->_layoutConnection->addRow(&(this->_buttonRestorConfig), &(this->_buttonDelConfProfil));
 
         this->_layoutConnection->addRow(&(this->_labelRecording), &(this->_recordingCB));
-        this->QObject::connect(&(this->_recordingCB), SIGNAL(stateChanged(int)), this, SLOT(recordingCheckChange(int)));
-
-//         this->_captureSnapFreqComboBox.addItem("1"   , 1000000);
-//         this->_captureSnapFreqComboBox.addItem("10"   , 1000000/10);
-//         this->_captureSnapFreqComboBox.addItem("20"   , 1000000/20);
-//         this->_captureSnapFreqComboBox.addItem("40"   , 1000000/40);
-//         this->_captureSnapFreqComboBox.addItem("60"   , 1000000/60);
-//         this->_captureSnapFreqComboBox.setStyleSheet("combobox-popup: 0;");
-//         this->_layoutConnection->addRow(&(this->_labelCaptureFreq), &(this->_captureSnapFreqComboBox));
-//         this->_captureSnapFreqComboBox.setEnabled(this->_front->is_recording);
-
-
-        this->_tlsBox.setCheckState(Qt::Unchecked);
-        this->_layoutConnection->addRow(&(this->_labelTls), &(this->_tlsBox));
-
-        this->_nlaBox.setCheckState(Qt::Unchecked);
-        this->_layoutConnection->addRow(&(this->_labelNla), &(this->_nlaBox));
-
-        this->_soundBox.setCheckState(Qt::Unchecked);
-        this->_layoutConnection->addRow(&(this->_labelSound), &(this->_soundBox));
 
         this->_connectionTab->setLayout(this->_layoutConnection);
         this->_tabs->addTab(this->_connectionTab, strConnection);
-
-
-        // VIEW TAB
-        const QString strView("View");
-        this->_layoutView = new QFormLayout(this->_viewTab);
-
-        this->_bppComboBox.addItem("15", 15);
-        this->_bppComboBox.addItem("16", 16);
-        this->_bppComboBox.addItem("24", 24);
-        this->_bppComboBox.setStyleSheet("combobox-popup: 0;");
-        this->_layoutView->addRow(&(this->_labelBpp), &(this->_bppComboBox));
-
-        this->_resolutionComboBox.addItem( "640 * 480", 640);
-        this->_resolutionComboBox.addItem( "800 * 600", 800);
-        this->_resolutionComboBox.addItem("1024 * 768", 1024);
-        this->_resolutionComboBox.addItem("1600 * 900", 1600);
-        this->_resolutionComboBox.setStyleSheet("combobox-popup: 0;");
-        this->_layoutView->addRow(&(this->_labelResolution), &(this->_resolutionComboBox));
-
-
-        this->_spanCheckBox.setCheckState(Qt::Unchecked);
-        this->_layoutView->addRow(&(this->_labelSpan), &(this->_spanCheckBox));
-        this->QObject::connect(&(this->_spanCheckBox), SIGNAL(stateChanged(int)), this, SLOT(spanCheckChange(int)));
-
-
-//         for (int i = 1; i <= FrontQtRDPGraphicAPI::MAX_MONITOR_COUNT; i++) {
-//             this->_monitorCountComboBox.addItem(std::to_string(i).c_str(), i);
-//         }
-//         this->_monitorCountComboBox.setStyleSheet("combobox-popup: 0;");
-//         this->_layoutView->addRow(&(this->_labelScreen), &(this->_monitorCountComboBox));
-//         this->QObject::connect(&(this->_monitorCountComboBox), SIGNAL(currentIndexChanged(int)), this, SLOT(monitorCountkChange(int)));
-
-
-        this->_layoutView->addRow(&(this->_labelPerf), &(this->_perfCheckBox));
-
-        this->_viewTab->setLayout(this->_layoutView);
-        this->_tabs->addTab(this->_viewTab, strView);
 
 
         // Services tab
@@ -327,19 +247,8 @@ public:
         this->_clipboardCheckBox.setCheckState(Qt::Unchecked);
         this->_layoutServices->addRow(&(this->_labelClipboard), &(this->_clipboardCheckBox));
 
-        this->_shareCheckBox.setCheckState(Qt::Unchecked);
-        this->QObject::connect(&(this->_shareCheckBox), SIGNAL(stateChanged(int)), this, SLOT(setEnableSharePath(int)));
-        this->_layoutServices->addRow(&(this->_labelShare), &(this->_shareCheckBox));
-
-        this->_sharePath.setEnabled(this->_front->enable_shared_virtual_disk);
-        this->_layoutServices->addRow(&(this->_labelSharePath), &(this->_sharePath));
-
-        QRect rectPath(QPoint(190, 226),QSize(180, 24));
-        this->_buttonSharePath.setGeometry(rectPath);
-        this->_buttonSharePath.setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(&(this->_buttonSharePath) , SIGNAL (pressed()) , this, SLOT (dirPathPressed()));
-        QLabel dirButtonLabel("", this);
-        this->_layoutServices->addRow(&(dirButtonLabel), &(this->_buttonSharePath));
+        this->_soundBox.setCheckState(Qt::Unchecked);
+        this->_layoutServices->addRow(&(this->_labelSound), &(this->_soundBox));
 
         this->_servicesTab->setLayout(this->_layoutServices);
         this->_tabs->addTab(this->_servicesTab, strServices);
@@ -358,80 +267,27 @@ public:
 
         this->_tableKeySetting = new QTableWidget(0, this->_columnNumber, this);
         QList<QString> columnTitles;
-        columnTitles << "Qt key ID" << "Scan Code" << "ASCII8" << "Extended";
+        columnTitles << "Qt key" << "Scan Code" << "ASCII8" << "Extended";
         this->_tableKeySetting->setHorizontalHeaderLabels({columnTitles});
         this->_tableKeySetting->setColumnWidth(0 ,85);
         this->_tableKeySetting->setColumnWidth(1 ,84);
         this->_tableKeySetting->setColumnWidth(2 ,84);
         this->_tableKeySetting->setColumnWidth(3 ,74);
-
-
-        for (size_t i = 0; i < this->_front->keyCustomDefinitions.size(); i++) {
-            this->addRow();
-            this->setRowValues(this->_front->keyCustomDefinitions[i].qtKeyID,
-                               this->_front->keyCustomDefinitions[i].scanCode,
-                               this->_front->keyCustomDefinitions[i].ASCII8,
-                               this->_front->keyCustomDefinitions[i].extended);
-
-        }
-
-
-//         std::ifstream ifichier(this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH), std::ios::in);
-//         if(ifichier) {
-//
-//             std::string ligne;
-//             std::string delimiter = " ";
-//
-//             while(getline(ifichier, ligne)) {
-//
-//                 int pos(ligne.find(delimiter));
-//
-//                 if (strcmp(ligne.substr(0, pos).c_str(), "-") == 0) {
-//
-//                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-//                     pos = ligne.find(delimiter);
-//
-//                     int qtKeyID  = std::stoi(ligne.substr(0, pos));
-//                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-//                     pos = ligne.find(delimiter);
-//
-//                     int scanCode = std::stoi(ligne.substr(0, pos));
-//                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-//                     pos = ligne.find(delimiter);
-//
-//                     int ASCII8   = std::stoi(ligne.substr(0, pos));
-//                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-//                     pos = ligne.find(delimiter);
-//
-//                     int extended = std::stoi(ligne.substr(0, pos));
-//
-//                     this->_front->qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
-//
-//                     this->addRow();
-//                     this->setRowValues(qtKeyID, scanCode, ASCII8, extended);
-//                 }
-//             }
-//
-//             ifichier.close();
-//         }
-         this->addRow();
-
-
+        //this->_tableKeySetting->verticalHeader()->hideSection(0);
+        this->_tableKeySetting->setSelectionBehavior(QAbstractItemView::SelectItems);
+        this->_tableKeySetting->setSelectionMode(QAbstractItemView::SingleSelection);
 
         this->_layoutKeyboard->addRow(this->_tableKeySetting);
-
         this->_keyboardTab->setLayout(this->_layoutKeyboard);
-
 
         this->_tabs->addTab(this->_keyboardTab, strKeyboard);
 
-        this->_buttonAddKey = new QPushButton("Add row", this->_keyboardTab);
+        this->_buttonAddKey = new QPushButton("Add Key", this->_keyboardTab);
         QRect rectAddKey(QPoint(110, 226),QSize(70, 24));
         this->_buttonAddKey->setToolTip(this->_buttonAddKey->text());
         this->_buttonAddKey->setGeometry(rectAddKey);
         this->_buttonAddKey->setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(this->_buttonAddKey    , SIGNAL (pressed()) , this, SLOT (addRow()));
-
+        this->QObject::connect(this->_buttonAddKey    , SIGNAL (pressed()) , this, SLOT (pushEdit()));
 
         this->_buttonDeleteKey = new QPushButton("Delete selected row", this->_keyboardTab);
         QRect rectDeleteKey(QPoint(190, 226),QSize(180, 24));
@@ -439,138 +295,43 @@ public:
         this->_buttonDeleteKey->setGeometry(rectDeleteKey);
         this->_buttonDeleteKey->setCursor(Qt::PointingHandCursor);
         this->QObject::connect(this->_buttonDeleteKey , SIGNAL (pressed()) , this, SLOT (deletePressed()));
+        //this->_buttonDeleteKey->setEnabled(false);
 
         this->_layout->addWidget(this->_tabs, 0, 0, 9, 4);
-
-
-        // Buttons
-        this->_layout->addWidget(&(this->_emptyPanel), 11, 0, 1, 2);
-
-        this->_buttonSave.setToolTip(this->_buttonSave.text());
-        this->_buttonSave.setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(&(this->_buttonSave)   , SIGNAL (pressed()),  this, SLOT (savePressed()));
-        this->QObject::connect(&(this->_buttonSave)   , SIGNAL (released()), this, SLOT (saveReleased()));
-        this->_buttonSave.setFocusPolicy(Qt::StrongFocus);
-        this->_layout->addWidget(&(this->_buttonSave), 11, 2);
-
-        this->_buttonCancel.setToolTip(this->_buttonCancel.text());
-        this->_buttonCancel.setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(&(this->_buttonCancel) , SIGNAL (pressed()),  this, SLOT (cancelPressed()));
-        this->QObject::connect(&(this->_buttonCancel) , SIGNAL (released()), this, SLOT (cancelReleased()));
-        this->_buttonCancel.setFocusPolicy(Qt::StrongFocus);
-        this->_layout->addWidget(&(this->_buttonCancel), 11, 3);
-
-
-
         this->setLayout(this->_layout);
-
-
-        this->setConfigValues();
-
-        QDesktopWidget* desktop = QApplication::desktop();
-        int centerW = (desktop->width()/2)  - (this->_width/2);
-        int centerH = (desktop->height()/2) - (this->_height/2);
-        this->move(centerW, centerH);
-
-        this->show();
     }
 
-    ~DialogOptions_Qt() {}
 
+    virtual void setConfigValues() {
 
-private:
-    void setConfigValues() {
-        int indexProfil = this->profilComboBox.findData(this->_front->current_user_profil);
-        if ( indexProfil != -1 ) {
-            this->profilComboBox.setCurrentIndex(indexProfil);
-        }
+        // Connection tab
+    	this->_recordingCB.setChecked(this->_front->is_recording);
 
-        int indexBpp = this->_bppComboBox.findData(this->_front->info.bpp);
-        if ( indexBpp != -1 ) {
-            this->_bppComboBox.setCurrentIndex(indexBpp);
-        }
-
-        int indexResolution = this->_resolutionComboBox.findData(this->_front->info.width);
-        if ( indexResolution != -1 ) {
-            this->_resolutionComboBox.setCurrentIndex(indexResolution);
-        }
-
-//         this->_monitorCountComboBox.setCurrentIndex(this->_front->info.cs_monitor.monitorCount-1);
-
-        if (this->_front->is_spanning) {
-            this->_spanCheckBox.setCheckState(Qt::Checked);
-        } else {
-            this->_spanCheckBox.setCheckState(Qt::Unchecked);
-        }
-
-        if (this->_front->info.rdp5_performanceflags == PERF_DISABLE_WALLPAPER) {
-            this->_perfCheckBox.setCheckState(Qt::Checked);
-        }
-
+        // Keyboard tab
         int indexLanguage = this->_languageComboBox.findData(this->_front->info.keylayout);
         if ( indexLanguage != -1 ) {
             this->_languageComboBox.setCurrentIndex(indexLanguage);
         }
-
-//         int indexCaptureFreq = this->_captureSnapFreqComboBox.findData(this->_front->delta_time);
-//         if ( indexCaptureFreq != -1 ) {
-//             this->_captureSnapFreqComboBox.setCurrentIndex(indexCaptureFreq);
-//         }
-
-        if (this->_front->is_recording) {
-            this->_recordingCB.setCheckState(Qt::Checked);
-        } else {
-            this->_recordingCB.setCheckState(Qt::Unchecked);
-        }
-
-        if (this->_front->modRDPParamsData.enable_tls) {
-            this->_tlsBox.setCheckState(Qt::Checked);
-        } else {
-            this->_tlsBox.setCheckState(Qt::Unchecked);
-        }
-
-        if (this->_front->modRDPParamsData.enable_nla) {
-            this->_nlaBox.setCheckState(Qt::Checked);
-        } else {
-            this->_nlaBox.setCheckState(Qt::Unchecked);
-        }
-
-        if (this->_front->modRDPParamsData.enable_sound) {
-            this->_soundBox.setCheckState(Qt::Checked);
-        } else {
-            this->_soundBox.setCheckState(Qt::Unchecked);
-        }
-
-        if (this->_front->enable_shared_clipboard) {
-            this->_clipboardCheckBox.setCheckState(Qt::Checked);
-        } else {
-            this->_clipboardCheckBox.setCheckState(Qt::Unchecked);
-        }
-
-        if (this->_front->enable_shared_virtual_disk) {
-            this->_shareCheckBox.setCheckState(Qt::Checked);
-        } else {
-            this->_shareCheckBox.setCheckState(Qt::Unchecked);
+        for (size_t i = 0; i < this->_front->keyCustomDefinitions.size(); i++) {
+            ClientRedemptionIOAPI::KeyCustomDefinition & key = this->_front->keyCustomDefinitions[i];
+            this->addRow();
+            this->setRowValues(key.qtKeyID, key.scanCode, key.ASCII8, key.extended, i, key.name);
         }
     }
 
-    void setRowValues(int qtKeyID, int scanCode, int ASCII8, int extended) {
-        int row(this->_tableKeySetting->rowCount() - 1);
 
-        QTableWidgetItem * item1 = new QTableWidgetItem;
-        item1->setText(std::to_string(qtKeyID).c_str());
-        this->_tableKeySetting->setItem(row, 0, item1);
-
-        QTableWidgetItem * item2 = new QTableWidgetItem;
-        item2->setText(std::to_string(scanCode).c_str());
-        this->_tableKeySetting->setItem(row, 1, item2);
-
-        QTableWidgetItem * item3 = new QTableWidgetItem;
-        item3->setText(std::to_string(ASCII8).c_str());
-        this->_tableKeySetting->setItem(row, 2, item3);
-
-        static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(row, 3))->setCurrentIndex(extended);
+    void setRowValues(int qtKeyID, int scanCode, const std::string ASCII8, int extended, int row, const std::string & name) {
+        if (static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(row, 0))->key_not_assigned) {
+            static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(row, 0))->key_not_assigned = false;
+            static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(row, 0))->set_key(qtKeyID, name);
+            this->_tableKeySetting->item(row, 1)->setText(std::to_string(scanCode).c_str());
+            this->_tableKeySetting->item(row, 2)->setText(ASCII8.c_str());
+            int extended_val = extended >> 8;
+            static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(row, 3))->setCurrentIndex(extended_val);
+            static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(row, 3))->setEnabled(true);
+        }
     }
+
 
     void updateKeySetting() {
         int tableKeySettingHeight((20*(this->_tableKeySetting->rowCount()+1))+11);
@@ -583,12 +344,110 @@ private:
         } else {
             this->_tableKeySetting->setColumnWidth(3 ,87);
         }
-
         this->update();
     }
 
 
+    virtual void getConfigValues() {
+
+        //  Connection tab
+        this->_front->is_recording = this->_recordingCB.isChecked();
+
+        // Keyboard tab
+        this->_front->vnc_conf.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
+
+        this->_front->keyCustomDefinitions.clear();
+
+        const int row_count = this->_tableKeySetting->rowCount();
+        this->_front->keyCustomDefinitions.clear();
+
+        for (int i = 0; i < row_count; i++) {
+            int qtKeyID(0);
+            int scanCode(0);
+            std::string ASCII8;
+            std::string name;
+            int extended(0);
+//             static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(i, 0))->print();
+            qtKeyID = static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(i, 0))->q_key_code;
+//                 LOG(LOG_INFO, "qtKeyID=%d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", qtKeyID);
+            if (qtKeyID != 0) {
+                scanCode = this->_tableKeySetting->item(i, 1)->text().toInt();
+                ASCII8 = this->_tableKeySetting->item(i, 2)->text().toStdString();
+                extended = (static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(i, 3))->currentIndex());
+                name = static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(i, 0))->label.text().toStdString();
+            }
+            this->_front->add_key_custom_definition(qtKeyID, scanCode, ASCII8, extended, name);
+        }
+
+        this->_front->update_keylayout();
+
+        this->_front->writeCustomKeyConfig();
+        this->_front->writeClientInfo();
+    }
+
+    void keyPressEvent(QKeyEvent *e) override {
+
+        const ClientRedemptionIOAPI::KeyCustomDefinition & keyCustomDefinition =
+        this->controllers->get_key_info(e->key(), e->text().toStdString());
+
+        int count = this->_tableKeySetting->selectedItems().count();
+        int row = 0;
+        if (count >= 1) {
+            QTableWidgetItem * focused = this->_tableKeySetting->selectedItems().at(0);
+            if (focused) {
+                row = focused->row();
+            }
+        }
+        if (row >= 0) {
+            this->setRowValues(keyCustomDefinition.qtKeyID,
+                                keyCustomDefinition.scanCode,
+                                keyCustomDefinition.ASCII8,
+                                keyCustomDefinition.extended & 0x0100,
+                                row, keyCustomDefinition.name);
+        }
+    }
+
+    void addRow() {
+        int rowNumber(this->_tableKeySetting->rowCount());
+
+        this->_tableKeySetting->insertRow(rowNumber);
+        this->_tableKeySetting->setRowHeight(rowNumber ,20);
+
+        QComboBox * combo = new QComboBox(this->_tableKeySetting);
+        combo->addItem("No" , 0);
+        combo->addItem("Yes", 1);
+        combo->setEnabled(false);
+        this->_tableKeySetting->setCellWidget(rowNumber, 3, combo);
+
+        QtKeyLabel * key_label = new QtKeyLabel(this);
+        this->_tableKeySetting->setCellWidget(rowNumber, 0, key_label);
+
+        QTableWidgetItem * item1 = new QTableWidgetItem;
+        item1->setText("");
+        this->_tableKeySetting->setItem(rowNumber, 0, item1);
+
+        QTableWidgetItem * item2 = new QTableWidgetItem;
+        item2->setText("");
+        this->_tableKeySetting->setItem(rowNumber, 1, item2);
+
+        QTableWidgetItem * item3 = new QTableWidgetItem;
+        item3->setText("");
+        this->_tableKeySetting->setItem(rowNumber, 2, item3);
+
+        this->_tableKeySetting->setEditTriggers(QAbstractItemView::AnyKeyPressed);
+
+        this->updateKeySetting();
+
+//         QTableWidgetSelectionRange range(rowNumber+1, 1, rowNumber+2, 2);
+//         this->_tableKeySetting->setRangeSelected(range, true);
+    }
+
+
 public Q_SLOTS:
+    void pushEdit() {
+        this->addRow();
+    }
+
     void deleteCurrentProtile() {
         if (this->profilComboBox.currentIndex() != 0) {
             this->_front->deleteCurrentProtile();
@@ -608,10 +467,343 @@ public Q_SLOTS:
         this->setConfigValues();
     }
 
+
+
+    void deletePressed() {
+       QModelIndexList indexes = this->_tableKeySetting->selectionModel()->selection().indexes();
+       for (int i = 0; i < indexes.count(); ++i) {
+           QModelIndex index = indexes.at(i);
+           this->_tableKeySetting->removeRow(index.row());
+       }
+
+       if (this->_tableKeySetting->rowCount() < 1) {
+           this->addRow();
+       }
+
+       this->updateKeySetting();
+    }
+
+};
+
+
+
+class QtRDPOptions : public QtOptions
+{
+
+Q_OBJECT
+
+public:
+    QCheckBox            _tlsBox;
+    QCheckBox            _nlaBox;
+
+    QLabel               _labelTls;
+    QLabel               _labelNla;
+
+    QWidget            * _viewTab;
+    QFormLayout        * _layoutView;
+
+    QComboBox   _bppComboBox;
+    QComboBox   _resolutionComboBox;
+    QCheckBox   _spanCheckBox;
+    QCheckBox   _wallpapperCheckBox;
+    QCheckBox   windowdragCheckBox;
+    QCheckBox   menuanimationsCheckBox;
+    QCheckBox   cursorShadowCheckBox;
+    QCheckBox   cursorsettingsCheckBox;
+    QCheckBox   fontSmoothingCheckBox;
+    QCheckBox   desktopCompositionCheckBox;
+
+    QLabel               _labelBpp;
+    QLabel               _labelResolution;
+    QLabel               _labelSpan;
+    QLabel               _labelWallpaper;
+    QLabel   windowdragLabel;
+    QLabel   menuanimationsLabel;
+    QLabel   cursorShadowLabel;
+    QLabel   cursorsettingsLabel;
+    QLabel   fontSmoothingLabel;
+    QLabel   desktopCompositionLabel;
+
+    QCheckBox            _shareCheckBox;
+    QLineEdit            _sharePath;
+    QPushButton          _buttonSharePath;
+    QCheckBox            _soundBox;
+    QCheckBox            remoteappCheckBox;
+    QLineEdit            remoteapp_cmd;
+    QLineEdit            remoteapp_workin_dir;
+    QLabel               _labelShare;
+    QLabel               _labelSharePath;
+    QLabel               _labelSound;
+    QLabel               remoteappLabel;
+    QLabel               remoteapp_cmd_label;
+    QLabel               remoteapp_workin_dir_label;
+
+    QCheckBox            _consoleBox;
+    QLabel               _labelConsole;
+
+
+
+    QtRDPOptions(ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+        : QtOptions( front, controllers, parent)
+        , _tlsBox(this)
+        , _nlaBox(this)
+        , _labelTls("TLS :", this)
+        , _labelNla("NLA :", this)
+        , _viewTab(nullptr)
+        , _layoutView(nullptr)
+        , _bppComboBox(this)
+        , _resolutionComboBox(this)
+        , _spanCheckBox(this)
+        , _wallpapperCheckBox(this)
+        , windowdragCheckBox(this)
+        , menuanimationsCheckBox(this)
+        , cursorShadowCheckBox(this)
+        , cursorsettingsCheckBox(this)
+        , fontSmoothingCheckBox(this)
+        , desktopCompositionCheckBox( this)
+        , _labelBpp("Color depth :", this)
+        , _labelResolution("Resolution :", this)
+        , _labelSpan("Span screen :", this)
+        , _labelWallpaper("Enable wallaper :", this)
+        , windowdragLabel("Enable windowdrag :", this)
+        , menuanimationsLabel("Enable menu animations :", this)
+        , cursorShadowLabel("Enable cursor shadow", this)
+        , cursorsettingsLabel("Enable cursor settings :", this)
+        , fontSmoothingLabel("Enable font smoothing :", this)
+        , desktopCompositionLabel("Enable desktop composition :", this)
+        , _shareCheckBox(this)
+        , _sharePath("", this)
+        , _buttonSharePath("Select a Directory", this)
+        , _soundBox(this)
+        , remoteappCheckBox(this)
+        , remoteapp_cmd("", this)
+        , remoteapp_workin_dir("", this)
+        , _labelShare("Shared Virtual Disk :", this)
+        , _labelSharePath("Shared Path :", this)
+        , _labelSound("Sound :",  this)
+        , remoteappLabel("Enable remote app :", this)
+        , remoteapp_cmd_label("Command line :", this)
+        , remoteapp_workin_dir_label("Working direction :", this)
+        , _consoleBox(this)
+        , _labelConsole("Console :", this)
+    {
+
+        // General tab
+        this->_tlsBox.setCheckState(Qt::Unchecked);
+        this->_layoutConnection->addRow(&(this->_labelTls), &(this->_tlsBox));
+        this->_nlaBox.setCheckState(Qt::Unchecked);
+        this->_layoutConnection->addRow(&(this->_labelNla), &(this->_nlaBox));
+        this->_consoleBox.setCheckState(Qt::Unchecked);
+        this->_layoutConnection->addRow(&(this->_labelConsole), &(this->_consoleBox));
+
+
+        // Services tab
+        this->_shareCheckBox.setCheckState(Qt::Unchecked);
+        this->QObject::connect(&(this->_shareCheckBox), SIGNAL(stateChanged(int)), this, SLOT(setEnableSharePath(int)));
+        this->_layoutServices->addRow(&(this->_labelShare), &(this->_shareCheckBox));
+        this->_layoutServices->addRow(&(this->_labelSharePath), &(this->_sharePath));
+        QRect rectPath(QPoint(190, 226),QSize(180, 24));
+        this->_buttonSharePath.setGeometry(rectPath);
+        this->_buttonSharePath.setCursor(Qt::PointingHandCursor);
+        this->QObject::connect(&(this->_buttonSharePath) , SIGNAL (pressed()) , this, SLOT (dirPathPressed()));
+        QLabel dirButtonLabel("", this);
+        this->_layoutServices->addRow(&(dirButtonLabel), &(this->_buttonSharePath));
+
+        this->_soundBox.setCheckState(Qt::Unchecked);
+        this->_layoutServices->addRow(&(this->_labelSound), &(this->_soundBox));
+
+        this->remoteappCheckBox.setCheckState(Qt::Unchecked);
+        this->QObject::connect(&(this->remoteappCheckBox), SIGNAL(stateChanged(int)), this, SLOT(setEnableRemoteApp(int)));
+        this->_layoutServices->addRow(&(this->remoteappLabel), &(this->remoteappCheckBox));
+
+        this->_layoutServices->addRow(&(this->remoteapp_cmd_label), &(this->remoteapp_cmd));
+
+        this->remoteapp_workin_dir.setEnabled(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
+        this->_layoutServices->addRow(&(this->remoteapp_workin_dir_label), &(this->remoteapp_workin_dir));
+
+
+        //  View tab
+        this->_viewTab = new QWidget(this);
+
+        const QString strView("View");
+        this->_layoutView = new QFormLayout(this->_viewTab);
+
+        this->_bppComboBox.addItem("15", 15);
+        this->_bppComboBox.addItem("16", 16);
+        this->_bppComboBox.addItem("24", 24);
+        this->_bppComboBox.setStyleSheet("combobox-popup: 0;");
+        this->_layoutView->addRow(&(this->_labelBpp), &(this->_bppComboBox));
+
+        this->_resolutionComboBox.addItem( "640 * 480", 640);
+        this->_resolutionComboBox.addItem( "800 * 600", 800);
+        this->_resolutionComboBox.addItem("1024 * 768", 1024);
+        this->_resolutionComboBox.addItem("1600 * 900", 1600);
+        this->_resolutionComboBox.setStyleSheet("combobox-popup: 0;");
+        this->_layoutView->addRow(&(this->_labelResolution), &(this->_resolutionComboBox));
+
+        this->_spanCheckBox.setCheckState(Qt::Unchecked);
+        this->_layoutView->addRow(&(this->_labelSpan), &(this->_spanCheckBox));
+        //this->QObject::connect(&(this->_spanCheckBox), SIGNAL(stateChanged(int)), this, SLOT(spanCheckChange(int)));
+
+        this->_layoutView->addRow(&(this->_labelWallpaper), &(this->_wallpapperCheckBox));
+        this->_layoutView->addRow(&(this->windowdragLabel), &(this->windowdragCheckBox));
+        this->_layoutView->addRow(&(this->menuanimationsLabel), &(this->menuanimationsCheckBox));
+        this->_layoutView->addRow(&(this->cursorShadowLabel), &(this->cursorShadowCheckBox));
+        this->_layoutView->addRow(&(this->cursorsettingsLabel), &(this->cursorsettingsCheckBox));
+        this->_layoutView->addRow(&(this->fontSmoothingLabel), &(this->fontSmoothingCheckBox));
+        this->_layoutView->addRow(&(this->desktopCompositionLabel), &(this->desktopCompositionCheckBox));
+
+        this->_viewTab->setLayout(this->_layoutView);
+        this->_tabs->addTab(this->_viewTab, strView);
+
+        this->addRow();
+        this->setConfigValues();
+    }
+
+
+    void setConfigValues() override {
+        QtOptions::setConfigValues();
+
+        // General tab
+        this->_tlsBox.setChecked(this->_front->modRDPParamsData.enable_tls);
+        this->_nlaBox.setChecked(this->_front->modRDPParamsData.enable_nla);
+        int indexProfil = this->profilComboBox.findData(this->_front->current_user_profil);
+        if ( indexProfil != -1 ) {
+            this->profilComboBox.setCurrentIndex(indexProfil);
+        }
+
+        // Services tab
+        this->_clipboardCheckBox.setChecked(this->_front->enable_shared_clipboard);
+        this->_shareCheckBox.setChecked(this->_front->enable_shared_virtual_disk);
+        this->_sharePath.setEnabled(this->_front->enable_shared_virtual_disk);
+        this->_sharePath.setText(this->_front->SHARE_DIR.c_str());
+        this->_soundBox.setChecked(this->_front->modRDPParamsData.enable_sound);
+        this->remoteappCheckBox.setChecked(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
+        this->remoteapp_cmd.setEnabled(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
+        this->remoteapp_cmd.setText(this->_front->full_cmd_line.c_str());
+        this->remoteapp_workin_dir.setEnabled(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
+        this->remoteapp_workin_dir.setText(this->_front->source_of_WorkingDir.c_str());
+
+        // View tab
+        int indexBpp = this->_bppComboBox.findData(this->_front->info.bpp);
+        if ( indexBpp != -1 ) {
+            this->_bppComboBox.setCurrentIndex(indexBpp);
+        }
+        int indexResolution = this->_resolutionComboBox.findData(this->_front->rdp_width);
+        if ( indexResolution != -1 ) {
+            this->_resolutionComboBox.setCurrentIndex(indexResolution);
+        }
+        this->_spanCheckBox.setChecked(this->_front->is_spanning);
+        if (this->_front->info.rdp5_performanceflags & PERF_DISABLE_WALLPAPER) {
+            this->_wallpapperCheckBox.setCheckState(Qt::Checked);
+        }
+        if (this->_front->info.rdp5_performanceflags & PERF_DISABLE_FULLWINDOWDRAG) {
+            this->windowdragCheckBox.setCheckState(Qt::Checked);
+        }
+        if (this->_front->info.rdp5_performanceflags & PERF_DISABLE_MENUANIMATIONS) {
+            this->menuanimationsCheckBox.setCheckState(Qt::Checked);
+        }
+        if (this->_front->info.rdp5_performanceflags & PERF_DISABLE_CURSOR_SHADOW) {
+            this->cursorShadowCheckBox.setCheckState(Qt::Checked);
+        }
+        if (this->_front->info.rdp5_performanceflags & PERF_DISABLE_CURSORSETTINGS) {
+            this->cursorsettingsCheckBox.setCheckState(Qt::Checked);
+        }
+        if (this->_front->info.rdp5_performanceflags & PERF_ENABLE_FONT_SMOOTHING) {
+            this->fontSmoothingCheckBox.setCheckState(Qt::Checked);
+        }
+        if (this->_front->info.rdp5_performanceflags & PERF_ENABLE_DESKTOP_COMPOSITION) {
+            this->desktopCompositionCheckBox.setCheckState(Qt::Checked);
+        }
+    }
+
+
+    void getConfigValues() override {
+        QtOptions::getConfigValues();
+
+        // General tab
+        bool new_profil = true;
+        std::string text_profil = this->profilComboBox.currentText().toStdString();
+        for (size_t i = 0; i < this->_front->userProfils.size(); i++) {
+            if (this->_front->userProfils[i].name == text_profil) {
+                new_profil = false;
+            }
+        }
+        if (new_profil) {
+            this->_front->userProfils.push_back({int(this->_front->userProfils.size()), text_profil.c_str()});
+
+            this->_front->current_user_profil = this->_front->userProfils.size()-1;
+        } else {
+            this->_front->current_user_profil = this->profilComboBox.currentIndex();
+        }
+        this->_front->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
+        this->_front->update_keylayout();
+        this->_front->modRDPParamsData.enable_tls = this->_tlsBox.isChecked();
+        this->_front->modRDPParamsData.enable_nla = this->_nlaBox.isChecked();
+        this->_front->info.console_session = this->_consoleBox.isChecked();
+
+
+        // Servirces tab
+        this->_front->enable_shared_clipboard = this->_clipboardCheckBox.isChecked();
+        if (this->_shareCheckBox.isChecked()) {
+            this->_front->enable_shared_virtual_disk = true;
+            this->_front->SHARE_DIR = this->_sharePath.text().toStdString();
+        } else {
+            this->_front->enable_shared_virtual_disk = false;
+        }
+        this->_front->modRDPParamsData.enable_sound = this->_soundBox.isChecked();
+        if (this->remoteappCheckBox.isChecked()) {
+            this->_front->mod_state = ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP;
+            this->_front->set_remoteapp_cmd_line(this->remoteapp_cmd.text().toStdString());
+            this->_front->source_of_WorkingDir = this->remoteapp_workin_dir.text().toStdString();
+        } else {
+            this->_front->mod_state = ClientRedemptionIOAPI::MOD_RDP;
+        }
+
+        //  View tab
+        this->_front->info.bpp = this->_bppComboBox.currentText().toInt();
+        std::string delimiter = " * ";
+        std::string resolution( this->_resolutionComboBox.currentText().toStdString());
+        int pos(resolution.find(delimiter));
+        this->_front->rdp_width  = std::stoi(resolution.substr(0, pos));
+        this->_front->rdp_height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
+        this->_front->is_spanning = this->_spanCheckBox.isChecked();
+        this->_front->info.rdp5_performanceflags = 0;
+        if (this->_wallpapperCheckBox.isChecked()) {
+            this->_front->info.rdp5_performanceflags |= PERF_DISABLE_WALLPAPER;
+        }
+        if (this->windowdragCheckBox.isChecked()) {
+            this->_front->info.rdp5_performanceflags |= PERF_DISABLE_FULLWINDOWDRAG;
+        }
+        if (this->menuanimationsCheckBox.isChecked()) {
+            this->_front->info.rdp5_performanceflags |= PERF_DISABLE_MENUANIMATIONS;
+        }
+        if (this->cursorShadowCheckBox.isChecked()) {
+            this->_front->info.rdp5_performanceflags |= PERF_DISABLE_CURSOR_SHADOW;
+        }
+        if (this->cursorsettingsCheckBox.isChecked()) {
+            this->_front->info.rdp5_performanceflags |= PERF_DISABLE_CURSORSETTINGS;
+        }
+        if (this->fontSmoothingCheckBox.isChecked()) {
+            this->_front->info.rdp5_performanceflags |= PERF_ENABLE_FONT_SMOOTHING;
+        }
+        if (this->desktopCompositionCheckBox.isChecked()) {
+            this->_front->info.rdp5_performanceflags |= PERF_ENABLE_DESKTOP_COMPOSITION;
+        }
+        this->_front->info.console_session = this->_consoleBox.isChecked();
+    }
+
+
+public Q_SLOTS:
     void setEnableSharePath(int value) {
         this->_sharePath.setEnabled(value);
         this->_buttonSharePath.setEnabled(value);
         this->_front->enable_shared_virtual_disk = bool(value);
+    }
+
+    void setEnableRemoteApp(int value) {
+        this->remoteapp_cmd.setEnabled(value);
+        this->remoteapp_workin_dir.setEnabled(value);
     }
 
     void dirPathPressed() {
@@ -624,633 +816,70 @@ public Q_SLOTS:
         this->_sharePath.setText(filePath);
     }
 
-    void savePressed() {}
-
-    void saveReleased() {
-
-        bool new_profil = true;
-        std::string text_profil = this->profilComboBox.currentText().toStdString();
-        for (size_t i = 0; i < this->_front->userProfils.size(); i++) {
-            if (this->_front->userProfils[i].name == text_profil) {
-                new_profil = false;
-            }
-        }
-
-        if (new_profil) {
-            this->_front->userProfils.push_back({int(this->_front->userProfils.size()), text_profil.c_str()});
-            this->_front->current_user_profil = this->_front->userProfils.size()-1;
-        } else {
-             this->_front->current_user_profil = this->profilComboBox.currentIndex();
-        }
-
-        this->_front->info.bpp = this->_bppComboBox.currentText().toInt();
-        std::string delimiter = " * ";
-        std::string resolution( this->_resolutionComboBox.currentText().toStdString());
-        int pos(resolution.find(delimiter));
-        this->_front->info.width  = std::stoi(resolution.substr(0, pos));
-        this->_front->info.height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
-        if (this->_perfCheckBox.isChecked()) {
-            this->_front->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-        } else {
-            this->_front->info.rdp5_performanceflags = 0;
-        }
-        if (this->_spanCheckBox.isChecked()) {
-            this->_front->is_spanning = true;
-        } else {
-            this->_front->is_spanning = false;
-        }
-        if (this->_recordingCB.isChecked()) {
-            this->_front->is_recording = true;
-            LOG(LOG_INFO, "recording checked!!!!!!!!!!!!!");
-        } else {
-            this->_front->is_recording = false;
-        }
-        if (this->_tlsBox.isChecked()) {
-            this->_front->modRDPParamsData.enable_tls = true;
-        } else {
-            this->_front->modRDPParamsData.enable_tls = false;
-        }
-        if (this->_nlaBox.isChecked()) {
-            this->_front->modRDPParamsData.enable_nla = true;
-        } else {
-            this->_front->modRDPParamsData.enable_nla = false;
-        }
-        if (this->_soundBox.isChecked()) {
-            this->_front->modRDPParamsData.enable_sound = true;
-        } else {
-            this->_front->modRDPParamsData.enable_sound = false;
-        }
-        this->_front->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
-        this->_front->update_keylayout();
-//         this->_front->info.cs_monitor.monitorCount = this->_monitorCountComboBox.itemData(this->_monitorCountComboBox.currentIndex()).toInt();
-//         this->_front->_monitorCount = this->_front->info.cs_monitor.monitorCount;
-        this->_front->info.width   = this->_front->info.width;
-        this->_front->info.height  = this->_front->info.height;
-//         this->_front->delta_time   = this->_captureSnapFreqComboBox.itemData(this->_captureSnapFreqComboBox.currentIndex()).toInt();
-
-        if (this->_clipboardCheckBox.isChecked()) {
-            this->_front->enable_shared_clipboard = true;
-        } else {
-            this->_front->enable_shared_clipboard = false;
-        }
-
-        if (this->_shareCheckBox.isChecked()) {
-            this->_front->enable_shared_virtual_disk = true;
-        } else {
-            this->_front->enable_shared_virtual_disk = false;
-        }
-
-        this->_front->SHARE_DIR = this->_sharePath.text().toStdString();
-
-        this->_front->writeClientInfo();
-
-//         remove((this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH)).c_str());
-//         this->_front->qtRDPKeymap.clearCustomKeyCode();
-
-//         std::ofstream ofichier(this->_front->MAIN_DIR + std::string(KEY_SETTING_PATH), std::ios::out | std::ios::trunc);
-//         if(ofichier) {
-//
-//             ofichier << "Key Setting" << std::endl << std::endl;
-//
-//             const int row_count = this->_tableKeySetting->rowCount();
-//
-//             for (int i = 0; i < row_count; i++) {
-//                 int qtKeyID(0);
-//                 if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
-//                     qtKeyID = this->_tableKeySetting->item(i, 0)->text().toInt();
-//                 }
-//
-//                 if (qtKeyID != 0) {
-//                     int scanCode(0);
-//                     if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
-//                         scanCode = this->_tableKeySetting->item(i, 1)->text().toInt();
-//                     }
-//                     int ASCII8(0);
-//                     if (!(this->_tableKeySetting->item(i, 0)->text().isEmpty())) {
-//                         ASCII8 = this->_tableKeySetting->item(i, 2)->text().toInt();
-//                     }
-//                     int extended(static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(i, 3))->currentIndex());
-//
-//                     this->_front->qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
-//
-//                     ofichier << "- ";
-//                     ofichier << qtKeyID  << " ";
-//                     ofichier << scanCode << " ";
-//                     ofichier << ASCII8   << " ";
-//                     ofichier << extended << std::endl;
-//                 }
-//             }
-//             ofichier.close();
-//         }
-
-        this->close();
-    }
-
-    void cancelPressed() {}
-
-    void cancelReleased() {
-        this->close();
-    }
-
-    void addRow() {
-        int rowNumber(this->_tableKeySetting->rowCount());
-        this->_tableKeySetting->insertRow(rowNumber);
-        this->_tableKeySetting->setRowHeight(rowNumber ,20);
-        QComboBox * combo = new QComboBox(this->_tableKeySetting);
-        combo->addItem("No" , 0);
-        combo->addItem("Yes", 1);
-        this->_tableKeySetting->setCellWidget(rowNumber, 3, combo);
-
-        QTableWidgetItem * item1 = new QTableWidgetItem;
-        item1->setText("");
-        this->_tableKeySetting->setItem(rowNumber, 0, item1);
-
-        QTableWidgetItem * item2 = new QTableWidgetItem;
-        item2->setText("");
-        this->_tableKeySetting->setItem(rowNumber, 1, item2);
-
-        QTableWidgetItem * item3 = new QTableWidgetItem;
-        item3->setText("");
-        this->_tableKeySetting->setItem(rowNumber, 2, item3);
-
-
-        this->updateKeySetting();
-    }
-
-    void deletePressed() {
-       QModelIndexList indexes = this->_tableKeySetting->selectionModel()->selection().indexes();
-       for (int i = 0; i < indexes.count(); ++i) {
-           QModelIndex index = indexes.at(i);
-           this->_tableKeySetting->removeRow(index.row());
-       }
-
-       if (this->_tableKeySetting->rowCount() == 0) {
-           this->addRow();
-       }
-
-       this->updateKeySetting();
-    }
-
-    void deleteReleased() {}
-
-    void spanCheckChange(int state) {
-        if (state == Qt::Unchecked) {
-//             this->_monitorCountComboBox.setCurrentIndex(0);
-        }
-    }
-
-    void recordingCheckChange(int ) {
-//         if (state == Qt::Unchecked) {
-//             this->_captureSnapFreqComboBox.setEnabled(false);
-//         } else {
-//             this->_captureSnapFreqComboBox.setEnabled(true);
-//         }
-    }
-
-    void monitorCountkChange(int index) {
-        if (index != 0) {
-            this->_spanCheckBox.setCheckState(Qt::Checked);
-        }
-    }
-
 };
 
 
 
-// #include "core/RDP/clipboard.hpp"
-// #include "utils/fileutils.hpp"
-//
-// class ClipBoard_Qt : public QObject
-// {
-//
-//     Q_OBJECT
-//
-// public:
-//
-//     enum : uint16_t {
-//           CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
-//         , CF_QT_CLIENT_FILECONTENTS         = 48026
-//     };
-//
-//     FrontQtRDPGraphicAPI                  * _front;
-//     QClipboard                * _clipboard;
-//     bool                        _local_clipboard_stream;
-//     size_t                      _cliboard_data_length;
-//     std::unique_ptr<uint8_t[]>  _chunk;
-//     QImage                    * _bufferImage;
-//     uint16_t                    _bufferTypeID;
-//     std::string                 _bufferTypeLongName;
-//     int                         _cItems;
-//     struct CB_out_File {
-//         uint64_t     size;
-//         std::string  name;
-//         std::string  nameUTF8;
-//         char *       chunk;
-//
-//         CB_out_File()
-//           : size(0)
-//           , name("")
-//           , nameUTF8("")
-//           , chunk(nullptr)
-//         {}
-//
-//         ~CB_out_File() {
-//             delete[] (chunk);
-//         }
-//     };
-//     std::vector<CB_out_File *>  _items_list;
-//     std::vector<std::string>    _temp_files_list;
-//     bool server_use_long_format_names;
-//
-//
-//
-//     ClipBoard_Qt(FrontQtRDPGraphicAPI * front, QWidget * parent)
-//         : QObject(parent)
-//         , _front(front)
-//         , _clipboard(nullptr)
-//         , _local_clipboard_stream(true)
-//         , _cliboard_data_length(0)
-//         , _bufferImage(nullptr)
-//         , _bufferTypeID(0)
-//         , _bufferTypeLongName("")
-//         , _cItems(0)
-//         , server_use_long_format_names(false)
-//     {
-//         this->clean_CB_temp_dir();
-//         this->_clipboard = QApplication::clipboard();
-//         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
-//     }
-//
-//     void write_clipboard_temp_file(std::string fileName, const uint8_t * data, size_t data_len) {
-//         std::string filePath(this->_front->CB_TEMP_DIR + std::string("/") + fileName);
-//         std::string filePath_mem(filePath);
-//         this->_temp_files_list.push_back(filePath_mem);
-//         std::ofstream oFile(filePath, std::ios::out | std::ios::binary | std::ios::app);
-//         if(oFile.is_open()) {
-//             oFile.write(reinterpret_cast<const char *>(data), data_len);
-//             oFile.close();
-//         }
-//     }
-//
-//     void setClipboard_files(std::string & name) {           //std::vector<FrontQtRDPGraphicAPI::CB_FilesList::CB_in_Files> items_list) {
-//
-//         /*QClipboard *cb = QApplication::clipboard();
-//         QMimeData* newMimeData = new QMimeData();
-//         const QMimeData* oldMimeData = cb->mimeData();
-//         QStringList ll = oldMimeData->formats();
-//         for (int i = 0; i < ll.size(); i++) {
-//             newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
-//         }
-//         QList<QUrl> list;
-//
-//         const std::string delimiter = "\n";
-//         uint32_t pos = 0;
-//         std::string str = items_list[0].name;
-//         while (pos <= str.size()) {
-//             pos = str.find(delimiter);
-//             std::string path = str.substr(0, pos);
-//             str = str.substr(pos+1, str.size());
-//             QString fileName(path.c_str());
-//             newMimeData->setText(fileName);
-//             list.append(QUrl::fromLocalFile(fileName));
-//             QByteArray gnomeFormat = QByteArray("copy\n").append(QUrl::fromLocalFile(fileName).toEncoded());
-//             newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
-//         }
-//
-//         newMimeData->setUrls(list);
-//         cb->setMimeData(newMimeData);*/
-//
-//
-// //         QClipboard *cb = QApplication::clipboard();
-// //         QMimeData* newMimeData = new QMimeData();
-// //         const QMimeData* oldMimeData = cb->mimeData();
-// //         QStringList ll = oldMimeData->formats();
-// //         for (int i = 0; i < ll.size(); i++) {
-// //             newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
-// //         }
-//
-// //         QByteArray gnomeFormat = QByteArray("copy\n");
-//
-// //         for (size_t i = 0; i < items_list.size(); i++) {
-//
-//             QClipboard *cb = QApplication::clipboard();
-//             QMimeData* newMimeData = new QMimeData();
-//             const QMimeData* oldMimeData = cb->mimeData();
-//             QStringList ll = oldMimeData->formats();
-//             for (int i = 0; i < ll.size(); i++) {
-//                 newMimeData->setData(ll[i], oldMimeData->data(ll[i]));
-//             }
-//
-//             QByteArray gnomeFormat = QByteArray("copy\n");
-//
-//             std::string path(this->_front->CB_TEMP_DIR + std::string("/") + name);
-//             //std::cout <<  path <<  std::endl;
-//             QString qpath(path.c_str());
-//
-//             //qDebug() << "QUrl" << QUrl::fromLocalFile(qpath);
-//
-//             gnomeFormat.append(QUrl::fromLocalFile(qpath).toEncoded());
-//
-//             newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
-//             cb->setMimeData(newMimeData);
-// //         }
-//
-// //         newMimeData->setData("x-special/gnome-copied-files", gnomeFormat);
-// //         cb->setMimeData(newMimeData);
-//     }
-//
-//     void setClipboard_text(std::string & str) {
-//         this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
-//     }
-//
-//     void setClipboard_image(const QImage & image) {               // Paste image to client
-//         this->_clipboard->setImage(image, QClipboard::Clipboard);
-//     }
-//
-//     void clean_CB_temp_dir() {
-//         DIR *theFolder = opendir(this->_front->CB_TEMP_DIR.c_str());
-//
-//         if (theFolder) {
-//             struct dirent *next_file;
-//
-//             while ( (next_file = readdir(theFolder)) != NULL )
-//             {
-//                 std::string filepath(this->_front->CB_TEMP_DIR + std::string("/") + std::string(next_file->d_name));
-//                 remove(filepath.c_str());
-//             }
-//             closedir(theFolder);
-//         }
-//     }
-//
-//     void emptyBuffer() {
-//         this->_bufferTypeID = 0;
-//         this->_cliboard_data_length = 0;
-//
-//         this->clean_CB_temp_dir();
-//
-//         this->_temp_files_list.clear();
-//         for (size_t i = 0; i < _items_list.size(); i++) {
-//             delete(this->_items_list[i]);
-//         }
-//         this->_items_list.clear();
-//     }
-//
-//
-//
-//
-// public Q_SLOTS:
-//
-//     void mem_clipboard() {
-//         if (this->_front->mod != nullptr && this->_local_clipboard_stream) {
-//             const QMimeData * mimeData = this->_clipboard->mimeData();
-//             mimeData->hasImage();
-//
-//             if (mimeData->hasImage()){
-//             //==================
-//             //    IMAGE COPY
-//             //==================
-//                 this->emptyBuffer();
-//
-//                 this->_bufferTypeID = RDPECLIP::CF_METAFILEPICT;
-//                 this->_bufferTypeLongName = std::string("\0\0", 2);
-//                 QImage bufferImageTmp(this->_clipboard->image());
-//                 if (bufferImageTmp.depth() > 24) {
-//                     bufferImageTmp = bufferImageTmp.convertToFormat(QImage::Format_RGB888);
-//                     bufferImageTmp = bufferImageTmp.rgbSwapped();
-//                 }
-//                 this->_bufferImage = new QImage(bufferImageTmp);
-//
-//                 this->_cliboard_data_length = this->_bufferImage->byteCount();
-//
-//                 this->_chunk = std::make_unique<uint8_t[]>(this->_cliboard_data_length + RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender::SIZE);
-//                 for (int i  = 0; i < this->_bufferImage->byteCount(); i++) {
-//                     this->_chunk[i] = this->_bufferImage->bits()[i];
-//                 }
-//                 RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender ender;
-//                 ender.emit(this->_chunk.get(), this->_cliboard_data_length);
-//
-//                 this->_front->clipboard_callback();
-//             //==========================================================================
-//
-//
-//
-//             } else if (mimeData->hasText()){                //  File or Text copy
-//
-//                 QString qstr = this->_clipboard->text(QClipboard::Clipboard);
-//                 if (qstr.size() > 0) {
-//                     this->emptyBuffer();
-//                     std::string str(qstr.toUtf8().constData());
-//
-//                     if (str.at(0) == '/') {
-//                 //==================
-//                 //    FILE COPY
-//                 //==================
-//                         this->_bufferTypeID       = CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
-//                         this->_bufferTypeLongName = std::string("F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0", 42);
-//
-//                         // retrieve each path
-//                         const std::string delimiter = "\n";
-//                         this->_cItems = 0;
-//                         uint32_t pos = 0;
-//                         while (pos <= str.size()) {
-//                             pos = str.find(delimiter);
-//                             std::string path = str.substr(0, pos);
-//                             str = str.substr(pos+1, str.size());
-//
-//                             // double slash
-//                             uint32_t posSlash(0);
-//                             std::string slash = "/";
-//                             bool stillSlash = true;
-//                             while (stillSlash) {
-//                                 posSlash = path.find(slash, posSlash);
-//                                 if (posSlash < path.size()) {
-//                                     path = path.substr(0, posSlash) + "//" + path.substr(posSlash+1, path.size());
-//                                     posSlash += 2;
-//                                 } else {
-//                                     path = path.substr(0, path.size());
-//                                     stillSlash = false;
-//                                 }
-//                             }
-//
-//                             // get file data
-//                             uint64_t size(::filesize(path.c_str()));
-//                             std::ifstream iFile(path.c_str(), std::ios::in | std::ios::binary);
-//                             if (iFile.is_open()) {
-//
-//                                 CB_out_File * file = new CB_out_File();
-//                                 file->size  = size;
-//                                 file->chunk = new char[file->size];
-//                                 iFile.read(file->chunk, file->size);
-//                                 iFile.close();
-//
-//                                 int posName(path.size()-1);
-//                                 bool lookForName = true;
-//                                 while (posName >= 0 && lookForName) {
-//                                     if (path.at(posName) == '/') {
-//                                         lookForName = false;
-//                                     }
-//                                     posName--;
-//                                 }
-//                                 file->nameUTF8 = path.substr(posName+2, path.size());
-//                                 //std::string name = file->nameUTF8;
-//                                 int UTF8nameSize(file->nameUTF8.size() *2);
-//                                 if (UTF8nameSize > 520) {
-//                                     UTF8nameSize = 520;
-//                                 }
-//                                 uint8_t UTF16nameData[520];
-//                                 int UTF16nameSize = ::UTF8toUTF16_CrLf(
-//                                     reinterpret_cast<const uint8_t *>(file->nameUTF8.c_str())
-//                                 , UTF16nameData
-//                                 , UTF8nameSize);
-//                                 file->name = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
-//                                 this->_cItems++;
-//                                 this->_items_list.push_back(file);
-//
-//                             } else {
-//                                 LOG(LOG_WARNING, "Path \"%s\" not found.", path.c_str());
-//                             }
-//                         }
-//
-//                         this->_front->clipboard_callback();
-//                 //==========================================================================
-//
-//
-//
-//                     } else {
-//                 //==================
-//                 //    TEXT COPY
-//                 //==================
-//                         this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
-//                         this->_bufferTypeLongName = std::string("\0\0", 2);
-//
-//                         size_t size( ( str.length() * 4) + 2 );
-//
-//                         this->_chunk = std::make_unique<uint8_t[]>(size);
-//
-//                         // UTF8toUTF16_CrLf for linux install
-//                         this->_cliboard_data_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size);
-//
-//                         RDPECLIP::FormatDataResponsePDU_Text::Ender ender;
-//                         ender.emit(this->_chunk.get(), this->_cliboard_data_length);
-//
-//                         this->_cliboard_data_length += RDPECLIP::FormatDataResponsePDU_Text::Ender::SIZE;
-//
-//                         this->_front->clipboard_callback();
-//                 //==========================================================================
-//                     }
-//                 }
-//             }
-//         }
-//     }
-//
-// };
-//
+class QtVNCOptions : public QtOptions
+{
+
+Q_OBJECT
+
+public:
+    QCheckBox            keyboard_apple_compatibility_CB;
+    QLabel               keyboard_apple_compatibility_label;
 
 
-// class Sound_Qt : public QObject
-// {
-//
-// Q_OBJECT
-//
-//     Phonon::MediaObject * media;
-//     Phonon::AudioOutput * audioOutput;
-//
-// public:
-//     int wave_data_to_wait;
-//
-//     uint32_t n_sample_per_sec;
-//     uint16_t bit_per_sample;
-//     uint16_t n_channels;
-//     uint16_t n_block_align;
-//     uint32_t bit_per_sec;
-//
-//     bool last_PDU_is_WaveInfo;
-//
-//     std::string wave_file_to_write;
-//
-//     int current_wav_index;
-//     int total_wav_files;
-//
-//
-//
-//     Sound_Qt(QWidget * parent)
-//       : QObject(parent)
-//       , media(nullptr)
-//       , audioOutput(nullptr)
-//       , wave_data_to_wait(0)
-//       , n_sample_per_sec(0)
-//       , bit_per_sample(0)
-//       , n_channels(0)
-//       , n_block_align(0)
-//       , bit_per_sec(0)
-//       , last_PDU_is_WaveInfo(false)
-//       , current_wav_index(0)
-//       , total_wav_files(0)
-//     {
-//         this->media = new Phonon::MediaObject(this);
-//         this->audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
-//         Phonon::createPath(this->media, this->audioOutput);
-//
-//         this->QObject::connect(this->media, SIGNAL (finished()),  this, SLOT (call_playback_over()));
-//     }
-//
-//     void init(size_t raw_total_size) {
-//
-//         this->total_wav_files++;
-//
-//         this->wave_file_to_write = std::string("sound") + std::to_string(this->total_wav_files) +std::string(".wav");
-//
-//         StaticOutStream<64> out_stream;
-//         out_stream.out_copy_bytes("RIFF", 4);
-//         out_stream.out_uint32_le(raw_total_size + 36);
-//         out_stream.out_copy_bytes("WAVEfmt ", 8);
-//         out_stream.out_uint32_le(16);
-//         out_stream.out_uint16_le(1);
-//         out_stream.out_uint16_le(this->n_channels);
-//         out_stream.out_uint32_le(this->n_sample_per_sec);
-//         out_stream.out_uint32_le(this->bit_per_sec);
-//         out_stream.out_uint16_le(this->n_block_align);
-//         out_stream.out_uint16_le(this->bit_per_sample);
-//         out_stream.out_copy_bytes("data", 4);
-//         out_stream.out_uint32_le(raw_total_size);
-//
-//         std::ofstream file(this->wave_file_to_write.c_str(), std::ios::out| std::ios::binary);
-//         if (file.is_open()) {
-//             file.write(reinterpret_cast<const char *>(out_stream.get_data()), 44);
-//             file.close();
-//         }
-//     }
-//
-//     void setData(const uint8_t * data, size_t size) {
-//         std::ofstream file(this->wave_file_to_write.c_str(), std::ios::app | std::ios::out| std::ios::binary);
-//         if (file) {
-//             file.write(reinterpret_cast<const char *>(data), size);
-//             file.close();
-//         }
-//     }
-//
-//     void play() {
-//         if (this->media->state() == Phonon::StoppedState) {
-//
-//             if (this->total_wav_files > this->current_wav_index) {
-//
-//                 this->current_wav_index++;
-//                 std::string wav_file_name = std::string("sound") + std::to_string(this->current_wav_index) +std::string(".wav");
-//
-//                 Phonon::MediaSource sources(QUrl(wav_file_name.c_str()));
-//                 this->media->setCurrentSource(sources);
-//                 this->media->play();
-//             }
-//         }
-//     }
-//
-// private Q_SLOTS:
-//     void call_playback_over() {
-//         std::string wav_file_name = std::string("sound") + std::to_string(this->current_wav_index) +std::string(".wav");
-//         remove(wav_file_name.c_str());
-//
-//         this->play();
-//     }
-//
-// };
+    QtVNCOptions(ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+      : QtOptions( front, controllers, parent)
+        , keyboard_apple_compatibility_CB(this)
+        , keyboard_apple_compatibility_label("Apple server keyboard :", this)
+    {
+        this->setConfigValues();
 
+        // General tab
+        this->keyboard_apple_compatibility_CB.setCheckState(Qt::Unchecked);
+        this->_layoutConnection->addRow(&(this->keyboard_apple_compatibility_label), &(this->keyboard_apple_compatibility_CB));
+    }
+
+
+    void getConfigValues() override {
+        QtOptions::getConfigValues();
+
+        // General tab
+        bool new_profil = true;
+        std::string text_profil = this->profilComboBox.currentText().toStdString();
+        for (size_t i = 0; i < this->_front->vnc_conf.userProfils.size(); i++) {
+            if (this->_front->vnc_conf.userProfils[i].name == text_profil) {
+                new_profil = false;
+            }
+        }
+        if (new_profil) {
+            this->_front->vnc_conf.userProfils.push_back({int(this->_front->vnc_conf.userProfils.size()), text_profil.c_str()});
+            this->_front->vnc_conf.current_user_profil = this->_front->vnc_conf.userProfils.size()-1;
+        } else {
+            this->_front->vnc_conf.current_user_profil = this->profilComboBox.currentIndex();
+        }
+        this->_front->vnc_conf.is_apple = this->keyboard_apple_compatibility_CB.isChecked();
+
+        // Services tab
+        this->_front->vnc_conf.enable_shared_clipboard = this->_clipboardCheckBox.isChecked();
+        this->_front->vnc_conf.enable_sound = this->_soundBox.isChecked();
+    }
+
+
+    void setConfigValues() override {
+        QtOptions::setConfigValues();
+
+        // General tab
+        int indexProfil = this->profilComboBox.findData(this->_front->vnc_conf.current_user_profil);
+        if ( indexProfil >= 0) {
+            this->profilComboBox.setCurrentIndex(indexProfil);
+        }
+
+        // Services tab
+        this->_soundBox.setChecked(this->_front->vnc_conf.enable_sound);
+        this->_clipboardCheckBox.setChecked(this->_front->vnc_conf.enable_shared_clipboard);
+    }
+
+};

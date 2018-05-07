@@ -191,7 +191,7 @@ class OutFilenameSequenceTransport : public Transport
             // LOG( LOG_INFO, "renaming file \"%s\" to \"%s\"\n"
             //    , this->current_filename_, filename);
             if (res < 0) {
-                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%d : %s\n"
+                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed error=%d : %s\n"
                    , this->current_filename_, filename, errno, strerror(errno));
                 return nullptr;
             }

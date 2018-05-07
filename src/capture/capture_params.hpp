@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "configs/autogen/enums.hpp"
+
 #include <sys/time.h>
 
 class ReportMessageApi;
@@ -33,4 +35,6 @@ struct CaptureParams
     char const * record_path;
     int groupid;
     ReportMessageApi * report_message;
+
+    SmartVideoCropping smart_video_cropping;
 };

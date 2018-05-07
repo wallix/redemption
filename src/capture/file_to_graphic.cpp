@@ -722,46 +722,37 @@ void FileToGraphic::interpret_order()
     case WrmChunkType::POINTER:
     {
         if (bool(this->verbose & Verbose::rdp_orders)){
-            LOG(LOG_INFO, "POINTER2");
+            LOG(LOG_INFO, "POINTER");
         }
 
-        uint8_t cache_idx;
-
-        this->mouse_x = this->stream.in_uint16_le();
-        this->mouse_y = this->stream.in_uint16_le();
-        cache_idx     = this->stream.in_uint8();
+        this->mouse_x         = this->stream.in_uint16_le();
+        this->mouse_y         = this->stream.in_uint16_le();
+        uint8_t cache_idx     = this->stream.in_uint8();
 
         if (  chunk_size - 8 /*header(8)*/ > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
             this->statistics.CachePointer.count++;
-            auto * const p = this->stream.get_current();
-            Pointer cursor(Pointer::POINTER_NULL);
-            cursor.width = 32;
-            cursor.height = 32;
-            cursor.x = this->stream.in_uint8();
-            cursor.y = this->stream.in_uint8();
-            stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
-            stream.in_copy_bytes(cursor.mask, 128);
-            this->statistics.CachePointer.total_len += this->stream.get_current() - p;
+            uint16_t width  = 32;
+            uint16_t height = 32;
+            uint8_t data_bpp = 24;
+            auto hotspot_x  = this->stream.in_uint8();
+            auto hotspot_y  = this->stream.in_uint8();
+            uint16_t mlen   = 128;
+            uint16_t dlen   = 32*32*3;
+            auto data       = stream.in_uint8p(dlen);
+            auto mask       = stream.in_uint8p(mlen);
+            this->statistics.CachePointer.total_len += dlen + mlen + 2;
 
+            Pointer cursor(data_bpp, {width, height}, {hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen});
             this->ptr_cache.add_pointer_static(cursor, cache_idx);
-
             for (gdi::GraphicApi * gd : this->graphic_consumers){
                 gd->set_pointer(cursor);
             }
         }
         else {
             this->statistics.PointerIndex.count++;
-            auto * const p = this->stream.get_current();
-            Pointer & pi = this->ptr_cache.Pointers[cache_idx];
-            Pointer cursor(Pointer::POINTER_NULL);
-            cursor.width = pi.width;
-            cursor.height = pi.height;
-            cursor.x = pi.x;
-            cursor.y = pi.y;
-            memcpy(cursor.data, pi.data, sizeof(pi.data));
-            memcpy(cursor.mask, pi.mask, sizeof(pi.mask));
-            this->statistics.PointerIndex.total_len += this->stream.get_current() - p;
-
+            Pointer cursor(this->ptr_cache.Pointers[cache_idx]);
+            this->statistics.PointerIndex.total_len += 0;
+            this->ptr_cache.Pointers[cache_idx] = cursor;
             for (gdi::GraphicApi * gd : this->graphic_consumers){
                 gd->set_pointer(cursor);
             }
@@ -774,38 +765,27 @@ void FileToGraphic::interpret_order()
             LOG(LOG_INFO, "POINTER2");
         }
 
-        uint8_t cache_idx;
-
         this->mouse_x = this->stream.in_uint16_le();
         this->mouse_y = this->stream.in_uint16_le();
-        cache_idx     = this->stream.in_uint8();
-
+        uint8_t cache_idx     = this->stream.in_uint8();
         this->statistics.CachePointer.count++;
-        auto * const p = this->stream.get_current();
 
-        Pointer cursor(Pointer::POINTER_NULL);
+        uint8_t width    = this->stream.in_uint8();
+        uint8_t height   = this->stream.in_uint8();
+        uint8_t data_bpp = this->stream.in_uint8();
+        uint8_t hotspot_x = this->stream.in_uint8();
+        uint8_t hotspot_y = this->stream.in_uint8();
+        uint16_t dlen = this->stream.in_uint16_le();
+        uint16_t mlen = this->stream.in_uint16_le();
+        assert(dlen <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 3);
+        assert(mlen <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8);
+        auto data = stream.in_uint8p(dlen);
+        auto mask = stream.in_uint8p(mlen);
+        this->statistics.CachePointer.total_len += 9 + mlen + dlen;
 
-        cursor.width    = this->stream.in_uint8();
-        cursor.height   = this->stream.in_uint8();
-        /* cursor.bpp   = this->stream.in_uint8();*/
-        this->stream.in_skip_bytes(1);
-
-        cursor.x = this->stream.in_uint8();
-        cursor.y = this->stream.in_uint8();
-
-        uint16_t data_size = this->stream.in_uint16_le();
-        assert(data_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 3);
-
-        uint16_t mask_size = this->stream.in_uint16_le();
-        assert(mask_size <= Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8);
-
-        stream.in_copy_bytes(cursor.data, std::min<size_t>(sizeof(cursor.data), data_size));
-        stream.in_copy_bytes(cursor.mask, std::min<size_t>(sizeof(cursor.mask), mask_size));
-
-        this->statistics.CachePointer.total_len += this->stream.get_current() - p;
+        Pointer cursor(data_bpp, {width, height}, {hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen});
 
         this->ptr_cache.add_pointer_static(cursor, cache_idx);
-
         for (gdi::GraphicApi * gd : this->graphic_consumers){
             gd->set_pointer(cursor);
         }
@@ -878,10 +858,17 @@ void FileToGraphic::interpret_order()
     break;
 
     case WrmChunkType::IMAGE_FRAME_RECT:
-        this->image_frame_rect.x  = this->stream.in_sint16_le();
-        this->image_frame_rect.y  = this->stream.in_sint16_le();
-        this->image_frame_rect.cx = this->stream.in_uint16_le();
-        this->image_frame_rect.cy = this->stream.in_uint16_le();
+        this->max_image_frame_rect.x  = this->stream.in_sint16_le();
+        this->max_image_frame_rect.y  = this->stream.in_sint16_le();
+        this->max_image_frame_rect.cx = this->stream.in_uint16_le();
+        this->max_image_frame_rect.cy = this->stream.in_uint16_le();
+
+        if (this->stream.in_remain() >= 4) {
+            this->min_image_frame_dim.w = this->stream.in_uint16_le();
+            this->min_image_frame_dim.h = this->stream.in_uint16_le();
+        }
+
+        this->stream.in_skip_bytes(this->stream.in_remain());
     break;
     default:
         LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
@@ -942,7 +929,7 @@ void FileToGraphic::process_window_information(
         case RDP::RAIL::WINDOW_ORDER_ICON: {
                 RDP::RAIL::WindowIcon order;
                 order.receive(stream);
-                order.log(LOG_INFO);
+                //order.log(LOG_INFO);
                 for (gdi::GraphicApi * gd : this->graphic_consumers){
                     gd->draw(order);
                 }
@@ -952,7 +939,7 @@ void FileToGraphic::process_window_information(
         case RDP::RAIL::WINDOW_ORDER_CACHEDICON: {
                 RDP::RAIL::CachedIcon order;
                 order.receive(stream);
-                order.log(LOG_INFO);
+                //order.log(LOG_INFO);
                 for (gdi::GraphicApi * gd : this->graphic_consumers){
                     gd->draw(order);
                 }
@@ -960,9 +947,12 @@ void FileToGraphic::process_window_information(
             break;
 
         case RDP::RAIL::WINDOW_ORDER_STATE_DELETED: {
+                this->statistics.DeletedWindow.count++;
+                auto * p = stream.get_current();
                 RDP::RAIL::DeletedWindow order;
                 order.receive(stream);
-                order.log(LOG_INFO);
+                this->statistics.DeletedWindow.total_len += stream.get_current() - p;
+                //order.log(LOG_INFO);
                 for (gdi::GraphicApi * gd : this->graphic_consumers){
                     gd->draw(order);
                 }
@@ -971,9 +961,12 @@ void FileToGraphic::process_window_information(
 
         case 0:
         case RDP::RAIL::WINDOW_ORDER_STATE_NEW: {
+                this->statistics.NewOrExistingWindow.count++;
+                auto * p = stream.get_current();
                 RDP::RAIL::NewOrExistingWindow order;
                 order.receive(stream);
-                order.log(LOG_INFO);
+                this->statistics.NewOrExistingWindow.total_len += stream.get_current() - p;
+                //order.log(LOG_INFO);
                 for (gdi::GraphicApi * gd : this->graphic_consumers){
                     gd->draw(order);
                 }
@@ -995,7 +988,7 @@ void FileToGraphic::process_notification_icon_information(
         case RDP::RAIL::WINDOW_ORDER_STATE_DELETED: {
                 RDP::RAIL::DeletedNotificationIcons order;
                 order.receive(stream);
-                order.log(LOG_INFO);
+                //order.log(LOG_INFO);
                 for (gdi::GraphicApi * gd : this->graphic_consumers){
                     gd->draw(order);
                 }
@@ -1006,7 +999,7 @@ void FileToGraphic::process_notification_icon_information(
         case RDP::RAIL::WINDOW_ORDER_STATE_NEW: {
                 RDP::RAIL::NewOrExistingNotificationIcons order;
                 order.receive(stream);
-                order.log(LOG_INFO);
+                //order.log(LOG_INFO);
                 for (gdi::GraphicApi * gd : this->graphic_consumers){
                     gd->draw(order);
                 }
@@ -1025,7 +1018,7 @@ void FileToGraphic::process_desktop_information(
     if (FieldsPresentFlags & RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_NONE) {
         RDP::RAIL::NonMonitoredDesktop order;
         order.receive(stream);
-        order.log(LOG_INFO);
+        //order.log(LOG_INFO);
         for (gdi::GraphicApi * gd : this->graphic_consumers){
             gd->draw(order);
         }
@@ -1033,7 +1026,7 @@ void FileToGraphic::process_desktop_information(
     else {
         RDP::RAIL::ActivelyMonitoredDesktop order;
         order.receive(stream);
-        order.log(LOG_INFO);
+        //order.log(LOG_INFO);
         for (gdi::GraphicApi * gd : this->graphic_consumers){
             gd->draw(order);
         }

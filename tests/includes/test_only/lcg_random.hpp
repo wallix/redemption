@@ -60,7 +60,8 @@ public:
         }
     }
 
-    uint32_t rand32() override
+private:
+    uint32_t rand32()
     {
         return this->seed = 999331UL * this->seed + 200560490131ULL;
     }

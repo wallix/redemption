@@ -821,7 +821,7 @@ public:
     }
 
     void ntlm_set_negotiate_flags_auth() {
-        uint32_t & negoFlag = this->NegotiateFlags;
+        uint32_t negoFlag = 0;
         if (this->NTLMv2) {
             negoFlag |= NTLMSSP_NEGOTIATE_56;
             if (this->SendVersionInfo) {
@@ -1040,6 +1040,8 @@ public:
             if (memcmp(this->MessageIntegrityCheck,
                        this->AUTHENTICATE_MESSAGE.MIC, 16)) {
                 LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
+                hexdump_c(this->MessageIntegrityCheck, 16);
+                hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);
                 return SEC_E_MESSAGE_ALTERED;
             }
         }
@@ -1166,7 +1168,9 @@ public:
         this->AUTHENTICATE_MESSAGE.emit(out_stream);
         output_buffer->Buffer.init(out_stream.get_offset());
         output_buffer->Buffer.copy(out_stream.get_data(), out_stream.get_offset());
-
+        if (this->verbose) {
+            this->AUTHENTICATE_MESSAGE.log();
+        }
         return SEC_I_COMPLETE_NEEDED;
     }
     SEC_STATUS read_authenticate(PSecBuffer input_buffer) {
@@ -1210,4 +1214,3 @@ public:
         return status;
     }
 };
-

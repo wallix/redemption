@@ -177,7 +177,8 @@ private:
 public:
     bool remote_app;
 
-    Rect image_frame_rect;
+    Rect      max_image_frame_rect;
+    Dimension min_image_frame_dim;
 
     struct Statistics
     {
@@ -219,6 +220,9 @@ public:
 
         uint64_t total_read_len;
         uint64_t internal_order_read_len;
+
+        Order NewOrExistingWindow;
+        Order DeletedWindow;
     } statistics;
 
     bool break_privplay_client;

@@ -1,8 +1,14 @@
-JAM_INCLUDE_PATH ?= ../../jam ;
+JAM_INCLUDE_PATH ?= [ SHELL "readlink -n -f ../../jam" ] ;
 
-REDEMPTION_PUBLIC_PATH ?= ../.. ;
+REDEMPTION_PUBLIC_PATH ?= [ SHELL "readlink -n -f ../.." ] ;
+
+ECHO $(REDEMPTION_PUBLIC_PATH) ;
+
+REDEMPTION_PROJECT_PATH ?= [ SHELL "readlink -n -f .." ] ;
+
 REDEMPTION_INCLUDE_PATH ?= $(REDEMPTION_PUBLIC_PATH)/include ;
 REDEMPTION_MODULES_SRC_PATH ?= $(REDEMPTION_PUBLIC_PATH)/modules ;
+
 
 include $(JAM_INCLUDE_PATH)/redemption-config.jam ;
 include $(JAM_INCLUDE_PATH)/cxxflags.jam ;
@@ -66,7 +72,7 @@ lib gssglue : : <name>gssglue <link>shared ;
 
 constant SHELL_PWD : [ SHELL "echo -n $PWD" ] ; # rule location
 
-constant MAIN_PATH : [ setvar MAIN_PATH : $(SHELL_PWD) ] ;
+constant CLIENT_REDEMPTION_MAIN_PATH : [ setvar CLIENT_REDEMPTION_MAIN_PATH : $(SHELL_PWD) ] ;
 
 rule disable-buggy-warn ( properties * )
 {
@@ -78,7 +84,7 @@ rule disable-buggy-warn ( properties * )
     local version = [ $(ps).get <toolset-$(toolset):version> ] ;
 
     local flags ;
-
+    
     if $(toolset) = gcc && ! ( $(version) <= 05.00 )
     {
         flags += <cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant ;
@@ -128,7 +134,7 @@ install install-bin
     : <location>$(INSTALLDIR)/usr/local/bin
     ;
 
-obj config.o : ../redemption_configs/redemption_src/configs/config.cpp ;
+obj config.o : $(REDEMPTION_PROJECT_PATH)/redemption_configs/redemption_src/configs/config.cpp ;
 
 obj hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp : ;
 
@@ -158,7 +164,7 @@ rule add_src ( src : requirements * )
 add_src core/app_path.cpp :
     <conditional>@defines
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
-    <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)$(MAIN_PATH)\"'
+    <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)$(CLIENT_REDEMPTION_MAIN_PATH)\"'
     ;
 add_src capture/capture.cpp ;
 add_src capture/file_to_graphic.cpp ;
@@ -220,7 +226,7 @@ constant lib_list :
 
 
 constant EXE_DEPENDENCIES :
-    <define>MAIN_PATH='\"$(MAIN_PATH)\"'
+    <define>CLIENT_REDEMPTION_MAIN_PATH='\"$(CLIENT_REDEMPTION_MAIN_PATH)\"'
     <define>REDEMPTION_QT_VERSION=$(qtversion)
 ;
 

@@ -1065,10 +1065,13 @@ public:
         const size_t offset_of_data_length = stream.get_offset();
         stream.out_skip_bytes(4);
 
-        auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
-            stream, this->color_scheme.c_str(), this->color_scheme.length() * 2);
+        uint8_t * const unicode_data = stream.get_current();
+        const size_t size_of_unicode_data = ::UTF8toUTF16(
+            byte_ptr_cast(this->color_scheme.c_str()), unicode_data, this->color_scheme.length() * 2);
+        stream.out_skip_bytes(size_of_unicode_data);
+        stream.out_clear_bytes(2);  // null-terminator
 
-        stream.set_out_uint32_le(2 /* CbString(2) */ + size_of_unicode_data, offset_of_data_length);
+        stream.set_out_uint32_le(size_of_unicode_data + 2 /*null-terminator*/, offset_of_data_length);
     }
 
     void receive(InStream & stream) {
@@ -1094,10 +1097,10 @@ public:
             throw Error(ERR_RAIL_PDU_TRUNCATED);
         }
 
-        assert(ColorSchemeLength >= 2);
+//        assert(ColorSchemeLength >= 2);
 
         get_non_null_terminated_utf16_from_utf8(
-            this->color_scheme, stream, stream.in_uint16_le(),
+            this->color_scheme, stream, ColorSchemeLength/*stream.in_uint16_le()*/,
             "High Contrast System Information Structure");
     }
 
@@ -3102,10 +3105,10 @@ public:
 
         this->WindowId_ = stream.in_uint32_le();
 
-        uint8_t ApplicationId_utf8_string[512 / 2]; // ApplicationId(512)
+        uint8_t ApplicationId_utf8_string[512 / 2 * 4 /* Max UTF-8 character length */]; // ApplicationId(512)
         const size_t length_of_ApplicationId_utf8_string = ::UTF16toUTF8(
             stream.get_current(),
-            512 / 2,    // ApplicationId(512)
+            512 / 2 * 4 /* Max UTF-8 character length */,    // ApplicationId(512)
             ApplicationId_utf8_string,
             sizeof(ApplicationId_utf8_string));
         this->application_id.assign(::char_ptr_cast(ApplicationId_utf8_string),

@@ -56,8 +56,9 @@ dir_requirements = dict((
     ('tests/sashimi', '<cxxflags>-Wno-format <cxxflags>-Wno-format-security'),
 ))
 
+# This is usefull if several source files have the same name to disambiguate tests
 target_pre_renames = dict((
-    ('tests/core/RDP/test_pointer.cpp', 'test_rdp_pointer'),
+#    ('tests/core/RDP/test_pointer.cpp', 'test_rdp_pointer'),
 ))
 
 target_renames = dict((
@@ -185,7 +186,8 @@ for d in (
     "regex",
     "sashimi",
     "transport",
-    "utils"
+    "utils",
+    "client_redemption"
 ):
     get_files(sources, 'src/'+d)
 get_files(sources, 'src/system/linux/system')
@@ -525,8 +527,9 @@ for name,aliases in dir_tests.items():
     print('explicit', name, ';')
     print('alias ', mark_target(name), ' :\n  ', '\n  '.join(aliases), '\n;', sep='')
 
-print('explicit tests.full ;')
-print('alias tests.full :')
+# all tests
+print('explicit test ;')
+print('alias test :')
 for name in dir_tests.keys():
     print(' ', name)
 print(';')

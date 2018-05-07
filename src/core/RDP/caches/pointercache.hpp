@@ -24,7 +24,7 @@
 
 #include "utils/sugar/noncopyable.hpp"
 
-#include "core/RDP/pointer.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 
 
 enum {
@@ -58,42 +58,28 @@ public:
 
     void add_pointer_static(const Pointer & cursor, int index) {
         assert((index >= 0) && (index < MAX_POINTER_COUNT));
-        this->Pointers[index].x = cursor.x;
-        this->Pointers[index].y = cursor.y;
-        this->Pointers[index].width = cursor.width;
-        this->Pointers[index].height = cursor.height;
-//        this->Pointers[index].bpp = cursor.bpp;
-        memcpy(this->Pointers[index].data, cursor.data, cursor.data_size());
-        memcpy(this->Pointers[index].mask, cursor.mask, cursor.mask_size());
+        this->Pointers[index] = cursor;
         this->stamps[index] = this->pointer_stamp;
-
         this->cached[index] = true;
     }
 
     /* check if the pointer is in the cache or not and if it should be sent      */
     int add_pointer(const Pointer & cursor, int & cache_idx)
     {
-        int i;
         int oldest = 0x7fffffff;
         int index = 0;
 
         this->pointer_stamp++;
         /* look for match */
-        for (i = 0; i < this->pointer_cache_entries; i++) {
-            if (this->Pointers[i].x == cursor.x
-            &&  this->Pointers[i].y == cursor.y
-            &&  this->Pointers[i].width == cursor.width
-            &&  this->Pointers[i].height == cursor.height
-//            &&  this->Pointers[i].bpp == cursor.bpp
-            &&  (memcmp(this->Pointers[i].data, cursor.data, cursor.data_size()) == 0)
-            &&  (memcmp(this->Pointers[i].mask, cursor.mask, cursor.mask_size()) == 0)) {
+        for (int i = 0; i < this->pointer_cache_entries; i++) {
+            if (this->Pointers[i] == cursor) {
                 this->stamps[i] = this->pointer_stamp;
                 cache_idx = i;
                 return POINTER_ALLREADY_SENT;
             }
         }
         /* look for oldest */
-        for (i = 0; i < this->pointer_cache_entries; i++) {
+        for (int i = 0; i < this->pointer_cache_entries; i++) {
             if (this->stamps[i] < oldest) {
                 oldest = this->stamps[i];
                 index  = i;

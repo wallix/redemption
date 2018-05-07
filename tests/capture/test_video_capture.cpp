@@ -102,7 +102,7 @@ RED_AUTO_TEST_CASE(TestSequencedVideoCapture)
         RDPDrawable drawable(800, 600);
         VideoParams video_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", false, false, false, std::chrono::microseconds{2 * 1000000l}, 0};
         CaptureParams capture_params{
-            now, "opaquerect_videocapture", nullptr, "./", 0 /* groupid */, nullptr};
+            now, "opaquerect_videocapture", nullptr, "./", 0 /* groupid */, nullptr, SmartVideoCropping::disable};
         SequencedVideoCaptureImpl video_capture(
             capture_params, 100 /* zoom */, drawable, drawable, video_params,
             next_video_notifier);
@@ -141,7 +141,7 @@ RED_AUTO_TEST_CASE(TestSequencedVideoCaptureMP4)
         RDPDrawable drawable(800, 600);
         VideoParams video_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "mp4", false, false, false, std::chrono::microseconds{2 * 1000000l}, 0};
         CaptureParams capture_params{
-            now, "opaquerect_videocapture", nullptr, "./", 0 /* groupid */, nullptr};
+            now, "opaquerect_videocapture", nullptr, "./", 0 /* groupid */, nullptr, SmartVideoCropping::disable};
         SequencedVideoCaptureImpl video_capture(
             capture_params, 100 /* zoom */, drawable, drawable, video_params, next_video_notifier);
         simple_movie(now, 250, drawable, video_capture, false, true);
@@ -179,7 +179,7 @@ RED_AUTO_TEST_CASE(TestVideoCaptureOneChunkFLV)
         RDPDrawable drawable(800, 600);
         VideoParams video_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", false, false, false, std::chrono::microseconds{1000 * 1000000l}, 0};
         CaptureParams capture_params{
-            now, "opaquerect_videocapture_one_chunk_xxx", nullptr, "./", 0 /* groupid */, nullptr};
+            now, "opaquerect_videocapture_one_chunk_xxx", nullptr, "./", 0 /* groupid */, nullptr, SmartVideoCropping::disable};
         SequencedVideoCaptureImpl video_capture(
             capture_params, 100 /* zoom */, drawable, drawable, video_params, next_video_notifier);
         simple_movie(now, 1000, drawable, video_capture, false, true);
@@ -198,7 +198,7 @@ RED_AUTO_TEST_CASE(TestFullVideoCaptureFlv)
         RDPDrawable drawable(800, 600);
         VideoParams video_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", false, false, false, {}, 0};
         CaptureParams capture_params{
-            now, "opaquerect_fullvideocapture_timestamp1", nullptr, "./", 0 /* groupid */, nullptr};
+            now, "opaquerect_fullvideocapture_timestamp1", nullptr, "./", 0 /* groupid */, nullptr, SmartVideoCropping::disable};
         FullVideoCaptureImpl video_capture(
             capture_params, drawable, drawable, video_params, FullVideoParams{false});
         simple_movie(now, 250, drawable, video_capture, false, true);
@@ -214,7 +214,7 @@ RED_AUTO_TEST_CASE(TestFullVideoCaptureFlv2)
         RDPDrawable drawable(800, 600);
         VideoParams video_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", false, false, false, {}, 0};
         CaptureParams capture_params{
-            now, "opaquerect_fullvideocapture_timestamp_mouse0", nullptr, "./", 0 /* groupid */, nullptr};
+            now, "opaquerect_fullvideocapture_timestamp_mouse0", nullptr, "./", 0 /* groupid */, nullptr, SmartVideoCropping::disable};
         FullVideoCaptureImpl video_capture(
             capture_params, drawable, drawable, video_params, FullVideoParams{false});
         simple_movie(now, 250, drawable, video_capture, false, false);
@@ -229,7 +229,7 @@ RED_AUTO_TEST_CASE(TestFullVideoCaptureX264)
         RDPDrawable drawable(800, 600);
         VideoParams video_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "mp4", false, false, false, {}, 0};
         CaptureParams capture_params{
-            now, "opaquerect_fullvideocapture_timestamp2", nullptr, "./", 0 /* groupid */, nullptr};
+            now, "opaquerect_fullvideocapture_timestamp2", nullptr, "./", 0 /* groupid */, nullptr, SmartVideoCropping::disable};
         FullVideoCaptureImpl video_capture(
             capture_params, drawable, drawable, video_params, FullVideoParams{false});
         simple_movie(now, 250, drawable, video_capture, false, true);
@@ -255,7 +255,7 @@ RED_AUTO_TEST_CASE(SequencedVideoCaptureFLV)
         RDPDrawable drawable(800, 600);
         VideoParams video_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "flv", false, false, false, std::chrono::microseconds{1000000}, 0};
         CaptureParams capture_params{
-            now, "opaquerect_seqvideocapture", nullptr, "./", 0 /* groupid */, nullptr};
+            now, "opaquerect_seqvideocapture", nullptr, "./", 0 /* groupid */, nullptr, SmartVideoCropping::disable};
         SequencedVideoCaptureImpl video_capture(
             capture_params, 100 /* zoom */, drawable, drawable, video_params, next_video_notifier);
         simple_movie(now, 250, drawable, video_capture, false, true);
@@ -304,7 +304,7 @@ RED_AUTO_TEST_CASE(SequencedVideoCaptureX264)
         RDPDrawable drawable(800, 600);
         VideoParams video_params{Level::high, drawable.width(), drawable.height(), 25, 15, 100000, "mp4", false, false, false, std::chrono::microseconds{1000000}, 0};
         CaptureParams capture_params{
-            now, "opaquerect_seqvideocapture_timestamp2", nullptr, "./", 0 /* groupid */, nullptr};
+            now, "opaquerect_seqvideocapture_timestamp2", nullptr, "./", 0 /* groupid */, nullptr, SmartVideoCropping::disable};
         SequencedVideoCaptureImpl video_capture(
             capture_params, 100 /* zoom */, drawable, drawable, video_params, next_video_notifier);
         simple_movie(now, 250, drawable, video_capture, false, true);

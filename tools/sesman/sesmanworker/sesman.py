@@ -31,12 +31,10 @@ from datetime   import datetime
 import socket
 from socket     import gethostname
 
-#TODO : remove these hardcoded strings
-RECORD_PATH = u'/var/wab/recorded/rdp/'
-
 from sesmanconf import TR, SESMANCONF
 import engine
 
+from engine import LOCAL_TRACE_PATH_RDP
 from engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
     APPROVAL_PENDING, APPROVAL_NONE
 from engine import APPREQ_REQUIRED, APPREQ_OPTIONAL
@@ -872,16 +870,16 @@ class Sesman():
                 Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
         return _status, _error
 
-    def create_record_path_directory(self):
+    def create_record_path_directory(self, rec_path):
         try:
-            os.stat(RECORD_PATH)
+            os.stat(rec_path)
         except OSError:
             try:
-                os.mkdir(RECORD_PATH)
+                os.mkdir(rec_path)
             except Exception:
-                Logger().info(u"Failed creating recording path (%s)" % RECORD_PATH)
+                Logger().info(u"Failed creating recording path (%s)" % rec_path)
                 self.send_data({u'rejected': TR(u'error_getting_record_path')})
-                return False, TR(u'error_getting_record_path %s') % RECORD_PATH
+                return False, TR(u'error_getting_record_path %s') % rec_path
         return True, u''
 
     def generate_record_filebase(self, session_id, user, account, start_time):
@@ -925,7 +923,7 @@ class Sesman():
         )
         return formated_encryption_key, formated_sign_key
 
-    def load_video_recording(self, user):
+    def load_video_recording(self, rec_path, user):
         Logger().info(u"Checking video")
 
         _status, _error = True, u''
@@ -944,9 +942,9 @@ class Sesman():
         else:   # localfile_hashed
             data_to_send[u"trace_type"] = u'1'
 
-        self.full_path = os.path.join(RECORD_PATH, self.record_filebase)
+        self.full_path = os.path.join(rec_path, self.record_filebase)
 
-        #TODO remove .flv extention and adapt ReDemPtion proxy code
+        #TODO remove .flv extension and adapt ReDemPtion proxy code (/!\ break the compatibility)
         data_to_send[u'rec_path'] = u"%s.flv" % (self.full_path)
 
         record_warning = SESMANCONF[u'sesman'].get('record_warning', True)
@@ -970,7 +968,7 @@ class Sesman():
 
         return _status, _error
 
-    def load_session_log_redirection(self):
+    def load_session_log_redirection(self, rec_path):
         Logger().info(u"Checking session log redirection")
 
         data_to_send = {
@@ -979,7 +977,7 @@ class Sesman():
         }
 
         self.full_log_path = os.path.join(
-            RECORD_PATH,
+            rec_path,
             self.record_filebase + u'.log'
         )
 
@@ -1341,14 +1339,17 @@ class Sesman():
                 start_time
             )
 
+            # add "Year-Month-Day" subdirectory to record path
+            date_path = start_time.strftime("%Y-%m-%d")
+            rec_path = os.path.join(LOCAL_TRACE_PATH_RDP, date_path)
             if _status:
                 Logger().info(u"Session will be recorded in %s" % self.record_filebase)
                 try:
-                    _status, _error = self.create_record_path_directory()
+                    _status, _error = self.create_record_path_directory(rec_path)
                     if _status and extra_info.is_recorded:
-                        _status, _error = self.load_video_recording(user)
+                        _status, _error = self.load_video_recording(rec_path, user)
                     if _status:
-                        _status, _error = self.load_session_log_redirection()
+                        _status, _error = self.load_session_log_redirection(rec_path)
                     if _status:
                         encryption_key, sign_key = self.get_trace_keys()
                         kv['encryption_key'] = encryption_key
@@ -1432,8 +1433,9 @@ class Sesman():
                 physical_proto_info = self.engine.get_target_protocols(physical_target)
                 application = self.engine.get_application(selected_target)
                 conn_opts = self.engine.get_target_conn_options(physical_target)
-                if physical_proto_info.protocol == u'RDP':
-                    kv[u'proxy_opt'] = ",".join(physical_proto_info.subprotocols)
+                if physical_proto_info.protocol == u'RDP' or physical_proto_info.protocol == u'VNC':
+                    if physical_proto_info.protocol == u'RDP':
+                        kv[u'proxy_opt'] = ",".join(physical_proto_info.subprotocols)
 
                     connectionpolicy_kv = self.fetch_connectionpolicy(conn_opts)
                     kv.update({k:v for (k, v) in connectionpolicy_kv.items() if v is not None})
@@ -1643,7 +1645,7 @@ class Sesman():
                                     _status, _error = self.engine.write_trace(self.full_path)
                                     if not _status:
                                         _error = TR("Trace writer failed for %s") % self.full_path
-                                        Logger().info(u"Failed accessing recording path (%s)" % RECORD_PATH)
+                                        Logger().info(u"Failed accessing recording path (%s)" % self.full_path)
                                         self.send_data({u'rejected': TR(u'error_getting_record_path')})
 
                                 if self.shared.get(u'reporting'):
@@ -1942,7 +1944,9 @@ class Sesman():
                 u'use_native_remoteapp_capability': 'use_native_remoteapp_capability',
                 u'use_client_provided_remoteapp': 'use_client_provided_remoteapp',
                 u'rail_disconnect_message_delay': 'remote_programs_disconnect_message_delay',
-                u'use_session_probe_to_launch_remote_program': 'use_session_probe_to_launch_remote_program'
+                u'use_session_probe_to_launch_remote_program': 'use_session_probe_to_launch_remote_program',
+                u'enable_nla': 'enable_nla',
+                u'enable_kerberos': 'enable_kerberos'
                 },
             'session_probe': {
                 u'session_probe' : 'enable_session_probe',
@@ -1969,7 +1973,10 @@ class Sesman():
                 u'session_probe_smart_launcher_short_delay' : 'smart_launcher_short_delay',
                 u'session_probe_enable_crash_dump' : 'enable_crash_dump',
                 u'session_probe_handle_usage_limit' : 'handle_usage_limit',
-                u'session_probe_memory_usage_limit' : 'memory_usage_limit'
+                u'session_probe_memory_usage_limit' : 'memory_usage_limit',
+
+                # Deprecated. For compatibility only.
+                u'enable_session_probe_launch_mask' : 'enable_launch_mask'
                 },
             'server_cert': {
                 u'server_cert_store' : 'server_cert_store',
@@ -1979,10 +1986,13 @@ class Sesman():
                 u'server_cert_success_message' : 'server_cert_success_message',
                 u'server_cert_failure_message' : 'server_cert_failure_message',
                 u'server_cert_error_message' : 'server_cert_error_message'
-            },
+                },
             'session': {
                 u'inactivity_timeout': 'inactivity_timeout'
-            }
+                },
+            'vnc': {
+                u'server_is_apple': 'server_is_apple'
+                }
         }
 
         connectionpolicy_kv = {}

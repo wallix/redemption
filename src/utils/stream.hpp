@@ -775,14 +775,17 @@ public:
         this->p = this->begin + offset;
     }
 
-    void out_copy_bytes(const void * v, size_t n) {
-        assert(this->has_room(n));
-        memcpy(this->p, v, n);
-        this->p += n;
+    void out_copy_bytes(cbyte_array data){
+        assert(this->has_room(data.size()));
+        memcpy(this->p, data.data(), data.size());
+        this->p += data.size();
     }
 
-    void out_copy_bytes(const char * v, size_t n) {
-        this->out_copy_bytes(reinterpret_cast<uint8_t const*>(v), n);
+    void out_copy_bytes(cbyte_ptr v, size_t n) {
+        this->out_copy_bytes({v, n});
+//        assert(this->has_room(n));
+//        memcpy(this->p, v.to_u8p(), n);
+//        this->p += n;
     }
 
     // Output zero terminated string, non including trailing 0

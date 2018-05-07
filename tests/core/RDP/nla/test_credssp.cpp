@@ -31,7 +31,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     // ===== NTLMSSP_NEGOTIATE =====
     constexpr static uint8_t packet[] = {
-        0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x02, 0xa1,
+        0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x03, 0xa1,
         0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04,
         0x28, 0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50,
         0x00, 0x01, 0x00, 0x00, 0x00, 0xb7, 0x82, 0x08,
@@ -49,9 +49,10 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     get_sig(s, sig1);
 
     InStream in_s(s.get_data(), s.get_offset());
-    TSRequest ts_req(in_s);
+    TSRequest ts_req(3);
+    ts_req.recv(in_s);
 
-    RED_CHECK_EQUAL(ts_req.version, 2);
+    RED_CHECK_EQUAL(ts_req.version, 3);
 
     RED_CHECK_EQUAL(ts_req.negoTokens.size(), 0x28);
     RED_CHECK_EQUAL(ts_req.authInfo.size(), 0);
@@ -69,7 +70,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     // ===== NTLMSSP_CHALLENGE =====
     constexpr static uint8_t packet2[] = {
-        0x30, 0x81, 0x94, 0xa0, 0x03, 0x02, 0x01, 0x02,
+        0x30, 0x81, 0x94, 0xa0, 0x03, 0x02, 0x01, 0x03,
         0xa1, 0x81, 0x8c, 0x30, 0x81, 0x89, 0x30, 0x81,
         0x86, 0xa0, 0x81, 0x83, 0x04, 0x81, 0x80, 0x4e,
         0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00, 0x02,
@@ -99,9 +100,10 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     get_sig(s, sig2);
 
     in_s = InStream(s.get_data(), s.get_offset());
-    TSRequest ts_req2(in_s);
+    TSRequest ts_req2(3);
+    ts_req2.recv(in_s);
 
-    RED_CHECK_EQUAL(ts_req2.version, 2);
+    RED_CHECK_EQUAL(ts_req2.version, 3);
 
     RED_CHECK_EQUAL(ts_req2.negoTokens.size(), 0x80);
     RED_CHECK_EQUAL(ts_req2.authInfo.size(), 0);
@@ -121,7 +123,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     // ===== NTLMSSP_AUTH =====
     constexpr static uint8_t packet3[] = {
         0x30, 0x82, 0x02, 0x41, 0xa0, 0x03, 0x02, 0x01,
-        0x02, 0xa1, 0x82, 0x01, 0x12, 0x30, 0x82, 0x01,
+        0x03, 0xa1, 0x82, 0x01, 0x12, 0x30, 0x82, 0x01,
         0x0e, 0x30, 0x82, 0x01, 0x0a, 0xa0, 0x82, 0x01,
         0x06, 0x04, 0x82, 0x01, 0x02, 0x4e, 0x54, 0x4c,
         0x4d, 0x53, 0x53, 0x50, 0x00, 0x03, 0x00, 0x00,
@@ -202,12 +204,12 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     uint8_t sig3[SslSha1::DIGEST_LENGTH];
     get_sig(s, sig3);
 
-    TSRequest ts_req3;
+    TSRequest ts_req3(3);
 
     in_s = InStream(s.get_data(), s.get_offset());
     ts_req3.recv(in_s);
 
-    RED_CHECK_EQUAL(ts_req3.version, 2);
+    RED_CHECK_EQUAL(ts_req3.version, 3);
 
     RED_CHECK_EQUAL(ts_req3.negoTokens.size(), 0x102);
     RED_CHECK_EQUAL(ts_req3.authInfo.size(), 0);
@@ -227,7 +229,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     // ===== PUBKEYAUTH =====
     constexpr static uint8_t packet4[] = {
         0x30, 0x82, 0x01, 0x2b, 0xa0, 0x03, 0x02, 0x01,
-        0x02, 0xa3, 0x82, 0x01, 0x22, 0x04, 0x82, 0x01,
+        0x03, 0xa3, 0x82, 0x01, 0x22, 0x04, 0x82, 0x01,
         0x1e, 0x01, 0x00, 0x00, 0x00, 0xc9, 0x88, 0xfc,
         0xf1, 0x11, 0x68, 0x2c, 0x72, 0x00, 0x00, 0x00,
         0x00, 0xc7, 0x51, 0xf4, 0x71, 0xd3, 0x9f, 0xb6,
@@ -273,9 +275,10 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     get_sig(s, sig4);
 
     in_s = InStream(s.get_data(), s.get_offset());
-    TSRequest ts_req4(in_s);
+    TSRequest ts_req4(3);
+    ts_req4.recv(in_s);
 
-    RED_CHECK_EQUAL(ts_req4.version, 2);
+    RED_CHECK_EQUAL(ts_req4.version, 3);
 
     RED_CHECK_EQUAL(ts_req4.negoTokens.size(), 0);
     RED_CHECK_EQUAL(ts_req4.authInfo.size(), 0);
@@ -295,7 +298,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     // ===== AUTHINFO =====
     constexpr static uint8_t packet5[] = {
-        0x30, 0x5a, 0xa0, 0x03, 0x02, 0x01, 0x02, 0xa2,
+        0x30, 0x5a, 0xa0, 0x03, 0x02, 0x01, 0x03, 0xa2,
         0x53, 0x04, 0x51, 0x01, 0x00, 0x00, 0x00, 0xb3,
         0x2c, 0x3b, 0xa1, 0x36, 0xf6, 0x55, 0x71, 0x01,
         0x00, 0x00, 0x00, 0xa8, 0x85, 0x7d, 0x11, 0xef,
@@ -308,6 +311,25 @@ RED_AUTO_TEST_CASE(TestTSRequest)
         0x2a, 0x13, 0x52, 0xa6, 0x52, 0x75, 0x50, 0x8d,
         0x3e, 0xe9, 0x6b, 0x57
     };
+//    "\x30\x08\xa0\x03\x02\x01\x03\xa2\x53\x04\x51\x01"
+//    "\x00\x00\x00\xb3\x2c\x3b\xa1\x36\xf6\x55\x71\x01"
+//    "\x00\x00\x00\xa8\x85\x7d\x11\xef\x92\xa0\xd6\xff"
+//    "\xee\xa1\xae\x6d\xc5\x2e\x4e\x65\x50\x28\x93\x75"
+//    "\x30\xe1\xc3\x37\xeb\xac\x1f\xdd\xf3\xe0\x92\xf6"
+//    "\x21\xbc\x8f\xa8\xd4\xe0\x5a\xa6\xff\xda\x09\x50"
+//    "\x24\x0d\x8f\x8f\xf4\x92\xfe\x49\x2a\x13\x52\xa6"
+//    "\x52\x75\x50\x8d\x3e\xe9\x6b\x57"
+//
+//    "\x30\x5a\xa0\x03\x02\x01\x03\xa2\x53\x04\x51\x01"
+//    "\x00\x00\x00\xb3\x2c\x3b\xa1\x36\xf6\x55\x71\x01"
+//    "\x00\x00\x00\xa8\x85\x7d\x11\xef\x92\xa0\xd6\xff"
+//    "\xee\xa1\xae\x6d\xc5\x2e\x4e\x65\x50\x28\x93\x75"
+//    "\x30\xe1\xc3\x37\xeb\xac\x1f\xdd\xf3\xe0\x92\xf6"
+//    "\x21\xbc\x8f\xa8\xd4\xe0\x5a\xa6\xff\xda\x09\x50"
+//    "\x24\x0d\x8f\x8f\xf4\x92\xfe\x49\x2a\x13\x52\xa6"
+//    "\x52\x75\x50\x8d\x3e\xe9\x6b\x57"
+
+
     LOG(LOG_INFO, "=================================\n");
     s.rewind();
     s.out_copy_bytes(packet5, sizeof(packet5));
@@ -315,9 +337,10 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     get_sig(s, sig5);
 
     in_s = InStream(s.get_data(), s.get_offset());
-    TSRequest ts_req5(in_s);
+    TSRequest ts_req5(3);
+    ts_req5.recv(in_s);
 
-    RED_CHECK_EQUAL(ts_req5.version, 2);
+    RED_CHECK_EQUAL(ts_req5.version, 3);
 
     RED_CHECK_EQUAL(ts_req5.negoTokens.size(), 0);
     RED_CHECK_EQUAL(ts_req5.authInfo.size(), 0x51);
@@ -328,9 +351,12 @@ RED_AUTO_TEST_CASE(TestTSRequest)
     RED_CHECK_EQUAL(to_send5.get_offset(), 0);
     ts_req5.emit(to_send5);
 
-    RED_CHECK_EQUAL(to_send5.get_offset(), 0x5a + 2);
+    RED_CHECK_EQUAL(to_send5.get_offset(), 0x5c);
 
     RED_CHECK_SIG(to_send5, sig5);
+
+//    auto av = make_array_view(to_send5.get_data(), sizeof(packet5));
+//    RED_CHECK_MEM_AA(av, packet5);
 
     // hexdump_c(to_send5.get_data(), to_send5.size());
 }

@@ -37,6 +37,11 @@ constexpr static inline uint8_t nbbytes(unsigned value) noexcept
     return static_cast<uint8_t>((value+7) / 8);
 }
 
+constexpr static inline unsigned even_pad_length(unsigned value) noexcept
+{
+    return value+(value&1);
+}
+
 constexpr static inline uint32_t nbbytes_large(unsigned value) noexcept
 {
     return ((value+7) / 8);

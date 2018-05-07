@@ -110,6 +110,8 @@ struct RdpInput : private noncopyable
     virtual void rdp_suppress_display_updates() {}
 
     virtual void refresh(Rect clip) = 0;
+
+    virtual void set_last_tram_len(size_t tram_length) {(void)tram_length;}
 };
 
 struct Callback : RdpInput

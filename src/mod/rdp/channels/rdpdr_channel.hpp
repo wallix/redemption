@@ -881,6 +881,15 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         cont.pop_back();
     }
 
+    struct NullVirtualChannelDataSender : VirtualChannelDataSender
+    {
+        void operator()(
+            uint32_t /*total_length*/, uint32_t /*flags*/,
+            const uint8_t * /*chunk_data*/, uint32_t /*chunk_data_length*/) override
+        {}
+    };
+    NullVirtualChannelDataSender null_virtual_channel_data_sender;
+
 public:
     struct Params : public BaseVirtualChannel::Params
     {
@@ -911,7 +920,7 @@ public:
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          params)
-    , to_server_sender(*to_server_sender_)
+    , to_server_sender(to_server_sender_ ? *to_server_sender_  : null_virtual_channel_data_sender)
     , serverVersionMinor(0xC)
     , file_system_drive_manager(file_system_drive_manager)
     , param_client_name(params.client_name)

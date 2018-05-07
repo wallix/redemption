@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Clément Moroldo
+   Author(s): Clément Moroldo, Christophe Grosjean
 
 */
 
@@ -24,7 +24,7 @@
 #include <fstream>
 
 #include "utils/log.hpp"
-#include "../client_input_output_api.hpp"
+#include "client_redemption/client_input_output_api.hpp"
 
 #if REDEMPTION_QT_VERSION == 4
 #   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
@@ -77,16 +77,20 @@ public:
             this->QObject::connect(&(this->timer),   SIGNAL(timeout()), this,  SLOT(call_draw_event_timer()));
 
             if (this->_callback) {
+                LOG(LOG_INFO, "start to listen : we have a callback");
                 if (this->_callback->get_event().is_trigger_time_set()) {
+                    LOG(LOG_INFO, "start to listen : we have a callback : trigger time is set");
                     struct timeval now = tvtime();
                     int time_to_wake = (this->_callback->get_event().get_trigger_time().tv_usec - now.tv_usec) / 1000
                     + (this->_callback->get_event().get_trigger_time().tv_sec - now.tv_sec) * 1000;
 
+                    LOG(LOG_INFO, "start to listen : we have a callback : time to wake = %d", time_to_wake);
+
                     if (time_to_wake < 0) {
-                        //this->timer.stop();
+                        LOG(LOG_INFO, "start to listen : we have a callback : draw event timer");
                         this->call_draw_event_timer();
                     } else {
-
+                        LOG(LOG_INFO, "start to listen : we have a callback : time to wake = %d (delayed)", time_to_wake);
                         this->timer.start( time_to_wake );
                     }
                 }
@@ -104,36 +108,44 @@ public:
 
 public Q_SLOTS:
     void call_draw_event_data() {
+        //LOG(LOG_INFO, "draw_event_data");
         this->_callback->get_event().set_waked_up_by_time(false);
         this->call_draw_event();
     }
 
     void call_draw_event_timer() {
+       //LOG(LOG_INFO, "draw_event_timer");
         this->_callback->get_event().set_waked_up_by_time(true);
         this->call_draw_event();
     }
 
     void call_draw_event() {
         if (this->client->mod) {
-
+            //LOG(LOG_INFO, "call_draw_event");
             this->client->callback();
 
             if (this->_callback) {
+                //LOG(LOG_INFO, "call_draw_event :: callback");
+
                 if (this->_callback->get_event().is_trigger_time_set()) {
+                    //LOG(LOG_INFO, "call_draw_event :: trigger time set");
+
                     struct timeval now = tvtime();
                     int time_to_wake = ((this->_callback->get_event().get_trigger_time().tv_usec - now.tv_usec) / 1000)
                     + ((this->_callback->get_event().get_trigger_time().tv_sec - now.tv_sec) * 1000);
 
+                    //LOG(LOG_INFO, "call_draw_event :: trigger time reset");
                     this->_callback->get_event().reset_trigger_time();
 
                     if (time_to_wake < 0) {
+                        //LOG(LOG_INFO, "call_draw_event :: stop timer");
                         this->timer.stop();
-//                         LOG(LOG_INFO, "time_to_wake = %d", time_to_wake);
-//                         this->timer.start( 40 );
                     } else {
+                        //LOG(LOG_INFO, "call_draw_event : we have a callback : time to wake = %d (delayed)", time_to_wake);
                         this->timer.start( time_to_wake );
                     }
                 } else {
+                    //LOG(LOG_INFO, "call_draw_event :: no trigger time stop timer");
                     this->timer.stop();
                 }
             }

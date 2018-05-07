@@ -102,6 +102,7 @@ ReplayMod::ReplayMod(
     case FrontAPI::ResizeResult::instant_done:
     case FrontAPI::ResizeResult::remoteapp:
     case FrontAPI::ResizeResult::done:
+
         // resizing done;
         this->front_width  = this->reader->info_width;
         this->front_height = this->reader->info_height;

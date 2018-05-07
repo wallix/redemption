@@ -142,7 +142,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         RDPDrawable gd_drawable(scr.cx, scr.cy);
 
         WrmCaptureImpl wrm(
-          CaptureParams{now, basename, "", record_path, groupid, nullptr},
+          CaptureParams{now, basename, "", record_path, groupid, nullptr, SmartVideoCropping::disable},
           wrm_params, gd_drawable);
 
         auto const color_cxt = gdi::ColorCtx::depth24();
@@ -261,7 +261,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         RDPDrawable gd_drawable(scr.cx, scr.cy);
 
         WrmCaptureImpl wrm(
-            CaptureParams{now, "capture", "", "./", 1000, nullptr},
+            CaptureParams{now, "capture", "", "./", 1000, nullptr, SmartVideoCropping::disable},
             wrm_params/* authentifier */, gd_drawable);
 
         RED_CHECK(true);
@@ -619,7 +619,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
         RDPDrawable gd_drawable(4, 1);
 
         WrmCaptureImpl wrm(
-          CaptureParams{now, basename, "", record_path, groupid, nullptr},
+          CaptureParams{now, basename, "", record_path, groupid, nullptr, SmartVideoCropping::disable},
           wrm_params, gd_drawable);
 
         bool ignore_frame_in_timeval = false;
@@ -697,6 +697,120 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
 //    RED_CHECK_EQUAL(output, "FOREGROUND_WINDOW_CHANGED=WINDOW\x01CLASS\x01COMMAND_LINE");
 
     RED_CHECK_SMEM_AC(output, "ipconfig\rFOREGROUND_WINDOW_CHANGED=WINDOW\x01CLASS\x01COMMAND_LINE\x00");
+
+    for (auto x : fileinfos) {
+        auto fsize = filesize(x.filename);
+        RED_CHECK_MESSAGE(
+            x.size == fsize,
+            "check " << x.size << " == filesize(\"" << x.filename
+            << "\") failed [" << x.size << " != " << fsize << "]"
+        );
+       ::unlink(x.filename);
+    }
+}
+
+RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
+{
+    const struct CheckFiles {
+        const char * filename;
+        int size;
+    } fileinfos[] = {
+        {"./capture_remoteapp-000000.wrm", 1670},
+        {"./capture_remoteapp.mwrm", 81},
+        {"/tmp/capture_remoteapp-000000.wrm", 50},
+        {"/tmp/capture_remoteapp.mwrm", 44},
+    };
+    for (auto const & d : fileinfos) {
+        unlink(d.filename);
+    }
+
+    {
+        // Timestamps are applied only when flushing
+        timeval now;
+        now.tv_usec = 0;
+        now.tv_sec = 1000;
+
+        Rect scr(0, 0, 800, 600);
+
+        LCGRandom rnd(0);
+        FakeFstat fstat;
+        CryptoContext cctx;
+
+        GraphicToFile::Verbose wrm_verbose = to_verbose_flags(0);
+
+        WrmCompressionAlgorithm wrm_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+        std::chrono::duration<unsigned int, std::ratio<1l, 100l> > wrm_frame_interval = std::chrono::seconds{1};
+        std::chrono::seconds wrm_break_interval = std::chrono::seconds{3};
+
+        const char * record_path = "./";
+        const int groupid = 0; // www-data
+        const char * hash_path = "/tmp/";
+
+        char basename[1024];
+        char extension[128];
+        strcpy(basename, "capture_remoteapp");
+        strcpy(extension, "");          // extension is currently ignored
+
+        cctx.set_trace_type(TraceType::localfile);
+
+        WrmParams wrm_params(
+            24,
+            true,   // RemoteApp
+            cctx,
+            rnd,
+            fstat,
+            hash_path,
+            wrm_frame_interval,
+            wrm_break_interval,
+            wrm_compression_algorithm,
+            int(wrm_verbose)
+        );
+
+        auto const color_cxt = gdi::ColorCtx::depth24();
+
+        RDPDrawable gd_drawable(800, 600);
+
+        WrmCaptureImpl wrm(
+          CaptureParams{now, basename, "", record_path, groupid, nullptr, SmartVideoCropping::v1},
+          wrm_params, gd_drawable);
+
+        bool ignore_frame_in_timeval = false;
+
+        wrm.send_timestamp_chunk(now, ignore_frame_in_timeval);
+
+        wrm.draw(RDPOpaqueRect(scr, encode_color24()(BLACK)), scr, color_cxt);
+
+        Rect rect = Rect(50, 50, 320, 200);
+        wrm.draw(RDPOpaqueRect(rect, encode_color24()(YELLOW)), rect, color_cxt);
+        wrm.visibility_rects_event(rect);
+
+
+        now.tv_sec++;
+        wrm.send_timestamp_chunk(now, ignore_frame_in_timeval);
+
+        wrm.draw(RDPOpaqueRect(scr, encode_color24()(BLACK)), scr, color_cxt);
+
+        rect = Rect(125, 75, 370, 250);
+        wrm.draw(RDPOpaqueRect(rect, encode_color24()(BLUE)), rect, color_cxt);
+        wrm.visibility_rects_event(rect);
+
+        wrm.send_timestamp_chunk(now, ignore_frame_in_timeval);
+    }
+
+    int fd = ::open(fileinfos[0].filename, O_RDONLY);
+    RED_REQUIRE_NE(fd, -1);
+    InFileTransport in_wrm_trans(unique_fd{fd});
+
+    FileToGraphic player(in_wrm_trans, {}, {}, false, to_verbose_flags(0));
+
+    while(player.next_order())
+    {
+        player.interpret_order();
+    }
+
+    RED_CHECK_EQUAL(player.remote_app, true);
+    RED_CHECK_EQUAL(player.max_image_frame_rect, Rect(50, 50, 320, 200).disjunct(Rect(125, 75, 370, 250)));
+    RED_CHECK_EQUAL(player.min_image_frame_dim, Dimension(370, 250));
 
     for (auto x : fileinfos) {
         auto fsize = filesize(x.filename);

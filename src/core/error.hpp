@@ -249,7 +249,7 @@
     f(ERR_RECORDER_FRAME_ALLOCATION_FAILED)                      \
     f(ERR_RECORDER_EMPTY_IMAGE)                                  \
     f(ERR_RECORDER_IMAGE_ALLOCATION_FAILED)                      \
-    f(ERR_RECORDER_INIT_FAILED)                                  \
+    f(ERR_RECORDER_FAILED_TO_EXTRACT_DATE)                       \
     f(ERR_RECORDER_FILE_CRYPTED)                                 \
                                                                  \
     f(ERR_RECORDER_SNAPSHOT_FAILED)                              \

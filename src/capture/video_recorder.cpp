@@ -96,11 +96,13 @@ video_recorder::video_recorder(
     write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,
     ConstImageDataView const & image_view, int bitrate,
     int frame_rate, int qscale, const char * codec_id,
-    const int target_width, const int target_height,
     int log_level
 )
 : original_height(image_view.height())
 {
+    const int image_view_width = image_view.width();
+    const int image_view_height = image_view.height();
+
     /* initialize libavcodec, and register all codecs and formats */
     av_register_all();
 
@@ -149,8 +151,8 @@ video_recorder::video_recorder(
     this->video_st->codec->bit_rate = bitrate;
     this->video_st->codec->bit_rate_tolerance = bitrate;
     // resolution must be a multiple of 2
-    this->video_st->codec->width = target_width & ~1;
-    this->video_st->codec->height = target_height & ~1;
+    this->video_st->codec->width = image_view_width & ~1;
+    this->video_st->codec->height = image_view_height & ~1;
 
     // time base: this is the fundamental unit of time (in seconds)
     // in terms of which frame timestamps are represented.
@@ -223,7 +225,7 @@ video_recorder::video_recorder(
     // and allocate the necessary encode buffers
     // find the video encoder
 
-    int const video_outbuf_size = target_width * target_height * 3 * 5;
+    int const video_outbuf_size = image_view_width * image_view_height * 3 * 5;
 
     {
         struct AVDict {
@@ -278,7 +280,7 @@ video_recorder::video_recorder(
     // init picture frame
     {
         AVPixelFormat const pix_fmt = this->video_st->codec->pix_fmt;
-        int const size = av_image_get_buffer_size(pix_fmt, target_width, target_height, 1);
+        int const size = av_image_get_buffer_size(pix_fmt, image_view_width, image_view_height, 1);
         if (size) {
             this->picture_buf.reset(static_cast<uint8_t*>(av_malloc(size)));
             std::fill_n(this->picture_buf.get(), size, 0);
@@ -289,11 +291,11 @@ video_recorder::video_recorder(
         }
         av_image_fill_arrays(
             this->picture->data, this->picture->linesize,
-            this->picture_buf.get(), pix_fmt, target_width, target_height, 1
+            this->picture_buf.get(), pix_fmt, image_view_width, image_view_height, 1
         );
 
-        this->picture->width = target_width;
-        this->picture->height = target_height;
+        this->picture->width = image_view_width;
+        this->picture->height = image_view_height;
         this->picture->format = this->video_st->codec->codec_id;
         this->original_picture->format = this->video_st->codec->codec_id;
     }
@@ -330,7 +332,7 @@ video_recorder::video_recorder(
 
     this->img_convert_ctx.reset(sws_getContext(
         image_view.width(), image_view.height(), AV_PIX_FMT_BGR24,
-        target_width, target_height, STREAM_PIX_FMT,
+        image_view_width, image_view_height, STREAM_PIX_FMT,
         SWS_BICUBIC, nullptr, nullptr, nullptr
     ));
 

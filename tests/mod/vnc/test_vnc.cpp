@@ -28,43 +28,43 @@
 #include "mod/vnc/vnc.hpp"
 #include "test_only/transport/test_transport.hpp"
 
-RED_AUTO_TEST_CASE(TestFillEncodingTypesBuffer)
-{
-    struct testable_mod_vnc : mod_vnc {
-        static void testable_fill_encoding_types_buffer(
-                const char * encodings, OutStream & stream,
-                uint16_t & number_of_encodings) {
-            fill_encoding_types_buffer(encodings, stream, number_of_encodings,
-                 VNCVerbose{});
-        }
-    };
+//RED_AUTO_TEST_CASE(TestFillEncodingTypesBuffer)
+//{
+//    struct testable_mod_vnc : mod_vnc {
+//        static void testable_fill_encoding_types_buffer(
+//                const char * encodings, OutStream & stream,
+//                uint16_t & number_of_encodings) {
+//            fill_encoding_types_buffer(encodings, stream, number_of_encodings,
+//                 VNCVerbose{});
+//        }
+//    };
 
-    {
-        StaticOutStream <512> stream;
-        uint16_t number_of_encodings = 0;
-        testable_mod_vnc::testable_fill_encoding_types_buffer("16,2,0,1,-239",
-            stream, number_of_encodings);
-        RED_CHECK(!memcmp(stream.get_data(),
-                            "\x00\x00\x00\x10\x00\x00\x00\x02"
-                            "\x00\x00\x00\x00\x00\x00\x00\x01"
-                            "\xFF\xFF\xFF\x11",
-                            20));
-        RED_CHECK_EQUAL(number_of_encodings, 5);
-    }
+//    {
+//        StaticOutStream <512> stream;
+//        uint16_t number_of_encodings = 0;
+//        testable_mod_vnc::testable_fill_encoding_types_buffer("16,2,0,1,-239",
+//            stream, number_of_encodings);
+//        RED_CHECK(!memcmp(stream.get_data(),
+//                            "\x00\x00\x00\x10\x00\x00\x00\x02"
+//                            "\x00\x00\x00\x00\x00\x00\x00\x01"
+//                            "\xFF\xFF\xFF\x11",
+//                            20));
+//        RED_CHECK_EQUAL(number_of_encodings, 5);
+//    }
 
-    {
-        StaticOutStream <512> stream;
-        uint16_t number_of_encodings = 0;
-        testable_mod_vnc::testable_fill_encoding_types_buffer(
-            "\t16 , 2 , 0 , 1 , -239 ", stream, number_of_encodings);
-        RED_CHECK(!memcmp(stream.get_data(),
-                            "\x00\x00\x00\x10\x00\x00\x00\x02"
-                            "\x00\x00\x00\x00\x00\x00\x00\x01"
-                            "\xFF\xFF\xFF\x11",
-                            20));
-        RED_CHECK_EQUAL(number_of_encodings, 5);
-    }
-}
+//    {
+//        StaticOutStream <512> stream;
+//        uint16_t number_of_encodings = 0;
+//        testable_mod_vnc::testable_fill_encoding_types_buffer(
+//            "\t16 , 2 , 0 , 1 , -239 ", stream, number_of_encodings);
+//        RED_CHECK(!memcmp(stream.get_data(),
+//                            "\x00\x00\x00\x10\x00\x00\x00\x02"
+//                            "\x00\x00\x00\x00\x00\x00\x00\x01"
+//                            "\xFF\xFF\xFF\x11",
+//                            20));
+//        RED_CHECK_EQUAL(number_of_encodings, 5);
+//    }
+//}
 
 
 RED_AUTO_TEST_CASE(TestVncMouse)

@@ -77,6 +77,7 @@
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "core/client_info.hpp"
+#include "core/date_dir_from_filename.hpp"
 #include "core/error.hpp"
 #include "core/font.hpp"
 #include "core/front_api.hpp"
@@ -926,7 +927,27 @@ public:
         VideoParams video_params = video_params_from_ini(this->client_info.width, this->client_info.height, ini);
 
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-        const char * record_path = ini.get<cfg::video::record_path>().c_str();
+        std::string record_path = ini.get<cfg::video::record_path>().to_string();
+        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+        std::string hash_path = ini.get<cfg::video::hash_path>().to_string();
+        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
+
+        {
+            DateDirFromFilename d(ini.get<cfg::session_log::log_path>());
+            if (!d.has_date()) {
+                LOG(LOG_WARNING, "Front::can_be_start_capture: failed to extract date");
+            }
+
+            hash_path.append(d.date_path().begin(), d.date_path().end());
+            record_path.append(d.date_path().begin(), d.date_path().end());
+        }
+
+        for (auto* s : {&record_path, &hash_path}) {
+            if (recursive_create_directory(s->c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+                LOG(LOG_ERR, "Front::can_be_start_capture: Failed to create directory: \"%s\"", *s);
+            }
+        }
+
         const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
 
         bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
@@ -936,7 +957,7 @@ public:
         // TODO missing CaptureFlags::full_video
         bool capture_video_full = false;
         // TODO missing CaptureFlags::meta
-        bool capture_meta = ini.get<cfg::globals::is_rec>() && bool(capture_flags & CaptureFlags::ocr);
+        bool capture_meta = false /*bool(capture_flags & CaptureFlags::meta)*/;
         bool capture_kbd = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
           || ini.get<cfg::session_log::enable_session_log>()
           || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
@@ -944,18 +965,6 @@ public:
         ;
 
         OcrParams const ocr_params = ocr_params_from_ini(ini);
-
-        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
-        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
-
-        if (recursive_create_directory(record_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
-            LOG(LOG_ERR, "Front::can_be_start_capture: Failed to create directory: \"%s\"", record_path);
-        }
-
-        if (recursive_create_directory(hash_path, S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
-            LOG(LOG_ERR, "Front::can_be_start_capture: Failed to create directory: \"%s\"", hash_path);
-        }
 
         char path[1024];
         char basename[1024];
@@ -1017,7 +1026,7 @@ public:
             this->cctx,
             this->gen,
             this->fstat,
-            hash_path,
+            hash_path.c_str(),
             ini
         );
 
@@ -1025,9 +1034,10 @@ public:
             now,
             basename,
             record_tmp_path,
-            record_path,
+            record_path.c_str(),
             groupid,
-            &this->report_message
+            &this->report_message,
+            ini.get<cfg::video::smart_video_cropping>()
         };
 
         this->capture = new Capture( capture_params
@@ -1042,7 +1052,8 @@ public:
                                    , capture_kbd, kbd_log_params
                                    , video_params
                                    , nullptr
-                                   , Rect()
+                                   , ((this->client_info.remote_program && (ini.get<cfg::video::smart_video_cropping>() != SmartVideoCropping::disable)) ?
+                                      Rect(0, 0, 640, 480) : Rect())
                                    );
 
 
@@ -1050,9 +1061,13 @@ public:
             this->capture->set_pointer_display();
         }
         this->capture->get_capture_event().set_trigger_time(wait_obj::NOW);
-        if (this->capture->get_graphic_api()) {
-            this->set_gd(this->capture->get_graphic_api());
+        if (this->capture->has_graphic_api()) {
+            this->set_gd(this->capture);
             this->capture->add_graphic(this->orders.graphics_update_pdu());
+        }
+
+        if (this->client_info.remote_program && !this->rail_window_rect.isempty()) {
+            this->capture->visibility_rects_event(this->rail_window_rect);
         }
 
         this->update_keyboard_input_mask_state();
@@ -1271,6 +1286,7 @@ public:
         while (buf.next_pdu())
         {
             InStream new_x224_stream(buf.current_pdu_buffer());
+            cb.set_last_tram_len(new_x224_stream.in_remain());
 
             switch (this->state) {
             case CONNECTION_INITIATION:
@@ -2356,8 +2372,28 @@ public:
                             }
                             break;
 
-                            //case FastPath::FASTPATH_INPUT_EVENT_MOUSEX:
-                            //break;
+                            // XFreeRDP sends this message even if its support is not advertised in the Input Capability Set.
+                            case FastPath::FASTPATH_INPUT_EVENT_MOUSEX:
+                            {
+                                FastPath::MouseExEvent_Recv me(cfpie.payload, byte);
+
+                                LOG(LOG_WARNING,
+                                    "Front::Received unexpected fast-path PDU, extended mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
+                                    me.pointerFlags, me.xPos, me.yPos);
+
+                                if (this->up_and_running) {
+                                    this->has_user_activity = true;
+                                }
+
+                                if ((me.pointerFlags & (SlowPath::PTRXFLAGS_BUTTON1 |
+                                                        SlowPath::PTRXFLAGS_BUTTON2)) &&
+                                    !(me.pointerFlags & SlowPath::PTRXFLAGS_DOWN)) {
+                                    if (this->capture) {
+                                        this->capture->possible_active_window_change();
+                                    }
+                                }
+                            }
+                            break;
 
                             case FastPath::FASTPATH_INPUT_EVENT_SYNC:
                             {
@@ -3725,6 +3761,28 @@ private:
                         }
                         break;
 
+                        // XFreeRDP sends this message even if its support is not advertised in the Input Capability Set.
+                        case SlowPath::INPUT_EVENT_MOUSEX:
+                        {
+                            SlowPath::ExtendedMouseEvent_Recv me(ie.payload);
+
+                            LOG(LOG_WARNING, "Front::process_data: Unexpected Slow-Path INPUT_EVENT_MOUSEX eventTime=%u pointerFlags=0x%04X, xPos=%u, yPos=%u)",
+                                ie.eventTime, me.pointerFlags, me.xPos, me.yPos);
+
+                            if (this->up_and_running) {
+                                this->has_user_activity = true;
+                            }
+
+                            if ((me.pointerFlags & (SlowPath::PTRXFLAGS_BUTTON1 |
+                                                    SlowPath::PTRXFLAGS_BUTTON2)) &&
+                                !(me.pointerFlags & SlowPath::PTRXFLAGS_DOWN)) {
+                                if (this->capture) {
+                                    this->capture->possible_active_window_change();
+                                }
+                            }
+                        }
+                        break;
+
                         case SlowPath::INPUT_EVENT_SCANCODE:
                         {
                             SlowPath::KeyboardEvent_Recv ke(ie.payload);
@@ -4213,6 +4271,41 @@ protected:
         }
     }
 
+    void draw_impl(RDPScrBlt const & cmd, Rect clip) {
+        Rect drect = clip.intersect(this->client_info.width, this->client_info.height).intersect(clip_from_cmd(cmd));
+        if (!drect.isempty()) {
+            const signed int deltax = static_cast<int16_t>(cmd.srcx) - cmd.rect.x;
+            const signed int deltay = static_cast<int16_t>(cmd.srcy) - cmd.rect.y;
+
+
+
+            int srcx = drect.x + deltax;
+            int srcy = drect.y + deltay;
+
+            if (srcx < 0) {
+                drect.x  -= srcx;
+                drect.cx += srcx;
+
+                srcx = 0;
+            }
+            if (srcy < 0) {
+                drect.y  -= srcy;
+                drect.cy += srcy;
+
+                srcy = 0;
+            }
+
+            Rect srect = Rect(srcx, srcy, drect.cx, drect.cy).intersect(this->client_info.width, this->client_info.height);
+
+            drect.cx = srect.cx;
+            drect.cy = srect.cy;
+
+
+
+            this->graphics_update->draw(RDPScrBlt(drect, cmd.rop, srcx, srcy), clip);
+        }
+    }
+
     void draw_impl(RDPMemBlt const& cmd, Rect clip, Bitmap const & bitmap) {
         if (this->client_info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX]) {
             this->priv_draw_memblt(cmd, clip, bitmap);
@@ -4265,6 +4358,29 @@ protected:
 
     void draw_impl(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) {
         this->priv_draw_and_update_cache_brush(cmd, clip, color_ctx);
+    }
+
+    Rect rail_window_rect;
+
+    void draw_impl(RDP::RAIL::NewOrExistingWindow const & cmd) {
+        this->graphics_update->draw(cmd);
+
+        if (!this->capture &&
+            (cmd.header.FieldsPresentFlags() & (RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET)) &&
+            (cmd.NumVisibilityRects() == 1)) {
+            this->rail_window_rect = static_cast<Rect>(cmd.VisibilityRects(0)).offset(
+                    cmd.VisibleOffsetX(), cmd.VisibleOffsetY()
+                );
+        }
+        else {
+            this->rail_window_rect.empty();
+        }
+    }
+
+    void draw_impl(RDP::RAIL::DeletedWindow const & cmd) {
+        this->graphics_update->draw(cmd);
+
+        this->rail_window_rect.empty();
     }
 
 public:

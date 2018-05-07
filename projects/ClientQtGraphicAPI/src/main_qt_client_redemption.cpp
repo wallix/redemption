@@ -25,7 +25,7 @@
 #include "utils/log.hpp"
 
 
-#include "client_redemption.hpp"
+#include "client_redemption/client_redemption.hpp"
 
 
 #include "qt_input_output_api/qt_output_sound.hpp"
@@ -44,26 +44,32 @@ int main(int argc, char** argv) {
 
     QApplication app(argc, argv);
 
-    QtIOGraphicMouseKeyboard * graphic_control_qt = new QtIOGraphicMouseKeyboard();
-    QWidget * qwidget_parent = graphic_control_qt->get_static_qwidget();
+    QtIOGraphicMouseKeyboard graphic_control_qt_obj;
 
-    ClientIOClipboardAPI  * clipboard_api = new QtInputOutputClipboard(qwidget_parent);
-    ClientOutputSoundAPI  * sound_api     = new QtOutputSound(qwidget_parent);
-    ClientInputSocketAPI  * socket_api    = new QtInputSocket(qwidget_parent);
+    ClientOutputGraphicAPI      * graphic_qt = &graphic_control_qt_obj;
+    ClientInputMouseKeyboardAPI * control_qt = &graphic_control_qt_obj;
+    QWidget * qwidget_parent = graphic_control_qt_obj.get_static_qwidget();
+
+    QtInputOutputClipboard clipboard_api_obj(qwidget_parent);
+    ClientIOClipboardAPI  * clipboard_api = &clipboard_api_obj;
+    QtOutputSound sound_api_obj(qwidget_parent);
+    ClientOutputSoundAPI  * sound_api     = &sound_api_obj;
+    QtInputSocket socket_api_obj(qwidget_parent);
+    ClientInputSocketAPI  * socket_api    = &socket_api_obj;
 
 
-    RDPVerbose verbose = to_verbose_flags(0);
+    RDPVerbose verbose = RDPVerbose::rdpdr_dump;          //to_verbose_flags(0x0);
 
     ClientRedemption client_qt( argv, argc, verbose
-                              , graphic_control_qt
+                              , graphic_qt
                               , clipboard_api
                               , sound_api
                               , socket_api
-                              , graphic_control_qt);
+                              , control_qt);
 
     app.exec();
 
-    delete(graphic_control_qt);
+//     delete(graphic_control_qt);
 
 }
 

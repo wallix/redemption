@@ -26,7 +26,7 @@
 #include "core/font.hpp"
 
 #include "core/RDP/bitmapupdate.hpp"
-#include "core/RDP/pointer.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 
 #include "core/RDP/caches/glyphcache.hpp"
 
@@ -921,7 +921,11 @@ public:
     void draw(const RDP::RAIL::NonMonitoredDesktop            &) override {}
 
     void set_pointer(const Pointer & cursor) override {
-        this->drawable.use_pointer(cursor.x, cursor.y, cursor.width, cursor.height, cursor.data, cursor.mask);
+        const auto dimensions = cursor.get_dimensions();
+        const auto hotspot = cursor.get_hotspot();
+        auto av_xor = cursor.get_24bits_xor_mask();
+        auto av_and = cursor.get_monochrome_and_mask();
+        this->drawable.use_pointer(hotspot.x, hotspot.y, dimensions.width, dimensions.height, av_xor.data(), av_and.data());
     }
 
     void set_palette(const BGRPalette & palette) override {
@@ -934,7 +938,11 @@ public:
 
 //    void reset_to_origin() noexcept override {}
 
-    void reset(unsigned int /*x*/, unsigned int /*y*/,
+    bool reset(unsigned int /*x*/, unsigned int /*y*/,
         unsigned int /*out_width*/, unsigned int /*out_height*/) noexcept
-        override {}
+        override { return false; }
+
+    Rect get() const override {
+        return Rect(0, 0, this->drawable.width(), this->drawable.height());
+    }
 };

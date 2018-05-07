@@ -36,7 +36,7 @@ h
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "core/RDP/pointer.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 #include "core/report_message_api.hpp"
 #include "keyboard/keymapSym.hpp"
 #include "main/version.hpp"
@@ -68,14 +68,10 @@ h
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
 
-class mod_vnc : public InternalMod, private NotifyApi
+class mod_vnc : public mod_api
 {
 
-    bool ongoing_framebuffer_update = false;
-
-    static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
-
-    FlatVNCAuthentification challenge;
+       static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
 
     /* mod data */
     char mod_name[256];
@@ -168,7 +164,6 @@ private:
         DO_INITIAL_CLEAR_SCREEN,
         RETRY_CONNECTION,
         UP_AND_RUNNING,
-        WAIT_PASSWORD,
         WAIT_SECURITY_TYPES,
         WAIT_SECURITY_TYPES_LEVEL,
         WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM,
@@ -188,11 +183,10 @@ public:
     };
 
 private:
+    FrontAPI& front;
     std::string encodings;
 
     int state;
-
-    bool allow_authentification_retries;
 
     bool left_ctrl_pressed = false;
 
@@ -226,7 +220,7 @@ public:
            , bool clipboard_up
            , bool clipboard_down
            , const char * encodings
-           , bool allow_authentification_retries
+           , bool allow_authentification_retries // This field is deprecated and should be removed
            , bool /*TODO is_socket_transport*/
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
@@ -235,16 +229,12 @@ public:
            , ClientExecute* client_execute
            , VNCVerbose verbose
            )
-    : InternalMod(front, front_width, front_height, font, theme, false)
-    , challenge(front, front_width, front_height, this->screen, static_cast<NotifyApi*>(this),
-                "Redemption " VERSION, this->theme(), label_text_message, label_text_password,
-                this->font())
-    , mod_name{0}
+    : mod_name{0}
     , username{0}
     , password{0}
     , t(t)
-    , width(0)
-    , height(0)
+    , width(front_width)
+    , height(front_height)
     , bpp(0)
     , depth(0)
     , verbose(verbose)
@@ -252,9 +242,9 @@ public:
     , to_vnc_clipboard_data_size(0)
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)
+    , front(front)
     , encodings(encodings)
     , state(WAIT_SECURITY_TYPES)
-    , allow_authentification_retries(allow_authentification_retries || !(*password))
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , report_message(report_message)
@@ -267,9 +257,9 @@ public:
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "Creation of new mod 'VNC'");
         }
-
-        // Clear client screen
-        this->invoke_asynchronous_graphic_task(AsynchronousGraphicTask::clear_screen);
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+            LOG(LOG_INFO, "server_is_apple=%s", (server_is_apple ? "yes" : "no"));
+        }
 
         ::time(&this->beginning);
 
@@ -288,7 +278,6 @@ public:
     } // Constructor
 
     ~mod_vnc() override {
-        this->screen.clear();
     }
 
     int get_fd() const override { return this->t.get_fd(); }
@@ -790,32 +779,20 @@ public:
         }
 
         // set almost null cursor, this is the little dot cursor
-        Pointer cursor;
-        cursor.x = 3;
-        cursor.y = 3;
-        // cursor.bpp = 24;
-        cursor.width = 32;
-        cursor.height = 32;
-        memset(cursor.data + 31 * (32 * 3), 0xff, 9);
-        memset(cursor.data + 30 * (32 * 3), 0xff, 9);
-        memset(cursor.data + 29 * (32 * 3), 0xff, 9);
-        memset(cursor.mask, 0xff, 32 * (32 / 8));
-
-        cursor.update_bw();
-
-        this->front.set_pointer(cursor);
+        drawable.set_pointer(Pointer(DotPointer{}));
 
         this->report_message.log5("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"");
 
         Rect const screen_rect(0, 0, this->width, this->height);
 
-        this->front.begin_update();
+        drawable.begin_update();
         RDPOpaqueRect orect(screen_rect, RDPColor{});
         drawable.draw(orect, screen_rect, gdi::ColorCtx::from_bpp(this->bpp, this->palette_update_ctx.get_palette()));
-        this->front.end_update();
+        drawable.end_update();
 
         this->state = UP_AND_RUNNING;
         this->front.can_be_start_capture();
+        
         this->update_screen(screen_rect, 1);
         this->lib_open_clip_channel();
 
@@ -892,11 +869,6 @@ public:
 
     // TODO It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?
     void rdp_input_mouse( int device_flags, int x, int y, Keymap2 * keymap ) override {
-        if (this->state == WAIT_PASSWORD) {
-            this->screen.rdp_input_mouse(device_flags, x, y, keymap);
-            return;
-        }
-
         if (this->state != UP_AND_RUNNING) {
             return;
         }
@@ -929,11 +901,6 @@ public:
                                    , Keymap2 * keymap
                                    ) override {
     //==============================================================================================================
-        if (this->state == WAIT_PASSWORD) {
-            this->screen.rdp_input_scancode(param1, param2, device_flags, param4, keymap);
-            return;
-        }
-
         if (this->state != UP_AND_RUNNING) {
             return;
         }
@@ -1325,7 +1292,7 @@ private:
     void update_screen(Rect r, uint8_t incr = 1) {
         StaticOutStream<10> stream;
         /* FramebufferUpdateRequest */
-        stream.out_uint8(3);
+        stream.out_uint8(VNC_CS_MSG_FRAME_BUFFER_UPDATE_REQUEST);
         stream.out_uint8(incr);
         stream.out_uint16_be(r.x);
         stream.out_uint16_be(r.y);
@@ -1336,11 +1303,6 @@ private:
 
 public:
     void rdp_input_invalidate(Rect r) override {
-        if (this->state == WAIT_PASSWORD) {
-            this->screen.rdp_input_invalidate(r);
-            return;
-        }
-
         if (this->state != UP_AND_RUNNING) {
             return;
         }
@@ -1468,31 +1430,6 @@ protected:
         VNC_SC_MSG_GII                            = 253,
     };
 
-    static void fill_encoding_types_buffer(const char * encodings, OutStream & stream, uint16_t & number_of_encodings, VNCVerbose verbose)
-    {
-        if (bool(verbose & VNCVerbose::basic_trace)) {
-            LOG(LOG_INFO, "VNC Encodings=\"%s\"", encodings);
-        }
-
-        auto stream_offset = stream.get_offset();
-
-        char * end;
-        char const * p = encodings;
-        for (int32_t encoding_type = std::strtol(p, &end, 0); p != end ; encoding_type = std::strtol(p, &end, 0))
-        {
-            if (bool(verbose & VNCVerbose::basic_trace)) {
-                LOG(LOG_INFO, "VNC Encoding type=0x%08X", unsigned(encoding_type));
-            }
-            stream.out_uint32_be(encoding_type);
-
-            p = end;
-            while (*p && (*p == ' ' || *p == '\t' || *p == ',')) {
-                ++p;
-            }
-        }
-        number_of_encodings = (stream.get_offset() - stream_offset) / 4;
-    }
-
     class PasswordCtx
     {
         enum class State
@@ -1603,7 +1540,7 @@ protected:
 
     UpAndRunningCtx up_and_running_ctx;
 
-    Buf64k buf;
+    Buf64k server_data_buf;
 
 public:
     void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override
@@ -1618,11 +1555,13 @@ public:
         }
 
         if (!this->event.is_waked_up_by_time()) {
-            this->buf.read_from(this->t);
+            this->server_data_buf.read_from(this->t);
         }
 
         while (this->draw_event_impl(drawable)) {
-
+	}
+        if (bool(this->verbose & VNCVerbose::draw_event)) {
+            LOG(LOG_INFO, "Remaining in buffer : %u", this->server_data_buf.remaining());
         }
 
         this->check_timeout();
@@ -1633,23 +1572,6 @@ private:
     {
         switch (this->state)
         {
-        case ASK_PASSWORD:
-            if (bool(this->verbose & VNCVerbose::connection)) {
-                LOG(LOG_INFO, "state=ASK_PASSWORD");
-            }
-            this->screen.add_widget(&this->challenge);
-
-            this->screen.set_widget_focus(&this->challenge, Widget::focus_reason_tabkey);
-
-            this->challenge.password_edit.set_text("");
-
-            this->challenge.set_widget_focus(&this->challenge.password_edit, Widget::focus_reason_tabkey);
-
-            this->screen.rdp_input_invalidate(this->screen.get_rect());
-
-            this->state = WAIT_PASSWORD;
-            return true;
-
         case DO_INITIAL_CLEAR_SCREEN:
             this->initial_clear_screen(drawable);
             return false;
@@ -1680,9 +1602,10 @@ private:
 
             if (!this->event.is_waked_up_by_time()) {
                 try {
-                    while (this->up_and_running_ctx.run(buf, drawable, *this)) {
+                    while (this->up_and_running_ctx.run(this->server_data_buf, drawable, *this)) {
                         this->up_and_running_ctx.restart();
                     }
+                    this->update_screen(Rect(0, 0, this->width, this->height), 1);
                     return false;
                 }
                 catch (const Error & e) {
@@ -1700,16 +1623,9 @@ private:
                     this->event.set_trigger_time(1000);
                 }
             }
-//            else {
-//                this->update_screen(Rect(0, 0, this->width, this->height), 1);
-//            }
-            return false;
-
-        case WAIT_PASSWORD:
-            if (bool(this->verbose & VNCVerbose::connection)) {
-                LOG(LOG_INFO, "state=WAIT_PASSWORD");
+            else {
+                this->update_screen(Rect(0, 0, this->width, this->height), 1);
             }
-            this->event.reset_trigger_time();
             return false;
 
         case WAIT_SECURITY_TYPES:
@@ -1720,17 +1636,17 @@ private:
 
                 size_t const protocol_version_len = 12;
 
-                if (buf.remaining() < protocol_version_len) {
+                if (this->server_data_buf.remaining() < protocol_version_len) {
                     return false;
                 }
 
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     // protocol_version_len - zero terminal
                     LOG(LOG_INFO, "Server Protocol Version=%.*s\n",
-                        int(protocol_version_len-1), buf.av().data());
+                        int(protocol_version_len-1), this->server_data_buf.av().data());
                 }
 
-                buf.advance(protocol_version_len);
+                this->server_data_buf.advance(protocol_version_len);
 
                 this->t.send("RFB 003.003\n", 12);
                 // sec type
@@ -1741,11 +1657,11 @@ private:
 
         case WAIT_SECURITY_TYPES_LEVEL:
             {
-                if (buf.remaining() < 4) {
+                if (this->server_data_buf.remaining() < 4) {
                     return false;
                 }
-                int32_t const security_level = InStream(buf.av(4)).in_sint32_be();
-                buf.advance(4);
+                int32_t const security_level = InStream(this->server_data_buf.av(4)).in_sint32_be();
+                this->server_data_buf.advance(4);
 
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "security level is %d "
@@ -1779,7 +1695,7 @@ private:
             }
 
             {
-                if (!this->password_ctx.run(this->buf)) {
+                if (!this->password_ctx.run(this->server_data_buf)) {
                     return false;
                 }
                 this->password_ctx.restart();
@@ -1808,7 +1724,7 @@ private:
                     LOG(LOG_INFO, "Waiting for password ack");
                 }
 
-                if (!this->auth_response_ctx.run(buf, [this](bool status, byte_array bytes){
+                if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, byte_array bytes){
                     if (status) {
                         if (bool(this->verbose & VNCVerbose::basic_trace)) {
                             LOG(LOG_INFO, "vnc password ok\n");
@@ -1817,18 +1733,7 @@ private:
                     else {
                         LOG(LOG_INFO, "vnc password failed. Reason: %.*s",
                             int(bytes.size()), bytes.to_charp());
-
-                        if (this->allow_authentification_retries)
-                        {
-                            this->t.disconnect();
-
-                            this->state = ASK_PASSWORD;
-                            this->event.set_trigger_time(wait_obj::NOW);
-                        }
-                        else
-                        {
                             throw Error(ERR_VNC_CONNECTION_ERROR);
-                        }
                     }
                 })) {
                     return false;
@@ -1843,7 +1748,7 @@ private:
             {
                 LOG(LOG_INFO, "VNC MS-LOGON Auth");
 
-                if (!this->ms_logon(buf)) {
+                if (!this->ms_logon(this->server_data_buf)) {
                     return false;
                 }
                 this->ms_logon_ctx.restart();
@@ -1857,7 +1762,7 @@ private:
                     LOG(LOG_INFO, "Waiting for password ack");
                 }
 
-                if (!this->auth_response_ctx.run(buf, [this](bool status, byte_array bytes){
+                if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, byte_array bytes){
                     if (status) {
                         if (bool(this->verbose & VNCVerbose::basic_trace)) {
                             LOG(LOG_INFO, "MS LOGON password ok\n");
@@ -1879,7 +1784,7 @@ private:
             {
                 LOG(LOG_ERR, "VNC INVALID Auth");
 
-                if (!this->invalid_auth_ctx.run(buf, [](array_view_u8 av){
+                if (!this->invalid_auth_ctx.run(this->server_data_buf, [](array_view_u8 av){
                     hexdump_c(av.data(), av.size());
                 })) {
                     return false;
@@ -1897,7 +1802,7 @@ private:
 
         case SERVER_INIT_RESPONSE:
             {
-                if (!this->server_init_ctx.run(buf, *this)) {
+                if (!this->server_init_ctx.run(this->server_data_buf, *this)) {
                     return false;
                 }
                 this->server_init_ctx.restart();
@@ -1974,6 +1879,11 @@ private:
                 // "\x01\x00\x1F\x00\x2F\x00\x1F\x0B\x05\x00"
                 // "\0\0\0"
 
+//                const char * pixel_format =  "\x20\x18\x00"
+//                                             "\x01\x00\xFF\x00\xFF\x00\xFF\x10\x08\x00"
+//                                             "\0\0\0" ;
+
+
                 const char * pixel_format =
                     "\x10" // bits per pixel  : 1 byte =  16
                     "\x10" // color depth     : 1 byte =  16
@@ -1986,6 +1896,7 @@ private:
                     "\x05" // green shift     : 1 bytes =  5
                     "\x00" // blue shift      : 1 bytes =  0
                     "\0\0\0"; // padding      : 3 bytes
+                    
                 stream.out_copy_bytes(pixel_format, 16);
                 this->t.send(stream.get_data(), stream.get_offset());
 
@@ -2035,37 +1946,86 @@ private:
             //         4         S32     encoding-type
 
             {
-                const char * encodings           = this->encodings.c_str();
-                uint16_t     number_of_encodings = 0;
-
                 // SetEncodings
                 StaticOutStream<32768> stream;
-                stream.out_uint8(2);
-                stream.out_uint8(0);
 
-                uint32_t number_of_encodings_offset = stream.get_offset();
-                stream.out_clear_bytes(2);
+                bool support_zrle_encoding          = true;
+                bool support_hextile_encoding       = false;
+                bool support_rre_encoding           = false;
+                bool support_raw_encoding           = true;
+                bool support_copyrect_encoding      = true;
+                bool support_cursor_pseudo_encoding = true;
 
-                this->fill_encoding_types_buffer(encodings, stream, number_of_encodings, this->verbose);
-
-                if (!number_of_encodings)
-                {
-                    if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                        LOG(LOG_WARNING, "mdo_vnc: using default encoding types - RRE(2),Raw(0),CopyRect(1),Cursor pseudo-encoding(-239)");
-                    }
-
-                    stream.out_uint32_be(ZRLE_ENCODING);            // (16) Zrle
-                    stream.out_uint32_be(HEXTILE_ENCODING);         // (5) Hextile
-                    stream.out_uint32_be(RAW_ENCODING);             // raw
-                    stream.out_uint32_be(COPYRECT_ENCODING);        // copy rect
-                    stream.out_uint32_be(RRE_ENCODING);             // RRE
-                    stream.out_uint32_be(CURSOR_PSEUDO_ENCODING);   // (-239) cursor
-                    number_of_encodings = 6;
+                char const * p = this->encodings.c_str();
+                if (p && *p){
+                    support_zrle_encoding          = false;
+                    for (;;){
+                        while (*p && *p == ','){++p;}
+                        char * end;
+                        int32_t encoding_type = std::strtol(p, &end, 0);
+                        if (p == end) { break; }
+                        p = end;
+                        switch (encoding_type){
+                        case HEXTILE_ENCODING:
+                            support_hextile_encoding = true;
+                        break;
+                        case ZRLE_ENCODING:
+                            support_zrle_encoding = true;
+                        break;
+                        case RRE_ENCODING:
+                            support_rre_encoding = true;
+                        break;
+                        default:
+                        break;
+                        }
+                    }                    
                 }
+                else {
+                    support_zrle_encoding          = true;
+                    support_hextile_encoding       = true;
+                    support_rre_encoding           = true;
+                }
+              
+                uint16_t number_of_encodings =  support_zrle_encoding
+                                             +  support_hextile_encoding
+                                             +  support_raw_encoding
+                                             +  support_copyrect_encoding
+                                             +  support_rre_encoding
+                                             +  support_cursor_pseudo_encoding;
 
-                stream.set_out_uint16_be(number_of_encodings, number_of_encodings_offset);
+//                LOG(LOG_INFO, "number of encodings=%d", number_of_encodings);
+
+                stream.out_uint8(VNC_CS_MSG_SET_ENCODINGS);
+                stream.out_uint8(0);
+                stream.out_uint16_be(number_of_encodings);
+                if (support_zrle_encoding)          {
+                    LOG(LOG_INFO, "enable ZRLE encoding");
+                    stream.out_uint32_be(ZRLE_ENCODING);
+                }            // (16) Zrle
+                if (support_hextile_encoding)       {
+                    LOG(LOG_INFO, "enable hextile encoding");
+                    stream.out_uint32_be(HEXTILE_ENCODING);
+                }         // (5) Hextile
+                if (support_raw_encoding)           {
+                    LOG(LOG_INFO, "enable RAW encoding");
+                    stream.out_uint32_be(RAW_ENCODING);
+                }             // (0) raw
+                if (support_copyrect_encoding)      {
+                    LOG(LOG_INFO, "enable copyrect encoding");
+                    stream.out_uint32_be(COPYRECT_ENCODING);
+                }        // (1) copy rect
+                if (support_rre_encoding)           {
+                    LOG(LOG_INFO, "enable rre encoding");
+                    stream.out_uint32_be(RRE_ENCODING);
+                }             // (2) RRE
+                if (support_cursor_pseudo_encoding) {
+                    LOG(LOG_INFO, "enable cursor pseudo encoding");
+                    stream.out_uint32_be(CURSOR_PSEUDO_ENCODING);
+                }   // (-239) cursor
+
                 this->t.send(stream.get_data(), 4 + number_of_encodings * 4);
             }
+
 
             switch (this->front.server_resize(this->width, this->height, this->bpp)){
             case FrontAPI::ResizeResult::instant_done:
@@ -2098,9 +2058,6 @@ private:
                     LOG(LOG_INFO, "resizing done");
                 }
                 // resizing done
-                this->front_width  = this->width;
-                this->front_height = this->height;
-
                 this->state = WAIT_CLIENT_UP_AND_RUNNING;
                 this->event.set_trigger_time(wait_obj::NOW);
                 break;
@@ -2113,7 +2070,7 @@ private:
             return true;
 
         case WAIT_CLIENT_UP_AND_RUNNING:
-            LOG(LOG_WARNING, "Waiting for client be come up and running");
+            LOG(LOG_WARNING, "Waiting for client become up and running");
             break;
 
         default:
@@ -2255,8 +2212,6 @@ private:
                     InStream stream(buf.av(sz));
                     stream.in_skip_bytes(1);
                     this->num_recs = stream.in_uint16_be();
-                    drawable.begin_update();
-                    vnc.ongoing_framebuffer_update = this->num_recs != 0;
 
                     buf.advance(sz);
                     r = Result::ok(State::Encoding);
@@ -2265,8 +2220,6 @@ private:
                 case State::Encoding:
                 {
                     if (0 == this->num_recs) {
-                        vnc.ongoing_framebuffer_update = false;
-                        drawable.end_update();
                         this->state = State::Header;
                         return true;
                     }
@@ -2291,18 +2244,20 @@ private:
                         --this->num_recs;
 
                         if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                            LOG(LOG_INFO, "%s",
+                            LOG(LOG_INFO, "%s %d (%d, %d, %d, %d)",
                                 (this->encoding == HEXTILE_ENCODING) ? "HEXTILE_ENCODING" :
                                 (this->encoding == CURSOR_PSEUDO_ENCODING) ? "CURSOR_PSEUDO_ENCODING" :
                                 (this->encoding == COPYRECT_ENCODING) ? "COPYRECT_ENCODING" :
                                 (this->encoding == RRE_ENCODING) ? "RRE_ENCODING" :
                                 (this->encoding == RAW_ENCODING) ? "RAW_ENCODING" :
-                                 "ZRLE_ENCODING");
+                                (this->encoding == ZRLE_ENCODING) ? "ZRLE_ENCODING" :
+                                 "UNKNOWN_ENCODING", this->encoding
+                                , this->x, this->y, this->cx, this->cy);
                         }
 
                         switch (this->encoding){
                         case COPYRECT_ENCODING:  /* raw */
-                            this->encoder = new VNC::Encoder::CopyRect(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.front_width, vnc.front_height, vnc.verbose);
+                            this->encoder = new VNC::Encoder::CopyRect(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.width, vnc.height, vnc.verbose);
                         break;
                         case HEXTILE_ENCODING:  /* hextile */
                             this->encoder = new VNC::Encoder::Hextile(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
@@ -2316,7 +2271,7 @@ private:
                             this->encoder = new VNC::Encoder::Raw(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
                         break;
                         case ZRLE_ENCODING: /* ZRLE */
-                            this->encoder = new VNC::Encoder::Zrle(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, this->zd, vnc.verbose);
+                            this->encoder = new VNC::Encoder::Zrle(this->bpp, this->Bpp, Rect(this->x, this->y, this->cx, this->cy), this->zd, vnc.verbose);
                         break;
                         case RRE_ENCODING: /* RRE */
                             this->encoder = new VNC::Encoder::RRE(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
@@ -2327,19 +2282,25 @@ private:
                         break;
                         }
                         buf.advance(sz);
+                        // Note: it is important to immediately call State::Data as in some cases there won't be 
+                        // any trailing data to expect.
+                        this->last = VNC::Encoder::EncoderState::Ready;
                         r = Result::ok(State::Data);
                     }
                 }
                 break;
                 case State::Data:
                     {
-                        if (last == VNC::Encoder::EncoderState::NeedMoreData){
+                        update_lock<gdi::GraphicApi> lock(drawable);
+                        if (this->last == VNC::Encoder::EncoderState::NeedMoreData){
                             if (this->last_avail == buf.remaining()){
-                                LOG(LOG_INFO, "new call without more data");
+                                LOG(LOG_ERR, "new call to vnc::mod without new data");
+                                throw Error(ERR_VNC);
                             }
                         }
                         if (encoder == nullptr){
-                            LOG(LOG_INFO, "call with null encoder");
+                            LOG(LOG_ERR, "Call to vnc::mod with null encoder");
+                            throw Error(ERR_VNC);
                         }
 
                         // Pre Assertion: we have an encoder
@@ -2399,9 +2360,7 @@ private:
             return false;
         }
 
-        if (!this->ongoing_framebuffer_update){
-            this->update_screen(Rect(0, 0, this->width, this->height), 1);
-        }
+        this->update_screen(Rect(0, 0, this->width, this->height), 1);
         return true;
     } // lib_frame_buffer_update
 
@@ -2797,12 +2756,28 @@ private:
         return true;
     } // lib_clip_data
 
+    void send_to_front_channel(
+        CHANNELS::ChannelNameId mod_channel_name,
+        uint8_t const * data, size_t length, size_t chunk_size, int flags) override
+    {
+        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+            LOG(LOG_INFO, "mod_vnc::send_to_front_channel");
+        }
+
+        const CHANNELS::ChannelDef * front_channel =
+            this->front.get_channel_list().get_by_name(mod_channel_name);
+        if (front_channel) {
+            this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
+        }
+    }
+
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name,
         InStream & chunk,
         size_t length,
         uint32_t flags
-    ) override {
+    ) override 
+    {
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::send_to_mod_channel");
         }
@@ -3360,31 +3335,6 @@ public:
             }
             this->state = DO_INITIAL_CLEAR_SCREEN;
             this->event.set_trigger_time(wait_obj::NOW);
-        }
-    }
-
-    void notify(Widget* sender, notify_event_t event) override {
-        (void)sender;
-        switch (event) {
-        case NOTIFY_SUBMIT:
-            this->screen.clear();
-
-            memset(this->password, 0, sizeof(this->password));
-            strncpy(this->password, this->challenge.password_edit.get_text(),
-                    sizeof(this->password) - 1);
-            this->password[sizeof(this->password) - 1] = 0;
-
-            this->state = RETRY_CONNECTION;
-            this->event.set_trigger_time(wait_obj::NOW);
-            break;
-        case NOTIFY_CANCEL:
-            this->event.signal = BACK_EVENT_NEXT;
-            this->event.set_trigger_time(wait_obj::NOW);
-
-            this->screen.clear();
-            break;
-        default:
-            break;
         }
     }
 

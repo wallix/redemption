@@ -32,7 +32,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
     StaticOutStream<65536> s;
     // ===== NTLMSSP_CHALLENGE =====
     constexpr static uint8_t packet2[] = {
-        0x30, 0x81, 0x94, 0xa0, 0x03, 0x02, 0x01, 0x02,
+        0x30, 0x81, 0x94, 0xa0, 0x03, 0x02, 0x01, 0x03,
         0xa1, 0x81, 0x8c, 0x30, 0x81, 0x89, 0x30, 0x81,
         0x86, 0xa0, 0x81, 0x83, 0x04, 0x81, 0x80, 0x4e,
         0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00, 0x02,
@@ -61,9 +61,10 @@ RED_AUTO_TEST_CASE(TestChallenge)
     get_sig(s, sig);
 
     InStream in_s(s.get_data(), s.get_offset());
-    TSRequest ts_req2(in_s);
+    TSRequest ts_req2(3);
+    ts_req2.recv(in_s);
 
-    RED_CHECK_EQUAL(ts_req2.version, 2);
+    RED_CHECK_EQUAL(ts_req2.version, 3);
 
     RED_CHECK_EQUAL(ts_req2.negoTokens.size(), 0x80);
     RED_CHECK_EQUAL(ts_req2.authInfo.size(), 0);

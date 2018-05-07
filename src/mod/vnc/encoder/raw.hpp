@@ -27,6 +27,18 @@ h
 #include "mod/vnc/vnc_verbose.hpp"
 #include "mod/vnc/encoder/encoder_api.hpp"
 
+
+// 7.6.1   Raw Encoding
+// ====================
+
+// The simplest encoding type is raw pixel data. In this case the data consists of width * height pixel values (where width
+// and height are the width and height of the rectangle). The values simply represent each pixel in left-to-right scanline order.
+// All RFB clients must be able to cope with pixel data in this raw encoding, and RFB servers should only produce raw encoding
+// unless the client specifically asks for some other encoding type.
+
+//         No. of bytes                    Type               Description
+// width * height * bytesPerPixel      PIXEL array              pixels
+
 namespace VNC {
     namespace Encoder {
         class Raw : public EncoderApi {
@@ -52,6 +64,11 @@ namespace VNC {
             // return is false if the encoder is waiting for more data
             EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
+                if (this->cx == 0 || this->cy == 0)
+                {
+                    return EncoderState::Exit;
+                }
+
                 size_t const line_size = this->cx * this->Bpp;
 
                 if (buf.remaining() < line_size) {

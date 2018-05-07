@@ -28,18 +28,19 @@
 
 #include <cinttypes>
 
-#include "utils/sugar/exchange.hpp"
-#include "utils/stream.hpp"
-#include "utils/key_qvalue_pairs.hpp"
-#include "configs/config.hpp"
-#include "core/authid.hpp"
-#include "transport/transport.hpp"
-#include "utils/translation.hpp"
-#include "utils/get_printable_password.hpp"
-#include "transport/crypto_transport.hpp"
-#include "utils/verbose_flags.hpp"
 #include "acl/mm_api.hpp"
 #include "acl/module_manager.hpp" // TODO only for MODULE_*
+#include "configs/config.hpp"
+#include "core/authid.hpp"
+#include "core/date_dir_from_filename.hpp"
+#include "transport/crypto_transport.hpp"
+#include "transport/transport.hpp"
+#include "utils/get_printable_password.hpp"
+#include "utils/key_qvalue_pairs.hpp"
+#include "utils/stream.hpp"
+#include "utils/sugar/exchange.hpp"
+#include "utils/translation.hpp"
+#include "utils/verbose_flags.hpp"
 
 #include <string>
 #include <ctime>
@@ -214,15 +215,12 @@ public:
         }
     }
 
-    void open(std::string const& log_path, std::string const& hash_directory)
+    void open(
+        std::string const& log_path, std::string const& hash_path,
+        int groupid, const_byte_array derivator)
     {
         assert(!this->ct.is_open());
-
-        size_t base_len = 0;
-        char const * basename = basename_len(log_path.c_str(), base_len);
-        auto const   hash_file = hash_directory + basename;
-
-        this->ct.open(log_path.c_str(), hash_file.c_str(), 0, {basename, base_len});
+        this->ct.open(log_path.c_str(), hash_path.c_str(), groupid, derivator);
         // force to create the file
         this->ct.send("", 0);
     }
@@ -397,9 +395,28 @@ public:
 
     void start_session_log()
     {
-        this->log_file.open(
-            this->ini.get<cfg::session_log::log_path>(),
-            this->ini.get<cfg::video::hash_path>().to_string());
+        auto& log_path = this->ini.get<cfg::session_log::log_path>();
+        DateDirFromFilename d(log_path);
+        size_t base_len = 0;
+
+        if (!d.has_date()) {
+            LOG(LOG_WARNING, "AclSerializer::start_session_log: failed to extract date");
+        }
+
+        const int groupid = ini.get<cfg::video::capture_groupid>();
+        std::string hash_path = this->ini.get<cfg::video::hash_path>().to_string();
+        hash_path.append(d.date_path().begin(), d.date_path().end());
+        std::string log_dir = log_path.substr(0, log_path.size()-d.filename().size());
+
+        for (auto* s : {&log_dir, &hash_path}) {
+            if (recursive_create_directory(s->c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
+                LOG(LOG_ERR,
+                    "AclSerializer::start_session_log: Failed to create directory: \"%s\"", *s);
+            }
+        }
+
+        hash_path.append(d.filename().begin(), d.filename().end());
+        this->log_file.open(log_path, hash_path, groupid, d.filename());
     }
 
     void close_session_log()

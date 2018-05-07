@@ -180,10 +180,89 @@ namespace redemption_unit_test__
 
         bool operator == (xarray const & other) const
         {
-            return other.sig.size() == other.sig.size()
+            return sig.size() == other.sig.size()
                 && std::equal(sig.begin(), sig.end(), other.sig.begin());
         }
     };
+
+    struct xarray_color
+    {
+        size_t & res;
+        const_byte_array sig;
+
+        std::size_t size() const
+        {
+            return sig.size();
+        }
+
+        bool operator == (xarray_color const & other) const
+        {
+            this->res = std::mismatch(sig.begin(), sig.end(), other.sig.begin(), other.sig.end()).first - sig.begin();
+            return this->res == sig.size() && this->sig.size() == other.sig.size();
+        }
+    };
+
+    inline std::ostream & operator<<(std::ostream & out, xarray_color const & x)
+    {
+        if (x.size() == 0){
+            return out << "\"\"\n";
+        }
+        char const * hex_table = "0123456789abcdef";
+        size_t q = 0;
+        size_t split = 16;
+        uint8_t tmpbuf[16];
+        size_t i = 0;
+        for (unsigned c : x.sig) {
+            if (q%split == 0){
+                if (x.sig.size()>split){
+                    out << "\n\"";
+                }
+                else {
+                    out << "\"";
+                }
+            }
+            if (q++ == x.res){ out << "\x1b[31m";}
+            out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
+            tmpbuf[i++] = c;
+            if (q%split == 0){
+                if (x.sig.size()>split) {
+                    out << "\" //";
+                    for (size_t v = 0 ; v < i ; v++){
+                        if ((tmpbuf[v] >= 0x20) && (tmpbuf[v] < 127)) {
+                            out << char(tmpbuf[v]);
+                        }
+                        else {
+                            out << ".";
+                        }
+                    }
+                    out << " !";
+                    i = 0;
+                }
+                else {
+                    out << "\"";
+                }
+            }
+        }
+        if (q%split != 0){
+            if (x.sig.size()>split) {
+                out << "\" //";
+                for (size_t v = 0 ; v < i ; v++){
+                    if ((tmpbuf[v] >= 0x20) && (tmpbuf[v] <= 127)) {
+                        out << char(tmpbuf[v]);
+                    }
+                    else {
+                        out << ".";
+                    }
+                }
+                out << " !";
+                i = 0;
+            }
+            else {
+                out << "\"";
+            }
+        }
+        return out << "\x1b[0m";
+    }
 
     inline std::ostream & operator<<(std::ostream & out, xarray const & x)
     {
@@ -203,35 +282,53 @@ namespace redemption_unit_test__
         << v1 << " " #op " " << v2 << "]"                \
     );
 
-#define RED_CHECK_MEM(mem, memref)                  \
-    do {                                            \
-        [](                                         \
-            redemption_unit_test__::xarray mem__,   \
-            redemption_unit_test__::xarray memref__ \
-        ){                                          \
-            RED_CHECK_OP_VAR_MESSAGE(               \
-                ==, mem__.size(), memref__.size(),  \
-                mem.size(), memref.size());         \
-            RED_CHECK_OP_VAR_MESSAGE(               \
-                ==, mem__, memref__,                \
-                mem, memref);                       \
-        }(                                          \
-            redemption_unit_test__::xarray{mem},    \
-            redemption_unit_test__::xarray{memref}  \
+#define RED_REQUIRE_OP_VAR_MESSAGE(op, v1, v2, src1, src2) \
+    RED_REQUIRE_MESSAGE(                                   \
+        (v1) op (v2),                                      \
+        "check " #src1 " " #op " " #src2 " failed ["       \
+        << v1 << " " #op " " << v2 << "]"                  \
+    );
+
+#define RED_CHECK_MEM_IMPL(red_check_op, mem, memref)     \
+    do {                                                  \
+        size_t res__ = 0;                                 \
+        [](                                               \
+            redemption_unit_test__::xarray_color mem__,   \
+            redemption_unit_test__::xarray_color memref__ \
+        ){                                                \
+            red_check_op(                                 \
+                ==, mem__.size(), memref__.size(),        \
+                mem.size(), memref.size());               \
+            red_check_op(                                 \
+                ==, mem__, memref__,                      \
+                mem, memref);                             \
+        }(                                                \
+            redemption_unit_test__::xarray_color{res__,mem},    \
+            redemption_unit_test__::xarray_color{res__,memref}  \
         );                                          \
     } while (0)
+
+#define RED_CHECK_MEM(mem, memref)                  \
+    RED_CHECK_MEM_IMPL(RED_CHECK_OP_VAR_MESSAGE, mem, memref)
+
+#define RED_REQUIRE_MEM(mem, memref)                  \
+    RED_CHECK_MEM_IMPL(RED_REQUIRE_OP_VAR_MESSAGE, mem, memref)
 
 #ifdef IN_IDE_PARSER
 # define RED_CHECK_MEM_C(mem, memref) void(mem), void("" memref)
 # define RED_CHECK_MEM_AC(mem, memref) void(mem), void("" memref)
 # define RED_CHECK_MEM_AA(mem, memref) void(mem), void(memref)
+# define RED_REQUIRE_MEM_C(mem, memref) void(mem), void("" memref)
+# define RED_REQUIRE_MEM_AC(mem, memref) void(mem), void("" memref)
+# define RED_REQUIRE_MEM_AA(mem, memref) void(mem), void(memref)
 #else
 # define RED_CHECK_MEM_C(mem, memref) RED_CHECK_MEM(mem, cstr_array_view("" memref))
 # define RED_CHECK_MEM_AC(mem, memref) RED_CHECK_MEM(make_array_view(mem), cstr_array_view("" memref))
 # define RED_CHECK_MEM_AA(mem, memref) RED_CHECK_MEM(make_array_view(mem), make_array_view(memref))
+# define RED_REQUIRE_MEM_C(mem, memref) RED_REQUIRE_MEM(mem, cstr_array_view("" memref))
+# define RED_REQUIRE_MEM_AC(mem, memref) RED_REQUIRE_MEM(make_array_view(mem), cstr_array_view("" memref))
+# define RED_REQUIRE_MEM_AA(mem, memref) RED_REQUIRE_MEM(make_array_view(mem), make_array_view(memref))
 # endif
-
-
 
 namespace redemption_unit_test__
 {
@@ -246,7 +343,7 @@ namespace redemption_unit_test__
 
         bool operator == (xsarray const & other) const
         {
-            return other.sig.size() == other.sig.size()
+            return sig.size() == other.sig.size()
                 && std::equal(sig.begin(), sig.end(), other.sig.begin());
         }
     };

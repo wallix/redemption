@@ -406,4 +406,24 @@ inline parse_error parse(OcrVersion & x, spec_type<OcrVersion>, array_view_const
     });
 }
 
+template<> struct zstr_buffer_traits<SmartVideoCropping> : zstr_buffer_traits<unsigned long> {};
+
+inline array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<SmartVideoCropping> & buf,
+    cfg_s_type<SmartVideoCropping>,
+    SmartVideoCropping x
+) {
+    int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
+    return array_view_const_char(buf.get(), sz);
+}
+
+inline parse_error parse(SmartVideoCropping & x, spec_type<SmartVideoCropping>, array_view_const_char value)
+{
+    return parse_enum_list(x, value, {
+        SmartVideoCropping::disable,
+        SmartVideoCropping::v1,
+        SmartVideoCropping::v2,
+    });
+}
+
 }

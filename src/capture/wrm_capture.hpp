@@ -475,13 +475,16 @@ public:
         this->stream_bitmaps.rewind();
     }
 
-    void send_image_frame_rect_chunk(const Rect& image_frame_rect)
+    void send_image_frame_rect_chunk(const Rect& max_image_frame_rect, const Dimension& min_image_frame_dim)
     {
         StaticOutStream<32> payload;
-        payload.out_sint16_le(image_frame_rect.x);
-        payload.out_sint16_le(image_frame_rect.y);
-        payload.out_uint16_le(image_frame_rect.cx);
-        payload.out_uint16_le(image_frame_rect.cy);
+        payload.out_sint16_le(max_image_frame_rect.x);
+        payload.out_sint16_le(max_image_frame_rect.y);
+        payload.out_uint16_le(max_image_frame_rect.cx);
+        payload.out_uint16_le(max_image_frame_rect.cy);
+
+        payload.out_uint16_le(min_image_frame_dim.w);
+        payload.out_uint16_le(min_image_frame_dim.h);
 
         wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::IMAGE_FRAME_RECT, payload.get_offset(), 0);
         this->trans.send(payload.get_data(), payload.get_offset());
@@ -489,75 +492,20 @@ public:
 
 protected:
     void send_pointer(int cache_idx, const Pointer & cursor) override {
-        if ((cursor.width != 32) || (cursor.height != 32)) {
-            this->send_pointer2(cache_idx, cursor);
-            return;
+        auto const dimensions = cursor.get_dimensions();
+        StaticOutStream<32+108*96> payload;
+        bool pointer32x32 = ((dimensions.width == 32) && (dimensions.height == 32));
+        if (pointer32x32) {
+            cursor.emit_pointer(payload, cache_idx, this->mouse_x, this->mouse_y);
         }
-
-        size_t size =   2           // mouse x
-                      + 2           // mouse y
-                      + 1           // cache index
-                      + 1           // hotspot x
-                      + 1           // hotspot y
-                      + 32 * 32 * 3 // data
-                      + 128         // mask
-                      ;
-        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::POINTER, size, 0);
-
-        StaticOutStream<16> payload;
-        payload.out_uint16_le(this->mouse_x);
-        payload.out_uint16_le(this->mouse_y);
-        payload.out_uint8(cache_idx);
-        payload.out_uint8(cursor.x);
-        payload.out_uint8(cursor.y);
-        this->trans.send(payload.get_data(), payload.get_offset());
-
-        this->trans.send(cursor.data, cursor.data_size());
-        this->trans.send(cursor.mask, cursor.mask_size());
+        else {
+            cursor.emit_pointer2(payload, cache_idx, this->mouse_x, this->mouse_y);
+        }
+        wrmcapture_send_wrm_chunk(this->trans, (pointer32x32)?WrmChunkType::POINTER:WrmChunkType::POINTER2, payload.get_offset(), 0);
+        this->trans.send(payload.get_data(), payload.get_offset());    
     }
 
-    void send_pointer2(int cache_idx, const Pointer & cursor) {
-        size_t size =   2                   // mouse x
-                      + 2                   // mouse y
-                      + 1                   // cache index
-
-                      + 1                   // mouse width
-                      + 1                   // mouse height
-                      + 1                   // mouse bpp
-
-                      + 1                   // hotspot x
-                      + 1                   // hotspot y
-
-                      + 2                   // data_size
-                      + 2                   // mask_size
-
-                      + cursor.data_size()  // data
-                      + cursor.mask_size()  // mask
-                      ;
-        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::POINTER2, size, 0);
-
-        StaticOutStream<32> payload;
-        payload.out_uint16_le(this->mouse_x);
-        payload.out_uint16_le(this->mouse_y);
-        payload.out_uint8(cache_idx);
-
-        payload.out_uint8(cursor.width);
-        payload.out_uint8(cursor.height);
-        payload.out_uint8(24);
-
-        payload.out_uint8(cursor.x);
-        payload.out_uint8(cursor.y);
-
-        payload.out_uint16_le(cursor.data_size());
-        payload.out_uint16_le(cursor.mask_size());
-
-        this->trans.send(payload.get_data(), payload.get_offset());
-
-        this->trans.send(cursor.data, cursor.data_size());
-        this->trans.send(cursor.mask, cursor.mask_size());
-    }
-
-    void set_pointer(int cache_idx) override {
+    void cached_pointer_update(int cache_idx) override {
         size_t size =   2                   // mouse x
                       + 2                   // mouse y
                       + 1                   // cache index
@@ -847,7 +795,8 @@ public:
 
     bool kbd_input_mask_enabled;
 
-    Rect image_frame_rect;
+    Rect      max_image_frame_rect;
+    Dimension min_image_frame_dim;
 
     WrmCaptureImpl(
         const CaptureParams & capture_params, const WrmParams & wrm_params,
@@ -874,8 +823,7 @@ public:
         capture_params.now, this->out, wrm_params.capture_bpp, wrm_params.remote_app,
         this->bmp_cache, this->gly_cache, this->ptr_cache, image_frame_api,
         wrm_params.wrm_compression_algorithm, GraphicToFile::SendInput::YES,
-        GraphicToFile::Verbose(wrm_params.wrm_verbose)
-    )
+        GraphicToFile::Verbose(wrm_params.wrm_verbose))
     , nc(this->graphic_to_file, capture_params.now,
         wrm_params.frame_interval, wrm_params.break_interval)
     , kbd_input_mask_enabled{false}
@@ -890,8 +838,8 @@ public:
 
     ~WrmCaptureImpl() override
     {
-        if (!this->image_frame_rect.isempty()) {
-            this->graphic_to_file.send_image_frame_rect_chunk(this->image_frame_rect);
+        if (!this->max_image_frame_rect.isempty()) {
+            this->graphic_to_file.send_image_frame_rect_chunk(this->max_image_frame_rect, this->min_image_frame_dim);
         }
     }
 
@@ -915,9 +863,12 @@ public:
         return this->nc.periodic_snapshot(now, x, y, ignore_frame_in_timeval);
     }
 
-    virtual void visibility_rects_event(Rect const & rect) {
+    void visibility_rects_event(Rect const & rect) override {
         if (!rect.isempty()) {
-            this->image_frame_rect = this->image_frame_rect.disjunct(rect);
+            this->max_image_frame_rect = this->max_image_frame_rect.disjunct(rect);
+
+            this->min_image_frame_dim.w = std::max(this->min_image_frame_dim.w, rect.cx);
+            this->min_image_frame_dim.h = std::max(this->min_image_frame_dim.h, rect.cy);
         }
     }
 };
