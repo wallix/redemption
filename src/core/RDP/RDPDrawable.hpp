@@ -62,6 +62,18 @@ class RDPDrawable
     using Color = Drawable::Color;
 
     Drawable drawable;
+    uint8_t  save_mouse[3072];   // 32 lines * 32 columns * 3 bytes per pixel = 3072 octets
+    uint16_t save_mouse_x;
+    uint16_t save_mouse_y;
+public:
+    int mouse_cursor_pos_x;
+    int mouse_cursor_pos_y;
+private:
+    bool dont_show_mouse_cursor;
+    const DrawablePointer * current_pointer;
+    DrawablePointer dynamic_pointer;
+    DrawablePointer default_pointer;
+    
     int frame_start_count;
     BGRPalette mod_palette_rgb;
 
@@ -903,12 +915,18 @@ public:
 
     void trace_mouse(void)
     {
-        return this->drawable.trace_mouse();
+        if (!this->dont_show_mouse_cursor && this->current_pointer) {
+            this->save_mouse_x = this->mouse_cursor_pos_x;
+            this->save_mouse_y = this->mouse_cursor_pos_y;
+            this->drawable.trace_mouse(this->current_pointer, this->mouse_cursor_pos_x, this->mouse_cursor_pos_y, this->save_mouse);
+        }
     }
 
     void clear_mouse(void)
     {
-        return this->drawable.clear_mouse();
+        if (!this->dont_show_mouse_cursor && this->current_pointer) {
+            this->drawable.clear_mouse(this->current_pointer, this->save_mouse_x, this->save_mouse_y, this->save_mouse);
+        }
     }
 
     void draw(const RDP::RAIL::NewOrExistingWindow            &) override {}

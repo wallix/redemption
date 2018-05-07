@@ -726,6 +726,8 @@ public:
 
     void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
 
+
+    // XXXXXXXXXXXXXX
     void set_pointer(Pointer const & ptr) override {
         this->graphic_to_file.set_pointer(ptr);
     }
