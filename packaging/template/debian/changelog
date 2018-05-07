@@ -1,3 +1,9 @@
+redemption (1.2.9%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Add date "Year-Month-Day" subdirectory in record path
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 07 May 2018 17:02:50 +0200
+
 redemption (1.2.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Add date "Year-Month-Day" subdirectory in record path
