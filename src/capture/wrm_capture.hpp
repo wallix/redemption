@@ -549,8 +549,6 @@ public:
 
         wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::POSSIBLE_ACTIVE_WINDOW_CHANGE, 0, 0);
     }
-
-    using RDPSerializer::set_pointer;
 };  // struct GraphicToFile
 
 

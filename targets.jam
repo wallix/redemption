@@ -1841,6 +1841,7 @@ test-run tests/core/RDP/test_rdp_pointer :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>tests/includes/test_only/fake_graphic.o
 ;
 test-run tests/core/RDP/test_remote_programs :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_remote_programs.cpp

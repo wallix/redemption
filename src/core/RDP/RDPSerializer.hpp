@@ -777,6 +777,7 @@ public:
         }
     }
 
+    // XXXXXXXXXXXXXXXXXXXXXXXXXXX
     void set_pointer(const Pointer & cursor) override {
         int cache_idx = 0;
         switch (this->pointer_cache.add_pointer(cursor, cache_idx)) {
