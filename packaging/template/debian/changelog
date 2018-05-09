@@ -1,3 +1,9 @@
+redemption (1.1.17%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Add setting to enable/disable support of Screen Sharing of Mac OS X (VNC).
+
+ -- cgrosjean <cgrosjean at wallix.com>  Wed, 09 May 2018 15:05:51 +0200
+
 redemption (1.1.15%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 
