@@ -1432,8 +1432,9 @@ class Sesman():
                 physical_proto_info = self.engine.get_target_protocols(physical_target)
                 application = self.engine.get_application(selected_target)
                 conn_opts = self.engine.get_target_conn_options(physical_target)
-                if physical_proto_info.protocol == u'RDP':
-                    kv[u'proxy_opt'] = ",".join(physical_proto_info.subprotocols)
+                if physical_proto_info.protocol == u'RDP' or physical_proto_info.protocol == u'VNC':
+                    if physical_proto_info.protocol == u'RDP':
+                        kv[u'proxy_opt'] = ",".join(physical_proto_info.subprotocols)
 
                     connectionpolicy_kv = self.fetch_connectionpolicy(conn_opts)
                     kv.update({k:v for (k, v) in connectionpolicy_kv.items() if v is not None})
@@ -1982,12 +1983,15 @@ class Sesman():
             },
             'session': {
                 u'inactivity_timeout': 'inactivity_timeout'
+            },
+            'vnc': {
+                u'server_is_apple': 'server_is_apple'
             }
         }
 
         connectionpolicy_kv = {}
 
-        #Logger().info(u"%s" % conn_opts)
+        Logger().info(u"> > > > > %s" % conn_opts)
 
         for (section, matches) in cp_spec.items():
             section_values = conn_opts.get(section)

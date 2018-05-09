@@ -434,6 +434,8 @@ void config_spec_definition(Writer && W)
         }, sesman::name{"vnc_server_clipboard_encoding_type"}, set(ClipboardEncodingType::latin1));
         W.sep();
         W.member(advanced_in_gui, sesman_to_proxy, type_<VncBogusClipboardInfiniteLoop>(), "bogus_clipboard_infinite_loop", sesman::name{"vnc_bogus_clipboard_infinite_loop"}, set(VncBogusClipboardInfiniteLoop::delayed));
+        W.sep();
+        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "server_is_apple", set(false));
     });
 
     W.section("mod_replay", [&]
