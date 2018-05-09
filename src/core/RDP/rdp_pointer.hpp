@@ -492,8 +492,8 @@ struct PointerLoader2
         this->hotspot = Hotspot(hotspot_x, hotspot_y);
         uint16_t dlen = stream.in_uint16_le();
         uint16_t mlen = stream.in_uint16_le();
-        assert(dlen <= MAX_WIDTH * MAX_HEIGHT * 3);
-        assert(mlen <= MAX_WIDTH * MAX_HEIGHT * 1 / 8);
+        // TODO: assert(dlen <= MAX_WIDTH * MAX_HEIGHT * 3);
+        // TODO: assert(mlen <= MAX_WIDTH * MAX_HEIGHT * 1 / 8);
         auto data = stream.in_uint8p(dlen);
         auto mask = stream.in_uint8p(mlen);
         this->data = make_array_view(data, dlen);
@@ -519,8 +519,8 @@ struct PointerLoader32x32
         this->hotspot = Hotspot(hotspot_x, hotspot_y);
         uint16_t dlen = 32*32*::nbbytes(24);
         uint16_t mlen = 32*::nbbytes(32);
-        assert(dlen <= MAX_WIDTH * MAX_HEIGHT * 3);
-        assert(mlen <= MAX_WIDTH * MAX_HEIGHT / 8);
+        // TODO: assert(dlen <= MAX_WIDTH * MAX_HEIGHT * 3);
+        // TODO: assert(mlen <= MAX_WIDTH * MAX_HEIGHT / 8);
         auto data = stream.in_uint8p(dlen);
         auto mask = stream.in_uint8p(mlen);
         this->data = make_array_view(data, dlen);
