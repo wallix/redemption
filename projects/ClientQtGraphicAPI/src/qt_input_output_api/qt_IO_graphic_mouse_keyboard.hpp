@@ -1479,7 +1479,7 @@ private:
         }
     }
 
-    ClientRedemptionIOAPI::KeyCustomDefinition get_key_info(int key, std::string text) {
+    ClientRedemptionIOAPI::KeyCustomDefinition get_key_info(int key, std::string text) override {
         this->qtRDPKeymap.keyEvent(0, key, text);
         ClientRedemptionIOAPI::KeyCustomDefinition key_info(
             this->qtRDPKeymap.qKeyCode,

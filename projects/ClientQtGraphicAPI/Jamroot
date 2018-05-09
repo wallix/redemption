@@ -100,7 +100,7 @@ project redemption_qt4_client
     <conditional>@flags
     <conditional>@disable-buggy-warn
 
-    <cxxflags>-std=c++14
+    <cxxflags>-std=c++17
 
     $(CXXFLAGS)
 
@@ -147,7 +147,6 @@ rule add_src_VNC ( src : requirements * )
     obj $(src).o : $(REDEMPTION_SRC_PATH)/$(src) : $(requirements) ;
     obj_list_VNC += $(src).o ;
 }
-add_src_VNC mod/internal/widget/flat_vnc_authentification.cpp ;
 add_src_VNC mod/internal/widget/edit_valid.cpp ;
 add_src_VNC mod/internal/widget/image.cpp ;
 add_src_VNC mod/internal/widget/password.cpp ;
@@ -194,6 +193,7 @@ add_src mod/internal/widget/rail_module_host.cpp ;
 add_src mod/internal/widget/screen.cpp ;
 add_src mod/internal/widget/scroll.cpp ;
 add_src mod/internal/widget/tooltip.cpp ;
+add_src mod/rdp/negociation.cpp ;
 add_src transport/crypto_transport.cpp ;
 add_src transport/mwrm_reader.cpp ;
 add_src transport/socket_transport.cpp ;

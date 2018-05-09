@@ -2788,6 +2788,7 @@ struct SessionReactor
         const bool enable;
     };
 
+    /// \return {-1, -1} if not timeout
     timeval get_next_timeout(EnableGraphics enable_gd)
     {
         if ((enable_gd && !this->graphic_events_.is_empty())

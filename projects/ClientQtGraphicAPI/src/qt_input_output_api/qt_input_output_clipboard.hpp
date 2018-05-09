@@ -77,8 +77,6 @@ public:
 
         CB_out_File(uint64_t size)
           : size(size)
-          , name("")
-          , nameUTF8("")
         {}
 
         ~CB_out_File() {
@@ -202,9 +200,9 @@ public:
         if (theFolder) {
             struct dirent *next_file;
 
-            while ( (next_file = readdir(theFolder)) != NULL )
+            while ((next_file = readdir(theFolder)))
             {
-                std::string filepath(this->client->CB_TEMP_DIR + std::string("/") + std::string(next_file->d_name));
+                std::string filepath(this->client->CB_TEMP_DIR + std::string("/") + next_file->d_name);
                 remove(filepath.c_str());
             }
             closedir(theFolder);

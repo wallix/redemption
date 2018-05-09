@@ -1022,7 +1022,13 @@ public:
 
         if (this->mod != nullptr) {
             try {
-                this->mod->draw_event(time(nullptr), *(this));
+                auto get_gd = [this]() -> gdi::GraphicApi& { return *this; };
+                auto is_mod_fd = [this](int fd, auto& /*e*/){
+                    return this->socket->get_fd() == fd;
+                };
+                session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, get_gd);
+                session_reactor.execute_events(is_mod_fd);
+                session_reactor.execute_graphics(is_mod_fd, get_gd());
 
             } catch (const Error & e) {
                 if (this->impl_graphic) {
