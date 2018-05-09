@@ -268,14 +268,15 @@ struct RecvPredictor {
 
 
 struct CliprdrHeader {
-    uint16_t msgType()  const { return this->msgType_; }
-    uint16_t msgFlags() const { return this->msgFlags_; }
-    uint32_t dataLen()  const { return this->dataLen_; }
-
-public:
+    
     uint16_t msgType_;
     uint16_t msgFlags_;
     uint32_t dataLen_;
+
+public:
+    uint16_t msgType()  const { return this->msgType_; }
+    uint16_t msgFlags() const { return this->msgFlags_; }
+    uint32_t dataLen()  const { return this->dataLen_; }
 
 
     CliprdrHeader()

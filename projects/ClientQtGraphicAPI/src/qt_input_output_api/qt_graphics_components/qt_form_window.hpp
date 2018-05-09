@@ -703,9 +703,8 @@ public:
             QStringList stringList;
 
             for (int i = 0; i < this->_front->_accountNB; i++) {
-                //LOG(LOG_INFO, "account name=%s  account index=%d", this->_front->_accountData[i].name, this->_front->_accountData[i].index);
                 if (this->_front->_accountData[i].protocol == this->protocol_type) {
-                    std::string title(this->_front->_accountData[i].IP + std::string(" - ")+ this->_front->_accountData[i].name);
+                    std::string title(this->_front->_accountData[i].title);
                     this->line_edit_panel._IPCombobox.addItem(QString(title.c_str()), i+1);
                     stringList << title.c_str();
                 }
@@ -746,7 +745,7 @@ public:
     QPushButton          _buttonConnexion;
     QPushButton          _buttonOptions;
 
-    QtOptions options;
+    QtOptions * options;
 
 
     QtFormTab(ClientInputMouseKeyboardAPI * controllers, ClientRedemptionIOAPI  * front, uint8_t protocol_type, QWidget * parent)
@@ -762,23 +761,17 @@ public:
         , formAccountConnectionPanel(this->controllers, this, this->protocol_type, front)
         , _buttonConnexion("Connection", this)
         , _buttonOptions("Options", this)
-        , options(front, protocol_type, this)
     {
+
+        if (protocol_type & ClientRedemptionIOAPI::MOD_RDP) {
+            this->options = new QtRDPOptions(front, this->controllers, this);
+        } else {
+            this->options = new QtVNCOptions(front, this->controllers, this);
+        }
 //         this->setMinimumHeight(360);
 //         this->setAccountData();
 
-//         this->formAccountConnectionPanel = new F;
         this->grid_layout.addWidget(&(this->formAccountConnectionPanel), 0, 0, 1, 3);
-
-//         this->grid_layout.addWidget(&(this->line_edit_panel), 0, 0, 1, 2);
-//
-//         this->account_panel = new QtAccountPanel(this, this->_front->_accountData, this->_front->_accountNB, this);
-//         this->scroller.setFixedSize(170,  160);
-//         this->scroller.setStyleSheet("/*background-color: #FFFFFF;*/ border: 1px solid #FFFFFF;"
-//             "border-bottom-color: #FF8C00;");
-//         this->scroller.setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
-//         this->scroller.setWidget(this->account_panel);
-//         this->grid_layout.addWidget(&(this->scroller), 0, 2, 1, 2);
 
         this->grid_layout.addWidget(&(this->_pwdCheckBox), 1, 0, 1, 2);
         this->_errorLabel.setFixedHeight(this->_errorLabel.height()+10);
@@ -797,8 +790,8 @@ public:
         this->_buttonOptions.setFocusPolicy(Qt::StrongFocus);
         this->grid_layout.addWidget(&(this->_buttonOptions), 3, 0, 1, 1);
 
-        this->grid_layout.addWidget(&(this->options), 4, 0, 3, 3);
-        this->options.hide();
+        this->grid_layout.addWidget(this->options, 4, 0, 3, 3);
+        this->options->hide();
 
         this->setLayout(&(this->grid_layout));
     }
@@ -899,8 +892,6 @@ public:
 
             this->controllers->client->current_user_profil = this->_front->_accountData[index].options_profil;
         }
-
-//         this->_buttonConnexion.setFocus();
     }
 
 private Q_SLOTS:
@@ -915,7 +906,14 @@ private Q_SLOTS:
         this->controllers->client->windowsData.form_y = points.y()-85;
         this->controllers->client->writeWindowsConf();
 
-        this->options.GetConfigValues();
+        this->options->getConfigValues();
+        this->_front->writeAccoundData(
+            this->get_IPField(),
+            this->get_userNameField(),
+            this->get_PWDField(),
+            this->get_portField()
+        );
+        this->_front->writeCustomKeyConfig();
 
         this->controllers->connexionReleased();
 
@@ -925,12 +923,7 @@ private Q_SLOTS:
             this->_front->_save_password_account = false;
         }
 
-        this->_front->writeAccoundData(
-            this->get_IPField(),
-            this->get_userNameField(),
-            this->get_PWDField(),
-            this->get_portField()
-        );
+
     }
 
     void optionsReleased() {
@@ -1086,20 +1079,24 @@ public:
 
     void options() {
         if (this->is_option_open) {
-            this->RDP_tab.options.hide();
+            this->RDP_tab.options->hide();
             this->RDP_tab._buttonOptions.setText("Options v");
-            this->VNC_tab.options.hide();
+            this->VNC_tab.options->hide();
             this->VNC_tab._buttonOptions.setText("Options v");
             this->setFixedHeight(this->_height);
             this->is_option_open = false;
         } else {
             this->setFixedHeight(this->_long_height);
-            this->RDP_tab.options.show();
+            this->RDP_tab.options->show();
             this->RDP_tab._buttonOptions.setText("Options ^");
-            this->VNC_tab.options.show();
+            this->VNC_tab.options->show();
             this->VNC_tab._buttonOptions.setText("Options ^");
             this->is_option_open = true;
         }
+    }
+
+    void call_add_row() {
+
     }
 
 private Q_SLOTS:

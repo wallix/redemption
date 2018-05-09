@@ -25,6 +25,7 @@
 
 #include "utils/log.hpp"
 #include "utils/verbose_flags.hpp"
+#include "utils/colors.hpp"
 #include "utils/zlib.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 #include "mod/vnc/encoder/encoder_api.hpp"
@@ -54,33 +55,43 @@ namespace VNC {
             std::vector<uint8_t> accumulator;
             std::vector<uint8_t> accumulator_uncompressed;
 
-
         public:
 
             VNCVerbose verbose;
 
-            Zrle(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy, Zdecompressor<> & zd, VNCVerbose verbose) 
-                 : bpp(bpp), Bpp(Bpp), r(x, y, cx, cy)
-                 , tile(Rect(this->r.x, this->r.y, 
-                      std::min<size_t>(this->r.cx, 64), 
+            Zrle(uint8_t bpp, uint8_t Bpp, Rect rect, Zdecompressor<> & zd, VNCVerbose verbose)
+                 : bpp(bpp), Bpp(Bpp), r(rect)
+                 , tile(Rect(this->r.x, this->r.y,
+                      std::min<size_t>(this->r.cx, 64),
                       std::min<size_t>(this->r.cy, 64)))
-                 , cx_remain{cx}
-                 , cy_remain{cy}
+                 , cx_remain{r.cx}
+                 , cy_remain{r.cy}
                 , zd(zd)
                 , state(ZrleState::Header)
                 , zlib_compressed_data_length(0), accumulator{}, accumulator_uncompressed{}
                 , verbose(verbose)
             {
-                if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                    LOG(LOG_INFO, "New zrle compressor %hhu (%zu %zu %zu %zu)", bpp, x,y, cx, cy);
+                if (bool(this->verbose & VNCVerbose::zrle_trace)) {
+                    LOG(LOG_INFO, "New VNC::Encoder::ZRLE %d (%d %d %u %u)", bpp, r.x, r.y, r.cx, r.cy);
                 }
+            }
+
+            // this one is used only in tests to check decompression behavior without compression layer
+            // injection of compressed data in tests raise troubles because it depends of all the past history.
+
+            // We are currently providing complete Streams encoding all the expected tiling rects
+            // We can predict the number of expected rects (64x64 tiling of external rect is determinist)
+            // But we can't predict the size of each individual rect before decoding.
+            void rle_test_bypass(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
+            {
+                this->lib_framebuffer_update_zrle(uncompressed_data_buffer, drawable);
             }
 
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
             EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
             {
-            
+
                 if (this->r.isempty())
                 {
                     if (bool(this->verbose & VNCVerbose::hextile_encoder)){
@@ -97,23 +108,27 @@ namespace VNC {
                 case ZrleState::Header:
                 {
                     const size_t sz = sizeof(uint32_t);
-                    if (buf.remaining() < sz){ 
-                        return EncoderState::NeedMoreData; 
+                    if (buf.remaining() < sz){
+                        return EncoderState::NeedMoreData;
                     }
                     this->zlib_compressed_data_length = Parse(buf.av().data()).in_uint32_be();
                     this->accumulator.clear();
                     this->accumulator.reserve(this->zlib_compressed_data_length);
                     this->accumulator_uncompressed.reserve(200000);
                     this->accumulator_uncompressed.clear();
+                    if (bool(this->verbose & VNCVerbose::zrle_trace)) {
+                        LOG(LOG_INFO, "ZRLE: consuming header data %zu bytes", sz);
+                        hexdump_d(buf.av().data(), sz);
+                    }
                     buf.advance(sz);
                     if (bool(this->verbose & VNCVerbose::basic_trace)) {
                         LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u remaining=%hu", this->zlib_compressed_data_length, buf.remaining());
                     }
-                    this->state = ZrleState::Data;
                     if (bool(this->verbose & VNCVerbose::basic_trace)) {
                         LOG(LOG_INFO, "Zrle::EncoderReady::zrle remaining data  %zu", buf.av().size());
                     }
-                    return EncoderState::Ready; 
+                    this->state = ZrleState::Data;
+                    return EncoderState::Ready;
                 }
                 break;
                 case ZrleState::Data:
@@ -122,20 +137,28 @@ namespace VNC {
                     {
                         auto av = buf.av(buf.remaining());
                         this->accumulator.insert(this->accumulator.end(), av.begin(), av.end());
+                        if (bool(this->verbose & VNCVerbose::zrle_trace)) {
+                            LOG(LOG_INFO, "ZRLE: consuming compressed data %hu bytes", buf.remaining());
+                            hexdump_d(buf.av().data(), buf.remaining());
+                        }
                         buf.advance(buf.remaining());
                         if (bool(this->verbose & VNCVerbose::basic_trace)) {
                             LOG(LOG_INFO, "Zrle::Encoder::NeedMoreData::zrle remaining data  %zu", buf.av().size());
                         }
-                        return EncoderState::NeedMoreData; 
+                        return EncoderState::NeedMoreData;
                     }
                     size_t interesting_part = this->zlib_compressed_data_length - this->accumulator.size();
                     auto av = buf.av(interesting_part);
                     this->accumulator.insert(this->accumulator.end(), av.begin(), av.end());
+                    if (bool(this->verbose & VNCVerbose::zrle_trace)) {
+                        LOG(LOG_INFO, "ZRLE: consuming end of compressed data block : %zu bytes", interesting_part);
+                        hexdump_d(buf.av().data(), interesting_part);
+                    }
                     buf.advance(interesting_part);
 
                     size_t data_ready = 0;
                     const size_t step = 32768;
-                    for (size_t q = 0 ; q < this->zlib_compressed_data_length ; 
+                    for (size_t q = 0 ; q < this->zlib_compressed_data_length ;
                                         q += this->zd.update(&this->accumulator[q], std::min(step, this->zlib_compressed_data_length-q))){
                         if (this->zd.full()) {
                             data_ready += this->zd.flush_ready(this->accumulator_uncompressed);
@@ -144,7 +167,7 @@ namespace VNC {
                     while (!this->zd.finish() && this->zd.available()){
                         data_ready += this->zd.flush_ready(this->accumulator_uncompressed);
                     }
-                    
+
                     InStream zlib_uncompressed_data_stream(this->accumulator_uncompressed.data(), data_ready);
                     this->accumulator.clear();
 
@@ -154,7 +177,7 @@ namespace VNC {
                     if (bool(this->verbose & VNCVerbose::basic_trace)) {
                         LOG(LOG_INFO, "Zrle::Encoder::Exit remaining data  %zu", buf.av().size());
                     }
-                    return EncoderState::Exit; 
+                    return EncoderState::Exit;
                 }
                 default:
                     LOG(LOG_ERR, "Unexpected state in ZrleEncoder (%u), should not happen", static_cast<unsigned>(this->state));
@@ -163,6 +186,7 @@ namespace VNC {
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "Zrle::Encoder Error remaining data  %zu", buf.av().size());
                 }
+
                 LOG(LOG_ERR, "VNC Encoding: ZRLE, unexpected encoding stream exit");
                 throw Error(ERR_VNC_ZRLE_PROTOCOL);
             }
@@ -170,9 +194,9 @@ namespace VNC {
     //    7.6.9   ZRLE Encoding
     //    =====================
 
-    //    ZRLE stands for Zlib [3] Run-Length Encoding, and combines zlib compression, tiling, palettisation and run-length encoding. 
-    //    On the wire, the rectangle begins with a 4-byte length field, and is followed by that many bytes of zlib-compressed data. 
-    //    A single zlib "stream" object is used for a given RFB protocol connection, so that ZRLE rectangles must be encoded and 
+    //    ZRLE stands for Zlib [3] Run-Length Encoding, and combines zlib compression, tiling, palettisation and run-length encoding.
+    //    On the wire, the rectangle begins with a 4-byte length field, and is followed by that many bytes of zlib-compressed data.
+    //    A single zlib "stream" object is used for a given RFB protocol connection, so that ZRLE rectangles must be encoded and
     //    decoded strictly in order.
 
     //        | No. of bytes | Type     | Description |
@@ -183,10 +207,10 @@ namespace VNC {
     //        +--------------+----------+-------------+
 
     //    The zlibData when uncompressed represents tiles of 64x64 pixels in left-to-right, top-to-bottom order, similar to hextile.
-    //    If the width of the rectangle is not an exact multiple of 64 then the width of the last tile in each row is smaller, and 
+    //    If the width of the rectangle is not an exact multiple of 64 then the width of the last tile in each row is smaller, and
     //    if the height of the rectangle is not an exact multiple of 64 then the height of each tile in the final row is smaller.
 
-    //    ZRLE makes use of a new type CPIXEL (compressed pixel). This is the same as a PIXEL for the agreed pixel format, except 
+    //    ZRLE makes use of a new type CPIXEL (compressed pixel). This is the same as a PIXEL for the agreed pixel format, except
     //    where true-colour-flag is non-zero, bits-per-pixel is 32, depth is 24 or less and all of the bits making up the red, green
     //    and blue intensities fit in either the least significant 3 bytes or the most significant 3 bytes. In this case a CPIXEL is
     //    only 3 bytes long, and contains the least significant or the most significant 3 bytes as appropriate. bytesPerCPixel is the
@@ -218,9 +242,9 @@ namespace VNC {
 
     //        Packed palette types. Followed by the palette, consisting of paletteSize (=*subencoding*) pixel values. Then the packed
     //    pixels follow, each pixel represented as a bit field yielding an index into the palette (0 meaning the first palette entry).
-    //    For paletteSize 2, a 1-bit field is used, for paletteSize 3 or 4 a 2-bit field is used and for paletteSize from 5 to 16 a 
+    //    For paletteSize 2, a 1-bit field is used, for paletteSize 3 or 4 a 2-bit field is used and for paletteSize from 5 to 16 a
     //    4-bit field is used. The bit fields are packed into bytes, the most significant bits representing the leftmost pixel (i.e. big
-    //     endian). For tiles not a multiple of 8, 4 or 2 pixels wide (as appropriate), padding bits are used to align each row to an 
+    //     endian). For tiles not a multiple of 8, 4 or 2 pixels wide (as appropriate), padding bits are used to align each row to an
     //    exact number of bytes.
 
     //        |  No. of bytes                |  Type        |  Description     |
@@ -230,10 +254,10 @@ namespace VNC {
     //        |                            m |     U8 array |    packedPixels  |
     //        +------------------------------+--------------+------------------+
 
-    //        where m is the number of bytes representing the packed pixels. 
+    //        where m is the number of bytes representing the packed pixels.
 
     //        For paletteSize of 2 this is floor((width + 7) / 8) * height,
-    //        for paletteSize of 3 or 4 this is floor((width + 3) / 4) * height, 
+    //        for paletteSize of 3 or 4 this is floor((width + 3) / 4) * height,
     //        for paletteSize of 5 to 16 this is floor((width + 1) / 2) * height.
 
     //    17 to 127
@@ -298,12 +322,12 @@ namespace VNC {
                         LOG(LOG_INFO, "lib_framebuffer_update_zrle remaining %zu", uncompressed_data_buffer.in_remain());
                         LOG(LOG_INFO, "Rect=%s Tile = %s cx_remain=%zu, cy_remain=%zu", this->r, this->tile, this->cx_remain, this->cy_remain);
                     }
-                
+
                     uint8_t   subencoding = uncompressed_data_buffer.in_uint8();
 
                     switch (subencoding) {
                     case 0:
-                        this->rawTile(uncompressed_data_buffer, drawable);                        
+                        this->rawTile(uncompressed_data_buffer, drawable);
                     break;
                     case 1:
                         this->solidTile(uncompressed_data_buffer, drawable);
@@ -365,9 +389,9 @@ namespace VNC {
                 LOG(LOG_ERR, "Compressed VNC::zrle stream truncated : not enough compressed data");
                 throw Error(ERR_VNC_ZRLE_PROTOCOL);
             }
-           
+
             void draw_tile(const uint8_t * raw, gdi::GraphicApi & drawable)
-            {            
+            {
                 update_lock<gdi::GraphicApi> lock(drawable);
                 const Bitmap bmp(raw, this->tile.cx, this->tile.cy, this->bpp, Rect(0, 0, this->tile.cx, this->tile.cy));
                 const RDPMemBlt cmd(0, this->tile, 0xCC, 0, 0, 0);
@@ -378,8 +402,11 @@ namespace VNC {
             // return false if there is no next tile any more
             bool next_tile()
             {
+//                LOG(LOG_INFO, "Previous tile: rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
+
                 if (this->cx_remain <= 64){
                     if (this->cy_remain <= 64){
+//                        LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
                         return false;
                     }
                     this->cx_remain = this->r.cx;
@@ -387,68 +414,32 @@ namespace VNC {
                     this->tile = Rect(this->r.x, this->tile.y + 64,
                                     std::min<size_t>(64, this->cx_remain),
                                     std::min<size_t>(64, this->cy_remain));
+//                    LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
                     return true;
                 }
                 this->cx_remain -= 64;
                 this->tile.x += 64;
                 this->tile.cx = std::min<size_t>(64, this->cx_remain);
+//                LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
                 return true;
             }
 
-            
+
             // 0:  Raw pixel data. width * height pixel values follow (where width and height are the width and height of the tile):
 
             // |  No. of bytes                   |  Type        |  Description |
             // +---------------------------------+--------------+--------------+
             // | width * height * bytesPerCPixel | CPIXEL array |    pixels    |
             // +---------------------------------+--------------+--------------+
-            
-//  zrle_update_context Bpp=2 x=1834 cx=12 cx_remain=12, cy_remain=19 tile_x=1834 tile_y=0
-//  lib_framebuffer_update_zrle 457
-//  VNC Encoding: ZRLE, Raw pixel data
-//  /* 0000 */ 0x02, 0x00, 0x25, 0x21, 0xab, 0x4a, 0x08, 0x3a, 0x29, 0x3a, 0xe8, 0x39, 0x25, 0x21, 0x82, 0x08,  // ..%!.J.:):.9%!..
-//  /* 0010 */ 0xe4, 0x18, 0x83, 0x08, 0x25, 0x21, 0xab, 0x52, 0x22, 0x00, 0x83, 0x08, 0x4a, 0x42, 0x6a, 0x4a,  // ....%!.R"...JBjJ
-//  /* 0020 */ 0x08, 0x3a, 0xe8, 0x39, 0x25, 0x21, 0x83, 0x08, 0xe4, 0x18, 0x83, 0x10, 0xe4, 0x18, 0x08, 0x3a,  // .:.9%!.........:
-//  /* 0030 */ 0x22, 0x00, 0xff, 0xff, 0xc4, 0x10, 0x08, 0x3a, 0xc7, 0x31, 0xe8, 0x39, 0x25, 0x21, 0x62, 0x08,  // "......:.1.9%!b.
-//  /* 0040 */ 0xa3, 0x10, 0x83, 0x08, 0xc4, 0x18, 0xc8, 0x39, 0x22, 0x00, 0xff, 0xff, 0xff, 0xff, 0xa4, 0x10,  // .......9".......
-//  /* 0050 */ 0x66, 0x29, 0xe8, 0x39, 0x45, 0x21, 0x82, 0x08, 0x82, 0x08, 0x62, 0x08, 0xe4, 0x18, 0x08, 0x3a,  // f).9E!....b....:
-//  /* 0060 */ 0x22, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x83, 0x08, 0x25, 0x21, 0x04, 0x19, 0xc3, 0x10,  // ".........%!....
-//  /* 0070 */ 0xc3, 0x10, 0x83, 0x08, 0xe4, 0x18, 0xe8, 0x39, 0x42, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  // .......9B.......
-//  /* 0080 */ 0xff, 0xff, 0x42, 0x00, 0x62, 0x08, 0xc4, 0x10, 0x04, 0x19, 0xc3, 0x10, 0xc3, 0x10, 0xc7, 0x31,  // ..B.b..........1
-//  /* 0090 */ 0x42, 0x08, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x22, 0x00, 0xa3, 0x08,  // B..........."...
-//  /* 00a0 */ 0xe4, 0x10, 0xc4, 0x10, 0xc4, 0x18, 0xa7, 0x31, 0x42, 0x08, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  // .......1B.......
-//  /* 00b0 */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x42, 0x00, 0x62, 0x08, 0xa3, 0x10, 0xc4, 0x18, 0x66, 0x29,  // ......B.b.....f)
-//  /* 00c0 */ 0x42, 0x08, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xdf, 0xff,  // B...............
-//  /* 00d0 */ 0x22, 0x00, 0x83, 0x08, 0xc4, 0x10, 0x05, 0x21, 0x42, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  // "......!B.......
-//  /* 00e0 */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x9e, 0xf7, 0x22, 0x00, 0xa3, 0x10, 0x05, 0x19,  // ..........".....
-//  /* 00f0 */ 0x42, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  // B...............
-//  /* 0100 */ 0xff, 0xff, 0x5d, 0xef, 0x22, 0x00, 0xa3, 0x10, 0x42, 0x08, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  // ..]."...B.......
-//  /* 0110 */ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x1c, 0xe7, 0x22, 0x00,  // ..............".
-//  /* 0120 */ 0x42, 0x08, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xbe, 0xf7, 0xff, 0xff, 0xff, 0xff, 0x42, 0x00,  // B.............B.
-//  /* 0130 */ 0x22, 0x00, 0x22, 0x00, 0x42, 0x00, 0x42, 0x00, 0x22, 0x00, 0xff, 0xff, 0xff, 0xff, 0xbe, 0xf7,  // ".".B.B.".......
-//  /* 0140 */ 0x01, 0x00, 0xb7, 0xb5, 0xff, 0xff, 0x42, 0x00, 0xa3, 0x08, 0xa3, 0x10, 0xc4, 0x10, 0xe4, 0x18,  // ......B.........
-//  /* 0150 */ 0x22, 0x00, 0xff, 0xff, 0xbe, 0xf7, 0x02, 0x00, 0x66, 0x29, 0x22, 0x00, 0xff, 0xff, 0x1c, 0xe7,  // ".......f)".....
-//  /* 0160 */ 0x22, 0x00, 0xa3, 0x10, 0xc3, 0x10, 0xe4, 0x18, 0x22, 0x00, 0xbe, 0xf7, 0x01, 0x00, 0x46, 0x21,  // ".......".....F!
-//  /* 0170 */ 0xa7, 0x29, 0x63, 0x08, 0x19, 0xc6, 0xff, 0xff, 0x63, 0x08, 0x83, 0x08, 0xc3, 0x10, 0x04, 0x19,  // .)c.....c.......
-//  /* 0180 */ 0x62, 0x08, 0x01, 0x00, 0x66, 0x29, 0x66, 0x29, 0x66, 0x29, 0x25, 0x19, 0x22, 0x00, 0xff, 0xff,  // b...f)f)f)%."...
-//  /* 0190 */ 0xbb, 0xd6, 0x22, 0x00, 0xe4, 0x18, 0xe4, 0x18, 0x25, 0x21, 0x46, 0x29, 0x86, 0x29, 0x66, 0x29,  // ..".....%!F).)f)
-//  /* 01a0 */ 0x45, 0x21, 0x04, 0x19, 0x43, 0x08, 0xbb, 0xd6, 0xff, 0xff, 0x22, 0x00, 0x25, 0x21, 0x25, 0x21,  // E!..C.....".%!%!
-//  /* 01b0 */ 0x05, 0x19, 0x46, 0x29, 0x46, 0x29, 0x66, 0x29, 0x66, 0x29, 0x45, 0x21, 0xa3, 0x10, 0x22, 0x00,  // ..F)F)f)f)E!..".
-//  /* 01c0 */ 0x42, 0x00, 0xa3, 0x10, 0xe4, 0x18, 0x05, 0x19,                                                  // B.......
-//  after consuming buffer '0 bytes'
-//  lib_frame_buffer_update asking update (1920, 1080)
-           
-            
+
             void rawTile(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
             {
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "VNC Encoding: ZRLE, Raw pixel data");
                 }
 
-                const uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
-                const uint16_t tile_cy = std::min<uint16_t>(this->cy_remain, 64);
-                const uint16_t tile_data_length = tile_cx * tile_cy * this->Bpp;
-                
+                const uint16_t tile_data_length = this->tile.cx * this->tile.cy * this->Bpp;
+
                 if (uncompressed_data_buffer.in_remain() < tile_data_length)
                 {
                     LOG(LOG_ERR, "Compressed VNC::zrle stream truncated (1)");
@@ -471,48 +462,27 @@ namespace VNC {
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "VNC Encoding: ZRLE, Solid tile (single color)");
                 }
-
-                const uint16_t tile_cx = std::min<uint16_t>(this->cx_remain, 64);
-                const uint16_t tile_cy = std::min<uint16_t>(this->cy_remain, 64);
-                uint8_t         tile_data[4*16384];    // max size with 16 bpp
-                const uint8_t * tile_data_p = tile_data;
-                
-                if (uncompressed_data_buffer.in_remain() < this->Bpp)
-                {
-                    LOG(LOG_ERR, "Compressed VNC::zrle stream truncated (2)");
-                    throw Error(ERR_VNC_ZRLE_PROTOCOL);
-                }
-
                 const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->Bpp);
 
-                uint8_t * tmp_tile_data = tile_data;
-
-                for (int i = 0; i < tile_cx; i++, tmp_tile_data += this->Bpp){
-                    memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
-                }
-
-                uint16_t line_size = tile_cx * this->Bpp;
-
-                for (int i = 1; i < tile_cy; i++, tmp_tile_data += line_size){
-                    memcpy(tmp_tile_data, tile_data, line_size);
-                }
-
-                this->draw_tile(tile_data_p, drawable);
+                auto const color_context= gdi::ColorCtx::depth16();
+                auto pixel_color = RDPColor::from((cpixel_pattern[1]<<8)+cpixel_pattern[0]);
+                const RDPOpaqueRect cmd(this->tile, pixel_color);
+                drawable.draw(cmd, this->tile, color_context);
 
             }
 
-            //  2 to 16 Packed palette types. 
-            
-            // Followed by the palette, consisting of paletteSize (=*subencoding*) pixel values. 
+            //  2 to 16 Packed palette types.
+
+            // Followed by the palette, consisting of paletteSize (=*subencoding*) pixel values.
             // Then the packed pixels follow, each pixel represented as a bit field yielding an index into the palette
             // (0 meaning the first palette entry).
-            //  For paletteSize 2, a 1-bit field is used, 
-            //  for paletteSize 3 or 4 a 2-bit field is used 
-            //  for paletteSize from 5 to 16 a 4-bit field is used. 
-            
-            // The bit fields are packed into bytes, the most significant bits representing the leftmost pixel 
+            //  For paletteSize 2, a 1-bit field is used,
+            //  for paletteSize 3 or 4 a 2-bit field is used
+            //  for paletteSize from 5 to 16 a 4-bit field is used.
+
+            // The bit fields are packed into bytes, the most significant bits representing the leftmost pixel
             // (i.e. big endian).
-            
+
             // For tiles not a multiple of 8, 4 or 2 pixels wide (as appropriate), padding bits are used to align
             // each row to an exact number of bytes.
 
@@ -523,11 +493,15 @@ namespace VNC {
             //        |                            m |     U8 array |    packedPixels  |
             //        +------------------------------+--------------+------------------+
 
-            //        where m is the number of bytes representing the packed pixels. 
+            //        where m is the number of bytes representing the packed pixels.
 
             //        For paletteSize of 2 this is floor((width + 7) / 8) * height,
-            //        for paletteSize of 3 or 4 this is floor((width + 3) / 4) * height, 
+            //        for paletteSize of 3 or 4 this is floor((width + 3) / 4) * height,
             //        for paletteSize of 5 to 16 this is floor((width + 1) / 2) * height.
+
+            // Note by CGR: what to do for invalid pattern referencing undefined palette color ?
+            // We could either use some arbitrary Color or raise some VNC Error
+            // As compatibility goes, we will LOG the error but accept the data and draw it as black
 
             void packedPalette(uint8_t subencoding, InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
             {
@@ -535,111 +509,104 @@ namespace VNC {
                     LOG(LOG_INFO, "VNC Encoding: ZRLE, Packed palette types, palette size=%d", subencoding);
                 }
 
-                uint8_t         tile_data[2*16384];    // max size with 16 bpp
+                uint8_t         tile_data[64*64*4];    // max raw tile size with 32 bpp
                 const uint8_t * tile_data_p = tile_data;
-                const uint16_t tile_data_length = tile.cx * tile.cy * this->Bpp;
-                
-                if (tile_data_length > sizeof(tile_data))
-                {
-                    LOG(LOG_ERR, "Compressed VNC::zrle stream truncated (2)");
+
+                const uint16_t   palette_size  = subencoding * this->Bpp;
+
+                if (uncompressed_data_buffer.in_remain() < palette_size){
+                    LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated (missing palette)");
                     throw Error(ERR_VNC_ZRLE_PROTOCOL);
                 }
 
-                const uint8_t    palette_count = subencoding;
-                const uint16_t   palette_size  = palette_count * this->Bpp;
+                const uint8_t * palette = uncompressed_data_buffer.in_uint8p(palette_size);
 
-                if (uncompressed_data_buffer.in_remain() < palette_size)
-                {
-                    LOG(LOG_ERR, "Compressed VNC::zrle stream truncated (3)");
-                    throw Error(ERR_VNC_ZRLE_PROTOCOL);
-                }
+                uint8_t pixels_per_byte = (subencoding>5)?2:(subencoding>2)?4:8;
+                size_t line_bytes_width = (subencoding>5)?((this->tile.cx+1)>>1)
+                                        : (subencoding>2)?((this->tile.cx+3)>>2)
+                                        : (this->tile.cx+7)>>3;
 
-                const uint8_t  * palette = uncompressed_data_buffer.in_uint8p(palette_size);
-
-//                hexdump_d(palette, palette_size);
-
-                uint16_t   packed_pixels_length =  (
-                       (palette_count == 2)                               ? (tile.cx + 7) / 8
-                    : ((palette_count == 3) || (palette_count == 4))      ? (tile.cx + 3) / 4
-                    /* ((palette_count >= 5) && (palette_count <= 16)) */ : (tile.cx + 1) / 2
-                ) * this->tile.cy;
+                size_t packed_pixels_length = line_bytes_width * this->tile.cy;
 
                 if (uncompressed_data_buffer.in_remain() < packed_pixels_length)
                 {
-                    LOG(LOG_ERR, "Compressed VNC::zrle stream truncated (3.1)");
+                    LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated (missing palette data)");
                     throw Error(ERR_VNC_ZRLE_PROTOCOL);
                 }
-
                 const uint8_t * packed_pixels = uncompressed_data_buffer.in_uint8p(packed_pixels_length);
-
-//                hexdump_d(packed_pixels, packed_pixels_length);
-
-                uint8_t * tmp_tile_data = tile_data;
-
-                uint16_t  tile_data_length_remain = tile_data_length;
-
-                uint8_t         pixel_remain         = tile.cx;
-                const uint8_t * packed_pixels_remain = packed_pixels;
-                uint8_t         current              = 0;
-                uint8_t         index                = 0;
-
-                uint8_t palette_index;
-
-                while (tile_data_length_remain >= this->Bpp)
-                {
-                    pixel_remain--;
-
-                    if (!index)
-                    {
-                        current = *packed_pixels_remain;
-                        packed_pixels_remain++;
-                    }
-
-                    if (palette_count == 2)
-                    {
-                        palette_index = (current & 0x80) >> 7;
-                        current <<= 1;
-                        index++;
-
-                        if (!pixel_remain || (index > 7))
-                        {
-                            index = 0;
+                for (size_t y = 0 ; y < this->tile.cy ; y++){
+                    size_t x = 0;
+                    for (size_t i = 0 ; i < line_bytes_width ; i++){
+                        uint8_t current_byte = packed_pixels[i];
+                        for(uint8_t q = 0 ; q < pixels_per_byte ; q++){
+                            if (x >= this->tile.cx) break;
+                            uint8_t palette_index = 0;
+                            if (subencoding > 5){ // 5 .. 16
+//                               LOG(LOG_INFO, "subencoding=%u q=%u", subencoding, q);
+                               switch (q){
+                                case 0:
+                                    palette_index = current_byte >> 4;
+                                break;
+                                case 1:
+                                    palette_index = current_byte & 0xF;
+                                break;
+                                }
+                            }
+                            else if (subencoding > 2){ // 3 or 4
+//                               LOG(LOG_INFO, "subencoding=%u q=%u", subencoding, q);
+                                switch (q){
+                                    case 0:
+                                        palette_index = (current_byte >> 6) & 3;
+                                    break;
+                                    case 1:
+                                        palette_index = (current_byte >> 4) & 3;
+                                    break;
+                                    case 2:
+                                        palette_index = (current_byte >> 2) & 3;
+                                    break;
+                                    case 3:
+                                        palette_index = current_byte & 3;
+                                    break;
+                                }
+                            }
+                            else { // 2
+//                               LOG(LOG_INFO, "subencoding=%u q=%u", subencoding, q);
+                                switch (q){
+                                    case 0:
+                                        palette_index = (current_byte >> 7) & 1;
+                                        break;
+                                    case 1:
+                                        palette_index = (current_byte >> 6) & 1;
+                                        break;
+                                    case 2:
+                                        palette_index = (current_byte >> 5) & 1;
+                                        break;
+                                    case 3:
+                                        palette_index = (current_byte >> 4) & 1;
+                                        break;
+                                    case 4:
+                                        palette_index = (current_byte >> 3) & 1;
+                                        break;
+                                    case 5:
+                                        palette_index = (current_byte >> 2) & 1;
+                                        break;
+                                    case 6:
+                                        palette_index = (current_byte >> 1) & 1;
+                                        break;
+                                    case 7:
+                                        palette_index = current_byte & 1;
+                                        break;
+                                }
+                            }
+                            if (palette_index >= subencoding){
+                                LOG(LOG_WARNING, "VNC::zrle uncompressed stream palette entry overflow) limit=%u palette_index=%u", subencoding, palette_index);
+                                palette_index = 0;
+                            }
+                            memcpy(tile_data+(y*this->tile.cx+x)*this->Bpp, &palette[palette_index*this->Bpp], this->Bpp);
+                            x++;
                         }
                     }
-                    else if ((palette_count == 3) || (palette_count == 4))
-                    {
-                        palette_index = (current & 0xC0) >> 6;
-                        current <<= 2;
-                        index++;
-
-                        if (!pixel_remain || (index > 3))
-                        {
-                            index = 0;
-                        }
-                    }
-                    else// if ((palette_count >= 5) && (palette_count <= 16))
-                    {
-                        palette_index = (current & 0xF0) >> 4;
-                        current <<= 4;
-                        index++;
-
-                        if (!pixel_remain || (index > 1))
-                        {
-                            index = 0;
-                        }
-                    }
-
-                    if (!pixel_remain)
-                    {
-                        pixel_remain = tile.cx;
-                    }
-
-                    const uint8_t * cpixel_pattern = palette + palette_index * this->Bpp;
-
-                    memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
-
-                    tmp_tile_data           += this->Bpp;
-                    tile_data_length_remain -= this->Bpp;
+                    packed_pixels += line_bytes_width;
                 }
 
                 this->draw_tile(tile_data_p, drawable);
@@ -667,62 +634,51 @@ namespace VNC {
                     LOG(LOG_INFO, "VNC Encoding: ZRLE, Plain RLE");
                 }
 
-                uint8_t         tile_data[4*16384];    // max size with 32 bpp
-                const uint8_t * tile_data_p = tile_data;
-                const uint16_t tile_data_length = tile.cx * tile.cy * this->Bpp;
-                
-                uint16_t   tile_data_length_remain = tile_data_length;
-                uint16_t   run_length    = 0;
+                uint8_t    tile_data[4*64*64];    // max size with 32 bpp
                 uint8_t  * tmp_tile_data = tile_data;
-
-                while (tile_data_length_remain >= this->Bpp)
-                {
-
-                    if (uncompressed_data_buffer.in_remain() < this->Bpp)
-                    {
-                        LOG(LOG_ERR, "Compressed VNC::zrle stream truncated (4)");
+                const uint8_t * cpixel_pattern = nullptr;
+                bool running = true;
+                while (running){
+                    if (uncompressed_data_buffer.in_remain() < this->Bpp+1){
+                        LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated (plainRLE)");
                         throw Error(ERR_VNC_ZRLE_PROTOCOL);
                     }
-
-                    const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->Bpp);
-
-                    run_length = 1;
-
-                    while (true)
-                    {
-                        if (uncompressed_data_buffer.in_remain() < 1)
-                        {
-                            LOG(LOG_ERR, "Compressed VNC::zrle stream truncated (4.1)");
+                    cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->Bpp);
+                    size_t length = uncompressed_data_buffer.in_uint8() + 1;
+                    if (length == 256){ // multi bytes length
+                        length -= 1;
+                        for(;;){
+                            if (uncompressed_data_buffer.in_remain() < 1){
+                                LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated (plainRLE) truncated length");
+                                throw Error(ERR_VNC_ZRLE_PROTOCOL);
+                            }
+                            uint8_t tmp = uncompressed_data_buffer.in_uint8();
+                            length += tmp + 1;
+                            if (tmp != 255){
+                                break;
+                            }
+                            length = length - 1;
+                        }
+                    }
+                    for (size_t i = 0 ; i < length ; i++){
+                        if (tmp_tile_data == tile_data + this->tile.cx * this->tile.cy * this->Bpp){
+                            LOG(LOG_ERR, "VNC::zrle uncompressed stream, plainRLE out of bound");
                             throw Error(ERR_VNC_ZRLE_PROTOCOL);
                         }
-
-                        uint8_t byte_value = uncompressed_data_buffer.in_uint8();
-                        run_length += byte_value;
-
-                        if (byte_value != 255)
-                            break;
-                    }
-
-                    while ((tile_data_length_remain >= this->Bpp) && run_length)
-                    {
                         memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
-
-                        tmp_tile_data           += this->Bpp;
-                        tile_data_length_remain -= this->Bpp;
-
-                        run_length--;
+                        tmp_tile_data+=this->Bpp;
+                    }
+                    if (tmp_tile_data == tile_data + this->tile.cx * this->tile.cy * this->Bpp){
+                        break;
                     }
                 }
 
-                assert(!run_length);
-                assert(!tile_data_length_remain);
-
-                this->draw_tile(tile_data_p, drawable);
+                this->draw_tile(tile_data, drawable);
             }
 
             //    130 to 255
-            //        Palette RLE. 
-            
+            //        Palette RLE.
+
             //        Followed by the palette, consisting of paletteSize = (subencoding - 128) pixel values:
 
             //        | No. of bytes                 | Type         | Description  |
@@ -758,69 +714,61 @@ namespace VNC {
                     LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE");
                 }
 
-                uint8_t         tile_data[4*16384];    // max size with 32 bpp
-                const uint8_t * tile_data_p = tile_data;
-                const uint16_t tile_data_length = this->tile.cx * this->tile.cy * this->Bpp;
-                const uint8_t    palette_count = subencoding - 128;
-                const uint16_t   palette_size  = palette_count * this->Bpp;
+                const uint16_t   palette_size  = (subencoding & 0x7F) * this->Bpp;
 
-                if (uncompressed_data_buffer.in_remain() < palette_size)
-                {
-                    LOG(LOG_ERR, "Compressed VNC::zrle stream truncated (5)");
+                if (uncompressed_data_buffer.in_remain() < palette_size){
+                    LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated (missing palette)");
                     throw Error(ERR_VNC_ZRLE_PROTOCOL);
                 }
 
                 const uint8_t * palette = uncompressed_data_buffer.in_uint8p(palette_size);
-                uint16_t   tile_data_length_remain = tile_data_length;
-                uint16_t   run_length    = 0;
-                uint8_t  * tmp_tile_data = tile_data;
 
-                while (tile_data_length_remain >= this->Bpp)
-                {
-                    if (uncompressed_data_buffer.in_remain() < 1)
-                    {
-                        LOG(LOG_ERR, "Compressed VNC::zrle stream truncated (6)");
+                uint8_t    tile_data[4*64*64];    // max size with 32 bpp
+                uint8_t  * tmp_tile_data = tile_data;
+                for (;;){
+                    if (uncompressed_data_buffer.in_remain() < 1){
+                        LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated (paletteRLE)");
                         throw Error(ERR_VNC_ZRLE_PROTOCOL);
                     }
-
-                    uint8_t         palette_index  = uncompressed_data_buffer.in_uint8();
-                    const uint8_t * cpixel_pattern = palette + (palette_index & 0x7F) * this->Bpp;
-
-                    run_length = 1;
-
-                    if (palette_index & 0x80)
-                    {
-                        while (true)
-                        {
-                            if (uncompressed_data_buffer.in_remain() < 1)
-                            {
-                                LOG(LOG_ERR, "Compressed VNC::zrle stream truncated (7)");
-                                throw Error(ERR_VNC_ZRLE_PROTOCOL);
+                    uint8_t palette_index = uncompressed_data_buffer.in_uint8();
+                    size_t length = 1;
+                    if ((palette_index & 0x80) != 0){
+                        palette_index &= 0x7F;
+                        if (uncompressed_data_buffer.in_remain() < 1){
+                            LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated, length missing (paletteRLE)");
+                            throw Error(ERR_VNC_ZRLE_PROTOCOL);
+                        }
+                        length = uncompressed_data_buffer.in_uint8() + 1;
+                        if (length == 256){ // multi bytes length
+                            length = length - 1;
+                            for(;;){
+                                if (uncompressed_data_buffer.in_remain() < 1){
+                                    LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated (paletteRLE) truncated length");
+                                    throw Error(ERR_VNC_ZRLE_PROTOCOL);
+                                }
+                                uint8_t tmp = uncompressed_data_buffer.in_uint8();
+                                length += tmp + 1;
+                                if (tmp != 255){
+                                    break;
+                                }
+                                length = length - 1;
                             }
-
-                            uint8_t byte_value = uncompressed_data_buffer.in_uint8();
-                            run_length += byte_value;
-
-                            if (byte_value != 255)
-                                break;
                         }
                     }
-
-                    while ((tile_data_length_remain >= this->Bpp) && run_length)
-                    {
-                        memcpy(tmp_tile_data, cpixel_pattern, this->Bpp);
-
-                        tmp_tile_data           += this->Bpp;
-                        tile_data_length_remain -= this->Bpp;
-
-                        run_length--;
+//                    LOG(LOG_INFO, "paletteIndex=%u length=%u", palette_index, length);
+                    for (size_t i = 0 ; i < length ; i++){
+                        if (tmp_tile_data == tile_data + this->tile.cx * this->tile.cy * this->Bpp){
+                            LOG(LOG_ERR, "VNC::zrle uncompressed stream, plainRLE out of bound");
+                            throw Error(ERR_VNC_ZRLE_PROTOCOL);
+                        }
+                        memcpy(tmp_tile_data, palette+palette_index*this->Bpp, this->Bpp);
+                        tmp_tile_data+=this->Bpp;
+                    }
+                    if (tmp_tile_data == tile_data + this->tile.cx * this->tile.cy * this->Bpp){
+                        break;
                     }
                 }
-
-                assert(!run_length);
-                assert(!tile_data_length_remain);
-
-                this->draw_tile(tile_data_p, drawable);
+                this->draw_tile(tile_data, drawable);
             }
         }; // class Zrle
     } // namespace Encoder

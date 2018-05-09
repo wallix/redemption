@@ -115,6 +115,7 @@ struct TSRequest final {
 
     /* [0] version */
     uint32_t version;
+    uint32_t use_version;
 
     /* [1] negoTokens (NegoData) */
     Array negoTokens;
@@ -133,6 +134,7 @@ struct TSRequest final {
 
     TSRequest()
         : version(6)
+        , use_version(this->version)
         , negoTokens(0)
         , authInfo(0)
         , pubKeyAuth(0)
@@ -141,17 +143,15 @@ struct TSRequest final {
     {
     }
 
-
-    explicit TSRequest(InStream & stream)
-        : version(6)
+    TSRequest(uint32_t version)
+        : version(version)
+        , use_version(this->version)
         , negoTokens(0)
         , authInfo(0)
         , pubKeyAuth(0)
         , error_code(0)
         , clientNonce(0)
     {
-        this->recv(stream);
-        // LOG(LOG_INFO, "TSRequest recv %d", res);
     }
 
     int ber_sizeof(int length) {
@@ -176,7 +176,7 @@ struct TSRequest final {
         int auth_info_length = (this->authInfo.size() > 0)
             ? CredSSP::sizeof_auth_info(this->authInfo.size())
             : 0;
-        int client_nonce_length = (this->version >= 5 && this->clientNonce.size() > 0)
+        int client_nonce_length = (this->use_version >= 5 && this->clientNonce.size() > 0)
             ? CredSSP::sizeof_client_nonce(this->clientNonce.size())
             : 0;
 
@@ -279,11 +279,11 @@ struct TSRequest final {
         LOG(LOG_INFO, "Credssp TSCredentials::recv() Remote Version %u",
             remote_version);
 
-        if (remote_version < this->version) {
-            this->version = remote_version;
+        if (remote_version < this->use_version) {
+            this->use_version = remote_version;
         }
-        LOG(LOG_INFO, "Credssp TSCredentials::recv() Local Version %u",
-            this->version);
+        LOG(LOG_INFO, "Credssp TSCredentials::recv() Negotiated version %u",
+            this->use_version);
 
         /* [1] negoTokens (NegoData) */
         if (BER::read_contextual_tag(stream, 1, length, true) != false)        {

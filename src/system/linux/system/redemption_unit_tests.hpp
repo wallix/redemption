@@ -185,7 +185,7 @@ namespace redemption_unit_test__
 
         bool operator == (xarray const & other) const
         {
-            return other.sig.size() == other.sig.size()
+            return sig.size() == other.sig.size()
                 && std::equal(sig.begin(), sig.end(), other.sig.begin());
         }
     };
@@ -220,12 +220,12 @@ namespace redemption_unit_test__
         for (unsigned c : x.sig) {
             if (q%split == 0){
                 if (x.sig.size()>split){
-                    out << "\n\""; 
+                    out << "\n\"";
                 }
                 else {
                     out << "\"";
                 }
-            } 
+            }
             if (q++ == x.res){ out << "\x1b[31m";}
             out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
             tmpbuf[i++] = c;
@@ -246,7 +246,7 @@ namespace redemption_unit_test__
                 else {
                     out << "\"";
                 }
-            } 
+            }
         }
         if (q%split != 0){
             if (x.sig.size()>split) {
@@ -265,7 +265,7 @@ namespace redemption_unit_test__
             else {
                 out << "\"";
             }
-        } 
+        }
         return out << "\x1b[0m";
     }
 
@@ -348,7 +348,7 @@ namespace redemption_unit_test__
 
         bool operator == (xsarray const & other) const
         {
-            return other.sig.size() == other.sig.size()
+            return sig.size() == other.sig.size()
                 && std::equal(sig.begin(), sig.end(), other.sig.begin());
         }
     };

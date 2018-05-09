@@ -25,12 +25,10 @@
 #include "gdi/graphic_api.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 
-class ClientInfo;
-
 class FakeGraphic : public gdi::GraphicApi
 {
 public:
-    FakeGraphic(ClientInfo & info, uint32_t verbose);
+    FakeGraphic(uint8_t bpp, size_t width, size_t height, uint32_t verbose);
 
     void draw(RDP::FrameMarker    const & cmd) override;
 
@@ -108,15 +106,7 @@ public:
 private:
     uint32_t                    verbose;
 public:
-    ClientInfo                & info;
     uint8_t                     mod_bpp;
     BGRPalette                  mod_palette;
-
-    int mouse_x;
-    int mouse_y;
-
-    bool notimestamp;
-    bool nomouse;
-
     RDPDrawable gd;
 };

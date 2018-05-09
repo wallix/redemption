@@ -714,11 +714,11 @@ public:
         return movie_time_start;
     }
 
-    virtual void replay_set_pause(timeval pause_duration) override {
+    void replay_set_pause(timeval pause_duration) override {
         this->replay_mod->set_pause(pause_duration);
     }
 
-    virtual void replay_set_sync() override {
+    void replay_set_sync() override {
         this->replay_mod->set_sync();
     }
 

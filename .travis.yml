@@ -1,78 +1,47 @@
-sudo: false
-dist: trusty
 language: cpp
+os: linux
+dist: trusty
+sudo: false
 
-addons:
-  apt:
-    packages:
-      #- g++-4.9
-      - g++-5
-      #- g++-6
-      - clang-4.0
-      - libssl-dev
-      - libpng12-dev
-      - libboost-dev
-      - libsnappy-dev
-    sources: &sources
-      - ubuntu-toolchain-r-test
-      - llvm-toolchain-trusty-4.0
-
-
-cache:
-  directories:
-    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.6.2
-    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.7.1
-    - ${TRAVIS_BUILD_DIR}/deps/llvm-3.8.0
-    - ${TRAVIS_BUILD_DIR}/deps
+# addons:
+#   apt:
+#     packages: ["libboost-test-dev", "libgssglue-dev", "libkrb5-dev", "libpng12-dev", "libsnappy-dev", "libssl-dev", "libavcodec-dev", "libavcodec-extra-54", "libavformat-dev", "libavformat-extra-54", "libavutil-dev", "libavutil-extra-52", "libbz2-dev", "libswscale-dev", "libswscale-extra-2", "libx264-dev"]
+#     sources: ["mc3man/trusty-media", "ubuntu-toolchain-r-test" ]
 
 
 matrix:
   include:
-    #GCC 4
-    #- os: linux
-      #env: TOOLSET=gcc-4.9
-      #compiler: gcc-4.9
-      #before_script:
-        #- "echo -e 'using gcc : : g++-4.9 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
+  # Clang 5.0
+  - env: COMPILER=clang-5 LLVM_VERSION=5.0.1
+    addons:
+      apt:
+        packages: ["clang-5.0", "libc++-dev", "libc++abi-dev", "libboost-test-dev", "libgssglue-dev", "libkrb5-dev", "libpng12-dev", "libsnappy-dev", "libssl-dev", "libavcodec-dev", "libavcodec-extra-54", "libavformat-dev", "libavformat-extra-54", "libavutil-dev", "libavutil-extra-52", "libbz2-dev", "libswscale-dev", "libswscale-extra-2", "libx264-dev"]
+        sources: ["ubuntu-toolchain-r-test", "llvm-toolchain-trusty-5.0", "mc3man/trusty-media"]
+    before_script:
+      - "echo -e 'using clang : : clang++-5.0 : <cxxflags>-fdiagnostics-color=always <cxxflags>-stdlib=libc++ <cxxflags>-Wunused-command-line-argument <linkflags>-stdlib=libc++ ;' > ~/user-config.jam"
 
-    # Note: Insufficient memory (4G)
-    #internal compiler error: Killed (program cc1plus)
-    #GCC 5
-    - os: linux
-      env: TOOLSET=gcc-5
-      compiler: gcc
-      before_script:
-        - "echo -e 'using gcc : : g++-5 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
+  # GCC 7
+  - env: COMPILER=gcc-7
+    addons:
+      apt:
+        packages: ["g++-7", "libboost-test-dev", "libgssglue-dev", "libkrb5-dev", "libpng12-dev", "libsnappy-dev", "libssl-dev", "libavcodec-dev", "libavcodec-extra-54", "libavformat-dev", "libavformat-extra-54", "libavutil-dev", "libavutil-extra-52", "libbz2-dev", "libswscale-dev", "libswscale-extra-2", "libx264-dev"]
+        sources: ["ubuntu-toolchain-r-test", "mc3man/trusty-media"]
+    before_script:
+      - "echo -e 'using gcc : : g++-7 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
 
-    # GCC 6
-    #- os: linux
-    #  env: COMPILER=gcc-6
-    #  compiler: gcc
-    #  before_script:
-    #    - "echo -e 'using gcc : : g++-6 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
 
-    # Clang 3.6
-    - os: linux
-      env: LLVM_VERSION=3.6.2
-      compiler: clang
-
-    # Clang 4.0
-    - os: linux
-      env: TOOLSET=clang-4.0
-      compiler: clang
+cache:
+  directories:
+    - ${HOME}/deps/llvm-5.0.1
+    - ${HOME}/deps
 
 
 install:
   ############################################################################
-  # All the dependencies are installed in ${TRAVIS_BUILD_DIR}/deps/
+  # All the dependencies are installed in ${HOME}/deps/
   ############################################################################
-  - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
+  - DEPS_DIR="${HOME}/deps"
   - mkdir -p ${DEPS_DIR} && cd ${DEPS_DIR}
-
-  ############################################################################
-  # Setup default versions and override compiler if needed
-  ############################################################################
-  - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
 
   ############################################################################
   # Install a recent CMake (unless already installed on OS X)
@@ -91,51 +60,51 @@ install:
   ############################################################################
   # Install Clang, libc++ and libc++abi
   ############################################################################
-  - |
-    if [[ "${LLVM_VERSION}" != "" ]]; then
-        LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
-        if [[ -z "$(ls -A ${LLVM_DIR})" ]]; then
-            LLVM_URL="http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz"
-            LIBCXX_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz"
-            LIBCXXABI_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxxabi-${LLVM_VERSION}.src.tar.xz"
-            CLANG_URL="http://llvm.org/releases/${LLVM_VERSION}/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-14.04.tar.xz"
-            mkdir -p ${LLVM_DIR}/build ${LLVM_DIR}/projects/libcxx ${LLVM_DIR}/projects/libcxxabi ${LLVM_DIR}/clang
-            travis_retry wget --quiet -O - ${LLVM_URL}      | tar --strip-components=1 -xJ -C ${LLVM_DIR}
-            travis_retry wget --quiet -O - ${LIBCXX_URL}    | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxx
-            travis_retry wget --quiet -O - ${LIBCXXABI_URL} | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxxabi
-            travis_retry wget --quiet -O - ${CLANG_URL}     | tar --strip-components=1 -xJ -C ${LLVM_DIR}/clang
-            (cd ${LLVM_DIR}/build && cmake .. -DCMAKE_INSTALL_PREFIX=${LLVM_DIR}/install -DCMAKE_CXX_COMPILER=clang++) || exit 1
-            (cd ${LLVM_DIR}/build/projects/libcxx && make install -j2) || exit 1
-            (cd ${LLVM_DIR}/build/projects/libcxxabi && make install -j2) || exit 1
-        fi
-        export CXXFLAGS="-nostdinc++ -isystem ${LLVM_DIR}/install/include/c++/v1"
-        [ "${LLVM_VERSION}" = "3.6.2" ] && CXXFLAGS+=" -Wno-unknown-warning-option"
-        export LDFLAGS="-L ${LLVM_DIR}/install/lib -l c++ -l c++abi"
-        export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_DIR}/install/lib"
-        export PATH="${LLVM_DIR}/clang/bin:${PATH}"
-        export TOOLSET=clang
-    fi
+  # - |
+  #   if [[ "${LLVM_VERSION}" != "" ]]; then
+  #       LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
+  #       if [[ -z "$(ls -A ${LLVM_DIR})" ]]; then
+  #           LLVM_URL="http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz"
+  #           LIBCXX_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz"
+  #           LIBCXXABI_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxxabi-${LLVM_VERSION}.src.tar.xz"
+  #           CLANG_URL="http://llvm.org/releases/${LLVM_VERSION}/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-14.04.tar.xz"
+  #           mkdir -p ${LLVM_DIR}/build ${LLVM_DIR}/projects/libcxx ${LLVM_DIR}/projects/libcxxabi ${LLVM_DIR}/clang
+  #           travis_retry wget --quiet -O - ${LLVM_URL}      | tar --strip-components=1 -xJ -C ${LLVM_DIR}
+  #           travis_retry wget --quiet -O - ${LIBCXX_URL}    | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxx
+  #           travis_retry wget --quiet -O - ${LIBCXXABI_URL} | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxxabi
+  #           travis_retry wget --quiet -O - ${CLANG_URL}     | tar --strip-components=1 -xJ -C ${LLVM_DIR}/clang
+  #           (cd ${LLVM_DIR}/build && cmake .. -DCMAKE_INSTALL_PREFIX=${LLVM_DIR}/install -DCMAKE_CXX_COMPILER=clang++) || exit 1
+  #           (cd ${LLVM_DIR}/build/projects/libcxx && make install -j2) || exit 1
+  #           (cd ${LLVM_DIR}/build/projects/libcxxabi && make install -j2) || exit 1
+  #       fi
+  #       export CXXFLAGS="-nostdinc++ -isystem ${LLVM_DIR}/install/include/c++/v1"
+  #       # [ "${LLVM_VERSION}" = "3.6.2" ] && CXXFLAGS+=" -Wno-unknown-warning-option"
+  #       export LDFLAGS="-L ${LLVM_DIR}/install/lib -l c++ -l c++abi"
+  #       # export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_DIR}/install/lib"
+  #       # export PATH="${LLVM_DIR}/clang/bin:${PATH}"
+  #       # export TOOLSET=clang
+  #   fi
 
   ############################################################################
   # Install libav
   ############################################################################
-  - |
-    LIBAV_URL=https://github.com/FFmpeg/FFmpeg/archive/n2.5.11.tar.gz
-    LIBAV_DIR=${DEPS_DIR}/libav
-    if [[ ! -d "${LIBAV_DIR}" ]]; then
-        mkdir -p ${LIBAV_DIR}/libav
-        travis_retry wget --quiet -O - ${LIBAV_URL} | tar --strip-components=1 -xz -C ${LIBAV_DIR}
-        # quick install (very bad)
-        echo -e \
-            "#ifndef AVUTIL_AVCONFIG_H\n" \
-            "#define AVUTIL_AVCONFIG_H\n" \
-            "#define AV_HAVE_BIGENDIAN 0\n" \
-            "#define AV_HAVE_FAST_UNALIGNED 1\n" \
-            "#define AV_HAVE_INCOMPATIBLE_LIBAV_ABI 0\n" \
-            "#endif\n" \
-        > ${LIBAV_DIR}/libavutil/avconfig.h
-    fi
-    export FFMPEG_INC_PATH=${LIBAV_DIR}
+  # - |
+  #   LIBAV_URL=https://github.com/FFmpeg/FFmpeg/archive/n2.5.11.tar.gz
+  #   LIBAV_DIR=${DEPS_DIR}/libav
+  #   if [[ ! -d "${LIBAV_DIR}" ]]; then
+  #       mkdir -p ${LIBAV_DIR}/libav
+  #       travis_retry wget --quiet -O - ${LIBAV_URL} | tar --strip-components=1 -xz -C ${LIBAV_DIR}
+  #       # quick install (very bad)
+  #       echo -e \
+  #           "#ifndef AVUTIL_AVCONFIG_H\n" \
+  #           "#define AVUTIL_AVCONFIG_H\n" \
+  #           "#define AV_HAVE_BIGENDIAN 0\n" \
+  #           "#define AV_HAVE_FAST_UNALIGNED 1\n" \
+  #           "#define AV_HAVE_INCOMPATIBLE_LIBAV_ABI 0\n" \
+  #           "#endif\n" \
+  #       > ${LIBAV_DIR}/libavutil/avconfig.h
+  #   fi
+  #   export FFMPEG_INC_PATH=${LIBAV_DIR}
 
   ############################################################################
   # Install Boost Build
@@ -155,7 +124,7 @@ install:
 
 script:
   - cd ${TRAVIS_BUILD_DIR}
-  - bjam linkflags=-c --toolset=$TOOLSET cxxflags="-std=c++11 $CXXFLAGS" -q exe libs
+  - bjam -q --toolset="${COMPILER%%-*}" cxxflags="-DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING" rdpproxy
 
 
 #branches:

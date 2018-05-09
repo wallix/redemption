@@ -144,6 +144,7 @@ private:
     //@}
 
     RdpNegociationResult negociation_result;
+    std::string target_host;
 
     const bool allow_using_multiple_monitors; // TODO duplicate monitor_count ?
     const uint32_t monitor_count;
@@ -733,6 +734,7 @@ public:
         , redir_info(redir_info)
         , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user)
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
+        , target_host(mod_rdp_params.target_host)
         , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
         , monitor_count(info.cs_monitor.monitorCount)
         , rdp_negociation(
@@ -1788,20 +1790,21 @@ public:
 
     // this->total_main_amount_data_rcv_from_client += length;
     // this->total_main_amount_data_rcv_from_server += length;
-    void log_metrics() override {
+    void log_metrics(const char * premary_user) override {
         if (bool(this->verbose & RDPVerbose::export_metrics)) {
             LOG(LOG_INFO, "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\" Client data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld",
-                this->redir_info.session_id, this->logon_info.username(),
-                this->logon_info.domain(), this->logon_info.hostname()/*"user_account", "0.0.0.0"*/,
+                this->redir_info.session_id, premary_user, this->logon_info.username(),
+                this->target_host/*"user_account", "0.0.0.0"*/,
                 this->total_main_amount_data_rcv_from_client,
                 this->total_cliprdr_amount_data_rcv_from_client,
                 this->total_rail_amount_data_rcv_from_client,
                 this->total_rdpdr_amount_data_rcv_from_client,
                 this->total_drdynvc_amount_data_rcv_from_client);
 
+
             LOG(LOG_INFO, "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\" Server data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld",
-                this->redir_info.session_id, this->logon_info.username(),
-                this->logon_info.domain(), this->logon_info.hostname(),
+                this->redir_info.session_id, premary_user, this->logon_info.username(),
+                this->target_host/*"user_account", "0.0.0.0"*/,
                 this->total_main_amount_data_rcv_from_server,
                 this->total_cliprdr_amount_data_rcv_from_server,
                 this->total_rail_amount_data_rcv_from_server,

@@ -96,6 +96,7 @@ public:
         : server(false)
         , send_seq_num(0)
         , recv_seq_num(0)
+        , ts_request(6) // Credssp Version 6 Supported
         , negoToken(ts_request.negoTokens)
         , pubKeyAuth(ts_request.pubKeyAuth)
         , authInfo(ts_request.authInfo)
@@ -272,7 +273,7 @@ protected:
         SEC_STATUS status;
         int public_key_length;
         uint8_t * public_key;
-        uint32_t version = this->ts_request.version;
+        uint32_t version = this->ts_request.use_version;
 
         public_key_length = this->PublicKey.size();
         public_key = this->PublicKey.get_data();
@@ -335,7 +336,7 @@ protected:
         SecBuffer Buffers[2];
         SecBufferDesc Message;
         SEC_STATUS status;
-        uint32_t version = this->ts_request.version;
+        uint32_t version = this->ts_request.use_version;
 
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspClient::decrypt_public_key_echo");

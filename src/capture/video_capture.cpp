@@ -103,21 +103,23 @@ void VideoTransportBase::force_open()
     std::snprintf(this->tmp_filename, sizeof(this->tmp_filename), "%sred-XXXXXX.tmp", this->final_filename);
     int fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
     if (fd == -1) {
+        int const errnum = errno;
         LOG( LOG_ERR, "can't open temporary file %s : %s [%d]"
            , this->tmp_filename
-           , strerror(errno), errno);
+           , strerror(errnum), errnum);
         this->status = false;
-        throw this->out_file.get_report_error()(Error(ERR_TRANSPORT_OPEN_FAILED, errno));
+        throw this->out_file.get_report_error()(Error(ERR_TRANSPORT_OPEN_FAILED, errnum));
     }
 
     if (fchmod(fd, this->groupid ? (S_IRUSR|S_IRGRP) : S_IRUSR) == -1) {
+        int const errnum = errno;
         LOG( LOG_ERR, "can't set file %s mod to %s : %s [%d]"
            , this->tmp_filename
            , this->groupid ? "u+r, g+r" : "u+r"
-           , strerror(errno), errno);
+           , strerror(errnum), errnum);
         ::close(fd);
         unlink(this->tmp_filename);
-        throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+        throw Error(ERR_TRANSPORT_OPEN_FAILED, errnum);
     }
 
     this->out_file.open(unique_fd{fd});
@@ -133,10 +135,11 @@ void VideoTransportBase::rename()
 
     if (::rename(this->tmp_filename, this->final_filename) < 0)
     {
+        int const errnum = errno;
         LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%d : %s\n"
-            , this->tmp_filename, this->final_filename, errno, strerror(errno));
+            , this->tmp_filename, this->final_filename, errnum, strerror(errnum));
         this->status = false;
-        throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+        throw Error(ERR_TRANSPORT_WRITE_FAILED, errnum);
     }
 
     this->tmp_filename[0] = 0;

@@ -1635,13 +1635,13 @@ namespace jln2
             }
         }
 
-        void detach() noexcept
-        {
-            if (this->p) {
-                this->p->shared_ptr = nullptr;
-                this->p = nullptr;
-            }
-        }
+        // void detach() noexcept
+        // {
+        //     if (this->p) {
+        //         this->p->shared_ptr = nullptr;
+        //         this->p = nullptr;
+        //     }
+        // }
 
     private:
         friend class SharedDataBase;

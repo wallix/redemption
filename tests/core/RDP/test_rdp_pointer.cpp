@@ -24,16 +24,16 @@
 #include "system/redemption_unit_tests.hpp"
 #include "test_only/check_sig.hpp"
 
-#include "core/RDP/rdp_pointer.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/drawable.hpp"
 #include "utils/png.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 
 RED_AUTO_TEST_CASE(TestDataSize)
 {
     Pointer p;
 
-    RED_CHECK_EQUAL(p.data_size(), 32 * 32 * 3);
+    RED_CHECK_EQUAL(p.xor_data_size(), 32 * 32 * 3);
 }
 
 RED_AUTO_TEST_CASE(TestNormalPointer)
@@ -747,3 +747,22 @@ RED_AUTO_TEST_CASE(TestPointerVNC_Color)
 //VNC Cursor(0, 8, 23, 27) 2 16 1242
 
 }
+
+RED_AUTO_TEST_CASE(TestPointerIO)
+{
+
+//    uint8_t data[] = {
+//    };
+
+////    InStream stream(data, sizeof(data)); 
+////    Pointer cursor(stream);
+//    
+//    Pointer p(EditPointer{});
+
+//    StaticOutStream<8192> result;
+//    
+//    cursor.emit(result);
+
+//    RED_CHECK_MEM(stream_to_avu8(result), make_array_view(data, sizeof(data))); 
+}
+

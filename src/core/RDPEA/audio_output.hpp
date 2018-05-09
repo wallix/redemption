@@ -296,6 +296,10 @@ struct ServerAudioFormatsandVersionHeader{
         LOG(LOG_INFO, "          * wVersion            = 0x%04x (2 bytes)", this->wVersion);
         LOG(LOG_INFO, "          * bPad       - (1 byte)  NOT USED");
     }
+
+    static size_t size() {
+        return 24;  //  4 + 4 + 4 + 4 + 2 + 2 + 2 + 1 + 2 + 1
+    }
 };
 
 

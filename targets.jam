@@ -38,6 +38,7 @@ exe rdpproxy :
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
   <library>src/core/mainloop.o
   <library>src/gdi/clip_from_cmd.o
@@ -278,6 +279,7 @@ exe rdptproxy :
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -367,6 +369,7 @@ exe vncclient :
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -515,6 +518,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -608,6 +612,7 @@ test-run tests/acl/test_authentifier :
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -701,6 +706,7 @@ test-run tests/acl/test_module_manager :
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -1079,6 +1085,76 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/front/fake_front.o
+;
+test-run tests/client_redemption/client_channel_managers/test_client_channel_CLIPRDR_manager :
+  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_channel_CLIPRDR_manager.cpp
+:
+  <covfile>src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp
+  <library>app_path_test.o
+  <library>crypto
+  <library>openssl
+  <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
+  <library>src/capture/file_to_graphic.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/client_execute.o
+  <library>src/mod/internal/internal_mod.o
+  <library>src/mod/internal/replay_mod.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>z
+;
+test-run tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager :
+  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager.cpp
+:
+  <covfile>src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.hpp
+  <library>app_path_test.o
+  <library>crypto
+  <library>openssl
+  <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
+  <library>src/capture/file_to_graphic.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/client_execute.o
+  <library>src/mod/internal/internal_mod.o
+  <library>src/mod/internal/replay_mod.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>z
 ;
 test-run tests/core/FSCC/test_FileInformation :
   $(REDEMPTION_TEST_PATH)/core/FSCC/test_FileInformation.cpp
@@ -1864,6 +1940,13 @@ test-run tests/core/test_client_info :
   <library>crypto
   <library>src/core/font.o
 ;
+test-run tests/core/test_date_dir_from_filename :
+  $(REDEMPTION_TEST_PATH)/core/test_date_dir_from_filename.cpp
+:
+  <covfile>src/core/date_dir_from_filename.cpp
+  <covfile>src/core/date_dir_from_filename.hpp
+  <library>src/core/date_dir_from_filename.o
+;
 test-run tests/core/test_error :
   $(REDEMPTION_TEST_PATH)/core/test_error.cpp
 :
@@ -1911,6 +1994,7 @@ test-run tests/core/test_mainloop :
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
   <library>src/core/mainloop.o
   <library>src/gdi/clip_from_cmd.o
@@ -2010,6 +2094,7 @@ test-run tests/core/test_session :
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -2105,6 +2190,7 @@ test-run tests/core/test_session_server :
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -2193,6 +2279,7 @@ test-run tests/front/test_front :
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -3555,6 +3642,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -3601,6 +3689,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -3647,6 +3736,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -4303,6 +4393,7 @@ obj src/capture/video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.c
 obj src/capture/video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder.cpp : <cxxflags>-Wno-deprecated-declarations ;
 obj src/core/RDP/mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
 obj src/core/RDP/nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;
+obj src/core/date_dir_from_filename.o : $(REDEMPTION_SRC_PATH)/core/date_dir_from_filename.cpp ;
 obj src/core/font.o : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 obj src/core/mainloop.o : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp ;
 obj src/gdi/clip_from_cmd.o : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
@@ -4361,6 +4452,7 @@ obj src/sashimi/sftp.o : $(REDEMPTION_SRC_PATH)/sashimi/sftp.cpp : <cxxflags>-Wn
 obj src/sashimi/ssh_error.o : $(REDEMPTION_SRC_PATH)/sashimi/ssh_error.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
 obj src/transport/crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_transport.cpp ;
 obj src/transport/mwrm_reader.o : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
+obj src/transport/recorder_transport.o : $(REDEMPTION_SRC_PATH)/transport/recorder_transport.cpp ;
 obj src/transport/socket_transport.o : $(REDEMPTION_SRC_PATH)/transport/socket_transport.cpp ;
 obj src/utils/authorization_channels.o : $(REDEMPTION_SRC_PATH)/utils/authorization_channels.cpp ;
 obj src/utils/bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
@@ -4417,6 +4509,10 @@ alias test_rdp_client_large_pointer : tests/client_mods/test_rdp_client_large_po
 alias test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card ;
 alias test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008 ;
 alias test_rdp_client_wab : tests/client_mods/test_rdp_client_wab ;
+alias test_client_channel_CLIPRDR_manager : tests/client_redemption/client_channel_managers/test_client_channel_CLIPRDR_manager ;
+alias test_client_channel_CLIPRDR_manager.coverage : tests/client_redemption/client_channel_managers/test_client_channel_CLIPRDR_manager.coverage ;
+alias test_client_channel_RDPSND_manager : tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager ;
+alias test_client_channel_RDPSND_manager.coverage : tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager.coverage ;
 alias test_FileInformation : tests/core/FSCC/test_FileInformation ;
 alias test_FileInformation.coverage : tests/core/FSCC/test_FileInformation.coverage ;
 alias test_bmpcache : tests/core/RDP/caches/test_bmpcache ;
@@ -4669,6 +4765,8 @@ alias test_check_files : tests/core/test_check_files ;
 alias test_check_files.coverage : tests/core/test_check_files.coverage ;
 alias test_client_info : tests/core/test_client_info ;
 alias test_client_info.coverage : tests/core/test_client_info.coverage ;
+alias test_date_dir_from_filename : tests/core/test_date_dir_from_filename ;
+alias test_date_dir_from_filename.coverage : tests/core/test_date_dir_from_filename.coverage ;
 alias test_error : tests/core/test_error ;
 alias test_error.coverage : tests/core/test_error.coverage ;
 alias test_font : tests/core/test_font ;
@@ -5066,6 +5164,11 @@ alias tests/client_mods :
   tests/client_mods/test_rdp_client_tls_w2008
   tests/client_mods/test_rdp_client_wab
 ;
+explicit tests/client_redemption/client_channel_managers ;
+alias tests/client_redemption/client_channel_managers :
+  tests/client_redemption/client_channel_managers/test_client_channel_CLIPRDR_manager
+  tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager
+;
 explicit tests/core/FSCC ;
 alias tests/core/FSCC :
   tests/core/FSCC/test_FileInformation
@@ -5239,6 +5342,7 @@ alias tests/core :
   tests/core/test_channel_names
   tests/core/test_check_files
   tests/core/test_client_info
+  tests/core/test_date_dir_from_filename
   tests/core/test_error
   tests/core/test_font
   tests/core/test_front_api
@@ -5497,13 +5601,14 @@ explicit tests/utils/winpr ;
 alias tests/utils/winpr :
   tests/utils/winpr/test_pattern
 ;
-explicit tests.full ;
-alias tests.full :
+explicit test ;
+alias test :
   tests/acl
   tests/capture/ocr/locale
   tests/capture
   tests/capture/utils
   tests/client_mods
+  tests/client_redemption/client_channel_managers
   tests/core/FSCC
   tests/core/RDP/caches
   tests/core/RDP/capabilities

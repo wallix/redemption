@@ -208,6 +208,7 @@ public:
                 this->form->set_userNameField(this->client->user_name);
             }
             this->form->show();
+
         }
     }
 
@@ -1432,7 +1433,7 @@ private:
     //      CONTROLLERS
     //------------------------
 
-    void keyPressEvent(const int key, const uint16_t text) override {
+    void keyPressEvent(const int key, const std::string text) override {
 //         if (this->client->mod_state ==  ClientRedemptionIOAPI::MOD_VNC) {
 //             this->client->send_rdp_unicode(text, 0);
 //         } else {
@@ -1443,7 +1444,7 @@ private:
 //         }
     }
 
-    void keyReleaseEvent(const int key, const uint16_t text) override {
+    void keyReleaseEvent(const int key, const std::string text) override {
 //          if (this->client->mod_state ==  ClientRedemptionIOAPI::MOD_VNC) {
 //             this->client->send_rdp_unicode(text, KBD_FLAG_UP);
 //         } else {
@@ -1461,7 +1462,6 @@ private:
             this->client->target_IP     = this->form->get_IPField();
             this->client->user_password = this->form->get_PWDField();
             this->client->port          = this->form->get_portField();
-            this->client->info.console_session = this->form->RDP_tab.options._consoleBox.isChecked();
 
             if (!this->client->target_IP.empty()){
                 this->client->connect();
@@ -1477,6 +1477,21 @@ private:
         if (this->form != nullptr && this->client->connected) {
             this->form->close();
         }
+    }
+
+    ClientRedemptionIOAPI::KeyCustomDefinition get_key_info(int key, std::string text) {
+        this->qtRDPKeymap.keyEvent(0, key, text);
+        ClientRedemptionIOAPI::KeyCustomDefinition key_info(
+            this->qtRDPKeymap.qKeyCode,
+            this->qtRDPKeymap.scanCode,
+            this->qtRDPKeymap.ascii,
+            this->qtRDPKeymap.flag &0x0100 ? 0x0100: 0,
+            this->qtRDPKeymap.qKeyName
+          );
+
+       // key_info.name = this->qtRDPKeymap.name;
+
+        return key_info;
     }
 
 };

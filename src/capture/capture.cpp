@@ -1240,23 +1240,28 @@ public:
     SessionLogAgent session_log_agent;
     bool enable_agent;
 
-    MetaCaptureImpl(
-        const timeval & now,
-        MetaParams const & meta_params,
-        std::string record_path,
-        const char * const basename,
-        ReportError report_error)
+    MetaCaptureImpl(CaptureParams const& capture_params, MetaParams const & meta_params)
     : meta_trans(unique_fd{[&](){
-        record_path.append(basename).append(".meta");
+        std::string record_path;
+        record_path += capture_params.record_tmp_path;
+        record_path += capture_params.basename;
+        record_path += ".meta";
         const char * filename = record_path.c_str();
-        int fd = ::open(filename, O_CREAT | O_TRUNC | O_WRONLY, 0440);
+        int const file_mode = capture_params.groupid ? (S_IRUSR|S_IRGRP) : S_IRUSR;
+        int fd = ::open(filename, O_CREAT | O_TRUNC | O_WRONLY, file_mode);
         if (fd < 0) {
-            LOG(LOG_ERR, "failed opening=%s\n", filename);
-            throw Error(ERR_TRANSPORT_OPEN_FAILED);
+            int const errnum = errno;
+            LOG(LOG_ERR, "can't open meta file %s: %s [%d]", filename, strerror(errnum), errnum);
+            Error error(ERR_TRANSPORT_OPEN_FAILED, errnum);
+            if (capture_params.report_message) {
+                report_and_transform_error(
+                    error, ReportMessageReporter{*capture_params.report_message});
+            }
+            throw error;
         }
         return fd;
-    }()}, std::move(report_error))
-    , meta(now, this->meta_trans, underlying_cast(meta_params.hide_non_printable))
+    }()}, report_error_from_reporter(capture_params.report_message))
+    , meta(capture_params.now, this->meta_trans, underlying_cast(meta_params.hide_non_printable))
     , session_log_agent(this->meta)
     , enable_agent(underlying_cast(meta_params.enable_session_log))
     {
@@ -1421,11 +1426,7 @@ Capture::Capture(
     }
 
     if (capture_meta) {
-        this->meta_capture_obj.reset(new MetaCaptureImpl(
-            capture_params.now, meta_params,
-            capture_params.record_tmp_path, capture_params.basename,
-            report_error_from_reporter(capture_params.report_message)
-        ));
+        this->meta_capture_obj.reset(new MetaCaptureImpl(capture_params, meta_params));
     }
 
     if (capture_wrm || capture_video || capture_ocr || capture_png || capture_video_full) {

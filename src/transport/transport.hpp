@@ -152,6 +152,9 @@ public:
     }
 
 private:
+    // note: `func(buf, len)` derived function shadows `f(array)` function base.
+    // do_*() function resolves this problem
+
     /// Atomic read read exactly the amount of data requested or return an error
     /// @see atomic_read
     virtual Read do_atomic_read(uint8_t * buffer, size_t len) {

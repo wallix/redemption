@@ -38,6 +38,7 @@
 
 #include <type_traits>
 #include <cstdint>
+#include <cstdio>
 
 #include "cxx/cxx.hpp"
 

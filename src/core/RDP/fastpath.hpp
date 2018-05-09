@@ -668,6 +668,83 @@ namespace FastPath {
         }
     };
 
+// [MS-RDPBCGR] - 2.2.8.1.2.2.4 Fast-Path Extended Mouse Event
+//  (TS_FP_POINTERX_EVENT)
+// ===========================================================
+
+// The TS_FP_POINTERX_EVENT structure is the fast-path variant of the
+//  TS_POINTERX_EVENT (section 2.2.8.1.1.3.1.1.4) structure. Support for the
+//  Extended Mouse Event is advertised in the Input Capability Set (section
+//  2.2.7.1.6).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |  eventHeader  |          pointerFlags         |      yPos     |
+// +---------------+-------------------------------+---------------+
+// |      ...      |              xPos             |
+// +---------------+-------------------------------+
+
+// eventHeader (1 byte): An 8-bit, unsigned integer. The format of this field
+//  is the same as the eventHeader byte field, specified in section
+//  2.2.8.1.2.2. The eventCode bitfield (3 bits in size) MUST be set to
+//  FASTPATH_INPUT_EVENT_MOUSEX (2). The eventFlags bitfield (5 bits in size)
+//  MUST be zeroed out.
+
+// pointerFlags (2 bytes): A 16-bit, unsigned integer. The flags describing
+//  the pointer event. The possible flags are identical to those found in the
+//  pointerFlags field of the TS_POINTERX_EVENT structure.
+
+// xPos (2 bytes): A 16-bit, unsigned integer. The x-coordinate of the
+//  pointer.
+
+// yPos (2 bytes): A 16-bit, unsigned integer. The y-coordinate of the
+//  pointer.
+
+    struct MouseExEvent_Recv {
+        uint16_t pointerFlags;
+        uint16_t xPos;
+        uint16_t yPos;
+
+        MouseExEvent_Recv(InStream & stream, uint8_t eventHeader)
+        : pointerFlags(0)
+        , xPos(0)
+        , yPos(0) {
+            uint8_t eventCode = (eventHeader & 0xE0) >> 5;
+            if (eventCode != FASTPATH_INPUT_EVENT_MOUSEX) {
+                LOG(LOG_ERR, "FastPath::MouseExEvent: unexpected event code, expected=0x%X got=0x%X",
+                    FASTPATH_INPUT_EVENT_MOUSEX, eventCode);
+                throw Error(ERR_RDP_FASTPATH);
+            }
+
+            const unsigned expected =
+                  6; // pointerFlags(2) + xPos(2) + yPos(2)
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR, "FastPath::MouseExEvent: data truncated, expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDP_FASTPATH);
+            }
+
+            this->pointerFlags = stream.in_uint16_le();
+            this->xPos         = stream.in_uint16_le();
+            this->yPos         = stream.in_uint16_le();
+        }
+    };
+
+    struct MouseExEvent_Send {
+        MouseExEvent_Send( OutStream & stream
+                       , uint16_t pointerFlags
+                       , uint16_t xPos
+                       , uint16_t yPos) {
+            stream.out_uint8(FASTPATH_INPUT_EVENT_MOUSEX << 5); // eventHeader
+
+            stream.out_uint16_le(pointerFlags);
+            stream.out_uint16_le(xPos);
+            stream.out_uint16_le(yPos);
+        }
+    };
+
 // [MS-RDPBCGR] - 2.2.8.1.2.2.5 Fast-Path Synchronize Event
 //  (TS_FP_SYNC_EVENT)
 // ========================================================
