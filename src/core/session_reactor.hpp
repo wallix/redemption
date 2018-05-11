@@ -28,7 +28,7 @@ Author(s): Jonathan Poelen
 #include "utils/executor.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
-#include "utils/log.hpp"
+// #include "utils/log.hpp"
 #include "core/error.hpp"
 
 #include <functional>

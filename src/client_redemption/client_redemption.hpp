@@ -1026,7 +1026,7 @@ public:
                 if (is_timeout) {
                     session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, get_gd);
                 } else {
-                    auto is_mod_fd = [this](int /*fd*/, auto& /*e*/){
+                    auto is_mod_fd = [/*this*/](int /*fd*/, auto& /*e*/){
                         return true /*this->socket->get_fd() == fd*/;
                     };
                     session_reactor.execute_events(is_mod_fd);
