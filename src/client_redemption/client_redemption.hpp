@@ -1006,7 +1006,7 @@ public:
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------
 
-    void callback() override {
+    void callback(bool is_timeout) override {
 
 //         LOG(LOG_INFO, "Socket Event callback");
 //         if (this->_recv_disconnect_ultimatum) {
@@ -1023,20 +1023,21 @@ public:
         if (this->mod != nullptr) {
             try {
                 auto get_gd = [this]() -> gdi::GraphicApi& { return *this; };
-                auto is_mod_fd = [this](int fd, auto& /*e*/){
-                    return this->socket->get_fd() == fd;
-                };
-                session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, get_gd);
-                session_reactor.execute_events(is_mod_fd);
-                session_reactor.execute_graphics(is_mod_fd, get_gd());
-
+                if (is_timeout) {
+                    session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, get_gd);
+                } else {
+                    auto is_mod_fd = [this](int /*fd*/, auto& /*e*/){
+                        return true /*this->socket->get_fd() == fd*/;
+                    };
+                    session_reactor.execute_events(is_mod_fd);
+                    session_reactor.execute_graphics(is_mod_fd, get_gd());
+                }
             } catch (const Error & e) {
                 if (this->impl_graphic) {
                     this->impl_graphic->dropScreen();
                 }
                 const std::string errorMsg("[" + this->target_IP +  "] lost: pipe broken");
-                const std::string errorMsgLog(errorMsg+" "+e.errmsg());
-                LOG(LOG_INFO, "%s", errorMsgLog.c_str());
+                LOG(LOG_INFO, "%s: %s", errorMsg, e.errmsg());
                 std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
 
                 this->disconnect(labelErrorMsg, true);

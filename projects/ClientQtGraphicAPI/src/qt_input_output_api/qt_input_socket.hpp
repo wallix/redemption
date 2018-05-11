@@ -94,7 +94,7 @@ public Q_SLOTS:
     void call_draw_event_data() {
         //LOG(LOG_INFO, "draw_event_data");
         if (this->client->mod) {
-            this->client->callback();
+            this->client->callback(false);
             this->prepare_timer_event();
         }
     }
@@ -102,7 +102,7 @@ public Q_SLOTS:
     void call_draw_event_timer() {
         //LOG(LOG_INFO, "draw_event_timer");
         if (this->client->mod) {
-            this->client->callback();
+            this->client->callback(true);
             this->prepare_timer_event();
         }
     }
@@ -112,10 +112,10 @@ private:
         timeval now = tvtime();
         this->session_reactor.set_current_time(now);
         timeval const tv = this->session_reactor.get_next_timeout(
-            SessionReactor::EnableGraphics{false});
+            SessionReactor::EnableGraphics{true});
         if (tv.tv_sec > -1) {
             auto const time_to_wake = std::chrono::duration_cast<std::chrono::milliseconds>( ustime(tv) - ustime(now));
-            this->timer.start( time_to_wake );
+            this->timer.start(std::max(time_to_wake, std::chrono::milliseconds{0}));
         }
         else {
             this->timer.stop();

@@ -148,7 +148,7 @@ public:
     virtual char const * get_mwrm_filename() { return ""; }
     virtual time_t get_real_time_movie_begin() { return time_t{}; }
     virtual void delete_replay_mod() {}
-    virtual void callback() {}
+    virtual void callback(bool /*is_timeout*/) {}
     virtual void draw_frame(int ) {}
     virtual void closeFromScreen() {}
     virtual void disconnexionReleased() {}
