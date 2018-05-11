@@ -610,11 +610,12 @@ public:
                                             first_part_data_size = PASTE_PIC_CONTENT_SIZE;
                                         }
                                         total_length += RDPECLIP::METAFILE_HEADERS_SIZE;
+                                        auto image = this->clientIOClipboardAPI->get_image();
                                         RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr(
                                               this->clientIOClipboardAPI->get_cliboard_data_length()
-                                            , this->clientIOClipboardAPI->get_image_buffer_width()
-                                            , this->clientIOClipboardAPI->get_image_buffer_height()
-                                            , this->clientIOClipboardAPI->get_image_buffer_depth()
+                                            , image.width()
+                                            , image.height()
+                                            , image.bits_per_pixel()
                                             , this->clipbrdFormatsList.ARBITRARY_SCALE
                                         );
                                         fdr.emit(out_stream_first_part);
@@ -624,7 +625,7 @@ public:
                                             , total_length
                                             , out_stream_first_part
                                             , first_part_data_size
-                                            , this->clientIOClipboardAPI->get_image_buffer_data()
+                                            , image.data()
                                             , this->clientIOClipboardAPI->get_cliboard_data_length() + RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender::SIZE
                                             , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                         );
@@ -643,14 +644,16 @@ public:
 
                                         fdr.emit(out_stream_first_part);
 
-                                        this->process_client_clipboard_out_data( channel_names::cliprdr
-                                                                            , total_length
-                                                                            , out_stream_first_part
-                                                                            , first_part_data_size
-                                                                            , this->clientIOClipboardAPI->get_image_buffer_data()
-                                                                            , this->clientIOClipboardAPI->get_cliboard_data_length()
-                                                                            , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                                                            );
+                                        auto image = this->clientIOClipboardAPI->get_image();
+                                        this->process_client_clipboard_out_data(
+                                            channel_names::cliprdr
+                                          , total_length
+                                          , out_stream_first_part
+                                          , first_part_data_size
+                                          , image.data()
+                                          , this->clientIOClipboardAPI->get_cliboard_data_length()
+                                          , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                        );
                                     }
                                     break;
 

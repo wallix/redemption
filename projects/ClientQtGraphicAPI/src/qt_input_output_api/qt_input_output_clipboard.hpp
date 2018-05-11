@@ -53,7 +53,6 @@
 
 class QtInputOutputClipboard : public QObject, public ClientIOClipboardAPI
 {
-
     Q_OBJECT
 
 public:
@@ -98,12 +97,12 @@ public:
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
     }
 
-    void write_clipboard_temp_file(std::string fileName, const uint8_t * data, size_t data_len) override {
-        std::string filePath(this->client->CB_TEMP_DIR + std::string("/") + fileName);
+    void write_clipboard_temp_file(std::string const& fileName, const uint8_t * data, size_t data_len) override {
+        std::string filePath(this->client->CB_TEMP_DIR + "/" + fileName);
         std::string filePath_mem(filePath);
         this->_temp_files_list.push_back(filePath_mem);
 
-        std::ofstream oFile(filePath, std::ios::out | std::ios::binary | std::ios::app);
+        std::ofstream oFile(filePath, std::ios::binary | std::ios::app);
 
         if(oFile.is_open()) {
             oFile.write(reinterpret_cast<const char *>(data), data_len);
@@ -111,7 +110,7 @@ public:
         }
     }
 
-    void setClipboard_files(std::string & name) override {  //std::vector<Front_RDP_Qt_API::CB_FilesList::CB_in_Files> items_list) {
+    void setClipboard_files(std::string const& name) override {  //std::vector<Front_RDP_Qt_API::CB_FilesList::CB_in_Files> items_list) {
 
         /*QClipboard *cb = QApplication::clipboard();
         QMimeData* newMimeData = new QMimeData();
@@ -162,7 +161,7 @@ public:
 
             QByteArray gnomeFormat = QByteArray("copy\n");
 
-            std::string path(this->client->CB_TEMP_DIR + std::string("/") + name);
+            std::string path(this->client->CB_TEMP_DIR + "/" + name);
             //std::cout <<  path <<  std::endl;
             QString qpath(path.c_str());
 
@@ -178,7 +177,7 @@ public:
 //         cb->setMimeData(newMimeData);
     }
 
-    void setClipboard_text(std::string & str) override {
+    void setClipboard_text(std::string const& str) override {
         this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
     }
 
@@ -371,20 +370,16 @@ public Q_SLOTS:
         }
     }
 
-    virtual int get_image_buffer_width() override {
-        return this->_bufferImage.width();
-    }
-
-    virtual int get_image_buffer_height() override {
-        return this->_bufferImage.height();
-    }
-
-    virtual uint8_t * get_image_buffer_data() override {
-        return this->_chunk.get();
-    }
-
-    virtual int get_image_buffer_depth() override {
-        return this->_bufferImage.depth();
+    ConstImageDataView get_image() override
+    {
+        return ConstImageDataView(
+            this->_chunk.get(),
+            this->_bufferImage.width(),
+            this->_bufferImage.height(),
+            this->_bufferImage.width(),
+            ConstImageDataView::BitsPerPixel(this->_bufferImage.depth()),
+            ConstImageDataView::Storage::TopToBottom
+        );
     }
 
     virtual int get_file_item_size(int index) override {

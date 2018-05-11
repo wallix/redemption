@@ -1433,7 +1433,7 @@ private:
     //      CONTROLLERS
     //------------------------
 
-    void keyPressEvent(const int key, const std::string text) override {
+    void keyPressEvent(const int key, std::string const& text) override {
 //         if (this->client->mod_state ==  ClientRedemptionIOAPI::MOD_VNC) {
 //             this->client->send_rdp_unicode(text, 0);
 //         } else {
@@ -1444,7 +1444,7 @@ private:
 //         }
     }
 
-    void keyReleaseEvent(const int key, const std::string text) override {
+    void keyReleaseEvent(const int key, std::string const& text) override {
 //          if (this->client->mod_state ==  ClientRedemptionIOAPI::MOD_VNC) {
 //             this->client->send_rdp_unicode(text, KBD_FLAG_UP);
 //         } else {
@@ -1479,7 +1479,7 @@ private:
         }
     }
 
-    ClientRedemptionIOAPI::KeyCustomDefinition get_key_info(int key, std::string text) override {
+    ClientRedemptionIOAPI::KeyCustomDefinition get_key_info(int key, std::string const& text) override {
         this->qtRDPKeymap.keyEvent(0, key, text);
         ClientRedemptionIOAPI::KeyCustomDefinition key_info(
             this->qtRDPKeymap.qKeyCode,

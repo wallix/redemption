@@ -102,7 +102,7 @@ public:
     void emptyBuffer() override {}
 
     //  set distant clipboard data
-    void setClipboard_text(std::string & str) override {
+    void setClipboard_text(std::string const& str) override {
         this->data_text = str;
     }
 
@@ -112,26 +112,12 @@ public:
         (void) image_height;
         (void) bpp;
     }
-    void setClipboard_files(std::string & /*name*/) override {}
-    void write_clipboard_temp_file(std::string fileName, const uint8_t * data, size_t data_len) override {
+    void setClipboard_files(std::string const& /*name*/) override {}
+    void write_clipboard_temp_file(std::string const& fileName, const uint8_t * data, size_t data_len) override {
         (void) fileName;
         (void) data;
         (void) data_len;
     }
-
-        // image data
-    // TODO should be `ImageDataView get_image_view()`
-    int get_image_buffer_width() override {return 0;}
-    int get_image_buffer_height() override {return 0;}
-    uint8_t * get_image_buffer_data() override {return nullptr;}
-    int get_image_buffer_depth() override {return 0;}
-
-        // files data (file index to identify a file among a files group descriptor)
-    std::string get_file_item_name(int /*index*/) override {return std::string("");}
-    // TODO should be `array_view_const_char get_file_item_size(int index)`
-    int get_file_item_size(int index) override {(void) index; return 0;}
-    char * get_file_item_data(int index) override {(void) index; return const_cast<char*>("");}
-
 };
 
 class FakeClientOutPutSound : public ClientOutputSoundAPI {
