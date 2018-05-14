@@ -334,6 +334,6 @@ RED_AUTO_TEST_CASE(TestSessionReactorDeleter)
 
     v.emplace_back(std::make_unique<S>());
     v.back()->foo(session_reactor, f);
-    session_reactor.execute_graphics([](auto&&...){return false;}, gdi::null_gd());
+    session_reactor.execute_graphics([]([[maybe_unused]] auto&&... xs){return false;}, gdi::null_gd());
     RED_CHECK_EQ(v.size(), 0);
 }

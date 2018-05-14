@@ -156,7 +156,7 @@ namespace jln2
 
             static constexpr bool has(int f, int mask) noexcept
             {
-                return (int(f) & mask) == mask;
+                return (f & mask) == mask;
             }
         };
 
@@ -743,6 +743,10 @@ namespace jln2
     template<class... Ts>
     struct ActionExecutor
     {
+        ActionExecutor() = default;
+        ActionExecutor(const ActionExecutor&) = delete;
+        ActionExecutor& operator=(const ActionExecutor&) = delete;
+
         std::function<R(ActionContext<Ts...>, Ts...)> on_action;
 
         bool exec_action(Ts&... xs)
@@ -1139,8 +1143,8 @@ namespace jln2
             std::index_sequence_for<Fs...>, std::decay_t<Fs>...>::type;
 
         return [=, i = 0u](auto ctx, auto&&... xs) mutable /*-> R*/ {
-            auto wrap = [&](auto& f) {
-                return [&]() {
+            auto wrap = [&i, &ctx, &xs...](auto& f) {
+                return [&i, &f, &ctx, &xs...]() {
                     return f(
                         FuncSequencerCtx<decltype(ctx), Pack>{ctx, i},
                         static_cast<decltype(xs)&&>(xs)...
@@ -1850,6 +1854,17 @@ namespace jln2
                 };
             }
         }
+
+        template<class InheritSharedPtr, class SharedData>
+        InheritSharedPtr add_shared_ptr_from_data(
+            SharedDataBase& node_executors,
+            std::unique_ptr<SharedData, SharedDataDeleter>&& data_uptr) /*noexcept*/
+        {
+            SharedData* data_ptr = data_uptr.release();
+            data_ptr->next = std::exchange(node_executors.next, data_ptr);
+            data_ptr->shared_ptr = nullptr;
+            return InheritSharedPtr(data_ptr);
+        }
     }
 
 
@@ -1906,10 +1921,8 @@ namespace jln2
             {
                 assert(this->data_ptr);
                 this->top().add_group(std::move(this->g));
-                SharedDataBase* data_ptr = this->data_ptr.release();
-                data_ptr->next = std::exchange(this->cont.node_executors.next, data_ptr);
-                data_ptr->shared_ptr = nullptr;
-                return TopSharedPtr<Ts...>(static_cast<TopData*>(data_ptr));
+                return detail::add_shared_ptr_from_data<TopSharedPtr<Ts...>>(
+                    this->cont.node_executors, std::move(this->data_ptr));
             }
         };
 
@@ -2207,10 +2220,8 @@ namespace jln2
             ActionSharedPtr<Ts...> terminate_init()
             {
                 assert(this->data_ptr);
-                SharedDataBase* data_ptr = this->data_ptr.release();
-                data_ptr->next = std::exchange(this->cont.node_executors.next, data_ptr);
-                data_ptr->shared_ptr = nullptr;
-                return ActionSharedPtr<Ts...>(static_cast<ActionData*>(data_ptr));
+                return detail::add_shared_ptr_from_data<ActionSharedPtr<Ts...>>(
+                    this->cont.node_executors, std::move(this->data_ptr));
             }
         };
 
