@@ -1427,7 +1427,8 @@ public:
     }
 
     // files data (file index to identify a file among a files group descriptor)
-    virtual std::string get_file_item_name(int /*index*/) {return {};}
+    virtual std::string get_file_item_name(int index) {(void)index; return {};}
+
     // TODO should be `array_view_const_char get_file_item_size(int index)`
     virtual  int get_file_item_size(int index) {(void) index; return 0;}
     virtual char * get_file_item_data(int index) {(void) index; /*TODO char const/string_view*/ return const_cast<char*>("");}

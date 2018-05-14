@@ -1660,7 +1660,8 @@ Capture::Microseconds Capture::periodic_snapshot(
     bool ignore_frame_in_timeval
 ) {
     if (this->gd_drawable) {
-        this->gd_drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
+        this->gd_drawable->mouse_cursor_pos_x = cursor_x;
+        this->gd_drawable->mouse_cursor_pos_y = cursor_y;
     }
     this->mouse_info = {now, cursor_x, cursor_y};
 
