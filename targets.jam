@@ -41,6 +41,7 @@ exe rdpproxy :
   <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
   <library>src/core/mainloop.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -116,6 +117,7 @@ exe main_client_redemption :
   <library>openssl
   <library>png
   <library>ppocr
+  <library>program_options
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/capture.o
@@ -281,6 +283,7 @@ exe rdptproxy :
   <library>src/core/RDP/nego.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -371,6 +374,7 @@ exe vncclient :
   <library>src/core/RDP/nego.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -520,6 +524,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/core/RDP/nego.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -614,6 +619,7 @@ test-run tests/acl/test_authentifier :
   <library>src/core/RDP/nego.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -1094,6 +1100,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_CLI
   <library>crypto
   <library>openssl
   <library>png
+  <library>program_options
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/file_to_graphic.o
@@ -1129,6 +1136,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   <library>crypto
   <library>openssl
   <library>png
+  <library>program_options
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/file_to_graphic.o
@@ -1998,6 +2006,7 @@ test-run tests/core/test_mainloop :
   <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
   <library>src/core/mainloop.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -2097,6 +2106,7 @@ test-run tests/core/test_session :
   <library>src/core/RDP/nego.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -2193,6 +2203,7 @@ test-run tests/core/test_session_server :
   <library>src/core/RDP/nego.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/font.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -4397,6 +4408,7 @@ obj src/core/RDP/nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;
 obj src/core/date_dir_from_filename.o : $(REDEMPTION_SRC_PATH)/core/date_dir_from_filename.cpp ;
 obj src/core/font.o : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 obj src/core/mainloop.o : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp ;
+obj src/core/set_server_redirection_target.o : $(REDEMPTION_SRC_PATH)/core/set_server_redirection_target.cpp ;
 obj src/gdi/clip_from_cmd.o : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
 obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;
