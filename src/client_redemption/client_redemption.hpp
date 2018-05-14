@@ -51,6 +51,8 @@
 
 class ClientRedemption : public ClientRedemptionIOAPI
 {
+    SessionReactor& session_reactor;
+    SessionReactor::GraphicEventPtr clear_screen_event;
 
 public:
     // io API
@@ -105,14 +107,15 @@ public:
     //      CONSTRUCTOR
     //------------------------
 
-    ClientRedemption(char* argv[], int argc, RDPVerbose verbose,
+    ClientRedemption(SessionReactor& session_reactor,
+                     char* argv[], int argc, RDPVerbose verbose,
                      ClientOutputGraphicAPI *impl_graphic,
                      ClientIOClipboardAPI * impl_clipboard,
                      ClientOutputSoundAPI * impl_sound,
                      ClientInputSocketAPI * impl_socket_listener,
                      ClientInputMouseKeyboardAPI * impl_mouse_keyboard)
-        : ClientRedemptionIOAPI(argv, argc, verbose)
-
+        : ClientRedemptionIOAPI(session_reactor, argv, argc, verbose)
+        , session_reactor(session_reactor)
         , impl_graphic( impl_graphic)
         , impl_clipboard (impl_clipboard)
         , impl_sound (impl_sound)
@@ -120,7 +123,7 @@ public:
         , impl_mouse_keyboard(impl_mouse_keyboard)
 
         , close_box_extra_message_ref("Close")
-        , client_execute(*(this), this->info.window_list_caps, false)
+        , client_execute(session_reactor, *(this), this->info.window_list_caps, false)
 
         , clientChannelRDPSNDManager(this->verbose, this, this->impl_sound)
         , clientChannelCLIPRDRManager(this->verbose, this, this->impl_clipboard)
@@ -220,7 +223,8 @@ public:
 
     bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) override {
          try {
-            this->replay_mod.reset(new ReplayMod( *this
+            this->replay_mod.reset(new ReplayMod( session_reactor
+                                                , *this
                                                 , movie_dir.c_str() //(this->REPLAY_DIR + "/").c_str()
                                                 , movie_name.c_str()
                                                 , 0             //this->info.width
@@ -354,8 +358,9 @@ public:
                     mod_rdp_params.deny_channels = nullptr;
                     mod_rdp_params.enable_rdpdr_data_analysis = false;
 
-                    this->unique_mod.reset(new mod_rdp( *(this->socket)
-                                                , *(this)
+                    this->unique_mod.reset(new mod_rdp( *this->socket
+                                                , session_reactor
+                                                , *this
                                                 , this->info
                                                 , ini.get_ref<cfg::mod_rdp::redir_info>()
                                                 , this->gen
@@ -410,6 +415,7 @@ public:
                     }
 
                     this->unique_mod.reset(new mod_rdp( *(this->socket)
+                                                , session_reactor
                                                 , *(this)
                                                 , this->info
                                                 , ini.get_ref<cfg::mod_rdp::redir_info>()
@@ -431,28 +437,23 @@ public:
 
             case MOD_VNC:
             {
-                 this->unique_mod.reset(new mod_vnc( *(this->socket)
+                 this->unique_mod.reset(new mod_vnc( *this->socket
+                                                    , session_reactor
                                                     , this->user_name.c_str()
                                                     , this->user_password.c_str()
-                                                    , *(this)
+                                                    , *this
                                                     , this->vnc_conf.width
                                                     , this->vnc_conf.height
-                                                    , this->ini.get<cfg::font>()
-                                                    , nullptr
-                                                    , nullptr
-                                                    , this->vnc_conf.theme
                                                     , this->vnc_conf.keylayout
                                                     , 0
                                                     , true
                                                     , true
                                                     , this->vnc_conf.vnc_encodings.c_str()
-                                                    , false
-                                                    , true
                                                     , mod_vnc::ClipboardEncodingType::UTF8
                                                     , VncBogusClipboardInfiniteLoop::delayed
                                                     , this->reportMessage
                                                     , this->vnc_conf.is_apple
-                                                    , &(this->vnc_conf.exe)
+                                                    , &this->vnc_conf.exe
 //                                                    , to_verbose_flags(0xfffffffd)
                                                     , to_verbose_flags(0)
                                                    )
@@ -464,9 +465,10 @@ public:
 
             this->mod = this->unique_mod.get();
 
-            this->mod->invoke_asynchronous_graphic_task(mod_api::AsynchronousGraphicTask::none);
-
-
+            this->clear_screen_event = this->session_reactor.create_graphic_event(std::ref(*this))
+            .on_action(jln::one_shot([](gdi::GraphicApi& gd, ClientRedemption& self){
+                gdi_clear_screen(gd, self.mod->get_dim());
+            }));
         } catch (const Error &) {
             this->mod = nullptr;
             return false;
@@ -1004,7 +1006,7 @@ public:
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------
 
-    void callback() override {
+    void callback(bool is_timeout) override {
 
 //         LOG(LOG_INFO, "Socket Event callback");
 //         if (this->_recv_disconnect_ultimatum) {
@@ -1020,15 +1022,22 @@ public:
 
         if (this->mod != nullptr) {
             try {
-                this->mod->draw_event(time(nullptr), *(this));
-
+                auto get_gd = [this]() -> gdi::GraphicApi& { return *this; };
+                if (is_timeout) {
+                    session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, get_gd);
+                } else {
+                    auto is_mod_fd = [/*this*/](int /*fd*/, auto& /*e*/){
+                        return true /*this->socket->get_fd() == fd*/;
+                    };
+                    session_reactor.execute_events(is_mod_fd);
+                    session_reactor.execute_graphics(is_mod_fd, get_gd());
+                }
             } catch (const Error & e) {
                 if (this->impl_graphic) {
                     this->impl_graphic->dropScreen();
                 }
                 const std::string errorMsg("[" + this->target_IP +  "] lost: pipe broken");
-                const std::string errorMsgLog(errorMsg+" "+e.errmsg());
-                LOG(LOG_INFO, "%s", errorMsgLog.c_str());
+                LOG(LOG_INFO, "%s: %s", errorMsg, e.errmsg());
                 std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
 
                 this->disconnect(labelErrorMsg, true);

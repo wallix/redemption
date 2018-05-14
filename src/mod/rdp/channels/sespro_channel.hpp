@@ -30,8 +30,9 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/make_unique.hpp"
-#include "utils/sugar/splitter.hpp"
-#include "utils/translation.hpp"
+#include "core/error.hpp"
+#include "core/session_reactor.hpp"
+#include "mod/mod_api.hpp"
 
 #include <chrono>
 #include <memory>
@@ -337,8 +338,6 @@ private:
 
     FileSystemVirtualChannel& file_system_virtual_channel;
 
-    wait_obj session_probe_event;
-
     ExtraSystemProcesses           extra_system_processes;
     OutboundConnectionMonitorRules outbound_connection_monitor_rules;
     ProcessMonitorRules            process_monitor_rules;
@@ -346,8 +345,6 @@ private:
     bool disconnection_reconnection_required = false; // Cause => Authenticated user changed.
 
     SessionProbeLauncher* session_probe_stop_launch_sequence_notifier = nullptr;
-
-    bool has_additional_launch_time = false;
 
     std::string server_message;
 
@@ -359,6 +356,10 @@ private:
     Random & gen;
 
     uint32_t reconnection_cookie = INVALID_RECONNECTION_COOKIE;
+
+    SessionReactor& session_reactor;
+    SessionReactor::TimerPtr session_probe_timer;
+    SessionReactor::GraphicEventPtr freeze_mod_screen;
 
     uint32_t options = 0;
 
@@ -412,6 +413,7 @@ public:
     };
 
     SessionProbeVirtualChannel(
+        SessionReactor& session_reactor,
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
         mod_api& mod,
@@ -466,6 +468,7 @@ public:
     , process_monitor_rules(
           params.session_probe_process_monitoring_rules)
     , gen(gen)
+    , session_reactor(session_reactor)
     {
         if (bool(this->verbose & RDPVerbose::sesprobe)) {
             LOG(LOG_INFO,
@@ -492,10 +495,12 @@ public:
             }
 
             if (!this->session_probe_launch_timeout_timer_started) {
-                this->session_probe_event.set_trigger_time(
-                    std::chrono::duration_cast<std::chrono::microseconds>(
-                        this->session_probe_effective_launch_timeout).count());
-
+                this->session_probe_timer = this->session_reactor.create_timer(std::ref(*this))
+                .set_delay(this->session_probe_effective_launch_timeout)
+                .on_action([](auto ctx, SessionProbeVirtualChannel& self){
+                    self.process_event_launch();
+                    return ctx.ready_to(self.session_probe_effective_launch_timeout);
+                });
                 this->session_probe_launch_timeout_timer_started = true;
             }
         }
@@ -509,38 +514,15 @@ protected:
     }
 
 public:
-    wait_obj* get_event()
-    {
-        if (this->session_probe_event.is_trigger_time_set()) {
-            if (this->has_additional_launch_time) {
-                if (!this->session_probe_ready) {
-                    this->session_probe_event.set_trigger_time(
-                        std::chrono::duration_cast<std::chrono::microseconds>(
-                            this->session_probe_effective_launch_timeout).count());
-                }
-
-                this->has_additional_launch_time = false;
-            }
-            return &this->session_probe_event;
-        }
-
-        return nullptr;
-    }
-
     void give_additional_launch_time() {
-        if (!this->session_probe_ready) {
-            this->has_additional_launch_time = true;
+        if (!this->session_probe_ready && this->session_probe_timer) {
+            this->session_probe_timer->set_delay(this->session_probe_effective_launch_timeout);
 
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::give_additional_launch_time");
             }
         }
-    }
-
-    bool is_event_signaled() {
-        return (this->session_probe_event.is_trigger_time_set() &&
-            this->session_probe_event.is_waked_up_by_time());
     }
 
     bool is_disconnection_reconnection_required() {
@@ -579,110 +561,100 @@ public:
                     "Session Probe keep alive requested");
         }
 
-        this->session_probe_event.set_trigger_time(
-            std::chrono::duration_cast<std::chrono::microseconds>(
-                this->param_session_probe_keepalive_timeout ).count());
+        this->session_probe_timer->set_delay(this->param_session_probe_keepalive_timeout);
     }
 
     bool client_input_disabled_because_session_probe_keepalive_is_missing = false;
 
-    void process_event()
+    void process_event_launch()
     {
-        if (!this->session_probe_event.is_trigger_time_set() ||
-            !this->session_probe_event.is_waked_up_by_time()) {
-            return;
+        LOG(((this->param_session_probe_on_launch_failure ==
+                SessionProbeOnLaunchFailure::disconnect_user) ?
+                LOG_ERR : LOG_WARNING),
+            "SessionProbeVirtualChannel::process_event: "
+                "Session Probe is not ready yet!");
+
+        error_type err_id = ERR_SESSION_PROBE_LAUNCH;
+
+        if (this->session_probe_stop_launch_sequence_notifier) {
+            this->session_probe_stop_launch_sequence_notifier->stop(false, err_id);
+            this->session_probe_stop_launch_sequence_notifier = nullptr;
         }
 
-        this->session_probe_event.reset_trigger_time();
+        const bool disable_input_event     = false;
+        const bool disable_graphics_update = false;
+        const bool need_full_screen_update =
+            this->mod.disable_input_event_and_graphics_update(
+                disable_input_event, disable_graphics_update);
 
-        if (this->session_probe_effective_launch_timeout.count() &&
-            !this->session_probe_ready &&
-            !this->has_additional_launch_time) {
-            LOG(((this->param_session_probe_on_launch_failure ==
-                  SessionProbeOnLaunchFailure::disconnect_user) ?
-                 LOG_ERR : LOG_WARNING),
-                "SessionProbeVirtualChannel::process_event: "
-                    "Session Probe is not ready yet!");
-
-            error_type err_id = ERR_SESSION_PROBE_LAUNCH;
-
-            if (this->session_probe_stop_launch_sequence_notifier) {
-                this->session_probe_stop_launch_sequence_notifier->stop(false, err_id);
-                this->session_probe_stop_launch_sequence_notifier = nullptr;
-            }
-
-            const bool disable_input_event     = false;
-            const bool disable_graphics_update = false;
-            const bool need_full_screen_update =
-                 this->mod.disable_input_event_and_graphics_update(
-                     disable_input_event, disable_graphics_update);
-
-            if (this->param_session_probe_on_launch_failure ==
-                SessionProbeOnLaunchFailure::ignore_and_continue) {
-                if (need_full_screen_update) {
-                    if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                        LOG(LOG_INFO,
-                            "SessionProbeVirtualChannel::process_event: "
-                                "Force full screen update. Rect=(0, 0, %u, %u)",
-                            this->param_front_width, this->param_front_height);
-                    }
-                    this->mod.rdp_input_invalidate(Rect(0, 0,
-                        this->param_front_width, this->param_front_height));
-                }
-            }
-            else {
-                throw Error(err_id);
-            }
+        if (this->param_session_probe_on_launch_failure
+         != SessionProbeOnLaunchFailure::ignore_and_continue) {
+            throw Error(err_id);
         }
 
-        if (this->session_probe_ready &&
-            this->param_session_probe_keepalive_timeout.count()) {
-            if (!this->session_probe_keep_alive_received) {
-                if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
-                    const bool disable_input_event     = false;
-                    const bool disable_graphics_update = false;
-                    this->mod.disable_input_event_and_graphics_update(
-                        disable_input_event, disable_graphics_update);
+        if (need_full_screen_update) {
+            if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                LOG(LOG_INFO,
+                    "SessionProbeVirtualChannel::process_event: "
+                        "Force full screen update. Rect=(0, 0, %u, %u)",
+                    this->param_front_width, this->param_front_height);
+            }
+            this->mod.rdp_input_invalidate(Rect(0, 0,
+                this->param_front_width, this->param_front_height));
+        }
+    }
 
-                    LOG(LOG_ERR,
-                        "SessionProbeVirtualChannel::process_event: "
-                            "No keep alive received from Session Probe!");
+    void process_event_ready()
+    {
+        if (!this->session_probe_keep_alive_received) {
+            if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
+                const bool disable_input_event     = false;
+                const bool disable_graphics_update = false;
+                this->mod.disable_input_event_and_graphics_update(
+                    disable_input_event, disable_graphics_update);
+
+                LOG(LOG_ERR,
+                    "SessionProbeVirtualChannel::process_event: "
+                        "No keep alive received from Session Probe!");
+            }
+
+            if (!this->disconnection_reconnection_required) {
+                if (this->session_probe_ending_in_progress) {
+                    this->rdp.sespro_ending_in_progress();
+                    return ;
                 }
 
-                if (!this->disconnection_reconnection_required) {
-                    if (this->session_probe_ending_in_progress) {
-                        throw Error(ERR_SESSION_PROBE_ENDING_IN_PROGRESS);
-                    }
+                if (SessionProbeOnKeepaliveTimeout::disconnect_user ==
+                    this->param_session_probe_on_keepalive_timeout) {
+                    this->report_message.report("SESSION_PROBE_KEEPALIVE_MISSED", "");
+                }
+                else if (SessionProbeOnKeepaliveTimeout::freeze_connection_and_wait ==
+                            this->param_session_probe_on_keepalive_timeout) {
 
-                    if (SessionProbeOnKeepaliveTimeout::disconnect_user ==
-                        this->param_session_probe_on_keepalive_timeout) {
-                        this->report_message.report("SESSION_PROBE_KEEPALIVE_MISSED", "");
-                    }
-                    else if (SessionProbeOnKeepaliveTimeout::freeze_connection_and_wait ==
-                             this->param_session_probe_on_keepalive_timeout) {
+                    if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
+                        const bool disable_input_event     = true;
+                        const bool disable_graphics_update = true;
+                            this->mod.disable_input_event_and_graphics_update(
+                                disable_input_event, disable_graphics_update);
 
-                        if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
-                            const bool disable_input_event     = true;
-                            const bool disable_graphics_update = true;
-                             this->mod.disable_input_event_and_graphics_update(
-                                 disable_input_event, disable_graphics_update);
+                        this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
 
-                            this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
-
-                            this->mod.invoke_asynchronous_graphic_task(mod_api::AsynchronousGraphicTask::freeze_screen);
-                        }
-                        this->request_keep_alive();
-                        std::string string_message = "No keep alive received from Session Probe!";
-                        this->mod.display_osd_message(string_message);
+                        this->freeze_mod_screen = this->session_reactor
+                        .create_graphic_event(mod.get_dim())
+                        .on_action(jln::one_shot([](gdi::GraphicApi& drawable, Dimension const& dim){
+                            gdi_freeze_screen(drawable, dim);
+                        }));
                     }
-                    else {
-                        this->front.session_probe_started(false);
-                    }
+                    this->request_keep_alive();
+                    this->mod.display_osd_message("No keep alive received from Session Probe!");
+                }
+                else {
+                    this->front.session_probe_started(false);
                 }
             }
-            else {
-                this->request_keep_alive();
-            }
+        }
+        else {
+            this->request_keep_alive();
         }
     }
 
@@ -876,7 +848,7 @@ public:
 
                 this->file_system_virtual_channel.disable_session_probe_drive();
 
-                this->session_probe_event.reset_trigger_time();
+                this->session_probe_timer.reset();
 
                 if (this->param_session_probe_keepalive_timeout.count() > 0) {
                     send_client_message([](OutStream & out_s) {
@@ -890,9 +862,12 @@ public:
                                 "Session Probe keep alive requested");
                     }
 
-                    this->session_probe_event.set_trigger_time(
-                        std::chrono::duration_cast<std::chrono::microseconds>(
-                            this->param_session_probe_keepalive_timeout).count());
+                    this->session_probe_timer = this->session_reactor.create_timer(std::ref(*this))
+                    .set_delay(this->param_session_probe_keepalive_timeout)
+                    .on_action([](auto ctx, SessionProbeVirtualChannel& self){
+                        self.process_event_ready();
+                        return ctx.ready_to(self.param_session_probe_keepalive_timeout);
+                    });
                 }
 
                 send_client_message([](OutStream & out_s) {
@@ -1019,7 +994,7 @@ public:
                                 this->param_memory_usage_limit);
                             out_s.out_copy_bytes(cstr, strlen(cstr));
                         }
-                    });
+                });
             }
             else if (!::strcasecmp(parameters_[0].c_str(), "DisableLaunchMask")) {
                 const bool disable_input_event     = false;
@@ -1105,7 +1080,7 @@ public:
 
                 this->disconnection_reconnection_required = true;
 
-                send_client_message([this](OutStream & out_s) {
+                send_client_message([](OutStream & out_s) {
                         const char cstr[] = "Confirm=Disconnection-Reconnection";
                         out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                     });

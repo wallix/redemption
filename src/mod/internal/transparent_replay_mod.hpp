@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "core/session_reactor.hpp"
 #include "transport/in_file_transport.hpp"
 #include "capture/transparentplayer.hpp"
 #include "mod/internal/internal_mod.hpp"
@@ -32,9 +33,12 @@ private:
 
     InFileTransport   ift;
     TransparentPlayer player;
+    SessionReactor& session_reactor;
+    SessionReactor::GraphicFdPtr fd_event;
 
 public:
-    TransparentReplayMod( FrontAPI & front
+    TransparentReplayMod( SessionReactor& session_reactor
+                        , FrontAPI & front
                         , const char * replay_path
                         , uint16_t width
                         , uint16_t height
@@ -50,26 +54,32 @@ public:
         return fd;
     }()})
     , player(this->ift, this->front)
-    {}
-
-    void draw_event(time_t now, gdi::GraphicApi &) override
+    , session_reactor(session_reactor)
     {
-        (void)now;
+        this->fd_event = session_reactor.create_graphic_fd_event(
+            this->ift.get_fd(), std::ref(*this))
+        .set_timeout(std::chrono::seconds{1})
+        .disable_timeout()
+        .on_exit(jln2::propagate_exit())
+        .on_action([](auto ctx, gdi::GraphicApi& gd, TransparentReplayMod& self){
+            self.draw_event(0, gd);
+            return ctx.need_more_data();
+        });
+    }
+
+    void draw_event(time_t /*now*/, gdi::GraphicApi &) override
+    {
         try {
             if (!this->player.interpret_chunk()) {
-                this->event.signal = /*BACK_EVENT_STOP*/BACK_EVENT_NEXT;
+                this->session_reactor.set_next_event(BACK_EVENT_NEXT);
             }
-
-            this->event.set_trigger_time(wait_obj::NOW);
         }
-        catch (Error const & e) {
+        catch (Error const& e) {
             if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
                 if (this->auth_error_message) {
                     *this->auth_error_message = "The recorded file is inaccessible or corrupted!";
                 }
-
-                this->event.signal = BACK_EVENT_NEXT;
-                this->event.set_trigger_time(wait_obj::NOW);
+                this->session_reactor.set_next_event(BACK_EVENT_NEXT);
             }
             else {
                 throw;

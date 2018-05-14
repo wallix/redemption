@@ -25,46 +25,33 @@
 
 #pragma once
 
-#include "transport/mwrm_reader.hpp"
 #include "capture/file_to_graphic.hpp" // FileToGraphic::Verbose
+#include "transport/mwrm_reader.hpp" // WrmVersion
+#include "core/session_reactor.hpp"
 #include "mod/internal/internal_mod.hpp"
-#include "capture/cryptofile.hpp"
-#include "utils/genfstat.hpp"
 
-class InMetaSequenceTransport;
 
 class ReplayMod : public InternalMod
 {
     std::string & auth_error_message;
 
-    CryptoContext cctx;
-    Fstat         fstat;
-
-    struct TemporaryCtxPath
-    {
-        char extension[128];
-        char prefix[4096];
-
-        //TODO: should be generalized to some wide use FilePath object
-        // with basename, path, ext, etc. methods and use it for passing
-        // around all of redemption pathes.
-        TemporaryCtxPath(const char * replay_path, const char * movie);
-    } movie_path;
-    std::unique_ptr<InMetaSequenceTransport> in_trans;
-    std::unique_ptr<FileToGraphic> reader;
+    class Reader;
+    std::unique_ptr<Reader> internal_reader;
 
     bool end_of_data;
     bool wait_for_escape;
 
-    time_t balise_time_frame;
     bool sync_setted;
 
     bool replay_on_loop;
+    SessionReactor& session_reactor;
+    SessionReactor::GraphicTimerPtr timer;
 
 public:
     using Verbose = FileToGraphic::Verbose;
 
-    ReplayMod( FrontAPI & front
+    ReplayMod( SessionReactor& session_reactor
+             , FrontAPI & front
              , const char * replay_path
              , const char * movie
              , uint16_t width
@@ -75,12 +62,13 @@ public:
              , bool replay_on_loop
              , Verbose debug_capture)
     : ReplayMod(
-        front, replay_path, movie, width, height, auth_error_message,
+        session_reactor, front, replay_path, movie, width, height, auth_error_message,
         font, wait_for_escape, timeval{0, 0}, timeval{0, 0}, 0, replay_on_loop, debug_capture)
     {
     }
 
-    ReplayMod( FrontAPI & front
+    ReplayMod( SessionReactor& session_reactor
+             , FrontAPI & front
              , const char * replay_path
              , const char * movie
              , uint16_t width
@@ -110,7 +98,7 @@ public:
 
     void set_sync();
 
-    WrmVersion get_wrm_version();
+    WrmVersion get_wrm_version() const;
 
     bool get_break_privplay_client();
 
@@ -134,12 +122,7 @@ public:
 
     time_t get_real_time_movie_begin();
 
-    std::string get_mwrm_path() const
-    {
-        std::string movie_path_str(this->movie_path.prefix);
-        movie_path_str += ".mwrm";
-        return movie_path_str;
-    }
+    std::string get_mwrm_path() const;
 
     void refresh(Rect /*rect*/) override
     {}

@@ -50,6 +50,7 @@ RED_AUTO_TEST_CASE(TestShowTestCard)
     Font font;
 
     RED_CHECK(true);
-    TestCardMod mod(front, info.width, info.height, font);
+    SessionReactor session_reactor;
+    TestCardMod mod(session_reactor, front, info.width, info.height, font);
     RED_CHECK_NO_THROW(mod.draw_event(time(nullptr), front));
 }

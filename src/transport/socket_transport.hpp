@@ -22,7 +22,8 @@
 
 #pragma once
 
-#include "core/wait_obj.hpp"
+#include <chrono>
+
 #include "transport/transport.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/invalid_socket.hpp"
@@ -66,8 +67,6 @@ public:
                    , Verbose verbose, std::string * error_message = nullptr);
 
     ~SocketTransport() override;
-
-    bool is_set(wait_obj & obj, fd_set & rfds) const;
 
     bool has_pending_data() const;
 

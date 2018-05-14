@@ -101,49 +101,47 @@ int main(int argc, char** argv)
     info.height = 600;
     info.build = 420;
 
+    auto sck = ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms);
+    if (!sck.is_open()) {
+        return 1;
+    }
     SocketTransport mod_trans(
-        "VNC Target", ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms),
-        target_device.c_str(), target_port, std::chrono::seconds(1),
-        to_verbose_flags(verbose), nullptr);
+        "VNC Target", std::move(sck), target_device.c_str(), target_port,
+        std::chrono::seconds(1), to_verbose_flags(verbose), nullptr);
     // mod_trans.connect();
 
     SSL_library_init();
     ClientFront front(info, verbose);
     //VncFront front(mod_trans, gen, ini, cctx, authentifier, fastpath_support, mem3blt_support, now, input_filename.c_str(), nullptr);
 
-    const bool is_socket_transport = true;
     const VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop {};
     Font font;
     NullReportMessage report_message;
 
     /* mod_api */
+    SessionReactor session_reactor;
     mod_vnc mod(
         mod_trans
+      , session_reactor
       , username.c_str()
       , password.c_str()
       , front
       , client_info.width
       , client_info.height
-      , font
-      , "label message", "label pass"
-      , Theme()
       , client_info.keylayout
       , 0             /* key_flags */
       , true          /* clipboard */
       , true          /* clipboard */
       , "16, 2, 0, 1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
-      , false         /* allow authentification retries */
-      , is_socket_transport
       , mod_vnc::ClipboardEncodingType::UTF8
       , bogus_clipboard_infinite_loop
       , report_message
       , false
       , nullptr
       , to_verbose_flags(verbose)|VNCVerbose::connection | VNCVerbose::basic_trace);
-    mod.get_event().set_trigger_time(wait_obj::NOW);
 
     using Ms = std::chrono::milliseconds;
     return run_test_client(
-        "VNC", mod_trans.sck, mod, front,
+        "VNC", session_reactor, mod, front,
         Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
 }

@@ -25,7 +25,7 @@
 #include "core/channel_list.hpp"
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
-#include "core/wait_obj.hpp"
+#include "core/session_reactor.hpp"
 #include "mod/rdp/rdp_log.hpp"
 
 #include <sys/types.h>
@@ -58,6 +58,18 @@ inline size_t rdpdr_in_file_read(int fd, uint8_t * buffer, size_t len)
     return len - remaining_len;
 }
 
+namespace detail
+{
+    inline auto create_notify_delete_task() noexcept
+    {
+        return [](jln2::NotifyDeleteType d, auto& self, AsynchronousTask::DeleterFunction& f){
+            if (d == jln2::NotifyDeleteType::DeleteByAction) {
+                f(self);
+            }
+        };
+    }
+}
+
 class RdpdrDriveReadTask final : public AsynchronousTask
 {
     const int file_descriptor;
@@ -73,6 +85,9 @@ class RdpdrDriveReadTask final : public AsynchronousTask
     off64_t Offset;
 
     VirtualChannelDataSender & to_server_sender;
+
+    SessionReactor::TopFdPtr fdobject;
+//     SessionReactor::BasicFdPtr fd_ptr;
 
     const RDPVerbose verbose;
 
@@ -95,21 +110,30 @@ public:
     , verbose(verbose)
     {}
 
-    void configure_wait_object(wait_obj & wait_object) const override {
-        assert(!wait_object.is_waked_up_by_time());
-
-        wait_object.set_trigger_time(1000000);
+    void configure_event(SessionReactor& session_reactor, DeleterFunction f) override
+    {
+        assert(!this->fdobject);
+        this->fdobject = session_reactor.create_fd_event(
+            this->file_descriptor, std::ref(*this), std::move(f))
+        .on_action([](auto ctx, RdpdrDriveReadTask& self, DeleterFunction& f) {
+            auto const r = self.run() ? ctx.need_more_data() : ctx.terminate();
+            // self.fdobject.detach();
+            f(self); // detroy this
+            return r;
+        })
+        .on_exit([](auto /*ctx*/, jln2::ExitR er, RdpdrDriveReadTask&, DeleterFunction&) mutable {
+            return er.to_result();
+        })
+        .set_timeout(std::chrono::milliseconds(1000))
+        .on_timeout([](auto ctx, RdpdrDriveReadTask& self, DeleterFunction&){
+            LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!",
+                self.file_descriptor);
+            return ctx.ready();
+        });
     }
 
-    int get_file_descriptor() const override { return this->file_descriptor; }
-
-    bool run(const wait_obj & wait_object) override {
-        if (wait_object.is_waked_up_by_time()) {
-            LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!",
-                this->file_descriptor);
-            return true;
-        }
-
+    bool run()
+    {
         StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream;
 
         uint32_t out_flags = 0;
@@ -178,7 +202,8 @@ public:
     }
 };  // RdpdrDriveReadTask
 
-class RdpdrSendDriveIOResponseTask final : public AsynchronousTask {
+class RdpdrSendDriveIOResponseTask final : public AsynchronousTask
+{
     const uint32_t flags;
     std::unique_ptr<uint8_t[]> data;
     const size_t data_length;
@@ -186,6 +211,8 @@ class RdpdrSendDriveIOResponseTask final : public AsynchronousTask {
     size_t remaining_number_of_bytes_to_send;
 
     VirtualChannelDataSender & to_server_sender;
+
+    SessionReactor::TimerPtr timer_ptr;
 
 public:
     RdpdrSendDriveIOResponseTask(uint32_t flags,
@@ -202,13 +229,20 @@ public:
         ::memcpy(this->data.get(), data, data_length);
     }
 
-    void configure_wait_object(wait_obj & wait_object) const override {
-        assert(!wait_object.is_waked_up_by_time());
-
-        wait_object.set_trigger_time(1000); // 1 ms
+    void configure_event(SessionReactor& session_reactor, DeleterFunction f) override
+    {
+        assert(!this->timer_ptr);
+        // TODO create_yield_event
+        this->timer_ptr = session_reactor.create_timer(std::ref(*this), std::move(f))
+        .set_notify_delete(detail::create_notify_delete_task())
+        .set_delay(std::chrono::milliseconds(1))
+        .on_action([](auto ctx, RdpdrSendDriveIOResponseTask& self, DeleterFunction&){
+            return self.run() ? ctx.ready() : ctx.terminate();
+        });
     }
 
-    bool run(const wait_obj &) override {
+    bool run()
+    {
         if (this->data_length <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
             this->to_server_sender(this->data_length, this->flags, this->data.get(), this->data_length);
 
@@ -251,29 +285,43 @@ class RdpdrSendClientMessageTask final : public AsynchronousTask {
 
     VirtualChannelDataSender & to_server_sender;
 
+    SessionReactor::TimerPtr timer_ptr;
+
 public:
-    RdpdrSendClientMessageTask(size_t total_length,
-                               uint32_t flags,
-                               const uint8_t * chunked_data,
-                               size_t chunked_data_length,
-                               VirtualChannelDataSender & to_server_sender,
-                               RDPVerbose verbose)
+    RdpdrSendClientMessageTask(
+        size_t total_length,
+        uint32_t flags,
+        const uint8_t * chunked_data,
+        size_t chunked_data_length,
+        VirtualChannelDataSender & to_server_sender,
+        RDPVerbose verbose)
     : total_length(total_length)
     , flags(flags)
     , chunked_data(std::make_unique<uint8_t[]>(chunked_data_length))
     , chunked_data_length(chunked_data_length)
-    , to_server_sender(to_server_sender.SynchronousSender()) {
+    , to_server_sender(to_server_sender.SynchronousSender())
+    {
+        assert(chunked_data_length <= CHANNELS::CHANNEL_CHUNK_LENGTH);
         (void)verbose;
+
         ::memcpy(this->chunked_data.get(), chunked_data, chunked_data_length);
     }
 
-    void configure_wait_object(wait_obj & wait_object) const override {
-        assert(!wait_object.is_waked_up_by_time());
-
-        wait_object.set_trigger_time(1000); // 1 ms
+    void configure_event(SessionReactor& session_reactor, DeleterFunction f) override
+    {
+        assert(!this->timer_ptr);
+        // TODO create_yield_event
+        this->timer_ptr = session_reactor.create_timer(std::ref(*this), std::move(f))
+        .set_notify_delete(detail::create_notify_delete_task())
+        .set_delay(std::chrono::milliseconds(1))
+        .on_action([](auto ctx, RdpdrSendClientMessageTask& self, DeleterFunction&){
+            self.run();
+            return ctx.terminate();
+        });
     }
 
-    bool run(const wait_obj &) override {
+    bool run()
+    {
         assert(this->chunked_data_length <=
             CHANNELS::CHANNEL_CHUNK_LENGTH);
 
@@ -283,4 +331,3 @@ public:
         return false;
     }
 };
-

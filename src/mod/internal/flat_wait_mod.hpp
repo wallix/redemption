@@ -23,12 +23,12 @@
 #pragma once
 
 #include "configs/config_access.hpp"
+#include "core/session_reactor.hpp"
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/notify_api.hpp"
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget/flat_wait.hpp"
 #include "mod/internal/widget/language_button.hpp"
-#include "utils/timeout.hpp"
 
 
 using FlatWaitModVariables = vcfg::variables<
@@ -51,13 +51,16 @@ class FlatWaitMod : public LocallyIntegrableMod, public NotifyApi
     FlatWait wait_widget;
 
     FlatWaitModVariables vars;
-    Timeout timeout;
+
+    SessionReactor::TimerPtr timeout_timer;
+    SessionReactor::GraphicEventPtr started_copy_past_event;
 
     CopyPaste copy_paste;
 
 public:
     FlatWaitMod(
-        FlatWaitModVariables vars, FrontAPI & front, uint16_t width, uint16_t height,
+        FlatWaitModVariables vars,
+        SessionReactor& session_reactor, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, const char * caption, const char * message, time_t now,
         ClientExecute & client_execute, bool showform = false, uint32_t flag = 0);
 

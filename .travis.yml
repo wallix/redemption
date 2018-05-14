@@ -1,135 +1,40 @@
 language: cpp
 os: linux
-dist: trusty
-sudo: false
-
-# addons:
-#   apt:
-#     packages: ["libboost-test-dev", "libgssglue-dev", "libkrb5-dev", "libpng12-dev", "libsnappy-dev", "libssl-dev", "libavcodec-dev", "libavcodec-extra-54", "libavformat-dev", "libavformat-extra-54", "libavutil-dev", "libavutil-extra-52", "libbz2-dev", "libswscale-dev", "libswscale-extra-2", "libx264-dev"]
-#     sources: ["mc3man/trusty-media", "ubuntu-toolchain-r-test" ]
-
+sudo: required
+services:
+  - docker
 
 matrix:
   include:
   # Clang 5.0
-  - env: COMPILER=clang-5 LLVM_VERSION=5.0.1
-    addons:
-      apt:
-        packages: ["clang-5.0", "libc++-dev", "libc++abi-dev", "libboost-test-dev", "libgssglue-dev", "libkrb5-dev", "libpng12-dev", "libsnappy-dev", "libssl-dev", "libavcodec-dev", "libavcodec-extra-54", "libavformat-dev", "libavformat-extra-54", "libavutil-dev", "libavutil-extra-52", "libbz2-dev", "libswscale-dev", "libswscale-extra-2", "libx264-dev"]
-        sources: ["ubuntu-toolchain-r-test", "llvm-toolchain-trusty-5.0", "mc3man/trusty-media"]
-    before_script:
-      - "echo -e 'using clang : : clang++-5.0 : <cxxflags>-fdiagnostics-color=always <cxxflags>-stdlib=libc++ <cxxflags>-Wunused-command-line-argument <linkflags>-stdlib=libc++ ;' > ~/user-config.jam"
-
+  - compiler: clang
+    env: DIST=ubuntu:17.10 INSTALL='clang-5.0 lldb-5.0 libc++-dev libc++abi-dev' BJAM_COMPILER=clang
   # GCC 7
-  - env: COMPILER=gcc-7
-    addons:
-      apt:
-        packages: ["g++-7", "libboost-test-dev", "libgssglue-dev", "libkrb5-dev", "libpng12-dev", "libsnappy-dev", "libssl-dev", "libavcodec-dev", "libavcodec-extra-54", "libavformat-dev", "libavformat-extra-54", "libavutil-dev", "libavutil-extra-52", "libbz2-dev", "libswscale-dev", "libswscale-extra-2", "libx264-dev"]
-        sources: ["ubuntu-toolchain-r-test", "mc3man/trusty-media"]
-    before_script:
-      - "echo -e 'using gcc : : g++-7 : <cxxflags>-fdiagnostics-color=always ;' > ~/user-config.jam"
+  - compiler: gcc
+    env: DIST=ubuntu:17.10 INSTALL=g++ BJAM_COMPILER=gcc
 
-
-cache:
-  directories:
-    - ${HOME}/deps/llvm-5.0.1
-    - ${HOME}/deps
-
-
-install:
-  ############################################################################
-  # All the dependencies are installed in ${HOME}/deps/
-  ############################################################################
-  - DEPS_DIR="${HOME}/deps"
-  - mkdir -p ${DEPS_DIR} && cd ${DEPS_DIR}
-
-  ############################################################################
-  # Install a recent CMake (unless already installed on OS X)
-  ############################################################################
+before_install:
   - |
-    if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-        if [[ ! -d "${DEPS_DIR}/cmake" ]]; then
-            CMAKE_URL="http://www.cmake.org/files/v3.5/cmake-3.5.2-Linux-x86_64.tar.gz"
-            mkdir cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C cmake
-        fi
-        export PATH=${DEPS_DIR}/cmake/bin:${PATH}
+    PATTERN="s/ubuntu:17.10/$DIST/;s/g++/$INSTALL/;s/gcc/$BJAM_COMPILER/g"
+    echo "$PATTERN"
+    sed "$PATTERN" Dockerfile > $BJAM_COMPILER.dockerfile
+    if [ "$BJAM_COMPILER" = clang ]; then
+      wget -O llvm-snapshot.gpg.key https://apt.llvm.org/llvm-snapshot.gpg.key
+      sed -i \
+        -e '4iCOPY llvm-snapshot.gpg.key .\nRUN apt-key add llvm-snapshot.gpg.key' \
+        -e '/mkdir/iRUN sed -i -e "s/__GLIBC__) || defined(//" /usr/include/c++/v1/__locale' \
+        $BJAM_COMPILER.dockerfile
+      echo -e 'using clang : : clang++-5.0 : <cxxflags>-fdiagnostics-color=always <cxxflags>-stdlib=libc++ <cxxflags>-Wunused-command-line-argument <linkflags>-stdlib=libc++ ;' > project-config.jam
     else
-        if ! brew ls --version cmake &>/dev/null; then brew install cmake; fi
+      echo -e 'using gcc : : g++-7 : <cxxflags>-fdiagnostics-color=always ;' > project-config.jam
     fi
-
-  ############################################################################
-  # Install Clang, libc++ and libc++abi
-  ############################################################################
-  # - |
-  #   if [[ "${LLVM_VERSION}" != "" ]]; then
-  #       LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
-  #       if [[ -z "$(ls -A ${LLVM_DIR})" ]]; then
-  #           LLVM_URL="http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz"
-  #           LIBCXX_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz"
-  #           LIBCXXABI_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxxabi-${LLVM_VERSION}.src.tar.xz"
-  #           CLANG_URL="http://llvm.org/releases/${LLVM_VERSION}/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-14.04.tar.xz"
-  #           mkdir -p ${LLVM_DIR}/build ${LLVM_DIR}/projects/libcxx ${LLVM_DIR}/projects/libcxxabi ${LLVM_DIR}/clang
-  #           travis_retry wget --quiet -O - ${LLVM_URL}      | tar --strip-components=1 -xJ -C ${LLVM_DIR}
-  #           travis_retry wget --quiet -O - ${LIBCXX_URL}    | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxx
-  #           travis_retry wget --quiet -O - ${LIBCXXABI_URL} | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxxabi
-  #           travis_retry wget --quiet -O - ${CLANG_URL}     | tar --strip-components=1 -xJ -C ${LLVM_DIR}/clang
-  #           (cd ${LLVM_DIR}/build && cmake .. -DCMAKE_INSTALL_PREFIX=${LLVM_DIR}/install -DCMAKE_CXX_COMPILER=clang++) || exit 1
-  #           (cd ${LLVM_DIR}/build/projects/libcxx && make install -j2) || exit 1
-  #           (cd ${LLVM_DIR}/build/projects/libcxxabi && make install -j2) || exit 1
-  #       fi
-  #       export CXXFLAGS="-nostdinc++ -isystem ${LLVM_DIR}/install/include/c++/v1"
-  #       # [ "${LLVM_VERSION}" = "3.6.2" ] && CXXFLAGS+=" -Wno-unknown-warning-option"
-  #       export LDFLAGS="-L ${LLVM_DIR}/install/lib -l c++ -l c++abi"
-  #       # export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_DIR}/install/lib"
-  #       # export PATH="${LLVM_DIR}/clang/bin:${PATH}"
-  #       # export TOOLSET=clang
-  #   fi
-
-  ############################################################################
-  # Install libav
-  ############################################################################
-  # - |
-  #   LIBAV_URL=https://github.com/FFmpeg/FFmpeg/archive/n2.5.11.tar.gz
-  #   LIBAV_DIR=${DEPS_DIR}/libav
-  #   if [[ ! -d "${LIBAV_DIR}" ]]; then
-  #       mkdir -p ${LIBAV_DIR}/libav
-  #       travis_retry wget --quiet -O - ${LIBAV_URL} | tar --strip-components=1 -xz -C ${LIBAV_DIR}
-  #       # quick install (very bad)
-  #       echo -e \
-  #           "#ifndef AVUTIL_AVCONFIG_H\n" \
-  #           "#define AVUTIL_AVCONFIG_H\n" \
-  #           "#define AV_HAVE_BIGENDIAN 0\n" \
-  #           "#define AV_HAVE_FAST_UNALIGNED 1\n" \
-  #           "#define AV_HAVE_INCOMPATIBLE_LIBAV_ABI 0\n" \
-  #           "#endif\n" \
-  #       > ${LIBAV_DIR}/libavutil/avconfig.h
-  #   fi
-  #   export FFMPEG_INC_PATH=${LIBAV_DIR}
-
-  ############################################################################
-  # Install Boost Build
-  ############################################################################
-  - |
-    BOOST_VERSION=1.59.0
-    BOOST_DIR=${DEPS_DIR}/boost-${BOOST_VERSION}
-    if [[ ! -d "${BOOST_DIR}" ]]; then
-        BOOST_URL="http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION//./_}.tar.gz"
-        mkdir -p ${BOOST_DIR}
-        { travis_retry wget --quiet -O - ${BOOST_URL} | tar --strip-components=1 -xz -C ${BOOST_DIR}; } || exit 1
-    fi
-
-    (cd ${BOOST_DIR}/tools/build && ./bootstrap.sh && ./b2 install --prefix=${DEPS_DIR}/b2)
-    export PATH=${DEPS_DIR}/b2/bin:${PATH}
-
+  - cat $BJAM_COMPILER.dockerfile
+  - cat project-config.jam
+  - docker pull $DIST
 
 script:
-  - cd ${TRAVIS_BUILD_DIR}
-  - bjam -q --toolset="${COMPILER%%-*}" cxxflags="-DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING" rdpproxy
+  - docker build -f $BJAM_COMPILER.dockerfile .
 
-
-#branches:
-#  only:
-#    - master
 
 notifications:
   email:
@@ -138,7 +43,6 @@ notifications:
       - rzhou@wallix.com
       - cgrosjean@wallix.com
       - cmoroldo@wallix.com
-      #- jinthavong@wallix.com
       #- mtan@wallix.com
     on_success: change
     on_failure: always

@@ -27,12 +27,13 @@
 
 
 FlatDialogMod::FlatDialogMod(
-    FlatDialogModVariables vars, FrontAPI & front, uint16_t width, uint16_t height,
+    FlatDialogModVariables vars, SessionReactor& session_reactor,
+    FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, const char * caption, const char * message,
-    const char * cancel_text, time_t now, ClientExecute & client_execute,
+    const char * cancel_text, time_t /*now*/, ClientExecute & client_execute,
     ChallengeOpt has_challenge
 )
-    : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
+    : LocallyIntegrableMod(session_reactor, front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->dialog_widget,
         front, front, this->font(), this->theme())
@@ -44,7 +45,6 @@ FlatDialogMod::FlatDialogMod(
         TR(trkeys::OK, language(vars)),
         cancel_text, has_challenge)
     , vars(vars)
-    , timeout(now, vars.get<cfg::debug::pass_dialog_box>())
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
 {
     this->screen.add_widget(&this->dialog_widget);
@@ -56,6 +56,20 @@ FlatDialogMod::FlatDialogMod(
         this->dialog_widget.set_widget_focus(this->dialog_widget.challenge, Widget::focus_reason_tabkey);
         // this->vars.get<cfg::to_send_set::insert>()(AUTHID_AUTHENTICATION_CHALLENGE);
     }
+
+    if (vars.get<cfg::debug::pass_dialog_box>()) {
+        this->timeout_timer = session_reactor.create_timer(std::ref(*this))
+        .set_delay(std::chrono::milliseconds(vars.get<cfg::debug::pass_dialog_box>()))
+        .on_action([](auto ctx, FlatDialogMod& self){
+            self.accepted();
+            return ctx.terminate();
+        });
+    }
+
+    this->started_copy_past_event = session_reactor.create_graphic_event(std::ref(*this))
+    .on_action(jln::one_shot([](gdi::GraphicApi&, FlatDialogMod& self){
+        self.copy_paste.ready(self.front);
+    }));
 }
 
 FlatDialogMod::~FlatDialogMod()
@@ -90,8 +104,7 @@ void FlatDialogMod::accepted()
     else {
         this->vars.set_acl<cfg::context::display_message>(true);
     }
-    this->event.signal = BACK_EVENT_NEXT;
-    this->event.set_trigger_time(wait_obj::NOW);
+    this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 }
 
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
@@ -105,28 +118,12 @@ void FlatDialogMod::refused()
             this->vars.set_acl<cfg::context::display_message>(false);
         }
     }
-    this->event.signal = BACK_EVENT_NEXT;
-    this->event.set_trigger_time(wait_obj::NOW);
+    this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 }
 
 void FlatDialogMod::draw_event(time_t now, gdi::GraphicApi & gapi)
 {
     LocallyIntegrableMod::draw_event(now, gapi);
-
-    if (!this->copy_paste && this->event.is_waked_up_by_time()) {
-        this->copy_paste.ready(this->front);
-    }
-    switch(this->timeout.check(now)) {
-    case Timeout::TIMEOUT_REACHED:
-        this->accepted();
-        break;
-    case Timeout::TIMEOUT_NOT_REACHED:
-        this->event.set_trigger_time(1000000);
-        break;
-    case Timeout::TIMEOUT_INACTIVE:
-        this->event.reset_trigger_time();
-        break;
-    }
 }
 
 

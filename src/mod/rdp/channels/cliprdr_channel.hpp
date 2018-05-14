@@ -62,6 +62,7 @@ private:
 
     SessionProbeLauncher* clipboard_monitor_ready_notifier = nullptr;
     SessionProbeLauncher* clipboard_initialize_notifier    = nullptr;
+    SessionProbeLauncher* format_list_notifier             = nullptr;
     SessionProbeLauncher* format_list_response_notifier    = nullptr;
     SessionProbeLauncher* format_data_request_notifier     = nullptr;
 
@@ -1442,6 +1443,12 @@ public:
                 send_message_to_client =
                     this->process_server_format_list_pdu(
                         total_length, flags, chunk);
+
+                if (this->format_list_notifier) {
+                    if (!this->format_list_notifier->on_server_format_list()) {
+                        this->format_list_notifier = nullptr;
+                    }
+                }
             break;
 
             case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
@@ -1495,6 +1502,7 @@ public:
     void set_session_probe_launcher(SessionProbeLauncher* launcher) {
         this->clipboard_monitor_ready_notifier = launcher;
         this->clipboard_initialize_notifier    = launcher;
+        this->format_list_notifier             = launcher;
         this->format_list_response_notifier    = launcher;
         this->format_data_request_notifier     = launcher;
     }

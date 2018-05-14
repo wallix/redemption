@@ -71,6 +71,7 @@ struct CryptContext
     // |                                     | generation routines will            |
     // |                                     | be FIPS 140-1 compliant.            |
     // +-------------------------------------+-------------------------------------+
+    // TODO used a enum class
     uint32_t encryptionMethod = 0;
 
     CryptContext() = default;
@@ -99,29 +100,7 @@ struct CryptContext
     /* Decrypt data using RC4 */
     void decrypt(uint8_t * data, size_t data_size)
     {
-        ssllib ssl;
-
-        if (this->use_count == 4096) {
-            size_t keylen = (this->encryptionMethod==1)?8:16;
-
-            Sign sign(this->update_key, keylen);
-            sign.update(this->key, keylen);
-            sign.final(this->key, sizeof(key));
-
-            this->rc4.set_key(this->key, keylen);
-
-            // size, in, out
-            this->rc4.crypt(keylen, this->key, this->key);
-
-            if (this->encryptionMethod == 1){
-                ssl.sec_make_40bit(this->key);
-            }
-            this->rc4.set_key(this->key, keylen);
-            this->use_count = 0;
-        }
-        // size, in, out
-        this->rc4.crypt(data_size, data, data);
-        this->use_count++;
+        this->decrypt(data, data_size, data);
     }
 
     /* Decrypt data using RC4 */

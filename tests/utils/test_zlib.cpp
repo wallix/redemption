@@ -34,7 +34,7 @@ RED_AUTO_TEST_CASE(TestZLIB0)
     uint8_t all_out[32768];
 
     // Create some easy to compress pattern
-    uint8_t uncompressed[70000]; 
+    uint8_t uncompressed[70000];
 
     uint8_t pattern[] = {
             'H', 'E', 'R', 'E', ' ', 'I', 'S', ' ', 'T', 'H', 'E', ' ', 'D', 'A', 'T', 'A',
@@ -75,7 +75,7 @@ RED_AUTO_TEST_CASE(TestZLIB0)
             last_avail_out = strm.avail_out;
             ret = deflate(&strm, Z_NO_FLUSH);
             total_compressed_size += CHUNK-strm.avail_out;
-            
+
             memcpy(&all_out[total_size], strm.next_out - last_avail_out + strm.avail_out, last_avail_out-strm.avail_out);
             total_size += last_avail_out - strm.avail_out;
             // or copy result
@@ -108,7 +108,7 @@ RED_AUTO_TEST_CASE(TestZLIB1)
     // Create some easy to compress pattern
     size_t total_size = 0;
     uint8_t all_out[32768];
-    uint8_t uncompressed[70000]; 
+    uint8_t uncompressed[70000];
 
     uint8_t pattern[] = {
             'H', 'E', 'R', 'E', ' ', 'I', 'S', ' ', 'T', 'H', 'E', ' ', 'D', 'A', 'T', 'A',
@@ -165,7 +165,7 @@ RED_AUTO_TEST_CASE(TestZLIB1)
 
     ret = deflateEnd(&strm);
 
-    hexdump(&all_out[0], total_size); 
+    hexdump(&all_out[0], total_size);
 
     RED_CHECK_EQUAL(total_size, 262);
     RED_CHECK_EQUAL(total_compressed_size, 262);
@@ -176,7 +176,7 @@ RED_AUTO_TEST_CASE(TestZLIB3)
     // Create some easy to compress pattern
     size_t total_size = 0;
     uint8_t all_out[32768];
-    uint8_t uncompressed[70000]; 
+    uint8_t uncompressed[70000];
 
     uint8_t pattern[] = {
             'H', 'E', 'R', 'E', ' ', 'I', 'S', ' ', 'T', 'H', 'E', ' ', 'D', 'A', 'T', 'A',
@@ -192,7 +192,7 @@ RED_AUTO_TEST_CASE(TestZLIB3)
 
     Zcompressor<> z;
     const size_t step = 1024;
-    
+
     for (q = 0 ; q < sizeof(uncompressed) ; q += z.update(&uncompressed[q], std::min(step,sizeof(uncompressed)-q))){
         if (z.full()) {
             total_size += z.flush_ready(&all_out[total_size], sizeof(all_out)-total_size);
@@ -202,7 +202,7 @@ RED_AUTO_TEST_CASE(TestZLIB3)
         total_size += z.flush_ready(&all_out[total_size], sizeof(all_out)-total_size);
     }
 
-    hexdump(&all_out[0], total_size); 
+    hexdump(&all_out[0], total_size);
     RED_CHECK_EQUAL(total_size, 262);
 
     Zdecompressor<> unz;
@@ -210,10 +210,9 @@ RED_AUTO_TEST_CASE(TestZLIB3)
 
     uint8_t decompressed[sizeof(uncompressed)] = {};
     size_t inflated_size = 0;
-    auto (& compressed) = all_out;
     const size_t compressed_size = total_size;
-    
-    for (q = 0 ; q < compressed_size ; q += unz.update(&compressed[q], std::min(step2, compressed_size-q))){
+
+    for (q = 0 ; q < compressed_size ; q += unz.update(&all_out[q], std::min(step2, compressed_size-q))){
         if (unz.full()) {
             inflated_size += unz.flush_ready(&decompressed[inflated_size], sizeof(decompressed)-inflated_size);
         }

@@ -23,6 +23,8 @@
 #include "transport/socket_transport.hpp"
 #include "utils/netutils.hpp"
 #include "utils/hexdump.hpp"
+#include "utils/select.hpp"
+#include "utils/difftimeval.hpp"
 #include "system/openssl.hpp"
 
 #include <sys/types.h>
@@ -72,11 +74,6 @@ SocketTransport::~SocketTransport()
            , "%s (%d): total_received=%" PRIu64 ", total_sent=%" PRIu64
            , this->name, this->sck, this->total_received, this->total_sent);
     }
-}
-
-bool SocketTransport::is_set(wait_obj & obj, fd_set & rfds) const
-{
-    return this->has_pending_data() || obj.is_set(this->sck, rfds);
 }
 
 bool SocketTransport::has_pending_data() const
@@ -170,6 +167,7 @@ Transport::TlsResult SocketTransport::enable_client_tls(bool server_cert_store,
 
 bool SocketTransport::disconnect()
 {
+    LOG(LOG_DEBUG, "fd close %d", this->sck);
     if (0 == strcmp("127.0.0.1", this->ip_address)){
         // silent trace in the case of watchdog
         LOG(LOG_INFO, "Socket %s (%d) : closing connection\n", this->name, this->sck);
@@ -188,6 +186,7 @@ bool SocketTransport::connect()
     if (this->sck <= 0){
         this->sck = ip_connect(this->ip_address, this->port, 3, 1000).release();
     }
+    LOG(LOG_DEBUG, "fd open %d", this->sck);
     return this->sck > 0;
 }
 

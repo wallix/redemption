@@ -23,6 +23,7 @@
 #define RED_TEST_MODULE TestXXXXXXXXXX
 #include "system/redemption_unit_tests.hpp"
 
+#include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
 
 RED_AUTO_TEST_CASE(TestXXXXXXXXX)
 {

@@ -35,6 +35,6 @@ class Server
     };
 
     virtual ~Server() {}
-    virtual Server_status start(int sck) = 0;
+    virtual Server_status start(int sck, bool forkable) = 0;
 };
 

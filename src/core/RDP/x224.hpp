@@ -1466,5 +1466,13 @@ namespace X224
             stream.out_uint8(X224::EOT_EOT);
         }
     };
+
+
+    struct write_x224_dt_tpdu_fn
+    {
+        void operator()(StreamSize<7>, OutStream & x224_header, std::size_t sz) const {
+            X224::DT_TPDU_Send(x224_header, sz);
+        }
+    };
 } // end namespace X224
 

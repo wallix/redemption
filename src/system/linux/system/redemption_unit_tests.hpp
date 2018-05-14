@@ -16,6 +16,11 @@
 
 #ifdef IN_IDE_PARSER
 
+namespace redemption_unit_test__
+{
+    void X(bool);
+}
+
 # define FIXTURES_PATH "./tests/fixtures"
 # define CFG_PATH "./sys/etc/rdpproxy"
 # define RED_CHECK_EXCEPTION_ERROR_ID(stmt, id) do { stmt; id; } while (0)
@@ -24,31 +29,31 @@
 # define RED_CHECK_EXCEPTION(stmt, exception, predicate) do {\
     stmt; [](exception & e) { predicate(e); }; } while (0)
 # define RED_CHECK_EQUAL(a, b) (a) == (b)
-# define RED_CHECK_EQ(a, b) (a) == (b)
-# define RED_CHECK_NE(a, b) (a) != (b)
-# define RED_CHECK_LT(a, b) (a) < (b)
-# define RED_CHECK_LE(a, b) (a) <= (b)
-# define RED_CHECK_GT(a, b) (a) > (b)
-# define RED_CHECK_GE(a, b) (a) >= (b)
-# define RED_CHECK(a) (a)
-# define RED_CHECK_MESSAGE(a, iostream_expr) (a), "" << iostream_expr
-# define RED_CHECK_EQUAL_COLLECTIONS(a, b) (a) == (b)
+# define RED_CHECK_EQ(a, b) ::redemption_unit_test__::X(bool((a) == (b)))
+# define RED_CHECK_NE(a, b) ::redemption_unit_test__::X(bool((a) != (b)))
+# define RED_CHECK_LT(a, b) ::redemption_unit_test__::X(bool((a) < (b)))
+# define RED_CHECK_LE(a, b) ::redemption_unit_test__::X(bool((a) <= (b)))
+# define RED_CHECK_GT(a, b) ::redemption_unit_test__::X(bool((a) > (b)))
+# define RED_CHECK_GE(a, b) ::redemption_unit_test__::X(bool((a) >= (b)))
+# define RED_CHECK(a) ::redemption_unit_test__::X(bool(a))
+# define RED_CHECK_MESSAGE(a, iostream_expr) ::redemption_unit_test__::X(bool(a)), "" << iostream_expr
+# define RED_CHECK_EQUAL_COLLECTIONS(a, b) ::redemption_unit_test__::X(bool((a) == (b)))
 # define RED_CHECK_PREDICATE(pred, arg_list) pred arg_list
 
 # define RED_REQUIRE_NO_THROW(stmt) do { stmt; } while (0)
 # define RED_REQUIRE_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
 # define RED_REQUIRE_EXCEPTION(stmt, exception, predicate) do {\
     stmt; [](exception & e) { predicate(e); }; } while (0)
-# define RED_REQUIRE_EQUAL(a, b) (a) == (b)
-# define RED_REQUIRE_EQ(a, b) (a) == (b)
-# define RED_REQUIRE_NE(a, b) (a) != (b)
-# define RED_REQUIRE_LT(a, b) (a) < (b)
-# define RED_REQUIRE_LE(a, b) (a) <= (b)
-# define RED_REQUIRE_GT(a, b) (a) > (b)
-# define RED_REQUIRE_GE(a, b) (a) >= (b)
-# define RED_REQUIRE(a) (a)
-# define RED_REQUIRE_MESSAGE(a, iostream_expr) (a), "" << iostream_expr
-# define RED_REQUIRE_EQUAL_COLLECTIONS(a, b) (a) == (b)
+# define RED_REQUIRE_EQUAL(a, b) ::redemption_unit_test__::X(bool((a) == (b)))
+# define RED_REQUIRE_EQ(a, b) ::redemption_unit_test__::X(bool((a) == (b)))
+# define RED_REQUIRE_NE(a, b) ::redemption_unit_test__::X(bool((a) != (b)))
+# define RED_REQUIRE_LT(a, b) ::redemption_unit_test__::X(bool((a) < (b)))
+# define RED_REQUIRE_LE(a, b) ::redemption_unit_test__::X(bool((a) <= (b)))
+# define RED_REQUIRE_GT(a, b) ::redemption_unit_test__::X(bool((a) > (b)))
+# define RED_REQUIRE_GE(a, b) ::redemption_unit_test__::X(bool((a) >= (b)))
+# define RED_REQUIRE(a) ::redemption_unit_test__::X(bool(a))
+# define RED_REQUIRE_MESSAGE(a, iostream_expr) ::redemption_unit_test__::X(bool(a)), "" << iostream_expr
+# define RED_REQUIRE_EQUAL_COLLECTIONS(a, b) ::redemption_unit_test__::X(bool((a) == (b)))
 # define RED_REQUIRE_PREDICATE(pred, arg_list) pred arg_list
 
 # define RED_FAIL(mess) mess

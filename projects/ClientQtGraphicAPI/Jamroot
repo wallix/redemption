@@ -1,11 +1,8 @@
-JAM_INCLUDE_PATH ?= [ SHELL "readlink -n -f ../../jam" ] ;
-
 REDEMPTION_PUBLIC_PATH ?= [ SHELL "readlink -n -f ../.." ] ;
 
-ECHO $(REDEMPTION_PUBLIC_PATH) ;
+ECHO redemption-src: $(REDEMPTION_PUBLIC_PATH) ;
 
-REDEMPTION_PROJECT_PATH ?= [ SHELL "readlink -n -f .." ] ;
-
+JAM_INCLUDE_PATH ?= $(REDEMPTION_PUBLIC_PATH)/jam ;
 REDEMPTION_INCLUDE_PATH ?= $(REDEMPTION_PUBLIC_PATH)/include ;
 REDEMPTION_MODULES_SRC_PATH ?= $(REDEMPTION_PUBLIC_PATH)/modules ;
 
@@ -19,11 +16,11 @@ include $(JAM_INCLUDE_PATH)/includes.jam ;
 # select best Qt version
 ## @{
 import os ;
-local qtversion = [ os.environ qtversion ] ;
+local qtversion = [ os.environ qt ] ;
 
 if ! $(qtversion)
 {
-    qtversion = [ os.environ qt ] ;
+    qtversion = [ os.environ qtversion ] ;
 }
 
 if ! $(qtversion)
@@ -35,16 +32,11 @@ if ! $(qtversion)
     }
 }
 
-if $(qtversion) && $(qtversion) != 4 && $(qtversion) != 5 && $(qtversion) != 6
+if ! $(qtversion) || ($(qtversion) != 4 && $(qtversion) != 5 && $(qtversion) != 6)
 {
     echo "Unknown Qt$(qtversion)." ;
     qtversion = ;
     exit "Please set a valid Qt version (4 or 5) with `bjam -s qt=4`." ;
-}
-
-if ! $(qtversion)
-{
-    
 }
 ## @}
 
@@ -93,14 +85,14 @@ rule disable-buggy-warn ( properties * )
     return $(flags) ;
 }
 
-project redemption_qt4_client
+project redemption_qt_client
     : requirements
 
     <conditional>@includes
     <conditional>@flags
     <conditional>@disable-buggy-warn
 
-    <cxxflags>-std=c++14
+    <cxxflags>-std=c++17
 
     $(CXXFLAGS)
 
@@ -134,12 +126,7 @@ install install-bin
     : <location>$(INSTALLDIR)/usr/local/bin
     ;
 
-obj config.o : $(REDEMPTION_PROJECT_PATH)/redemption_configs/redemption_src/configs/config.cpp ;
-
-obj hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp : ;
-
-
-
+obj config.o : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
 
 local obj_list_VNC ;
 rule add_src_VNC ( src : requirements * )
@@ -147,7 +134,6 @@ rule add_src_VNC ( src : requirements * )
     obj $(src).o : $(REDEMPTION_SRC_PATH)/$(src) : $(requirements) ;
     obj_list_VNC += $(src).o ;
 }
-add_src_VNC mod/internal/widget/flat_vnc_authentification.cpp ;
 add_src_VNC mod/internal/widget/edit_valid.cpp ;
 add_src_VNC mod/internal/widget/image.cpp ;
 add_src_VNC mod/internal/widget/password.cpp ;
@@ -155,7 +141,7 @@ add_src_VNC mod/internal/widget/edit.cpp ;
 
 
 
-local obj_list ;
+local obj_list = config.o ;
 rule add_src ( src : requirements * )
 {
     obj $(src).o : $(REDEMPTION_SRC_PATH)/$(src) : $(requirements) ;
@@ -194,6 +180,7 @@ add_src mod/internal/widget/rail_module_host.cpp ;
 add_src mod/internal/widget/screen.cpp ;
 add_src mod/internal/widget/scroll.cpp ;
 add_src mod/internal/widget/tooltip.cpp ;
+add_src mod/rdp/negociation.cpp ;
 add_src transport/crypto_transport.cpp ;
 add_src transport/mwrm_reader.cpp ;
 add_src transport/socket_transport.cpp ;
@@ -204,6 +191,7 @@ add_src utils/cfgloader.cpp ;
 add_src utils/confdescriptor.cpp ;
 add_src utils/d3des.cpp ;
 add_src utils/fileutils.cpp ;
+add_src utils/hexdump.cpp ;
 add_src utils/log_as_logprint.cpp ;
 add_src utils/netutils.cpp ;
 add_src utils/pattutils.cpp ;
@@ -260,56 +248,30 @@ else
 }
 
 
-if $(qtversion) {
+obj front_Qt$(qtversion)_rdp.o : src/main_qt_client_redemption.cpp :
+    <define>REDEMPTION_DECL_LOG_TEST
+    $(EXE_DEPENDENCIES)
+;
 
-   obj front_Qt$(qtversion)_rdp.o : src/main_qt_client_redemption.cpp :
-        <define>REDEMPTION_DECL_LOG_TEST
-        $(EXE_DEPENDENCIES)
-    ;
-
-    exe client_rdp :
-        src/qt_input_output_api/qt_output_sound.hpp
-        src/qt_input_output_api/qt_input_output_clipboard.hpp
-        src/qt_input_output_api/qt_input_socket.hpp
-        src/qt_input_output_api/qt_graphics_components/qt_progress_bar_window.hpp
-        src/qt_input_output_api/qt_graphics_components/qt_options_window.hpp
-        src/qt_input_output_api/qt_graphics_components/qt_screen_window.hpp
-        src/qt_input_output_api/qt_graphics_components/qt_form_window.hpp
-        front_Qt$(qtversion)_rdp.o
-        $(obj_list)
-        $(lib_list)
-        $(obj_list_VNC)
-        config.o
-        hexdump.o
-        libqtclient
-        # TODO: disable phonon requirement when compiling with -D_NO_SOUND
-        libphonon
-    :
-        $(EXE_DEPENDENCIES)
-        <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
-    ;
-
-
-} else {
-    echo "No valid Qt version found" ;
-
-    obj front_rdp.o : src/main_client_redemption.cpp :
-        <define>REDEMPTION_DECL_LOG_TEST
-        $(EXE_DEPENDENCIES)
-    ;
-
-    exe client_rdp :
-        front_rdp.o
-        $(obj_list)
-        $(lib_list)
-        $(obj_list_VNC)
-        config.o
-        hexdump.o
-    :
-        $(EXE_DEPENDENCIES)
-        <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
-    ;
-}
+exe client_rdp :
+    src/qt_input_output_api/qt_output_sound.hpp
+    src/qt_input_output_api/qt_input_output_clipboard.hpp
+    src/qt_input_output_api/qt_input_socket.hpp
+    src/qt_input_output_api/qt_graphics_components/qt_progress_bar_window.hpp
+    src/qt_input_output_api/qt_graphics_components/qt_options_window.hpp
+    src/qt_input_output_api/qt_graphics_components/qt_screen_window.hpp
+    src/qt_input_output_api/qt_graphics_components/qt_form_window.hpp
+    front_Qt$(qtversion)_rdp.o
+    $(obj_list)
+    $(lib_list)
+    $(obj_list_VNC)
+    libqtclient
+    # TODO: disable phonon requirement when compiling with -D_NO_SOUND
+    libphonon
+:
+    $(EXE_DEPENDENCIES)
+    <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
+;
 
 #obj test_client.o : src/test_client_redemption.cpp :
 #    <define>REDEMPTION_DECL_LOG_TEST
@@ -321,13 +283,8 @@ if $(qtversion) {
 #    $(obj_list)
 #    $(lib_list)
 #    $(obj_list_VNC)
-#    config.o
-#    hexdump.o
 #:
 #    $(EXE_DEPENDENCIES)
 #    <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
 #    
 #;
-
-
-

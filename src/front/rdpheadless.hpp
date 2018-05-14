@@ -55,6 +55,8 @@
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"
 
+#include "front/execute_events.hpp"
+
 #include "keyboard/keymap2.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "mod/vnc/vnc.hpp"
@@ -63,6 +65,7 @@
 
 #include "utils/bitmap.hpp"
 #include "utils/netutils.hpp"
+#include "utils/select.hpp"
 #include "utils/word_identification.hpp"
 
 #include "openssl_tls.hpp"
@@ -413,6 +416,7 @@ private:
     // Connexion socket members
     ClientInfo        _info;
     std::unique_ptr<mod_api> _callback;
+    SessionReactor session_reactor;
 
 public:
     // TODO enum class
@@ -695,22 +699,17 @@ public:
         if (protocol_is_VNC) {
             this->_callback = std::make_unique<mod_vnc>(
                 *this->socket
+              , this->session_reactor
               , userName
               , userPwd
               , *(this)
               , this->_info.width
               , this->_info.height
-              , ini.get<cfg::font>()
-              , ""
-              , ""
-              , this->theme
               , this->_info.keylayout
               , 0
               , true
               , true
               , "0,1,-239"
-              , false
-              , true
               , mod_vnc::ClipboardEncodingType::UTF8
               , VncBogusClipboardInfiniteLoop::delayed
               , this->report_message
@@ -721,6 +720,7 @@ public:
         } else {
             auto rdp = std::make_unique<mod_rdp>(
                 *this->socket
+              , this->session_reactor
               , *this
               , this->_info
               , ini.get_ref<cfg::mod_rdp::redir_info>()
@@ -744,7 +744,7 @@ public:
         try {
             while (!this->_callback->is_up_and_running()) {
                 // std::cout << " Early negociations...\n";
-                if (int err = this->wait_and_draw_event(sck, *this->_callback, *(this), {3, 0})) {
+                if (int err = this->wait_and_draw_event({3, 0})) {
                     return err;
                 }
             }
@@ -821,35 +821,17 @@ public:
         }
 
         return sck;
-
     }
 
-    int wait_and_draw_event(int sck, mod_api& mod, FrontAPI & front, timeval timeout) {
-        unsigned max = 0;
-        fd_set   rfds;
-
-        io_fd_zero(rfds);
-
-        auto & event = mod.get_event();
-        event.wait_on_fd(sck, rfds, max, timeout);
-
-        int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
-        // std::cout << "RDP CLIENT :: select num = " <<  num << "\n";
-
-        if (num < 0) {
-            if (errno == EINTR) {
-                return 0;
-                //continue;
-            }
-
-            std::cerr << "RDP CLIENT :: errno = " <<  strerror(errno) << "\n";
+    int wait_and_draw_event(timeval timeout)
+    {
+        if (ExecuteEventsResult::Error == execute_events(
+            timeout, this->session_reactor, SessionReactor::EnableGraphics{true},
+            *this->_callback, *this
+        )) {
+            std::cerr << "RDP CLIENT :: errno = " << strerror(errno) << "\n";
             return 9;
         }
-
-        if (event.is_set(sck, rfds)) {
-            mod.draw_event(time(nullptr), front);
-        }
-
         return 0;
     }
 
@@ -911,7 +893,7 @@ public:
     void begin_update() override {}
     void end_update() override {}
 
-    void set_pointer(Pointer const & cursor) override {
+    void set_pointer(Pointer const & /*cursor*/) override {
         if (this->_verbose & SHOW_CURSOR_STATE_CHANGE) {
             // TODO: dump changes to the cursor (signature based ?)
             std::cout <<  "server >> change cursor " <<  std::endl;
@@ -1267,7 +1249,7 @@ public:
     void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPOpaqueRect color=" << cmd.color.as_bgr().to_u32();
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << " clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1293,7 +1275,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPLineTo " << std::endl;
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1301,7 +1283,7 @@ public:
     void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPatBlt rop=" << int(cmd.rop);
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1310,7 +1292,7 @@ public:
         (void)bitmap;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMem3Blt rop=" << int(cmd.rop);
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1344,7 +1326,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMultiOpaqueRect " << std::endl;
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1353,7 +1335,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPMultiPatBlt " << std::endl;
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1371,7 +1353,7 @@ public:
         (void)gly_cache;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPGlyphIndex " << std::endl;
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1380,7 +1362,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPolygonSC " << std::endl;
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1389,7 +1371,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPolygonCB " << std::endl;
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1398,7 +1380,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPPolyline " << std::endl;
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1407,7 +1389,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPEllipseSC " << std::endl;
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }
@@ -1416,7 +1398,7 @@ public:
         (void)cmd;
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server >> RDPEllipseCB " << std::endl;
-            std::cout << " bpp: " << color_ctx.depth().to_bpp();
+            std::cout << " bpp: " << int(color_ctx.depth().to_bpp());
             std::cout << "clip x=" << int(clip.x) <<  std::endl;
         }
     }

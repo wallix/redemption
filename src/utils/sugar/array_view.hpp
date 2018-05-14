@@ -88,8 +88,8 @@ struct array_view
     constexpr type const * data() const noexcept { return this->p; }
     REDEMPTION_CONSTEXPR_AFTER_CXX11 type * data() noexcept { return this->p; }
 
-    constexpr type const * begin() const { return this->data(); }
-    constexpr type const * end() const { return this->data() + this->size(); }
+    constexpr type const * begin() const noexcept { return this->data(); }
+    constexpr type const * end() const noexcept { return this->data() + this->size(); }
     REDEMPTION_CONSTEXPR_AFTER_CXX11 type * begin() noexcept { return this->data(); }
     REDEMPTION_CONSTEXPR_AFTER_CXX11 type * end() noexcept { return this->data() + this->size(); }
 

@@ -99,10 +99,10 @@ class FakeClientIOClipboard : public ClientIOClipboardAPI
 {
 public:
     std::string data_text;
-    void emptyBuffer() {}
+    void emptyBuffer() override {}
 
     //  set distant clipboard data
-    void setClipboard_text(std::string & str) override {
+    void setClipboard_text(std::string const& str) override {
         this->data_text = str;
     }
 
@@ -112,40 +112,27 @@ public:
         (void) image_height;
         (void) bpp;
     }
-    void setClipboard_files(std::string & name) override {}
-    void write_clipboard_temp_file(std::string fileName, const uint8_t * data, size_t data_len) override {
+    void setClipboard_files(std::string const& /*name*/) override {}
+    void write_clipboard_temp_file(std::string const& fileName, const uint8_t * data, size_t data_len) override {
         (void) fileName;
         (void) data;
         (void) data_len;
     }
-
-        // image data
-    // TODO should be `ImageDataView get_image_view()`
-    int get_image_buffer_width() override {return 0;}
-    int get_image_buffer_height() override {return 0;}
-    uint8_t * get_image_buffer_data() override {return 0;}
-    int get_image_buffer_depth() override {return 0;}
-
-        // files data (file index to identify a file among a files group descriptor)
-    std::string get_file_item_name(int index) override {return std::string("");}
-    // TODO should be `array_view_const_char get_file_item_size(int index)`
-    int get_file_item_size(int index) override {(void) index; return 0;}
-    char * get_file_item_data(int index) override {(void) index; return const_cast<char*>("");}
-
 };
 
 class FakeClientOutPutSound : public ClientOutputSoundAPI {
 
 public:
-    void init(size_t raw_total_size) override {(void) raw_total_size; };
-    void setData(const uint8_t * data, size_t size) override {(void) data; (void) size; };
-    void play() override {};
+    void init(size_t raw_total_size) override {(void) raw_total_size; }
+    void setData(const uint8_t * data, size_t size) override {(void) data; (void) size; }
+    void play() override {}
 };
 
 
 
 class FakeClient : public ClientRedemptionAPI
 {
+    CHANNELS::ChannelDefArray channels;
 
 public:
     int read_stream_index = -1;
@@ -165,7 +152,7 @@ public:
 
     uint16_t get_next_pdu_type() {
         this->read_stream_index++;
-        if (this->read_stream_index < fake_mod.types.size()) {
+        if (this->read_stream_index < int(fake_mod.types.size())) {
             return fake_mod.types[this->read_stream_index];
         }
 
@@ -174,7 +161,7 @@ public:
 
     uint16_t get_next_pdu_sub_type() {
         this->read_stream_sub_index++;
-        if (this->read_stream_sub_index < fake_mod.sub_types.size()) {
+        if (this->read_stream_sub_index < int(fake_mod.sub_types.size())) {
             return fake_mod.sub_types[this->read_stream_sub_index];
         }
 
@@ -183,7 +170,7 @@ public:
 
 
 
-    void draw(RDP::FrameMarker    const & cmd) override { (void) cmd; };
+    void draw(RDP::FrameMarker    const & cmd) override { (void) cmd; }
     void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { (void) cmd; (void) clip; (void) color_ctx; (void) bmp; }
     void draw(RDPDestBlt          const & cmd, Rect clip) override { (void) cmd; (void) clip; }
     void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { (void) cmd; (void) clip; }
@@ -201,12 +188,9 @@ public:
     void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { (void) cmd; (void) clip; (void) color_ctx; }
     void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { (void) cmd; (void) clip; (void) color_ctx; }
     void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { (void) cmd; (void) clip; (void) color_ctx; }
-    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { (void) cmd; (void) bmp; (void) clip;}
+    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { (void) cmd; (void) bmp; (void) clip; (void)color_ctx; }
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { (void) cmd; (void) clip; (void) gly_cache; (void) color_ctx;}
     bool must_be_stop_capture() override { return true;}
-    const CHANNELS::ChannelDefArray & get_channel_list() const override {const CHANNELS::ChannelDefArray c; return c;}
+    const CHANNELS::ChannelDefArray & get_channel_list() const override { return this->channels;}
     ResizeResult server_resize(int , int , int ) override { return ResizeResult::instant_done;}
-
-
-
 };

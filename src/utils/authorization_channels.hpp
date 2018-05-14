@@ -92,6 +92,7 @@ private:
     CHANNELS::ChannelNameId const * allow_and_deny_pivot_;
     bool all_allow_ = false;
     bool all_deny_ = false;
+    // TODO array<bool, n> -> bitset<n> | uint8_t | enum
     std::array<bool, decltype(rdpdr_list())().size()> rdpdr_restriction_ {{}};
     std::array<bool, decltype(cliprde_list())().size()> cliprdr_restriction_ {{}};
     std::array<bool, decltype(rdpsnd_list())().size()> rdpsnd_restriction_ {{}};

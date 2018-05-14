@@ -22,6 +22,7 @@
 
 #include "mod/mod_api.hpp"
 #include "mod/rdp/rdp_api.hpp"
+#include "core/session_reactor.hpp"
 
 class AuthApi;
 class ReportMessageApi;

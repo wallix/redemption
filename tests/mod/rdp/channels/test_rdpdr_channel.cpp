@@ -141,9 +141,10 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
 
+    SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
-        &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, file_system_virtual_channel_params);
+        session_reactor, &to_client_sender, &to_server_sender,
+        file_system_drive_manager, front, file_system_virtual_channel_params);
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
@@ -249,8 +250,9 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
 
+    SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
-        &to_client_sender, &to_server_sender, file_system_drive_manager,
+        session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, file_system_virtual_channel_params);
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
@@ -357,8 +359,9 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
 
+    SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
-        &to_client_sender, &to_server_sender, file_system_drive_manager,
+        session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, file_system_virtual_channel_params);
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
@@ -465,8 +468,9 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
 
+    SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
-        &to_client_sender, &to_server_sender, file_system_drive_manager,
+        session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, file_system_virtual_channel_params);
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
@@ -573,8 +577,9 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
 
+    SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
-        &to_client_sender, &to_server_sender, file_system_drive_manager,
+        session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, file_system_virtual_channel_params);
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
@@ -681,8 +686,9 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
 
+    SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
-        &to_client_sender, &to_server_sender, file_system_drive_manager,
+        session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, file_system_virtual_channel_params);
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH + 8];
@@ -788,8 +794,9 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
 
+    SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
-        &to_client_sender, &to_server_sender, file_system_drive_manager,
+        session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, file_system_virtual_channel_params);
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH + 8];

@@ -26,16 +26,15 @@
 #include "configs/config_access.hpp"
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"
-#include "utils/timeout.hpp"
 
 
 FlatLoginMod::FlatLoginMod(
-    FlatLoginModVariables vars,
+    FlatLoginModVariables vars, SessionReactor& session_reactor,
     char const * username, char const * password,
-    FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, time_t now,
+    FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, time_t /*now*/,
     ClientExecute & client_execute
 )
-    : LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
+    : LocallyIntegrableMod(session_reactor, front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>().c_str(),
         this->login, front, front, this->font(), this->theme())
@@ -48,10 +47,10 @@ FlatLoginMod::FlatLoginMod(
         vars.get<cfg::context::opt_message>().c_str(),
         &this->language_button,
         this->font(), Translator(language(vars)), this->theme())
-    , timeout(now, vars.get<cfg::globals::authentication_timeout>().count())
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
     , vars(vars)
 {
+    LOG(LOG_DEBUG, "FlatLoginMod");
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
         LOG(LOG_INFO, "LoginMod: Ending session in %u seconds",
             static_cast<unsigned>(vars.get<cfg::globals::authentication_timeout>().count()));
@@ -69,6 +68,20 @@ FlatLoginMod::FlatLoginMod(
     }
 
     this->screen.rdp_input_invalidate(this->screen.get_rect());
+
+    if (vars.get<cfg::globals::authentication_timeout>().count()) {
+        this->timeout_timer = session_reactor.create_timer(std::ref(session_reactor))
+        .set_delay(vars.get<cfg::globals::authentication_timeout>())
+        .on_action([](auto ctx, SessionReactor& session_reactor){
+            session_reactor.set_next_event(BACK_EVENT_STOP);
+            return ctx.terminate();
+        });
+    }
+
+    this->started_copy_past_event = session_reactor.create_graphic_event(std::ref(*this))
+    .on_action(jln::one_shot([](gdi::GraphicApi&, FlatLoginMod& self){
+        self.copy_paste.ready(self.front);
+    }));
 }
 
 FlatLoginMod::~FlatLoginMod()
@@ -87,12 +100,10 @@ void FlatLoginMod::notify(Widget* sender, notify_event_t event)
         this->vars.ask<cfg::globals::target_device>();
         this->vars.ask<cfg::context::target_protocol>();
         this->vars.set_acl<cfg::context::password>(this->login.password_edit.get_text());
-        this->event.signal = BACK_EVENT_NEXT;
-        this->event.set_trigger_time(wait_obj::NOW);
+        this->session_reactor.set_next_event(BACK_EVENT_NEXT);
         break;
     case NOTIFY_CANCEL:
-        this->event.signal = BACK_EVENT_STOP;
-        this->event.set_trigger_time(wait_obj::NOW);
+        this->session_reactor.set_next_event(BACK_EVENT_STOP);
         break;
     case NOTIFY_PASTE: case NOTIFY_COPY: case NOTIFY_CUT:
         if (this->copy_paste) {
@@ -106,23 +117,6 @@ void FlatLoginMod::notify(Widget* sender, notify_event_t event)
 void FlatLoginMod::draw_event(time_t now, gdi::GraphicApi & gapi)
 {
     LocallyIntegrableMod::draw_event(now, gapi);
-
-    if (!this->copy_paste && this->event.is_waked_up_by_time()) {
-        this->copy_paste.ready(this->front);
-    }
-
-    switch(this->timeout.check(now)) {
-    case Timeout::TIMEOUT_REACHED:
-        this->event.signal = BACK_EVENT_STOP;
-        this->event.set_trigger_time(wait_obj::NOW);
-        break;
-    case Timeout::TIMEOUT_NOT_REACHED:
-        this->event.set_trigger_time(200000);
-        break;
-    case Timeout::TIMEOUT_INACTIVE:
-        this->event.reset_trigger_time();
-        break;
-    }
 }
 
 void FlatLoginMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)

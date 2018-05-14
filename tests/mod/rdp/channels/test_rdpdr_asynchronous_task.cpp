@@ -23,12 +23,13 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#include "test_only/get_file_contents.hpp"
+#include "gdi/graphic_api.hpp"
 #include "transport/in_file_transport.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/make_unique.hpp"
 #include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "test_only/transport/test_transport.hpp"
+#include "test_only/get_file_contents.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -79,41 +80,21 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
         test_to_server_sender, to_verbose_flags(verbose));
 
     bool run_task = true;
+    SessionReactor session_reactor;
+    rdpdr_drive_read_task.configure_event(
+        session_reactor, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
+            *b = false;
+        }});
 
-    do
-    {
-        wait_obj event;
-
-        rdpdr_drive_read_task.configure_wait_object(event);
-
-        unsigned max = 0;
-        fd_set rfds;
-
-        FD_ZERO(&rfds);
-
-        timeval timeout = { 3, 0 };
-
-        event.wait_on_fd(rdpdr_drive_read_task.get_file_descriptor(), rfds, max, timeout);
-
-        int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
-
-        if (num < 0) {
-            if (errno == EINTR) {
-                continue;
-            }
-
-            LOG(LOG_ERR, "Task loop raised error %d : %s", errno, strerror(errno));
-            run_task = false;
-        }
-        else {
-            if (event.is_set(rdpdr_drive_read_task.get_file_descriptor(), rfds)) {
-                if (!rdpdr_drive_read_task.run(event)) {
-                    run_task = false;
-                }
-            }
-        }
+    RED_CHECK(!session_reactor.fd_events_.is_empty());
+    RED_CHECK(run_task);
+    auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };
+    for (int i = 0; i < 100 && !session_reactor.fd_events_.is_empty(); ++i) {
+        session_reactor.execute_events(fd_is_set);
     }
-    while (run_task);
+    session_reactor.execute_timers(SessionReactor::EnableGraphics{false}, &gdi::null_gd);
+    RED_CHECK(session_reactor.fd_events_.is_empty());
+    RED_CHECK(!run_task);
 }
 
 RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
@@ -138,47 +119,27 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     RdpdrSendDriveIOResponseTask rdpdr_send_drive_io_response_task(
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
         reinterpret_cast<uint8_t const *>(contents.data()),
-        contents.size(),
-        test_to_server_sender,
-        to_verbose_flags(verbose));
+        contents.size(), test_to_server_sender, to_verbose_flags(verbose));
 
     LOG(LOG_INFO, "RdpdrSendDriveIOResponseTask");
-
     bool run_task = true;
+    SessionReactor session_reactor;
+    rdpdr_send_drive_io_response_task.configure_event(
+        session_reactor, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
+            *b = false;
+        }});
+    RED_CHECK(session_reactor.fd_events_.is_empty());
 
-    do
-    {
-        LOG(LOG_INFO, "do");
-        wait_obj event;
+    RED_CHECK(!session_reactor.timer_events_.is_empty());
 
-        rdpdr_send_drive_io_response_task.configure_wait_object(event);
-
-        unsigned max = 0;
-        fd_set rfds;
-
-        FD_ZERO(&rfds);
-
-        timeval timeout = { 3, 0 };
-
-        event.wait_on_fd(rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds, max, timeout);
-
-        int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
-
-        if (num < 0) {
-            if (errno == EINTR) {
-                continue;
-            }
-
-            LOG(LOG_ERR, "Task loop raised error %d : %s", errno, strerror(errno));
-            run_task = false;
-        }
-        else {
-            if (event.is_set(rdpdr_send_drive_io_response_task.get_file_descriptor(), rfds)) {
-                if (!rdpdr_send_drive_io_response_task.run(event)) {
-                    run_task = false;
-                }
-            }
-        }
+    timeval timeout = session_reactor.get_current_time();
+    for (int i = 0; i < 100 && !session_reactor.timer_events_.is_empty(); ++i) {
+        session_reactor.execute_timers(
+            SessionReactor::EnableGraphics{false},
+            []()->gdi::GraphicApi&{return gdi::null_gd(); });
+        session_reactor.set_current_time(timeout);
+        ++timeout.tv_sec;
     }
-    while (run_task);
+    RED_CHECK(session_reactor.timer_events_.is_empty());
+    RED_CHECK(!run_task);
 }
