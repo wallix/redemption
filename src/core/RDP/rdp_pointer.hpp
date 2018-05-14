@@ -470,6 +470,64 @@ struct SystemDefaultPointer : public ConstPointer {
 };
 
 
+struct PointerLoader2
+{
+    CursorSize dimensions;
+    uint8_t data_bpp;
+    Hotspot hotspot;
+    array_view_const_u8 data;
+    array_view_const_u8 mask;
+    
+    PointerLoader2(InStream & stream)
+        : dimensions(0, 0)
+        , data_bpp{0}
+        , hotspot(0, 0)
+    {
+        uint8_t width    = stream.in_uint8();
+        uint8_t height   = stream.in_uint8();
+        this->dimensions = CursorSize(width, height);
+        this->data_bpp = stream.in_uint8();
+        uint8_t hotspot_x = stream.in_uint8();
+        uint8_t hotspot_y = stream.in_uint8();
+        this->hotspot = Hotspot(hotspot_x, hotspot_y);
+        uint16_t dlen = stream.in_uint16_le();
+        uint16_t mlen = stream.in_uint16_le();
+        // TODO: assert(dlen <= MAX_WIDTH * MAX_HEIGHT * 3);
+        // TODO: assert(mlen <= MAX_WIDTH * MAX_HEIGHT * 1 / 8);
+        auto data = stream.in_uint8p(dlen);
+        auto mask = stream.in_uint8p(mlen);
+        this->data = make_array_view(data, dlen);
+        this->mask = make_array_view(mask, mlen);
+    }
+};
+
+struct PointerLoader32x32
+{
+    CursorSize dimensions;
+    uint8_t data_bpp;
+    Hotspot hotspot;
+    array_view_const_u8 data;
+    array_view_const_u8 mask;
+    
+    PointerLoader32x32(InStream & stream)
+        : dimensions(32, 32)
+        , data_bpp{24}
+        , hotspot(0, 0)
+    {
+        uint8_t hotspot_x = stream.in_uint8();
+        uint8_t hotspot_y = stream.in_uint8();
+        this->hotspot = Hotspot(hotspot_x, hotspot_y);
+        uint16_t dlen = 32*32*::nbbytes(24);
+        uint16_t mlen = 32*::nbbytes(32);
+        // TODO: assert(dlen <= MAX_WIDTH * MAX_HEIGHT * 3);
+        // TODO: assert(mlen <= MAX_WIDTH * MAX_HEIGHT / 8);
+        auto data = stream.in_uint8p(dlen);
+        auto mask = stream.in_uint8p(mlen);
+        this->data = make_array_view(data, dlen);
+        this->mask = make_array_view(mask, mlen);
+    }
+};
+
 struct Pointer : public BasePointer {
 
     friend class NewPointerUpdate;
@@ -606,6 +664,7 @@ public:
         }
     }
 
+
     Pointer(uint8_t Bpp, CursorSize d, Hotspot hs, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask, 
                    int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max)
         : BasePointer(CursorSize(std::min<size_t>(size_t(d.width), size_t(32))+(std::min<size_t>(size_t(d.width), size_t(32))&1),d.height), hs)
@@ -681,6 +740,8 @@ public:
         return true;    
     }
 
+
+
     explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and)
         : BasePointer(d, hs)
     {
@@ -699,6 +760,16 @@ public:
                                                           this->dimensions.height, 
                                                           ::even_pad_length(this->dimensions.width * Bpp),
                                                           Bpp);
+    }
+
+    explicit Pointer(const PointerLoader2 pl)
+     : Pointer(pl.data_bpp, pl.dimensions, pl.hotspot, pl.data, pl.mask)
+    {
+    }
+
+    explicit Pointer(const PointerLoader32x32 pl)
+     : Pointer(pl.data_bpp, pl.dimensions, pl.hotspot, pl.data, pl.mask)
+    {
     }
 
     explicit Pointer(uint8_t data_bpp, CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and)
@@ -835,11 +906,8 @@ public:
         }
     }
 
-    void emit_pointer(OutStream & result, int cache_idx, uint16_t mouse_x, uint16_t mouse_y) const
+    void emit_pointer32x32(OutStream & result) const
     {
-        result.out_uint16_le(mouse_x);
-        result.out_uint16_le(mouse_y);
-        result.out_uint8(cache_idx);
         result.out_uint8(this->get_hotspot().x);
         result.out_uint8(this->get_hotspot().y);
 
@@ -847,12 +915,8 @@ public:
         result.out_copy_bytes(this->get_monochrome_and_mask());
     }
 
-    void emit_pointer2(OutStream & result, int cache_idx, uint16_t mouse_x, uint16_t mouse_y) const
+    void emit_pointer2(OutStream & result) const
     {
-        result.out_uint16_le(mouse_x);
-        result.out_uint16_le(mouse_y);
-        result.out_uint8(cache_idx);
-
         result.out_uint8(this->get_dimensions().width);
         result.out_uint8(this->get_dimensions().height);
         result.out_uint8(24);
@@ -1293,4 +1357,5 @@ struct ARGB32Pointer {
         return {this->data, this->dimensions.width * this->dimensions.height * 4};
     }
 };
+
 

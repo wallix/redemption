@@ -1028,6 +1028,8 @@ inline void test_app_recorder_impl(char const * opt_vlc, size_t sz1, size_t sz2,
     RED_CHECK_EQUAL(0, res);
 
     RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000000.flv", sz1);
+//    RED_CHECK_EQUAL(filesize("/tmp/recorder.1-000000.flv"), sz1);
+//    exit(-1);
     RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000001.flv", sz2);
     RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1.flv", sz3);
 }

@@ -1494,15 +1494,17 @@ public:
     }
 
         // image data
+    // TODO should be `ImageDataView get_image_view()`
     virtual int get_image_buffer_width() {return 0;}
     virtual int get_image_buffer_height() {return 0;}
     virtual uint8_t * get_image_buffer_data() {return 0;}
     virtual int get_image_buffer_depth() {return 0;}
 
         // files data (file index to identify a file among a files group descriptor)
-    virtual std::string get_file_item_name(int index) {return std::string("");}
+    virtual std::string get_file_item_name(int index) {(void) index; return std::string("");}
+    // TODO should be `array_view_const_char get_file_item_size(int index)`
     virtual int get_file_item_size(int index) {(void) index; return 0;}
-    virtual char * get_file_item_data(int index) {(void) index; return "";}
+    virtual char * get_file_item_data(int index) {(void) index; return const_cast<char*>("");}
 
     int get_citems_number() {
         return this->_cItems;
