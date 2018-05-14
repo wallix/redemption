@@ -32,6 +32,7 @@
 #include "qt_input_output_api/qt_input_output_clipboard.hpp"
 #include "qt_input_output_api/qt_IO_graphic_mouse_keyboard.hpp"
 #include "qt_input_output_api/qt_input_socket.hpp"
+#include "qt_input_output_api/IO_disk.hpp"
 
 
 #pragma GCC diagnostic pop
@@ -56,6 +57,8 @@ int main(int argc, char** argv) {
     ClientOutputSoundAPI  * sound_api     = &sound_api_obj;
     QtInputSocket socket_api_obj(qwidget_parent);
     ClientInputSocketAPI  * socket_api    = &socket_api_obj;
+    IODisk ioDisk_api_obj;
+    ClientIODiskAPI * ioDisk_api = &ioDisk_api_obj;
 
 
     RDPVerbose verbose = RDPVerbose::rdpdr_dump;          //to_verbose_flags(0x0);
@@ -65,7 +68,8 @@ int main(int argc, char** argv) {
                               , clipboard_api
                               , sound_api
                               , socket_api
-                              , control_qt);
+                              , control_qt
+                              , ioDisk_api);
 
     app.exec();
 

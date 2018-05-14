@@ -110,7 +110,8 @@ public:
                      ClientIOClipboardAPI * impl_clipboard,
                      ClientOutputSoundAPI * impl_sound,
                      ClientInputSocketAPI * impl_socket_listener,
-                     ClientInputMouseKeyboardAPI * impl_mouse_keyboard)
+                     ClientInputMouseKeyboardAPI * impl_mouse_keyboard,
+                     ClientIODiskAPI * impl_io_disk)
         : ClientRedemptionIOAPI(argv, argc, verbose)
 
         , impl_graphic( impl_graphic)
@@ -124,7 +125,7 @@ public:
 
         , clientChannelRDPSNDManager(this->verbose, this, this->impl_sound)
         , clientChannelCLIPRDRManager(this->verbose, this, this->impl_clipboard)
-        , clientChannelRDPDRManager(this->verbose, this)
+        , clientChannelRDPDRManager(this->verbose, this, impl_io_disk)
         , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
     	, graph_capture(nullptr)
     {

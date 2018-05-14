@@ -1516,6 +1516,106 @@ public:
 
 
 
+#include "core/FSCC/FileInformation.hpp"
+
+constexpr long long WINDOWS_TICK = 10000000;
+constexpr long long SEC_TO_UNIX_EPOCH = 11644473600LL;
+
+class ClientIODiskAPI : public ClientIOAPI {
+
+
+public:
+    struct FileStat {
+
+        uint64_t LastAccessTime = 0;
+        uint64_t LastWriteTime  = 0;
+        uint64_t CreationTime   = 0;
+        uint64_t ChangeTime     = 0;
+        uint32_t FileAttributes = 0;
+
+        int64_t  AllocationSize = 0;
+        int64_t  EndOfFile      = 0;
+        uint32_t NumberOfLinks  = 0;
+        uint8_t  DeletePending  = 0;
+        uint8_t  Directory      = 0;
+    };
+
+    struct FileStatvfs {
+
+        uint64_t VolumeCreationTime             = 0;
+        const char * VolumeLabel                = "";
+        const char * FileSystemName             = "ext4";
+
+        uint32_t FileSystemAttributes           = fscc::NEW_FILE_ATTRIBUTES;
+        uint32_t SectorsPerAllocationUnit       = 8;
+
+        uint32_t BytesPerSector                 = 0;
+        uint32_t MaximumComponentNameLength     = 0;
+        uint64_t TotalAllocationUnits           = 0;
+        uint64_t CallerAvailableAllocationUnits = 0;
+        uint64_t AvailableAllocationUnits       = 0;
+        uint64_t ActualAvailableAllocationUnits = 0;
+    };
+
+
+
+
+    unsigned WindowsTickToUnixSeconds(long long windowsTicks) {
+        return unsigned((windowsTicks / WINDOWS_TICK) - SEC_TO_UNIX_EPOCH);
+    }
+
+    long long UnixSecondsToWindowsTick(unsigned unixSeconds) {
+        return ((unixSeconds + SEC_TO_UNIX_EPOCH) * WINDOWS_TICK);
+    }
+
+    uint32_t string_to_hex32(unsigned char * str) {
+        size_t size = sizeof(str);
+        uint32_t hex32(0);
+        for (size_t i = 0; i < size; i++) {
+            int s = str[i];
+            if(s > 47 && s < 58) {                      //this covers 0-9
+                hex32 += (s - 48) << (size - i - 1);
+            } else if (s > 64 && s < 71) {              // this covers A-F
+                hex32 += (s - 55) << (size - i - 1);
+            } else if (s > 'a'-1 && s < 'f'+1) {        // this covers a-f
+                hex32 += (s - 'a') << (size - i - 1);
+            }
+        }
+        return hex32;
+    }
+
+    virtual bool ifile_good(const char * new_path) {}
+
+    virtual bool ofile_good(const char * new_path) {}
+
+    virtual bool dir_good(const char * new_path) {}
+
+    virtual void marke_dir(const char * new_path) {}
+
+    virtual FileStat get_file_stat(const char * file_to_request) {}
+
+    virtual FileStatvfs get_file_statvfs(const char * file_to_request) {}
+
+    virtual erref::NTSTATUS read_data(const  std::string & file_to_tread,
+                                        int file_size,
+                                        int offset,
+                                        std::unique_ptr<uint8_t[]> & ReadData,
+                                        bool log_erro_on) {}
+
+    virtual bool set_elem_from_dir(std::vector<std::string> & elem_list, std::string & str_dir_path) {}
+
+    virtual int get_device(const char * file_path) {}
+
+    virtual uint32_t get_volume_serial_number(int device) {}
+
+    virtual bool write_file(const char * file_to_write, const char * data, int data_len) {}
+
+    virtual bool remove_file(const char * file_to_remove) {}
+
+    virtual bool rename_file(const char * file_to_rename,  const char * new_name) {}
+};
+
+
 
 class ClientOutputSoundAPI : public ClientIOAPI {
 
@@ -1662,36 +1762,36 @@ public:
 
     // replay mod
 
-    virtual void create_screen(std::string const & , std::string const & ) {};
+    virtual void create_screen(std::string const & , std::string const & ) {}
 
     virtual void draw_frame(int ) {}
 
 
     // remote app
 
-    virtual void create_remote_app_screen(uint32_t , int , int , int , int ) {};
+    virtual void create_remote_app_screen(uint32_t , int , int , int , int ) {}
 
-    virtual void move_screen(uint32_t , int , int ) {};
+    virtual void move_screen(uint32_t , int , int ) {}
 
-    virtual void set_screen_size(uint32_t , int , int ) {};
+    virtual void set_screen_size(uint32_t , int , int ) {}
 
-    virtual void set_pixmap_shift(uint32_t , int , int ) {};
+    virtual void set_pixmap_shift(uint32_t , int , int ) {}
 
-    virtual int get_visible_width(uint32_t ) {return 0;};
+    virtual int get_visible_width(uint32_t ) {return 0;}
 
-    virtual int get_visible_height(uint32_t ) {return 0;};
+    virtual int get_visible_height(uint32_t ) {return 0;}
 
-    virtual int get_mem_width(uint32_t ) {return 0;};
+    virtual int get_mem_width(uint32_t ) {return 0;}
 
-    virtual int get_mem_height(uint32_t ) {return 0;};
+    virtual int get_mem_height(uint32_t ) {return 0;}
 
-    virtual void set_mem_size(uint32_t , int , int ) {};
+    virtual void set_mem_size(uint32_t , int , int ) {}
 
-    virtual void show_screen(uint32_t ) {};
+    virtual void show_screen(uint32_t ) {}
 
-    virtual void dropScreen(uint32_t ) {};
+    virtual void dropScreen(uint32_t ) {}
 
-    virtual void clear_remote_app_screen() {};
+    virtual void clear_remote_app_screen() {}
 
 
 
