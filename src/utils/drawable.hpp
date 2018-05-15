@@ -32,6 +32,7 @@
 #include "utils/rect.hpp"
 #include "utils/ellipse.hpp"
 #include "utils/bitfu.hpp"
+#include "utils/drawable_pointer.hpp"
 #include "gdi/image_frame_api.hpp"
 
 using std::size_t;
@@ -948,107 +949,6 @@ private:
 };
 
 
-struct DrawablePointer {
-    enum {
-          MAX_WIDTH  = 96
-        , MAX_HEIGHT = 96
-    };
-
-    struct ContiguousPixels {
-        int             x;
-        int             y;
-        uint8_t         data_size;
-        const uint8_t * data;
-    };
-
-    ContiguousPixels contiguous_pixels[MAX_WIDTH / 2 * MAX_HEIGHT];    // MAX_WIDTH / 2 contiguous pixels per line * MAX_HEIGHT lines
-    uint8_t          number_of_contiguous_pixels;
-
-    uint8_t data[MAX_WIDTH * MAX_HEIGHT * 3];  // 32 pixels per line * 32 lines * 3 bytes per pixel
-
-    int hotspot_x;
-    int hotspot_y;
-
-    DrawablePointer() : contiguous_pixels(), number_of_contiguous_pixels(0), data(), hotspot_x(0), hotspot_y(0) {}
-
-    void initialize(int hotspot_x, int hotspot_y, unsigned int width, unsigned int height, const uint8_t * pointer_data, const uint8_t * pointer_mask) {
-        ::memset(this->contiguous_pixels, 0, sizeof(this->contiguous_pixels));
-        this->number_of_contiguous_pixels = 0;
-        ::memset(this->data, 0, sizeof(this->data));
-
-        this->hotspot_x = hotspot_x;
-        this->hotspot_y = hotspot_y;
-        //printf("hotspot_x=%d hotspot_y=%d\n", hotspot_x, hotspot_y);
-
-        bool               non_transparent_pixel;
-        uint8_t          * current_data               = this->data;
-        ContiguousPixels * current_contiguous_pixels  = this->contiguous_pixels;
-
-        const unsigned int xor_line_length_in_byte = width * 3;
-        const unsigned int xor_padded_line_length_in_byte =
-            ((xor_line_length_in_byte % 2) ?
-             xor_line_length_in_byte + 1 :
-             xor_line_length_in_byte);
-        const unsigned int remainder = (width % 8);
-        const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
-        const unsigned int and_padded_line_length_in_byte =
-            ((and_line_length_in_byte % 2) ?
-             and_line_length_in_byte + 1 :
-             and_line_length_in_byte);
-
-        for (unsigned int line = 0; line < height; line++) {
-            bool in_contiguous_mouse_pixels = false;
-
-            for (unsigned int column = 0; column < width; column++) {
-                const div_t        res = div(column, 8);
-                const unsigned int rem = 7 - res.rem;
-
-                non_transparent_pixel = !(((*(pointer_mask + and_padded_line_length_in_byte * (height - (line + 1)) + res.quot)) & (1 << rem)) >> rem);
-                //printf("%c", (non_transparent_pixel ? 'X' : '.'));
-
-                const uint8_t * pixel = pointer_data + xor_padded_line_length_in_byte * (height - (line + 1)) + column * 3;
-                //printf("%02X%02X%02X", *pixel, *(pixel + 1), *(pixel+2));
-
-                if (non_transparent_pixel && !in_contiguous_mouse_pixels) {
-                    this->number_of_contiguous_pixels++;
-
-                    current_contiguous_pixels->x         = column;
-                    current_contiguous_pixels->y         = line;
-                    current_contiguous_pixels->data_size = 0;
-                    current_contiguous_pixels->data      = current_data;
-                    current_contiguous_pixels++;
-
-                    in_contiguous_mouse_pixels = true;
-                }
-                else if (!non_transparent_pixel && in_contiguous_mouse_pixels) {
-                    in_contiguous_mouse_pixels = false;
-                }
-
-                if (in_contiguous_mouse_pixels) {
-                    ::memcpy(current_data, pixel, 3);
-
-                    (current_contiguous_pixels-1)->data_size += 3;
-                    current_data        += 3;
-                }
-            }
-            //printf("\n");
-        }
-
-        //hexdump_c(pointer_mask, 128);
-    }
-
-    struct ContiguousPixelsView {
-        DrawablePointer::ContiguousPixels const * first;
-        DrawablePointer::ContiguousPixels const * last;
-        DrawablePointer::ContiguousPixels const * begin() const noexcept { return this->first; }
-        DrawablePointer::ContiguousPixels const * end() const noexcept { return this->last; }
-    };
-
-    ContiguousPixelsView contiguous_pixels_view() const {
-        return {this->contiguous_pixels + 0, this->contiguous_pixels + this->number_of_contiguous_pixels};
-    }
-};  // struct DrawablePointer
-
 class Drawable
 {
     using DrawableImplPrivate = DrawableImpl<DepthColor::color24>;
@@ -1797,10 +1697,7 @@ public:
         memcpy(this->impl().row_data(rownum), data, this->rowsize());
     }
 
-    void trace_mouse(const DrawablePointer * current_pointer, int mouse_cursor_pos_x, int mouse_cursor_pos_y, uint8_t * save_mouse) {
-        const int x = mouse_cursor_pos_x - current_pointer->hotspot_x;
-        const int y = mouse_cursor_pos_y - current_pointer->hotspot_y;
-
+    void trace_mouse(const DrawablePointer * current_pointer, const int x, const int y, uint8_t * save_mouse) {
         uint8_t * psave = save_mouse;
         const uint8_t * data_end = this->impl().last_pixel();
 
@@ -1829,10 +1726,7 @@ public:
         }
     }
 
-    void clear_mouse(const DrawablePointer * current_pointer, int save_mouse_x, int save_mouse_y, uint8_t * save_mouse) {
-        const int x = save_mouse_x - current_pointer->hotspot_x;
-        const int y = save_mouse_y - current_pointer->hotspot_y;
-
+    void clear_mouse(const DrawablePointer * current_pointer, const int x, const int y, uint8_t * save_mouse) {
         uint8_t * psave = save_mouse;
         const uint8_t * data_end = this->impl().last_pixel();
 
