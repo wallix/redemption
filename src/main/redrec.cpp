@@ -76,7 +76,7 @@ int main(int argc, const char** argv)
         else
         {
             // create new argc, argv
-            new_argv.resize(argc+2);
+            new_argv.resize(argc+2u);
             new_argv.back() = nullptr;
             new_argv[0] = argv[0];
             new_argv[1] = command;

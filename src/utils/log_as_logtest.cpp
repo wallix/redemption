@@ -116,6 +116,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...)
         std::vprintf(format, ap);
         REDEMPTION_DIAGNOSTIC_POP
         std::puts("");
+        std::fflush(stdout);
         va_end(ap);
     }
 }

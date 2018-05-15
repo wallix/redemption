@@ -191,7 +191,7 @@ public:
     bool write_file(const char * file_to_write, const char * data, int data_len) override {
         std::ofstream oFile(file_to_write, std::ios::out | std::ios::binary);
         if (oFile.good()) {
-            oFile.write(reinterpret_cast<const char *>(data), data_len);
+            oFile.write(data, data_len);
             oFile.close();
             return true;
         }

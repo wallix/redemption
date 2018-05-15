@@ -33,7 +33,6 @@
  */
 class RecorderTransport : public SocketTransport {
 public:
-	/** @brief */
 	enum PacketType : uint8_t {
 		RECORD_TYPE_DATA_IN,
 		RECORD_TYPE_DATA_OUT,

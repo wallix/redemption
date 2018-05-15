@@ -33,6 +33,7 @@
 #include "configs/config.hpp"
 #include "core/authid.hpp"
 #include "core/date_dir_from_filename.hpp"
+#include "core/set_server_redirection_target.hpp"
 #include "transport/crypto_transport.hpp"
 #include "transport/transport.hpp"
 #include "utils/get_printable_password.hpp"
@@ -560,26 +561,7 @@ public:
                     }
                     else if ((e.id == ERR_RDP_SERVER_REDIR) &&
                              this->ini.get<cfg::mod_rdp::server_redirection_support>()) {
-                        // SET new target in ini
-                        const char * host = char_ptr_cast(this->ini.get<cfg::mod_rdp::redir_info>().host);
-                        const char * password = char_ptr_cast(this->ini.get<cfg::mod_rdp::redir_info>().password);
-                        const char * username = char_ptr_cast(this->ini.get<cfg::mod_rdp::redir_info>().username);
-                        const char * change_user = "";
-                        if (this->ini.get<cfg::mod_rdp::redir_info>().dont_store_username
-                        && (username[0] != 0)) {
-                            LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
-                            this->ini.set_acl<cfg::globals::target_user>(username);
-                            change_user = username;
-                        }
-                        if (password[0] != 0) {
-                            LOG(LOG_INFO, "SrvRedir: Change target password");
-                            this->ini.set_acl<cfg::context::target_password>(password);
-                        }
-                        LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
-                        this->ini.set_acl<cfg::context::target_host>(host);
-                        char message[768] = {};
-                        sprintf(message, "%s@%s", change_user, host);
-                        this->report("SERVER_REDIRECTION", message);
+                        set_server_redirection_target(this->ini, *this);
                         this->remote_answer = true;
                         signal = BACK_EVENT_NEXT;
                         return true;

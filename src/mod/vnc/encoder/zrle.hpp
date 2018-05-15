@@ -639,7 +639,7 @@ namespace VNC {
                 const uint8_t * cpixel_pattern = nullptr;
                 bool running = true;
                 while (running){
-                    if (uncompressed_data_buffer.in_remain() < this->Bpp+1){
+                    if (uncompressed_data_buffer.in_remain() < this->Bpp+1u){
                         LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated (plainRLE)");
                         throw Error(ERR_VNC_ZRLE_PROTOCOL);
                     }

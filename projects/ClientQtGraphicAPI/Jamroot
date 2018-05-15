@@ -70,17 +70,8 @@ rule disable-buggy-warn ( properties * )
 {
     local ps = [ property-set.create $(properties) ] ;
     local toolset = [ $(ps).get <toolset> ] ;
-    # TODO is not the real version. For toolset=gcc-5, version is 5
-    # gcc -dumpversion
-    # clang -dumpversion = llvm version ?
-    local version = [ $(ps).get <toolset-$(toolset):version> ] ;
 
-    local flags ;
-    
-    if ( $(toolset) = gcc && ! ( $(version) <= 05.00 ) ) || ( $(toolset) = clang && ! ( $(version) <= 05.00 ) )
-    {
-        flags += <cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant ;
-    } 
+    local flags = <cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant ;
     if $(toolset) = clang {
         flags += <cxxflags>-Wno-unused-command-line-argument ;
         flags += <cxxflags>-Wno-comma ;
