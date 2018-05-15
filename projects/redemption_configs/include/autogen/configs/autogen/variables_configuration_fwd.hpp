@@ -140,6 +140,7 @@ namespace cfg {
         struct session_probe_exe_or_file;
         struct session_probe_arguments;
         struct session_probe_clipboard_based_launcher_clipboard_initialization_delay;
+        struct session_probe_clipboard_based_launcher_start_delay;
         struct session_probe_clipboard_based_launcher_long_delay;
         struct session_probe_clipboard_based_launcher_short_delay;
         struct session_probe_allow_multiple_handshake;
@@ -164,7 +165,6 @@ namespace cfg {
         struct clipboard_up;
         struct clipboard_down;
         struct encodings;
-        struct allow_authentification_retries;
         struct server_clipboard_encoding_type;
         struct bogus_clipboard_infinite_loop;
         struct server_is_apple;

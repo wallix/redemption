@@ -86,6 +86,7 @@ struct ModRDPParams {
     bool                         session_probe_enable_log_rotation = true;
 
     std::chrono::milliseconds    session_probe_clipboard_based_launcher_clipboard_initialization_delay {};
+    std::chrono::milliseconds    session_probe_clipboard_based_launcher_start_delay {};
     std::chrono::milliseconds    session_probe_clipboard_based_launcher_long_delay {};
     std::chrono::milliseconds    session_probe_clipboard_based_launcher_short_delay {};
 
@@ -191,7 +192,7 @@ struct ModRDPParams {
 
     const char * load_balance_info = "";
 
-    unsigned rail_disconnect_message_delay = 0;
+    std::chrono::milliseconds rail_disconnect_message_delay {};
 
     bool use_session_probe_to_launch_remote_program = true;
 
@@ -274,6 +275,7 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_enable_log_rotation);
 
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_clipboard_initialization_delay);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_start_delay);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_long_delay);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_short_delay);
 
@@ -383,7 +385,7 @@ struct ModRDPParams {
 
         RDP_PARAMS_LOG("%s",     s_or_none,             load_balance_info);
 
-        RDP_PARAMS_LOG("%u",     RDP_PARAMS_LOG_GET,    rail_disconnect_message_delay);
+        RDP_PARAMS_LOG("%u",     from_millisec,         rail_disconnect_message_delay);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             use_session_probe_to_launch_remote_program);
 

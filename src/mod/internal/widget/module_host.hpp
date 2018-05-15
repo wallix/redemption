@@ -32,12 +32,13 @@
 class WidgetModuleHost : public WidgetParent, public gdi::GraphicApi
 {
 public:
-    WidgetModuleHost(gdi::GraphicApi& drawable, Widget& parent,
-                     NotifyApi* notifier,
-                     std::unique_ptr<mod_api> managed_mod, Font const & font,
-                     const GCC::UserData::CSMonitor& cs_monitor,
-                     uint16_t front_width, uint16_t front_height,
-                     int group_id = 0);
+    WidgetModuleHost(
+        gdi::GraphicApi& drawable, Widget& parent,
+        NotifyApi* notifier,
+        std::unique_ptr<mod_api> managed_mod, Font const & font,
+        const GCC::UserData::CSMonitor& cs_monitor,
+        uint16_t front_width, uint16_t front_height,
+        int group_id = 0);
 
     void draw(RDP::FrameMarker    const & cmd) override;
     void draw(RDPDestBlt          const & cmd, Rect clip) override;
@@ -146,12 +147,6 @@ private:
         // mod_api
 
         void draw_event(time_t now, gdi::GraphicApi& drawable) override;
-
-        wait_obj& get_event() override;
-
-        int get_fd() const override;
-
-        void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override;
 
         bool is_up_and_running() override;
 

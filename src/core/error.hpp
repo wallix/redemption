@@ -364,14 +364,15 @@ enum error_type
 #undef MAKE_ENUM
 #undef MAKE_ENUM_V
 
-struct Error {
+struct Error
+{
     error_type id;
     int errnum;
 
 private:
     mutable bool has_msg = false;
     mutable bool with_id = false;
-    mutable char msg[128]  = { 0 };
+    mutable char msg[128] = { 0 };
 
     Error() = delete;
 

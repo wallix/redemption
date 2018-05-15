@@ -49,13 +49,21 @@ convert_verbose_flags(E verbose)
 { return {static_cast<uint32_t>(verbose)}; }
 
 
-#define REDEMPTION_VERBOSE_FLAGS_DEC_OPS(Prefix, enum_name)         \
-    enum class enum_name : uint32_t;                                \
-                                                                    \
-    Prefix enum_name operator | (enum_name x, enum_name y) noexcept \
-    { return enum_name(uint32_t(x) | uint32_t(y)); }                \
-    Prefix enum_name operator & (enum_name x, enum_name y) noexcept \
-    { return enum_name(uint32_t(x) & uint32_t(y)); }
+#define REDEMPTION_VERBOSE_FLAGS_DEC_OPS(Prefix, enum_name)            \
+    enum class enum_name : uint32_t;                                   \
+                                                                       \
+    Prefix enum_name operator | (enum_name x, enum_name y) noexcept    \
+    { return enum_name(uint32_t(x) | uint32_t(y)); }                   \
+    Prefix enum_name operator & (enum_name x, enum_name y) noexcept    \
+    { return enum_name(uint32_t(x) & uint32_t(y)); }                   \
+                                                                       \
+    Prefix enum_name& operator |= (enum_name& x, enum_name y) noexcept \
+    { return x = x | y; }                                              \
+    Prefix enum_name& operator &= (enum_name& x, enum_name y) noexcept \
+    { return x = x & y; }                                              \
+                                                                       \
+    Prefix enum_name operator ~ (enum_name x) noexcept                 \
+    { return enum_name(~uint32_t(x)); }
 
 
 #define REDEMPTION_VERBOSE_FLAGS(visibility, verbose_member_name) \

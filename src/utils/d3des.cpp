@@ -79,7 +79,7 @@ static unsigned char pc2[48] = {
 };
 
 /* Thanks to James Gillogly & Phil Karn! */
-void rfbDesKey(unsigned char *key, int edf)
+void rfbDesKey(const unsigned char *key, int edf)
 {
     int j, l, m, n;
     unsigned char pc1m[56], pcr[56];

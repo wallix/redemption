@@ -24,6 +24,7 @@
 #pragma once
 
 #include "mod/internal/internal_mod.hpp"
+#include "core/session_reactor.hpp"
 
 class Bouncer2Mod : public InternalMod
 {
@@ -37,9 +38,14 @@ class Bouncer2Mod : public InternalMod
     int mouse_x = 0;
     int mouse_y = 0;
 
+    SessionReactor& session_reactor;
+    SessionReactor::GraphicTimerPtr timer;
+
 public:
-    Bouncer2Mod(FrontAPI & front, uint16_t width, uint16_t height,
-                Font const & font, bool dont_resize);
+    Bouncer2Mod(
+         SessionReactor& session_reactor,
+         FrontAPI & front, uint16_t width, uint16_t height,
+         Font const & font, bool dont_resize);
 
     ~Bouncer2Mod() override;
 

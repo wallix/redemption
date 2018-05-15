@@ -573,7 +573,7 @@ RED_AUTO_TEST_CASE(TestPointerVNC_BW)
     Drawable gd(width, height);
     Bitmap bmp(bmp_bpp, source_bpp, nullptr, width, height, expected_data, sizeof(expected_data), false);
     gd.mem_blt(screen_rect, bmp, 0, 0);
-    dump_png24("./test_pointer_arrow.png", gd);
+    // dump_png24("./test_pointer_arrow.png", gd);
 }
 
 

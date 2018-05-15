@@ -94,36 +94,6 @@ void WidgetModuleHost::ModuleHolder::draw_event(time_t now, gdi::GraphicApi& dra
     }
 }
 
-wait_obj& WidgetModuleHost::ModuleHolder::get_event()
-{
-    if (this->managed_mod)
-    {
-        return this->managed_mod->get_event();
-    }
-
-    return mod_api::get_event();
-}
-
-int WidgetModuleHost::ModuleHolder::get_fd() const
-{
-    if (this->managed_mod)
-    {
-        return this->managed_mod->get_fd();
-    }
-
-    return INVALID_SOCKET;
-}
-
-void WidgetModuleHost::ModuleHolder::get_event_handlers(
-    std::vector<EventHandler>& out_event_handlers)
-
-{
-    if (this->managed_mod)
-    {
-        this->managed_mod->get_event_handlers(out_event_handlers);
-    }
-}
-
 bool WidgetModuleHost::ModuleHolder::is_up_and_running()
 {
     if (this->managed_mod)

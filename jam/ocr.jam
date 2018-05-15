@@ -4,13 +4,19 @@ obj ocr.o : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp ;
 
 rule create_ppocr_rule ( srcs * )
 {
+    local targets ;
     for f in $(srcs)
     {
-        obj $(f).o : $(f) ;
+        local path = $(f:P) ;
+        local target = ppocr_$(path:B)_$(f:B).o ;
+        obj $(target) : $(f) ;
+        alias $(f).o : $(target) ;
+        targets += $(target) ;
     }
 
-    alias ppocr : $(srcs).o ;
+    alias ppocr : $(targets) ;
 }
+
 create_ppocr_rule
     $(PPOCR_SRC_PATH)/ppocr/box_char/box.cpp
     $(PPOCR_SRC_PATH)/ppocr/box_char/make_box_character.cpp

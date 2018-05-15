@@ -271,6 +271,7 @@ BGRColor FlatWabClose::get_bg_color() const
     return this->bg_color;
 }
 
+// TODO std::chrono::seconds ?
 void FlatWabClose::refresh_timeleft(long tl)
 {
     bool seconds = true;

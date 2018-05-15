@@ -43,14 +43,15 @@ RED_AUTO_TEST_CASE(TestDialogMod)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(front, window_list_caps, 0);
+    SessionReactor session_reactor;
+    ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile             ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "OK", 0, client_execute);
+    FlatDialogMod d(ini, session_reactor, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "OK", 0, client_execute);
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -70,14 +71,15 @@ RED_AUTO_TEST_CASE(TestDialogModReject)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(front, window_list_caps, 0);
+    SessionReactor session_reactor;
+    ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile             ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "Cancel", 0, client_execute);
+    FlatDialogMod d(ini, session_reactor, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "Cancel", 0, client_execute);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -96,14 +98,15 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(front, window_list_caps, 0);
+    SessionReactor session_reactor;
+    ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "Cancel", 0, client_execute, CHALLENGE_ECHO);
+    FlatDialogMod d(ini, session_reactor, front, 800, 600, Rect(0, 0, 799, 599), "Title", "Hello, World", "Cancel", 0, client_execute, CHALLENGE_ECHO);
 
 
     bool    ctrl_alt_del;
@@ -142,14 +145,15 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge2)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(front, window_list_caps, 0);
+    SessionReactor session_reactor;
+    ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 1600, 1200, Rect(800, 600, 799, 599), "Title", "Hello, World", "Cancel", 0, client_execute, CHALLENGE_ECHO);
+    FlatDialogMod d(ini, session_reactor, front, 1600, 1200, Rect(800, 600, 799, 599), "Title", "Hello, World", "Cancel", 0, client_execute, CHALLENGE_ECHO);
 
 
     bool    ctrl_alt_del;

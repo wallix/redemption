@@ -1710,4 +1710,6 @@ private:
         this->send_message_to_server(length, flags, out_s.get_data(),
             length);
     }
+
+    void sespro_ending_in_progress() override {}
 };

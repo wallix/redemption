@@ -26,7 +26,7 @@
 #define DE1	1	/* MODE == decrypt */
 
 extern "C" {
-void rfbDesKey(unsigned char *, int);
+void rfbDesKey(const unsigned char *, int);
 /*		      hexkey[8]     MODE
  * Sets the internal key register according to the hexadecimal
  * key contained in the 8 bytes of hexkey, according to the DES,

@@ -23,6 +23,7 @@
 
 #include <cinttypes>
 
+#include "utils/hexdump.hpp"
 #include "utils/stream.hpp"
 #include "utils/log.hpp"
 #include "core/error.hpp"

@@ -54,7 +54,8 @@ RED_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
     ini.set<cfg::globals::session_timeout>(cfg::globals::session_timeout::type{900});
     ini.set<cfg::debug::auth>(255);
 
-    MMIni mm(ini);
+    SessionReactor session_reactor;
+    MMIni mm(session_reactor, ini);
 
     char outdata[] =
         // Time: 10011
@@ -153,7 +154,8 @@ RED_AUTO_TEST_CASE(TestAuthentifierKeepalive)
     ini.set<cfg::globals::session_timeout>(cfg::globals::session_timeout::type{900});
     ini.set<cfg::debug::auth>(255);
 
-    MMIni mm(ini);
+    SessionReactor session_reactor;
+    MMIni mm(session_reactor, ini);
 
     char outdata[] =
         // Time 10011
@@ -283,7 +285,8 @@ RED_AUTO_TEST_CASE(TestAuthentifierInactivity)
     ini.set<cfg::globals::keepalive_grace_delay>(cfg::globals::keepalive_grace_delay::type{30});
     ini.set<cfg::globals::session_timeout>(cfg::globals::session_timeout::type{240}); // = 8*30 = 240secs inactivity>
     ini.set<cfg::debug::auth>(255);
-    MMIni mm(ini);
+    SessionReactor session_reactor;
+    MMIni mm(session_reactor, ini);
 
     char outdata[] =
         // Time 10011

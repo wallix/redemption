@@ -68,7 +68,6 @@ exe rdpproxy :
   <library>src/mod/internal/widget/flat_form.o
   <library>src/mod/internal/widget/flat_interactive_target.o
   <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
   <library>src/mod/internal/widget/group_box.o
@@ -87,6 +86,7 @@ exe rdpproxy :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -137,16 +137,12 @@ exe main_client_redemption :
   <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/edit_valid.o
   <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
-  <library>src/mod/internal/widget/image.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -190,6 +186,7 @@ exe rdpclient :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/socket_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
@@ -224,16 +221,12 @@ exe rdpheadless :
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/edit_valid.o
   <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
-  <library>src/mod/internal/widget/image.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/socket_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
@@ -315,7 +308,6 @@ exe rdptproxy :
   <library>src/mod/internal/widget/flat_form.o
   <library>src/mod/internal/widget/flat_interactive_target.o
   <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
   <library>src/mod/internal/widget/group_box.o
@@ -334,6 +326,7 @@ exe rdptproxy :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -405,7 +398,6 @@ exe vncclient :
   <library>src/mod/internal/widget/flat_form.o
   <library>src/mod/internal/widget/flat_interactive_target.o
   <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
   <library>src/mod/internal/widget/group_box.o
@@ -424,6 +416,7 @@ exe vncclient :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -554,7 +547,6 @@ test-run tests/acl/test_acl_serializer :
   <library>src/mod/internal/widget/flat_form.o
   <library>src/mod/internal/widget/flat_interactive_target.o
   <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
   <library>src/mod/internal/widget/group_box.o
@@ -573,6 +565,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -648,7 +641,6 @@ test-run tests/acl/test_authentifier :
   <library>src/mod/internal/widget/flat_form.o
   <library>src/mod/internal/widget/flat_interactive_target.o
   <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
   <library>src/mod/internal/widget/group_box.o
@@ -667,6 +659,7 @@ test-run tests/acl/test_authentifier :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -742,7 +735,6 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/internal/widget/flat_form.o
   <library>src/mod/internal/widget/flat_interactive_target.o
   <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
   <library>src/mod/internal/widget/group_box.o
@@ -761,6 +753,7 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -985,6 +978,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/negociation.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -1045,6 +1039,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/negociation.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -1080,6 +1075,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/negociation.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -2029,7 +2025,6 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/widget/flat_form.o
   <library>src/mod/internal/widget/flat_interactive_target.o
   <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
   <library>src/mod/internal/widget/group_box.o
@@ -2048,6 +2043,7 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -2128,7 +2124,6 @@ test-run tests/core/test_session :
   <library>src/mod/internal/widget/flat_form.o
   <library>src/mod/internal/widget/flat_interactive_target.o
   <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
   <library>src/mod/internal/widget/group_box.o
@@ -2147,6 +2142,7 @@ test-run tests/core/test_session :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -2163,6 +2159,13 @@ test-run tests/core/test_session :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>z
+;
+test-run tests/core/test_session_reactor :
+  $(REDEMPTION_TEST_PATH)/core/test_session_reactor.cpp
+:
+  <covfile>src/core/session_reactor.hpp
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
 ;
 test-run tests/core/test_session_server :
   $(REDEMPTION_TEST_PATH)/core/test_session_server.cpp
@@ -2217,7 +2220,6 @@ test-run tests/core/test_session_server :
   <library>src/mod/internal/widget/flat_form.o
   <library>src/mod/internal/widget/flat_interactive_target.o
   <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
   <library>src/mod/internal/widget/group_box.o
@@ -2236,6 +2238,7 @@ test-run tests/core/test_session_server :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -2252,11 +2255,6 @@ test-run tests/core/test_session_server :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>z
-;
-test-run tests/core/test_wait_obj :
-  $(REDEMPTION_TEST_PATH)/core/test_wait_obj.cpp
-:
-  <covfile>src/core/wait_obj.hpp
 ;
 test-run tests/front/test_front :
   $(REDEMPTION_TEST_PATH)/front/test_front.cpp
@@ -2296,6 +2294,7 @@ test-run tests/front/test_front :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/authorization_channels.o
@@ -2925,12 +2924,6 @@ test-run tests/mod/internal/widget/test_flat_login :
   <library>src/utils/png.o
   <library>src/utils/rle.o
 ;
-test-run tests/mod/internal/widget/test_flat_vnc_authentification :
-  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_vnc_authentification.cpp
-:
-  <covfile>src/mod/internal/widget/flat_vnc_authentification.cpp
-  <covfile>src/mod/internal/widget/flat_vnc_authentification.hpp
-;
 test-run tests/mod/internal/widget/test_flat_wab_close :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_wab_close.cpp
 :
@@ -3347,6 +3340,8 @@ test-run tests/mod/rdp/channels/test_rdpdr_asynchronous_task :
   <covfile>src/mod/rdp/channels/rdpdr_asynchronous_task.hpp
   <library>crypto
   <library>src/core/RDP/mppc.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
   <library>src/utils/hexdump.o
 ;
 test-run tests/mod/rdp/channels/test_rdpdr_channel :
@@ -3392,6 +3387,13 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_clipboard_based_launcher.cpp
 :
   <covfile>src/mod/rdp/channels/sespro_clipboard_based_launcher.hpp
+  <library>app_path_test.o
+  <library>crypto
+  <library>src/core/RDP/mppc.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
 ;
 test-run tests/mod/rdp/channels/test_sespro_launcher :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_sespro_launcher.cpp
@@ -3429,6 +3431,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/negociation.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -3482,14 +3485,7 @@ test-run tests/mod/vnc/encoder/test_hextile :
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
-  <library>src/mod/internal/widget/image.o
-  <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
@@ -3517,14 +3513,7 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
-  <library>src/mod/internal/widget/image.o
-  <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
@@ -3552,14 +3541,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_vnc_authentification.o
-  <library>src/mod/internal/widget/image.o
-  <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
@@ -4343,11 +4325,6 @@ test-run tests/utils/test_theme :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
 ;
-test-run tests/utils/test_timeout :
-  $(REDEMPTION_TEST_PATH)/utils/test_timeout.cpp
-:
-  <covfile>src/utils/timeout.hpp
-;
 test-run tests/utils/test_timeval_ops :
   $(REDEMPTION_TEST_PATH)/utils/test_timeval_ops.cpp
 :
@@ -4447,7 +4424,6 @@ obj src/mod/internal/widget/flat_dialog.o : $(REDEMPTION_SRC_PATH)/mod/internal/
 obj src/mod/internal/widget/flat_form.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_form.cpp ;
 obj src/mod/internal/widget/flat_interactive_target.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_interactive_target.cpp ;
 obj src/mod/internal/widget/flat_login.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_login.cpp ;
-obj src/mod/internal/widget/flat_vnc_authentification.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_vnc_authentification.cpp ;
 obj src/mod/internal/widget/flat_wab_close.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_wab_close.cpp ;
 obj src/mod/internal/widget/flat_wait.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_wait.cpp ;
 obj src/mod/internal/widget/group_box.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/group_box.cpp ;
@@ -4466,6 +4442,7 @@ obj src/mod/internal/widget/selector.o : $(REDEMPTION_SRC_PATH)/mod/internal/wid
 obj src/mod/internal/widget/tooltip.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/tooltip.cpp ;
 obj src/mod/internal/widget/widget_rect.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/widget_rect.cpp ;
 obj src/mod/internal/widget_test_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget_test_mod.cpp ;
+obj src/mod/rdp/negociation.o : $(REDEMPTION_SRC_PATH)/mod/rdp/negociation.cpp ;
 obj src/sashimi/channels.o : $(REDEMPTION_SRC_PATH)/sashimi/channels.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
 obj src/sashimi/channels_client.o : $(REDEMPTION_SRC_PATH)/sashimi/channels_client.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
 obj src/sashimi/channels_server.o : $(REDEMPTION_SRC_PATH)/sashimi/channels_server.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
@@ -4807,10 +4784,10 @@ alias test_server_notifier_api : tests/core/test_server_notifier_api ;
 alias test_server_notifier_api.coverage : tests/core/test_server_notifier_api.coverage ;
 alias test_session : tests/core/test_session ;
 alias test_session.coverage : tests/core/test_session.coverage ;
+alias test_session_reactor : tests/core/test_session_reactor ;
+alias test_session_reactor.coverage : tests/core/test_session_reactor.coverage ;
 alias test_session_server : tests/core/test_session_server ;
 alias test_session_server.coverage : tests/core/test_session_server.coverage ;
-alias test_wait_obj : tests/core/test_wait_obj ;
-alias test_wait_obj.coverage : tests/core/test_wait_obj.coverage ;
 alias test_front : tests/front/test_front ;
 alias test_front.coverage : tests/front/test_front.coverage ;
 alias test_graphic_api : tests/gdi/test_graphic_api ;
@@ -4869,8 +4846,6 @@ alias test_flat_interactive_target : tests/mod/internal/widget/test_flat_interac
 alias test_flat_interactive_target.coverage : tests/mod/internal/widget/test_flat_interactive_target.coverage ;
 alias test_flat_login : tests/mod/internal/widget/test_flat_login ;
 alias test_flat_login.coverage : tests/mod/internal/widget/test_flat_login.coverage ;
-alias test_flat_vnc_authentification : tests/mod/internal/widget/test_flat_vnc_authentification ;
-alias test_flat_vnc_authentification.coverage : tests/mod/internal/widget/test_flat_vnc_authentification.coverage ;
 alias test_flat_wab_close : tests/mod/internal/widget/test_flat_wab_close ;
 alias test_flat_wab_close.coverage : tests/mod/internal/widget/test_flat_wab_close.coverage ;
 alias test_flat_wait : tests/mod/internal/widget/test_flat_wait ;
@@ -5139,8 +5114,6 @@ alias test_stream : tests/utils/test_stream ;
 alias test_stream.coverage : tests/utils/test_stream.coverage ;
 alias test_theme : tests/utils/test_theme ;
 alias test_theme.coverage : tests/utils/test_theme.coverage ;
-alias test_timeout : tests/utils/test_timeout ;
-alias test_timeout.coverage : tests/utils/test_timeout.coverage ;
 alias test_timeval_ops : tests/utils/test_timeval_ops ;
 alias test_timeval_ops.coverage : tests/utils/test_timeval_ops.coverage ;
 alias test_translation : tests/utils/test_translation ;
@@ -5379,8 +5352,8 @@ alias tests/core :
   tests/core/test_server
   tests/core/test_server_notifier_api
   tests/core/test_session
+  tests/core/test_session_reactor
   tests/core/test_session_server
-  tests/core/test_wait_obj
 ;
 explicit tests/front ;
 alias tests/front :
@@ -5428,7 +5401,6 @@ alias tests/mod/internal/widget :
   tests/mod/internal/widget/test_flat_form
   tests/mod/internal/widget/test_flat_interactive_target
   tests/mod/internal/widget/test_flat_login
-  tests/mod/internal/widget/test_flat_vnc_authentification
   tests/mod/internal/widget/test_flat_wab_close
   tests/mod/internal/widget/test_flat_wait
   tests/mod/internal/widget/test_grid
@@ -5619,7 +5591,6 @@ alias tests/utils :
   tests/utils/test_rle
   tests/utils/test_stream
   tests/utils/test_theme
-  tests/utils/test_timeout
   tests/utils/test_timeval_ops
   tests/utils/test_translation
   tests/utils/test_utf

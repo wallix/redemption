@@ -43,7 +43,6 @@
 
 #include "capture/wrm_chunk_type.hpp"
 #include "capture/file_to_graphic.hpp"
-#include "core/wait_obj.hpp"
 #include "core/window_constants.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
@@ -351,7 +350,6 @@ private:
     UpdateProgressData * update_progress_data;
 
     MouseTrace mouse_info;
-    wait_obj capture_event;
 
     std::vector<std::reference_wrapper<gdi::GraphicApi>> gds;
     // Objects willing to be warned of FrameMarker Events
@@ -382,10 +380,6 @@ public:
     );
 
     ~Capture();
-
-    wait_obj & get_capture_event() {
-        return this->capture_event;
-    }
 
     public:
     void update_config(bool enable_rt_display);

@@ -38,14 +38,12 @@ struct CursorSize {
     unsigned width;
     unsigned height;
     CursorSize(unsigned w, unsigned h) : width(w), height(h) {}
-    CursorSize(const CursorSize & cs) : width(cs.width), height(cs.height) {}
 };
 
 struct Hotspot {
     unsigned x;
     unsigned y;
     Hotspot(unsigned x, unsigned y) : x(x), y(y) {}
-    Hotspot(const Hotspot & hs) : x(hs.x), y(hs.y) {}
 };
 
 struct BasePointer {
@@ -563,14 +561,8 @@ public:
         , MASK_SIZE = MAX_WIDTH * MAX_HEIGHT * 1 / 8
     };
 
-
 private:
 //    unsigned bpp;
-    
-    struct {
-        alignas(4) 
-        uint8_t data[DATA_SIZE];
-    } alpha_q;
 
     uint8_t data[DATA_SIZE];
 
@@ -596,7 +588,7 @@ public:
 
 public:
 
-    explicit Pointer(const CursorSize & d, const Hotspot & hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, uint8_t data_bpp, const BGRPalette & palette, bool clean_up_32_bpp_cursor, BogusLinuxCursor bogus_linux_cursor)
+    explicit Pointer(const CursorSize d, const Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, uint8_t data_bpp, const BGRPalette & palette, bool clean_up_32_bpp_cursor, BogusLinuxCursor bogus_linux_cursor)
         : BasePointer(d, hs)
     {
         auto mlen = av_and.size();

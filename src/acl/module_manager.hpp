@@ -24,36 +24,39 @@
 
 #pragma once
 
-#include "transport/socket_transport.hpp"
-#include "configs/config.hpp"
-#include "utils/netutils.hpp"
-#include "mod/mod_api.hpp"
-#include "acl/mm_api.hpp"
 #include "acl/auth_api.hpp"
-#include "mod/null/null.hpp"
-#include "mod/rdp/windowing_api.hpp"
-#include "mod/rdp/rdp.hpp"
-#include "mod/rdp/rdp_api.hpp"
-#include "mod/vnc/vnc.hpp"
-#include "mod/xup/xup.hpp"
+#include "acl/mm_api.hpp"
+#include "configs/config.hpp"
+#include "core/session_reactor.hpp"
+#include "front/front.hpp"
+#include "gdi/protected_graphics.hpp"
+
 #include "mod/internal/bouncer2_mod.hpp"
 #include "mod/internal/client_execute.hpp"
-#include "mod/internal/test_card_mod.hpp"
-#include "mod/internal/replay_mod.hpp"
-#include "front/front.hpp"
-#include "utils/translation.hpp"
-#include "utils/sugar/scope_exit.hpp"
-
-#include "mod/internal/flat_login_mod.hpp"
-#include "mod/internal/selector_mod.hpp"
-#include "mod/internal/flat_wab_close_mod.hpp"
 #include "mod/internal/flat_dialog_mod.hpp"
+#include "mod/internal/flat_login_mod.hpp"
+#include "mod/internal/flat_wab_close_mod.hpp"
 #include "mod/internal/flat_wait_mod.hpp"
 #include "mod/internal/interactive_target_mod.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
+#include "mod/internal/replay_mod.hpp"
+#include "mod/internal/selector_mod.hpp"
+#include "mod/internal/test_card_mod.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 
-#include "gdi/protected_graphics.hpp"
+#include "mod/mod_api.hpp"
+#include "mod/null/null.hpp"
+#include "mod/rdp/rdp.hpp"
+#include "mod/rdp/rdp_api.hpp"
+#include "mod/rdp/windowing_api.hpp"
+#include "mod/vnc/vnc.hpp"
+#include "mod/xup/xup.hpp"
+
+#include "transport/socket_transport.hpp"
+
+#include "utils/netutils.hpp"
+#include "utils/sugar/scope_exit.hpp"
+#include "utils/translation.hpp"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -166,10 +169,12 @@ class MMIni : public MMApi
 {
 protected:
     Inifile & ini;
+    SessionReactor& session_reactor;
 
 public:
-    explicit MMIni(Inifile & ini_)
+    explicit MMIni(SessionReactor& session_reactor, Inifile & ini_)
     : ini(ini_)
+    , session_reactor(session_reactor)
     {}
 
     ~MMIni() override {}
@@ -315,10 +320,8 @@ public:
     }
 
     void check_module() override {
-        if (this->ini.get<cfg::context::forcemodule>() &&
-            !this->is_connected()) {
-            this->mod->get_event().signal = BACK_EVENT_NEXT;
-            this->mod->get_event().set_trigger_time(wait_obj::NOW);
+        if (this->ini.get<cfg::context::forcemodule>() && !this->is_connected()) {
+            this->session_reactor.set_event_next(BACK_EVENT_NEXT);
             this->ini.set<cfg::context::forcemodule>(false);
             // Do not send back the value to sesman.
         }
@@ -624,12 +627,6 @@ private:
         void send_auth_channel_data(const char * data) override
         { this->mm.internal_mod->send_auth_channel_data(data); }
 
-        wait_obj & get_event() override
-        { return this->mm.internal_mod->get_event(); }
-
-        void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override
-        { return this->mm.internal_mod->get_event_handlers(out_event_handlers); }
-
         void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name,
             uint8_t const * data, size_t length, size_t chunk_size, int flags) override
         { this->mm.internal_mod->send_to_front_channel(mod_channel_name, data, length, chunk_size, flags); }
@@ -817,33 +814,23 @@ private:
     SocketTransport * socket_transport = nullptr;
 
 public:
-    ModuleManager(Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
-        : MMIni(ini)
+    ModuleManager(SessionReactor& session_reactor, Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
+        : MMIni(session_reactor, ini)
         , front(front)
         , no_mod()
         , mod_osd(*this)
         , gen(gen)
         , timeobj(timeobj)
-        , client_execute(front, this->front.client_info.window_list_caps,
+        , client_execute(session_reactor, front, this->front.client_info.window_list_caps,
                          ini.get<cfg::debug::mod_internal>() & 1)
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
     {
-        this->no_mod.get_event().reset_trigger_time();
         this->mod = &this->no_mod;
     }
 
     bool has_pending_data() const
     {
         return this->socket_transport && this->socket_transport->has_pending_data();
-    }
-
-    bool is_set_event(fd_set & rfds) const
-    {
-        wait_obj & obj = this->mod->get_event();
-        if (this->socket_transport) {
-            return this->socket_transport->is_set(obj, rfds);
-        }
-        return obj.is_set(INVALID_SOCKET, rfds);
     }
 
     void remove_mod() override {
@@ -914,6 +901,7 @@ public:
         case MODULE_INTERNAL_BOUNCER2:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'bouncer2_mod'");
             this->set_mod(new Bouncer2Mod(
+                this->session_reactor,
                 this->front,
                 this->front.client_info.width,
                 this->front.client_info.height,
@@ -927,6 +915,7 @@ public:
         case MODULE_INTERNAL_TEST:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test'");
             this->set_mod(new ReplayMod(
+                this->session_reactor,
                 this->front,
                 this->ini.get<cfg::video::replay_path>().c_str(),
                 this->ini.get<cfg::context::movie>().c_str(),
@@ -946,6 +935,7 @@ public:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
                 this->set_mod(new WidgetTestMod(
+                    this->session_reactor,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
@@ -957,6 +947,7 @@ public:
         case MODULE_INTERNAL_CARD:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test_card'");
             this->set_mod(new TestCardMod(
+                this->session_reactor,
                 this->front,
                 this->front.client_info.width,
                 this->front.client_info.height,
@@ -975,6 +966,7 @@ public:
 
             this->set_mod(new SelectorMod(
                 this->ini,
+                this->session_reactor,
                 this->front,
                 this->front.client_info.width,
                 this->front.client_info.height,
@@ -998,6 +990,7 @@ public:
                 }
                 this->set_mod(new FlatWabCloseMod(
                     this->ini,
+                    this->session_reactor,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
@@ -1022,6 +1015,7 @@ public:
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'INTERNAL::CloseBack'");
                 this->set_mod(new FlatWabCloseMod(
                     this->ini,
+                    this->session_reactor,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
@@ -1043,6 +1037,7 @@ public:
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Interactive Target'");
                 this->set_mod(new InteractiveTargetMod(
                     this->ini,
+                    this->session_reactor,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
@@ -1065,6 +1060,7 @@ public:
                 const char * caption = "Information";
                 this->set_mod(new FlatDialogMod(
                     this->ini,
+                    this->session_reactor,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
@@ -1091,6 +1087,7 @@ public:
                 const char * caption = "Information";
                 this->set_mod(new FlatDialogMod(
                     this->ini,
+                    this->session_reactor,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
@@ -1122,6 +1119,7 @@ public:
                 this->ini.ask<cfg::context::password>();
                 this->set_mod(new FlatDialogMod(
                     this->ini,
+                    this->session_reactor,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
@@ -1150,6 +1148,7 @@ public:
                 uint flag = this->ini.get<cfg::context::formflag>();
                 this->set_mod(new FlatWaitMod(
                     this->ini,
+                    this->session_reactor,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
@@ -1200,6 +1199,7 @@ public:
 
             this->set_mod(new FlatLoginMod(
                 this->ini,
+                this->session_reactor,
                 accounts.username,
                 accounts.password,
                 this->front,
@@ -1234,6 +1234,7 @@ public:
                     this->ini.get<cfg::debug::mod_xup>(),
                     nullptr,
                     sock_mod_barrier(),
+                    this->session_reactor,
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
@@ -1288,6 +1289,7 @@ public:
                                            , this->front.keymap.key_flags
                                            , this->ini.get<cfg::font>()
                                            , this->ini.get<cfg::theme>()
+                                           // TODO move to member
                                            , this->ini.get_ref<cfg::context::server_auto_reconnect_packet>()
                                            , this->ini.get_ref<cfg::context::close_box_extra_message>()
                                            , to_verbose_flags(this->ini.get<cfg::debug::mod_rdp>())
@@ -1343,6 +1345,7 @@ public:
                 mod_rdp_params.session_probe_arguments             = this->ini.get<cfg::mod_rdp::session_probe_arguments>();
 
                 mod_rdp_params.session_probe_clipboard_based_launcher_clipboard_initialization_delay = this->ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay>();
+                mod_rdp_params.session_probe_clipboard_based_launcher_start_delay                    = this->ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay>();
                 mod_rdp_params.session_probe_clipboard_based_launcher_long_delay                     = this->ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay>();
                 mod_rdp_params.session_probe_clipboard_based_launcher_short_delay                    = this->ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay>();
 
@@ -1495,6 +1498,7 @@ public:
                         this->ini.get<cfg::debug::mod_rdp>(),
                         &this->ini.get_ref<cfg::context::auth_error_message>(),
                         sock_mod_barrier(),
+                        this->session_reactor,
                         this->front,
                         client_info,
                         ini.get_ref<cfg::mod_rdp::redir_info>(),
@@ -1520,20 +1524,21 @@ public:
                         this->client_execute.set_target_info(target_info.c_str());
 
                         this->set_mod(
-                                new RailModuleHostMod(
-                                        this->ini,
-                                        this->front,
-                                        this->front.client_info.width,
-                                        this->front.client_info.height,
-                                        adjusted_client_execute_rect,
-                                        std::move(managed_mod),
-                                        this->client_execute,
-                                        this->front.client_info.cs_monitor,
-                                        !this->ini.get<cfg::globals::is_rec>()
-                                    ),
-                                nullptr,
-                                &this->client_execute
-                            );
+                            new RailModuleHostMod(
+                                this->ini,
+                                this->session_reactor,
+                                this->front,
+                                this->front.client_info.width,
+                                this->front.client_info.height,
+                                adjusted_client_execute_rect,
+                                std::move(managed_mod),
+                                this->client_execute,
+                                this->front.client_info.cs_monitor,
+                                !this->ini.get<cfg::globals::is_rec>()
+                            ),
+                            nullptr,
+                            &this->client_execute
+                        );
                         LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
                     }
                     else {
@@ -1582,22 +1587,17 @@ public:
                         this->ini.get<cfg::debug::mod_vnc>(),
                         nullptr,
                         sock_mod_barrier(),
+                        this->session_reactor,
                         this->ini.get<cfg::globals::target_user>().c_str(),
                         this->ini.get<cfg::context::target_password>().c_str(),
                         this->front,
                         this->front.client_info.width,
                         this->front.client_info.height,
-                        this->ini.get<cfg::font>(),
-                        TR(trkeys::authentication_required, language(this->ini)),
-                        TR(trkeys::password, language(this->ini)),
-                        this->ini.get<cfg::theme>(),
                         this->front.client_info.keylayout,
                         this->front.keymap.key_flags,
                         this->ini.get<cfg::mod_vnc::clipboard_up>(),
                         this->ini.get<cfg::mod_vnc::clipboard_down>(),
                         this->ini.get<cfg::mod_vnc::encodings>().c_str(),
-                        this->ini.get<cfg::mod_vnc::allow_authentification_retries>(),
-                        true,
                         this->ini.get<cfg::mod_vnc::server_clipboard_encoding_type>()
                             != ClipboardEncodingType::latin1
                             ? mod_vnc::ClipboardEncodingType::UTF8
@@ -1626,16 +1626,17 @@ public:
                         this->client_execute.set_target_info(target_info.c_str());
 
                         this->set_mod(new RailModuleHostMod(
-                                this->ini,
-                                this->front,
-                                this->front.client_info.width,
-                                this->front.client_info.height,
-                                adjusted_client_execute_rect,
-                                std::move(managed_mod),
-                                this->client_execute,
-                                this->front.client_info.cs_monitor,
-                                false
-                            ));
+                            this->ini,
+                            this->session_reactor,
+                            this->front,
+                            this->front.client_info.width,
+                            this->front.client_info.height,
+                            adjusted_client_execute_rect,
+                            std::move(managed_mod),
+                            this->client_execute,
+                            this->front.client_info.cs_monitor,
+                            false
+                        ));
                         LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
                     }
                     else {

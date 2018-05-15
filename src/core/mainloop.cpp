@@ -238,7 +238,7 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
 
 }
 
-void redemption_main_loop(Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat, unsigned uid, unsigned gid, std::string config_filename)
+void redemption_main_loop(Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat, unsigned uid, unsigned gid, std::string config_filename, bool forkable)
 {
     init_signals();
 
@@ -258,5 +258,5 @@ void redemption_main_loop(Inifile & ini, CryptoContext & cctx, Random & rnd, Fst
                    , 60                                 /* timeout sec           */
                    , ini.get<cfg::globals::enable_transparent_mode>()
                    );
-    listener.run();
+    listener.run(forkable);
 }

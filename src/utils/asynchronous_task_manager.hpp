@@ -21,16 +21,44 @@
 
 #pragma once
 
-class wait_obj;
+class SessionReactor;
 
 class AsynchronousTask {
 public:
     virtual ~AsynchronousTask() = default;
 
-    virtual void configure_wait_object(wait_obj & wait_object) const = 0;
+    struct DeleterFunction
+    {
+        using ptr_function = void(*)(void* data, AsynchronousTask&) noexcept;
 
-    virtual int get_file_descriptor() const { return -1; }
+        explicit DeleterFunction() = default;
 
-    virtual bool run(const wait_obj & wait_object) = 0;
+        template<class T, class F>
+        DeleterFunction(T* p, F f)
+        noexcept(noexcept(static_cast<void(*)(T*, AsynchronousTask&) noexcept>(f)))
+        : data(p)
+        , f([](void* data, AsynchronousTask& t) noexcept {
+            char f[1]{};
+            reinterpret_cast<F&>(f)(static_cast<T*>(data), t);
+        })
+        {}
+
+        template<class T>
+        DeleterFunction(T* p, ptr_function f) noexcept
+        : data(p)
+        , f(f)
+        {}
+
+        void operator()(AsynchronousTask& self) noexcept
+        {
+            this->f(this->data, self);
+        }
+
+    private:
+        void* data = nullptr;
+        ptr_function  f = [](void*, AsynchronousTask&) noexcept {};
+    };
+
+    virtual void configure_event(SessionReactor&, DeleterFunction) = 0;
 };
 

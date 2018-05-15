@@ -18,15 +18,9 @@
    Author(s): Clément Moroldo
 */
 
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
-
-#include "utils/log.hpp"
-
+#include "core/session_reactor.hpp"
 
 #include "client_redemption/client_redemption.hpp"
-
 
 #include "qt_input_output_api/qt_output_sound.hpp"
 #include "qt_input_output_api/qt_input_output_clipboard.hpp"
@@ -35,35 +29,29 @@
 #include "qt_input_output_api/IO_disk.hpp"
 
 
-#pragma GCC diagnostic pop
-
-
-
-
-int main(int argc, char** argv) {
-
+int main(int argc, char** argv)
+{
+    SessionReactor reactor;
 
     QApplication app(argc, argv);
 
     QtIOGraphicMouseKeyboard graphic_control_qt_obj;
+    QWidget * qwidget_parent = graphic_control_qt_obj.get_static_qwidget();
+    QtInputOutputClipboard clipboard_api_obj(qwidget_parent);
+    QtOutputSound sound_api_obj(qwidget_parent);
+    IODisk ioDisk_api_obj;
+    QtInputSocket socket_api_obj(reactor, qwidget_parent);
 
     ClientOutputGraphicAPI      * graphic_qt = &graphic_control_qt_obj;
     ClientInputMouseKeyboardAPI * control_qt = &graphic_control_qt_obj;
-    QWidget * qwidget_parent = graphic_control_qt_obj.get_static_qwidget();
-
-    QtInputOutputClipboard clipboard_api_obj(qwidget_parent);
-    ClientIOClipboardAPI  * clipboard_api = &clipboard_api_obj;
-    QtOutputSound sound_api_obj(qwidget_parent);
-    ClientOutputSoundAPI  * sound_api     = &sound_api_obj;
-    QtInputSocket socket_api_obj(qwidget_parent);
-    ClientInputSocketAPI  * socket_api    = &socket_api_obj;
-    IODisk ioDisk_api_obj;
-    ClientIODiskAPI * ioDisk_api = &ioDisk_api_obj;
-
+    ClientIOClipboardAPI * clipboard_api = &clipboard_api_obj;
+    ClientOutputSoundAPI * sound_api     = &sound_api_obj;
+    ClientInputSocketAPI * socket_api    = &socket_api_obj;
+    ClientIODiskAPI      * ioDisk_api    = &ioDisk_api_obj;
 
     RDPVerbose verbose = RDPVerbose::rdpdr_dump;          //to_verbose_flags(0x0);
 
-    ClientRedemption client_qt( argv, argc, verbose
+    ClientRedemption client_qt( reactor, argv, argc, verbose
                               , graphic_qt
                               , clipboard_api
                               , sound_api
@@ -72,9 +60,4 @@ int main(int argc, char** argv) {
                               , ioDisk_api);
 
     app.exec();
-
-//     delete(graphic_control_qt);
-
 }
-
-

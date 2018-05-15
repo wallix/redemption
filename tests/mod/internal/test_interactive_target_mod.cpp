@@ -45,7 +45,8 @@ RED_AUTO_TEST_CASE(TestDialogMod)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(front, window_list_caps, 0);
+    SessionReactor session_reactor;
+    ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile             ini;
     ini.set_acl<cfg::context::target_host>("somehost");
@@ -55,7 +56,7 @@ RED_AUTO_TEST_CASE(TestDialogMod)
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    InteractiveTargetMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), client_execute);
+    InteractiveTargetMod d(ini, session_reactor, front, 800, 600, Rect(0, 0, 799, 599), client_execute);
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enter to validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -75,14 +76,15 @@ RED_AUTO_TEST_CASE(TestDialogModReject)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(front, window_list_caps, 0);
+    SessionReactor session_reactor;
+    ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile             ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    InteractiveTargetMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), client_execute);
+    InteractiveTargetMod d(ini, session_reactor, front, 800, 600, Rect(0, 0, 799, 599), client_execute);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -101,7 +103,8 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(front, window_list_caps, 0);
+    SessionReactor session_reactor;
+    ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
     ini.set_acl<cfg::context::target_host>("somehost");
@@ -111,7 +114,7 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge)
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    InteractiveTargetMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), client_execute);
+    InteractiveTargetMod d(ini, session_reactor, front, 800, 600, Rect(0, 0, 799, 599), client_execute);
 
     bool    ctrl_alt_del;
 
@@ -150,7 +153,8 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge2)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(front, window_list_caps, 0);
+    SessionReactor session_reactor;
+    ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
     ini.set_acl<cfg::context::target_host>("somehost");
@@ -160,7 +164,7 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge2)
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    InteractiveTargetMod d(ini, front, 1600, 1200, Rect(800, 600, 799, 599), client_execute);
+    InteractiveTargetMod d(ini, session_reactor, front, 1600, 1200, Rect(800, 600, 799, 599), client_execute);
 
     bool    ctrl_alt_del;
 

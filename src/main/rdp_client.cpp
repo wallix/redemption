@@ -31,7 +31,6 @@
 
 #include "core/client_info.hpp"
 #include "transport/socket_transport.hpp"
-#include "core/wait_obj.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/rdp.hpp"
@@ -123,10 +122,13 @@ int main(int argc, char** argv)
     }
 
     /* SocketTransport mod_trans */
+    auto sck = ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms);
+    if (!sck.is_open()) {
+        return 1;
+    }
     SocketTransport mod_trans(
-        "RDP Server", ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms),
-        target_device.c_str(), target_port, std::chrono::seconds(1),
-        to_verbose_flags(verbose), nullptr);
+        "RDP Server", std::move(sck), target_device.c_str(), target_port,
+        std::chrono::seconds(1), to_verbose_flags(verbose), nullptr);
 
     /* Random */
     UdevRandom gen;
@@ -136,10 +138,11 @@ int main(int argc, char** argv)
     NullReportMessage report_message;
 
     /* mod_api */
-    mod_rdp mod( mod_trans, front, client_info, redir_info, gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
+    SessionReactor session_reactor;
+    mod_rdp mod(mod_trans, session_reactor, front, client_info, redir_info, gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
     using Ms = std::chrono::milliseconds;
     return run_test_client(
-        "RDP", mod_trans.sck, mod, front,
+        "RDP", session_reactor, mod, front,
         Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
 }

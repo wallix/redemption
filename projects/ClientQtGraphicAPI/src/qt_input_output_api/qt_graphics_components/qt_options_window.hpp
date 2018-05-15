@@ -85,16 +85,10 @@ public:
       }
 
     void set_key(int q_key_code, const std::string & q_key_name) {
-//         LOG(LOG_INFO, "q_key_code=%d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", q_key_code);
         this->q_key_code = q_key_code;
         this->label.clear();
         this->label.setText(q_key_name.c_str());
-       // LOG(LOG_INFO, "q_key_code=%d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", this->q_key_code);
     }
-
-//     void print() {
-//         LOG(LOG_INFO, "internal q_key_code=%d", this->q_key_code);
-//     }
 };
 
 
@@ -527,13 +521,13 @@ public:
     QCheckBox            _shareCheckBox;
     QLineEdit            _sharePath;
     QPushButton          _buttonSharePath;
-    QCheckBox            _soundBox;
+//     QCheckBox            _soundBox;
     QCheckBox            remoteappCheckBox;
     QLineEdit            remoteapp_cmd;
     QLineEdit            remoteapp_workin_dir;
     QLabel               _labelShare;
     QLabel               _labelSharePath;
-    QLabel               _labelSound;
+//     QLabel               _labelSound;
     QLabel               remoteappLabel;
     QLabel               remoteapp_cmd_label;
     QLabel               remoteapp_workin_dir_label;
@@ -574,13 +568,13 @@ public:
         , _shareCheckBox(this)
         , _sharePath("", this)
         , _buttonSharePath("Select a Directory", this)
-        , _soundBox(this)
+//         , _soundBox(this)
         , remoteappCheckBox(this)
         , remoteapp_cmd("", this)
         , remoteapp_workin_dir("", this)
         , _labelShare("Shared Virtual Disk :", this)
         , _labelSharePath("Shared Path :", this)
-        , _labelSound("Sound :",  this)
+//         , _labelSound("Sound :",  this)
         , remoteappLabel("Enable remote app :", this)
         , remoteapp_cmd_label("Command line :", this)
         , remoteapp_workin_dir_label("Working direction :", this)

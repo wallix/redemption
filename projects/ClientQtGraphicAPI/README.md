@@ -227,5 +227,5 @@ Ajouter les lignes suivantes:
 
 Enfin, compiler votre client à l'aide de la commande suivante:
 
-	bjam votre_client_exe
+	bjam -s qt=$version votre_client_exe
 
