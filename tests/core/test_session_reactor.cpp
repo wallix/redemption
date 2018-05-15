@@ -243,7 +243,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
     };
 
     SessionReactor::GraphicEventPtr event = session_reactor.create_graphic_event(std::ref(s))
-    .on_action(jln2::funcsequencer(
+    .on_action(jln2::sequencer(
         trace("a"_s),
         trace("b"_s),
         trace("c"_s),
@@ -272,7 +272,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
     };
 
     event = session_reactor.create_graphic_event(std::ref(s))
-    .on_action(jln2::funcsequencer(
+    .on_action(jln2::sequencer(
         "a"_f = trace2([](auto ctx){ return ctx.next(); }),
         "b"_f = trace2([](auto ctx){ return ctx.at("d"_s).ready(); }),
         "c"_f = [](auto ctx, gdi::GraphicApi& /*gd*/, std::string& s){

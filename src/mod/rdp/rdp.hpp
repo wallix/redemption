@@ -104,9 +104,9 @@
 #include "mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
 #include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
+#include "mod/rdp/rdp_negociation_data.hpp"
 #include "mod/rdp/rdp_orders.hpp"
 #include "mod/rdp/rdp_params.hpp"
-#include "mod/rdp/negociation.hpp"
 
 #include "system/ssl_calls.hpp"
 
@@ -150,7 +150,6 @@ private:
     const uint32_t monitor_count;
 
     FileSystemDriveManager file_system_drive_manager;
-    RdpNegociation rdp_negociation;
     Transport& trans;
 
     std::unique_ptr<VirtualChannelDataSender>     file_system_to_client_sender;
@@ -737,19 +736,6 @@ public:
         , target_host(mod_rdp_params.target_host)
         , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
         , monitor_count(info.cs_monitor.monitorCount)
-        , rdp_negociation(
-            this->authorization_channels, this->mod_channel_list,
-            this->auth_channel, this->checkout_channel,
-            this->decrypt, this->encrypt, this->logon_info,
-            this->enable_auth_channel,
-            trans, front, info, redir_info,
-            gen, timeobj, mod_rdp_params, report_message, [&]{
-                if (mod_rdp_params.enable_session_probe) {
-                    this->file_system_drive_manager.EnableSessionProbeDrive(
-                        mod_rdp_params.proxy_managed_drive_prefix, mod_rdp_params.verbose);
-                }
-                return this->file_system_drive_manager.HasManagedDrive();
-            }())
         , trans(trans)
         , front(front)
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
@@ -1146,8 +1132,6 @@ public:
             }
         }
 
-        this->rdp_negociation.set_program(program, directory);
-
         if (this->remote_program) {
             this->remote_programs_session_manager =
                 std::make_unique<RemoteProgramsSessionManager>(
@@ -1164,106 +1148,14 @@ public:
 
         this->negociation_result.front_width = info.width;
         this->negociation_result.front_height = info.height;
-        this->init_negociate_event();
+
+        if (mod_rdp_params.enable_session_probe) {
+            this->file_system_drive_manager.EnableSessionProbeDrive(
+                mod_rdp_params.proxy_managed_drive_prefix, mod_rdp_params.verbose);
+        }
+
+        this->init_negociate_event_(info, timeobj, mod_rdp_params, program, directory);
     }   // mod_rdp
-
-    void init_negociate_event()
-    {
-        auto check_error = [this](auto /*ctx*/, jln2::ExitR er, gdi::GraphicApi&){
-            if (er.status != jln2::ExitR::Exception) {
-                return er.to_result();
-            }
-
-            switch (er.error.id) {
-                case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
-                case ERR_TRANSPORT_TLS_CERTIFICATE_MISSED:
-                case ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED:
-                case ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE:
-                case ERR_NLA_AUTHENTICATION_FAILED:
-                    return er.to_result();
-                default: break;
-            }
-
-            const char * statestr = "UNKNOWN_STATE";
-            const char * statedescr = "Unknow state.";
-            switch (this->rdp_negociation.get_state()) {
-                #define CASE(e, trkey)                      \
-                    case RdpNegociation::State::e:          \
-                        statestr = "RDP_" #e;               \
-                        statedescr = TR(trkey, this->lang); \
-                    break
-                CASE(NEGO_INITIATE, trkeys::err_mod_rdp_nego);
-                CASE(NEGO, trkeys::err_mod_rdp_nego);
-                CASE(BASIC_SETTINGS_EXCHANGE, trkeys::err_mod_rdp_basic_settings_exchange);
-                CASE(CHANNEL_CONNECTION_ATTACH_USER, trkeys::err_mod_rdp_channel_connection_attach_user);
-                CASE(CHANNEL_JOIN_CONFIRME, trkeys::mod_rdp_channel_join_confirme);
-                CASE(GET_LICENSE, trkeys::mod_rdp_get_license);
-                #undef CASE
-            }
-
-            this->close_box_extra_message_ref += " ";
-            this->close_box_extra_message_ref += statedescr;
-            this->close_box_extra_message_ref += " (";
-            this->close_box_extra_message_ref += statestr;
-            this->close_box_extra_message_ref += ")";
-
-            LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state. %s",
-                statestr, statedescr);
-            er.error = Error(ERR_SESSION_UNKNOWN_BACKEND);
-            return er.to_result();
-        };
-
-        using namespace jln::literals;
-        this->fd_event = this->session_reactor
-        .create_graphic_fd_event(this->trans.get_fd())
-        .set_timeout(std::chrono::milliseconds(0))
-        .on_exit(check_error)
-        .on_action(jln2::exit_with_error<ERR_RDP_PROTOCOL>() /* replaced by on_timeout action*/)
-        .on_timeout([this](auto ctx, gdi::GraphicApi& gd){
-            gdi_clear_screen(gd, this->get_dim());
-            LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
-            this->rdp_negociation.start_negociation();
-
-            return ctx.replace_action([this](auto ctx, gdi::GraphicApi&){
-                bool const is_finish = this->rdp_negociation.recv_data(this->buf);
-                // RdpNego::recv_next_data set a new fd if tls
-                int const fd = this->trans.get_fd();
-                if (fd >= 0) {
-                    ctx.set_fd(fd);
-                }
-                if (is_finish) {
-                    this->negociation_result = this->rdp_negociation.get_result();
-                    return ctx.disable_timeout().replace_exit(jln2::propagate_exit())
-                    .replace_action([this](auto ctx, gdi::GraphicApi& gd){
-                        this->draw_event(ctx.get_current_time().tv_sec, gd);
-                        return ctx.need_more_data();
-                    });
-                }
-                else {
-                    return ctx.need_more_data();
-                }
-            })
-            .set_or_disable_timeout(this->open_session_timeout, [this](auto ctx, gdi::GraphicApi&){
-                if (this->error_message) {
-                    *this->error_message = "Logon timer expired!";
-                }
-
-                this->report_message.report("CONNECTION_FAILED", "Logon timer expired.");
-
-                if (this->enable_session_probe) {
-                    const bool disable_input_event     = false;
-                    const bool disable_graphics_update = false;
-                    this->disable_input_event_and_graphics_update(
-                        disable_input_event, disable_graphics_update);
-                }
-
-                LOG(LOG_ERR,
-                    "Logon timer expired on %s. The session will be disconnected.",
-                    this->logon_info.hostname());
-                return ctx.exception(Error(ERR_RDP_OPEN_SESSION_TIMEOUT));
-            });
-        });
-    }
 
     ~mod_rdp() override {
         if (this->enable_session_probe) {
@@ -4315,6 +4207,7 @@ public:
             CASE(ENCRYPTFAILED);
             CASE(ENCPKGMISMATCH);
             CASE(DECRYPTFAILED2);
+            #undef CASE
             default:
                 return "?";
         }
@@ -6031,4 +5924,9 @@ private:
 
         this->session_reactor.set_event_next(BACK_EVENT_NEXT);
     }
+
+private:
+    void init_negociate_event_(
+        const ClientInfo & info, TimeObj & timeobj, const ModRDPParams & mod_rdp_params,
+        char const* program, char const* directory);
 };

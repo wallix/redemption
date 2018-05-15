@@ -87,7 +87,8 @@ exe rdpproxy :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
-  <library>src/mod/rdp/negociation.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -144,7 +145,8 @@ exe main_client_redemption :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/rdp/negociation.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -188,7 +190,8 @@ exe rdpclient :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/rdp/negociation.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/socket_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
@@ -228,7 +231,8 @@ exe rdpheadless :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/rdp/negociation.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/socket_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
@@ -329,7 +333,8 @@ exe rdptproxy :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
-  <library>src/mod/rdp/negociation.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -420,7 +425,8 @@ exe vncclient :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
-  <library>src/mod/rdp/negociation.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -570,7 +576,8 @@ test-run tests/acl/test_acl_serializer :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
-  <library>src/mod/rdp/negociation.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -665,7 +672,8 @@ test-run tests/acl/test_authentifier :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
-  <library>src/mod/rdp/negociation.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -759,7 +767,8 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
-  <library>src/mod/rdp/negociation.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -984,7 +993,8 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/rdp/negociation.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -1045,7 +1055,8 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/rdp/negociation.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -1081,7 +1092,8 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/rdp/negociation.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -2088,7 +2100,8 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
-  <library>src/mod/rdp/negociation.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -2188,7 +2201,8 @@ test-run tests/core/test_session :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
-  <library>src/mod/rdp/negociation.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -2285,7 +2299,8 @@ test-run tests/core/test_session_server :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
-  <library>src/mod/rdp/negociation.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -2341,7 +2356,8 @@ test-run tests/front/test_front :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/rdp/negociation.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/authorization_channels.o
@@ -3456,6 +3472,7 @@ test-run tests/mod/rdp/channels/test_virtual_channel_data_sender :
 test-run tests/mod/rdp/test_rdp :
   $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp.cpp
 :
+  <covfile>src/mod/rdp/rdp.cpp
   <covfile>src/mod/rdp/rdp.hpp
   <library>app_path_test.o
   <library>crypto
@@ -3478,7 +3495,8 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/rdp/negociation.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -4490,7 +4508,8 @@ obj src/mod/internal/widget/selector.o : $(REDEMPTION_SRC_PATH)/mod/internal/wid
 obj src/mod/internal/widget/tooltip.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/tooltip.cpp ;
 obj src/mod/internal/widget/widget_rect.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/widget_rect.cpp ;
 obj src/mod/internal/widget_test_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget_test_mod.cpp ;
-obj src/mod/rdp/negociation.o : $(REDEMPTION_SRC_PATH)/mod/rdp/negociation.cpp ;
+obj src/mod/rdp/rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
+obj src/mod/rdp/rdp_negociation.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
 obj src/sashimi/channels.o : $(REDEMPTION_SRC_PATH)/sashimi/channels.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
 obj src/sashimi/channels_client.o : $(REDEMPTION_SRC_PATH)/sashimi/channels_client.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
 obj src/sashimi/channels_server.o : $(REDEMPTION_SRC_PATH)/sashimi/channels_server.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;

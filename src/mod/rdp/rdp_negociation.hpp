@@ -33,6 +33,7 @@
 #include "core/channel_names.hpp"
 #include "core/server_notifier_api.hpp"
 #include "mod/rdp/rdp_log.hpp"
+#include "mod/rdp/rdp_negociation_data.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 
 #include <functional> // std::reference_wrapper
@@ -52,31 +53,6 @@ namespace CHANNELS
 {
     class ChannelDefArray;
 }
-
-
-struct RdpNegociationResult
-{
-    uint16_t front_width = 0;
-    uint16_t front_height = 0;
-    bool use_rdp5 = true;
-    uint16_t userid = 0;
-    int encryptionLevel = 0;
-    int encryptionMethod = 0;
-};
-
-struct RdpLogonInfo
-{
-    RdpLogonInfo(char const* hostname, bool hide_client_name, char const* target_user) noexcept;
-
-    char const* username()  const noexcept { return this->_username; }
-    char const* domain()    const noexcept { return this->_domain; }
-    char const* hostname()  const noexcept { return this->_hostname; }
-
-private:
-    char _username[128] = {};
-    char _domain[256] = {};
-    char _hostname[HOST_NAME_MAX + 1] = {};
-};
 
 class RdpNegociation
 {

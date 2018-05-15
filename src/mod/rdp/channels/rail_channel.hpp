@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "configs/config.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/rail_session_manager.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
@@ -190,7 +191,7 @@ private:
         PDU pdu;
 
         pdu.receive(chunk);
-        
+
         if (bool(this->verbose & RDPVerbose::rail)) {
             pdu.log(LOG_INFO);
         }
