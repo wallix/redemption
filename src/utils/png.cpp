@@ -269,13 +269,13 @@ void dump_png24(std::FILE * f, ConstImageDataView const & image_view, bool bgr)
     png_write_end(png.ppng, png.pinfo);
 }
 
-void dump_png24(const char * filename, ConstImageDataView const & image_view)
+void dump_png24(const char * filename, ConstImageDataView const & image_view, bool bgr)
 {
     // TODO image_view.bytes_per_pixel(); isn't used
     assert(3 == image_view.bytes_per_pixel());
 
     if (File f{filename, "wb"}) {
-        dump_png24(f, image_view, true);
+        dump_png24(f, image_view, bgr);
     }
 }
 
