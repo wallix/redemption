@@ -53,7 +53,7 @@ void dump_png24(
 
 void dump_png24(std::FILE * f, ConstImageDataView const & image_view, bool bgr);
 void dump_png24(Transport & trans, ConstImageDataView const & image_view, bool bgr);
-void dump_png24(const char * filename, ConstImageDataView const & bmp);
+void dump_png24(const char * filename, ConstImageDataView const & bmp, bool bgr);
 
 void read_png24(std::FILE * f, MutableImageDataView const & mutable_image_view);
 void read_png24(Transport & trans, MutableImageDataView const & mutable_image_view);
