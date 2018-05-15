@@ -1143,8 +1143,9 @@ namespace jln2
             std::index_sequence_for<Fs...>, std::decay_t<Fs>...>::type;
 
         return [=, i = 0u](auto ctx, auto&&... xs) mutable /*-> R*/ {
+            // gcc < 8.0 bug: explicit capture otherwise xs is misaligned
             auto wrap = [&i, &ctx, &xs...](auto& f) {
-                return [&i, &f, &ctx, &xs...]() {
+                return [&]() {
                     return f(
                         FuncSequencerCtx<decltype(ctx), Pack>{ctx, i},
                         static_cast<decltype(xs)&&>(xs)...
