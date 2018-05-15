@@ -1497,24 +1497,28 @@ Capture::Capture(
                 capture_params, wrm_params, *this->gd_drawable));
         }
 
+#ifndef REDEMPTION_NO_FFMPEG
         if (capture_video) {
             std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
             if (video_params.capture_chunk && this->meta_capture_obj) {
                 this->notifier_next_video.session_meta = &this->meta_capture_obj->get_session_meta();
                 notifier = this->notifier_next_video;
             }
-#ifndef REDEMPTION_NO_FFMPEG
             this->sequenced_video_capture_obj.reset(new SequencedVideoCaptureImpl(
                 capture_params, png_params.zoom, *this->gd_drawable,
                 *image_frame_api_ptr, video_params, notifier));
-#endif
         }
 
-#ifndef REDEMPTION_NO_FFMPEG
         if (capture_video_full) {
             this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
                 capture_params, *this->gd_drawable,
                 *image_frame_api_ptr, video_params, full_video_params));
+        }
+#else
+        if (capture_video || capture_video_full) {
+            (void)full_video_params;
+            (void)video_params;
+            LOG(LOG_WARNING, "VideoCapture is disabled (-DREDEMPTION_NO_FFMPEG)");
         }
 #endif
 
