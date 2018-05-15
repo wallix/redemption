@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <cerrno>
 
 inline void rdpdr_in_file_seek(int fd, int64_t offset, int whence)
 {

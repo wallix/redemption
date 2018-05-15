@@ -156,12 +156,12 @@ add_src core/app_path.cpp :
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)$(CLIENT_REDEMPTION_MAIN_PATH)\"'
     ;
-add_src capture/capture.cpp ;
+add_src capture/capture.cpp : <define>REDEMPTION_NO_FFMPEG ;
 add_src capture/file_to_graphic.cpp ;
 add_src capture/rdp_ppocr/get_ocr_constants.cpp ;
 add_src capture/utils/match_finder.cpp ;
-add_src capture/video_capture.cpp ;
-add_src capture/video_recorder.cpp ;
+#add_src capture/video_capture.cpp ;
+#add_src capture/video_recorder.cpp ;
 add_src core/RDP/mppc.cpp ;
 add_src core/RDP/nego.cpp ;
 add_src core/font.cpp ;

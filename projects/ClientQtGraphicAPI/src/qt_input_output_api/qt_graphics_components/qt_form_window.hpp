@@ -237,7 +237,11 @@ public:
 
 
 #include <sys/ioctl.h>
-
+#define Q_OBJECT_NO_WARNING                                         \
+    REDEMPTION_DIAGNOSTIC_PUSH                                          \
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Winconsistent-missing-override") \
+    Q_OBJECT                                                            \
+    REDEMPTION_DIAGNOSTIC_POP
 
 class QtMoviesPanel : public QWidget
 {

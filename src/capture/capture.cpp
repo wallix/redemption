@@ -69,8 +69,14 @@
 #include "capture/capture.hpp"
 #include "capture/wrm_capture.hpp"
 #include "capture/utils/match_finder.hpp"
+#include "utils/video_cropper.hpp"
 
-#include "capture/video_capture.hpp"
+#ifndef REDEMPTION_NO_FFMPEG
+# include "capture/video_capture.hpp"
+#else
+class FullVideoCaptureImpl {};
+class SequencedVideoCaptureImpl {};
+#endif
 
 #include "utils/recording_progress.hpp"
 #include "utils/sugar/underlying_cast.hpp"
@@ -1378,9 +1384,11 @@ void Capture::TitleChangedFunctions::notify_title_changed(
     if (this->capture.meta_capture_obj) {
         this->capture.meta_capture_obj->get_session_meta().title_changed(now.tv_sec, title);
     }
+#ifndef REDEMPTION_NO_FFMPEG
     if (this->capture.sequenced_video_capture_obj) {
         this->capture.sequenced_video_capture_obj->next_video(now);
     }
+#endif
     if (this->capture.update_progress_data) {
         this->capture.update_progress_data->next_video(now.tv_sec);
     }
@@ -1495,16 +1503,20 @@ Capture::Capture(
                 this->notifier_next_video.session_meta = &this->meta_capture_obj->get_session_meta();
                 notifier = this->notifier_next_video;
             }
+#ifndef REDEMPTION_NO_FFMPEG
             this->sequenced_video_capture_obj.reset(new SequencedVideoCaptureImpl(
                 capture_params, png_params.zoom, *this->gd_drawable,
                 *image_frame_api_ptr, video_params, notifier));
+#endif
         }
 
+#ifndef REDEMPTION_NO_FFMPEG
         if (capture_video_full) {
             this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
                 capture_params, *this->gd_drawable,
                 *image_frame_api_ptr, video_params, full_video_params));
         }
+#endif
 
         if (capture_pattern_checker) {
             this->patterns_checker.reset(new PatternsChecker(
@@ -1543,7 +1555,7 @@ Capture::Capture(
         if (this->png_capture_obj) {
             this->caps.push_back(*this->png_capture_obj);
         }
-
+#ifndef REDEMPTION_NO_FFMPEG
         if (this->sequenced_video_capture_obj) {
             //this->caps.push_back(this->sequenced_video_capture_obj->vc);
             this->caps.push_back(*this->sequenced_video_capture_obj);
@@ -1552,6 +1564,7 @@ Capture::Capture(
         if (this->full_video_capture_obj) {
             this->caps.push_back(*this->full_video_capture_obj);
         }
+#endif
     }
 
     if (capture_kbd) {
