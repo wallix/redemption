@@ -222,7 +222,7 @@ public:
 
 class RemoteAppQtScreen : public QtScreen
 {
-    
+
 Q_OBJECT
 
 public:
@@ -326,6 +326,7 @@ public:
                 this->_front->windowsData.screen_x = (desktop->width()/2)  - (this->_width/2);
                 this->_front->windowsData.screen_y = (desktop->height()/2) - (this->_height/2);
             }
+
             this->move(this->_front->windowsData.screen_x, this->_front->windowsData.screen_y);
         }
     }

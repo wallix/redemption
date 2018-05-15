@@ -376,7 +376,7 @@ public:
         this->_front->update_keylayout();
 
         this->_front->writeCustomKeyConfig();
-        this->_front->writeClientInfo();
+        //this->_front->writeClientInfo();
     }
 
     void keyPressEvent(QKeyEvent *e) override {

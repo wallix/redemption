@@ -227,11 +227,30 @@ public:
 
         void open() {
             if (std::ifstream ifile{this->front->WINDOWS_CONF}) {
-                this->no_data = false;
-                ifile.ignore() >> this->form_x;
-                ifile.ignore() >> this->form_y;
-                ifile.ignore() >> this->screen_x;
-                ifile.ignore() >> this->screen_y;
+                 this->no_data = false;
+
+                 std::string line;
+                 int pos = 0;
+
+                 getline(ifile, line);
+                 pos = line.find(" ");
+                 line = line.substr(pos, line.length());
+                 this->form_x = std::stoi(line);
+
+                 getline(ifile, line);
+                 pos = line.find(" ");
+                 line = line.substr(pos, line.length());
+                 this->form_y = std::stoi(line);
+
+                 getline(ifile, line);
+                 pos = line.find(" ");
+                 line = line.substr(pos, line.length());
+                 this->screen_x = std::stoi(line);
+
+                 getline(ifile, line);
+                 pos = line.find(" ");
+                 line = line.substr(pos, line.length());
+                 this->screen_y = std::stoi(line);
             }
         }
 
@@ -1158,8 +1177,8 @@ public:
         this->info.console_session = 0;
         this->info.brush_cache_code = 0;
         this->info.bpp = 24;
-        this->info.width  = this->rdp_width;
-        this->info.height = this->rdp_height;
+        this->info.width  = 800;
+        this->info.height = 600;
         this->info.console_session = false;
         this->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
         this->info.cs_monitor.monitorCount = 1;

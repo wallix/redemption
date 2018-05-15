@@ -116,11 +116,11 @@ private:
         if (tv.tv_sec > -1) {
 
             //+  (tv.tvtime - tv
-            int time_to_wake = (1000 * (tv.tv_sec - now.tv_sec)) + ((tv.tv_usec - now.tv_usec) / 1000);
+            int time_to_wake =(1000 * (tv.tv_sec - now.tv_sec)) + ((tv.tv_usec - now.tv_usec) / 1000);
 
                 //ustime(tv) - ustime(now);
             //int delai = std::max(time_to_wake, 0);
-            this->timer.start(time_to_wake);
+            this->timer.start( std::max(time_to_wake, 0));
         }
         else {
             this->timer.stop();

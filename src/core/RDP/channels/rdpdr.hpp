@@ -1339,6 +1339,29 @@ class DeviceCreateRequest {
     uint8_t Path_[65536] = {0};
 
 public:
+    DeviceCreateRequest() = default;
+
+    DeviceCreateRequest(uint32_t DesiredAccess,
+                        uint64_t AllocationSize,
+                        uint32_t FileAttributes,
+                        uint32_t SharedAccess,
+                        uint32_t CreateDisposition,
+                        uint32_t CreateOptions,
+                        //size_t PathLength_UTF16,
+                        size_t PathLength_UTF8,
+                        const char * Path_UTF8)
+        : DesiredAccess_(DesiredAccess)
+        , AllocationSize_(AllocationSize)
+        , FileAttributes_(FileAttributes)
+        , SharedAccess_(SharedAccess)
+        , CreateDisposition_(CreateDisposition)
+        , CreateOptions_(CreateOptions)
+       // , PathLength_UTF16(PathLength_UTF16)
+        , PathLength_UTF8(PathLength_UTF8)
+        {
+
+        }
+
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DesiredAccess_);
         stream.out_uint64_le(this->AllocationSize_);

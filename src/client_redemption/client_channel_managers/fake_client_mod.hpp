@@ -194,3 +194,81 @@ public:
     const CHANNELS::ChannelDefArray & get_channel_list() const override { return this->channels;}
     ResizeResult server_resize(int , int , int ) override { return ResizeResult::instant_done;}
 };
+
+class FakeIODisk : public ClientIODiskAPI
+{
+
+public:
+    FakeIODisk() = default;
+
+    bool ifile_good(const char * new_path) override {
+        return true;
+    }
+
+    bool ofile_good(const char * new_path) override {
+        return true;
+    }
+
+    bool dir_good(const char * new_path) override {
+        return true;
+    }
+
+    void marke_dir(const char * new_path) override {
+
+    }
+
+    FileStat get_file_stat(const char * file_to_request) override {
+
+        FileStat fileStat;
+
+
+        return fileStat;
+    }
+
+    FileStatvfs get_file_statvfs(const char * file_to_request) override {
+
+         FileStatvfs fileStatvfs;
+
+        return fileStatvfs;
+    }
+
+    erref::NTSTATUS read_data(const  std::string & file_to_tread,
+                                        int file_size,
+                                        int offset,
+                                        std::unique_ptr<uint8_t[]> & ReadData,
+                                        bool log_erro_on) override {
+
+        return erref::NTSTATUS::STATUS_SUCCESS;
+    }
+
+    bool set_elem_from_dir(std::vector<std::string> & elem_list, std::string & str_dir_path) override {
+        elem_list.clear();
+
+        return true;
+    }
+
+    int get_device(const char * file_path) override {
+        return 0;
+    }
+
+    uint32_t get_volume_serial_number(int device) override {
+
+        return 0;
+    }
+
+    bool write_file(const char * file_to_write, const char * data, int data_len) override {
+        return true;
+    }
+
+    bool remove_file(const char * file_to_remove) override {
+        return false;
+    }
+
+    bool rename_file(const char * file_to_rename,  const char * new_name) override {
+        return false;
+    }
+
+
+};
+
+

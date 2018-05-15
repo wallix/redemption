@@ -236,12 +236,12 @@ public:
 };
 
 
-#include <sys/ioctl.h>
-#define Q_OBJECT_NO_WARNING                                         \
-    REDEMPTION_DIAGNOSTIC_PUSH                                          \
-    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Winconsistent-missing-override") \
-    Q_OBJECT                                                            \
-    REDEMPTION_DIAGNOSTIC_POP
+// #include <sys/ioctl.h>
+// #define Q_OBJECT_NO_WARNING                                         \
+//     REDEMPTION_DIAGNOSTIC_PUSH                                          \
+//     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Winconsistent-missing-override") \
+//     Q_OBJECT                                                            \
+//     REDEMPTION_DIAGNOSTIC_POP
 
 class QtMoviesPanel : public QWidget
 {
@@ -918,6 +918,7 @@ private Q_SLOTS:
             this->get_portField()
         );
         this->_front->writeCustomKeyConfig();
+        this->_front->writeClientInfo();
 
         this->controllers->connexionReleased();
 
@@ -926,8 +927,6 @@ private Q_SLOTS:
         } else {
             this->_front->_save_password_account = false;
         }
-
-
     }
 
     void optionsReleased() {
@@ -1017,6 +1016,7 @@ public:
         QPoint points = this->mapToGlobal({0, 0});
         this->controllers->client->windowsData.form_x = points.x()-1;
         this->controllers->client->windowsData.form_y = points.y()-39;
+        LOG(LOG_INFO, "to write windowsData.form_x=%d, windowsData.form_y=%d", this->controllers->client->windowsData.form_x, this->controllers->client->windowsData.form_y);
         this->controllers->client->writeWindowsConf();
         this->is_closing = true;
 
