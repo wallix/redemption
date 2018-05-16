@@ -35,34 +35,30 @@ public:
     std::vector<uint16_t> types;
     std::vector<uint16_t> sub_types;
 
+    struct PDUData {
+
+        uint8_t data[1600];
+        size_t size = 0;
+
+    } last_pdu[10];
+
+    int index_in = 0;
+    int index_out = 0;
+
+
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override {
         (void) front_channel_name;
         (void) length;
         (void) flags;
 
+        if (this->index_in < 10) {
+            last_pdu[this->index_in].size = chunk.in_remain();
+            std::memcpy(last_pdu[this->index_in].data, chunk.get_data(), chunk.in_remain());
+            this->index_in++;
+        }
+
         this->types.push_back(chunk.in_uint16_le());
         this->sub_types.push_back(chunk.in_uint16_le());
-
-        //InStream stream =  chunk.clone();
-
-//         switch (chunk.in_uint16_le()) {
-//
-//             case RDPECLIP::CB_MONITOR_READY:
-//                 break;
-//             case RDPECLIP::CB_FORMAT_LIST:
-//     case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
-//     case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-//     case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-//     case RDPECLIP::CB_TEMP_DIRECTORY:
-//     case RDPECLIP::CB_CLIP_CAPS:
-//     case RDPECLIP::CB_FILECONTENTS_REQUEST:
-//     case RDPECLIP::CB_FILECONTENTS_RESPONSE:
-//     case RDPECLIP::CB_LOCK_CLIPDATA:
-//     case RDPECLIP::CB_UNLOCK_CLIPDATA:
-//
-//         }
-
-        //this->streams.push_back(chunk.clone());
     }
 
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override {
@@ -147,7 +143,7 @@ public:
     }
 
     size_t get_total_stream_produced() {
-        return this->fake_mod.types.size();
+        return this->fake_mod.index_in;
     }
 
     uint16_t get_next_pdu_type() {
@@ -166,6 +162,15 @@ public:
         }
 
         return -1;
+    }
+
+    FakeRDPChannelsMod::PDUData * stream() {
+        if (this->fake_mod.index_out < 10) {
+            this->fake_mod.index_out++;
+            return &(this->fake_mod.last_pdu[this->fake_mod.index_out-1]);
+        }
+
+        return nullptr;
     }
 
     void draw(RDP::FrameMarker    const & cmd) override { (void) cmd; }

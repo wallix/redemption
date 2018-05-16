@@ -1367,8 +1367,8 @@ public:
 };
 
 
-// TODO this isn't API
-class ClientIOAPI
+
+class ClientIO
 {
 public:
     ClientRedemptionIOAPI * client;
@@ -1379,7 +1379,7 @@ public:
 };
 
 
-class ClientIOClipboardAPI : public ClientIOAPI {
+class ClientIOClipboardAPI : public ClientIO {
 
 public:
     enum : int {
@@ -1467,7 +1467,7 @@ public:
 constexpr long long WINDOWS_TICK = 10000000;
 constexpr long long SEC_TO_UNIX_EPOCH = 11644473600LL;
 
-class ClientIODiskAPI : public ClientIOAPI {
+class ClientIODiskAPI : public ClientIO {
 
 
 public:
@@ -1565,7 +1565,7 @@ public:
 
 
 
-class ClientOutputSoundAPI : public ClientIOAPI {
+class ClientOutputSoundAPI : public ClientIO {
 
 public:
     uint32_t n_sample_per_sec = 0;
@@ -1590,7 +1590,7 @@ public:
 
 
 
-class ClientInputSocketAPI : public ClientIOAPI {
+class ClientInputSocketAPI : public ClientIO {
 
 public:
     mod_api * _callback = nullptr;
@@ -1603,7 +1603,7 @@ public:
 
 
 
-class ClientInputMouseKeyboardAPI : public ClientIOAPI {
+class ClientInputMouseKeyboardAPI : public ClientIO {
 
 
 public:

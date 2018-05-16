@@ -212,7 +212,7 @@ public:
         return this->cl;
     }
 
-     void delete_replay_mod() override {
+    void delete_replay_mod() override {
         this->replay_mod.reset();
     }
 
@@ -221,7 +221,7 @@ public:
 //     }
 
     void closeFromScreen() override {
-        if (impl_graphic) {
+        if (this->impl_graphic) {
             this->impl_graphic->closeFromScreen();
         }
     }
