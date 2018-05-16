@@ -205,74 +205,77 @@ class FakeIODisk : public ClientIODiskAPI
 public:
     FakeIODisk() = default;
 
-    bool ifile_good(const char * new_path) override {
+    bool ifile_good(const char * /*new_path*/) override {
         return true;
     }
 
-    bool ofile_good(const char * new_path) override {
+    bool ofile_good(const char * /*new_path*/) override {
         return true;
     }
 
-    bool dir_good(const char * new_path) override {
+    bool dir_good(const char * /*new_path*/) override {
         return true;
     }
 
-    void marke_dir(const char * new_path) override {
+    void marke_dir(const char * /*new_path*/) override {
 
     }
 
-    FileStat get_file_stat(const char * file_to_request) override {
-
-        FileStat fileStat;
-
-
-        return fileStat;
+    FileStat get_file_stat(const char * /*file_to_request*/) override {
+        return FileStat{};
     }
 
-    FileStatvfs get_file_statvfs(const char * file_to_request) override {
-
-         FileStatvfs fileStatvfs;
-
-        return fileStatvfs;
+    FileStatvfs get_file_statvfs(const char * /*file_to_request*/) override {
+        return FileStatvfs{};
     }
 
-    erref::NTSTATUS read_data(const  std::string & file_to_tread,
-                                        int file_size,
-                                        int offset,
-                                        std::unique_ptr<uint8_t[]> & ReadData,
-                                        bool log_erro_on) override {
+    // TODO unique_ptr& <- bad idea
+    erref::NTSTATUS read_data(const std::string & file_to_tread,
+                              int file_size,
+                              int offset,
+                              std::unique_ptr<uint8_t[]> & ReadData,
+                              bool log_erro_on) override {
+        (void)file_to_tread;
+        (void)file_size;
+        (void)offset;
+        (void)ReadData;
+        (void)log_erro_on;
 
         return erref::NTSTATUS::STATUS_SUCCESS;
     }
 
+    // TODO str_dir_path is not constant ?
     bool set_elem_from_dir(std::vector<std::string> & elem_list, std::string & str_dir_path) override {
+        (void)str_dir_path;
         elem_list.clear();
 
         return true;
     }
 
-    int get_device(const char * file_path) override {
+    int get_device(const char * /*file_path*/) override {
         return 0;
     }
 
-    uint32_t get_volume_serial_number(int device) override {
+    uint32_t get_volume_serial_number(int /*device*/) override {
 
         return 0;
     }
 
     bool write_file(const char * file_to_write, const char * data, int data_len) override {
+        (void)file_to_write;
+        (void)data;
+        (void)data_len;
+
         return true;
     }
 
-    bool remove_file(const char * file_to_remove) override {
+    bool remove_file(const char * /*file_to_remove*/) override {
         return false;
     }
 
     bool rename_file(const char * file_to_rename,  const char * new_name) override {
+        (void)file_to_rename;
+        (void)new_name;
         return false;
     }
-
-
 };
-
-
