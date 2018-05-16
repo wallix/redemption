@@ -423,9 +423,7 @@ protected:
     const bool remote_program;
     const bool remote_program_enhanced;
 
-    // TODO used std::unique_ptr
-    TransparentRecorder * transparent_recorder;
-    Transport           * persistent_key_list_transport;
+    Transport* persistent_key_list_transport;
 
     //uint64_t total_data_received;
 
@@ -820,7 +818,6 @@ public:
         , enable_multiscrblt(false)
         , remote_program(mod_rdp_params.remote_program)
         , remote_program_enhanced(mod_rdp_params.remote_program_enhanced)
-        , transparent_recorder(nullptr)
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
         //, total_data_received(0)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
@@ -887,10 +884,6 @@ public:
         if (mod_rdp_params.proxy_managed_drives && (*mod_rdp_params.proxy_managed_drives)) {
             this->configure_proxy_managed_drives(mod_rdp_params.proxy_managed_drives,
                                                  mod_rdp_params.proxy_managed_drive_prefix);
-        }
-
-        if (mod_rdp_params.transparent_recorder_transport) {
-            this->transparent_recorder = new TransparentRecorder(mod_rdp_params.transparent_recorder_transport);
         }
 
         this->configure_extra_orders(mod_rdp_params.extra_orders);
@@ -1164,8 +1157,6 @@ public:
             this->disable_input_event_and_graphics_update(
                 disable_input_event, disable_graphics_update);
         }
-
-        delete this->transparent_recorder;
 
         if (!this->end_session_reason.empty()
         &&  !this->end_session_message.empty()) {
@@ -1630,11 +1621,6 @@ public:
 
     void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name, uint8_t const * data
                               , size_t length, size_t chunk_size, int flags) override {
-        if (this->transparent_recorder) {
-            this->transparent_recorder->send_to_front_channel( mod_channel_name, data, length
-                                                             , chunk_size, flags);
-        }
-
         const CHANNELS::ChannelDef * front_channel = this->front.get_channel_list().get_by_name(mod_channel_name);
         if (front_channel) {
             this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
@@ -2002,11 +1988,7 @@ public:
         if (this->enable_transparent_mode) {
             //total_data_received += su.payload.size();
             //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);
-            if (this->transparent_recorder) {
-                this->transparent_recorder->send_fastpath_data(su.payload);
-            }
             this->front.send_fastpath_data(su.payload);
-
             return;
         }
 
@@ -2368,13 +2350,6 @@ public:
                                 else {
                                     LOG(LOG_INFO, "Resizing to %ux%ux%u", this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp);
 
-
-                                    if (this->transparent_recorder) {
-                                        this->transparent_recorder->server_resize(this->negociation_result.front_width,
-                                            this->negociation_result.front_height, this->orders.bpp);
-                                    }
-
-
                                     if (FrontAPI::ResizeResult::fail == this->front.server_resize(this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp)){
                                         LOG(LOG_ERR, "Resize not available on older clients,"
                                             " change client resolution to match server resolution");
@@ -2457,13 +2432,6 @@ public:
                                 //total_data_received += copy_stream.size();
                                 //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);
 
-                                if (this->transparent_recorder) {
-                                    this->transparent_recorder->send_data_indication_ex(
-                                        mcs.channelId,
-                                        copy_stream.get_data(),
-                                        copy_stream.get_offset()
-                                    );
-                                }
                                 this->front.send_data_indication_ex(
                                     mcs.channelId,
                                     copy_stream.get_data(),
@@ -2664,10 +2632,6 @@ public:
 
 /*
                             LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->orders.bpp);
-                            if (this->transparent_recorder) {
-                                this->transparent_recorder->server_resize(this->front_width,
-                                    this->front_height, this->orders.bpp);
-                            }
                             if (-1 == this->front.server_resize(this->front_width, this->front_height, this->orders.bpp)){
                                 LOG(LOG_ERR, "Resize not available on older clients,"
                                     " change client resolution to match server resolution");

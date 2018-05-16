@@ -84,7 +84,7 @@ alias install :
     install-etc-ppocr
     install-share
 ;
-alias exe     : rdpproxy rdptproxy rdptanalyzer rdpclient vncclient rdpheadless rdpinichecker ;
+alias exe     : rdpproxy rdpclient vncclient rdpheadless rdpinichecker ;
 alias libs    : libredrec libscytale ;
 
 alias ocr_tools : display_learning extract_text ppocr_extract_text ;

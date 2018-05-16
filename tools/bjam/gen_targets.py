@@ -65,10 +65,8 @@ target_pre_renames = dict((
 
 target_renames = dict((
     ('main', 'rdpproxy'),
-    ('transparent', 'rdptproxy'),
     ('do_recorder', 'redrec'),
     ('ini_checker', 'rdpinichecker'),
-    ('tanalyzer', 'rdptanalyzer'),
     ('rdp_client', 'rdpclient'),
     ('vnc_client', 'vncclient'),
 ))
