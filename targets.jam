@@ -114,22 +114,14 @@ exe main_client_redemption :
   $(EXE_DEPENDENCIES)
   <library>app_path_exe.o
   <library>crypto
-  <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
   <library>openssl
   <library>png
-  <library>ppocr
   <library>program_options
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
-  <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
-  <library>src/capture/ocr/locale/latin_to_cyrillic.o
-  <library>src/capture/rdp_ppocr/get_ocr_constants.o
-  <library>src/capture/utils/match_finder.o
-  <library>src/capture/video_capture.o
-  <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/font.o
@@ -157,7 +149,6 @@ exe main_client_redemption :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
-  <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>z
