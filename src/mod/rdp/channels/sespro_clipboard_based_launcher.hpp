@@ -379,7 +379,7 @@ public:
 
         this->event = this->session_reactor.create_timer(std::ref(*this))
         .set_delay(this->short_delay)
-        .on_action(jln2::funcsequencer(
+        .on_action(jln2::sequencer(
             "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>, value<true>,  value<true> )),
             "r (down)"_f        (send_scancode(value<19>, value<0>,                           value<false>, value<true> )),
             "r (up)"_f          (send_scancode(value<19>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true> )),
@@ -476,7 +476,7 @@ public:
 
         this->event = this->session_reactor.create_timer(std::ref(*this))
         .set_delay(this->short_delay)
-        .on_action(jln2::funcsequencer(
+        .on_action(jln2::sequencer(
             "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>, value<true>,  value<true> )),
             "r (down)"_f        (send_scancode(value<19>, value<0>,                           value<false>, value<true> )),
             "r (up)"_f          (send_scancode(value<19>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true> )),

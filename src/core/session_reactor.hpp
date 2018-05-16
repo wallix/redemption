@@ -859,54 +859,6 @@ namespace jln2
 
     namespace detail
     {
-        template<std::size_t... Ints, class... Fs>
-        R switch_(unsigned i, std::integer_sequence<std::size_t, Ints...>, Fs&&... fs)
-        {
-            R r;
-            REDEMPTION_DIAGNOSTIC_PUSH
-            REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wparentheses")
-            REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-value")
-            (((i == Ints) && ((void)(r = fs()), true)) || ...)
-            || ((void)(r = R::ExitError), true);
-            REDEMPTION_DIAGNOSTIC_POP
-            return r;
-        }
-    }
-
-    template<class... Fs>
-    auto sequencer(Fs&&... fs)
-    {
-        static_assert(sizeof...(Fs) > 1);
-
-        return [=, i = 0u](auto ctx, auto&&... xs) mutable /*-> R*/ {
-            auto wrap = [&](auto& f) {
-                return [&]() {
-                    return f(ctx, static_cast<decltype(xs)&&>(xs)...);
-                };
-            };
-            R const r = detail::switch_(
-                i, std::make_index_sequence<sizeof...(Fs)>{}, wrap(fs)...);
-
-            switch (r) {
-                case R::Next:
-                    return i < sizeof...(fs)-1 ? ((void)++i, R::Ready) : R::Next;
-                case R::CreateGroup:
-                    ++i;
-                    return R::CreateContinuation;
-                case R::SubstituteTimeout:
-                case R::SubstituteAction:
-                case R::SubstituteExit:
-                    ++i;
-                    return r;
-                default:
-                    return r;
-            }
-        };
-    }
-
-
-    namespace detail
-    {
         template<class S, class F>
         struct named_function
         {
@@ -1102,6 +1054,8 @@ namespace jln2
         , i(i)
         {}
 
+        operator Ctx& () noexcept { return this->ctx; }
+
     private:
         Ctx& ctx;
         unsigned& i;
@@ -1109,9 +1063,27 @@ namespace jln2
 
     namespace detail
     {
+        template<class> struct name_or_index;
+
+        template<class i, class S>
+        struct name_or_index<named_indexed<i, S>>
+        { using type = S; };
+
+        template<class i>
+        struct name_or_index<named_indexed<i, unamed>>
+        { using type = i; };
+
+        template<class... Ts>
+        struct CheckUniqueName : name_or_index<Ts>::type...
+        {
+            static const bool value = true;
+        };
+
         template<class... NamedIndexed>
         struct named_indexed_pack : NamedIndexed...
         {
+            static_assert(CheckUniqueName<NamedIndexed...>::value, "name duplicated");
+
             static const std::size_t count = sizeof...(NamedIndexed);
 
             static inline char const* const strings[sizeof...(NamedIndexed)]
@@ -1127,15 +1099,28 @@ namespace jln2
             using type = named_indexed_pack<typename function_to_named_index<
                 std::integral_constant<std::size_t, Ints>,  Fs>::type...>;
         };
+
+
+        template<std::size_t... Ints, class... Fs>
+        R switch_(unsigned i, std::integer_sequence<std::size_t, Ints...>, Fs&&... fs)
+        {
+            R r;
+            REDEMPTION_DIAGNOSTIC_PUSH
+            REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wparentheses")
+            REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-value")
+            (((i == Ints) && ((void)(r = fs()), true)) || ...)
+            || ((void)(r = R::ExitError), true);
+            REDEMPTION_DIAGNOSTIC_POP
+            return r;
+        }
     }
 
     template<class S, class F>
     detail::named_function<S, F> named(S, F)
     { return {}; }
 
-    // TODO is `sequencer`
     template<class... Fs>
-    auto funcsequencer(Fs&&... fs)
+    auto sequencer(Fs&&... fs)
     {
         static_assert(sizeof...(Fs) > 1);
 
@@ -2434,9 +2419,9 @@ namespace jln2
         else {
             auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(
                 this->current_group);
-            g->on_action([f, &group](TopContext<Ts...> ctx, Ts... xs) mutable /*-> R*/ {
-                return group.t.invoke(f, ctx, static_cast<Ts&>(xs)...);
-            });
+            g->GroupExecutor<Ts...>::on_action = [f, &group](GroupContext<Ts...> ctx, Ts... xs) mutable /*-> R*/ {
+                return group.t.invoke(f, TopContext<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
+            };
         }
         this->top.sub_group(std::move(g));
         return R::SubstituteAction;
