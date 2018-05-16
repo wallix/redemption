@@ -1170,6 +1170,42 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_CLI
   <library>src/utils/rle.o
   <library>z
 ;
+test-run tests/client_redemption/client_channel_managers/test_client_channel_RDPDR_manager :
+  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_channel_RDPDR_manager.cpp
+:
+  <covfile>src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.hpp
+  <library>app_path_test.o
+  <library>crypto
+  <library>openssl
+  <library>png
+  <library>program_options
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
+  <library>src/capture/file_to_graphic.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/client_execute.o
+  <library>src/mod/internal/internal_mod.o
+  <library>src/mod/internal/replay_mod.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>z
+;
 test-run tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager.cpp
 :
@@ -2709,16 +2745,10 @@ test-run tests/mod/internal/test_replay_mod :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/replay_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -4586,6 +4616,8 @@ alias test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008 ;
 alias test_rdp_client_wab : tests/client_mods/test_rdp_client_wab ;
 alias test_client_channel_CLIPRDR_manager : tests/client_redemption/client_channel_managers/test_client_channel_CLIPRDR_manager ;
 alias test_client_channel_CLIPRDR_manager.coverage : tests/client_redemption/client_channel_managers/test_client_channel_CLIPRDR_manager.coverage ;
+alias test_client_channel_RDPDR_manager : tests/client_redemption/client_channel_managers/test_client_channel_RDPDR_manager ;
+alias test_client_channel_RDPDR_manager.coverage : tests/client_redemption/client_channel_managers/test_client_channel_RDPDR_manager.coverage ;
 alias test_client_channel_RDPSND_manager : tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager ;
 alias test_client_channel_RDPSND_manager.coverage : tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager.coverage ;
 alias test_FileInformation : tests/core/FSCC/test_FileInformation ;
@@ -5242,6 +5274,7 @@ alias tests/client_mods :
 explicit tests/client_redemption/client_channel_managers ;
 alias tests/client_redemption/client_channel_managers :
   tests/client_redemption/client_channel_managers/test_client_channel_CLIPRDR_manager
+  tests/client_redemption/client_channel_managers/test_client_channel_RDPDR_manager
   tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager
 ;
 explicit tests/core/FSCC ;

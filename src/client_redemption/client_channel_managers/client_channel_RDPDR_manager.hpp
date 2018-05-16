@@ -196,9 +196,11 @@ public:
 
 
     void receive(InStream & chunk) {
-        if (this->impl_io_disk !=  nullptr) {
-         if (this->fileSystemData.writeData_to_wait) {
+        if (this->impl_io_disk == nullptr) {
+            return ;
+        }
 
+        if (this->fileSystemData.writeData_to_wait) {
             size_t length(chunk.in_remain());
 
             this->fileSystemData.writeData_to_wait -= length;
@@ -1398,7 +1400,6 @@ public:
 
             default: LOG(LOG_WARNING, "SERVER >> RDPDR: DEFAULT RDPDR unknow component = %x", component);
                 break;
-        }
         }
     }
 

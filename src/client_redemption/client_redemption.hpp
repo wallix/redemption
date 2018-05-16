@@ -68,7 +68,6 @@ public:
 
     // RDP
     CHANNELS::ChannelDefArray   cl;
-    Font                 _font;
     std::string          _error;
     std::string   error_message;
     std::unique_ptr<Random> gen;
@@ -236,7 +235,6 @@ public:
                                                 , 0             //this->info.width
                                                 , 0             //this->info.height
                                                 , this->_error
-                                                , this->_font
                                                 , true
                                                 , begin_read
                                                 , end_read
