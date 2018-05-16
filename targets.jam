@@ -139,14 +139,9 @@ exe main_client_redemption :
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/replay_mod.o
-  <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/crypto_transport.o
@@ -187,13 +182,8 @@ exe rdpclient :
   <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/socket_transport.o
@@ -228,13 +218,8 @@ exe rdpheadless :
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/socket_transport.o
@@ -876,13 +861,8 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/utils/authorization_channels.o
@@ -938,13 +918,8 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/utils/authorization_channels.o
@@ -975,13 +950,8 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/utils/authorization_channels.o
@@ -1011,12 +981,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_CLI
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/replay_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -1047,12 +1012,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/replay_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -1083,12 +1043,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/replay_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -2245,13 +2200,8 @@ test-run tests/front/test_front :
   <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/crypto_transport.o
@@ -3377,13 +3327,8 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/gdi/protected_graphics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/utils/authorization_channels.o
@@ -3434,17 +3379,10 @@ test-run tests/mod/vnc/encoder/test_hextile :
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -3462,17 +3400,10 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -3490,17 +3421,10 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o

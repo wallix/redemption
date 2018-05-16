@@ -29,7 +29,6 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 #include "core/RDP/remote_programs.hpp"
-#include "mod/internal/internal_mod.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/windowing_api.hpp"
 #include "utils/bitmap_from_file.hpp"
@@ -655,42 +654,42 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
 
     // Mouse pointer managment
     if (!this->move_size_initialized) {
-        if (this->north.contains_pt(xPos, yPos) 
+        if (this->north.contains_pt(xPos, yPos)
         ||  this->south.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZENS != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZENS;
                     this->front_->set_pointer(Pointer(SizeNSPointer{}));
             }
         }
-        else if (this->north_west_north.contains_pt(xPos, yPos) 
-             ||  this->north_west_west.contains_pt(xPos, yPos) 
-             ||  this->south_east_south.contains_pt(xPos, yPos) 
+        else if (this->north_west_north.contains_pt(xPos, yPos)
+             ||  this->north_west_west.contains_pt(xPos, yPos)
+             ||  this->south_east_south.contains_pt(xPos, yPos)
              ||  this->south_east_east.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZENWSE != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZENWSE;
                     this->front_->set_pointer(Pointer(SizeNESWPointer{}));
             }
         }
-        else if (this->west.contains_pt(xPos, yPos) 
+        else if (this->west.contains_pt(xPos, yPos)
              ||  this->east.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZEWE != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZEWE;
                     this->front_->set_pointer(Pointer(SizeWEPointer{}));
             }
         }
-        else if (this->south_west_west.contains_pt(xPos, yPos) 
-             ||  this->south_west_south.contains_pt(xPos, yPos) 
-             ||  this->north_east_east.contains_pt(xPos, yPos) 
+        else if (this->south_west_west.contains_pt(xPos, yPos)
+             ||  this->south_west_south.contains_pt(xPos, yPos)
+             ||  this->north_east_east.contains_pt(xPos, yPos)
              ||  this->north_east_north.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZENESW != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZENESW;
                     this->front_->set_pointer(Pointer(SizeNESWPointer{}));
             }
         }
-        else if ((this->title_bar_rect.contains_pt(xPos, yPos)) 
-             ||  (this->enable_resizing_hosted_desktop_ && this->resize_hosted_desktop_box_rect.contains_pt(xPos, yPos)) 
-             ||  (this->minimize_box_rect.contains_pt(xPos, yPos)) 
-             ||  (this->maximize_box_rect.contains_pt(xPos, yPos)) 
+        else if ((this->title_bar_rect.contains_pt(xPos, yPos))
+             ||  (this->enable_resizing_hosted_desktop_ && this->resize_hosted_desktop_box_rect.contains_pt(xPos, yPos))
+             ||  (this->minimize_box_rect.contains_pt(xPos, yPos))
+             ||  (this->maximize_box_rect.contains_pt(xPos, yPos))
              ||  (this->close_box_rect.contains_pt(xPos, yPos))) {
             if (Pointer::POINTER_NORMAL != this->current_mouse_pointer_type) {
                 this->current_mouse_pointer_type = Pointer::POINTER_NORMAL;
