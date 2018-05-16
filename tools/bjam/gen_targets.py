@@ -29,6 +29,10 @@ disable_srcs = (
     'src/utils/log_as_logtest.cpp',
 )
 
+src_deps = dict((
+    ('src/acl/module_manager.hpp', glob.glob('src/acl/module_manager/*.cpp')),
+))
+
 src_requirements = dict((
     ('src/main/rdpheadless.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
     ('src/main/scytale.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
@@ -135,6 +139,11 @@ class File:
         self.have_coverage = False
         self.used = False #
 
+def HFile(d, f):
+    return File(d, d+'/'+f, 'H')
+
+def CFile(d, f):
+    return File(d, d+'/'+f, 'C')
 
 ###
 ### Get files
@@ -154,21 +163,26 @@ def append_file(a, root, path, type):
     path = path.replace('//', '/')
     a.append(File(root, path, type))
 
+def get_type(name):
+    if name[-4:] == '.hpp':
+        return 'H'
+    elif name[-4:] == '.cpp':
+        return 'C'
+    elif name[-2:] == '.h':
+        return 'H'
+    elif name[-2:] == '.c':
+        return 'C'
+    elif name[-3:] == '.hh':
+        return 'H'
+    elif name[-3:] == '.cc':
+        return 'C'
+
 def get_files(a, dirpath):
     for root, dirs, files in os.walk(project_root + '/' + dirpath):
         for name in files:
-            if name[-4:] == '.hpp':
-                append_file(a, root, root+'/'+name, 'H')
-            elif name[-4:] == '.cpp':
-                append_file(a, root, root+'/'+name, 'C')
-            elif name[-2:] == '.h':
-                append_file(a, root, root+'/'+name, 'H')
-            elif name[-2:] == '.c':
-                append_file(a, root, root+'/'+name, 'C')
-            elif name[-3:] == '.hh':
-                append_file(a, root, root+'/'+name, 'H')
-            elif name[-3:] == '.cc':
-                append_file(a, root, root+'/'+name, 'C')
+            type = get_type(name)
+            if type:
+                append_file(a, root, root+'/'+name, type)
 
 def start_with(str, prefix):
     return str[:len(prefix)] == prefix
@@ -216,15 +230,13 @@ tests = [f for f in files_on_tests \
 sources = [f for f in sources if f.path not in disable_srcs]
 
 extra_srcs = (
-    ('src/configs/config.hpp', File(
+    ('src/configs/config.hpp', HFile(
         'projects/redemption_configs/redemption_src',
-        'projects/redemption_configs/redemption_src/configs/config.hpp',
-        'H')
+        'configs/config.hpp')
     ),
-    ('src/configs/config.cpp', File(
+    ('src/configs/config.cpp', CFile(
         'projects/redemption_configs/redemption_src',
-        'projects/redemption_configs/redemption_src/configs/config.cpp',
-        'C')
+        'configs/config.cpp')
     ),
 )
 
@@ -300,12 +312,13 @@ for name, f in all_files.items():
 for name, f in all_files.items():
     deps = []
     for pf in f.user_includes:
-        cpp_name = pf.path[:-4]+'.cpp'
-        if cpp_name in all_files:
-            deps.append(all_files[cpp_name])
-        cpp_name = pf.path[:-4]+'.cc'
-        if cpp_name in all_files:
-            deps.append(all_files[cpp_name])
+        if pf.path in src_deps:
+            for path in src_deps[pf.path]:
+                deps.append(all_files[path])
+        for ext in ('.cpp', '.cc'):
+            cpp_name = pf.path[:-4]+ext
+            if cpp_name in all_files:
+                deps.append(all_files[cpp_name])
     f.direct_source_deps = set(deps)
 
     deps = []

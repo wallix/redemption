@@ -26,11 +26,13 @@
 #include "core/listen.hpp"
 #include "core/session.hpp"
 #include "front/execute_events.hpp"
+#include "main/version.hpp"
+#include "mod/internal/transparent_replay_mod.hpp"
+#include "mod/rdp/rdp.hpp"
+#include "program_options/program_options.hpp"
+#include "transport/out_file_transport.hpp"
 #include "transport/socket_transport.hpp"
 #include "utils/invalid_socket.hpp"
-#include "transport/out_file_transport.hpp"
-#include "mod/internal/transparent_replay_mod.hpp"
-#include "program_options/program_options.hpp"
 
 void run_mod(SessionReactor& session_reactor, mod_api& mod, Front& front);
 

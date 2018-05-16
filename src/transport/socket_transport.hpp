@@ -62,6 +62,7 @@ public:
         dump = 0x100,
     };
 
+    // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport
     SocketTransport( const char * name, unique_fd sck, const char *ip_address, int port
                    , std::chrono::milliseconds recv_timeout
                    , Verbose verbose, std::string * error_message = nullptr);

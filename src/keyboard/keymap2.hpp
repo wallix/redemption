@@ -37,8 +37,9 @@ struct Keymap2
          , KBDFLAGS_RELEASE  = 0x8000
          };
 
-    enum {
-           SCROLLLOCK  = 0x01
+    enum KeyFlags {
+           NoFlag      = 0
+         , SCROLLLOCK  = 0x01
          , NUMLOCK     = 0x02
          , CAPSLOCK    = 0x04
          , FLG_SHIFT   = 0x08
@@ -68,9 +69,7 @@ private:
     int keys_down[256];  // key states 0 up 1 down (0..127 plain keys, 128..255 extended keys)
 
 public:
-    int key_flags; // scroll_lock = 1, num_lock = 2, caps_lock = 4,
-                   // shift = 8, ctrl = 16, Alt = 32,
-                   // Windows = 64, AltGr = 128
+    KeyFlags key_flags;
 
     enum {
         SIZE_KEYBUF = 20
