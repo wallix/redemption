@@ -435,6 +435,36 @@ operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeOnKeepaliveTimeout e)
 { return os << static_cast<unsigned long>(e); }
 
 
+enum class SmartVideoCropping {
+    disable = 0,
+    v1 = 1,
+    v2 = 2,
+};
+
+inline bool is_valid_enum_value(SmartVideoCropping e)
+{ return static_cast<unsigned long>(e) < 3; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, SmartVideoCropping e)
+{ return os << static_cast<unsigned long>(e); }
+
+
+enum class RdpModeConsole {
+    allow = 0,
+    force = 1,
+    forbid = 2,
+};
+
+inline bool is_valid_enum_value(RdpModeConsole e)
+{ return static_cast<unsigned long>(e) < 3; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, RdpModeConsole e)
+{ return os << static_cast<unsigned long>(e); }
+
+
 // Specifies the maximum color resolution (color depth) for client session:
 enum class ColorDepth {
     // 8-bit
@@ -481,28 +511,6 @@ inline bool is_valid_enum_value(OcrVersion e)
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &
 operator << (std::basic_ostream<Ch, Tr> & os, OcrVersion e)
-{ return os << static_cast<unsigned long>(e); }
-
-
-enum class SmartVideoCropping {
-    disable = 0,
-    v1 = 1,
-    v2 = 2,
-};
-
-inline bool is_valid_enum_value(SmartVideoCropping e)
-{
-    auto const i = static_cast<unsigned long>(e);
-    return false
-     || i == 0
-     || i == 1
-     || i == 2
-    ;
-}
-
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, SmartVideoCropping e)
 { return os << static_cast<unsigned long>(e); }
 
 

@@ -45,13 +45,17 @@ void ModuleManager::create_mod_rdp(
 
     auto client_info = client_info_;
 
-    if (ini.get<cfg::context::mode_console>() == "force") {
-        client_info.console_session = true;
-        LOG(LOG_INFO, "Session::mode console : force");
-    }
-    else if (ini.get<cfg::context::mode_console>() == "forbid") {
-        client_info.console_session = false;
-        LOG(LOG_INFO, "Session::mode console : forbid");
+    switch (ini.get<cfg::context::mode_console>()) {
+        case RdpModeConsole::force:
+            client_info.console_session = true;
+            LOG(LOG_INFO, "Session::mode console : force");
+            break;
+        case RdpModeConsole::forbid:
+            client_info.console_session = false;
+            LOG(LOG_INFO, "Session::mode console : forbid");
+            break;
+        case RdpModeConsole::allow:
+            break;
     }
     //else {
     //    // default is "allow", do nothing special

@@ -125,8 +125,7 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::context::keepalive>(true);
     ini.set<cfg::context::message>(cs);
     ini.set<cfg::context::message>(s);
-    ini.set<cfg::context::mode_console>(cs);
-    ini.set<cfg::context::mode_console>(s);
+    ini.set<cfg::context::mode_console>(RdpModeConsole::allow);
     ini.set_acl<cfg::context::module>(1);
     ini.set<cfg::context::movie>(cpath);
     ini.set<cfg::context::movie>(spath);

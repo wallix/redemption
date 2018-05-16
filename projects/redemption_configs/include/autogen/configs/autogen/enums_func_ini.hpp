@@ -366,6 +366,47 @@ inline parse_error parse(SessionProbeOnKeepaliveTimeout & x, spec_type<SessionPr
     return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (3 - 1)) - 1)>());
 }
 
+template<> struct zstr_buffer_traits<SmartVideoCropping> : zstr_buffer_traits<unsigned long> {};
+
+inline array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<SmartVideoCropping> & buf,
+    cfg_s_type<SmartVideoCropping>,
+    SmartVideoCropping x
+) {
+    int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
+    return array_view_const_char(buf.get(), sz);
+}
+
+inline parse_error parse(SmartVideoCropping & x, spec_type<SmartVideoCropping>, array_view_const_char value)
+{
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (3 - 1)) - 1)>());
+}
+
+template<> struct zstr_buffer_traits<RdpModeConsole> : zstr_buffer_traits<void> {};
+
+inline array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<RdpModeConsole> & buf,
+    cfg_s_type<RdpModeConsole>,
+    RdpModeConsole x
+) {
+    (void)buf;    static constexpr array_view_const_char arr[]{
+        cstr_array_view("allow"),
+        cstr_array_view("force"),
+        cstr_array_view("forbid"),
+    };
+    assert(static_cast<unsigned long>(x) < 3);
+    return arr[static_cast<unsigned long>(x)];
+}
+
+inline parse_error parse(RdpModeConsole & x, spec_type<RdpModeConsole>, array_view_const_char value)
+{
+    return parse_enum_str(x, value, {
+        {cstr_array_view("allow"), RdpModeConsole::allow},
+        {cstr_array_view("force"), RdpModeConsole::force},
+        {cstr_array_view("forbid"), RdpModeConsole::forbid},
+    });
+}
+
 template<> struct zstr_buffer_traits<ColorDepth> : zstr_buffer_traits<unsigned long> {};
 
 inline array_view_const_char assign_zbuf_from_cfg(
@@ -403,26 +444,6 @@ inline parse_error parse(OcrVersion & x, spec_type<OcrVersion>, array_view_const
     return parse_enum_list(x, value, {
         OcrVersion::v1,
         OcrVersion::v2,
-    });
-}
-
-template<> struct zstr_buffer_traits<SmartVideoCropping> : zstr_buffer_traits<unsigned long> {};
-
-inline array_view_const_char assign_zbuf_from_cfg(
-    zstr_buffer_from<SmartVideoCropping> & buf,
-    cfg_s_type<SmartVideoCropping>,
-    SmartVideoCropping x
-) {
-    int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
-}
-
-inline parse_error parse(SmartVideoCropping & x, spec_type<SmartVideoCropping>, array_view_const_char value)
-{
-    return parse_enum_list(x, value, {
-        SmartVideoCropping::disable,
-        SmartVideoCropping::v1,
-        SmartVideoCropping::v2,
     });
 }
 

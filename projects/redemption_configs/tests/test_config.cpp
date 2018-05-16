@@ -286,7 +286,7 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::context::end_date_cnx>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::context::end_time>());
 
-    RED_CHECK_EQUAL("allow",                          ini.get<cfg::context::mode_console>());
+    RED_CHECK_EQUAL(RdpModeConsole::allow,            ini.get<cfg::context::mode_console>());
     RED_CHECK_EQUAL(-3600,                            ini.get<cfg::context::timezone>());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::context::real_target_device>());
@@ -2107,9 +2107,9 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
 
     // mode_console
-    ini.get_acl_field(AUTHID_CONTEXT_MODE_CONSOLE).set(cstr_array_view("deny"));
+    ini.get_acl_field(AUTHID_CONTEXT_MODE_CONSOLE).set(cstr_array_view("forbid"));
 
-    RED_CHECK_EQUAL("deny", ini.get<cfg::context::mode_console>());
+    RED_CHECK_EQUAL(RdpModeConsole::forbid, ini.get<cfg::context::mode_console>());
 
 
     // timezone
