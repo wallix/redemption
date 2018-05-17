@@ -781,3 +781,23 @@ RED_AUTO_TEST_CASE(TestMemblt3)
     // uncomment to see result in png file
     //dump_png("./test_memblt3_", gd.impl());
 }
+
+
+RED_AUTO_TEST_CASE(test_BitArray2D)
+{
+    Pointer p(DrawableDefaultPointer{}, false);
+//    auto av     = p.get_24bits_xor_mask();
+    auto avmask = p.get_monochrome_and_mask();
+    
+    Array2D a2d(4, 32, avmask.data());
+    for (auto x : a2d){
+        BitArray ba(32, x);
+        for (auto bit : ba){
+            printf("%s", bit?"1":"0");
+        }
+        printf("\n");
+    }
+}
+
+
+

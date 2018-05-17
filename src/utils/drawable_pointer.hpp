@@ -35,6 +35,59 @@
 
 #pragma once
 
+
+
+class Array2D
+{
+    size_t width_in_bytes;
+    size_t height;
+    const uint8_t * data;
+
+    public:
+    class Iterator
+    {
+        const uint8_t * data;
+        size_t nbbytes;
+        public:
+        Iterator (const uint8_t * data, size_t nbbytes) : data(data), nbbytes(nbbytes) {}
+        bool operator!= (const Iterator & other) const { return this->data != other.data; }
+        const uint8_t * operator* () const { return this->data; }
+        const Iterator & operator++ () { this->data += this->nbbytes; return *this; }
+    };
+    
+    public:
+    Array2D(size_t width_in_bytes, size_t height, const uint8_t * data) :
+    width_in_bytes(width_in_bytes), height(height), data(data)
+    {}
+ 
+    Iterator begin () const { return Iterator(this->data, this->width_in_bytes); }
+    Iterator end () const { return Iterator(&this->data[this->width_in_bytes * this->height], this->width_in_bytes); }
+};
+
+class BitArray
+{
+    size_t width_in_bits;
+    const uint8_t * data;
+
+    public:
+    class Iterator
+    {
+        const uint8_t * data;
+        size_t offset;
+        public:
+        Iterator (const uint8_t * data, size_t offset) : data(data), offset(offset) {}
+        bool operator!= (const Iterator & other) const { return (this->data != other.data) || (this->offset != other.offset); }
+        bool operator* () const { return this->data[this->offset>>3]&(1<<(7-(offset&0x7))); }
+        const Iterator & operator++ () { ++this->offset; return *this; }
+    };
+    
+    BitArray(size_t width_in_bits, const uint8_t * data) : width_in_bits(width_in_bits), data(data)  {}
+ 
+    Iterator begin () const { return Iterator(this->data, 0); }
+    Iterator end () const { return Iterator(this->data, this->width_in_bits); }
+};
+
+
 struct DrawablePointer {
     enum {
           MAX_WIDTH  = 96
@@ -61,6 +114,15 @@ struct DrawablePointer {
         ::memset(this->data, 0, sizeof(this->data));
 
         ContiguousPixels * current_contiguous_pixels  = this->contiguous_pixels;
+
+//        Array2D a2d(::nbbytes(width), height, pointer_mask);
+//        for (auto x : a2d){
+//            BitArray ba(width, x);
+//            for (auto bit : ba){
+//                printf("%s", bit?"1":"0");
+//            }
+//            printf("\n");
+//        }
 
         const unsigned int remainder = (width % 8);
         const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
@@ -104,11 +166,11 @@ struct DrawablePointer {
         uint8_t * current_data = this->data;
         for (size_t count = 0 ; count < this->number_of_contiguous_pixels ; count++) {
             ContiguousPixels & block = this->contiguous_pixels[count];
-            const uint8_t * pixel = pointer_data + block.y * xor_padded_line_length_in_byte + block.x * 3;
+              const uint8_t * pixel = pointer_data + xor_padded_line_length_in_byte * (height - (block.y + 1)) + block.x * 3;
             ::memcpy(current_data, pixel, block.data_size);
+            this->contiguous_pixels[count].data = current_data;
             current_data += block.data_size;
         }
-
         //hexdump_c(pointer_mask, 128);
     }
 
