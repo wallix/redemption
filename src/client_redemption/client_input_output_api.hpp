@@ -162,7 +162,7 @@ public:
 
     CryptoContext     cctx;
 
-    SocketTransport    * socket;
+    Transport    * socket;
     int                  client_sck;
     TimeSystem           timeSystem;
     NullAuthentifier   authentifier;
@@ -289,6 +289,9 @@ public:
     bool                 is_recording;
     bool                 is_replaying;
     bool                 is_loading_replay_mod;
+    bool				 is_full_capturing;
+    bool				 is_full_replaying;
+    std::string 		 full_capture_file_name;
     bool                 connected;
     bool                 is_spanning;
 //
@@ -419,18 +422,21 @@ public:
     , windowsData(this)
     , _accountNB(0)
     , _save_password_account(false)
+    , _last_target_index(0)
     , mod_state(MOD_RDP)
     , is_recording(false)
     , is_replaying(false)
     , is_loading_replay_mod(false)
+    , is_full_capturing(false)
+    , is_full_replaying(false)
     , connected(false)
     , is_spanning(false)
-//     , wab_diag_question(false)
 //     , asked_color(0)
     , current_user_profil(0)
-//     , _recv_disconnect_ultimatum(false)
+    , _recv_disconnect_ultimatum(false)
     , mod_palette(BGRPalette::classic_332())
     , vnc_conf(session_reactor, this)
+    , wab_diag_question(false)
     {
         SSL_load_error_strings();
         SSL_library_init();

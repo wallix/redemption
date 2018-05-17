@@ -36,7 +36,8 @@
 #include "mod/rdp/rdp.hpp"
 #include "mod/vnc/vnc.hpp"
 
-
+#include "transport/recorder_transport.hpp"
+#include "transport/replay_transport.hpp"
 
 #include "client_redemption/client_input_output_api.hpp"
 
@@ -70,7 +71,7 @@ public:
     Font                 _font;
     std::string          _error;
     std::string   error_message;
-    UdevRandom           gen;
+    std::unique_ptr<Random> gen;
     std::array<uint8_t, 28> server_auto_reconnect_packet_ref;
     Inifile ini;
     std::string close_box_extra_message_ref;
@@ -368,7 +369,7 @@ public:
                                                 , *this
                                                 , this->info
                                                 , ini.get_ref<cfg::mod_rdp::redir_info>()
-                                                , this->gen
+                                                , *this->gen
                                                 , this->timeSystem
                                                 , mod_rdp_params
                                                 , this->authentifier
@@ -424,7 +425,7 @@ public:
                                                 , *(this)
                                                 , this->info
                                                 , ini.get_ref<cfg::mod_rdp::redir_info>()
-                                                , this->gen
+                                                , *this->gen
                                                 , this->timeSystem
                                                 , mod_rdp_params
                                                 , this->authentifier
@@ -483,6 +484,15 @@ public:
     }
 
     bool init_socket() {
+    	if (this->is_full_replaying) {
+    		ReplayTransport *transport = new ReplayTransport(user_name.c_str(), full_capture_file_name
+    				, this->target_IP.c_str(), this->port, std::chrono::milliseconds(1000), true
+    				, &this->error_message);
+    		this->socket = transport;
+    		this->client_sck = transport->get_fd();
+    		return true;
+    	}
+
         unique_fd client_sck = ip_connect(this->target_IP.c_str(),
                                           this->port,
                                           3,                //nbTry
@@ -492,8 +502,17 @@ public:
 
         if (this->client_sck > 0) {
             try {
-
-                this->socket = new SocketTransport( this->user_name.c_str()
+            	if (this->is_full_capturing)
+            		this->socket = new RecorderTransport(this->user_name.c_str(), this->full_capture_file_name
+                            , std::move(client_sck)
+                            , this->target_IP.c_str()
+                            , this->port
+                            , std::chrono::milliseconds(1000)
+                            , to_verbose_flags(0)
+                            //, SocketTransport::Verbose::dump
+                            , &this->error_message);
+            	else
+            		this->socket = new SocketTransport( this->user_name.c_str()
                                                 , std::move(client_sck)
                                                 , this->target_IP.c_str()
                                                 , this->port
@@ -532,6 +551,12 @@ public:
     //------------------------
 
     virtual void connect() override {
+
+    	if (this->is_full_capturing || this->is_full_replaying) {
+    		gen.reset(new FixedRandom());
+    	} else {
+    		gen.reset(new UdevRandom());
+    	}
 
         this->clientChannelRemoteAppManager.clear();
         this->cl.clear_channels();

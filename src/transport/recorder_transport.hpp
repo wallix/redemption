@@ -17,7 +17,6 @@
    Copyright (C) Wallix 2013
    Author(s): David Fort
 
-   XXXXXXXXXXXXXX
 */
 
 #pragma once
@@ -33,6 +32,7 @@
  */
 class RecorderTransport : public SocketTransport {
 public:
+	/** @brief type of packet */
 	enum PacketType : uint8_t {
 		RECORD_TYPE_DATA_IN,
 		RECORD_TYPE_DATA_OUT,
