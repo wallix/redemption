@@ -828,7 +828,7 @@ public:
               this->info.bpp
             , is_remoteapp
             , this->cctx
-            , this->gen
+            , *this->gen
             , this->fstat
             , hash_path.c_str()
             , std::chrono::duration<unsigned int, std::ratio<1l, 100l> >{60}

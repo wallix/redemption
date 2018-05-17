@@ -14,34 +14,26 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 Product name: redemption, a FLOSS RDP proxy
-Copyright (C) Wallix 2017
+Copyright (C) Wallix 2018
 Author(s): Jonathan Poelen
 */
 
 #pragma once
 
-#include <memory>
-#include <chrono>
-#include <string>
-#include <new>
-
-#include "utils/executor.hpp"
+#include "core/error.hpp"
+#include "cxx/cxx.hpp"
+#include "cxx/diagnostic.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
-// #include "utils/log.hpp"
-#include "core/error.hpp"
+#include "utils/difftimeval.hpp"
 
+#include <cassert>
+#include <chrono>
+#include <exception>
 #include <functional>
 #include <memory>
-#include <cassert>
-#include <exception>
-#include <chrono>
+#include <type_traits>
 #include <utility>
-#include "cxx/diagnostic.hpp"
-#include "utils/executor.hpp"
-#include "utils/sugar/scope_exit.hpp"
-#include "core/error.hpp"
-
 
 #ifndef NDEBUG
 # define REDEMPTION_DEBUG_ONLY(...) __VA_ARGS__
@@ -51,7 +43,7 @@ Author(s): Jonathan Poelen
 
 class SessionReactor;
 
-namespace jln2
+namespace jln
 {
     using Reactor = SessionReactor;
 
@@ -116,6 +108,114 @@ namespace jln2
         return reinterpret_cast<F const&>(f);
     }
 
+    namespace detail
+    {
+        template<class... Ts>
+        struct tuple;
+
+        template<class Ints, class... Ts>
+        struct tuple_impl;
+
+        template<class T, class... Ts>
+        struct emplace_type
+        {
+            tuple<Ts...> t;
+
+            template<class... Us>
+            auto operator()(Us&&... xs) const
+            {
+                static_assert(0 == sizeof...(Ts));
+                REDEMPTION_DIAGNOSTIC_PUSH
+                REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
+                return emplace_type<T, Us&&...>{{static_cast<Us&&>(xs)...}};
+                REDEMPTION_DIAGNOSTIC_POP
+            }
+        };
+
+    # define FALCON_RETURN_NOEXCEPT(expr)        \
+        noexcept(noexcept(decltype(expr)(expr))) \
+        { return expr; }
+
+        template<size_t, class T>
+        struct tuple_elem
+        {
+            T x;
+
+            template<std::size_t... ints, class... Ts>
+            constexpr tuple_elem(int, tuple_impl<std::integer_sequence<size_t, ints...>, Ts...>& t)
+            noexcept(noexcept(T{static_cast<Ts&&>(static_cast<tuple_elem<ints, Ts>&>(t).x)...}))
+            : x{static_cast<Ts&&>(static_cast<tuple_elem<ints, Ts>&>(t).x)...}
+            {}
+
+            template<class... Ts>
+            constexpr tuple_elem(emplace_type<T, Ts...> e)
+            noexcept(noexcept(tuple_elem(1, e.t)))
+            : tuple_elem(1, e.t)
+            {}
+
+            template<class U>
+            constexpr tuple_elem(U&& x)
+            noexcept(noexcept(T(static_cast<U&&>(x))))
+            : x(static_cast<U&&>(x))
+            {}
+        };
+
+        template<std::size_t... ints, class... Ts>
+        struct tuple_impl<std::integer_sequence<size_t, ints...>, Ts...>
+        : tuple_elem<ints, Ts>...
+        {
+            template<class F, class... Args>
+            decltype(auto) invoke(F && f, Args&&... args)
+            noexcept(noexcept(f(
+                static_cast<Args&&>(args)...,
+                static_cast<tuple_elem<ints, Ts>*>(nullptr)->x...)))
+            {
+                return f(
+                    static_cast<Args&&>(args)...,
+                    static_cast<tuple_elem<ints, Ts>&>(*this).x...
+                );
+            }
+        };
+
+        template<class... Ts>
+        struct tuple : tuple_impl<std::make_index_sequence<sizeof...(Ts)>, Ts...>
+        {};
+
+        template<std::size_t i, class T>
+        T& get(tuple_elem<i, T>& e) noexcept
+        {
+            return e.x;
+        }
+
+        template<std::size_t i, class T>
+        T&& get(tuple_elem<i, T>&& e) noexcept
+        {
+            return static_cast<T&&>(e.x);
+        }
+
+        template<std::size_t i, class T>
+        T const& get(tuple_elem<i, T> const& e) noexcept
+        {
+            return e.x;
+        }
+
+        template<class T> struct tuple_size;
+        template<class... Ts> struct tuple_size<tuple<Ts...>>
+        : std::integral_constant<std::size_t, sizeof...(Ts)>
+        {};
+
+        template<class T> struct decay_and_strip { using type = T; };
+        template<class T> struct decay_and_strip<T&> : decay_and_strip<T>{};
+        template<class T> struct decay_and_strip<T const> : decay_and_strip<T>{};
+        template<class T> struct decay_and_strip<std::reference_wrapper<T>> { using type = T&; };
+        template<class T, class... Ts> struct decay_and_strip<emplace_type<T, Ts...>> { using type = T; };
+    }
+
+    template<class T>
+    using decay_and_strip_t = typename detail::decay_and_strip<T>::type;
+
+    template<class T>
+    constexpr auto emplace = detail::emplace_type<T>{};
 
     namespace detail
     {
@@ -282,9 +382,10 @@ namespace jln2
             template<class... Ts>
             explicit ActionExecutorBuilder_Concept(Ts&&...) noexcept;
 
-            template<class... Ts> ActionSharedPtr<Ts...> on_action(Func);
-
+            ActionExecutorBuilder_Concept on_action(Func);
             ActionExecutorBuilder_Concept set_notify_delete(Func);
+
+            template<class... Ts> operator ActionSharedPtr<Ts...> ();
         };
 
         template<class Top, class Group>
@@ -313,7 +414,6 @@ namespace jln2
     #endif
     }
 
-    using jln::detail::decay_and_strip_t;
 
     enum class NextMode { ChildToNext, CreateContinuation, };
 
@@ -619,7 +719,7 @@ namespace jln2
     };
 
     template<class... Ts>
-    using GroupExecutorDefault = GroupExecutorWithValues<jln::detail::tuple<>, Ts...>;
+    using GroupExecutorDefault = GroupExecutorWithValues<detail::tuple<>, Ts...>;
 
 
     template<class... Ts>
@@ -842,20 +942,65 @@ namespace jln2
     template<class F>
     auto one_shot(F f)
     {
-        return [f](auto /*ctx*/, auto&&... xs) mutable {
+        return [f](auto ctx, auto&&... xs) mutable {
             f(static_cast<decltype(xs)&&>(xs)...);
-            return R::Terminate;
+            return ctx.terminate();
         };
     }
 
     template<class F>
     auto always_ready(F f)
     {
-        return [f](auto /*ctx*/, auto&&... xs) mutable {
+        return [f](auto ctx, auto&&... xs) mutable {
             f(static_cast<decltype(xs)&&>(xs)...);
-            return R::Ready;
+            return ctx.ready();
         };
     }
+
+    namespace detail
+    {
+        template<auto f, class T, class... Args>
+        void invoke(T&& o, Args&&... args)
+        {
+            if constexpr (std::is_member_function_pointer<decltype(f)>::value) {
+                if constexpr (std::is_pointer<std::remove_reference_t<decltype(o)>>::value) {
+                    assert(o);
+                    (o->*f)(static_cast<Args&&>(args)...);
+                }
+                else {
+                    (o.*f)(static_cast<Args&&>(args)...);
+                }
+            }
+            else {
+                f(static_cast<T&&>(o), static_cast<Args&&>(args)...);
+            }
+        }
+
+        template<auto f>
+        void invoke()
+        {
+            f();
+        }
+    }
+
+    template<auto f>
+    auto one_shot() noexcept
+    {
+        return [](auto ctx, auto&&... xs){
+            detail::invoke<f>(static_cast<decltype(xs)&&>(xs)...);
+            return ctx.ready();
+        };
+    }
+
+    template<auto f>
+    auto always_ready() noexcept
+    {
+        return [](auto ctx, auto&&... xs){
+            detail::invoke<f>(static_cast<decltype(xs)&&>(xs)...);
+            return ctx.terminate();
+        };
+    }
+
 
     namespace detail
     {
@@ -1684,7 +1829,7 @@ namespace jln2
                         assert(!self->is_deleted);
                         REDEMPTION_DEBUG_ONLY(self->is_deleted = true;)
                         self->release_shared_ptr();
-                        jln::make_lambda<F>()(static_cast<NotifyDeleteType>(cat), self->u.value);
+                        make_lambda<F>()(static_cast<NotifyDeleteType>(cat), self->u.value);
                         self->u.value.~T();
                         break;
                     case FreeCat::Self:
@@ -1825,7 +1970,7 @@ namespace jln2
         template<class Tuple, class... Ts, class F>
         auto create_on_timeout(GroupExecutorWithValues<Tuple, Ts...>& g, F&& f)
         {
-            if constexpr (std::is_same<Tuple, jln::detail::tuple<>>::value) {
+            if constexpr (std::is_same<Tuple, detail::tuple<>>::value) {
                 (void)g;
                 return [f](GroupTimerContext<Ts...> ctx, Ts... xs) mutable /*-> R*/ {
                     return f(TopTimerContext<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
@@ -1855,9 +2000,9 @@ namespace jln2
 
 
 #ifdef IN_IDE_PARSER
-# define REDEMPTION_JLN2_CONCEPT(C) C
+# define REDEMPTION_JLN_CONCEPT(C) C
 #else
-# define REDEMPTION_JLN2_CONCEPT(C) auto
+# define REDEMPTION_JLN_CONCEPT(C) auto
 #endif
 
     template<class... Ts>
@@ -1867,7 +2012,7 @@ namespace jln2
         using Group = GroupExecutor<Ts...>;
         using TopData = SharedData<Top>;
 
-        using GroupDeleter = ::jln2::GroupDeleter<Ts...>;
+        using GroupDeleter = GroupDeleter<Ts...>;
 
     public:
         using Ptr = TopSharedPtr<Ts...>;
@@ -1914,10 +2059,10 @@ namespace jln2
 
     public:
         template<class... Us>
-        REDEMPTION_JLN2_CONCEPT(detail::TopExecutorBuilder_Concept)
+        REDEMPTION_JLN_CONCEPT(detail::TopExecutorBuilder_Concept)
         create_top_executor(Reactor& reactor, int fd, Us&&... xs)
         {
-            using Tuple = jln::detail::tuple<decay_and_strip_t<Us>...>;
+            using Tuple = detail::tuple<decay_and_strip_t<Us>...>;
             using Group = GroupExecutorWithValues<Tuple, Ts...>;
             using InitCtx = InitContext<Tuple>;
             return detail::TopExecutorBuilder<InitCtx>{
@@ -2041,7 +2186,7 @@ namespace jln2
     {
         using Timer = TimerExecutor<Ts...>;
 
-        using TimerDeleter = ::jln2::TimerDeleter<Ts...>;
+        using TimerDeleter = TimerDeleter<Ts...>;
 
     public:
         using Ptr = TimerSharedPtr<Ts...>;
@@ -2062,7 +2207,7 @@ namespace jln2
             void set_notify_delete(F) noexcept
             {
                 this->data_ptr->set_notify_delete([](NotifyDeleteType t, auto& act) noexcept{
-                    act.invoke(jln::make_lambda<F>(), t);
+                    act.invoke(make_lambda<F>(), t);
                 });
             }
 
@@ -2078,10 +2223,10 @@ namespace jln2
 
     public:
         template<class... Us>
-        REDEMPTION_JLN2_CONCEPT(detail::TimerExecutorBuilder_Concept)
+        REDEMPTION_JLN_CONCEPT(detail::TimerExecutorBuilder_Concept)
         create_timer_executor(Reactor& reactor, Us&&... xs)
         {
-            using Tuple = jln::detail::tuple<decay_and_strip_t<Us>...>;
+            using Tuple = detail::tuple<decay_and_strip_t<Us>...>;
             using Timer = TimerExecutorWithValues<Tuple, Ts...>;
             using TimerData = SharedData<Timer>;
             using InitCtx = InitContext<TimerData, Tuple>;
@@ -2178,7 +2323,7 @@ namespace jln2
     {
         using Action = ActionExecutor<Ts...>;
 
-        using ActionDeleter = ::jln2::ActionDeleter<Ts...>;
+        using ActionDeleter = ActionDeleter<Ts...>;
 
     public:
         using Ptr = ActionSharedPtr<Ts...>;
@@ -2199,7 +2344,7 @@ namespace jln2
             void set_notify_delete(F) noexcept
             {
                 this->data_ptr->set_notify_delete([](NotifyDeleteType t, auto& act) noexcept{
-                    act.invoke(jln::make_lambda<F>(), t);
+                    act.invoke(make_lambda<F>(), t);
                 });
             }
 
@@ -2213,10 +2358,10 @@ namespace jln2
 
     public:
         template<class... Us>
-        REDEMPTION_JLN2_CONCEPT(detail::ActionExecutorBuilder_Concept)
+        REDEMPTION_JLN_CONCEPT(detail::ActionExecutorBuilder_Concept)
         create_action_executor(Reactor& /*reactor*/, Us&&... xs)
         {
-            using Tuple = jln::detail::tuple<decay_and_strip_t<Us>...>;
+            using Tuple = detail::tuple<decay_and_strip_t<Us>...>;
             using Action = ActionExecutorWithValues<Tuple, Ts...>;
             using ActionData = SharedData<Action>;
             using InitCtx = InitContext<ActionData, Tuple>;
@@ -2356,12 +2501,12 @@ namespace jln2
 
     template<class... Ts>
     template<class... Us>
-    REDEMPTION_JLN2_CONCEPT(detail::GroupExecutorBuilder_Concept)
+    REDEMPTION_JLN_CONCEPT(detail::GroupExecutorBuilder_Concept)
     GroupContext<Ts...>::create_sub_executor(Us&&... xs)
     {
         using Top = TopExecutor<Ts...>;
         using Group = GroupExecutorWithValues<
-            jln::detail::tuple<decay_and_strip_t<Us>...>, Ts...>;
+            detail::tuple<decay_and_strip_t<Us>...>, Ts...>;
         return detail::GroupExecutorBuilder<Top, Group>{
             this->top, std::make_unique<Group>(static_cast<Us&&>(xs)...)};
     }
@@ -2413,7 +2558,7 @@ namespace jln2
         auto g = std::unique_ptr<GroupExecutorDefault<Ts...>, GroupDeleter<Ts...>>(
             new GroupExecutorDefault<Ts...>);
         // TODO same in GroupExecutorWithValues
-        if constexpr (std::is_same<Tuple, jln::detail::tuple<>>::value) {
+        if constexpr (std::is_same<Tuple, detail::tuple<>>::value) {
             g->on_action(static_cast<F&&>(f));
         }
         else {
@@ -2673,76 +2818,76 @@ enum BackEvent_t {
 
 struct SessionReactor
 {
-    using TimerContainer = jln2::TimerContainer<>;
+    using TimerContainer = jln::TimerContainer<>;
     using TimerPtr = TimerContainer::Ptr;
 
     template<class... Args>
-    REDEMPTION_JLN2_CONCEPT(jln2::detail::TimerExecutorBuilder_Concept)
+    REDEMPTION_JLN_CONCEPT(jln::detail::TimerExecutorBuilder_Concept)
     create_timer(Args&&... args)
     {
         return this->timer_events_.create_timer_executor(*this, static_cast<Args&&>(args)...);
     }
 
 
-    using GraphicTimerContainer = jln2::TimerContainer<gdi::GraphicApi&>;
+    using GraphicTimerContainer = jln::TimerContainer<gdi::GraphicApi&>;
     using GraphicTimerPtr = GraphicTimerContainer::Ptr;
 
     template<class... Args>
-    REDEMPTION_JLN2_CONCEPT(jln2::detail::TimerExecutorBuilder_Concept)
+    REDEMPTION_JLN_CONCEPT(jln::detail::TimerExecutorBuilder_Concept)
     create_graphic_timer(Args&&... args)
     {
         return this->graphic_timer_events_.create_timer_executor(*this, static_cast<Args&&>(args)...);
     }
 
 
-    using CallbackEventContainer = jln2::ActionContainer<Callback&>;
+    using CallbackEventContainer = jln::ActionContainer<Callback&>;
     using CallbackEventPtr = CallbackEventContainer::Ptr;
 
     template<class... Args>
-    REDEMPTION_JLN2_CONCEPT(jln2::detail::ActionExecutorBuilder_Concept)
+    REDEMPTION_JLN_CONCEPT(jln::detail::ActionExecutorBuilder_Concept)
     create_callback_event(Args&&... args)
     {
         return this->front_events_.create_action_executor(*this, static_cast<Args&&>(args)...);
     }
 
 
-    using GraphicEventContainer = jln2::ActionContainer<gdi::GraphicApi&>;
+    using GraphicEventContainer = jln::ActionContainer<gdi::GraphicApi&>;
     using GraphicEventPtr = GraphicEventContainer::Ptr;
 
     template<class... Args>
-    REDEMPTION_JLN2_CONCEPT(jln2::detail::ActionExecutorBuilder_Concept)
+    REDEMPTION_JLN_CONCEPT(jln::detail::ActionExecutorBuilder_Concept)
     create_graphic_event(Args&&... args)
     {
         return this->graphic_events_.create_action_executor(*this, static_cast<Args&&>(args)...);
     }
 
-    using SesmanEventContainer = jln2::ActionContainer<Inifile&>;
+    using SesmanEventContainer = jln::ActionContainer<Inifile&>;
     using SesmanEventPtr = SesmanEventContainer::Ptr;
 
     template<class... Args>
-    REDEMPTION_JLN2_CONCEPT(jln2::detail::ActionExecutorBuilder_Concept)
+    REDEMPTION_JLN_CONCEPT(jln::detail::ActionExecutorBuilder_Concept)
     create_sesman_event(Args&&... args)
     {
         return this->sesman_events_.create_action_executor(*this, static_cast<Args&&>(args)...);
     }
 
 
-    using TopFdContainer = jln2::TopContainer<>;
+    using TopFdContainer = jln::TopContainer<>;
     using TopFdPtr = TopFdContainer::Ptr;
 
     template<class... Args>
-    REDEMPTION_JLN2_CONCEPT(jln2::detail::TopExecutorBuilder_Concept)
+    REDEMPTION_JLN_CONCEPT(jln::detail::TopExecutorBuilder_Concept)
     create_fd_event(int fd, Args&&... args)
     {
         return this->fd_events_.create_top_executor(*this, fd, static_cast<Args&&>(args)...);
     }
 
 
-    using GraphicFdContainer = jln2::TopContainer<gdi::GraphicApi&>;
+    using GraphicFdContainer = jln::TopContainer<gdi::GraphicApi&>;
     using GraphicFdPtr = GraphicFdContainer::Ptr;
 
     template<class... Args>
-    REDEMPTION_JLN2_CONCEPT(jln2::detail::TopExecutorBuilder_Concept)
+    REDEMPTION_JLN_CONCEPT(jln::detail::TopExecutorBuilder_Concept)
     create_graphic_fd_event(int fd, Args&&... args)
     {
         return this->graphic_fd_events_.create_top_executor(*this, fd, static_cast<Args&&>(args)...);
@@ -2912,7 +3057,7 @@ struct SessionReactor
     }
 };
 
-namespace jln2
+namespace jln
 {
     template<class... Ts>
     void TopExecutor<Ts...>::update_next_time() noexcept

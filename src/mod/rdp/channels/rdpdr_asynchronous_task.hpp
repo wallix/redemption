@@ -63,8 +63,8 @@ namespace detail
 {
     inline auto create_notify_delete_task() noexcept
     {
-        return [](jln2::NotifyDeleteType d, auto& self, AsynchronousTask::DeleterFunction& f){
-            if (d == jln2::NotifyDeleteType::DeleteByAction) {
+        return [](jln::NotifyDeleteType d, auto& self, AsynchronousTask::DeleterFunction& f){
+            if (d == jln::NotifyDeleteType::DeleteByAction) {
                 f(self);
             }
         };
@@ -122,7 +122,7 @@ public:
             f(self); // detroy this
             return r;
         })
-        .on_exit([](auto /*ctx*/, jln2::ExitR er, RdpdrDriveReadTask&, DeleterFunction&) mutable {
+        .on_exit([](auto /*ctx*/, jln::ExitR er, RdpdrDriveReadTask&, DeleterFunction&) mutable {
             return er.to_result();
         })
         .set_timeout(std::chrono::milliseconds(1000))
