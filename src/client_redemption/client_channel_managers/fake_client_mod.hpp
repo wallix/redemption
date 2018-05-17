@@ -25,6 +25,7 @@
 #include "client_redemption/client_input_output_api.hpp"
 
 #include "core/RDP/clipboard.hpp"
+#include "utils/sugar/byte.hpp"
 
 
 class FakeRDPChannelsMod : public mod_api
@@ -230,15 +231,13 @@ public:
     }
 
     // TODO unique_ptr& <- bad idea
-    erref::NTSTATUS read_data(const std::string & file_to_tread,
-                              int file_size,
-                              int offset,
-                              std::unique_ptr<uint8_t[]> & ReadData,
-                              bool log_erro_on) override {
+    erref::NTSTATUS read_data(
+        std::string const& file_to_tread, int offset, byte_array data,
+        bool log_erro_on
+    ) override {
         (void)file_to_tread;
-        (void)file_size;
         (void)offset;
-        (void)ReadData;
+        (void)data;
         (void)log_erro_on;
 
         return erref::NTSTATUS::STATUS_SUCCESS;

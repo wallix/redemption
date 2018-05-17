@@ -1550,11 +1550,10 @@ public:
 
     virtual FileStatvfs get_file_statvfs(const char * file_to_request) = 0;
 
-    virtual erref::NTSTATUS read_data(const  std::string & file_to_tread,
-                                        int file_size,
-                                        int offset,
-                                        std::unique_ptr<uint8_t[]> & ReadData,
-                                        bool log_erro_on) = 0;
+    // TODO `log_error_on` is suspecious
+    virtual erref::NTSTATUS read_data(
+        std::string const& file_to_tread, int offset, byte_array data,
+        bool log_error_on) = 0;
 
     virtual bool set_elem_from_dir(std::vector<std::string> & elem_list, std::string & str_dir_path) = 0;
 

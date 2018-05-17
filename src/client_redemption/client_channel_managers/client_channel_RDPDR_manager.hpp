@@ -730,15 +730,13 @@ public:
                                 rdpdr::DeviceReadRequest drr;
                                 drr.receive(chunk);
 
-                                int file_size(drr.Length());
-                                int offset(drr.Offset());
-                                std::unique_ptr<uint8_t[]> ReadData = std::make_unique<uint8_t[]>(file_size+offset);
+                                uint32_t file_size{drr.Length()};
+                                uint64_t offset{drr.Offset()};
+                                std::unique_ptr<uint8_t[]> ReadData = std::make_unique<uint8_t[]>(file_size);
                                 std::string file_to_tread = this->fileSystemData.paths.at(id);
 
-                                deviceIOResponse.set_IoStatus(this->impl_io_disk->read_data(file_to_tread,
-                                                                                        file_size,
-                                                                                        offset,
-                                                                                        ReadData, true));
+                                deviceIOResponse.set_IoStatus(this->impl_io_disk->read_data(
+                                    file_to_tread, offset, {ReadData.get(), file_size}, true));
 
                                 deviceIOResponse.emit(out_stream);
                                 rdpdr::DeviceReadResponse deviceReadResponse(file_size);
@@ -748,7 +746,7 @@ public:
                                                                     , 20 + file_size
                                                                     , out_stream
                                                                     , out_stream.get_capacity() - 20
-                                                                    , ReadData.get() + offset
+                                                                    , ReadData.get()
                                                                     , file_size
                                                                     , 0);
                                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
