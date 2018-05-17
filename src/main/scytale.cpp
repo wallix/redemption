@@ -117,7 +117,7 @@ struct CryptoContextWrapper
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
         bool with_encryption, bool with_checksum,
         bool old_encryption_scheme, bool one_shot_encryption_scheme,
-        char const * filename_derivatator)
+        char const * filename_derivator)
     {
         cctx.set_get_hmac_key_cb(hmac_fn);
         cctx.set_get_trace_key_cb(trace_fn);
@@ -131,7 +131,7 @@ struct CryptoContextWrapper
         cctx.one_shot_encryption_scheme = one_shot_encryption_scheme;
 
         size_t base_len = 0;
-        char const * base = basename_len(filename_derivatator, base_len);
+        char const * base = basename_len(filename_derivator, base_len);
         cctx.set_master_derivator({base, base_len});
     }
 };
@@ -178,11 +178,11 @@ struct RedCryptoWriterHandle
         bool with_encryption, bool with_checksum,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
         int old_encryption_scheme , int one_shot_encryption_scheme,
-        char const * filename_derivatator)
+        char const * filename_derivator)
     : random_wrapper(random_type)
     , cctxw(hmac_fn, trace_fn, with_encryption, with_checksum,
             old_encryption_scheme, one_shot_encryption_scheme,
-            filename_derivatator)
+            filename_derivator)
     , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, fstat)
     {
         memset(this->qhashhex, '0', sizeof(this->qhashhex)-1);
@@ -242,11 +242,11 @@ struct RedCryptoReaderHandle
         InCryptoTransport::EncryptionMode encryption,
         get_hmac_key_prototype * hmac_fn, get_trace_key_prototype * trace_fn,
         int old_encryption_scheme, int one_shot_encryption_scheme,
-        char const * filename_derivatator)
-    : cctxw(hmac_fn, trace_fn, 
+        char const * filename_derivator)
+    : cctxw(hmac_fn, trace_fn,
             false /* unused for reading */, false /* unused for reading */,
             old_encryption_scheme, one_shot_encryption_scheme,
-            filename_derivatator)
+            filename_derivator)
     , in_crypto_transport(cctxw.cctx, encryption, this->fstat)
     {
         memset(this->qhashhex, '0', sizeof(this->qhashhex)-1);
@@ -278,7 +278,7 @@ namespace
         }
         *phex = '\0';
     }
-    
+
     inline void hashex_to_hash(HashHexArray const & hashhex, HashArray hash) noexcept {
         // Undefined Behavior if hashhex is not a valid input hex key
         static_assert(sizeof(HashArray) * 2 + 1 == sizeof(HashHexArray), "");
