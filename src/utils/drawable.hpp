@@ -1697,60 +1697,38 @@ public:
         memcpy(this->impl().row_data(rownum), data, this->rowsize());
     }
 
-    void trace_mouse(const DrawablePointer * current_pointer, const int x, const int y, uint8_t * save_mouse) {
-        uint8_t * psave = save_mouse;
-        const uint8_t * data_end = this->impl().last_pixel();
-
+    void trace_mouse(const DrawablePointer * current_pointer, const int x, const int y, uint8_t * psave) {
         for (DrawablePointer::ContiguousPixels const & contiguous_pixels : current_pointer->contiguous_pixels_view()) {
-            uint8_t  * pixel_start = this->impl().first_pixel(contiguous_pixels.x + x, contiguous_pixels.y + y);
-            unsigned   lg          = contiguous_pixels.data_size;
-            if (pixel_start + lg <= this->impl().first_pixel()) {
-                continue;
+            uint8_t * pixel_begin = this->impl().first_pixel(contiguous_pixels.x + x, contiguous_pixels.y + y);
+            uint8_t * pixel_end = pixel_begin + contiguous_pixels.data_size;
+            uint8_t * line_begin = this->impl().row_data(contiguous_pixels.y+y);
+            uint8_t * line_end = line_begin + this->impl().rowsize();
+            if (pixel_end > line_end) {
+                pixel_end = line_end;
             }
-
-            int offset = 0;
-            if (pixel_start < this->impl().first_pixel()) {
-                offset = this->data() - pixel_start;
-                lg -= offset;
-                pixel_start = this->impl().first_pixel();
+            size_t offset = (pixel_begin < line_begin) ? line_begin - pixel_begin : 0;
+            if (pixel_end > pixel_begin+offset){
+                memcpy(psave+offset, pixel_begin+offset, pixel_end-pixel_begin-offset);
+                memcpy(pixel_begin + offset, contiguous_pixels.data + offset, pixel_end-pixel_begin-offset);
             }
-            if (pixel_start >= data_end) {
-                break;
-            }
-            if (pixel_start + lg >= data_end) {
-                lg = data_end - pixel_start;
-            }
-            memcpy(psave, pixel_start, lg);
-            memcpy(pixel_start, contiguous_pixels.data + offset, lg);
-            psave += lg;
+            psave += contiguous_pixels.data_size;
         }
     }
 
-    void clear_mouse(const DrawablePointer * current_pointer, const int x, const int y, uint8_t * save_mouse) {
-        uint8_t * psave = save_mouse;
-        const uint8_t * data_end = this->impl().last_pixel();
-
+    void clear_mouse(const DrawablePointer * current_pointer, const int x, const int y, uint8_t * psave) {
         for (DrawablePointer::ContiguousPixels const & contiguous_pixels : current_pointer->contiguous_pixels_view()) {
-            uint8_t  * pixel_start = this->impl().first_pixel(contiguous_pixels.x + x, contiguous_pixels.y + y);
-            unsigned   lg          = contiguous_pixels.data_size;
-            if (pixel_start + lg <= this->impl().first_pixel()) {
-                continue;
+            uint8_t * pixel_begin = this->impl().first_pixel(contiguous_pixels.x + x, contiguous_pixels.y + y);
+            uint8_t * pixel_end = pixel_begin + contiguous_pixels.data_size;
+            uint8_t * line_begin = this->impl().row_data(contiguous_pixels.y+y);
+            uint8_t * line_end = line_begin + this->impl().rowsize();
+            if (pixel_end > line_end) {
+                pixel_end = line_end;
             }
-
-            int offset = 0;
-            if (pixel_start < this->impl().first_pixel()) {
-                offset = this->data() - pixel_start;
-                lg -= offset;
-                pixel_start = this->impl().first_pixel();
+            size_t offset = (pixel_begin < line_begin) ? line_begin - pixel_begin : 0;
+            if (pixel_end > pixel_begin+offset){
+                memcpy(pixel_begin+offset, psave+offset, pixel_end-pixel_begin-offset);
             }
-            if (pixel_start >= data_end) {
-                break;
-            }
-            if (pixel_start + lg >= data_end) {
-                lg = data_end - pixel_start;
-            }
-            memcpy(pixel_start, psave, lg);
-            psave += lg;
+            psave += contiguous_pixels.data_size;
         }
     }
 

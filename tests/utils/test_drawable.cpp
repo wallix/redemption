@@ -296,16 +296,18 @@ RED_AUTO_TEST_CASE(TestAddMouse)
     gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
     gd.trace_mouse(&current_pointer, 100, 100, save_mouse);
 
-    RED_CHECK_SIG(gd, "\x75\xc6\xe6\x3b\xd3\x22\x88\x14\x27\x03\xf3\x3e\x3c\x90\x5f\xac\xc1\x5c\x61\xa0");
-
     // uncomment to see result in png file
 //    dump_png24("./test_mouse_000_.png", gd, true);
 
+    RED_CHECK_SIG(gd, "\x75\xc6\xe6\x3b\xd3\x22\x88\x14\x27\x03\xf3\x3e\x3c\x90\x5f\xac\xc1\x5c\x61\xa0");
+
+
     gd.clear_mouse(&current_pointer, 100, 100, save_mouse);
+    // uncomment to see result in png file
+//    dump_png24("./test_mouse_001_.png", gd, true);
+
     RED_CHECK_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
 
-    // uncomment to see result in png file
-    //dump_png24("/tmp/test_mouse_001_", gd, true);
 }
 
 
@@ -326,19 +328,19 @@ RED_AUTO_TEST_CASE(TestAddMouse2)
     DrawablePointer current_pointer;
     current_pointer.initialize(32, 32, av.data(), avmask.data());
     
-    gd.opaquerect(screen_rect, gd.u32bgr_to_color(BLACK)); // BLACK
+    gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
 
     gd.trace_mouse(&current_pointer, 638, 470, save_mouse);
-    RED_CHECK_SIG(gd, "\xd1\x1b\xe6\x6b\x0a\x66\x87\xd2\x06\x07\x5a\x52\x90\x8a\x37\xc7\x8c\x46\x46\x4b");
-
     // uncomment to see result in png file
-    //dump_png("test_mouse2_visible_", gd.impl());
+//    dump_png24("test_mouse2_visible_.png", gd, true);
 
+    RED_CHECK_SIG(gd, "\x0e\x3a\x0a\x4d\x8d\x14\x7b\xc6\x5e\xf8\xd6\x39\xb3\x15\x24\xac\x83\x62\x93\x4c");
+
+    
     gd.clear_mouse(&current_pointer, 638, 470, save_mouse);
-    RED_CHECK_SIG(gd, "\xf9\x71\xf3\x63\x57\xcc\x45\x41\x40\x90\xce\xce\xce\x55\xa9\x1e\xe1\x9a\xab\x29");
-
     // uncomment to see result in png file
-    //dump_png("test_mouse2_clear_", gd.impl());
+//    dump_png24("test_mouse2_clear_.png", gd, true);
+    RED_CHECK_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
 }
 
 RED_AUTO_TEST_CASE(TestAddMouse3)
@@ -358,11 +360,11 @@ RED_AUTO_TEST_CASE(TestAddMouse3)
 
     gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
     gd.trace_mouse(&current_pointer, -8, -8, save_mouse);
-    
-    RED_CHECK_SIG(gd, "\xec\x2b\xf0\xb0\xe0\x8a\x60\x64\xba\x8d\x2d\xbb\x33\xc7\x58\xd0\x4b\x19\x21\x3f");
-
     // uncomment to see result in png file
-    //dump_png("test_mouse3_visible_", gd.impl());
+//    dump_png24("test_mouse3_visible_.png", gd, true);
+    
+    RED_CHECK_SIG(gd, "\xcf\x4e\x83\x7f\xbe\x20\x0e\xe4\x5d\x08\x51\x91\xf5\x23\x8b\x83\xb5\xd4\x73\xff");
+
 
     gd.clear_mouse(&current_pointer, -8, -8, save_mouse);
     RED_CHECK_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
