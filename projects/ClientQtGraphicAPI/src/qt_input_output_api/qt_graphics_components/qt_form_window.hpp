@@ -1016,7 +1016,6 @@ public:
         QPoint points = this->mapToGlobal({0, 0});
         this->controllers->client->windowsData.form_x = points.x()-1;
         this->controllers->client->windowsData.form_y = points.y()-39;
-        LOG(LOG_INFO, "to write windowsData.form_x=%d, windowsData.form_y=%d", this->controllers->client->windowsData.form_x, this->controllers->client->windowsData.form_y);
         this->controllers->client->writeWindowsConf();
         this->is_closing = true;
 

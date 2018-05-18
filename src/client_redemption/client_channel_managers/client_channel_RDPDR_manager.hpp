@@ -115,7 +115,7 @@ class ClientChannelRDPDRManager {
 
     ClientIODiskAPI * impl_io_disk;
 
-
+public:
     struct FileSystemData {
 
         struct DeviceData {
@@ -148,7 +148,7 @@ class ClientChannelRDPDRManager {
 
     } fileSystemData;
 
-public:
+
 
     ClientChannelRDPDRManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientIODiskAPI * impl_io_disk)
       : verbose(verbose)
@@ -216,14 +216,17 @@ public:
             return;
         }
 
-        uint16_t component = chunk.in_uint16_le();
-        uint16_t packetId  = chunk.in_uint16_le();
+//         uint16_t component = chunk.in_uint16_le();
+//         uint16_t packetId  = chunk.in_uint16_le();
 
-        switch (component) {
+        rdpdr::SharedHeader header;
+        header.receive(chunk);
+
+        switch (header.component) {
 
             case rdpdr::Component::RDPDR_CTYP_CORE:
 
-                switch (packetId) {
+                switch (header.packet_id) {
                     case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
                         {
                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -1270,7 +1273,7 @@ public:
 
                         } break;
 
-                    default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT RDPDR_CTYP_CORE unknow packetId = %x",       packetId);
+                    default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT RDPDR_CTYP_CORE unknow packetId = %x",       header.packet_id);
                         break;
                 }
                         break;
@@ -1282,7 +1285,7 @@ public:
                 //hexdump_c(chunk_series.get_data(), chunk_size);
                 chunk.in_skip_bytes(4);
 
-                switch (packetId) {
+                switch (header.packet_id) {
                     case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
                     {
                         if (bool(this->verbose & RDPVerbose::printer)) {
@@ -1390,13 +1393,13 @@ public:
                         break;
 
                     default :
-                        LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: DEFAULT PRINTER unknow packetId = %x", packetId);
+                        LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: DEFAULT PRINTER unknow packetId = %x", header.packet_id);
                         break;
                 }
             }
                 break;
 
-            default: LOG(LOG_WARNING, "SERVER >> RDPDR: DEFAULT RDPDR unknow component = %x", component);
+            default: LOG(LOG_WARNING, "SERVER >> RDPDR: DEFAULT RDPDR unknow component = %x", header.component);
                 break;
         }
         }

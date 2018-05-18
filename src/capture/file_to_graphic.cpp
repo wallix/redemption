@@ -725,8 +725,6 @@ void FileToGraphic::interpret_order()
             LOG(LOG_INFO, "POINTER");
         }
 
-        LOG(LOG_INFO, "POINTER2 !!!!!!!!!!!!!!!!!!!!!!!!");
-
         this->mouse_x         = this->stream.in_uint16_le();
         this->mouse_y         = this->stream.in_uint16_le();
         uint8_t cache_idx     = this->stream.in_uint8();
@@ -739,7 +737,7 @@ void FileToGraphic::interpret_order()
             for (gdi::GraphicApi * gd : this->graphic_consumers){
                 gd->set_pointer(cursor);
             }
-            
+
             this->ptr_cache.add_pointer_static(cursor, cache_idx);
             for (gdi::GraphicApi * gd : this->graphic_consumers){
                 gd->set_pointer(cursor);
@@ -763,9 +761,6 @@ void FileToGraphic::interpret_order()
         if (bool(this->verbose & Verbose::rdp_orders)){
             LOG(LOG_INFO, "POINTER2");
         }
-
-
-        LOG(LOG_INFO, "POINTER2 !!!!!!!!!!!!!!!!!!!!!!!!");
 
         size_t start_offset = this->stream.get_offset();
         this->mouse_x = this->stream.in_uint16_le();

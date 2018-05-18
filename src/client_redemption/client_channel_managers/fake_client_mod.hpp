@@ -199,6 +199,8 @@ public:
     ResizeResult server_resize(int , int , int ) override { return ResizeResult::instant_done;}
 };
 
+
+
 class FakeIODisk : public ClientIODiskAPI
 {
 
@@ -222,18 +224,13 @@ public:
     }
 
     FileStat get_file_stat(const char * file_to_request) override {
-
         FileStat fileStat;
-
-
         return fileStat;
     }
 
     FileStatvfs get_file_statvfs(const char * file_to_request) override {
-
          FileStatvfs fileStatvfs;
-
-        return fileStatvfs;
+         return fileStatvfs;
     }
 
     erref::NTSTATUS read_data(const  std::string & file_to_tread,

@@ -669,6 +669,7 @@ private:
             QImage srcBitmapMirrored = srcBitmap.mirrored(false, true);
             //uchar data[1600*900*3];
 
+
             uchar * data = new uchar[srcBitmapMirrored.byteCount()];
 
             const uchar * srcData = srcBitmapMirrored.constBits();
@@ -676,18 +677,24 @@ private:
 
             int data_len = bitmap.line_size() * mincy;
             Op op;
+            LOG(LOG_INFO, " 1 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             for (int i = 0; i < data_len; i++) {
                 data[i] = op.op(srcData[i], dstData[i]);
             }
 
-            QImage image(data, mincx, mincy, srcBitmapMirrored.format());
-            QRect trect(drect.x, drect.y, mincx, mincy);
+            LOG(LOG_INFO, " 2 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
+            QImage image(data, mincx, mincy, srcBitmapMirrored.format());
+            LOG(LOG_INFO, " 3 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            QRect trect(drect.x, drect.y, mincx, mincy);
+            LOG(LOG_INFO, " 4 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             if (this->client->connected || this->client->is_replaying) {
                 this->painter.drawImage(trect, image);
             }
 
+            LOG(LOG_INFO, " 5 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             delete[](data);
+            LOG(LOG_INFO, " 6 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         }
     }
 
@@ -1164,10 +1171,12 @@ private:
                         const uchar * dstData = dstBitmap.constScanLine(mincy - k);
 
                         for (size_t x = 0; x < rowsize-2; x += 3) {
-                            data[x  ] = ((dstData[x  ] ^ r) & srcData[x  ]) ^ r;
-                            data[x+1] = ((dstData[x+1] ^ g) & srcData[x+1]) ^ g;
-                            data[x+2] = ((dstData[x+2] ^ b) & srcData[x+2]) ^ b;
+                            data.get()[x  ] = ((dstData[x  ] ^ r) & srcData[x  ]) ^ r;
+                            data.get()[x+1] = ((dstData[x+1] ^ g) & srcData[x+1]) ^ g;
+                            data.get()[x+2] = ((dstData[x+2] ^ b) & srcData[x+2]) ^ b;
                         }
+
+                        LOG(LOG_INFO, "x=%zu  !!!!!!!!!!!!!!!!!!!!!!!!!!!!", x);
 
                         QImage image(data.get(), mincx, 1, srcBitmap.format());
                         if (image.depth() != this->client->info.bpp) {

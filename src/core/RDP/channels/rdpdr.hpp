@@ -3379,7 +3379,7 @@ struct ClientDeviceListAnnounceRequest {
 //  |                             | information.                              |
 //  +-----------------------------+-------------------------------------------+
 
-enum {
+enum : uint32_t {
       FileBasicInformation        = 0x00000004
     , FileStandardInformation     = 0x00000005
     , FileAttributeTagInformation = 0x00000023
@@ -3409,6 +3409,10 @@ public:
     struct { uint8_t const * p; std::size_t sz; } query_buffer = {nullptr, 0u};
 
 public:
+    ServerDriveQueryInformationRequest(uint32_t FsInformationClass)
+      : FsInformationClass_(FsInformationClass)
+      {}
+
     ServerDriveQueryInformationRequest() = default;
 
     REDEMPTION_NON_COPYABLE(ServerDriveQueryInformationRequest);
@@ -4233,6 +4237,14 @@ class ServerDriveQueryDirectoryRequest {
 
 
 public:
+    ServerDriveQueryDirectoryRequest(uint32_t FsInformationClass,
+                                     uint8_t  InitialQuery)
+      : FsInformationClass_(FsInformationClass)
+      , InitialQuery_(InitialQuery)
+      {}
+
+    ServerDriveQueryDirectoryRequest() = default;
+
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
         stream.out_uint8(this->InitialQuery_);

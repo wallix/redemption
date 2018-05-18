@@ -24,6 +24,7 @@
 #include "utils/sugar/std_stream_proto.hpp"
 
 #include <cstdint>
+#include <cstddef>
 
 namespace CHANNELS
 {
