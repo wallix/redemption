@@ -24,10 +24,8 @@
 #define RED_TEST_MODULE TestOrderColCache
 #include "system/redemption_unit_tests.hpp"
 
-
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 
-#include "./test_orders.hpp"
 
 RED_AUTO_TEST_CASE(TestColCache)
 {
@@ -118,7 +116,7 @@ RED_AUTO_TEST_CASE(TestColCache)
             04, 07, 03, 00, 05, 07, 03, 00, 06, 07, 03, 00, 07, 07, 03, 00,
         };
 
-        check_datas(out_stream.get_offset(), out_stream.get_data(), sizeof(datas), datas, "Color Cache 1");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
         uint8_t control = in_stream.in_uint8();
@@ -127,6 +125,8 @@ RED_AUTO_TEST_CASE(TestColCache)
         RDPColCache cmd(0, newcmd.palette);
         cmd.receive(in_stream, header);
 
-        check<RDPColCache>(cmd, newcmd, "Color Cache 1");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 }

@@ -25,10 +25,8 @@
 #define RED_TEST_MODULE TestOrderEllipseCB
 #include "system/redemption_unit_tests.hpp"
 
-
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
 
-#include "./test_orders.hpp"
 
 RED_AUTO_TEST_CASE(TestEllipseCB)
 {
@@ -74,7 +72,7 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
             0x02, 0x03,
             0x04, 0x05,
             0x06, 0x07 };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 31, datas, "EllipseCB 1");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -89,12 +87,11 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
 
         cmd.receive(in_stream, header);
 
-        check<RDPEllipseCB>(common_cmd, cmd,
-                            RDPOrderCommon(ELLIPSECB, Rect(311, 0, 800, 600)),
-                            RDPEllipseCB(Rect(300, 400, 50, 60), 0xFF, 0x01, encode_color24()(BGRColor{0x102030}), encode_color24()(BGRColor{0x112233}),
-                                         RDPBrush(3, 4, 0x03, 0xDD,
-                                         reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7"))),
-                            "EllipseCB 1");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
+        RED_CHECK_MEM(
+            stream_to_avu8(out_stream).subarray(2),
+            stream_to_avu8(out_stream2).subarray(1));
     }
 
     {
@@ -116,8 +113,7 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
               0xdf, 0x0f, 0x2c, 0x01, 0x90, 0x01, 0x5e, 0x01,
               0xcc, 0x01, 0xff, 0x30, 0x20, 0x10,
               0x33, 0x22, 0x11, 0x03, 0x04, 0x01, 0xdd };
-
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 23, datas, "EllipseCB 2");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -132,11 +128,11 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
 
         cmd.receive(in_stream, header);
 
-        check<RDPEllipseCB>(common_cmd, cmd,
-            RDPOrderCommon(ELLIPSECB, Rect(311, 0, 800, 600)),
-            RDPEllipseCB(Rect(300, 400, 50, 60), 0xFF, 0x01, encode_color24()(BGRColor{0x102030}), encode_color24()(BGRColor{0x112233}),
-                RDPBrush(3, 4, 0x01, 0xDD)),
-            "EllipseCB 2");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
+        RED_CHECK_MEM(
+            stream_to_avu8(out_stream).subarray(2),
+            stream_to_avu8(out_stream2).subarray(1));
     }
 
     {
@@ -158,7 +154,7 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
               0xdf, 0x13, 0x2c, 0x01, 0x90, 0x01, 0x5e, 0x01,
               0xcc, 0x01, 0xff, 0x30, 0x20, 0x10, 0x33, 0x22, 0x11, 0x03, 0x04,
               0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 28, datas, "EllipseCB 3");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -173,11 +169,11 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
 
         cmd.receive(in_stream, header);
 
-        check<RDPEllipseCB>(common_cmd, cmd,
-            RDPOrderCommon(ELLIPSECB, Rect(311, 0, 800, 600)),
-            RDPEllipseCB(Rect(300, 400, 50, 60), 0xFF, 0x01, encode_color24()(BGRColor{0x102030}), encode_color24()(BGRColor{0x112233}),
-                RDPBrush(3, 4, 0x03, 0xDD, reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7"))),
-            "EllipseCB 3");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
+        RED_CHECK_MEM(
+            stream_to_avu8(out_stream).subarray(2),
+            stream_to_avu8(out_stream2).subarray(1));
     }
 
 }

@@ -24,10 +24,8 @@
 #define RED_TEST_MODULE TestOrderPolyline
 #include "system/redemption_unit_tests.hpp"
 
-
 #include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 
-#include "./test_orders.hpp"
 
 RED_AUTO_TEST_CASE(TestPolyline)
 {
@@ -84,7 +82,7 @@ RED_AUTO_TEST_CASE(TestPolyline)
             0x98, 0x24, 0x14, 0x80, 0xA0, 0x62, 0x32, 0x32,
             0x4E, 0x32, 0x62, 0xFF, 0x60
         };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), sizeof(datas), datas, "Polyline 1");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -101,34 +99,10 @@ RED_AUTO_TEST_CASE(TestPolyline)
         RDPPolyline cmd = state_polyline;
         cmd.receive(in_stream, header);
 
-        deltaPoints.rewind();
-
-        deltaPoints.out_sint16_le(0);
-        deltaPoints.out_sint16_le(20);
-
-        deltaPoints.out_sint16_le(160);
-        deltaPoints.out_sint16_le(0);
-
-        deltaPoints.out_sint16_le(0);
-        deltaPoints.out_sint16_le(-30);
-
-        deltaPoints.out_sint16_le(50);
-        deltaPoints.out_sint16_le(50);
-
-        deltaPoints.out_sint16_le(-50);
-        deltaPoints.out_sint16_le(50);
-
-        deltaPoints.out_sint16_le(0);
-        deltaPoints.out_sint16_le(-30);
-
-        deltaPoints.out_sint16_le(-160);
-        deltaPoints.out_sint16_le(0);
-
-        deltaPoints_in = InStream(deltaPoints.get_data(), deltaPoints.get_offset());
-
-        check<RDPPolyline>(common_cmd, cmd,
-            RDPOrderCommon(POLYLINE, Rect(0, 0, 0, 0)),
-            RDPPolyline(158, 230, 0x0D, 0, encode_color24()(BGRColor{0x000000}), 7, deltaPoints_in),
-            "Polyline 2");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_polyline);
+        RED_CHECK_MEM(
+            stream_to_avu8(out_stream).subarray(1),
+            stream_to_avu8(out_stream2).subarray(1));
     }
 }

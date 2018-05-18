@@ -8,7 +8,6 @@ exe rdpinichecker :
   $(EXE_DEPENDENCIES)
   <library>app_path_exe.o
   <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/core/error.o
   <library>src/core/font.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
@@ -4259,7 +4258,6 @@ test-run tests/utils/test_fileutils :
 :
   <covfile>src/utils/fileutils.cpp
   <covfile>src/utils/fileutils.hpp
-  <library>src/core/error.o
   <library>src/utils/fileutils.o
 ;
 test-run tests/utils/test_genfstat :
@@ -4371,7 +4369,6 @@ test-run tests/utils/test_theme :
   <covfile>src/utils/theme.hpp
   <library>app_path_test.o
   <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/core/error.o
   <library>src/core/font.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
@@ -4388,7 +4385,6 @@ test-run tests/utils/test_translation :
   <covfile>src/utils/translation.hpp
   <library>app_path_test.o
   <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/core/error.o
   <library>src/core/font.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o

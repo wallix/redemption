@@ -295,7 +295,7 @@ public:
                         self.update_screen(Rect(0, 0, self.width, self.height), 1);
                     }
                     catch (const Error & e) {
-                        LOG(LOG_ERR, "VNC Stopped [reason id=%u]", e.id);
+                        LOG(LOG_ERR, "VNC Stopped: %s", e.errmsg());
                         self.session_reactor.set_event_next(BACK_EVENT_NEXT);
                         self.front.must_be_stop_capture();
                     }

@@ -2474,9 +2474,7 @@ namespace jln
             this->top.on_timeout_switch = detail::create_on_timeout(group, static_cast<F&&>(f));
             return R::SubstituteTimeout;
         }
-        else {
-            this->top.disable_timeout();
-        }
+        this->top.disable_timeout();
         return R::Ready;
     }
 
@@ -2959,9 +2957,9 @@ struct SessionReactor
     template<class F>
     void for_each_fd(EnableGraphics enable_gd, F f)
     {
-        auto g = [&f](int fd, auto& top){
+        auto g = [&f](int fd, auto& /*top*/){
             assert(fd != -1);
-            f(fd, top);
+            f(fd);
         };
         this->fd_events_.for_each(g);
         if (enable_gd) {

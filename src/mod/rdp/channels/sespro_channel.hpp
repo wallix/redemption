@@ -23,16 +23,13 @@
 
 #include "core/error.hpp"
 #include "core/front_api.hpp"
+#include "core/session_reactor.hpp"
 #include "mod/mod_api.hpp"
-#include "mod/rdp/rdp_api.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
+#include "mod/rdp/rdp_api.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
-#include "utils/sugar/make_unique.hpp"
-#include "core/error.hpp"
-#include "core/session_reactor.hpp"
-#include "mod/mod_api.hpp"
 
 #include <chrono>
 #include <memory>
