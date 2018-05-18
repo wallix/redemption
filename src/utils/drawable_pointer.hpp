@@ -64,6 +64,30 @@ class Array2D
     Iterator end () const { return Iterator(&this->data[this->width_in_bytes * this->height], this->width_in_bytes); }
 };
 
+class PixelArray
+{
+    uint8_t * data;
+    const size_t width_in_bytes;
+
+    public:
+    class Iterator
+    {
+        uint8_t * data;
+        size_t offset;
+        public:
+        Iterator (uint8_t * data) : data(data), offset(0) {}
+        bool operator!= (const Iterator & other) const { return (this->data != other.data) || (this->offset != other.offset); }
+        uint8_t * operator* () const { return &this->data[this->offset]; }
+        const Iterator & operator++ () { this->offset+=3; return *this; }
+    };
+    
+    PixelArray(size_t width_in_pixels, uint8_t * data) : data(data), width_in_bytes(width_in_pixels*3)  {}
+ 
+    Iterator begin () const { return Iterator(this->data); }
+    Iterator end () const { return Iterator(this->data + this->width_in_bytes); }
+};
+
+
 class BitArray
 {
     size_t width_in_bits;
