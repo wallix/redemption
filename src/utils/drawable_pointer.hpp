@@ -88,6 +88,48 @@ class PixelArray
 };
 
 
+class BitZones
+{
+    size_t width_in_bits;
+    const uint8_t * data;
+
+    public:
+    class Iterator
+    {
+        const size_t width_in_bits;
+        const uint8_t * data;
+        size_t offset;
+        struct Zone {
+            bool bit;
+            size_t length;
+            Zone(bool bit, size_t length) : bit(bit), length(length) {}
+        } zone;
+        public:
+        Iterator (const uint8_t * data, size_t width_in_bits) : width_in_bits(width_in_bits), data(data), offset(0), zone(0,0) 
+        {
+            this->operator++();
+        }
+        bool operator!= (const Iterator & other) const { return (this->data != other.data) || (this->offset != other.offset); }
+        Zone operator* () const { return this->zone;}
+        const Iterator & operator++ () { 
+            this->offset += zone.length;
+            bool bit = this->data[this->offset>>3]&(1<<(7-(offset&0x7)));
+            size_t lg = 1;
+            while ((this->offset < this->width_in_bits) && (bit == (this->data[this->offset>>3]&(1<<(7-(this->offset&0x7)))))){
+                lg++;
+            }
+            this->zone = Zone(bit, lg);
+            return *this; 
+        }
+    };
+    
+    BitZones(size_t width_in_bits, const uint8_t * data) : width_in_bits(width_in_bits), data(data)  {}
+ 
+    Iterator begin () const { return Iterator(this->data, 0); }
+    Iterator end () const { return Iterator(this->data, this->width_in_bits); }
+};
+
+
 class BitArray
 {
     size_t width_in_bits;
@@ -174,7 +216,6 @@ struct DrawablePointer {
             this->contiguous_pixels[count].data = current_data;
             current_data += block.data_size;
         }
-        //hexdump_c(pointer_mask, 128);
     }
 
     struct ContiguousPixelsView {
