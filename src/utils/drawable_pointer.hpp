@@ -105,21 +105,25 @@ class BitZones
             Zone(bool bit, size_t length) : bit(bit), length(length) {}
         } zone;
         public:
-        Iterator (const uint8_t * data, size_t width_in_bits) : width_in_bits(width_in_bits), data(data), offset(0), zone(0,0) 
+        Iterator (const uint8_t * data, size_t width_in_bits, size_t offset) : width_in_bits(width_in_bits), data(data), offset(offset), zone(0,0) 
         {
             this->operator++();
         }
         bool operator!= (const Iterator & other) const { return (this->data != other.data) || (this->offset != other.offset); }
         Zone operator* () const { return this->zone;}
         const Iterator & operator++ () { 
-            if (this->offset > this->width_in_bits){
+            if (this->offset < this->width_in_bits){
                 this->offset += zone.length;
                 if (this->offset < this->width_in_bits){
                     bool bit = this->data[this->offset>>3]&(1<<(7-(offset&0x7)));
+                    
                     size_t lg = 1;
-                    while (((this->offset+lg) < this->width_in_bits) && (bit == (this->data[(this->offset+lg)>>3]&(1<<(7-((this->offset+lg)&0x7)))))){
+                    while ((this->offset+lg) < this->width_in_bits){
+                        bool bit2 = this->data[(this->offset+lg)>>3]&(1<<(7-((this->offset+lg)&0x7)));
+                        if (bit2 != bit) { break;}
                         lg++;
                     }
+//                    printf("%d - zone(%d, %d) - %d | ", this->offset, bit, lg, this->offset+ lg);
                     this->zone = Zone(bit, lg);
                 }
             }
@@ -127,7 +131,9 @@ class BitZones
         }
     };
     
-    BitZones(size_t width_in_bits, const uint8_t * data) : width_in_bits(width_in_bits), data(data)  {}
+    BitZones(size_t width_in_bits, const uint8_t * data) : width_in_bits(width_in_bits), data(data)  {
+//        printf("bitzone %.2x %.2x %.2x %.2x\n", data[0], data[1], data[2], data[3]);
+    }
  
     Iterator begin () const { return Iterator(this->data, this->width_in_bits, 0); }
     Iterator end () const { return Iterator(this->data, this->width_in_bits, this->width_in_bits); }
@@ -188,29 +194,21 @@ struct DrawablePointer {
         Array2D a2d(::nbbytes(width), height, pointer_mask);
         size_t y = height-1;
         for (auto line : a2d){
-            bool in_contiguous_mouse_pixels = false;
             size_t x = 0;
             BitZones ba(width, line);
             for (auto zone : ba){
-                if (!bit && !in_contiguous_mouse_pixels) {
-                    this->number_of_contiguous_pixels++;
-                    current_contiguous_pixels->x         = x;
-                    current_contiguous_pixels->y         = y;
-                    current_contiguous_pixels->data_size = 0;
+                if (!zone.bit){
+                    current_contiguous_pixels->x = x;
+                    current_contiguous_pixels->y = y;
+                    current_contiguous_pixels->data_size = zone.length*this->Bpp;
                     current_contiguous_pixels++;
-                    in_contiguous_mouse_pixels = true;
                 }
-                else if (bit && in_contiguous_mouse_pixels) {
-                    in_contiguous_mouse_pixels = false;
-                }
-
-                if (in_contiguous_mouse_pixels) {
-                    (current_contiguous_pixels-1)->data_size += Bpp;
-                }
-                x++;
+                x += zone.length;
             }
             y--;
         }
+
+        this->number_of_contiguous_pixels = current_contiguous_pixels - this->contiguous_pixels;
 
         uint8_t * current_data = this->data;
         for (size_t count = 0 ; count < this->number_of_contiguous_pixels ; count++) {
