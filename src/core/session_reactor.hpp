@@ -785,6 +785,7 @@ namespace jln
             }
 
             REDEMPTION_UNREACHABLE();
+            return false;
         }
 
     private:
@@ -885,6 +886,7 @@ namespace jln
             }
 
             REDEMPTION_UNREACHABLE();
+            return false;
         }
 
     private:
@@ -1500,6 +1502,7 @@ namespace jln
             }
 
             REDEMPTION_UNREACHABLE();
+            return false;
         }
 
         bool exec_action(Ts&... xs)
@@ -1569,6 +1572,7 @@ namespace jln
             }
 
             REDEMPTION_UNREACHABLE();
+            return false;
         }
 
     private:
@@ -1610,6 +1614,7 @@ namespace jln
                     // return R::Ready;
             }
             REDEMPTION_UNREACHABLE();
+            return R::Terminate;
         }
 
         R _exec_exit(R r, Ts&... xs)
@@ -2012,7 +2017,7 @@ namespace jln
         using Group = GroupExecutor<Ts...>;
         using TopData = SharedData<Top>;
 
-        using GroupDeleter = GroupDeleter<Ts...>;
+        using GroupDeleter = ::jln::GroupDeleter<Ts...>;
 
     public:
         using Ptr = TopSharedPtr<Ts...>;
@@ -2186,7 +2191,7 @@ namespace jln
     {
         using Timer = TimerExecutor<Ts...>;
 
-        using TimerDeleter = TimerDeleter<Ts...>;
+        using TimerDeleter = ::jln::TimerDeleter<Ts...>;
 
     public:
         using Ptr = TimerSharedPtr<Ts...>;
@@ -2323,7 +2328,7 @@ namespace jln
     {
         using Action = ActionExecutor<Ts...>;
 
-        using ActionDeleter = ActionDeleter<Ts...>;
+        using ActionDeleter = ::jln::ActionDeleter<Ts...>;
 
     public:
         using Ptr = ActionSharedPtr<Ts...>;
