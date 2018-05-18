@@ -102,11 +102,11 @@ struct DrawablePointer {
     };
 
     ContiguousPixels contiguous_pixels[MAX_WIDTH / 2 * MAX_HEIGHT];    // MAX_WIDTH / 2 contiguous pixels per line * MAX_HEIGHT lines
-    uint8_t          number_of_contiguous_pixels;
-
+    uint8_t number_of_contiguous_pixels;
+    uint8_t Bpp;
     uint8_t data[MAX_WIDTH * MAX_HEIGHT * 3];  // 32 pixels per line * 32 lines * 3 bytes per pixel
 
-    DrawablePointer() : contiguous_pixels(), number_of_contiguous_pixels(0), data() {}
+    DrawablePointer() : contiguous_pixels(), number_of_contiguous_pixels(0), Bpp(3), data() {}
 
     void initialize(unsigned int width, unsigned int height, const uint8_t * pointer_data, const uint8_t * pointer_mask) {
         ::memset(this->contiguous_pixels, 0, sizeof(this->contiguous_pixels));
@@ -135,56 +135,17 @@ struct DrawablePointer {
                 }
 
                 if (in_contiguous_mouse_pixels) {
-                    (current_contiguous_pixels-1)->data_size += 3;
+                    (current_contiguous_pixels-1)->data_size += Bpp;
                 }
                 x++;
             }
             y--;
         }
 
-//        const unsigned int remainder = (width % 8);
-//        const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
-//        const unsigned int and_padded_line_length_in_byte =
-//            ((and_line_length_in_byte % 2) ?
-//             and_line_length_in_byte + 1 :
-//             and_line_length_in_byte);
-
-//        for (unsigned int line = 0; line < height; line++) {
-//            bool in_contiguous_mouse_pixels = false;
-//            for (unsigned int column = 0; column < width; column++) {
-//                const div_t        res = div(column, 8);
-//                const unsigned int rem = 7 - res.rem;
-
-//                bool non_transparent_pixel = !(((*(pointer_mask + and_padded_line_length_in_byte * (height - (line + 1)) + res.quot)) & (1 << rem)) >> rem);
-//                if (non_transparent_pixel && !in_contiguous_mouse_pixels) {
-//                    this->number_of_contiguous_pixels++;
-//                    current_contiguous_pixels->x         = column;
-//                    current_contiguous_pixels->y         = line;
-//                    current_contiguous_pixels->data_size = 0;
-//                    current_contiguous_pixels++;
-//                    in_contiguous_mouse_pixels = true;
-//                }
-//                else if (!non_transparent_pixel && in_contiguous_mouse_pixels) {
-//                    in_contiguous_mouse_pixels = false;
-//                }
-
-//                if (in_contiguous_mouse_pixels) {
-//                    (current_contiguous_pixels-1)->data_size += 3;
-//                }
-//                
-//            }
-//        }
-
-        const unsigned int xor_line_length_in_byte = width * 3;
-        const unsigned int xor_padded_line_length_in_byte =
-            ((xor_line_length_in_byte % 2) ?
-             xor_line_length_in_byte + 1 :
-             xor_line_length_in_byte);
-
         uint8_t * current_data = this->data;
         for (size_t count = 0 ; count < this->number_of_contiguous_pixels ; count++) {
             ContiguousPixels & block = this->contiguous_pixels[count];
-              const uint8_t * pixel = pointer_data + xor_padded_line_length_in_byte * (height - (block.y + 1)) + block.x * 3;
+              const uint8_t * pixel = pointer_data + even_pad_length(width*Bpp) * (height - (block.y + 1)) + block.x * Bpp;
             ::memcpy(current_data, pixel, block.data_size);
             this->contiguous_pixels[count].data = current_data;
             current_data += block.data_size;
