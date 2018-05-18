@@ -112,21 +112,25 @@ class BitZones
         bool operator!= (const Iterator & other) const { return (this->data != other.data) || (this->offset != other.offset); }
         Zone operator* () const { return this->zone;}
         const Iterator & operator++ () { 
-            this->offset += zone.length;
-            bool bit = this->data[this->offset>>3]&(1<<(7-(offset&0x7)));
-            size_t lg = 1;
-            while ((this->offset < this->width_in_bits) && (bit == (this->data[this->offset>>3]&(1<<(7-(this->offset&0x7)))))){
-                lg++;
+            if (this->offset > this->width_in_bits){
+                this->offset += zone.length;
+                if (this->offset < this->width_in_bits){
+                    bool bit = this->data[this->offset>>3]&(1<<(7-(offset&0x7)));
+                    size_t lg = 1;
+                    while (((this->offset+lg) < this->width_in_bits) && (bit == (this->data[(this->offset+lg)>>3]&(1<<(7-((this->offset+lg)&0x7)))))){
+                        lg++;
+                    }
+                    this->zone = Zone(bit, lg);
+                }
             }
-            this->zone = Zone(bit, lg);
             return *this; 
         }
     };
     
     BitZones(size_t width_in_bits, const uint8_t * data) : width_in_bits(width_in_bits), data(data)  {}
  
-    Iterator begin () const { return Iterator(this->data, 0); }
-    Iterator end () const { return Iterator(this->data, this->width_in_bits); }
+    Iterator begin () const { return Iterator(this->data, this->width_in_bits, 0); }
+    Iterator end () const { return Iterator(this->data, this->width_in_bits, this->width_in_bits); }
 };
 
 
@@ -186,8 +190,8 @@ struct DrawablePointer {
         for (auto line : a2d){
             bool in_contiguous_mouse_pixels = false;
             size_t x = 0;
-            BitArray ba(width, line);
-            for (auto bit : ba){
+            BitZones ba(width, line);
+            for (auto zone : ba){
                 if (!bit && !in_contiguous_mouse_pixels) {
                     this->number_of_contiguous_pixels++;
                     current_contiguous_pixels->x         = x;
