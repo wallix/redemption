@@ -115,47 +115,65 @@ struct DrawablePointer {
 
         ContiguousPixels * current_contiguous_pixels  = this->contiguous_pixels;
 
-//        Array2D a2d(::nbbytes(width), height, pointer_mask);
-//        for (auto x : a2d){
-//            BitArray ba(width, x);
-//            for (auto bit : ba){
-//                printf("%s", bit?"1":"0");
-//            }
-//            printf("\n");
-//        }
-
-        const unsigned int remainder = (width % 8);
-        const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
-        const unsigned int and_padded_line_length_in_byte =
-            ((and_line_length_in_byte % 2) ?
-             and_line_length_in_byte + 1 :
-             and_line_length_in_byte);
-
-        for (unsigned int line = 0; line < height; line++) {
+        Array2D a2d(::nbbytes(width), height, pointer_mask);
+        size_t y = height-1;
+        for (auto line : a2d){
             bool in_contiguous_mouse_pixels = false;
-
-            for (unsigned int column = 0; column < width; column++) {
-                const div_t        res = div(column, 8);
-                const unsigned int rem = 7 - res.rem;
-
-                bool non_transparent_pixel = !(((*(pointer_mask + and_padded_line_length_in_byte * (height - (line + 1)) + res.quot)) & (1 << rem)) >> rem);
-                if (non_transparent_pixel && !in_contiguous_mouse_pixels) {
+            size_t x = 0;
+            BitArray ba(width, line);
+            for (auto bit : ba){
+                if (!bit && !in_contiguous_mouse_pixels) {
                     this->number_of_contiguous_pixels++;
-                    current_contiguous_pixels->x         = column;
-                    current_contiguous_pixels->y         = line;
+                    current_contiguous_pixels->x         = x;
+                    current_contiguous_pixels->y         = y;
                     current_contiguous_pixels->data_size = 0;
                     current_contiguous_pixels++;
                     in_contiguous_mouse_pixels = true;
                 }
-                else if (!non_transparent_pixel && in_contiguous_mouse_pixels) {
+                else if (bit && in_contiguous_mouse_pixels) {
                     in_contiguous_mouse_pixels = false;
                 }
 
                 if (in_contiguous_mouse_pixels) {
                     (current_contiguous_pixels-1)->data_size += 3;
                 }
+                x++;
             }
+            y--;
         }
+
+//        const unsigned int remainder = (width % 8);
+//        const unsigned int and_line_length_in_byte = width / 8 + (remainder ? 1 : 0);
+//        const unsigned int and_padded_line_length_in_byte =
+//            ((and_line_length_in_byte % 2) ?
+//             and_line_length_in_byte + 1 :
+//             and_line_length_in_byte);
+
+//        for (unsigned int line = 0; line < height; line++) {
+//            bool in_contiguous_mouse_pixels = false;
+//            for (unsigned int column = 0; column < width; column++) {
+//                const div_t        res = div(column, 8);
+//                const unsigned int rem = 7 - res.rem;
+
+//                bool non_transparent_pixel = !(((*(pointer_mask + and_padded_line_length_in_byte * (height - (line + 1)) + res.quot)) & (1 << rem)) >> rem);
+//                if (non_transparent_pixel && !in_contiguous_mouse_pixels) {
+//                    this->number_of_contiguous_pixels++;
+//                    current_contiguous_pixels->x         = column;
+//                    current_contiguous_pixels->y         = line;
+//                    current_contiguous_pixels->data_size = 0;
+//                    current_contiguous_pixels++;
+//                    in_contiguous_mouse_pixels = true;
+//                }
+//                else if (!non_transparent_pixel && in_contiguous_mouse_pixels) {
+//                    in_contiguous_mouse_pixels = false;
+//                }
+
+//                if (in_contiguous_mouse_pixels) {
+//                    (current_contiguous_pixels-1)->data_size += 3;
+//                }
+//                
+//            }
+//        }
 
         const unsigned int xor_line_length_in_byte = width * 3;
         const unsigned int xor_padded_line_length_in_byte =
