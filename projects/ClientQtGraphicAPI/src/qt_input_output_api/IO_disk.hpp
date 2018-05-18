@@ -134,7 +134,7 @@ public:
             inFile.read(data.to_charp(), std::min(remaining, int(data.size())));
         }
 
-        if (!inFile || inFile.eof()) {
+        if (inFile.fail()) {
             if (log_erro_on) {
                 LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_tread.c_str());
             }
