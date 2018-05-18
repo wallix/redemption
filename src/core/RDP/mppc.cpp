@@ -29,7 +29,6 @@
 #include "core/RDP/mppc/mppc_50.hpp"
 #include "core/RDP/mppc/mppc_60.hpp"
 #include "core/RDP/mppc/mppc_61.hpp"
-#include "utils/sugar/make_unique.hpp"
 
 rdp_mppc_enc::rdp_mppc_enc(bool verbose)
     : total_uncompressed_data_size(0)

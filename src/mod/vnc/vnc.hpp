@@ -48,7 +48,6 @@ h
 #include "utils/d3des.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/log.hpp"
-#include "utils/sugar/make_unique.hpp"
 #include "utils/sugar/update_lock.hpp"
 #include "utils/sugar/strutils.hpp"
 #include "utils/utf.hpp"

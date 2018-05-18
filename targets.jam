@@ -4071,11 +4071,6 @@ test-run tests/utils/sugar/test_iter :
 :
   <covfile>src/utils/sugar/iter.hpp
 ;
-test-run tests/utils/sugar/test_make_unique :
-  $(REDEMPTION_TEST_PATH)/utils/sugar/test_make_unique.cpp
-:
-  <covfile>src/utils/sugar/make_unique.hpp
-;
 test-run tests/utils/sugar/test_movable_noncopyable :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_movable_noncopyable.cpp
 :
@@ -5077,8 +5072,6 @@ alias test_finally : tests/utils/sugar/test_finally ;
 alias test_finally.coverage : tests/utils/sugar/test_finally.coverage ;
 alias test_iter : tests/utils/sugar/test_iter ;
 alias test_iter.coverage : tests/utils/sugar/test_iter.coverage ;
-alias test_make_unique : tests/utils/sugar/test_make_unique ;
-alias test_make_unique.coverage : tests/utils/sugar/test_make_unique.coverage ;
 alias test_movable_noncopyable : tests/utils/sugar/test_movable_noncopyable ;
 alias test_movable_noncopyable.coverage : tests/utils/sugar/test_movable_noncopyable.coverage ;
 alias test_noncopyable : tests/utils/sugar/test_noncopyable ;
@@ -5594,7 +5587,6 @@ alias tests/utils/sugar :
   tests/utils/sugar/test_exchange
   tests/utils/sugar/test_finally
   tests/utils/sugar/test_iter
-  tests/utils/sugar/test_make_unique
   tests/utils/sugar/test_movable_noncopyable
   tests/utils/sugar/test_noncopyable
   tests/utils/sugar/test_range

@@ -26,7 +26,6 @@
 #include "core/RDP/clipboard.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
-#include "utils/sugar/make_unique.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/stream.hpp"
 #include "utils/key_qvalue_pairs.hpp"
