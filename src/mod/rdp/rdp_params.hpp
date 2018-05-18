@@ -100,7 +100,6 @@ struct ModRDPParams {
     bool         enable_transparent_mode = false;
     const char * output_filename = "";
     Transport  * persistent_key_list_transport = nullptr;
-    Transport  * transparent_recorder_transport = nullptr;
 
     int key_flags;
 
@@ -295,7 +294,6 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_transparent_mode);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             output_filename);
         RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    persistent_key_list_transport);
-        RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    transparent_recorder_transport);
 
         RDP_PARAMS_LOG("%d",     RDP_PARAMS_LOG_GET,    key_flags);
 

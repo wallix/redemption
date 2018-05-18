@@ -104,7 +104,7 @@ struct ReplayMod::Reader
     }
 
     REDEMPTION_CXX_NODISCARD
-    bool server_resize(FrontAPI& front, WidgetScreen& screen)
+    bool server_resize(FrontAPI& front)
     {
         bool is_resized = false;
         switch (front.server_resize(
@@ -118,7 +118,6 @@ struct ReplayMod::Reader
             case FrontAPI::ResizeResult::done:
                 // resizing done;
                 is_resized = true;
-                screen.set_wh(this->reader.info_width, this->reader.info_height);
                 break;
             case FrontAPI::ResizeResult::fail:
                 // resizing failed
@@ -141,15 +140,16 @@ ReplayMod::ReplayMod(
   , uint16_t width
   , uint16_t height
   , std::string & auth_error_message
-  , Font const & font
   , bool wait_for_escape
   , timeval const & begin_read
   , timeval const & end_read
   , time_t balise_time_frame
   , bool replay_on_loop
   , Verbose debug_capture)
-: InternalMod(front, width, height, font, Theme{}, true)
-, auth_error_message(auth_error_message)
+: auth_error_message(auth_error_message)
+, front_width(width)
+, front_height(height)
+, front(front)
 , internal_reader(std::make_unique<Reader>(
     Reader::Path{replay_path, movie}, begin_read, end_read, balise_time_frame, debug_capture))
 , end_of_data(false)
@@ -158,7 +158,7 @@ ReplayMod::ReplayMod(
 , replay_on_loop(replay_on_loop)
 , session_reactor(session_reactor)
 {
-    if (this->internal_reader->server_resize(front, this->screen)) {
+    if (this->internal_reader->server_resize(front)) {
         this->front_width  = this->internal_reader->reader.info_width;
         this->front_height = this->internal_reader->reader.info_height;
     }
@@ -171,10 +171,7 @@ ReplayMod::ReplayMod(
     });
 }
 
-ReplayMod::~ReplayMod()
-{
-    this->screen.clear();
-}
+ReplayMod::~ReplayMod() = default;
 
 void ReplayMod::add_consumer(
     gdi::GraphicApi * graphic_ptr,
@@ -296,7 +293,7 @@ void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & drawable)
                         this->internal_reader->balise_time_frame,
                         this->internal_reader->debug_capture);
 
-                    if (this->internal_reader->server_resize(this->front, this->screen)) {
+                    if (this->internal_reader->server_resize(this->front)) {
                         this->front_width  = this->internal_reader->reader.info_width;
                         this->front_height = this->internal_reader->reader.info_height;
                     }
@@ -332,7 +329,6 @@ void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & drawable)
 
 std::string ReplayMod::get_mwrm_path() const
 {
-    std::string movie_path_str(this->internal_reader->movie_path.prefix);
-    movie_path_str += ".mwrm";
-    return movie_path_str;
+    using namespace std::string_literals;
+    return this->internal_reader->movie_path.prefix + ".mwrm"s;
 }

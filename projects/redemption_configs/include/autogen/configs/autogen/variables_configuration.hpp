@@ -3733,9 +3733,9 @@ namespace cfg {
         type value{};
     };
     /// AUTHID_CONTEXT_MODE_CONSOLE <br/>
-    /// type: std::string <br/>
+    /// type: RdpModeConsole <br/>
     /// sesman -> proxy <br/>
-    /// value = "allow" <br/>
+    /// value = static_cast<type>(0) <br/>
     struct context::mode_console {
         static constexpr bool is_sesman_to_proxy() { return 1; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -3744,10 +3744,10 @@ namespace cfg {
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index() { return authid_t(108); }
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = RdpModeConsole;
+        using sesman_and_spec_type = RdpModeConsole;
         using mapped_type = sesman_and_spec_type;
-        type value = "allow";
+        type value = static_cast<type>(0);
     };
     /// AUTHID_CONTEXT_TIMEZONE <br/>
     /// type: int <br/>

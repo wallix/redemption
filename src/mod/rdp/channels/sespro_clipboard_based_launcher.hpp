@@ -131,7 +131,7 @@ public:
         if (this->state == State::START) {
             this->event = this->session_reactor.create_timer()
             .set_delay(this->clipboard_initialization_delay)
-            .on_action(jln2::one_shot([&]{ this->on_event(); }));
+            .on_action(jln::one_shot([&]{ this->on_event(); }));
         }
 
         if (this->sesprob_channel) {
@@ -350,8 +350,8 @@ public:
 
     void make_delay_sequencer()
     {
-        using jln2::value;
-        using namespace jln2::literals;
+        using jln::value;
+        using namespace jln::literals;
 
         auto send_scancode = [](auto param1, auto device_flags, auto check_format_list_received, auto wait_for_short_delay){
             return [](auto ctx, SessionProbeClipboardBasedLauncher& self){
@@ -379,7 +379,7 @@ public:
 
         this->event = this->session_reactor.create_timer(std::ref(*this))
         .set_delay(this->short_delay)
-        .on_action(jln2::sequencer(
+        .on_action(jln::sequencer(
             "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>, value<true>,  value<true> )),
             "r (down)"_f        (send_scancode(value<19>, value<0>,                           value<false>, value<true> )),
             "r (up)"_f          (send_scancode(value<19>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true> )),
@@ -442,8 +442,8 @@ public:
 
     void make_run_sequencer()
     {
-        using jln2::value;
-        using namespace jln2::literals;
+        using jln::value;
+        using namespace jln::literals;
 
         auto send_scancode = [](auto param1, auto device_flags, auto check_image_readed, auto wait_for_short_delay){
             return [](auto ctx, SessionProbeClipboardBasedLauncher& self){
@@ -476,7 +476,7 @@ public:
 
         this->event = this->session_reactor.create_timer(std::ref(*this))
         .set_delay(this->short_delay)
-        .on_action(jln2::sequencer(
+        .on_action(jln::sequencer(
             "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>, value<true>,  value<true> )),
             "r (down)"_f        (send_scancode(value<19>, value<0>,                           value<false>, value<true> )),
             "r (up)"_f          (send_scancode(value<19>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true> )),
@@ -492,7 +492,7 @@ public:
                 if (!self.format_data_requested) {
                     return ctx.set_delay(self.short_delay).exec_at(0);
                 }
-                return jln2::make_lambda<decltype(send_scancode)>()(value<28>, value<0>, value<true>, value<true>)(ctx, self);
+                return jln::make_lambda<decltype(send_scancode)>()(value<28>, value<0>, value<true>, value<true>)(ctx, self);
             }),
             "Enter (up)"_f      (send_scancode(value<28>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true>))
         ));

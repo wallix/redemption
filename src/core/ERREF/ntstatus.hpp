@@ -65,15 +65,10 @@ namespace erref {
 //  | STATUS_ACCESS_DENIED     | object but has not been granted those access rights.  |
 //  |                          |                                                       |
 //  +--------------------------+-------------------------------------------------------+
-//  | 0xC0000022               | {Access Denied} A process has requested access to an  |
-//  | STATUS_ACCESS_DENIED     | object but has not been granted those access rights.  |
-//  |                          |                                                       |
-//  +--------------------------+-------------------------------------------------------+
 //  | ...                      | ...                                                   |
 //  |                          |                                                       |
 //
 
-// TODO strong enum: NTSTATUS::Success, etc
 enum class NTSTATUS : uint32_t
 {
     STATUS_SUCCESS                  = 0x00000000,

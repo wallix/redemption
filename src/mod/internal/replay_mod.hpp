@@ -28,12 +28,17 @@
 #include "capture/file_to_graphic.hpp" // FileToGraphic::Verbose
 #include "transport/mwrm_reader.hpp" // WrmVersion
 #include "core/session_reactor.hpp"
-#include "mod/internal/internal_mod.hpp"
+#include "mod/mod_api.hpp"
 
+class FrontAPI;
 
-class ReplayMod : public InternalMod
+class ReplayMod : public mod_api
 {
-    std::string & auth_error_message;
+    std::string& auth_error_message;
+
+    uint16_t front_width;
+    uint16_t front_height;
+    FrontAPI& front;
 
     class Reader;
     std::unique_ptr<Reader> internal_reader;
@@ -57,13 +62,12 @@ public:
              , uint16_t width
              , uint16_t height
              , std::string & auth_error_message
-             , Font const & font
              , bool wait_for_escape
              , bool replay_on_loop
              , Verbose debug_capture)
     : ReplayMod(
         session_reactor, front, replay_path, movie, width, height, auth_error_message,
-        font, wait_for_escape, timeval{0, 0}, timeval{0, 0}, 0, replay_on_loop, debug_capture)
+        wait_for_escape, timeval{0, 0}, timeval{0, 0}, 0, replay_on_loop, debug_capture)
     {
     }
 
@@ -74,7 +78,6 @@ public:
              , uint16_t width
              , uint16_t height
              , std::string & auth_error_message
-             , Font const & font
              , bool wait_for_escape
              , timeval const & begin_read
              , timeval const & end_read
@@ -124,8 +127,12 @@ public:
 
     std::string get_mwrm_path() const;
 
-    void refresh(Rect /*rect*/) override
-    {}
+    void refresh(Rect /*rect*/) override {}
+
+    void send_to_front_channel(
+        CHANNELS::ChannelNameId /*mod_channel_name*/,
+        const uint8_t * /*data*/, size_t /*length*/, size_t /*chunk_size*/, int /*flags*/
+    ) override {}
 
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue

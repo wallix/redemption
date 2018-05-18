@@ -24,13 +24,9 @@
 
 #include "utils/log.hpp"
 
-
 #include "client_redemption/client_redemption.hpp"
 
-
 #pragma GCC diagnostic pop
-
-
 
 
 int main(int argc, char** argv)
@@ -47,5 +43,3 @@ int main(int argc, char** argv)
                            , nullptr
                            , nullptr);
 }
-
-

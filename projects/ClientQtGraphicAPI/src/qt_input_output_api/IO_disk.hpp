@@ -25,6 +25,7 @@
 #include <sys/statvfs.h>
 #include <linux/hdreg.h>
 
+#include "utils/fileutils.hpp"
 #include "utils/log.hpp"
 #include "client_redemption/client_input_output_api.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
@@ -112,35 +113,32 @@ public:
         return fileStatvfs;
     }
 
-    erref::NTSTATUS read_data(const  std::string & file_to_tread,
-                                        int file_size,
-                                        int offset,
-                                        std::unique_ptr<uint8_t[]> & ReadData,
-                                        bool log_erro_on) override {
+    erref::NTSTATUS read_data(
+        std::string const& file_to_tread, int offset, byte_array data,
+        bool log_erro_on
+    ) override {
+        auto const fsz = filesize(file_to_tread.c_str());
+        if (fsz < 0) {
+            return erref::NTSTATUS::STATUS_NO_SUCH_FILE;
+        }
+        if (offset > fsz) {
+            return erref::NTSTATUS::STATUS_UNSUCCESSFUL;
+        }
 
-        std::ifstream ateFile(file_to_tread, std::ios::binary| std::ios::ate);
-        if(ateFile.is_open()) {
-            if (file_size > ateFile.tellg()) {
-                file_size = ateFile.tellg();
-            }
-            ateFile.close();
+        auto const remaining = fsz - offset;
 
-            std::ifstream inFile(file_to_tread, std::ios::in | std::ios::binary);
-            if(inFile.is_open()) {
-                ReadData = std::make_unique<uint8_t[]>(file_size+offset);
-                inFile.read(reinterpret_cast<char *>(ReadData.get()), file_size+offset);
-                inFile.close();
-            } else {
-                if (log_erro_on) {
-                    LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_tread.c_str());
-                }
-                return erref::NTSTATUS::STATUS_NO_SUCH_FILE;
-            }
+        assert(std::size_t(remaining) <= data.size());
 
-        } else {
+        std::ifstream inFile(file_to_tread, std::ios::in | std::ios::binary);
+        if(inFile) {
+            inFile.read(data.to_charp(), std::min(remaining, int(data.size())));
+        }
+
+        if (!inFile || inFile.eof()) {
             if (log_erro_on) {
                 LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_tread.c_str());
             }
+            // TODO or STATUS_ACCESS_DENIED
             return erref::NTSTATUS::STATUS_NO_SUCH_FILE;
         }
 

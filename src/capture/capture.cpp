@@ -1610,6 +1610,7 @@ Capture::Capture(
             this->probes.push_back(this->meta_capture_obj->session_log_agent);
         }
     }
+
     if (this->title_capture_obj) {
         this->caps.push_back(*this->title_capture_obj);
         this->probes.push_back(*this->title_capture_obj);

@@ -40,10 +40,10 @@ void mod_rdp::init_negociate_event_(
     char const* program, char const* directory)
 {
     auto check_error = [this](
-        auto /*ctx*/, jln2::ExitR er,
+        auto /*ctx*/, jln::ExitR er,
         gdi::GraphicApi&, RdpNegociation& rdp_negociation
     ){
-        if (er.status != jln2::ExitR::Exception) {
+        if (er.status != jln::ExitR::Exception) {
             return er.to_result();
         }
 
@@ -99,7 +99,7 @@ void mod_rdp::init_negociate_event_(
     ))
     .set_timeout(std::chrono::milliseconds(0))
     .on_exit(check_error)
-    .on_action(jln2::exit_with_error<ERR_RDP_PROTOCOL>() /* replaced by on_timeout action*/)
+    .on_action(jln::exit_with_error<ERR_RDP_PROTOCOL>() /* replaced by on_timeout action*/)
     .on_timeout([this](auto ctx, gdi::GraphicApi& gd, RdpNegociation& rdp_negociation){
         gdi_clear_screen(gd, this->get_dim());
         LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
@@ -123,7 +123,7 @@ void mod_rdp::init_negociate_event_(
             this->negociation_result = rdp_negociation.get_result();
             // TODO replace_event()
             return ctx.disable_timeout()
-            .replace_exit(jln2::propagate_exit())
+            .replace_exit(jln::propagate_exit())
             .replace_action([this](auto ctx, gdi::GraphicApi& gd, RdpNegociation&){
                 this->draw_event(ctx.get_current_time().tv_sec, gd);
                 return ctx.need_more_data();

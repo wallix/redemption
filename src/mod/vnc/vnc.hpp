@@ -275,9 +275,9 @@ public:
         this->fd_event = session_reactor
         .create_graphic_fd_event(this->t.get_fd(), std::ref(*this))
         .set_timeout(std::chrono::milliseconds(0))
-        .on_exit(jln2::propagate_exit())
+        .on_exit(jln::propagate_exit())
         // TODO VNC_PROTOCOL_ERROR
-        .on_action(jln2::exit_with_error<ERR_VNC_CONNECTION_ERROR>() /* replaced by on_timeout action*/)
+        .on_action(jln::exit_with_error<ERR_VNC_CONNECTION_ERROR>() /* replaced by on_timeout action*/)
         .on_timeout([](auto ctx, gdi::GraphicApi& gd, mod_vnc& self){
             LOG(LOG_DEBUG, "gdi_clear_screen");
             gdi_clear_screen(gd, self.get_dim());

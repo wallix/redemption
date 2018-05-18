@@ -167,10 +167,17 @@ inline void config_type_definition(type_enumerations & e)
       .value("freeze_connection_and_wait")
     ;
 
-    e.enumeration_set("SmartVideoCropping")
-      .value("disable", 0)
-      .value("v1", 1)
-      .value("v2", 2)
+    e.enumeration_list("SmartVideoCropping")
+      .value("disable")
+      .value("v1")
+      .value("v2")
+    ;
+
+    e.enumeration_list("RdpModeConsole")
+      .value("allow")
+      .value("force")
+      .value("forbid")
+      .set_string_parser()
     ;
 }
 

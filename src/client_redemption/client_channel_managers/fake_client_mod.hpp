@@ -25,6 +25,7 @@
 #include "client_redemption/client_input_output_api.hpp"
 
 #include "core/RDP/clipboard.hpp"
+#include "utils/sugar/byte.hpp"
 
 
 class FakeRDPChannelsMod : public mod_api
@@ -207,19 +208,19 @@ class FakeIODisk : public ClientIODiskAPI
 public:
     FakeIODisk() = default;
 
-    bool ifile_good(const char * new_path) override {
+    bool ifile_good(const char * /*new_path*/) override {
         return true;
     }
 
-    bool ofile_good(const char * new_path) override {
+    bool ofile_good(const char * /*new_path*/) override {
         return true;
     }
 
-    bool dir_good(const char * new_path) override {
+    bool dir_good(const char * /*new_path*/) override {
         return true;
     }
 
-    void marke_dir(const char * new_path) override {
+    void marke_dir(const char * /*new_path*/) override {
 
     }
 
@@ -233,43 +234,51 @@ public:
          return fileStatvfs;
     }
 
-    erref::NTSTATUS read_data(const  std::string & file_to_tread,
-                                        int file_size,
-                                        int offset,
-                                        std::unique_ptr<uint8_t[]> & ReadData,
-                                        bool log_erro_on) override {
+    // TODO unique_ptr& <- bad idea
+    erref::NTSTATUS read_data(
+        std::string const& file_to_tread, int offset, byte_array data,
+        bool log_erro_on
+    ) override {
+        (void)file_to_tread;
+        (void)offset;
+        (void)data;
+        (void)log_erro_on;
 
         return erref::NTSTATUS::STATUS_SUCCESS;
     }
 
-    bool set_elem_from_dir(std::vector<std::string> & elem_list, std::string & str_dir_path) override {
+    // TODO str_dir_path is not constant ?
+    bool set_elem_from_dir(std::vector<std::string> & elem_list, const std::string & str_dir_path) override {
+        (void)str_dir_path;
         elem_list.clear();
 
         return true;
     }
 
-    int get_device(const char * file_path) override {
+    int get_device(const char * /*file_path*/) override {
         return 0;
     }
 
-    uint32_t get_volume_serial_number(int device) override {
+    uint32_t get_volume_serial_number(int /*device*/) override {
 
         return 0;
     }
 
     bool write_file(const char * file_to_write, const char * data, int data_len) override {
+        (void)file_to_write;
+        (void)data;
+        (void)data_len;
+
         return true;
     }
 
-    bool remove_file(const char * file_to_remove) override {
+    bool remove_file(const char * /*file_to_remove*/) override {
         return false;
     }
 
     bool rename_file(const char * file_to_rename,  const char * new_name) override {
+        (void)file_to_rename;
+        (void)new_name;
         return false;
     }
-
-
 };
-
-

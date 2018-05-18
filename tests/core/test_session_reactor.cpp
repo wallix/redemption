@@ -30,30 +30,30 @@
 template<class> struct t_{};
 RED_AUTO_TEST_CASE(TestSequencer)
 {
-    using R = jln2::R;
+    using R = jln::R;
     struct Ctx {} ctx;
     using Array = std::array<int, 5>;
     Array a{};
-    auto sequencer = jln2::sequencer(
+    auto sequencer = jln::sequencer(
         [&a](Ctx){ a[0] = 1; return R::Next; },
         [&a](Ctx){ a[1] = 1; return R::Next; },
         [&a](Ctx){ a[2] = 1; return R::Next; },
         [&a](Ctx){ a[3] = 1; return R::Next; },
         [&a](Ctx){ a[4] = 1; return R::Next; }
     );
-    RED_CHECK(sequencer(ctx) == jln2::R::Ready); RED_CHECK_EQ_RANGES(a, (Array{{1, 0, 0, 0, 0}}));
-    RED_CHECK(sequencer(ctx) == jln2::R::Ready); RED_CHECK_EQ_RANGES(a, (Array{{1, 1, 0, 0, 0}}));
-    RED_CHECK(sequencer(ctx) == jln2::R::Ready); RED_CHECK_EQ_RANGES(a, (Array{{1, 1, 1, 0, 0}}));
-    RED_CHECK(sequencer(ctx) == jln2::R::Ready); RED_CHECK_EQ_RANGES(a, (Array{{1, 1, 1, 1, 0}}));
-    RED_CHECK(sequencer(ctx) == jln2::R::Next);  RED_CHECK_EQ_RANGES(a, (Array{{1, 1, 1, 1, 1}}));
+    RED_CHECK(sequencer(ctx) == jln::R::Ready); RED_CHECK_EQ_RANGES(a, (Array{{1, 0, 0, 0, 0}}));
+    RED_CHECK(sequencer(ctx) == jln::R::Ready); RED_CHECK_EQ_RANGES(a, (Array{{1, 1, 0, 0, 0}}));
+    RED_CHECK(sequencer(ctx) == jln::R::Ready); RED_CHECK_EQ_RANGES(a, (Array{{1, 1, 1, 0, 0}}));
+    RED_CHECK(sequencer(ctx) == jln::R::Ready); RED_CHECK_EQ_RANGES(a, (Array{{1, 1, 1, 1, 0}}));
+    RED_CHECK(sequencer(ctx) == jln::R::Next);  RED_CHECK_EQ_RANGES(a, (Array{{1, 1, 1, 1, 1}}));
 }
 
 constexpr auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };
 
 RED_AUTO_TEST_CASE(TestSessionReactorTimer)
 {
-    using Ptr = jln2::SharedPtr;
-    using Dt = jln2::NotifyDeleteType;
+    using Ptr = jln::SharedPtr;
+    using Dt = jln::NotifyDeleteType;
     SessionReactor session_reactor;
 
     session_reactor.set_current_time(timeval{10, 222});
@@ -67,7 +67,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
         s += "d1\n";
     })
     .set_delay(std::chrono::seconds(1))
-    .on_action(jln2::one_shot([](std::string& s){
+    .on_action(jln::one_shot([](std::string& s){
         s += "timer1\n";
     }));
 
@@ -76,7 +76,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
         s += "d2\n";
     })
     .set_delay(std::chrono::seconds(2))
-    .on_action(jln2::always_ready([](std::string& s){
+    .on_action(jln::always_ready([](std::string& s){
         s += "timer2\n";
     }));
 
@@ -92,7 +92,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
 
     Ptr timer4 = session_reactor.create_graphic_timer(std::ref(s))
     .set_time({16, 0})
-    .on_action(jln2::one_shot([](gdi::GraphicApi&, std::string& s){
+    .on_action(jln::one_shot([](gdi::GraphicApi&, std::string& s){
         s += "timer4\n";
     }));
 
@@ -135,7 +135,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
 RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
 {
     SessionReactor session_reactor;
-    using Dt = jln2::NotifyDeleteType;
+    using Dt = jln::NotifyDeleteType;
 
     std::string s;
 
@@ -143,7 +143,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
     .set_notify_delete([](Dt, std::string& s){
         s += "~gd\n";
     })
-    .on_action(jln2::one_shot([](gdi::GraphicApi&, std::string& s){
+    .on_action(jln::one_shot([](gdi::GraphicApi&, std::string& s){
         s += "gd\n";
     }));
 
@@ -151,7 +151,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
     .set_notify_delete([](Dt, std::string& s){
         s += "~callback\n";
     })
-    .on_action(jln2::one_shot([](Callback&, std::string& s){
+    .on_action(jln::one_shot([](Callback&, std::string& s){
         s += "callback\n";
     }));
 
@@ -199,7 +199,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorFd)
         s += "fd1\n";
         return ctx.next();
     })
-    .on_exit(jln2::propagate_exit([](std::string& s){
+    .on_exit(jln::propagate_exit([](std::string& s){
         s += "~fd1\n";
     }))
     .set_timeout({})
@@ -210,7 +210,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorFd)
         s += "fd2\n";
         return ctx.next();
     })
-    .on_exit(jln2::propagate_exit([&s](gdi::GraphicApi&){
+    .on_exit(jln::propagate_exit([&s](gdi::GraphicApi&){
         s += "~fd2\n";
     }))
     .set_timeout({})
@@ -229,8 +229,8 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
 
     std::string s;
 
-    using namespace jln2::literals;
-    using jln2::value;
+    using namespace jln::literals;
+    using jln::value;
 
     auto trace = [](auto name){
         return [](auto ctx, gdi::GraphicApi&, std::string& s){
@@ -243,7 +243,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
     };
 
     SessionReactor::GraphicEventPtr event = session_reactor.create_graphic_event(std::ref(s))
-    .on_action(jln2::sequencer(
+    .on_action(jln::sequencer(
         trace("a"_s),
         trace("b"_s),
         trace("c"_s),
@@ -272,7 +272,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
     };
 
     event = session_reactor.create_graphic_event(std::ref(s))
-    .on_action(jln2::sequencer(
+    .on_action(jln::sequencer(
         "a"_f = trace2([](auto ctx){ return ctx.next(); }),
         "b"_f = trace2([](auto ctx){ return ctx.at("d"_s).ready(); }),
         "c"_f = [](auto ctx, gdi::GraphicApi& /*gd*/, std::string& s){
@@ -302,9 +302,9 @@ RED_AUTO_TEST_CASE(TestSessionReactorDeleter)
     class S;
 
     std::vector<std::unique_ptr<S>> v;
-    auto f = [&v](S&, jln2::NotifyDeleteType t){
+    auto f = [&v](S&, jln::NotifyDeleteType t){
         RED_CHECK_EQ(v.size(), 1);
-        if (t == jln2::NotifyDeleteType::DeleteByAction) {
+        if (t == jln::NotifyDeleteType::DeleteByAction) {
             v.clear();
         }
     };
@@ -318,7 +318,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorDeleter)
         void foo(SessionReactor& session_reactor, F f)
         {
             this->gd_ptr = session_reactor.create_graphic_event(std::ref(*this), f)
-            .set_notify_delete([](jln2::NotifyDeleteType d, S& self, F f){ f(self, d); })
+            .set_notify_delete([](jln::NotifyDeleteType d, S& self, F f){ f(self, d); })
             .on_action([](auto ctx, gdi::GraphicApi&, S&, F){
                 return ctx.terminate();
             });

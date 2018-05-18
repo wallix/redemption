@@ -55,10 +55,15 @@ namespace
     };
 }
 
+inline Keymap2::KeyFlags& operator^=(Keymap2::KeyFlags& f, Keymap2::KeyFlags const& x) noexcept
+{
+    f = Keymap2::KeyFlags(int(f) ^ int(x));
+    return f;
+}
 
 Keymap2::Keymap2(uint32_t verbose)
     : keys_down{}
-    , key_flags(0)
+    , key_flags(NoFlag)
     , ibuf(0)
     , nbuf(0)
     , buffer{}
@@ -73,7 +78,7 @@ Keymap2::Keymap2(uint32_t verbose)
 
 void Keymap2::synchronize(uint16_t param1)
 {
-    this->key_flags = param1 & 0x07;
+    this->key_flags = KeyFlags(param1 & (SCROLLLOCK | NUMLOCK | CAPSLOCK));
     // non sticky keys are forced to be UP
     // TODO Non sticky keys are forced in up state. Is it what we should do ? We have up and down events for these key anyway hence up is not likelier than down (really it should be 'unknown', but we do not have this state")
     this->keys_down[LEFT_SHIFT] = 0;

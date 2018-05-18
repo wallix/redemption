@@ -28,12 +28,14 @@
 #include "client_redemption/client_channel_managers/fake_client_mod.hpp"
 #include "client_redemption/client_channel_managers/client_channel_RDPDR_manager.hpp"
 
-namespace rdpdr {
-    std::ostream& operator<<(std::ostream& out, rdpdr::Component const & e)
+namespace rdpdr
+{
+    inline std::ostream& operator<<(std::ostream& out, rdpdr::Component const & e)
     {
         return out << +underlying_cast(e); // '+' for transform u8/s8 to int
     }
-    std::ostream& operator<<(std::ostream& out, rdpdr::PacketId const & e)
+
+    inline std::ostream& operator<<(std::ostream& out, rdpdr::PacketId const & e)
     {
         return out << +underlying_cast(e); // '+' for transform u8/s8 to int
     }
