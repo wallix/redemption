@@ -1176,7 +1176,7 @@ private:
                             data.get()[x+2] = ((dstData[x+2] ^ b) & srcData[x+2]) ^ b;
                         }
 
-                        LOG(LOG_INFO, "x=%zu  !!!!!!!!!!!!!!!!!!!!!!!!!!!!", x);
+//                        LOG(LOG_INFO, "x=%zu  !!!!!!!!!!!!!!!!!!!!!!!!!!!!", x);
 
                         QImage image(data.get(), mincx, 1, srcBitmap.format());
                         if (image.depth() != this->client->info.bpp) {

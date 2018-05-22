@@ -1059,9 +1059,9 @@ RED_AUTO_TEST_CASE(TestAppRecorderVlc)
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder.1.flva\".\n\n");
     RED_CHECK_EQUAL(0, res);
 
-    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000000.flv", 62513401);
+    RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder.1-000000.flv", 62513397, 62515277);
     RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000001.flv", 7555247);
-    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1.flv", 70069337);
+    RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder.1.flv", 70069333, 70071213);
 }
 
 RED_AUTO_TEST_CASE(TestAppRecorderChunk)
