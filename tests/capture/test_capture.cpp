@@ -303,7 +303,10 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     now.tv_usec = 0;
     now.tv_sec = 1000;
 
-    Rect scr(0, 0, 12, 10);
+//    Rect scr(0, 0, 12, 10);
+
+
+      Rect scr(0, 0, 100, 100);
 
     ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
     ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
@@ -432,14 +435,14 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
     capture.draw(RDPOpaqueRect(scr, encode_color16()(BLUE)), scr, color_cxt);
     now.tv_sec++;
-    capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+    capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
 
     const char * filename = "./capture-000000.png";
 
     auto s = get_file_contents<std::string>(filename);
     RED_CHECK_SIG2(
         reinterpret_cast<const uint8_t*>(s.data()), s.size(),
-        "\x39\xb2\x11\x9d\x25\x64\x8d\x7b\xce\x3e\xf1\xf0\xad\x29\x50\xea\xa3\x01\x5c\x27"
+        "\x10\x93\x34\x23\x8f\x7b\x87\x61\xf6\xe2\xc5\xa0\x2e\x12\x40\xab\x86\xe3\x9c\x87"
     );
     ::unlink(filename);
 }
