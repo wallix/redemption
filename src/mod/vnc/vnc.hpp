@@ -278,11 +278,9 @@ public:
         // TODO VNC_PROTOCOL_ERROR
         .on_action(jln::exit_with_error<ERR_VNC_CONNECTION_ERROR>() /* replaced by on_timeout action*/)
         .on_timeout([](auto ctx, gdi::GraphicApi& gd, mod_vnc& self){
-            LOG(LOG_DEBUG, "gdi_clear_screen");
             gdi_clear_screen(gd, self.get_dim());
             return ctx.disable_timeout()
             .replace_action([](auto ctx, gdi::GraphicApi& gd, mod_vnc& self){
-                LOG(LOG_DEBUG, "on action");
                 self.server_data_buf.read_from(self.t);
                 while (self.state != UP_AND_RUNNING && self.draw_event_impl(gd)) {
                 }
