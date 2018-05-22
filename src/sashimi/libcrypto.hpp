@@ -39,7 +39,7 @@
 
 #include <syslog.h>
 #include <vector>
-#include "utils/sugar/make_unique.hpp"
+#include <memory>
 
 #include "core/error.hpp"
 

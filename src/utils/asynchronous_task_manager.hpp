@@ -27,14 +27,14 @@ class AsynchronousTask {
 public:
     virtual ~AsynchronousTask() = default;
 
-    struct DeleterFunction
+    struct TerminateEventNotifier
     {
         using ptr_function = void(*)(void* data, AsynchronousTask&) noexcept;
 
-        explicit DeleterFunction() = default;
+        explicit TerminateEventNotifier() = default;
 
         template<class T, class F>
-        DeleterFunction(T* p, F f)
+        TerminateEventNotifier(T* p, F f)
         noexcept(noexcept(static_cast<void(*)(T*, AsynchronousTask&) noexcept>(f)))
         : data(p)
         , f([](void* data, AsynchronousTask& t) noexcept {
@@ -44,7 +44,7 @@ public:
         {}
 
         template<class T>
-        DeleterFunction(T* p, ptr_function f) noexcept
+        TerminateEventNotifier(T* p, ptr_function f) noexcept
         : data(p)
         , f(f)
         {}
@@ -59,6 +59,6 @@ public:
         ptr_function  f = [](void*, AsynchronousTask&) noexcept {};
     };
 
-    virtual void configure_event(SessionReactor&, DeleterFunction) = 0;
+    virtual void configure_event(SessionReactor&, TerminateEventNotifier) = 0;
 };
 

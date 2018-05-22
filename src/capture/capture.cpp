@@ -42,7 +42,6 @@
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/cast.hpp"
-#include "utils/sugar/make_unique.hpp"
 
 #include "utils/bitmap_shrink.hpp"
 #include "utils/colors.hpp"

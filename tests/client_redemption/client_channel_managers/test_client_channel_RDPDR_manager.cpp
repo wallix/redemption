@@ -48,8 +48,6 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
     FakeIODisk fakeIODisk;
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
 
-
-
     StaticOutStream<512> out_serverAnnounce;
     rdpdr::SharedHeader header_serverAnnounce(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE);
     header_serverAnnounce.emit(out_serverAnnounce);

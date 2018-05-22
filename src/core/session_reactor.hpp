@@ -23,9 +23,10 @@ Author(s): Jonathan Poelen
 #include "core/error.hpp"
 #include "cxx/cxx.hpp"
 #include "cxx/diagnostic.hpp"
+#include "utils/difftimeval.hpp"
+#include "utils/string_c.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
-#include "utils/difftimeval.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -1072,26 +1073,10 @@ namespace jln
         };
     }
 
-    template<char... cs>
-    struct string_c
-    {
-        static inline char const value[sizeof...(cs)+1]{cs..., '\0'};
-
-        static constexpr char const* c_str() noexcept { return value; }
-    };
-
     namespace literals
     {
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
-        template<class C, C... cs>
-        string_c<cs...> operator ""_c () noexcept
-        { return {}; }
-
-        template<class C, C... cs>
-        string_c<cs...> operator ""_s () noexcept
-        { return {}; }
-
         template<class C, C... cs>
         detail::named_type<string_c<cs...>> operator ""_f () noexcept
         { return {}; }
@@ -2489,9 +2474,7 @@ namespace jln
             this->top.on_timeout_switch = detail::create_on_timeout(group, static_cast<F&&>(f));
             return R::SubstituteTimeout;
         }
-        else {
-            this->top.disable_timeout();
-        }
+        this->top.disable_timeout();
         return R::Ready;
     }
 
@@ -2974,9 +2957,9 @@ struct SessionReactor
     template<class F>
     void for_each_fd(EnableGraphics enable_gd, F f)
     {
-        auto g = [&f](int fd, auto& top){
+        auto g = [&f](int fd, auto& /*top*/){
             assert(fd != -1);
-            f(fd, top);
+            f(fd);
         };
         this->fd_events_.for_each(g);
         if (enable_gd) {

@@ -24,10 +24,8 @@
 #define RED_TEST_MODULE TestOrderMemBlt
 #include "system/redemption_unit_tests.hpp"
 
-
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 
-#include "./test_orders.hpp"
 
 RED_AUTO_TEST_CASE(TestMemBlt)
 {
@@ -56,7 +54,7 @@ RED_AUTO_TEST_CASE(TestMemBlt)
               3,    // srcx = 0 + 3 = 3
               4,    // srcy = 0 + 4 = 4
         };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 9, datas, "MemBlt 1");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -73,10 +71,9 @@ RED_AUTO_TEST_CASE(TestMemBlt)
 
         cmd.receive(in_stream, header);
 
-        check<RDPMemBlt>(common_cmd, cmd,
-            RDPOrderCommon(MEMBLT, Rect(311, 0, 800, 600)),
-            RDPMemBlt(cache_id, Rect(300, 400, 50, 60), 0xFF, 3, 4, cache_idx),
-            "MemBlt 1");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_memblt);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 
     {
@@ -105,7 +102,7 @@ RED_AUTO_TEST_CASE(TestMemBlt)
             0x04, 0x00,  // srcy = 4
             0x0F, 0      // cache_idx
         };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 21, datas, "MemBlt 2");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -118,13 +115,10 @@ RED_AUTO_TEST_CASE(TestMemBlt)
 
 
         RDPMemBlt cmd(0, Rect(), 0, 0, 0, 0);
-
-
         cmd.receive(in_stream, header);
 
-        check<RDPMemBlt>(common_cmd, cmd,
-            RDPOrderCommon(MEMBLT, Rect(311, 0, 800, 600)),
-            RDPMemBlt(cache_id, Rect(300, 400, 50, 60), 0xFF, 3, 4, cache_idx),
-            "MemBlt 2");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_memblt);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 }

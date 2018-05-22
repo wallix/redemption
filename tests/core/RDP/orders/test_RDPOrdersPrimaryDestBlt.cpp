@@ -24,10 +24,8 @@
 #define RED_TEST_MODULE TestOrderDestBlt
 #include "system/redemption_unit_tests.hpp"
 
-
 #include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 
-#include "./test_orders.hpp"
 
 RED_AUTO_TEST_CASE(TestDestBlt)
 {
@@ -52,7 +50,7 @@ RED_AUTO_TEST_CASE(TestDestBlt)
             0x3c, 0x00,  // cy = 60
             0xFF,        // rop
         };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 11, datas, "DestBlt 1");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -67,9 +65,8 @@ RED_AUTO_TEST_CASE(TestDestBlt)
 
         cmd.receive(in_stream, header);
 
-        check<RDPDestBlt>(common_cmd, cmd,
-            RDPOrderCommon(DESTBLT, Rect(311, 0, 800, 600)),
-            RDPDestBlt(Rect(300, 400, 50, 60), 0xFF),
-            "DestBlt 1");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_destblt);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 }

@@ -58,7 +58,7 @@ void mod_rdp::init_negociate_event_(
         }
 
         const char * statestr = "UNKNOWN_STATE";
-        const char * statedescr = "Unknow state.";
+        const char * statedescr = "Unknown state.";
         switch (rdp_negociation.get_state()) {
             #define CASE(e, trkey)                      \
                 case RdpNegociation::State::e:          \

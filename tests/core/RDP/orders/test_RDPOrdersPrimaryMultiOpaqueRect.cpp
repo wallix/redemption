@@ -24,10 +24,8 @@
 #define RED_TEST_MODULE TestOrderMultiOpaqueRect
 #include "system/redemption_unit_tests.hpp"
 
-
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
 
-#include "./test_orders.hpp"
 
 RED_AUTO_TEST_CASE(TestMultiOpaqueRect)
 {
@@ -81,7 +79,7 @@ RED_AUTO_TEST_CASE(TestMultiOpaqueRect)
  /* 0040 */ 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a,  // ................
  /* 0050 */ 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a,                          // ............
         };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), sizeof(datas), datas, "MultiOpaqueRect 1");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -98,25 +96,10 @@ RED_AUTO_TEST_CASE(TestMultiOpaqueRect)
         RDPMultiOpaqueRect cmd = state_multiopaquerect;
         cmd.receive(in_stream, header);
 
-        deltaRectangles.rewind();
-
-        deltaRectangles.out_sint16_le(316);
-        deltaRectangles.out_sint16_le(378);
-        deltaRectangles.out_sint16_le(10);
-        deltaRectangles.out_sint16_le(10);
-
-        for (int i = 0; i < 19; i++) {
-            deltaRectangles.out_sint16_le(10);
-            deltaRectangles.out_sint16_le(10);
-            deltaRectangles.out_sint16_le(10);
-            deltaRectangles.out_sint16_le(10);
-        }
-
-        in_deltaRectangles = InStream(deltaRectangles.get_data(), deltaRectangles.get_offset());
-
-        check<RDPMultiOpaqueRect>(common_cmd, cmd,
-            RDPOrderCommon(MULTIOPAQUERECT, Rect(0, 0, 0, 0)),
-            RDPMultiOpaqueRect(316, 378, 200, 200, encode_color24()(BLACK), 20, in_deltaRectangles),
-            "MultiOpaqueRect 2");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_multiopaquerect);
+        RED_CHECK_MEM(
+            stream_to_avu8(out_stream).subarray(1),
+            stream_to_avu8(out_stream2).subarray(1));
     }
 }

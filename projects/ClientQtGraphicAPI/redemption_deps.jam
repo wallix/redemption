@@ -8,6 +8,7 @@ add_lib snappy ;
 add_src capture/file_to_graphic.cpp ;
 add_src core/RDP/mppc.cpp ;
 add_src core/RDP/nego.cpp ;
+add_src core/error.cpp ;
 add_src core/font.cpp ;
 add_src gdi/clip_from_cmd.cpp ;
 add_src gdi/graphic_api.cpp ;

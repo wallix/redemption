@@ -48,7 +48,6 @@ h
 #include "utils/d3des.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/log.hpp"
-#include "utils/sugar/make_unique.hpp"
 #include "utils/sugar/update_lock.hpp"
 #include "utils/sugar/strutils.hpp"
 #include "utils/utf.hpp"
@@ -279,11 +278,9 @@ public:
         // TODO VNC_PROTOCOL_ERROR
         .on_action(jln::exit_with_error<ERR_VNC_CONNECTION_ERROR>() /* replaced by on_timeout action*/)
         .on_timeout([](auto ctx, gdi::GraphicApi& gd, mod_vnc& self){
-            LOG(LOG_DEBUG, "gdi_clear_screen");
             gdi_clear_screen(gd, self.get_dim());
             return ctx.disable_timeout()
             .replace_action([](auto ctx, gdi::GraphicApi& gd, mod_vnc& self){
-                LOG(LOG_DEBUG, "on action");
                 self.server_data_buf.read_from(self.t);
                 while (self.state != UP_AND_RUNNING && self.draw_event_impl(gd)) {
                 }
@@ -295,7 +292,7 @@ public:
                         self.update_screen(Rect(0, 0, self.width, self.height), 1);
                     }
                     catch (const Error & e) {
-                        LOG(LOG_ERR, "VNC Stopped [reason id=%u]", e.id);
+                        LOG(LOG_ERR, "VNC Stopped: %s", e.errmsg());
                         self.session_reactor.set_event_next(BACK_EVENT_NEXT);
                         self.front.must_be_stop_capture();
                     }

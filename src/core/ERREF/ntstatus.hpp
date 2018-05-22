@@ -24,8 +24,6 @@
 #include <cinttypes>
 #include <inttypes.h>
 
-#include "core/error.hpp"
-
 #include "utils/sugar/cast.hpp"
 #include "utils/stream.hpp"
 

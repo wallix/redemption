@@ -6,7 +6,6 @@
 Ex: `./gtrace -c -- ./bin/gcc/debug/test_in_meta_sequence_transport -ex 'b test_in_meta_sequence_transport.cpp:340' | ./bt -fs`
 - `gbt [-hcpqs] [--help] command line [-- [gdb-args...]]`: alias for `./gtrace [-cp] -n $command -- -ex "b $command_filename.cpp:$line" | ./bt -f[qs]`
 - `tmalloc command [args]`: run command with libtmalloc (cf: `LD_PRELOAD=../tmalloc/libtmalloc.so`), see `./tools/tmalloc`.
-- `sanitize-address [bjam-args]`: run `bjam asan` with `LD_LIBRARY_PATH=/usr/lib/gcc-snapshot/lib`.
 
 # Static analyzer
 
@@ -20,17 +19,17 @@ Ex: `./gtrace -c -- ./bin/gcc/debug/test_in_meta_sequence_transport -ex 'b test_
 
 - `clang-tidy [clang-tidy-args]`: run `clang-tidy`. Used `-fix` flag for fix detected errors.
 
-# Sanitizw
-
- - help: ASAN_OPTIONS=help=1 ./exe
-
-# ASan
+# Sanitizers
 
 - Add the ligne below at the end of your '.bashrc'.
 
-alias bjam="ASAN_OPTIONS=detect_leaks=1 LSAN_OPTIONS=suppressions=./tools/c++-analyzer/suppr-leak-asan.txt bjam"
+alias bjam="ASAN_OPTIONS=detect_stack_use_after_return=1:detect_leaks=1 LSAN_OPTIONS=suppressions=./tools/c++-analyzer/suppr-leak-asan.txt bjam"
 
-# UBSan
+## ASan
+
+ - help: ASAN_OPTIONS=help=1 ./exe
+
+## UBSan
 
 http://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
 
