@@ -81,14 +81,9 @@ public:
         (void)ssl_cipher_list;
     }
 
-    virtual const uint8_t * get_public_key() const
+    virtual array_view_const_u8 get_public_key() const
     {
-        return nullptr;
-    }
-
-    virtual size_t get_public_key_length() const
-    {
-        return 0;
+        return {};
     }
 
     enum class Read : bool { Eof, Ok };
@@ -243,8 +238,7 @@ struct InTransport
     void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list)
     { this->t.enable_server_tls(certificate_password, ssl_cipher_list); }
 
-    const uint8_t * get_public_key() const { return this->t.get_public_key(); }
-    size_t get_public_key_length() const { return this->t.get_public_key_length(); }
+    array_view_const_u8 get_public_key() const { return this->t.get_public_key(); }
 
     void seek(int64_t offset, int whence) { this->t.seek(offset, whence); }
     bool disconnect() { return this->t.disconnect(); }
@@ -285,8 +279,7 @@ struct OutTransport
     void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list)
     { this->t.enable_server_tls(certificate_password, ssl_cipher_list); }
 
-    const uint8_t * get_public_key() const { return this->t.get_public_key(); }
-    size_t get_public_key_length() const { return this->t.get_public_key_length(); }
+    array_view_const_u8 get_public_key() const { return this->t.get_public_key(); }
 
     void seek(int64_t offset, int whence) { this->t.seek(offset, whence); }
     bool disconnect() { return this->t.disconnect(); }

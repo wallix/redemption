@@ -151,8 +151,8 @@ struct GeneratorTransport : Transport
     {
         if (this->remaining_is_error && this->len != this->current) {
             this->remaining_is_error = false;
-            RED_REQUIRE_MESSAGE(this->len == this->current, 
-                "\n~GeneratorTransport() remaining=" << (this->len-this->current) 
+            RED_REQUIRE_MESSAGE(this->len == this->current,
+                "\n~GeneratorTransport() remaining=" << (this->len-this->current)
                 << " len=" << this->len << "\n"
                 << (redemption_unit_test__::hexdump_trailing{
                     "GeneratorTransport", this->data.get() + this->current, this->len - this->current
@@ -247,8 +247,8 @@ struct CheckTransport : Transport
     {
         if (this->remaining_is_error && this->len != this->current) {
             this->remaining_is_error = false;
-            RED_REQUIRE_MESSAGE(this->len == this->current, 
-                "\n~CheckTransport() reamining=0 failed, remaining=" << (this->len-this->current) 
+            RED_REQUIRE_MESSAGE(this->len == this->current,
+                "\n~CheckTransport() reamining=0 failed, remaining=" << (this->len-this->current)
                 << " len=" << this->len << "\n"
                 << (redemption_unit_test__::hexdump_trailing{
                     "CheckTransport", this->data.get() + this->current, this->len - this->current
@@ -263,7 +263,7 @@ private:
     void do_send(const uint8_t * const data, size_t len) override
     {
         const size_t available_len = std::min<size_t>(this->len - this->current, len);
-        
+
         if (0 != memcmp(data, this->data.get() + this->current, available_len)){
             // data differs, find where
             uint32_t differs = 0;
@@ -341,14 +341,9 @@ struct TestTransport : public Transport
         memcpy(this->public_key.get(), data, data_size);
     }
 
-    const uint8_t * get_public_key() const override
+    array_view_const_u8 get_public_key() const override
     {
-        return this->public_key.get();
-    }
-
-    size_t get_public_key_length() const override
-    {
-        return this->public_key_length;
+        return {this->public_key.get(), this->public_key_length};
     }
 
 private:

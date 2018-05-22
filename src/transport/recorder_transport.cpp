@@ -38,8 +38,7 @@ RecorderTransport::RecorderTransport( const char * name, const std::string &fnam
 }
 
 
-RecorderTransport::~RecorderTransport() {
-}
+RecorderTransport::~RecorderTransport() = default;
 
 
 Transport::TlsResult RecorderTransport::enable_client_tls(bool server_cert_store,
@@ -53,14 +52,15 @@ Transport::TlsResult RecorderTransport::enable_client_tls(bool server_cert_store
 	if (ret == Transport::TlsResult::Ok) {
 		auto now = std::chrono::system_clock::now();
 		auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time);
+        auto const key = this->get_public_key();
 
 		headers_stream.out_uint8(RECORD_TYPE_CERT);
 		headers_stream.out_uint64_le(delta.count());
-		headers_stream.out_uint32_le(get_public_key_length());
+		headers_stream.out_uint32_le(key.size());
 
-		//LOG(LOG_WARNING, "cert len=%lu", get_public_key_length());
+		//LOG(LOG_WARNING, "cert len=%lu", key.size());
 		file.send(headers_stream.get_data(), headers_stream.get_offset());
-		file.send(get_public_key(), get_public_key_length());
+		file.send(key.data(), key.size());
 		headers_stream.rewind(0);
 	}
 	return ret;

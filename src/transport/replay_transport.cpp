@@ -151,12 +151,9 @@ ReplayTransport::ReadResult ReplayTransport::read_more_chunk() {
 }
 
 
-const uint8_t * ReplayTransport::get_public_key() const {
-	return public_key;
-}
-
-size_t ReplayTransport::get_public_key_length() const {
-	return public_key_size;
+array_view_const_u8 ReplayTransport::get_public_key() const
+{
+	return {this->public_key, this->public_key_size};
 }
 
 Transport::TlsResult ReplayTransport::enable_client_tls(bool server_cert_store,
