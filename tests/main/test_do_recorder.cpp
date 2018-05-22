@@ -1036,7 +1036,7 @@ inline void test_app_recorder_impl(char const * opt_vlc, size_t sz1, size_t sz2,
 
 RED_AUTO_TEST_CASE(TestAppRecorder)
 {
-    test_app_recorder_impl("--disable-bogus-vlc", 13451870, 1641583, 14978053);
+    test_app_recorder_impl("--disable-bogus-vlc", 13450874, 1641583, 14977057);
 }
 
 inline void test_app_recorder_impl2(char const * opt_vlc, size_t sz1, size_t sz2, size_t sz3)
@@ -1073,7 +1073,7 @@ inline void test_app_recorder_impl2(char const * opt_vlc, size_t sz1, size_t sz2
 
 RED_AUTO_TEST_CASE(TestAppRecorderVlc)
 {
-    test_app_recorder_impl2("--bogus-vlc", 62515277, 7555247, 70071213);
+    test_app_recorder_impl2("--bogus-vlc", 62513401, 7555247, 70069337);
 }
 
 RED_AUTO_TEST_CASE(TestAppRecorderChunk)
@@ -1103,7 +1103,7 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunk)
 
     RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder-chunk-000000.png", 26981);
     RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder-chunk-000001.png", 27536);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder-chunk-000000.mp4", 11227513, 11227499);
+    RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder-chunk-000000.mp4", 11226760, 11227499);
     RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder-chunk-000001.mp4", 86044, 86030);
     RED_CHECK_FILE_CONTENTS("/tmp/recorder-chunk.pgs", R"js({"percentage":100,"eta":0,"videos":1})js");
     RED_CHECK_FILE_CONTENTS("/tmp/recorder-chunk.meta", "2016-02-18 18:27:01 + (break)\n");
