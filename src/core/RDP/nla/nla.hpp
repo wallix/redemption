@@ -84,10 +84,10 @@ public:
     bool hardcoded_tests = false;
 
     rdpCredsspBase(
-        uint8_t * user,
-        uint8_t * domain,
-        uint8_t * pass,
-        uint8_t * hostname,
+        uint8_t const* user,
+        uint8_t const* domain,
+        uint8_t const* pass,
+        uint8_t const* hostname,
         const char * target_host,
         const bool krb,
         const bool restricted_admin_mode,
@@ -121,11 +121,12 @@ public:
         , class_name_log(class_name_log)
     {
         if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredsspClient:: Initialization");
+            LOG(LOG_INFO, "%s:: Initialization", this->class_name_log);
         }
         this->set_credentials(user, domain, pass, hostname);
     }
 
+protected:
     int credssp_ntlm_init(bool is_server) {
         if (this->verbose) {
             LOG(LOG_INFO, "%s::ntlm_init", this->class_name_log);
@@ -153,8 +154,9 @@ public:
         this->trans.send(ts_request_emit.get_data(), ts_request_emit.get_offset());
     }
 
-    void set_credentials(uint8_t * user, uint8_t * domain,
-                         uint8_t * pass, uint8_t * hostname) {
+private:
+    void set_credentials(uint8_t const* user, uint8_t const* domain,
+                         uint8_t const* pass, uint8_t const* hostname) {
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspClient::set_credentials");
         }
@@ -180,6 +182,7 @@ public:
         this->ServicePrincipalName.get_data()[length] = 0;
     }
 
+protected:
     void InitSecurityInterface(SecInterface secInter) {
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspClient::InitSecurityInterface");
