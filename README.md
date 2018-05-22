@@ -92,6 +92,14 @@ and install (as administrator):
 
 Binaries are located in /usr/local/bin.
 
+## Modes
+
+$ `bjam [variant=]{release|debug|san}`
+
+- `release`: default
+- `debug`: debug mode (compile with `-g -D_GLIBCXX_DEBUG`)
+- `san`: enable sanitizers: asan, lsan, usan
+
 
 Run ReDemPtion
 ==============
