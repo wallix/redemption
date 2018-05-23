@@ -24,10 +24,8 @@
 #define RED_TEST_MODULE TestOrderPatBlt
 #include "system/redemption_unit_tests.hpp"
 
-
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 
-#include "./test_orders.hpp"
 
 RED_AUTO_TEST_CASE(TestPatBlt)
 {
@@ -79,7 +77,7 @@ RED_AUTO_TEST_CASE(TestPatBlt)
             0xDD,        // brush.hatch
             1, 2, 3, 4, 5, 6, 7   // brush.extra
         };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 30, datas, "PatBlt 1");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -94,11 +92,9 @@ RED_AUTO_TEST_CASE(TestPatBlt)
 
         cmd.receive(in_stream, header);
 
-        check<RDPPatBlt>(common_cmd, cmd,
-            RDPOrderCommon(PATBLT, Rect(311, 0, 800, 600)),
-            RDPPatBlt(Rect(300, 400, 50, 60), 0xFF, encode_color24()(BGRColor{0x102030}), encode_color24()(BGRColor{0x112233}),
-                RDPBrush(3, 4, 0x03, 0xDD, reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7"))),
-            "PatBlt 1");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_patblt);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 
     {
@@ -131,7 +127,7 @@ RED_AUTO_TEST_CASE(TestPatBlt)
             0x01,        // brush.style
             0xDD,        // brush.hatch
         };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 23, datas, "PatBlt 2");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -146,11 +142,9 @@ RED_AUTO_TEST_CASE(TestPatBlt)
 
         cmd.receive(in_stream, header);
 
-        check<RDPPatBlt>(common_cmd, cmd,
-            RDPOrderCommon(PATBLT, Rect(311, 0, 800, 600)),
-            RDPPatBlt(Rect(300, 400, 50, 60), 0xFF, encode_color24()(BGRColor{0x102030}), encode_color24()(BGRColor{0x112233}),
-                RDPBrush(3, 4, 0x01, 0xDD)),
-            "PatBlt 2");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_patblt);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 
     {
@@ -182,7 +176,7 @@ RED_AUTO_TEST_CASE(TestPatBlt)
             0x04,        // brush_org_y
             1, 2, 3, 4, 5, 6, 7   // brush_extra
         };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 28, datas, "PatBlt 3");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -197,10 +191,8 @@ RED_AUTO_TEST_CASE(TestPatBlt)
 
         cmd.receive(in_stream, header);
 
-        check<RDPPatBlt>(common_cmd, cmd,
-            RDPOrderCommon(PATBLT, Rect(311, 0, 800, 600)),
-            RDPPatBlt(Rect(300, 400, 50, 60), 0xFF, encode_color24()(BGRColor{0x102030}), encode_color24()(BGRColor{0x112233}),
-                RDPBrush(3, 4, 0x03, 0xDD, reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7"))),
-            "PatBlt 3");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_patblt);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 }

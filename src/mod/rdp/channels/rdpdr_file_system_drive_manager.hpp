@@ -32,7 +32,6 @@
 #include "mod/rdp/rdp_log.hpp"
 #include "transport/in_file_transport.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/sugar/make_unique.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/winpr/pattern.hpp"
 

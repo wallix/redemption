@@ -45,7 +45,7 @@ inline ExecuteEventsResult execute_events(
 
     session_reactor.for_each_fd(
         enable_graphics,
-        [&](int fd, auto const&){
+        [&](int fd){
             io_fd_set(fd, rfds);
             max = std::max(max, unsigned(fd));
         }

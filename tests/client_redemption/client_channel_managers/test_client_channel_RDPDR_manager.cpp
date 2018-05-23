@@ -42,73 +42,71 @@ namespace rdpdr
 }
 
 
-RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
-{
-    FakeClient client;
-    FakeIODisk fakeIODisk;
-    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
+//RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
+//{
+//    FakeClient client;
+//    FakeIODisk fakeIODisk;
+//    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
+
+//    StaticOutStream<512> out_serverAnnounce;
+//    rdpdr::SharedHeader header_serverAnnounce(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE);
+//    header_serverAnnounce.emit(out_serverAnnounce);
+//    out_serverAnnounce.out_uint16_be(1);
+//    out_serverAnnounce.out_uint16_be(1);
+//    out_serverAnnounce.out_uint32_be(2);
+//    InStream chunk_serverAnnounce(out_serverAnnounce.get_data(), out_serverAnnounce.get_offset());
+
+//    manager.receive(chunk_serverAnnounce);
+//    RED_CHECK_EQUAL(client.get_total_stream_produced(), 2);
+
+//    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
+//    InStream stream_clientIDConfirm(pdu_data->data, pdu_data->size);
+//    rdpdr::SharedHeader header_clientIDConfirm;
+//    header_clientIDConfirm.receive(stream_clientIDConfirm);
+//    RED_CHECK_EQUAL(header_clientIDConfirm.component, rdpdr::RDPDR_CTYP_CORE);
+//    RED_CHECK_EQUAL(header_clientIDConfirm.packet_id, rdpdr::PAKID_CORE_CLIENTID_CONFIRM);
+
+//    pdu_data = client.stream();
+//    InStream stream_clientName(pdu_data->data, pdu_data->size);
+//    rdpdr::SharedHeader header_clientName;
+//    header_clientName.receive(stream_clientName);
+//    RED_CHECK_EQUAL(header_clientName.component, rdpdr::RDPDR_CTYP_CORE);
+//    RED_CHECK_EQUAL(header_clientName.packet_id, rdpdr::PAKID_CORE_CLIENT_NAME);
 
 
 
-    StaticOutStream<512> out_serverAnnounce;
-    rdpdr::SharedHeader header_serverAnnounce(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE);
-    header_serverAnnounce.emit(out_serverAnnounce);
-    out_serverAnnounce.out_uint16_be(1);
-    out_serverAnnounce.out_uint16_be(1);
-    out_serverAnnounce.out_uint32_be(2);
-    InStream chunk_serverAnnounce(out_serverAnnounce.get_data(), out_serverAnnounce.get_offset());
+//    StaticOutStream<512> out_serverCapabilityRequest;
+//    rdpdr::SharedHeader header_serverCapabilityRequest(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY);
+//    header_serverCapabilityRequest.emit(out_serverCapabilityRequest);
+//    out_serverCapabilityRequest.out_uint16_le(0);
+//    out_serverCapabilityRequest.out_uint16_le(0);
+//    InStream chunk_serverCapabilityRequest(out_serverCapabilityRequest.get_data(), out_serverCapabilityRequest.get_offset());
 
-    manager.receive(chunk_serverAnnounce);
-    RED_CHECK_EQUAL(client.get_total_stream_produced(), 2);
+//    manager.receive(chunk_serverCapabilityRequest);
 
-    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
-    InStream stream_clientIDConfirm(pdu_data->data, pdu_data->size);
-    rdpdr::SharedHeader header_clientIDConfirm;
-    header_clientIDConfirm.receive(stream_clientIDConfirm);
-    RED_CHECK_EQUAL(header_clientIDConfirm.component, rdpdr::RDPDR_CTYP_CORE);
-    RED_CHECK_EQUAL(header_clientIDConfirm.packet_id, rdpdr::PAKID_CORE_CLIENTID_CONFIRM);
+//    StaticOutStream<512> out_serverClientIDConfirm;
+//    rdpdr::SharedHeader header_serverClientIDConfirm(rdpdr::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM);
+//    header_serverClientIDConfirm.emit(out_serverClientIDConfirm);
+//    InStream chunk_serverClientIDConfirm(out_serverClientIDConfirm.get_data(), out_serverClientIDConfirm.get_offset());
 
-    pdu_data = client.stream();
-    InStream stream_clientName(pdu_data->data, pdu_data->size);
-    rdpdr::SharedHeader header_clientName;
-    header_clientName.receive(stream_clientName);
-    RED_CHECK_EQUAL(header_clientName.component, rdpdr::RDPDR_CTYP_CORE);
-    RED_CHECK_EQUAL(header_clientName.packet_id, rdpdr::PAKID_CORE_CLIENT_NAME);
+//    manager.receive(chunk_serverClientIDConfirm);
 
+//    RED_CHECK_EQUAL(client.get_total_stream_produced(), 4);
 
+//    pdu_data = client.stream();
+//    InStream stream_clientCapability(pdu_data->data, pdu_data->size);
+//    rdpdr::SharedHeader header_clientCapability;
+//    header_clientCapability.receive(stream_clientCapability);
+//    RED_CHECK_EQUAL(header_clientCapability.component, rdpdr::RDPDR_CTYP_CORE);
+//    RED_CHECK_EQUAL(header_clientCapability.packet_id, rdpdr::PAKID_CORE_CLIENT_CAPABILITY);
 
-    StaticOutStream<512> out_serverCapabilityRequest;
-    rdpdr::SharedHeader header_serverCapabilityRequest(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY);
-    header_serverCapabilityRequest.emit(out_serverCapabilityRequest);
-    out_serverCapabilityRequest.out_uint16_le(0);
-    out_serverCapabilityRequest.out_uint16_le(0);
-    InStream chunk_serverCapabilityRequest(out_serverCapabilityRequest.get_data(), out_serverCapabilityRequest.get_offset());
-
-    manager.receive(chunk_serverCapabilityRequest);
-
-    StaticOutStream<512> out_serverClientIDConfirm;
-    rdpdr::SharedHeader header_serverClientIDConfirm(rdpdr::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM);
-    header_serverClientIDConfirm.emit(out_serverClientIDConfirm);
-    InStream chunk_serverClientIDConfirm(out_serverClientIDConfirm.get_data(), out_serverClientIDConfirm.get_offset());
-
-    manager.receive(chunk_serverClientIDConfirm);
-
-    RED_CHECK_EQUAL(client.get_total_stream_produced(), 4);
-
-    pdu_data = client.stream();
-    InStream stream_clientCapability(pdu_data->data, pdu_data->size);
-    rdpdr::SharedHeader header_clientCapability;
-    header_clientCapability.receive(stream_clientCapability);
-    RED_CHECK_EQUAL(header_clientCapability.component, rdpdr::RDPDR_CTYP_CORE);
-    RED_CHECK_EQUAL(header_clientCapability.packet_id, rdpdr::PAKID_CORE_CLIENT_CAPABILITY);
-
-    pdu_data = client.stream();
-    InStream stream_deviceListAnnounce(pdu_data->data, pdu_data->size);
-    rdpdr::SharedHeader header_deviceListAnnounce;
-    header_deviceListAnnounce.receive(stream_deviceListAnnounce);
-    RED_CHECK_EQUAL(header_deviceListAnnounce.component, rdpdr::RDPDR_CTYP_CORE);
-    RED_CHECK_EQUAL(header_deviceListAnnounce.packet_id, rdpdr::PAKID_CORE_DEVICELIST_ANNOUNCE);
-}
+//    pdu_data = client.stream();
+//    InStream stream_deviceListAnnounce(pdu_data->data, pdu_data->size);
+//    rdpdr::SharedHeader header_deviceListAnnounce;
+//    header_deviceListAnnounce.receive(stream_deviceListAnnounce);
+//    RED_CHECK_EQUAL(header_deviceListAnnounce.component, rdpdr::RDPDR_CTYP_CORE);
+//    RED_CHECK_EQUAL(header_deviceListAnnounce.packet_id, rdpdr::PAKID_CORE_DEVICELIST_ANNOUNCE);
+//}
 
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelCreateFileOrDir)

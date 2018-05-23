@@ -24,10 +24,8 @@
 #define RED_TEST_MODULE TestOrderOpaqueRect
 #include "system/redemption_unit_tests.hpp"
 
-
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 
-#include "./test_orders.hpp"
 
 RED_AUTO_TEST_CASE(TestOpaqueRect)
 {
@@ -51,7 +49,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             0x90,
             0x01,
             0x4C };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 7, datas, "rect draw 0");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -69,10 +67,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RDPColor{});
         cmd.receive(in_stream, header);
 
-        check<RDPOpaqueRect>(common_cmd, cmd,
-            RDPOrderCommon(RECT, Rect(0, 400, 800, 76)),
-            RDPOpaqueRect(Rect(0, 0, 800, 600), RDPColor{}),
-            "rect draw 0");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_orect);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 
     {
@@ -86,7 +83,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOpaqueRect(Rect(0, 0, 10, 10), RDPColor::from(0xFFFFFF)).emit(out_stream, newcommon, state_common, state_orect);
 
         uint8_t datas[2] = {SMALL | DELTA | CHANGE | STANDARD, RECT};
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 2, datas, "rect draw identical");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -100,10 +97,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), RDPColor::from(0xFFFFFF));
         cmd.receive(in_stream, header);
 
-        check<RDPOpaqueRect>(common_cmd, cmd,
-            RDPOrderCommon(RECT, Rect(0, 0, 800, 600)),
-            RDPOpaqueRect(Rect(0, 0, 10, 10), RDPColor::from(0xFFFFFF)),
-            "rect draw identical");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_orect);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 
     {
@@ -119,7 +115,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             1, // x coordinate changed
             5, // +5 on x
         };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 4, datas, "rect draw 1");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -133,10 +129,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), RDPColor::from(0xFFFFFF));
         cmd.receive(in_stream, header);
 
-        check<RDPOpaqueRect>(common_cmd, cmd,
-            RDPOrderCommon(RECT, Rect(0, 0, 800, 600)),
-            RDPOpaqueRect(Rect(5, 0, 10, 10), RDPColor::from(0xFFFFFF)),
-            "rect draw 1");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_orect);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 
     {
@@ -155,7 +150,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             15,   // +15 on w
             20,   // +20 on h
         };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 7, datas, "rect draw 2");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -169,10 +164,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), RDPColor::from(0xFFFFFF));
         cmd.receive(in_stream, header);
 
-        check<RDPOpaqueRect>(common_cmd, cmd,
-            RDPOrderCommon(RECT, Rect(0, 0, 800, 600)),
-            RDPOpaqueRect(Rect(5, 10, 25, 30), RDPColor::from(0xFFFFFF)),
-            "rect draw 2");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_orect);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 
     {
@@ -187,7 +181,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             2,  // y coordinate changed
             0x2C, 1 // y = 0x12C = 300
         };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 5, datas, "rect draw 3");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -201,10 +195,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), RDPColor::from(0xFFFFFF));
         cmd.receive(in_stream, header);
 
-        check<RDPOpaqueRect>(common_cmd, cmd,
-            RDPOrderCommon(RECT, Rect(0, 0, 800, 600)),
-            RDPOpaqueRect(Rect(0, 300, 10, 10), RDPColor::from(0xFFFFFF)),
-            "rect draw 3");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_orect);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 
     {
@@ -220,7 +213,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             0x05, 0, // x = 0x005 = 5
             0x2C, 1, // y = 0x12C = 300
         };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 7, datas, "rect draw 4");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -234,10 +227,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), RDPColor::from(0xFFFFFF));
         cmd.receive(in_stream, header);
 
-        check<RDPOpaqueRect>(common_cmd, cmd,
-            RDPOrderCommon(RECT, Rect(0, 0, 800, 600)),
-            RDPOpaqueRect(Rect(5, 300, 10, 10), RDPColor::from(0xFFFFFF)),
-            "rect draw 4");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_orect);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 
     {
@@ -255,7 +247,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             25, 0,   // w = 25
             30, 0,   // h = 30
         };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 11, datas, "rect draw 5");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -269,10 +261,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), RDPColor::from(0xFFFFFF));
         cmd.receive(in_stream, header);
 
-        check<RDPOpaqueRect>(common_cmd, cmd,
-            RDPOrderCommon(RECT, Rect(0, 0, 800, 600)),
-            RDPOpaqueRect(Rect(5, 300, 25, 30), RDPColor::from(0xFFFFFF)),
-            "rect draw 5");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_orect);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 
     {
@@ -291,7 +282,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             30, 0,   // h = 30
             0x30, 0x20, 0x10  // RGB colors
         };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 14, datas, "rect draw 6");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -305,10 +296,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), RDPColor::from(0xFFFFFF));
         cmd.receive(in_stream, header);
 
-        check<RDPOpaqueRect>(common_cmd, cmd,
-            RDPOrderCommon(RECT, Rect(0, 0, 800, 600)),
-            RDPOpaqueRect(Rect(5, 300, 25, 30), RDPColor::from(0x102030)),
-            "rect draw 6");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_orect);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 
     {
@@ -331,7 +321,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             30, 0,   // h = 30
             0x30, 0x20, 0x10  // RGB colors
         };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 21, datas, "rect draw 7");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -345,10 +335,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), RDPColor::from(0xFFFFFF));
         cmd.receive(in_stream, header);
 
-        check<RDPOpaqueRect>(common_cmd, cmd,
-            RDPOrderCommon(RECT, Rect(0, 300, 310, 20)),
-            RDPOpaqueRect(Rect(5, 300, 25, 30), RDPColor::from(0x102030)),
-            "rect draw 7");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_orect);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 
     {
@@ -371,7 +360,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             0x5D, 2,   // H = 605
             0x30, 0x20, 0x10,  // RGB colors
         };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 17, datas, "rect draw 8");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -385,10 +374,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), RDPColor::from(0xFFFFFF));
         cmd.receive(in_stream, header);
 
-        check<RDPOpaqueRect>(common_cmd, cmd,
-            RDPOrderCommon(RECT, Rect(10, 10, 800, 600)),
-            RDPOpaqueRect(Rect(5, 0, 810, 605), RDPColor::from(0x102030)),
-            "rect draw 8");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_orect);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 
     {
@@ -407,7 +395,7 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
             0x5D, 2,   // H = 605
             0x30, 0x20, 0x10,  // RGB colors
         };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 11, datas, "Rect Draw 9");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -421,10 +409,9 @@ RED_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOpaqueRect cmd(Rect(0, 0, 10, 10), RDPColor::from(0xFFFFFF));
         cmd.receive(in_stream, header);
 
-        check<RDPOpaqueRect>(common_cmd, cmd,
-            RDPOrderCommon(RECT, Rect(0, 0, 800, 600)),
-            RDPOpaqueRect(Rect(5, 0, 810, 605), RDPColor::from(0x102030)),
-            "Rect Draw 9");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_orect);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 
 }

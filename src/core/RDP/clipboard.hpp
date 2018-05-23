@@ -2239,7 +2239,7 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
 
                 default:
                     size_t len_to_skyp = recordSize*2;
-                    LOG(LOG_WARNING, "DEFAULT: unknow record type=%x size=%zu octets", unsigned(type), len_to_skyp);
+                    LOG(LOG_WARNING, "DEFAULT: unknown record type=%x size=%zu octets", unsigned(type), len_to_skyp);
                     if (len_to_skyp <= stream.in_remain()) {
                         stream.in_skip_bytes(len_to_skyp - 6);
                     } else {
@@ -2429,7 +2429,7 @@ public:
                 }
                 break;
 
-                default: LOG(LOG_INFO, "DEFAULT: unknow record type=%x size=%d octets", unsigned(type), size);
+                default: LOG(LOG_INFO, "DEFAULT: unknown record type=%x size=%d octets", unsigned(type), size);
                          chunk.in_skip_bytes(size - 6);
 
                 break;
@@ -2684,7 +2684,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
                     }
                         break;
 
-                    default: LOG(LOG_WARNING, "CLIPRDR Unknow CB_FILECONTENTS_RESPONSE with flag = %d", state.file_content_request_flag);
+                    default: LOG(LOG_WARNING, "CLIPRDR Unknown CB_FILECONTENTS_RESPONSE with flag = %d", state.file_content_request_flag);
                         break;
                 }
                 break;
@@ -2705,7 +2705,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             }
                 break;
 
-            default: LOG(LOG_WARNING, "CLIPRDR Unknow PDU with length = %u", header.dataLen());
+            default: LOG(LOG_WARNING, "CLIPRDR Unknown PDU with length = %u", header.dataLen());
                 break;
         }
     }

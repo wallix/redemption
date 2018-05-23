@@ -63,9 +63,13 @@ namespace detail
 {
     inline auto create_notify_delete_task() noexcept
     {
-        return [](jln::NotifyDeleteType d, auto& self, AsynchronousTask::DeleterFunction& f){
+        return [](
+            jln::NotifyDeleteType d,
+            AsynchronousTask& task,
+            AsynchronousTask::TerminateEventNotifier& terminate_notifier
+        ){
             if (d == jln::NotifyDeleteType::DeleteByAction) {
-                f(self);
+                terminate_notifier(task);
             }
         };
     }
@@ -88,7 +92,6 @@ class RdpdrDriveReadTask final : public AsynchronousTask
     VirtualChannelDataSender & to_server_sender;
 
     SessionReactor::TopFdPtr fdobject;
-//     SessionReactor::BasicFdPtr fd_ptr;
 
     const RDPVerbose verbose;
 
@@ -111,22 +114,23 @@ public:
     , verbose(verbose)
     {}
 
-    void configure_event(SessionReactor& session_reactor, DeleterFunction f) override
+    void configure_event(SessionReactor& session_reactor, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->fdobject);
         this->fdobject = session_reactor.create_fd_event(
-            this->file_descriptor, std::ref(*this), std::move(f))
-        .on_action([](auto ctx, RdpdrDriveReadTask& self, DeleterFunction& f) {
-            auto const r = self.run() ? ctx.need_more_data() : ctx.terminate();
+            this->file_descriptor, std::ref(*this), std::move(terminate_notifier))
+        .on_action([](auto ctx, RdpdrDriveReadTask& self, TerminateEventNotifier& terminate_notifier) {
+            if (self.run()) {
+                return ctx.need_more_data();
+            }
+            auto const r = ctx.terminate();
             // self.fdobject.detach();
-            f(self); // detroy this
+            terminate_notifier(self); // detroy this
             return r;
         })
-        .on_exit([](auto /*ctx*/, jln::ExitR er, RdpdrDriveReadTask&, DeleterFunction&) mutable {
-            return er.to_result();
-        })
-        .set_timeout(std::chrono::milliseconds(1000))
-        .on_timeout([](auto ctx, RdpdrDriveReadTask& self, DeleterFunction&){
+        .on_exit(jln::propagate_exit())
+        .set_timeout(std::chrono::seconds(1))
+        .on_timeout([](auto ctx, RdpdrDriveReadTask& self, TerminateEventNotifier&){
             LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!",
                 self.file_descriptor);
             return ctx.ready();
@@ -230,14 +234,15 @@ public:
         ::memcpy(this->data.get(), data, data_length);
     }
 
-    void configure_event(SessionReactor& session_reactor, DeleterFunction f) override
+    void configure_event(SessionReactor& session_reactor, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
-        this->timer_ptr = session_reactor.create_timer(std::ref(*this), std::move(f))
+        this->timer_ptr = session_reactor.create_timer(
+            std::ref(*this), std::move(terminate_notifier))
         .set_notify_delete(detail::create_notify_delete_task())
         .set_delay(std::chrono::milliseconds(1))
-        .on_action([](auto ctx, RdpdrSendDriveIOResponseTask& self, DeleterFunction&){
+        .on_action([](auto ctx, RdpdrSendDriveIOResponseTask& self, TerminateEventNotifier&){
             return self.run() ? ctx.ready() : ctx.terminate();
         });
     }
@@ -308,14 +313,15 @@ public:
         ::memcpy(this->chunked_data.get(), chunked_data, chunked_data_length);
     }
 
-    void configure_event(SessionReactor& session_reactor, DeleterFunction f) override
+    void configure_event(SessionReactor& session_reactor, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->timer_ptr);
         // TODO create_yield_event
-        this->timer_ptr = session_reactor.create_timer(std::ref(*this), std::move(f))
+        this->timer_ptr = session_reactor.create_timer(
+            std::ref(*this), std::move(terminate_notifier))
         .set_notify_delete(detail::create_notify_delete_task())
         .set_delay(std::chrono::milliseconds(1))
-        .on_action([](auto ctx, RdpdrSendClientMessageTask& self, DeleterFunction&){
+        .on_action([](auto ctx, RdpdrSendClientMessageTask& self, TerminateEventNotifier&){
             self.run();
             return ctx.terminate();
         });

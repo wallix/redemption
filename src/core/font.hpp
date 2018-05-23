@@ -33,7 +33,6 @@
 
 #include "utils/bitfu.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
-#include "utils/sugar/make_unique.hpp"
 
 
 struct FontChar

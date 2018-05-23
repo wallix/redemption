@@ -29,7 +29,6 @@
 #include "utils/difftimeval.hpp"
 #include "utils/rdtsc.hpp"
 #include "utils/stream.hpp"
-#include "utils/sugar/make_unique.hpp"
 
 #include <cinttypes>
 

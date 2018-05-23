@@ -207,7 +207,7 @@ public:
 
             std::string file_to_write = this->fileSystemData.paths.at(this->fileSystemData.file_to_write_id);
 
-            std::ofstream oFile(file_to_write.c_str(), std::ios::out | std::ios::binary | std::ios::app);
+            std::ofstream oFile(file_to_write.c_str(), std::ios::binary | std::ios::app);
             if (oFile.good()) {
                 oFile.write(reinterpret_cast<const char *>(chunk.get_current()), length);
                 oFile.close();

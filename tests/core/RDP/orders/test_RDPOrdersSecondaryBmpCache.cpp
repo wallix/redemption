@@ -24,11 +24,9 @@
 #define RED_TEST_MODULE TestOrderColCache
 #include "system/redemption_unit_tests.hpp"
 
-
 #include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "core/client_info.hpp"
 
-#include "./test_orders.hpp"
 
 RED_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
 {
@@ -67,7 +65,7 @@ RED_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
             0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff,
         };
 
-        check_datas(out_stream.get_offset(), out_stream.get_data(), sizeof(datas), datas, "Bmp Cache 1");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(buf, out_stream.get_offset());
 
@@ -79,8 +77,10 @@ RED_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
         RED_CHECK_EQUAL(static_cast<unsigned>(TS_CACHE_BITMAP_UNCOMPRESSED), header.type);
 
         RDPBmpCache cmd;
-//        cmd.receive(in_stream, control, header);
-
-//        check<RDPColCache>(cmd, newcmd, "Color Cache 1");
+        // cmd.receive(in_stream, header, BGRPalette::classic_332(), control);
+        //
+        // decltype(out_stream) out_stream2;
+        // cmd.emit(24, out_stream2, ci.bitmap_cache_version, use_bitmap_comp, ci.use_compact_packets);
+        // RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 }

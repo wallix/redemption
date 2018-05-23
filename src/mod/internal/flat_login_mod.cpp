@@ -50,7 +50,6 @@ FlatLoginMod::FlatLoginMod(
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
     , vars(vars)
 {
-    LOG(LOG_DEBUG, "FlatLoginMod");
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
         LOG(LOG_INFO, "LoginMod: Ending session in %u seconds",
             static_cast<unsigned>(vars.get<cfg::globals::authentication_timeout>().count()));

@@ -25,7 +25,6 @@
 
 #include "core/channel_list.hpp"
 #include "core/client_info.hpp"
-#include "utils/sugar/make_unique.hpp"
 #include "core/RDP/clipboard.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"

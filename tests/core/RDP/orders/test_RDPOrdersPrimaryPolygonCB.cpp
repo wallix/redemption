@@ -25,10 +25,7 @@
 #define RED_TEST_MODULE TestOrderPolygonCB
 #include "system/redemption_unit_tests.hpp"
 
-
 #include "core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
-
-#include "./test_orders.hpp"
 
 
 RED_AUTO_TEST_CASE(TestPolygonCB)
@@ -54,7 +51,7 @@ RED_AUTO_TEST_CASE(TestPolygonCB)
             0x90,
             0x01,
             0x4C };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), 7, datas, "polygonCB draw 01");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -72,11 +69,9 @@ RED_AUTO_TEST_CASE(TestPolygonCB)
         RDPPolygonCB cmd;
         cmd.receive(in_stream, header);
 
-        check<RDPPolygonCB>(common_cmd, cmd,
-                            RDPOrderCommon(POLYGONCB, Rect(0, 400, 800, 76)),
-                            RDPPolygonCB(),
-                            "polygonCB draw 01");
-
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_PolygonCB);
+        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
     }
 
     {
@@ -141,7 +136,7 @@ RED_AUTO_TEST_CASE(TestPolygonCB)
             0x98, 0x24, 0x14, 0x80, 0xA0, 0x62, 0x32, 0x32,
             0x4E, 0x32, 0x62, 0xFF, 0x60
         };
-        check_datas(out_stream.get_offset(), out_stream.get_data(), sizeof(datas), datas, "PolygonSC 1");
+        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
 
         InStream in_stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -158,37 +153,11 @@ RED_AUTO_TEST_CASE(TestPolygonCB)
         RDPPolygonCB cmd = state_polygonCB;
         cmd.receive(in_stream, header);
 
-        deltaPoints.rewind();
-
-        deltaPoints.out_sint16_le(0);
-        deltaPoints.out_sint16_le(20);
-
-        deltaPoints.out_sint16_le(160);
-        deltaPoints.out_sint16_le(0);
-
-        deltaPoints.out_sint16_le(0);
-        deltaPoints.out_sint16_le(-30);
-
-        deltaPoints.out_sint16_le(50);
-        deltaPoints.out_sint16_le(50);
-
-        deltaPoints.out_sint16_le(-50);
-        deltaPoints.out_sint16_le(50);
-
-        deltaPoints.out_sint16_le(0);
-        deltaPoints.out_sint16_le(-30);
-
-        deltaPoints.out_sint16_le(-160);
-        deltaPoints.out_sint16_le(0);
-
-        deltaPoints_in = InStream(deltaPoints.get_data(), deltaPoints.get_offset());
-
-        check<RDPPolygonCB>(common_cmd, cmd,
-                            RDPOrderCommon(POLYGONCB, Rect(0, 0, 0, 0)),
-                            RDPPolygonCB(158, 230, 0x0D, 0, encode_color24()(BGRColor{0x0D080F}), encode_color24()(BGRColor{0xD41002}),
-                                         RDPBrush(3, 4, 3, 0xDD, reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7")),
-                                         7, deltaPoints_in),
-                            "PolygonSC 1");
+        decltype(out_stream) out_stream2;
+        cmd.emit(out_stream2, newcommon, state_common, state_polygonCB);
+        RED_CHECK_MEM(
+            stream_to_avu8(out_stream).subarray(1),
+            stream_to_avu8(out_stream2).subarray(1));
     }
 
 }

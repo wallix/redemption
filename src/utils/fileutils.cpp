@@ -22,7 +22,6 @@
 
 #include "utils/fileutils.hpp"
 #include "utils/log.hpp"
-#include "core/error.hpp"
 
 #include <cstdio>
 #include <cstddef>
