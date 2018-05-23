@@ -2812,10 +2812,12 @@ public:
 
     explicit ClientNameRequest(const char * computer_name, const uint32_t unicodeFlag)
     : UnicodeFlag(unicodeFlag)
-    , ComputerNameLen(sizeof(computer_name))
+    , ComputerNameLen(strlen(computer_name))
     {
-//         assert(this->ComputerNameLen <= 500-1);
-        std::memcpy(this->ComputerName, computer_name, 500);
+        this->ComputerNameLen = std::min(this->ComputerNameLen, sizeof(ComputerName) - 1);
+        assert(this->ComputerNameLen == strlen(computer_name));
+        std::memcpy(this->ComputerName, computer_name, this->ComputerNameLen);
+        std::memset(this->ComputerName + this->ComputerNameLen, 0, sizeof(ComputerName)-this->ComputerNameLen);
     }
 
 
@@ -4241,7 +4243,9 @@ public:
                                      uint8_t  InitialQuery)
       : FsInformationClass_(FsInformationClass)
       , InitialQuery_(InitialQuery)
-      {}
+    {
+        this->Path_[0] = 0;
+    }
 
     ServerDriveQueryDirectoryRequest() = default;
 

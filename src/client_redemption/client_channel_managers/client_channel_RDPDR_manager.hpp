@@ -156,13 +156,13 @@ public:
       , impl_io_disk(impl_io_disk)
     {
         std::string tmp(this->client->SHARE_DIR);
-        int pos(tmp.find("/"));
+        int pos(tmp.find('/'));
 
         this->fileSystemData.devicesCount = 0;
 
         while (pos != -1) {
             tmp = tmp.substr(pos+1, tmp.length());
-            pos = tmp.find("/");
+            pos = tmp.find('/');
         }
         size_t size(tmp.size());
         if (size > 7) {
@@ -265,14 +265,13 @@ public:
                         }
 
                         {
-                        StaticOutStream<32> stream;
+                        StaticOutStream<LOGIN_NAME_MAX*2+32> stream;
 
                         rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
                                                         , rdpdr::PacketId::PAKID_CORE_CLIENT_NAME);
                         sharedHeader.emit(stream);
                         char username[LOGIN_NAME_MAX];
                         gethostname(username, LOGIN_NAME_MAX);
-                        std::string str_username(username);
 
                         rdpdr::ClientNameRequest clientNameRequest(username, rdpdr::UNICODE_CHAR);
                         clientNameRequest.emit(stream);
