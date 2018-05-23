@@ -50,18 +50,7 @@ Transport::TlsResult RecorderTransport::enable_client_tls(bool server_cert_store
 	auto ret = SocketTransport::enable_client_tls(server_cert_store, server_cert_check,
 								server_notifier, certif_path);
 	if (ret == Transport::TlsResult::Ok) {
-		auto now = std::chrono::system_clock::now();
-		auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time);
-        auto const key = this->get_public_key();
-
-		headers_stream.out_uint8(RECORD_TYPE_CERT);
-		headers_stream.out_uint64_le(delta.count());
-		headers_stream.out_uint32_le(key.size());
-
-		//LOG(LOG_WARNING, "cert len=%lu", key.size());
-		file.send(headers_stream.get_data(), headers_stream.get_offset());
-		file.send(key.data(), key.size());
-		headers_stream.rewind(0);
+        this->write_packet(RECORD_TYPE_CERT, this->get_public_key());
 	}
 	return ret;
 }
@@ -80,55 +69,44 @@ Transport::TlsResult RecorderTransport::enable_client_tls(bool server_cert_store
 }*/
 
 
-size_t RecorderTransport::do_partial_read(uint8_t * buffer, size_t len) {
+size_t RecorderTransport::do_partial_read(uint8_t * buffer, size_t len)
+{
 	size_t ret = SocketTransport::do_partial_read(buffer, len);
 
 	if (ret > 0) {
-		auto now = std::chrono::system_clock::now();
-		auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time);
-
-		headers_stream.out_uint8(RECORD_TYPE_DATA_IN);
-		headers_stream.out_uint64_le(delta.count());
-		headers_stream.out_uint32_le(ret);
-		// LOG(LOG_WARNING, "do_partial_read len=%lu", ret);
-
-		file.send(headers_stream.get_data(), headers_stream.get_offset());
-		file.send(buffer, ret);
-		headers_stream.rewind(0);
+        this->write_packet(RECORD_TYPE_DATA_IN, {buffer, ret});
 	}
 	return ret;
 }
 
-Transport::Read RecorderTransport::do_atomic_read(uint8_t * buffer, size_t len) {
+Transport::Read RecorderTransport::do_atomic_read(uint8_t * buffer, size_t len)
+{
 	auto ret = SocketTransport::do_atomic_read(buffer, len);
 
 	if (ret != Transport::Read::Eof) {
-		auto now = std::chrono::system_clock::now();
-		auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time);
-
-		headers_stream.out_uint8(RECORD_TYPE_DATA_IN);
-		headers_stream.out_uint64_le(delta.count());
-		headers_stream.out_uint32_le(len);
-		// LOG(LOG_WARNING, "do_atomic_read len=%lu", len);
-
-
-		file.send(headers_stream.get_data(), headers_stream.get_offset());
-		file.send(buffer, len);
-		headers_stream.rewind(0);
+        this->write_packet(RECORD_TYPE_DATA_IN, {buffer, len});
 	}
-
 	return ret;
 }
 
+bool RecorderTransport::disconnect()
+{
+	this->write_packet(RECORD_TYPE_EOF, nullptr);
+	this->file.close();
+	return SocketTransport::disconnect();
+}
 
-bool RecorderTransport::disconnect() {
+void RecorderTransport::write_packet(PacketType type, const_byte_array buffer)
+{
 	auto now = std::chrono::system_clock::now();
 	auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time);
 
-	headers_stream.out_uint8(RECORD_TYPE_EOF);
+	headers_stream.out_uint8(type);
 	headers_stream.out_uint64_le(delta.count());
-	headers_stream.out_uint32_le(0);
+	headers_stream.out_uint32_le(buffer.size());
+    // LOG(LOG_WARNING, "write_packet len=%lu", len);
 
-	file.close();
-	return SocketTransport::disconnect();
+    file.send(headers_stream.get_data(), headers_stream.get_offset());
+    file.send(buffer);
+    headers_stream.rewind(0);
 }

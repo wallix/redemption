@@ -30,15 +30,18 @@
 /**
  * @brief a socket transport that records all the sent packets
  */
-class RecorderTransport : public SocketTransport {
+class RecorderTransport : public SocketTransport
+{
 public:
 	/** @brief type of packet */
-	enum PacketType : uint8_t {
+	enum PacketType : uint8_t
+	{
 		RECORD_TYPE_DATA_IN,
 		RECORD_TYPE_DATA_OUT,
 		RECORD_TYPE_CERT,
 		RECORD_TYPE_EOF
 	};
+
 public:
 	RecorderTransport( const char * name, const std::string &fname, unique_fd sck, const char *ip_address, int port
 					   , std::chrono::milliseconds recv_timeout
@@ -60,9 +63,10 @@ public:
 
     bool disconnect() override;
 
-protected:
+private:
+    void write_packet(PacketType type, const_byte_array buffer);
 
     std::chrono::time_point<std::chrono::system_clock> start_time;
 	OutFileTransport file;
-	StaticOutStream<100> headers_stream;
+	StaticOutStream<16> headers_stream;
 };
