@@ -797,11 +797,6 @@ test-run tests/capture/test_ppocr :
   <library>src/utils/png.o
   <library>src/utils/rle.o
 ;
-test-run tests/capture/test_transparentchunk :
-  $(REDEMPTION_TEST_PATH)/capture/test_transparentchunk.cpp
-:
-  <covfile>src/capture/transparentchunk.hpp
-;
 test-run tests/capture/test_video_capture :
   $(REDEMPTION_TEST_PATH)/capture/test_video_capture.cpp
 :
@@ -4544,8 +4539,6 @@ alias test_cryptofile : tests/capture/test_cryptofile ;
 alias test_cryptofile.coverage : tests/capture/test_cryptofile.coverage ;
 alias test_ocr : tests/capture/test_ocr ;
 alias test_ppocr : tests/capture/test_ppocr ;
-alias test_transparentchunk : tests/capture/test_transparentchunk ;
-alias test_transparentchunk.coverage : tests/capture/test_transparentchunk.coverage ;
 alias test_video_capture : tests/capture/test_video_capture ;
 alias test_video_capture.coverage : tests/capture/test_video_capture.coverage ;
 alias test_wrm_capture : tests/capture/test_wrm_capture ;
@@ -5193,7 +5186,6 @@ alias tests/capture :
   tests/capture/test_cryptofile
   tests/capture/test_ocr
   tests/capture/test_ppocr
-  tests/capture/test_transparentchunk
   tests/capture/test_video_capture
   tests/capture/test_wrm_capture
 ;
