@@ -416,8 +416,8 @@ public:
     , client_sck(-1)
     , keymap()
     , _timer(0)
-    , commandIsValid(0)
-    , port(0)
+    , commandIsValid(PORT_GOT)
+    , port(3389)
     , local_IP("unknow_local_IP")
     , windowsData(this)
     , _accountNB(0)
@@ -566,7 +566,12 @@ public:
             cli::helper("========= Protocol ========="),
 
             cli::option("vnc").help("Set connection mod to VNC")
-            .action([this](){ this->mod_state = MOD_VNC; }),
+            .action([this](){
+                this->mod_state = MOD_VNC;
+                if (!bool(this->commandIsValid & PORT_GOT)) {
+                    this->port = 5900;
+                }
+            }),
 
             cli::option("rdp").help("Set connection mod to RDP (default).")
             .action([this](){ this->mod_state = MOD_VNC; }),

@@ -3938,6 +3938,21 @@ test-run tests/transport/test_out_file_transport :
   <covfile>src/transport/out_file_transport.hpp
   <library>src/core/error.o
 ;
+test-run tests/transport/test_recorder_transport :
+  $(REDEMPTION_TEST_PATH)/transport/test_recorder_transport.cpp
+:
+  <covfile>src/transport/recorder_transport.cpp
+  <covfile>src/transport/recorder_transport.hpp
+  <library>app_path_test.o
+  <library>crypto
+  <library>openssl
+  <library>src/core/error.o
+  <library>src/transport/recorder_transport.o
+  <library>src/transport/socket_transport.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
+;
 test-run tests/transport/test_snappy_compression_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_snappy_compression_transport.cpp
 :
@@ -5022,6 +5037,8 @@ alias test_mwrm_reader : tests/transport/test_mwrm_reader ;
 alias test_mwrm_reader.coverage : tests/transport/test_mwrm_reader.coverage ;
 alias test_out_file_transport : tests/transport/test_out_file_transport ;
 alias test_out_file_transport.coverage : tests/transport/test_out_file_transport.coverage ;
+alias test_recorder_transport : tests/transport/test_recorder_transport ;
+alias test_recorder_transport.coverage : tests/transport/test_recorder_transport.coverage ;
 alias test_snappy_compression_transport : tests/transport/test_snappy_compression_transport ;
 alias test_snappy_compression_transport.coverage : tests/transport/test_snappy_compression_transport.coverage ;
 alias test_socket_transport : tests/transport/test_socket_transport ;
@@ -5548,6 +5565,7 @@ alias tests/transport :
   tests/transport/test_in_meta_sequence_transport
   tests/transport/test_mwrm_reader
   tests/transport/test_out_file_transport
+  tests/transport/test_recorder_transport
   tests/transport/test_snappy_compression_transport
   tests/transport/test_socket_transport
   tests/transport/test_test_transport

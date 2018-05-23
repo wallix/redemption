@@ -19,8 +19,8 @@
 */
 
 #include "core/session_reactor.hpp"
-
 #include "client_redemption/client_redemption.hpp"
+#include "utils/set_exception_handler_pretty_message.hpp"
 
 #include "qt_input_output_api/qt_output_sound.hpp"
 #include "qt_input_output_api/qt_input_output_clipboard.hpp"
@@ -31,6 +31,8 @@
 
 int main(int argc, char** argv)
 {
+    set_exception_handler_pretty_message();
+
     SessionReactor reactor;
 
     QApplication app(argc, argv);

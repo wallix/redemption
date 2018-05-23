@@ -333,7 +333,7 @@ namespace cli
 
         Res operator()(ParseResult& pr) const
         {
-            value = pr.argv[pr.opti];
+            value = pr.str;
             return Ok;
         }
     };
@@ -396,11 +396,11 @@ namespace cli
         if (!*s1) {
             if (!*s2) {
                 if (opt.d.optional_value) {
-                    pr.str = s2;
+                    pr.str = "";
                 }
                 else {
                     ++pr.opti;
-                    pr.str = pr.argv[pr.opti];
+                    pr.str = (pr.opti < pr.argc) ? pr.argv[pr.opti] : "";
                 }
                 return apply_option(pr, opt.act);
             }
@@ -428,14 +428,14 @@ namespace cli
     {
         if (opt.d.short_name == s[0]) {
             ++pr.opti;
+            pr.str = (pr.opti < pr.argc) ? pr.argv[pr.opti] : "";
             return apply_option(pr, opt.act);
         }
         return parse_short_option(s, pr, opts...);
     }
 
-    template<class Opt, class T, class Act>
-
-    void print_action(std::ostream & out, Opt const& opt, Arg<T, Act> const& arg)
+    template<class Output, class Opt, class T, class Act>
+    void print_action(Output&& out, Opt const& opt, Arg<T, Act> const& arg)
     {
         out << " [";
         if (arg.name) {
@@ -450,43 +450,58 @@ namespace cli
         out << ']';
     }
 
-    template<class Opt, class Act>
-    void print_action(std::ostream & out, Opt const&, OnOff<Act> const&)
+    template<class Output, class Opt, class Act>
+    void print_action(Output&& out, Opt const&, OnOff<Act> const&)
     {
         out << "[={on|off}]";
     }
 
-    template<class Opt, class Act>
-    void print_action(std::ostream &, Opt const&, Act const&)
+    template<class Output, class Opt, class Act>
+    void print_action(Output&&, Opt const&, Act const&)
     {}
 
     template<class Opt>
-    void print_help(std::ostream & out, Opt const& opt)
+    void print_help(std::ostream& out, Opt const& opt)
     {
-        constexpr int minlen = 30;
-        auto const old_pos = out.tellp();
+        constexpr int minlen = 32;
+        int n = 0;
 
         if (opt.d.short_name) {
+            n += 2;
             out << '-' << opt.d.short_name;
             if (*opt.d.long_name) {
+                n += 4;
+                n += int(strlen(opt.d.long_name));
                 out << ", --" << opt.d.long_name;
-            }
-            else {
-                out << "";
             }
         }
         else if (*opt.d.long_name) {
+            n += 2;
+            n += int(strlen(opt.d.long_name));
             out << "--" << opt.d.long_name;
         }
 
-        print_action(out, opt, opt.act);
+        struct Output
+        {
+            std::ostream& out;
+            int& n;
+            Output& operator<<(char const* s)
+            {
+                n += int(strlen(s));
+                out << s;
+                return *this;
+            }
 
-        auto const new_pos = out.tellp();
-        if (new_pos - old_pos < minlen) {
-            out << std::setw(minlen - (new_pos - old_pos)) << "";
-        }
+            Output& operator<<(char c)
+            {
+                n += 1;
+                out << c;
+                return *this;
+            }
+        };
+        print_action(Output{out, n}, opt, opt.act);
 
-        out << "  " << opt.d.help << "\n";
+        out << std::setw(std::max(minlen - n, 0)) << "  " << opt.d.help << "\n";
     }
 
     inline void print_help(std::ostream & out, Helper h)

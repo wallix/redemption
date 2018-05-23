@@ -106,10 +106,10 @@ Le client Qt RDP implémente plusieurs sous protocoles RDP passant par des canna
 
 Commandes de connexion:
 
-	-n [user_name]     renseigne le nom de l'user du compte de la cible.
-	-w [user_password] renseigne le mot de passe de l'user du compte de la cible.
+	-u [user_name]     renseigne le nom de l'user du compte de la cible.
+	-p [user_password] renseigne le mot de passe de l'user du compte de la cible.
 	-i [target_IP]     resenigne l'adresse IP de la cible.
-	-p [port]          renseigne le port de connexion à la cible.
+	-P [port]          renseigne le port de connexion à la cible.
 
 Commandes verbose:
 

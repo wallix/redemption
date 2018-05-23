@@ -178,16 +178,16 @@ public:
         } else {
             std::cout << "Argument(s) required to connect: ";
             if (!(this->commandIsValid & NAME_GOT)) {
-                std::cout << "-n [user_name] ";
+                std::cout << "-u [user_name] ";
             }
             if (!(this->commandIsValid & PWD_GOT)) {
-                std::cout << "-w [password] ";
+                std::cout << "-p [password] ";
             }
             if (!(this->commandIsValid & IP_GOT)) {
                 std::cout << "-i [ip_server] ";
             }
             if (!(this->commandIsValid & PORT_GOT)) {
-                std::cout << "-p [port] ";
+                std::cout << "-P [port] ";
             }
             std::cout << std::endl;
 
