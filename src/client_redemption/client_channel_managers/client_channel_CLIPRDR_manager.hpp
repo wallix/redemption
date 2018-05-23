@@ -470,7 +470,7 @@ public:
                                         int k(0);
                                         bool isEndString = false;
                                         while (!isEndString) {
-                                            u_int16_t bit(chunk.in_uint16_le());
+                                            uint16_t bit(chunk.in_uint16_le());
                                             if (bit == 0) {
                                                 isEndString = true;
                                             }
@@ -483,7 +483,7 @@ public:
                                     }
 
 
-                                    for (int j = 0; j < ClipbrdFormatsList::CLIPBRD_FORMAT_COUNT && !isSharedFormat; j++) {
+                                    for (size_t j = 0; j < this->clipbrdFormatsList.size && !isSharedFormat; j++) {
                                         if (this->clipbrdFormatsList.IDs[j] == formatID) {
                                             this->_requestedFormatId = formatID;
                                             isSharedFormat = true;

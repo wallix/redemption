@@ -225,13 +225,13 @@ public:
     }
 
     FileStat get_file_stat(const char * file_to_request) override {
-        FileStat fileStat;
-        return fileStat;
+        (void)file_to_request;
+        return FileStat{};
     }
 
     FileStatvfs get_file_statvfs(const char * file_to_request) override {
-         FileStatvfs fileStatvfs;
-         return fileStatvfs;
+        (void)file_to_request;
+        return FileStatvfs{};
     }
 
     // TODO unique_ptr& <- bad idea

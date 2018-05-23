@@ -179,7 +179,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileBasicInformation)
     FakeIODisk fakeIODisk;
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
 
-    manager.fileSystemData.paths.emplace<int, std::string>(1, "test");
+    manager.fileSystemData.paths.emplace(1, "test");
 
     StaticOutStream<512> out_create;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);
@@ -210,7 +210,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileStandardInformation)
     FakeIODisk fakeIODisk;
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
 
-    manager.fileSystemData.paths.emplace<int, std::string>(1, "test");
+    manager.fileSystemData.paths.emplace(1, "test");
 
     StaticOutStream<512> out_create;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);
@@ -241,7 +241,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileAttributeTagInformation)
     FakeIODisk fakeIODisk;
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
 
-    manager.fileSystemData.paths.emplace<int, std::string>(1, "test");
+    manager.fileSystemData.paths.emplace(1, "test");
 
     StaticOutStream<512> out_create;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);
@@ -272,7 +272,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelClose)
     FakeIODisk fakeIODisk;
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
 
-    manager.fileSystemData.paths.emplace<int, std::string>(1, "test");
+    manager.fileSystemData.paths.emplace(1, "test");
 
     StaticOutStream<512> out_create;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);
@@ -300,7 +300,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
     FakeIODisk fakeIODisk;
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
 
-    manager.fileSystemData.paths.emplace<int, std::string>(1, "test");
+    manager.fileSystemData.paths.emplace(1, "test");
 
     StaticOutStream<512> out_create;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);
@@ -331,7 +331,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelDirectoryControl)
     FakeIODisk fakeIODisk;
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
 
-    manager.fileSystemData.paths.emplace<int, std::string>(1, "test");
+    manager.fileSystemData.paths.emplace(1, "test");
 
     StaticOutStream<512> out_create;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);
@@ -355,8 +355,3 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelDirectoryControl)
     RED_CHECK_EQUAL(header_deviceIOCompletion.component, rdpdr::RDPDR_CTYP_CORE);
     RED_CHECK_EQUAL(header_deviceIOCompletion.packet_id, rdpdr::PAKID_CORE_DEVICE_IOCOMPLETION);
 }
-
-
-
-
-
