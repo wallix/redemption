@@ -49,7 +49,8 @@ int main(int argc, char** argv)
     ClientInputSocketAPI * socket_api    = &socket_api_obj;
     ClientIODiskAPI      * ioDisk_api    = &ioDisk_api_obj;
 
-    RDPVerbose verbose =  RDPVerbose::graphics;             //RDPVerbose::rdpdr_dump;           //to_verbose_flags(0x0);
+    //RDPVerbose::rdpdr_dump;           //to_verbose_flags(0x0);
+    RDPVerbose verbose =  to_verbose_flags(0x0);            //RDPVerbose::graphics;
 
     ClientRedemption client_qt( reactor, argv, argc, verbose
                               , graphic_qt

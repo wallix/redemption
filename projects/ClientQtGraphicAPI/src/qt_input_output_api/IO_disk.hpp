@@ -145,7 +145,7 @@ public:
         return erref::NTSTATUS::STATUS_SUCCESS;
     }
 
-    bool set_elem_from_dir(std::vector<std::string> & elem_list, std::string & str_dir_path) override {
+    bool set_elem_from_dir(std::vector<std::string> & elem_list, const std::string & str_dir_path) override {
         elem_list.clear();
 
         DIR *dir;

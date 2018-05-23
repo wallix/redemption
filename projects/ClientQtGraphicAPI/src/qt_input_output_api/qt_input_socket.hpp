@@ -79,7 +79,7 @@ public:
             this->QObject::connect(this->_sckListener, SIGNAL(activated(int)), this, SLOT(call_draw_event_data()));
             this->QObject::connect(&(this->timer), SIGNAL(timeout()), this, SLOT(call_draw_event_timer()));
 
-            LOG(LOG_INFO, "start to listen : we have a callback");
+            //LOG(LOG_INFO, "start to listen : we have a callback");
 
             this->prepare_timer_event();
 
@@ -92,7 +92,7 @@ public:
 
 public Q_SLOTS:
     void call_draw_event_data() {
-        //LOG(LOG_INFO, "draw_event_data");
+//         LOG(LOG_INFO, "draw_event_data");
         if (this->client->mod) {
             this->client->callback(false);
             this->prepare_timer_event();
@@ -100,7 +100,7 @@ public Q_SLOTS:
     }
 
     void call_draw_event_timer() {
-        //LOG(LOG_INFO, "draw_event_timer");
+//         LOG(LOG_INFO, "draw_event_timer");
         if (this->client->mod) {
             this->client->callback(true);
             this->prepare_timer_event();
@@ -109,6 +109,7 @@ public Q_SLOTS:
 
 private:
     void prepare_timer_event() {
+//         LOG(LOG_INFO, "prepare_timer_event");
         timeval now = tvtime();
         this->session_reactor.set_current_time(now);
         timeval const tv = this->session_reactor.get_next_timeout(
@@ -116,11 +117,15 @@ private:
         if (tv.tv_sec > -1) {
 
             //+  (tv.tvtime - tv
-            int time_to_wake =(1000 * (tv.tv_sec - now.tv_sec)) + ((tv.tv_usec - now.tv_usec) / 1000);
+            long time_to_wake = (1000 * (tv.tv_sec - now.tv_sec)) + ((tv.tv_usec - now.tv_usec) / 1000);
 
                 //ustime(tv) - ustime(now);
             //int delai = std::max(time_to_wake, 0);
-            this->timer.start( std::max(time_to_wake, 0));
+//             LOG(LOG_INFO, "prepare_timer_event = %d", time_to_wake);
+            if (time_to_wake < 0) {
+                time_to_wake = 0;
+            }
+            this->timer.start(time_to_wake);
         }
         else {
             this->timer.stop();
