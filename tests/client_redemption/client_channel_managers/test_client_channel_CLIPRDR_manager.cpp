@@ -77,59 +77,59 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
 
 
 
-RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromServerToCLient)
-{
-    const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
-                                                        CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-
-    FakeClient client;
-    FakeClientIOClipboard clip_io;
-    ClientChannelCLIPRDRManager clientChannelCLIPRDRManager(RDPVerbose::cliprdr/*to_verbose_flags(0x0)*/, &client, &clip_io);
-
-
-
-    StaticOutStream<512> out_FormatListPDU;
-    uint32_t formatIDs[] = { RDPECLIP::CF_TEXT };
-    std::string format_name("\0\0");
-    const uint16_t * formatListDataName[] = {reinterpret_cast<const uint16_t *>(format_name.data())};
-    const size_t size_names[] = {2};
-    RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListDataName, size_names, 1);
-    format_list_pdu_long.emit(out_FormatListPDU);
-    InStream chunk_FormatListPDU(out_FormatListPDU.get_data(), out_FormatListPDU.get_offset());
-
-    clientChannelCLIPRDRManager.receive(chunk_FormatListPDU, flag_channel);
-    RED_CHECK_EQUAL(client.get_total_stream_produced(), 3);
-
-    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
-    InStream stream_formatListResponse(pdu_data->data, pdu_data->size);
-    RDPECLIP::CliprdrHeader header_formatListResponse;
-    header_formatListResponse.recv(stream_formatListResponse);
-    RED_CHECK_EQUAL(header_formatListResponse.msgType(), RDPECLIP::CB_FORMAT_LIST_RESPONSE);
-
-    pdu_data = client.stream();
-    InStream stream_lockClipdata(pdu_data->data, pdu_data->size);
-    RDPECLIP::CliprdrHeader header_lockClipdata;
-    header_lockClipdata.recv(stream_lockClipdata);
-    RED_CHECK_EQUAL(header_lockClipdata.msgType(), RDPECLIP::CB_LOCK_CLIPDATA);
-
-    pdu_data = client.stream();
-    InStream stream_formataDataRequest(pdu_data->data, pdu_data->size);
-    RDPECLIP::CliprdrHeader header_formataDataRequest;
-    header_formataDataRequest.recv(stream_formataDataRequest);
-    RED_CHECK_EQUAL(header_formataDataRequest.msgType(), RDPECLIP::CB_FORMAT_DATA_REQUEST);
-
-
-
-    StaticOutStream<512> out_FormatDataResponse;
-    RDPECLIP::FormatDataResponsePDU_Text fdr(5);
-    fdr.emit(out_FormatDataResponse);
-    uint8_t data_resp[] = {97, 99, 97, 98};
-    out_FormatDataResponse.out_copy_bytes(data_resp, sizeof(data_resp));
-    InStream chunk_FormatDataResponse(out_FormatDataResponse.get_data(), out_FormatDataResponse.get_offset());
-
-    clientChannelCLIPRDRManager.receive(chunk_FormatDataResponse, flag_channel);
-    RED_CHECK_EQUAL(client.get_total_stream_produced(), 4);
-}
+//RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromServerToCLient)
+//{
+//    const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
+//                                                        CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
+//
+//    FakeClient client;
+//    FakeClientIOClipboard clip_io;
+//    ClientChannelCLIPRDRManager clientChannelCLIPRDRManager(RDPVerbose::cliprdr/*to_verbose_flags(0x0)*/, &client, &clip_io);
+//
+//
+//
+//    StaticOutStream<512> out_FormatListPDU;
+//    uint32_t formatIDs[] = { RDPECLIP::CF_TEXT };
+//    std::string format_name("\0\0");
+//    const uint16_t * formatListDataName[] = {reinterpret_cast<const uint16_t *>(format_name.data())};
+//    const size_t size_names[] = {2};
+//    RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListDataName, size_names, 1);
+//    format_list_pdu_long.emit(out_FormatListPDU);
+//    InStream chunk_FormatListPDU(out_FormatListPDU.get_data(), out_FormatListPDU.get_offset());
+//
+//    clientChannelCLIPRDRManager.receive(chunk_FormatListPDU, flag_channel);
+//    RED_CHECK_EQUAL(client.get_total_stream_produced(), 3);
+//
+//    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
+//    InStream stream_formatListResponse(pdu_data->data, pdu_data->size);
+//    RDPECLIP::CliprdrHeader header_formatListResponse;
+//    header_formatListResponse.recv(stream_formatListResponse);
+//    RED_CHECK_EQUAL(header_formatListResponse.msgType(), RDPECLIP::CB_FORMAT_LIST_RESPONSE);
+//
+//    pdu_data = client.stream();
+//    InStream stream_lockClipdata(pdu_data->data, pdu_data->size);
+//    RDPECLIP::CliprdrHeader header_lockClipdata;
+//    header_lockClipdata.recv(stream_lockClipdata);
+//    RED_CHECK_EQUAL(header_lockClipdata.msgType(), RDPECLIP::CB_LOCK_CLIPDATA);
+//
+//    pdu_data = client.stream();
+//    InStream stream_formataDataRequest(pdu_data->data, pdu_data->size);
+//    RDPECLIP::CliprdrHeader header_formataDataRequest;
+//    header_formataDataRequest.recv(stream_formataDataRequest);
+//    RED_CHECK_EQUAL(header_formataDataRequest.msgType(), RDPECLIP::CB_FORMAT_DATA_REQUEST);
+//
+//
+//
+//    StaticOutStream<512> out_FormatDataResponse;
+//    RDPECLIP::FormatDataResponsePDU_Text fdr(5);
+//    fdr.emit(out_FormatDataResponse);
+//    uint8_t data_resp[] = {97, 99, 97, 98};
+//    out_FormatDataResponse.out_copy_bytes(data_resp, sizeof(data_resp));
+//    InStream chunk_FormatDataResponse(out_FormatDataResponse.get_data(), out_FormatDataResponse.get_offset());
+//
+//    clientChannelCLIPRDRManager.receive(chunk_FormatDataResponse, flag_channel);
+//    RED_CHECK_EQUAL(client.get_total_stream_produced(), 4);
+//}
 
 
 
