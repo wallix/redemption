@@ -471,6 +471,10 @@ public:
         this->setDefaultConfig();
         this->setUserProfil();
         this->setClientInfo();
+//         this->rdp_width = 1920;
+//         this->rdp_height = 1080;
+//         this->info.width  = 1920;
+//         this->info.height = 1080;
         this->keymap.init_layout(this->info.keylayout);
         this->setCustomKeyConfig();
 
@@ -773,13 +777,10 @@ public:
 
     void add_key_custom_definition(int qtKeyID, int scanCode, const std::string & ASCII8, int extended, const std::string & name) {
 
-        LOG(LOG_INFO, "qkey=%d scanCode=%d ascii=%s extended=%d name=%s !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", qtKeyID, scanCode, ASCII8, extended, name);
         KeyCustomDefinition keyCustomDefinition = {qtKeyID, scanCode, ASCII8, extended, name};
         this->keyCustomDefinitions.push_back(keyCustomDefinition);
 
         const ClientRedemptionIOAPI::KeyCustomDefinition & key = this->keyCustomDefinitions[this->keyCustomDefinitions.size() - 1];
-
-        LOG(LOG_INFO, "qkey=%d scanCode=%d ascii=%s extended=%d name=%s", key.qtKeyID, key.scanCode, key.ASCII8, key.extended, key.name);
     }
 
 
@@ -1256,6 +1257,8 @@ public:
                 new_ofile.close();
 
             } else {
+                std::getline(ofichier, ligne);
+                std::getline(ofichier, ligne);
                 ofichier.seekp(ofichier.tellg());
                 ofichier << "name "   << this->userProfils[this->current_user_profil].name << "\n";
                 ofichier << "keylayout "             << this->info.keylayout               << "\n";

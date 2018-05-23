@@ -22,6 +22,8 @@
 
 #include "capture/video_recorder.hpp"
 
+#ifndef REDEMPTION_NO_FFMPEG
+
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -464,3 +466,20 @@ void video_recorder::encoding_video_frame(uint64_t frame_index)
         throw Error(ERR_RECORDER_FAILED_TO_WRITE_ENCODED_FRAME);
     }
 }
+
+#else
+
+    video_recorder::video_recorder(
+        write_packet_fn_t /*write_packet_fn*/, seek_fn_t /*seek_fn*/, void * /*io_params*/,
+        ConstImageDataView const & /*image_view*/, int /*bitrate*/,
+        int /*frame_rate*/, int /*qscale*/, const char * /*codec_id*/,
+        int /*log_level*/
+    ) {}
+
+    video_recorder::~video_recorder() {}
+
+    void video_recorder::preparing_video_frame() {}
+
+    void video_recorder::encoding_video_frame(uint64_t /*frame_index*/) {}
+
+#endif

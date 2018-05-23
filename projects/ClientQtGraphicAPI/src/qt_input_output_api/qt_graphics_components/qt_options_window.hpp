@@ -647,6 +647,7 @@ public:
         this->_resolutionComboBox.addItem( "800 * 600", 800);
         this->_resolutionComboBox.addItem("1024 * 768", 1024);
         this->_resolutionComboBox.addItem("1600 * 900", 1600);
+        this->_resolutionComboBox.addItem("1920 * 1080", 1920);
         this->_resolutionComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutView->addRow(&(this->_labelResolution), &(this->_resolutionComboBox));
 

@@ -285,9 +285,9 @@ public:
             this->is_loading_replay_mod = false;
 
             if (impl_graphic) {
-                this->impl_graphic->reset_cache(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
+                //LOG(LOG_INFO, "", this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
+                //this->impl_graphic->reset_cache(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
                 this->impl_graphic->create_screen(this->_movie_dir, this->_movie_name);
-
                 if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
                     if (this->impl_mouse_keyboard) {
                         this->impl_mouse_keyboard->pre_load_movie();

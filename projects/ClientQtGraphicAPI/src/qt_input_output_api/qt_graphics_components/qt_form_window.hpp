@@ -911,6 +911,8 @@ private Q_SLOTS:
         this->controllers->client->writeWindowsConf();
 
         this->options->getConfigValues();
+//         this->_front->rdp_width = 1920;
+//         this->_front->rdp_height = 1080;
         this->_front->writeAccoundData(
             this->get_IPField(),
             this->get_userNameField(),

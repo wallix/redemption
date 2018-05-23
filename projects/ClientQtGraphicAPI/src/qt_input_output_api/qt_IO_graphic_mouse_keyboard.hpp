@@ -91,6 +91,7 @@ public:
       , mod_bpp(24)
       , form(nullptr)
       , screen(nullptr)
+     // , cache(nullptr)
       , bar(nullptr)
 //       , trans_cache(nullptr)
       , qtRDPKeymap()
@@ -139,15 +140,23 @@ public:
         }
     }
 
-    virtual void reset_cache(int w,  int h) override {
+    virtual void reset_cache(const int w,  const int h) override {
 
+        if (w == 0 || h == 0) {
+            return;
+        }
         if (this->painter.isActive()) {
             this->painter.end();
         }
+        LOG(LOG_INFO, "!!!!!!!!!!!!!!!! w=%d h=%d", w, h);
         this->cache = QPixmap(w, h);
-        this->painter.begin(&(this->cache));
+
+        if (!(this->cache.isNull())) {
+            this->painter.begin(&(this->cache));
+        }
 
         this->painter.fillRect(0, 0, w, h, Qt::black);
+
     }
 
     virtual void create_screen() override {
@@ -208,7 +217,6 @@ public:
                 this->form->set_userNameField(this->client->user_name);
             }
             this->form->show();
-
         }
     }
 
@@ -398,7 +406,7 @@ private:
         }
     }
 
-    FrontAPI::ResizeResult server_resize(int width, int height, int bpp) override {
+    FrontAPI::ResizeResult server_resize(const int width, const int height, const int bpp) override {
 
         if (width == 0 || height == 0) {
             return FrontAPI::ResizeResult::fail;
@@ -410,15 +418,22 @@ private:
                 if (this->client->info.width == width && this->client->info.height == height) {
                     return FrontAPI::ResizeResult::instant_done;
                 }
+                this->dropScreen();
+                this->reset_cache(width, height);
+                this->screen = new RDPQtScreen(this->drawn_client, this, &(this->cache));
+                this->screen->show();
                     break;
 
             case ClientRedemptionIOAPI::MOD_VNC:
                 if (this->client->vnc_conf.width == width && this->client->vnc_conf.height == height) {
                     return FrontAPI::ResizeResult::instant_done;
-                } else {
-                    this->client->vnc_conf.width = width;
-                    this->client->vnc_conf.height = height;
                 }
+                this->client->vnc_conf.width = width;
+                this->client->vnc_conf.height = height;
+                this->dropScreen();
+                this->reset_cache(width, height);
+                this->screen = new RDPQtScreen(this->drawn_client, this, &(this->cache));
+                this->screen->show();
                     break;
 
             case ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP:
@@ -426,34 +441,29 @@ private:
                     break;
 
             case ClientRedemptionIOAPI::MOD_RDP_REPLAY:
-                if (!this->client->is_loading_replay_mod) {
+                //if (!this->client->is_loading_replay_mod) {
                     time_t current_time_movie = 0;
 
-                    if (!this->is_pre_loading) {
+                    if (!this->is_pre_loading && !this->client->is_loading_replay_mod) {
                         if (this->screen) {
                             current_time_movie = this->screen->get_current_time_movie();
                         }
                         this->dropScreen();
                     }
-
+                    LOG(LOG_INFO, "!!!!!!!!!!!!!!!! width=%d  height=%d", width, height);
                     this->reset_cache(width, height);
 
-                    if (!this->is_pre_loading) {
+                    if (!this->is_pre_loading && !this->client->is_loading_replay_mod) {
                         this->screen = new ReplayQtScreen(this->drawn_client, this, this->client->_movie_dir, this->client->_movie_name, &(this->cache), this->client->get_movie_time_length(this->client->get_mwrm_filename()), current_time_movie);
 
                         this->screen->show();
                     }
-                }
+                //}
                 return FrontAPI::ResizeResult::instant_done;
                     break;
         }
 
         this->client->info.bpp = bpp;
-
-        this->dropScreen();
-        this->reset_cache(width, height);
-        this->screen = new RDPQtScreen(this->drawn_client, this, &(this->cache));
-        this->screen->show();
 
         return FrontAPI::ResizeResult::instant_done;
     }
@@ -667,34 +677,25 @@ private:
             dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
 
             QImage srcBitmapMirrored = srcBitmap.mirrored(false, true);
-            //uchar data[1600*900*3];
-
-
-            uchar * data = new uchar[srcBitmapMirrored.byteCount()];
-
             const uchar * srcData = srcBitmapMirrored.constBits();
             const uchar * dstData = dstBitmap.constBits();
 
             int data_len = bitmap.line_size() * mincy;
+            if (data_len <= 0) {
+                return;
+            }
+            std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(data_len);
+
             Op op;
-            LOG(LOG_INFO, " 1 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             for (int i = 0; i < data_len; i++) {
                 data[i] = op.op(srcData[i], dstData[i]);
             }
 
-            LOG(LOG_INFO, " 2 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-
-            QImage image(data, mincx, mincy, srcBitmapMirrored.format());
-            LOG(LOG_INFO, " 3 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            QImage image(data.get(), mincx, mincy, srcBitmapMirrored.format());
             QRect trect(drect.x, drect.y, mincx, mincy);
-            LOG(LOG_INFO, " 4 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             if (this->client->connected || this->client->is_replaying) {
                 this->painter.drawImage(trect, image);
             }
-
-            LOG(LOG_INFO, " 5 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-            delete[](data);
-            LOG(LOG_INFO, " 6 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         }
     }
 
@@ -1130,7 +1131,7 @@ private:
 
 
     void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override {
-
+        //LOG(LOG_INFO, "RDPMem3Blt    !!!!!!!!!!!!!!!!!");
         const Rect drect = clip.intersect(cmd.rect);
         if (drect.isempty()){
             return ;
@@ -1153,41 +1154,62 @@ private:
                 const uint8_t g(fore.green());
                 const uint8_t b(fore.blue());
 
-                int rowYCoord(drect.y + drect.cy-1);
+                //int rowYCoord(drect.y + drect.cy-1);
                 const QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), true));
 
                 if (this->client->connected || this->client->is_replaying) {
-                    QImage dstBitmap(this->cache.toImage().copy(drect.x, drect.y, mincx, mincy));
+
+
                     QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
                     srcBitmap = srcBitmap.convertToFormat(QImage::Format_RGB888);
+                    srcBitmap = srcBitmap.mirrored(false, true);
+                    if (bitmap.bpp() == 24) {
+                        srcBitmap = srcBitmap.rgbSwapped();
+                    }
+
+                    QImage dstBitmap(this->cache.toImage().copy(drect.x, drect.y, mincx, mincy));
                     dstBitmap = dstBitmap.convertToFormat(QImage::Format_RGB888);
 
-                    const size_t rowsize(srcBitmap.bytesPerLine());
-                    std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(rowsize);
+                    const uchar * srcData = srcBitmap.bits();
+                    const uchar * dstData = dstBitmap.bits();
+
+                    const size_t rowsize(srcBitmap.byteCount() *3);
+                    if (rowsize < 3) {
+                        return;
+                    }
+                    std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(static_cast<int> (rowsize));
 
                     for (size_t k = 1 ; k < drect.cy; k++) {
 
-                        const uchar * srcData = srcBitmap.constScanLine(k);
-                        const uchar * dstData = dstBitmap.constScanLine(mincy - k);
+//                         const uchar * srcData = srcBitmap.constScanLine(k);
+//                         const uchar * dstData = dstBitmap.constScanLine(mincy - k);
 
                         for (size_t x = 0; x < rowsize-2; x += 3) {
-                            data.get()[x  ] = ((dstData[x  ] ^ r) & srcData[x  ]) ^ r;
-                            data.get()[x+1] = ((dstData[x+1] ^ g) & srcData[x+1]) ^ g;
-                            data.get()[x+2] = ((dstData[x+2] ^ b) & srcData[x+2]) ^ b;
+                            data[x  ] = ((dstData[x  ] ^ r) & srcData[x  ]) ^ r;
+                            data[x+1] = ((dstData[x+1] ^ g) & srcData[x+1]) ^ g;
+                            data[x+2] = ((dstData[x+2] ^ b) & srcData[x+2]) ^ b;
                         }
 
-                        LOG(LOG_INFO, "x=%zu  !!!!!!!!!!!!!!!!!!!!!!!!!!!!", x);
+//                         QImage image(data.get(), mincx, 1, srcBitmap.format());
+//                         if (image.depth() != this->client->info.bpp) {
+//                             image = image.convertToFormat(this->bpp_to_QFormat(this->client->info.bpp, false));
+//                         }
+//                         QRect trect(drect.x, rowYCoord, mincx, 1);
+//
+//                         this->painter.drawImage(trect, image);
+//
+//                         rowYCoord--;
+                    }
 
-                        QImage image(data.get(), mincx, 1, srcBitmap.format());
-                        if (image.depth() != this->client->info.bpp) {
-                            image = image.convertToFormat(this->bpp_to_QFormat(this->client->info.bpp, false));
-                        }
-                        QRect trect(drect.x, rowYCoord, mincx, 1);
+                        QImage image(data.get(), mincx, mincy, srcBitmap.format());
+//                         if (image.depth() != this->client->info.bpp) {
+//                             image = image.convertToFormat(this->bpp_to_QFormat(this->client->info.bpp, false));
+//                         }
+                        QRect trect(drect.x, drect.y, mincx, mincy);
 
                         this->painter.drawImage(trect, image);
 
-                        rowYCoord--;
-                    }
+                        //rowYCoord--;
                 }
             }
             break;
