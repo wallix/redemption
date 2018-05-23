@@ -171,6 +171,7 @@ ReplayMod::ReplayMod(
     });
 }
 
+
 ReplayMod::~ReplayMod() = default;
 
 void ReplayMod::add_consumer(
@@ -227,6 +228,12 @@ void ReplayMod::rdp_input_scancode(
         && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
         this->session_reactor.set_next_event(BACK_EVENT_STOP);
     }
+}
+
+Dimension ReplayMod::get_dim() const {
+     Dimension dim(this->front_width , this->front_height);
+
+     return dim;
 }
 
 void ReplayMod::set_pause(timeval & time)

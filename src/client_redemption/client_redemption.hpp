@@ -285,9 +285,9 @@ public:
             this->is_loading_replay_mod = false;
 
             if (impl_graphic) {
-                //LOG(LOG_INFO, "", this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
-                //this->impl_graphic->reset_cache(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
+                this->impl_graphic->reset_cache(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
                 this->impl_graphic->create_screen(this->_movie_dir, this->_movie_name);
+
                 if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
                     if (this->impl_mouse_keyboard) {
                         this->impl_mouse_keyboard->pre_load_movie();
@@ -1282,7 +1282,7 @@ private:
     // sudo dpkg -i /home/qa/Desktop/redemption_0.9.740bjessie_amd64.deb
 
 
-
+// cxxflags=-DREDEMPTION_NO_FFMPEG
 
 
     // scp -P 22 -r cmoroldo@10.10.43.46:/home/cmoroldo/Bureau/redemption_test_charge/movie.wrm /home/qa/Desktop/movie_sample_data/

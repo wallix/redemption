@@ -148,7 +148,7 @@ public:
         if (this->painter.isActive()) {
             this->painter.end();
         }
-        LOG(LOG_INFO, "!!!!!!!!!!!!!!!! w=%d h=%d", w, h);
+
         this->cache = QPixmap(w, h);
 
         if (!(this->cache.isNull())) {
@@ -441,24 +441,24 @@ private:
                     break;
 
             case ClientRedemptionIOAPI::MOD_RDP_REPLAY:
-                //if (!this->client->is_loading_replay_mod) {
+                if (!this->client->is_loading_replay_mod) {
                     time_t current_time_movie = 0;
 
-                    if (!this->is_pre_loading && !this->client->is_loading_replay_mod) {
+//                     if (!this->is_pre_loading) {
                         if (this->screen) {
                             current_time_movie = this->screen->get_current_time_movie();
                         }
                         this->dropScreen();
-                    }
+//                     }
                     LOG(LOG_INFO, "!!!!!!!!!!!!!!!! width=%d  height=%d", width, height);
                     this->reset_cache(width, height);
 
-                    if (!this->is_pre_loading && !this->client->is_loading_replay_mod) {
+//                     if (!this->is_pre_loading) {
                         this->screen = new ReplayQtScreen(this->drawn_client, this, this->client->_movie_dir, this->client->_movie_name, &(this->cache), this->client->get_movie_time_length(this->client->get_mwrm_filename()), current_time_movie);
 
                         this->screen->show();
-                    }
-                //}
+//                     }
+                }
                 return FrontAPI::ResizeResult::instant_done;
                     break;
         }
@@ -1184,11 +1184,11 @@ private:
 //                         const uchar * srcData = srcBitmap.constScanLine(k);
 //                         const uchar * dstData = dstBitmap.constScanLine(mincy - k);
 
-                        for (size_t x = 0; x < rowsize-2; x += 3) {
-                            data[x  ] = ((dstData[x  ] ^ r) & srcData[x  ]) ^ r;
-                            data[x+1] = ((dstData[x+1] ^ g) & srcData[x+1]) ^ g;
-                            data[x+2] = ((dstData[x+2] ^ b) & srcData[x+2]) ^ b;
-                        }
+//                         for (size_t x = 0; x < rowsize-2; x += 3) {
+//                             data[x  ] = ((dstData[x  ] ^ r) & srcData[x  ]) ^ r;
+//                             data[x+1] = ((dstData[x+1] ^ g) & srcData[x+1]) ^ g;
+//                             data[x+2] = ((dstData[x+2] ^ b) & srcData[x+2]) ^ b;
+//                         }
 
 //                         QImage image(data.get(), mincx, 1, srcBitmap.format());
 //                         if (image.depth() != this->client->info.bpp) {
@@ -1201,13 +1201,13 @@ private:
 //                         rowYCoord--;
                     }
 
-                        QImage image(data.get(), mincx, mincy, srcBitmap.format());
-//                         if (image.depth() != this->client->info.bpp) {
-//                             image = image.convertToFormat(this->bpp_to_QFormat(this->client->info.bpp, false));
-//                         }
-                        QRect trect(drect.x, drect.y, mincx, mincy);
-
-                        this->painter.drawImage(trect, image);
+//                         QImage image(data.get(), mincx, mincy, srcBitmap.format());
+// //                         if (image.depth() != this->client->info.bpp) {
+// //                             image = image.convertToFormat(this->bpp_to_QFormat(this->client->info.bpp, false));
+// //                         }
+//                         QRect trect(drect.x, drect.y, mincx, mincy);
+//
+//                         this->painter.drawImage(trect, image);
 
                         //rowYCoord--;
                 }

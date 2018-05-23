@@ -127,6 +127,8 @@ public:
 
     std::string get_mwrm_path() const;
 
+    Dimension get_dim() const override;
+
     void refresh(Rect /*rect*/) override {}
 
     void send_to_front_channel(
