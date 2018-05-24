@@ -1,3 +1,9 @@
+redemption (1.1.19%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix proxy crash when using large logo.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 24 May 2018 17:41:55 +0200
+
 redemption (1.1.17%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Add setting to enable/disable support of Screen Sharing of Mac OS X (VNC).
