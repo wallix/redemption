@@ -32,7 +32,11 @@ RecorderTransport::RecorderTransport(Transport& trans, char const* filename)
 : start_time(std::chrono::system_clock::now())
 , trans(trans)
 , file(unique_fd(::open(filename, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)))
-{}
+{
+    if (!this->file.is_open()) {
+        throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
+    }
+}
 
 RecorderTransport::~RecorderTransport()
 {

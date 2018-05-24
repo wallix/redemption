@@ -180,6 +180,7 @@ exe rdpclient :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/transport/recorder_transport.o
   <library>src/transport/socket_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
@@ -311,6 +312,7 @@ exe vncclient :
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/recorder_transport.o
   <library>src/transport/socket_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
@@ -3943,15 +3945,9 @@ test-run tests/transport/test_recorder_transport :
 :
   <covfile>src/transport/recorder_transport.cpp
   <covfile>src/transport/recorder_transport.hpp
-  <library>app_path_test.o
-  <library>crypto
-  <library>openssl
   <library>src/core/error.o
   <library>src/transport/recorder_transport.o
-  <library>src/transport/socket_transport.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
 ;
 test-run tests/transport/test_snappy_compression_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_snappy_compression_transport.cpp
