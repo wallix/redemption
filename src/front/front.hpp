@@ -615,7 +615,15 @@ private:
 
     uint16_t rail_channel_id = 0;
 
-    size_t max_bitmap_size = 1024 * 30; // should be less than 1 << 15
+    // [MS-RDPEGDI] - 3.1.8.2.1 Abstract Data Model
+    //
+    // The shared state necessary to support the transmission and reception of RDP6.1-BC compressed data
+    // between a client and server requires a level-1 history buffer (HistoryBuffer) and a current offset into
+    // the history buffer (HistoryOffset). The size of the history buffer is fixed at 2,000,000 bytes. Any single
+    // block of data that is being compressed by a compliant compressor MUST be smaller in size than
+    // 16,383 bytes. The HistoryOffset MUST start initialized to zero, while the history buffer MUST be filled
+    // with zeros. After it has been initialized, the entire history buffer is immediately regarded as valid.
+    size_t max_bitmap_size = 16383 - 1;
 
     bool focus_on_password_textbox = false;
     bool consent_ui_is_visible     = false;
@@ -1133,7 +1141,15 @@ private:
             LOG(LOG_INFO, "Front::reset: bitmap_cache_version=%d", this->client_info.bitmap_cache_version);
         }
 
-        this->max_bitmap_size = 1024 * 30;  // should be less than 1 << 15
+        // [MS-RDPEGDI] - 3.1.8.2.1 Abstract Data Model
+        //
+        // The shared state necessary to support the transmission and reception of RDP6.1-BC compressed data
+        // between a client and server requires a level-1 history buffer (HistoryBuffer) and a current offset into
+        // the history buffer (HistoryOffset). The size of the history buffer is fixed at 2,000,000 bytes. Any single
+        // block of data that is being compressed by a compliant compressor MUST be smaller in size than
+        // 16,383 bytes. The HistoryOffset MUST start initialized to zero, while the history buffer MUST be filled
+        // with zeros. After it has been initialized, the entire history buffer is immediately regarded as valid.
+        this->max_bitmap_size = 16383 - 1;
 
         int const mppc_type = this->get_appropriate_compression_type(
             this->client_info.rdp_compression_type,

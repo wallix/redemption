@@ -569,6 +569,12 @@ private:
             LOG(LOG_INFO, "compress_40");
         }
 
+        if (uncompressed_data_size >= RDP_40_HIST_BUF_LEN) {
+            LOG(LOG_ERR, "compress_40: input stream too large, max=%u got=%u",
+                RDP_40_HIST_BUF_LEN - 1, uncompressed_data_size);
+            throw Error(ERR_RDP_PROTOCOL);
+        }
+
         this->flags = PACKET_COMPR_TYPE_8K;
 
         this->hash_tab_mgr.clear_undo_history();
