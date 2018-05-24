@@ -48,7 +48,7 @@ Transport::TlsResult RecorderTransport::enable_client_tls(
     auto const r = this->trans.enable_client_tls(
         server_cert_store, server_cert_check, server_notifier, certif_path);
     if (r != RecorderTransport::TlsResult::Fail) {
-        this->write_packet(PacketType::Cert, nullptr);
+        this->write_packet(PacketType::ClientCert, nullptr);
     }
     return r;
 }
@@ -56,7 +56,7 @@ Transport::TlsResult RecorderTransport::enable_client_tls(
 void RecorderTransport::enable_server_tls(const char * certificate_password, const char * ssl_cipher_list)
 {
     this->trans.enable_server_tls(certificate_password, ssl_cipher_list);
-    this->write_packet(PacketType::Cert, nullptr);
+    this->write_packet(PacketType::ServerCert, nullptr);
 }
 
 array_view_const_u8 RecorderTransport::get_public_key() const
@@ -125,7 +125,7 @@ void RecorderTransport::write_packet(PacketType type, const_byte_array buffer)
 	auto now = std::chrono::system_clock::now();
 	auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time);
 
-	StaticOutStream<16> headers_stream;
+	StaticOutStream<13> headers_stream;
 	headers_stream.out_uint8(uint8_t(type));
 	headers_stream.out_uint64_le(delta.count());
 	headers_stream.out_uint32_le(buffer.size());
@@ -133,4 +133,18 @@ void RecorderTransport::write_packet(PacketType type, const_byte_array buffer)
 
     this->file.send(headers_stream.get_data(), headers_stream.get_offset());
     this->file.send(buffer);
+}
+
+RecorderTransportHeader read_recorder_transport_header(Transport& trans)
+{
+    char data[13];
+	InStream headers_stream(data);
+
+    trans.recv_boom(make_array_view(data));
+
+	return {
+        RecorderTransport::PacketType(headers_stream.in_uint8()),
+        std::chrono::milliseconds(headers_stream.in_uint64_le()),
+        headers_stream.in_uint32_le()
+    };
 }

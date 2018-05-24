@@ -38,7 +38,8 @@ public:
 	{
 		DataIn,
 		DataOut,
-		Cert,
+		ClientCert,
+		ServerCert,
 		Eof,
 		Disconnect,
 		Connect,
@@ -83,3 +84,12 @@ private:
     Transport& trans;
     OutFileTransport file;
 };
+
+struct RecorderTransportHeader
+{
+    RecorderTransport::PacketType type;
+    std::chrono::milliseconds duration;
+    uint32_t data_size;
+};
+
+RecorderTransportHeader read_recorder_transport_header(Transport& trans);

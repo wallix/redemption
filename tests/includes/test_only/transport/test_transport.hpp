@@ -125,6 +125,10 @@ namespace redemption_unit_test__
 
 struct GeneratorTransport : Transport
 {
+    GeneratorTransport(cbyte_array buffer)
+    : GeneratorTransport(buffer.data(), buffer.size())
+    {}
+
     GeneratorTransport(cbyte_ptr data, size_t len)
     : data(new(std::nothrow) uint8_t[len])
     , len(len)

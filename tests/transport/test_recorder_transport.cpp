@@ -33,6 +33,29 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
     char const* filename = "/tmp/recorder_test.out";
     SCOPE_EXIT(unlink(filename));
 
+    using Pck = RecorderTransport::PacketType;
+
+    struct {
+        Pck type;
+        array_view_const_char s;
+    } a[] {
+        {Pck::DataOut,    cstr_array_view("abc")},
+        {Pck::DataOut,    cstr_array_view("defg")},
+        {Pck::DataIn,     cstr_array_view("")},
+        {Pck::DataIn,     cstr_array_view("")},
+        {Pck::DataOut,    cstr_array_view("h")},
+        {Pck::DataOut,    cstr_array_view("ijklm")},
+        {Pck::Disconnect, cstr_array_view("")},
+        {Pck::Connect,    cstr_array_view("")},
+        {Pck::DataOut,    cstr_array_view("no")},
+        {Pck::ServerCert, cstr_array_view("")},
+        {Pck::DataOut,    cstr_array_view("p")},
+        {Pck::DataIn,     cstr_array_view("")},
+        {Pck::DataOut,    cstr_array_view("q")},
+        {Pck::DataOut,    cstr_array_view("rstuvw")},
+        {Pck::DataOut,    cstr_array_view("xyz")},
+    };
+
     {
         TestTransport socket(
             cstr_array_view("123456789"),
@@ -40,21 +63,18 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
         RecorderTransport trans(socket, filename);
         char buf[10];
 
-        trans.send(cstr_array_view("abc"));
-        trans.send(cstr_array_view("defg"));
-        (void)trans.partial_read(buf, 3);
-        (void)trans.partial_read(buf, 3);
-        trans.send(cstr_array_view("h"));
-        trans.send(cstr_array_view("ijklm"));
-        trans.disconnect();
-        trans.connect();
-        trans.send(cstr_array_view("no"));
-        trans.enable_server_tls("", "");
-        trans.send(cstr_array_view("p"));
-        (void)trans.partial_read(buf, 3);
-        trans.send(cstr_array_view("q"));
-        trans.send(cstr_array_view("rstuvw"));
-        trans.send(cstr_array_view("xyz"));
+        for (auto m : a) {
+            switch (m.type) {
+                case Pck::DataOut: trans.send(m.s); break;
+                case Pck::DataIn: (void)trans.partial_read(buf, 3); break;
+                case Pck::ServerCert: trans.enable_server_tls("", ""); break;
+                case Pck::Disconnect: trans.disconnect(); break;
+                case Pck::Connect: trans.connect(); break;
+                case Pck::ClientCert:
+                case Pck::Eof:
+                    RED_FAIL("unreacheable");
+            }
+        }
     }
 
     auto s = get_file_contents(filename);
@@ -66,17 +86,29 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00""h"
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\x00""ijklm"
         // Disconnect
-        "\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-        // Connect
         "\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        // Connect
+        "\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00""no"
         // Cert
-        "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00""p"
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00""789"
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00""q"
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00""rstuvw"
         "\x01\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00""xyz"
         // Eof
-        "\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00");
+        "\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00");
+
+    {
+        GeneratorTransport trans(s);
+        RecorderTransportHeader header;
+        while (
+            (void)(header = read_recorder_transport_header(trans)),
+            header.type != RecorderTransport::PacketType::Eof
+        ) {
+            RED_CHECK_LT(header.data_size, s.size());
+            RED_CHECK_EQ(Transport::Read::Ok, trans.atomic_read({s.data(), header.data_size}));
+        }
+    }
 }

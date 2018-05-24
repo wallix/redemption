@@ -67,8 +67,8 @@ namespace redemption_unit_test__
 # define RED_REQUIRE_EQUAL_COLLECTIONS(a, b) ::redemption_unit_test__::X(bool((a) == (b)))
 # define RED_REQUIRE_PREDICATE(pred, arg_list) pred arg_list
 
-# define RED_FAIL(mess) mess
-# define RED_ERROR(mess) mess
+# define RED_FAIL(mess) ::redemption_unit_test__::Stream{} << mess
+# define RED_ERROR(mess) ::redemption_unit_test__::Stream{} << mess
 
 #else
 

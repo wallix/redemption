@@ -93,7 +93,14 @@ public:
     /// it throws Error(ERR_TRANSPORT_NO_MORE_DATA)
     void recv_boom(byte_ptr buffer, size_t len)
     {
-        if (Read::Eof == this->atomic_read(buffer, len)){
+        if (Read::Eof == this->atomic_read(buffer, len)) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+    }
+
+    void recv_boom(byte_array buffer)
+    {
+        if (Read::Eof == this->atomic_read(buffer.to_u8p(), buffer.size())) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
     }
@@ -217,6 +224,7 @@ struct InTransport
     {}
 
     void recv_boom(byte_ptr buffer, size_t len) { this->t.recv_boom(buffer, len); }
+    void recv_boom(byte_array buffer) { this->t.recv_boom(buffer); }
 
     REDEMPTION_CXX_NODISCARD
     Transport::Read atomic_read(byte_ptr buffer, size_t len) { return this->t.atomic_read(buffer, len); }
