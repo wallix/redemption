@@ -939,7 +939,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceIORequest: expected=%u remains=%zu",
+                    "Truncated DeviceAnnounceHeaderPrinterSpecificData: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -957,7 +957,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
 
         if (!stream.in_check_rem(this->PnPNameLen )) {
             LOG(LOG_ERR,
-                "Truncated DeviceIORequest: expected=%zu remains=%zu",
+                "Truncated DeviceAnnounceHeaderPrinterSpecificData: expected=%zu remains=%zu",
                 this->PnPNameLen , stream.in_remain());
             throw Error(ERR_RDPDR_PDU_TRUNCATED);
         }
@@ -965,7 +965,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
 
         if (!stream.in_check_rem(this->DriverNameLen)) {
             LOG(LOG_ERR,
-                "Truncated DeviceIORequest: expected=%zu remains=%zu",
+                "Truncated DeviceAnnounceHeaderPrinterSpecificData: expected=%zu remains=%zu",
                 this->DriverNameLen, stream.in_remain());
             throw Error(ERR_RDPDR_PDU_TRUNCATED);
         }
@@ -973,7 +973,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
 
         if (!stream.in_check_rem(this->PrintNameLen)) {
             LOG(LOG_ERR,
-                "Truncated DeviceIORequest: expected=%zu remains=%zu",
+                "Truncated DeviceAnnounceHeaderPrinterSpecificData: expected=%zu remains=%zu",
                 this->PrintNameLen, stream.in_remain());
             throw Error(ERR_RDPDR_PDU_TRUNCATED);
         }
@@ -1359,7 +1359,11 @@ public:
        // , PathLength_UTF16(PathLength_UTF16)
         , PathLength_UTF8(PathLength_UTF8)
         {
+            if (PathLength_UTF8 > 65536) {
+                PathLength_UTF8 = 65536;
+            }
 
+            std::memcpy(this->Path_, Path_UTF8, PathLength_UTF8);
         }
 
     void emit(OutStream & stream) const {
@@ -2201,18 +2205,18 @@ enum : uint8_t {
 
 class DeviceCreateResponse {
     uint32_t FileId_     = 0;
-    uint8_t  Information = 0;
+    uint8_t  Information_ = 0;
 
 public:
     DeviceCreateResponse() = default;
 
     DeviceCreateResponse(uint32_t FileId, uint8_t Information)
     : FileId_(FileId)
-    , Information(Information) {}
+    , Information_(Information) {}
 
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FileId_);
-        stream.out_uint8(this->Information);
+        stream.out_uint8(this->Information_);
     }
 
     void receive(InStream & stream, erref::NTSTATUS IoStatus) {
@@ -2231,7 +2235,7 @@ public:
         }
 
         this->FileId_     = stream.in_uint32_le();
-        this->Information = (IoStatus != erref::NTSTATUS::STATUS_SUCCESS ? stream.in_uint8() : 0x00);
+        this->Information_ = (IoStatus != erref::NTSTATUS::STATUS_SUCCESS ? stream.in_uint8() : 0x00);
     }
 
     void receive(InStream & stream) {
@@ -2256,11 +2260,12 @@ public:
 
         this->FileId_     = stream.in_uint32_le();
         if (stream.in_check_rem(1)) {
-            this->Information = stream.in_uint8();
+            this->Information_ = stream.in_uint8();
         }
     }
 
     uint32_t FileId() const { return this->FileId_; }
+    uint32_t Information() const { return this->Information_; }
 
 private:
     static const char * get_Information_name(uint8_t Information) {
@@ -2276,14 +2281,14 @@ private:
 public:
     void log(int level) const {
         LOG(level, "DeviceCreateResponse: FileId=%u Information=%s(0x%X)",
-            this->FileId_, this->get_Information_name(this->Information),
-            unsigned(this->Information));
+            this->FileId_, this->get_Information_name(this->Information_),
+            unsigned(this->Information_));
     }
 
     void log() const {
         LOG(LOG_INFO, "     Device Create Response:");
         LOG(LOG_INFO, "          * FileId      = 0x%08x (4 bytes)", this->FileId_);
-        LOG(LOG_INFO, "          * Information = 0x%02x (1 byte) optional", this->Information);
+        LOG(LOG_INFO, "          * Information = 0x%02x (1 byte) optional", this->Information_);
     }
 };
 
@@ -2688,11 +2693,13 @@ public:
 //  3.2.5.1.3.
 
 class ClientAnnounceReply {
+
+public:
     uint16_t VersionMajor = 0;
     uint16_t VersionMinor = 0;
     uint16_t ClientId     = 0;
 
-public:
+
     ClientAnnounceReply() = default;
 
     ClientAnnounceReply(uint16_t VersionMajor, uint16_t VersionMinor, uint16_t ClientId)

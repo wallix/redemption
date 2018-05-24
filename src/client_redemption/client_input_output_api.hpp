@@ -471,10 +471,6 @@ public:
         this->setDefaultConfig();
         this->setUserProfil();
         this->setClientInfo();
-//         this->rdp_width = 1920;
-//         this->rdp_height = 1080;
-//         this->info.width  = 1920;
-//         this->info.height = 1080;
         this->keymap.init_layout(this->info.keylayout);
         this->setCustomKeyConfig();
 

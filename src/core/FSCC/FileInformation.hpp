@@ -773,10 +773,12 @@ struct FileAllocationInformation {
 //  +-----------------------------+--------------------------------------------+
 
 class FileAttributeTagInformation {
+
+public:
     uint32_t FileAttributes = 0;
     uint32_t ReparseTag     = 0;
 
-public:
+
     FileAttributeTagInformation() = default;
 
     FileAttributeTagInformation(uint32_t FileAttributes, uint32_t ReparseTag)
@@ -921,10 +923,10 @@ public:
 //  +-----------------------------+--------------------------------------------+
 
 class FileBasicInformation {
-    uint64_t CreationTime    = 0;
+    uint64_t CreationTime_   = 0;
     uint64_t LastAccessTime_ = 0;
     uint64_t LastWriteTime_  = 0;
-    uint64_t ChangeTime      = 0;
+    uint64_t ChangeTime_     = 0;
     uint32_t FileAttributes_ = 0;
 
 public:
@@ -933,17 +935,17 @@ public:
     FileBasicInformation(uint64_t CreationTime, uint64_t LastAccessTime,
                          uint64_t LastWriteTime, uint64_t ChangeTime,
                          uint32_t FileAttributes)
-    : CreationTime(CreationTime)
+    : CreationTime_(CreationTime)
     , LastAccessTime_(LastAccessTime)
     , LastWriteTime_(LastWriteTime)
-    , ChangeTime(ChangeTime)
+    , ChangeTime_(ChangeTime)
     , FileAttributes_(FileAttributes) {}
 
     void emit(OutStream & stream) const {
-        stream.out_uint64_le(this->CreationTime);
+        stream.out_uint64_le(this->CreationTime_);
         stream.out_uint64_le(this->LastAccessTime_);
         stream.out_uint64_le(this->LastWriteTime_);
-        stream.out_uint64_le(this->ChangeTime);
+        stream.out_uint64_le(this->ChangeTime_);
 
         stream.out_uint32_le(this->FileAttributes_);
 
@@ -964,21 +966,24 @@ public:
             }
         }
 
-        this->CreationTime    = stream.in_uint64_le();
+        this->CreationTime_   = stream.in_uint64_le();
         this->LastAccessTime_ = stream.in_uint64_le();
         this->LastWriteTime_  = stream.in_uint64_le();
-        this->ChangeTime      = stream.in_uint64_le();
-
+        this->ChangeTime_     = stream.in_uint64_le();
         this->FileAttributes_ = stream.in_uint32_le();
 
         // Reserved(4), MUST NOT be transmitted.
     }
 
-    uint64_t FileAttributes() const { return this->FileAttributes_; }
+    uint32_t FileAttributes() const { return this->FileAttributes_; }
 
     uint64_t LastAccessTime() const { return this->LastAccessTime_; }
 
     uint64_t LastWriteTime() const { return this->LastWriteTime_; }
+
+    uint64_t ChangeTime() const { return this->ChangeTime_; }
+
+    uint64_t CreationTime() const { return this->CreationTime_; }
 
     static size_t size() {
         return 36;  /* CreationTime(8) + LastAccessTime(8) + LastWriteTime(8) + ChangeTime(8) + FileAttributes(4) */
@@ -989,8 +994,8 @@ private:
         size_t length = ::snprintf(buffer, size,
             "FileBasicInformation: CreationTime=%" PRIu64 " LastAccessTime=%" PRIu64
                 " LastWriteTime=%" PRIu64 " ChangeTime=%" PRIu64 " FileAttributes=0x%X",
-            this->CreationTime, this->LastAccessTime_, this->LastWriteTime_,
-            this->ChangeTime, this->FileAttributes_);
+            this->CreationTime_, this->LastAccessTime_, this->LastWriteTime_,
+            this->ChangeTime_, this->FileAttributes_);
         return ((length < size) ? length : size - 1);
     }
 
@@ -1004,10 +1009,10 @@ public:
 
     void log() const {
         LOG(LOG_INFO, "     File Basic Information:");
-        LOG(LOG_INFO, "          * CreationTime   = 0x%" PRIx64 " (8 bytes)", this->CreationTime);
+        LOG(LOG_INFO, "          * CreationTime   = 0x%" PRIx64 " (8 bytes)", this->CreationTime_);
         LOG(LOG_INFO, "          * LastAccessTime = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime_);
         LOG(LOG_INFO, "          * LastWriteTime  = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime_);
-        LOG(LOG_INFO, "          * ChangeTime     = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
+        LOG(LOG_INFO, "          * ChangeTime     = 0x%" PRIx64 " (8 bytes)", this->ChangeTime_);
         LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes): %s", this->FileAttributes_, get_FileAttributes_name(this->FileAttributes_));
     }
 };  // FileBasicInformation
@@ -2569,13 +2574,15 @@ struct FileRenameInformation {
 //  +-----------------------------+-----------------------------------------+
 
 class FileStandardInformation {
+
+public:
     int64_t  AllocationSize = 0;
     int64_t  EndOfFile      = 0;
     uint32_t NumberOfLinks  = 0;
     uint8_t  DeletePending  = 0;
     uint8_t  Directory      = 0;
 
-public:
+
     FileStandardInformation() = default;
 
     FileStandardInformation(int64_t AllocationSize, int64_t EndOfFile,

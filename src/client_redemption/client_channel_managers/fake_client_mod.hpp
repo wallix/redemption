@@ -31,16 +31,10 @@
 class FakeRDPChannelsMod : public mod_api
 {
 public:
-//     RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu;
-
-    std::vector<uint16_t> types;
-    std::vector<uint16_t> sub_types;
 
     struct PDUData {
-
-        uint8_t data[1600];
+        uint8_t data[1600] = {0};
         size_t size = 0;
-
     } last_pdu[10];
 
     int index_in = 0;
@@ -57,9 +51,6 @@ public:
             std::memcpy(last_pdu[this->index_in].data, chunk.get_data(), chunk.in_remain());
             this->index_in++;
         }
-
-        this->types.push_back(chunk.in_uint16_le());
-        this->sub_types.push_back(chunk.in_uint16_le());
     }
 
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override {
@@ -147,23 +138,23 @@ public:
         return this->fake_mod.index_in;
     }
 
-    uint16_t get_next_pdu_type() {
-        this->read_stream_index++;
-        if (this->read_stream_index < int(fake_mod.types.size())) {
-            return fake_mod.types[this->read_stream_index];
-        }
-
-        return -1;
-    }
-
-    uint16_t get_next_pdu_sub_type() {
-        this->read_stream_sub_index++;
-        if (this->read_stream_sub_index < int(fake_mod.sub_types.size())) {
-            return fake_mod.sub_types[this->read_stream_sub_index];
-        }
-
-        return -1;
-    }
+//     uint16_t get_next_pdu_type() {
+//         this->read_stream_index++;
+//         if (this->read_stream_index < int(fake_mod.types.size())) {
+//             return fake_mod.types[this->read_stream_index];
+//         }
+//
+//         return -1;
+//     }
+//
+//     uint16_t get_next_pdu_sub_type() {
+//         this->read_stream_sub_index++;
+//         if (this->read_stream_sub_index < int(fake_mod.sub_types.size())) {
+//             return fake_mod.sub_types[this->read_stream_sub_index];
+//         }
+//
+//         return -1;
+//     }
 
     FakeRDPChannelsMod::PDUData * stream() {
         if (this->fake_mod.index_out < 10) {

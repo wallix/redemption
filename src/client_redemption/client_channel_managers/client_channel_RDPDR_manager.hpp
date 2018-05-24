@@ -125,7 +125,7 @@ public:
         };
 
         bool drives_created = false;
-        bool fileSystemCapacity[5] = { false };
+        bool fileSystemCapacity[6] = { false };
         size_t devicesCount = 1;
         DeviceData devices[2];
 
@@ -148,12 +148,15 @@ public:
 
     } fileSystemData;
 
+    uint16_t server_capability_number;
+
 
 
     ClientChannelRDPDRManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientIODiskAPI * impl_io_disk)
       : verbose(verbose)
       , client(client)
       , impl_io_disk(impl_io_disk)
+      , server_capability_number(0)
     {
         std::string tmp(this->client->SHARE_DIR);
         int pos(tmp.find('/'));
@@ -217,9 +220,6 @@ public:
 
             return;
         }
-
-//         uint16_t component = chunk.in_uint16_le();
-//         uint16_t packetId  = chunk.in_uint16_le();
 
         rdpdr::SharedHeader header;
         header.receive(chunk);
@@ -293,15 +293,15 @@ public:
 
                     case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
                         {
-                        uint16_t capa  = chunk.in_uint16_le();
+                        this->server_capability_number  = chunk.in_uint16_le();
                         chunk.in_skip_bytes(2);
                         bool driveEnable = false;
-                        for (int i = 0; i < capa; i++) {
+                        for (int i = 0; i < this->server_capability_number ; i++) {
                             uint16_t type = chunk.in_uint16_le();
                             uint16_t size = chunk.in_uint16_le() - 4;
                             chunk.in_skip_bytes(size);
                             this->fileSystemData.fileSystemCapacity[type] = true;
-                            if (type == 0x4) {
+                            if (type == rdpdr::CAP_DRIVE_TYPE) {
                                 driveEnable = true;
                             }
                         }
@@ -329,7 +329,7 @@ public:
                                                         , rdpdr::PacketId::PAKID_CORE_CLIENT_CAPABILITY);
                         sharedHeader.emit(out_stream);
 
-                        out_stream.out_uint16_le(5);    // 5 capabilities.
+                        out_stream.out_uint16_le(this->server_capability_number);    // 5 capabilities.
                         out_stream.out_clear_bytes(2);  // Padding(2)
 
                         // General capability set
@@ -356,17 +356,25 @@ public:
 
                         general_capability_set.emit(out_stream);
 
-                        rdpdr::CapabilityHeader ch1(rdpdr::CAP_PRINTER_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
-                        ch1.emit(out_stream);
+                        if (this->fileSystemData.fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE] == true) {
+                            rdpdr::CapabilityHeader ch(rdpdr::CAP_PRINTER_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
+                            ch.emit(out_stream);
+                        }
 
-                        rdpdr::CapabilityHeader ch2(rdpdr::CAP_PORT_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
-                        ch2.emit(out_stream);
+                        if (this->fileSystemData.fileSystemCapacity[rdpdr::CAP_PORT_TYPE] == true) {
+                            rdpdr::CapabilityHeader ch(rdpdr::CAP_PORT_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
+                            ch.emit(out_stream);
+                        }
 
-                        rdpdr::CapabilityHeader ch3(rdpdr::CAP_DRIVE_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
-                        ch3.emit(out_stream);
+                        if (this->fileSystemData.fileSystemCapacity[rdpdr::CAP_DRIVE_TYPE] == true) {
+                            rdpdr::CapabilityHeader ch(rdpdr::CAP_DRIVE_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
+                            ch.emit(out_stream);
+                        }
 
-                        rdpdr::CapabilityHeader ch4(rdpdr::CAP_SMARTCARD_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
-                        ch4.emit(out_stream);
+                        if (this->fileSystemData.fileSystemCapacity[rdpdr::CAP_SMARTCARD_TYPE] == true) {
+                            rdpdr::CapabilityHeader ch(rdpdr::CAP_SMARTCARD_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
+                            ch.emit(out_stream);
+                        }
 
                         int total_length(out_stream.get_offset());
                         InStream chunk_to_send(out_stream.get_data(), total_length);
@@ -657,7 +665,7 @@ public:
                                             std::string file_to_request = this->fileSystemData.paths.at(id);
 
                                             std::ifstream file(file_to_request.c_str());
-                                            if (!file.good()) {
+                                            if (!(this->impl_io_disk->ifile_good(file_to_request.c_str()))) {
                                                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_ACCESS_DENIED);
                                                 //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", file_to_request.c_str());
                                             }
