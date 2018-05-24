@@ -19,6 +19,15 @@
 namespace redemption_unit_test__
 {
     void X(bool);
+
+    struct Stream
+    {
+        template<class T>
+        Stream operator<<(T const&)
+        {
+            return *this;
+        }
+    }
 }
 
 # define FIXTURES_PATH "./tests/fixtures"
@@ -26,7 +35,7 @@ namespace redemption_unit_test__
 # define RED_CHECK_EXCEPTION_ERROR_ID(stmt, id) do { stmt; id; } while (0)
 # define RED_CHECK_NO_THROW(stmt) do { stmt; } while (0)
 # define RED_CHECK_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
-# define RED_CHECK_EXCEPTION(stmt, exception, predicate) do {\
+# define RED_CHECK_EXCEPTION(stmt, exception, predicate) do { \
     stmt; [](exception & e) { predicate(e); }; } while (0)
 # define RED_CHECK_EQUAL(a, b) (a) == (b)
 # define RED_CHECK_EQ(a, b) ::redemption_unit_test__::X(bool((a) == (b)))
@@ -36,7 +45,8 @@ namespace redemption_unit_test__
 # define RED_CHECK_GT(a, b) ::redemption_unit_test__::X(bool((a) > (b)))
 # define RED_CHECK_GE(a, b) ::redemption_unit_test__::X(bool((a) >= (b)))
 # define RED_CHECK(a) ::redemption_unit_test__::X(bool(a))
-# define RED_CHECK_MESSAGE(a, iostream_expr) ::redemption_unit_test__::X(bool(a)), "" << iostream_expr
+# define RED_CHECK_MESSAGE(a, iostream_expr) ::redemption_unit_test__::X(bool(a)), \
+    ::redemption_unit_test__::Stream{} << iostream_expr
 # define RED_CHECK_EQUAL_COLLECTIONS(a, b) ::redemption_unit_test__::X(bool((a) == (b)))
 # define RED_CHECK_PREDICATE(pred, arg_list) pred arg_list
 
@@ -52,7 +62,8 @@ namespace redemption_unit_test__
 # define RED_REQUIRE_GT(a, b) ::redemption_unit_test__::X(bool((a) > (b)))
 # define RED_REQUIRE_GE(a, b) ::redemption_unit_test__::X(bool((a) >= (b)))
 # define RED_REQUIRE(a) ::redemption_unit_test__::X(bool(a))
-# define RED_REQUIRE_MESSAGE(a, iostream_expr) ::redemption_unit_test__::X(bool(a)), "" << iostream_expr
+# define RED_REQUIRE_MESSAGE(a, iostream_expr) ::redemption_unit_test__::X(bool(a)), \
+    ::redemption_unit_test__::Stream{} << iostream_expr
 # define RED_REQUIRE_EQUAL_COLLECTIONS(a, b) ::redemption_unit_test__::X(bool((a) == (b)))
 # define RED_REQUIRE_PREDICATE(pred, arg_list) pred arg_list
 
@@ -294,29 +305,29 @@ namespace redemption_unit_test__
         << v1 << " " #op " " << v2 << "]"                  \
     );
 
-#define RED_CHECK_MEM_IMPL(red_check_op, mem, memref)     \
-    do {                                                  \
-        size_t res__ = 0;                                 \
-        [](                                               \
-            redemption_unit_test__::xarray_color mem__,   \
-            redemption_unit_test__::xarray_color memref__ \
-        ){                                                \
-            red_check_op(                                 \
-                ==, mem__.size(), memref__.size(),        \
-                mem.size(), memref.size());               \
-            red_check_op(                                 \
-                ==, mem__, memref__,                      \
-                mem, memref);                             \
-        }(                                                \
-            redemption_unit_test__::xarray_color{res__,mem},    \
-            redemption_unit_test__::xarray_color{res__,memref}  \
-        );                                          \
+#define RED_CHECK_MEM_IMPL(red_check_op, mem, memref)          \
+    do {                                                       \
+        size_t res__ = 0;                                      \
+        [](                                                    \
+            redemption_unit_test__::xarray_color mem__,        \
+            redemption_unit_test__::xarray_color memref__      \
+        ){                                                     \
+            red_check_op(                                      \
+                ==, mem__.size(), memref__.size(),             \
+                mem.size(), memref.size());                    \
+            red_check_op(                                      \
+                ==, mem__, memref__,                           \
+                mem, memref);                                  \
+        }(                                                     \
+            redemption_unit_test__::xarray_color{res__,mem},   \
+            redemption_unit_test__::xarray_color{res__,memref} \
+        );                                                     \
     } while (0)
 
-#define RED_CHECK_MEM(mem, memref)                  \
+#define RED_CHECK_MEM(mem, memref) \
     RED_CHECK_MEM_IMPL(RED_CHECK_OP_VAR_MESSAGE, mem, memref)
 
-#define RED_REQUIRE_MEM(mem, memref)                  \
+#define RED_REQUIRE_MEM(mem, memref) \
     RED_CHECK_MEM_IMPL(RED_REQUIRE_OP_VAR_MESSAGE, mem, memref)
 
 #ifdef IN_IDE_PARSER
@@ -421,8 +432,9 @@ namespace redemption_unit_test__
 // force line to last checkpoint
 #ifndef IN_IDE_PARSER
 # undef BOOST_AUTO_TEST_CASE
-# define BOOST_AUTO_TEST_CASE(test_name)                                                              \
-    BOOST_FIXTURE_TEST_CASE(test_name##_start__, BOOST_AUTO_TEST_CASE_FIXTURE) { BOOST_CHECK(true); } \
+# define BOOST_AUTO_TEST_CASE(test_name)                                       \
+    BOOST_FIXTURE_TEST_CASE(test_name##_start__, BOOST_AUTO_TEST_CASE_FIXTURE) \
+    { BOOST_CHECK(true); }                                                     \
     BOOST_FIXTURE_TEST_CASE(test_name, BOOST_AUTO_TEST_CASE_FIXTURE)
 #endif
 

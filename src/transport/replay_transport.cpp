@@ -19,6 +19,8 @@
 
 */
 
+#include <thread>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/timerfd.h>
@@ -109,8 +111,8 @@ ReplayTransport::ReadResult ReplayTransport::read_more_chunk() {
 	record_time = start_time + std::chrono::milliseconds(instream.in_uint64_le());
 	chunkLen = instream.in_uint32_le();
 
-	switch (recordType) {
-	case RecorderTransport::RECORD_TYPE_CERT:
+	switch (RecorderTransport::PacketType{recordType}) {
+	case RecorderTransport::PacketType::Cert:
 		// LOG(LOG_WARNING, "cert len=%u", chunkLen);
 		public_key_size = chunkLen;
 		public_key = static_cast<uint8_t *>(malloc(chunkLen));
@@ -121,7 +123,7 @@ ReplayTransport::ReadResult ReplayTransport::read_more_chunk() {
 		}
 		return Meta;
 
-	case RecorderTransport::RECORD_TYPE_DATA_IN:
+	case RecorderTransport::PacketType::DataIn:
 		// LOG(LOG_WARNING, "data chunk len=%u offset=%lu", chunkLen, record_offset);
 		offset = record_ptr - record_data;
 
@@ -138,7 +140,11 @@ ReplayTransport::ReadResult ReplayTransport::read_more_chunk() {
 		status = Data;
 		break;
 
-	case RecorderTransport::RECORD_TYPE_EOF:
+	case RecorderTransport::PacketType::DataOut:
+        // TODO
+		break;
+
+	case RecorderTransport::PacketType::Eof:
 		// LOG(LOG_WARNING, "EOF !!!!!!!!!!!!!!");
 		eof = true;
 		status = Eof;
@@ -184,9 +190,12 @@ size_t ReplayTransport::do_partial_read(uint8_t * buffer, size_t len) {
 	std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 	if (record_time > now) {
 		auto delta = record_time - now;
-		std::chrono::milliseconds toSleep = (delta > recv_timeout) ? recv_timeout :
-				std::chrono::duration_cast<std::chrono::milliseconds>(delta);
-		usleep(toSleep.count() * 1000);
+		if (delta > recv_timeout) {
+            std::this_thread::sleep_for(recv_timeout);
+        }
+        else {
+            std::this_thread::sleep_for(delta);
+        }
 	}
 
 	now = std::chrono::system_clock::now();
@@ -236,9 +245,12 @@ Transport::Read ReplayTransport::do_atomic_read(uint8_t * buffer, size_t len) {
 	while (now < dueTime) {
 		if (now < record_time) {
 			auto delta = record_time - now;
-			std::chrono::milliseconds toSleep = (delta > recv_timeout) ? recv_timeout :
-					std::chrono::duration_cast<std::chrono::milliseconds>(delta);
-			usleep(toSleep.count() * 1000);
+            if (delta > recv_timeout) {
+                std::this_thread::sleep_for(recv_timeout);
+            }
+            else {
+                std::this_thread::sleep_for(delta);
+            }
 		}
 
 		now = std::chrono::system_clock::now();

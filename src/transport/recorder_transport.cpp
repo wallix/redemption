@@ -28,72 +28,96 @@
 
 #include "recorder_transport.hpp"
 
-RecorderTransport::RecorderTransport( const char * name, const std::string &fname, unique_fd sck
-		, const char *ip_address, int port, std::chrono::milliseconds recv_timeout
-		, Verbose verbose, std::string * error_message)
-	: SocketTransport(name, std::move(sck), ip_address, port, recv_timeout, verbose, error_message)
-	, start_time(std::chrono::system_clock::now())
-	, file( unique_fd(::open(fname.c_str(), O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) )
+RecorderTransport::RecorderTransport(Transport& trans, char const* filename)
+: start_time(std::chrono::system_clock::now())
+, trans(trans)
+, file(unique_fd(::open(filename, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)))
+{}
+
+RecorderTransport::~RecorderTransport()
 {
+    if (this->file.is_open()) {
+        this->write_packet(PacketType::Eof, nullptr);
+    }
 }
 
-
-RecorderTransport::~RecorderTransport() = default;
-
-
-Transport::TlsResult RecorderTransport::enable_client_tls(bool server_cert_store,
-                                ServerCertCheck server_cert_check,
-                                ServerNotifier & server_notifier,
-                                const char * certif_path
-    )
+Transport::TlsResult RecorderTransport::enable_client_tls(
+    bool server_cert_store, ServerCertCheck server_cert_check,
+    ServerNotifier & server_notifier, const char * certif_path)
 {
-	auto ret = SocketTransport::enable_client_tls(server_cert_store, server_cert_check,
-								server_notifier, certif_path);
-	if (ret == Transport::TlsResult::Ok) {
-        this->write_packet(RECORD_TYPE_CERT, this->get_public_key());
-	}
-	return ret;
+    auto const r = this->trans.enable_client_tls(
+        server_cert_store, server_cert_check, server_notifier, certif_path);
+    if (r != RecorderTransport::TlsResult::Fail) {
+        this->write_packet(PacketType::Cert, nullptr);
+    }
+    return r;
 }
 
-/*void RecorderTransport::do_send(const uint8_t * const buffer, size_t len) {
-	auto now = std::chrono::system_clock::now();
-
-	headers_stream.out_uint8(RECORD_TYPE_DATA_OUT);
-	headers_stream.out_uint64_le(now.time_since_epoch().count() - start_time);
-	headers_stream.out_uint32_le(len);
-	file.send(headers_stream.get_data(), headers_stream.get_offset());
-	file.send(buffer, len);
-	headers_stream.rewind(0);
-
-	SocketTransport::do_send(buffer, len);
-}*/
-
-
-size_t RecorderTransport::do_partial_read(uint8_t * buffer, size_t len)
+void RecorderTransport::enable_server_tls(const char * certificate_password, const char * ssl_cipher_list)
 {
-	size_t ret = SocketTransport::do_partial_read(buffer, len);
-
-	if (ret > 0) {
-        this->write_packet(RECORD_TYPE_DATA_IN, {buffer, ret});
-	}
-	return ret;
+    this->trans.enable_server_tls(certificate_password, ssl_cipher_list);
+    this->write_packet(PacketType::Cert, nullptr);
 }
 
-Transport::Read RecorderTransport::do_atomic_read(uint8_t * buffer, size_t len)
+array_view_const_u8 RecorderTransport::get_public_key() const
 {
-	auto ret = SocketTransport::do_atomic_read(buffer, len);
+    return this->trans.get_public_key();
+}
 
-	if (ret != Transport::Read::Eof) {
-        this->write_packet(RECORD_TYPE_DATA_IN, {buffer, len});
-	}
-	return ret;
+void RecorderTransport::flush()
+{
+    return this->trans.flush();
 }
 
 bool RecorderTransport::disconnect()
 {
-	this->write_packet(RECORD_TYPE_EOF, nullptr);
-	this->file.close();
-	return SocketTransport::disconnect();
+    this->write_packet(PacketType::Disconnect, nullptr);
+    return this->trans.disconnect();
+}
+
+bool RecorderTransport::connect()
+{
+    this->write_packet(PacketType::Connect, nullptr);
+    return this->trans.connect();
+}
+
+void RecorderTransport::timestamp(timeval now)
+{
+    this->trans.timestamp(now);
+}
+
+bool RecorderTransport::next()
+{
+    return this->trans.next();
+}
+
+int RecorderTransport::get_fd() const
+{
+    return this->trans.get_fd();
+}
+
+Transport::Read RecorderTransport::do_atomic_read(uint8_t * buffer, size_t len)
+{
+    auto const r = this->trans.atomic_read(buffer, len);
+    if (r == Read::Ok) {
+        this->write_packet(PacketType::DataIn, {buffer, len});
+    }
+    return r;
+}
+
+size_t RecorderTransport::do_partial_read(uint8_t * buffer, size_t len)
+{
+    auto const r = this->trans.partial_read(buffer, len);
+    if (r) {
+        this->write_packet(PacketType::DataIn, {buffer, len});
+    }
+    return r;
+}
+
+void RecorderTransport::do_send(const uint8_t * buffer, size_t len)
+{
+    this->trans.send(buffer, len);
+    this->write_packet(PacketType::DataOut, {buffer, len});
 }
 
 void RecorderTransport::write_packet(PacketType type, const_byte_array buffer)
@@ -101,12 +125,12 @@ void RecorderTransport::write_packet(PacketType type, const_byte_array buffer)
 	auto now = std::chrono::system_clock::now();
 	auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time);
 
-	headers_stream.out_uint8(type);
+	StaticOutStream<16> headers_stream;
+	headers_stream.out_uint8(uint8_t(type));
 	headers_stream.out_uint64_le(delta.count());
 	headers_stream.out_uint32_le(buffer.size());
-    // LOG(LOG_WARNING, "write_packet len=%lu", len);
+    // LOG(LOG_DEBUG, "write_packet len=%lu", len);
 
-    file.send(headers_stream.get_data(), headers_stream.get_offset());
-    file.send(buffer);
-    headers_stream.rewind(0);
+    this->file.send(headers_stream.get_data(), headers_stream.get_offset());
+    this->file.send(buffer);
 }

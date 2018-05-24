@@ -125,7 +125,7 @@ namespace redemption_unit_test__
 
 struct GeneratorTransport : Transport
 {
-    GeneratorTransport(const void * data, size_t len)
+    GeneratorTransport(cbyte_ptr data, size_t len)
     : data(new(std::nothrow) uint8_t[len])
     , len(len)
     {
@@ -133,7 +133,7 @@ struct GeneratorTransport : Transport
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
         if (data) {
-            memcpy(this->data.get(), data, len);
+            memcpy(this->data.get(), data.to_u8p(), len);
         }
     }
 
@@ -164,7 +164,6 @@ struct GeneratorTransport : Transport
     }
 
 private:
-
     Read do_atomic_read(uint8_t * buffer, size_t len) override
     {
         size_t const remaining = this->len - this->current;
@@ -219,7 +218,11 @@ private:
 
 struct CheckTransport : Transport
 {
-    CheckTransport(const char * data, size_t len)
+    CheckTransport(const_buffer_t buffer)
+    : CheckTransport(buffer.to_charp(), buffer.size())
+    {}
+
+    CheckTransport(cbyte_ptr data, size_t len)
     : data(new(std::nothrow) uint8_t[len])
     , len(len)
     , current(0)
@@ -227,7 +230,7 @@ struct CheckTransport : Transport
         if (!this->data) {
             throw Error(ERR_TRANSPORT, 0);
         }
-        memcpy(this->data.get(), data, len);
+        memcpy(this->data.get(), data.to_u8p(), len);
     }
 
     size_t remaining() {
@@ -316,9 +319,13 @@ private:
 
 struct TestTransport : public Transport
 {
+    TestTransport(cbyte_array indata, cbyte_array outdata)
+    : TestTransport(indata.data(), indata.size(), outdata.data(), outdata.size())
+    {}
+
     TestTransport(
-        const char * indata, size_t inlen,
-        const char * outdata, size_t outlen)
+        cbyte_ptr indata, size_t inlen,
+        cbyte_ptr outdata, size_t outlen)
     : check(outdata, outlen)
     , gen(indata, inlen)
     , public_key_length(0)

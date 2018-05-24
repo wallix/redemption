@@ -152,19 +152,22 @@ private:
 
     /// Atomic read read exactly the amount of data requested or return an error
     /// @see atomic_read
-    virtual Read do_atomic_read(uint8_t * buffer, size_t len) {
+    virtual Read do_atomic_read(uint8_t * buffer, size_t len)
+    {
         (void)buffer;
         (void)len;
         throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
     }
 
-    virtual size_t do_partial_read(uint8_t * buffer, size_t len) {
+    virtual size_t do_partial_read(uint8_t * buffer, size_t len)
+    {
         (void)buffer;
         (void)len;
         throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
     }
 
-    virtual void do_send(const uint8_t * buffer, size_t len) {
+    virtual void do_send(const uint8_t * buffer, size_t len)
+    {
         (void)buffer;
         (void)len;
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
@@ -261,6 +264,7 @@ struct OutTransport
     {}
 
     void send(cbyte_ptr buffer, size_t len) { this->t.send(buffer, len); }
+    void send(cbyte_array buffer) { this->t.send(buffer); }
 
     uint32_t get_seqno() const { return this->t.get_seqno(); }
 

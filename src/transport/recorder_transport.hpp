@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "transport/socket_transport.hpp"
+#include "transport/transport.hpp"
 #include "transport/out_file_transport.hpp"
 #include "utils/stream.hpp"
 
@@ -30,43 +30,56 @@
 /**
  * @brief a socket transport that records all the sent packets
  */
-class RecorderTransport : public SocketTransport
+class RecorderTransport : public Transport
 {
 public:
 	/** @brief type of packet */
-	enum PacketType : uint8_t
+	enum class PacketType : uint8_t
 	{
-		RECORD_TYPE_DATA_IN,
-		RECORD_TYPE_DATA_OUT,
-		RECORD_TYPE_CERT,
-		RECORD_TYPE_EOF
+		DataIn,
+		DataOut,
+		Cert,
+		Eof,
+		Disconnect,
+		Connect,
 	};
 
-public:
-	RecorderTransport( const char * name, const std::string &fname, unique_fd sck, const char *ip_address, int port
-					   , std::chrono::milliseconds recv_timeout
-					   , Verbose verbose, std::string * error_message = nullptr);
+	RecorderTransport(Transport& trans, char const* filename);
 
 	~RecorderTransport() override;
 
-	/* void do_send(const uint8_t * const buffer, size_t len) override;*/
-
-	TlsResult enable_client_tls(bool server_cert_store,
-                                ServerCertCheck server_cert_check,
-                                ServerNotifier & server_notifier,
-                                const char * certif_path
+    TlsResult enable_client_tls(
+        bool server_cert_store, ServerCertCheck server_cert_check,
+        ServerNotifier & server_notifier, const char * certif_path
     ) override;
+
+    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list) override;
+
+    array_view_const_u8 get_public_key() const override;
+
+    void flush() override;
+
+    bool disconnect() override;
+
+    bool connect() override;
+
+    void timestamp(timeval now) override;
+
+    bool next() override;
+
+    int get_fd() const override;
+
+private:
+    Read do_atomic_read(uint8_t * buffer, size_t len) override;
 
     size_t do_partial_read(uint8_t * buffer, size_t len) override;
 
-    Read do_atomic_read(uint8_t * buffer, size_t len) override;
-
-    bool disconnect() override;
+    void do_send(const uint8_t * buffer, size_t len) override;
 
 private:
     void write_packet(PacketType type, const_byte_array buffer);
 
     std::chrono::time_point<std::chrono::system_clock> start_time;
-	OutFileTransport file;
-	StaticOutStream<16> headers_stream;
+    Transport& trans;
+    OutFileTransport file;
 };
