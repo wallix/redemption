@@ -56,7 +56,7 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
         Server_status start(int, bool /*forkable*/) override { return START_WANT_STOP; }
     } dummy;
 
-    Listen listener(dummy, inet_addr("127.0.0.1"), 4444, true, 25, false); // 25 seconds to connect, or timeout
+    Listen listener(dummy, inet_addr("127.0.0.1"), 4444, true, 2, false); // 25 seconds to connect, or timeout
 
     int nb_inbuffer = 0;
     uint8_t buffer[1024];

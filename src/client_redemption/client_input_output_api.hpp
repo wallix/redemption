@@ -157,11 +157,13 @@ public:
 
 class ClientRedemptionIOAPI : public ClientRedemptionAPI
 {
+    // TODO Private !!!!!!!!!!!!!!!!!!!!!!!
 public:
     RDPVerbose        verbose;
 
     CryptoContext     cctx;
 
+    // TODO unique_ptr
     Transport    * socket;
     int                  client_sck;
     TimeSystem           timeSystem;

@@ -57,6 +57,8 @@ class ClientRedemption : public ClientRedemptionIOAPI
     SessionReactor& session_reactor;
     SessionReactor::GraphicEventPtr clear_screen_event;
 
+    std::unique_ptr<Transport> _socket_in_recorder;
+
     // io API
     ClientOutputGraphicAPI      * impl_graphic;
     ClientIOClipboardAPI        * impl_clipboard;
@@ -505,25 +507,21 @@ public:
 
         if (this->client_sck > 0) {
             try {
-            	if (this->is_full_capturing)
-            		this->socket = new RecorderTransport(this->user_name.c_str(), this->full_capture_file_name
-                            , std::move(client_sck)
-                            , this->target_IP.c_str()
-                            , this->port
-                            , std::chrono::milliseconds(1000)
-                            , to_verbose_flags(0)
-                            //, SocketTransport::Verbose::dump
-                            , &this->error_message);
-            	else
-            		this->socket = new SocketTransport( this->user_name.c_str()
-                                                , std::move(client_sck)
-                                                , this->target_IP.c_str()
-                                                , this->port
-                                                , std::chrono::milliseconds(1000)
-                                                , to_verbose_flags(0)
-                                                //, SocketTransport::Verbose::dump
-                                                , &this->error_message
-                                                );
+                this->socket = new SocketTransport( this->user_name.c_str()
+                                            , std::move(client_sck)
+                                            , this->target_IP.c_str()
+                                            , this->port
+                                            , std::chrono::milliseconds(1000)
+                                            , to_verbose_flags(0)
+                                            //, SocketTransport::Verbose::dump
+                                            , &this->error_message
+                                            );
+
+            	if (this->is_full_capturing) {
+                    this->_socket_in_recorder.reset(this->socket);
+            		this->socket = new RecorderTransport(
+                        *this->socket, this->full_capture_file_name.c_str());
+                }
 
                 LOG(LOG_INFO, "Connected to [%s].", this->target_IP.c_str());
 

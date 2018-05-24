@@ -112,7 +112,7 @@ ReplayTransport::ReadResult ReplayTransport::read_more_chunk() {
 	chunkLen = instream.in_uint32_le();
 
 	switch (RecorderTransport::PacketType{recordType}) {
-	case RecorderTransport::PacketType::Cert:
+	case RecorderTransport::PacketType::ClientCert:
 		// LOG(LOG_WARNING, "cert len=%u", chunkLen);
 		public_key_size = chunkLen;
 		public_key = static_cast<uint8_t *>(malloc(chunkLen));
@@ -140,14 +140,17 @@ ReplayTransport::ReadResult ReplayTransport::read_more_chunk() {
 		status = Data;
 		break;
 
-	case RecorderTransport::PacketType::DataOut:
-        // TODO
-		break;
-
 	case RecorderTransport::PacketType::Eof:
 		// LOG(LOG_WARNING, "EOF !!!!!!!!!!!!!!");
 		eof = true;
 		status = Eof;
+		break;
+
+	case RecorderTransport::PacketType::DataOut:
+	case RecorderTransport::PacketType::Connect:
+	case RecorderTransport::PacketType::Disconnect:
+	case RecorderTransport::PacketType::ServerCert:
+        // TODO
 		break;
 	}
 
