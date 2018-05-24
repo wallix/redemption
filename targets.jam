@@ -180,6 +180,7 @@ exe rdpclient :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/transport/recorder_transport.o
   <library>src/transport/socket_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
@@ -311,6 +312,7 @@ exe vncclient :
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/recorder_transport.o
   <library>src/transport/socket_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
@@ -796,11 +798,6 @@ test-run tests/capture/test_ppocr :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-;
-test-run tests/capture/test_transparentchunk :
-  $(REDEMPTION_TEST_PATH)/capture/test_transparentchunk.cpp
-:
-  <covfile>src/capture/transparentchunk.hpp
 ;
 test-run tests/capture/test_video_capture :
   $(REDEMPTION_TEST_PATH)/capture/test_video_capture.cpp
@@ -3943,6 +3940,15 @@ test-run tests/transport/test_out_file_transport :
   <covfile>src/transport/out_file_transport.hpp
   <library>src/core/error.o
 ;
+test-run tests/transport/test_recorder_transport :
+  $(REDEMPTION_TEST_PATH)/transport/test_recorder_transport.cpp
+:
+  <covfile>src/transport/recorder_transport.cpp
+  <covfile>src/transport/recorder_transport.hpp
+  <library>src/core/error.o
+  <library>src/transport/recorder_transport.o
+  <library>src/utils/hexdump.o
+;
 test-run tests/transport/test_snappy_compression_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_snappy_compression_transport.cpp
 :
@@ -4544,8 +4550,6 @@ alias test_cryptofile : tests/capture/test_cryptofile ;
 alias test_cryptofile.coverage : tests/capture/test_cryptofile.coverage ;
 alias test_ocr : tests/capture/test_ocr ;
 alias test_ppocr : tests/capture/test_ppocr ;
-alias test_transparentchunk : tests/capture/test_transparentchunk ;
-alias test_transparentchunk.coverage : tests/capture/test_transparentchunk.coverage ;
 alias test_video_capture : tests/capture/test_video_capture ;
 alias test_video_capture.coverage : tests/capture/test_video_capture.coverage ;
 alias test_wrm_capture : tests/capture/test_wrm_capture ;
@@ -5029,6 +5033,8 @@ alias test_mwrm_reader : tests/transport/test_mwrm_reader ;
 alias test_mwrm_reader.coverage : tests/transport/test_mwrm_reader.coverage ;
 alias test_out_file_transport : tests/transport/test_out_file_transport ;
 alias test_out_file_transport.coverage : tests/transport/test_out_file_transport.coverage ;
+alias test_recorder_transport : tests/transport/test_recorder_transport ;
+alias test_recorder_transport.coverage : tests/transport/test_recorder_transport.coverage ;
 alias test_snappy_compression_transport : tests/transport/test_snappy_compression_transport ;
 alias test_snappy_compression_transport.coverage : tests/transport/test_snappy_compression_transport.coverage ;
 alias test_socket_transport : tests/transport/test_socket_transport ;
@@ -5193,7 +5199,6 @@ alias tests/capture :
   tests/capture/test_cryptofile
   tests/capture/test_ocr
   tests/capture/test_ppocr
-  tests/capture/test_transparentchunk
   tests/capture/test_video_capture
   tests/capture/test_wrm_capture
 ;
@@ -5556,6 +5561,7 @@ alias tests/transport :
   tests/transport/test_in_meta_sequence_transport
   tests/transport/test_mwrm_reader
   tests/transport/test_out_file_transport
+  tests/transport/test_recorder_transport
   tests/transport/test_snappy_compression_transport
   tests/transport/test_socket_transport
   tests/transport/test_test_transport

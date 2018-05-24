@@ -64,7 +64,7 @@ protected:
 
     Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
-    PSecurityFunctionTable table;
+    std::unique_ptr<SecurityFunctionTable> table;
     SecPkgContext_Sizes ContextSizes;
     bool RestrictedAdminMode;
     SecInterface sec_interface;
@@ -76,14 +76,18 @@ protected:
     Translation::language_t lang;
     const bool verbose;
 
+private:
+    Transport & trans;
+    char const* class_name_log;
+
 public:
     bool hardcoded_tests = false;
 
     rdpCredsspBase(
-        uint8_t * user,
-        uint8_t * domain,
-        uint8_t * pass,
-        uint8_t * hostname,
+        uint8_t const* user,
+        uint8_t const* domain,
+        uint8_t const* pass,
+        uint8_t const* hostname,
         const char * target_host,
         const bool krb,
         const bool restricted_admin_mode,
@@ -91,6 +95,8 @@ public:
         TimeObj & timeobj,
         std::string& extra_message,
         Translation::language_t lang,
+        Transport & trans,
+        char const* class_name_log,
         const bool verbose = false
     )
         : server(false)
@@ -111,23 +117,46 @@ public:
         , extra_message(extra_message)
         , lang(lang)
         , verbose(verbose)
+        , trans(trans)
+        , class_name_log(class_name_log)
     {
         if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredsspClient:: Initialization");
+            LOG(LOG_INFO, "%s:: Initialization", this->class_name_log);
         }
         this->set_credentials(user, domain, pass, hostname);
     }
 
-    ~rdpCredsspBase()
-    {
-        if (this->table) {
-            delete this->table;
-            this->table = nullptr;
+protected:
+    int credssp_ntlm_init(bool is_server) {
+        if (this->verbose) {
+            LOG(LOG_INFO, "%s::ntlm_init", this->class_name_log);
         }
+
+        this->server = is_server;
+
+        // ============================================
+        /* Get Public Key From TLS Layer and hostname */
+        // ============================================
+
+        auto const key = this->trans.get_public_key();
+        this->PublicKey.init(key.size());
+        this->PublicKey.copy(key.data(), key.size());
+
+        return 1;
     }
 
-    void set_credentials(uint8_t * user, uint8_t * domain,
-                         uint8_t * pass, uint8_t * hostname) {
+    void credssp_send() {
+        if (this->verbose) {
+            LOG(LOG_INFO, "rdpCredsspServer::send");
+        }
+        StaticOutStream<65536> ts_request_emit;
+        this->ts_request.emit(ts_request_emit);
+        this->trans.send(ts_request_emit.get_data(), ts_request_emit.get_offset());
+    }
+
+private:
+    void set_credentials(uint8_t const* user, uint8_t const* domain,
+                         uint8_t const* pass, uint8_t const* hostname) {
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspClient::set_credentials");
         }
@@ -153,15 +182,13 @@ public:
         this->ServicePrincipalName.get_data()[length] = 0;
     }
 
+protected:
     void InitSecurityInterface(SecInterface secInter) {
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspClient::InitSecurityInterface");
         }
 
-        if (this->table) {
-            delete this->table;
-            this->table = nullptr;
-        }
+        this->table.reset();
 
         switch (secInter) {
             case NTLM_Interface:
@@ -171,19 +198,19 @@ public:
                     if (this->hardcoded_tests) {
                         table->hardcoded_tests = true;
                     }
-                    this->table = table;
+                    this->table.reset(table);
                 }
                 break;
             case Kerberos_Interface:
                 LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
                 #ifndef __EMSCRIPTEN__
-                this->table = new Kerberos_SecurityFunctionTable;
+                this->table.reset(new Kerberos_SecurityFunctionTable);
                 #else
                 assert(false && "Unsupported Kerberos");
                 #endif
                 break;
             default:
-                this->table = new SecurityFunctionTable;
+                this->table.reset(new SecurityFunctionTable);
         }
     }
 
@@ -450,29 +477,12 @@ public:
         : rdpCredsspBase(
             user, domain, pass, hostname, target_host, krb,
             restricted_admin_mode, rand, timeobj, extra_message, lang,
-            verbose)
+            transport.get_transport(), "rdpCredsspClient", verbose)
         , trans(transport)
     {
     }
 
 public:
-    int credssp_ntlm_client_init() {
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredsspClient::client_init");
-        }
-
-        this->server = false;
-
-        // ============================================
-        /* Get Public Key From TLS Layer and hostname */
-        // ============================================
-
-        this->PublicKey.init(this->trans.get_public_key_length());
-        this->PublicKey.copy(this->trans.get_public_key(), this->trans.get_public_key_length());
-
-        return 1;
-    }
-
     void credssp_encode_ts_credentials() {
         if (this->RestrictedAdminMode) {
             LOG(LOG_INFO, "Restricted Admin Mode");
@@ -535,15 +545,6 @@ public:
         return SEC_E_OK;
     }
 
-    void credssp_send() {
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredsspClient::send");
-        }
-        StaticOutStream<65536> ts_request_emit;
-        this->ts_request.emit(ts_request_emit);
-        this->trans.send(ts_request_emit.get_data(), ts_request_emit.get_offset());
-    }
-
 private:
     enum class Res : bool { Err, Ok };
 
@@ -554,7 +555,7 @@ private:
             LOG(LOG_INFO, "rdpCredsspClient::client_authenticate");
         }
 
-        if (this->credssp_ntlm_client_init() == 0) {
+        if (this->credssp_ntlm_init(false) == 0) {
             return Res::Err;
         }
         SecPkgInfo packageInfo;
@@ -836,26 +837,9 @@ public:
         : rdpCredsspBase(
             user, domain, pass, hostname, "", krb,
             restricted_admin_mode, rand, timeobj, extra_message, lang,
-            verbose)
+            transport, "rdpCredsspServer", verbose)
         , trans(transport)
     {
-    }
-
-    int credssp_ntlm_server_init() {
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredsspServer::server_init");
-        }
-
-        this->server = true;
-
-        // ================================
-        /* Get Public Key From TLS Layer */
-        // ================================
-
-        this->PublicKey.init(this->trans.get_public_key_length());
-        this->PublicKey.copy(this->trans.get_public_key(), this->trans.get_public_key_length());
-
-        return 1;
     }
 
     SEC_STATUS credssp_decrypt_ts_credentials() {
@@ -902,15 +886,6 @@ public:
         //         this->ts_credentials.passCreds.password_length);
 
         return SEC_E_OK;
-    }
-
-    void credssp_send() {
-        if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredsspServer::send");
-        }
-        StaticOutStream<65536> ts_request_emit;
-        this->ts_request.emit(ts_request_emit);
-        this->trans.send(ts_request_emit.get_data(), ts_request_emit.get_offset());
     }
 
     int credssp_recv() {
@@ -967,7 +942,7 @@ public:
        // TODO
        // sspi_GlobalInit();
 
-       if (this->credssp_ntlm_server_init() == 0)
+       if (this->credssp_ntlm_init(true) == 0)
            return 0;
 
        this->InitSecurityInterface(NTLM_Interface);

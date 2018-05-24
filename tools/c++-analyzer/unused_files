@@ -2,7 +2,7 @@
 
 cd "`dirname "$0"`"/../..
 
-dirproj='src/capture src/core src/front src/main src/mod src/transport src/utils src/acl src/gdi'
+dirproj='src/acl src/capture src/core src/client_redemption src/core src/cxx src/front src/gdi src/main src/mod src/transport src/utils'
 dirtest='src/ftests tests'
 
 function find_unused() {
@@ -11,7 +11,7 @@ function find_unused() {
     done
 }
 
-unused=`find $dirproj -name '*.h' -o -name '*.hpp' | find_unused $dirproj`
+unused=`find $dirproj -name '*.h' -o -name '*.hpp' | find_unused $dirproj | grep -v ^src/utils/crypto/ssl_`
 
 echo -e "Unused files in ${dirproj// /, }:
 

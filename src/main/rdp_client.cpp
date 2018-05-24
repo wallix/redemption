@@ -30,18 +30,20 @@
 #include "front/client_front.hpp"
 
 #include "core/client_info.hpp"
-#include "transport/socket_transport.hpp"
 #include "mod/mod_api.hpp"
-#include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/rdp.hpp"
-#include "utils/redirection_info.hpp"
-#include "utils/netutils.hpp"
-#include "utils/genrandom.hpp"
+#include "mod/rdp/rdp_params.hpp"
 #include "program_options/program_options.hpp"
+#include "transport/recorder_transport.hpp"
+#include "transport/socket_transport.hpp"
+#include "utils/genrandom.hpp"
+#include "utils/netutils.hpp"
+#include "utils/redirection_info.hpp"
 
 
 int main(int argc, char** argv)
 {
+    // TODO code duplication with vnc_client
     RedirectionInfo redir_info;
     uint64_t verbose = 0;
     std::string target_device;
@@ -52,14 +54,10 @@ int main(int argc, char** argv)
     unsigned inactivity_time_ms = 1000u;
     unsigned max_time_ms = 5u * inactivity_time_ms;
     std::string screen_output;
+    std::string record_output;
 
     std::string username;
     std::string password;
-    ClientInfo client_info;
-
-    client_info.width = 800;
-    client_info.height = 600;
-    client_info.bpp = 32;
 
     /* Program options */
     namespace po = program_options;
@@ -73,6 +71,7 @@ int main(int argc, char** argv)
         {'a', "inactivity-time", &inactivity_time_ms, "milliseconds inactivity before sreenshot"},
         {'m', "max-time", &max_time_ms, "maximum milliseconds before sreenshot"},
         {'s', "screen-output", &screen_output, "png screenshot path"},
+        {'r', "record-path", &record_output, "dump socket path"},
         {"verbose", &verbose, "verbose"},
     });
 
@@ -81,10 +80,10 @@ int main(int argc, char** argv)
     if (options.count("help") > 0) {
         std::cout <<
             "\n"
-            "ReDemPtion Stand alone RDP Client.\n"
+            "ReDemPtion stand alone RDP Client " << VERSION << ".\n"
             "Copyright (C) Wallix 2010-2018.\n"
             "\n"
-            "Usage: rdpproxy [options]\n\n"
+            "Usage: " << argv[0] << " [options]\n\n"
             << desc << std::endl
         ;
         return 0;
@@ -96,6 +95,11 @@ int main(int argc, char** argv)
     }
 
     openlog("rdpclient", LOG_CONS | LOG_PERROR, LOG_USER);
+
+    ClientInfo client_info;
+    client_info.width = 800;
+    client_info.height = 600;
+    client_info.bpp = 32;
 
     Inifile ini;
 
@@ -136,13 +140,22 @@ int main(int argc, char** argv)
 
     NullAuthentifier authentifier;
     NullReportMessage report_message;
-
-    /* mod_api */
     SessionReactor session_reactor;
-    mod_rdp mod(mod_trans, session_reactor, front, client_info, redir_info, gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
-    using Ms = std::chrono::milliseconds;
-    return run_test_client(
-        "RDP", session_reactor, mod, front,
-        Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
+    auto run = [&](Transport& trans){
+        mod_rdp mod(
+            trans, session_reactor, front, client_info, redir_info,
+            gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
+
+        using Ms = std::chrono::milliseconds;
+        return run_test_client(
+            "RDP", session_reactor, mod, front,
+            Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
+    };
+
+    if (!record_output.empty()) {
+        RecorderTransport record(mod_trans, record_output.c_str());
+        return run(record);
+    }
+    return run(mod_trans);
 }

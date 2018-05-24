@@ -36,9 +36,7 @@ public:
 
 	~ReplayTransport() override;
 
-    virtual const uint8_t * get_public_key() const override;
-
-    virtual size_t get_public_key_length() const override;
+    array_view_const_u8 get_public_key() const override;
 
     TlsResult enable_client_tls(bool server_cert_store,
                                     ServerCertCheck server_cert_check,

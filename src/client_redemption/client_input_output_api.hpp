@@ -157,11 +157,13 @@ public:
 
 class ClientRedemptionIOAPI : public ClientRedemptionAPI
 {
+    // TODO Private !!!!!!!!!!!!!!!!!!!!!!!
 public:
     RDPVerbose        verbose;
 
     CryptoContext     cctx;
 
+    // TODO unique_ptr
     Transport    * socket;
     int                  client_sck;
     TimeSystem           timeSystem;
@@ -416,8 +418,8 @@ public:
     , client_sck(-1)
     , keymap()
     , _timer(0)
-    , commandIsValid(0)
-    , port(0)
+    , commandIsValid(PORT_GOT)
+    , port(3389)
     , local_IP("unknow_local_IP")
     , windowsData(this)
     , _accountNB(0)
@@ -471,6 +473,10 @@ public:
         this->setDefaultConfig();
         this->setUserProfil();
         this->setClientInfo();
+//         this->rdp_width = 1920;
+//         this->rdp_height = 1080;
+//         this->info.width  = 1920;
+//         this->info.height = 1080;
         this->keymap.init_layout(this->info.keylayout);
         this->setCustomKeyConfig();
 
@@ -562,7 +568,12 @@ public:
             cli::helper("========= Protocol ========="),
 
             cli::option("vnc").help("Set connection mod to VNC")
-            .action([this](){ this->mod_state = MOD_VNC; }),
+            .action([this](){
+                this->mod_state = MOD_VNC;
+                if (!bool(this->commandIsValid & PORT_GOT)) {
+                    this->port = 5900;
+                }
+            }),
 
             cli::option("rdp").help("Set connection mod to RDP (default).")
             .action([this](){ this->mod_state = MOD_VNC; }),
