@@ -81,14 +81,9 @@ bool SocketTransport::has_pending_data() const
     return this->tls && this->tls->pending_data();
 }
 
-const uint8_t * SocketTransport::get_public_key() const
+array_view_const_u8 SocketTransport::get_public_key() const
 {
     return this->tls ? this->tls->get_public_key() : nullptr;
-}
-
-size_t SocketTransport::get_public_key_length() const
-{
-    return this->tls ? this->tls->get_public_key_length() : 0;
 }
 
 void SocketTransport::enable_server_tls(const char * certificate_password,

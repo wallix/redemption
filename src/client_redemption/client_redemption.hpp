@@ -57,6 +57,8 @@ class ClientRedemption : public ClientRedemptionIOAPI
     SessionReactor& session_reactor;
     SessionReactor::GraphicEventPtr clear_screen_event;
 
+    std::unique_ptr<Transport> _socket_in_recorder;
+
     // io API
     ClientOutputGraphicAPI      * impl_graphic;
     ClientIOClipboardAPI        * impl_clipboard;
@@ -236,16 +238,16 @@ public:
         } else {
             std::cout << "Argument(s) required to connect: ";
             if (!(this->commandIsValid & NAME_GOT)) {
-                std::cout << "-n [user_name] ";
+                std::cout << "-u [user_name] ";
             }
             if (!(this->commandIsValid & PWD_GOT)) {
-                std::cout << "-w [password] ";
+                std::cout << "-p [password] ";
             }
             if (!(this->commandIsValid & IP_GOT)) {
                 std::cout << "-i [ip_server] ";
             }
             if (!(this->commandIsValid & PORT_GOT)) {
-                std::cout << "-p [port] ";
+                std::cout << "-P [port] ";
             }
             std::cout << std::endl;
 
@@ -342,9 +344,9 @@ public:
             this->is_loading_replay_mod = false;
 
             if (impl_graphic) {
-                this->impl_graphic->reset_cache(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
+                //LOG(LOG_INFO, "", this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
+                //this->impl_graphic->reset_cache(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
                 this->impl_graphic->create_screen(this->_movie_dir, this->_movie_name);
-
                 if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
                     if (this->impl_mouse_keyboard) {
                         this->impl_mouse_keyboard->pre_load_movie();
@@ -607,25 +609,21 @@ public:
 
         if (this->client_sck > 0) {
             try {
-            	if (this->is_full_capturing)
-            		this->socket = new RecorderTransport(this->user_name.c_str(), this->full_capture_file_name
-                            , std::move(client_sck)
-                            , this->target_IP.c_str()
-                            , this->port
-                            , std::chrono::milliseconds(1000)
-                            , to_verbose_flags(0)
-                            //, SocketTransport::Verbose::dump
-                            , &this->error_message);
-            	else
-            		this->socket = new SocketTransport( this->user_name.c_str()
-                                                , std::move(client_sck)
-                                                , this->target_IP.c_str()
-                                                , this->port
-                                                , std::chrono::milliseconds(1000)
-                                                , to_verbose_flags(0)
-                                                //, SocketTransport::Verbose::dump
-                                                , &this->error_message
-                                                );
+                this->socket = new SocketTransport( this->user_name.c_str()
+                                            , std::move(client_sck)
+                                            , this->target_IP.c_str()
+                                            , this->port
+                                            , std::chrono::milliseconds(1000)
+                                            , to_verbose_flags(0)
+                                            //, SocketTransport::Verbose::dump
+                                            , &this->error_message
+                                            );
+
+            	if (this->is_full_capturing) {
+                    this->_socket_in_recorder.reset(this->socket);
+            		this->socket = new RecorderTransport(
+                        *this->socket, this->full_capture_file_name.c_str());
+                }
 
                 LOG(LOG_INFO, "Connected to [%s].", this->target_IP.c_str());
 

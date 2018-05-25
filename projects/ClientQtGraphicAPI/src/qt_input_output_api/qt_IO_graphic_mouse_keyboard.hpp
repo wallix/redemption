@@ -440,7 +440,7 @@ private:
                     break;
 
             case ClientRedemptionIOAPI::MOD_RDP_REPLAY:
-                if (!this->client->is_loading_replay_mod) {
+                //if (!this->client->is_loading_replay_mod) {
                     time_t current_time_movie = 0;
 
                     if (!this->is_pre_loading) {

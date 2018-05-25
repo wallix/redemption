@@ -51,6 +51,7 @@ struct Listen {
     bool exit_on_timeout;
     int timeout_sec;
 
+    // TODO timeout_sec as std::seconds
     Listen(Server & server, uint32_t s_addr, int port, bool exit_on_timeout = false, int timeout_sec = 60, bool enable_transparent_mode = false)
         : server(server)
         , s_addr(s_addr)

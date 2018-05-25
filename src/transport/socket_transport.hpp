@@ -73,9 +73,7 @@ public:
 
     int get_fd() const override { return this->sck; }
 
-    const uint8_t * get_public_key() const override;
-
-    size_t get_public_key_length() const override;
+    array_view_const_u8 get_public_key() const override;
 
     void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list) override;
 

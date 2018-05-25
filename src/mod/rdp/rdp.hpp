@@ -26,8 +26,6 @@
 
 #include "acl/auth_api.hpp"
 
-#include "capture/transparentrecorder.hpp"
-
 #include "core/FSCC/FileInformation.hpp"
 
 #include "core/RDP/MonitorLayoutPDU.hpp"
