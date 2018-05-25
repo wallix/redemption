@@ -775,9 +775,10 @@ private:
                 uncompressed_data_size, this->historyOffset);
         }
 
+        // TODO  result of comparison of constant 65536 with expression of type 'uint16_t' (aka 'unsigned short') is always false
         if (uncompressed_data_size >= RDP_60_HIST_BUF_LEN) {
-            LOG(LOG_ERR, "compress_60: input stream too large, max=%u got=%u",
-                RDP_60_HIST_BUF_LEN - 1, uncompressed_data_size);
+            LOG(LOG_ERR, "compress_60: input stream too large, max=%zu got=%u",
+                RDP_60_HIST_BUF_LEN - 1u, uncompressed_data_size);
             throw Error(ERR_RDP_PROTOCOL);
         }
 

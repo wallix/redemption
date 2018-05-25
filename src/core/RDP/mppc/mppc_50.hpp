@@ -26,7 +26,7 @@
 
 #include <cinttypes>
 
-#define RDP_50_HIST_BUF_LEN (1024 * 64) /* RDP 5.0 uses 64K history buf */
+static const size_t RDP_50_HIST_BUF_LEN = (1024 * 64); /* RDP 5.0 uses 64K history buf */
 
 
 struct rdp_mppc_50_dec : public rdp_mppc_dec
@@ -599,8 +599,8 @@ private:
         }
 
         if (uncompressed_data_size >= RDP_50_HIST_BUF_LEN) {
-            LOG(LOG_ERR, "compress_50: input stream too large, max=%u got=%u",
-                RDP_50_HIST_BUF_LEN - 1, uncompressed_data_size);
+            LOG(LOG_ERR, "compress_50: input stream too large, max=%zu got=%u",
+                RDP_50_HIST_BUF_LEN - 1u, uncompressed_data_size);
             throw Error(ERR_RDP_PROTOCOL);
         }
 
