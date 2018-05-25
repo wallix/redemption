@@ -77,9 +77,9 @@ private:
 
     void do_send(const uint8_t * buffer, size_t len) override;
 
-private:
     void write_packet(PacketType type, const_byte_array buffer);
 
+private:
     std::chrono::time_point<std::chrono::system_clock> start_time;
     Transport& trans;
     OutFileTransport file;
@@ -88,7 +88,7 @@ private:
 struct RecorderTransportHeader
 {
     RecorderTransport::PacketType type;
-    std::chrono::milliseconds duration;
+    std::chrono::milliseconds record_duration;
     uint32_t data_size;
 };
 

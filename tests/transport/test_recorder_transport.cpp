@@ -27,6 +27,8 @@
 #include "test_only/get_file_contents.hpp"
 #include "utils/sugar/scope_exit.hpp"
 
+#include <utility>
+
 
 RED_AUTO_TEST_CASE(TestRecorderTransport)
 {
@@ -103,12 +105,15 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
     {
         GeneratorTransport trans(s);
         RecorderTransportHeader header;
+        auto it = std::begin(a);
         while (
             (void)(header = read_recorder_transport_header(trans)),
             header.type != RecorderTransport::PacketType::Eof
         ) {
-            RED_CHECK_LT(header.data_size, s.size());
+            RED_CHECK_EQ(((it->type == Pck::DataIn) ? 3 : it->s.size()), header.data_size);
             RED_CHECK_EQ(Transport::Read::Ok, trans.atomic_read({s.data(), header.data_size}));
+            ++it;
         }
+        RED_CHECK_EQ(it-std::begin(a), std::size(a));
     }
 }
