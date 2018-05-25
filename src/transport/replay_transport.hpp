@@ -31,8 +31,7 @@
 class ReplayTransport : public Transport {
 public:
 	ReplayTransport( const char *name, const std::string &fname, const char *ip_address, int port
-					   , std::chrono::milliseconds recv_timeout, bool respect_timing
-					   , std::string * error_message = nullptr);
+					   , std::chrono::milliseconds recv_timeout, bool respect_timing);
 
 	~ReplayTransport() override;
 

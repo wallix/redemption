@@ -489,14 +489,15 @@ public:
     }
 
     bool init_socket() {
-    	if (this->is_full_replaying) {
-    		ReplayTransport *transport = new ReplayTransport(user_name.c_str(), full_capture_file_name
-    				, this->target_IP.c_str(), this->port, std::chrono::milliseconds(1000), true
-    				, &this->error_message);
-    		this->socket = transport;
-    		this->client_sck = transport->get_fd();
-    		return true;
-    	}
+        if (this->is_full_replaying) {
+            ReplayTransport *transport = new ReplayTransport(
+                user_name.c_str(), full_capture_file_name,
+                this->target_IP.c_str(), this->port,
+                std::chrono::seconds(1), true);
+            this->socket = transport;
+            this->client_sck = transport->get_fd();
+            return true;
+        }
 
         unique_fd client_sck = ip_connect(this->target_IP.c_str(),
                                           this->port,
@@ -517,9 +518,9 @@ public:
                                             , &this->error_message
                                             );
 
-            	if (this->is_full_capturing) {
+                if (this->is_full_capturing) {
                     this->_socket_in_recorder.reset(this->socket);
-            		this->socket = new RecorderTransport(
+                    this->socket = new RecorderTransport(
                         *this->socket, this->full_capture_file_name.c_str());
                 }
 
@@ -553,11 +554,11 @@ public:
 
     virtual void connect() override {
 
-    	if (this->is_full_capturing || this->is_full_replaying) {
-    		gen.reset(new FixedRandom());
-    	} else {
-    		gen.reset(new UdevRandom());
-    	}
+        if (this->is_full_capturing || this->is_full_replaying) {
+            gen.reset(new FixedRandom());
+        } else {
+            gen.reset(new UdevRandom());
+        }
 
         this->clientChannelRemoteAppManager.clear();
         this->cl.clear_channels();

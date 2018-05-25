@@ -33,12 +33,12 @@
 #include "recorder_transport.hpp"
 
 ReplayTransport::ReplayTransport( const char * name, const std::string &fname, const char *ip_address
-		, int port, std::chrono::milliseconds timeout, bool respect_timing, std::string * error_message)
+		, int port, std::chrono::milliseconds timeout, bool respect_timing)
 	: respect_timing(respect_timing)
 	, start_time(std::chrono::system_clock::now())
 	, clock_id(CLOCK_MONOTONIC)
 	, recv_timeout(timeout)
-	, inFile(unique_fd(::open(fname.c_str(), O_RDONLY)) )
+	, inFile(unique_fd(::open(fname.c_str(), O_RDONLY)))
 	, record_data(nullptr), record_ptr(nullptr)
 	, public_key(nullptr), public_key_size(0)
 	, record_len(0), eof(false)
@@ -46,7 +46,6 @@ ReplayTransport::ReplayTransport( const char * name, const std::string &fname, c
 	(void)name;
 	(void)ip_address;
 	(void)port;
-	(void)error_message;
 
 	if (respect_timing) {
 		timer = timerfd_create(clock_id, TFD_NONBLOCK);
