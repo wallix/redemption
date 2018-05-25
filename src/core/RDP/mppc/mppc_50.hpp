@@ -492,7 +492,7 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc
     hash_table_manager hash_tab_mgr;
 
     explicit rdp_mppc_50_enc(bool verbose = 0)
-        : rdp_mppc_enc(verbose)
+        : rdp_mppc_enc(RDP_50_HIST_BUF_LEN - 1, verbose)
         , historyBuffer{0}
         , outputBuffer(this->outputBufferPlus + 64)  /* contains compressed data */
         , outputBufferPlus{0}
@@ -596,6 +596,12 @@ private:
     {
         if (this->verbose) {
             LOG(LOG_INFO, "compress_50");
+        }
+
+        if (uncompressed_data_size >= RDP_50_HIST_BUF_LEN) {
+            LOG(LOG_ERR, "compress_50: input stream too large, max=%u got=%u",
+                RDP_50_HIST_BUF_LEN - 1, uncompressed_data_size);
+            throw Error(ERR_RDP_PROTOCOL);
         }
 
         this->flags = PACKET_COMPR_TYPE_64K;

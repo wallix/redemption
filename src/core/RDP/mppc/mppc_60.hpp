@@ -710,7 +710,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc
     hash_table_manager hash_tab_mgr;
 
     explicit rdp_mppc_60_enc(bool verbose = 0)
-        : rdp_mppc_enc(verbose)
+        : rdp_mppc_enc(RDP_60_HIST_BUF_LEN - 1, verbose)
         // The HistoryOffset MUST start initialized to zero, while the
         //     history buffer MUST be filled with zeros. After it has been
         //     initialized, the entire history buffer is immediately
@@ -773,6 +773,12 @@ private:
         if (this->verbose) {
             LOG(LOG_INFO, "compress_60: uncompressed_data_size=%u historyOffset=%u",
                 uncompressed_data_size, this->historyOffset);
+        }
+
+        if (uncompressed_data_size >= RDP_60_HIST_BUF_LEN) {
+            LOG(LOG_ERR, "compress_60: input stream too large, max=%u got=%u",
+                RDP_60_HIST_BUF_LEN - 1, uncompressed_data_size);
+            throw Error(ERR_RDP_PROTOCOL);
         }
 
         this->flags = PACKET_COMPR_TYPE_RDP6;

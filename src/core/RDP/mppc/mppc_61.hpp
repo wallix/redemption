@@ -158,7 +158,15 @@ enum {
 
 
 static const size_t RDP_61_HISTORY_BUFFER_LENGTH = 2000000;
-static const size_t RDP_61_MAX_DATA_BLOCK_SIZE   = 16382;
+
+// [MS-RDPEGDI] - 3.1.8.2.1 Abstract Data Model
+// The shared state necessary to support the transmission and reception of RDP6.1-BC compressed data
+// between a client and server requires a level-1 history buffer (HistoryBuffer) and a current offset into
+// the history buffer (HistoryOffset). The size of the history buffer is fixed at 2,000,000 bytes. Any single
+// block of data that is being compressed by a compliant compressor MUST be smaller in size than
+// 16,383 bytes. The HistoryOffset MUST start initialized to zero, while the history buffer MUST be filled
+// with zeros. After it has been initialized, the entire history buffer is immediately regarded as valid.
+static const size_t RDP_61_MAX_DATA_BLOCK_SIZE = 16383 - 1;
 
 
 static const size_t RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH      = 9;    // sizeof(RDP61_MATCH_DETAILS) + 1
@@ -584,7 +592,7 @@ class rdp_mppc_61_enc : public rdp_mppc_enc {
 
 public:
     explicit rdp_mppc_61_enc(bool verbose = 0)
-        : rdp_mppc_enc(verbose)
+        : rdp_mppc_enc(RDP_61_MAX_DATA_BLOCK_SIZE, verbose)
         , historyBuffer{0}
         , historyOffset(0)
         , level_1_output_buffer{0}
@@ -602,6 +610,12 @@ private:
         if (this->verbose) {
             LOG(LOG_INFO, "compress_61: uncompressed_data_size=%" PRIu16 " historyOffset=%" PRIu32,
                 uncompressed_data_size, this->historyOffset);
+        }
+
+        if (uncompressed_data_size > RDP_61_MAX_DATA_BLOCK_SIZE) {
+            LOG(LOG_ERR, "compress_61: input stream too large, max=%u got=%u",
+                RDP_61_MAX_DATA_BLOCK_SIZE, uncompressed_data_size);
+            throw Error(ERR_RDP_PROTOCOL);
         }
 
         this->Level1ComprFlags = L1_INNER_COMPRESSION;
