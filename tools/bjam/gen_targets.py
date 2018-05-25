@@ -68,7 +68,6 @@ target_renames = dict((
     ('do_recorder', 'redrec'),
     ('ini_checker', 'rdpinichecker'),
     ('rdp_client', 'rdpclient'),
-    ('vnc_client', 'vncclient'),
 ))
 
 #coverage_requirements = dict((
