@@ -373,10 +373,7 @@ private:
     Error() = delete;
 
 public:
-    explicit Error(error_type id, int errnum = 0) noexcept
-    : id(id)
-    , errnum(errnum)
-    {}
+    explicit Error(error_type id, int errnum = 0) noexcept;
 
     const char * errmsg(bool with_id = true) const noexcept;
 };
