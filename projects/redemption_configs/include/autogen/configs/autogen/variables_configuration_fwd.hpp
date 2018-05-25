@@ -54,6 +54,7 @@ namespace cfg {
         struct unicode_keyboard_event_support;
         struct mod_recv_timeout;
         struct spark_view_specific_glyph_width;
+        struct experimental_enable_serializer_data_block_size_limit;
     };
 
     struct session_log {

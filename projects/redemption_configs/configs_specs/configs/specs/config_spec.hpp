@@ -191,6 +191,9 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "spark_view_specific_glyph_width", set(false));
+        W.sep();
+
+        W.member(advanced_in_gui, no_sesman, type_<bool>(), "experimental_enable_serializer_data_block_size_limit",set(false));
     });
 
     W.section("session_log", [&]
