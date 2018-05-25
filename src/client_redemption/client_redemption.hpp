@@ -59,7 +59,7 @@
 #include "client_redemption/client_channel_managers/client_channel_RDPDR_manager.hpp"
 #include "client_redemption/client_channel_managers/client_channel_remoteapp_manager.hpp"
 
-#include "test_only/fixed_random.hpp"
+#include "utils/fixed_random.hpp"
 
 
 

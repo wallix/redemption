@@ -242,6 +242,24 @@ exe rdpheadless :
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 
+exe recorder_proxy :
+	$(REDEMPTION_SRC_PATH)/proxy_recorder/proxy_recorder.cpp
+:
+    <library>gssapi_krb5
+    <library>krb5
+    <library>crypto
+    <library>openssl
+    <library>dl
+    <library>src/core/error.o
+    <library>src/transport/socket_transport.o
+    <library>src/utils/fileutils.o
+    <library>src/utils/hexdump.o
+    <library>src/utils/netutils.o
+    <library>src/transport/recorder_transport.o
+
+    $(EXE_DEPENDENCIES)
+;
+
 lib libredrec :
   src/main/do_recorder.cpp.lib.o
 :
