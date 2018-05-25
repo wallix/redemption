@@ -427,8 +427,13 @@ namespace cli
     Res parse_short_option(char const * s, ParseResult& pr, Opt const& opt, Opts const&... opts)
     {
         if (opt.d.short_name == s[0]) {
-            ++pr.opti;
-            pr.str = (pr.opti < pr.argc) ? pr.argv[pr.opti] : "";
+            if (s[1]) {
+                pr.str = s + 1;
+            }
+            else {
+                ++pr.opti;
+                pr.str = (pr.opti < pr.argc) ? pr.argv[pr.opti] : "";
+            }
             return apply_option(pr, opt.act);
         }
         return parse_short_option(s, pr, opts...);
@@ -535,7 +540,7 @@ namespace cli
                             res = parse_long_option(s+2, r, opts...);
                         }
                     }
-                    else if (!s[2]) {
+                    else {
                         res = parse_short_option(s+1, r, opts...);
                     }
                 }
