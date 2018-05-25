@@ -1686,10 +1686,13 @@ public:
     const int screen_max_width;
     const int screen_max_height;
 
+    bool is_pre_loading;
+
     ClientOutputGraphicAPI(int max_width, int max_height)
       : drawn_client(nullptr),
 		screen_max_width(max_width)
-      , screen_max_height(max_height) {
+      , screen_max_height(max_height)
+      , is_pre_loading(false) {
     }
 
     virtual ~ClientOutputGraphicAPI() = default;

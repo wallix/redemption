@@ -76,7 +76,7 @@ public:
 
     std::vector<QPixmap> balises;
 
-    bool is_pre_loading;
+
 
 
 
@@ -95,7 +95,6 @@ public:
       , bar(nullptr)
 //       , trans_cache(nullptr)
       , qtRDPKeymap()
-      , is_pre_loading(false)
     {}
 
 
@@ -444,20 +443,19 @@ private:
                 if (!this->client->is_loading_replay_mod) {
                     time_t current_time_movie = 0;
 
-//                     if (!this->is_pre_loading) {
+                    if (!this->is_pre_loading) {
                         if (this->screen) {
                             current_time_movie = this->screen->get_current_time_movie();
                         }
                         this->dropScreen();
-//                     }
-                    LOG(LOG_INFO, "!!!!!!!!!!!!!!!! width=%d  height=%d", width, height);
+                    }
                     this->reset_cache(width, height);
 
-//                     if (!this->is_pre_loading) {
+                    if (!this->is_pre_loading) {
                         this->screen = new ReplayQtScreen(this->drawn_client, this, this->client->_movie_dir, this->client->_movie_name, &(this->cache), this->client->get_movie_time_length(this->client->get_mwrm_filename()), current_time_movie);
 
                         this->screen->show();
-//                     }
+                    }
                 }
                 return FrontAPI::ResizeResult::instant_done;
                     break;
@@ -1023,7 +1021,6 @@ private:
             // this->setClip(clip.x, clip.y, clip.cx, clip.cy);
             this->painter.drawLine(cmd.startx, cmd.starty, cmd.endx, cmd.endy);
         }
-
     }
 
 

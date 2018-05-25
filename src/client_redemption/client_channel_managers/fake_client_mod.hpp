@@ -47,7 +47,7 @@ public:
         (void) flags;
 
         if (this->index_in < 10) {
-            last_pdu[this->index_in].size = chunk.in_remain();
+            last_pdu[this->index_in].size = length;         //chunk.in_remain();
             std::memcpy(last_pdu[this->index_in].data, chunk.get_data(), chunk.in_remain());
             this->index_in++;
         }
@@ -137,24 +137,6 @@ public:
     size_t get_total_stream_produced() {
         return this->fake_mod.index_in;
     }
-
-//     uint16_t get_next_pdu_type() {
-//         this->read_stream_index++;
-//         if (this->read_stream_index < int(fake_mod.types.size())) {
-//             return fake_mod.types[this->read_stream_index];
-//         }
-//
-//         return -1;
-//     }
-//
-//     uint16_t get_next_pdu_sub_type() {
-//         this->read_stream_sub_index++;
-//         if (this->read_stream_sub_index < int(fake_mod.sub_types.size())) {
-//             return fake_mod.sub_types[this->read_stream_sub_index];
-//         }
-//
-//         return -1;
-//     }
 
     FakeRDPChannelsMod::PDUData * stream() {
         if (this->fake_mod.index_out < 10) {

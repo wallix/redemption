@@ -219,24 +219,23 @@ public:
 
             pDir = opendir (this->client->CB_TEMP_DIR.c_str());
 
-            if (pDir) {
-
-                this->clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS
-                                                , this->clipbrdFormatsList.FILECONTENTS
-                                                );
-                this->clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW
-                                                , this->clipbrdFormatsList.FILEGROUPDESCRIPTORW
-                                                );
+            this->clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS
+                                            , this->clipbrdFormatsList.FILECONTENTS
+                                            );
+            this->clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW
+                                            , this->clipbrdFormatsList.FILEGROUPDESCRIPTORW
+                                            );
 //                 this->clipbrdFormatsList.add_format( RDPECLIP::CF_UNICODETEXT
 //                                                 , std::string("\0\0", 2)
 //                                                 );
-                this->clipbrdFormatsList.add_format( RDPECLIP::CF_TEXT
-                                                , std::string("\0\0", 2)
-                                                );
-                this->clipbrdFormatsList.add_format( RDPECLIP::CF_METAFILEPICT
-                                                , std::string("\0\0", 2)
-                                                );
-            } else {
+            this->clipbrdFormatsList.add_format( RDPECLIP::CF_TEXT
+                                            , std::string("\0\0", 2)
+                                            );
+            this->clipbrdFormatsList.add_format( RDPECLIP::CF_METAFILEPICT
+                                            , std::string("\0\0", 2)
+                                            );
+
+            if (!pDir) {
                 LOG(LOG_WARNING, "Can't enable shared clipboard, %s directory doesn't exist.", this->client->CB_TEMP_DIR);
             }
     }

@@ -268,7 +268,7 @@ struct RecvPredictor {
 
 
 struct CliprdrHeader {
-    
+
     uint16_t msgType_;
     uint16_t msgFlags_;
     uint32_t dataLen_;
@@ -369,7 +369,6 @@ struct ClipboardCapabilitiesPDU
 
     uint16_t cCapabilitiesSets = 0;
 
-public:
     ClipboardCapabilitiesPDU() = default;
 
     ClipboardCapabilitiesPDU(uint16_t cCapabilitiesSets, uint32_t length_capabilities)
@@ -582,12 +581,14 @@ static inline const std::string get_generalFlags_names(uint32_t generalFlags) {
 //  field, that is the generalFlags field is set to 0x00000000.
 
 class GeneralCapabilitySet {
+
+public:
     uint16_t capabilitySetType = CB_CAPSTYPE_GENERAL;
     uint16_t lengthCapability  = size();
     uint32_t version_          = CB_CAPS_VERSION_1;
     uint32_t generalFlags_     = 0;
 
-public:
+
     GeneralCapabilitySet() = default;
 
     GeneralCapabilitySet(uint32_t version, uint32_t generalFlags) {
@@ -1085,7 +1086,7 @@ struct FormatListPDU_LongName {
     uint32_t    formatListIDs[FORMAT_LIST_MAX_SIZE];
     uint16_t    formatListName[FORMAT_LIST_MAX_SIZE][500];
     std::size_t formatListNameLen[FORMAT_LIST_MAX_SIZE];
-    std::size_t       formatListSize;
+    std::size_t       formatListSize = 0;
 
 
     explicit FormatListPDU_LongName( const uint32_t * formatListIDs
