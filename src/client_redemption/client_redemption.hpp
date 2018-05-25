@@ -490,10 +490,9 @@ public:
 
     bool init_socket() {
         if (this->is_full_replaying) {
+            LOG(LOG_INFO, "Replay %s", this->full_capture_file_name);
             ReplayTransport *transport = new ReplayTransport(
-                user_name.c_str(), full_capture_file_name,
-                this->target_IP.c_str(), this->port,
-                std::chrono::seconds(1), true);
+                this->full_capture_file_name.c_str(), this->target_IP.c_str(), this->port);
             this->socket = transport;
             this->client_sck = transport->get_fd();
             return true;
@@ -512,7 +511,7 @@ public:
                                             , std::move(client_sck)
                                             , this->target_IP.c_str()
                                             , this->port
-                                            , std::chrono::milliseconds(1000)
+                                            , std::chrono::seconds(1)
                                             , to_verbose_flags(0)
                                             //, SocketTransport::Verbose::dump
                                             , &this->error_message
@@ -1246,6 +1245,7 @@ private:
     {
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
+            (void)clip;
             if constexpr (with_log) {
                 order.log(LOG_INFO, clip);
             }

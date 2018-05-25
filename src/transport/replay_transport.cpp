@@ -19,7 +19,12 @@
 
 */
 
-#include <thread>
+#include "utils/log.hpp"
+#include "utils/stream.hpp"
+#include "replay_transport.hpp"
+#include "recorder_transport.hpp"
+
+#include <cstring>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -27,269 +32,172 @@
 #include <sys/eventfd.h>
 #include <fcntl.h>
 
-#include "utils/log.hpp"
-#include "utils/stream.hpp"
-#include "replay_transport.hpp"
-#include "recorder_transport.hpp"
 
-ReplayTransport::ReplayTransport( const char * name, const std::string &fname, const char *ip_address
-		, int port, std::chrono::milliseconds timeout, bool respect_timing)
-	: respect_timing(respect_timing)
-	, start_time(std::chrono::system_clock::now())
-	, clock_id(CLOCK_MONOTONIC)
-	, recv_timeout(timeout)
-	, inFile(unique_fd(::open(fname.c_str(), O_RDONLY)))
-	, record_data(nullptr), record_ptr(nullptr)
-	, public_key(nullptr), public_key_size(0)
-	, record_len(0), eof(false)
+namespace
 {
-	(void)name;
-	(void)ip_address;
-	(void)port;
+    unique_fd open_file(char const* filename)
+    {
+        unique_fd ufd{::open(filename, O_RDONLY)};
+        if (!ufd) {
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+        }
+        return ufd;
+    }
+}
 
-	if (respect_timing) {
-		timer = timerfd_create(clock_id, TFD_NONBLOCK);
-	} else {
-		uint64_t value = 0;
+ReplayTransport::ReplayTransport(const char* fname, const char *ip_address, int port)
+: start_time(std::chrono::system_clock::now())
+, in_file(open_file(fname))
+, timer_fd(timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK))
+{
+    (void)ip_address;
+    (void)port;
 
-		timer = eventfd(0, EFD_NONBLOCK);
-		write(timer, &value, 8); // that will make the file descriptor always selectable
-	}
+    if (!timer_fd) {
+        throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+    }
 
-	ReplayTransport::ReadResult res;
-	do {
-		res = read_more_chunk();
-	} while(res == Meta);
+    this->read_more_chunk();
+    this->reschedule_timer();
 }
 
 
 ReplayTransport::~ReplayTransport() = default;
 
 
-void ReplayTransport::reschedule_timer() {
-	if (!respect_timing)
-		return;
+void ReplayTransport::reschedule_timer()
+{
+    auto const now = std::chrono::system_clock::now();
+    auto const delate_time = (this->record_time - now);
 
-	itimerspec timeout = {};
-	uint64_t msecDelta;
-	auto now = std::chrono::system_clock::now();
+    itimerspec timeout = {};
+    if (delate_time.count() > 0) {
+        auto sec = std::chrono::duration_cast<std::chrono::seconds>(delate_time);
+        auto nano = std::chrono::duration_cast<std::chrono::nanoseconds>(delate_time - sec);
+        timeout.it_value.tv_sec = sec.count();
+        timeout.it_value.tv_nsec = nano.count();
+    }
 
-	if (now >= record_time) {
-		/* we passed dueTime, let's program a very short relative time*/
-		msecDelta = 1;
-	} else {
-		msecDelta = std::max(
-				std::chrono::milliseconds(1),
-				std::chrono::duration_cast<std::chrono::milliseconds>(record_time - now)
-		).count();
-	}
+    LOG(LOG_DEBUG, "trigerring timer now sec=%ld nsec=%ld", timeout.it_value.tv_sec, timeout.it_value.tv_nsec);
 
-	timeout.it_value.tv_sec = msecDelta / 1000;
-	timeout.it_value.tv_nsec = (msecDelta % 1000) * 1000 * 1000;
-	//LOG(LOG_WARNING, "trigerring timer now sec=%ld nsec=%ld", timeout.it_value.tv_sec, timeout.it_value.tv_nsec);
-
-	if (timerfd_settime(timer, 0, &timeout, nullptr) < 0) {
-		LOG(LOG_ERR, "unable to set the timer time");
-	}
+    if (timerfd_settime(this->timer_fd.fd(), 0, &timeout, nullptr) < 0) {
+        LOG(LOG_ERR, "unable to set the timer time");
+        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+    }
 }
 
-ReplayTransport::ReadResult ReplayTransport::read_more_chunk() {
-	uint8_t buffer[8+4+1];
-	uint32_t chunkLen, offset;
-	ReplayTransport::ReadResult status = Eof;
+void ReplayTransport::read_more_chunk()
+{
+    while (!this->is_eof) {
+        auto header = read_recorder_transport_header(this->in_file);
 
-	Transport::Read ret = inFile.atomic_read(buffer, sizeof(buffer));
-	if (ret == Transport::Read::Eof) {
-		eof = true;
-		return Eof;
-	}
+        this->record_time = this->start_time + header.record_duration;
 
-	InStream instream(buffer, sizeof(buffer));
+        switch (header.type)
+        {
+            case RecorderTransport::PacketType::ClientCert:
+                this->public_key.size = header.data_size;
+                this->public_key.data = std::make_unique<uint8_t[]>(header.data_size);
+                this->in_file.recv_boom(this->public_key.data.get(), this->public_key.size);
+                break;
 
-	uint8_t recordType = instream.in_uint8();
-	record_time = start_time + std::chrono::milliseconds(instream.in_uint64_le());
-	chunkLen = instream.in_uint32_le();
+            case RecorderTransport::PacketType::DataIn:
+                if (this->data.capacity < header.data_size) {
+                    this->data.data = std::make_unique<uint8_t[]>(header.data_size);
+                    this->data.capacity = header.data_size;
+                }
+                this->data.size = header.data_size;
+                this->data.current_pos = 0;
+                this->in_file.recv_boom(this->data.data.get(), header.data_size);
+                // this->record_len += header.data_size;
+                if (header.data_size) {
+                    return;
+                }
+                break;
 
-	switch (RecorderTransport::PacketType{recordType}) {
-	case RecorderTransport::PacketType::ClientCert:
-		// LOG(LOG_WARNING, "cert len=%u", chunkLen);
-		public_key_size = chunkLen;
-		public_key = static_cast<uint8_t *>(malloc(chunkLen));
-		ret = inFile.atomic_read(public_key, chunkLen);
-		if (ret != Transport::Read::Ok) {
-			eof = true;
-			return Eof;
-		}
-		return Meta;
+            case RecorderTransport::PacketType::Eof:
+                this->is_eof = true;
+                return;
 
-	case RecorderTransport::PacketType::DataIn:
-		// LOG(LOG_WARNING, "data chunk len=%u offset=%lu", chunkLen, record_offset);
-		offset = record_ptr - record_data;
-
-		record_data = record_ptr = static_cast<char *>(realloc(record_data, record_len + chunkLen));
-		if (record_len)
-			memmove(record_ptr, record_ptr + offset, record_len);
-
-		ret = inFile.atomic_read(record_ptr + offset, chunkLen);
-		if (ret != Transport::Read::Ok) {
-			eof = true;
-			return Eof;
-		}
-		record_len += chunkLen;
-		status = Data;
-		break;
-
-	case RecorderTransport::PacketType::Eof:
-		// LOG(LOG_WARNING, "EOF !!!!!!!!!!!!!!");
-		eof = true;
-		status = Eof;
-		break;
-
-	case RecorderTransport::PacketType::DataOut:
-	case RecorderTransport::PacketType::Connect:
-	case RecorderTransport::PacketType::Disconnect:
-	case RecorderTransport::PacketType::ServerCert:
-        // TODO
-		break;
-	}
-
-	reschedule_timer();
-
-	return status;
+            case RecorderTransport::PacketType::DataOut:
+            case RecorderTransport::PacketType::Connect:
+            case RecorderTransport::PacketType::Disconnect:
+            case RecorderTransport::PacketType::ServerCert: {
+                // TODO
+                uint8_t buffer[4*1024];
+                while (header.data_size) {
+                    auto min = std::min<size_t>(sizeof(buffer), header.data_size);
+                    this->in_file.recv_boom(buffer, min);
+                    header.data_size -= min;
+                }
+                break;
+            }
+        }
+    }
 }
 
 
 array_view_const_u8 ReplayTransport::get_public_key() const
 {
-	return {this->public_key, this->public_key_size};
+    return {this->public_key.data.get(), this->public_key.size};
 }
 
-Transport::TlsResult ReplayTransport::enable_client_tls(bool server_cert_store,
-                                    ServerCertCheck server_cert_check,
-                                    ServerNotifier & server_notifier,
-                                    const char * certif_path)
+Transport::TlsResult ReplayTransport::enable_client_tls(
+    bool server_cert_store, ServerCertCheck server_cert_check,
+    ServerNotifier & server_notifier, const char * certif_path)
 {
-	(void)server_cert_store;
-	(void)server_cert_check;
-	(void)server_notifier;
-	(void)certif_path;
+    (void)server_cert_store;
+    (void)server_cert_check;
+    (void)server_notifier;
+    (void)certif_path;
 
-	return Transport::TlsResult::Ok;
+    return Transport::TlsResult::Ok;
 }
 
-size_t ReplayTransport::do_partial_read(uint8_t * buffer, size_t len) {
-	size_t ret;
-	uint64_t timeval;
+array_view_const_u8 ReplayTransport::Data::av() const noexcept
+{
+    return {this->data.get() + this->current_pos, this->size - this->current_pos};
+}
 
-	if (respect_timing)
-		read(timer, &timeval, sizeof(timeval));
+size_t ReplayTransport::do_partial_read(uint8_t * buffer, size_t const len)
+{
+    if (this->is_eof) {
+        LOG(LOG_ERR, "ReplayTransport is eof");
+        throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+    }
 
-	reschedule_timer();
-	if (eof) {
-		throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
-	}
-
-	std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-	if (record_time > now) {
-		auto delta = record_time - now;
-		if (delta > recv_timeout) {
-            std::this_thread::sleep_for(recv_timeout);
+    {
+        uint64_t timeval;
+        if (sizeof(timeval) != read(this->timer_fd.fd(), &timeval, sizeof(timeval))) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
         }
-        else {
-            std::this_thread::sleep_for(delta);
-        }
-	}
+    }
 
-	now = std::chrono::system_clock::now();
-	if (record_time > now)
-		return 0;
+    auto av = this->data.av();
+    auto new_len = std::min(av.size(), len);
+    memcpy(buffer, av.data(), new_len);
+    this->data.current_pos += new_len;
 
-	if (len < record_len) {
-		// partially read the record
-		memcpy(buffer, record_ptr, len);
-		record_ptr += len;
-		record_len -= len;
+    LOG(LOG_DEBUG, "ReplayTransport::partial_read len=%zu new_len=%zu remaining=%zu", len, new_len, av.size());
 
-		return len;
-	}
+    if (av.size() == new_len) {
+        this->read_more_chunk();
+    }
+    this->reschedule_timer();
 
-	memcpy(buffer, record_ptr, record_len);
-	ret = record_len;
-	record_len = 0;
-
-	ReplayTransport::ReadResult res;
-	do {
-		res = read_more_chunk();
-		if (res == Eof) {
-			eof = true;
-			throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
-		}
-	} while (res != Data);
-	return ret;
+    return new_len;
 }
 
-Transport::Read ReplayTransport::do_atomic_read(uint8_t * buffer, size_t len) {
-	std::chrono::system_clock::time_point now, dueTime;
-	ReplayTransport::ReadResult res;
-	uint64_t timeval;
-
-	if (respect_timing)
-		read(timer, &timeval, sizeof(timeval));
-	reschedule_timer();
-
-	if (eof) {
-		return Transport::Read::Eof;
-	}
-
-	now = std::chrono::system_clock::now();
-	dueTime = now + recv_timeout;
-
-	while (now < dueTime) {
-		if (now < record_time) {
-			auto delta = record_time - now;
-            if (delta > recv_timeout) {
-                std::this_thread::sleep_for(recv_timeout);
-            }
-            else {
-                std::this_thread::sleep_for(delta);
-            }
-		}
-
-		now = std::chrono::system_clock::now();
-		if (now < record_time)
-			continue;
-
-		if (record_len <= len) {
-			memcpy(buffer, record_ptr, len);
-			record_len -= len;
-			record_ptr += len;
-			if (!record_len) {
-
-				do {
-					res = read_more_chunk();
-					if (res == Eof) {
-						eof = true;
-						return Transport::Read::Eof;
-					}
-				} while (res != Data);
-			}
-
-			return Transport::Read::Ok;
-		}
-
-		do {
-			res = read_more_chunk();
-			if (res == Eof) {
-				eof = true;
-				return Transport::Read::Eof;
-			}
-		} while (res != Data);
-	}
-
-	throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
+Transport::Read ReplayTransport::do_atomic_read(uint8_t * buffer, size_t len)
+{
+    (void)buffer;
+    (void)len;
+    LOG(LOG_ERR, "ReplayTransport::do_atomic_read unimplemented");
+    throw Error(ERR_TRANSPORT_READ_FAILED);
 }
 
-void ReplayTransport::do_send(const uint8_t * const buffer, size_t len) {
-	(void)buffer;
-	(void)len;
+void ReplayTransport::do_send(const uint8_t * const buffer, size_t len)
+{
+    (void)buffer;
+    (void)len;
 }
