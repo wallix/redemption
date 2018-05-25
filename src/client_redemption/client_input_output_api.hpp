@@ -335,10 +335,10 @@ public:
     bool                 enable_shared_virtual_disk;
 
     struct KeyCustomDefinition {
-        int qtKeyID  = 0;
-        int scanCode = 0;
+        int qtKeyID;
+        int scanCode;
         std::string ASCII8;
-        int extended = 0;
+        int extended;
         std::string name;
 
         KeyCustomDefinition(int qtKeyID, int scanCode, std::string ASCII8, int extended, std::string name)
@@ -347,7 +347,7 @@ public:
           , ASCII8(std::move(ASCII8))
           , extended(extended ? 0x0100 : 0)
           , name(std::move(name))
-          {}
+        {}
     };
     std::vector<KeyCustomDefinition> keyCustomDefinitions;
 
@@ -783,11 +783,7 @@ public:
 
 
     void add_key_custom_definition(int qtKeyID, int scanCode, const std::string & ASCII8, int extended, const std::string & name) {
-
-        KeyCustomDefinition keyCustomDefinition = {qtKeyID, scanCode, ASCII8, extended, name};
-        this->keyCustomDefinitions.push_back(keyCustomDefinition);
-
-        const ClientRedemptionIOAPI::KeyCustomDefinition & key = this->keyCustomDefinitions[this->keyCustomDefinitions.size() - 1];
+        this->keyCustomDefinitions.emplace_back(qtKeyID, scanCode, ASCII8, extended, name);
     }
 
 
