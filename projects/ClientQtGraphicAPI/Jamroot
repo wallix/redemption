@@ -196,6 +196,7 @@ else
 obj front_Qt$(qtversion)_rdp.o : src/main_qt_client_redemption.cpp :
     <define>REDEMPTION_DECL_LOG_TEST
     $(EXE_DEPENDENCIES)
+    <include>$(REDEMPTION_TEST_PATH)/includes # lcg/fixed random
 ;
 
 exe client_rdp :

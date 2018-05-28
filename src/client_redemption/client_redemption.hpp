@@ -47,8 +47,7 @@
 #include "client_redemption/client_channel_managers/client_channel_RDPDR_manager.hpp"
 #include "client_redemption/client_channel_managers/client_channel_remoteapp_manager.hpp"
 
-
-
+#include "test_only/fixed_random.hpp"
 
 
 
@@ -554,9 +553,9 @@ public:
     virtual void connect() override {
 
         if (this->is_full_capturing || this->is_full_replaying) {
-            gen.reset(new FixedRandom());
+            gen = std::make_unique<FixedRandom>();
         } else {
-            gen.reset(new UdevRandom());
+            gen = std::make_unique<UdevRandom>();
         }
 
         this->clientChannelRemoteAppManager.clear();

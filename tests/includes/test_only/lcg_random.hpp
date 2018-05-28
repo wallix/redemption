@@ -29,7 +29,7 @@ class LCGRandom : public Random
 {
     uint64_t seed;
 public:
-    explicit LCGRandom(uint32_t seed)
+    explicit LCGRandom(uint32_t seed = 0)
     : seed(seed)
     {
     }
