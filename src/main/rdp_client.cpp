@@ -35,6 +35,7 @@
 #include "utils/genrandom.hpp"
 #include "utils/netutils.hpp"
 #include "utils/redirection_info.hpp"
+#include "test_only/fixed_random.hpp"
 
 #include <iostream>
 #include <string>
@@ -74,6 +75,7 @@ int main(int argc, char** argv)
         {'s', "screen-output", &screen_output, "png screenshot path"},
         {'r', "record-path", &record_output, "dump socket path"},
         {'V', "vnc", "dump socket path"},
+        {'l', "lcg", "use LCGRandom and LCGTime"},
         {"verbose", &verbose, "verbose"},
     });
 
@@ -186,14 +188,22 @@ int main(int argc, char** argv)
             mod_rdp_params.log();
         }
 
-        UdevRandom gen;
-        TimeSystem timeobj;
+        UdevRandom system_gen;
+        TimeSystem system_timeobj;
+        FixedRandom lcg_gen;
+        LCGTime lcg_timeobj;
         NullAuthentifier authentifier;
 
+        bool const use_system_obj = record_output.empty() && !options.count("lcg");
+
         return run([&](Transport& trans){
+            using TimeObjRef = TimeObj&;
+            using RandomRef = Random&;
             return mod_rdp(
                 trans, session_reactor, front, client_info, redir_info,
-                gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
+                use_system_obj ? RandomRef(system_gen) : lcg_gen,
+                use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
+                mod_rdp_params, authentifier, report_message, ini);
         });
     }
 }

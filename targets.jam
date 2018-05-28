@@ -159,6 +159,7 @@ exe rdpclient :
   $(REDEMPTION_SRC_PATH)/main/rdp_client.cpp
 :
   $(EXE_DEPENDENCIES)
+  <include>$(REDEMPTION_TEST_PATH)/includes
   <library>app_path_exe.o
   <library>crypto
   <library>gssapi_krb5
