@@ -24,6 +24,7 @@
 #include "core/RDP/mppc/mppc_utils.hpp"
 #include "utils/stream.hpp"
 
+#include <limits>
 #include <cinttypes>
 
 static const size_t RDP_50_HIST_BUF_LEN = (1024 * 64); /* RDP 5.0 uses 64K history buf */
@@ -598,11 +599,14 @@ private:
             LOG(LOG_INFO, "compress_50");
         }
 
-        if (uncompressed_data_size >= RDP_50_HIST_BUF_LEN) {
-            LOG(LOG_ERR, "compress_50: input stream too large, max=%zu got=%u",
-                RDP_50_HIST_BUF_LEN - 1u, uncompressed_data_size);
-            throw Error(ERR_RDP_PROTOCOL);
-        }
+        static_assert(std::numeric_limits<decltype(uncompressed_data_size)>::max() < RDP_50_HIST_BUF_LEN,
+          "LOG(LOG_ERR, \"compress_50: input stream too large, max=%zu got=%u\","
+          "\nRDP_50_HIST_BUF_LEN - 1u, uncompressed_data_size)");
+        // if (uncompressed_data_size >= RDP_50_HIST_BUF_LEN) {
+        //     LOG(LOG_ERR, "compress_50: input stream too large, max=%zu got=%u",
+        //         RDP_50_HIST_BUF_LEN - 1u, uncompressed_data_size);
+        //     throw Error(ERR_RDP_PROTOCOL);
+        // }
 
         this->flags = PACKET_COMPR_TYPE_64K;
 
