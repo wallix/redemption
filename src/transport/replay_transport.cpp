@@ -45,15 +45,17 @@ namespace
     }
 }
 
-ReplayTransport::ReplayTransport(const char* fname, const char *ip_address, int port)
+ReplayTransport::ReplayTransport(
+    const char* fname, const char *ip_address, int port, Timing timing)
 : start_time(std::chrono::system_clock::now())
 , in_file(open_file(fname))
-, timer_fd(timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK))
+, timer_fd(Timing::Real == timing ? timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK) : -1)
+, timing(timing)
 {
     (void)ip_address;
     (void)port;
 
-    if (!timer_fd) {
+    if (Timing::Real == timing && !this->timer_fd) {
         throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
     }
 
@@ -67,6 +69,10 @@ ReplayTransport::~ReplayTransport() = default;
 
 void ReplayTransport::reschedule_timer()
 {
+    if (Timing::Real != this->timing) {
+        return;
+    }
+
     auto const now = std::chrono::system_clock::now();
     auto const delate_time = (this->record_time - now);
 
@@ -77,8 +83,12 @@ void ReplayTransport::reschedule_timer()
         timeout.it_value.tv_sec = sec.count();
         timeout.it_value.tv_nsec = nano.count();
     }
+    // zero disarms the timer, force to 1 nanoseconds
+    if (!timeout.it_value.tv_nsec && !timeout.it_value.tv_nsec) {
+        timeout.it_value.tv_nsec = 1;
+    }
 
-    LOG(LOG_DEBUG, "trigerring timer now sec=%ld nsec=%ld", timeout.it_value.tv_sec, timeout.it_value.tv_nsec);
+    // LOG(LOG_DEBUG, "trigerring timer now sec=%ld nsec=%ld", timeout.it_value.tv_sec, timeout.it_value.tv_nsec);
 
     if (timerfd_settime(this->timer_fd.fd(), 0, &timeout, nullptr) < 0) {
         LOG(LOG_ERR, "unable to set the timer time");
@@ -166,14 +176,23 @@ size_t ReplayTransport::do_partial_read(uint8_t * buffer, size_t const len)
         throw Error(ERR_TRANSPORT_NO_MORE_DATA);
     }
 
+    if (Timing::Real == this->timing)
     {
         uint64_t timeval;
         if (sizeof(timeval) != read(this->timer_fd.fd(), &timeval, sizeof(timeval))) {
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+            int const err = errno;
+            LOG(LOG_ERR, "read error");
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, err);
         }
     }
 
     auto av = this->data.av();
+
+    if (av.size() > len) {
+        LOG(LOG_ERR, "ReplayTransport::partial_read(buf, len=%zu) should be %zu or greater", len, av.size());
+        throw Error(ERR_TRANSPORT_DIFFERS);
+    }
+
     auto new_len = std::min(av.size(), len);
     memcpy(buffer, av.data(), new_len);
     this->data.current_pos += new_len;

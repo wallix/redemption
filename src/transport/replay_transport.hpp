@@ -32,22 +32,18 @@
 class ReplayTransport : public Transport
 {
 public:
-	ReplayTransport(const char* fname, const char *ip_address, int port);
+    enum class Timing : bool { Real, Unckecked };
+
+	ReplayTransport(
+        const char* fname, const char *ip_address, int port, Timing timing = Timing::Real);
 
 	~ReplayTransport();
 
     array_view_const_u8 get_public_key() const override;
 
-    TlsResult enable_client_tls(bool server_cert_store,
-                                    ServerCertCheck server_cert_check,
-                                    ServerNotifier & server_notifier,
-                                    const char * certif_path) override;
-
-    size_t do_partial_read(uint8_t * buffer, size_t len) override;
-
-    [[noreturn]] Read do_atomic_read(uint8_t * buffer, size_t len) override;
-
-    void do_send(const uint8_t * const buffer, size_t len) override;
+    TlsResult enable_client_tls(
+        bool server_cert_store, ServerCertCheck server_cert_check,
+        ServerNotifier & server_notifier, const char * certif_path) override;
 
     int get_fd() const override { return this->timer_fd.fd(); }
 
@@ -56,6 +52,12 @@ private:
     void read_more_chunk();
 
     void reschedule_timer();
+
+    size_t do_partial_read(uint8_t * buffer, size_t len) override;
+
+    [[noreturn]] Read do_atomic_read(uint8_t * buffer, size_t len) override;
+
+    void do_send(const uint8_t * const buffer, size_t len) override;
 
 private:
     std::chrono::system_clock::time_point start_time;
@@ -81,4 +83,5 @@ private:
     Key public_key;
 	// uint64_t record_len = 0;
 	bool is_eof = false;
+	Timing timing;
 };

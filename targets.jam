@@ -3855,6 +3855,7 @@ test-run tests/transport/test_recorder_transport :
   <covfile>src/transport/recorder_transport.hpp
   <library>src/core/error.o
   <library>src/transport/recorder_transport.o
+  <library>src/transport/replay_transport.o
   <library>src/utils/hexdump.o
 ;
 test-run tests/transport/test_snappy_compression_transport :
