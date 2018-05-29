@@ -126,6 +126,7 @@ void ReplayTransport::read_more_chunk()
                 break;
 
             case RecorderTransport::PacketType::Eof:
+                LOG(LOG_INFO, "ReplayTransport::read_more_chunk: eof = true");
                 this->is_eof = true;
                 return;
 
@@ -172,7 +173,7 @@ array_view_const_u8 ReplayTransport::Data::av() const noexcept
 size_t ReplayTransport::do_partial_read(uint8_t * buffer, size_t const len)
 {
     if (this->is_eof) {
-        LOG(LOG_ERR, "ReplayTransport is eof");
+        LOG(LOG_INFO, "ReplayTransport::do_partial_read: is eof");
         throw Error(ERR_TRANSPORT_NO_MORE_DATA);
     }
 
@@ -181,7 +182,7 @@ size_t ReplayTransport::do_partial_read(uint8_t * buffer, size_t const len)
         uint64_t timeval;
         if (sizeof(timeval) != read(this->timer_fd.fd(), &timeval, sizeof(timeval))) {
             int const err = errno;
-            LOG(LOG_ERR, "read error");
+            LOG(LOG_ERR, "ReplayTransport::do_partial_read: read timer_fd error");
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, err);
         }
     }

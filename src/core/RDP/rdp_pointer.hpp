@@ -69,7 +69,7 @@ public:
 
 struct ConstPointer : public BasePointer {
     const char * data;
-    explicit ConstPointer(const CursorSize & d, const Hotspot & hs, const char * data) 
+    explicit ConstPointer(const CursorSize & d, const Hotspot & hs, const char * data)
         : BasePointer(d, hs)
         , data(data)
     {}
@@ -77,7 +77,7 @@ struct ConstPointer : public BasePointer {
 
 struct NormalPointer : public ConstPointer {
     NormalPointer()
-        : ConstPointer(CursorSize{32,32}, Hotspot{0,0}, 
+        : ConstPointer(CursorSize{32,32}, Hotspot{0,0},
             /* 0000 */ "................................"
             /* 0060 */ "................................"
             /* 00c0 */ "................................"
@@ -116,7 +116,7 @@ struct NormalPointer : public ConstPointer {
 
 struct EditPointer : public ConstPointer {
     EditPointer()
-        : ConstPointer(CursorSize{32,32}, Hotspot{15,16}, 
+        : ConstPointer(CursorSize{32,32}, Hotspot{15,16},
             /* 0000 */ "................................"
             /* 0060 */ "................................"
             /* 00c0 */ "................................"
@@ -155,7 +155,7 @@ struct EditPointer : public ConstPointer {
 
 struct DrawableDefaultPointer : public ConstPointer {
     DrawableDefaultPointer()
-        : ConstPointer(CursorSize{32,32}, Hotspot{0,0}, 
+        : ConstPointer(CursorSize{32,32}, Hotspot{0,0},
             /* 0000 */ "................................"
             /* 0060 */ "................................"
             /* 00c0 */ "................................"
@@ -194,7 +194,7 @@ struct DrawableDefaultPointer : public ConstPointer {
 
 struct SizeNSPointer : public ConstPointer {
     SizeNSPointer()
-        : ConstPointer(CursorSize{32,32}, Hotspot{10,10}, 
+        : ConstPointer(CursorSize{32,32}, Hotspot{10,10},
         /* 0000 */ "................................"
         /* 0060 */ "................................"
         /* 00c0 */ "................................"
@@ -233,7 +233,7 @@ struct SizeNSPointer : public ConstPointer {
 
 struct SizeNESWPointer : public ConstPointer {
     SizeNESWPointer()
-        : ConstPointer(CursorSize{32,32}, Hotspot{10,10}, 
+        : ConstPointer(CursorSize{32,32}, Hotspot{10,10},
     /* 0000 */ "................................"
     /* 0060 */ "................................"
     /* 00c0 */ "................................"
@@ -273,7 +273,7 @@ struct SizeNESWPointer : public ConstPointer {
 
 struct SizeNWSEPointer : public ConstPointer {
     SizeNWSEPointer()
-        : ConstPointer(CursorSize{32,32}, Hotspot{10,10}, 
+        : ConstPointer(CursorSize{32,32}, Hotspot{10,10},
     /* 0000 */ "................................"
     /* 0060 */ "................................"
     /* 00c0 */ "................................"
@@ -313,7 +313,7 @@ struct SizeNWSEPointer : public ConstPointer {
 
 struct SizeWEPointer : public ConstPointer {
     SizeWEPointer()
-        : ConstPointer(CursorSize{32,32}, Hotspot{10,10}, 
+        : ConstPointer(CursorSize{32,32}, Hotspot{10,10},
     /* 0000 */ "................................"
     /* 0060 */ "................................"
     /* 00c0 */ "................................"
@@ -352,7 +352,7 @@ struct SizeWEPointer : public ConstPointer {
 
 struct DotPointer : public ConstPointer {
     DotPointer()
-        : ConstPointer(CursorSize{32,32}, Hotspot{2,2}, 
+        : ConstPointer(CursorSize{32,32}, Hotspot{2,2},
     /* 0000 */ "................................"
     /* 0060 */ "................................"
     /* 00c0 */ "................................"
@@ -391,7 +391,7 @@ struct DotPointer : public ConstPointer {
 
 struct NullPointer : public ConstPointer {
     NullPointer()
-        : ConstPointer(CursorSize{32,32}, Hotspot{2,2}, 
+        : ConstPointer(CursorSize{32,32}, Hotspot{2,2},
     /* 0000 */ "................................"
     /* 0060 */ "................................"
     /* 00c0 */ "................................"
@@ -430,7 +430,7 @@ struct NullPointer : public ConstPointer {
 
 struct SystemDefaultPointer : public ConstPointer {
     SystemDefaultPointer()
-        : ConstPointer(CursorSize{32,32}, Hotspot{10,10}, 
+        : ConstPointer(CursorSize{32,32}, Hotspot{10,10},
     /* 0000 */ "--------------------------------"
     /* 0060 */ "------------------XX------------"
     /* 00c0 */ "-----------------X++X-----------"
@@ -475,7 +475,7 @@ struct PointerLoader2
     Hotspot hotspot;
     array_view_const_u8 data;
     array_view_const_u8 mask;
-    
+
     PointerLoader2(InStream & stream)
         : dimensions(0, 0)
         , data_bpp{0}
@@ -506,7 +506,7 @@ struct PointerLoader32x32
     Hotspot hotspot;
     array_view_const_u8 data;
     array_view_const_u8 mask;
-    
+
     PointerLoader32x32(InStream & stream)
         : dimensions(32, 32)
         , data_bpp{24}
@@ -530,7 +530,7 @@ struct Pointer : public BasePointer {
 
     friend class NewPointerUpdate;
     friend class ColorPointerUpdate;
-    
+
 // TODO: in TS_SYSTEMPOINTERATTRIBUTE, POINTER_NULL and POINTER_NORMAL are attributed specific values
 // we could directly provide these to Pointer constructor instead of defining a switch on call site (rdp.hpp)
 
@@ -573,7 +573,7 @@ private:
 public:
 
 
-    void store_data_cursor(const char * cursor, bool inverted){ 
+    void store_data_cursor(const char * cursor, bool inverted){
             uint8_t * tmp = this->data;
             memset(this->mask, 0, this->dimensions.width * this->dimensions.height / 8);
             for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
@@ -595,7 +595,7 @@ public:
         auto dlen = av_xor.size();
         auto data = av_xor.data();
         auto mask = av_and.data();
-        
+
         if (data_bpp == 1) {
             uint8_t data_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8];
             uint8_t mask_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8];
@@ -657,13 +657,13 @@ public:
     }
 
 
-    Pointer(uint8_t Bpp, CursorSize d, Hotspot hs, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask, 
+    Pointer(uint8_t Bpp, CursorSize d, Hotspot hs, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask,
                    int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max)
         : BasePointer(CursorSize(std::min<size_t>(size_t(d.width), size_t(32))+(std::min<size_t>(size_t(d.width), size_t(32))&1),d.height), hs)
     {
     // VNC Pointer format
     // ==================
-    
+
     // The data consists of width * height pixel values followed by
     // a bitmask.
 
@@ -684,7 +684,7 @@ public:
        size_t source_offset_line = (minheight-1) * d.width * Bpp;
        size_t source_mask_offset_line = (minheight-1) * ::nbbytes(d.width);
        memset(this->data, 0xAA, sizeof(this->data));
-       
+
 //       LOG(LOG_INFO, "r%u rs<<%u g%u gs<<%u b%u bs<<%u", red_max, red_shift, green_max, green_shift, blue_max, blue_shift);
        for (size_t y = 0 ; y < minheight ; y++){
             for (size_t x = 0 ; x < minwidth ; x++){
@@ -695,8 +695,8 @@ public:
 //                    pixel = (pixel<<8) + vncdata[source_offset+Bpp-i-1];
                     pixel = (pixel<<8) + vncdata[source_offset+i];
                 }
-                const unsigned red = (pixel >> red_shift) & red_max; 
-                const unsigned green = (pixel >> green_shift) & green_max; 
+                const unsigned red = (pixel >> red_shift) & red_max;
+                const unsigned green = (pixel >> green_shift) & green_max;
                 const unsigned blue = (pixel >> blue_shift) & blue_max;
 //               LOG(LOG_INFO, "pixel=%.2X (%.1X, %.1X, %.1X)", pixel, red, green, blue);
                 this->data[target_offset] = (red << 3) | (red >> 2);
@@ -729,7 +729,7 @@ public:
                 }
             }
         }
-        return true;    
+        return true;
     }
 
 
@@ -745,11 +745,11 @@ public:
         }
         memcpy(this->mask, av_and.data(), av_and.size());
         memcpy(this->data, av_xor.data(), av_xor.size());
-        
+
         unsigned Bpp = 3;
         this->only_black_white = this->is_black_and_white(av_xor.data(),
                                                           this->dimensions.width,
-                                                          this->dimensions.height, 
+                                                          this->dimensions.height,
                                                           ::even_pad_length(this->dimensions.width * Bpp),
                                                           Bpp);
     }
@@ -823,7 +823,7 @@ public:
         return (this->dimensions.width != 0 && this->dimensions.height != 0/* && this->bpp*/);
     }
 
-    void to_regular_pointer(const uint8_t * indata, unsigned dlen, uint8_t bpp, const BGRPalette & palette) 
+    void to_regular_pointer(const uint8_t * indata, unsigned dlen, uint8_t bpp, const BGRPalette & palette)
     {
         switch (bpp) {
         case 1 :
@@ -918,7 +918,7 @@ public:
 
         result.out_uint16_le(this->xor_data_size());
         result.out_uint16_le(this->bit_mask_size());
-        
+
         result.out_copy_bytes(this->get_24bits_xor_mask());
         result.out_copy_bytes(this->get_monochrome_and_mask());
     }
@@ -946,7 +946,7 @@ public:
         break;
         }
     }
-    
+
     void cleanup_32_bpp_cursor(unsigned width, unsigned height) {
         const unsigned int xor_line_length_in_byte = width * 3;
         const unsigned int xor_padded_line_length_in_byte = ::even_pad_length(xor_line_length_in_byte);
@@ -976,7 +976,7 @@ public:
             }
         }
     }
-    
+
 };
 
 //    2.2.9.1.1.4.4     Color Pointer Update (TS_COLORPOINTERATTRIBUTE)
@@ -991,26 +991,26 @@ public:
 // hotSpot (4 bytes): Point (section 2.2.9.1.1.4.1) structure containing the x-coordinates and y-coordinates of the pointer hotspot.
 
 // width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in pixels. The maximum allowed pointer width
-// is 96 pixels if the client indicated support for large pointers by setting the LARGE_POINTER_FLAG (0x00000001) in the 
-// Large Pointer Capability Set (section 2.2.7.2.7). 
+// is 96 pixels if the client indicated support for large pointers by setting the LARGE_POINTER_FLAG (0x00000001) in the
+// Large Pointer Capability Set (section 2.2.7.2.7).
 // If the LARGE_POINTER_FLAG was not set, the maximum allowed pointer width is 32 pixels.
 
 // height (2 bytes): A 16-bit, unsigned integer. The height of the pointer in pixels. The maximum allowed pointer height
-// is 96 pixels if the client indicated support for large pointers by setting the LARGE_POINTER_FLAG (0x00000001) in the 
-// Large Pointer Capability Set (section 2.2.7.2.7). 
+// is 96 pixels if the client indicated support for large pointers by setting the LARGE_POINTER_FLAG (0x00000001) in the
+// Large Pointer Capability Set (section 2.2.7.2.7).
 // If the LARGE_POINTER_FLAG was not set, the maximum allowed pointer height is 32 pixels.
 
 // lengthAndMask (2 bytes):  A 16-bit, unsigned integer. The size in bytes of the andMaskData field.
 
 // lengthXorMask (2 bytes):  A 16-bit, unsigned integer. The size in bytes of the xorMaskData field.
 
-// xorMaskData (variable): A variable-length array of bytes. Contains the 24-bpp, bottom-up XOR mask scan-line data. 
-// The XOR mask is padded to a 2-byte boundary for each encoded scan-line. For example, if a 3x3 pixel cursor is being sent, 
-// then each scan-line will consume 10 bytes (3 pixels per scan-line multiplied by 3 bytes per pixel, rounded up to the next even 
+// xorMaskData (variable): A variable-length array of bytes. Contains the 24-bpp, bottom-up XOR mask scan-line data.
+// The XOR mask is padded to a 2-byte boundary for each encoded scan-line. For example, if a 3x3 pixel cursor is being sent,
+// then each scan-line will consume 10 bytes (3 pixels per scan-line multiplied by 3 bytes per pixel, rounded up to the next even
 // number of bytes).
 
-// andMaskData (variable): A variable-length array of bytes. Contains the 1-bpp, bottom-up AND mask scan-line data. 
-// The AND mask is padded to a 2-byte boundary for each encoded scan-line. For example, if a 7x7 pixel cursor is being sent, 
+// andMaskData (variable): A variable-length array of bytes. Contains the 1-bpp, bottom-up AND mask scan-line data.
+// The AND mask is padded to a 2-byte boundary for each encoded scan-line. For example, if a 7x7 pixel cursor is being sent,
 // then each scan-line will consume 2 bytes (7 pixels per scan-line multiplied by 1 bpp, rounded up to the next even number of bytes).
 
 // pad (1 byte): An optional 8-bit, unsigned integer. Padding. Values in this field MUST be ignored.
@@ -1025,13 +1025,13 @@ public:
         , cursor(cursor)
     {
     }
-    
+
     void emit(OutStream & stream)
     {
 
         const auto dimensions = cursor.get_dimensions();
         const auto hotspot = cursor.get_hotspot();
-    
+
 //    cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
 //      entry in the pointer cache in which to store the pointer image. The
 //      number of cache entries is negotiated using the Pointer Capability Set
@@ -1228,7 +1228,7 @@ public:
             }
 
             stream.out_copy_bytes(xorMaskData, xor_padded_line_length_in_byte * dimensions.height);
-            
+
 
             auto av_and = this->cursor.get_monochrome_and_mask();
             uint8_t andMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8] = { 0 };
@@ -1241,11 +1241,11 @@ public:
             }
 
             stream.out_copy_bytes(andMaskData, and_padded_line_length_in_byte * dimensions.height); /* mask */
-            
+
         }
         else {
             auto av_and = this->cursor.get_monochrome_and_mask();
-            
+
             uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 4] = { 0 };
             auto av_xor = this->cursor.get_24bits_xor_mask();
 
@@ -1302,13 +1302,15 @@ struct ARGB32Pointer {
     CursorSize dimensions;
     Hotspot hotspot;
 
-    alignas(4) 
+    alignas(4)
     uint8_t data[Pointer::DATA_SIZE];
 
     ARGB32Pointer(Pointer const & cursor)
         : dimensions(cursor.get_dimensions())
         , hotspot(cursor.get_hotspot())
     {
+        assert(this->dimensions.width * this->dimensions.height * 4 <= sizeof(data));
+
         const uint8_t * cursormask = cursor.get_monochrome_and_mask().data();
         const uint8_t * cursordata = cursor.get_24bits_xor_mask().data();
         size_t mask_offset_line = 0;
@@ -1316,10 +1318,10 @@ struct ARGB32Pointer {
         size_t target_data_offset_line = ((this->dimensions.height - 1) * this->dimensions.width*4);
         for (uint8_t y = 0 ; y < this->dimensions.height ; y++){
             for(uint8_t x = 0 ; x < this->dimensions.width ; x++){
-                const size_t mask_offset = mask_offset_line +::nbbytes(x+1)-1; 
-                const size_t data_offset = data_offset_line + x*3; 
+                const size_t mask_offset = mask_offset_line +::nbbytes(x+1)-1;
+                const size_t data_offset = data_offset_line + x*3;
                 const size_t target_data_offset = target_data_offset_line + x*4;
-                //LOG(LOG_INFO, "(x=%d/%u, y=%d/%u) mw=%zu mx=%zu, mask_offset=%zu data_offset=%zu target_offset%zu",x, this->dimensions.width, y, this->dimensions.height, 
+                //LOG(LOG_INFO, "(x=%d/%u, y=%d/%u) mw=%zu mx=%zu, mask_offset=%zu data_offset=%zu target_offset%zu",x, this->dimensions.width, y, this->dimensions.height,
                 //            size_t(::nbbytes(this->dimensions.width)), size_t(::nbbytes(x+1)), mask_offset, data_offset, target_data_offset);
                 uint8_t mask_value = (cursormask[mask_offset]&(0x80>>(x&7)))?0x00:0xFF;
                 for (uint8_t i = 0 ; i < 3 ; i++){

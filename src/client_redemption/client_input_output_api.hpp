@@ -55,7 +55,6 @@
 #include "mod/rdp/rdp_log.hpp"
 #include "transport/crypto_transport.hpp"
 #include "transport/socket_transport.hpp"
-#include "utils/cli.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/genfstat.hpp"
 #include "utils/genrandom.hpp"
