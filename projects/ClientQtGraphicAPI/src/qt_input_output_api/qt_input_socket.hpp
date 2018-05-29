@@ -92,7 +92,7 @@ public:
 
 public Q_SLOTS:
     void call_draw_event_data() {
-//         LOG(LOG_INFO, "draw_event_data");
+        // LOG(LOG_DEBUG, "draw_event_data");
         if (this->client->mod) {
             this->client->callback(false);
             this->prepare_timer_event();
@@ -100,7 +100,7 @@ public Q_SLOTS:
     }
 
     void call_draw_event_timer() {
-//         LOG(LOG_INFO, "draw_event_timer");
+        // LOG(LOG_DEBUG, "draw_event_timer");
         if (this->client->mod) {
             this->client->callback(true);
             this->prepare_timer_event();
@@ -114,6 +114,7 @@ private:
         this->session_reactor.set_current_time(now);
         timeval const tv = this->session_reactor.get_next_timeout(
             SessionReactor::EnableGraphics{true});
+        // LOG(LOG_DEBUG, "start timer: %ld %ld", tv.tv_sec, tv.tv_usec);
         if (tv.tv_sec > -1) {
 
             //+  (tv.tvtime - tv

@@ -27,6 +27,7 @@ Author(s): Jonathan Poelen
 
 #include <cstdlib>
 #include <cstring>
+#include <utility>
 
 #include "utils/sugar/array_view.hpp"
 
@@ -38,7 +39,8 @@ namespace cli
     {};
 
     template<class T>
-    struct has_optional_value<T, decltype(void(T::has_optional_value))> : std::false_type
+    struct has_optional_value<T, std::void_t<typename T::has_optional_value>>
+    : T::has_optional_value
     {};
 
     enum class Res
@@ -64,6 +66,7 @@ namespace cli
         char short_name;
         char const * long_name;
         char const * help;
+        // tribool None, Required, Optional
         bool optional_value;
     };
 
@@ -280,7 +283,8 @@ namespace cli
     template<class Act>
     struct OnOff
     {
-        static const bool has_optional_value = true;
+        // TODO has_optional_value() function: true_type, false_type, bool
+        using has_optional_value = std::true_type;
 
         Act act;
 
@@ -290,7 +294,13 @@ namespace cli
 
         Res operator()(ParseResult& pr) const
         {
-            Res r = (this->act(!*pr.str || !strcmp(pr.str, "on")), Ok);
+            bool const on = !pr.str || strcmp(pr.str, "on") || strcmp(pr.str, "1");
+            bool const off = !on && (strcmp(pr.str, "off") || strcmp(pr.str, "0"));
+            if (!on && !off) {
+                return Res::BadFormat;
+            }
+
+            Res r = (this->act(on), Ok);
             if (r == Res::Ok) {
                 ++pr.opti;
             }
@@ -396,7 +406,7 @@ namespace cli
         if (!*s1) {
             if (!*s2) {
                 if (opt.d.optional_value) {
-                    pr.str = "";
+                    pr.str = nullptr;
                 }
                 else {
                     ++pr.opti;
@@ -405,7 +415,7 @@ namespace cli
                 return apply_option(pr, opt.act);
             }
             else if (*s2 == '=') {
-                pr.str = s2+1;
+                pr.str = s2 + 1;
                 return apply_option(pr, opt.act);
             }
         }
@@ -427,8 +437,16 @@ namespace cli
     Res parse_short_option(char const * s, ParseResult& pr, Opt const& opt, Opts const&... opts)
     {
         if (opt.d.short_name == s[0]) {
-            ++pr.opti;
-            pr.str = (pr.opti < pr.argc) ? pr.argv[pr.opti] : "";
+            if (s[1]) {
+                pr.str = s + ((s[1] == '=') ? 2 : 1);
+            }
+            else if (opt.d.optional_value) {
+                pr.str = nullptr;
+            }
+            else {
+                ++pr.opti;
+                pr.str = (pr.opti < pr.argc) ? pr.argv[pr.opti] : "";
+            }
             return apply_option(pr, opt.act);
         }
         return parse_short_option(s, pr, opts...);
@@ -517,8 +535,22 @@ namespace cli
         };
     }
 
+#ifdef IN_IDE_PARSER
     template<class Tuple>
     ParseResult parse(Tuple const& t, int const ac, char const * const * const av)
+    {
+        (void)t;
+        (void)ac;
+        (void)av;
+    }
+
+    namespace detail {
+        template<class Tuple>
+        ParseResult parse_impl(Tuple const& t, int const ac, char const * const * const av)
+#else
+    template<class Tuple>
+    ParseResult parse(Tuple const& t, int const ac, char const * const * const av)
+#endif
     {
         ParseResult r;
         r.argc = ac;
@@ -535,7 +567,7 @@ namespace cli
                             res = parse_long_option(s+2, r, opts...);
                         }
                     }
-                    else if (!s[2]) {
+                    else {
                         res = parse_short_option(s+1, r, opts...);
                     }
                 }
@@ -548,8 +580,23 @@ namespace cli
         return r;
     }
 
+#ifdef IN_IDE_PARSER
+    }
+
     template<class Tuple>
     void print_help(Tuple const& t, std::ostream & out)
+    {
+        (void)t;
+        (void)out;
+    }
+
+    namespace detail {
+        template<class Tuple>
+        void print_help_impl(Tuple const& t, std::ostream & out)
+#else
+    template<class Tuple>
+    void print_help(Tuple const& t, std::ostream & out)
+#endif
     {
         t([&out](auto... opts) {
             (void)std::initializer_list<int>{
@@ -557,4 +604,7 @@ namespace cli
             };
         });
     }
+#ifdef IN_IDE_PARSER
+    }
+#endif
 }

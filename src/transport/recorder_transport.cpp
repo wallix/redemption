@@ -20,13 +20,14 @@
    A transport that records all the received packets
 */
 
+#include "recorder_transport.hpp"
+
+#include <chrono>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include <chrono>
-
-#include "recorder_transport.hpp"
 
 RecorderTransport::RecorderTransport(Transport& trans, char const* filename)
 : start_time(std::chrono::system_clock::now())
@@ -103,19 +104,18 @@ int RecorderTransport::get_fd() const
 Transport::Read RecorderTransport::do_atomic_read(uint8_t * buffer, size_t len)
 {
     auto const r = this->trans.atomic_read(buffer, len);
-    if (r == Read::Ok) {
-        this->write_packet(PacketType::DataIn, {buffer, len});
+    switch (r) {
+        case Read::Ok: this->write_packet(PacketType::DataIn, {buffer, len}); break;
+        case Read::Eof: this->write_packet(PacketType::Eof, {buffer, len}); break;
     }
     return r;
 }
 
 size_t RecorderTransport::do_partial_read(uint8_t * buffer, size_t len)
 {
-    auto const r = this->trans.partial_read(buffer, len);
-    if (r) {
-        this->write_packet(PacketType::DataIn, {buffer, len});
-    }
-    return r;
+    len = this->trans.partial_read(buffer, len);
+    this->write_packet(PacketType::DataIn, {buffer, len});
+    return len;
 }
 
 void RecorderTransport::do_send(const uint8_t * buffer, size_t len)

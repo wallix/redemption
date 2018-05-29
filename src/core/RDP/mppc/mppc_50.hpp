@@ -24,9 +24,10 @@
 #include "core/RDP/mppc/mppc_utils.hpp"
 #include "utils/stream.hpp"
 
+#include <limits>
 #include <cinttypes>
 
-#define RDP_50_HIST_BUF_LEN (1024 * 64) /* RDP 5.0 uses 64K history buf */
+static const size_t RDP_50_HIST_BUF_LEN = (1024 * 64); /* RDP 5.0 uses 64K history buf */
 
 
 struct rdp_mppc_50_dec : public rdp_mppc_dec
@@ -598,11 +599,9 @@ private:
             LOG(LOG_INFO, "compress_50");
         }
 
-        if (uncompressed_data_size >= RDP_50_HIST_BUF_LEN) {
-            LOG(LOG_ERR, "compress_50: input stream too large, max=%d got=%u",
-                RDP_50_HIST_BUF_LEN - 1, uncompressed_data_size);
-            throw Error(ERR_RDP_PROTOCOL);
-        }
+        static_assert(std::numeric_limits<decltype(uncompressed_data_size)>::max() < RDP_50_HIST_BUF_LEN,
+          "LOG(LOG_ERR, \"compress_50: input stream too large, max=%zu got=%u\","
+          "\nRDP_50_HIST_BUF_LEN - 1u, uncompressed_data_size)");
 
         this->flags = PACKET_COMPR_TYPE_64K;
 
@@ -622,7 +621,7 @@ private:
             this->flagsHold |= PACKET_AT_FRONT;
         }
 
-        if ((this->historyOffset + uncompressed_data_size + 2) >= RDP_50_HIST_BUF_LEN) {
+        if ((this->historyOffset + uncompressed_data_size + 2) >= static_cast<ssize_t>(RDP_50_HIST_BUF_LEN)) {
             /* historyBuffer cannot hold uncompressed_data - rewind it */
             this->historyOffset =  0;
             this->flagsHold     |= PACKET_AT_FRONT;

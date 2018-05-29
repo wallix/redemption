@@ -21,56 +21,67 @@
 #pragma once
 
 #include <chrono>
-#include "transport/transport.hpp"
+#include <memory>
+
 #include "transport/in_file_transport.hpp"
 #include "utils/sugar/unique_fd.hpp"
 
 /**
  *	@brief a transport that will replay a full capture
  */
-class ReplayTransport : public Transport {
+class ReplayTransport : public Transport
+{
 public:
-	ReplayTransport( const char *name, const std::string &fname, const char *ip_address, int port
-					   , std::chrono::milliseconds recv_timeout, bool respect_timing
-					   , std::string * error_message = nullptr);
+    enum class Timing : bool { Real, Unckecked };
 
-	~ReplayTransport() override;
+	ReplayTransport(
+        const char* fname, const char *ip_address, int port, Timing timing = Timing::Real);
+
+	~ReplayTransport();
 
     array_view_const_u8 get_public_key() const override;
 
-    TlsResult enable_client_tls(bool server_cert_store,
-                                    ServerCertCheck server_cert_check,
-                                    ServerNotifier & server_notifier,
-                                    const char * certif_path) override;
+    TlsResult enable_client_tls(
+        bool server_cert_store, ServerCertCheck server_cert_check,
+        ServerNotifier & server_notifier, const char * certif_path) override;
 
-    size_t do_partial_read(uint8_t * buffer, size_t len) override;
+    int get_fd() const override { return this->timer_fd.fd(); }
 
-    Read do_atomic_read(uint8_t * buffer, size_t len) override;
-
-    void do_send(const uint8_t * const buffer, size_t len) override;
-
-    int get_fd() const override { return timer; }
-
-protected:
+private:
     /** @brief the result of read_more_chunk */
-    enum ReadResult { Data, Meta, Eof };
-
-    ReadResult read_more_chunk();
+    void read_more_chunk();
 
     void reschedule_timer();
 
-protected:
-    bool respect_timing;
-    std::chrono::system_clock::time_point start_time;
-    int clock_id;
-    std::chrono::milliseconds recv_timeout;
-    InFileTransport inFile;
-	int timer;
+    size_t do_partial_read(uint8_t * buffer, size_t len) override;
 
-	std::chrono::system_clock::time_point record_time;
-	char *record_data, *record_ptr;
-	uint8_t *public_key;
-	size_t public_key_size;
-	uint32_t record_len;
-	bool eof;
+    [[noreturn]] Read do_atomic_read(uint8_t * buffer, size_t len) override;
+
+    void do_send(const uint8_t * const buffer, size_t len) override;
+
+private:
+    std::chrono::system_clock::time_point start_time;
+    std::chrono::system_clock::time_point record_time;
+    InFileTransport in_file;
+	unique_fd timer_fd;
+
+	struct Data
+	{
+        std::unique_ptr<uint8_t[]> data;
+        size_t current_pos = 0;
+        size_t capacity = 0;
+        size_t size = 0;
+
+        array_view_const_u8 av() const noexcept;
+    };
+    Data data;
+    struct Key
+    {
+        std::unique_ptr<uint8_t[]> data;
+        size_t size = 0;
+    };
+    Key public_key;
+	// uint64_t record_len = 0;
+	bool is_eof = false;
+	Timing timing;
 };

@@ -23,9 +23,17 @@
 
 
 #include "transport/recorder_transport.hpp"
+#include "transport/replay_transport.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/get_file_contents.hpp"
 #include "utils/sugar/scope_exit.hpp"
+#include "utils/select.hpp"
+
+#include <utility>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 
 RED_AUTO_TEST_CASE(TestRecorderTransport)
@@ -103,12 +111,71 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
     {
         GeneratorTransport trans(s);
         RecorderTransportHeader header;
+        auto it = std::begin(a);
         while (
             (void)(header = read_recorder_transport_header(trans)),
             header.type != RecorderTransport::PacketType::Eof
         ) {
-            RED_CHECK_LT(header.data_size, s.size());
+            RED_CHECK_EQ(((it->type == Pck::DataIn) ? 3 : it->s.size()), header.data_size);
             RED_CHECK_EQ(Transport::Read::Ok, trans.atomic_read({s.data(), header.data_size}));
+            ++it;
+        }
+        RED_CHECK_EQ(it-std::begin(a), std::size(a));
+    }
+
+    // Replay
+    {
+        ReplayTransport trans(filename, "", 0, ReplayTransport::Timing::Unckecked);
+        char buf[10];
+        auto av = make_array_view(buf);
+        auto in = cstr_array_view("123456789");
+
+        for (auto m : a) {
+            switch (m.type) {
+                case Pck::DataIn:
+                    RED_CHECK_EQ(3, trans.partial_read(av));
+                    RED_CHECK_MEM(in.subarray(0, 3), make_array_view(buf, 3));
+                    in = in.subarray(3);
+                    break;
+                case Pck::DataOut:
+                case Pck::ServerCert:
+                case Pck::Disconnect:
+                case Pck::Connect:
+                case Pck::ClientCert:
+                case Pck::Eof:
+                    break;
+            }
+        }
+    }
+
+    // Replay real time
+    {
+        ReplayTransport trans(filename, "", 0, ReplayTransport::Timing::Real);
+        char buf[10];
+        auto av = make_array_view(buf);
+        auto in = cstr_array_view("123456789");
+        fd_set rfd;
+        int fd = trans.get_fd();
+        io_fd_zero(rfd);
+        io_fd_set(fd, rfd);
+        timeval timeout{1, 0};
+
+        for (auto m : a) {
+            switch (m.type) {
+                case Pck::DataIn:
+                    RED_REQUIRE_EQ(1, select(fd+1, &rfd, nullptr, nullptr, &timeout));
+                    RED_CHECK_EQ(3, trans.partial_read(av));
+                    RED_CHECK_MEM(in.subarray(0, 3), make_array_view(buf, 3));
+                    in = in.subarray(3);
+                    break;
+                case Pck::DataOut:
+                case Pck::ServerCert:
+                case Pck::Disconnect:
+                case Pck::Connect:
+                case Pck::ClientCert:
+                case Pck::Eof:
+                    break;
+            }
         }
     }
 }

@@ -24,6 +24,7 @@
 #include "core/RDP/mppc/mppc_utils.hpp"
 #include "utils/stream.hpp"
 
+#include <limits>
 #include <cinttypes>
 
 static uint8_t HuffLenLEC[] = {
@@ -775,11 +776,9 @@ private:
                 uncompressed_data_size, this->historyOffset);
         }
 
-        //if (uncompressed_data_size >= RDP_60_HIST_BUF_LEN) {
-        //    LOG(LOG_ERR, "compress_60: input stream too large, max=%u got=%u",
-        //        RDP_60_HIST_BUF_LEN - 1, uncompressed_data_size);
-        //    throw Error(ERR_RDP_PROTOCOL);
-        //}
+        static_assert(std::numeric_limits<decltype(uncompressed_data_size)>::max() < RDP_60_HIST_BUF_LEN,
+          "LOG(LOG_ERR, \"compress_60: input stream too large, max=%zu got=%u\","
+          "\nRDP_60_HIST_BUF_LEN - 1u, uncompressed_data_size)");
 
         this->flags = PACKET_COMPR_TYPE_RDP6;
 
