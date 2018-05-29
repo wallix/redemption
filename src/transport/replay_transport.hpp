@@ -32,10 +32,10 @@
 class ReplayTransport : public Transport
 {
 public:
-    enum class Timing : bool { Real, Unckecked };
+    enum class FdType : bool { Timer, AlwaysReady };
 
 	ReplayTransport(
-        const char* fname, const char *ip_address, int port, Timing timing = Timing::Real);
+        const char* fname, const char *ip_address, int port, FdType fd_type = FdType::Timer);
 
 	~ReplayTransport();
 
@@ -45,7 +45,7 @@ public:
         bool server_cert_store, ServerCertCheck server_cert_check,
         ServerNotifier & server_notifier, const char * certif_path) override;
 
-    int get_fd() const override { return this->timer_fd.fd(); }
+    int get_fd() const override { return this->fd.fd(); }
 
 private:
     /** @brief the result of read_more_chunk */
@@ -63,7 +63,8 @@ private:
     std::chrono::system_clock::time_point start_time;
     std::chrono::system_clock::time_point record_time;
     InFileTransport in_file;
-	unique_fd timer_fd;
+	unique_fd fd;
+	FdType fd_type;
 
 	struct Data
 	{
@@ -83,5 +84,4 @@ private:
     Key public_key;
 	// uint64_t record_len = 0;
 	bool is_eof = false;
-	Timing timing;
 };

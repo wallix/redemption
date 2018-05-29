@@ -216,6 +216,7 @@ exe client_rdp :
 :
     $(EXE_DEPENDENCIES)
     <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
+    <toolset>clang:<cxxflags>-Wredundant-parens&&-Wno-redundant-parens
 ;
 
 #obj test_client.o : src/test_client_redemption.cpp :

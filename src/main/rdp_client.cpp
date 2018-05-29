@@ -184,6 +184,19 @@ int main(int argc, char** argv)
           , ini.get_ref<cfg::context::close_box_extra_message>()
           , to_verbose_flags(verbose));
 
+        mod_rdp_params.device_id                  = "device_id";
+        mod_rdp_params.enable_tls                 = true;
+        mod_rdp_params.enable_nla                 = true;
+        mod_rdp_params.enable_fastpath            = true;
+        mod_rdp_params.enable_mem3blt             = true;
+        mod_rdp_params.enable_new_pointer         = true;
+        mod_rdp_params.enable_glyph_cache         = true;
+        mod_rdp_params.enable_ninegrid_bitmap     = true;
+        std::string allow_channels = "*";
+        mod_rdp_params.allow_channels             = &allow_channels;
+        mod_rdp_params.deny_channels = nullptr;
+        mod_rdp_params.enable_rdpdr_data_analysis = false;
+
         if (verbose > 128) {
             mod_rdp_params.log();
         }

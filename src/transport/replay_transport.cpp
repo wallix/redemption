@@ -46,16 +46,25 @@ namespace
 }
 
 ReplayTransport::ReplayTransport(
-    const char* fname, const char *ip_address, int port, Timing timing)
+    const char* fname, const char *ip_address, int port, FdType fd_type)
 : start_time(std::chrono::system_clock::now())
 , in_file(open_file(fname))
-, timer_fd(Timing::Real == timing ? timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK) : -1)
-, timing(timing)
+, fd(FdType::Timer == fd_type
+? timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)
+: []{
+    int fd = eventfd(1, EFD_NONBLOCK);
+    if (fd > -1) {
+        uint64_t value = 0;
+        write(fd, &value, 8); // that will make the file descriptor always selectable
+    }
+    return fd;
+}())
+, fd_type(fd_type)
 {
     (void)ip_address;
     (void)port;
 
-    if (Timing::Real == timing && !this->timer_fd) {
+    if (!this->fd) {
         throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
     }
 
@@ -69,7 +78,7 @@ ReplayTransport::~ReplayTransport() = default;
 
 void ReplayTransport::reschedule_timer()
 {
-    if (Timing::Real != this->timing) {
+    if (FdType::Timer != this->fd_type) {
         return;
     }
 
@@ -90,7 +99,7 @@ void ReplayTransport::reschedule_timer()
 
     // LOG(LOG_DEBUG, "trigerring timer now sec=%ld nsec=%ld", timeout.it_value.tv_sec, timeout.it_value.tv_nsec);
 
-    if (timerfd_settime(this->timer_fd.fd(), 0, &timeout, nullptr) < 0) {
+    if (timerfd_settime(this->fd.fd(), 0, &timeout, nullptr) < 0) {
         LOG(LOG_ERR, "unable to set the timer time");
         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
     }
@@ -126,6 +135,7 @@ void ReplayTransport::read_more_chunk()
                 break;
 
             case RecorderTransport::PacketType::Eof:
+                LOG(LOG_INFO, "ReplayTransport::read_more_chunk: eof = true");
                 this->is_eof = true;
                 return;
 
@@ -172,16 +182,16 @@ array_view_const_u8 ReplayTransport::Data::av() const noexcept
 size_t ReplayTransport::do_partial_read(uint8_t * buffer, size_t const len)
 {
     if (this->is_eof) {
-        LOG(LOG_ERR, "ReplayTransport is eof");
+        LOG(LOG_INFO, "ReplayTransport::do_partial_read: is eof");
         throw Error(ERR_TRANSPORT_NO_MORE_DATA);
     }
 
-    if (Timing::Real == this->timing)
+    if (FdType::Timer == this->fd_type)
     {
         uint64_t timeval;
-        if (sizeof(timeval) != read(this->timer_fd.fd(), &timeval, sizeof(timeval))) {
+        if (sizeof(timeval) != read(this->fd.fd(), &timeval, sizeof(timeval))) {
             int const err = errno;
-            LOG(LOG_ERR, "read error");
+            LOG(LOG_ERR, "ReplayTransport::do_partial_read: read fd error");
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, err);
         }
     }
