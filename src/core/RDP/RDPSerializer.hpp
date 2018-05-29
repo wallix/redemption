@@ -178,6 +178,7 @@ public:
                  , const bool use_bitmap_comp
                  , const bool use_compact_packets
                  , size_t max_data_block_size
+                 , bool experimental_enable_serializer_data_block_size_limit
                  , Verbose verbose)
     : stream_orders(stream_orders)
     , stream_bitmaps(stream_bitmaps)
@@ -185,7 +186,10 @@ public:
     , bitmap_cache_version(bitmap_cache_version)
     , use_bitmap_comp(use_bitmap_comp)
     , use_compact_packets(use_compact_packets)
-    , max_data_block_size(max_data_block_size)
+    , max_data_block_size(std::min(max_data_block_size,
+                                   (experimental_enable_serializer_data_block_size_limit ?
+                                    static_cast<decltype(max_data_block_size)>(MAX_ORDERS_SIZE) :
+                                    std::numeric_limits<decltype(max_data_block_size)>::max())))
     // Internal state of orders
     , polygonSC()
     , polygonCB()
@@ -217,8 +221,8 @@ public:
     {
         //LOG(LOG_INFO, "RDPSerializer::reserve_order %u (avail=%u)", asked_size, this->stream_orders.size());
         // To support 64x64 32-bit bitmap.
-        size_t max_packet_size = std::min(this->stream_orders.get_capacity(), this->max_data_block_size);
-        size_t used_size = this->stream_orders.get_offset();
+        size_t const max_packet_size = std::min(this->stream_orders.get_capacity(), this->max_data_block_size);
+        size_t const used_size = this->stream_orders.get_offset();
         if (bool(this->verbose & Verbose::internal_buffer)) {
             LOG( LOG_INFO
                , "<Serializer %p> RDPSerializer::reserve_order[%zu](%zu) used=%zu free=%zu"

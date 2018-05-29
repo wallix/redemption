@@ -129,6 +129,9 @@
 "#_advanced\n"
 "spark_view_specific_glyph_width = boolean(default=False)\n\n"
 
+"#_advanced\n"
+"experimental_enable_serializer_data_block_size_limit = boolean(default=False)\n\n"
+
 "[session_log]\n\n"
 
 "enable_session_log = boolean(default=True)\n\n"

@@ -184,6 +184,7 @@ private:
               , const int use_bitmap_comp
               , const int op2
               , size_t max_data_block_size
+              , bool experimental_enable_serializer_data_block_size_limit
               , bool fastpath_support
               , rdp_mppc_enc * mppc_enc
               , bool compression
@@ -204,6 +205,7 @@ private:
               , use_bitmap_comp
               , op2
               , max_data_block_size
+              , experimental_enable_serializer_data_block_size_limit
               , fastpath_support
               , mppc_enc
               , compression
@@ -378,6 +380,7 @@ private:
           , ini.get<cfg::client::bitmap_compression>()
           , client_info.use_compact_packets
           , max_data_block_size
+          , ini.get<cfg::globals::experimental_enable_serializer_data_block_size_limit>()
           , fastpath_support
           , mppc_enc
           , bool(ini.get<cfg::client::rdp_compression>()) ? client_info.rdp_compression : 0

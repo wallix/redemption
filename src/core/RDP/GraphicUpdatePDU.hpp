@@ -452,6 +452,7 @@ public:
                      , const int use_bitmap_comp
                      , const int op2
                      , size_t max_data_block_size
+                     , bool experimental_enable_serializer_data_block_size_limit
                      , bool fastpath_support
                      , rdp_mppc_enc * mppc_enc
                      , bool compression
@@ -461,7 +462,8 @@ public:
         : RDPSerializer( this->buffer_stream_orders.get_data_stream()
                        , this->buffer_stream_bitmaps.get_data_stream()
                        , bpp, bmp_cache, gly_cache, pointer_cache
-                       , bitmap_cache_version, use_bitmap_comp, op2, max_data_block_size, verbose)
+                       , bitmap_cache_version, use_bitmap_comp, op2, max_data_block_size
+                       , experimental_enable_serializer_data_block_size_limit, verbose)
         , userid(userid)
         , shareid(shareid)
         , encryptionLevel(encryptionLevel)

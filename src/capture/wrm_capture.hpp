@@ -227,7 +227,7 @@ public:
                 , SendInput send_input = SendInput::NO
                 , Verbose verbose = Verbose::none)
     : RDPSerializer( this->buffer_stream_orders, this->buffer_stream_bitmaps, capture_bpp
-                   , bmp_cache, gly_cache, ptr_cache, 0, true, true, 32 * 1024, verbose)
+                   , bmp_cache, gly_cache, ptr_cache, 0, true, true, 32 * 1024, true, verbose)
     , compression_bullder(trans, wrm_compression_algorithm)
     , trans_target(trans)
     , trans(this->compression_bullder.get())
@@ -505,7 +505,7 @@ protected:
             cursor.emit_pointer2(payload);
         }
         wrmcapture_send_wrm_chunk(this->trans, (pointer32x32)?WrmChunkType::POINTER:WrmChunkType::POINTER2, payload.get_offset(), 0);
-        this->trans.send(payload.get_data(), payload.get_offset());    
+        this->trans.send(payload.get_data(), payload.get_offset());
     }
 
     void cached_pointer_update(int cache_idx) override {
