@@ -436,12 +436,8 @@ private:
             case ClientRedemptionAPI::MOD_RDP_REMOTE_APP:
                 return FrontAPI::ResizeResult::remoteapp;
                     break;
-
-<<<<<<< HEAD
+                
             case ClientRedemptionAPI::MOD_RDP_REPLAY:
-=======
-            case ClientRedemptionIOAPI::MOD_RDP_REPLAY:
->>>>>>> 92629d24a2fccf5e102ac5184eff3ce652350b56
                 if (!this->client->is_loading_replay_mod) {
                     time_t current_time_movie = 0;
 

@@ -248,21 +248,21 @@ public:
 
         this->disconnect("", false);
 
-        if (this->connection_cmd_info_complete == COMMAND_VALID) {
+        if (this->connection_info_cmd_complete == COMMAND_VALID) {
             this->connect();
 
         } else {
             std::cout << "Argument(s) required to connect: ";
-            if (!(this->connection_cmd_info_complete & NAME_GOT)) {
+            if (!(this->connection_info_cmd_complete & NAME_GOT)) {
                 std::cout << "-u [user_name] ";
             }
-            if (!(this->connection_cmd_info_complete & PWD_GOT)) {
+            if (!(this->connection_info_cmd_complete & PWD_GOT)) {
                 std::cout << "-p [password] ";
             }
-            if (!(this->connection_cmd_info_complete & IP_GOT)) {
+            if (!(this->connection_info_cmd_complete & IP_GOT)) {
                 std::cout << "-i [ip_server] ";
             }
-            if (!(this->connection_cmd_info_complete & PORT_GOT)) {
+            if (!(this->connection_info_cmd_complete & PORT_GOT)) {
                 std::cout << "-P [port] ";
             }
             std::cout << std::endl;
