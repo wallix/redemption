@@ -613,7 +613,7 @@ private:
         }
 
         if (uncompressed_data_size > RDP_61_MAX_DATA_BLOCK_SIZE) {
-            LOG(LOG_ERR, "compress_61: input stream too large, max=%u got=%u",
+            LOG(LOG_ERR, "compress_61: input stream too large, max=%zu got=%u",
                 RDP_61_MAX_DATA_BLOCK_SIZE, uncompressed_data_size);
             throw Error(ERR_RDP_PROTOCOL);
         }
