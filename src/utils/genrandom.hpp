@@ -122,21 +122,3 @@ class UdevRandom : public Random
     }
 
 };
-
-/**
- * @brief a random generator that always returns the same value, useful when you
- *         want to be able to replay scenarios (and so you need random that is not
- *         so randomized).
- */
-class FixedRandom : public Random {
-public:
-    FixedRandom(uint8_t fixedByte = 0xff) : value(fixedByte) {
-    }
-
-    void random(void * dest, size_t size) override {
-        memset(dest, value, size);
-    }
-
-protected:
-    uint8_t value;
-};

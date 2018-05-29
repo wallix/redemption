@@ -167,7 +167,7 @@ private:
         GlyphCache glyph_cache;
 
         struct PrivateGraphicsUpdatePDU final : GraphicsUpdatePDU {
-            size_t max_bitmap_size_;
+            size_t max_data_block_size;
 
             PrivateGraphicsUpdatePDU(
                 OrderCaps & client_order_caps
@@ -183,7 +183,8 @@ private:
               , const int bitmap_cache_version
               , const int use_bitmap_comp
               , const int op2
-              , size_t max_bitmap_size
+              , size_t max_data_block_size
+              , bool experimental_enable_serializer_data_block_size_limit
               , bool fastpath_support
               , rdp_mppc_enc * mppc_enc
               , bool compression
@@ -203,14 +204,15 @@ private:
               , bitmap_cache_version
               , use_bitmap_comp
               , op2
-              , max_bitmap_size
+              , max_data_block_size
+              , experimental_enable_serializer_data_block_size_limit
               , fastpath_support
               , mppc_enc
               , compression
               , send_new_pointer
               , verbose
             )
-            , max_bitmap_size_(max_bitmap_size)
+            , max_data_block_size(max_data_block_size)
             , client_order_caps(client_order_caps)
             {}
 
@@ -225,13 +227,13 @@ private:
             void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
                 Bitmap new_bmp(this->capture_bpp, bmp);
 
-                if (static_cast<size_t>(new_bmp.cx() * new_bmp.cy() * new_bmp.bpp()) > this->max_bitmap_size_) {
+                if (static_cast<size_t>(new_bmp.cx() * new_bmp.cy() * new_bmp.bpp()) > this->max_data_block_size) {
                     const uint16_t max_image_width
                       = std::min<uint16_t>(
-                            align4(this->max_bitmap_size_ / nbbytes(new_bmp.bpp())),
+                            align4(this->max_data_block_size / nbbytes(new_bmp.bpp())),
                             new_bmp.cx()
                         );
-                    const uint16_t max_image_height = this->max_bitmap_size_ / (max_image_width * nbbytes(new_bmp.bpp()));
+                    const uint16_t max_image_height = this->max_data_block_size / (max_image_width * nbbytes(new_bmp.bpp()));
 
                     contiguous_sub_rect_f(
                         CxCy{new_bmp.cx(), new_bmp.cy()},
@@ -290,7 +292,7 @@ private:
           , int & encryptionLevel
           , CryptContext & encrypt
           , const Inifile & ini
-          , size_t max_bitmap_size
+          , size_t max_data_block_size
           , bool fastpath_support
           , rdp_mppc_enc * mppc_enc
           , Verbose verbose
@@ -377,7 +379,8 @@ private:
           , client_info.bitmap_cache_version
           , ini.get<cfg::client::bitmap_compression>()
           , client_info.use_compact_packets
-          , max_bitmap_size
+          , max_data_block_size
+          , ini.get<cfg::globals::experimental_enable_serializer_data_block_size_limit>()
           , fastpath_support
           , mppc_enc
           , bool(ini.get<cfg::client::rdp_compression>()) ? client_info.rdp_compression : 0
@@ -410,7 +413,7 @@ private:
           , int & encryptionLevel
           , CryptContext & encrypt
           , const Inifile & ini
-          , size_t max_bitmap_size
+          , size_t max_data_block_size
           , bool fastpath_support
           , rdp_mppc_enc * mppc_enc
           , Verbose verbose
@@ -422,7 +425,7 @@ private:
 
             new (&this->u.graphics) Graphics(
                 client_order_caps, client_info, trans, userid, shareid, encryptionLevel, encrypt,
-                ini, max_bitmap_size, fastpath_support, mppc_enc, verbose
+                ini, max_data_block_size, fastpath_support, mppc_enc, verbose
             );
             this->is_initialized = true;
         }
@@ -609,7 +612,7 @@ private:
 
     uint16_t rail_channel_id = 0;
 
-    size_t max_bitmap_size = 1024 * 30; // should be less than 1 << 15
+    size_t max_data_block_size = 1024 * 64;
 
     bool focus_on_password_textbox = false;
     bool consent_ui_is_visible     = false;
@@ -1148,19 +1151,19 @@ private:
             LOG(LOG_INFO, "Front::reset: bitmap_cache_version=%d", this->client_info.bitmap_cache_version);
         }
 
-        this->max_bitmap_size = 1024 * 30;  // should be less than 1 << 15
+        this->max_data_block_size = 1024 * 64;
 
         int const mppc_type = this->get_appropriate_compression_type(
             this->client_info.rdp_compression_type,
             static_cast<int>(this->ini.get<cfg::client::rdp_compression>()) - 1
         );
-        if (mppc_type == PACKET_COMPR_TYPE_8K) {
-            this->max_bitmap_size = 1024 * 8;
-        }
         this->mppc_enc = rdp_mppc_load_compressor(
             bool(this->verbose & Verbose::basic_trace), "Front::reset",
             mppc_type, this->ini.get<cfg::debug::compression>()
         );
+        if (this->mppc_enc) {
+            this->max_data_block_size = this->mppc_enc->get_max_data_block_size();
+        }
 
         if (this->orders.has_bmp_cache_persister()) {
             this->save_persistent_disk_bitmap_cache();
@@ -1175,7 +1178,7 @@ private:
           , this->encryptionLevel
           , this->encrypt
           , this->ini
-          , this->max_bitmap_size
+          , this->max_data_block_size
           , this->server_fastpath_update_support
           , this->mppc_enc.get()
           , this->verbose
@@ -4530,10 +4533,10 @@ protected:
 
             const uint16_t max_image_width =
                 std::min<uint16_t>(
-                        align4(this->max_bitmap_size / nbbytes(image_bpp)),
+                        align4(this->max_data_block_size / nbbytes(image_bpp)),
                         image_rect.cx
                     );
-            const uint16_t max_image_height = this->max_bitmap_size / (max_image_width * nbbytes(image_bpp));
+            const uint16_t max_image_height = this->max_data_block_size / (max_image_width * nbbytes(image_bpp));
 
             BGRColor order_color = color_decode(cmd.color, color_ctx);
             RDPColor image_color = color_encode(order_color, image_bpp);

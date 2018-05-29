@@ -187,6 +187,9 @@ class Sesman():
         self.back_selector = False
         self.target_app_rights = {}
 
+
+        self.restricted_area_warning_already_shown = False
+
         self.shared[u'session_probe_launch_error_message'] = u''
 
     def reset_session_var(self):
@@ -560,6 +563,32 @@ class Sesman():
         return _status, _error
 
 
+    def show_restricted_area_warning(self):
+        Logger().info(u"Show restricted area message")
+
+        _status, _error = True, u''
+        data_to_send = {
+            u'module': u'transitory'
+        }
+
+        restricted_area_warning = SESMANCONF[u'sesman'].get('restricted_area_warning', True)
+        if restricted_area_warning:
+            message =  u"Warning! Unauthorized access to this system is forbidden and will be prosecuted by law."
+            try:
+                with open('/var/wab/etc/proxys/messages/login.%s' % self.language) as f:
+                    message = f.read().decode('utf-8')
+            except Exception, e:
+                pass
+            data_to_send[u'message'] = cut_message(message)
+
+            _status, _error = self.interactive_accept_message(data_to_send)
+            Logger().info(u"Security agreement : %s" % ["NO", "YES"][_status])
+        else:
+            self.send_data(data_to_send)
+
+        return _status, _error
+
+
     def authentify(self):
         """ Authentify the user through password engine and then retreive his rights
              The user preferred language will be set as the language to use in
@@ -568,6 +597,12 @@ class Sesman():
         _status, _error = self.receive_data()
         if not _status:
             return False, _error
+
+        if not self.restricted_area_warning_already_shown:
+            self.restricted_area_warning_already_shown = True
+            _status, _error = self.show_restricted_area_warning()
+            if not _status:
+                self.send_data({u'rejected': _error})
 
         if self.shared.get(u'login') == MAGICASK:
             return None, TR(u"Empty user, try again")

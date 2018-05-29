@@ -66,18 +66,28 @@ constant SHELL_PWD : [ SHELL "echo -n $PWD" ] ; # rule location
 
 constant CLIENT_REDEMPTION_MAIN_PATH : [ setvar CLIENT_REDEMPTION_MAIN_PATH : $(SHELL_PWD) ] ;
 
-rule disable-buggy-warn ( properties * )
+if $(qtversion) = 4
 {
-    local ps = [ property-set.create $(properties) ] ;
-    local toolset = [ $(ps).get <toolset> ] ;
+    rule disable-buggy-warn ( properties * )
+    {
+        local ps = [ property-set.create $(properties) ] ;
+        local toolset = [ $(ps).get <toolset> ] ;
 
-    local flags = <cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant ;
-    if $(toolset) = clang {
-        flags += <cxxflags>-Wno-unused-command-line-argument ;
-        flags += <cxxflags>-Wno-comma ;
+        local flags = <cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant ;
+        if $(toolset) = clang {
+            flags += <cxxflags>-Wno-unused-command-line-argument ;
+            flags += <cxxflags>-Wno-comma ;
+        }
+
+        return $(flags) ;
     }
-
-    return $(flags) ;
+}
+else
+{
+    rule disable-buggy-warn ( properties * )
+    {
+        return ;
+    }
 }
 
 project redemption_qt_client
@@ -85,7 +95,7 @@ project redemption_qt_client
 
     <conditional>@includes
     <conditional>@flags
-    <conditional>@disable-buggy-warn
+    # <conditional>@disable-buggy-warn
 
     <cxxflags>-std=c++17
 
@@ -186,6 +196,7 @@ else
 obj front_Qt$(qtversion)_rdp.o : src/main_qt_client_redemption.cpp :
     <define>REDEMPTION_DECL_LOG_TEST
     $(EXE_DEPENDENCIES)
+    <include>$(REDEMPTION_TEST_PATH)/includes # lcg/fixed random
 ;
 
 exe client_rdp :
@@ -205,6 +216,7 @@ exe client_rdp :
 :
     $(EXE_DEPENDENCIES)
     <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
+    <toolset>clang:<cxxflags>-Wredundant-parens&&-Wno-redundant-parens
 ;
 
 #obj test_client.o : src/test_client_redemption.cpp :

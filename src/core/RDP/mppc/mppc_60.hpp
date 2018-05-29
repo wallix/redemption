@@ -24,6 +24,7 @@
 #include "core/RDP/mppc/mppc_utils.hpp"
 #include "utils/stream.hpp"
 
+#include <limits>
 #include <cinttypes>
 
 static uint8_t HuffLenLEC[] = {
@@ -710,7 +711,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc
     hash_table_manager hash_tab_mgr;
 
     explicit rdp_mppc_60_enc(bool verbose = 0)
-        : rdp_mppc_enc(verbose)
+        : rdp_mppc_enc(RDP_60_HIST_BUF_LEN - 1, verbose)
         // The HistoryOffset MUST start initialized to zero, while the
         //     history buffer MUST be filled with zeros. After it has been
         //     initialized, the entire history buffer is immediately
@@ -774,6 +775,10 @@ private:
             LOG(LOG_INFO, "compress_60: uncompressed_data_size=%u historyOffset=%u",
                 uncompressed_data_size, this->historyOffset);
         }
+
+        static_assert(std::numeric_limits<decltype(uncompressed_data_size)>::max() < RDP_60_HIST_BUF_LEN,
+          "LOG(LOG_ERR, \"compress_60: input stream too large, max=%zu got=%u\","
+          "\nRDP_60_HIST_BUF_LEN - 1u, uncompressed_data_size)");
 
         this->flags = PACKET_COMPR_TYPE_RDP6;
 

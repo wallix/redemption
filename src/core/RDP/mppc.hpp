@@ -447,11 +447,13 @@ class rdp_mppc_enc
     uint64_t total_uncompressed_data_size;
     uint64_t total_compressed_data_size;
 
+    uint32_t max_data_block_size;
+
 protected:
     const bool verbose;
 
-    explicit rdp_mppc_enc(bool verbose);
-    
+    explicit rdp_mppc_enc(uint32_t max_data_block_size, bool verbose);
+
 public:
     virtual ~rdp_mppc_enc() = default;
 
@@ -465,6 +467,8 @@ public:
     virtual void dump(bool mini_dump) const = 0;
 
     virtual void get_compressed_data(OutStream & stream) const = 0;
+
+    uint32_t get_max_data_block_size() const;
 
 private:
     virtual void do_compress(

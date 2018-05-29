@@ -77,6 +77,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     ini.set<cfg::video::png_interval>(std::chrono::seconds{300});
     ini.set<cfg::video::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth24);
     ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
+    ini.set<cfg::globals::experimental_enable_serializer_data_block_size_limit>(true);
 
     // Uncomment the code block below to generate testing data.
     //int nodelay = 1;

@@ -36,6 +36,8 @@ src_deps = dict((
 src_requirements = dict((
     ('src/main/rdpheadless.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
     ('src/main/scytale.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
+    ('src/main/rdp_client.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
+    ('src/main/main_client_redemption.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for fixed_random
     #('libscytale', '<library>log_print.o'),
     ('tests/includes/test_only/front/fake_front.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'),
     ('tests/includes/test_only/fake_graphic.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'),
@@ -68,7 +70,6 @@ target_renames = dict((
     ('do_recorder', 'redrec'),
     ('ini_checker', 'rdpinichecker'),
     ('rdp_client', 'rdpclient'),
-    ('vnc_client', 'vncclient'),
 ))
 
 #coverage_requirements = dict((
@@ -97,6 +98,7 @@ sys_lib_prefix = (
 
 user_lib_assoc = dict((
     ('program_options/program_options.hpp', 'program_options'),
+    ('src/core/error.hpp', 'dl'),
     ('openssl_crypto.hpp', 'crypto'),
     ('openssl_tls.hpp', 'openssl'),
 ))

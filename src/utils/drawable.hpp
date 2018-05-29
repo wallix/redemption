@@ -1706,6 +1706,12 @@ public:
             if (pixel_end > line_end) {
                 pixel_end = line_end;
             }
+            if (line_begin >= this->impl().last_pixel()) {
+                continue;
+            }
+            if (line_end < this->impl().first_pixel()) {
+                continue;
+            }
             size_t offset = (pixel_begin < line_begin) ? line_begin - pixel_begin : 0;
             if (pixel_end > pixel_begin+offset){
                 memcpy(psave+offset, pixel_begin+offset, pixel_end-pixel_begin-offset);
@@ -1723,6 +1729,12 @@ public:
             uint8_t * line_end = line_begin + this->impl().rowsize();
             if (pixel_end > line_end) {
                 pixel_end = line_end;
+            }
+            if (line_begin >= this->impl().last_pixel()) {
+                continue;
+            }
+            if (line_end < this->impl().first_pixel()) {
+                continue;
             }
             size_t offset = (pixel_begin < line_begin) ? line_begin - pixel_begin : 0;
             if (pixel_end > pixel_begin+offset){

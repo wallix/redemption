@@ -55,15 +55,12 @@
 #include "mod/rdp/rdp_log.hpp"
 #include "transport/crypto_transport.hpp"
 #include "transport/socket_transport.hpp"
-#include "utils/cli.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/genfstat.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/netutils.hpp"
 #include "utils/fileutils.hpp"
 #include "main/version.hpp"
-
-#include "program_options/program_options.hpp"
 
 #endif
 
@@ -217,7 +214,54 @@ public:
     bool                 enable_shared_clipboard;
     bool                 enable_shared_virtual_disk;
 
-     struct ModVNCParamsData {
+    struct KeyCustomDefinition {
+        int qtKeyID;
+        int scanCode;
+        std::string ASCII8;
+        int extended;
+        std::string name;
+
+        KeyCustomDefinition(int qtKeyID, int scanCode, std::string ASCII8, int extended, std::string name)
+          : qtKeyID(qtKeyID)
+          , scanCode(scanCode)
+          , ASCII8(std::move(ASCII8))
+          , extended(extended ? 0x0100 : 0)
+          , name(std::move(name))
+        {}
+    };
+    std::vector<KeyCustomDefinition> keyCustomDefinitions;
+
+    bool                 _recv_disconnect_ultimatum;
+    BGRPalette           mod_palette;
+
+
+    struct IconMovieData {
+        const std::string file_name;
+        const std::string file_path;
+        const std::string file_version;
+        const std::string file_resolution;
+        const std::string file_checksum;
+        const long int movie_len = 0;
+
+        IconMovieData(std::string file_name,
+                      std::string file_path,
+                      std::string file_version,
+                      std::string file_resolution,
+                      std::string file_checksum,
+                      long int movie_len)
+            : file_name(std::move(file_name))
+            , file_path(std::move(file_path))
+            , file_version(std::move(file_version))
+            , file_resolution(std::move(file_resolution))
+            , file_checksum(std::move(file_checksum))
+            , movie_len(movie_len)
+            {}
+    };
+    std::vector<IconMovieData> icons_movie_data;
+
+
+    // VNC mod
+    struct ModVNCParamsData {
         bool is_apple;
         Theme      theme;
         WindowListCaps windowListCaps;
@@ -310,6 +354,10 @@ public:
     , port(3389)
     , mod_palette(BGRPalette::classic_332())
     {}
+
+    private:
+    void parse_options(int argc, char const* const argv[]);
+
 
     virtual ~ClientRedemptionAPI() = default;
 
@@ -525,6 +573,9 @@ public:
         return ((unixSeconds + SEC_TO_UNIX_EPOCH) * WINDOWS_TICK);
     }
 
+    //  TODO put this somewhere
+    //this->parse_options(argc, argv);
+
     uint32_t string_to_hex32(unsigned char * str) {
         size_t size = sizeof(str);
         uint32_t hex32(0);
@@ -635,6 +686,11 @@ public:
     // CONTROLLER
     virtual void connexionReleased() {
         this->client->connect();
+
+    }
+
+    void add_key_custom_definition(int qtKeyID, int scanCode, const std::string & ASCII8, int extended, const std::string & name) {
+        //this->keyCustomDefinitions.emplace_back(qtKeyID, scanCode, ASCII8, extended, name);
     }
 
     virtual void disconnexionReleased() {

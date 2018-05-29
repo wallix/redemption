@@ -451,7 +451,8 @@ public:
                      , const int bitmap_cache_version
                      , const int use_bitmap_comp
                      , const int op2
-                     , size_t max_bitmap_size
+                     , size_t max_data_block_size
+                     , bool experimental_enable_serializer_data_block_size_limit
                      , bool fastpath_support
                      , rdp_mppc_enc * mppc_enc
                      , bool compression
@@ -461,7 +462,8 @@ public:
         : RDPSerializer( this->buffer_stream_orders.get_data_stream()
                        , this->buffer_stream_bitmaps.get_data_stream()
                        , bpp, bmp_cache, gly_cache, pointer_cache
-                       , bitmap_cache_version, use_bitmap_comp, op2, max_bitmap_size, verbose)
+                       , bitmap_cache_version, use_bitmap_comp, op2, max_data_block_size
+                       , experimental_enable_serializer_data_block_size_limit, verbose)
         , userid(userid)
         , shareid(shareid)
         , encryptionLevel(encryptionLevel)
@@ -548,8 +550,8 @@ protected:
 // 2.2.9.1.2.1 Fast-Path Update (TS_FP_UPDATE)
 // ==========================================
 
-// The TS_FP_UPDATE structure is used to describe and encapsulate the data for a fast-path update sent from server to client. 
-// All fast-path updates conform to this basic structure (sections 2.2.9.1.2.1.1 to 2.2.9.1.2.1.10). 
+// The TS_FP_UPDATE structure is used to describe and encapsulate the data for a fast-path update sent from server to client.
+// All fast-path updates conform to this basic structure (sections 2.2.9.1.2.1.1 to 2.2.9.1.2.1.10).
 
 // updateHeader (1 byte):  An 8-bit, unsigned integer. Three pieces of information are collapsed into this byte:
 
@@ -565,16 +567,16 @@ protected:
 
 // The TS_FP_UPDATE_PALETTE structure is the fast-path variant of the TS_UPDATE_PALETTE (section 2.2.9.1.1.3.1.1) structure.
 
-// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field, 
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field,
 // specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set to FASTPATH_UPDATETYPE_PALETTE (2).
 
-// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) is 
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) is
 // the same as the compressionFlags field specified in the Fast-Path Update structure.
 
-// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same as the 
+// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same as the
 // size field specified in the Fast-Path Update structure.
 
-// paletteUpdateData (variable): Variable-length palette data. Both slow-path and fast-path utilize the same data format, 
+// paletteUpdateData (variable): Variable-length palette data. Both slow-path and fast-path utilize the same data format,
 // a Palette Update Data (section 2.2.9.1.1.3.1.1.1) structure, to represent this information.
 
 // 2.2.9.1.2.1.2 Fast-Path Bitmap Update (TS_FP_UPDATE_BITMAP)
@@ -582,30 +584,30 @@ protected:
 
 // The TS_FP_UPDATE_BITMAP structure is the fast-path variant of the TS_UPDATE_BITMAP (section 2.2.9.1.1.3.1.2) structure.
 
-// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field 
-// specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set 
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field
+// specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set
 // to FASTPATH_UPDATETYPE_BITMAP (1).
 
-// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) 
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values)
 // is the same as the compressionFlags field specified in the Fast-Path Update structure.
 
-// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same 
+// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same
 // as the size field specified in the Fast-Path Update structure.
 
-// bitmapUpdateData (variable):  Variable-length bitmap data. Both slow-path and fast-path utilize the same data format, 
+// bitmapUpdateData (variable):  Variable-length bitmap data. Both slow-path and fast-path utilize the same data format,
 // a Bitmap Update Data (section 2.2.9.1.1.3.1.2.1) structure, to represent this information.
 
 // 2.2.9.1.2.1.3 Fast-Path Synchronize Update (TS_FP_UPDATE_SYNCHRONIZE)
 // =====================================================================
 
-// The TS_FP_UPDATE_SYNCHRONIZE structure is the fast-path variant of the TS_UPDATE_SYNCHRONIZE_PDU_DATA 
+// The TS_FP_UPDATE_SYNCHRONIZE structure is the fast-path variant of the TS_UPDATE_SYNCHRONIZE_PDU_DATA
 // (section 2.2.9.1.1.3.1.3) structure.
 
 // updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field
-//  described in the Fast-Path Update (section 2.2.9.1.2.1). The updateCode bitfield (4 bits in size) MUST be set 
+//  described in the Fast-Path Update (section 2.2.9.1.2.1). The updateCode bitfield (4 bits in size) MUST be set
 // to FASTPATH_UPDATETYPE_SYNCHRONIZE (3).
 
-// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) 
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values)
 // is the same as the compressionFlags field described in the Fast-Path Update structure.
 
 // size (2 bytes): A 16-bit, unsigned integer. This field MUST be set to zero.
@@ -618,13 +620,13 @@ protected:
 // updateHeader (1 byte): The format of this field is the same as the updateHeader byte field specified in the Fast-Path Update
 // (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set to FASTPATH_UPDATETYPE_PTR_POSITION (8).
 
-// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) 
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values)
 // is the same as the compressionFlags field specified in the Fast-Path Update structure.
 
 // size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same as the
 // size field specified in the Fast-Path Update structure.
 
-// pointerPositionUpdateData (4 bytes): Pointer coordinates. Both slow-path and fast-path utilize the same data format, 
+// pointerPositionUpdateData (4 bytes): Pointer coordinates. Both slow-path and fast-path utilize the same data format,
 // a Pointer Position Update (section 2.2.9.1.1.4.2) structure, to represent this information.
 
 // 2.2.9.1.2.1.5 Fast-Path System Pointer Hidden Update (TS_FP_SYSTEMPOINTERHIDDENATTRIBUTE)
@@ -633,10 +635,10 @@ protected:
 // The TS_FP_SYSTEMPOINTERHIDDENATTRIBUTE structure is used to hide the pointer.
 
 // updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field
-//  specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be 
+//  specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be
 // set to FASTPATH_UPDATETYPE_PTR_NULL (5).
 
-// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) 
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values)
 // is the same as the compressionFlags field specified in the Fast-Path Update structure.
 
 // size (2 bytes): A 16-bit, unsigned integer. This field MUST be set to zero.
@@ -646,11 +648,11 @@ protected:
 
 // The TS_FP_SYSTEMPOINTERDEFAULTATTRIBUTE structure is used to set the shape of the pointer to the operating system default.
 
-// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field 
-// specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set 
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field
+// specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set
 // to FASTPATH_UPDATETYPE_PTR_DEFAULT (6).
 
-// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) 
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values)
 // is the same as the compressionFlags field specified in the Fast-Path Update structure.
 
 // size (2 bytes): A 16-bit, unsigned integer. This field MUST be set to zero.
@@ -658,20 +660,20 @@ protected:
 // 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE)
 // =========================================================================
 
-// The TS_FP_COLORPOINTERATTRIBUTE structure is the fast-path variant of the TS_COLORPOINTERATTRIBUTE (section 2.2.9.1.1.4.4) 
+// The TS_FP_COLORPOINTERATTRIBUTE structure is the fast-path variant of the TS_COLORPOINTERATTRIBUTE (section 2.2.9.1.1.4.4)
 // structure.
 
-// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field 
-// specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set 
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field
+// specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set
 // to FASTPATH_UPDATETYPE_COLOR (9).
 
-// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) 
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values)
 // is the same as the compressionFlags field specified in the Fast-Path Update structure.
 
-// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same as 
+// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same as
 // the size field specified in the Fast-Path Update structure.
 
-// colorPointerUpdateData (variable): Color pointer data. Both slow-path and fast-path utilize the same data format, 
+// colorPointerUpdateData (variable): Color pointer data. Both slow-path and fast-path utilize the same data format,
 // a Color Pointer Update (section 2.2.9.1.1.4.4) structure, to represent this information.
 
 // 2.2.9.1.2.1.8 Fast-Path New Pointer Update (TS_FP_POINTERATTRIBUTE)
@@ -682,28 +684,28 @@ protected:
 // updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field
 // specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set to FASTPATH_UPDATETYPE_POINTER (11).
 
-// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) 
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values)
 // is the same as the compressionFlags field specified in the Fast-Path Update structure.
 
 // size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same as the size
 // field specified in the Fast-Path Update structure.
 
-// newPointerUpdateData (variable): Color pointer data at arbitrary color depth. Both slow-path and fast-path utilize the same 
+// newPointerUpdateData (variable): Color pointer data at arbitrary color depth. Both slow-path and fast-path utilize the same
 // data format, a New Pointer Update (section 2.2.9.1.1.4.5) structure, to represent this information.
 
 // 2.2.9.1.2.1.9 Fast-Path Cached Pointer Update (TS_FP_CACHEDPOINTERATTRIBUTE)
 // ============================================================================
 
-// The TS_FP_CACHEDPOINTERATTRIBUTE structure is the fast-path variant of the TS_CACHEDPOINTERATTRIBUTE (section 2.2.9.1.1.4.6) 
+// The TS_FP_CACHEDPOINTERATTRIBUTE structure is the fast-path variant of the TS_CACHEDPOINTERATTRIBUTE (section 2.2.9.1.1.4.6)
 // structure.
 
-// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field 
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field
 // specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set to FASTPATH_UPDATETYPE_CACHED (10).
 
-// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) 
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values)
 // is the same as the compressionFlags field specified in the Fast-Path Update structure.
 
-// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same as 
+// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same as
 // the size field specified in the Fast-Path Update structure.
 
 // cachedPointerUpdateData (2 bytes):  Cached pointer data. Both slow-path and fast-path utilize the same data format,
@@ -714,17 +716,17 @@ protected:
 
 // The TS_FP_SURFCMDS structure encapsulates one or more Surface Command (section 2.2.9.1.2.1.10.1) structures.
 
-// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field 
-// specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set 
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is the same as the updateHeader byte field
+// specified in the Fast-Path Update (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST be set
 // to FASTPATH_UPDATETYPE_SURFCMDS (4).
 
-// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values) 
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional field (as well as the possible values)
 // is the same as the compressionFlags field specified in the Fast-Path Update (section 2.2.9.1.2.1) structure.
 
-// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same as 
+// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as the possible values) is the same as
 // the size field specified in the Fast-Path Update structure.
 
-// surfaceCommands (variable): An array of Surface Command (section 2.2.9.1.2.1.10.1) structures containing a collection 
+// surfaceCommands (variable): An array of Surface Command (section 2.2.9.1.2.1.10.1) structures containing a collection
 // of commands to be processed by the client.
 
 

@@ -437,7 +437,11 @@ private:
                 return FrontAPI::ResizeResult::remoteapp;
                     break;
 
+<<<<<<< HEAD
             case ClientRedemptionAPI::MOD_RDP_REPLAY:
+=======
+            case ClientRedemptionIOAPI::MOD_RDP_REPLAY:
+>>>>>>> 92629d24a2fccf5e102ac5184eff3ce652350b56
                 if (!this->client->is_loading_replay_mod) {
                     time_t current_time_movie = 0;
 
@@ -1125,7 +1129,7 @@ private:
     }
 
 
-    void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override {
+    void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx /*color_ctx*/, const Bitmap & bitmap) override {
         //LOG(LOG_INFO, "RDPMem3Blt    !!!!!!!!!!!!!!!!!");
         const Rect drect = clip.intersect(cmd.rect);
         if (drect.isempty()){
@@ -1144,10 +1148,10 @@ private:
                     return;
                 }
 
-                const QColor fore(this->u32_to_qcolor(cmd.fore_color, color_ctx));
-                const uint8_t r(fore.red());
-                const uint8_t g(fore.green());
-                const uint8_t b(fore.blue());
+                // const QColor fore(this->u32_to_qcolor(cmd.fore_color, color_ctx));
+                // const uint8_t r(fore.red());
+                // const uint8_t g(fore.green());
+                // const uint8_t b(fore.blue());
 
                 //int rowYCoord(drect.y + drect.cy-1);
                 const QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), true));
@@ -1165,14 +1169,14 @@ private:
                     QImage dstBitmap(this->cache.toImage().copy(drect.x, drect.y, mincx, mincy));
                     dstBitmap = dstBitmap.convertToFormat(QImage::Format_RGB888);
 
-                    const uchar * srcData = srcBitmap.bits();
-                    const uchar * dstData = dstBitmap.bits();
+                    // const uchar * srcData = srcBitmap.bits();
+                    // const uchar * dstData = dstBitmap.bits();
 
                     const size_t rowsize(srcBitmap.byteCount() *3);
                     if (rowsize < 3) {
                         return;
                     }
-                    std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(static_cast<int> (rowsize));
+                    // std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(static_cast<int> (rowsize));
 
                     for (size_t k = 1 ; k < drect.cy; k++) {
 

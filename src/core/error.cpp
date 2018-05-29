@@ -25,6 +25,44 @@
 #include "core/error.hpp"
 #include "utils/string_c.hpp"
 
+#ifndef NDEBUG
+# include <cstring>
+# include "utils/log.hpp"
+# if __has_include(<boost/stacktrace.hpp>)
+//#  include <iostream>
+#  include <boost/stacktrace.hpp>
+#  define REDEMPTION_ERROR_WITH_STACKTRACE
+# endif
+#endif
+
+Error::Error(error_type id, int errnum) noexcept
+: id(id)
+, errnum(errnum)
+{
+#ifndef NDEBUG
+    if (id == NO_ERROR) {
+        return;
+    }
+
+    if (errnum) {
+        LOG(LOG_DEBUG, "Create Error: %s: %s", this->errmsg(), strerror(errnum));
+    }
+    else {
+        LOG(LOG_DEBUG, "Create Error %s", this->errmsg());
+    }
+
+# ifdef REDEMPTION_ERROR_WITH_STACKTRACE
+    int i = 0;
+    for (auto && frame: boost::stacktrace::stacktrace()){
+        if (!frame.empty()){
+            LOG(LOG_DEBUG, "#%d %s", i++, boost::stacktrace::to_string(frame));
+        }
+    }
+//    std::cerr << boost::stacktrace::stacktrace() << std::flush;
+# endif
+#endif
+}
+
 const char * Error::errmsg(bool with_id) const noexcept
 {
     switch(this->id) {

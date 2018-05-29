@@ -30,9 +30,10 @@
 #include "core/RDP/mppc/mppc_60.hpp"
 #include "core/RDP/mppc/mppc_61.hpp"
 
-rdp_mppc_enc::rdp_mppc_enc(bool verbose)
+rdp_mppc_enc::rdp_mppc_enc(uint32_t max_data_block_size, bool verbose)
     : total_uncompressed_data_size(0)
     , total_compressed_data_size(0)
+    , max_data_block_size(max_data_block_size)
     , verbose(verbose)
 {
 }
@@ -60,6 +61,11 @@ void rdp_mppc_enc::compress(
             static_cast<long double>(total_compressed_data_size) * 100
             / static_cast<long double>(total_uncompressed_data_size));
     }
+}
+
+uint32_t rdp_mppc_enc::get_max_data_block_size() const
+{
+    return this->max_data_block_size;
 }
 
 
