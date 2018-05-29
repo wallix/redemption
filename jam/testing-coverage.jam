@@ -83,7 +83,10 @@ lib libunit_test :
 constant TEST_DEPENDENCIES :
     <library>libunit_test
     <library>log_test.o
+    # Used by redemption unit tests pretty error
     <library>src/core/error.o
+    # Used by bjam in debug mode (from error)
+    <library>dl
     <include>$(REDEMPTION_TEST_PATH)/includes
     # <cxxflags>-frtti
     <define>BOOST_AUTO_TEST_MAIN
