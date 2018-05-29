@@ -294,8 +294,8 @@ namespace cli
 
         Res operator()(ParseResult& pr) const
         {
-            bool const on = !pr.str || strcmp(pr.str, "on") || strcmp(pr.str, "1");
-            bool const off = !on && (strcmp(pr.str, "off") || strcmp(pr.str, "0"));
+            bool const on = !pr.str || !strcmp(pr.str, "on") || !strcmp(pr.str, "1");
+            bool const off = !on && (!strcmp(pr.str, "off") || !strcmp(pr.str, "0"));
             if (!on && !off) {
                 return Res::BadFormat;
             }
