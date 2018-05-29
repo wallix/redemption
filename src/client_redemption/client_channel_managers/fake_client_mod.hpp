@@ -22,7 +22,7 @@
 */
 
 
-#include "client_redemption/client_input_output_api.hpp"
+#include "client_redemption/client_input_output_api/client_redemption_api.hpp"
 
 #include "core/RDP/clipboard.hpp"
 #include "utils/sugar/byte.hpp"
@@ -87,11 +87,16 @@ class FakeClientIOClipboard : public ClientIOClipboardAPI
 {
 public:
     std::string data_text;
+    std::unique_ptr<uint8_t[]>  _chunk;
     void emptyBuffer() override {}
 
     //  set distant clipboard data
     void setClipboard_text(std::string const& str) override {
         this->data_text = str;
+    }
+
+    uint8_t * get_text() override {
+        return this->_chunk.get();
     }
 
     void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const int bpp) override {

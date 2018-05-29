@@ -24,7 +24,7 @@
 #pragma once
 
 #include "utils/log.hpp"
-#include "client_redemption/client_input_output_api.hpp"
+#include "client_redemption/client_redemption_api.hpp"
 #include "core/RDP/clipboard.hpp"
 
 
@@ -599,7 +599,6 @@ public:
                                 }
 
 
-
                                 switch(this->clientIOClipboardAPI->get_buffer_type_id()) {
 
                                     case RDPECLIP::CF_METAFILEPICT:
@@ -643,13 +642,12 @@ public:
 
                                         fdr.emit(out_stream_first_part);
 
-                                        auto image = this->clientIOClipboardAPI->get_image();
                                         this->process_client_clipboard_out_data(
                                             channel_names::cliprdr
                                           , total_length
                                           , out_stream_first_part
                                           , first_part_data_size
-                                          , image.data()
+                                          , this->clientIOClipboardAPI->get_text()
                                           , this->clientIOClipboardAPI->get_cliboard_data_length()
                                           , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                         );

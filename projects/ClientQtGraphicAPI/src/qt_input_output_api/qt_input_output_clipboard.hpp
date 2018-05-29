@@ -30,7 +30,7 @@
 #include "core/RDP/clipboard.hpp"
 #include "utils/fileutils.hpp"
 
-#include "client_redemption/client_input_output_api.hpp"
+#include "client_redemption/client_redemption_api.hpp"
 
 #include <QtCore/QMimeData>
 #include <QtGui/QClipboard>
@@ -62,7 +62,7 @@ public:
         , CF_QT_CLIENT_FILECONTENTS         = 48026
     };
 
-    ClientRedemptionIOAPI     * _front;
+    ClientRedemptionAPI    * _front;
     QClipboard                * _clipboard;
     std::unique_ptr<uint8_t[]>  _chunk;
     QImage                      _bufferImage;
@@ -382,15 +382,19 @@ public Q_SLOTS:
         );
     }
 
-    virtual int get_file_item_size(int index) override {
+    uint8_t * get_text() override {
+        return this->_chunk.get();
+    }
+
+    int get_file_item_size(int index) override {
         return this->_items_list[index]->size;
     }
 
-    virtual std::string get_file_item_name(int index) override {
+    std::string get_file_item_name(int index) override {
         return this->_items_list[index]->nameUTF8;
     }
 
-    virtual char * get_file_item_data(int index) override {
+    char * get_file_item_data(int index) override {
         return this->_items_list[index]->chunk;
     }
 

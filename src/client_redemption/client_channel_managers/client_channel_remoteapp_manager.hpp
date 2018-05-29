@@ -28,7 +28,7 @@
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 
-#include "client_redemption/client_input_output_api.hpp"
+#include "client_redemption/client_redemption_api.hpp"
 
 
 // [MS-RDPERP]: Remote Desktop Protocol: Remote Programs Virtual Channel Extension

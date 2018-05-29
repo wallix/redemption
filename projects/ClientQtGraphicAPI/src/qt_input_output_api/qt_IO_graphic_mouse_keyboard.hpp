@@ -26,7 +26,7 @@
 
 
 
-#include "client_redemption/client_input_output_api.hpp"
+#include "client_redemption/client_redemption_api.hpp"
 #include "keymaps/qt_scancode_keymap.hpp"
 #include "qt_graphics_components/qt_progress_bar_window.hpp"
 #include "qt_graphics_components/qt_options_window.hpp"
@@ -78,8 +78,6 @@ public:
 
 
 
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
     //------------------------
     //      CONSTRUCTOR
@@ -104,14 +102,14 @@ public:
     // MAIN WINDOW MANAGEMENT FUNCTIONS
     //-----------------------------
 
-    virtual void set_drawn_client(ClientRedemptionIOAPI * client) override {
+    virtual void set_drawn_client(ClientRedemptionAPI * client) override {
         this->drawn_client = client;
         //this->qtRDPKeymap._verbose = (this->drawn_client->verbose == RDPVerbose::input) ? 1 : 0;
         this->qtRDPKeymap.setKeyboardLayout(this->drawn_client->info.keylayout);
 
         this->qtRDPKeymap.clearCustomKeyCode();
         for (size_t i = 0; i < this->drawn_client->keyCustomDefinitions.size(); i++) {
-            ClientRedemptionIOAPI::KeyCustomDefinition & key = this->drawn_client->keyCustomDefinitions[i];
+            ClientRedemptionAPI::KeyCustomDefinition & key = this->drawn_client->keyCustomDefinitions[i];
             this->qtRDPKeymap.setCustomKeyCode(key.qtKeyID, key.scanCode, key.ASCII8, key.extended);
         }
 
@@ -208,7 +206,7 @@ public:
 
     virtual void init_form() override {
         if (this->form) {
-            if (this->client->mod_state != ClientRedemptionIOAPI::MOD_RDP_REPLAY) {
+            if (this->client->mod_state != ClientRedemptionAPI::MOD_RDP_REPLAY) {
                 this->form->init_form();
                 this->form->set_IPField(this->client->target_IP);
                 this->form->set_portField(this->client->port);
@@ -392,7 +390,7 @@ private:
             return;
         }
 
-        if (this->drawn_client->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
+        if (this->drawn_client->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP) {
             for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
                 if (it->second) {
                     it->second->update_view();
@@ -413,7 +411,7 @@ private:
 
         switch (this->client->mod_state) {
 
-            case ClientRedemptionIOAPI::MOD_RDP:
+            case ClientRedemptionAPI::MOD_RDP:
                 if (this->client->info.width == width && this->client->info.height == height) {
                     return FrontAPI::ResizeResult::instant_done;
                 }
@@ -423,7 +421,7 @@ private:
                 this->screen->show();
                     break;
 
-            case ClientRedemptionIOAPI::MOD_VNC:
+            case ClientRedemptionAPI::MOD_VNC:
                 if (this->client->vnc_conf.width == width && this->client->vnc_conf.height == height) {
                     return FrontAPI::ResizeResult::instant_done;
                 }
@@ -435,12 +433,12 @@ private:
                 this->screen->show();
                     break;
 
-            case ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP:
+            case ClientRedemptionAPI::MOD_RDP_REMOTE_APP:
                 return FrontAPI::ResizeResult::remoteapp;
                     break;
 
-            case ClientRedemptionIOAPI::MOD_RDP_REPLAY:
-                //if (!this->client->is_loading_replay_mod) {
+            case ClientRedemptionAPI::MOD_RDP_REPLAY:
+                if (!this->client->is_loading_replay_mod) {
                     time_t current_time_movie = 0;
 
                     if (!this->is_pre_loading) {
@@ -478,7 +476,7 @@ private:
         this->cursor_image = QImage(av_alpha_q.data(), dimensions.width, dimensions.height, dimensions.width * 4, QImage::Format_ARGB32_Premultiplied);
 
          ;
-        if (this->drawn_client->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) {
+        if (this->drawn_client->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP) {
             for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
                 if (it->second) {
                     it->second->setCursor(QCursor(QPixmap::fromImage(this->cursor_image), hotspot.x, hotspot.x));
@@ -501,14 +499,14 @@ private:
 
         this->is_pre_loading = true;
 
-        if (movie_length > ClientRedemptionIOAPI::BALISED_FRAME) {
+        if (movie_length > ClientRedemptionAPI::BALISED_FRAME) {
 
             while (endin_frame < movie_length) {
 
                 this->client->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
 
                 this->balises.push_back(this->cache);
-                endin_frame += ClientRedemptionIOAPI::BALISED_FRAME;
+                endin_frame += ClientRedemptionAPI::BALISED_FRAME;
                 if (this->bar) {
                     this->bar->setValue(endin_frame);
                 }
@@ -797,7 +795,7 @@ private:
     //       DRAW FUNCTIONS
     //-----------------------------
 
-    //using ClientRedemptionIOAPI::draw;
+    //using ClientRedemptionAPI::draw;
 
     void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
 
@@ -1462,7 +1460,7 @@ private:
     //------------------------
 
     void keyPressEvent(const int key, std::string const& text) override {
-//         if (this->client->mod_state ==  ClientRedemptionIOAPI::MOD_VNC) {
+//         if (this->client->mod_state ==  ClientRedemptionAPI::MOD_VNC) {
 //             this->client->send_rdp_unicode(text, 0);
 //         } else {
             this->qtRDPKeymap.keyEvent(0, key, text);
@@ -1473,7 +1471,7 @@ private:
     }
 
     void keyReleaseEvent(const int key, std::string const& text) override {
-//          if (this->client->mod_state ==  ClientRedemptionIOAPI::MOD_VNC) {
+//          if (this->client->mod_state ==  ClientRedemptionAPI::MOD_VNC) {
 //             this->client->send_rdp_unicode(text, KBD_FLAG_UP);
 //         } else {
             this->qtRDPKeymap.keyEvent(KBD_FLAG_UP, key, text);
@@ -1510,9 +1508,9 @@ private:
         }
     }
 
-    ClientRedemptionIOAPI::KeyCustomDefinition get_key_info(int key, std::string const& text) override {
+    ClientRedemptionAPI::KeyCustomDefinition get_key_info(int key, std::string const& text) override {
         this->qtRDPKeymap.keyEvent(0, key, text);
-        ClientRedemptionIOAPI::KeyCustomDefinition key_info(
+        ClientRedemptionAPI::KeyCustomDefinition key_info(
             this->qtRDPKeymap.qKeyCode,
             this->qtRDPKeymap.scanCode,
             this->qtRDPKeymap.ascii,

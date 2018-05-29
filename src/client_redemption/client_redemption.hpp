@@ -40,7 +40,7 @@
 #include "transport/recorder_transport.hpp"
 #include "transport/replay_transport.hpp"
 
-#include "client_redemption/client_input_output_api.hpp"
+#include "client_redemption/client_redemption_controller.hpp"
 
 #include "client_redemption/client_channel_managers/client_channel_RDPSND_manager.hpp"
 #include "client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp"
@@ -52,8 +52,22 @@
 
 
 
-class ClientRedemption : public ClientRedemptionIOAPI
+class ClientRedemption : public ClientRedemptionController
 {
+
+private:
+    CryptoContext     cctx;
+
+    // TODO unique_ptr
+    Transport       * socket;
+    int               client_sck;
+    TimeSystem        timeSystem;
+    NullAuthentifier  authentifier;
+    NullReportMessage reportMessage;
+
+
+
+public:
     SessionReactor& session_reactor;
     SessionReactor::GraphicEventPtr clear_screen_event;
 
@@ -174,6 +188,8 @@ class ClientRedemption : public ClientRedemptionIOAPI
 
     } wrmGraphicStat;
 
+    std::string       local_IP;
+
 public:
     ClientRedemption(SessionReactor & session_reactor,
                      char* argv[], int argc, RDPVerbose verbose,
@@ -183,8 +199,10 @@ public:
                      ClientInputSocketAPI * impl_socket_listener,
                      ClientInputMouseKeyboardAPI * impl_mouse_keyboard,
                      ClientIODiskAPI * impl_io_disk)
-//         : ClientRedemptionIOAPI(argv, argc, verbose)
-        : ClientRedemptionIOAPI(session_reactor, argv, argc, verbose)
+        : ClientRedemptionController(session_reactor, argv, argc, verbose)
+        , cctx()
+        , socket(nullptr)
+        , client_sck(-1)
         , session_reactor(session_reactor)
         , impl_graphic(impl_graphic)
         , impl_clipboard(impl_clipboard)
@@ -192,14 +210,13 @@ public:
         , impl_socket_listener (impl_socket_listener)
         , impl_mouse_keyboard(impl_mouse_keyboard)
         , impl_io_disk(impl_io_disk)
-
         , close_box_extra_message_ref("Close")
         , client_execute(session_reactor, *(this), this->info.window_list_caps, false)
-
         , clientChannelRDPSNDManager(this->verbose, this, this->impl_sound)
         , clientChannelCLIPRDRManager(this->verbose, this, this->impl_clipboard)
         , clientChannelRDPDRManager(this->verbose, this, this->impl_io_disk)
         , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
+        , local_IP("unknow_local_IP")
     {
         if (this->impl_clipboard) {
             this->impl_clipboard->set_client(this);
@@ -232,21 +249,21 @@ public:
 
         this->disconnect("", false);
 
-        if (this->commandIsValid == COMMAND_VALID) {
+        if (this->connection_cmd_info_complete == COMMAND_VALID) {
             this->connect();
 
         } else {
             std::cout << "Argument(s) required to connect: ";
-            if (!(this->commandIsValid & NAME_GOT)) {
+            if (!(this->connection_cmd_info_complete & NAME_GOT)) {
                 std::cout << "-u [user_name] ";
             }
-            if (!(this->commandIsValid & PWD_GOT)) {
+            if (!(this->connection_cmd_info_complete & PWD_GOT)) {
                 std::cout << "-p [password] ";
             }
-            if (!(this->commandIsValid & IP_GOT)) {
+            if (!(this->connection_cmd_info_complete & IP_GOT)) {
                 std::cout << "-i [ip_server] ";
             }
-            if (!(this->commandIsValid & PORT_GOT)) {
+            if (!(this->connection_cmd_info_complete & PORT_GOT)) {
                 std::cout << "-P [port] ";
             }
             std::cout << std::endl;
@@ -263,11 +280,11 @@ public:
         }
 
         switch (this->mod_state) {
-            case ClientRedemptionIOAPI::MOD_VNC:
-                this->keymap.init_layout(this->vnc_conf.keylayout);
+            case ClientRedemptionConfig::MOD_VNC:
+                this->init_layout(this->vnc_conf.keylayout);
                 break;
 
-            default: this->keymap.init_layout(this->info.keylayout);
+            default: this->init_layout(this->info.keylayout);
                 break;
         }
     }
@@ -818,9 +835,9 @@ public:
 
                 case WrmVersion::v2:
                 {
-                    int last_balised = (begin/ ClientRedemptionIOAPI::BALISED_FRAME);
+                    int last_balised = (begin/ ClientRedemptionConfig::BALISED_FRAME);
                     this->is_loading_replay_mod = true;
-                    if (this->load_replay_mod(this->_movie_dir, this->_movie_name, {last_balised * ClientRedemptionIOAPI::BALISED_FRAME, 0}, {0, 0})) {
+                    if (this->load_replay_mod(this->_movie_dir, this->_movie_name, {last_balised * ClientRedemptionConfig::BALISED_FRAME, 0}, {0, 0})) {
 
                         this->is_loading_replay_mod = false;
 
@@ -1122,7 +1139,7 @@ public:
     //       DRAW FUNCTIONS
     //-----------------------------
 
-    using ClientRedemptionIOAPI::draw;
+    using ClientRedemptionConfig::draw;
 
     void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->impl_graphic->is_pre_loading) {

@@ -28,7 +28,7 @@
 
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
-#include "client_redemption/client_input_output_api.hpp"
+#include "client_redemption/client_redemption_api.hpp"
 
 
 
@@ -104,7 +104,7 @@ public:
         RDP,
         VNC
     };
-    ClientRedemptionIOAPI   * _front;
+    ClientRedemptionAPI   * _front;
     ClientInputMouseKeyboardAPI * controllers;
     const int            _width;
     const int            _height;
@@ -150,7 +150,7 @@ public:
 //     bool                 key_editting;
 
 
-    QtOptions(ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+    QtOptions(ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
         : QWidget(parent)
         , _front(front)
         , controllers(controllers)
@@ -307,7 +307,7 @@ public:
             this->_languageComboBox.setCurrentIndex(indexLanguage);
         }
         for (size_t i = 0; i < this->_front->keyCustomDefinitions.size(); i++) {
-            ClientRedemptionIOAPI::KeyCustomDefinition & key = this->_front->keyCustomDefinitions[i];
+            ClientRedemptionAPI::KeyCustomDefinition & key = this->_front->keyCustomDefinitions[i];
             this->addRow();
             this->setRowValues(key.qtKeyID, key.scanCode, key.ASCII8, key.extended, i, key.name);
         }
@@ -381,7 +381,7 @@ public:
 
     void keyPressEvent(QKeyEvent *e) override {
 
-        const ClientRedemptionIOAPI::KeyCustomDefinition & keyCustomDefinition =
+        const ClientRedemptionAPI::KeyCustomDefinition & keyCustomDefinition =
         this->controllers->get_key_info(e->key(), e->text().toStdString());
 
         int count = this->_tableKeySetting->selectedItems().count();
@@ -541,7 +541,7 @@ public:
 
 
 
-    QtRDPOptions(ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+    QtRDPOptions(ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
         : QtOptions( front, controllers, parent)
         , _tlsBox(this)
         , _nlaBox(this)
@@ -627,7 +627,7 @@ public:
 
         this->_layoutServices->addRow(&(this->remoteapp_cmd_label), &(this->remoteapp_cmd));
 
-        this->remoteapp_workin_dir.setEnabled(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
+        this->remoteapp_workin_dir.setEnabled(this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
         this->_layoutServices->addRow(&(this->remoteapp_workin_dir_label), &(this->remoteapp_workin_dir));
 
 
@@ -688,10 +688,10 @@ public:
         this->_sharePath.setEnabled(this->_front->enable_shared_virtual_disk);
         this->_sharePath.setText(this->_front->SHARE_DIR.c_str());
         this->_soundBox.setChecked(this->_front->modRDPParamsData.enable_sound);
-        this->remoteappCheckBox.setChecked(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
-        this->remoteapp_cmd.setEnabled(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
+        this->remoteappCheckBox.setChecked(this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
+        this->remoteapp_cmd.setEnabled(this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
         this->remoteapp_cmd.setText(this->_front->full_cmd_line.c_str());
-        this->remoteapp_workin_dir.setEnabled(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
+        this->remoteapp_workin_dir.setEnabled(this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
         this->remoteapp_workin_dir.setText(this->_front->source_of_WorkingDir.c_str());
 
         // View tab
@@ -766,11 +766,11 @@ public:
         }
         this->_front->modRDPParamsData.enable_sound = this->_soundBox.isChecked();
         if (this->remoteappCheckBox.isChecked()) {
-            this->_front->mod_state = ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP;
+            this->_front->mod_state = ClientRedemptionAPI::MOD_RDP_REMOTE_APP;
             this->_front->set_remoteapp_cmd_line(this->remoteapp_cmd.text().toStdString());
             this->_front->source_of_WorkingDir = this->remoteapp_workin_dir.text().toStdString();
         } else {
-            this->_front->mod_state = ClientRedemptionIOAPI::MOD_RDP;
+            this->_front->mod_state = ClientRedemptionAPI::MOD_RDP;
         }
 
         //  View tab
@@ -843,7 +843,7 @@ public:
     QLabel               keyboard_apple_compatibility_label;
 
 
-    QtVNCOptions(ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+    QtVNCOptions(ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
       : QtOptions( front, controllers, parent)
         , keyboard_apple_compatibility_CB(this)
         , keyboard_apple_compatibility_label("Apple server keyboard :", this)
