@@ -29,7 +29,7 @@
 # include <cstring>
 # include "utils/log.hpp"
 # if __has_include(<boost/stacktrace.hpp>)
-#  include <iostream>
+//#  include <iostream>
 #  include <boost/stacktrace.hpp>
 #  define REDEMPTION_ERROR_WITH_STACKTRACE
 # endif
@@ -52,7 +52,13 @@ Error::Error(error_type id, int errnum) noexcept
     }
 
 # ifdef REDEMPTION_ERROR_WITH_STACKTRACE
-    std::cerr << boost::stacktrace::stacktrace() << std::flush;
+    int i = 0;
+    for (auto && frame: boost::stacktrace::stacktrace()){
+        if (!frame.empty()){
+            LOG(LOG_DEBUG, "#%d %s", i++, boost::stacktrace::to_string(frame));
+        }
+    }
+//    std::cerr << boost::stacktrace::stacktrace() << std::flush;
 # endif
 #endif
 }
