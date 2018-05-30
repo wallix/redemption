@@ -36,7 +36,7 @@
 #include "../keymaps/qt_scancode_keymap.hpp"
 #include "qt_options_window.hpp"
 
-
+#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 
 #include <QtGui/QPainter>
 #include <QtGui/QKeyEvent>

@@ -26,7 +26,7 @@
 #include "utils/log.hpp"
 #include "core/RDPEA/audio_output.hpp"
 #include "client_redemption/client_redemption_api.hpp"
-
+#include "client_redemption/client_input_output_api/client_sound_api.hpp"
 
 
 

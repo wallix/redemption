@@ -22,49 +22,11 @@
 
 #include "utils/log.hpp"
 
-#ifndef Q_MOC_RUN
 
-// #include <algorithm>
-// #include <fstream>
-// #include <iostream>
-// #include <sstream>
-// #include <string>
-//
-// #include <climits>
-// #include <cstdint>
-// #include <cstdio>
-// #include <dirent.h>
-// #include <unistd.h>
-//
-// #include <openssl/ssl.h>
-//
-// #include "acl/auth_api.hpp"
-// #include "configs/config.hpp"
-// #include "core/RDP/MonitorLayoutPDU.hpp"
-// #include "core/RDP/RDPDrawable.hpp"
-// #include "core/RDP/bitmapupdate.hpp"
-// #include "core/channel_list.hpp"
-// #include "core/client_info.hpp"
-// #include "core/front_api.hpp"
-// #include "core/report_message_api.hpp"
-// #include "gdi/graphic_api.hpp"
-// // #include "keyboard/keymap2.hpp"
-// #include "mod/internal/client_execute.hpp"
-// #include "mod/internal/replay_mod.hpp"
-// #include "mod/mod_api.hpp"
-// #include "mod/rdp/rdp_log.hpp"
-// #include "transport/crypto_transport.hpp"
-// #include "transport/socket_transport.hpp"
-// #include "utils/bitmap.hpp"
-// #include "utils/genfstat.hpp"
-// #include "utils/genrandom.hpp"
-// #include "utils/netutils.hpp"
-// #include "utils/fileutils.hpp"
-// #include "main/version.hpp"
-
+#include "gdi/graphic_api.hpp"
+#include "core/RDP/RDPDrawable.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 
-#endif
 
 
 

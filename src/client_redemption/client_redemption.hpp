@@ -23,25 +23,36 @@
 
 
 #include "utils/log.hpp"
+#include "utils/genrandom.hpp"
+#include "utils/netutils.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/genfstat.hpp"
+
+#include "configs/autogen/enums.hpp"
+
+#include "acl/auth_api.hpp"
 
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
-#include "configs/autogen/enums.hpp"
-#include "core/session_reactor.hpp"
+
+#include "mod/internal/replay_mod.hpp"
+#include "mod/rdp/rdp.hpp"
+#include "mod/vnc/vnc.hpp"
+
+#include "transport/crypto_transport.hpp"
+#include "transport/socket_transport.hpp"
+#include "transport/recorder_transport.hpp"
+#include "transport/replay_transport.hpp"
 
 #include "capture/full_video_params.hpp"
 #include "capture/video_params.hpp"
 #include "capture/wrm_capture.hpp"
-#include "core/RDP/RDPDrawable.hpp"
 
-#include "mod/rdp/rdp.hpp"
-#include "mod/vnc/vnc.hpp"
 
-#include "transport/recorder_transport.hpp"
-#include "transport/replay_transport.hpp"
+#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
+#include "client_redemption/client_input_output_api/client_socket_api.hpp"
 
 #include "client_redemption/client_redemption_controller.hpp"
-
 #include "client_redemption/client_channel_managers/client_channel_RDPSND_manager.hpp"
 #include "client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp"
 #include "client_redemption/client_channel_managers/client_channel_RDPDR_manager.hpp"

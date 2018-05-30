@@ -24,43 +24,23 @@
 
 #ifndef Q_MOC_RUN
 
-#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <string>
-
-#include <climits>
-#include <cstdint>
 #include <cstdio>
 #include <dirent.h>
 #include <unistd.h>
 
-#include <openssl/ssl.h>
 
-#include "acl/auth_api.hpp"
 #include "configs/config.hpp"
-#include "core/RDP/MonitorLayoutPDU.hpp"
-#include "core/RDP/RDPDrawable.hpp"
-#include "core/RDP/bitmapupdate.hpp"
-#include "core/channel_list.hpp"
+
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
-#include "gdi/graphic_api.hpp"
-// #include "keyboard/keymap2.hpp"
+
 #include "mod/internal/client_execute.hpp"
-#include "mod/internal/replay_mod.hpp"
 #include "mod/mod_api.hpp"
-#include "mod/rdp/rdp_log.hpp"
-#include "transport/crypto_transport.hpp"
-#include "transport/socket_transport.hpp"
-#include "utils/bitmap.hpp"
-#include "utils/genfstat.hpp"
-#include "utils/genrandom.hpp"
-#include "utils/netutils.hpp"
-#include "utils/fileutils.hpp"
-#include "main/version.hpp"
+
 
 #endif
 
@@ -191,7 +171,7 @@ public:
     };
     std::vector<KeyCustomDefinition> keyCustomDefinitions;
 
-    bool                 _recv_disconnect_ultimatum;
+   // bool                 _recv_disconnect_ultimatum;
 
 
     struct IconMovieData {
@@ -216,7 +196,7 @@ public:
             , movie_len(movie_len)
             {}
     };
-    std::vector<IconMovieData> icons_movie_data;
+//     std::vector<IconMovieData> icons_movie_data;
 
 
     // VNC mod
@@ -304,11 +284,14 @@ public:
     , vnc_conf(session_reactor, *(this))
     , is_recording(false)
     , is_spanning(false)
+    , rdp_width(0)
+    , rdp_height(0)
+    , is_full_capturing(false)
+    , is_full_replaying(false)
     , is_replaying(false)
     , is_loading_replay_mod(false)
     , connected(false)
-    , is_full_capturing(false)
-    , is_full_replaying(false)
+
     , connection_info_cmd_complete(PORT_GOT)
     , port(3389)
     , mod_palette(BGRPalette::classic_332())
@@ -381,10 +364,6 @@ public:
 };
 
 
-
-
-
-
 class ClientIO
 {
 public:
@@ -394,418 +373,3 @@ public:
         this->client = client;
     }
 };
-
-
-class ClientIOClipboardAPI : public ClientIO {
-
-public:
-    enum : int {
-        FILEGROUPDESCRIPTORW_BUFFER_TYPE = 0,
-        IMAGE_BUFFER_TYPE                = 1,
-        TEXT_BUFFER_TYPE                 = 2
-    };
-
-    uint16_t    _bufferTypeID;
-    int         _bufferTypeNameIndex;
-    bool        _local_clipboard_stream;
-    size_t      _cliboard_data_length;
-    int         _cItems;
-
-public:
-    ClientIOClipboardAPI()
-      : _bufferTypeID(0)
-      , _bufferTypeNameIndex(0)
-      , _local_clipboard_stream(true)
-      , _cliboard_data_length(0)
-      , _cItems(0)
-      {}
-
-    virtual ~ClientIOClipboardAPI() = default;
-
-    // control state
-    virtual void emptyBuffer() = 0;
-
-    void set_local_clipboard_stream(bool val) {
-        this->_local_clipboard_stream = val;
-    }
-
-    bool get_local_clipboard_stream() {
-        return this->_local_clipboard_stream;
-    }
-
-    //  set distant clipboard data
-    virtual void setClipboard_text(std::string const& str) = 0;
-    virtual void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const int bpp) = 0;
-    virtual void setClipboard_files(std::string const& name) = 0;
-    virtual void write_clipboard_temp_file(std::string const& fileName, const uint8_t * data, size_t data_len) = 0;
-
-
-    //  get local clipboard data
-    uint16_t get_buffer_type_id() {
-        return this->_bufferTypeID;
-    }
-
-    size_t get_cliboard_data_length() {
-        return _cliboard_data_length;
-    }
-
-    int get_buffer_type_long_name() {
-        return this->_bufferTypeNameIndex;
-    }
-
-    virtual ConstImageDataView get_image()
-    {
-        return ConstImageDataView(
-            reinterpret_cast<uint8_t const*>(""),
-            0, 0, 0, ConstImageDataView::BitsPerPixel{},
-            ConstImageDataView::Storage::TopToBottom
-        );
-    }
-
-    virtual uint8_t * get_text() = 0;
-
-    // files data (file index to identify a file among a files group descriptor)
-    virtual std::string get_file_item_name(int index) {(void)index; return {};}
-
-    // TODO should be `array_view_const_char get_file_item_size(int index)`
-    virtual  int get_file_item_size(int index) {(void) index; return 0;}
-    virtual char * get_file_item_data(int index) {(void) index; /*TODO char const/string_view*/ return const_cast<char*>("");}
-
-    int get_citems_number() {
-        return this->_cItems;
-    }
-};
-
-
-
-#include "core/FSCC/FileInformation.hpp"
-
-constexpr long long WINDOWS_TICK = 10000000;
-constexpr long long SEC_TO_UNIX_EPOCH = 11644473600LL;
-
-class ClientIODiskAPI : public ClientIO {
-
-
-public:
-    virtual ~ClientIODiskAPI() = default;
-
-    struct FileStat {
-
-        uint64_t LastAccessTime = 0;
-        uint64_t LastWriteTime  = 0;
-        uint64_t CreationTime   = 0;
-        uint64_t ChangeTime     = 0;
-        uint32_t FileAttributes = 0;
-
-        int64_t  AllocationSize = 0;
-        int64_t  EndOfFile      = 0;
-        uint32_t NumberOfLinks  = 0;
-        uint8_t  DeletePending  = 0;
-        uint8_t  Directory      = 0;
-    };
-
-    struct FileStatvfs {
-
-        uint64_t VolumeCreationTime             = 0;
-        const char * VolumeLabel                = "";
-        const char * FileSystemName             = "ext4";
-
-        uint32_t FileSystemAttributes           = fscc::NEW_FILE_ATTRIBUTES;
-        uint32_t SectorsPerAllocationUnit       = 8;
-
-        uint32_t BytesPerSector                 = 0;
-        uint32_t MaximumComponentNameLength     = 0;
-        uint64_t TotalAllocationUnits           = 0;
-        uint64_t CallerAvailableAllocationUnits = 0;
-        uint64_t AvailableAllocationUnits       = 0;
-        uint64_t ActualAvailableAllocationUnits = 0;
-    };
-
-
-
-
-    unsigned WindowsTickToUnixSeconds(long long windowsTicks) {
-        return unsigned((windowsTicks / WINDOWS_TICK) - SEC_TO_UNIX_EPOCH);
-    }
-
-    long long UnixSecondsToWindowsTick(unsigned unixSeconds) {
-        return ((unixSeconds + SEC_TO_UNIX_EPOCH) * WINDOWS_TICK);
-    }
-
-    //  TODO put this somewhere
-    //this->parse_options(argc, argv);
-
-    uint32_t string_to_hex32(unsigned char * str) {
-        size_t size = sizeof(str);
-        uint32_t hex32(0);
-        for (size_t i = 0; i < size; i++) {
-            int s = str[i];
-            if(s > 47 && s < 58) {                      //this covers 0-9
-                hex32 += (s - 48) << (size - i - 1);
-            } else if (s > 64 && s < 71) {              // this covers A-F
-                hex32 += (s - 55) << (size - i - 1);
-            } else if (s > 'a'-1 && s < 'f'+1) {        // this covers a-f
-                hex32 += (s - 'a') << (size - i - 1);
-            }
-        }
-        return hex32;
-    }
-
-    virtual bool ifile_good(const char * new_path) = 0;
-
-    virtual bool ofile_good(const char * new_path) = 0;
-
-    virtual bool dir_good(const char * new_path) = 0;
-
-    virtual void marke_dir(const char * new_path) = 0;
-
-    virtual FileStat get_file_stat(const char * file_to_request) = 0;
-
-    virtual FileStatvfs get_file_statvfs(const char * file_to_request) = 0;
-
-    // TODO `log_error_on` is suspecious
-    virtual erref::NTSTATUS read_data(
-        std::string const& file_to_tread, int offset, byte_array data,
-        bool log_error_on) = 0;
-
-    virtual bool set_elem_from_dir(std::vector<std::string> & elem_list, const std::string & str_dir_path) = 0;
-
-    virtual int get_device(const char * file_path) = 0;
-
-    virtual uint32_t get_volume_serial_number(int device) = 0;
-
-    virtual bool write_file(const char * file_to_write, const char * data, int data_len) = 0;
-
-    virtual bool remove_file(const char * file_to_remove) = 0;
-
-    virtual bool rename_file(const char * file_to_rename,  const char * new_name) = 0;
-};
-
-
-
-class ClientOutputSoundAPI : public ClientIO {
-
-public:
-    uint32_t n_sample_per_sec = 0;
-    uint16_t bit_per_sample = 0;
-    uint16_t n_channels = 0;
-    uint16_t n_block_align = 0;
-    uint32_t bit_per_sec = 0;
-
-    std::string path;
-
-    void set_path(const std::string & path) {
-        this->path = path;
-    }
-
-    virtual void init(size_t raw_total_size) = 0;
-    virtual void setData(const uint8_t * data, size_t size) = 0;
-    virtual void play() = 0;
-
-    virtual ~ClientOutputSoundAPI() = default;
-
-};
-
-
-
-class ClientInputSocketAPI : public ClientIO {
-
-public:
-    mod_api * _callback = nullptr;
-
-    virtual bool start_to_listen(int client_sck, mod_api * mod) = 0;
-    virtual void disconnect() = 0;
-
-    virtual ~ClientInputSocketAPI() = default;
-};
-
-
-
-class ClientInputMouseKeyboardAPI : public ClientIO {
-
-
-public:
-
-    ClientInputMouseKeyboardAPI() = default;
-
-    virtual ~ClientInputMouseKeyboardAPI() = default;
-
-
-    virtual ClientRedemptionAPI * get_client() {
-        return this->client;
-    }
-
-    virtual void update_keylayout() = 0;
-
-    virtual void init_form() = 0;
-
-    virtual void pre_load_movie() {}
-
-
-    // CONTROLLER
-    virtual void connexionReleased() {
-        this->client->connect();
-
-    }
-
-    void add_key_custom_definition(int /*qtKeyID*/, int /*scanCode*/, const std::string & /*ASCII8*/, int /*extended*/, const std::string & /*name*/) {
-        //this->keyCustomDefinitions.emplace_back(qtKeyID, scanCode, ASCII8, extended, name);
-    }
-
-    virtual void disconnexionReleased() {
-        this->client->disconnexionReleased();
-    }
-
-    void CtrlAltDelPressed() {
-        this->client->CtrlAltDelPressed();
-    }
-
-    void CtrlAltDelReleased() {
-        this->client->CtrlAltDelReleased();
-    }
-
-    virtual void mouseButtonEvent(int x, int y, int flag) {
-        this->client->mouseButtonEvent(x, y, flag);
-    }
-
-    virtual void wheelEvent(int x,  int y, int delta) {
-        this->client->wheelEvent(x, y, delta);
-    }
-
-    virtual bool mouseMouveEvent(int x, int y) {
-        return this->client->mouseMouveEvent(x, y);
-    }
-
-    // TODO string_view
-    void virtual keyPressEvent(const int key, std::string const& text)  = 0;
-
-    // TODO string_view
-    void virtual keyReleaseEvent(const int key, std::string const& text)  = 0;
-
-    void virtual refreshPressed() {
-        this->client->refreshPressed();
-    }
-
-    virtual void open_options() {}
-
-    // TODO string_view
-    virtual ClientRedemptionAPI::KeyCustomDefinition get_key_info(int, std::string const&) {
-        return ClientRedemptionAPI::KeyCustomDefinition(0, 0, "", 0, "");
-    }
-
-};
-
-
-
-// class ClientOutputGraphicAPI {
-//
-// public:
-//     ClientRedemptionAPI * drawn_client;
-//
-//     const int screen_max_width;
-//     const int screen_max_height;
-//
-//     bool is_pre_loading;
-//
-//     ClientOutputGraphicAPI(int max_width, int max_height)
-//       : drawn_client(nullptr),
-// 		screen_max_width(max_width)
-//       , screen_max_height(max_height)
-//       , is_pre_loading(false) {
-//     }
-//
-//     virtual ~ClientOutputGraphicAPI() = default;
-//
-//     virtual void set_drawn_client(ClientRedemptionAPI * client) {
-//         this->drawn_client = client;
-//     }
-//
-//     virtual void set_ErrorMsg(std::string const & movie_path) = 0;
-//
-//     virtual void dropScreen() = 0;
-//
-//     virtual void show_screen() = 0;
-//
-//     virtual void reset_cache(int w,  int h) = 0;
-//
-//     virtual void create_screen() = 0;
-//
-//     virtual void closeFromScreen() = 0;
-//
-//     virtual void set_screen_size(int x, int y) = 0;
-//
-//     virtual void update_screen() = 0;
-//
-//
-//     // replay mod
-//
-//     virtual void create_screen(std::string const & , std::string const & ) {}
-//
-//     virtual void draw_frame(int ) {}
-//
-//
-//     // remote app
-//
-//     virtual void create_remote_app_screen(uint32_t , int , int , int , int ) {}
-//
-//     virtual void move_screen(uint32_t , int , int ) {}
-//
-//     virtual void set_screen_size(uint32_t , int , int ) {}
-//
-//     virtual void set_pixmap_shift(uint32_t , int , int ) {}
-//
-//     virtual int get_visible_width(uint32_t ) {return 0;}
-//
-//     virtual int get_visible_height(uint32_t ) {return 0;}
-//
-//     virtual int get_mem_width(uint32_t ) {return 0;}
-//
-//     virtual int get_mem_height(uint32_t ) {return 0;}
-//
-//     virtual void set_mem_size(uint32_t , int , int ) {}
-//
-//     virtual void show_screen(uint32_t ) {}
-//
-//     virtual void dropScreen(uint32_t ) {}
-//
-//     virtual void clear_remote_app_screen() {}
-//
-//
-//
-//
-//     virtual FrontAPI::ResizeResult server_resize(int width, int height, int bpp) = 0;
-//
-//     virtual void set_pointer(Pointer      const &) {}
-//
-//     virtual void draw(RDP::FrameMarker    const & cmd) = 0;
-//     virtual void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) = 0;
-//     virtual void draw(RDPDestBlt          const & cmd, Rect clip) = 0;
-//     virtual void draw(RDPMultiDstBlt      const & cmd, Rect clip) = 0;
-//     virtual void draw(RDPScrBlt           const & cmd, Rect clip) = 0;
-//     virtual void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) = 0;
-//     virtual void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) = 0;
-//     virtual void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) = 0;
-//
-//     virtual void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-//     virtual void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-//     virtual void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-//     virtual void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-//     virtual void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-//     virtual void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-//     virtual void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-//     virtual void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-//     virtual void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-//     virtual void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-//     virtual void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) = 0;
-//     virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) = 0;
-//
-//
-//     // TODO The 2 methods below should not exist and cache access be done before calling drawing orders
-// //     virtual void draw(RDPColCache   const &) {}
-// //     virtual void draw(RDPBrushCache const &) {}
-//
-//     virtual void begin_update() {}
-//     virtual void end_update() {}
-// };
-
-
