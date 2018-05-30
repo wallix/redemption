@@ -124,8 +124,8 @@ public:
                 return ctx.need_more_data();
             }
             auto const r = ctx.terminate();
-            // self.fdobject.detach();
-            terminate_notifier(self); // detroy this
+            self.fdobject.detach();
+            terminate_notifier(self); // destroy this
             return r;
         })
         .on_exit(jln::propagate_exit())
