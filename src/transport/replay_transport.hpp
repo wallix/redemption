@@ -22,9 +22,12 @@
 
 #include <chrono>
 #include <memory>
+#include <vector>
 
+#include "transport/recorder_transport.hpp"
 #include "transport/in_file_transport.hpp"
 #include "utils/sugar/unique_fd.hpp"
+
 
 /**
  *	@brief a transport that will replay a full capture
@@ -48,6 +51,8 @@ public:
     int get_fd() const override { return this->fd.fd(); }
 
 private:
+    using PacketType = RecorderTransport::PacketType;
+
     /** @brief the result of read_more_chunk */
     void read_more_chunk();
 
@@ -55,9 +60,12 @@ private:
 
     size_t do_partial_read(uint8_t * buffer, size_t len) override;
 
-    [[noreturn]] Read do_atomic_read(uint8_t * buffer, size_t len) override;
+    Read do_atomic_read(uint8_t * buffer, size_t len) override;
 
     void do_send(const uint8_t * const buffer, size_t len) override;
+
+    array_view_const_u8 next_current_data(PacketType);
+    void read_timer();
 
 private:
     std::chrono::system_clock::time_point start_time;
@@ -69,13 +77,17 @@ private:
 	struct Data
 	{
         std::unique_ptr<uint8_t[]> data;
-        size_t current_pos = 0;
         size_t capacity = 0;
-        size_t size = 0;
+        size_t size;
+        PacketType type;
 
         array_view_const_u8 av() const noexcept;
     };
-    Data data;
+
+    std::vector<Data> datas;
+    size_t data_pos;
+    std::vector<Data> gc_datas;
+
     struct Key
     {
         std::unique_ptr<uint8_t[]> data;

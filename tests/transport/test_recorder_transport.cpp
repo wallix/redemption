@@ -123,6 +123,11 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
         RED_CHECK_EQ(it-std::begin(a), std::size(a));
     }
 
+    {
+        ReplayTransport trans(filename, "", 0, ReplayTransport::FdType::AlwaysReady);
+        RED_CHECK_EXCEPTION_ERROR_ID(trans.send("!@#", 3), ERR_TRANSPORT_DIFFERS);
+    }
+
     // Replay
     {
         ReplayTransport trans(filename, "", 0, ReplayTransport::FdType::AlwaysReady);
@@ -143,10 +148,10 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
                     RED_CHECK_MEM(in.subarray(0, 3), make_array_view(buf, 3));
                     in = in.subarray(3);
                     break;
-                case Pck::DataOut:
-                case Pck::ServerCert:
-                case Pck::Disconnect:
-                case Pck::Connect:
+                case Pck::DataOut: trans.send(m.s); break;
+                case Pck::ServerCert: trans.enable_server_tls("", ""); break;
+                case Pck::Disconnect: trans.disconnect(); break;
+                case Pck::Connect: trans.connect(); break;
                 case Pck::ClientCert:
                 case Pck::Eof:
                     break;
@@ -174,10 +179,10 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
                     RED_CHECK_MEM(in.subarray(0, 3), make_array_view(buf, 3));
                     in = in.subarray(3);
                     break;
-                case Pck::DataOut:
-                case Pck::ServerCert:
-                case Pck::Disconnect:
-                case Pck::Connect:
+                case Pck::DataOut: trans.send(m.s); break;
+                case Pck::ServerCert: trans.enable_server_tls("", ""); break;
+                case Pck::Disconnect: trans.disconnect(); break;
+                case Pck::Connect: trans.connect(); break;
                 case Pck::ClientCert:
                 case Pck::Eof:
                     break;

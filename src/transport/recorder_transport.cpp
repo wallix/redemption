@@ -20,7 +20,8 @@
    A transport that records all the received packets
 */
 
-#include "recorder_transport.hpp"
+#include "transport/recorder_transport.hpp"
+#include "utils/stream.hpp"
 
 #include <chrono>
 

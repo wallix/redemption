@@ -69,7 +69,6 @@ ReplayTransport::ReplayTransport(
     }
 
     this->read_more_chunk();
-    this->reschedule_timer();
 }
 
 
@@ -83,19 +82,16 @@ void ReplayTransport::reschedule_timer()
     }
 
     auto const now = std::chrono::system_clock::now();
-    auto const delate_time = (this->record_time - now);
+    // zero disarms the timer, force to 1 nanoseconds
+    auto const delate_time = std::max(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(this->record_time - now),
+        std::chrono::nanoseconds{1});
+    auto const sec = std::chrono::duration_cast<std::chrono::seconds>(delate_time);
+    auto const nano = delate_time - sec;
 
     itimerspec timeout = {};
-    if (delate_time.count() > 0) {
-        auto sec = std::chrono::duration_cast<std::chrono::seconds>(delate_time);
-        auto nano = std::chrono::duration_cast<std::chrono::nanoseconds>(delate_time - sec);
-        timeout.it_value.tv_sec = sec.count();
-        timeout.it_value.tv_nsec = nano.count();
-    }
-    // zero disarms the timer, force to 1 nanoseconds
-    if (!timeout.it_value.tv_nsec && !timeout.it_value.tv_nsec) {
-        timeout.it_value.tv_nsec = 1;
-    }
+    timeout.it_value.tv_sec = sec.count();
+    timeout.it_value.tv_nsec = nano.count();
 
     // LOG(LOG_DEBUG, "trigerring timer now sec=%ld nsec=%ld", timeout.it_value.tv_sec, timeout.it_value.tv_nsec);
 
@@ -105,44 +101,60 @@ void ReplayTransport::reschedule_timer()
     }
 }
 
+using PacketType = RecorderTransport::PacketType;
+
 void ReplayTransport::read_more_chunk()
 {
+    this->data_pos = 0;
+    while (!this->datas.empty()) {
+        this->gc_datas.push_back(std::move(this->datas.back()));
+        this->datas.pop_back();
+    }
+
     while (!this->is_eof) {
+        auto read_buffer = [this](PacketType type, size_t const n){
+            Data* buf;
+            if (this->gc_datas.empty()) {
+                buf = &this->datas.emplace_back();
+                auto capacity = std::max(n, size_t(1024u));
+                buf->data = std::make_unique<uint8_t[]>(capacity);
+                buf->capacity = capacity;
+            }
+            else {
+                buf = &this->datas.emplace_back(std::move(this->gc_datas.back()));
+                this->gc_datas.pop_back();
+                if (buf->capacity < n) {
+                    buf->capacity = n + 1024u;
+                    buf->data = std::make_unique<uint8_t[]>(buf->capacity);
+                }
+            };
+
+            buf->size = n;
+            buf->type = type;
+
+            this->in_file.recv_boom(buf->data.get(), n);
+        };
+
         auto header = read_recorder_transport_header(this->in_file);
 
         this->record_time = this->start_time + header.record_duration;
 
         switch (header.type)
         {
-            case RecorderTransport::PacketType::ClientCert:
-                this->public_key.size = header.data_size;
-                this->public_key.data = std::make_unique<uint8_t[]>(header.data_size);
-                this->in_file.recv_boom(this->public_key.data.get(), this->public_key.size);
+            case PacketType::ClientCert:
+            case PacketType::DataOut:
+                read_buffer(header.type, header.data_size);
                 break;
 
-            case RecorderTransport::PacketType::DataIn:
-                if (this->data.capacity < header.data_size) {
-                    this->data.data = std::make_unique<uint8_t[]>(header.data_size);
-                    this->data.capacity = header.data_size;
-                }
-                this->data.size = header.data_size;
-                this->data.current_pos = 0;
-                this->in_file.recv_boom(this->data.data.get(), header.data_size);
-                // this->record_len += header.data_size;
-                if (header.data_size) {
-                    return;
-                }
-                break;
-
-            case RecorderTransport::PacketType::Eof:
-                LOG(LOG_INFO, "ReplayTransport::read_more_chunk: eof = true");
-                this->is_eof = true;
+            case PacketType::DataIn:
+            case PacketType::Eof:
+                read_buffer(header.type, header.data_size);
+                this->reschedule_timer();
                 return;
 
-            case RecorderTransport::PacketType::DataOut:
-            case RecorderTransport::PacketType::Connect:
-            case RecorderTransport::PacketType::Disconnect:
-            case RecorderTransport::PacketType::ServerCert: {
+            case PacketType::Connect:
+            case PacketType::Disconnect:
+            case PacketType::ServerCert: {
                 // TODO
                 uint8_t buffer[4*1024];
                 while (header.data_size) {
@@ -154,6 +166,23 @@ void ReplayTransport::read_more_chunk()
             }
         }
     }
+}
+
+array_view_const_u8 ReplayTransport::next_current_data(PacketType type)
+{
+    auto const no_more = (this->datas.size() < this->data_pos);
+    if (no_more || this->datas[this->data_pos].type != type) {
+        if (no_more) {
+            LOG(LOG_ERR, "ReplayTransport: no data");
+        }
+        else {
+            LOG(LOG_ERR, "ReplayTransport: next type is %d, expected %d",
+                this->datas[this->data_pos].type, type);
+        }
+        throw Error(no_more || this->is_eof ? ERR_TRANSPORT_NO_MORE_DATA : ERR_TRANSPORT_DIFFERS);
+    }
+
+    return this->datas[this->data_pos++].av();
 }
 
 
@@ -171,21 +200,20 @@ Transport::TlsResult ReplayTransport::enable_client_tls(
     (void)server_notifier;
     (void)certif_path;
 
+    auto av = this->next_current_data(PacketType::ClientCert);
+    this->public_key.size = av.size();
+    this->public_key.data = std::make_unique<uint8_t[]>(av.size());
+    memcpy(this->public_key.data.get(), av.data(), av.size());
     return Transport::TlsResult::Ok;
 }
 
 array_view_const_u8 ReplayTransport::Data::av() const noexcept
 {
-    return {this->data.get() + this->current_pos, this->size - this->current_pos};
+    return {this->data.get(), this->size};
 }
 
-size_t ReplayTransport::do_partial_read(uint8_t * buffer, size_t const len)
+void ReplayTransport::read_timer()
 {
-    if (this->is_eof) {
-        LOG(LOG_INFO, "ReplayTransport::do_partial_read: is eof");
-        throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-    }
-
     if (FdType::Timer == this->fd_type)
     {
         uint64_t timeval;
@@ -195,38 +223,59 @@ size_t ReplayTransport::do_partial_read(uint8_t * buffer, size_t const len)
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, err);
         }
     }
+}
 
-    auto av = this->data.av();
+size_t ReplayTransport::do_partial_read(uint8_t * buffer, size_t const len)
+{
+    if (this->is_eof) {
+        throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+    }
+
+    this->read_timer();
+
+    auto av = this->next_current_data(PacketType::DataIn);
 
     if (av.size() > len) {
-        LOG(LOG_ERR, "ReplayTransport::partial_read(buf, len=%zu) should be %zu or greater", len, av.size());
+        LOG(LOG_ERR, "ReplayTransport::do_atomic_read(buf, len=%zu) should be %zu or greater", len, av.size());
         throw Error(ERR_TRANSPORT_DIFFERS);
     }
 
-    auto new_len = std::min(av.size(), len);
-    memcpy(buffer, av.data(), new_len);
-    this->data.current_pos += new_len;
-
-    LOG(LOG_DEBUG, "ReplayTransport::partial_read len=%zu new_len=%zu remaining=%zu", len, new_len, av.size());
-
-    if (av.size() == new_len) {
-        this->read_more_chunk();
-    }
-    this->reschedule_timer();
-
-    return new_len;
+    memcpy(buffer, av.data(), av.size());
+    this->read_more_chunk();
+    return av.size();
 }
 
 Transport::Read ReplayTransport::do_atomic_read(uint8_t * buffer, size_t len)
 {
-    (void)buffer;
-    (void)len;
-    LOG(LOG_ERR, "ReplayTransport::do_atomic_read unimplemented");
-    throw Error(ERR_TRANSPORT_READ_FAILED);
+    if (this->is_eof) {
+        return Read::Eof;
+    }
+
+    this->read_timer();
+
+    auto av = this->next_current_data(PacketType::DataIn);
+
+    if (av.size() != len) {
+        LOG(LOG_ERR, "ReplayTransport::do_atomic_read(buf, len=%zu) should be %zu", len, av.size());
+        throw Error(ERR_TRANSPORT_DIFFERS);
+    }
+
+    memcpy(buffer, av.data(), len);
+    this->read_more_chunk();
+    return Read::Ok;
 }
 
 void ReplayTransport::do_send(const uint8_t * const buffer, size_t len)
 {
-    (void)buffer;
-    (void)len;
+    auto av = this->next_current_data(PacketType::DataOut);
+
+    if (av.size() != len || memcmp(av.data(), buffer, len)) {
+        if (av.size() != len) {
+            LOG(LOG_ERR, "ReplayTransport::do_send(buf, len=%zu) should be %zu", len, av.size());
+        }
+        else {
+            LOG(LOG_ERR, "ReplayTransport::do_send data differs");
+        }
+        throw Error(ERR_TRANSPORT_DIFFERS);
+    }
 }

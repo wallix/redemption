@@ -57,7 +57,7 @@ public:
     uint32_t get_seqno() const
     { return this->seqno; }
 
-    enum class TlsResult { Ok, Fail, Want, };
+    enum class [[nodiscard]] TlsResult { Ok, Fail, Want, };
     virtual TlsResult enable_client_tls(
             bool server_cert_store,
             ServerCertCheck server_cert_check,
@@ -86,7 +86,7 @@ public:
         return {};
     }
 
-    enum class Read : bool { Eof, Ok };
+    enum class [[nodiscard]] Read : bool { Eof, Ok };
 
     /// recv_boom read len bytes into buffer or throw an Error
     /// if EOF is encountered at that point it's also an error and
