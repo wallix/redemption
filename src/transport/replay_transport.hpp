@@ -48,6 +48,12 @@ public:
         bool server_cert_store, ServerCertCheck server_cert_check,
         ServerNotifier & server_notifier, const char * certif_path) override;
 
+    void enable_server_tls(const char * certificate_password,
+        const char * ssl_cipher_list) override;
+
+    bool disconnect() override;
+    bool connect() override;
+
     int get_fd() const override { return this->fd.fd(); }
 
 private:

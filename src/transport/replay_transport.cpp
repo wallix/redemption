@@ -143,6 +143,9 @@ void ReplayTransport::read_more_chunk()
         {
             case PacketType::ClientCert:
             case PacketType::DataOut:
+            case PacketType::ServerCert:
+            case PacketType::Connect:
+            case PacketType::Disconnect:
                 read_buffer(header.type, header.data_size);
                 break;
 
@@ -151,19 +154,6 @@ void ReplayTransport::read_more_chunk()
                 read_buffer(header.type, header.data_size);
                 this->reschedule_timer();
                 return;
-
-            case PacketType::Connect:
-            case PacketType::Disconnect:
-            case PacketType::ServerCert: {
-                // TODO
-                uint8_t buffer[4*1024];
-                while (header.data_size) {
-                    auto min = std::min<size_t>(sizeof(buffer), header.data_size);
-                    this->in_file.recv_boom(buffer, min);
-                    header.data_size -= min;
-                }
-                break;
-            }
         }
     }
 }
@@ -205,6 +195,26 @@ Transport::TlsResult ReplayTransport::enable_client_tls(
     this->public_key.data = std::make_unique<uint8_t[]>(av.size());
     memcpy(this->public_key.data.get(), av.data(), av.size());
     return Transport::TlsResult::Ok;
+}
+
+void ReplayTransport::enable_server_tls(
+    const char* certificate_password, const char* ssl_cipher_list)
+{
+    this->next_current_data(PacketType::ServerCert);
+    (void)certificate_password;
+    (void)ssl_cipher_list;
+}
+
+bool ReplayTransport::connect()
+{
+    this->next_current_data(PacketType::Connect);
+    return true;
+}
+
+bool ReplayTransport::disconnect()
+{
+    this->next_current_data(PacketType::Disconnect);
+    return true;
 }
 
 array_view_const_u8 ReplayTransport::Data::av() const noexcept
