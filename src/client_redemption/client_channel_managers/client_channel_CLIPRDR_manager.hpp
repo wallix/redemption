@@ -25,6 +25,7 @@
 
 #include "utils/log.hpp"
 #include "client_redemption/client_redemption_api.hpp"
+
 #include "core/RDP/clipboard.hpp"
 
 

@@ -330,9 +330,9 @@ public:
     virtual void connect() {}
     virtual void disconnect(std::string const &, bool) {}
     virtual void replay(const std::string &, const std::string &) {}
-    virtual bool load_replay_mod(std::string const &, std::string const &, timeval, timeval) { return true; }
+    virtual bool load_replay_mod(std::string const &, std::string const &, timeval, timeval) { return false; }
     virtual timeval reload_replay_mod(int, timeval) { return timeval{}; }
-    virtual bool is_replay_on() { return true; }
+    virtual bool is_replay_on() { return false; }
     virtual char const * get_mwrm_filename() { return ""; }
     virtual time_t get_real_time_movie_begin() { return time_t{}; }
     virtual void delete_replay_mod() {}
@@ -344,7 +344,7 @@ public:
     virtual void replay_set_sync() {}
     virtual void mouseButtonEvent(int , int , int) {}
     virtual void wheelEvent(int ,  int , int) {}
-    virtual bool mouseMouveEvent(int , int ) {}
+    virtual bool mouseMouveEvent(int , int ) {return false;}
     virtual void send_rdp_scanCode(int, int) {}
     virtual void send_rdp_unicode(uint16_t, uint16_t) {}
     virtual void refreshPressed() {}
@@ -367,7 +367,7 @@ public:
     virtual void add_key_custom_definition(int, int, const std::string &, int, const std::string &) {}
     virtual void setAccountData() {}
     virtual void writeAccoundData(const std::string &, const std::string &, const std::string &, const int) {}
-    virtual std::vector<IconMovieData> get_icon_movie_data() {}
+    virtual std::vector<IconMovieData> get_icon_movie_data() {std::vector<IconMovieData> vec; return vec;}
     virtual void set_remoteapp_cmd_line(const std::string &) {}
     virtual bool is_no_win_data() {}
     virtual void deleteCurrentProtile() {}
@@ -375,7 +375,7 @@ public:
     virtual void writeClientInfo() {}
 
 
-    virtual time_t get_movie_time_length(char const *) {}
+    virtual time_t get_movie_time_length(char const *) { return time_t{}; }
     virtual void instant_play_client(std::chrono::microseconds) {}
 
 };
@@ -648,7 +648,7 @@ public:
 
     }
 
-    void add_key_custom_definition(int qtKeyID, int scanCode, const std::string & ASCII8, int extended, const std::string & name) {
+    void add_key_custom_definition(int /*qtKeyID*/, int /*scanCode*/, const std::string & /*ASCII8*/, int /*extended*/, const std::string & /*name*/) {
         //this->keyCustomDefinitions.emplace_back(qtKeyID, scanCode, ASCII8, extended, name);
     }
 
@@ -697,115 +697,115 @@ public:
 
 
 
-class ClientOutputGraphicAPI {
-
-public:
-    ClientRedemptionAPI * drawn_client;
-
-    const int screen_max_width;
-    const int screen_max_height;
-
-    bool is_pre_loading;
-
-    ClientOutputGraphicAPI(int max_width, int max_height)
-      : drawn_client(nullptr),
-		screen_max_width(max_width)
-      , screen_max_height(max_height)
-      , is_pre_loading(false) {
-    }
-
-    virtual ~ClientOutputGraphicAPI() = default;
-
-    virtual void set_drawn_client(ClientRedemptionAPI * client) {
-        this->drawn_client = client;
-    }
-
-    virtual void set_ErrorMsg(std::string const & movie_path) = 0;
-
-    virtual void dropScreen() = 0;
-
-    virtual void show_screen() = 0;
-
-    virtual void reset_cache(int w,  int h) = 0;
-
-    virtual void create_screen() = 0;
-
-    virtual void closeFromScreen() = 0;
-
-    virtual void set_screen_size(int x, int y) = 0;
-
-    virtual void update_screen() = 0;
-
-
-    // replay mod
-
-    virtual void create_screen(std::string const & , std::string const & ) {}
-
-    virtual void draw_frame(int ) {}
-
-
-    // remote app
-
-    virtual void create_remote_app_screen(uint32_t , int , int , int , int ) {}
-
-    virtual void move_screen(uint32_t , int , int ) {}
-
-    virtual void set_screen_size(uint32_t , int , int ) {}
-
-    virtual void set_pixmap_shift(uint32_t , int , int ) {}
-
-    virtual int get_visible_width(uint32_t ) {return 0;}
-
-    virtual int get_visible_height(uint32_t ) {return 0;}
-
-    virtual int get_mem_width(uint32_t ) {return 0;}
-
-    virtual int get_mem_height(uint32_t ) {return 0;}
-
-    virtual void set_mem_size(uint32_t , int , int ) {}
-
-    virtual void show_screen(uint32_t ) {}
-
-    virtual void dropScreen(uint32_t ) {}
-
-    virtual void clear_remote_app_screen() {}
-
-
-
-
-    virtual FrontAPI::ResizeResult server_resize(int width, int height, int bpp) = 0;
-
-    virtual void set_pointer(Pointer      const &) {}
-
-    virtual void draw(RDP::FrameMarker    const & cmd) = 0;
-    virtual void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) = 0;
-    virtual void draw(RDPDestBlt          const & cmd, Rect clip) = 0;
-    virtual void draw(RDPMultiDstBlt      const & cmd, Rect clip) = 0;
-    virtual void draw(RDPScrBlt           const & cmd, Rect clip) = 0;
-    virtual void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) = 0;
-    virtual void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) = 0;
-    virtual void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) = 0;
-
-    virtual void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) = 0;
-    virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) = 0;
-
-
-    // TODO The 2 methods below should not exist and cache access be done before calling drawing orders
-//     virtual void draw(RDPColCache   const &) {}
-//     virtual void draw(RDPBrushCache const &) {}
-
-    virtual void begin_update() {}
-    virtual void end_update() {}
-};
+// class ClientOutputGraphicAPI {
+//
+// public:
+//     ClientRedemptionAPI * drawn_client;
+//
+//     const int screen_max_width;
+//     const int screen_max_height;
+//
+//     bool is_pre_loading;
+//
+//     ClientOutputGraphicAPI(int max_width, int max_height)
+//       : drawn_client(nullptr),
+// 		screen_max_width(max_width)
+//       , screen_max_height(max_height)
+//       , is_pre_loading(false) {
+//     }
+//
+//     virtual ~ClientOutputGraphicAPI() = default;
+//
+//     virtual void set_drawn_client(ClientRedemptionAPI * client) {
+//         this->drawn_client = client;
+//     }
+//
+//     virtual void set_ErrorMsg(std::string const & movie_path) = 0;
+//
+//     virtual void dropScreen() = 0;
+//
+//     virtual void show_screen() = 0;
+//
+//     virtual void reset_cache(int w,  int h) = 0;
+//
+//     virtual void create_screen() = 0;
+//
+//     virtual void closeFromScreen() = 0;
+//
+//     virtual void set_screen_size(int x, int y) = 0;
+//
+//     virtual void update_screen() = 0;
+//
+//
+//     // replay mod
+//
+//     virtual void create_screen(std::string const & , std::string const & ) {}
+//
+//     virtual void draw_frame(int ) {}
+//
+//
+//     // remote app
+//
+//     virtual void create_remote_app_screen(uint32_t , int , int , int , int ) {}
+//
+//     virtual void move_screen(uint32_t , int , int ) {}
+//
+//     virtual void set_screen_size(uint32_t , int , int ) {}
+//
+//     virtual void set_pixmap_shift(uint32_t , int , int ) {}
+//
+//     virtual int get_visible_width(uint32_t ) {return 0;}
+//
+//     virtual int get_visible_height(uint32_t ) {return 0;}
+//
+//     virtual int get_mem_width(uint32_t ) {return 0;}
+//
+//     virtual int get_mem_height(uint32_t ) {return 0;}
+//
+//     virtual void set_mem_size(uint32_t , int , int ) {}
+//
+//     virtual void show_screen(uint32_t ) {}
+//
+//     virtual void dropScreen(uint32_t ) {}
+//
+//     virtual void clear_remote_app_screen() {}
+//
+//
+//
+//
+//     virtual FrontAPI::ResizeResult server_resize(int width, int height, int bpp) = 0;
+//
+//     virtual void set_pointer(Pointer      const &) {}
+//
+//     virtual void draw(RDP::FrameMarker    const & cmd) = 0;
+//     virtual void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) = 0;
+//     virtual void draw(RDPDestBlt          const & cmd, Rect clip) = 0;
+//     virtual void draw(RDPMultiDstBlt      const & cmd, Rect clip) = 0;
+//     virtual void draw(RDPScrBlt           const & cmd, Rect clip) = 0;
+//     virtual void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) = 0;
+//     virtual void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) = 0;
+//     virtual void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) = 0;
+//
+//     virtual void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
+//     virtual void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
+//     virtual void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
+//     virtual void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
+//     virtual void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
+//     virtual void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
+//     virtual void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
+//     virtual void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
+//     virtual void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
+//     virtual void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
+//     virtual void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) = 0;
+//     virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) = 0;
+//
+//
+//     // TODO The 2 methods below should not exist and cache access be done before calling drawing orders
+// //     virtual void draw(RDPColCache   const &) {}
+// //     virtual void draw(RDPBrushCache const &) {}
+//
+//     virtual void begin_update() {}
+//     virtual void end_update() {}
+// };
 
 

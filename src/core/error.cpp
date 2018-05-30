@@ -24,6 +24,7 @@
 #define NOT_UNDEF_EACH_ERROR
 #include "core/error.hpp"
 #include "utils/string_c.hpp"
+#include <dlfcn.h>
 
 #ifndef NDEBUG
 # include <cstring>

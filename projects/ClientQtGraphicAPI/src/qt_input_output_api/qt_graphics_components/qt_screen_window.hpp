@@ -24,7 +24,7 @@
 
 #include "utils/log.hpp"
 #include "client_redemption/client_redemption_api.hpp"
-
+#include "client_redemption/client_input_output_api/client_graphic_api.hpp"
 
 
 #include <QtCore/QTimer>

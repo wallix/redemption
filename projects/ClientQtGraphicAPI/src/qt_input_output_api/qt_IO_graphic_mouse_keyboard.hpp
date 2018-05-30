@@ -33,7 +33,7 @@
 #include "qt_graphics_components/qt_screen_window.hpp"
 #include "qt_graphics_components/qt_form_window.hpp"
 
-
+#include "client_redemption/client_input_output_api/client_graphic_api.hpp"
 
 #include <QtGui/QBitmap>
 #include <QtGui/QColor>
@@ -436,7 +436,7 @@ private:
             case ClientRedemptionAPI::MOD_RDP_REMOTE_APP:
                 return FrontAPI::ResizeResult::remoteapp;
                     break;
-                
+
             case ClientRedemptionAPI::MOD_RDP_REPLAY:
                 if (!this->client->is_loading_replay_mod) {
                     time_t current_time_movie = 0;
