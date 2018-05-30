@@ -326,6 +326,7 @@ void ModuleManager::create_mod_rdp(
                 nullptr,
                 &client_execute
             );
+            new_mod->set_mod_draw_event(*this->mod);
             LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
         }
         else {

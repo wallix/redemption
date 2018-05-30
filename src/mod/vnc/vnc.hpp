@@ -1563,7 +1563,8 @@ public:
         this->server_data_buf.read_from(this->t);
 
         while (this->draw_event_impl(drawable)) {
-	}
+        }
+
         if (bool(this->verbose & VNCVerbose::draw_event)) {
             LOG(LOG_INFO, "Remaining in buffer : %u", this->server_data_buf.remaining());
         }

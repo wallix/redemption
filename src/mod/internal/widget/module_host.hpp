@@ -35,7 +35,7 @@ public:
     WidgetModuleHost(
         gdi::GraphicApi& drawable, Widget& parent,
         NotifyApi* notifier,
-        std::unique_ptr<mod_api> managed_mod, Font const & font,
+        /*TODO not_null_ptr<>*/ std::unique_ptr<mod_api>&& managed_mod, Font const & font,
         const GCC::UserData::CSMonitor& cs_monitor,
         uint16_t front_width, uint16_t front_height,
         int group_id = 0);
@@ -132,10 +132,10 @@ private:
     private:
         WidgetModuleHost& host;
 
-        std::unique_ptr<mod_api> managed_mod;
+        const std::unique_ptr<mod_api> managed_mod;
 
     public:
-        ModuleHolder(WidgetModuleHost& host, std::unique_ptr<mod_api> managed_mod);
+        ModuleHolder(WidgetModuleHost& host, /*TODO not_null_ptr<>*/ std::unique_ptr<mod_api>&& managed_mod);
 
         // Callback
         void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name,
