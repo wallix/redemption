@@ -134,8 +134,8 @@ public:
 
     FakeRDPChannelsMod fake_mod;
 
-    FakeClient()
-      : ClientRedemptionAPI()
+    FakeClient(SessionReactor& session_reactor)
+      : ClientRedemptionAPI( session_reactor)
     {
         this->mod = &(this->fake_mod);
     }

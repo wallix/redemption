@@ -44,7 +44,8 @@ namespace rdpdr
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
 {
-   FakeClient client;
+   SessionReactor session_reactor;
+   FakeClient client(session_reactor);
    FakeIODisk fakeIODisk;
    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
 
@@ -194,7 +195,8 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelCreateFileOrDir)
 {
-    FakeClient client;
+    SessionReactor session_reactor;
+    FakeClient client(session_reactor);
     FakeIODisk fakeIODisk;
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
 
@@ -247,7 +249,8 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelCreateFileOrDir)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelLockControl)
 {
-    FakeClient client;
+    SessionReactor session_reactor;
+    FakeClient client(session_reactor);
     FakeIODisk fakeIODisk;
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
 
@@ -285,7 +288,8 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelLockControl)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileBasicInformation)
 {
-    FakeClient client;
+    SessionReactor session_reactor;
+    FakeClient client(session_reactor);
     FakeIODisk fakeIODisk;
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
 
@@ -336,7 +340,8 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileBasicInformation)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileStandardInformation)
 {
-    FakeClient client;
+    SessionReactor session_reactor;
+    FakeClient client(session_reactor);
     FakeIODisk fakeIODisk;
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
 
@@ -387,7 +392,8 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileStandardInformation)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileAttributeTagInformation)
 {
-    FakeClient client;
+    SessionReactor session_reactor;
+    FakeClient client(session_reactor);
     FakeIODisk fakeIODisk;
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
 
@@ -435,7 +441,8 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileAttributeTagInformation)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelClose)
 {
-    FakeClient client;
+    SessionReactor session_reactor;
+    FakeClient client(session_reactor);
     FakeIODisk fakeIODisk;
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
 
@@ -473,7 +480,8 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelClose)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
 {
-    FakeClient client;
+    SessionReactor session_reactor;
+    FakeClient client(session_reactor);
     FakeIODisk fakeIODisk;
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
 
@@ -517,7 +525,8 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelDirectoryControl)
 {
-    FakeClient client;
+    SessionReactor session_reactor;
+    FakeClient client(session_reactor);
     FakeIODisk fakeIODisk;
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
 

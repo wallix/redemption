@@ -32,7 +32,8 @@
 
 RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
 {
-    FakeClient client;
+    SessionReactor session_reactor;
+    FakeClient client(session_reactor);
     FakeClientOutPutSound snd_io;
     ClientChannelRDPSNDManager manager(to_verbose_flags(0x0), &client, &snd_io);
 
@@ -44,7 +45,7 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
     safsvh.emit(out_ServerAudioFormatsandVersion);
     InStream chunk_ServerAudioFormatsandVersion(out_ServerAudioFormatsandVersion.get_data(), out_ServerAudioFormatsandVersion.get_offset());
 
-    
+
 
     manager.receive(chunk_ServerAudioFormatsandVersion);
     RED_CHECK_EQUAL(client.get_total_stream_produced(), 2);
@@ -86,7 +87,8 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
 
 RED_AUTO_TEST_CASE(TestRDPSNDChannelWave)
 {
-    FakeClient client;
+    SessionReactor session_reactor;
+    FakeClient client(session_reactor);
     FakeClientOutPutSound snd_io;
     ClientChannelRDPSNDManager manager(to_verbose_flags(0x0), &client, &snd_io);
 

@@ -34,7 +34,8 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
 {
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-    FakeClient client;
+    SessionReactor session_reactor;
+    FakeClient client(session_reactor);
     FakeClientIOClipboard clip_io;
     ClientChannelCLIPRDRManager manager(/*to_verbose_flags(0x0)*/RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump, &client, &clip_io);
 
@@ -102,8 +103,8 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromServerToCLient)
 {
    const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                        CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-
-   FakeClient client;
+   SessionReactor session_reactor;
+   FakeClient client(session_reactor);
    FakeClientIOClipboard clip_io;
    ClientChannelCLIPRDRManager manager(RDPVerbose::cliprdr/*to_verbose_flags(0x0)*/, &client, &clip_io);
 
@@ -175,8 +176,8 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromClientToServer)
 {
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-
-    FakeClient client;
+    SessionReactor session_reactor;
+    FakeClient client(session_reactor);
     FakeClientIOClipboard clip_io;
     ClientChannelCLIPRDRManager manager(RDPVerbose::cliprdr/*to_verbose_flags(0x0)*/, &client, &clip_io);
 
