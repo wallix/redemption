@@ -221,7 +221,8 @@ public:
     {
         //LOG(LOG_INFO, "RDPSerializer::reserve_order %u (avail=%u)", asked_size, this->stream_orders.size());
         // To support 64x64 32-bit bitmap.
-        size_t const max_packet_size = std::min(this->stream_orders.get_capacity(), this->max_data_block_size);
+        // TODO MAX_ORDERS_SIZE should be this->max_data_block_size (doesn't work woth compression=0 (RDP 4.0))
+        size_t const max_packet_size = std::min(this->stream_orders.get_capacity(), size_t(MAX_ORDERS_SIZE));
         size_t const used_size = this->stream_orders.get_offset();
         if (bool(this->verbose & Verbose::internal_buffer)) {
             LOG( LOG_INFO
