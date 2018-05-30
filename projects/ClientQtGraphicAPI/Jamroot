@@ -133,7 +133,8 @@ install install-bin
 obj config.o : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
 
 local obj_list = config.o ;
-local lib_list = ;
+# needed when linking with error.o in debug mode because of boost::stacktrace
+local lib_list = dl ;
 
 rule add_src ( src : requirements * )
 {
