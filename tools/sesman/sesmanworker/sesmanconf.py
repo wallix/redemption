@@ -33,7 +33,7 @@ class SesmanConfig(object):
         self.conf = {
           u'sesman' :
             { u'record_warning'                  : True
-            , u'restricted_area_warning'         : True
+            , u'login_message'                   : True
             , u'debug'                           : False
             , u'auth_mode_passthrough'           : False
             , u'default_login'                   : u''
