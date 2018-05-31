@@ -18,8 +18,10 @@ Copyright (C) Wallix 2018
 Author(s): Jonathan Poelen
 */
 
+#include "core/session_reactor.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "mod/rdp/rdp_negociation.hpp"
+
 
 struct Private_RdpNegociation
 {

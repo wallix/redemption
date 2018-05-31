@@ -272,36 +272,37 @@ public:
         std::snprintf(this->password, sizeof(this->password), "%s", password);
 
         this->fd_event = session_reactor
-        .create_graphic_fd_event(this->t.get_fd(), std::ref(*this))
+        .create_graphic_fd_event(this->t.get_fd())
         .set_timeout(std::chrono::milliseconds(0))
         .on_exit(jln::propagate_exit())
         // TODO VNC_PROTOCOL_ERROR
         .on_action(jln::exit_with_error<ERR_VNC_CONNECTION_ERROR>() /* replaced by on_timeout action*/)
-        .on_timeout([](auto ctx, gdi::GraphicApi& gd, mod_vnc& self){
-            gdi_clear_screen(gd, self.get_dim());
+        .on_timeout([this](auto ctx, gdi::GraphicApi& gd){
+            gdi_clear_screen(gd, this->get_dim());
             return ctx.disable_timeout()
-            .replace_action([](auto ctx, gdi::GraphicApi& gd, mod_vnc& self){
-                self.server_data_buf.read_from(self.t);
-                while (self.state != UP_AND_RUNNING && self.draw_event_impl(gd)) {
+            .replace_action([this](auto ctx, gdi::GraphicApi& gd){
+                this->server_data_buf.read_from(this->t);
+                while (this->state != UP_AND_RUNNING && this->draw_event_impl(gd)) {
                 }
-                if (self.state == UP_AND_RUNNING) {
+                if (this->state == UP_AND_RUNNING) {
                     try {
-                        while (self.up_and_running_ctx.run(self.server_data_buf, gd, self)) {
-                            self.up_and_running_ctx.restart();
+                        while (this->up_and_running_ctx.run(this->server_data_buf, gd, *this)) {
+                            this->up_and_running_ctx.restart();
                         }
-                        self.update_screen(Rect(0, 0, self.width, self.height), 1);
+                        this->update_screen(Rect(0, 0, this->width, this->height), 1);
                     }
                     catch (const Error & e) {
                         LOG(LOG_ERR, "VNC Stopped: %s", e.errmsg());
-                        self.session_reactor.set_event_next(BACK_EVENT_NEXT);
-                        self.front.must_be_stop_capture();
+                        this->session_reactor.set_event_next(BACK_EVENT_NEXT);
+                        this->front.must_be_stop_capture();
                     }
                     catch (...) {
                         LOG(LOG_ERR, "unexpected exception raised in VNC");
-                        self.session_reactor.set_event_next(BACK_EVENT_NEXT);
-                        self.front.must_be_stop_capture();
+                        this->session_reactor.set_event_next(BACK_EVENT_NEXT);
+                        this->front.must_be_stop_capture();
                     }
                 }
+                this->check_timeout();
                 return ctx.need_more_data();
             }).ready();
         });
