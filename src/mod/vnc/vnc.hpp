@@ -203,6 +203,7 @@ private:
 
     SessionReactor& session_reactor;
     SessionReactor::GraphicFdPtr fd_event;
+    SessionReactor::TimerPtr clipboard_timer_event;
 
 public:
     mod_vnc( Transport & t
@@ -271,6 +272,14 @@ public:
         std::snprintf(this->username, sizeof(this->username), "%s", username);
         std::snprintf(this->password, sizeof(this->password), "%s", password);
 
+
+        this->clipboard_timer_event = this->session_reactor.create_timer()
+        .set_delay(std::chrono::hours(1))
+        .on_action([this](auto ctx){
+            this->check_timeout();
+            return ctx.ready();
+        });
+
         this->fd_event = session_reactor
         .create_graphic_fd_event(this->t.get_fd())
         .set_timeout(std::chrono::milliseconds(0))
@@ -281,28 +290,7 @@ public:
             gdi_clear_screen(gd, this->get_dim());
             return ctx.disable_timeout()
             .replace_action([this](auto ctx, gdi::GraphicApi& gd){
-                this->server_data_buf.read_from(this->t);
-                while (this->state != UP_AND_RUNNING && this->draw_event_impl(gd)) {
-                }
-                if (this->state == UP_AND_RUNNING) {
-                    try {
-                        while (this->up_and_running_ctx.run(this->server_data_buf, gd, *this)) {
-                            this->up_and_running_ctx.restart();
-                        }
-                        this->update_screen(Rect(0, 0, this->width, this->height), 1);
-                    }
-                    catch (const Error & e) {
-                        LOG(LOG_ERR, "VNC Stopped: %s", e.errmsg());
-                        this->session_reactor.set_event_next(BACK_EVENT_NEXT);
-                        this->front.must_be_stop_capture();
-                    }
-                    catch (...) {
-                        LOG(LOG_ERR, "unexpected exception raised in VNC");
-                        this->session_reactor.set_event_next(BACK_EVENT_NEXT);
-                        this->front.must_be_stop_capture();
-                    }
-                }
-                this->check_timeout();
+                this->draw_event(ctx.get_current_time().tv_sec, gd);
                 return ctx.need_more_data();
             }).ready();
         });
@@ -1587,7 +1575,23 @@ private:
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
             }
 
-            assert(!"unreachable, see fd_event");
+            try {
+                while (this->up_and_running_ctx.run(this->server_data_buf, drawable, *this)) {
+                    this->up_and_running_ctx.restart();
+                }
+                this->update_screen(Rect(0, 0, this->width, this->height), 1);
+            }
+            catch (const Error & e) {
+                LOG(LOG_ERR, "VNC Stopped: %s", e.errmsg());
+                this->session_reactor.set_event_next(BACK_EVENT_NEXT);
+                this->front.must_be_stop_capture();
+            }
+            catch (...) {
+                LOG(LOG_ERR, "unexpected exception raised in VNC");
+                this->session_reactor.set_event_next(BACK_EVENT_NEXT);
+                this->front.must_be_stop_capture();
+            }
+
             return false;
 
         case WAIT_SECURITY_TYPES:
@@ -2067,6 +2071,7 @@ private:
             size_t chunk_size = length;
 
             this->clipboard_requesting_for_data_is_delayed = false;
+            this->clipboard_timer_event->set_delay(std::chrono::hours(1));
             this->send_to_front_channel( channel_names::cliprdr
                                        , out_s.get_data()
                                        , length
@@ -2703,6 +2708,7 @@ private:
 
             // Can stop RDP to VNC clipboard infinite loop.
             this->clipboard_requesting_for_data_is_delayed = false;
+            this->clipboard_timer_event->set_delay(std::chrono::hours(1));
         }
         else {
             LOG(LOG_WARNING, "mod_vnc::lib_clip_data: Clipboard Channel Redirection unavailable");
@@ -2894,6 +2900,7 @@ private:
                         chunk_size = length;
 
                         this->clipboard_requesting_for_data_is_delayed = false;
+                        this->clipboard_timer_event->set_delay(std::chrono::hours(1));
 
                         this->send_to_front_channel( channel_names::cliprdr
                                                    , out_s.get_data()
@@ -2910,9 +2917,10 @@ private:
                                     "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%u) (delayed)",
                                     RDPECLIP::CB_FORMAT_DATA_REQUEST);
                             }
-// TODO                            this->event.set_trigger_time(MINIMUM_TIMEVAL - timeval_diff);
-
                             this->clipboard_requesting_for_data_is_delayed = true;
+                            this->clipboard_timer_event->set_delay(
+                                std::chrono::duration_cast<std::chrono::milliseconds>(
+                                    MINIMUM_TIMEVAL - timeval_diff));
                         }
                         else if (this->bogus_clipboard_infinite_loop
                             != VncBogusClipboardInfiniteLoop::duplicated
