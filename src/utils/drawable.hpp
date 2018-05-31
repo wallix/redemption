@@ -232,7 +232,7 @@ enum class DepthColor { color8 = 8, color15 = 15, color16 = 16, color24 = 24, co
 struct DrawableTraitColor24
 {
     // 24 bpp
-    static const size_t Bpp = 3;
+    static const uint8_t Bpp = 3;
 
     class color_t {
         uint8_t b;
@@ -366,7 +366,7 @@ public:
     using traits = DrawableTrait<BppIn>;
     using color_t = typename traits::color_t;
 
-    static const size_t Bpp = traits::Bpp;
+    static const uint8_t Bpp = traits::Bpp;
 
     DrawableImpl(unsigned width, unsigned height)
     : width_(width)
@@ -1699,6 +1699,9 @@ public:
 
     void trace_mouse(const DrawablePointer * current_pointer, const int x, const int y, uint8_t * psave) {
         for (DrawablePointer::ContiguousPixels const & contiguous_pixels : current_pointer->contiguous_pixels_view()) {
+            if (contiguous_pixels.x + x < 0 || contiguous_pixels.y + y < 0) {
+                continue;
+            }
             uint8_t * pixel_begin = this->impl().first_pixel(contiguous_pixels.x + x, contiguous_pixels.y + y);
             uint8_t * pixel_end = pixel_begin + contiguous_pixels.data_size;
             uint8_t * line_begin = this->impl().row_data(contiguous_pixels.y+y);
@@ -1706,10 +1709,10 @@ public:
             if (pixel_end > line_end) {
                 pixel_end = line_end;
             }
-            if (line_begin >= this->impl().last_pixel()) {
+            if (line_end >= this->impl().last_pixel()) {
                 continue;
             }
-            if (line_end < this->impl().first_pixel()) {
+            if (line_begin < this->impl().first_pixel()) {
                 continue;
             }
             size_t offset = (pixel_begin < line_begin) ? line_begin - pixel_begin : 0;
@@ -1723,6 +1726,9 @@ public:
 
     void clear_mouse(const DrawablePointer * current_pointer, const int x, const int y, uint8_t * psave) {
         for (DrawablePointer::ContiguousPixels const & contiguous_pixels : current_pointer->contiguous_pixels_view()) {
+            if (contiguous_pixels.x + x < 0 || contiguous_pixels.y + y < 0) {
+                continue;
+            }
             uint8_t * pixel_begin = this->impl().first_pixel(contiguous_pixels.x + x, contiguous_pixels.y + y);
             uint8_t * pixel_end = pixel_begin + contiguous_pixels.data_size;
             uint8_t * line_begin = this->impl().row_data(contiguous_pixels.y+y);
@@ -1730,10 +1736,10 @@ public:
             if (pixel_end > line_end) {
                 pixel_end = line_end;
             }
-            if (line_begin >= this->impl().last_pixel()) {
+            if (line_end >= this->impl().last_pixel()) {
                 continue;
             }
-            if (line_end < this->impl().first_pixel()) {
+            if (line_begin < this->impl().first_pixel()) {
                 continue;
             }
             size_t offset = (pixel_begin < line_begin) ? line_begin - pixel_begin : 0;
