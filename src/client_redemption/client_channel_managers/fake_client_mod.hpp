@@ -22,8 +22,11 @@
 */
 
 
-#include "client_redemption/client_redemption_api.hpp"
+#include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
 #include "client_redemption/client_input_output_api/client_graphic_api.hpp"
+#include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
+#include "client_redemption/client_input_output_api/client_sound_api.hpp"
+#include "client_redemption/client_redemption_api.hpp"
 
 #include "core/RDP/clipboard.hpp"
 #include "utils/sugar/byte.hpp"

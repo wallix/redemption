@@ -352,7 +352,7 @@ public:
     virtual void writeAccoundData(const std::string &, const std::string &, const std::string &, const int) {}
     virtual std::vector<IconMovieData> get_icon_movie_data() {std::vector<IconMovieData> vec; return vec;}
     virtual void set_remoteapp_cmd_line(const std::string &) {}
-    virtual bool is_no_win_data() {}
+    virtual bool is_no_win_data() { return true; }
     virtual void deleteCurrentProtile() {}
     virtual void setDefaultConfig() {}
     virtual void writeClientInfo() {}

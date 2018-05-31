@@ -681,8 +681,6 @@ public:
 
         KeyCustomDefinition keyCustomDefinition = {qtKeyID, scanCode, ASCII8, extended, name};
         this->keyCustomDefinitions.push_back(keyCustomDefinition);
-
-        const ClientRedemptionConfig::KeyCustomDefinition & key = this->keyCustomDefinitions[this->keyCustomDefinitions.size() - 1];
     }
 
 

@@ -24,19 +24,13 @@
 
 #pragma once
 
-#include <sys/ioctl.h>
-#include <sys/statvfs.h>
-#include <linux/hdreg.h>
-#include <unordered_map>
-
-
-#include "utils/log.hpp"
+#include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
 #include "core/FSCC/FileInformation.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
+#include "mod/rdp/rdp_log.hpp"
+#include "utils/log.hpp"
 
-//#include "client_redemption/client_redemption_api.hpp"
-#include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
-
+#include <unordered_map>
 
 
 // [MS-RDPEFS]: Rmote Desktop Protocol: File System Virtual Channel Extension
