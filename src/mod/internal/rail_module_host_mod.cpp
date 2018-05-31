@@ -42,6 +42,8 @@ RailModuleHostMod::RailModuleHostMod(
 , can_resize_hosted_desktop(can_resize_hosted_desktop)
 , client_execute(client_execute)
 {
+    this->screen.move_xy(widget_rect.x, widget_rect.y);
+
     this->screen.add_widget(&this->rail_module_host);
 
     this->screen.set_widget_focus(&this->rail_module_host,
