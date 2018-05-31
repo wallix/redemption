@@ -18,7 +18,7 @@ project configs
     <include>$(REDEMPTION_SRC_PATH)
     <include>$(SYSTEM_SRC_PATH)
 
-    <cxxflags>-std=c++14
+    <cxxflags>-std=c++17
 
     $(CXXFLAGS)
     <toolset>clang:<cxxflags>-Wno-class-varargs
@@ -64,6 +64,7 @@ alias generate_enum : $(FILEGEN_ENUM) ;
 alias generate_ini : $(FILEGEN_INI) ;
 
 obj log_test.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;
+obj error.o : $(REDEMPTION_SRC_PATH)/core/error.cpp ;
 obj keymap : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp : ;
 
 exe make_cpp_config : src/configs/write_cpp_config.cpp : <library>keymap <library>log_test.o ;
@@ -113,6 +114,7 @@ constant TEST_DEPENDENCIES :
     <library>app_path_test.o
     <library>config.o
     <library>hexdump.o
+    <library>error.o
     <cxxflags>-frtti
     <include>redemption_src
     <conditional>@defines-for-test
