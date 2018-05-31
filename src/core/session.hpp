@@ -242,10 +242,19 @@ public:
                     this->write_performance_log(now);
                 }
 
-                session_reactor.execute_timers(enable_graphics, [&]() -> gdi::GraphicApi& {
-                    return mm.get_graphic_wrapper(front);
-                });
-                // session_reactor.timer_events_.info(end_tv);
+                try {
+                    session_reactor.execute_timers(enable_graphics, [&]() -> gdi::GraphicApi& {
+                            return mm.get_graphic_wrapper(front);
+                        });
+                } catch (Error const& e) {
+                    if (ERR_AUTOMATIC_RECONNECTION_REQUIRED == e.id) {
+                        this->ini.set<cfg::context::perform_automatic_reconnection>(true);
+                        session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
+                    }
+                    else {
+                        throw;
+                    }
+                }
 
                 session_reactor.execute_events([&rfds](int fd, auto& /*e*/){
                     return io_fd_isset(fd, rfds);
