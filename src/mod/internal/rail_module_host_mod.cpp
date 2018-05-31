@@ -137,7 +137,8 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
                 if (self.rail_module_host.get_managed_mod().is_auto_reconnectable()) {
                     throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
                 }
-                return ctx.terminate();
+//                return ctx.terminate();
+                return ctx.ready();
             });
         }
     }
