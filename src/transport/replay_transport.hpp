@@ -37,9 +37,12 @@ class ReplayTransport : public Transport
 {
 public:
     enum class FdType : bool { Timer, AlwaysReady };
+    enum class UncheckedPacket : uint8_t { None, Send };
 
 	ReplayTransport(
-        const char* fname, const char *ip_address, int port, FdType fd_type = FdType::Timer);
+        const char* fname, const char *ip_address, int port,
+        FdType fd_type = FdType::Timer,
+        UncheckedPacket unchecked_packet = UncheckedPacket::None);
 
 	~ReplayTransport();
 
@@ -73,6 +76,7 @@ private:
 
     void do_send(const uint8_t * const buffer, size_t len) override;
 
+    void unchecked_next_current_data(PacketType);
     array_view_const_u8 next_current_data(PacketType);
     void read_timer();
 
@@ -82,6 +86,7 @@ private:
     InFileTransport in_file;
 	unique_fd fd;
 	FdType fd_type;
+	UncheckedPacket unchecked_packet;
 
 	struct Data
 	{

@@ -46,7 +46,8 @@ namespace
 }
 
 ReplayTransport::ReplayTransport(
-    const char* fname, const char *ip_address, int port, FdType fd_type)
+    const char* fname, const char *ip_address, int port,
+    FdType fd_type, UncheckedPacket unchecked_packet)
 : start_time(std::chrono::system_clock::now())
 , in_file(open_file(fname))
 , fd(FdType::Timer == fd_type
@@ -60,6 +61,7 @@ ReplayTransport::ReplayTransport(
     return fd;
 }())
 , fd_type(fd_type)
+, unchecked_packet(unchecked_packet)
 {
     (void)ip_address;
     (void)port;
@@ -150,9 +152,13 @@ void ReplayTransport::read_more_chunk()
                 break;
 
             case PacketType::DataIn:
+                read_buffer(header.type, header.data_size);
+                this->reschedule_timer();
+                return;
             case PacketType::Eof:
                 read_buffer(header.type, header.data_size);
                 this->reschedule_timer();
+                this->is_eof = true;
                 return;
 
             case PacketType::Info:
@@ -161,6 +167,17 @@ void ReplayTransport::read_more_chunk()
                 this->in_file.recv_boom(this->infos.back());
                 break;
         }
+    }
+}
+
+void ReplayTransport::unchecked_next_current_data(PacketType type)
+{
+    if (this->data_pos < this->datas.size() && this->datas[this->data_pos].type == type) {
+        ++this->data_pos;
+    }
+    else {
+        LOG(LOG_WARNING, "ReplayTransport: unchecked next type is %d, expected %d",
+            this->datas[this->data_pos].type, type);
     }
 }
 
@@ -206,6 +223,11 @@ Transport::TlsResult ReplayTransport::enable_client_tls(
 void ReplayTransport::enable_server_tls(
     const char* certificate_password, const char* ssl_cipher_list)
 {
+    if (UncheckedPacket::Send == this->unchecked_packet) {
+        this->unchecked_next_current_data(PacketType::ServerCert);
+        return ;
+    }
+
     this->next_current_data(PacketType::ServerCert);
     (void)certificate_password;
     (void)ssl_cipher_list;
@@ -283,6 +305,11 @@ Transport::Read ReplayTransport::do_atomic_read(uint8_t * buffer, size_t len)
 
 void ReplayTransport::do_send(const uint8_t * const buffer, size_t len)
 {
+    if (UncheckedPacket::Send == this->unchecked_packet) {
+        this->unchecked_next_current_data(PacketType::DataOut);
+        return ;
+    }
+
     auto av = this->next_current_data(PacketType::DataOut);
 
     if (av.size() != len || memcmp(av.data(), buffer, len)) {
