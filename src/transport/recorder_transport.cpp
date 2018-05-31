@@ -47,6 +47,11 @@ RecorderTransport::~RecorderTransport()
     }
 }
 
+void RecorderTransport::add_info(byte_array info)
+{
+    this->write_packet(PacketType::Info, info);
+}
+
 Transport::TlsResult RecorderTransport::enable_client_tls(
     bool server_cert_store, ServerCertCheck server_cert_check,
     ServerNotifier & server_notifier, const char * certif_path)

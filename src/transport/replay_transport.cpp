@@ -154,6 +154,12 @@ void ReplayTransport::read_more_chunk()
                 read_buffer(header.type, header.data_size);
                 this->reschedule_timer();
                 return;
+
+            case PacketType::Info:
+                this->infos.emplace_back();
+                this->infos.back().resize(header.data_size);
+                this->in_file.recv_boom(this->infos.back());
+                break;
         }
     }
 }

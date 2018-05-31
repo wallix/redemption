@@ -38,6 +38,7 @@
 #include "utils/netutils.hpp"
 #include "utils/redirection_info.hpp"
 #include "test_only/fixed_random.hpp"
+#include "test_only/get_file_contents.hpp"
 
 #include <iostream>
 #include <string>
@@ -151,7 +152,19 @@ int main(int argc, char** argv)
         std::optional<RecorderTransport> recorder_trans;
         Transport* trans = &mod_trans;
         if (!record_output.empty()) {
-            trans = &recorder_trans.emplace(mod_trans, record_output.c_str());
+            RecorderTransport& recorder = recorder_trans.emplace(
+                mod_trans, record_output.c_str());
+            if (ini_file.empty()) {
+                recorder.add_info({});
+            }
+            else {
+                auto contents = get_file_contents(ini_file);
+                recorder.add_info(contents);
+            }
+            for (auto cstr : make_array_view(argv+1, argv+argc)) {
+                recorder.add_info({cstr, strlen(cstr)});
+            }
+            trans = &recorder;
         }
         auto mod = create_mod(*trans);
         using Ms = std::chrono::milliseconds;

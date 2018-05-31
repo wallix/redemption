@@ -23,6 +23,7 @@
 #include <chrono>
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "transport/recorder_transport.hpp"
 #include "transport/in_file_transport.hpp"
@@ -55,6 +56,8 @@ public:
     bool connect() override;
 
     int get_fd() const override { return this->fd.fd(); }
+
+    std::vector<std::string> const& get_infos() const noexcept { return this->infos; }
 
 private:
     using PacketType = RecorderTransport::PacketType;
@@ -102,4 +105,6 @@ private:
     Key public_key;
 	// uint64_t record_len = 0;
 	bool is_eof = false;
+
+	std::vector<std::string> infos;
 };

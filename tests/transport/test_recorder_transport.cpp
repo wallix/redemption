@@ -79,6 +79,7 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
                 case Pck::Disconnect: trans.disconnect(); break;
                 case Pck::Connect: trans.connect(); break;
                 case Pck::ClientCert:
+                case Pck::Info:
                 case Pck::Eof:
                     RED_FAIL("unreacheable");
             }
@@ -153,6 +154,7 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
                 case Pck::Disconnect: trans.disconnect(); break;
                 case Pck::Connect: trans.connect(); break;
                 case Pck::ClientCert:
+                case Pck::Info:
                 case Pck::Eof:
                     break;
             }
@@ -184,6 +186,7 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
                 case Pck::Disconnect: trans.disconnect(); break;
                 case Pck::Connect: trans.connect(); break;
                 case Pck::ClientCert:
+                case Pck::Info:
                 case Pck::Eof:
                     break;
             }

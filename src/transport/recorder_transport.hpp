@@ -43,11 +43,14 @@ public:
 		Eof,
 		Disconnect,
 		Connect,
+		Info,
 	};
 
 	RecorderTransport(Transport& trans, char const* filename);
 
 	~RecorderTransport() override;
+
+	void add_info(byte_array);
 
     TlsResult enable_client_tls(
         bool server_cert_store, ServerCertCheck server_cert_check,
