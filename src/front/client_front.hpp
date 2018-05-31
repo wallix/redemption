@@ -210,7 +210,7 @@ inline int wait_for_screenshot(
     }
 }
 
-inline int run_test_client(
+inline error_t run_test_client(
     char const* type, SessionReactor& session_reactor, mod_api& mod, gdi::GraphicApi& gd,
     std::chrono::milliseconds inactivity_time, std::chrono::milliseconds max_time,
     std::string const& screen_output)
@@ -227,7 +227,7 @@ inline int run_test_client(
         FILE * f = fopen(screen_output.c_str(), "w");
         if (!f) {
             LOG(LOG_ERR, "%s CLIENT :: %s: %s", type, screen_output.c_str(), strerror(errno));
-            return 1;
+            return ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE;
         }
         SCOPE_EXIT(fclose(f));
 
@@ -244,6 +244,6 @@ inline int run_test_client(
     }
     catch (Error const & e) {
         LOG(LOG_ERR, "%s CLIENT :: Exception raised = %s !\n", type, e.errmsg());
-        return 1;
+        return e.id;
     }
 }
