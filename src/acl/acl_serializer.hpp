@@ -503,7 +503,7 @@ public:
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
                 signal = BACK_EVENT_NONE;
                 // TODO signal management (refresh/next) should go to ModuleManager, it's basically the same behavior. It could be implemented by closing module then opening another one of the same kind
-                //mm.mod->refresh_context();
+                //mm.get_mod()->refresh_context();
             }
             else if ((signal == BACK_EVENT_NEXT)
                     || (signal == BACK_EVENT_RETRY_CURRENT)
@@ -537,8 +537,8 @@ public:
                 if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
                     this->keepalive.stop();
                 }
-                if (mm.mod) {
-                    mm.mod->disconnect(now);
+                if (mm.get_mod()) {
+                    mm.get_mod()->disconnect(now);
                 }
                 mm.remove_mod();
                 try {
@@ -639,7 +639,7 @@ public:
             // Get sesman answer to AUTHCHANNEL_TARGET
             if (!this->ini.get<cfg::context::auth_channel_answer>().empty()) {
                 // If set, transmit to auth_channel channel
-                mm.mod->send_auth_channel_data(this->ini.get<cfg::context::auth_channel_answer>().c_str());
+                mm.get_mod()->send_auth_channel_data(this->ini.get<cfg::context::auth_channel_answer>().c_str());
                 // Erase the context variable
                 this->ini.get_ref<cfg::context::auth_channel_answer>().clear();
             }
