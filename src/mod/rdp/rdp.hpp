@@ -697,14 +697,6 @@ protected:
     long int total_rdpdr_amount_data_rcv_from_server;
     long int total_drdynvc_amount_data_rcv_from_server;
 
-    mod_api* mod_draw_event = this;
-
-public:
-    void set_mod_draw_event(mod_api& mod)
-    {
-        this->mod_draw_event = &mod;
-    }
-
 public:
     using Verbose = RDPVerbose;
 

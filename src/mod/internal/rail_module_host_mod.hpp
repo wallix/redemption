@@ -56,7 +56,7 @@ public:
     void notify(Widget*, notify_event_t) override
     {}
 
-    RailModuleHost * get_module_host();
+    RailModuleHost& get_module_host();
 
     // RdpInput
 
@@ -92,6 +92,8 @@ public:
     Dimension get_dim() const override;
 
     bool is_resizing_hosted_desktop_allowed() const override;
+
+    gdi::GraphicApi& proxy_gd(gdi::GraphicApi& gd);
 
 private:
     RailModuleHost rail_module_host;

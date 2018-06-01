@@ -55,6 +55,12 @@ WidgetModuleHost::ModuleHolder::ModuleHolder(
     assert(this->managed_mod);
 }
 
+gdi::GraphicApi & WidgetModuleHost::proxy_gd(gdi::GraphicApi& gd)
+{
+    this->drawable_ptr = &gd;
+    return *this;
+}
+
 // Callback
 void WidgetModuleHost::ModuleHolder::send_to_mod_channel(
     CHANNELS::ChannelNameId front_channel_name,

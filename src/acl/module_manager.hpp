@@ -644,15 +644,20 @@ private:
     };
 
 public:
-    gdi::GraphicApi & get_graphic_wrapper(gdi::GraphicApi & drawable) {
-        if (this->mod_osd.get_protected_rect().isempty()) {
-            return drawable;
+    gdi::GraphicApi & get_graphic_wrapper()
+    {
+        gdi::GraphicApi& gd = this->mod_osd.get_protected_rect().isempty()
+          ? static_cast<gdi::GraphicApi&>(this->front) : this->mod_osd;
+        if (this->rail_module_host_mod_ptr) {
+            return this->rail_module_host_mod_ptr->proxy_gd(gd);
         }
-        return this->mod_osd;
+        return gd;
     }
 
-    Callback & get_callback()
-    { return *this->mod; }
+    Callback & get_callback() noexcept
+    {
+        return *this->mod;
+    }
 
 private:
     struct sock_mod_barrier {};
@@ -783,6 +788,8 @@ public:
         }
     }
 
+private:
+    RailModuleHostMod* rail_module_host_mod_ptr = nullptr;
     Front & front;
     null_mod no_mod;
     ModOSD mod_osd;
@@ -793,6 +800,7 @@ public:
 
     int old_target_module = MODULE_UNKNOWN;
 
+public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
@@ -833,6 +841,7 @@ public:
             this->mod = &this->no_mod;
             this->rdpapi = nullptr;
             this->winapi = nullptr;
+            this->rail_module_host_mod_ptr = nullptr;
         }
     }
 
@@ -851,6 +860,7 @@ private:
         this->clear_osd_message();
 
         this->mod = mod.get();
+        this->rail_module_host_mod_ptr = nullptr;
 
         this->rdpapi = rdpapi;
         this->winapi = winapi;

@@ -52,8 +52,9 @@ RailModuleHostMod::RailModuleHostMod(
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 }
 
-RailModuleHost * RailModuleHostMod::get_module_host() {
-    return &(this->rail_module_host);
+RailModuleHost& RailModuleHostMod::get_module_host()
+{
+    return this->rail_module_host;
 }
 
 // RdpInput
@@ -157,4 +158,9 @@ bool RailModuleHostMod::is_resizing_hosted_desktop_allowed() const
 {
     return (vars.get<cfg::remote_program::allow_resize_hosted_desktop>() &&
         this->can_resize_hosted_desktop);
+}
+
+gdi::GraphicApi & RailModuleHostMod::proxy_gd(gdi::GraphicApi& gd)
+{
+    return this->rail_module_host.proxy_gd(gd);
 }

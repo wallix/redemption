@@ -244,8 +244,8 @@ public:
 
                 try {
                     session_reactor.execute_timers(enable_graphics, [&]() -> gdi::GraphicApi& {
-                            return mm.get_graphic_wrapper(front);
-                        });
+                        return mm.get_graphic_wrapper();
+                    });
                 } catch (Error const& e) {
                     if (ERR_AUTOMATIC_RECONNECTION_REQUIRED == e.id) {
                         this->ini.set<cfg::context::perform_automatic_reconnection>(true);
@@ -305,7 +305,7 @@ public:
                         {
                             if (BACK_EVENT_NONE == session_reactor.signal) {
                                 // Process incoming module trafic
-                                auto& gd = mm.get_graphic_wrapper(front);
+                                auto& gd = mm.get_graphic_wrapper();
                                 session_reactor.execute_graphics([&rfds](int fd, auto& /*e*/){
                                     return io_fd_isset(fd, rfds);
                                 }, gd);

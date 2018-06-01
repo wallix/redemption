@@ -46,6 +46,8 @@ public:
 
     ~RailModuleHost() override;
 
+    gdi::GraphicApi& proxy_gd(gdi::GraphicApi& gd);
+
     mod_api& get_managed_mod();
 
     const mod_api& get_managed_mod() const;

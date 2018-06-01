@@ -297,9 +297,6 @@ void ModuleManager::create_mod_rdp(
         );
         std::unique_ptr<mod_api> managed_mod(new_mod);
 
-        rdp_api*       rdpapi = new_mod;
-        windowing_api* winapi = new_mod->get_windowing_api();
-
         if (host_mod_in_widget) {
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
 
@@ -310,26 +307,26 @@ void ModuleManager::create_mod_rdp(
 
             client_execute.set_target_info(target_info.c_str());
 
-            this->set_mod(
-                new RailModuleHostMod(
-                    ini,
-                    this->session_reactor,
-                    front,
-                    client_info.width,
-                    client_info.height,
-                    adjusted_client_execute_rect,
-                    std::move(managed_mod),
-                    client_execute,
-                    client_info.cs_monitor,
-                    !ini.get<cfg::globals::is_rec>()
-                ),
-                nullptr,
-                &client_execute
+            auto* host_mod = new RailModuleHostMod(
+                ini,
+                this->session_reactor,
+                front,
+                client_info.width,
+                client_info.height,
+                adjusted_client_execute_rect,
+                std::move(managed_mod),
+                client_execute,
+                client_info.cs_monitor,
+                !ini.get<cfg::globals::is_rec>()
             );
-            new_mod->set_mod_draw_event(*this->mod);
+
+            this->set_mod(host_mod, nullptr, &client_execute);
+            this->rail_module_host_mod_ptr = host_mod;
             LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
         }
         else {
+            rdp_api*       rdpapi = new_mod;
+            windowing_api* winapi = new_mod->get_windowing_api();
             this->set_mod(managed_mod.release(), rdpapi, winapi);
         }
 
