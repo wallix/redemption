@@ -20,7 +20,8 @@
    A transport that records all the received packets
 */
 
-#include "recorder_transport.hpp"
+#include "transport/recorder_transport.hpp"
+#include "utils/stream.hpp"
 
 #include <chrono>
 
@@ -44,6 +45,11 @@ RecorderTransport::~RecorderTransport()
     if (this->file.is_open()) {
         this->write_packet(PacketType::Eof, nullptr);
     }
+}
+
+void RecorderTransport::add_info(byte_array info)
+{
+    this->write_packet(PacketType::Info, info);
 }
 
 Transport::TlsResult RecorderTransport::enable_client_tls(

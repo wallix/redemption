@@ -188,8 +188,6 @@ class Sesman():
         self.target_app_rights = {}
 
 
-        self.login_message_already_shown = False
-
         self.shared[u'session_probe_launch_error_message'] = u''
 
     def reset_session_var(self):
@@ -563,32 +561,6 @@ class Sesman():
         return _status, _error
 
 
-    def show_login_message(self):
-        Logger().info(u"Show login message")
-
-        _status, _error = True, u''
-        data_to_send = {
-            u'module': u'transitory'
-        }
-
-        login_message = SESMANCONF[u'sesman'].get('login_message', True)
-        if login_message:
-            message =  u"Warning! Unauthorized access to this system is forbidden and will be prosecuted by law."
-            try:
-                with open('/var/wab/etc/proxys/messages/login.%s' % self.language) as f:
-                    message = f.read().decode('utf-8')
-            except Exception, e:
-                pass
-            data_to_send[u'message'] = cut_message(message)
-
-            _status, _error = self.interactive_accept_message(data_to_send)
-            Logger().info(u"Login message agreement : %s" % ["NO", "YES"][_status])
-        else:
-            self.send_data(data_to_send)
-
-        return _status, _error
-
-
     def authentify(self):
         """ Authentify the user through password engine and then retreive his rights
              The user preferred language will be set as the language to use in
@@ -597,12 +569,6 @@ class Sesman():
         _status, _error = self.receive_data()
         if not _status:
             return False, _error
-
-        if not self.login_message_already_shown:
-            self.login_message_already_shown = True
-            _status, _error = self.show_login_message()
-            if not _status:
-                self.send_data({u'rejected': _error})
 
         if self.shared.get(u'login') == MAGICASK:
             return None, TR(u"Empty user, try again")

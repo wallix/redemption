@@ -657,6 +657,8 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "opt_message");
         W.sep();
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "login_message");
+        W.sep();
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "session_probe_outbound_connection_monitoring_rules");
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "session_probe_process_monitoring_rules");
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "session_probe_extra_system_processes");

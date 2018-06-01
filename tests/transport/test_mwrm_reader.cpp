@@ -117,7 +117,9 @@ RED_AUTO_TEST_CASE(TestMwrmLineReader)
         InCryptoTransport ifile(cctx, is_not_encrypted, fstat);
         ifile.open(filename);
         MwrmLineReader line_reader(ifile);
-        RED_CHECK_EXCEPTION_ERROR_ID(line_reader.next_line(), ERR_TRANSPORT_READ_FAILED);
+        RED_CHECK_EXCEPTION_ERROR_ID(
+            RED_CHECK_EQUAL(line_reader.next_line(), Read::Ok),
+            ERR_TRANSPORT_READ_FAILED);
     }
 
     remove(filename);

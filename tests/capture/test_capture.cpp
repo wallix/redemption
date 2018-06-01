@@ -442,7 +442,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     auto s = get_file_contents<std::string>(filename);
     RED_CHECK_SIG2(
         reinterpret_cast<const uint8_t*>(s.data()), s.size(),
-        "\x10\x93\x34\x23\x8f\x7b\x87\x61\xf6\xe2\xc5\xa0\x2e\x12\x40\xab\x86\xe3\x9c\x87"
+        "\xbd\x6a\x84\x08\x3e\xe7\x19\xab\xb0\x67\xeb\x72\x94\x1f\xea\x26\xc4\x69\xe1\x37"
     );
     ::unlink(filename);
 }

@@ -87,7 +87,6 @@
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
 #include "core/server_notifier_api.hpp"
-#include "core/session_reactor.hpp"
 
 #include "mod/internal/client_execute.hpp"
 #include "mod/mod_api.hpp"
@@ -118,6 +117,7 @@
 #include "utils/sugar/splitter.hpp"
 
 #include <cstdlib>
+#include <deque>
 
 
 class mod_rdp : public mod_api, public rdp_api
@@ -436,30 +436,40 @@ protected:
 
     struct AsynchronousTaskContainer
     {
-        void add(SessionReactor& session_reactor, std::unique_ptr<AsynchronousTask>&& task)
+    private:
+        static auto remover() noexcept
         {
-            auto remover = [](AsynchronousTaskContainer* pself, AsynchronousTask& task) noexcept {
-                if (pself->tasks.size() == 1) {
-                    assert(pself->tasks.front().get() == &task);
-                    pself->tasks.clear();
-                }
-                else {
-                    auto it = std::find_if(
-                        pself->tasks.begin(),
-                        pself->tasks.end(),
-                        [&task](auto& uptr){ return uptr.get() == &task; }
-                    );
-                    assert(it != pself->tasks.end());
-                    *it = std::move(pself->tasks.back());
-                    pself->tasks.pop_back();
-                }
+            return [](AsynchronousTaskContainer* pself, AsynchronousTask& task) noexcept {
+                (void)task;
+                assert(&task == pself->tasks.front().get());
+                pself->tasks.pop_front();
+                pself->next();
             };
-            this->tasks.emplace_back(std::move(task))
-            ->configure_event(session_reactor, {this, remover});
+        }
+
+    public:
+        AsynchronousTaskContainer(SessionReactor& session_reactor)
+          : session_reactor(session_reactor)
+        {}
+
+        void add(std::unique_ptr<AsynchronousTask>&& task)
+        {
+            this->tasks.emplace_back(std::move(task));
+            if (this->tasks.size() == 1u) {
+                this->tasks.front()->configure_event(this->session_reactor, {this, remover()});
+            }
         }
 
     private:
-        std::vector<std::unique_ptr<AsynchronousTask>> tasks;
+        void next()
+        {
+            if (this->tasks.size()) {
+                this->tasks.front()->configure_event(this->session_reactor, {this, remover()});
+            }
+        }
+
+        std::deque<std::unique_ptr<AsynchronousTask>> tasks;
+        SessionReactor& session_reactor;
     };
     AsynchronousTaskContainer asynchronous_tasks;
 
@@ -481,7 +491,6 @@ protected:
         std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender;
 
         AsynchronousTaskContainer& asynchronous_tasks;
-        SessionReactor& session_reactor;
 
         RDPVerbose verbose;
 
@@ -489,11 +498,9 @@ protected:
         ToServerAsynchronousSender(
             std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender,
             AsynchronousTaskContainer& asynchronous_tasks,
-            SessionReactor& session_reactor,
             RDPVerbose verbose)
         : to_server_synchronous_sender(std::move(to_server_synchronous_sender))
         , asynchronous_tasks(asynchronous_tasks)
-        , session_reactor(session_reactor)
         , verbose(verbose)
         {}
 
@@ -506,7 +513,6 @@ protected:
             const uint8_t* chunk_data, uint32_t chunk_data_length) override
         {
             this->asynchronous_tasks.add(
-                this->session_reactor,
                 std::make_unique<RdpdrSendClientMessageTask>(
                     total_length, flags, chunk_data, chunk_data_length,
                     *this->to_server_synchronous_sender.get(),
@@ -691,6 +697,14 @@ protected:
     long int total_rdpdr_amount_data_rcv_from_server;
     long int total_drdynvc_amount_data_rcv_from_server;
 
+    mod_api* mod_draw_event = this;
+
+public:
+    void set_mod_draw_event(mod_api& mod)
+    {
+        this->mod_draw_event = &mod;
+    }
+
 public:
     using Verbose = RDPVerbose;
 
@@ -820,6 +834,7 @@ public:
         //, total_data_received(0)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , bogus_linux_cursor(mod_rdp_params.bogus_linux_cursor)
+        , asynchronous_tasks(session_reactor)
         , lang(mod_rdp_params.lang)
         , font(mod_rdp_params.font)
         , use_client_provided_remoteapp(mod_rdp_params.use_client_provided_remoteapp)
@@ -1229,14 +1244,12 @@ protected:
                 this->verbose);
 
         if (channel_name != channel_names::rdpdr) {
-            return std::unique_ptr<VirtualChannelDataSender>(
-                std::move(to_server_sender));
+            return std::unique_ptr<VirtualChannelDataSender>(std::move(to_server_sender));
         }
 
         return std::make_unique<ToServerAsynchronousSender>(
             std::move(to_server_sender),
             this->asynchronous_tasks,
-            this->session_reactor,
             this->verbose);
     }
 
@@ -5692,7 +5705,7 @@ private:
             out_asynchronous_task);
 
         if (out_asynchronous_task) {
-            this->asynchronous_tasks.add(this->session_reactor, std::move(out_asynchronous_task));
+            this->asynchronous_tasks.add(std::move(out_asynchronous_task));
         }
     }
 
@@ -5730,7 +5743,7 @@ private:
             out_asynchronous_task);
 
         if (out_asynchronous_task) {
-            this->asynchronous_tasks.add(this->session_reactor, std::move(out_asynchronous_task));
+            this->asynchronous_tasks.add(std::move(out_asynchronous_task));
         }
     }
 

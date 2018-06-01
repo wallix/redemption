@@ -48,7 +48,7 @@ Error::Error(error_type id, int errnum) noexcept
         LOG(LOG_DEBUG, "Create Error: %s: %s", this->errmsg(), strerror(errnum));
     }
     else {
-        LOG(LOG_DEBUG, "Create Error %s", this->errmsg());
+        LOG(LOG_DEBUG, "Create Error: %s", this->errmsg());
     }
 
 # ifdef REDEMPTION_ERROR_WITH_STACKTRACE

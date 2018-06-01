@@ -1027,9 +1027,9 @@ RED_AUTO_TEST_CASE(TestAppRecorder)
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder.1.flva\".\n\n");
     RED_CHECK_EQUAL(0, res);
 
-    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000000.flv", 13450874);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000000.flv", 13450872);
     RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000001.flv", 1641583);
-    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1.flv", 14977057);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1.flv", 14977055);
 }
 
 RED_AUTO_TEST_CASE(TestAppRecorderVlc)
@@ -1059,9 +1059,9 @@ RED_AUTO_TEST_CASE(TestAppRecorderVlc)
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder.1.flva\".\n\n");
     RED_CHECK_EQUAL(0, res);
 
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder.1-000000.flv", 62513401, 62513397);
+    RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder.1-000000.flv", 62513361, 62513397);
     RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000001.flv", 7555247);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder.1.flv", 70069337, 70069333);
+    RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder.1.flv", 70069297, 70069333);
 }
 
 RED_AUTO_TEST_CASE(TestAppRecorderChunk)
@@ -1091,7 +1091,7 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunk)
 
     RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder-chunk-000000.png", 26981);
     RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder-chunk-000001.png", 27536);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder-chunk-000000.mp4", 11226760, 11226789);
+    RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder-chunk-000000.mp4", 11226814, 11226789);
     RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder-chunk-000001.mp4", 86044, 86030);
     RED_CHECK_FILE_CONTENTS("/tmp/recorder-chunk.pgs", R"js({"percentage":100,"eta":0,"videos":1})js");
     RED_CHECK_FILE_CONTENTS("/tmp/recorder-chunk.meta", "2016-02-18 18:27:01 + (break)\n");

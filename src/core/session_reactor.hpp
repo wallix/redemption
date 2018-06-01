@@ -603,6 +603,9 @@ namespace jln
         TopTimerContext& replace_exit(F&& f);
 
         template<class F>
+        R replace_timeout(F&& f);
+
+        template<class F>
         R set_or_disable_timeout(std::chrono::milliseconds ms, F&& f);
 
         TopTimerContext& disable_timeout() noexcept
@@ -1760,13 +1763,13 @@ namespace jln
             }
         }
 
-        // void detach() noexcept
-        // {
-        //     if (this->p) {
-        //         this->p->shared_ptr = nullptr;
-        //         this->p = nullptr;
-        //     }
-        // }
+        void detach() noexcept
+        {
+            if (this->p) {
+                this->p->shared_ptr = nullptr;
+                this->p = nullptr;
+            }
+        }
 
     private:
         friend class SharedDataBase;
@@ -2462,6 +2465,15 @@ namespace jln
         auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(this->current_group);
         group.on_exit(static_cast<F&&>(f));
         return *this;
+    }
+
+    template<class Tuple, class... Ts>
+    template<class F>
+    R TopTimerContext<Tuple, Ts...>::replace_timeout(F&& f)
+    {
+        auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(this->current_group);
+        this->top.on_timeout_switch = detail::create_on_timeout(group, static_cast<F&&>(f));
+        return R::SubstituteTimeout;
     }
 
     template<class Tuple, class... Ts>

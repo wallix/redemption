@@ -18,8 +18,10 @@ Copyright (C) Wallix 2018
 Author(s): Jonathan Poelen
 */
 
+#include "core/session_reactor.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "mod/rdp/rdp_negociation.hpp"
+
 
 struct Private_RdpNegociation
 {
@@ -124,8 +126,8 @@ void mod_rdp::init_negociate_event_(
             // TODO replace_event()
             return ctx.disable_timeout()
             .replace_exit(jln::propagate_exit())
-            .replace_action([this](auto ctx, gdi::GraphicApi& gd, RdpNegociation&){
-                this->draw_event(ctx.get_current_time().tv_sec, gd);
+            .replace_action([mod = this->mod_draw_event](auto ctx, gdi::GraphicApi& gd, RdpNegociation&){
+                mod->draw_event(ctx.get_current_time().tv_sec, gd);
                 return ctx.need_more_data();
             });
         })

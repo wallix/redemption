@@ -37,7 +37,6 @@
 #include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
 
 
-
 // [MS-RDPEFS]: Rmote Desktop Protocol: File System Virtual Channel Extension
 //
 //

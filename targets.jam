@@ -175,6 +175,7 @@ exe rdpclient :
   <library>src/core/RDP/nego.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
