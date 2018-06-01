@@ -5,8 +5,8 @@ In your `~/.bashrc`:
 ```bash
 bf () {
   bjam "$@" 2>&1 \
-  | $REDEMPTION_PATH/tools/bjam/bjam_filter.awk \
-  | $REDEMPTION_PATH/tools/bjam/unit_test_color.sh -e "s#$HOME/#~/#g"
+  | stdbuf -o0 $REDEMPTION_PATH/tools/bjam/bjam_filter.awk \
+  | $REDEMPTION_PATH/tools/bjam/unit_test_color.sh -e "s#$PWD#./#g;s#$HOME/#~/#g"
   return ${PIPESTATUS[0]}
 }
 
@@ -22,8 +22,8 @@ In your `~/.zshrc`:
 ```bash
 bf () {
   bjam "$@" 2>&1 \
-  | $REDEMPTION_PATH/tools/bjam/bjam_filter.awk \
-  | $REDEMPTION_PATH/tools/bjam/unit_test_color.sh -e "s#$HOME/#~/#g"
+  | stdbuf -o0 $REDEMPTION_PATH/tools/bjam/bjam_filter.awk \
+  | $REDEMPTION_PATH/tools/bjam/unit_test_color.sh -e "s#$PWD#./#g;s#$HOME/#~/#g"
   return ${pipestatus[1]}
 }
 

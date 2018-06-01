@@ -1,5 +1,5 @@
 #!/usr/bin/awk  -OSf
-# 'https://github.com/jonathanpoelen/colout/colout' '-po' '-ER' '^rdpproxy: (INFO [^-]+--  [-=]{3,}>? )([^-=<]*)(.*)?' 'b' 'g' 'b' '--' '-ERci2' '^([a-zA-Z0-9_]+: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT)).* --  (error:)?([a-zA-Z0-9_]+:)?(.*)' 'n' 'n' 'b' 'Y' 'R' 'c' 'W' 'R' '+u' '+ru' '--' '-c' '(Assertion) `(.*)'\'' failed.' 'y' 'R' '--' '^rdpproxy: (\[RDP Session\]) ' 'd' '--' '-cri5' '( type)="([^"]+)"|^([^=]+)="((\\"|[^"])+)"' 'lr' 'lm' 'lb' 'd' '--' '-ER' '^(src/[^:]+):([:0-9]+) (.)' 'c' 'Y' 'R' '--' '-ER' '^SUMMARY:' 'r'
+# 'https://github.com/jonathanpoelen/colout/colout' '-po' '-ER' '^rdpproxy: (INFO [^-]+--  [-=]{3,}>? )([^-=<]*)(.*)?' 'b' 'g' 'b' '--' '-ERci2' '^([a-zA-Z0-9_]+: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT)).* --  (error:)?([a-zA-Z0-9_]+:)?(.*)' 'n' 'n' 'b' 'Y' 'R' 'c' 'W' 'R' '+u' '+ru' '--' '-c' '(Assertion) `(.*)'\'' failed.' 'y' 'R' '--' '^rdpproxy: (\[RDP Session\]) ' 'd' '--' '-cri5' '( type)="([^"]+)"|^([^=]+)="((\\"|[^"])+)"' 'lr' 'lm' 'lb' 'd' '--' '-ER' '^(src/[^:]+|/[^:]+):([:0-9]+) (.)' 'c' 'Y' 'R' '--' '-ER' '^SUMMARY:' 'r'
 # gawk profile, created Tue Apr 17 18:18:01 2018
 
 # BEGIN rule(s)
@@ -166,7 +166,7 @@ BEGIN {
 			$0 = substr($0, RSTART + RLENGTH)
 		} while (match($0, /( type)="([^"]+)"|^([^=]+)="((\\"|[^"])+)"/, a))
 		$0 = substr($0, RLENGTH + RSTART)
-	} else if (match($0, /^(src\/[^:]+):([:0-9]+) (.)/, a)) {
+	} else if (match($0, /^(src\/[^:]+|\/[^:]+):([:0-9]+) (.)/, a)) {
 		n = length(a) / 3
 		if (n == 1) {
 			i = 0
