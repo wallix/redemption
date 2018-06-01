@@ -39,6 +39,7 @@
 #include <QtCore/QTimer>
 
 
+
 class QtInputSocket : public QObject, public ClientInputSocketAPI
 {
     Q_OBJECT

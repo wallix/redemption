@@ -79,22 +79,32 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
     pdu_data = client.stream();
     InStream stream_formatList(pdu_data->data, pdu_data->size);
     RED_CHECK_EQUAL(pdu_data->size, 96);
-    RDPECLIP::FormatListPDU_LongName format_list_pdu_long;
-    format_list_pdu_long.recv(stream_formatList);
-    RED_CHECK_EQUAL(format_list_pdu_long.header.msgType(), RDPECLIP::CB_FORMAT_LIST);
-    RED_CHECK_EQUAL(format_list_pdu_long.header.msgFlags(), RDPECLIP::CB_RESPONSE_NONE);
-    RED_CHECK_EQUAL(format_list_pdu_long.header.dataLen(), 88);
-    RED_CHECK_EQUAL(format_list_pdu_long.formatListSize, 4);
 
-    RED_CHECK_EQUAL(format_list_pdu_long.formatListNameLen[0], 26);
-    RED_CHECK_EQUAL(format_list_pdu_long.formatListNameLen[1], 42);
-    RED_CHECK_EQUAL(format_list_pdu_long.formatListNameLen[2], 2);
-    RED_CHECK_EQUAL(format_list_pdu_long.formatListNameLen[3], 2);
+    RDPECLIP::CliprdrHeader format_list_header;
+    format_list_header.recv(stream_formatList);
+    RED_CHECK_EQUAL(format_list_header.msgType(), RDPECLIP::CB_FORMAT_LIST);
+    RED_CHECK_EQUAL(format_list_header.msgFlags(), RDPECLIP::CB_RESPONSE_NONE);
+    RED_CHECK_EQUAL(format_list_header.dataLen(), 88);
 
-    RED_CHECK_EQUAL(format_list_pdu_long.formatListIDs[0], 48026);
-    RED_CHECK_EQUAL(format_list_pdu_long.formatListIDs[1], 48025);
-    RED_CHECK_EQUAL(format_list_pdu_long.formatListIDs[2], 1);
-    RED_CHECK_EQUAL(format_list_pdu_long.formatListIDs[3], 3);
+    RDPECLIP::FormatListPDU_LongName format_list_pdu_long0;
+    format_list_pdu_long0.recv(stream_formatList);
+    RED_CHECK_EQUAL(format_list_pdu_long0.formatIDs, 48026);
+    RED_CHECK_EQUAL(format_list_pdu_long0.formatDataNameUTF16Len, 26);
+
+    RDPECLIP::FormatListPDU_LongName format_list_pdu_long1;
+    format_list_pdu_long1.recv(stream_formatList);
+    RED_CHECK_EQUAL(format_list_pdu_long1.formatIDs, 48025);
+    RED_CHECK_EQUAL(format_list_pdu_long1.formatDataNameUTF16Len, 42);
+
+    RDPECLIP::FormatListPDU_LongName format_list_pdu_long2;
+    format_list_pdu_long2.recv(stream_formatList);
+    RED_CHECK_EQUAL(format_list_pdu_long2.formatIDs, 1);
+    RED_CHECK_EQUAL(format_list_pdu_long2.formatDataNameUTF16Len, 2);
+
+    RDPECLIP::FormatListPDU_LongName format_list_pdu_long3;
+    format_list_pdu_long3.recv(stream_formatList);
+    RED_CHECK_EQUAL(format_list_pdu_long3.formatIDs, 3);
+    RED_CHECK_EQUAL(format_list_pdu_long3.formatDataNameUTF16Len, 2);
 }
 
 
@@ -109,12 +119,12 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromServerToCLient)
    ClientChannelCLIPRDRManager manager(RDPVerbose::cliprdr/*to_verbose_flags(0x0)*/, &client, &clip_io);
 
    StaticOutStream<512> out_FormatListPDU;
-   uint32_t formatIDs[] = { RDPECLIP::CF_TEXT };
-   uint16_t format_name[] {0};
-   const uint16_t * formatListDataName[] = {format_name};
-   const size_t size_names[] = {2};
-   RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListDataName, size_names, 1);
+   RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 6);
+   format_list_header.emit(out_FormatListPDU);
+
+   RDPECLIP::FormatListPDU_LongName format_list_pdu_long(RDPECLIP::CF_TEXT, "", 2);
    format_list_pdu_long.emit(out_FormatListPDU);
+
    InStream chunk_FormatListPDU(out_FormatListPDU.get_data(), out_FormatListPDU.get_offset());
 
    manager.receive(chunk_FormatListPDU, flag_channel);

@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include "utils/log.hpp"
 
 #ifndef Q_MOC_RUN
 
@@ -31,6 +30,10 @@
 #include <dirent.h>
 #include <unistd.h>
 
+
+
+#include "utils/log.hpp"
+#include "mod/rdp/rdp_log.hpp"
 
 #include "configs/config.hpp"
 

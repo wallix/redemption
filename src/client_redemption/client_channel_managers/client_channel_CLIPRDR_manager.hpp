@@ -24,9 +24,12 @@
 #pragma once
 
 #include "utils/log.hpp"
+#include "core/channel_list.hpp"
+#include "core/RDP/clipboard.hpp"
+
 #include "client_redemption/client_redemption_api.hpp"
 #include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
-#include "core/RDP/clipboard.hpp"
+
 
 
 
@@ -115,12 +118,8 @@ public:
     ClientRedemptionAPI * client;
 
     enum : int {
-       PDU_HEADER_SIZE =    8
-    };
-
-    enum : int {
-        PASTE_TEXT_CONTENT_SIZE = CHANNELS::CHANNEL_CHUNK_LENGTH - PDU_HEADER_SIZE
-      , PASTE_PIC_CONTENT_SIZE  = CHANNELS::CHANNEL_CHUNK_LENGTH - RDPECLIP::METAFILE_HEADERS_SIZE - PDU_HEADER_SIZE
+        PASTE_TEXT_CONTENT_SIZE = CHANNELS::CHANNEL_CHUNK_LENGTH - 8
+      , PASTE_PIC_CONTENT_SIZE  = CHANNELS::CHANNEL_CHUNK_LENGTH - RDPECLIP::METAFILE_HEADERS_SIZE - 8
     };
 
 
@@ -148,11 +147,11 @@ public:
 
         ClipbrdFormatsList()
           : FILECONTENTS(
-              "F\0i\0l\0e\0C\0o\0n\0t\0e\0n\0t\0s\0\0\0"
-            , 26)
+              "FileContents"
+            )
           , FILEGROUPDESCRIPTORW(
-              "F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0"
-            , 42)
+              "FileGroupDescriptorW"
+            )
           , ARBITRARY_SCALE(40)
         {}
 
@@ -374,11 +373,11 @@ public:
                         // TODO: check this, dangerous, we don't know how many formats are really available
                         // sizes array seems to be the length of names, this should no be managed separately from names
                         if (this->server_use_long_format_names) {
-                            const uint16_t * names[] = {
-                                        reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[0].data()),
-                                        reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[1].data()),
-                                        reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[2].data()),
-                                        reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[3].data())
+                            const char * names[] = {
+                                        this->clipbrdFormatsList.names[0].data(),
+                                        this->clipbrdFormatsList.names[1].data(),
+                                        this->clipbrdFormatsList.names[2].data(),
+                                        this->clipbrdFormatsList.names[3].data()
                                         //reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[4].data())
                                                        };
 
@@ -386,9 +385,9 @@ public:
 
                             this->send_FormatListPDU(this->clipbrdFormatsList.IDs, names, sizes, this->clipbrdFormatsList.size);
                         } else {
-                            const uint16_t * names[] = {
-                                        reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[2].data()),
-                                        reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[3].data())
+                            const char * names[] = {
+                                        this->clipbrdFormatsList.names[2].data(),
+                                        this->clipbrdFormatsList.names[3].data()
                                         //reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[4].data())
                                                        };
 
@@ -590,7 +589,7 @@ public:
 
                             chunk.in_skip_bytes(4);
                             int first_part_data_size(0);
-                            uint32_t total_length(this->clientIOClipboardAPI->get_cliboard_data_length() + PDU_HEADER_SIZE);
+                            uint32_t total_length(this->clientIOClipboardAPI->get_cliboard_data_length() + RDPECLIP::CliprdrHeader::size());
                             StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
 
                             if (this->clientIOClipboardAPI->get_buffer_type_id() == chunk.in_uint32_le()) {
@@ -658,8 +657,8 @@ public:
                                     case ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
                                     {
                                         int data_sent(0);
-                                        first_part_data_size = PDU_HEADER_SIZE + 4;
-                                        total_length = (RDPECLIP::FileDescriptor::size() * this->clientIOClipboardAPI->get_citems_number()) + 8 + PDU_HEADER_SIZE;
+                                        first_part_data_size = RDPECLIP::CliprdrHeader::size() + 4;
+                                        total_length = (RDPECLIP::FileDescriptor::size() * this->clientIOClipboardAPI->get_citems_number()) + 8 + RDPECLIP::CliprdrHeader::size();
                                         int flag_first(CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
                                         //ClipBoard_Qt::CB_out_File file = this->clientIOClipboardAPI->_items_list[0];
                                         RDPECLIP::FormatDataResponsePDU_FileList fdr(this->clientIOClipboardAPI->get_citems_number());
@@ -1174,21 +1173,38 @@ public:
             format_size_name = 2;
         }
 
-        const uint16_t * formatListDataName[] = {reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[index].data())};
+        const char * formatListDataName[] = {this->clipbrdFormatsList.names[index].data()};
         const size_t size_names[] = {format_size_name};
 
         this->send_FormatListPDU(formatIDs, formatListDataName, size_names, 1);
     }
 
-    void send_FormatListPDU(uint32_t const * formatIDs, const uint16_t ** formatListName, const std::size_t * size_names, const std::size_t formatIDs_size) {
+    void send_FormatListPDU(uint32_t const * formatIDs, const char ** formatListName, const std::size_t * size_names, const std::size_t formatIDs_size) {
 
         StaticOutStream<1600> out_stream;
         if (this->server_use_long_format_names) {
+            RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_LIST, 0, 0);
+
+            for (size_t i = 0; i < formatIDs_size;i++) {
+                header.dataLen_ += size_names[i] + 4;
+            }
+            header.emit(out_stream);
+
+            for (size_t i = 0; i < formatIDs_size;i++) {
+                RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs[i],
+                                                                       formatListName[i],
+                                                                       size_names[i]);
+                format_list_pdu_long.emit(out_stream);
+            }
+
+
+
+/*
             RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListName, size_names, formatIDs_size);
-            format_list_pdu_long.emit(out_stream);
+            format_list_pdu_long.emit(out_stream);*/
         } else {
-            RDPECLIP::FormatListPDU_ShortName format_list_pdu_short(formatIDs, formatListName, size_names, formatIDs_size);
-            format_list_pdu_short.emit(out_stream);
+//             RDPECLIP::FormatListPDU_ShortName format_list_pdu_short(formatIDs, formatListName, size_names, formatIDs_size);
+//             format_list_pdu_short.emit(out_stream);
         }
 
         InStream chunk(out_stream.get_data(), out_stream.get_offset());

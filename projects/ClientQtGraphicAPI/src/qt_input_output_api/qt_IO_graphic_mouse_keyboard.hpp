@@ -1008,7 +1008,6 @@ private:
             // this->setClip(trect.x(), trect.y(), trect.width(), trect.height());
             this->painter.drawImage(trect, qbitmap);
         }
-
     }
 
 

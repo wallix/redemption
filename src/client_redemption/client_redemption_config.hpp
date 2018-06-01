@@ -30,10 +30,9 @@
 #include <cstdint>
 #include <openssl/ssl.h>
 
-#include "utils/log.hpp"
 
 #include "utils/cli.hpp"
-#include "mod/rdp/rdp_log.hpp"
+
 #include "main/version.hpp"
 
 #include "client_redemption/client_redemption_api.hpp"

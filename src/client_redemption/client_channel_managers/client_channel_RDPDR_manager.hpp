@@ -29,12 +29,11 @@
 #include <linux/hdreg.h>
 #include <unordered_map>
 
-
 #include "utils/log.hpp"
 #include "core/FSCC/FileInformation.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
+#include "core/channel_list.hpp"
 
-//#include "client_redemption/client_redemption_api.hpp"
 #include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
 
 

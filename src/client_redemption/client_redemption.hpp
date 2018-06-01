@@ -49,6 +49,7 @@
 #include "capture/wrm_capture.hpp"
 
 
+
 #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 #include "client_redemption/client_input_output_api/client_socket_api.hpp"
 
@@ -199,6 +200,8 @@ public:
     } wrmGraphicStat;
 
     std::string       local_IP;
+
+
 
 public:
     ClientRedemption(SessionReactor & session_reactor,
@@ -1502,7 +1505,7 @@ private:
 
     // sudo dpkg -i /home/qa/Desktop/redemption_0.9.740bjessie_amd64.deb
 
-
+// REDEMPTION_LOG_PRINT=1
 // cxxflags=-DREDEMPTION_NO_FFMPEG
 
 
