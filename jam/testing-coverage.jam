@@ -73,8 +73,13 @@ actions id {
     : > $(<)
 }
 
+obj register_error_exception.o :
+    $(REDEMPTION_SRC_PATH)/system/linux/system/register_error_exception.cpp
+;
+
 lib libunit_test :
     $(SYSTEM_SRC_PATH)/system/test_framework.cpp
+    $(SYSTEM_SRC_PATH)/system/redemption_unit_tests.cpp
 :
     <link>shared
     # <cxxflags>-frtti
@@ -83,10 +88,6 @@ lib libunit_test :
 constant TEST_DEPENDENCIES :
     <library>libunit_test
     <library>log_test.o
-    # Used by redemption unit tests pretty error
-    <library>src/core/error.o
-    # Used by bjam in debug mode (from error)
-    <library>dl
     <include>$(REDEMPTION_TEST_PATH)/includes
     # <cxxflags>-frtti
     <define>BOOST_AUTO_TEST_MAIN
@@ -97,6 +98,11 @@ constant TEST_DEPENDENCIES :
 
 rule test-run ( target : source : requirements * : )
 {
+    if <library>src/core/error.o in $(requirements)
+    {
+        requirements += <library>register_error_exception.o ;
+    }
+
     unit-test $(target) : $(source) : $(TEST_DEPENDENCIES) $(requirements) ;
 
     if ! <covflag>nocover in $(requirements)
