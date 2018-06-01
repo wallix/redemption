@@ -204,6 +204,7 @@ private:
     SessionReactor& session_reactor;
     SessionReactor::GraphicFdPtr fd_event;
     SessionReactor::TimerPtr clipboard_timer_event;
+    SessionReactor::GraphicEventPtr wait_client_up_and_running_event;
 
 public:
     mod_vnc( Transport & t
@@ -272,8 +273,8 @@ public:
         std::snprintf(this->username, sizeof(this->username), "%s", username);
         std::snprintf(this->password, sizeof(this->password), "%s", password);
 
-
         this->clipboard_timer_event = this->session_reactor.create_timer()
+        // "disable" the timer
         .set_delay(std::chrono::hours(1))
         .on_action([this](auto ctx){
             this->check_timeout();
@@ -3297,6 +3298,11 @@ public:
                 LOG(LOG_INFO, "Client up and running");
             }
             this->state = DO_INITIAL_CLEAR_SCREEN;
+            this->wait_client_up_and_running_event = this->session_reactor.create_graphic_event()
+            .on_action([this](auto ctx, gdi::GraphicApi & drawable){
+                this->initial_clear_screen(drawable);
+                return ctx.terminate();
+            });
         }
     }
 
