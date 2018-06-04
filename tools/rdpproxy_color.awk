@@ -1,5 +1,5 @@
 #!/usr/bin/awk  -OSf
-# 'https://github.com/jonathanpoelen/colout/colout' '-po' '-ER' '^rdpproxy: (INFO [^-]+--  [-=]{3,}>? )([^-=<]*)(.*)?' 'b' 'g' 'b' '--' '-ERci2' '^([a-zA-Z0-9_]+: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT)).* --  (error:)?([a-zA-Z0-9_]+:)?(.*)' 'n' 'n' 'b' 'Y' 'R' 'c' 'W' 'R' '+u' '+ru' '--' '-c' '(Assertion) `(.*)'\'' failed.' 'y' 'R' '--' '^rdpproxy: (\[RDP Session\]) ' 'd' '--' '-cri5' '( type)="([^"]+)"|^([^=]+)="((\\"|[^"])+)"' 'lr' 'lm' 'lb' 'd' '--' '-ER' '^(src/[^:]+|/[^:]+):([:0-9]+) ([^:]+)(.?)' 'c' 'Y' 'R' 'o' '--' '-ER' '^SUMMARY:' 'r' '--' '^    (#[0-9]+) [^ ]+ in (.+ )([^ :]+)(:[0-9]+)(:[0-9]+)' 'r' 'm' 'c' 'Y' 'Y' '--' '^    (#[0-9]+) [^ ]+ in ([^ ]+) \(([^+]+)' 'r' 'm' 'c'
+# 'https://github.com/jonathanpoelen/colout/colout' '-po' '-ER' '^rdpproxy: (INFO [^-]+--  [-=]{3,}>? )([^-=<]*)(.*)?' 'b' 'g' 'b' '--' '-ERci2' '^([a-zA-Z0-9_]+: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT)).* --  (error:)?([a-zA-Z0-9_]+:)?(.*)' 'n' 'n' 'b' 'Y' 'R' 'c' 'W' 'R' '+u' '+ru' '--' '-c' '(Assertion) `(.*)'\'' failed.' 'y' 'R' '--' '^rdpproxy: (\[RDP Session\]) ' 'd' '--' '-cri5' '( type)="([^"]+)"|^([^=]+)="((\\"|[^"])+)"' 'lr' 'lm' 'lb' 'd' '--' '-ER' '^(src/[^:]+|/[^:]+):([:0-9]+) ([^:]+)(.?)' 'c' 'Y' 'R' 'o' '--' '-ER' '^SUMMARY:' 'r' '--' '^    (#[0-9]+) [^ ]+ in (.+ )([^ :]+)(:[0-9]+)(:[0-9]+)?' 'r' 'm' 'c' 'Y' 'Y' '--' '^    (#[0-9]+) [^ ]+ in (.*) \(([^+]+)\+0x' 'r' 'm' 'n'
 # gawk profile, created Mon Jun  4 15:09:33 2018
 
 # BEGIN rule(s)
@@ -42,7 +42,7 @@ BEGIN {
 	nb_colors7 = 5
 	colors8[0] = ";31"
 	colors8[1] = ";35"
-	colors8[2] = ";36"
+	colors8[2] = ";0"
 	nb_colors8 = 3
 }
 
@@ -210,7 +210,7 @@ BEGIN {
 			s = s substr($0, p, RSTART + RLENGTH - p)
 		}
 		$0 = substr($0, RLENGTH + RSTART) esc_reset
-	} else if (match($0, /^    (#[0-9]+) [^ ]+ in (.+ )([^ :]+)(:[0-9]+)(:[0-9]+)/, a)) {
+	} else if (match($0, /^    (#[0-9]+) [^ ]+ in (.+ )([^ :]+)(:[0-9]+)(:[0-9]+)?/, a)) {
 		n = length(a) / 3
 		if (n == 1) {
 			i = 0
@@ -231,7 +231,7 @@ BEGIN {
 			s = s substr($0, p, RSTART + RLENGTH - p)
 		}
 		$0 = substr($0, RLENGTH + RSTART)
-	} else if (match($0, /^    (#[0-9]+) [^ ]+ in ([^ ]+) \(([^+]+)/, a)) {
+	} else if (match($0, /^    (#[0-9]+) [^ ]+ in (.*) \(([^+]+)\+0x/, a)) {
 		n = length(a) / 3
 		if (n == 1) {
 			i = 0

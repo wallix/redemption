@@ -22,6 +22,7 @@
 
 #include "core/RDP/mppc.hpp"
 #include "core/RDP/mppc/mppc_utils.hpp"
+#include "cxx/diagnostic.hpp"
 #include "utils/stream.hpp"
 
 #include <limits>
@@ -776,9 +777,12 @@ private:
                 uncompressed_data_size, this->historyOffset);
         }
 
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wtype-limits")
         static_assert(std::numeric_limits<decltype(uncompressed_data_size)>::max() < RDP_60_HIST_BUF_LEN,
           "LOG(LOG_ERR, \"compress_60: input stream too large, max=%zu got=%u\","
           "\nRDP_60_HIST_BUF_LEN - 1u, uncompressed_data_size)");
+        REDEMPTION_DIAGNOSTIC_POP
 
         this->flags = PACKET_COMPR_TYPE_RDP6;
 
