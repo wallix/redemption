@@ -349,7 +349,7 @@ public Q_SLOTS:
                 //    TEXT COPY
                 //==================
                         this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
-                        this->_bufferTypeNameIndex = TEXT_BUFFER_TYPE;
+                        //this->_bufferTypeNameIndex = TEXT_BUFFER_TYPE;
 
                         size_t size( ( str.length() * 4) + 2 );
 

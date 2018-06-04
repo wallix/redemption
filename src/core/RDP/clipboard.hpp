@@ -1176,18 +1176,22 @@ struct FormatListPDU
 //
 // };
 
+constexpr const char * FILEGROUPDESCRIPTORW = "Filegroupdescriptorw";
+constexpr const char * FILECONTENTS         = "Filecontents";
+
+
 struct FormatListPDU_LongName {
 
     //  FORMAT_LIST_MAX_SIZE
 
-    uint32_t    formatIDs = 0;
+    uint32_t    formatID = 0;
     uint8_t     formatUTF16Name[500] = {0};
     std::size_t formatDataNameUTF16Len = 0;
 
-    explicit FormatListPDU_LongName( const uint32_t  formatIDs
+    explicit FormatListPDU_LongName( const uint32_t  formatID
                                    , const char * formatUTF8Name
                                    , const std::size_t formatNameUTF8Len)
-    : formatIDs(formatIDs)
+    : formatID(formatID)
     {
          this->formatDataNameUTF16Len = ::UTF8toUTF16(
             reinterpret_cast<const uint8_t *>(formatUTF8Name),
@@ -1206,13 +1210,13 @@ struct FormatListPDU_LongName {
 
     void emit(OutStream & stream) const {
 
-        stream.out_uint32_le(this->formatIDs);
+        stream.out_uint32_le(this->formatID);
         stream.out_copy_bytes(this->formatUTF16Name, this->formatDataNameUTF16Len);
     }
 
     void recv(InStream & stream) {
 
-        this->formatIDs = stream.in_uint32_le();
+        this->formatID = stream.in_uint32_le();
 
         uint16_t c = -1;
 
@@ -1231,18 +1235,24 @@ struct FormatListPDU_LongName {
     void log() const {
         LOG(LOG_INFO, "     Format List PDU Long Name:");
 
-        uint8_t utf8_string[500];
+        char utf8_string[500];
 
-        const size_t size = ::UTF16toUTF8(
+        size_t size = ::UTF16toUTF8(
             this->formatUTF16Name,
             this->formatDataNameUTF16Len,
-            utf8_string,
+            reinterpret_cast<uint8_t*>(utf8_string),
             sizeof(utf8_string));
 
-        utf8_string[size] = 0;
+        if (size > 500) {
+            size = 500;
+        }
 
-        LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatIDs, get_Format_name(this->formatIDs));
-        LOG(LOG_INFO, "             * formatListDataName = \"%s\" (%zu bytes)", reinterpret_cast<char *>(utf8_string), this->formatDataNameUTF16Len);
+        utf8_string[size-1] = 0;
+
+        std::string name_string(utf8_string);
+
+        LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatID, get_Format_name(this->formatID));
+        LOG(LOG_INFO, "             * formatListDataName = \"%s\" (%zu bytes)", name_string, this->formatDataNameUTF16Len);
     }
 
 };
@@ -2652,9 +2662,12 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             case CB_FORMAT_LIST:
             {
                 if (state.use_long_format_names) {
-                    FormatListPDU_LongName pdu;
-                    pdu.recv(stream);
-                    pdu.log();
+                    header.log();
+                    while (chunk.in_remain() >= 6) {
+                        FormatListPDU_LongName pdu;
+                        pdu.recv(chunk);
+                        pdu.log();
+                    }
                 } else {
                     FormatListPDU_ShortName pdu;
                     pdu.recv(stream);

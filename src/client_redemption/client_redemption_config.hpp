@@ -37,6 +37,8 @@
 
 #include "client_redemption/client_redemption_api.hpp"
 
+#include "client_redemption/client_input_output_api/rdp_clipboard_config.hpp"
+
 
 
 
@@ -50,6 +52,8 @@ public:
     RDPVerbose        verbose;
     //bool                _recv_disconnect_ultimatum;
     bool wab_diag_question;
+
+    RDPClipboardConfig rDPClipboardConfig;
 
 
 
@@ -91,6 +95,12 @@ public:
             }
         }
 
+        // Set RDP CLIPRDR config
+        this->rDPClipboardConfig.ARBITRARY_SCALE = 40;
+        this->rDPClipboardConfig.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, std::string(RDPECLIP::FILEGROUPDESCRIPTORW));
+        this->rDPClipboardConfig.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, std::string(RDPECLIP::FILECONTENTS));
+        this->rDPClipboardConfig.add_format(RDPECLIP::CF_TEXT, std::string(""));
+        this->rDPClipboardConfig.add_format(RDPECLIP::CF_METAFILEPICT, std::string(""));
 
         this->setUserProfil();
         this->setClientInfo();

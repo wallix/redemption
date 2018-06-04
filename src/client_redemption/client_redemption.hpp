@@ -226,7 +226,7 @@ public:
         , close_box_extra_message_ref("Close")
         , client_execute(session_reactor, *(this), this->info.window_list_caps, false)
         , clientChannelRDPSNDManager(this->verbose, this, this->impl_sound)
-        , clientChannelCLIPRDRManager(this->verbose, this, this->impl_clipboard)
+        , clientChannelCLIPRDRManager(this->verbose, this, this->impl_clipboard, &(this->rDPClipboardConfig))
         , clientChannelRDPDRManager(this->verbose, this, this->impl_io_disk)
         , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
         , local_IP("unknow_local_IP")
@@ -266,6 +266,7 @@ public:
             this->connect();
 
         } else {
+            LOG(LOG_INFO, "connection_info_cmd_complete=%u", this->connection_info_cmd_complete);
             std::cout << "Argument(s) required to connect: ";
             if (!(this->connection_info_cmd_complete & NAME_GOT)) {
                 std::cout << "-u [user_name] ";

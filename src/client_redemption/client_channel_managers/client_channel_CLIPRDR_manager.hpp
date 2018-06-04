@@ -29,6 +29,7 @@
 
 #include "client_redemption/client_redemption_api.hpp"
 #include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
+#include "client_redemption/client_input_output_api/rdp_clipboard_config.hpp"
 
 
 
@@ -117,53 +118,53 @@ public:
     ClientIOClipboardAPI * clientIOClipboardAPI;
     ClientRedemptionAPI * client;
 
+    RDPClipboardConfig * config;
+
     enum : int {
         PASTE_TEXT_CONTENT_SIZE = CHANNELS::CHANNEL_CHUNK_LENGTH - 8
       , PASTE_PIC_CONTENT_SIZE  = CHANNELS::CHANNEL_CHUNK_LENGTH - RDPECLIP::METAFILE_HEADERS_SIZE - 8
     };
+    int index = 0;
 
 
 
-    struct ClipbrdFormatsList{
+//     struct ClipbrdFormatsList{
+//
+//
+//
+//         enum : int {
+//               CLIPBRD_FORMAT_COUNT = 4
+//         };
+//
+//         size_t size = 0;
+//
+//         const std::string FILECONTENTS;
+//         const std::string FILEGROUPDESCRIPTORW;
+//         uint32_t          IDs[CLIPBRD_FORMAT_COUNT];
+//         std::string       names[CLIPBRD_FORMAT_COUNT];
+//
+//         const double      ARBITRARY_SCALE;  //  module MetaFilePic resolution, value=40 is
+//                                             //  empirically close to original resolution.
+//
+//         ClipbrdFormatsList()
+//           : FILECONTENTS(
+//               "FileContents"
+//             )
+//           , FILEGROUPDESCRIPTORW(
+//               "FileGroupDescriptorW"
+//             )
+//           , ARBITRARY_SCALE(40)
+//         {}
+//
+//         void add_format(uint32_t ID, const std::string & name) {
+//             if (this->size < CLIPBRD_FORMAT_COUNT) {
+//                 this->IDs[size]   = ID;
+//                 this->names[size] = name;
+//                 this->size++;
+//             }
+//         }
 
-        enum : uint16_t {
-              CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
-            , CF_QT_CLIENT_FILECONTENTS         = 48026
-        };
-
-        enum : int {
-              CLIPBRD_FORMAT_COUNT = 4
-        };
-
-        size_t size = 0;
-
-        const std::string FILECONTENTS;
-        const std::string FILEGROUPDESCRIPTORW;
-        uint32_t          IDs[CLIPBRD_FORMAT_COUNT];
-        std::string       names[CLIPBRD_FORMAT_COUNT];
-        int index = 0;
-        const double      ARBITRARY_SCALE;  //  module MetaFilePic resolution, value=40 is
-                                            //  empirically close to original resolution.
-
-        ClipbrdFormatsList()
-          : FILECONTENTS(
-              "FileContents"
-            )
-          , FILEGROUPDESCRIPTORW(
-              "FileGroupDescriptorW"
-            )
-          , ARBITRARY_SCALE(40)
-        {}
-
-        void add_format(uint32_t ID, const std::string & name) {
-            if (this->size < CLIPBRD_FORMAT_COUNT) {
-                this->IDs[size]   = ID;
-                this->names[size] = name;
-                this->size++;
-            }
-        }
-
-    } clipbrdFormatsList;
+//     } clipbrdFormatsList;
 
     struct CB_Buffers {
         std::unique_ptr<uint8_t[]>  data = nullptr;
@@ -200,16 +201,17 @@ public:
 
 
 
-    ClientChannelCLIPRDRManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientIOClipboardAPI * clientIOClipboardAPI)
+    ClientChannelCLIPRDRManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientIOClipboardAPI * clientIOClipboardAPI, RDPClipboardConfig * rDPClipboardConfig)
       : verbose(verbose)
       , clientIOClipboardAPI(clientIOClipboardAPI)
       , client(client)
+      , config(rDPClipboardConfig)
       , _cb_buffers()
       , _cb_filesList()
       , _waiting_for_data(false)
       , server_use_long_format_names(true)
       {
-          this->clipbrdFormatsList.index = 0;
+          this->index = 0;
             DIR *pDir;
             pDir = opendir (this->client->CB_TEMP_DIR.c_str());
 
@@ -219,25 +221,25 @@ public:
 
             pDir = opendir (this->client->CB_TEMP_DIR.c_str());
 
-            this->clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS
-                                            , this->clipbrdFormatsList.FILECONTENTS
-                                            );
-            this->clipbrdFormatsList.add_format( ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW
-                                            , this->clipbrdFormatsList.FILEGROUPDESCRIPTORW
-                                            );
-//                 this->clipbrdFormatsList.add_format( RDPECLIP::CF_UNICODETEXT
-//                                                 , std::string("\0\0", 2)
-//                                                 );
-            this->clipbrdFormatsList.add_format( RDPECLIP::CF_TEXT
-                                            , std::string("\0\0", 2)
-                                            );
-            this->clipbrdFormatsList.add_format( RDPECLIP::CF_METAFILEPICT
-                                            , std::string("\0\0", 2)
-                                            );
+//             this->clipbrdFormatsList.add_format( ClipbrdFormatsList::ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS
+//                                             , this->clipbrdFormatsList.FILECONTENTS
+//                                             );
+//             this->clipbrdFormatsList.add_format( ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW
+//                                             , this->clipbrdFormatsList.FILEGROUPDESCRIPTORW
+//                                             );
+// //                 this->clipbrdFormatsList.add_format( RDPECLIP::CF_UNICODETEXT
+// //                                                 , std::string("\0\0", 2)
+// //                                                 );
+//             this->clipbrdFormatsList.add_format( RDPECLIP::CF_TEXT
+//                                             , std::string("\0\0", 2)
+//                                             );
+//             this->clipbrdFormatsList.add_format( RDPECLIP::CF_METAFILEPICT
+//                                             , std::string("\0\0", 2)
+//                                             );
 
-            if (!pDir) {
-                LOG(LOG_WARNING, "Can't enable shared clipboard, %s directory doesn't exist.", this->client->CB_TEMP_DIR);
-            }
+        if (!pDir) {
+            LOG(LOG_WARNING, "Can't enable shared clipboard, %s directory doesn't exist.", this->client->CB_TEMP_DIR);
+        }
     }
 
     ~ClientChannelCLIPRDRManager() {
@@ -370,37 +372,55 @@ public:
                             }
                         }
 
-                        // TODO: check this, dangerous, we don't know how many formats are really available
-                        // sizes array seems to be the length of names, this should no be managed separately from names
                         if (this->server_use_long_format_names) {
-                            const char * names[] = {
-                                        this->clipbrdFormatsList.names[0].data(),
-                                        this->clipbrdFormatsList.names[1].data(),
-                                        this->clipbrdFormatsList.names[2].data(),
-                                        this->clipbrdFormatsList.names[3].data()
-                                        //reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[4].data())
-                                                       };
 
-                            size_t sizes[] = {26, 42, 2, 2, /*2*/};
+                            StaticOutStream<1600> out_stream;
+                            RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, this->config->total_format_list_pdu_size);
+                            format_list_header.emit(out_stream);
 
-                            this->send_FormatListPDU(this->clipbrdFormatsList.IDs, names, sizes, this->clipbrdFormatsList.size);
+                            for (size_t i = 0; i < this->config->formats.size(); i++) {
+                                this->config->formats[i].emit(out_stream);
+                            }
+
+                            InStream chunk(out_stream.get_data(), out_stream.get_offset());
+
+                            this->client->mod->send_to_mod_channel( channel_names::cliprdr
+                                      , chunk
+                                      , out_stream.get_offset()
+                                      , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |
+                                        CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                                      );
+
+
+
+//                             const char * names[] = {
+//                                         this->clipbrdFormatsList.names[0].data(),
+//                                         this->clipbrdFormatsList.names[1].data(),
+//                                         this->clipbrdFormatsList.names[2].data(),
+//                                         this->clipbrdFormatsList.names[3].data()
+//                                         //reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[4].data())
+//                                                        };
+//
+//                             size_t sizes[] = {26, 42, 2, 2, /*2*/};
+//
+//                             this->send_FormatListPDU(this->clipbrdFormatsList.IDs, names, sizes, this->clipbrdFormatsList.size);
                         } else {
-                            const char * names[] = {
-                                        this->clipbrdFormatsList.names[2].data(),
-                                        this->clipbrdFormatsList.names[3].data()
-                                        //reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[4].data())
-                                                       };
-
-                            size_t sizes[] = {2, 2, /*2*/};
-
-                            // TODO: check documentation, what are we setting from IDs array ?
-                            //       before In changed IDs array size, there was no IDs[4]!!!!
-                            uint32_t ids[] = { this->clipbrdFormatsList.IDs[2]
-                                             , this->clipbrdFormatsList.IDs[3]
-//                                             , this->clipbrdFormatsList.IDs[4]
-                                             };
-                            LOG(LOG_INFO, "short format to send");
-                            this->send_FormatListPDU(ids, names, sizes, 2);
+//                             const char * names[] = {
+//                                         this->clipbrdFormatsList.names[2].data(),
+//                                         this->clipbrdFormatsList.names[3].data()
+//                                         //reinterpret_cast<const uint16_t *>(this->clipbrdFormatsList.names[4].data())
+//                                                        };
+//
+//                             size_t sizes[] = {2, 2, /*2*/};
+//
+//                             // TODO: check documentation, what are we setting from IDs array ?
+//                             //       before In changed IDs array size, there was no IDs[4]!!!!
+//                             uint32_t ids[] = { this->clipbrdFormatsList.IDs[2]
+//                                              , this->clipbrdFormatsList.IDs[3]
+// //                                             , this->clipbrdFormatsList.IDs[4]
+//                                              };
+//                             LOG(LOG_INFO, "short format to send");
+//                             this->send_FormatListPDU(ids, names, sizes, 2);
                         }
 
                     break;
@@ -482,15 +502,15 @@ public:
                                     }
 
 
-                                    for (size_t j = 0; j < this->clipbrdFormatsList.size && !isSharedFormat; j++) {
-                                        if (this->clipbrdFormatsList.IDs[j] == formatID) {
+                                    for (size_t j = 0; j < this->config->formats.size() && !isSharedFormat; j++) {
+                                        if (this->config->formats[j].formatID == formatID) {
                                             this->_requestedFormatId = formatID;
                                             isSharedFormat = true;
                                             formatAvailable = 0;
                                         }
                                     }
 
-                                    if (this->_requestedFormatName == this->clipbrdFormatsList.FILEGROUPDESCRIPTORW && !isSharedFormat) {
+                                    if (this->_requestedFormatName == std::string(RDPECLIP::FILEGROUPDESCRIPTORW) && !isSharedFormat) {
                                         this->_requestedFormatId = formatID;
                                         isSharedFormat = true;
                                         formatAvailable = 0;
@@ -560,8 +580,8 @@ public:
                     break;
 
                     case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-                        if(this->_requestedFormatName == this->clipbrdFormatsList.FILEGROUPDESCRIPTORW) {
-                            this->_requestedFormatId = ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
+                        if(this->_requestedFormatName == std::string(RDPECLIP::FILEGROUPDESCRIPTORW)) {
+                            this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
                         }
 
                         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -614,7 +634,7 @@ public:
                                             , image.width()
                                             , image.height()
                                             , image.bits_per_pixel()
-                                            , this->clipbrdFormatsList.ARBITRARY_SCALE
+                                            , this->config->ARBITRARY_SCALE
                                         );
                                         fdr.emit(out_stream_first_part);
 
@@ -654,7 +674,7 @@ public:
                                     }
                                     break;
 
-                                    case ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
+                                    case ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
                                     {
                                         int data_sent(0);
                                         first_part_data_size = RDPECLIP::CliprdrHeader::size() + 4;
@@ -816,8 +836,8 @@ public:
                                     LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Response PDU");
                                 }
 
-                                if(this->_requestedFormatName == this->clipbrdFormatsList.FILEGROUPDESCRIPTORW) {
-                                    this->_requestedFormatId = ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS;
+                                if(this->_requestedFormatName == std::string(RDPECLIP::FILEGROUPDESCRIPTORW)) {
+                                    this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS;
                                     this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList);
                                 }
                             }
@@ -936,7 +956,7 @@ public:
                 }
             break;
 
-            case ClipbrdFormatsList::CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
+            case ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
 
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                     cb_buffers.sizeTotal -= 4;
@@ -988,7 +1008,7 @@ public:
                 }
             break;
 
-            case ClipbrdFormatsList::CF_QT_CLIENT_FILECONTENTS:
+            case ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS:
 
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                     cb_filesList.streamIDToRequest = chunk.in_uint32_le();
@@ -1161,65 +1181,88 @@ public:
     }
 
     void send_FormatListPDU() {
-        uint32_t formatIDs[] = { this->clientIOClipboardAPI->get_buffer_type_id() };
-
-        int index = 0;
-        size_t format_size_name = 0;
-        if (this->clientIOClipboardAPI->get_buffer_type_long_name() == ClientIOClipboardAPI::FILEGROUPDESCRIPTORW_BUFFER_TYPE) {
-            index = 1;
-            format_size_name = 42;
-        } else {
-            index = 2;
-            format_size_name = 2;
-        }
-
-        const char * formatListDataName[] = {this->clipbrdFormatsList.names[index].data()};
-        const size_t size_names[] = {format_size_name};
-
-        this->send_FormatListPDU(formatIDs, formatListDataName, size_names, 1);
-    }
-
-    void send_FormatListPDU(uint32_t const * formatIDs, const char ** formatListName, const std::size_t * size_names, const std::size_t formatIDs_size) {
 
         StaticOutStream<1600> out_stream;
-        if (this->server_use_long_format_names) {
-            RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_LIST, 0, 0);
 
-            for (size_t i = 0; i < formatIDs_size;i++) {
-                header.dataLen_ += size_names[i] + 4;
-            }
-            header.emit(out_stream);
+        std::string format_name = this->config->formats_map[this->clientIOClipboardAPI->get_buffer_type_id()];
 
-            for (size_t i = 0; i < formatIDs_size;i++) {
-                RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs[i],
-                                                                       formatListName[i],
-                                                                       size_names[i]);
-                format_list_pdu_long.emit(out_stream);
-            }
+        RDPECLIP::FormatListPDU_LongName format_list(this->clientIOClipboardAPI->get_buffer_type_id(), format_name.c_str(), format_name.size());
+
+        RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, format_list.formatDataNameUTF16Len+4);
+        format_list_header.emit(out_stream);
 
 
-
-/*
-            RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListName, size_names, formatIDs_size);
-            format_list_pdu_long.emit(out_stream);*/
-        } else {
-//             RDPECLIP::FormatListPDU_ShortName format_list_pdu_short(formatIDs, formatListName, size_names, formatIDs_size);
-//             format_list_pdu_short.emit(out_stream);
-        }
+        format_list.emit(out_stream);
 
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
         this->client->mod->send_to_mod_channel( channel_names::cliprdr
-                                      , chunk
-                                      , out_stream.get_offset()
-                                      , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |
-                                        CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                      );
+                    , chunk
+                    , out_stream.get_offset()
+                    , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |
+                    CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                    );
 
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO, "CLIENT >> CB channel: Format List PDU");
-        }
+
+//         uint32_t formatIDs[] = { this->clientIOClipboardAPI->get_buffer_type_id() };
+//
+//         int index = 0;
+//         size_t format_size_name = 0;
+//         if (this->clientIOClipboardAPI->get_buffer_type_long_name() == ClientIOClipboardAPI::FILEGROUPDESCRIPTORW_BUFFER_TYPE) {
+//             index = 1;
+//             format_size_name = 42;
+//         } else {
+//             index = 2;
+//             format_size_name = 2;
+//         }
+//
+//         const char * formatListDataName[] = {this->clipbrdFormatsList.names[index].data()};
+//         const size_t size_names[] = {format_size_name};
+//
+//         this->send_FormatListPDU(formatIDs, formatListDataName, size_names, 1);
     }
+
+//     void send_FormatListPDU(uint32_t const * formatIDs, const char ** formatListName, const std::size_t * size_names, const std::size_t formatIDs_size) {
+//
+//         StaticOutStream<1600> out_stream;
+//         if (this->server_use_long_format_names) {
+//             RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_LIST, 0, 0);
+//
+//             for (size_t i = 0; i < formatIDs_size;i++) {
+//                 header.dataLen_ += size_names[i] + 4;
+//             }
+//             header.emit(out_stream);
+//
+//             for (size_t i = 0; i < formatIDs_size;i++) {
+//                 RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs[i],
+//                                                                        formatListName[i],
+//                                                                        size_names[i]);
+//                 format_list_pdu_long.emit(out_stream);
+//             }
+//
+//
+//
+// /*
+//             RDPECLIP::FormatListPDU_LongName format_list_pdu_long(formatIDs, formatListName, size_names, formatIDs_size);
+//             format_list_pdu_long.emit(out_stream);*/
+//         } /*else {
+// //             RDPECLIP::FormatListPDU_ShortName format_list_pdu_short(formatIDs, formatListName, size_names, formatIDs_size);
+// //             format_list_pdu_short.emit(out_stream);
+//         }*/
+//
+//         InStream chunk(out_stream.get_data(), out_stream.get_offset());
+//
+//         this->client->mod->send_to_mod_channel( channel_names::cliprdr
+//                                       , chunk
+//                                       , out_stream.get_offset()
+//                                       , CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST |
+//                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+//                                       );
+//
+//         if (bool(this->verbose & RDPVerbose::cliprdr)) {
+//             LOG(LOG_INFO, "CLIENT >> CB channel: Format List PDU");
+//         }
+//     }
 
 
     void process_client_clipboard_out_data(const CHANNELS::ChannelNameId & front_channel_name, const uint64_t total_length, OutStream & out_stream_first_part, const size_t first_part_data_size,  uint8_t const * data, const size_t data_len, uint32_t flags){
