@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "utils/log.hpp"
 
 #if REDEMPTION_QT_VERSION == 4
 #   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
@@ -36,7 +37,10 @@
 
 class ProgressBarWindow : public QWidget {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     QProgressBar load_bar;

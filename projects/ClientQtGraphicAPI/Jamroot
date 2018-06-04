@@ -74,10 +74,6 @@ if $(qtversion) = 4
         local toolset = [ $(ps).get <toolset> ] ;
 
         local flags = <cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant ;
-        if $(toolset) = clang {
-            flags += <cxxflags>-Wno-unused-command-line-argument ;
-            flags += <cxxflags>-Wno-comma ;
-        }
 
         return $(flags) ;
     }
@@ -95,7 +91,7 @@ project redemption_qt_client
 
     <conditional>@includes
     <conditional>@flags
-    # <conditional>@disable-buggy-warn
+    <conditional>@disable-buggy-warn
 
     <cxxflags>-std=c++17
 
@@ -114,7 +110,7 @@ project redemption_qt_client
 
     <toolset>gcc:<cxxflags>-Wno-missing-include-dirs
 
-    <variant>debug:<library>dl <variant>san:<library>dl
+
 
    : default-build release
 ;
@@ -220,6 +216,7 @@ exe client_rdp :
     # disable moc warnings
     <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
     <toolset>clang:<cxxflags>-Wredundant-parens&&-Wno-redundant-parens
+    <variant>debug:<library>dl <variant>san:<library>dl
 ;
 
 #obj test_client.o : src/test_client_redemption.cpp :

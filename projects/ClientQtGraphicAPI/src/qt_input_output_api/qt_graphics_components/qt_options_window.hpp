@@ -65,8 +65,10 @@
 
 class QtKeyLabel :  public QWidget
 {
-
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     int q_key_code;
@@ -97,7 +99,10 @@ public:
 class QtOptions : public QWidget
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     enum : uint8_t {
@@ -484,7 +489,10 @@ public Q_SLOTS:
 class QtRDPOptions : public QtOptions
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     QCheckBox            _tlsBox;
@@ -836,7 +844,10 @@ public Q_SLOTS:
 class QtVNCOptions : public QtOptions
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     QCheckBox            keyboard_apple_compatibility_CB;

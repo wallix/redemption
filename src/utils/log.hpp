@@ -41,6 +41,7 @@
 #include <cstdio>
 
 #include "cxx/cxx.hpp"
+#include "cxx/diagnostic.hpp"
 
 #include <syslog.h>
 
@@ -179,13 +180,16 @@ log_array_02x_format(uint8_t const (&d)[n]) noexcept
 # ifdef NDEBUG
 #   define LOG_FILENAME(priority)
 # else
-#   define LOG_FILENAME(priority)                        \
-    if (priority != LOG_INFO && priority != LOG_DEBUG) { \
-        LOG__REDEMPTION__INTERNAL(                       \
-            priority, "%s (%d/%d) --  In %s:%d",         \
-            __FILE__, __LINE__                           \
-        );                                               \
-    }
+#   define LOG_FILENAME(priority)                            \
+    REDEMPTION_DIAGNOSTIC_PUSH                               \
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunreachable-code") \
+    if (priority != LOG_INFO && priority != LOG_DEBUG) {     \
+        LOG__REDEMPTION__INTERNAL(                           \
+            priority, "%s (%d/%d) --  In %s:%d",             \
+            __FILE__, __LINE__                               \
+        );                                                   \
+    }                                                        \
+    REDEMPTION_DIAGNOSTIC_POP
 # endif
 
 # define LOG(priority, ...) do {                                 \

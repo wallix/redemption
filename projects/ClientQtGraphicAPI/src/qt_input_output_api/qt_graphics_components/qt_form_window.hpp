@@ -74,8 +74,10 @@
 
 class IconMovie :  public QWidget
 {
-
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     ClientInputMouseKeyboardAPI * controllers;
@@ -236,17 +238,13 @@ public:
 };
 
 
-// #include <sys/ioctl.h>
-// #define Q_OBJECT_NO_WARNING                                         \
-//     REDEMPTION_DIAGNOSTIC_PUSH                                          \
-//     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Winconsistent-missing-override") \
-//     Q_OBJECT                                                            \
-//     REDEMPTION_DIAGNOSTIC_POP
-
 class QtMoviesPanel : public QWidget
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     ClientInputMouseKeyboardAPI * controllers;
@@ -292,8 +290,10 @@ public:
 
 class QtFormReplay : public QWidget
 {
-
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     ClientInputMouseKeyboardAPI * controllers;
@@ -378,7 +378,10 @@ public:
 class ConnectionFormQt  : public QWidget
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     uint8_t protocol_type;
@@ -455,7 +458,10 @@ private Q_SLOTS:
 class QtIconAccount :  public QWidget
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     FormTabAPI * main_tab;
@@ -609,7 +615,10 @@ public:
 class QtAccountPanel : public QWidget
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     QtIconAccount * icons[15];
@@ -726,7 +735,10 @@ public:
 class QtFormTab : public FormTabAPI
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 
 public:
@@ -941,7 +953,10 @@ private Q_SLOTS:
 class QtForm : public QWidget
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     ClientInputMouseKeyboardAPI * controllers;

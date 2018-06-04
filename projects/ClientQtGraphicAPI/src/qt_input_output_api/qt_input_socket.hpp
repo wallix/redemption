@@ -42,7 +42,10 @@
 
 class QtInputSocket : public QObject, public ClientInputSocketAPI
 {
-    Q_OBJECT
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
+Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
     SessionReactor& session_reactor;
 

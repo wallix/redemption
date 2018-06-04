@@ -42,10 +42,15 @@
 #include <Phonon/MediaObject>
 #endif
 
+
+
 class QtOutputSound : public QObject, public ClientOutputSoundAPI
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
     Phonon::MediaObject * media;
     Phonon::AudioOutput * audioOutput;

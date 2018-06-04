@@ -50,7 +50,10 @@
 
 class QtScreen : public QWidget
 {
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     enum : int {
@@ -223,7 +226,10 @@ public:
 class RemoteAppQtScreen : public QtScreen
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     int x_pixmap_shift;
@@ -270,7 +276,10 @@ public:
 
 class RDPQtScreen :  public QtScreen
 {
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     QPushButton    _buttonCtrlAltDel;
@@ -369,7 +378,10 @@ public Q_SLOTS:
 
 class ReplayQtScreen : public QtScreen
 {
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     QPushButton    _buttonCtrlAltDel;
