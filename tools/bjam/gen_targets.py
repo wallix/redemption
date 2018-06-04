@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -O
 
-import glob ;
-import os ;
+import glob
+import os
 from collections import OrderedDict
 
 #project_root = '../..'
@@ -22,6 +22,8 @@ disable_tests = (
 )
 
 disable_srcs = (
+    'src/system/linux/system/redemption_unit_tests.cpp',
+    'src/system/linux/system/register_error_exception.cpp',
     'src/system/linux/system/test_framework.cpp',
     'src/utils/log_as_syslog.cpp',
     'src/utils/log_as_logemasm.cpp',
@@ -98,7 +100,7 @@ sys_lib_prefix = (
 
 user_lib_assoc = dict((
     ('program_options/program_options.hpp', 'program_options'),
-    ('src/core/error.hpp', 'dl'),
+    ('src/core/error.hpp', '<variant>debug:<library>dl <variant>san:<library>dl'), # Boost.stacktrace
     ('openssl_crypto.hpp', 'crypto'),
     ('openssl_tls.hpp', 'openssl'),
 ))
@@ -220,7 +222,6 @@ get_files(files_on_tests, 'tests')
 tests = [f for f in files_on_tests \
     if f.type != 'H' \
     and not start_with(f.path, 'tests/includes/') \
-    and not start_with(f.path, 'tests/system/common/') \
     and not start_with(f.path, 'tests/system/emscripten/system/') \
     and not start_with(f.path, 'tests/web_video/') \
     and f.path != 'tests/test_meta_protocol2.cpp' \
@@ -228,6 +229,12 @@ tests = [f for f in files_on_tests \
 ]
 
 sources = [f for f in sources if f.path not in disable_srcs]
+sources += [f for f in files_on_tests \
+    if f.type == 'H' \
+    and not start_with(f.path, 'tests/includes/') \
+    and not start_with(f.path, 'tests/system/emscripten/system/') \
+    and not start_with(f.path, 'tests/web_video/')
+]
 
 extra_srcs = (
     ('src/configs/config.hpp', HFile(
@@ -284,16 +291,17 @@ def get_includes(path):
                         inc = line[1:line.rfind('"')]
                         found = False
                         for dir_name in includes:
-                            file_name = dir_name+inc
+                            file_name = os.path.normpath(dir_name+inc)
                             if file_name in all_files:
                                 user_includes.append(all_files[file_name])
                                 found = True
                                 break
                         if not found:
-                            file_name = path[0:path.rfind('/')] + '/' + inc
+                            file_name = os.path.normpath(path[0:path.rfind('/')] + '/' + inc)
                             if file_name in all_files:
                                 user_includes.append(all_files[file_name])
-                            unknown_user_includes.append(inc)
+                            else:
+                                unknown_user_includes.append(inc)
                     if len(line) and line[0] == '<':
                         system_includes.append(line[1:line.rfind('>')])
     return set(user_includes), set(system_includes), set(unknown_user_includes)

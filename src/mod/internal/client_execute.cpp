@@ -3081,7 +3081,6 @@ void ClientExecute::create_auxiliary_window(Rect const window_rect_)
         }
 
         this->front_->draw(order);
-        this->on_new_or_existing_window(adjusted_window_rect);
     }
 
     this->auxiliary_window_rect = window_rect;
@@ -3108,7 +3107,6 @@ void ClientExecute::destroy_auxiliary_window()
         }
 
         this->front_->draw(order);
-        this->on_delete_window();
     }
 
     this->auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;

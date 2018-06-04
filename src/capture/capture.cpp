@@ -1697,7 +1697,8 @@ void Capture::visibility_rects_event(Rect const & rect_) {
     }
 
     if ((this->smart_video_cropping == SmartVideoCropping::disable) ||
-        (this->smart_video_cropping == SmartVideoCropping::v1)) {
+        (this->smart_video_cropping == SmartVideoCropping::v1) ||
+        !static_cast<bool>(this->video_cropper)) {
         return;
     }
 

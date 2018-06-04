@@ -3,4 +3,4 @@
 
 #include "system/ssl_calls.hpp"
 
-#include "../../common/test_ssl_calls.cpp"
+#include "../../common/test_ssl_calls.hpp"

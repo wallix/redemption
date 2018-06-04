@@ -40,6 +40,8 @@ public:
         uint16_t front_width, uint16_t front_height,
         int group_id = 0);
 
+    gdi::GraphicApi& proxy_gd(gdi::GraphicApi& gd);
+
     void draw(RDP::FrameMarker    const & cmd) override;
     void draw(RDPDestBlt          const & cmd, Rect clip) override;
     void draw(RDPMultiDstBlt      const & cmd, Rect clip) override;

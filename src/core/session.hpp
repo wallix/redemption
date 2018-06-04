@@ -176,7 +176,7 @@ public:
                 io_fd_zero(rfds);
                 timeval timeout = time_mark;
 
-                if (mm.mod->is_up_and_running() || !front.up_and_running) {
+                if (mm.get_mod()->is_up_and_running() || !front.up_and_running) {
                     wait_on_sck(front_trans, rfds, max);
                 }
 
@@ -244,8 +244,8 @@ public:
 
                 try {
                     session_reactor.execute_timers(enable_graphics, [&]() -> gdi::GraphicApi& {
-                            return mm.get_graphic_wrapper(front);
-                        });
+                        return mm.get_graphic_wrapper();
+                    });
                 } catch (Error const& e) {
                     if (ERR_AUTOMATIC_RECONNECTION_REQUIRED == e.id) {
                         this->ini.set<cfg::context::perform_automatic_reconnection>(true);
@@ -305,7 +305,7 @@ public:
                         {
                             if (BACK_EVENT_NONE == session_reactor.signal) {
                                 // Process incoming module trafic
-                                auto& gd = mm.get_graphic_wrapper(front);
+                                auto& gd = mm.get_graphic_wrapper();
                                 session_reactor.execute_graphics([&rfds](int fd, auto& /*e*/){
                                     return io_fd_isset(fd, rfds);
                                 }, gd);
@@ -479,17 +479,17 @@ public:
                     session_reactor.signal = signal;
                 };
 
-                if (mm.mod) {
+                if (mm.get_mod()) {
                     timeval wait_log_metrics = ::how_long_to_wait(alarm_log_metrics, tvtime());
                     if (!wait_log_metrics.tv_sec && ! wait_log_metrics.tv_usec) {
-                        mm.mod->log_metrics(this->ini.get<cfg::globals::auth_user>().c_str());
+                        mm.get_mod()->log_metrics(this->ini.get<cfg::globals::auth_user>().c_str());
                         alarm_log_metrics = tvtime();
                         alarm_log_metrics.tv_sec += this->log_metrics_delay;
                     }
                 }
             }
-            if (mm.mod) {
-                mm.mod->disconnect(time(nullptr));
+            if (mm.get_mod()) {
+                mm.get_mod()->disconnect(time(nullptr));
             }
             front.disconnect();
         }

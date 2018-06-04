@@ -25,6 +25,8 @@ sed -E -e '/^tests\//{
   s/^(tests\/[^.]+\.[ch]pp\([0-9]+\)): last checkpoint$/'$file'\1'$reset': '$cat'last checkpoint'$reset'/;t
   s/^(tests\/[^.]+\.[ch]pp\([0-9]+\)): last checkpoint: "([^"]+)" entry.$/'$file'\1'$reset': '$cat'last checkpoint'$reset': "'$name'\2'$reset'" entry/;t
 }
+s/^(src|tests|)(\/[^.]+\.[ch]p?p?:[0-9]+:[0-9]+): ([^:]+): /'$file'\1\2'$reset': '$err'\3'$reset': /;t
+s/^SUMMARY: /'$err'SUMMARY: '$reset'/;t
 s/^unknown location\(0\): fatal error:? in "([^"]+)": ([a-zA-Z0-9]+::)*([^:]+): (.*)$/'$cat'unknown location(0):'$reset' '$err'fatal error'$reset' in "'$name'\1'$reset'": '$cat'\2\3'$reset': '$op'\4'$reset'/;t
 s/^terminate called.*$/'$term_mess'&'$reset'/;t
 s/^  what\(\): .*$/'$exception'&'$reset'/;t

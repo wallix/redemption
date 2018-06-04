@@ -165,7 +165,7 @@ inline const char * get_module_name(int module_id) {
 class MMIni : public MMApi
 {
 protected:
-    Inifile & ini;
+    Inifile& ini;
     SessionReactor& session_reactor;
 
 public:
@@ -173,8 +173,6 @@ public:
     : ini(ini_)
     , session_reactor(session_reactor)
     {}
-
-    ~MMIni() override {}
 
     void remove_mod() override {}
 
@@ -386,13 +384,12 @@ private:
         void disable_osd()
         {
             this->is_disable_by_input = false;
-            this->mm.mod = this->mm.internal_mod;
             auto const protected_rect = this->get_protected_rect();
             this->set_protected_rect(Rect{});
 
             if (this->bogus_refresh_rect_ex) {
-                this->mm.internal_mod->rdp_suppress_display_updates();
-                this->mm.internal_mod->rdp_allow_display_updates(0, 0,
+                this->mm.mod->rdp_suppress_display_updates();
+                this->mm.mod->rdp_allow_display_updates(0, 0,
                     this->mm.front.client_info.width, this->mm.front.client_info.height);
             }
 
@@ -400,7 +397,7 @@ private:
                 this->mm.winapi->destroy_auxiliary_window();
             }
 
-            this->mm.internal_mod->rdp_input_invalidate(protected_rect);
+            this->mm.mod->rdp_input_invalidate(protected_rect);
         }
 
         const char* get_message() const {
@@ -495,7 +492,7 @@ private:
                     return rect.isempty();
                 });
                 if (p != e) {
-                    this->mm.internal_mod->rdp_input_invalidate2({p, e});
+                    this->mm.mod->rdp_input_invalidate2({p, e});
                     this->clip = r.intersect(this->get_protected_rect());
                 }
                 return true;
@@ -509,7 +506,7 @@ private:
             bool ret = false;
             for (Rect const & r : vr) {
                 if (!this->try_input_invalidate(r)) {
-                    this->mm.internal_mod->rdp_input_invalidate(r);
+                    this->mm.mod->rdp_input_invalidate(r);
                 }
                 else {
                     ret = true;
@@ -523,7 +520,7 @@ private:
         {
             drawable.begin_update();
             this->draw_osd_message_impl(drawable);
-            this->mm.internal_mod->draw_event(now, drawable);
+            this->mm.mod->draw_event(now, drawable);
             drawable.end_update();
         }
 
@@ -563,99 +560,104 @@ private:
 
         void refresh_rects(array_view<Rect const> av) override
         {
-            this->mm.internal_mod->rdp_input_invalidate2(av);
+            this->mm.mod->rdp_input_invalidate2(av);
         }
 
         void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
         {
             if (!this->try_input_scancode(param1, param2, param3, param4, keymap)) {
-                this->mm.internal_mod->rdp_input_scancode(param1, param2, param3, param4, keymap);
+                this->mm.mod->rdp_input_scancode(param1, param2, param3, param4, keymap);
             }
         }
 
         void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
-            this->mm.internal_mod->rdp_input_unicode(unicode, flag);
+            this->mm.mod->rdp_input_unicode(unicode, flag);
         }
 
         void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
         {
             if (!this->try_input_mouse(device_flags, x, y, keymap)) {
-                this->mm.internal_mod->rdp_input_mouse(device_flags, x, y, keymap);
+                this->mm.mod->rdp_input_mouse(device_flags, x, y, keymap);
             }
         }
 
         void rdp_input_invalidate(Rect r) override
         {
             if (!this->try_input_invalidate(r)) {
-                this->mm.internal_mod->rdp_input_invalidate(r);
+                this->mm.mod->rdp_input_invalidate(r);
             }
         }
 
         void rdp_input_invalidate2(array_view<Rect const> vr) override
         {
             if (!this->try_input_invalidate2(vr)) {
-                this->mm.internal_mod->rdp_input_invalidate2(vr);
+                this->mm.mod->rdp_input_invalidate2(vr);
             }
         }
 
         void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
-        { this->mm.internal_mod->rdp_input_synchronize(time, device_flags, param1, param2); }
+        { this->mm.mod->rdp_input_synchronize(time, device_flags, param1, param2); }
 
         void rdp_input_up_and_running() override
-        { this->mm.internal_mod->rdp_input_up_and_running(); }
+        { this->mm.mod->rdp_input_up_and_running(); }
 
         void rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) override
-        { this->mm.internal_mod->rdp_allow_display_updates(left, top, right, bottom); }
+        { this->mm.mod->rdp_allow_display_updates(left, top, right, bottom); }
 
         void rdp_suppress_display_updates() override
-        { this->mm.internal_mod->rdp_suppress_display_updates(); }
+        { this->mm.mod->rdp_suppress_display_updates(); }
 
         void refresh(Rect r) override
         {
-            this->mm.internal_mod->refresh(r);
+            this->mm.mod->refresh(r);
         }
 
         void send_to_mod_channel(
             CHANNELS::ChannelNameId front_channel_name, InStream & chunk,
             std::size_t length, uint32_t flags
         ) override
-        { this->mm.internal_mod->send_to_mod_channel(front_channel_name, chunk, length, flags); }
+        { this->mm.mod->send_to_mod_channel(front_channel_name, chunk, length, flags); }
 
         void send_auth_channel_data(const char * data) override
-        { this->mm.internal_mod->send_auth_channel_data(data); }
+        { this->mm.mod->send_auth_channel_data(data); }
 
         void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name,
             uint8_t const * data, size_t length, size_t chunk_size, int flags) override
-        { this->mm.internal_mod->send_to_front_channel(mod_channel_name, data, length, chunk_size, flags); }
+        { this->mm.mod->send_to_front_channel(mod_channel_name, data, length, chunk_size, flags); }
 
         void refresh_context() override
-        { this->mm.internal_mod->refresh_context(); }
+        { this->mm.mod->refresh_context(); }
 
         bool is_up_and_running() override
-        { return this->mm.internal_mod->is_up_and_running(); }
+        { return this->mm.mod->is_up_and_running(); }
 
         void disconnect(time_t now) override
-        { this->mm.internal_mod->disconnect(now); }
+        { this->mm.mod->disconnect(now); }
 
         void display_osd_message(std::string const & message) override
-        { this->mm.internal_mod->display_osd_message(message); }
+        { this->mm.mod->display_osd_message(message); }
 
         Dimension get_dim() const override
         {
-            return this->mm.internal_mod->get_dim();
+            return this->mm.mod->get_dim();
         }
     };
 
 public:
-    gdi::GraphicApi & get_graphic_wrapper(gdi::GraphicApi & drawable) {
-        if (this->mod_osd.get_protected_rect().isempty()) {
-            return drawable;
+    gdi::GraphicApi & get_graphic_wrapper()
+    {
+        gdi::GraphicApi& gd = this->mod_osd.get_protected_rect().isempty()
+          ? static_cast<gdi::GraphicApi&>(this->front) : this->mod_osd;
+        if (this->rail_module_host_mod_ptr) {
+            return this->rail_module_host_mod_ptr->proxy_gd(gd);
         }
-        return this->mod_osd;
+        return gd;
     }
 
-    Callback & get_callback()
-    { return *this->mod; }
+    Callback & get_callback() noexcept
+    {
+        return *this->mod;
+    }
 
 private:
     struct sock_mod_barrier {};
@@ -773,7 +775,6 @@ public:
         if (!this->mod_osd.get_protected_rect().isempty()) {
             this->mod_osd.disable_osd();
         }
-        this->mod = this->internal_mod;
     }
 
     void osd_message(std::string message, bool is_disable_by_input)
@@ -787,10 +788,11 @@ public:
         }
     }
 
+private:
+    RailModuleHostMod* rail_module_host_mod_ptr = nullptr;
     Front & front;
     null_mod no_mod;
     ModOSD mod_osd;
-    mod_api * internal_mod = &no_mod;
     Random & gen;
     TimeObj & timeobj;
 
@@ -798,6 +800,7 @@ public:
 
     int old_target_module = MODULE_UNKNOWN;
 
+public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
@@ -831,14 +834,14 @@ public:
     }
 
     void remove_mod() override {
-        if (this->internal_mod != &this->no_mod) {
+        if (this->mod != &this->no_mod) {
             this->clear_osd_message();
 
-            delete this->internal_mod;
-            this->internal_mod = &this->no_mod;
+            delete this->mod;
             this->mod = &this->no_mod;
             this->rdpapi = nullptr;
             this->winapi = nullptr;
+            this->rail_module_host_mod_ptr = nullptr;
         }
     }
 
@@ -856,8 +859,8 @@ private:
 
         this->clear_osd_message();
 
-        this->internal_mod = mod.get();
         this->mod = mod.get();
+        this->rail_module_host_mod_ptr = nullptr;
 
         this->rdpapi = rdpapi;
         this->winapi = winapi;

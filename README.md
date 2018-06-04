@@ -61,6 +61,12 @@ And set environment variable (optionally)
 
 List with `sed -E '/\[ setvar/!d;s/.*\[ setvar ([^ ]+).*/\1/' jam/defines.jam`
 
+    export FFMPEG_INC_PATH=$HOME/ffmpeg/includes
+
+Or with `-s` to bjam
+
+    bjam -s FFMPEG_INC_PATH=$HOME/ffmpeg/includes ...
+
 
 Compilation
 ===========

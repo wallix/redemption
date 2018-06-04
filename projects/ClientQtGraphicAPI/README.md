@@ -84,7 +84,9 @@ Pour compiler avec la bibliothèque Qt5:
 
     bjam -s qt=5 client_rdp_Qt
 
+Note: Les includes de Qt peuvent être configurés avec les variables d'environnement `QT4_INCLUDE`, `QT5_INCLUDE` et `QT5_PHONON_INCLUDE` depuis le shell avec `export` ou avec `-s` de bjam.
 
+    bjam -s qt=5 -s QT4_INCLUDE=/usr/include/qt4 client_rdp_Qt
 
 ## Utilisation du client Qt RDP
 

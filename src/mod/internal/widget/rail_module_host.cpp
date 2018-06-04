@@ -44,6 +44,11 @@ RailModuleHost::~RailModuleHost()
     this->clear();
 }
 
+gdi::GraphicApi & RailModuleHost::proxy_gd(gdi::GraphicApi& gd)
+{
+    return this->module_host.proxy_gd(gd);
+}
+
 mod_api& RailModuleHost::get_managed_mod()
 {
     return this->module_host.get_managed_mod();

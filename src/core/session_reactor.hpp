@@ -1384,7 +1384,11 @@ namespace jln
             return this->reactor;
         }
 
-        void set_timeout(std::chrono::milliseconds ms) noexcept;
+        void set_timeout(std::chrono::milliseconds ms) noexcept
+        {
+            this->timer_data.delay = ms;
+            this->update_next_time();
+        }
 
         void update_next_time() noexcept;
 
@@ -1871,9 +1875,9 @@ namespace jln
         {
             friend class TopSharedPtr;
 
-            void update_timer(std::chrono::milliseconds ms) noexcept
+            void set_timeout(std::chrono::milliseconds ms) noexcept
             {
-                this->top().delay = ms;
+                this->top().set_timeout(ms);
             }
 
             void set_time(timeval const& tv) noexcept
@@ -2488,14 +2492,6 @@ namespace jln
         }
         this->top.disable_timeout();
         return R::Ready;
-    }
-
-
-    template<class... Ts>
-    void TopExecutor<Ts...>::set_timeout(std::chrono::milliseconds ms) noexcept
-    {
-        this->timer_data.delay = ms;
-        this->update_next_time();
     }
 
 

@@ -3,7 +3,11 @@
 #define BOOST_TEST_MODULE RED_TEST_MODULE
 
 #include <boost/test/auto_unit_test.hpp>
-#include <algorithm>
+
+#include "utils/sugar/underlying_cast.hpp"
+
+#include <iterator>
+
 
 // // fixed link error (API changed)
 // #ifdef __clang__
@@ -27,7 +31,7 @@ namespace redemption_unit_test__
         {
             return *this;
         }
-    }
+    };
 }
 
 # define FIXTURES_PATH "./tests/fixtures"
@@ -194,11 +198,7 @@ namespace redemption_unit_test__
             return sig.size();
         }
 
-        bool operator == (xarray const & other) const
-        {
-            return sig.size() == other.sig.size()
-                && std::equal(sig.begin(), sig.end(), other.sig.begin());
-        }
+        bool operator == (xarray const & other) const;
     };
 
     struct xarray_color
@@ -211,84 +211,11 @@ namespace redemption_unit_test__
             return sig.size();
         }
 
-        bool operator == (xarray_color const & other) const
-        {
-            this->res = std::mismatch(sig.begin(), sig.end(), other.sig.begin(), other.sig.end()).first - sig.begin();
-            return this->res == sig.size() && this->sig.size() == other.sig.size();
-        }
+        bool operator == (xarray_color const & other) const;
     };
 
-    inline std::ostream & operator<<(std::ostream & out, xarray_color const & x)
-    {
-        if (x.size() == 0){
-            return out << "\"\"\n";
-        }
-        char const * hex_table = "0123456789abcdef";
-        size_t q = 0;
-        size_t split = 16;
-        uint8_t tmpbuf[16];
-        size_t i = 0;
-        for (unsigned c : x.sig) {
-            if (q%split == 0){
-                if (x.sig.size()>split){
-                    out << "\n\"";
-                }
-                else {
-                    out << "\"";
-                }
-            }
-            if (q++ == x.res){ out << "\x1b[31m";}
-            out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
-            tmpbuf[i++] = c;
-            if (q%split == 0){
-                if (x.sig.size()>split) {
-                    out << "\" //";
-                    for (size_t v = 0 ; v < i ; v++){
-                        if ((tmpbuf[v] >= 0x20) && (tmpbuf[v] < 127)) {
-                            out << char(tmpbuf[v]);
-                        }
-                        else {
-                            out << ".";
-                        }
-                    }
-                    out << " !";
-                    i = 0;
-                }
-                else {
-                    out << "\"";
-                }
-            }
-        }
-        if (q%split != 0){
-            if (x.sig.size()>split) {
-                out << "\" //";
-                for (size_t v = 0 ; v < i ; v++){
-                    if ((tmpbuf[v] >= 0x20) && (tmpbuf[v] <= 127)) {
-                        out << char(tmpbuf[v]);
-                    }
-                    else {
-                        out << ".";
-                    }
-                }
-                out << " !";
-                i = 0;
-            }
-            else {
-                out << "\"";
-            }
-        }
-        return out << "\x1b[0m";
-    }
-
-    inline std::ostream & operator<<(std::ostream & out, xarray const & x)
-    {
-        out << "\"";
-        char const * hex_table = "0123456789abcdef";
-        for (unsigned c : x.sig) {
-            out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
-        }
-        return out << "\"";
-    }
+    std::ostream & operator<<(std::ostream & out, xarray_color const & x);
+    std::ostream & operator<<(std::ostream & out, xarray const & x);
 }
 
 #define RED_CHECK_OP_VAR_MESSAGE(op, v1, v2, src1, src2) \
@@ -357,27 +284,10 @@ namespace redemption_unit_test__
             return sig.size();
         }
 
-        bool operator == (xsarray const & other) const
-        {
-            return sig.size() == other.sig.size()
-                && std::equal(sig.begin(), sig.end(), other.sig.begin());
-        }
+        bool operator == (xsarray const & other) const;
     };
 
-    inline std::ostream & operator<<(std::ostream & out, xsarray const & x)
-    {
-        out << "\"";
-        char const * hex_table = "0123456789abcdef";
-        for (unsigned c : x.sig) {
-            if ((c >= 0x20) && (c <= 127)) {
-                out << char(c);
-            }
-            else {
-                out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
-            }
-        }
-        return out << "\"";
-    }
+    std::ostream & operator<<(std::ostream & out, xsarray const & x);
 }
 
 #define RED_CHECK_SMEM(mem, memref)                  \

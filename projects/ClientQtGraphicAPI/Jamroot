@@ -133,8 +133,7 @@ install install-bin
 obj config.o : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
 
 local obj_list = config.o ;
-# needed when linking with error.o in debug mode because of boost::stacktrace
-local lib_list = dl ;
+local lib_list = ;
 
 rule add_src ( src : requirements * )
 {
@@ -216,6 +215,7 @@ exe client_rdp :
     libphonon
 :
     $(EXE_DEPENDENCIES)
+    # disable moc warnings
     <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
     <toolset>clang:<cxxflags>-Wredundant-parens&&-Wno-redundant-parens
 ;

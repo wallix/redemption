@@ -29,10 +29,16 @@ class ReportMessageApi;
 
 class MMApi
 {
+protected:
+    mod_api* mod;
+
 public:
+    mod_api* get_mod()
+    {
+        return this->mod;
+    }
 
-    mod_api * mod;
-
+public:
     bool last_module;
     bool connected;
 

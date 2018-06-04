@@ -91,7 +91,7 @@ void ModuleManager::create_mod_vnc(
 
             client_execute.set_target_info(target_info.c_str());
 
-            this->set_mod(new RailModuleHostMod(
+            auto* host_mod = new RailModuleHostMod(
                 ini,
                 this->session_reactor,
                 front,
@@ -102,7 +102,9 @@ void ModuleManager::create_mod_vnc(
                 client_execute,
                 client_info.cs_monitor,
                 false
-            ));
+            );
+            this->set_mod(host_mod);
+            this->rail_module_host_mod_ptr = host_mod;
             LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
         }
         else {
