@@ -87,25 +87,25 @@ dir_nocoverage = set([
 file_nocoverage = set(glob.glob('tests/*.cpp'))
 
 sys_lib_assoc = dict((
-    ('png.h', 'png'),
-    ('krb5.h', 'krb5'),
-    ('gssapi/gssapi.h', 'gssapi_krb5'),
-    ('snappy-c.h', 'snappy'),
-    ('zlib.h', 'z'),
+    ('png.h', '<library>png'),
+    ('krb5.h', '<library>krb5'),
+    ('gssapi/gssapi.h', '<library>gssapi_krb5'),
+    ('snappy-c.h', '<library>snappy'),
+    ('zlib.h', '<library>z'),
 ))
 sys_lib_prefix = (
-    ('libavformat/', 'ffmpeg'),
-    ('openssl/', 'crypto'),
+    ('libavformat/', '<library>ffmpeg'),
+    ('openssl/', '<library>crypto'),
 )
 
 user_lib_assoc = dict((
-    ('program_options/program_options.hpp', 'program_options'),
+    ('program_options/program_options.hpp', '<library>program_options'),
     ('src/core/error.hpp', '<variant>debug:<library>dl <variant>san:<library>dl'), # Boost.stacktrace
-    ('openssl_crypto.hpp', 'crypto'),
-    ('openssl_tls.hpp', 'openssl'),
+    ('openssl_crypto.hpp', '<library>crypto'),
+    ('openssl_tls.hpp', '<library>openssl'),
 ))
 user_lib_prefix = (
-    ('ppocr/', 'ppocr'),
+    ('ppocr/', '<library>ppocr'),
 )
 
 def get_lib(inc, lib_assoc, lib_prefix):
@@ -430,8 +430,8 @@ def requirement_action(f, act):
 
 def get_requirements(f):
     a = []
-    for name in f.all_lib_deps:
-        a.append('<library>'+name)
+    for dep in f.all_lib_deps:
+        a.append(dep)
     requirement_action(f, lambda r: a.append(r))
     return a
 

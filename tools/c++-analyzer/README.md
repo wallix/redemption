@@ -27,11 +27,14 @@ alias bjam="ASAN_OPTIONS=detect_stack_use_after_return=1:detect_leaks=1 LSAN_OPT
 
 ## ASan
 
- - help: ASAN_OPTIONS=help=1 ./exe
+ - help: `ASAN_OPTIONS=help=1 ./exe`
+ - `export ASAN_OPTIONS=detect_stack_use_after_return=1:detect_leaks=1`
 
 ## UBSan
 
 http://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
+
+ -  `export UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1`
 
 ## Options
 
