@@ -203,7 +203,6 @@ private:
 
     SessionReactor& session_reactor;
     SessionReactor::GraphicFdPtr fd_event;
-    SessionReactor::TimerPtr clipboard_timer_event;
     SessionReactor::GraphicEventPtr wait_client_up_and_running_event;
 
 public:
@@ -273,27 +272,21 @@ public:
         std::snprintf(this->username, sizeof(this->username), "%s", username);
         std::snprintf(this->password, sizeof(this->password), "%s", password);
 
-        this->clipboard_timer_event = this->session_reactor.create_timer()
-        // "disable" the timer
-        .set_delay(std::chrono::hours(1))
-        .on_action([this](auto ctx){
-            this->check_timeout();
-            return ctx.ready();
-        });
-
         this->fd_event = session_reactor
         .create_graphic_fd_event(this->t.get_fd())
         .set_timeout(std::chrono::milliseconds(0))
         .on_exit(jln::propagate_exit())
-        // TODO VNC_PROTOCOL_ERROR
-        .on_action(jln::exit_with_error<ERR_VNC_CONNECTION_ERROR>() /* replaced by on_timeout action*/)
+        .on_action([this](auto ctx, gdi::GraphicApi& gd){
+            this->draw_event(ctx.get_current_time().tv_sec, gd);
+            return ctx.need_more_data();
+        })
         .on_timeout([this](auto ctx, gdi::GraphicApi& gd){
             gdi_clear_screen(gd, this->get_dim());
-            return ctx.disable_timeout()
-            .replace_action([this](auto ctx, gdi::GraphicApi& gd){
-                this->draw_event(ctx.get_current_time().tv_sec, gd);
-                return ctx.need_more_data();
-            }).ready();
+            // rearmed by clipboard
+            return ctx.disable_timeout().replace_timeout([this](auto ctx, gdi::GraphicApi&){
+                this->check_timeout();
+                return ctx.disable_timeout().ready();
+            });
         });
     } // Constructor
 
@@ -2072,7 +2065,7 @@ private:
             size_t chunk_size = length;
 
             this->clipboard_requesting_for_data_is_delayed = false;
-            this->clipboard_timer_event->set_delay(std::chrono::hours(1));
+            this->fd_event->disable_timeout();
             this->send_to_front_channel( channel_names::cliprdr
                                        , out_s.get_data()
                                        , length
@@ -2709,7 +2702,7 @@ private:
 
             // Can stop RDP to VNC clipboard infinite loop.
             this->clipboard_requesting_for_data_is_delayed = false;
-            this->clipboard_timer_event->set_delay(std::chrono::hours(1));
+            this->fd_event->disable_timeout();
         }
         else {
             LOG(LOG_WARNING, "mod_vnc::lib_clip_data: Clipboard Channel Redirection unavailable");
@@ -2901,7 +2894,7 @@ private:
                         chunk_size = length;
 
                         this->clipboard_requesting_for_data_is_delayed = false;
-                        this->clipboard_timer_event->set_delay(std::chrono::hours(1));
+                        this->fd_event->disable_timeout();
 
                         this->send_to_front_channel( channel_names::cliprdr
                                                    , out_s.get_data()
@@ -2919,7 +2912,9 @@ private:
                                     RDPECLIP::CB_FORMAT_DATA_REQUEST);
                             }
                             this->clipboard_requesting_for_data_is_delayed = true;
-                            this->clipboard_timer_event->set_delay(
+                            // arms timeout
+                            this->fd_event->enable_timeout();
+                            this->fd_event->set_timeout(
                                 std::chrono::duration_cast<std::chrono::milliseconds>(
                                     MINIMUM_TIMEVAL - timeval_diff));
                         }
