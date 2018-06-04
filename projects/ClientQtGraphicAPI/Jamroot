@@ -114,6 +114,8 @@ project redemption_qt_client
 
     <toolset>gcc:<cxxflags>-Wno-missing-include-dirs
 
+    <variant>debug:<library>dl <variant>san:<library>dl
+
    : default-build release
 ;
 

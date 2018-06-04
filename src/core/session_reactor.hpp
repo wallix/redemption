@@ -416,6 +416,12 @@ namespace jln
     }
 
 
+#ifdef IN_IDE_PARSER
+# define REDEMPTION_JLN_CONCEPT(C) C
+#else
+# define REDEMPTION_JLN_CONCEPT(C) auto
+#endif
+
     enum class NextMode { ChildToNext, CreateContinuation, };
 
     template<class... Ts>
@@ -427,11 +433,8 @@ namespace jln
         {}
 
         template<class... Us>
-    #ifdef IN_IDE_PARSER
-        detail::GroupExecutorBuilder_Concept create_sub_executor(Us&&...);
-    #else
-        auto create_sub_executor(Us&&...);
-    #endif
+        REDEMPTION_JLN_CONCEPT(detail::GroupExecutorBuilder_Concept)
+        create_sub_executor(Us&&...);
 
         R exception(Error const& e) noexcept;
         R ready() noexcept { return R::Ready; }
@@ -1995,12 +1998,6 @@ namespace jln
         }
     }
 
-
-#ifdef IN_IDE_PARSER
-# define REDEMPTION_JLN_CONCEPT(C) C
-#else
-# define REDEMPTION_JLN_CONCEPT(C) auto
-#endif
 
     template<class... Ts>
     class TopContainer

@@ -782,9 +782,6 @@ public:
 
     void out_copy_bytes(cbyte_ptr v, size_t n) {
         this->out_copy_bytes({v, n});
-//        assert(this->has_room(n));
-//        memcpy(this->p, v.to_u8p(), n);
-//        this->p += n;
     }
 
     // Output zero terminated string, non including trailing 0

@@ -3415,7 +3415,8 @@ class ServerDriveQueryInformationRequest {
 public:
     uint32_t FsInformationClass_ = 0;
 
-    struct { uint8_t const * p; std::size_t sz; } query_buffer = {nullptr, 0u};
+    struct { uint8_t const * p; std::size_t sz; } query_buffer
+      = {cbyte_ptr("").to_u8p(), 0u};
 
 public:
     ServerDriveQueryInformationRequest(uint32_t FsInformationClass)
