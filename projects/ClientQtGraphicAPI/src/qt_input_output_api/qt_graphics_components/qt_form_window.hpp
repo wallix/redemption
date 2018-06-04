@@ -704,7 +704,8 @@ public:
 
     void setAccountData() {
         if (this->_front) {
-            this->_front->setAccountData();
+            //TODO
+            //this->_front->setAccountData();
 
             if (this->_front->_save_password_account) {
                 this->main_panel->check_password_box();

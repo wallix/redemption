@@ -105,10 +105,12 @@ public:
         this->setUserProfil();
         this->setClientInfo();
         this->setCustomKeyConfig();
+        this->setAccountData();
 
         this->openWindowsData();
         std::fill(std::begin(this->info.order_caps.orderSupport), std::end(this->info.order_caps.orderSupport), 1);
         this->info.glyph_cache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_FULL;
+;
 
         //this->parse_options(argc, argv);
 
@@ -126,18 +128,21 @@ public:
             cli::option('u', "username").help("Set target session user name")
             .action(cli::arg([this](std::string s){
                 this->user_name = std::move(s);
+
                 this->connection_info_cmd_complete += NAME_GOT;
             })),
 
             cli::option('p', "password").help("Set target session user password")
             .action(cli::arg([this](std::string s){
                 this->user_password = std::move(s);
+
                 this->connection_info_cmd_complete += PWD_GOT;
             })),
 
             cli::option('i', "ip").help("Set target IP address")
             .action(cli::arg([this](std::string s){
                 this->target_IP = std::move(s);
+
                 this->connection_info_cmd_complete += IP_GOT;
             })),
 

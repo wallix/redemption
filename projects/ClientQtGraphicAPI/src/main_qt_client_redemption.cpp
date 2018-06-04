@@ -52,8 +52,8 @@ int main(int argc, char** argv)
     ClientIODiskAPI      * ioDisk_api    = &ioDisk_api_obj;
 
     //RDPVerbose::rdpdr_dump;           //to_verbose_flags(0x0);
-    //to_verbose_flags(0x0);           //RDPVerbose::graphics;
-    RDPVerbose verbose = RDPVerbose::cliprdr_dump | RDPVerbose::cliprdr;
+    //;           //RDPVerbose::graphics;
+    RDPVerbose verbose = to_verbose_flags(0x0);
 
     ClientRedemption client_qt( reactor, argv, argc, verbose
                               , graphic_qt
