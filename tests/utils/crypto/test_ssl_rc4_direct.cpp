@@ -4,4 +4,4 @@
 
 using SslRC4 = SslRC4_direct;
 
-#include "../../system/common/test_ssl_rc4.cpp"
+#include "../../system/common/test_ssl_rc4.hpp"

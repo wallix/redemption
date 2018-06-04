@@ -1502,7 +1502,9 @@ inline int get_joint_visibility_rect(
                 }
             }
 
-            out_min_image_frame_rect = Rect(0, 0, player.min_image_frame_dim.w, player.min_image_frame_dim.h);
+            out_min_image_frame_rect = Rect(0, 0,
+                std::min(player.min_image_frame_dim.w, player.info_width),
+                std::min(player.min_image_frame_dim.h, player.info_height));
             if (!out_min_image_frame_rect.isempty()) {
                 if (out_min_image_frame_rect.cx & 1) {
                     out_min_image_frame_rect.cx++;
