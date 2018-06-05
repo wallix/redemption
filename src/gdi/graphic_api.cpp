@@ -174,7 +174,7 @@ void server_draw_text(
             total_height = std::max(uint16_t(total_height), font_item->height);
         }
 
-        const Rect bk(x, y, total_width + 1, total_height + 1);
+        const Rect bk(x, y, total_width + 1 + 2, total_height + 1);
 
         RDPGlyphIndex glyphindex(
             cacheId,            // cache_id
