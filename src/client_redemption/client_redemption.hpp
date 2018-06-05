@@ -1474,6 +1474,7 @@ private:
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             (void)clip;
+            (void)order;
             if constexpr (with_log) {
                 order.log(LOG_INFO, clip);
             }

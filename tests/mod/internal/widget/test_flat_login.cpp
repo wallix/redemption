@@ -29,7 +29,7 @@
 #include "test_only/check_sig.hpp"
 #include "test_only/mod/fake_draw.hpp"
 
-const char * LOGON_MESSAGE = "Warning! Unauthorized access to this system is forbidden and will be prosecuted by law.";
+constexpr const char * LOGON_MESSAGE = "Warning! Unauthorized access to this system is forbidden and will be prosecuted by law.";
 
 RED_AUTO_TEST_CASE(TraceFlatLogin)
 {
