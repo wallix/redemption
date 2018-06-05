@@ -1,8 +1,8 @@
 _bjam_completion () {
   reply=($(
     sed -n -E '
-    /^ *(test-run|unit-test|exe|install|alias|lib|explicit) /{
-      s/^ *[^ ]+\s+([-_a-zA-Z0-9]+).*/\1/
+    /^ *(test-run|unit-test|exe|install|alias|lib|make) /{
+      s/^ *[^ ]+\s+([-_.a-zA-Z0-9]+).*/\1/
       H
       /_src$/!p
     }
@@ -18,4 +18,9 @@ _bjam_completion () {
   ))
 }
 
-compctl -K _bjam_completion -M 'r:|[_[:lower:]]=** r:|=*' bjam
+compctl \
+  -K _bjam_completion -M 'r:|[_[:lower:]]=** r:|=*' \
+  - 's[cxxflags=]' -k '(gcc clang)' \
+  -- bjam
+
+compctl -x 's[cxxflags=]' -k '(gcc clang)' aaa

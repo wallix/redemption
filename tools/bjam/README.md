@@ -13,6 +13,9 @@ bf () {
 pbf='REDEMPTION_LOG_PRINT=1 bf'
 
 source $REDEMPTION_PATH/tools/bjam/bjam_completion.bash
+
+# bf/pbf auto-completion
+compctl -K _bjam_completion -M 'r:|[_[:lower:]]=** r:|=*' bf
 ```
 
 # Zsh
@@ -30,4 +33,7 @@ bf () {
 pbf='REDEMPTION_LOG_PRINT=1 bf'
 
 source $REDEMPTION_PATH/tools/bjam/bjam_completion.zsh
+
+# bf/pbf auto-completion
+complete -F _bjam_completion bf pbf
 ```
