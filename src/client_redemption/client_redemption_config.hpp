@@ -32,7 +32,7 @@
 
 
 #include "utils/cli.hpp"
-
+#include "core/RDP/clipboard.hpp"
 #include "main/version.hpp"
 
 #include "client_redemption/client_redemption_api.hpp"
@@ -96,11 +96,17 @@ public:
         }
 
         // Set RDP CLIPRDR config
-        this->rDPClipboardConfig.ARBITRARY_SCALE = 40;
+        this->rDPClipboardConfig.channel_flags = CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
+        this->rDPClipboardConfig.arbitrary_scale = 40;
+        this->rDPClipboardConfig.total_format_list_pdu_size = 0;
+        this->rDPClipboardConfig.server_use_long_format_names = true;
+        this->rDPClipboardConfig.cCapabilitiesSets = 1;
+        this->rDPClipboardConfig.generalFlags = RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS;
         this->rDPClipboardConfig.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, std::string(RDPECLIP::FILEGROUPDESCRIPTORW));
         this->rDPClipboardConfig.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, std::string(RDPECLIP::FILECONTENTS));
         this->rDPClipboardConfig.add_format(RDPECLIP::CF_TEXT, std::string(""));
         this->rDPClipboardConfig.add_format(RDPECLIP::CF_METAFILEPICT, std::string(""));
+
 
         this->setUserProfil();
         this->setClientInfo();

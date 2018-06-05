@@ -693,7 +693,7 @@ public:
                     out_stream.out_uint16_le(TS_RAIL_ORDER_EXEC);
                     out_stream.out_uint16_le(12 + size_of_unicode_ExeOrFile + size_of_unicode_WorkingDir +size_of_unicode_Arguments);
 
-                    out_stream.out_uint16_le(TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY | TS_RAIL_EXEC_FLAG_APP_USER_MODEL_ID |  TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS);
+                    out_stream.out_uint16_le(TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY | TS_RAIL_EXEC_FLAG_APP_USER_MODEL_ID | TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS);
                     out_stream.out_uint16_le(size_of_unicode_ExeOrFile);
                     out_stream.out_uint16_le(size_of_unicode_WorkingDir);
                     out_stream.out_uint16_le(size_of_unicode_Arguments);

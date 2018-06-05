@@ -5260,6 +5260,78 @@ struct ClientDriveNotifyChangeDirectoryResponse {
 
 
 
+// 2.2.2.7 Server Core Capability Request (DR_CORE_CAPABILITY_REQ)
+//
+//  The server announces its capabilities and requests the same from the client.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             header                            |
+// +-------------------------------+-------------------------------+
+// |     numCapabilities           |            Padding            |
+// +-------------------------------+-------------------------------+
+// |                  CapabilityMessage (variable)                 |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// Header (4 bytes): An RDPDR_HEADER header. The Component field MUST be set to RDPDR_CTYP_CORE, and the PacketId field MUST be set to PAKID_CORE_SERVER_CAPABILITY.
+//
+// numCapabilities (2 bytes):  A 16-bit integer that specifies the number of items in the CapabilityMessage array.
+//
+// Padding (2 bytes): A 16-bit unsigned integer of padding. This field is unused and MUST be ignored.
+//
+// CapabilityMessage (variable): An array of CAPABILITY_SET structures (section 2.2.1.2.1). The number of capabilities is specified by the numCapabilities field
+
+struct ServerCoreCapabilityRequest {
+
+    uint16_t numCapabilities = 0;
+
+    ServerCoreCapabilityRequest() = default;
+
+    ServerCoreCapabilityRequest(uint16_t numCapabilities)
+      : numCapabilities(numCapabilities)
+    {}
+
+    void emit(OutStream & stream) const {
+        stream.out_uint16_le(this->numCapabilities);
+        stream.out_skip_bytes(2);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 4;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientDriveNotifyChangeDirectoryResponse (0): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+        this->numCapabilities = stream.in_uint16_le();
+    }
+
+    void log() const {
+        LOG(LOG_INFO, "     Client Core Capability Request:");
+        LOG(LOG_INFO, "          * numCapabilities = %u (2 bytes)", numCapabilities);
+        LOG(LOG_INFO, "          * Padding - (2 bytes) NOT USED");
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
+
 struct RdpDrStatus
 {
     struct DeviceIORequestData {
