@@ -521,8 +521,8 @@ namespace VNC {
 
                 const uint8_t * palette = uncompressed_data_buffer.in_uint8p(palette_size);
 
-                uint8_t pixels_per_byte = (subencoding>5)?2:(subencoding>2)?4:8;
-                size_t line_bytes_width = (subencoding>5)?((this->tile.cx+1)>>1)
+                uint8_t pixels_per_byte = (subencoding>4)?2:(subencoding>2)?4:8;
+                size_t line_bytes_width = (subencoding>4)?((this->tile.cx+1)>>1)
                                         : (subencoding>2)?((this->tile.cx+3)>>2)
                                         : (this->tile.cx+7)>>3;
 
@@ -541,7 +541,7 @@ namespace VNC {
                         for(uint8_t q = 0 ; q < pixels_per_byte ; q++){
                             if (x >= this->tile.cx) break;
                             uint8_t palette_index = 0;
-                            if (subencoding > 5){ // 5 .. 16
+                            if (subencoding > 4){ // 5 .. 16
 //                               LOG(LOG_INFO, "subencoding=%u q=%u", subencoding, q);
                                switch (q){
                                 case 0:
