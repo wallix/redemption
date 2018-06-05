@@ -40,6 +40,7 @@ using FlatLoginModVariables = vcfg::variables<
     vcfg::var<cfg::font,                                vcfg::accessmode::get>,
     vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
     vcfg::var<cfg::context::opt_message,                vcfg::accessmode::get>,
+    vcfg::var<cfg::context::login_message,              vcfg::accessmode::get>,
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
     vcfg::var<cfg::globals::authentication_timeout,     vcfg::accessmode::get>,
     vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
