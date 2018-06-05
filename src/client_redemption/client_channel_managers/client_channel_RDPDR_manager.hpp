@@ -305,14 +305,12 @@ public:
                             }
                         }
 
-                        if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                            if (driveEnable) {
+                        if (driveEnable) {
+                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                 LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Core Capability Request - Drive Capability Enable");
-                                //this->show_in_stream(0, chunk_series, chunk_size);
-                            } else {
-                                LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Core Capability Request - Drive Not Allowed");
-                                //this->show_in_stream(0, chunk_series, chunk_size);
                             }
+                        } else {
+                            LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Core Capability Request - Drive Not Allowed");
                         }
                         }
                         break;

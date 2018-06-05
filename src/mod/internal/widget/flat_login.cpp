@@ -179,7 +179,7 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
 
 
     const int cbloc_h = this->login_label.cy() + 20 + this->login_label.cy() + 20 + this->password_label.cy() +
-                            60 + this->login_message_label.cy();
+                            60 + this->login_message_label.cy() + 60;
 
     const int cbloc_x = (width  - cbloc_w) / 2;
     const int cbloc_y = (height - cbloc_h) / 2;
