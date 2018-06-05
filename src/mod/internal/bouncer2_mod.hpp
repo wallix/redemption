@@ -45,7 +45,7 @@ public:
     Bouncer2Mod(
          SessionReactor& session_reactor,
          FrontAPI & front, uint16_t width, uint16_t height,
-         Font const & font, bool dont_resize);
+         Font const & font);
 
     ~Bouncer2Mod() override;
 

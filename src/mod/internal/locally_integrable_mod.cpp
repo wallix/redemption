@@ -27,7 +27,7 @@ LocallyIntegrableMod::LocallyIntegrableMod(
     uint16_t front_width, uint16_t front_height,
     Font const & font, ClientExecute & client_execute,
     Theme const & theme)
-: InternalMod(front, front_width, front_height, font, theme, false)
+: InternalMod(front, front_width, front_height, font, theme)
 , client_execute(client_execute)
 , dvc_manager(false)
 , dc_state(DCState::Wait)
