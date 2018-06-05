@@ -117,16 +117,15 @@ SelectorMod::SelectorMod(
     this->ask_page();
     this->selector.rdp_input_invalidate(this->selector.get_rect());
 
-    this->started_copy_past_event = session_reactor.create_graphic_event(std::ref(*this))
-    .on_action(jln::one_shot([](gdi::GraphicApi&, SelectorMod& self){
-        self.copy_paste.ready(self.front);
+    this->started_copy_past_event = session_reactor.create_graphic_event()
+    .on_action(jln::one_shot([this](gdi::GraphicApi&){
+        this->copy_paste.ready(this->front);
     }));
 
-    this->sesman_event = session_reactor.create_sesman_event(std::ref(*this))
-    .on_action([](auto ctx, Inifile&, SelectorMod& self){
-        self.refresh_context();
-        return ctx.ready();
-    });
+    this->sesman_event = session_reactor.create_sesman_event()
+    .on_action(jln::always_ready([this](Inifile&){
+        this->refresh_context();
+    }));
 }
 
 void SelectorMod::ask_page()

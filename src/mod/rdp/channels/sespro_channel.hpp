@@ -492,11 +492,11 @@ public:
             }
 
             if (!this->session_probe_launch_timeout_timer_started) {
-                this->session_probe_timer = this->session_reactor.create_timer(std::ref(*this))
+                this->session_probe_timer = this->session_reactor.create_timer()
                 .set_delay(this->session_probe_effective_launch_timeout)
-                .on_action([](auto ctx, SessionProbeVirtualChannel& self){
-                    self.process_event_launch();
-                    return ctx.ready_to(self.session_probe_effective_launch_timeout);
+                .on_action([this](JLN_TIMER_CTX ctx){
+                    this->process_event_launch();
+                    return ctx.ready_to(this->session_probe_effective_launch_timeout);
                 });
                 this->session_probe_launch_timeout_timer_started = true;
             }
@@ -859,11 +859,11 @@ public:
                                 "Session Probe keep alive requested");
                     }
 
-                    this->session_probe_timer = this->session_reactor.create_timer(std::ref(*this))
+                    this->session_probe_timer = this->session_reactor.create_timer()
                     .set_delay(this->param_session_probe_keepalive_timeout)
-                    .on_action([](auto ctx, SessionProbeVirtualChannel& self){
-                        self.process_event_ready();
-                        return ctx.ready_to(self.param_session_probe_keepalive_timeout);
+                    .on_action([this](auto ctx){
+                        this->process_event_ready();
+                        return ctx.ready_to(this->param_session_probe_keepalive_timeout);
                     });
                 }
 

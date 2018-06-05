@@ -478,16 +478,16 @@ public:
 
             this->currently_without_window = true;
 
-            this->waiting_screen_event = this->session_reactor.create_timer(std::ref(*this))
+            this->waiting_screen_event = this->session_reactor.create_timer()
             .set_delay(this->rail_disconnect_message_delay)
             // this->process_event()
-            .on_action(jln::one_shot([](RemoteProgramsSessionManager& self){
-                if (self.currently_without_window
-                 && (DialogBoxType::NONE == self.dialog_box_type)
-                 && self.has_previous_window
+            .on_action(jln::one_shot([this]{
+                if (this->currently_without_window
+                 && (DialogBoxType::NONE == this->dialog_box_type)
+                 && this->has_previous_window
                 ) {
-                    self.dialog_box_create(DialogBoxType::WAITING_SCREEN);
-                    self.waiting_screen_draw(0);
+                    this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
+                    this->waiting_screen_draw(0);
                 }
             }));
         }

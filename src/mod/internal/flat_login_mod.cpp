@@ -70,17 +70,17 @@ FlatLoginMod::FlatLoginMod(
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
-        this->timeout_timer = session_reactor.create_timer(std::ref(session_reactor))
+        this->timeout_timer = session_reactor.create_timer()
         .set_delay(vars.get<cfg::globals::authentication_timeout>())
-        .on_action([](auto ctx, SessionReactor& session_reactor){
-            session_reactor.set_next_event(BACK_EVENT_STOP);
+        .on_action([](JLN_TIMER_CTX ctx){
+            ctx.get_reactor().set_next_event(BACK_EVENT_STOP);
             return ctx.terminate();
         });
     }
 
-    this->started_copy_past_event = session_reactor.create_graphic_event(std::ref(*this))
-    .on_action(jln::one_shot([](gdi::GraphicApi&, FlatLoginMod& self){
-        self.copy_paste.ready(self.front);
+    this->started_copy_past_event = session_reactor.create_graphic_event()
+    .on_action(jln::one_shot([this](gdi::GraphicApi&){
+        this->copy_paste.ready(this->front);
     }));
 }
 
