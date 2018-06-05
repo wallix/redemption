@@ -6977,7 +6977,7 @@ RED_AUTO_TEST_CASE(TestZrlePackedPalette5)
     InStream buffer(PackedPalette5, sizeof(PackedPalette5));
     encoder.rle_test_bypass(buffer, drawable);
     RED_CHECK_EQUAL(0, buffer.in_remain());
-    drawable.save_to_png("vnc5.png");
+//    drawable.save_to_png("vnc5.png");
     char message[4096] = {};
     if (!redemption_unit_test__::check_sig(drawable.gd, message,
         "\xd7\x7d\xbb\xa7\xcb\xed\x89\x3d\xa8\x61\xa6\xeb\x90\xd8\xee\x03\xa5\x3b\x0b\x4a")){
