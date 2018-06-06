@@ -121,6 +121,9 @@ public:
     uint16_t protocol_minor_version;
     uint32_t next_file_id = 0;
 
+    std::unique_ptr<uint8_t[]> ReadData;
+    int last_read_data_portion_length;
+
     uint32_t get_file_id() {
         this->next_file_id++;
         return this->next_file_id;
@@ -168,6 +171,7 @@ public:
       , drives_created(false)
       , protocol_minor_version(0)
       , next_file_id(0)
+      , last_read_data_portion_length(0)
       , server_capability_number(0)
     {
         this->fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE]   = config.enable_printer_type;
@@ -774,51 +778,35 @@ public:
                                 rdpdr::DeviceReadRequest drr;
                                 drr.receive(chunk);
 
-                                std::unique_ptr<uint8_t[]> ReadData;
-                                int file_size(drr.Length());
-                                int offset(drr.Offset());
-
                                 std::string file_to_tread = this->paths.at(id);
-
-                                std::ifstream ateFile(file_to_tread, std::ios::binary| std::ios::ate);
-                                if(ateFile.is_open()) {
-                                    if (file_size > ateFile.tellg()) {
-                                        file_size = ateFile.tellg();
-                                    }
-                                    ateFile.close();
-
-                                    std::ifstream inFile(file_to_tread, std::ios::in | std::ios::binary);
-                                    if(inFile.is_open()) {
-                                        ReadData = std::make_unique<uint8_t[]>(file_size);
-                                        inFile.read(reinterpret_cast<char *>(ReadData.get()), offset);
-                                        inFile.close();
-                                    } else {
-                                        deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                        LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_tread.c_str());
-                                    }
-                                } else {
+                                int portion_length = 0;
+                                int file_size = this->impl_io_disk->get_file_size(file_to_tread.c_str());
+                                if (file_size < 0) {
                                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                     LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_tread.c_str());
+                                } else {
+
+                                    portion_length = std::min(static_cast<int>(drr.Length()), file_size);
+                                    int offset(drr.Offset());
+
+                                    if (this->last_read_data_portion_length != portion_length) {
+                                        this->ReadData = std::make_unique<uint8_t[]>(portion_length);
+                                        this->last_read_data_portion_length = portion_length;
+                                    }
+
+                                    this->impl_io_disk->read_data(file_to_tread, offset, {ReadData.get(), static_cast<size_t>(portion_length)});
                                 }
 
-//                                 uint32_t file_size{drr.Length()};
-//                                 uint64_t offset{drr.Offset()};
-//                                 //std::unique_ptr<uint8_t[]> ReadData = std::make_unique<uint8_t[]>(file_size);
-//                                 std::string file_to_tread = this->paths.at(id);
-//
-//                                 deviceIOResponse.set_IoStatus(this->impl_io_disk->read_data(
-//                                     file_to_tread, offset, /*{ReadData.get(), file_size}*/, true));
-
                                 deviceIOResponse.emit(out_stream);
-                                rdpdr::DeviceReadResponse deviceReadResponse(file_size);
+                                rdpdr::DeviceReadResponse deviceReadResponse(portion_length);
                                 deviceReadResponse.emit(out_stream);
 
                                 this->process_client_clipboard_out_data( channel_names::rdpdr
-                                                                    , 20 + file_size
+                                                                    , 20 + portion_length
                                                                     , out_stream
                                                                     , out_stream.get_capacity() - 20
                                                                     , ReadData.get()
-                                                                    , file_size
+                                                                    , portion_length
                                                                     , 0);
                                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                     LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Read Response");
