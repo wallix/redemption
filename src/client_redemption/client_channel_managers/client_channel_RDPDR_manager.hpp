@@ -774,13 +774,40 @@ public:
                                 rdpdr::DeviceReadRequest drr;
                                 drr.receive(chunk);
 
-                                uint32_t file_size{drr.Length()};
-                                uint64_t offset{drr.Offset()};
-                                std::unique_ptr<uint8_t[]> ReadData = std::make_unique<uint8_t[]>(file_size);
+                                std::unique_ptr<uint8_t[]> ReadData;
+                                int file_size(drr.Length());
+                                int offset(drr.Offset());
+
                                 std::string file_to_tread = this->paths.at(id);
 
-                                deviceIOResponse.set_IoStatus(this->impl_io_disk->read_data(
-                                    file_to_tread, offset, {ReadData.get(), file_size}, true));
+                                std::ifstream ateFile(file_to_tread, std::ios::binary| std::ios::ate);
+                                if(ateFile.is_open()) {
+                                    if (file_size > ateFile.tellg()) {
+                                        file_size = ateFile.tellg();
+                                    }
+                                    ateFile.close();
+
+                                    std::ifstream inFile(file_to_tread, std::ios::in | std::ios::binary);
+                                    if(inFile.is_open()) {
+                                        ReadData = std::make_unique<uint8_t[]>(file_size);
+                                        inFile.read(reinterpret_cast<char *>(ReadData.get()), offset);
+                                        inFile.close();
+                                    } else {
+                                        deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
+                                        LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_tread.c_str());
+                                    }
+                                } else {
+                                    deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
+                                    LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_tread.c_str());
+                                }
+
+//                                 uint32_t file_size{drr.Length()};
+//                                 uint64_t offset{drr.Offset()};
+//                                 //std::unique_ptr<uint8_t[]> ReadData = std::make_unique<uint8_t[]>(file_size);
+//                                 std::string file_to_tread = this->paths.at(id);
+//
+//                                 deviceIOResponse.set_IoStatus(this->impl_io_disk->read_data(
+//                                     file_to_tread, offset, /*{ReadData.get(), file_size}*/, true));
 
                                 deviceIOResponse.emit(out_stream);
                                 rdpdr::DeviceReadResponse deviceReadResponse(file_size);
