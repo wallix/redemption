@@ -800,7 +800,7 @@ class Sesman():
                             self.send_data({
                                   u'login': MAGICASK
                                 , u'selector_lines_per_page' : u'0'
-                                , u'login_message' : cut_message(self.login_message)
+                                , u'login_message' : cut_message(self.login_message, 8192)
                                 , u'module' : u'login'})
                             Logger().info(u"Logout")
                             return None, u"Logout"
@@ -862,7 +862,7 @@ class Sesman():
 
             else:
                 self.send_data({u'login': MAGICASK,
-                                u'login_message' : cut_message(self.login_message),
+                                u'login_message' : cut_message(self.login_message, 8192),
                                 u'module': 'login'
                                 })
                 return None, u"Logout"
@@ -1243,7 +1243,7 @@ class Sesman():
                 data_to_send = { u'login': self.shared.get(u'login') if not current_wab_login.startswith('_OTP_') else MAGICASK
                                , u'password': MAGICASK
                                , u'module' : u'login'
-                               , u'login_message' : cut_message(self.login_message)
+                               , u'login_message' : cut_message(self.login_message, 8192)
                                , u'language' : SESMANCONF.language
                                , u'opt_message' : TR(u'authentication_failed') if self.shared.get(u'password') != MAGICASK else u'' }
                 self.send_data(data_to_send)
