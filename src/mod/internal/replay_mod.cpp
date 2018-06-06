@@ -163,10 +163,10 @@ ReplayMod::ReplayMod(
         this->front_height = this->internal_reader->reader.info_height;
     }
 
-    this->timer = session_reactor.create_graphic_timer(std::ref(*this))
+    this->timer = session_reactor.create_graphic_timer()
     .set_delay(std::chrono::seconds(0))
-    .on_action([](auto ctx, gdi::GraphicApi& gd, ReplayMod& self){
-        self.draw_event(0, gd);
+    .on_action([this](auto ctx, gdi::GraphicApi& gd){
+        this->draw_event(0, gd);
         return ctx.ready_at(ctx.get_current_time());
     });
 }

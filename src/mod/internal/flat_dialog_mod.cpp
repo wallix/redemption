@@ -58,17 +58,17 @@ FlatDialogMod::FlatDialogMod(
     }
 
     if (vars.get<cfg::debug::pass_dialog_box>()) {
-        this->timeout_timer = session_reactor.create_timer(std::ref(*this))
+        this->timeout_timer = session_reactor.create_timer()
         .set_delay(std::chrono::milliseconds(vars.get<cfg::debug::pass_dialog_box>()))
-        .on_action([](auto ctx, FlatDialogMod& self){
-            self.accepted();
+        .on_action([this](JLN_TIMER_CTX ctx){
+            this->accepted();
             return ctx.terminate();
         });
     }
 
-    this->started_copy_past_event = session_reactor.create_graphic_event(std::ref(*this))
-    .on_action(jln::one_shot([](gdi::GraphicApi&, FlatDialogMod& self){
-        self.copy_paste.ready(self.front);
+    this->started_copy_past_event = session_reactor.create_graphic_event()
+    .on_action(jln::one_shot([this](gdi::GraphicApi&){
+        this->copy_paste.ready(this->front);
     }));
 }
 

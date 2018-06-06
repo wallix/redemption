@@ -276,14 +276,15 @@ public:
         .create_graphic_fd_event(this->t.get_fd())
         .set_timeout(std::chrono::milliseconds(0))
         .on_exit(jln::propagate_exit())
-        .on_action([this](auto ctx, gdi::GraphicApi& gd){
+        .on_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
             this->draw_event(ctx.get_current_time().tv_sec, gd);
             return ctx.need_more_data();
         })
-        .on_timeout([this](auto ctx, gdi::GraphicApi& gd){
+        .on_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi& gd){
             gdi_clear_screen(gd, this->get_dim());
             // rearmed by clipboard
-            return ctx.disable_timeout().replace_timeout([this](auto ctx, gdi::GraphicApi&){
+            return ctx.disable_timeout()
+            .replace_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi&){
                 this->check_timeout();
                 return ctx.disable_timeout().ready();
             });

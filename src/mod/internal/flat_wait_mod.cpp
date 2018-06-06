@@ -53,16 +53,15 @@ FlatWaitMod::FlatWaitMod(
     this->screen.set_widget_focus(&this->wait_widget, Widget::focus_reason_tabkey);
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
-    this->timeout_timer = session_reactor.create_timer(std::ref(*this))
+    this->timeout_timer = session_reactor.create_timer()
     .set_delay(std::chrono::seconds(600))
-    .on_action([](auto ctx, FlatWaitMod& self){
-        self.refused();
-        return ctx.terminate();
-    });
+    .on_action(jln::one_shot([this]{
+        this->refused();
+    }));
 
-    this->started_copy_past_event = session_reactor.create_graphic_event(std::ref(*this))
-    .on_action(jln::one_shot([](gdi::GraphicApi&, FlatWaitMod& self){
-        self.copy_paste.ready(self.front);
+    this->started_copy_past_event = session_reactor.create_graphic_event()
+    .on_action(jln::one_shot([this](gdi::GraphicApi&){
+        this->copy_paste.ready(this->front);
     }));
 }
 

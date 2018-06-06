@@ -32,10 +32,10 @@ except Exception, e:
     tracelog = traceback.format_exc(e)
     try:
         from fake.proxyengine import *
+        LOCAL_TRACE_PATH_RDP = u'/var/wab/recorded/rdp/'
         Logger().info("================================")
         Logger().info("==== Load Fake PROXY ENGINE ====")
         Logger().info("================================")
-        LOCAL_TRACE_PATH_RDP = u'/var/wab/recorded/rdp/'
     except Exception, e:
         # Logger().info("FAKE LOADING FAILED>>>>>> %s" % traceback.format_exc(e))
         Logger().info("WABENGINE LOADING FAILED>>>>>> %s" % tracelog)
@@ -127,7 +127,7 @@ class Engine(object):
 
         self.service = None
 
-        self.checktarget_status_cache = None
+        self.checktarget_cache = None
         self.checktarget_infos_cache = None
 
     def _post_authentication(self):
@@ -648,7 +648,7 @@ class Engine(object):
 
         self.service = None
 
-        self.checktarget_status_cache = None
+        self.checktarget_cache = None
         self.checktarget_infos_cache = None
 
     def get_proxy_user_rights(self, protocols, target_device, **kwargs):
@@ -1363,15 +1363,15 @@ class Engine(object):
         return self.wabengine.read_session_parameters(self.session_id, key=key)
 
     def check_target(self, target, pid=None, request_ticket=None):
-        if self.checktarget_status_cache is APPROVAL_ACCEPTED:
+        if self.checktarget_cache == (APPROVAL_ACCEPTED, target['target_uid']):
             # Logger().info("** CALL Check_target SKIPED**")
-            return self.checktarget_status_cache, self.checktarget_infos_cache
+            return self.checktarget_cache[0], self.checktarget_infos_cache
         Logger().debug("** CALL Check_target ** ticket=%s" %
-                      request_ticket)
+                       request_ticket)
         status, infos = self.checkout.check_target(target, request_ticket)
         Logger().debug("** END Check_target ** returns => "
                        "status=%s, info fields=%s" % (status, infos.keys()))
-        self.checktarget_status_cache = status
+        self.checktarget_cache = (status, target['target_uid'])
         self.checktarget_infos_cache = infos
         # Logger().info("returns => status=%s, info=%s" % (status, infos))
         deconnection_time = infos.get("deconnection_time")

@@ -154,32 +154,25 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
     dim = this->login_edit.get_optimal_dim();
     this->login_edit.set_wh((width >= 420) ? 400 : width - 20, dim.h);
 
+    const uint16_t offset_y = this->login_edit.cy();
+
     this->password_edit.use_title(width < 640);
     dim = this->password_edit.get_optimal_dim();
     this->password_edit.set_wh((width >= 420) ? 400 : width - 20, dim.h);
 
     const int cbloc_w = std::max(this->login_label.cx()    + 10 + this->login_edit.cx(),
-                                    this->password_label.cx() + 10 + this->password_edit.cx());
+                                 this->password_label.cx() + 10 + this->password_edit.cx());
 
 
     dim = this->login_message_label.get_optimal_dim();
-    if (this->fixed_format_login_message) {
         this->login_message_label.set_wh(dim);
-    }
-    else {
-        std::string formatted_login_message;
-        gdi::MultiLineTextMetrics mltm(this->font, this->login_message.c_str(),
-            cbloc_w - 20, formatted_login_message);
-        this->login_message_label.set_wh(cbloc_w, std::max(mltm.height, int(dim.h)) + dim.h);
-        this->login_message_label.set_text(formatted_login_message.c_str());
-    }
 
     dim = this->error_message_label.get_optimal_dim();
     this->error_message_label.set_wh(dim);
 
 
-    const int cbloc_h = this->login_label.cy() + 20 + this->login_label.cy() + 20 + this->password_label.cy() +
-                            60 + this->login_message_label.cy();
+    const int cbloc_h = this->login_label.cy() + offset_y + this->login_label.cy() + offset_y + this->password_label.cy() +
+                            60 + this->login_message_label.cy() + 60;
 
     const int cbloc_x = (width  - cbloc_w) / 2;
     const int cbloc_y = (height - cbloc_h) / 2;
@@ -187,10 +180,10 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
     this->error_message_label.set_xy(left + cbloc_x, top + cbloc_y);
 
     this->login_label.set_xy(left + cbloc_x,
-                                this->error_message_label.y() + this->error_message_label.cy() + 20);
+                             this->error_message_label.y() + this->error_message_label.cy() + offset_y + 4);
 
     this->password_label.set_xy(left + cbloc_x,
-                                this->login_label.y() + this->login_label.cy() + 20);
+                                this->login_label.y() + this->error_message_label.cy() + offset_y + 4);
 
     const int labels_w = std::max(this->password_label.cx(), this->login_label.cx());
 
@@ -204,7 +197,7 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
     this->error_message_label.set_wh(this->login_edit.cx(), dim.h);
 
 
-    this->login_message_label.set_xy(left + cbloc_x, this->password_label.y() + this->password_label.cy() + 60);
+    this->login_message_label.set_xy(left + (width - this->login_message_label.cx()) / 2, this->password_label.y() + this->password_label.cy() + 60);
 
 
     dim = this->version_label.get_optimal_dim();

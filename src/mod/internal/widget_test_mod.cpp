@@ -53,7 +53,7 @@ struct WidgetTestMod::WidgetTestModPrivate
 WidgetTestMod::WidgetTestMod(
     SessionReactor& session_reactor,
     FrontAPI & front, uint16_t width, uint16_t height, Font const & font)
-: InternalMod(front, width, height, font, Theme{}, false)
+: InternalMod(front, width, height, font, Theme{})
 , d(std::make_unique<WidgetTestModPrivate>(session_reactor, *this))
 {
     front.server_resize(width, height, 8);

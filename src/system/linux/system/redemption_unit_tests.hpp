@@ -334,6 +334,14 @@ namespace redemption_unit_test__
     ::unlink(filename);                                          \
 }
 
+#define RED_CHECK_FILE_SIZE_AND_CLEAN3(filename, size1, size2, size3) { \
+    size_t fsize = filesize(filename);                                  \
+    if (fsize != size2 && fsize != size3){                              \
+        RED_CHECK_EQUAL(size1, fsize);                                  \
+    }                                                                   \
+    ::unlink(filename);                                                 \
+}
+
 // require #include "test_only/get_file_contents.hpp"
 #define RED_CHECK_FILE_CONTENTS(filename, contents)      \
     RED_CHECK_EQ(get_file_contents(filename), contents); \

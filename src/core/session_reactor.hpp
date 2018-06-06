@@ -618,6 +618,24 @@ namespace jln
         }
     };
 
+#ifdef IN_IDE_PARSER
+# define JLN_GROUP_CTX ::jln::GroupContext<>
+# define JLN_TOP_CTX ::jln::TopContext < ::jln::detail::tuple<>>
+# define JLN_TIMER_CTX ::jln::TimerContext<>
+# define JLN_ACTION_CTX ::jln::ActionContext<>
+# define JLN_EXIT_CTX ::jln::ExitContext<>
+# define JLN_GROUP_TIMER_CTX ::jln::GroupTimerContext<>
+# define JLN_TOP_TIMER_CTX ::jln::TopTimerContext < ::jln::detail::tuple<>>
+#else
+# define JLN_GROUP_CTX auto
+# define JLN_TOP_CTX auto
+# define JLN_TIMER_CTX auto
+# define JLN_ACTION_CTX auto
+# define JLN_EXIT_CTX auto
+# define JLN_GROUP_TIMER_CTX auto
+# define JLN_TOP_TIMER_CTX auto
+#endif
+
     template<class... Ts>
     struct TimerData
     {
@@ -1198,6 +1216,18 @@ namespace jln
         Ctx& ctx;
         unsigned& i;
     };
+
+#ifdef IN_IDE_PARSER
+    namespace detail { struct UnknownCtx : ActionContext<> {}; }
+# define JLN_FUNCSEQUENCER_CTX ::jln::FuncSequencerCtx< \
+    ::jln::detail::UnknownCtx,                          \
+    ::jln::detail::named_indexed_pack<                  \
+        ::jln::detail::named_indexed<                   \
+            ::std::integral_constant<std::size_t, 0>,   \
+            ::jln::detail::unamed>>>
+#else
+# define JLN_FUNCSEQUENCER_CTX auto
+#endif
 
     namespace detail
     {

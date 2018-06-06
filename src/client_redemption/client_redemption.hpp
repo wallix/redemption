@@ -610,9 +610,9 @@ public:
 
             this->mod = this->unique_mod.get();
 
-            this->clear_screen_event = this->session_reactor.create_graphic_event(std::ref(*this))
-            .on_action(jln::one_shot([](gdi::GraphicApi& gd, ClientRedemption& self){
-                gdi_clear_screen(gd, self.mod->get_dim());
+            this->clear_screen_event = this->session_reactor.create_graphic_event()
+            .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
+                gdi_clear_screen(gd, this->mod->get_dim());
             }));
         } catch (const Error &) {
             this->mod = nullptr;
@@ -1474,6 +1474,7 @@ private:
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             (void)clip;
+            (void)order;
             if constexpr (with_log) {
                 order.log(LOG_INFO, clip);
             }
