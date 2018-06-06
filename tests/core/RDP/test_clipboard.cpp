@@ -21,7 +21,7 @@
 #define RED_TEST_MODULE TestGCC
 #include "system/redemption_unit_tests.hpp"
 
-
+#include "utils/hexdump.hpp"
 #include "core/RDP/clipboard.hpp"
 
 
@@ -417,24 +417,50 @@ RED_AUTO_TEST_CASE(TestFileDescriptor)
 RED_AUTO_TEST_CASE(TestFormatListPDU) {
 
     // inData
-    std::string name1("F\0i\0l\0e\0C\0o\0n\0t\0e\0n\0t\0s\0\0\0", 26);
-    std::string name2("F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0", 42);
+    std::string name1("FileContents");
+    std::string name2("FileGroupDescriptorW");
     std::string name3("\0\0", 2);
-
-    const uint16_t * names[] = {reinterpret_cast<const uint16_t *>(name1.data()),
-                                reinterpret_cast<const uint16_t *>(name2.data()),
-                                reinterpret_cast<const uint16_t *>(name3.data()),
-                                reinterpret_cast<const uint16_t *>(name3.data()),
-                                reinterpret_cast<const uint16_t *>(name3.data())};
-    std::size_t size = 5;
-
-    uint32_t IDs[] = {48026, 48025, RDPECLIP::CF_UNICODETEXT, RDPECLIP::CF_TEXT, RDPECLIP::CF_METAFILEPICT};
-    size_t sizes[] = {26, 42, 2, 2, 2};
 
     // Init stream format list PDU long name
     StaticOutStream<1024> out_stream;
-    RDPECLIP::FormatListPDU_LongName format_list_pdu_long(IDs, names, sizes, size);
-    format_list_pdu_long.emit(out_stream);
+    RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_LIST, 0, 0);
+
+    RDPECLIP::FormatListPDU_LongName format_list_pdu_long0(48026,
+                                                           name1.c_str(),
+                                                           name1.size());
+    header.dataLen_ += format_list_pdu_long0.formatDataNameUTF16Len + 4;
+    RDPECLIP::FormatListPDU_LongName format_list_pdu_long1(48025,
+                                                           name2.c_str(),
+                                                           name2.size());
+    header.dataLen_ += format_list_pdu_long1.formatDataNameUTF16Len + 4;
+    RDPECLIP::FormatListPDU_LongName format_list_pdu_long2(RDPECLIP::CF_UNICODETEXT,
+                                                           name3.c_str(),
+                                                           name3.size());
+    header.dataLen_ += format_list_pdu_long2.formatDataNameUTF16Len + 4;
+    RDPECLIP::FormatListPDU_LongName format_list_pdu_long3(RDPECLIP::CF_TEXT,
+                                                           name3.c_str(),
+                                                           name3.size());
+    header.dataLen_ += format_list_pdu_long3.formatDataNameUTF16Len + 4;
+    RDPECLIP::FormatListPDU_LongName format_list_pdu_long4(RDPECLIP::CF_METAFILEPICT,
+                                                           name3.c_str(),
+                                                           name3.size());
+    header.dataLen_ += format_list_pdu_long4.formatDataNameUTF16Len + 4;
+
+    header.emit(out_stream);
+    format_list_pdu_long0.emit(out_stream);
+    format_list_pdu_long1.emit(out_stream);
+    format_list_pdu_long2.emit(out_stream);
+    format_list_pdu_long3.emit(out_stream);
+    format_list_pdu_long4.emit(out_stream);
+
+//     header.log();
+//     format_list_pdu_long0.log();
+//     format_list_pdu_long1.log();
+//     format_list_pdu_long2.log();
+//     format_list_pdu_long3.log();
+//     format_list_pdu_long4.log();
+//
+//     hexdump(out_stream.get_data(), out_stream.get_offset(), 16);
 
 
     const char exp_data[] =
@@ -445,6 +471,8 @@ RED_AUTO_TEST_CASE(TestFormatListPDU) {
         "\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00\x72\x00" //s.c.r.i.p.t.o.r.
         "\x57\x00\x00\x00\x0d\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00" //W...............
         "\x03\x00\x00\x00\x00\x00";
+
+
 
     std::string expected(reinterpret_cast<const char *>(exp_data), sizeof(exp_data)-1);
     std::string out_data(reinterpret_cast<char *>(out_stream.get_data()), out_stream.get_offset());

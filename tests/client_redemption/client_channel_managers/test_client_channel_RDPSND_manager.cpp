@@ -32,7 +32,8 @@
 
 RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
 {
-    FakeClient client;
+    SessionReactor session_reactor;
+    FakeClient client(session_reactor);
     FakeClientOutPutSound snd_io;
     ClientChannelRDPSNDManager manager(to_verbose_flags(0x0), &client, &snd_io);
 
@@ -44,11 +45,28 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
     safsvh.emit(out_ServerAudioFormatsandVersion);
     InStream chunk_ServerAudioFormatsandVersion(out_ServerAudioFormatsandVersion.get_data(), out_ServerAudioFormatsandVersion.get_offset());
 
+
+
     manager.receive(chunk_ServerAudioFormatsandVersion);
     RED_CHECK_EQUAL(client.get_total_stream_produced(), 2);
 
-    RED_CHECK_EQUAL(client.get_next_pdu_type(), rdpsnd::SNDC_FORMATS);
-    RED_CHECK_EQUAL(client.get_next_pdu_type(), rdpsnd::SNDC_QUALITYMODE);
+    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
+    RED_REQUIRE(pdu_data);
+    InStream stream_formats(pdu_data->data, pdu_data->size);
+    rdpsnd::RDPSNDPDUHeader header_formats;
+    header_formats.receive(stream_formats);
+    RED_CHECK_EQUAL(header_formats.msgType, rdpsnd::SNDC_FORMATS);
+
+
+
+
+    pdu_data = client.stream();
+    RED_REQUIRE(pdu_data);
+    InStream stream_qualitymode(pdu_data->data, pdu_data->size);
+    rdpsnd::RDPSNDPDUHeader header_qualitymode;
+    header_qualitymode.receive(stream_qualitymode);
+    RED_CHECK_EQUAL(header_qualitymode.msgType, rdpsnd::SNDC_QUALITYMODE);
+
 
     StaticOutStream<512> out_TrainingPDU;
     rdpsnd::RDPSNDPDUHeader header_TrainingPDU(rdpsnd::SNDC_TRAINING, 4);
@@ -60,16 +78,24 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
     manager.receive(chunk_TrainingPDU);
     RED_CHECK_EQUAL(client.get_total_stream_produced(), 3);
 
-    RED_CHECK_EQUAL(client.get_next_pdu_type(), rdpsnd::SNDC_TRAINING);
+    pdu_data = client.stream();
+    RED_REQUIRE(pdu_data);
+    InStream stream_clientTraining(pdu_data->data, pdu_data->size);
+    rdpsnd::RDPSNDPDUHeader header_clientTraining;
+    header_clientTraining.receive(stream_clientTraining);
+    RED_CHECK_EQUAL(header_clientTraining.msgType, rdpsnd::SNDC_TRAINING);
 }
 
 
 
 RED_AUTO_TEST_CASE(TestRDPSNDChannelWave)
 {
-    FakeClient client;
+    SessionReactor session_reactor;
+    FakeClient client(session_reactor);
     FakeClientOutPutSound snd_io;
     ClientChannelRDPSNDManager manager(to_verbose_flags(0x0), &client, &snd_io);
+
+
 
     StaticOutStream<512> out_WaveInfoPDU;
     rdpsnd::RDPSNDPDUHeader header(rdpsnd::SNDC_WAVE, 12);
@@ -87,7 +113,12 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelWave)
 
     RED_CHECK_EQUAL(client.get_total_stream_produced(), 1);
 
-    RED_CHECK_EQUAL(client.get_next_pdu_type(), rdpsnd::SNDC_WAVECONFIRM);
+    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
+    RED_REQUIRE(pdu_data);
+    InStream stream_waveconfirm(pdu_data->data, pdu_data->size);
+    rdpsnd::RDPSNDPDUHeader header_waveConfirm;
+    header_waveConfirm.receive(stream_waveconfirm);
+    RED_CHECK_EQUAL(header_waveConfirm.msgType, rdpsnd::SNDC_WAVECONFIRM);
 }
 
 

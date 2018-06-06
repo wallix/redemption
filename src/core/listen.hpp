@@ -51,6 +51,7 @@ struct Listen {
     bool exit_on_timeout;
     int timeout_sec;
 
+    // TODO timeout_sec as std::seconds
     Listen(Server & server, uint32_t s_addr, int port, bool exit_on_timeout = false, int timeout_sec = 60, bool enable_transparent_mode = false)
         : server(server)
         , s_addr(s_addr)
@@ -133,7 +134,7 @@ struct Listen {
     }
 
     // TODO Some values (server, timeout) become only necessary when calling check
-    void run() {
+    void run(bool forkable) {
         bool loop_listener = true;
         while (loop_listener) {
             fd_set rfds;
@@ -162,7 +163,7 @@ struct Listen {
             break;
             case 1:
             {
-                Server::Server_status res = this->server.start(this->sck);
+                Server::Server_status res = this->server.start(this->sck, forkable);
                 if (Server::START_WANT_STOP == res){
                     loop_listener = false;
                 }

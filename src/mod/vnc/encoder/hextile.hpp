@@ -230,7 +230,7 @@ namespace VNC {
                     const size_t header_bytes = type_bytes + any_subrect_bytes + hextile_bg_bytes + hextile_fg_bytes;
                     if (buf.remaining() < header_bytes){
                         if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                            LOG(LOG_INFO, "Hextile::hexTileraw need more data %zu (has %zu)", header_bytes, buf.remaining());
+                            LOG(LOG_INFO, "Hextile::hexTileraw need more data %zu (has %hu)", header_bytes, buf.remaining());
                         }
                         return EncoderState::NeedMoreData;
                     }
@@ -324,7 +324,7 @@ namespace VNC {
                     }
                 }
                 if (bool(this->verbose & VNCVerbose::hextile_encoder)){
-                    LOG(LOG_INFO, "Hextile::hexTileraw need more data (has %zu)", buf.remaining());
+                    LOG(LOG_INFO, "Hextile::hexTileraw need more data (has %hu)", buf.remaining());
                 }
                 return EncoderState::NeedMoreData; // finished decoding
             }

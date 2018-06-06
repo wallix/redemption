@@ -29,8 +29,8 @@ RailModuleHost::RailModuleHost(
     uint16_t front_width, uint16_t front_height
 )
 : WidgetParent(drawable, parent, notifier)
-, module_host(drawable, *this, this, std::move(managed_mod), font,
-              cs_monitor, front_width, front_height)
+, module_host(drawable, *this, this, std::move(managed_mod),
+              font, cs_monitor, front_width, front_height)
 {
     this->impl = &composite_array;
 
@@ -42,6 +42,11 @@ RailModuleHost::RailModuleHost(
 RailModuleHost::~RailModuleHost()
 {
     this->clear();
+}
+
+gdi::GraphicApi & RailModuleHost::proxy_gd(gdi::GraphicApi& gd)
+{
+    return this->module_host.proxy_gd(gd);
 }
 
 mod_api& RailModuleHost::get_managed_mod()

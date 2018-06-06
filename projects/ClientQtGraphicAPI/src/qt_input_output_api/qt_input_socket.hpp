@@ -24,7 +24,9 @@
 #include <fstream>
 
 #include "utils/log.hpp"
-#include "client_redemption/client_input_output_api.hpp"
+#include "core/session_reactor.hpp"
+//#include "client_redemption/client_redemption_api.hpp"
+#include "client_redemption/client_input_output_api/client_socket_api.hpp"
 
 #if REDEMPTION_QT_VERSION == 4
 #   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
@@ -37,10 +39,15 @@
 #include <QtCore/QTimer>
 
 
+
 class QtInputSocket : public QObject, public ClientInputSocketAPI
 {
-
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
+
+    SessionReactor& session_reactor;
 
 public:
     QSocketNotifier           * _sckListener;
@@ -48,8 +55,9 @@ public:
     QTimer timer;
 
 
-    QtInputSocket(QWidget * parent)
+    QtInputSocket(SessionReactor& session_reactor, QWidget * parent)
         : QObject(parent)
+        , session_reactor(session_reactor)
         , _sckListener(nullptr)
         , timer(this)
     {}
@@ -71,86 +79,63 @@ public:
 
         this->_callback = mod;
 
-        if (this->_callback !=  nullptr) {
+        if (this->_callback) {
             this->_sckListener = new QSocketNotifier(client_sck, QSocketNotifier::Read, this);
-            this->QObject::connect(this->_sckListener,   SIGNAL(activated(int)), this,  SLOT(call_draw_event_data()));
-            this->QObject::connect(&(this->timer),   SIGNAL(timeout()), this,  SLOT(call_draw_event_timer()));
+            this->QObject::connect(this->_sckListener, SIGNAL(activated(int)), this, SLOT(call_draw_event_data()));
+            this->QObject::connect(&(this->timer), SIGNAL(timeout()), this, SLOT(call_draw_event_timer()));
 
-            if (this->_callback) {
-                LOG(LOG_INFO, "start to listen : we have a callback");
-                if (this->_callback->get_event().is_trigger_time_set()) {
-                    LOG(LOG_INFO, "start to listen : we have a callback : trigger time is set");
-                    struct timeval now = tvtime();
-                    int time_to_wake = (this->_callback->get_event().get_trigger_time().tv_usec - now.tv_usec) / 1000
-                    + (this->_callback->get_event().get_trigger_time().tv_sec - now.tv_sec) * 1000;
+            //LOG(LOG_INFO, "start to listen : we have a callback");
 
-                    LOG(LOG_INFO, "start to listen : we have a callback : time to wake = %d", time_to_wake);
+            this->prepare_timer_event();
 
-                    if (time_to_wake < 0) {
-                        LOG(LOG_INFO, "start to listen : we have a callback : draw event timer");
-                        this->call_draw_event_timer();
-                    } else {
-                        LOG(LOG_INFO, "start to listen : we have a callback : time to wake = %d (delayed)", time_to_wake);
-                        this->timer.start( time_to_wake );
-                    }
-                }
-            } else {
-                return false;
-            }
-
-        } else {
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
 
 
 public Q_SLOTS:
     void call_draw_event_data() {
-        //LOG(LOG_INFO, "draw_event_data");
-        this->_callback->get_event().set_waked_up_by_time(false);
-        this->call_draw_event();
-    }
-
-    void call_draw_event_timer() {
-       //LOG(LOG_INFO, "draw_event_timer");
-        this->_callback->get_event().set_waked_up_by_time(true);
-        this->call_draw_event();
-    }
-
-    void call_draw_event() {
+        // LOG(LOG_DEBUG, "draw_event_data");
         if (this->client->mod) {
-            //LOG(LOG_INFO, "call_draw_event");
-            this->client->callback();
-
-            if (this->_callback) {
-                //LOG(LOG_INFO, "call_draw_event :: callback");
-
-                if (this->_callback->get_event().is_trigger_time_set()) {
-                    //LOG(LOG_INFO, "call_draw_event :: trigger time set");
-
-                    struct timeval now = tvtime();
-                    int time_to_wake = ((this->_callback->get_event().get_trigger_time().tv_usec - now.tv_usec) / 1000)
-                    + ((this->_callback->get_event().get_trigger_time().tv_sec - now.tv_sec) * 1000);
-
-                    //LOG(LOG_INFO, "call_draw_event :: trigger time reset");
-                    this->_callback->get_event().reset_trigger_time();
-
-                    if (time_to_wake < 0) {
-                        //LOG(LOG_INFO, "call_draw_event :: stop timer");
-                        this->timer.stop();
-                    } else {
-                        //LOG(LOG_INFO, "call_draw_event : we have a callback : time to wake = %d (delayed)", time_to_wake);
-                        this->timer.start( time_to_wake );
-                    }
-                } else {
-                    //LOG(LOG_INFO, "call_draw_event :: no trigger time stop timer");
-                    this->timer.stop();
-                }
-            }
+            this->client->callback(false);
+            this->prepare_timer_event();
         }
     }
 
+    void call_draw_event_timer() {
+        // LOG(LOG_DEBUG, "draw_event_timer");
+        if (this->client->mod) {
+            this->client->callback(true);
+            this->prepare_timer_event();
+        }
+    }
+
+private:
+    void prepare_timer_event() {
+//         LOG(LOG_INFO, "prepare_timer_event");
+        timeval now = tvtime();
+        this->session_reactor.set_current_time(now);
+        timeval const tv = this->session_reactor.get_next_timeout(
+            SessionReactor::EnableGraphics{true});
+        // LOG(LOG_DEBUG, "start timer: %ld %ld", tv.tv_sec, tv.tv_usec);
+        if (tv.tv_sec > -1) {
+
+            //+  (tv.tvtime - tv
+            long time_to_wake = (1000 * (tv.tv_sec - now.tv_sec)) + ((tv.tv_usec - now.tv_usec) / 1000);
+
+                //ustime(tv) - ustime(now);
+            //int delai = std::max(time_to_wake, 0);
+//             LOG(LOG_INFO, "prepare_timer_event = %d", time_to_wake);
+            if (time_to_wake < 0) {
+                time_to_wake = 0;
+            }
+            this->timer.start(time_to_wake);
+        }
+        else {
+            this->timer.stop();
+        }
+    }
 };
 

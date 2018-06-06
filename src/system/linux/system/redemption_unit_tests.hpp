@@ -3,7 +3,11 @@
 #define BOOST_TEST_MODULE RED_TEST_MODULE
 
 #include <boost/test/auto_unit_test.hpp>
-#include <algorithm>
+
+#include "utils/sugar/underlying_cast.hpp"
+
+#include <iterator>
+
 
 // // fixed link error (API changed)
 // #ifdef __clang__
@@ -16,43 +20,59 @@
 
 #ifdef IN_IDE_PARSER
 
+namespace redemption_unit_test__
+{
+    void X(bool);
+
+    struct Stream
+    {
+        template<class T>
+        Stream operator<<(T const&)
+        {
+            return *this;
+        }
+    };
+}
+
 # define FIXTURES_PATH "./tests/fixtures"
 # define CFG_PATH "./sys/etc/rdpproxy"
 # define RED_CHECK_EXCEPTION_ERROR_ID(stmt, id) do { stmt; id; } while (0)
 # define RED_CHECK_NO_THROW(stmt) do { stmt; } while (0)
 # define RED_CHECK_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
-# define RED_CHECK_EXCEPTION(stmt, exception, predicate) do {\
+# define RED_CHECK_EXCEPTION(stmt, exception, predicate) do { \
     stmt; [](exception & e) { predicate(e); }; } while (0)
 # define RED_CHECK_EQUAL(a, b) (a) == (b)
-# define RED_CHECK_EQ(a, b) (a) == (b)
-# define RED_CHECK_NE(a, b) (a) != (b)
-# define RED_CHECK_LT(a, b) (a) < (b)
-# define RED_CHECK_LE(a, b) (a) <= (b)
-# define RED_CHECK_GT(a, b) (a) > (b)
-# define RED_CHECK_GE(a, b) (a) >= (b)
-# define RED_CHECK(a) (a)
-# define RED_CHECK_MESSAGE(a, iostream_expr) (a), "" << iostream_expr
-# define RED_CHECK_EQUAL_COLLECTIONS(a, b) (a) == (b)
+# define RED_CHECK_EQ(a, b) ::redemption_unit_test__::X(bool((a) == (b)))
+# define RED_CHECK_NE(a, b) ::redemption_unit_test__::X(bool((a) != (b)))
+# define RED_CHECK_LT(a, b) ::redemption_unit_test__::X(bool((a) < (b)))
+# define RED_CHECK_LE(a, b) ::redemption_unit_test__::X(bool((a) <= (b)))
+# define RED_CHECK_GT(a, b) ::redemption_unit_test__::X(bool((a) > (b)))
+# define RED_CHECK_GE(a, b) ::redemption_unit_test__::X(bool((a) >= (b)))
+# define RED_CHECK(a) ::redemption_unit_test__::X(bool(a))
+# define RED_CHECK_MESSAGE(a, iostream_expr) ::redemption_unit_test__::X(bool(a)), \
+    ::redemption_unit_test__::Stream{} << iostream_expr
+# define RED_CHECK_EQUAL_COLLECTIONS(a, b) ::redemption_unit_test__::X(bool((a) == (b)))
 # define RED_CHECK_PREDICATE(pred, arg_list) pred arg_list
 
 # define RED_REQUIRE_NO_THROW(stmt) do { stmt; } while (0)
 # define RED_REQUIRE_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
 # define RED_REQUIRE_EXCEPTION(stmt, exception, predicate) do {\
     stmt; [](exception & e) { predicate(e); }; } while (0)
-# define RED_REQUIRE_EQUAL(a, b) (a) == (b)
-# define RED_REQUIRE_EQ(a, b) (a) == (b)
-# define RED_REQUIRE_NE(a, b) (a) != (b)
-# define RED_REQUIRE_LT(a, b) (a) < (b)
-# define RED_REQUIRE_LE(a, b) (a) <= (b)
-# define RED_REQUIRE_GT(a, b) (a) > (b)
-# define RED_REQUIRE_GE(a, b) (a) >= (b)
-# define RED_REQUIRE(a) (a)
-# define RED_REQUIRE_MESSAGE(a, iostream_expr) (a), "" << iostream_expr
-# define RED_REQUIRE_EQUAL_COLLECTIONS(a, b) (a) == (b)
+# define RED_REQUIRE_EQUAL(a, b) ::redemption_unit_test__::X(bool((a) == (b)))
+# define RED_REQUIRE_EQ(a, b) ::redemption_unit_test__::X(bool((a) == (b)))
+# define RED_REQUIRE_NE(a, b) ::redemption_unit_test__::X(bool((a) != (b)))
+# define RED_REQUIRE_LT(a, b) ::redemption_unit_test__::X(bool((a) < (b)))
+# define RED_REQUIRE_LE(a, b) ::redemption_unit_test__::X(bool((a) <= (b)))
+# define RED_REQUIRE_GT(a, b) ::redemption_unit_test__::X(bool((a) > (b)))
+# define RED_REQUIRE_GE(a, b) ::redemption_unit_test__::X(bool((a) >= (b)))
+# define RED_REQUIRE(a) ::redemption_unit_test__::X(bool(a))
+# define RED_REQUIRE_MESSAGE(a, iostream_expr) ::redemption_unit_test__::X(bool(a)), \
+    ::redemption_unit_test__::Stream{} << iostream_expr
+# define RED_REQUIRE_EQUAL_COLLECTIONS(a, b) ::redemption_unit_test__::X(bool((a) == (b)))
 # define RED_REQUIRE_PREDICATE(pred, arg_list) pred arg_list
 
-# define RED_FAIL(mess) mess
-# define RED_ERROR(mess) mess
+# define RED_FAIL(mess) ::redemption_unit_test__::Stream{} << mess
+# define RED_ERROR(mess) ::redemption_unit_test__::Stream{} << mess
 
 #else
 
@@ -178,11 +198,7 @@ namespace redemption_unit_test__
             return sig.size();
         }
 
-        bool operator == (xarray const & other) const
-        {
-            return sig.size() == other.sig.size()
-                && std::equal(sig.begin(), sig.end(), other.sig.begin());
-        }
+        bool operator == (xarray const & other) const;
     };
 
     struct xarray_color
@@ -195,84 +211,11 @@ namespace redemption_unit_test__
             return sig.size();
         }
 
-        bool operator == (xarray_color const & other) const
-        {
-            this->res = std::mismatch(sig.begin(), sig.end(), other.sig.begin(), other.sig.end()).first - sig.begin();
-            return this->res == sig.size() && this->sig.size() == other.sig.size();
-        }
+        bool operator == (xarray_color const & other) const;
     };
 
-    inline std::ostream & operator<<(std::ostream & out, xarray_color const & x)
-    {
-        if (x.size() == 0){
-            return out << "\"\"\n";
-        }
-        char const * hex_table = "0123456789abcdef";
-        size_t q = 0;
-        size_t split = 16;
-        uint8_t tmpbuf[16];
-        size_t i = 0;
-        for (unsigned c : x.sig) {
-            if (q%split == 0){
-                if (x.sig.size()>split){
-                    out << "\n\"";
-                }
-                else {
-                    out << "\"";
-                }
-            }
-            if (q++ == x.res){ out << "\x1b[31m";}
-            out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
-            tmpbuf[i++] = c;
-            if (q%split == 0){
-                if (x.sig.size()>split) {
-                    out << "\" //";
-                    for (size_t v = 0 ; v < i ; v++){
-                        if ((tmpbuf[v] >= 0x20) && (tmpbuf[v] < 127)) {
-                            out << char(tmpbuf[v]);
-                        }
-                        else {
-                            out << ".";
-                        }
-                    }
-                    out << " !";
-                    i = 0;
-                }
-                else {
-                    out << "\"";
-                }
-            }
-        }
-        if (q%split != 0){
-            if (x.sig.size()>split) {
-                out << "\" //";
-                for (size_t v = 0 ; v < i ; v++){
-                    if ((tmpbuf[v] >= 0x20) && (tmpbuf[v] <= 127)) {
-                        out << char(tmpbuf[v]);
-                    }
-                    else {
-                        out << ".";
-                    }
-                }
-                out << " !";
-                i = 0;
-            }
-            else {
-                out << "\"";
-            }
-        }
-        return out << "\x1b[0m";
-    }
-
-    inline std::ostream & operator<<(std::ostream & out, xarray const & x)
-    {
-        out << "\"";
-        char const * hex_table = "0123456789abcdef";
-        for (unsigned c : x.sig) {
-            out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
-        }
-        return out << "\"";
-    }
+    std::ostream & operator<<(std::ostream & out, xarray_color const & x);
+    std::ostream & operator<<(std::ostream & out, xarray const & x);
 }
 
 #define RED_CHECK_OP_VAR_MESSAGE(op, v1, v2, src1, src2) \
@@ -289,29 +232,29 @@ namespace redemption_unit_test__
         << v1 << " " #op " " << v2 << "]"                  \
     );
 
-#define RED_CHECK_MEM_IMPL(red_check_op, mem, memref)     \
-    do {                                                  \
-        size_t res__ = 0;                                 \
-        [](                                               \
-            redemption_unit_test__::xarray_color mem__,   \
-            redemption_unit_test__::xarray_color memref__ \
-        ){                                                \
-            red_check_op(                                 \
-                ==, mem__.size(), memref__.size(),        \
-                mem.size(), memref.size());               \
-            red_check_op(                                 \
-                ==, mem__, memref__,                      \
-                mem, memref);                             \
-        }(                                                \
-            redemption_unit_test__::xarray_color{res__,mem},    \
-            redemption_unit_test__::xarray_color{res__,memref}  \
-        );                                          \
+#define RED_CHECK_MEM_IMPL(red_check_op, mem, memref)          \
+    do {                                                       \
+        size_t res__ = 0;                                      \
+        [](                                                    \
+            redemption_unit_test__::xarray_color mem__,        \
+            redemption_unit_test__::xarray_color memref__      \
+        ){                                                     \
+            red_check_op(                                      \
+                ==, mem__.size(), memref__.size(),             \
+                mem.size(), memref.size());                    \
+            red_check_op(                                      \
+                ==, mem__, memref__,                           \
+                mem, memref);                                  \
+        }(                                                     \
+            redemption_unit_test__::xarray_color{res__,mem},   \
+            redemption_unit_test__::xarray_color{res__,memref} \
+        );                                                     \
     } while (0)
 
-#define RED_CHECK_MEM(mem, memref)                  \
+#define RED_CHECK_MEM(mem, memref) \
     RED_CHECK_MEM_IMPL(RED_CHECK_OP_VAR_MESSAGE, mem, memref)
 
-#define RED_REQUIRE_MEM(mem, memref)                  \
+#define RED_REQUIRE_MEM(mem, memref) \
     RED_CHECK_MEM_IMPL(RED_REQUIRE_OP_VAR_MESSAGE, mem, memref)
 
 #ifdef IN_IDE_PARSER
@@ -341,27 +284,10 @@ namespace redemption_unit_test__
             return sig.size();
         }
 
-        bool operator == (xsarray const & other) const
-        {
-            return sig.size() == other.sig.size()
-                && std::equal(sig.begin(), sig.end(), other.sig.begin());
-        }
+        bool operator == (xsarray const & other) const;
     };
 
-    inline std::ostream & operator<<(std::ostream & out, xsarray const & x)
-    {
-        out << "\"";
-        char const * hex_table = "0123456789abcdef";
-        for (unsigned c : x.sig) {
-            if ((c >= 0x20) && (c <= 127)) {
-                out << char(c);
-            }
-            else {
-                out << "\\x" << hex_table[c >> 4] << hex_table[c & 0xf];
-            }
-        }
-        return out << "\"";
-    }
+    std::ostream & operator<<(std::ostream & out, xsarray const & x);
 }
 
 #define RED_CHECK_SMEM(mem, memref)                  \
@@ -408,6 +334,14 @@ namespace redemption_unit_test__
     ::unlink(filename);                                          \
 }
 
+#define RED_CHECK_FILE_SIZE_AND_CLEAN3(filename, size1, size2, size3) { \
+    size_t fsize = filesize(filename);                                  \
+    if (fsize != size2 && fsize != size3){                              \
+        RED_CHECK_EQUAL(size1, fsize);                                  \
+    }                                                                   \
+    ::unlink(filename);                                                 \
+}
+
 // require #include "test_only/get_file_contents.hpp"
 #define RED_CHECK_FILE_CONTENTS(filename, contents)      \
     RED_CHECK_EQ(get_file_contents(filename), contents); \
@@ -416,8 +350,9 @@ namespace redemption_unit_test__
 // force line to last checkpoint
 #ifndef IN_IDE_PARSER
 # undef BOOST_AUTO_TEST_CASE
-# define BOOST_AUTO_TEST_CASE(test_name)                                                              \
-    BOOST_FIXTURE_TEST_CASE(test_name##_start__, BOOST_AUTO_TEST_CASE_FIXTURE) { BOOST_CHECK(true); } \
+# define BOOST_AUTO_TEST_CASE(test_name)                                       \
+    BOOST_FIXTURE_TEST_CASE(test_name##_start__, BOOST_AUTO_TEST_CASE_FIXTURE) \
+    { BOOST_CHECK(true); }                                                     \
     BOOST_FIXTURE_TEST_CASE(test_name, BOOST_AUTO_TEST_CASE_FIXTURE)
 #endif
 

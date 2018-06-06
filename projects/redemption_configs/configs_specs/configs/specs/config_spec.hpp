@@ -191,6 +191,9 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "spark_view_specific_glyph_width", set(false));
+        W.sep();
+
+        W.member(advanced_in_gui, no_sesman, type_<bool>(), "experimental_enable_serializer_data_block_size_limit",set(false));
     });
 
     W.section("session_log", [&]
@@ -369,6 +372,7 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_clipboard_initialization_delay", sesman::name{"session_probe_smart_launcher_clipboard_initialization_delay"}, set(2000));
+        W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_start_delay", sesman::name{"session_probe_smart_launcher_start_delay"}, set(0));
         W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_long_delay", sesman::name{"session_probe_smart_launcher_long_delay"}, set(500));
         W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_short_delay", sesman::name{"session_probe_smart_launcher_short_delay"}, set(50));
         W.sep();
@@ -426,8 +430,6 @@ void config_spec_definition(Writer && W)
             "  16: ZRLE\n"
             "  -239 (0xFFFFFF11): Cursor pseudo-encoding"
         });
-        W.sep();
-        W.member(advanced_in_gui, no_sesman, type_<bool>(), "allow_authentification_retries", set(false));
         W.sep();
         W.member(advanced_in_gui, sesman_to_proxy, type_<ClipboardEncodingType>(), "server_clipboard_encoding_type", desc{
             "VNC server clipboard data encoding type."
@@ -631,7 +633,7 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, type_<unsigned>(), "end_date_cnx", sesman::name{"timeclose"}, set(0));
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "end_time");
         W.sep();
-        W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "mode_console", set("allow"));
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<RdpModeConsole>(), "mode_console", set(RdpModeConsole::allow));
         W.member(no_ini_no_gui, sesman_to_proxy, type_<signed>(), "timezone", set(-3600));
         W.sep();
         W.member(no_ini_no_gui, sesman_rw, type_<std::string>(), "real_target_device");
@@ -654,6 +656,8 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "pattern_notify");
         W.sep();
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "opt_message");
+        W.sep();
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "login_message");
         W.sep();
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "session_probe_outbound_connection_monitoring_rules");
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "session_probe_process_monitoring_rules");
@@ -684,7 +688,7 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "auth_command_rail_exec_password");
         W.sep();
 
-        W.member(no_ini_no_gui, sesman_to_proxy, type_<unsigned>(), "rail_disconnect_message_delay", set(3000));
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "rail_disconnect_message_delay", set(3000));
         W.sep();
 
         W.member(no_ini_no_gui, sesman_to_proxy, type_<bool>(), "use_session_probe_to_launch_remote_program", set(true));

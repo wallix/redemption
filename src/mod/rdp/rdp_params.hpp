@@ -86,6 +86,7 @@ struct ModRDPParams {
     bool                         session_probe_enable_log_rotation = true;
 
     std::chrono::milliseconds    session_probe_clipboard_based_launcher_clipboard_initialization_delay {};
+    std::chrono::milliseconds    session_probe_clipboard_based_launcher_start_delay {};
     std::chrono::milliseconds    session_probe_clipboard_based_launcher_long_delay {};
     std::chrono::milliseconds    session_probe_clipboard_based_launcher_short_delay {};
 
@@ -99,7 +100,6 @@ struct ModRDPParams {
     bool         enable_transparent_mode = false;
     const char * output_filename = "";
     Transport  * persistent_key_list_transport = nullptr;
-    Transport  * transparent_recorder_transport = nullptr;
 
     int key_flags;
 
@@ -191,7 +191,7 @@ struct ModRDPParams {
 
     const char * load_balance_info = "";
 
-    unsigned rail_disconnect_message_delay = 0;
+    std::chrono::milliseconds rail_disconnect_message_delay {};
 
     bool use_session_probe_to_launch_remote_program = true;
 
@@ -274,6 +274,7 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_enable_log_rotation);
 
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_clipboard_initialization_delay);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_start_delay);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_long_delay);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_short_delay);
 
@@ -293,7 +294,6 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_transparent_mode);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             output_filename);
         RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    persistent_key_list_transport);
-        RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    transparent_recorder_transport);
 
         RDP_PARAMS_LOG("%d",     RDP_PARAMS_LOG_GET,    key_flags);
 
@@ -383,7 +383,7 @@ struct ModRDPParams {
 
         RDP_PARAMS_LOG("%s",     s_or_none,             load_balance_info);
 
-        RDP_PARAMS_LOG("%u",     RDP_PARAMS_LOG_GET,    rail_disconnect_message_delay);
+        RDP_PARAMS_LOG("%u",     from_millisec,         rail_disconnect_message_delay);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             use_session_probe_to_launch_remote_program);
 

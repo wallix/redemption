@@ -25,7 +25,6 @@
 #include "core/report_message_api.hpp"
 #include "transport/transport.hpp"
 #include "utils/sugar/unique_fd.hpp"
-#include "utils/sugar/make_unique.hpp"
 
 #include <memory>
 

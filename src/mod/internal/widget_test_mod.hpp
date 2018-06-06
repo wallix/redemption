@@ -21,11 +21,13 @@
 #pragma once
 
 #include "mod/internal/internal_mod.hpp"
+class SessionReactor;
 
 class WidgetTestMod : public InternalMod
 {
 public:
-    WidgetTestMod(FrontAPI & front, uint16_t width, uint16_t height, Font const & font);
+    WidgetTestMod(SessionReactor& session_reactor,
+        FrontAPI & front, uint16_t width, uint16_t height, Font const & font);
 
     ~WidgetTestMod() override;
 

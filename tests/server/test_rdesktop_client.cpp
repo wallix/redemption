@@ -77,6 +77,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     ini.set<cfg::video::png_interval>(std::chrono::seconds{300});
     ini.set<cfg::video::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth24);
     ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
+    ini.set<cfg::globals::experimental_enable_serializer_data_block_size_limit>(true);
 
     // Uncomment the code block below to generate testing data.
     //int nodelay = 1;
@@ -107,7 +108,8 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     const bool fastpath_support = false;
     const bool mem3blt_support  = false;
     NullReportMessage report_message;
-    Front front( front_trans, gen, ini, cctx, report_message, fastpath_support, mem3blt_support, now);
+    SessionReactor session_reactor;
+    Front front(session_reactor, front_trans, gen, ini, cctx, report_message, fastpath_support, mem3blt_support, now);
     front.ignore_rdesktop_bogus_clip = true;
     null_mod no_mod;
 
@@ -118,7 +120,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
     RED_CHECK_EQUAL(1, front.up_and_running);
-    TestCardMod mod(front, front.client_info.width, front.client_info.height, ini.get<cfg::font>());
+    TestCardMod mod(session_reactor, front, front.client_info.width, front.client_info.height, ini.get<cfg::font>());
     mod.draw_event(time(nullptr), front);
 
     // Uncomment the code block below to generate testing data.

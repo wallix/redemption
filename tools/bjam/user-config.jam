@@ -15,6 +15,7 @@ using gcc : 6.0 : ccache /usr/lib/gcc-snapshot/bin/g++ : <cxxflags>-fdiagnostics
 # uses ccache with clang
 using clang : : ccache clang++ : <cxxflags>-fcolor-diagnostics ;
 #using clang : : clang++ : <cxxflags>-fcolor-diagnostics <cxxflags>-Qunused-arguments <cxxflags>-Wno-overlength-strings ;
+# using clang : : ccache clang++-6.0 : <cxxflags>-nostdinc++ <cxxflags>-isystem/usr/include/c++/v1/ <cxxflags>-fdiagnostics-color <cxxflags>-stdlib=libc++ <linkflags>-stdlib=libc++ ;
 
 #using clang : cache : ccache clang++ : <cxxflags>-fcolor-diagnostics ;
 

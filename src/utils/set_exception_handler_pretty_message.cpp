@@ -23,19 +23,29 @@ Author(s): Jonathan Poelen
 
 #include <exception>
 #include <iostream>
+#include <cstring>
 
+
+namespace
+{
+    std::terminate_handler old_terminate_handler;
+}
 
 void set_exception_handler_pretty_message() noexcept
 {
-    static std::terminate_handler old_terminate_handler =
-    std::set_terminate([]{
+    old_terminate_handler = std::set_terminate([]{
         auto eptr = std::current_exception();
         try {
             if (eptr) {
                 std::rethrow_exception(eptr);
             }
         } catch(const Error& e) {
-            std::cerr << e.errmsg() << "\n";
+            if (e.errnum) {
+                std::cerr << e.errmsg() << " - " << strerror(e.errnum) << "\n";
+            }
+            else {
+                std::cerr << e.errmsg() << "\n";
+            }
         } catch(...) {
         }
         old_terminate_handler();

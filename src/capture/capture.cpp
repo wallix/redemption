@@ -42,7 +42,6 @@
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/cast.hpp"
-#include "utils/sugar/make_unique.hpp"
 
 #include "utils/bitmap_shrink.hpp"
 #include "utils/colors.hpp"
@@ -69,8 +68,14 @@
 #include "capture/capture.hpp"
 #include "capture/wrm_capture.hpp"
 #include "capture/utils/match_finder.hpp"
+#include "utils/video_cropper.hpp"
 
-#include "capture/video_capture.hpp"
+#ifndef REDEMPTION_NO_FFMPEG
+# include "capture/video_capture.hpp"
+#else
+class FullVideoCaptureImpl {};
+class SequencedVideoCaptureImpl {};
+#endif
 
 #include "utils/recording_progress.hpp"
 #include "utils/sugar/underlying_cast.hpp"
@@ -1378,9 +1383,11 @@ void Capture::TitleChangedFunctions::notify_title_changed(
     if (this->capture.meta_capture_obj) {
         this->capture.meta_capture_obj->get_session_meta().title_changed(now.tv_sec, title);
     }
+#ifndef REDEMPTION_NO_FFMPEG
     if (this->capture.sequenced_video_capture_obj) {
         this->capture.sequenced_video_capture_obj->next_video(now);
     }
+#endif
     if (this->capture.update_progress_data) {
         this->capture.update_progress_data->next_video(now.tv_sec);
     }
@@ -1413,7 +1420,6 @@ Capture::Capture(
 : is_replay_mod(!capture_params.report_message)
 , update_progress_data(update_progress_data)
 , mouse_info{capture_params.now, drawable_params.width / 2, drawable_params.height / 2}
-, capture_event{}
 , capture_drawable(capture_wrm || capture_video || capture_ocr || capture_png || capture_video_full)
 , smart_video_cropping(capture_params.smart_video_cropping)
 {
@@ -1490,6 +1496,7 @@ Capture::Capture(
                 capture_params, wrm_params, *this->gd_drawable));
         }
 
+#ifndef REDEMPTION_NO_FFMPEG
         if (capture_video) {
             std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
             if (video_params.capture_chunk && this->meta_capture_obj) {
@@ -1506,6 +1513,13 @@ Capture::Capture(
                 capture_params, *this->gd_drawable,
                 *image_frame_api_ptr, video_params, full_video_params));
         }
+#else
+        if (capture_video || capture_video_full) {
+            (void)full_video_params;
+            (void)video_params;
+            LOG(LOG_WARNING, "VideoCapture is disabled (-DREDEMPTION_NO_FFMPEG)");
+        }
+#endif
 
         if (capture_pattern_checker) {
             this->patterns_checker.reset(new PatternsChecker(
@@ -1544,7 +1558,7 @@ Capture::Capture(
         if (this->png_capture_obj) {
             this->caps.push_back(*this->png_capture_obj);
         }
-
+#ifndef REDEMPTION_NO_FFMPEG
         if (this->sequenced_video_capture_obj) {
             //this->caps.push_back(this->sequenced_video_capture_obj->vc);
             this->caps.push_back(*this->sequenced_video_capture_obj);
@@ -1553,6 +1567,7 @@ Capture::Capture(
         if (this->full_video_capture_obj) {
             this->caps.push_back(*this->full_video_capture_obj);
         }
+#endif
     }
 
     if (capture_kbd) {
@@ -1594,6 +1609,7 @@ Capture::Capture(
             this->probes.push_back(this->meta_capture_obj->session_log_agent);
         }
     }
+
     if (this->title_capture_obj) {
         this->caps.push_back(*this->title_capture_obj);
         this->probes.push_back(*this->title_capture_obj);
@@ -1660,10 +1676,9 @@ Capture::Microseconds Capture::periodic_snapshot(
     int cursor_x, int cursor_y,
     bool ignore_frame_in_timeval
 ) {
-    this->capture_event.reset_trigger_time();
-
     if (this->gd_drawable) {
-        this->gd_drawable->set_mouse_cursor_pos(cursor_x, cursor_y);
+        this->gd_drawable->mouse_cursor_pos_x = cursor_x;
+        this->gd_drawable->mouse_cursor_pos_y = cursor_y;
     }
     this->mouse_info = {now, cursor_x, cursor_y};
 
@@ -1672,7 +1687,6 @@ Capture::Microseconds Capture::periodic_snapshot(
         for (gdi::CaptureApi & cap : this->caps) {
             time = std::min(time, cap.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval).ms());
         }
-        this->capture_event.update_trigger_time(time.count());
     }
     return time;
 }
@@ -1683,7 +1697,8 @@ void Capture::visibility_rects_event(Rect const & rect_) {
     }
 
     if ((this->smart_video_cropping == SmartVideoCropping::disable) ||
-        (this->smart_video_cropping == SmartVideoCropping::v1)) {
+        (this->smart_video_cropping == SmartVideoCropping::v1) ||
+        !static_cast<bool>(this->video_cropper)) {
         return;
     }
 

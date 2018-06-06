@@ -23,50 +23,81 @@
 
 
 #include "utils/log.hpp"
+#include "utils/genrandom.hpp"
+#include "utils/netutils.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/genfstat.hpp"
+
+#include "configs/autogen/enums.hpp"
+
+#include "acl/auth_api.hpp"
 
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
-#include "configs/autogen/enums.hpp"
 
-#include "capture/full_video_params.hpp"
-#include "capture/video_params.hpp"
-#include "capture/capture.hpp"
-
+#include "mod/internal/replay_mod.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "mod/vnc/vnc.hpp"
 
+#include "transport/crypto_transport.hpp"
+#include "transport/socket_transport.hpp"
+#include "transport/recorder_transport.hpp"
+#include "transport/replay_transport.hpp"
+
+#include "capture/full_video_params.hpp"
+#include "capture/video_params.hpp"
+#include "capture/wrm_capture.hpp"
 
 
-#include "client_redemption/client_input_output_api.hpp"
 
+#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
+#include "client_redemption/client_input_output_api/client_socket_api.hpp"
+
+#include "client_redemption/client_redemption_controller.hpp"
 #include "client_redemption/client_channel_managers/client_channel_RDPSND_manager.hpp"
 #include "client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp"
 #include "client_redemption/client_channel_managers/client_channel_RDPDR_manager.hpp"
 #include "client_redemption/client_channel_managers/client_channel_remoteapp_manager.hpp"
 
+#include "test_only/fixed_random.hpp"
 
 
 
-
-
-class ClientRedemption : public ClientRedemptionIOAPI
+class ClientRedemption : public ClientRedemptionController
 {
 
+private:
+    CryptoContext     cctx;
+
+    // TODO unique_ptr
+    Transport       * socket;
+    int               client_sck;
+    TimeSystem        timeSystem;
+    NullAuthentifier  authentifier;
+    NullReportMessage reportMessage;
+
+
+
 public:
+    SessionReactor& session_reactor;
+    SessionReactor::GraphicEventPtr clear_screen_event;
+
+    std::unique_ptr<Transport> _socket_in_recorder;
+
     // io API
     ClientOutputGraphicAPI      * impl_graphic;
     ClientIOClipboardAPI        * impl_clipboard;
     ClientOutputSoundAPI        * impl_sound;
     ClientInputSocketAPI        * impl_socket_listener;
     ClientInputMouseKeyboardAPI * impl_mouse_keyboard;
+    ClientIODiskAPI             * impl_io_disk;
 
 
     // RDP
     CHANNELS::ChannelDefArray   cl;
-    Font                 _font;
     std::string          _error;
     std::string   error_message;
-    UdevRandom           gen;
+    std::unique_ptr<Random> gen;
     std::array<uint8_t, 28> server_auto_reconnect_packet_ref;
     Inifile ini;
     std::string close_box_extra_message_ref;
@@ -95,39 +126,112 @@ public:
 
     // Recorder
     Fstat fstat;
+
+    struct Capture
+    {
+        RDPDrawable drawable;
+        WrmCaptureImpl wrm_capture;
+
+        Capture(
+            const uint16_t width, const uint16_t height,
+            CaptureParams const& capture_params, WrmParams const& wrm_params)
+        : drawable(width, height)
+        , wrm_capture(capture_params, wrm_params, this->drawable)
+        {}
+    };
     std::unique_ptr<Capture>  capture;
-    gdi::GraphicApi    * graph_capture;
+
+    struct WRMGraphicStat {
+
+        int amount_RDPDestBlt = 0;
+        long pixels_RDPDestBlt = 0;
+
+        int amount_RDPMultiDstBlt = 0;
+        long pixels_RDPMultiDstBlt = 0;
+
+        int amount_RDPScrBlt = 0;
+        long pixels_RDPScrBlt = 0;
+
+        int amount_RDPMultiScrBlt = 0;
+        long pixels_RDPMultiScrBlt = 0;
+
+        int amount_RDPMemBlt = 0;
+        long pixels_RDPMemBlt = 0;
+
+        int amount_RDPBitmapData = 0;
+        long pixels_RDPBitmapData = 0;
+
+        int amount_RDPPatBlt= 0;
+        long pixels_RDPPatBlt= 0;
+
+        int amount_RDPMultiPatBlt = 0;
+        long pixels_RDPMultiPatBlt = 0;
+
+        int amount_RDPOpaqueRect = 0;
+        long pixels_RDPOpaqueRect = 0;
+
+        int amount_RDPMultiOpaqueRect = 0;
+        long pixels_RDPMultiOpaqueRect = 0;
+
+        int amount_RDPLineTo = 0;
+        long pixels_RDPLineTo = 0;
+
+        int amount_RDPPolygonSC = 0;
+        long pixels_RDPPolygonSC = 0;
+
+        int amount_RDPPolygonCB = 0;
+        long pixels_RDPPolygonCB = 0;
+
+        int amount_RDPPolyline = 0;
+        long pixels_RDPPolyline = 0;
+
+        int amount_RDPEllipseSC = 0;
+        long pixels_RDPEllipseSC = 0;
+
+        int amount_RDPEllipseCB = 0;
+        long pixels_RDPEllipseCB = 0;
+
+        int amount_RDPMem3Blt= 0;
+        long pixels_RDPMem3Blt= 0;
+
+        int amount_RDPGlyphIndex = 0;
+        long pixels_RDPGlyphIndex = 0;
+
+    } wrmGraphicStat;
+
+    std::string       local_IP;
 
 
 
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //------------------------
-    //      CONSTRUCTOR
-    //------------------------
-
-    ClientRedemption(char* argv[], int argc, RDPVerbose verbose,
-                     ClientOutputGraphicAPI *impl_graphic,
+public:
+    ClientRedemption(SessionReactor & session_reactor,
+                     char* argv[], int argc, RDPVerbose verbose,
+                     ClientOutputGraphicAPI * impl_graphic,
                      ClientIOClipboardAPI * impl_clipboard,
                      ClientOutputSoundAPI * impl_sound,
                      ClientInputSocketAPI * impl_socket_listener,
-                     ClientInputMouseKeyboardAPI * impl_mouse_keyboard)
-        : ClientRedemptionIOAPI(argv, argc, verbose)
-
-        , impl_graphic( impl_graphic)
-        , impl_clipboard (impl_clipboard)
+                     ClientInputMouseKeyboardAPI * impl_mouse_keyboard,
+                     ClientIODiskAPI * impl_io_disk)
+        : ClientRedemptionController(session_reactor, argv, argc, verbose)
+        , cctx()
+        , socket(nullptr)
+        , client_sck(-1)
+        , session_reactor(session_reactor)
+        , impl_graphic(impl_graphic)
+        , impl_clipboard(impl_clipboard)
         , impl_sound (impl_sound)
         , impl_socket_listener (impl_socket_listener)
         , impl_mouse_keyboard(impl_mouse_keyboard)
-
+        , impl_io_disk(impl_io_disk)
         , close_box_extra_message_ref("Close")
-        , client_execute(*(this), this->info.window_list_caps, false)
-
+        , client_execute(session_reactor, *(this), this->info.window_list_caps, false)
         , clientChannelRDPSNDManager(this->verbose, this, this->impl_sound)
-        , clientChannelCLIPRDRManager(this->verbose, this, this->impl_clipboard)
-        , clientChannelRDPDRManager(this->verbose, this)
+        , clientChannelCLIPRDRManager(this->verbose, this, this->impl_clipboard, this->rDPClipboardConfig)
+        , clientChannelRDPDRManager(this->verbose, this, this->impl_io_disk)
         , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
-    	, graph_capture(nullptr)
+        , local_IP("unknow_local_IP")
     {
+
         if (this->impl_clipboard) {
             this->impl_clipboard->set_client(this);
         } else {
@@ -159,22 +263,23 @@ public:
 
         this->disconnect("", false);
 
-        if (this->commandIsValid == COMMAND_VALID) {
+        if (this->connection_info_cmd_complete == COMMAND_VALID) {
+
             this->connect();
 
         } else {
             std::cout << "Argument(s) required to connect: ";
-            if (!(this->commandIsValid & NAME_GOT)) {
-                std::cout << "-n [user_name] ";
+            if (!(this->connection_info_cmd_complete & NAME_GOT)) {
+                std::cout << "-u [user_name] ";
             }
-            if (!(this->commandIsValid & PWD_GOT)) {
-                std::cout << "-w [password] ";
+            if (!(this->connection_info_cmd_complete & PWD_GOT)) {
+                std::cout << "-p [password] ";
             }
-            if (!(this->commandIsValid & IP_GOT)) {
+            if (!(this->connection_info_cmd_complete & IP_GOT)) {
                 std::cout << "-i [ip_server] ";
             }
-            if (!(this->commandIsValid & PORT_GOT)) {
-                std::cout << "-p [port] ";
+            if (!(this->connection_info_cmd_complete & PORT_GOT)) {
+                std::cout << "-P [port] ";
             }
             std::cout << std::endl;
 
@@ -190,13 +295,12 @@ public:
         }
 
         switch (this->mod_state) {
-            case ClientRedemptionIOAPI::MOD_VNC:
-                this->keymap.init_layout(this->vnc_conf.keylayout);
+            case ClientRedemptionConfig::MOD_VNC:
+                this->init_layout(this->vnc_conf.keylayout);
                 break;
 
-            default: this->keymap.init_layout(this->info.keylayout);
+            default: this->init_layout(this->info.keylayout);
                 break;
-
         }
     }
 
@@ -204,7 +308,7 @@ public:
         return this->cl;
     }
 
-     void delete_replay_mod() override {
+    void delete_replay_mod() override {
         this->replay_mod.reset();
     }
 
@@ -213,20 +317,20 @@ public:
 //     }
 
     void closeFromScreen() override {
-        if (impl_graphic) {
+        if (this->impl_graphic) {
             this->impl_graphic->closeFromScreen();
         }
     }
 
     bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) override {
          try {
-            this->replay_mod.reset(new ReplayMod( *this
+            this->replay_mod.reset(new ReplayMod( session_reactor
+                                                , *this
                                                 , movie_dir.c_str() //(this->REPLAY_DIR + "/").c_str()
                                                 , movie_name.c_str()
                                                 , 0             //this->info.width
                                                 , 0             //this->info.height
                                                 , this->_error
-                                                , this->_font
                                                 , true
                                                 , begin_read
                                                 , end_read
@@ -272,12 +376,57 @@ public:
             this->is_loading_replay_mod = false;
 
             if (impl_graphic) {
-                this->impl_graphic->reset_cache(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
+                //LOG(LOG_INFO, "", this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
+                //this->impl_graphic->reset_cache(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
                 this->impl_graphic->create_screen(this->_movie_dir, this->_movie_name);
-
                 if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
                     if (this->impl_mouse_keyboard) {
                         this->impl_mouse_keyboard->pre_load_movie();
+                        LOG(LOG_INFO, "amount_RDPDestBlt = %d pixels_RDPDestBlt = %ld", this->wrmGraphicStat.amount_RDPDestBlt, this->wrmGraphicStat.pixels_RDPDestBlt);
+                          /*amount_RDPMultiDstBlt = %d pixels_RDPMultiDstBlt = %ld\n*/
+                         LOG(LOG_INFO, "amount_RDPScrBlt = %d pixels_RDPScrBlt = %ld", this->wrmGraphicStat.amount_RDPScrBlt, this->wrmGraphicStat.pixels_RDPScrBlt);/* amount_RDPMultiScrBlt = %d pixels_RDPMultiScrBlt = %ld\n*/
+                         LOG(LOG_INFO, "amount_RDPMemBlt = %d pixels_RDPMemBlt = %ld", this->wrmGraphicStat.amount_RDPMemBlt, this->wrmGraphicStat.pixels_RDPMemBlt);
+                         LOG(LOG_INFO, "amount_RDPBitmapData = %d pixels_RDPBitmapData = %ld ", this->wrmGraphicStat.amount_RDPBitmapData, this->wrmGraphicStat.pixels_RDPBitmapData);
+                         LOG(LOG_INFO, "amount_RDPPatBlt= %d pixels_RDPPatBlt= %ld", this->wrmGraphicStat.amount_RDPPatBlt, this->wrmGraphicStat.pixels_RDPPatBlt);
+                         //LOG(LOG_INFO, "amount_RDPMultiPatBlt = %d pixels_RDPMultiPatBlt = %ld");
+                         LOG(LOG_INFO, "amount_RDPOpaqueRect = %d pixels_RDPOpaqueRect = %ld", this->wrmGraphicStat.amount_RDPOpaqueRect, this->wrmGraphicStat.pixels_RDPOpaqueRect);
+                          /*\n amount_RDPMultiOpaqueRect = %d pixels_RDPMultiOpaqueRect = %ld*/
+                         LOG(LOG_INFO, "amount_RDPLineTo = %d pixels_RDPLineTo = %ld ", this->wrmGraphicStat.amount_RDPLineTo, this->wrmGraphicStat.pixels_RDPLineTo);
+                          /*amount_RDPPolygonSC = %d pixels_RDPPolygonSC = %ld\n amount_RDPPolygonCB = %d pixels_RDPPolygonCB = %ld\n amount_RDPPolyline = %d pixels_RDPPolyline = %ld\n amount_RDPEllipseSC = %d pixels_RDPEllipseSC = %ld\n amount_RDPEllipseCB = %d pixels_RDPEllipseCB = %ld\n*/
+                         LOG(LOG_INFO, "amount_RDPMem3Blt= %d pixels_RDPMem3Blt= %ld", this->wrmGraphicStat.amount_RDPMem3Blt, this->wrmGraphicStat.pixels_RDPMem3Blt);
+                         LOG(LOG_INFO, "amount_RDPGlyphIndex = %d pixels_RDPGlyphIndex = %ld", this->wrmGraphicStat.amount_RDPGlyphIndex, this->wrmGraphicStat.pixels_RDPGlyphIndex);
+
+//              this->wrmGraphicStat.amount_RDPMultiDstBlt,
+//              this->wrmGraphicStat.pixels_RDPMultiDstBlt,
+
+//              this->wrmGraphicStat.amount_RDPMultiScrBlt,
+//              this->wrmGraphicStat.pixels_RDPMultiScrBlt,
+
+
+
+
+//              this->wrmGraphicStat.amount_RDPMultiPatBlt,
+//              this->wrmGraphicStat.pixels_RDPMultiPatBlt,
+
+
+//              this->wrmGraphicStat.amount_RDPMultiOpaqueRect,
+//              this->wrmGraphicStat.pixels_RDPMultiOpaqueRect,
+
+
+//              this->wrmGraphicStat.amount_RDPPolygonSC,
+//              this->wrmGraphicStat.pixels_RDPPolygonSC,
+//
+//              this->wrmGraphicStat.amount_RDPPolygonCB,
+//              this->wrmGraphicStat.pixels_RDPPolygonCB,
+//
+//              this->wrmGraphicStat.amount_RDPPolyline,
+//              this->wrmGraphicStat.pixels_RDPPolyline,
+//
+//              this->wrmGraphicStat.amount_RDPEllipseSC,
+//              this->wrmGraphicStat.pixels_RDPEllipseSC,
+//
+//              this->wrmGraphicStat.amount_RDPEllipseCB,
+//              this->wrmGraphicStat.pixels_RDPEllipseCB,
                     }
                 }
             }
@@ -354,11 +503,12 @@ public:
                     mod_rdp_params.deny_channels = nullptr;
                     mod_rdp_params.enable_rdpdr_data_analysis = false;
 
-                    this->unique_mod.reset(new mod_rdp( *(this->socket)
-                                                , *(this)
+                    this->unique_mod.reset(new mod_rdp( *this->socket
+                                                , session_reactor
+                                                , *this
                                                 , this->info
                                                 , ini.get_ref<cfg::mod_rdp::redir_info>()
-                                                , this->gen
+                                                , *this->gen
                                                 , this->timeSystem
                                                 , mod_rdp_params
                                                 , this->authentifier
@@ -404,16 +554,17 @@ public:
                     mod_rdp_params.use_client_provided_remoteapp = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
                     mod_rdp_params.use_session_probe_to_launch_remote_program = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
 
-                    if (impl_graphic) {
+                    if (this->impl_graphic) {
                         this->info.width = this->impl_graphic->screen_max_width;
                         this->info.height = this->impl_graphic->screen_max_height;
                     }
 
                     this->unique_mod.reset(new mod_rdp( *(this->socket)
+                                                , session_reactor
                                                 , *(this)
                                                 , this->info
                                                 , ini.get_ref<cfg::mod_rdp::redir_info>()
-                                                , this->gen
+                                                , *this->gen
                                                 , this->timeSystem
                                                 , mod_rdp_params
                                                 , this->authentifier
@@ -431,28 +582,23 @@ public:
 
             case MOD_VNC:
             {
-                 this->unique_mod.reset(new mod_vnc( *(this->socket)
+                 this->unique_mod.reset(new mod_vnc( *this->socket
+                                                    , session_reactor
                                                     , this->user_name.c_str()
                                                     , this->user_password.c_str()
-                                                    , *(this)
+                                                    , *this
                                                     , this->vnc_conf.width
                                                     , this->vnc_conf.height
-                                                    , this->ini.get<cfg::font>()
-                                                    , nullptr
-                                                    , nullptr
-                                                    , this->vnc_conf.theme
                                                     , this->vnc_conf.keylayout
                                                     , 0
                                                     , true
                                                     , true
                                                     , this->vnc_conf.vnc_encodings.c_str()
-                                                    , false
-                                                    , true
                                                     , mod_vnc::ClipboardEncodingType::UTF8
                                                     , VncBogusClipboardInfiniteLoop::delayed
                                                     , this->reportMessage
                                                     , this->vnc_conf.is_apple
-                                                    , &(this->vnc_conf.exe)
+                                                    , &this->vnc_conf.exe
 //                                                    , to_verbose_flags(0xfffffffd)
                                                     , to_verbose_flags(0)
                                                    )
@@ -464,9 +610,10 @@ public:
 
             this->mod = this->unique_mod.get();
 
-            this->mod->invoke_asynchronous_graphic_task(mod_api::AsynchronousGraphicTask::none);
-
-
+            this->clear_screen_event = this->session_reactor.create_graphic_event()
+            .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
+                gdi_clear_screen(gd, this->mod->get_dim());
+            }));
         } catch (const Error &) {
             this->mod = nullptr;
             return false;
@@ -476,6 +623,16 @@ public:
     }
 
     bool init_socket() {
+        if (this->is_full_replaying) {
+            LOG(LOG_INFO, "Replay %s", this->full_capture_file_name);
+            ReplayTransport *transport = new ReplayTransport(
+                this->full_capture_file_name.c_str(), this->target_IP.c_str(), this->port,
+                ReplayTransport::FdType::Timer, ReplayTransport::UncheckedPacket::Send);
+            this->socket = transport;
+            this->client_sck = transport->get_fd();
+            return true;
+        }
+
         unique_fd client_sck = ip_connect(this->target_IP.c_str(),
                                           this->port,
                                           3,                //nbTry
@@ -485,16 +642,21 @@ public:
 
         if (this->client_sck > 0) {
             try {
-
                 this->socket = new SocketTransport( this->user_name.c_str()
-                                                , std::move(client_sck)
-                                                , this->target_IP.c_str()
-                                                , this->port
-                                                , std::chrono::milliseconds(1000)
-                                                , to_verbose_flags(0)
-                                                //, SocketTransport::Verbose::dump
-                                                , &this->error_message
-                                                );
+                                            , std::move(client_sck)
+                                            , this->target_IP.c_str()
+                                            , this->port
+                                            , std::chrono::seconds(1)
+                                            , to_verbose_flags(0)
+                                            //, SocketTransport::Verbose::dump
+                                            , &this->error_message
+                                            );
+
+                if (this->is_full_capturing) {
+                    this->_socket_in_recorder.reset(this->socket);
+                    this->socket = new RecorderTransport(
+                        *this->socket, this->full_capture_file_name.c_str());
+                }
 
                 LOG(LOG_INFO, "Connected to [%s].", this->target_IP.c_str());
 
@@ -525,6 +687,12 @@ public:
     //------------------------
 
     virtual void connect() override {
+
+        if (this->is_full_capturing || this->is_full_replaying) {
+            gen = std::make_unique<FixedRandom>();
+        } else {
+            gen = std::make_unique<UdevRandom>();
+        }
 
         this->clientChannelRemoteAppManager.clear();
         this->cl.clear_channels();
@@ -683,9 +851,9 @@ public:
 
                 case WrmVersion::v2:
                 {
-                    int last_balised = (begin/ ClientRedemptionIOAPI::BALISED_FRAME);
+                    int last_balised = (begin/ ClientRedemptionConfig::BALISED_FRAME);
                     this->is_loading_replay_mod = true;
-                    if (this->load_replay_mod(this->_movie_dir, this->_movie_name, {last_balised * ClientRedemptionIOAPI::BALISED_FRAME, 0}, {0, 0})) {
+                    if (this->load_replay_mod(this->_movie_dir, this->_movie_name, {last_balised * ClientRedemptionConfig::BALISED_FRAME, 0}, {0, 0})) {
 
                         this->is_loading_replay_mod = false;
 
@@ -780,103 +948,41 @@ public:
     }
 
     virtual void set_capture() {
-        Inifile ini;
-            ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
-            ini.set<cfg::video::png_limit>(0);
-            ini.set<cfg::video::disable_keyboard_log>(KeyboardLogFlags::none);
-            ini.set<cfg::session_log::enable_session_log>(0);
-            ini.set<cfg::session_log::keyboard_input_masking_level>(KeyboardInputMaskingLevel::unmasked);
-            ini.set<cfg::context::pattern_kill>("");
-            ini.set<cfg::context::pattern_notify>("");
-            ini.set<cfg::debug::capture>(0xfffffff);
-            ini.set<cfg::video::capture_groupid>(1);
-            ini.set<cfg::video::record_tmp_path>(this->REPLAY_DIR);
-            ini.set<cfg::video::record_path>(this->REPLAY_DIR);
-            ini.set<cfg::video::hash_path>(this->REPLAY_DIR+std::string("/signatures"));
-            time_t now;
-            time(&now);
-            std::string data(ctime(&now));
-            std::string data_cut(data.c_str(), data.size()-1);
-            std::string name("-Replay");
-            std::string movie_name(data_cut+name);
-            ini.set<cfg::globals::movie_path>(movie_name.c_str());
-            ini.set<cfg::globals::trace_type>(TraceType::localfile);
-            ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
-            ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned, std::ratio<1, 100>>(1));
-            ini.set<cfg::video::break_interval>(std::chrono::seconds(600));
+        std::string record_path = this->REPLAY_DIR + "/";
+        std::string hash_path = this->REPLAY_DIR + "/signatures/";
+        time_t now;
+        time(&now);
+        std::string movie_name = ctime(&now);
+        movie_name.pop_back();
+        movie_name += "-Replay";
 
-            UdevRandom gen;
+        bool const is_remoteapp = false;
+        WrmParams wrmParams(
+              this->info.bpp
+            , is_remoteapp
+            , this->cctx
+            , *this->gen
+            , this->fstat
+            , hash_path.c_str()
+            , std::chrono::duration<unsigned int, std::ratio<1l, 100l> >{60}
+            , std::chrono::seconds(600) /* break_interval */
+            , WrmCompressionAlgorithm::no_compression
+            , 0
+        );
 
+        CaptureParams captureParams;
+        captureParams.now = tvtime();
+        captureParams.basename = movie_name.c_str();
+        captureParams.record_tmp_path = record_path.c_str();
+        captureParams.record_path = record_path.c_str();
+        captureParams.groupid = 0;
+        captureParams.report_message = nullptr;
 
-            //NullReportMessage * reportMessage  = nullptr;
-            struct timeval time;
-            gettimeofday(&time, nullptr);
-            PngParams png_params = {0, 0, ini.get<cfg::video::png_interval>(), 100, 0, true, this->info.remote_program, ini.get<cfg::video::rt_display>()};
-            VideoParams videoParams = {Level::high, this->info.width, this->info.height, 0, 0, 0, std::string(""), true, true, false, ini.get<cfg::video::break_interval>(), 0};
-            OcrParams ocr_params = { ini.get<cfg::ocr::version>(),
-                                        static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>()),
-                                        ini.get<cfg::ocr::on_title_bar_only>(),
-                                        ini.get<cfg::ocr::max_unrecog_char_rate>(),
-                                        ini.get<cfg::ocr::interval>(),
-                                        0
-                                    };
+        this->capture = std::make_unique<Capture>(
+            this->info.width, this->info.height,
+            captureParams, wrmParams);
 
-            std::string record_path = this->REPLAY_DIR.c_str() + std::string("/");
-
-            bool const is_remoteapp = false;
-            WrmParams wrmParams(
-                  this->info.bpp
-                , is_remoteapp
-                , this->cctx
-                , gen
-                , this->fstat
-                , ini.get<cfg::video::hash_path>().c_str()
-                , std::chrono::duration<unsigned int, std::ratio<1l, 100l> >{60}
-                , ini.get<cfg::video::break_interval>()
-                , WrmCompressionAlgorithm::no_compression
-                , 0
-            );
-
-            PatternParams patternCheckerParams {"", "", 0};
-            SequencedVideoParams sequenced_video_params {};
-            FullVideoParams full_video_params = { false };
-            MetaParams meta_params {
-                MetaParams::EnableSessionLog::No,
-                MetaParams::HideNonPrintable::No
-            };
-            KbdLogParams kbd_log_params {false, false, false, false};
-
-            CaptureParams captureParams;
-            captureParams.now = tvtime();
-            captureParams.basename = movie_name.c_str();
-            captureParams.record_tmp_path = record_path.c_str();
-            captureParams.record_path = record_path.c_str();
-            captureParams.groupid = 0;
-            captureParams.report_message = nullptr;
-
-            DrawableParams drawableParams;
-            drawableParams.width  = this->info.width;
-            drawableParams.height = this->info.height;
-            drawableParams.rdp_drawable = nullptr;
-
-            this->capture = std::make_unique<Capture>(captureParams
-                                            , drawableParams
-                                            , true, wrmParams
-                                            , false, png_params
-                                            , false, patternCheckerParams
-                                            , false, ocr_params
-                                            , false, sequenced_video_params
-                                            , false, full_video_params
-                                            , false, meta_params
-                                            , false, kbd_log_params
-                                            , videoParams
-                                            , nullptr
-                                            , Rect(0, 0, 0, 0)
-                                            );
-
-            //this->capture.get()->gd_drawable->width();
-
-            this->graph_capture = this->capture.get();
+        //this->capture->gd_drawable->width();
     }
 
 
@@ -1004,7 +1110,7 @@ public:
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------
 
-    void callback() override {
+    void callback(bool is_timeout) override {
 
 //         LOG(LOG_INFO, "Socket Event callback");
 //         if (this->_recv_disconnect_ultimatum) {
@@ -1014,21 +1120,27 @@ public:
 //             std::string labelErrorMsg("<font color='Red'>Disconnected by server</font>");
 //             this->disconnect(labelErrorMsg, false);
 //             this->capture = nullptr;
-//             this->graph_capture = nullptr;
 //             this->_recv_disconnect_ultimatum = false;
 //         }
 
         if (this->mod != nullptr) {
             try {
-                this->mod->draw_event(time(nullptr), *(this));
-
+                auto get_gd = [this]() -> gdi::GraphicApi& { return *this; };
+                if (is_timeout) {
+                    session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, get_gd);
+                } else {
+                    auto is_mod_fd = [/*this*/](int /*fd*/, auto& /*e*/){
+                        return true /*this->socket->get_fd() == fd*/;
+                    };
+                    session_reactor.execute_events(is_mod_fd);
+                    session_reactor.execute_graphics(is_mod_fd, get_gd());
+                }
             } catch (const Error & e) {
                 if (this->impl_graphic) {
                     this->impl_graphic->dropScreen();
                 }
                 const std::string errorMsg("[" + this->target_IP +  "] lost: pipe broken");
-                const std::string errorMsgLog(errorMsg+" "+e.errmsg());
-                LOG(LOG_INFO, "%s", errorMsgLog.c_str());
+                LOG(LOG_INFO, "%s: %s", errorMsg, e.errmsg());
                 std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
 
                 this->disconnect(labelErrorMsg, true);
@@ -1043,292 +1155,184 @@ public:
     //       DRAW FUNCTIONS
     //-----------------------------
 
-    using ClientRedemptionIOAPI::draw;
+    using ClientRedemptionConfig::draw;
 
     void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
+        if (this->impl_graphic->is_pre_loading) {
+            this->wrmGraphicStat.amount_RDPPatBlt++;
+            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
+            this->wrmGraphicStat.pixels_RDPPatBlt+= rect.cx * rect.cy;
         }
-
-        if (this->impl_graphic) {
-            this->impl_graphic->draw(cmd, clip, color_ctx);
-        }
-
-        if (this->is_recording && !this->is_replaying) {
-            this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette));
-            struct timeval time;
-            gettimeofday(&time, nullptr);
-            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
-        }
+        this->draw_impl(with_log{}, cmd, clip, color_ctx);
     }
 
 
     void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
+        if (this->impl_graphic->is_pre_loading) {
+            this->wrmGraphicStat.amount_RDPOpaqueRect++;
+            const Rect rect = cmd.rect.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
+            this->wrmGraphicStat.pixels_RDPOpaqueRect+= rect.cx * rect.cy;
         }
-
-        if (this->impl_graphic) {
-            this->impl_graphic->draw(cmd, clip, color_ctx);
-        }
-
-        if (this->is_recording && !this->is_replaying) {
-            this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette));
-            struct timeval time;
-            gettimeofday(&time, nullptr);
-            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
-        }
+        this->draw_impl(with_log{}, cmd, clip, color_ctx);
     }
 
 
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            //bitmap_data.log(LOG_INFO, "RDPBitmapData");
-            LOG(LOG_INFO, "RDPBitmapData");
-            LOG(LOG_INFO, "========================================\n");
+        if (this->impl_graphic->is_pre_loading) {
+            this->wrmGraphicStat.amount_RDPBitmapData++;
+            Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top,
+                                (bitmap_data.dest_right - bitmap_data.dest_left + 1),
+                                (bitmap_data.dest_bottom - bitmap_data.dest_top + 1));
+            const Rect rect = rectBmp.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
+            this->wrmGraphicStat.pixels_RDPBitmapData+= rect.cx * rect.cy;
         }
-
-        if (this->impl_graphic) {
-            this->impl_graphic->draw(bitmap_data, bmp);
-        }
-
-        if (this->is_recording && !this->is_replaying) {
-            this->graph_capture->draw(bitmap_data, bmp);
-            struct timeval time;
-            gettimeofday(&time, nullptr);
-            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
-        }
+        this->draw_impl(no_log{}, bitmap_data, bmp);
     }
 
 
     void draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
+        if (this->impl_graphic->is_pre_loading) {
+            this->wrmGraphicStat.amount_RDPLineTo++;
+            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
+            this->wrmGraphicStat.pixels_RDPLineTo+= rect.cx * rect.cy;
         }
-
-        if (this->impl_graphic) {
-            this->impl_graphic->draw(cmd, clip, color_ctx);
-        }
-
-        if (this->is_recording && !this->is_replaying) {
-            this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette));
-            struct timeval time;
-            gettimeofday(&time, nullptr);
-            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
-        }
+        this->draw_impl(with_log{}, cmd, clip, color_ctx);
     }
 
 
     void draw(const RDPScrBlt & cmd, Rect clip) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
+        if (this->impl_graphic->is_pre_loading) {
+            this->wrmGraphicStat.amount_RDPScrBlt++;
+            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
+            this->wrmGraphicStat.pixels_RDPScrBlt+= rect.cx * rect.cy;
         }
-
-        if (this->impl_graphic) {
-            this->impl_graphic->draw(cmd, clip);
-        }
-
-        if (this->is_recording && !this->is_replaying) {
-            this->graph_capture->draw(cmd, clip);
-            struct timeval time;
-            gettimeofday(&time, nullptr);
-            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
-        }
+        this->draw_impl(with_log{}, cmd, clip);
     }
 
 
     void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override {
-         if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-         }
-
-        if (this->impl_graphic) {
-            this->impl_graphic->draw(cmd, clip, bitmap);
+        if (this->impl_graphic->is_pre_loading) {
+            this->wrmGraphicStat.amount_RDPMemBlt++;
+            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
+            this->wrmGraphicStat.pixels_RDPMemBlt+= rect.cx * rect.cy;
         }
-
-        if (this->is_recording && !this->is_replaying) {
-            this->graph_capture->draw(cmd, clip, bitmap);
-            struct timeval time;
-            gettimeofday(&time, nullptr);
-            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
-        }
+        this->draw_impl(with_log{}, cmd, clip, bitmap);
     }
 
 
     void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
+        if (this->impl_graphic->is_pre_loading) {
+            this->wrmGraphicStat.amount_RDPMem3Blt++;
+            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
+            this->wrmGraphicStat.pixels_RDPMem3Blt+= rect.cx * rect.cy;
         }
-
-        if (this->impl_graphic) {
-            this->impl_graphic->draw(cmd, clip, color_ctx, bitmap);
-        }
-
-        if (this->is_recording && !this->is_replaying) {
-            this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette), bitmap);
-            struct timeval time;
-            gettimeofday(&time, nullptr);
-            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
-        }
-
-/*        if (this->wab_diag_question) {
+        this->draw_impl(with_log{}, cmd, clip, color_ctx, bitmap);
+        /*if (this->wab_diag_question) {
             this->answer_question(this->asked_color);
         }*/
     }
 
-
     void draw(const RDPDestBlt & cmd, Rect clip) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
+        if (this->impl_graphic->is_pre_loading) {
+            this->wrmGraphicStat.amount_RDPDestBlt++;
+            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
+            this->wrmGraphicStat.pixels_RDPDestBlt += rect.cx * rect.cy;
         }
-
-        if (this->impl_graphic) {
-            this->impl_graphic->draw(cmd, clip);
-        }
-
-        if (this->is_recording && !this->is_replaying) {
-            this->graph_capture->draw(cmd, clip);
-            struct timeval time;
-            gettimeofday(&time, nullptr);
-            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
-        }
+        this->draw_impl(with_log{}, cmd, clip);
     }
 
     void draw(const RDPMultiDstBlt & cmd, Rect clip) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
+//         if (this->impl_graphic->is_pre_loading) {
+//             this->wrmGraphicStat.amount_RDPMultiDstBlt++;
+//             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
+//             this->wrmGraphicStat.pixels_RDPMultiDstBlt+= rect.cx * rect.cy;
+//         }
+        this->draw_unimplemented(with_log{}, cmd, clip);
     }
 
     void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        (void) color_ctx;
+//         if (this->impl_graphic->is_pre_loading) {
+//             this->wrmGraphicStat.amount_RDPMultiOpaqueRect++;
+//             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
+//             this->wrmGraphicStat.pixels_RDPMultiOpaqueRect+= rect.cx * rect.cy;
+//         }
+        this->draw_unimplemented(with_log{}, cmd, clip, color_ctx);
     }
 
     void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        (void) color_ctx;
+//         if (this->impl_graphic->is_pre_loading) {
+//             this->wrmGraphicStat.amount_RDPMultiPatBlt++;
+//             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
+//             this->wrmGraphicStat.pixels_RDPMultiPatBlt+= rect.cx * rect.cy;
+//         }
+        this->draw_unimplemented(with_log{}, cmd, clip, color_ctx);
     }
 
     void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
+//         if (this->impl_graphic->is_pre_loading) {
+//             this->wrmGraphicStat.amount_RDPMultiScrBlt++;
+//             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
+//             this->wrmGraphicStat.pixels_RDPMultiScrBlt+= rect.cx * rect.cy;
+//         }
+        this->draw_unimplemented(with_log{}, cmd, clip);
     }
 
     void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
-         if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-         }
-
-        if (this->impl_graphic) {
-            this->impl_graphic->draw(cmd, clip, color_ctx, gly_cache);
+        if (this->impl_graphic->is_pre_loading) {
+            this->wrmGraphicStat.amount_RDPGlyphIndex++;
+            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
+            this->wrmGraphicStat.pixels_RDPGlyphIndex+= rect.cx * rect.cy;
         }
-
-        if (this->is_recording && !this->is_replaying) {
-            this->graph_capture->draw(cmd, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette), gly_cache);
-            struct timeval time;
-            gettimeofday(&time, nullptr);
-            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
-        }
+        this->draw_impl(with_log{}, cmd, clip, color_ctx, gly_cache);
     }
 
     void draw(const RDPPolygonSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            //cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        (void) cmd;
-        (void) clip;
-        (void) color_ctx;
+//         if (this->impl_graphic->is_pre_loading) {
+//             this->wrmGraphicStat.amount_RDPPolygonSC++;
+//             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
+//             this->wrmGraphicStat.pixels_RDPPolygonSC+= rect.cx * rect.cy;
+//         }
+        this->draw_unimplemented(no_log{}, cmd, clip, color_ctx);
     }
 
     void draw(const RDPPolygonCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            //cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        (void) cmd;
-        (void) clip;
-        (void) color_ctx;
+//         if (this->impl_graphic->is_pre_loading) {
+//             this->wrmGraphicStat.amount_RDPPolygonCB++;
+//             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
+//             this->wrmGraphicStat.pixels_RDPPolygonCB+= rect.cx * rect.cy;
+//         }
+        this->draw_unimplemented(no_log{}, cmd, clip, color_ctx);
     }
 
     void draw(const RDPPolyline & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        (void) color_ctx;
+//         if (this->impl_graphic->is_pre_loading) {
+//             this->wrmGraphicStat.amount_RDPPolyline++;
+//             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
+//             this->wrmGraphicStat.pixels_RDPPolyline+= rect.cx * rect.cy;
+//         }
+        this->draw_unimplemented(with_log{}, cmd, clip, color_ctx);
     }
 
     void draw(const RDPEllipseSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        (void) cmd;
-        (void) clip;
-        (void) color_ctx;
+//         if (this->impl_graphic->is_pre_loading) {
+//             this->wrmGraphicStat.amount_RDPEllipseSC++;
+//             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
+//             this->wrmGraphicStat.pixels_RDPEllipseSC+= rect.cx * rect.cy;
+//         }
+        this->draw_unimplemented(with_log{}, cmd, clip, color_ctx);
     }
 
     void draw(const RDPEllipseCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            //cmd.log(LOG_INFO, clip);
-            LOG(LOG_INFO, "========================================\n");
-        }
-        (void) cmd;
-        (void) clip;
-        (void) color_ctx;
+//         if (this->impl_graphic->is_pre_loading) {
+//             this->wrmGraphicStat.amount_RDPEllipseCB++;
+//             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
+//             this->wrmGraphicStat.pixels_RDPEllipseCB+= rect.cx * rect.cy;
+//         }
+        this->draw_unimplemented(no_log{}, cmd, clip, color_ctx);
     }
 
-    void draw(const RDP::FrameMarker & order) override {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            //order.log(LOG_INFO);
-            LOG(LOG_INFO, "========================================\n");
-        }
-
-        if (this->is_recording && !this->is_replaying) {
-            this->graph_capture->draw(order);
-            struct timeval time;
-            gettimeofday(&time, nullptr);
-            this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
-        }
+    void draw(const RDP::FrameMarker& order) override {
+        this->draw_impl(no_log{}, order);
     }
 
     void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
@@ -1359,7 +1363,7 @@ public:
 //     }
 
     ResizeResult server_resize(int width, int height, int bpp) override {
-        LOG(LOG_INFO, "server_resize to (%d, %d, %d)", width, height, bpp);
+        //LOG(LOG_INFO, "server_resize to (%d, %d, %d)", width, height, bpp);
         if (this->impl_graphic) {
             return this->impl_graphic->server_resize(width, height, bpp);
         }
@@ -1374,10 +1378,9 @@ public:
             }
 
             if (this->is_recording && !this->is_replaying) {
-                this->graph_capture->begin_update();
-                struct timeval time;
-                gettimeofday(&time, nullptr);
-                this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+                this->capture->drawable.begin_update();
+                this->capture->wrm_capture.begin_update();
+                this->capture->wrm_capture.periodic_snapshot(tvtime(), this->mouse_data.x, this->mouse_data.y, false);
             }
         }
     }
@@ -1391,10 +1394,9 @@ public:
             }
 
             if (this->is_recording && !this->is_replaying) {
-                this->graph_capture->end_update();
-                struct timeval time;
-                gettimeofday(&time, nullptr);
-                this->capture.get()->periodic_snapshot(time, this->mouse_data.x, this->mouse_data.y, false);
+                this->capture->drawable.end_update();
+                this->capture->wrm_capture.end_update();
+                this->capture->wrm_capture.periodic_snapshot(tvtime(), this->mouse_data.x, this->mouse_data.y, false);
             }
         }
     }
@@ -1403,6 +1405,82 @@ public:
         return false;
     }
 
+private:
+    using no_log = std::false_type;
+    using with_log = std::true_type;
+
+    void draw_impl(no_log, RDP::FrameMarker const& order)
+    {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            //order.log(LOG_INFO);
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        if (this->is_recording && !this->is_replaying) {
+            this->capture->drawable.draw(order);
+            this->capture->wrm_capture.draw(order);
+            this->capture->wrm_capture.periodic_snapshot(tvtime(), this->mouse_data.x, this->mouse_data.y, false);
+        }
+    }
+
+    template<class WithLog, class Order, class T, class... Ts>
+    void draw_impl(WithLog with_log, Order& order, T& clip_or_bmp, Ts&... others)
+    {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            if constexpr (with_log) {
+                order.log(LOG_INFO, clip_or_bmp);
+            }
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        if (this->impl_graphic) {
+            this->impl_graphic->draw(order, clip_or_bmp, others...);
+        }
+
+        if (this->is_recording && !this->is_replaying) {
+            this->capture->drawable.draw(order, clip_or_bmp, others...);
+            this->capture->wrm_capture.draw(order, clip_or_bmp, others...);
+            this->capture->wrm_capture.periodic_snapshot(tvtime(), this->mouse_data.x, this->mouse_data.y, false);
+        }
+    }
+
+    template<class WithLog, class Order, class... Ts>
+    void draw_impl(WithLog with_log, Order& order, Rect clip, gdi::ColorCtx color_ctx, Ts&... others)
+    {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            if constexpr (with_log) {
+                order.log(LOG_INFO, clip);
+            }
+            LOG(LOG_INFO, "========================================\n");
+        }
+
+        if (this->impl_graphic) {
+            this->impl_graphic->draw(order, clip, color_ctx, others...);
+        }
+
+        if (this->is_recording && !this->is_replaying) {
+            this->capture->drawable.draw(order, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette), others...);
+            this->capture->wrm_capture.draw(order, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette), others...);
+            this->capture->wrm_capture.periodic_snapshot(tvtime(), this->mouse_data.x, this->mouse_data.y, false);
+        }
+    }
+
+    template<class WithLog, class Order, class... Ts>
+    void draw_unimplemented(WithLog with_log, Order& order, Rect clip, Ts&... /*others*/)
+    {
+        if (bool(this->verbose & RDPVerbose::graphics)) {
+            LOG(LOG_INFO, "--------- FRONT ------------------------");
+            (void)clip;
+            (void)order;
+            if constexpr (with_log) {
+                order.log(LOG_INFO, clip);
+            }
+            LOG(LOG_INFO, "========================================\n");
+        }
+    }
 };
 
 
@@ -1431,8 +1509,8 @@ public:
 
     // sudo dpkg -i /home/qa/Desktop/redemption_0.9.740bjessie_amd64.deb
 
-
-
+// REDEMPTION_LOG_PRINT=1
+// cxxflags=-DREDEMPTION_NO_FFMPEG
 
 
     // scp -P 22 -r cmoroldo@10.10.43.46:/home/cmoroldo/Bureau/redemption_test_charge/movie.wrm /home/qa/Desktop/movie_sample_data/

@@ -29,14 +29,14 @@
 #include "utils/log.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
-#include "client_redemption/client_input_output_api.hpp"
+#include "client_redemption/client_redemption_api.hpp"
 
 
 
 #include "../keymaps/qt_scancode_keymap.hpp"
 #include "qt_options_window.hpp"
 
-
+#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 
 #include <QtGui/QPainter>
 #include <QtGui/QKeyEvent>
@@ -74,8 +74,10 @@
 
 class IconMovie :  public QWidget
 {
-
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     ClientInputMouseKeyboardAPI * controllers;
@@ -214,7 +216,7 @@ public:
 
             std::string const movie_dir = path.substr(0, pos);
 
-            this->controllers->client->mod_state = ClientRedemptionIOAPI::MOD_RDP_REPLAY;
+            this->controllers->client->mod_state = ClientRedemptionAPI::MOD_RDP_REPLAY;
             this->controllers->client->replay(movie_name, movie_dir);
         }
     }
@@ -236,13 +238,13 @@ public:
 };
 
 
-#include <sys/ioctl.h>
-
-
 class QtMoviesPanel : public QWidget
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     ClientInputMouseKeyboardAPI * controllers;
@@ -258,7 +260,7 @@ public:
         this->setMinimumSize(395, 250);
         this->setMaximumWidth(395);
 
-        std::vector<ClientRedemptionIOAPI::IconMovieData> iconData = this->controllers->client->get_icon_movie_data();
+        std::vector<ClientRedemptionAPI::IconMovieData> iconData = this->controllers->client->get_icon_movie_data();
 
         for (size_t i = 0; i < iconData.size(); i++) {
             IconMovie* icon = new IconMovie(controllers, iconData[i].file_name, iconData[i].file_path, iconData[i].file_version, iconData[i].file_resolution, iconData[i].file_checksum, iconData[i].movie_len, this);
@@ -288,8 +290,10 @@ public:
 
 class QtFormReplay : public QWidget
 {
-
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     ClientInputMouseKeyboardAPI * controllers;
@@ -342,7 +346,7 @@ private Q_SLOTS:
 
         std::string const movie_dir = str_movie_path.substr(0, pos);
 
-        this->controllers->client->mod_state = ClientRedemptionIOAPI::MOD_RDP_REPLAY;
+        this->controllers->client->mod_state = ClientRedemptionAPI::MOD_RDP_REPLAY;
         this->controllers->client->replay(movie_name, movie_dir);
     }
 
@@ -374,7 +378,10 @@ public:
 class ConnectionFormQt  : public QWidget
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     uint8_t protocol_type;
@@ -405,7 +412,7 @@ public:
       , _IPField("", this)
       , _userNameField("", this)
       , _PWDField("", this)
-      , _portField((protocol_type == ClientRedemptionIOAPI::MOD_RDP) ? "389" : "5900", this)
+      , _portField((protocol_type == ClientRedemptionAPI::MOD_RDP) ? "389" : "5900", this)
       , _IPLabel(      QString("IP server :"), this)
       , _userNameLabel(QString("User name : "), this)
       , _PWDLabel(     QString("Password :  "), this)
@@ -429,7 +436,7 @@ public:
         this->line_edit_layout.addRow(&(this->_PWDLabel)     , &(this->_PWDField));
         this->line_edit_layout.addRow(&(this->_portLabel)    , &(this->_portField));
 
-        if (this->protocol_type == ClientRedemptionIOAPI::MOD_VNC) {
+        if (this->protocol_type == ClientRedemptionAPI::MOD_VNC) {
             this->_userNameField.hide();
             this->_userNameLabel.hide();
             this->_portField.setText("5900");
@@ -451,17 +458,20 @@ private Q_SLOTS:
 class QtIconAccount :  public QWidget
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     FormTabAPI * main_tab;
-    const ClientRedemptionIOAPI::AccountData accountData;
+    const ClientRedemptionAPI::AccountData accountData;
     QPixmap pixmap;
     QRect drop_rect;
 
 
 
-    QtIconAccount(FormTabAPI * main_tab, const ClientRedemptionIOAPI::AccountData & accountData, QWidget * parent)
+    QtIconAccount(FormTabAPI * main_tab, const ClientRedemptionAPI::AccountData & accountData, QWidget * parent)
       : QWidget(parent)
       , main_tab(main_tab)
       , accountData(accountData)
@@ -605,16 +615,19 @@ public:
 class QtAccountPanel : public QWidget
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     QtIconAccount * icons[15];
     QFormLayout lay;
-    const ClientRedemptionIOAPI::AccountData * accountData;
+    const ClientRedemptionAPI::AccountData * accountData;
     const int nb_account;
 
 
-    QtAccountPanel(FormTabAPI * main_tab, const ClientRedemptionIOAPI::AccountData * accountData, int nb_account, QWidget * parent, int protocol_type)
+    QtAccountPanel(FormTabAPI * main_tab, const ClientRedemptionAPI::AccountData * accountData, int nb_account, QWidget * parent, int protocol_type)
       : QWidget(parent)
       , lay(this)
       , accountData(accountData)
@@ -653,7 +666,7 @@ class QtFormAccountConnectionPanel : public QWidget
 {
 
 public:
-    ClientRedemptionIOAPI       * _front;
+    ClientRedemptionAPI       * _front;
     ClientInputMouseKeyboardAPI * controllers;
     FormTabAPI * main_panel;
     ConnectionFormQt     line_edit_panel;
@@ -663,7 +676,7 @@ public:
     int protocol_type;
 
 
-    QtFormAccountConnectionPanel(ClientInputMouseKeyboardAPI * controllers, FormTabAPI * main_panel,  uint8_t protocol_type, ClientRedemptionIOAPI * front)
+    QtFormAccountConnectionPanel(ClientInputMouseKeyboardAPI * controllers, FormTabAPI * main_panel,  uint8_t protocol_type, ClientRedemptionAPI * front)
       : QWidget(main_panel)
       , _front(front)
       , controllers(controllers)
@@ -691,7 +704,8 @@ public:
 
     void setAccountData() {
         if (this->_front) {
-            this->_front->setAccountData();
+            //TODO
+            //this->_front->setAccountData();
 
             if (this->_front->_save_password_account) {
                 this->main_panel->check_password_box();
@@ -722,14 +736,17 @@ public:
 class QtFormTab : public FormTabAPI
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 
 public:
 
 
     uint8_t protocol_type;
-    ClientRedemptionIOAPI       * _front;
+    ClientRedemptionAPI       * _front;
     ClientInputMouseKeyboardAPI * controllers;
     const int            _width;
     const int            _height;
@@ -748,7 +765,7 @@ public:
     QtOptions * options;
 
 
-    QtFormTab(ClientInputMouseKeyboardAPI * controllers, ClientRedemptionIOAPI  * front, uint8_t protocol_type, QWidget * parent)
+    QtFormTab(ClientInputMouseKeyboardAPI * controllers, ClientRedemptionAPI  * front, uint8_t protocol_type, QWidget * parent)
         : FormTabAPI(parent)
         , protocol_type(protocol_type)
         , _front(front)
@@ -763,7 +780,7 @@ public:
         , _buttonOptions("Options", this)
     {
 
-        if (protocol_type & ClientRedemptionIOAPI::MOD_RDP) {
+        if (protocol_type & ClientRedemptionAPI::MOD_RDP) {
             this->options = new QtRDPOptions(front, this->controllers, this);
         } else {
             this->options = new QtVNCOptions(front, this->controllers, this);
@@ -897,16 +914,18 @@ public:
 private Q_SLOTS:
     void connexionReleased() {
 
-        if (! (this->protocol_type == ClientRedemptionIOAPI::MOD_RDP && this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP) ){
+        if (! (this->protocol_type == ClientRedemptionAPI::MOD_RDP && this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP) ){
             this->_front->mod_state = this->protocol_type;
         }
 
         QPoint points = this->mapToGlobal({0, 0});
         this->controllers->client->windowsData.form_x = points.x()-14;
         this->controllers->client->windowsData.form_y = points.y()-85;
-        this->controllers->client->writeWindowsConf();
+        this->controllers->client->writeWindowsData();
 
         this->options->getConfigValues();
+//         this->_front->rdp_width = 1920;
+//         this->_front->rdp_height = 1080;
         this->_front->writeAccoundData(
             this->get_IPField(),
             this->get_userNameField(),
@@ -914,6 +933,7 @@ private Q_SLOTS:
             this->get_portField()
         );
         this->_front->writeCustomKeyConfig();
+        this->_front->writeClientInfo();
 
         this->controllers->connexionReleased();
 
@@ -922,8 +942,6 @@ private Q_SLOTS:
         } else {
             this->_front->_save_password_account = false;
         }
-
-
     }
 
     void optionsReleased() {
@@ -936,7 +954,10 @@ private Q_SLOTS:
 class QtForm : public QWidget
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     ClientInputMouseKeyboardAPI * controllers;
@@ -957,7 +978,7 @@ public:
 
 
 
-    QtForm(ClientInputMouseKeyboardAPI * controllers, ClientRedemptionIOAPI  * front)
+    QtForm(ClientInputMouseKeyboardAPI * controllers, ClientRedemptionAPI  * front)
         : QWidget()
         , controllers(controllers)
         , _width(460)
@@ -965,8 +986,8 @@ public:
         , _long_height(690)
         , main_layout(this)
         , tabs(this)
-        , RDP_tab(controllers, front, ClientRedemptionIOAPI::MOD_RDP, this)
-        , VNC_tab(controllers, front, ClientRedemptionIOAPI::MOD_VNC, this)
+        , RDP_tab(controllers, front, ClientRedemptionAPI::MOD_RDP, this)
+        , VNC_tab(controllers, front, ClientRedemptionAPI::MOD_VNC, this)
         , replay_tab(controllers, this)
         , is_option_open(false)
         , is_closing(false)
@@ -1013,7 +1034,7 @@ public:
         QPoint points = this->mapToGlobal({0, 0});
         this->controllers->client->windowsData.form_x = points.x()-1;
         this->controllers->client->windowsData.form_y = points.y()-39;
-        this->controllers->client->writeWindowsConf();
+        this->controllers->client->writeWindowsData();
         this->is_closing = true;
 
         if (this->is_option_open) {

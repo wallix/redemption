@@ -22,47 +22,43 @@
 */
 
 
-#include "client_redemption/client_input_output_api.hpp"
+#include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
+#include "client_redemption/client_input_output_api/client_graphic_api.hpp"
+
+#include "client_redemption/client_input_output_api/client_sound_api.hpp"
+#include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
+#include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
+
+#include "client_redemption/client_redemption_api.hpp"
+
 
 #include "core/RDP/clipboard.hpp"
+#include "utils/sugar/byte.hpp"
 
 
 class FakeRDPChannelsMod : public mod_api
 {
 public:
-//     RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu;
 
-    std::vector<uint16_t> types;
-    std::vector<uint16_t> sub_types;
+    struct PDUData {
+        uint8_t data[1600] = {0};
+        size_t size = 0;
+    } last_pdu[10];
+
+    int index_in = 0;
+    int index_out = 0;
+
 
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override {
         (void) front_channel_name;
         (void) length;
         (void) flags;
 
-        this->types.push_back(chunk.in_uint16_le());
-        this->sub_types.push_back(chunk.in_uint16_le());
-
-        //InStream stream =  chunk.clone();
-
-//         switch (chunk.in_uint16_le()) {
-//
-//             case RDPECLIP::CB_MONITOR_READY:
-//                 break;
-//             case RDPECLIP::CB_FORMAT_LIST:
-//     case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
-//     case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-//     case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-//     case RDPECLIP::CB_TEMP_DIRECTORY:
-//     case RDPECLIP::CB_CLIP_CAPS:
-//     case RDPECLIP::CB_FILECONTENTS_REQUEST:
-//     case RDPECLIP::CB_FILECONTENTS_RESPONSE:
-//     case RDPECLIP::CB_LOCK_CLIPDATA:
-//     case RDPECLIP::CB_UNLOCK_CLIPDATA:
-//
-//         }
-
-        //this->streams.push_back(chunk.clone());
+        if (this->index_in < 10) {
+            last_pdu[this->index_in].size = length;         //chunk.in_remain();
+            std::memcpy(last_pdu[this->index_in].data, chunk.get_data(), chunk.in_remain());
+            this->index_in++;
+        }
     }
 
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override {
@@ -99,11 +95,16 @@ class FakeClientIOClipboard : public ClientIOClipboardAPI
 {
 public:
     std::string data_text;
-    void emptyBuffer() {}
+    std::unique_ptr<uint8_t[]>  _chunk;
+    void emptyBuffer() override {}
 
     //  set distant clipboard data
-    void setClipboard_text(std::string & str) override {
+    void setClipboard_text(std::string const& str) override {
         this->data_text = str;
+    }
+
+    uint8_t * get_text() override {
+        return this->_chunk.get();
     }
 
     void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const int bpp) override {
@@ -112,40 +113,27 @@ public:
         (void) image_height;
         (void) bpp;
     }
-    void setClipboard_files(std::string & name) override {}
-    void write_clipboard_temp_file(std::string fileName, const uint8_t * data, size_t data_len) override {
+    void setClipboard_files(std::string const& /*name*/) override {}
+    void write_clipboard_temp_file(std::string const& fileName, const uint8_t * data, size_t data_len) override {
         (void) fileName;
         (void) data;
         (void) data_len;
     }
-
-        // image data
-    // TODO should be `ImageDataView get_image_view()`
-    int get_image_buffer_width() override {return 0;}
-    int get_image_buffer_height() override {return 0;}
-    uint8_t * get_image_buffer_data() override {return 0;}
-    int get_image_buffer_depth() override {return 0;}
-
-        // files data (file index to identify a file among a files group descriptor)
-    std::string get_file_item_name(int index) override {return std::string("");}
-    // TODO should be `array_view_const_char get_file_item_size(int index)`
-    int get_file_item_size(int index) override {(void) index; return 0;}
-    char * get_file_item_data(int index) override {(void) index; return const_cast<char*>("");}
-
 };
 
 class FakeClientOutPutSound : public ClientOutputSoundAPI {
 
 public:
-    void init(size_t raw_total_size) override {(void) raw_total_size; };
-    void setData(const uint8_t * data, size_t size) override {(void) data; (void) size; };
-    void play() override {};
+    void init(size_t raw_total_size) override {(void) raw_total_size; }
+    void setData(const uint8_t * data, size_t size) override {(void) data; (void) size; }
+    void play() override {}
 };
 
 
 
 class FakeClient : public ClientRedemptionAPI
 {
+    CHANNELS::ChannelDefArray channels;
 
 public:
     int read_stream_index = -1;
@@ -153,37 +141,26 @@ public:
 
     FakeRDPChannelsMod fake_mod;
 
-    FakeClient()
-      : ClientRedemptionAPI()
+    FakeClient(SessionReactor& session_reactor)
+      : ClientRedemptionAPI( session_reactor)
     {
         this->mod = &(this->fake_mod);
     }
 
     size_t get_total_stream_produced() {
-        return this->fake_mod.types.size();
+        return this->fake_mod.index_in;
     }
 
-    uint16_t get_next_pdu_type() {
-        this->read_stream_index++;
-        if (this->read_stream_index < fake_mod.types.size()) {
-            return fake_mod.types[this->read_stream_index];
+    FakeRDPChannelsMod::PDUData * stream() {
+        if (this->fake_mod.index_out < 10) {
+            this->fake_mod.index_out++;
+            return &(this->fake_mod.last_pdu[this->fake_mod.index_out-1]);
         }
 
-        return -1;
+        return nullptr;
     }
 
-    uint16_t get_next_pdu_sub_type() {
-        this->read_stream_sub_index++;
-        if (this->read_stream_sub_index < fake_mod.sub_types.size()) {
-            return fake_mod.sub_types[this->read_stream_sub_index];
-        }
-
-        return -1;
-    }
-
-
-
-    void draw(RDP::FrameMarker    const & cmd) override { (void) cmd; };
+    void draw(RDP::FrameMarker    const & cmd) override { (void) cmd; }
     void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { (void) cmd; (void) clip; (void) color_ctx; (void) bmp; }
     void draw(RDPDestBlt          const & cmd, Rect clip) override { (void) cmd; (void) clip; }
     void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { (void) cmd; (void) clip; }
@@ -201,12 +178,91 @@ public:
     void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { (void) cmd; (void) clip; (void) color_ctx; }
     void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { (void) cmd; (void) clip; (void) color_ctx; }
     void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { (void) cmd; (void) clip; (void) color_ctx; }
-    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { (void) cmd; (void) bmp; (void) clip;}
+    void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { (void) cmd; (void) bmp; (void) clip; (void)color_ctx; }
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { (void) cmd; (void) clip; (void) gly_cache; (void) color_ctx;}
+    using ClientRedemptionAPI::draw;
     bool must_be_stop_capture() override { return true;}
-    const CHANNELS::ChannelDefArray & get_channel_list() const override {const CHANNELS::ChannelDefArray c; return c;}
+    const CHANNELS::ChannelDefArray & get_channel_list() const override { return this->channels;}
     ResizeResult server_resize(int , int , int ) override { return ResizeResult::instant_done;}
+};
 
 
 
+class FakeIODisk : public ClientIODiskAPI
+{
+
+public:
+    FakeIODisk() = default;
+
+    bool ifile_good(const char * /*new_path*/) override {
+        return true;
+    }
+
+    bool ofile_good(const char * /*new_path*/) override {
+        return true;
+    }
+
+    bool dir_good(const char * /*new_path*/) override {
+        return true;
+    }
+
+    void marke_dir(const char * /*new_path*/) override {
+
+    }
+
+    FileStat get_file_stat(const char * file_to_request) override {
+        (void)file_to_request;
+        return FileStat{};
+    }
+
+    FileStatvfs get_file_statvfs(const char * file_to_request) override {
+        (void)file_to_request;
+        return FileStatvfs{};
+    }
+
+    erref::NTSTATUS read_data(
+        std::string const& file_to_tread, int offset, byte_array data,
+        bool log_erro_on
+    ) override {
+        (void)file_to_tread;
+        (void)offset;
+        (void)data;
+        (void)log_erro_on;
+
+        return erref::NTSTATUS::STATUS_SUCCESS;
+    }
+
+    bool set_elem_from_dir(std::vector<std::string> & elem_list, const std::string & str_dir_path) override {
+        (void)str_dir_path;
+        elem_list.clear();
+
+        return true;
+    }
+
+    int get_device(const char * /*file_path*/) override {
+        return 0;
+    }
+
+    uint32_t get_volume_serial_number(int /*device*/) override {
+
+        return 0;
+    }
+
+    bool write_file(const char * file_to_write, const char * data, int data_len) override {
+        (void)file_to_write;
+        (void)data;
+        (void)data_len;
+
+        return true;
+    }
+
+    bool remove_file(const char * /*file_to_remove*/) override {
+        return false;
+    }
+
+    bool rename_file(const char * file_to_rename,  const char * new_name) override {
+        (void)file_to_rename;
+        (void)new_name;
+        return false;
+    }
 };

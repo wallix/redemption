@@ -62,6 +62,20 @@ class RDPDrawable
     using Color = Drawable::Color;
 
     Drawable drawable;
+    uint8_t  save_mouse[3072];   // 32 lines * 32 columns * 3 bytes per pixel = 3072 octets
+    uint16_t save_mouse_x;
+    uint16_t save_mouse_y;
+public:
+    int mouse_cursor_pos_x;
+    int mouse_cursor_pos_y;
+    int mouse_cursor_hotspot_x;
+    int mouse_cursor_hotspot_y;
+private:
+    bool dont_show_mouse_cursor;
+    const DrawablePointer * current_pointer;
+    DrawablePointer dynamic_pointer;
+    DrawablePointer default_pointer;
+    
     int frame_start_count;
     BGRPalette mod_palette_rgb;
 
@@ -72,11 +86,22 @@ class RDPDrawable
 public:
     RDPDrawable(const uint16_t width, const uint16_t height)
     : drawable(width, height)
+    , mouse_cursor_pos_x(width / 2)
+    , mouse_cursor_pos_y(height / 2)
+    , mouse_cursor_hotspot_x(0)
+    , mouse_cursor_hotspot_y(0)
+    , dont_show_mouse_cursor(false)
+    , current_pointer(&this->default_pointer)
     , frame_start_count(0)
     , mod_palette_rgb(BGRPalette::classic_332())
     {
+        Pointer p(DrawableDefaultPointer{}, true);
+        auto av     = p.get_24bits_xor_mask();
+        auto avmask = p.get_monochrome_and_mask();
+        this->default_pointer.initialize(32, 32, av.data(), avmask.data());
     }
 
+public:
     ConstImageView get_image_view() const override
     {
         return gdi::get_image_view(this->drawable);
@@ -120,11 +145,13 @@ public:
     }
 
     void set_mouse_cursor_pos(int x, int y) {
-        this->drawable.set_mouse_cursor_pos(x, y);
+        this->mouse_cursor_pos_x = x;
+        this->mouse_cursor_pos_y = y;
+
     }
 
     void show_mouse_cursor(bool x) {
-        this->drawable.dont_show_mouse_cursor = !x;
+        this->dont_show_mouse_cursor = !x;
     }
 
     void prepare_image_frame() override {}
@@ -903,12 +930,24 @@ public:
 
     void trace_mouse(void)
     {
-        return this->drawable.trace_mouse();
+        if (this->dont_show_mouse_cursor || !this->current_pointer) {
+            return;
+        }
+        this->save_mouse_x = this->mouse_cursor_pos_x;
+        this->save_mouse_y = this->mouse_cursor_pos_y;
+        int x = this->save_mouse_x - this->mouse_cursor_hotspot_x;
+        int y = this->save_mouse_y - this->mouse_cursor_hotspot_y;
+        return this->drawable.trace_mouse(this->current_pointer, x, y, this->save_mouse);
     }
 
     void clear_mouse(void)
     {
-        return this->drawable.clear_mouse();
+        if (this->dont_show_mouse_cursor || !this->current_pointer) {
+            return;
+        }
+        int x = this->save_mouse_x - this->mouse_cursor_hotspot_x;
+        int y = this->save_mouse_y - this->mouse_cursor_hotspot_y;
+        return this->drawable.clear_mouse(this->current_pointer, x, y, this->save_mouse);
     }
 
     void draw(const RDP::RAIL::NewOrExistingWindow            &) override {}
@@ -925,7 +964,11 @@ public:
         const auto hotspot = cursor.get_hotspot();
         auto av_xor = cursor.get_24bits_xor_mask();
         auto av_and = cursor.get_monochrome_and_mask();
-        this->drawable.use_pointer(hotspot.x, hotspot.y, dimensions.width, dimensions.height, av_xor.data(), av_and.data());
+        
+        this->dynamic_pointer.initialize(dimensions.width, dimensions.height, av_xor.data(), av_and.data());
+        this->mouse_cursor_hotspot_x = hotspot.x;
+        this->mouse_cursor_hotspot_y = hotspot.y;
+        this->current_pointer = &this->dynamic_pointer ;
     }
 
     void set_palette(const BGRPalette & palette) override {

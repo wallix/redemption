@@ -21,7 +21,6 @@
    Error exception object
 */
 
-
 #pragma once
 
 #include "utils/translation.hpp"
@@ -364,179 +363,23 @@ enum error_type
 #undef MAKE_ENUM
 #undef MAKE_ENUM_V
 
-struct Error {
+
+struct Error
+{
     error_type id;
     int errnum;
 
 private:
-    mutable bool has_msg = false;
-    mutable bool with_id = false;
-    mutable char msg[128]  = { 0 };
-
     Error() = delete;
 
 public:
-    explicit Error(error_type id, int errnum = 0) noexcept
-    : id(id)
-    , errnum(errnum)
-    {}
+    explicit Error(error_type id, int errnum = 0) noexcept;
 
-    const char * errmsg(bool with_id = true) const noexcept {
-        switch(this->id) {
-        case NO_ERROR:
-            return "No error";
-        case ERR_SESSION_UNKNOWN_BACKEND:
-            return "Unknown Backend";
-        case ERR_NLA_AUTHENTICATION_FAILED:
-            return "NLA Authentication Failed";
-        case ERR_TRANSPORT_OPEN_FAILED:
-            return "Open file failed";
-        case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
-            return "TLS certificate changed";
-        case ERR_TRANSPORT_TLS_CERTIFICATE_MISSED:
-            return "TLS certificate missed";
-        case ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED:
-            return "TLS certificate corrupted";
-        case ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE:
-            return "TLS certificate is inaccessible";
-        case ERR_VNC_CONNECTION_ERROR:
-            return "VNC connection error.";
-        case ERR_WIDGET_INVALID_COMPOSITE_DESTROY:
-            return "Composite Widget Destroyed without child list not empty";
-
-        case ERR_SESSION_PROBE_ENDING_IN_PROGRESS:
-            return "Session logoff in progress";
-
-        case ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT:
-            return "Unsupported client display monitor layout";
-
-        case ERR_LIC:
-            return "An error occurred during the licensing protocol";
-
-        case ERR_RAIL_CLIENT_EXECUTE:
-            return "The RemoteApp program did not start on the remote computer";
-
-        case ERR_RAIL_STARTING_PROGRAM:
-            return "Cannot start the RemoteApp program";
-
-        case ERR_RAIL_UNAUTHORIZED_PROGRAM:
-            return "The RemoteApp program is not in the list of authorized programs";
-
-        case ERR_RDP_OPEN_SESSION_TIMEOUT:
-            return "Logon timer expired";
-
-        case ERR_RDP_SERVER_REDIR:
-            return "The computer that you are trying to connect to is redirecting you to another computer.";
-
-        default:
-            if (this->has_msg && this->with_id == with_id) {
-                return this->msg;
-            }
-            char const * c_err = "Exception";
-            switch (this->id) {
-                #define MAKE_CASE(e) case e: c_err = "Exception " #e; break;
-                #define MAKE_CASE_V(e, x) case e: c_err = "Exception " #e; break;
-                EACH_ERROR(MAKE_CASE, MAKE_CASE_V)
-                #undef MAKE_CASE
-                #undef MAKE_CASE_V
-            }
-            if (with_id) {
-                std::snprintf(this->msg, sizeof(this->msg), "%s no : %d", c_err, this->id);
-            }
-            else {
-                std::snprintf(this->msg, sizeof(this->msg), "%s", c_err);
-            }
-            this->msg[sizeof(this->msg) - 1] = 0;
-            this->has_msg = true;
-            this->with_id = with_id;
-            return this->msg;
-        }
-    }
+    const char * errmsg(bool with_id = true) const noexcept;
 };
 
-inline const char* local_err_msg(const Error& error, Translation::language_t lang, bool with_id = true) {
-    switch (error.id) {
-    case ERR_SESSION_UNKNOWN_BACKEND:
-        return TR(trkeys::err_session_unknown_backend, lang);
+const char* local_err_msg(const Error& error, Translation::language_t lang, bool with_id = true) noexcept;
 
-    case ERR_NLA_AUTHENTICATION_FAILED:
-        return TR(trkeys::err_nla_authentication_failed, lang);
-
-    case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
-        return TR(trkeys::err_transport_tls_certificate_changed, lang);
-
-    case ERR_TRANSPORT_TLS_CERTIFICATE_MISSED:
-        return TR(trkeys::err_transport_tls_certificate_missed, lang);
-
-    case ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED:
-        return TR(trkeys::err_transport_tls_certificate_corrupted, lang);
-
-    case ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE:
-        return TR(trkeys::err_transport_tls_certificate_inaccessible, lang);
-
-    case ERR_VNC_CONNECTION_ERROR:
-        return TR(trkeys::err_vnc_connection_error, lang);
-
-    case ERR_SESSION_PROBE_ENDING_IN_PROGRESS:
-        return TR(trkeys::session_logoff_in_progress, lang);
-
-    case ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT:
-        return TR(trkeys::err_rdp_unsupported_monitor_layout, lang);
-
-    case ERR_LIC:
-        return TR(trkeys::err_lic, lang);
-
-    case ERR_RAIL_CLIENT_EXECUTE:
-        return TR(trkeys::err_rail_client_execute, lang);
-
-    case ERR_RAIL_STARTING_PROGRAM:
-        return TR(trkeys::err_rail_starting_program, lang);
-
-    case ERR_RAIL_UNAUTHORIZED_PROGRAM:
-        return TR(trkeys::err_rail_unauthorized_program, lang);
-
-    case ERR_RDP_OPEN_SESSION_TIMEOUT:
-        return TR(trkeys::err_rdp_open_session_timeout, lang);
-
-    case ERR_RDP_SERVER_REDIR:
-        return TR(trkeys::err_rdp_server_redir, lang);
-
-    case ERR_SESSION_PROBE_LAUNCH:
-        return TR(trkeys::err_session_probe_launch, lang);
-
-    case ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE:
-        return TR(trkeys::err_session_probe_asbl_fsvc_unavailable, lang);
-
-    case ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS:
-        return TR(trkeys::err_session_probe_asbl_maybe_something_blocks, lang);
-
-    case ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON:
-        return TR(trkeys::err_session_probe_asbl_unknown_reason, lang);
-
-    case ERR_SESSION_PROBE_CBBL_FSVC_UNAVAILABLE:
-        return TR(trkeys::err_session_probe_cbbl_fsvc_unavailable, lang);
-
-    case ERR_SESSION_PROBE_CBBL_CBVC_UNAVAILABLE:
-        return TR(trkeys::err_session_probe_cbbl_cbvc_unavailable, lang);
-
-    case ERR_SESSION_PROBE_CBBL_DRIVE_NOT_READY_YET:
-        return TR(trkeys::err_session_probe_cbbl_drive_not_ready_yet, lang);
-
-    case ERR_SESSION_PROBE_CBBL_MAYBE_SOMETHING_BLOCKS:
-        return TR(trkeys::err_session_probe_cbbl_maybe_something_blocks, lang);
-
-    case ERR_SESSION_PROBE_CBBL_LAUNCH_CYCLE_INTERRUPTED:
-        return TR(trkeys::err_session_probe_cbbl_launch_cycle_interrupted, lang);
-
-    case ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG:
-        return TR(trkeys::err_session_probe_cbbl_unknown_reason_refer_to_syslog, lang);
-
-    case ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG:
-        return TR(trkeys::err_session_probe_rp_launch_refer_to_syslog, lang);
-
-    default:
-        return error.errmsg(with_id);
-    }
-}
-
-#undef EACH_ERROR
+#ifndef NOT_UNDEF_EACH_ERROR
+# undef EACH_ERROR
+#endif

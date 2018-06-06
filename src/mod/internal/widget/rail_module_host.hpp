@@ -36,14 +36,17 @@ private:
     WidgetModuleHost module_host;
 
 public:
-    RailModuleHost(gdi::GraphicApi& drawable,
-               int16_t left, int16_t top, int16_t width, int16_t height,
-               Widget& parent, NotifyApi* notifier,
-               std::unique_ptr<mod_api> managed_mod, Font const & font,
-               const GCC::UserData::CSMonitor& cs_monitor,
-               uint16_t front_width, uint16_t front_height);
+    RailModuleHost(
+        gdi::GraphicApi& drawable,
+        int16_t left, int16_t top, int16_t width, int16_t height,
+        Widget& parent, NotifyApi* notifier,
+        std::unique_ptr<mod_api> managed_mod, Font const & font,
+        const GCC::UserData::CSMonitor& cs_monitor,
+        uint16_t front_width, uint16_t front_height);
 
     ~RailModuleHost() override;
+
+    gdi::GraphicApi& proxy_gd(gdi::GraphicApi& gd);
 
     mod_api& get_managed_mod();
 

@@ -31,6 +31,8 @@
 
 #include "configs/config.hpp"
 
+#include "core/session_reactor.hpp"
+
 #include "core/RDP/GraphicUpdatePDU.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/PersistentKeyListPDU.hpp"
@@ -105,7 +107,6 @@
 #include "utils/log.hpp"
 #include "utils/rect.hpp"
 #include "utils/stream.hpp"
-#include "utils/timeout.hpp"
 
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
@@ -128,7 +129,6 @@ class Front : public FrontAPI
     bool nomouse;
     int mouse_x = 0;
     int mouse_y = 0;
-    wait_obj event;
 
 public:
     bool has_user_activity = true;
@@ -167,7 +167,7 @@ private:
         GlyphCache glyph_cache;
 
         struct PrivateGraphicsUpdatePDU final : GraphicsUpdatePDU {
-            size_t max_bitmap_size_;
+            size_t max_data_block_size;
 
             PrivateGraphicsUpdatePDU(
                 OrderCaps & client_order_caps
@@ -183,7 +183,8 @@ private:
               , const int bitmap_cache_version
               , const int use_bitmap_comp
               , const int op2
-              , size_t max_bitmap_size
+              , size_t max_data_block_size
+              , bool experimental_enable_serializer_data_block_size_limit
               , bool fastpath_support
               , rdp_mppc_enc * mppc_enc
               , bool compression
@@ -203,14 +204,15 @@ private:
               , bitmap_cache_version
               , use_bitmap_comp
               , op2
-              , max_bitmap_size
+              , max_data_block_size
+              , experimental_enable_serializer_data_block_size_limit
               , fastpath_support
               , mppc_enc
               , compression
               , send_new_pointer
               , verbose
             )
-            , max_bitmap_size_(max_bitmap_size)
+            , max_data_block_size(max_data_block_size)
             , client_order_caps(client_order_caps)
             {}
 
@@ -225,13 +227,13 @@ private:
             void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
                 Bitmap new_bmp(this->capture_bpp, bmp);
 
-                if (static_cast<size_t>(new_bmp.cx() * new_bmp.cy() * new_bmp.bpp()) > this->max_bitmap_size_) {
+                if (static_cast<size_t>(new_bmp.cx() * new_bmp.cy() * new_bmp.bpp()) > this->max_data_block_size) {
                     const uint16_t max_image_width
                       = std::min<uint16_t>(
-                            align4(this->max_bitmap_size_ / nbbytes(new_bmp.bpp())),
+                            align4(this->max_data_block_size / nbbytes(new_bmp.bpp())),
                             new_bmp.cx()
                         );
-                    const uint16_t max_image_height = this->max_bitmap_size_ / (max_image_width * nbbytes(new_bmp.bpp()));
+                    const uint16_t max_image_height = this->max_data_block_size / (max_image_width * nbbytes(new_bmp.bpp()));
 
                     contiguous_sub_rect_f(
                         CxCy{new_bmp.cx(), new_bmp.cy()},
@@ -290,7 +292,7 @@ private:
           , int & encryptionLevel
           , CryptContext & encrypt
           , const Inifile & ini
-          , size_t max_bitmap_size
+          , size_t max_data_block_size
           , bool fastpath_support
           , rdp_mppc_enc * mppc_enc
           , Verbose verbose
@@ -377,7 +379,8 @@ private:
           , client_info.bitmap_cache_version
           , ini.get<cfg::client::bitmap_compression>()
           , client_info.use_compact_packets
-          , max_bitmap_size
+          , max_data_block_size
+          , ini.get<cfg::globals::experimental_enable_serializer_data_block_size_limit>()
           , fastpath_support
           , mppc_enc
           , bool(ini.get<cfg::client::rdp_compression>()) ? client_info.rdp_compression : 0
@@ -410,7 +413,7 @@ private:
           , int & encryptionLevel
           , CryptContext & encrypt
           , const Inifile & ini
-          , size_t max_bitmap_size
+          , size_t max_data_block_size
           , bool fastpath_support
           , rdp_mppc_enc * mppc_enc
           , Verbose verbose
@@ -422,7 +425,7 @@ private:
 
             new (&this->u.graphics) Graphics(
                 client_order_caps, client_info, trans, userid, shareid, encryptionLevel, encrypt,
-                ini, max_bitmap_size, fastpath_support, mppc_enc, verbose
+                ini, max_data_block_size, fastpath_support, mppc_enc, verbose
             );
             this->is_initialized = true;
         }
@@ -499,13 +502,6 @@ private:
         bool is_initialized = false;
     } orders;
 
-    struct write_x224_dt_tpdu_fn
-    {
-        void operator()(StreamSize<256>, OutStream & x224_header, std::size_t sz) const {
-            X224::DT_TPDU_Send(x224_header, sz);
-        }
-    };
-
     /// \param fn  Fn(MCS::ChannelJoinRequest_Recv &)
     template<class Fn>
     void channel_join_request_transmission(InStream & x224_data, Fn fn) {
@@ -525,7 +521,7 @@ private:
                     MCS::PER_ENCODING
                 );
             },
-            write_x224_dt_tpdu_fn{}
+            X224::write_x224_dt_tpdu_fn{}
         );
     }
 
@@ -548,7 +544,7 @@ protected:
     CHANNELS::ChannelDefArray channel_list;
 
 public:
-    int up_and_running;
+    bool up_and_running;
 
 private:
     int share_id;
@@ -616,21 +612,23 @@ private:
 
     uint16_t rail_channel_id = 0;
 
-    size_t max_bitmap_size = 1024 * 30; // should be less than 1 << 15
+    size_t max_data_block_size = 1024 * 64;
 
     bool focus_on_password_textbox = false;
     bool consent_ui_is_visible     = false;
 
     bool session_probe_started_ = false;
 
-    Timeout timeout;
-
     bool is_client_disconnected = false;
 
     bool client_support_monitor_layout_pdu = false;
 
     bool is_first_memblt = true;
-    bool session_resized = false;
+
+    SessionReactor& session_reactor;
+    SessionReactor::TimerPtr handshake_timeout;
+    SessionReactor::CallbackEventPtr incoming_event;
+    SessionReactor::TimerPtr capture_timer;
 
 public:
     bool ignore_rdesktop_bogus_clip = false;
@@ -680,17 +678,18 @@ public:
     BGRPalette const & get_palette() const { return this->mod_palette_rgb; }
 
 public:
-    Front(  Transport & trans
-          , Random & gen
-          , Inifile & ini
-          , CryptoContext & cctx
-          , ReportMessageApi & report_message
-          , bool fp_support // If true, fast-path must be supported
-          , bool mem3blt_support
-          , time_t now
-          , std::string server_capabilities_filename = {}
-          , Transport * persistent_key_list_transport = nullptr
-          )
+    Front( SessionReactor& session_reactor
+         , Transport & trans
+         , Random & gen
+         , Inifile & ini
+         , CryptoContext & cctx
+         , ReportMessageApi & report_message
+         , bool fp_support // If true, fast-path must be supported
+         , bool mem3blt_support
+         , time_t /*now*/
+         , std::string server_capabilities_filename = {}
+         , Transport * persistent_key_list_transport = nullptr
+         )
     : nomouse(ini.get<cfg::globals::nomouse>())
     , capture(nullptr)
     , verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
@@ -717,8 +716,18 @@ public:
     , persistent_key_list_transport(persistent_key_list_transport)
     , report_message(report_message)
     , auth_info_sent(false)
-    , timeout(now, this->ini.get<cfg::globals::handshake_timeout>().count())
+    , session_reactor(session_reactor)
     {
+        if (this->ini.get<cfg::globals::handshake_timeout>().count()) {
+            this->handshake_timeout = session_reactor.create_timer()
+            .set_delay(this->ini.get<cfg::globals::handshake_timeout>())
+            .on_action([](auto ctx){
+                LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
+                throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
+                return ctx.ready();
+            });
+        }
+
         // init TLS
         // --------------------------------------------------------
 
@@ -779,8 +788,6 @@ public:
             this->encrypt.encryptionMethod = 2; /* 128 bits */
         break;
         }
-
-        this->event.set_trigger_time(500000);
     }
 
     ~Front() override {
@@ -791,14 +798,6 @@ public:
         }
 
         delete this->capture;
-    }
-
-    wait_obj& get_event() {
-        if (this->session_resized) {
-            this->event.set_trigger_time(wait_obj::NOW);
-        }
-
-        return this->event;
     }
 
     ResizeResult server_resize(int width, int height, int bpp) override
@@ -859,7 +858,11 @@ public:
                 }
             }
             else {
-                this->session_resized = true;
+                this->incoming_event = this->session_reactor
+                .create_callback_event(std::ref(*this))
+                .on_action(jln::one_shot([](Callback& cb, Front& front){
+                    cb.refresh(Rect(0, 0, front.client_info.width, front.client_info.height));
+                }));
                 res = ResizeResult::remoteapp;
             }
         }
@@ -1056,15 +1059,27 @@ public:
                                       Rect(0, 0, 640, 480) : Rect())
                                    );
 
-
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }
-        this->capture->get_capture_event().set_trigger_time(wait_obj::NOW);
         if (this->capture->has_graphic_api()) {
             this->set_gd(this->capture);
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
+
+        this->capture_timer = this->session_reactor.create_timer()
+        .set_delay(std::chrono::milliseconds(0))
+        .on_action([this](auto ctx){
+            auto const capture_ms = this->capture->periodic_snapshot(
+                ctx.get_current_time(),
+                this->mouse_x, this->mouse_y,
+                false  // ignore frame in time interval
+            ).ms();
+            return (decltype(capture_ms)::max() == capture_ms)
+                ? ctx.terminate()
+                : ctx.ready_to(
+                    std::chrono::duration_cast<std::chrono::milliseconds>(capture_ms));
+        });
 
         if (this->client_info.remote_program && !this->rail_window_rect.isempty()) {
             this->capture->visibility_rects_event(this->rail_window_rect);
@@ -1084,6 +1099,7 @@ public:
         if (this->capture) {
             LOG(LOG_INFO, "---<>  Front::must_be_stop_capture  <>---");
             delete this->capture;
+            this->capture_timer.reset();
             this->capture = nullptr;
 
             this->set_gd(this->orders.graphics_update_pdu());
@@ -1097,19 +1113,6 @@ public:
             this->capture->update_config(enable_rt_display);
         }
     }
-
-    void periodic_snapshot()
-    {
-        //LOG(LOG_INFO, "Front::periodic_snapshot");
-        if (this->capture) {
-            struct timeval now = tvtime();
-            this->capture->periodic_snapshot(
-                now, this->mouse_x, this->mouse_y
-              , false  // ignore frame in time interval
-            );
-        }
-    }
-    // ===========================================================================
 
     static int get_appropriate_compression_type(int client_supported_type, int front_supported_type)
     {
@@ -1148,19 +1151,19 @@ private:
             LOG(LOG_INFO, "Front::reset: bitmap_cache_version=%d", this->client_info.bitmap_cache_version);
         }
 
-        this->max_bitmap_size = 1024 * 30;  // should be less than 1 << 15
+        this->max_data_block_size = 1024 * 64;
 
         int const mppc_type = this->get_appropriate_compression_type(
             this->client_info.rdp_compression_type,
             static_cast<int>(this->ini.get<cfg::client::rdp_compression>()) - 1
         );
-        if (mppc_type == PACKET_COMPR_TYPE_8K) {
-            this->max_bitmap_size = 1024 * 8;
-        }
         this->mppc_enc = rdp_mppc_load_compressor(
             bool(this->verbose & Verbose::basic_trace), "Front::reset",
             mppc_type, this->ini.get<cfg::debug::compression>()
         );
+        if (this->mppc_enc) {
+            this->max_data_block_size = this->mppc_enc->get_max_data_block_size();
+        }
 
         if (this->orders.has_bmp_cache_persister()) {
             this->save_persistent_disk_bitmap_cache();
@@ -1175,7 +1178,7 @@ private:
           , this->encryptionLevel
           , this->encrypt
           , this->ini
-          , this->max_bitmap_size
+          , this->max_data_block_size
           , this->server_fastpath_update_support
           , this->mppc_enc.get()
           , this->verbose
@@ -1217,7 +1220,7 @@ public:
                 [](StreamSize<256>, OutStream & mcs_data) {
                     MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
                 },
-                write_x224_dt_tpdu_fn{}
+                X224::write_x224_dt_tpdu_fn{}
             );
         }
     }
@@ -1252,35 +1255,11 @@ public:
     TpduBuffer buf;
     size_t channel_list_index = 0;
 
-    void incoming(Callback & cb, time_t now)
+    void incoming(Callback & cb, time_t /*now*/)
     {
         if (bool(this->verbose & Verbose::basic_trace3)) {
             LOG(LOG_INFO, "Front::incoming");
         }
-
-        bool is_waked_up_by_time__save = this->event.is_waked_up_by_time();
-
-        switch(this->timeout.check(now)) {
-        case Timeout::TIMEOUT_REACHED:
-            LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
-            throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
-            break;
-        case Timeout::TIMEOUT_NOT_REACHED:
-            this->event.set_trigger_time(500000);
-            break;
-        default:
-        case Timeout::TIMEOUT_INACTIVE:
-            this->event.reset_trigger_time();
-            break;
-        }
-
-        if (this->session_resized) {
-            cb.refresh(Rect(0, 0, this->client_info.width, this->client_info.height));
-
-            this->session_resized = false;
-        }
-
-        if (is_waked_up_by_time__save) return;
 
         buf.load_data(this->trans);
         while (buf.next_pdu())
@@ -1682,7 +1661,7 @@ public:
                     [](StreamSize<256>, OutStream & mcs_header, std::size_t packed_size) {
                         MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, packed_size, MCS::BER_ENCODING);
                     },
-                    write_x224_dt_tpdu_fn{}
+                    X224::write_x224_dt_tpdu_fn{}
                 );
             }
             this->state = CHANNEL_ATTACH_USER;
@@ -1765,7 +1744,7 @@ public:
                     [this](StreamSize<256>, OutStream & mcs_data) {
                         MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
                     },
-                    write_x224_dt_tpdu_fn{}
+                    X224::write_x224_dt_tpdu_fn{}
                 );
                 this->state = CHANNEL_JOIN_CONFIRM_USER_ID;
                 break;
@@ -2686,7 +2665,7 @@ public:
                 );
                 (void)mcs;
             },
-            write_x224_dt_tpdu_fn{}
+            X224::write_x224_dt_tpdu_fn{}
         );
     }
 
@@ -4044,7 +4023,7 @@ private:
                 this->set_gd(this->orders.graphics_update_pdu());
 
                 this->up_and_running = 1;
-                this->timeout.cancel_timeout();
+                this->handshake_timeout.reset();
                 cb.rdp_input_up_and_running();
                 // TODO we should use accessors to set that, also not sure it's the right place to set it
                 this->ini.set_acl<cfg::context::opt_width>(this->client_info.width);
@@ -4554,10 +4533,10 @@ protected:
 
             const uint16_t max_image_width =
                 std::min<uint16_t>(
-                        align4(this->max_bitmap_size / nbbytes(image_bpp)),
+                        align4(this->max_data_block_size / nbbytes(image_bpp)),
                         image_rect.cx
                     );
-            const uint16_t max_image_height = this->max_bitmap_size / (max_image_width * nbbytes(image_bpp));
+            const uint16_t max_image_height = this->max_data_block_size / (max_image_width * nbbytes(image_bpp));
 
             BGRColor order_color = color_decode(cmd.color, color_ctx);
             RDPColor image_color = color_encode(order_color, image_bpp);

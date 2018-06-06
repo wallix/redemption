@@ -41,6 +41,8 @@
 #include "utils/stream.hpp"
 #include "utils/bitmap.hpp"
 
+class SessionReactor;
+
 struct xup_mod : public mod_api {
 
 enum {
@@ -77,6 +79,7 @@ enum {
     RDPPen pen;
 
     xup_mod( Transport & t
+           , SessionReactor& /*session_reactor*/
            , FrontAPI & front
            , uint16_t /*front_width*/
            , uint16_t /*front_height*/
@@ -108,8 +111,6 @@ enum {
     }
 
     ~xup_mod() override {}
-
-    int get_fd() const override { return this->t.get_fd(); }
 
     enum {
         XUPWM_INVALIDATE = 200
@@ -340,7 +341,7 @@ enum {
             }
         }
         catch(...){
-            this->event.signal = BACK_EVENT_NEXT;
+// TODO            this->event.signal = BACK_EVENT_NEXT;
             this->front.must_be_stop_capture();
         }
     }

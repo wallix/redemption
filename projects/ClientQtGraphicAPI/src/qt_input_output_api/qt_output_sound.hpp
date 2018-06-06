@@ -24,7 +24,7 @@
 #include <fstream>
 
 #include "utils/log.hpp"
-#include "client_redemption/client_input_output_api.hpp"
+#include "client_redemption/client_input_output_api/client_sound_api.hpp"
 
 #if REDEMPTION_QT_VERSION == 4
 #   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
@@ -42,10 +42,15 @@
 #include <Phonon/MediaObject>
 #endif
 
+
+
 class QtOutputSound : public QObject, public ClientOutputSoundAPI
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
     Phonon::MediaObject * media;
     Phonon::AudioOutput * audioOutput;

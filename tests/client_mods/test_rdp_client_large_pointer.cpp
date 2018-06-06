@@ -1,4 +1,4 @@
-/*
+ /*
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
@@ -23,9 +23,7 @@
 
 #define RED_TEST_MODULE TestRdpClientLargePointer
 
-
 #include "system/redemption_unit_tests.hpp"
-
 
 // Comment the code block below to generate testing data.
 // Uncomment the code block below to generate testing data.
@@ -34,6 +32,7 @@
 // Uncomment the code block below to generate testing data.
 // include "transport/socket_transport.hpp"
 #include "test_only/transport/test_transport.hpp"
+#include "test_only/session_reactor_executor.hpp"
 #include "core/client_info.hpp"
 #include "mod/rdp/rdp.hpp"
 
@@ -126,7 +125,8 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     LCGTime timeobj;
     NullAuthentifier authentifier;
     NullReportMessage report_message;
-    mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
+    SessionReactor session_reactor;
+    mod_rdp mod(t, session_reactor, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
         gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
     if (verbose > 2) {
@@ -135,10 +135,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     RED_CHECK_EQUAL(front.info.width, 1024);
     RED_CHECK_EQUAL(front.info.height, 768);
 
-    for (uint32_t count = 0; count < 72; ++count) {
-        LOG(LOG_INFO, "===================> count = %u", count);
-        mod.draw_event(0, front);
-    }
+    execute_mod(session_reactor, mod, front, 72);
 
     //front.dump_png("trace_test_rdp_client_large_pointer_disabled_");
 }
@@ -232,7 +229,8 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     LCGTime timeobj;
     NullAuthentifier authentifier;
     NullReportMessage report_message;
-    mod_rdp mod(t, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
+    SessionReactor session_reactor;
+    mod_rdp mod(t, session_reactor, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
         gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
     if (verbose > 2) {
@@ -241,10 +239,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     RED_CHECK_EQUAL(front.info.width, 1024);
     RED_CHECK_EQUAL(front.info.height, 768);
 
-    for (uint32_t count = 0; count < 72; ++count) {
-        LOG(LOG_INFO, "===================> count = %u", count);
-        mod.draw_event(0, front);
-    }
+    execute_mod(session_reactor, mod, front, 72);
 
     //front.dump_png("trace_test_rdp_client_large_pointer_enabled_");
 }

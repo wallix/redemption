@@ -43,8 +43,6 @@ public:
     : verbose(verbose)
     {}
 
-    wait_obj* get_event() override { return nullptr; }
-
     bool on_clipboard_initialize() override { return false; }
 
     bool on_clipboard_monitor_ready() override { return false; }
@@ -94,8 +92,6 @@ public:
         return false;
     }
 
-    bool on_event() override { return false; }
-
     bool on_image_read(uint64_t offset, uint32_t length) override {
         (void)offset;
         (void)length;
@@ -119,6 +115,8 @@ public:
     }
 
     bool on_server_format_data_request() override { return false; }
+
+    bool on_server_format_list() override { return false; }
 
     bool on_server_format_list_response() override { return false; }
 

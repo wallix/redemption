@@ -22,7 +22,8 @@
 
 #pragma once
 
-#include "core/wait_obj.hpp"
+#include <chrono>
+
 #include "transport/transport.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/invalid_socket.hpp"
@@ -61,21 +62,18 @@ public:
         dump = 0x100,
     };
 
+    // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport
     SocketTransport( const char * name, unique_fd sck, const char *ip_address, int port
                    , std::chrono::milliseconds recv_timeout
                    , Verbose verbose, std::string * error_message = nullptr);
 
     ~SocketTransport() override;
 
-    bool is_set(wait_obj & obj, fd_set & rfds) const;
-
     bool has_pending_data() const;
 
     int get_fd() const override { return this->sck; }
 
-    const uint8_t * get_public_key() const override;
-
-    size_t get_public_key_length() const override;
+    array_view_const_u8 get_public_key() const override;
 
     void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list) override;
 

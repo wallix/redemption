@@ -23,4 +23,4 @@
 #define RED_TEST_MODULE mod_exp
 
 #include "system/ssl_mod_exp.hpp"
-#include "../../common/test_ssl_mod_exp.cpp"
+#include "../../common/test_ssl_mod_exp.hpp"

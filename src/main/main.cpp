@@ -259,6 +259,8 @@ int main(int argc, char** argv)
 
         {'i', "inetd", "launch redemption with inetd like launcher"},
 
+        {'N', "nofork", "not forkable (debug)"},
+
         {"config-file", &config_filename, "use an another ini file"},
 
         {opt_print_spec, "Configuration file spec for rdpproxy.ini"},
@@ -430,7 +432,10 @@ int main(int argc, char** argv)
     }
 
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");
-    redemption_main_loop(ini, cctx, rnd, fstat, euid, egid, std::move(config_filename));
+    redemption_main_loop(
+        ini, cctx, rnd, fstat, euid, egid,
+        std::move(config_filename),
+        !options.count("nofork"));
 
     /* delete the .pid file if it exists */
     /* don't care about errors. */

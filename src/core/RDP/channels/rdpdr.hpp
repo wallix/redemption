@@ -939,7 +939,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated DeviceIORequest: expected=%u remains=%zu",
+                    "Truncated DeviceAnnounceHeaderPrinterSpecificData: expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
@@ -957,7 +957,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
 
         if (!stream.in_check_rem(this->PnPNameLen )) {
             LOG(LOG_ERR,
-                "Truncated DeviceIORequest: expected=%zu remains=%zu",
+                "Truncated DeviceAnnounceHeaderPrinterSpecificData: expected=%zu remains=%zu",
                 this->PnPNameLen , stream.in_remain());
             throw Error(ERR_RDPDR_PDU_TRUNCATED);
         }
@@ -965,7 +965,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
 
         if (!stream.in_check_rem(this->DriverNameLen)) {
             LOG(LOG_ERR,
-                "Truncated DeviceIORequest: expected=%zu remains=%zu",
+                "Truncated DeviceAnnounceHeaderPrinterSpecificData: expected=%zu remains=%zu",
                 this->DriverNameLen, stream.in_remain());
             throw Error(ERR_RDPDR_PDU_TRUNCATED);
         }
@@ -973,7 +973,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
 
         if (!stream.in_check_rem(this->PrintNameLen)) {
             LOG(LOG_ERR,
-                "Truncated DeviceIORequest: expected=%zu remains=%zu",
+                "Truncated DeviceAnnounceHeaderPrinterSpecificData: expected=%zu remains=%zu",
                 this->PrintNameLen, stream.in_remain());
             throw Error(ERR_RDPDR_PDU_TRUNCATED);
         }
@@ -1339,6 +1339,33 @@ class DeviceCreateRequest {
     uint8_t Path_[65536] = {0};
 
 public:
+    DeviceCreateRequest() = default;
+
+    DeviceCreateRequest(uint32_t DesiredAccess,
+                        uint64_t AllocationSize,
+                        uint32_t FileAttributes,
+                        uint32_t SharedAccess,
+                        uint32_t CreateDisposition,
+                        uint32_t CreateOptions,
+                        //size_t PathLength_UTF16,
+                        size_t PathLength_UTF8,
+                        const char * Path_UTF8)
+        : DesiredAccess_(DesiredAccess)
+        , AllocationSize_(AllocationSize)
+        , FileAttributes_(FileAttributes)
+        , SharedAccess_(SharedAccess)
+        , CreateDisposition_(CreateDisposition)
+        , CreateOptions_(CreateOptions)
+       // , PathLength_UTF16(PathLength_UTF16)
+        , PathLength_UTF8(PathLength_UTF8)
+        {
+            if (PathLength_UTF8 > 65536) {
+                PathLength_UTF8 = 65536;
+            }
+
+            std::memcpy(this->Path_, Path_UTF8, PathLength_UTF8);
+        }
+
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->DesiredAccess_);
         stream.out_uint64_le(this->AllocationSize_);
@@ -2178,18 +2205,18 @@ enum : uint8_t {
 
 class DeviceCreateResponse {
     uint32_t FileId_     = 0;
-    uint8_t  Information = 0;
+    uint8_t  Information_ = 0;
 
 public:
     DeviceCreateResponse() = default;
 
     DeviceCreateResponse(uint32_t FileId, uint8_t Information)
     : FileId_(FileId)
-    , Information(Information) {}
+    , Information_(Information) {}
 
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FileId_);
-        stream.out_uint8(this->Information);
+        stream.out_uint8(this->Information_);
     }
 
     void receive(InStream & stream, erref::NTSTATUS IoStatus) {
@@ -2208,7 +2235,7 @@ public:
         }
 
         this->FileId_     = stream.in_uint32_le();
-        this->Information = (IoStatus != erref::NTSTATUS::STATUS_SUCCESS ? stream.in_uint8() : 0x00);
+        this->Information_ = (IoStatus != erref::NTSTATUS::STATUS_SUCCESS ? stream.in_uint8() : 0x00);
     }
 
     void receive(InStream & stream) {
@@ -2233,11 +2260,12 @@ public:
 
         this->FileId_     = stream.in_uint32_le();
         if (stream.in_check_rem(1)) {
-            this->Information = stream.in_uint8();
+            this->Information_ = stream.in_uint8();
         }
     }
 
     uint32_t FileId() const { return this->FileId_; }
+    uint32_t Information() const { return this->Information_; }
 
 private:
     static const char * get_Information_name(uint8_t Information) {
@@ -2253,14 +2281,14 @@ private:
 public:
     void log(int level) const {
         LOG(level, "DeviceCreateResponse: FileId=%u Information=%s(0x%X)",
-            this->FileId_, this->get_Information_name(this->Information),
-            unsigned(this->Information));
+            this->FileId_, this->get_Information_name(this->Information_),
+            unsigned(this->Information_));
     }
 
     void log() const {
         LOG(LOG_INFO, "     Device Create Response:");
         LOG(LOG_INFO, "          * FileId      = 0x%08x (4 bytes)", this->FileId_);
-        LOG(LOG_INFO, "          * Information = 0x%02x (1 byte) optional", this->Information);
+        LOG(LOG_INFO, "          * Information = 0x%02x (1 byte) optional", this->Information_);
     }
 };
 
@@ -2665,11 +2693,13 @@ public:
 //  3.2.5.1.3.
 
 class ClientAnnounceReply {
+
+public:
     uint16_t VersionMajor = 0;
     uint16_t VersionMinor = 0;
     uint16_t ClientId     = 0;
 
-public:
+
     ClientAnnounceReply() = default;
 
     ClientAnnounceReply(uint16_t VersionMajor, uint16_t VersionMinor, uint16_t ClientId)
@@ -2789,10 +2819,12 @@ public:
 
     explicit ClientNameRequest(const char * computer_name, const uint32_t unicodeFlag)
     : UnicodeFlag(unicodeFlag)
-    , ComputerNameLen(sizeof(computer_name))
+    , ComputerNameLen(strlen(computer_name))
     {
-//         assert(this->ComputerNameLen <= 500-1);
-        std::memcpy(this->ComputerName, computer_name, 500);
+        this->ComputerNameLen = std::min(this->ComputerNameLen, sizeof(ComputerName) - 1);
+        assert(this->ComputerNameLen == strlen(computer_name));
+        std::memcpy(this->ComputerName, computer_name, this->ComputerNameLen);
+        std::memset(this->ComputerName + this->ComputerNameLen, 0, sizeof(ComputerName)-this->ComputerNameLen);
     }
 
 
@@ -3356,7 +3388,7 @@ struct ClientDeviceListAnnounceRequest {
 //  |                             | information.                              |
 //  +-----------------------------+-------------------------------------------+
 
-enum {
+enum : uint32_t {
       FileBasicInformation        = 0x00000004
     , FileStandardInformation     = 0x00000005
     , FileAttributeTagInformation = 0x00000023
@@ -3383,9 +3415,14 @@ class ServerDriveQueryInformationRequest {
 public:
     uint32_t FsInformationClass_ = 0;
 
-    struct { uint8_t const * p; std::size_t sz; } query_buffer = {nullptr, 0u};
+    struct { uint8_t const * p; std::size_t sz; } query_buffer
+      = {cbyte_ptr("").to_u8p(), 0u};
 
 public:
+    ServerDriveQueryInformationRequest(uint32_t FsInformationClass)
+      : FsInformationClass_(FsInformationClass)
+      {}
+
     ServerDriveQueryInformationRequest() = default;
 
     REDEMPTION_NON_COPYABLE(ServerDriveQueryInformationRequest);
@@ -4210,6 +4247,16 @@ class ServerDriveQueryDirectoryRequest {
 
 
 public:
+    ServerDriveQueryDirectoryRequest(uint32_t FsInformationClass,
+                                     uint8_t  InitialQuery)
+      : FsInformationClass_(FsInformationClass)
+      , InitialQuery_(InitialQuery)
+    {
+        this->Path_[0] = 0;
+    }
+
+    ServerDriveQueryDirectoryRequest() = default;
+
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
         stream.out_uint8(this->InitialQuery_);
@@ -5210,6 +5257,78 @@ struct ClientDriveNotifyChangeDirectoryResponse {
         LOG(LOG_INFO, "          * Length = %d (4 bytes)", int(this->Length));
     }
 };
+
+
+
+// 2.2.2.7 Server Core Capability Request (DR_CORE_CAPABILITY_REQ)
+//
+//  The server announces its capabilities and requests the same from the client.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             header                            |
+// +-------------------------------+-------------------------------+
+// |     numCapabilities           |            Padding            |
+// +-------------------------------+-------------------------------+
+// |                  CapabilityMessage (variable)                 |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// Header (4 bytes): An RDPDR_HEADER header. The Component field MUST be set to RDPDR_CTYP_CORE, and the PacketId field MUST be set to PAKID_CORE_SERVER_CAPABILITY.
+//
+// numCapabilities (2 bytes):  A 16-bit integer that specifies the number of items in the CapabilityMessage array.
+//
+// Padding (2 bytes): A 16-bit unsigned integer of padding. This field is unused and MUST be ignored.
+//
+// CapabilityMessage (variable): An array of CAPABILITY_SET structures (section 2.2.1.2.1). The number of capabilities is specified by the numCapabilities field
+
+struct ServerCoreCapabilityRequest {
+
+    uint16_t numCapabilities = 0;
+
+    ServerCoreCapabilityRequest() = default;
+
+    ServerCoreCapabilityRequest(uint16_t numCapabilities)
+      : numCapabilities(numCapabilities)
+    {}
+
+    void emit(OutStream & stream) const {
+        stream.out_uint16_le(this->numCapabilities);
+        stream.out_skip_bytes(2);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 4;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientDriveNotifyChangeDirectoryResponse (0): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+        this->numCapabilities = stream.in_uint16_le();
+    }
+
+    void log() const {
+        LOG(LOG_INFO, "     Client Core Capability Request:");
+        LOG(LOG_INFO, "          * numCapabilities = %u (2 bytes)", numCapabilities);
+        LOG(LOG_INFO, "          * Padding - (2 bytes) NOT USED");
+    }
+};
+
+
+
+
+
+
+
+
+
 
 
 

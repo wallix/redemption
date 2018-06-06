@@ -29,6 +29,8 @@
 #include "test_only/check_sig.hpp"
 #include "test_only/mod/fake_draw.hpp"
 
+constexpr const char * LOGON_MESSAGE = "Warning! Unauthorized access to this system is forbidden and will be prosecuted by law.";
+
 RED_AUTO_TEST_CASE(TraceFlatLogin)
 {
     TestDraw drawable(800, 600);
@@ -43,7 +45,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable.gd, 0, 0, parent.cx(), parent.cy(), parent, notifier, "test1",
-                         "rec", "rec", "Login", "Password", "", extra_button, font,
+                         "rec", "rec", "Login", "Password", "", LOGON_MESSAGE, extra_button, font,
                          Translator{}, Theme{});
 
     // ask to widget to redraw at it's current position
@@ -51,7 +53,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xe1\x2b\x7f\xd9\x2d\x5f\xf3\xcf\x05\xd4\x77\x40\x02\xb9\x8f\x66\x7e\xdb\xc6\xb7");
+    RED_CHECK_SIG(drawable.gd, "\x9d\x55\x31\xca\x63\xab\x50\x2d\x62\xec\x13\x33\xbe\x7f\xd0\x2e\xc2\xe0\x13\x2e");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLogin2)
@@ -67,7 +69,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin2)
     NotifyApi * notifier = nullptr;
 
     FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, notifier, "test2",
-                         nullptr, nullptr, "Login", "Password", "", extra_button, font,
+                         nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, font,
                          Translator{}, Theme{});
 
     // ask to widget to redraw at it's current position
@@ -78,7 +80,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin2)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xb7\xe9\xfc\xaf\x84\xd8\x49\x7d\xb4\x23\x82\x34\xab\x4d\x74\xcf\x59\x67\x7c\x91");
+    RED_CHECK_SIG(drawable.gd, "\xbb\x6a\x39\xa0\xc6\xa4\x95\x69\x98\xb0\x44\x9b\x42\x47\x99\xe5\x82\xbb\x6d\x00");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLogin3)
@@ -105,7 +107,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin3)
     parent.set_wh(800, 600);
 
     FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, &notifier, "test3",
-                         nullptr, nullptr, "Login", "Password", "", extra_button, font,
+                         nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, font,
                          Translator{}, Theme{});
 
     flat_login.set_widget_focus(&flat_login.password_edit, Widget::focus_reason_tabkey);
@@ -128,7 +130,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin3)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x5d\x90\xcb\x7a\x0a\xe1\xa6\x4e\x36\x4a\x96\xc5\x3a\x13\x30\x47\x12\xf0\xe6\xef");
+    RED_CHECK_SIG(drawable.gd, "\x66\x07\x24\x02\xb1\x33\x7f\x6a\xbe\xaa\x66\xa0\x10\x38\x76\x33\x59\xfd\xc6\xf5");
 
     notifier.sender = nullptr;
     notifier.event = 0;
@@ -153,7 +155,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, notifier, "test4",
-                         nullptr, nullptr, "Login", "Password", "", extra_button, font,
+                         nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, font,
                          Translator{}, Theme{});
 
     // ask to widget to redraw at it's current position
@@ -164,7 +166,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x5b\xf0\x1e\xc8\xa7\x15\x79\x55\x58\x91\x41\xde\xcc\x2f\xf3\xbc\x96\x83\xbe\xad");
+    RED_CHECK_SIG(drawable.gd, "\x5c\x73\xb8\xb7\x3d\xfb\xe2\x1a\x17\x9f\x36\x29\x83\x17\x8b\xc3\xfc\x7f\xed\x69");
 
     flat_login.rdp_input_mouse(MOUSE_FLAG_MOVE,
                                flat_login.helpicon.x() + flat_login.helpicon.cx() / 2,
@@ -172,7 +174,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xf5\x8e\x7c\xb8\xe5\xf6\x63\x9f\xd7\x5a\x35\x07\x07\x2e\xa5\x00\x35\x94\x02\xe6");
+    RED_CHECK_SIG(drawable.gd, "\xb1\x74\xc3\x49\x28\xcf\xec\x11\x3b\x9a\xea\x92\x5c\x08\x85\x06\x19\xa5\x9c\x95");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLoginClip)
@@ -189,7 +191,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginClip)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, notifier, "test6",
-                         nullptr, nullptr, "Login", "Password", "", extra_button, font,
+                         nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, font,
                          Translator{}, Theme{});
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
@@ -200,7 +202,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginClip)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x7f\xc9\xe7\xbb\x07\x22\x69\xb6\xc4\x0b\xf5\x35\xd6\x33\x27\xe0\xd9\x4d\x4c\xa4");
+    RED_CHECK_SIG(drawable.gd, "\xca\xd8\x01\x1a\xe2\x26\x5d\xb7\x91\x11\xe4\x92\xbd\x21\xb4\x32\x20\xf4\xe5\xd7");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLoginClip2)
@@ -217,7 +219,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginClip2)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, notifier, "test6",
-                         nullptr, nullptr, "Login", "Password", "", extra_button, font,
+                         nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, font,
                          Translator{}, Theme{});
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
@@ -255,7 +257,7 @@ RED_AUTO_TEST_CASE(EventWidgetOk)
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable.gd, 0, 0, 800, 600, parent, &notifier, "test6",
-                         nullptr, nullptr, "Login", "Password", "", extra_button, font,
+                         nullptr, nullptr, "Login", "Password", "", LOGON_MESSAGE, extra_button, font,
                          Translator{}, Theme{});
 
     RED_CHECK(notifier.sender == nullptr);

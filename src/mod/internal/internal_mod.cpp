@@ -25,19 +25,14 @@
 
 InternalMod::InternalMod(
     FrontAPI & front, uint16_t front_width, uint16_t front_height,
-    Font const & font, Theme const & theme, bool dont_resize
+    Font const & font, Theme const & theme
 )
     : front_width(front_width)
     , front_height(front_height)
     , front(front)
     , screen(front, font, nullptr, theme)
 {
-
     this->screen.set_wh(front_width, front_height);
-
-    if (!dont_resize) {
-        this->front.server_resize(front_width, front_height, 24);
-    }
 }
 
 void InternalMod::send_to_front_channel(

@@ -42,7 +42,8 @@ RED_AUTO_TEST_CASE(TestWabCloseMod)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(front, window_list_caps, 0);
+    SessionReactor session_reactor;
+    ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
 
@@ -50,7 +51,7 @@ RED_AUTO_TEST_CASE(TestWabCloseMod)
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
 
-    FlatWabCloseMod d(ini, front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000), client_execute, true);
+    FlatWabCloseMod d(ini, session_reactor, front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000), client_execute, true);
     d.draw_event(100001, front);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }
@@ -67,7 +68,8 @@ RED_AUTO_TEST_CASE(TestWabCloseMod2)
 
     FakeFront front(info, 0);
     WindowListCaps window_list_caps;
-    ClientExecute client_execute(front, window_list_caps, 0);
+    SessionReactor session_reactor;
+    ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
 
@@ -75,7 +77,7 @@ RED_AUTO_TEST_CASE(TestWabCloseMod2)
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
 
-    FlatWabCloseMod d(ini, front, 2048, 1536, Rect(1024, 768, 1023, 767), static_cast<time_t>(100000), client_execute, true);
+    FlatWabCloseMod d(ini, session_reactor, front, 2048, 1536, Rect(1024, 768, 1023, 767), static_cast<time_t>(100000), client_execute, true);
     d.draw_event(100001, front);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }

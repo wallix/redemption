@@ -30,7 +30,8 @@
 #include "core/RDP/clipboard.hpp"
 #include "utils/fileutils.hpp"
 
-#include "client_redemption/client_input_output_api.hpp"
+#include "client_redemption/client_redemption_api.hpp"
+#include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
 
 #include <QtCore/QMimeData>
 #include <QtGui/QClipboard>
@@ -53,8 +54,10 @@
 
 class QtInputOutputClipboard : public QObject, public ClientIOClipboardAPI
 {
-
-    Q_OBJECT
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
+Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
 
@@ -63,7 +66,7 @@ public:
         , CF_QT_CLIENT_FILECONTENTS         = 48026
     };
 
-    ClientRedemptionIOAPI     * _front;
+    ClientRedemptionAPI    * _front;
     QClipboard                * _clipboard;
     std::unique_ptr<uint8_t[]>  _chunk;
     QImage                      _bufferImage;
@@ -77,8 +80,6 @@ public:
 
         CB_out_File(uint64_t size)
           : size(size)
-          , name("")
-          , nameUTF8("")
         {}
 
         ~CB_out_File() {
@@ -100,12 +101,12 @@ public:
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
     }
 
-    void write_clipboard_temp_file(std::string fileName, const uint8_t * data, size_t data_len) override {
-        std::string filePath(this->client->CB_TEMP_DIR + std::string("/") + fileName);
+    void write_clipboard_temp_file(std::string const& fileName, const uint8_t * data, size_t data_len) override {
+        std::string filePath(this->client->CB_TEMP_DIR + "/" + fileName);
         std::string filePath_mem(filePath);
         this->_temp_files_list.push_back(filePath_mem);
 
-        std::ofstream oFile(filePath, std::ios::out | std::ios::binary | std::ios::app);
+        std::ofstream oFile(filePath, std::ios::binary | std::ios::app);
 
         if(oFile.is_open()) {
             oFile.write(reinterpret_cast<const char *>(data), data_len);
@@ -113,7 +114,7 @@ public:
         }
     }
 
-    void setClipboard_files(std::string & name) override {  //std::vector<Front_RDP_Qt_API::CB_FilesList::CB_in_Files> items_list) {
+    void setClipboard_files(std::string const& name) override {  //std::vector<Front_RDP_Qt_API::CB_FilesList::CB_in_Files> items_list) {
 
         /*QClipboard *cb = QApplication::clipboard();
         QMimeData* newMimeData = new QMimeData();
@@ -164,7 +165,7 @@ public:
 
             QByteArray gnomeFormat = QByteArray("copy\n");
 
-            std::string path(this->client->CB_TEMP_DIR + std::string("/") + name);
+            std::string path(this->client->CB_TEMP_DIR + "/" + name);
             //std::cout <<  path <<  std::endl;
             QString qpath(path.c_str());
 
@@ -180,7 +181,7 @@ public:
 //         cb->setMimeData(newMimeData);
     }
 
-    void setClipboard_text(std::string & str) override {
+    void setClipboard_text(std::string const& str) override {
         this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
     }
 
@@ -202,9 +203,9 @@ public:
         if (theFolder) {
             struct dirent *next_file;
 
-            while ( (next_file = readdir(theFolder)) != NULL )
+            while ((next_file = readdir(theFolder)))
             {
-                std::string filepath(this->client->CB_TEMP_DIR + std::string("/") + std::string(next_file->d_name));
+                std::string filepath(this->client->CB_TEMP_DIR + std::string("/") + next_file->d_name);
                 remove(filepath.c_str());
             }
             closedir(theFolder);
@@ -351,7 +352,7 @@ public Q_SLOTS:
                 //    TEXT COPY
                 //==================
                         this->_bufferTypeID = RDPECLIP::CF_UNICODETEXT;
-                        this->_bufferTypeNameIndex = TEXT_BUFFER_TYPE;
+                        //this->_bufferTypeNameIndex = TEXT_BUFFER_TYPE;
 
                         size_t size( ( str.length() * 4) + 2 );
 
@@ -373,31 +374,31 @@ public Q_SLOTS:
         }
     }
 
-    virtual int get_image_buffer_width() override {
-        return this->_bufferImage.width();
+    ConstImageDataView get_image() override
+    {
+        return ConstImageDataView(
+            this->_chunk.get(),
+            this->_bufferImage.width(),
+            this->_bufferImage.height(),
+            this->_bufferImage.width(),
+            ConstImageDataView::BitsPerPixel(this->_bufferImage.depth()),
+            ConstImageDataView::Storage::TopToBottom
+        );
     }
 
-    virtual int get_image_buffer_height() override {
-        return this->_bufferImage.height();
-    }
-
-    virtual uint8_t * get_image_buffer_data() override {
+    uint8_t * get_text() override {
         return this->_chunk.get();
     }
 
-    virtual int get_image_buffer_depth() override {
-        return this->_bufferImage.depth();
-    }
-
-    virtual int get_file_item_size(int index) override {
+    int get_file_item_size(int index) override {
         return this->_items_list[index]->size;
     }
 
-    virtual std::string get_file_item_name(int index) override {
+    std::string get_file_item_name(int index) override {
         return this->_items_list[index]->nameUTF8;
     }
 
-    virtual char * get_file_item_data(int index) override {
+    char * get_file_item_data(int index) override {
         return this->_items_list[index]->chunk;
     }
 

@@ -125,15 +125,19 @@ namespace redemption_unit_test__
 
 struct GeneratorTransport : Transport
 {
-    GeneratorTransport(const void * data, size_t len)
-    : len(len)
+    GeneratorTransport(cbyte_array buffer)
+    : GeneratorTransport(buffer.data(), buffer.size())
+    {}
+
+    GeneratorTransport(cbyte_ptr data, size_t len)
+    : data(new(std::nothrow) uint8_t[len])
+    , len(len)
     {
-        this->data.reset(new(std::nothrow) uint8_t[len]);
         if (!this->data) {
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
         if (data) {
-            memcpy(this->data.get(), data, len);
+            memcpy(this->data.get(), data.to_u8p(), len);
         }
     }
 
@@ -151,8 +155,8 @@ struct GeneratorTransport : Transport
     {
         if (this->remaining_is_error && this->len != this->current) {
             this->remaining_is_error = false;
-            RED_REQUIRE_MESSAGE(this->len == this->current, 
-                "\n~GeneratorTransport() remaining=" << (this->len-this->current) 
+            RED_REQUIRE_MESSAGE(this->len == this->current,
+                "\n~GeneratorTransport() remaining=" << (this->len-this->current)
                 << " len=" << this->len << "\n"
                 << (redemption_unit_test__::hexdump_trailing{
                     "GeneratorTransport", this->data.get() + this->current, this->len - this->current
@@ -164,7 +168,6 @@ struct GeneratorTransport : Transport
     }
 
 private:
-
     Read do_atomic_read(uint8_t * buffer, size_t len) override
     {
         size_t const remaining = this->len - this->current;
@@ -198,8 +201,8 @@ private:
         LOG(LOG_INFO, "Sent dumped on target (-1) %zu bytes", len);
     }
 
-    std::unique_ptr<uint8_t[]> data;
-    std::size_t len = 0;
+    const std::unique_ptr<uint8_t[]> data;
+    const std::size_t len = 0;
     std::size_t current = 0;
     bool remaining_is_error = true;
 };
@@ -219,7 +222,11 @@ private:
 
 struct CheckTransport : Transport
 {
-    CheckTransport(const char * data, size_t len)
+    CheckTransport(const_buffer_t buffer)
+    : CheckTransport(buffer.to_charp(), buffer.size())
+    {}
+
+    CheckTransport(cbyte_ptr data, size_t len)
     : data(new(std::nothrow) uint8_t[len])
     , len(len)
     , current(0)
@@ -227,7 +234,7 @@ struct CheckTransport : Transport
         if (!this->data) {
             throw Error(ERR_TRANSPORT, 0);
         }
-        memcpy(this->data.get(), data, len);
+        memcpy(this->data.get(), data.to_u8p(), len);
     }
 
     size_t remaining() {
@@ -247,8 +254,8 @@ struct CheckTransport : Transport
     {
         if (this->remaining_is_error && this->len != this->current) {
             this->remaining_is_error = false;
-            RED_REQUIRE_MESSAGE(this->len == this->current, 
-                "\n~CheckTransport() reamining=0 failed, remaining=" << (this->len-this->current) 
+            RED_REQUIRE_MESSAGE(this->len == this->current,
+                "\n~CheckTransport() reamining=0 failed, remaining=" << (this->len-this->current)
                 << " len=" << this->len << "\n"
                 << (redemption_unit_test__::hexdump_trailing{
                     "CheckTransport", this->data.get() + this->current, this->len - this->current
@@ -263,7 +270,7 @@ private:
     void do_send(const uint8_t * const data, size_t len) override
     {
         const size_t available_len = std::min<size_t>(this->len - this->current, len);
-        
+
         if (0 != memcmp(data, this->data.get() + this->current, available_len)){
             // data differs, find where
             uint32_t differs = 0;
@@ -316,9 +323,13 @@ private:
 
 struct TestTransport : public Transport
 {
+    TestTransport(cbyte_array indata, cbyte_array outdata)
+    : TestTransport(indata.data(), indata.size(), outdata.data(), outdata.size())
+    {}
+
     TestTransport(
-        const char * indata, size_t inlen,
-        const char * outdata, size_t outlen)
+        cbyte_ptr indata, size_t inlen,
+        cbyte_ptr outdata, size_t outlen)
     : check(outdata, outlen)
     , gen(indata, inlen)
     , public_key_length(0)
@@ -341,14 +352,9 @@ struct TestTransport : public Transport
         memcpy(this->public_key.get(), data, data_size);
     }
 
-    const uint8_t * get_public_key() const override
+    array_view_const_u8 get_public_key() const override
     {
-        return this->public_key.get();
-    }
-
-    size_t get_public_key_length() const override
-    {
-        return this->public_key_length;
+        return {this->public_key.get(), this->public_key_length};
     }
 
 private:

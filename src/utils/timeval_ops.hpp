@@ -54,8 +54,7 @@ inline bool operator>=(const timeval & a, const timeval & b) noexcept {
 
 static inline timeval operator-(timeval const & endtime, timeval const & starttime)
 {
-    assert((endtime.tv_sec  > starttime.tv_sec ) ||
-           (endtime.tv_usec > starttime.tv_usec));
+    assert(endtime >= starttime);
 
     timeval result;
 

@@ -206,7 +206,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_up>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_down>());
     RED_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
@@ -287,7 +286,7 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(0,                                ini.get<cfg::context::end_date_cnx>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::context::end_time>());
 
-    RED_CHECK_EQUAL("allow",                          ini.get<cfg::context::mode_console>());
+    RED_CHECK_EQUAL(RdpModeConsole::allow,            ini.get<cfg::context::mode_console>());
     RED_CHECK_EQUAL(-3600,                            ini.get<cfg::context::timezone>());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::context::real_target_device>());
@@ -360,7 +359,6 @@ RED_AUTO_TEST_CASE(TestConfig1)
         "[mod_vnc]\n"
         "clipboard_up=yes\n"
         "encodings=16,2,0,1,-239\n"
-        "allow_authentification_retries=yes\n"
         "server_clipboard_encoding_type=latin1\n"
         "bogus_clipboard_infinite_loop=0\n"
         "\n"
@@ -527,7 +525,6 @@ RED_AUTO_TEST_CASE(TestConfig1)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_vnc::clipboard_up>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::clipboard_down>());
     RED_CHECK_EQUAL("16,2,0,1,-239",                  ini.get<cfg::mod_vnc::encodings>());
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::mod_vnc::allow_authentification_retries>());
     RED_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
     RED_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
@@ -744,7 +741,6 @@ RED_AUTO_TEST_CASE(TestConfig1bis)
     RED_CHECK_EQUAL(6000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
     RED_CHECK_EQUAL(ClipboardEncodingType::utf8,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
     RED_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::duplicated,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
@@ -934,7 +930,6 @@ RED_AUTO_TEST_CASE(TestConfig2)
     RED_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
     RED_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
     RED_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
@@ -1131,7 +1126,6 @@ RED_AUTO_TEST_CASE(TestConfig3)
     RED_CHECK_EQUAL(3000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
     RED_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
     RED_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::continued,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
@@ -1302,7 +1296,6 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
     RED_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
     RED_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
@@ -1474,7 +1467,6 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL(7000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
     RED_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
     RED_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
@@ -1632,7 +1624,6 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
     RED_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
     RED_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
@@ -1792,7 +1783,6 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(5000,                             ini.get<cfg::mod_rdp::session_probe_keepalive_timeout>().count());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::mod_vnc::encodings>());
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::mod_vnc::allow_authentification_retries>());
     RED_CHECK_EQUAL(ClipboardEncodingType::latin1,          ini.get<cfg::mod_vnc::server_clipboard_encoding_type>());
     RED_CHECK_EQUAL(VncBogusClipboardInfiniteLoop::delayed,
                                                         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>());
@@ -2117,9 +2107,9 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
 
     // mode_console
-    ini.get_acl_field(AUTHID_CONTEXT_MODE_CONSOLE).set(cstr_array_view("deny"));
+    ini.get_acl_field(AUTHID_CONTEXT_MODE_CONSOLE).set(cstr_array_view("forbid"));
 
-    RED_CHECK_EQUAL("deny", ini.get<cfg::context::mode_console>());
+    RED_CHECK_EQUAL(RdpModeConsole::forbid, ini.get<cfg::context::mode_console>());
 
 
     // timezone

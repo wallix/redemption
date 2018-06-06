@@ -22,6 +22,10 @@
 
 #pragma once
 
+#include <cstdint>
+
+#ifndef REDEMPTION_NO_FFMPEG
+
 #include <memory>
 
 #ifndef M_PI
@@ -47,10 +51,16 @@ class AVFormatContext;
 class AVIOContext;
 class AVStream;
 class SwsContext;
+
+#endif
+
 class ConstImageDataView;
 
 class video_recorder
 {
+
+#ifndef REDEMPTION_NO_FFMPEG
+
     struct default_av_free { void operator()(void * ptr); };
     struct default_av_free_format_context { void operator()(AVFormatContext * ctx); };
     struct default_sws_free_context { void operator()(SwsContext * sws_ctx); };
@@ -88,6 +98,8 @@ class video_recorder
     std::unique_ptr<AVIOContext, default_av_free> custom_io_context;
 
     AVPacket pkt;
+
+#endif
 
     //static const unsigned frame_key_limit = 100;
     //unsigned frame_key = frame_key_limit;

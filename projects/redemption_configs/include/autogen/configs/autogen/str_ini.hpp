@@ -129,6 +129,9 @@
 "#_advanced\n"
 "#spark_view_specific_glyph_width = 0\n\n"
 
+"#_advanced\n"
+"#experimental_enable_serializer_data_block_size_limit = 0\n\n"
+
 "[session_log]\n\n"
 
 "#enable_session_log = 1\n\n"
@@ -443,6 +446,10 @@
 
 "# (is in millisecond)\n"
 "#_hidden\n"
+"#session_probe_clipboard_based_launcher_start_delay = 0\n\n"
+
+"# (is in millisecond)\n"
+"#_hidden\n"
 "#session_probe_clipboard_based_launcher_long_delay = 500\n\n"
 
 "# (is in millisecond)\n"
@@ -549,9 +556,6 @@
 "#   -239 (0xFFFFFF11): Cursor pseudo-encoding\n"
 "#_advanced\n"
 "#encodings = \n\n"
-
-"#_advanced\n"
-"#allow_authentification_retries = 0\n\n"
 
 "# VNC server clipboard data encoding type.\n"
 "#_advanced\n"

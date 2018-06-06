@@ -29,17 +29,12 @@
 #include <linux/hdreg.h>
 #include <unordered_map>
 
-
 #include "utils/log.hpp"
 #include "core/FSCC/FileInformation.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
+#include "core/channel_list.hpp"
 
-#include "client_redemption/client_input_output_api.hpp"
-
-
-
-constexpr long long WINDOWS_TICK = 10000000;
-constexpr long long SEC_TO_UNIX_EPOCH = 11644473600LL;
+#include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
 
 
 // [MS-RDPEFS]: Rmote Desktop Protocol: File System Virtual Channel Extension
@@ -111,12 +106,15 @@ constexpr long long SEC_TO_UNIX_EPOCH = 11644473600LL;
 // Figure 2: Drive redirection sequence
 
 
+
 class ClientChannelRDPDRManager {
 
     RDPVerbose verbose;
     ClientRedemptionAPI * client;
 
+    ClientIODiskAPI * impl_io_disk;
 
+public:
     struct FileSystemData {
 
         struct DeviceData {
@@ -126,7 +124,7 @@ class ClientChannelRDPDRManager {
         };
 
         bool drives_created = false;
-        bool fileSystemCapacity[5] = { false };
+        bool fileSystemCapacity[6] = { false };
         size_t devicesCount = 1;
         DeviceData devices[2];
 
@@ -149,22 +147,24 @@ class ClientChannelRDPDRManager {
 
     } fileSystemData;
 
+    uint16_t server_capability_number;
 
-public:
 
 
-    ClientChannelRDPDRManager(RDPVerbose verbose, ClientRedemptionAPI * client)
+    ClientChannelRDPDRManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientIODiskAPI * impl_io_disk)
       : verbose(verbose)
       , client(client)
+      , impl_io_disk(impl_io_disk)
+      , server_capability_number(0)
     {
         std::string tmp(this->client->SHARE_DIR);
-        int pos(tmp.find("/"));
+        int pos(tmp.find('/'));
 
         this->fileSystemData.devicesCount = 0;
 
         while (pos != -1) {
             tmp = tmp.substr(pos+1, tmp.length());
-            pos = tmp.find("/");
+            pos = tmp.find('/');
         }
         size_t size(tmp.size());
         if (size > 7) {
@@ -196,26 +196,20 @@ public:
         this->fileSystemData.elem_in_path.clear();
     }
 
-    unsigned WindowsTickToUnixSeconds(long long windowsTicks) {
-        return unsigned((windowsTicks / WINDOWS_TICK) - SEC_TO_UNIX_EPOCH);
-    }
-
-    long long UnixSecondsToWindowsTick(unsigned unixSeconds) {
-        return ((unixSeconds + SEC_TO_UNIX_EPOCH) * WINDOWS_TICK);
-    }
-
-
 
     void receive(InStream & chunk) {
-         if (this->fileSystemData.writeData_to_wait) {
+        if (this->impl_io_disk == nullptr) {
+            return ;
+        }
 
+        if (this->fileSystemData.writeData_to_wait) {
             size_t length(chunk.in_remain());
 
             this->fileSystemData.writeData_to_wait -= length;
 
             std::string file_to_write = this->fileSystemData.paths.at(this->fileSystemData.file_to_write_id);
 
-            std::ofstream oFile(file_to_write.c_str(), std::ios::out | std::ios::binary | std::ios::app);
+            std::ofstream oFile(file_to_write.c_str(), std::ios::binary | std::ios::app);
             if (oFile.good()) {
                 oFile.write(reinterpret_cast<const char *>(chunk.get_current()), length);
                 oFile.close();
@@ -226,16 +220,14 @@ public:
             return;
         }
 
+        rdpdr::SharedHeader header;
+        header.receive(chunk);
 
-
-        uint16_t component = chunk.in_uint16_le();
-        uint16_t packetId  = chunk.in_uint16_le();
-
-        switch (component) {
+        switch (header.component) {
 
             case rdpdr::Component::RDPDR_CTYP_CORE:
 
-                switch (packetId) {
+                switch (header.packet_id) {
                     case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
                         {
                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -272,14 +264,13 @@ public:
                         }
 
                         {
-                        StaticOutStream<32> stream;
+                        StaticOutStream<LOGIN_NAME_MAX*2+32> stream;
 
                         rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
                                                         , rdpdr::PacketId::PAKID_CORE_CLIENT_NAME);
                         sharedHeader.emit(stream);
                         char username[LOGIN_NAME_MAX];
                         gethostname(username, LOGIN_NAME_MAX);
-                        std::string str_username(username);
 
                         rdpdr::ClientNameRequest clientNameRequest(username, rdpdr::UNICODE_CHAR);
                         clientNameRequest.emit(stream);
@@ -301,27 +292,25 @@ public:
 
                     case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
                         {
-                        uint16_t capa  = chunk.in_uint16_le();
+                        this->server_capability_number  = chunk.in_uint16_le();
                         chunk.in_skip_bytes(2);
                         bool driveEnable = false;
-                        for (int i = 0; i < capa; i++) {
+                        for (int i = 0; i < this->server_capability_number ; i++) {
                             uint16_t type = chunk.in_uint16_le();
                             uint16_t size = chunk.in_uint16_le() - 4;
                             chunk.in_skip_bytes(size);
                             this->fileSystemData.fileSystemCapacity[type] = true;
-                            if (type == 0x4) {
+                            if (type == rdpdr::CAP_DRIVE_TYPE) {
                                 driveEnable = true;
                             }
                         }
 
-                        if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                            if (driveEnable) {
+                        if (driveEnable) {
+                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                 LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Core Capability Request - Drive Capability Enable");
-                                //this->show_in_stream(0, chunk_series, chunk_size);
-                            } else {
-                                LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Core Capability Request - Drive Not Allowed");
-                                //this->show_in_stream(0, chunk_series, chunk_size);
                             }
+                        } else {
+                            LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Core Capability Request - Drive Not Allowed");
                         }
                         }
                         break;
@@ -337,7 +326,7 @@ public:
                                                         , rdpdr::PacketId::PAKID_CORE_CLIENT_CAPABILITY);
                         sharedHeader.emit(out_stream);
 
-                        out_stream.out_uint16_le(5);    // 5 capabilities.
+                        out_stream.out_uint16_le(this->server_capability_number);    // 5 capabilities.
                         out_stream.out_clear_bytes(2);  // Padding(2)
 
                         // General capability set
@@ -364,17 +353,25 @@ public:
 
                         general_capability_set.emit(out_stream);
 
-                        rdpdr::CapabilityHeader ch1(rdpdr::CAP_PRINTER_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
-                        ch1.emit(out_stream);
+                        if (this->fileSystemData.fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE] == true) {
+                            rdpdr::CapabilityHeader ch(rdpdr::CAP_PRINTER_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
+                            ch.emit(out_stream);
+                        }
 
-                        rdpdr::CapabilityHeader ch2(rdpdr::CAP_PORT_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
-                        ch2.emit(out_stream);
+                        if (this->fileSystemData.fileSystemCapacity[rdpdr::CAP_PORT_TYPE] == true) {
+                            rdpdr::CapabilityHeader ch(rdpdr::CAP_PORT_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
+                            ch.emit(out_stream);
+                        }
 
-                        rdpdr::CapabilityHeader ch3(rdpdr::CAP_DRIVE_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
-                        ch3.emit(out_stream);
+                        if (this->fileSystemData.fileSystemCapacity[rdpdr::CAP_DRIVE_TYPE] == true) {
+                            rdpdr::CapabilityHeader ch(rdpdr::CAP_DRIVE_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
+                            ch.emit(out_stream);
+                        }
 
-                        rdpdr::CapabilityHeader ch4(rdpdr::CAP_SMARTCARD_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
-                        ch4.emit(out_stream);
+                        if (this->fileSystemData.fileSystemCapacity[rdpdr::CAP_SMARTCARD_TYPE] == true) {
+                            rdpdr::CapabilityHeader ch(rdpdr::CAP_SMARTCARD_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
+                            ch.emit(out_stream);
+                        }
 
                         int total_length(out_stream.get_offset());
                         InStream chunk_to_send(out_stream.get_data(), total_length);
@@ -432,7 +429,6 @@ public:
                                                                , this->fileSystemData.devices[i].name
                                                                , nullptr, 0);
                                 dah.emit(out_stream);
-
                             }
                         }
 
@@ -526,8 +522,7 @@ public:
 
                                     std::string new_path(this->client->SHARE_DIR + request.Path());
 
-                                    std::ifstream file(new_path.c_str());
-                                    if (file.good()) {
+                                    if (this->impl_io_disk->ifile_good(new_path.c_str())) {
                                         id = this->fileSystemData.get_file_id();
                                         this->fileSystemData.paths.emplace(id, new_path);
                                     } else {
@@ -539,18 +534,15 @@ public:
 
                                             if (request.CreateOptions() & smb2::FILE_DIRECTORY_FILE) {
                                                 LOG(LOG_WARNING, "new directory: \"%s\"", new_path);
-                                                mkdir(new_path.c_str(), ACCESSPERMS);
+                                                this->impl_io_disk->marke_dir(new_path.c_str());
                                             } else {
                                                 //LOG(LOG_WARNING, "new file: \"%s\"", new_path);
-                                                std::ofstream oFile(new_path, std::ios::out | std::ios::binary);
-                                                if (!oFile.good()) {
+
+                                                if (! ( this->impl_io_disk->ofile_good(new_path.c_str())) ) {
                                                     LOG(LOG_WARNING, "  Can't open create such file: \'%s\'.", new_path.c_str());
                                                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                                } else {
-                                                    oFile.close();
                                                 }
                                             }
-
                                         } else {
                                             //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", new_path.c_str());
                                             deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
@@ -599,8 +591,7 @@ public:
 
                                         std::string file_to_request = this->fileSystemData.paths.at(id);
 
-                                        std::ifstream file(file_to_request.c_str());
-                                        if (!file.good()) {
+                                        if (! (this->impl_io_disk->ifile_good(file_to_request.c_str())) ) {
                                             deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                             //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", file_to_request.c_str());
                                         }
@@ -610,17 +601,9 @@ public:
                                         rdpdr::ClientDriveQueryInformationResponse cdqir(rdpdr::FILE_BASIC_INFORMATION_SIZE);
                                         cdqir.emit(out_stream);
 
-                                        struct stat buff;
-                                        stat(file_to_request.c_str(), &buff);
+                                        ClientIODiskAPI::FileStat fileStat = this->impl_io_disk->get_file_stat(file_to_request.c_str());
 
-                                        uint64_t LastAccessTime = UnixSecondsToWindowsTick(buff.st_atime);
-                                        uint64_t LastWriteTime  = UnixSecondsToWindowsTick(buff.st_mtime);
-                                        uint64_t ChangeTime     = UnixSecondsToWindowsTick(buff.st_ctime);
-                                        uint32_t FileAttributes = fscc::FILE_ATTRIBUTE_ARCHIVE;
-                                        if (S_ISDIR(buff.st_mode)) {
-                                            FileAttributes = fscc::FILE_ATTRIBUTE_DIRECTORY;
-                                        }
-                                        fscc::FileBasicInformation fileBasicInformation(LastWriteTime, LastAccessTime, LastWriteTime, ChangeTime, FileAttributes);
+                                        fscc::FileBasicInformation fileBasicInformation(fileStat.LastWriteTime, fileStat.LastAccessTime, fileStat.LastWriteTime, fileStat.ChangeTime, fileStat.FileAttributes);
 
                                         fileBasicInformation.emit(out_stream);
 
@@ -648,25 +631,13 @@ public:
                                         rdpdr::ClientDriveQueryInformationResponse cdqir(rdpdr::FILE_STANDARD_INFORMATION_SIZE);
                                         cdqir.emit(out_stream);
 
-                                        struct stat buff;
-                                        stat(this->fileSystemData.paths.at(id).c_str(), &buff);
+                                        ClientIODiskAPI::FileStat fileStat = this->impl_io_disk->get_file_stat(this->fileSystemData.paths.at(id).c_str());
 
-                                        int64_t  AllocationSize = buff.st_size;;
-                                        int64_t  EndOfFile      = buff.st_size;
-                                        uint32_t NumberOfLinks  = buff.st_nlink;
-                                        uint8_t  DeletePending  = 1;
-                                        uint8_t  Directory      = 0;
-
-
-                                        if (S_ISDIR(buff.st_mode)) {
-                                            Directory = 1;
-                                        }
-
-                                        fscc::FileStandardInformation fsi( AllocationSize
-                                                                        , EndOfFile
-                                                                        , NumberOfLinks
-                                                                        , DeletePending
-                                                                        , Directory);
+                                        fscc::FileStandardInformation fsi( fileStat.AllocationSize
+                                                                         , fileStat.EndOfFile
+                                                                         , fileStat.NumberOfLinks
+                                                                         , fileStat.DeletePending
+                                                                         , fileStat.Directory);
                                         fsi.emit(out_stream);
 
                                         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
@@ -691,18 +662,16 @@ public:
                                             std::string file_to_request = this->fileSystemData.paths.at(id);
 
                                             std::ifstream file(file_to_request.c_str());
-                                            if (!file.good()) {
+                                            if (!(this->impl_io_disk->ifile_good(file_to_request.c_str()))) {
                                                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_ACCESS_DENIED);
                                                 //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", file_to_request.c_str());
                                             }
                                             deviceIOResponse.emit(out_stream);
 
-                                            struct stat buff;
-                                            stat(file_to_request.c_str(), &buff);
-                                            uint32_t fileAttributes(0);
-                                            if (!S_ISDIR(buff.st_mode)) {
-                                                fileAttributes = fscc::FILE_ATTRIBUTE_ARCHIVE;
-                                            }
+
+                                            ClientIODiskAPI::FileStat fileStat = this->impl_io_disk->get_file_stat(file_to_request.c_str());
+
+                                            uint32_t fileAttributes(fileStat.FileAttributes & fscc::FILE_ATTRIBUTE_ARCHIVE);
 
                                             rdpdr::ClientDriveQueryInformationResponse cdqir(8);
                                             cdqir.emit(out_stream);
@@ -768,32 +737,13 @@ public:
                                 rdpdr::DeviceReadRequest drr;
                                 drr.receive(chunk);
 
-                                std::unique_ptr<uint8_t[]> ReadData;
-                                int file_size(drr.Length());
-                                int offset(drr.Offset());
-
+                                uint32_t file_size{drr.Length()};
+                                uint64_t offset{drr.Offset()};
+                                std::unique_ptr<uint8_t[]> ReadData = std::make_unique<uint8_t[]>(file_size);
                                 std::string file_to_tread = this->fileSystemData.paths.at(id);
 
-                                std::ifstream ateFile(file_to_tread, std::ios::binary| std::ios::ate);
-                                if(ateFile.is_open()) {
-                                    if (file_size > ateFile.tellg()) {
-                                        file_size = ateFile.tellg();
-                                    }
-                                    ateFile.close();
-
-                                    std::ifstream inFile(file_to_tread, std::ios::in | std::ios::binary);
-                                    if(inFile.is_open()) {
-                                        ReadData = std::make_unique<uint8_t[]>(file_size+offset);
-                                        inFile.read(reinterpret_cast<char *>(ReadData.get()), file_size+offset);
-                                        inFile.close();
-                                    } else {
-                                        deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                        LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_tread.c_str());
-                                    }
-                                } else {
-                                    deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                    LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_tread.c_str());
-                                }
+                                deviceIOResponse.set_IoStatus(this->impl_io_disk->read_data(
+                                    file_to_tread, offset, {ReadData.get(), file_size}, true));
 
                                 deviceIOResponse.emit(out_stream);
                                 rdpdr::DeviceReadResponse deviceReadResponse(file_size);
@@ -803,7 +753,7 @@ public:
                                                                     , 20 + file_size
                                                                     , out_stream
                                                                     , out_stream.get_capacity() - 20
-                                                                    , ReadData.get() + offset
+                                                                    , ReadData.get()
                                                                     , file_size
                                                                     , 0);
                                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -827,13 +777,7 @@ public:
                                         rdpdr::ServerDriveQueryDirectoryRequest sdqdr;
                                         sdqdr.receive(chunk);
 
-                                        uint64_t LastAccessTime  = 0;
-                                        uint64_t LastWriteTime   = 0;
-                                        uint64_t ChangeTime      = 0;
-                                        uint64_t CreationTime    = 0;
-                                        int64_t  EndOfFile       = 0;
-                                        int64_t  AllocationSize  = 0;
-                                        uint32_t FileAttributes  = fscc::FILE_ATTRIBUTE_ARCHIVE;
+                                        ClientIODiskAPI::FileStat child;
 
                                         std::string path = sdqdr.Path();
                                         std::string endPath;
@@ -855,7 +799,8 @@ public:
                                             str_file_name = tmp_path;
 
                                             std::string str_file_path_slash(this->client->SHARE_DIR + path);
-                                            if (stat(str_file_path_slash.c_str(), &buff_child)) {
+
+                                            if (this->impl_io_disk->dir_good(str_file_path_slash.c_str())) {
                                                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                                 //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());
                                             }
@@ -877,35 +822,10 @@ public:
                                                 }
                                             }
 
-
                                             if (sdqdr.InitialQuery()) {
-                                                this->fileSystemData.current_dir_id = id;
-                                                this->fileSystemData.elem_in_path.clear();
 
-                                                DIR *dir;
-                                                struct dirent *ent;
-                                                std::string ignored1("..");
-                                                std::string ignored2(".");
-
-                                                if ((dir = opendir (str_dir_path.c_str())) != nullptr) {
-
-                                                    try {
-                                                        while ((ent = readdir (dir)) != nullptr) {
-
-                                                            std::string current_name = std::string (ent->d_name);
-
-                                                            if (!(current_name == ignored1) && !(current_name == ignored2)) {
-                                                                this->fileSystemData.elem_in_path.push_back(current_name);
-                                                            }
-                                                        }
-                                                    } catch (Error & e) {
-                                                        LOG(LOG_WARNING, "readdir error: (%u) %s", e.id, e.errmsg());
-                                                    }
-                                                    closedir (dir);
-
-                                                } else {
+                                                if (!(this->impl_io_disk->set_elem_from_dir(this->fileSystemData.elem_in_path, str_dir_path))) {
                                                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                                    //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_dir).", str_dir_path.c_str());
                                                 }
                                             }
 
@@ -920,16 +840,7 @@ public:
                                                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                                     //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());
                                                 } else {
-                                                    LastAccessTime  = UnixSecondsToWindowsTick(buff_child.st_atime);
-                                                    LastWriteTime   = UnixSecondsToWindowsTick(buff_child.st_mtime);
-                                                    CreationTime    = LastWriteTime - 1;
-                                                    EndOfFile       = buff_child.st_size;
-                                                    AllocationSize  = buff_child.st_size;
-                                                    if (S_ISDIR(buff_child.st_mode)) {
-                                                        FileAttributes = fscc::FILE_ATTRIBUTE_DIRECTORY;
-                                                        EndOfFile       = 0;
-                                                        AllocationSize  = 0;
-                                                    }
+                                                       child = this->impl_io_disk->get_file_stat(str_file_path_slash.c_str());
                                                 }
                                             }
                                         }
@@ -940,13 +851,13 @@ public:
 
                                             case rdpdr::FileDirectoryInformation:
                                             {
-                                                fscc::FileDirectoryInformation fbdi(CreationTime,
-                                                                                    LastAccessTime,
-                                                                                    LastWriteTime,
-                                                                                    ChangeTime,
-                                                                                    EndOfFile,
-                                                                                    AllocationSize,
-                                                                                    FileAttributes,
+                                                fscc::FileDirectoryInformation fbdi(child.CreationTime,
+                                                                                    child.LastAccessTime,
+                                                                                    child.LastWriteTime,
+                                                                                    child.ChangeTime,
+                                                                                    child.EndOfFile,
+                                                                                    child.AllocationSize,
+                                                                                    child.FileAttributes,
                                                                                     str_file_name.c_str());
 
                                                 rdpdr::ClientDriveQueryDirectoryResponse cdqdr(fbdi.size());
@@ -957,13 +868,13 @@ public:
                                                 break;
                                             case rdpdr::FileFullDirectoryInformation:
                                             {
-                                                fscc::FileFullDirectoryInformation ffdi(CreationTime,
-                                                                                        LastAccessTime,
-                                                                                        LastWriteTime,
-                                                                                        ChangeTime,
-                                                                                        EndOfFile,
-                                                                                        AllocationSize,
-                                                                                        FileAttributes,
+                                                fscc::FileFullDirectoryInformation ffdi(child.CreationTime,
+                                                                                        child.LastAccessTime,
+                                                                                        child.LastWriteTime,
+                                                                                        child.ChangeTime,
+                                                                                        child.EndOfFile,
+                                                                                        child.AllocationSize,
+                                                                                        child.FileAttributes,
                                                                                         str_file_name.c_str());
 
                                                 rdpdr::ClientDriveQueryDirectoryResponse cdqdr(ffdi.size());
@@ -974,7 +885,7 @@ public:
                                                 break;
                                             case rdpdr::FileBothDirectoryInformation:
                                             {
-                                                fscc::FileBothDirectoryInformation fbdi(CreationTime, LastAccessTime, LastWriteTime, ChangeTime, EndOfFile, AllocationSize, FileAttributes, str_file_name.c_str());
+                                                fscc::FileBothDirectoryInformation fbdi(child.CreationTime,                                                                                 child.LastAccessTime, child.LastWriteTime, child.ChangeTime, child.EndOfFile, child.AllocationSize, child.FileAttributes, str_file_name.c_str());
 
                                                 rdpdr::ClientDriveQueryDirectoryResponse cdqdr(fbdi.size());
                                                 cdqdr.emit(out_stream);
@@ -1051,20 +962,9 @@ public:
                                     rdpdr::ServerDriveQueryVolumeInformationRequest sdqvir;
                                     sdqvir.receive(chunk);
 
-                                    uint64_t VolumeCreationTime             = 0;
-                                    const char * VolumeLabel                = "";
-                                    const char * FileSystemName             = "ext4";
-
-                                    uint32_t FileSystemAttributes           = fscc::NEW_FILE_ATTRIBUTES;
-                                    uint32_t SectorsPerAllocationUnit       = 8;
-
-                                    uint32_t BytesPerSector                 = 0;
-                                    uint32_t MaximumComponentNameLength     = 0;
-                                    uint64_t TotalAllocationUnits           = 0;
-                                    uint64_t CallerAvailableAllocationUnits = 0;
-                                    uint64_t AvailableAllocationUnits       = 0;
-                                    uint64_t ActualAvailableAllocationUnits = 0;
                                     uint32_t VolumeSerialNumber             = 0;
+
+                                    ClientIODiskAPI::FileStatvfs fileStatvfs;
 
                                     std::string str_path;
 
@@ -1075,30 +975,19 @@ public:
                                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                     }
 
-                                    struct statvfs buffvfs;
-                                    if (statvfs(str_path.c_str(), &buffvfs)) {
+                                    if ((this->impl_io_disk->ifile_good(str_path.c_str()) )) {
+                                        this->impl_io_disk->get_file_statvfs(str_path.c_str());
+                                    } else {
                                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                         LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buffvfs).", str_path.c_str());
-                                    } else {
-                                        uint64_t freespace(buffvfs.f_bfree * buffvfs.f_bsize);
-
-                                        TotalAllocationUnits           = freespace + 0x1000000;
-                                        CallerAvailableAllocationUnits = freespace;
-                                        AvailableAllocationUnits       = freespace;
-                                        ActualAvailableAllocationUnits = freespace;
-
-                                        BytesPerSector                 = buffvfs.f_bsize;
-                                        MaximumComponentNameLength     = buffvfs.f_namemax;
                                     }
 
-                                    static struct hd_driveid hd;
-                                    int device = open(str_path.c_str(), O_RDONLY | O_NONBLOCK);
+                                    int device = this->impl_io_disk->get_device(str_path.c_str());
                                     if (device < 0) {
                                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                         //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (hd_driveid).", str_path.c_str());
                                     } else {
-                                        ioctl(device, HDIO_GET_IDENTITY, &hd);
-                                        VolumeSerialNumber = this->string_to_hex32(hd.serial_no);
+                                        VolumeSerialNumber = this->impl_io_disk->get_volume_serial_number(device);
                                     }
 
                                     deviceIOResponse.emit(out_stream);
@@ -1107,7 +996,7 @@ public:
                                         switch (sdqvir.FsInformationClass()) {
                                             case rdpdr::FileFsVolumeInformation:
                                             {
-                                                fscc::FileFsVolumeInformation ffvi(VolumeCreationTime, VolumeSerialNumber, 0, VolumeLabel);
+                                                fscc::FileFsVolumeInformation ffvi(fileStatvfs.VolumeCreationTime, VolumeSerialNumber, 0, fileStatvfs.VolumeLabel);
 
                                                 rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(ffvi.size());
                                                 cdqvir.emit(out_stream);
@@ -1118,7 +1007,7 @@ public:
 
                                             case rdpdr::FileFsSizeInformation:
                                             {
-                                                fscc::FileFsSizeInformation ffsi(TotalAllocationUnits, AvailableAllocationUnits, SectorsPerAllocationUnit, BytesPerSector);
+                                                fscc::FileFsSizeInformation ffsi(fileStatvfs.TotalAllocationUnits, fileStatvfs.AvailableAllocationUnits, fileStatvfs.SectorsPerAllocationUnit, fileStatvfs.BytesPerSector);
 
                                                 rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(ffsi.size());
                                                 cdqvir.emit(out_stream);
@@ -1129,7 +1018,7 @@ public:
 
                                             case rdpdr::FileFsAttributeInformation:
                                             {
-                                                fscc::FileFsAttributeInformation ffai(FileSystemAttributes, MaximumComponentNameLength, FileSystemName);
+                                                fscc::FileFsAttributeInformation ffai(fileStatvfs.FileSystemAttributes, fileStatvfs.MaximumComponentNameLength, fileStatvfs.FileSystemName);
 
                                                 rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(ffai.size());
                                                 cdqvir.emit(out_stream);
@@ -1139,7 +1028,7 @@ public:
                                                 break;
                                             case rdpdr::FileFsFullSizeInformation:
                                             {
-                                                fscc::FileFsFullSizeInformation fffsi(TotalAllocationUnits, CallerAvailableAllocationUnits, ActualAvailableAllocationUnits, SectorsPerAllocationUnit, BytesPerSector);
+                                                fscc::FileFsFullSizeInformation fffsi(fileStatvfs.TotalAllocationUnits, fileStatvfs.CallerAvailableAllocationUnits, fileStatvfs.ActualAvailableAllocationUnits, fileStatvfs.SectorsPerAllocationUnit, fileStatvfs.BytesPerSector);
 
                                                 rdpdr::ClientDriveQueryVolumeInformationResponse cdqvir(fffsi.size());
                                                 cdqvir.emit(out_stream);
@@ -1199,11 +1088,7 @@ public:
 
                                     std::string file_to_write = this->fileSystemData.paths.at(id);
 
-                                    std::ofstream oFile(file_to_write.c_str(), std::ios::out | std::ios::binary);
-                                    if (oFile.good()) {
-                                        oFile.write(reinterpret_cast<const char *>(dwr.WriteData), WriteDataLen);
-                                        oFile.close();
-                                    }  else {
+                                    if (this->impl_io_disk->write_file(file_to_write.c_str(), reinterpret_cast<const char *>(dwr.WriteData), WriteDataLen ) ) {
                                         LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_write.c_str());
                                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                     }
@@ -1237,11 +1122,9 @@ public:
 
                                     std::string file_to_request = this->fileSystemData.paths.at(id);
 
-                                    std::ifstream file(file_to_request.c_str(), std::ios::in |std::ios::binary);
-                                    if (!file.good()) {
+                                    if (! (this->impl_io_disk->ifile_good(file_to_request.c_str()))) {
                                         LOG(LOG_WARNING, "  Can't open such file of directory : \'%s\'.", file_to_request.c_str());
                                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
-                                        file.close();
                                     }
 
 
@@ -1256,7 +1139,8 @@ public:
                                             rdpfri.receive(chunk);
 
                                             std::string fileName(this->client->SHARE_DIR + rdpfri.FileName());
-                                            if (rename(file_to_request.c_str(), fileName.c_str()) !=  0) {
+
+                                            if (this->impl_io_disk->rename_file(file_to_request.c_str(), fileName.c_str())) {
                                                 LOG(LOG_WARNING, "  Can't rename such file of directory : \'%s\' to \'%s\'.", file_to_request.c_str(), fileName.c_str());
                                                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_OBJECT_NAME_INVALID);
                                             }
@@ -1282,7 +1166,7 @@ public:
 
                                             std::string file_to_request = this->fileSystemData.paths.at(id);
 
-                                            if (remove(file_to_request.c_str()) != 0) {
+                                            if (this->impl_io_disk->remove_file(file_to_request.c_str())) {
                                                 DeletePending = 0;
                                                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_ACCESS_DENIED);
                                                 LOG(LOG_WARNING, "  Can't delete such file of directory : \'%s\'.", file_to_request.c_str());
@@ -1393,7 +1277,7 @@ public:
 
                         } break;
 
-                    default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT RDPDR_CTYP_CORE unknow packetId = %x",       packetId);
+                    default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT RDPDR_CTYP_CORE unknow packetId = %x",       header.packet_id);
                         break;
                 }
                         break;
@@ -1405,7 +1289,7 @@ public:
                 //hexdump_c(chunk_series.get_data(), chunk_size);
                 chunk.in_skip_bytes(4);
 
-                switch (packetId) {
+                switch (header.packet_id) {
                     case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
                     {
                         if (bool(this->verbose & RDPVerbose::printer)) {
@@ -1513,13 +1397,13 @@ public:
                         break;
 
                     default :
-                        LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: DEFAULT PRINTER unknow packetId = %x", packetId);
+                        LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: DEFAULT PRINTER unknow packetId = %x", header.packet_id);
                         break;
                 }
             }
                 break;
 
-            default: LOG(LOG_WARNING, "SERVER >> RDPDR: DEFAULT RDPDR unknow component = %x", component);
+            default: LOG(LOG_WARNING, "SERVER >> RDPDR: DEFAULT RDPDR unknow component = %x", header.component);
                 break;
         }
     }
@@ -1664,22 +1548,4 @@ public:
                                                 );
         }
     }
-
-    uint32_t string_to_hex32(unsigned char * str) {
-        size_t size = sizeof(str);
-        uint32_t hex32(0);
-        for (size_t i = 0; i < size; i++) {
-            int s = str[i];
-            if(s > 47 && s < 58) {                      //this covers 0-9
-                hex32 += (s - 48) << (size - i - 1);
-            } else if (s > 64 && s < 71) {              // this covers A-F
-                hex32 += (s - 55) << (size - i - 1);
-            } else if (s > 'a'-1 && s < 'f'+1) {        // this covers a-f
-                hex32 += (s - 'a') << (size - i - 1);
-            }
-        }
-
-        return hex32;
-    }
-
 };

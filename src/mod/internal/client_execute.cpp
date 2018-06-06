@@ -27,10 +27,8 @@
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 #include "core/RDP/remote_programs.hpp"
-#include "mod/internal/internal_mod.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/windowing_api.hpp"
 #include "utils/bitmap_from_file.hpp"
@@ -49,13 +47,15 @@
 #define INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH  640
 #define INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT 480
 
-ClientExecute::ClientExecute(FrontAPI & front, WindowListCaps const & window_list_caps, bool verbose)
+ClientExecute::ClientExecute(
+    SessionReactor& session_reactor, FrontAPI & front,
+    WindowListCaps const & window_list_caps, bool verbose)
 : front_(&front)
 , wallix_icon_min(bitmap_from_file(app_path(AppPath::WallixIconMin)))
 , window_title(INTERNAL_MODULE_WINDOW_TITLE)
 , window_level_supported_ex(window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX)
-, button_1_down_event_handler(*this)
 , verbose(verbose)
+, session_reactor(session_reactor)
 {
 }   // ClientExecute
 
@@ -73,27 +73,6 @@ void ClientExecute::set_verbose(bool verbose)
 void ClientExecute::enable_remote_program(bool enable)
 {
     this->rail_enabled = enable;
-}
-
-void ClientExecute::get_event_handlers(std::vector<EventHandler>& out_event_handlers)
-{
-    if (bool(*this) && this->button_1_down_event.is_trigger_time_set()) {
-        out_event_handlers.emplace_back(
-            &this->button_1_down_event,
-            &this->button_1_down_event_handler,
-            INVALID_SOCKET
-        );
-    }
-}
-
-void ClientExecute::process_button_1_down_event(time_t, wait_obj &, gdi::GraphicApi&)
-{
-    assert(bool(*this));
-
-    this->initialize_move_size(this->button_1_down_x, this->button_1_down_y,
-        this->button_1_down);
-
-    this->button_1_down_event.reset_trigger_time();
 }
 
 Rect ClientExecute::adjust_rect(Rect rect)
@@ -664,53 +643,53 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
     //    "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u pressed_mouse_button=%d",
     //    pointerFlags, xPos, yPos, this->pressed_mouse_button);
 
-    if (this->button_1_down_event.is_trigger_time_set()) {
+    if (this->button_1_down_timer) {
         if (SlowPath::PTRFLAGS_BUTTON1 != pointerFlags) {
             this->initialize_move_size(this->button_1_down_x, this->button_1_down_y,
                 this->button_1_down);
         }
 
-        this->button_1_down_event.reset_trigger_time();
+        this->button_1_down_timer.reset();
     }
 
     // Mouse pointer managment
     if (!this->move_size_initialized) {
-        if (this->north.contains_pt(xPos, yPos) 
+        if (this->north.contains_pt(xPos, yPos)
         ||  this->south.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZENS != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZENS;
                     this->front_->set_pointer(Pointer(SizeNSPointer{}));
             }
         }
-        else if (this->north_west_north.contains_pt(xPos, yPos) 
-             ||  this->north_west_west.contains_pt(xPos, yPos) 
-             ||  this->south_east_south.contains_pt(xPos, yPos) 
+        else if (this->north_west_north.contains_pt(xPos, yPos)
+             ||  this->north_west_west.contains_pt(xPos, yPos)
+             ||  this->south_east_south.contains_pt(xPos, yPos)
              ||  this->south_east_east.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZENWSE != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZENWSE;
                     this->front_->set_pointer(Pointer(SizeNESWPointer{}));
             }
         }
-        else if (this->west.contains_pt(xPos, yPos) 
+        else if (this->west.contains_pt(xPos, yPos)
              ||  this->east.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZEWE != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZEWE;
                     this->front_->set_pointer(Pointer(SizeWEPointer{}));
             }
         }
-        else if (this->south_west_west.contains_pt(xPos, yPos) 
-             ||  this->south_west_south.contains_pt(xPos, yPos) 
-             ||  this->north_east_east.contains_pt(xPos, yPos) 
+        else if (this->south_west_west.contains_pt(xPos, yPos)
+             ||  this->south_west_south.contains_pt(xPos, yPos)
+             ||  this->north_east_east.contains_pt(xPos, yPos)
              ||  this->north_east_north.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZENESW != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZENESW;
                     this->front_->set_pointer(Pointer(SizeNESWPointer{}));
             }
         }
-        else if ((this->title_bar_rect.contains_pt(xPos, yPos)) 
-             ||  (this->enable_resizing_hosted_desktop_ && this->resize_hosted_desktop_box_rect.contains_pt(xPos, yPos)) 
-             ||  (this->minimize_box_rect.contains_pt(xPos, yPos)) 
-             ||  (this->maximize_box_rect.contains_pt(xPos, yPos)) 
+        else if ((this->title_bar_rect.contains_pt(xPos, yPos))
+             ||  (this->enable_resizing_hosted_desktop_ && this->resize_hosted_desktop_box_rect.contains_pt(xPos, yPos))
+             ||  (this->minimize_box_rect.contains_pt(xPos, yPos))
+             ||  (this->maximize_box_rect.contains_pt(xPos, yPos))
              ||  (this->close_box_rect.contains_pt(xPos, yPos))) {
             if (Pointer::POINTER_NORMAL != this->current_mouse_pointer_type) {
                 this->current_mouse_pointer_type = Pointer::POINTER_NORMAL;
@@ -766,7 +745,16 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button)) {
                     this->button_1_down = this->pressed_mouse_button;
 
-                    this->button_1_down_event.set_trigger_time(400000);
+                    this->button_1_down_timer = this->session_reactor
+                    .create_timer()
+                    .set_delay(std::chrono::milliseconds(400))
+                    .on_action(jln::one_shot([this]{
+                        assert(bool(*this));
+                        this->initialize_move_size(
+                            this->button_1_down_x,
+                            this->button_1_down_y,
+                            this->button_1_down);
+                    }));
 
                     this->button_1_down_x = xPos;
                     this->button_1_down_y = yPos;
@@ -3093,7 +3081,6 @@ void ClientExecute::create_auxiliary_window(Rect const window_rect_)
         }
 
         this->front_->draw(order);
-        this->on_new_or_existing_window(adjusted_window_rect);
     }
 
     this->auxiliary_window_rect = window_rect;
@@ -3120,7 +3107,6 @@ void ClientExecute::destroy_auxiliary_window()
         }
 
         this->front_->draw(order);
-        this->on_delete_window();
     }
 
     this->auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;

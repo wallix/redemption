@@ -27,7 +27,6 @@
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget/flat_login.hpp"
 #include "mod/internal/widget/language_button.hpp"
-#include "utils/timeout.hpp"
 
 
 using FlatLoginModVariables = vcfg::variables<
@@ -41,6 +40,7 @@ using FlatLoginModVariables = vcfg::variables<
     vcfg::var<cfg::font,                                vcfg::accessmode::get>,
     vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
     vcfg::var<cfg::context::opt_message,                vcfg::accessmode::get>,
+    vcfg::var<cfg::context::login_message,              vcfg::accessmode::get>,
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
     vcfg::var<cfg::globals::authentication_timeout,     vcfg::accessmode::get>,
     vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
@@ -52,7 +52,8 @@ class FlatLoginMod : public LocallyIntegrableMod, public NotifyApi
     LanguageButton language_button;
 
     FlatLogin login;
-    Timeout timeout;
+    SessionReactor::TimerPtr timeout_timer;
+    SessionReactor::GraphicEventPtr started_copy_past_event;
 
     CopyPaste copy_paste;
 
@@ -60,7 +61,7 @@ class FlatLoginMod : public LocallyIntegrableMod, public NotifyApi
 
 public:
     FlatLoginMod(
-        FlatLoginModVariables vars,
+        FlatLoginModVariables vars, SessionReactor& session_reactor,
         char const * username, char const * password,
         FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, time_t now,
         ClientExecute & client_execute

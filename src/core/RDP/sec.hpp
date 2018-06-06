@@ -856,6 +856,18 @@ enum {
         }
     };
 
+    struct write_sec_send_fn
+    {
+        uint32_t flags;
+        CryptContext & encrypt;
+        int encryption_level;
+
+        void operator()(StreamSize<256>, OutStream & sec_header, uint8_t * packet_data, std::size_t packet_size) const {
+            SEC::Sec_Send sec(sec_header, packet_data, packet_size, this->flags, this->encrypt, this->encryption_level);
+            (void)sec;
+        }
+    };
+
     // 5.1.3 Generating the Licensing Encryption and MAC Salt Keys
     // ===========================================================
 

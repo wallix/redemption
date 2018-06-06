@@ -1502,7 +1502,9 @@ inline int get_joint_visibility_rect(
                 }
             }
 
-            out_min_image_frame_rect = Rect(0, 0, player.min_image_frame_dim.w, player.min_image_frame_dim.h);
+            out_min_image_frame_rect = Rect(0, 0,
+                std::min(player.min_image_frame_dim.w, player.info_width),
+                std::min(player.min_image_frame_dim.h, player.info_height));
             if (!out_min_image_frame_rect.isempty()) {
                 if (out_min_image_frame_rect.cx & 1) {
                     out_min_image_frame_rect.cx++;
@@ -1560,7 +1562,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned int, std::centi>{wrm_frame_interval});
     ini.set<cfg::video::break_interval>(std::chrono::seconds{wrm_break_interval});
     ini.set<cfg::globals::trace_type>(encryption_type);
-    ini.set<cfg::video::rt_display>(bool(capture_flags & CaptureFlags::png));
 
     ini.set<cfg::globals::capture_chunk>(chunk);
     ini.set<cfg::ocr::version>(ocr_version == 2 ? OcrVersion::v2 : OcrVersion::v1);
@@ -1753,7 +1754,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         const char * record_path = record_tmp_path;
 
                         bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
-                        bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
+                        bool capture_png = bool(capture_flags & CaptureFlags::png);
                         bool capture_pattern_checker = false;
 
                         bool capture_ocr = bool(capture_flags & CaptureFlags::ocr)
@@ -2199,7 +2200,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     recorder.chunk = options.count("chunk") > 0;
     recorder.capture_flags
       = (                   options.count("wrm")    ? CaptureFlags::wrm   : CaptureFlags::none)
-      | ((recorder.chunk || options.count("png"))   ? CaptureFlags::png   : CaptureFlags::none)
+      | ((!recorder.chunk && options.count("png"))  ? CaptureFlags::png   : CaptureFlags::none)
       | ((recorder.chunk || options.count("video")) ? CaptureFlags::video : CaptureFlags::none)
       | ((recorder.chunk || options.count("ocr"))   ? CaptureFlags::ocr   : CaptureFlags::none);
 

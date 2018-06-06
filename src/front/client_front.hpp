@@ -22,6 +22,8 @@
 
 #include "utils/log.hpp"
 #include "utils/png.hpp"
+#include "utils/select.hpp"
+#include "utils/difftimeval.hpp"
 #include "utils/sugar/scope_exit.hpp"
 
 #include "core/front_api.hpp"
@@ -31,6 +33,8 @@
 #include "core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/channel_list.hpp"
+#include "cxx/cxx.hpp"
+#include "front/execute_events.hpp"
 #include "gdi/graphic_cmd_color.hpp"
 
 class ClientFront : public FrontAPI
@@ -129,90 +133,48 @@ public:
 
 #include "mod/mod_api.hpp"
 
-struct Select
-{
-    Select(char const * type, int sck_fd, mod_api & mod, gdi::GraphicApi & gd)
-      : type(type)
-      , sck_fd(sck_fd)
-      , mod(mod)
-      , gd(gd)
-    {
-        io_fd_zero(rfds);
-    }
-
-    enum class Res { Ok, Error, Continue, Timeout, };
-
-    Res next_event(timeval & timeout)
-    {
-        auto & event = mod.get_event();
-        event.wait_on_timeout(timeout);
-        io_fd_set(sck_fd, rfds);
-
-        int num = select(sck_fd + 1, &rfds, nullptr, nullptr, &timeout);
-
-        if (num < 0) {
-            if (errno == EINTR) {
-                return Res::Continue;
-            }
-
-            LOG(LOG_INFO, "%s CLIENT :: errno = %d\n", type, errno);
-            return Res::Error;
-        }
-
-        if (event.is_set(sck_fd, rfds)) {
-            LOG(LOG_INFO, "%s CLIENT :: draw_event", type);
-            mod.draw_event(time(nullptr), gd);
-            return Res::Ok;
-        }
-
-        return Res::Timeout;
-    }
-
-private:
-    fd_set rfds;
-    char const * type;
-    int sck_fd;
-    mod_api & mod;
-    gdi::GraphicApi & gd;
-};
-
-inline int run_connection_test(char const * type, int sck_fd, mod_api & mod, gdi::GraphicApi & gd)
+inline int run_connection_test(
+    char const * type, SessionReactor& session_reactor, mod_api& mod, gdi::GraphicApi& gd)
 {
     int       timeout_counter = 0;
     int const timeout_counter_max = 3;
-
-    Select select(type, sck_fd, mod, gd);
+    timeval const timeout = {5, 0};
 
     for (;;) {
         LOG(LOG_INFO, "run_connection_test");
-        timeval timeout = {5, 0};
 
-        switch (select.next_event(timeout))
-        {
-            case Select::Res::Error: return 1;
-            case Select::Res::Continue: break;
-            case Select::Res::Timeout:
+        switch (execute_events(
+            timeout, session_reactor,
+            SessionReactor::EnableGraphics{true}, mod, gd
+        )) {
+            case ExecuteEventsResult::Error:
+                LOG(LOG_INFO, "%s CLIENT :: errno = %d\n", type, errno);
+                return 1;
+            case ExecuteEventsResult::Continue:
+                break;
+            case ExecuteEventsResult::Timeout:
                 ++timeout_counter;
                 LOG(LOG_INFO, "%s CLIENT :: Timeout (%d/%d)", type, timeout_counter, timeout_counter_max);
                 if (timeout_counter == timeout_counter_max) {
                     return 2;
                 }
                 break;
-            case Select::Res::Ok:
+            case ExecuteEventsResult::Success:
                 if (mod.is_up_and_running()) {
                     LOG(LOG_INFO, "%s CLIENT :: Done", type);
                     return 0;
                 }
+                break;
         }
     }
 }
 
 
-inline int wait_for_screenshot(char const * type, int sck_fd, mod_api & mod, gdi::GraphicApi & gd, std::chrono::milliseconds inactivity_time, std::chrono::milliseconds max_time)
+inline int wait_for_screenshot(
+    char const* type, SessionReactor& session_reactor, Callback& callback, gdi::GraphicApi & gd,
+    std::chrono::milliseconds inactivity_time, std::chrono::milliseconds max_time)
 {
     auto const time_start = ustime();
-
-    Select select(type, sck_fd, mod, gd);
 
     for (;;) {
         auto const elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -224,14 +186,23 @@ inline int wait_for_screenshot(char const * type, int sck_fd, mod_api & mod, gdi
 
         auto const ms = std::min(max_time - elapsed, inactivity_time);
         auto const seconds = std::chrono::duration_cast<std::chrono::seconds>(ms);
-        timeval timeout = {seconds.count(), (ms - seconds).count()};
+        timeval timeout = {
+            seconds.count(),
+            std::chrono::duration_cast<std::chrono::microseconds>(ms - seconds).count()
+        };
 
-        switch (select.next_event(timeout))
-        {
-            case Select::Res::Error: return 1;
-            case Select::Res::Continue:
-            case Select::Res::Timeout:
-            case Select::Res::Ok:
+        switch (execute_events(
+            timeout, session_reactor,
+            SessionReactor::EnableGraphics{true}, callback, gd
+        )) {
+            case ExecuteEventsResult::Error:
+                LOG(LOG_INFO, "%s CLIENT :: errno = %d\n", type, errno);
+                return 1;
+            case ExecuteEventsResult::Success:
+                LOG(LOG_INFO, "%s CLIENT :: draw_event", type);
+                REDEMPTION_CXX_FALLTHROUGH;
+            case ExecuteEventsResult::Continue:
+            case ExecuteEventsResult::Timeout:
                 if (!timeout.tv_sec && !timeout.tv_usec) {
                     return 0;
                 }
@@ -239,10 +210,13 @@ inline int wait_for_screenshot(char const * type, int sck_fd, mod_api & mod, gdi
     }
 }
 
-inline int run_test_client(char const * type, int sck_fd, mod_api & mod, gdi::GraphicApi & gd, std::chrono::milliseconds inactivity_time, std::chrono::milliseconds max_time, std::string const & screen_output)
+inline error_t run_test_client(
+    char const* type, SessionReactor& session_reactor, mod_api& mod, gdi::GraphicApi& gd,
+    std::chrono::milliseconds inactivity_time, std::chrono::milliseconds max_time,
+    std::string const& screen_output)
 {
     try {
-        if (int err = run_connection_test(type, sck_fd, mod, gd)) {
+        if (int err = run_connection_test(type, session_reactor, mod, gd)) {
             return err;
         }
 
@@ -253,14 +227,14 @@ inline int run_test_client(char const * type, int sck_fd, mod_api & mod, gdi::Gr
         FILE * f = fopen(screen_output.c_str(), "w");
         if (!f) {
             LOG(LOG_ERR, "%s CLIENT :: %s: %s", type, screen_output.c_str(), strerror(errno));
-            return 1;
+            return ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE;
         }
         SCOPE_EXIT(fclose(f));
 
         Dimension dim = mod.get_dim();
         RDPDrawable gd(dim.w, dim.h);
 
-        if (int err = wait_for_screenshot(type, sck_fd, mod, gd, inactivity_time, max_time)) {
+        if (int err = wait_for_screenshot(type, session_reactor, mod, gd, inactivity_time, max_time)) {
             return err;
         }
 
@@ -270,6 +244,6 @@ inline int run_test_client(char const * type, int sck_fd, mod_api & mod, gdi::Gr
     }
     catch (Error const & e) {
         LOG(LOG_ERR, "%s CLIENT :: Exception raised = %s !\n", type, e.errmsg());
-        return 1;
+        return e.id;
     }
 }

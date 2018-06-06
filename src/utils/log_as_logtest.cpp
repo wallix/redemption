@@ -48,6 +48,9 @@ namespace
 {
     static std::string log_buf = {};
     static bool enable_buf_log = false;
+# ifndef NDEBUG
+    static bool previous_is_line_marker = false;
+# endif
 }
 
 LOG__REDEMPTION__BUFFERED::LOG__REDEMPTION__BUFFERED()
@@ -75,6 +78,16 @@ void LOG__REDEMPTION__BUFFERED::clear()
 void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...)
 {
     if (enable_buf_log) {
+# ifndef NDEBUG
+        // see LOG_FILENAME
+        if (priority != LOG_INFO && priority != LOG_DEBUG) {
+            if (!previous_is_line_marker) {
+                previous_is_line_marker = true;
+                return ;
+            }
+            previous_is_line_marker = false;
+        }
+# endif
         va_list ap;
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
@@ -103,6 +116,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...)
         std::vprintf(format, ap);
         REDEMPTION_DIAGNOSTIC_POP
         std::puts("");
+        std::fflush(stdout);
         va_end(ap);
     }
 }

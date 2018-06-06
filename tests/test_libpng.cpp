@@ -157,5 +157,4 @@ RED_AUTO_TEST_CASE(TestCreateFrenchFlagPngFile)
         unlink("/tmp/fflag.png");
     }
     // ----------------------------------------------------------------------
-
 }

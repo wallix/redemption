@@ -27,8 +27,11 @@
 #include "core/RDP/remote_programs.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
+#include "core/channel_list.hpp"
 
-#include "client_redemption/client_input_output_api.hpp"
+#include "client_redemption/client_redemption_api.hpp"
+#include "client_redemption/client_input_output_api/client_graphic_api.hpp"
+#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 
 
 // [MS-RDPERP]: Remote Desktop Protocol: Remote Programs Virtual Channel Extension
@@ -690,7 +693,7 @@ public:
                     out_stream.out_uint16_le(TS_RAIL_ORDER_EXEC);
                     out_stream.out_uint16_le(12 + size_of_unicode_ExeOrFile + size_of_unicode_WorkingDir +size_of_unicode_Arguments);
 
-                    out_stream.out_uint16_le(TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY | TS_RAIL_EXEC_FLAG_APP_USER_MODEL_ID |  TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS);
+                    out_stream.out_uint16_le(TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY | TS_RAIL_EXEC_FLAG_APP_USER_MODEL_ID | TS_RAIL_EXEC_FLAG_EXPAND_ARGUMENTS);
                     out_stream.out_uint16_le(size_of_unicode_ExeOrFile);
                     out_stream.out_uint16_le(size_of_unicode_WorkingDir);
                     out_stream.out_uint16_le(size_of_unicode_Arguments);

@@ -125,8 +125,7 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::context::keepalive>(true);
     ini.set<cfg::context::message>(cs);
     ini.set<cfg::context::message>(s);
-    ini.set<cfg::context::mode_console>(cs);
-    ini.set<cfg::context::mode_console>(s);
+    ini.set<cfg::context::mode_console>(RdpModeConsole::allow);
     ini.set_acl<cfg::context::module>(1);
     ini.set<cfg::context::movie>(cpath);
     ini.set<cfg::context::movie>(spath);
@@ -289,7 +288,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
 
     ini.set<cfg::mod_replay::on_end_of_data>(true);
 
-    ini.set<cfg::mod_vnc::allow_authentification_retries>(true);
     ini.set<cfg::mod_vnc::bogus_clipboard_infinite_loop>(VncBogusClipboardInfiniteLoop::duplicated);
     ini.set<cfg::mod_vnc::clipboard_down>(true);
     ini.set<cfg::mod_vnc::clipboard_up>(true);

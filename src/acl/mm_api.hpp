@@ -22,16 +22,23 @@
 
 #include "mod/mod_api.hpp"
 #include "mod/rdp/rdp_api.hpp"
+#include "core/session_reactor.hpp"
 
 class AuthApi;
 class ReportMessageApi;
 
 class MMApi
 {
+protected:
+    mod_api* mod;
+
 public:
+    mod_api* get_mod()
+    {
+        return this->mod;
+    }
 
-    mod_api * mod;
-
+public:
     bool last_module;
     bool connected;
 

@@ -2,11 +2,10 @@
 {
   if (/^\.\.\.skip|^Jamfile|^  *"ccache|^  *"clang|^ *"g\+\+d|\.o\.\.\.$|^In|^  "scan-build/)
   {}
-  else if (/[^.]+\.(compile\.c\+\+|link)|^testing\.unit-test /)
+  else if (/[^.]+\.(compile\.c\+\+|link)|^testing\.unit-test|qt.?\.moc /)
   {
     ++i
     print "\x1b[32m[" int(i*100/n) "%] [" i "/" n "]\x1b[0m " $0
-    fflush()
   }
   else if (/^testing\.unit-test /)
   {
@@ -21,11 +20,9 @@
     n=int($2)
     i=0;
     print
-    fflush()
   }
   else
   {
     print
-    fflush()
   }
 }

@@ -28,8 +28,8 @@
 
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
-#include "client_redemption/client_input_output_api.hpp"
-
+#include "client_redemption/client_redemption_api.hpp"
+#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 
 
 #include "../keymaps/qt_scancode_keymap.hpp"
@@ -65,8 +65,10 @@
 
 class QtKeyLabel :  public QWidget
 {
-
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     int q_key_code;
@@ -85,16 +87,10 @@ public:
       }
 
     void set_key(int q_key_code, const std::string & q_key_name) {
-//         LOG(LOG_INFO, "q_key_code=%d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", q_key_code);
         this->q_key_code = q_key_code;
         this->label.clear();
         this->label.setText(q_key_name.c_str());
-       // LOG(LOG_INFO, "q_key_code=%d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", this->q_key_code);
     }
-
-//     void print() {
-//         LOG(LOG_INFO, "internal q_key_code=%d", this->q_key_code);
-//     }
 };
 
 
@@ -103,14 +99,17 @@ public:
 class QtOptions : public QWidget
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     enum : uint8_t {
         RDP,
         VNC
     };
-    ClientRedemptionIOAPI   * _front;
+    ClientRedemptionAPI   * _front;
     ClientInputMouseKeyboardAPI * controllers;
     const int            _width;
     const int            _height;
@@ -156,7 +155,7 @@ public:
 //     bool                 key_editting;
 
 
-    QtOptions(ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+    QtOptions(ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
         : QWidget(parent)
         , _front(front)
         , controllers(controllers)
@@ -313,7 +312,7 @@ public:
             this->_languageComboBox.setCurrentIndex(indexLanguage);
         }
         for (size_t i = 0; i < this->_front->keyCustomDefinitions.size(); i++) {
-            ClientRedemptionIOAPI::KeyCustomDefinition & key = this->_front->keyCustomDefinitions[i];
+            ClientRedemptionAPI::KeyCustomDefinition & key = this->_front->keyCustomDefinitions[i];
             this->addRow();
             this->setRowValues(key.qtKeyID, key.scanCode, key.ASCII8, key.extended, i, key.name);
         }
@@ -382,12 +381,12 @@ public:
         this->_front->update_keylayout();
 
         this->_front->writeCustomKeyConfig();
-        this->_front->writeClientInfo();
+        //this->_front->writeClientInfo();
     }
 
     void keyPressEvent(QKeyEvent *e) override {
 
-        const ClientRedemptionIOAPI::KeyCustomDefinition & keyCustomDefinition =
+        const ClientRedemptionAPI::KeyCustomDefinition & keyCustomDefinition =
         this->controllers->get_key_info(e->key(), e->text().toStdString());
 
         int count = this->_tableKeySetting->selectedItems().count();
@@ -490,7 +489,10 @@ public Q_SLOTS:
 class QtRDPOptions : public QtOptions
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     QCheckBox            _tlsBox;
@@ -527,23 +529,27 @@ public:
     QCheckBox            _shareCheckBox;
     QLineEdit            _sharePath;
     QPushButton          _buttonSharePath;
-    QCheckBox            _soundBox;
+//     QCheckBox            _soundBox;
     QCheckBox            remoteappCheckBox;
     QLineEdit            remoteapp_cmd;
     QLineEdit            remoteapp_workin_dir;
     QLabel               _labelShare;
     QLabel               _labelSharePath;
-    QLabel               _labelSound;
+//     QLabel               _labelSound;
     QLabel               remoteappLabel;
     QLabel               remoteapp_cmd_label;
     QLabel               remoteapp_workin_dir_label;
 
     QCheckBox            _consoleBox;
     QLabel               _labelConsole;
+    QComboBox            _captureReplayCombo;
+    QLabel               _labelCaptureReplay;
+    QLineEdit            _captureFileEntry;
+    QLabel               _labelCaptureFile;
 
 
 
-    QtRDPOptions(ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+    QtRDPOptions(ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
         : QtOptions( front, controllers, parent)
         , _tlsBox(this)
         , _nlaBox(this)
@@ -574,18 +580,23 @@ public:
         , _shareCheckBox(this)
         , _sharePath("", this)
         , _buttonSharePath("Select a Directory", this)
-        , _soundBox(this)
+//         , _soundBox(this)
         , remoteappCheckBox(this)
         , remoteapp_cmd("", this)
         , remoteapp_workin_dir("", this)
         , _labelShare("Shared Virtual Disk :", this)
         , _labelSharePath("Shared Path :", this)
-        , _labelSound("Sound :",  this)
+//         , _labelSound("Sound :",  this)
         , remoteappLabel("Enable remote app :", this)
         , remoteapp_cmd_label("Command line :", this)
         , remoteapp_workin_dir_label("Working direction :", this)
         , _consoleBox(this)
         , _labelConsole("Console :", this)
+    	, _captureReplayCombo(this)
+    	, _labelCaptureReplay("replay/capture :", this)
+    	, _captureFileEntry("/tmp/capture.dump", this)
+    	, _labelCaptureFile("capture file", this)
+
     {
 
         // General tab
@@ -595,6 +606,12 @@ public:
         this->_layoutConnection->addRow(&(this->_labelNla), &(this->_nlaBox));
         this->_consoleBox.setCheckState(Qt::Unchecked);
         this->_layoutConnection->addRow(&(this->_labelConsole), &(this->_consoleBox));
+        this->_captureReplayCombo.addItem("none", "none");
+        this->_captureReplayCombo.addItem("capture", "capture");
+        this->_captureReplayCombo.addItem("replay", "replay");
+        this->_layoutConnection->addRow(&this->_labelCaptureReplay, &(this->_captureReplayCombo));
+        //this->_captureFileEntry.setDisabled(true);
+        this->_layoutConnection->addRow(&(this->_labelCaptureFile), &(this->_captureFileEntry));
 
 
         // Services tab
@@ -618,7 +635,7 @@ public:
 
         this->_layoutServices->addRow(&(this->remoteapp_cmd_label), &(this->remoteapp_cmd));
 
-        this->remoteapp_workin_dir.setEnabled(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
+        this->remoteapp_workin_dir.setEnabled(this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
         this->_layoutServices->addRow(&(this->remoteapp_workin_dir_label), &(this->remoteapp_workin_dir));
 
 
@@ -638,6 +655,7 @@ public:
         this->_resolutionComboBox.addItem( "800 * 600", 800);
         this->_resolutionComboBox.addItem("1024 * 768", 1024);
         this->_resolutionComboBox.addItem("1600 * 900", 1600);
+        this->_resolutionComboBox.addItem("1920 * 1080", 1920);
         this->_resolutionComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutView->addRow(&(this->_labelResolution), &(this->_resolutionComboBox));
 
@@ -678,10 +696,10 @@ public:
         this->_sharePath.setEnabled(this->_front->enable_shared_virtual_disk);
         this->_sharePath.setText(this->_front->SHARE_DIR.c_str());
         this->_soundBox.setChecked(this->_front->modRDPParamsData.enable_sound);
-        this->remoteappCheckBox.setChecked(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
-        this->remoteapp_cmd.setEnabled(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
+        this->remoteappCheckBox.setChecked(this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
+        this->remoteapp_cmd.setEnabled(this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
         this->remoteapp_cmd.setText(this->_front->full_cmd_line.c_str());
-        this->remoteapp_workin_dir.setEnabled(this->_front->mod_state == ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP);
+        this->remoteapp_workin_dir.setEnabled(this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
         this->remoteapp_workin_dir.setText(this->_front->source_of_WorkingDir.c_str());
 
         // View tab
@@ -736,14 +754,17 @@ public:
         } else {
             this->_front->current_user_profil = this->profilComboBox.currentIndex();
         }
-        this->_front->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
-        this->_front->update_keylayout();
-        this->_front->modRDPParamsData.enable_tls = this->_tlsBox.isChecked();
-        this->_front->modRDPParamsData.enable_nla = this->_nlaBox.isChecked();
-        this->_front->info.console_session = this->_consoleBox.isChecked();
+        _front->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
+        _front->update_keylayout();
+        _front->modRDPParamsData.enable_tls = this->_tlsBox.isChecked();
+        _front->modRDPParamsData.enable_nla = this->_nlaBox.isChecked();
+        _front->info.console_session = this->_consoleBox.isChecked();
+        _front->is_full_capturing = (this->_captureReplayCombo.currentText() == "capture");
+        _front->is_full_replaying = (this->_captureReplayCombo.currentText() == "replay");
+        _front->full_capture_file_name = this->_captureFileEntry.text().toStdString();
 
 
-        // Servirces tab
+        // Services tab
         this->_front->enable_shared_clipboard = this->_clipboardCheckBox.isChecked();
         if (this->_shareCheckBox.isChecked()) {
             this->_front->enable_shared_virtual_disk = true;
@@ -753,11 +774,11 @@ public:
         }
         this->_front->modRDPParamsData.enable_sound = this->_soundBox.isChecked();
         if (this->remoteappCheckBox.isChecked()) {
-            this->_front->mod_state = ClientRedemptionIOAPI::MOD_RDP_REMOTE_APP;
+            this->_front->mod_state = ClientRedemptionAPI::MOD_RDP_REMOTE_APP;
             this->_front->set_remoteapp_cmd_line(this->remoteapp_cmd.text().toStdString());
             this->_front->source_of_WorkingDir = this->remoteapp_workin_dir.text().toStdString();
         } else {
-            this->_front->mod_state = ClientRedemptionIOAPI::MOD_RDP;
+            this->_front->mod_state = ClientRedemptionAPI::MOD_RDP;
         }
 
         //  View tab
@@ -823,14 +844,17 @@ public Q_SLOTS:
 class QtVNCOptions : public QtOptions
 {
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
+REDEMPTION_DIAGNOSTIC_POP
 
 public:
     QCheckBox            keyboard_apple_compatibility_CB;
     QLabel               keyboard_apple_compatibility_label;
 
 
-    QtVNCOptions(ClientRedemptionIOAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+    QtVNCOptions(ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
       : QtOptions( front, controllers, parent)
         , keyboard_apple_compatibility_CB(this)
         , keyboard_apple_compatibility_label("Apple server keyboard :", this)

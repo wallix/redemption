@@ -21,15 +21,15 @@
 
 #pragma once
 
-#include "core/error.hpp"
-#include "core/wait_obj.hpp"
-#include "mod/rdp/channels/base_channel.hpp"
+#include <cstdint>
+
+
+class BaseVirtualChannel;
+class InStream;
 
 class SessionProbeLauncher {
 public:
     virtual ~SessionProbeLauncher() = default;
-
-    virtual wait_obj* get_event() = 0;
 
     virtual bool on_clipboard_initialize() = 0;
 
@@ -41,11 +41,11 @@ public:
 
     virtual bool on_device_announce_responded() = 0;
 
-    virtual bool on_event() = 0;
-
     virtual bool on_image_read(uint64_t offset, uint32_t length) = 0;
 
     virtual bool on_server_format_data_request() = 0;
+
+    virtual bool on_server_format_list() = 0;
 
     virtual bool on_server_format_list_response() = 0;
 

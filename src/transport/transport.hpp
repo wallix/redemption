@@ -57,7 +57,7 @@ public:
     uint32_t get_seqno() const
     { return this->seqno; }
 
-    enum class TlsResult { Ok, Fail, Want, };
+    enum class [[nodiscard]] TlsResult { Ok, Fail, Want, };
     virtual TlsResult enable_client_tls(
             bool server_cert_store,
             ServerCertCheck server_cert_check,
@@ -81,24 +81,26 @@ public:
         (void)ssl_cipher_list;
     }
 
-    virtual const uint8_t * get_public_key() const
+    virtual array_view_const_u8 get_public_key() const
     {
-        return nullptr;
+        return {};
     }
 
-    virtual size_t get_public_key_length() const
-    {
-        return 0;
-    }
-
-    enum class Read : bool { Eof, Ok };
+    enum class [[nodiscard]] Read : bool { Eof, Ok };
 
     /// recv_boom read len bytes into buffer or throw an Error
     /// if EOF is encountered at that point it's also an error and
     /// it throws Error(ERR_TRANSPORT_NO_MORE_DATA)
     void recv_boom(byte_ptr buffer, size_t len)
     {
-        if (Read::Eof == this->atomic_read(buffer, len)){
+        if (Read::Eof == this->atomic_read(buffer, len)) {
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        }
+    }
+
+    void recv_boom(byte_array buffer)
+    {
+        if (Read::Eof == this->atomic_read(buffer.to_u8p(), buffer.size())) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
     }
@@ -157,19 +159,22 @@ private:
 
     /// Atomic read read exactly the amount of data requested or return an error
     /// @see atomic_read
-    virtual Read do_atomic_read(uint8_t * buffer, size_t len) {
+    virtual Read do_atomic_read(uint8_t * buffer, size_t len)
+    {
         (void)buffer;
         (void)len;
         throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
     }
 
-    virtual size_t do_partial_read(uint8_t * buffer, size_t len) {
+    virtual size_t do_partial_read(uint8_t * buffer, size_t len)
+    {
         (void)buffer;
         (void)len;
         throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
     }
 
-    virtual void do_send(const uint8_t * buffer, size_t len) {
+    virtual void do_send(const uint8_t * buffer, size_t len)
+    {
         (void)buffer;
         (void)len;
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND);
@@ -219,6 +224,7 @@ struct InTransport
     {}
 
     void recv_boom(byte_ptr buffer, size_t len) { this->t.recv_boom(buffer, len); }
+    void recv_boom(byte_array buffer) { this->t.recv_boom(buffer); }
 
     REDEMPTION_CXX_NODISCARD
     Transport::Read atomic_read(byte_ptr buffer, size_t len) { return this->t.atomic_read(buffer, len); }
@@ -243,8 +249,7 @@ struct InTransport
     void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list)
     { this->t.enable_server_tls(certificate_password, ssl_cipher_list); }
 
-    const uint8_t * get_public_key() const { return this->t.get_public_key(); }
-    size_t get_public_key_length() const { return this->t.get_public_key_length(); }
+    array_view_const_u8 get_public_key() const { return this->t.get_public_key(); }
 
     void seek(int64_t offset, int whence) { this->t.seek(offset, whence); }
     bool disconnect() { return this->t.disconnect(); }
@@ -267,6 +272,7 @@ struct OutTransport
     {}
 
     void send(cbyte_ptr buffer, size_t len) { this->t.send(buffer, len); }
+    void send(cbyte_array buffer) { this->t.send(buffer); }
 
     uint32_t get_seqno() const { return this->t.get_seqno(); }
 
@@ -285,8 +291,7 @@ struct OutTransport
     void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list)
     { this->t.enable_server_tls(certificate_password, ssl_cipher_list); }
 
-    const uint8_t * get_public_key() const { return this->t.get_public_key(); }
-    size_t get_public_key_length() const { return this->t.get_public_key_length(); }
+    array_view_const_u8 get_public_key() const { return this->t.get_public_key(); }
 
     void seek(int64_t offset, int whence) { this->t.seek(offset, whence); }
     bool disconnect() { return this->t.disconnect(); }

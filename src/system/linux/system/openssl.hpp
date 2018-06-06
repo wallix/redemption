@@ -101,14 +101,9 @@ public:
         return SSL_pending(this->allocated_ssl);
     }
 
-    uint8_t const * get_public_key() const noexcept
+    array_view_const_u8 get_public_key() const noexcept
     {
-        return this->public_key.get();
-    }
-
-    std::size_t get_public_key_length() const noexcept
-    {
-        return this->public_key_length;
+        return {this->public_key.get(), this->public_key_length};
     }
 
     static inline char* crypto_print_name(X509_NAME* name)
@@ -218,7 +213,7 @@ public:
                     error_msg = "Unknown error";
                     break;
             }
-            print_error("Unknown error", error_message);
+            print_error(error_msg, error_message);
             return Transport::TlsResult::Fail;
         }
 

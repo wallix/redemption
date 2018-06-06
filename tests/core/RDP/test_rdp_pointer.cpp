@@ -28,6 +28,7 @@
 #include "utils/drawable.hpp"
 #include "utils/png.hpp"
 #include "core/RDP/rdp_pointer.hpp"
+#include "test_only/fake_graphic.hpp"
 
 RED_AUTO_TEST_CASE(TestDataSize)
 {
@@ -572,7 +573,7 @@ RED_AUTO_TEST_CASE(TestPointerVNC_BW)
     Drawable gd(width, height);
     Bitmap bmp(bmp_bpp, source_bpp, nullptr, width, height, expected_data, sizeof(expected_data), false);
     gd.mem_blt(screen_rect, bmp, 0, 0);
-    dump_png24("./test_pointer_arrow.png", gd);
+    // dump_png24("./test_pointer_arrow.png", gd);
 }
 
 
@@ -719,7 +720,7 @@ RED_AUTO_TEST_CASE(TestPointerVNC_Color)
 
     Pointer vnccursor(2, CursorSize{23, 27}, Hotspot{0, 8}, vncdata, vncmask, 11, 31, 5, 63, 0, 31);
 
-    // When cursor Size is odd, then the next even width is used and mask is fixed accordingly to avoid soe annoying border cases
+    // When cursor Size is odd, then the next even width is used and mask is fixed accordingly to avoid some annoying border cases
     RED_CHECK_EQUAL(vnccursor.get_dimensions().width, 24);
     RED_CHECK_EQUAL(vnccursor.get_dimensions().height, 27);
     RED_CHECK_EQUAL(vnccursor.get_hotspot().x, 0);
@@ -750,14 +751,29 @@ RED_AUTO_TEST_CASE(TestPointerVNC_Color)
 
 RED_AUTO_TEST_CASE(TestPointerIO)
 {
+        
 
-//    uint8_t data[] = {
-//    };
+        StaticOutStream<32+108*96> stream;
+        Pointer cursor(EditPointer{});  
 
-////    InStream stream(data, sizeof(data)); 
-////    Pointer cursor(stream);
-//    
-//    Pointer p(EditPointer{});
+        uint16_t width = cursor.get_dimensions().width;
+        uint16_t height = cursor.get_dimensions().height;
+        
+        FakeGraphic drawable(24, width, height, 0);
+        auto const color_context = gdi::ColorCtx::depth24();
+        auto pixel_color = RDPColor::from(PINK);
+        Rect rect(0,0,width,height);
+        drawable.draw(RDPOpaqueRect(rect, pixel_color), rect, color_context);
+        
+        auto av_xor = cursor.get_24bits_xor_mask();
+        Bitmap bmp(24, 24, nullptr, width, height, av_xor.data(), av_xor.size(), false);
+//        drawable.mem_blt(rect, bmp, 0, 0);
+//               
+//        drawable.save_to_png("./cursor.png");
+
+//        cursor.emit_pointer32x32(payload);
+//        
+//        array_view_const_u8 av = {payload.get_data(), payload.get_offset()};
 
 //    StaticOutStream<8192> result;
 //    

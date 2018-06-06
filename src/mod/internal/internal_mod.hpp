@@ -36,8 +36,9 @@ protected:
     WidgetScreen screen;
 
 public:
-    InternalMod(FrontAPI & front, uint16_t front_width, uint16_t front_height, Font const & font,
-                Theme const & theme, bool dont_resize);
+    InternalMod(
+        FrontAPI & front, uint16_t front_width, uint16_t front_height,
+        Font const & font, Theme const & theme);
 
     Font const & font() const
     {
@@ -48,9 +49,6 @@ public:
     {
         return this->screen.theme;
     }
-
-    ~InternalMod() override
-    {}
 
     Rect get_screen_rect() const
     {

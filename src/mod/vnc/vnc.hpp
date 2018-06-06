@@ -38,18 +38,16 @@ h
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 #include "core/report_message_api.hpp"
+#include "core/session_reactor.hpp"
 #include "keyboard/keymapSym.hpp"
 #include "main/version.hpp"
 #include "mod/internal/client_execute.hpp"
-#include "mod/internal/internal_mod.hpp"
-#include "mod/internal/widget/flat_vnc_authentification.hpp"
-#include "mod/internal/widget/notify_api.hpp"
+#include "mod/mod_api.hpp"
 #include "utils/diffiehellman.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/d3des.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/log.hpp"
-#include "utils/sugar/make_unique.hpp"
 #include "utils/sugar/update_lock.hpp"
 #include "utils/sugar/strutils.hpp"
 #include "utils/utf.hpp"
@@ -77,6 +75,8 @@ class mod_vnc : public mod_api
     char mod_name[256];
     char username[256];
     char password[256];
+
+    FrontAPI& front;
 
 public:
     struct Mouse {
@@ -159,10 +159,8 @@ private:
     bool client_use_long_format_names = false;
     bool server_use_long_format_names = true;
 
-    enum {
-        ASK_PASSWORD,
+    enum VncState {
         DO_INITIAL_CLEAR_SCREEN,
-        RETRY_CONNECTION,
         UP_AND_RUNNING,
         WAIT_SECURITY_TYPES,
         WAIT_SECURITY_TYPES_LEVEL,
@@ -183,10 +181,9 @@ public:
     };
 
 private:
-    FrontAPI& front;
     std::string encodings;
 
-    int state;
+    VncState state;
 
     bool left_ctrl_pressed = false;
 
@@ -204,24 +201,23 @@ private:
     ClientExecute* client_execute = nullptr;
     Zdecompressor<> zd;
 
+    SessionReactor& session_reactor;
+    SessionReactor::GraphicFdPtr fd_event;
+    SessionReactor::GraphicEventPtr wait_client_up_and_running_event;
+
 public:
     mod_vnc( Transport & t
+           , SessionReactor& session_reactor
            , const char * username
            , const char * password
            , FrontAPI & front
            , uint16_t front_width
            , uint16_t front_height
-           , Font const & font
-           , const char * label_text_message
-           , const char * label_text_password
-           , Theme const & theme
            , int keylayout
            , int key_flags
            , bool clipboard_up
            , bool clipboard_down
            , const char * encodings
-           , bool allow_authentification_retries // This field is deprecated and should be removed
-           , bool /*TODO is_socket_transport*/
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
            , ReportMessageApi & report_message
@@ -232,6 +228,7 @@ public:
     : mod_name{0}
     , username{0}
     , password{0}
+    , front(front)
     , t(t)
     , width(front_width)
     , height(front_height)
@@ -242,7 +239,6 @@ public:
     , to_vnc_clipboard_data_size(0)
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)
-    , front(front)
     , encodings(encodings)
     , state(WAIT_SECURITY_TYPES)
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
@@ -251,6 +247,7 @@ public:
     , server_is_apple(server_is_apple)
     , keylayout(keylayout)
     , client_execute(client_execute)
+    , session_reactor(session_reactor)
     , frame_buffer_update_ctx(this->zd, verbose)
     , clipboard_data_ctx(verbose)
     {
@@ -275,12 +272,24 @@ public:
         std::snprintf(this->username, sizeof(this->username), "%s", username);
         std::snprintf(this->password, sizeof(this->password), "%s", password);
 
+        this->fd_event = session_reactor
+        .create_graphic_fd_event(this->t.get_fd())
+        .set_timeout(std::chrono::milliseconds(0))
+        .on_exit(jln::propagate_exit())
+        .on_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
+            this->draw_event(ctx.get_current_time().tv_sec, gd);
+            return ctx.need_more_data();
+        })
+        .on_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi& gd){
+            gdi_clear_screen(gd, this->get_dim());
+            // rearmed by clipboard
+            return ctx.disable_timeout()
+            .replace_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi&){
+                this->check_timeout();
+                return ctx.disable_timeout().ready();
+            });
+        });
     } // Constructor
-
-    ~mod_vnc() override {
-    }
-
-    int get_fd() const override { return this->t.get_fd(); }
 
     template<std::size_t MaxLen>
     class MessageCtx
@@ -792,11 +801,10 @@ public:
 
         this->state = UP_AND_RUNNING;
         this->front.can_be_start_capture();
-        
+
         this->update_screen(screen_rect, 1);
         this->lib_open_clip_channel();
 
-        this->event.reset_trigger_time();
         if (bool(this->verbose & VNCVerbose::connection)) {
             LOG(LOG_INFO, "VNC screen cleaning ok\n");
         }
@@ -868,7 +876,7 @@ public:
     }
 
     // TODO It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?
-    void rdp_input_mouse( int device_flags, int x, int y, Keymap2 * keymap ) override {
+    void rdp_input_mouse( int device_flags, int x, int y, Keymap2 * /*keymap*/ ) override {
         if (this->state != UP_AND_RUNNING) {
             return;
         }
@@ -893,14 +901,9 @@ public:
         }
     } // rdp_input_mouse
 
-    //==============================================================================================================
-    void rdp_input_scancode( long param1
-                                   , long param2
-                                   , long device_flags
-                                   , long param4
-                                   , Keymap2 * keymap
-                                   ) override {
-    //==============================================================================================================
+    void rdp_input_scancode(
+        long param1, long /*param2*/, long device_flags, long /*param4*/, Keymap2 * /*keymap*/
+    ) override {
         if (this->state != UP_AND_RUNNING) {
             return;
         }
@@ -926,7 +929,6 @@ public:
     void rdp_input_unicode(uint16_t /*unicode*/, uint16_t /*flag*/) override {
         LOG(LOG_WARNING, "mod_vnc::rdp_input_unicode: Unicode Keyboard Event is not yet supported");
     }
-
 
     void keyMapSym_event(int device_flags, long param1, uint8_t downflag) {
         this->keymapSym.event(device_flags, param1);
@@ -964,7 +966,6 @@ public:
         stream.out_clear_bytes(2);
         stream.out_uint32_be(key);
         this->t.send(stream.get_data(), stream.get_offset());
-        this->event.set_trigger_time(1000);
     }
 
     void apple_keyboard_translation(int device_flags, long param1, uint8_t downflag) {
@@ -1208,8 +1209,6 @@ protected:
             stream.out_copy_bytes(str, str_len);    // text
 
             this->t.send(stream.get_data(), stream.get_offset());
-
-            this->event.set_trigger_time(1000);
         };
 
         if (this->state == UP_AND_RUNNING) {
@@ -1273,13 +1272,9 @@ protected:
     }
 
 public:
-    //==============================================================================================================
-    void rdp_input_synchronize( uint32_t time
-                                      , uint16_t device_flags
-                                      , int16_t param1
-                                      , int16_t param2
-                                      ) override {
-    //==============================================================================================================
+    void rdp_input_synchronize(
+        uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2
+    ) override {
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG( LOG_INFO
                , "KeymapSym::synchronize(time=%u, device_flags=%08x, param1=%04x, param1=%04x"
@@ -1549,17 +1544,11 @@ public:
             LOG(LOG_INFO, "vnc::draw_event");
         }
 
-        if (AsynchronousGraphicTask::none != this->asynchronous_graphic_task) {
-            this->perform_asynchronous_graphic_task(drawable);
-            return;
-        }
-
-        if (!this->event.is_waked_up_by_time()) {
-            this->server_data_buf.read_from(this->t);
-        }
+        this->server_data_buf.read_from(this->t);
 
         while (this->draw_event_impl(drawable)) {
-	}
+        }
+
         if (bool(this->verbose & VNCVerbose::draw_event)) {
             LOG(LOG_INFO, "Remaining in buffer : %u", this->server_data_buf.remaining());
         }
@@ -1576,56 +1565,28 @@ private:
             this->initial_clear_screen(drawable);
             return false;
 
-        case RETRY_CONNECTION:
-            if (bool(this->verbose & VNCVerbose::connection)) {
-                LOG(LOG_INFO, "state=RETRY_CONNECTION");
-            }
-            try
-            {
-                if (!this->t.connect()) {
-                    LOG(LOG_ERR, "VNC connection error");
-                    throw Error(ERR_VNC_CONNECTION_ERROR);
-                }
-            }
-            catch (Error const &)
-            {
-                throw Error(ERR_VNC_CONNECTION_ERROR);
-            }
-
-            this->state = WAIT_SECURITY_TYPES;
-            return true;
-
         case UP_AND_RUNNING:
             if (bool(this->verbose & VNCVerbose::draw_event)) {
                 LOG(LOG_INFO, "state=UP_AND_RUNNING");
             }
 
-            if (!this->event.is_waked_up_by_time()) {
-                try {
-                    while (this->up_and_running_ctx.run(this->server_data_buf, drawable, *this)) {
-                        this->up_and_running_ctx.restart();
-                    }
-                    this->update_screen(Rect(0, 0, this->width, this->height), 1);
-                    return false;
+            try {
+                while (this->up_and_running_ctx.run(this->server_data_buf, drawable, *this)) {
+                    this->up_and_running_ctx.restart();
                 }
-                catch (const Error & e) {
-                    LOG(LOG_ERR, "VNC Stopped [reason id=%u]", e.id);
-                    this->event.signal = BACK_EVENT_NEXT;
-                    this->front.must_be_stop_capture();
-                }
-                catch (...) {
-                    LOG(LOG_ERR, "unexpected exception raised in VNC");
-                    this->event.signal = BACK_EVENT_NEXT;
-                    this->front.must_be_stop_capture();
-                }
-
-                if (this->event.signal != BACK_EVENT_NEXT) {
-                    this->event.set_trigger_time(1000);
-                }
-            }
-            else {
                 this->update_screen(Rect(0, 0, this->width, this->height), 1);
             }
+            catch (const Error & e) {
+                LOG(LOG_ERR, "VNC Stopped: %s", e.errmsg());
+                this->session_reactor.set_event_next(BACK_EVENT_NEXT);
+                this->front.must_be_stop_capture();
+            }
+            catch (...) {
+                LOG(LOG_ERR, "unexpected exception raised in VNC");
+                this->session_reactor.set_event_next(BACK_EVENT_NEXT);
+                this->front.must_be_stop_capture();
+            }
+
             return false;
 
         case WAIT_SECURITY_TYPES:
@@ -1642,7 +1603,7 @@ private:
 
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     // protocol_version_len - zero terminal
-                    LOG(LOG_INFO, "Server Protocol Version=%.*s\n",
+                    LOG(LOG_INFO, "Server Protocol Version=%.*s",
                         int(protocol_version_len-1), this->server_data_buf.av().data());
                 }
 
@@ -1665,7 +1626,7 @@ private:
 
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "security level is %d "
-                        "(1 = none, 2 = standard, -6 = mslogon)\n",
+                        "(1 = none, 2 = standard, -6 = mslogon)",
                         security_level);
                 }
 
@@ -1733,7 +1694,7 @@ private:
                     else {
                         LOG(LOG_INFO, "vnc password failed. Reason: %.*s",
                             int(bytes.size()), bytes.to_charp());
-                            throw Error(ERR_VNC_CONNECTION_ERROR);
+                        throw Error(ERR_VNC_CONNECTION_ERROR);
                     }
                 })) {
                     return false;
@@ -1896,7 +1857,7 @@ private:
                     "\x05" // green shift     : 1 bytes =  5
                     "\x00" // blue shift      : 1 bytes =  0
                     "\0\0\0"; // padding      : 3 bytes
-                    
+
                 stream.out_copy_bytes(pixel_format, 16);
                 this->t.send(stream.get_data(), stream.get_offset());
 
@@ -1978,14 +1939,14 @@ private:
                         default:
                         break;
                         }
-                    }                    
+                    }
                 }
                 else {
                     support_zrle_encoding          = true;
                     support_hextile_encoding       = true;
                     support_rre_encoding           = true;
                 }
-              
+
                 uint16_t number_of_encodings =  support_zrle_encoding
                                              +  support_hextile_encoding
                                              +  support_raw_encoding
@@ -2034,7 +1995,6 @@ private:
                 }
                 // no resizing needed
                 this->state = DO_INITIAL_CLEAR_SCREEN;
-                this->event.set_trigger_time(wait_obj::NOW);
                 break;
             case FrontAPI::ResizeResult::remoteapp:
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
@@ -2051,7 +2011,6 @@ private:
                 }
                 // no resizing needed
                 this->state = DO_INITIAL_CLEAR_SCREEN;
-                this->event.set_trigger_time(wait_obj::NOW);
                 break;
             case FrontAPI::ResizeResult::done:
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
@@ -2059,7 +2018,6 @@ private:
                 }
                 // resizing done
                 this->state = WAIT_CLIENT_UP_AND_RUNNING;
-                this->event.set_trigger_time(wait_obj::NOW);
                 break;
             case FrontAPI::ResizeResult::fail:
                 // resizing failed
@@ -2074,7 +2032,7 @@ private:
             break;
 
         default:
-            LOG(LOG_ERR, "Unknown state=%d", this->state);
+            LOG(LOG_ERR, "Unknown state=%d", static_cast<int>(this->state));
             throw Error(ERR_VNC);
         }
 
@@ -2084,41 +2042,38 @@ private:
 private:
     void check_timeout()
     {
-        if (this->event.is_waked_up_by_time()) {
-            this->event.reset_trigger_time();
-
-            if (this->clipboard_requesting_for_data_is_delayed) {
-                //const uint64_t usnow = ustime();
-                //const uint64_t timeval_diff = usnow - this->clipboard_last_client_data_timestamp;
-                //LOG(LOG_INFO,
-                //    "usnow=%llu clipboard_last_client_data_timestamp=%llu timeval_diff=%llu",
-                //    usnow, this->clipboard_last_client_data_timestamp, timeval_diff);
-                if (bool(this->verbose & VNCVerbose::basic_trace)) {
-                    LOG(LOG_INFO,
-                        "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%u) (time)",
-                        RDPECLIP::CB_FORMAT_DATA_REQUEST);
-                }
-
-                // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_TEXT or CF_UNICODETEXT)
-                // 04 00 00 00 04 00 00 00 0? 00 00 00
-                // 00 00 00 00
-                RDPECLIP::FormatDataRequestPDU format_data_request_pdu(this->clipboard_requested_format_id);
-                StaticOutStream<256>           out_s;
-
-                format_data_request_pdu.emit(out_s);
-
-                size_t length     = out_s.get_offset();
-                size_t chunk_size = length;
-
-                this->clipboard_requesting_for_data_is_delayed = false;
-                this->send_to_front_channel( channel_names::cliprdr
-                                           , out_s.get_data()
-                                           , length
-                                           , chunk_size
-                                           , CHANNELS::CHANNEL_FLAG_FIRST
-                                           | CHANNELS::CHANNEL_FLAG_LAST
-                                           );
+        if (this->clipboard_requesting_for_data_is_delayed) {
+            //const uint64_t usnow = ustime();
+            //const uint64_t timeval_diff = usnow - this->clipboard_last_client_data_timestamp;
+            //LOG(LOG_INFO,
+            //    "usnow=%llu clipboard_last_client_data_timestamp=%llu timeval_diff=%llu",
+            //    usnow, this->clipboard_last_client_data_timestamp, timeval_diff);
+            if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                LOG(LOG_INFO,
+                    "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%u) (time)",
+                    RDPECLIP::CB_FORMAT_DATA_REQUEST);
             }
+
+            // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_TEXT or CF_UNICODETEXT)
+            // 04 00 00 00 04 00 00 00 0? 00 00 00
+            // 00 00 00 00
+            RDPECLIP::FormatDataRequestPDU format_data_request_pdu(this->clipboard_requested_format_id);
+            StaticOutStream<256>           out_s;
+
+            format_data_request_pdu.emit(out_s);
+
+            size_t length     = out_s.get_offset();
+            size_t chunk_size = length;
+
+            this->clipboard_requesting_for_data_is_delayed = false;
+            this->fd_event->disable_timeout();
+            this->send_to_front_channel( channel_names::cliprdr
+                                       , out_s.get_data()
+                                       , length
+                                       , chunk_size
+                                       , CHANNELS::CHANNEL_FLAG_FIRST
+                                       | CHANNELS::CHANNEL_FLAG_LAST
+                                       );
         }
     }
 
@@ -2282,7 +2237,7 @@ private:
                         break;
                         }
                         buf.advance(sz);
-                        // Note: it is important to immediately call State::Data as in some cases there won't be 
+                        // Note: it is important to immediately call State::Data as in some cases there won't be
                         // any trailing data to expect.
                         this->last = VNC::Encoder::EncoderState::Ready;
                         r = Result::ok(State::Data);
@@ -2748,6 +2703,7 @@ private:
 
             // Can stop RDP to VNC clipboard infinite loop.
             this->clipboard_requesting_for_data_is_delayed = false;
+            this->fd_event->disable_timeout();
         }
         else {
             LOG(LOG_WARNING, "mod_vnc::lib_clip_data: Clipboard Channel Redirection unavailable");
@@ -2776,7 +2732,7 @@ private:
         InStream & chunk,
         size_t length,
         uint32_t flags
-    ) override 
+    ) override
     {
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::send_to_mod_channel");
@@ -2939,6 +2895,7 @@ private:
                         chunk_size = length;
 
                         this->clipboard_requesting_for_data_is_delayed = false;
+                        this->fd_event->disable_timeout();
 
                         this->send_to_front_channel( channel_names::cliprdr
                                                    , out_s.get_data()
@@ -2955,9 +2912,12 @@ private:
                                     "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%u) (delayed)",
                                     RDPECLIP::CB_FORMAT_DATA_REQUEST);
                             }
-                            this->event.set_trigger_time(MINIMUM_TIMEVAL - timeval_diff);
-
                             this->clipboard_requesting_for_data_is_delayed = true;
+                            // arms timeout
+                            this->fd_event->enable_timeout();
+                            this->fd_event->set_timeout(
+                                std::chrono::duration_cast<std::chrono::milliseconds>(
+                                    MINIMUM_TIMEVAL - timeval_diff));
                         }
                         else if (this->bogus_clipboard_infinite_loop
                             != VncBogusClipboardInfiniteLoop::duplicated
@@ -3334,7 +3294,11 @@ public:
                 LOG(LOG_INFO, "Client up and running");
             }
             this->state = DO_INITIAL_CLEAR_SCREEN;
-            this->event.set_trigger_time(wait_obj::NOW);
+            this->wait_client_up_and_running_event = this->session_reactor.create_graphic_event()
+            .on_action([this](auto ctx, gdi::GraphicApi & drawable){
+                this->initial_clear_screen(drawable);
+                return ctx.terminate();
+            });
         }
     }
 
@@ -3385,9 +3349,5 @@ public:
 
     Dimension get_dim() const override
     { return Dimension(this->width, this->height); }
-
-    void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
-        mod_api::get_event_handlers(out_event_handlers);
-    }
 };
 

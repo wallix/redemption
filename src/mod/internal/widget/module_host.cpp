@@ -48,11 +48,17 @@
 
 
 WidgetModuleHost::ModuleHolder::ModuleHolder(
-    WidgetModuleHost& host, std::unique_ptr<mod_api> managed_mod)
+    WidgetModuleHost& host, std::unique_ptr<mod_api>&& managed_mod)
 : host(host)
 , managed_mod(std::move(managed_mod))
 {
     assert(this->managed_mod);
+}
+
+gdi::GraphicApi & WidgetModuleHost::proxy_gd(gdi::GraphicApi& gd)
+{
+    this->drawable_ptr = &gd;
+    return *this;
 }
 
 // Callback
@@ -61,87 +67,38 @@ void WidgetModuleHost::ModuleHolder::send_to_mod_channel(
     InStream& chunk, size_t length,
     uint32_t flags)
 {
-    if (this->managed_mod)
-    {
-        return this->managed_mod->send_to_mod_channel(
-            front_channel_name,
-            chunk,
-            length,
-            flags
-        );
-    }
+    this->managed_mod->send_to_mod_channel(
+        front_channel_name,
+        chunk,
+        length,
+        flags
+    );
 }
 
 void WidgetModuleHost::ModuleHolder::send_auth_channel_data(const char * string_data)
 {
-    if (this->managed_mod)
-    {
-        this->managed_mod->send_auth_channel_data(string_data);
-    }
+    this->managed_mod->send_auth_channel_data(string_data);
 }
 
 // mod_api
 
 void WidgetModuleHost::ModuleHolder::draw_event(time_t now, gdi::GraphicApi& drawable)
 {
-    if (this->managed_mod)
-    {
-        this->host.drawable_ptr = &drawable;
+    this->host.drawable_ptr = &drawable;
 
-        this->managed_mod->draw_event(now, this->host);
+    this->managed_mod->draw_event(now, this->host);
 
-        this->host.drawable_ptr = &this->host.drawable_ref;
-    }
-}
-
-wait_obj& WidgetModuleHost::ModuleHolder::get_event()
-{
-    if (this->managed_mod)
-    {
-        return this->managed_mod->get_event();
-    }
-
-    return mod_api::get_event();
-}
-
-int WidgetModuleHost::ModuleHolder::get_fd() const
-{
-    if (this->managed_mod)
-    {
-        return this->managed_mod->get_fd();
-    }
-
-    return INVALID_SOCKET;
-}
-
-void WidgetModuleHost::ModuleHolder::get_event_handlers(
-    std::vector<EventHandler>& out_event_handlers)
-
-{
-    if (this->managed_mod)
-    {
-        this->managed_mod->get_event_handlers(out_event_handlers);
-    }
+    this->host.drawable_ptr = &this->host.drawable_ref;
 }
 
 bool WidgetModuleHost::ModuleHolder::is_up_and_running()
 {
-    if (this->managed_mod)
-    {
-        return this->managed_mod->is_up_and_running();
-    }
-
-    return mod_api::is_up_and_running();
+    return this->managed_mod->is_up_and_running();
 }
 
 bool WidgetModuleHost::ModuleHolder::is_auto_reconnectable()
 {
-    if (this->managed_mod)
-    {
-        return this->managed_mod->is_auto_reconnectable();
-    }
-
-    return false;
+    return this->managed_mod->is_auto_reconnectable();
 }
 
 void WidgetModuleHost::ModuleHolder::send_to_front_channel(
@@ -149,76 +106,49 @@ void WidgetModuleHost::ModuleHolder::send_to_front_channel(
     const uint8_t* data, size_t length,
     size_t chunk_size, int flags)
 {
-    if (this->managed_mod)
-    {
-        this->managed_mod->send_to_front_channel(mod_channel_name,
-            data, length, chunk_size, flags);
-    }
+    this->managed_mod->send_to_front_channel(mod_channel_name,
+        data, length, chunk_size, flags);
 }
 
 // RdpInput
 
 void WidgetModuleHost::ModuleHolder::rdp_input_invalidate(Rect r)
 {
-    if (this->managed_mod)
-    {
-        this->managed_mod->rdp_input_invalidate(r);
-    }
+    this->managed_mod->rdp_input_invalidate(r);
 }
 
 void WidgetModuleHost::ModuleHolder::rdp_input_mouse(
     int device_flags, int x, int y, Keymap2* keymap)
 {
-    if (this->managed_mod)
-    {
-        this->managed_mod->rdp_input_mouse(device_flags, x, y,
-            keymap);
-    }
+    this->managed_mod->rdp_input_mouse(device_flags, x, y, keymap);
 }
 
 void WidgetModuleHost::ModuleHolder::rdp_input_scancode(
     long param1, long param2, long param3, long param4, Keymap2* keymap)
 {
-    if (this->managed_mod)
-    {
-        this->managed_mod->rdp_input_scancode(param1, param2, param3, param4, keymap);
-    }
+    this->managed_mod->rdp_input_scancode(param1, param2, param3, param4, keymap);
 }
 
 void WidgetModuleHost::ModuleHolder::rdp_input_synchronize(
     uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
 {
-    if (this->managed_mod)
-    {
-        this->managed_mod->rdp_input_synchronize(time, device_flags,
-            param1, param2);
-    }
+    this->managed_mod->rdp_input_synchronize(time, device_flags,
+        param1, param2);
 }
 
 void WidgetModuleHost::ModuleHolder::rdp_input_up_and_running()
 {
-    if (this->managed_mod)
-    {
-        this->managed_mod->rdp_input_up_and_running();
-    }
+    this->managed_mod->rdp_input_up_and_running();
 }
 
 void WidgetModuleHost::ModuleHolder::refresh(Rect r)
 {
-    if (this->managed_mod)
-    {
-        this->managed_mod->refresh(r);
-    }
+    this->managed_mod->refresh(r);
 }
 
 Dimension WidgetModuleHost::ModuleHolder::get_dim() const
 {
-    if (this->managed_mod)
-    {
-        return this->managed_mod->get_dim();
-    }
-
-    return mod_api::get_dim();
+    return this->managed_mod->get_dim();
 }
 
 
@@ -397,7 +327,7 @@ void WidgetModuleHost::set_pointer(Pointer const & pointer)
 WidgetModuleHost::WidgetModuleHost(
     gdi::GraphicApi& drawable, Widget& parent,
     NotifyApi* notifier,
-    std::unique_ptr<mod_api> managed_mod, Font const & font,
+    std::unique_ptr<mod_api>&& managed_mod, Font const & font,
     const GCC::UserData::CSMonitor& cs_monitor,
     uint16_t front_width, uint16_t front_height,
     int group_id)

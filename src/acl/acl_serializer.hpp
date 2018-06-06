@@ -33,6 +33,7 @@
 #include "configs/config.hpp"
 #include "core/authid.hpp"
 #include "core/date_dir_from_filename.hpp"
+#include "core/set_server_redirection_target.hpp"
 #include "transport/crypto_transport.hpp"
 #include "transport/transport.hpp"
 #include "utils/get_printable_password.hpp"
@@ -397,7 +398,6 @@ public:
     {
         auto& log_path = this->ini.get<cfg::session_log::log_path>();
         DateDirFromFilename d(log_path);
-        size_t base_len = 0;
 
         if (!d.has_date()) {
             LOG(LOG_WARNING, "AclSerializer::start_session_log: failed to extract date");
@@ -428,11 +428,10 @@ public:
         AuthApi & authentifier, ReportMessageApi & report_message, MMApi & mm,
         time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity
     ) {
-        //LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u",
-        //    (unsigned)now, static_cast<unsigned>(signal));
+        // LOG(LOG_DEBUG, "================> ACL check: now=%u, signal=%u, front_signal=%u",
+        //  static_cast<unsigned>(now), static_cast<unsigned>(signal), static_cast<unsigned>(front_signal));
         if (signal == BACK_EVENT_STOP) {
             // here, mm.last_module should be false only when we are in login box
-            mm.mod->get_event().reset_trigger_time();
             return false;
         }
 
@@ -492,6 +491,9 @@ public:
                 this->remote_answer = false;
                 this->send_acl_data();
             }
+            if (signal == BACK_EVENT_REFRESH) {
+                signal = BACK_EVENT_NONE;
+            }
         }
         else if (this->remote_answer
         || (signal == BACK_EVENT_RETRY_CURRENT)
@@ -501,9 +503,7 @@ public:
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
                 signal = BACK_EVENT_NONE;
                 // TODO signal management (refresh/next) should go to ModuleManager, it's basically the same behavior. It could be implemented by closing module then opening another one of the same kind
-                mm.mod->refresh_context();
-                mm.mod->get_event().signal = BACK_EVENT_NONE;
-                mm.mod->get_event().set_trigger_time(wait_obj::NOW);
+                //mm.get_mod()->refresh_context();
             }
             else if ((signal == BACK_EVENT_NEXT)
                     || (signal == BACK_EVENT_RETRY_CURRENT)
@@ -537,8 +537,8 @@ public:
                 if (next_state == MODULE_INTERNAL_CLOSE_BACK) {
                     this->keepalive.stop();
                 }
-                if (mm.mod) {
-                    mm.mod->disconnect(now);
+                if (mm.get_mod()) {
+                    mm.get_mod()->disconnect(now);
                 }
                 mm.remove_mod();
                 try {
@@ -561,26 +561,7 @@ public:
                     }
                     else if ((e.id == ERR_RDP_SERVER_REDIR) &&
                              this->ini.get<cfg::mod_rdp::server_redirection_support>()) {
-                        // SET new target in ini
-                        const char * host = char_ptr_cast(this->ini.get<cfg::mod_rdp::redir_info>().host);
-                        const char * password = char_ptr_cast(this->ini.get<cfg::mod_rdp::redir_info>().password);
-                        const char * username = char_ptr_cast(this->ini.get<cfg::mod_rdp::redir_info>().username);
-                        const char * change_user = "";
-                        if (this->ini.get<cfg::mod_rdp::redir_info>().dont_store_username
-                        && (username[0] != 0)) {
-                            LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
-                            this->ini.set_acl<cfg::globals::target_user>(username);
-                            change_user = username;
-                        }
-                        if (password[0] != 0) {
-                            LOG(LOG_INFO, "SrvRedir: Change target password");
-                            this->ini.set_acl<cfg::context::target_password>(password);
-                        }
-                        LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
-                        this->ini.set_acl<cfg::context::target_host>(host);
-                        char message[768] = {};
-                        sprintf(message, "%s@%s", change_user, host);
-                        this->report("SERVER_REDIRECTION", message);
+                        set_server_redirection_target(this->ini, *this);
                         this->remote_answer = true;
                         signal = BACK_EVENT_NEXT;
                         return true;
@@ -658,7 +639,7 @@ public:
             // Get sesman answer to AUTHCHANNEL_TARGET
             if (!this->ini.get<cfg::context::auth_channel_answer>().empty()) {
                 // If set, transmit to auth_channel channel
-                mm.mod->send_auth_channel_data(this->ini.get<cfg::context::auth_channel_answer>().c_str());
+                mm.get_mod()->send_auth_channel_data(this->ini.get<cfg::context::auth_channel_answer>().c_str());
                 // Erase the context variable
                 this->ini.get_ref<cfg::context::auth_channel_answer>().clear();
             }

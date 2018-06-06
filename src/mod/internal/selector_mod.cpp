@@ -50,10 +50,12 @@ namespace
 }
 
 SelectorMod::SelectorMod(
-    SelectorModVariables vars, FrontAPI & front, uint16_t width, uint16_t height,
+    SelectorModVariables vars, SessionReactor& session_reactor,
+    FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & client_execute
 )
     : LocallyIntegrableMod(
+        session_reactor,
         front, width, height, vars.get<cfg::font>(),
         client_execute, vars.get<cfg::theme>())
 
@@ -114,6 +116,16 @@ SelectorMod::SelectorMod(
     this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
     this->ask_page();
     this->selector.rdp_input_invalidate(this->selector.get_rect());
+
+    this->started_copy_past_event = session_reactor.create_graphic_event()
+    .on_action(jln::one_shot([this](gdi::GraphicApi&){
+        this->copy_paste.ready(this->front);
+    }));
+
+    this->sesman_event = session_reactor.create_sesman_event()
+    .on_action(jln::always_ready([this](Inifile&){
+        this->refresh_context();
+    }));
 }
 
 void SelectorMod::ask_page()
@@ -127,8 +139,8 @@ void SelectorMod::ask_page()
     this->vars.ask<cfg::globals::target_user>();
     this->vars.ask<cfg::globals::target_device>();
     this->vars.ask<cfg::context::selector>();
-    this->event.signal = BACK_EVENT_REFRESH;
-    this->event.set_trigger_time(wait_obj::NOW);
+
+    this->session_reactor.set_next_event(BACK_EVENT_REFRESH);
 }
 
 void SelectorMod::notify(Widget* widget, notify_event_t event)
@@ -143,10 +155,10 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
         this->vars.ask<cfg::globals::auth_user>();
         this->vars.ask<cfg::context::password>();
         this->vars.set<cfg::context::selector>(false);
-        this->event.signal = BACK_EVENT_NEXT;
-        this->event.set_trigger_time(wait_obj::NOW);
+        this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 
         this->waiting_for_next_module = true;
+        this->sesman_event.reset();
     } break;
     case NOTIFY_SUBMIT: {
         if (this->waiting_for_next_module) {
@@ -168,10 +180,10 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
             this->vars.ask<cfg::globals::target_device>();
             this->vars.ask<cfg::context::target_protocol>();
 
-            this->event.signal = BACK_EVENT_NEXT;
-            this->event.set_trigger_time(wait_obj::NOW);
+            this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 
             this->waiting_for_next_module = true;
+            this->sesman_event.reset();
         }
         else if (widget->group_id == this->selector.apply.group_id) {
             this->ask_page();
@@ -237,7 +249,6 @@ void SelectorMod::refresh_context()
 
     this->selector.current_page.rdp_input_invalidate(this->selector.current_page.get_rect());
     this->selector.number_page.rdp_input_invalidate(this->selector.number_page.get_rect());
-    this->event.reset_trigger_time();
 }
 
 void SelectorMod::refresh_device()
@@ -346,12 +357,6 @@ void SelectorMod::rdp_input_scancode(
 void SelectorMod::draw_event(time_t now, gdi::GraphicApi & gapi)
 {
     LocallyIntegrableMod::draw_event(now, gapi);
-
-    if (!this->copy_paste && this->event.is_waked_up_by_time()) {
-        this->copy_paste.ready(this->front);
-    }
-
-    this->event.reset_trigger_time();
 }
 
 void SelectorMod::send_to_mod_channel(

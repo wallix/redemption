@@ -20,30 +20,35 @@
  *
  */
 
-#include <iostream>
-#include <string>
-#include <openssl/ssl.h>
-
 #include "main/version.hpp"
 
 #include "configs/config.hpp"
-#include "front/client_front.hpp"
-
 #include "core/client_info.hpp"
-#include "transport/socket_transport.hpp"
-#include "core/wait_obj.hpp"
+#include "core/set_server_redirection_target.hpp"
+#include "front/client_front.hpp"
 #include "mod/mod_api.hpp"
-#include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/rdp.hpp"
-#include "utils/redirection_info.hpp"
-#include "utils/netutils.hpp"
-#include "utils/genrandom.hpp"
+#include "mod/rdp/rdp_params.hpp"
+#include "mod/vnc/vnc.hpp"
 #include "program_options/program_options.hpp"
+#include "transport/recorder_transport.hpp"
+#include "transport/socket_transport.hpp"
+#include "utils/cfgloader.hpp"
+#include "utils/genrandom.hpp"
+#include "utils/netutils.hpp"
+#include "utils/redirection_info.hpp"
+#include "test_only/fixed_random.hpp"
+#include "test_only/get_file_contents.hpp"
+
+#include <iostream>
+#include <string>
+#include <optional>
+
+#include <openssl/ssl.h>
 
 
 int main(int argc, char** argv)
 {
-    RedirectionInfo redir_info;
     uint64_t verbose = 0;
     std::string target_device;
     int target_port = 3389;
@@ -53,14 +58,15 @@ int main(int argc, char** argv)
     unsigned inactivity_time_ms = 1000u;
     unsigned max_time_ms = 5u * inactivity_time_ms;
     std::string screen_output;
+    std::string record_output;
 
     std::string username;
     std::string password;
-    ClientInfo client_info;
 
-    client_info.width = 800;
-    client_info.height = 600;
-    client_info.bpp = 32;
+    std::string load_balance_info;
+    std::string ini_file;
+
+    int cert_check;
 
     /* Program options */
     namespace po = program_options;
@@ -74,6 +80,17 @@ int main(int argc, char** argv)
         {'a', "inactivity-time", &inactivity_time_ms, "milliseconds inactivity before sreenshot"},
         {'m', "max-time", &max_time_ms, "maximum milliseconds before sreenshot"},
         {'s', "screen-output", &screen_output, "png screenshot path"},
+        {'r', "record-path", &record_output, "dump socket path"},
+        {'V', "vnc", "dump socket path"},
+        {'l', "lcg", "use LCGRandom and LCGTime"},
+        {'b', "load-balance-info", &load_balance_info, ""},
+        {'n', "ini", &ini_file, "load ini filename"},
+        {'c', "cert-check", &cert_check,
+            "0 = fails if certificates doesn't match or miss.\n"
+            "1 = fails if certificate doesn't match, succeed if no known certificate\n"
+            "2 = succeed if certificates exists (not checked), fails if missing.\n"
+            "3 = always succeed.\n"
+        },
         {"verbose", &verbose, "verbose"},
     });
 
@@ -82,10 +99,10 @@ int main(int argc, char** argv)
     if (options.count("help") > 0) {
         std::cout <<
             "\n"
-            "ReDemPtion Stand alone RDP Client.\n"
+            "ReDemPtion stand alone RDP Client " << VERSION << ".\n"
             "Copyright (C) Wallix 2010-2018.\n"
             "\n"
-            "Usage: rdpproxy [options]\n\n"
+            "Usage: " << argv[0] << " [options]\n\n"
             << desc << std::endl
         ;
         return 0;
@@ -96,50 +113,161 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    openlog("rdpclient", LOG_CONS | LOG_PERROR, LOG_USER);
+    bool const is_vnc = options.count("vnc");
 
-    Inifile ini;
-
-    ini.set<cfg::mod_rdp::persistent_disk_bitmap_cache>(false);
-    ini.set<cfg::mod_rdp::persist_bitmap_cache_on_disk>(false);
-    ini.set<cfg::client::persist_bitmap_cache_on_disk>(false);
-    ini.set<cfg::client::persistent_disk_bitmap_cache>(false);
-
-    SSL_library_init();
-    ClientFront front(client_info, verbose > 10);
-    ModRDPParams mod_rdp_params( username.c_str()
-                               , password.c_str()
-                               , target_device.c_str()
-                               , "0.0.0.0"   // client ip is silenced
-                               , /*front.keymap.key_flags*/ 0
-                               , ini.get<cfg::font>()
-                               , ini.get<cfg::theme>()
-                               , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
-                               , ini.get_ref<cfg::context::close_box_extra_message>()
-                               , to_verbose_flags(verbose));
-
-    if (verbose > 128) {
-        mod_rdp_params.log();
+    if (is_vnc && !options.count("port")) {
+        target_port = 5900;
     }
 
+    openlog("rdpclient", LOG_CONS | LOG_PERROR, LOG_USER);
+
     /* SocketTransport mod_trans */
+    auto sck = ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms);
+    if (!sck.is_open()) {
+        return 1;
+    }
+
+    ClientInfo client_info;
+    client_info.width = 800;
+    client_info.height = 600;
+    client_info.bpp = 24;
+    if (is_vnc) {
+        client_info.keylayout = 0x04C;
+        client_info.console_session = 0;
+        client_info.brush_cache_code = 0;
+        client_info.build = 420;
+    }
+
     SocketTransport mod_trans(
-        "RDP Server", ip_connect(target_device.c_str(), target_port, nbretry, retry_delai_ms),
-        target_device.c_str(), target_port, std::chrono::seconds(1),
-        to_verbose_flags(verbose), nullptr);
+        is_vnc ? "VNC Server" : "RDP Server", std::move(sck), target_device.c_str(),
+        target_port, std::chrono::seconds(1), to_verbose_flags(verbose), nullptr);
 
-    /* Random */
-    UdevRandom gen;
-    TimeSystem timeobj;
+    SSL_library_init();
 
-    NullAuthentifier authentifier;
+    ClientFront front(client_info, verbose);
     NullReportMessage report_message;
+    SessionReactor session_reactor;
 
-    /* mod_api */
-    mod_rdp mod( mod_trans, front, client_info, redir_info, gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
+    auto run = [&](auto create_mod){
+        std::optional<RecorderTransport> recorder_trans;
+        Transport* trans = &mod_trans;
+        if (!record_output.empty()) {
+            RecorderTransport& recorder = recorder_trans.emplace(
+                mod_trans, record_output.c_str());
+            if (ini_file.empty()) {
+                recorder.add_info({});
+            }
+            else {
+                auto contents = get_file_contents(ini_file);
+                recorder.add_info(contents);
+            }
+            for (auto cstr : make_array_view(argv+1, argv+argc)) {
+                recorder.add_info({cstr, strlen(cstr)});
+            }
+            trans = &recorder;
+        }
+        auto mod = create_mod(*trans);
+        using Ms = std::chrono::milliseconds;
+        return run_test_client(
+            is_vnc ? "VNC" : "RDP", session_reactor, mod, front,
+            Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
+    };
 
-    using Ms = std::chrono::milliseconds;
-    return run_test_client(
-        "RDP", mod_trans.sck, mod, front,
-        Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
+    if (is_vnc) {
+        return run([&](Transport& trans){
+            return mod_vnc(
+                trans
+              , session_reactor
+              , username.c_str()
+              , password.c_str()
+              , front
+              , 800
+              , 600
+              , 0x04C         /* keylayout */
+              , 0             /* key_flags */
+              , true          /* clipboard */
+              , true          /* clipboard */
+              , "16, 2, 0, 1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
+              , mod_vnc::ClipboardEncodingType::UTF8
+              , VncBogusClipboardInfiniteLoop::delayed
+              , report_message
+              , false
+              , nullptr
+              , to_verbose_flags(verbose) | VNCVerbose::connection | VNCVerbose::basic_trace);
+        }) ? 1 : 0;
+    }
+    else {
+        Inifile ini;
+        if (!ini_file.empty()) {
+            configuration_load(ini.configuration_holder(), ini_file);
+        }
+
+        ini.set<cfg::mod_rdp::server_redirection_support>(true);
+
+        ModRDPParams mod_rdp_params(
+            username.c_str()
+          , password.c_str()
+          , target_device.c_str()
+          , "0.0.0.0"   // client ip is silenced
+          , /*front.keymap.key_flags*/ 0
+          , ini.get<cfg::font>()
+          , ini.get<cfg::theme>()
+          , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
+          , ini.get_ref<cfg::context::close_box_extra_message>()
+          , to_verbose_flags(verbose));
+
+        mod_rdp_params.device_id                  = "device_id";
+        mod_rdp_params.enable_tls                 = true;
+        mod_rdp_params.enable_nla                 = true;
+        mod_rdp_params.enable_fastpath            = true;
+        mod_rdp_params.enable_mem3blt             = true;
+        mod_rdp_params.enable_new_pointer         = true;
+        mod_rdp_params.enable_glyph_cache         = true;
+        mod_rdp_params.enable_ninegrid_bitmap     = true;
+        std::string allow_channels                = "*";
+        mod_rdp_params.allow_channels             = &allow_channels;
+        mod_rdp_params.deny_channels              = nullptr;
+        mod_rdp_params.enable_rdpdr_data_analysis = false;
+        mod_rdp_params.load_balance_info          = load_balance_info.c_str();
+        mod_rdp_params.server_cert_check          = static_cast<ServerCertCheck>(cert_check);
+
+        if (verbose > 128) {
+            mod_rdp_params.log();
+        }
+
+        UdevRandom system_gen;
+        TimeSystem system_timeobj;
+        FixedRandom lcg_gen;
+        LCGTime lcg_timeobj;
+        NullAuthentifier authentifier;
+        auto& redir_info = ini.get_ref<cfg::mod_rdp::redir_info>();
+
+        bool const use_system_obj = record_output.empty() && !options.count("lcg");
+
+        error_t eid = run([&](Transport& trans){
+            using TimeObjRef = TimeObj&;
+            using RandomRef = Random&;
+            return mod_rdp(
+                trans, session_reactor, front, client_info, redir_info,
+                use_system_obj ? RandomRef(system_gen) : lcg_gen,
+                use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
+                mod_rdp_params, authentifier, report_message, ini);
+        });
+
+        if (ERR_RDP_SERVER_REDIR != eid) {
+            return eid  ? 1 : 0;
+        }
+
+        set_server_redirection_target(ini, report_message);
+
+        return run([&](Transport& trans){
+            using TimeObjRef = TimeObj&;
+            using RandomRef = Random&;
+            return mod_rdp(
+                trans, session_reactor, front, client_info, redir_info,
+                use_system_obj ? RandomRef(system_gen) : lcg_gen,
+                use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
+                mod_rdp_params, authentifier, report_message, ini);
+        }) ? 2 : 0;
+    }
 }

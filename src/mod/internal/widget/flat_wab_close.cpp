@@ -207,10 +207,10 @@ void FlatWabClose::move_size_widget(int16_t left, int16_t top, uint16_t width, u
     }
     else {
         std::string formatted_diagnostic_text;
-        gdi::MultiLineTextMetrics mltt(this->font, this->diagnostic_text.c_str(),
+        gdi::MultiLineTextMetrics mltm(this->font, this->diagnostic_text.c_str(),
             ((this->diagnostic_label.cx() > this->cx() - (x + 10)) ? this->separator.cx() : this->separator.cx() - x),
             formatted_diagnostic_text);
-        this->diagnostic_value.set_wh(mltt.width, std::max(mltt.height, int(dim.h)));
+        this->diagnostic_value.set_wh(mltm.width, std::max(mltm.height, int(dim.h)));
         this->diagnostic_value.set_text(formatted_diagnostic_text.c_str());
     }
 
@@ -271,6 +271,7 @@ BGRColor FlatWabClose::get_bg_color() const
     return this->bg_color;
 }
 
+// TODO std::chrono::seconds ?
 void FlatWabClose::refresh_timeleft(long tl)
 {
     bool seconds = true;

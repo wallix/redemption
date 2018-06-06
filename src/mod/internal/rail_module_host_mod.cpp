@@ -18,6 +18,7 @@
     Author(s): Christophe Grosjean, Meng Tan, Jonathan Poelen, Raphael Zhou
 */
 
+#include "core/session_reactor.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
 #include "mod/internal/client_execute.hpp"
 #include "configs/config.hpp"
@@ -25,22 +26,24 @@
 
 RailModuleHostMod::RailModuleHostMod(
     RailModuleHostModVariables vars,
+    SessionReactor& session_reactor,
     FrontAPI& front, uint16_t width, uint16_t height,
     Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
     ClientExecute& client_execute,
     const GCC::UserData::CSMonitor& cs_monitor,
     bool can_resize_hosted_desktop)
-: LocallyIntegrableMod(front, width, height, vars.get<cfg::font>(),
-                        client_execute, vars.get<cfg::theme>())
+: LocallyIntegrableMod(session_reactor, front, width, height, vars.get<cfg::font>(),
+                       client_execute, vars.get<cfg::theme>())
 , rail_module_host(front, widget_rect.x, widget_rect.y,
                    widget_rect.cx, widget_rect.cy,
                    this->screen, this, std::move(managed_mod),
                    vars.get<cfg::font>(), cs_monitor, width, height)
 , vars(vars)
 , can_resize_hosted_desktop(can_resize_hosted_desktop)
-, managed_mod_event_handler(*this)
 , client_execute(client_execute)
 {
+    this->screen.move_xy(widget_rect.x, widget_rect.y);
+
     this->screen.add_widget(&this->rail_module_host);
 
     this->screen.set_widget_focus(&this->rail_module_host,
@@ -49,8 +52,9 @@ RailModuleHostMod::RailModuleHostMod(
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 }
 
-RailModuleHost * RailModuleHostMod::get_module_host() {
-    return &(this->rail_module_host);
+RailModuleHost& RailModuleHostMod::get_module_host()
+{
+    return this->rail_module_host;
 }
 
 // RdpInput
@@ -104,33 +108,9 @@ void RailModuleHostMod::send_auth_channel_data(const char * string_data)
 
 void RailModuleHostMod::draw_event(time_t now, gdi::GraphicApi& gapi)
 {
-    LocallyIntegrableMod::draw_event(now, gapi);
-
-    this->event.reset_trigger_time();
-}
-
-void RailModuleHostMod::get_event_handlers(std::vector<EventHandler>& out_event_handlers)
-{
     mod_api& mod = this->rail_module_host.get_managed_mod();
 
-    mod.get_event_handlers(out_event_handlers);
-
-    out_event_handlers.emplace_back(
-        &mod.get_event(),
-        &this->managed_mod_event_handler,
-        mod.get_fd()
-    );
-
-    if (this->disconnection_reconnection_required &&
-        mod.is_auto_reconnectable()) {
-        out_event_handlers.emplace_back(
-            &this->disconnection_reconnection_event,
-            &this->disconnection_reconnection_event_handler,
-            INVALID_SOCKET
-        );
-    }
-
-    LocallyIntegrableMod::get_event_handlers(out_event_handlers);
+    return mod.draw_event(now, gapi);
 }
 
 bool RailModuleHostMod::is_up_and_running()
@@ -149,9 +129,21 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
 
     if (dim.w && dim.h && ((dim.w != width) || (dim.h != height)) &&
         this->client_execute.is_resizing_hosted_desktop_enabled()) {
-        this->disconnection_reconnection_required = true;
-
-        this->disconnection_reconnection_event.set_trigger_time(1000000);
+        if (this->disconnection_reconnection_timer) {
+            this->disconnection_reconnection_timer->set_delay(std::chrono::seconds(1));
+        }
+        else {
+            this->disconnection_reconnection_timer = this->session_reactor
+            .create_timer(std::ref(*this))
+            .set_delay(std::chrono::seconds(1))
+            .on_action([](auto ctx, RailModuleHostMod& self){
+                if (self.rail_module_host.get_managed_mod().is_auto_reconnectable()) {
+                    throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
+                }
+//                return ctx.terminate();
+                return ctx.ready();
+            });
+        }
     }
 }
 
@@ -166,4 +158,9 @@ bool RailModuleHostMod::is_resizing_hosted_desktop_allowed() const
 {
     return (vars.get<cfg::remote_program::allow_resize_hosted_desktop>() &&
         this->can_resize_hosted_desktop);
+}
+
+gdi::GraphicApi & RailModuleHostMod::proxy_gd(gdi::GraphicApi& gd)
+{
+    return this->rail_module_host.proxy_gd(gd);
 }

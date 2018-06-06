@@ -24,6 +24,7 @@
 #include "configs/config.hpp"
 #include "core/server.hpp"
 #include "core/session.hpp"
+#include "main/version.hpp"
 #include "utils/netutils.hpp"
 
 class SessionServer : public Server
@@ -54,7 +55,7 @@ public:
     {
     }
 
-    Server_status start(int incoming_sck) override
+    Server_status start(int incoming_sck, bool forkable) override
     {
         union
         {
@@ -79,7 +80,7 @@ public:
         const int source_port = ntohs(u.s4.sin_port);
         REDEMPTION_DIAGNOSTIC_POP
         /* start new process */
-        const pid_t pid = fork();
+        const pid_t pid = forkable ? fork() : 0;
         switch (pid) {
         case 0: /* child */
         // TODO: see exit status of child, we could use it to diagnose session behaviours

@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -O
 
-import glob ;
-import os ;
+import glob
+import os
 from collections import OrderedDict
 
 #project_root = '../..'
@@ -17,13 +17,13 @@ includes = (
 )
 
 disable_tests = (
-    'tests/epoll.cpp',
-    'tests/utils/test_executor.cpp',
     'tests/utils/crypto/test_ssl_mod_exp_direct.cpp',
     'src/system/linux/system/test_framework.cpp',
 )
 
 disable_srcs = (
+    'src/system/linux/system/redemption_unit_tests.cpp',
+    'src/system/linux/system/register_error_exception.cpp',
     'src/system/linux/system/test_framework.cpp',
     'src/utils/log_as_syslog.cpp',
     'src/utils/log_as_logemasm.cpp',
@@ -31,9 +31,15 @@ disable_srcs = (
     'src/utils/log_as_logtest.cpp',
 )
 
+src_deps = dict((
+    ('src/acl/module_manager.hpp', glob.glob('src/acl/module_manager/*.cpp')),
+))
+
 src_requirements = dict((
     ('src/main/rdpheadless.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
     ('src/main/scytale.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
+    ('src/main/rdp_client.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
+    ('src/main/main_client_redemption.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for fixed_random
     #('libscytale', '<library>log_print.o'),
     ('tests/includes/test_only/front/fake_front.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'),
     ('tests/includes/test_only/fake_graphic.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'),
@@ -63,12 +69,9 @@ target_pre_renames = dict((
 
 target_renames = dict((
     ('main', 'rdpproxy'),
-    ('transparent', 'rdptproxy'),
     ('do_recorder', 'redrec'),
     ('ini_checker', 'rdpinichecker'),
-    ('tanalyzer', 'rdptanalyzer'),
     ('rdp_client', 'rdpclient'),
-    ('vnc_client', 'vncclient'),
 ))
 
 #coverage_requirements = dict((
@@ -84,24 +87,25 @@ dir_nocoverage = set([
 file_nocoverage = set(glob.glob('tests/*.cpp'))
 
 sys_lib_assoc = dict((
-    ('png.h', 'png'),
-    ('krb5.h', 'krb5'),
-    ('gssapi/gssapi.h', 'gssapi_krb5'),
-    ('snappy-c.h', 'snappy'),
-    ('zlib.h', 'z'),
+    ('png.h', '<library>png'),
+    ('krb5.h', '<library>krb5'),
+    ('gssapi/gssapi.h', '<library>gssapi_krb5'),
+    ('snappy-c.h', '<library>snappy'),
+    ('zlib.h', '<library>z'),
 ))
 sys_lib_prefix = (
-    ('libavformat/', 'ffmpeg'),
-    ('openssl/', 'crypto'),
+    ('libavformat/', '<library>ffmpeg'),
+    ('openssl/', '<library>crypto'),
 )
 
 user_lib_assoc = dict((
-    ('program_options/program_options.hpp', 'program_options'),
-    ('openssl_crypto.hpp', 'crypto'),
-    ('openssl_tls.hpp', 'openssl'),
+    ('program_options/program_options.hpp', '<library>program_options'),
+    ('src/core/error.hpp', '<variant>debug:<library>dl <variant>san:<library>dl'), # Boost.stacktrace
+    ('openssl_crypto.hpp', '<library>crypto'),
+    ('openssl_tls.hpp', '<library>openssl'),
 ))
 user_lib_prefix = (
-    ('ppocr/', 'ppocr'),
+    ('ppocr/', '<library>ppocr'),
 )
 
 def get_lib(inc, lib_assoc, lib_prefix):
@@ -137,6 +141,11 @@ class File:
         self.have_coverage = False
         self.used = False #
 
+def HFile(d, f):
+    return File(d, d+'/'+f, 'H')
+
+def CFile(d, f):
+    return File(d, d+'/'+f, 'C')
 
 ###
 ### Get files
@@ -156,21 +165,26 @@ def append_file(a, root, path, type):
     path = path.replace('//', '/')
     a.append(File(root, path, type))
 
+def get_type(name):
+    if name[-4:] == '.hpp':
+        return 'H'
+    elif name[-4:] == '.cpp':
+        return 'C'
+    elif name[-2:] == '.h':
+        return 'H'
+    elif name[-2:] == '.c':
+        return 'C'
+    elif name[-3:] == '.hh':
+        return 'H'
+    elif name[-3:] == '.cc':
+        return 'C'
+
 def get_files(a, dirpath):
     for root, dirs, files in os.walk(project_root + '/' + dirpath):
         for name in files:
-            if name[-4:] == '.hpp':
-                append_file(a, root, root+'/'+name, 'H')
-            elif name[-4:] == '.cpp':
-                append_file(a, root, root+'/'+name, 'C')
-            elif name[-2:] == '.h':
-                append_file(a, root, root+'/'+name, 'H')
-            elif name[-2:] == '.c':
-                append_file(a, root, root+'/'+name, 'C')
-            elif name[-3:] == '.hh':
-                append_file(a, root, root+'/'+name, 'H')
-            elif name[-3:] == '.cc':
-                append_file(a, root, root+'/'+name, 'C')
+            type = get_type(name)
+            if type:
+                append_file(a, root, root+'/'+name, type)
 
 def start_with(str, prefix):
     return str[:len(prefix)] == prefix
@@ -208,7 +222,6 @@ get_files(files_on_tests, 'tests')
 tests = [f for f in files_on_tests \
     if f.type != 'H' \
     and not start_with(f.path, 'tests/includes/') \
-    and not start_with(f.path, 'tests/system/common/') \
     and not start_with(f.path, 'tests/system/emscripten/system/') \
     and not start_with(f.path, 'tests/web_video/') \
     and f.path != 'tests/test_meta_protocol2.cpp' \
@@ -216,17 +229,21 @@ tests = [f for f in files_on_tests \
 ]
 
 sources = [f for f in sources if f.path not in disable_srcs]
+sources += [f for f in files_on_tests \
+    if f.type == 'H' \
+    and not start_with(f.path, 'tests/includes/') \
+    and not start_with(f.path, 'tests/system/emscripten/system/') \
+    and not start_with(f.path, 'tests/web_video/')
+]
 
 extra_srcs = (
-    ('src/configs/config.hpp', File(
+    ('src/configs/config.hpp', HFile(
         'projects/redemption_configs/redemption_src',
-        'projects/redemption_configs/redemption_src/configs/config.hpp',
-        'H')
+        'configs/config.hpp')
     ),
-    ('src/configs/config.cpp', File(
+    ('src/configs/config.cpp', CFile(
         'projects/redemption_configs/redemption_src',
-        'projects/redemption_configs/redemption_src/configs/config.cpp',
-        'C')
+        'configs/config.cpp')
     ),
 )
 
@@ -274,16 +291,17 @@ def get_includes(path):
                         inc = line[1:line.rfind('"')]
                         found = False
                         for dir_name in includes:
-                            file_name = dir_name+inc
+                            file_name = os.path.normpath(dir_name+inc)
                             if file_name in all_files:
                                 user_includes.append(all_files[file_name])
                                 found = True
                                 break
                         if not found:
-                            file_name = path[0:path.rfind('/')] + '/' + inc
+                            file_name = os.path.normpath(path[0:path.rfind('/')] + '/' + inc)
                             if file_name in all_files:
                                 user_includes.append(all_files[file_name])
-                            unknown_user_includes.append(inc)
+                            else:
+                                unknown_user_includes.append(inc)
                     if len(line) and line[0] == '<':
                         system_includes.append(line[1:line.rfind('>')])
     return set(user_includes), set(system_includes), set(unknown_user_includes)
@@ -302,12 +320,13 @@ for name, f in all_files.items():
 for name, f in all_files.items():
     deps = []
     for pf in f.user_includes:
-        cpp_name = pf.path[:-4]+'.cpp'
-        if cpp_name in all_files:
-            deps.append(all_files[cpp_name])
-        cpp_name = pf.path[:-4]+'.cc'
-        if cpp_name in all_files:
-            deps.append(all_files[cpp_name])
+        if pf.path in src_deps:
+            for path in src_deps[pf.path]:
+                deps.append(all_files[path])
+        for ext in ('.cpp', '.cc'):
+            cpp_name = pf.path[:-4]+ext
+            if cpp_name in all_files:
+                deps.append(all_files[cpp_name])
     f.direct_source_deps = set(deps)
 
     deps = []
@@ -411,8 +430,8 @@ def requirement_action(f, act):
 
 def get_requirements(f):
     a = []
-    for name in f.all_lib_deps:
-        a.append('<library>'+name)
+    for dep in f.all_lib_deps:
+        a.append(dep)
     requirement_action(f, lambda r: a.append(r))
     return a
 

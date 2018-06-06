@@ -155,10 +155,8 @@ public:
     void process_server_message(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data,
         uint32_t chunk_data_length,
-        std::unique_ptr<AsynchronousTask> & out_asynchronous_task) override
+        std::unique_ptr<AsynchronousTask> & /*out_asynchronous_task*/) override
     {
-        (void)out_asynchronous_task;
-
         if (bool(this->verbose & RDPVerbose::drdynvc)) {
             LOG(LOG_INFO,
                 "DynamicChannelVirtualChannel::process_server_message: "

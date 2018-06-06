@@ -1000,45 +1000,8 @@ RED_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
     RED_CHECK_EQUAL(1, res);
 }
 
-inline void test_app_recorder_impl(char const * opt_vlc, size_t sz1, size_t sz2, size_t sz3)
-{
-    LOG(LOG_INFO, "=================== TestAppRecorder =============");
-    char const * argv[] {
-        "recorder.py",
-        "redrec",
-        "-i",
-            FIXTURES_PATH "/verifier/recorded/"
-            "toto@10.10.43.13,Administrateur@QA@cible"
-            ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
-        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
-        "-o",
-            "/tmp/recorder.1.flva",
-        "--video",
-        "--full",
-        "--video-break-interval", "500",
-        "--video-codec", "flv",
-        opt_vlc,
-    };
-    int argc = sizeof(argv)/sizeof(char*);
-
-    CoutBuf cout_buf;
-    int res = do_main(argc, argv, hmac_fn, trace_fn);
-    EVP_cleanup();
-    RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder.1.flva\".\n\n");
-    RED_CHECK_EQUAL(0, res);
-
-    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000000.flv", sz1);
-    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000001.flv", sz2);
-    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1.flv", sz3);
-}
-
 RED_AUTO_TEST_CASE(TestAppRecorder)
 {
-    test_app_recorder_impl("--disable-bogus-vlc", 13451870, 1641583, 14978053);
-}
-
-inline void test_app_recorder_impl2(char const * opt_vlc, size_t sz1, size_t sz2, size_t sz3)
-{
     LOG(LOG_INFO, "=================== TestAppRecorder =============");
     char const * argv[] {
         "recorder.py",
@@ -1054,7 +1017,7 @@ inline void test_app_recorder_impl2(char const * opt_vlc, size_t sz1, size_t sz2
         "--full",
         "--video-break-interval", "500",
         "--video-codec", "flv",
-        opt_vlc,
+        "--disable-bogus-vlc",
     };
     int argc = sizeof(argv)/sizeof(char*);
 
@@ -1064,14 +1027,41 @@ inline void test_app_recorder_impl2(char const * opt_vlc, size_t sz1, size_t sz2
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder.1.flva\".\n\n");
     RED_CHECK_EQUAL(0, res);
 
-    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000000.flv", sz1);
-    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000001.flv", sz2);
-    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1.flv", sz3);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000000.flv", 13450872);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000001.flv", 1641583);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1.flv", 14977055);
 }
 
 RED_AUTO_TEST_CASE(TestAppRecorderVlc)
 {
-    test_app_recorder_impl2("--bogus-vlc", 62515277, 7555247, 70071213);
+    LOG(LOG_INFO, "=================== TestAppRecorder =============");
+    char const * argv[] {
+        "recorder.py",
+        "redrec",
+        "-i",
+            FIXTURES_PATH "/verifier/recorded/"
+            "toto@10.10.43.13,Administrateur@QA@cible"
+            ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
+        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
+        "-o",
+            "/tmp/recorder.1.flva",
+        "--video",
+        "--full",
+        "--video-break-interval", "500",
+        "--video-codec", "flv",
+        "--bogus-vlc",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    CoutBuf cout_buf;
+    int res = do_main(argc, argv, hmac_fn, trace_fn);
+    EVP_cleanup();
+    RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder.1.flva\".\n\n");
+    RED_CHECK_EQUAL(0, res);
+
+    RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder.1-000000.flv", 62513357, 62513361);
+    RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000001.flv", 7555247);
+    RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder.1.flv", 70069293, 70069297);
 }
 
 RED_AUTO_TEST_CASE(TestAppRecorderChunk)
@@ -1101,7 +1091,7 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunk)
 
     RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder-chunk-000000.png", 26981);
     RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder-chunk-000001.png", 27536);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder-chunk-000000.mp4", 11227513, 11227499);
+    RED_CHECK_FILE_SIZE_AND_CLEAN3("/tmp/recorder-chunk-000000.mp4", 11226843, 11226814, 11226829);
     RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder-chunk-000001.mp4", 86044, 86030);
     RED_CHECK_FILE_CONTENTS("/tmp/recorder-chunk.pgs", R"js({"percentage":100,"eta":0,"videos":1})js");
     RED_CHECK_FILE_CONTENTS("/tmp/recorder-chunk.meta", "2016-02-18 18:27:01 + (break)\n");

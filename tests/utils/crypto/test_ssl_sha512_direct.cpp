@@ -5,4 +5,4 @@
 using SslSha512 = SslSha512_direct;
 using SslHMAC_Sha512 = SslHMAC_Sha512_direct;
 
-#include "../../system/common/test_ssl_sha512.cpp"
+#include "../../system/common/test_ssl_sha512.hpp"

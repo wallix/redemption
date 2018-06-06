@@ -84,7 +84,9 @@ Pour compiler avec la bibliothèque Qt5:
 
     bjam -s qt=5 client_rdp_Qt
 
+Note: Les includes de Qt peuvent être configurés avec les variables d'environnement `QT4_INCLUDE`, `QT5_INCLUDE` et `QT5_PHONON_INCLUDE` depuis le shell avec `export` ou avec `-s` de bjam.
 
+    bjam -s qt=5 -s QT4_INCLUDE=/usr/include/qt4 client_rdp_Qt
 
 ## Utilisation du client Qt RDP
 
@@ -106,10 +108,10 @@ Le client Qt RDP implémente plusieurs sous protocoles RDP passant par des canna
 
 Commandes de connexion:
 
-	-n [user_name]     renseigne le nom de l'user du compte de la cible.
-	-w [user_password] renseigne le mot de passe de l'user du compte de la cible.
+	-u [user_name]     renseigne le nom de l'user du compte de la cible.
+	-p [user_password] renseigne le mot de passe de l'user du compte de la cible.
 	-i [target_IP]     resenigne l'adresse IP de la cible.
-	-p [port]          renseigne le port de connexion à la cible.
+	-P [port]          renseigne le port de connexion à la cible.
 
 Commandes verbose:
 
@@ -227,5 +229,5 @@ Ajouter les lignes suivantes:
 
 Enfin, compiler votre client à l'aide de la commande suivante:
 
-	bjam votre_client_exe
+	bjam -s qt=$version votre_client_exe
 

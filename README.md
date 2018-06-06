@@ -21,11 +21,11 @@ To compile ReDemPtion you need the following packages:
 - libboost-test-dev (unit-test dependency)
 - libssl-dev
 - libkrb5-dev
-- libgssglue-dev
+- libgssglue-dev (unnecessary since Ubuntu 17.10)
 - libsnappy-dev
 - libpng12-dev
 - libffmpeg-dev (see below)
-- g++ >= 4.9 or clang++ >= 3.5 or other C++14 compiler
+- g++ >= 7.2 or clang++ >= 5.0 or other C++17 compiler
 
 <!--Optionally:
 - python (python-dev)-->
@@ -36,19 +36,18 @@ Submodule ($ `git submodule update --init`):
 
 ## FFmpeg:
 
-### Ubuntu (16.04):
-<!-- BEGIN optional if NO_FFMPEG ? (note: ok with 53 (?) and 54 version)-->
+### Ubuntu:
 - libavcodec-dev
 - libavformat-dev
 - libavutil-dev
 - libswscale-dev
 - libx264-dev
 - libbz2-dev
-- libavcodec-ffmpeg56
-- libavformat-ffmpeg56
-- libavutil-ffmpeg54
-- libswscale-ffmpeg3
-<!-- END optional -->
+<!-- ok with 53 (?) and 54 version-->
+<!-- - libavcodec-ffmpeg56 -->
+<!-- - libavformat-ffmpeg56 -->
+<!-- - libavutil-ffmpeg54 -->
+<!-- - libswscale-ffmpeg3 -->
 
 ### Other distros:
 - https://github.com/FFmpeg/FFmpeg/archive/n2.5.11.tar.gz
@@ -61,6 +60,12 @@ And set environment variable (optionally)
 ## Environment variable setting
 
 List with `sed -E '/\[ setvar/!d;s/.*\[ setvar ([^ ]+).*/\1/' jam/defines.jam`
+
+    export FFMPEG_INC_PATH=$HOME/ffmpeg/includes
+
+Or with `-s` to bjam
+
+    bjam -s FFMPEG_INC_PATH=$HOME/ffmpeg/includes ...
 
 
 Compilation
@@ -92,6 +97,14 @@ and install (as administrator):
 \# `bjam install`
 
 Binaries are located in /usr/local/bin.
+
+## Modes
+
+$ `bjam [variant=]{release|debug|san}`
+
+- `release`: default
+- `debug`: debug mode (compile with `-g -D_GLIBCXX_DEBUG`)
+- `san`: enable sanitizers: asan, lsan, usan
 
 
 Run ReDemPtion

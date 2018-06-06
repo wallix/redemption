@@ -22,11 +22,13 @@
 
 #include "core/RDP/mppc.hpp"
 #include "core/RDP/mppc/mppc_utils.hpp"
+#include "cxx/diagnostic.hpp"
 #include "utils/stream.hpp"
 
+#include <limits>
 #include <cinttypes>
 
-#define RDP_50_HIST_BUF_LEN (1024 * 64) /* RDP 5.0 uses 64K history buf */
+static const size_t RDP_50_HIST_BUF_LEN = (1024 * 64); /* RDP 5.0 uses 64K history buf */
 
 
 struct rdp_mppc_50_dec : public rdp_mppc_dec
@@ -492,7 +494,7 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc
     hash_table_manager hash_tab_mgr;
 
     explicit rdp_mppc_50_enc(bool verbose = 0)
-        : rdp_mppc_enc(verbose)
+        : rdp_mppc_enc(RDP_50_HIST_BUF_LEN - 1, verbose)
         , historyBuffer{0}
         , outputBuffer(this->outputBufferPlus + 64)  /* contains compressed data */
         , outputBufferPlus{0}
@@ -598,6 +600,13 @@ private:
             LOG(LOG_INFO, "compress_50");
         }
 
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wtype-limits")
+        static_assert(std::numeric_limits<decltype(uncompressed_data_size)>::max() < RDP_50_HIST_BUF_LEN,
+          "LOG(LOG_ERR, \"compress_50: input stream too large, max=%zu got=%u\","
+          "\nRDP_50_HIST_BUF_LEN - 1u, uncompressed_data_size)");
+        REDEMPTION_DIAGNOSTIC_POP
+
         this->flags = PACKET_COMPR_TYPE_64K;
 
         this->hash_tab_mgr.clear_undo_history();
@@ -616,7 +625,7 @@ private:
             this->flagsHold |= PACKET_AT_FRONT;
         }
 
-        if ((this->historyOffset + uncompressed_data_size + 2) >= RDP_50_HIST_BUF_LEN) {
+        if ((this->historyOffset + uncompressed_data_size + 2) >= static_cast<ssize_t>(RDP_50_HIST_BUF_LEN)) {
             /* historyBuffer cannot hold uncompressed_data - rewind it */
             this->historyOffset =  0;
             this->flagsHold     |= PACKET_AT_FRONT;
