@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include <unordered_map>
 #include "core/RDP/clipboard.hpp"
 #include "utils/log.hpp"
 

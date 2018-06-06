@@ -122,18 +122,15 @@ public:
         if (fsz < 0) {
             return erref::NTSTATUS::STATUS_NO_SUCH_FILE;
         }
-        if (offset > fsz) {
-            return erref::NTSTATUS::STATUS_UNSUCCESSFUL;
-        }
+//         if (offset > fsz) {
+//             return erref::NTSTATUS::STATUS_UNSUCCESSFUL;
+//         }
 
         auto const remaining = fsz - offset;
 
-        assert(std::size_t(remaining) <= data.size());
+//         assert(std::size_t(remaining) <= data.size());
 
         std::ifstream inFile(file_to_tread, std::ios::in | std::ios::binary);
-        if(inFile) {
-            inFile.read(data.to_charp(), std::min(remaining, int(data.size())));
-        }
 
         if (inFile.fail()) {
             if (log_erro_on) {
@@ -141,6 +138,8 @@ public:
             }
             // TODO or STATUS_ACCESS_DENIED
             return erref::NTSTATUS::STATUS_NO_SUCH_FILE;
+        } else {
+            inFile.read(data.to_charp(), std::min(remaining, int(data.size())));
         }
 
         return erref::NTSTATUS::STATUS_SUCCESS;
