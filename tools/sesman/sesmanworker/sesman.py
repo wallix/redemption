@@ -1242,7 +1242,7 @@ class Sesman():
 
                 data_to_send = { u'login': self.shared.get(u'login') if not current_wab_login.startswith('_OTP_') else MAGICASK
                                , u'password': MAGICASK
-                               u'login_message' : cut_message(self.login_message),
+                               , u'login_message' : cut_message(self.login_message)
                                , u'module' : u'login'
                                , u'language' : SESMANCONF.language
                                , u'opt_message' : TR(u'authentication_failed') if self.shared.get(u'password') != MAGICASK else u'' }
