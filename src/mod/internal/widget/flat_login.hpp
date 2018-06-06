@@ -25,6 +25,7 @@
 #include "mod/internal/widget/edit_valid.hpp"
 #include "mod/internal/widget/image.hpp"
 #include "utils/translation.hpp"
+#include "mod/internal/widget/multiline.hpp"
 
 class Theme;
 
@@ -38,10 +39,17 @@ public:
     WidgetEditValid    login_edit;
     WidgetLabel        password_label;
     WidgetEditValid    password_edit;
+    WidgetMultiLine    login_message_label;
     WidgetImage        img;
     WidgetLabel        version_label;
     WidgetFlatButton   helpicon;
     WidgetFlatButton * extra_button;
+
+    Font const & font;
+
+    std::string login_message;
+
+    bool fixed_format_login_message = true;
 
 private:
     Translator tr;
@@ -63,6 +71,7 @@ public:
               const char * label_text_login,
               const char * label_text_password,
               const char * label_error_message,
+              const char * label_login_message,
               WidgetFlatButton * extra_button,
               Font const & font, Translator tr, Theme const & theme);
 

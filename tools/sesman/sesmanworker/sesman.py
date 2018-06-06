@@ -189,6 +189,8 @@ class Sesman():
         self.back_selector = False
         self.target_app_rights = {}
 
+        self.login_message = u"Warning! Unauthorized access to this system is forbidden and will be prosecuted by law."
+
         self.shared[u'session_probe_launch_error_message'] = u''
 
     def reset_session_var(self):
@@ -263,6 +265,13 @@ class Sesman():
             })
         self.engine.reset_proxy_rights()
 
+    def load_login_message(self):
+        try:
+            with open('/var/wab/etc/proxys/messages/login.%s' % self.language) as f:
+                self.login_message = f.read().decode('utf-8')
+        except Exception, e:
+            pass
+
     def set_language_from_keylayout(self):
         self.language = SESMANCONF.language
         french_layouts = [0x0000040C, # French (France)
@@ -278,6 +287,8 @@ class Sesman():
                 pass
         if keylayout in french_layouts:
             self.language = 'fr'
+
+        self.load_login_message()
 
     #TODO: is may be possible to delay sending data until the next input through receive_data
     def send_data(self, data):
@@ -643,6 +654,7 @@ class Sesman():
                                                                           real_wab_login)
 
             self.language = self.engine.get_language()
+            self.load_login_message()
             if self.engine.get_force_change_password():
                 self.send_data({u'rejected': TR(u'changepassword')})
                 return False, TR(u'changepassword')
@@ -788,7 +800,8 @@ class Sesman():
                             self.send_data({
                                   u'login': MAGICASK
                                 , u'selector_lines_per_page' : u'0'
-                                , u'module'                  : u'login'})
+                                , u'login_message' : cut_message(self.login_message)
+                                , u'module' : u'login'})
                             Logger().info(u"Logout")
                             return None, u"Logout"
 
@@ -849,6 +862,7 @@ class Sesman():
 
             else:
                 self.send_data({u'login': MAGICASK,
+                                u'login_message' : cut_message(self.login_message),
                                 u'module': 'login'
                                 })
                 return None, u"Logout"
@@ -1228,6 +1242,7 @@ class Sesman():
 
                 data_to_send = { u'login': self.shared.get(u'login') if not current_wab_login.startswith('_OTP_') else MAGICASK
                                , u'password': MAGICASK
+                               u'login_message' : cut_message(self.login_message),
                                , u'module' : u'login'
                                , u'language' : SESMANCONF.language
                                , u'opt_message' : TR(u'authentication_failed') if self.shared.get(u'password') != MAGICASK else u'' }

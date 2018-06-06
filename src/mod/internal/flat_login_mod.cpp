@@ -46,6 +46,7 @@ FlatLoginMod::FlatLoginMod(
         TR(trkeys::login, language(vars)),
         TR(trkeys::password, language(vars)),
         vars.get<cfg::context::opt_message>().c_str(),
+        vars.get<cfg::context::login_message>().c_str(),
         &this->language_button,
         this->font(), Translator(language(vars)), this->theme())
     , timeout(now, vars.get<cfg::globals::authentication_timeout>().count())

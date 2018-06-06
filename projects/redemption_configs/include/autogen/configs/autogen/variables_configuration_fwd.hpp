@@ -319,6 +319,7 @@ namespace cfg {
         struct pattern_kill;
         struct pattern_notify;
         struct opt_message;
+        struct login_message;
         struct session_probe_outbound_connection_monitoring_rules;
         struct session_probe_process_monitoring_rules;
         struct session_probe_extra_system_processes;
