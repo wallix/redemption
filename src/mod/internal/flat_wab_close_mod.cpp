@@ -96,21 +96,18 @@ FlatWabCloseMod::FlatWabCloseMod(
             delay = vars.get<cfg::globals::close_timeout>();
             start_timer = delay;
         }
-        this->timeout_timer = session_reactor.create_timer(
-            std::ref(*this), std::ref(session_reactor), start_timer)
+        this->timeout_timer = session_reactor.create_timer(start_timer)
         .set_delay(delay)
-        .on_action([](auto ctx,
-            FlatWabCloseMod& self, SessionReactor& session_reactor, std::chrono::seconds& seconds
-        ){
+        .on_action([this](JLN_TIMER_CTX ctx, std::chrono::seconds& seconds){
             // TODO milliseconds += ctx.time() - previous_time
             ++seconds;
-            auto const close_timeout = self.vars.get<cfg::globals::close_timeout>();
+            auto const close_timeout = this->vars.get<cfg::globals::close_timeout>();
             if (seconds < close_timeout) {
-                self.close_widget.refresh_timeleft((close_timeout - seconds).count());
+                this->close_widget.refresh_timeleft((close_timeout - seconds).count());
                 return ctx.ready_to(std::min(std::chrono::seconds{1}, close_timeout));
             }
             else {
-                session_reactor.set_event_next(BACK_EVENT_STOP);
+                ctx.get_reactor().set_event_next(BACK_EVENT_STOP);
                 return ctx.terminate();
             }
         });

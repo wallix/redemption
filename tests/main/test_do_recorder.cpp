@@ -1091,7 +1091,7 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunk)
 
     RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder-chunk-000000.png", 26981);
     RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder-chunk-000001.png", 27536);
-    RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder-chunk-000000.mp4", 11226843, 11226814);
+    RED_CHECK_FILE_SIZE_AND_CLEAN3("/tmp/recorder-chunk-000000.mp4", 11226843, 11226814, 11226829);
     RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder-chunk-000001.mp4", 86044, 86030);
     RED_CHECK_FILE_CONTENTS("/tmp/recorder-chunk.pgs", R"js({"percentage":100,"eta":0,"videos":1})js");
     RED_CHECK_FILE_CONTENTS("/tmp/recorder-chunk.meta", "2016-02-18 18:27:01 + (break)\n");

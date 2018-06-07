@@ -47,7 +47,9 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
    SessionReactor session_reactor;
    FakeClient client(session_reactor);
    FakeIODisk fakeIODisk;
-   ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
+   RDPDiskConfig config;
+   config.add_drive(client.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+   ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
    StaticOutStream<512> out_serverAnnounce;
    rdpdr::SharedHeader header_serverAnnounce(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE);
@@ -57,12 +59,12 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
    out_serverAnnounce.out_uint32_le(0x00000002);
    InStream chunk_serverAnnounce(out_serverAnnounce.get_data(), out_serverAnnounce.get_offset());
 
-   RED_CHECK_EQUAL(manager.fileSystemData.protocol_minor_version, 0);
+   RED_CHECK_EQUAL(manager.protocol_minor_version, 0);
 
    manager.receive(chunk_serverAnnounce);
    RED_CHECK_EQUAL(client.get_total_stream_produced(), 2);
 
-   RED_CHECK_EQUAL(manager.fileSystemData.protocol_minor_version, 0x000c);
+   RED_CHECK_EQUAL(manager.protocol_minor_version, 0x000c);
 
    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
    RED_CHECK_EQUAL(pdu_data->size, 12);
@@ -122,11 +124,11 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
    manager.receive(chunk_serverCapabilityRequest);
 
    RED_CHECK_EQUAL(manager.server_capability_number, 5);
-   RED_CHECK_EQUAL(manager.fileSystemData.fileSystemCapacity[rdpdr::CAP_GENERAL_TYPE], true);
-   RED_CHECK_EQUAL(manager.fileSystemData.fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE], true);
-   RED_CHECK_EQUAL(manager.fileSystemData.fileSystemCapacity[rdpdr::CAP_PORT_TYPE], true);
-   RED_CHECK_EQUAL(manager.fileSystemData.fileSystemCapacity[rdpdr::CAP_DRIVE_TYPE], true);
-   RED_CHECK_EQUAL(manager.fileSystemData.fileSystemCapacity[rdpdr::CAP_SMARTCARD_TYPE], true);
+   //RED_CHECK_EQUAL(manager.fileSystemCapacity[rdpdr::CAP_GENERAL_TYPE], true);
+   RED_CHECK_EQUAL(manager.fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE], true);
+   RED_CHECK_EQUAL(manager.fileSystemCapacity[rdpdr::CAP_PORT_TYPE], true);
+   RED_CHECK_EQUAL(manager.fileSystemCapacity[rdpdr::CAP_DRIVE_TYPE], true);
+   RED_CHECK_EQUAL(manager.fileSystemCapacity[rdpdr::CAP_SMARTCARD_TYPE], true);
 
 
    StaticOutStream<512> out_serverClientIDConfirm;
@@ -198,7 +200,9 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelCreateFileOrDir)
     SessionReactor session_reactor;
     FakeClient client(session_reactor);
     FakeIODisk fakeIODisk;
-    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
+    RDPDiskConfig config;
+    config.add_drive(client.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
     StaticOutStream<512> out_stream;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);
@@ -252,7 +256,9 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelLockControl)
     SessionReactor session_reactor;
     FakeClient client(session_reactor);
     FakeIODisk fakeIODisk;
-    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
+    RDPDiskConfig config;
+    config.add_drive(client.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
     StaticOutStream<512> out_stream;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);
@@ -291,9 +297,11 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileBasicInformation)
     SessionReactor session_reactor;
     FakeClient client(session_reactor);
     FakeIODisk fakeIODisk;
-    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
+    RDPDiskConfig config;
+    config.add_drive(client.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
-    manager.fileSystemData.paths.emplace(1, "test");
+    manager.paths.emplace(1, "test");
 
     StaticOutStream<512> out_stream;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);
@@ -343,9 +351,11 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileStandardInformation)
     SessionReactor session_reactor;
     FakeClient client(session_reactor);
     FakeIODisk fakeIODisk;
-    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
+    RDPDiskConfig config;
+    config.add_drive(client.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
-    manager.fileSystemData.paths.emplace(1, "test");
+    manager.paths.emplace(1, "test");
 
     StaticOutStream<512> out_stream;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);
@@ -395,9 +405,11 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileAttributeTagInformation)
     SessionReactor session_reactor;
     FakeClient client(session_reactor);
     FakeIODisk fakeIODisk;
-    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
+    RDPDiskConfig config;
+    config.add_drive(client.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
-    manager.fileSystemData.paths.emplace(1, "test");
+    manager.paths.emplace(1, "test");
 
     StaticOutStream<512> out_stream;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);
@@ -444,9 +456,11 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelClose)
     SessionReactor session_reactor;
     FakeClient client(session_reactor);
     FakeIODisk fakeIODisk;
-    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
+    RDPDiskConfig config;
+    config.add_drive(client.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
-    manager.fileSystemData.paths.emplace(1, "test");
+    manager.paths.emplace(1, "test");
 
     StaticOutStream<512> out_stream;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);
@@ -483,9 +497,11 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
     SessionReactor session_reactor;
     FakeClient client(session_reactor);
     FakeIODisk fakeIODisk;
-    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
+    RDPDiskConfig config;
+    config.add_drive(client.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
-    manager.fileSystemData.paths.emplace(1, "test");
+    manager.paths.emplace(1, "test");
 
     StaticOutStream<512> out_stream;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);
@@ -528,9 +544,11 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelDirectoryControl)
     SessionReactor session_reactor;
     FakeClient client(session_reactor);
     FakeIODisk fakeIODisk;
-    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk);
+    RDPDiskConfig config;
+    config.add_drive(client.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
-    manager.fileSystemData.paths.emplace(1, "test");
+    manager.paths.emplace(1, "test");
 
     StaticOutStream<512> out_stream;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);

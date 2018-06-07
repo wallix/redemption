@@ -48,6 +48,6 @@ RED_AUTO_TEST_CASE(TestBouncer2Mod)
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
     SessionReactor session_reactor;
-    Bouncer2Mod d(session_reactor, front, 800, 600, font, false);
+    Bouncer2Mod d(session_reactor, front, 800, 600, font);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }

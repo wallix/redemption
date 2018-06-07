@@ -81,9 +81,6 @@ public:
         return ((unixSeconds + SEC_TO_UNIX_EPOCH) * WINDOWS_TICK);
     }
 
-    //  TODO put this somewhere
-    //this->parse_options(argc, argv);
-
     uint32_t string_to_hex32(unsigned char * str) {
         size_t size = sizeof(str);
         uint32_t hex32(0);
@@ -104,6 +101,8 @@ public:
 
     virtual bool ofile_good(const char * new_path) = 0;
 
+    virtual int get_file_size(const char * path) = 0;
+
     virtual bool dir_good(const char * new_path) = 0;
 
     virtual void marke_dir(const char * new_path) = 0;
@@ -112,10 +111,8 @@ public:
 
     virtual FileStatvfs get_file_statvfs(const char * file_to_request) = 0;
 
-    // TODO `log_error_on` is suspecious
-    virtual erref::NTSTATUS read_data(
-        std::string const& file_to_tread, int offset, byte_array data,
-        bool log_error_on) = 0;
+    virtual void read_data(
+        std::string const& file_to_tread, int offset, byte_array data) = 0;
 
     virtual bool set_elem_from_dir(std::vector<std::string> & elem_list, const std::string & str_dir_path) = 0;
 

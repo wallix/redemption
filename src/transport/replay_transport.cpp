@@ -56,7 +56,7 @@ ReplayTransport::ReplayTransport(
     int fd = eventfd(1, EFD_NONBLOCK);
     if (fd > -1) {
         uint64_t value = 0;
-        write(fd, &value, 8); // that will make the file descriptor always selectable
+        [[maybe_unused]] auto ret = write(fd, &value, 8); // that will make the file descriptor always selectable
     }
     return fd;
 }())

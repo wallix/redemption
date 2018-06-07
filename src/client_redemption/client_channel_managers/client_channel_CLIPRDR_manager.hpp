@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include <unordered_map>
+
 #include "utils/log.hpp"
 #include "core/channel_list.hpp"
 #include "core/RDP/clipboard.hpp"

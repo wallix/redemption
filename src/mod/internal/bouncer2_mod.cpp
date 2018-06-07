@@ -29,14 +29,14 @@
 Bouncer2Mod::Bouncer2Mod(
     SessionReactor& session_reactor,
     FrontAPI & front, uint16_t width, uint16_t height,
-    Font const & font, bool dont_resize)
-: InternalMod(front, width, height, font, Theme{}, dont_resize)
+    Font const & font)
+: InternalMod(front, width, height, font, Theme{})
 , dancing_rect(0,0,100,100)
 , session_reactor(session_reactor)
-, timer(session_reactor.create_graphic_timer(std::ref(*this))
+, timer(session_reactor.create_graphic_timer()
     .set_delay(std::chrono::milliseconds(33))
-    .on_action(jln::always_ready([](gdi::GraphicApi& gd, Bouncer2Mod& self){
-        self.draw_event(0, gd);
+    .on_action(jln::always_ready([this](gdi::GraphicApi& gd){
+        this->draw_event(0, gd);
     })))
 {}
 

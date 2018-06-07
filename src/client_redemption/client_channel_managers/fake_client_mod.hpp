@@ -220,7 +220,6 @@ public:
         return FileStatvfs{};
     }
 
-    // TODO unique_ptr& <- bad idea
     erref::NTSTATUS read_data(
         std::string const& file_to_tread, int offset, byte_array data,
         bool log_erro_on
@@ -233,7 +232,6 @@ public:
         return erref::NTSTATUS::STATUS_SUCCESS;
     }
 
-    // TODO str_dir_path is not constant ?
     bool set_elem_from_dir(std::vector<std::string> & elem_list, const std::string & str_dir_path) override {
         (void)str_dir_path;
         elem_list.clear();

@@ -85,7 +85,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
         s += "d3\n";
     })
     .set_delay(std::chrono::seconds(1))
-    .on_action([](auto ctx, std::string& s, char& c){
+    .on_action([](JLN_TIMER_CTX ctx, std::string& s, char& c){
         s += "timer3\n";
         return c++ == 'd' ? ctx.terminate() : ctx.ready();
     });
@@ -156,7 +156,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
     }));
 
     auto ini = session_reactor.create_sesman_event(std::ref(s))
-    .on_action([](auto ctx, Inifile&, std::string& s){
+    .on_action([](JLN_ACTION_CTX ctx, Inifile&, std::string& s){
         s += "ini\n";
         return ctx.terminate();
     });
@@ -195,7 +195,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorFd)
     SCOPE_EXIT(::close(fd1));
 
     SessionReactor::TopFdPtr fd_event = session_reactor.create_fd_event(fd1, std::ref(s))
-    .on_action([](auto ctx, std::string& s){
+    .on_action([](JLN_TOP_CTX ctx, std::string& s){
         s += "fd1\n";
         return ctx.next();
     })
@@ -203,10 +203,10 @@ RED_AUTO_TEST_CASE(TestSessionReactorFd)
         s += "~fd1\n";
     }))
     .set_timeout({})
-    .on_timeout([](auto ctx, std::string&){ return ctx.ready(); });
+    .on_timeout([](JLN_TOP_TIMER_CTX ctx, std::string&){ return ctx.ready(); });
 
     SessionReactor::GraphicFdPtr fd_gd_event = session_reactor.create_graphic_fd_event(fd1)
-    .on_action([&s](auto ctx, gdi::GraphicApi&){
+    .on_action([&s](JLN_TOP_CTX ctx, gdi::GraphicApi&){
         s += "fd2\n";
         return ctx.next();
     })
@@ -214,7 +214,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorFd)
         s += "~fd2\n";
     }))
     .set_timeout({})
-    .on_timeout([](auto ctx, gdi::GraphicApi&){ return ctx.ready(); });
+    .on_timeout([](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi&){ return ctx.ready(); });
 
     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
     RED_CHECK_EQ(s, "fd2\n~fd2\n");
@@ -233,7 +233,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
     using jln::value;
 
     auto trace = [](auto name){
-        return [](auto ctx, gdi::GraphicApi&, std::string& s){
+        return [](JLN_FUNCSEQUENCER_CTX ctx, gdi::GraphicApi&, std::string& s){
             s += decltype(name){}.c_str();
             // or
             // if constexpr (ctx.is_final_sequence()) return ctx.ready();
@@ -265,7 +265,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
     s.clear();
 
     auto trace2 = [](auto f){
-        return [](auto ctx, gdi::GraphicApi&, std::string& s){
+        return [](JLN_FUNCSEQUENCER_CTX ctx, gdi::GraphicApi&, std::string& s){
             s += ctx.sequence_name();
             return jln::make_lambda<decltype(f)>()(ctx);
         };
@@ -273,14 +273,14 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
 
     event = session_reactor.create_graphic_event(std::ref(s))
     .on_action(jln::sequencer(
-        "a"_f = trace2([](auto ctx){ return ctx.next(); }),
-        "b"_f = trace2([](auto ctx){ return ctx.at("d"_s).ready(); }),
-        "c"_f = [](auto ctx, gdi::GraphicApi& /*gd*/, std::string& s){
+        "a"_f = trace2([](JLN_FUNCSEQUENCER_CTX ctx){ return ctx.next(); }),
+        "b"_f = trace2([](JLN_FUNCSEQUENCER_CTX ctx){ return ctx.at("d"_s).ready(); }),
+        "c"_f = [](JLN_FUNCSEQUENCER_CTX ctx, gdi::GraphicApi& /*gd*/, std::string& s){
             s += ctx.sequence_name();
             return ctx.exec_at("e"_s);
         },
-        "d"_f = trace2([](auto ctx){ return ctx.previous().ready(); }),
-        "e"_f = trace2([](auto ctx){ return ctx.terminate(); })
+        "d"_f = trace2([](JLN_FUNCSEQUENCER_CTX ctx){ return ctx.previous().ready(); }),
+        "e"_f = trace2([](JLN_FUNCSEQUENCER_CTX ctx){ return ctx.terminate(); })
     ));
 
     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
@@ -319,7 +319,7 @@ RED_AUTO_TEST_CASE(TestSessionReactorDeleter)
         {
             this->gd_ptr = session_reactor.create_graphic_event(std::ref(*this), f)
             .set_notify_delete([](jln::NotifyDeleteType d, S& self, F f){ f(self, d); })
-            .on_action([](auto ctx, gdi::GraphicApi&, S&, F){
+            .on_action([](JLN_ACTION_CTX ctx, gdi::GraphicApi&, S&, F){
                 return ctx.terminate();
             });
         }

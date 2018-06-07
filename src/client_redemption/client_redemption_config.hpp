@@ -38,6 +38,7 @@
 #include "client_redemption/client_redemption_api.hpp"
 
 #include "client_redemption/client_input_output_api/rdp_clipboard_config.hpp"
+#include "client_redemption/client_input_output_api/rdp_disk_config.hpp"
 
 
 
@@ -54,6 +55,7 @@ public:
     bool wab_diag_question;
 
     RDPClipboardConfig rDPClipboardConfig;
+    RDPDiskConfig      rDPDiskConfig;
 
 
 
@@ -95,6 +97,7 @@ public:
             }
         }
 
+
         // Set RDP CLIPRDR config
         this->rDPClipboardConfig.channel_flags = CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
         this->rDPClipboardConfig.arbitrary_scale = 40;
@@ -106,6 +109,16 @@ public:
         this->rDPClipboardConfig.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, std::string(RDPECLIP::FILECONTENTS));
         this->rDPClipboardConfig.add_format(RDPECLIP::CF_TEXT, std::string(""));
         this->rDPClipboardConfig.add_format(RDPECLIP::CF_METAFILEPICT, std::string(""));
+
+
+        // Set RDP RDPDR config
+
+        this->rDPDiskConfig.add_drive(this->SHARE_DIR, rdpdr::RDPDR_DTYP_FILESYSTEM);
+        this->rDPDiskConfig.enable_drive_type = true;
+        this->rDPDiskConfig.enable_printer_type = true;
+        this->rDPDiskConfig.enable_drive_type = true;
+        this->rDPDiskConfig.enable_drive_type = true;
+
 
 
         this->setUserProfil();

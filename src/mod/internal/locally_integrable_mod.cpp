@@ -27,7 +27,7 @@ LocallyIntegrableMod::LocallyIntegrableMod(
     uint16_t front_width, uint16_t front_height,
     Font const & font, ClientExecute & client_execute,
     Theme const & theme)
-: InternalMod(front, front_width, front_height, font, theme, false)
+: InternalMod(front, front_width, front_height, font, theme)
 , client_execute(client_execute)
 , dvc_manager(false)
 , dc_state(DCState::Wait)
@@ -36,15 +36,14 @@ LocallyIntegrableMod::LocallyIntegrableMod(
 , session_reactor(session_reactor)
 {
     if (this->rail_enabled) {
-        this->graphic_event = session_reactor.create_graphic_event(std::ref(*this))
-        .on_action(jln::one_shot([](gdi::GraphicApi&, LocallyIntegrableMod& self){
-            if (false == static_cast<bool>(self.client_execute)/* &&
-                self.event.is_waked_up_by_time()*/) {
-                self.client_execute.ready(
-                    self, self.front_width, self.front_height, self.font(),
-                    self.is_resizing_hosted_desktop_allowed());
+        this->graphic_event = session_reactor.create_graphic_event()
+        .on_action(jln::one_shot([this](gdi::GraphicApi&){
+            if (false == static_cast<bool>(this->client_execute)) {
+                this->client_execute.ready(
+                    *this, this->front_width, this->front_height, this->font(),
+                    this->is_resizing_hosted_desktop_allowed());
 
-                self.dvc_manager.ready(self.front);
+                this->dvc_manager.ready(this->front);
             }
         }));
     }
@@ -90,11 +89,10 @@ void LocallyIntegrableMod::rdp_input_mouse(int device_flags, int x, int y, Keyma
                             this->first_click_down_timer->set_delay(std::chrono::seconds(1));
                         }
                         else {
-                            this->first_click_down_timer = this->session_reactor
-                            .create_timer(std::ref(*this))
+                            this->first_click_down_timer = this->session_reactor.create_timer()
                             .set_delay(std::chrono::seconds(1))
-                            .on_action(jln::one_shot([](LocallyIntegrableMod& self){
-                                self.dc_state = DCState::Wait;
+                            .on_action(jln::one_shot([this]{
+                                this->dc_state = DCState::Wait;
                             }));
                         }
                     }

@@ -122,6 +122,42 @@ MultiLineTextMetrics::MultiLineTextMetrics(const Font& font, const char* unicode
     this->height = height_max * number_of_lines;
 }
 
+MultiLineTextMetricsEx::MultiLineTextMetricsEx(const Font& font, const char* unicode_text, int max_width,
+    std::string& out_multiline_string_ref)
+{
+    out_multiline_string_ref.clear();
+
+    const char   delimiter[]      = "<br>";
+    const size_t delimiter_length = sizeof(delimiter) - 1;
+
+    std::string s(unicode_text);
+    std::string temp_str;
+
+    auto get_mltm = [this, &temp_str, &font, max_width, &out_multiline_string_ref, delimiter](const char *s) {
+        MultiLineTextMetrics mltm(font, s, max_width, temp_str);
+
+        if (!out_multiline_string_ref.empty()) {
+            out_multiline_string_ref += delimiter;
+        }
+        out_multiline_string_ref += temp_str;
+
+        this->width   = std::max(this->width, mltm.width);
+        this->height += mltm.height;
+    };
+
+    auto start = 0;
+    auto end = s.find(delimiter);
+    while (end != std::string::npos)
+    {
+        get_mltm(s.substr(start, end - start).c_str());
+
+        start = end + delimiter_length;
+        end = s.find(delimiter, start);
+    }
+
+    get_mltm(s.substr(start, end).c_str());
+}
+
 
 // TODO implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
 // TODO: is it still used ? If yes move it somewhere else. Method from internal mods ?

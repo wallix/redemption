@@ -746,14 +746,14 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     this->button_1_down = this->pressed_mouse_button;
 
                     this->button_1_down_timer = this->session_reactor
-                    .create_timer(std::ref(*this))
+                    .create_timer()
                     .set_delay(std::chrono::milliseconds(400))
-                    .on_action(jln::one_shot([](ClientExecute& self){
-                        assert(bool(self));
-                        self.initialize_move_size(
-                            self.button_1_down_x,
-                            self.button_1_down_y,
-                            self.button_1_down);
+                    .on_action(jln::one_shot([this]{
+                        assert(bool(*this));
+                        this->initialize_move_size(
+                            this->button_1_down_x,
+                            this->button_1_down_y,
+                            this->button_1_down);
                     }));
 
                     this->button_1_down_x = xPos;

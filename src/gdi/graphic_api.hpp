@@ -367,6 +367,16 @@ struct MultiLineTextMetrics
 };
 
 
+struct MultiLineTextMetricsEx
+{
+    int width = 0;
+    int height = 0;
+
+    MultiLineTextMetricsEx(const Font& font, const char* unicode_text, int max_width,
+        std::string& out_multiline_string_ref);
+};
+
+
 // TODO implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
 // TODO: is it still used ? If yes move it somewhere else. Method from internal mods ?
 void server_draw_text(

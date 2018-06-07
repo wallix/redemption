@@ -102,13 +102,13 @@ void mod_rdp::init_negociate_event_(
     .set_timeout(std::chrono::milliseconds(0))
     .on_exit(check_error)
     .on_action(jln::exit_with_error<ERR_RDP_PROTOCOL>() /* replaced by on_timeout action*/)
-    .on_timeout([this](auto ctx, gdi::GraphicApi& gd, RdpNegociation& rdp_negociation){
+    .on_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi& gd, RdpNegociation& rdp_negociation){
         gdi_clear_screen(gd, this->get_dim());
         LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
         rdp_negociation.start_negociation();
 
         return ctx.replace_action([this](
-            auto ctx, gdi::GraphicApi&, RdpNegociation& rdp_negociation
+            JLN_TOP_CTX ctx, gdi::GraphicApi&, RdpNegociation& rdp_negociation
         ){
             bool const is_finish = rdp_negociation.recv_data(this->buf);
 
@@ -132,7 +132,7 @@ void mod_rdp::init_negociate_event_(
             });
         })
         .set_or_disable_timeout(this->open_session_timeout, [this](
-            auto ctx, gdi::GraphicApi&, RdpNegociation&
+            JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi&, RdpNegociation&
         ){
             if (this->error_message) {
                 *this->error_message = "Logon timer expired!";
