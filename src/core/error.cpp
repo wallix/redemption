@@ -23,7 +23,25 @@
 
 #define NOT_UNDEF_EACH_ERROR
 #include "core/error.hpp"
-#include "utils/string_c.hpp"
+#include "cxx/cxx.hpp"
+
+#if __cplusplus >= REDEMPTION_CXX_STD_17
+# include "utils/string_c.hpp"
+#else
+namespace
+{
+    template<std::size_t n>
+    struct ErrorCbuf
+    {
+        char buf[n+30];
+
+        ErrorCbuf(char const* s, int e) noexcept
+        {
+            std::sprintf(buf, "Exception %s no: %u", s, e);
+        }
+    };
+}
+#endif
 
 #ifndef NDEBUG
 # include <cstring>
@@ -112,28 +130,31 @@ const char * Error::errmsg(bool with_id) const noexcept
         return "The computer that you are trying to connect to is redirecting you to another computer.";
 
     default:
+        #define PP_STRINGIFY_I(x) #x
+        #define PP_STRINGIFY(x) PP_STRINGIFY_I(x)
+        #define MAKE_CASE_V(e, x) case e:                 \
+            return with_id                                \
+                ? "Exception " #e " no: " PP_STRINGIFY(x) \
+                : "Exception " #e;
+#if __cplusplus >= REDEMPTION_CXX_STD_17
         using namespace jln::literals;
+        #define MAKE_CASE(e) case e:                         \
+            return with_id                                   \
+                ? jln::string_c_concat_t<                    \
+                    decltype("Exception " #e " no: "_c),     \
+                    jln::ull_to_string_c_t<int(e)>>::c_str() \
+                : "Exception " #e;
+#else
+        #define MAKE_CASE(e) case e: \
+            static ErrorCbuf<sizeof(#e)> buf_##e(#e, int(e)); return buf_##e.buf;
+#endif
         switch (this->id) {
-            #define PP_STRINGIFY_I(x) #x
-            #define PP_STRINGIFY(x) PP_STRINGIFY_I(x)
-            #define MAKE_CASE_V(e, x) case e:                  \
-                return with_id                                 \
-                    ? "Exception " #e " no : " PP_STRINGIFY(x) \
-                    : "Exception " #e;                         \
-                break;
-            #define MAKE_CASE(e) case e:                         \
-                return with_id                                   \
-                    ? jln::string_c_concat_t<                    \
-                        decltype("Exception " #e " no : "_c),    \
-                        jln::ull_to_string_c_t<int(e)>>::c_str() \
-                    : "Exception " #e;                           \
-                break;
             EACH_ERROR(MAKE_CASE, MAKE_CASE_V)
-            #undef MAKE_CASE
-            #undef MAKE_CASE_V
-            #undef PP_STRINGIFY
-            #undef PP_STRINGIFY_I
         }
+        #undef MAKE_CASE
+        #undef MAKE_CASE_V
+        #undef PP_STRINGIFY
+        #undef PP_STRINGIFY_I
         return "Unknown Error";
     }
 }
