@@ -49,15 +49,8 @@ public:
 
     std::string login_message;
 
-    bool fixed_format_login_message = true;
-
 private:
     Translator tr;
-
-    // WidgetFrame frame;
-    // WidgetImage wimage;
-    // WidgetVScrollBar vbar;
-    // WidgetHScrollBar hbar;
 
     bool labels_added = false;
 

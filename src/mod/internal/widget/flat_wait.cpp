@@ -26,6 +26,10 @@
 #include "keyboard/keymap2.hpp"
 #include "gdi/graphic_api.hpp"
 
+enum {
+    WIDGET_MULTILINE_BORDER_X = 10,
+    WIDGET_MULTILINE_BORDER_Y = 4
+};
 
 FlatWait::FlatWait(
     gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
@@ -39,7 +43,8 @@ FlatWait::FlatWait(
     , groupbox(drawable, *this, nullptr, caption,
                theme.global.fgcolor, theme.global.bgcolor, font)
     , dialog(drawable, this->groupbox, nullptr, text, -10,
-             theme.global.fgcolor, theme.global.bgcolor, font, 10, 2)
+             theme.global.fgcolor, theme.global.bgcolor, font,
+             WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
     , form(drawable, *this, this, -20, font, theme, lang, required, duration_max)
     , goselector(drawable, this->groupbox, this, TR(trkeys::back_selector, lang), -12,
                  theme.global.fgcolor, theme.global.bgcolor,
