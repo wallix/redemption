@@ -53,7 +53,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xaa\x5c\xb2\x4c\x8d\xe6\x93\xa9\xec\xf7\xfe\x69\xe5\xfa\xe7\xdf\xb9\xc6\x7e\x7b");
+    RED_CHECK_SIG(drawable.gd, "\x25\x88\x4b\x4b\x1a\xe5\x9d\x40\x89\xdd\x75\x93\xb2\x00\xac\x9c\xbe\xf8\x9b\xc9");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLogin2)
@@ -80,7 +80,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin2)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x2e\x24\xc0\xac\x79\x2c\x69\x4e\xb5\x4e\x89\x3e\x4e\xc2\xc6\xd0\xe0\x77\x37\xfe");
+    RED_CHECK_SIG(drawable.gd, "\xfc\x58\x01\xeb\xaa\x5c\x2f\x70\xfb\x9e\xb5\x0d\x3f\xeb\x45\x0f\xa6\xf8\x0e\x5d");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLogin3)
@@ -130,7 +130,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin3)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x97\xac\xd2\x50\x4f\x18\x42\xc9\xf4\xa3\x7f\x41\x1e\x38\x65\x68\xb7\xf8\xe0\x1b");
+    RED_CHECK_SIG(drawable.gd, "\x2d\xc3\x0c\xf1\xa1\xba\x05\x03\x7d\x5a\x4c\x76\xc2\x95\x1f\x7d\xa3\x79\xdb\x86");
 
     notifier.sender = nullptr;
     notifier.event = 0;
@@ -166,7 +166,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x1c\xf6\xf1\x90\xd3\xe2\x2d\x73\xb6\x23\xab\x33\x7b\x5f\x56\xdc\xd6\x86\xe4\x0c");
+    RED_CHECK_SIG(drawable.gd, "\x13\x54\xd0\xda\x67\x51\x3a\xcf\x5e\xda\x77\xe8\xb4\x84\x9e\x37\x70\x01\xc3\x94");
 
     flat_login.rdp_input_mouse(MOUSE_FLAG_MOVE,
                                flat_login.helpicon.x() + flat_login.helpicon.cx() / 2,
@@ -174,7 +174,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x1c\x34\xf9\x0a\x25\x28\x23\x49\x4f\x2d\x44\x2e\x58\xcc\x8b\x15\xa9\x7c\x75\x3a");
+    RED_CHECK_SIG(drawable.gd, "\x0a\xfe\xe8\x1e\x5c\xa9\xcf\xbb\x91\x9b\x6a\x30\x82\x1a\xea\xb6\xe3\x88\xa5\x35");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLoginClip)
@@ -202,7 +202,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginClip)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x21\x57\x7f\xbb\x1d\xcd\xfe\x01\xf7\x0a\xe1\x7b\xf8\x5e\x1e\x46\xf4\x33\xe9\x8e");
+    RED_CHECK_SIG(drawable.gd, "\xd4\xaf\x4c\x52\x88\xf9\x44\x7f\x44\x38\xce\x4f\x2c\xd8\x96\x1d\xfa\xff\x6d\xdb");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLoginClip2)
@@ -289,5 +289,5 @@ RED_AUTO_TEST_CASE(TraceFlatLogin4)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x0b\x72\xf2\xb6\x17\x3f\xb0\x4c\x5c\x75\x81\x6a\xf9\x30\x35\x1c\xac\x68\xef\x2e");
+    RED_CHECK_SIG(drawable.gd, "\xfe\xf8\x4c\x18\xf2\xa9\x59\x58\xb1\x78\x10\xa0\x6c\x26\xe7\xa4\x36\xcb\x0e\x8f");
 }

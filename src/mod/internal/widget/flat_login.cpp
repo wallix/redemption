@@ -163,7 +163,7 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
     std::string formatted_login_message;
     gdi::MultiLineTextMetricsEx mltm_ex(this->font, this->login_message.c_str(), WIDGET_MULTILINE_BORDER_Y,
         cbloc_w - WIDGET_MULTILINE_BORDER_X * 2, formatted_login_message);
-    this->login_message_label.set_wh(cbloc_w, mltm_ex.height + WIDGET_MULTILINE_BORDER_Y * 2);
+    this->login_message_label.set_wh(mltm_ex.width + WIDGET_MULTILINE_BORDER_X * 2, mltm_ex.height + WIDGET_MULTILINE_BORDER_Y * 2);
     this->login_message_label.set_text(formatted_login_message.c_str());
 
     dim = this->error_message_label.get_optimal_dim();
