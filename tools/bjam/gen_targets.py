@@ -546,6 +546,23 @@ for name,aliases in dir_tests.items():
     print('explicit', name, ';')
     print('alias ', mark_target(name), ' :\n  ', '\n  '.join(aliases), '\n;', sep='')
 
+
+# alias for recursive directory
+dir_rec_tests = OrderedDict()
+for name,aliases in dir_tests.items():
+    dir_rec_tests.setdefault(name + '.rec', []).append(name)
+dir_rec_tests.pop('tests.rec')
+
+for name,aliases in dir_tests.items():
+    dirname = os.path.dirname(name)
+    if dirname:
+        dir_rec_tests.get(dirname + '.rec', []).append(name + '.rec')
+
+for name,aliases in dir_rec_tests.items():
+    print('explicit', name, ';')
+    print('alias ', mark_target(name), ' :\n  ', '\n  '.join(aliases), '\n;', sep='')
+
+
 # all tests
 print('explicit test ;')
 print('alias test :')
@@ -553,12 +570,14 @@ for name in dir_tests.keys():
     print(' ', name)
 print(';')
 
+
 # explicit sashimi
 print('explicit ')
 for target,dep in all_targets:
     if -1 != target.find("/sashimi/") or (dep and -1 != dep.find("/sashimi/")):
         print(' ', target)
 print(';')
+
 
 import sys
 for f in all_files.values():
