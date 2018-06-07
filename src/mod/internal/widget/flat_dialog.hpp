@@ -54,6 +54,8 @@ public:
 
     Font const & font;
 
+    std::string dialog_string;
+
     BGRColor bg_color;
 
     FlatDialog(gdi::GraphicApi & drawable,

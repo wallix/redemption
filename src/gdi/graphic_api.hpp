@@ -362,8 +362,8 @@ struct MultiLineTextMetrics
     int width = 0;
     int height = 0;
 
-    MultiLineTextMetrics(const Font& font, const char* unicode_text, int max_width,
-        std::string& out_multiline_string_ref);
+    MultiLineTextMetrics(const Font& font, const char* unicode_text, unsigned int line_spacing,
+        int max_width, std::string& out_multiline_string_ref);
 };
 
 
@@ -372,8 +372,8 @@ struct MultiLineTextMetricsEx
     int width = 0;
     int height = 0;
 
-    MultiLineTextMetricsEx(const Font& font, const char* unicode_text, int max_width,
-        std::string& out_multiline_string_ref);
+    MultiLineTextMetricsEx(const Font& font, const char* unicode_text, unsigned int line_spacing,
+        int max_width, std::string& out_multiline_string_ref);
 };
 
 

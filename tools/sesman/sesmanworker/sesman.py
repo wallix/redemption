@@ -188,7 +188,7 @@ class Sesman():
         self.target_app_rights = {}
 
 
-        self.login_message = u"Warning! Unauthorized access to this system is forbidden and will be prosecuted by law."
+        self.login_message = u"Warning! Unauthorized access to this system is forbidden and will be prosecuted by law.<br><br>By accessing this system, you agree that your actions may be monitored if unauthorized usage is suspected."
 
 
         self.shared[u'session_probe_launch_error_message'] = u''
@@ -800,7 +800,7 @@ class Sesman():
                             self.send_data({
                                   u'login': MAGICASK
                                 , u'selector_lines_per_page' : u'0'
-                                , u'login_message' : cut_message(self.login_message)
+                                , u'login_message' : cut_message(self.login_message, 8192)
                                 , u'module' : u'login'})
                             Logger().info(u"Logout")
                             return None, u"Logout"
@@ -862,7 +862,7 @@ class Sesman():
 
             else:
                 self.send_data({u'login': MAGICASK,
-                                u'login_message' : cut_message(self.login_message),
+                                u'login_message' : cut_message(self.login_message, 8192),
                                 u'module': 'login'
                                 })
                 return None, u"Logout"
@@ -965,13 +965,14 @@ class Sesman():
 
         record_warning = SESMANCONF[u'sesman'].get('record_warning', True)
         if record_warning:
-            message =  u"Warning! Your remote session may be recorded and kept in electronic format."
+#            message =  u"Warning! Your remote session may be recorded and kept in electronic format."
+            message =  u"Welcome on WALLIX Bastion<br>--<br>Your actions could be recorded and stored in electronic format.<br>Please contact your Bastion administrator for more information."
             try:
                 with open('/var/wab/etc/proxys/messages/motd.%s' % self.language) as f:
                     message = f.read().decode('utf-8')
             except Exception, e:
                 pass
-            data_to_send[u'message'] = cut_message(message)
+            data_to_send[u'message'] = cut_message(message, 8192)
 
             _status, _error = self.interactive_accept_message(data_to_send)
             Logger().info(u"Recording agreement of %s to %s@%s : %s" %
@@ -1243,7 +1244,7 @@ class Sesman():
                 data_to_send = { u'login': self.shared.get(u'login') if not current_wab_login.startswith('_OTP_') else MAGICASK
                                , u'password': MAGICASK
                                , u'module' : u'login'
-                               , u'login_message' : cut_message(self.login_message)
+                               , u'login_message' : cut_message(self.login_message, 8192)
                                , u'language' : SESMANCONF.language
                                , u'opt_message' : TR(u'authentication_failed') if self.shared.get(u'password') != MAGICASK else u'' }
                 self.send_data(data_to_send)

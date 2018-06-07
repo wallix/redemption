@@ -61,7 +61,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x90\x1d\x52\xa3\x11\x2f\xd3\xed\x6e\xe7\xbd\x98\x3d\x57\xe9\xdb\x0a\x72\xe9\x31");
+    RED_CHECK_SIG(drawable.gd, "\x3a\xe2\xea\xc3\xa0\xd4\x33\x56\xc9\xb9\xdd\xe5\xed\xaf\x97\x7d\xf4\xa7\xf6\xac");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialog2)
@@ -95,7 +95,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog2)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x75\x16\xab\xf9\x4a\xab\xf8\x20\x06\x9e\x50\x6f\xce\x58\xe8\x36\xf0\x53\xd2\x38");
+    RED_CHECK_SIG(drawable.gd, "\xec\xa6\x6d\x84\xee\x77\x2b\x6f\xd5\x7f\x4d\xf4\x4b\x25\x76\xd4\xb6\x6e\x64\x05");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialog3)
@@ -129,7 +129,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog3)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x74\xfd\xcc\x8d\x7b\xe8\xe0\xa2\x5f\x23\xa0\x3a\xe5\x04\x30\x93\x87\x73\x1d\xd3");
+    RED_CHECK_SIG(drawable.gd, "\xf8\xb5\x49\x1d\x2c\x28\xf4\xfc\x89\x7c\xb5\x82\x51\x14\xeb\xc2\x67\x62\x2e\x4d");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialog4)
@@ -163,7 +163,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog4)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x64\x9c\x88\xe4\xf1\xe7\x64\x81\xec\x12\x3e\x28\x28\x33\xe9\x96\x15\x34\x4b\x3d");
+    RED_CHECK_SIG(drawable.gd, "\xc8\xfe\xeb\xb4\xa5\x0f\xdf\x65\x82\x19\x3d\xd8\xf2\x13\x95\x6d\xf0\x35\xcc\x64");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialog5)
@@ -197,7 +197,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog5)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog5.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x8f\x5a\xdc\xe7\x0d\xb2\xff\x5b\xed\x9d\x9e\xa4\x22\xfa\x36\x95\x46\x33\x05\x16");
+    RED_CHECK_SIG(drawable.gd, "\x30\x67\xeb\xb9\x00\x68\xe4\xf0\x82\x94\x9f\x6f\x27\x12\xae\xab\x8e\x97\x94\x4f");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialog6)
@@ -231,7 +231,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog6)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog6.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x81\x25\xbb\xbe\xd1\x82\x8f\x02\xb2\x62\xec\xa6\xdb\xfb\x01\xe6\x58\x52\x6e\xdd");
+    RED_CHECK_SIG(drawable.gd, "\x2a\xe4\x67\x13\x3e\x31\x5f\xc8\xb3\x3c\x85\xe4\xba\x1d\xfd\xe5\xe9\x22\xc5\x98");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialogClip)
@@ -265,7 +265,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialogClip)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xf7\x9e\x59\x23\x0b\x84\x1b\x90\x1d\x6e\x3b\xe2\x2f\x0c\x39\x1f\x95\xac\xaf\x4f");
+    RED_CHECK_SIG(drawable.gd, "\x51\x9a\xaa\x4e\xc7\x52\xcc\x5d\xf0\x68\x2a\x23\xeb\xec\x3d\x38\xe1\xcd\x75\x1d");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialogClip2)
@@ -299,7 +299,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialogClip2)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog8.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x8e\x3b\x71\xe6\x83\xd8\xae\x56\xe6\xea\xd6\x6d\x09\x40\xf7\xe9\x0d\x88\xdb\x1b");
+    RED_CHECK_SIG(drawable.gd, "\x04\xeb\x2e\x1a\x17\x55\x38\x6c\xb9\x9e\x1e\x5e\x01\x0f\x5a\x98\xe4\x6f\x4e\x0f");
 }
 
 RED_AUTO_TEST_CASE(EventWidgetOkCancel)
@@ -348,7 +348,7 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-clic-1-button-ok.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x6e\x22\xbd\x87\x7b\x9c\x93\xb3\x62\xe6\x47\x36\xae\xb0\x2d\x95\x7b\x0d\xf1\xc9");
+    RED_CHECK_SIG(drawable.gd, "\x55\x9f\xd3\xe0\xe1\xe3\x5f\x7b\xa3\xe9\xdf\x2d\x2d\x05\xc0\xf7\x2a\xe3\xd1\x05");
 
 
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
@@ -363,7 +363,7 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-clic-2-button-ok.png");
 
 
-    RED_CHECK_SIG(drawable.gd, "\xa6\x1d\x30\x14\x91\x5b\x81\xa0\xf4\x6d\x44\x30\x88\x3c\xfc\x83\x80\x79\x52\xd8");
+    RED_CHECK_SIG(drawable.gd, "\x37\xf3\x9d\xf6\x9a\xc1\x9e\x0d\xaf\xac\x29\x9a\xe7\xd1\x56\xeb\x1b\xe9\xf7\x59");
 
 
     x = flat_dialog.cancel->x() + flat_dialog.cancel->cx() / 2 ;
@@ -379,7 +379,7 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-clic-3-button-cancel.png");
 
 
-    RED_CHECK_SIG(drawable.gd, "\xe5\x54\xf4\x28\x42\xd1\xfc\xb5\xf5\x46\xe5\xb9\x18\xa5\x25\x87\x50\x8b\x5b\x97");
+    RED_CHECK_SIG(drawable.gd, "\x3f\x0d\x03\x36\xb9\xb3\x7e\xc5\x11\xe9\x6c\xff\x88\xca\xef\x03\x5f\x33\x70\xfd");
 
 
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
@@ -453,7 +453,7 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-challenge-1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x54\x86\xd7\x3a\xc9\xf6\x45\x66\x14\xe0\xe1\x0c\x4d\xdf\x84\xe5\x13\xe5\x82\x2e");
+    RED_CHECK_SIG(drawable.gd, "\x3d\xe7\xb6\x5c\x61\x8e\xc4\x9c\xbc\xf5\xe5\x32\xa9\xe8\x74\xef\x50\x60\xfd\x86");
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
