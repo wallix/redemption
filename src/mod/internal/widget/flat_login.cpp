@@ -170,13 +170,18 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
     this->error_message_label.set_wh(dim);
 
 
-    const int cbloc_h = this->login_label.cy() + offset_y + this->login_label.cy() + offset_y + this->password_label.cy() +
-                            60 + this->login_message_label.cy() + 60;
+    const int cbloc_h = this->login_message_label.cy() + 60 +
+        this->login_label.cy() + offset_y + this->login_label.cy() + offset_y + this->password_label.cy() +
+        60;
 
     const int cbloc_x = (width  - cbloc_w) / 2;
     const int cbloc_y = (height - cbloc_h) / 2;
 
-    this->error_message_label.set_xy(left + cbloc_x, top + cbloc_y);
+    this->login_message_label.set_xy(left + (width - this->login_message_label.cx()) / 2, cbloc_y);
+
+
+
+    this->error_message_label.set_xy(left + cbloc_x, top + cbloc_y + this->login_message_label.cy() + 60);
 
     this->login_label.set_xy(left + cbloc_x,
                              this->error_message_label.y() + this->error_message_label.cy() + offset_y + 4);
@@ -194,9 +199,6 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
 
     dim = this->error_message_label.get_optimal_dim();
     this->error_message_label.set_wh(this->login_edit.cx(), dim.h);
-
-
-    this->login_message_label.set_xy(left + (width - this->login_message_label.cx()) / 2, this->password_label.y() + this->password_label.cy() + 60);
 
 
     dim = this->version_label.get_optimal_dim();
