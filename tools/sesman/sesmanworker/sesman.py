@@ -187,9 +187,7 @@ class Sesman():
         self.back_selector = False
         self.target_app_rights = {}
 
-
-        self.login_message = u"Warning! Unauthorized access to this system is forbidden and will be prosecuted by law.<br><br>By accessing this system, you agree that your actions may be monitored if unauthorized usage is suspected."
-
+        self.login_message = u"Warning! Unauthorized access to this system is forbidden and will be prosecuted by law."
 
         self.shared[u'session_probe_launch_error_message'] = u''
 
@@ -965,8 +963,7 @@ class Sesman():
 
         record_warning = SESMANCONF[u'sesman'].get('record_warning', True)
         if record_warning:
-#            message =  u"Warning! Your remote session may be recorded and kept in electronic format."
-            message =  u"Welcome on WALLIX Bastion<br>--<br>Your actions could be recorded and stored in electronic format.<br>Please contact your Bastion administrator for more information."
+            message =  u"Warning! Your remote session may be recorded and kept in electronic format."
             try:
                 with open('/var/wab/etc/proxys/messages/motd.%s' % self.language) as f:
                     message = f.read().decode('utf-8')
