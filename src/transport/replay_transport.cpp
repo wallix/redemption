@@ -63,6 +63,7 @@ ReplayTransport::ReplayTransport(
 }())
 , fd_type(fd_type)
 , unchecked_packet(unchecked_packet)
+, data_pos(0)
 {
     (void)ip_address;
     (void)port;
@@ -100,7 +101,7 @@ void ReplayTransport::reschedule_timer()
     }
 }
 
-using PacketType = RecorderTransport::PacketType;
+using PacketType = RecorderFile::PacketType;
 
 void ReplayTransport::read_more_chunk()
 {

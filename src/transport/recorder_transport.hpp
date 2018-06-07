@@ -26,12 +26,10 @@
 
 #include <chrono>
 
-
 /**
- * @brief a socket transport that records all the sent packets
+ * @brief a file containin a capture
  */
-class RecorderTransport : public Transport
-{
+class RecorderFile {
 public:
 	/** @brief type of packet */
 	enum class PacketType : uint8_t
@@ -46,9 +44,26 @@ public:
 		Info,
 	};
 
-	RecorderTransport(Transport& trans, char const* filename);
+	RecorderFile(char const* filename);
 
-	~RecorderTransport() override;
+	~RecorderFile();
+
+	void write_packet(PacketType type, const_byte_array buffer);
+
+protected:
+    std::chrono::time_point<std::chrono::system_clock> start_time;
+    OutFileTransport file;
+};
+
+
+/**
+ * @brief a socket transport that records all the sent packets
+ */
+class RecorderTransport : public Transport
+{
+public:
+
+	RecorderTransport(Transport& trans, char const* filename);
 
 	void add_info(byte_array);
 
@@ -80,17 +95,17 @@ private:
 
     void do_send(const uint8_t * buffer, size_t len) override;
 
-    void write_packet(PacketType type, const_byte_array buffer);
-
 private:
-    std::chrono::time_point<std::chrono::system_clock> start_time;
     Transport& trans;
-    OutFileTransport file;
+    RecorderFile out;
 };
 
+/**
+ * @brief header of record
+ */
 struct RecorderTransportHeader
 {
-    RecorderTransport::PacketType type;
+    RecorderFile::PacketType type;
     std::chrono::milliseconds record_duration;
     uint32_t data_size;
 };
