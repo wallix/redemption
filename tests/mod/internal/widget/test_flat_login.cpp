@@ -29,7 +29,7 @@
 #include "test_only/check_sig.hpp"
 #include "test_only/mod/fake_draw.hpp"
 
-const char * LOGON_MESSAGE = "Warning! Unauthorized access to this system is forbidden and will be prosecuted by law.";
+constexpr const char * LOGON_MESSAGE = "Warning! Unauthorized access to this system is forbidden and will be prosecuted by law.";
 
 RED_AUTO_TEST_CASE(TraceFlatLogin)
 {
@@ -53,7 +53,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x9d\x55\x31\xca\x63\xab\x50\x2d\x62\xec\x13\x33\xbe\x7f\xd0\x2e\xc2\xe0\x13\x2e");
+    RED_CHECK_SIG(drawable.gd, "\x25\x88\x4b\x4b\x1a\xe5\x9d\x40\x89\xdd\x75\x93\xb2\x00\xac\x9c\xbe\xf8\x9b\xc9");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLogin2)
@@ -80,7 +80,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin2)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xbb\x6a\x39\xa0\xc6\xa4\x95\x69\x98\xb0\x44\x9b\x42\x47\x99\xe5\x82\xbb\x6d\x00");
+    RED_CHECK_SIG(drawable.gd, "\xfc\x58\x01\xeb\xaa\x5c\x2f\x70\xfb\x9e\xb5\x0d\x3f\xeb\x45\x0f\xa6\xf8\x0e\x5d");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLogin3)
@@ -130,7 +130,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin3)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x66\x07\x24\x02\xb1\x33\x7f\x6a\xbe\xaa\x66\xa0\x10\x38\x76\x33\x59\xfd\xc6\xf5");
+    RED_CHECK_SIG(drawable.gd, "\x2d\xc3\x0c\xf1\xa1\xba\x05\x03\x7d\x5a\x4c\x76\xc2\x95\x1f\x7d\xa3\x79\xdb\x86");
 
     notifier.sender = nullptr;
     notifier.event = 0;
@@ -166,7 +166,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x5c\x73\xb8\xb7\x3d\xfb\xe2\x1a\x17\x9f\x36\x29\x83\x17\x8b\xc3\xfc\x7f\xed\x69");
+    RED_CHECK_SIG(drawable.gd, "\x13\x54\xd0\xda\x67\x51\x3a\xcf\x5e\xda\x77\xe8\xb4\x84\x9e\x37\x70\x01\xc3\x94");
 
     flat_login.rdp_input_mouse(MOUSE_FLAG_MOVE,
                                flat_login.helpicon.x() + flat_login.helpicon.cx() / 2,
@@ -174,7 +174,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xb1\x74\xc3\x49\x28\xcf\xec\x11\x3b\x9a\xea\x92\x5c\x08\x85\x06\x19\xa5\x9c\x95");
+    RED_CHECK_SIG(drawable.gd, "\x0a\xfe\xe8\x1e\x5c\xa9\xcf\xbb\x91\x9b\x6a\x30\x82\x1a\xea\xb6\xe3\x88\xa5\x35");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLoginClip)
@@ -202,7 +202,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginClip)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xca\xd8\x01\x1a\xe2\x26\x5d\xb7\x91\x11\xe4\x92\xbd\x21\xb4\x32\x20\xf4\xe5\xd7");
+    RED_CHECK_SIG(drawable.gd, "\xd4\xaf\x4c\x52\x88\xf9\x44\x7f\x44\x38\xce\x4f\x2c\xd8\x96\x1d\xfa\xff\x6d\xdb");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLoginClip2)
@@ -262,4 +262,32 @@ RED_AUTO_TEST_CASE(EventWidgetOk)
 
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
+}
+
+RED_AUTO_TEST_CASE(TraceFlatLogin4)
+{
+    TestDraw drawable(800, 600);
+
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    // FlatLogin is a flat_login widget at position 0,0 in it's parent context
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
+    NotifyApi * notifier = nullptr;
+    WidgetFlatButton * extra_button = nullptr;
+
+    FlatLogin flat_login(drawable.gd, 0, 0, parent.cx(), parent.cy(), parent, notifier, "test1",
+                         "rec", "rec", "Login", "Password", "",
+                         "WARNING: Unauthorized access to this system is forbidden and will be prosecuted by law.<br><br>"
+                             "By accessing this system, you agree that your actions may be monitored if unauthorized usage is suspected.",
+                         extra_button, font,
+                         Translator{}, Theme{});
+
+    // ask to widget to redraw at it's current position
+    flat_login.rdp_input_invalidate(flat_login.get_rect());
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login4.png");
+
+    RED_CHECK_SIG(drawable.gd, "\xfe\xf8\x4c\x18\xf2\xa9\x59\x58\xb1\x78\x10\xa0\x6c\x26\xe7\xa4\x36\xcb\x0e\x8f");
 }

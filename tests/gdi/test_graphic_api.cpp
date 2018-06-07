@@ -56,14 +56,76 @@ RED_AUTO_TEST_CASE(MultiLineTextMetrics)
             "abc efg fajshfkg kf gfjg hjgsj dj, fhsg h, sg, mshg szjh gkj,"
             " s hzgskhg shzktgs t lurzywiurtyzlis uhtzsli uyzi tyz liuhtzli"
             " tyzkr tyzdkl yzdk,  ylktyzdlk dlktuh lkzhluzo huwory gzl",
-            300, out);
+            0, 300, out);
         RED_CHECK_EQUAL(75, text.height);
         RED_CHECK_EQUAL(294, text.width);
         RED_CHECK_EQUAL(
             "abc efg fajshfkg kf gfjg hjgsj dj, fhsg h,<br>"
             "sg, mshg szjh gkj, s hzgskhg shzktgs t<br>"
             "lurzywiurtyzlis uhtzsli uyzi tyz liuhtzli<br>"
-            "tyzkr tyzdkl yzdk, ylktyzdlk dlktuh<br>lkzhluzo huwory gzl",
+            "tyzkr tyzdkl yzdk, ylktyzdlk dlktuh<br>"
+            "lkzhluzo huwory gzl",
+            out);
+    }
+}
+
+RED_AUTO_TEST_CASE(MultiLineTextMetricsEx)
+{
+    std::string out;
+
+    {
+        gdi::MultiLineTextMetricsEx text(font,
+            "Unauthorized access to this system is forbidden and will be prosecuted by law. By accessing this system, you agree that your actions may be monitored if unauthorized usage is suspected.",
+            0, 300, out);
+        RED_CHECK_EQUAL(75, text.height);
+        RED_CHECK_EQUAL(280, text.width);
+        RED_CHECK_EQUAL(
+            "Unauthorized access to this system is<br>"
+            "forbidden and will be prosecuted by law.<br>"
+            "By accessing this system, you agree that<br>"
+            "your actions may be monitored if<br>"
+            "unauthorized usage is suspected.",
+            out);
+    }
+}
+
+RED_AUTO_TEST_CASE(MultiLineTextMetricsEx1)
+{
+    std::string out;
+
+    {
+        gdi::MultiLineTextMetricsEx text(font,
+            "Unauthorized access to this system is forbidden and will be prosecuted by law.<br>By accessing this system, you agree that your actions may be monitored if unauthorized usage is suspected.",
+            0, 300, out);
+        RED_CHECK_EQUAL(75, text.height);
+        RED_CHECK_EQUAL(280, text.width);
+        RED_CHECK_EQUAL(
+            "Unauthorized access to this system is<br>"
+            "forbidden and will be prosecuted by law.<br>"
+            "By accessing this system, you agree that<br>"
+            "your actions may be monitored if<br>"
+            "unauthorized usage is suspected.",
+            out);
+    }
+}
+
+RED_AUTO_TEST_CASE(MultiLineTextMetricsEx2)
+{
+    std::string out;
+
+    {
+        gdi::MultiLineTextMetricsEx text(font,
+            "Unauthorized access to this system is forbidden and will be prosecuted by law.<br><br>By accessing this system, you agree that your actions may be monitored if unauthorized usage is suspected.",
+            0, 300, out);
+        RED_CHECK_EQUAL(90, text.height);
+        RED_CHECK_EQUAL(280, text.width);
+        RED_CHECK_EQUAL(
+            "Unauthorized access to this system is<br>"
+            "forbidden and will be prosecuted by law.<br>"
+            "<br>"
+            "By accessing this system, you agree that<br>"
+            "your actions may be monitored if<br>"
+            "unauthorized usage is suspected.",
             out);
     }
 }

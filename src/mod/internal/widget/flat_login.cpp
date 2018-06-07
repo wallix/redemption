@@ -24,6 +24,11 @@
 #include "keyboard/keymap2.hpp"
 #include "gdi/graphic_api.hpp"
 
+enum {
+    WIDGET_MULTILINE_BORDER_X = 10,
+    WIDGET_MULTILINE_BORDER_Y = 4
+};
+
 FlatLogin::FlatLogin(
     gdi::GraphicApi & drawable,
     int16_t left, int16_t top, uint16_t width, uint16_t height, Widget & parent,
@@ -55,7 +60,8 @@ FlatLogin::FlatLogin(
                     font, label_text_password, (width <= 640),
                     -1u, 1, 1, true)
     , login_message_label(drawable, *this, nullptr, label_login_message, -10,
-             theme.global.fgcolor, theme.global.bgcolor, font, 10, 2)
+             theme.global.fgcolor, theme.global.bgcolor, font,
+             WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
     , img(drawable,
             theme.global.logo ? theme.global.logo_path.c_str() :
             app_path(AppPath::LoginWabBlue), *this, nullptr, -10)
@@ -66,13 +72,6 @@ FlatLogin::FlatLogin(
                 theme.global.fgcolor, theme.global.bgcolor,
                 theme.global.focus_color, 2, font, 6, 2)
     , extra_button(extra_button)
-    // , frame(drawable, Rect((width - 300) / 2, 10, 300, 250), parent, notifier, -17)
-    // , wimage(drawable, 0, 0, SHARE_PATH "/Philips_PM5544_640.bmp",
-    //          parent, notifier, -17)
-    // , vbar(drawable, parent, notifier, this->theme.selector_selected.bgcolor,
-    //        this->theme.selector_line1.bgcolor, this->theme.selector_focus.bgcolor, -17)
-    // , hbar(drawable, parent, notifier, this->theme.selector_selected.bgcolor,
-    //        this->theme.selector_line1.bgcolor, this->theme.selector_focus.bgcolor, -17)
     , font(font)
     , login_message(label_login_message)
     , tr(tr)
@@ -104,9 +103,6 @@ FlatLogin::FlatLogin(
 
     this->helpicon.tab_flag = IGNORE_TAB;
     this->helpicon.focus_flag = IGNORE_FOCUS;
-
-    this->fixed_format_login_message =
-        (this->login_message.find("<br>") != std::string::npos);
 
     this->move_size_widget(left, top, width, height);
 }
@@ -153,33 +149,29 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
     dim = this->login_edit.get_optimal_dim();
     this->login_edit.set_wh((width >= 420) ? 400 : width - 20, dim.h);
 
+    const uint16_t offset_y = this->login_edit.cy();
+
     this->password_edit.use_title(width < 640);
     dim = this->password_edit.get_optimal_dim();
     this->password_edit.set_wh((width >= 420) ? 400 : width - 20, dim.h);
 
     const int cbloc_w = std::max(this->login_label.cx()    + 10 + this->login_edit.cx(),
-                                    this->password_label.cx() + 10 + this->password_edit.cx());
+                                 this->password_label.cx() + 10 + this->password_edit.cx());
 
 
     dim = this->login_message_label.get_optimal_dim();
-    if (this->fixed_format_login_message) {
-        this->login_message_label.set_wh(dim);
-    }
-    else {
-        std::string formatted_login_message;
-        gdi::MultiLineTextMetrics mltm(this->font, this->login_message.c_str(),
-            cbloc_w - 20, formatted_login_message);
-        this->login_message_label.set_wh(cbloc_w, std::max(mltm.height, int(dim.h)) + dim.h);
-        this->login_message_label.set_text(formatted_login_message.c_str());
-    }
+    std::string formatted_login_message;
+    gdi::MultiLineTextMetricsEx mltm_ex(this->font, this->login_message.c_str(), WIDGET_MULTILINE_BORDER_Y,
+        cbloc_w - WIDGET_MULTILINE_BORDER_X * 2, formatted_login_message);
+    this->login_message_label.set_wh(mltm_ex.width + WIDGET_MULTILINE_BORDER_X * 2, mltm_ex.height + WIDGET_MULTILINE_BORDER_Y * 2);
+    this->login_message_label.set_text(formatted_login_message.c_str());
 
     dim = this->error_message_label.get_optimal_dim();
     this->error_message_label.set_wh(dim);
 
 
-    const int cbloc_h = this->login_label.cy() + 20 + this->login_label.cy() + 20 + this->password_label.cy() +
+    const int cbloc_h = this->login_label.cy() + offset_y + this->login_label.cy() + offset_y + this->password_label.cy() +
                             60 + this->login_message_label.cy() + 60;
-
 
     const int cbloc_x = (width  - cbloc_w) / 2;
     const int cbloc_y = (height - cbloc_h) / 2;
@@ -187,10 +179,10 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
     this->error_message_label.set_xy(left + cbloc_x, top + cbloc_y);
 
     this->login_label.set_xy(left + cbloc_x,
-                                this->error_message_label.y() + this->error_message_label.cy() + 20);
+                             this->error_message_label.y() + this->error_message_label.cy() + offset_y + 4);
 
     this->password_label.set_xy(left + cbloc_x,
-                                this->login_label.y() + this->login_label.cy() + 20);
+                                this->login_label.y() + this->error_message_label.cy() + offset_y + 4);
 
     const int labels_w = std::max(this->password_label.cx(), this->login_label.cx());
 
@@ -203,7 +195,7 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
     this->error_message_label.set_wh(this->login_edit.cx(), dim.h);
 
 
-    this->login_message_label.set_xy(left + cbloc_x, this->password_label.y() + this->password_label.cy() + 60);
+    this->login_message_label.set_xy(left + (width - this->login_message_label.cx()) / 2, this->password_label.y() + this->password_label.cy() + 60);
 
 
     dim = this->version_label.get_optimal_dim();

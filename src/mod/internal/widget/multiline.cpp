@@ -105,7 +105,7 @@ void WidgetMultiLine::rdp_input_invalidate(Rect clip)
     if (!rect_intersect.isempty()) {
         this->drawable.begin_update();
 
-        int dy = this->y() + this->y_text;
+        int dy = this->y();
         this->drawable.draw(RDPOpaqueRect(rect_intersect, encode_color24()(this->bg_color)), this->get_rect(), gdi::ColorCtx::depth24());
         for (line_t * line = this->lines; line->str; ++line) {
             dy += this->y_text;
@@ -124,7 +124,7 @@ void WidgetMultiLine::rdp_input_invalidate(Rect clip)
                                                     this->cy_text
                                         ))
                 );
-            dy += this->y_text + this->cy_text;
+            dy += this->cy_text;
         }
 
         this->drawable.end_update();
@@ -146,5 +146,5 @@ Dimension WidgetMultiLine::get_optimal_dim()
         }
     }
     return Dimension(max_line_width + this->x_text * 2,
-        (max_line_height + this->y_text * 2) * (line - &this->lines[0]));
+        (max_line_height + this->y_text) * (line - &this->lines[0]));
 }
