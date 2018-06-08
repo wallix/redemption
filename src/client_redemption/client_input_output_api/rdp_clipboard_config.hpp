@@ -40,8 +40,6 @@ enum : uint16_t {
 
 struct RDPClipboardConfig {
 
-    uint32_t channel_flags = CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-
     // Arbitrary picture resolution ratio, a 40 value empirically keep native resolution.
     // Data are last if to low.
 	double arbitrary_scale = 40;

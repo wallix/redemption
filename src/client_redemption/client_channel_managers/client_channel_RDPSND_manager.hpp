@@ -330,7 +330,7 @@ public:
                                                     , chunk_to_send
                                                     , out_stream.get_offset()
                                                     , CHANNELS::CHANNEL_FLAG_LAST |
-                                                    CHANNELS::CHANNEL_FLAG_FIRST
+                                                      CHANNELS::CHANNEL_FLAG_FIRST
                                                     );
 
                     if (bool(this->verbose & RDPVerbose::rdpsnd)) {

@@ -157,10 +157,15 @@ public:
 
     uint32_t current_dir_id = 0;
     std::vector<std::string> elem_in_path;
-
-
-
     uint16_t server_capability_number;
+
+    uint32_t ioCode1 = 0;
+    uint32_t extendedPDU = 0;
+    uint32_t extraFlags1 = 0;
+    uint32_t SpecialTypeDeviceCap = 0;
+    uint32_t general_capability_version = 0;
+
+    const uint32_t channel_flags;
 
 
 
@@ -173,6 +178,12 @@ public:
       , next_file_id(0)
       , last_read_data_portion_length(0)
       , server_capability_number(0)
+      , ioCode1(config.ioCode1)
+      , extendedPDU(config.extendedPDU)
+      , extraFlags1(config.extraFlags1)
+      , SpecialTypeDeviceCap(config.SpecialTypeDeviceCap)
+      , general_capability_version(config.general_capability_version)
+      , channel_flags(CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST)
     {
         this->fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE]   = config.enable_printer_type;
         this->fileSystemCapacity[rdpdr::CAP_DRIVE_TYPE]     = config.enable_drive_type;
@@ -183,47 +194,6 @@ public:
             DeviceData hard1(config.device_list[i].name, i+1, config.device_list[i].type);
             device_list.push_back(hard1);
         }
-
-//         std::string tmp(this->client->SHARE_DIR);
-//         int pos(tmp.find('/'));
-//
-// //         this->devicesCount = 0;
-//
-//         while (pos != -1) {
-//             tmp = tmp.substr(pos+1, tmp.length());
-//             pos = tmp.find('/');
-//         }
-//         size_t size(tmp.size());
-//         if (size > 7) {
-//             size = 7;
-//         }
-//
-//         char final_name[8] = {0};
-//
-//
-//         for (size_t i = 0; i < size; i++) {
-//             final_name[i] = tmp.data()[i];
-//         }
-//
-//         DeviceData hard1(final_name, 1, rdpdr::RDPDR_DTYP_FILESYSTEM);
-//         device_list.push_back(hard1);
-//         this->devices[this->devicesCount].ID = 1;
-//         this->devices[this->devicesCount].type = rdpdr::RDPDR_DTYP_FILESYSTEM;
-//         this->devicesCount++;
-
-
-//         std::string name_printer("printer");
-//         const char * char_name_printer = name_printer.c_str();
-//         size = name_printer.size();
-//         if (size > 7) {
-//             size = 7;
-//         }
-//         for (size_t i = 0; i < size; i++) {
-//             this->devices[this->devicesCount].name[i] = char_name_printer[i];
-//         }
-//         this->devices[this->devicesCount].ID = 2;
-//         this->devices[this->devicesCount].type = rdpdr::RDPDR_DTYP_PRINT;
-//         this->devicesCount++;
     }
 
     ~ClientChannelRDPDRManager() {
@@ -289,8 +259,7 @@ public:
                         this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                         , chunk_to_send
                                                         , total_length
-                                                        , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                        , this->channel_flags
                                                         );
                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                             LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Announce Reply");
@@ -388,15 +357,12 @@ public:
                         rdpdr::GeneralCapabilitySet general_capability_set(
                                 0x2,        // osType
                                 this->protocol_minor_version,        // protocolMinorVersion -
-                                rdpdr::SUPPORT_ALL_REQUEST,     // ioCode1
-                                rdpdr::RDPDR_DEVICE_REMOVE_PDUS |           // extendedPDU -
-                                    rdpdr::RDPDR_CLIENT_DISPLAY_NAME_PDU  |
-                                    rdpdr::RDPDR_USER_LOGGEDON_PDU,
-                                rdpdr::ENABLE_ASYNCIO,        // extraFlags1
-                                0,                          // SpecialTypeDeviceCap
-                                rdpdr::GENERAL_CAPABILITY_VERSION_02
+                                this->ioCode1,                     // ioCode1
+                                this->extendedPDU,
+                                this->extraFlags1,                     // extraFlags1
+                                this->SpecialTypeDeviceCap,                     // SpecialTypeDeviceCap
+                                this->general_capability_version
                             );
-
                         general_capability_set.emit(out_stream);
 
                         if (this->fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE] == true) {
@@ -517,10 +483,6 @@ public:
                         rdpdr::DeviceIORequest deviceIORequest;
                         deviceIORequest.receive(chunk);
 
-//                         if (deviceIORequest.DeviceId() == 2) {
-//                             this->verbose = RDPVerbose::rdpdr;
-//                         }
-
                         StaticOutStream<1024> out_stream;
                         rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
                                                         , rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION);
@@ -547,7 +509,7 @@ public:
                                                                     , chunk_to_send
                                                                     , out_stream.get_offset()
                                                                     , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                                      CHANNELS::CHANNEL_FLAG_FIRST
                                                                     );
                             }
                                 break;
@@ -688,7 +650,7 @@ public:
                                                                             , chunk_to_send
                                                                             , out_stream.get_offset()
                                                                             , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                            CHANNELS::CHANNEL_FLAG_FIRST
+                                                                              CHANNELS::CHANNEL_FLAG_FIRST
                                                                             );
                                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                             LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Standard Information Response");
@@ -728,7 +690,7 @@ public:
                                                                                 , chunk_to_send
                                                                                 , out_stream.get_offset()
                                                                                 , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                                    CHANNELS::CHANNEL_FLAG_FIRST
+                                                                                  CHANNELS::CHANNEL_FLAG_FIRST
                                                                                 );
 
                                             if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -762,7 +724,7 @@ public:
                                                                     , chunk_to_send
                                                                     , out_stream.get_offset()
                                                                     , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                                      CHANNELS::CHANNEL_FLAG_FIRST
                                                                     );
                                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                     LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Close Response");
@@ -962,9 +924,9 @@ public:
                                         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
                                         this->client->mod->send_to_mod_channel( channel_names::rdpdr
-                                                                            , chunk_to_send
-                                                                            , out_stream.get_offset()
-                                                                            , CHANNELS::CHANNEL_FLAG_LAST |
+                                                                              , chunk_to_send
+                                                                              , out_stream.get_offset()
+                                                                              , CHANNELS::CHANNEL_FLAG_LAST |
                                                                                 CHANNELS::CHANNEL_FLAG_FIRST
                                                                             );
                                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
