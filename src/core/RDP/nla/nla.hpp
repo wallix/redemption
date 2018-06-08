@@ -677,9 +677,7 @@ private:
 
         if (output_buffer.Buffer.size() > 0) {
             // copy or set reference ? BStream
-            this->negoToken.init(output_buffer.Buffer.size());
-            this->negoToken.copy(output_buffer.Buffer.get_data(),
-                                    output_buffer.Buffer.size());
+            this->negoToken.copy(output_buffer.Buffer);
 
             // #ifdef WITH_DEBUG_CREDSSP
             //             LOG(LOG_ERR, "Sending Authentication Token");
@@ -727,8 +725,7 @@ private:
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
         }
-        this->client_auth_data.input_buffer.Buffer.init(this->negoToken.size());
-        this->client_auth_data.input_buffer.Buffer.copy(this->negoToken.get_data(), this->negoToken.size());
+        this->client_auth_data.input_buffer.Buffer.copy(this->negoToken);
 
         this->client_auth_data.have_input_buffer = true;
 
@@ -893,22 +890,22 @@ public:
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspServer::recv");
         }
-        uint8_t head[4] = {};
-        uint8_t * point = head;
+        uint8_t buffer[65536];
+        uint8_t * point = buffer;
         size_t length = 0;
         this->trans.recv_boom(point, 2);
         point += 2;
-        uint8_t byte = head[1];
+        uint8_t byte = buffer[1];
         if (byte & 0x80) {
             byte &= ~(0x80);
 
             if (byte == 1) {
                 this->trans.recv_boom(point, byte);
-                length = head[2];
+                length = buffer[2];
             }
             else if (byte == 2) {
                 this->trans.recv_boom(point, byte);
-                length = (head[2] << 8) | head[3];
+                length = (buffer[2] << 8) | buffer[3];
                 if (length > 0xFFFF - 4) {
                     return -1;
                 }
@@ -922,11 +919,9 @@ public:
             byte = 0;
         }
 
-        uint8_t buffer[65536];
-        OutStream ts_request_received(buffer, 2 + byte + length);
-        ts_request_received.out_copy_bytes(head, 2 + byte);
-        this->trans.recv_boom(ts_request_received.get_current(), length);
-        InStream in_stream(ts_request_received.get_data(), ts_request_received.get_capacity());
+        size_t const offset = 2 + byte;
+        this->trans.recv_boom(buffer + offset, length);
+        InStream in_stream(buffer, offset + length);
         this->ts_request.recv(in_stream);
 
         // hexdump_c(this->pubKeyAuth.get_data(), this->pubKeyAuth.size());
@@ -935,7 +930,6 @@ public:
     }
 
     int credssp_server_authenticate() {
-       SEC_STATUS status;
        if (this->verbose) {
            LOG(LOG_INFO, "rdpCredsspServer::server_authenticate");
        }
@@ -948,7 +942,7 @@ public:
        this->InitSecurityInterface(NTLM_Interface);
 
        SecPkgInfo packageInfo;
-       status = this->table->QuerySecurityPackageInfo(&packageInfo);
+       SEC_STATUS status = this->table->QuerySecurityPackageInfo(&packageInfo);
 
        if (status != SEC_E_OK) {
            LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X", status);
@@ -1006,9 +1000,7 @@ public:
            if (this->credssp_recv() < 0)
                return -1;
 
-           input_buffer.Buffer.init(this->negoToken.size());
-           input_buffer.Buffer.copy(this->negoToken.get_data(),
-                                    input_buffer.Buffer.size());
+           input_buffer.Buffer.copy(this->negoToken);
 
            if (this->negoToken.size() < 1) {
                LOG(LOG_ERR, "CredSSP: invalid negoToken!");
@@ -1024,9 +1016,7 @@ public:
            status = this->table->AcceptSecurityContext(&input_buffer_desc, fContextReq,
                                                        &output_buffer_desc);
 
-           this->negoToken.init(output_buffer.Buffer.size());
-           this->negoToken.copy(output_buffer.Buffer.get_data(),
-                                output_buffer.Buffer.size());
+           this->negoToken.copy(output_buffer.Buffer);
 
            if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED)) {
                this->table->CompleteAuthToken(&output_buffer_desc);
