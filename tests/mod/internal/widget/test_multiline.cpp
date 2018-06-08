@@ -47,7 +47,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine)
     int16_t x = 0;
     int16_t y = 0;
     int xtext = 4;
-    int ytext = 1;
+    int ytext = 2;
 
     /* TODO
      * I believe users of this widget may wish to control text position and behavior inside rectangle

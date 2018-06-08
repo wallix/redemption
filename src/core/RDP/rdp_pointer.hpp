@@ -659,7 +659,7 @@ public:
 
     Pointer(uint8_t Bpp, CursorSize d, Hotspot hs, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask,
                    int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max)
-        : BasePointer(CursorSize(std::min<size_t>(size_t(d.width), size_t(32))+(std::min<size_t>(size_t(d.width), size_t(32))&1),d.height), hs)
+        : BasePointer(CursorSize(32,d.height), hs)
     {
     // VNC Pointer format
     // ==================
@@ -677,7 +677,7 @@ public:
     // pixel in the cursor is valid.
 
        size_t minheight = std::min<size_t>(size_t(d.height), size_t(32));
-       size_t minwidth = std::min<size_t>(size_t(d.width), size_t(32));
+       size_t minwidth = 32;
 
        size_t target_offset_line = 0;
        size_t target_mask_offset_line = 0;
@@ -687,13 +687,18 @@ public:
 
 //       LOG(LOG_INFO, "r%u rs<<%u g%u gs<<%u b%u bs<<%u", red_max, red_shift, green_max, green_shift, blue_max, blue_shift);
        for (size_t y = 0 ; y < minheight ; y++){
-            for (size_t x = 0 ; x < minwidth ; x++){
+            for (size_t x = 0 ; x < 32 ; x++){
                 const size_t target_offset = target_offset_line +x*3;
                 const size_t source_offset = source_offset_line + x*Bpp;
                 unsigned pixel = 0;
-                for(size_t i = 0 ; i < Bpp ; i++){
-//                    pixel = (pixel<<8) + vncdata[source_offset+Bpp-i-1];
-                    pixel = (pixel<<8) + vncdata[source_offset+i];
+                if (x < d.width) {
+                    for(size_t i = 0 ; i < Bpp ; i++){
+    //                    pixel = (pixel<<8) + vncdata[source_offset+Bpp-i-1];
+                        pixel = (pixel<<8) + vncdata[source_offset+i];
+                    }
+                }
+                else {
+                    pixel = 0;
                 }
                 const unsigned red = (pixel >> red_shift) & red_max;
                 const unsigned green = (pixel >> green_shift) & green_max;
@@ -703,18 +708,25 @@ public:
                 this->data[target_offset+1] = (green << 2) | (green >> 4);
                 this->data[target_offset+2] = (blue << 3) | (blue >> 2);
             }
-            for (size_t xx = 0 ; xx*8 < minwidth ; xx++){
+            for (size_t xx = 0 ; xx < 4 ; xx++){
 //                LOG(LOG_INFO, "y=%u xx=%u source_mask_offset=%u target_mask_offset=%u")";
-                this->mask[target_mask_offset_line+xx] = 0xFF ^ vncmask[source_mask_offset_line+xx];
+                if (xx < ::nbbytes(d.width)){
+                    this->mask[target_mask_offset_line+xx] = 0xFF ^ vncmask[source_mask_offset_line+xx];
+                }
+                else {
+                    this->mask[target_mask_offset_line+xx] = 0xFF;
+                }
             }
             if ((minwidth % 8) != 0){
                 this->mask[target_mask_offset_line+::nbbytes(minwidth)-1] |= (0xFF>>(minwidth % 8));
             }
-            target_offset_line += (minwidth + (minwidth & 1))*3;
-            target_mask_offset_line += ::nbbytes(minwidth);
+            target_offset_line += 32*3;
+            target_mask_offset_line += 4;
             source_offset_line -= d.width*Bpp;
             source_mask_offset_line -= ::nbbytes(d.width);
        }
+       this->dimensions.width = 32;
+       LOG(LOG_INFO, "width=%u height=%u", d.width, d.height);
     }
 
 
