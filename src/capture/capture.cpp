@@ -1738,6 +1738,8 @@ void Capture::visibility_rects_event(Rect const & rect_) {
 
 Rect Capture::get_joint_visibility_rect() const
 {
+LOG(LOG_INFO, "> > > > > Capture::get_joint_visibility_rect(): ...");
+
     Rect joint_visibility_rect;
 
     std::for_each(
@@ -1757,13 +1759,15 @@ Rect Capture::get_joint_visibility_rect() const
                             assert(window.fields_present_flags &
                                 RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET);
 
-                            if (!(window.style & WS_ICONIC) &&
-                                ((window.style & WS_VISIBLE) ||
-                                 ((window.show_state != SW_FORCEMINIMIZE) &&
-                                  (window.show_state != SW_HIDE) &&
-                                  (window.show_state != SW_MINIMIZE)) ||
-                                  // window is ctreated before recording starts
-                                  ((!window.style && !window.show_state)))) {
+                            if ((((window.style & WS_DISABLED) || (window.style & WS_SYSMENU) || (window.style & WS_VISIBLE)) &&
+                                 !(window.style & WS_ICONIC) &&
+                                 (window.show_state != SW_FORCEMINIMIZE) &&
+                                 (window.show_state != SW_HIDE) &&
+                                 (window.show_state != SW_MINIMIZE)) ||
+                                // window is ctreated before recording starts
+                                (!window.style && !window.show_state)) {
+LOG(LOG_INFO, "+ + + + + Rect=%s ShowState=0x%X Style=0x%X",
+    window_visibility_rect.rect.offset(window.visible_offset_x, window.visible_offset_y), window.show_state, window.style);
                                     joint_visibility_rect =
                                         joint_visibility_rect.disjunct(
                                             window_visibility_rect.rect.offset(
@@ -1771,16 +1775,27 @@ Rect Capture::get_joint_visibility_rect() const
                                                     window.visible_offset_y
                                                 ));
                             }
+else {
+LOG(LOG_INFO, "- - - - - Rect=%s ShowState=0x%X Style=0x%X",
+    window_visibility_rect.rect.offset(window.visible_offset_x, window.visible_offset_y), window.show_state, window.style);
+}
+
                         }
                     );
             }
         );
+
+LOG(LOG_INFO, "> > > > > Capture::get_joint_visibility_rect(): Done.");
 
     return joint_visibility_rect;
 }
 
 void Capture::draw_impl(const RDP::RAIL::NewOrExistingWindow & cmd)
 {
+LOG(LOG_INFO, "> > > > > Capture::draw_impl(NewOrExistingWindow): ...");
+
+    cmd.log(LOG_INFO);
+
     if (this->capture_drawable) {
         this->graphic_api->draw(cmd);
     }
@@ -1851,10 +1866,14 @@ void Capture::draw_impl(const RDP::RAIL::NewOrExistingWindow & cmd)
     Rect joint_visibility_rect = this->get_joint_visibility_rect();
 
     this->visibility_rects_event(joint_visibility_rect);
+
+LOG(LOG_INFO, "> > > > > Capture::draw_impl(NewOrExistingWindow): Done.");
 }
 
 void Capture::draw_impl(const RDP::RAIL::DeletedWindow & cmd)
 {
+LOG(LOG_INFO, "> > > > > Capture::draw_impl(DeletedWindow): ...");
+
     if (this->capture_drawable) {
         this->graphic_api->draw(cmd);
     }
@@ -1881,6 +1900,8 @@ void Capture::draw_impl(const RDP::RAIL::DeletedWindow & cmd)
     Rect joint_visibility_rect = this->get_joint_visibility_rect();
 
     this->visibility_rects_event(joint_visibility_rect);
+
+LOG(LOG_INFO, "> > > > > Capture::draw_impl(DeletedWindow): Done.");
 }
 
 void Capture::set_pointer_display() {
