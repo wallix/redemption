@@ -31,7 +31,7 @@ FlatForm::FlatForm(
     gdi::GraphicApi& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
     Widget & parent, NotifyApi* notifier, int group_id,
     Font const & font, Theme const & theme, Translation::language_t lang,
-    int flags, int duration_max
+    unsigned flags, int duration_max
 )
     : FlatForm(drawable, parent, notifier, group_id, font, theme, lang, flags, duration_max)
 {
@@ -42,7 +42,7 @@ FlatForm::FlatForm(
     gdi::GraphicApi& drawable,
     Widget & parent, NotifyApi* notifier, int group_id,
     Font const & font, Theme const & theme, Translation::language_t lang,
-    int flags, int duration_max
+    unsigned flags, int duration_max
 )
     : WidgetParent(drawable, parent, notifier, group_id)
     , warning_msg(drawable, *this, nullptr, "", group_id,

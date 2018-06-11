@@ -185,6 +185,7 @@ class Sesman():
         self.allow_back_selector = SESMANCONF[u'sesman'].get('allow_back_to_selector',
                                                              True)
         self.back_selector = False
+        self.hide_approval_back_selector = False
         self.target_app_rights = {}
 
         self.login_message = u"Warning! Unauthorized access to this system is forbidden and will be prosecuted by law."
@@ -678,6 +679,7 @@ class Sesman():
 
         Logger().info(u"get_service")
         self.back_selector = False
+        self.hide_approval_back_selector = True
         (_status, _error,
          wab_login, target_login, target_device,
          self.target_service_name, self.target_group,
@@ -824,6 +826,7 @@ class Sesman():
                         return False, u"Unexpected error in selector pagination"
                     if self.allow_back_selector:
                         self.back_selector = True
+                    self.hide_approval_back_selector = False
                 elif len(services) == 1:
                     Logger().info(u"service len = 1 %s" % str(services))
                     s = services[0]
@@ -1187,12 +1190,14 @@ class Sesman():
             flag = self._get_rf_flags(request_fields)
             # duration_max is in minutes
             duration_max =  self._get_rf_duration_max(request_fields) / 60
+        if self.hide_approval_back_selector:
+            flag |= 0x10000
         if status == APPROVAL_NONE:
             tosend["showform"] = True
-            tosend["formflag"] = flag
             tosend["duration_max"] = duration_max
         else:
             tosend["showform"] = False
+        tosend["formflag"] = flag
         self.send_data(tosend)
 
     def start(self):

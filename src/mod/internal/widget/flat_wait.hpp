@@ -47,6 +47,7 @@ public:
 
 private:
     BGRColor bg_color;
+    bool hide_back_to_selector;
 
 public:
     FlatWait(gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
@@ -54,7 +55,7 @@ public:
              const char* caption, const char * text, int group_id,
              WidgetFlatButton * extra_button,
              Font const & font, Theme const & theme, Translation::language_t lang,
-             bool showform = false, int required = FlatForm::NONE, int duration_max = 0);
+             bool showform = false, unsigned flags = FlatForm::NONE, int duration_max = 0);
 
     ~FlatWait() override;
 
