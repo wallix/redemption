@@ -284,8 +284,7 @@ public:
                         this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                             , chunk_to_send
                                                             , total_length
-                                                            , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                            CHANNELS::CHANNEL_FLAG_FIRST
+                                                            , this->channel_flags
                                                             );
                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                             LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Name Request");
@@ -446,8 +445,7 @@ public:
                         this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                         , chunk_to_send
                                                         , total_length
-                                                        , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                        , this->channel_flags
                                                         );
                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                             LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Device List Announce Request");
@@ -508,8 +506,7 @@ public:
                                 this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                     , chunk_to_send
                                                                     , out_stream.get_offset()
-                                                                    , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                      CHANNELS::CHANNEL_FLAG_FIRST
+                                                                    , this->channel_flags
                                                                     );
                             }
                                 break;
@@ -570,8 +567,7 @@ public:
                                 this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                     , chunk_to_send
                                                                     , out_stream.get_offset()
-                                                                    , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                    CHANNELS::CHANNEL_FLAG_FIRST
+                                                                    , this->channel_flags
                                                                     );
 
                                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -616,8 +612,7 @@ public:
                                         this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                             , chunk_to_send
                                                                             , out_stream.get_offset()
-                                                                            , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                            CHANNELS::CHANNEL_FLAG_FIRST
+                                                                            , this->channel_flags
                                                                             );
                                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                             LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Basic Query Information Response");
@@ -649,8 +644,7 @@ public:
                                         this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                             , chunk_to_send
                                                                             , out_stream.get_offset()
-                                                                            , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                              CHANNELS::CHANNEL_FLAG_FIRST
+                                                                            , this->channel_flags
                                                                             );
                                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                             LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Standard Information Response");
@@ -689,8 +683,7 @@ public:
                                             this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                                 , chunk_to_send
                                                                                 , out_stream.get_offset()
-                                                                                , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                                  CHANNELS::CHANNEL_FLAG_FIRST
+                                                                                , this->channel_flags
                                                                                 );
 
                                             if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -723,8 +716,7 @@ public:
                                 this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                     , chunk_to_send
                                                                     , out_stream.get_offset()
-                                                                    , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                      CHANNELS::CHANNEL_FLAG_FIRST
+                                                                    , this->channel_flags
                                                                     );
                                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                     LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Close Response");
@@ -926,8 +918,7 @@ public:
                                         this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                               , chunk_to_send
                                                                               , out_stream.get_offset()
-                                                                              , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                                CHANNELS::CHANNEL_FLAG_FIRST
+                                                                              , this->channel_flags
                                                                             );
                                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                             LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Directory Response");
@@ -1073,8 +1064,7 @@ public:
                                     this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                         , chunk_to_send
                                                                         , out_stream.get_offset()
-                                                                        , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                            CHANNELS::CHANNEL_FLAG_FIRST
+                                                                        , this->channel_flags
                                                                         );
                                     if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Volume Information Response");
@@ -1116,8 +1106,7 @@ public:
                                     this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                         , chunk_to_send
                                                                         , out_stream.get_offset()
-                                                                        , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                            CHANNELS::CHANNEL_FLAG_FIRST
+                                                                        , this->channel_flags
                                                                         );
                                     if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Write Response");
@@ -1210,8 +1199,7 @@ public:
                                     this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                     , chunk_to_send
                                                                     , out_stream.get_offset()
-                                                                    , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                    CHANNELS::CHANNEL_FLAG_FIRST
+                                                                    , this->channel_flags
                                                                     );
                                     if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Client Drive Set Information Response");
@@ -1272,8 +1260,7 @@ public:
                                     this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                         , chunk_to_send
                                                                         , out_stream.get_offset()
-                                                                        , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                                        , this->channel_flags
                                                                         );
                                 }
                                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
