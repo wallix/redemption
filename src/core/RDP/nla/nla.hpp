@@ -36,10 +36,10 @@
 
 #define NLA_PKG_NAME NTLMSP_NAME
 
-/* CredSSP Client-To-Server Binding Hash\0 */
+/* CredSSP Client-To-Server Binding Hash */
 static const uint8_t client_server_hash_magic[] =
     "CredSSP Client-To-Server Binding Hash";
-/* CredSSP Server-To-Client Binding Hash\0 */
+/* CredSSP Server-To-Client Binding Hash */
 static const uint8_t server_client_hash_magic[] =
     "CredSSP Server-To-Client Binding Hash";
 static const size_t CLIENT_NONCE_LENTH = 32;
