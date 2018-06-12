@@ -21,8 +21,10 @@
 #pragma once
 
 enum {
+    WS_DISABLED = 0x08000000L,
     WS_ICONIC   = 0x20000000L,  // The window is initially minimized. Same as the WS_MINIMIZE style.
     WS_MINIMIZE = WS_ICONIC,
+    WS_SYSMENU  = 0x00080000L,
     WS_VISIBLE  = 0x10000000L   // The window is initially visible.
 };
 

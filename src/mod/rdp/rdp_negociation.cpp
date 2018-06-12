@@ -1480,7 +1480,7 @@ bool RdpNegociation::get_license(InStream & stream)
         }
 
         if (sec.payload.get_current() != sec.payload.get_data_end()){
-            LOG(LOG_ERR, "all data should have been consumed %s:%d tag = 0x%x", __FILE__, __LINE__, flic.tag);
+            LOG(LOG_ERR, "RdpNego: all data should have been consumed, tag = 0x%x", flic.tag);
             throw Error(ERR_SEC);
         }
     }

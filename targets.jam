@@ -5710,6 +5710,213 @@ explicit tests/utils/winpr ;
 alias tests/utils/winpr :
   tests/utils/winpr/test_pattern
 ;
+explicit tests/acl.rec ;
+alias tests/acl.rec :
+  tests/acl
+;
+explicit tests/capture/ocr/locale.rec ;
+alias tests/capture/ocr/locale.rec :
+  tests/capture/ocr/locale
+;
+explicit tests/capture.rec ;
+alias tests/capture.rec :
+  tests/capture
+  tests/capture/utils.rec
+;
+explicit tests/capture/utils.rec ;
+alias tests/capture/utils.rec :
+  tests/capture/utils
+;
+explicit tests/client_mods.rec ;
+alias tests/client_mods.rec :
+  tests/client_mods
+;
+explicit tests/client_redemption/client_channel_managers.rec ;
+alias tests/client_redemption/client_channel_managers.rec :
+  tests/client_redemption/client_channel_managers
+;
+explicit tests/core/FSCC.rec ;
+alias tests/core/FSCC.rec :
+  tests/core/FSCC
+;
+explicit tests/core/RDP/caches.rec ;
+alias tests/core/RDP/caches.rec :
+  tests/core/RDP/caches
+;
+explicit tests/core/RDP/capabilities.rec ;
+alias tests/core/RDP/capabilities.rec :
+  tests/core/RDP/capabilities
+;
+explicit tests/core/RDP/channels.rec ;
+alias tests/core/RDP/channels.rec :
+  tests/core/RDP/channels
+;
+explicit tests/core/RDP/gcc/userdata.rec ;
+alias tests/core/RDP/gcc/userdata.rec :
+  tests/core/RDP/gcc/userdata
+;
+explicit tests/core/RDP/mppc.rec ;
+alias tests/core/RDP/mppc.rec :
+  tests/core/RDP/mppc
+;
+explicit tests/core/RDP/nla/asn1.rec ;
+alias tests/core/RDP/nla/asn1.rec :
+  tests/core/RDP/nla/asn1
+;
+explicit tests/core/RDP/nla/kerberos.rec ;
+alias tests/core/RDP/nla/kerberos.rec :
+  tests/core/RDP/nla/kerberos
+;
+explicit tests/core/RDP/nla/ntlm.rec ;
+alias tests/core/RDP/nla/ntlm.rec :
+  tests/core/RDP/nla/ntlm
+;
+explicit tests/core/RDP/nla.rec ;
+alias tests/core/RDP/nla.rec :
+  tests/core/RDP/nla
+  tests/core/RDP/nla/asn1.rec
+  tests/core/RDP/nla/kerberos.rec
+  tests/core/RDP/nla/ntlm.rec
+;
+explicit tests/core/RDP/orders.rec ;
+alias tests/core/RDP/orders.rec :
+  tests/core/RDP/orders
+;
+explicit tests/core/RDP.rec ;
+alias tests/core/RDP.rec :
+  tests/core/RDP
+  tests/core/RDP/caches.rec
+  tests/core/RDP/capabilities.rec
+  tests/core/RDP/channels.rec
+  tests/core/RDP/mppc.rec
+  tests/core/RDP/nla.rec
+  tests/core/RDP/orders.rec
+;
+explicit tests/core/RDPEA.rec ;
+alias tests/core/RDPEA.rec :
+  tests/core/RDPEA
+;
+explicit tests/core/SMB2.rec ;
+alias tests/core/SMB2.rec :
+  tests/core/SMB2
+;
+explicit tests/core/WMF.rec ;
+alias tests/core/WMF.rec :
+  tests/core/WMF
+;
+explicit tests/core.rec ;
+alias tests/core.rec :
+  tests/core
+  tests/core/FSCC.rec
+  tests/core/RDP.rec
+  tests/core/RDPEA.rec
+  tests/core/SMB2.rec
+  tests/core/WMF.rec
+;
+explicit tests/front.rec ;
+alias tests/front.rec :
+  tests/front
+;
+explicit tests/gdi.rec ;
+alias tests/gdi.rec :
+  tests/gdi
+;
+explicit tests/keyboard.rec ;
+alias tests/keyboard.rec :
+  tests/keyboard
+;
+explicit tests/main.rec ;
+alias tests/main.rec :
+  tests/main
+;
+explicit tests/mod/internal.rec ;
+alias tests/mod/internal.rec :
+  tests/mod/internal
+  tests/mod/internal/widget.rec
+;
+explicit tests/mod/internal/widget.rec ;
+alias tests/mod/internal/widget.rec :
+  tests/mod/internal/widget
+;
+explicit tests/mod/null.rec ;
+alias tests/mod/null.rec :
+  tests/mod/null
+;
+explicit tests/mod/rdp/channels.rec ;
+alias tests/mod/rdp/channels.rec :
+  tests/mod/rdp/channels
+;
+explicit tests/mod/rdp.rec ;
+alias tests/mod/rdp.rec :
+  tests/mod/rdp
+  tests/mod/rdp/channels.rec
+;
+explicit tests/mod.rec ;
+alias tests/mod.rec :
+  tests/mod
+  tests/mod/internal.rec
+  tests/mod/null.rec
+  tests/mod/rdp.rec
+  tests/mod/vnc.rec
+  tests/mod/xup.rec
+;
+explicit tests/mod/vnc/encoder.rec ;
+alias tests/mod/vnc/encoder.rec :
+  tests/mod/vnc/encoder
+;
+explicit tests/mod/vnc.rec ;
+alias tests/mod/vnc.rec :
+  tests/mod/vnc
+  tests/mod/vnc/encoder.rec
+;
+explicit tests/mod/xup.rec ;
+alias tests/mod/xup.rec :
+  tests/mod/xup
+;
+explicit tests/regex.rec ;
+alias tests/regex.rec :
+  tests/regex
+;
+explicit tests/sashimi.rec ;
+alias tests/sashimi.rec :
+  tests/sashimi
+;
+explicit tests/server.rec ;
+alias tests/server.rec :
+  tests/server
+;
+explicit tests/system/linux/system.rec ;
+alias tests/system/linux/system.rec :
+  tests/system/linux/system
+;
+explicit tests/transport.rec ;
+alias tests/transport.rec :
+  tests/transport
+;
+explicit tests/utils/crypto.rec ;
+alias tests/utils/crypto.rec :
+  tests/utils/crypto
+;
+explicit tests/utils/sugar/numerics.rec ;
+alias tests/utils/sugar/numerics.rec :
+  tests/utils/sugar/numerics
+;
+explicit tests/utils/sugar.rec ;
+alias tests/utils/sugar.rec :
+  tests/utils/sugar
+  tests/utils/sugar/numerics.rec
+;
+explicit tests/utils.rec ;
+alias tests/utils.rec :
+  tests/utils
+  tests/utils/crypto.rec
+  tests/utils/sugar.rec
+  tests/utils/winpr.rec
+;
+explicit tests/utils/winpr.rec ;
+alias tests/utils/winpr.rec :
+  tests/utils/winpr
+;
 explicit test ;
 alias test :
   tests/acl

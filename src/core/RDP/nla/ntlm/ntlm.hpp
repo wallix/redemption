@@ -24,6 +24,9 @@
 #include "core/RDP/nla/sspi.hpp"
 #include "core/RDP/nla/ntlm/ntlm_context.hpp"
 
+#include <memory>
+
+
 // TODO: constants below are still globals,
 // better to move them in the scope of functions/objects using them
 namespace {
@@ -45,20 +48,20 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable
 private:
     Random & rand;
     TimeObj & timeobj;
-    CREDENTIALS * credentials = nullptr;
-    NTLMContext * context = nullptr;
+    std::unique_ptr<CREDENTIALS> credentials;
+    std::unique_ptr<NTLMContext> context;
 
 public:
     bool hardcoded_tests = false;
 
     CREDENTIALS const * getCredentialHandle() const
     {
-        return this->credentials;
+        return this->credentials.get();
     }
 
     NTLMContext const * getContextHandle() const
     {
-        return this->context;
+        return this->context.get();
     }
 
 public:
@@ -66,11 +69,7 @@ public:
         : rand(rand), timeobj(timeobj)
     {}
 
-    ~Ntlm_SecurityFunctionTable()
-    {
-        delete this->context;
-        delete this->credentials;
-    }
+    ~Ntlm_SecurityFunctionTable() = default;
 
     SEC_STATUS CompleteAuthToken(SecBufferDesc*) override { return SEC_E_UNSUPPORTED_FUNCTION; }
 
@@ -104,26 +103,14 @@ public:
         (void)pszPrincipal;
         (void)pvLogonID;
 
-        if (fCredentialUse == SECPKG_CRED_OUTBOUND) {
-            this->credentials = new CREDENTIALS;
-
-            if (pAuthData != nullptr) {
-                this->credentials->identity.CopyAuthIdentity(*pAuthData);
-            }
-
-            return SEC_E_OK;
-        }
-        else if (fCredentialUse == SECPKG_CRED_INBOUND) {
-            this->credentials = new CREDENTIALS;
+        if (fCredentialUse == SECPKG_CRED_OUTBOUND
+         || fCredentialUse == SECPKG_CRED_INBOUND)
+        {
+            this->credentials.reset(new CREDENTIALS);
 
             if (pAuthData) {
                 this->credentials->identity.CopyAuthIdentity(*pAuthData);
             }
-            else {
-                this->credentials->identity.clear();
-            }
-
-            return SEC_E_OK;
         }
 
         return SEC_E_OK;
@@ -142,7 +129,7 @@ public:
         }
 
         if (!this->context) {
-            this->context = new NTLMContext(this->rand, this->timeobj);
+            this->context.reset(new(std::nothrow) NTLMContext(this->rand, this->timeobj));
 
             if (!this->context) {
                 return SEC_E_INSUFFICIENT_MEMORY;
@@ -242,7 +229,7 @@ public:
         SecBufferDesc * pOutput
     ) override {
         if (!this->context) {
-            this->context = new(std::nothrow) NTLMContext(this->rand, this->timeobj);
+            this->context.reset(new(std::nothrow) NTLMContext(this->rand, this->timeobj));
 
             if (!this->context) {
                 return SEC_E_INSUFFICIENT_MEMORY;
