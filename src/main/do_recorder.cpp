@@ -1871,7 +1871,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 record_path,
                                 groupid,
                                 nullptr,
-                                ini.get<cfg::video::smart_video_cropping>()
+                                ini.get<cfg::video::smart_video_cropping>(),
+                                0
                             };
                             auto * capture = new(storage.get_storage()) Capture(
                                   capture_params

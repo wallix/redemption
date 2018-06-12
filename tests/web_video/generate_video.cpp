@@ -53,7 +53,7 @@ int main(int ac, char ** av)
         Level::medium, drawable.width(), drawable.height(),
         25, 15, 100000, codec, false, false, false, std::chrono::microseconds{2 * 1000000l}, 0};
     CaptureParams capture_params{
-        now, basename, nullptr, path, 0 /* groupid */, nullptr, SmartVideoCropping::disable};
+        now, basename, nullptr, path, 0 /* groupid */, nullptr, SmartVideoCropping::disable, 0};
     FullVideoCaptureImpl capture(
         capture_params, drawable, drawable, video_params, FullVideoParams{false});
 
