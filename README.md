@@ -57,11 +57,19 @@ And set environment variable (optionally)
 - `export FFMPEG_LIB_PATH=/my/ffmpeg/library/path` (/!\\ without `/` terminal)
 - `export FFMPEG_LINK_MODE=shared` (static or shared, shared by default)
 
+Note:
+Disable ffmpeg with `NO_FFMPEG=1`.
+
 ## Environment variable setting
 
 List with `sed -E '/\[ setvar/!d;s/.*\[ setvar ([^ ]+).*/\1/' jam/defines.jam`
 
     export FFMPEG_INC_PATH=$HOME/ffmpeg/includes
+    bjam ....
+
+Or
+
+    FFMPEG_INC_PATH=$HOME/ffmpeg/includes FFMPEG_LIB_PATH=... bjam ....
 
 Or with `-s` to bjam
 

@@ -98,3 +98,4 @@ _FFMPEG_LINK_MODE ?= "shared" ;
 constant FFMPEG_INC_PATH : [ setvar FFMPEG_INC_PATH : $(_FFMPEG_INC_PATH) ] ;
 constant FFMPEG_LIB_PATH : [ setvar FFMPEG_LIB_PATH : $(_FFMPEG_LIB_PATH) ] ;
 constant FFMPEG_LINK_MODE : [ setvar FFMPEG_LINK_MODE : $(_FFMPEG_LINK_MODE) ] ;
+constant NO_FFMPEG : [ setvar NO_FFMPEG : 0 ] ;

@@ -1000,6 +1000,7 @@ RED_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
     RED_CHECK_EQUAL(1, res);
 }
 
+#ifndef REDEMPTION_NO_FFMPEG
 RED_AUTO_TEST_CASE(TestAppRecorder)
 {
     LOG(LOG_INFO, "=================== TestAppRecorder =============");
@@ -1031,7 +1032,9 @@ RED_AUTO_TEST_CASE(TestAppRecorder)
     RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000001.flv", 1641583);
     RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1.flv", 14977055);
 }
+#endif
 
+#ifndef REDEMPTION_NO_FFMPEG
 RED_AUTO_TEST_CASE(TestAppRecorderVlc)
 {
     LOG(LOG_INFO, "=================== TestAppRecorder =============");
@@ -1063,7 +1066,9 @@ RED_AUTO_TEST_CASE(TestAppRecorderVlc)
     RED_CHECK_FILE_SIZE_AND_CLEAN("/tmp/recorder.1-000001.flv", 7555247);
     RED_CHECK_FILE_SIZE_AND_CLEAN2("/tmp/recorder.1.flv", 70069293, 70069297);
 }
+#endif
 
+#ifndef REDEMPTION_NO_FFMPEG
 RED_AUTO_TEST_CASE(TestAppRecorderChunk)
 {
     LOG(LOG_INFO, "=================== TestAppRecorder =============");
@@ -1096,6 +1101,7 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunk)
     RED_CHECK_FILE_CONTENTS("/tmp/recorder-chunk.pgs", R"js({"percentage":100,"eta":0,"videos":1})js");
     RED_CHECK_FILE_CONTENTS("/tmp/recorder-chunk.meta", "2016-02-18 18:27:01 + (break)\n");
 }
+#endif
 
 RED_AUTO_TEST_CASE(TestClearTargetFiles)
 {

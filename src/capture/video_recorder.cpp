@@ -470,11 +470,15 @@ void video_recorder::encoding_video_frame(uint64_t frame_index)
 #else
 
     video_recorder::video_recorder(
-        write_packet_fn_t /*write_packet_fn*/, seek_fn_t /*seek_fn*/, void * /*io_params*/,
+        write_packet_fn_t write_packet_fn, seek_fn_t /*seek_fn*/, void * io_params,
         ConstImageDataView const & /*image_view*/, int /*bitrate*/,
         int /*frame_rate*/, int /*qscale*/, const char * /*codec_id*/,
         int /*log_level*/
-    ) {}
+    ) {
+        uint8_t buf[1]{};
+        // force file create
+        write_packet_fn(io_params, buf, 0);
+    }
 
     video_recorder::~video_recorder() {}
 

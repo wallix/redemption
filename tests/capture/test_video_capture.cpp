@@ -23,28 +23,18 @@
 #define RED_TEST_MODULE TestWrmCapture
 #include "system/redemption_unit_tests.hpp"
 
+#include "capture/video_capture.hpp"
 
 
+#ifndef REDEMPTION_NO_FFMPEG
+
+#include "core/RDP/RDPDrawable.hpp"
+#include "utils/drawable.hpp"
+#include "utils/fileutils.hpp"
 #include "utils/log.hpp"
 
 #include <memory>
 
-#include "utils/png.hpp"
-#include "utils/drawable.hpp"
-#include "utils/stream.hpp"
-
-#include "transport/transport.hpp"
-#include "test_only/transport/test_transport.hpp"
-#include "transport/out_file_transport.hpp"
-#include "transport/in_file_transport.hpp"
-
-#include "test_only/check_sig.hpp"
-#include "test_only/get_file_contents.hpp"
-#include "utils/fileutils.hpp"
-#include "utils/bitmap_shrink.hpp"
-
-#include "capture/video_capture.hpp"
-#include "core/RDP/RDPDrawable.hpp"
 
 inline void simple_movie(
     timeval now, unsigned duration, RDPDrawable & drawable,
@@ -333,3 +323,7 @@ RED_AUTO_TEST_CASE(SequencedVideoCaptureX264)
     RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000010.png", 3098, 3098);
     RED_CHECK_FILE_SIZE_AND_CLEAN2("./opaquerect_seqvideocapture_timestamp2-000010.mp4", 6618, 6604);
 }
+#else
+RED_AUTO_TEST_CASE(NoTest)
+{}
+#endif

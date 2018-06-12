@@ -10,6 +10,10 @@ REDEMPTION_CXXFLAGS ?=
     <toolset>gcc:<cxxflags>-ftemplate-depth=524 # bjam force value to 128... è_é
 ;
 
+if $(NO_FFMPEG) = 1 {
+    REDEMPTION_CXXFLAGS += <define>REDEMPTION_NO_FFMPEG=1 ;
+}
+
 variant coverage : san : ;
 
 #gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
