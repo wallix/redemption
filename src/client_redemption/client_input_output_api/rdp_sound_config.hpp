@@ -27,6 +27,13 @@
 
 struct RDPSoundConfig {
 
+    uint32_t dwFlags = rdpsnd::TSSNDCAPS_ALIVE | rdpsnd::TSSNDCAPS_VOLUME;
+    uint32_t dwVolume = 0x7fff7fff;
+    uint32_t dwPitch = 0;
+    uint16_t wDGramPort = 0;
+    uint16_t wNumberOfFormats = 1;
+    uint16_t wVersion = 0x06;
+		
 };
 
 	
