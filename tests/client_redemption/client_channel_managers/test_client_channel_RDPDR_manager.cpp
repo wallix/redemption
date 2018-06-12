@@ -21,7 +21,7 @@
    Unit test to writing RDP orders to file and rereading them
 */
 
-#define RED_TEST_MODULE TestCLIPRDRChannelManager
+#define RED_TEST_MODULE TestRDPDRChannelManager
 #include "system/redemption_unit_tests.hpp"
 
 
@@ -502,6 +502,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
     manager.paths.emplace(1, "test");
+    fakeIODisk.fil_size = 4;
 
     StaticOutStream<512> out_stream;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);
@@ -514,7 +515,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
                                 0x00000000);
     dior.emit(out_stream);
 
-    rdpdr::DeviceReadRequest drr(0, 0);
+    rdpdr::DeviceReadRequest drr(4, 0);
     drr.emit(out_stream);
 
     InStream chunk(out_stream.get_data(), out_stream.get_offset());
@@ -523,7 +524,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
     RED_CHECK_EQUAL(client.get_total_stream_produced(), 1);
 
     FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
-    RED_CHECK_EQUAL(pdu_data->size, 20);
+    RED_CHECK_EQUAL(pdu_data->size, 24);
     InStream stream_deviceIOCompletion(pdu_data->data, pdu_data->size);
     rdpdr::SharedHeader header_deviceIOCompletion;
     header_deviceIOCompletion.receive(stream_deviceIOCompletion);
@@ -536,7 +537,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
     RED_CHECK_EQUAL(static_cast<int>(deviceIOResponse.IoStatus()), static_cast<int>(erref::NTSTATUS::STATUS_SUCCESS));
     rdpdr::DeviceReadResponse deviceReadResponse;
     deviceReadResponse.receive(stream_deviceIOCompletion);
-    RED_CHECK_EQUAL(deviceReadResponse.Length,     0);
+    RED_CHECK_EQUAL(deviceReadResponse.Length,     4);
 }
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelDirectoryControl)
