@@ -259,4 +259,8 @@ public:
         (void)new_name;
         return false;
     }
+
+    int get_file_size(const char * path) override {
+        (void) path;
+    }
 };
