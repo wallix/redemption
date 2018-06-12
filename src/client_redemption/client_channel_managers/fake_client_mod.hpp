@@ -220,16 +220,10 @@ public:
         return FileStatvfs{};
     }
 
-    erref::NTSTATUS read_data(
-        std::string const& file_to_tread, int offset, byte_array data,
-        bool log_erro_on
-    ) override {
+    void read_data(std::string const& file_to_tread, int offset, byte_array data) override {
         (void)file_to_tread;
         (void)offset;
         (void)data;
-        (void)log_erro_on;
-
-        return erref::NTSTATUS::STATUS_SUCCESS;
     }
 
     bool set_elem_from_dir(std::vector<std::string> & elem_list, const std::string & str_dir_path) override {
