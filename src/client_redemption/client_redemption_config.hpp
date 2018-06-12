@@ -39,6 +39,7 @@
 
 #include "client_redemption/client_input_output_api/rdp_clipboard_config.hpp"
 #include "client_redemption/client_input_output_api/rdp_disk_config.hpp"
+#include "client_redemption/client_input_output_api/rdp_sound_config.hpp"
 
 
 
@@ -56,6 +57,7 @@ public:
 
     RDPClipboardConfig rDPClipboardConfig;
     RDPDiskConfig      rDPDiskConfig;
+    RDPSoundConfig     rDPSoundConfig;
 
 
 
@@ -99,7 +101,6 @@ public:
 
 
         // Set RDP CLIPRDR config
-        this->rDPClipboardConfig.channel_flags = CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
         this->rDPClipboardConfig.arbitrary_scale = 40;
         this->rDPClipboardConfig.total_format_list_pdu_size = 0;
         this->rDPClipboardConfig.server_use_long_format_names = true;
@@ -112,12 +113,20 @@ public:
 
 
         // Set RDP RDPDR config
-
         this->rDPDiskConfig.add_drive(this->SHARE_DIR, rdpdr::RDPDR_DTYP_FILESYSTEM);
         this->rDPDiskConfig.enable_drive_type = true;
         this->rDPDiskConfig.enable_printer_type = true;
         this->rDPDiskConfig.enable_drive_type = true;
         this->rDPDiskConfig.enable_drive_type = true;
+
+
+        // Set RDP SND config
+        this->rDPSoundConfig.dwFlags = rdpsnd::TSSNDCAPS_ALIVE | rdpsnd::TSSNDCAPS_VOLUME;
+        this->rDPSoundConfig.dwVolume = 0x7fff7fff;
+        this->rDPSoundConfig.dwPitch = 0;
+        this->rDPSoundConfig.wDGramPort = 0;
+        this->rDPSoundConfig.wNumberOfFormats = 1;
+        this->rDPSoundConfig.wVersion = 0x06;
 
 
 
