@@ -225,7 +225,7 @@ public:
         , impl_io_disk(impl_io_disk)
         , close_box_extra_message_ref("Close")
         , client_execute(session_reactor, *(this), this->info.window_list_caps, false)
-        , clientChannelRDPSNDManager(this->verbose, this, this->impl_sound)
+        , clientChannelRDPSNDManager(this->verbose, this, this->impl_sound, this->rDPSoundConfig)
         , clientChannelCLIPRDRManager(this->verbose, this, this->impl_clipboard, this->rDPClipboardConfig)
         , clientChannelRDPDRManager(this->verbose, this, this->impl_io_disk, this->rDPDiskConfig)
         , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
