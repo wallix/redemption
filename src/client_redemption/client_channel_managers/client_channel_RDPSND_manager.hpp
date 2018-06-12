@@ -29,6 +29,7 @@
 #include "client_redemption/client_input_output_api/client_sound_api.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 #include "core/RDPEA/audio_output.hpp"
+#include "client_redemption/client_input_output_api/rdp_sound_config.hpp"
 
 
 
@@ -211,20 +212,37 @@ class ClientChannelRDPSNDManager {
     RDPVerbose verbose;
     ClientOutputSoundAPI * impl_sound;
     ClientRedemptionAPI * client;
+
+    const uint32_t channel_flags;
+
     int wave_data_to_wait = 0;
     bool last_PDU_is_WaveInfo = 0;
 
     uint16_t last_cBlockNo;
     uint8_t last_wTimeStamp;
 
+    uint32_t dwFlags;
+    uint32_t dwVolume;
+    uint32_t dwPitch ;
+    uint16_t wDGramPort;
+    uint16_t wNumberOfFormats;
+    uint16_t wVersion;
+
 
 public:
-    ClientChannelRDPSNDManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientOutputSoundAPI * impl_sound)
+    ClientChannelRDPSNDManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientOutputSoundAPI * impl_sound, RDPSoundConfig & config)
       : verbose(verbose)
       , impl_sound(impl_sound)
       , client(client)
+      , channel_flags(CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST)
       , last_cBlockNo(0)
       , last_wTimeStamp(0)
+      , dwFlags(config.dwFlags)
+      , dwVolume(config.dwVolume)
+      , dwPitch(config.dwPitch)
+      , wDGramPort(config.wDGramPort)
+      , wNumberOfFormats(config.wNumberOfFormats)
+      , wVersion(config.wVersion)
       {}
 
     void receive(InStream & chunk) {
@@ -267,8 +285,7 @@ public:
                 this->client->mod->send_to_mod_channel( channel_names::rdpsnd
                                                       , chunk_to_send
                                                       , out_stream.get_offset()
-                                                      , CHANNELS::CHANNEL_FLAG_LAST |
-                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                      , this->channel_flags
                                                       );
                 if (bool(this->verbose & RDPVerbose::rdpsnd)) {
                     LOG(LOG_INFO, "CLIENT >> RDPEA: Wave Confirm PDU");
@@ -329,8 +346,7 @@ public:
                     this->client->mod->send_to_mod_channel( channel_names::rdpsnd
                                                     , chunk_to_send
                                                     , out_stream.get_offset()
-                                                    , CHANNELS::CHANNEL_FLAG_LAST |
-                                                      CHANNELS::CHANNEL_FLAG_FIRST
+                                                    , this->channel_flags
                                                     );
 
                     if (bool(this->verbose & RDPVerbose::rdpsnd)) {
@@ -350,8 +366,7 @@ public:
                     this->client->mod->send_to_mod_channel( channel_names::rdpsnd
                                                     , chunk_to_send2
                                                     , quality_stream.get_offset()
-                                                    , CHANNELS::CHANNEL_FLAG_LAST |
-                                                    CHANNELS::CHANNEL_FLAG_FIRST
+                                                    , this->channel_flags
                                                     );
 
                     if (bool(this->verbose & RDPVerbose::rdpsnd)) {
@@ -382,8 +397,7 @@ public:
                     this->client->mod->send_to_mod_channel( channel_names::rdpsnd
                                                     , chunk_to_send
                                                     , out_stream.get_offset()
-                                                    , CHANNELS::CHANNEL_FLAG_LAST |
-                                                    CHANNELS::CHANNEL_FLAG_FIRST
+                                                    , this->channel_flags
                                                     );
 
                     if (bool(this->verbose & RDPVerbose::rdpsnd)) {
