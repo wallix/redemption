@@ -192,6 +192,8 @@ class FakeIODisk : public ClientIODiskAPI
 {
 
 public:
+    int fil_size = 0;
+
     FakeIODisk() = default;
 
     bool ifile_good(const char * /*new_path*/) override {
@@ -262,5 +264,7 @@ public:
 
     int get_file_size(const char * path) override {
         (void) path;
+
+        return this->fil_size;
     }
 };
