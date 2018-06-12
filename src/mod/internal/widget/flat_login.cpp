@@ -80,10 +80,11 @@ FlatLogin::FlatLogin(
     this->impl = &composite_array;
 
     this->add_widget(&this->img);
-
     this->add_widget(&this->helpicon);
+
     this->add_widget(&this->login_edit);
     this->add_widget(&this->password_edit);
+
     if (width > 640) {
         this->add_widget(&this->login_label);
         this->add_widget(&this->password_label);
@@ -159,7 +160,6 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
                                  this->password_label.cx() + 10 + this->password_edit.cx());
 
 
-    dim = this->login_message_label.get_optimal_dim();
     std::string formatted_login_message;
     gdi::MultiLineTextMetricsEx mltm_ex(this->font, this->login_message.c_str(), WIDGET_MULTILINE_BORDER_Y,
         cbloc_w - WIDGET_MULTILINE_BORDER_X * 2, formatted_login_message);
