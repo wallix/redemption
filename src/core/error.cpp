@@ -73,7 +73,9 @@ Error::Error(error_type id, int errnum) noexcept
     int i = 0;
     for (auto && frame: boost::stacktrace::stacktrace()){
         if (!frame.empty()){
-            LOG(LOG_DEBUG, "#%d %s", i++, boost::stacktrace::to_string(frame));
+            auto line = boost::stacktrace::to_string(frame);
+            LOG(LOG_DEBUG, "#%d %s", i, line);
+            ++i;
         }
     }
 //    std::cerr << boost::stacktrace::stacktrace() << std::flush;

@@ -23,6 +23,7 @@
 // https://github.com/jonathanpoelen/falcon.cxx/blob/master/include/falcon/cxx/cxx.hpp
 
 #include "cxx/compiler_version.hpp"
+#include "cxx/diagnostic.hpp"
 
 #define REDEMPTION_CXX_STD_03 199711L // 1998/2003
 #define REDEMPTION_CXX_STD_11 201103L
@@ -163,7 +164,12 @@
 
 // REDEMPTION_UNREACHABLE / REDEMPTION_UNREACHABLE_IF
 #ifndef NDEBUG
-# define REDEMPTION_UNREACHABLE() assert(!"Unreachable code reached.")
+# define REDEMPTION_UNREACHABLE()                            \
+    REDEMPTION_DIAGNOSTIC_PUSH                               \
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunreachable-code") \
+    assert(!"Unreachable code reached.")                     \
+    REDEMPTION_DIAGNOSTIC_POP
+
 # define REDEMPTION_UNREACHABLE_IF(condition) \
   assert((condition) && "Unreachable code reached.")
 #else
