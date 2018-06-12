@@ -26,6 +26,12 @@
 #include "keyboard/keymap2.hpp"
 #include "gdi/graphic_api.hpp"
 
+enum {
+    WIDGET_MULTILINE_BORDER_X = 10,
+    WIDGET_MULTILINE_BORDER_Y = 4
+};
+
+constexpr unsigned HIDE_BACK_TO_SELECTOR = 0x10000;
 
 FlatWait::FlatWait(
     gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
@@ -33,14 +39,16 @@ FlatWait::FlatWait(
     const char* caption, const char * text, int group_id,
     WidgetFlatButton * extra_button,
     Font const & font, Theme const & theme, Translation::language_t lang,
-    bool showform, int required, int duration_max
+    bool showform, unsigned flags, int duration_max
 )
     : WidgetParent(drawable, parent, notifier, group_id)
     , groupbox(drawable, *this, nullptr, caption,
                theme.global.fgcolor, theme.global.bgcolor, font)
     , dialog(drawable, this->groupbox, nullptr, text, -10,
-             theme.global.fgcolor, theme.global.bgcolor, font, 10, 2)
-    , form(drawable, *this, this, -20, font, theme, lang, required, duration_max)
+             theme.global.fgcolor, theme.global.bgcolor, font,
+             WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
+    , form(drawable, *this, this, -20, font, theme, lang,
+           flags & ~HIDE_BACK_TO_SELECTOR, duration_max)
     , goselector(drawable, this->groupbox, this, TR(trkeys::back_selector, lang), -12,
                  theme.global.fgcolor, theme.global.bgcolor,
                  theme.global.focus_color, 2, font, 6, 2)
@@ -50,6 +58,7 @@ FlatWait::FlatWait(
     , extra_button(extra_button)
     , hasform(showform)
     , bg_color(theme.global.bgcolor)
+    , hide_back_to_selector(flags & HIDE_BACK_TO_SELECTOR)
 {
     this->impl = &composite_array;
 
@@ -59,7 +68,9 @@ FlatWait::FlatWait(
         this->groupbox.add_widget(&this->form);
     }
 
-    this->groupbox.add_widget(&this->goselector);
+    if (!this->hide_back_to_selector) {
+        this->groupbox.add_widget(&this->goselector);
+    }
     this->groupbox.add_widget(&this->exit);
 
     this->add_widget(&this->groupbox);
@@ -107,11 +118,13 @@ void FlatWait::move_size_widget(int16_t left, int16_t top, uint16_t width, uint1
     this->exit.set_wh(dim);
     this->exit.set_xy(left + width - 40 - this->exit.cx(), y);
 
-    dim = this->goselector.get_optimal_dim();
-    this->goselector.set_wh(dim);
-    this->goselector.set_xy(this->exit.x() - (this->goselector.cx() + 10), y);
+    if (!this->hide_back_to_selector) {
+        dim = this->goselector.get_optimal_dim();
+        this->goselector.set_wh(dim);
+        this->goselector.set_xy(this->exit.x() - (this->goselector.cx() + 10), y);
+    }
 
-    y += this->goselector.cy() + 20;
+    y += this->exit.cy() + 20;
 
     this->groupbox.set_wh(this->groupbox.cx(), y - top);
     this->groupbox.move_xy(0, (height - (y - top)) / 2);

@@ -14,22 +14,26 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2017
-   Author(s): Christophe Grosjean, Raphael ZHOU
+   Copyright (C) Wallix 2010-2013
+   Author(s): Clément Moroldo, David Fort
 */
 
 #pragma once
 
-enum {
-    WS_DISABLED = 0x08000000L,
-    WS_ICONIC   = 0x20000000L,  // The window is initially minimized. Same as the WS_MINIMIZE style.
-    WS_MINIMIZE = WS_ICONIC,
-    WS_SYSMENU  = 0x00080000L,
-    WS_VISIBLE  = 0x10000000L   // The window is initially visible.
+#include "utils/log.hpp"
+#include "core/RDPEA/audio_output.hpp"
+
+
+
+struct RDPSoundConfig {
+
+    uint32_t dwFlags = rdpsnd::TSSNDCAPS_ALIVE | rdpsnd::TSSNDCAPS_VOLUME;
+    uint32_t dwVolume = 0x7fff7fff;
+    uint32_t dwPitch = 0;
+    uint16_t wDGramPort = 0;
+    uint16_t wNumberOfFormats = 1;
+    uint16_t wVersion = 0x06;
+		
 };
 
-enum {
-    SW_FORCEMINIMIZE = 11,
-    SW_HIDE          = 0,
-    SW_MINIMIZE      = 6
-};
+	

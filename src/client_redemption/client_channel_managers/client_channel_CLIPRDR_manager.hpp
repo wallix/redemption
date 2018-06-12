@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include <unordered_map>
+
 #include "utils/log.hpp"
 #include "core/channel_list.hpp"
 #include "core/RDP/clipboard.hpp"
@@ -172,7 +174,7 @@ public:
       , clientIOClipboardAPI(clientIOClipboardAPI)
       , client(client)
       , _waiting_for_data(false)
-      , channel_flags(config.channel_flags)
+      , channel_flags(CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL)
       , arbitrary_scale(config.arbitrary_scale)
       , _cb_buffers()
       , _cb_filesList()

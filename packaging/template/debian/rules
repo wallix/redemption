@@ -25,7 +25,7 @@ clean:
 	dh_testdir Jamroot
 	dh_testroot
 	dh_clean
-	bjam clean
+	bjam clean $(BJAM_EXTRA_INSTALL)
 
 build:
 	# dh_testdir - test directory before building Debian package. It makes sure

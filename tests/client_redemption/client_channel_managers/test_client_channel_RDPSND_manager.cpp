@@ -35,7 +35,8 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
     SessionReactor session_reactor;
     FakeClient client(session_reactor);
     FakeClientOutPutSound snd_io;
-    ClientChannelRDPSNDManager manager(to_verbose_flags(0x0), &client, &snd_io);
+    RDPSoundConfig config;
+    ClientChannelRDPSNDManager manager(to_verbose_flags(0x0), &client, &snd_io, config);
 
 
     StaticOutStream<512> out_ServerAudioFormatsandVersion;
@@ -93,7 +94,8 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelWave)
     SessionReactor session_reactor;
     FakeClient client(session_reactor);
     FakeClientOutPutSound snd_io;
-    ClientChannelRDPSNDManager manager(to_verbose_flags(0x0), &client, &snd_io);
+    RDPSoundConfig config;
+    ClientChannelRDPSNDManager manager(to_verbose_flags(0x0), &client, &snd_io, config);
 
 
 

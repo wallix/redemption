@@ -56,8 +56,8 @@ inline std::string & operator += (std::string & s, range<char const*> r)
     return s;
 }
 
-MultiLineTextMetrics::MultiLineTextMetrics(const Font& font, const char* unicode_text, int max_width,
-    std::string& out_multiline_string_ref)
+MultiLineTextMetrics::MultiLineTextMetrics(const Font& font, const char* unicode_text, unsigned int line_spacing,
+    int max_width, std::string& out_multiline_string_ref)
 {
     out_multiline_string_ref.clear();
 
@@ -119,7 +119,48 @@ MultiLineTextMetrics::MultiLineTextMetrics(const Font& font, const char* unicode
         }
     }
 
-    this->height = height_max * number_of_lines;
+    this->height = height_max * number_of_lines + line_spacing * (number_of_lines - 1);
+}
+
+MultiLineTextMetricsEx::MultiLineTextMetricsEx(const Font& font, const char* unicode_text, unsigned int line_spacing,
+    int max_width, std::string& out_multiline_string_ref)
+{
+    out_multiline_string_ref.clear();
+
+    const char   delimiter[]      = "<br>";
+    const size_t delimiter_length = sizeof(delimiter) - 1;
+
+    std::string s(unicode_text);
+    std::string temp_str;
+
+    auto get_mltm = [this, &temp_str, &font, max_width, &out_multiline_string_ref, delimiter, line_spacing]
+            (const char *s) {
+        MultiLineTextMetrics mltm(font, s, line_spacing, max_width, temp_str);
+
+        if (!out_multiline_string_ref.empty()) {
+            out_multiline_string_ref += delimiter;
+        }
+        out_multiline_string_ref += temp_str;
+
+        if (this->height) {
+            this->height += line_spacing;
+        }
+
+        this->width   = std::max(this->width, mltm.width);
+        this->height += mltm.height;
+    };
+
+    auto start = 0;
+    auto end = s.find(delimiter);
+    while (end != std::string::npos)
+    {
+        get_mltm(s.substr(start, end - start).c_str());
+
+        start = end + delimiter_length;
+        end = s.find(delimiter, start);
+    }
+
+    get_mltm(s.substr(start, end).c_str());
 }
 
 

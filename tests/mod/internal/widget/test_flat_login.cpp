@@ -53,7 +53,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x40\x86\x2c\x3b\xb9\xb4\x89\xfa\x39\x41\x59\xe6\x2d\x8a\xa0\xba\x0b\x84\xdb\x30");
+    RED_CHECK_SIG(drawable.gd, "\x62\xfc\xed\xfc\x62\x2f\x45\xfb\xd6\xfe\x2a\xd8\xbc\x2e\xd7\xba\x32\xee\xbf\x66");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLogin2)
@@ -80,7 +80,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin2)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x7b\x82\x3c\xba\x80\x86\x22\x5a\x08\xef\xdd\xbd\x00\x78\x9c\x9b\x36\x98\x5c\xc1");
+    RED_CHECK_SIG(drawable.gd, "\x07\x6a\x50\x5a\x57\xbb\x27\xef\x96\xba\x23\xb4\x4b\xfe\x3b\xc8\x77\xb8\x34\x27");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLogin3)
@@ -130,7 +130,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin3)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x8b\xf1\x30\xb5\x40\x5c\x36\xc8\x50\xf8\xd6\x4a\xcf\xf5\xf5\xd4\x09\x37\xed\xe6");
+    RED_CHECK_SIG(drawable.gd, "\xa6\xaf\x9e\xbe\xf8\x7d\x42\x9c\x09\xb4\xbc\xc7\x3f\x4a\xa9\xf1\xd4\xd4\x27\x4f");
 
     notifier.sender = nullptr;
     notifier.event = 0;
@@ -166,7 +166,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x12\x6c\xd3\xe9\x95\xc9\x55\xa2\xe7\x74\x16\xb1\xbc\xeb\x3a\xa0\x71\x20\x73\x01");
+    RED_CHECK_SIG(drawable.gd, "\x78\xdd\xb8\x3e\x68\x9b\x7d\xfc\x9a\xe3\x45\xd5\x68\x0c\x93\x37\x64\x2c\x42\x78");
 
     flat_login.rdp_input_mouse(MOUSE_FLAG_MOVE,
                                flat_login.helpicon.x() + flat_login.helpicon.cx() / 2,
@@ -174,7 +174,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x8d\x6f\xb9\x53\x9f\x4c\x80\x53\x21\x62\x9c\xb3\x96\x32\x0e\x5a\xfd\xaf\x78\xd9");
+    RED_CHECK_SIG(drawable.gd, "\xa7\xd2\x83\xb2\x71\x90\x8a\x56\x40\x65\xd4\xb0\x41\xa3\x12\x52\x4f\x1a\xb8\xe1");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLoginClip)
@@ -202,7 +202,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginClip)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x71\xf5\x4b\x47\xb7\x11\x74\x0c\x2a\x4b\x2e\xd7\x78\x9f\xc5\x36\x0c\xa3\x13\x4b");
+    RED_CHECK_SIG(drawable.gd, "\xd8\x45\xfd\x54\x9f\xa6\x11\x40\x80\xd9\x30\x89\x6b\xb6\x50\x2f\x60\x2d\x18\x26");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLoginClip2)
@@ -262,4 +262,32 @@ RED_AUTO_TEST_CASE(EventWidgetOk)
 
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
+}
+
+RED_AUTO_TEST_CASE(TraceFlatLogin4)
+{
+    TestDraw drawable(800, 600);
+
+    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+
+    // FlatLogin is a flat_login widget at position 0,0 in it's parent context
+    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    parent.set_wh(800, 600);
+
+    NotifyApi * notifier = nullptr;
+    WidgetFlatButton * extra_button = nullptr;
+
+    FlatLogin flat_login(drawable.gd, 0, 0, parent.cx(), parent.cy(), parent, notifier, "test1",
+                         "rec", "rec", "Login", "Password", "",
+                         "WARNING: Unauthorized access to this system is forbidden and will be prosecuted by law.<br><br>"
+                             "By accessing this system, you agree that your actions may be monitored if unauthorized usage is suspected.",
+                         extra_button, font,
+                         Translator{}, Theme{});
+
+    // ask to widget to redraw at it's current position
+    flat_login.rdp_input_invalidate(flat_login.get_rect());
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login4.png");
+
+    RED_CHECK_SIG(drawable.gd, "\x87\x3e\x57\x50\x2e\x78\x4b\x5a\xa0\x6f\x15\x20\x2a\x45\x37\x4f\xf9\x58\x18\xea");
 }

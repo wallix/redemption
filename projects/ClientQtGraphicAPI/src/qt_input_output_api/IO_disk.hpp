@@ -114,36 +114,18 @@ public:
         return fileStatvfs;
     }
 
-    erref::NTSTATUS read_data(
-        std::string const& file_to_tread, int offset, byte_array data,
-        bool log_erro_on
-    ) override {
-        auto const fsz = filesize(file_to_tread.c_str());
-        if (fsz < 0) {
-            return erref::NTSTATUS::STATUS_NO_SUCH_FILE;
-        }
-        if (offset > fsz) {
-            return erref::NTSTATUS::STATUS_UNSUCCESSFUL;
-        }
-
-        auto const remaining = fsz - offset;
-
-        assert(std::size_t(remaining) <= data.size());
+    void read_data(std::string const& file_to_tread, int offset, byte_array data) override {
 
         std::ifstream inFile(file_to_tread, std::ios::in | std::ios::binary);
-        if(inFile) {
-            inFile.read(data.to_charp(), std::min(remaining, int(data.size())));
+        if(inFile.is_open()) {
+            inFile.ignore(offset);
+            inFile.read(data.to_charp(), data.size());
+            inFile.close();
         }
+    }
 
-        if (inFile.fail()) {
-            if (log_erro_on) {
-                LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_tread.c_str());
-            }
-            // TODO or STATUS_ACCESS_DENIED
-            return erref::NTSTATUS::STATUS_NO_SUCH_FILE;
-        }
-
-        return erref::NTSTATUS::STATUS_SUCCESS;
+    int get_file_size(const char * path) override {
+        return filesize(path);
     }
 
     bool set_elem_from_dir(std::vector<std::string> & elem_list, const std::string & str_dir_path) override {

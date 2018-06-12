@@ -223,7 +223,7 @@ public:
         // }
 
         // Token Buffer
-	gss_buffer_desc input_tok, output_tok;
+        gss_buffer_desc input_tok, output_tok;
         output_tok.length = 0;
         if (pInput) {
             PSecBuffer input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
@@ -331,7 +331,7 @@ public:
 
 
         // Token Buffer
-	gss_buffer_desc input_tok, output_tok;
+        gss_buffer_desc input_tok, output_tok;
         output_tok.length = 0;
         if (pInput) {
             PSecBuffer input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);

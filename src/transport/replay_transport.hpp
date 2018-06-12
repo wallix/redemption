@@ -63,7 +63,7 @@ public:
     std::vector<std::string> const& get_infos() const noexcept { return this->infos; }
 
 private:
-    using PacketType = RecorderTransport::PacketType;
+    using PacketType = RecorderFile::PacketType;
 
     /** @brief the result of read_more_chunk */
     void read_more_chunk();

@@ -27,6 +27,10 @@
 #include "keyboard/keymap2.hpp"
 #include "gdi/graphic_api.hpp"
 
+enum {
+    WIDGET_MULTILINE_BORDER_X = 10,
+    WIDGET_MULTILINE_BORDER_Y = 4
+};
 
 FlatDialog::FlatDialog(
     gdi::GraphicApi & drawable, int16_t left, int16_t top, int16_t width, int16_t height,
@@ -42,7 +46,8 @@ FlatDialog::FlatDialog(
     , separator(drawable, *this, this, -12,
                 theme.global.separator_color)
     , dialog(drawable, *this, nullptr, text, -10,
-                theme.global.fgcolor, theme.global.bgcolor, font, 10, 2)
+                theme.global.fgcolor, theme.global.bgcolor, font,
+                WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
     , challenge(nullptr)
     , ok(drawable, *this, this, ok_text ? ok_text : "Ok", -12,
             theme.global.fgcolor, theme.global.bgcolor,
@@ -58,6 +63,7 @@ FlatDialog::FlatDialog(
           app_path(AppPath::LoginWabBlue), *this, nullptr, -8)
     , extra_button(extra_button)
     , font(font)
+    , dialog_string(text)
     , bg_color(theme.global.bgcolor)
 {
     this->impl = &composite_array;
@@ -129,7 +135,11 @@ void FlatDialog::move_size_widget(int16_t left, int16_t top, uint16_t width, uin
     total_height += this->title.cy();
 
     dim = this->dialog.get_optimal_dim();
-    this->dialog.set_wh(dim);
+    std::string formatted_dialog_string;
+    gdi::MultiLineTextMetricsEx mltm_ex(this->font, this->dialog_string.c_str(), WIDGET_MULTILINE_BORDER_Y,
+        width * 4 / 5 - WIDGET_MULTILINE_BORDER_X * 2, formatted_dialog_string);
+    this->dialog.set_wh(mltm_ex.width + WIDGET_MULTILINE_BORDER_X * 2, mltm_ex.height + WIDGET_MULTILINE_BORDER_Y * 2);
+    this->dialog.set_text(formatted_dialog_string.c_str());
 
     const int total_width = std::max(this->dialog.cx(), this->title.cx());
 

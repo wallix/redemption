@@ -362,6 +362,8 @@ private:
 
     SmartVideoCropping smart_video_cropping;
 
+    uint32_t verbose = 0;
+
 public:
     Capture(
         const CaptureParams capture_params,
@@ -445,15 +447,19 @@ protected:
         int32_t visible_offset_x;
         int32_t visible_offset_y;
 
+        std::string title_info;
+
         WindowRecord(uint32_t window_id, uint32_t fields_present_flags,
                      uint32_t style, uint8_t show_state,
-                     int32_t visible_offset_x, int32_t visible_offset_y)
+                     int32_t visible_offset_x, int32_t visible_offset_y,
+                     const char* title_info)
         : window_id(window_id)
         , fields_present_flags(fields_present_flags)
         , style(style)
         , show_state(show_state)
         , visible_offset_x(visible_offset_x)
-        , visible_offset_y(visible_offset_y) {}
+        , visible_offset_y(visible_offset_y)
+        , title_info(title_info) {}
     };
 
     std::vector<WindowRecord> windows;

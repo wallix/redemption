@@ -311,6 +311,7 @@ RdpNegociation::RdpNegociation(
     , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
     , info_packet_extra_flags(info.has_sound_code ? INFO_REMOTECONSOLEAUDIO : InfoPacketFlags{})
     , has_managed_drive(has_managed_drive)
+	, send_channel_index(0)
 {
     this->negociation_result.front_width = info.width - (info.width % 4);
     this->negociation_result.front_height = info.height;
@@ -431,11 +432,11 @@ bool RdpNegociation::recv_data(TpduBuffer& buf)
                 break;
             case State::CHANNEL_CONNECTION_ATTACH_USER:
                 if (this->channel_connection_attach_user(x224_data)){
-                    this->state = State::CHANNEL_JOIN_CONFIRME;
+                    this->state = State::CHANNEL_JOIN_CONFIRM;
                 }
                 break;
-            case State::CHANNEL_JOIN_CONFIRME:
-                if (this->channel_join_confirme(x224_data)){
+            case State::CHANNEL_JOIN_CONFIRM:
+                if (this->channel_join_confirm(x224_data)){
                     this->state = State::GET_LICENSE;
                 }
                 break;
@@ -1117,7 +1118,7 @@ bool RdpNegociation::channel_connection_attach_user(InStream & stream)
     return true;
 }
 
-bool RdpNegociation::channel_join_confirme(InStream & x224_data)
+bool RdpNegociation::channel_join_confirm(InStream & x224_data)
 {
     {
         X224::DT_TPDU_Recv x224(x224_data);
@@ -1480,7 +1481,7 @@ bool RdpNegociation::get_license(InStream & stream)
         }
 
         if (sec.payload.get_current() != sec.payload.get_data_end()){
-            LOG(LOG_ERR, "all data should have been consumed %s:%d tag = 0x%x", __FILE__, __LINE__, flic.tag);
+            LOG(LOG_ERR, "RdpNego: all data should have been consumed, tag = 0x%x", flic.tag);
             throw Error(ERR_SEC);
         }
     }

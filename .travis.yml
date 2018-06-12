@@ -4,6 +4,8 @@ sudo: required
 services:
   - docker
 
+if: tag IS blank
+
 matrix:
   include:
   # Clang 5.0
@@ -35,6 +37,9 @@ before_install:
 script:
   - docker build -f $BJAM_COMPILER.dockerfile .
 
+# branches:
+#   except:
+#     - /^[0-9]/
 
 notifications:
   email:

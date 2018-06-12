@@ -91,7 +91,6 @@ public:
     , cursorHotx(0)
     , cursorHoty(0)
     , clip(-1, -1, 0, 0)
-
     {
         this->setAttribute(Qt::WA_DeleteOnClose);
         this->setFocusPolicy(Qt::StrongFocus);

@@ -103,7 +103,7 @@ public:
 };
 
 #define NTLMSP_NAME "NTLM"
-#define SECBUFFER_VERSION                        0
+#define SECBUFFER_VERSION 0
 
 /* Buffer Types */
 enum buffer_type {

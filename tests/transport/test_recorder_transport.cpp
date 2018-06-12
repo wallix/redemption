@@ -41,7 +41,7 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
     char const* filename = "/tmp/recorder_test.out";
     SCOPE_EXIT(unlink(filename));
 
-    using Pck = RecorderTransport::PacketType;
+    using Pck = RecorderFile::PacketType;
 
     struct {
         Pck type;
@@ -115,7 +115,7 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
         auto it = std::begin(a);
         while (
             (void)(header = read_recorder_transport_header(trans)),
-            header.type != RecorderTransport::PacketType::Eof
+            header.type != RecorderFile::PacketType::Eof
         ) {
             RED_CHECK_EQ(((it->type == Pck::DataIn) ? 3 : it->s.size()), header.data_size);
             RED_CHECK_EQ(Transport::Read::Ok, trans.atomic_read({s.data(), header.data_size}));

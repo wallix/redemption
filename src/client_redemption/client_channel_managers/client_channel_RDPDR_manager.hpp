@@ -35,6 +35,7 @@
 #include "core/channel_list.hpp"
 
 #include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
+#include "client_redemption/client_input_output_api/rdp_disk_config.hpp"
 
 
 // [MS-RDPEFS]: Rmote Desktop Protocol: File System Virtual Channel Extension
@@ -115,85 +116,88 @@ class ClientChannelRDPDRManager {
     ClientIODiskAPI * impl_io_disk;
 
 public:
-    struct FileSystemData {
 
-        struct DeviceData {
-            char name[8] = {0};
-            uint32_t ID = 0;
-            rdpdr::RDPDR_DTYP type = rdpdr::RDPDR_DTYP::RDPDR_DTYP_UNSPECIFIED;
-        };
+    bool drives_created;
+    uint16_t protocol_minor_version;
+    uint32_t next_file_id = 0;
 
-        bool drives_created = false;
-        bool fileSystemCapacity[6] = { false };
-        size_t devicesCount = 1;
-        DeviceData devices[2];
+    std::unique_ptr<uint8_t[]> ReadData;
+    int last_read_data_portion_length;
 
-        uint32_t next_file_id = 0;
+    uint32_t get_file_id() {
+        this->next_file_id++;
+        return this->next_file_id;
+    }
 
-        uint32_t get_file_id() {
-            this->next_file_id++;
-            return this->next_file_id;
+    std::unordered_map<int, std::string> paths;
+
+
+    struct DeviceData {
+        char name[8] = {0};
+        uint32_t ID = 0;
+        rdpdr::RDPDR_DTYP type = rdpdr::RDPDR_DTYP::RDPDR_DTYP_UNSPECIFIED;
+
+        DeviceData(const char * name, uint32_t ID, rdpdr::RDPDR_DTYP type)
+          : ID(ID)
+          , type(type)
+        {
+            for (int i = 0; i < 8; i++) {
+                this->name[i] = name[i];
+            }
         }
+    };
 
-        std::unordered_map<int, std::string> paths;
+    std::vector<DeviceData> device_list;
 
-        int writeData_to_wait = 0;
-        int file_to_write_id = 0;
+    bool fileSystemCapacity[6] = { true, true, false, false, false, false };
 
-        uint32_t current_dir_id = 0;
-        std::vector<std::string> elem_in_path;
 
-        uint16_t protocol_minor_version = 0;
+    int writeData_to_wait = 0;
+    int file_to_write_id = 0;
 
-    } fileSystemData;
-
+    uint32_t current_dir_id = 0;
+    std::vector<std::string> elem_in_path;
     uint16_t server_capability_number;
 
+    uint32_t ioCode1 = 0;
+    uint32_t extendedPDU = 0;
+    uint32_t extraFlags1 = 0;
+    uint32_t SpecialTypeDeviceCap = 0;
+    uint32_t general_capability_version = 0;
+
+    const uint32_t channel_flags;
 
 
-    ClientChannelRDPDRManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientIODiskAPI * impl_io_disk)
+
+    ClientChannelRDPDRManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientIODiskAPI * impl_io_disk, RDPDiskConfig & config)
       : verbose(verbose)
       , client(client)
       , impl_io_disk(impl_io_disk)
+      , drives_created(false)
+      , protocol_minor_version(0)
+      , next_file_id(0)
+      , last_read_data_portion_length(0)
       , server_capability_number(0)
+      , ioCode1(config.ioCode1)
+      , extendedPDU(config.extendedPDU)
+      , extraFlags1(config.extraFlags1)
+      , SpecialTypeDeviceCap(config.SpecialTypeDeviceCap)
+      , general_capability_version(config.general_capability_version)
+      , channel_flags(CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST)
     {
-        std::string tmp(this->client->SHARE_DIR);
-        int pos(tmp.find('/'));
+        this->fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE]   = config.enable_printer_type;
+        this->fileSystemCapacity[rdpdr::CAP_DRIVE_TYPE]     = config.enable_drive_type;
+        this->fileSystemCapacity[rdpdr::CAP_SMARTCARD_TYPE] = config.enable_smart_card_type;
+        this->fileSystemCapacity[rdpdr::CAP_PORT_TYPE]      = config.enable_port_type;
 
-        this->fileSystemData.devicesCount = 0;
-
-        while (pos != -1) {
-            tmp = tmp.substr(pos+1, tmp.length());
-            pos = tmp.find('/');
+        for (size_t i = 0; i < config.device_list.size(); i++) {
+            DeviceData hard1(config.device_list[i].name, i+1, config.device_list[i].type);
+            device_list.push_back(hard1);
         }
-        size_t size(tmp.size());
-        if (size > 7) {
-            size = 7;
-        }
-        for (size_t i = 0; i < size; i++) {
-            this->fileSystemData.devices[this->fileSystemData.devicesCount].name[i] = tmp.data()[i];
-        }
-        this->fileSystemData.devices[this->fileSystemData.devicesCount].ID = 1;
-        this->fileSystemData.devices[this->fileSystemData.devicesCount].type = rdpdr::RDPDR_DTYP_FILESYSTEM;
-        this->fileSystemData.devicesCount++;
-
-
-        std::string name_printer("printer");
-        const char * char_name_printer = name_printer.c_str();
-        size = name_printer.size();
-        if (size > 7) {
-            size = 7;
-        }
-        for (size_t i = 0; i < size; i++) {
-            this->fileSystemData.devices[this->fileSystemData.devicesCount].name[i] = char_name_printer[i];
-        }
-        this->fileSystemData.devices[this->fileSystemData.devicesCount].ID = 2;
-        this->fileSystemData.devices[this->fileSystemData.devicesCount].type = rdpdr::RDPDR_DTYP_PRINT;
-        this->fileSystemData.devicesCount++;
     }
 
     ~ClientChannelRDPDRManager() {
-        this->fileSystemData.elem_in_path.clear();
+        this->elem_in_path.clear();
     }
 
 
@@ -202,12 +206,12 @@ public:
             return ;
         }
 
-        if (this->fileSystemData.writeData_to_wait) {
+        if (this->writeData_to_wait) {
             size_t length(chunk.in_remain());
 
-            this->fileSystemData.writeData_to_wait -= length;
+            this->writeData_to_wait -= length;
 
-            std::string file_to_write = this->fileSystemData.paths.at(this->fileSystemData.file_to_write_id);
+            std::string file_to_write = this->paths.at(this->file_to_write_id);
 
             std::ofstream oFile(file_to_write.c_str(), std::ios::binary | std::ios::app);
             if (oFile.good()) {
@@ -234,9 +238,9 @@ public:
                             LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Announce Request");
                         }
 
-                        uint16_t versionMajor = chunk.in_uint16_le();
-                        this->fileSystemData.protocol_minor_version = chunk.in_uint16_le();
-                        uint32_t clientID = chunk.in_uint32_le();
+                        rdpdr::ServerAnnounceRequest sar;
+                        sar.receive(chunk);
+                        this->protocol_minor_version = sar.VersionMinor();
 
                         StaticOutStream<32> stream;
 
@@ -244,9 +248,9 @@ public:
                                                         , rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM);
                         sharedHeader.emit(stream);
 
-                        rdpdr::ClientAnnounceReply clientAnnounceReply( versionMajor
-                                                                      , this->fileSystemData.protocol_minor_version
-                                                                      , clientID);
+                        rdpdr::ClientAnnounceReply clientAnnounceReply( sar.VersionMajor()
+                                                                      , this->protocol_minor_version
+                                                                      , sar.ClientId());
                         clientAnnounceReply.emit(stream);
 
                         int total_length(stream.get_offset());
@@ -255,8 +259,7 @@ public:
                         this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                         , chunk_to_send
                                                         , total_length
-                                                        , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                        , this->channel_flags
                                                         );
                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                             LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Announce Reply");
@@ -281,8 +284,7 @@ public:
                         this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                             , chunk_to_send
                                                             , total_length
-                                                            , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                            CHANNELS::CHANNEL_FLAG_FIRST
+                                                            , this->channel_flags
                                                             );
                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                             LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Name Request");
@@ -292,16 +294,33 @@ public:
 
                     case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:
                         {
-                        this->server_capability_number  = chunk.in_uint16_le();
-                        chunk.in_skip_bytes(2);
+                        rdpdr::ServerCoreCapabilityRequest sccr;
+                        sccr.receive(chunk);
+                        this->server_capability_number = sccr.numCapabilities;
+
                         bool driveEnable = false;
                         for (int i = 0; i < this->server_capability_number ; i++) {
-                            uint16_t type = chunk.in_uint16_le();
-                            uint16_t size = chunk.in_uint16_le() - 4;
-                            chunk.in_skip_bytes(size);
-                            this->fileSystemData.fileSystemCapacity[type] = true;
-                            if (type == rdpdr::CAP_DRIVE_TYPE) {
-                                driveEnable = true;
+                             rdpdr::CapabilityHeader ch;
+                             ch.receive(chunk);
+
+                             switch (ch.CapabilityType) {
+                                case rdpdr::CAP_GENERAL_TYPE:
+                                    {
+                                        rdpdr::GeneralCapabilitySet gcs;
+                                        gcs.receive(chunk, ch.Version);
+                                    }
+                                    break;
+                                case rdpdr::CAP_DRIVE_TYPE:
+                                    driveEnable = true;
+                                    [[fallthrough]];
+                                case rdpdr::CAP_PRINTER_TYPE:
+                                    [[fallthrough]];
+                                case rdpdr::CAP_PORT_TYPE:
+                                    [[fallthrough]];
+                                case rdpdr::CAP_SMARTCARD_TYPE:
+                                    chunk.in_skip_bytes(ch.CapabilityLength - 8);
+                                    this->fileSystemCapacity[ch.CapabilityType] = true;
+                                    break;
                             }
                         }
 
@@ -319,56 +338,48 @@ public:
                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                             LOG(LOG_INFO, "SERVER >> RDPDR Channel: Server Client ID Confirm");
                         }
-                        //this->show_in_stream(0, chunk_series, chunk_size);
+
                         {
                         StaticOutStream<1024> out_stream;
                         rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
                                                         , rdpdr::PacketId::PAKID_CORE_CLIENT_CAPABILITY);
                         sharedHeader.emit(out_stream);
 
-                        out_stream.out_uint16_le(this->server_capability_number);    // 5 capabilities.
-                        out_stream.out_clear_bytes(2);  // Padding(2)
+                        rdpdr::ClientCoreCapabilityResponse cccr(this->server_capability_number);// 5 capabilities.
+                        cccr.emit(out_stream);
 
-                        // General capability set
-                        out_stream.out_uint16_le(rdpdr::CAP_GENERAL_TYPE);
-                        out_stream.out_uint16_le(36 + 8);
-                                /*rdpdr::GeneralCapabilitySet::size(
-                                    general_capability_version) +
-                                8   // CapabilityType(2) + CapabilityLength(2) +
-                                    //     Version(4)
-                            );*/
-                        out_stream.out_uint32_le(rdpdr::GENERAL_CAPABILITY_VERSION_02);
+                        rdpdr::CapabilityHeader ch(rdpdr::CAP_GENERAL_TYPE, rdpdr::GENERAL_CAPABILITY_VERSION_02);
+                        ch.CapabilityLength = 36 + 8;   // CapabilityType(2) + CapabilityLength(2) +
+                                                        //     Version(4) + ...
+                        ch.emit(out_stream);
 
                         rdpdr::GeneralCapabilitySet general_capability_set(
                                 0x2,        // osType
-                                this->fileSystemData.protocol_minor_version,        // protocolMinorVersion -
-                                rdpdr::SUPPORT_ALL_REQUEST,     // ioCode1
-                                rdpdr::RDPDR_DEVICE_REMOVE_PDUS |           // extendedPDU -
-                                    rdpdr::RDPDR_CLIENT_DISPLAY_NAME_PDU  |
-                                    rdpdr::RDPDR_USER_LOGGEDON_PDU,
-                                rdpdr::ENABLE_ASYNCIO,        // extraFlags1
-                                0,                          // SpecialTypeDeviceCap
-                                rdpdr::GENERAL_CAPABILITY_VERSION_02
+                                this->protocol_minor_version,        // protocolMinorVersion -
+                                this->ioCode1,                     // ioCode1
+                                this->extendedPDU,
+                                this->extraFlags1,                     // extraFlags1
+                                this->SpecialTypeDeviceCap,                     // SpecialTypeDeviceCap
+                                this->general_capability_version
                             );
-
                         general_capability_set.emit(out_stream);
 
-                        if (this->fileSystemData.fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE] == true) {
+                        if (this->fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE] == true) {
                             rdpdr::CapabilityHeader ch(rdpdr::CAP_PRINTER_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                             ch.emit(out_stream);
                         }
 
-                        if (this->fileSystemData.fileSystemCapacity[rdpdr::CAP_PORT_TYPE] == true) {
+                        if (this->fileSystemCapacity[rdpdr::CAP_PORT_TYPE] == true) {
                             rdpdr::CapabilityHeader ch(rdpdr::CAP_PORT_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                             ch.emit(out_stream);
                         }
 
-                        if (this->fileSystemData.fileSystemCapacity[rdpdr::CAP_DRIVE_TYPE] == true) {
+                        if (this->fileSystemCapacity[rdpdr::CAP_DRIVE_TYPE] == true) {
                             rdpdr::CapabilityHeader ch(rdpdr::CAP_DRIVE_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                             ch.emit(out_stream);
                         }
 
-                        if (this->fileSystemData.fileSystemCapacity[rdpdr::CAP_SMARTCARD_TYPE] == true) {
+                        if (this->fileSystemCapacity[rdpdr::CAP_SMARTCARD_TYPE] == true) {
                             rdpdr::CapabilityHeader ch(rdpdr::CAP_SMARTCARD_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                             ch.emit(out_stream);
                         }
@@ -393,24 +404,20 @@ public:
                                                         , rdpdr::PacketId::PAKID_CORE_DEVICELIST_ANNOUNCE);
                         sharedHeader.emit(out_stream);
 
-                        rdpdr::ClientDeviceListAnnounceRequest cdlar(this->fileSystemData.devicesCount);
+                        rdpdr::ClientDeviceListAnnounceRequest cdlar(this->device_list.size());
                         cdlar.emit(out_stream);
 
-                        for (size_t i = 0; i < this->fileSystemData.devicesCount; i++) {
+                        for (size_t i = 0; i < this->device_list.size(); i++) {
 
-                            if (this->fileSystemData.devices[i].type == rdpdr::RDPDR_DTYP_PRINT) {
+                            if (this->device_list[i].type == rdpdr::RDPDR_DTYP_PRINT) {
 
-                                rdpdr::DeviceAnnounceHeader dah( this->fileSystemData.devices[i].type
-                                                               , this->fileSystemData.devices[i].ID
-                                                               , this->fileSystemData.devices[i].name
+                                rdpdr::DeviceAnnounceHeader dah( this->device_list[i].type
+                                                               , this->device_list[i].ID
+                                                               , this->device_list[i].name
                                                                , nullptr, 24 + 0 + 4 + 2 + 8 + 0);
                                 dah.emit(out_stream);
 
                                 rdpdr::DeviceAnnounceHeaderPrinterSpecificData dahp(
-//                                                     this->fileSystemData.devices[i].type
-//                                                   , this->fileSystemData.devices[i].ID
-//                                                   , this->fileSystemData.devices[i].name
-//                                                     24 + 0 + 4 + 2 + sizeof(printName)
                                                 rdpdr::RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII
                                                 , 0
                                                 , 4       // PnPNameLen
@@ -424,9 +431,9 @@ public:
                                 dahp.emit(out_stream);
 
                             } else {
-                                rdpdr::DeviceAnnounceHeader dah( this->fileSystemData.devices[i].type
-                                                               , this->fileSystemData.devices[i].ID
-                                                               , this->fileSystemData.devices[i].name
+                                rdpdr::DeviceAnnounceHeader dah( this->device_list[i].type
+                                                               , this->device_list[i].ID
+                                                               , this->device_list[i].name
                                                                , nullptr, 0);
                                 dah.emit(out_stream);
                             }
@@ -438,8 +445,7 @@ public:
                         this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                         , chunk_to_send
                                                         , total_length
-                                                        , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                        , this->channel_flags
                                                         );
                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                             LOG(LOG_INFO, "CLIENT >> RDPDR Channel: Client Device List Announce Request");
@@ -453,9 +459,9 @@ public:
                         sdar.receive(chunk);
 
                         if (sdar.ResultCode() == erref::NTSTATUS::STATUS_SUCCESS) {
-                            this->fileSystemData.drives_created = true;
+                            this->drives_created = true;
                         } else {
-                            this->fileSystemData.drives_created = false;
+                            this->drives_created = false;
                             LOG(LOG_WARNING, "SERVER >> RDPDR Channel: Can't create virtual disk ID=%x Hres=%x", sdar.DeviceId(), sdar.ResultCode());
                         }
                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -474,10 +480,6 @@ public:
                         {
                         rdpdr::DeviceIORequest deviceIORequest;
                         deviceIORequest.receive(chunk);
-
-                        if (deviceIORequest.DeviceId() ==  2) {
-                            this->verbose = RDPVerbose::rdpdr;
-                        }
 
                         StaticOutStream<1024> out_stream;
                         rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
@@ -504,8 +506,7 @@ public:
                                 this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                     , chunk_to_send
                                                                     , out_stream.get_offset()
-                                                                    , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                                    , this->channel_flags
                                                                     );
                             }
                                 break;
@@ -523,14 +524,14 @@ public:
                                     std::string new_path(this->client->SHARE_DIR + request.Path());
 
                                     if (this->impl_io_disk->ifile_good(new_path.c_str())) {
-                                        id = this->fileSystemData.get_file_id();
-                                        this->fileSystemData.paths.emplace(id, new_path);
+                                        id = this->get_file_id();
+                                        this->paths.emplace(id, new_path);
                                     } else {
 //                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Create Request 3");
                                         if (request.CreateDisposition() & smb2::FILE_CREATE) {
 
-                                            id = this->fileSystemData.get_file_id();
-                                            this->fileSystemData.paths.emplace(id, new_path);
+                                            id = this->get_file_id();
+                                            this->paths.emplace(id, new_path);
 
                                             if (request.CreateOptions() & smb2::FILE_DIRECTORY_FILE) {
                                                 LOG(LOG_WARNING, "new directory: \"%s\"", new_path);
@@ -566,8 +567,7 @@ public:
                                 this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                     , chunk_to_send
                                                                     , out_stream.get_offset()
-                                                                    , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                    CHANNELS::CHANNEL_FLAG_FIRST
+                                                                    , this->channel_flags
                                                                     );
 
                                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -589,7 +589,7 @@ public:
                                         }
                                         {
 
-                                        std::string file_to_request = this->fileSystemData.paths.at(id);
+                                        std::string file_to_request = this->paths.at(id);
 
                                         if (! (this->impl_io_disk->ifile_good(file_to_request.c_str())) ) {
                                             deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
@@ -612,8 +612,7 @@ public:
                                         this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                             , chunk_to_send
                                                                             , out_stream.get_offset()
-                                                                            , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                            CHANNELS::CHANNEL_FLAG_FIRST
+                                                                            , this->channel_flags
                                                                             );
                                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                             LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Basic Query Information Response");
@@ -631,7 +630,7 @@ public:
                                         rdpdr::ClientDriveQueryInformationResponse cdqir(rdpdr::FILE_STANDARD_INFORMATION_SIZE);
                                         cdqir.emit(out_stream);
 
-                                        ClientIODiskAPI::FileStat fileStat = this->impl_io_disk->get_file_stat(this->fileSystemData.paths.at(id).c_str());
+                                        ClientIODiskAPI::FileStat fileStat = this->impl_io_disk->get_file_stat(this->paths.at(id).c_str());
 
                                         fscc::FileStandardInformation fsi( fileStat.AllocationSize
                                                                          , fileStat.EndOfFile
@@ -645,8 +644,7 @@ public:
                                         this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                             , chunk_to_send
                                                                             , out_stream.get_offset()
-                                                                            , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                            CHANNELS::CHANNEL_FLAG_FIRST
+                                                                            , this->channel_flags
                                                                             );
                                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                             LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Standard Information Response");
@@ -659,7 +657,7 @@ public:
                                             LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Query File Attribute Tag Information Request");
                                         }
                                         {
-                                            std::string file_to_request = this->fileSystemData.paths.at(id);
+                                            std::string file_to_request = this->paths.at(id);
 
                                             std::ifstream file(file_to_request.c_str());
                                             if (!(this->impl_io_disk->ifile_good(file_to_request.c_str()))) {
@@ -685,10 +683,8 @@ public:
                                             this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                                 , chunk_to_send
                                                                                 , out_stream.get_offset()
-                                                                                , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                                    CHANNELS::CHANNEL_FLAG_FIRST
+                                                                                , this->channel_flags
                                                                                 );
-
 
                                             if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                                 LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query File Attribute Tag Information Response");
@@ -709,7 +705,7 @@ public:
                                 }
                                 {
 
-                                this->fileSystemData.paths.erase(id);
+                                this->paths.erase(id);
 
                                 deviceIOResponse.emit(out_stream);
 
@@ -720,8 +716,7 @@ public:
                                 this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                     , chunk_to_send
                                                                     , out_stream.get_offset()
-                                                                    , CHANNELS::CHANNEL_FLAG_LAST  |
-                                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                                    , this->channel_flags
                                                                     );
                                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                     LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Close Response");
@@ -737,24 +732,35 @@ public:
                                 rdpdr::DeviceReadRequest drr;
                                 drr.receive(chunk);
 
-                                uint32_t file_size{drr.Length()};
-                                uint64_t offset{drr.Offset()};
-                                std::unique_ptr<uint8_t[]> ReadData = std::make_unique<uint8_t[]>(file_size);
-                                std::string file_to_tread = this->fileSystemData.paths.at(id);
+                                std::string file_to_tread = this->paths.at(id);
+                                int portion_length = 0;
+                                int file_size = this->impl_io_disk->get_file_size(file_to_tread.c_str());
+                                if (file_size < 0) {
+                                    deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
+                                    LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_tread.c_str());
+                                } else {
 
-                                deviceIOResponse.set_IoStatus(this->impl_io_disk->read_data(
-                                    file_to_tread, offset, {ReadData.get(), file_size}, true));
+                                    portion_length = std::min(static_cast<int>(drr.Length()), file_size);
+                                    int offset(drr.Offset());
+
+                                    if (this->last_read_data_portion_length != portion_length) {
+                                        this->ReadData = std::make_unique<uint8_t[]>(portion_length);
+                                        this->last_read_data_portion_length = portion_length;
+                                    }
+
+                                    this->impl_io_disk->read_data(file_to_tread, offset, {ReadData.get(), static_cast<size_t>(portion_length)});
+                                }
 
                                 deviceIOResponse.emit(out_stream);
-                                rdpdr::DeviceReadResponse deviceReadResponse(file_size);
+                                rdpdr::DeviceReadResponse deviceReadResponse(portion_length);
                                 deviceReadResponse.emit(out_stream);
 
                                 this->process_client_clipboard_out_data( channel_names::rdpdr
-                                                                    , 20 + file_size
+                                                                    , 20 + portion_length
                                                                     , out_stream
                                                                     , out_stream.get_capacity() - 20
                                                                     , ReadData.get()
-                                                                    , file_size
+                                                                    , portion_length
                                                                     , 0);
                                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                     LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Read Response");
@@ -808,8 +814,8 @@ public:
                                         } else {
 
                                             std::string str_dir_path;
-                                            if (this->fileSystemData.paths.end() != this->fileSystemData.paths.find(id)) {
-                                                str_dir_path = this->fileSystemData.paths.at(id);
+                                            if (this->paths.end() != this->paths.find(id)) {
+                                                str_dir_path = this->paths.at(id);
                                             } else {
                                                 LOG(LOG_WARNING, " Device I/O Query Directory Request Unknow ID (%u).", id);
                                                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
@@ -824,16 +830,16 @@ public:
 
                                             if (sdqdr.InitialQuery()) {
 
-                                                if (!(this->impl_io_disk->set_elem_from_dir(this->fileSystemData.elem_in_path, str_dir_path))) {
+                                                if (!(this->impl_io_disk->set_elem_from_dir(this->elem_in_path, str_dir_path))) {
                                                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                                 }
                                             }
 
-                                            if (this->fileSystemData.elem_in_path.size() == 0) {
+                                            if (this->elem_in_path.size() == 0) {
                                                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_MORE_FILES);
                                             } else {
-                                                str_file_name = this->fileSystemData.elem_in_path[0];
-                                                this->fileSystemData.elem_in_path.erase(this->fileSystemData.elem_in_path.begin());
+                                                str_file_name = this->elem_in_path[0];
+                                                this->elem_in_path.erase(this->elem_in_path.begin());
 
                                                 std::string str_file_path_slash(str_dir_path + "/" + str_file_name);
                                                 if (stat(str_file_path_slash.c_str(), &buff_child)) {
@@ -910,10 +916,9 @@ public:
                                         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
                                         this->client->mod->send_to_mod_channel( channel_names::rdpdr
-                                                                            , chunk_to_send
-                                                                            , out_stream.get_offset()
-                                                                            , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                                CHANNELS::CHANNEL_FLAG_FIRST
+                                                                              , chunk_to_send
+                                                                              , out_stream.get_offset()
+                                                                              , this->channel_flags
                                                                             );
                                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                             LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Directory Response");
@@ -968,8 +973,8 @@ public:
 
                                     std::string str_path;
 
-                                    if (this->fileSystemData.paths.end() != this->fileSystemData.paths.find(id)) {
-                                        str_path = this->fileSystemData.paths.at(id);
+                                    if (this->paths.end() != this->paths.find(id)) {
+                                        str_path = this->paths.at(id);
                                     } else {
                                         LOG(LOG_WARNING, " Device I/O Query Volume Information Request Unknow ID (%u).", id);
                                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
@@ -1059,8 +1064,7 @@ public:
                                     this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                         , chunk_to_send
                                                                         , out_stream.get_offset()
-                                                                        , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                            CHANNELS::CHANNEL_FLAG_FIRST
+                                                                        , this->channel_flags
                                                                         );
                                     if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Query Volume Information Response");
@@ -1081,12 +1085,12 @@ public:
 
                                     if (dwr.Length > CHANNELS::CHANNEL_CHUNK_LENGTH) {
 
-                                        this->fileSystemData.writeData_to_wait = dwr.Length - rdpdr::DeviceWriteRequest::FISRT_PART_DATA_MAX_LEN;
-                                        this->fileSystemData.file_to_write_id = id;
+                                        this->writeData_to_wait = dwr.Length - rdpdr::DeviceWriteRequest::FISRT_PART_DATA_MAX_LEN;
+                                        this->file_to_write_id = id;
                                         WriteDataLen = rdpdr::DeviceWriteRequest::FISRT_PART_DATA_MAX_LEN;
                                     }
 
-                                    std::string file_to_write = this->fileSystemData.paths.at(id);
+                                    std::string file_to_write = this->paths.at(id);
 
                                     if (this->impl_io_disk->write_file(file_to_write.c_str(), reinterpret_cast<const char *>(dwr.WriteData), WriteDataLen ) ) {
                                         LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_write.c_str());
@@ -1102,8 +1106,7 @@ public:
                                     this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                         , chunk_to_send
                                                                         , out_stream.get_offset()
-                                                                        , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                            CHANNELS::CHANNEL_FLAG_FIRST
+                                                                        , this->channel_flags
                                                                         );
                                     if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Write Response");
@@ -1120,7 +1123,7 @@ public:
                                     rdpdr::ServerDriveSetInformationRequest sdsir;
                                     sdsir.receive(chunk);
 
-                                    std::string file_to_request = this->fileSystemData.paths.at(id);
+                                    std::string file_to_request = this->paths.at(id);
 
                                     if (! (this->impl_io_disk->ifile_good(file_to_request.c_str()))) {
                                         LOG(LOG_WARNING, "  Can't open such file of directory : \'%s\'.", file_to_request.c_str());
@@ -1164,7 +1167,7 @@ public:
                                         {
                                             uint8_t DeletePending = 1;
 
-                                            std::string file_to_request = this->fileSystemData.paths.at(id);
+                                            std::string file_to_request = this->paths.at(id);
 
                                             if (this->impl_io_disk->remove_file(file_to_request.c_str())) {
                                                 DeletePending = 0;
@@ -1196,8 +1199,7 @@ public:
                                     this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                     , chunk_to_send
                                                                     , out_stream.get_offset()
-                                                                    , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                    CHANNELS::CHANNEL_FLAG_FIRST
+                                                                    , this->channel_flags
                                                                     );
                                     if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Client Drive Set Information Response");
@@ -1258,8 +1260,7 @@ public:
                                     this->client->mod->send_to_mod_channel( channel_names::rdpdr
                                                                         , chunk_to_send
                                                                         , out_stream.get_offset()
-                                                                        , CHANNELS::CHANNEL_FLAG_LAST |
-                                                                        CHANNELS::CHANNEL_FLAG_FIRST
+                                                                        , this->channel_flags
                                                                         );
                                 }
                                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -1307,7 +1308,7 @@ public:
                             uint16_t type = chunk.in_uint16_le();
                             uint16_t size = chunk.in_uint16_le() - 4;
                             chunk.in_skip_bytes(size);
-                            this->fileSystemData.fileSystemCapacity[type] = true;
+                            this->fileSystemCapacity[type] = true;
                             if (type == 0x4) {
                                 driveEnable = true;
                             }
@@ -1335,9 +1336,9 @@ public:
                         sdar.receive(chunk);
 
                         if (sdar.ResultCode() == erref::NTSTATUS::STATUS_SUCCESS) {
-                            this->fileSystemData.drives_created = true;
+                            this->drives_created = true;
                         } else {
-                            this->fileSystemData.drives_created = false;
+                            this->drives_created = false;
                             LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: Can't create virtual disk ID=%x Hres=%x", sdar.DeviceId(), sdar.ResultCode());
                         }
                         if (bool(this->verbose & RDPVerbose::printer)) {
@@ -1408,7 +1409,7 @@ public:
         }
     }
 
-    void FremoveDriveDevice(const FileSystemData::DeviceData * devices, const size_t deviceCount) {
+    void FremoveDriveDevice(const DeviceData * devices, const size_t deviceCount) {
         StaticOutStream<1024> out_stream;
 
         rdpdr::SharedHeader sharedHeader( rdpdr::RDPDR_CTYP_CORE

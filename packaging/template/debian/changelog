@@ -1,3 +1,25 @@
+redemption (1.2.29%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * (RemoteApp) Exclue Microsoft Input Method Editor icon from resulting video.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 12 Jun 2018 12:07:04 +0200
+
+redemption (1.2.27%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix RemoteApp windows detection.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 11 Jun 2018 18:32:21 +0200
+
+redemption (1.2.19%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 07 Jun 2018 18:29:27 +0200
+
+redemption (1.2.17%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 07 Jun 2018 14:57:23 +0200
+
 redemption (1.2.15%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix login message formatting issue.

@@ -548,12 +548,12 @@ struct ClientDriveDeviceListRemove {
 //  +-----------------------+----------------------+
 
 enum RDPDR_DTYP : uint32_t {
-      RDPDR_DTYP_UNSPECIFIED = 0
-    , RDPDR_DTYP_SERIAL     = 0x00000001
-    , RDPDR_DTYP_PARALLEL   = 0x00000002
-    , RDPDR_DTYP_PRINT      = 0x00000004
-    , RDPDR_DTYP_FILESYSTEM = 0x00000008
-    , RDPDR_DTYP_SMARTCARD  = 0x00000020
+      RDPDR_DTYP_UNSPECIFIED = 0x00000000
+    , RDPDR_DTYP_SERIAL      = 0x00000001
+    , RDPDR_DTYP_PARALLEL    = 0x00000002
+    , RDPDR_DTYP_PRINT       = 0x00000004
+    , RDPDR_DTYP_FILESYSTEM  = 0x00000008
+    , RDPDR_DTYP_SMARTCARD   = 0x00000020
 };
 
 static const char * get_DeviceType_name(RDPDR_DTYP DeviceType) noexcept
@@ -5306,16 +5306,17 @@ struct ServerCoreCapabilityRequest {
 
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "Truncated ClientDriveNotifyChangeDirectoryResponse (0): expected=%u remains=%zu",
+                    "Truncated ServerCoreCapabilityRequest (0): expected=%u remains=%zu",
                     expected, stream.in_remain());
                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
             }
         }
         this->numCapabilities = stream.in_uint16_le();
+        stream.in_skip_bytes(2);
     }
 
     void log() const {
-        LOG(LOG_INFO, "     Client Core Capability Request:");
+        LOG(LOG_INFO, "     Server Core Capability Request:");
         LOG(LOG_INFO, "          * numCapabilities = %u (2 bytes)", numCapabilities);
         LOG(LOG_INFO, "          * Padding - (2 bytes) NOT USED");
     }
@@ -5323,8 +5324,67 @@ struct ServerCoreCapabilityRequest {
 
 
 
+// 2.2.2.7 Server Core Capability Request (DR_CORE_CAPABILITY_REQ)
+//
+//  The server announces its capabilities and requests the same from the client.
 
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             header                            |
+// +-------------------------------+-------------------------------+
+// |     numCapabilities           |            Padding            |
+// +-------------------------------+-------------------------------+
+// |                  CapabilityMessage (variable)                 |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
 
+// Header (4 bytes): An RDPDR_HEADER header. The Component field MUST be set to RDPDR_CTYP_CORE, and the PacketId field MUST be set to PAKID_CORE_SERVER_CAPABILITY.
+//
+// numCapabilities (2 bytes):  A 16-bit integer that specifies the number of items in the CapabilityMessage array.
+//
+// Padding (2 bytes): A 16-bit unsigned integer of padding. This field is unused and MUST be ignored.
+//
+// CapabilityMessage (variable): An array of CAPABILITY_SET structures (section 2.2.1.2.1). The number of capabilities is specified by the numCapabilities field.
+
+struct ClientCoreCapabilityResponse {
+
+    uint16_t numCapabilities = 0;
+
+    ClientCoreCapabilityResponse() = default;
+
+    ClientCoreCapabilityResponse(uint16_t numCapabilities)
+      : numCapabilities(numCapabilities)
+    {}
+
+    void emit(OutStream & stream) const {
+        stream.out_uint16_le(this->numCapabilities);
+        stream.out_skip_bytes(2);
+    }
+
+    void receive(InStream & stream) {
+        {
+            const unsigned expected = 4;
+
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "Truncated ClientCoreCapabilityResponse (0): expected=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+            }
+        }
+        this->numCapabilities = stream.in_uint16_le();
+        stream.in_skip_bytes(2);
+    }
+
+    void log() const {
+        LOG(LOG_INFO, "     Client Core Capability Response:");
+        LOG(LOG_INFO, "          * numCapabilities = %u (2 bytes)", numCapabilities);
+        LOG(LOG_INFO, "          * Padding - (2 bytes) NOT USED");
+    }
+};
 
 
 
@@ -5981,22 +6041,19 @@ void streamLog(InStream & stream , RdpDrStatus & status)
 
                 case PacketId::PAKID_CORE_SERVER_CAPABILITY:
                     {
-                        int numCapabilities(s.in_uint16_le());
-                        s.in_skip_bytes(2);
+                        ServerCoreCapabilityRequest sccr;
+                        sccr.receive(s);
+                        sccr.log();
 
-                        LOG(LOG_INFO, "     Client Core Capability Request:");
-                        LOG(LOG_INFO, "          * numCapabilities = %d (2 bytes)", numCapabilities);
-                        LOG(LOG_INFO, "          * Padding - (2 bytes) NOT USED");
+                        for (uint16_t i = 0; i < sccr.numCapabilities; i++) {
 
-                        for (uint16_t i = 0; i < numCapabilities; i++) {
-                            InStream s_serie = s.clone();
-                            uint16_t CapabilityType = s_serie.in_uint16_le();
-                            switch (CapabilityType) {
+                            CapabilityHeader ch;
+                            ch.receive(s);
+                            ch.log();
+
+                            switch (ch.CapabilityType) {
                                 case CAP_GENERAL_TYPE:
                                     {
-                                        CapabilityHeader ch;
-                                        ch.receive(s);
-                                        ch.log();
                                         GeneralCapabilitySet gcs;
                                         gcs.receive(s, ch.Version);
                                         gcs.log();
@@ -6006,11 +6063,7 @@ void streamLog(InStream & stream , RdpDrStatus & status)
                                 case CAP_PORT_TYPE:
                                 case CAP_DRIVE_TYPE:
                                 case CAP_SMARTCARD_TYPE:
-                                    {
-                                        CapabilityHeader ch;
-                                        ch.receive(s);
-                                        ch.log();
-                                    }
+                                    s.in_skip_bytes(ch.CapabilityLength - 8);
                                     break;
                             }
                         }
@@ -6019,37 +6072,30 @@ void streamLog(InStream & stream , RdpDrStatus & status)
 
                 case PacketId::PAKID_CORE_CLIENT_CAPABILITY:
                     {
-                        int numCapabilities(s.in_uint16_le());
-                        s.in_skip_bytes(2);
+                        ClientCoreCapabilityResponse cccr;
+                        cccr.receive(s);
+                        cccr.log();
 
-                        LOG(LOG_INFO, "     Client Core Capability Request:");
-                        LOG(LOG_INFO, "          * numCapabilities = %d (2 bytes)", numCapabilities);
-                        LOG(LOG_INFO, "          * Padding - (2 bytes) NOT USED");
+                        for (uint16_t i = 0; i < cccr.numCapabilities; i++) {
 
-                        for (uint16_t i = 0; i < numCapabilities; i++) {
-                            InStream s_serie = s.clone();
-                            uint16_t CapabilityType = s_serie.in_uint16_le();
-                            switch (CapabilityType) {
+                            CapabilityHeader ch;
+                            ch.receive(s);
+                            ch.log();
+
+                            switch (ch.CapabilityType) {
                                 case CAP_GENERAL_TYPE:
                                     {
-                                        CapabilityHeader ch;
-                                        ch.receive(s);
-                                        ch.log();
                                         GeneralCapabilitySet gcs;
                                         gcs.receive(s, ch.Version);
                                         gcs.log();
-                                        break;
                                     }
+                                    break;
                                 case CAP_PRINTER_TYPE:
                                 case CAP_PORT_TYPE:
                                 case CAP_DRIVE_TYPE:
                                 case CAP_SMARTCARD_TYPE:
-                                    {
-                                        CapabilityHeader ch;
-                                        ch.receive(s);
-                                        ch.log();
-                                        break;
-                                    }
+                                    s.in_skip_bytes(ch.CapabilityLength - 8);
+                                    break;
                             }
                         }
                     }
