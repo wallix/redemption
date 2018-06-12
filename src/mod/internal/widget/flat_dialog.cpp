@@ -134,7 +134,6 @@ void FlatDialog::move_size_widget(int16_t left, int16_t top, uint16_t width, uin
     y            += this->title.cy();
     total_height += this->title.cy();
 
-    dim = this->dialog.get_optimal_dim();
     std::string formatted_dialog_string;
     gdi::MultiLineTextMetricsEx mltm_ex(this->font, this->dialog_string.c_str(), WIDGET_MULTILINE_BORDER_Y,
         width * 4 / 5 - WIDGET_MULTILINE_BORDER_X * 2, formatted_dialog_string);
