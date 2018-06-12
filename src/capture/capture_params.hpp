@@ -37,4 +37,6 @@ struct CaptureParams
     ReportMessageApi * report_message;
 
     SmartVideoCropping smart_video_cropping;
+
+    uint32_t verbose;
 };

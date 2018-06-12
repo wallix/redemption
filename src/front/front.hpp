@@ -1040,7 +1040,8 @@ public:
             record_path.c_str(),
             groupid,
             &this->report_message,
-            ini.get<cfg::video::smart_video_cropping>()
+            ini.get<cfg::video::smart_video_cropping>(),
+            ini.get<cfg::debug::capture>()
         };
 
         this->capture = new Capture( capture_params
