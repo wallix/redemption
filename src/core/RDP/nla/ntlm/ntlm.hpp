@@ -146,9 +146,6 @@ public:
             if (!pOutput) {
                 return SEC_E_INVALID_TOKEN;
             }
-            if (pOutput->cBuffers < 1) {
-                return SEC_E_INVALID_TOKEN;
-            }
             PSecBuffer output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
             if (!output_buffer) {
                 return SEC_E_INVALID_TOKEN;
@@ -165,9 +162,6 @@ public:
             return SEC_E_OUT_OF_SEQUENCE;
         }
         else {
-            if (pInput->cBuffers < 1) {
-                return SEC_E_INVALID_TOKEN;
-            }
             PSecBuffer input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
 
             if (!input_buffer) {
@@ -187,9 +181,6 @@ public:
                 this->context->read_challenge(input_buffer);
 
                 if (!pOutput) {
-                    return SEC_E_INVALID_TOKEN;
-                }
-                if (pOutput->cBuffers < 1) {
                     return SEC_E_INVALID_TOKEN;
                 }
                 PSecBuffer output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
@@ -234,10 +225,6 @@ public:
 
         if (this->context->state == NTLM_STATE_INITIAL) {
             this->context->state = NTLM_STATE_NEGOTIATE;
-
-            if (input.cBuffers < 1) {
-                return SEC_E_INVALID_TOKEN;
-            }
             PSecBuffer input_buffer = input.FindSecBuffer(SECBUFFER_TOKEN);
 
             if (!input_buffer) {
@@ -249,9 +236,6 @@ public:
             /*SEC_STATUS status = */this->context->read_negotiate(input_buffer);
 
             if (this->context->state == NTLM_STATE_CHALLENGE) {
-                if (output.cBuffers < 1) {
-                    return SEC_E_INVALID_TOKEN;
-                }
                 PSecBuffer output_buffer = output.FindSecBuffer(SECBUFFER_TOKEN);
 
                 if (!output_buffer || !output_buffer->BufferType) {
@@ -266,9 +250,6 @@ public:
             return SEC_E_OUT_OF_SEQUENCE;
         }
         else if (this->context->state == NTLM_STATE_AUTHENTICATE) {
-            if (input.cBuffers < 1) {
-                return SEC_E_INVALID_TOKEN;
-            }
             PSecBuffer input_buffer = input.FindSecBuffer(SECBUFFER_TOKEN);
 
             if (!input_buffer) {

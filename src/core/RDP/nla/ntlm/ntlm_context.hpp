@@ -295,7 +295,7 @@ public:
     void NTOWFv2_FromHash(const uint8_t * hash,   size_t hash_size,
                           const uint8_t * user,   size_t user_size,
                           const uint8_t * domain, size_t domain_size,
-                          uint8_t * buff, size_t buff_size) {
+                          uint8_t (&buff)[SslMd5::DIGEST_LENGTH]) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext NTOWFv2 Hash");
         }
@@ -306,20 +306,10 @@ public:
         UTF16Upper(userup, user_size);
         hmac_md5.update(userup, user_size);
         delete [] userup;
-        userup = nullptr;
-
-        uint8_t tmp_md5[SslMd5::DIGEST_LENGTH] = {};
 
         // hmac_md5.update(user, user_size);
         hmac_md5.update(domain, domain_size);
-        hmac_md5.final(tmp_md5);
-        // TODO: check if buff_size is SslMd5::DIGEST_LENGTH
-        // if it is so no need to use a temporary variable
-        // and copy digest afterward.
-        memset(buff, 0, buff_size);
-        memcpy(buff, tmp_md5,
-            std::min(buff_size,
-            static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
+        hmac_md5.final(buff);
     }
     // all strings are in unicode utf16
     void hash_password(const uint8_t * pass, size_t pass_size, uint8_t (&hash)[SslMd4::DIGEST_LENGTH]) {
@@ -689,7 +679,7 @@ public:
         this->NTOWFv2_FromHash(hash, hash_size,
                                UserName.get_data(), UserName.size(),
                                DomainName.get_data(), DomainName.size(),
-                               ResponseKeyNT, sizeof(ResponseKeyNT));
+                               ResponseKeyNT);
         // LOG(LOG_INFO, "ResponseKeyNT");
         // hexdump_c(ResponseKeyNT, sizeof(ResponseKeyNT));
         SslHMAC_Md5 hmac_md5resp(ResponseKeyNT, sizeof(ResponseKeyNT));
@@ -700,7 +690,6 @@ public:
         bool res = !memcmp(NtProofStr, NtProofStr_from_msg, 16);
 
         delete [] temp;
-        temp = nullptr;
 
         return res;
     }
@@ -728,7 +717,7 @@ public:
         this->NTOWFv2_FromHash(hash, hash_size,
                                UserName.get_data(), UserName.size(),
                                DomainName.get_data(), DomainName.size(),
-                               ResponseKeyLM, sizeof(ResponseKeyLM));
+                               ResponseKeyLM);
 
         SslHMAC_Md5 hmac_md5resp(ResponseKeyLM, sizeof(ResponseKeyLM));
         hmac_md5resp.update(this->ServerChallenge, 8);
@@ -756,7 +745,7 @@ public:
         this->NTOWFv2_FromHash(hash, hash_size,
                                UserName.get_data(), UserName.size(),
                                DomainName.get_data(), DomainName.size(),
-                               ResponseKeyNT, sizeof(ResponseKeyNT));
+                               ResponseKeyNT);
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
         //                           NtProofStr)
         SslHMAC_Md5 hmac_md5seskey(ResponseKeyNT, sizeof(ResponseKeyNT));
@@ -767,11 +756,12 @@ public:
 
     // server method
     bool ntlm_check_nego() {
-        uint32_t & negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
-        if (!((negoFlag & NTLMSSP_REQUEST_TARGET) &&
-              (negoFlag & NTLMSSP_NEGOTIATE_NTLM) &&
-              (negoFlag & NTLMSSP_NEGOTIATE_ALWAYS_SIGN) &&
-              (negoFlag & NTLMSSP_NEGOTIATE_UNICODE))) {
+        uint32_t const negoFlag = this->NEGOTIATE_MESSAGE.negoFlags.flags;
+        uint32_t const mask = NTLMSSP_REQUEST_TARGET
+                            | NTLMSSP_NEGOTIATE_NTLM
+                            | NTLMSSP_NEGOTIATE_ALWAYS_SIGN
+                            | NTLMSSP_NEGOTIATE_UNICODE;
+        if ((negoFlag & mask) != mask) {
             return false;
         }
         this->NegotiateFlags = negoFlag;
@@ -1103,6 +1093,7 @@ public:
         this->state = NTLM_STATE_CHALLENGE;
         return SEC_I_CONTINUE_NEEDED;
     }
+
     SEC_STATUS write_challenge(PSecBuffer output_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Write Challenge");
@@ -1119,6 +1110,7 @@ public:
         this->state = NTLM_STATE_AUTHENTICATE;
         return SEC_I_CONTINUE_NEEDED;
     }
+
     SEC_STATUS read_challenge(PSecBuffer input_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Read Challenge");
@@ -1168,6 +1160,7 @@ public:
         }
         return SEC_I_COMPLETE_NEEDED;
     }
+
     SEC_STATUS read_authenticate(PSecBuffer input_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Read Authenticate");
@@ -1189,12 +1182,12 @@ public:
         }
         this->identity.User.init(this->AUTHENTICATE_MESSAGE.UserName.buffer.size());
         this->identity.User.copy(this->AUTHENTICATE_MESSAGE.UserName.buffer.get_data(),
-                                  this->AUTHENTICATE_MESSAGE.UserName.buffer.size());
+                                 this->AUTHENTICATE_MESSAGE.UserName.buffer.size());
         // LOG(LOG_INFO, "USER from authenticate size = %u", this->identity.User.size());
         // hexdump_c(this->identity.User.get_data(), this->identity.User.size());
         this->identity.Domain.init(this->AUTHENTICATE_MESSAGE.DomainName.buffer.size());
         this->identity.Domain.copy(this->AUTHENTICATE_MESSAGE.DomainName.buffer.get_data(),
-                                    this->AUTHENTICATE_MESSAGE.DomainName.buffer.size());
+                                   this->AUTHENTICATE_MESSAGE.DomainName.buffer.size());
         // LOG(LOG_INFO, "DOMAIN from authenticate size = %u", this->identity.Domain.size());
         // hexdump_c(this->identity.Domain.get_data(), this->identity.Domain.size());
 

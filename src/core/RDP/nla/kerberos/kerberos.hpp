@@ -132,22 +132,13 @@ public:
         (void)fCredentialUse;
 
         if (pszPrincipal && pvLogonID) {
-            Array * spn = pvLogonID;
-            const char * p = pszPrincipal;
-            size_t length = 0;
-            if (p) {
-                length = strlen(p);
-            }
-            spn->init(length + 1);
-            spn->copy(reinterpret_cast<const uint8_t *>(pszPrincipal), length);
-            spn->get_data()[length] = 0;
+            size_t length = strlen(pszPrincipal);
+            pvLogonID->init(length + 1);
+            pvLogonID->copy(reinterpret_cast<const uint8_t *>(pszPrincipal), length);
+            pvLogonID->get_data()[length] = 0;
         }
         this->credentials = new Krb5Creds;
 
-        SEC_WINNT_AUTH_IDENTITY* identity = nullptr;
-        if (pAuthData != nullptr) {
-            identity = pAuthData;
-        }
         // set KRB5CCNAME cache name to specific with PID,
         // call kinit to get tgt with identity credentials
 
@@ -157,9 +148,9 @@ public:
         cache[255] = 0;
         setenv("KRB5CCNAME", cache, 1);
         LOG(LOG_INFO, "set KRB5CCNAME to %s", cache);
-        if (identity) {
-            int ret = this->credentials->get_credentials(identity->princname,
-                                                         identity->princpass, nullptr);
+        if (pAuthData) {
+            int ret = this->credentials->get_credentials(pAuthData->princname,
+                                                         pAuthData->princpass, nullptr);
             if (!ret) {
                 return SEC_E_OK;
             }
@@ -205,9 +196,6 @@ public:
         if (!this->krb_ctx) {
             // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
             this->krb_ctx = new KERBEROSContext;
-            if (!this->krb_ctx) {
-                return SEC_E_INSUFFICIENT_MEMORY;
-            }
 
             // Target name (server name, ip ...)
             if (!this->get_service_name(pszTargetName, &krb_ctx->target_name)) {
@@ -317,9 +305,6 @@ public:
         if (!this->krb_ctx) {
             // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
             this->krb_ctx = new KERBEROSContext;
-            if (!this->krb_ctx) {
-                return SEC_E_INSUFFICIENT_MEMORY;
-            }
         }
         // else {
         //     LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");

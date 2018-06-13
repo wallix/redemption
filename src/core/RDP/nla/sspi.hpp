@@ -68,7 +68,7 @@ public:
         return this->data;
     }
 
-    void copy(Array & other) {
+    void copy(Array const& other) {
         this->init(other.size());
         memcpy(this->get_data(), other.get_data(), this->size());
     }
@@ -160,7 +160,6 @@ struct SecBufferDesc
     }
 
 };
-typedef SecBufferDesc *PSecBufferDesc;
 
 struct TimeStamp {
     uint32_t LowPart;
@@ -175,7 +174,6 @@ struct SecPkgInfo {
     const char* Name;
     const char* Comment;
 };
-typedef SecPkgInfo *PSecPkgInfo;
 
 
 struct SEC_CHANNEL_BINDINGS

@@ -172,11 +172,7 @@ private:
     }
 
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
-        const char * p = reinterpret_cast<const char *>(pszTargetName);
-        size_t length = 0;
-        if (p) {
-            length = strlen(p);
-        }
+        size_t length = pszTargetName ? strlen(reinterpret_cast<const char*>(pszTargetName)) : 0;
         this->ServicePrincipalName.init(length + 1);
         this->ServicePrincipalName.copy(pszTargetName, length);
         this->ServicePrincipalName.get_data()[length] = 0;
@@ -591,7 +587,7 @@ private:
         this->client_auth_data.input_buffer.setzero();
         this->client_auth_data.have_input_buffer = false;
         this->client_auth_data.input_buffer_desc = {0,0,nullptr};
-        memset(&this->ContextSizes, 0x00, sizeof(SecPkgContext_Sizes));
+        this->ContextSizes = {};
 
         return Res::Ok;
     }
@@ -952,7 +948,7 @@ public:
 
        input_buffer.setzero();
        output_buffer.setzero();
-       memset(&this->ContextSizes, 0x00, sizeof(SecPkgContext_Sizes));
+       this->ContextSizes = {};
        /*
         * from tspkg.dll: 0x00000112
         * ASC_REQ_MUTUAL_AUTH
