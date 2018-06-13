@@ -310,8 +310,8 @@ public:
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     SEC_STATUS AcceptSecurityContext(
-        SecBufferDesc * pInput, unsigned long fContextReq,
-        SecBufferDesc * pOutput
+        SecBufferDesc& input, unsigned long fContextReq,
+        SecBufferDesc& output
     ) override
     {
         (void)fContextReq;
@@ -333,21 +333,15 @@ public:
         // Token Buffer
         gss_buffer_desc input_tok, output_tok;
         output_tok.length = 0;
-        if (pInput) {
-            PSecBuffer input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
-            if (input_buffer) {
-                // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
-                //     input_buffer->Buffer.size());
-                input_tok.length = input_buffer->Buffer.size();
-                input_tok.value = input_buffer->Buffer.get_data();
-            }
-            else {
-                // LOG(LOG_INFO, "NO INPUT BUFFER TOKEN");
-                input_tok.length = 0;
-            }
+        PSecBuffer input_buffer = input.FindSecBuffer(SECBUFFER_TOKEN);
+        if (input_buffer) {
+            // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
+            //     input_buffer->Buffer.size());
+            input_tok.length = input_buffer->Buffer.size();
+            input_tok.value = input_buffer->Buffer.get_data();
         }
         else {
-            // LOG(LOG_INFO, "NO INPUT BUFFER DESC");
+            // LOG(LOG_INFO, "NO INPUT BUFFER TOKEN");
             input_tok.length = 0;
         }
 
@@ -394,7 +388,7 @@ public:
             return SEC_E_OUT_OF_SEQUENCE;
         }
 
-        PSecBuffer output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
+        PSecBuffer output_buffer = output.FindSecBuffer(SECBUFFER_TOKEN);
 
         // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
         if (output_tok.length < 1) {

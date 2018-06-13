@@ -1013,8 +1013,9 @@ public:
            output_buffer.BufferType = SECBUFFER_TOKEN;
            output_buffer.Buffer.init(cbMaxToken);
 
-           status = this->table->AcceptSecurityContext(&input_buffer_desc, fContextReq,
-                                                       &output_buffer_desc);
+           status = this->table->AcceptSecurityContext(
+               input_buffer_desc, fContextReq,
+               output_buffer_desc);
 
            this->negoToken.copy(output_buffer.Buffer);
 

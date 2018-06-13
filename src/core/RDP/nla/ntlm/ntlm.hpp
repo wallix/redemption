@@ -129,11 +129,7 @@ public:
         }
 
         if (!this->context) {
-            this->context.reset(new(std::nothrow) NTLMContext(this->rand, this->timeobj));
-
-            if (!this->context) {
-                return SEC_E_INSUFFICIENT_MEMORY;
-            }
+            this->context.reset(new NTLMContext(this->rand, this->timeobj));
 
             this->context->verbose = verbose;
             // this->context->init();
@@ -225,15 +221,11 @@ public:
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     SEC_STATUS AcceptSecurityContext(
-        SecBufferDesc * pInput, unsigned long fContextReq,
-        SecBufferDesc * pOutput
+        SecBufferDesc& input, unsigned long fContextReq,
+        SecBufferDesc& output
     ) override {
         if (!this->context) {
-            this->context.reset(new(std::nothrow) NTLMContext(this->rand, this->timeobj));
-
-            if (!this->context) {
-                return SEC_E_INSUFFICIENT_MEMORY;
-            }
+            this->context.reset(new NTLMContext(this->rand, this->timeobj));
 
             this->context->server = true;
             if (fContextReq & ASC_REQ_CONFIDENTIALITY) {
@@ -250,13 +242,10 @@ public:
         if (this->context->state == NTLM_STATE_INITIAL) {
             this->context->state = NTLM_STATE_NEGOTIATE;
 
-            if (!pInput) {
+            if (input.cBuffers < 1) {
                 return SEC_E_INVALID_TOKEN;
             }
-            if (pInput->cBuffers < 1) {
-                return SEC_E_INVALID_TOKEN;
-            }
-            PSecBuffer input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
+            PSecBuffer input_buffer = input.FindSecBuffer(SECBUFFER_TOKEN);
 
             if (!input_buffer) {
                 return SEC_E_INVALID_TOKEN;
@@ -267,13 +256,10 @@ public:
             /*SEC_STATUS status = */this->context->read_negotiate(input_buffer);
 
             if (this->context->state == NTLM_STATE_CHALLENGE) {
-                if (!pOutput) {
+                if (output.cBuffers < 1) {
                     return SEC_E_INVALID_TOKEN;
                 }
-                if (pOutput->cBuffers < 1) {
-                    return SEC_E_INVALID_TOKEN;
-                }
-                PSecBuffer output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
+                PSecBuffer output_buffer = output.FindSecBuffer(SECBUFFER_TOKEN);
 
                 if (!output_buffer || !output_buffer->BufferType) {
                     return SEC_E_INVALID_TOKEN;
@@ -287,13 +273,10 @@ public:
             return SEC_E_OUT_OF_SEQUENCE;
         }
         else if (this->context->state == NTLM_STATE_AUTHENTICATE) {
-            if (!pInput) {
+            if (input.cBuffers < 1) {
                 return SEC_E_INVALID_TOKEN;
             }
-            if (pInput->cBuffers < 1) {
-                return SEC_E_INVALID_TOKEN;
-            }
-            PSecBuffer input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
+            PSecBuffer input_buffer = input.FindSecBuffer(SECBUFFER_TOKEN);
 
             if (!input_buffer) {
                 return SEC_E_INVALID_TOKEN;
@@ -307,12 +290,10 @@ public:
             }
             SEC_STATUS status = this->context->read_authenticate(input_buffer);
 
-            if (pOutput) {
-                size_t i;
-                for (i = 0; i < pOutput->cBuffers; i++) {
-                    pOutput->pBuffers[i].Buffer.init(0);
-                    pOutput->pBuffers[i].BufferType = SECBUFFER_TOKEN;
-                }
+            size_t i;
+            for (i = 0; i < output.cBuffers; i++) {
+                output.pBuffers[i].Buffer.init(0);
+                output.pBuffers[i].BufferType = SECBUFFER_TOKEN;
             }
             return status;
         }

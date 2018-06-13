@@ -620,9 +620,9 @@ struct SecurityFunctionTable {
 
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
-    virtual SEC_STATUS AcceptSecurityContext(SecBufferDesc * pInput,
+    virtual SEC_STATUS AcceptSecurityContext(SecBufferDesc& pInput,
                                              unsigned long fContextReq,
-                                             SecBufferDesc * pOutput) {
+                                             SecBufferDesc& pOutput) {
         (void)pInput;
         (void)fContextReq;
         (void)pOutput;

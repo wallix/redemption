@@ -64,7 +64,6 @@ public:
     bool UseMIC;
     NtlmState state;
 
-public:
     int SendSeqNum;
     int RecvSeqNum;
 
@@ -87,10 +86,8 @@ public:
 
     //int LmCompatibilityLevel;
     bool SendWorkstationName;
-public:
     Array Workstation;
     Array ServicePrincipalName;
-public:
     SEC_WINNT_AUTH_IDENTITY identity;
 
     // uint8_t* ChannelBindingToken;
@@ -99,7 +96,6 @@ public:
 
     // bool SendSingleHostData;
     // NTLM_SINGLE_HOST_DATA SingleHostData;
-public:
     NTLMNegotiateMessage NEGOTIATE_MESSAGE;
     NTLMChallengeMessage CHALLENGE_MESSAGE;
     NTLMAuthenticateMessage AUTHENTICATE_MESSAGE;
@@ -126,7 +122,6 @@ private:
 public:
     uint8_t ExportedSessionKey[16];
     uint8_t EncryptedRandomSessionKey[16];
-public:
     uint8_t ClientSigningKey[16];
     uint8_t ClientSealingKey[16];
     uint8_t ServerSigningKey[16];
