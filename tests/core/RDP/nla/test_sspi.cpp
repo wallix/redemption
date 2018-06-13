@@ -216,6 +216,7 @@ RED_AUTO_TEST_CASE(TestSecIdentity)
 RED_AUTO_TEST_CASE(TestSecFunctionTable)
 {
     SecurityFunctionTable table;
+    SecBufferDesc buffer_desc;
     SEC_STATUS status;
     //status = table.EnumerateSecurityPackages(nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
@@ -229,12 +230,10 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     status = table.InitializeSecurityContext(nullptr, 0, nullptr, 0, nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    SecBufferDesc input;
-    SecBufferDesc output;
-    status = table.AcceptSecurityContext(input, 0, output);
+    status = table.AcceptSecurityContext(buffer_desc, 0, buffer_desc);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.CompleteAuthToken(nullptr);
+    status = table.CompleteAuthToken(buffer_desc);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     //status = table.DeleteSecurityContext(nullptr);
@@ -243,8 +242,7 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     //status = table.ApplyControlToken(nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.QueryContextSizes(nullptr);
-    RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
+    RED_CHECK_EXCEPTION_ERROR_ID(table.QueryContextSizes(), ERR_SEC);
 
     status = table.ImpersonateSecurityContext();
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
@@ -270,18 +268,17 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     //status = table.QuerySecurityContextToken(nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.EncryptMessage(nullptr, 0);
+    SecBufferDesc Message;
+    status = table.EncryptMessage(Message, 0);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.DecryptMessage(nullptr, 0);
+    status = table.DecryptMessage(Message, 0);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     //status = table.SetContextAttributes(nullptr, 0, nullptr, 0);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    SecPkgInfo packageInfo;
-    status = table.QuerySecurityPackageInfo(&packageInfo);
-    RED_CHECK_EQUAL(status, SEC_E_SECPKG_NOT_FOUND);
+    RED_CHECK_EXCEPTION_ERROR_ID(table.QuerySecurityPackageInfo(), ERR_SEC);
     // RED_CHECK_EQUAL(packageInfo.fCapabilities, NTLM_SecPkgInfo.fCapabilities);
     // RED_CHECK_EQUAL(packageInfo.wVersion, NTLM_SecPkgInfo.wVersion);
     // RED_CHECK_EQUAL(packageInfo.wRPCID, NTLM_SecPkgInfo.wRPCID);

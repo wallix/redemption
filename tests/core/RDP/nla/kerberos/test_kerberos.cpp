@@ -56,10 +56,7 @@ RED_AUTO_TEST_CASE(TestAcquireCredentials)
 RED_AUTO_TEST_CASE(TestKerberos)
 {
     Kerberos_SecurityFunctionTable table;
-    SecPkgInfo packageInfo;
-    SEC_STATUS status;
-    status = table.QuerySecurityPackageInfo(&packageInfo);
-    RED_CHECK_EQUAL(status, SEC_E_OK);
-
+    SecPkgInfo packageInfo = table.QuerySecurityPackageInfo();
+    (void)packageInfo;
     KERBEROSContext krb_ctx;
 }

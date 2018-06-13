@@ -109,22 +109,18 @@ public:
     }
 
     // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
-    SEC_STATUS QuerySecurityPackageInfo(SecPkgInfo * pPackageInfo) override {
-        assert(pPackageInfo);
-        *pPackageInfo = KERBEROS_SecPkgInfo;
-        return SEC_E_OK;
+    SecPkgInfo QuerySecurityPackageInfo() override {
+        return KERBEROS_SecPkgInfo;
     }
 
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
-    SEC_STATUS QueryContextSizes(SecPkgContext_Sizes* ContextSizes) override {
-        if (!ContextSizes) {
-            return SEC_E_INSUFFICIENT_MEMORY;
-        }
-        ContextSizes->cbMaxToken = 4096;
-        ContextSizes->cbMaxSignature = 0;
-        ContextSizes->cbBlockSize = 0;
-        ContextSizes->cbSecurityTrailer = 16;
-        return SEC_E_OK;
+    SecPkgContext_Sizes QueryContextSizes() override {
+        SecPkgContext_Sizes ContextSizes;
+        ContextSizes.cbMaxToken = 4096;
+        ContextSizes.cbMaxSignature = 0;
+        ContextSizes.cbBlockSize = 0;
+        ContextSizes.cbSecurityTrailer = 16;
+        return ContextSizes;
     }
 
     // GSS_Acquire_cred
@@ -412,7 +408,7 @@ public:
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    SEC_STATUS EncryptMessage(PSecBufferDesc pMessage, unsigned long MessageSeqNo) override {
+    SEC_STATUS EncryptMessage(SecBufferDesc& Message, unsigned long MessageSeqNo) override {
         (void)MessageSeqNo;
         // OM_uint32 KRB5_CALLCONV
         // gss_wrap(
@@ -432,9 +428,9 @@ public:
         }
         PSecBuffer data_buffer = nullptr;
         gss_buffer_desc inbuf, outbuf;
-        for (unsigned long index = 0; index < pMessage->cBuffers; index++) {
-            if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA) {
-                data_buffer = &pMessage->pBuffers[index];
+        for (unsigned long index = 0; index < Message.cBuffers; index++) {
+            if (Message.pBuffers[index].BufferType == SECBUFFER_DATA) {
+                data_buffer = &Message.pBuffers[index];
             }
         }
         if (data_buffer) {
@@ -463,7 +459,7 @@ public:
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    SEC_STATUS DecryptMessage(PSecBufferDesc pMessage, unsigned long MessageSeqNo) override {
+    SEC_STATUS DecryptMessage(SecBufferDesc& Message, unsigned long MessageSeqNo) override {
         (void)MessageSeqNo;
 
         // OM_uint32 gss_unwrap
@@ -484,9 +480,9 @@ public:
         }
         PSecBuffer data_buffer = nullptr;
         gss_buffer_desc inbuf, outbuf;
-        for (unsigned long index = 0; index < pMessage->cBuffers; index++) {
-            if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA) {
-                data_buffer = &pMessage->pBuffers[index];
+        for (unsigned long index = 0; index < Message.cBuffers; index++) {
+            if (Message.pBuffers[index].BufferType == SECBUFFER_DATA) {
+                data_buffer = &Message.pBuffers[index];
             }
         }
         if (data_buffer) {

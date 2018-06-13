@@ -98,13 +98,9 @@ RED_AUTO_TEST_CASE(TestInitialize)
         make_array_view(creds->identity.Password.get_data(), creds->identity.Password.size()),
         "\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00");
 
-    SecPkgInfo server_packageInfo;
-    server_status = server_table.QuerySecurityPackageInfo(&server_packageInfo);
-    RED_CHECK_EQUAL(server_status, SEC_E_OK);
+    SecPkgInfo server_packageInfo = server_table.QuerySecurityPackageInfo();
 
-    SecPkgInfo client_packageInfo;
-    client_status = client_table.QuerySecurityPackageInfo(&client_packageInfo);
-    RED_CHECK_EQUAL(client_status, SEC_E_OK);
+    SecPkgInfo client_packageInfo = client_table.QuerySecurityPackageInfo();
 
     SecBuffer input_buffer;
     SecBuffer output_buffer;
@@ -252,8 +248,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
                         server->MessageIntegrityCheck,
                         16));
 
-    SecPkgContext_Sizes ContextSizes;
-    server_table.QueryContextSizes(&ContextSizes);
+    SecPkgContext_Sizes ContextSizes = server_table.QueryContextSizes();
     RED_CHECK_EQUAL(ContextSizes.cbMaxToken, 2010);
     RED_CHECK_EQUAL(ContextSizes.cbMaxSignature, 16);
     RED_CHECK_EQUAL(ContextSizes.cbBlockSize, 0);
@@ -278,7 +273,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     Message.cBuffers = 2;
     Message.ulVersion = SECBUFFER_VERSION;
     Message.pBuffers = Buffers;
-    server_status = server_table.EncryptMessage(&Message, 0);
+    server_status = server_table.EncryptMessage(Message, 0);
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
     Result.init(ContextSizes.cbMaxSignature + sizeof(message));
 
@@ -304,7 +299,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     Message.cBuffers = 2;
     Message.ulVersion = SECBUFFER_VERSION;
     Message.pBuffers = Buffers;
-    client_status = client_table.DecryptMessage(&Message, 0);
+    client_status = client_table.DecryptMessage(Message, 0);
 
     RED_CHECK_EQUAL(client_status, SEC_E_OK);
 

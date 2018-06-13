@@ -144,7 +144,7 @@ struct SecBufferDesc
     unsigned long cBuffers;
     SecBuffer *   pBuffers;
 
-    PSecBuffer FindSecBuffer(unsigned long BufferType)
+    PSecBuffer FindSecBuffer(buffer_type BufferType)
     {
         unsigned long index;
         PSecBuffer pSecBuffer = nullptr;
@@ -566,9 +566,9 @@ enum SecPkg_Att {
 typedef void (*SEC_GET_KEY_FN)(void* Arg, void* Principal, uint32_t KeyVer, void** Key, SEC_STATUS* pStatus);
 typedef void* HANDLE, *PHANDLE, *LPHANDLE;
 
-struct SecurityFunctionTable {
-
-    virtual ~SecurityFunctionTable() {}
+struct SecurityFunctionTable
+{
+    virtual ~SecurityFunctionTable() = default;
     uint32_t dwVersion;
 
     // ENUMERATE_SECURITY_PACKAGES_FN EnumerateSecurityPackages;
@@ -632,8 +632,8 @@ struct SecurityFunctionTable {
 
     // GSS_Process_context_token ?
     // COMPLETE_AUTH_TOKEN CompleteAuthToken;
-    virtual SEC_STATUS CompleteAuthToken(SecBufferDesc * pToken) {
-        (void)pToken;
+    virtual SEC_STATUS CompleteAuthToken(SecBufferDesc& Token) {
+        (void)Token;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
@@ -649,9 +649,8 @@ struct SecurityFunctionTable {
     //}
 
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
-    virtual SEC_STATUS QueryContextSizes(SecPkgContext_Sizes* ContextSizes) {
-        (void)ContextSizes;
-        return SEC_E_UNSUPPORTED_FUNCTION;
+    virtual SecPkgContext_Sizes QueryContextSizes() {
+        throw Error(ERR_SEC);
     }
 
     // IMPERSONATE_SECURITY_CONTEXT ImpersonateSecurityContext;
@@ -677,9 +676,10 @@ struct SecurityFunctionTable {
     //}
 
     // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
-    virtual SEC_STATUS QuerySecurityPackageInfo(SecPkgInfo * pPackageInfo) {
-        (void)pPackageInfo;
-        return SEC_E_SECPKG_NOT_FOUND;
+    virtual SecPkgInfo QuerySecurityPackageInfo()
+    {
+        throw Error(ERR_SEC);
+        // return SecPkgInfo{};
     }
 
     // void* Reserved3;
@@ -720,16 +720,16 @@ struct SecurityFunctionTable {
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    virtual SEC_STATUS EncryptMessage(SecBufferDesc * pMessage, unsigned long MessageSeqNo) {
-        (void)pMessage;
+    virtual SEC_STATUS EncryptMessage(SecBufferDesc& Message, unsigned long MessageSeqNo) {
+        (void)Message;
         (void)MessageSeqNo;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    virtual SEC_STATUS DecryptMessage(SecBufferDesc * pMessage, unsigned long MessageSeqNo) {
-        (void)pMessage;
+    virtual SEC_STATUS DecryptMessage(SecBufferDesc& Message, unsigned long MessageSeqNo) {
+        (void)Message;
         (void)MessageSeqNo;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
@@ -741,8 +741,6 @@ struct SecurityFunctionTable {
     //}
 
 };
-
-typedef SecurityFunctionTable *PSecurityFunctionTable;
 
 enum SecInterface {
     NTLM_Interface,

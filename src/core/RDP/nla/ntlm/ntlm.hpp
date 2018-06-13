@@ -71,26 +71,19 @@ public:
 
     ~Ntlm_SecurityFunctionTable() = default;
 
-    SEC_STATUS CompleteAuthToken(SecBufferDesc*) override { return SEC_E_UNSUPPORTED_FUNCTION; }
-
-
     // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
-    SEC_STATUS QuerySecurityPackageInfo(SecPkgInfo * pPackageInfo) override {
-        assert(pPackageInfo);
-        *pPackageInfo = NTLM_SecPkgInfo;
-        return SEC_E_OK;
+    SecPkgInfo QuerySecurityPackageInfo() override {
+        return NTLM_SecPkgInfo;
     }
 
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
-    SEC_STATUS QueryContextSizes(SecPkgContext_Sizes* ContextSizes) override {
-        if (!ContextSizes) {
-            return SEC_E_INSUFFICIENT_MEMORY;
-        }
-        ContextSizes->cbMaxToken = 2010;
-        ContextSizes->cbMaxSignature = 16;
-        ContextSizes->cbBlockSize = 0;
-        ContextSizes->cbSecurityTrailer = 16;
-        return SEC_E_OK;
+    SecPkgContext_Sizes QueryContextSizes() override {
+        SecPkgContext_Sizes ContextSizes;
+        ContextSizes.cbMaxToken = 2010;
+        ContextSizes.cbMaxSignature = 16;
+        ContextSizes.cbBlockSize = 0;
+        ContextSizes.cbSecurityTrailer = 16;
+        return ContextSizes;
     }
 
     // GSS_Acquire_cred
@@ -303,7 +296,7 @@ public:
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    SEC_STATUS EncryptMessage(PSecBufferDesc pMessage, unsigned long MessageSeqNo) override {
+    SEC_STATUS EncryptMessage(SecBufferDesc& Message, unsigned long MessageSeqNo) override {
         int length;
         uint8_t* data;
         uint32_t SeqNo(MessageSeqNo);
@@ -318,12 +311,12 @@ public:
         if (this->context->verbose & 0x400) {
             LOG(LOG_INFO, "NTLM_SSPI::EncryptMessage");
         }
-        for (unsigned long index = 0; index < pMessage->cBuffers; index++) {
-            if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA) {
-                data_buffer = &pMessage->pBuffers[index];
+        for (unsigned long index = 0; index < Message.cBuffers; index++) {
+            if (Message.pBuffers[index].BufferType == SECBUFFER_DATA) {
+                data_buffer = &Message.pBuffers[index];
             }
-            else if (pMessage->pBuffers[index].BufferType == SECBUFFER_TOKEN) {
-                signature_buffer = &pMessage->pBuffers[index];
+            else if (Message.pBuffers[index].BufferType == SECBUFFER_TOKEN) {
+                signature_buffer = &Message.pBuffers[index];
             }
         }
 
@@ -398,7 +391,7 @@ public:
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    SEC_STATUS DecryptMessage(PSecBufferDesc pMessage, unsigned long MessageSeqNo) override {
+    SEC_STATUS DecryptMessage(SecBufferDesc& Message, unsigned long MessageSeqNo) override {
         int length = 0;
         uint8_t* data = nullptr;
         uint32_t SeqNo(MessageSeqNo);
@@ -415,12 +408,12 @@ public:
             LOG(LOG_INFO, "NTLM_SSPI::DecryptMessage");
         }
 
-        for (unsigned long index = 0; index < pMessage->cBuffers; index++) {
-            if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA) {
-                data_buffer = &pMessage->pBuffers[index];
+        for (unsigned long index = 0; index < Message.cBuffers; index++) {
+            if (Message.pBuffers[index].BufferType == SECBUFFER_DATA) {
+                data_buffer = &Message.pBuffers[index];
             }
-            else if (pMessage->pBuffers[index].BufferType == SECBUFFER_TOKEN) {
-                signature_buffer = &pMessage->pBuffers[index];
+            else if (Message.pBuffers[index].BufferType == SECBUFFER_TOKEN) {
+                signature_buffer = &Message.pBuffers[index];
             }
         }
 

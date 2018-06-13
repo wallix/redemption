@@ -338,7 +338,7 @@ protected:
         Message.ulVersion = SECBUFFER_VERSION;
         Message.pBuffers = Buffers;
 
-        status = this->table->EncryptMessage(&Message, this->send_seq_num++);
+        status = this->table->EncryptMessage(Message, this->send_seq_num++);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "EncryptMessage status: 0x%08X", status);
@@ -396,7 +396,7 @@ protected:
         Message.ulVersion = SECBUFFER_VERSION;
         Message.pBuffers = Buffers;
 
-        status = this->table->DecryptMessage(&Message, this->recv_seq_num++);
+        status = this->table->DecryptMessage(Message, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "DecryptMessage failure: 0x%08X", status);
@@ -529,7 +529,7 @@ public:
         Message.ulVersion = SECBUFFER_VERSION;
         Message.pBuffers = Buffers;
 
-        status = this->table->EncryptMessage(&Message, this->send_seq_num++);
+        status = this->table->EncryptMessage(Message, this->send_seq_num++);
 
         if (status != SEC_E_OK)
             return status;
@@ -568,13 +568,7 @@ private:
                 LOG(LOG_ERR, "Could not Initiate %u Security Interface!", this->sec_interface);
                 return Res::Err;
             }
-            status = this->table->QuerySecurityPackageInfo(&packageInfo);
-
-            if (status != SEC_E_OK) {
-                LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X", status);
-                return Res::Err;
-            }
-
+            packageInfo = this->table->QuerySecurityPackageInfo();
             status = this->table->AcquireCredentialsHandle(this->target_host,
                                                            SECPKG_CRED_OUTBOUND,
                                                            &this->ServicePrincipalName,
@@ -657,13 +651,10 @@ private:
         if ((status == SEC_I_COMPLETE_AND_CONTINUE) ||
             (status == SEC_I_COMPLETE_NEEDED) ||
             (status == SEC_E_OK)) {
-            this->table->CompleteAuthToken(&output_buffer_desc);
+            this->table->CompleteAuthToken(output_buffer_desc);
 
             // have_pub_key_auth = true;
-            if (this->table->QueryContextSizes(&this->ContextSizes) != SEC_E_OK) {
-                LOG(LOG_ERR, "QueryContextSizes failure");
-                return Res::Err;
-            }
+            this->ContextSizes = this->table->QueryContextSizes();
             encrypted = this->credssp_encrypt_public_key_echo();
             if (status == SEC_I_COMPLETE_NEEDED) {
                 status = SEC_E_OK;
@@ -867,7 +858,7 @@ public:
         Message.ulVersion = SECBUFFER_VERSION;
         Message.pBuffers = Buffers;
 
-        status = this->table->DecryptMessage(&Message, this->recv_seq_num++);
+        status = this->table->DecryptMessage(Message, this->recv_seq_num++);
 
         if (status != SEC_E_OK)
             return status;
@@ -941,20 +932,12 @@ public:
 
        this->InitSecurityInterface(NTLM_Interface);
 
-       SecPkgInfo packageInfo;
-       SEC_STATUS status = this->table->QuerySecurityPackageInfo(&packageInfo);
-
-       if (status != SEC_E_OK) {
-           LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X", status);
-           return 0;
-       }
+       SecPkgInfo packageInfo = this->table->QuerySecurityPackageInfo();
 
        unsigned long cbMaxToken = packageInfo.cbMaxToken;
 
-       status = this->table->AcquireCredentialsHandle(nullptr,
-                                                      SECPKG_CRED_INBOUND,
-                                                      nullptr,
-                                                      nullptr);
+       SEC_STATUS status = this->table->AcquireCredentialsHandle(
+           nullptr, SECPKG_CRED_INBOUND, nullptr, nullptr);
 
        if (status != SEC_E_OK) {
            LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X", status);
@@ -1020,7 +1003,7 @@ public:
            this->negoToken.copy(output_buffer.Buffer);
 
            if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED)) {
-               this->table->CompleteAuthToken(&output_buffer_desc);
+               this->table->CompleteAuthToken(output_buffer_desc);
 
                if (status == SEC_I_COMPLETE_NEEDED)
                    status = SEC_E_OK;
@@ -1029,11 +1012,7 @@ public:
            }
 
            if (status == SEC_E_OK) {
-
-               if (this->table->QueryContextSizes(&this->ContextSizes) != SEC_E_OK) {
-                   LOG(LOG_ERR, "QueryContextSizes failure");
-                   return 0;
-               }
+               this->ContextSizes = this->table->QueryContextSizes();
 
                if (this->credssp_decrypt_public_key_echo() != SEC_E_OK) {
                    LOG(LOG_ERR, "Error: could not verify client's public key echo");
