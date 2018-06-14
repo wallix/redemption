@@ -189,6 +189,17 @@ RED_AUTO_TEST_CASE(TestNlaserver)
     Translation::language_t lang = Translation::EN;
     rdpCredsspServer credssp(logtrans, user, domain, pass, host, false, false, rand, timeobj, extra_message, lang);
     credssp.hardcoded_tests = true;
-    int res = credssp.credssp_server_authenticate();
-    RED_CHECK_EQUAL(res, 1);
+    RED_CHECK(credssp.credssp_server_authenticate_init());
+
+    rdpCredsspServer::State st = rdpCredsspServer::State::Cont;
+    TpduBuffer buf;
+    while (rdpCredsspServer::State::Cont == st) {
+        buf.load_data(logtrans);
+        while (buf.next_credssp() && rdpCredsspServer::State::Cont == st) {
+            InStream in_stream(buf.current_pdu_buffer());
+            st = credssp.credssp_server_authenticate_next(in_stream);
+        }
+    }
+    RED_CHECK_EQUAL(0, buf.remaining());
+    RED_CHECK_EQUAL(st, rdpCredsspServer::State::Finish);
 }

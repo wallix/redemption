@@ -24,6 +24,7 @@
 #include "core/RDP/nla/sspi.hpp"
 #include "core/RDP/nla/credssp.hpp"
 #include "core/RDP/nla/ntlm/ntlm.hpp"
+#include "core/RDP/tpdu_buffer.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/translation.hpp"
 #include "system/ssl_sha256.hpp"
@@ -803,8 +804,6 @@ public:
 
 class rdpCredsspServer : public rdpCredsspBase
 {
-    Transport & trans;
-
 public:
     rdpCredsspServer(Transport & transport,
                uint8_t * user,
@@ -822,7 +821,6 @@ public:
             user, domain, pass, hostname, "", krb,
             restricted_admin_mode, rand, timeobj, extra_message, lang,
             transport, "rdpCredsspServer", verbose)
-        , trans(transport)
     {
     }
 
@@ -872,196 +870,198 @@ public:
         return SEC_E_OK;
     }
 
-    int credssp_recv() {
-        // ad hoc read of ber encoding size.
+private:
+    struct ServerAuthenticateData
+    {
+        enum : uint8_t { Start, Loop, Final } state = Start;
+        unsigned long cbMaxToken;
+    };
+    ServerAuthenticateData server_auth_data;
+    enum class Res : bool { Err, Ok };
+
+    Res sm_credssp_server_authenticate_start()
+    {
         if (this->verbose) {
-            LOG(LOG_INFO, "rdpCredsspServer::recv");
+            LOG(LOG_INFO, "rdpCredsspServer::server_authenticate");
         }
-        uint8_t buffer[65536];
-        uint8_t * point = buffer;
-        size_t length = 0;
-        this->trans.recv_boom(point, 2);
-        point += 2;
-        uint8_t byte = buffer[1];
-        if (byte & 0x80) {
-            byte &= ~(0x80);
+        // TODO
+        // sspi_GlobalInit();
 
-            if (byte == 1) {
-                this->trans.recv_boom(point, byte);
-                length = buffer[2];
-            }
-            else if (byte == 2) {
-                this->trans.recv_boom(point, byte);
-                length = (buffer[2] << 8) | buffer[3];
-                if (length > 0xFFFF - 4) {
-                    return -1;
-                }
-            }
-            else {
-                return -1;
-            }
-        }
-        else {
-            length = byte;
-            byte = 0;
+        if (this->credssp_ntlm_init(true) == 0)
+            return Res::Err;
+
+        this->InitSecurityInterface(NTLM_Interface);
+
+        SecPkgInfo const packageInfo = this->table->QuerySecurityPackageInfo();
+
+        SEC_STATUS status = this->table->AcquireCredentialsHandle(
+            nullptr, SECPKG_CRED_INBOUND, nullptr, nullptr);
+
+        if (status != SEC_E_OK) {
+            LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X", status);
+            return Res::Err;
         }
 
-        size_t const offset = 2 + byte;
-        this->trans.recv_boom(buffer + offset, length);
-        InStream in_stream(buffer, offset + length);
-        this->ts_request.recv(in_stream);
+        this->server_auth_data.cbMaxToken = packageInfo.cbMaxToken;
+        this->ContextSizes = {};
 
-        // hexdump_c(this->pubKeyAuth.get_data(), this->pubKeyAuth.size());
-
-        return 1;
-    }
-
-    int credssp_server_authenticate() {
-       if (this->verbose) {
-           LOG(LOG_INFO, "rdpCredsspServer::server_authenticate");
-       }
-       // TODO
-       // sspi_GlobalInit();
-
-       if (this->credssp_ntlm_init(true) == 0)
-           return 0;
-
-       this->InitSecurityInterface(NTLM_Interface);
-
-       SecPkgInfo packageInfo = this->table->QuerySecurityPackageInfo();
-
-       unsigned long cbMaxToken = packageInfo.cbMaxToken;
-
-       SEC_STATUS status = this->table->AcquireCredentialsHandle(
-           nullptr, SECPKG_CRED_INBOUND, nullptr, nullptr);
-
-       if (status != SEC_E_OK) {
-           LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X", status);
-           return 0;
-       }
-
-
-       SecBuffer input_buffer;
-       SecBuffer output_buffer;
-       SecBufferDesc input_buffer_desc;
-       SecBufferDesc output_buffer_desc;
-
-       input_buffer.setzero();
-       output_buffer.setzero();
-       this->ContextSizes = {};
-       /*
+        /*
         * from tspkg.dll: 0x00000112
         * ASC_REQ_MUTUAL_AUTH
         * ASC_REQ_CONFIDENTIALITY
         * ASC_REQ_ALLOCATE_MEMORY
         */
 
-       unsigned long fContextReq = 0;
-       fContextReq |= ASC_REQ_MUTUAL_AUTH;
-       fContextReq |= ASC_REQ_CONFIDENTIALITY;
+        return Res::Ok;
+    }
 
-       fContextReq |= ASC_REQ_CONNECTION;
-       fContextReq |= ASC_REQ_USE_SESSION_KEY;
+    Res sm_credssp_server_authenticate_recv(InStream & in_stream)
+    {
+        /* receive authentication token */
+        this->ts_request.recv(in_stream);
 
-       fContextReq |= ASC_REQ_REPLAY_DETECT;
-       fContextReq |= ASC_REQ_SEQUENCE_DETECT;
+        SecBuffer input_buffer;
+        SecBuffer output_buffer;
+        SecBufferDesc input_buffer_desc;
+        SecBufferDesc output_buffer_desc;
 
-       fContextReq |= ASC_REQ_EXTENDED_ERROR;
+        input_buffer.setzero();
+        output_buffer.setzero();
 
-       while (true) {
-           /* receive authentication token */
+        input_buffer_desc.ulVersion = SECBUFFER_VERSION;
+        input_buffer_desc.cBuffers = 1;
+        input_buffer_desc.pBuffers = &input_buffer;
+        input_buffer.BufferType = SECBUFFER_TOKEN;
+        input_buffer.Buffer.copy(this->negoToken);
 
-           input_buffer_desc.ulVersion = SECBUFFER_VERSION;
-           input_buffer_desc.cBuffers = 1;
-           input_buffer_desc.pBuffers = &input_buffer;
-           input_buffer.BufferType = SECBUFFER_TOKEN;
+        if (this->negoToken.size() < 1) {
+            LOG(LOG_ERR, "CredSSP: invalid negoToken!");
+            return Res::Err;
+        }
 
-           if (this->credssp_recv() < 0)
-               return -1;
+        output_buffer_desc.ulVersion = SECBUFFER_VERSION;
+        output_buffer_desc.cBuffers = 1;
+        output_buffer_desc.pBuffers = &output_buffer;
+        output_buffer.BufferType = SECBUFFER_TOKEN;
+        output_buffer.Buffer.init(this->server_auth_data.cbMaxToken);
 
-           input_buffer.Buffer.copy(this->negoToken);
+        unsigned long const fContextReq = 0
+            | ASC_REQ_MUTUAL_AUTH
+            | ASC_REQ_CONFIDENTIALITY
+            | ASC_REQ_CONNECTION
+            | ASC_REQ_USE_SESSION_KEY
+            | ASC_REQ_REPLAY_DETECT
+            | ASC_REQ_SEQUENCE_DETECT
+            | ASC_REQ_EXTENDED_ERROR;
+        SEC_STATUS status = this->table->AcceptSecurityContext(
+            input_buffer_desc, fContextReq,
+            output_buffer_desc);
 
-           if (this->negoToken.size() < 1) {
-               LOG(LOG_ERR, "CredSSP: invalid negoToken!");
-               return -1;
-           }
+        this->negoToken.copy(output_buffer.Buffer);
 
-           output_buffer_desc.ulVersion = SECBUFFER_VERSION;
-           output_buffer_desc.cBuffers = 1;
-           output_buffer_desc.pBuffers = &output_buffer;
-           output_buffer.BufferType = SECBUFFER_TOKEN;
-           output_buffer.Buffer.init(cbMaxToken);
+        if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED)) {
+            this->table->CompleteAuthToken(output_buffer_desc);
 
-           status = this->table->AcceptSecurityContext(
-               input_buffer_desc, fContextReq,
-               output_buffer_desc);
+            if (status == SEC_I_COMPLETE_NEEDED)
+                status = SEC_E_OK;
+            else if (status == SEC_I_COMPLETE_AND_CONTINUE)
+                status = SEC_I_CONTINUE_NEEDED;
+        }
 
-           this->negoToken.copy(output_buffer.Buffer);
+        if (status == SEC_E_OK) {
+            this->ContextSizes = this->table->QueryContextSizes();
 
-           if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED)) {
-               this->table->CompleteAuthToken(output_buffer_desc);
+            if (this->credssp_decrypt_public_key_echo() != SEC_E_OK) {
+                LOG(LOG_ERR, "Error: could not verify client's public key echo");
+                return Res::Err;
+            }
 
-               if (status == SEC_I_COMPLETE_NEEDED)
-                   status = SEC_E_OK;
-               else if (status == SEC_I_COMPLETE_AND_CONTINUE)
-                   status = SEC_I_CONTINUE_NEEDED;
-           }
+            this->negoToken.init(0);
 
-           if (status == SEC_E_OK) {
-               this->ContextSizes = this->table->QueryContextSizes();
+            this->credssp_encrypt_public_key_echo();
+        }
 
-               if (this->credssp_decrypt_public_key_echo() != SEC_E_OK) {
-                   LOG(LOG_ERR, "Error: could not verify client's public key echo");
-                   return -1;
-               }
+        if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED)) {
+            LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X", status);
+            return Res::Err;
+        }
 
-               this->negoToken.init(0);
+        this->credssp_send();
+        this->credssp_buffer_free();
 
-               this->credssp_encrypt_public_key_echo();
-           }
+        if (status != SEC_I_CONTINUE_NEEDED) {
+            if (status != SEC_E_OK) {
+                LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X", status);
+                return Res::Err;
+            }
+            this->server_auth_data.state = ServerAuthenticateData::Final;
+        }
 
-           if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED)) {
-               LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X", status);
-               return -1;
-           }
+        return Res::Ok;
+    }
 
-           this->credssp_send();
-           this->credssp_buffer_free();
+    Res sm_credssp_server_authenticate_final(InStream & in_stream)
+    {
+        /* Receive encrypted credentials */
+        this->ts_request.recv(in_stream);
 
-           if (status != SEC_I_CONTINUE_NEEDED)
-               break;
-       }
+        SEC_STATUS status = this->credssp_decrypt_ts_credentials();
 
-       /* Receive encrypted credentials */
+        if (status != SEC_E_OK) {
+            LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", status);
+            return Res::Err;
+        }
 
-       if (this->credssp_recv() < 0)
-           return -1;
+        status = this->table->ImpersonateSecurityContext();
 
-       if (this->credssp_decrypt_ts_credentials() != SEC_E_OK) {
-           LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X", status);
-           return 0;
-       }
+        if (status != SEC_E_OK) {
+            LOG(LOG_ERR, "ImpersonateSecurityContext status: 0x%08X", status);
+            return Res::Err;
+        }
+        else {
+            status = this->table->RevertSecurityContext();
 
-       if (status != SEC_E_OK) {
-           LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X", status);
-           return 0;
-       }
+            if (status != SEC_E_OK) {
+                LOG(LOG_ERR, "RevertSecurityContext status: 0x%08X", status);
+                return Res::Err;
+            }
+        }
 
-       status = this->table->ImpersonateSecurityContext();
+        return Res::Ok;
+    }
 
-       if (status != SEC_E_OK) {
-           LOG(LOG_ERR, "ImpersonateSecurityContext status: 0x%08X", status);
-           return 0;
-       }
-       else {
-           status = this->table->RevertSecurityContext();
+public:
+    bool credssp_server_authenticate_init()
+    {
+        this->server_auth_data.state = ServerAuthenticateData::Start;
+        if (Res::Err == this->sm_credssp_server_authenticate_start()) {
+            return false;
+        }
+        this->server_auth_data.state = ServerAuthenticateData::Loop;
+        return true;
+    }
 
-           if (status != SEC_E_OK) {
-               LOG(LOG_ERR, "RevertSecurityContext status: 0x%08X", status);
-               return 0;
-           }
-       }
+    enum class State { Err, Cont, Finish, };
 
-       return 1;
+    State credssp_server_authenticate_next(InStream & in_stream)
+    {
+        switch (this->server_auth_data.state)
+        {
+            case ServerAuthenticateData::Start:
+                return State::Err;
+            case ServerAuthenticateData::Loop:
+                if (Res::Err == this->sm_credssp_server_authenticate_recv(in_stream)) {
+                    return State::Err;
+                }
+                return State::Cont;
+            case ServerAuthenticateData::Final:
+                if (Res::Err == this->sm_credssp_server_authenticate_final(in_stream)) {
+                    return State::Err;
+                }
+                this->server_auth_data.state = ServerAuthenticateData::Start;
+                return State::Finish;
+        }
+
+        return State::Err;
     }
 };
