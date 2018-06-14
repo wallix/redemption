@@ -164,11 +164,12 @@
 
 // REDEMPTION_UNREACHABLE / REDEMPTION_UNREACHABLE_IF
 #ifndef NDEBUG
-# define REDEMPTION_UNREACHABLE()                            \
-    REDEMPTION_DIAGNOSTIC_PUSH                               \
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunreachable-code") \
-    assert(!"Unreachable code reached.")                     \
-    REDEMPTION_DIAGNOSTIC_POP
+# define REDEMPTION_UNREACHABLE() do {                           \
+        REDEMPTION_DIAGNOSTIC_PUSH                               \
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunreachable-code") \
+        assert(!"Unreachable code reached.");                    \
+        REDEMPTION_DIAGNOSTIC_POP                                \
+    } while (0)
 
 # define REDEMPTION_UNREACHABLE_IF(condition) \
   assert((condition) && "Unreachable code reached.")
