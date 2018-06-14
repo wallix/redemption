@@ -71,7 +71,7 @@ void mod_rdp::init_negociate_event_(
             CASE(NEGO, trkeys::err_mod_rdp_nego);
             CASE(BASIC_SETTINGS_EXCHANGE, trkeys::err_mod_rdp_basic_settings_exchange);
             CASE(CHANNEL_CONNECTION_ATTACH_USER, trkeys::err_mod_rdp_channel_connection_attach_user);
-            CASE(CHANNEL_JOIN_CONFIRME, trkeys::mod_rdp_channel_join_confirme);
+            CASE(CHANNEL_JOIN_CONFIRM, trkeys::mod_rdp_channel_join_confirme);
             CASE(GET_LICENSE, trkeys::mod_rdp_get_license);
             #undef CASE
         }

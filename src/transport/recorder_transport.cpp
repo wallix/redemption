@@ -29,27 +29,48 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-
-RecorderTransport::RecorderTransport(Transport& trans, char const* filename)
-: start_time(std::chrono::system_clock::now())
-, trans(trans)
-, file(unique_fd(::open(filename, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)))
+RecorderFile::RecorderFile(const char *filename)
+	: start_time(std::chrono::system_clock::now())
+	, file(unique_fd(::open(filename, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)))
 {
     if (!this->file.is_open()) {
         throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
     }
 }
 
-RecorderTransport::~RecorderTransport()
+RecorderFile::~RecorderFile()
 {
     if (this->file.is_open()) {
         this->write_packet(PacketType::Eof, nullptr);
     }
 }
 
+void RecorderFile::write_packet(PacketType type, const_byte_array buffer)
+{
+	auto now = std::chrono::system_clock::now();
+	auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time);
+
+	StaticOutStream<13> headers_stream;
+	headers_stream.out_uint8(uint8_t(type));
+	headers_stream.out_uint64_le(delta.count());
+	headers_stream.out_uint32_le(buffer.size());
+    // LOG(LOG_DEBUG, "write_packet len=%lu", len);
+
+    this->file.send(headers_stream.get_data(), headers_stream.get_offset());
+    this->file.send(buffer);
+}
+
+
+RecorderTransport::RecorderTransport(Transport& trans, char const* filename)
+	: trans(trans)
+	, out(filename)
+{
+}
+
+
 void RecorderTransport::add_info(byte_array info)
 {
-    this->write_packet(PacketType::Info, info);
+    this->out.write_packet(RecorderFile::PacketType::Info, info);
 }
 
 Transport::TlsResult RecorderTransport::enable_client_tls(
@@ -59,7 +80,7 @@ Transport::TlsResult RecorderTransport::enable_client_tls(
     auto const r = this->trans.enable_client_tls(
         server_cert_store, server_cert_check, server_notifier, certif_path);
     if (r != RecorderTransport::TlsResult::Fail) {
-        this->write_packet(PacketType::ClientCert, nullptr);
+        this->out.write_packet(RecorderFile::PacketType::ClientCert, nullptr);
     }
     return r;
 }
@@ -67,7 +88,7 @@ Transport::TlsResult RecorderTransport::enable_client_tls(
 void RecorderTransport::enable_server_tls(const char * certificate_password, const char * ssl_cipher_list)
 {
     this->trans.enable_server_tls(certificate_password, ssl_cipher_list);
-    this->write_packet(PacketType::ServerCert, nullptr);
+    this->out.write_packet(RecorderFile::PacketType::ServerCert, nullptr);
 }
 
 array_view_const_u8 RecorderTransport::get_public_key() const
@@ -82,13 +103,13 @@ void RecorderTransport::flush()
 
 bool RecorderTransport::disconnect()
 {
-    this->write_packet(PacketType::Disconnect, nullptr);
+    this->out.write_packet(RecorderFile::PacketType::Disconnect, nullptr);
     return this->trans.disconnect();
 }
 
 bool RecorderTransport::connect()
 {
-    this->write_packet(PacketType::Connect, nullptr);
+    this->out.write_packet(RecorderFile::PacketType::Connect, nullptr);
     return this->trans.connect();
 }
 
@@ -111,8 +132,8 @@ Transport::Read RecorderTransport::do_atomic_read(uint8_t * buffer, size_t len)
 {
     auto const r = this->trans.atomic_read(buffer, len);
     switch (r) {
-        case Read::Ok: this->write_packet(PacketType::DataIn, {buffer, len}); break;
-        case Read::Eof: this->write_packet(PacketType::Eof, {buffer, len}); break;
+        case Read::Ok: this->out.write_packet(RecorderFile::PacketType::DataIn, {buffer, len}); break;
+        case Read::Eof: this->out.write_packet(RecorderFile::PacketType::Eof, {buffer, len}); break;
     }
     return r;
 }
@@ -120,30 +141,16 @@ Transport::Read RecorderTransport::do_atomic_read(uint8_t * buffer, size_t len)
 size_t RecorderTransport::do_partial_read(uint8_t * buffer, size_t len)
 {
     len = this->trans.partial_read(buffer, len);
-    this->write_packet(PacketType::DataIn, {buffer, len});
+    this->out.write_packet(RecorderFile::PacketType::DataIn, {buffer, len});
     return len;
 }
 
 void RecorderTransport::do_send(const uint8_t * buffer, size_t len)
 {
     this->trans.send(buffer, len);
-    this->write_packet(PacketType::DataOut, {buffer, len});
+    this->out.write_packet(RecorderFile::PacketType::DataOut, {buffer, len});
 }
 
-void RecorderTransport::write_packet(PacketType type, const_byte_array buffer)
-{
-	auto now = std::chrono::system_clock::now();
-	auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time);
-
-	StaticOutStream<13> headers_stream;
-	headers_stream.out_uint8(uint8_t(type));
-	headers_stream.out_uint64_le(delta.count());
-	headers_stream.out_uint32_le(buffer.size());
-    // LOG(LOG_DEBUG, "write_packet len=%lu", len);
-
-    this->file.send(headers_stream.get_data(), headers_stream.get_offset());
-    this->file.send(buffer);
-}
 
 RecorderTransportHeader read_recorder_transport_header(Transport& trans)
 {
@@ -153,7 +160,7 @@ RecorderTransportHeader read_recorder_transport_header(Transport& trans)
     trans.recv_boom(make_array_view(data));
 
 	return {
-        RecorderTransport::PacketType(headers_stream.in_uint8()),
+        RecorderFile::PacketType(headers_stream.in_uint8()),
         std::chrono::milliseconds(headers_stream.in_uint64_le()),
         headers_stream.in_uint32_le()
     };
