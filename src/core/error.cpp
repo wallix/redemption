@@ -147,8 +147,9 @@ const char * Error::errmsg(bool with_id) const noexcept
                     jln::ull_to_string_c_t<int(e)>>::c_str() \
                 : "Exception " #e;
 #else
-        #define MAKE_CASE(e) case e: \
-            static ErrorCbuf<sizeof(#e)> buf_##e(#e, int(e)); return buf_##e.buf;
+        #define MAKE_CASE(e) case e:                          \
+            static ErrorCbuf<sizeof(#e)> buf_##e(#e, int(e)); \
+            return with_id ? buf_##e.buf : "Exception " #e;
 #endif
         switch (this->id) {
             EACH_ERROR(MAKE_CASE, MAKE_CASE_V)
