@@ -1843,7 +1843,7 @@ void ClientExecute::reset(bool soft)
         this->internal_module_window_created = false;
     }
 
-    auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
+    this->auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
     this->work_area_count = 0;
 
