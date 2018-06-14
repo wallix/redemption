@@ -25,12 +25,36 @@ create_ppocr_rule
     $(PPOCR_SRC_PATH)/ppocr/image/image_from_file.cpp
     $(PPOCR_SRC_PATH)/ppocr/loader2/glyphs_loader.cpp
     $(PPOCR_SRC_PATH)/ppocr/loader2/image_io.cpp
+    $(PPOCR_SRC_PATH)/ppocr/ocr2/data_indexes_by_words.cpp
+    $(PPOCR_SRC_PATH)/ppocr/ocr2/disambiguous_with_dict.cpp
+    $(PPOCR_SRC_PATH)/ppocr/ocr2/filter_by_font.cpp
+    $(PPOCR_SRC_PATH)/ppocr/ocr2/filter_by_lines.cpp
+    $(PPOCR_SRC_PATH)/ppocr/ocr2/glyphs.cpp
+    $(PPOCR_SRC_PATH)/ppocr/ocr2/replacement.cpp
+    $(PPOCR_SRC_PATH)/ppocr/ocr2/word_lines.cpp
     $(PPOCR_SRC_PATH)/ppocr/spell/dictionary.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/agravity.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/alternation.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/compass.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/dcompass.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/density.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/direction.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/dvdirection.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/dvdirection2.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/dvgravity.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/dvgravity2.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/dzdensity.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/gravity.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/gravity2.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/hbar.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/hdirection.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/hdirection2.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/hgravity.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/hgravity2.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/proportionality.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/proportionality_zone.cpp
+    $(PPOCR_SRC_PATH)/ppocr/strategies/zone.cpp
     $(PPOCR_SRC_PATH)/ppocr/utils/image_compare.cpp
-    [ glob
-        $(PPOCR_SRC_PATH)/ppocr/ocr2/*.cpp
-        $(PPOCR_SRC_PATH)/ppocr/strategies/*.cpp
-    ]
 ;
 
 ## } ppocr
