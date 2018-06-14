@@ -54,6 +54,9 @@ RdpNego::RdpNego(
 , krb(nla && krb)
 , restricted_admin_mode(admin_mode)
 , selected_protocol(RdpNegoProtocols::Rdp)
+, enabled_protocols(RdpNegoProtocols::Rdp
+    | (this->tls ? RdpNegoProtocols::Tls : 0)
+    | (this->nla ? RdpNegoProtocols::Nla : 0))
 , target_host(target_host)
 , current_password(nullptr)
 , rand(rand)
@@ -64,10 +67,6 @@ RdpNego::RdpNego(
 , state(State::Negociate)
 , verbose(verbose)
 {
-    this->enabled_protocols = RdpNegoProtocols::Rdp
-        | (this->tls ? RdpNegoProtocols::Tls : 0)
-        | (this->nla ? RdpNegoProtocols::Nla : 0);
-
     LOG(LOG_INFO, "RdpNego: TLS=%s NLA=%s adminMode=%s",
         ((this->enabled_protocols & RdpNegoProtocols::Tls) ? "Enabled" : "Disabled"),
         ((this->enabled_protocols & RdpNegoProtocols::Nla) ? "Enabled" : "Disabled"),

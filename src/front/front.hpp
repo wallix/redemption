@@ -1358,7 +1358,7 @@ public:
                 // +---------------------------------+--------------------------------------------------------+
                 // | AUTHZ_SUCCESS 0x00000000        | The user has permission to access the server.          |
                 // +---------------------------------+--------------------------------------------------------+
-                // | AUTHZ _ACCESS_DENIED 0x0000052E | The user does not have permission to access the server.|
+                // | AUTHZ_ACCESS_DENIED 0x0000052E | The user does not have permission to access the server.|
                 // +---------------------------------+--------------------------------------------------------+
 
                     }
