@@ -5556,12 +5556,18 @@ private:
         this->auth_channel_flags  = flags;
         this->auth_channel_chanid = auth_channel.chanid;
 
-        const char Log[] = "Log=";
+        std::string              order;
+        std::vector<std::string> parameters;
+        ::parse_server_message(auth_channel_message.c_str(), order, parameters);
 
-        if (!auth_channel_message.compare(0, sizeof(Log) - 1, Log)) {
-            const char * log_string =
-                (auth_channel_message.c_str() + sizeof(Log) - 1);
-            LOG(LOG_INFO, "WABLauncher: %s", log_string);
+        if (!::strcasecmp(order.c_str(), "Input") && parameters.size()) {
+            const bool disable_input_event     = (::strcasecmp(parameters[0].c_str(), "Enable") != 0);
+            const bool disable_graphics_update = false;
+            this->disable_input_event_and_graphics_update(
+                disable_input_event, disable_graphics_update);
+        }
+        else if (!::strcasecmp(order.c_str(), "Log") && parameters.size()) {
+            LOG(LOG_INFO, "WABLauncher: %s", parameters[0].c_str());
         }
         else {
             LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message);

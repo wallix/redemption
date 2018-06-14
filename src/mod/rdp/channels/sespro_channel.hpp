@@ -28,6 +28,7 @@
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/rdp_api.hpp"
 #include "utils/genrandom.hpp"
+#include "utils/parse_server_message.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
 
@@ -655,36 +656,6 @@ public:
         }
     }
 
-    static bool parse_server_message(const char * svr_msg, std::string & order_ref, std::vector<std::string> & parameters_ref) {
-        order_ref.clear();
-        parameters_ref.clear();
-
-        const char * separator = strchr(svr_msg, '=');
-
-        if (separator) {
-            order_ref.assign(svr_msg, separator - svr_msg);
-
-            const char * params = (separator + 1);
-
-            /** TODO
-             * for (r : get_split(separator, this->server_message.c_str() + this->server_message.size(), '\ x01')) {
-             *     parameters.push_back({r.begin(), r.end()});
-             * }
-             */
-            while ((separator = ::strchr(params, '\x01')) != nullptr) {
-                parameters_ref.emplace_back(params, separator - params);
-
-                params = (separator + 1);
-            }
-            parameters_ref.emplace_back(params);
-        }
-        else {
-            order_ref.assign(svr_msg);
-        }
-
-        return order_ref.length();
-    }
-
     template <class T>
     void send_client_message(T t) {
         StaticOutStream<8192> out_s;
@@ -757,7 +728,7 @@ public:
         // TODO vector<string_view>
         std::vector<std::string> parameters_;
         const bool parse_server_message_result =
-            parse_server_message(this->server_message.c_str(), order_, parameters_);
+            ::parse_server_message(this->server_message.c_str(), order_, parameters_);
         if (!parse_server_message_result) {
             LOG(LOG_WARNING,
                 "SessionProbeVirtualChannel::process_server_message: "

@@ -4357,6 +4357,11 @@ test-run tests/utils/test_parse :
 :
   <covfile>src/utils/parse.hpp
 ;
+test-run tests/utils/test_parse_server_message :
+  $(REDEMPTION_TEST_PATH)/utils/test_parse_server_message.cpp
+:
+  <covfile>src/utils/parse_server_message.hpp
+;
 test-run tests/utils/test_pattutils :
   $(REDEMPTION_TEST_PATH)/utils/test_pattutils.cpp
 :
@@ -5204,6 +5209,8 @@ alias test_netutils.coverage : tests/utils/test_netutils.coverage ;
 alias test_outbound_connection_monitor_rules : tests/utils/test_outbound_connection_monitor_rules ;
 alias test_parse : tests/utils/test_parse ;
 alias test_parse.coverage : tests/utils/test_parse.coverage ;
+alias test_parse_server_message : tests/utils/test_parse_server_message ;
+alias test_parse_server_message.coverage : tests/utils/test_parse_server_message.coverage ;
 alias test_pattutils : tests/utils/test_pattutils ;
 alias test_pattutils.coverage : tests/utils/test_pattutils.coverage ;
 alias test_png : tests/utils/test_png ;
@@ -5689,6 +5696,7 @@ alias tests/utils :
   tests/utils/test_netutils
   tests/utils/test_outbound_connection_monitor_rules
   tests/utils/test_parse
+  tests/utils/test_parse_server_message
   tests/utils/test_pattutils
   tests/utils/test_png
   tests/utils/test_rdtsc
