@@ -31,7 +31,7 @@
 
 
 /**
- *	@brief a transport that will replay a full capture
+ *    @brief a transport that will replay a full capture
  */
 class ReplayTransport : public Transport
 {
@@ -39,12 +39,12 @@ public:
     enum class FdType : bool { Timer, AlwaysReady };
     enum class UncheckedPacket : uint8_t { None, Send };
 
-	ReplayTransport(
+    ReplayTransport(
         const char* fname, const char *ip_address, int port,
         FdType fd_type = FdType::Timer,
         UncheckedPacket unchecked_packet = UncheckedPacket::None);
 
-	~ReplayTransport();
+    ~ReplayTransport();
 
     array_view_const_u8 get_public_key() const override;
 
@@ -81,15 +81,15 @@ private:
     void read_timer();
 
 private:
-    std::chrono::system_clock::time_point start_time;
+    const std::chrono::system_clock::time_point start_time;
     std::chrono::system_clock::time_point record_time;
     InFileTransport in_file;
-	unique_fd fd;
-	FdType fd_type;
-	UncheckedPacket unchecked_packet;
+    const unique_fd fd;
+    const FdType fd_type;
+    const UncheckedPacket unchecked_packet;
 
-	struct Data
-	{
+    struct Data
+    {
         std::unique_ptr<uint8_t[]> data;
         size_t capacity = 0;
         size_t size;
@@ -108,8 +108,8 @@ private:
         size_t size = 0;
     };
     Key public_key;
-	// uint64_t record_len = 0;
-	bool is_eof = false;
+    // uint64_t record_len = 0;
+    bool is_eof = false;
 
-	std::vector<std::string> infos;
+    std::vector<std::string> infos;
 };

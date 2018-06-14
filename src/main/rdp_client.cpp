@@ -34,10 +34,10 @@
 #include "transport/recorder_transport.hpp"
 #include "transport/socket_transport.hpp"
 #include "utils/cfgloader.hpp"
+#include "utils/fixed_random.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/netutils.hpp"
 #include "utils/redirection_info.hpp"
-#include "test_only/fixed_random.hpp"
 #include "test_only/get_file_contents.hpp"
 
 #include <iostream>

@@ -54,11 +54,10 @@ ReplayTransport::ReplayTransport(
 ? timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)
 : []{
     int fd = eventfd(0, EFD_NONBLOCK);
-    if (fd > -1) {
-        uint64_t value = 0;
-        [[maybe_unused]] auto ret = write(fd, &value, 8); // that will make the file descriptor always selectable
+    if (fd < 0) {
+        throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
     }
-    uint64_t value = 0;
+    uint64_t value = 1;
     [[maybe_unused]] auto ret = write(fd, &value, 8); // that will make the file descriptor always selectable
     return fd;
 }())
