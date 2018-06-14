@@ -1,3 +1,9 @@
+redemption (1.1.31%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Add capability to enable/disable keyboard/mouse input from Auth Channcel.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 14 Jun 2018 16:56:32 +0200
+
 redemption (1.1.27%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 
