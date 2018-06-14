@@ -1106,6 +1106,7 @@ test-run tests/core/RDP/caches/test_pointercache :
   $(REDEMPTION_TEST_PATH)/core/RDP/caches/test_pointercache.cpp
 :
   <covfile>src/core/RDP/caches/pointercache.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/capabilities/test_activate :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_activate.cpp
@@ -1726,6 +1727,7 @@ test-run tests/core/RDP/test_pointer :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_pointer.cpp
 :
   <covfile>src/core/RDP/pointer.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/core/RDP/test_protocol :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_protocol.cpp
@@ -3342,31 +3344,71 @@ test-run tests/mod/vnc/encoder/test_hextile :
   $(REDEMPTION_TEST_PATH)/mod/vnc/encoder/test_hextile.cpp
 :
   <covfile>src/mod/vnc/encoder/hextile.hpp
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymapSym.o
+  <library>src/mod/internal/client_execute.o
+  <library>src/mod/internal/internal_mod.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/edit.o
+  <library>src/mod/internal/widget/edit_valid.o
+  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/flat_vnc_authentification.o
+  <library>src/mod/internal/widget/image.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/password.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/d3des.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/fake_graphic.o
+  <library>z
 ;
 test-run tests/mod/vnc/encoder/test_zrle :
   $(REDEMPTION_TEST_PATH)/mod/vnc/encoder/test_zrle.cpp
 :
   <covfile>src/mod/vnc/encoder/zrle.hpp
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymapSym.o
+  <library>src/mod/internal/client_execute.o
+  <library>src/mod/internal/internal_mod.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/edit.o
+  <library>src/mod/internal/widget/edit_valid.o
+  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/flat_vnc_authentification.o
+  <library>src/mod/internal/widget/image.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/password.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/d3des.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/fake_graphic.o
+  <library>z
 ;
 test-run tests/mod/vnc/test_vnc :
   $(REDEMPTION_TEST_PATH)/mod/vnc/test_vnc.cpp
@@ -3411,6 +3453,7 @@ test-run tests/mod/xup/test_xup :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
+  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
 ;
 test-run tests/regex/test_regex :
@@ -4099,6 +4142,11 @@ test-run tests/utils/test_parse :
   $(REDEMPTION_TEST_PATH)/utils/test_parse.cpp
 :
   <covfile>src/utils/parse.hpp
+;
+test-run tests/utils/test_parse_server_message :
+  $(REDEMPTION_TEST_PATH)/utils/test_parse_server_message.cpp
+:
+  <covfile>src/utils/parse_server_message.hpp
 ;
 test-run tests/utils/test_pattutils :
   $(REDEMPTION_TEST_PATH)/utils/test_pattutils.cpp
@@ -4925,6 +4973,8 @@ alias test_netutils.coverage : tests/utils/test_netutils.coverage ;
 alias test_outbound_connection_monitor_rules : tests/utils/test_outbound_connection_monitor_rules ;
 alias test_parse : tests/utils/test_parse ;
 alias test_parse.coverage : tests/utils/test_parse.coverage ;
+alias test_parse_server_message : tests/utils/test_parse_server_message ;
+alias test_parse_server_message.coverage : tests/utils/test_parse_server_message.coverage ;
 alias test_pattutils : tests/utils/test_pattutils ;
 alias test_pattutils.coverage : tests/utils/test_pattutils.coverage ;
 alias test_png : tests/utils/test_png ;
@@ -5408,6 +5458,7 @@ alias tests/utils :
   tests/utils/test_netutils
   tests/utils/test_outbound_connection_monitor_rules
   tests/utils/test_parse
+  tests/utils/test_parse_server_message
   tests/utils/test_pattutils
   tests/utils/test_png
   tests/utils/test_rdtsc
