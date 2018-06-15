@@ -35,7 +35,7 @@
 #include "utils/log.hpp"
 #include "utils/invalid_socket.hpp"
 #include "utils/select.hpp"
-#include "utils/sugar/scope_exit.hpp"
+#include "utils/sugar/unique_fd.hpp"
 #include "core/server.hpp"
 #include "cxx/diagnostic.hpp"
 
@@ -60,10 +60,8 @@ struct Listen {
         , exit_on_timeout(exit_on_timeout)
         , timeout_sec(timeout_sec)
     {
-        int sck = socket(PF_INET, SOCK_STREAM, 0);
-        SCOPE_EXIT(if (sck != INVALID_SOCKET){
-            close(sck);
-        });
+        unique_fd unique_sck {socket(PF_INET, SOCK_STREAM, 0)};
+        int const sck = unique_sck.fd();
 
         /* reuse same port if a previous daemon was stopped */
         int allow_reuse = 1;
@@ -72,7 +70,7 @@ struct Listen {
         /* set snd buffer to at least 32 Kbytes */
         int snd_buffer_size = 32768;
         unsigned int option_len = sizeof(snd_buffer_size);
-        if (0 == getsockopt(this->sck, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, &option_len)) {
+        if (0 == getsockopt(sck, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, &option_len)) {
             if (snd_buffer_size < 32768) {
                 snd_buffer_size = 32768;
                 setsockopt(sck, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, sizeof(snd_buffer_size));
@@ -119,9 +117,7 @@ struct Listen {
         }
 
         // OK, keep the temporary socket everything was fine
-        this->sck = sck;
-        // This to avoid closing old temporary socket through RAII
-        sck = INVALID_SOCKET;
+        this->sck = unique_sck.release();
     }
 
     ~Listen()
