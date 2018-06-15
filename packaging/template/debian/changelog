@@ -2,6 +2,12 @@ redemption (1.2.31%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix trap divide error when using 256 colors without compression.
 
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 15 Jun 2018 18:57:47 +0200
+
+redemption (1.2.31%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix trap divide error when using 256 colors without compression.
+
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 15 Jun 2018 18:51:19 +0200
 
 redemption (1.2.29%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
