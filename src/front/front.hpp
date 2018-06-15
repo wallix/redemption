@@ -117,7 +117,7 @@
 
 #include <memory>
 
-
+enum { MAX_DATA_BLOCK_SIZE = 1024 * 30 };
 
 class Front : public FrontAPI
 {
@@ -612,7 +612,7 @@ private:
 
     uint16_t rail_channel_id = 0;
 
-    size_t max_data_block_size = 1024 * 64;
+    size_t max_data_block_size = MAX_DATA_BLOCK_SIZE;
 
     bool focus_on_password_textbox = false;
     bool consent_ui_is_visible     = false;
@@ -1152,7 +1152,7 @@ private:
             LOG(LOG_INFO, "Front::reset: bitmap_cache_version=%d", this->client_info.bitmap_cache_version);
         }
 
-        this->max_data_block_size = 1024 * 64;
+        this->max_data_block_size = MAX_DATA_BLOCK_SIZE;
 
         int const mppc_type = this->get_appropriate_compression_type(
             this->client_info.rdp_compression_type,
@@ -1163,7 +1163,8 @@ private:
             mppc_type, this->ini.get<cfg::debug::compression>()
         );
         if (this->mppc_enc) {
-            this->max_data_block_size = this->mppc_enc->get_max_data_block_size();
+            this->max_data_block_size = std::min<size_t>(MAX_DATA_BLOCK_SIZE,
+                this->mppc_enc->get_max_data_block_size());
         }
 
         if (this->orders.has_bmp_cache_persister()) {
