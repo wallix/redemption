@@ -96,7 +96,9 @@ FlatLogin::FlatLogin(
 
     this->add_widget(&this->error_message_label);
 
-    this->add_widget(&this->login_message_label);
+    if (*label_login_message) {
+        this->add_widget(&this->login_message_label);
+    }
 
     if (extra_button) {
         this->add_widget(extra_button);
