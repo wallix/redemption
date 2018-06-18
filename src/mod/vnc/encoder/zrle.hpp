@@ -636,14 +636,12 @@ namespace VNC {
 
                 uint8_t    tile_data[4*64*64];    // max size with 32 bpp
                 uint8_t  * tmp_tile_data = tile_data;
-                const uint8_t * cpixel_pattern = nullptr;
-                bool running = true;
-                while (running){
+                for (;;){
                     if (uncompressed_data_buffer.in_remain() < this->Bpp+1u){
                         LOG(LOG_ERR, "VNC::zrle uncompressed stream truncated (plainRLE)");
                         throw Error(ERR_VNC_ZRLE_PROTOCOL);
                     }
-                    cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->Bpp);
+                    const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(this->Bpp);
                     size_t length = uncompressed_data_buffer.in_uint8() + 1;
                     if (length == 256){ // multi bytes length
                         length -= 1;

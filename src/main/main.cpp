@@ -144,7 +144,6 @@ inline int shutdown()
         // check name of pid
         if (pid > 0)
         {
-            bool is_proxy = true;
             char path[64];
             std::sprintf(path, "/proc/%d/cmdline", pid);
             unique_fd fd(open(path, O_RDONLY));
@@ -153,6 +152,7 @@ inline int shutdown()
                 pid = 0;
             }
             else {
+                bool is_proxy = true;
                 try {
                     text[InFileTransport(std::move(fd)).partial_read(text, sizeof(text)-1)] = 0;
                     if (!strstr(text, "/rdpproxy")) {
