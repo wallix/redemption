@@ -1,3 +1,9 @@
+redemption (1.1.37%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix proxy crashs when connect to invalid target from Selector.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 18 Jun 2018 17:24:42 +0200
+
 redemption (1.1.35%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix trap divide error when using 256 colors without compression.
