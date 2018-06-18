@@ -18,16 +18,65 @@
  *   Author(s): Christophe Grosjean, Meng Tan, Jennifer Inthavong
  */
 
-#include "mod/internal/widget/flat_login.hpp"
 #include "core/app_path.hpp"
-#include "utils/theme.hpp"
-#include "keyboard/keymap2.hpp"
+#include "core/font.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
+#include "keyboard/keymap2.hpp"
+#include "mod/internal/widget/flat_login.hpp"
+#include "utils/theme.hpp"
+#include "utils/sugar/update_lock.hpp"
 
 enum {
     WIDGET_MULTILINE_BORDER_X = 10,
     WIDGET_MULTILINE_BORDER_Y = 4
 };
+
+FlatLogin::ScrollableMessage::ScrollableMessage(
+    gdi::GraphicApi & drawable, Widget & parent,
+    Font const & font, Theme const & theme, Widget& message)
+: WidgetParent(drawable, parent, nullptr, 0)
+, message(message)
+, step(font.size())
+, scroll_bar(
+    drawable, *this, this, false, 0,
+    theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
+    font, 0)
+{
+    this->impl = &this->composite_array;
+    this->set_bg_color(theme.global.bgcolor);
+    this->add_widget(&message);
+    this->add_widget(&this->scroll_bar);
+}
+
+void FlatLogin::ScrollableMessage::notify(Widget * /*sender*/, notify_event_t /*event*/)
+{
+    update_lock gd_lock{this->drawable};
+
+    auto const new_y = -this->scroll_bar.get_current_value() * this->step;
+    this->message.set_xy(this->message.x(), this->y() + new_y);
+
+    if (this->message.bottom() < this->scroll_bar.bottom()) {
+        Rect const message_rect(
+            this->x(), this->y(),
+            this->cx(), this->message.bottom() - this->y());
+        Rect const bottom_rect(
+            this->x(), message_rect.bottom(),
+            this->cx(), this->bottom() - message_rect.bottom());
+
+        this->message.rdp_input_invalidate(message_rect);
+        if (!bottom_rect.isempty()) {
+            this->drawable.draw(
+                RDPOpaqueRect(bottom_rect, encode_color24()(this->get_bg_color())),
+                bottom_rect,
+                gdi::ColorCtx::depth24());
+        }
+    }
+    else {
+        Rect const message_rect(this->x(), this->y(), this->message.cx(), this->cy());
+        this->message.rdp_input_invalidate(message_rect);
+    }
+}
 
 FlatLogin::FlatLogin(
     gdi::GraphicApi & drawable,
@@ -62,6 +111,7 @@ FlatLogin::FlatLogin(
     , login_message_label(drawable, *this, nullptr, label_login_message, -10,
              theme.global.fgcolor, theme.global.bgcolor, font,
              WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
+    , scrollable_login_message_label(drawable, *this, font, theme, this->login_message_label)
     , img(drawable,
             theme.global.logo ? theme.global.logo_path.c_str() :
             app_path(AppPath::LoginWabBlue), *this, nullptr, -10)
@@ -77,7 +127,7 @@ FlatLogin::FlatLogin(
     , tr(tr)
     , bg_color(theme.global.bgcolor)
 {
-    this->impl = &composite_array;
+    this->impl = &this->composite_array;
 
     this->add_widget(&this->img);
     this->add_widget(&this->helpicon);
@@ -85,18 +135,13 @@ FlatLogin::FlatLogin(
     this->add_widget(&this->login_edit);
     this->add_widget(&this->password_edit);
 
-    if (width > 640) {
-        this->add_widget(&this->login_label);
-        this->add_widget(&this->password_label);
-
-        this->labels_added = true;
-    }
-
     this->add_widget(&this->version_label);
 
     this->add_widget(&this->error_message_label);
 
-    this->add_widget(&this->login_message_label);
+    if (*label_login_message) {
+        this->add_widget(&this->login_message_label);
+    }
 
     if (extra_button) {
         this->add_widget(extra_button);
@@ -177,11 +222,50 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
     const int cbloc_x = (width  - cbloc_w) / 2;
     const int cbloc_y = (height - cbloc_h) / 2;
 
-    this->login_message_label.set_xy(left + (width - this->login_message_label.cx()) / 2, cbloc_y);
+    auto const bottom_size
+      = this->error_message_label.cy()
+      + this->login_edit.cy()
+      + this->password_edit.cy()
+      + this->version_label.cy()
+      + (offset_y + 4) * 4
+      + 60;
+
+    int login_message_bottom;
+
+    if (height - bottom_size < this->login_message_label.cy()) {
+        if (!this->scroll_added) {
+            this->add_widget(&this->scrollable_login_message_label);
+            this->remove_widget(&this->login_message_label);
+            this->scroll_added = true;
+        }
+        auto const h = height - bottom_size;
+        auto const scroll_dim = this->scrollable_login_message_label.scroll_bar.get_optimal_dim();
+        this->login_message_label.set_xy(
+            left + (width - this->login_message_label.cx()) / 2, top + offset_y);
+        this->scrollable_login_message_label.set_xy(
+            this->login_message_label.x(), this->login_message_label.y());
+        this->scrollable_login_message_label.scroll_bar.set_xy(
+            this->login_message_label.right(), this->login_message_label.y());
+        this->scrollable_login_message_label.scroll_bar.set_wh(scroll_dim.w, h);
+        this->scrollable_login_message_label.set_wh(
+            this->login_message_label.cx() + scroll_dim.w, h);
+        this->scrollable_login_message_label.scroll_bar.set_max_value(
+            (this->login_message_label.cy() - h) / this->font.size() + 1);
+        login_message_bottom = this->scrollable_login_message_label.cy() + offset_y * 2 + 4;
+    }
+    else {
+        if (this->scroll_added) {
+            this->add_widget(&this->login_message_label);
+            this->remove_widget(&this->scrollable_login_message_label);
+            this->scroll_added = false;
+        }
+        this->login_message_label.set_xy(
+            left + (width - this->login_message_label.cx()) / 2, cbloc_y);
+        login_message_bottom = cbloc_y + this->login_message_label.cy() + 60;
+    }
 
 
-
-    this->error_message_label.set_xy(left + cbloc_x, top + cbloc_y + this->login_message_label.cy() + 60);
+    this->error_message_label.set_xy(left + cbloc_x, top + login_message_bottom);
 
     this->login_label.set_xy(left + cbloc_x,
                              this->error_message_label.y() + this->error_message_label.cy() + offset_y + 4);
@@ -195,7 +279,7 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
     this->password_edit.set_xy(left + cbloc_x + labels_w + 10, this->password_label.y() - this->password_edit.get_border_height() - 3);
 
     this->error_message_label.set_xy(this->login_edit.x(),
-                                        this->error_message_label.y());
+                                     this->error_message_label.y());
 
     dim = this->error_message_label.get_optimal_dim();
     this->error_message_label.set_wh(this->login_edit.cx(), dim.h);

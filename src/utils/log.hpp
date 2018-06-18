@@ -57,9 +57,9 @@ namespace detail_ {
 // T* to void* for %p
 template<class T> detail_::vlog_wrap<void const*> log_value(T* p) noexcept { return {p}; }
 template<class T> detail_::vlog_wrap<void const*> log_value(T const* p) noexcept { return {p}; }
-inline detail_::vlog_wrap<char const*> log_value(char* p) noexcept { return {p}; }
+inline detail_::vlog_wrap<char const*> log_value(char* p) noexcept { return {p}; } // NOLINT
 inline detail_::vlog_wrap<char const*> log_value(char const* p) noexcept { return {p}; }
-inline detail_::vlog_wrap<uint8_t const*> log_value(uint8_t* p) noexcept { return {p}; }
+inline detail_::vlog_wrap<uint8_t const*> log_value(uint8_t* p) noexcept { return {p}; } // NOLINT
 inline detail_::vlog_wrap<uint8_t const*> log_value(uint8_t const* p) noexcept { return {p}; }
 
 // enum type

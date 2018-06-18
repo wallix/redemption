@@ -167,7 +167,7 @@
 # define REDEMPTION_UNREACHABLE() do {                           \
         REDEMPTION_DIAGNOSTIC_PUSH                               \
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunreachable-code") \
-        assert(!"Unreachable code reached.");                    \
+        assert(!"Unreachable code reached."); /* NOLINT */       \
         REDEMPTION_DIAGNOSTIC_POP                                \
     } while (0)
 

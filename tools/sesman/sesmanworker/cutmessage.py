@@ -14,7 +14,7 @@ import unittest
 
 def cut_message(message, width = 75, in_cr = '\n', out_cr = '<br>', margin = 6):
     result = []
-    for line in message.split(in_cr):
+    for line in message.strip().split(in_cr):
         while len(line) > width:
             end = line[width:].split(' ')
 

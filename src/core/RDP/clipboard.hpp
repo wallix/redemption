@@ -1228,7 +1228,6 @@ struct FormatListPDU_LongName {
             this->formatUTF16Name[name_len] = c;
             name_len ++;
         }
-        c = -1;
         this->formatDataNameUTF16Len = name_len;
     }
 
