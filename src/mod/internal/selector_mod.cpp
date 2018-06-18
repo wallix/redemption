@@ -159,19 +159,22 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
             uint16_t row_index = 0;
             uint16_t column_index = 0;
             this->selector.selector_lines.get_selection(row_index, column_index);
-            const char * target = this->selector.selector_lines.get_cell_text(row_index, WidgetSelector::IDX_TARGET);
-            const char * groups = this->selector.selector_lines.get_cell_text(row_index, WidgetSelector::IDX_TARGETGROUP);
-            snprintf(buffer, sizeof(buffer), "%s:%s:%s",
-                        target, groups, this->vars.get<cfg::globals::auth_user>().c_str());
-            this->vars.set_acl<cfg::globals::auth_user>(buffer);
-            this->vars.ask<cfg::globals::target_user>();
-            this->vars.ask<cfg::globals::target_device>();
-            this->vars.ask<cfg::context::target_protocol>();
+            if (static_cast<uint16_t>(-1u) != row_index)
+            {
+                const char * target = this->selector.selector_lines.get_cell_text(row_index, WidgetSelector::IDX_TARGET);
+                const char * groups = this->selector.selector_lines.get_cell_text(row_index, WidgetSelector::IDX_TARGETGROUP);
+                snprintf(buffer, sizeof(buffer), "%s:%s:%s",
+                            target, groups, this->vars.get<cfg::globals::auth_user>().c_str());
+                this->vars.set_acl<cfg::globals::auth_user>(buffer);
+                this->vars.ask<cfg::globals::target_user>();
+                this->vars.ask<cfg::globals::target_device>();
+                this->vars.ask<cfg::context::target_protocol>();
 
-            this->event.signal = BACK_EVENT_NEXT;
-            this->event.set_trigger_time(wait_obj::NOW);
+                this->event.signal = BACK_EVENT_NEXT;
+                this->event.set_trigger_time(wait_obj::NOW);
 
-            this->waiting_for_next_module = true;
+                this->waiting_for_next_module = true;
+            }
         }
         else if (widget->group_id == this->selector.apply.group_id) {
             this->ask_page();
