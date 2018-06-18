@@ -1,11 +1,26 @@
 #!/bin/sh
 
-cd "$(dirname "$0")"/../..
+${CLANG_TIDY:=clang-tidy} -checks='*,-llvm-include-order,-hicpp-no-array-decay,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-readability-implicit-bool-conversion,-cppcoreguidelines-pro-type-vararg,-hicpp-vararg,-cppcoreguidelines-pro-bounds-constant-array-index,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-fuchsia-overloaded-operator,-google-runtime-int,-google-runtime-references,-hicpp-exception-baseclass,-google-readability-todo,-readability-static-accessed-through-instance,-fuchsia-default-arguments,-android-cloexec-open,-hicpp-signed-bitwise,-llvm-header-guard' \
+-header-filter='.*' \
+$(find src/ -name '*.cpp' \
+    -a -not -path 'src/ftests/*' \
+    -a -not -path 'src/keyboard/*' \
+    -a -not -path 'src/openssl_c/*' \
+    -a -not -path 'src/proto/*' \
+    -a -not -path 'src/sashimi/*' \
+    -a -not -name app_path.cpp \
+    -a -not -name log_as_logemasm.cpp) -- \
+-std=c++17 \
+-I'include' \
+-I'modules/includes' \
+-I'modules/ppocr/includes/mln' \
+-I'modules/ppocr/src' \
+-I'projects/ocr1/include' \
+-I'projects/redemption_configs/include/autogen' \
+-I'projects/redemption_configs/redemption_src' \
+-I'src' \
+-I'src/system/linux' \
+-I'tests/includes/'
 
-bjam debug --toolset=clang rdpproxy -n -a \
-| grep -m1 src/main/main.cpp \
-| sed s'/ -o .*//' \
-| while read cc o ; do
-  eval clang-tidy "$@" -checks='*,-llvm-namespace-comment,-llvm-include-order,-google-readability-function' \
-   -header-filter='.*' src/main/*.cpp -- $o
-done
+# highlighting
+# sed "s#`pwd`/##" | colout '(^[ps][^/]+/[^:]+):([^:]+:[^:]+): (error)?(warning)?(note)?:([^[]+)(\[.*)?' c y r,o m,o c,o \#eee,o w
