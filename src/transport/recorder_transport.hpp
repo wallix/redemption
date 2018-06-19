@@ -27,7 +27,7 @@
 #include <chrono>
 
 /**
- * @brief a file containin a capture
+ * @brief a file containing a capture
  */
 class RecorderFile {
 public:
