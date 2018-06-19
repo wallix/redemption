@@ -348,6 +348,8 @@ protected:
     const bool disable_file_system_log_syslog;
     const bool disable_file_system_log_wrm;
 
+    bool delayed_start_capture = false;
+
     const std::chrono::milliseconds   session_probe_launch_timeout;
     const std::chrono::milliseconds   session_probe_launch_fallback_timeout;
     const bool                        session_probe_start_launch_timeout_timer_only_after_logon;
@@ -2412,7 +2414,13 @@ public:
                                 this->already_upped_and_running = true;
                             }
 
-                            if (this->front.can_be_start_capture()) {
+                            if (this->enable_session_probe &&
+                                this->session_probe_enable_launch_mask) {
+                                this->delayed_start_capture = true;
+
+                                LOG(LOG_INFO, "Mod_rdp: Capture starting is delayed.");
+                            }
+                            else if (this->front.can_be_start_capture()) {
                                 if (this->bogus_refresh_rect
                                  && this->allow_using_multiple_monitors
                                  && this->monitor_count > 1
@@ -5896,6 +5904,23 @@ private:
         this->authentifier.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
 
         this->session_reactor.set_event_next(BACK_EVENT_NEXT);
+    }
+
+    void sespro_launch_process_ended() override {
+        if (this->delayed_start_capture) {
+            this->delayed_start_capture = false;
+
+            if (this->front.can_be_start_capture()) {
+                if (this->bogus_refresh_rect
+                 && this->allow_using_multiple_monitors
+                 && this->monitor_count > 1
+                ) {
+                    this->rdp_suppress_display_updates();
+                    this->rdp_allow_display_updates(0, 0, this->negociation_result.front_width, this->negociation_result.front_height);
+                }
+                this->rdp_input_invalidate(Rect(0, 0, this->negociation_result.front_width, this->negociation_result.front_height));
+            }
+        }
     }
 
 private:
