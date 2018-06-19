@@ -600,6 +600,8 @@ public:
             this->mod.rdp_input_invalidate(Rect(0, 0,
                 this->param_front_width, this->param_front_height));
         }
+
+        this->rdp.sespro_launch_process_ended();
     }
 
     void process_event_ready()
@@ -817,6 +819,8 @@ public:
                 this->file_system_virtual_channel.disable_session_probe_drive();
 
                 this->session_probe_timer.reset();
+
+                this->rdp.sespro_launch_process_ended();
 
                 if (this->param_session_probe_keepalive_timeout.count() > 0) {
                     send_client_message([](OutStream & out_s) {
