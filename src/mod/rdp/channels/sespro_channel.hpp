@@ -579,6 +579,8 @@ public:
             this->session_probe_stop_launch_sequence_notifier = nullptr;
         }
 
+        this->session_probe_timer.reset();
+
         const bool disable_input_event     = false;
         const bool disable_graphics_update = false;
         const bool need_full_screen_update =
