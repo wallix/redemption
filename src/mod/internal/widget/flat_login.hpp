@@ -24,6 +24,7 @@
 #include "mod/internal/widget/label.hpp"
 #include "mod/internal/widget/edit_valid.hpp"
 #include "mod/internal/widget/image.hpp"
+#include "mod/internal/widget/scroll.hpp"
 #include "utils/translation.hpp"
 #include "mod/internal/widget/multiline.hpp"
 
@@ -31,6 +32,20 @@ class Theme;
 
 class FlatLogin : public WidgetParent
 {
+    class ScrollableMessage : public WidgetParent
+    {
+        CompositeArray composite_array;
+        Widget& message;
+        int step;
+
+    public:
+        WidgetScrollBar scroll_bar;
+        ScrollableMessage(
+            gdi::GraphicApi & drawable, Widget & parent,
+            Font const & font, Theme const & theme, Widget & message);
+
+        void notify(Widget * sender, notify_event_t event) override;
+    };
 public:
     CompositeArray composite_array;
 
@@ -40,6 +55,7 @@ public:
     WidgetLabel        password_label;
     WidgetEditValid    password_edit;
     WidgetMultiLine    login_message_label;
+    ScrollableMessage  scrollable_login_message_label;
     WidgetImage        img;
     WidgetLabel        version_label;
     WidgetFlatButton   helpicon;
@@ -53,6 +69,7 @@ private:
     Translator tr;
 
     bool labels_added = false;
+    bool scroll_added = false;
 
     BGRColor bg_color;
 
