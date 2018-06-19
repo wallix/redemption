@@ -125,7 +125,8 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
     }
 
     {
-        ReplayTransport trans(filename, "", 0, ReplayTransport::FdType::AlwaysReady);
+        ReplayTransport trans(filename, "ip", 0/*port*/, ReplayTransport::FdType::AlwaysReady,
+        		ReplayTransport::UncheckedPacket::Send);
         RED_CHECK_EXCEPTION_ERROR_ID(trans.send("!@#", 3), ERR_TRANSPORT_DIFFERS);
     }
 
@@ -135,15 +136,17 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
         char buf[10];
         auto av = make_array_view(buf);
         auto in = cstr_array_view("123456789");
+        timeval timeout{0, 0};
         fd_set rfd;
         int fd = trans.get_fd();
-        io_fd_zero(rfd);
-        io_fd_set(fd, rfd);
-        timeval timeout{0, 0};
 
         for (auto m : a) {
+
             switch (m.type) {
                 case Pck::DataIn:
+                    io_fd_zero(rfd);
+                    io_fd_set(fd, rfd);
+
                     RED_REQUIRE_EQ(1, select(fd+1, &rfd, nullptr, nullptr, &timeout));
                     RED_CHECK_EQ(3, trans.partial_read(av));
                     RED_CHECK_MEM(in.subarray(0, 3), make_array_view(buf, 3));
@@ -169,13 +172,13 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
         auto in = cstr_array_view("123456789");
         fd_set rfd;
         int fd = trans.get_fd();
-        io_fd_zero(rfd);
-        io_fd_set(fd, rfd);
         timeval timeout{1, 0};
 
         for (auto m : a) {
             switch (m.type) {
                 case Pck::DataIn:
+                    io_fd_zero(rfd);
+                    io_fd_set(fd, rfd);
                     RED_REQUIRE_EQ(1, select(fd+1, &rfd, nullptr, nullptr, &timeout));
                     RED_CHECK_EQ(3, trans.partial_read(av));
                     RED_CHECK_MEM(in.subarray(0, 3), make_array_view(buf, 3));

@@ -145,7 +145,7 @@ public:
 		fd_set rset;
 		bool doRun = true;
 
-		LOG(LOG_INFO, "Running front connection");
+		LOG(LOG_ERR, "Recording front connection in %s", captureFile.c_str());
 		int front_fd = frontConn.get_fd();
 		int back_fd = backConn.get_fd();
 
@@ -232,29 +232,25 @@ public:
         const pid_t pid = fork();
         connection_counter++;
 
-        switch (pid) {
-        case 0: /* child */
-            {
-                close(sck);
+        if(pid == 0) {
+        	openlog("FrontConnection", LOG_CONS | LOG_PERROR, LOG_USER);
+			close(sck);
 
-                int nodelay = 1;
-                if (setsockopt(sck_in, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay)) < 0) {
-                	LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
-                	_exit(1);
-                }
+			int nodelay = 1;
+			if (setsockopt(sck_in, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay)) < 0) {
+				LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
+				_exit(1);
+			}
 
-                char finalPath[300];
-                std::snprintf(finalPath, sizeof(finalPath), captureTemplate.c_str(), connection_counter);
+			char finalPath[300];
+			std::snprintf(finalPath, sizeof(finalPath), captureTemplate.c_str(), connection_counter);
 
-                FrontConnection conn(sck_in, connection_counter, targetHost.c_str(), targetPort, std::string(finalPath));
-                conn.run();
-                exit(0);
-            }
-            break;
-        default: /* father */
-        	close(sck_in);
-        	break;
-        }
+			FrontConnection conn(sck_in, connection_counter, targetHost.c_str(), targetPort, std::string(finalPath));
+			conn.run();
+			exit(0);
+		}
+
+        close(sck_in);
 
     	return Server::START_OK;
     }
