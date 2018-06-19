@@ -38,7 +38,7 @@ namespace cpp_enumeration_writer
     auto e_map(E & e) {
         return map(
             bind('e', e.name),
-            bind('u', e.values.size()),
+            bind('u', e.max()),
             bind('d', cpp_comment(e.desc, 0)),
             bind('i', cpp_comment(e.info, 0))
         );
@@ -80,7 +80,7 @@ namespace cpp_enumeration_writer
                 loop(e, "        cstr_array_view(\"%s\"),\n");
                 write(e,
                     "    };\n"
-                    "    assert(static_cast<unsigned long>(x) < %u);\n"
+                    "    assert(is_valid_enum_value(x));\n"
                     "    return arr[static_cast<unsigned long>(x)];\n"
                 );
             }
@@ -131,7 +131,7 @@ namespace cpp_enumeration_writer
         for (auto & e : enums.enumerations_) {
             cfg_to_s_fmt(e);
             parse_fmt(e, [&]{ write(e,
-                "    return parse_enum_u(x, value, std::integral_constant<unsigned long, ((1 << (%u - 1)) - 1)>());\n"
+                "    return parse_enum_u(x, value, std::integral_constant<unsigned long, %u>());\n"
             ); });
         }
         for (auto & e : enums.enumerations_set_) {
@@ -209,15 +209,14 @@ namespace cpp_enumeration_writer
                 write(e,
                     "inline bool is_valid_enum_value(%e e)\n"
                     "{\n"
-                    "    auto const i = static_cast<unsigned long>(e);\n"
-                    "    return i == (i & static_cast<unsigned long>((1 << (%u - 1)) - 1));\n"
+                    "    return static_cast<unsigned long>(e) <= %u;\n"
                     "}\n\n"
                     "inline %e operator | (%e x, %e y)\n"
                     "{ return static_cast<%e>(static_cast<unsigned long>(x) | static_cast<unsigned long>(y)); }\n"
                     "inline %e operator & (%e x, %e y)\n"
                     "{ return static_cast<%e>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }\n"
                     "inline %e operator ~ (%e x)\n"
-                    "{ return static_cast<%e>(~static_cast<unsigned long>(x) & static_cast<unsigned long>((1 << (%u - 1)) - 1)); }\n"
+                    "{ return static_cast<%e>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(%u)); }\n"
                     "inline %e operator + (%e & x, %e y) { return x | y; }\n"
                     "inline %e operator - (%e & x, %e y) { return x & ~y; }\n"
                     "inline %e & operator |= (%e & x, %e y) { return x = x | y; }\n"
@@ -230,7 +229,7 @@ namespace cpp_enumeration_writer
                 enum_def(e, [CPP_IDE(i = 0)] (auto &) mutable { return i++; });
                 write(e,
                     "inline bool is_valid_enum_value(%e e)\n"
-                    "{ return static_cast<unsigned long>(e) < %u; }\n\n"
+                    "{ return static_cast<unsigned long>(e) <= %u; }\n\n"
                 );
             }
             write_io(e);

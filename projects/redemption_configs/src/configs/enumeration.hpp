@@ -92,14 +92,16 @@ struct type_enumeration : type_enumeration_base<type_enumeration>
         return *this;
     }
 
-    unsigned count() const {
+    unsigned long count() const
+    {
         return this->values.size();
     }
 
-    unsigned max() const {
+    unsigned long max() const
+    {
         return this->flag == autoincrement
-            ? this->count()
-            : ((1 << (this->values.size())) - 1) >> 1;
+            ? this->count() - 1u
+            : (1u << (this->values.size() - 1u)) - 1u;
     }
 
 
@@ -127,6 +129,11 @@ struct type_enumeration_set : type_enumeration_base<type_enumeration_set>
     {
         this->values.push_back({name, desc, nullptr, val});
         return *this;
+    }
+
+    unsigned long max() const
+    {
+        return this->values.size()-1u;
     }
 
     struct Value
