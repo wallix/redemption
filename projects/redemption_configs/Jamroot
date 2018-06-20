@@ -123,5 +123,6 @@ constant TEST_DEPENDENCIES :
 ## Tests
 ## @{
 unit-test test_config : tests/test_config.cpp : $(TEST_DEPENDENCIES) ;
+unit-test test_parser : tests/test_parser.cpp : $(TEST_DEPENDENCIES) ;
 unit-test test_config_assign : tests/test_config_assign.cpp : $(TEST_DEPENDENCIES) ;
 ## }

@@ -329,6 +329,7 @@ namespace cfg {
         struct disconnect_reason_ack;
         struct ip_target;
         struct recording_started;
+        struct rt_ready;
         struct perform_automatic_reconnection;
         struct server_auto_reconnect_packet;
         struct auth_command;
