@@ -242,24 +242,6 @@ exe rdpheadless :
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 
-exe recorder_proxy :
-	$(REDEMPTION_SRC_PATH)/proxy_recorder/proxy_recorder.cpp
-:
-    <library>gssapi_krb5
-    <library>krb5
-    <library>crypto
-    <library>openssl
-    <library>dl
-    <library>src/core/error.o
-    <library>src/transport/socket_transport.o
-    <library>src/utils/fileutils.o
-    <library>src/utils/hexdump.o
-    <library>src/utils/netutils.o
-    <library>src/transport/recorder_transport.o
-
-    $(EXE_DEPENDENCIES)
-;
-
 lib libredrec :
   src/main/do_recorder.cpp.lib.o
 :
@@ -2518,6 +2500,7 @@ test-run tests/mod/internal/test_flat_login_mod :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/scroll.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
@@ -2935,6 +2918,7 @@ test-run tests/mod/internal/widget/test_flat_login :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/scroll.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o

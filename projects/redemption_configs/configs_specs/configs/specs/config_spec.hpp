@@ -198,11 +198,11 @@ void config_spec_definition(Writer && W)
 
     W.section("session_log", [&]
     {
-        W.member(ini_and_gui, no_sesman, type_<bool>(), "enable_session_log", set(true));
+        W.member(ini_and_gui, sesman_to_proxy, type_<bool>(), "enable_session_log", set(true));
         W.member(advanced_in_gui, sesman_to_proxy, type_<std::string>(), "log_path", sesman::name{"session_log_path"});
         W.sep();
-        W.member(advanced_in_gui, no_sesman, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", set(KeyboardInputMaskingLevel::password_and_unidentified));
-        W.member(advanced_in_gui, no_sesman, type_<bool>(), "hide_non_printable_kbd_input", set(false));
+        W.member(advanced_in_gui, sesman_to_proxy, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", set(KeyboardInputMaskingLevel::password_and_unidentified));
+        W.member(advanced_in_gui, sesman_to_proxy, type_<bool>(), "hide_non_printable_kbd_input", set(false));
     });
 
     W.section("client", [&]
@@ -669,6 +669,7 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, no_sesman, type_<std::string>(), "ip_target");
         W.sep();
         W.member(no_ini_no_gui, proxy_to_sesman, type_<bool>(), "recording_started", set(false));
+        W.member(no_ini_no_gui, sesman_rw, type_<bool>(), "rt_ready", set(false));
         W.sep();
         W.member(no_ini_no_gui, no_sesman, type_<bool>(), "perform_automatic_reconnection", set(false));
         W.member(no_ini_no_gui, no_sesman, type_<types::fixed_binary<28>>(), "server_auto_reconnect_packet");
