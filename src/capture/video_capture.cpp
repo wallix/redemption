@@ -607,6 +607,7 @@ void SequencedVideoCaptureImpl::VideoCapture::next_video()
         this->video_params.target_height,
         this->video_params.verbosity
     ));
+    this->recorder->preparing_video_frame();
     this->video_cap_ctx.next_video();
 }
 
