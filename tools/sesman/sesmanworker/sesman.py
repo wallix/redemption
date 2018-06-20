@@ -247,6 +247,7 @@ class Sesman():
             u'target_application_account': u'',
             u'target_application_password': u'',
             u'rt_display': 0,
+            u'rt_ready': False,
             u'opt_message': u'',
 
             u'ticket': u'',
@@ -1572,10 +1573,6 @@ class Sesman():
                     }
                     if is_interactive_login:
                         update_args["effective_login"] = kv.get('target_login')
-                    if self.full_path:
-                        # RT available if recording
-                        # TODO: decorrelate RT and recording
-                        update_args["rt"] = True
                     if self.shared.get('width'):
                         update_args["video_width"] = int(self.shared.get('width'))
                     if self.shared.get('height'):
@@ -1631,8 +1628,7 @@ class Sesman():
                                 self.check_session_parameters = False
                             if self.proxy_conx in r:
                                 _status, _error = self.receive_data([
-                                    "width",
-                                    "height",
+                                    "width", "height", "rt_ready"
                                 ])
 
                                 if self._changed_keys:
@@ -1944,14 +1940,33 @@ class Sesman():
                 u"Unexpected reporting reason: "
                 "\"%s\" \"%s\" \"%s\"" % (reason, target, message))
 
+    KEYMAPPING = {
+        # exchange key : (acl key, type)
+        'height': ('video_height', 'int'),
+        'width': ('video_width', 'int'),
+        'rt_ready': ('rt', 'bool')
+    }
+
+    @staticmethod
+    def convert_value(value, cotype):
+        if not isinstance(value, basestring):
+            return value
+        if cotype == 'int':
+            return int(value)
+        if cotype == 'bool':
+            return (value.lower() == 'true')
+        return value
+
     def update_session_data(self, changed_keys):
-        keymapping = {
-            'height': 'video_height',
-            'width': 'video_width'
-        }
         data_to_update = {
-            keymapping.get(key) : self.shared.get(key) for key in changed_keys
-            if keymapping.get(key) is not None
+            acl_key : convert_value(val, cotype)
+            for (acl_key, cotype), val in (
+                    (KEYMAPPING.get(key), self.shared.get(key))
+                    for key in changed_keys if (
+                            KEYMAPPING.get(key) is not None
+                            and self.shared.get(key) is not None
+                    )
+            )
         }
         self.engine.update_session(**data_to_update)
 
