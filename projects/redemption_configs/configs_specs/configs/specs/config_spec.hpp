@@ -669,6 +669,7 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, no_sesman, type_<std::string>(), "ip_target");
         W.sep();
         W.member(no_ini_no_gui, proxy_to_sesman, type_<bool>(), "recording_started", set(false));
+        W.member(no_ini_no_gui, sesman_rw, type_<bool>(), "rt_ready", set(false));
         W.sep();
         W.member(no_ini_no_gui, no_sesman, type_<bool>(), "perform_automatic_reconnection", set(false));
         W.member(no_ini_no_gui, no_sesman, type_<types::fixed_binary<28>>(), "server_auto_reconnect_packet");
