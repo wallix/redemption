@@ -1134,6 +1134,8 @@ public:
                     };
                     session_reactor.execute_events(is_mod_fd);
                     session_reactor.execute_graphics(is_mod_fd, get_gd());
+
+                    this->mod->log_metrics("me");
                 }
             } catch (const Error & e) {
                 if (this->impl_graphic) {
