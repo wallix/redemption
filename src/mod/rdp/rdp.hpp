@@ -845,7 +845,8 @@ public:
         , metrics( nullptr
                  , redir_info.session_id
                  , mod_rdp_params.target_user
-                 , mod_rdp_params.target_host)
+                 , mod_rdp_params.target_host
+                 , vars.get<cfg::globals::auth_user>().c_str())
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -1661,11 +1662,11 @@ public:
 
     // this->metrics.total_main_amount_data_rcv_from_client += length;
     // this->metrics.total_main_amount_data_rcv_from_server += length;
-    void log_metrics(const char * premary_user) override {
+    void log_metrics() override {
 
         if (bool(this->verbose & RDPVerbose::export_metrics)) {
 
-            this->metrics.log(premary_user);
+            this->metrics.log();
         }
     }
 

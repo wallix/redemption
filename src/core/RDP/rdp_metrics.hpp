@@ -33,6 +33,7 @@ struct RDPMetrics {
     const uint32_t session_id;
     const char * account;
     const char * target_host;
+    const char * primary_user;
 
     long int total_main_amount_data_rcv_from_client = 0;
     long int total_cliprdr_amount_data_rcv_from_client = 0;
@@ -51,20 +52,22 @@ struct RDPMetrics {
     RDPMetrics( const char * filename
               , const uint32_t session_id
               , const char * account
-              , const char * target_host)
+              , const char * target_host
+              , const char * primary_user)
       : filename(filename)
       , session_id(session_id)
       , account(account)
       , target_host(target_host)
+      , primary_user(primary_user)
       {}
 
-    void log( const char * primary_user) {
+    void log() {
 
-        char sentence[4096] = {'\0'};
+        char sentence[4096];
         snprintf(sentence, sizeof(sentence), "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\""
         "\n   Client data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld"
         "\n   Server data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld",
-            this->session_id, primary_user, this->account, this->target_host,
+            this->session_id, this->primary_user, this->account, this->target_host,
             this->total_main_amount_data_rcv_from_client,
             this->total_cliprdr_amount_data_rcv_from_client,
             this->total_rail_amount_data_rcv_from_client,
@@ -90,7 +93,12 @@ struct RDPMetrics {
             iov[0].iov_base = sentence;
             iov[0].iov_len = std::strlen(sentence);
 
-            ::writev(fd, iov, 1);
+            ssize_t nwritten = ::writev(fd, iov, 1);
+
+            if (nwritten == -1) {
+                LOG(LOG_ERR, "Log Metrics error: can't write \"%s\"", this->filename);
+                return;
+            }
 
         } else {
             LOG(LOG_INFO, "%s", sentence);
