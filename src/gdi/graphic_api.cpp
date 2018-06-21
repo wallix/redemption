@@ -32,10 +32,14 @@ namespace
     {
         UTF8toUnicodeIterator unicode_iter(unicode_text);
         uint16_t height_max = 0;
+        FontCharView const* font_item = nullptr;
         for (; uint32_t c = getc(unicode_iter); ++unicode_iter) {
-            const FontChar & font_item = font.glyph_or_unknown(c);
-            width += font_item.incby;
-            height_max = std::max(height_max, font_item.height);
+            font_item = &font.glyph_or_unknown(c);
+            width += font_item->incby;
+            height_max = std::max(height_max, font_item->height);
+        }
+        if (font_item) {
+            width -= font_item->right;
         }
         height = height_max;
     }
@@ -195,7 +199,7 @@ void server_draw_text(
             ++unicode_iter;
 
             int cacheIndex = 0;
-            FontChar const * font_item = font.glyph_at(charnum);
+            FontCharView const * font_item = font.glyph_at(charnum);
             if (!font_item) {
                 LOG(LOG_WARNING, "server_draw_text() - character not defined >0x%02x<", charnum);
                 font_item = &font.unknown_glyph();
@@ -203,7 +207,7 @@ void server_draw_text(
 
             // TODO avoid passing parameters by reference to get results
             const GlyphCache::t_glyph_cache_result cache_result =
-                mod_glyph_cache.add_glyph(*font_item, cacheId, cacheIndex);
+                mod_glyph_cache.add_glyph(FontChar(*font_item), cacheId, cacheIndex);
             (void)cache_result; // supress warning
 
             *data_begin = cacheIndex;

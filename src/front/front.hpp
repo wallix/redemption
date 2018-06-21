@@ -4425,9 +4425,7 @@ protected:
                 uint8_t data = variable_bytes.in_uint8();
                 if (data <= 0xFD) {
                     FontChar const & fc = gly_cache.glyphs[cmd.cache_id][data].font_item;
-                    if (!fc) {
-                        assert(fc);
-                    }
+                    assert(fc);
 
                     if (has_delta_bytes) {
                         data = variable_bytes.in_uint8();
@@ -4440,7 +4438,7 @@ protected:
                     }
 
                     if (fc) {
-                        const int16_t x = cmd.bk.x + draw_pos_ref + fc.offset;
+                        const int16_t x = cmd.bk.x + draw_pos_ref;
                         const int16_t y = cmd.bk.y;
 
                         contiguous_sub_rect_f(CxCy{fc.width, fc.height}, SubCxCy{64, 64}, [&](Rect rect){

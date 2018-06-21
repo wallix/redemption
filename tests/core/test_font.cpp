@@ -32,24 +32,16 @@
 RED_AUTO_TEST_CASE(TestCreateFontChar)
 {
     std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(8);
-    int16_t offset = 0;
-    int16_t baseline = 1;
+    int16_t offsetx = 0;
+    int16_t offsety = 1;
     uint16_t width = 8;
     uint16_t height = 8;
     int16_t incby = 8;
 
-//     FontChar fc1(data, offset, baseline, width, height, incby);
-//     RED_CHECK_EQUAL(fc1.datasize(), 8);
-//     RED_CHECK_EQUAL(fc1.offset, offset);
-//     RED_CHECK_EQUAL(fc1.baseline, baseline);
-//     RED_CHECK_EQUAL(fc1.width, width);
-//     RED_CHECK_EQUAL(fc1.height, height);
-//     RED_CHECK_EQUAL(fc1.incby, incby);
-
-    FontChar fc2(offset, baseline, width, height, incby);
+    FontChar fc2(offsetx, offsety, width, height, incby);
     RED_CHECK_EQUAL(fc2.datasize(), 8);
-    RED_CHECK_EQUAL(fc2.offset, offset);
-    RED_CHECK_EQUAL(fc2.baseline, baseline);
+    RED_CHECK_EQUAL(fc2.offsetx, offsetx);
+    RED_CHECK_EQUAL(fc2.offsety, offsety);
     RED_CHECK_EQUAL(fc2.width, width);
     RED_CHECK_EQUAL(fc2.height, height);
     RED_CHECK_EQUAL(fc2.incby, incby);
@@ -63,7 +55,7 @@ RED_AUTO_TEST_CASE(TestCreateFont)
         RED_CHECK(!f.is_loaded());
     }
 
-    Font f(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font f(FIXTURES_PATH "/dejavu-sans-10.rbf");
     RED_CHECK(f.is_loaded());
 
     RED_CHECK_EQUAL("DejaVu Sans", f.name());
@@ -76,10 +68,11 @@ RED_AUTO_TEST_CASE(TestCreateFont)
     RED_CHECK(!f.glyph_defined(0x4dff+1));
 
     RED_CHECK(f.glyph_defined('?'));
-    RED_CHECK_EQUAL(f.glyph_at('?'), &f.unknown_glyph());
+    RED_CHECK(f.glyph_or_unknown('?').item_compare(f.unknown_glyph()));
 
+    FontCharView* nullptr_char = nullptr;
     RED_CHECK_EQUAL(&f.glyph_or_unknown(31), &f.unknown_glyph());
-    RED_CHECK_EQUAL(f.glyph_at(31), static_cast<FontChar*>(nullptr));
+    RED_CHECK_EQUAL(f.glyph_at(31), nullptr_char);
     RED_CHECK_EQUAL(f.glyph_at(32), &f.glyph_or_unknown(32));
-    RED_CHECK_NE(f.glyph_at(32), static_cast<FontChar*>(nullptr));
+    RED_CHECK_NE(f.glyph_at(32), nullptr_char);
 }

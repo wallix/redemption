@@ -76,4 +76,4 @@ std::string app_path_s(AppPath);
 #define DH2048_PEM "dh2048.pem"
 #define DH_PEM DH2048_PEM
 
-#define DEFAULT_FONT_NAME "dejavu_14.fv1"
+#define DEFAULT_FONT_NAME "dejavu_14.rbf"

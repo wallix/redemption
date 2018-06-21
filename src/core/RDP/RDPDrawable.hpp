@@ -75,7 +75,7 @@ private:
     const DrawablePointer * current_pointer;
     DrawablePointer dynamic_pointer;
     DrawablePointer default_pointer;
-    
+
     int frame_start_count;
     BGRPalette mod_palette_rgb;
 
@@ -667,7 +667,7 @@ public:
 //  All fragment cache indices MUST be in the range 0 to 255 (inclusive).
 
 private:
-    void draw_glyph(FontChar const & fc, int16_t px, int16_t pos_y, Color fg_color, Rect clip)
+    void draw_glyph(FontChar const & fc, int16_t px, int16_t py, Color fg_color, Rect clip)
     {
         const uint8_t * fc_data            = fc.data.get();
         for (int yy = 0 ; yy < fc.height; yy++)
@@ -680,10 +680,10 @@ private:
                     fc_data++;
                     fc_bit_mask = 128;
                 }
-                if (clip.contains_pt(px + xx, pos_y + fc.baseline + yy)
+                if (clip.contains_pt(px + xx, py + yy)
                 && (fc_bit_mask & *fc_data))
                 {
-                    this->drawable.draw_pixel(px + xx, pos_y + fc.baseline + yy, fg_color);
+                    this->drawable.draw_pixel(px + xx, py + yy, fg_color);
                 }
                 fc_bit_mask >>= 1;
             }
@@ -732,7 +732,7 @@ public:
                     const int16_t x = draw_pos_ref + bmp_pos_x;
                     const int16_t y = offset_y + bmp_pos_y;
                     if (Rect(0,0,0,0) != clip.intersect(Rect(x, y, fc.incby, fc.height))){
-                        this->draw_glyph(fc, x + fc.offset, y, color, clip);
+                        this->draw_glyph(fc, x + fc.offsetx, y + fc.offsety, color, clip);
                     }
                 }
 
@@ -964,7 +964,7 @@ public:
         const auto hotspot = cursor.get_hotspot();
         auto av_xor = cursor.get_24bits_xor_mask();
         auto av_and = cursor.get_monochrome_and_mask();
-        
+
         this->dynamic_pointer.initialize(dimensions.width, dimensions.height, av_xor.data(), av_and.data());
         this->mouse_cursor_hotspot_x = hotspot.x;
         this->mouse_cursor_hotspot_y = hotspot.y;

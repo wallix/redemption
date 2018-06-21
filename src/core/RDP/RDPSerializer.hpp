@@ -410,7 +410,7 @@ protected:
     void emit_glyph_cache(uint8_t cacheId, uint8_t cacheIndex) {
         FontChar & fc = this->glyph_cache.glyphs[cacheId][cacheIndex].font_item;
         RDPGlyphCache cmd(
-            cacheId, /*1, */cacheIndex, fc.offset, fc.baseline, fc.width, fc.height, std::move(fc.data));
+            cacheId, /*1, */cacheIndex, fc.offsetx, fc.offsety, fc.width, fc.height, std::move(fc.data));
         // always restored fc.data
         auto finally_ = finally([&]{ fc.data = std::move(cmd.aj); });
 
