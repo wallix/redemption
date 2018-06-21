@@ -1959,11 +1959,11 @@ class Sesman():
 
     def update_session_data(self, changed_keys):
         data_to_update = {
-            acl_key : convert_value(val, cotype)
+            acl_key : Sesman.convert_value(val, cotype)
             for (acl_key, cotype), val in (
-                    (KEYMAPPING.get(key), self.shared.get(key))
+                    (Sesman.KEYMAPPING.get(key), self.shared.get(key))
                     for key in changed_keys if (
-                            KEYMAPPING.get(key) is not None
+                            Sesman.KEYMAPPING.get(key) is not None
                             and self.shared.get(key) is not None
                     )
             )
