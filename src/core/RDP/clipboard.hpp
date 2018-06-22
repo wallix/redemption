@@ -1250,8 +1250,10 @@ struct FormatListPDU_LongName {
 
         std::string name_string(utf8_string);
 
+        ::hexdump(this->formatUTF16Name, this->formatDataNameUTF16Len);
+
         LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatID, get_Format_name(this->formatID));
-        LOG(LOG_INFO, "             * formatListDataName = \"%s\" (%zu bytes)", name_string, this->formatDataNameUTF16Len);
+        LOG(LOG_INFO, "             * formatListDataName = \"%s\" \"%s\" (%zu bytes)",  reinterpret_cast<const char *>(this->formatUTF16Name), name_string, this->formatDataNameUTF16Len);
     }
 
 };

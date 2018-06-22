@@ -88,7 +88,7 @@ public:
     QPixmap pixmap;
     QRect drop_rect;
 
-    const std::string name;
+    std::string name;
     const std::string path;
     const std::string version;
     const std::string reso;
@@ -135,6 +135,10 @@ public:
         QFont font = painter.font();
         font.setPixelSize(10);
         painter.setFont(font);
+
+        if (this->name.length() > 40) {
+            this->name = this->name.substr(0, 39)+"...";
+        }
 
         QString qname(this->name.c_str());
         QString qversion(this->version.c_str());

@@ -1066,7 +1066,7 @@ private:
 
 
     void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override {
-        //std::cout << "RDPMemBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" <<  std::dec <<  std::endl;
+        std::cout << "RDPMemBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" <<  std::dec <<  std::endl;
         const Rect drect = clip.intersect(cmd.rect);
         if (drect.isempty()){
             return ;
@@ -1092,7 +1092,7 @@ private:
                 this->draw_memblt_op<Op_0x55>(drect, bitmap);
                 break;
 
-            case 0x66: this->draw_memblt_op<Op_0x66>(drect, bitmap);
+            case 0x66:                                      //this->draw_memblt_op<Op_0x66>(drect, bitmap);
                 break;
 
             case 0x99:  this->draw_memblt_op<Op_0x99>(drect, bitmap);

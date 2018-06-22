@@ -64,7 +64,7 @@ struct RDPMetrics {
     void log() {
 
         char sentence[4096];
-        snprintf(sentence, sizeof(sentence), "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\""
+          ::snprintf(sentence, sizeof(sentence), "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\""
         "\n   Client data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld"
         "\n   Server data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld",
             this->session_id, this->primary_user, this->account, this->target_host,
