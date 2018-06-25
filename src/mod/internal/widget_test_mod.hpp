@@ -49,5 +49,6 @@ public:
 
 private:
     class WidgetTestModPrivate;
+    friend WidgetTestModPrivate;
     std::unique_ptr<WidgetTestModPrivate> d;
 };

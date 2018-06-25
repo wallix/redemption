@@ -21,6 +21,7 @@
 #     * name (32 bytes) (ex : Deja Vu Sans)
 #     * size (2 bytes)
 #     * style (2 bytes) (always '1')
+#     * max height (4 bytes)
 #     * number of glyph (4 bytes)
 #     * total data len (4 bytes)
 # - Individual glyph informations are :
@@ -79,11 +80,12 @@ sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer)
 FONT_SIZE = int(sys.argv[1]) if len(sys.argv) > 1 else 14
 CHARSET_SIZE = 0x4e00
 ichar_gen = range(32, CHARSET_SIZE)
+# ichar_gen = range(32, max(ord('p'),ord('l'),ord('o'),ord('?'))+1)
 
 
-police = ImageFont.truetype("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf", FONT_SIZE)
+police = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", FONT_SIZE)
 
-f = open(f"./dejavu_{FONT_SIZE}.rbf", u'wb')
+f = open(f"/home/jpoelen/rawdisk2/dejavu_{FONT_SIZE}.rbf", u'wb')
 
 # Magic number
 f.write(u"RBF1".encode('utf-8'))
@@ -93,17 +95,8 @@ name = police.getname()[0].encode('utf-8')
 f.write(name)
 f.write(b'\0'*(max(0,32-len(name))))
 
-# font size
-f.write(struct.pack('<h', FONT_SIZE))
-
-# Style of font (always 1)
-f.write(struct.pack('<h', 1))
-
-# Number of glyph
-f.write(struct.pack('<I', len(ichar_gen)))
-
-# Total data len
-total = 0
+max_height = 0
+total_data_len = 0
 for i in ichar_gen:
     char = chr(i)
     mask = police.getmask(char, mode="1")
@@ -113,19 +106,26 @@ for i in ichar_gen:
         y1 = bbox[1]
         x2 = bbox[2]
         y2 = bbox[3]
-        x1 = 0
-        y1 = 0
         cx = x2 - x1
         cy = y2 - y1
-        total += align4(nbbytes(cx) * cy)
-f.write(struct.pack('<I', total))
+        max_height = max(max_height, police.getsize(char)[1])
+        total_data_len += align4(nbbytes(cx) * cy)
+
+f.write(struct.pack('<H', FONT_SIZE))
+f.write(struct.pack('<h', 1))
+f.write(struct.pack('<H', max_height))
+f.write(struct.pack('<I', len(ichar_gen)))
+f.write(struct.pack('<I', total_data_len))
+
 
 for i in ichar_gen:
     char = chr(i)
     abc = police.font.getabc(char)
     abc = (int(abc[0]), int(abc[1]), int(abc[2]))
     mask = police.getmask(char, mode="1")
-    w, h = mask.size # police.getsize(char)
+    w, h = police.getsize(char)
+    #x w, h = mask.size # police.getsize(char)
+    offsetx, offsety = police.getoffset(char)
     bbox = mask.getbbox()
     if bbox is None:
         bbox = (0,0,abc[0]+abc[1],0)
@@ -133,20 +133,14 @@ for i in ichar_gen:
     y1 = bbox[1]
     x2 = bbox[2]
     y2 = bbox[3]
-    x1 = 0
-    y1 = 0
     cx = x2 - x1
     cy = y2 - y1
 
-    print(f"{i:#x} CHR = {char}   SIZE = {w},{h}   ABC = {abc}   BBOX = {bbox}")
-
-    # if cx > abc[0] + abc[1]:
-    #     sys.stderr.write(f'bad size: {cx} > {abc[0] + abc[1]}\n')
-    #     exit(1)
+    print(f"{i:#x} CHR: {char}  SIZE: {w},{h}  CX/Y: {cx},{cy}  OFFSET: {offsetx},{offsety}  ABC: {abc}  BBOX: {bbox}")
 
     f.write(struct.pack('<I', i))
     f.write(struct.pack('<H', x1))
-    f.write(struct.pack('<h', -cy))
+    f.write(struct.pack('<h', +offsety))
     f.write(struct.pack('<h', abc[0]))
     f.write(struct.pack('<h', abc[1]))
     f.write(struct.pack('<h', abc[2]))

@@ -288,6 +288,10 @@ struct Font
         return this->size_;
     }
 
+    uint16_t max_height() const noexcept {
+        return this->max_height_;
+    }
+
     uint16_t style() const noexcept {
         return this->style_;
     }
@@ -334,6 +338,7 @@ private:
     std::vector<FontCharView> font_items;
     FontCharView unknown_item = default_unknown_glyph();
     uint16_t size_ = 0;
+    uint16_t max_height_ = 0;
     uint16_t style_ = 0;
     char name_[32] {};
 

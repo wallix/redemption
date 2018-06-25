@@ -18,6 +18,7 @@
     Author(s): Christophe Grosjean, Meng Tan, Jonathan Poelen, Raphael Zhou
 */
 
+#include "core/font.hpp"
 #include "core/front_api.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
@@ -38,11 +39,23 @@ struct WidgetTestMod::WidgetTestModPrivate
     WidgetTestModPrivate(SessionReactor& session_reactor, WidgetTestMod& mod)
       : session_reactor(session_reactor)
     {
-        this->timer = this->session_reactor.create_graphic_timer(std::ref(mod))
+        LOG(LOG_DEBUG, "WidgetTestModPrivate");
+        this->timer = this->session_reactor.create_graphic_timer(
+            std::ref(mod), jln::emplace<const Font>("/home/jpoelen/rawdisk2/dejavu_24.rbf"))
         .set_delay(std::chrono::seconds(0))
-        .on_action([](auto ctx, gdi::GraphicApi& gd, WidgetTestMod& mod){
-            mod.draw_event(0, gd);
-            return ctx.set_delay(std::chrono::seconds(3)).ready();
+        .on_action([](auto ctx, gdi::GraphicApi& gd, WidgetTestMod& mod, Font const& font){
+            update_lock update_lock{mod.front};
+            gd.draw(RDPOpaqueRect(Rect(9, 9, 100, 100),
+                encode_color24()(BLUE)), Rect(0, 0, 800, 600), gdi::ColorCtx::depth24());
+            gdi::server_draw_text(
+                gd, mod.font(), 10, 10, "plop?",
+                encode_color24()(RED), encode_color24()(GREEN),
+                gdi::ColorCtx::depth24(), Rect(0, 0, 800, 600));
+            gdi::server_draw_text(
+                gd, mod.font(), 100, 10, "plop.",
+                encode_color24()(RED), encode_color24()(GREEN),
+                gdi::ColorCtx::depth24(), Rect(0, 0, 800, 600));
+            return ctx.set_delay(std::chrono::seconds(10)).ready();
         });
     }
 
