@@ -46,9 +46,6 @@ namespace
             font_item = &font.glyph_or_unknown(c);
             width += fc_offset(*font_item) + fc_width(*font_item);
         }
-        if (font_item) {
-            width -= fc_offset(*font_item);
-        }
         height = font.max_height();
     }
 }
@@ -192,19 +189,15 @@ void server_draw_text(
 
     while (*unicode_iter) {
         int total_width = 0;
-        uint8_t data_[256];
-        data_[0] = data_[1] = data_[2] = 0;
-        uint8_t* data = std::begin(data_);
-        auto data_begin = data;
-        const auto data_end = std::end(data_)-4;
+        uint8_t data[256];
+        data[1] = 0;
+        auto data_begin = std::begin(data);
+        const auto data_end = std::end(data)-2;
 
         const int cacheId = 7;
         FontCharView const* font_item = nullptr;
-        while (data_begin != data_end) {
+        while (data_begin != data_end && *unicode_iter) {
             const uint32_t charnum = *unicode_iter;
-            if (!charnum) {
-                break ;
-            }
             ++unicode_iter;
 
             int cacheIndex = 0;
@@ -219,17 +212,13 @@ void server_draw_text(
                 mod_glyph_cache.add_glyph(FontChar(*font_item), cacheId, cacheIndex);
             (void)cache_result; // supress warning
 
-            // data_begin[-1] += font_item->offsetx + font_item->abcA;
             *data_begin++ = cacheIndex;
             *data_begin++ += fc_offset(*font_item);
             data_begin[1] = fc_width(*font_item);
             total_width += fc_offset(*font_item) + fc_width(*font_item);
         }
-        // if (font_item) {
-        //     data_begin[-1] -= font_item->abcC;
-        // }
 
-        const Rect bk(x, y, total_width + 1, font.max_height());
+        const Rect bk(x, y, total_width, font.max_height());
 
         RDPGlyphIndex glyphindex(
             cacheId,            // cache_id
@@ -249,7 +238,7 @@ void server_draw_text(
             data                // data
         );
 
-        x += total_width;
+        x += total_width - 1;
 
         drawable.draw(glyphindex, clip, color_ctx, mod_glyph_cache);
     }
