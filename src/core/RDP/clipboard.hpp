@@ -1237,10 +1237,10 @@ struct FormatListPDU_LongName {
         char utf8_string[500];
 
         size_t size = ::UTF16toUTF8(
-            this->formatUTF16Name,
+            this->formatUTF16Name+1,
             this->formatDataNameUTF16Len,
             reinterpret_cast<uint8_t*>(utf8_string),
-            sizeof(utf8_string));
+            500);
 
         if (size > 500) {
             size = 500;
@@ -1251,9 +1251,10 @@ struct FormatListPDU_LongName {
         std::string name_string(utf8_string);
 
         ::hexdump(this->formatUTF16Name, this->formatDataNameUTF16Len);
+        ::hexdump(reinterpret_cast<const uint8_t*>(name_string.data()), name_string.size());
 
         LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatID, get_Format_name(this->formatID));
-        LOG(LOG_INFO, "             * formatListDataName = \"%s\" \"%s\" (%zu bytes)",  reinterpret_cast<const char *>(this->formatUTF16Name), name_string, this->formatDataNameUTF16Len);
+        LOG(LOG_INFO, "             * formatListDataName = \"%s\" (%zu bytes)", name_string.c_str(), this->formatDataNameUTF16Len);
     }
 
 };
