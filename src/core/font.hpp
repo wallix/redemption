@@ -70,7 +70,7 @@ struct FontCharView
     FontCharView() = default;
 
     explicit operator bool () const noexcept {
-        return bool(this->incby);
+        return bool(this->data);
     }
 
     uint16_t datasize() const noexcept
@@ -208,7 +208,7 @@ struct FontChar
     }
 
     explicit operator bool () const noexcept {
-        return bool(this->incby);
+        return bool(this->data);
     }
 
     uint16_t datasize() const noexcept

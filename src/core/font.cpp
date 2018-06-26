@@ -34,7 +34,7 @@
 
 namespace
 {
-    constexpr uint8_t unknown_glyph_data[12]{
+    constexpr uint8_t unknown_glyph_data[]{
         0b01111'000,
         0b10001'000,
         0b00001'000,
@@ -47,6 +47,7 @@ namespace
         0b00100'000,
     };
 }
+
 FontCharView Font::default_unknown_glyph() noexcept
 {
     return FontCharView{2, 0, 0, 5, 1, 8, 0, 5, 10, unknown_glyph_data};

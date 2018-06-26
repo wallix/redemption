@@ -708,7 +708,7 @@ public:
                 FontChar const & fc = gly_cache.glyphs[cache_id][data].font_item;
                 if (!fc)
                 {
-                    LOG( LOG_INFO
+                    LOG( LOG_WARNING
                        , "RDPDrawable::draw_VariableBytes: Unknown glyph, cacheId=%u cacheIndex=%u"
                        , cache_id, data);
                     assert(fc);
