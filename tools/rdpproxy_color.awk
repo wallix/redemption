@@ -1,6 +1,6 @@
 #!/usr/bin/awk  -OSf
-# 'https://github.com/jonathanpoelen/colout/colout' '-po' '-ER' '^rdpproxy: (INFO [^-]+--  [-=]{3,}>? )([^-=<]*)(.*)?' 'b' 'g' 'b' '--' '-ERci2' '^([a-zA-Z0-9_]+: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT)).* --  (error:)?([a-zA-Z0-9_]+:)?(.*)' 'n' 'n' 'b' 'Y' 'R' 'c' 'W' 'R' '+u' '+ru' '--' '-c' '(Assertion) `(.*)'\'' failed.' 'y' 'R' '--' '^rdpproxy: (\[RDP Session\]) ' 'd' '--' '-cri5' '( type)="([^"]+)"|^([^=]+)="((\\"|[^"])+)"' 'lr' 'lm' 'lb' 'd' '--' '-ER' '^(src/[^:]+|/[^:]+):([:0-9]+) ([^:]+)(.?)' 'c' 'Y' 'R' 'o' '--' '-ER' '^SUMMARY:' 'r' '--' '^    (#[0-9]+) [^ ]+ in (.+ )([^ :]+)(:[0-9]+)(:[0-9]+)?' 'r' 'm' 'c' 'Y' 'Y' '--' '^    (#[0-9]+) [^ ]+ in (.*) \(([^+]+)\+0x' 'r' 'm' 'n'
-# gawk profile, created Mon Jun  4 15:09:33 2018
+# colout '-po' '-ER' '^rdpproxy: (INFO [^-]+--  [-=]{3,}>? )([^-=<]*)(.*)?' 'b' 'g' 'b' '--' '-ERci2' '^([a-zA-Z0-9_]+: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT)).* --  (error:)?([a-zA-Z0-9_]+:)?(.*)' 'n' 'n' 'b' 'Y' 'R' 'c' 'W' 'R' '+u' '+ru' '--' '-c' '(src/[^:]+|/[^:]+):([:0-9]+)' 'c' 'Y' '--' '-c' '(Assertion) `(.*)'\'' failed.' 'e7,o' 'R' '--' '^rdpproxy: (\[RDP Session\]) ' 'd' '--' '-cri5' '( type)="([^"]+)"|^([^=]+)="((\\"|[^"])+)"' 'lr' 'lm' 'lb' 'd' '--' '-ER' '^(src/[^:]+|/[^:]+):([:0-9]+) ([^:]+)(.?)' 'c' 'Y' 'R' 'o' '--' '-ER' '^SUMMARY:' 'r' '--' '^    (#[0-9]+) [^ ]+ in (.+ )([^ :]+)(:[0-9]+)(:[0-9]+)?' 'r' 'm' 'c' 'Y' 'Y' '--' '^    (#[0-9]+) [^ ]+ in (.*) \(([^+]+)\+0x' 'r' 'm' 'n'
+# gawk profile, created Tue Jun 26 18:54:24 2018
 
 # BEGIN rule(s)
 
@@ -21,29 +21,32 @@ BEGIN {
 	colors1[8] = "4"
 	colors1[9] = "24"
 	nb_colors1 = 10
-	colors2[0] = ";33"
-	colors2[1] = ";31;1"
+	colors2[0] = ";36"
+	colors2[1] = ";33;1"
 	nb_colors2 = 2
-	colors4[0] = ";91"
-	colors4[1] = ";95"
-	colors4[2] = ";94"
-	colors4[3] = ";2"
-	nb_colors4 = 4
-	colors5[0] = ";36"
-	colors5[1] = ";33;1"
-	colors5[2] = ";31;1"
-	colors5[3] = ";1"
+	colors3[0] = ";37;1"
+	colors3[1] = ";31;1"
+	nb_colors3 = 2
+	colors5[0] = ";91"
+	colors5[1] = ";95"
+	colors5[2] = ";94"
+	colors5[3] = ";2"
 	nb_colors5 = 4
-	colors7[0] = ";31"
-	colors7[1] = ";35"
-	colors7[2] = ";36"
-	colors7[3] = ";33;1"
-	colors7[4] = ";33;1"
-	nb_colors7 = 5
+	colors6[0] = ";36"
+	colors6[1] = ";33;1"
+	colors6[2] = ";31;1"
+	colors6[3] = ";1"
+	nb_colors6 = 4
 	colors8[0] = ";31"
 	colors8[1] = ";35"
-	colors8[2] = ";0"
-	nb_colors8 = 3
+	colors8[2] = ";36"
+	colors8[3] = ";33;1"
+	colors8[4] = ";33;1"
+	nb_colors8 = 5
+	colors9[0] = ";31"
+	colors9[1] = ";35"
+	colors9[2] = ";0"
+	nb_colors9 = 3
 }
 
 # Rule(s)
@@ -97,7 +100,7 @@ BEGIN {
 		}
 		$0 = substr($0, RLENGTH + RSTART) esc_reset
 	}
-	if (match($0, /(Assertion) `(.*)' failed./, a)) {
+	if (match($0, /(src\/[^:]+|\/[^:]+):([:0-9]+)/, a)) {
 		n = length(a) / 3
 		if (n == 1) {
 			i = 0
@@ -113,6 +116,28 @@ BEGIN {
 				}
 				ic = i - 1
 				s = s substr($0, p, start - p) "\033[" colors2[ic % nb_colors2] "m" a[i] esc_reset
+				p = start + a[i, "length"]
+			}
+			s = s substr($0, p, RSTART + RLENGTH - p)
+		}
+		$0 = substr($0, RLENGTH + RSTART)
+	}
+	if (match($0, /(Assertion) `(.*)' failed./, a)) {
+		n = length(a) / 3
+		if (n == 1) {
+			i = 0
+			ic = 0
+			s = s substr($0, 0, RSTART - 1) "\033[" colors3[ic % nb_colors3] "m" a[i] esc_reset
+		} else {
+			p = 1
+			for (i = 1; i < n; ++i) {
+				start = a[i, "start"]
+				if (start == null) {
+					++n
+					continue
+				}
+				ic = i - 1
+				s = s substr($0, p, start - p) "\033[" colors3[ic % nb_colors3] "m" a[i] esc_reset
 				p = start + a[i, "length"]
 			}
 			s = s substr($0, p, RSTART + RLENGTH - p)
@@ -145,7 +170,7 @@ BEGIN {
 			if (n == 1) {
 				i = 0
 				ic = 0
-				s = s substr($0, 0, RSTART - 1) "\033[" colors4[ic % nb_colors4] "m" a[i] esc_reset
+				s = s substr($0, 0, RSTART - 1) "\033[" colors5[ic % nb_colors5] "m" a[i] esc_reset
 			} else {
 				p = 1
 				for (i = 1; i < n; ++i) {
@@ -158,7 +183,7 @@ BEGIN {
 						continue
 					}
 					ic = i - 1
-					s = s substr($0, p, start - p) "\033[" colors4[ic % nb_colors4] "m" a[i] esc_reset
+					s = s substr($0, p, start - p) "\033[" colors5[ic % nb_colors5] "m" a[i] esc_reset
 					p = start + a[i, "length"]
 				}
 				s = s substr($0, p, RSTART + RLENGTH - p)
@@ -174,7 +199,7 @@ BEGIN {
 		if (n == 1) {
 			i = 0
 			ic = 0
-			s = s substr($0, 0, RSTART - 1) "\033[" colors5[ic % nb_colors5] "m" a[i]
+			s = s substr($0, 0, RSTART - 1) "\033[" colors6[ic % nb_colors6] "m" a[i]
 		} else {
 			p = 1
 			for (i = 1; i < n; ++i) {
@@ -184,7 +209,7 @@ BEGIN {
 					continue
 				}
 				ic = i - 1
-				s = s substr($0, p, start - p) "\033[" colors5[ic % nb_colors5] "m" a[i]
+				s = s substr($0, p, start - p) "\033[" colors6[ic % nb_colors6] "m" a[i]
 				p = start + a[i, "length"]
 			}
 			s = s substr($0, p, RSTART + RLENGTH - p)
@@ -215,27 +240,6 @@ BEGIN {
 		if (n == 1) {
 			i = 0
 			ic = 0
-			s = s substr($0, 0, RSTART - 1) "\033[" colors7[ic % nb_colors7] "m" a[i] esc_reset
-		} else {
-			p = 1
-			for (i = 1; i < n; ++i) {
-				start = a[i, "start"]
-				if (start == null) {
-					++n
-					continue
-				}
-				ic = i - 1
-				s = s substr($0, p, start - p) "\033[" colors7[ic % nb_colors7] "m" a[i] esc_reset
-				p = start + a[i, "length"]
-			}
-			s = s substr($0, p, RSTART + RLENGTH - p)
-		}
-		$0 = substr($0, RLENGTH + RSTART)
-	} else if (match($0, /^    (#[0-9]+) [^ ]+ in (.*) \(([^+]+)\+0x/, a)) {
-		n = length(a) / 3
-		if (n == 1) {
-			i = 0
-			ic = 0
 			s = s substr($0, 0, RSTART - 1) "\033[" colors8[ic % nb_colors8] "m" a[i] esc_reset
 		} else {
 			p = 1
@@ -247,6 +251,27 @@ BEGIN {
 				}
 				ic = i - 1
 				s = s substr($0, p, start - p) "\033[" colors8[ic % nb_colors8] "m" a[i] esc_reset
+				p = start + a[i, "length"]
+			}
+			s = s substr($0, p, RSTART + RLENGTH - p)
+		}
+		$0 = substr($0, RLENGTH + RSTART)
+	} else if (match($0, /^    (#[0-9]+) [^ ]+ in (.*) \(([^+]+)\+0x/, a)) {
+		n = length(a) / 3
+		if (n == 1) {
+			i = 0
+			ic = 0
+			s = s substr($0, 0, RSTART - 1) "\033[" colors9[ic % nb_colors9] "m" a[i] esc_reset
+		} else {
+			p = 1
+			for (i = 1; i < n; ++i) {
+				start = a[i, "start"]
+				if (start == null) {
+					++n
+					continue
+				}
+				ic = i - 1
+				s = s substr($0, p, start - p) "\033[" colors9[ic % nb_colors9] "m" a[i] esc_reset
 				p = start + a[i, "length"]
 			}
 			s = s substr($0, p, RSTART + RLENGTH - p)
