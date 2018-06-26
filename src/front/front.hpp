@@ -4421,6 +4421,8 @@ protected:
             uint16_t draw_pos_ref = 0;
             InStream variable_bytes(cmd.data, cmd.data_len);
 
+            this->draw(RDPOpaqueRect(cmd.bk, cmd.fore_color), clip, color_ctx);
+
             while (variable_bytes.in_remain()) {
                 uint8_t data = variable_bytes.in_uint8();
                 if (data <= 0xFD) {
@@ -4446,9 +4448,9 @@ protected:
 
                             RDPBitmapData rdpbd;
                             rdpbd.dest_left      = rect.x + x;
-                            rdpbd.dest_top       = rect.y + y;
+                            rdpbd.dest_top       = rect.y + y + fc.offsety;
                             rdpbd.dest_right     = rect.cx + rect.x + x - 1;
-                            rdpbd.dest_bottom    = rect.cy + rect.y + y - 1;
+                            rdpbd.dest_bottom    = rect.cy + rect.y + y + fc.offsety - 1;
                             rdpbd.bits_per_pixel = 24;
                             rdpbd.flags          = NO_BITMAP_COMPRESSION_HDR | BITMAP_COMPRESSION;
                             rdpbd.bitmap_length  = rect.cx * rect.cy * 3;
