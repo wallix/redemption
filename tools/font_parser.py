@@ -79,6 +79,7 @@ def count_bit_padding(cx):
 
 fontsize = 14
 fontpath = "/usr/share/fonts/truetype/lato/Lato-Light.ttf"
+fontpath2 = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
 if len(sys.argv) > 1:
     try:
@@ -95,7 +96,33 @@ CHARSET_SIZE = 0x4e00
 ichar_gen = range(32, CHARSET_SIZE)
 # ichar_gen = range(32, max(ord('p'),ord('l'),ord('o'),ord('?'))+1)
 
-police = ImageFont.truetype(fontpath, fontsize)
+freetypefont_ = ImageFont.truetype(fontpath, fontsize)
+fallback_freetypefont = ImageFont.truetype(fontpath2, fontsize)
+
+unknown_glyph = freetypefont_.getmask("◀", mode="1")
+unknown_glyph_bbox = unknown_glyph.getbbox()
+
+def is_unknown_glyph(mask):
+    if not unknown_glyph:
+        return False
+    bbox1 = mask.getbbox()
+    if bbox1 != unknown_glyph_bbox:
+        return False
+    for iy in range(bbox1[1], bbox1[3]):
+        for ix in range(bbox1[0], bbox1[2]):
+            if mask.getpixel((ix, iy)) != unknown_glyph.getpixel((ix, iy)):
+                return False
+    return True
+
+if not is_unknown_glyph(freetypefont_.getmask("▶", mode="1")):
+    unknown_glyph = None
+
+def get_freetypefont_mask(char):
+    mask = freetypefont_.getmask(char, mode="1")
+    if is_unknown_glyph(mask):
+        return (fallback_freetypefont, fallback_freetypefont.getmask(char, mode="1"))
+    return (freetypefont_, mask)
+
 
 f = open(f"{os.path.splitext(os.path.basename(fontpath))[0]}_{fontsize}.rbf", u'wb')
 
@@ -103,18 +130,20 @@ f = open(f"{os.path.splitext(os.path.basename(fontpath))[0]}_{fontsize}.rbf", u'
 f.write(u"RBF1".encode('utf-8'))
 
 # Name of font
-name = police.getname()[0].encode('utf-8')
+name = freetypefont_.getname()[0].encode('utf-8')
 f.write(name)
 f.write(b'\0'*(max(0,32-len(name))))
 
 max_height = 0
 total_data_len = 0
+freetypefont_masks = []
 for i in ichar_gen:
     char = chr(i)
-    mask = police.getmask(char, mode="1")
+    freetypefont, mask = get_freetypefont_mask(char)
+    freetypefont_masks.append((freetypefont, mask))
     bbox = mask.getbbox()
     if bbox is None:
-        abc = police.font.getabc(char)
+        abc = freetypefont.font.getabc(char)
         total_data_len += align4(nbbytes(int(abc[0]) + int(abc[1]) + int(abc[2])))
     else:
         x1 = bbox[0]
@@ -123,9 +152,9 @@ for i in ichar_gen:
         y2 = bbox[3]
         cx = x2 - x1
         cy = y2 - y1
-        # offsetx, offsety = police.getoffset(char)
+        # offsetx, offsety = freetypefont.getoffset(char)
         # max_height = max(max_height, offsety + cy)
-        max_height = max(max_height, police.getsize(char)[1])
+        max_height = max(max_height, freetypefont.getsize(char)[1])
         total_data_len += align4(nbbytes(cx) * cy)
 
 f.write(struct.pack('<H', fontsize))
@@ -134,21 +163,22 @@ f.write(struct.pack('<H', max_height))
 f.write(struct.pack('<I', len(ichar_gen)))
 f.write(struct.pack('<I', total_data_len))
 
-
+ituple = 0
 for i in ichar_gen:
     char = chr(i)
-    abc = police.font.getabc(char)
+    freetypefont, mask = freetypefont_masks[ituple]
+    ituple += 1
+    abc = freetypefont.font.getabc(char)
     abc = (int(abc[0]), int(abc[1]), int(abc[2]))
-    mask = police.getmask(char, mode="1")
-    w, h = police.getsize(char)
-    #x w, h = mask.size # police.getsize(char)
-    offsetx, offsety = police.getoffset(char)
+    w, h = freetypefont.getsize(char)
+    #x w, h = mask.size # freetypefont.getsize(char)
+    offsetx, offsety = freetypefont.getoffset(char)
     bbox = mask.getbbox()
     if bbox is None:
         class mask:
             def getpixel(self):
                 return 0
-        bbox = (0, 0, abc[0]+abc[1]+abc[2], 0)
+        bbox = (0, 0, abc[0]+abc[1]+abc[2], 1)
         abc = (0, bbox[2], 0)
     x1 = bbox[0]
     y1 = bbox[1]
