@@ -39,17 +39,27 @@ struct FontCharView
 {
     int16_t offsetx = 0;
     int16_t offsety = 0;
+    int16_t abcA = 0;
+    int16_t abcB = 0;
+    int16_t abcC = 0;
+
     int16_t incby = 0;
     int16_t right = 0;
+
     uint16_t width = 0;
     uint16_t height = 0;
     uint8_t const* data = nullptr;
 
     FontCharView(
-        int16_t offsetx, int16_t offsety, int16_t incby, int16_t right,
+        int16_t offsetx, int16_t offsety,
+        int16_t abcA, int16_t abcB, int16_t abcC,
+        int16_t incby, int16_t right,
         uint16_t width, uint16_t height, uint8_t const* data) noexcept
     : offsetx{offsetx}
     , offsety{offsety}
+    , abcA{abcA}
+    , abcB{abcB}
+    , abcC{abcC}
     , incby{incby}
     , right{right}
     , width{width}
@@ -120,6 +130,9 @@ struct FontChar
 {
     int16_t offsetx = 0;
     int16_t offsety = 0;
+    int16_t abcA = 0;
+    int16_t abcB = 0;
+    int16_t abcC = 0;
     int16_t incby = 0;
     int16_t right = 0;
     uint16_t width = 0;
@@ -127,9 +140,12 @@ struct FontChar
     std::unique_ptr<uint8_t[]> data; // PERF mini_vector<32>
 
     // TODO data really aligned ?
-    FontChar(std::unique_ptr<uint8_t[]> data, int16_t offsetx, int16_t offsety, uint16_t width, uint16_t height, int16_t incby)
+    FontChar(std::unique_ptr<uint8_t[]> data, int16_t offsetx, int16_t offsety, uint16_t width, uint16_t height, int16_t incby, int16_t abcA, int16_t abcB, int16_t abcC)
         : offsetx{offsetx}
         , offsety{offsety}
+        , abcA{abcA}
+        , abcB{abcB}
+        , abcC{abcC}
         , incby{incby}
         , width{width}
         , height{height}
@@ -137,9 +153,12 @@ struct FontChar
     {
     }
 
-    FontChar(int16_t offsetx, int16_t offsety, uint16_t width, uint16_t height, int16_t incby)
+    FontChar(int16_t offsetx, int16_t offsety, uint16_t width, uint16_t height, int16_t incby, int16_t abcA, int16_t abcB, int16_t abcC)
         : offsetx{offsetx}
         , offsety{offsety}
+        , abcA{abcA}
+        , abcB{abcB}
+        , abcC{abcC}
         , incby{incby}
         , width{width}
         , height{height}
@@ -150,6 +169,9 @@ struct FontChar
     explicit FontChar(FontCharView const& font_char_view)
         : offsetx{font_char_view.offsetx}
         , offsety{font_char_view.offsety}
+        , abcA{font_char_view.abcA}
+        , abcB{font_char_view.abcB}
+        , abcC{font_char_view.abcC}
         , incby{font_char_view.incby}
         , right{font_char_view.right}
         , width{font_char_view.width}
@@ -170,7 +192,9 @@ struct FontChar
     FontCharView to_view() const noexcept
     {
         return FontCharView{
-            this->offsetx, this->offsety, this->incby, this->right,
+            this->offsetx, this->offsety,
+            this->abcA, this->abcB, this->abcC,
+            this->incby, this->right,
             this->width, this->height, this->data.get()
         };
     }
@@ -180,7 +204,7 @@ struct FontChar
     FontChar clone() const {
         auto ptr = std::make_unique<uint8_t[]>(this->datasize());
         memcpy(ptr.get(), this->data.get(), this->datasize());
-        return FontChar(std::move(ptr), this->offsetx, this->offsety, this->width, this->height, this->incby);
+        return FontChar(std::move(ptr), this->offsetx, this->offsety, this->width, this->height, this->incby, this->abcA, this->abcB, this->abcC);
     }
 
     explicit operator bool () const noexcept {

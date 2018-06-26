@@ -409,9 +409,6 @@ protected:
 
     void emit_glyph_cache(uint8_t cacheId, uint8_t cacheIndex) {
         FontChar & fc = this->glyph_cache.glyphs[cacheId][cacheIndex].font_item;
-        if (!fc.width) {
-            return ;
-        }
         RDPGlyphCache cmd(
             cacheId, /*1, */cacheIndex, fc.offsetx, fc.offsety, fc.width, fc.height, std::move(fc.data));
         // always restored fc.data

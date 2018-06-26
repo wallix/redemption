@@ -49,7 +49,7 @@ namespace
 }
 FontCharView Font::default_unknown_glyph() noexcept
 {
-    return FontCharView{2, 0, 8, 0, 5, 10, unknown_glyph_data};
+    return FontCharView{2, 0, 0, 5, 1, 8, 0, 5, 10, unknown_glyph_data};
 }
 
 void Font::load_from_file(char const * file_path)
@@ -136,13 +136,10 @@ void Font::load_from_file(char const * file_path)
         number_of_glyph = stream.in_uint32_le();
         total_data_len = stream.in_uint32_le();
 
-        LOG(LOG_DEBUG, "%d %d %d", this->style_, this->max_height_, number_of_glyph, total_data_len);
-
         // LOG(LOG_DEBUG,
         //     "name: '%s'  size: %d  style: %d  nbglyph: %d  total_data: %d",
         //     this->name_, this->size_, this->style_, number_of_glyph, total_data_len);
     }
-    LOG(LOG_DEBUG, "%d", total_data_len);
 
     this->data_glyphs = std::make_unique<uint8_t[]>(total_data_len);
     this->font_items.reserve(number_of_glyph);
@@ -191,6 +188,7 @@ void Font::load_from_file(char const * file_path)
 
         this->font_items.emplace_back(
             offsetx, offsety,
+            left, display_width, right,
             left+display_width+right, right,
             width, height, data);
         data += data_size;

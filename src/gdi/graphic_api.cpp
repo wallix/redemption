@@ -26,6 +26,16 @@
 
 namespace
 {
+    int fc_width(FontCharView const& fc)
+    {
+        return fc.abcB + fc.abcC;
+    }
+
+    int fc_offset(FontCharView const& fc)
+    {
+        return std::max(fc.offsetx + fc.abcA, 1);
+    }
+
     template<class Getc>
     void textmetrics_impl(
         const Font & font, const char * unicode_text, int & width, int & height, Getc getc)
@@ -34,10 +44,10 @@ namespace
         FontCharView const* font_item = nullptr;
         for (; uint32_t c = getc(unicode_iter); ++unicode_iter) {
             font_item = &font.glyph_or_unknown(c);
-            width += font_item->incby;
+            width += fc_offset(*font_item) + fc_width(*font_item);
         }
         if (font_item) {
-            width -= font_item->right;
+            width -= fc_offset(*font_item);
         }
         height = font.max_height();
     }
@@ -182,12 +192,14 @@ void server_draw_text(
 
     while (*unicode_iter) {
         int total_width = 0;
-        uint8_t data[256];
-        auto data_begin = std::begin(data);
-        const auto data_end = std::end(data)-2;
+        uint8_t data_[256];
+        data_[0] = data_[1] = data_[2] = 0;
+        uint8_t* data = std::begin(data_);
+        auto data_begin = data;
+        const auto data_end = std::end(data_)-4;
 
         const int cacheId = 7;
-        int distance_from_previous_fragment = 0;
+        FontCharView const* font_item = nullptr;
         while (data_begin != data_end) {
             const uint32_t charnum = *unicode_iter;
             if (!charnum) {
@@ -196,7 +208,7 @@ void server_draw_text(
             ++unicode_iter;
 
             int cacheIndex = 0;
-            FontCharView const * font_item = font.glyph_at(charnum);
+            font_item = font.glyph_at(charnum);
             if (!font_item) {
                 LOG(LOG_WARNING, "server_draw_text() - character not defined >0x%02x<", charnum);
                 font_item = &font.unknown_glyph();
@@ -207,13 +219,15 @@ void server_draw_text(
                 mod_glyph_cache.add_glyph(FontChar(*font_item), cacheId, cacheIndex);
             (void)cache_result; // supress warning
 
-            *data_begin = cacheIndex;
-            ++data_begin;
-            *data_begin = distance_from_previous_fragment;
-            ++data_begin;
-            distance_from_previous_fragment = font_item->incby;
-            total_width += font_item->incby;
+            // data_begin[-1] += font_item->offsetx + font_item->abcA;
+            *data_begin++ = cacheIndex;
+            *data_begin++ += fc_offset(*font_item);
+            data_begin[1] = fc_width(*font_item);
+            total_width += fc_offset(*font_item) + fc_width(*font_item);
         }
+        // if (font_item) {
+        //     data_begin[-1] -= font_item->abcC;
+        // }
 
         const Rect bk(x, y, total_width + 1, font.max_height());
 
