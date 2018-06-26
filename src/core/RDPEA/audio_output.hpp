@@ -1367,6 +1367,14 @@ static inline void streamLogClient(InStream & stream, int flag) {
             }
                 break;
 
+            case SNDC_WAVECONFIRM:
+            {
+                WaveConfirmPDU wc;
+                wc.receive(stream);
+                wc.log();
+            }
+                break;
+
             default: LOG(LOG_WARNING, "Client RDPSND Unknown PDU with length = %zu", header.BodySize);
                 break;
         }
@@ -1417,7 +1425,7 @@ static inline void streamLogServer(InStream & stream, int flag) {
 
             case SNDC_CLOSE:
             {
-                LOG(LOG_INFO, "Server RDPSDN SNDC_CLOSE");
+                LOG(LOG_INFO, "Server >> RDPSDN SNDC_CLOSE");
             }
                 break;
 
@@ -1455,7 +1463,7 @@ static inline void streamLogServer(InStream & stream, int flag) {
 
             default:
                 if (header.BodySize ==  0 && header.msgType ==  0) {
-                    LOG(LOG_INFO, "Server RDPSDN SNDC_WAVE");
+                    LOG(LOG_INFO, "Server sndc wave");
                 } else {
                     LOG(LOG_WARNING, "Server RDPSND Unknown PDU with length = %zu", header.BodySize);
                 }
