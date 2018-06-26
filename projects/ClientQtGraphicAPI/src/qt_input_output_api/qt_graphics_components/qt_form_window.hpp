@@ -88,7 +88,7 @@ public:
     QPixmap pixmap;
     QRect drop_rect;
 
-    const std::string name;
+    std::string name;
     const std::string path;
     const std::string version;
     const std::string reso;
@@ -135,6 +135,10 @@ public:
         QFont font = painter.font();
         font.setPixelSize(10);
         painter.setFont(font);
+
+        if (this->name.length() > 40) {
+            this->name = this->name.substr(0, 39)+"...";
+        }
 
         QString qname(this->name.c_str());
         QString qversion(this->version.c_str());
@@ -412,7 +416,7 @@ public:
       , _IPField("", this)
       , _userNameField("", this)
       , _PWDField("", this)
-      , _portField((protocol_type == ClientRedemptionAPI::MOD_RDP) ? "389" : "5900", this)
+      , _portField((protocol_type == ClientRedemptionAPI::MOD_RDP) ? "3389" : "5900", this)
       , _IPLabel(      QString("IP server :"), this)
       , _userNameLabel(QString("User name : "), this)
       , _PWDLabel(     QString("Password :  "), this)
@@ -448,7 +452,7 @@ public:
 private Q_SLOTS:
     void targetPicked(int index) {
         if (this->main_panel) {
-            this->main_panel->targetPicked(index);
+            this->main_panel->targetPicked(this->_IPCombobox.itemData(index).toInt());
         }
     }
 };
@@ -746,7 +750,7 @@ public:
 
 
     uint8_t protocol_type;
-    ClientRedemptionAPI       * _front;
+    ClientRedemptionAPI         * _front;
     ClientInputMouseKeyboardAPI * controllers;
     const int            _width;
     const int            _height;
@@ -779,7 +783,6 @@ public:
         , _buttonConnexion("Connection", this)
         , _buttonOptions("Options", this)
     {
-
         if (protocol_type & ClientRedemptionAPI::MOD_RDP) {
             this->options = new QtRDPOptions(front, this->controllers, this);
         } else {

@@ -115,6 +115,7 @@ public:
     };
 
     enum : uint8_t {
+        NO_PROTOCOL        = 0,
         MOD_RDP            = 1,
         MOD_VNC            = 2,
         MOD_RDP_REMOTE_APP = 3,
@@ -134,7 +135,7 @@ public:
         int port = 0;
         int options_profil = 0;
         int index = -1;
-        int protocol = MOD_RDP;
+        int protocol = NO_PROTOCOL;
     }    _accountData[MAX_ACCOUNT_DATA];
     int  _accountNB;
     bool _save_password_account;

@@ -29,6 +29,7 @@
 #include "qt_input_output_api/IO_disk.hpp"
 
 
+
 int main(int argc, char** argv)
 {
     set_exception_handler_pretty_message();
@@ -53,7 +54,7 @@ int main(int argc, char** argv)
 
     //RDPVerbose::rdpdr_dump;           //to_verbose_flags(0x0);
     //;           //RDPVerbose::graphics;
-    RDPVerbose verbose = RDPVerbose::rdpdr_dump;            //to_verbose_flags(0x0);
+    RDPVerbose verbose = RDPVerbose::rdpsnd;           //        to_verbose_flags(0x0);
 
     ClientRedemption client_qt( reactor, argv, argc, verbose
                               , graphic_qt

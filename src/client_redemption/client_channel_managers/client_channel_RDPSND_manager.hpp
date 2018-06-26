@@ -219,7 +219,7 @@ class ClientChannelRDPSNDManager {
     bool last_PDU_is_WaveInfo = 0;
 
     uint16_t last_cBlockNo;
-    uint8_t last_wTimeStamp;
+    uint16_t last_wTimeStamp;
 
     uint32_t dwFlags;
     uint32_t dwVolume;
@@ -312,13 +312,12 @@ public:
                     rdpsnd::RDPSNDPDUHeader header_out(rdpsnd::SNDC_FORMATS, 38);
                     header_out.emit(out_stream);
 
-                    rdpsnd::ClientAudioFormatsandVersionHeader cafvh( rdpsnd::TSSNDCAPS_ALIVE |
-                                                                        rdpsnd::TSSNDCAPS_VOLUME
-                                                                    , 0x7fff7fff
-                                                                    , 0
-                                                                    , 0
-                                                                    , 1
-                                                                    , 0x06
+                    rdpsnd::ClientAudioFormatsandVersionHeader cafvh( this->dwFlags
+                                                                    , this->dwVolume
+                                                                    , this->dwPitch
+                                                                    , this->wDGramPort
+                                                                    , this->wNumberOfFormats
+                                                                    , this->wVersion
                                                                     );
                     cafvh.emit(out_stream);
 
@@ -386,7 +385,7 @@ public:
 
                     StaticOutStream<32> out_stream;
 
-                    rdpsnd::RDPSNDPDUHeader header_quality(rdpsnd::SNDC_TRAINING, 8);
+                    rdpsnd::RDPSNDPDUHeader header_quality(rdpsnd::SNDC_TRAINING, 4);
                     header_quality.emit(out_stream);
 
                     rdpsnd::TrainingConfirmPDU train_conf(train.wTimeStamp, train.wPackSize);

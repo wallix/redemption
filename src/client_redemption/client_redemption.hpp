@@ -231,7 +231,6 @@ public:
         , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
         , local_IP("unknow_local_IP")
     {
-
         if (this->impl_clipboard) {
             this->impl_clipboard->set_client(this);
         } else {

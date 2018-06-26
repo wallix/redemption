@@ -98,5 +98,5 @@ public:
 
     virtual Dimension get_dim() const { return Dimension(); }
 
-    virtual void log_metrics(const char *) {}
+    virtual void log_metrics() {}
 };

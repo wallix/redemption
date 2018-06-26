@@ -87,6 +87,7 @@
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
 #include "core/server_notifier_api.hpp"
+#include "core/RDP/rdp_metrics.hpp"
 
 #include "mod/internal/client_execute.hpp"
 #include "mod/mod_api.hpp"
@@ -687,17 +688,8 @@ protected:
 
     ModRdpVariables vars;
 
-    long int total_main_amount_data_rcv_from_client;
-    long int total_cliprdr_amount_data_rcv_from_client;
-    long int total_rail_amount_data_rcv_from_client;
-    long int total_rdpdr_amount_data_rcv_from_client;
-    long int total_drdynvc_amount_data_rcv_from_client;
+    RDPMetrics metrics;
 
-    long int total_main_amount_data_rcv_from_server;
-    long int total_cliprdr_amount_data_rcv_from_server;
-    long int total_rail_amount_data_rcv_from_server;
-    long int total_rdpdr_amount_data_rcv_from_server;
-    long int total_drdynvc_amount_data_rcv_from_server;
 
 public:
     using Verbose = RDPVerbose;
@@ -848,16 +840,13 @@ public:
         , client_window_list_caps(info.window_list_caps)
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
         , vars(vars)
-        , total_main_amount_data_rcv_from_client(0)
-        , total_cliprdr_amount_data_rcv_from_client(0)
-        , total_rail_amount_data_rcv_from_client(0)
-        , total_rdpdr_amount_data_rcv_from_client(0)
-        , total_drdynvc_amount_data_rcv_from_client(0)
-        , total_main_amount_data_rcv_from_server(0)
-        , total_cliprdr_amount_data_rcv_from_server(0)
-        , total_rail_amount_data_rcv_from_server(0)
-        , total_rdpdr_amount_data_rcv_from_server(0)
-        , total_drdynvc_amount_data_rcv_from_server(0)
+
+        // TODO replace nullptr with log metrics file path
+        , metrics( nullptr
+                 , redir_info.session_id
+                 , mod_rdp_params.target_user
+                 , mod_rdp_params.target_host
+                 , vars.get<cfg::globals::auth_user>().c_str())
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -1651,19 +1640,19 @@ public:
 
         switch (front_channel_name) {
             case channel_names::cliprdr:
-                this->total_cliprdr_amount_data_rcv_from_client += length;
+                this->metrics.total_cliprdr_amount_data_rcv_from_client += length;
                 this->send_to_mod_cliprdr_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::rail:
-                this->total_rail_amount_data_rcv_from_client += length;
+                this->metrics.total_rail_amount_data_rcv_from_client += length;
                 this->send_to_mod_rail_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::rdpdr:
-                this->total_rdpdr_amount_data_rcv_from_client += length;
+                this->metrics.total_rdpdr_amount_data_rcv_from_client += length;
                 this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::drdynvc:
-                this->total_drdynvc_amount_data_rcv_from_client += length;
+                this->metrics.total_drdynvc_amount_data_rcv_from_client += length;
                 this->send_to_mod_drdynvc_channel(mod_channel, chunk, length, flags);
                 break;
             default:
@@ -1671,28 +1660,13 @@ public:
         }
     }
 
-    // this->total_main_amount_data_rcv_from_client += length;
-    // this->total_main_amount_data_rcv_from_server += length;
-    void log_metrics(const char * premary_user) override {
+    // this->metrics.total_main_amount_data_rcv_from_client += length;
+    // this->metrics.total_main_amount_data_rcv_from_server += length;
+    void log_metrics() override {
+
         if (bool(this->verbose & RDPVerbose::export_metrics)) {
-            LOG(LOG_INFO, "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\" Client data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld",
-                this->redir_info.session_id, premary_user, this->logon_info.username(),
-                this->target_host/*"user_account", "0.0.0.0"*/,
-                this->total_main_amount_data_rcv_from_client,
-                this->total_cliprdr_amount_data_rcv_from_client,
-                this->total_rail_amount_data_rcv_from_client,
-                this->total_rdpdr_amount_data_rcv_from_client,
-                this->total_drdynvc_amount_data_rcv_from_client);
 
-
-            LOG(LOG_INFO, "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\" Server data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld",
-                this->redir_info.session_id, premary_user, this->logon_info.username(),
-                this->target_host/*"user_account", "0.0.0.0"*/,
-                this->total_main_amount_data_rcv_from_server,
-                this->total_cliprdr_amount_data_rcv_from_server,
-                this->total_rail_amount_data_rcv_from_server,
-                this->total_rdpdr_amount_data_rcv_from_server,
-                this->total_drdynvc_amount_data_rcv_from_server);
+            this->metrics.log();
         }
     }
 
@@ -1700,7 +1674,6 @@ private:
     void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * /*cliprdr_channel*/,
                                      InStream & chunk, size_t length, uint32_t flags) {
         ClipboardVirtualChannel& channel = this->get_clipboard_virtual_channel();
-
 
         if (bool(this->verbose & RDPVerbose::cliprdr)) {
             InStream clone = chunk.clone();
@@ -1987,7 +1960,7 @@ public:
     void connected_fast_path(gdi::GraphicApi & drawable, array_view_u8 array)
     {
         InStream stream(array);
-        this->total_main_amount_data_rcv_from_server += stream.in_remain();
+        this->metrics.total_main_amount_data_rcv_from_server += stream.in_remain();
 
         FastPath::ServerUpdatePDU_Recv su(stream, this->decrypt, array.data());
         if (this->enable_transparent_mode) {
@@ -2161,7 +2134,7 @@ public:
 
         X224::DT_TPDU_Recv x224(stream);
 
-        this->total_main_amount_data_rcv_from_server += stream.in_remain();
+        this->metrics.total_main_amount_data_rcv_from_server += stream.in_remain();
 
         const int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
 
@@ -2240,19 +2213,19 @@ public:
             }
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
-                this->total_cliprdr_amount_data_rcv_from_server += length;
+                this->metrics.total_cliprdr_amount_data_rcv_from_server += length;
                 this->process_cliprdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::rail) {
-                this->total_rail_amount_data_rcv_from_server += length;
+                this->metrics.total_rail_amount_data_rcv_from_server += length;
                 this->process_rail_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::rdpdr) {
-                this->total_rdpdr_amount_data_rcv_from_server += length;
+                this->metrics.total_rdpdr_amount_data_rcv_from_server += length;
                 this->process_rdpdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::drdynvc) {
-                this->total_drdynvc_amount_data_rcv_from_server += length;
+                this->metrics.total_drdynvc_amount_data_rcv_from_server += length;
                 this->process_drdynvc_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else {
@@ -5043,7 +5016,7 @@ public:
     }
 
     void set_last_tram_len(size_t tram_length) override {
-        this->total_main_amount_data_rcv_from_client += tram_length;
+        this->metrics.total_main_amount_data_rcv_from_client += tram_length;
     }
 
     // [referenced from 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE) ]
@@ -5739,7 +5712,6 @@ private:
         // this->send_to_front_channel(
         //     channel_names::rdpdr, stream.get_current(), length, chunk_size, flags);
         // return;
-
 
         DynamicChannelVirtualChannel& channel = this->get_dynamic_channel_virtual_channel();
 

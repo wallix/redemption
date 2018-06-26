@@ -40,12 +40,23 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
 
 
     StaticOutStream<512> out_ServerAudioFormatsandVersion;
-    rdpsnd::RDPSNDPDUHeader header_ServerAudioFormatsandVersion(rdpsnd::SNDC_FORMATS, rdpsnd::ServerAudioFormatsandVersionHeader::size());
+    rdpsnd::RDPSNDPDUHeader header_ServerAudioFormatsandVersion(rdpsnd::SNDC_FORMATS, rdpsnd::ServerAudioFormatsandVersionHeader::size()+18);
     header_ServerAudioFormatsandVersion.emit(out_ServerAudioFormatsandVersion);
-    rdpsnd::ServerAudioFormatsandVersionHeader safsvh(0, 0, 0);
-    safsvh.emit(out_ServerAudioFormatsandVersion);
-    InStream chunk_ServerAudioFormatsandVersion(out_ServerAudioFormatsandVersion.get_data(), out_ServerAudioFormatsandVersion.get_offset());
 
+    rdpsnd::ServerAudioFormatsandVersionHeader safsvh(1, 0xff, 0x0006);
+    safsvh.emit(out_ServerAudioFormatsandVersion);
+
+    rdpsnd::AudioFormat af_to_send(rdpsnd::WAVE_FORMAT_PCM,
+                           0x0002,
+                           0x0000ac44,
+                           0x0002b110,
+                           0x0004,
+                           0x0010,
+                           0);
+
+    af_to_send.emit(out_ServerAudioFormatsandVersion);
+
+    InStream chunk_ServerAudioFormatsandVersion(out_ServerAudioFormatsandVersion.get_data(), out_ServerAudioFormatsandVersion.get_offset());
 
 
     manager.receive(chunk_ServerAudioFormatsandVersion);
@@ -57,8 +68,20 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
     rdpsnd::RDPSNDPDUHeader header_formats;
     header_formats.receive(stream_formats);
     RED_CHECK_EQUAL(header_formats.msgType, rdpsnd::SNDC_FORMATS);
+    RED_CHECK_EQUAL(header_formats.BodySize, 38);
 
+    rdpsnd::ClientAudioFormatsandVersionHeader safsvh_received;
+    safsvh_received.receive(stream_formats);
+    RED_CHECK_EQUAL(safsvh_received.dwFlags, 0x00000003);
+    RED_CHECK_EQUAL(safsvh_received.dwVolume, 0x7fff7fff);
+    RED_CHECK_EQUAL(safsvh_received.dwPitch, 0x00000000);
+    RED_CHECK_EQUAL(safsvh_received.wDGramPort, 0x0000);
+    RED_CHECK_EQUAL(safsvh_received.wNumberOfFormats, 1);
+    RED_CHECK_EQUAL(safsvh_received.wVersion, 0x0006);
 
+    rdpsnd::AudioFormat af_received;
+    af_received.receive(stream_formats);
+    RED_CHECK_EQUAL(af_received.wFormatTag, 0x0001);
 
 
     pdu_data = client.stream();
@@ -67,12 +90,17 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
     rdpsnd::RDPSNDPDUHeader header_qualitymode;
     header_qualitymode.receive(stream_qualitymode);
     RED_CHECK_EQUAL(header_qualitymode.msgType, rdpsnd::SNDC_QUALITYMODE);
+    RED_CHECK_EQUAL(header_qualitymode.BodySize, 8);
+
+    rdpsnd::QualityModePDU qm;
+    qm.receive(stream_qualitymode);
+    RED_CHECK_EQUAL(qm.wQualityMode, 0x0002);
 
 
     StaticOutStream<512> out_TrainingPDU;
     rdpsnd::RDPSNDPDUHeader header_TrainingPDU(rdpsnd::SNDC_TRAINING, 4);
     header_TrainingPDU.emit(out_TrainingPDU);
-    rdpsnd::TrainingPDU train(0, 0);
+    rdpsnd::TrainingPDU train(0x954e, 0);
     train.emit(out_TrainingPDU);
     InStream chunk_TrainingPDU(out_TrainingPDU.get_data(), out_TrainingPDU.get_offset());
 
@@ -85,6 +113,10 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
     rdpsnd::RDPSNDPDUHeader header_clientTraining;
     header_clientTraining.receive(stream_clientTraining);
     RED_CHECK_EQUAL(header_clientTraining.msgType, rdpsnd::SNDC_TRAINING);
+    RED_CHECK_EQUAL(header_clientTraining.BodySize, 4);
+    rdpsnd::TrainingConfirmPDU tc;
+    tc.receive(stream_clientTraining);
+    RED_CHECK_EQUAL(tc.wPackSize, 0);
 }
 
 
@@ -97,12 +129,10 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelWave)
     RDPSoundConfig config;
     ClientChannelRDPSNDManager manager(to_verbose_flags(0x0), &client, &snd_io, config);
 
-
-
     StaticOutStream<512> out_WaveInfoPDU;
     rdpsnd::RDPSNDPDUHeader header(rdpsnd::SNDC_WAVE, 12);
     header.emit(out_WaveInfoPDU);
-    rdpsnd::WaveInfoPDU waveInfo(0, 0, 0);
+    rdpsnd::WaveInfoPDU waveInfo(0x58ea, 0x0000, 0x00);
     waveInfo.emit(out_WaveInfoPDU);
     InStream chunk_WaveInfoPDU(out_WaveInfoPDU.get_data(), out_WaveInfoPDU.get_offset());
 
@@ -121,6 +151,12 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelWave)
     rdpsnd::RDPSNDPDUHeader header_waveConfirm;
     header_waveConfirm.receive(stream_waveconfirm);
     RED_CHECK_EQUAL(header_waveConfirm.msgType, rdpsnd::SNDC_WAVECONFIRM);
+    RED_CHECK_EQUAL(header_waveConfirm.BodySize, 4);
+
+    rdpsnd::WaveConfirmPDU wc;
+    wc.receive(stream_waveconfirm);
+    RED_CHECK_EQUAL(wc.wTimeStamp, 0x58ea);
+    RED_CHECK_EQUAL(wc.cConfBlockNo, 0x00);
 }
 
 
