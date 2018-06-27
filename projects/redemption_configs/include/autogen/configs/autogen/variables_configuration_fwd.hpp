@@ -160,6 +160,7 @@ namespace cfg {
         struct bogus_ios_rdpdr_virtual_channel;
         struct enable_rdpdr_data_analysis;
         struct experimental_fix_input_event_sync;
+        struct experimental_fix_too_long_cookie;
     };
 
     struct mod_vnc {

@@ -415,6 +415,9 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "experimental_fix_input_event_sync", set(true));
+        W.sep();
+
+        W.member(advanced_in_gui, no_sesman, type_<bool>(), "experimental_fix_too_long_cookie", set(true));
     });
 
     W.section("mod_vnc", [&]

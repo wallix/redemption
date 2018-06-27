@@ -385,6 +385,7 @@ protected:
     const bool                        enable_rdpdr_data_analysis;
 
     const bool                        experimental_fix_input_event_sync;
+    const bool                        experimental_fix_too_long_cookie;
 
     std::string session_probe_target_informations;
 
@@ -796,6 +797,7 @@ public:
         , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
         , enable_rdpdr_data_analysis(mod_rdp_params.enable_rdpdr_data_analysis)
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
+        , experimental_fix_too_long_cookie(mod_rdp_params.experimental_fix_too_long_cookie)
         , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
         , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
         , session_probe_process_monitoring_rules(mod_rdp_params.session_probe_process_monitoring_rules)
@@ -939,13 +941,28 @@ public:
                             "Falled back to using AlternateShell based launcher.");
                 }
 
+                char clipboard_based_launcher_cookie[32];
+                {
+                    SslSha1 sha1;
+                    sha1.update(byte_ptr_cast(this->session_probe_target_informations.c_str()),
+                        this->session_probe_target_informations.length());
+
+                    uint8_t sig[SslSha1::DIGEST_LENGTH];
+                    sha1.final(sig);
+
+                    snprintf(clipboard_based_launcher_cookie, sizeof(clipboard_based_launcher_cookie),
+                        "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
+                        sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7], sig[8], sig[9]);
+                }
+
                 session_probe_arguments = get_session_probe_arguments(
                     std::move(session_probe_arguments),
                     get_session_probe_arguments::Exe{exe_var_str},
                     get_session_probe_arguments::Title{""},
                     get_session_probe_arguments::Cookie{
                         this->session_probe_use_clipboard_based_launcher
-                            ? "" : this->session_probe_target_informations.c_str()},
+                            ? "" : ((this->experimental_fix_too_long_cookie &&
+                                     (this->session_probe_target_informations.length() > 20)) ? clipboard_based_launcher_cookie : this->session_probe_target_informations.c_str())},
                     get_session_probe_arguments::Cbspl{
                         this->session_probe_use_clipboard_based_launcher ? "CD %TMP%&" : ""}
                 );

@@ -540,6 +540,9 @@
 "#_advanced\n"
 "experimental_fix_input_event_sync = boolean(default=True)\n\n"
 
+"#_advanced\n"
+"experimental_fix_too_long_cookie = boolean(default=True)\n\n"
+
 "[mod_vnc]\n\n"
 
 "# Enable or disable the clipboard from client (client to server).\n"
