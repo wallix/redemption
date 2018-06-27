@@ -1,3 +1,9 @@
+redemption (1.2.39%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix proxy crash when using a long string as cookie of application session.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Wed, 27 Jun 2018 15:51:31 +0200
+
 redemption (1.2.37%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Add comments to configuration interface.
