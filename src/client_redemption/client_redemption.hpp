@@ -1053,7 +1053,8 @@ public:
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override {
         if (bool(this->verbose & RDPVerbose::rail_order)) {
-            LOG(LOG_INFO, "RDP::RAIL::NewOrExistingWindow");
+            cmd.log(LOG_INFO);
+//             LOG(LOG_INFO, "RDP::RAIL::NewOrExistingWindow");
         }
 
         this->clientChannelRemoteAppManager.draw(cmd);

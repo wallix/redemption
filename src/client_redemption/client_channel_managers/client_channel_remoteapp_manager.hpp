@@ -161,7 +161,7 @@ class ClientChannelRemoteAppManager {
 
     ClientInputMouseKeyboardAPI * impl_input;
 
-    struct RailChannelData {
+//     struct RailChannelData {
 //         uint32_t clientWindowID;
         uint32_t ServerWindowID;
 
@@ -173,7 +173,7 @@ class ClientChannelRemoteAppManager {
 
         int build_number = 0;
 
-    } rail_channel_data;
+//     } rail_channel_data;
 
 
 public:
@@ -188,7 +188,7 @@ public:
       {}
 
     void clear() {
-        this->rail_channel_data.z_order.clear();
+        this->z_order.clear();
     }
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) {
@@ -202,6 +202,13 @@ public:
             case RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_2:
             case RemoteProgramsWindowIdManager::INVALID_WINDOW_ID:
                 break;
+
+//             case 0x800000:
+//                 this->z_order.clear();
+//                 this->impl_graphic->clear_remote_app_screen();
+//                 //LOG(LOG_INFO, "RAIL::DeletedWindow  Last App has been close - mod rdp disconnection.");
+//                 this->client->disconnect("", false);
+//                 break;
 
             default:
                 if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_OWNER) {
@@ -293,10 +300,10 @@ public:
     void draw(const RDP::RAIL::ActivelyMonitoredDesktop  & cmd) {
 
         if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER) {
-            this->rail_channel_data.z_order.clear();
-            if (this->rail_channel_data.ExecuteResult) {
+            this->z_order.clear();
+            if (this->ExecuteResult) {
                 for (size_t i = 0; i < cmd.NumWindowIds(); i++) {
-                    this->rail_channel_data.z_order.push_back(cmd.window_ids(i));
+                    this->z_order.push_back(cmd.window_ids(i));
                 }
             }
         }
@@ -307,28 +314,26 @@ public:
 
         uint32_t win_id = cmd.header.WindowId();
 
-        this->impl_graphic->dropScreen(win_id);
-
         int elem_to_erase = -1;
 
-        for (size_t i = 0; i < this->rail_channel_data.z_order.size(); i++) {
-            if (this->rail_channel_data.z_order[i] == cmd.header.WindowId()) {
+        for (size_t i = 0; i < this->z_order.size(); i++) {
+            if (this->z_order[i] == cmd.header.WindowId()) {
+
                 elem_to_erase = i;
             }
         }
 
         if (elem_to_erase != -1) {
-            this->rail_channel_data.z_order.erase(this->rail_channel_data.z_order.begin()+elem_to_erase);
+            this->z_order.erase(this->z_order.begin()+elem_to_erase);
         }
 
-        if ( this->rail_channel_data.z_order.size() == 0) {
+        if ( this->z_order.size() <= 1) {
             this->impl_graphic->clear_remote_app_screen();
             this->client->disconnect("", false);
 
         } else {
 
             this->impl_input->refreshPressed();
-
         }
     }
 
@@ -349,7 +354,7 @@ public:
 
                 HandshakePDU hspdu;
                 hspdu.receive(stream);
-                this->rail_channel_data.build_number = hspdu.buildNumber();
+                this->build_number = hspdu.buildNumber();
 
                 }
                 break;
@@ -363,7 +368,7 @@ public:
                 sspu.receive(stream);
                 sspu.log(LOG_INFO);
 
-                if (sspu.SystemParam() ==  SPI_SETSCREENSAVEACTIVE) {
+                if (sspu.SystemParam() == SPI_SETSCREENSAVEACTIVE) {
 
                     {
                     StaticOutStream<32> out_stream;;
@@ -637,7 +642,7 @@ public:
 
                     out_stream.out_uint16_le(TS_RAIL_ORDER_HANDSHAKE);
                     out_stream.out_uint16_le(8);
-                    out_stream.out_uint32_le(this->rail_channel_data.build_number);
+                    out_stream.out_uint32_le(this->build_number);
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
@@ -735,7 +740,7 @@ public:
                 ServerGetApplicationIDResponsePDU sgaior;
                 sgaior.receive(stream);
                 sgaior.log(LOG_INFO);
-                this->rail_channel_data.ServerWindowID = sgaior.WindowId();
+                this->ServerWindowID = sgaior.WindowId();
                 }
 //                 {
 //                     StaticOutStream<32> out_stream;
@@ -765,7 +770,7 @@ public:
                     res_pdu.receive(stream);
                     res_pdu.log(LOG_INFO);
                     if (res_pdu.ExecResult() == RAIL_EXEC_S_OK) {
-                        this->rail_channel_data.ExecuteResult = true;
+                        this->ExecuteResult = true;
                     }
                 }
                 break;

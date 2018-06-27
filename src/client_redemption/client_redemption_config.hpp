@@ -351,6 +351,10 @@ public:
                 // TODO return 1;
                 break;
         }
+
+        if (bool(RDPVerbose::rail & this->verbose)) {
+            this->verbose = this->verbose | RDPVerbose::rail_order;
+        }
     }
 
     ~ClientRedemptionConfig() = default;
