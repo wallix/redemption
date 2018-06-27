@@ -32,7 +32,7 @@ RED_AUTO_TEST_CASE(TestWidgetHScrollBar)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -56,25 +56,25 @@ RED_AUTO_TEST_CASE(TestWidgetHScrollBar)
     wscroll.rdp_input_invalidate(wscroll.get_rect());
 
 
-    //drawable.save_to_png("scroll0.png");
+    // drawable.save_to_png("scroll0.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xaf\x8d\xda\xea\xbe\x5c\x0b\x53\xf4\x28\xe3\xbc\x29\x49\xa1\x4c\x75\x7f\xc5\xbf");
+    RED_CHECK_SIG(drawable.gd, "\x83\x21\x77\x50\x83\x42\xea\x1f\xf9\x35\x0a\x76\x91\xc0\x75\x18\x60\x2a\xad\xc5");
 
     wscroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, x + 5, y + 5, nullptr);
 
     wscroll.rdp_input_invalidate(wscroll.get_rect());
 
 
-    //drawable.save_to_png("scroll1.png");
+    // drawable.save_to_png("scroll1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x68\xec\xba\xe1\xbe\x41\x74\x31\x17\xd2\x89\x2c\x35\x1a\xa0\x6a\x10\x06\xa1\x9a");
+    RED_CHECK_SIG(drawable.gd, "\xa2\x14\x83\xa8\xce\xb3\xba\xab\x10\x42\xd8\xf8\xdb\x41\x57\xad\x38\xd8\x73\xb8");
 }
 
 RED_AUTO_TEST_CASE(TestWidgetVScrollBar)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -98,25 +98,25 @@ RED_AUTO_TEST_CASE(TestWidgetVScrollBar)
     wscroll.rdp_input_invalidate(wscroll.get_rect());
 
 
-    //drawable.save_to_png("scroll2.png");
+    // drawable.save_to_png("scroll2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x35\x2b\x65\xcf\x60\x37\xc3\x4f\x19\x5e\xf5\xf7\x55\xb6\x87\x3b\x2b\x84\x52\x41");
+    RED_CHECK_SIG(drawable.gd, "\xeb\xf1\x30\x34\xcc\x5b\x67\x76\x4e\x93\x8e\xe4\xd0\xe4\x33\xb1\x58\xa6\x35\xae");
 
     wscroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, x + 5, y + 5, nullptr);
 
     wscroll.rdp_input_invalidate(wscroll.get_rect());
 
 
-    //drawable.save_to_png("scroll3.png");
+    // drawable.save_to_png("scroll3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x22\x74\x49\xb3\xe6\xc2\x89\x21\xf5\x98\xe0\x63\x21\xeb\x5f\xfd\xe2\xe4\x61\x02");
+    RED_CHECK_SIG(drawable.gd, "\xa5\xc0\x2d\x25\xee\xd2\x84\x7a\x1e\x79\x09\x9b\x02\x4b\x80\xf0\x30\x6f\x17\xbe");
 }
 
 RED_AUTO_TEST_CASE(TestWidgetHScrollBarRail)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -140,25 +140,25 @@ RED_AUTO_TEST_CASE(TestWidgetHScrollBarRail)
     wscroll.rdp_input_invalidate(wscroll.get_rect());
 
 
-    //drawable.save_to_png("scroll4.png");
+    // drawable.save_to_png("scroll4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x18\x49\xe8\x32\x2b\x96\x81\xd8\xc6\xd2\xf0\x56\xae\x03\x40\xb2\x18\xef\x04\x25");
+    RED_CHECK_SIG(drawable.gd, "\x05\x03\xd6\xd9\xd8\x54\xd5\x04\x76\xac\xa0\x10\xed\x0b\x9d\xa8\x45\x3f\x51\xb2");
 
     wscroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, x + 5, y + 5, nullptr);
 
     wscroll.rdp_input_invalidate(wscroll.get_rect());
 
 
-    //drawable.save_to_png("scroll5.png");
+    // drawable.save_to_png("scroll5.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x51\x9c\x6b\xd3\x11\x49\x22\x1c\x3e\x59\x41\x73\x93\xf7\x75\xe0\xae\x00\x09\xa8");
+    RED_CHECK_SIG(drawable.gd, "\x02\x3f\xf7\x34\x86\x04\x07\x02\x99\x1b\x4d\x41\x40\xf6\x96\xd1\xcf\x13\x5c\x70");
 }
 
 RED_AUTO_TEST_CASE(TestWidgetVScrollBarRail)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -182,16 +182,16 @@ RED_AUTO_TEST_CASE(TestWidgetVScrollBarRail)
     wscroll.rdp_input_invalidate(wscroll.get_rect());
 
 
-    //drawable.save_to_png("scroll6.png");
+    // drawable.save_to_png("scroll6.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x48\x75\xb9\x15\x1f\xe5\x3c\x10\x9b\x9e\x70\x42\xf4\xa4\xa2\x9f\xe1\x7b\x47\xd8");
+    RED_CHECK_SIG(drawable.gd, "\x5b\xfa\xfa\x3f\xb6\xd7\x8a\x15\xbe\x90\x74\xc0\x43\xa4\x65\x9d\xd9\xcc\x8f\xa8");
 
     wscroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, x + 5, y + 5, nullptr);
 
     wscroll.rdp_input_invalidate(wscroll.get_rect());
 
 
-    //drawable.save_to_png("scroll7.png");
+    // drawable.save_to_png("scroll7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xb2\xb0\x07\x74\xcd\x55\xa1\x2d\xd2\x16\xc2\x74\x4f\xde\x50\x0c\x34\x37\x9b\x09");
+    RED_CHECK_SIG(drawable.gd, "\xb1\x8a\x53\x41\x25\x21\xb0\x34\x69\x69\xd9\xa0\x42\xd7\x12\xac\x38\x41\x91\x45");
 }

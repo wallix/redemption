@@ -55,12 +55,12 @@ RED_AUTO_TEST_CASE(TestCreateFont)
         RED_CHECK(!f.is_loaded());
     }
 
-    Font f(FIXTURES_PATH "/dejavu-sans-10.rbf");
+    Font f(FIXTURES_PATH "/Lato-Light_16.rbf");
     RED_CHECK(f.is_loaded());
 
-    RED_CHECK_EQUAL("DejaVu Sans", f.name());
+    RED_CHECK_EQUAL("Lato", f.name());
     RED_CHECK_EQUAL(1, f.style());
-    RED_CHECK_EQUAL(10, f.size());
+    RED_CHECK_EQUAL(16, f.size());
 
     RED_CHECK(!f.glyph_defined(31));
     RED_CHECK(f.glyph_defined(32));

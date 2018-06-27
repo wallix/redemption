@@ -45,7 +45,7 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
         }
     } notifier;
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
     parent.set_wh(800, 600);
@@ -61,8 +61,8 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     wnumber_edit.set_xy(x, y);
 
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
-//    drawable.save_to_png(OUTPUT_FILE_PATH "number_edit-e1.png");
-    RED_CHECK_SIG(drawable.gd, "\xb4\x77\xd9\x77\x1b\xbc\x9e\x63\x5d\x99\x6e\x22\xef\x69\xea\x87\xfa\x16\x52\x5c");
+    // drawable.save_to_png("number_edit-e1.png");
+    RED_CHECK_SIG(drawable.gd, "\x1f\x0d\x7c\xd8\x43\x5b\x69\xe9\x20\x15\x32\x1c\x15\x2a\xa4\xd4\x90\x0a\x34\x6c");
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -70,16 +70,16 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     keymap.push('a');
     wnumber_edit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
-//    drawable.save_to_png(OUTPUT_FILE_PATH "number_edit-e2-1.png");
-    RED_CHECK_SIG(drawable.gd, "\xb4\x77\xd9\x77\x1b\xbc\x9e\x63\x5d\x99\x6e\x22\xef\x69\xea\x87\xfa\x16\x52\x5c");
+    // drawable.save_to_png("number_edit-e2-1.png");
+    RED_CHECK_SIG(drawable.gd, "\x1f\x0d\x7c\xd8\x43\x5b\x69\xe9\x20\x15\x32\x1c\x15\x2a\xa4\xd4\x90\x0a\x34\x6c");
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
 
     keymap.push('2');
     wnumber_edit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
-//    drawable.save_to_png(OUTPUT_FILE_PATH "number_edit-e2-2.png");
-    RED_CHECK_SIG(drawable.gd, "\xff\xd0\xe8\xbf\x21\x94\xdb\x15\x15\x32\x17\x1d\x89\x4d\x79\xae\xda\x97\xf7\x92");
+    // drawable.save_to_png("number_edit-e2-2.png");
+    RED_CHECK_SIG(drawable.gd, "\x4b\x5a\xb9\x52\x13\x81\x8f\x35\x09\xa9\xf5\x64\x52\x8f\x24\x2c\x1f\xe0\x90\xb4");
     RED_CHECK(notifier.sender == &wnumber_edit);
     RED_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
 }

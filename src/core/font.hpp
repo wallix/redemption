@@ -234,27 +234,6 @@ struct FontChar
 }; // END STRUCT - FontChar
 
 
-// TODO NUM_GLYPHS is misleading it's actually number of glyph in font. Using it to set size of a static array is quite dangerous as we shouldn't have to change code whenever we change font file.
-
-
-/*
-  The fv1 files contain
-  Font File Header (just one)
-    FNT1       4 bytes
-    Font Name  32 bytes
-    Font Size  2 bytes
-    Font Style 2 bytes
-    Pad        8 bytes
-  Font Data (repeat for each glyph)
-    Width      2 bytes
-    Height     2 bytes
-    Baseline   2 bytes
-    Offset     2 bytes
-    Incby      2 bytes
-    Pad        6 bytes
-    Glyph Data var, see FONT_DATASIZE macro
-*/
-
 struct Font
 {
     Font() = default;

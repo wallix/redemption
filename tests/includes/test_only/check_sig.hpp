@@ -25,6 +25,8 @@
 
 #include "system/ssl_sha1.hpp"
 
+// fix tests with:
+// bjam test_flat_wab_close | grep ^tests/ | while IFS='()"' read f l e n E s ; do sed $l,$(($l+1))'s/RED_CHECK_SIG(drawable.gd, .*/RED_CHECK_SIG(drawable.gd, "'${s//x/\\\\x}');/' -i "$f" ; done
 
 #define RED_CHECK_SIG(obj, sig)                                      \
     do {                                                             \

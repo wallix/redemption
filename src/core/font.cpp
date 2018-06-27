@@ -51,8 +51,30 @@ namespace
 
 FontCharView Font::default_unknown_glyph() noexcept
 {
-    return FontCharView{2, 0, 6, 5, 10, unknown_glyph_data};
+    return FontCharView{2, 0, 7, 5, 10, unknown_glyph_data};
 }
+
+/*
+- the RBF1 file always begins by the label "RBF1"
+- Police global informations are :
+    * name (32 bytes) (ex : Deja Vu Sans)
+    * size (2 bytes)
+    * style (2 bytes) (always '1')
+    * max height (4 bytes)
+    * number of glyph (4 bytes)
+    * total data len (4 bytes)
+- Individual glyph informations are :
+    * value (4 bytes)
+    * offsetx (2 bytes)
+    * offsety (2 bytes)
+    * abcA (left space)
+    * abcB (glyph width)
+    * abcC (roght space)
+    * cx (2 bytes)
+    * cy (2 bytes)
+    * data (the bitmap representing the sketch of the glyph, one bit by pixel, 0 for
+      background, 1 for foreground) (aligned of 4 btyes)
+*/
 
 void Font::load_from_file(char const * file_path)
 {

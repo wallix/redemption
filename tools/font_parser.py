@@ -8,7 +8,7 @@
 # format used by ReDemPtion.
 #
 # HINTs:
-# - Each FV1 glyph is sketched in a bitmap whose dimensions are mutiples of 8. As PIL glyphes
+# - Each RBF1 glyph is sketched in a bitmap whose dimensions are mutiples of 8. As PIL glyphes
 #   width are not multiple of 8 they have to be padded. By convention, they are padded to left
 #   and bottom.
 # - The glyphs are not antialiased.
@@ -16,7 +16,7 @@
 # - Thus, each pixel in a sketch is represented by only one bit
 #
 # FORMATs :
-# - the FV1 file always begins by the label "RBF1"
+# - the RBF1 file always begins by the label "RBF1"
 # - Police global informations are :
 #     * name (32 bytes) (ex : Deja Vu Sans)
 #     * size (2 bytes)

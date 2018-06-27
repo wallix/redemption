@@ -34,7 +34,7 @@ RED_AUTO_TEST_CASE(TraceFlatWait)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -86,16 +86,16 @@ RED_AUTO_TEST_CASE(TraceFlatWait)
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "flat_wait.png");
+    // drawable.save_to_png("flat_wait.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x1b\xf9\xcc\xf2\x3f\xef\x1f\xbf\xa1\xe2\x70\xdf\xef\x94\xa4\x6f\xf7\xeb\x13\xc2");
+    RED_CHECK_SIG(drawable.gd, "\x66\x3b\x3a\xe7\x3c\x01\x70\xf6\x84\xb3\x77\x3b\x37\x3c\x52\x51\xf0\xdd\x7a\x77");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWaitWithForm)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -149,9 +149,9 @@ RED_AUTO_TEST_CASE(TraceFlatWaitWithForm)
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "flat_wait_1.png");
+    // drawable.save_to_png("flat_wait_1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x2b\xae\xee\xd5\x35\xca\x1d\x42\x1a\x1b\xf2\x67\x39\xbf\x38\xfb\x51\xb4\xab\x5f");
+    RED_CHECK_SIG(drawable.gd, "\x7b\x38\xb6\x4a\x07\x5d\xb9\x2c\x08\x26\x29\x95\xd3\xcf\xc7\xa2\xf2\xa4\xb1\x76");
 }
 
 
@@ -365,7 +365,7 @@ RED_AUTO_TEST_CASE(TraceFlatWaitWithForm)
 //                                       flat_dialog.cx(),
 //                                       flat_dialog.cy()));
 
-//     //drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog7.png");
+//     // drawable.save_to_png("flat_dialog7.png");
 
 //     char message[1024];
 

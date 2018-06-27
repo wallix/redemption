@@ -61,7 +61,7 @@ std::string app_path_s(AppPath);
 // #define HELP_ICON "helpicon.png"
 // #define CURSOR0 "cursor0.cur"
 // #define CURSOR1 "cursor1.cur"
-// #define FONT1 "sans-10.fv1"
+// #define FONT1 "sans-10.rbf"
 #define REDEMPTION_LOGO24 "xrdp24b-redemption.png"
 #define LOCKFILE "rdpproxy.pid"
 

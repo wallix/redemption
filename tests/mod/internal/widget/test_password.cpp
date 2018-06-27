@@ -34,7 +34,7 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetPassword is a password widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -63,16 +63,16 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword)
                                     wpassword.cx(),
                                     wpassword.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password.png");
+    // drawable.save_to_png("password.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xd8\xad\x77\x6e\x88\x33\xf8\x46\x94\xc2\x25\x7a\x6c\xd3\x2b\x23\x85\xc3\xaa\x37");
+    RED_CHECK_SIG(drawable.gd, "\x55\x68\x7f\x73\x0e\xbb\x81\x14\xaf\xec\x50\x8e\x45\x1c\xbf\xfa\x3d\x7c\x94\x34");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetPassword2)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetPassword is a password widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -97,16 +97,16 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword2)
                                     wpassword.cx(),
                                     wpassword.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password2.png");
+    // drawable.save_to_png("password2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x82\xb6\x09\x58\x6d\xf1\x83\x79\x5f\x63\xad\x37\x1b\x44\xd2\x2a\x58\x80\x4b\xbb");
+    RED_CHECK_SIG(drawable.gd, "\x4c\xce\x8c\xe2\x96\x04\x33\x8e\x05\x37\x8b\x37\xb1\x84\x65\x8a\x14\xa4\xe4\xe0");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetPassword3)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetPassword is a password widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -131,16 +131,16 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword3)
                                     wpassword.cx(),
                                     wpassword.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password3.png");
+    // drawable.save_to_png("password3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xd8\x4e\x56\xf4\x75\x0c\x6e\x18\x91\xcd\x1d\xe9\x2b\x8a\x9c\x78\x4f\x93\x6b\xe4");
+    RED_CHECK_SIG(drawable.gd, "\x99\xa8\xb7\x5d\xc8\xf7\x21\x7a\xfd\x43\xda\x6f\xa6\x22\x0b\xb1\x98\x94\xbe\x01");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetPassword4)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetPassword is a password widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -165,16 +165,16 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword4)
                                     wpassword.cx(),
                                     wpassword.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password4.png");
+    // drawable.save_to_png("password4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xf6\xb5\x23\x51\xdf\x86\x30\xe0\xf4\x10\x33\x8b\xd6\x27\x93\x0f\x34\x4f\x1d\x30");
+    RED_CHECK_SIG(drawable.gd, "\xbc\xe3\x4f\xed\x92\x61\x9f\xce\x1c\x30\x89\x3b\x2c\x03\xfc\x57\x35\x3b\x58\xc4");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetPassword5)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetPassword is a password widget of size 100x20 at position -20,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -199,16 +199,16 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword5)
                                     wpassword.cx(),
                                     wpassword.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password5.png");
+    // drawable.save_to_png("password5.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xa2\xad\x76\xa7\xa5\xb1\x12\xb9\xab\xc7\xcf\x69\xcb\xf2\xd9\xbf\x8b\x0b\xf5\x30");
+    RED_CHECK_SIG(drawable.gd, "\x84\x87\xdd\xb9\x3b\x4b\xde\x71\x62\x39\x57\x69\xcc\x01\x08\xaf\x4d\x1e\xf4\x4a");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetPassword6)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetPassword is a password widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -233,16 +233,16 @@ RED_AUTO_TEST_CASE(TraceWidgetPassword6)
                                     wpassword.cx(),
                                     wpassword.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password6.png");
+    // drawable.save_to_png("password6.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x95\x39\x49\x96\x2c\xaf\xa5\xf6\xda\x7b\x7f\x44\x3c\xe4\x9b\x18\x15\xe0\x2f\x37");
+    RED_CHECK_SIG(drawable.gd, "\xa6\x7d\xf0\xea\x02\x7a\x83\xf1\x97\x99\xf6\xac\xce\x88\x30\x8c\x03\x79\xfe\xe0");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetPasswordClip)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetPassword is a password widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -267,16 +267,16 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordClip)
                                     wpassword.cx(),
                                     wpassword.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password7.png");
+    // drawable.save_to_png("password7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xc8\x9e\x4b\xb8\x2e\xf3\x1e\x49\x8c\x55\x27\x82\x2e\x3f\xea\x21\x87\x4e\x10\x86");
+    RED_CHECK_SIG(drawable.gd, "\xa1\x4c\x85\x5d\xe1\x28\x6a\xca\x28\x5d\xec\xab\x78\xdd\x9c\xf9\xf4\x96\xd5\x18");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetPassword is a password widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -301,9 +301,9 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
                                     30,
                                     10));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password8.png");
+    // drawable.save_to_png("password8.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x01\x5a\x19\xfb\xe0\x0c\xc1\xf4\x80\x76\x48\x8c\x49\xdf\x55\xd2\xa7\x60\xfa\x8f");
+    RED_CHECK_SIG(drawable.gd, "\xbd\x31\x54\x64\x79\xfe\x2c\x43\xd9\xb7\x0d\x4b\x5e\x61\xec\xab\x04\xdc\x3e\x28");
 }
 
 RED_AUTO_TEST_CASE(EventWidgetPassword)
@@ -321,7 +321,7 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
         }
     } notifier;
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
     parent.set_wh(800, 600);
@@ -338,8 +338,8 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
 
     wpassword.focus(Widget::focus_reason_tabkey);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit1-e1.png");
-    RED_CHECK_SIG(drawable.gd, "\x9d\xac\xdb\x03\xd9\x1a\x90\x59\xcb\x54\x05\x7c\x37\x17\x0e\x89\x61\x5c\x7d\xef");
+    // drawable.save_to_png("password-edit1-e1.png");
+    RED_CHECK_SIG(drawable.gd, "\x22\x5a\x9f\x46\x5a\x65\xce\x21\xb5\xb2\x58\x8e\xad\x5d\x27\x21\x34\x29\xfa\xfc");
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -350,8 +350,8 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 16, ctrl_alt_delete);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit1-e2-1.png");
-    RED_CHECK_SIG(drawable.gd, "\x99\x24\xc3\xf0\x32\x4f\xd0\x02\x58\x0d\xf1\xfe\x25\xee\x23\xf5\xc5\xa7\x0f\x45");
+    // drawable.save_to_png("password-edit1-e2-1.png");
+    RED_CHECK_SIG(drawable.gd, "\x3f\x66\xd4\xcb\x95\x88\x04\xb2\xc2\xa8\x17\x0b\x68\x7e\xdc\xb3\xea\x76\xe9\xe8");
     RED_CHECK(notifier.sender == &wpassword);
     RED_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
     notifier.event = 0;
@@ -361,8 +361,8 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 17, ctrl_alt_delete);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit1-e2-2.png");
-    RED_CHECK_SIG(drawable.gd, "\x22\xe4\xaa\x93\x0f\x5a\xd2\x84\xdd\xb3\x6e\xcd\x3c\x3e\xec\x9e\x3d\x28\x04\xb4");
+    // drawable.save_to_png("password-edit1-e2-2.png");
+    RED_CHECK_SIG(drawable.gd, "\xb8\xcf\x40\x2c\xac\x7d\x2a\xd2\x21\x4f\xfa\x9c\xca\xc6\xfa\xc1\x64\xf8\x6b\x4e");
     RED_CHECK(notifier.sender == &wpassword);
     RED_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
     notifier.event = 0;
@@ -371,8 +371,8 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
     keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit1-e3.png");
-    RED_CHECK_SIG(drawable.gd, "\x3d\x0e\x76\x9c\x94\x32\xc6\x5f\x1a\xbd\x19\x74\xc7\xb1\x86\x10\xa6\x9c\x24\xab");
+    // drawable.save_to_png("password-edit1-e3.png");
+    RED_CHECK_SIG(drawable.gd, "\x2f\x86\xa1\xaf\x12\xdb\xf4\x76\x83\xd7\xd0\x0b\x9f\x70\xc8\x65\x5b\x34\x58\x5f");
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
 
@@ -380,27 +380,27 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit1-e4.png");
-    RED_CHECK_SIG(drawable.gd, "\x22\xe4\xaa\x93\x0f\x5a\xd2\x84\xdd\xb3\x6e\xcd\x3c\x3e\xec\x9e\x3d\x28\x04\xb4");
+    // drawable.save_to_png("password-edit1-e4.png");
+    RED_CHECK_SIG(drawable.gd, "\xb8\xcf\x40\x2c\xac\x7d\x2a\xd2\x21\x4f\xfa\x9c\xca\xc6\xfa\xc1\x64\xf8\x6b\x4e");
 
     keymap.push_kevent(Keymap2::KEVENT_BACKSPACE);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit1-e5.png");
-    RED_CHECK_SIG(drawable.gd, "\x99\x24\xc3\xf0\x32\x4f\xd0\x02\x58\x0d\xf1\xfe\x25\xee\x23\xf5\xc5\xa7\x0f\x45");
+    // drawable.save_to_png("password-edit1-e5.png");
+    RED_CHECK_SIG(drawable.gd, "\x3f\x66\xd4\xcb\x95\x88\x04\xb2\xc2\xa8\x17\x0b\x68\x7e\xdc\xb3\xea\x76\xe9\xe8");
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit1-e6.png");
-    RED_CHECK_SIG(drawable.gd, "\x60\x5f\x3b\x16\x88\x6f\x2a\x54\x7b\x90\xa4\x92\xbc\xf5\xef\xda\xd6\xab\x1a\x12");
+    // drawable.save_to_png("password-edit1-e6.png");
+    RED_CHECK_SIG(drawable.gd, "\xa2\x75\xbb\x0d\x83\x29\x03\xbd\x42\x54\x8f\x6c\x4a\xb4\x2f\x56\x93\x2f\xef\xc7");
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit1-e7.png");
-    RED_CHECK_SIG(drawable.gd, "\xb8\x86\xab\x4d\x6c\xb6\x02\x86\xb5\xef\xfb\x4a\x7c\x0d\x2f\x06\x26\x9c\x5e\xbe");
+    // drawable.save_to_png("password-edit1-e7.png");
+    RED_CHECK_SIG(drawable.gd, "\x8b\x61\x8d\x2d\x47\xcd\x9b\x1e\x9e\xaf\xe4\x26\x00\xbc\x38\xd0\xd5\x3f\xec\x2e");
 
     keymap.push_kevent(Keymap2::KEVENT_DELETE);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
@@ -408,8 +408,8 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
     RED_CHECK(notifier.event == 0);
 
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit1-e8.png");
-    RED_CHECK_SIG(drawable.gd, "\xd3\xf2\xea\xb4\x7e\x2c\xab\xc0\x1d\x29\xd0\xbe\x2d\x76\x0e\x55\x7e\x60\x2e\x9f");
+    // drawable.save_to_png("password-edit1-e8.png");
+    RED_CHECK_SIG(drawable.gd, "\xcf\x22\x3d\x44\xf7\x03\x3e\x29\x66\xa0\x3b\xe9\x83\x46\x95\xb0\x4e\x3b\x92\x93");
 
     keymap.push_kevent(Keymap2::KEVENT_END);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
@@ -417,8 +417,8 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
     RED_CHECK(notifier.event == 0);
 
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit1-e9.png");
-    RED_CHECK_SIG(drawable.gd, "\x9d\xac\xdb\x03\xd9\x1a\x90\x59\xcb\x54\x05\x7c\x37\x17\x0e\x89\x61\x5c\x7d\xef");
+    // drawable.save_to_png("password-edit1-e9.png");
+    RED_CHECK_SIG(drawable.gd, "\x22\x5a\x9f\x46\x5a\x65\xce\x21\xb5\xb2\x58\x8e\xad\x5d\x27\x21\x34\x29\xfa\xfc");
 
     keymap.push_kevent(Keymap2::KEVENT_HOME);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
@@ -426,8 +426,8 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
     RED_CHECK(notifier.event == 0);
 
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit1-e10.png");
-    RED_CHECK_SIG(drawable.gd, "\xe5\xff\x0a\x7d\xdc\xbd\xf3\x3e\xec\x3a\xaf\x0c\x30\x7d\x9e\xce\xfc\xc5\x6f\xcb");
+    // drawable.save_to_png("password-edit1-e10.png");
+    RED_CHECK_SIG(drawable.gd, "\xee\x0f\x21\x73\xfb\x7f\xf8\x54\xf2\x24\x00\xe3\x6e\xec\x9d\x23\x69\xee\xf8\x66");
 
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
@@ -467,15 +467,15 @@ RED_AUTO_TEST_CASE(EventWidgetPassword)
     widget_for_receive_event.event = 0;
 
     wpassword.rdp_input_invalidate(Rect(0, 0, wpassword.cx(), wpassword.cx()));
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit-e11.png");
-    RED_CHECK_SIG(drawable.gd, "\x6e\x4f\xf7\x07\x18\x16\x10\x89\xb3\xf4\xb1\x43\xb6\x45\x53\x82\x1d\x74\x7c\x9e");
+    // drawable.save_to_png("password-edit-e11.png");
+    RED_CHECK_SIG(drawable.gd, "\xd4\xfd\xab\x94\xcc\x8b\xa1\xba\xa1\xaa\xa2\x2d\xe0\xe2\x9b\xb9\xeb\xde\xba\x40");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetPassword is a password widget of size 256x125 at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -533,16 +533,16 @@ RED_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
     // ask to widget to redraw at position 100,25 and of size 100x100.
     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-compo1.png");
+    // drawable.save_to_png("password-compo1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x27\x65\x28\x0e\x2c\x89\xf7\x46\xb7\x8d\x6c\xd5\x3f\x14\x0c\xb3\x37\x38\xd5\x50");
+    RED_CHECK_SIG(drawable.gd, "\xe9\xaa\xc3\x82\x4d\xe1\xa4\x16\xcf\xe6\x4f\xa5\xe2\xcf\x8c\xdd\xd3\xa9\xf9\x81");
 
     // ask to widget to redraw at it's current position
     wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-compo2.png");
+    // drawable.save_to_png("password-compo2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x2a\xe5\xd1\x8a\x45\x83\xc4\x16\x9f\xee\x5e\x3d\x1b\xfc\x27\xe2\x57\xe5\x37\x13");
+    RED_CHECK_SIG(drawable.gd, "\x18\x07\x10\x6e\xe6\x16\x7b\x05\xe1\x57\x8b\x99\x96\x39\x53\x43\x12\x0e\x6f\x2e");
     wcomposite.clear();
 }
 
@@ -561,7 +561,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword)
         }
     } notifier;
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
     parent.set_wh(800, 600);
@@ -578,8 +578,8 @@ RED_AUTO_TEST_CASE(DataWidgetPassword)
 
     wpassword.focus(Widget::focus_reason_tabkey);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit2-e1.png");
-    RED_CHECK_SIG(drawable.gd, "\x99\x24\xc3\xf0\x32\x4f\xd0\x02\x58\x0d\xf1\xfe\x25\xee\x23\xf5\xc5\xa7\x0f\x45");
+    // drawable.save_to_png("password-edit2-e1.png");
+    RED_CHECK_SIG(drawable.gd, "\x3f\x66\xd4\xcb\x95\x88\x04\xb2\xc2\xa8\x17\x0b\x68\x7e\xdc\xb3\xea\x76\xe9\xe8");
     RED_CHECK(notifier.sender == &wpassword);
     RED_CHECK(notifier.event == 0);
     notifier.sender = nullptr;
@@ -594,24 +594,24 @@ RED_AUTO_TEST_CASE(DataWidgetPassword)
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit2-e2.png");
-    RED_CHECK_SIG(drawable.gd, "\x60\x5f\x3b\x16\x88\x6f\x2a\x54\x7b\x90\xa4\x92\xbc\xf5\xef\xda\xd6\xab\x1a\x12");
+    // drawable.save_to_png("password-edit2-e2.png");
+    RED_CHECK_SIG(drawable.gd, "\xa2\x75\xbb\x0d\x83\x29\x03\xbd\x42\x54\x8f\x6c\x4a\xb4\x2f\x56\x93\x2f\xef\xc7");
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit2-e3.png");
-    RED_CHECK_SIG(drawable.gd, "\xb8\x86\xab\x4d\x6c\xb6\x02\x86\xb5\xef\xfb\x4a\x7c\x0d\x2f\x06\x26\x9c\x5e\xbe");
+    // drawable.save_to_png("password-edit2-e3.png");
+    RED_CHECK_SIG(drawable.gd, "\x8b\x61\x8d\x2d\x47\xcd\x9b\x1e\x9e\xaf\xe4\x26\x00\xbc\x38\xd0\xd5\x3f\xec\x2e");
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit2-e4.png");
-    RED_CHECK_SIG(drawable.gd, "\x06\x52\x0b\x43\x8c\x4d\xbc\xf8\xbb\x7a\xd9\x57\xac\xa1\x36\x21\xbb\xe8\x21\xa9");
+    // drawable.save_to_png("password-edit2-e4.png");
+    RED_CHECK_SIG(drawable.gd, "\x58\x53\x33\x1b\x93\x41\x5f\xa2\xbd\x7b\x5b\xed\x90\x8a\x1d\x0b\x16\x68\xb0\x06");
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
 
@@ -620,8 +620,8 @@ RED_AUTO_TEST_CASE(DataWidgetPassword)
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit2-e5.png");
-    RED_CHECK_SIG(drawable.gd, "\x6d\xae\xd9\x53\x39\xa0\x35\x13\x2c\x14\x5d\x71\x6f\x65\x29\x11\xf1\x13\x34\x0b");
+    // drawable.save_to_png("password-edit2-e5.png");
+    RED_CHECK_SIG(drawable.gd, "\x8f\x3c\xea\x45\x08\xd1\x31\x33\x7a\x74\x20\x30\xdf\xb7\xbd\xe6\x49\xc7\x53\xfd");
 
     RED_CHECK_EQUAL(std::string("aurlie"), wpassword.get_text());
 }
@@ -641,7 +641,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword2)
         }
     } notifier;
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
     parent.set_wh(800, 600);
@@ -658,8 +658,8 @@ RED_AUTO_TEST_CASE(DataWidgetPassword2)
 
     wpassword.focus(Widget::focus_reason_tabkey);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit3-e1.png");
-    RED_CHECK_SIG(drawable.gd, "\x99\x24\xc3\xf0\x32\x4f\xd0\x02\x58\x0d\xf1\xfe\x25\xee\x23\xf5\xc5\xa7\x0f\x45");
+    // drawable.save_to_png("password-edit3-e1.png");
+    RED_CHECK_SIG(drawable.gd, "\x3f\x66\xd4\xcb\x95\x88\x04\xb2\xc2\xa8\x17\x0b\x68\x7e\xdc\xb3\xea\x76\xe9\xe8");
     RED_CHECK(notifier.sender == &wpassword);
     RED_CHECK(notifier.event == 0);
     notifier.sender = nullptr;
@@ -674,32 +674,32 @@ RED_AUTO_TEST_CASE(DataWidgetPassword2)
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit3-e2.png");
-    RED_CHECK_SIG(drawable.gd, "\x60\x5f\x3b\x16\x88\x6f\x2a\x54\x7b\x90\xa4\x92\xbc\xf5\xef\xda\xd6\xab\x1a\x12");
+    // drawable.save_to_png("password-edit3-e2.png");
+    RED_CHECK_SIG(drawable.gd, "\xa2\x75\xbb\x0d\x83\x29\x03\xbd\x42\x54\x8f\x6c\x4a\xb4\x2f\x56\x93\x2f\xef\xc7");
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit3-e3.png");
-    RED_CHECK_SIG(drawable.gd, "\xb8\x86\xab\x4d\x6c\xb6\x02\x86\xb5\xef\xfb\x4a\x7c\x0d\x2f\x06\x26\x9c\x5e\xbe");
+    // drawable.save_to_png("password-edit3-e3.png");
+    RED_CHECK_SIG(drawable.gd, "\x8b\x61\x8d\x2d\x47\xcd\x9b\x1e\x9e\xaf\xe4\x26\x00\xbc\x38\xd0\xd5\x3f\xec\x2e");
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit3-e4.png");
-    RED_CHECK_SIG(drawable.gd, "\x06\x52\x0b\x43\x8c\x4d\xbc\xf8\xbb\x7a\xd9\x57\xac\xa1\x36\x21\xbb\xe8\x21\xa9");
+    // drawable.save_to_png("password-edit3-e4.png");
+    RED_CHECK_SIG(drawable.gd, "\x58\x53\x33\x1b\x93\x41\x5f\xa2\xbd\x7b\x5b\xed\x90\x8a\x1d\x0b\x16\x68\xb0\x06");
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit3-e5.png");
-    RED_CHECK_SIG(drawable.gd, "\x79\x39\x0b\xd4\xad\xbc\x27\x90\xa0\xb8\x78\x9e\xcd\x89\xf9\x6c\x52\x37\x52\x45");
+    // drawable.save_to_png("password-edit3-e5.png");
+    RED_CHECK_SIG(drawable.gd, "\xc4\x51\xf7\x3b\xcb\x9a\x0e\x44\x9c\xa2\x96\x0d\x90\xaf\x9c\xba\x8f\x7b\x61\x6b");
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
 
@@ -708,8 +708,8 @@ RED_AUTO_TEST_CASE(DataWidgetPassword2)
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit3-e6.png");
-    RED_CHECK_SIG(drawable.gd, "\x6d\xae\xd9\x53\x39\xa0\x35\x13\x2c\x14\x5d\x71\x6f\x65\x29\x11\xf1\x13\x34\x0b");
+    // drawable.save_to_png("password-edit3-e6.png");
+    RED_CHECK_SIG(drawable.gd, "\x8f\x3c\xea\x45\x08\xd1\x31\x33\x7a\x74\x20\x30\xdf\xb7\xbd\xe6\x49\xc7\x53\xfd");
 
     RED_CHECK_EQUAL(std::string("aurlie"), wpassword.get_text());
 }
@@ -729,7 +729,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
         }
     } notifier;
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
     parent.set_wh(800, 600);
@@ -746,8 +746,8 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
 
     wpassword.focus(Widget::focus_reason_tabkey);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit4-e1.png");
-    RED_CHECK_SIG(drawable.gd, "\x99\x24\xc3\xf0\x32\x4f\xd0\x02\x58\x0d\xf1\xfe\x25\xee\x23\xf5\xc5\xa7\x0f\x45");
+    // drawable.save_to_png("password-edit4-e1.png");
+    RED_CHECK_SIG(drawable.gd, "\x3f\x66\xd4\xcb\x95\x88\x04\xb2\xc2\xa8\x17\x0b\x68\x7e\xdc\xb3\xea\x76\xe9\xe8");
     RED_CHECK(notifier.sender == &wpassword);
     RED_CHECK(notifier.event == 0);
     notifier.sender = nullptr;
@@ -762,32 +762,32 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit4-e2.png");
-    RED_CHECK_SIG(drawable.gd, "\x60\x5f\x3b\x16\x88\x6f\x2a\x54\x7b\x90\xa4\x92\xbc\xf5\xef\xda\xd6\xab\x1a\x12");
+    // drawable.save_to_png("password-edit4-e2.png");
+    RED_CHECK_SIG(drawable.gd, "\xa2\x75\xbb\x0d\x83\x29\x03\xbd\x42\x54\x8f\x6c\x4a\xb4\x2f\x56\x93\x2f\xef\xc7");
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit4-e3.png");
-    RED_CHECK_SIG(drawable.gd, "\xb8\x86\xab\x4d\x6c\xb6\x02\x86\xb5\xef\xfb\x4a\x7c\x0d\x2f\x06\x26\x9c\x5e\xbe");
+    // drawable.save_to_png("password-edit4-e3.png");
+    RED_CHECK_SIG(drawable.gd, "\x8b\x61\x8d\x2d\x47\xcd\x9b\x1e\x9e\xaf\xe4\x26\x00\xbc\x38\xd0\xd5\x3f\xec\x2e");
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit4-e4.png");
-    RED_CHECK_SIG(drawable.gd, "\x06\x52\x0b\x43\x8c\x4d\xbc\xf8\xbb\x7a\xd9\x57\xac\xa1\x36\x21\xbb\xe8\x21\xa9");
+    // drawable.save_to_png("password-edit4-e4.png");
+    RED_CHECK_SIG(drawable.gd, "\x58\x53\x33\x1b\x93\x41\x5f\xa2\xbd\x7b\x5b\xed\x90\x8a\x1d\x0b\x16\x68\xb0\x06");
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit4-e5.png");
-    RED_CHECK_SIG(drawable.gd, "\x79\x39\x0b\xd4\xad\xbc\x27\x90\xa0\xb8\x78\x9e\xcd\x89\xf9\x6c\x52\x37\x52\x45");
+    // drawable.save_to_png("password-edit4-e5.png");
+    RED_CHECK_SIG(drawable.gd, "\xc4\x51\xf7\x3b\xcb\x9a\x0e\x44\x9c\xa2\x96\x0d\x90\xaf\x9c\xba\x8f\x7b\x61\x6b");
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
 
@@ -795,8 +795,8 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
     keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit4-e6.png");
-    RED_CHECK_SIG(drawable.gd, "\x06\x52\x0b\x43\x8c\x4d\xbc\xf8\xbb\x7a\xd9\x57\xac\xa1\x36\x21\xbb\xe8\x21\xa9");
+    // drawable.save_to_png("password-edit4-e6.png");
+    RED_CHECK_SIG(drawable.gd, "\x58\x53\x33\x1b\x93\x41\x5f\xa2\xbd\x7b\x5b\xed\x90\x8a\x1d\x0b\x16\x68\xb0\x06");
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
 
@@ -807,8 +807,8 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
     keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 17, ctrl_alt_delete);
     wpassword.rdp_input_invalidate(wpassword.get_rect());
-    // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit4-e7.png");
-    RED_CHECK_SIG(drawable.gd, "\xe5\x14\x42\x63\xef\x49\xab\xad\x11\x4f\x82\x27\xf6\xe1\xed\x12\x65\xff\x45\x47");
+    // drawable.save_to_png("password-edit4-e7.png");
+    RED_CHECK_SIG(drawable.gd, "\xa9\x1c\x46\xea\x9e\x44\xc3\xd8\xc4\x55\xb5\xf5\x2f\x16\x17\x99\xbc\xf1\x5f\x0d");
     RED_CHECK(notifier.sender == &wpassword);
     RED_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
     notifier.sender = nullptr;
