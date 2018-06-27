@@ -198,11 +198,11 @@ void config_spec_definition(Writer && W)
 
     W.section("session_log", [&]
     {
-        W.member(ini_and_gui, sesman_to_proxy, type_<bool>(), "enable_session_log", set(true));
+        W.member(ini_and_gui, no_sesman, type_<bool>(), "enable_session_log", set(true));
         W.member(advanced_in_gui, sesman_to_proxy, type_<std::string>(), "log_path", sesman::name{"session_log_path"});
         W.sep();
-        W.member(advanced_in_gui, sesman_to_proxy, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", set(KeyboardInputMaskingLevel::password_and_unidentified));
-        W.member(advanced_in_gui, sesman_to_proxy, type_<bool>(), "hide_non_printable_kbd_input", set(false));
+        W.member(advanced_in_gui, no_sesman, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", set(KeyboardInputMaskingLevel::password_and_unidentified));
+        W.member(advanced_in_gui, no_sesman, type_<bool>(), "hide_non_printable_kbd_input", set(false));
     });
 
     W.section("client", [&]
@@ -510,7 +510,11 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, type_<unsigned>(), "h_width", desc{"Width for high quality."}, set(2048));
         W.member(advanced_in_gui, no_sesman, type_<unsigned>(), "h_qscale", desc{"Qscale (parameter given to ffmpeg) for high quality."}, set(7));
         W.sep();
-        W.member(ini_and_gui, no_sesman, type_<SmartVideoCropping>(), "smart_video_cropping", set(SmartVideoCropping::disable));
+        W.member(ini_and_gui, no_sesman, type_<SmartVideoCropping>(), "smart_video_cropping", desc{
+                "0 : Disabled. When replaying the session video, the size of the RDP viewer matches the size of the client's desktop\n"
+                "1 : When replaying the session video, the size of the RDP viewer is restricted to the greatest area covered by the application during session\n"
+                "2 : When replaying the session video, the size of the RDP viewer is fully covered by the size of the greatest application window during session"
+            },set(SmartVideoCropping::disable));
     });
 
     W.section("crypto", [&]

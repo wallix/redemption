@@ -1983,11 +1983,6 @@ class Sesman():
                 u'enable_nla': 'enable_nla',
                 u'enable_kerberos': 'enable_kerberos'
                 },
-            'session_log': {
-                u'enable_session_log': 'enable_session_log',
-                u'keyboard_input_masking_level': 'keyboard_input_masking_level',
-                u'hide_non_printable_kbd_input': 'hide_non_printable_kbd_input'
-                },
             'session_probe': {
                 u'session_probe' : 'enable_session_probe',
                 u'session_probe_use_smart_launcher' : 'use_smart_launcher',
