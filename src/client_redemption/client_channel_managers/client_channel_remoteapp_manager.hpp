@@ -161,6 +161,8 @@ class ClientChannelRemoteAppManager {
 
     ClientInputMouseKeyboardAPI * impl_input;
 
+public:
+
 //     struct RailChannelData {
 //         uint32_t clientWindowID;
         uint32_t ServerWindowID;
@@ -176,7 +178,7 @@ class ClientChannelRemoteAppManager {
 //     } rail_channel_data;
 
 
-public:
+// public:
     ClientChannelRemoteAppManager(RDPVerbose verbose,
                                   ClientRedemptionAPI * client,
                                   ClientOutputGraphicAPI * impl_graphic,
