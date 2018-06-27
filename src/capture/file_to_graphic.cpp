@@ -351,7 +351,7 @@ void FileToGraphic::interpret_order()
                 auto cmd = receive_order.read<RDPGlyphCache>(
                     this->statistics.CacheGlyph, Verbose::rdp_orders, header);
                 this->gly_cache.set_glyph(
-                    FontChar(std::move(cmd.aj), cmd.x, cmd.y, cmd.cx, cmd.cy, -1, 0, 0, 0),
+                    FontChar(std::move(cmd.aj), cmd.x, cmd.y, cmd.cx, cmd.cy, -1),
                     cmd.cacheId, cmd.cacheIndex
                 );
             }

@@ -26,16 +26,6 @@
 
 namespace
 {
-    int fc_width(FontCharView const& fc)
-    {
-        return fc.abcB + fc.abcC;
-    }
-
-    int fc_offset(FontCharView const& fc)
-    {
-        return std::max(fc.offsetx + fc.abcA, 1);
-    }
-
     template<class Getc>
     void textmetrics_impl(
         const Font & font, const char * unicode_text, int & width, int & height, Getc getc)
@@ -44,7 +34,7 @@ namespace
         FontCharView const* font_item = nullptr;
         for (; uint32_t c = getc(unicode_iter); ++unicode_iter) {
             font_item = &font.glyph_or_unknown(c);
-            width += fc_offset(*font_item) + fc_width(*font_item);
+            width += font_item->offsetx + font_item->incby;
         }
         height = font.max_height();
     }
@@ -213,9 +203,9 @@ void server_draw_text(
             (void)cache_result; // supress warning
 
             *data_begin++ = cacheIndex;
-            *data_begin++ += fc_offset(*font_item);
-            data_begin[1] = fc_width(*font_item);
-            total_width += fc_offset(*font_item) + fc_width(*font_item);
+            *data_begin++ += font_item->offsetx;
+            data_begin[1] = font_item->incby;
+            total_width += font_item->offsetx + font_item->incby;
         }
 
         const Rect bk(x, y, total_width, font.max_height());

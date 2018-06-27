@@ -34,7 +34,8 @@
 
 namespace
 {
-    constexpr uint8_t unknown_glyph_data[]{
+    // height aligned of 4 bytes
+    constexpr uint8_t unknown_glyph_data[12]{
         0b01111'000,
         0b10001'000,
         0b00001'000,
@@ -50,7 +51,7 @@ namespace
 
 FontCharView Font::default_unknown_glyph() noexcept
 {
-    return FontCharView{2, 0, 0, 5, 1, 8, 0, 5, 10, unknown_glyph_data};
+    return FontCharView{2, 0, 6, 5, 10, unknown_glyph_data};
 }
 
 void Font::load_from_file(char const * file_path)
@@ -58,6 +59,8 @@ void Font::load_from_file(char const * file_path)
     // TODO Temporary disabling font to avoid useless messages in watchdog
     //LOG(LOG_INFO, "Reading font file %s", file_path);
     // RAZ of font chars table
+
+    this->max_height_ = default_unknown_glyph().offsety + default_unknown_glyph().height + 1;
 
     unique_fd const ufd{open(file_path, O_RDONLY)};
     if (!ufd) {
@@ -159,9 +162,9 @@ void Font::load_from_file(char const * file_path)
         auto const value = stream.in_uint32_le(); (void)value;
         auto const offsetx = stream.in_sint16_le();
         auto const offsety = stream.in_sint16_le();
-        auto const left = stream.in_sint16_le();
-        auto const display_width = stream.in_uint16_le();
-        auto const right = stream.in_sint16_le();
+        auto const abcA = stream.in_sint16_le();
+        auto const abcB = stream.in_uint16_le();
+        auto const abcC = stream.in_sint16_le();
         auto const width = stream.in_uint16_le();
         auto const height = stream.in_uint16_le();
 
@@ -188,9 +191,7 @@ void Font::load_from_file(char const * file_path)
         stream.in_copy_bytes(data, data_size);
 
         this->font_items.emplace_back(
-            offsetx, offsety,
-            left, display_width, right,
-            left+display_width+right, right,
+            std::max(offsetx + abcA, 1), offsety, std::max(abcB + abcC, width+0),
             width, height, data);
         data += data_size;
     }

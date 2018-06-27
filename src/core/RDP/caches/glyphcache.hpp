@@ -86,6 +86,7 @@ public:
     }
 
 private:
+    // TODO FontChar -> FontCharView
     t_glyph_cache_result priv_add_glyph(FontChar const & font_item, int cacheid, int & cacheidx) {
         this->glyph_stamp++;
 
