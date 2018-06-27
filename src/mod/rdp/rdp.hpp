@@ -1150,17 +1150,23 @@ public:
                 );
         }
 
-        LOG(LOG_INFO, "RDP mod built");
+        LOG(LOG_INFO, "RDP mod built 1");
 
         this->negociation_result.front_width = info.width;
         this->negociation_result.front_height = info.height;
+
+        LOG(LOG_INFO, "RDP mod built 2");
 
         if (mod_rdp_params.enable_session_probe) {
             this->file_system_drive_manager.EnableSessionProbeDrive(
                 mod_rdp_params.proxy_managed_drive_prefix, mod_rdp_params.verbose);
         }
 
+        LOG(LOG_INFO, "RDP mod built 3");
+
         this->init_negociate_event_(info, timeobj, mod_rdp_params, program, directory);
+
+        LOG(LOG_INFO, "RDP mod built 4");
     }   // mod_rdp
 
     ~mod_rdp() override {

@@ -24,10 +24,11 @@
 
 #include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
 #include "client_redemption/client_input_output_api/client_graphic_api.hpp"
-
+#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 #include "client_redemption/client_input_output_api/client_sound_api.hpp"
 #include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
 #include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
+
 
 #include "client_redemption/client_redemption_api.hpp"
 
@@ -129,6 +130,71 @@ public:
     void play() override {}
 };
 
+
+class FakeClientOutputGraphic : public ClientOutputGraphicAPI {
+
+public:
+    FakeClientOutputGraphic() : ClientOutputGraphicAPI(0, 0) {}
+
+    virtual void set_ErrorMsg(std::string const & movie_path) override {}
+
+    virtual void dropScreen() override {}
+
+    virtual void show_screen() override {}
+
+    virtual void reset_cache(int w,  int h) override {}
+
+    virtual void create_screen() override {}
+
+    virtual void closeFromScreen() override {}
+
+    virtual void set_screen_size(int x, int y) override {}
+
+    virtual void update_screen() override {}
+
+
+
+    virtual FrontAPI::ResizeResult server_resize(int width, int height, int bpp) override {}
+
+    virtual void set_pointer(Pointer      const &) override {}
+
+    virtual void draw(RDP::FrameMarker    const & cmd) override {}
+    virtual void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
+    virtual void draw(RDPDestBlt          const & cmd, Rect clip) override {}
+    virtual void draw(RDPMultiDstBlt      const & cmd, Rect clip) override {}
+    virtual void draw(RDPScrBlt           const & cmd, Rect clip) override {}
+    virtual void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override {}
+    virtual void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override {}
+    virtual void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override {}
+
+    virtual void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
+    virtual void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
+    virtual void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
+    virtual void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
+    virtual void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
+    virtual void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
+    virtual void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
+    virtual void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
+    virtual void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
+    virtual void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
+    virtual void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {}
+    virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override {}
+};
+
+class FakeClientInputMouseKeyboard : public ClientInputMouseKeyboardAPI {
+
+public:
+    FakeClientInputMouseKeyboard() : ClientInputMouseKeyboardAPI() {}
+
+    // TODO string_view
+    void virtual keyPressEvent(const int key, std::string const& text) override {}
+
+    // TODO string_view
+    void virtual keyReleaseEvent(const int key, std::string const& text) override {}
+
+    virtual void init_form() override {}
+    virtual void update_keylayout() override {}
+};
 
 
 class FakeClient : public ClientRedemptionAPI

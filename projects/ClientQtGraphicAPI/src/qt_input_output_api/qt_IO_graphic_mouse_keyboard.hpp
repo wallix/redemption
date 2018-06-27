@@ -1240,7 +1240,6 @@ private:
             default: LOG(LOG_WARNING, "DEFAULT: RDPMem3Blt rop = %x", cmd.rop);
             break;
         }
-
     }
 
 
@@ -1269,7 +1268,6 @@ private:
             default: LOG(LOG_WARNING, "DEFAULT: RDPDestBlt rop = %x", cmd.rop);
                 break;
         }
-
     }
 
     void draw(const RDPMultiDstBlt & cmd, Rect clip) override {
