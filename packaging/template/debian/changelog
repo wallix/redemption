@@ -1,3 +1,9 @@
+redemption (1.2.43%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * fix build
+
+ -- cgrosjean <cgrosjean at wallix.com>  Wed, 27 Jun 2018 18:36:44 +0200
+
 redemption (1.2.41%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix Glyph drawing issue (16907)
