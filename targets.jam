@@ -970,28 +970,6 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   <library>src/utils/rle.o
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
-test-run tests/client_redemption/client_channel_managers/test_client_channel_remoteapp_manager :
-  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_channel_remoteapp_manager.cpp
-:
-  <covfile>src/client_redemption/client_channel_managers/client_channel_remoteapp_manager.hpp
-  <library>app_path_test.o
-  <library>crypto
-  <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/core/RDP/mppc.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/graphic_api.o
-  <library>src/mod/internal/client_execute.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/png.o
-  <library>src/utils/rle.o
-  <variant>debug:<library>dl <variant>san:<library>dl
-;
 test-run tests/core/FSCC/test_FileInformation :
   $(REDEMPTION_TEST_PATH)/core/FSCC/test_FileInformation.cpp
 :
@@ -4654,8 +4632,6 @@ alias test_client_channel_RDPDR_manager : tests/client_redemption/client_channel
 alias test_client_channel_RDPDR_manager.coverage : tests/client_redemption/client_channel_managers/test_client_channel_RDPDR_manager.coverage ;
 alias test_client_channel_RDPSND_manager : tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager ;
 alias test_client_channel_RDPSND_manager.coverage : tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager.coverage ;
-alias test_client_channel_remoteapp_manager : tests/client_redemption/client_channel_managers/test_client_channel_remoteapp_manager ;
-alias test_client_channel_remoteapp_manager.coverage : tests/client_redemption/client_channel_managers/test_client_channel_remoteapp_manager.coverage ;
 alias test_FileInformation : tests/core/FSCC/test_FileInformation ;
 alias test_FileInformation.coverage : tests/core/FSCC/test_FileInformation.coverage ;
 alias test_bmpcache : tests/core/RDP/caches/test_bmpcache ;
@@ -5310,7 +5286,6 @@ alias tests/client_redemption/client_channel_managers :
   tests/client_redemption/client_channel_managers/test_client_channel_CLIPRDR_manager
   tests/client_redemption/client_channel_managers/test_client_channel_RDPDR_manager
   tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager
-  tests/client_redemption/client_channel_managers/test_client_channel_remoteapp_manager
 ;
 explicit tests/core/FSCC ;
 alias tests/core/FSCC :
