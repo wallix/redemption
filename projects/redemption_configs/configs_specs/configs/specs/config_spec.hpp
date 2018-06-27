@@ -514,9 +514,9 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, type_<unsigned>(), "h_qscale", desc{"Qscale (parameter given to ffmpeg) for high quality."}, set(7));
         W.sep();
         W.member(ini_and_gui, no_sesman, type_<SmartVideoCropping>(), "smart_video_cropping", desc{
-                "0 : Disabled. When replaying the session video, the size of the RDP viewer matches the size of the client's desktop\n"
-                "1 : When replaying the session video, the size of the RDP viewer is restricted to the greatest area covered by the application during session\n"
-                "2 : When replaying the session video, the size of the RDP viewer is fully covered by the size of the greatest application window during session"
+                "0 : Disabled. When replaying the session video, the content of the RDP viewer matches the size of the client's desktop\n"
+                "1 : When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session\n"
+                "2 : When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session"
             },set(SmartVideoCropping::disable));
     });
 

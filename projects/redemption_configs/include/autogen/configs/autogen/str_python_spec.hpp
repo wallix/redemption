@@ -753,9 +753,9 @@
 "#_advanced\n"
 "h_qscale = integer(min=0, default=7)\n\n"
 
-"# 0 : Disabled. When replaying the session video, the size of the RDP viewer matches the size of the client's desktop\n"
-"# 1 : When replaying the session video, the size of the RDP viewer is restricted to the greatest area covered by the application during session\n"
-"# 2 : When replaying the session video, the size of the RDP viewer is fully covered by the size of the greatest application window during session\n"
+"# 0 : Disabled. When replaying the session video, the content of the RDP viewer matches the size of the client's desktop\n"
+"# 1 : When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session\n"
+"# 2 : When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session\n"
 "#   0: disable\n"
 "#   1: v1\n"
 "#   2: v2\n"

@@ -2761,9 +2761,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{7};
     };
-    /// 0 : Disabled. When replaying the session video, the size of the RDP viewer matches the size of the client's desktop <br/>
-    /// 1 : When replaying the session video, the size of the RDP viewer is restricted to the greatest area covered by the application during session <br/>
-    /// 2 : When replaying the session video, the size of the RDP viewer is fully covered by the size of the greatest application window during session <br/>
+    /// 0 : Disabled. When replaying the session video, the content of the RDP viewer matches the size of the client's desktop <br/>
+    /// 1 : When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session <br/>
+    /// 2 : When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session <br/>
     /// type: SmartVideoCropping <br/>
     /// value = static_cast<type>(0) <br/>
     struct video::smart_video_cropping {
