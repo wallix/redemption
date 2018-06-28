@@ -1,3 +1,9 @@
+redemption (1.2.45%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix mode of meta file.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 28 Jun 2018 12:30:25 +0200
+
 redemption (1.2.43%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * fix build
