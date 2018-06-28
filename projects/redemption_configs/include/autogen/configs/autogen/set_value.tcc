@@ -1336,6 +1336,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "session_probe_clipboard_based_launcher_start_delay")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay&>(this->variables).value,
+                ::configs::spec_type<std::chrono::milliseconds>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "session_probe_clipboard_based_launcher_long_delay")) {
             ::configs::parse_and_log(
                 context, key,

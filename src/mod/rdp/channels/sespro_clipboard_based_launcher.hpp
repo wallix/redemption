@@ -74,6 +74,7 @@ class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
     ClipboardVirtualChannel*    cliprdr_channel = nullptr;
 
     const std::chrono::milliseconds clipboard_initialization_delay;
+    const std::chrono::milliseconds start_delay;
     const std::chrono::milliseconds long_delay;
     const std::chrono::milliseconds short_delay;
 
@@ -85,6 +86,7 @@ public:
     SessionProbeClipboardBasedLauncher(mod_api& mod,
         const char* alternate_shell,
         std::chrono::milliseconds clipboard_initialization_delay_ms,
+        std::chrono::milliseconds start_delay_ms,
         std::chrono::milliseconds long_delay_ms,
         std::chrono::milliseconds short_delay_ms, RDPVerbose verbose)
     : mod(mod)
@@ -92,6 +94,7 @@ public:
     , clipboard_initialization_delay(
         (clipboard_initialization_delay_ms < std::chrono::milliseconds(2000)) ? std::chrono::milliseconds(2000) : clipboard_initialization_delay_ms
         )
+    , start_delay(start_delay_ms)
     , long_delay((long_delay_ms < std::chrono::milliseconds(500)) ? std::chrono::milliseconds(500) : long_delay_ms)
     , short_delay((short_delay_ms < std::chrono::milliseconds(50)) ? std::chrono::milliseconds(50) : short_delay_ms)
     , verbose(verbose)
@@ -100,10 +103,11 @@ public:
             LOG(LOG_INFO,
                 "SessionProbeClipboardBasedLauncher: "
                     "clipboard_initialization_delay_ms=%" PRId64 " "
+                    "start_delay_ms=%" PRId64 " "
                     "long_delay_ms=%" PRId64 " "
                     "short_delay_ms=%" PRId64,
-                clipboard_initialization_delay_ms.count(), long_delay_ms.count(),
-                short_delay_ms.count());
+                clipboard_initialization_delay_ms.count(), start_delay_ms.count(),
+                long_delay_ms.count(), short_delay_ms.count());
         }
     }
 
@@ -608,7 +612,7 @@ public:
 
         this->state = State::RUN_WIN_D_WIN_DOWN;
 
-        this->event.set_trigger_time(this->short_delay);
+        this->event.set_trigger_time(std::max(this->short_delay, this->start_delay));
 
         return false;
     }

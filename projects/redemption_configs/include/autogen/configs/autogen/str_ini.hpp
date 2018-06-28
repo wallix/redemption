@@ -446,6 +446,10 @@
 
 "# (is in millisecond)\n"
 "#_hidden\n"
+"#session_probe_clipboard_based_launcher_start_delay = 2000\n\n"
+
+"# (is in millisecond)\n"
+"#_hidden\n"
 "#session_probe_clipboard_based_launcher_long_delay = 500\n\n"
 
 "# (is in millisecond)\n"

@@ -379,6 +379,7 @@ protected:
     const bool                        use_session_probe_to_launch_remote_program;
 
     const std::chrono::milliseconds   session_probe_clipboard_based_launcher_clipboard_initialization_delay;
+    const std::chrono::milliseconds   session_probe_clipboard_based_launcher_start_delay;
     const std::chrono::milliseconds   session_probe_clipboard_based_launcher_long_delay;
     const std::chrono::milliseconds   session_probe_clipboard_based_launcher_short_delay;
 
@@ -983,6 +984,7 @@ public:
         , session_probe_enable_log_rotation(mod_rdp_params.session_probe_enable_log_rotation)
         , use_session_probe_to_launch_remote_program(mod_rdp_params.use_session_probe_to_launch_remote_program)
         , session_probe_clipboard_based_launcher_clipboard_initialization_delay(mod_rdp_params.session_probe_clipboard_based_launcher_clipboard_initialization_delay)
+        , session_probe_clipboard_based_launcher_start_delay(mod_rdp_params.session_probe_clipboard_based_launcher_start_delay)
         , session_probe_clipboard_based_launcher_long_delay(mod_rdp_params.session_probe_clipboard_based_launcher_long_delay)
         , session_probe_clipboard_based_launcher_short_delay(mod_rdp_params.session_probe_clipboard_based_launcher_short_delay)
         , session_probe_allow_multiple_handshake(mod_rdp_params.session_probe_allow_multiple_handshake)
@@ -1545,6 +1547,7 @@ public:
                                 std::make_unique<SessionProbeClipboardBasedLauncher>(
                                     *this, alternate_shell.c_str(),
                                     this->session_probe_clipboard_based_launcher_clipboard_initialization_delay,
+                                    this->session_probe_clipboard_based_launcher_start_delay,
                                     this->session_probe_clipboard_based_launcher_long_delay,
                                     this->session_probe_clipboard_based_launcher_short_delay,
                                     this->verbose);
