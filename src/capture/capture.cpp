@@ -1254,9 +1254,15 @@ public:
         const char * filename = record_path.c_str();
         int const file_mode = capture_params.groupid ? (S_IRUSR|S_IRGRP) : S_IRUSR;
         int fd = ::open(filename, O_CREAT | O_TRUNC | O_WRONLY, file_mode);
-        if (fd < 0) {
+        // umask (man umask) can change effective mode of created file
+        if ((fd < 0) || (chmod(filename, file_mode) == -1)) {
             int const errnum = errno;
-            LOG(LOG_ERR, "can't open meta file %s: %s [%d]", filename, strerror(errnum), errnum);
+            if (fd < 0) {
+                LOG(LOG_ERR, "can't open meta file %s: %s [%d]", filename, strerror(errnum), errnum);
+            }
+            else {
+                LOG(LOG_ERR, "can't change mod of meta file %s: %s [%d]", filename, strerror(errnum), errnum);
+            }
             Error error(ERR_TRANSPORT_OPEN_FAILED, errnum);
             if (capture_params.report_message) {
                 report_and_transform_error(
