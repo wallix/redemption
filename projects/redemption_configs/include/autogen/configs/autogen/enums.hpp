@@ -431,8 +431,11 @@ operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeOnKeepaliveTimeout e)
 
 
 enum class SmartVideoCropping {
+    // Disabled. When replaying the session video, the content of the RDP viewer matches the size of the client's desktop
     disable = 0,
+    // When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session
     v1 = 1,
+    // When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session
     v2 = 2,
 };
 

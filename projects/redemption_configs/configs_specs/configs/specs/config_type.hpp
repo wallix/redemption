@@ -168,9 +168,9 @@ inline void config_type_definition(type_enumerations & e)
     ;
 
     e.enumeration_list("SmartVideoCropping")
-      .value("disable")
-      .value("v1")
-      .value("v2")
+      .value("disable", "Disabled. When replaying the session video, the content of the RDP viewer matches the size of the client's desktop")
+      .value("v1", "When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session")
+      .value("v2", "When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session")
     ;
 
     e.enumeration_list("RdpModeConsole")
