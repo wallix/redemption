@@ -309,37 +309,25 @@ int main(int argc, char** argv)
     openlog("rdpproxy", LOG_CONS | LOG_PERROR, LOG_USER);
 
     if (options.count("check")) {
-        bool user_check_file_result  =
-            ((uid != euid) || (gid != egid)) ?
-            CheckFile::check(user_check_file_list) : true;
         /*
           setgid(egid);
           setuid(euid);
         */
-        bool euser_check_file_result = CheckFile::check(euser_check_file_list);
+        bool const euser_check_file_result = check_files(euid, egid);
         /*
           setgid(gid);
           setuid(uid);
         */
 
-        if ((uid != euid) || (gid != egid)) {
-            CheckFile::ShowAll(user_check_file_list, uid, gid);
-        }
-        CheckFile::ShowAll(euser_check_file_list, euid, egid);
-
-        if (!user_check_file_result || !euser_check_file_result)
+        if (!euser_check_file_result)
         {
-            if ((uid != euid) || (gid != egid))
-            {
-                CheckFile::ShowErrors(user_check_file_list, uid, gid);
-            }
-            CheckFile::ShowErrors(euser_check_file_list, euid, egid);
-
             LOG(LOG_INFO,
-                "Please verify that all tests passed. If not, "
-                "you may need to remove %s or reinstall rdpproxy if some configuration "
+                "Please verify that all tests passed. If not, you may need "
+                "to remove %s or reinstall rdpproxy if some configuration "
                 "files are missing.", app_path(AppPath::LockFile));
+            return 1;
         }
+
         return 0;
     }
 

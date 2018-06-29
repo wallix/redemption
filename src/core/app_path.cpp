@@ -60,7 +60,6 @@ char const * app_path(AppPath k) noexcept
         case AppPath::Persistent: return PERSISTENT_PATH;
         case AppPath::PersistentRdp: return PERSISTENT_PATH "/mod_rdp";
         case AppPath::DriveRedirection: return DRIVE_REDIRECTION_PATH;
-        case AppPath::PidParent: return PID_PATH;
         case AppPath::Share: return SHARE_PATH;
         case AppPath::Cfg: return CFG_PATH;
         case AppPath::LoginWabBlue: return SHARE_PATH "/" LOGIN_WAB_BLUE;
@@ -69,7 +68,7 @@ char const * app_path(AppPath k) noexcept
         case AppPath::CfgIni: return CFG_PATH "/" RDPPROXY_INI;
         case AppPath::CfgCrt: return CFG_PATH "/rdpproxy.crt";
         case AppPath::CfgKey: return CFG_PATH "/rdpproxy.key";
-        case AppPath::CfgDhPem: return CFG_PATH "/" DH_PEM;
+        case AppPath::CfgDhPem: return CFG_PATH "/dh2048.pem";
         case AppPath::LockDir: return PID_PATH "/redemption";
         case AppPath::LockFile: return PID_PATH "/redemption/" LOCKFILE;
         case AppPath::DefaultFontFile: return SHARE_PATH "/" DEFAULT_FONT_NAME;

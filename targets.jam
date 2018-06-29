@@ -40,6 +40,7 @@ exe rdpproxy :
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/check_files.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -1875,8 +1876,10 @@ test-run tests/core/test_channel_names :
 test-run tests/core/test_check_files :
   $(REDEMPTION_TEST_PATH)/core/test_check_files.cpp
 :
+  <covfile>src/core/check_files.cpp
   <covfile>src/core/check_files.hpp
   <library>app_path_test.o
+  <library>src/core/check_files.o
 ;
 test-run tests/core/test_client_info :
   $(REDEMPTION_TEST_PATH)/core/test_client_info.cpp
@@ -2281,6 +2284,7 @@ test-run tests/gdi/test_graphic_api :
 :
   <covfile>src/gdi/graphic_api.cpp
   <covfile>src/gdi/graphic_api.hpp
+  <library>app_path_test.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
 ;
@@ -4512,6 +4516,7 @@ obj src/capture/video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.c
 obj src/capture/video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder.cpp : <cxxflags>-Wno-deprecated-declarations ;
 obj src/core/RDP/mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
 obj src/core/RDP/nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;
+obj src/core/check_files.o : $(REDEMPTION_SRC_PATH)/core/check_files.cpp ;
 obj src/core/date_dir_from_filename.o : $(REDEMPTION_SRC_PATH)/core/date_dir_from_filename.cpp ;
 obj src/core/error.o : $(REDEMPTION_SRC_PATH)/core/error.cpp ;
 obj src/core/font.o : $(REDEMPTION_SRC_PATH)/core/font.cpp ;

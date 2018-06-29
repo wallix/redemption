@@ -36,7 +36,6 @@ enum class AppPath
     Persistent,
     PersistentRdp,
     DriveRedirection,
-    PidParent,
     Share,
     Cfg,
     LoginWabBlue,
@@ -65,15 +64,8 @@ std::string app_path_s(AppPath);
 #define REDEMPTION_LOGO24 "xrdp24b-redemption.png"
 #define LOCKFILE "rdpproxy.pid"
 
-
 // #define RSAKEYS_INI "rsakeys.ini"
 #define RDPPROXY_INI "rdpproxy.ini"
 #define THEME_INI    "theme.ini"
-
-#define RDPPROXY_CRT "rdpproxy.crt"
-#define RDPPROXY_KEY "rdpproxy.key"
-// #define DH1024_PEM "dh1024.pem"
-#define DH2048_PEM "dh2048.pem"
-#define DH_PEM DH2048_PEM
 
 #define DEFAULT_FONT_NAME "dejavu_14.rbf"
