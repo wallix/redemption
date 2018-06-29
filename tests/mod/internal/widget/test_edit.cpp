@@ -35,7 +35,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetEdit is a edit widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -64,16 +64,16 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    // // drawable.save_to_png("edit1.png");
+    // drawable.save_to_png("edit1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xc7\x99\x1f\x40\xc9\x3b\x94\x44\x24\xb0\x14\x05\xdb\x3f\xdd\xfd\x6c\x04\x91\x28");
+    RED_CHECK_SIG(drawable.gd, "\xae\xaf\x11\xb3\xff\x64\x87\x77\xe8\x4a\x15\xd2\x94\x83\x35\x57\x18\x8a\xf4\x2c");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetEdit2)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetEdit is a edit widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -98,16 +98,16 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit2)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    // // drawable.save_to_png("edit2.png");
+    // drawable.save_to_png("edit2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x80\xc0\x5a\x0f\x50\xf0\x7b\xca\x19\x9c\xc3\x04\xf7\x3e\xa2\xe3\xe6\xe9\xdc\xae");
+    RED_CHECK_SIG(drawable.gd, "\x1e\x5d\xc1\x0e\x49\x19\xf8\xc7\x35\x0b\xd7\xbe\x95\x21\xe7\xd9\xd1\xdb\x95\xb8");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetEdit3)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetEdit is a edit widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -132,16 +132,16 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    // // drawable.save_to_png("edit3.png");
+    // drawable.save_to_png("edit3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x8e\xe4\xdf\xf4\x84\x5a\x15\x77\x13\x5e\xef\xd5\xd1\x9b\x16\x9b\x78\x0c\x2b\xb6");
+    RED_CHECK_SIG(drawable.gd, "\x97\x5a\xa5\x98\x34\x61\x07\x30\x40\x2e\x02\xda\x08\x61\x91\x95\x09\x64\xde\x57");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetEdit4)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -166,16 +166,16 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit4)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    // // drawable.save_to_png("edit4.png");
+    // drawable.save_to_png("edit4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xa2\x51\x8a\xa7\xa9\xfa\x36\x55\xb1\xec\x58\x80\x7a\x6d\xc0\x80\xd8\xc4\xf5\xe7");
+    RED_CHECK_SIG(drawable.gd, "\x3b\x2c\x5a\x89\x72\x7f\xe4\x45\x86\x04\xfb\xc2\x8e\xf6\xe6\x4c\xd8\x2b\x37\xab");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetEdit5)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetEdit is a edit widget of size 100x20 at position -20,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -200,16 +200,16 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit5)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    // // drawable.save_to_png("edit5.png");
+    // drawable.save_to_png("edit5.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xca\xce\x31\x98\x72\xa9\x48\x02\xcc\xaa\x62\x98\x8f\x13\x20\xa5\x38\x2c\x7c\xcf");
+    RED_CHECK_SIG(drawable.gd, "\xb8\x85\xe3\x1f\x50\x89\xc8\x93\x7b\x5e\xc9\x28\x92\x40\x8a\x61\x61\x86\xa8\x9b");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetEdit6)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetEdit is a edit widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -234,16 +234,16 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit6)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    // // drawable.save_to_png("edit6.png");
+    // drawable.save_to_png("edit6.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x8d\xf4\xcc\xf4\x21\x8d\xc8\x8c\x52\x9f\x94\xc2\x90\xfd\x9a\xe7\x3e\x7c\x86\xc8");
+    RED_CHECK_SIG(drawable.gd, "\xd2\xb7\x7e\xe2\x35\xd1\x0b\x4b\x8d\xc8\xca\x14\x1c\x27\x4a\xe4\x6c\x5e\xf7\x83");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetEditClip)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetEdit is a edit widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -268,16 +268,16 @@ RED_AUTO_TEST_CASE(TraceWidgetEditClip)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    // // drawable.save_to_png("edit7.png");
+    // drawable.save_to_png("edit7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x53\x7a\x54\x5e\x4f\x84\xe7\xe8\x2e\xa1\x2d\xda\x49\x04\x6e\x83\xc6\x80\xd8\x04");
+    RED_CHECK_SIG(drawable.gd, "\x82\xd3\x97\xb5\x70\x57\xa0\x31\x5d\xfe\x62\x5c\xae\xcb\x42\x40\xcd\xbf\xf7\xb4");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetEditClip2)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetEdit is a edit widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -302,9 +302,9 @@ RED_AUTO_TEST_CASE(TraceWidgetEditClip2)
                                     30,
                                     10));
 
-    // // drawable.save_to_png("edit8.png");
+    // drawable.save_to_png("edit8.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x19\xd6\x37\xfc\x56\x80\x9d\x76\xce\xc9\x4d\x84\x02\xbb\x00\x36\x7e\x85\x37\x69");
+    RED_CHECK_SIG(drawable.gd, "\xdf\xa2\x5b\x1c\x7d\x42\xd9\x7d\xe6\x1b\xc5\xdc\x73\x45\x22\x3c\xe5\x1d\x04\xe8");
 }
 
 RED_AUTO_TEST_CASE(EventWidgetEdit)
@@ -340,7 +340,7 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
         }
     } notifier;
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
     parent.set_wh(800, 600);
@@ -358,7 +358,7 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png("edit-e1.png");
-    RED_CHECK_SIG(drawable.gd, "\x44\xf4\x47\x2a\xf9\x6d\x18\xf5\x38\x34\x9a\xdd\xd5\xa4\x3b\xbb\xd1\xcb\x98\x0d");
+    RED_CHECK_SIG(drawable.gd, "\xae\x5b\xb4\xa4\xb7\xc4\xbb\xc3\x69\x8e\xf4\x32\x1b\x19\x91\xff\x12\xd3\x87\xc1");
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -370,7 +370,7 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
     keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 16, ctrl_alt_delete);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png("edit-e2-1.png");
-    RED_CHECK_SIG(drawable.gd, "\xae\xc8\x14\xa5\xf8\x5f\x46\xe1\xdd\x19\x11\xf1\xfb\x27\x3b\xc2\x36\x2c\x09\x20");
+    RED_CHECK_SIG(drawable.gd, "\x45\x22\xa3\xef\x85\x3f\x81\xc2\xd3\x40\x23\x54\x95\x15\x3a\xca\x22\xfe\x93\x0b");
     RED_CHECK(notifier.sender == &wedit);
     RED_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
     notifier.sender = nullptr;
@@ -381,7 +381,7 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
     keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 17, ctrl_alt_delete);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png("edit-e2-2.png");
-    RED_CHECK_SIG(drawable.gd, "\xbf\x8e\xf0\x40\xdf\x7f\x13\x6f\xb8\x17\x42\xfc\xa6\xa6\x64\xa2\x5f\x6e\x48\xaf");
+    RED_CHECK_SIG(drawable.gd, "\xe1\x2c\x25\xf6\x93\x30\xf9\x46\x40\x9e\xe4\x6f\x11\x43\x3c\x6b\x15\x2d\x4f\xcb");
     RED_CHECK(notifier.sender == &wedit);
     RED_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
     notifier.sender = nullptr;
@@ -391,7 +391,7 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png("edit-e3.png");
-    RED_CHECK_SIG(drawable.gd, "\xed\xb5\xc8\x03\xf8\x89\x29\xc7\x6b\xc3\x54\xd1\x82\xaa\x71\xf8\x45\xc4\xd2\x3b");
+    RED_CHECK_SIG(drawable.gd, "\x65\x3c\x08\xed\xe0\x8f\x8b\xe6\x53\xae\x90\x5d\x1b\x4b\x7b\x8b\x9d\xaa\x12\x46");
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
 
@@ -400,26 +400,26 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png("edit-e4.png");
-    RED_CHECK_SIG(drawable.gd, "\xbf\x8e\xf0\x40\xdf\x7f\x13\x6f\xb8\x17\x42\xfc\xa6\xa6\x64\xa2\x5f\x6e\x48\xaf");
+    RED_CHECK_SIG(drawable.gd, "\xe1\x2c\x25\xf6\x93\x30\xf9\x46\x40\x9e\xe4\x6f\x11\x43\x3c\x6b\x15\x2d\x4f\xcb");
 
     keymap.push_kevent(Keymap2::KEVENT_BACKSPACE);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png("edit-e5.png");
-    RED_CHECK_SIG(drawable.gd, "\xae\xc8\x14\xa5\xf8\x5f\x46\xe1\xdd\x19\x11\xf1\xfb\x27\x3b\xc2\x36\x2c\x09\x20");
+    RED_CHECK_SIG(drawable.gd, "\x45\x22\xa3\xef\x85\x3f\x81\xc2\xd3\x40\x23\x54\x95\x15\x3a\xca\x22\xfe\x93\x0b");
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png("edit-e6.png");
-    RED_CHECK_SIG(drawable.gd, "\xc0\x74\x67\x34\x1e\x68\x03\xdf\xc8\xf6\x33\x9e\xc2\x12\x02\xaf\x9c\xc1\xb3\x3f");
+    RED_CHECK_SIG(drawable.gd, "\x6b\xef\xd7\xaf\x7f\x79\x5a\x0e\x8b\xee\xd2\xfb\x26\xaa\x01\x47\x81\xaa\xe0\xb5");
 
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png("edit-e7.png");
-    RED_CHECK_SIG(drawable.gd, "\x7d\x2e\x43\x00\x55\xb3\x69\x57\x46\xc5\x6e\x1f\x98\xee\x53\x3e\xe1\x9f\xc0\xe4");
+    RED_CHECK_SIG(drawable.gd, "\x83\x00\xdb\xc8\xc1\x75\x0e\xc0\xb6\xa6\x36\x3f\xf5\xb8\x28\xf0\x45\x15\x4b\x3b");
 
     keymap.push_kevent(Keymap2::KEVENT_DELETE);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
@@ -428,7 +428,7 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png("edit-e8.png");
-    RED_CHECK_SIG(drawable.gd, "\x47\x6d\xf3\xc2\x37\x0d\x23\x81\x86\x78\xed\x1f\x47\x86\x82\x4d\x1e\x8b\x71\xe6");
+    RED_CHECK_SIG(drawable.gd, "\x46\x79\x49\x73\x54\xbe\x66\x91\x2b\x7a\xdb\x32\xf6\x39\x2f\x82\xa9\xc7\xc7\xce");
 
     keymap.push_kevent(Keymap2::KEVENT_END);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
@@ -437,7 +437,7 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png("edit-e9.png");
-    RED_CHECK_SIG(drawable.gd, "\x7e\xf2\x83\xa5\x84\x21\x18\x89\xf9\xfb\x9d\xaf\x98\x70\xc9\xb2\x2d\x9a\x9c\x79");
+    RED_CHECK_SIG(drawable.gd, "\xd4\x54\x30\xb6\x70\xb3\xaa\x14\x1d\x79\x26\xc3\xe9\x88\x86\xeb\x6c\xab\x27\x72");
 
     keymap.push_kevent(Keymap2::KEVENT_HOME);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
@@ -446,7 +446,7 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png("edit-e10.png");
-    RED_CHECK_SIG(drawable.gd, "\x6b\x39\x5e\x15\xd1\xf7\x71\x25\xb9\xae\xb9\x49\x8c\xa1\x95\x26\xb9\x72\x2e\xf4");
+    RED_CHECK_SIG(drawable.gd, "\x53\xd2\xa3\xd9\xcb\xaa\x39\x63\x7d\x89\x44\x33\x84\xcd\x8b\xa1\xe3\x47\x49\x17");
 
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
@@ -467,14 +467,14 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
 
     // drawable.save_to_png("edit-e11.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x52\x7f\xea\x38\xfe\xf0\x19\xd7\x47\x86\x9c\x17\x33\xfb\xe5\xea\x7e\x06\x25\x20");
+    RED_CHECK_SIG(drawable.gd, "\x36\xb8\x39\xca\x04\xec\x79\xfb\xd6\x96\xf0\x09\x24\x24\xd1\x2d\x13\xd9\x64\x86");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetEdit is a edit widget of size 256x125 at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -534,14 +534,14 @@ RED_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
 
     // drawable.save_to_png("edit9.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xaf\x75\xe8\xb2\x84\x14\x37\x9e\x84\xf4\xdc\x1f\x09\x2f\x12\xa6\xfb\x88\x12\x46");
+    RED_CHECK_SIG(drawable.gd, "\x03\x46\x64\x48\x8f\x30\x38\xd8\x0e\x09\x18\xb8\x90\x36\x00\x19\x2e\x6f\x47\xb5");
 
     // ask to widget to redraw at it's current position
     wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
 
     // drawable.save_to_png("edit10.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x1f\x2d\xf3\xed\xc1\xaa\x00\xdc\x51\xc7\x9b\x51\x71\x84\x20\x62\x92\x37\x4b\xca");
+    RED_CHECK_SIG(drawable.gd, "\x3e\x02\x5f\x15\xfe\xa8\xf4\x59\x9a\xa7\x37\xa9\xeb\xf4\xe4\xad\x9e\x8c\x55\x85");
     wcomposite.clear();
 }
 
@@ -549,7 +549,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditScrolling)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
     parent.set_wh(800, 600);
@@ -640,7 +640,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditScrolling)
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     // drawable.save_to_png("edit-s2-1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x42\x96\x9c\xd7\xdd\x44\x53\x15\xcb\x9b\x46\x5f\xe5\xe6\x1b\xa8\xa8\x3d\x9b\xb4");
+    RED_CHECK_SIG(drawable.gd, "\x94\x78\xfe\x80\x68\x73\xd2\x7c\xa5\xe4\x46\x77\xdb\x7f\x25\x18\xf3\x83\xc3\x38");
 
     parent.clear();
 }

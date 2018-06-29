@@ -37,7 +37,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -61,14 +61,14 @@ RED_AUTO_TEST_CASE(TraceFlatDialog)
 
     // drawable.save_to_png("flat_dialog1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xb1\x58\x70\xb2\xa3\xf1\x8f\x2f\xdd\x4a\xc1\xbb\xcd\xf3\x50\xad\x11\xc1\xe0\x9c");
+    RED_CHECK_SIG(drawable.gd, "\x5c\x9e\xa5\x68\x89\x6f\x70\x1d\x6f\x37\x07\x25\xaa\x38\x85\xbb\x1b\xa2\xa5\xa9");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialog2)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -95,14 +95,14 @@ RED_AUTO_TEST_CASE(TraceFlatDialog2)
 
     // drawable.save_to_png("flat_dialog2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xd4\x59\x7a\x79\x69\xfd\x80\x03\xe8\xb8\x04\xf4\x57\x2b\xd0\xbc\x66\x8f\x31\xb7");
+    RED_CHECK_SIG(drawable.gd, "\x2b\x31\xcf\x29\xa8\x8e\x64\x50\x94\xd4\xc7\x5c\x69\x3e\x22\x22\x0b\xbb\xe3\x22");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialog3)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -129,14 +129,14 @@ RED_AUTO_TEST_CASE(TraceFlatDialog3)
 
     // drawable.save_to_png("flat_dialog3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x50\xc0\xdf\x77\x69\x22\xb7\x1d\x6c\xd5\x9b\x06\x52\xd6\x3f\xa1\x72\xfb\xe3\xb1");
+    RED_CHECK_SIG(drawable.gd, "\x9a\x7b\xcd\x7a\x44\xb0\xc8\x52\x21\xee\xc1\x40\xc4\x7d\xbe\x47\x47\xda\x4c\x11");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialog4)
 {
     TestDraw drawable(1280, 1024);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -163,14 +163,14 @@ RED_AUTO_TEST_CASE(TraceFlatDialog4)
 
     // drawable.save_to_png("flat_dialog4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x2a\x3c\xe5\xf6\x37\xe5\xc2\x38\x98\xdc\x05\xe6\x83\x95\x70\x7b\xe8\x84\x48\xda");
+    RED_CHECK_SIG(drawable.gd, "\x3b\x73\xf0\x21\x40\x52\x19\x61\x31\x97\xcc\x82\x3d\x7a\xe0\x24\xdf\x5c\xb5\xdd");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialog5)
 {
     TestDraw drawable(640, 480);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position -20,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -197,14 +197,14 @@ RED_AUTO_TEST_CASE(TraceFlatDialog5)
 
     // drawable.save_to_png("flat_dialog5.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xb9\xc1\x6e\xcf\x52\x8d\xae\x31\xe7\xfe\xe8\x5a\x8f\x16\x7a\xaf\x5c\x35\xca\x7b");
+    RED_CHECK_SIG(drawable.gd, "\xb4\x13\x9b\xc7\x8a\xc8\x19\xab\x95\xa4\xe8\x80\xa0\x30\xab\x33\x32\x94\x4c\x90");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialog6)
 {
     TestDraw drawable(352, 500);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -231,14 +231,14 @@ RED_AUTO_TEST_CASE(TraceFlatDialog6)
 
     // drawable.save_to_png("flat_dialog6.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xd0\xda\x5c\x84\xf1\x08\xd6\x94\xbf\x28\x1e\x64\xa3\x9a\x05\xb3\x91\x91\xce\x8e");
+    RED_CHECK_SIG(drawable.gd, "\x5c\x88\xa1\x4f\x80\x39\x90\xb2\x75\x0f\x16\x6c\xb2\x02\x28\xcc\xea\x42\x69\x5e");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialogClip)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -265,14 +265,14 @@ RED_AUTO_TEST_CASE(TraceFlatDialogClip)
 
     // drawable.save_to_png("flat_dialog7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xcd\x06\xae\x60\x85\x3c\x96\x41\x71\xea\x41\x83\x8b\xa0\x47\x52\x8a\xe6\xa8\x9c");
+    RED_CHECK_SIG(drawable.gd, "\xf9\x32\x9f\x92\x53\x55\x0f\x68\x8d\xc9\xff\xdb\xf8\x42\x8d\x73\x55\x7c\xbb\xb1");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialogClip2)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -299,14 +299,14 @@ RED_AUTO_TEST_CASE(TraceFlatDialogClip2)
 
     // drawable.save_to_png("flat_dialog8.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x58\x1e\xa2\x28\xe9\xe8\x75\x01\x56\x43\x0a\x09\xc5\xb9\x5d\x72\x43\x30\xba\x66");
+    RED_CHECK_SIG(drawable.gd, "\x6a\xbe\x33\x53\x74\x19\x62\x01\x94\x1d\xf8\x8d\xf1\xba\xea\x5b\x4f\xef\x0f\xff");
 }
 
 RED_AUTO_TEST_CASE(EventWidgetOkCancel)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
     parent.set_wh(800, 600);
@@ -348,7 +348,7 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
     // drawable.save_to_png("flat_dialog-clic-1-button-ok.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xaf\x07\xd6\x95\xf2\x9a\x4b\x8e\x8a\x7e\xc8\x29\x85\xcc\x07\x43\xec\x55\xc8\x44");
+    RED_CHECK_SIG(drawable.gd, "\x6b\x5b\x10\x31\xa7\xc4\xda\x68\x66\x0b\x0e\x5f\x61\xd5\xb4\xc6\x6b\x9f\x5d\x87");
 
 
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
@@ -363,7 +363,7 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     // drawable.save_to_png("flat_dialog-clic-2-button-ok.png");
 
 
-    RED_CHECK_SIG(drawable.gd, "\xc3\xb6\x9f\xb0\xed\xf9\x3f\x37\xde\xbb\x21\x27\x23\x92\x7a\x96\x10\x7a\x48\x88");
+    RED_CHECK_SIG(drawable.gd, "\x4d\xcb\x66\x8b\x05\x21\xbc\x35\x39\xe2\x59\x0c\xbc\x04\x98\xdc\xff\x9e\x4b\xc5");
 
 
     x = flat_dialog.cancel->x() + flat_dialog.cancel->cx() / 2 ;
@@ -379,7 +379,7 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     // drawable.save_to_png("flat_dialog-clic-3-button-cancel.png");
 
 
-    RED_CHECK_SIG(drawable.gd, "\x5f\xdf\x5b\x4e\x76\x7b\x5b\x31\x02\x91\x9b\x18\xd6\x9a\x14\xae\xb3\x95\x31\xe5");
+    RED_CHECK_SIG(drawable.gd, "\x7c\x76\x0f\xfb\xab\x1a\xdf\x97\xdc\xc0\xbd\xf7\x34\xcc\xbf\xca\x97\xa3\x02\x58");
 
 
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
@@ -401,7 +401,7 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
     parent.set_wh(800, 600);
@@ -453,7 +453,7 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
     // drawable.save_to_png("flat_dialog-challenge-1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x10\xfb\x06\xd7\x29\xc8\xda\x3f\x01\xe0\xd1\x57\x22\x5d\xf0\x18\x62\x4f\xb6\xf4");
+    RED_CHECK_SIG(drawable.gd, "\xed\xb3\xbc\x4e\xd6\x1c\xe6\x0d\x43\x61\x8b\xe2\x0b\xae\x66\x4c\xd2\x1d\x4b\x06");
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);

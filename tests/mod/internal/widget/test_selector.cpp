@@ -36,7 +36,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetSelector is a selector widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -86,7 +86,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
 
     // drawable.save_to_png("selector1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x19\x84\xf0\xd2\xc5\x32\xf2\xb1\x39\x4b\xe7\xb5\x64\x13\x14\xaf\xcc\x24\xc7\x74");
+    RED_CHECK_SIG(drawable.gd, "\x50\x25\xe5\x03\x76\x81\x53\xfc\x6e\x22\xd4\xf8\xfb\xf1\x70\x57\x4d\xb5\x16\x45");
 
     selector.selector_lines.set_selection(1);
 
@@ -95,14 +95,14 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
 
     // drawable.save_to_png("selector2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x97\x02\x64\x5d\x6a\x0d\xe7\x0c\x80\x46\x94\x03\x0a\xc9\xf5\x65\x84\x82\xdf\xa1");
+    RED_CHECK_SIG(drawable.gd, "\xa7\x47\xcc\x6f\x5c\x52\x40\x92\x70\x30\x6c\x75\xa0\xd7\xf8\x3b\x70\xe5\x45\x00");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
 {
     TestDraw drawable(640, 480);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetSelector is a selector widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -153,7 +153,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
 
     // drawable.save_to_png("selector-resize1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x0c\x2f\x45\x86\x46\x0c\x9b\xa0\x04\x50\x9d\xf9\xb7\x71\x95\xe5\xc3\x03\x3b\x70");
+    RED_CHECK_SIG(drawable.gd, "\xbb\x51\x75\x39\x8a\x7f\xad\x40\xdf\xd0\xc5\xc7\xac\x20\x2b\xa0\x89\x66\xdc\x90");
 
 
     selector.selector_lines.set_selection(1);
@@ -163,14 +163,14 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
 
     // drawable.save_to_png("selector-resize2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xe6\x5b\xfb\x35\x15\x5d\xa5\x1c\xe6\xec\x50\xb8\xdf\x25\xae\x5b\xd0\x00\x29\x83");
+    RED_CHECK_SIG(drawable.gd, "\x6c\x77\x75\x9f\x0a\xf0\x98\x35\xa7\xfd\xf2\xf7\x37\xc5\xe7\x56\xb7\xf5\x23\x30");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelector2)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -196,14 +196,14 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector2)
 
     // drawable.save_to_png("selector3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xb7\xfc\x92\x85\x3a\x0e\xcb\x9a\x0b\xa4\xfd\xce\xb2\xe4\x6b\xb5\x4a\x8f\x89\x85");
+    RED_CHECK_SIG(drawable.gd, "\x84\x8f\x42\x84\x07\x86\x34\x90\x65\x3a\xd4\x5f\x72\xb9\xe9\xeb\x3b\x4a\xb5\x25");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetSelector is a selector widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -232,7 +232,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
 
     // drawable.save_to_png("selector4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x07\x9e\x6c\x0a\x29\xb2\x31\xff\xab\x73\x58\x71\x89\xe4\xb7\x05\xeb\x0c\xb1\x1c");
+    RED_CHECK_SIG(drawable.gd, "\x68\x1e\x1c\x20\xb1\x2a\x68\x59\x45\xc1\x41\x0c\x03\x0d\x3e\xc9\xf3\xce\x22\x40");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
@@ -241,7 +241,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
     parent.set_wh(800, 600);
@@ -269,14 +269,14 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
 
     // drawable.save_to_png("selector5.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x31\x82\xdc\x89\xfd\xda\x77\xc1\xf9\xa1\x44\x23\xdb\xc5\x09\xae\xb9\xb7\x2b\x35");
+    RED_CHECK_SIG(drawable.gd, "\x9d\xbe\x64\x88\x34\x4b\x79\x83\x6a\xa1\x36\xad\xf4\x9e\xe6\x89\xb8\xf3\x86\x87");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -331,7 +331,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
     // drawable.save_to_png("selector6-1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xfb\xfb\x7c\x3a\x5b\x2a\x12\x66\xde\x8f\xf0\x80\x45\x05\x25\xa6\x96\xaf\x1b\xd3");
+    RED_CHECK_SIG(drawable.gd, "\x72\x58\x16\x04\xe4\x09\xb6\x58\x40\x70\x62\xe1\xf8\xd7\xf6\xe4\x02\xd9\xd0\x96");
 
 
     Keymap2 keymap;
@@ -356,7 +356,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     // drawable.save_to_png("selector6-3.png");
 
 
-    RED_CHECK_SIG(drawable.gd, "\x0b\x38\xe4\x34\xaf\x83\x85\x48\x6e\xb7\xcf\xeb\x2f\xab\x1e\xeb\x2c\xf1\xe0\x5e");
+    RED_CHECK_SIG(drawable.gd, "\x72\xf6\x86\x9a\xf8\x1c\x62\xae\xce\x8e\x40\x26\x9d\x4a\x65\xac\x7e\x13\x75\x52");
 
 
     keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
@@ -367,7 +367,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     // drawable.save_to_png("selector6-4.png");
 
 
-    RED_CHECK_SIG(drawable.gd, "\x47\x5b\x33\x00\x69\xf4\x64\x6f\x92\x9b\x76\x36\x06\x2d\x40\xf1\xe6\xe3\x29\x23");
+    RED_CHECK_SIG(drawable.gd, "\x0a\x7a\xa1\x01\x97\xdb\x79\x24\x21\x49\x24\x61\xd6\x2b\x0f\xf7\xb4\x67\xdb\xd2");
 
 
     keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
@@ -378,7 +378,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     // drawable.save_to_png("selector6-5.png");
 
 
-    RED_CHECK_SIG(drawable.gd, "\xfb\xfb\x7c\x3a\x5b\x2a\x12\x66\xde\x8f\xf0\x80\x45\x05\x25\xa6\x96\xaf\x1b\xd3");
+    RED_CHECK_SIG(drawable.gd, "\x72\x58\x16\x04\xe4\x09\xb6\x58\x40\x70\x62\xe1\xf8\xd7\xf6\xe4\x02\xd9\xd0\x96");
 
 
     keymap.push_kevent(Keymap2::KEVENT_HOME);
@@ -389,7 +389,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     // drawable.save_to_png("selector6-6.png");
 
 
-    RED_CHECK_SIG(drawable.gd, "\x47\x5b\x33\x00\x69\xf4\x64\x6f\x92\x9b\x76\x36\x06\x2d\x40\xf1\xe6\xe3\x29\x23");
+    RED_CHECK_SIG(drawable.gd, "\x0a\x7a\xa1\x01\x97\xdb\x79\x24\x21\x49\x24\x61\xd6\x2b\x0f\xf7\xb4\x67\xdb\xd2");
 
     // int x = selector.selector_lines.rect.x + 5;
     // int y = selector.selector_lines.rect.y + 3;
@@ -406,7 +406,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -468,7 +468,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     // drawable.save_to_png("selector7-1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x87\xad\xc8\x34\xbe\x07\xf1\xc0\xa2\x74\x2c\x05\x40\x31\x69\x8c\xf3\xbe\x6f\xd3");
+    RED_CHECK_SIG(drawable.gd, "\xcb\xa1\x9f\x4e\xb9\x42\x64\xa9\xa5\x9d\xcd\x06\xc2\x33\x56\xae\xab\xfa\x75\x65");
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -482,7 +482,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
     // drawable.save_to_png("selector7-2.png");
 
 
-    RED_CHECK_SIG(drawable.gd, "\x28\xfe\xb2\x60\xcb\xd9\x8b\x7b\xef\x55\x0b\x90\xd4\xdc\x22\x67\xfd\x0c\x2a\x7a");
+    RED_CHECK_SIG(drawable.gd, "\x7d\x15\x56\x7d\xe4\x03\x75\xb5\xb7\x47\x7f\xb4\x24\x38\xed\xe6\x29\xe3\xd8\x81");
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
@@ -491,7 +491,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     // drawable.save_to_png("selector7-3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xb1\x20\x51\xe1\x3f\x57\x16\x9c\x39\xd9\xcc\x99\xab\x82\x6d\xd9\x08\xef\x81\xeb");
+    RED_CHECK_SIG(drawable.gd, "\x77\x74\x1e\x4e\xfa\x9e\xc1\x65\x8b\x53\x40\x08\xce\x5c\x32\xe8\x44\x00\x3d\x6b");
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
@@ -502,7 +502,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     // drawable.save_to_png("selector7-4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x89\x03\xac\x4f\x8d\xdf\xf9\x90\x54\xa5\xa7\x20\xee\x37\xd0\x81\xda\xba\x58\x2f");
+    RED_CHECK_SIG(drawable.gd, "\xce\xfd\x05\x29\xf5\xbc\x75\xb2\x06\xba\x1b\xe1\xbe\x6a\x00\xd3\x14\x2a\x16\x65");
 
 
     keymap.push_kevent(Keymap2::KEVENT_END);
@@ -512,7 +512,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     // drawable.save_to_png("selector7-5.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xac\x4f\x35\x77\x32\xaa\x94\x58\x61\x5e\xd5\x74\xd6\xa3\xc5\xfd\xf1\xdf\x9a\x37");
+    RED_CHECK_SIG(drawable.gd, "\x7b\x90\xfa\xfc\x76\xd6\x9c\x2a\xba\xd7\x98\xc2\xbf\x59\xa2\xf0\x8b\x47\xdd\xb2");
 
 
     keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
@@ -522,7 +522,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     // drawable.save_to_png("selector7-6.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xa3\x7a\xd4\xfd\xdc\xed\x50\xce\x99\x19\xc5\x6c\x84\x3a\x8b\x1c\xc0\xe4\x45\x5e");
+    RED_CHECK_SIG(drawable.gd, "\x03\xb4\xed\xd3\xd3\x6d\x38\x33\x96\x04\x39\x7d\xdf\xd4\xa0\xcd\xee\xd5\xd2\x46");
 
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
@@ -532,7 +532,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     // drawable.save_to_png("selector7-7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x8b\xf0\xf9\xb6\x55\x0b\x7d\xe0\x4c\x00\x2b\x0f\x5c\x18\x81\xec\x20\x0e\x0b\x03");
+    RED_CHECK_SIG(drawable.gd, "\xfe\x3b\x6e\x81\xba\x50\x46\xda\xe9\x67\x97\x6d\x59\x4d\x71\x54\x48\x01\xd5\xc5");
 
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
@@ -544,7 +544,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     // drawable.save_to_png("selector7-8.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x0d\x11\xd6\xef\x07\xb4\x69\xbb\x7d\x90\xe4\x24\x03\x1e\xfe\x98\x4c\x45\x7d\x3b");
+    RED_CHECK_SIG(drawable.gd, "\xfc\xaf\x04\x5d\x54\x8a\xe4\x93\x99\x1c\xef\xc0\xe8\x98\x69\x4b\xb8\xf6\xa6\x4f");
 
     keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
@@ -566,7 +566,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     // drawable.save_to_png("selector7-9.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x3f\x6d\x31\xca\x83\xda\x82\x87\x24\x50\x29\x32\xa9\xf2\xe8\xdc\xb3\xc8\xaf\xd0");
+    RED_CHECK_SIG(drawable.gd, "\x66\x8e\x41\x3b\xcd\xd7\xde\x26\x6e\x22\x93\xe2\x82\x42\x97\xf3\x22\xc4\xa9\x27");
 }
 
 // RED_AUTO_TEST_CASE(TraceWidgetSelectorAdjustColumns)

@@ -35,7 +35,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatLogin is a flat_login widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -53,14 +53,14 @@ RED_AUTO_TEST_CASE(TraceFlatLogin)
 
     // drawable.save_to_png("flat_login.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x4d\xc2\xb2\x86\xc4\x61\xf8\x34\x7b\xfc\x7b\xe1\xb7\xaf\x61\x98\xaf\xff\x1c\x01");
+    RED_CHECK_SIG(drawable.gd, "\x61\x60\x78\x34\xa8\x76\xfd\xe8\xdd\xf8\x4e\x7c\xa2\x00\x14\x8e\x14\x1e\xd0\x84");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLogin2)
 {
     TestDraw drawable(800, 600);
     WidgetFlatButton * extra_button = nullptr;
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatLogin is a flat_login widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -80,7 +80,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin2)
 
     // drawable.save_to_png("flat_login2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x0c\xce\x0a\x55\xcb\xf4\xe6\xd2\xb7\x0d\xa3\x05\x5d\xa1\xb9\x93\xf0\xcd\xf8\x89");
+    RED_CHECK_SIG(drawable.gd, "\xcd\x3b\x99\x90\x5d\x98\x53\x51\x4e\xdd\xae\x58\x0c\x88\xe3\xbd\x14\xda\xda\x57");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLogin3)
@@ -100,7 +100,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin3)
     } notifier;
     WidgetFlatButton * extra_button = nullptr;
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatLogin is a flat_login widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -130,7 +130,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin3)
 
     // drawable.save_to_png("flat_login3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xbd\xaa\xa1\x1a\x8a\x77\xc3\x69\xcd\xcf\x34\xd2\xd0\xae\xb7\x7a\x17\xf3\x52\xbc");
+    RED_CHECK_SIG(drawable.gd, "\xbc\x60\x55\x96\xd9\x27\xdd\xd2\x43\xca\xa5\x75\x3f\x1a\x8f\x03\x4b\xb3\x16\x79");
 
     notifier.sender = nullptr;
     notifier.event = 0;
@@ -145,7 +145,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatLogin is a flat_login widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -166,7 +166,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
     // drawable.save_to_png("flat_login-help1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x59\xd5\x91\xd2\xde\x6b\x2f\xee\x09\x62\x2e\xa4\x62\xcd\x03\x19\xfc\xaf\x78\x7c");
+    RED_CHECK_SIG(drawable.gd, "\x88\x8c\x57\x64\xc8\x73\x74\xf6\x89\xaf\x53\x28\x2b\xe6\xfa\xc5\x30\x37\x94\xf3");
 
     flat_login.rdp_input_mouse(MOUSE_FLAG_MOVE,
                                flat_login.helpicon.x() + flat_login.helpicon.cx() / 2,
@@ -174,14 +174,14 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
     // drawable.save_to_png("flat_login-help2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x12\xe3\xff\x10\x4c\x3f\xcd\xb1\x78\xbd\xb8\xd3\x36\xc8\x6b\xf6\x2b\x48\xff\x9d");
+    RED_CHECK_SIG(drawable.gd, "\x3c\xc2\xc8\xcb\xf6\xb4\xa8\x3b\x22\xb3\xef\x54\x59\x5c\xc5\x37\xd8\x51\xb3\x10");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLoginClip)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatLogin is a flat_login widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -202,14 +202,14 @@ RED_AUTO_TEST_CASE(TraceFlatLoginClip)
 
     // drawable.save_to_png("flat_login7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x4a\x92\xbf\xb8\x27\x62\x2a\x9f\x97\x3c\xef\xf5\xb8\xd7\x99\xc1\x27\x3d\x66\x9e");
+    RED_CHECK_SIG(drawable.gd, "\xb3\xa0\x84\x73\x75\xba\xa1\x7d\xc9\xdb\x2f\x72\x2f\x58\x62\xa6\xe2\x53\xf1\xe3");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLoginClip2)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatLogin is a flat_login widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -237,7 +237,7 @@ RED_AUTO_TEST_CASE(EventWidgetOk)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
     parent.set_wh(800, 600);
@@ -268,7 +268,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin4)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatLogin is a flat_login widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -289,5 +289,5 @@ RED_AUTO_TEST_CASE(TraceFlatLogin4)
 
     // drawable.save_to_png("flat_login4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xae\x9e\xab\x4a\x7d\x9e\x5e\x88\xd0\xd4\xd0\x57\x37\x57\x31\xbe\xcb\x7b\x86\x69");
+    RED_CHECK_SIG(drawable.gd, "\x20\x58\xbc\x63\xe4\x07\x75\xea\x32\xec\x7a\x1a\x92\xdd\x2a\xa9\xfa\x53\x89\xb9");
 }

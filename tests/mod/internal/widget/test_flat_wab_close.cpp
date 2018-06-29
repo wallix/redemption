@@ -34,7 +34,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatWabClose is a flat_wab_close widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -53,14 +53,14 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose)
 
     // drawable.save_to_png("flat_wab_close.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xfe\xf7\x90\xd0\xca\x7a\xe6\x3b\x5c\x96\xff\x3b\xbc\xb6\x9c\xc4\x98\x01\xdb\x83");
+    RED_CHECK_SIG(drawable.gd, "\xdb\x65\x0f\x79\xfe\xd4\xee\x90\x78\xb7\x04\x01\xed\x5a\x83\x12\xe9\x03\x39\x1e");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWabClose2)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -93,14 +93,14 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose2)
 
 //    drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xd3\x5d\xa6\x2c\xee\x6c\xb0\xd3\xe9\x03\xff\xb4\xec\x04\xfa\x0e\x0b\x68\xf4\x4a");
+    RED_CHECK_SIG(drawable.gd, "\x46\xca\x13\x7f\x61\x03\x7c\xd1\xe0\x84\x8f\x11\x89\x09\x3c\xf0\xe1\x3b\xa6\xa1");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWabClose3)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -119,14 +119,14 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose3)
 
     // drawable.save_to_png("flat_wab_close3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x3f\xd1\x8d\xf9\x44\x80\x73\xca\x96\x51\xca\x60\xed\x6d\xd4\xf4\x23\xb9\x8b\x75");
+    RED_CHECK_SIG(drawable.gd, "\x37\xca\xf1\xf0\x97\x55\x83\xa8\x76\x95\xd3\xd9\x6d\xa8\x18\xd3\x02\x9d\xd9\xd3");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWabCloseClip)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -145,14 +145,14 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseClip)
 
     // drawable.save_to_png("flat_wab_close7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x5d\x62\x72\xa8\x8d\xc5\x95\xe8\xc2\x7a\xc8\x36\x01\x14\x0e\x5a\x67\xca\x0c\x41");
+    RED_CHECK_SIG(drawable.gd, "\x4b\x63\x5e\x1b\x74\x99\x92\xed\xfd\xa8\xbe\xc9\xf0\x8e\x73\x34\xdc\xf9\x8a\x08");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -174,7 +174,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
 
     // drawable.save_to_png("flat_wab_close8.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x6b\x68\x36\x6f\x2d\x72\x12\xec\xc7\x65\x51\x7e\xe1\xe6\x02\xab\x02\x29\x48\xbf");
+    RED_CHECK_SIG(drawable.gd, "\x5e\xd7\x4c\xb7\x03\x2f\xe1\x79\xbf\x92\x0b\x30\xd6\x9b\xe3\xe2\x5d\xbf\x7b\x75");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
@@ -192,7 +192,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
 
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -211,13 +211,13 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
 
     // drawable.save_to_png("flat_wab_close-exit1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x67\x93\x48\x32\x7d\xd2\x55\x8e\x22\x66\x0d\xb2\x8f\x78\x7e\xa7\xed\xd8\xe4\x93");
+    RED_CHECK_SIG(drawable.gd, "\xa8\x5c\xaf\x51\x0d\x59\xfa\x8c\x38\x4e\xe7\x67\x21\x64\xc2\xf0\x8b\xa7\xf7\x1f");
 
     flat_wab_close.refresh_timeleft(49);
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
     // drawable.save_to_png("flat_wab_close-exit2.png");
-    RED_CHECK_SIG(drawable.gd, "\xab\x76\x08\xc6\xe9\xb6\x36\xb1\x11\x01\xa0\xe5\x7e\xdf\xb7\xa7\x98\x89\xf6\xb1");
+    RED_CHECK_SIG(drawable.gd, "\x3b\xcb\x95\xcf\x2f\x9b\xb8\x4e\x45\xe2\x47\x6c\x50\x92\xa8\x64\xc9\xe3\x17\xf8");
 
     flat_wab_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                                    flat_wab_close.cancel.x() + 2,
@@ -230,7 +230,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     RED_CHECK(notifier.event == NOTIFY_CANCEL);
 
     // drawable.save_to_png("flat_wab_close-exit3.png");
-    RED_CHECK_SIG(drawable.gd, "\xab\x76\x08\xc6\xe9\xb6\x36\xb1\x11\x01\xa0\xe5\x7e\xdf\xb7\xa7\x98\x89\xf6\xb1");
+    RED_CHECK_SIG(drawable.gd, "\x3b\xcb\x95\xcf\x2f\x9b\xb8\x4e\x45\xe2\x47\x6c\x50\x92\xa8\x64\xc9\xe3\x17\xf8");
 
     notifier.sender = nullptr;
     notifier.event = 0;

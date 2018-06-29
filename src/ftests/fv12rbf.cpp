@@ -200,11 +200,11 @@ int main(int ac, char** av)
 
         out_stream.out_uint32_le(index);
 
-        out_stream.out_uint16_le(min_col);
+        out_stream.out_uint16_le(offset);
         out_stream.out_uint16_le(min_line);
 
         out_stream.out_uint16_le(0);
-        out_stream.out_uint16_le(incby - min_col);
+        out_stream.out_uint16_le(incby-offset);
         out_stream.out_uint16_le(0);
 
         out_stream.out_uint16_le(new_width);
@@ -254,11 +254,11 @@ int main(int ac, char** av)
     }
 
     OutStream out_stream{&data_out_file[pos_header], 10};
-    out_stream.out_uint16_le(height_max);
+    out_stream.out_uint16_le(height_max + 1);
     out_stream.out_uint32_le(index - 32);
     out_stream.out_uint32_le(total);
 
     out.sputn(reinterpret_cast<char*>(data_out_file.data()), data_out_file.size());
 
-    std::cout << total;
+    std::cout << height_max << " " << total;
 }

@@ -34,7 +34,7 @@ RED_AUTO_TEST_CASE(TraceFlatWait)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -88,14 +88,14 @@ RED_AUTO_TEST_CASE(TraceFlatWait)
 
     // drawable.save_to_png("flat_wait.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x66\x3b\x3a\xe7\x3c\x01\x70\xf6\x84\xb3\x77\x3b\x37\x3c\x52\x51\xf0\xdd\x7a\x77");
+    RED_CHECK_SIG(drawable.gd, "\x37\x22\xba\x23\x6c\x15\x2f\x46\x0e\x0d\xec\x1e\xf3\xe5\x0b\xa7\x29\xb1\xa7\x40");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWaitWithForm)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -151,7 +151,7 @@ RED_AUTO_TEST_CASE(TraceFlatWaitWithForm)
 
     // drawable.save_to_png("flat_wait_1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x7b\x38\xb6\x4a\x07\x5d\xb9\x2c\x08\x26\x29\x95\xd3\xcf\xc7\xa2\xf2\xa4\xb1\x76");
+    RED_CHECK_SIG(drawable.gd, "\x83\x4a\x45\xdc\xb6\x7a\x12\x79\x14\x95\xc1\x11\x57\xc7\x05\xa2\x23\x54\xde\x92");
 }
 
 

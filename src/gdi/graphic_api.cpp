@@ -208,7 +208,7 @@ void server_draw_text(
             total_width += font_item->offsetx + font_item->incby;
         }
 
-        const Rect bk(x, y, total_width, font.max_height());
+        const Rect bk(x, y, total_width+1, font.max_height());
 
         RDPGlyphIndex glyphindex(
             cacheId,            // cache_id
