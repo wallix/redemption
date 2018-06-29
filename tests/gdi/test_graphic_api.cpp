@@ -25,7 +25,6 @@
 
 #include "gdi/graphic_api.hpp"
 #include "core/font.hpp"
-#include "core/app_path.hpp"
 
 Font const font {FIXTURES_PATH "/Lato-Light_16.rbf"};
 

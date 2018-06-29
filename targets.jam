@@ -2284,7 +2284,6 @@ test-run tests/gdi/test_graphic_api :
 :
   <covfile>src/gdi/graphic_api.cpp
   <covfile>src/gdi/graphic_api.hpp
-  <library>app_path_test.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
 ;
