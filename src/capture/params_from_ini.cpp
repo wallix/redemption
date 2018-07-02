@@ -25,7 +25,10 @@
 #include "configs/config.hpp"
 
 
-VideoParams video_params_from_ini(uint16_t original_width, uint16_t original_height, const Inifile & ini)
+VideoParams video_params_from_ini(
+    uint16_t original_width, uint16_t original_height,
+    std::chrono::seconds video_break_interval,
+    const Inifile & ini)
 {
     VideoParams video_params = [&]() {
         auto create_params = [&](auto... xs) {
@@ -35,7 +38,7 @@ VideoParams video_params_from_ini(uint16_t original_width, uint16_t original_hei
                 ini.get<cfg::globals::notimestamp>(),
                 ini.get<cfg::globals::capture_chunk>(),
                 ini.get<cfg::video::bogus_vlc_frame_rate>(),
-                ini.get<cfg::video::video_break_interval>(),
+                video_break_interval,
                 ini.get<cfg::debug::ffmpeg>()
             };
         };

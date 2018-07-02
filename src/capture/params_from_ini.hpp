@@ -34,7 +34,10 @@ class Fstat;
 class Inifile;
 class Random;
 
-VideoParams video_params_from_ini(uint16_t original_width, uint16_t original_height, const Inifile & ini);
+VideoParams video_params_from_ini(
+    uint16_t original_width, uint16_t original_height,
+    std::chrono::seconds video_break_interval,
+    const Inifile & ini);
 
 OcrParams ocr_params_from_ini(Inifile & ini);
 

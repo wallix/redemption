@@ -1714,12 +1714,12 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             //std::cout << "zoom: " << zoom << '%' << std::endl;
                         }
 
-                        ini.set<cfg::video::video_break_interval>(std::chrono::seconds{video_break_interval});
                         ini.set<cfg::video::bogus_vlc_frame_rate>(video_params.bogus_vlc_frame_rate);
                         ini.set<cfg::globals::video_quality>(video_params.video_quality);
                         ini.set<cfg::globals::codec_id>(video_params.codec);
                         video_params = video_params_from_ini(
-                            player.screen_rect.cx, player.screen_rect.cy, ini);
+                            player.screen_rect.cx, player.screen_rect.cy,
+                            std::chrono::seconds{video_break_interval}, ini);
 
                         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
                         const char * record_path = record_tmp_path;

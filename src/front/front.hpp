@@ -927,7 +927,9 @@ public:
 
         this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16) ? 16 : 24);
         // TODO remove this after unifying capture interface
-        VideoParams video_params = video_params_from_ini(this->client_info.width, this->client_info.height, ini);
+        VideoParams video_params = video_params_from_ini(
+            this->client_info.width, this->client_info.height,
+            std::chrono::seconds::zero(), ini);
 
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         std::string record_path = ini.get<cfg::video::record_path>().to_string();
