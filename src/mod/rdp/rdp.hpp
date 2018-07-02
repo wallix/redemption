@@ -2134,9 +2134,9 @@ private:
         }
     }
 
-    void process_session_probe_launcher_event(time_t, wait_obj& /*event*/, gdi::GraphicApi&) {
+    void process_session_probe_launcher_event(time_t now, wait_obj& /*event*/, gdi::GraphicApi&) {
         if (this->session_probe_launcher) {
-            this->session_probe_launcher->on_event();
+            this->session_probe_launcher->on_event(now);
         }
     }
 

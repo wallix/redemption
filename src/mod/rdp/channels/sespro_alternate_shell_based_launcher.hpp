@@ -94,7 +94,7 @@ public:
         return false;
     }
 
-    bool on_event() override { return false; }
+    bool on_event(time_t) override { return false; }
 
     bool on_image_read(uint64_t offset, uint32_t length) override {
         (void)offset;
@@ -119,6 +119,8 @@ public:
     }
 
     bool on_server_format_data_request() override { return false; }
+
+    bool on_server_format_list() override { return false; }
 
     bool on_server_format_list_response() override { return false; }
 
