@@ -20,8 +20,6 @@
 
 #include "main/version.hpp"
 
-#include "configs/config.hpp"
-
 #include "front/rdpheadless.hpp"
 #include "utils/netutils.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
@@ -75,16 +73,19 @@ int main(int argc, char** argv)
     int index = 0;
 
 
-    Inifile ini;
+    std::array<unsigned char, 28> server_auto_reconnect_packet;
+    std::string close_box_extra_message;
+    Theme theme;
+    Font font;
     ModRDPParams mod_rdp_params( ""
                                , ""
                                , ""
                                , ""
                                , 2
-                               , ini.get<cfg::font>()
-                               , ini.get<cfg::theme>()
-                               , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
-                               , ini.get_ref<cfg::context::close_box_extra_message>()
+                               , font
+                               , theme
+                               , server_auto_reconnect_packet
+                               , close_box_extra_message
                                , to_verbose_flags(0)
                                );
     bool quick_connection_test = true;
