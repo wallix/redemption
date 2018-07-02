@@ -330,7 +330,6 @@ namespace cfg {
         struct recording_started;
         struct rt_ready;
         struct perform_automatic_reconnection;
-        struct server_auto_reconnect_packet;
         struct auth_command;
         struct auth_notify;
         struct auth_notify_rail_exec_flags;

@@ -4181,17 +4181,6 @@ namespace cfg {
         using mapped_type = type;
         type value{0};
     };
-    /// type: std::array<unsigned char, 28> <br/>
-    /// value{} <br/>
-    struct context::server_auto_reconnect_packet {
-        static constexpr bool is_sesman_to_proxy() { return 0; }
-        static constexpr bool is_proxy_to_sesman() { return 0; }
-        static constexpr char const * section() { return "context"; }
-        static constexpr char const * name() { return "server_auto_reconnect_packet"; }
-        using type = std::array<unsigned char, 28>;
-        using mapped_type = type;
-        type value{};
-    };
     /// AUTHID_CONTEXT_AUTH_COMMAND <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
@@ -4808,7 +4797,6 @@ struct context
 , cfg::context::recording_started
 , cfg::context::rt_ready
 , cfg::context::perform_automatic_reconnection
-, cfg::context::server_auto_reconnect_packet
 , cfg::context::auth_command
 , cfg::context::auth_notify
 , cfg::context::auth_notify_rail_exec_flags

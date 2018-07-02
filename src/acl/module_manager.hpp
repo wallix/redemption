@@ -793,6 +793,8 @@ private:
 
     ClientExecute client_execute;
 
+    std::array<uint8_t, 28> server_auto_reconnect_packet {};
+
     int old_target_module = MODULE_UNKNOWN;
 
 public:
@@ -1253,7 +1255,8 @@ public:
             this->create_mod_rdp(
                 authentifier, report_message, this->ini,
                 this->front, this->front.client_info,
-                this->client_execute, this->front.keymap.key_flags);
+                this->client_execute, this->front.keymap.key_flags,
+                this->server_auto_reconnect_packet);
             break;
 
         case MODULE_VNC:
@@ -1312,7 +1315,8 @@ private:
     void create_mod_rdp(
         AuthApi& authentifier, ReportMessageApi& report_message,
         Inifile& ini, FrontAPI& front, ClientInfo const& client_info,
-        ClientExecute& client_execute, Keymap2::KeyFlags key_flags);
+        ClientExecute& client_execute, Keymap2::KeyFlags key_flags,
+        std::array<uint8_t, 28>& server_auto_reconnect_packet);
 
     void create_mod_vnc(
         AuthApi& authentifier, ReportMessageApi& report_message,
