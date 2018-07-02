@@ -3179,17 +3179,6 @@ namespace cfg {
         type value{};
     };
 
-    /// type: std::string <br/>
-    /// value{} <br/>
-    struct context::movie {
-        static constexpr bool is_sesman_to_proxy() { return 0; }
-        static constexpr bool is_proxy_to_sesman() { return 0; }
-        static constexpr char const * section() { return "context"; }
-        static constexpr char const * name() { return "movie"; }
-        using type = std::string;
-        using mapped_type = type;
-        type value{};
-    };
     /// AUTHID_CONTEXT_OPT_BITRATE <br/>
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
@@ -4759,8 +4748,7 @@ struct internal_mod
 { static constexpr bool is_section = true; };
 
 struct context
-: cfg::context::movie
-, cfg::context::opt_bitrate
+: cfg::context::opt_bitrate
 , cfg::context::opt_framerate
 , cfg::context::opt_qscale
 , cfg::context::opt_bpp

@@ -325,8 +325,7 @@ public:
          try {
             this->replay_mod.reset(new ReplayMod( session_reactor
                                                 , *this
-                                                , movie_dir.c_str() //(this->REPLAY_DIR + "/").c_str()
-                                                , movie_name.c_str()
+                                                , (movie_dir + movie_name).c_str() //(this->REPLAY_DIR + "/").c_str()
                                                 , 0             //this->info.width
                                                 , 0             //this->info.height
                                                 , this->_error

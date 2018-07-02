@@ -270,7 +270,6 @@ namespace cfg {
     };
 
     struct context {
-        struct movie;
         struct opt_bitrate;
         struct opt_framerate;
         struct opt_qscale;

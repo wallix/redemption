@@ -42,12 +42,9 @@ struct ReplayMod::Reader
         //TODO: should be generalized to some wide use FilePath object
         // with basename, path, ext, etc. methods and use it for passing
         // around all of redemption pathes.
-        Path(const char * replay_path, const char * movie)
+        Path(const char * replay_path)
         {
-            char path_movie[1024];
-            std::snprintf(path_movie, sizeof(path_movie)-1, "%s%s", replay_path, movie);
-            path_movie[sizeof(path_movie)-1] = 0;
-            LOG(LOG_INFO, "Playing %s", path_movie);
+            LOG(LOG_INFO, "Playing %s", replay_path);
 
             char path[1024];
             char basename[1024];
@@ -56,7 +53,7 @@ struct ReplayMod::Reader
             strcpy(this->extension, ".mwrm"); // extension is currently ignored
 
             const bool res = canonical_path(
-                path_movie,
+                replay_path,
                 path, sizeof(path),
                 basename, sizeof(basename),
                 this->extension, sizeof(this->extension)
@@ -136,7 +133,6 @@ ReplayMod::ReplayMod(
     SessionReactor& session_reactor
   , FrontAPI & front
   , const char * replay_path
-  , const char * movie
   , uint16_t width
   , uint16_t height
   , std::string & auth_error_message
@@ -151,7 +147,7 @@ ReplayMod::ReplayMod(
 , front_height(height)
 , front(front)
 , internal_reader(std::make_unique<Reader>(
-    Reader::Path{replay_path, movie}, begin_read, end_read, balise_time_frame, debug_capture))
+    Reader::Path{replay_path}, begin_read, end_read, balise_time_frame, debug_capture))
 , end_of_data(false)
 , wait_for_escape(wait_for_escape)
 , sync_setted(false)
