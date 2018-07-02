@@ -47,6 +47,10 @@ struct RDPMetrics {
     long int total_rdpdr_amount_data_rcv_from_server = 0;
     long int total_drdynvc_amount_data_rcv_from_server = 0;
 
+    int total_right_clicks = 0;
+    int total_left_clicks = 0;
+    int total_keys_pressed = 0;
+
 
 
     RDPMetrics( const char * filename
@@ -61,13 +65,16 @@ struct RDPMetrics {
       , primary_user(primary_user)
       {}
 
+
     void log() {
 
         char sentence[4096];
           ::snprintf(sentence, sizeof(sentence), "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\""
-        "\n   Client data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld"
-        "\n   Server data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld",
+          " right_click_sent=%d left_click_sent=%d keys_sent=%d"
+         " Client data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld"
+        " Server data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld",
             this->session_id, this->primary_user, this->account, this->target_host,
+            this->total_right_clicks, this->total_left_clicks, this->total_keys_pressed,
             this->total_main_amount_data_rcv_from_client,
             this->total_cliprdr_amount_data_rcv_from_client,
             this->total_rail_amount_data_rcv_from_client,

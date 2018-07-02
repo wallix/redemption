@@ -1602,6 +1602,8 @@ public:
 
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
 
+            this->metrics.total_keys_pressed++;
+
             if (this->remote_programs_session_manager) {
                 this->remote_programs_session_manager->input_scancode(param1, param2, device_flags);
             }
@@ -1611,6 +1613,7 @@ public:
     void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(0, RDP_INPUT_UNICODE, flag, unicode, 0);
+            this->metrics.total_keys_pressed++;
         }
     }
 
@@ -1629,6 +1632,14 @@ public:
         if ((UP_AND_RUNNING == this->connection_finalization_state) &&
             !this->input_event_disabled) {
             this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
+
+            if (device_flags & MOUSE_FLAG_DOWN) {
+                if (device_flags & MOUSE_FLAG_BUTTON2) {
+                    this->metrics.total_right_clicks++;
+                } else if (device_flags & MOUSE_FLAG_BUTTON1) {
+                    this->metrics.total_left_clicks++;
+                }
+            }
 
             if (this->remote_programs_session_manager) {
                 this->remote_programs_session_manager->input_mouse(device_flags, x, y);
@@ -1683,8 +1694,6 @@ public:
         }
     }
 
-    // this->metrics.total_main_amount_data_rcv_from_client += length;
-    // this->metrics.total_main_amount_data_rcv_from_server += length;
     void log_metrics() override {
 
         if (bool(this->verbose & RDPVerbose::export_metrics)) {
