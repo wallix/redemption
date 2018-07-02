@@ -348,6 +348,10 @@ public:
         return false;
     }
 
+    static inline std::chrono::milliseconds to_microseconds(std::chrono::milliseconds const& delay, float coefficient) {
+        return std::chrono::milliseconds(static_cast<uint64_t>(delay.count() * coefficient));
+    }
+
     void make_delay_sequencer()
     {
         using jln::value;
@@ -372,8 +376,12 @@ public:
                     0/*param2*/
                 );
 
-                return ctx.set_delay(decltype(wait_for_short_delay)::value ? self.short_delay : self.long_delay)
-                .next();
+                return ctx.set_delay(
+                        self.to_microseconds(
+                                (decltype(wait_for_short_delay)::value ? self.short_delay : self.long_delay),
+                                self.delay_coefficient
+                            )
+                    ).next();
             };
         };
 
@@ -430,11 +438,11 @@ public:
                                                  | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
                 }
 
-                return ctx.set_delay(self.long_delay).next();
+                return ctx.set_delay(self.to_microseconds(self.long_delay, self.delay_coefficient)).next();
             }),
             "Wait format list responsd"_f
                                 ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
-                return ctx.set_delay(self.long_delay).ready();
+                return ctx.set_delay(self.to_microseconds(self.long_delay, self.delay_coefficient)).ready();
             })
 
         ));
@@ -466,10 +474,15 @@ public:
 
                 if (ctx.is_final_sequence()) {
                     self.state = State::WAIT;
-                    return ctx.set_delay(self.short_delay).at(0).ready();
+                    return ctx.set_delay(self.to_microseconds(self.short_delay, self.delay_coefficient)).at(0).ready();
                 }
                 else {
-                    return ctx.set_delay(decltype(wait_for_short_delay)::value ? self.short_delay : self.long_delay).next();
+                    return ctx.set_delay(
+                            self.to_microseconds(
+                                    (decltype(wait_for_short_delay)::value ? self.short_delay : self.long_delay),
+                                    self.delay_coefficient
+                                )
+                        ).next();
                 }
             };
         };
@@ -490,7 +503,7 @@ public:
             "Enter (down)"_f    ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
                 ++self.copy_paste_loop_counter;
                 if (!self.format_data_requested) {
-                    return ctx.set_delay(self.short_delay).exec_at(0);
+                    return ctx.set_delay(self.to_microseconds(self.short_delay, self.delay_coefficient)).exec_at(0);
                 }
                 return jln::make_lambda<decltype(send_scancode)>()(value<28>, value<0>, value<true>, value<true>)(ctx, self);
             }),
