@@ -53,9 +53,9 @@ namespace trkeys
         "Your password will expire soon. Please change it.",
         "Votre mot de passe va bientôt expirer. Veuillez le changer.");
     TR_KV(protocol, "Protocol", "Protocole");
-    TR_KV(target_group, "Target Group", "Groupe");
     TR_KV(authorization, "Authorization", "Autorisation");
     TR_KV(target, "Target", "Cible");
+    TR_KV(description, "Description", "Description");
     TR_KV(close_time, "Close Time", "Date de clôture");
     TR_KV(logout, "Logout", "Déconnexion");
     TR_KV(apply, "Apply", "Appliquer");

@@ -73,10 +73,11 @@ SelectorMod::SelectorMod(
         params.base_len[2] = 80;
         params.base_len[3] = 100;
 
-        params.label[0] = "Authorization";
-        params.label[1] = "Target";
-        params.label[2] = "Protocol";
-        params.label[3] = "Description";
+        Translator tr(language(vars.get<cfg::translation::language>()));
+        params.label[0] = tr(trkeys::authorization);
+        params.label[1] = tr(trkeys::target);
+        params.label[2] = tr(trkeys::protocol);
+        params.label[3] = tr(trkeys::description);
 
         return params;
     }())
