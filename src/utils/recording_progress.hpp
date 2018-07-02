@@ -305,7 +305,7 @@ public:
         int const file_mode = S_IRUSR | S_IRGRP;
         int const fd = ::open(progress_filename, O_CREAT | O_TRUNC | O_WRONLY, file_mode);
         // umask (man umask) can change effective mode of created file
-        if ((fd < 0) || (chmod(progress_filename, file_mode) == -1)) {
+        if ((fd < 0) || (chmod(progress_filename, file_mode) < 0)) {
             int const errnum = errno;
             LOG(LOG_ERR, "%s progress information file (%s): %s [%d]",
                 (fd < 0) ? "Failed to create" : "Can't change mod of",
