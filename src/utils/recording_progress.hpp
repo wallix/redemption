@@ -302,10 +302,14 @@ public:
     ) noexcept
     : format(format)
     {
-        int fd = ::open(progress_filename, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IRGRP);
-        if (fd == -1) {
-            LOG(LOG_ERR, "Failed to create progress information file (%s): %s",
-                progress_filename, strerror(errno));
+        int const file_mode = S_IRUSR | S_IRGRP;
+        int const fd = ::open(progress_filename, O_CREAT | O_TRUNC | O_WRONLY, file_mode);
+        // umask (man umask) can change effective mode of created file
+        if ((fd < 0) || (chmod(progress_filename, file_mode) < 0)) {
+            int const errnum = errno;
+            LOG(LOG_ERR, "%s progress information file (%s): %s [%d]",
+                (fd < 0) ? "Failed to create" : "Can't change mod of",
+                progress_filename, strerror(errno), errnum);
         }
 
         auto const start_record = (begin_capture ? begin_capture : begin_record);

@@ -65,9 +65,6 @@ public:
 private:
     using PacketType = RecorderFile::PacketType;
 
-    /** @brief the result of read_more_chunk */
-    void read_more_chunk();
-
     void reschedule_timer();
 
     size_t do_partial_read(uint8_t * buffer, size_t len) override;
@@ -76,31 +73,35 @@ private:
 
     void do_send(const uint8_t * const buffer, size_t len) override;
 
-    void unchecked_next_current_data(PacketType);
-    array_view_const_u8 next_current_data(PacketType);
     void read_timer();
+
+    std::chrono::system_clock::time_point prefetchForTimer();
+
+    /** @brief a chunk of capture file */
+    struct Data
+    {
+        std::unique_ptr<uint8_t[]> data;
+        size_t size;
+        PacketType type;
+        std::chrono::system_clock::time_point time;
+
+        array_view_const_u8 av() const noexcept;
+    };
+
+    Data *read_single_chunk();
+    size_t searchAndPrefetchFor(PacketType kind);
 
 private:
     const std::chrono::system_clock::time_point start_time;
-    std::chrono::system_clock::time_point record_time;
+
     InFileTransport in_file;
     const unique_fd fd;
     const FdType fd_type;
     const UncheckedPacket unchecked_packet;
 
-    struct Data
-    {
-        std::unique_ptr<uint8_t[]> data;
-        size_t capacity = 0;
-        size_t size;
-        PacketType type;
-
-        array_view_const_u8 av() const noexcept;
-    };
-
-    std::vector<Data> datas;
-    size_t data_pos;
-    std::vector<Data> gc_datas;
+    std::vector<Data> mPrefetchQueue;
+    size_t data_in_pos;
+    size_t data_out_pos;
 
     struct Key
     {
@@ -108,8 +109,6 @@ private:
         size_t size = 0;
     };
     Key public_key;
-    // uint64_t record_len = 0;
-    bool is_eof = false;
 
     std::vector<std::string> infos;
 };

@@ -203,6 +203,10 @@ int main(int argc, char** argv)
         }
 
         ini.set<cfg::mod_rdp::server_redirection_support>(true);
+        std::array<unsigned char, 28> server_auto_reconnect_packet;
+        std::string close_box_extra_message;
+        Theme theme;
+        Font font;
 
         ModRDPParams mod_rdp_params(
             username.c_str()
@@ -210,10 +214,10 @@ int main(int argc, char** argv)
           , target_device.c_str()
           , "0.0.0.0"   // client ip is silenced
           , /*front.keymap.key_flags*/ 0
-          , ini.get<cfg::font>()
-          , ini.get<cfg::theme>()
-          , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
-          , ini.get_ref<cfg::context::close_box_extra_message>()
+          , font
+          , theme
+          , server_auto_reconnect_packet
+          , close_box_extra_message
           , to_verbose_flags(verbose));
 
         mod_rdp_params.device_id                  = "device_id";
@@ -240,19 +244,23 @@ int main(int argc, char** argv)
         FixedRandom lcg_gen;
         LCGTime lcg_timeobj;
         NullAuthentifier authentifier;
-        auto& redir_info = ini.get_ref<cfg::mod_rdp::redir_info>();
+        RedirectionInfo redir_info;
 
         bool const use_system_obj = record_output.empty() && !options.count("lcg");
 
-        error_t eid = run([&](Transport& trans){
-            using TimeObjRef = TimeObj&;
-            using RandomRef = Random&;
-            return mod_rdp(
-                trans, session_reactor, front, client_info, redir_info,
-                use_system_obj ? RandomRef(system_gen) : lcg_gen,
-                use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
-                mod_rdp_params, authentifier, report_message, ini);
-        });
+        auto run_rdp = [&]{
+            return run([&](Transport& trans){
+                using TimeObjRef = TimeObj&;
+                using RandomRef = Random&;
+                return mod_rdp(
+                    trans, session_reactor, front, client_info, redir_info,
+                    use_system_obj ? RandomRef(system_gen) : lcg_gen,
+                    use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
+                    mod_rdp_params, authentifier, report_message, ini);
+            });
+        };
+
+        error_t eid = run_rdp();
 
         if (ERR_RDP_SERVER_REDIR != eid) {
             return eid  ? 1 : 0;
@@ -260,14 +268,6 @@ int main(int argc, char** argv)
 
         set_server_redirection_target(ini, report_message);
 
-        return run([&](Transport& trans){
-            using TimeObjRef = TimeObj&;
-            using RandomRef = Random&;
-            return mod_rdp(
-                trans, session_reactor, front, client_info, redir_info,
-                use_system_obj ? RandomRef(system_gen) : lcg_gen,
-                use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
-                mod_rdp_params, authentifier, report_message, ini);
-        }) ? 2 : 0;
+        return run_rdp() ? 2 : 0;
     }
 }

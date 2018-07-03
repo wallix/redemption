@@ -92,6 +92,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     Inifile ini;
 
+    std::array<uint8_t, 28> server_auto_reconnect_packet {};
     ModRDPParams mod_rdp_params( "administrateur"
                                , "S3cur3!1nux"
                                , "10.10.47.35"
@@ -99,7 +100,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
                                , 7
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
-                               , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
+                               , server_auto_reconnect_packet
                                , ini.get_ref<cfg::context::close_box_extra_message>()
                                , to_verbose_flags(511)
                                );
@@ -187,6 +188,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
 
     Inifile ini;
 
+    std::array<uint8_t, 28> server_auto_reconnect_packet {};
     ModRDPParams mod_rdp_params( "administrateur"
                                , "S3cur3!1nux"
                                , "10.10.47.16"
@@ -194,7 +196,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
                                , 7
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
-                               , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
+                               , server_auto_reconnect_packet
                                , ini.get_ref<cfg::context::close_box_extra_message>()
                                , to_verbose_flags(2023)
                                );

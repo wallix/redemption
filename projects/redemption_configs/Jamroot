@@ -88,6 +88,7 @@ alias generate : generate_types generate_descs ;
 
 include ../../jam/testing-coverage.jam ;
 
+obj font.o : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 obj cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
 obj fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
 obj hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
@@ -108,13 +109,14 @@ obj config.o : redemption_src/configs/config.cpp
 constant TEST_DEPENDENCIES :
     $(UNIT_TEST_DEPENDENCIES)
     <library>libunit_test
-    <library>log_test.o
-    <library>cfgloader.o
-    <library>fileutils.o
     <library>app_path_test.o
+    <library>cfgloader.o
     <library>config.o
-    <library>hexdump.o
     <library>error.o
+    <library>fileutils.o
+    <library>font.o
+    <library>hexdump.o
+    <library>log_test.o
     <cxxflags>-frtti
     <include>redemption_src
     <conditional>@defines-for-test

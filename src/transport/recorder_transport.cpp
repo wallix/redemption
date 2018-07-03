@@ -80,7 +80,7 @@ Transport::TlsResult RecorderTransport::enable_client_tls(
     auto const r = this->trans.enable_client_tls(
         server_cert_store, server_cert_check, server_notifier, certif_path);
     if (r != RecorderTransport::TlsResult::Fail) {
-        this->out.write_packet(RecorderFile::PacketType::ClientCert, nullptr);
+        this->out.write_packet(RecorderFile::PacketType::ClientCert, this->trans.get_public_key());
     }
     return r;
 }
@@ -88,7 +88,7 @@ Transport::TlsResult RecorderTransport::enable_client_tls(
 void RecorderTransport::enable_server_tls(const char * certificate_password, const char * ssl_cipher_list)
 {
     this->trans.enable_server_tls(certificate_password, ssl_cipher_list);
-    this->out.write_packet(RecorderFile::PacketType::ServerCert, nullptr);
+    this->out.write_packet(RecorderFile::PacketType::ServerCert, this->trans.get_public_key());
 }
 
 array_view_const_u8 RecorderTransport::get_public_key() const

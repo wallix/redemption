@@ -289,11 +289,6 @@ public:
             }
             else if (target == "autotest") {
                 LOG(LOG_INFO, "==========> MODULE_INTERNAL test");
-                std::string user = this->ini.get<cfg::globals::target_user>();
-                if (user.size() < 5 || !std::equal(user.end() - 5u, user.end(), ".mwrm")) {
-                    user += ".mwrm";
-                }
-                this->ini.set<cfg::context::movie>(std::move(user));
                 res = MODULE_INTERNAL_TEST;
             }
             else if (target == "widget_message") {
@@ -798,6 +793,8 @@ private:
 
     ClientExecute client_execute;
 
+    std::array<uint8_t, 28> server_auto_reconnect_packet {};
+
     int old_target_module = MODULE_UNKNOWN;
 
 public:
@@ -916,8 +913,14 @@ public:
             this->set_mod(new ReplayMod(
                 this->session_reactor,
                 this->front,
-                this->ini.get<cfg::video::replay_path>().c_str(),
-                this->ini.get<cfg::context::movie>().c_str(),
+                [this]{
+                    auto movie_path = this->ini.get<cfg::video::replay_path>().to_string()
+                                    + this->ini.get<cfg::globals::target_user>();
+                    if (movie_path.size() < 5u || !std::equal(movie_path.end() - 5u, movie_path.end(), ".mwrm")) {
+                        movie_path += ".mwrm";
+                    }
+                    return movie_path;
+                }().c_str(),
                 this->front.client_info.width,
                 this->front.client_info.height,
                 this->ini.get_ref<cfg::context::auth_error_message>(),
@@ -1252,7 +1255,8 @@ public:
             this->create_mod_rdp(
                 authentifier, report_message, this->ini,
                 this->front, this->front.client_info,
-                this->client_execute, this->front.keymap.key_flags);
+                this->client_execute, this->front.keymap.key_flags,
+                this->server_auto_reconnect_packet);
             break;
 
         case MODULE_VNC:
@@ -1311,7 +1315,8 @@ private:
     void create_mod_rdp(
         AuthApi& authentifier, ReportMessageApi& report_message,
         Inifile& ini, FrontAPI& front, ClientInfo const& client_info,
-        ClientExecute& client_execute, Keymap2::KeyFlags key_flags);
+        ClientExecute& client_execute, Keymap2::KeyFlags key_flags,
+        std::array<uint8_t, 28>& server_auto_reconnect_packet);
 
     void create_mod_vnc(
         AuthApi& authentifier, ReportMessageApi& report_message,

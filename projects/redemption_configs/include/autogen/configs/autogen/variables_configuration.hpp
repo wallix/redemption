@@ -2526,17 +2526,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(1);
     };
-    /// type: std::chrono::seconds <br/>
-    /// value{0} <br/>
-    struct video::video_break_interval {
-        static constexpr bool is_sesman_to_proxy() { return 0; }
-        static constexpr bool is_proxy_to_sesman() { return 0; }
-        static constexpr char const * section() { return "video"; }
-        static constexpr char const * name() { return "video_break_interval"; }
-        using type = std::chrono::seconds;
-        using mapped_type = type;
-        type value{0};
-    };
     /// Needed to play a video with ffplay or VLC. <br/>
     /// Note: Useless with mpv and mplayer. <br/>
     /// type: bool <br/>
@@ -3190,17 +3179,6 @@ namespace cfg {
         type value{};
     };
 
-    /// type: std::string <br/>
-    /// value{} <br/>
-    struct context::movie {
-        static constexpr bool is_sesman_to_proxy() { return 0; }
-        static constexpr bool is_proxy_to_sesman() { return 0; }
-        static constexpr char const * section() { return "context"; }
-        static constexpr char const * name() { return "movie"; }
-        using type = std::string;
-        using mapped_type = type;
-        type value{};
-    };
     /// AUTHID_CONTEXT_OPT_BITRATE <br/>
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
@@ -4203,17 +4181,6 @@ namespace cfg {
         using mapped_type = type;
         type value{0};
     };
-    /// type: std::array<unsigned char, 28> <br/>
-    /// value{} <br/>
-    struct context::server_auto_reconnect_packet {
-        static constexpr bool is_sesman_to_proxy() { return 0; }
-        static constexpr bool is_proxy_to_sesman() { return 0; }
-        static constexpr char const * section() { return "context"; }
-        static constexpr char const * name() { return "server_auto_reconnect_packet"; }
-        using type = std::array<unsigned char, 28>;
-        using mapped_type = type;
-        type value{};
-    };
     /// AUTHID_CONTEXT_AUTH_COMMAND <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
@@ -4702,7 +4669,6 @@ struct video
 , cfg::video::rt_display
 , cfg::video::wrm_color_depth_selection_strategy
 , cfg::video::wrm_compression_algorithm
-, cfg::video::video_break_interval
 , cfg::video::bogus_vlc_frame_rate
 , cfg::video::l_bitrate
 , cfg::video::l_framerate
@@ -4771,8 +4737,7 @@ struct internal_mod
 { static constexpr bool is_section = true; };
 
 struct context
-: cfg::context::movie
-, cfg::context::opt_bitrate
+: cfg::context::opt_bitrate
 , cfg::context::opt_framerate
 , cfg::context::opt_qscale
 , cfg::context::opt_bpp
@@ -4832,7 +4797,6 @@ struct context
 , cfg::context::recording_started
 , cfg::context::rt_ready
 , cfg::context::perform_automatic_reconnection
-, cfg::context::server_auto_reconnect_packet
 , cfg::context::auth_command
 , cfg::context::auth_notify
 , cfg::context::auth_notify_rail_exec_flags

@@ -202,7 +202,6 @@ namespace cfg {
         struct rt_display;
         struct wrm_color_depth_selection_strategy;
         struct wrm_compression_algorithm;
-        struct video_break_interval;
         struct bogus_vlc_frame_rate;
         struct l_bitrate;
         struct l_framerate;
@@ -271,7 +270,6 @@ namespace cfg {
     };
 
     struct context {
-        struct movie;
         struct opt_bitrate;
         struct opt_framerate;
         struct opt_qscale;
@@ -332,7 +330,6 @@ namespace cfg {
         struct recording_started;
         struct rt_ready;
         struct perform_automatic_reconnection;
-        struct server_auto_reconnect_packet;
         struct auth_command;
         struct auth_notify;
         struct auth_notify_rail_exec_flags;

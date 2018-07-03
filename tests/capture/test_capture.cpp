@@ -106,7 +106,8 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         // TODO remove this after unifying capture interface
         bool full_video = false;
 
-        VideoParams video_params = video_params_from_ini(scr.cx, scr.cy, ini);
+        VideoParams video_params = video_params_from_ini(scr.cx, scr.cy,
+            std::chrono::seconds::zero(), ini);
         video_params.no_timestamp = false;
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const char * record_path = record_tmp_path;
@@ -334,7 +335,8 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     // TODO remove this after unifying capture interface
     bool no_timestamp = false;
 
-    VideoParams video_params = video_params_from_ini(scr.cx, scr.cy, ini);
+    VideoParams video_params = video_params_from_ini(scr.cx, scr.cy,
+        std::chrono::seconds::zero(), ini);
     video_params.no_timestamp = no_timestamp;
     const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
     const char * record_path = record_tmp_path;
