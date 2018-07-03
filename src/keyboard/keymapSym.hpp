@@ -159,6 +159,8 @@ struct KeymapSym
 
     bool is_num_locked() const;
 
+    void toggle_num_lock(bool on);
+
     bool is_left_shift_pressed() const;
 
     bool is_right_shift_pressed() const;

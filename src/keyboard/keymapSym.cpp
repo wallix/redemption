@@ -1436,6 +1436,13 @@ bool KeymapSym::is_num_locked() const
     return this->key_flags & NUMLOCK;
 }
 
+void KeymapSym::toggle_num_lock(bool on)
+{
+    if (((this->key_flags & NUMLOCK) == NUMLOCK) != on) {
+        this->key_flags ^= NUMLOCK;
+    }
+}
+
 bool KeymapSym::is_left_shift_pressed() const
 {
     return this->keys_down[LEFT_SHIFT];
