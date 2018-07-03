@@ -474,10 +474,13 @@ private:
         ARGB32Pointer vnccursor(cursor);
         const auto av_alpha_q = vnccursor.get_alpha_q();
 
+        //::hexdump(av_alpha_q.data(), dimensions.width * dimensions.height, dimensions.width);
+
         // this->cursor_image is used when client is replaying
         this->cursor_image = QImage(av_alpha_q.data(), dimensions.width, dimensions.height, dimensions.width * 4, QImage::Format_ARGB32_Premultiplied);
 
-         ;
+
+
         if (this->drawn_client->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP) {
             for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
                 if (it->second) {
@@ -1379,11 +1382,11 @@ private:
                                     fc_data++;
                                     fc_bit_mask = 128;
                                 }
-                                if (clip.contains_pt(x + fc.offset + xx, y + fc.baseline + yy)
+                                if (clip.contains_pt(x + fc.offsetx + xx, y + fc.offsety + yy)
                                 && (fc_bit_mask & *fc_data))
                                 {
                                     if (this->client->connected || this->client->is_replaying) {
-                                        this->painter.fillRect(x + fc.offset + xx, y + fc.baseline + yy, 1, 1, color);
+                                        this->painter.fillRect(x + fc.offsetx + xx, y + fc.offsety + yy, 1, 1, color);
                                     }
                                 }
                                 fc_bit_mask >>= 1;

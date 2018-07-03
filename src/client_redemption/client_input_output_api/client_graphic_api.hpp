@@ -134,9 +134,6 @@ public:
     virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) = 0;
 
 
-    // TODO The 2 methods below should not exist and cache access be done before calling drawing orders
-//     virtual void draw(RDPColCache   const &) {}
-//     virtual void draw(RDPBrushCache const &) {}
 
     virtual void begin_update() {}
     virtual void end_update() {}

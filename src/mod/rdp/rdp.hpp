@@ -1695,9 +1695,7 @@ public:
     }
 
     void log_metrics() override {
-
         if (bool(this->verbose & RDPVerbose::export_metrics)) {
-
             this->metrics.log();
         }
     }
@@ -2144,6 +2142,7 @@ public:
             case FastPath::UpdateType::POINTER:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "Process pointer new (Fast)");
+
                 }
                 this->process_new_pointer_pdu(stream, drawable);
                 break;
@@ -5233,6 +5232,9 @@ public:
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
         }
 
+//         InStream stream_to_log = stream.clone();
+//           ::hexdump(stream.get_data(), stream.in_remain());
+
         unsigned data_bpp  = stream.in_uint16_le(); /* data bpp */
         unsigned pointer_idx = stream.in_uint16_le();
         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
@@ -5261,15 +5263,28 @@ public:
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
+//         LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu data_bpp=%u pointer_idx=%u hotspot_x=%u hotspot_y=%u width=%u height=%u mlen=%u dlen=%u square=%u", data_bpp, pointer_idx, hotspot_x, hotspot_y, width, height, mlen, dlen, height*width);
         const uint8_t * data = stream.in_uint8p(dlen);
         const uint8_t * mask = stream.in_uint8p(mlen);
 
         Pointer cursor({width, height}, {hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor);
         this->cursors[pointer_idx] = cursor;
 
+
+
         drawable.set_pointer(cursor);
         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
+//             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done cursormask");
+//             const uint8_t * cursormask = cursor.get_monochrome_and_mask().data();
+//             ::hexdump(cursormask, cursor.get_dimensions().width * cursor.get_dimensions().height, cursor.get_dimensions().width);
+//             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done cursordata");
+//             const uint8_t * cursordata = cursor.get_24bits_xor_mask().data();
+//             ::hexdump(cursordata, cursor.get_dimensions().width * cursor.get_dimensions().height, cursor.get_dimensions().width);
+//             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done vnccursor");
+//             ARGB32Pointer vnccursor(cursor);
+//             const auto av_alpha_q = vnccursor.get_alpha_q();
+//             ::hexdump(av_alpha_q.data(), cursor.get_dimensions().width * cursor.get_dimensions().height, cursor.get_dimensions().width);
         }
     }   // process_new_pointer_pdu
 

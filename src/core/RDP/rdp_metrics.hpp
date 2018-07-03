@@ -71,10 +71,11 @@ struct RDPMetrics {
         char sentence[4096];
           ::snprintf(sentence, sizeof(sentence), "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\""
           " right_click_sent=%d left_click_sent=%d keys_sent=%d"
-         " Client data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld"
-        " Server data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld",
+         " Client data received by channels - main=%ld cliprdr=%ld rail=%ld rdpdr=%ld drdynvc=%ld"
+        " Server data received by channels - main=%ld cliprdr=%ld rail=%ld rdpdr=%ld drdynvc=%ld",
             this->session_id, this->primary_user, this->account, this->target_host,
             this->total_right_clicks, this->total_left_clicks, this->total_keys_pressed,
+            
             this->total_main_amount_data_rcv_from_client,
             this->total_cliprdr_amount_data_rcv_from_client,
             this->total_rail_amount_data_rcv_from_client,

@@ -588,7 +588,6 @@ public:
 
 
 
-
     void openWindowsData() override {
         if (std::ifstream ifile{this->WINDOWS_CONF}) {
             this->windowsData.no_data = false;
