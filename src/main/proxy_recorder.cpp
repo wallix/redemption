@@ -36,6 +36,9 @@
 
 #include "utils/fixed_random.hpp"
 
+#include <openssl/ssl.h>
+
+
 using PacketType = RecorderFile::PacketType;
 
 /** @brief a front connection with a RDP client */
@@ -271,6 +274,8 @@ int main(int argc, char *argv[]) {
 		LOG(LOG_ERR, "expecting target host, port and capture template");
 		return 1;
 	}
+
+	SSL_library_init();
 
 	FrontServer front(argv[1], strtol(argv[2], nullptr, 10), argv[3]);
 	Listen listener(front, inet_addr("0.0.0.0"), 3389);
