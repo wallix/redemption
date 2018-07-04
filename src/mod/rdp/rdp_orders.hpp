@@ -173,9 +173,7 @@ public:
             delete this->bmp_cache;
         }
 
-        if (this->ninegrid_bmp_cache) {
-            delete this->ninegrid_bmp_cache;
-        }
+        delete this->ninegrid_bmp_cache;
     }
 
 private:
