@@ -574,16 +574,16 @@ public:
 
 
     void store_data_cursor(const char * cursor, bool inverted){
-            uint8_t * tmp = this->data;
-            memset(this->mask, 0, this->dimensions.width * this->dimensions.height / 8);
-            for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
-                // COLOR: X:1 .:0 +:0 -:1
-                // MASK:  X:0 .:1 +:0 -:1
-                uint8_t v = (((cursor[i] == 'X')||(cursor[i] == '-'))^inverted) ? 0xFF : 0;
-                tmp[0] = tmp[1] = tmp[2] = v;
-                tmp += 3;
-                this->mask[i/8]|= ((cursor[i] == '.')||(cursor[i] == '-'))?(0x80 >> (i%8)):0;
-            }
+        uint8_t * tmp = this->data;
+        memset(this->mask, 0, this->dimensions.width * this->dimensions.height / 8);
+        for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
+            // COLOR: X:1 .:0 +:0 -:1
+            // MASK:  X:0 .:1 +:0 -:1
+            uint8_t v = (((cursor[i] == 'X')||(cursor[i] == '-'))^inverted) ? 0xFF : 0;
+            tmp[0] = tmp[1] = tmp[2] = v;
+            tmp += 3;
+            this->mask[i/8]|= ((cursor[i] == '.')||(cursor[i] == '-'))?(0x80 >> (i%8)):0;
+        }
     }
 
 public:
@@ -648,11 +648,9 @@ public:
                             and_bit_extraction_mask = 7;
                             andMask++;
                         }
-
                     }
                 }
             }
-
         }
     }
 

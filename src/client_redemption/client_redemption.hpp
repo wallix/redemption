@@ -500,6 +500,7 @@ public:
                     mod_rdp_params.allow_channels                  = &allow_channels;
                     mod_rdp_params.deny_channels = nullptr;
                     mod_rdp_params.enable_rdpdr_data_analysis = false;
+                    mod_rdp_params.bogus_linux_cursor = BogusLinuxCursor::enable;
 
                     this->unique_mod.reset(new mod_rdp( *this->socket
                                                 , session_reactor

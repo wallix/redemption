@@ -35,6 +35,8 @@ struct RDPMetrics {
     const char * target_host;
     const char * primary_user;
 
+    int fd = -1;
+
     long int total_main_amount_data_rcv_from_client = 0;
     long int total_cliprdr_amount_data_rcv_from_client = 0;
     long int total_rail_amount_data_rcv_from_client = 0;
@@ -63,7 +65,15 @@ struct RDPMetrics {
       , account(account)
       , target_host(target_host)
       , primary_user(primary_user)
-      {}
+      {
+          if (this->filename) {
+            this->fd = ::open(this->filename, O_WRONLY);
+
+            if (this->fd < 0) {
+                LOG(LOG_ERR, "Log Metrics error: can't open \"%s\"", this->filename);
+            }
+          }
+    }
 
 
     void log() {
@@ -75,7 +85,7 @@ struct RDPMetrics {
         " Server data received by channels - main=%ld cliprdr=%ld rail=%ld rdpdr=%ld drdynvc=%ld",
             this->session_id, this->primary_user, this->account, this->target_host,
             this->total_right_clicks, this->total_left_clicks, this->total_keys_pressed,
-            
+
             this->total_main_amount_data_rcv_from_client,
             this->total_cliprdr_amount_data_rcv_from_client,
             this->total_rail_amount_data_rcv_from_client,
@@ -89,13 +99,11 @@ struct RDPMetrics {
             this->total_drdynvc_amount_data_rcv_from_server
         );
 
-        if (this->filename) {
-            int fd = ::open(this->filename, O_WRONLY);
 
-            if (fd == -1) {
-                LOG(LOG_ERR, "Log Metrics error: can't open \"%s\"", this->filename);
-                return;
-            }
+        if (this->fd < 0) {
+            LOG(LOG_INFO, "%s", sentence);
+
+        } else {
 
             struct iovec iov[1];
             iov[0].iov_base = sentence;
@@ -107,9 +115,6 @@ struct RDPMetrics {
                 LOG(LOG_ERR, "Log Metrics error: can't write \"%s\"", this->filename);
                 return;
             }
-
-        } else {
-            LOG(LOG_INFO, "%s", sentence);
         }
     }
 };
