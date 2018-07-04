@@ -211,7 +211,15 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
 
     template<class T>
     disable_if_enum_t<T>
-    write_value(T const & r) { this->out() << '{' << r << '}'; }
+    write_value(T const & r)
+    {
+        if (std::is_same<T, bool>{}) {
+            this->out() << '{' << (r ? "true" : "false") << '}';
+        }
+        else {
+            this->out() << '{' << r << '}';
+        }
+    }
 
     void write_value(const char * s) { this->out() << " = \"" << io_quoted2{s} << '"';  }
     void write_value(std::string const & str) { this->write_value(str.c_str()); }
