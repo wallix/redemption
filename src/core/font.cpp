@@ -47,7 +47,7 @@ namespace
         0b00100'000,
         0b00100'000,
     };
-}
+}  // namespace
 
 FontCharView Font::default_unknown_glyph() noexcept
 {

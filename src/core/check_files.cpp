@@ -112,7 +112,7 @@ namespace
 
         return result;
     }
-}
+}  // namespace
 
 bool check_files(unsigned euid, unsigned egid)
 {

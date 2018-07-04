@@ -210,7 +210,7 @@ namespace jln
         template<class T> struct decay_and_strip<T const> : decay_and_strip<T>{};
         template<class T> struct decay_and_strip<std::reference_wrapper<T>> { using type = T&; };
         template<class T, class... Ts> struct decay_and_strip<emplace_type<T, Ts...>> { using type = T; };
-    }
+    }  // namespace detail
 
     template<class T>
     using decay_and_strip_t = typename detail::decay_and_strip<T>::type;
@@ -413,7 +413,7 @@ namespace jln
         template<class InitCtx>
         using ActionExecutorBuilder = ActionExecutorBuilderImpl<BuilderInit::None, InitCtx>;
     #endif
-    }
+    }  // namespace detail
 
 
 #ifdef IN_IDE_PARSER
@@ -1008,7 +1008,7 @@ namespace jln
         {
             f();
         }
-    }
+    }  // namespace detail
 
     template<auto f>
     auto one_shot() noexcept
@@ -1095,7 +1095,7 @@ namespace jln
         {
             using type = named_indexed<i, S>;
         };
-    }
+    }  // namespace detail
 
     namespace literals
     {
@@ -1281,7 +1281,7 @@ namespace jln
             REDEMPTION_DIAGNOSTIC_POP
             return r;
         }
-    }
+    }  // namespace detail
 
     template<class S, class F>
     detail::named_function<S, F> named(S, F)
@@ -2026,7 +2026,7 @@ namespace jln
             data_ptr->shared_ptr = nullptr;
             return InheritSharedPtr(data_ptr);
         }
-    }
+    }  // namespace detail
 
 
     template<class... Ts>
@@ -2819,7 +2819,7 @@ namespace jln
         return ActionExecutorBuilderImpl<
             BuilderInit::E(Has | BuilderInit::NotifyDelete), InitCtx>(std::move(this->init_ctx));
     }
-}
+}  // namespace jln
 
 
 class mod_api;
@@ -3097,4 +3097,4 @@ namespace jln
         this->delay = ms;
         this->tv = addusectimeval(this->delay, this->reactor.get_current_time());
     }
-}
+}  // namespace jln

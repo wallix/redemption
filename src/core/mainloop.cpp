@@ -127,7 +127,7 @@ REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
 REDEMPTION_DIAGNOSTIC_POP
 }
 
-}
+}  // namespace
 
 //void reset_signals(void)
 //{

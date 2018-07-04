@@ -25,7 +25,7 @@ Author(s): Jonathan Poelen
 
 struct DateDirFromFilename
 {
-    DateDirFromFilename(array_view_const_char path) noexcept;
+    explicit DateDirFromFilename(array_view_const_char path) noexcept;
 
     bool has_date() const noexcept
     {
