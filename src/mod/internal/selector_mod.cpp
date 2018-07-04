@@ -275,9 +275,7 @@ void SelectorMod::refresh_device()
         targets[size_targets] = '\0';
         protocols[size_protocols] = '\0';
 
-        //this->selector.add_device(groups, targets, protocols);
-
-        const char * texts[] = { groups, targets, protocols,  "", "", "", "", "", "", ""};
+        const char * texts[] = { groups, targets, protocols, nullptr };
         this->selector.add_device(texts);
 
         groups[size_groups] = c_group;
@@ -300,10 +298,8 @@ void SelectorMod::refresh_device()
         this->selector.selector_lines.tab_flag = Widget::IGNORE_TAB;
         this->selector.selector_lines.focus_flag = Widget::IGNORE_FOCUS;
 
-        const char * texts[] = { "", TR(trkeys::no_results, language(this->vars)), "", "", "", "", "", "", "", ""};
+        const char * texts[] = { "", TR(trkeys::no_results, language(this->vars)), nullptr };
         this->selector.add_device(texts);
-
-        //this->selector.add_device("", TR(trkeys::no_results, language(this->vars)), "", "");
     } else {
         this->selector.selector_lines.tab_flag = Widget::NORMAL_TAB;
         this->selector.selector_lines.focus_flag = Widget::NORMAL_FOCUS;

@@ -37,7 +37,6 @@ WidgetLabelGrid::WidgetLabelGrid(
         bg_color_1, fg_color_1, bg_color_2, fg_color_2,
         bg_color_focus, fg_color_focus,
         bg_color_selection, fg_color_selection, border, group_id)
-    , toDelete()
     , font(font)
 {}
 
@@ -54,23 +53,23 @@ void WidgetLabelGrid::clear()
 
 void WidgetLabelGrid::clean_labels()
 {
-    for (int i = 0; i < GRID_NB_COLUMNS_MAX; i++) {
-        for (int j = 0; j < GRID_NB_ROWS_MAX; j++) {
-            if (this->toDelete[i][j]) {
-                if (this->widgets[i][j]) {
-                    delete this->widgets[i][j];
-                    this->widgets[i][j] = nullptr;
-                }
-            }
+    for (int i = 0; i < this->get_nb_columns(); i++) {
+        for (int j = 0; j < this->get_nb_rows(); j++) {
+            Widget* w = this->remove_widget(j, i);
+            delete w;
         }
     }
 }
 
 uint16_t WidgetLabelGrid::add_line(const char ** entries)
 {
-    assert(this->nb_rows <= GRID_NB_ROWS_MAX);
-    for (int i = 0; i < this->nb_columns; i++) {
-        bool odd = this->nb_rows & 1;
+    uint16_t const  old_nb_row = this->get_nb_rows();
+
+    assert(old_nb_row < GRID_NB_ROWS_MAX);
+
+    this->set_nb_rows(old_nb_row + 1);
+    for (int i = 0; i < this->get_nb_columns() && entries[i]; i++) {
+        bool odd = this->get_nb_rows() & 1;
         WidgetLabel * label = new WidgetLabel(
             this->drawable, *this, this,
             entries[i], this->group_id,
@@ -83,17 +82,18 @@ uint16_t WidgetLabelGrid::add_line(const char ** entries)
         label->set_wh(dim);
 
         label->tool = true;
-        this->set_widget(this->nb_rows, i, label);
-        this->toDelete[i][this->nb_rows] = true;
+        this->set_widget(old_nb_row, i, label);
     }
-    return this->nb_rows++;
+
+    return old_nb_row;
 }
 
 const char * WidgetLabelGrid::get_cell_text(uint16_t row_index, uint16_t column_index)
 {
     const char * result = "";
-    if (this->toDelete[column_index][row_index]) {
-        WidgetLabel * label = static_cast<WidgetLabel*>(this->widgets[column_index][row_index]);
+    Widget * w = this->get_widget(row_index, column_index);
+    if (w) {
+        WidgetLabel * label = static_cast<WidgetLabel*>(w);
         result = label->get_text();
     }
     return result;
