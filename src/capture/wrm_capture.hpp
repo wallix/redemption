@@ -809,7 +809,7 @@ public:
         BmpCache::CacheOption(600, 768, false),
         BmpCache::CacheOption(300, 3072, false),
         BmpCache::CacheOption(262, 12288, false))
-    , ptr_cache(/*pointerCacheSize=*/0x19)
+    , ptr_cache(/*pointer_cache_entries=*/0x19)
     , out(
         wrm_params.cctx,
         wrm_params.rnd,
