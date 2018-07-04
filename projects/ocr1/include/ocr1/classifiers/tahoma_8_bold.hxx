@@ -19,7 +19,7 @@ if (count < 34) {
             return "_";
           } else {}
         } else {}
-      } else {
+      } else /* NOLINT */ {
         if (count == 8) {
           if (width == 2) {
             return ":";
@@ -42,7 +42,7 @@ if (count < 34) {
           } else {}
         } else {}
       }
-    } else {
+    } else /* NOLINT */ {
       if (count < 15) {
         if (count == 12) {
           return "~";
@@ -73,7 +73,7 @@ if (count < 34) {
             return "=";
           } else {}
         } else {}
-      } else {
+      } else /* NOLINT */ {
         if (count == 15) {
           return "r";
         } else if (count == 16) {
@@ -117,7 +117,7 @@ if (count < 34) {
         } else {}
       }
     }
-  } else {
+  } else /* NOLINT */ {
     if (count < 27) {
       if (count < 24) {
         if (count == 20) {
@@ -167,7 +167,7 @@ if (count < 34) {
         } else if (count == 23) {
           return "e";
         } else {}
-      } else {
+      } else /* NOLINT */ {
         if (count == 24) {
           if (width == 6) {
             if (height == 6) {
@@ -230,7 +230,7 @@ if (count < 34) {
           } else {}
         } else {}
       }
-    } else {
+    } else /* NOLINT */ {
       if (count < 30) {
         if (count == 27) {
           if (width == 6) {
@@ -301,7 +301,7 @@ if (count < 34) {
             return "€";
           } else {}
         } else {}
-      } else {
+      } else /* NOLINT */ {
         if (count == 30) {
           if (width == 6) {
             if (height == 8) {
@@ -382,7 +382,7 @@ if (count < 34) {
       }
     }
   }
-} else {
+} else /* NOLINT */ {
   if (count < 58) {
     if (count < 42) {
       if (count < 38) {
@@ -431,7 +431,7 @@ if (count < 34) {
             } else {}
           } else {}
         } else {}
-      } else {
+      } else /* NOLINT */ {
         if (count == 38) {
           if (width == 6) {
             return "fl";
@@ -458,7 +458,7 @@ if (count < 34) {
           } else {}
         } else {}
       }
-    } else {
+    } else /* NOLINT */ {
       if (count < 50) {
         if (count == 42) {
           return "@";
@@ -467,7 +467,7 @@ if (count < 34) {
         } else if (count == 46) {
           return "W";
         } else {}
-      } else {
+      } else /* NOLINT */ {
         if (count == 50) {
           return "fk";
         } else if (count == 51) {
@@ -479,7 +479,7 @@ if (count < 34) {
         } else {}
       }
     }
-  } else {
+  } else /* NOLINT */ {
     if (count < 74) {
       if (count < 70) {
         if (count == 58) {
@@ -489,7 +489,7 @@ if (count < 34) {
         } else if (count == 60) {
           return "fff";
         } else {}
-      } else {
+      } else /* NOLINT */ {
         if (count == 70) {
           return "ffk";
         } else if (count == 71) {
@@ -498,7 +498,7 @@ if (count < 34) {
           return "ffb";
         } else {}
       }
-    } else {
+    } else /* NOLINT */ {
       if (count < 80) {
         if (count == 74) {
           return "fffi";
@@ -507,7 +507,7 @@ if (count < 34) {
         } else if (count == 79) {
           return "ffft";
         } else {}
-      } else {
+      } else /* NOLINT */ {
         if (count == 80) {
           return "ffff";
         } else if (count == 90) {

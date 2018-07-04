@@ -20,7 +20,7 @@ if (count < 19) {
           return "_";
         } else {}
       } else {}
-    } else {
+    } else /* NOLINT */ {
       if (count == 6) {
         if (width == 1) {
           return "\x1";
@@ -41,7 +41,7 @@ if (count < 19) {
         } else {}
       } else {}
     }
-  } else {
+  } else /* NOLINT */ {
     if (count < 14) {
       if (count == 10) {
         if (width == 4) {
@@ -96,7 +96,7 @@ if (count < 19) {
           } else if (width == 3) {
             return "I";
           } else {}
-        } else {
+        } else /* NOLINT */ {
           if (width == 4) {
             return "e";
           } else if (width == 5) {
@@ -106,7 +106,7 @@ if (count < 19) {
           } else {}
         }
       } else {}
-    } else {
+    } else /* NOLINT */ {
       if (count < 16) {
         if (count == 14) {
           if (width == 4) {
@@ -163,7 +163,7 @@ if (count < 19) {
             } else {}
           } else {}
         } else {}
-      } else {
+      } else /* NOLINT */ {
         if (count == 16) {
           if (width == 4) {
             return "5";
@@ -224,7 +224,7 @@ if (count < 19) {
       }
     }
   }
-} else {
+} else /* NOLINT */ {
   if (count < 27) {
     if (count < 23) {
       if (count == 19) {
@@ -250,7 +250,7 @@ if (count < 19) {
           } else if (width == 5) {
             return "й";
           } else {}
-        } else {
+        } else /* NOLINT */ {
           if (width == 6) {
             return "ѳ";
           } else if (width == 7) {
@@ -292,7 +292,7 @@ if (count < 19) {
           } else {}
         } else {}
       } else {}
-    } else {
+    } else /* NOLINT */ {
       if (count == 23) {
         if (width == 7) {
           if (height == 9) {
@@ -329,7 +329,7 @@ if (count < 19) {
         } else {}
       } else {}
     }
-  } else {
+  } else /* NOLINT */ {
     if (count < 32) {
       if (count == 27) {
         if (width == 7) {
@@ -360,7 +360,7 @@ if (count < 19) {
           return "Ю";
         } else {}
       } else {}
-    } else {
+    } else /* NOLINT */ {
       if (count < 36) {
         if (count == 32) {
           return "M";
@@ -371,7 +371,7 @@ if (count < 19) {
             return "ѳѵ";
           } else {}
         } else {}
-      } else {
+      } else /* NOLINT */ {
         if (count == 36) {
           return "Щ";
         } else if (count == 39) {

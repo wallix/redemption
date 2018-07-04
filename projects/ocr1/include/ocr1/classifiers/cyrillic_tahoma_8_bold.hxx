@@ -19,7 +19,7 @@ if (count < 35) {
             return "_";
           } else {}
         } else {}
-      } else {
+      } else /* NOLINT */ {
         if (count == 8) {
           if (width == 2) {
             return ":";
@@ -48,7 +48,7 @@ if (count < 35) {
           } else {}
         } else {}
       }
-    } else {
+    } else /* NOLINT */ {
       if (count < 16) {
         if (count == 13) {
           if (width == 7) {
@@ -83,7 +83,7 @@ if (count < 35) {
             return "г";
           } else {}
         } else {}
-      } else {
+      } else /* NOLINT */ {
         if (count == 16) {
           if (width == 2) {
             return "\x2";
@@ -147,7 +147,7 @@ if (count < 35) {
         } else {}
       }
     }
-  } else {
+  } else /* NOLINT */ {
     if (count < 27) {
       if (count < 23) {
         if (count == 20) {
@@ -199,7 +199,7 @@ if (count < 35) {
             } else {}
           } else {}
         } else {}
-      } else {
+      } else /* NOLINT */ {
         if (count == 23) {
           if (width == 5) {
             return "й";
@@ -300,7 +300,7 @@ if (count < 35) {
           } else {}
         } else {}
       }
-    } else {
+    } else /* NOLINT */ {
       if (count < 31) {
         if (count == 27) {
           if (width == 6) {
@@ -409,7 +409,7 @@ if (count < 35) {
             return "Ъ";
           } else {}
         } else {}
-      } else {
+      } else /* NOLINT */ {
         if (count == 31) {
           if (width == 6) {
             if (height == 8) {
@@ -512,7 +512,7 @@ if (count < 35) {
       }
     }
   }
-} else {
+} else /* NOLINT */ {
   if (count < 54) {
     if (count < 43) {
       if (count < 38) {
@@ -553,7 +553,7 @@ if (count < 35) {
             return "д";
           } else {}
         } else {}
-      } else {
+      } else /* NOLINT */ {
         if (count == 38) {
           if (width == 6) {
             return "fl";
@@ -598,7 +598,7 @@ if (count < 35) {
           return "@";
         } else {}
       }
-    } else {
+    } else /* NOLINT */ {
       if (count < 48) {
         if (count == 43) {
           return "щ";
@@ -613,7 +613,7 @@ if (count < 35) {
         } else if (count == 47) {
           return "Д";
         } else {}
-      } else {
+      } else /* NOLINT */ {
         if (count == 48) {
           return "Ж";
         } else if (count == 50) {
@@ -633,7 +633,7 @@ if (count < 35) {
         } else {}
       }
     }
-  } else {
+  } else /* NOLINT */ {
     if (count < 72) {
       if (count < 59) {
         if (count == 54) {
@@ -643,7 +643,7 @@ if (count < 35) {
         } else if (count == 58) {
           return "ffl";
         } else {}
-      } else {
+      } else /* NOLINT */ {
         if (count == 59) {
           return "fft";
         } else if (count == 60) {
@@ -654,7 +654,7 @@ if (count < 35) {
           return "ffh";
         } else {}
       }
-    } else {
+    } else /* NOLINT */ {
       if (count < 80) {
         if (count == 72) {
           return "ffb";
@@ -665,7 +665,7 @@ if (count < 35) {
         } else if (count == 79) {
           return "ffft";
         } else {}
-      } else {
+      } else /* NOLINT */ {
         if (count == 80) {
           return "ffff";
         } else if (count == 90) {
