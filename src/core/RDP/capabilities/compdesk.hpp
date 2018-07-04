@@ -55,11 +55,11 @@ enum {
 
 
 struct CompDeskCaps : public Capability {
-    uint16_t CompDeskSupportLevel;
+    uint16_t CompDeskSupportLevel{COMPDESK_NOT_SUPPORTED};
 
     CompDeskCaps()
     : Capability(CAPSETTYPE_COMPDESK, CAPLEN_COMPDESK)
-    , CompDeskSupportLevel(COMPDESK_NOT_SUPPORTED) // By default, minimal
+    
     {
     }
 

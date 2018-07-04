@@ -22,6 +22,8 @@
 
 #include "transport/out_file_transport.hpp"
 
+#include <cstring>
+
 
 struct FilenameGenerator
 {

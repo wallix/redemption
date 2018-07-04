@@ -29,6 +29,7 @@
 #pragma once
 
 #include "core/RDP/gcc/data_block_type.hpp"
+#include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "core/error.hpp"
 
@@ -68,15 +69,13 @@ struct CSMultiTransport {
         , SOFTSYNC_TCP_TO_UDP         = 0x200
     };
 
-    uint16_t userDataType;
-    uint16_t length;
+    uint16_t userDataType{CS_MULTITRANSPORT};
+    uint16_t length{8};
 
-    uint32_t flags;
+    uint32_t flags{0};
 
     CSMultiTransport()
-    : userDataType(CS_MULTITRANSPORT)
-    , length(8)
-    , flags(0)
+     
     {
     }
 

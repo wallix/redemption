@@ -19,10 +19,11 @@
 
 */
 
-
 #pragma once
 
-#include <string.h>
+#include <cstring>
+#include <cstdint>
+
 
 struct brush_item {
     int stamp;

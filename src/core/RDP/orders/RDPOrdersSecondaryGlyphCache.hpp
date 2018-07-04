@@ -165,8 +165,8 @@ public:
                  , std::unique_ptr<uint8_t[]> aj
                  )
     : cacheId(cacheId)
-    , cGlyphs(1)
-    , cacheIndex(cacheIndex)
+    , 
+     cacheIndex(cacheIndex)
     , x(x)
     , y(y)
     , cx(cx)

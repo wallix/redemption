@@ -106,12 +106,12 @@
 
 class RDPMultiDstBlt {
 public:
-    int16_t nLeftRect;
-    int16_t nTopRect;
-    int16_t nWidth;
-    int16_t nHeight;
-    uint8_t bRop;
-    uint8_t nDeltaEntries;
+    int16_t nLeftRect{0};
+    int16_t nTopRect{0};
+    int16_t nWidth{0};
+    int16_t nHeight{0};
+    uint8_t bRop{0};
+    uint8_t nDeltaEntries{0};
 
     struct RDP::DeltaEncodedRectangle deltaEncodedRectangles[45];
 
@@ -120,12 +120,7 @@ public:
     }
 
     RDPMultiDstBlt()
-    : nLeftRect(0)
-    , nTopRect(0)
-    , nWidth(0)
-    , nHeight(0)
-    , bRop(0)
-    , nDeltaEntries(0) {
+     {
         ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
     }
 

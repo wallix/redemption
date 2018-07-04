@@ -21,10 +21,12 @@
 
 #pragma once
 
-#include <stdio.h>
 #include "utils/log.hpp"
 #include "core/error.hpp"
 #include "utils/utf.hpp"
+
+#include <new>
+#include <cstdio>
 
 
 // TODO: CGR. This array here should be replaced by a plain std::vector<uint8_t>
@@ -33,16 +35,14 @@ class Array {
         AUTOSIZE = 65536
     };
 
-    uint8_t* data;
-    size_t capacity;
+    uint8_t* data{nullptr};
+    size_t capacity{0};
     private:
-    uint8_t autobuffer[AUTOSIZE];
+    uint8_t autobuffer[AUTOSIZE]{};
 
     public:
     explicit Array(size_t size = AUTOSIZE)
-        : data(nullptr)
-        , capacity(0)
-        , autobuffer()
+         
     {
         this->data = this->autobuffer;
         this->init(size);
@@ -213,13 +213,13 @@ struct SEC_WINNT_AUTH_IDENTITY
     Array User;
     Array Domain;
     Array Password;
-    uint32_t Flags;
+    uint32_t Flags{0};
 
     SEC_WINNT_AUTH_IDENTITY()
         : User(0)
         , Domain(0)
         , Password(0)
-        , Flags(0)
+         
     {
         this->princname[0] = 0;
         this->princpass[0] = 0;

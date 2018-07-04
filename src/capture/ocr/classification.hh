@@ -41,16 +41,13 @@ private:
     std::string out_tmp;
 
 public:
-    unsigned character_count;
-    unsigned unrecognized_count;
-    unsigned first_unrecognized_index;
+    unsigned character_count{0};
+    unsigned unrecognized_count{0};
+    unsigned first_unrecognized_index{0};
     unsigned font_id;
 
     classifier_type(unsigned font = -1u)
-    : character_count(0)
-    , unrecognized_count(0)
-    , first_unrecognized_index(0)
-    , font_id(font)
+    : font_id(font)
     {}
 
     unsigned unrecognized_rate() const

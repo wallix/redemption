@@ -110,12 +110,12 @@
 
 class RDPMultiOpaqueRect {
 public:
-    int16_t  nLeftRect;
-    int16_t  nTopRect;
-    int16_t  nWidth;
-    int16_t  nHeight;
+    int16_t  nLeftRect{0};
+    int16_t  nTopRect{0};
+    int16_t  nWidth{0};
+    int16_t  nHeight{0};
     RDPColor _Color;
-    uint8_t  nDeltaEntries;
+    uint8_t  nDeltaEntries{0};
 
     struct RDP::DeltaEncodedRectangle deltaEncodedRectangles[45];
 
@@ -124,12 +124,9 @@ public:
     }
 
     RDPMultiOpaqueRect()
-    : nLeftRect(0)
-    , nTopRect(0)
-    , nWidth(0)
-    , nHeight(0)
-    , _Color{}
-    , nDeltaEntries(0)
+    : 
+     _Color{}
+     
     {
         ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
     }

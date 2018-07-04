@@ -688,9 +688,8 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc
     //     of RDP6.0-BC compressed data between a client and server requires
     //     a history buffer and a current offset into the history buffer
     //    (HistoryOffset).
-
     uint8_t    historyBuffer[RDP_60_HIST_BUF_LEN];   /* contains uncompressed data */
-    uint16_t   historyOffset;   /* next free slot in historyBuffer */
+    uint16_t   historyOffset{0};   /* next free slot in historyBuffer */
 
     // In addition to the history buffer and HistoryOffset, a small cache
     //     MUST also be managed by the client and server endpoints. This
@@ -699,15 +698,17 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc
     //     (copy-offsets are described in [MS-RDPBCGR] section 3.1.8.1). This
     //     saves on bandwidth in cases where there are many repeated
     //     copy-offsets.
+    // Whenever the history buffer is initialized or reinitialized, the
+    //     OffsetCache MUST be emptied
     uint16_t offsetCache[CACHED_OFFSET_COUNT];
 
     uint8_t    outputBuffer[RDP_60_HIST_BUF_LEN];    /* contains compressed data              */
-    uint16_t   bytes_in_opb;    /* compressed bytes available in         */
+    uint16_t   bytes_in_opb{0};    /* compressed bytes available in         */
                                 /*     outputBuffer                      */
 
-    uint8_t    flags;           /* PACKET_COMPRESSED, PACKET_AT_FRONT,   */
+    uint8_t    flags{0};           /* PACKET_COMPRESSED, PACKET_AT_FRONT,   */
                                 /*     PACKET_FLUSHED etc                */
-    uint8_t    flagsHold;
+    uint8_t    flagsHold{PACKET_FLUSHED};
 
     hash_table_manager hash_tab_mgr;
 
@@ -718,14 +719,8 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc
         //     initialized, the entire history buffer is immediately
         //     regarded as valid.
         , historyBuffer{0}
-        , historyOffset(0)
-        // Whenever the history buffer is initialized or reinitialized, the
-        //     OffsetCache MUST be emptied.
         , offsetCache{0}
         , outputBuffer{0}
-        , bytes_in_opb(0)
-        , flags(0)
-        , flagsHold(PACKET_FLUSHED)
         , hash_tab_mgr(MINIMUM_MATCH_LENGTH, MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
     {}
 

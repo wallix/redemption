@@ -21,6 +21,9 @@
 
 #pragma once
 
+#include <cstdint>
+
+
 namespace RDP {
 
 // [MS-RDPBCGR] - 2.2.11.1 Inclusive Rectangle (TS_RECTANGLE16)

@@ -77,9 +77,9 @@ enum {
 };
 
 struct DrawNineGridCacheCaps : public Capability {
-    uint32_t drawNineGridSupportLevel;
-    uint16_t drawNineGridCacheSize;
-    uint16_t drawNineGridCacheEntries;
+    uint32_t drawNineGridSupportLevel{DRAW_NINEGRID_NO_SUPPORT}; // from a specific list of value (see enum)
+    uint16_t drawNineGridCacheSize{0};                      // 0 by default (max = 2560 Kilobytes)
+    uint16_t drawNineGridCacheEntries{0};                   // 0 by default (max =  256entries)
 
     DrawNineGridCacheCaps(uint32_t drawNineGridSupportLevel,
                           uint16_t drawNineGridCacheSize,
@@ -91,9 +91,6 @@ struct DrawNineGridCacheCaps : public Capability {
 
     DrawNineGridCacheCaps()
     : Capability(CAPSTYPE_DRAWNINEGRIDCACHE, CAPLEN_DRAWNINEGRIDCACHE)
-    , drawNineGridSupportLevel(DRAW_NINEGRID_NO_SUPPORT) // from a specific list of value (see enum)
-    , drawNineGridCacheSize(0)    // 0 by default (max = 2560 Kilobytes)
-    , drawNineGridCacheEntries(0) // 0 by default (max = 256 entries)
     {
     }
 

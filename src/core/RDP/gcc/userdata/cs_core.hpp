@@ -29,6 +29,7 @@
 #pragma once
 
 #include "core/RDP/gcc/data_block_type.hpp"
+#include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "core/error.hpp"
 
@@ -347,58 +348,36 @@ enum {
 
 struct CSCore {
     // header
-    uint16_t userDataType;
-    uint16_t length;
-    uint32_t version;
+    uint16_t userDataType{CS_CORE};
+    uint16_t length{216};            // default: everything including serverSelectedProtocol
+    uint32_t version{0x00080001};    // RDP version. 1 == RDP4, 4 == RDP5
     uint16_t desktopWidth;
     uint16_t desktopHeight;
-    uint16_t colorDepth;
-    uint16_t SASSequence;
-    uint32_t keyboardLayout;
-    uint32_t clientBuild;
+    uint16_t colorDepth{0xca01};
+    uint16_t SASSequence{0xaa03};
+    uint32_t keyboardLayout{0x040c}; // default to French
+    uint32_t clientBuild{2600};
     uint16_t clientName[16];
-    uint32_t keyboardType;
-    uint32_t keyboardSubType;
-    uint32_t keyboardFunctionKey;
+    uint32_t keyboardType{4};
+    uint32_t keyboardSubType{0};
+    uint32_t keyboardFunctionKey{12};
     uint16_t imeFileName[32];
     // optional payload
-    uint16_t postBeta2ColorDepth;
-    uint16_t clientProductId;
-    uint32_t serialNumber;
-    uint16_t highColorDepth;
-    uint16_t supportedColorDepths;
-    uint16_t earlyCapabilityFlags;
+    uint16_t postBeta2ColorDepth{0xca01};
+    uint16_t clientProductId{1};
+    uint32_t serialNumber{0};
+    uint16_t highColorDepth{0};
+    uint16_t supportedColorDepths{7};
+    uint16_t earlyCapabilityFlags{1};
     uint8_t  clientDigProductId[64];
-    uint8_t  connectionType;
-    uint8_t  pad1octet;
-    uint32_t serverSelectedProtocol;
+    uint8_t  connectionType{0};
+    uint8_t  pad1octet{0};
+    uint32_t serverSelectedProtocol{0};
 
     // we do not provide parameters in constructor,
     // because setting them one field at a time is more explicit and maintainable
     // (drawback: danger is different, not swapping parameters, but we may forget to define some...)
     CSCore()
-    : userDataType(CS_CORE)
-    , length(216) // default: everything including serverSelectedProtocol
-    , version(0x00080001)  // RDP version. 1 == RDP4, 4 == RDP5.
-    , colorDepth(0xca01)
-    , SASSequence(0xaa03)
-    , keyboardLayout(0x040c) // default to French
-    , clientBuild(2600)
-    // clientName = ""
-    , keyboardType(4)
-    , keyboardSubType(0)
-    , keyboardFunctionKey(12)
-    // imeFileName = ""
-    , postBeta2ColorDepth(0xca01)
-    , clientProductId(1)
-    , serialNumber(0)
-    , highColorDepth(0)
-    , supportedColorDepths(7)
-    , earlyCapabilityFlags(1)
-    // clientDigProductId = ""
-    , connectionType(0)
-    , pad1octet(0)
-    , serverSelectedProtocol(0)
     {
         memset(this->clientName, 0, 32);
         memset(this->imeFileName, 0, 64);

@@ -71,9 +71,9 @@ public:
         , FrameEnd   = 0x00000001    /* TS_FRAME_END   */
     };
 
-    uint32_t action;
+    uint32_t action{FrameStart};
 
-    FrameMarker() : action(FrameStart) {}
+    FrameMarker()  {}
 
     explicit FrameMarker(uint32_t action) : action(action) {}
 

@@ -9,7 +9,8 @@ $(find src/ -name '*.cpp' \
     -a -not -path 'src/proto/*' \
     -a -not -path 'src/sashimi/*' \
     -a -not -name app_path.cpp \
-    -a -not -name log_as_logemasm.cpp) -- \
+    -a -not -name log_as_logemasm.cpp) \
+-- \
 -std=c++17 \
 -I'include' \
 -I'modules/includes' \

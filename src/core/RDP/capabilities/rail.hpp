@@ -155,11 +155,10 @@ enum {
 };
 
 struct RailCaps : public Capability {
-    uint32_t RailSupportLevel;
+    uint32_t RailSupportLevel{0}; // Only the two less significant bit are used (as flags)
 
     RailCaps()
     : Capability(CAPSTYPE_RAIL, CAPLEN_RAIL)
-    , RailSupportLevel(0) // Only the two less significant bit are used (as flags.)
     {
     }
 

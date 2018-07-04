@@ -181,12 +181,12 @@
 
 class RDPPolyline {
 public:
-    int16_t  xStart;
-    int16_t  yStart;
-    uint8_t  bRop2;
-    uint16_t BrushCacheEntry;
+    int16_t  xStart{0};
+    int16_t  yStart{0};
+    uint8_t  bRop2{0x0};
+    uint16_t BrushCacheEntry{0x0000};
     RDPColor PenColor;
-    uint8_t  NumDeltaEntries;
+    uint8_t  NumDeltaEntries{0};
 
     struct DeltaEncodedPoint {
         int16_t xDelta;
@@ -198,12 +198,9 @@ public:
     }
 
     RDPPolyline()
-    : xStart(0)
-    , yStart(0)
-    , bRop2(0x0)
-    , BrushCacheEntry(0x0000)
-    , PenColor{}
-    , NumDeltaEntries(0) {
+    : 
+     PenColor{}
+     {
         ::memset(this->deltaEncodedPoints, 0, sizeof(this->deltaEncodedPoints));
     }
 

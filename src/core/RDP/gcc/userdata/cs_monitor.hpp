@@ -94,11 +94,11 @@ namespace GCC { namespace UserData {
 // -------------------------------------------------------------------------
 
 struct CSMonitor {
-    uint16_t userDataType;
-    uint16_t length;
+    uint16_t userDataType{CS_MONITOR};
+    uint16_t length{0};
 
-    uint32_t flags;
-    uint32_t monitorCount;
+    uint32_t flags{0};
+    uint32_t monitorCount{0};
 
     enum {
         MAX_MONITOR_COUNT = 16
@@ -114,15 +114,12 @@ struct CSMonitor {
         uint32_t flags;
     } monitorDefArray[MAX_MONITOR_COUNT];
 
-    bool permissive;
+    bool permissive{false};
 
     CSMonitor()
-    : userDataType(CS_MONITOR)
-    , length(0)
-    , flags(0)
-    , monitorCount(0)
-    , monitorDefArray()
-    , permissive(false) {}
+    : 
+     monitorDefArray()
+     {}
 
     void emit(OutStream & stream) /* TODO const*/ {
         assert((this->monitorCount > 0) && (this->monitorCount <= MAX_MONITOR_COUNT));

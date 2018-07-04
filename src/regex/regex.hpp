@@ -50,7 +50,7 @@ namespace re
         };
         Parser parser;
         StateMachine2 sm;
-        std::size_t pos;
+        std::size_t pos{0};
 
     public:
         typedef unsigned flag_t;
@@ -63,8 +63,8 @@ namespace re
         explicit Regex(unsigned step_limit = 10000)
         : parser()
         , sm(state_list_t(), nullptr, 0)
-        , pos(0)
-        , step_limit(step_limit)
+        , 
+         step_limit(step_limit)
         {}
 
         explicit Regex(const char * s, flag_t flags = DEFAULT_FLAG, unsigned step_limit = 10000)

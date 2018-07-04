@@ -30,7 +30,7 @@ class ReportMessageApi;
 class MMApi
 {
 protected:
-    mod_api* mod;
+    mod_api* mod{nullptr};
 
 public:
     mod_api* get_mod()
@@ -39,12 +39,10 @@ public:
     }
 
 public:
-    bool last_module;
-    bool connected;
+    bool last_module{false};
+    bool connected{false};
 
-    MMApi() : mod(nullptr)
-        , last_module(false)
-        , connected(false) {}
+    MMApi() = default;
     virtual ~MMApi() {}
     virtual void remove_mod() = 0;
     virtual void new_mod(int target_module, time_t now, AuthApi &, ReportMessageApi &) = 0;

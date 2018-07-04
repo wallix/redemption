@@ -57,15 +57,12 @@ enum {
 };
 
 struct BitmapCacheHostSupportCaps : public Capability {
-    uint8_t cacheVersion;
-    uint8_t pad1;
-    uint16_t pad2;
+    uint8_t cacheVersion{1};
+    uint8_t pad1{0};
+    uint16_t pad2{0};
 
     BitmapCacheHostSupportCaps()
     : Capability(CAPSTYPE_BITMAPCACHE_HOSTSUPPORT, CAPLEN_BITMAPCACHE_HOSTSUPPORT)
-    , cacheVersion(1)
-    , pad1(0)
-    , pad2(0)
     {
     }
 

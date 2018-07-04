@@ -29,6 +29,7 @@
 #pragma once
 
 #include "core/RDP/gcc/data_block_type.hpp"
+#include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "core/error.hpp"
 
@@ -115,8 +116,8 @@ namespace GCC { namespace UserData {
 
 
 struct CSCluster {
-    uint16_t userDataType;
-    uint16_t length;
+    uint16_t userDataType{CS_CLUSTER};
+    uint16_t length{12};
 
     enum {
         REDIRECTION_SUPPORTED            = 0x00000001,
@@ -124,16 +125,12 @@ struct CSCluster {
         REDIRECTED_SMARTCARD             = 0x00000040,
         ServerSessionRedirectionVersionMask = 0x0000003C
     };
-    uint32_t flags;
-    uint32_t redirectedSessionID;
+    uint32_t flags{0};
+    uint32_t redirectedSessionID{0};
 
-    bool permissive;
+    bool permissive{false};
     CSCluster()
-    : userDataType(CS_CLUSTER)
-    , length(12)
-    , flags(0)
-    , redirectedSessionID(0)
-    , permissive(false)
+     
     {
     }
 

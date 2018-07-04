@@ -485,11 +485,11 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc
     uint8_t  * outputBuffer;        /* contains compressed data */
     uint8_t    outputBufferPlus[RDP_50_HIST_BUF_LEN + 64 + 8];
     uint16_t   outputBufferSize;
-    uint16_t   historyOffset;       /* next free slot in historyBuffer */
-    uint16_t   bytes_in_opb;        /* compressed bytes available in outputBuffer */
-    uint8_t    flags;               /* PACKET_COMPRESSED, PACKET_AT_FRONT, PACKET_FLUSHED etc */
-    uint8_t    flagsHold;
-    bool       first_pkt;           /* this is the first pkt passing through enc */
+    uint16_t   historyOffset{0};       /* next free slot in historyBuffer */
+    uint16_t   bytes_in_opb{0};        /* compressed bytes available in outputBuffer */
+    uint8_t    flags{0};               /* PACKET_COMPRESSED, PACKET_AT_FRONT, PACKET_FLUSHED etc */
+    uint8_t    flagsHold{0};
+    bool       first_pkt{true};           /* this is the first pkt passing through enc */
 
     hash_table_manager hash_tab_mgr;
 
@@ -499,12 +499,7 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc
         , outputBuffer(this->outputBufferPlus + 64)  /* contains compressed data */
         , outputBufferPlus{0}
         , outputBufferSize(RDP_50_HIST_BUF_LEN - 1)
-        , historyOffset(0)          /* next free slot in historyBuffer */
-        , bytes_in_opb(0)           /* compressed bytes available in outputBuffer */
-        , flags(0)                  /* PACKET_COMPRESSED, PACKET_AT_FRONT, PACKET_FLUSHED etc */
-        , flagsHold(0)
-        , first_pkt(true)           /* this is the first pkt passing through enc */
-        , hash_tab_mgr(RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH,
+        ,           hash_tab_mgr(RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH,
               MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
     {}
 

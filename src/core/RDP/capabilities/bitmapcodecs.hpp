@@ -307,14 +307,12 @@ enum {
 
 struct NSCodecCaps {
 
-    uint8_t fAllowDynamicFidelity;
-    uint8_t fAllowSubsampling;
-    uint8_t colorLossLevel;
+    uint8_t fAllowDynamicFidelity{0}; // true/false
+    uint8_t fAllowSubsampling{0};     // true/false
+    uint8_t colorLossLevel{1};        // Between 1 and 7
 
     NSCodecCaps()
-    : fAllowDynamicFidelity(0)  // true/false
-    , fAllowSubsampling(0)      // true/false
-    , colorLossLevel(1)         // Between 1 and 7
+
     {
     }
 };
@@ -348,81 +346,61 @@ struct RFXSrvrCaps : public RFXGenCaps {
 
 struct RFXICap {
 
-    uint16_t version;
-    uint16_t tileSize;
-    uint8_t  flags;
-    uint8_t  colConvBits;
-    uint8_t  transformBits;
-    uint8_t  entropyBits;
+    uint16_t version{CLW_VERSION_1_0};          // MUST be set to 0x0100 CLW_VERSION_1_0
+    uint16_t tileSize{CT_TILE_64X64};           // MUST be set to CT_TILE_64x64 (0x0040)
+    uint8_t  flags{0};                          // flag from enum
+    uint8_t  colConvBits{CLW_COL_CONV_ICT};     // MUST be set to CLW_COL_CONV_ICT (0x1)
+    uint8_t  transformBits{CLW_XFORM_DWT_53_A}; // MUST be set to CLW_COL_CONV_ICT (0x1)
+    uint8_t  entropyBits{CLW_ENTROPY_RLGR1};    // MUST be set to one of the following values :
+                                                //   - CLW_ENTROPY_RLGR1
+                                                //   - CLW_ENTROPY_RLGR3
 
 //    RFXICap * icapsData;
 
     RFXICap()
-    : version(CLW_VERSION_1_0)                // MUST be set to 0x0100 CLW_VERSION_1_0
-    , tileSize(CT_TILE_64X64)    // MUST be set to CT_TILE_64x64 (0x0040
-    , flags(0)                                     // flag from enum
-    , colConvBits(CLW_COL_CONV_ICT)                // MUST be set to CLW_COL_CONV_ICT (0x1)
-    , transformBits(CLW_XFORM_DWT_53_A)    // MUST be set to CLW_COL_CONV_ICT (0x1)
-    , entropyBits(CLW_ENTROPY_RLGR1)            // MUST be set to one of the following values :
-                                                //   - CLW_ENTROPY_RLGR1
-                                                //   - CLW_ENTROPY_RLGR3
     {
     }
 };
 
 struct RFXCapset {
 
-    uint16_t blockType;
-    uint32_t blockLen;
-    uint8_t  codecId;
-    uint16_t capsetType;
-    uint16_t numIcaps;
-    uint16_t icapLen;
+    uint16_t blockType{CBY_CAPSET}; // MUST be set to CBY_CAPSET (0xCBC1)
+    uint32_t blockLen{0};           // total length in bytes of the fields of that structure
+    uint8_t  codecId{1};            // MUST be set to 0x01
+    uint16_t capsetType{1};         // MUST be set to CLY_CAPSET (0xCFC0)
+    uint16_t numIcaps{0};           // number of elements in icapsData array
+    uint16_t icapLen{8};            // total length in bytes of the fields of a icap structure (i.e. a row in icapsData array)
 
-    RFXICap * icapsData;
+    RFXICap * icapsData{nullptr};
 
     RFXCapset()
-    : blockType(CBY_CAPSET)    // MUST be set to CBY_CAPSET (0xCBC1)
-    , blockLen(0)             // total length in bytes of the fields of that structure
-    , codecId(1)            // MUST be set to 0x01
-    , capsetType(1)            // MUST be set to CLY_CAPSET (0xCFC0)
-    , numIcaps(0)            // number of elements in icapsData array
-    , icapLen(8)             // total length in bytes of the fields of a icap structure (i.e. a row in icapsData array)
-    , icapsData(nullptr)
     {
     }
 };
 
 struct RFXCaps {
 
-    uint16_t blockType;
-    uint32_t blockLen;
-    uint16_t numCapsets;
+    uint16_t blockType{CBY_CAPS}; // MUST be set to CBY_CAPS (0xCBC0)
+    uint32_t blockLen{8};         // MUST be set to 0x0008
+    uint16_t numCapsets{1};       // MUST be set to 0x0001
 
-    RFXCapset * capsetsData;
+    RFXCapset * capsetsData{nullptr};
 
     RFXCaps()
-    : blockType(CBY_CAPS)    // MUST be set to CBY_CAPS (0xCBC0)
-    , blockLen(8)             // MUST be set to 0x0008
-    , numCapsets(1)            // MUST be set to 0x0001
-    , capsetsData(nullptr)
     {
     }
 };
 
 struct RFXClntCaps : public RFXGenCaps {
 
-    uint32_t length;
-    uint32_t captureFlags;
-    uint32_t capsLength;
+    uint32_t length{0};
+    uint32_t captureFlags{0};
+    uint32_t capsLength{0};
 
-    RFXCaps * capsData;
+    RFXCaps * capsData{nullptr};
 
     RFXClntCaps()
-    : length(0)          // Total length in bytes of that structure fields
-    , captureFlags(0)    // flag from enum
-    , capsLength(0)        // length in bytes of the next field
-    , capsData(nullptr)
+
     {
     }
 };
@@ -430,16 +408,14 @@ struct RFXClntCaps : public RFXGenCaps {
 struct BitmapCodec {
 
     uint8_t  codecGUID[16];
-    uint8_t  codecID;
-    uint16_t codecPropertiesLength;
+    uint8_t  codecID{0};  // CS : a bitmap data identifier code
+                          // SC :
+                          //    - if codecGUID == CODEC_GUID_NSCODEC, MUST be set to 1
+    uint16_t codecPropertiesLength{0}; // size in bytes of the next field
 
     RFXGenCaps * codecProperties;
 
     BitmapCodec()
-    : codecID(0)                // CS : a bitmap data identifier code
-                                // SC :
-                                //    - if codecGUID == CODEC_GUID_NSCODEC, MUST be set to 1
-    , codecPropertiesLength(0)  // size in bytes of the next field
     {
         memset(this->codecGUID, 0, 16); // 16 bits array filled with fixed lists of values
     }
@@ -460,12 +436,12 @@ struct BitmapCodec {
 
 struct BitmapCodecs {
 
-    uint8_t bitmapCodecCount;
+    uint8_t bitmapCodecCount{0};
 
     BitmapCodec bitmapCodecArray[BITMAPCODECS_MAX_SIZE];
 
     BitmapCodecs()
-    : bitmapCodecCount(0)  // actual number of entries (max 255) in the array in the next field
+
     {
     }
 };

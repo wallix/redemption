@@ -365,14 +365,11 @@ enum {
 
 struct CapabilityHeader {
 
-    uint16_t CapabilityType;
-    uint16_t CapabilityLength;
-    uint32_t Version;
+    uint16_t CapabilityType{0};
+    uint16_t CapabilityLength{0};
+    uint32_t Version{0};
 
     CapabilityHeader()
-      : CapabilityType(0)
-      , CapabilityLength(0)
-      , Version(0)
     {}
 
     CapabilityHeader( uint16_t CapabilityType
@@ -1152,11 +1149,7 @@ class DeviceIORequest {
 public:
 
     DeviceIORequest()
-      : DeviceId_(0)
-      , FileId_(0)
-      , CompletionId_(0)
-      , MajorFunction_(0)
-      , MinorFunction_(0) {}
+    {}
 
     DeviceIORequest( uint32_t DeviceId_
                    , uint32_t FileId_

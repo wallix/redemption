@@ -72,14 +72,12 @@ enum {
 };
 
 struct PointerCaps : public Capability {
-    uint16_t colorPointerFlag;
-    uint16_t colorPointerCacheSize;
-    uint16_t pointerCacheSize;
+    uint16_t colorPointerFlag{1};
+    uint16_t colorPointerCacheSize{25};
+    uint16_t pointerCacheSize{25};
     PointerCaps()
     : Capability(CAPSTYPE_POINTER, CAPLEN_POINTER)
-    , colorPointerFlag(1)       // True = color supported ; False = only mono supported
-    , colorPointerCacheSize(25) // Number of available slots in color pointer cache
-    , pointerCacheSize(25)       // Optionnal ; Number of available slots in new update pointer cache
+    
     {
     }
 

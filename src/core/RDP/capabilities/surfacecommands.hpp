@@ -70,13 +70,11 @@ enum {
 };
 
 struct SurfaceCommandsCaps : public Capability {
-    uint32_t cmdFlags;
-    uint32_t reserved;
+    uint32_t cmdFlags{0}; // from a specific list of values (see enum); default 0x00
+    uint32_t reserved{0}; // not Used
 
     SurfaceCommandsCaps()
     : Capability(CAPSETTYPE_SURFACE_COMMANDS, CAPLEN_SURFACE_COMMANDS)
-    , cmdFlags(0) // from a specific list of values (see enum); default 0x00
-    , reserved(0) // not Used
     {
     }
 

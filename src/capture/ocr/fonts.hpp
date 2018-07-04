@@ -24,6 +24,7 @@
 #include "locale/locale_id.hpp"
 
 #include <type_traits>
+#include <cstring>
 
 
 namespace ocr {

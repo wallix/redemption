@@ -112,14 +112,13 @@
 class RDPEllipseSC {
 public:
     Ellipse el;
-    uint8_t  bRop2;
-    uint8_t  fillMode;
+    uint8_t  bRop2{0x0};
+    uint8_t  fillMode{0x0};
     RDPColor color;
 
     RDPEllipseSC()
-    : bRop2(0x0)
-    , fillMode(0x0)
-    , color{}
+    : 
+     color{}
     {}
 
     RDPEllipseSC(const Rect r, RDPColor c)
