@@ -26,10 +26,6 @@
 
 class SubRegion;
 class NotifyApi;
-namespace
-{
-    class GraphicApi;
-}
 
 void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, BGRColor bg_color);
 
