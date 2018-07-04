@@ -245,6 +245,7 @@ public:
             cli::option("remote-exe").help("Connection as remote application and set the line command.")
             .action(cli::arg("command", [this](std::string line){
                 this->mod_state = MOD_RDP_REMOTE_APP;
+                this->enable_shared_remoteapp = true;
                 auto pos(line.find(' '));
                 if (pos == std::string::npos) {
                     this->source_of_ExeOrFile = std::move(line);
@@ -326,7 +327,7 @@ public:
                 this->SHARE_DIR = std::move(s);
             })),
 
-            cli::option("remote-dir").help("Remote directory")
+            cli::option("remote-dir").help("Remote working directory")
             .action(cli::arg_location("directory", this->source_of_WorkingDir))
         );
 
@@ -815,6 +816,11 @@ public:
                             this->enable_shared_clipboard = true;
                         }
                     } else
+                    if (line.compare(0, pos, "enable_shared_remoteapp") == 0) {
+                        if (std::stoi(info)) {
+                            this->enable_shared_remoteapp = true;
+                        }
+                    } else
                     if (line.compare(0, pos, "enable_shared_virtual_disk") == 0) {
                         if (std::stoi(info)) {
                             this->enable_shared_virtual_disk = true;
@@ -1126,7 +1132,6 @@ public:
     void setDefaultConfig() override {
         //this->current_user_profil = 0;
         this->info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
-        this->info.console_session = 0;
         this->info.brush_cache_code = 0;
         this->info.bpp = 24;
         this->info.width  = 800;
@@ -1177,7 +1182,6 @@ public:
                 new_ofile << "\nid "     << this->userProfils[this->current_user_profil].id   << "\n";
                 new_ofile << "name "   << this->userProfils[this->current_user_profil].name << "\n";
                 new_ofile << "keylayout "             << this->info.keylayout               << "\n";
-                new_ofile << "console_session "       << this->info.console_session         << "\n";
                 new_ofile << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
                 new_ofile << "bpp "                   << this->info.bpp                     << "\n";
                 new_ofile << "width "                 << this->rdp_width                   << "\n";
@@ -1193,6 +1197,7 @@ public:
 //                 new_ofile << "delta_time "            << this->delta_time << "\n";
                 new_ofile << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
                 new_ofile << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
+                new_ofile << "enable_shared_remoteapp " << this->enable_shared_remoteapp << "\n";
                 new_ofile << "share-dir "                              << this->SHARE_DIR << std::endl;
                 new_ofile << "remote-exe "                              << this->full_cmd_line << std::endl;
                 new_ofile << "remote-dir "                              << this->source_of_WorkingDir << std::endl;
@@ -1207,7 +1212,6 @@ public:
                 ofichier.seekp(ofichier.tellg());
                 ofichier << "name "   << this->userProfils[this->current_user_profil].name << "\n";
                 ofichier << "keylayout "             << this->info.keylayout               << "\n";
-                ofichier << "console_session "       << this->info.console_session         << "\n";
                 ofichier << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
                 ofichier << "bpp "                   << this->info.bpp                       << "\n";
                 ofichier << "width "                 << this->rdp_width                   << "\n";
@@ -1223,6 +1227,7 @@ public:
 //                 ofichier << "delta_time "            << this->delta_time << "\n";
                 ofichier << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
                 ofichier << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
+                ofichier << "enable_shared_remoteapp " << this->enable_shared_remoteapp << "\n";
                 ofichier << "share-dir "                              << this->SHARE_DIR << std::endl;
                 ofichier << "remote-exe "                              << this->full_cmd_line << std::endl;
                 ofichier << "remote-dir "                              << this->source_of_WorkingDir << std::endl;

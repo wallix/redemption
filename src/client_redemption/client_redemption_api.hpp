@@ -157,6 +157,7 @@ public:
 
     bool                 enable_shared_clipboard;
     bool                 enable_shared_virtual_disk;
+    bool enable_shared_remoteapp;
 
     struct KeyCustomDefinition {
         int qtKeyID;
@@ -285,6 +286,7 @@ public:
     , mod_state(MOD_RDP)
     , enable_shared_clipboard(true)
     , enable_shared_virtual_disk(true)
+    , enable_shared_remoteapp(false)
     , vnc_conf(session_reactor, *(this))
     , is_recording(false)
     , is_spanning(false)
