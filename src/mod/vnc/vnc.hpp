@@ -39,6 +39,7 @@ h
 #include "core/RDP/rdp_pointer.hpp"
 #include "core/report_message_api.hpp"
 #include "core/session_reactor.hpp"
+#include "keyboard/keymap2.hpp"
 #include "keyboard/keymapSym.hpp"
 #include "main/version.hpp"
 #include "mod/internal/client_execute.hpp"
@@ -902,7 +903,7 @@ public:
     } // rdp_input_mouse
 
     void rdp_input_scancode(
-        long param1, long /*param2*/, long device_flags, long /*param4*/, Keymap2 * /*keymap*/
+        long param1, long /*param2*/, long device_flags, long /*param4*/, Keymap2 * keymap
     ) override {
         if (this->state != UP_AND_RUNNING) {
             return;
@@ -915,6 +916,10 @@ public:
         // TODO As down/up state is not stored in keymapSym, code below is quite dangerous
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, param1=%ld)", device_flags, param1);
+        }
+
+        if (0x45 == param1) {
+            this->keymapSym.toggle_num_lock(keymap->is_num_locked());
         }
 
         uint8_t downflag = !(device_flags & KBD_FLAG_UP);
