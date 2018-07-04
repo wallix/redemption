@@ -1,3 +1,10 @@
+redemption (1.1.41%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix buffer overflow in Selector.
+  * Fix toggling Num Lock key in VNC session.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Wed, 04 Jul 2018 18:40:25 +0200
+
 redemption (1.1.39%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Remove green screen as beginning of video fragments.
