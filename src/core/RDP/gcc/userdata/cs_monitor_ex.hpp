@@ -129,7 +129,7 @@ struct CSMonitorEx {
     } monitorAttributesArray[MAX_MONITOR_COUNT];
 
     CSMonitorEx()
-    : 
+    :
      monitorAttributesArray() {}
 
     void emit(OutStream & stream) /* TODO const*/ {
@@ -279,4 +279,5 @@ struct CSMonitorEx {
         LOG(LOG_INFO, "%s", buffer);
     }
 };
-}} // namespaces
+} // namespace UserData
+} // namespace GCC

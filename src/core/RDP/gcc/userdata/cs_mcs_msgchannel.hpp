@@ -59,7 +59,7 @@ struct CSMCSMsgChannel {
     uint32_t flags{0};
 
     CSMCSMsgChannel()
-     
+
     {
     }
 
@@ -97,4 +97,5 @@ struct CSMCSMsgChannel {
     }
 };
 
-}} // namespaces
+} // namespace UserData
+} // namespace GCC

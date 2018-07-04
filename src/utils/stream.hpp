@@ -1208,7 +1208,7 @@ namespace details_ {
         uint8_t buf[TotalSz::value];
         write_packets_impl(data_buf_sz, header_buf_sz, buf, trans, data_writer, header_writers...);
     }
-}
+} // namespace details_
 
 
 /**

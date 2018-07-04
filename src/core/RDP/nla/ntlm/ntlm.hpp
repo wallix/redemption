@@ -41,7 +41,7 @@ namespace {
         Ntlm_Name,              // Name
         Ntlm_Comment            // Comment
     };
-}
+} // namespace
 
 struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable
 {

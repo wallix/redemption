@@ -130,7 +130,7 @@ struct CSCluster {
 
     bool permissive{false};
     CSCluster()
-     
+
     {
     }
 
@@ -186,4 +186,5 @@ struct CSCluster {
     }
 };
 
-}} // namespaces
+} // namespace UserData
+} // namespace GCC

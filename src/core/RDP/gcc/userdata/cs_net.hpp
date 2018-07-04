@@ -216,4 +216,5 @@ struct CSNet {
     }
 };
 
-}} // namespaces
+} // namespace UserData
+} // namespace GCC

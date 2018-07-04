@@ -88,7 +88,7 @@ struct SCNet {
     } channelDefArray[32];
 
     SCNet()
-     
+
     {
     }
 
@@ -165,4 +165,5 @@ struct SCNet {
     }
 };
 
-}}
+} // namespace UserData
+} // namespace GCC

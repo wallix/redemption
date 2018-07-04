@@ -154,7 +154,7 @@ namespace
 
     bool is_cyrillic_alpha(uint32_t c) noexcept
     { return ((1040 <= c && c <= 1071) || (1072 <= c && c <= 1103)); }
-}
+} // namespace
 
 
 void ocr::locale::latin_to_cyrillic_context::latin_to_cyrillic(std::string& out)

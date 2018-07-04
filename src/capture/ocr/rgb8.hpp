@@ -59,7 +59,7 @@ namespace ocr
     private:
         value_type components[3];
     };
-}
+} // namespace ocr
 
 
 namespace mln
@@ -75,5 +75,5 @@ namespace mln
             static void read_value(std::basic_istream<Ch, Tr>& is, ::ocr::rgb8 & v)
             { is.read(reinterpret_cast<char*>(&v), sizeof(::ocr::rgb8)); }
         };
-    }
-} // mln
+    } // namespace trait
+} // namespace mln

@@ -765,4 +765,5 @@ struct SCSecurity {
 
 };
 
-}}
+} // namespace UserData
+} // namespace GCC

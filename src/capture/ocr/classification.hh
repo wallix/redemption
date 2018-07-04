@@ -181,4 +181,4 @@ private:
     classifier_type classifier;
 };
 
-}
+} // namespace ocr

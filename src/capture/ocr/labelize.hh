@@ -75,7 +75,7 @@ namespace internal {
         }
         return ret;
     }
-} // namespace ocr::internal
+} // namespace internal
 
 struct label_attr_t
 {

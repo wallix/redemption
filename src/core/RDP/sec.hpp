@@ -1886,5 +1886,5 @@ enum {
 // to connect. Furthermore, the server invalidates and updates the cookie at hourly intervals, sending the
 // new cookie to the client in the Save Session Info PDU.
 
-}
+} // namespace SEC
 

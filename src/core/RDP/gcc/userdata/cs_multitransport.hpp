@@ -75,7 +75,7 @@ struct CSMultiTransport {
     uint32_t flags{0};
 
     CSMultiTransport()
-     
+
     {
     }
 
@@ -113,4 +113,5 @@ struct CSMultiTransport {
     }
 };
 
-}} // namespaces
+} // namespace UserData
+} // namespace GCC

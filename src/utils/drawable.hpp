@@ -223,7 +223,7 @@ namespace Ops {
     typedef CopySrc Op_0xCC;
     typedef Op2_0x0E Op_0xDD;
     typedef Op2_0x0F Op_0xEE;
-}
+} // namespace Ops
 
 
 enum class DepthColor { color8 = 8, color15 = 15, color16 = 16, color24 = 24, color32 = 32 };
@@ -1780,4 +1780,4 @@ namespace gdi
     {
         return drawable;
     }
-}
+} // namespace gdi

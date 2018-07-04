@@ -602,4 +602,5 @@ struct CSCore {
         LOG(LOG_INFO, "cs_core::serverSelectedProtocol = %u", this->serverSelectedProtocol);
     }
 };
-}} // namespaces
+} // namespace UserData
+} // namespace GCC

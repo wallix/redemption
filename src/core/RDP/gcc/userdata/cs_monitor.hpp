@@ -117,7 +117,7 @@ struct CSMonitor {
     bool permissive{false};
 
     CSMonitor()
-    : 
+    :
      monitorDefArray()
      {}
 
@@ -261,4 +261,5 @@ struct CSMonitor {
     }
 };
 
-}} // namespaces
+} // namespace UserData
+} // namespace GCC

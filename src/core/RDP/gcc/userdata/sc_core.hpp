@@ -165,7 +165,7 @@ struct SCCore {
     uint32_t earlyCapabilityFlags{0};
 
     SCCore()
-     
+
     {
     }
 
@@ -261,4 +261,5 @@ struct SCCore {
     }
 };
 
-}}
+} // namespace UserData
+} // namespace GCC

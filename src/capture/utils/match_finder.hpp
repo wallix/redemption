@@ -82,4 +82,4 @@ struct MatchFinder
         ConfigureRegexes conf_regex, const char * pattern, const char * data);
 };
 
-}
+} // namespace utils

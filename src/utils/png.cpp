@@ -167,7 +167,7 @@ namespace
 
         png_read_end(png.ppng, png.pinfo);
     }
-}
+} // namespace
 
 void dump_png24(
     Transport & trans, uint8_t const * data,

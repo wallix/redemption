@@ -51,7 +51,7 @@ namespace
 # ifndef NDEBUG
     static bool previous_is_line_marker = false;
 # endif
-}
+} // namespace
 
 LOG__REDEMPTION__BUFFERED::LOG__REDEMPTION__BUFFERED()
 {

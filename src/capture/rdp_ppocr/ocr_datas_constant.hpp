@@ -42,7 +42,7 @@ namespace detail_ {
     template<template<class...> class Template, class T, class... Ts>
     struct first_type<Template<T, Ts...>>
     { using type = T; };
-}
+} // namespace detail_
 
 struct OcrDatasConstant {
     ppocr::PpOcrDatas const datas;
@@ -80,4 +80,4 @@ struct OcrDatasConstant {
     {}
 };
 
-}
+} // namespace rdp_ppocr

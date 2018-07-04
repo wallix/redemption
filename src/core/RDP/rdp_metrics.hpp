@@ -20,12 +20,14 @@
 
 #pragma once
 
-#include <stdio.h>
-#include <string.h>
+#include "utils/log.hpp"
+
+#include <cstdio>
+#include <cstring>
+
 #include <fcntl.h>
 #include <sys/uio.h>
 
-#include "utils/log.hpp"
 
 struct RDPMetrics {
 

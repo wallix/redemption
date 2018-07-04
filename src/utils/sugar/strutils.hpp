@@ -23,6 +23,10 @@
 #include "core/error.hpp"
 #include "utils/log.hpp"
 
+#include <algorithm>
+#include <cstring>
+
+
 inline static char * in_place_windows_to_linux_newline_convert(char * s) {
     char * src, * dest;
 

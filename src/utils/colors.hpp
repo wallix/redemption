@@ -559,7 +559,7 @@ namespace shortcut_encode
     using enc15 = encode_color15;
     using enc16 = encode_color16;
     using enc24 = encode_color24;
-}
+} // namespace shortcut_encode
 
 namespace shortcut_decode_with_palette
 {
@@ -567,4 +567,4 @@ namespace shortcut_decode_with_palette
     using dec15 = decode_color15;
     using dec16 = decode_color16;
     using dec24 = decode_color24;
-}
+} // namespace shortcut_decode_with_palette

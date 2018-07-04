@@ -133,4 +133,5 @@ struct CSSecurity {
     }
 };
 
-}} // namespaces
+} // namespace UserData
+} // namespace GCC

@@ -108,7 +108,7 @@ namespace CredSSP {
         length += BER::sizeof_contextual_tag(length);
         return length;
     }
-}
+} // namespace CredSSP // namespace CredSSP
 
 struct TSRequest final {
     /* TSRequest */

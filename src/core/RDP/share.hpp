@@ -342,7 +342,7 @@ namespace RDP {
         STREAM_MED = 2,
         STREAM_HI = 4
     };
-}
+} // namespace RDP
 
 // uncompressedLength (2 bytes): A 16-bit, unsigned integer. The uncompressed
 //   length of the packet in bytes.

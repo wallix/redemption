@@ -23,6 +23,9 @@
 #include <string>
 #include <vector>
 
+#include <cstring>
+
+
 inline bool parse_server_message(const char * svr_msg, std::string & order_ref, std::vector<std::string> & parameters_ref) {
     order_ref.clear();
     parameters_ref.clear();

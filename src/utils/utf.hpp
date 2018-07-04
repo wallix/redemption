@@ -29,7 +29,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include "utils/unicode_case_conversion.h"
+#include "utils/unicode_case_conversion.hpp"
 
 enum {
       maximum_length_of_utf8_character_in_bytes = 4

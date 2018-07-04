@@ -756,4 +756,4 @@ namespace ocr
 
         return false;
     }
-}
+} // namespace ocr

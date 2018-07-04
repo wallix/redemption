@@ -442,4 +442,4 @@ namespace BER {
     //    return read_universal_tag(s, TAG_INTEGER, false)
     //        && read_length(s, length);
     //}
-}
+} // namespace BER

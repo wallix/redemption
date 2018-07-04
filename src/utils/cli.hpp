@@ -607,4 +607,4 @@ namespace cli
 #ifdef IN_IDE_PARSER
     }
 #endif
-}
+} // namespace cli

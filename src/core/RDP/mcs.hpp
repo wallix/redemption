@@ -2997,5 +2997,4 @@ namespace MCS
         }
     };
 
-}
-
+} // namespace MCS

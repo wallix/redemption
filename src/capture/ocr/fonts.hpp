@@ -34,7 +34,7 @@ namespace {
         static constexpr const char unknown_array[2] = "?";
     };
     constexpr decltype(unknown_addr_::unknown_array) unknown_addr_::unknown_array;
-}
+} // namespace
 static constexpr const char * const & unknown = unknown_addr_::unknown_array;
 
 namespace fonts {
@@ -78,7 +78,7 @@ namespace fonts {
 #       include "ocr1/common_classifier.hxx"
 #       include "ocr1/latin_classifier.hxx"
 #       include "ocr1/cyrillic_classifier.hxx"
-    }
+    } // namespace
 
     static constexpr Font latin_fonts[] = {
 #       include "ocr1/common_classifier.names.hxx"
@@ -123,7 +123,7 @@ namespace fonts {
             }
             return ret;
         }
-    }
+    } // namespace internal
 
     static const/*expr*/ unsigned min_height_font[] = {
         internal::min_height(latin_fonts)
@@ -143,5 +143,5 @@ namespace fonts {
         }
         return -1u;
     }
-}
-}
+} // namespace fonts
+} // namespace ocr

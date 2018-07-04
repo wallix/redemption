@@ -149,4 +149,4 @@ namespace aux_ {
             }
         }
     } bitmap_data_allocator;
-}
+} // namespace aux_

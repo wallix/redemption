@@ -320,7 +320,7 @@ namespace trkeys
         "Échec lors de la connexion de la session sur la cible."
     );
 #undef TR_KV
-}
+} // namespace trkeys
 
 class Inifile;
 

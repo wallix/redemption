@@ -172,7 +172,7 @@ namespace Extractors
         void prepare_data(Buf64k const &) const
         {}
     };
-}
+} // namespace Extractors
 
 
 struct TpduBuffer
