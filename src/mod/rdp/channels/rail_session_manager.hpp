@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "acl/auth_api.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
@@ -34,6 +35,7 @@
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/rdp_log.hpp"
 #include "mod/rdp/windowing_api.hpp"
+#include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "utils/rect.hpp"
 #include "utils/theme.hpp"
 #include "utils/translation.hpp"

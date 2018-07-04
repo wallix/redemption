@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "utils/log.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/colors.hpp"

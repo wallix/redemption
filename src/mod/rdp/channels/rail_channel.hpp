@@ -24,6 +24,7 @@
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/rail_session_manager.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
+#include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/rdp_api.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "utils/log.hpp"
