@@ -39,6 +39,7 @@ h
 #include "core/RDP/pointer.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 #include "core/report_message_api.hpp"
+#include "keyboard/keymap2.hpp"
 #include "keyboard/keymapSym.hpp"
 #include "main/version.hpp"
 #include "mod/internal/client_execute.hpp"
@@ -275,7 +276,7 @@ public:
 
         std::snprintf(this->username, sizeof(this->username), "%s", username);
         std::snprintf(this->password, sizeof(this->password), "%s", password);
-        
+
         this->event.set_trigger_time(wait_obj::NOW);
 
     } // Constructor
@@ -795,7 +796,7 @@ public:
 
         this->state = UP_AND_RUNNING;
         this->front.can_be_start_capture();
-        
+
         this->update_screen(screen_rect, 1);
         this->lib_open_clip_channel();
 
@@ -915,6 +916,10 @@ public:
         // TODO As down/up state is not stored in keymapSym, code below is quite dangerous
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, param1=%ld)", device_flags, param1);
+        }
+
+        if (0x45 == param1) {
+            this->keymapSym.toggle_num_lock(keymap->is_num_locked());
         }
 
         uint8_t downflag = !(device_flags & KBD_FLAG_UP);
@@ -1904,7 +1909,7 @@ private:
                     "\x05" // green shift     : 1 bytes =  5
                     "\x00" // blue shift      : 1 bytes =  0
                     "\0\0\0"; // padding      : 3 bytes
-                    
+
                 stream.out_copy_bytes(pixel_format, 16);
                 this->t.send(stream.get_data(), stream.get_offset());
 
@@ -1986,7 +1991,7 @@ private:
                         default:
                         break;
                         }
-                    }                    
+                    }
                 }
                 else {
                     support_zrle_encoding          = true;
@@ -1997,7 +2002,7 @@ private:
 //                    support_zrle_encoding          = false;
                     support_hextile_encoding       = false;
                     support_rre_encoding           = false;
-                
+
                 uint16_t number_of_encodings =  support_zrle_encoding
                                              +  support_hextile_encoding
                                              +  support_raw_encoding
@@ -2294,7 +2299,7 @@ private:
                         break;
                         }
                         buf.advance(sz);
-                        // Note: it is important to immediately call State::Data as in some cases there won't be 
+                        // Note: it is important to immediately call State::Data as in some cases there won't be
                         // any trailing data to expect.
                         this->last = VNC::Encoder::EncoderState::Ready;
                         r = Result::ok(State::Data);
@@ -2788,7 +2793,7 @@ private:
         InStream & chunk,
         size_t length,
         uint32_t flags
-    ) override 
+    ) override
     {
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::send_to_mod_channel");
