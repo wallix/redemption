@@ -1,6 +1,6 @@
 #!/bin/sh
 
-${CLANG_TIDY:=clang-tidy} -checks='*,-llvm-include-order,-hicpp-no-array-decay,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-readability-implicit-bool-conversion,-cppcoreguidelines-pro-type-vararg,-hicpp-vararg,-cppcoreguidelines-pro-bounds-constant-array-index,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-fuchsia-overloaded-operator,-google-runtime-int,-google-runtime-references,-hicpp-exception-baseclass,-google-readability-todo,-readability-static-accessed-through-instance,-fuchsia-default-arguments,-android-cloexec-open,-hicpp-signed-bitwise,-llvm-header-guard' \
+${CLANG_TIDY:=clang-tidy} -checks='*,-cppcoreguidelines-special-member-functions,-hicpp-special-member-functions-llvm-include-order,-hicpp-no-array-decay,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-readability-implicit-bool-conversion,-cppcoreguidelines-pro-type-vararg,-hicpp-vararg,-cppcoreguidelines-pro-bounds-constant-array-index,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-fuchsia-overloaded-operator,-google-runtime-int,-google-runtime-references,-hicpp-exception-baseclass,-google-readability-todo,-readability-static-accessed-through-instance,-fuchsia-default-arguments,-android-cloexec-open,-hicpp-signed-bitwise,-llvm-header-guard' \
 -header-filter='.*' \
 $(find src/ -name '*.cpp' \
     -a -not -path 'src/ftests/*' \

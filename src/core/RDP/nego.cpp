@@ -64,7 +64,6 @@ RdpNego::RdpNego(
 , lb_info(nullptr)
 , extra_message(extra_message)
 , lang(lang)
-, state(State::Negociate)
 , verbose(verbose)
 {
     LOG(LOG_INFO, "RdpNego: TLS=%s NLA=%s adminMode=%s",

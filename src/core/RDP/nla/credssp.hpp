@@ -489,14 +489,14 @@ struct TSCspDataDetail {
                     uint8_t * containerName, size_t containerName_length,
                     uint8_t * cspName, size_t cspName_length)
         : keySpec(keySpec)
-        , cardName()
-        , cardName_length(cardName_length)
-        , readerName()
-        , readerName_length(readerName_length)
-        , containerName()
-        , containerName_length(containerName_length)
-        , cspName()
-        , cspName_length(cspName_length)
+        , 
+         cardName_length(cardName_length)
+        , 
+         readerName_length(readerName_length)
+        , 
+         containerName_length(containerName_length)
+        , 
+         cspName_length(cspName_length)
     {
         this->cardName_length = (cardName_length < sizeof(this->cardName))
             ? cardName_length

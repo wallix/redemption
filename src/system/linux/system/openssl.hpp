@@ -67,22 +67,15 @@ namespace
 
 class TLSContext
 {
-    bool tls;
-    SSL_CTX * allocated_ctx;
-    SSL     * allocated_ssl;
-    SSL     * io;
+    bool tls = false;
+    SSL_CTX * allocated_ctx = nullptr;
+    SSL     * allocated_ssl = nullptr;
+    SSL     * io = nullptr;
     std::unique_ptr<uint8_t[]> public_key;
-    size_t public_key_length;
+    size_t public_key_length = 0;
 
 public:
-    TLSContext() : tls(false)
-        , allocated_ctx(nullptr)
-        , allocated_ssl(nullptr)
-        , io(nullptr)
-        , public_key(nullptr)
-        , public_key_length(0)
-    {
-    }
+    TLSContext() = default;
 
     ~TLSContext()
     {

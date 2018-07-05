@@ -62,12 +62,11 @@ namespace CHANNELS {
         static const size_t max_size_name = 7;
 
         ChannelNameId name;
-        uint32_t flags;
-        int      chanid;
+        uint32_t flags{0};
+        int      chanid{0};
 
         ChannelDef()
-        : flags(0)
-        , chanid(0)
+         
         {}
 
         ChannelDef(ChannelNameId name, uint32_t flags, int chanid)
@@ -85,11 +84,11 @@ namespace CHANNELS {
 
     class ChannelDefArray {
         // The number of requested static virtual channels (the maximum allowed is 31).
-        size_t     channelCount;
+        size_t     channelCount{0};
         ChannelDef items[MAX_STATIC_VIRTUAL_CHANNELS + 2];  // + global channel + wab channel
 
     public:
-        ChannelDefArray() : channelCount(0) {}
+        ChannelDefArray()  {}
 
         void clear_channels()
         {

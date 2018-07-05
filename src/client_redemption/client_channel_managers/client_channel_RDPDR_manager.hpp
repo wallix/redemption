@@ -117,12 +117,12 @@ class ClientChannelRDPDRManager {
 
 public:
 
-    bool drives_created;
-    uint16_t protocol_minor_version;
+    bool drives_created = false;
+    uint16_t protocol_minor_version = 0;
     uint32_t next_file_id = 0;
 
     std::unique_ptr<uint8_t[]> ReadData;
-    int last_read_data_portion_length;
+    int last_read_data_portion_length = 0;
 
     uint32_t get_file_id() {
         this->next_file_id++;
@@ -157,7 +157,7 @@ public:
 
     uint32_t current_dir_id = 0;
     std::vector<std::string> elem_in_path;
-    uint16_t server_capability_number;
+    uint16_t server_capability_number = 0;
 
     uint32_t ioCode1 = 0;
     uint32_t extendedPDU = 0;
@@ -173,11 +173,6 @@ public:
       : verbose(verbose)
       , client(client)
       , impl_io_disk(impl_io_disk)
-      , drives_created(false)
-      , protocol_minor_version(0)
-      , next_file_id(0)
-      , last_read_data_portion_length(0)
-      , server_capability_number(0)
       , ioCode1(config.ioCode1)
       , extendedPDU(config.extendedPDU)
       , extraFlags1(config.extraFlags1)

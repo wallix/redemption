@@ -37,20 +37,14 @@ public:
         TEXT_BUFFER_TYPE                 = 2
     };
 
-    uint16_t    _bufferTypeID;
-    int         _bufferTypeNameIndex;
-    bool        _local_clipboard_stream;
-    size_t      _cliboard_data_length;
-    int         _cItems;
+    uint16_t    _bufferTypeID = 0;
+    int         _bufferTypeNameIndex = 0;
+    bool        _local_clipboard_stream = false;
+    size_t      _cliboard_data_length = 0;
+    int         _cItems = 0;
 
 public:
-    ClientIOClipboardAPI()
-      : _bufferTypeID(0)
-      , _bufferTypeNameIndex(0)
-      , _local_clipboard_stream(true)
-      , _cliboard_data_length(0)
-      , _cItems(0)
-      {}
+    ClientIOClipboardAPI() = default;
 
     virtual ~ClientIOClipboardAPI() = default;
 

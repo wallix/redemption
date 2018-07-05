@@ -61,8 +61,8 @@ class CompositeArray : public CompositeContainer
         MAX_CHILDREN_COUNT = 256
     };
 
-    Widget * child_table[MAX_CHILDREN_COUNT];
-    size_t    children_count;
+    Widget * child_table[MAX_CHILDREN_COUNT] {};
+    size_t   children_count = 0;
 
 public:
     CompositeArray();

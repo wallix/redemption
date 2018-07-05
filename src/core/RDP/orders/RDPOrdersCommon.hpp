@@ -160,13 +160,13 @@ inline void receive_rdp_color(InStream & stream, RDPColor & color)
 }
 
 struct RDPPen {
-    uint8_t style;
-    uint8_t width;
+    uint8_t style{0};
+    uint8_t width{0};
     RDPColor color;
     RDPPen(uint8_t style, uint8_t width, RDPColor color)
         : style(style), width(width), color(color) {}
 
-    RDPPen() : style(0), width(0), color{} {
+    RDPPen() :  color{} {
     }
 
     bool operator==(const RDPPen &other) const {
@@ -178,17 +178,14 @@ struct RDPPen {
 };
 
 struct RDPBrush {
-    int8_t org_x;
-    int8_t org_y;
-    uint8_t style;
-    uint8_t hatch;
+    int8_t org_x{0};
+    int8_t org_y{0};
+    uint8_t style{0};
+    uint8_t hatch{0};
     uint8_t extra[7];
 
-    RDPBrush() :
-        org_x(0),
-        org_y(0),
-        style(0),
-        hatch(0)
+    RDPBrush() 
+        
         {
             memset(this->extra, 0, 7);
         }

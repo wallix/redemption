@@ -270,9 +270,9 @@ struct RecvPredictor {
 
 struct CliprdrHeader {
 
-    uint16_t msgType_;
-    uint16_t msgFlags_;
-    uint32_t dataLen_;
+    uint16_t msgType_{0};
+    uint16_t msgFlags_{0};
+    uint32_t dataLen_{0};
 
 public:
     uint16_t msgType()  const { return this->msgType_; }
@@ -281,9 +281,7 @@ public:
 
 
     CliprdrHeader()
-        : msgType_(0)
-        , msgFlags_(0)
-        , dataLen_(0) {
+         {
     }   // CliprdrHeader()
 
     CliprdrHeader(uint16_t msgType, uint16_t msgFlags, uint32_t dataLen)
@@ -900,8 +898,7 @@ struct FormatListPDU
 
     FormatListPDU()
         : header(CB_FORMAT_LIST, 0, 0)
-        , contains_data_in_text_format(false)
-        , contains_data_in_unicodetext_format(false)
+         
         {}
 
     void emit(OutStream & stream) /* TODO const*/ {
@@ -1414,11 +1411,11 @@ struct FormatListResponsePDU
 struct FormatDataRequestPDU
 {
     CliprdrHeader header;
-    uint32_t requestedFormatId;
+    uint32_t requestedFormatId{0};
 
     FormatDataRequestPDU()
             : header(CB_FORMAT_DATA_REQUEST, 0, 4)
-            , requestedFormatId(0) {
+             {
     }   // FormatDataRequestPDU()
 
     explicit FormatDataRequestPDU(uint32_t requestedFormatId)
@@ -1620,8 +1617,8 @@ struct FileContentsResponse
 {
     CliprdrHeader header;
 
-    uint32_t streamID;
-    uint64_t size;
+    uint32_t streamID{0};
+    uint64_t size{0};
 
 
     explicit FileContentsResponse(const uint32_t streamID, const uint64_t size, uint32_t data_size)
@@ -1632,8 +1629,7 @@ struct FileContentsResponse
 
     explicit FileContentsResponse(bool response_ok = false)
     : header( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 4)
-    , streamID(0)
-    , size(0)
+     
     {}
 
     void emit(OutStream & stream) const {
@@ -2194,9 +2190,9 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
 
     // metaFileData (variable): The variable sized contents of the metafile as specified in [MS-WMF] section 2.
 
-    uint32_t mappingMode;
-    uint32_t xExt;
-    uint32_t yExt;
+    uint32_t mappingMode{0};
+    uint32_t xExt{0};
+    uint32_t yExt{0};
 
     MFF::MetaHeader metaHeader;
     MFF::MetaSetMapMod metaSetMapMod;
@@ -2236,10 +2232,8 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
 
     explicit FormatDataResponsePDU_MetaFilePic()
       : FormatDataResponsePDU()
-      , mappingMode(0)
-      , xExt(0)
-      , yExt(0)
-      , metaHeader(0, 0, 0)
+      , 
+       metaHeader(0, 0, 0)
       , metaSetMapMod(0)
       , metaSetWindowExt(0, 0)
       , metaSetWindowOrg(0, 0)
@@ -2401,7 +2395,7 @@ struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
 
 struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
 
-    int cItems;
+    int cItems{0};
 
     void log() const {
         this->header.log();
@@ -2411,7 +2405,7 @@ struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
 
     explicit FormatDataResponsePDU_FileList()
       : FormatDataResponsePDU()
-      , cItems(0)
+       
     {}
 
     explicit FormatDataResponsePDU_FileList(const std::size_t cItems)
@@ -2434,19 +2428,14 @@ class MetaFilePicDescriptor
 {
 
 public:
-    int recordSize;
-    int height;
-    int width;
-    int bpp;
-    int imageSize;
+    int recordSize{0};
+    int height{0};
+    int width{0};
+    int bpp{0};
+    int imageSize{0};
 
 
-    MetaFilePicDescriptor() :
-      recordSize(0)
-    , height(0)
-    , width(0)
-    , bpp(0)
-    , imageSize(0)
+    MetaFilePicDescriptor()  
     {}
 
     void receive(InStream & chunk) {

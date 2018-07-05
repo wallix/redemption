@@ -101,7 +101,7 @@ private:
         explicit cache_element(Bitmap const & bmp)
         : bmp(bmp)
         , stamp(0)
-        , cached(false)
+         
         {}
 
         cache_element(cache_element const &) = delete;

@@ -414,16 +414,14 @@ public:
         }
 
     private:
-        BasicResult() noexcept
-          : is_ok(false)
-        {}
+        BasicResult() noexcept = default;
 
         BasicResult(T value) noexcept
           : is_ok(true)
           , value(value)
         {}
 
-        bool is_ok;
+        bool is_ok = false;
         T value;
     };
 

@@ -53,7 +53,7 @@ namespace Extractors
 
     private:
         HeaderResult() noexcept
-          : is_extracted(false)
+           
         {}
 
         HeaderResult(uint16_t len) noexcept
@@ -61,7 +61,7 @@ namespace Extractors
           , len(len)
         {}
 
-        bool is_extracted;
+        bool is_extracted{false};
         uint16_t len;
     };
 
