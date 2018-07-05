@@ -46,7 +46,7 @@ class Node:
             c.dim = self.dim
             s += c._c_str(tab + 1)
             s += "  " * tab
-            s += "} else /* NOLINT */ {\n"
+            s += "} else {\n"
             c.children = self.children[i:]
             s += c._c_str(tab + 1)
             s += "  " * tab
@@ -58,7 +58,7 @@ class Node:
                 s += " == %s) {\n" % c.value
                 s += c._c_str(tab + 1)
                 s += "  " * tab + "} else "
-            s += "{}\n"
+            s += "/* NOLINT */ {}\n"
         return s
 
     def c_str(self):
