@@ -734,7 +734,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc
         LOG(LOG_INFO, "historyOffset=%u", this->historyOffset);
         LOG(LOG_INFO, "bytes_in_opb=%u", this->bytes_in_opb);
         LOG(LOG_INFO, "offsetCache");
-        hexdump_d(reinterpret_cast<const uint8_t *>(this->offsetCache), sizeof(this->offsetCache));
+        hexdump_d(reinterpret_cast<const char *>(this->offsetCache), sizeof(this->offsetCache));
         LOG(LOG_INFO, "flags=0x%02X", this->flags);
         LOG(LOG_INFO, "flagsHold=0x%02X", this->flagsHold);
 

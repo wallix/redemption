@@ -157,7 +157,7 @@ public:
                  , uint8_t size, const uint8_t * pattern)
     : cacheIndex(cacheIndex), bpp(bpp), width(width), height(height), type(type), size(size)
     {
-        this->data = reinterpret_cast<uint8_t *>(malloc(this->size));
+        this->data = static_cast<uint8_t *>(malloc(this->size));
         memcpy(this->data, pattern, this->size);
     }
 

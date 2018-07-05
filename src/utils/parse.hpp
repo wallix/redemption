@@ -157,22 +157,22 @@ public:
     // 10 = 10, 0x10 = 16
     unsigned long ulong_from_cstr() noexcept
     {
-        uint8_t * endptr = nullptr;
+        char* endptr = nullptr;
         unsigned long res = ((this->p[0] == '0') && (this->p[1] == 'x'))
-            ? strtoul(char_ptr_cast(this->p), reinterpret_cast<char**>(&endptr), 16)
-            : strtoul(char_ptr_cast(this->p), reinterpret_cast<char**>(&endptr), 10);
-        this->p = endptr;
+            ? strtoul(char_ptr_cast(this->p), &endptr, 16)
+            : strtoul(char_ptr_cast(this->p), &endptr, 10);
+        this->p = byte_ptr_cast(endptr);
         return res;
     }
 
     // 10 = 10, 0x10 = 16
     long long_from_cstr() noexcept
     {
-        uint8_t * endptr = nullptr;
+        char* endptr = nullptr;
         long res = ((this->p[0] == '0') && (this->p[1] == 'x'))
-            ? strtol(char_ptr_cast(this->p), reinterpret_cast<char**>(&endptr), 16)
-            : strtol(char_ptr_cast(this->p), reinterpret_cast<char**>(&endptr), 10);
-        this->p = endptr;
+            ? strtol(char_ptr_cast(this->p), &endptr, 16)
+            : strtol(char_ptr_cast(this->p), &endptr, 10);
+        this->p = byte_ptr_cast(endptr);
         return res;
     }
 
