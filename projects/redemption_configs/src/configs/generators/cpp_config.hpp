@@ -138,8 +138,8 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
         }
         this->tab(); this->out() << "/// value"; this->write_assignable_default(pack_contains<default_>(infos), type, &infos); this->out() << " <br/>\n";
         this->tab(); this->out() << "struct " << varname_with_section << " {\n";
-        this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy() { return " << bool(properties & sesman::io::sesman_to_proxy) << "; }\n";
-        this->tab(); this->out() << "    static constexpr bool is_proxy_to_sesman() { return " << bool(properties & sesman::io::proxy_to_sesman) << "; }\n";
+        this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy() { return " << (bool(properties & sesman::io::sesman_to_proxy) ? "true" : "false") << "; }\n";
+        this->tab(); this->out() << "    static constexpr bool is_proxy_to_sesman() { return " << (bool(properties & sesman::io::proxy_to_sesman) ? "true" : "false") << "; }\n";
 
         this->tab(); this->out() << "    static constexpr char const * section() { return \"" << section_name << "\"; }\n";
         this->tab(); this->out() << "    static constexpr char const * name() { return \"" << varname << "\"; }\n";
