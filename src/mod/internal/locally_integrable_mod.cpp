@@ -198,7 +198,7 @@ void LocallyIntegrableMod::refresh(Rect r)
 }
 
 // TODO remove
-void LocallyIntegrableMod::draw_event(time_t, gdi::GraphicApi &) {}
+void LocallyIntegrableMod::draw_event(time_t /*now*/, gdi::GraphicApi & /*drawable*/) {}
 
 void LocallyIntegrableMod::send_to_mod_channel(
     CHANNELS::ChannelNameId front_channel_name, InStream& chunk,

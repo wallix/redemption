@@ -35,7 +35,7 @@
 // bjam debug rdpheadless && bin/gcc-4.9.2/debug/rdpheadless --user admin --pwd $mdp --ip 10.10.47.54 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
 
 
-int run_mod(not_null_ptr<mod_api>, RDPHeadlessFront &, bool, std::chrono::milliseconds, bool);
+int run_mod(not_null_ptr<mod_api> /*mod_ptr*/, RDPHeadlessFront & /*front*/, bool /*quick_connection_test*/, std::chrono::milliseconds /*time_out_response*/, bool /*time_set_connection_test*/);
 
 ///////////////////////////////
 // APPLICATION

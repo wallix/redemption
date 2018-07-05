@@ -277,7 +277,7 @@ private:
                 }
             }
 
-            void set_palette(const BGRPalette&) override {
+            void set_palette(const BGRPalette& /*unused*/) override {
             }
 
             OrderCaps & client_order_caps;
@@ -661,7 +661,7 @@ public:
     void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
 
-    void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
+    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
     void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
@@ -4629,7 +4629,7 @@ protected:
         this->orders.graphics_update_pdu().draw(cmd);
     }
 
-    void draw_impl(RDPBrushCache const &) {
+    void draw_impl(RDPBrushCache const & /*unused*/) {
         // TODO unimplemented
     }
 

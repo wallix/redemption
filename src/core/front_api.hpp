@@ -56,7 +56,7 @@ public:
     };
     virtual ResizeResult server_resize(int width, int height, int bpp) = 0;
 
-    virtual void update_pointer_position(uint16_t, uint16_t) {}
+    virtual void update_pointer_position(uint16_t /*unused*/, uint16_t /*unused*/) {}
 
     ////////////////////////////////
     // Used by transparent proxy.
@@ -64,17 +64,17 @@ public:
     // TODO uint16_t -> CHannelId ; (data + size) -> array_view
     virtual void send_data_indication_ex(uint16_t channelId, uint8_t const * data, std::size_t size)
     { (void)channelId; (void)data; (void)size; }
-    virtual void send_fastpath_data(InStream &) {}
+    virtual void send_fastpath_data(InStream & /*unused*/) {}
 
     virtual void set_keyboard_indicators(uint16_t LedFlags) { (void)LedFlags; }
 
     ////////////////////////////////
     // Session Probe.
 
-    virtual void session_probe_started(bool) {}
+    virtual void session_probe_started(bool /*unused*/) {}
     virtual void set_keylayout(int LCID) { (void)LCID; }
-    virtual void set_focus_on_password_textbox(bool) {}
-    virtual void set_consent_ui_visible(bool) {}
+    virtual void set_focus_on_password_textbox(bool /*unused*/) {}
+    virtual void set_consent_ui_visible(bool /*unused*/) {}
     virtual void session_update(array_view_const_char message) { (void)message; }
 
     ////////////////////////////////

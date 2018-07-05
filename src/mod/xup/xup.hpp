@@ -116,7 +116,7 @@ enum {
         XUPWM_INVALIDATE = 200
     };
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *) override {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * /*keymap*/) override {
         LOG(LOG_INFO, "input mouse");
 
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */

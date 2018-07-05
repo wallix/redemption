@@ -149,7 +149,7 @@ public:
 
     // External world can generate 4 kind of events
     // - keyboard event (scancode)
-    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 *) override {
+    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * /*keymap*/) override {
         (void)param1;
         (void)param2;
         (void)param3;
@@ -163,7 +163,7 @@ public:
     }
 
     // - mouve event (mouse moves or a button went up or down)
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *) override {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * /*keymap*/) override {
         (void)device_flags;
         (void)x;
         (void)y;
@@ -189,7 +189,7 @@ public:
             this->notifier->notify(this, event);
     }
 
-    void notify(Widget *, NotifyApi::notify_event_t event) override
+    void notify(Widget * /*sender*/, NotifyApi::notify_event_t event) override
     {
         if (this->notifier)
             this->notifier->notify(this, event);

@@ -48,7 +48,7 @@ public:
     virtual void new_mod(int target_module, time_t now, AuthApi &, ReportMessageApi &) = 0;
     virtual int next_module() = 0;
     // virtual int get_mod_from_protocol() = 0;
-    virtual void invoke_close_box(const char * auth_error_message, BackEvent_t & signal, time_t now, AuthApi &, ReportMessageApi &) {
+    virtual void invoke_close_box(const char * auth_error_message, BackEvent_t & signal, time_t now, AuthApi & /*unused*/, ReportMessageApi & /*unused*/) {
         (void)auth_error_message;
         (void)signal;
         (void)now;

@@ -143,7 +143,7 @@ namespace jln
             T x;
 
             template<std::size_t... ints, class... Ts>
-            constexpr tuple_elem(int, tuple_impl<std::integer_sequence<size_t, ints...>, Ts...>& t)
+            constexpr tuple_elem(int /*unused*/, tuple_impl<std::integer_sequence<size_t, ints...>, Ts...>& t)
             noexcept(noexcept(T{static_cast<Ts&&>(static_cast<tuple_elem<ints, Ts>&>(t).x)...}))
             : x{static_cast<Ts&&>(static_cast<tuple_elem<ints, Ts>&>(t).x)...}
             {}
@@ -282,7 +282,7 @@ namespace jln
             auto propagate_exit() &&;
 
             template<class F>
-            auto set_notify_delete(F&&) && noexcept;
+            auto set_notify_delete(F&& /*f*/) && noexcept;
 
         private:
             InitCtx init_ctx;
@@ -291,7 +291,7 @@ namespace jln
         template<BuilderInit::E Has, class InitCtx>
         struct [[nodiscard]] TimerExecutorBuilderImpl
         {
-            explicit TimerExecutorBuilderImpl(InitCtx&&) noexcept;
+            explicit TimerExecutorBuilderImpl(InitCtx&& /*init_ctx*/) noexcept;
 
             template<class F>
             auto on_action(F&& f) &&;
@@ -300,7 +300,7 @@ namespace jln
             auto set_time(timeval tv) &&;
 
             template<class F>
-            auto set_notify_delete(F&&) && noexcept;
+            auto set_notify_delete(F&& /*f*/) && noexcept;
 
         private:
             InitCtx init_ctx;
@@ -315,7 +315,7 @@ namespace jln
             auto on_action(F&& f) &&;
 
             template<class F>
-            auto set_notify_delete(F&&) && noexcept;
+            auto set_notify_delete(F&& /*f*/) && noexcept;
 
         private:
             InitCtx init_ctx;
@@ -434,7 +434,7 @@ namespace jln
 
         template<class... Us>
         REDEMPTION_JLN_CONCEPT(detail::GroupExecutorBuilder_Concept)
-        create_sub_executor(Us&&...);
+        create_sub_executor(Us&&... /*xs*/);
 
         R exception(Error const& e) noexcept;
         R ready() noexcept { return R::Ready; }
@@ -1064,9 +1064,9 @@ namespace jln
                 return {static_cast<F&&>(f)};
             }
 
-            named_type const& operator=(named_type&) const noexcept { return *this; }
-            named_type const& operator=(named_type&&) const noexcept { return *this; }
-            named_type const& operator=(named_type const&) const noexcept { return *this; }
+            named_type const& operator=(named_type& /*unused*/) const noexcept { return *this; }
+            named_type const& operator=(named_type&& /*unused*/) const noexcept { return *this; }
+            named_type const& operator=(named_type const& /*unused*/) const noexcept { return *this; }
         };
 
         struct unamed{};
@@ -1174,7 +1174,7 @@ namespace jln
         }
 
         template<char... cs>
-        Ctx& at(string_c<cs...>) noexcept
+        Ctx& at(string_c<cs...> /*unused*/) noexcept
         {
             this->i = detail::named_indexed_by_name<string_c<cs...>>(NamedIndexPack{}).index();
             return this->ctx;
@@ -1187,7 +1187,7 @@ namespace jln
         }
 
         template<char... cs>
-        R exec_at(string_c<cs...>) noexcept
+        R exec_at(string_c<cs...> /*unused*/) noexcept
         {
             this->i = detail::named_indexed_by_name<string_c<cs...>>(NamedIndexPack{}).index();
             return R::ReRun;
@@ -1270,7 +1270,7 @@ namespace jln
 
 
         template<std::size_t... Ints, class... Fs>
-        R switch_(unsigned i, std::integer_sequence<std::size_t, Ints...>, Fs&&... fs)
+        R switch_(unsigned i, std::integer_sequence<std::size_t, Ints...> /*unused*/, Fs&&... fs)
         {
             R r;
             REDEMPTION_DIAGNOSTIC_PUSH
@@ -1284,7 +1284,7 @@ namespace jln
     }  // namespace detail
 
     template<class S, class F>
-    detail::named_function<S, F> named(S, F)
+    detail::named_function<S, F> named(S /*unused*/, F /*unused*/)
     { return {}; }
 
     template<class... Fs>
@@ -1849,7 +1849,7 @@ namespace jln
         }
 
         template<class F>
-        void set_notify_delete(F)
+        void set_notify_delete(F /*unused*/)
         {
             this->deleter = [](SharedDataBase* p, FreeCat cat) noexcept {
                 auto* self = static_cast<SharedData*>(p);
@@ -2228,7 +2228,7 @@ namespace jln
             }
 
             template<class F>
-            void set_notify_delete(F) noexcept
+            void set_notify_delete(F /*unused*/) noexcept
             {
                 this->data_ptr->set_notify_delete([](NotifyDeleteType t, auto& act) noexcept{
                     act.invoke(make_lambda<F>(), t);
@@ -2365,7 +2365,7 @@ namespace jln
             }
 
             template<class F>
-            void set_notify_delete(F) noexcept
+            void set_notify_delete(F /*unused*/) noexcept
             {
                 this->data_ptr->set_notify_delete([](NotifyDeleteType t, auto& act) noexcept{
                     act.invoke(make_lambda<F>(), t);

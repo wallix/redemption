@@ -169,7 +169,7 @@ namespace Extractors
             else                    { throw Error(ERR_NEGO_INCONSISTENT_FLAGS); }
         }
 
-        void prepare_data(Buf64k const &) const
+        void prepare_data(Buf64k const & /*unused*/ /*unused*/) const
         {}
     };
 } // namespace Extractors

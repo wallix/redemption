@@ -70,7 +70,7 @@ public:
 
     void set_color(BGRColor bg_color, BGRColor fg_color) override;
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2*) override;
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* /*unused*/) override;
 
     void auto_resize();
 };
