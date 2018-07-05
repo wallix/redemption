@@ -194,7 +194,7 @@ struct RDPBrush {
         }
 
     RDPBrush(int8_t org_x, int8_t org_y, uint8_t style, uint8_t hatch,
-             const uint8_t * extra = reinterpret_cast<const uint8_t*>("\0\0\0\0\0\0\0")) :
+             const uint8_t * extra = byte_ptr_cast("\0\0\0\0\0\0\0")) :
         org_x(org_x),
         org_y(org_y),
         style(style),

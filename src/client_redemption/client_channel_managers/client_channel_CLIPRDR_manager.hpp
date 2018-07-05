@@ -26,6 +26,7 @@
 #include <unordered_map>
 
 #include "utils/log.hpp"
+#include "utils/sugar/cast.hpp"
 #include "core/channel_list.hpp"
 #include "core/RDP/clipboard.hpp"
 
@@ -413,7 +414,7 @@ public:
                                         formatAvailable -=  32;
                                         uint8_t utf16_string[32];
                                         chunk.in_copy_bytes(utf16_string, 32);
-                                        this->_requestedFormatName = std::string(reinterpret_cast<const char*>(utf16_string), 32);
+                                        this->_requestedFormatName = std::string(char_ptr_cast(utf16_string), 32);
                                     } else {
 
                                         uint16_t utf16_string[120];
@@ -739,7 +740,7 @@ public:
                                       , total_length
                                       , out_stream_first_part
                                       , first_part_data_size
-                                      , reinterpret_cast<uint8_t *>(
+                                      , byte_ptr_cast(
                                         this->clientIOClipboardAPI->get_file_item_data(lindex))
                                       , this->clientIOClipboardAPI->get_file_item_size(lindex)
                                       , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
@@ -1033,9 +1034,9 @@ public:
             length_of_utf8_string = ::UTF16toUTF8(
             this->_cb_buffers.data.get(), this->_cb_buffers.sizeTotal,
             utf8_string.get(), this->_cb_buffers.sizeTotal);
-            str_data = reinterpret_cast<const char*>(utf8_string.get());
+            str_data = char_ptr_cast(utf8_string.get());
         } else {
-            str_data = reinterpret_cast<const char*>(this->_cb_buffers.data.get());
+            str_data = char_ptr_cast(this->_cb_buffers.data.get());
             length_of_utf8_string = this->_cb_buffers.size;
         }
 

@@ -99,7 +99,7 @@ struct ThemeHolder final : public ConfigurationHolder
                 this->theme.global.error_color = color_from_cstr(value);
             }
             else if (0 == strcmp(key, "logo")){
-                this->theme.global.logo = Parse(reinterpret_cast<const uint8_t *>(value)).bool_from_cstr();
+                this->theme.global.logo = Parse(byte_ptr_cast(value)).bool_from_cstr();
             }
         }
         else if (0 == strcmp(context, "edit")) {

@@ -173,7 +173,7 @@ private:
     }
 
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
-        size_t length = pszTargetName ? strlen(reinterpret_cast<const char*>(pszTargetName)) : 0;
+        size_t length = pszTargetName ? strlen(char_ptr_cast(pszTargetName)) : 0;
         this->ServicePrincipalName.init(length + 1);
         this->ServicePrincipalName.copy(pszTargetName, length);
         this->ServicePrincipalName.get_data()[length] = 0;
@@ -624,7 +624,7 @@ private:
         output_buffer.Buffer.init(this->client_auth_data.cbMaxToken);
 
         SEC_STATUS status = this->table->InitializeSecurityContext(
-            reinterpret_cast<char*>(this->ServicePrincipalName.get_data()),
+            char_ptr_cast(this->ServicePrincipalName.get_data()),
             fContextReq,
             this->client_auth_data.have_input_buffer
                 ? &this->client_auth_data.input_buffer_desc

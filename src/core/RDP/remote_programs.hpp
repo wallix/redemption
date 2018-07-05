@@ -3085,7 +3085,7 @@ public:
         uint8_t ApplicationId_unicode_data[512];
         ::memset(ApplicationId_unicode_data, 0, sizeof(ApplicationId_unicode_data));
         /*const size_t size_of_ApplicationId_unicode_data = */::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->application_id.c_str()),
+            byte_ptr_cast(this->application_id.c_str()),
             ApplicationId_unicode_data, sizeof(ApplicationId_unicode_data) - 2 /* null-terminator */);
 
         stream.out_copy_bytes(ApplicationId_unicode_data, sizeof(ApplicationId_unicode_data));

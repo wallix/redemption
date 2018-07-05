@@ -24,6 +24,7 @@
 #include "core/RDP/mppc/mppc_utils.hpp"
 #include "core/RDP/mppc/mppc_50.hpp"
 #include "utils/stream.hpp"
+#include "utils/sugar/cast.hpp"
 
 #include <type_traits> // std::is_base_of
 
@@ -189,7 +190,7 @@ struct rdp_mppc_61_dec : public rdp_mppc_dec
     rdp_mppc_61_dec()
         : rdp_mppc_dec()
         , historyBuffer{0}
-         
+
     {}
 
 private:
@@ -594,9 +595,9 @@ public:
     explicit rdp_mppc_61_enc(bool verbose = 0)
         : rdp_mppc_enc(RDP_61_MAX_DATA_BLOCK_SIZE, verbose)
         , historyBuffer{0}
-        , 
+        ,
          level_1_output_buffer{0}
-         
+
     {}
 
 private:
@@ -715,7 +716,7 @@ private:
                     2); // Level1ComprFlags(1) + Level2ComprFlags(1)
 
             if (Level2ComprFlags & PACKET_COMPRESSED) {
-                this->outputBuffer           = reinterpret_cast<uint8_t *>(this->level_2_compressor.outputBuffer);
+                this->outputBuffer           = this->level_2_compressor.outputBuffer;
                 this->bytes_in_output_buffer = this->level_2_compressor.bytes_in_opb;
             }
             else {
@@ -734,7 +735,7 @@ private:
                 compressed_data_size, rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
             if (Level2ComprFlags & PACKET_COMPRESSED) {
-                this->outputBuffer           = reinterpret_cast<uint8_t *>(this->level_2_compressor.outputBuffer);
+                this->outputBuffer           = this->level_2_compressor.outputBuffer;
                 this->bytes_in_output_buffer = this->level_2_compressor.bytes_in_opb;
             }
             else {

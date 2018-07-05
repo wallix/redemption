@@ -163,7 +163,7 @@ void WidgetPassword::rdp_input_mouse(int device_flags, int x, int y, Keymap2* ke
                 // |
 
             this->edit_pos = std::min<size_t>((x - this->x() - this->masked_text.x_text - this->w_char/2) / this->w_char, this->num_chars-1);
-            this->edit_buffer_pos = UTF8GetPos(reinterpret_cast<uint8_t*>(&this->label.buffer[0]), this->edit_pos);
+            this->edit_buffer_pos = UTF8GetPos(byte_ptr_cast(&this->label.buffer[0]), this->edit_pos);
         }
         if (e != this->edit_pos) {
             this->update_draw_cursor(old_cursor_rect);

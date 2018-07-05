@@ -125,8 +125,7 @@ struct rdp_mppc_enc_hash_table_manager
     {
         LOG(LOG_INFO, "Type=RDP X.X bulk compressor hash table manager");
         LOG(LOG_INFO, "hashTable");
-        hexdump_d(reinterpret_cast<const char *>(this->hash_table),
-            (mini_dump ? 16 : get_table_size()));
+        hexdump_d(reinterpret_cast<uint8_t const*>(this->hash_table), (mini_dump ? 16 : get_table_size()));
     }
 
     inline T get_offset(hash_type hash) const

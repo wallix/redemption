@@ -23,6 +23,7 @@
 #include "configs/autogen/enums.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/byte.hpp"
+#include "utils/sugar/cast.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "openssl_crypto.hpp"
@@ -144,7 +145,7 @@ public:
         if (derivator.end()-p.base() == ext.size() - 1
          && std::equal(
              p.base(), p.base() + ext.size() - 1,
-             reinterpret_cast<uint8_t const*>(ext.data() + 1)
+             byte_ptr_cast(ext.data() + 1)
         )) {
             constexpr auto extmwrm = cstr_array_view(".mwrm");
             auto const prefix_len = (p == last ? derivator.end() : p.base() - 1) - derivator.begin();

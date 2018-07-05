@@ -922,9 +922,9 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
         stream.out_uint32_le(this->DriverNameLen);
         stream.out_uint32_le(this->PrintNameLen);
         stream.out_uint32_le(this->CachedFieldsLen);
-        stream.out_copy_bytes(reinterpret_cast<uint8_t *>(this->PnPName), this->PnPNameLen);
-        stream.out_copy_bytes(reinterpret_cast<uint8_t *>(this->DriverName), this->DriverNameLen);
-        stream.out_copy_bytes(reinterpret_cast<uint8_t *>(this->PrinterName), this->PrintNameLen);
+        stream.out_copy_bytes(byte_ptr_cast(this->PnPName), this->PnPNameLen);
+        stream.out_copy_bytes(byte_ptr_cast(this->DriverName), this->DriverNameLen);
+        stream.out_copy_bytes(byte_ptr_cast(this->PrinterName), this->PrintNameLen);
     }
 
     void receive(InStream & stream) {
@@ -1458,7 +1458,7 @@ public:
 
     uint32_t CreateOptions() const { return this->CreateOptions_; }
 
-    const char * Path() const { return reinterpret_cast<const char *>(this->Path_); }
+    const char * Path() const { return char_ptr_cast(this->Path_); }
 
     size_t PathLength() const { return this->PathLength_UTF16; }
 
@@ -1469,7 +1469,7 @@ public:
                 "CreateOptions=0x%X Path=\"%s\"",
             this->DesiredAccess_, this->AllocationSize_, this->FileAttributes_,
             this->SharedAccess_, this->CreateDisposition_, this->CreateOptions_,
-            reinterpret_cast<const char *>(this->Path_));
+            char_ptr_cast(this->Path_));
     }
 
     void log() const {
@@ -1485,7 +1485,7 @@ public:
         LOG(LOG_INFO, "          * CreateDisposition = 0x%08x (4 bytes): %s", this->CreateDisposition_, smb2::get_CreateDisposition_name(this->CreateDisposition_));
         LOG(LOG_INFO, "          * CreateOptions     = 0x%08x (4 bytes): %s", this->CreateOptions_, smb2::get_CreateOptions_name(this->CreateOptions_));
         LOG(LOG_INFO, "          * PathLength        = %d (4 bytes)", int(this->PathLength_UTF16));
-        LOG(LOG_INFO, "          * Path              = \"%s\" (%d byte(s))", reinterpret_cast<const char *>(this->Path_), int(this->PathLength_UTF16));
+        LOG(LOG_INFO, "          * Path              = \"%s\" (%d byte(s))", char_ptr_cast(this->Path_), int(this->PathLength_UTF16));
     }
 
 };  // DeviceCreateRequest
@@ -1800,7 +1800,7 @@ struct DeviceWriteRequest {
         LOG(LOG_INFO, "          * Length    = %d (4 bytes)", int(this->Length));
         LOG(LOG_INFO, "          * Offset    = 0x%" PRIx64 " (8 bytes)", this->Offset);
         LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
-        //auto s = reinterpret_cast<char const *>(this->WriteData);
+        //auto s = char_ptr_cast(this->WriteData);
         int len = int(this->Length);
         LOG(LOG_INFO, "          * WriteData (%d byte(s))", len);
     }
@@ -2390,7 +2390,7 @@ struct DeviceReadResponse {
 //         }
         //uint8_t data[0xffff];
         //stream.in_copy_bytes(data, Length);
-        //this->ReadData = std::string(reinterpret_cast<char *>(data), Length/2);
+        //this->ReadData = std::string(char_ptr_cast(data), Length/2);
     }
 
     void log() const {
@@ -2831,7 +2831,7 @@ public:
             // The null-terminator is included.
             uint8_t ComputerName_unicode_data[65536];
             size_t size_of_ComputerName_unicode_data = ::UTF8toUTF16(
-                reinterpret_cast<const uint8_t *>(this->ComputerName),
+                byte_ptr_cast(this->ComputerName),
                 ComputerName_unicode_data, sizeof(ComputerName_unicode_data));
             // Writes null terminator.
             ComputerName_unicode_data[size_of_ComputerName_unicode_data    ] =
@@ -2846,7 +2846,7 @@ public:
             this->ComputerName[this->ComputerNameLen] = '\0';
             this->ComputerNameLen += 1;
             stream.out_uint32_le(this->ComputerNameLen);
-            stream.out_copy_bytes(reinterpret_cast<const uint8_t *>(this->ComputerName), this->ComputerNameLen);
+            stream.out_copy_bytes(byte_ptr_cast(this->ComputerName), this->ComputerNameLen);
         }
     }
 
@@ -2890,7 +2890,7 @@ public:
                 const size_t ComputerName_utf8_len = ::UTF16toUTF8(
                     ComputerName_unicode_data,
                     this->ComputerNameLen,
-                    reinterpret_cast<uint8_t *>(this->ComputerName),
+                    byte_ptr_cast(this->ComputerName),
                     sizeof(this->ComputerName));
 
                 this->ComputerName[ComputerName_utf8_len] = '\0';
@@ -4041,7 +4041,7 @@ public:
 
         uint8_t FileName_unicode_data[1000];
         const size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->FileName_),
+            byte_ptr_cast(this->FileName_),
             FileName_unicode_data, sizeof(FileName_unicode_data));
 
         uint8_t * temp_p = FileName_unicode_data;
@@ -4093,7 +4093,7 @@ public:
             const size_t FileName_utf8_len = ::UTF16toUTF8(
                 FileName_unicode_data,
                 this->FileNameLength / 2,
-                reinterpret_cast<uint8_t *> (this->FileName_),
+                byte_ptr_cast (this->FileName_),
                 sizeof(this->FileName_));
 
             this->FileName_[FileName_utf8_len] = '\0';
@@ -4257,7 +4257,7 @@ public:
         // The null-terminator is included.
         uint8_t Path_unicode_data[65536];
         size_t size_of_Path_unicode_data = ::UTF8toUTF16(
-            reinterpret_cast<const uint8_t *>(this->Path_),
+            byte_ptr_cast(this->Path_),
             Path_unicode_data, sizeof(Path_unicode_data));
 
         assert(size_of_Path_unicode_data <= 65534);
@@ -4318,7 +4318,7 @@ public:
 
             const size_t path_utf8_len = ::UTF16toUTF8(Path_unicode_data,
                 this->PathLength / 2,
-                reinterpret_cast<uint8_t *>(this->Path_),
+                byte_ptr_cast(this->Path_),
                 sizeof(this->Path_));
 
             this->Path_[path_utf8_len] = '\0';

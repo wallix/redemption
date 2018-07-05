@@ -28,6 +28,7 @@
 #include "utils/utf.hpp"
 #include "utils/parse.hpp"
 #include "utils/sugar/buffer_t.hpp"
+#include "utils/sugar/cast.hpp"
 
 #include <memory>
 #include <initializer_list>
@@ -59,7 +60,7 @@ public:
     }
 
     explicit InStream(char const * array, std::size_t len, std::size_t offset = 0)
-    : InStream(reinterpret_cast<uint8_t const *>(array), len, offset)
+    : InStream(byte_ptr_cast(array), len, offset)
     {
     }
 
@@ -391,7 +392,7 @@ public:
     }
 
     explicit OutStream(char * array, std::size_t len, std::size_t offset = 0)
-    : OutStream(reinterpret_cast<uint8_t*>(array), len, offset)
+    : OutStream(byte_ptr_cast(array), len, offset)
     {
     }
 
@@ -738,7 +739,7 @@ public:
 
     void out_unistr(const char* text)
     {
-        out_unistr(reinterpret_cast<const uint8_t*>(text));
+        out_unistr(byte_ptr_cast(text));
     }
 
     void out_date_name(const char* text, const size_t buflen)
@@ -841,7 +842,7 @@ inline array_view_const_u8 stream_to_avu8(OutStream & stream) noexcept
 
 inline array_view_const_char stream_to_avchar(OutStream & stream) noexcept
 {
-    return make_array_view(reinterpret_cast<char const*>(stream.get_data()), stream.get_offset());
+    return make_array_view(char_ptr_cast(stream.get_data()), stream.get_offset());
 }
 
 

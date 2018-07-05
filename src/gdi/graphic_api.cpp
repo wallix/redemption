@@ -80,7 +80,7 @@ MultiLineTextMetrics::MultiLineTextMetrics(const Font& font, const char* unicode
             textmetrics_impl(
                 font, parameter.begin(), w, h,
                 [&](UTF8toUnicodeIterator & it){
-                    return it.pos() <= reinterpret_cast<uint8_t const*>(parameter.end())
+                    return it.pos() <= byte_ptr_cast(parameter.end())
                         ? *it : 0u;
                 });
 
@@ -221,7 +221,7 @@ void server_draw_text(
             bk,                 // op
             // brush
             RDPBrush(0, 0, 3, 0xaa,
-                reinterpret_cast<const uint8_t *>("\xaa\x55\xaa\x55\xaa\x55\xaa\x55")),
+                byte_ptr_cast("\xaa\x55\xaa\x55\xaa\x55\xaa\x55")),
             x,                  // glyph_x
             y,                  // glyph_y
             data_begin - data,  // data_len in bytes

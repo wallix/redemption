@@ -4282,8 +4282,8 @@ public:
             LOG(LOG_INFO, "process save session info : Logon");
             RDP::LogonInfoVersion1_Recv liv1(ssipdudata.payload);
 
-            process_logon_info(reinterpret_cast<char *>(liv1.Domain),
-                reinterpret_cast<char *>(liv1.UserName));
+            process_logon_info(char_ptr_cast(liv1.Domain),
+                char_ptr_cast(liv1.UserName));
 
             this->front.send_savesessioninfo();
         }
@@ -4293,8 +4293,8 @@ public:
             LOG(LOG_INFO, "process save session info : Logon long");
             RDP::LogonInfoVersion2_Recv liv2(ssipdudata.payload);
 
-            process_logon_info(reinterpret_cast<char *>(liv2.Domain),
-                reinterpret_cast<char *>(liv2.UserName));
+            process_logon_info(char_ptr_cast(liv2.Domain),
+                char_ptr_cast(liv2.UserName));
 
             this->front.send_savesessioninfo();
         }

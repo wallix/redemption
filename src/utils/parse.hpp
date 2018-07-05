@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include "utils/sugar/cast.hpp"
+
 #include <cstdint> // for sized types
 #include <cstring> // for memcpy
 #include <cstdlib> // strto*
@@ -139,7 +141,7 @@ public:
     }
 
     void in_copy_bytes(char * v, size_t n) {
-        this->in_copy_bytes(reinterpret_cast<uint8_t*>(v), n);
+        this->in_copy_bytes(byte_ptr_cast(v), n);
     }
 
     const uint8_t *in_uint8p(unsigned int n) {
@@ -157,8 +159,8 @@ public:
     {
         uint8_t * endptr = nullptr;
         unsigned long res = ((this->p[0] == '0') && (this->p[1] == 'x'))
-            ? strtoul(reinterpret_cast<const char*>(this->p), reinterpret_cast<char**>(&endptr), 16)
-            : strtoul(reinterpret_cast<const char*>(this->p), reinterpret_cast<char**>(&endptr), 10);
+            ? strtoul(char_ptr_cast(this->p), reinterpret_cast<char**>(&endptr), 16)
+            : strtoul(char_ptr_cast(this->p), reinterpret_cast<char**>(&endptr), 10);
         this->p = endptr;
         return res;
     }
@@ -168,8 +170,8 @@ public:
     {
         uint8_t * endptr = nullptr;
         long res = ((this->p[0] == '0') && (this->p[1] == 'x'))
-            ? strtol(reinterpret_cast<const char*>(this->p), reinterpret_cast<char**>(&endptr), 16)
-            : strtol(reinterpret_cast<const char*>(this->p), reinterpret_cast<char**>(&endptr), 10);
+            ? strtol(char_ptr_cast(this->p), reinterpret_cast<char**>(&endptr), 16)
+            : strtol(char_ptr_cast(this->p), reinterpret_cast<char**>(&endptr), 10);
         this->p = endptr;
         return res;
     }
@@ -177,22 +179,22 @@ public:
     // 1, yes, on, true
     bool bool_from_cstr() noexcept
     {
-        if (0 == strncasecmp("1", reinterpret_cast<const char*>(this->p), 1))
+        if (0 == strncasecmp("1", char_ptr_cast(this->p), 1))
         {
             this->p += 1;
             return true;
         }
-        else if (0 == strncasecmp("yes", reinterpret_cast<const char*>(this->p), 3))
+        else if (0 == strncasecmp("yes", char_ptr_cast(this->p), 3))
         {
             this->p += 3;
             return true;
         }
-        else if (0 == strncasecmp("on", reinterpret_cast<const char*>(this->p), 2))
+        else if (0 == strncasecmp("on", char_ptr_cast(this->p), 2))
         {
             this->p += 2;
             return true;
         }
-        else if (0 == strncasecmp("true", reinterpret_cast<const char*>(this->p), 4))
+        else if (0 == strncasecmp("true", char_ptr_cast(this->p), 4))
         {
             this->p += 4;
             return true;

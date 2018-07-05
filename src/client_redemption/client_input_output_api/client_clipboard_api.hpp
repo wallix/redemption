@@ -88,7 +88,7 @@ public:
     virtual ConstImageDataView get_image()
     {
         return ConstImageDataView(
-            reinterpret_cast<uint8_t const*>(""),
+            byte_ptr_cast(""),
             0, 0, 0, ConstImageDataView::BitsPerPixel{},
             ConstImageDataView::Storage::TopToBottom
         );

@@ -171,7 +171,7 @@ void ocr::locale::latin_to_cyrillic_context::latin_to_cyrillic(std::string& out)
     while (uc) {
         if (uc ==  ' ') {
             do {
-                e = reinterpret_cast<char const *>(utf8_it.pos());
+                e = char_ptr_cast(utf8_it.pos());
                 uc = *++utf8_it;
             } while (uc == ' ');
         }
@@ -210,14 +210,14 @@ void ocr::locale::latin_to_cyrillic_context::latin_to_cyrillic(std::string& out)
                 && ascii_table_to_cyrillic[uc]
                 ) {
                     this->out_tmp.append(beg, e);
-                    beg = reinterpret_cast<char const *>(utf8_it_start.pos());
+                    beg = char_ptr_cast(utf8_it_start.pos());
                     this->out_tmp += ascii_table_to_cyrillic[uc];
                 }
-                e = reinterpret_cast<char const *>(utf8_it_start.pos());
+                e = char_ptr_cast(utf8_it_start.pos());
             }
         }
 
-        e = reinterpret_cast<char const *>(utf8_it.pos());
+        e = char_ptr_cast(utf8_it.pos());
     }
 
     if (!this->out_tmp.empty()) {

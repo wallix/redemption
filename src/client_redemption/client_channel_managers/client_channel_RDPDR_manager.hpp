@@ -215,7 +215,7 @@ public:
 
             std::ofstream oFile(file_to_write.c_str(), std::ios::binary | std::ios::app);
             if (oFile.good()) {
-                oFile.write(reinterpret_cast<const char *>(chunk.get_current()), length);
+                oFile.write(char_ptr_cast(chunk.get_current()), length);
                 oFile.close();
             }  else {
                 LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_write.c_str());
@@ -1092,7 +1092,7 @@ public:
 
                                     std::string file_to_write = this->paths.at(id);
 
-                                    if (this->impl_io_disk->write_file(file_to_write.c_str(), reinterpret_cast<const char *>(dwr.WriteData), WriteDataLen ) ) {
+                                    if (this->impl_io_disk->write_file(file_to_write.c_str(), char_ptr_cast(dwr.WriteData), WriteDataLen ) ) {
                                         LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_write.c_str());
                                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                     }

@@ -34,7 +34,7 @@ void CopyPaste::LimitString::utf16_push_back(const uint8_t * s, size_t n)
 {
     this->size_ += UTF16toUTF8(
         s, n,
-        reinterpret_cast<uint8_t*>(this->buf_ + this->size_),
+        byte_ptr_cast(this->buf_ + this->size_),
         this->max_size() - this->size_
     );
     this->buf_[this->size_] = 0;

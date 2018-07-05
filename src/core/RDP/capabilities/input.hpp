@@ -141,6 +141,6 @@ struct InputCaps : public Capability {
             this->imeFileName, sizeof(this->imeFileName) / sizeof(this->imeFileName[0]),
             imeFileName_utf8, sizeof(imeFileName_utf8) / sizeof(imeFileName_utf8[0])
         )] = 0;
-        LOG(LOG_INFO, "     Input caps::imeFileName %s", reinterpret_cast<char *>(imeFileName_utf8));
+        LOG(LOG_INFO, "     Input caps::imeFileName %s", char_ptr_cast(imeFileName_utf8));
     }
 };

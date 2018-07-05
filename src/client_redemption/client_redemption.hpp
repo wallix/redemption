@@ -1021,7 +1021,7 @@ public:
             case CHANID_WABDIAG:
             {
                 int len = chunk.in_uint32_le();
-                std::string msg(reinterpret_cast<char const *>(chunk.get_current()), len);
+                std::string msg(char_ptr_cast(chunk.get_current()), len);
 
                 if        (msg == std::string("ConfirmationPixelColor=White")) {
                     this->wab_diag_question = true;

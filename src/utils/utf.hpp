@@ -30,6 +30,7 @@
 #include <cstdlib>
 #include <cstring>
 #include "utils/unicode_case_conversion.hpp"
+#include "utils/sugar/cast.hpp"
 
 enum {
       maximum_length_of_utf8_character_in_bytes = 4
@@ -239,8 +240,8 @@ static inline bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t *
 
 
     size_t insertion_point = i;
-    size_t end_point = insertion_point + strlen(reinterpret_cast<char *>(source+i));
-    size_t to_insert_nbbytes = strlen(reinterpret_cast<const char *>(to_insert));
+    size_t end_point = insertion_point + strlen(char_ptr_cast(source+i));
+    size_t to_insert_nbbytes = strlen(char_ptr_cast(to_insert));
     if (end_point + to_insert_nbbytes + 1 > max_source){
         return false;
     }
@@ -289,7 +290,7 @@ static inline void UTF8RemoveOneAtPos(uint8_t * source, size_t len)
         len -= ((c >> 6) == 2)?0:1;
         if (len == 0) {
             size_t insertion_point = i;
-            size_t end_point = insertion_point + strlen(reinterpret_cast<char *>(source+i));
+            size_t end_point = insertion_point + strlen(char_ptr_cast(source+i));
             uint32_t char_len = UTF8CharNbBytes(source+i);
             memmove(source + i, source + i + char_len, end_point - insertion_point + 1 - char_len);
             break;
@@ -473,7 +474,7 @@ public:
     { ++*this; }
 
     explicit UTF8toUnicodeIterator(const char * str)
-    : UTF8toUnicodeIterator(reinterpret_cast<const uint8_t*>(str))
+    : UTF8toUnicodeIterator(byte_ptr_cast(str))
     {}
 
     UTF8toUnicodeIterator & operator++()
@@ -682,7 +683,7 @@ static inline size_t UTF32toUTF8(uint32_t utf32_char, uint8_t * utf8_target, siz
 
 static inline size_t UTF8ToUTF8LCopy(uint8_t * dest, size_t dest_size, const uint8_t * source)
 {
-    size_t source_len     = strlen(reinterpret_cast<const char *>(source));
+    size_t source_len     = strlen(char_ptr_cast(source));
     if (source_len > dest_size - 1){
         // rule out malformed UTF8 source, we need to check that or the following loop may never end
         if ((source[0] & 0xC0) == 0x80) {

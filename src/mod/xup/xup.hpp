@@ -244,7 +244,7 @@ enum {
                             stream.in_uint16_le());
                          drawable.draw(RDPPatBlt(r, this->rop, color_encode(BLACK, this->bpp), color_encode(WHITE, this->bpp),
                             RDPBrush(r.x, r.y, 3, 0xaa,
-                            reinterpret_cast<const uint8_t *>("\xaa\x55\xaa\x55\xaa\x55\xaa\x55"))
+                            byte_ptr_cast("\xaa\x55\xaa\x55\xaa\x55\xaa\x55"))
                          ), r, gdi::ColorCtx::from_bpp(this->bpp, this->palette332));
                     }
                     break;

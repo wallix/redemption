@@ -73,7 +73,7 @@ namespace mln
 
             template<class Ch, class Tr>
             static void read_value(std::basic_istream<Ch, Tr>& is, ::ocr::rgb8 & v)
-            { is.read(reinterpret_cast<char*>(&v), sizeof(::ocr::rgb8)); }
+            { is.read(reinterpret_cast<char*>(&v), sizeof(::ocr::rgb8)); } // NOLINT
         };
     } // namespace trait
 } // namespace mln

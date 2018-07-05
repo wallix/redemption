@@ -46,7 +46,7 @@ WidgetEdit::WidgetEdit(
         this->buffer_size = strlen(text);
         this->num_chars = UTF8Len(byte_ptr_cast(this->label.buffer));
         this->edit_pos = std::min(this->num_chars, edit_position);
-        this->edit_buffer_pos = UTF8GetPos(reinterpret_cast<uint8_t *>(this->label.buffer), this->edit_pos);
+        this->edit_buffer_pos = UTF8GetPos(byte_ptr_cast(this->label.buffer), this->edit_pos);
         this->cursor_px_pos = 0;
         char c = this->label.buffer[this->edit_buffer_pos];
         this->label.buffer[this->edit_buffer_pos] = 0;
@@ -261,7 +261,7 @@ void WidgetEdit::draw_cursor(const Rect clip)
 void WidgetEdit::increment_edit_pos()
 {
     this->edit_pos++;
-    size_t n = UTF8GetPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 1);
+    size_t n = UTF8GetPos(byte_ptr_cast(this->label.buffer + this->edit_buffer_pos), 1);
     char c = this->label.buffer[this->edit_buffer_pos + n];
     this->label.buffer[this->edit_buffer_pos + n] = 0;
     gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
@@ -456,7 +456,7 @@ void WidgetEdit::rdp_input_scancode(long int param1, long int param2, long int p
                         size_t pxtmp = this->cursor_px_pos;
                         size_t ebpos = this->edit_buffer_pos;
                         this->decrement_edit_pos();
-                        UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
+                        UTF8RemoveOneAtPos(byte_ptr_cast(this->label.buffer + this->edit_buffer_pos), 0);
                         this->buffer_size += this->edit_buffer_pos - ebpos;
                         Rect const rect(
                             this->x() + this->cursor_px_pos + this->label.x_text,
@@ -497,7 +497,7 @@ void WidgetEdit::rdp_input_scancode(long int param1, long int param2, long int p
                         gdi::TextMetrics tm(this->font, this->label.buffer + this->edit_buffer_pos);
                         this->h_text = tm.height;
                         this->label.buffer[this->edit_buffer_pos + len] = c;
-                        UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
+                        UTF8RemoveOneAtPos(byte_ptr_cast(this->label.buffer + this->edit_buffer_pos), 0);
                         this->buffer_size -= len;
                         this->num_chars--;
                         Rect const rect(
@@ -552,7 +552,7 @@ void WidgetEdit::rdp_input_scancode(long int param1, long int param2, long int p
             case Keymap2::KEVENT_KEY:
                 if (this->num_chars < WidgetLabel::buffer_size - 5) {
                     uint32_t c = keymap->get_char();
-                    UTF8InsertOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0, c, WidgetLabel::buffer_size - 1 - this->edit_buffer_pos);
+                    UTF8InsertOneAtPos(byte_ptr_cast(this->label.buffer + this->edit_buffer_pos), 0, c, WidgetLabel::buffer_size - 1 - this->edit_buffer_pos);
                     size_t tmp = this->edit_buffer_pos;
                     size_t pxtmp = this->cursor_px_pos;
                     this->increment_edit_pos();
@@ -615,7 +615,7 @@ void WidgetEdit::rdp_input_unicode(uint16_t unicode, uint16_t flag)
     size_t utf8_length = UTF16toUTF8(&unicode, 1, utf8, sizeof(utf8) - 1);
     utf8[utf8_length] = 0;
 
-    UTF8InsertAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos),
+    UTF8InsertAtPos(byte_ptr_cast(this->label.buffer + this->edit_buffer_pos),
         0, utf8, WidgetLabel::buffer_size - 1 - this->edit_buffer_pos);
     size_t tmp = this->edit_buffer_pos;
     size_t pxtmp = this->cursor_px_pos;

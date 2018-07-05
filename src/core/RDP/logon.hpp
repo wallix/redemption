@@ -855,15 +855,15 @@ struct InfoPacket {
         this->flags |= INFO_LOGONNOTIFY;
 
         this->cbDomain         = UTF8ToUTF8LCopy(this->Domain,
-            sizeof(this->Domain), reinterpret_cast<const uint8_t *>(domain)) * 2;
+            sizeof(this->Domain), byte_ptr_cast(domain)) * 2;
         this->cbUserName       = UTF8ToUTF8LCopy(this->UserName,
-            sizeof(this->UserName), reinterpret_cast<const uint8_t *>(username)) * 2;
+            sizeof(this->UserName), byte_ptr_cast(username)) * 2;
         this->cbPassword       = UTF8ToUTF8LCopy(this->Password,
-            sizeof(this->Password), reinterpret_cast<const uint8_t *>(password)) * 2;
+            sizeof(this->Password), byte_ptr_cast(password)) * 2;
         this->cbAlternateShell = UTF8ToUTF8LCopy(this->AlternateShell,
-            sizeof(this->AlternateShell), reinterpret_cast<const uint8_t *>(program)) * 2;
+            sizeof(this->AlternateShell), byte_ptr_cast(program)) * 2;
         this->cbWorkingDir     = UTF8ToUTF8LCopy(this->WorkingDir,
-            sizeof(this->WorkingDir), reinterpret_cast<const uint8_t *>(directory)) * 2;
+            sizeof(this->WorkingDir), byte_ptr_cast(directory)) * 2;
 
         if (performanceFlags) {
             this->extendedInfoPacket.performanceFlags = performanceFlags;
@@ -872,7 +872,7 @@ struct InfoPacket {
         if (clientAddr){
             this->extendedInfoPacket.cbClientAddress = (UTF8ToUTF8LCopy(this->extendedInfoPacket.clientAddress,
                 sizeof(this->extendedInfoPacket.clientAddress),
-                reinterpret_cast<const uint8_t *>(clientAddr)) + 1) * 2;
+                byte_ptr_cast(clientAddr)) + 1) * 2;
         }
     }
 
@@ -919,7 +919,7 @@ struct InfoPacket {
             // Client Time Zone (172 bytes)
             stream.out_uint32_le(this->extendedInfoPacket.clientTimeZone.Bias);
             stream.out_date_name(
-                reinterpret_cast<char const *>(this->extendedInfoPacket.clientTimeZone.StandardName), 64);
+                char_ptr_cast(this->extendedInfoPacket.clientTimeZone.StandardName), 64);
 
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wYear);
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wMonth);
@@ -933,7 +933,7 @@ struct InfoPacket {
             stream.out_uint32_le(this->extendedInfoPacket.clientTimeZone.StandardBias);
 
             stream.out_date_name(
-                reinterpret_cast<char const *>(this->extendedInfoPacket.clientTimeZone.DaylightName), 64);
+                char_ptr_cast(this->extendedInfoPacket.clientTimeZone.DaylightName), 64);
 
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wYear);
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wMonth);
@@ -1156,7 +1156,7 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::cbWorkingDir %u", this->cbWorkingDir);
         LOG(LOG_INFO, "InfoPacket::Domain %s", this->Domain);
         LOG(LOG_INFO, "InfoPacket::UserName %s", this->UserName);
-        LOG(LOG_INFO, "InfoPacket::Password %s", ::get_printable_password(reinterpret_cast<char const*>(this->Password), password_printing_mode));
+        LOG(LOG_INFO, "InfoPacket::Password %s", ::get_printable_password(char_ptr_cast(this->Password), password_printing_mode));
 
         if (show_alternate_shell) {
             LOG(LOG_INFO, "InfoPacket::AlternateShell %s", this->AlternateShell);
