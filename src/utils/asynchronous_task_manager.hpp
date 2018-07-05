@@ -56,7 +56,7 @@ public:
 
     private:
         void* data = nullptr;
-        ptr_function  f = [](void*, AsynchronousTask&) noexcept {};
+        ptr_function  f = [](void* /*unused*/, AsynchronousTask& /*unused*/) noexcept {};
     };
 
     virtual void configure_event(SessionReactor&, TerminateEventNotifier) = 0;

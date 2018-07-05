@@ -73,14 +73,14 @@ namespace cli
     constexpr struct Ok_ : std::integral_constant<Res, Res::Ok> {} Ok {};
 
     template<class Act>
-    auto apply_option_impl(ParseResult& pr, Act && act, int)
+    auto apply_option_impl(ParseResult& pr, Act && act, int /*unused*/)
     -> decltype(act(pr))
     {
         return act(pr);
     }
 
     template<class Act>
-    auto apply_option_impl(ParseResult&, Act && act, char)
+    auto apply_option_impl(ParseResult& /*unused*/, Act && act, char /*unused*/)
     -> decltype(act())
     {
         return act();
@@ -141,7 +141,7 @@ namespace cli
     };
 
     template<class T>
-    T operator, (T x, Ok_)
+    T operator, (T x, Ok_ /*unused*/)
     { return x; }
 
     template<class Act>
@@ -164,62 +164,62 @@ namespace cli
 
     constexpr struct Help
     {
-        Res operator()(ParseResult const&) const
+        Res operator()(ParseResult const& /*unused*/) const
         {
             return Res::Help;
         }
     } help {};
 
     template<class Act>
-    Res arg_parse(int*, char const * s, Act act)
+    Res arg_parse(int* /*unused*/, char const * s, Act act)
     {
         return act(static_cast<int>(std::strtol(s, nullptr, 0))), Ok;
     }
 
     template<class Act>
-    Res arg_parse(unsigned*, char const * s, Act act)
+    Res arg_parse(unsigned* /*unused*/, char const * s, Act act)
     {
         return act(static_cast<unsigned>(std::strtoul(s, nullptr, 0))), Ok;
     }
 
     template<class Act>
-    Res arg_parse(long*, char const * s, Act act)
+    Res arg_parse(long* /*unused*/, char const * s, Act act)
     {
         return act(std::strtol(s, nullptr, 0)), Ok;
     }
 
     template<class Act>
-    Res arg_parse(unsigned long*, char const * s, Act act)
+    Res arg_parse(unsigned long* /*unused*/, char const * s, Act act)
     {
         return act(std::strtoul(s, nullptr, 0)), Ok;
     }
 
     template<class Act>
-    Res arg_parse(long long*, char const * s, Act act)
+    Res arg_parse(long long* /*unused*/, char const * s, Act act)
     {
         return act(std::strtoll(s, nullptr, 0)), Ok;
     }
 
     template<class Act>
-    Res arg_parse(unsigned long long*, char const * s, Act act)
+    Res arg_parse(unsigned long long* /*unused*/, char const * s, Act act)
     {
         return act(std::strtoull(s, nullptr, 0)), Ok;
     }
 
     template<class Act>
-    Res arg_parse(std::string*, char const * s, Act act)
+    Res arg_parse(std::string* /*unused*/, char const * s, Act act)
     {
         return act(s), Ok;
     }
 
     template<class Act>
-    Res arg_parse(char const *, char const * s, Act act)
+    Res arg_parse(char const * /*unused*/, char const * s, Act act)
     {
         return act(s), Ok;
     }
 
     template<class T, class Act>
-    Res arg_parse(array_view<T>*, char const * s, Act act)
+    Res arg_parse(array_view<T>* /*unused*/, char const * s, Act act)
     {
         return act({s, strlen(s)}), Ok;
     }
@@ -385,13 +385,13 @@ namespace cli
         return {s};
     }
 
-    inline Res parse_long_option(char const *, ParseResult const&)
+    inline Res parse_long_option(char const * /*unused*/, ParseResult const& /*unused*/)
     {
         return Res::BadOption;
     }
 
     template<class... Opts>
-    Res parse_long_option(char const * s, ParseResult& pr, Helper const&, Opts const&... opts)
+    Res parse_long_option(char const * s, ParseResult& pr, Helper const& /*unused*/, Opts const&... opts)
     {
         return parse_long_option(s, pr, opts...);
     }
@@ -422,13 +422,13 @@ namespace cli
         return parse_long_option(s, pr, opts...);
     }
 
-    inline Res parse_short_option(char const *, ParseResult const&)
+    inline Res parse_short_option(char const * /*unused*/, ParseResult const& /*unused*/)
     {
         return Res::BadOption;
     }
 
     template<class... Opts>
-    Res parse_short_option(char const * s, ParseResult& pr, Helper const&, Opts const&... opts)
+    Res parse_short_option(char const * s, ParseResult& pr, Helper const& /*unused*/, Opts const&... opts)
     {
         return parse_short_option(s, pr, opts...);
     }
@@ -469,13 +469,13 @@ namespace cli
     }
 
     template<class Output, class Opt, class Act>
-    void print_action(Output&& out, Opt const&, OnOff<Act> const&)
+    void print_action(Output&& out, Opt const& /*unused*/, OnOff<Act> const& /*unused*/)
     {
         out << "[={on|off}]";
     }
 
     template<class Output, class Opt, class Act>
-    void print_action(Output&&, Opt const&, Act const&)
+    void print_action(Output&& /*unused*/, Opt const& /*unused*/, Act const& /*unused*/)
     {}
 
     template<class Opt>

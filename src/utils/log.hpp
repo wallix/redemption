@@ -71,7 +71,7 @@ log_value(T const & e) noexcept
 namespace detail_ {
     // has c_str() member
     template<class T>
-    auto log_value(T const & x, int)
+    auto log_value(T const & x, int /*unused*/)
     -> typename std::enable_if<
         std::is_convertible<decltype(x.c_str()), char const *>::value,
         vlog_wrap<char const *>
@@ -79,7 +79,7 @@ namespace detail_ {
     { return {x.c_str()}; }
 
     template<class T>
-    vlog_wrap<T const &> log_value(T const & x, char)
+    vlog_wrap<T const &> log_value(T const & x, char /*unused*/)
     { return {x}; }
 } // namespace detail_
 
@@ -229,7 +229,7 @@ namespace {
         //{ nullptr/*, -1*/ }
     };
 
-    inline void LOGCHECK__REDEMPTION__INTERNAL(int)
+    inline void LOGCHECK__REDEMPTION__INTERNAL(int /*unused*/)
     {}
 
 #if defined(LOG_UNCHECKED_FORMAT)

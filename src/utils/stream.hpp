@@ -1005,12 +1005,12 @@ struct DynamicStreamWriter
         return this->stream_size_;
     }
 
-    void operator()(std::size_t, OutStream & ostream) const {
+    void operator()(std::size_t /*unused*/, OutStream & ostream) const {
         assert(ostream.get_capacity() == this->stream_size_);
         this->apply_writer1(ostream, this->writer_, 1);
     }
 
-    void operator()(std::size_t, OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz) const {
+    void operator()(std::size_t /*unused*/, OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz) const {
         assert(ostream.get_capacity() == this->stream_size_);
         this->apply_writer2(ostream, buf, used_buf_sz, this->writer_, 1);
     }
@@ -1020,7 +1020,7 @@ struct DynamicStreamWriter
 
 private:
     template<class W>
-    auto apply_writer1(OutStream & ostream, W & writer, int) const
+    auto apply_writer1(OutStream & ostream, W & writer, int /*unused*/) const
     -> decltype(writer(ostream))
     { writer(ostream); }
 
@@ -1028,12 +1028,12 @@ private:
     void apply_writer1(OutStream & ostream, W & writer, unsigned) const;
 
     template<class W>
-    auto apply_writer2(OutStream & ostream, uint8_t *, std::size_t used_buf_sz, W & writer, int) const
+    auto apply_writer2(OutStream & ostream, uint8_t * /*unused*/, std::size_t used_buf_sz, W & writer, int /*unused*/) const
     -> decltype(writer(ostream, used_buf_sz))
     { writer(ostream, used_buf_sz); }
 
     template<class W>
-    void apply_writer2(OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz, W & writer, unsigned) const
+    void apply_writer2(OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz, W & writer, unsigned /*unused*/) const
     { writer(ostream, buf, used_buf_sz); }
 };
 
@@ -1047,23 +1047,23 @@ namespace details_ {
     /// Extract stream size of Writer
     /// @{
     template<class R, class C, class Sz, class ... Args>
-    constexpr Sz packet_size_from_mfunc(R(C::*)(Sz, OutStream &, Args...)) {
+    constexpr Sz packet_size_from_mfunc(R(C::* /*unused*/)(Sz, OutStream &, Args...)) {
         return Sz{};
     }
 
     template<class R, class C, class Sz, class ... Args>
-    constexpr Sz packet_size_from_mfunc(R(C::*)(Sz, OutStream &, Args...) const) {
+    constexpr Sz packet_size_from_mfunc(R(C::* /*unused*/)(Sz, OutStream &, Args...) const) {
         return Sz{};
     }
 
     template<class F>
-    constexpr auto packet_size_impl(F const &, std::false_type)
+    constexpr auto packet_size_impl(F const & /*unused*/, std::false_type /*unused*/)
     -> decltype(packet_size_from_mfunc(&F::operator())){
         return packet_size_from_mfunc(&F::operator());
     }
 
     template<class Writer>
-    constexpr auto packet_size_impl(Writer & writer, std::true_type)
+    constexpr auto packet_size_impl(Writer & writer, std::true_type /*unused*/)
     -> decltype(writer.packet_size()) {
         return writer.packet_size();
     }
@@ -1083,7 +1083,7 @@ namespace details_ {
     }
 
     template<class R, class Sz, class ... Args>
-    constexpr Sz packet_size(R(*)(Sz, OutStream &, Args...)) {
+    constexpr Sz packet_size(R(* /*unused*/)(Sz, OutStream &, Args...)) {
         return Sz{};
     }
     /// @}
@@ -1093,7 +1093,7 @@ namespace details_ {
     /// @{
     template<class T, class U>
     std::integral_constant<std::size_t, T::value + U::value>
-    packet_size_add(T const &, U const &) {
+    packet_size_add(T const & /*unused*/, U const & /*unused*/) {
         return {};
     }
 
@@ -1142,12 +1142,12 @@ namespace details_ {
 
 
     template<class StreamSz, class Writer>
-    auto apply_writer(StreamSz sz, OutStream & ostream, uint8_t *, std::size_t used_buf_sz, Writer & writer, int)
+    auto apply_writer(StreamSz sz, OutStream & ostream, uint8_t * /*unused*/, std::size_t used_buf_sz, Writer & writer, int /*unused*/)
     -> decltype(writer(sz, ostream, used_buf_sz))
     { writer(sz, ostream, used_buf_sz); }
 
     template<class StreamSz, class Writer>
-    void apply_writer(StreamSz sz, OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz, Writer & writer, unsigned)
+    void apply_writer(StreamSz sz, OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz, Writer & writer, unsigned /*unused*/)
     { writer(sz, ostream, buf, used_buf_sz); }
 
 
@@ -1184,7 +1184,7 @@ namespace details_ {
 
     template<class DataBufSz, class HeaderBufSz, class Transport, class DataWriter, class... HeaderWriters>
     void write_packets(
-        DataBufSz data_buf_sz, HeaderBufSz header_buf_sz, std::size_t,
+        DataBufSz data_buf_sz, HeaderBufSz header_buf_sz, std::size_t /*unused*/,
         Transport & trans, DataWriter & data_writer, HeaderWriters & ... header_writers)
     {
         if (data_buf_sz + header_buf_sz < 65536) {
@@ -1202,7 +1202,7 @@ namespace details_ {
         class Transport, class DataWriter, class... HeaderWriters
     >
     void write_packets(
-        DataBufSz data_buf_sz, HeaderBufSz header_buf_sz, TotalSz,
+        DataBufSz data_buf_sz, HeaderBufSz header_buf_sz, TotalSz /*unused*/,
         Transport & trans, DataWriter & data_writer, HeaderWriters & ... header_writers)
     {
         uint8_t buf[TotalSz::value];

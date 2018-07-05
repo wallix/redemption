@@ -459,12 +459,12 @@ struct BitmapCodecCaps : public Capability {
     {
     }
 
-    void emit(OutStream &) const {
+    void emit(OutStream & /*unused*/) const {
         // TODO BitmapCodec::emit unimplemented
         LOG(LOG_INFO, "BitmapCodec caps emit not implemented");
     }
 
-    void recv(InStream &, uint16_t len) {
+    void recv(InStream & /*unused*/, uint16_t len) {
         (void)len;
         // TODO BitmapCodec::recv unimplemented
         LOG(LOG_INFO, "BitmapCodec caps recv not implemented");
