@@ -112,7 +112,7 @@ SelectorMod::SelectorMod(
                             this->selector.selector_lines.border
                             +  this->selector.selector_lines.y_padding_label);
 
-    this->selector_lines_per_page_saved = available_height / line_height;
+    this->selector_lines_per_page_saved = std::min<int>(available_height / line_height, GRID_NB_ROWS_MAX);
     this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
     this->ask_page();
     this->selector.rdp_input_invalidate(this->selector.get_rect());
@@ -383,11 +383,10 @@ void SelectorMod::move_size_widget(int16_t left, int16_t top, uint16_t width, ui
                             this->selector.selector_lines.border
                             +  this->selector.selector_lines.y_padding_label);
 
-    int selector_lines_per_page = available_height / line_height;
+    int const selector_lines_per_page = std::min<int>(available_height / line_height, GRID_NB_ROWS_MAX);
     if (this->selector_lines_per_page_saved != selector_lines_per_page) {
         this->selector_lines_per_page_saved = selector_lines_per_page;
-
-        this->vars.set_acl<cfg::context::selector_lines_per_page>(available_height / line_height);
+        this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
         this->ask_page();
         this->selector.rdp_input_invalidate(this->selector.get_rect());
     }

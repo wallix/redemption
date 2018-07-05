@@ -28,7 +28,7 @@
 #include "utils/difftimeval.hpp"
 
 static const uint16_t GRID_NB_COLUMNS_MAX = 10;
-static const uint16_t GRID_NB_ROWS_MAX    = 50;
+static const uint16_t GRID_NB_ROWS_MAX    = 250;
 
 
 struct WidgetGrid : public Widget {
@@ -214,7 +214,7 @@ public:
         return this->nb_rows;
     }
     uint16_t set_nb_rows(uint16_t nb_rows) {
-        assert(nb_rows < GRID_NB_ROWS_MAX);
+        assert(nb_rows <= GRID_NB_ROWS_MAX);
 
         uint16_t old_nb_rows = this->nb_rows;
         this->nb_rows = nb_rows;
