@@ -71,7 +71,7 @@ void sighup(int sig)
 //    LOG(LOG_INFO, "Ignoring SIGCHLD : signal %d pid %d\n", sig, getpid());
 //}
 
-void init_signals(void)
+void init_signals()
 {
     struct sigaction sa;
 

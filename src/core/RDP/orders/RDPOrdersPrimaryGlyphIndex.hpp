@@ -296,7 +296,7 @@ public:
     uint8_t  data_len;
     uint8_t  data[256];
 
-    static uint8_t id(void) {
+    static uint8_t id() {
         return RDP::GLYPHINDEX;
     }
 

@@ -42,35 +42,35 @@ public:
         this->p -= n;
     }
 
-    int8_t in_sint8(void) {
+    int8_t in_sint8() {
         return *(reinterpret_cast<int8_t const *>(this->p++));
     }
 
-    uint8_t in_uint8(void) {
+    uint8_t in_uint8() {
         return *this->p++;
     }
 
-    int16_t in_sint16_be(void) {
+    int16_t in_sint16_be() {
         unsigned int v = this->in_uint16_be();
         return static_cast<int16_t>(v > 32767 ? v - 65536 : v);
     }
 
-    int16_t in_sint16_le(void) {
+    int16_t in_sint16_le() {
         unsigned int v = this->in_uint16_le();
         return static_cast<int16_t>(v > 32767 ? v - 65536 : v);
     }
 
-    uint16_t in_uint16_le(void) {
+    uint16_t in_uint16_le() {
         this->p += 2;
         return static_cast<uint16_t>(this->p[-2] | (this->p[-1] << 8));
     }
 
-    uint16_t in_uint16_be(void) {
+    uint16_t in_uint16_be() {
         this->p += 2;
         return static_cast<uint16_t>(this->p[-1] | (this->p[-2] << 8)) ;
     }
 
-    uint32_t in_uint32_le(void) {
+    uint32_t in_uint32_le() {
         this->p += 4;
         return  this->p[-4]
              | (this->p[-3] << 8)
@@ -79,7 +79,7 @@ public:
              ;
     }
 
-    uint32_t in_uint32_be(void) {
+    uint32_t in_uint32_be() {
         this->p += 4;
         return  this->p[-1]
              | (this->p[-2] << 8)
@@ -88,29 +88,29 @@ public:
              ;
     }
 
-    int32_t in_sint32_le(void) {
+    int32_t in_sint32_le() {
         uint64_t v = this->in_uint32_le();
         return static_cast<int32_t>((v > 0x7FFFFFFF) ? v - 0x100000000LL : v);
     }
 
-    int32_t in_sint32_be(void) {
+    int32_t in_sint32_be() {
         uint64_t v = this->in_uint32_be();
         return static_cast<int32_t>((v > 0x7FFFFFFF) ? v - 0x100000000LL : v);
     }
 
-    int64_t in_sint64_le(void) {
+    int64_t in_sint64_le() {
         int64_t res;
         *(reinterpret_cast<uint64_t *>(&res)) = this->in_uint64_le();
         return res;
     }
 
-    uint64_t in_uint64_le(void) {
+    uint64_t in_uint64_le() {
         uint64_t low = this->in_uint32_le();
         uint64_t high = this->in_uint32_le();
         return low + (high << 32);
     }
 
-    uint64_t in_uint64_be(void) {
+    uint64_t in_uint64_be() {
         uint64_t high = this->in_uint32_be();
         uint64_t low = this->in_uint32_be();
         return low + (high << 32);
@@ -327,7 +327,7 @@ public:
     //    of the first byte and the 8 bits of the next byte are concatenated
     //    (the first byte containing the high-order bits) to create a 15-bit
     //    signed delta value.
-    int16_t in_DEP(void) {
+    int16_t in_DEP() {
         int16_t point = this->in_uint8();
         if (point & 0x80)
         {

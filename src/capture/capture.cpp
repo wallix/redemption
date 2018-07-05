@@ -663,7 +663,7 @@ public:
         imageFrameApi, imageFrameApi.get_mutable_image_view())
     {}
 
-    void dump(void)
+    void dump()
     {
         auto const image_view = this->image_frame_api.get_mutable_image_view();
         if (this->zoom_factor == 100) {

@@ -806,7 +806,7 @@ public:
         this->store_data_cursor(p.data, inverted);
     }
 
-    void set_mask_to_FF(void){
+    void set_mask_to_FF(){
         ::memset(this->mask, 0xFF, sizeof(this->mask));
     }
 

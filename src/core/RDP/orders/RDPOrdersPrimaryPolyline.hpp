@@ -193,7 +193,7 @@ public:
         int16_t yDelta;
     } deltaEncodedPoints[128];
 
-    static uint8_t id(void) {
+    static uint8_t id() {
         return RDP::POLYLINE;
     }
 

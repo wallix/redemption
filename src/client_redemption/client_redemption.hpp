@@ -303,7 +303,7 @@ public:
         }
     }
 
-    const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
+    const CHANNELS::ChannelDefArray & get_channel_list() const override {
         return this->cl;
     }
 

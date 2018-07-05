@@ -110,7 +110,7 @@ public:
     }
 
 
-    bool check_end(void) const {
+    bool check_end() const {
         return this->p.p == this->end;
     }
 
@@ -139,63 +139,63 @@ public:
     // Generic binary Data access methods
     // =========================================================================
 
-    int8_t in_sint8(void) {
+    int8_t in_sint8() {
         assert(this->in_check_rem(1));
         return this->p.in_sint8();
     }
 
     // ---------------------------------------------------------------------------
 
-    uint8_t in_uint8(void) {
+    uint8_t in_uint8() {
         assert(this->in_check_rem(1));
         return this->p.in_uint8();
     }
 
     /* Peek a byte from stream without move <p>. */
-    uint8_t peek_uint8(void) {
+    uint8_t peek_uint8() {
         assert(this->in_check_rem(1));
         return *this->p.p;
     }
 
-    int16_t in_sint16_be(void) {
+    int16_t in_sint16_be() {
         assert(this->in_check_rem(2));
         return this->p.in_sint16_be();
     }
 
-    int16_t in_sint16_le(void) {
+    int16_t in_sint16_le() {
         assert(this->in_check_rem(2));
         return this->p.in_sint16_le();
     }
 
-    uint16_t in_uint16_le(void) {
+    uint16_t in_uint16_le() {
         assert(this->in_check_rem(2));
         return this->p.in_uint16_le();
     }
 
-    uint16_t in_uint16_be(void) {
+    uint16_t in_uint16_be() {
         assert(this->in_check_rem(2));
         return this->p.in_uint16_be();
     }
 
-    uint32_t in_uint32_le(void) {
+    uint32_t in_uint32_le() {
         assert(this->in_check_rem(4));
         return this->p.in_uint32_le();
     }
 
-    uint32_t in_uint32_be(void) {
+    uint32_t in_uint32_be() {
         assert(this->in_check_rem(4));
         return this->p.in_uint32_be();
     }
 
-    int32_t in_sint32_le(void) {
+    int32_t in_sint32_le() {
         return this->p.in_sint32_le();
     }
 
-    int32_t in_sint32_be(void) {
+    int32_t in_sint32_be() {
         return this->p.in_sint32_be();
     }
 
-    int64_t in_sint64_le(void) {
+    int64_t in_sint64_le() {
         return this->p.in_sint64_le();
     }
 
@@ -210,12 +210,12 @@ public:
         tv.tv_sec = static_cast<uint32_t>(movie_usec / 1000000LL);
     }
 
-    uint64_t in_uint64_le(void) {
+    uint64_t in_uint64_le() {
         assert(this->in_check_rem(8));
         return this->p.in_uint64_le();
     }
 
-    uint64_t in_uint64_be(void) {
+    uint64_t in_uint64_be() {
         assert(this->in_check_rem(8));
         return this->p.in_uint64_be();
     }
@@ -345,7 +345,7 @@ public:
     //    of the first byte and the 8 bits of the next byte are concatenated
     //    (the first byte containing the high-order bits) to create a 15-bit
     //    signed delta value.
-    int16_t in_DEP(void) {
+    int16_t in_DEP() {
         return this->p.in_DEP();
     }
 

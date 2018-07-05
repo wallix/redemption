@@ -1016,12 +1016,12 @@ enum {
             }
         }
 
-        const uint8_t * get_MAC_salt_key(void)
+        const uint8_t * get_MAC_salt_key()
         {
             return this->blob0;
         }
 
-        const uint8_t * get_LicensingEncryptionKey(void)
+        const uint8_t * get_LicensingEncryptionKey()
         {
             return this->licensingEncryptionKey;
         }

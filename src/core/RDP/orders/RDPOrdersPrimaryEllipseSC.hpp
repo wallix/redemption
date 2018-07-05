@@ -139,7 +139,7 @@ public:
             && this->color == other.color;
     }
 
-    static uint8_t id(void) {
+    static uint8_t id() {
         return RDP::ELLIPSESC;
     }
 

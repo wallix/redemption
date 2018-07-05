@@ -51,7 +51,7 @@ class RDPLineTo {
     uint8_t rop2;
     RDPPen pen;
 
-    static uint8_t id(void)
+    static uint8_t id()
     {
         return RDP::LINE;
     }

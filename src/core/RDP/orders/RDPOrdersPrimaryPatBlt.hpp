@@ -1022,7 +1022,7 @@ class RDPPatBlt {
     RDPColor fore_color;
     RDPBrush brush;
 
-    static uint8_t id(void)
+    static uint8_t id()
     {
         return RDP::PATBLT;
     }

@@ -928,7 +928,7 @@ public:
         return this->drawable.logical_frame_ended;
     }
 
-    void trace_mouse(void)
+    void trace_mouse()
     {
         if (this->dont_show_mouse_cursor || !this->current_pointer) {
             return;
@@ -940,7 +940,7 @@ public:
         return this->drawable.trace_mouse(this->current_pointer, x, y, this->save_mouse);
     }
 
-    void clear_mouse(void)
+    void clear_mouse()
     {
         if (this->dont_show_mouse_cursor || !this->current_pointer) {
             return;
