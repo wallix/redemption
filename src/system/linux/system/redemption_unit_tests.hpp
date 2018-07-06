@@ -36,7 +36,7 @@ namespace redemption_unit_test__
 
 # define FIXTURES_PATH "./tests/fixtures"
 # define CFG_PATH "./sys/etc/rdpproxy"
-# define RED_CHECK_EXCEPTION_ERROR_ID(stmt, id) do { stmt; id; } while (0)
+# define RED_CHECK_EXCEPTION_ERROR_ID(stmt, id) do { stmt; (void)id; } while (0)
 # define RED_CHECK_NO_THROW(stmt) do { stmt; } while (0)
 # define RED_CHECK_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
 # define RED_CHECK_EXCEPTION(stmt, exception, predicate) do { \
@@ -162,7 +162,7 @@ namespace redemption_unit_test__
 #define RED_CHECK_EQ_RANGES(a, b) RED_CHECK_EQUAL_RANGES(a, b)
 #define RED_REQUIRE_EQ_RANGES(a, b) RED_REQUIRE_EQUAL_RANGES(a, b)
 
-namespace std
+namespace std // NOLINT(cert-dcl58-cpp)
 {
     // this is a hack...
     template<class Ch, class Tr>
