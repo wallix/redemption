@@ -382,7 +382,7 @@ private:
         UpdateProgressDataOldFormat old_format;
         UpdateProgressDataJSONFormat json_format;
         U() : dummy() {}
-        ~U() = default;
+        ~U() {}
     } u;
     Format format;
 };
