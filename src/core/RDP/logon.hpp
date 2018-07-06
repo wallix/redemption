@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "utils/sugar/cast.hpp"
 #include "utils/log.hpp"

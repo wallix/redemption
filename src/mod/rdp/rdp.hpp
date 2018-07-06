@@ -3073,7 +3073,7 @@ public:
 
                 PointerCaps pointer_caps;
                 pointer_caps.len                       = 10;
-                if (this->enable_new_pointer == false) {
+                if (!this->enable_new_pointer) {
                     pointer_caps.pointerCacheSize      = 0;
                     pointer_caps.colorPointerCacheSize = 20;
                     pointer_caps.len                   = 8;
@@ -4943,7 +4943,7 @@ public:
     }
 
     void send_input(int time, int message_type, int device_flags, int param1, int param2) override {
-        if (this->enable_fastpath_client_input_event == false) {
+        if (!this->enable_fastpath_client_input_event) {
             this->send_input_slowpath(time, message_type, device_flags, param1, param2);
         }
         else {

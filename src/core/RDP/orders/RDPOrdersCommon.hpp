@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include <assert.h>
+#include <cassert>
 
 #include "utils/log.hpp"
 #include "utils/stream.hpp"

@@ -1942,7 +1942,7 @@ public:
                                 0x02, 0x00, 0x00, 0x00,
                                 0xf3, 0x99, 0x00, 0x00
                             };
-                            static_assert(sizeof(lic3) == 16, "");
+                            static_assert(sizeof(lic3) == 16);
 
                             SEC::Sec_Send sec(
                                 sec_header, lic3, sizeof(lic3),
@@ -2035,7 +2035,7 @@ public:
                                 0x6f, 0x73, 0x6f, 0x66, 0x74, 0x2e, 0x63, 0x6f,
                                 0x6d, 0x00
                             };
-                            static_assert(sizeof(lic1) == 314, "");
+                            static_assert(sizeof(lic1) == 314);
 
                             OutReservedStreamHelper hstream(sec_header.get_data(), 8, sec_header.get_capacity());
                             OutStream & stream = hstream.get_data_stream();

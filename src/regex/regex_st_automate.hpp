@@ -209,10 +209,7 @@ namespace re {
         if (consumer.valid()) {
             return false;
         }
-        if (res) {
-            return true;
-        }
-        return false;
+        return res;
     }
 
     inline bool st_step(st_step_range_list_t & l1, st_step_range_list_t & l2,

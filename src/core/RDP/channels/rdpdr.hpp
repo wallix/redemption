@@ -22,7 +22,7 @@
 #pragma once
 
 #include <cinttypes>
-#include <inttypes.h>
+#include <cinttypes>
 #include  <algorithm>
 
 

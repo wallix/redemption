@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "utils/log.hpp"
 #include "utils/stream.hpp"

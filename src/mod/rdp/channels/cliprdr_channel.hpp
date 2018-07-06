@@ -851,11 +851,7 @@ public:
             }
         }
 
-        if (this->proxy_managed) {
-            return false;
-        }
-
-        return true;
+        return !this->proxy_managed;
     }
 
     bool process_server_file_contents_request_pdu(uint32_t total_length,

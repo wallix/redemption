@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include <assert.h>
-#include <stdint.h>
+#include <cassert>
+#include <cstdint>
 #include <cinttypes>
 
 #include "core/RDP/share.hpp"
@@ -1401,7 +1401,7 @@ enum {
             // Construct pre-master secret (session key)
             // we get 24 bytes on 32 from
             // client_random and server_random
-            static_assert(SEC_RANDOM_SIZE == 32, "");
+            static_assert(SEC_RANDOM_SIZE == 32 );
             memcpy(pre_master_secret, client_random, 24);
             memcpy(pre_master_secret + 24, server_random, 24);
 

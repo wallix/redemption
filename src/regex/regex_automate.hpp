@@ -29,7 +29,7 @@
 #include <iomanip>
 #include <cstring> //memset
 #include <cassert>
-#include <stdint.h>
+#include <cstdint>
 
 #include "regex_utils.hpp"
 #include "utils/sugar/noncopyable.hpp"
@@ -1609,7 +1609,7 @@ namespace re {
                         this->set_pos(ppos);
                         return match_success;
                     }
-                    if (exact_match == true && this->pal2->empty()) {
+                    if (exact_match && this->pal2->empty()) {
                         this->set_pos(ppos);
                         return match_fail;
                     }
@@ -1620,7 +1620,7 @@ namespace re {
                     ++this->step_id;
                     std::swap(this->pal1, this->pal2);
                     this->pal2->clear();
-                    if (false == exact_match) {
+                    if (!exact_match) {
                         if (this->st_range_list == this->st_range_list_last) {
                             if (active_capture) {
                                 this->s = this->consumer.str();

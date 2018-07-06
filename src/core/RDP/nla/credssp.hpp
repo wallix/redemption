@@ -286,7 +286,7 @@ struct TSRequest final {
             this->use_version);
 
         /* [1] negoTokens (NegoData) */
-        if (BER::read_contextual_tag(stream, 1, length, true) != false)        {
+        if (BER::read_contextual_tag(stream, 1, length, true))        {
             LOG(LOG_INFO, "Credssp TSCredentials::recv() NEGOTOKENS");
 
             if (!BER::read_sequence_tag(stream, length) || /* SEQUENCE OF NegoDataItem */
@@ -302,7 +302,7 @@ struct TSRequest final {
         }
 
         /* [2] authInfo (OCTET STRING) */
-        if (BER::read_contextual_tag(stream, 2, length, true) != false) {
+        if (BER::read_contextual_tag(stream, 2, length, true)) {
             LOG(LOG_INFO, "Credssp TSCredentials::recv() AUTHINFO");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
@@ -314,7 +314,7 @@ struct TSRequest final {
         }
 
         /* [3] pubKeyAuth (OCTET STRING) */
-        if (BER::read_contextual_tag(stream, 3, length, true) != false) {
+        if (BER::read_contextual_tag(stream, 3, length, true)) {
             LOG(LOG_INFO, "Credssp TSCredentials::recv() PUBKEYAUTH");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
@@ -326,7 +326,7 @@ struct TSRequest final {
         /* [4] errorCode (INTEGER) */
         if (remote_version >= 3
             && remote_version != 5
-            && BER::read_contextual_tag(stream, 4, length, true) != false) {
+            && BER::read_contextual_tag(stream, 4, length, true)) {
             LOG(LOG_INFO, "Credssp TSCredentials::recv() ErrorCode");
             if (!BER::read_integer(stream, this->error_code)) {
                 return -1;
@@ -340,7 +340,7 @@ struct TSRequest final {
         }
         /* [5] clientNonce (OCTET STRING) */
         if (remote_version >= 5
-            && BER::read_contextual_tag(stream, 5, length, true) != false) {
+            && BER::read_contextual_tag(stream, 5, length, true)) {
             LOG(LOG_INFO, "Credssp TSCredentials::recv() CLIENTNONCE");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
@@ -604,7 +604,7 @@ struct TSCspDataDetail {
         BER::read_integer(stream, this->keySpec);
 
         /* [1] cardName (OCTET STRING OPTIONAL) */
-        if (BER::read_contextual_tag(stream, 1, length, true) != false) {
+        if (BER::read_contextual_tag(stream, 1, length, true)) {
             LOG(LOG_INFO, "Credssp TSCspDataDetail::recv() : cardName");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
@@ -615,7 +615,7 @@ struct TSCspDataDetail {
             stream.in_copy_bytes(this->cardName, length);
         }
         /* [2] readerName (OCTET STRING OPTIONAL) */
-        if (BER::read_contextual_tag(stream, 2, length, true) != false) {
+        if (BER::read_contextual_tag(stream, 2, length, true)) {
             LOG(LOG_INFO, "Credssp TSCspDataDetail::recv() : readerName");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
@@ -626,7 +626,7 @@ struct TSCspDataDetail {
             stream.in_copy_bytes(this->readerName, length);
         }
         /* [3] containerName (OCTET STRING OPTIONAL) */
-        if (BER::read_contextual_tag(stream, 3, length, true) != false) {
+        if (BER::read_contextual_tag(stream, 3, length, true)) {
             LOG(LOG_INFO, "Credssp TSCspDataDetail::recv() : containerName");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
@@ -637,7 +637,7 @@ struct TSCspDataDetail {
             stream.in_copy_bytes(this->containerName, length);
         }
         /* [4] cspName (OCTET STRING OPTIONAL) */
-        if (BER::read_contextual_tag(stream, 4, length, true) != false) {
+        if (BER::read_contextual_tag(stream, 4, length, true)) {
             LOG(LOG_INFO, "Credssp TSCspDataDetail::recv() : cspName");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
@@ -786,7 +786,7 @@ struct TSSmartCardCreds {
         this->cspData.recv(stream);
 
         /* [2] userHint (OCTET STRING) */
-        if (BER::read_contextual_tag(stream, 2, length, true) != false) {
+        if (BER::read_contextual_tag(stream, 2, length, true)) {
             LOG(LOG_INFO, "Credssp TSSmartCardCreds::recv() : userHint");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
@@ -798,7 +798,7 @@ struct TSSmartCardCreds {
         }
 
         /* [3] domainHint (OCTET STRING) */
-        if (BER::read_contextual_tag(stream, 3, length, true) != false) {
+        if (BER::read_contextual_tag(stream, 3, length, true)) {
             LOG(LOG_INFO, "Credssp TSSmartCardCreds::recv() : domainHint");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {

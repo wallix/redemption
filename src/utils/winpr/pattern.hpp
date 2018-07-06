@@ -27,8 +27,8 @@
 #include <fcntl.h>
 #endif
 
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 
 enum {
     WILDCARD_STAR     = 0x00000001,
@@ -266,10 +266,7 @@ static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
             if (cchFileName < cchTail)
                 return false;
 
-            if (strcasecmp(&lpFileName[cchFileName - cchTail], lpTail) == 0)
-                return true;
-
-            return false;
+            return strcasecmp(&lpFileName[cchFileName - cchTail], lpTail) == 0;
         }
     }
 

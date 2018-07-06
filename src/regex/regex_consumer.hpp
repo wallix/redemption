@@ -22,7 +22,7 @@
 #pragma once
 
 #include <ostream>
-#include <stdint.h>
+#include <cstdint>
 #include <cstdio>
 
 namespace re {

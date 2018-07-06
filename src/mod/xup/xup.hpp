@@ -28,7 +28,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
-#include <errno.h>
+#include <cerrno>
 
 /* include "ther h files */
 #include "core/RDP/rdp_pointer.hpp"

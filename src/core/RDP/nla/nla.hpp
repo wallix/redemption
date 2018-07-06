@@ -769,11 +769,7 @@ public:
         }
 
         this->client_auth_data.state = ClientAuthenticateData::Loop;
-        if (Res::Err == this->sm_credssp_client_authenticate_send()) {
-            return false;
-        }
-
-        return true;
+        return Res::Err != this->sm_credssp_client_authenticate_send();
     }
 
     enum class State { Err, Cont, Finish, };

@@ -34,7 +34,7 @@
 #include "core/error.hpp"
 #include "core/RDP/gcc/userdata/mcs_channels.hpp"
 
-#include <inttypes.h>
+#include <cinttypes>
 
 namespace GCC { namespace UserData {
 

@@ -564,10 +564,7 @@ public:
             return false;
         }
 
-        if (!mech_found)
-            return false;
-
-        return true;
+        return mech_found != 0;
     }
 
 };

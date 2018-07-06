@@ -287,7 +287,7 @@ private:
 template<class... BGRValues>
 BGRPalette make_rgb_palette(BGRValues... bgr_values) noexcept
 {
-    static_assert(sizeof...(bgr_values) == 256, "");
+    static_assert(sizeof...(bgr_values) == 256 );
     return BGRPalette(BGRasRGBColor(BGRColor(bgr_values))...);
 }
 

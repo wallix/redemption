@@ -267,7 +267,7 @@ public:
             bool nResult = this->level_2_decompressor.decompress(compressed_data_stream.get_current(),
                 compressed_data_stream.in_remain(), Level2ComprFlags, level_1_compressed_data,
                 level_1_compressed_data_size);
-            if (nResult != true) {
+            if (!nResult) {
                 LOG(LOG_ERR, "RDP 6.1 bluk compression Level-2 decompression error");
                 throw Error(ERR_RDP61_DECOMPRESS_LEVEL_2);
             }

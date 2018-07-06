@@ -121,9 +121,7 @@ namespace BER {
         if (!s.in_check_rem(1))
             return false;
         byte = s.in_uint8();
-        if (byte != (CLASS_UNIV | ber_pc(pc) | (TAG_MASK & tag)))
-            return false;
-        return true;
+        return byte == (CLASS_UNIV | ber_pc(pc) | (TAG_MASK & tag));
     }
 
     inline int write_universal_tag(OutStream & s, uint8_t tag, bool pc) {

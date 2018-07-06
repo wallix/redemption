@@ -23,7 +23,7 @@
 
 #include <string>
 #include <cinttypes>
-#include <inttypes.h>
+#include <cinttypes>
 
 #include "core/error.hpp"
 
