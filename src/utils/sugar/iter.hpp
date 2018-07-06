@@ -69,7 +69,7 @@ namespace aux_ {
     template<class T, std::size_t N>
     struct iter_array_pointer<const T[N], const T*>
     { typedef iter_type<const T*> type; };
-}
+}  // namespace aux_
 
 /**
  * \example

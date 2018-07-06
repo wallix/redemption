@@ -82,7 +82,7 @@ private:
         {}
 
         ~CompressionTransport()
-        {}
+        = default;
     } compressors;
 
     void destruct_()

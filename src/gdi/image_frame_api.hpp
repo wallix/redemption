@@ -66,4 +66,4 @@ inline ImageFrameApi::ImageView get_mutable_image_view(ImageFrameApi & image_fra
     return image_frame.get_mutable_image_view();
 }
 
-}
+}  // namespace gdi

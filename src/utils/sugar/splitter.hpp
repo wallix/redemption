@@ -130,7 +130,7 @@ namespace adl_begin_end
     template<class Cont>
     auto end_(Cont && cont) -> decltype(end(std::forward<Cont>(cont)))
     { return end(cont); }
-}
+}  // namespace adl_begin_end
 
 namespace fn
 {
@@ -143,7 +143,7 @@ namespace fn
     auto end(Cont & cont)
     -> decltype(adl_begin_end::end_(cont))
     { return adl_begin_end::end_(cont); }
-}
+}  // namespace fn
 
 template<class Cont>
 struct container_traits

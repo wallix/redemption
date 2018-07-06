@@ -54,7 +54,7 @@ public:
 
     friend class PrivateData;
 
-    Bitmap() noexcept {}
+    Bitmap() noexcept = default;
 
     Bitmap(Bitmap && bmp) noexcept;
     Bitmap(const Bitmap & other) noexcept;

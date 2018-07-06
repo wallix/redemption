@@ -216,7 +216,7 @@ namespace redemption_unit_test__
 
     std::ostream & operator<<(std::ostream & out, xarray_color const & x);
     std::ostream & operator<<(std::ostream & out, xarray const & x);
-}
+}  // namespace redemption_unit_test__
 
 #define RED_CHECK_OP_VAR_MESSAGE(op, v1, v2, src1, src2) \
     RED_CHECK_MESSAGE(                                   \
@@ -288,7 +288,7 @@ namespace redemption_unit_test__
     };
 
     std::ostream & operator<<(std::ostream & out, xsarray const & x);
-}
+}  // namespace redemption_unit_test__
 
 #define RED_CHECK_SMEM(mem, memref)                  \
     do {                                             \

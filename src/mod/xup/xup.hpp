@@ -110,7 +110,7 @@ enum {
         this->t.send(stream.get_data(), stream.get_offset());
     }
 
-    ~xup_mod() override {}
+    ~xup_mod() override = default;
 
     enum {
         XUPWM_INVALIDATE = 200

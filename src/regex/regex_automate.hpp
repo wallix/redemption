@@ -1772,5 +1772,5 @@ namespace re {
         const char * s;
         //END
     };
-}
+}  // namespace re
 

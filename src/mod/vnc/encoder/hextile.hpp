@@ -176,7 +176,7 @@ namespace VNC {
                  this->cy_remain = this->r.cy;
             }
 
-            virtual ~Hextile(){}
+            virtual ~Hextile()= default;
 
             // return is EncoderState::Exit if the Encoder has finished working (can be reset or deleted),
             // return is EncoderState::NeedMoreData if the encoder is waiting for more data
@@ -370,5 +370,5 @@ namespace VNC {
                 return this->tile;
             }
         };
-    } // namespace encoder
+    }  // namespace Encoder
 } // namespace VNC

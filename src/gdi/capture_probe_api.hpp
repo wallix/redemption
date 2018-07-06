@@ -37,5 +37,5 @@ struct CaptureProbeApi : private noncopyable
     virtual void possible_active_window_change() = 0;
 };
 
-}
+}  // namespace gdi
 

@@ -166,8 +166,7 @@ struct SCCore {
 
     SCCore()
 
-    {
-    }
+    = default;
 
     void emit(OutStream & stream) const
     {

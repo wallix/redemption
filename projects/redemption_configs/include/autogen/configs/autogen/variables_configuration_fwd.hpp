@@ -350,4 +350,4 @@ namespace cfg {
 
     struct theme;
     struct font;
-}
+} // namespace cfg

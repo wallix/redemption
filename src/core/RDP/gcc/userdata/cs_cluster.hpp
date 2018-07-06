@@ -131,8 +131,7 @@ struct CSCluster {
     bool permissive{false};
     CSCluster()
 
-    {
-    }
+    = default;
 
     void emit(OutStream & stream) const
     {

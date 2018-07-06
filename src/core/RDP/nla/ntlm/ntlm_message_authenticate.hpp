@@ -489,8 +489,7 @@ struct LMv2_Response {
     uint8_t ClientChallenge[8]{};
 
     LMv2_Response()
-    {
-    }
+    = default;
 
     void emit(OutStream & stream) const {
         stream.out_copy_bytes(this->Response, 16);
@@ -587,8 +586,7 @@ struct NTLMv2_Client_Challenge {
 
     NTLMv2_Client_Challenge()
 
-    {
-    }
+    = default;
 
     void emit(OutStream & stream) /* TODO const*/ {
         // ULONG length;
@@ -653,8 +651,7 @@ struct NTLMv2_Response {
 
     NTLMv2_Response()
 
-    {
-    }
+    = default;
 
     void emit(OutStream & stream) /* TODO const*/ {
         stream.out_copy_bytes(this->Response, 16);

@@ -139,5 +139,5 @@ namespace re {
             delete st;
         }
     };
-}
+}  // namespace re
 

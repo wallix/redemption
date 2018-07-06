@@ -286,7 +286,7 @@ public:
         }
     }
 
-    ~ClientRedemption() {}
+    ~ClientRedemption() = default;
 
     virtual void update_keylayout() override {
         if (this->impl_mouse_keyboard) {

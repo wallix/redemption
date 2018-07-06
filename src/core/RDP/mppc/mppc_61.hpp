@@ -368,7 +368,7 @@ struct rdp_mppc_enc_match_finder
 {
     StaticOutStream<65536> match_details_stream;
 
-    virtual ~rdp_mppc_enc_match_finder() {}
+    virtual ~rdp_mppc_enc_match_finder() = default;
 
     virtual void dump(bool mini_dump) const = 0;
 

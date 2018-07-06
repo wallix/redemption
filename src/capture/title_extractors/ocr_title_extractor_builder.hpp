@@ -93,7 +93,7 @@ class OcrTitleExtractorBuilder
         struct {} dummy;
 
         Variant() : dummy() {}
-        ~Variant() {}
+        ~Variant() = default;
     } variant;
 
 public:

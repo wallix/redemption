@@ -497,7 +497,7 @@ private:
             char dummy;
 
             U() : dummy() {}
-            ~U() {}
+            ~U() = default;
         } u;
         bool is_initialized = false;
     } orders;

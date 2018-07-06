@@ -1064,9 +1064,9 @@ namespace jln
                 return {static_cast<F&&>(f)};
             }
 
-            named_type const& operator=(named_type& /*unused*/) const noexcept { return *this; }
+            named_type const& operator=(named_type& /*unused*/) const noexcept = default;
             named_type const& operator=(named_type&& /*unused*/) const noexcept { return *this; }
-            named_type const& operator=(named_type const& /*unused*/) const noexcept { return *this; }
+            named_type const& operator=(named_type const& /*unused*/) const noexcept = default;
         };
 
         struct unamed{};

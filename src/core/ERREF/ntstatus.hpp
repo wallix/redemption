@@ -99,4 +99,4 @@ inline const char * get_NTStatus(NTSTATUS ntstatus) noexcept
     return "<unknown>";
 }
 
-}
+}  // namespace erref

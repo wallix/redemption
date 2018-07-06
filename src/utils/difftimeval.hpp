@@ -29,14 +29,14 @@
 
 class TimeObj {
 public:
-    virtual ~TimeObj() {}
+    virtual ~TimeObj() = default;
     virtual timeval get_time() = 0;
 };
 
 class TimeSystem : public TimeObj {
 public:
-    TimeSystem() {}
-    ~TimeSystem() override {}
+    TimeSystem() = default;
+    ~TimeSystem() override = default;
     timeval get_time() override {
         timeval tv;
         gettimeofday(&tv, nullptr);
@@ -50,7 +50,7 @@ public:
     explicit LCGTime(uint32_t seed = 7984813UL)
         : seed(seed)
     {}
-    ~LCGTime() override {}
+    ~LCGTime() override = default;
     timeval get_time() override {
         timeval tv;
         tv.tv_sec = this->rand32();

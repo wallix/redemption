@@ -4471,7 +4471,7 @@ namespace cfg {
         type value{};
     };
 
-}
+} // namespace cfg
 
 namespace cfg_section {
 struct globals
@@ -4815,7 +4815,7 @@ struct context
 , cfg::context::close_box_extra_message
 { static constexpr bool is_section = true; };
 
-}
+} // namespace cfg_section
 
 namespace configs {
 struct VariablesConfiguration
@@ -4987,4 +4987,4 @@ using VariablesAclPack = Pack<
 , cfg::context::use_session_probe_to_launch_remote_program
 , cfg::context::session_probe_launch_error_message
 >;
-}
+} // namespace cfg

@@ -142,7 +142,7 @@ namespace cpp_enumeration_writer
                 out << "    });\n";
             });
         }
-        out << "}\n";
+        out << "} // namespace configs\n";
     }
 
     inline void write_type(std::ostream & out, type_enumerations const & enums)

@@ -1118,5 +1118,5 @@ namespace re {
         State * m_root = nullptr;
         StateAccu m_accu;
     };
-}
+}  // namespace re
 

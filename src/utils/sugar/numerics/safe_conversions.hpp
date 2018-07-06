@@ -222,7 +222,7 @@ namespace detail
     {
         static const bool value = true;
     };
-}
+}  // namespace detail
 
 
 template <class Dst, class Src>

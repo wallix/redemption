@@ -204,7 +204,7 @@ public:
     {
     }
 
-    ~RDPSerializer() override {}
+    ~RDPSerializer() override = default;
 
 protected:
     virtual void flush_orders() = 0;

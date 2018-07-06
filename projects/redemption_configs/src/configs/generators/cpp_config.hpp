@@ -345,7 +345,7 @@ void write_variables_configuration_fwd(std::ostream & out_varconf, ConfigCppWrit
         }
     }
 
-    out_varconf << "}\n";
+    out_varconf << "} // namespace cfg\n";
 }
 
 template<class ConfigCppWriter>
@@ -380,8 +380,8 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
     std::vector<std::string> section_names;
 
     out_varconf <<
-      "}\n\n"
-      "namespace cfg_section {\n"
+        "} // namespace cfg\n\n"
+        "namespace cfg_section {\n"
     ;
     for (auto & body : writer.sections) {
        if (!body.section_name.empty()) {
@@ -391,7 +391,7 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
            out_varconf << "{ static constexpr bool is_section = true; };\n\n";
        }
     }
-    out_varconf << "}\n\n"
+    out_varconf << "} // namespace cfg_section\n\n"
       "namespace configs {\n"
       "struct VariablesConfiguration\n"
       ": "
@@ -410,7 +410,7 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
     join(writer.variables_acl, "cfg::", "");
     out_varconf <<
       ">;\n"
-      "}\n"
+      "} // namespace cfg\n"
     ;
 }
 
