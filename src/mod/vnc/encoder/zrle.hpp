@@ -23,10 +23,16 @@
 
 #pragma once
 
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "utils/log.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/colors.hpp"
+#include "utils/stream.hpp"
 #include "utils/zlib.hpp"
+#include "utils/hexdump.hpp"
+#include "utils/bitmap.hpp"
+#include "gdi/graphic_api.hpp"
+#include "utils/sugar/update_lock.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 #include "mod/vnc/encoder/encoder_api.hpp"
 

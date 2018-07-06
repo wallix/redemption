@@ -862,7 +862,7 @@ enum {
         CryptContext & encrypt;
         int encryption_level;
 
-        void operator()(StreamSize<256>, OutStream & sec_header, uint8_t * packet_data, std::size_t packet_size) const {
+        void operator()(StreamSize<256> /*unused*/, OutStream & sec_header, uint8_t * packet_data, std::size_t packet_size) const {
             SEC::Sec_Send sec(sec_header, packet_data, packet_size, this->flags, this->encrypt, this->encryption_level);
             (void)sec;
         }
@@ -1016,12 +1016,12 @@ enum {
             }
         }
 
-        const uint8_t * get_MAC_salt_key(void)
+        const uint8_t * get_MAC_salt_key()
         {
             return this->blob0;
         }
 
-        const uint8_t * get_LicensingEncryptionKey(void)
+        const uint8_t * get_LicensingEncryptionKey()
         {
             return this->licensingEncryptionKey;
         }
@@ -1886,5 +1886,5 @@ enum {
 // to connect. Furthermore, the server invalidates and updates the cookie at hourly intervals, sending the
 // new cookie to the client in the Save Session Info PDU.
 
-}
+} // namespace SEC
 

@@ -57,14 +57,12 @@ private:
         #ifndef NDEBUG
         Bitmap bmp;
         #endif
-        uint_fast32_t stamp;
-        uint8_t sha1[SslSha1::DIGEST_LENGTH];
-        bool is_valid;
+        uint_fast32_t stamp{0};
+        uint8_t sha1[SslSha1::DIGEST_LENGTH]{};
+        bool is_valid{false};
 
         cache_lite_element()
-        : stamp(0)
-        , sha1()
-        , is_valid(false) {}
+        {}
 
         explicit cache_lite_element(const uint8_t (& sha1_)[SslSha1::DIGEST_LENGTH])
         : stamp(0)
@@ -89,23 +87,21 @@ private:
     struct cache_element
     {
         Bitmap bmp;
-        uint_fast32_t stamp;
+        uint_fast32_t stamp{0};
         union {
             uint8_t  sig_8[8];
             uint32_t sig_32[2];
         } sig;
         uint8_t sha1[SslSha1::DIGEST_LENGTH];
-        bool cached;
+        bool cached{false};
 
         cache_element()
-        : stamp(0)
-        , cached(false)
         {}
 
         explicit cache_element(Bitmap const & bmp)
         : bmp(bmp)
         , stamp(0)
-        , cached(false)
+         
         {}
 
         cache_element(cache_element const &) = delete;
@@ -123,18 +119,17 @@ private:
     };
 
     class storage_value_set {
-        size_t elem_size;
+        size_t elem_size{0};
         std::unique_ptr<uint8_t[]> data;
         std::unique_ptr<void*[]> free_list;
-        void* * free_list_cur;
+        void* * free_list_cur{nullptr};
 
         storage_value_set(storage_value_set const &);
         storage_value_set& operator=(storage_value_set const &);
 
     public:
         storage_value_set()
-        : elem_size(0)
-        , free_list_cur(nullptr)
+
         {}
 
         template<class T>

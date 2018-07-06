@@ -29,6 +29,7 @@
 #pragma once
 
 #include "core/RDP/gcc/data_block_type.hpp"
+#include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "core/error.hpp"
 
@@ -52,15 +53,13 @@ namespace GCC { namespace UserData {
 // future use. It MUST be set to zero.
 
 struct CSMCSMsgChannel {
-    uint16_t userDataType;
-    uint16_t length;
+    uint16_t userDataType{CS_MCS_MSGCHANNEL};
+    uint16_t length{8};
 
-    uint32_t flags;
+    uint32_t flags{0};
 
     CSMCSMsgChannel()
-    : userDataType(CS_MCS_MSGCHANNEL)
-    , length(8)
-    , flags(0)
+
     {
     }
 
@@ -98,4 +97,5 @@ struct CSMCSMsgChannel {
     }
 };
 
-}} // namespaces
+} // namespace UserData
+} // namespace GCC

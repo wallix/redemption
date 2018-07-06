@@ -595,24 +595,17 @@ enum {
 
 struct SystemTime {
 
-    uint16_t wYear;
-    uint16_t wMonth;
-    uint16_t wDayOfWeek;
-    uint16_t wDay;
-    uint16_t wHour;
-    uint16_t wMinute;
-    uint16_t wSecond;
-    uint16_t wMilliseconds;
+    uint16_t wYear{0};
+    uint16_t wMonth{0};
+    uint16_t wDayOfWeek{0};
+    uint16_t wDay{0};
+    uint16_t wHour{0};
+    uint16_t wMinute{0};
+    uint16_t wSecond{0};
+    uint16_t wMilliseconds{0};
 
     SystemTime()
-        : wYear(0)
-        , wMonth(0)
-        , wDayOfWeek(0)
-        , wDay(0)
-        , wHour(0)
-        , wMinute(0)
-        , wSecond(0)
-        , wMilliseconds(0)
+
     {
         ;
     } // END CONSTRUCTOR
@@ -653,28 +646,22 @@ struct SystemTime {
 
 
 struct ClientTimeZone {
-    uint32_t Bias;
-    uint8_t StandardName[64];
+    uint32_t Bias{0};         // bias value (in minutes)
+    uint8_t StandardName[64] {};
     SystemTime StandardDate;
-    uint32_t StandardBias;
-    uint8_t DaylightName[64];
+    uint32_t StandardBias{0}; // MUST be ignored if a valid date and time is not specified
+                              // in the StandardDate field or the wYear, wMonth, wDayOfWeek,
+                              // wDay, wHour, wMinute, wSecond, and wMilliseconds fields
+                              // of the StandardDate field are all set to zero
+    uint8_t DaylightName[64] {};
     SystemTime DaylightDate;
-    uint32_t DaylightBias;
+    uint32_t DaylightBias{0}; // MUST be ignored if a valid date and time is not specified in
+                              // the DaylightDate field or the wYear, wMonth, wDayOfWeek, wDay,
+                              // wHour, wMinute, wSecond, and wMilliseconds fields of the
+                              // DaylightDate field are all set to zero
 
     ClientTimeZone()
-        : Bias(0) //......... bias value (in minutes)
-        , StandardBias(0) //  MUST be ignored if a valid date and time is not specified in the StandardDate field or the wYear,
-                          //    wMonth, wDayOfWeek, wDay, wHour, wMinute, wSecond, and wMilliseconds fields
-                          //    of the StandardDate field are all set to zero
-        , DaylightBias(0) //  MUST be ignored if a valid date and time is not specified in the DaylightDate field or the wYear,
-                          //    wMonth, wDayOfWeek, wDay, wHour, wMinute, wSecond, and wMilliseconds fields
-                          //    of the DaylightDate field are all set to zero
     {
-        ::memset(this->StandardName, 0, sizeof(this->StandardName));
-        ::memset(this->DaylightName, 0, sizeof(this->DaylightName));
-
-        // bias
-        this->Bias = 0;
         // standard Name
 //        memcpy(this->StandardName, "GMT Standard Time", strlen("GMT Standard Time")+1);
         ::UTF8toUTF16(::byte_ptr_cast("GMT"), this->StandardName, sizeof(this->StandardName));
@@ -740,34 +727,21 @@ struct ClientTimeZone {
 
 struct ExtendedInfoPacket {
 
-    uint16_t clientAddressFamily;
-    uint16_t cbClientAddress;
-    uint8_t clientAddress[81];
-    uint16_t cbClientDir;
-    uint8_t clientDir[257];
-    uint32_t clientSessionId;
-    uint32_t performanceFlags;
-    uint16_t cbAutoReconnectLen;
-    uint8_t autoReconnectCookie[28];
-    uint16_t reserved1;
-    uint16_t reserved2;
-    ClientTimeZone clientTimeZone;      // optionals Extra attributes from TS_TIME_ZONE_INFORMATION
+    uint16_t clientAddressFamily{2}; // numeric socket descriptor
+    uint16_t cbClientAddress{0};     // size in bytes of variable size clientAdress attribute
+    uint8_t clientAddress[81] {};
+    uint16_t cbClientDir{0};         // size in bytes of variable size clientDir attribute
+    uint8_t clientDir[257] {};
+    uint32_t clientSessionId{0};     // was added in RDP 5.1 and is currently (from what version on ??) ignored by the server. It SHOULD be set to 0.
+    uint32_t performanceFlags{0};    // from a closed list of flags. It is used by RDP 5.1, 5.2, 6.0, 6.1, and 7.0 servers
+    uint16_t cbAutoReconnectLen{0};  // size in bytes of variable size autoReconnectCookie attribute. is only read by RDP 5.2, 6.0, 6.1, and 7.0 servers.
+    uint8_t autoReconnectCookie[28] {};
+    uint16_t reserved1{0};           // if this field is present, the reserved2 field MUST be present.
+    uint16_t reserved2{0};           // this field MUST be present if the reserved1 field is present.
+    ClientTimeZone clientTimeZone;   // optionals Extra attributes from TS_TIME_ZONE_INFORMATION
 
     ExtendedInfoPacket()
-    : clientAddressFamily(0) // numeric socket descriptor
-    , cbClientAddress(0) //.... size in bytes of variable size clientAdress attribute
-    , cbClientDir(0) //         size in bytes of variable size clientDir attribute
-    , clientSessionId(0) //.... was added in RDP 5.1 and is currently (from what version on ??) ignored by the server. It SHOULD be set to 0.
-    , performanceFlags(0) //    from a closed list of flags. It is used by RDP 5.1, 5.2, 6.0, 6.1, and 7.0 servers
-    , cbAutoReconnectLen(0) //. size in bytes of variable size autoReconnectCookie attribute. is only read by RDP 5.2, 6.0, 6.1, and 7.0 servers.
-    , reserved1(0) //           if this field is present, the reserved2 field MUST be present.
-    , reserved2(0) //.......... this field MUST be present if the reserved1 field is present.
     {
-        ::memset(this->clientAddress, 0, sizeof(this->clientAddress));
-        ::memset(this->clientDir, 0, sizeof(this->clientDir));
-        ::memset(this->autoReconnectCookie, 0, sizeof(this->autoReconnectCookie));
-
-        this->clientAddressFamily = 2;
         const char * defaultAddress = "0.0.0.0";
         ::memcpy(this->clientAddress, defaultAddress, ::strlen(defaultAddress) + 1);
         this->cbClientAddress = 2 * strlen(defaultAddress) + 2;
@@ -775,52 +749,32 @@ struct ExtendedInfoPacket {
         const char * defaultClientDir = "C:\\Windows\\System32\\mstscax.dll";
         ::memcpy(this->clientDir, defaultClientDir, ::strlen(defaultClientDir) + 1);
         this->cbClientDir = 2 * ::strlen(defaultClientDir) + 2;
-
-        clientSessionId = 0;
     } // END CONSTRUCTOR
 }; // END STRUCT : ExtendedInfoPacket
 
 struct InfoPacket {
-    uint8_t rdp5_support;
-    uint32_t CodePage;
-    uint32_t flags;
-    uint16_t cbDomain;
-    uint16_t cbUserName;
-    uint16_t cbPassword;
-    uint16_t cbAlternateShell;
-    uint16_t cbWorkingDir;
-    uint8_t Domain[257];
-    uint8_t UserName[257];
-    uint8_t Password[257];
-    uint8_t AlternateShell[512];
-    uint8_t WorkingDir[512];
-    ExtendedInfoPacket extendedInfoPacket;  // optionals Extra attributes from TS_EXTENDED_INFO_PACKET:
+    uint8_t rdp5_support{0};
+    uint32_t CodePage{0};         // ANSI code page descriptor
+    uint32_t flags = INFO_MOUSE
+                   | INFO_DISABLECTRLALTDEL
+                   | INFO_UNICODE
+                   | INFO_MAXIMIZESHELL
+                   | INFO_ENABLEWINDOWSKEY
+                   | INFO_LOGONERRORS
+                   | INFO_LOGONNOTIFY;
+    uint16_t cbDomain{0};         // size in bytes of variable size Domain attribute
+    uint16_t cbUserName{0};       // size in bytes of variable size UserName attribute
+    uint16_t cbPassword{0};       // size in bytes of variable size Password attribute
+    uint16_t cbAlternateShell{0}; // size in bytes of variable size AlternateShell attribute
+    uint16_t cbWorkingDir{0};     // size in bytes of variable size WorkingDir attribute
+    uint8_t Domain[257]{};
+    uint8_t UserName[257]{};
+    uint8_t Password[257]{};
+    uint8_t AlternateShell[512]{};
+    uint8_t WorkingDir[512]{};
+    ExtendedInfoPacket extendedInfoPacket {}; // optionals Extra attributes from TS_EXTENDED_INFO_PACKET:
 
-    InfoPacket()
-    : rdp5_support(0)
-    , CodePage(0) //........... ANSI code page descriptor
-    , flags(0) //               bitmap
-    , cbDomain(0) //........... size in bytes of variable size Domain attribute
-    , cbUserName(0) //          size in bytes of variable size UserName attribute
-    , cbPassword(0) //......... size in bytes of variable size Password attribute
-    , cbAlternateShell(0) //    size in bytes of variable size AlternateShell attribute
-    , cbWorkingDir(0) //....... size in bytes of variable size WorkingDir attribute
-    , extendedInfoPacket()
-    {
-        ::memset(this->Domain,         0, sizeof(this->Domain));
-        ::memset(this->UserName,       0, sizeof(this->UserName));
-        ::memset(this->Password,       0, sizeof(this->Password));
-        ::memset(this->AlternateShell, 0, sizeof(this->AlternateShell));
-        ::memset(this->WorkingDir,     0, sizeof(this->WorkingDir));
-
-        this->flags  = INFO_MOUSE;
-        this->flags |= INFO_DISABLECTRLALTDEL;
-        this->flags |= INFO_UNICODE;
-        this->flags |= INFO_MAXIMIZESHELL;
-        this->flags |= INFO_ENABLEWINDOWSKEY;
-        this->flags |= INFO_LOGONERRORS;
-        this->flags |= INFO_LOGONNOTIFY;
-    } // END CONSTRUCTOR
+    InfoPacket() = default;
 
     InfoPacket( int use_rdp5
               , const char *domain
@@ -831,39 +785,17 @@ struct InfoPacket {
               , uint32_t performanceFlags = 0
               , const char *clientAddr = nullptr)
     : rdp5_support(use_rdp5)
-    , CodePage(0) //........... ANSI code page descriptor
-    , flags(0) //               bitmap
-    , cbDomain(0) //........... size in bytes of variable size Domain attribute
-    , cbUserName(0) //          size in bytes of variable size UserName attribute
-    , cbPassword(0) //......... size in bytes of variable size Password attribute
-    , cbAlternateShell(0) //    size in bytes of variable size AlternateShell attribute
-    , cbWorkingDir(0) //....... size in bytes of variable size WorkingDir attribute
-    , extendedInfoPacket()
     {
-        ::memset(this->Domain,         0, sizeof(this->Domain));
-        ::memset(this->UserName,       0, sizeof(this->UserName));
-        ::memset(this->Password,       0, sizeof(this->Password));
-        ::memset(this->AlternateShell, 0, sizeof(this->AlternateShell));
-        ::memset(this->WorkingDir,     0, sizeof(this->WorkingDir));
-
-        this->flags  = INFO_MOUSE;
-        this->flags |= INFO_DISABLECTRLALTDEL;
-        this->flags |= INFO_UNICODE;
-        this->flags |= INFO_MAXIMIZESHELL;
-        this->flags |= INFO_ENABLEWINDOWSKEY;
-        this->flags |= INFO_LOGONERRORS;
-        this->flags |= INFO_LOGONNOTIFY;
-
         this->cbDomain         = UTF8ToUTF8LCopy(this->Domain,
-            sizeof(this->Domain), reinterpret_cast<const uint8_t *>(domain)) * 2;
+            sizeof(this->Domain), byte_ptr_cast(domain)) * 2;
         this->cbUserName       = UTF8ToUTF8LCopy(this->UserName,
-            sizeof(this->UserName), reinterpret_cast<const uint8_t *>(username)) * 2;
+            sizeof(this->UserName), byte_ptr_cast(username)) * 2;
         this->cbPassword       = UTF8ToUTF8LCopy(this->Password,
-            sizeof(this->Password), reinterpret_cast<const uint8_t *>(password)) * 2;
+            sizeof(this->Password), byte_ptr_cast(password)) * 2;
         this->cbAlternateShell = UTF8ToUTF8LCopy(this->AlternateShell,
-            sizeof(this->AlternateShell), reinterpret_cast<const uint8_t *>(program)) * 2;
+            sizeof(this->AlternateShell), byte_ptr_cast(program)) * 2;
         this->cbWorkingDir     = UTF8ToUTF8LCopy(this->WorkingDir,
-            sizeof(this->WorkingDir), reinterpret_cast<const uint8_t *>(directory)) * 2;
+            sizeof(this->WorkingDir), byte_ptr_cast(directory)) * 2;
 
         if (performanceFlags) {
             this->extendedInfoPacket.performanceFlags = performanceFlags;
@@ -872,7 +804,7 @@ struct InfoPacket {
         if (clientAddr){
             this->extendedInfoPacket.cbClientAddress = (UTF8ToUTF8LCopy(this->extendedInfoPacket.clientAddress,
                 sizeof(this->extendedInfoPacket.clientAddress),
-                reinterpret_cast<const uint8_t *>(clientAddr)) + 1) * 2;
+                byte_ptr_cast(clientAddr)) + 1) * 2;
         }
     }
 
@@ -919,7 +851,7 @@ struct InfoPacket {
             // Client Time Zone (172 bytes)
             stream.out_uint32_le(this->extendedInfoPacket.clientTimeZone.Bias);
             stream.out_date_name(
-                reinterpret_cast<char const *>(this->extendedInfoPacket.clientTimeZone.StandardName), 64);
+                char_ptr_cast(this->extendedInfoPacket.clientTimeZone.StandardName), 64);
 
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wYear);
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wMonth);
@@ -933,7 +865,7 @@ struct InfoPacket {
             stream.out_uint32_le(this->extendedInfoPacket.clientTimeZone.StandardBias);
 
             stream.out_date_name(
-                reinterpret_cast<char const *>(this->extendedInfoPacket.clientTimeZone.DaylightName), 64);
+                char_ptr_cast(this->extendedInfoPacket.clientTimeZone.DaylightName), 64);
 
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wYear);
             stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wMonth);
@@ -1156,7 +1088,7 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::cbWorkingDir %u", this->cbWorkingDir);
         LOG(LOG_INFO, "InfoPacket::Domain %s", this->Domain);
         LOG(LOG_INFO, "InfoPacket::UserName %s", this->UserName);
-        LOG(LOG_INFO, "InfoPacket::Password %s", ::get_printable_password(reinterpret_cast<char const*>(this->Password), password_printing_mode));
+        LOG(LOG_INFO, "InfoPacket::Password %s", ::get_printable_password(char_ptr_cast(this->Password), password_printing_mode));
 
         if (show_alternate_shell) {
             LOG(LOG_INFO, "InfoPacket::AlternateShell %s", this->AlternateShell);

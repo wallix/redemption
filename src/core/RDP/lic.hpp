@@ -3124,7 +3124,7 @@ namespace LIC
         // The bbErrorInfo field MUST contain an empty binary large object (BLOB) of type BB_ERROR_BLOB (0x0004).
         ValidClientMessage validClientMessage;
 
-        ErrorAlert_Send(OutStream &, uint8_t msgType, uint8_t version, ValidClientMessage &) :
+        ErrorAlert_Send(OutStream & /*unused*/, uint8_t msgType, uint8_t version, ValidClientMessage & /*unused*/) :
         	wMsgType(msgType), bVersion(version), wMsgSize(0)
         {
         }

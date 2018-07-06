@@ -138,8 +138,8 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
         }
         this->tab(); this->out() << "/// value"; this->write_assignable_default(pack_contains<default_>(infos), type, &infos); this->out() << " <br/>\n";
         this->tab(); this->out() << "struct " << varname_with_section << " {\n";
-        this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy() { return " << bool(properties & sesman::io::sesman_to_proxy) << "; }\n";
-        this->tab(); this->out() << "    static constexpr bool is_proxy_to_sesman() { return " << bool(properties & sesman::io::proxy_to_sesman) << "; }\n";
+        this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy() { return " << (bool(properties & sesman::io::sesman_to_proxy) ? "true" : "false") << "; }\n";
+        this->tab(); this->out() << "    static constexpr bool is_proxy_to_sesman() { return " << (bool(properties & sesman::io::proxy_to_sesman) ? "true" : "false") << "; }\n";
 
         this->tab(); this->out() << "    static constexpr char const * section() { return \"" << section_name << "\"; }\n";
         this->tab(); this->out() << "    static constexpr char const * name() { return \"" << varname << "\"; }\n";
@@ -211,7 +211,15 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
 
     template<class T>
     disable_if_enum_t<T>
-    write_value(T const & r) { this->out() << '{' << r << '}'; }
+    write_value(T const & r)
+    {
+        if (std::is_same<T, bool>{}) {
+            this->out() << '{' << (r ? "true" : "false") << '}';
+        }
+        else {
+            this->out() << '{' << r << '}';
+        }
+    }
 
     void write_value(const char * s) { this->out() << " = \"" << io_quoted2{s} << '"';  }
     void write_value(std::string const & str) { this->write_value(str.c_str()); }

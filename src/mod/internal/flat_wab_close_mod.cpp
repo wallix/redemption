@@ -137,4 +137,4 @@ void FlatWabCloseMod::notify(Widget* sender, notify_event_t event)
     }
 }
 
-void FlatWabCloseMod::draw_event(time_t /*now*/, gdi::GraphicApi&) {}
+void FlatWabCloseMod::draw_event(time_t /*now*/, gdi::GraphicApi& /*unused*/) {}

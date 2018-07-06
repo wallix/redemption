@@ -126,7 +126,7 @@ public:
     , patblt(Rect(), 0, RDPColor{}, RDPColor{}, RDPBrush())
     , lineto(0, 0, 0, 0, 0, RDPColor{}, 0, RDPPen(0, 0, RDPColor{}))
     , glyph_index( 0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
-                 , reinterpret_cast<const uint8_t *>(""))
+                 , byte_ptr_cast(""))
     , global_palette(BGRPalette::classic_332())
     , bmp_cache(nullptr)
     , ninegrid_bmp_cache(nullptr)
@@ -157,7 +157,7 @@ public:
         this->patblt      = RDPPatBlt(Rect(), 0, RDPColor{}, RDPColor{}, RDPBrush());
         this->lineto      = RDPLineTo(0, 0, 0, 0, 0, RDPColor{}, 0, RDPPen(0, 0, RDPColor{}));
         this->glyph_index = RDPGlyphIndex( 0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1)
-                                         , RDPBrush(), 0, 0, 0, reinterpret_cast<const uint8_t *>(""));
+                                         , RDPBrush(), 0, 0, 0, byte_ptr_cast(""));
         this->polyline        = RDPPolyline();
         this->ninegrid     = RDPNineGrid();
     }
@@ -173,9 +173,7 @@ public:
             delete this->bmp_cache;
         }
 
-        if (this->ninegrid_bmp_cache) {
-            delete this->ninegrid_bmp_cache;
-        }
+        delete this->ninegrid_bmp_cache;
     }
 
 private:

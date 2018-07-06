@@ -32,7 +32,7 @@ namespace CHANNELS
     {
         enum class Id : uint64_t;
 
-        constexpr ChannelNameId(Id id = Id{}) noexcept
+        constexpr explicit ChannelNameId(Id id = Id{}) noexcept
           : id(id)
         {}
 
@@ -97,7 +97,7 @@ namespace CHANNELS
     {
         return out << channel_name.c_str();
     }
-}
+}  // namespace CHANNELS
 
 #define DEF_NAME(name) constexpr CHANNELS::ChannelNameId name = CHANNELS::ChannelNameId(#name)
 namespace channel_names

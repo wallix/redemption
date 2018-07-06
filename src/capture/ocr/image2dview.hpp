@@ -48,4 +48,4 @@ namespace ocr
         const ImageValue & operator[](const ::mln::point2d & p) const
         { return input(p); }
     };
-}
+} // namespace ocr

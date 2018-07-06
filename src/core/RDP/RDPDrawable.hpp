@@ -213,10 +213,10 @@ public:
         this->drawable.set_row(rownum, data);
     }
 
-    void draw(RDPColCache   const &) override {
+    void draw(RDPColCache   const & /*unused*/) override {
     }
 
-    void draw(RDPBrushCache const &) override {
+    void draw(RDPBrushCache const & /*unused*/) override {
     }
 
     void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
@@ -257,7 +257,7 @@ public:
         this->last_update_index++;
     }
 
-    void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
+    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
 
 private:
     // TODO removed when RDPMultiDstBlt and RDPMultiOpaqueRect contains a rect member
@@ -928,7 +928,7 @@ public:
         return this->drawable.logical_frame_ended;
     }
 
-    void trace_mouse(void)
+    void trace_mouse()
     {
         if (this->dont_show_mouse_cursor || !this->current_pointer) {
             return;
@@ -940,7 +940,7 @@ public:
         return this->drawable.trace_mouse(this->current_pointer, x, y, this->save_mouse);
     }
 
-    void clear_mouse(void)
+    void clear_mouse()
     {
         if (this->dont_show_mouse_cursor || !this->current_pointer) {
             return;
@@ -950,14 +950,14 @@ public:
         return this->drawable.clear_mouse(this->current_pointer, x, y, this->save_mouse);
     }
 
-    void draw(const RDP::RAIL::NewOrExistingWindow            &) override {}
-    void draw(const RDP::RAIL::WindowIcon                     &) override {}
-    void draw(const RDP::RAIL::CachedIcon                     &) override {}
-    void draw(const RDP::RAIL::DeletedWindow                  &) override {}
-    void draw(const RDP::RAIL::NewOrExistingNotificationIcons &) override {}
-    void draw(const RDP::RAIL::DeletedNotificationIcons       &) override {}
-    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       &) override {}
-    void draw(const RDP::RAIL::NonMonitoredDesktop            &) override {}
+    void draw(const RDP::RAIL::NewOrExistingWindow            & /*unused*/) override {}
+    void draw(const RDP::RAIL::WindowIcon                     & /*unused*/) override {}
+    void draw(const RDP::RAIL::CachedIcon                     & /*unused*/) override {}
+    void draw(const RDP::RAIL::DeletedWindow                  & /*unused*/) override {}
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*unused*/) override {}
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & /*unused*/) override {}
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & /*unused*/) override {}
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & /*unused*/) override {}
 
     void set_pointer(const Pointer & cursor) override {
         const auto dimensions = cursor.get_dimensions();

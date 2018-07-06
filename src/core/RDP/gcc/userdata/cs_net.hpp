@@ -30,6 +30,7 @@
 
 #include "core/RDP/gcc/data_block_type.hpp"
 #include "utils/stream.hpp"
+#include "utils/log.hpp"
 #include "core/error.hpp"
 #include "core/RDP/gcc/userdata/mcs_channels.hpp"
 
@@ -215,4 +216,5 @@ struct CSNet {
     }
 };
 
-}} // namespaces
+} // namespace UserData
+} // namespace GCC

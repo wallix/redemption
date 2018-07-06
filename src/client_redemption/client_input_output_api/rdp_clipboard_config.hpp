@@ -23,7 +23,7 @@
 #include "core/RDP/clipboard.hpp"
 #include "utils/log.hpp"
 
-
+#include <vector>
 
 
 namespace ClientCLIPRDRConfig {

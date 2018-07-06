@@ -186,7 +186,7 @@ class NTLMChallengeMessage
 public:
     NtlmField TargetName;          /* 8 Bytes */
     NtlmNegotiateFlags negoFlags;  /* 4 Bytes */
-    uint8_t serverChallenge[8];    /* 8 Bytes */
+    uint8_t serverChallenge[8]{};    /* 8 Bytes */
     // uint64_t serverChallenge;
     /* 8 Bytes reserved */
     NtlmField TargetInfo;          /* 8 Bytes */
@@ -200,8 +200,8 @@ public:
 public:
     NTLMChallengeMessage()
         : message(NtlmChallenge)
-        , serverChallenge()
-        , PayloadOffset(12+8+4+8+8+8+8)
+        , 
+         PayloadOffset(12+8+4+8+8+8+8)
     {
     }
 

@@ -79,32 +79,21 @@ enum {
 };
 
 struct BmpCacheCaps : public Capability {
-    uint32_t pad1;
-    uint32_t pad2;
-    uint32_t pad3;
-    uint32_t pad4;
-    uint32_t pad5;
-    uint32_t pad6;
-    uint16_t cache0Entries;
-    uint16_t cache0MaximumCellSize;
-    uint16_t cache1Entries;
-    uint16_t cache1MaximumCellSize;
-    uint16_t cache2Entries;
-    uint16_t cache2MaximumCellSize;
+    uint32_t pad1{0};
+    uint32_t pad2{0};
+    uint32_t pad3{0};
+    uint32_t pad4{0};
+    uint32_t pad5{0};
+    uint32_t pad6{0};
+    uint16_t cache0Entries{0xC8};
+    uint16_t cache0MaximumCellSize{0};
+    uint16_t cache1Entries{0x258};
+    uint16_t cache1MaximumCellSize{0};
+    uint16_t cache2Entries{0x3E8};
+    uint16_t cache2MaximumCellSize{0};
     BmpCacheCaps()
     : Capability(CAPSTYPE_BITMAPCACHE, CAPLEN_BITMAPCACHE)
-    , pad1(0)
-    , pad2(0)
-    , pad3(0)
-    , pad4(0)
-    , pad5(0)
-    , pad6(0)
-    , cache0Entries(0xC8)
-    , cache0MaximumCellSize(0)
-    , cache1Entries(0x258)
-    , cache1MaximumCellSize(0)
-    , cache2Entries(0x3E8)
-    , cache2MaximumCellSize(0)
+     
     {
     }
 

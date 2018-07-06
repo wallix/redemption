@@ -66,7 +66,7 @@ class RDPDestBlt {
     Rect rect;
     uint8_t rop;
 
-    static uint8_t id(void)
+    static uint8_t id()
     {
         return RDP::DESTBLT;
     }

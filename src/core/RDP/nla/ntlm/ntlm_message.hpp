@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "utils/hexdump.hpp"
 
@@ -200,22 +201,15 @@ struct NTLMMessage final {
 #define NTLMSSP_REVISION_W2K3            0x0F
 
 struct NtlmVersion {
-    uint8_t ProductMajorVersion;   /* 1 Byte */
-    uint8_t ProductMinorVersion;   /* 1 Byte */
-    uint16_t ProductBuild;         /* 2 Bytes */
+    uint8_t ProductMajorVersion{WINDOWS_MAJOR_VERSION_6};   /* 1 Byte */
+    uint8_t ProductMinorVersion{WINDOWS_MINOR_VERSION_2};   /* 1 Byte */
+    uint16_t ProductBuild{0x0000};         /* 2 Bytes */
     /* 3 Bytes Reserved */
-    uint8_t NtlmRevisionCurrent;   /* 1 Byte */
+    uint8_t NtlmRevisionCurrent{NTLMSSP_REVISION_W2K3};   /* 1 Byte */
 
-    bool ignore_version;
+    bool ignore_version{true};
 
-    NtlmVersion()
-        : ProductMajorVersion(WINDOWS_MAJOR_VERSION_6)
-        , ProductMinorVersion(WINDOWS_MINOR_VERSION_2)
-        , ProductBuild(0x0000)
-        , NtlmRevisionCurrent(NTLMSSP_REVISION_W2K3)
-        , ignore_version(true)
-    {
-    }
+    NtlmVersion() = default;
 
     void ignore_version_info() {
         this->ignore_version = true;
@@ -491,11 +485,8 @@ static const char* const NTLM_NEGOTIATE_STRINGS[] ={
 };
 
 struct NtlmNegotiateFlags {
-    uint32_t flags;          /* 4 Bytes */
-    NtlmNegotiateFlags()
-        : flags(0)
-    {
-    }
+    uint32_t flags{0};          /* 4 Bytes */
+    NtlmNegotiateFlags() = default;
 
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->flags);
@@ -524,20 +515,19 @@ struct NtlmNegotiateFlags {
 };
 
 struct NtlmField {
-    uint16_t len;           /* 2 Bytes */
-    uint16_t maxLen;        /* 2 Bytes */
-    uint32_t bufferOffset;  /* 4 Bytes */
+    uint16_t len{0};           /* 2 Bytes */
+    uint16_t maxLen{0};        /* 2 Bytes */
+    uint32_t bufferOffset{0};  /* 4 Bytes */
     struct Buffer {
         std::unique_ptr<uint8_t[]> dynbuf;
         uint8_t buf[65535];
         std::size_t sz_buf;
         OutStream ostream;
-        std::size_t in_sz;
+        std::size_t in_sz{0};
 
         Buffer()
         : sz_buf(sizeof(this->buf))
         , ostream(this->buf)
-        , in_sz(0)
         {}
 
         Buffer(Buffer const &) = delete;
@@ -582,14 +572,7 @@ struct NtlmField {
         }
     } buffer;
 
-    NtlmField()
-        : len(0)
-        , maxLen(0)
-        , bufferOffset(0)
-    {
-    }
-
-    ~NtlmField() {}
+    NtlmField() = default;
 
     void log(const char * name) {
         LOG(LOG_DEBUG, "Field %s, len: %u, maxlen: %u, offset: %u",

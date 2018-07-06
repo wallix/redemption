@@ -223,7 +223,7 @@ namespace Ops {
     typedef CopySrc Op_0xCC;
     typedef Op2_0x0E Op_0xDD;
     typedef Op2_0x0F Op_0xEE;
-}
+} // namespace Ops
 
 
 enum class DepthColor { color8 = 8, color15 = 15, color16 = 16, color24 = 24, color32 = 32 };
@@ -651,7 +651,7 @@ private:
     }
 
     template <typename Op2>
-    void colorline(int x, int y, int l, color_t color, Op2)
+    void colorline(int x, int y, int l, color_t color, Op2 /*unused*/)
     {
         if (!(y >= 0 &&
               y < this->height())) {
@@ -741,7 +741,7 @@ public:
     }
 
 private:
-    void scr_blt_op_overlap(Rect const rect_dest, size_t srcx, size_t srcy, Ops::CopySrc)
+    void scr_blt_op_overlap(Rect const rect_dest, size_t srcx, size_t srcy, Ops::CopySrc /*unused*/)
     {
         this->scr_blt_impl(rect_dest, srcx, srcy, [](P dest, cP src, size_t n) {
             memmove(dest, src, n);
@@ -850,7 +850,7 @@ public:
     }
 
     template<class Op>
-    void horizontal_line(uint16_t x, uint16_t y, uint16_t endx, color_t color, Op)
+    void horizontal_line(uint16_t x, uint16_t y, uint16_t endx, color_t color, Op /*unused*/)
     {
         assert(x <= endx);
 
@@ -858,17 +858,17 @@ public:
     }
 
     template <typename Op>
-    void patblt_op(Rect rect, color_t color, Op)
+    void patblt_op(Rect rect, color_t color, Op /*unused*/)
     {
         this->apply_for_rect(rect, AssignOp<Op>{color});
     }
 
-    void patblt_op(Rect rect, color_t color, Ops::InvertSrc)
+    void patblt_op(Rect rect, color_t color, Ops::InvertSrc /*unused*/)
     {
         this->apply_for_rect(rect, Assign{~color});
     }
 
-    void patblt_op(Rect rect, color_t color, Ops::CopySrc)
+    void patblt_op(Rect rect, color_t color, Ops::CopySrc /*unused*/)
     {
         this->apply_for_rect(rect, Assign{color});
     }
@@ -908,7 +908,7 @@ private:
         }
     }
 
-    void copy(uint8_t * dest, const uint8_t * src, size_t n, Ops::CopySrc)
+    void copy(uint8_t * dest, const uint8_t * src, size_t n, Ops::CopySrc /*unused*/)
     {
        memcpy(dest, src, n);
     }
@@ -1780,4 +1780,4 @@ namespace gdi
     {
         return drawable;
     }
-}
+} // namespace gdi

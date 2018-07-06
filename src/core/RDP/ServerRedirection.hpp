@@ -262,52 +262,31 @@ enum {
 
 
 struct ServerRedirectionPDU {
-    uint16_t Flags;
-    uint16_t Length;
-    uint32_t SessionID;
-    uint32_t RedirFlags;
-    uint32_t TargetNetAddressLength;
-    uint8_t  TargetNetAddress[256];
-    uint32_t LoadBalanceInfoLength;
-    uint8_t  LoadBalanceInfo[1024];
-    uint32_t UserNameLength;
-    uint8_t  UserName[512];
-    uint32_t DomainLength;
-    uint8_t  Domain[512];
-    uint32_t PasswordLength;
-    uint8_t  Password[512];
-    uint32_t TargetFQDNLength;
-    uint8_t  TargetFQDN[1024];
-    uint32_t TargetNetBiosNameLength;
-    uint8_t  TargetNetBiosName[512];
-    uint32_t TsvUrlLength;
-    uint8_t  TsvUrl[1024];
-    uint32_t TargetNetAddressesLength;
-    uint8_t  TargetNetAddresses[1024];
+    uint16_t Flags{SEC_REDIRECTION_PKT};
+    uint16_t Length{0};
+    uint32_t SessionID{0};
+    uint32_t RedirFlags{0};
+    uint32_t TargetNetAddressLength{0};
+    uint8_t  TargetNetAddress[256]{};
+    uint32_t LoadBalanceInfoLength{0};
+    uint8_t  LoadBalanceInfo[1024]{};
+    uint32_t UserNameLength{0};
+    uint8_t  UserName[512]{};
+    uint32_t DomainLength{0};
+    uint8_t  Domain[512]{};
+    uint32_t PasswordLength{0};
+    uint8_t  Password[512]{};
+    uint32_t TargetFQDNLength{0};
+    uint8_t  TargetFQDN[1024]{};
+    uint32_t TargetNetBiosNameLength{0};
+    uint8_t  TargetNetBiosName[512]{};
+    uint32_t TsvUrlLength{0};
+    uint8_t  TsvUrl[1024]{};
+    uint32_t TargetNetAddressesLength{0};
+    uint8_t  TargetNetAddresses[1024]{};
 
     ServerRedirectionPDU()
-        : Flags(SEC_REDIRECTION_PKT)
-        , Length(0)
-        , SessionID(0)
-        , RedirFlags(0)
-        , TargetNetAddressLength(0)
-        , TargetNetAddress()
-        , LoadBalanceInfoLength(0)
-        , LoadBalanceInfo()
-        , UserNameLength(0)
-        , UserName()
-        , DomainLength(0)
-        , Domain()
-        , PasswordLength(0)
-        , Password()
-        , TargetFQDNLength(0)
-        , TargetFQDN()
-        , TargetNetBiosNameLength(0)
-        , TargetNetBiosName()
-        , TsvUrlLength(0)
-        , TsvUrl()
-        , TargetNetAddressesLength(0)
-        , TargetNetAddresses()
+         
     {
     }
 

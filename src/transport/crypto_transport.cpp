@@ -376,7 +376,7 @@ size_t InCryptoTransport::do_partial_read(uint8_t * buffer, size_t len)
 
             size_t chunk_size = CRYPTO_BUFFER_SIZE;
             const snappy_status status = snappy_uncompress(
-                    reinterpret_cast<char *>(dec_buf),
+                    char_ptr_cast(dec_buf),
                     pack_buf_size, this->clear_data, &chunk_size);
 
             switch (status)

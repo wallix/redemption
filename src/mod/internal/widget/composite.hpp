@@ -26,10 +26,6 @@
 
 class SubRegion;
 class NotifyApi;
-namespace
-{
-    class GraphicApi;
-}
 
 void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, BGRColor bg_color);
 
@@ -65,8 +61,8 @@ class CompositeArray : public CompositeContainer
         MAX_CHILDREN_COUNT = 256
     };
 
-    Widget * child_table[MAX_CHILDREN_COUNT];
-    size_t    children_count;
+    Widget * child_table[MAX_CHILDREN_COUNT] {};
+    size_t   children_count = 0;
 
 public:
     CompositeArray();

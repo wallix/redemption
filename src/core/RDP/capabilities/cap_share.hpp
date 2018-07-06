@@ -53,13 +53,12 @@ enum {
 
 
 struct ShareCaps : public Capability {
-    uint16_t nodeId;
-    uint16_t pad2octets;
+    uint16_t nodeId{0};     // CS : SHOULD be set to 0
+                            // SC : SHOULD be set to the server channel ID
+    uint16_t pad2octets{0}; // MUST be ignored
+
     ShareCaps()
     : Capability(CAPSTYPE_SHARE, CAPLEN_SHARE)
-    , nodeId(0)     // CS : SHOULD be set to 0
-                    // SC : SHOULD be set to the server channel ID
-    , pad2octets(0) // MUST be ignored
     {
     }
 

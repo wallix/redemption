@@ -80,17 +80,15 @@ namespace GCC { namespace UserData {
 //00 00 -> padding
 
 struct SCNet {
-    uint16_t userDataType;
-    uint16_t MCSChannelId;
-    uint16_t channelCount;
+    uint16_t userDataType{SC_NET};
+    uint16_t MCSChannelId{GCC::MCS_GLOBAL_CHANNEL};
+    uint16_t channelCount{0};
     struct {
         uint16_t id;
     } channelDefArray[32];
 
     SCNet()
-    : userDataType(SC_NET)
-    , MCSChannelId(GCC::MCS_GLOBAL_CHANNEL)
-    , channelCount(0)
+
     {
     }
 
@@ -167,4 +165,5 @@ struct SCNet {
     }
 };
 
-}}
+} // namespace UserData
+} // namespace GCC

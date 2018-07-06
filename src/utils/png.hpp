@@ -31,7 +31,7 @@ class MutableImageDataView;
 namespace gdi
 {
     class GraphicApi;
-}
+} // namespace gdi
 
 void dump_png24(
     Transport & trans,

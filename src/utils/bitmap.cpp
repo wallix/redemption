@@ -54,7 +54,7 @@
 namespace aux_
 {
     BmpMemAlloc bitmap_data_allocator;
-}
+} // namespace aux_
 
 Bitmap::Bitmap(Bitmap && bmp) noexcept
 : data_bitmap(bmp.data_bitmap)

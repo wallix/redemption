@@ -29,7 +29,7 @@ Author(s): Jonathan Poelen
 namespace
 {
     std::terminate_handler old_terminate_handler;
-}
+} // namespace
 
 void set_exception_handler_pretty_message() noexcept
 {

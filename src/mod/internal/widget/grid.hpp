@@ -28,20 +28,18 @@
 #include "utils/difftimeval.hpp"
 
 static const uint16_t GRID_NB_COLUMNS_MAX = 10;
-static const uint16_t GRID_NB_ROWS_MAX    = 50;
+static const uint16_t GRID_NB_ROWS_MAX    = 250;
 
 
 struct WidgetGrid : public Widget {
-protected:
+private:
     Widget  * widgets[GRID_NB_COLUMNS_MAX][GRID_NB_ROWS_MAX];
     void     * meta_data[GRID_NB_COLUMNS_MAX][GRID_NB_ROWS_MAX];
 
     uint16_t nb_rows;
 
-public:
     uint16_t nb_columns;
 
-protected:
     uint16_t column_width[GRID_NB_COLUMNS_MAX];
     uint16_t row_height[GRID_NB_ROWS_MAX];
 
@@ -60,7 +58,7 @@ public:
 
     const uint16_t border;    // Width and height of cell's border.
 
-protected:
+private:
     uint16_t selection_y;   // Index of seleted row.
 
     // TODO: see why grid object need a difftimer ?
@@ -214,12 +212,17 @@ public:
         return this->nb_rows;
     }
     uint16_t set_nb_rows(uint16_t nb_rows) {
-        assert(nb_rows < GRID_NB_ROWS_MAX);
+        assert(nb_rows <= GRID_NB_ROWS_MAX);
 
         uint16_t old_nb_rows = this->nb_rows;
         this->nb_rows = nb_rows;
         return old_nb_rows;
     }
+
+    uint16_t get_nb_columns() const {
+        return this->nb_columns;
+    }
+
 
     uint16_t get_row_height(uint16_t row_index) const {
         assert(row_index < this->nb_rows);
@@ -237,7 +240,17 @@ public:
         assert(row_index <= GRID_NB_ROWS_MAX);
         return this->widgets[column_index][row_index];
     }
-
+    Widget * remove_widget(uint16_t row_index, uint16_t column_index, void** meta_data = nullptr) {
+        assert(column_index <= this->nb_columns);
+        assert(row_index <= GRID_NB_ROWS_MAX);
+        Widget * w = this->widgets[column_index][row_index];
+        this->widgets[column_index][row_index] = nullptr;
+        if (meta_data) {
+            *meta_data = this->meta_data[column_index][row_index];
+        }
+        this->meta_data[column_index][row_index] = nullptr;
+        return w;
+    }
     Widget * set_widget(uint16_t row_index, uint16_t column_index, Widget * w,
                          void * meta_data = nullptr) {
         assert(column_index <= this->nb_columns);
@@ -406,7 +419,7 @@ void compute_format(WidgetGrid & grid, ColumnWidthStrategy * column_width_strate
     uint16_t column_width_optimal[GRID_NB_COLUMNS_MAX] = { 0 };
 
     for (uint16_t row_index = 0; row_index < grid.get_nb_rows(); row_index++) {
-        for (uint16_t column_index = 0; column_index < grid.nb_columns; column_index++) {
+        for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
             Widget * w = grid.get_widget(row_index, column_index);
             if (!w) {
                 continue;
@@ -427,8 +440,8 @@ void compute_format(WidgetGrid & grid, ColumnWidthStrategy * column_width_strate
     // TODO Optiomize this
     uint16_t unsatisfied_column_count = 0;
     // min
-    uint16_t unused_width = static_cast<int16_t>(grid.cx() - grid.border * 2 * grid.nb_columns);
-    for (uint16_t column_index = 0; column_index < grid.nb_columns; column_index++) {
+    uint16_t unused_width = static_cast<int16_t>(grid.cx() - grid.border * 2 * grid.get_nb_columns());
+    for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
         column_width[column_index] = column_width_strategies[column_index].min;
         unused_width -= static_cast<int16_t>(column_width_strategies[column_index].min);
 
@@ -443,7 +456,7 @@ void compute_format(WidgetGrid & grid, ColumnWidthStrategy * column_width_strate
             break;
         }
         unsatisfied_column_count = 0;
-        for (uint16_t column_index = 0; column_index < grid.nb_columns; column_index++) {
+        for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
             uint16_t optimal_max = std::min(column_width_optimal[column_index], column_width_strategies[column_index].max);
             if (column_width[column_index] < optimal_max) {
                 uint16_t ajusted_part = std::min<uint16_t>(part, optimal_max - column_width[column_index]);
@@ -458,7 +471,7 @@ void compute_format(WidgetGrid & grid, ColumnWidthStrategy * column_width_strate
     }
     // max
     unsatisfied_column_count = 0;
-    for (uint16_t column_index = 0; column_index < grid.nb_columns; column_index++) {
+    for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
         if (column_width[column_index] < column_width_strategies[column_index].max) {
             unsatisfied_column_count++;
         }
@@ -469,7 +482,7 @@ void compute_format(WidgetGrid & grid, ColumnWidthStrategy * column_width_strate
             break;
         }
         unsatisfied_column_count = 0;
-        for (uint16_t column_index = 0; column_index < grid.nb_columns; column_index++) {
+        for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
             if (column_width[column_index] < column_width_strategies[column_index].max) {
                 uint16_t ajusted_part = std::min<uint16_t>(part, column_width_strategies[column_index].max - column_width[column_index]);
                 column_width[column_index] += ajusted_part;
@@ -491,7 +504,7 @@ void apply_format(WidgetGrid & grid, uint16_t * row_height, uint16_t * column_wi
         height += row_height[row_index] + grid.border * 2;
     }
     grid.set_wh(grid.cx(), height);
-    for (uint16_t column_index = 0; column_index < grid.nb_columns; column_index++) {
+    for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
         grid.set_column_width(column_index, column_width[column_index]);
     }
 }

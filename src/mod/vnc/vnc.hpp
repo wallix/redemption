@@ -414,16 +414,14 @@ public:
         }
 
     private:
-        BasicResult() noexcept
-          : is_ok(false)
-        {}
+        BasicResult() noexcept = default;
 
         BasicResult(T value) noexcept
           : is_ok(true)
           , value(value)
         {}
 
-        bool is_ok;
+        bool is_ok = false;
         T value;
     };
 
@@ -2452,7 +2450,7 @@ private:
     } // lib_palette_update
 
     /******************************************************************************/
-    void lib_open_clip_channel(void) {
+    void lib_open_clip_channel() {
         const CHANNELS::ChannelDef * channel = this->get_channel_by_name(channel_names::cliprdr);
 
         if (channel) {

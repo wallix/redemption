@@ -900,7 +900,7 @@ void FileToGraphic::process_windowing( InStream & stream, const RDP::AltsecDrawi
 }
 
 void FileToGraphic::process_window_information(
-    InStream & stream, const RDP::AltsecDrawingOrderHeader &, uint32_t FieldsPresentFlags)
+    InStream & stream, const RDP::AltsecDrawingOrderHeader & /*unused*/, uint32_t FieldsPresentFlags)
 {
     if (bool(this->verbose & Verbose::probe)) {
         LOG(LOG_INFO, "rdp_orders::process_window_information");
@@ -961,7 +961,7 @@ void FileToGraphic::process_window_information(
 }
 
 void FileToGraphic::process_notification_icon_information(
-    InStream & stream, const RDP::AltsecDrawingOrderHeader &, uint32_t FieldsPresentFlags)
+    InStream & stream, const RDP::AltsecDrawingOrderHeader & /*unused*/, uint32_t FieldsPresentFlags)
 {
     if (bool(this->verbose & Verbose::probe)) {
         LOG(LOG_INFO, "rdp_orders::process_notification_icon_information");
@@ -994,7 +994,7 @@ void FileToGraphic::process_notification_icon_information(
 }
 
 void FileToGraphic::process_desktop_information(
-    InStream & stream, const RDP::AltsecDrawingOrderHeader &, uint32_t FieldsPresentFlags)
+    InStream & stream, const RDP::AltsecDrawingOrderHeader & /*unused*/, uint32_t FieldsPresentFlags)
 {
     if (bool(this->verbose & Verbose::probe)) {
         LOG(LOG_INFO, "rdp_orders::process_desktop_information");

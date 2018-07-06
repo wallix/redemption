@@ -124,7 +124,7 @@ public:
 
     DeltaEncodedRectangle deltaEncodedRectangles[45] {};
 
-    static uint8_t id(void)
+    static uint8_t id()
     {
         return RDP::MULTISCRBLT;
     }

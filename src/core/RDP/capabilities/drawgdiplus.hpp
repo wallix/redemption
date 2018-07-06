@@ -153,48 +153,39 @@ enum {
 
 struct GdiPCacheEntries {
 
-    uint16_t GdipGraphicsCacheEntries;
-    uint16_t GdipBrushCacheEntries;
-    uint16_t GdipPenCacheEntries;
-    uint16_t GdipImageCacheEntries;
-    uint16_t GdipImageAttributesCacheEntries;
+    uint16_t GdipGraphicsCacheEntries{0};        // 0 by default (max 10 entries)
+    uint16_t GdipBrushCacheEntries{0};           // 0 by default (max  5 entries)
+    uint16_t GdipPenCacheEntries{0};             // 0 by default (max  5 entries)
+    uint16_t GdipImageCacheEntries{0};           // 0 by default (max 10 entries)
+    uint16_t GdipImageAttributesCacheEntries{0}; // 0 by default (max  2 entries)
 
     GdiPCacheEntries()
-    : GdipGraphicsCacheEntries(0)        // 0 by default (max 10 entries)
-    , GdipBrushCacheEntries(0)           // 0 by default (max  5 entries)
-    , GdipPenCacheEntries(0)             // 0 by default (max  5 entries)
-    , GdipImageCacheEntries(0)           // 0 by default (max 10 entries)
-    , GdipImageAttributesCacheEntries(0) // 0 by default (max  2 entries)
+
     {
     }
 };
 
 struct GdiPCacheChunkSize {
 
-    uint16_t GdipGraphicsCacheChunkSize;
-    uint16_t GdipObjectBrushCacheChunkSize;
-    uint16_t GdipObjectPenCacheChunkSize;
-    uint16_t GdipObjectImageAttributesCacheChunkSize;
+    uint16_t GdipGraphicsCacheChunkSize{0};                 // 0 by default (max  512 entries)
+    uint16_t GdipObjectBrushCacheChunkSize{0};              // 0 by default (max 2048 entries)
+    uint16_t GdipObjectPenCacheChunkSize{0};                // 0 by default (max 1024 entries)
+    uint16_t GdipObjectImageAttributesCacheChunkSize{0};    // 0 by default (max   64 entries)
 
     GdiPCacheChunkSize()
-    : GdipGraphicsCacheChunkSize(0)              // 0 by default (max  512 bytes)
-    , GdipObjectBrushCacheChunkSize(0)           // 0 by default (max 2048 bytes)
-    , GdipObjectPenCacheChunkSize(0)             // 0 by default (max 1024 bytes)
-    , GdipObjectImageAttributesCacheChunkSize(0) // 0 by default (max   64 bytes)
+
     {
     }
 };
 
 struct GdiPImageCacheProperties {
 
-    uint16_t GdipObjectImageCacheChunkSize;
-    uint16_t GdipObjectImageCacheTotalSize;
-    uint16_t GdipObjectImageCacheMaxSize;
+    uint16_t GdipObjectImageCacheChunkSize{0};              // 0 by default (max 4096 entries)
+    uint16_t GdipObjectImageCacheTotalSize{0};              // 0 by default (max  256 entries)
+    uint16_t GdipObjectImageCacheMaxSize{0};                // 0 by default (max  128  entries)
 
     GdiPImageCacheProperties()
-    : GdipObjectImageCacheChunkSize(0)  // 0 by default (max 4096 bytes)
-    , GdipObjectImageCacheTotalSize(0)  // 0 by default (max  256 chunks)
-    , GdipObjectImageCacheMaxSize(0)    // 0 by default (max  128 chunks)
+
     {
     }
 };
@@ -205,9 +196,10 @@ enum {
 
 struct DrawGdiPlusCaps : public Capability {
 
-    uint32_t drawGDIPlusSupportLevel;
-    uint32_t GdipVersion;
-    uint32_t drawGdiplusCacheLevel;
+    uint32_t drawGDIPlusSupportLevel{TS_DRAW_GDIPLUS_DEFAULT};  // from a specific list of values (see enum)
+    uint32_t GdipVersion{0}; // CS : MUST be a valid version number
+                             // SC : whatever (not used)
+    uint32_t drawGdiplusCacheLevel{TS_DRAW_GDIPLUS_CACHE_LEVEL_DEFAULT}; // from a specific list of values (see enum
 
     GdiPCacheEntries gdiPCacheEntries;
     GdiPCacheChunkSize gdiPCacheChunkSize;
@@ -216,10 +208,7 @@ struct DrawGdiPlusCaps : public Capability {
 
     DrawGdiPlusCaps()
     : Capability(CAPSTYPE_DRAWGDIPLUS, CAPLEN_DRAWGDIPLUS)
-    , drawGDIPlusSupportLevel(TS_DRAW_GDIPLUS_DEFAULT) // from a specific list of values (see enum)
-    , GdipVersion(0) // CS : MUST be a valid version number
-                     // SC : whatever (not used)
-    , drawGdiplusCacheLevel(TS_DRAW_GDIPLUS_CACHE_LEVEL_DEFAULT) // from a specific list of values (see enum)
+
     {
     }
 

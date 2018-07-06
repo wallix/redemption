@@ -49,7 +49,7 @@ namespace {
 
     static gss_OID_desc _gss_spnego_krb5_mechanism_oid_desc =
     { 9, const_cast<void *>(static_cast<const void *>("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02")) };
-}
+} // namespace // namespace
 
 
 
@@ -134,7 +134,7 @@ public:
         if (pszPrincipal && pvLogonID) {
             size_t length = strlen(pszPrincipal);
             pvLogonID->init(length + 1);
-            pvLogonID->copy(reinterpret_cast<const uint8_t *>(pszPrincipal), length);
+            pvLogonID->copy(byte_ptr_cast(pszPrincipal), length);
             pvLogonID->get_data()[length] = 0;
         }
         this->credentials = new Krb5Creds;
@@ -166,9 +166,9 @@ public:
         int size = (strlen(service_name) + 1 + strlen(server) + 1);
 
         output.value = malloc(size);
-        snprintf(reinterpret_cast<char*>(output.value), size, "%s@%s", service_name, server);
-        output.length = strlen(reinterpret_cast<const char*>(output.value)) + 1;
-        LOG(LOG_INFO, "GSS IMPORT NAME : %s", reinterpret_cast<char const *>(output.value));
+        snprintf(static_cast<char*>(output.value), size, "%s@%s", service_name, server);
+        output.length = strlen(static_cast<char*>(output.value)) + 1;
+        LOG(LOG_INFO, "GSS IMPORT NAME : %s", static_cast<char*>(output.value));
         major_status = gss_import_name(&minor_status, &output, type, name);
         free(output.value);
         if (GSS_ERROR(major_status)) {
@@ -277,7 +277,7 @@ public:
         }
         else {
             output_buffer->Buffer.init(output_tok.length);
-            output_buffer->Buffer.copy(reinterpret_cast<const uint8_t*>(output_tok.value), output_tok.length);
+            output_buffer->Buffer.copy(static_cast<uint8_t const*>(output_tok.value), output_tok.length);
         }
 
         (void) gss_release_buffer(&minor_status, &output_tok);
@@ -436,7 +436,7 @@ public:
         }
         // LOG(LOG_INFO, "GSS_WRAP outbuf length : %d", outbuf.length);
         data_buffer->Buffer.init(outbuf.length);
-        data_buffer->Buffer.copy(reinterpret_cast<const uint8_t *>(outbuf.value), outbuf.length);
+        data_buffer->Buffer.copy(static_cast<uint8_t const*>(outbuf.value), outbuf.length);
         gss_release_buffer(&minor_status, &outbuf);
 
         return SEC_E_OK;
@@ -488,7 +488,7 @@ public:
         }
         // LOG(LOG_INFO, "GSS_UNWRAP outbuf length : %d", outbuf.length);
         data_buffer->Buffer.init(outbuf.length);
-        data_buffer->Buffer.copy(reinterpret_cast<const uint8_t *>(outbuf.value), outbuf.length);
+        data_buffer->Buffer.copy(static_cast<uint8_t const*>(outbuf.value), outbuf.length);
         gss_release_buffer(&minor_status, &outbuf);
         return SEC_E_OK;
     }
@@ -528,7 +528,7 @@ public:
         	if (ms != GSS_S_COMPLETE)
                     continue;
 
-                LOG(LOG_ERR," - %s\n", reinterpret_cast<char const *>(status_string.value));
+                LOG(LOG_ERR," - %s\n", static_cast<uint8_t const*>(status_string.value));
         }
         while (ms == GSS_S_COMPLETE && msgctx);
 

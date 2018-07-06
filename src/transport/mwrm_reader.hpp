@@ -64,41 +64,26 @@ struct MetaHeader
 
 struct MetaLine
 {
-    char    filename[PATH_MAX + 1];
+    char    filename[PATH_MAX + 1] {};
     // always 0 with header.version = 1
     //@{
-    off_t   size;
-    mode_t  mode;
-    uid_t   uid;
-    gid_t   gid;
-    dev_t   dev;
-    ino_t   ino;
-    time_t  mtime;
-    time_t  ctime;
+    off_t   size {};
+    mode_t  mode {};
+    uid_t   uid {};
+    gid_t   gid {};
+    dev_t   dev {};
+    ino_t   ino {};
+    time_t  mtime {};
+    time_t  ctime {};
     //@}
-    time_t  start_time;
-    time_t  stop_time;
+    time_t  start_time {};
+    time_t  stop_time {};
     // always true with header.version = 2 and header.has_checksum = true
-    bool with_hash;
-    uint8_t hash1[MD_HASH::DIGEST_LENGTH];
-    uint8_t hash2[MD_HASH::DIGEST_LENGTH];
+    bool with_hash {};
+    uint8_t hash1[MD_HASH::DIGEST_LENGTH] {};
+    uint8_t hash2[MD_HASH::DIGEST_LENGTH] {};
 
-    MetaLine()
-    : filename{}
-    , size(0)
-    , mode(0)
-    , uid(0)
-    , gid(0)
-    , dev(0)
-    , ino(0)
-    , mtime{}
-    , ctime{}
-    , start_time{}
-    , stop_time{}
-    , with_hash(false)
-    , hash1{}
-    , hash2{}
-    {}
+    MetaLine() = default;
 };
 
 class MwrmLineReader

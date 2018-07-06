@@ -21,6 +21,7 @@
 #pragma once
 
 #include "capture/utils/drawable_image_view.hpp"
+#include "capture/ocr/extract_bars.hh"
 #include "ocr_datas_constant.hpp"
 #include "ocr_context.hpp"
 
@@ -28,6 +29,8 @@
 #include "ppocr/ocr2/filter_by_lines.hpp"
 #include "ppocr/ocr2/filter_by_font.hpp"
 #include "ppocr/ocr2/disambiguous_with_dict.hpp"
+
+#include <mln/image/image2d.hh>
 
 
 namespace rdp_ppocr {
@@ -153,7 +156,7 @@ namespace detail_ {
             --h;
         }
     }
-}
+} // namespace detail_
 
 /**
  * \return unrecognized_count
@@ -294,4 +297,4 @@ unsigned extract_text(
     return unrecognized_count;
 }
 
-}
+} // namespace rdp_ppocr

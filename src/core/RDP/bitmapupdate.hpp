@@ -189,35 +189,24 @@ enum {
 
 struct RDPBitmapData {
     // Bitmap Data (TS_BITMAP_DATA)
-    uint16_t dest_left;
-    uint16_t dest_top;
-    uint16_t dest_right;
-    uint16_t dest_bottom;
-    uint16_t width;
-    uint16_t height;
-    uint16_t bits_per_pixel;
-    uint16_t flags;
+    uint16_t dest_left{0};
+    uint16_t dest_top{0};
+    uint16_t dest_right{0};
+    uint16_t dest_bottom{0};
+    uint16_t width{0};
+    uint16_t height{0};
+    uint16_t bits_per_pixel{0};
+    uint16_t flags{0};
 
-    uint16_t bitmap_length;
+    uint16_t bitmap_length{0};
 
     // Compressed Data Header (TS_CD_HEADER)
-    uint16_t cb_comp_main_body_size;
-    uint16_t cb_scan_width;
-    uint16_t cb_uncompressed_size;
+    uint16_t cb_comp_main_body_size{0};
+    uint16_t cb_scan_width{0};
+    uint16_t cb_uncompressed_size{0};
 
     RDPBitmapData()
-    : dest_left(0)
-    , dest_top(0)
-    , dest_right(0)
-    , dest_bottom(0)
-    , width(0)
-    , height(0)
-    , bits_per_pixel(0)
-    , flags(0)
-    , bitmap_length(0)
-    , cb_comp_main_body_size(0)
-    , cb_scan_width(0)
-    , cb_uncompressed_size(0) {
+     {
     }
 
     void emit(OutStream & stream) const {

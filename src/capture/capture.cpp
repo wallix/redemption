@@ -435,7 +435,7 @@ public:
         if (this->kbd_stream.get_offset()) {
             LOG(LOG_INFO, R"x(type="KBD input" data="%.*s")x",
                 int(this->kbd_stream.get_offset()),
-                reinterpret_cast<char const *>(this->kbd_stream.get_data()));
+                char_ptr_cast(this->kbd_stream.get_data()));
             this->kbd_stream.rewind();
         }
     }
@@ -663,7 +663,7 @@ public:
         imageFrameApi, imageFrameApi.get_mutable_image_view())
     {}
 
-    void dump(void)
+    void dump()
     {
         auto const image_view = this->image_frame_api.get_mutable_image_view();
         if (this->zoom_factor == 100) {

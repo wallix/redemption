@@ -29,6 +29,7 @@
 #pragma once
 
 #include "core/RDP/gcc/data_block_type.hpp"
+#include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "core/error.hpp"
 
@@ -102,12 +103,12 @@ namespace GCC { namespace UserData {
 
 
 struct CSMonitorEx {
-    uint16_t userDataType;
-    uint16_t length;
+    uint16_t userDataType{CS_MONITOR_EX};
+    uint16_t length{0};
 
-    uint32_t flags;
-    uint32_t monitorAttributeSize;
-    uint32_t monitorCount;
+    uint32_t flags{0};
+    uint32_t monitorAttributeSize{20};
+    uint32_t monitorCount{0};
 
     enum {
         MAX_MONITOR_COUNT = 16
@@ -128,12 +129,8 @@ struct CSMonitorEx {
     } monitorAttributesArray[MAX_MONITOR_COUNT];
 
     CSMonitorEx()
-    : userDataType(CS_MONITOR_EX)
-    , length(0)
-    , flags(0)
-    , monitorAttributeSize(20) // size of the Monitor Attributes structure
-    , monitorCount(0)
-    , monitorAttributesArray() {}
+    :
+     monitorAttributesArray() {}
 
     void emit(OutStream & stream) /* TODO const*/ {
         assert((this->monitorCount > 0) && (this->monitorCount <= MAX_MONITOR_COUNT));
@@ -282,4 +279,5 @@ struct CSMonitorEx {
         LOG(LOG_INFO, "%s", buffer);
     }
 };
-}} // namespaces
+} // namespace UserData
+} // namespace GCC

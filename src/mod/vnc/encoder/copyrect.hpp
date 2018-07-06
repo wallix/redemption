@@ -22,9 +22,13 @@ h
 
 #pragma once
 
-#include "utils/log.hpp"
-#include "utils/verbose_flags.hpp"
+#include "core/buf64k.hpp"
+#include "gdi/graphic_api.hpp"
+#include "mod/vnc/encoder/encoder_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
+#include "utils/log.hpp"
+#include "utils/sugar/update_lock.hpp"
+#include "utils/verbose_flags.hpp"
 
 // 7.6.2   CopyRect Encoding
 // =========================
@@ -59,7 +63,7 @@ namespace VNC {
 //                 Data,
 //                 Exit
 //             } state;
-        
+
         public:
 //             VNCVerbose verbose;
 
@@ -69,9 +73,9 @@ namespace VNC {
 //                 , verbose(verbose)
             {
             }
-            
+
             virtual ~CopyRect(){}
-            
+
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
             EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
@@ -93,7 +97,7 @@ namespace VNC {
                 );
 
                 return EncoderState::Exit; // finished decoding
-            }           
+            }
         };
     } // namespace encoder
 } // namespace VNC

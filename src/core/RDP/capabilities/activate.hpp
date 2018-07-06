@@ -59,17 +59,13 @@ enum {
 
 
 struct ActivationCaps : public Capability {
-    uint16_t helpKeyFlag;
-    uint16_t helpKeyIndexFlag;
-    uint16_t helpExtendedKeyFlag;
-    uint16_t windowManagerKeyFlag;
+    uint16_t helpKeyFlag{0};
+    uint16_t helpKeyIndexFlag{0};
+    uint16_t helpExtendedKeyFlag{0};
+    uint16_t windowManagerKeyFlag{0};
 
     ActivationCaps()
     : Capability(CAPSTYPE_ACTIVATION, CAPLEN_ACTIVATION)
-    , helpKeyFlag(0)
-    , helpKeyIndexFlag(0)
-    , helpExtendedKeyFlag(0)
-    , windowManagerKeyFlag(0)
     {
     }
 

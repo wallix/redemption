@@ -176,7 +176,7 @@ public:
 
     void remove_mod() override {}
 
-    void new_mod(int target_module, time_t now, AuthApi &, ReportMessageApi &) override
+    void new_mod(int target_module, time_t now, AuthApi & /*unused*/, ReportMessageApi & /*unused*/) override
     {
         LOG(LOG_INFO, "new mod %d at time: %d\n", target_module, static_cast<int>(now));
         switch (target_module) {
@@ -467,7 +467,7 @@ private:
             return false;
         }
 
-        bool try_input_mouse(int device_flags, int x, int y, Keymap2 *)
+        bool try_input_mouse(int device_flags, int x, int y, Keymap2 * /*unused*/)
         {
             if (this->is_disable_by_input
              && this->get_protected_rect().contains_pt(x, y)
@@ -667,7 +667,7 @@ private:
         ModWithSocket(
             ModuleManager & mm, AuthApi & /*authentifier*/,
             const char * name, unique_fd sck, uint32_t verbose,
-            std::string * error_message, sock_mod_barrier, Args && ... mod_args)
+            std::string * error_message, sock_mod_barrier /*unused*/, Args && ... mod_args)
         : SocketTransport( name, std::move(sck)
                          , mm.ini.get<cfg::context::target_host>().c_str()
                          , mm.ini.get<cfg::context::target_port>()

@@ -21,6 +21,14 @@
 
 #pragma once
 
+#include "core/error.hpp"
+#include "utils/log.hpp"
+#include "utils/stream.hpp"
+
+#include <cstdint>
+#include <cstddef>
+
+
 namespace RDP {
 
 // [MS-RDPBCGR] - 2.2.11.1 Inclusive Rectangle (TS_RECTANGLE16)

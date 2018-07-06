@@ -199,33 +199,30 @@
 
 class RDPPolygonCB {
 public:
-    int16_t  xStart;
-    int16_t  yStart;
-    uint8_t  bRop2;
-    uint8_t  fillMode;
+    int16_t  xStart{0};
+    int16_t  yStart{0};
+    uint8_t  bRop2{0x0};
+    uint8_t  fillMode{0x00};
     RDPColor backColor;
     RDPColor foreColor;
     RDPBrush brush;
-    uint8_t  NumDeltaEntries;
+    uint8_t  NumDeltaEntries{0};
 
     struct DeltaPoint {
         int16_t xDelta;
         int16_t yDelta;
     } deltaPoints [128];
 
-    static uint8_t id(void) {
+    static uint8_t id() {
         return RDP::POLYGONCB;
     }
 
     RDPPolygonCB()
-    : xStart(0)
-    , yStart(0)
-    , bRop2(0x0)
-    , fillMode(0x00)
-    , backColor{}
+    : 
+     backColor{}
     , foreColor{}
     , brush(RDPBrush())
-    , NumDeltaEntries(0) {
+     {
         ::memset(this->deltaPoints, 0, sizeof(this->deltaPoints));
     }
 

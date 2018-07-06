@@ -235,19 +235,19 @@ private:
 
     #ifndef IN_IDE_PARSER
     template<std::size_t n, class... Ts>
-    explicit BGRPalette(std::integral_constant<std::size_t, n>, Ts... ints) noexcept
+    explicit BGRPalette(std::integral_constant<std::size_t, n> /*unused*/, Ts... ints) noexcept
     : BGRPalette(std::integral_constant<std::size_t, n*4>{}, ints..., ints..., ints..., ints...)
     {}
     #endif
 
     template<class... Ts>
-    explicit BGRPalette(std::integral_constant<std::size_t, 256>, Ts... ints) noexcept
+    explicit BGRPalette(std::integral_constant<std::size_t, 256> /*unused*/, Ts... ints) noexcept
     : palette{BGRColor(ints)...}
     {}
 
     #ifndef IN_IDE_PARSER
     template<class BGRValue, std::size_t n, class... Ts>
-    explicit BGRPalette(BGRValue const (&a)[256], std::integral_constant<std::size_t, n>, Ts... ints) noexcept
+    explicit BGRPalette(BGRValue const (&a)[256], std::integral_constant<std::size_t, n> /*unused*/, Ts... ints) noexcept
     : BGRPalette(a, std::integral_constant<std::size_t, n*4>{},
         ints...,
         (ints + sizeof...(ints))...,
@@ -258,12 +258,12 @@ private:
     #endif
 
     template<class BGRValue, class... Ts>
-    explicit BGRPalette(BGRValue const (&a)[256], std::integral_constant<std::size_t, 256>, Ts... ints) noexcept
+    explicit BGRPalette(BGRValue const (&a)[256], std::integral_constant<std::size_t, 256> /*unused*/, Ts... ints) noexcept
     : palette{BGRColor(a[ints])...}
     {}
 
     template<class Transform>
-    /*constexpr*/ BGRPalette(Transform trans, int) noexcept
+    /*constexpr*/ BGRPalette(Transform trans, int /*unused*/) noexcept
     {
         /* rgb332 palette */
         for (int bindex = 0; bindex < 4; bindex++) {
@@ -559,7 +559,7 @@ namespace shortcut_encode
     using enc15 = encode_color15;
     using enc16 = encode_color16;
     using enc24 = encode_color24;
-}
+} // namespace shortcut_encode
 
 namespace shortcut_decode_with_palette
 {
@@ -567,4 +567,4 @@ namespace shortcut_decode_with_palette
     using dec15 = decode_color15;
     using dec16 = decode_color16;
     using dec24 = decode_color24;
-}
+} // namespace shortcut_decode_with_palette

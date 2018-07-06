@@ -381,15 +381,12 @@ private:
     {
         using uint_fast = uint_fast32_t;
         static const std::size_t count = configs::VariablesAclPack::size;
-        std::array<uint_fast, (count + sizeof(uint_fast) - 1) / sizeof(uint_fast)> words;
+        std::array<uint_fast, (count + sizeof(uint_fast) - 1) / sizeof(uint_fast)> words {};
         std::array<authid_t, count> list;
-        std::size_t list_size;
+        std::size_t list_size = 0;
 
     public:
-        ToSendIndexList()
-        : words{}
-        , list_size(0)
-        {}
+        ToSendIndexList() = default;
 
         void insert(authid_t id) noexcept
         {

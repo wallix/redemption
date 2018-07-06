@@ -22,7 +22,10 @@
 
 #include "configs/autogen/enums.hpp"
 
+#include <cstdint>
+
 #include <sys/time.h>
+
 
 class ReportMessageApi;
 

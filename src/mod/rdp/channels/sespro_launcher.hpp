@@ -18,8 +18,9 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-
 #pragma once
+
+#include "core/error.hpp"
 
 #include <cstdint>
 

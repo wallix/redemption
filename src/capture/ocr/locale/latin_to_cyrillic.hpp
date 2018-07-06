@@ -35,4 +35,5 @@ private:
     std::string out_tmp;
 };
 
-} }
+} // namespace locale
+} // namespace ocr

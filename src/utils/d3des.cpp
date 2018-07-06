@@ -30,10 +30,10 @@
 
 extern "C" {
 
-static void scrunch(unsigned char *, unsigned long *);
-static void unscrun(unsigned long *, unsigned char *);
-static void desfunc(unsigned long *, unsigned long *);
-static void cookey(unsigned long *);
+static void scrunch(unsigned char * /*outof*/, unsigned long * /*into*/);
+static void unscrun(unsigned long * /*outof*/, unsigned char * /*into*/);
+static void desfunc(unsigned long * /*block*/, unsigned long * /*keys*/);
+static void cookey(unsigned long * /*raw1*/);
 
 static unsigned long KnL[32] = { 0L };
 /*

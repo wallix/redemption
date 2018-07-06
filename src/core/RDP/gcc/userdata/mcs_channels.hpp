@@ -33,4 +33,4 @@ namespace GCC {
         MCS_GLOBAL_CHANNEL   = 1003,
         MCS_USERCHANNEL_BASE = 1001
     };
-} // namespaces
+} // namespace GCC

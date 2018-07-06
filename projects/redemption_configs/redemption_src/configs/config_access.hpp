@@ -60,7 +60,7 @@ class variables
     struct Pack : Cfg... {};
 
     template<class T, accessmode Mode>
-    static constexpr accessmode mode(var<T, Mode>) {
+    static constexpr accessmode mode(var<T, Mode> /*unused*/) {
         return Mode;
     }
 

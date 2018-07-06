@@ -457,9 +457,9 @@ enum : int {
           , headerSize(9)
           , version(version)
           , size((data_length/2) + METAFILE_WORDS_HEADER_SIZE)
-          , numberOfObjects(0)
-          , maxRecord((data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2)
-          , numberOfMembers(0)                              // Not used
+          , 
+           maxRecord((data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2)
+          
         {}
 
         void emit(OutStream & stream) const {
@@ -574,11 +574,11 @@ enum : int {
 
     struct MetaSetMapMod : Record {
 
-        uint16_t mappingMode;
+        uint16_t mappingMode{0};
 
         MetaSetMapMod()
           : Record(4, MFF::META_SETMAPMODE)
-          , mappingMode(0)
+           
         {}
 
         MetaSetMapMod(const uint16_t mappingMode)
@@ -634,13 +634,12 @@ enum : int {
 
     struct MetaSetWindowExt : Record {
 
-        uint16_t height;
-        uint16_t width;
+        uint16_t height{0};
+        uint16_t width{0};
 
         MetaSetWindowExt()
           : Record(5, MFF::META_SETWINDOWEXT)
-          , height(0)
-          , width(0)
+           
         {}
 
         MetaSetWindowExt(const uint16_t height, const uint16_t width)
@@ -699,13 +698,12 @@ enum : int {
 
     struct MetaSetWindowOrg : Record {
 
-        uint16_t yOrg;
-        uint16_t xOrg;
+        uint16_t yOrg{0};
+        uint16_t xOrg{0};
 
         MetaSetWindowOrg()
           : Record(5, MFF::META_SETWINDOWORG)
-          , yOrg(0)
-          , xOrg(0)
+           
         {}
 
         MetaSetWindowOrg(const uint16_t yOrg, const uint16_t xOrg)
@@ -1007,28 +1005,20 @@ enum : int {
         // Target (variable): A variable-sized DeviceIndependentBitmap Object (section 2.2.2.9) that defines
         // image content. This object MUST be specified, even if the raster operation does not require a source.
 
-        uint32_t rasterOperation;
-        uint16_t srcHeight;
-        uint16_t srcWidth;
-        uint16_t ySrc;
-        uint16_t xSrc;
-        uint16_t destHeight;
-        uint16_t destWidth;
-        uint16_t yDest;
-        uint16_t xDest;
+        uint32_t rasterOperation{0};
+        uint16_t srcHeight{0};
+        uint16_t srcWidth{0};
+        uint16_t ySrc{0};
+        uint16_t xSrc{0};
+        uint16_t destHeight{0};
+        uint16_t destWidth{0};
+        uint16_t yDest{0};
+        uint16_t xDest{0};
 
         DibStretchBLT()
         : Record(META_DIBSTRETCHBLT_HEADER_SIZE/2, MFF::META_DIBSTRETCHBLT)
         , bitmapInfoHeader(0, 0, 0, 0)
-        , rasterOperation(0)
-        , srcHeight(0)
-        , srcWidth(0)
-        , ySrc(0)
-        , xSrc(0)
-        , destHeight(0)
-        , destWidth(0)
-        , yDest(0)
-        , xDest(0)
+         
         {}
 
         DibStretchBLT(const std::size_t data_length, const uint16_t height, const uint16_t width, const uint16_t depth, uint32_t op)

@@ -418,7 +418,7 @@ namespace detail
         StaticOutReservedStreamHelper<1024, 65536-1024> buffer_stream_orders;
         StaticOutReservedStreamHelper<1024, 65536-1024> buffer_stream_bitmaps;
     };
-}
+} // namespace detail
 
 class GraphicsUpdatePDU : private detail::GraphicsUpdatePDUBuffer, public RDPSerializer
 {

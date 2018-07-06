@@ -175,7 +175,7 @@ class RDPMem3Blt {
     RDPBrush    brush;
     uint16_t    cache_idx;
 
-    static uint8_t id(void) {
+    static uint8_t id() {
         return RDP::MEM3BLT;
     }
 

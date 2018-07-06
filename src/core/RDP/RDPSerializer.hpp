@@ -282,7 +282,7 @@ private:
     }
 
 public:
-    void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
+    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
 
     void draw(RDPOpaqueRect const & cmd_, Rect clip, gdi::ColorCtx color_ctx) override {
         //LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect");
@@ -803,6 +803,6 @@ public:
     }
 
     // TODO set_palette unimplemented
-    void set_palette(const BGRPalette&) override {}
+    void set_palette(const BGRPalette& /*unused*/) override {}
 };
 

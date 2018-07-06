@@ -54,12 +54,11 @@ enum {
 };
 
 struct FontCaps : public Capability {
-    uint16_t fontSupportFlags;
-    uint16_t pad2octets;
+    uint16_t fontSupportFlags{FONTSUPPORT_FONTLIST};
+    uint16_t pad2octets{0};
     FontCaps()
     : Capability(CAPSTYPE_FONT, CAPLEN_FONT)
-    , fontSupportFlags(FONTSUPPORT_FONTLIST)
-    , pad2octets(0)
+     
     {
     }
 

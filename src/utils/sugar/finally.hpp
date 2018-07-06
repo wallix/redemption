@@ -20,6 +20,9 @@
 
 #pragma once
 
+#include <type_traits>
+
+
 template<class F>
 struct basic_finally {
     F f;

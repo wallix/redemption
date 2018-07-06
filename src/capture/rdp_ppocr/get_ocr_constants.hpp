@@ -30,4 +30,4 @@ OcrDatasConstant const & get_ocr_constants(std::string const & directory);
 
 OcrDatasConstant const & get_ocr_constants(std::string directory, ocr::locale::LocaleId const & locale);
 
-}
+} // namespace rdp_ppocr

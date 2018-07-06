@@ -56,4 +56,4 @@ struct OcrContext
     }
 };
 
-}
+} // namespace rdp_ppocr

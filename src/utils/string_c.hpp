@@ -44,7 +44,7 @@ namespace jln
         string_c<cs...> operator ""_s () noexcept
         { return {}; }
         REDEMPTION_DIAGNOSTIC_POP
-    }
+    } // namespace literals
 
     namespace detail
     {
@@ -85,7 +85,7 @@ namespace jln
             template<char c1, char c2, char c3, char c4, char c5>
             using type = string_c<c1, c2, c3, c4, c5>;
         };
-    }
+    } // namespace detail
 
     template<unsigned long long x>
     struct ull_to_string_c
@@ -120,4 +120,4 @@ namespace jln
 
     template<class x, class y>
     using string_c_concat_t = typename string_c_concat<x, y>::type;
-}
+} // namespace jln

@@ -66,11 +66,11 @@ enum {
 };
 
 struct LargePointerCaps : public Capability {
-    uint16_t largePointerSupportFlags;
+    uint16_t largePointerSupportFlags{0}; // from a specific list of values (see enum
 
     LargePointerCaps()
     : Capability(CAPSETTYPE_LARGE_POINTER, CAPLEN_LARGE_POINTER)
-    , largePointerSupportFlags(0) // from a specific list of values (see enum)
+
     {
     }
 

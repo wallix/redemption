@@ -54,4 +54,5 @@ private:
     type_id id;
 };
 
-} }
+} // namespace locale
+} // namespace ocr

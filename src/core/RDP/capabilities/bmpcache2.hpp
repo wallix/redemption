@@ -127,24 +127,17 @@ enum {
 };
 
 struct BmpCache2Caps : public Capability {
-    uint16_t cacheFlags;
-    uint8_t pad1;
-    uint8_t numCellCaches;
-    uint32_t bitmapCache0CellInfo;
-    uint32_t bitmapCache1CellInfo;
-    uint32_t bitmapCache2CellInfo;
-    uint32_t bitmapCache3CellInfo;
-    uint32_t bitmapCache4CellInfo;
+    uint16_t cacheFlags{0};
+    uint8_t pad1{0};
+    uint8_t numCellCaches{0};
+    uint32_t bitmapCache0CellInfo{0};
+    uint32_t bitmapCache1CellInfo{0};
+    uint32_t bitmapCache2CellInfo{0};
+    uint32_t bitmapCache3CellInfo{0};
+    uint32_t bitmapCache4CellInfo{0};
     BmpCache2Caps()
     : Capability(CAPSTYPE_BITMAPCACHE_REV2, CAPLEN_BITMAPCACHE_REV2)
-    , cacheFlags(0)
-    , pad1(0)
-    , numCellCaches(0)
-    , bitmapCache0CellInfo(0)
-    , bitmapCache1CellInfo(0)
-    , bitmapCache2CellInfo(0)
-    , bitmapCache3CellInfo(0)
-    , bitmapCache4CellInfo(0)
+     
     {
     }
 

@@ -1272,7 +1272,7 @@ void compress_color_plane(uint16_t cx, uint16_t cy, OutStream & outbuffer, uint8
     //LOG(LOG_INFO, "compress_color_plane: exit");
 }
 
-}
+} // namespace
 
 void rle_compress60(ConstImageDataView const & image, OutStream & outbuffer)
 {

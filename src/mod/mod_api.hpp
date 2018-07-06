@@ -83,7 +83,7 @@ public:
 
     virtual void disconnect(time_t now) { (void)now; }
 
-    virtual void display_osd_message(std::string const &) {}
+    virtual void display_osd_message(std::string const & /*unused*/) {}
 
     virtual void move_size_widget(int16_t/* left*/, int16_t/* top*/, uint16_t/* width*/, uint16_t/* height*/) {}
 

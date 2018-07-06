@@ -20,10 +20,15 @@
    Wrapper code around zlib to compress or decompress
 */
 
-
 #pragma once
 
 #include "cxx/diagnostic.hpp"
+
+#include <vector>
+
+#include <cstdint>
+#include <cstring>
+#include <zlib.h>
 
 
 template <size_t outsize = 65536>

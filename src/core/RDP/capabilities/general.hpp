@@ -200,32 +200,21 @@ enum {
 
 
 struct GeneralCaps : public Capability {
-    uint16_t os_major;
-    uint16_t os_minor;
-    uint16_t protocolVersion;
-    uint16_t pad2octetsA;
-    uint16_t compressionType;
-    uint16_t extraflags;
-    uint16_t updateCapability;
-    uint16_t remoteUnshare;
-    uint16_t compressionLevel;
+    uint16_t os_major{OSMAJORTYPE_WINDOWS};
+    uint16_t os_minor{OSMINORTYPE_WINDOWS_NT};
+    uint16_t protocolVersion{0x200};
+    uint16_t pad2octetsA{0};
+    uint16_t compressionType{0};
+    uint16_t extraflags{0};
+    uint16_t updateCapability{0};
+    uint16_t remoteUnshare{0};
+    uint16_t compressionLevel{0};
     // default caplen stops here
-    uint8_t refreshRectSupport;
-    uint8_t suppressOutputSupport;
+    uint8_t refreshRectSupport{0};
+    uint8_t suppressOutputSupport{0};
     GeneralCaps()
     : Capability(CAPSTYPE_GENERAL, CAPLEN_GENERAL)
-    , os_major(OSMAJORTYPE_WINDOWS)
-    , os_minor(OSMINORTYPE_WINDOWS_NT)
-    , protocolVersion(0x200)
-    , pad2octetsA(0)
-    , compressionType(0)
-    , extraflags(0)
-    , updateCapability(0)
-    , remoteUnshare(0)
-    , compressionLevel(0)
-    // for clients, the two server only fields below are padding
-    , refreshRectSupport(0)
-    , suppressOutputSupport(0)
+     
     {
     }
 

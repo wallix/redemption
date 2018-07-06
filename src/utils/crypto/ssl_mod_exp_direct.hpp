@@ -22,7 +22,9 @@
 #pragma once
 
 #include <algorithm>
+#include <memory>
 #include <cassert>
+#include <cstddef>
 
 
 /**

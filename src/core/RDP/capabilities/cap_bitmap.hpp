@@ -131,34 +131,22 @@ enum {
 };
 
 struct BitmapCaps : public Capability {
-    uint16_t preferredBitsPerPixel;
-    uint16_t receive1BitPerPixel;
-    uint16_t receive4BitsPerPixel;
-    uint16_t receive8BitsPerPixel;
-    uint16_t desktopWidth;
-    uint16_t desktopHeight;
-    uint16_t pad2octets;
-    uint16_t desktopResizeFlag;
-    uint16_t bitmapCompressionFlag;
-    uint8_t  highColorFlags;
-    uint8_t  drawingFlags;
-    uint16_t multipleRectangleSupport;
-    uint16_t pad2octetsB;
+    uint16_t preferredBitsPerPixel{8};
+    uint16_t receive1BitPerPixel{1};
+    uint16_t receive4BitsPerPixel{1};
+    uint16_t receive8BitsPerPixel{1};
+    uint16_t desktopWidth{0};
+    uint16_t desktopHeight{0};
+    uint16_t pad2octets{0};
+    uint16_t desktopResizeFlag{1};
+    uint16_t bitmapCompressionFlag{1};
+    uint8_t  highColorFlags{0};
+    uint8_t  drawingFlags{0};
+    uint16_t multipleRectangleSupport{1};
+    uint16_t pad2octetsB{0};
     BitmapCaps()
     : Capability(CAPSTYPE_BITMAP, CAPLEN_BITMAP)
-    , preferredBitsPerPixel(8)
-    , receive1BitPerPixel(1)
-    , receive4BitsPerPixel(1)
-    , receive8BitsPerPixel(1)
-    , desktopWidth(0)
-    , desktopHeight(0)
-    , pad2octets(0)
-    , desktopResizeFlag(1)
-    , bitmapCompressionFlag(1)
-    , highColorFlags(0)
-    , drawingFlags(0)
-    , multipleRectangleSupport(1)
-    , pad2octetsB(0)
+     
     {
     }
 

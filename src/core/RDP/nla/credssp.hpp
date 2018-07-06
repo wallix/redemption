@@ -108,13 +108,13 @@ namespace CredSSP {
         length += BER::sizeof_contextual_tag(length);
         return length;
     }
-}
+} // namespace CredSSP // namespace CredSSP
 
 struct TSRequest final {
     /* TSRequest */
 
     /* [0] version */
-    uint32_t version;
+    uint32_t version{6};
     uint32_t use_version;
 
     /* [1] negoTokens (NegoData) */
@@ -127,19 +127,19 @@ struct TSRequest final {
     Array pubKeyAuth;
     // BStream pubKeyAuth;
     /* [4] errorCode (INTEGER OPTIONAL) */
-    uint32_t error_code;
+    uint32_t error_code{0};
     /* [5] clientNonce (OCTET STRING OPTIONAL) */
     Array clientNonce;
 
 
     TSRequest()
-        : version(6)
-        , use_version(this->version)
+        : 
+         use_version(this->version)
         , negoTokens(0)
         , authInfo(0)
         , pubKeyAuth(0)
-        , error_code(0)
-        , clientNonce(0)
+        , 
+         clientNonce(0)
     {
     }
 
@@ -364,16 +364,14 @@ struct TSRequest final {
  */
 struct TSPasswordCreds {
     uint8_t domainName[256];
-    size_t domainName_length;
+    size_t domainName_length{0};
     uint8_t userName[256];
-    size_t userName_length;
+    size_t userName_length{0};
     uint8_t password[256];
-    size_t password_length;
+    size_t password_length{0};
 
     TSPasswordCreds()
-        : domainName_length(0)
-        , userName_length(0)
-        , password_length(0)
+         
     {
 
     }
@@ -471,26 +469,18 @@ struct TSPasswordCreds {
  *
  */
 struct TSCspDataDetail {
-    uint32_t keySpec;
-    uint8_t cardName[256];
-    size_t cardName_length;
-    uint8_t readerName[256];
-    size_t readerName_length;
-    uint8_t containerName[256];
-    size_t containerName_length;
-    uint8_t cspName[256];
-    size_t cspName_length;
+    uint32_t keySpec{0};
+    uint8_t cardName[256]{};
+    size_t cardName_length{0};
+    uint8_t readerName[256]{};
+    size_t readerName_length{0};
+    uint8_t containerName[256]{};
+    size_t containerName_length{0};
+    uint8_t cspName[256]{};
+    size_t cspName_length{0};
 
     TSCspDataDetail()
-        : keySpec(0)
-        , cardName()
-        , cardName_length(0)
-        , readerName()
-        , readerName_length(0)
-        , containerName()
-        , containerName_length(0)
-        , cspName()
-        , cspName_length(0)
+         
     {
     }
 
@@ -499,14 +489,14 @@ struct TSCspDataDetail {
                     uint8_t * containerName, size_t containerName_length,
                     uint8_t * cspName, size_t cspName_length)
         : keySpec(keySpec)
-        , cardName()
-        , cardName_length(cardName_length)
-        , readerName()
-        , readerName_length(readerName_length)
-        , containerName()
-        , containerName_length(containerName_length)
-        , cspName()
-        , cspName_length(cspName_length)
+        , 
+         cardName_length(cardName_length)
+        , 
+         readerName_length(readerName_length)
+        , 
+         containerName_length(containerName_length)
+        , 
+         cspName_length(cspName_length)
     {
         this->cardName_length = (cardName_length < sizeof(this->cardName))
             ? cardName_length
@@ -674,22 +664,18 @@ struct TSCspDataDetail {
  */
 
 struct TSSmartCardCreds {
-    uint8_t pin[256];
-    size_t pin_length;
+    uint8_t pin[256]{};
+    size_t pin_length{0};
     TSCspDataDetail cspData;
-    uint8_t userHint[256];
-    size_t userHint_length;
-    uint8_t domainHint[256];
-    size_t domainHint_length;
+    uint8_t userHint[256]{};
+    size_t userHint_length{0};
+    uint8_t domainHint[256]{};
+    size_t domainHint_length{0};
 
     TSSmartCardCreds()
-        : pin()
-        , pin_length(0)
-        , cspData()
-        , userHint()
-        , userHint_length(0)
-        , domainHint()
-        , domainHint_length(0)
+        : 
+         cspData()
+         
     {
     }
 
@@ -841,13 +827,13 @@ struct TSSmartCardCreds {
  */
 struct TSCredentials
 {
-    uint32_t credType;
+    uint32_t credType{1};
     TSPasswordCreds passCreds;
     TSSmartCardCreds smartcardCreds;
     // For now, TSCredentials can only contains TSPasswordCreds (not TSSmartCardCreds)
 
     TSCredentials()
-        : credType(1)
+         
     {}
 
     TSCredentials(const uint8_t * domain, size_t domain_length, const uint8_t * user, size_t user_length, const uint8_t * pass, size_t pass_length)

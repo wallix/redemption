@@ -111,7 +111,7 @@ private:
 
 public:
     template<class Cmd>
-    static auto is_encodable_cmd_color(Cmd const &)
+    static auto is_encodable_cmd_color(Cmd const & /*unused*/)
     -> decltype(is_encodable_(1, std::declval<Cmd&>()))
     { return {}; }
 };

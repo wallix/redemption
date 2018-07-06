@@ -136,7 +136,7 @@ namespace ocr
     {
         std::vector<uint8_t> deja_vu;
         std::vector<mln::box2d> rect_deja_vu;
-        unsigned col_deja_vu;
+        unsigned col_deja_vu{0};
         unsigned bbox_min_height;
         unsigned bbox_max_height;
 
@@ -161,8 +161,7 @@ namespace ocr
     public:
         ExtractTitles(unsigned box_min_height = ocr::bbox_min_height,
                       unsigned box_max_height = ocr::bbox_max_height)
-        : col_deja_vu(0)
-        , bbox_min_height(box_min_height)
+        : bbox_min_height(box_min_height)
         , bbox_max_height(box_max_height)
         {}
 
@@ -756,4 +755,4 @@ namespace ocr
 
         return false;
     }
-}
+} // namespace ocr

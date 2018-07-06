@@ -78,11 +78,11 @@
 class RDPColCache {
 public:
     BGRPalette palette;
-    uint8_t    cacheIndex;
+    uint8_t    cacheIndex{0};
 
     RDPColCache()
       : palette(BGRPalette::classic_332())
-      , cacheIndex(0) {}
+       {}
 
     RDPColCache(uint8_t cacheIndex, const BGRPalette & palette)
         : palette(palette)

@@ -112,15 +112,13 @@ enum {
 };
 
 struct WindowListCaps : public Capability {
-    uint32_t WndSupportLevel;
-    uint8_t NumIconCaches;
-    uint16_t NumIconCacheEntries;
+    uint32_t WndSupportLevel{TS_WINDOW_LEVEL_NOT_SUPPORTED};
+    uint8_t NumIconCaches{0};
+    uint16_t NumIconCacheEntries{0};
 
     WindowListCaps()
     : Capability(CAPSTYPE_WINDOW, CAPLEN_WINDOW)
-    , WndSupportLevel(TS_WINDOW_LEVEL_NOT_SUPPORTED) // from a specific list of values (see enum)
-    , NumIconCaches(0)
-    , NumIconCacheEntries(0)
+     
     {
     }
 

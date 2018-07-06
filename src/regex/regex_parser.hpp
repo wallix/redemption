@@ -33,7 +33,7 @@ namespace re {
     class StateAccu
     {
     public:
-        unsigned num_cap;
+        unsigned num_cap = 0;
         state_list_t sts;
         std::vector<unsigned> indexes;
         typedef std::vector<std::pair<char_int, char_int> > c_range_type;
@@ -112,8 +112,7 @@ namespace re {
 
     public:
         StateAccu()
-        : num_cap(0)
-        , sts()
+        : sts()
 #ifdef RE_PARSER_POOL_STATE
         , mem(memory_list_t::allocate(nullptr))
 #endif
@@ -1036,8 +1035,7 @@ namespace re {
 #endif
     public:
         StateParser()
-        : m_root(nullptr)
-        , m_accu()
+        : m_accu()
         {
             this->m_accu.sts.reserve(32);
         }
@@ -1117,7 +1115,7 @@ namespace re {
         StateParser(const StateParser &);
         StateParser& operator=(const StateParser &);
 
-        State * m_root;
+        State * m_root = nullptr;
         StateAccu m_accu;
     };
 }

@@ -32,7 +32,7 @@
 
 namespace RDP {
 struct BitmapCachePersistentListEntry;
-}
+} // namespace RDP
 
 class BmpCachePersister
 {

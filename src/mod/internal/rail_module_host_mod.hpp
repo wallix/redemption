@@ -53,7 +53,7 @@ public:
         this->screen.clear();
     }
 
-    void notify(Widget*, notify_event_t) override
+    void notify(Widget* /*sender*/, notify_event_t /*event*/) override
     {}
 
     RailModuleHost& get_module_host();

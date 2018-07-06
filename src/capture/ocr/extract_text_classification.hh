@@ -45,7 +45,7 @@ namespace aux_ {
         }
         ima.fill_border(false);
     }
-}
+} // namespace aux_
 
 template<class ImageView>
 void image_view_to_image2d_bool(
@@ -81,4 +81,4 @@ private:
     mln::image2d<bool> ima;
 };
 
-}
+} // namespace ocr

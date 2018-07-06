@@ -27,13 +27,13 @@
 
 struct null_mod : public mod_api
 {
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *) override {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * /*keymap*/) override {
         (void)device_flags;
         (void)x;
         (void)y;
     }
 
-    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 *) override {
+    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * /*keymap*/) override {
         (void)param1;
         (void)param2;
         (void)param3;
@@ -47,14 +47,14 @@ struct null_mod : public mod_api
         (void)param2;
     }
 
-    void rdp_input_invalidate(const Rect) override {}
+    void rdp_input_invalidate(const Rect /*r*/) override {}
 
-    void refresh(const Rect) override {}
+    void refresh(const Rect /*clip*/) override {}
 
     // management of module originated event ("data received from server")
     // return non zero if module is "finished", 0 if it's still running
     // the null module never finish and accept any incoming event
-    void draw_event(time_t now, gdi::GraphicApi &) override { (void)now; }
+    void draw_event(time_t now, gdi::GraphicApi & /*drawable*/) override { (void)now; }
 
     bool is_up_and_running() override { return true; }
 

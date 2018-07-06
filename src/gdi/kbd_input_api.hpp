@@ -22,6 +22,7 @@
 #pragma once
 
 #include <sys/time.h> // timeval
+#include <cstdint>
 
 #include "utils/sugar/noncopyable.hpp"
 

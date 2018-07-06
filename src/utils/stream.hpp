@@ -28,6 +28,7 @@
 #include "utils/utf.hpp"
 #include "utils/parse.hpp"
 #include "utils/sugar/buffer_t.hpp"
+#include "utils/sugar/cast.hpp"
 
 #include <memory>
 #include <initializer_list>
@@ -59,7 +60,7 @@ public:
     }
 
     explicit InStream(char const * array, std::size_t len, std::size_t offset = 0)
-    : InStream(reinterpret_cast<uint8_t const *>(array), len, offset)
+    : InStream(byte_ptr_cast(array), len, offset)
     {
     }
 
@@ -109,7 +110,7 @@ public:
     }
 
 
-    bool check_end(void) const {
+    bool check_end() const {
         return this->p.p == this->end;
     }
 
@@ -138,63 +139,63 @@ public:
     // Generic binary Data access methods
     // =========================================================================
 
-    int8_t in_sint8(void) {
+    int8_t in_sint8() {
         assert(this->in_check_rem(1));
         return this->p.in_sint8();
     }
 
     // ---------------------------------------------------------------------------
 
-    uint8_t in_uint8(void) {
+    uint8_t in_uint8() {
         assert(this->in_check_rem(1));
         return this->p.in_uint8();
     }
 
     /* Peek a byte from stream without move <p>. */
-    uint8_t peek_uint8(void) {
+    uint8_t peek_uint8() {
         assert(this->in_check_rem(1));
         return *this->p.p;
     }
 
-    int16_t in_sint16_be(void) {
+    int16_t in_sint16_be() {
         assert(this->in_check_rem(2));
         return this->p.in_sint16_be();
     }
 
-    int16_t in_sint16_le(void) {
+    int16_t in_sint16_le() {
         assert(this->in_check_rem(2));
         return this->p.in_sint16_le();
     }
 
-    uint16_t in_uint16_le(void) {
+    uint16_t in_uint16_le() {
         assert(this->in_check_rem(2));
         return this->p.in_uint16_le();
     }
 
-    uint16_t in_uint16_be(void) {
+    uint16_t in_uint16_be() {
         assert(this->in_check_rem(2));
         return this->p.in_uint16_be();
     }
 
-    uint32_t in_uint32_le(void) {
+    uint32_t in_uint32_le() {
         assert(this->in_check_rem(4));
         return this->p.in_uint32_le();
     }
 
-    uint32_t in_uint32_be(void) {
+    uint32_t in_uint32_be() {
         assert(this->in_check_rem(4));
         return this->p.in_uint32_be();
     }
 
-    int32_t in_sint32_le(void) {
+    int32_t in_sint32_le() {
         return this->p.in_sint32_le();
     }
 
-    int32_t in_sint32_be(void) {
+    int32_t in_sint32_be() {
         return this->p.in_sint32_be();
     }
 
-    int64_t in_sint64_le(void) {
+    int64_t in_sint64_le() {
         return this->p.in_sint64_le();
     }
 
@@ -209,12 +210,12 @@ public:
         tv.tv_sec = static_cast<uint32_t>(movie_usec / 1000000LL);
     }
 
-    uint64_t in_uint64_le(void) {
+    uint64_t in_uint64_le() {
         assert(this->in_check_rem(8));
         return this->p.in_uint64_le();
     }
 
-    uint64_t in_uint64_be(void) {
+    uint64_t in_uint64_be() {
         assert(this->in_check_rem(8));
         return this->p.in_uint64_be();
     }
@@ -344,7 +345,7 @@ public:
     //    of the first byte and the 8 bits of the next byte are concatenated
     //    (the first byte containing the high-order bits) to create a 15-bit
     //    signed delta value.
-    int16_t in_DEP(void) {
+    int16_t in_DEP() {
         return this->p.in_DEP();
     }
 
@@ -391,7 +392,7 @@ public:
     }
 
     explicit OutStream(char * array, std::size_t len, std::size_t offset = 0)
-    : OutStream(reinterpret_cast<uint8_t*>(array), len, offset)
+    : OutStream(byte_ptr_cast(array), len, offset)
     {
     }
 
@@ -738,7 +739,7 @@ public:
 
     void out_unistr(const char* text)
     {
-        out_unistr(reinterpret_cast<const uint8_t*>(text));
+        out_unistr(byte_ptr_cast(text));
     }
 
     void out_date_name(const char* text, const size_t buflen)
@@ -841,7 +842,7 @@ inline array_view_const_u8 stream_to_avu8(OutStream & stream) noexcept
 
 inline array_view_const_char stream_to_avchar(OutStream & stream) noexcept
 {
-    return make_array_view(reinterpret_cast<char const*>(stream.get_data()), stream.get_offset());
+    return make_array_view(char_ptr_cast(stream.get_data()), stream.get_offset());
 }
 
 
@@ -1005,12 +1006,12 @@ struct DynamicStreamWriter
         return this->stream_size_;
     }
 
-    void operator()(std::size_t, OutStream & ostream) const {
+    void operator()(std::size_t /*unused*/, OutStream & ostream) const {
         assert(ostream.get_capacity() == this->stream_size_);
         this->apply_writer1(ostream, this->writer_, 1);
     }
 
-    void operator()(std::size_t, OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz) const {
+    void operator()(std::size_t /*unused*/, OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz) const {
         assert(ostream.get_capacity() == this->stream_size_);
         this->apply_writer2(ostream, buf, used_buf_sz, this->writer_, 1);
     }
@@ -1020,7 +1021,7 @@ struct DynamicStreamWriter
 
 private:
     template<class W>
-    auto apply_writer1(OutStream & ostream, W & writer, int) const
+    auto apply_writer1(OutStream & ostream, W & writer, int /*unused*/) const
     -> decltype(writer(ostream))
     { writer(ostream); }
 
@@ -1028,12 +1029,12 @@ private:
     void apply_writer1(OutStream & ostream, W & writer, unsigned) const;
 
     template<class W>
-    auto apply_writer2(OutStream & ostream, uint8_t *, std::size_t used_buf_sz, W & writer, int) const
+    auto apply_writer2(OutStream & ostream, uint8_t * /*unused*/, std::size_t used_buf_sz, W & writer, int /*unused*/) const
     -> decltype(writer(ostream, used_buf_sz))
     { writer(ostream, used_buf_sz); }
 
     template<class W>
-    void apply_writer2(OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz, W & writer, unsigned) const
+    void apply_writer2(OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz, W & writer, unsigned /*unused*/) const
     { writer(ostream, buf, used_buf_sz); }
 };
 
@@ -1047,23 +1048,23 @@ namespace details_ {
     /// Extract stream size of Writer
     /// @{
     template<class R, class C, class Sz, class ... Args>
-    constexpr Sz packet_size_from_mfunc(R(C::*)(Sz, OutStream &, Args...)) {
+    constexpr Sz packet_size_from_mfunc(R(C::* /*unused*/)(Sz, OutStream &, Args...)) {
         return Sz{};
     }
 
     template<class R, class C, class Sz, class ... Args>
-    constexpr Sz packet_size_from_mfunc(R(C::*)(Sz, OutStream &, Args...) const) {
+    constexpr Sz packet_size_from_mfunc(R(C::* /*unused*/)(Sz, OutStream &, Args...) const) {
         return Sz{};
     }
 
     template<class F>
-    constexpr auto packet_size_impl(F const &, std::false_type)
+    constexpr auto packet_size_impl(F const & /*unused*/, std::false_type /*unused*/)
     -> decltype(packet_size_from_mfunc(&F::operator())){
         return packet_size_from_mfunc(&F::operator());
     }
 
     template<class Writer>
-    constexpr auto packet_size_impl(Writer & writer, std::true_type)
+    constexpr auto packet_size_impl(Writer & writer, std::true_type /*unused*/)
     -> decltype(writer.packet_size()) {
         return writer.packet_size();
     }
@@ -1083,7 +1084,7 @@ namespace details_ {
     }
 
     template<class R, class Sz, class ... Args>
-    constexpr Sz packet_size(R(*)(Sz, OutStream &, Args...)) {
+    constexpr Sz packet_size(R(* /*unused*/)(Sz, OutStream &, Args...)) {
         return Sz{};
     }
     /// @}
@@ -1093,7 +1094,7 @@ namespace details_ {
     /// @{
     template<class T, class U>
     std::integral_constant<std::size_t, T::value + U::value>
-    packet_size_add(T const &, U const &) {
+    packet_size_add(T const & /*unused*/, U const & /*unused*/) {
         return {};
     }
 
@@ -1142,12 +1143,12 @@ namespace details_ {
 
 
     template<class StreamSz, class Writer>
-    auto apply_writer(StreamSz sz, OutStream & ostream, uint8_t *, std::size_t used_buf_sz, Writer & writer, int)
+    auto apply_writer(StreamSz sz, OutStream & ostream, uint8_t * /*unused*/, std::size_t used_buf_sz, Writer & writer, int /*unused*/)
     -> decltype(writer(sz, ostream, used_buf_sz))
     { writer(sz, ostream, used_buf_sz); }
 
     template<class StreamSz, class Writer>
-    void apply_writer(StreamSz sz, OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz, Writer & writer, unsigned)
+    void apply_writer(StreamSz sz, OutStream & ostream, uint8_t * buf, std::size_t used_buf_sz, Writer & writer, unsigned /*unused*/)
     { writer(sz, ostream, buf, used_buf_sz); }
 
 
@@ -1184,7 +1185,7 @@ namespace details_ {
 
     template<class DataBufSz, class HeaderBufSz, class Transport, class DataWriter, class... HeaderWriters>
     void write_packets(
-        DataBufSz data_buf_sz, HeaderBufSz header_buf_sz, std::size_t,
+        DataBufSz data_buf_sz, HeaderBufSz header_buf_sz, std::size_t /*unused*/,
         Transport & trans, DataWriter & data_writer, HeaderWriters & ... header_writers)
     {
         if (data_buf_sz + header_buf_sz < 65536) {
@@ -1202,13 +1203,13 @@ namespace details_ {
         class Transport, class DataWriter, class... HeaderWriters
     >
     void write_packets(
-        DataBufSz data_buf_sz, HeaderBufSz header_buf_sz, TotalSz,
+        DataBufSz data_buf_sz, HeaderBufSz header_buf_sz, TotalSz /*unused*/,
         Transport & trans, DataWriter & data_writer, HeaderWriters & ... header_writers)
     {
         uint8_t buf[TotalSz::value];
         write_packets_impl(data_buf_sz, header_buf_sz, buf, trans, data_writer, header_writers...);
     }
-}
+} // namespace details_
 
 
 /**

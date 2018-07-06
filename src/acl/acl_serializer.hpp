@@ -699,7 +699,7 @@ private:
                     ++m;
                     memcpy(this->key_name_buf, this->p, m - this->p);
                     this->p = m;
-                    return reinterpret_cast<char const *>(this->key_name_buf);
+                    return this->key_name_buf;
                 }
             }
             if (always_internal_copy) {

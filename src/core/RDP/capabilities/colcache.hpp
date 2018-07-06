@@ -59,12 +59,11 @@ enum {
 
 
 struct ColorCacheCaps : public Capability {
-    uint16_t colorTableCacheSize;
-    uint16_t pad2octets;
+    uint16_t colorTableCacheSize{0x0006};
+    uint16_t pad2octets{0};
     ColorCacheCaps()
     : Capability(CAPSTYPE_COLORCACHE, CAPLEN_COLORCACHE)
-    , colorTableCacheSize(0x0006)
-    , pad2octets(0)
+     
     {
     }
 
