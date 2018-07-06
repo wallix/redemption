@@ -448,7 +448,7 @@ namespace re {
             if (this->nb_capture) {
                 unsigned * reindex = this->reindex_trace;
                 bool * typefirst = this->caps_type;
-                typedef state_list_t::const_iterator state_iterator;
+                using state_iterator = state_list_t::const_iterator;
                 state_iterator stfirst = sts.end() - this->nb_capture;
                 state_iterator stlast = sts.end();
                 for (unsigned num_open; stfirst != stlast; ++stfirst, ++typefirst) {
@@ -782,7 +782,7 @@ namespace re {
         };
 
         typedef std::pair<const char *, const char *> range_t;
-        typedef std::vector<range_t> range_matches;
+        using range_matches = std::vector<range_t>;
 
         class DefaultMatchTracer
         {
@@ -1145,7 +1145,7 @@ namespace re {
                 unsigned real_count_consume;
             };
 
-            typedef StepRange * iterator;
+            using iterator = StepRange *;
 
             StepRange & next_uninitialized()
             {
@@ -1183,7 +1183,7 @@ namespace re {
 #endif
         };
 
-        typedef StepRangeList::iterator StepRangeIterator;
+        using StepRangeIterator = StepRangeList::iterator;
 
         static unsigned part_of_text_search_check(const State & st, unsigned pos, char_int c,
                                              utf8_consumer consumer,
@@ -1466,10 +1466,10 @@ namespace re {
         }
 
         template<unsigned State> struct MatchState { static const unsigned value = State; };
-        typedef MatchState<1> MatchStart;
-        typedef MatchState<2> MatchRun;
-        typedef MatchState<4> MatchFinish;
-        typedef MatchState<3> MatchImpl;
+        using MatchStart = MatchState<1>;
+        using MatchRun = MatchState<2>;
+        using MatchFinish = MatchState<4>;
+        using MatchImpl = MatchState<3>;
 
         template<typename Tracer, bool active_capture>
         unsigned match_start(const char * s, Tracer tracer, size_t * ppos,

@@ -170,12 +170,12 @@ private:
     public:
         storage_value_set & storage;
 
-        typedef typename std::allocator<T>::pointer pointer;
-        typedef typename std::allocator<T>::size_type size_type;
+        using pointer = typename std::allocator<T>::pointer;
+        using size_type = typename std::allocator<T>::size_type;
 
         template<class U>
         struct rebind {
-            typedef aligned_set_allocator<U> other;
+            using other = aligned_set_allocator<value_set<cache_element> >;
         };
 
         explicit aligned_set_allocator(storage_value_set & storage)
@@ -227,8 +227,8 @@ private:
         T * first;
         T * last;
 
-        typedef aligned_set_allocator<value_set<T> > set_allocator;
-        typedef std::less<value_set<T> > set_compare;
+        using set_allocator = aligned_set_allocator<value_set<T> >;
+        using set_compare = std::less<value_set<T> >;
         typedef std::set<value_set<T>, set_compare, set_allocator> set_type;
 
         set_type sorted_elements;
@@ -372,7 +372,7 @@ public:
     const uint8_t number_of_cache;
     const bool    use_waiting_list;
 
-    typedef Cache<cache_element> cache_;
+    using cache_ = Cache<cache_element>;
 
 private:
     const size_t size_elements;

@@ -30,7 +30,7 @@ namespace ocr
         mln::image2d<ImageValue> const & input;
 
     public:
-        typedef ImageValue value_type;
+        using value_type = ImageValue;
 
         Image2dView(mln::image2d<ImageValue> const & input_)
         : input(input_)

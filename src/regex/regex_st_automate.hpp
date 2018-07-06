@@ -55,8 +55,8 @@ namespace re {
     }
 
     typedef std::pair<const State*, unsigned> st_step_elem_t;
-    typedef std::vector<st_step_elem_t> st_step_range_list_t;
-    typedef st_step_range_list_t::iterator st_step_range_iterator_t;
+    using st_step_range_list_t = std::vector<st_step_elem_t>;
+    using st_step_range_iterator_t = st_step_range_list_t::iterator;
 
     inline bool st_exact_step(st_step_range_list_t & l1, st_step_range_list_t & l2,
                               StatesValue & stval, size_t c, utf8_consumer & consumer, unsigned count)

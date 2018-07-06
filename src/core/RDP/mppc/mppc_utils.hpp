@@ -93,7 +93,7 @@ struct rdp_mppc_enc_hash_table_manager
     const unsigned int max_undo_element;
     const unsigned int undo_element_size;
 
-    typedef uint16_t hash_type;
+    using hash_type = uint16_t;
 
     rdp_mppc_enc_hash_table_manager(unsigned int length_of_data_to_sign, unsigned int max_undo_element)
         : hash_table(nullptr)

@@ -39,7 +39,7 @@ class BmpCachePersister
 private:
     static const uint8_t CURRENT_VERSION = 1;
 
-    typedef Bitmap map_value;
+    using map_value = Bitmap;
 
     class map_key
     {

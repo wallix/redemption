@@ -32,7 +32,7 @@ inline void display_char_box(
     std::ostream & os, const mln::image2d<bool> & ima,
     const std::vector<ocr::label_attr_t> & attrs)
 {
-    typedef std::vector<ocr::label_attr_t>::const_iterator iterator;
+    using iterator = std::vector<ocr::label_attr_t>::const_iterator;
     iterator first = attrs.begin();
     iterator last = attrs.end();
     for (; first != last; ++first){

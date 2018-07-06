@@ -109,7 +109,7 @@ private:
     FilenameGenerator& operator=(FilenameGenerator const &) = delete;
 };
 
-typedef FilenameGenerator::Format FilenameFormat;
+using FilenameFormat = FilenameGenerator::Format;
 
 
 // TODO in PngCapture

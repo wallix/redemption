@@ -137,7 +137,7 @@ struct SecBuffer {
     }
 };
 
-typedef SecBuffer *PSecBuffer;
+using PSecBuffer = SecBuffer *;
 struct SecBufferDesc
 {
     unsigned long ulVersion;
@@ -561,7 +561,7 @@ enum SecPkg_Att {
 };
 
 
-typedef void (*SEC_GET_KEY_FN)(void* Arg, void* Principal, uint32_t KeyVer, void** Key, SEC_STATUS* pStatus);
+using SEC_GET_KEY_FN = void (*)(void *, void *, uint32_t, void **, SEC_STATUS *);
 typedef void* HANDLE, *PHANDLE, *LPHANDLE;
 
 struct SecurityFunctionTable

@@ -50,8 +50,8 @@ enum {
 };
 
 extern "C" {
-    typedef int get_hmac_key_prototype(uint8_t * buffer);
-    typedef int get_trace_key_prototype(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme);
+    using get_hmac_key_prototype = int (uint8_t *);
+    using get_trace_key_prototype = int (const uint8_t *, int, uint8_t *, unsigned int);
 }
 
 

@@ -28,7 +28,7 @@
 namespace re {
 
     using std::size_t;
-    typedef uint32_t char_int;
+    using char_int = uint32_t;
 
     struct utf8_char
     {

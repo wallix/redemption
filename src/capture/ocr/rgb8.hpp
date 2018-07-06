@@ -27,7 +27,7 @@ namespace ocr
     class rgb8
     {
     public:
-        typedef unsigned char value_type;
+        using value_type = unsigned char;
 
     public:
         explicit rgb8() = default;

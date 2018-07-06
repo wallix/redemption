@@ -105,7 +105,7 @@ namespace Ops {
         }
     };
 
-    typedef InvertSrc Op2_0x04; // R2_NOTCOPYPEN Pn
+    using Op2_0x04 = InvertSrc; // R2_NOTCOPYPEN Pn
 
     struct Op2_0x05 // R2_MASKPENNOT PDna
     {
@@ -115,7 +115,7 @@ namespace Ops {
         }
     };
 
-    typedef InvertTarget Op2_0x06; // R2_NOT Dn
+    using Op2_0x06 = InvertTarget; // R2_NOT Dn
 
     struct Op2_0x07 // R2_XORPEN DPx
     {
@@ -165,7 +165,7 @@ namespace Ops {
         }
     };
 
-    typedef CopySrc Op2_0x0D; // R2_COPYPEN P
+    using Op2_0x0D = CopySrc; // R2_COPYPEN P
 
     struct Op2_0x0E // R2_MERGEPENNOT PDno
     {
@@ -192,17 +192,17 @@ namespace Ops {
     };
 
 
-    typedef Op2_0x02 Op_0x05;
-    typedef InvertSrc Op_0x0F;
-    typedef Op2_0x05 Op_0x50;
-    typedef Op2_0x07 Op_0x5A;
-    typedef Op2_0x08 Op_0x5F;
-    typedef Op2_0x09 Op_0xA0;
-    typedef Op2_0x0A Op_0xA5;
-    typedef Op2_0x0C Op_0xAF;
-    typedef CopySrc Op_0xF0;
-    typedef Op2_0x0E Op_0xF5;
-    typedef Op2_0x0F Op_0xFA;
+    using Op_0x05 = Op2_0x02;
+    using Op_0x0F = InvertSrc;
+    using Op_0x50 = Op2_0x05;
+    using Op_0x5A = Op2_0x07;
+    using Op_0x5F = Op2_0x08;
+    using Op_0xA0 = Op2_0x09;
+    using Op_0xA5 = Op2_0x0A;
+    using Op_0xAF = Op2_0x0C;
+    using Op_0xF0 = CopySrc;
+    using Op_0xF5 = Op2_0x0E;
+    using Op_0xFA = Op2_0x0F;
 
     struct Op_0x11 // NOTSRCERASE DSon
     {
@@ -212,17 +212,17 @@ namespace Ops {
         }
     };
 
-    typedef Op2_0x03 Op_0x22;
-    typedef InvertSrc Op_0x33;
-    typedef Op2_0x05 Op_0x44;
-    typedef Op2_0x07 Op_0x66;
-    typedef Op2_0x08 Op_0x77;
-    typedef Op2_0x09 Op_0x88;
-    typedef Op2_0x0A Op_0x99;
-    typedef Op2_0x0C Op_0xBB;
-    typedef CopySrc Op_0xCC;
-    typedef Op2_0x0E Op_0xDD;
-    typedef Op2_0x0F Op_0xEE;
+    using Op_0x22 = Op2_0x03;
+    using Op_0x33 = InvertSrc;
+    using Op_0x44 = Op2_0x05;
+    using Op_0x66 = Op2_0x07;
+    using Op_0x77 = Op2_0x08;
+    using Op_0x88 = Op2_0x09;
+    using Op_0x99 = Op2_0x0A;
+    using Op_0xBB = Op2_0x0C;
+    using Op_0xCC = CopySrc;
+    using Op_0xDD = Op2_0x0E;
+    using Op_0xEE = Op2_0x0F;
 } // namespace Ops
 
 

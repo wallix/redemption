@@ -57,7 +57,7 @@ struct Keylayout
 
     int LCID; // Microsoft Locale ID code used for keyboard layouts
 
-    typedef int KeyLayout_t[MAX_LAYOUT_CHARS];
+    using KeyLayout_t = int[MAX_LAYOUT_CHARS];
 
     // keylayout working tables (X11 mode : begins in 8e position.)
     // Each one contains at most MAX_LAYOUT_CHARS key mappings for a given modifier keys combination
@@ -73,17 +73,17 @@ struct Keylayout
 
     char const * locale_name;
 
-    typedef struct dkk {
+    struct dkey_key_t {
         uint16_t secondKey;
         uint16_t modifiedKey;
-    } dkey_key_t;
+    };
 
-    typedef struct dk { // Struture holding a deadkey and the rules to apply to available second keys:
+    struct dkey_t {                                 // Struture holding a deadkey and the rules to apply to available second keys:
          uint32_t   uchar;                       // unicode code point
          uint8_t    extendedKeyCode;             // scancode + extended bit
          uint8_t    nbSecondKeys;                // number of second keys available for that deadkey
          dkey_key_t secondKeys[MAX_SECOND_KEYS]; // the couples second key/modified key
-    } dkey_t;
+    };
 
     //dkey_t deadkeys[MAX_DEADKEYS];
     dkey_t const * deadkeys;

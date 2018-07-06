@@ -324,8 +324,8 @@ namespace re {
     struct VectorRange
     {
         typedef std::pair<char_int, char_int> range_t;
-        typedef std::vector<range_t> container_type;
-        typedef container_type::iterator iterator;
+        using container_type = std::vector<range_t>;
+        using iterator = container_type::iterator;
 
         container_type & ranges;
 
@@ -1031,7 +1031,7 @@ namespace re {
             {}
         };
 #else
-        typedef StateDeleter Deleter;
+        using Deleter = StateDeleter;
 #endif
     public:
         StateParser()

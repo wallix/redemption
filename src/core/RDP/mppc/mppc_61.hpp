@@ -475,9 +475,9 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
 {
     static const size_t MAXIMUM_HASH_BUFFER_UNDO_ELEMENT = 256;
 
-    typedef uint32_t                                     offset_type;
-    typedef rdp_mppc_enc_hash_table_manager<offset_type> hash_table_manager;
-    typedef hash_table_manager::hash_type                hash_type;
+    using offset_type = uint32_t;
+    using hash_table_manager = rdp_mppc_enc_hash_table_manager<offset_type>;
+    using hash_type = hash_table_manager::hash_type;
 
     hash_table_manager hash_tab_mgr;
 
@@ -809,4 +809,4 @@ public:
     }
 };  // struct rdp_mppc_61_enc
 
-typedef rdp_mppc_61_enc<rdp_mppc_61_enc_hash_based_match_finder> rdp_mppc_61_enc_hash_based;
+using rdp_mppc_61_enc_hash_based = rdp_mppc_61_enc<rdp_mppc_61_enc_hash_based_match_finder>;
