@@ -69,7 +69,7 @@ namespace RDP {
         class DeletedNotificationIcons;
         class ActivelyMonitoredDesktop;
         class NonMonitoredDesktop;
-    }
+    } // namespace RAIL
 }  // namespace RDP
 
 namespace gdi {

@@ -170,7 +170,7 @@ namespace std // NOLINT(cert-dcl58-cpp)
     {
         return out << "nullptr";
     }
-}
+} // namespace std
 
 #include "utils/sugar/underlying_cast.hpp"
 

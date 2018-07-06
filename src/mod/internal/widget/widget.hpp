@@ -30,7 +30,7 @@ struct Keymap2;
 namespace gdi
 {
     class GraphicApi;
-}
+} // namespace gdi
 
 enum NotifyEventType
 {

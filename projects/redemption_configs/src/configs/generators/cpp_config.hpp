@@ -410,7 +410,7 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
     join(writer.variables_acl, "cfg::", "");
     out_varconf <<
       ">;\n"
-      "} // namespace cfg\n"
+      "} // namespace configs\n"
     ;
 }
 

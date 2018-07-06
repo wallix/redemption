@@ -75,7 +75,7 @@ namespace detail
     struct zstr_buffer_traits<T, false, true>
     : zstr_buffer_traits<typename std::underlying_type<T>::type, true, false>
     {};
-}
+} // namespace detail
 
 template<class T>
 struct zstr_buffer_traits
@@ -200,7 +200,7 @@ namespace spec_types
     template<class Ch, class Tr>
     std::basic_ostream<Ch, Tr> & operator << (std::basic_ostream<Ch, Tr> & out, directory_path const & path)
     { return out << path.to_string(); }
-}
+} // namespace spec_types
 
 
 
@@ -367,7 +367,7 @@ namespace
 
     template<class T, T val>
     using mp_to_string = typename int_to_meta_string<T, val>::type;
-}
+} // namespace
 
 constexpr parse_error no_parse_error {nullptr};
 
@@ -522,7 +522,7 @@ namespace detail
         x = val;
         return no_parse_error;
     }
-}
+} // namespace detail
 
 namespace
 {
@@ -532,7 +532,7 @@ namespace
     using min_integral = std::integral_constant<T, std::numeric_limits<T>::min()>;
     template<class T>
     using zero_integral = std::integral_constant<T, 0>;
-}
+} // namespace
 
 template<class TInt>
 typename std::enable_if<std::is_integral<TInt>::value && !std::is_same<TInt, bool>::value, parse_error>::type
@@ -566,7 +566,7 @@ namespace detail
         x.assign(value.data(), value.size());
         return no_parse_error;
     }
-}
+} // namespace detail
 
 inline parse_error parse(std::string & x, spec_type<spec_types::list<int>> /*type*/, array_view_const_char value)
 { return detail::parse_integral_list<int>(x, value); }
@@ -584,7 +584,7 @@ namespace detail
                 return to_upper(c1) == to_upper(c2);
             });
     }
-}
+} // namespace detail
 
 template<class T>
 typename std::enable_if<std::is_integral<T>::value, parse_error>::type
@@ -770,7 +770,7 @@ namespace detail
             x = new_value;
         }
     };
-}
+} // namespace detail
 
 template<class T, class Spec, class U>
 void set_value(T & x, spec_type<Spec> /*type*/, U && new_value)
@@ -780,4 +780,4 @@ template<class T, class Spec, class U, class... Ts>
 void set_value(T & x, spec_type<Spec> /*type*/, U && param1, Ts && ... other_params)
 { detail::set_value_impl<T, Spec>::impl(x, std::forward<U>(param1), std::forward<Ts>(other_params)...); }
 
-}
+} // namespace configs

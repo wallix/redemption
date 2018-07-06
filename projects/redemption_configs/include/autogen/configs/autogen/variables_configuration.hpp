@@ -4987,4 +4987,4 @@ using VariablesAclPack = Pack<
 , cfg::context::use_session_probe_to_launch_remote_program
 , cfg::context::session_probe_launch_error_message
 >;
-} // namespace cfg
+} // namespace configs

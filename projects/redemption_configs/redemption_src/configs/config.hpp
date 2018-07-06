@@ -77,7 +77,7 @@ namespace configs
     struct BufferPack<Pack<Ts...>>
     : CBuf<Ts>...
     {};
-}
+} // namespace configs
 
 // config members
 //@{
@@ -117,7 +117,7 @@ namespace configs
     {}
 
     void post_set_value(VariablesConfiguration & vars, ::cfg::internal_mod::theme const & cfg_value);
-}
+} // namespace configs
 
 
 class Inifile

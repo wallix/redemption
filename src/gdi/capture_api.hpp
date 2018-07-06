@@ -35,8 +35,8 @@ struct timeval;
 namespace RDP {
     namespace RAIL {
         class Rectangle;
-    }
-}
+    } // namespace RAIL
+} // namespace RDP
 
 namespace gdi {
 
