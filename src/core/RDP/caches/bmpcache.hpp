@@ -101,7 +101,7 @@ private:
         explicit cache_element(Bitmap const & bmp)
         : bmp(bmp)
         , stamp(0)
-         
+
         {}
 
         cache_element(cache_element const &) = delete;
@@ -175,7 +175,7 @@ private:
 
         template<class U>
         struct rebind {
-            using other = aligned_set_allocator<value_set<cache_element> >;
+            using other = aligned_set_allocator<U>;
         };
 
         explicit aligned_set_allocator(storage_value_set & storage)
