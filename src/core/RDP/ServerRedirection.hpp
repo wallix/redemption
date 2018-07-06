@@ -287,8 +287,7 @@ struct ServerRedirectionPDU {
 
     ServerRedirectionPDU()
          
-    {
-    }
+    = default;
 
     unsigned recv_field_process(InStream & stream, uint8_t* field, size_t field_size,
                                 uint32_t & field_length) {

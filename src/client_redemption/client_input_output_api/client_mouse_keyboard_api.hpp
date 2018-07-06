@@ -92,7 +92,7 @@ public:
     virtual void open_options() {}
 
     // TODO string_view
-    virtual ClientRedemptionAPI::KeyCustomDefinition get_key_info(int, std::string const&) {
+    virtual ClientRedemptionAPI::KeyCustomDefinition get_key_info(int /*unused*/, std::string const& /*unused*/) {
         return ClientRedemptionAPI::KeyCustomDefinition(0, 0, "", 0, "");
     }
 

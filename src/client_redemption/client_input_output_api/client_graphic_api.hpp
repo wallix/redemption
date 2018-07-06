@@ -20,19 +20,14 @@
 
 #pragma once
 
+#include "client_redemption/client_redemption_api.hpp"
+#include "core/RDP/RDPDrawable.hpp"
+#include "gdi/graphic_api.hpp"
 #include "utils/log.hpp"
 
 
-#include "gdi/graphic_api.hpp"
-#include "core/RDP/RDPDrawable.hpp"
-#include "client_redemption/client_redemption_api.hpp"
-
-
-
-
-
-class ClientOutputGraphicAPI {
-
+class ClientOutputGraphicAPI : public gdi::GraphicApi
+{
 public:
     ClientRedemptionAPI * drawn_client;
 
@@ -73,70 +68,37 @@ public:
 
     // replay mod
 
-    virtual void create_screen(std::string const & , std::string const & ) {}
+    virtual void create_screen(std::string const &  /*unused*/, std::string const &  /*unused*/) {}
 
-    virtual void draw_frame(int ) {}
+    virtual void draw_frame(int  /*unused*/) {}
 
 
     // remote app
 
-    virtual void create_remote_app_screen(uint32_t , int , int , int , int ) {}
+    virtual void create_remote_app_screen(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/, int  /*unused*/, int  /*unused*/) {}
 
-    virtual void move_screen(uint32_t , int , int ) {}
+    virtual void move_screen(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
 
-    virtual void set_screen_size(uint32_t , int , int ) {}
+    virtual void set_screen_size(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
 
-    virtual void set_pixmap_shift(uint32_t , int , int ) {}
+    virtual void set_pixmap_shift(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
 
-    virtual int get_visible_width(uint32_t ) {return 0;}
+    virtual int get_visible_width(uint32_t  /*unused*/) {return 0;}
 
-    virtual int get_visible_height(uint32_t ) {return 0;}
+    virtual int get_visible_height(uint32_t  /*unused*/) {return 0;}
 
-    virtual int get_mem_width(uint32_t ) {return 0;}
+    virtual int get_mem_width(uint32_t  /*unused*/) {return 0;}
 
-    virtual int get_mem_height(uint32_t ) {return 0;}
+    virtual int get_mem_height(uint32_t  /*unused*/) {return 0;}
 
-    virtual void set_mem_size(uint32_t , int , int ) {}
+    virtual void set_mem_size(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
 
-    virtual void show_screen(uint32_t ) {}
+    virtual void show_screen(uint32_t  /*unused*/) {}
 
-    virtual void dropScreen(uint32_t ) {}
+    virtual void dropScreen(uint32_t  /*unused*/) {}
 
     virtual void clear_remote_app_screen() {}
 
-
-
-
+    // TODO bpp -> gdi::Depth TODO inner GraphicApi ?
     virtual FrontAPI::ResizeResult server_resize(int width, int height, int bpp) = 0;
-
-    virtual void set_pointer(Pointer      const &) {}
-
-    virtual void draw(RDP::FrameMarker    const & cmd) = 0;
-    virtual void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) = 0;
-    virtual void draw(RDPDestBlt          const & cmd, Rect clip) = 0;
-    virtual void draw(RDPMultiDstBlt      const & cmd, Rect clip) = 0;
-    virtual void draw(RDPScrBlt           const & cmd, Rect clip) = 0;
-    virtual void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) = 0;
-    virtual void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) = 0;
-    virtual void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) = 0;
-
-    virtual void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) = 0;
-    virtual void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) = 0;
-    virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) = 0;
-
-
-
-    virtual void begin_update() {}
-    virtual void end_update() {}
 };
-
-

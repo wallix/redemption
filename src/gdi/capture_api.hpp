@@ -127,5 +127,5 @@ inline bool operator>=(CaptureApi::Microseconds const & a, CaptureApi::Microseco
     return a.count() >= b.count();
 }
 
-}
+}  // namespace gdi
 

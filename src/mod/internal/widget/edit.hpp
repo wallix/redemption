@@ -46,7 +46,7 @@ public:
                int group_id, BGRColor fgcolor, BGRColor bgcolor, BGRColor focus_color,
                Font const & font, std::size_t edit_position = -1, int xtext = 0, int ytext = 0);
 
-    WidgetEdit(WidgetEdit const &);
+    WidgetEdit(WidgetEdit const & other);
 
     ~WidgetEdit() override;
 

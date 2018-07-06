@@ -70,7 +70,7 @@ namespace RDP {
         class ActivelyMonitoredDesktop;
         class NonMonitoredDesktop;
     }
-}
+}  // namespace RDP
 
 namespace gdi {
 
@@ -240,7 +240,7 @@ inline BGRColor color_decode(const RDPColor color, Depth depth, const BGRPalette
 // in vnc copyrect we need that to clip to the whole screen
 struct GraphicApi : private noncopyable
 {
-    GraphicApi() {}
+    GraphicApi() = default;
 
     virtual ~GraphicApi() = default;
 
@@ -339,7 +339,7 @@ public:
 
 public:
     NullGraphic()
-    {}
+    = default;
 };
 
 inline gdi::GraphicApi & null_gd() noexcept
@@ -387,4 +387,4 @@ void server_draw_text(
     Rect clip
 );
 
-}
+}  // namespace gdi

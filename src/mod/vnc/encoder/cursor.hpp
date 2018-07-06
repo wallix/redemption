@@ -89,7 +89,7 @@ namespace VNC {
             {
             }
 
-            virtual ~Cursor(){}
+            virtual ~Cursor()= default;
 
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
@@ -145,5 +145,5 @@ namespace VNC {
                 return EncoderState::Exit;
             }
         };
-    } // namespace encoder
+    }  // namespace Encoder
 } // namespace VNC

@@ -447,4 +447,4 @@ inline parse_error parse(OcrVersion & x, spec_type<OcrVersion> /*type*/, array_v
     });
 }
 
-}
+} // namespace configs

@@ -288,5 +288,5 @@ namespace re {
         return new_sequence(new_string_sequence(c, count), out1);
     }
 
-}
+}  // namespace re
 

@@ -118,7 +118,7 @@ public:
 
     void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
-    void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
+    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
 
     void set_pointer(Pointer const & pointer) override
     {

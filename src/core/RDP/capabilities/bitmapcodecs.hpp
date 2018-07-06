@@ -313,15 +313,13 @@ struct NSCodecCaps {
 
     NSCodecCaps()
 
-    {
-    }
+    = default;
 };
 
 struct RFXGenCaps {
     // Super class for Codecs (REMOTEFX & NSCODEC
     RFXGenCaps()
-    {
-    }
+    = default;
 };
 
 struct RFXSrvrCaps : public RFXGenCaps {
@@ -358,8 +356,7 @@ struct RFXICap {
 //    RFXICap * icapsData;
 
     RFXICap()
-    {
-    }
+    = default;
 };
 
 struct RFXCapset {
@@ -374,8 +371,7 @@ struct RFXCapset {
     RFXICap * icapsData{nullptr};
 
     RFXCapset()
-    {
-    }
+    = default;
 };
 
 struct RFXCaps {
@@ -387,8 +383,7 @@ struct RFXCaps {
     RFXCapset * capsetsData{nullptr};
 
     RFXCaps()
-    {
-    }
+    = default;
 };
 
 struct RFXClntCaps : public RFXGenCaps {
@@ -401,8 +396,7 @@ struct RFXClntCaps : public RFXGenCaps {
 
     RFXClntCaps()
 
-    {
-    }
+    = default;
 };
 
 struct BitmapCodec {
@@ -442,8 +436,7 @@ struct BitmapCodecs {
 
     BitmapCodecs()
 
-    {
-    }
+    = default;
 };
 
 enum {

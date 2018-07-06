@@ -151,7 +151,7 @@ namespace detail
     };
 
     template <class Dst, class Src>
-    constexpr int check_int(Src const &) noexcept
+    constexpr int check_int(Src const & /*unused*/) noexcept
     {
         static_assert(std::is_integral<Src>::value || std::is_enum<Src>::value, "Argument must be an integral.");
         static_assert(std::is_integral<Dst>::value || std::is_enum<Dst>::value, "Dst must be an integral.");
@@ -159,7 +159,7 @@ namespace detail
     }
 
     template <class Dst, class Src>
-    /*c++14 constexpr*/ Dst checked_cast(type_<Dst>, Src value)
+    /*c++14 constexpr*/ Dst checked_cast(type_<Dst> /*unused*/, Src value)
     {
     #ifndef NDEBUG
         REDEMPTION_DIAGNOSTIC_PUSH
@@ -173,13 +173,13 @@ namespace detail
     }
 
     template <class Dst>
-    constexpr Dst checked_cast(type_<Dst>, Dst value)
+    constexpr Dst checked_cast(type_<Dst> /*unused*/, Dst value)
     {
         return value;
     }
 
     template <class Dst, class Src>
-    /*c++14 constexpr*/ Dst saturated_cast(type_<Dst>, Src value)
+    /*c++14 constexpr*/ Dst saturated_cast(type_<Dst> /*unused*/, Src value)
     {
         if (std::is_signed<Dst>::value == std::is_signed<Src>::value && sizeof(Dst) >= sizeof(Src)) {
             return static_cast<Dst>(value);
@@ -197,7 +197,7 @@ namespace detail
     }
 
     template <class Dst>
-    constexpr Dst saturated_cast(type_<Dst>, Dst value)
+    constexpr Dst saturated_cast(type_<Dst> /*unused*/, Dst value)
     {
         return value;
     }
@@ -222,7 +222,7 @@ namespace detail
     {
         static const bool value = true;
     };
-}
+}  // namespace detail
 
 
 template <class Dst, class Src>

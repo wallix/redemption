@@ -70,7 +70,6 @@ namespace redemption_unit_test__
                     }
                 }
                 out << " !";
-                i = 0;
             }
             else {
                 out << "\"";

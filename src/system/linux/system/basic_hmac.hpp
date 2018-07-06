@@ -143,4 +143,4 @@ public:
     }
 };
 
-}
+}  // namespace detail_

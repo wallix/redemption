@@ -281,8 +281,7 @@ public:
 
 
     CliprdrHeader()
-         {
-    }   // CliprdrHeader()
+         = default;   // CliprdrHeader()
 
     CliprdrHeader(uint16_t msgType, uint16_t msgFlags, uint32_t dataLen)
         : msgType_(msgType)
@@ -2436,7 +2435,7 @@ public:
 
 
     MetaFilePicDescriptor()  
-    {}
+    = default;
 
     void receive(InStream & chunk) {
         // Header

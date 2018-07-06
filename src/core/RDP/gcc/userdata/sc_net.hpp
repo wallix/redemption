@@ -89,8 +89,7 @@ struct SCNet {
 
     SCNet()
 
-    {
-    }
+    = default;
 
     void emit(OutStream & stream) const
     {

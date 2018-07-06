@@ -28,7 +28,7 @@
 class PartialReaderAPI {
 public:
     virtual size_t partial_read(byte_ptr buffer, size_t len) = 0;
-    virtual ~PartialReaderAPI() {}
+    virtual ~PartialReaderAPI() = default;
 };
 
 struct Buf64k

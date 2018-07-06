@@ -81,8 +81,7 @@ private:
         : dummy()
         {}
 
-        ~CompressionTransport()
-        {}
+        ~CompressionTransport() {}
     } compressors;
 
     void destruct_()

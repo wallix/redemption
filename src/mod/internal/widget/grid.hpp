@@ -110,8 +110,7 @@ public:
         assert(nb_columns <= GRID_NB_COLUMNS_MAX);
     }
 
-    ~WidgetGrid() override {
-    }
+    ~WidgetGrid() override = default;
 
     virtual void clear() {
         for (uint16_t column_index = 0; column_index < this->nb_columns; column_index++) {

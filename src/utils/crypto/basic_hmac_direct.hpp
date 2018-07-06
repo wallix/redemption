@@ -88,7 +88,7 @@ class DelayedHMAC_direct
     Ssl context;
 
 public:
-    DelayedHMAC_direct() {}
+    DelayedHMAC_direct() = default;
 
     void init(const uint8_t * const key, size_t key_len)
     {
@@ -129,4 +129,4 @@ public:
     }
 };
 
-}
+}  // namespace detail_

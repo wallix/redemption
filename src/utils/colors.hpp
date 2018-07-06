@@ -364,7 +364,7 @@ struct decode_color8
 {
     static constexpr const uint8_t bpp = 8;
 
-    constexpr decode_color8() noexcept {}
+    constexpr decode_color8() noexcept = default;
 
     BGRColor operator()(RDPColor c, BGRPalette const & palette) const noexcept
     {
@@ -377,7 +377,7 @@ struct decode_color15
 {
     static constexpr const uint8_t bpp = 15;
 
-    constexpr decode_color15() noexcept {}
+    constexpr decode_color15() noexcept = default;
 
     constexpr BGRColor operator()(RDPColor c) const noexcept
     {
@@ -394,7 +394,7 @@ struct decode_color16
 {
     static constexpr const uint8_t bpp = 16;
 
-    constexpr decode_color16() noexcept {}
+    constexpr decode_color16() noexcept = default;
 
     constexpr BGRColor operator()(RDPColor c) const noexcept
     {
@@ -411,7 +411,7 @@ struct decode_color24
 {
     static constexpr const uint8_t bpp = 24;
 
-    constexpr decode_color24() noexcept {}
+    constexpr decode_color24() noexcept = default;
 
     constexpr BGRColor operator()(RDPColor c) const noexcept
     {
@@ -471,7 +471,7 @@ struct encode_color8
 {
     static constexpr const uint8_t bpp = 8;
 
-    constexpr encode_color8() noexcept {}
+    constexpr encode_color8() noexcept = default;
 
     constexpr RDPColor operator()(BGRasRGBColor c) const noexcept {
         // bbbgggrr
@@ -487,7 +487,7 @@ struct encode_color15
 {
     static constexpr const uint8_t bpp = 15;
 
-    constexpr encode_color15() noexcept {}
+    constexpr encode_color15() noexcept = default;
 
     // rgb555
     RDPColor operator()(BGRasRGBColor c) const noexcept
@@ -508,7 +508,7 @@ struct encode_color16
 {
     static constexpr const uint8_t bpp = 16;
 
-    constexpr encode_color16() noexcept {}
+    constexpr encode_color16() noexcept = default;
 
     // rgb565
     RDPColor operator()(BGRasRGBColor c) const noexcept
@@ -529,7 +529,7 @@ struct encode_color24
 {
     static constexpr const uint8_t bpp = 24;
 
-    constexpr encode_color24() noexcept {}
+    constexpr encode_color24() noexcept = default;
 
     RDPColor operator()(BGRColor c) const noexcept
     {

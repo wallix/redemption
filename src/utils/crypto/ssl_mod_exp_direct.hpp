@@ -55,7 +55,7 @@ static inline size_t mod_exp_direct(
         Bignum(Bignum &&) = default;
         Bignum & operator = (Bignum &&) = default;
 
-        Bignum(Bignum_one, size_t max_size)
+        Bignum(Bignum_one /*unused*/, size_t max_size)
         : n{1}
         , n_max{max_size}
         , a{new uint8_t[n_max]{0}}

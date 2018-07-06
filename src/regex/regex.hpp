@@ -97,7 +97,7 @@ namespace re
         }
 
         ~Regex()
-        {}
+        = default;
 
         unsigned mark_count() const
         {
@@ -420,5 +420,5 @@ namespace re
             this->sm.display_states();
         }
     };
-}
+}  // namespace re
 

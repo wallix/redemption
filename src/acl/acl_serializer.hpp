@@ -821,14 +821,14 @@ public:
                     if (field.set(reader.get_val()) && bool(this->verbose & Verbose::variable)) {
                         const char * val         = field.c_str();
                         const char * display_val = val;
-                        if (cfg::crypto::key0::index() == authid ||
-                            cfg::crypto::key1::index() == authid ||
-                            cfg::context::password::index() == authid ||
-                            cfg::context::target_password::index() == authid ||
-                            cfg::globals::target_application_password::index() == authid ||
-                            cfg::context::auth_command_rail_exec_password::index() == authid ||
-                            (cfg::context::auth_channel_answer::index() == authid &&
-                             strcasestr(val, "password") != nullptr)
+                        if (cfg::crypto::key0::index == authid ||
+                            cfg::crypto::key1::index == authid ||
+                            cfg::context::password::index == authid ||
+                            cfg::context::target_password::index == authid ||
+                            cfg::globals::target_application_password::index == authid ||
+                            cfg::context::auth_command_rail_exec_password::index == authid ||
+                            (cfg::context::auth_channel_answer::index == authid &&
+                            strcasestr(val, "password") != nullptr)
                         ) {
                             display_val = ::get_printable_password(val, this->ini.get<cfg::debug::password>());
                         }

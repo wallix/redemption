@@ -23,10 +23,14 @@ h
 #pragma once
 
 #include "core/buf64k.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "gdi/graphic_api.hpp"
 #include "mod/vnc/encoder/encoder_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 #include "utils/log.hpp"
+#include "utils/stream.hpp"
+#include "utils/hexdump.hpp"
+#include "utils/bitmap.hpp"
 #include "utils/sugar/update_lock.hpp"
 #include "utils/verbose_flags.hpp"
 
@@ -172,7 +176,7 @@ namespace VNC {
                  this->cy_remain = this->r.cy;
             }
 
-            virtual ~Hextile(){}
+            virtual ~Hextile()= default;
 
             // return is EncoderState::Exit if the Encoder has finished working (can be reset or deleted),
             // return is EncoderState::NeedMoreData if the encoder is waiting for more data
@@ -366,5 +370,5 @@ namespace VNC {
                 return this->tile;
             }
         };
-    } // namespace encoder
+    }  // namespace Encoder
 } // namespace VNC

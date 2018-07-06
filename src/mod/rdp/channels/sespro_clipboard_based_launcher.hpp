@@ -613,7 +613,7 @@ public:
         this->cliprdr_channel = reinterpret_cast<ClipboardVirtualChannel*>(channel);
     }
 
-    void set_remote_programs_virtual_channel(BaseVirtualChannel*) override {}
+    void set_remote_programs_virtual_channel(BaseVirtualChannel* /*channel*/) override {}
 
     void set_session_probe_virtual_channel(
             BaseVirtualChannel* channel) override {
@@ -716,7 +716,7 @@ private:
                                       | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
     }
 
-    void rdp_send_scancode(long param1, long param2, long device_flags, long time, Keymap2 *) {
+    void rdp_send_scancode(long param1, long param2, long device_flags, long time, Keymap2 * /*unused*/) {
         this->mod.send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
     }
 

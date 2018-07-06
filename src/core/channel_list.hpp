@@ -67,7 +67,7 @@ namespace CHANNELS {
 
         ChannelDef()
          
-        {}
+        = default;
 
         ChannelDef(ChannelNameId name, uint32_t flags, int chanid)
         : name(name)
@@ -88,7 +88,7 @@ namespace CHANNELS {
         ChannelDef items[MAX_STATIC_VIRTUAL_CHANNELS + 2];  // + global channel + wab channel
 
     public:
-        ChannelDefArray()  {}
+        ChannelDefArray()  = default;
 
         void clear_channels()
         {

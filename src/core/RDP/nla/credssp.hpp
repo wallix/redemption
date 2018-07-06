@@ -108,7 +108,7 @@ namespace CredSSP {
         length += BER::sizeof_contextual_tag(length);
         return length;
     }
-} // namespace CredSSP // namespace CredSSP
+}  // namespace CredSSP
 
 struct TSRequest final {
     /* TSRequest */
@@ -372,9 +372,7 @@ struct TSPasswordCreds {
 
     TSPasswordCreds()
          
-    {
-
-    }
+    = default;
 
     TSPasswordCreds(const uint8_t * domain, size_t domain_length, const uint8_t * user, size_t user_length, const uint8_t * pass, size_t pass_length) {
         this->domainName_length = (domain_length < sizeof(this->domainName))
@@ -481,8 +479,7 @@ struct TSCspDataDetail {
 
     TSCspDataDetail()
          
-    {
-    }
+    = default;
 
     TSCspDataDetail(uint32_t keySpec, uint8_t * cardName, size_t cardName_length,
                     uint8_t * readerName, size_t readerName_length,
@@ -834,7 +831,7 @@ struct TSCredentials
 
     TSCredentials()
          
-    {}
+    = default;
 
     TSCredentials(const uint8_t * domain, size_t domain_length, const uint8_t * user, size_t user_length, const uint8_t * pass, size_t pass_length)
         : credType(1)

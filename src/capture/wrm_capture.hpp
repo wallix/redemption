@@ -622,8 +622,7 @@ class WrmCaptureImpl :
             return this->GraphicToFile::kbd_input(now, uchar);
         }
 
-        ~Serializer() {
-        }
+        ~Serializer() = default;
     } graphic_to_file;
 
 public:

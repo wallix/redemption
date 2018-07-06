@@ -73,7 +73,7 @@ public:
 
     uint32_t action{FrameStart};
 
-    FrameMarker()  {}
+    FrameMarker()  = default;
 
     explicit FrameMarker(uint32_t action) : action(action) {}
 

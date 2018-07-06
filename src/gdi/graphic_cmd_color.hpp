@@ -116,4 +116,4 @@ public:
     { return {}; }
 };
 
-}
+}  // namespace gdi

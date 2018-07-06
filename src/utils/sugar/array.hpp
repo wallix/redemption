@@ -55,7 +55,7 @@ namespace utils
        using std::data;
        using std::size;
 # endif
-    }
+    }  // namespace adl_barrier_
 
     namespace detail_
     {
@@ -73,7 +73,7 @@ namespace utils
         noexcept(noexcept(size(c)))
         -> decltype(size(c))
         { return size(c); }
-    }
+    }  // namespace detail_
 
     template<class C>
     constexpr auto data(C & c)
@@ -115,4 +115,4 @@ namespace utils
         using array_type = std::array<typename std::decay<T>::type, sizeof...(Ts) + 1>;
         return array_type{{std::forward<T>(value), std::forward<Ts>(values)...}};
     }
-}
+}  // namespace utils

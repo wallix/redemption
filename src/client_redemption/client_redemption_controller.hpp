@@ -83,7 +83,7 @@ public:
         }
     }
 
-    void wheelEvent(int ,  int , int delta) override {
+    void wheelEvent(int  /*unused*/,  int  /*unused*/, int delta) override {
         int flag(MOUSE_FLAG_HWHEEL);
         if (delta < 0) {
             flag = flag | MOUSE_FLAG_WHEEL_NEGATIVE;

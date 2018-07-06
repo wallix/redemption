@@ -136,49 +136,53 @@ class FakeClientOutputGraphic : public ClientOutputGraphicAPI {
 public:
     FakeClientOutputGraphic() : ClientOutputGraphicAPI(0, 0) {}
 
-    virtual void set_ErrorMsg(std::string const & movie_path) override {}
+    void set_ErrorMsg(std::string const & movie_path) override { (void)movie_path; }
 
-    virtual void dropScreen() override {}
+    void dropScreen() override {}
 
-    virtual void show_screen() override {}
+    void show_screen() override {}
 
-    virtual void reset_cache(int w,  int h) override {}
+    void reset_cache(int w,  int h) override { (void)w; (void)h; }
 
-    virtual void create_screen() override {}
+    void create_screen() override {}
 
-    virtual void closeFromScreen() override {}
+    void closeFromScreen() override {}
 
-    virtual void set_screen_size(int x, int y) override {}
+    void set_screen_size(int x, int y) override { (void)x; (void)y; }
 
-    virtual void update_screen() override {}
+    void update_screen() override {}
 
 
+    // TODO bpp -> gdi::Depth
+    FrontAPI::ResizeResult server_resize(int width, int height, int bpp) override
+    {
+        (void)width;
+        (void)height;
+        (void)bpp;
+        return FrontAPI::ResizeResult::done;
+    }
 
-    virtual FrontAPI::ResizeResult server_resize(int width, int height, int bpp) override {}
+    void draw(RDP::FrameMarker    const & /*cmd*/) override {}
+    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
+    void draw(RDPDestBlt          const & /*cmd*/, Rect /*clip*/) override {}
+    void draw(RDPMultiDstBlt      const & /*cmd*/, Rect /*clip*/) override {}
+    void draw(RDPScrBlt           const & /*cmd*/, Rect /*clip*/) override {}
+    void draw(RDP::RDPMultiScrBlt const & /*cmd*/, Rect /*clip*/) override {}
+    void draw(RDPMemBlt           const & /*cmd*/, Rect /*clip*/, Bitmap const & /*bmp*/) override {}
+    void draw(RDPBitmapData       const & /*cmd*/, Bitmap const & /*bmp*/) override {}
 
-    virtual void set_pointer(Pointer      const &) override {}
-
-    virtual void draw(RDP::FrameMarker    const & cmd) override {}
-    virtual void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
-    virtual void draw(RDPDestBlt          const & cmd, Rect clip) override {}
-    virtual void draw(RDPMultiDstBlt      const & cmd, Rect clip) override {}
-    virtual void draw(RDPScrBlt           const & cmd, Rect clip) override {}
-    virtual void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) override {}
-    virtual void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override {}
-    virtual void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) override {}
-
-    virtual void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
-    virtual void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
-    virtual void draw(RDPOpaqueRect       const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
-    virtual void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
-    virtual void draw(RDPLineTo           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
-    virtual void draw(RDPPolygonSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
-    virtual void draw(RDPPolygonCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
-    virtual void draw(RDPPolyline         const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
-    virtual void draw(RDPEllipseSC        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
-    virtual void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {}
-    virtual void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {}
-    virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override {}
+    void draw(RDPPatBlt           const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
+    void draw(RDP::RDPMultiPatBlt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
+    void draw(RDPOpaqueRect       const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
+    void draw(RDPMultiOpaqueRect  const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
+    void draw(RDPLineTo           const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
+    void draw(RDPPolygonSC        const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
+    void draw(RDPPolygonCB        const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
+    void draw(RDPPolyline         const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
+    void draw(RDPEllipseSC        const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
+    void draw(RDPEllipseCB        const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
+    void draw(RDPMem3Blt          const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}
+    void draw(RDPGlyphIndex       const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, GlyphCache const & /*gly_cache*/) override {}
 };
 
 class FakeClientInputMouseKeyboard : public ClientInputMouseKeyboardAPI {
@@ -187,10 +191,10 @@ public:
     FakeClientInputMouseKeyboard() : ClientInputMouseKeyboardAPI() {}
 
     // TODO string_view
-    void virtual keyPressEvent(const int key, std::string const& text) override {}
+    void virtual keyPressEvent(const int key, std::string const& text) override { (void)key; (void)text; }
 
     // TODO string_view
-    void virtual keyReleaseEvent(const int key, std::string const& text) override {}
+    void virtual keyReleaseEvent(const int key, std::string const& text) override { (void)key; (void)text; }
 
     virtual void init_form() override {}
     virtual void update_keylayout() override {}
@@ -249,7 +253,7 @@ public:
     using ClientRedemptionAPI::draw;
     bool must_be_stop_capture() override { return true;}
     const CHANNELS::ChannelDefArray & get_channel_list() const override { return this->channels;}
-    ResizeResult server_resize(int , int , int ) override { return ResizeResult::instant_done;}
+    ResizeResult server_resize(int  /*width*/, int  /*height*/, int  /*bpp*/) override { return ResizeResult::instant_done;}
 };
 
 

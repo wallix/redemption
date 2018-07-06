@@ -34,7 +34,7 @@ class Server
     , START_WANT_STOP // Child process terminating or main process willing server to stop
     };
 
-    virtual ~Server() {}
+    virtual ~Server() = default;
     virtual Server_status start(int sck, bool forkable) = 0;
 };
 

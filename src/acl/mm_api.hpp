@@ -43,7 +43,7 @@ public:
     bool connected{false};
 
     MMApi() = default;
-    virtual ~MMApi() {}
+    virtual ~MMApi() = default;
     virtual void remove_mod() = 0;
     virtual void new_mod(int target_module, time_t now, AuthApi &, ReportMessageApi &) = 0;
     virtual int next_module() = 0;

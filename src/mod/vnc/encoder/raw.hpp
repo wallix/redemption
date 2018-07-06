@@ -23,6 +23,7 @@ h
 #pragma once
 
 #include "core/buf64k.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "gdi/graphic_api.hpp"
 #include "mod/vnc/encoder/encoder_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
@@ -62,7 +63,7 @@ namespace VNC {
             {
             }
 
-            virtual ~Raw(){}
+            virtual ~Raw()= default;
 
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
@@ -119,5 +120,5 @@ namespace VNC {
                 }
         };
 
-    } // namespace encoder
+    }  // namespace Encoder
 } // namespace VNC

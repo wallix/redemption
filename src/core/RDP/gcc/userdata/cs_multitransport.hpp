@@ -76,8 +76,7 @@ struct CSMultiTransport {
 
     CSMultiTransport()
 
-    {
-    }
+    = default;
 
     void emit(OutStream & stream) const
     {
