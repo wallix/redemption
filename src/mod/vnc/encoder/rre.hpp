@@ -23,7 +23,9 @@ h
 #pragma once
 
 #include "core/buf64k.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "utils/log.hpp"
+#include "utils/stream.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/sugar/update_lock.hpp"

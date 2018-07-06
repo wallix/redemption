@@ -24,6 +24,7 @@
 #pragma once
 
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "utils/log.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/colors.hpp"

@@ -73,34 +73,34 @@ public:
 
     // replay mod
 
-    virtual void create_screen(std::string const & , std::string const & ) {}
+    virtual void create_screen(std::string const &  /*unused*/, std::string const &  /*unused*/) {}
 
-    virtual void draw_frame(int ) {}
+    virtual void draw_frame(int  /*unused*/) {}
 
 
     // remote app
 
-    virtual void create_remote_app_screen(uint32_t , int , int , int , int ) {}
+    virtual void create_remote_app_screen(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/, int  /*unused*/, int  /*unused*/) {}
 
-    virtual void move_screen(uint32_t , int , int ) {}
+    virtual void move_screen(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
 
-    virtual void set_screen_size(uint32_t , int , int ) {}
+    virtual void set_screen_size(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
 
-    virtual void set_pixmap_shift(uint32_t , int , int ) {}
+    virtual void set_pixmap_shift(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
 
-    virtual int get_visible_width(uint32_t ) {return 0;}
+    virtual int get_visible_width(uint32_t  /*unused*/) {return 0;}
 
-    virtual int get_visible_height(uint32_t ) {return 0;}
+    virtual int get_visible_height(uint32_t  /*unused*/) {return 0;}
 
-    virtual int get_mem_width(uint32_t ) {return 0;}
+    virtual int get_mem_width(uint32_t  /*unused*/) {return 0;}
 
-    virtual int get_mem_height(uint32_t ) {return 0;}
+    virtual int get_mem_height(uint32_t  /*unused*/) {return 0;}
 
-    virtual void set_mem_size(uint32_t , int , int ) {}
+    virtual void set_mem_size(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
 
-    virtual void show_screen(uint32_t ) {}
+    virtual void show_screen(uint32_t  /*unused*/) {}
 
-    virtual void dropScreen(uint32_t ) {}
+    virtual void dropScreen(uint32_t  /*unused*/) {}
 
     virtual void clear_remote_app_screen() {}
 
@@ -109,7 +109,7 @@ public:
 
     virtual FrontAPI::ResizeResult server_resize(int width, int height, int bpp) = 0;
 
-    virtual void set_pointer(Pointer      const &) {}
+    virtual void set_pointer(Pointer      const & /*unused*/) {}
 
     virtual void draw(RDP::FrameMarker    const & cmd) = 0;
     virtual void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) = 0;

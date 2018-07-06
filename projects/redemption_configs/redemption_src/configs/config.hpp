@@ -113,7 +113,7 @@ namespace configs
     }
 
     template<class CfgType>
-    void post_set_value(VariablesConfiguration &, CfgType const &)
+    void post_set_value(VariablesConfiguration &, CfgType const & /*x*/)
     {}
 
     void post_set_value(VariablesConfiguration & vars, ::cfg::internal_mod::theme const & cfg_value);
@@ -181,11 +181,13 @@ private:
         this->unask<T>(std::integral_constant<bool, T::is_sesman_to_proxy()>());
     }
 
-    template<class T> void insert_index(std::false_type) {}
-    template<class T> void insert_index(std::true_type) { this->to_send_index.insert(T::index()); }
+    template<class T> void insert_index(std::false_type /*disable*/) {}
+    template<class T> void insert_index(std::true_type /*enable*/)
+    { this->to_send_index.insert(T::index()); }
 
-    template<class T> void unask(std::false_type) {}
-    template<class T> void unask(std::true_type) { this->fields[T::index()].asked_ = false; }
+    template<class T> void unask(std::false_type /*disable*/) {}
+    template<class T> void unask(std::true_type /*enable*/)
+    { this->fields[T::index()].asked_ = false; }
 
     struct Buffers : configs::BufferPack<configs::VariablesAclPack> {};
 

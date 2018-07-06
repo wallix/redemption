@@ -156,10 +156,10 @@ public:
 
     virtual FrontAPI::ResizeResult server_resize(int width, int height, int bpp) override {}
 
-    virtual void set_pointer(Pointer      const &) override {}
+    virtual void set_pointer(Pointer      const & /*unused*/) override {}
 
     virtual void draw(RDP::FrameMarker    const & cmd) override {}
-    virtual void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
+    virtual void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
     virtual void draw(RDPDestBlt          const & cmd, Rect clip) override {}
     virtual void draw(RDPMultiDstBlt      const & cmd, Rect clip) override {}
     virtual void draw(RDPScrBlt           const & cmd, Rect clip) override {}
@@ -249,7 +249,7 @@ public:
     using ClientRedemptionAPI::draw;
     bool must_be_stop_capture() override { return true;}
     const CHANNELS::ChannelDefArray & get_channel_list() const override { return this->channels;}
-    ResizeResult server_resize(int , int , int ) override { return ResizeResult::instant_done;}
+    ResizeResult server_resize(int  /*width*/, int  /*height*/, int  /*bpp*/) override { return ResizeResult::instant_done;}
 };
 
 

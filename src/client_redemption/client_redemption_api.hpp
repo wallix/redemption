@@ -309,31 +309,31 @@ public:
 
     virtual void send_clipboard_format() {}
 
-    void send_to_channel( const CHANNELS::ChannelDef & , uint8_t const *
-                        , std::size_t , std::size_t , int ) override {}
+    void send_to_channel( const CHANNELS::ChannelDef &  /*channel*/, uint8_t const *
+                         /*data*/, std::size_t  /*length*/, std::size_t  /*chunk_size*/, int  /*flags*/) override {}
 
 
     // CONTROLLER
     virtual void connect() {}
-    virtual void disconnect(std::string const &, bool) {}
-    virtual void replay(const std::string &, const std::string &) {}
-    virtual bool load_replay_mod(std::string const &, std::string const &, timeval, timeval) { return false; }
-    virtual timeval reload_replay_mod(int, timeval) { return timeval{}; }
+    virtual void disconnect(std::string const & /*unused*/, bool /*unused*/) {}
+    virtual void replay(const std::string & /*unused*/, const std::string & /*unused*/) {}
+    virtual bool load_replay_mod(std::string const & /*unused*/, std::string const & /*unused*/, timeval /*unused*/, timeval /*unused*/) { return false; }
+    virtual timeval reload_replay_mod(int /*unused*/, timeval /*unused*/) { return timeval{}; }
     virtual bool is_replay_on() { return false; }
     virtual char const * get_mwrm_filename() { return ""; }
     virtual time_t get_real_time_movie_begin() { return time_t{}; }
     virtual void delete_replay_mod() {}
     virtual void callback(bool /*is_timeout*/) {}
-    virtual void draw_frame(int ) {}
+    virtual void draw_frame(int  /*unused*/) {}
     virtual void closeFromScreen() {}
     virtual void disconnexionReleased() {}
-    virtual void replay_set_pause(timeval) {}
+    virtual void replay_set_pause(timeval /*unused*/) {}
     virtual void replay_set_sync() {}
-    virtual void mouseButtonEvent(int , int , int) {}
-    virtual void wheelEvent(int ,  int , int) {}
-    virtual bool mouseMouveEvent(int , int ) {return false;}
-    virtual void send_rdp_scanCode(int, int) {}
-    virtual void send_rdp_unicode(uint16_t, uint16_t) {}
+    virtual void mouseButtonEvent(int  /*unused*/, int  /*unused*/, int /*unused*/) {}
+    virtual void wheelEvent(int  /*unused*/,  int  /*unused*/, int /*unused*/) {}
+    virtual bool mouseMouveEvent(int  /*unused*/, int  /*unused*/) {return false;}
+    virtual void send_rdp_scanCode(int /*unused*/, int /*unused*/) {}
+    virtual void send_rdp_unicode(uint16_t /*unused*/, uint16_t /*unused*/) {}
     virtual void refreshPressed() {}
     virtual void CtrlAltDelPressed() {}
     virtual void CtrlAltDelReleased() {}
@@ -351,19 +351,19 @@ public:
     virtual void setUserProfil() {}
     virtual void setCustomKeyConfig() {}
     virtual void writeCustomKeyConfig() {}
-    virtual void add_key_custom_definition(int, int, const std::string &, int, const std::string &) {}
+    virtual void add_key_custom_definition(int /*unused*/, int /*unused*/, const std::string & /*unused*/, int /*unused*/, const std::string & /*unused*/) {}
     virtual void setAccountData() {}
-    virtual void writeAccoundData(const std::string &, const std::string &, const std::string &, const int) {}
+    virtual void writeAccoundData(const std::string & /*unused*/, const std::string & /*unused*/, const std::string & /*unused*/, const int /*unused*/) {}
     virtual std::vector<IconMovieData> get_icon_movie_data() {std::vector<IconMovieData> vec; return vec;}
-    virtual void set_remoteapp_cmd_line(const std::string &) {}
+    virtual void set_remoteapp_cmd_line(const std::string & /*unused*/) {}
     virtual bool is_no_win_data() { return true; }
     virtual void deleteCurrentProtile() {}
     virtual void setDefaultConfig() {}
     virtual void writeClientInfo() {}
 
 
-    virtual time_t get_movie_time_length(char const *) { return time_t{}; }
-    virtual void instant_play_client(std::chrono::microseconds) {}
+    virtual time_t get_movie_time_length(char const * /*unused*/) { return time_t{}; }
+    virtual void instant_play_client(std::chrono::microseconds /*unused*/) {}
 
 };
 

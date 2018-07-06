@@ -39,7 +39,7 @@ public:
     : impl(new FuncImpl<typename std::decay<F>::type>{std::forward<F>(f)})
     {}
 
-    explicit ReportError(std::nullptr_t = nullptr)
+    explicit ReportError(std::nullptr_t /*nullptr*/ = nullptr)
     : impl(new NullImpl)
     {}
 

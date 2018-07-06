@@ -73,7 +73,7 @@ private:
         , r_(s.next())
         {}
 
-        iterator(splitter & s, int)
+        iterator(splitter & s, int /*unused*/)
         : splitter_(s)
         {}
 

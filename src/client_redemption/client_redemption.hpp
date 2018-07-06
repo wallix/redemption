@@ -995,7 +995,7 @@ public:
         this->clientChannelCLIPRDRManager.send_FormatListPDU();
     }
 
-    void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t , size_t chunk_size, int flags) override {
+    void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t  /*unused*/, size_t chunk_size, int flags) override {
 
         const CHANNELS::ChannelDef * mod_channel = this->cl.get_by_name(channel.name);
         if (!mod_channel) {
@@ -1068,14 +1068,14 @@ public:
         this->clientChannelRemoteAppManager.draw(cmd);
     }
 
-    void draw(const RDP::RAIL::WindowIcon            & ) override {
+    void draw(const RDP::RAIL::WindowIcon            &  /*unused*/) override {
         if (bool(this->verbose & RDPVerbose::rail_order)) {
             LOG(LOG_INFO, "RDP::RAIL::WindowIcon");
         }
 //         cmd.log(LOG_INFO);
     }
 
-    void draw(const RDP::RAIL::CachedIcon            & ) override {
+    void draw(const RDP::RAIL::CachedIcon            &  /*unused*/) override {
         if (bool(this->verbose & RDPVerbose::rail_order)) {
             LOG(LOG_INFO, "RDP::RAIL::CachedIcon");
         }
@@ -1409,7 +1409,7 @@ private:
     using no_log = std::false_type;
     using with_log = std::true_type;
 
-    void draw_impl(no_log, RDP::FrameMarker const& order)
+    void draw_impl(no_log /*unused*/, RDP::FrameMarker const& order)
     {
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");

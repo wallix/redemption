@@ -147,7 +147,7 @@ private:
     Transport::Read read_meta_line_v1(MetaLine & meta_line);
 
     enum class FileType : bool { Hash, Mwrm };
-    Transport::Read read_meta_line_v2(MetaLine & meta_line, FileType);
+    Transport::Read read_meta_line_v2(MetaLine & meta_line, FileType file_type);
 };
 
 

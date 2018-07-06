@@ -166,7 +166,7 @@ namespace std
 {
     // this is a hack...
     template<class Ch, class Tr>
-    std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & out, decltype(nullptr) const &)
+    std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & out, decltype(nullptr) const & /*nullptr*/)
     {
         return out << "nullptr";
     }
