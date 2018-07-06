@@ -357,3 +357,4 @@ namespace redemption_unit_test__
 #endif
 
 #define RED_AUTO_TEST_CASE BOOST_AUTO_TEST_CASE
+

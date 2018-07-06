@@ -5116,7 +5116,10 @@ public:
         const uint8_t * data = stream.in_uint8p(dlen);
         const uint8_t * mask = stream.in_uint8p(mlen);
 
-        Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen});
+        assert(::even_pad_length(::nbbytes(width)) == mlen / height);
+        assert(::even_pad_length(::nbbytes(width * xorBpp)) == dlen / height);
+
+        Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen}, mlen / height, dlen / height);
         this->cursors[pointer_cache_idx] = cursor;
 
         drawable.set_pointer(cursor);
@@ -5267,9 +5270,11 @@ public:
         const uint8_t * data = stream.in_uint8p(dlen);
         const uint8_t * mask = stream.in_uint8p(mlen);
 
-        Pointer cursor({width, height}, {hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor);
-        this->cursors[pointer_idx] = cursor;
+        Pointer cursor({width, height}, {hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor, mlen / height, dlen / height);
+        assert(::even_pad_length(::nbbytes(width)) == mlen / height);
+        assert(::even_pad_length(::nbbytes(width * xorBpp)) == dlen / height);
 
+        this->cursors[pointer_idx] = cursor;
 
 
         drawable.set_pointer(cursor);

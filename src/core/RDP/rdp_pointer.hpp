@@ -46,6 +46,8 @@ struct Hotspot {
     Hotspot(unsigned x, unsigned y) : x(x), y(y) {}
 };
 
+
+
 struct BasePointer {
 protected:
     CursorSize dimensions;
@@ -471,6 +473,8 @@ struct SystemDefaultPointer : public ConstPointer {
 struct PointerLoader2
 {
     CursorSize dimensions;
+    unsigned maskline_bytes;
+    unsigned xorline_bytes;
     uint8_t data_bpp;
     Hotspot hotspot;
     array_view_const_u8 data;
@@ -496,12 +500,17 @@ struct PointerLoader2
         auto mask = stream.in_uint8p(mlen);
         this->data = make_array_view(data, dlen);
         this->mask = make_array_view(mask, mlen);
+        this->maskline_bytes = mlen / height;
+        this->xorline_bytes = dlen / height;
+
     }
 };
 
 struct PointerLoader32x32
 {
     CursorSize dimensions;
+    unsigned maskline_bytes;
+    unsigned xorline_bytes;
     uint8_t data_bpp;
     Hotspot hotspot;
     array_view_const_u8 data;
@@ -509,6 +518,8 @@ struct PointerLoader32x32
 
     PointerLoader32x32(InStream & stream)
         : dimensions(32, 32)
+        , maskline_bytes(4)
+        , xorline_bytes(96)
         , data_bpp{24}
         , hotspot(0, 0)
     {
@@ -530,6 +541,10 @@ struct Pointer : public BasePointer {
 
     friend class NewPointerUpdate;
     friend class ColorPointerUpdate;
+
+    unsigned maskline_bytes = 0;
+    unsigned xorline_bytes = 0;
+
 
 // TODO: in TS_SYSTEMPOINTERATTRIBUTE, POINTER_NULL and POINTER_NORMAL are attributed specific values
 // we could directly provide these to Pointer constructor instead of defining a switch on call site (rdp.hpp)
@@ -572,29 +587,16 @@ private:
 
 public:
 
-
-    void store_data_cursor(const char * cursor, bool inverted){
-        uint8_t * tmp = this->data;
-        memset(this->mask, 0, this->dimensions.width * this->dimensions.height / 8);
-        for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
-            // COLOR: X:1 .:0 +:0 -:1
-            // MASK:  X:0 .:1 +:0 -:1
-            uint8_t v = (((cursor[i] == 'X')||(cursor[i] == '-'))^inverted) ? 0xFF : 0;
-            tmp[0] = tmp[1] = tmp[2] = v;
-            tmp += 3;
-            this->mask[i/8]|= ((cursor[i] == '.')||(cursor[i] == '-'))?(0x80 >> (i%8)):0;
-        }
-    }
-
-public:
-
-    explicit Pointer(const CursorSize d, const Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, uint8_t data_bpp, const BGRPalette & palette, bool clean_up_32_bpp_cursor, BogusLinuxCursor bogus_linux_cursor)
+    explicit Pointer(const CursorSize d, const Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, uint8_t data_bpp, const BGRPalette & palette, bool clean_up_32_bpp_cursor, BogusLinuxCursor bogus_linux_cursor, unsigned maskline_bytes, unsigned xorline_bytes)
         : BasePointer(d, hs)
+        , maskline_bytes(maskline_bytes)
+        , xorline_bytes(xorline_bytes)
     {
         auto mlen = av_and.size();
         auto dlen = av_xor.size();
         auto data = av_xor.data();
         auto mask = av_and.data();
+
 
         if (data_bpp == 1) {
             uint8_t data_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8];
@@ -656,8 +658,10 @@ public:
 
 
     Pointer(uint8_t Bpp, CursorSize d, Hotspot hs, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask,
-                   int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max)
+                   int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max, unsigned maskline_bytes, unsigned xorline_bytes)
         : BasePointer(CursorSize(32,d.height), hs)
+        , maskline_bytes(maskline_bytes)
+        , xorline_bytes(xorline_bytes)
     {
     // VNC Pointer format
     // ==================
@@ -744,8 +748,10 @@ public:
 
 
 
-    explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and)
+    explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, unsigned maskline_bytes, unsigned xorline_bytes)
         : BasePointer(d, hs)
+        , maskline_bytes(maskline_bytes)
+        , xorline_bytes(xorline_bytes)
     {
         if ((av_and.size() > this->bit_mask_size()) || (av_xor.size() > this->xor_data_size())) {
             LOG(LOG_ERR, "mod_rdp::process_color_pointer_pdu: "
@@ -765,17 +771,19 @@ public:
     }
 
     explicit Pointer(const PointerLoader2 pl)
-     : Pointer(pl.data_bpp, pl.dimensions, pl.hotspot, pl.data, pl.mask)
+     : Pointer(pl.data_bpp, pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
     {
     }
 
     explicit Pointer(const PointerLoader32x32 pl)
-     : Pointer(pl.data_bpp, pl.dimensions, pl.hotspot, pl.data, pl.mask)
+     : Pointer(pl.data_bpp, pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
     {
     }
 
-    explicit Pointer(uint8_t data_bpp, CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and)
+    explicit Pointer(uint8_t data_bpp, CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, unsigned maskline_bytes, unsigned xorline_bytes)
     : BasePointer(d, hs)
+    , maskline_bytes(maskline_bytes)
+    , xorline_bytes(xorline_bytes)
     {
         (void)data_bpp;
         if ((av_and.size() > this->bit_mask_size()) || (av_xor.size() > this->xor_data_size())) {
@@ -801,9 +809,21 @@ public:
 
     explicit Pointer(const ConstPointer & p = NullPointer{}, bool inverted  = false)
     :   BasePointer(p.get_dimensions(), p.get_hotspot())
+    , maskline_bytes(::nbbytes(p.get_dimensions().width))
+    , xorline_bytes(p.get_dimensions().width*3)
     {
         this->only_black_white = true;
-        this->store_data_cursor(p.data, inverted);
+        const char * cursor = p.data;
+        uint8_t * tmp = this->data;
+        memset(this->mask, 0, this->dimensions.width * this->dimensions.height / 8);
+        for (size_t i = 0 ; i < this->dimensions.width * this->dimensions.height ; i++) {
+            // COLOR: X:1 .:0 +:0 -:1
+            // MASK:  X:0 .:1 +:0 -:1
+            uint8_t v = (((cursor[i] == 'X')||(cursor[i] == '-'))^inverted) ? 0xFF : 0;
+            tmp[0] = tmp[1] = tmp[2] = v;
+            tmp += 3;
+            this->mask[i/8]|= ((cursor[i] == '.')||(cursor[i] == '-'))?(0x80 >> (i%8)):0;
+        }
     }
 
     void set_mask_to_FF(){
