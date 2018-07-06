@@ -52,7 +52,7 @@ public:
     {}
 
     virtual ~Transport()
-    {}
+    = default;
 
     uint32_t get_seqno() const
     { return this->seqno; }

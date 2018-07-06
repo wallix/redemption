@@ -60,8 +60,7 @@ struct CSMCSMsgChannel {
 
     CSMCSMsgChannel()
 
-    {
-    }
+    = default;
 
     void emit(OutStream & stream) const
     {

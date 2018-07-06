@@ -197,7 +197,7 @@ void Font::load_from_file(char const * file_path)
         //     "right: %d  width: %d  height: %d  data_size: %d",
         //     value, offsetx, offsety, left, display_width, right, width, height, data_size);
 
-        if (width * height > stream_buf_sz
+        if (size_t(width * height) > stream_buf_sz
          || this->data_glyphs.get() + total_data_len - data < data_size
         ) {
             LOG(LOG_ERR, "Font: error reading font file [%s at glyph %u]:"

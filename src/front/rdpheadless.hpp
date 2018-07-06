@@ -973,7 +973,7 @@ public:
     //         CLIPBOARD
     //-----------------------------
 
-    void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t , size_t chunk_size, int flags) override {
+    void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t  /*length*/, size_t chunk_size, int flags) override {
         const CHANNELS::ChannelDef * mod_channel = this->_cl.get_by_name(channel.name);
         if (!mod_channel) {
             return;
@@ -1244,7 +1244,7 @@ public:
     //       DRAW FUNCTIONS
     //-----------------------------
 
-    void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
+    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
 
     void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {

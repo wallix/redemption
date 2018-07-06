@@ -33,7 +33,7 @@ namespace detail_
 
     template<>
     struct enable_if_impl<false>;
-}
+}  // namespace detail_
 
 template<class T>
 struct is_enum_flags : std::false_type

@@ -99,7 +99,7 @@ public:
 
     RDPSaveBitmap()
      
-    {}
+    = default;
 
     RDPSaveBitmap(uint32_t SavedBitmapPosition, int16_t nLeftRect, int16_t nTopRect, int16_t nRightRect, int16_t nBottomRect, uint8_t Operation)
     : SavedBitmapPosition(SavedBitmapPosition)

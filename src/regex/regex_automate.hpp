@@ -796,10 +796,10 @@ namespace re {
             unsigned new_id(unsigned old_id) const
             { return this->sm.pop_idx_trace(old_id); }
 
-            bool open(unsigned /*idx*/, const char *, unsigned /*num_cap*/) const
+            bool open(unsigned /*idx*/, const char * /*s*/, unsigned /*num_cap*/) const
             { return true; }
 
-            bool close(unsigned /*idx*/, const char *, unsigned /*num_cap*/) const
+            bool close(unsigned /*idx*/, const char * /*s*/, unsigned /*num_cap*/) const
             { return true; }
 
             void fail(unsigned idx) const
@@ -1256,8 +1256,9 @@ namespace re {
 
         template<typename Tracer, bool exact_match, bool active_capture, bool active_part_of_text>
         unsigned step(char_int c, Tracer tracer,
-                      ExactMatch<exact_match>, ActiveCapture<active_capture>,
-                      ActivePartOfText<active_part_of_text>)
+                      ExactMatch<exact_match> /*match*/,
+                      ActiveCapture<active_capture> /*capture*/,
+                      ActivePartOfText<active_part_of_text> /*part*/)
         {
             StepRangeList & l1 = *this->pal1;
             StepRangeList & l2 = *this->pal2;
@@ -1472,7 +1473,7 @@ namespace re {
 
         template<typename Tracer, bool active_capture>
         unsigned match_start(const char * s, Tracer tracer, size_t * ppos,
-                             ActiveCapture<active_capture>)
+                             ActiveCapture<active_capture> /*capture*/)
         {
             return match_impl(s, 0, tracer, ppos,
                               ExactMatch<false>(),
@@ -1484,8 +1485,8 @@ namespace re {
 
 
         template<typename Tracer, bool active_capture, bool active_part_of_text>
-        bool match_finish(Tracer tracer, size_t * ppos, ActiveCapture<active_capture>,
-                          ActivePartOfText<active_part_of_text>)
+        bool match_finish(Tracer tracer, size_t * ppos, ActiveCapture<active_capture> /*capture*/,
+                          ActivePartOfText<active_part_of_text> /*part*/)
         {
             RE_SHOW(std::cout << ("finish") << std::endl);
             return match_impl(s, 0, tracer, ppos,
@@ -1506,8 +1507,9 @@ namespace re {
 
         template<typename Tracer, bool exact_match, bool active_capture, bool active_part_of_text>
         unsigned match_run(const char * s, unsigned step_limit, Tracer tracer, size_t * ppos,
-                           ExactMatch<exact_match>, ActiveCapture<active_capture>,
-                           ActivePartOfText<active_part_of_text>)
+                           ExactMatch<exact_match> /*match*/,
+                           ActiveCapture<active_capture> /*capture*/,
+                           ActivePartOfText<active_part_of_text> /*part*/)
         {
             return match_impl(s, step_limit, tracer, ppos,
                               ExactMatch<exact_match>(),
@@ -1519,8 +1521,9 @@ namespace re {
 
         template<typename Tracer, bool exact_match, bool active_capture, bool active_part_of_text>
         bool match(const char * s, unsigned step_limit, Tracer tracer, size_t * ppos,
-                        ExactMatch<exact_match>, ActiveCapture<active_capture>,
-                        ActivePartOfText<active_part_of_text>)
+                        ExactMatch<exact_match> /*match*/,
+                        ActiveCapture<active_capture> /*capture*/,
+                        ActivePartOfText<active_part_of_text> /*part*/)
         {
             return match_impl(s, step_limit, tracer, ppos,
                               ExactMatch<exact_match>(),
@@ -1532,8 +1535,9 @@ namespace re {
 
         template<typename Tracer, bool exact_match, bool active_capture, bool active_part_of_text, unsigned R>
         unsigned match_impl(const char * s, unsigned step_limit, Tracer tracer, size_t * ppos,
-                            ExactMatch<exact_match>, ActiveCapture<active_capture>,
-                            ActivePartOfText<active_part_of_text>, MatchState<R>)
+                            ExactMatch<exact_match> /*match*/,
+                            ActiveCapture<active_capture> /*capture*/,
+                            ActivePartOfText<active_part_of_text>, MatchState<R> /*part*/)
         {
             if (R & MatchStart::value) {
                 if (ppos) {
@@ -1768,5 +1772,5 @@ namespace re {
         const char * s;
         //END
     };
-}
+}  // namespace re
 

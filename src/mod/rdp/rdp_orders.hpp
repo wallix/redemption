@@ -294,7 +294,7 @@ private:
     }
 
     void process_window_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
-                                   , uint32_t FieldsPresentFlags, gdi::GraphicApi & gd) {
+                                    /*unused*/, uint32_t FieldsPresentFlags, gdi::GraphicApi & gd) {
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "rdp_orders::process_window_information");
         }
@@ -348,7 +348,7 @@ private:
     }
 
     void process_notification_icon_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
-                                              , uint32_t FieldsPresentFlags, gdi::GraphicApi & gd) {
+                                               /*unused*/, uint32_t FieldsPresentFlags, gdi::GraphicApi & gd) {
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "rdp_orders::process_notification_icon_information");
         }
@@ -380,7 +380,7 @@ private:
     }
 
     void process_desktop_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
-                                    , uint32_t FieldsPresentFlags, gdi::GraphicApi & gd) {
+                                     /*unused*/, uint32_t FieldsPresentFlags, gdi::GraphicApi & gd) {
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "rdp_orders::process_desktop_information");
         }

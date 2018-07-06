@@ -437,8 +437,7 @@ struct SCSecurity {
 
             PublicKeyBlob()
 
-            {
-            }
+            = default;
         } RSAPK;
 
         // wSignatureBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
@@ -456,8 +455,7 @@ struct SCSecurity {
         uint8_t wSignatureBlob[72];
 
         ServerProprietaryCertificate()
-        {
-        }
+        = default;
     } proprietaryCertificate;
 
     struct X509CertificateChain {

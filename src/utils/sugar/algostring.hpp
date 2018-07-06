@@ -115,7 +115,7 @@ namespace algostring
         }
         return {escaped_subject, subject};
     }
-}
+}  // namespace algostring
 
 inline void append_escaped_delimiters(std::string & escaped_subject, array_view_const_char subject)
 {

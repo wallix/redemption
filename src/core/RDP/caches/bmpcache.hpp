@@ -62,7 +62,7 @@ private:
         bool is_valid{false};
 
         cache_lite_element()
-        {}
+        = default;
 
         explicit cache_lite_element(const uint8_t (& sha1_)[SslSha1::DIGEST_LENGTH])
         : stamp(0)
@@ -96,7 +96,7 @@ private:
         bool cached{false};
 
         cache_element()
-        {}
+        = default;
 
         explicit cache_element(Bitmap const & bmp)
         : bmp(bmp)
@@ -130,7 +130,7 @@ private:
     public:
         storage_value_set()
 
-        {}
+        = default;
 
         template<class T>
         void update() {

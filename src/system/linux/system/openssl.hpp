@@ -63,7 +63,7 @@ namespace
         }
         return false;
     }
-}
+}  // namespace
 
 class TLSContext
 {

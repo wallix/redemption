@@ -210,28 +210,34 @@ template<class> struct cfg_s_type {};
 //@{
 
 inline array_view_const_char assign_zbuf_from_cfg(
-    zstr_buffer_from<std::string> &,
-    cfg_s_type<std::string>,
+    zstr_buffer_from<std::string> & /*buf*/,
+    cfg_s_type<std::string> /*type*/,
     std::string const & str
 ) { return {str.c_str(), str.size()}; }
 
 inline array_view_const_char assign_zbuf_from_cfg(
-    zstr_buffer_from<std::string> &,
-    cfg_s_type<spec_types::list<std::string>>,
+    zstr_buffer_from<std::string> & /*buf*/,
+    cfg_s_type<spec_types::list<std::string>> /*type*/,
     std::string const & str
 ) { return {str.c_str(), str.size()}; }
 
 template<std::size_t N>
-array_view_const_char assign_zbuf_from_cfg(zstr_buffer_from<char[N]> &, cfg_s_type<char[N]>,  char const (&s)[N])
+array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<char[N]> & /*buf*/,
+    cfg_s_type<char[N]> /*type*/,
+    char const (&s)[N])
 { return {s, strlen(s)}; }
 
-inline array_view_const_char assign_zbuf_from_cfg(zstr_buffer_from<bool>&, cfg_s_type<bool>, bool x)
+inline array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<bool> & /*type*/,
+    cfg_s_type<bool> /*type*/,
+    bool x)
 { return x ? cstr_array_view("True") : cstr_array_view("False"); }
 
 template<std::size_t N>
 array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<std::array<unsigned char, N>> & buf,
-    cfg_s_type<spec_types::fixed_binary>,
+    cfg_s_type<spec_types::fixed_binary> /*type*/,
     std::array<unsigned char, N> const & arr
 ) {
     char * p = buf.get();
@@ -249,13 +255,13 @@ template<class T,
     spec_types::underlying_type_for_range_t<T> max>
 array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<T> & zbuf,
-    cfg_s_type<spec_types::range<T, min, max>>,
+    cfg_s_type<spec_types::range<T, min, max>> /*type*/,
     T const & rng
 ) { return assign_zbuf_from_cfg(zbuf, cfg_s_type<T>{}, rng); }
 
 template<class TInt>
 typename std::enable_if<std::is_integral<TInt>::value, array_view_const_char>::type
-assign_zbuf_from_cfg(zstr_buffer_from<TInt> & buf, cfg_s_type<TInt>, TInt const & x)
+assign_zbuf_from_cfg(zstr_buffer_from<TInt> & buf, cfg_s_type<TInt> /*type*/, TInt const & x)
 {
     int sz = (std::is_signed<TInt>::value)
         ? snprintf(buf.get(), buf.size(), "%lld", static_cast<long long>(x))
@@ -265,7 +271,7 @@ assign_zbuf_from_cfg(zstr_buffer_from<TInt> & buf, cfg_s_type<TInt>, TInt const 
 
 template<class E>
 typename std::enable_if<std::is_enum<E>::value, array_view_const_char>::type
-assign_zbuf_from_cfg(zstr_buffer_from<E> & buf, cfg_s_type<E>, E const & x)
+assign_zbuf_from_cfg(zstr_buffer_from<E> & buf, cfg_s_type<E> /*type*/, E const & x)
 {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
     return array_view_const_char(buf.get(), sz);
@@ -275,7 +281,7 @@ assign_zbuf_from_cfg(zstr_buffer_from<E> & buf, cfg_s_type<E>, E const & x)
 template<class T, class Ratio>
 array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<std::chrono::duration<T, Ratio>> & buf,
-    cfg_s_type<std::chrono::duration<T, Ratio>>,
+    cfg_s_type<std::chrono::duration<T, Ratio>> /*type*/,
     std::chrono::duration<T, Ratio> const & x
 ) {
     int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x.count()));
@@ -365,14 +371,14 @@ namespace
 
 constexpr parse_error no_parse_error {nullptr};
 
-inline parse_error parse(std::string & x, spec_type<std::string>, array_view_const_char value)
+inline parse_error parse(std::string & x, spec_type<std::string> /*type*/, array_view_const_char value)
 {
     x.assign(value.data(), value.size());
     return no_parse_error;
 }
 
 template<std::size_t N>
-parse_error parse(char (&x)[N], spec_type<char[N]>, array_view_const_char value)
+parse_error parse(char (&x)[N], spec_type<char[N]> /*type*/, array_view_const_char value)
 {
     if (value.size() >= N-1) {
         return parse_error{"out of bounds, limits is "_mp_str + mp_to_string<long, N-1>()};
@@ -383,7 +389,7 @@ parse_error parse(char (&x)[N], spec_type<char[N]>, array_view_const_char value)
 }
 
 template<std::size_t N>
-parse_error parse(char (&x)[N], spec_type<spec_types::fixed_string>, array_view_const_char value)
+parse_error parse(char (&x)[N], spec_type<spec_types::fixed_string> /*type*/, array_view_const_char value)
 {
     if (value.size() >= N) {
         return parse_error{"out of bounds, limits is "_mp_str + mp_to_string<long, N>()};
@@ -396,7 +402,7 @@ parse_error parse(char (&x)[N], spec_type<spec_types::fixed_string>, array_view_
 template<std::size_t N>
 parse_error parse(
     std::array<unsigned char, N> & key,
-    spec_type<spec_types::fixed_binary>,
+    spec_type<spec_types::fixed_binary> /*type*/,
     array_view_const_char value
 ) {
     if (value.size() != N*2) {
@@ -417,7 +423,7 @@ parse_error parse(
     return no_parse_error;
 }
 
-inline parse_error parse(std::string & x, spec_type<spec_types::list<std::string>>, array_view_const_char value)
+inline parse_error parse(std::string & x, spec_type<spec_types::list<std::string>> /*type*/, array_view_const_char value)
 {
     x.assign(value.data(), value.size());
     return no_parse_error;
@@ -425,7 +431,7 @@ inline parse_error parse(std::string & x, spec_type<spec_types::list<std::string
 
 inline parse_error parse(
     spec_types::directory_path & x,
-    spec_type<spec_types::directory_path>,
+    spec_type<spec_types::directory_path> /*type*/,
     array_view_const_char value
 ) {
     x = std::string(value.data(), value.size());
@@ -437,7 +443,7 @@ template<class T,
     spec_types::underlying_type_for_range_t<T> max>
 parse_error parse(
     T & x,
-    spec_type<spec_types::range<T, min, max>>,
+    spec_type<spec_types::range<T, min, max>> /*type*/,
     array_view_const_char value
 ) {
     using Int = spec_types::underlying_type_for_range_t<T>;
@@ -530,13 +536,13 @@ namespace
 
 template<class TInt>
 typename std::enable_if<std::is_integral<TInt>::value && !std::is_same<TInt, bool>::value, parse_error>::type
-parse(TInt & x, spec_type<TInt>, array_view_const_char value)
+parse(TInt & x, spec_type<TInt> /*type*/, array_view_const_char value)
 { return detail::parse_integral(x, value, min_integral<TInt>(), max_integral<TInt>()); }
 
 template<class T, class Ratio>
 parse_error parse(
     std::chrono::duration<T, Ratio> & x,
-    spec_type<std::chrono::duration<T, Ratio>>,
+    spec_type<std::chrono::duration<T, Ratio>> /*type*/,
     array_view_const_char value
 ) {
     T y{}; // create with default value
@@ -562,10 +568,10 @@ namespace detail
     }
 }
 
-inline parse_error parse(std::string & x, spec_type<spec_types::list<int>>, array_view_const_char value)
+inline parse_error parse(std::string & x, spec_type<spec_types::list<int>> /*type*/, array_view_const_char value)
 { return detail::parse_integral_list<int>(x, value); }
 
-inline parse_error parse(std::string & x, spec_type<spec_types::list<unsigned>>, array_view_const_char value)
+inline parse_error parse(std::string & x, spec_type<spec_types::list<unsigned>> /*type*/, array_view_const_char value)
 { return detail::parse_integral_list<unsigned>(x, value); }
 
 namespace detail
@@ -582,7 +588,7 @@ namespace detail
 
 template<class T>
 typename std::enable_if<std::is_integral<T>::value, parse_error>::type
-parse(T & x, spec_type<bool>, array_view_const_char value)
+parse(T & x, spec_type<bool> /*type*/, array_view_const_char value)
 {
     range<char const *> rng = trim(value);
 
@@ -767,11 +773,11 @@ namespace detail
 }
 
 template<class T, class Spec, class U>
-void set_value(T & x, spec_type<Spec>, U && new_value)
+void set_value(T & x, spec_type<Spec> /*type*/, U && new_value)
 { detail::set_value_impl<T, Spec>::impl(x, std::forward<U>(new_value)); }
 
 template<class T, class Spec, class U, class... Ts>
-void set_value(T & x, spec_type<Spec>, U && param1, Ts && ... other_params)
+void set_value(T & x, spec_type<Spec> /*type*/, U && param1, Ts && ... other_params)
 { detail::set_value_impl<T, Spec>::impl(x, std::forward<U>(param1), std::forward<Ts>(other_params)...); }
 
 }

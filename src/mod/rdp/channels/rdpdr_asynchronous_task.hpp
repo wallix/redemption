@@ -73,7 +73,7 @@ namespace detail
             }
         };
     }
-}
+}  // namespace detail
 
 class RdpdrDriveReadTask final : public AsynchronousTask
 {

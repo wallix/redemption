@@ -1,6 +1,43 @@
 #!/bin/sh
 
-${CLANG_TIDY:=clang-tidy} -checks='*,-misc-macro-parentheses,-hicpp-use-equals-delete,-misc-unused-parameters,-hicpp-braces-around-statements,-hicpp-use-equals-default,-readability-avoid-const-params-in-decls,-readability-braces-around-statements,-cppcoreguidelines-pro-type-union-access,-cppcoreguidelines-special-member-functions,-hicpp-special-member-functions,-llvm-include-order,-hicpp-no-array-decay,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-readability-implicit-bool-conversion,-cppcoreguidelines-pro-type-vararg,-hicpp-vararg,-cppcoreguidelines-pro-bounds-constant-array-index,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-fuchsia-overloaded-operator,-google-runtime-int,-google-runtime-references,-hicpp-exception-baseclass,-google-readability-todo,-readability-static-accessed-through-instance,-fuchsia-default-arguments,-android-cloexec-open,-hicpp-signed-bitwise,-llvm-header-guard' \
+# cppcoreguidelines-pro-type-member-init / hicpp-member-init false positive...
+
+${CLANG_TIDY:=clang-tidy} -checks='*,
+-android-cloexec-open,
+-clang-diagnostic-deprecated-declarations,
+-cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+-cppcoreguidelines-pro-bounds-constant-array-index,
+-cppcoreguidelines-pro-bounds-pointer-arithmetic,
+-cppcoreguidelines-pro-type-member-init,
+-cppcoreguidelines-pro-type-union-access,
+-cppcoreguidelines-pro-type-vararg,
+-cppcoreguidelines-special-member-functions,
+-fuchsia-default-arguments,
+-fuchsia-overloaded-operator,
+-google-build-using-namespace,
+-google-readability-namespace-comments,
+-google-readability-todo,
+-google-runtime-int,
+-google-runtime-references,
+-hicpp-braces-around-statements,
+-hicpp-exception-baseclass,
+-hicpp-no-array-decay,
+-hicpp-signed-bitwise,
+-hicpp-special-member-functions,
+-hicpp-use-auto,
+-hicpp-use-equals-default,
+-hicpp-use-equals-delete,
+-hicpp-vararg,
+-llvm-header-guard,
+-llvm-include-order,
+-misc-macro-parentheses,
+-misc-unused-parameters,
+-modernize-use-auto,
+-readability-avoid-const-params-in-decls,
+-readability-braces-around-statements,
+-readability-implicit-bool-conversion,
+-readability-static-accessed-through-instance,' \
+-config='{CheckOptions: [{key: llvm-namespace-comment.ShortNamespaceLines, value: 10}]}' \
 -header-filter='.*' \
 $(find src/ -name '*.cpp' \
     -a -not -path 'src/ftests/*' \
@@ -8,6 +45,8 @@ $(find src/ -name '*.cpp' \
     -a -not -path 'src/openssl_c/*' \
     -a -not -path 'src/proto/*' \
     -a -not -path 'src/sashimi/*' \
+    -a -not -path 'src/system/emscripten/*' \
+    -a -not -path 'src/utils/crypto/*' \
     -a -not -name app_path.cpp \
     -a -not -name log_as_logemasm.cpp) \
 -- \

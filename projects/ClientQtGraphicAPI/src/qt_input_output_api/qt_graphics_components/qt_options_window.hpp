@@ -696,7 +696,7 @@ public:
         this->_sharePath.setEnabled(this->_front->enable_shared_virtual_disk);
         this->_sharePath.setText(this->_front->SHARE_DIR.c_str());
         this->_soundBox.setChecked(this->_front->modRDPParamsData.enable_sound);
-        this->remoteappCheckBox.setChecked(this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
+        this->remoteappCheckBox.setChecked(this->_front->enable_shared_remoteapp);
         this->remoteapp_cmd.setEnabled(this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
         this->remoteapp_cmd.setText(this->_front->full_cmd_line.c_str());
         this->remoteapp_workin_dir.setEnabled(this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
@@ -774,10 +774,12 @@ public:
         }
         this->_front->modRDPParamsData.enable_sound = this->_soundBox.isChecked();
         if (this->remoteappCheckBox.isChecked()) {
+            this->_front->enable_shared_remoteapp = true;
             this->_front->mod_state = ClientRedemptionAPI::MOD_RDP_REMOTE_APP;
             this->_front->set_remoteapp_cmd_line(this->remoteapp_cmd.text().toStdString());
             this->_front->source_of_WorkingDir = this->remoteapp_workin_dir.text().toStdString();
         } else {
+            this->_front->enable_shared_remoteapp = false;
             this->_front->mod_state = ClientRedemptionAPI::MOD_RDP;
         }
 

@@ -370,7 +370,7 @@ struct CapabilityHeader {
     uint32_t Version{0};
 
     CapabilityHeader()
-    {}
+    = default;
 
     CapabilityHeader( uint16_t CapabilityType
                     , uint32_t Version)
@@ -1149,7 +1149,7 @@ class DeviceIORequest {
 public:
 
     DeviceIORequest()
-    {}
+    = default;
 
     DeviceIORequest( uint32_t DeviceId_
                    , uint32_t FileId_
@@ -5397,7 +5397,7 @@ struct RdpDrStatus
         {}
 
         DeviceIORequestData()
-        {}
+        = default;
 
         uint32_t DeviceId() {
             return this->request.DeviceId();

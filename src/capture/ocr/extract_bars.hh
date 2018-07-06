@@ -255,10 +255,10 @@ namespace ocr
         }
 
     private:
-        static bool is_win2012(const titlebar_color_windows2012_standard &)
+        static bool is_win2012(const titlebar_color_windows2012_standard& /*win2012*/)
         { return true; }
 
-        static bool is_win2012(const titlebar_color_windows2012_vnc_standard &)
+        static bool is_win2012(const titlebar_color_windows2012_vnc_standard& /*win2012_vnc*/)
         { return true; }
 
         static bool is_win2012(const titlebar_color & tcolor)

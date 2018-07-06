@@ -1585,7 +1585,7 @@ public:
         }
     }   // configure_proxy_managed_drives
 
-    void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 *) override {
+    void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 * /*keymap*/) override {
         if ((UP_AND_RUNNING == this->connection_finalization_state) &&
             !this->input_event_disabled) {
             if (this->first_scancode && !(device_flags & 0x8000) &&
@@ -1625,7 +1625,7 @@ public:
         }
     }
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *) override {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * /*keymap*/) override {
         //if (!(MOUSE_FLAG_MOVE & device_flags)) {
         //    LOG(LOG_INFO, "rdp_input_mouse x=%d y=%d device_flags=%d", x, y, device_flags);
         //}
@@ -1719,7 +1719,7 @@ private:
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
 
-    void send_to_mod_rail_channel(const CHANNELS::ChannelDef *,
+    void send_to_mod_rail_channel(const CHANNELS::ChannelDef * /*unused*/,
                                   InStream & chunk, size_t length, uint32_t flags) {
         RemoteProgramsVirtualChannel& channel = this->get_remote_programs_virtual_channel();
 
@@ -5698,7 +5698,7 @@ private:
         assert(!out_asynchronous_task);
     }
 
-    void process_rdpdr_event(const CHANNELS::ChannelDef &,
+    void process_rdpdr_event(const CHANNELS::ChannelDef & /*unused*/,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         if (!this->enable_rdpdr_data_analysis &&
             this->authorization_channels.rdpdr_type_all_is_authorized() &&
@@ -5740,7 +5740,7 @@ private:
         }
     }
 
-    void process_drdynvc_event(const CHANNELS::ChannelDef &,
+    void process_drdynvc_event(const CHANNELS::ChannelDef & /*unused*/,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         // if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
         //     if (bool(this->verbose & (RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump))) {

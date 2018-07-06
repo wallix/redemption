@@ -69,37 +69,37 @@ public:
 
     void flush() { }
 
-    void draw(RDPOpaqueRect const &, Rect, gdi::ColorCtx) override { }
-    void draw(const RDPScrBlt &, Rect) override { }
-    void draw(const RDPDestBlt &, Rect) override { }
-    void draw(const RDPMultiDstBlt &, Rect) override { }
-    void draw(RDPMultiOpaqueRect const &, Rect, gdi::ColorCtx) override { }
-    void draw(RDP::RDPMultiPatBlt const &, Rect, gdi::ColorCtx) override { }
-    void draw(const RDP::RDPMultiScrBlt &, Rect) override { }
-    void draw(RDPPatBlt const &, Rect, gdi::ColorCtx) override { }
-    void draw(const RDPMemBlt &, Rect, const Bitmap &) override { }
-    void draw(RDPMem3Blt const &, Rect, gdi::ColorCtx, const Bitmap &) override { }
-    void draw(RDPLineTo const &, Rect, gdi::ColorCtx) override { }
-    void draw(RDPGlyphIndex const &, Rect, gdi::ColorCtx, const GlyphCache &) override { }
-    void draw(RDPPolygonSC const &, Rect, gdi::ColorCtx) override { }
-    void draw(RDPPolygonCB const &, Rect, gdi::ColorCtx) override { }
-    void draw(RDPPolyline const &, Rect, gdi::ColorCtx) override { }
-    void draw(RDPEllipseSC const &, Rect, gdi::ColorCtx) override { }
-    void draw(RDPEllipseCB const &, Rect, gdi::ColorCtx) override { }
-    void draw(const RDPColCache   &) override { }
-    void draw(const RDPBrushCache &) override { }
-    void draw(const RDP::FrameMarker &) override { }
-    void draw(const RDP::RAIL::NewOrExistingWindow &) override { }
-    void draw(const RDP::RAIL::WindowIcon &) override { }
-    void draw(const RDP::RAIL::CachedIcon &) override { }
-    void draw(const RDP::RAIL::DeletedWindow &) override { }
-    void draw(const RDP::RAIL::NewOrExistingNotificationIcons &) override { }
-    void draw(const RDP::RAIL::DeletedNotificationIcons &) override { }
-    void draw(const RDP::RAIL::ActivelyMonitoredDesktop &) override { }
-    void draw(const RDP::RAIL::NonMonitoredDesktop &) override { }
-    void draw(const RDPBitmapData &, const Bitmap &) override { }
-    void set_palette(const BGRPalette&) override { }
-    void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const &) override {}
+    void draw(RDPOpaqueRect const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+    void draw(const RDPScrBlt & /*cmd*/, Rect /*clip*/) override { }
+    void draw(const RDPDestBlt & /*cmd*/, Rect /*clip*/) override { }
+    void draw(const RDPMultiDstBlt & /*cmd*/, Rect /*clip*/) override { }
+    void draw(RDPMultiOpaqueRect const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+    void draw(RDP::RDPMultiPatBlt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+    void draw(const RDP::RDPMultiScrBlt & /*cmd*/, Rect /*clip*/) override { }
+    void draw(RDPPatBlt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+    void draw(const RDPMemBlt & /*cmd*/, Rect /*clip*/, const Bitmap & /*bmp*/) override { }
+    void draw(RDPMem3Blt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, const Bitmap & /*bmp*/) override { }
+    void draw(RDPLineTo const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+    void draw(RDPGlyphIndex const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, const GlyphCache & /*gly_cache*/) override { }
+    void draw(RDPPolygonSC const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+    void draw(RDPPolygonCB const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+    void draw(RDPPolyline const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+    void draw(RDPEllipseSC const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+    void draw(RDPEllipseCB const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+    void draw(const RDPColCache   & /*unused*/) override { }
+    void draw(const RDPBrushCache & /*unused*/) override { }
+    void draw(const RDP::FrameMarker & /*cmd*/) override { }
+    void draw(const RDP::RAIL::NewOrExistingWindow & /*unused*/) override { }
+    void draw(const RDP::RAIL::WindowIcon & /*unused*/) override { }
+    void draw(const RDP::RAIL::CachedIcon & /*unused*/) override { }
+    void draw(const RDP::RAIL::DeletedWindow & /*unused*/) override { }
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*unused*/) override { }
+    void draw(const RDP::RAIL::DeletedNotificationIcons & /*unused*/) override { }
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop & /*unused*/) override { }
+    void draw(const RDP::RAIL::NonMonitoredDesktop & /*unused*/) override { }
+    void draw(const RDPBitmapData & /*cmd*/, const Bitmap & /*bmp*/) override { }
+    void set_palette(const BGRPalette& /*unused*/) override { }
+    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const & /*unused*/) override {}
 
 
     ResizeResult server_resize(int width, int height, int bpp) override {
@@ -112,15 +112,15 @@ public:
         return ResizeResult::instant_done;
     }
 
-    void set_pointer(const Pointer &) override { }
+    void set_pointer(const Pointer & /*unused*/) override { }
 
     void begin_update() override { }
     void end_update() override { }
 
     const CHANNELS::ChannelDefArray & get_channel_list() const override { return cl; }
 
-    void send_to_channel( const CHANNELS::ChannelDef &, const uint8_t *, std::size_t
-                        , std::size_t, int) override {
+    void send_to_channel( const CHANNELS::ChannelDef & /*channel*/, const uint8_t * /*data*/, std::size_t
+                         /*length*/, std::size_t /*chunk_size*/, int /*flags*/) override {
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "send_to_channel");
@@ -128,7 +128,7 @@ public:
         }
     }
 
-    void update_pointer_position(uint16_t, uint16_t) override {}
+    void update_pointer_position(uint16_t /*unused*/, uint16_t /*unused*/) override {}
 };
 
 #include "mod/mod_api.hpp"

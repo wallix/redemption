@@ -1089,4 +1089,4 @@ enum : int {
             this->bitmapInfoHeader.log();
         }
     };
-}
+}  // namespace MFF

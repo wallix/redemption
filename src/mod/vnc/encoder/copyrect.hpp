@@ -23,10 +23,12 @@ h
 #pragma once
 
 #include "core/buf64k.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "gdi/graphic_api.hpp"
 #include "mod/vnc/encoder/encoder_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 #include "utils/log.hpp"
+#include "utils/stream.hpp"
 #include "utils/sugar/update_lock.hpp"
 #include "utils/verbose_flags.hpp"
 
@@ -74,7 +76,7 @@ namespace VNC {
             {
             }
 
-            virtual ~CopyRect(){}
+            virtual ~CopyRect()= default;
 
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
@@ -99,5 +101,5 @@ namespace VNC {
                 return EncoderState::Exit; // finished decoding
             }
         };
-    } // namespace encoder
+    }  // namespace Encoder
 } // namespace VNC

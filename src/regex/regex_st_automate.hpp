@@ -329,5 +329,5 @@ namespace re {
         }
         return false;
     }
-}
+}  // namespace re
 

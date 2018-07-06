@@ -445,8 +445,8 @@ void config_spec_definition(Writer && W)
 
     W.section("mod_replay", [&]
     {
-        W.member(hidden_in_gui, no_sesman, type_<bool>(), "on_end_of_data", desc{"0 - Wait for Escape, 1 - End session"}, set(0));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "replay_on_loop", desc{"0 - replay once, 1 - loop replay"}, set(0));
+        W.member(hidden_in_gui, no_sesman, type_<bool>(), "on_end_of_data", desc{"0 - Wait for Escape, 1 - End session"}, set(false));
+        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "replay_on_loop", desc{"0 - replay once, 1 - loop replay"}, set(false));
     });
 
     W.section("ocr", [&]

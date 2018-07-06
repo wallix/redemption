@@ -65,7 +65,7 @@ public:
 
 	RecorderTransport(Transport& trans, char const* filename);
 
-	void add_info(byte_array);
+	void add_info(byte_array bytes);
 
     TlsResult enable_client_tls(
         bool server_cert_store, ServerCertCheck server_cert_check,

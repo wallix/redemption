@@ -313,14 +313,10 @@ public:
 
 
     void draw(const RDP::RAIL::DeletedWindow            & cmd) {
-
-        uint32_t win_id = cmd.header.WindowId();
-
         int elem_to_erase = -1;
 
         for (size_t i = 0; i < this->z_order.size(); i++) {
             if (this->z_order[i] == cmd.header.WindowId()) {
-
                 elem_to_erase = i;
             }
         }
@@ -332,9 +328,7 @@ public:
         if ( this->z_order.size() <= 1) {
             this->impl_graphic->clear_remote_app_screen();
             this->client->disconnect("", false);
-
         } else {
-
             this->impl_input->refreshPressed();
         }
     }

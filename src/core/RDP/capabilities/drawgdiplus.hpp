@@ -161,8 +161,7 @@ struct GdiPCacheEntries {
 
     GdiPCacheEntries()
 
-    {
-    }
+    = default;
 };
 
 struct GdiPCacheChunkSize {
@@ -174,8 +173,7 @@ struct GdiPCacheChunkSize {
 
     GdiPCacheChunkSize()
 
-    {
-    }
+    = default;
 };
 
 struct GdiPImageCacheProperties {
@@ -186,8 +184,7 @@ struct GdiPImageCacheProperties {
 
     GdiPImageCacheProperties()
 
-    {
-    }
+    = default;
 };
 
 enum {
