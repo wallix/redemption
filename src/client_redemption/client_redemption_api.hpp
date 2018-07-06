@@ -364,7 +364,6 @@ public:
 
     virtual time_t get_movie_time_length(char const * /*unused*/) { return time_t{}; }
     virtual void instant_play_client(std::chrono::microseconds /*unused*/) {}
-
 };
 
 
