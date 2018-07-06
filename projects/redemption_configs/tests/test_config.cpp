@@ -2194,7 +2194,7 @@ RED_AUTO_TEST_CASE(TestConfigNotifications)
     RED_CHECK(!ini.check_from_acl());
 
     // auth_user has been changed, so check_from_acl() method will notify that something changed
-    ini.get_acl_field(cfg::globals::auth_user::index()).set(cstr_array_view("someoneelse"));
+    ini.get_acl_field(cfg::globals::auth_user::index).set(cstr_array_view("someoneelse"));
     RED_CHECK(ini.check_from_acl());
     RED_CHECK_EQUAL("someoneelse", ini.get<cfg::globals::auth_user>());
 
@@ -2225,10 +2225,10 @@ RED_AUTO_TEST_CASE(TestConfigNotifications)
 
     for (auto && var : list) {
         RED_CHECK(
-            var.authid() == cfg::globals::auth_user::index()
-         || var.authid() == cfg::globals::host::index()
-         || var.authid() == cfg::context::opt_height::index()
-         || var.authid() == cfg::globals::target::index()
+            var.authid() == cfg::globals::auth_user::index
+         || var.authid() == cfg::globals::host::index
+         || var.authid() == cfg::context::opt_height::index
+         || var.authid() == cfg::globals::target::index
         );
     }
     ini.clear_send_index();

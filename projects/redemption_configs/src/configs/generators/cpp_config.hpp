@@ -138,16 +138,16 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
         }
         this->tab(); this->out() << "/// value"; this->write_assignable_default(pack_contains<default_>(infos), type, &infos); this->out() << " <br/>\n";
         this->tab(); this->out() << "struct " << varname_with_section << " {\n";
-        this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy() { return " << (bool(properties & sesman::io::sesman_to_proxy) ? "true" : "false") << "; }\n";
-        this->tab(); this->out() << "    static constexpr bool is_proxy_to_sesman() { return " << (bool(properties & sesman::io::proxy_to_sesman) ? "true" : "false") << "; }\n";
+        this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy = " << (bool(properties & sesman::io::sesman_to_proxy) ? "true" : "false") << ";\n";
+        this->tab(); this->out() << "    static constexpr bool is_proxy_to_sesman = " << (bool(properties & sesman::io::proxy_to_sesman) ? "true" : "false") << ";\n";
 
-        this->tab(); this->out() << "    static constexpr char const * section() { return \"" << section_name << "\"; }\n";
-        this->tab(); this->out() << "    static constexpr char const * name() { return \"" << varname << "\"; }\n";
+        this->tab(); this->out() << "    static constexpr char const * section = \"" << section_name << "\";\n";
+        this->tab(); this->out() << "    static constexpr char const * name = \"" << varname << "\";\n";
 
         if (bool(properties)) {
             this->tab(); this->out() << "    // for old cppcheck\n";
             this->tab(); this->out() << "    // cppcheck-suppress obsoleteFunctionsindex\n";
-            this->tab(); this->out() << "    static constexpr authid_t index() { return authid_t(" << this->index_authid++ << "); }\n";
+            this->tab(); this->out() << "    static constexpr authid_t index = authid_t(" << this->index_authid++ << ");\n";
         }
 
         this->tab(); this->out() << "    using type = ";
