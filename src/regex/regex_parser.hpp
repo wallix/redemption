@@ -36,7 +36,7 @@ namespace re {
         unsigned num_cap = 0;
         state_list_t sts;
         std::vector<unsigned> indexes;
-        typedef std::vector<std::pair<char_int, char_int> > c_range_type;
+        using c_range_type = std::vector<std::pair<char_int, char_int>>;
         c_range_type c_ranges;
 
     private:
@@ -323,7 +323,7 @@ namespace re {
 
     struct VectorRange
     {
-        typedef std::pair<char_int, char_int> range_t;
+        using range_t = std::pair<char_int, char_int>;
         using container_type = std::vector<range_t>;
         using iterator = container_type::iterator;
 
@@ -703,7 +703,7 @@ namespace re {
         }
     };
 
-    typedef std::pair<State*, State**> IntermendaryState;
+    using IntermendaryState = std::pair<State*, State**>;
 
     inline bool is_unique_string_state(State * first, State * last)
     {

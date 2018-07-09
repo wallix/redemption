@@ -332,8 +332,8 @@ public:
         try {
             this->incoming();
 
-            if (!this->ini.get<cfg::context::module>().compare("RDP")
-            ||  !this->ini.get<cfg::context::module>().compare("VNC")) {
+            if (this->ini.get<cfg::context::module>() == "RDP"
+            ||  this->ini.get<cfg::context::module>() == "VNC") {
                 this->session_type = this->ini.get<cfg::context::module>();
             }
             this->remote_answer = true;

@@ -137,7 +137,7 @@ public:
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue
     // non 0 if it wants to stop (to run another module)
-    void draw_event(time_t now, gdi::GraphicApi & drawable) override;
+    void draw_event(time_t now, gdi::GraphicApi & gd) override;
 
     bool is_up_and_running() override
     { return true; }

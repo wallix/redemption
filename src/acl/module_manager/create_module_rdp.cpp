@@ -38,12 +38,10 @@
 
 void ModuleManager::create_mod_rdp(
     AuthApi& authentifier, ReportMessageApi& report_message,
-    Inifile& ini, FrontAPI& front, ClientInfo const& client_info_, ClientExecute& client_execute,
+    Inifile& ini, FrontAPI& front, ClientInfo client_info, ClientExecute& client_execute,
     Keymap2::KeyFlags key_flags, std::array<uint8_t, 28>& server_auto_reconnect_packet)
 {
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP'");
-
-    auto client_info = client_info_;
 
     switch (ini.get<cfg::context::mode_console>()) {
         case RdpModeConsole::force:

@@ -956,7 +956,7 @@ public:
         }
         else {
             if (!this->session_probe_channel ||
-                this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
+                this->param_client_execute_exe_or_file != serpdu.ExeOrFile()) {
 
                 auto info = key_qvalue_pairs({
                     {"type", "CLIENT_EXECUTE_REMOTEAPP"},
@@ -967,7 +967,7 @@ public:
             }
         }
 
-        if (!this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
+        if (this->param_client_execute_exe_or_file == serpdu.ExeOrFile()) {
             assert(!is_auth_application);
 
             if (this->session_probe_channel) {
@@ -997,7 +997,7 @@ public:
 
             return (!this->session_probe_channel);
         }
-        else if (!this->param_client_execute_exe_or_file_2.compare(serpdu.ExeOrFile())) {
+        else if (this->param_client_execute_exe_or_file_2 == serpdu.ExeOrFile()) {
             assert(!is_auth_application);
 
             if (this->session_probe_channel) {

@@ -47,7 +47,7 @@ namespace
         }
         return p - list;
     }
-}
+} // namespace
 
 SelectorMod::SelectorMod(
     SelectorModVariables vars, SessionReactor& session_reactor,

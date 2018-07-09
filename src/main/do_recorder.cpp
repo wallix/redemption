@@ -2185,13 +2185,13 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
       | ((recorder.chunk || options.count("ocr"))   ? CaptureFlags::ocr   : CaptureFlags::none);
 
     if (options.count("video-quality") > 0) {
-            if (0 == strcmp(recorder.video_quality.c_str(), "high")) {
+        if      (0 == strcmp(recorder.video_quality.c_str(), "high")) {
             recorder.video_params.video_quality = Level::high;
         }
         else if (0 == strcmp(recorder.video_quality.c_str(), "low")) {
             recorder.video_params.video_quality = Level::low;
         }
-        else  if (0 == strcmp(recorder.video_quality.c_str(), "medium")) {
+        else if (0 == strcmp(recorder.video_quality.c_str(), "medium")) {
             recorder.video_params.video_quality = Level::medium;
         }
         else {
@@ -2239,7 +2239,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     //recorder.video_params.video_codec = "flv";
 
     if (options.count("compression") > 0) {
-         if (wrm_compression_algorithm == "none") {
+        if (wrm_compression_algorithm == "none") {
             recorder.wrm_compression_algorithm_ = static_cast<int>(WrmCompressionAlgorithm::no_compression);
         }
         else if (wrm_compression_algorithm == "gzip") {
@@ -2334,7 +2334,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     }
 
     if (options.count("encryption") > 0) {
-         if (0 == strcmp(recorder.wrm_encryption.c_str(), "enable")) {
+        if (0 == strcmp(recorder.wrm_encryption.c_str(), "enable")) {
             recorder.encryption_type = TraceType::cryptofile;
         }
         else if (0 == strcmp(recorder.wrm_encryption.c_str(), "disable")) {

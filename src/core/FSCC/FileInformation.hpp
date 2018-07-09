@@ -413,7 +413,7 @@ struct FileObjectBuffer_Type1 {                             // FSCTL_CREATE_OR_G
 
     FileObjectBuffer_Type1() = default;
 
-    FileObjectBuffer_Type1(uint8_t * ObjectId, uint8_t * BirthVolumeId, uint8_t * BirthObjectId)
+    FileObjectBuffer_Type1(uint8_t const * ObjectId, uint8_t const * BirthVolumeId, uint8_t const * BirthObjectId)
     {
         for (size_t i = 0; i < GUID_SIZE; i++) {
             this->ObjectId[i] = ObjectId[i];
@@ -500,7 +500,7 @@ struct FileObjectBuffer_Type2 {                             // FSCTL_CREATE_OR_G
 
     FileObjectBuffer_Type2() = default;
 
-    FileObjectBuffer_Type2(uint8_t * ObjectId, uint8_t * ExtendedInfo)
+    FileObjectBuffer_Type2(uint8_t const * ObjectId, uint8_t const * ExtendedInfo)
     {
         for (size_t i = 0; i < GUID_SIZE; i++) {
             this->ObjectId[i] = ObjectId[i];

@@ -2233,7 +2233,7 @@ public:
             size_t chunk_size = sec.payload.in_remain();
 
             // If channel name is our virtual channel, then don't send data to front
-                 if (mod_channel.name == this->auth_channel && this->enable_auth_channel) {
+            if      (mod_channel.name == this->auth_channel && this->enable_auth_channel) {
                 this->process_auth_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == this->checkout_channel) {
@@ -2698,12 +2698,12 @@ public:
 
     TpduBuffer buf;
 
-    void draw_event(time_t now, gdi::GraphicApi & drawable_) override
+    void draw_event(time_t now, gdi::GraphicApi & gd) override
     {
         //LOG(LOG_INFO, "mod_rdp::draw_event()");
 
         if (this->remote_programs_session_manager) {
-            this->remote_programs_session_manager->set_drawable(&drawable_);
+            this->remote_programs_session_manager->set_drawable(&gd);
         }
 
         this->buf.load_data(this->trans);
@@ -2716,7 +2716,7 @@ public:
                     ? (*this->remote_programs_session_manager)
                     : ( this->graphics_update_disabled
                         ? gdi::null_gd()
-                        : drawable_
+                        : gd
                     ));
                 if (this->buf.current_pdu_is_fast_path()) {
                     this->connected_fast_path(drawable, this->buf.current_pdu_buffer());

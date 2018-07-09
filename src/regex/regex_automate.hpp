@@ -291,7 +291,7 @@ namespace re {
                 StateList * last = this->st_range_beginning.first+1;
                 StateList * firstdest = this->st_list + matrix_size;
                 for (; first != last; ++first) {
-                    typedef StateList * tab2_st_t[2];
+                    using tab2_st_t = StateList*[2];
                     tab2_st_t& tab = reinterpret_cast<tab2_st_t&>(*first);
                     //overlap
                     StateList * cpfirst = tab[0];
@@ -714,7 +714,7 @@ namespace re {
                     else {
                         StateList * tmpstl = l->last;
                         push_state(l, st->out1, num_open, 1);
-                        typedef StateList * tab2_st_t[2];
+                        using tab2_st_t = StateList*[2];
                         tab2_st_t& tab = reinterpret_cast<tab2_st_t&>(*this->st_range_beginning.last);
                         tab[0] = tmpstl;
                         tab[1] = l->last;
@@ -781,7 +781,7 @@ namespace re {
             match_undetermined = 2
         };
 
-        typedef std::pair<const char *, const char *> range_t;
+        using range_t = std::pair<const char *, const char *>;
         using range_matches = std::vector<range_t>;
 
         class DefaultMatchTracer
@@ -808,7 +808,7 @@ namespace re {
             void good(unsigned idx) const
             { this->sm.set_idx_trace(idx); }
 
-            typedef std::pair<const unsigned *, const unsigned *> range_idx_trace;
+            using range_idx_trace = std::pair<const unsigned *, const unsigned *>;
 
             range_idx_trace range_idx_trace_reserved() const
             { return range_idx_trace(this->sm.idx_trace_free, this->sm.pidx_trace_free); }
@@ -1266,7 +1266,7 @@ namespace re {
             unsigned new_trace;
             unsigned count_consume;
             bool count_consume_is_one = false;
-            for (StepRangeIterator ifirst = l1.begin(), ilast = l1.end(); ifirst != ilast; ++ifirst) {
+            for (StepRangeIterator ifirst = l1.begin(), ilast = l1.end(); ifirst != ilast; ++ifirst) /* NOLINT(modernize-loop-convert) */{
                 ++this->step_count;
                 if (active_capture) {
                     new_trace = 0;

@@ -53,6 +53,7 @@
 
 #include "utils/netutils.hpp"
 #include "utils/sugar/scope_exit.hpp"
+#include "utils/sugar/update_lock.hpp"
 #include "utils/translation.hpp"
 
 #include <sys/socket.h>
@@ -511,12 +512,11 @@ private:
         }
 
     private:
-        void draw_event(time_t now, gdi::GraphicApi & drawable) override
+        void draw_event(time_t now, gdi::GraphicApi & gd) override
         {
-            drawable.begin_update();
-            this->draw_osd_message_impl(drawable);
-            this->mm.mod->draw_event(now, drawable);
-            drawable.end_update();
+            update_lock lock{gd};
+            this->draw_osd_message_impl(gd);
+            this->mm.mod->draw_event(now, gd);
         }
 
         void draw_osd_message_impl(gdi::GraphicApi & drawable)
@@ -774,7 +774,7 @@ public:
 
     void osd_message(std::string message, bool is_disable_by_input)
     {
-        if (message.compare(this->mod_osd.get_message())) {
+        if (message != this->mod_osd.get_message()) {
             this->clear_osd_message();
         }
         if (!message.empty()) {
@@ -1314,7 +1314,7 @@ private:
 
     void create_mod_rdp(
         AuthApi& authentifier, ReportMessageApi& report_message,
-        Inifile& ini, FrontAPI& front, ClientInfo const& client_info,
+        Inifile& ini, FrontAPI& front, ClientInfo client_info,
         ClientExecute& client_execute, Keymap2::KeyFlags key_flags,
         std::array<uint8_t, 28>& server_auto_reconnect_packet);
 

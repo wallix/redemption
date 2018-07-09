@@ -580,7 +580,7 @@ public:
 
     void out_4BUE(uint32_t v){
         assert(!(v & 0xC0000000));
-             if (v <= 0x3F      ) {
+        if      (v <= 0x3F      ) {
             this->out_uint8(static_cast<uint8_t>(v));
         }
         else if (v <= 0x3FFF    ) {

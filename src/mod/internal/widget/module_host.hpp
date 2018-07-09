@@ -148,7 +148,7 @@ private:
 
         // mod_api
 
-        void draw_event(time_t now, gdi::GraphicApi& drawable) override;
+        void draw_event(time_t now, gdi::GraphicApi& gd) override;
 
         bool is_up_and_running() override;
 

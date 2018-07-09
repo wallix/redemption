@@ -27,18 +27,18 @@
 
 #include <cassert>
 
-rdp_ppocr::OcrDatasConstant const & rdp_ppocr::get_ocr_constants(std::string const & directory_)
+rdp_ppocr::OcrDatasConstant const & rdp_ppocr::get_ocr_constants(std::string const & directory)
 {
     try {
-        static std::string directory = directory_;
+        static std::string ppocr_directory = directory;
         static OcrDatasConstant const constants(
-            ppocr::utils::load_from_file<ppocr::PpOcrDatas>((directory + "/datas.txt").c_str()),
-            ppocr::utils::load_from_file<ppocr::ocr2::Glyphs>((directory + "/glyphs.txt").c_str()),
-            ppocr::utils::load_from_file<ppocr::spell::Dictionary>((directory + "/dict.trie.txt").c_str()),
-            ppocr::utils::load_from_file<ppocr::ocr2::WWordsLines>((directory + "/words_lines.txt").c_str()),
-            ppocr::utils::load_from_file<ppocr::ocr2::Replacements>((directory + "/replacements.txt").c_str())
+            ppocr::utils::load_from_file<ppocr::PpOcrDatas>((ppocr_directory + "/datas.txt").c_str()),
+            ppocr::utils::load_from_file<ppocr::ocr2::Glyphs>((ppocr_directory + "/glyphs.txt").c_str()),
+            ppocr::utils::load_from_file<ppocr::spell::Dictionary>((ppocr_directory + "/dict.trie.txt").c_str()),
+            ppocr::utils::load_from_file<ppocr::ocr2::WWordsLines>((ppocr_directory + "/words_lines.txt").c_str()),
+            ppocr::utils::load_from_file<ppocr::ocr2::Replacements>((ppocr_directory + "/replacements.txt").c_str())
         );
-        assert(directory == directory_);
+        assert(ppocr_directory == directory);
         return constants;
     }
     catch (std::exception const & e) {

@@ -48,7 +48,7 @@ namespace
         }
         return sb.st_size;
     }
-}
+} // namespace
 
 
 void InCryptoTransport::EncryptedBufferHandle::allocate(std::size_t n)
@@ -810,7 +810,7 @@ namespace
             data += res.consumed;
         }
     }
-}
+} // namespace
 
 void OutCryptoTransport::create_hash_file(
     uint8_t const (&qhash)[MD_HASH::DIGEST_LENGTH],
@@ -884,30 +884,30 @@ void OutCryptoTransport::do_send(const uint8_t * data, size_t len)
 
 
 EncryptionSchemeTypeResult open_if_possible_and_get_encryption_scheme_type(
-    InCryptoTransport & in_test, const char * filename, const_byte_array derivator, Error * err)
+    InCryptoTransport & in, const char * filename, const_byte_array derivator, Error * err)
 {
     try {
         if (derivator.data()) {
-            in_test.open(filename, derivator);
+            in.open(filename, derivator);
         }
         else {
-            in_test.open(filename);
+            in.open(filename);
         }
 
-        if (not in_test.is_encrypted()) {
+        if (not in.is_encrypted()) {
             return EncryptionSchemeTypeResult::NoEncrypted;
         }
 
-        in_test.disable_log_decrypt();
+        in.disable_log_decrypt();
         char mem[1];
-        auto len = in_test.partial_read(mem, 0);
+        auto len = in.partial_read(mem, 0);
         (void)len;
     }
     catch(Error const& e) {
-        in_test.disable_log_decrypt(false);
+        in.disable_log_decrypt(false);
         if (e.id == ERR_SSL_CALL_FAILED) {
-            if (in_test.is_open()) {
-                in_test.close();
+            if (in.is_open()) {
+                in.close();
             }
             return EncryptionSchemeTypeResult::OldScheme;
         }
@@ -917,7 +917,7 @@ EncryptionSchemeTypeResult open_if_possible_and_get_encryption_scheme_type(
         return EncryptionSchemeTypeResult::Error;
     }
 
-    in_test.disable_log_decrypt(false);
+    in.disable_log_decrypt(false);
     return EncryptionSchemeTypeResult::NewScheme;
 }
 

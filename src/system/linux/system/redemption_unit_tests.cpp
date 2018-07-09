@@ -109,4 +109,4 @@ namespace redemption_unit_test__
         }
         return out << "\"";
     }
-}
+} // namespace redemption_unit_test__

@@ -762,8 +762,8 @@ public:
 
         // --------------------------------------------------------
 
-        for (size_t i = 0; i < 6 ; i++) {
-            this->palette_memblt_sent[i] = false;
+        for (bool& x : this->palette_memblt_sent) {
+            x = false;
         }
 
         // from server_sec

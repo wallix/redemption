@@ -781,9 +781,9 @@ public:
         return interval - duration % interval;
     }
 
-    void visibility_rects_event(Rect const & rect_) override {
-        if ((this->smart_video_cropping != SmartVideoCropping::disable) && !rect_.isempty()) {
-            Rect rect = rect_.intersect(
+    void visibility_rects_event(Rect rect) override {
+        if ((this->smart_video_cropping != SmartVideoCropping::disable) && !rect.isempty()) {
+            rect = rect.intersect(
                 {0, 0, this->drawable.width(), this->drawable.height()});
 
 
@@ -1698,9 +1698,9 @@ Capture::Microseconds Capture::periodic_snapshot(
     return time;
 }
 
-void Capture::visibility_rects_event(Rect const & rect_) {
+void Capture::visibility_rects_event(Rect rect) {
     for (gdi::CaptureApi & cap : this->caps) {
-        cap.visibility_rects_event(rect_);
+        cap.visibility_rects_event(rect);
     }
 
     if ((this->smart_video_cropping == SmartVideoCropping::disable) ||
@@ -1716,7 +1716,7 @@ void Capture::visibility_rects_event(Rect const & rect_) {
 
     assert((image_frame_rect.cx <= drawable_width) && (image_frame_rect.cy <= drawable_height));
 
-    Rect const rect = Rect(0, 0, drawable_width, drawable_height).intersect(rect_);
+    rect = Rect(0, 0, drawable_width, drawable_height).intersect(rect);
 
     if (image_frame_rect.contains(rect)) {
         return;

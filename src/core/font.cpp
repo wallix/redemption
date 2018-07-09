@@ -201,7 +201,7 @@ void Font::load_from_file(char const * file_path)
          || this->data_glyphs.get() + total_data_len - data < data_size
         ) {
             LOG(LOG_ERR, "Font: error reading font file [%s at glyph %u]:"
-                " width(%u)*height(%u) too large (total_data_len = %d)",
+                " width(%u)*height(%u) too large (total_data_len = %u)",
                 file_path, index, width, height, total_data_len);
             return;
         }

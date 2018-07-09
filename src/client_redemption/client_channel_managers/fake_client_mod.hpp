@@ -78,7 +78,7 @@ public:
 
     void refresh(Rect clip) override { (void) clip; }
 
-    void draw_event(time_t now, gdi::GraphicApi & drawable) override { (void) now; (void) drawable; }
+    void draw_event(time_t now, gdi::GraphicApi & gd) override { (void)now; (void)gd; }
 
     void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name,
         uint8_t const * data, size_t length, size_t chunk_size, int flags) override {
@@ -139,16 +139,20 @@ public:
     void set_ErrorMsg(std::string const & movie_path) override { (void)movie_path; }
 
     void dropScreen() override {}
+    void dropScreen(uint32_t /*unused*/) override {}
 
     void show_screen() override {}
+    void show_screen(uint32_t /*unused*/) override {}
 
     void reset_cache(int w,  int h) override { (void)w; (void)h; }
 
     void create_screen() override {}
+    void create_screen(std::string const & /*unused*/, std::string const & /*unused*/) override {}
 
     void closeFromScreen() override {}
 
     void set_screen_size(int x, int y) override { (void)x; (void)y; }
+    void set_screen_size(uint32_t /*unused*/, int x, int y) override { (void)x; (void)y; }
 
     void update_screen() override {}
 
@@ -161,6 +165,8 @@ public:
         (void)bpp;
         return FrontAPI::ResizeResult::done;
     }
+
+    using ClientOutputGraphicAPI::draw;
 
     void draw(RDP::FrameMarker    const & /*cmd*/) override {}
     void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}

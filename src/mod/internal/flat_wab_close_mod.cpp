@@ -50,7 +50,7 @@ namespace
             }
         }
     };
-}
+} // namespace
 
 FlatWabCloseMod::FlatWabCloseMod(
     FlatWabCloseModVariables vars, SessionReactor& session_reactor,

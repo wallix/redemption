@@ -50,7 +50,7 @@ const char * basename_len(const char * path, size_t & len)
     return path;
 }
 
-char * basename_len(char * path, size_t & len)
+char * basename_len(char * path, size_t & len) /* NOLINT(readability-non-const-parameter) */
 {
     char const * const_path = path;
     return const_cast<char*>(basename_len(const_path, len));

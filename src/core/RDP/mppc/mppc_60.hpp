@@ -741,7 +741,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc
         this->hash_tab_mgr.dump(mini_dump);
     }
 
-    static inline int cache_find(uint16_t * offset_cache, uint16_t copy_offset)
+    static inline int cache_find(uint16_t const * offset_cache, uint16_t copy_offset)
     {
         for (int i = 0; i < 4; i++) {
             if (offset_cache[i] == copy_offset) {

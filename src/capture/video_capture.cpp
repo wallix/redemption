@@ -526,7 +526,7 @@ void SequencedVideoCaptureImpl::FirstImage::frame_marker_event(
 }
 
 Microseconds SequencedVideoCaptureImpl::FirstImage::periodic_snapshot(
-    const timeval& now, int x, int y, bool ignore_frame_in_timeval)
+    const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
 {
     Microseconds ret;
 
@@ -553,7 +553,8 @@ Microseconds SequencedVideoCaptureImpl::FirstImage::periodic_snapshot(
         ret = interval - duration;
     }
 
-    return std::min(ret, this->first_image_impl.video_sequencer.periodic_snapshot(now, x, y, ignore_frame_in_timeval));
+    return std::min(ret, this->first_image_impl.video_sequencer.periodic_snapshot(
+        now, cursor_x, cursor_y, ignore_frame_in_timeval));
 }
 
 

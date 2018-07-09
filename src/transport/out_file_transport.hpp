@@ -127,10 +127,10 @@ private:
     ReportMessageApi & reporter;
 };
 
-inline Error ReportError::NullImpl::get_error(Error error)
+inline Error ReportError::NullImpl::get_error(Error err)
 {
-    report_and_transform_error(error, LogReporter{});
-    return error;
+    report_and_transform_error(err, LogReporter{});
+    return err;
 }
 
 inline ReportError report_error_from_reporter(ReportMessageApi & reporter)

@@ -562,7 +562,9 @@ enum SecPkg_Att {
 
 
 using SEC_GET_KEY_FN = void (*)(void* Arg, void* Principal, uint32_t KeyVer, void** Key, SEC_STATUS* pStatus);
-typedef void* HANDLE, *PHANDLE, *LPHANDLE;
+using HANDLE = void*;
+using PHANDLE = void*;
+using LPHANDLE = void*;
 
 struct SecurityFunctionTable
 {

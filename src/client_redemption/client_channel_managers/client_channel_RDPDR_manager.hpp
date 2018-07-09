@@ -402,13 +402,13 @@ public:
                         rdpdr::ClientDeviceListAnnounceRequest cdlar(this->device_list.size());
                         cdlar.emit(out_stream);
 
-                        for (size_t i = 0; i < this->device_list.size(); i++) {
+                        for (auto const& device : this->device_list) {
 
-                            if (this->device_list[i].type == rdpdr::RDPDR_DTYP_PRINT) {
+                            if (device.type == rdpdr::RDPDR_DTYP_PRINT) {
 
-                                rdpdr::DeviceAnnounceHeader dah( this->device_list[i].type
-                                                               , this->device_list[i].ID
-                                                               , this->device_list[i].name
+                                rdpdr::DeviceAnnounceHeader dah( device.type
+                                                               , device.ID
+                                                               , device.name
                                                                , nullptr, 24 + 0 + 4 + 2 + 8 + 0);
                                 dah.emit(out_stream);
 
@@ -426,9 +426,9 @@ public:
                                 dahp.emit(out_stream);
 
                             } else {
-                                rdpdr::DeviceAnnounceHeader dah( this->device_list[i].type
-                                                               , this->device_list[i].ID
-                                                               , this->device_list[i].name
+                                rdpdr::DeviceAnnounceHeader dah( device.type
+                                                               , device.ID
+                                                               , device.name
                                                                , nullptr, 0);
                                 dah.emit(out_stream);
                             }

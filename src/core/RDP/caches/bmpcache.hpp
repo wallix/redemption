@@ -215,9 +215,8 @@ private:
         {}
 
         bool operator<(value_set const & other) const {
-            typedef std::pair<const uint8_t *, const uint8_t *> iterator_pair;
             const uint8_t * e = this->elem.sha1 + sizeof(this->elem.sha1);
-            iterator_pair p = std::mismatch(this->elem.sha1 + 0, e, other.elem.sha1 + 0);
+            auto p = std::mismatch(this->elem.sha1 + 0, e, other.elem.sha1 + 0);
             return p.first == e ? false : *p.first < *p.second;
         }
     };
@@ -229,7 +228,7 @@ private:
 
         using set_allocator = aligned_set_allocator<value_set<T> >;
         using set_compare = std::less<value_set<T> >;
-        typedef std::set<value_set<T>, set_compare, set_allocator> set_type;
+        using set_type = std::set<value_set<T>, set_compare, set_allocator>;
 
         set_type sorted_elements;
 
@@ -357,8 +356,6 @@ public:
         size_t entries() const {
             return this->size();
         }
-
-//        typedef T Element;
     };
 
 
@@ -488,11 +485,11 @@ public:
         const size_t coef = this->use_waiting_list ? 3 : 2; /*+ compressed*/
         const size_t add_mem = (this->bpp == 8 ? sizeof(BGRPalette) : 0) + 32 /*arbitrary*/;
 
-        for (unsigned i_cache = 0; i_cache < MAXIMUM_NUMBER_OF_CACHES; ++i_cache) {
-            if (this->caches[i_cache].size()) {
+        for (auto& cache : this->caches) {
+            if (cache.size()) {
                 for (aux_::BmpMemAlloc::MemoryDef & mem: mems) {
-                    if (this->caches[i_cache].bmp_size() + add_mem <= mem.sz) {
-                        mem.cel += this->caches[i_cache].size() * coef;
+                    if (cache.bmp_size() + add_mem <= mem.sz) {
+                        mem.cel += cache.size() * coef;
                         break;
                     }
                 }

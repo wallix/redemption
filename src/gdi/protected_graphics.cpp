@@ -111,4 +111,4 @@ void ProtectedGraphics::draw_impl(const RDPScrBlt & cmd, const Rect clip)
     }
 }
 
-}
+} // namespace gdi

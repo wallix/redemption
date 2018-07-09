@@ -102,7 +102,7 @@ namespace
         *p = 0;
         return pline;
     }
-}
+} // namespace
 
 MwrmReader::MwrmReader(InTransport ibuf) noexcept
 : line_reader(ibuf)
@@ -204,8 +204,8 @@ Transport::Read MwrmReader::read_meta_hash_line_v1(MetaLine & meta_line)
     constexpr std::size_t hash_size = 32u;
     constexpr std::size_t size_after_filename = hash_size * 2 + 1;
 
-    static_assert(hash_size == sizeof(meta_line.hash1), "");
-    static_assert(hash_size == sizeof(meta_line.hash2), "");
+    static_assert(hash_size == sizeof(meta_line.hash1));
+    static_assert(hash_size == sizeof(meta_line.hash2));
 
     if (line_buf.size() <= size_after_filename) {
         throw Error(ERR_TRANSPORT_READ_FAILED);
@@ -243,7 +243,7 @@ Transport::Read MwrmReader::read_meta_line_v1(MetaLine & meta_line)
 
     // TODO Code below looks much too complicated for what it's doing
 
-    typedef std::reverse_iterator<char*> reverse_iterator;
+    using reverse_iterator = std::reverse_iterator<char*>;
 
     using std::begin;
 

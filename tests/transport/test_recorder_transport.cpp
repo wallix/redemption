@@ -39,6 +39,7 @@
 RED_AUTO_TEST_CASE(TestRecorderTransport)
 {
     char const* filename = "/tmp/recorder_test.out";
+    unlink(filename);
     SCOPE_EXIT(unlink(filename));
 
     using Pck = RecorderFile::PacketType;

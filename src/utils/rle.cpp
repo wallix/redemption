@@ -647,7 +647,6 @@ void decompress_(
             }
         }
     }
-    return;
 }
 
 void compress_(ConstImageDataView const & image, OutStream & outbuffer)

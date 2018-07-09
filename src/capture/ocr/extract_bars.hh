@@ -178,11 +178,10 @@ namespace ocr
                 return ;
             }
 
-            typedef std::vector<mln::box2d>::iterator box_iterator;
-            for (box_iterator first = this->rect_deja_vu.begin(), last = this->rect_deja_vu.end(); first != last; ++first) {
-                for (unsigned y = first->min_row(), y_max = first->max_row(); y != y_max; ++y) {
-                    std::fill(this->deja_vu.begin() + this->col_deja_vu * y + first->min_col(),
-                              this->deja_vu.begin() + this->col_deja_vu * y + first->max_col(),
+            for (auto const& rect : this->rect_deja_vu) {
+                for (unsigned y = rect.min_row(), y_max = rect.max_row(); y != y_max; ++y) {
+                    std::fill(this->deja_vu.begin() + this->col_deja_vu * y + rect.min_col(),
+                              this->deja_vu.begin() + this->col_deja_vu * y + rect.max_col(),
                               false);
                 }
             }
@@ -311,9 +310,8 @@ namespace ocr
                 {
                     const unsigned width = this->input.width();
                     const unsigned h = std::min(this->ih, this->input.height()) - this->y;
-                    typedef std::vector<uint8_t>::iterator iterator;
-                    iterator first = this->extract_titles.deja_vu.begin() + this->y * width + this->x;
-                    iterator last = first + width * h;
+                    auto first = this->extract_titles.deja_vu.begin() + this->y * width + this->x;
+                    auto last = first + width * h;
                     for (; first != last; first += width) {
                         std::fill(first, first + this->w, true);
                     }

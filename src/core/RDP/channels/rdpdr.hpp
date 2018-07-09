@@ -442,8 +442,9 @@ struct ClientDriveDeviceListRemove {
     uint32_t DeviceCount;
     uint32_t DeviceIds[1592] = { 0 };
 
+    // TODO array_view
     ClientDriveDeviceListRemove( uint32_t DeviceCount
-                               , uint32_t * DeviceIds)
+                               , uint32_t const * DeviceIds)
     : DeviceCount(DeviceCount)
     {
         //assert(this->DeviceCount > 1592);
@@ -5436,10 +5437,10 @@ struct RdpDrStatus
     }
 
     void setDeviceIORequest(DeviceIORequest & request) {
-        for (size_t i = 0; i < this->requestList.size(); i++) {
-            if (this->requestList[i].DeviceId() == request.DeviceId() && this->requestList[i].CompletionId() == request.CompletionId()) {
-                LOG(LOG_ERR, " Request %s has same ID than back received Request(%s)", get_MajorFunction_name(request.MajorFunction()), get_MajorFunction_name(this->requestList[i].MajorFunction()) );
-                this->requestList[i] = request;
+        for (auto & request_data : this->requestList) {
+            if (request_data.DeviceId() == request.DeviceId() && request_data.CompletionId() == request.CompletionId()) {
+                LOG(LOG_ERR, " Request %s has same ID than back received Request(%s)", get_MajorFunction_name(request.MajorFunction()), get_MajorFunction_name(request_data.MajorFunction()) );
+                request_data = request;
                 return;
             }
         }
