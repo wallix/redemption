@@ -3,6 +3,7 @@
 # cppcoreguidelines-pro-type-member-init / hicpp-member-init false positive...
 
 ${CLANG_TIDY:=clang-tidy} -checks='*,
+-modernize-raw-string-literal
 -android-cloexec-open,
 -clang-diagnostic-deprecated-declarations,
 -cppcoreguidelines-pro-bounds-array-to-pointer-decay,

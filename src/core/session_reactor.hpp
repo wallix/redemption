@@ -1059,14 +1059,14 @@ namespace jln
             }
 
             template<class F>
-            named_function<S, std::decay_t<F>> operator=(F&& f) const noexcept
+            named_function<S, std::decay_t<F>> operator=(F&& f) const noexcept /*NOLINT(cppcoreguidelines-c-copy-assignment-signature)*/
             {
                 return {static_cast<F&&>(f)};
             }
 
-            named_type const& operator=(named_type& /*unused*/) const noexcept { return *this; }
-            named_type const& operator=(named_type&& /*unused*/) const noexcept { return *this; }
-            named_type const& operator=(named_type const& /*unused*/) const noexcept { return *this; }
+            named_type const& operator=(named_type& /*unused*/) const noexcept { return *this; } /*NOLINT(cppcoreguidelines-c-copy-assignment-signature)*/
+            named_type const& operator=(named_type&& /*unused*/) const noexcept { return *this; } /*NOLINT(cppcoreguidelines-c-copy-assignment-signature)*/
+            named_type const& operator=(named_type const& /*unused*/) const noexcept { return *this; } /*NOLINT(cppcoreguidelines-c-copy-assignment-signature)*/
         };
 
         struct unamed{};

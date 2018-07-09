@@ -2557,7 +2557,7 @@ extern "C" {
                 switch (get_encryption_scheme_type(cctx, rp.full_path.c_str(), cbyte_array{}, &out_error))
                 {
                     case EncryptionSchemeTypeResult::Error:
-                        throw out_error;
+                        throw out_error; /* NOLINT(misc-throw-by-value-catch-by-reference) */
                     case EncryptionSchemeTypeResult::OldScheme:
                         cctx.old_encryption_scheme = true;
                         break;
