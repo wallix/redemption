@@ -467,7 +467,7 @@ private:
     }   // process_client_format_data_response_pdu
 
 private:
-    void log_file_descriptor(RDPECLIP::FileDescriptor fd)
+    void log_file_descriptor(RDPECLIP::FileDescriptor const& fd)
     {
         auto const file_size_str = std::to_string(fd.file_size());
         auto const info = key_qvalue_pairs({

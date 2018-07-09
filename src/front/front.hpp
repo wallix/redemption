@@ -1263,7 +1263,7 @@ public:
     TpduBuffer buf;
     size_t channel_list_index = 0;
 
-    void incoming(Callback & cb, time_t /*now*/)
+    void incoming(Callback & cb, time_t /*now*/) /*NOLINT(hicpp-function-size)*/
     {
         if (bool(this->verbose & Verbose::basic_trace3)) {
             LOG(LOG_INFO, "Front::incoming");

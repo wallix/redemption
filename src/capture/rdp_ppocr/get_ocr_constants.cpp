@@ -54,5 +54,5 @@ rdp_ppocr::OcrDatasConstant const & rdp_ppocr::get_ocr_constants(std::string dir
     else {
         directory += "/ppocr.latin";
     }
-    return get_ocr_constants(std::move(directory));
+    return get_ocr_constants(directory);
 }

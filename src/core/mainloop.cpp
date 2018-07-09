@@ -24,7 +24,7 @@
 #include <signal.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
-#include <errno.h>
+#include <cerrno>
 #include <sys/types.h>
 #include <sys/socket.h>
 
