@@ -5117,7 +5117,7 @@ public:
         const uint8_t * mask = stream.in_uint8p(mlen);
 
         assert(::even_pad_length(::nbbytes(width)) == mlen / height);
-        assert(::even_pad_length(::nbbytes(width * xorBpp)) == dlen / height);
+        // TODO unknown xorBpp: assert(::even_pad_length(::nbbytes(width * xorBpp)) == dlen / height);
 
         Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen}, mlen / height, dlen / height);
         this->cursors[pointer_cache_idx] = cursor;
@@ -5266,7 +5266,7 @@ public:
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
-        LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu data_bpp=%u pointer_idx=%u hotspot_x=%u hotspot_y=%u width=%u height=%u mlen=%u dlen=%u square=%u", data_bpp, pointer_idx, hotspot_x, hotspot_y, width, height, mlen, dlen, height*width);
+        LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu data_bpp=%u pointer_idx=%u hotspot_x=%d hotspot_y=%d width=%d height=%d mlen=%u dlen=%u square=%d", data_bpp, pointer_idx, hotspot_x, hotspot_y, width, height, mlen, dlen, height*width);
         const uint8_t * data = stream.in_uint8p(dlen);
         const uint8_t * mask = stream.in_uint8p(mlen);
 
