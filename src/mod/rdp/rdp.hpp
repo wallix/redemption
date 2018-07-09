@@ -5117,7 +5117,7 @@ public:
         const uint8_t * mask = stream.in_uint8p(mlen);
 
         assert(::even_pad_length(::nbbytes(width)) == mlen / height);
-        // TODO unknown xorBpp: assert(::even_pad_length(::nbbytes(width * xorBpp)) == dlen / height);
+        assert(::even_pad_length(::nbbytes(width * 24)) == dlen / height);
 
         Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen}, mlen / height, dlen / height);
         this->cursors[pointer_cache_idx] = cursor;
