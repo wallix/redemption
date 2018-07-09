@@ -598,19 +598,19 @@ void FileToGraphic::interpret_order()
         }
         else {
             this->info_number_of_cache       = this->stream.in_uint8();
-            this->info_use_waiting_list      = (this->stream.in_uint8() ? true : false);
+            this->info_use_waiting_list      = bool(this->stream.in_uint8());
 
-            this->info_cache_0_persistent    = (this->stream.in_uint8() ? true : false);
-            this->info_cache_1_persistent    = (this->stream.in_uint8() ? true : false);
-            this->info_cache_2_persistent    = (this->stream.in_uint8() ? true : false);
+            this->info_cache_0_persistent    = bool(this->stream.in_uint8());
+            this->info_cache_1_persistent    = bool(this->stream.in_uint8());
+            this->info_cache_2_persistent    = bool(this->stream.in_uint8());
 
             this->info_cache_3_entries       = this->stream.in_uint16_le();
             this->info_cache_3_size          = this->stream.in_uint16_le();
-            this->info_cache_3_persistent    = (this->stream.in_uint8() ? true : false);
+            this->info_cache_3_persistent    = bool(this->stream.in_uint8());
 
             this->info_cache_4_entries       = this->stream.in_uint16_le();
             this->info_cache_4_size          = this->stream.in_uint16_le();
-            this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
+            this->info_cache_4_persistent    = bool(this->stream.in_uint8());
 
             this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
             assert(is_valid_enum_value(this->info_compression_algorithm));
@@ -623,7 +623,7 @@ void FileToGraphic::interpret_order()
             );
 
             if (this->info_version > 4) {
-                this->remote_app = (this->stream.in_uint8() ? true : false);
+                this->remote_app = bool(this->stream.in_uint8());
             }
         }
 

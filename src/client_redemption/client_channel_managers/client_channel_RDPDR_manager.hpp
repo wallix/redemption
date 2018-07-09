@@ -359,22 +359,22 @@ public:
                             );
                         general_capability_set.emit(out_stream);
 
-                        if (this->fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE] == true) {
+                        if (this->fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE]) {
                             rdpdr::CapabilityHeader ch(rdpdr::CAP_PRINTER_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                             ch.emit(out_stream);
                         }
 
-                        if (this->fileSystemCapacity[rdpdr::CAP_PORT_TYPE] == true) {
+                        if (this->fileSystemCapacity[rdpdr::CAP_PORT_TYPE]) {
                             rdpdr::CapabilityHeader ch(rdpdr::CAP_PORT_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                             ch.emit(out_stream);
                         }
 
-                        if (this->fileSystemCapacity[rdpdr::CAP_DRIVE_TYPE] == true) {
+                        if (this->fileSystemCapacity[rdpdr::CAP_DRIVE_TYPE]) {
                             rdpdr::CapabilityHeader ch(rdpdr::CAP_DRIVE_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                             ch.emit(out_stream);
                         }
 
-                        if (this->fileSystemCapacity[rdpdr::CAP_SMARTCARD_TYPE] == true) {
+                        if (this->fileSystemCapacity[rdpdr::CAP_SMARTCARD_TYPE]) {
                             rdpdr::CapabilityHeader ch(rdpdr::CAP_SMARTCARD_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                             ch.emit(out_stream);
                         }

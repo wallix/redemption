@@ -3143,12 +3143,7 @@ bool ClientExecute::is_rail_enabled() const
 
 bool ClientExecute::is_resizing_hosted_desktop_enabled() const
 {
-    if (this->allow_resize_hosted_desktop_ &&
-        this->enable_resizing_hosted_desktop_) {
-        return true;
-    }
-
-    return false;
+    return (this->allow_resize_hosted_desktop_ && this->enable_resizing_hosted_desktop_);
 }
 
 void ClientExecute::enable_resizing_hosted_desktop(bool enable)

@@ -283,19 +283,19 @@ public:
 
                 if (this->info_version > 3) {
                     info_number_of_cache            = stream.in_uint8();
-                    info_use_waiting_list           = (stream.in_uint8() ? true : false);
+                    info_use_waiting_list           = bool(stream.in_uint8());
 
-                    info_cache_0_persistent         = (stream.in_uint8() ? true : false);
-                    info_cache_1_persistent         = (stream.in_uint8() ? true : false);
-                    info_cache_2_persistent         = (stream.in_uint8() ? true : false);
+                    info_cache_0_persistent         = bool(stream.in_uint8());
+                    info_cache_1_persistent         = bool(stream.in_uint8());
+                    info_cache_2_persistent         = bool(stream.in_uint8());
 
                     info_cache_3_entries            = stream.in_uint16_le();
                     info_cache_3_size               = stream.in_uint16_le();
-                    info_cache_3_persistent         = (stream.in_uint8() ? true : false);
+                    info_cache_3_persistent         = bool(stream.in_uint8());
 
                     info_cache_4_entries            = stream.in_uint16_le();
                     info_cache_4_size               = stream.in_uint16_le();
-                    info_cache_4_persistent         = (stream.in_uint8() ? true : false);
+                    info_cache_4_persistent         = bool(stream.in_uint8());
 
                     //uint8_t info_compression_algorithm = stream.in_uint8();
                     //assert(info_compression_algorithm < 3);
@@ -548,19 +548,19 @@ private:
             }
             else {
                 this->info_number_of_cache       = this->stream.in_uint8();
-                this->info_use_waiting_list      = (this->stream.in_uint8() ? true : false);
+                this->info_use_waiting_list      = bool(this->stream.in_uint8());
 
-                this->info_cache_0_persistent    = (this->stream.in_uint8() ? true : false);
-                this->info_cache_1_persistent    = (this->stream.in_uint8() ? true : false);
-                this->info_cache_2_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_0_persistent    = bool(this->stream.in_uint8());
+                this->info_cache_1_persistent    = bool(this->stream.in_uint8());
+                this->info_cache_2_persistent    = bool(this->stream.in_uint8());
 
                 this->info_cache_3_entries       = this->stream.in_uint16_le();
                 this->info_cache_3_size          = this->stream.in_uint16_le();
-                this->info_cache_3_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_3_persistent    = bool(this->stream.in_uint8());
 
                 this->info_cache_4_entries       = this->stream.in_uint16_le();
                 this->info_cache_4_size          = this->stream.in_uint16_le();
-                this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_4_persistent    = bool(this->stream.in_uint8());
 
                 this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
                 assert(is_valid_enum_value(this->info_compression_algorithm));

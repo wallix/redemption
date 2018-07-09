@@ -379,12 +379,10 @@ namespace ocr
                     }
                 }
 
-                if (contains_char == false) {
-                    if (is_empty_line) {
-                        break;
-                    }
+                if (!contains_char && is_empty_line) {
+                    break;
                 }
-                is_empty_line = (contains_char == false);
+                is_empty_line = (!contains_char);
 
                 ++ih;
 
@@ -602,12 +600,10 @@ namespace ocr
                 }
                 return false;
             }
-            if (tcolor.threshold_bars(input(y, button_col))
-             && cbutton == input(y, button_col+1)
-             && cbutton == input(y, button_col+2)) {
-                return true;
-            }
-            return false;
+
+            return (tcolor.threshold_bars(input(y, button_col))
+                && cbutton == input(y, button_col+1)
+                && cbutton == input(y, button_col+2));
         }
 
         /*
@@ -747,10 +743,6 @@ namespace ocr
             }
         }
 
-        if (min_row != -1u || max_row < last_row) {
-            return true;
-        }
-
-        return false;
+        return (min_row != -1u || max_row < last_row);
     }
 } // namespace ocr
