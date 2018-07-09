@@ -559,16 +559,16 @@ public:
 
                         return true;
                     }
-                    else if ((e.id == ERR_RDP_SERVER_REDIR) &&
+
+                    if ((e.id == ERR_RDP_SERVER_REDIR) &&
                              this->ini.get<cfg::mod_rdp::server_redirection_support>()) {
                         set_server_redirection_target(this->ini, *this);
                         this->remote_answer = true;
                         signal = BACK_EVENT_NEXT;
                         return true;
                     }
-                    else {
-                        throw;
-                    }
+
+                    throw;
                 }
                 if (!this->keepalive.is_started() && mm.connected) {
                     this->keepalive.start(now);

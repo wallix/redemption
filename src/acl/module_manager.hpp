@@ -224,43 +224,43 @@ public:
             LOG(LOG_INFO, "===========> MODULE_LOGIN");
             return MODULE_INTERNAL_WIDGET_LOGIN;
         }
-        else if (module_cstr == STRMODULE_SELECTOR) {
+        if (module_cstr == STRMODULE_SELECTOR) {
             LOG(LOG_INFO, "===============> MODULE_SELECTOR");
             return MODULE_INTERNAL_WIDGET_SELECTOR;
         }
-        else if (module_cstr == STRMODULE_SELECTOR_LEGACY) {
+        if (module_cstr == STRMODULE_SELECTOR_LEGACY) {
             LOG(LOG_INFO, "===============> MODULE_SELECTOR_LEGACY");
             return MODULE_INTERNAL_WIDGET_SELECTOR_LEGACY;
         }
-        else if (module_cstr == STRMODULE_CONFIRM) {
+        if (module_cstr == STRMODULE_CONFIRM) {
             LOG(LOG_INFO, "===============> MODULE_DIALOG_CONFIRM");
             return MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE;
         }
-        else if (module_cstr == STRMODULE_CHALLENGE) {
+        if (module_cstr == STRMODULE_CHALLENGE) {
             LOG(LOG_INFO, "===========> MODULE_DIALOG_CHALLENGE");
             return MODULE_INTERNAL_DIALOG_CHALLENGE;
         }
-        else if (module_cstr == STRMODULE_VALID) {
+        if (module_cstr == STRMODULE_VALID) {
             LOG(LOG_INFO, "===========> MODULE_DIALOG_VALID");
             return MODULE_INTERNAL_DIALOG_VALID_MESSAGE;
         }
-        else if (module_cstr == STRMODULE_WAITINFO) {
+        if (module_cstr == STRMODULE_WAITINFO) {
             LOG(LOG_INFO, "===========> MODULE_WAITINFO");
             return MODULE_INTERNAL_WAIT_INFO;
         }
-        else if (module_cstr == STRMODULE_TARGET) {
+        if (module_cstr == STRMODULE_TARGET) {
             LOG(LOG_INFO, "===========> MODULE_INTERACTIVE_TARGET");
             return MODULE_INTERNAL_TARGET;
         }
-        else if (module_cstr == STRMODULE_TRANSITORY) {
+        if (module_cstr == STRMODULE_TRANSITORY) {
             LOG(LOG_INFO, "===============> WAIT WITH CURRENT MODULE");
             return MODULE_TRANSITORY;
         }
-        else if (module_cstr == STRMODULE_CLOSE) {
+        if (module_cstr == STRMODULE_CLOSE) {
             LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE (1)");
             return MODULE_INTERNAL_CLOSE;
         }
-        else if (module_cstr == STRMODULE_CLOSE_BACK) {
+        if (module_cstr == STRMODULE_CLOSE_BACK) {
             LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE_BACK");
             return MODULE_INTERNAL_CLOSE_BACK;
         }
@@ -273,15 +273,15 @@ public:
             }
             return MODULE_INTERNAL_CLOSE;
         }
-        else if (module_cstr == STRMODULE_RDP) {
+        if (module_cstr == STRMODULE_RDP) {
             LOG(LOG_INFO, "===========> MODULE_RDP");
             return MODULE_RDP;
         }
-        else if (module_cstr == STRMODULE_VNC) {
+        if (module_cstr == STRMODULE_VNC) {
             LOG(LOG_INFO, "===========> MODULE_VNC");
             return MODULE_VNC;
         }
-        else if (module_cstr == STRMODULE_INTERNAL) {
+        if (module_cstr == STRMODULE_INTERNAL) {
             int res = MODULE_EXIT;
             auto & target = this->ini.get<cfg::context::target_host>();
             if (target == "bouncer2") {

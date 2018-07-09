@@ -128,11 +128,7 @@ public:
 
     time_t get_inactivity_timeout() override
     {
-        if (this->acl_serial){
-            return this->acl_serial->get_inactivity_timeout();
-        }
-        else
-            return 0;
+        return this->acl_serial ? this->acl_serial->get_inactivity_timeout() : 0;
     }
 
     void new_remote_mod() override

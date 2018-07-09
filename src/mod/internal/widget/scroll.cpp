@@ -308,22 +308,13 @@ void WidgetScrollBar::set_wh(uint16_t w, uint16_t h)
 
 Dimension WidgetScrollBar::get_optimal_button_dim()
 {
-    if (this->horizontal) {
-        Dimension dim = WidgetFlatButton::get_optimal_dim(1, this->font, "▶", 3, 2);
+    Dimension dim = WidgetFlatButton::get_optimal_dim(
+        1, this->font, this->horizontal ? "▶" : "▲", 3, 2);
 
-        dim.w += 1;
-        dim.h += 2;
+    dim.w += 1;
+    dim.h += 2;
 
-        return dim;
-    }
-    else {
-        Dimension dim = WidgetFlatButton::get_optimal_dim(1, this->font, "▲", 3, 2);
-
-        dim.w += 1;
-        dim.h += 2;
-
-        return dim;
-    }
+    return dim;
 }
 
 Dimension WidgetScrollBar::get_optimal_dim()

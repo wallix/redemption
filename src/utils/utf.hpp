@@ -422,7 +422,7 @@ static inline size_t UTF8toUTF16_CrLf(const uint8_t * source, uint8_t * target, 
         if ((ucode == 0x0D) && (source[i+1] == 0x0A)){
            continue;
         }
-        else if (ucode == 0x0A) {
+        if (ucode == 0x0A) {
             if (i_t + 4 /* CrLf en unicode */ > t_len) { goto UTF8toUTF16_exit; }
             target[i_t]     = 0x0D;
             target[i_t + 1] = 0x00;
@@ -814,7 +814,7 @@ static inline size_t UTF16toLatin1(const uint8_t * utf16_source_, size_t utf16_l
                 *dst = pair.latin1;
                 return true;
             }
-            else if (pair.utf16 > src) {
+            if (pair.utf16 > src) {
                 break;
             }
         }

@@ -644,7 +644,7 @@ namespace re {
                     const bool ret = this->next_is_finish(st->out1);
                     return ( ! ret) ?this->next_is_finish(st->out2) : ret;
                 }
-                else if (st->is_cap()) {
+                if (st->is_cap()) {
                     return this->next_is_finish(st->out1);
                 }
             }
@@ -664,7 +664,7 @@ namespace re {
                     const bool ret = this->next_is_terminate(st->out1);
                     return ( ! ret) ?this->next_is_terminate(st->out2) : ret;
                 }
-                else if (st->is_cap()) {
+                if (st->is_cap()) {
                     return this->next_is_terminate(st->out1);
                 }
             }

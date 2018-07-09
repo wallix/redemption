@@ -370,7 +370,8 @@ namespace X224
 
                 return;
             }
-            else if (action == FastPath::FASTPATH_OUTPUT_ACTION_X224) {
+
+            if (action == FastPath::FASTPATH_OUTPUT_ACTION_X224) {
                 /* 4 bytes */
                 t.recv_boom(*end, X224::TPKT_HEADER_LEN - nbbytes);
                 *end += X224::TPKT_HEADER_LEN - nbbytes;

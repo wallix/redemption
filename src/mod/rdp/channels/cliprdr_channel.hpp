@@ -1313,11 +1313,10 @@ public:
 
             return false;
         }
-        else {
-            if (this->clipboard_monitor_ready_notifier) {
-                if (!this->clipboard_monitor_ready_notifier->on_clipboard_monitor_ready()) {
-                    this->clipboard_monitor_ready_notifier = nullptr;
-                }
+
+        if (this->clipboard_monitor_ready_notifier) {
+            if (!this->clipboard_monitor_ready_notifier->on_clipboard_monitor_ready()) {
+                this->clipboard_monitor_ready_notifier = nullptr;
             }
         }
 

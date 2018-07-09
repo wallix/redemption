@@ -1344,9 +1344,8 @@ public:
 
             return this->usec_ocr_interval;
         }
-        else {
-            return this->usec_ocr_interval - diff;
-        }
+
+        return this->usec_ocr_interval - diff;
     }
 
     void session_update(timeval const & /*now*/, array_view_const_char message) override {

@@ -50,15 +50,13 @@ namespace re {
         if (c[0]) {
             return os.write(c, 4);
         }
-        else if (c[1]) {
+        if (c[1]) {
             return os.write(c+1, 3);
         }
-        else if (c[2]) {
+        if (c[2]) {
             return os.write(c+2, 2);
         }
-        else {
-            os.write(c+3, 1);
-        }
+        os.write(c+3, 1);
         return os;
     }
 

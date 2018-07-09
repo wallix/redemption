@@ -2629,10 +2629,9 @@ extern "C" {
                     std::cout << "decrypt ok" << std::endl;
                     return 0;
                 }
-                else {
-                    std::cout << "decrypt failed" << std::endl;
-                    return -1;
-                }
+
+                std::cout << "decrypt failed" << std::endl;
+                return -1;
             } catch (const Error & e) {
                 std::cout << "decrypt failed: with id=" << e.id << std::endl;
             }

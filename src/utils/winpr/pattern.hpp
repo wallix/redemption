@@ -56,24 +56,24 @@ static const char * FilePatternFindNextWildcardA(const char * lpPattern, unsigne
             *pFlags = WILDCARD_STAR;
             return lpWildcard;
         }
-        else if (lpWildcard[0] == '?')
+        if (lpWildcard[0] == '?')
         {
             *pFlags = WILDCARD_QM;
             return lpWildcard;
         }
-        else if (lpWildcard[0] == '~')
+        if (lpWildcard[0] == '~')
         {
             if (lpWildcard[1] == '*')
             {
                 *pFlags = WILDCARD_DOS_STAR;
                 return lpWildcard;
             }
-            else if (lpWildcard[1] == '?')
+            if (lpWildcard[1] == '?')
             {
                 *pFlags = WILDCARD_DOS_QM;
                 return lpWildcard;
             }
-            else if (lpWildcard[1] == '.')
+            if (lpWildcard[1] == '.')
             {
                 *pFlags = WILDCARD_DOS_DOT;
                 return lpWildcard;
@@ -140,7 +140,7 @@ static bool FilePatternMatchSubExpressionA(const char * lpFileName, size_t cchFi
 
         return true;
     }
-    else if (*lpWildcard == '?')
+    if (*lpWildcard == '?')
     {
         /**
          *                     X     S     Y
@@ -192,7 +192,7 @@ static bool FilePatternMatchSubExpressionA(const char * lpFileName, size_t cchFi
 
         return true;
     }
-    else if (*lpWildcard == '~')
+    if (*lpWildcard == '~')
     {
         fprintf(stderr, "warning: unimplemented '~' pattern match\n");
 
@@ -270,7 +270,7 @@ static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
         }
     }
 
-    /**
+    /*
      * The remaining expressions are evaluated in a non deterministic
      * finite order as listed below, where:
      *
@@ -330,45 +330,37 @@ static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
 
             return match;
         }
-        else
+
+        while (lpNextWildcard)
         {
-            while (lpNextWildcard)
-            {
-                cchSubFileName = cchFileName - (lpSubFileName - lpFileName);
-                size_t cchNextWildcard = ((dwNextFlags & WILDCARD_DOS) ? 2 : 1);
+            cchSubFileName = cchFileName - (lpSubFileName - lpFileName);
+            size_t cchNextWildcard = ((dwNextFlags & WILDCARD_DOS) ? 2 : 1);
 
-                const char * lpX = lpSubPattern;
-                size_t cchX = (lpWildcard - lpSubPattern);
+            const char * lpX = lpSubPattern;
+            size_t cchX = (lpWildcard - lpSubPattern);
 
-                const char * lpY = &lpSubPattern[cchX + cchWildcard];
-                size_t cchY = (lpNextWildcard - lpWildcard) - cchWildcard;
+            const char * lpY = &lpSubPattern[cchX + cchWildcard];
+            size_t cchY = (lpNextWildcard - lpWildcard) - cchWildcard;
 
-                bool match = FilePatternMatchSubExpressionA(lpSubFileName, cchSubFileName,
-                        lpX, cchX, lpY, cchY, lpWildcard, &lpMatchEnd);
+            bool match = FilePatternMatchSubExpressionA(lpSubFileName, cchSubFileName,
+                    lpX, cchX, lpY, cchY, lpWildcard, &lpMatchEnd);
 
-                if (!match)
-                    return false;
+            if (!match)
+                return false;
 
-                lpSubFileName = lpMatchEnd;
+            lpSubFileName = lpMatchEnd;
 
-                cchWildcard = cchNextWildcard;
-                lpWildcard = lpNextWildcard;
-                dwFlags = dwNextFlags;
+            cchWildcard = cchNextWildcard;
+            lpWildcard = lpNextWildcard;
+            dwFlags = dwNextFlags;
 
-                lpNextWildcard = FilePatternFindNextWildcardA(&lpWildcard[cchWildcard], &dwNextFlags);
-            }
-
-            return true;
+            lpNextWildcard = FilePatternFindNextWildcardA(&lpWildcard[cchWildcard], &dwNextFlags);
         }
-    }
-    else
-    {
-        /* no wildcard characters */
 
-        if (strcasecmp(lpFileName, lpPattern) == 0)
-            return true;
+        return true;
     }
 
-    return false;
+    /* no wildcard characters */
+    return (strcasecmp(lpFileName, lpPattern) == 0);
 }
 

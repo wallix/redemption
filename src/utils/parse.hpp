@@ -184,17 +184,17 @@ public:
             this->p += 1;
             return true;
         }
-        else if (0 == strncasecmp("yes", char_ptr_cast(this->p), 3))
+        if (0 == strncasecmp("yes", char_ptr_cast(this->p), 3))
         {
             this->p += 3;
             return true;
         }
-        else if (0 == strncasecmp("on", char_ptr_cast(this->p), 2))
+        if (0 == strncasecmp("on", char_ptr_cast(this->p), 2))
         {
             this->p += 2;
             return true;
         }
-        else if (0 == strncasecmp("true", char_ptr_cast(this->p), 4))
+        if (0 == strncasecmp("true", char_ptr_cast(this->p), 4))
         {
             this->p += 4;
             return true;

@@ -557,10 +557,8 @@ namespace re {
                                       accu.range(ranges.ranges[0].second+1, -1u, eps));
                     return &eps->out1;
                 }
-                else {
-                    *pst = accu.range(ranges.ranges[0].first, ranges.ranges[0].second);
-                    return &(*pst)->out1;
-                }
+                *pst = accu.range(ranges.ranges[0].first, ranges.ranges[0].second);
+                return &(*pst)->out1;
             }
 
             std::sort(ranges.ranges.begin(), ranges.ranges.end());

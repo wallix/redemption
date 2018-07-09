@@ -1875,7 +1875,7 @@ private:
                 if (remaining_data_length == data_length) {
                     return (flags & (~CHANNELS::CHANNEL_FLAG_LAST));
                 }
-                else if (remaining_data_length == virtual_channel_data_length) {
+                if (remaining_data_length == virtual_channel_data_length) {
                     return (flags & (~CHANNELS::CHANNEL_FLAG_FIRST));
                 }
 
@@ -2737,9 +2737,7 @@ public:
                     this->session_probe_virtual_channel_p->is_disconnection_reconnection_required()) {
                     throw Error(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION);
                 }
-                else {
-                    this->front.must_be_stop_capture();
-                }
+                this->front.must_be_stop_capture();
 
                 if (this->remote_apps_not_enabled) {
                     throw Error(ERR_RAIL_NOT_ENABLED);

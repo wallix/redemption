@@ -220,10 +220,8 @@ protected:
                 number[index]++;
                 break;
             }
-            else {
-                number[index] = 0;
-                continue;
-            }
+
+            number[index] = 0;
         }
     }
 
@@ -234,10 +232,7 @@ protected:
                 number[index]--;
                 break;
             }
-            else {
-                number[index] = 0xFF;
-                continue;
-            }
+            number[index] = 0xFF;
         }
     }
 
@@ -1014,13 +1009,12 @@ private:
             LOG(LOG_ERR, "ImpersonateSecurityContext status: 0x%08X", status);
             return Res::Err;
         }
-        else {
-            status = this->table->RevertSecurityContext();
 
-            if (status != SEC_E_OK) {
-                LOG(LOG_ERR, "RevertSecurityContext status: 0x%08X", status);
-                return Res::Err;
-            }
+        status = this->table->RevertSecurityContext();
+
+        if (status != SEC_E_OK) {
+            LOG(LOG_ERR, "RevertSecurityContext status: 0x%08X", status);
+            return Res::Err;
         }
 
         return Res::Ok;

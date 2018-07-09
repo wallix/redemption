@@ -161,42 +161,39 @@ public:
             }
             return SEC_E_OUT_OF_SEQUENCE;
         }
-        else {
-            PSecBuffer input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
 
-            if (!input_buffer) {
+        PSecBuffer input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
+
+        if (!input_buffer) {
+            return SEC_E_INVALID_TOKEN;
+        }
+        if (input_buffer->Buffer.size() < 1) {
+            return SEC_E_INVALID_TOKEN;
+        }
+        // channel_bindings = sspi_FindSecBuffer(pInput, SECBUFFER_CHANNEL_BINDINGS);
+
+        // if (channel_bindings) {
+        //     this->context->Bindings.BindingsLength = channel_bindings->cbBuffer;
+        //     this->context->Bindings.Bindings = (SEC_CHANNEL_BINDINGS*) channel_bindings->pvBuffer;
+        // }
+
+        if (this->context->state == NTLM_STATE_CHALLENGE) {
+            this->context->read_challenge(input_buffer);
+
+            if (!pOutput) {
                 return SEC_E_INVALID_TOKEN;
             }
-            if (input_buffer->Buffer.size() < 1) {
+            PSecBuffer output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
+
+            if (!output_buffer) {
                 return SEC_E_INVALID_TOKEN;
             }
-            // channel_bindings = sspi_FindSecBuffer(pInput, SECBUFFER_CHANNEL_BINDINGS);
-
-            // if (channel_bindings) {
-            //     this->context->Bindings.BindingsLength = channel_bindings->cbBuffer;
-            //     this->context->Bindings.Bindings = (SEC_CHANNEL_BINDINGS*) channel_bindings->pvBuffer;
-            // }
-
-            if (this->context->state == NTLM_STATE_CHALLENGE) {
-                this->context->read_challenge(input_buffer);
-
-                if (!pOutput) {
-                    return SEC_E_INVALID_TOKEN;
-                }
-                PSecBuffer output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
-
-                if (!output_buffer) {
-                    return SEC_E_INVALID_TOKEN;
-                }
-                if (output_buffer->Buffer.size() < 1) {
-                    return SEC_E_INSUFFICIENT_MEMORY;
-                }
-                if (this->context->state == NTLM_STATE_AUTHENTICATE) {
-                    return this->context->write_authenticate(output_buffer);
-                }
+            if (output_buffer->Buffer.size() < 1) {
+                return SEC_E_INSUFFICIENT_MEMORY;
             }
-
-            return SEC_E_OUT_OF_SEQUENCE;
+            if (this->context->state == NTLM_STATE_AUTHENTICATE) {
+                return this->context->write_authenticate(output_buffer);
+            }
         }
 
         return SEC_E_OUT_OF_SEQUENCE;
@@ -249,7 +246,8 @@ public:
 
             return SEC_E_OUT_OF_SEQUENCE;
         }
-        else if (this->context->state == NTLM_STATE_AUTHENTICATE) {
+
+        if (this->context->state == NTLM_STATE_AUTHENTICATE) {
             PSecBuffer input_buffer = input.FindSecBuffer(SECBUFFER_TOKEN);
 
             if (!input_buffer) {

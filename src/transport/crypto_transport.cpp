@@ -412,44 +412,43 @@ size_t InCryptoTransport::do_partial_read(uint8_t * buffer, size_t len)
         }
         return copiable_size;
     }
-    else {
-        if (this->raw_size - this->clear_pos > len){
-            ::memcpy(&buffer[0], &this->clear_data[this->clear_pos], len);
-            this->clear_pos += len;
-            this->current_len += len;
-            if (this->file_len <= this->current_len) {
-                this->eof = true;
-            }
-            return len;
-        }
-        size_t remaining_len = len;
-        if (this->raw_size - this->clear_pos > 0){
-            ::memcpy(&buffer[0], &this->clear_data[this->clear_pos], this->raw_size - this->clear_pos);
-            remaining_len -= this->raw_size - this->clear_pos;
-            this->raw_size = 0;
-            this->clear_pos = 0;
-        }
-        while(remaining_len){
-            ssize_t const res = ::read(this->fd, &buffer[len - remaining_len], remaining_len);
-            if (res <= 0){
-                if (res == 0) {
-                    this->eof = true;
-                    break;
-                }
-                if (errno == EINTR){
-                    continue;
-                }
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-            }
-            remaining_len -= res;
-        };
 
+    if (this->raw_size - this->clear_pos > len){
+        ::memcpy(&buffer[0], &this->clear_data[this->clear_pos], len);
+        this->clear_pos += len;
         this->current_len += len;
         if (this->file_len <= this->current_len) {
             this->eof = true;
         }
-        return len - remaining_len;
+        return len;
     }
+    size_t remaining_len = len;
+    if (this->raw_size - this->clear_pos > 0){
+        ::memcpy(&buffer[0], &this->clear_data[this->clear_pos], this->raw_size - this->clear_pos);
+        remaining_len -= this->raw_size - this->clear_pos;
+        this->raw_size = 0;
+        this->clear_pos = 0;
+    }
+    while(remaining_len){
+        ssize_t const res = ::read(this->fd, &buffer[len - remaining_len], remaining_len);
+        if (res <= 0){
+            if (res == 0) {
+                this->eof = true;
+                break;
+            }
+            if (errno == EINTR){
+                continue;
+            }
+            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+        }
+        remaining_len -= res;
+    };
+
+    this->current_len += len;
+    if (this->file_len <= this->current_len) {
+        this->eof = true;
+    }
+    return len - remaining_len;
 }
 
 InCryptoTransport::Read InCryptoTransport::do_atomic_read(uint8_t * buffer, size_t len)
@@ -577,9 +576,7 @@ ocrypto::Result ocrypto::open(const_byte_array derivator)
         this->update_hmac(&this->header_buf[0], 40);
         return Result{{this->header_buf, 40u}, 0u};
     }
-    else {
-        return Result{{this->header_buf, 0u}, 0u};
-    }
+    return Result{{this->header_buf, 0u}, 0u};
 }
 
 ocrypto::Result ocrypto::close(

@@ -453,7 +453,8 @@ public:
                                     session_reactor.signal = signal;
                                     break;
                                 }
-                                else if (signal) {
+
+                                if (signal) {
                                     session_reactor.signal = signal;
                                 }
                                 else {

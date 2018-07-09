@@ -432,10 +432,10 @@ void FileToGraphic::interpret_order()
                         LOG(LOG_ERR, "Memblt bitmap not found in cache at (%u, %u)",
                             this->ssc.memblt.cache_id, this->ssc.memblt.cache_idx);
                         throw Error(ERR_WRM);
-                    } else {
-                        for (gdi::GraphicApi * gd : this->graphic_consumers){
-                            gd->draw(this->ssc.memblt, clip, bmp);
-                        }
+                    }
+
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.memblt, clip, bmp);
                     }
                 }
                 break;
@@ -450,10 +450,9 @@ void FileToGraphic::interpret_order()
                             this->ssc.mem3blt.cache_id, this->ssc.mem3blt.cache_idx);
                         throw Error(ERR_WRM);
                     }
-                    else {
-                        for (gdi::GraphicApi * gd : this->graphic_consumers){
-                            gd->draw(this->ssc.mem3blt, clip, receive_order.color_ctx(palette), bmp);
-                        }
+
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.mem3blt, clip, receive_order.color_ctx(palette), bmp);
                     }
                 }
                 break;

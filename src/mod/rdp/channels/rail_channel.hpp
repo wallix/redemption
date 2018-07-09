@@ -997,7 +997,8 @@ public:
 
             return (!this->session_probe_channel);
         }
-        else if (this->param_client_execute_exe_or_file_2 == serpdu.ExeOrFile()) {
+
+        if (this->param_client_execute_exe_or_file_2 == serpdu.ExeOrFile()) {
             assert(!is_auth_application);
 
             if (this->session_probe_channel) {
@@ -1005,12 +1006,9 @@ public:
             }
 
             if (serpdu.ExecResult() != RAIL_EXEC_S_OK) {
-                if (serpdu.ExecResult() == RAIL_EXEC_E_NOT_IN_ALLOWLIST) {
-                    throw Error(ERR_RAIL_UNAUTHORIZED_PROGRAM);
-                }
-                else {
-                    throw Error(ERR_RAIL_STARTING_PROGRAM);
-                }
+                throw Error((serpdu.ExecResult() == RAIL_EXEC_E_NOT_IN_ALLOWLIST)
+                    ? ERR_RAIL_UNAUTHORIZED_PROGRAM
+                    : ERR_RAIL_STARTING_PROGRAM);
             }
 
             return true;
