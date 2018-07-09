@@ -5272,7 +5272,7 @@ public:
 
         Pointer cursor({width, height}, {hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor, mlen / height, dlen / height);
         assert(::even_pad_length(::nbbytes(width)) == mlen / height);
-        assert(::even_pad_length(::nbbytes(width * xorBpp)) == dlen / height);
+        assert(::even_pad_length(::nbbytes(width * data_bpp)) == dlen / height);
 
         this->cursors[pointer_idx] = cursor;
 
