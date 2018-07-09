@@ -172,7 +172,7 @@ public:
         , ServerSigningKey()
         , ServerSealingKey()
         , MessageIntegrityCheck()
-        , verbose(0)
+        , verbose(false)
         // , SendSingleHostData(false)
     {
         // this->SavedNegotiateMessage.init(0);

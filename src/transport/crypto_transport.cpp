@@ -156,7 +156,7 @@ const InCryptoTransport::HASH InCryptoTransport::fhash(const char * pathname)
             if (res < 0 && errno == EINTR) { continue; }
             if (res < 0) { throw Error(ERR_TRANSPORT_READ_FAILED, errno); }
             hm.update(buffer, res);
-        } while (1);
+        } while (true);
     }
 
     HASH fhash;
@@ -707,7 +707,7 @@ OutCryptoTransport::~OutCryptoTransport()
 // TODO: CGR: I want to remove that from Transport API
 bool OutCryptoTransport::disconnect()
 {
-    return 0;
+    return false;
 }
 
 bool OutCryptoTransport::is_open() const

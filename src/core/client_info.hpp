@@ -88,7 +88,7 @@ struct ClientInfo {
     int rdp_compression_type = 0;
     int rdp_autologin = 0;
     int encryptionLevel; /* 1, 2, 3 = low, medium, high */
-    bool has_sound_code = 0; /* 1 = leave sound at server */
+    bool has_sound_code = false; /* 1 = leave sound at server */
     int is_mce = 0;
     uint32_t rdp5_performanceflags = 0;
     int brush_cache_code = 0; /* 0 = no cache 1 = 8x8 standard cache
@@ -185,7 +185,7 @@ struct ClientInfo {
             throw Error(ERR_SEC_PROCESS_LOGON_UNKNOWN_FLAGS);
         }
         if (infoPacket.flags & INFO_REMOTECONSOLEAUDIO) {
-            this->has_sound_code = 1;
+            this->has_sound_code = true;
         }
         // TODO for now not allowing both autologon and mce
         if ((infoPacket.flags & INFO_AUTOLOGON) && (!this->is_mce)){

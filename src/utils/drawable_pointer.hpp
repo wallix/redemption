@@ -110,7 +110,7 @@ class BitZones
             Zone(bool bit, size_t length) : bit(bit), length(length) {}
         } zone;
         public:
-        Iterator (const uint8_t * data, size_t width_in_bits, size_t offset) : width_in_bits(width_in_bits), data(data), offset(offset), zone(0,0)
+        Iterator (const uint8_t * data, size_t width_in_bits, size_t offset) : width_in_bits(width_in_bits), data(data), offset(offset), zone(false,0)
         {
             this->operator++();
         }

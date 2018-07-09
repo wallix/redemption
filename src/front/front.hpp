@@ -383,8 +383,8 @@ private:
           , ini.get<cfg::globals::experimental_enable_serializer_data_block_size_limit>()
           , fastpath_support
           , mppc_enc
-          , bool(ini.get<cfg::client::rdp_compression>()) ? client_info.rdp_compression : 0
-          , bool(ini.get<cfg::client::enable_new_pointer_update>()) ? client_info.supported_new_pointer_update : 0
+          , bool(ini.get<cfg::client::rdp_compression>()) ? client_info.rdp_compression : false
+          , bool(ini.get<cfg::client::enable_new_pointer_update>()) ? client_info.supported_new_pointer_update : false
           , ( (ini.get<cfg::debug::primary_orders>()
                 ? RDPSerializer::Verbose::primary_orders   : RDPSerializer::Verbose::none)
             | (ini.get<cfg::debug::secondary_orders>()
@@ -694,7 +694,7 @@ public:
     , capture(nullptr)
     , verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
     , keymap(bool(this->verbose & Verbose::keymap) ? 1 : 0)
-    , up_and_running(0)
+    , up_and_running(false)
     , share_id(65538)
     , encryptionLevel(underlying_cast(ini.get<cfg::globals::encryptionLevel>()) + 1)
     , trans(trans)
@@ -845,7 +845,7 @@ public:
                     // start a send_deactive, send_deman_active process with
                     // the new resolution setting
                     /* shut down the rdp client */
-                    this->up_and_running = 0;
+                    this->up_and_running = false;
                     this->send_deactive();
                     /* this should do the actual resizing */
                     this->send_demand_active();
@@ -3058,8 +3058,7 @@ private:
                         this->client_info.general_caps.log("Front::process_confirm_active: Receiving from client");
                     }
                     this->client_info.use_compact_packets =
-                        (this->client_info.general_caps.extraflags & NO_BITMAP_COMPRESSION_HDR) ?
-                        1 : 0;
+                        bool(this->client_info.general_caps.extraflags & NO_BITMAP_COMPRESSION_HDR);
 
                     this->server_fastpath_update_support =
                         (   this->fastpath_support
@@ -4030,7 +4029,7 @@ private:
 
                 this->set_gd(this->orders.graphics_update_pdu());
 
-                this->up_and_running = 1;
+                this->up_and_running = true;
                 this->handshake_timeout.reset();
                 cb.rdp_input_up_and_running();
                 // TODO we should use accessors to set that, also not sure it's the right place to set it

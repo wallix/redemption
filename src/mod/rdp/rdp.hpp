@@ -4782,7 +4782,7 @@ public:
 
         try
         {
-            while (1) {
+            for (;;) {
                 this->send_persistent_key_list_pdu(
                     [this](StreamSize<65535>, OutStream & pdu_data_stream) {
                         uint8_t * data = pdu_data_stream.get_data();

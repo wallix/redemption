@@ -402,7 +402,7 @@ namespace jln
         using ActionExecutorBuilder = ActionExecutorBuilder_Concept;
     #else
         template<class Top, class Group>
-        using GroupExecutorBuilder = GroupExecutorBuilderImpl<0, 0, Top, Group>;
+        using GroupExecutorBuilder = GroupExecutorBuilderImpl<false, false, Top, Group>;
 
         template<class InitCtx>
         using TopExecutorBuilder = TopExecutorBuilderImpl<BuilderInit::None, InitCtx>;
@@ -1494,7 +1494,7 @@ namespace jln
                         case R::SubstituteExit:
                             REDEMPTION_UNREACHABLE();
                     }
-                } while(0);
+                } while(false);
             }
             catch (Error const& e) {
                 this->error = e;
@@ -1564,7 +1564,7 @@ namespace jln
                         case R::SubstituteExit:
                             REDEMPTION_UNREACHABLE();
                     }
-                } while(0);
+                } while(false);
             }
             catch (Error const& e) {
                 this->error = e;

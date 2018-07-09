@@ -592,7 +592,7 @@ class rdp_mppc_61_enc : public rdp_mppc_enc {
     MatchFinder match_finder;
 
 public:
-    explicit rdp_mppc_61_enc(bool verbose = 0)
+    explicit rdp_mppc_61_enc(bool verbose = false)
         : rdp_mppc_enc(RDP_61_MAX_DATA_BLOCK_SIZE, verbose)
         , historyBuffer{0}
         ,

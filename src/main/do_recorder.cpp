@@ -2035,7 +2035,7 @@ struct RecorderParams {
     bool auto_output_file   = false;
     bool remove_input_file  = false;
     uint32_t    clear       = 1; // default on
-    bool infile_is_encrypted = 0;
+    bool infile_is_encrypted = false;
     bool chunk = false;
 
     // verifier options
@@ -2559,7 +2559,7 @@ extern "C" {
                     case EncryptionSchemeTypeResult::Error:
                         throw out_error;
                     case EncryptionSchemeTypeResult::OldScheme:
-                        cctx.old_encryption_scheme = 1;
+                        cctx.old_encryption_scheme = true;
                         break;
                     default:
                         break;
