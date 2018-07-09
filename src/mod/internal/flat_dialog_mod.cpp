@@ -35,7 +35,7 @@ FlatDialogMod::FlatDialogMod(
 )
     : LocallyIntegrableMod(session_reactor, front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
     , language_button(
-        vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->dialog_widget,
+        vars.get<cfg::client::keyboard_layout_proposals>(), this->dialog_widget,
         front, front, this->font(), this->theme())
     , dialog_widget(
         front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,

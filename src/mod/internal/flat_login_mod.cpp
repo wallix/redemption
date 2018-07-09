@@ -36,7 +36,7 @@ FlatLoginMod::FlatLoginMod(
 )
     : LocallyIntegrableMod(session_reactor, front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
     , language_button(
-        vars.get<cfg::client::keyboard_layout_proposals>().c_str(),
+        vars.get<cfg::client::keyboard_layout_proposals>(),
         this->login, front, front, this->font(), this->theme())
     , login(
         front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,

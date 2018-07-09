@@ -32,7 +32,7 @@ FlatWaitMod::FlatWaitMod(
     ClientExecute & client_execute, bool showform, uint32_t flag
 )
     : LocallyIntegrableMod(session_reactor, front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
-    , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->wait_widget, front, front, this->font(), this->theme())
+    , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->wait_widget, front, front, this->font(), this->theme())
     , wait_widget(front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy, this->screen, this, caption, message, 0,
                     &this->language_button,
                     vars.get<cfg::font>(),

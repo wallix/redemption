@@ -36,7 +36,7 @@ InteractiveTargetMod::InteractiveTargetMod(
     , ask_device(vars.is_asked<cfg::context::target_host>())
     , ask_login(vars.is_asked<cfg::globals::target_user>())
     , ask_password((this->ask_login || vars.is_asked<cfg::context::target_password>()))
-    , language_button(vars.get<cfg::client::keyboard_layout_proposals>().c_str(), this->challenge, front, front, this->font(), this->theme())
+    , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->challenge, front, front, this->font(), this->theme())
     , challenge(
         front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
         this->screen, this,

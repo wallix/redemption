@@ -746,7 +746,7 @@ public:
                 } else
                 if (line.compare(0, pos, "name") == 0) {
                     if (read_id) {
-                        this->userProfils.push_back({read_id, info.c_str()});
+                        this->userProfils.push_back({read_id, info});
                     }
                 } else
                 if (this->current_user_profil == read_id) {
