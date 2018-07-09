@@ -1579,15 +1579,15 @@ Capture::Capture(
     if (capture_kbd) {
         if (kbd_log_params.syslog_keyboard_log) {
             this->syslog_kbd_capture_obj.reset(new SyslogKbd(capture_params.now));
-            this->kbds.push_back(*this->syslog_kbd_capture_obj.get());
-            this->caps.push_back(*this->syslog_kbd_capture_obj.get());
+            this->kbds.push_back(*this->syslog_kbd_capture_obj);
+            this->caps.push_back(*this->syslog_kbd_capture_obj);
         }
 
         if (kbd_log_params.session_log_enabled) {
             this->session_log_kbd_capture_obj.reset(new SessionLogKbd(
                 *capture_params.report_message));
-            this->kbds.push_back(*this->session_log_kbd_capture_obj.get());
-            this->probes.push_back(*this->session_log_kbd_capture_obj.get());
+            this->kbds.push_back(*this->session_log_kbd_capture_obj);
+            this->probes.push_back(*this->session_log_kbd_capture_obj);
         }
 
         this->pattern_kbd_capture_obj.reset(new PatternKbd(
@@ -1597,7 +1597,7 @@ Capture::Capture(
             pattern_params.verbose));
 
         if (this->pattern_kbd_capture_obj->contains_pattern()) {
-            this->kbds.push_back(*this->pattern_kbd_capture_obj.get());
+            this->kbds.push_back(*this->pattern_kbd_capture_obj);
         }
         else {
             this->pattern_kbd_capture_obj.reset();

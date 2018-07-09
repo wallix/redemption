@@ -3,6 +3,8 @@
 # cppcoreguidelines-pro-type-member-init / hicpp-member-init false positive...
 
 ${CLANG_TIDY:=clang-tidy} -checks='*,
+-hicpp-noexcept-move,
+-cert-err61-cpp,
 -cert-err09-cpp,
 -modernize-raw-string-literal,
 -android-cloexec-open,

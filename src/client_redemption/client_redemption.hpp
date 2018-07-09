@@ -344,7 +344,7 @@ public:
             LOG(LOG_ERR, "new ReplayMod error %s", err.errmsg());
         }
 
-        if (this->replay_mod.get() == nullptr) {
+        if (this->replay_mod == nullptr) {
             if (impl_graphic) {
                 this->impl_graphic->dropScreen();
             }
@@ -934,7 +934,7 @@ public:
     }
 
     void instant_play_client(std::chrono::microseconds time) override {
-        this->replay_mod.get()->instant_play_client(time);
+        this->replay_mod->instant_play_client(time);
     }
 
     void disconnexionReleased() override{

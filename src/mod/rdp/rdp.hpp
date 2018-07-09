@@ -519,7 +519,7 @@ protected:
             this->asynchronous_tasks.add(
                 std::make_unique<RdpdrSendClientMessageTask>(
                     total_length, flags, chunk_data, chunk_data_length,
-                    *this->to_server_synchronous_sender.get(),
+                    *this->to_server_synchronous_sender,
                     this->verbose
                 )
             );

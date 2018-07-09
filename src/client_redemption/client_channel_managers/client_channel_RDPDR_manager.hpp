@@ -792,10 +792,10 @@ public:
                                         if (sdqdr.InitialQuery() && endPath != asterix) {
 
                                             std::string tmp_path = path;
-                                            int tmp_path_index = tmp_path.find("/");
+                                            int tmp_path_index = tmp_path.find('/');
                                             while (tmp_path_index != -1) {
                                                 tmp_path = tmp_path.substr(tmp_path_index+1, tmp_path.length());
-                                                tmp_path_index = tmp_path.find("/");
+                                                tmp_path_index = tmp_path.find('/');
                                             }
                                             str_file_name = tmp_path;
 

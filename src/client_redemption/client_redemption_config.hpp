@@ -591,26 +591,24 @@ public:
             int pos = 0;
 
             getline(ifile, line);
-            pos = line.find(" ");
+            pos = line.find(' ');
             line = line.substr(pos, line.length());
             this->windowsData.form_x = std::stoi(line);
 
             getline(ifile, line);
-            pos = line.find(" ");
+            pos = line.find(' ');
             line = line.substr(pos, line.length());
             this->windowsData.form_y = std::stoi(line);
 
             getline(ifile, line);
-            pos = line.find(" ");
+            pos = line.find(' ');
             line = line.substr(pos, line.length());
             this->windowsData.screen_x = std::stoi(line);
 
             getline(ifile, line);
-            pos = line.find(" ");
+            pos = line.find(' ');
             line = line.substr(pos, line.length());
             this->windowsData.screen_y = std::stoi(line);
-
-            ifile.close();
         }
     }
 

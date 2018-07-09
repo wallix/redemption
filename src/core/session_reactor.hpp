@@ -2069,7 +2069,7 @@ namespace jln
             void on_timeout(F&& f)
             {
                 this->top().timer_data.on_timeout = detail::create_on_timeout(
-                    *this->g.get(), static_cast<F&&>(f));
+                    *this->g, static_cast<F&&>(f));
             }
 
             TopSharedPtr<Ts...> terminate_init()

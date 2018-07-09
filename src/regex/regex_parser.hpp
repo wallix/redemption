@@ -374,7 +374,7 @@ namespace re {
     inline bool is_range_repetition(const char * s)
     {
         const char * begin = s;
-        while (*s && '0' <= *s && *s <= '9') {
+        while ('0' <= *s && *s <= '9') {
             ++s;
         }
         if (begin == s || !*s || (*s != ',' && *s != '}')) {
@@ -384,10 +384,10 @@ namespace re {
             return true;
         }
         ++s;
-        while (*s && '0' <= *s && *s <= '9') {
+        while ('0' <= *s && *s <= '9') {
             ++s;
         }
-        return *s && *s == '}';
+        return *s == '}';
     }
 
     inline bool is_meta_char(utf8_consumer & consumer, char_int c)

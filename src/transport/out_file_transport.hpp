@@ -43,7 +43,7 @@ public:
     : impl(new NullImpl)
     {}
 
-    ReportError(ReportError && other)
+    ReportError(ReportError && other) noexcept
     : impl(std::move(other.impl))
     {}
 

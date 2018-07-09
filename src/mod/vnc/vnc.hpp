@@ -1924,7 +1924,7 @@ private:
                 if (p && *p){
                     support_zrle_encoding          = false;
                     for (;;){
-                        while (*p && *p == ','){++p;}
+                        while (*p == ','){++p;}
                         char * end;
                         int32_t encoding_type = std::strtol(p, &end, 0);
                         if (p == end) { break; }
