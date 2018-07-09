@@ -42,17 +42,15 @@
 using PacketType = RecorderFile::PacketType;
 
 /** @brief a front connection with a RDP client */
-class FrontConnection {
+class FrontConnection
+{
 public:
-	FrontConnection(int sck, int connId, const char *host, int port, const std::string &captureFile)
-		: frontConn("front", unique_fd(sck), "127.0.0.1", 3389, std::chrono::milliseconds(100), to_verbose_flags(0))
-		, frontProtocols(0)
-		, backConn("back", ip_connect(host, port, 3, 1000), host, port, std::chrono::milliseconds(100), to_verbose_flags(0))
-		, captureFile(captureFile)
-		, conn_no(connId)
-		, tmpBuffer(new uint8_t[0xffff])
-		, state(NEGOCIATING_FRONT_STEP1)
-		, outFile(captureFile.c_str())
+	FrontConnection(unique_fd sck, std::string const& host, int port, std::string captureFile)
+		: frontConn("front", std::move(sck), "127.0.0.1", 3389, std::chrono::milliseconds(100), to_verbose_flags(0))
+		, backConn("back", ip_connect(host.c_str(), port, 3, 1000),
+            host.c_str(), port, std::chrono::milliseconds(100), to_verbose_flags(0))
+		, captureFile(std::move(captureFile))
+		, outFile(this->captureFile.c_str())
 	{
 	}
 
@@ -77,7 +75,7 @@ public:
 			}
 			break;
 		default: // FRONT_FORWARD
-			size_t ret = frontConn.do_partial_read(tmpBuffer, 0xffff);
+			size_t ret = frontConn.partial_read(make_array_view(tmpBuffer));
 			if (ret > 0) {
 				outFile.write_packet(PacketType::DataOut, {tmpBuffer, ret});
 				backConn.send(tmpBuffer, ret);
@@ -134,7 +132,7 @@ public:
 			break;
 
 		default:
-			size_t ret = backConn.do_partial_read(tmpBuffer, 0xffff);
+			size_t ret = backConn.partial_read(make_array_view(tmpBuffer));
 			if (ret > 0) {
 				frontConn.send(tmpBuffer, ret);
 				outFile.write_packet(PacketType::DataIn, {tmpBuffer, ret});
@@ -145,37 +143,36 @@ public:
 
 
 	void run() {
-		fd_set rset;
-		bool doRun = true;
+		LOG(LOG_INFO, "Recording front connection in %s", captureFile);
 
-		LOG(LOG_ERR, "Recording front connection in %s", captureFile.c_str());
+		fd_set rset;
 		int front_fd = frontConn.get_fd();
 		int back_fd = backConn.get_fd();
 
-		while (doRun) {
-			int status;
+        try {
+            for (;;) {
+                FD_ZERO(&rset);
 
-			FD_ZERO(&rset);
+                switch(state) {
+                case NEGOCIATING_FRONT_STEP1:
+                    FD_SET(front_fd, &rset);
+                    break;
+                case NEGOCIATING_BACK_STEP1:
+                case NEGOCIATING_BACK_STEP2:
+                    FD_SET(back_fd, &rset);
+                    break;
+                default:
+                    FD_SET(front_fd, &rset);
+                    FD_SET(back_fd, &rset);
+                    break;
+                }
 
-			switch(state) {
-			case NEGOCIATING_FRONT_STEP1:
-				FD_SET(front_fd, &rset);
-				break;
-			case NEGOCIATING_BACK_STEP1:
-			case NEGOCIATING_BACK_STEP2:
-				FD_SET(back_fd, &rset);
-				break;
-			default:
-				FD_SET(front_fd, &rset);
-				FD_SET(back_fd, &rset);
-				break;
-			}
+                int status = select(std::max(front_fd, back_fd) + 1, &rset, nullptr, nullptr, nullptr);
+                if (status < 0) {
+                    LOG(LOG_ERR, "select error: %s [%d]", strerror(errno), errno);
+                    break;
+                }
 
-			status = select(std::max(front_fd, back_fd) + 1, &rset, nullptr, nullptr, nullptr);
-			if (status < 0)
-				break;
-
-			try {
 				if (FD_ISSET(front_fd, &rset)) {
 					treat_front_activity();
 				}
@@ -183,51 +180,47 @@ public:
 				if (FD_ISSET(back_fd, &rset)) {
 					treat_back_activity();
 				}
-			} catch(...) {
-				doRun = false;
-			}
-		}
+            }
+        } catch(Error const& e) {
+            LOG(LOG_ERR, "Recording front connection ending: %s", e.errmsg());
+        }
 	}
 
-protected:
+private:
 	FixedRandom random;
 	SocketTransport frontConn;
 	TpduBuffer frontBuffer;
-	uint32_t frontProtocols;
 
 	SocketTransport backConn;
 	TpduBuffer backBuffer;
 
 	std::string captureFile;
-	int conn_no;
-	uint8_t *tmpBuffer;
+	uint8_t tmpBuffer[0xffff];
 
 	enum {
 		NEGOCIATING_FRONT_STEP1,
 		NEGOCIATING_BACK_STEP1,
 		NEGOCIATING_BACK_STEP2,
 		FORWARD
-	} state;
+	} state = NEGOCIATING_FRONT_STEP1;
 
 	RecorderFile outFile;
 };
 
 /** @brief the server that handles RDP connections */
-class FrontServer : public Server {
+class FrontServer : public Server
+{
 public:
-	FrontServer(const std::string &host, int port, const std::string &captureFile)
-		: connection_counter(0)
-		, targetHost(host)
-		, targetPort(port)
-		, captureTemplate(captureFile)
+	FrontServer(std::string host, int port, std::string captureFile)
+		: targetPort(port)
+        , targetHost(std::move(host))
+		, captureTemplate(std::move(captureFile))
 	{
 	}
 
-	Server::Server_status start(int sck, bool forkable) override {
-		(void)forkable;
-
-		int sck_in = accept(sck, nullptr, nullptr);
-		if (-1 == sck_in) {
+	Server::Server_status start(int sck, bool /*forkable*/) override {
+		unique_fd sck_in {accept(sck, nullptr, nullptr)};
+		if (!sck_in) {
 			LOG(LOG_INFO, "Accept failed on socket %d (%s)", sck, strerror(errno));
 			_exit(1);
 		}
@@ -240,7 +233,7 @@ public:
 			close(sck);
 
 			int nodelay = 1;
-			if (setsockopt(sck_in, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay)) < 0) {
+			if (setsockopt(sck_in.fd(), IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay)) < 0) {
 				LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
 				_exit(1);
 			}
@@ -248,28 +241,24 @@ public:
 			char finalPath[300];
 			std::snprintf(finalPath, sizeof(finalPath), captureTemplate.c_str(), connection_counter);
 
-			FrontConnection conn(sck_in, connection_counter, targetHost.c_str(), targetPort, std::string(finalPath));
+			FrontConnection conn(std::move(sck_in), targetHost, targetPort, finalPath);
 			conn.run();
 			exit(0);
 		}
 
-        close(sck_in);
-
     	return Server::START_OK;
     }
 
-protected:
-	int connection_counter;
-	std::string targetHost;
+private:
+	int connection_counter = 0;
 	int targetPort;
+	std::string targetHost;
 	std::string captureTemplate;
 };
 
 
-int main(int argc, char *argv[]) {
-	(void)argc;
-	(void)argv;
-
+int main(int argc, char *argv[])
+{
 	if (argc < 4) {
 		LOG(LOG_ERR, "expecting target host, port and capture template");
 		return 1;

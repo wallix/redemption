@@ -87,6 +87,7 @@ public:
 
     bool connect() override;
 
+protected:
     size_t do_partial_read(uint8_t * buffer, size_t len) override;
 
     Read do_atomic_read(uint8_t * buffer, size_t len) override;
