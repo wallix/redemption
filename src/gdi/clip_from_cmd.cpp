@@ -95,7 +95,7 @@ namespace {
         }
         return Rect(minx, miny, maxx-minx+1, maxy-miny+1);
     }
-}
+} // namespace
 
 Rect clip_from_cmd(RDPPolygonSC const & cmd) {
     return clip_from_delta_list(

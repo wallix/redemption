@@ -18,6 +18,7 @@
     Author(s): Christophe Grosjean, Meng Tan, Jonathan Poelen, Raphael Zhou
 */
 
+#include "core/font.hpp"
 #include "core/front_api.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
@@ -38,11 +39,48 @@ struct WidgetTestMod::WidgetTestModPrivate
     WidgetTestModPrivate(SessionReactor& session_reactor, WidgetTestMod& mod)
       : session_reactor(session_reactor)
     {
+        LOG(LOG_DEBUG, "WidgetTestModPrivate");
         this->timer = this->session_reactor.create_graphic_timer(std::ref(mod))
         .set_delay(std::chrono::seconds(0))
         .on_action([](auto ctx, gdi::GraphicApi& gd, WidgetTestMod& mod){
-            mod.draw_event(0, gd);
-            return ctx.set_delay(std::chrono::seconds(3)).ready();
+            update_lock update_lock{mod.front};
+            int y = 10;
+            for (auto s : {
+                // "/home/jpoelen/rawdisk2/Laksaman_14.rbf",
+                // "/home/jpoelen/rawdisk2/Laksaman_15.rbf",
+                // "/home/jpoelen/rawdisk2/Laksaman_16.rbf",
+                // "/home/jpoelen/rawdisk2/Laksaman_17.rbf",
+                "/home/jpoelen/rawdisk2/Lato-Light_14.rbf",
+                "/home/jpoelen/rawdisk2/Lato-Light_15.rbf",
+                "/home/jpoelen/rawdisk2/Lato-Light_16.rbf",
+                "/home/jpoelen/rawdisk2/Lato-Light_17.rbf",
+                "/home/jpoelen/rawdisk2/Lato-Thin_14.rbf",
+                "/home/jpoelen/rawdisk2/Lato-Thin_15.rbf",
+                "/home/jpoelen/rawdisk2/Lato-Thin_16.rbf",
+                "/home/jpoelen/rawdisk2/Lato-Thin_17.rbf",
+                "/home/jpoelen/rawdisk2/Lohit-Telugu_14.rbf",
+                "/home/jpoelen/rawdisk2/Lohit-Telugu_15.rbf",
+                "/home/jpoelen/rawdisk2/Lohit-Telugu_16.rbf",
+                "/home/jpoelen/rawdisk2/Lohit-Telugu_17.rbf",
+                // "/home/jpoelen/rawdisk2/NanumSquareR_14.rbf",
+                // "/home/jpoelen/rawdisk2/NanumSquareR_15.rbf",
+                // "/home/jpoelen/rawdisk2/NanumSquareR_16.rbf",
+                // "/home/jpoelen/rawdisk2/NanumSquareR_17.rbf",
+                // "/home/jpoelen/rawdisk2/Suruma_14.rbf",
+                // "/home/jpoelen/rawdisk2/Suruma_15.rbf",
+                // "/home/jpoelen/rawdisk2/Suruma_16.rbf",
+                // "/home/jpoelen/rawdisk2/Suruma_17.rbf",
+            }) {
+                Font font(s);
+                auto * text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`!@#$%^&*()_=[]'\",./<>?|:{}¹²³ cl◀◂▸▶▲▼▤▥➜¤€’¥×\\æœúíàéèçùµÉÀð.";
+                gdi::server_draw_text(
+                    gd, font, 10, y, text,
+                    encode_color24()(BGRColor(0xeeb6c1)), encode_color24()(BGRColor(0x747132)),
+                    gdi::ColorCtx::depth24(), Rect(10, y-10, gdi::TextMetrics(font, text).width, 600));
+                y += font.max_height() + 10;
+            }
+            // return ctx.set_delay(std::chrono::seconds(10)).ready();
+            return ctx.terminate();
         });
     }
 
@@ -84,7 +122,7 @@ void WidgetTestMod::refresh(Rect clip)
     this->rdp_input_invalidate(clip);
 }
 
-void WidgetTestMod::draw_event(time_t, gdi::GraphicApi& gd)
+void WidgetTestMod::draw_event(time_t /*now*/, gdi::GraphicApi& gd)
 {
     update_lock<decltype(this->front)> update_lock{this->front};
 

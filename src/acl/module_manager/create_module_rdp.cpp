@@ -38,12 +38,10 @@
 
 void ModuleManager::create_mod_rdp(
     AuthApi& authentifier, ReportMessageApi& report_message,
-    Inifile& ini, FrontAPI& front, ClientInfo const& client_info_, ClientExecute& client_execute,
-    Keymap2::KeyFlags key_flags)
+    Inifile& ini, FrontAPI& front, ClientInfo client_info, ClientExecute& client_execute,
+    Keymap2::KeyFlags key_flags, std::array<uint8_t, 28>& server_auto_reconnect_packet)
 {
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP'");
-
-    auto client_info = client_info_;
 
     switch (ini.get<cfg::context::mode_console>()) {
         case RdpModeConsole::force:
@@ -83,8 +81,7 @@ void ModuleManager::create_mod_rdp(
       , key_flags
       , ini.get<cfg::font>()
       , ini.get<cfg::theme>()
-      // TODO move to member
-      , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
+      , server_auto_reconnect_packet
       , ini.get_ref<cfg::context::close_box_extra_message>()
       , to_verbose_flags(ini.get<cfg::debug::mod_rdp>())
       //, RDPVerbose::basic_trace4 | RDPVerbose::basic_trace3 | RDPVerbose::basic_trace7 | RDPVerbose::basic_trace

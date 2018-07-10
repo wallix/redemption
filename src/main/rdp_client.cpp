@@ -133,7 +133,7 @@ int main(int argc, char** argv)
     client_info.bpp = 24;
     if (is_vnc) {
         client_info.keylayout = 0x04C;
-        client_info.console_session = 0;
+        client_info.console_session = false;
         client_info.brush_cache_code = 0;
         client_info.build = 420;
     }
@@ -196,70 +196,59 @@ int main(int argc, char** argv)
               , to_verbose_flags(verbose) | VNCVerbose::connection | VNCVerbose::basic_trace);
         }) ? 1 : 0;
     }
-    else {
-        Inifile ini;
-        if (!ini_file.empty()) {
-            configuration_load(ini.configuration_holder(), ini_file);
-        }
 
-        ini.set<cfg::mod_rdp::server_redirection_support>(true);
+    Inifile ini;
+    if (!ini_file.empty()) {
+        configuration_load(ini.configuration_holder(), ini_file);
+    }
 
-        ModRDPParams mod_rdp_params(
-            username.c_str()
-          , password.c_str()
-          , target_device.c_str()
-          , "0.0.0.0"   // client ip is silenced
-          , /*front.keymap.key_flags*/ 0
-          , ini.get<cfg::font>()
-          , ini.get<cfg::theme>()
-          , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
-          , ini.get_ref<cfg::context::close_box_extra_message>()
-          , to_verbose_flags(verbose));
+    ini.set<cfg::mod_rdp::server_redirection_support>(true);
+    std::array<unsigned char, 28> server_auto_reconnect_packet;
+    std::string close_box_extra_message;
+    Theme theme;
+    Font font;
 
-        mod_rdp_params.device_id                  = "device_id";
-        mod_rdp_params.enable_tls                 = true;
-        mod_rdp_params.enable_nla                 = true;
-        mod_rdp_params.enable_fastpath            = true;
-        mod_rdp_params.enable_mem3blt             = true;
-        mod_rdp_params.enable_new_pointer         = true;
-        mod_rdp_params.enable_glyph_cache         = true;
-        mod_rdp_params.enable_ninegrid_bitmap     = true;
-        std::string allow_channels                = "*";
-        mod_rdp_params.allow_channels             = &allow_channels;
-        mod_rdp_params.deny_channels              = nullptr;
-        mod_rdp_params.enable_rdpdr_data_analysis = false;
-        mod_rdp_params.load_balance_info          = load_balance_info.c_str();
-        mod_rdp_params.server_cert_check          = static_cast<ServerCertCheck>(cert_check);
+    ModRDPParams mod_rdp_params(
+        username.c_str()
+        , password.c_str()
+        , target_device.c_str()
+        , "0.0.0.0"   // client ip is silenced
+        , /*front.keymap.key_flags*/ 0
+        , font
+        , theme
+        , server_auto_reconnect_packet
+        , close_box_extra_message
+        , to_verbose_flags(verbose));
 
-        if (verbose > 128) {
-            mod_rdp_params.log();
-        }
+    mod_rdp_params.device_id                  = "device_id";
+    mod_rdp_params.enable_tls                 = true;
+    mod_rdp_params.enable_nla                 = true;
+    mod_rdp_params.enable_fastpath            = true;
+    mod_rdp_params.enable_mem3blt             = true;
+    mod_rdp_params.enable_new_pointer         = true;
+    mod_rdp_params.enable_glyph_cache         = true;
+    mod_rdp_params.enable_ninegrid_bitmap     = true;
+    std::string allow_channels                = "*";
+    mod_rdp_params.allow_channels             = &allow_channels;
+    mod_rdp_params.deny_channels              = nullptr;
+    mod_rdp_params.enable_rdpdr_data_analysis = false;
+    mod_rdp_params.load_balance_info          = load_balance_info.c_str();
+    mod_rdp_params.server_cert_check          = static_cast<ServerCertCheck>(cert_check);
 
-        UdevRandom system_gen;
-        TimeSystem system_timeobj;
-        FixedRandom lcg_gen;
-        LCGTime lcg_timeobj;
-        NullAuthentifier authentifier;
-        auto& redir_info = ini.get_ref<cfg::mod_rdp::redir_info>();
+    if (verbose > 128) {
+        mod_rdp_params.log();
+    }
 
-        bool const use_system_obj = record_output.empty() && !options.count("lcg");
+    UdevRandom system_gen;
+    TimeSystem system_timeobj;
+    FixedRandom lcg_gen;
+    LCGTime lcg_timeobj;
+    NullAuthentifier authentifier;
+    RedirectionInfo redir_info;
 
-        error_t eid = run([&](Transport& trans){
-            using TimeObjRef = TimeObj&;
-            using RandomRef = Random&;
-            return mod_rdp(
-                trans, session_reactor, front, client_info, redir_info,
-                use_system_obj ? RandomRef(system_gen) : lcg_gen,
-                use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
-                mod_rdp_params, authentifier, report_message, ini);
-        });
+    bool const use_system_obj = record_output.empty() && !options.count("lcg");
 
-        if (ERR_RDP_SERVER_REDIR != eid) {
-            return eid  ? 1 : 0;
-        }
-
-        set_server_redirection_target(ini, report_message);
-
+    auto run_rdp = [&]{
         return run([&](Transport& trans){
             using TimeObjRef = TimeObj&;
             using RandomRef = Random&;
@@ -268,6 +257,16 @@ int main(int argc, char** argv)
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
                 mod_rdp_params, authentifier, report_message, ini);
-        }) ? 2 : 0;
+        });
+    };
+
+    error_t eid = run_rdp();
+
+    if (ERR_RDP_SERVER_REDIR != eid) {
+        return eid  ? 1 : 0;
     }
+
+    set_server_redirection_target(ini, report_message);
+
+    return run_rdp() ? 2 : 0;
 }

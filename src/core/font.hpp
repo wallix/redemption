@@ -35,34 +35,124 @@
 #include "utils/sugar/not_null_ptr.hpp"
 
 
+struct FontCharView
+{
+    int16_t offsetx = 0;
+    int16_t offsety = 0;
+    int16_t incby = 0;
+    uint16_t width = 0;
+    uint16_t height = 0;
+    uint8_t const* data = nullptr;
+
+    FontCharView(
+        int16_t offsetx, int16_t offsety, int16_t incby,
+        uint16_t width, uint16_t height, uint8_t const* data) noexcept
+    : offsetx{offsetx}
+    , offsety{offsety}
+    , incby{incby}
+    , width{width}
+    , height{height}
+    , data{data}
+    {}
+
+    FontCharView() = default;
+
+    explicit operator bool () const noexcept {
+        return bool(this->data);
+    }
+
+    uint16_t datasize() const noexcept
+    {
+        return align4(nbbytes(this->width) * this->height);
+    }
+
+    /* compare the two font items returns true if they match */
+    bool item_compare(FontCharView const & glyph) const noexcept
+    {
+        return glyph
+            && (this->offsetx == glyph.offsetx)
+            && (this->offsety == glyph.offsety)
+            && (this->width == glyph.width)
+            && (this->height == glyph.height)
+            && (0 == memcmp(this->data, glyph.data, glyph.datasize()));
+    }
+
+    //void show() {
+    //          uint8_t   fc_bit_mask        = 128;
+    //    const uint8_t * fc_data            = this->data.get();
+    //    const bool      skip_padding_pixel = (this->width % 8);
+    //
+    //    for (int y = 0; y < this->height; y++)
+    //    {
+    //        for (int x = 0; x < this->width; x++)
+    //        {
+    //            if (fc_bit_mask & (*fc_data)) {
+    //                printf("X");
+    //            }
+    //            else {
+    //                printf(".");
+    //            }
+    //
+    //            fc_bit_mask >>= 1;
+    //            if (!fc_bit_mask)
+    //            {
+    //                fc_data++;
+    //                fc_bit_mask = 128;
+    //            }
+    //        }
+    //
+    //        if (skip_padding_pixel) {
+    //            fc_data++;
+    //            fc_bit_mask = 128;
+    //            printf("_");
+    //        }
+    //        printf("\n");
+    //    }
+    //    printf("
+    //}
+}; // END STRUCT - FontCharView
+
+
 struct FontChar
 {
-    int16_t   offset = 0;   // leading whistespace before char
-    int16_t   baseline = 0; // real -height (probably unused for now)
-    uint16_t  width = 0;    // width of glyph actually containing pixels
-    uint16_t  height = 0;   // height of glyph (in pixels)
-    int16_t   incby = 0;    // width of glyph (in pixels) including leading and trailing whitespaces
+    int16_t offsetx = 0;
+    int16_t offsety = 0;
+    int16_t incby = 0;
+    uint16_t width = 0;
+    uint16_t height = 0;
     std::unique_ptr<uint8_t[]> data; // PERF mini_vector<32>
 
     // TODO data really aligned ?
-    FontChar(std::unique_ptr<uint8_t[]> data, int16_t offset, int16_t baseline, uint16_t width, uint16_t height, int16_t incby)
-        : offset{offset}
-        , baseline{baseline}
+    FontChar(std::unique_ptr<uint8_t[]> data, int16_t offsetx, int16_t offsety, uint16_t width, uint16_t height, int16_t incby)
+        : offsetx{offsetx}
+        , offsety{offsety}
+        , incby{incby}
         , width{width}
         , height{height}
-        , incby{incby}
         , data{std::move(data)}
     {
     }
 
-    FontChar(int16_t offset, int16_t baseline, uint16_t width, uint16_t height, int16_t incby)
-        : offset{offset}
-        , baseline{baseline}
+    FontChar(int16_t offsetx, int16_t offsety, uint16_t width, uint16_t height, int16_t incby)
+        : offsetx{offsetx}
+        , offsety{offsety}
+        , incby{incby}
         , width{width}
         , height{height}
-        , incby{incby}
         , data{std::make_unique<uint8_t[]>(this->datasize())}
     {
+    }
+
+    explicit FontChar(FontCharView const& font_char_view)
+        : offsetx{font_char_view.offsetx}
+        , offsety{font_char_view.offsety}
+        , incby{font_char_view.incby}
+        , width{font_char_view.width}
+        , height{font_char_view.height}
+        , data{std::make_unique<uint8_t[]>(font_char_view.datasize())}
+    {
+        assert(font_char_view.datasize() == this->datasize());
+        memcpy(this->data.get(), font_char_view.data, font_char_view.datasize());
     }
 
     FontChar() = default;
@@ -72,12 +162,20 @@ struct FontChar
     FontChar & operator=(FontChar &&) = default;
     FontChar & operator=(FontChar const &) = delete;
 
+    FontCharView to_view() const noexcept
+    {
+        return FontCharView{
+            this->offsetx, this->offsety, this->incby,
+            this->width, this->height, this->data.get()
+        };
+    }
+
     void * operator new (size_t) = delete;
 
     FontChar clone() const {
         auto ptr = std::make_unique<uint8_t[]>(this->datasize());
         memcpy(ptr.get(), this->data.get(), this->datasize());
-        return FontChar(std::move(ptr), this->offset, this->baseline, this->width, this->height, this->incby);
+        return FontChar(std::move(ptr), this->offsetx, this->offsety, this->width, this->height, this->incby);
     }
 
     explicit operator bool () const noexcept {
@@ -93,8 +191,8 @@ struct FontChar
     bool item_compare(FontChar const & glyph) const noexcept
     {
         return glyph
-            && (this->offset == glyph.offset)
-            && (this->baseline == glyph.baseline)
+            && (this->offsetx == glyph.offsetx)
+            && (this->offsety == glyph.offsety)
             && (this->width == glyph.width)
             && (this->height == glyph.height)
             && (0 == memcmp(this->data.get(), glyph.data.get(), glyph.datasize()));
@@ -136,39 +234,18 @@ struct FontChar
 }; // END STRUCT - FontChar
 
 
-// TODO NUM_GLYPHS is misleading it's actually number of glyph in font. Using it to set size of a static array is quite dangerous as we shouldn't have to change code whenever we change font file.
-
-
-/*
-  The fv1 files contain
-  Font File Header (just one)
-    FNT1       4 bytes
-    Font Name  32 bytes
-    Font Size  2 bytes
-    Font Style 2 bytes
-    Pad        8 bytes
-  Font Data (repeat for each glyph)
-    Width      2 bytes
-    Height     2 bytes
-    Baseline   2 bytes
-    Offset     2 bytes
-    Incby      2 bytes
-    Pad        6 bytes
-    Glyph Data var, see FONT_DATASIZE macro
-*/
-
 struct Font
 {
     Font() = default;
 
-    /// \param file_path  path to the font definition file (*.fv1)
+    /// \param file_path  path to the font definition file (*.rbf)
     explicit Font(const char * file_path, bool spark_view_specific_glyph_width = false)
     : spark_view_specific_glyph_width_(spark_view_specific_glyph_width)
     {
         this->load_from_file(file_path);
         this->font_items.shrink_to_fit();
         if (auto item = this->glyph_at('?')) {
-            this->unknown_item = item;
+            this->unknown_item = *item;
         }
     }
 
@@ -183,6 +260,10 @@ struct Font
 
     uint16_t size() const noexcept {
         return this->size_;
+    }
+
+    uint16_t max_height() const noexcept {
+        return this->max_height_;
     }
 
     uint16_t style() const noexcept {
@@ -203,41 +284,35 @@ struct Font
             && bool(this->font_items[charnum - 32u]);
     }
 
-    FontChar const & glyph_or_unknown(uint32_t charnum) const
+    FontCharView const & glyph_or_unknown(uint32_t charnum) const
     {
         return this->glyph_defined(charnum)
              ? this->font_items[charnum - 32u]
-             : *this->unknown_item;
+             : this->unknown_glyph();
     }
 
-    FontChar const * glyph_at(uint32_t charnum) const
+    FontCharView const * glyph_at(uint32_t charnum) const
     {
         return this->glyph_defined(charnum)
              ? &this->font_items[charnum - 32u]
              : nullptr;
     }
 
-    FontChar const & unknown_glyph() const
+    FontCharView const & unknown_glyph() const noexcept
     {
-        return *this->unknown_item;
+        return this->unknown_item;
     }
 
 private:
-    static FontChar const & default_unknown_glyph()
-    {
-        static FontChar item(
-            std::unique_ptr<uint8_t[]>(
-                new uint8_t[16]{0, 0, 0, 0x70, 0x88, 0x08, 0x10, 0x20, 0x20, 0x00, 0x20, 0x20, 0, 0, 0, 0}
-            ), 1, -15, 5, 15, 7
-        );
-        return item;
-    }
+    static FontCharView default_unknown_glyph() noexcept;
 
     void load_from_file(const char * file_path);
 
-    std::vector<FontChar> font_items;
-    not_null_ptr<FontChar const> unknown_item = &default_unknown_glyph();
+    std::unique_ptr<uint8_t[]> data_glyphs;
+    std::vector<FontCharView> font_items;
+    FontCharView unknown_item = default_unknown_glyph();
     uint16_t size_ = 0;
+    uint16_t max_height_ = 0;
     uint16_t style_ = 0;
     char name_[32] {};
 

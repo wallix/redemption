@@ -27,7 +27,7 @@ namespace ocr
     class rgb8
     {
     public:
-        typedef unsigned char value_type;
+        using value_type = unsigned char;
 
     public:
         explicit rgb8() = default;
@@ -59,7 +59,7 @@ namespace ocr
     private:
         value_type components[3];
     };
-}
+} // namespace ocr
 
 
 namespace mln
@@ -73,7 +73,7 @@ namespace mln
 
             template<class Ch, class Tr>
             static void read_value(std::basic_istream<Ch, Tr>& is, ::ocr::rgb8 & v)
-            { is.read(reinterpret_cast<char*>(&v), sizeof(::ocr::rgb8)); }
+            { is.read(reinterpret_cast<char*>(&v), sizeof(::ocr::rgb8)); } // NOLINT
         };
-    }
-} // mln
+    } // namespace trait
+} // namespace mln

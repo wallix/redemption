@@ -39,11 +39,11 @@ public:
     : impl(new FuncImpl<typename std::decay<F>::type>{std::forward<F>(f)})
     {}
 
-    explicit ReportError(std::nullptr_t = nullptr)
+    explicit ReportError(std::nullptr_t /*nullptr*/ = nullptr)
     : impl(new NullImpl)
     {}
 
-    ReportError(ReportError && other)
+    ReportError(ReportError && other) noexcept
     : impl(std::move(other.impl))
     {}
 
@@ -127,10 +127,10 @@ private:
     ReportMessageApi & reporter;
 };
 
-inline Error ReportError::NullImpl::get_error(Error error)
+inline Error ReportError::NullImpl::get_error(Error err)
 {
-    report_and_transform_error(error, LogReporter{});
-    return error;
+    report_and_transform_error(err, LogReporter{});
+    return err;
 }
 
 inline ReportError report_error_from_reporter(ReportMessageApi & reporter)

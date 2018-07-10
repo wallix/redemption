@@ -25,6 +25,8 @@
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
+#else
+# define EM_ASM_(...)
 #endif
 
 
@@ -74,7 +76,8 @@ class TransportWebSocket :  public Transport
         EM_ASM_({ send_to_serveur(HEAPU8.subarray($0, $0 + $1), $1); }, buffer, len);
     }
 
-    void do_recv(uint8_t ** pbuffer, size_t len) override {
+    size_t do_partial_read(uint8_t * buffer, size_t len) override {
+        auto const buffer_start = buffer;
 
         if (this->buffer !=  nullptr) {
 
@@ -87,10 +90,10 @@ class TransportWebSocket :  public Transport
                 //std::copy(std::begin(this->buffer), std::end(this->buffer+len), std::begin(*pbuffer));
 
                 for (int i = 0; i < len; i++) {
-                    (*pbuffer)[i] = this->buffer[i + this->sentSize];
+                    buffer[i] = this->buffer[i + this->sentSize];
                 }
                 this->sentSize += len;
-                *pbuffer += lenMax;
+                buffer += lenMax;
 
             } else {
                 EM_ASM_({ console.log('do_recv len='+$0); }, len);
@@ -98,6 +101,8 @@ class TransportWebSocket :  public Transport
         } else {
 
         }
+
+        return buffer - buffer_start;
     }
 
     Read do_atomic_read(uint8_t * pbuffer, size_t len) override {

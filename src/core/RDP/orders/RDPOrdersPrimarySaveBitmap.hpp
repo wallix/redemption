@@ -90,21 +90,16 @@
 
 class RDPSaveBitmap {
 public:
-    uint32_t SavedBitmapPosition;
-    uint16_t nLeftRect;
-    uint16_t nTopRect;
-    uint16_t nRightRect;
-    uint16_t nBottomRect;
-    uint8_t Operation;
+    uint32_t SavedBitmapPosition{0};
+    uint16_t nLeftRect{0};
+    uint16_t nTopRect{0};
+    uint16_t nRightRect{0};
+    uint16_t nBottomRect{0};
+    uint8_t Operation{0};
 
     RDPSaveBitmap()
-    : SavedBitmapPosition(0)
-    , nLeftRect(0)
-    , nTopRect(0)
-    , nRightRect(0)
-    , nBottomRect(0)
-    , Operation(0)
-    {}
+     
+    = default;
 
     RDPSaveBitmap(uint32_t SavedBitmapPosition, int16_t nLeftRect, int16_t nTopRect, int16_t nRightRect, int16_t nBottomRect, uint8_t Operation)
     : SavedBitmapPosition(SavedBitmapPosition)

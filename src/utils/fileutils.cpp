@@ -22,6 +22,7 @@
 
 #include "utils/fileutils.hpp"
 #include "utils/log.hpp"
+#include "utils/sugar/cast.hpp"
 
 #include <cstdio>
 #include <cstddef>
@@ -49,7 +50,7 @@ const char * basename_len(const char * path, size_t & len)
     return path;
 }
 
-char * basename_len(char * path, size_t & len)
+char * basename_len(char * path, size_t & len) /* NOLINT(readability-non-const-parameter) */
 {
     char const * const_path = path;
     return const_cast<char*>(basename_len(const_path, len));
@@ -271,8 +272,8 @@ int recursive_delete_directory(const char * directory_path)
             }
 
             size_t entry_path_length = directory_path_len + strlen(ent->d_name) + 2;
-            // TODO not use alloca !!!
-            char * entry_path = reinterpret_cast<char *>(alloca(entry_path_length));
+            // TODO don't use alloca !!!
+            char * entry_path = static_cast<char*>(alloca(entry_path_length));
 
             if (entry_path) {
                 struct stat statbuf;

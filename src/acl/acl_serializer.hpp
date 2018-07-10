@@ -332,8 +332,8 @@ public:
         try {
             this->incoming();
 
-            if (!this->ini.get<cfg::context::module>().compare("RDP")
-            ||  !this->ini.get<cfg::context::module>().compare("VNC")) {
+            if (this->ini.get<cfg::context::module>() == "RDP"
+            ||  this->ini.get<cfg::context::module>() == "VNC") {
                 this->session_type = this->ini.get<cfg::context::module>();
             }
             this->remote_answer = true;
@@ -559,16 +559,16 @@ public:
 
                         return true;
                     }
-                    else if ((e.id == ERR_RDP_SERVER_REDIR) &&
+
+                    if ((e.id == ERR_RDP_SERVER_REDIR) &&
                              this->ini.get<cfg::mod_rdp::server_redirection_support>()) {
                         set_server_redirection_target(this->ini, *this);
                         this->remote_answer = true;
                         signal = BACK_EVENT_NEXT;
                         return true;
                     }
-                    else {
-                        throw;
-                    }
+
+                    throw;
                 }
                 if (!this->keepalive.is_started() && mm.connected) {
                     this->keepalive.start(now);
@@ -699,7 +699,7 @@ private:
                     ++m;
                     memcpy(this->key_name_buf, this->p, m - this->p);
                     this->p = m;
-                    return reinterpret_cast<char const *>(this->key_name_buf);
+                    return this->key_name_buf;
                 }
             }
             if (always_internal_copy) {
@@ -821,14 +821,14 @@ public:
                     if (field.set(reader.get_val()) && bool(this->verbose & Verbose::variable)) {
                         const char * val         = field.c_str();
                         const char * display_val = val;
-                        if (cfg::crypto::key0::index() == authid ||
-                            cfg::crypto::key1::index() == authid ||
-                            cfg::context::password::index() == authid ||
-                            cfg::context::target_password::index() == authid ||
-                            cfg::globals::target_application_password::index() == authid ||
-                            cfg::context::auth_command_rail_exec_password::index() == authid ||
-                            (cfg::context::auth_channel_answer::index() == authid &&
-                             strcasestr(val, "password") != nullptr)
+                        if (cfg::crypto::key0::index == authid ||
+                            cfg::crypto::key1::index == authid ||
+                            cfg::context::password::index == authid ||
+                            cfg::context::target_password::index == authid ||
+                            cfg::globals::target_application_password::index == authid ||
+                            cfg::context::auth_command_rail_exec_password::index == authid ||
+                            (cfg::context::auth_channel_answer::index == authid &&
+                            strcasestr(val, "password") != nullptr)
                         ) {
                             display_val = ::get_printable_password(val, this->ini.get<cfg::debug::password>());
                         }

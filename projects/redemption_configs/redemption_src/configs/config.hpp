@@ -77,7 +77,7 @@ namespace configs
     struct BufferPack<Pack<Ts...>>
     : CBuf<Ts>...
     {};
-}
+} // namespace configs
 
 // config members
 //@{
@@ -113,11 +113,11 @@ namespace configs
     }
 
     template<class CfgType>
-    void post_set_value(VariablesConfiguration &, CfgType const &)
+    void post_set_value(VariablesConfiguration &, CfgType const & /*x*/)
     {}
 
     void post_set_value(VariablesConfiguration & vars, ::cfg::internal_mod::theme const & cfg_value);
-}
+} // namespace configs
 
 
 class Inifile
@@ -133,38 +133,38 @@ public:
 
     template<class T>
     typename T::type const & get() const noexcept {
-        //static_assert(T::is_sesman_to_proxy(), "T isn't readable");
+        //static_assert(T::is_sesman_to_proxy, "T isn't readable");
         return static_cast<T const &>(this->variables).value;
     }
 
     template<class T>
     typename T::type & get_ref() noexcept {
-        static_assert(!T::is_proxy_to_sesman(), "reference on write variable isn't safe");
+        static_assert(!T::is_proxy_to_sesman, "reference on write variable isn't safe");
         return static_cast<T&>(this->variables).value;
     }
 
     template<class T, class... Args>
     void set(Args && ... args) {
-        static_assert(!T::is_proxy_to_sesman(), "T is writable, used set_acl<T>() instead.");
+        static_assert(!T::is_proxy_to_sesman, "T is writable, used set_acl<T>() instead.");
         this->set_value<T>(std::forward<Args>(args)...);
     }
 
     template<class T, class... Args>
     void set_acl(Args && ... args) {
-        static_assert(T::is_proxy_to_sesman(), "T isn't writable, used set<T>() instead.");
+        static_assert(T::is_proxy_to_sesman, "T isn't writable, used set<T>() instead.");
         this->set_value<T>(std::forward<Args>(args)...);
     }
 
     template<class T>
     void ask() {
-        static_assert(T::is_sesman_to_proxy(), "T isn't askable");
-        this->to_send_index.insert(T::index());
+        static_assert(T::is_sesman_to_proxy, "T isn't askable");
+        this->to_send_index.insert(T::index);
         static_cast<Field<T>&>(this->fields).asked_ = true;
     }
 
     template<class T>
     bool is_asked() const {
-        static_assert(T::is_sesman_to_proxy(), "T isn't askable");
+        static_assert(T::is_sesman_to_proxy, "T isn't askable");
         return static_cast<Field<T>const&>(this->fields).asked_;
     }
 
@@ -177,15 +177,17 @@ private:
             std::forward<Args>(args)...
         );
         configs::post_set_value(this->variables, static_cast<T&>(this->variables));
-        this->insert_index<T>(std::integral_constant<bool, T::is_proxy_to_sesman()>());
-        this->unask<T>(std::integral_constant<bool, T::is_sesman_to_proxy()>());
+        this->insert_index<T>(std::integral_constant<bool, T::is_proxy_to_sesman>());
+        this->unask<T>(std::integral_constant<bool, T::is_sesman_to_proxy>());
     }
 
-    template<class T> void insert_index(std::false_type) {}
-    template<class T> void insert_index(std::true_type) { this->to_send_index.insert(T::index()); }
+    template<class T> void insert_index(std::false_type /*disable*/) {}
+    template<class T> void insert_index(std::true_type /*enable*/)
+    { this->to_send_index.insert(T::index); }
 
-    template<class T> void unask(std::false_type) {}
-    template<class T> void unask(std::true_type) { this->fields[T::index()].asked_ = false; }
+    template<class T> void unask(std::false_type /*disable*/) {}
+    template<class T> void unask(std::true_type /*enable*/)
+    { this->fields[T::index].asked_ = false; }
 
     struct Buffers : configs::BufferPack<configs::VariablesAclPack> {};
 
@@ -208,7 +210,7 @@ private:
         bool parse(configs::VariablesConfiguration & variables, array_view_const_char value) override final
         {
             return ! ::configs::parse_and_log(
-                T::section(), T::name(),
+                T::section, T::name,
                 static_cast<T&>(variables).value,
                 configs::spec_type<typename T::sesman_and_spec_type>{},
                 value
@@ -381,15 +383,12 @@ private:
     {
         using uint_fast = uint_fast32_t;
         static const std::size_t count = configs::VariablesAclPack::size;
-        std::array<uint_fast, (count + sizeof(uint_fast) - 1) / sizeof(uint_fast)> words;
+        std::array<uint_fast, (count + sizeof(uint_fast) - 1) / sizeof(uint_fast)> words {};
         std::array<authid_t, count> list;
-        std::size_t list_size;
+        std::size_t list_size = 0;
 
     public:
-        ToSendIndexList()
-        : words{}
-        , list_size(0)
-        {}
+        ToSendIndexList() = default;
 
         void insert(authid_t id) noexcept
         {
@@ -435,8 +434,8 @@ private:
     template<class T>
     void push_to_send_index()
     {
-        static_assert(T::is_proxy_to_sesman(), "is not writable");
-        this->to_send_index.insert(T::index());
+        static_assert(T::is_proxy_to_sesman, "is not writable");
+        this->to_send_index.insert(T::index);
     }
 
     void initialize()

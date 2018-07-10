@@ -348,6 +348,10 @@ public:
         return false;
     }
 
+    static inline std::chrono::milliseconds to_microseconds(std::chrono::milliseconds const& delay, float coefficient) {
+        return std::chrono::milliseconds(static_cast<uint64_t>(delay.count() * coefficient));
+    }
+
     void make_delay_sequencer()
     {
         using jln::value;
@@ -372,8 +376,12 @@ public:
                     0/*param2*/
                 );
 
-                return ctx.set_delay(decltype(wait_for_short_delay)::value ? self.short_delay : self.long_delay)
-                .next();
+                return ctx.set_delay(
+                        self.to_microseconds(
+                                (decltype(wait_for_short_delay)::value ? self.short_delay : self.long_delay),
+                                self.delay_coefficient
+                            )
+                    ).next();
             };
         };
 
@@ -396,9 +404,7 @@ public:
 
                     return ctx.exec_at("Windows (down)"_c);
                 }
-                else {
-                    return ctx.exec_at("Send format list"_c);
-                }
+                return ctx.exec_at("Send format list"_c);
             }),
 
             "Send format list"_f
@@ -430,11 +436,11 @@ public:
                                                  | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
                 }
 
-                return ctx.set_delay(self.long_delay).next();
+                return ctx.set_delay(self.to_microseconds(self.long_delay, self.delay_coefficient)).next();
             }),
             "Wait format list responsd"_f
                                 ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
-                return ctx.set_delay(self.long_delay).ready();
+                return ctx.set_delay(self.to_microseconds(self.long_delay, self.delay_coefficient)).ready();
             })
 
         ));
@@ -466,11 +472,15 @@ public:
 
                 if (ctx.is_final_sequence()) {
                     self.state = State::WAIT;
-                    return ctx.set_delay(self.short_delay).at(0).ready();
+                    return ctx.set_delay(self.to_microseconds(self.short_delay, self.delay_coefficient)).at(0).ready();
                 }
-                else {
-                    return ctx.set_delay(decltype(wait_for_short_delay)::value ? self.short_delay : self.long_delay).next();
-                }
+
+                return ctx.set_delay(
+                    self.to_microseconds(
+                        (decltype(wait_for_short_delay)::value ? self.short_delay : self.long_delay),
+                        self.delay_coefficient
+                    )
+                ).next();
             };
         };
 
@@ -490,7 +500,7 @@ public:
             "Enter (down)"_f    ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
                 ++self.copy_paste_loop_counter;
                 if (!self.format_data_requested) {
-                    return ctx.set_delay(self.short_delay).exec_at(0);
+                    return ctx.set_delay(self.to_microseconds(self.short_delay, self.delay_coefficient)).exec_at(0);
                 }
                 return jln::make_lambda<decltype(send_scancode)>()(value<28>, value<0>, value<true>, value<true>)(ctx, self);
             }),
@@ -534,17 +544,16 @@ public:
 
             return true;
         }
-        else {
-            if (this->state != State::START) {
-                return (this->state < State::WAIT);
-            }
 
-            this->state = State::RUN;
-
-            make_run_sequencer();
-
-            return false;
+        if (this->state != State::START) {
+            return (this->state < State::WAIT);
         }
+
+        this->state = State::RUN;
+
+        make_run_sequencer();
+
+        return false;
     }
 
     // Returns false to prevent message to be sent to server.
@@ -600,7 +609,7 @@ public:
         this->cliprdr_channel = reinterpret_cast<ClipboardVirtualChannel*>(channel);
     }
 
-    void set_remote_programs_virtual_channel(BaseVirtualChannel*) override {}
+    void set_remote_programs_virtual_channel(BaseVirtualChannel* /*channel*/) override {}
 
     void set_session_probe_virtual_channel(
             BaseVirtualChannel* channel) override {
@@ -703,7 +712,7 @@ private:
                                       | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
     }
 
-    void rdp_send_scancode(long param1, long param2, long device_flags, long time, Keymap2 *) {
+    void rdp_send_scancode(long param1, long param2, long device_flags, long time, Keymap2 * /*unused*/) {
         this->mod.send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
     }
 

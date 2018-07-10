@@ -18,4 +18,4 @@ namespace ocr {
     static const unsigned bbox_treshold = 2; // Tolerance to title bar height
     static const unsigned bbox_min_width = 100; // Min width of title bar
     // \}
-}
+} // namespace ocr

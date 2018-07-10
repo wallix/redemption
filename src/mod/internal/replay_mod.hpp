@@ -58,7 +58,6 @@ public:
     ReplayMod( SessionReactor& session_reactor
              , FrontAPI & front
              , const char * replay_path
-             , const char * movie
              , uint16_t width
              , uint16_t height
              , std::string & auth_error_message
@@ -66,7 +65,7 @@ public:
              , bool replay_on_loop
              , Verbose debug_capture)
     : ReplayMod(
-        session_reactor, front, replay_path, movie, width, height, auth_error_message,
+        session_reactor, front, replay_path, width, height, auth_error_message,
         wait_for_escape, timeval{0, 0}, timeval{0, 0}, 0, replay_on_loop, debug_capture)
     {
     }
@@ -74,7 +73,6 @@ public:
     ReplayMod( SessionReactor& session_reactor
              , FrontAPI & front
              , const char * replay_path
-             , const char * movie
              , uint16_t width
              , uint16_t height
              , std::string & auth_error_message
@@ -139,7 +137,7 @@ public:
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue
     // non 0 if it wants to stop (to run another module)
-    void draw_event(time_t now, gdi::GraphicApi & drawable) override;
+    void draw_event(time_t now, gdi::GraphicApi & gd) override;
 
     bool is_up_and_running() override
     { return true; }

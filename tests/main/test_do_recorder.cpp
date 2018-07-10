@@ -1263,3 +1263,33 @@ RED_AUTO_TEST_CASE(TestClearTargetFiles)
         ::rmdir(tmpdirname);
     }
 }
+
+#ifndef REDEMPTION_NO_FFMPEG
+RED_AUTO_TEST_CASE(TestAppRecorderChunkMeta)
+{
+    LOG(LOG_INFO, "=================== TestAppRecorder =============");
+    char const * argv[] {
+        "recorder.py",
+        "redrec",
+        "-i",
+            FIXTURES_PATH "/kpd_input.mwrm",
+        "--config-file",
+            FIXTURES_PATH "/disable_kbd_inpit_in_meta.ini",
+        "--mwrm-path", FIXTURES_PATH,
+        "-o",
+            "/tmp/recorder-chunk-meta",
+        "--chunk",
+        "--video-codec", "mp4",
+        "--json-pgs",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    CoutBuf cout_buf;
+    int res = do_main(argc, argv, hmac_fn, trace_fn);
+    EVP_cleanup();
+    RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder-chunk-meta.mwrm\".\n\n");
+    RED_CHECK_EQUAL(0, res);
+
+    RED_CHECK_FILE_CONTENTS("/tmp/recorder-chunk-meta.meta", "2018-07-10 13:51:55 + type=\"TITLE_BAR\" data=\"Invite de commandes\"\n");
+}
+#endif

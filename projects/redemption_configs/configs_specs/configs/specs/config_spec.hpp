@@ -445,8 +445,8 @@ void config_spec_definition(Writer && W)
 
     W.section("mod_replay", [&]
     {
-        W.member(hidden_in_gui, no_sesman, type_<bool>(), "on_end_of_data", desc{"0 - Wait for Escape, 1 - End session"}, set(0));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "replay_on_loop", desc{"0 - replay once, 1 - loop replay"}, set(0));
+        W.member(hidden_in_gui, no_sesman, type_<bool>(), "on_end_of_data", desc{"0 - Wait for Escape, 1 - End session"}, set(false));
+        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "replay_on_loop", desc{"0 - replay once, 1 - loop replay"}, set(false));
     });
 
     W.section("ocr", [&]
@@ -490,8 +490,6 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<ColorDepthSelectionStrategy>{}, "wrm_color_depth_selection_strategy", set(ColorDepthSelectionStrategy::depth16));
         W.member(advanced_in_gui, no_sesman, type_<WrmCompressionAlgorithm>{}, "wrm_compression_algorithm", set(WrmCompressionAlgorithm::gzip));
-        W.sep();
-        W.member(no_ini_no_gui, no_sesman, type_<std::chrono::seconds>(), "video_break_interval", set(0));
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "bogus_vlc_frame_rate", desc{"Needed to play a video with ffplay or VLC.\nNote: Useless with mpv and mplayer."}, set(true));
         W.sep();
@@ -584,8 +582,6 @@ void config_spec_definition(Writer && W)
 
     W.section("context", [&]
     {
-        W.member(no_ini_no_gui, no_sesman, type_<std::string>(), "movie");
-        W.sep();
         W.member(no_ini_no_gui, sesman_to_proxy, type_<unsigned>(), "opt_bitrate", sesman::name{"bitrate"}, set(40000));
         W.member(no_ini_no_gui, sesman_to_proxy, type_<unsigned>(), "opt_framerate", sesman::name{"framerate"}, set(5));
         W.member(no_ini_no_gui, sesman_to_proxy, type_<unsigned>(), "opt_qscale", sesman::name{"qscale"}, set(15));
@@ -675,7 +671,6 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_rw, type_<bool>(), "rt_ready", set(false));
         W.sep();
         W.member(no_ini_no_gui, no_sesman, type_<bool>(), "perform_automatic_reconnection", set(false));
-        W.member(no_ini_no_gui, no_sesman, type_<types::fixed_binary<28>>(), "server_auto_reconnect_packet");
         W.sep();
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "auth_command");
         W.member(no_ini_no_gui, proxy_to_sesman, type_<std::string>(), "auth_notify");

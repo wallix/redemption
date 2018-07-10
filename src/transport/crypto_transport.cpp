@@ -48,7 +48,7 @@ namespace
         }
         return sb.st_size;
     }
-}
+} // namespace
 
 
 void InCryptoTransport::EncryptedBufferHandle::allocate(std::size_t n)
@@ -156,7 +156,7 @@ const InCryptoTransport::HASH InCryptoTransport::fhash(const char * pathname)
             if (res < 0 && errno == EINTR) { continue; }
             if (res < 0) { throw Error(ERR_TRANSPORT_READ_FAILED, errno); }
             hm.update(buffer, res);
-        } while (1);
+        } while (true);
     }
 
     HASH fhash;
@@ -376,7 +376,7 @@ size_t InCryptoTransport::do_partial_read(uint8_t * buffer, size_t len)
 
             size_t chunk_size = CRYPTO_BUFFER_SIZE;
             const snappy_status status = snappy_uncompress(
-                    reinterpret_cast<char *>(dec_buf),
+                    char_ptr_cast(dec_buf),
                     pack_buf_size, this->clear_data, &chunk_size);
 
             switch (status)
@@ -412,44 +412,43 @@ size_t InCryptoTransport::do_partial_read(uint8_t * buffer, size_t len)
         }
         return copiable_size;
     }
-    else {
-        if (this->raw_size - this->clear_pos > len){
-            ::memcpy(&buffer[0], &this->clear_data[this->clear_pos], len);
-            this->clear_pos += len;
-            this->current_len += len;
-            if (this->file_len <= this->current_len) {
-                this->eof = true;
-            }
-            return len;
-        }
-        size_t remaining_len = len;
-        if (this->raw_size - this->clear_pos > 0){
-            ::memcpy(&buffer[0], &this->clear_data[this->clear_pos], this->raw_size - this->clear_pos);
-            remaining_len -= this->raw_size - this->clear_pos;
-            this->raw_size = 0;
-            this->clear_pos = 0;
-        }
-        while(remaining_len){
-            ssize_t const res = ::read(this->fd, &buffer[len - remaining_len], remaining_len);
-            if (res <= 0){
-                if (res == 0) {
-                    this->eof = true;
-                    break;
-                }
-                if (errno == EINTR){
-                    continue;
-                }
-                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
-            }
-            remaining_len -= res;
-        };
 
+    if (this->raw_size - this->clear_pos > len){
+        ::memcpy(&buffer[0], &this->clear_data[this->clear_pos], len);
+        this->clear_pos += len;
         this->current_len += len;
         if (this->file_len <= this->current_len) {
             this->eof = true;
         }
-        return len - remaining_len;
+        return len;
     }
+    size_t remaining_len = len;
+    if (this->raw_size - this->clear_pos > 0){
+        ::memcpy(&buffer[0], &this->clear_data[this->clear_pos], this->raw_size - this->clear_pos);
+        remaining_len -= this->raw_size - this->clear_pos;
+        this->raw_size = 0;
+        this->clear_pos = 0;
+    }
+    while(remaining_len){
+        ssize_t const res = ::read(this->fd, &buffer[len - remaining_len], remaining_len);
+        if (res <= 0){
+            if (res == 0) {
+                this->eof = true;
+                break;
+            }
+            if (errno == EINTR){
+                continue;
+            }
+            throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+        }
+        remaining_len -= res;
+    };
+
+    this->current_len += len;
+    if (this->file_len <= this->current_len) {
+        this->eof = true;
+    }
+    return len - remaining_len;
 }
 
 InCryptoTransport::Read InCryptoTransport::do_atomic_read(uint8_t * buffer, size_t len)
@@ -577,9 +576,7 @@ ocrypto::Result ocrypto::open(const_byte_array derivator)
         this->update_hmac(&this->header_buf[0], 40);
         return Result{{this->header_buf, 40u}, 0u};
     }
-    else {
-        return Result{{this->header_buf, 0u}, 0u};
-    }
+    return Result{{this->header_buf, 0u}, 0u};
 }
 
 ocrypto::Result ocrypto::close(
@@ -707,7 +704,7 @@ OutCryptoTransport::~OutCryptoTransport()
 // TODO: CGR: I want to remove that from Transport API
 bool OutCryptoTransport::disconnect()
 {
-    return 0;
+    return false;
 }
 
 bool OutCryptoTransport::is_open() const
@@ -810,7 +807,7 @@ namespace
             data += res.consumed;
         }
     }
-}
+} // namespace
 
 void OutCryptoTransport::create_hash_file(
     uint8_t const (&qhash)[MD_HASH::DIGEST_LENGTH],
@@ -884,30 +881,30 @@ void OutCryptoTransport::do_send(const uint8_t * data, size_t len)
 
 
 EncryptionSchemeTypeResult open_if_possible_and_get_encryption_scheme_type(
-    InCryptoTransport & in_test, const char * filename, const_byte_array derivator, Error * err)
+    InCryptoTransport & in, const char * filename, const_byte_array derivator, Error * err)
 {
     try {
         if (derivator.data()) {
-            in_test.open(filename, derivator);
+            in.open(filename, derivator);
         }
         else {
-            in_test.open(filename);
+            in.open(filename);
         }
 
-        if (not in_test.is_encrypted()) {
+        if (not in.is_encrypted()) {
             return EncryptionSchemeTypeResult::NoEncrypted;
         }
 
-        in_test.disable_log_decrypt();
+        in.disable_log_decrypt();
         char mem[1];
-        auto len = in_test.partial_read(mem, 0);
+        auto len = in.partial_read(mem, 0);
         (void)len;
     }
     catch(Error const& e) {
-        in_test.disable_log_decrypt(false);
+        in.disable_log_decrypt(false);
         if (e.id == ERR_SSL_CALL_FAILED) {
-            if (in_test.is_open()) {
-                in_test.close();
+            if (in.is_open()) {
+                in.close();
             }
             return EncryptionSchemeTypeResult::OldScheme;
         }
@@ -917,7 +914,7 @@ EncryptionSchemeTypeResult open_if_possible_and_get_encryption_scheme_type(
         return EncryptionSchemeTypeResult::Error;
     }
 
-    in_test.disable_log_decrypt(false);
+    in.disable_log_decrypt(false);
     return EncryptionSchemeTypeResult::NewScheme;
 }
 

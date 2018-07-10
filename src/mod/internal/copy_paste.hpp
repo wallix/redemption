@@ -32,7 +32,7 @@ class InStream;
 namespace CHANNELS
 {
     class ChannelDef;
-}
+} // namespace CHANNELS
 
 
 class CopyPaste

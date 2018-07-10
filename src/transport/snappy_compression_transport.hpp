@@ -89,8 +89,8 @@ private:
                 this->uncompressed_data_length = sizeof(this->uncompressed_data_buffer);
 
                 snappy_status status = ::snappy_uncompress(
-                      reinterpret_cast<char *>(data_buf) , compressed_data_length
-                    , reinterpret_cast<char *>(this->uncompressed_data), &this->uncompressed_data_length);
+                      char_ptr_cast(data_buf) , compressed_data_length
+                    , char_ptr_cast(this->uncompressed_data), &this->uncompressed_data_length);
                 if (/*this->verbose & 0x2 || */(status != SNAPPY_OK)) {
                     LOG( ((status != SNAPPY_OK) ? LOG_ERR : LOG_INFO)
                        , "SnappyCompressionInTransport::do_recv: snappy_uncompress return %u", status);
@@ -124,7 +124,7 @@ public:
     , uncompressed_data_length(0) {
         (void)verbose;
         assert(::snappy_max_compressed_length(MAX_UNCOMPRESSED_DATA_LENGTH) <= SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH);
-        assert(MAX_UNCOMPRESSED_DATA_LENGTH <= 0xFFFF); // 0xFFFF (for uint16_t)
+        static_assert(MAX_UNCOMPRESSED_DATA_LENGTH <= 0xFFFF); // 0xFFFF (for uint16_t)
     }
 
     ~SnappyCompressionOutTransport() override {
@@ -151,8 +151,8 @@ private:
         data_stream.out_skip_bytes(sizeof(uint16_t));
         compressed_data_length -= sizeof(uint16_t);
 
-        snappy_status status = ::snappy_compress( reinterpret_cast<const char *>(data), data_length
-                                                , reinterpret_cast<char *>(data_stream.get_current()), &compressed_data_length);
+        snappy_status status = ::snappy_compress( char_ptr_cast(data), data_length
+                                                , char_ptr_cast(data_stream.get_current()), &compressed_data_length);
         if (/*this->verbose & 0x2 || */(status != SNAPPY_OK)) {
             LOG( ((status != SNAPPY_OK) ? LOG_ERR : LOG_INFO)
                , "SnappyCompressionOutTransport::compress: snappy_compress return %u", status);

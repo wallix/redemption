@@ -22,10 +22,15 @@ h
 
 #pragma once
 
-#include "utils/log.hpp"
-#include "utils/verbose_flags.hpp"
-#include "mod/vnc/vnc_verbose.hpp"
+#include "core/buf64k.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "gdi/graphic_api.hpp"
 #include "mod/vnc/encoder/encoder_api.hpp"
+#include "mod/vnc/vnc_verbose.hpp"
+#include "utils/bitmap.hpp"
+#include "utils/log.hpp"
+#include "utils/sugar/update_lock.hpp"
+#include "utils/verbose_flags.hpp"
 
 
 // 7.6.1   Raw Encoding
@@ -52,14 +57,14 @@ namespace VNC {
         public:
             VNCVerbose verbose;
 
-            Raw(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy, VNCVerbose verbose) 
+            Raw(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy, VNCVerbose verbose)
                 : bpp(bpp), Bpp(Bpp), x(x), y(y), cx(cx), cy(cy)
                 , verbose(verbose)
             {
             }
-            
-            virtual ~Raw(){}
-            
+
+            virtual ~Raw()= default;
+
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
             EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
@@ -72,7 +77,7 @@ namespace VNC {
                 size_t const line_size = this->cx * this->Bpp;
 
                 if (buf.remaining() < line_size) {
-                    return EncoderState::NeedMoreData; 
+                    return EncoderState::NeedMoreData;
                 }
 
                 auto const cy = std::min<size_t>(buf.remaining() / line_size, this->cy);
@@ -88,11 +93,11 @@ namespace VNC {
 
                 buf.advance(new_av.size());
                 if (this->cy == 0){
-                    return EncoderState::Exit; 
+                    return EncoderState::Exit;
                 }
-                return EncoderState::Ready; 
+                return EncoderState::Ready;
             }
-            
+
             public:
                 void draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawable)
                 {
@@ -114,6 +119,6 @@ namespace VNC {
                     }
                 }
         };
-    
-    } // namespace encoder
+
+    }  // namespace Encoder
 } // namespace VNC

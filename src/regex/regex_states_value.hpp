@@ -42,7 +42,7 @@ namespace re {
         {}
 
         ~StatesValue()
-        {}
+        = default;
 
         void reset_nums()
         {
@@ -62,5 +62,5 @@ namespace re {
         }
     };
 
-}
+}  // namespace re
 

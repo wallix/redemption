@@ -23,6 +23,10 @@
 #include "gdi/image_frame_api.hpp"
 #include "utils/bitfu.hpp"
 
+#include <memory>
+#include <cstring>
+
+
 class VideoCropper : public gdi::ImageFrameApi
 {
 private:

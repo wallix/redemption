@@ -68,7 +68,7 @@ public:
     int                  mod_bpp;
     QtForm            * form;
     QtScreen           * screen;
-    QPixmap              cache;
+    QPixmap             cache;
     ProgressBarWindow  * bar;
     QPainter             painter;
     QImage cursor_image;
@@ -141,6 +141,7 @@ public:
 
     virtual void reset_cache(const int w,  const int h) override {
 
+        LOG(LOG_INFO, "reset_cache w=%d h=%d", w, h);
         if (w == 0 || h == 0) {
             return;
         }
@@ -149,6 +150,8 @@ public:
         }
 
         this->cache = QPixmap(w, h);
+
+        LOG(LOG_INFO, "reset_cache this->cache.width()=%d this->cache.height()=%d", this->cache.width(), this->cache.height());
 
         if (!(this->cache.isNull())) {
             this->painter.begin(&(this->cache));
@@ -474,10 +477,13 @@ private:
         ARGB32Pointer vnccursor(cursor);
         const auto av_alpha_q = vnccursor.get_alpha_q();
 
+        //::hexdump(av_alpha_q.data(), dimensions.width * dimensions.height, dimensions.width);
+
         // this->cursor_image is used when client is replaying
         this->cursor_image = QImage(av_alpha_q.data(), dimensions.width, dimensions.height, dimensions.width * 4, QImage::Format_ARGB32_Premultiplied);
 
-         ;
+
+
         if (this->drawn_client->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP) {
             for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
                 if (it->second) {
@@ -655,10 +661,12 @@ private:
     template<class Op>
     void draw_memblt_op(const Rect & drect, const Bitmap & bitmap) {
 
-        LOG(LOG_INFO, "draw_memblt_op bitmap.cx()=%u this->cache.width()=%d drect.x=%u drect.cx=%u", bitmap.cx(), this->cache.width(), drect.x, drect.cx);
-        LOG(LOG_INFO, "draw_memblt_op bitmap.cy()=%u this->cache.height()=%d drect.y=%u drect.cy=%u", bitmap.cy(), this->cache.height(), drect.y, drect.cy);
+//         LOG(LOG_INFO, "draw_memblt_op bitmap.cx()=%u this->cache.width()=%d drect.x=%u drect.cx=%u", bitmap.cx(), this->cache.width(), drect.x, drect.cx);
+//         LOG(LOG_INFO, "draw_memblt_op bitmap.cy()=%u this->cache.height()=%d drect.y=%u drect.cy=%u", bitmap.cy(), this->cache.height(), drect.y, drect.cy);
         const uint16_t mincx = std::min<int16_t>(bitmap.cx(), /*std::min<int16_t>(this->cache.width() - drect.x,*/ drect.cx/*)*/);
         const uint16_t mincy = std::min<int16_t>(bitmap.cy(), /*std::min<int16_t>(this->cache.height() - drect.y,*/ drect.cy/*)*/);
+
+        LOG(LOG_INFO, "draw_memblt_op mincx=%u mincy=%u", mincx, mincy);
 
         if (mincx <= 0 || mincy <= 0) {
             return;
@@ -666,24 +674,23 @@ private:
         if (this->screen) {
             QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
 
-            LOG(LOG_INFO,"draw_memblt_op mincx=%u mincy=%u bitmap.line_size=%zu x=%u y=%u", mincx, mincy, bitmap.line_size(), drect.x, drect.y);
+            LOG(LOG_INFO,"draw_memblt_op mincx=%u mincy=%u bitmap.line_size=%zu x=%u y=%u bpp=%u", mincx, mincy, bitmap.line_size(), drect.x, drect.y, bitmap.bpp());
             QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
-            QImage dstBitmap(this->cache.toImage().copy(drect.x, drect.y, mincx, mincy));
-
             if (bitmap.bpp() == 24) {
                 srcBitmap = srcBitmap.rgbSwapped();
             }
-
             if (bitmap.bpp() != this->client->info.bpp) {
                 srcBitmap = srcBitmap.convertToFormat(this->bpp_to_QFormat(this->client->info.bpp, false));
             }
-            QImage dstBitmap_formated = dstBitmap.convertToFormat(srcBitmap.format());
+            srcBitmap = srcBitmap.mirrored(false, true);
+            const uchar * srcData = srcBitmap.constBits();
 
-            QImage srcBitmapMirrored = srcBitmap.mirrored(false, true);
-            const uchar * srcData = srcBitmapMirrored.constBits();
-            const uchar * dstData = dstBitmap_formated.constBits();
+            QImage dstBitmap(this->cache.toImage().copy(drect.x, drect.y, mincx, mincy));
+            dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
+            const uchar * dstData = dstBitmap.constBits();
 
-            int data_len = bitmap.line_size() * mincy;
+            //bitmap.line_size() * mincy;
+            int data_len = (/*srcBitmap.depth()/8) * */dstBitmap.width() * dstBitmap.height());
             if (data_len <= 0) {
                 return;
             }
@@ -693,18 +700,18 @@ private:
 
             Op op;
             for (int i = 0; i < data_len; i++) {
-//                 LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 1 i=%d", i);
+                LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 1 i=%d", i);
                 uchar dst_res = dstData[i];
-//                 LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 2 i =%d", i);
+                LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 2 i =%d", i);
                 uchar src_res = srcData[i];
-//                 LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 3 i =%d", i);
+                LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 3 i =%d", i);
                 uchar res = op.op(src_res, dst_res);
-//                 LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 4 i =%d", i);
+                LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 4 i =%d", i);
                 data[i] = res;
-//                 LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 5 i =%d", i);
+                LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 5 i =%d", i);
             }
 
-            QImage image(data.get(), mincx, mincy, srcBitmapMirrored.format());
+            QImage image(data.get(), mincx, mincy, srcBitmap.format());
             QRect trect(drect.x, drect.y, mincx, mincy);
 
             if (this->client->connected || this->client->is_replaying) {
@@ -1083,15 +1090,15 @@ private:
 
 
     void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override {
-        //std::cout << "RDPMemBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" <<  std::dec <<  std::endl;
+        std::cout << "RDPMemBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" <<  std::dec <<  std::endl;
         const Rect drect = clip.intersect(cmd.rect);
         if (drect.isempty()){
             return ;
         }
 
-        if (this->cache.width() <= 0 || this->cache.height() <=  0) {
-            return;
-        }
+//         if (this->cache.width() <= 0 || this->cache.height() <=  0) {
+//             return;
+//         }
 
         // // this->setClip(drect.x, drect.y, drect.cx, drect.cy);
 
@@ -1147,7 +1154,7 @@ private:
 
 
     void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override {
-        LOG(LOG_INFO, "RDPMem3Blt    !!!!!!!!!!!!!!!!!");
+//         LOG(LOG_INFO, "RDPMem3Blt    !!!!!!!!!!!!!!!!!");
         const Rect drect = clip.intersect(cmd.rect);
         if (drect.isempty()){
             return ;
@@ -1158,11 +1165,11 @@ private:
         switch (cmd.rop) {
             case 0xB8:
             {
-                const uint16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(this->client->info.width  - drect.x, drect.cx));
-                const uint16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(this->client->info.height - drect.y, drect.cy));
+                const uint16_t mincx = std::min<int16_t>(bitmap.cx(), std::min<int16_t>(1920 - drect.x, drect.cx));
+                const uint16_t mincy = std::min<int16_t>(bitmap.cy(), std::min<int16_t>(1080 - drect.y, drect.cy));
 
-                LOG(LOG_INFO, "RDPMem3Blt bitmap.cx()=%u this->cache.width()=%d drect.x=%u drect.cx=%u", bitmap.cx(), this->client->info.width, drect.x, drect.cx);
-                LOG(LOG_INFO, "RDPMem3Blt bitmap.cy()=%u this->cache.height()=%d drect.y=%u drect.cy=%u", bitmap.cy(), this->client->info.height, drect.y, drect.cy);
+//                 LOG(LOG_INFO, "RDPMem3Blt bitmap.cx()=%u mincx=%u drect.x=%u drect.cx=%u", bitmap.cx(), mincx, drect.x, drect.cx);
+//                 LOG(LOG_INFO, "RDPMem3Blt bitmap.cy()=%u mincy=%u drect.y=%u drect.cy=%u", bitmap.cy(), mincy, drect.y, drect.cy);
 
                 if (mincx <= 0 || mincy <= 0) {
                     LOG(LOG_INFO, "RDPMem3Blt    null");
@@ -1174,7 +1181,7 @@ private:
                 const uint8_t g(fore.green());
                 const uint8_t b(fore.blue());
 
-                int rowYCoord(drect.y + drect.cy-1);
+//                 int rowYCoord(drect.y + drect.cy-1);
                 const QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), true));
 
                 if (this->client->connected || this->client->is_replaying) {
@@ -1185,52 +1192,69 @@ private:
                     if (bitmap.bpp() == 24) {
                         srcBitmap = srcBitmap.rgbSwapped();
                     }
+                    const uchar * srcData = srcBitmap.bits();
 
                     QImage dstBitmap(this->cache.toImage().copy(drect.x, drect.y, mincx, mincy));
                     dstBitmap = dstBitmap.convertToFormat(QImage::Format_RGB888);
-
-                    const uchar * srcData = srcBitmap.bits();
                     const uchar * dstData = dstBitmap.bits();
 
-                    const size_t rowsize(srcBitmap.byteCount() *3);
-                    if (rowsize < 3) {
-                        return;
+//                     const size_t rowsize(srcBitmap.byteCount() *3);
+//                     if (rowsize < 3) {
+//                         return;
+//                     }
+
+                    const int data_size(3*dstBitmap.width()*dstBitmap.height());
+                    std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(data_size);
+
+                    for (int k = 0 ; k < data_size-2; k += 3) {
+                            data[k  ] = ((dstData[k  ] ^ r) & srcData[k  ]) ^ r;
+                            data[k+1] = ((dstData[k+1] ^ g) & srcData[k+1]) ^ g;
+                            data[k+2] = ((dstData[k+2] ^ b) & srcData[k+2]) ^ b;
                     }
-                    std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(static_cast<int> (rowsize));
 
-                    for (size_t k = 1 ; k < drect.cy; k++) {
 
-                        const uchar * srcData = srcBitmap.constScanLine(k);
-                        const uchar * dstData = dstBitmap.constScanLine(mincy - k);
+//                     for (size_t k = 0 ; k < mincy; k++) {
+//
+//                         LOG(LOG_INFO, "RDPMem3Blt k=%zu rowsize=%zu", k, rowsize);
+//
+//
+//
+// //                         const uchar * srcData = srcBitmap.constScanLine(k);
+// //                         const uchar * dstData = dstBitmap.constScanLine(mincy - k);
+//
+//                         for (size_t x = 0; x < rowsize-2; x += 3) {
+//                             LOG(LOG_INFO, "RDPMem3Blt x=%zu", x);
+//                             size_t x_data = x*3;
+//                             data[x  ] = ((dstData[x  ] ^ r) & srcData[x  ]) ^ r;
+//                             LOG(LOG_INFO, "RDPMem3Blt x=%zu", x);
+//                             data[x+1] = ((dstData[x+1] ^ g) & srcData[x+1]) ^ g;
+//                             LOG(LOG_INFO, "RDPMem3Blt x=%zu", x);
+//                             data[x+2] = ((dstData[x+2] ^ b) & srcData[x+2]) ^ b;
+//                             LOG(LOG_INFO, "RDPMem3Blt x=%zu", x);
+//                         }
+//
+//                         QImage image(data.get(), mincx, 1, srcBitmap.format());
+//                         if (image.depth() != this->client->info.bpp) {
+//                             image = image.convertToFormat(this->bpp_to_QFormat(this->client->info.bpp, false));
+//                         }
+//                         QRect trect(drect.x, rowYCoord, mincx, 1);
+//
+//
+//
+//                         //this->painter.drawImage(trect, image);
+//
+//                         rowYCoord--;
+//                     }
 
-                        for (size_t x = 0; x < rowsize-2; x += 3) {
-                            data[x  ] = ((dstData[x  ] ^ r) & srcData[x  ]) ^ r;
-                            data[x+1] = ((dstData[x+1] ^ g) & srcData[x+1]) ^ g;
-                            data[x+2] = ((dstData[x+2] ^ b) & srcData[x+2]) ^ b;
-                        }
+//                     this->painter.fillRect(drect.x, drect.y, mincx, 1, fore.red());
 
-                        QImage image(data.get(), mincx, 1, srcBitmap.format());
+                        QImage image(data.get(), mincx, mincy, srcBitmap.format());
                         if (image.depth() != this->client->info.bpp) {
                             image = image.convertToFormat(this->bpp_to_QFormat(this->client->info.bpp, false));
                         }
-                        QRect trect(drect.x, rowYCoord, mincx, 1);
+                        QRect trect(drect.x, drect.y, mincx, mincy);
 
-
-
-                        //this->painter.drawImage(trect, image);
-
-                        rowYCoord--;
-                    }
-
-                    this->painter.fillRect(drect.x, drect.y, mincx, 1, fore.red());
-
-//                         QImage image(data.get(), mincx, mincy, srcBitmap.format());
-// //                         if (image.depth() != this->client->info.bpp) {
-// //                             image = image.convertToFormat(this->bpp_to_QFormat(this->client->info.bpp, false));
-// //                         }
-//                         QRect trect(drect.x, drect.y, mincx, mincy);
-//
-//                         this->painter.drawImage(trect, image);
+                        this->painter.drawImage(trect, image);
 //
 //                         rowYCoord--;
                 }
@@ -1379,11 +1403,11 @@ private:
                                     fc_data++;
                                     fc_bit_mask = 128;
                                 }
-                                if (clip.contains_pt(x + fc.offset + xx, y + fc.baseline + yy)
+                                if (clip.contains_pt(x + fc.offsetx + xx, y + fc.offsety + yy)
                                 && (fc_bit_mask & *fc_data))
                                 {
                                     if (this->client->connected || this->client->is_replaying) {
-                                        this->painter.fillRect(x + fc.offset + xx, y + fc.baseline + yy, 1, 1, color);
+                                        this->painter.fillRect(x + fc.offsetx + xx, y + fc.offsety + yy, 1, 1, color);
                                     }
                                 }
                                 fc_bit_mask >>= 1;
@@ -1550,4 +1574,3 @@ private:
     }
 
 };
-

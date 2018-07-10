@@ -138,16 +138,16 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
         }
         this->tab(); this->out() << "/// value"; this->write_assignable_default(pack_contains<default_>(infos), type, &infos); this->out() << " <br/>\n";
         this->tab(); this->out() << "struct " << varname_with_section << " {\n";
-        this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy() { return " << bool(properties & sesman::io::sesman_to_proxy) << "; }\n";
-        this->tab(); this->out() << "    static constexpr bool is_proxy_to_sesman() { return " << bool(properties & sesman::io::proxy_to_sesman) << "; }\n";
+        this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy = " << (bool(properties & sesman::io::sesman_to_proxy) ? "true" : "false") << ";\n";
+        this->tab(); this->out() << "    static constexpr bool is_proxy_to_sesman = " << (bool(properties & sesman::io::proxy_to_sesman) ? "true" : "false") << ";\n";
 
-        this->tab(); this->out() << "    static constexpr char const * section() { return \"" << section_name << "\"; }\n";
-        this->tab(); this->out() << "    static constexpr char const * name() { return \"" << varname << "\"; }\n";
+        this->tab(); this->out() << "    static constexpr char const * section = \"" << section_name << "\";\n";
+        this->tab(); this->out() << "    static constexpr char const * name = \"" << varname << "\";\n";
 
         if (bool(properties)) {
             this->tab(); this->out() << "    // for old cppcheck\n";
             this->tab(); this->out() << "    // cppcheck-suppress obsoleteFunctionsindex\n";
-            this->tab(); this->out() << "    static constexpr authid_t index() { return authid_t(" << this->index_authid++ << "); }\n";
+            this->tab(); this->out() << "    static constexpr authid_t index = authid_t(" << this->index_authid++ << ");\n";
         }
 
         this->tab(); this->out() << "    using type = ";
@@ -211,7 +211,15 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
 
     template<class T>
     disable_if_enum_t<T>
-    write_value(T const & r) { this->out() << '{' << r << '}'; }
+    write_value(T const & r)
+    {
+        if (std::is_same<T, bool>{}) {
+            this->out() << '{' << (r ? "true" : "false") << '}';
+        }
+        else {
+            this->out() << '{' << r << '}';
+        }
+    }
 
     void write_value(const char * s) { this->out() << " = \"" << io_quoted2{s} << '"';  }
     void write_value(std::string const & str) { this->write_value(str.c_str()); }
@@ -337,7 +345,7 @@ void write_variables_configuration_fwd(std::ostream & out_varconf, ConfigCppWrit
         }
     }
 
-    out_varconf << "}\n";
+    out_varconf << "} // namespace cfg\n";
 }
 
 template<class ConfigCppWriter>
@@ -372,8 +380,8 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
     std::vector<std::string> section_names;
 
     out_varconf <<
-      "}\n\n"
-      "namespace cfg_section {\n"
+        "} // namespace cfg\n\n"
+        "namespace cfg_section {\n"
     ;
     for (auto & body : writer.sections) {
        if (!body.section_name.empty()) {
@@ -383,7 +391,7 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
            out_varconf << "{ static constexpr bool is_section = true; };\n\n";
        }
     }
-    out_varconf << "}\n\n"
+    out_varconf << "} // namespace cfg_section\n\n"
       "namespace configs {\n"
       "struct VariablesConfiguration\n"
       ": "
@@ -402,7 +410,7 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
     join(writer.variables_acl, "cfg::", "");
     out_varconf <<
       ">;\n"
-      "}\n"
+      "} // namespace configs\n"
     ;
 }
 

@@ -117,12 +117,12 @@ class ClientChannelRDPDRManager {
 
 public:
 
-    bool drives_created;
-    uint16_t protocol_minor_version;
+    bool drives_created = false;
+    uint16_t protocol_minor_version = 0;
     uint32_t next_file_id = 0;
 
     std::unique_ptr<uint8_t[]> ReadData;
-    int last_read_data_portion_length;
+    int last_read_data_portion_length = 0;
 
     uint32_t get_file_id() {
         this->next_file_id++;
@@ -157,7 +157,7 @@ public:
 
     uint32_t current_dir_id = 0;
     std::vector<std::string> elem_in_path;
-    uint16_t server_capability_number;
+    uint16_t server_capability_number = 0;
 
     uint32_t ioCode1 = 0;
     uint32_t extendedPDU = 0;
@@ -173,11 +173,6 @@ public:
       : verbose(verbose)
       , client(client)
       , impl_io_disk(impl_io_disk)
-      , drives_created(false)
-      , protocol_minor_version(0)
-      , next_file_id(0)
-      , last_read_data_portion_length(0)
-      , server_capability_number(0)
       , ioCode1(config.ioCode1)
       , extendedPDU(config.extendedPDU)
       , extraFlags1(config.extraFlags1)
@@ -215,7 +210,7 @@ public:
 
             std::ofstream oFile(file_to_write.c_str(), std::ios::binary | std::ios::app);
             if (oFile.good()) {
-                oFile.write(reinterpret_cast<const char *>(chunk.get_current()), length);
+                oFile.write(char_ptr_cast(chunk.get_current()), length);
                 oFile.close();
             }  else {
                 LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_write.c_str());
@@ -364,22 +359,22 @@ public:
                             );
                         general_capability_set.emit(out_stream);
 
-                        if (this->fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE] == true) {
+                        if (this->fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE]) {
                             rdpdr::CapabilityHeader ch(rdpdr::CAP_PRINTER_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                             ch.emit(out_stream);
                         }
 
-                        if (this->fileSystemCapacity[rdpdr::CAP_PORT_TYPE] == true) {
+                        if (this->fileSystemCapacity[rdpdr::CAP_PORT_TYPE]) {
                             rdpdr::CapabilityHeader ch(rdpdr::CAP_PORT_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                             ch.emit(out_stream);
                         }
 
-                        if (this->fileSystemCapacity[rdpdr::CAP_DRIVE_TYPE] == true) {
+                        if (this->fileSystemCapacity[rdpdr::CAP_DRIVE_TYPE]) {
                             rdpdr::CapabilityHeader ch(rdpdr::CAP_DRIVE_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                             ch.emit(out_stream);
                         }
 
-                        if (this->fileSystemCapacity[rdpdr::CAP_SMARTCARD_TYPE] == true) {
+                        if (this->fileSystemCapacity[rdpdr::CAP_SMARTCARD_TYPE]) {
                             rdpdr::CapabilityHeader ch(rdpdr::CAP_SMARTCARD_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                             ch.emit(out_stream);
                         }
@@ -407,13 +402,13 @@ public:
                         rdpdr::ClientDeviceListAnnounceRequest cdlar(this->device_list.size());
                         cdlar.emit(out_stream);
 
-                        for (size_t i = 0; i < this->device_list.size(); i++) {
+                        for (auto const& device : this->device_list) {
 
-                            if (this->device_list[i].type == rdpdr::RDPDR_DTYP_PRINT) {
+                            if (device.type == rdpdr::RDPDR_DTYP_PRINT) {
 
-                                rdpdr::DeviceAnnounceHeader dah( this->device_list[i].type
-                                                               , this->device_list[i].ID
-                                                               , this->device_list[i].name
+                                rdpdr::DeviceAnnounceHeader dah( device.type
+                                                               , device.ID
+                                                               , device.name
                                                                , nullptr, 24 + 0 + 4 + 2 + 8 + 0);
                                 dah.emit(out_stream);
 
@@ -431,9 +426,9 @@ public:
                                 dahp.emit(out_stream);
 
                             } else {
-                                rdpdr::DeviceAnnounceHeader dah( this->device_list[i].type
-                                                               , this->device_list[i].ID
-                                                               , this->device_list[i].name
+                                rdpdr::DeviceAnnounceHeader dah( device.type
+                                                               , device.ID
+                                                               , device.name
                                                                , nullptr, 0);
                                 dah.emit(out_stream);
                             }
@@ -797,10 +792,10 @@ public:
                                         if (sdqdr.InitialQuery() && endPath != asterix) {
 
                                             std::string tmp_path = path;
-                                            int tmp_path_index = tmp_path.find("/");
+                                            int tmp_path_index = tmp_path.find('/');
                                             while (tmp_path_index != -1) {
                                                 tmp_path = tmp_path.substr(tmp_path_index+1, tmp_path.length());
-                                                tmp_path_index = tmp_path.find("/");
+                                                tmp_path_index = tmp_path.find('/');
                                             }
                                             str_file_name = tmp_path;
 
@@ -1092,7 +1087,7 @@ public:
 
                                     std::string file_to_write = this->paths.at(id);
 
-                                    if (this->impl_io_disk->write_file(file_to_write.c_str(), reinterpret_cast<const char *>(dwr.WriteData), WriteDataLen ) ) {
+                                    if (this->impl_io_disk->write_file(file_to_write.c_str(), char_ptr_cast(dwr.WriteData), WriteDataLen ) ) {
                                         LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_write.c_str());
                                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                     }

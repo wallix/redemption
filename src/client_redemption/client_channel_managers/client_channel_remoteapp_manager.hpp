@@ -313,14 +313,10 @@ public:
 
 
     void draw(const RDP::RAIL::DeletedWindow            & cmd) {
-
-        uint32_t win_id = cmd.header.WindowId();
-
         int elem_to_erase = -1;
 
         for (size_t i = 0; i < this->z_order.size(); i++) {
             if (this->z_order[i] == cmd.header.WindowId()) {
-
                 elem_to_erase = i;
             }
         }
@@ -332,9 +328,7 @@ public:
         if ( this->z_order.size() <= 1) {
             this->impl_graphic->clear_remote_app_screen();
             this->client->disconnect("", false);
-
         } else {
-
             this->impl_input->refreshPressed();
         }
     }
@@ -687,15 +681,15 @@ public:
 
                     const char * source_of_ExeOrFile = this->client->source_of_ExeOrFile.c_str();
                     uint8_t unicode_ExeOrFile[500];
-                    const size_t size_of_unicode_ExeOrFile = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(source_of_ExeOrFile), unicode_ExeOrFile, 500);
+                    const size_t size_of_unicode_ExeOrFile = ::UTF8toUTF16(byte_ptr_cast(source_of_ExeOrFile), unicode_ExeOrFile, 500);
 
                     const char * source_of_WorkingDir = this->client->source_of_WorkingDir.c_str();
                     uint8_t unicode_WorkingDir[500];
-                    const size_t size_of_unicode_WorkingDir = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(source_of_WorkingDir), unicode_WorkingDir, 500);
+                    const size_t size_of_unicode_WorkingDir = ::UTF8toUTF16(byte_ptr_cast(source_of_WorkingDir), unicode_WorkingDir, 500);
 
                     const char * source_of_Arguments = this->client->source_of_Arguments.c_str();
                     uint8_t unicode_Arguments[500];
-                    const size_t size_of_unicode_Arguments = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(source_of_Arguments), unicode_Arguments, 500);
+                    const size_t size_of_unicode_Arguments = ::UTF8toUTF16(byte_ptr_cast(source_of_Arguments), unicode_Arguments, 500);
 
                     out_stream.out_uint16_le(TS_RAIL_ORDER_EXEC);
                     out_stream.out_uint16_le(12 + size_of_unicode_ExeOrFile + size_of_unicode_WorkingDir +size_of_unicode_Arguments);

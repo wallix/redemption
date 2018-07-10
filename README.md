@@ -34,6 +34,7 @@ Submodule ($ `git submodule update --init`):
 - https://github.com/wallix/program_options
 - https://github.com/wallix/ppocr
 
+
 ## FFmpeg:
 
 ### Ubuntu:
@@ -57,8 +58,10 @@ And set environment variable (optionally)
 - `export FFMPEG_LIB_PATH=/my/ffmpeg/library/path` (/!\\ without `/` terminal)
 - `export FFMPEG_LINK_MODE=shared` (static or shared, shared by default)
 
-Note:
+### Note:
+
 Disable ffmpeg with `NO_FFMPEG=1`.
+
 
 ## Environment variable setting
 

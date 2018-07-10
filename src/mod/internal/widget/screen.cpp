@@ -55,7 +55,7 @@ WidgetScreen::~WidgetScreen()
 
 void WidgetScreen::show_tooltip(
     Widget * widget, const char * text, int x, int y,
-    Rect const preferred_display_rect, int)
+    Rect const preferred_display_rect, int /*iter*/)
 {
     if (text == nullptr) {
         if (this->tooltip) {

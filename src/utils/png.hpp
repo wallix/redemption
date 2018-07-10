@@ -31,7 +31,7 @@ class MutableImageDataView;
 namespace gdi
 {
     class GraphicApi;
-}
+} // namespace gdi
 
 void dump_png24(
     Transport & trans,
@@ -43,7 +43,7 @@ void dump_png24(
 );
 
 void dump_png24(
-    std::FILE * f,
+    std::FILE * file,
     uint8_t const * data,
     std::size_t width,
     std::size_t height,
@@ -51,18 +51,18 @@ void dump_png24(
     bool bgr
 );
 
-void dump_png24(std::FILE * f, ConstImageDataView const & image_view, bool bgr);
+void dump_png24(std::FILE * file, ConstImageDataView const & image_view, bool bgr);
 void dump_png24(Transport & trans, ConstImageDataView const & image_view, bool bgr);
-void dump_png24(const char * filename, ConstImageDataView const & bmp, bool bgr);
+void dump_png24(const char * filename, ConstImageDataView const & image_view, bool bgr);
 
-void read_png24(std::FILE * f, MutableImageDataView const & mutable_image_view);
+void read_png24(std::FILE * file, MutableImageDataView const & mutable_image_view);
 void read_png24(Transport & trans, MutableImageDataView const & mutable_image_view);
-void read_png24(const char * filename, MutableImageDataView const & image_view);
+void read_png24(const char * filename, MutableImageDataView const & mutable_image_view);
 
 void set_rows_from_image_chunk(
     Transport & trans,
     WrmChunkType chunk_type,
     uint32_t chunk_size,
-    std::size_t cx,
-    array_view<gdi::GraphicApi*>
+    std::size_t width,
+    array_view<gdi::GraphicApi*> graphic_consumers
 );

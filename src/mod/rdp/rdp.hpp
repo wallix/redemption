@@ -519,7 +519,7 @@ protected:
             this->asynchronous_tasks.add(
                 std::make_unique<RdpdrSendClientMessageTask>(
                     total_length, flags, chunk_data, chunk_data_length,
-                    *this->to_server_synchronous_sender.get(),
+                    *this->to_server_synchronous_sender,
                     this->verbose
                 )
             );
@@ -1585,7 +1585,7 @@ public:
         }
     }   // configure_proxy_managed_drives
 
-    void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 *) override {
+    void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 * /*keymap*/) override {
         if ((UP_AND_RUNNING == this->connection_finalization_state) &&
             !this->input_event_disabled) {
             if (this->first_scancode && !(device_flags & 0x8000) &&
@@ -1602,6 +1602,8 @@ public:
 
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
 
+            this->metrics.total_keys_pressed++;
+
             if (this->remote_programs_session_manager) {
                 this->remote_programs_session_manager->input_scancode(param1, param2, device_flags);
             }
@@ -1611,6 +1613,7 @@ public:
     void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(0, RDP_INPUT_UNICODE, flag, unicode, 0);
+            this->metrics.total_keys_pressed++;
         }
     }
 
@@ -1622,13 +1625,21 @@ public:
         }
     }
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *) override {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * /*keymap*/) override {
         //if (!(MOUSE_FLAG_MOVE & device_flags)) {
         //    LOG(LOG_INFO, "rdp_input_mouse x=%d y=%d device_flags=%d", x, y, device_flags);
         //}
         if ((UP_AND_RUNNING == this->connection_finalization_state) &&
             !this->input_event_disabled) {
             this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
+
+            if (device_flags & MOUSE_FLAG_DOWN) {
+                if (device_flags & MOUSE_FLAG_BUTTON2) {
+                    this->metrics.total_right_clicks++;
+                } else if (device_flags & MOUSE_FLAG_BUTTON1) {
+                    this->metrics.total_left_clicks++;
+                }
+            }
 
             if (this->remote_programs_session_manager) {
                 this->remote_programs_session_manager->input_mouse(device_flags, x, y);
@@ -1683,12 +1694,8 @@ public:
         }
     }
 
-    // this->metrics.total_main_amount_data_rcv_from_client += length;
-    // this->metrics.total_main_amount_data_rcv_from_server += length;
     void log_metrics() override {
-
         if (bool(this->verbose & RDPVerbose::export_metrics)) {
-
             this->metrics.log();
         }
     }
@@ -1712,7 +1719,7 @@ private:
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
 
-    void send_to_mod_rail_channel(const CHANNELS::ChannelDef *,
+    void send_to_mod_rail_channel(const CHANNELS::ChannelDef * /*unused*/,
                                   InStream & chunk, size_t length, uint32_t flags) {
         RemoteProgramsVirtualChannel& channel = this->get_remote_programs_virtual_channel();
 
@@ -1868,7 +1875,7 @@ private:
                 if (remaining_data_length == data_length) {
                     return (flags & (~CHANNELS::CHANNEL_FLAG_LAST));
                 }
-                else if (remaining_data_length == virtual_channel_data_length) {
+                if (remaining_data_length == virtual_channel_data_length) {
                     return (flags & (~CHANNELS::CHANNEL_FLAG_FIRST));
                 }
 
@@ -2135,6 +2142,7 @@ public:
             case FastPath::UpdateType::POINTER:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "Process pointer new (Fast)");
+
                 }
                 this->process_new_pointer_pdu(stream, drawable);
                 break;
@@ -2225,7 +2233,7 @@ public:
             size_t chunk_size = sec.payload.in_remain();
 
             // If channel name is our virtual channel, then don't send data to front
-                 if (mod_channel.name == this->auth_channel && this->enable_auth_channel) {
+            if      (mod_channel.name == this->auth_channel && this->enable_auth_channel) {
                 this->process_auth_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == this->checkout_channel) {
@@ -2690,12 +2698,12 @@ public:
 
     TpduBuffer buf;
 
-    void draw_event(time_t now, gdi::GraphicApi & drawable_) override
+    void draw_event(time_t now, gdi::GraphicApi & gd) override
     {
         //LOG(LOG_INFO, "mod_rdp::draw_event()");
 
         if (this->remote_programs_session_manager) {
-            this->remote_programs_session_manager->set_drawable(&drawable_);
+            this->remote_programs_session_manager->set_drawable(&gd);
         }
 
         this->buf.load_data(this->trans);
@@ -2708,7 +2716,7 @@ public:
                     ? (*this->remote_programs_session_manager)
                     : ( this->graphics_update_disabled
                         ? gdi::null_gd()
-                        : drawable_
+                        : gd
                     ));
                 if (this->buf.current_pdu_is_fast_path()) {
                     this->connected_fast_path(drawable, this->buf.current_pdu_buffer());
@@ -2729,9 +2737,7 @@ public:
                     this->session_probe_virtual_channel_p->is_disconnection_reconnection_required()) {
                     throw Error(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION);
                 }
-                else {
-                    this->front.must_be_stop_capture();
-                }
+                this->front.must_be_stop_capture();
 
                 if (this->remote_apps_not_enabled) {
                     throw Error(ERR_RAIL_NOT_ENABLED);
@@ -3065,7 +3071,7 @@ public:
 
                 PointerCaps pointer_caps;
                 pointer_caps.len                       = 10;
-                if (this->enable_new_pointer == false) {
+                if (!this->enable_new_pointer) {
                     pointer_caps.pointerCacheSize      = 0;
                     pointer_caps.colorPointerCacheSize = 20;
                     pointer_caps.len                   = 8;
@@ -4274,8 +4280,8 @@ public:
             LOG(LOG_INFO, "process save session info : Logon");
             RDP::LogonInfoVersion1_Recv liv1(ssipdudata.payload);
 
-            process_logon_info(reinterpret_cast<char *>(liv1.Domain),
-                reinterpret_cast<char *>(liv1.UserName));
+            process_logon_info(char_ptr_cast(liv1.Domain),
+                char_ptr_cast(liv1.UserName));
 
             this->front.send_savesessioninfo();
         }
@@ -4285,8 +4291,8 @@ public:
             LOG(LOG_INFO, "process save session info : Logon long");
             RDP::LogonInfoVersion2_Recv liv2(ssipdudata.payload);
 
-            process_logon_info(reinterpret_cast<char *>(liv2.Domain),
-                reinterpret_cast<char *>(liv2.UserName));
+            process_logon_info(char_ptr_cast(liv2.Domain),
+                char_ptr_cast(liv2.UserName));
 
             this->front.send_savesessioninfo();
         }
@@ -4774,7 +4780,7 @@ public:
 
         try
         {
-            while (1) {
+            for (;;) {
                 this->send_persistent_key_list_pdu(
                     [this](StreamSize<65535>, OutStream & pdu_data_stream) {
                         uint8_t * data = pdu_data_stream.get_data();
@@ -4935,7 +4941,7 @@ public:
     }
 
     void send_input(int time, int message_type, int device_flags, int param1, int param2) override {
-        if (this->enable_fastpath_client_input_event == false) {
+        if (!this->enable_fastpath_client_input_event) {
             this->send_input_slowpath(time, message_type, device_flags, param1, param2);
         }
         else {
@@ -5108,7 +5114,10 @@ public:
         const uint8_t * data = stream.in_uint8p(dlen);
         const uint8_t * mask = stream.in_uint8p(mlen);
 
-        Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen});
+        assert(::even_pad_length(::nbbytes(width)) == mlen / height);
+        assert(::even_pad_length(::nbbytes(width * 24)) == dlen / height);
+
+        Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen}, mlen / height, dlen / height);
         this->cursors[pointer_cache_idx] = cursor;
 
         drawable.set_pointer(cursor);
@@ -5224,6 +5233,9 @@ public:
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
         }
 
+//         InStream stream_to_log = stream.clone();
+//           ::hexdump(stream.get_data(), stream.in_remain());
+
         unsigned data_bpp  = stream.in_uint16_le(); /* data bpp */
         unsigned pointer_idx = stream.in_uint16_le();
         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
@@ -5252,15 +5264,30 @@ public:
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
+        LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu data_bpp=%u pointer_idx=%u hotspot_x=%d hotspot_y=%d width=%d height=%d mlen=%u dlen=%u square=%d", data_bpp, pointer_idx, hotspot_x, hotspot_y, width, height, mlen, dlen, height*width);
         const uint8_t * data = stream.in_uint8p(dlen);
         const uint8_t * mask = stream.in_uint8p(mlen);
 
-        Pointer cursor({width, height}, {hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor);
+        Pointer cursor({width, height}, {hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor, mlen / height, dlen / height);
+        assert(::even_pad_length(::nbbytes(width)) == mlen / height);
+        assert(::even_pad_length(::nbbytes(width * data_bpp)) == dlen / height);
+
         this->cursors[pointer_idx] = cursor;
+
 
         drawable.set_pointer(cursor);
         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done cursormask");
+            const uint8_t * cursormask = cursor.get_monochrome_and_mask().data();
+            ::hexdump(cursormask, mlen);
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done cursordata");
+            const uint8_t * cursordata = cursor.get_24bits_xor_mask().data();
+            ::hexdump(cursordata, dlen);
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done vnccursor");
+            ARGB32Pointer vnccursor(cursor);
+            const auto av_alpha_q = vnccursor.get_alpha_q();
+            ::hexdump(av_alpha_q.data(), cursor.get_dimensions().width * cursor.get_dimensions().height);
         }
     }   // process_new_pointer_pdu
 
@@ -5669,7 +5696,7 @@ private:
         assert(!out_asynchronous_task);
     }
 
-    void process_rdpdr_event(const CHANNELS::ChannelDef &,
+    void process_rdpdr_event(const CHANNELS::ChannelDef & /*unused*/,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         if (!this->enable_rdpdr_data_analysis &&
             this->authorization_channels.rdpdr_type_all_is_authorized() &&
@@ -5711,7 +5738,7 @@ private:
         }
     }
 
-    void process_drdynvc_event(const CHANNELS::ChannelDef &,
+    void process_drdynvc_event(const CHANNELS::ChannelDef & /*unused*/,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         // if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
         //     if (bool(this->verbose & (RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump))) {

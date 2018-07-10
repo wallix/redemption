@@ -41,16 +41,13 @@ private:
     std::string out_tmp;
 
 public:
-    unsigned character_count;
-    unsigned unrecognized_count;
-    unsigned first_unrecognized_index;
+    unsigned character_count{0};
+    unsigned unrecognized_count{0};
+    unsigned first_unrecognized_index{0};
     unsigned font_id;
 
     classifier_type(unsigned font = -1u)
-    : character_count(0)
-    , unrecognized_count(0)
-    , first_unrecognized_index(0)
-    , font_id(font)
+    : font_id(font)
     {}
 
     unsigned unrecognized_rate() const
@@ -78,9 +75,8 @@ public:
         this->font_id = font_id;
         this->out.reserve(attrs.size());
         bool beginning = true;
-        typedef std::vector<label_attr_t>::iterator iterator;
-        iterator first = attrs.begin();
-        iterator last = attrs.end();
+        auto first = attrs.begin();
+        auto last = attrs.end();
 
         if (first == last) {
             return ;
@@ -140,7 +136,7 @@ public:
 
 struct Classification
 {
-    typedef classifier_type result_type;
+    using result_type = classifier_type;
 
     Classification()
     {}
@@ -184,4 +180,4 @@ private:
     classifier_type classifier;
 };
 
-}
+} // namespace ocr

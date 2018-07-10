@@ -108,13 +108,13 @@ namespace CredSSP {
         length += BER::sizeof_contextual_tag(length);
         return length;
     }
-}
+}  // namespace CredSSP
 
 struct TSRequest final {
     /* TSRequest */
 
     /* [0] version */
-    uint32_t version;
+    uint32_t version{6};
     uint32_t use_version;
 
     /* [1] negoTokens (NegoData) */
@@ -127,19 +127,19 @@ struct TSRequest final {
     Array pubKeyAuth;
     // BStream pubKeyAuth;
     /* [4] errorCode (INTEGER OPTIONAL) */
-    uint32_t error_code;
+    uint32_t error_code{0};
     /* [5] clientNonce (OCTET STRING OPTIONAL) */
     Array clientNonce;
 
 
     TSRequest()
-        : version(6)
-        , use_version(this->version)
+        :
+         use_version(this->version)
         , negoTokens(0)
         , authInfo(0)
         , pubKeyAuth(0)
-        , error_code(0)
-        , clientNonce(0)
+        ,
+         clientNonce(0)
     {
     }
 
@@ -286,10 +286,10 @@ struct TSRequest final {
             this->use_version);
 
         /* [1] negoTokens (NegoData) */
-        if (BER::read_contextual_tag(stream, 1, length, true) != false)        {
+        if (BER::read_contextual_tag(stream, 1, length, true))        {
             LOG(LOG_INFO, "Credssp TSCredentials::recv() NEGOTOKENS");
 
-            if (!BER::read_sequence_tag(stream, length) || /* SEQUENCE OF NegoDataItem */
+            if (!BER::read_sequence_tag(stream, length) || /* SEQUENCE OF NegoDataItem */ /*NOLINT(misc-redundant-expression)*/
                 !BER::read_sequence_tag(stream, length) || /* NegoDataItem */
                 !BER::read_contextual_tag(stream, 0, length, true) || /* [0] negoToken */
                 !BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
@@ -302,7 +302,7 @@ struct TSRequest final {
         }
 
         /* [2] authInfo (OCTET STRING) */
-        if (BER::read_contextual_tag(stream, 2, length, true) != false) {
+        if (BER::read_contextual_tag(stream, 2, length, true)) {
             LOG(LOG_INFO, "Credssp TSCredentials::recv() AUTHINFO");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
@@ -314,7 +314,7 @@ struct TSRequest final {
         }
 
         /* [3] pubKeyAuth (OCTET STRING) */
-        if (BER::read_contextual_tag(stream, 3, length, true) != false) {
+        if (BER::read_contextual_tag(stream, 3, length, true)) {
             LOG(LOG_INFO, "Credssp TSCredentials::recv() PUBKEYAUTH");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
@@ -326,7 +326,7 @@ struct TSRequest final {
         /* [4] errorCode (INTEGER) */
         if (remote_version >= 3
             && remote_version != 5
-            && BER::read_contextual_tag(stream, 4, length, true) != false) {
+            && BER::read_contextual_tag(stream, 4, length, true)) {
             LOG(LOG_INFO, "Credssp TSCredentials::recv() ErrorCode");
             if (!BER::read_integer(stream, this->error_code)) {
                 return -1;
@@ -340,7 +340,7 @@ struct TSRequest final {
         }
         /* [5] clientNonce (OCTET STRING) */
         if (remote_version >= 5
-            && BER::read_contextual_tag(stream, 5, length, true) != false) {
+            && BER::read_contextual_tag(stream, 5, length, true)) {
             LOG(LOG_INFO, "Credssp TSCredentials::recv() CLIENTNONCE");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
@@ -364,19 +364,15 @@ struct TSRequest final {
  */
 struct TSPasswordCreds {
     uint8_t domainName[256];
-    size_t domainName_length;
+    size_t domainName_length{0};
     uint8_t userName[256];
-    size_t userName_length;
+    size_t userName_length{0};
     uint8_t password[256];
-    size_t password_length;
+    size_t password_length{0};
 
     TSPasswordCreds()
-        : domainName_length(0)
-        , userName_length(0)
-        , password_length(0)
-    {
 
-    }
+    = default;
 
     TSPasswordCreds(const uint8_t * domain, size_t domain_length, const uint8_t * user, size_t user_length, const uint8_t * pass, size_t pass_length) {
         this->domainName_length = (domain_length < sizeof(this->domainName))
@@ -471,42 +467,33 @@ struct TSPasswordCreds {
  *
  */
 struct TSCspDataDetail {
-    uint32_t keySpec;
-    uint8_t cardName[256];
-    size_t cardName_length;
-    uint8_t readerName[256];
-    size_t readerName_length;
-    uint8_t containerName[256];
-    size_t containerName_length;
-    uint8_t cspName[256];
-    size_t cspName_length;
+    uint32_t keySpec{0};
+    uint8_t cardName[256]{};
+    size_t cardName_length{0};
+    uint8_t readerName[256]{};
+    size_t readerName_length{0};
+    uint8_t containerName[256]{};
+    size_t containerName_length{0};
+    uint8_t cspName[256]{};
+    size_t cspName_length{0};
 
     TSCspDataDetail()
-        : keySpec(0)
-        , cardName()
-        , cardName_length(0)
-        , readerName()
-        , readerName_length(0)
-        , containerName()
-        , containerName_length(0)
-        , cspName()
-        , cspName_length(0)
-    {
-    }
+
+    = default;
 
     TSCspDataDetail(uint32_t keySpec, uint8_t * cardName, size_t cardName_length,
                     uint8_t * readerName, size_t readerName_length,
                     uint8_t * containerName, size_t containerName_length,
                     uint8_t * cspName, size_t cspName_length)
         : keySpec(keySpec)
-        , cardName()
-        , cardName_length(cardName_length)
-        , readerName()
-        , readerName_length(readerName_length)
-        , containerName()
-        , containerName_length(containerName_length)
-        , cspName()
-        , cspName_length(cspName_length)
+        ,
+         cardName_length(cardName_length)
+        ,
+         readerName_length(readerName_length)
+        ,
+         containerName_length(containerName_length)
+        ,
+         cspName_length(cspName_length)
     {
         this->cardName_length = (cardName_length < sizeof(this->cardName))
             ? cardName_length
@@ -617,7 +604,7 @@ struct TSCspDataDetail {
         BER::read_integer(stream, this->keySpec);
 
         /* [1] cardName (OCTET STRING OPTIONAL) */
-        if (BER::read_contextual_tag(stream, 1, length, true) != false) {
+        if (BER::read_contextual_tag(stream, 1, length, true)) {
             LOG(LOG_INFO, "Credssp TSCspDataDetail::recv() : cardName");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
@@ -628,7 +615,7 @@ struct TSCspDataDetail {
             stream.in_copy_bytes(this->cardName, length);
         }
         /* [2] readerName (OCTET STRING OPTIONAL) */
-        if (BER::read_contextual_tag(stream, 2, length, true) != false) {
+        if (BER::read_contextual_tag(stream, 2, length, true)) {
             LOG(LOG_INFO, "Credssp TSCspDataDetail::recv() : readerName");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
@@ -639,7 +626,7 @@ struct TSCspDataDetail {
             stream.in_copy_bytes(this->readerName, length);
         }
         /* [3] containerName (OCTET STRING OPTIONAL) */
-        if (BER::read_contextual_tag(stream, 3, length, true) != false) {
+        if (BER::read_contextual_tag(stream, 3, length, true)) {
             LOG(LOG_INFO, "Credssp TSCspDataDetail::recv() : containerName");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
@@ -650,7 +637,7 @@ struct TSCspDataDetail {
             stream.in_copy_bytes(this->containerName, length);
         }
         /* [4] cspName (OCTET STRING OPTIONAL) */
-        if (BER::read_contextual_tag(stream, 4, length, true) != false) {
+        if (BER::read_contextual_tag(stream, 4, length, true)) {
             LOG(LOG_INFO, "Credssp TSCspDataDetail::recv() : cspName");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
@@ -674,22 +661,18 @@ struct TSCspDataDetail {
  */
 
 struct TSSmartCardCreds {
-    uint8_t pin[256];
-    size_t pin_length;
+    uint8_t pin[256]{};
+    size_t pin_length{0};
     TSCspDataDetail cspData;
-    uint8_t userHint[256];
-    size_t userHint_length;
-    uint8_t domainHint[256];
-    size_t domainHint_length;
+    uint8_t userHint[256]{};
+    size_t userHint_length{0};
+    uint8_t domainHint[256]{};
+    size_t domainHint_length{0};
 
     TSSmartCardCreds()
-        : pin()
-        , pin_length(0)
-        , cspData()
-        , userHint()
-        , userHint_length(0)
-        , domainHint()
-        , domainHint_length(0)
+        :
+         cspData()
+
     {
     }
 
@@ -803,7 +786,7 @@ struct TSSmartCardCreds {
         this->cspData.recv(stream);
 
         /* [2] userHint (OCTET STRING) */
-        if (BER::read_contextual_tag(stream, 2, length, true) != false) {
+        if (BER::read_contextual_tag(stream, 2, length, true)) {
             LOG(LOG_INFO, "Credssp TSSmartCardCreds::recv() : userHint");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
@@ -815,7 +798,7 @@ struct TSSmartCardCreds {
         }
 
         /* [3] domainHint (OCTET STRING) */
-        if (BER::read_contextual_tag(stream, 3, length, true) != false) {
+        if (BER::read_contextual_tag(stream, 3, length, true)) {
             LOG(LOG_INFO, "Credssp TSSmartCardCreds::recv() : domainHint");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
@@ -841,14 +824,14 @@ struct TSSmartCardCreds {
  */
 struct TSCredentials
 {
-    uint32_t credType;
+    uint32_t credType{1};
     TSPasswordCreds passCreds;
     TSSmartCardCreds smartcardCreds;
     // For now, TSCredentials can only contains TSPasswordCreds (not TSSmartCardCreds)
 
     TSCredentials()
-        : credType(1)
-    {}
+
+    = default;
 
     TSCredentials(const uint8_t * domain, size_t domain_length, const uint8_t * user, size_t user_length, const uint8_t * pass, size_t pass_length)
         : credType(1)

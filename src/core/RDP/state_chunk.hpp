@@ -71,7 +71,7 @@ struct StateChunk {
     , mem3blt(0, Rect(), 0, 0, 0, RDPColor{}, RDPColor{}, RDPBrush(), 0)
     , lineto(0, 0, 0, 0, 0, RDPColor{}, 0, RDPPen(0, 0, RDPColor{}))
     , glyphindex( 0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
-                , reinterpret_cast<const uint8_t *>(""))
+                , byte_ptr_cast(""))
     , polyline()
     , ellipseSC()
     {}

@@ -34,7 +34,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -59,16 +59,16 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton)
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0, 0, wbutton.cx(), wbutton.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button.png");
+    // drawable.save_to_png("button.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x68\xe5\xb3\xd8\x73\x90\x97\x63\x7b\x69\x3f\xb3\x59\x98\xf5\xff\xe6\x1a\x39\x6f");
+    RED_CHECK_SIG(drawable.gd, "\xdd\xc2\xb2\x1e\x8d\x45\x6c\xd9\xef\x05\x26\xd5\x4a\x80\xec\xaf\x9c\x1b\xb1\xaf");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetFlatButton2)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetFlatButton is a button widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -94,9 +94,9 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton2)
                                       wbutton.cx(),
                                       wbutton.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button2.png");
+    // drawable.save_to_png("button2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x2a\x11\x27\x83\xfc\xca\xe3\x9d\x61\x10\x17\xd8\xbc\xae\x31\x27\x4f\x67\x6d\x71");
+    RED_CHECK_SIG(drawable.gd, "\xca\x1b\x47\xa5\x8f\xf0\x39\xad\xb6\x3c\x75\x13\xe5\x83\x4c\xdf\xe9\x57\x80\x59");
 }
 
 
@@ -104,7 +104,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton3)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetFlatButton is a button widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -130,9 +130,9 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton3)
                                       wbutton.cx(),
                                       wbutton.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button3.png");
+    // drawable.save_to_png("button3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xd4\x20\x28\xee\x67\x81\xee\x29\x81\xa2\xe2\x2a\xe9\xdc\x3b\xb6\x96\x09\xd6\xd5");
+    RED_CHECK_SIG(drawable.gd, "\x3e\x75\x28\xf9\x54\x99\x36\x1e\xb9\x87\x54\xd9\xfa\x07\xcc\x15\x81\xec\xd9\xd3");
 
 }
 
@@ -140,7 +140,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton4)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetFlatButton is a button widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -166,9 +166,9 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton4)
                                       wbutton.cx(),
                                       wbutton.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button4.png");
+    // drawable.save_to_png("button4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xa0\x82\xc3\x05\x38\x74\xb0\xe0\xa6\xb7\x6e\x4e\xc7\xaf\x7c\x0c\xe7\x95\xad\x33");
+    RED_CHECK_SIG(drawable.gd, "\x0b\x33\xf4\xd2\xc9\xa7\x79\x0f\xac\xbe\x3c\xa8\xa6\xde\x5d\x64\x4b\xe3\xf0\x2c");
 
 }
 
@@ -176,7 +176,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton5)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetFlatButton is a button widget of size 100x20 at position -20,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -202,9 +202,9 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton5)
                                       wbutton.cx(),
                                       wbutton.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button5.png");
+    // drawable.save_to_png("button5.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xdb\xab\xd3\x2c\x94\x64\xa7\xf0\xd8\xf5\xc6\xda\xc9\x29\x69\x72\x0f\xda\xcf\xe5");
+    RED_CHECK_SIG(drawable.gd, "\x39\x29\xce\xbf\x2e\xde\xcb\x24\x8d\x0c\xd3\xc3\xd5\xea\x51\x2e\xee\x47\x14\x68");
 
 }
 
@@ -212,7 +212,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton6)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetFlatButton is a button widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -238,9 +238,9 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton6)
                                       wbutton.cx(),
                                       wbutton.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button6.png");
+    // drawable.save_to_png("button6.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x6c\x19\x06\x10\x85\xc1\x56\x63\xf3\x0a\xef\x1f\xed\xce\xf8\xa2\x36\x0a\x12\x78");
+    RED_CHECK_SIG(drawable.gd, "\x8a\xe6\xed\xdf\x9d\xad\x44\x2a\xef\x53\x79\xf3\x33\x5a\xfe\xdc\x43\xb8\xf7\x22");
 
 }
 
@@ -248,7 +248,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonClip)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetFlatButton is a button widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -274,9 +274,9 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonClip)
                                       wbutton.cx(),
                                       wbutton.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button7.png");
+    // drawable.save_to_png("button7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x85\x49\x79\x3f\xf1\x05\x4d\x53\x2d\x0c\x58\xe6\xf3\x6b\xb8\x7a\xb0\x21\xe5\x9d");
+    RED_CHECK_SIG(drawable.gd, "\x15\x28\xe8\x21\x36\x3f\xb1\x94\x39\xa9\xfc\xe7\xc5\x6a\xc7\x90\xef\x77\x3c\x14");
 
 }
 
@@ -284,7 +284,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonClip2)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetFlatButton is a button widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -310,16 +310,16 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonClip2)
                                       30,
                                       10));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button8.png");
+    // drawable.save_to_png("button8.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x84\x60\xe3\xf9\x31\xe5\x7e\x90\x4a\xb5\x18\xd9\xc9\x3a\xc5\x8f\xf3\x38\x30\xae");
+    RED_CHECK_SIG(drawable.gd, "\xf7\x36\xd7\x86\xbb\x33\x70\x0b\x90\x3a\xc0\xfb\x03\x9d\xdf\xf9\xc3\x99\x67\x10");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
     parent.set_wh(800, 600);
@@ -342,25 +342,25 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
 
     wbutton.rdp_input_invalidate(wbutton.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button9.png");
+    // drawable.save_to_png("button9.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x4d\x48\x1f\x6f\xe8\x0e\x26\x61\x7c\xfb\xdd\x70\x77\x94\xd6\x70\x10\xce\xe0\xda");
+    RED_CHECK_SIG(drawable.gd, "\x72\xac\x38\xdf\x59\x84\x3b\x80\xf5\x0a\xc8\xcc\xe5\x97\xbd\xc9\x2f\x16\x89\x0c");
 
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, nullptr);
     wbutton.rdp_input_invalidate(wbutton.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button10.png");
+    // drawable.save_to_png("button10.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x69\x43\xb9\x96\x60\x66\xb9\xe6\x32\x1a\x66\xdb\xa4\xf6\x69\x99\x0c\x5b\xd7\x0a");
+    RED_CHECK_SIG(drawable.gd, "\xa6\x46\x23\xf9\x18\xb6\x48\x06\x1c\xdd\x09\x27\x39\xcd\x99\xd0\x28\xe7\xda\xb9");
 
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 15, 15, nullptr);
     wbutton.rdp_input_invalidate(wbutton.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button11.png");
+    // drawable.save_to_png("button11.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x4d\x48\x1f\x6f\xe8\x0e\x26\x61\x7c\xfb\xdd\x70\x77\x94\xd6\x70\x10\xce\xe0\xda");
+    RED_CHECK_SIG(drawable.gd, "\x72\xac\x38\xdf\x59\x84\x3b\x80\xf5\x0a\xc8\xcc\xe5\x97\xbd\xc9\x2f\x16\x89\x0c");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetFlatButtonEvent)
@@ -467,7 +467,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetFlatButton is a button widget of size 256x125 at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -525,17 +525,17 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
     // ask to widget to redraw at position 100,25 and of size 100x100.
     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button12.png");
+    // drawable.save_to_png("button12.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xea\x26\xfc\x6b\x6e\x30\x6d\x39\xa4\x06\xb2\xae\xe0\xde\x95\x20\x67\x8a\x44\xba");
+    RED_CHECK_SIG(drawable.gd, "\xe0\xe5\x89\x9a\x4f\xc8\x5c\x95\x4a\x46\x26\x7f\xac\x44\x5b\xc1\x57\x6d\x06\x84");
 
 
     // ask to widget to redraw at it's current position
     wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button13.png");
+    // drawable.save_to_png("button13.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x56\x5c\x7e\x82\x85\xba\xdf\x0b\xf8\x63\x07\x97\x71\xba\x55\x91\x2f\xfc\x70\xe2");
+    RED_CHECK_SIG(drawable.gd, "\xdb\xfd\x24\x61\xa3\xd4\x82\x64\x5a\x61\xed\x1b\xbc\x32\xd8\xdf\x8d\x7f\x5c\x5c");
 
 
     wcomposite.clear();
@@ -543,9 +543,9 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
 
 RED_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 {
-    TestDraw drawable(70, 40);
+    TestDraw drawable(72, 40);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
     parent.set_wh(800, 600);
@@ -568,18 +568,18 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 
     wbutton.rdp_input_invalidate(wbutton.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button14.png");
+    // drawable.save_to_png("button14.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x49\x06\x79\x76\xc9\x88\xca\xd0\x0c\xca\x82\x27\xe0\xe4\xe4\xd9\x8b\xf0\xb1\x39");
+    RED_CHECK_SIG(drawable.gd, "\x36\x23\xb8\x1b\x58\x75\x3e\x8c\x38\x1b\x4b\xba\x67\x19\x72\x85\x1d\xce\xe0\xc1");
 
 
     wbutton.focus(Widget::focus_reason_tabkey);
 
     wbutton.rdp_input_invalidate(wbutton.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button15.png");
+    // drawable.save_to_png("button15.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xca\xc9\xc3\xa6\xd9\xa2\x8b\xd8\xce\x1f\x8d\x18\xf2\x94\xda\x44\x3a\xfe\x41\x78");
+    RED_CHECK_SIG(drawable.gd, "\xfc\x69\x29\x22\xe8\xac\xfb\x2b\x26\x02\x12\x9b\x99\x2d\xec\xde\x56\x03\x02\xaa");
 
 
 
@@ -587,26 +587,26 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 
     wbutton.rdp_input_invalidate(wbutton.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button16.png");
+    // drawable.save_to_png("button16.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x49\x06\x79\x76\xc9\x88\xca\xd0\x0c\xca\x82\x27\xe0\xe4\xe4\xd9\x8b\xf0\xb1\x39");
+    RED_CHECK_SIG(drawable.gd, "\x36\x23\xb8\x1b\x58\x75\x3e\x8c\x38\x1b\x4b\xba\x67\x19\x72\x85\x1d\xce\xe0\xc1");
 
 
     wbutton.focus(Widget::focus_reason_tabkey);
 
     wbutton.rdp_input_invalidate(wbutton.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button17.png");
+    // drawable.save_to_png("button17.png");
 
 
-    RED_CHECK_SIG(drawable.gd, "\xca\xc9\xc3\xa6\xd9\xa2\x8b\xd8\xce\x1f\x8d\x18\xf2\x94\xda\x44\x3a\xfe\x41\x78");
+    RED_CHECK_SIG(drawable.gd, "\xfc\x69\x29\x22\xe8\xac\xfb\x2b\x26\x02\x12\x9b\x99\x2d\xec\xde\x56\x03\x02\xaa");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetFlatButtonLite)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -629,24 +629,24 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonLite)
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(wbutton.x(), wbutton.y(), wbutton.cx(), wbutton.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button_lite.png");
+    // drawable.save_to_png("button_lite.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x3f\xd2\x5c\x22\x14\x65\xf3\x99\x36\x92\x27\x3a\x2f\xdb\x1e\xa0\x58\x8d\x27\xc3");
+    RED_CHECK_SIG(drawable.gd, "\x15\xa0\xce\x65\x61\xe4\x3a\x59\x40\xbb\xee\x09\xf3\x24\xc3\x96\x53\x4c\xab\x87");
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, wbutton.x() + 2, wbutton.y() + 2, nullptr);
 
     wbutton.rdp_input_invalidate(Rect(wbutton.x(), wbutton.y(), wbutton.cx(), wbutton.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button_lite_down.png");
+    // drawable.save_to_png("button_lite_down.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xa6\x89\x9a\xee\xc7\x4b\xc7\x94\x78\x7c\xea\xdf\xc3\x5d\xa8\x90\x2c\xf8\x85\x4d");
+    RED_CHECK_SIG(drawable.gd, "\x45\x12\x72\xb4\xc2\xba\xc7\x79\xf8\xbb\x73\x58\x57\x4a\x5e\xeb\xf4\xce\xfc\x37");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetFlatButtonStrong)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetFlatButton is a button widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -669,15 +669,15 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonStrong)
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(wbutton.x(), wbutton.y(), wbutton.cx(), wbutton.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button_lite.png");
+    // drawable.save_to_png("button_lite.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xbe\x7c\xda\x16\x34\x50\x8e\xca\x69\x60\xcb\xe0\xef\xa3\xef\x1b\xb0\xf1\x19\xc8");
+    RED_CHECK_SIG(drawable.gd, "\x96\xd0\x45\xec\x88\xda\xa5\x78\xc1\x8b\x6a\x81\xa7\x06\xb4\xab\xb9\x2a\x4e\x9d");
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, wbutton.x() + 2, wbutton.y() + 2, nullptr);
 
     wbutton.rdp_input_invalidate(Rect(wbutton.x(), wbutton.y(), wbutton.cx(), wbutton.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "button_lite_down.png");
+    // drawable.save_to_png("button_lite_down.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x36\x7c\x2c\x57\xcd\x28\x47\xe4\x9c\x7d\x77\x5e\x15\xe5\x43\xa3\x04\xe9\x2d\x36");
+    RED_CHECK_SIG(drawable.gd, "\x5f\x79\x1f\x43\xd0\x7c\x0b\x24\x8d\xd7\x7f\xde\xbe\xa1\x7d\xcb\x06\xd8\x37\xcd");
 }

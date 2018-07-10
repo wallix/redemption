@@ -24,7 +24,7 @@
 #include <signal.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
-#include <errno.h>
+#include <cerrno>
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -71,7 +71,7 @@ void sighup(int sig)
 //    LOG(LOG_INFO, "Ignoring SIGCHLD : signal %d pid %d\n", sig, getpid());
 //}
 
-void init_signals(void)
+void init_signals()
 {
     struct sigaction sa;
 
@@ -127,7 +127,7 @@ REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
 REDEMPTION_DIAGNOSTIC_POP
 }
 
-}
+}  // namespace
 
 //void reset_signals(void)
 //{

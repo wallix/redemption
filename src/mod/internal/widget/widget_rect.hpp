@@ -28,7 +28,7 @@ class NotifyApi;
 namespace gdi
 {
     class GraphicApi;
-}
+} // namespace gdi
 
 class WidgetRect : public Widget
 {

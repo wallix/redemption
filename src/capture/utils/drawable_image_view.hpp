@@ -51,7 +51,7 @@ public:
         uint8_t red()   const { return c[2]; }
     };
 
-    typedef Color value_type;
+    using value_type = Color;
 
     Color operator()(unsigned row, unsigned col) const
     { return {this->drawable.data(col, row)}; }

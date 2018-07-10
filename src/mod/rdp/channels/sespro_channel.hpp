@@ -1002,8 +1002,7 @@ public:
                     });
             }
             else if (!::strcasecmp(parameters_[0].c_str(), "Get startup application")) {
-                if (this->param_real_alternate_shell.compare(
-                         "[None]") ||
+                if (this->param_real_alternate_shell != "[None]" ||
                     this->start_application_started) {
                     send_client_message([this](OutStream & out_s) {
                             {
@@ -1015,7 +1014,7 @@ public:
                                 const char cstr[] = "[Windows Explorer]";
                                 out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                             }
-                            else if (!this->param_real_alternate_shell.compare("[None]")) {
+                            else if (this->param_real_alternate_shell == "[None]") {
                                 const char cstr[] = "[None]";
                                 out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                             }
@@ -1676,7 +1675,7 @@ public:
     }
 
     void start_end_session_check() {
-        if (this->param_real_alternate_shell.compare("[None]")) {
+        if (this->param_real_alternate_shell != "[None]") {
             return;
         }
 

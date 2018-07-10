@@ -22,7 +22,7 @@
 #pragma once
 
 #include <cinttypes>
-#include <inttypes.h>
+#include <cinttypes>
 
 #include "utils/sugar/cast.hpp"
 #include "utils/stream.hpp"
@@ -99,4 +99,4 @@ inline const char * get_NTStatus(NTSTATUS ntstatus) noexcept
     return "<unknown>";
 }
 
-}
+}  // namespace erref

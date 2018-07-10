@@ -25,8 +25,8 @@
 template<class String>
 int get_file_contents(String& s, const char * name)
 {
-    typedef typename String::value_type char_type;
-    typedef typename String::traits_type traits_type;
+    using char_type = typename String::value_type;
+    using traits_type = typename String::traits_type;
 
     std::basic_filebuf<char_type, traits_type> buf;
 

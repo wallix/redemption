@@ -29,7 +29,7 @@ REDEMPTION_DIAGNOSTIC_POP
 
 #include <cstdarg>
 
-void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...)
+void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*NOLINT(cert-dcl50-cpp)*/
 {
     va_list ap;
     va_start(ap, format);

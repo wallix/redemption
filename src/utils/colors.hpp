@@ -235,19 +235,19 @@ private:
 
     #ifndef IN_IDE_PARSER
     template<std::size_t n, class... Ts>
-    explicit BGRPalette(std::integral_constant<std::size_t, n>, Ts... ints) noexcept
+    explicit BGRPalette(std::integral_constant<std::size_t, n> /*unused*/, Ts... ints) noexcept
     : BGRPalette(std::integral_constant<std::size_t, n*4>{}, ints..., ints..., ints..., ints...)
     {}
     #endif
 
     template<class... Ts>
-    explicit BGRPalette(std::integral_constant<std::size_t, 256>, Ts... ints) noexcept
+    explicit BGRPalette(std::integral_constant<std::size_t, 256> /*unused*/, Ts... ints) noexcept
     : palette{BGRColor(ints)...}
     {}
 
     #ifndef IN_IDE_PARSER
     template<class BGRValue, std::size_t n, class... Ts>
-    explicit BGRPalette(BGRValue const (&a)[256], std::integral_constant<std::size_t, n>, Ts... ints) noexcept
+    explicit BGRPalette(BGRValue const (&a)[256], std::integral_constant<std::size_t, n> /*unused*/, Ts... ints) noexcept
     : BGRPalette(a, std::integral_constant<std::size_t, n*4>{},
         ints...,
         (ints + sizeof...(ints))...,
@@ -258,12 +258,12 @@ private:
     #endif
 
     template<class BGRValue, class... Ts>
-    explicit BGRPalette(BGRValue const (&a)[256], std::integral_constant<std::size_t, 256>, Ts... ints) noexcept
+    explicit BGRPalette(BGRValue const (&a)[256], std::integral_constant<std::size_t, 256> /*unused*/, Ts... ints) noexcept
     : palette{BGRColor(a[ints])...}
     {}
 
     template<class Transform>
-    /*constexpr*/ BGRPalette(Transform trans, int) noexcept
+    /*constexpr*/ BGRPalette(Transform trans, int /*unused*/) noexcept
     {
         /* rgb332 palette */
         for (int bindex = 0; bindex < 4; bindex++) {
@@ -287,7 +287,7 @@ private:
 template<class... BGRValues>
 BGRPalette make_rgb_palette(BGRValues... bgr_values) noexcept
 {
-    static_assert(sizeof...(bgr_values) == 256, "");
+    static_assert(sizeof...(bgr_values) == 256 );
     return BGRPalette(BGRasRGBColor(BGRColor(bgr_values))...);
 }
 
@@ -305,7 +305,7 @@ inline BGRColor color_from_cstr(const char * str)
 {
     BGRColor bgr;
 
-    if (0) {}
+    if (false) {}
 # define ELSE_COLOR(COLOR_NAME) else if (0 == strcasecmp(#COLOR_NAME, str)) { bgr = COLOR_NAME; }
     ELSE_COLOR(BLACK)
     ELSE_COLOR(GREY)
@@ -364,7 +364,7 @@ struct decode_color8
 {
     static constexpr const uint8_t bpp = 8;
 
-    constexpr decode_color8() noexcept {}
+    constexpr decode_color8() noexcept = default;
 
     BGRColor operator()(RDPColor c, BGRPalette const & palette) const noexcept
     {
@@ -377,7 +377,7 @@ struct decode_color15
 {
     static constexpr const uint8_t bpp = 15;
 
-    constexpr decode_color15() noexcept {}
+    constexpr decode_color15() noexcept = default;
 
     constexpr BGRColor operator()(RDPColor c) const noexcept
     {
@@ -394,7 +394,7 @@ struct decode_color16
 {
     static constexpr const uint8_t bpp = 16;
 
-    constexpr decode_color16() noexcept {}
+    constexpr decode_color16() noexcept = default;
 
     constexpr BGRColor operator()(RDPColor c) const noexcept
     {
@@ -411,7 +411,7 @@ struct decode_color24
 {
     static constexpr const uint8_t bpp = 24;
 
-    constexpr decode_color24() noexcept {}
+    constexpr decode_color24() noexcept = default;
 
     constexpr BGRColor operator()(RDPColor c) const noexcept
     {
@@ -471,7 +471,7 @@ struct encode_color8
 {
     static constexpr const uint8_t bpp = 8;
 
-    constexpr encode_color8() noexcept {}
+    constexpr encode_color8() noexcept = default;
 
     constexpr RDPColor operator()(BGRasRGBColor c) const noexcept {
         // bbbgggrr
@@ -487,7 +487,7 @@ struct encode_color15
 {
     static constexpr const uint8_t bpp = 15;
 
-    constexpr encode_color15() noexcept {}
+    constexpr encode_color15() noexcept = default;
 
     // rgb555
     RDPColor operator()(BGRasRGBColor c) const noexcept
@@ -508,7 +508,7 @@ struct encode_color16
 {
     static constexpr const uint8_t bpp = 16;
 
-    constexpr encode_color16() noexcept {}
+    constexpr encode_color16() noexcept = default;
 
     // rgb565
     RDPColor operator()(BGRasRGBColor c) const noexcept
@@ -529,7 +529,7 @@ struct encode_color24
 {
     static constexpr const uint8_t bpp = 24;
 
-    constexpr encode_color24() noexcept {}
+    constexpr encode_color24() noexcept = default;
 
     RDPColor operator()(BGRColor c) const noexcept
     {
@@ -559,7 +559,7 @@ namespace shortcut_encode
     using enc15 = encode_color15;
     using enc16 = encode_color16;
     using enc24 = encode_color24;
-}
+} // namespace shortcut_encode
 
 namespace shortcut_decode_with_palette
 {
@@ -567,4 +567,4 @@ namespace shortcut_decode_with_palette
     using dec15 = decode_color15;
     using dec16 = decode_color16;
     using dec24 = decode_color24;
-}
+} // namespace shortcut_decode_with_palette

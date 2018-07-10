@@ -32,14 +32,14 @@
 
 namespace RDP {
 struct BitmapCachePersistentListEntry;
-}
+} // namespace RDP
 
 class BmpCachePersister
 {
 private:
     static const uint8_t CURRENT_VERSION = 1;
 
-    typedef Bitmap map_value;
+    using map_value = Bitmap;
 
     class map_key
     {
@@ -51,8 +51,7 @@ private:
         }
 
         bool operator<(const map_key & other) const /*noexcept*/ {
-            typedef std::pair<const uint8_t *, const uint8_t *> iterator_pair;
-            iterator_pair p = std::mismatch(this->begin(), this->end(), other.begin());
+            auto p = std::mismatch(this->begin(), this->end(), other.begin());
             return p.first == this->end() ? false : *p.first < *p.second;
         }
 
@@ -85,7 +84,7 @@ private:
         { return this->key + sizeof(this->key); }
     };
 
-    typedef std::map<map_key, map_value> container_type;
+    using container_type = std::map<map_key, map_value>;
 
     container_type bmp_map[BmpCache::MAXIMUM_NUMBER_OF_CACHES];
 

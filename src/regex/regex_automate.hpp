@@ -29,7 +29,7 @@
 #include <iomanip>
 #include <cstring> //memset
 #include <cassert>
-#include <stdint.h>
+#include <cstdint>
 
 #include "regex_utils.hpp"
 #include "utils/sugar/noncopyable.hpp"
@@ -291,7 +291,7 @@ namespace re {
                 StateList * last = this->st_range_beginning.first+1;
                 StateList * firstdest = this->st_list + matrix_size;
                 for (; first != last; ++first) {
-                    typedef StateList * tab2_st_t[2];
+                    using tab2_st_t = StateList*[2];
                     tab2_st_t& tab = reinterpret_cast<tab2_st_t&>(*first);
                     //overlap
                     StateList * cpfirst = tab[0];
@@ -448,7 +448,7 @@ namespace re {
             if (this->nb_capture) {
                 unsigned * reindex = this->reindex_trace;
                 bool * typefirst = this->caps_type;
-                typedef state_list_t::const_iterator state_iterator;
+                using state_iterator = state_list_t::const_iterator;
                 state_iterator stfirst = sts.end() - this->nb_capture;
                 state_iterator stlast = sts.end();
                 for (unsigned num_open; stfirst != stlast; ++stfirst, ++typefirst) {
@@ -644,7 +644,7 @@ namespace re {
                     const bool ret = this->next_is_finish(st->out1);
                     return ( ! ret) ?this->next_is_finish(st->out2) : ret;
                 }
-                else if (st->is_cap()) {
+                if (st->is_cap()) {
                     return this->next_is_finish(st->out1);
                 }
             }
@@ -664,7 +664,7 @@ namespace re {
                     const bool ret = this->next_is_terminate(st->out1);
                     return ( ! ret) ?this->next_is_terminate(st->out2) : ret;
                 }
-                else if (st->is_cap()) {
+                if (st->is_cap()) {
                     return this->next_is_terminate(st->out1);
                 }
             }
@@ -714,7 +714,7 @@ namespace re {
                     else {
                         StateList * tmpstl = l->last;
                         push_state(l, st->out1, num_open, 1);
-                        typedef StateList * tab2_st_t[2];
+                        using tab2_st_t = StateList*[2];
                         tab2_st_t& tab = reinterpret_cast<tab2_st_t&>(*this->st_range_beginning.last);
                         tab[0] = tmpstl;
                         tab[1] = l->last;
@@ -781,8 +781,8 @@ namespace re {
             match_undetermined = 2
         };
 
-        typedef std::pair<const char *, const char *> range_t;
-        typedef std::vector<range_t> range_matches;
+        using range_t = std::pair<const char *, const char *>;
+        using range_matches = std::vector<range_t>;
 
         class DefaultMatchTracer
         {
@@ -796,10 +796,10 @@ namespace re {
             unsigned new_id(unsigned old_id) const
             { return this->sm.pop_idx_trace(old_id); }
 
-            bool open(unsigned /*idx*/, const char *, unsigned /*num_cap*/) const
+            bool open(unsigned /*idx*/, const char * /*s*/, unsigned /*num_cap*/) const
             { return true; }
 
-            bool close(unsigned /*idx*/, const char *, unsigned /*num_cap*/) const
+            bool close(unsigned /*idx*/, const char * /*s*/, unsigned /*num_cap*/) const
             { return true; }
 
             void fail(unsigned idx) const
@@ -808,7 +808,7 @@ namespace re {
             void good(unsigned idx) const
             { this->sm.set_idx_trace(idx); }
 
-            typedef std::pair<const unsigned *, const unsigned *> range_idx_trace;
+            using range_idx_trace = std::pair<const unsigned *, const unsigned *>;
 
             range_idx_trace range_idx_trace_reserved() const
             { return range_idx_trace(this->sm.idx_trace_free, this->sm.pidx_trace_free); }
@@ -1145,7 +1145,7 @@ namespace re {
                 unsigned real_count_consume;
             };
 
-            typedef StepRange * iterator;
+            using iterator = StepRange *;
 
             StepRange & next_uninitialized()
             {
@@ -1183,7 +1183,7 @@ namespace re {
 #endif
         };
 
-        typedef StepRangeList::iterator StepRangeIterator;
+        using StepRangeIterator = StepRangeList::iterator;
 
         static unsigned part_of_text_search_check(const State & st, unsigned pos, char_int c,
                                              utf8_consumer consumer,
@@ -1256,8 +1256,9 @@ namespace re {
 
         template<typename Tracer, bool exact_match, bool active_capture, bool active_part_of_text>
         unsigned step(char_int c, Tracer tracer,
-                      ExactMatch<exact_match>, ActiveCapture<active_capture>,
-                      ActivePartOfText<active_part_of_text>)
+                      ExactMatch<exact_match> /*match*/,
+                      ActiveCapture<active_capture> /*capture*/,
+                      ActivePartOfText<active_part_of_text> /*part*/)
         {
             StepRangeList & l1 = *this->pal1;
             StepRangeList & l2 = *this->pal2;
@@ -1265,7 +1266,7 @@ namespace re {
             unsigned new_trace;
             unsigned count_consume;
             bool count_consume_is_one = false;
-            for (StepRangeIterator ifirst = l1.begin(), ilast = l1.end(); ifirst != ilast; ++ifirst) {
+            for (StepRangeIterator ifirst = l1.begin(), ilast = l1.end(); ifirst != ilast; ++ifirst) /* NOLINT(modernize-loop-convert) */{
                 ++this->step_count;
                 if (active_capture) {
                     new_trace = 0;
@@ -1465,14 +1466,14 @@ namespace re {
         }
 
         template<unsigned State> struct MatchState { static const unsigned value = State; };
-        typedef MatchState<1> MatchStart;
-        typedef MatchState<2> MatchRun;
-        typedef MatchState<4> MatchFinish;
-        typedef MatchState<3> MatchImpl;
+        using MatchStart = MatchState<1>;
+        using MatchRun = MatchState<2>;
+        using MatchFinish = MatchState<4>;
+        using MatchImpl = MatchState<3>;
 
         template<typename Tracer, bool active_capture>
         unsigned match_start(const char * s, Tracer tracer, size_t * ppos,
-                             ActiveCapture<active_capture>)
+                             ActiveCapture<active_capture> /*capture*/)
         {
             return match_impl(s, 0, tracer, ppos,
                               ExactMatch<false>(),
@@ -1484,8 +1485,8 @@ namespace re {
 
 
         template<typename Tracer, bool active_capture, bool active_part_of_text>
-        bool match_finish(Tracer tracer, size_t * ppos, ActiveCapture<active_capture>,
-                          ActivePartOfText<active_part_of_text>)
+        bool match_finish(Tracer tracer, size_t * ppos, ActiveCapture<active_capture> /*capture*/,
+                          ActivePartOfText<active_part_of_text> /*part*/)
         {
             RE_SHOW(std::cout << ("finish") << std::endl);
             return match_impl(s, 0, tracer, ppos,
@@ -1506,8 +1507,9 @@ namespace re {
 
         template<typename Tracer, bool exact_match, bool active_capture, bool active_part_of_text>
         unsigned match_run(const char * s, unsigned step_limit, Tracer tracer, size_t * ppos,
-                           ExactMatch<exact_match>, ActiveCapture<active_capture>,
-                           ActivePartOfText<active_part_of_text>)
+                           ExactMatch<exact_match> /*match*/,
+                           ActiveCapture<active_capture> /*capture*/,
+                           ActivePartOfText<active_part_of_text> /*part*/)
         {
             return match_impl(s, step_limit, tracer, ppos,
                               ExactMatch<exact_match>(),
@@ -1519,8 +1521,9 @@ namespace re {
 
         template<typename Tracer, bool exact_match, bool active_capture, bool active_part_of_text>
         bool match(const char * s, unsigned step_limit, Tracer tracer, size_t * ppos,
-                        ExactMatch<exact_match>, ActiveCapture<active_capture>,
-                        ActivePartOfText<active_part_of_text>)
+                        ExactMatch<exact_match> /*match*/,
+                        ActiveCapture<active_capture> /*capture*/,
+                        ActivePartOfText<active_part_of_text> /*part*/)
         {
             return match_impl(s, step_limit, tracer, ppos,
                               ExactMatch<exact_match>(),
@@ -1532,8 +1535,9 @@ namespace re {
 
         template<typename Tracer, bool exact_match, bool active_capture, bool active_part_of_text, unsigned R>
         unsigned match_impl(const char * s, unsigned step_limit, Tracer tracer, size_t * ppos,
-                            ExactMatch<exact_match>, ActiveCapture<active_capture>,
-                            ActivePartOfText<active_part_of_text>, MatchState<R>)
+                            ExactMatch<exact_match> /*match*/,
+                            ActiveCapture<active_capture> /*capture*/,
+                            ActivePartOfText<active_part_of_text>, MatchState<R> /*part*/)
         {
             if (R & MatchStart::value) {
                 if (ppos) {
@@ -1605,7 +1609,7 @@ namespace re {
                         this->set_pos(ppos);
                         return match_success;
                     }
-                    if (exact_match == true && this->pal2->empty()) {
+                    if (exact_match && this->pal2->empty()) {
                         this->set_pos(ppos);
                         return match_fail;
                     }
@@ -1616,7 +1620,7 @@ namespace re {
                     ++this->step_id;
                     std::swap(this->pal1, this->pal2);
                     this->pal2->clear();
-                    if (false == exact_match) {
+                    if (!exact_match) {
                         if (this->st_range_list == this->st_range_list_last) {
                             if (active_capture) {
                                 this->s = this->consumer.str();
@@ -1768,5 +1772,5 @@ namespace re {
         const char * s;
         //END
     };
-}
+}  // namespace re
 

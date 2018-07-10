@@ -28,7 +28,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
-#include <errno.h>
+#include <cerrno>
 
 /* include "ther h files */
 #include "core/RDP/rdp_pointer.hpp"
@@ -110,13 +110,13 @@ enum {
         this->t.send(stream.get_data(), stream.get_offset());
     }
 
-    ~xup_mod() override {}
+    ~xup_mod() override = default;
 
     enum {
         XUPWM_INVALIDATE = 200
     };
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *) override {
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * /*keymap*/) override {
         LOG(LOG_INFO, "input mouse");
 
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
@@ -170,7 +170,6 @@ enum {
         (void)param1;
         (void)param2;
         LOG(LOG_INFO, "overloaded by subclasses");
-        return;
     }
 
     void rdp_input_invalidate(Rect r) override {
@@ -202,7 +201,7 @@ enum {
         this->t.send(stream.get_data(), len);
     }
 
-    void draw_event(time_t now, gdi::GraphicApi & drawable) override {
+    void draw_event(time_t now, gdi::GraphicApi & gd) override {
         (void)now;
         try{
             uint8_t buf[32768];
@@ -242,9 +241,9 @@ enum {
                             stream.in_sint16_le(),
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
-                         drawable.draw(RDPPatBlt(r, this->rop, color_encode(BLACK, this->bpp), color_encode(WHITE, this->bpp),
+                         gd.draw(RDPPatBlt(r, this->rop, color_encode(BLACK, this->bpp), color_encode(WHITE, this->bpp),
                             RDPBrush(r.x, r.y, 3, 0xaa,
-                            reinterpret_cast<const uint8_t *>("\xaa\x55\xaa\x55\xaa\x55\xaa\x55"))
+                            byte_ptr_cast("\xaa\x55\xaa\x55\xaa\x55\xaa\x55"))
                          ), r, gdi::ColorCtx::from_bpp(this->bpp, this->palette332));
                     }
                     break;
@@ -258,7 +257,7 @@ enum {
                         const int srcx = stream.in_sint16_le();
                         const int srcy = stream.in_sint16_le();
                         const RDPScrBlt scrblt(r, 0xCC, srcx, srcy);
-                        drawable.draw(scrblt, r);
+                        gd.draw(scrblt, r);
                     }
                     break;
                     case 5:
@@ -275,7 +274,7 @@ enum {
                         int srcx = stream.in_sint16_le();
                         int srcy = stream.in_sint16_le();
                         Bitmap bmp(this->bpp, bpp, &this->palette332, width, height, bmpdata, sizeof(bmpdata));
-                        drawable.draw(RDPMemBlt(0, r, 0xCC, srcx, srcy, 0), r, bmp);
+                        gd.draw(RDPMemBlt(0, r, 0xCC, srcx, srcy, 0), r, bmp);
                     }
                     break;
                     case 10: /* server_set_clip */
@@ -318,7 +317,7 @@ enum {
                         const RDPLineTo lineto(
                             1, x1, y1, x2, y2, color_encode(WHITE, this->bpp), this->rop,
                             RDPPen(this->pen.style, this->pen.width, encode_color24()(this->fgcolor)));
-                        drawable.draw(lineto, Rect(0,0,1,1), gdi::ColorCtx::from_bpp(this->bpp, this->palette332));
+                        gd.draw(lineto, Rect(0,0,1,1), gdi::ColorCtx::from_bpp(this->bpp, this->palette332));
                     }
                     break;
                     case 19:

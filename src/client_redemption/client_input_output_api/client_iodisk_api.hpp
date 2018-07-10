@@ -81,16 +81,16 @@ public:
         return ((unixSeconds + SEC_TO_UNIX_EPOCH) * WINDOWS_TICK);
     }
 
-    uint32_t string_to_hex32(unsigned char * str) {
+    uint32_t string_to_hex32(uint8_t const * str) {
         size_t size = sizeof(str);
         uint32_t hex32(0);
         for (size_t i = 0; i < size; i++) {
             int s = str[i];
-            if(s > 47 && s < 58) {                      //this covers 0-9
-                hex32 += (s - 48) << (size - i - 1);
-            } else if (s > 64 && s < 71) {              // this covers A-F
-                hex32 += (s - 55) << (size - i - 1);
-            } else if (s > 'a'-1 && s < 'f'+1) {        // this covers a-f
+            if('0' <= s && s <= '9') {
+                hex32 += (s - '0') << (size - i - 1);
+            } else if ('A' <= s && s <= 'F') {
+                hex32 += (s - 'A') << (size - i - 1);
+            } else if ('a' <= s && s <= 'f') {
                 hex32 += (s - 'a') << (size - i - 1);
             }
         }

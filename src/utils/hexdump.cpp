@@ -68,7 +68,7 @@ void hexdump_impl(
     }
 }
 
-}
+} // namespace
 
 
 void hexdump(const_byte_ptr data, size_t size, unsigned line_length)

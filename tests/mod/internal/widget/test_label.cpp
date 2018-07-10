@@ -35,7 +35,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLabel)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -66,16 +66,16 @@ RED_AUTO_TEST_CASE(TraceWidgetLabel)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png("/tmp/label0.png");
+    // drawable.save_to_png("label0.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x95\x82\x5d\x61\x2b\x30\xe5\x65\x2f\x7e\x77\xb6\x66\x0b\x1c\xd2\x50\x01\x3f\x1d");
+    RED_CHECK_SIG(drawable.gd, "\x1c\xa5\x6d\xfa\x82\xb1\x50\xf9\x35\x11\xd1\x45\xfa\x60\x51\x61\x79\x41\xe0\x65");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLabel2)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetLabel is a label widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -100,16 +100,16 @@ RED_AUTO_TEST_CASE(TraceWidgetLabel2)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png("/tmp/label2.png");
+    // drawable.save_to_png("label2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xe5\x01\x49\x35\x8d\x89\xbb\xd5\xd3\x61\xab\x3a\x03\x97\x2c\x03\xf5\xa3\x12\x83");
+    RED_CHECK_SIG(drawable.gd, "\x99\x61\xf8\x93\x28\x4f\x7b\x21\xc2\xfb\x73\x45\xff\x2c\xfd\xc2\xf7\x4d\xaf\x5c");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLabel3)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetLabel is a label widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -134,16 +134,16 @@ RED_AUTO_TEST_CASE(TraceWidgetLabel3)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png("/tmp/label3.png");
+    // drawable.save_to_png("label3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x57\x4f\x69\x68\x76\xe8\xd5\xd4\x4f\xfd\xa0\x39\x8e\xd9\x6f\x83\x4d\x21\x71\xb7");
+    RED_CHECK_SIG(drawable.gd, "\x10\xb4\xcb\x22\x6b\x71\x3d\x83\x3d\x5f\x05\xe6\xf1\xc7\xb4\x25\x19\x90\xa4\xd2");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLabel4)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetLabel is a label widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -168,16 +168,16 @@ RED_AUTO_TEST_CASE(TraceWidgetLabel4)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png("/tmp/label4.png");
+    // drawable.save_to_png("label4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x40\xc5\x45\x15\xf4\x30\xad\x65\xf4\x88\x3c\xec\xdf\xdf\xf3\xcb\xd6\x5d\x34\x86");
+    RED_CHECK_SIG(drawable.gd, "\x8b\x75\xdc\x26\xd7\xc0\x59\x37\x5e\x4d\x82\x48\x1e\x74\xf7\x80\xf2\xbd\x51\x88");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLabel5)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetLabel is a label widget of size 100x20 at position -20,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -202,16 +202,16 @@ RED_AUTO_TEST_CASE(TraceWidgetLabel5)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png("/tmp/label5.png");
+    // drawable.save_to_png("label5.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x3a\x3d\xc2\x64\xad\x03\x20\x54\xb5\x2e\x4c\xd9\x5a\x1b\x43\x6c\x91\xa7\x4c\xc1");
+    RED_CHECK_SIG(drawable.gd, "\x4a\x25\x32\xea\xe2\x7e\x69\xb0\xb5\x87\xad\x51\x77\x62\xf2\x36\x05\x5e\xde\x20");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLabel6)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -236,16 +236,16 @@ RED_AUTO_TEST_CASE(TraceWidgetLabel6)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png("/tmp/label6.png");
+    // drawable.save_to_png("label6.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xad\xb7\x7e\x8b\xd1\xc3\x99\x8d\xc7\xae\x41\x68\xb8\x67\x3e\x11\xfe\x78\x5f\xfd");
+    RED_CHECK_SIG(drawable.gd, "\x46\xcf\x3a\x61\x8c\x3d\xde\xe7\x51\xe2\xae\xd9\xa3\x17\x84\x74\x11\x4c\x25\xc5");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLabelClip)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -270,16 +270,16 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelClip)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png("/tmp/label7.png");
+    // drawable.save_to_png("label7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x08\x53\x1a\x07\xeb\x45\x84\xf8\x62\x54\x8e\x45\xe1\xa4\xde\x60\xe5\xf4\xd6\x5c");
+    RED_CHECK_SIG(drawable.gd, "\xc7\x5a\x05\x6b\x04\x7b\x9c\x23\xcb\xc6\x14\xcc\xc4\x24\xb5\x1a\x72\x66\x11\xf2");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLabelClip2)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetLabel is a label widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -304,9 +304,9 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelClip2)
                                      30,
                                      10));
 
-    //drawable.save_to_png("/tmp/label8.png");
+    // drawable.save_to_png("label8.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x9e\x7a\x67\xb5\x0b\x65\x85\x15\x2e\xe6\xf5\x5d\x48\xd5\xbd\x92\x04\xa8\x61\x91");
+    RED_CHECK_SIG(drawable.gd, "\x29\x13\x71\xa7\x9f\x72\x9b\x97\x94\x24\x41\xe4\x38\x15\xde\x6c\x80\x79\x68\x24");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLabelEvent)
@@ -336,7 +336,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelEvent)
     int16_t x = 0;
     int16_t y = 0;
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     WidgetLabel wlabel(drawable.gd, parent, notifier, "", 0, BLACK, WHITE, font);
     Dimension dim = wlabel.get_optimal_dim();
@@ -363,7 +363,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     //WidgetLabel is a label widget of size 256x125 at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -422,16 +422,16 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
 //    wcomposite.rdp_input_invalidate(Rect(0, 0, 800, 600));
 
-   //drawable.save_to_png("/tmp/label9.png");
+    // drawable.save_to_png("label9.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xe0\x70\x43\x8a\x56\xfb\x53\xb4\xa7\xab\x15\xda\x6c\x6d\x7e\xc2\xc8\xd4\xca\xac");
+    RED_CHECK_SIG(drawable.gd, "\xa0\x72\xf8\x43\xa4\xdb\x86\x14\x27\x57\x0e\x60\x7e\x80\xde\xa1\xab\x33\xf2\x01");
 
     //ask to widget to redraw at it's current position
     wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
 
-    // drawable.save_to_png("/tmp/label10.png");
+    // drawable.save_to_png("label10.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x04\x53\x86\xe9\xcd\xab\x74\xa4\x8f\x7c\x35\x56\xd8\xb4\xb2\x85\x48\x6f\x20\x92");
+    RED_CHECK_SIG(drawable.gd, "\xcd\x6d\x51\x8b\x2e\xab\x2f\xdf\x48\x8c\x87\xde\xb9\x49\xc5\x64\xfc\xc7\xf0\xf5");
     wcomposite.clear();
 }
 
@@ -442,7 +442,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelMax)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetLabel is a label widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -475,7 +475,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelMax)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png("/tmp/label2.png");
+    // drawable.save_to_png("label2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x9c\x1b\x03\xb9\xc2\xf2\xf8\x77\xa8\x14\x50\x2c\x23\xc1\x0d\x36\xb6\x20\x10\xee");
+    RED_CHECK_SIG(drawable.gd, "\xd9\xd1\xc5\x5e\x61\x3a\x1c\x0c\xa5\xcf\x58\x33\x80\x66\x76\xe0\xbf\xdc\x6f\x58");
 }

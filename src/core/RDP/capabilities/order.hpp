@@ -325,42 +325,27 @@ enum {
 struct OrderCaps : public Capability {
 
     uint8_t terminalDescriptor[16];
-    uint32_t pad4octetsA;
-    uint16_t desktopSaveXGranularity;
-    uint16_t desktopSaveYGranularity;
-    uint16_t pad2octetsA;
-    uint16_t maximumOrderLevel;
-    uint16_t numberFonts;
-    uint16_t orderFlags;
+    uint32_t pad4octetsA{0};                         // MUST be ignored
+    uint16_t desktopSaveXGranularity{1};             // ignored and assumed to be 1
+    uint16_t desktopSaveYGranularity{20};            // ignored and assumed to be 20
+    uint16_t pad2octetsA{0};                         // MUST be ignored
+    uint16_t maximumOrderLevel{ORD_LEVEL_1_ORDERS};  // is ignored and SHOULD be set to 1
+    uint16_t numberFonts{0};                         // is ignored and SHOULD be set to 0
+    uint16_t orderFlags{NEGOTIATEORDERSUPPORT};      //  from a "const list"
     uint8_t orderSupport[NB_ORDER_SUPPORT];
-    uint16_t textFlags;
-    uint16_t orderSupportExFlags;
-    uint32_t pad4octetsB;
-    uint32_t desktopSaveSize;
-    uint16_t pad2octetsC;
-    uint16_t pad2octetsD;
-    uint16_t textANSICodePage;
-    uint16_t pad2octetsE ;
+    uint16_t textFlags{0};                           // MUST be ignored
+    uint16_t orderSupportExFlags{0};                 //  from a "const list"
+    uint32_t pad4octetsB{0};                         // MUST be ignored
+    uint32_t desktopSaveSize{0};                     // ignored and assumed to be 230.400
+    uint16_t pad2octetsC{0};                         // MUST be ignored
+    uint16_t pad2octetsD{0};                         // MUST be ignored
+    uint16_t textANSICodePage{0};                    // CS : Code page of client
+                                                     // SC : is ignored by client and SHOULD be set to 0
+    uint16_t pad2octetsE{0} ;// MUST be ignored
 
     OrderCaps()
     : Capability(CAPSTYPE_ORDER, CAPLEN_ORDER)
 //        , terminalDescriptor = "";
-        , pad4octetsA(0) //....................... MUST be ignored
-        , desktopSaveXGranularity(1) //            ignored and assumed to be 1
-        , desktopSaveYGranularity(20) //.......... ignored and assumed to be 20
-        , pad2octetsA(0) //                        MUST be ignored
-        , maximumOrderLevel(ORD_LEVEL_1_ORDERS) // is ignored and SHOULD be set to 1
-        , numberFonts(0) //                        is ignored and SHOULD be set to 0
-        , orderFlags(NEGOTIATEORDERSUPPORT) //.... from a "const list"
-        , textFlags(0) //                          MUST be ignored
-        , orderSupportExFlags(0) //............... from a "const list"
-        , pad4octetsB(0) //                        MUST be ignored
-        , desktopSaveSize(0) //................... ignored and assumed to be 230.400
-        , pad2octetsC(0) //                        MUST be ignored
-        , pad2octetsD(0) //....................... MUST be ignored
-        , textANSICodePage(0) //                   CS : Code page of client
-                              //                   SC : is ignored by client and SHOULD be set to 0
-        , pad2octetsE (0) //...................... MUST be ignored
     {
         memset(this->terminalDescriptor, 0, 16); // 16 bytes array ALWAYS filled with 0
         memset(this->orderSupport, 0, NB_ORDER_SUPPORT); // 32 bits array filled with 0 BY DEFAULT

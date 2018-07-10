@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "acl/auth_api.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
@@ -34,6 +35,7 @@
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/rdp_log.hpp"
 #include "mod/rdp/windowing_api.hpp"
+#include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "utils/rect.hpp"
 #include "utils/theme.hpp"
 #include "utils/translation.hpp"
@@ -116,7 +118,7 @@ public:
 
     void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
-    void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
+    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
 
     void set_pointer(Pointer const & pointer) override
     {

@@ -37,7 +37,7 @@ namespace detail
             return static_cast<E>(this->verbose);
         }
     };
-}
+} // namespace detail
 
 inline detail::to_verbose_flags_
 to_verbose_flags(uint32_t verbose)

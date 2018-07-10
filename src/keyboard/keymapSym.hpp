@@ -101,7 +101,7 @@ struct KeymapSym
 
     int last_sym;
 
-    typedef int KeyLayout_t[128];
+    using KeyLayout_t = int[128];
 
     // keylayout working tables (X11 mode : begins in 8e position.)
     KeyLayout_t keylayout_WORK_noshift_sym;
@@ -158,6 +158,8 @@ struct KeymapSym
     bool is_scroll_locked() const;
 
     bool is_num_locked() const;
+
+    void toggle_num_lock(bool on);
 
     bool is_left_shift_pressed() const;
 

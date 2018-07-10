@@ -204,7 +204,7 @@ public:
     {
     }
 
-    ~RDPSerializer() override {}
+    ~RDPSerializer() override = default;
 
 protected:
     virtual void flush_orders() = 0;
@@ -282,7 +282,7 @@ private:
     }
 
 public:
-    void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
+    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
 
     void draw(RDPOpaqueRect const & cmd_, Rect clip, gdi::ColorCtx color_ctx) override {
         //LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect");
@@ -410,7 +410,7 @@ protected:
     void emit_glyph_cache(uint8_t cacheId, uint8_t cacheIndex) {
         FontChar & fc = this->glyph_cache.glyphs[cacheId][cacheIndex].font_item;
         RDPGlyphCache cmd(
-            cacheId, /*1, */cacheIndex, fc.offset, fc.baseline, fc.width, fc.height, std::move(fc.data));
+            cacheId, /*1, */cacheIndex, fc.offsetx, fc.offsety, fc.width, fc.height, std::move(fc.data));
         // always restored fc.data
         auto finally_ = finally([&]{ fc.data = std::move(cmd.aj); });
 
@@ -803,6 +803,6 @@ public:
     }
 
     // TODO set_palette unimplemented
-    void set_palette(const BGRPalette&) override {}
+    void set_palette(const BGRPalette& /*unused*/) override {}
 };
 

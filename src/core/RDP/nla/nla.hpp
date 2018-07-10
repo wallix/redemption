@@ -173,7 +173,7 @@ private:
     }
 
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
-        size_t length = pszTargetName ? strlen(reinterpret_cast<const char*>(pszTargetName)) : 0;
+        size_t length = pszTargetName ? strlen(char_ptr_cast(pszTargetName)) : 0;
         this->ServicePrincipalName.init(length + 1);
         this->ServicePrincipalName.copy(pszTargetName, length);
         this->ServicePrincipalName.get_data()[length] = 0;
@@ -220,10 +220,8 @@ protected:
                 number[index]++;
                 break;
             }
-            else {
-                number[index] = 0;
-                continue;
-            }
+
+            number[index] = 0;
         }
     }
 
@@ -234,10 +232,7 @@ protected:
                 number[index]--;
                 break;
             }
-            else {
-                number[index] = 0xFF;
-                continue;
-            }
+            number[index] = 0xFF;
         }
     }
 
@@ -624,7 +619,7 @@ private:
         output_buffer.Buffer.init(this->client_auth_data.cbMaxToken);
 
         SEC_STATUS status = this->table->InitializeSecurityContext(
-            reinterpret_cast<char*>(this->ServicePrincipalName.get_data()),
+            char_ptr_cast(this->ServicePrincipalName.get_data()),
             fContextReq,
             this->client_auth_data.have_input_buffer
                 ? &this->client_auth_data.input_buffer_desc
@@ -769,11 +764,7 @@ public:
         }
 
         this->client_auth_data.state = ClientAuthenticateData::Loop;
-        if (Res::Err == this->sm_credssp_client_authenticate_send()) {
-            return false;
-        }
-
-        return true;
+        return Res::Err != this->sm_credssp_client_authenticate_send();
     }
 
     enum class State { Err, Cont, Finish, };
@@ -1018,13 +1009,12 @@ private:
             LOG(LOG_ERR, "ImpersonateSecurityContext status: 0x%08X", status);
             return Res::Err;
         }
-        else {
-            status = this->table->RevertSecurityContext();
 
-            if (status != SEC_E_OK) {
-                LOG(LOG_ERR, "RevertSecurityContext status: 0x%08X", status);
-                return Res::Err;
-            }
+        status = this->table->RevertSecurityContext();
+
+        if (status != SEC_E_OK) {
+            LOG(LOG_ERR, "RevertSecurityContext status: 0x%08X", status);
+            return Res::Err;
         }
 
         return Res::Ok;

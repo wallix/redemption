@@ -141,7 +141,7 @@ class OutChunkedBufferingTransport : public Transport
     uint8_t buf[SZ];
     OutStream stream;
 
-    static_assert(SZ >= 8, "");
+    static_assert(SZ >= 8);
 
 public:
     explicit OutChunkedBufferingTransport(Transport & trans)
@@ -622,8 +622,7 @@ class WrmCaptureImpl :
             return this->GraphicToFile::kbd_input(now, uchar);
         }
 
-        ~Serializer() {
-        }
+        ~Serializer() = default;
     } graphic_to_file;
 
 public:
@@ -809,7 +808,7 @@ public:
         BmpCache::CacheOption(600, 768, false),
         BmpCache::CacheOption(300, 3072, false),
         BmpCache::CacheOption(262, 12288, false))
-    , ptr_cache(/*pointerCacheSize=*/0x19)
+    , ptr_cache(/*pointer_cache_entries=*/0x19)
     , out(
         wrm_params.cctx,
         wrm_params.rnd,
@@ -866,7 +865,7 @@ public:
         return this->nc.periodic_snapshot(now, x, y, ignore_frame_in_timeval);
     }
 
-    void visibility_rects_event(Rect const & rect) override {
+    void visibility_rects_event(Rect rect) override {
         if (!rect.isempty()) {
             this->max_image_frame_rect = this->max_image_frame_rect.disjunct(rect);
 

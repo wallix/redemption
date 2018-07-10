@@ -31,15 +31,14 @@ namespace
         const Font & font, const char * unicode_text, int & width, int & height, Getc getc)
     {
         UTF8toUnicodeIterator unicode_iter(unicode_text);
-        uint16_t height_max = 0;
+        FontCharView const* font_item = nullptr;
         for (; uint32_t c = getc(unicode_iter); ++unicode_iter) {
-            const FontChar & font_item = font.glyph_or_unknown(c);
-            width += font_item.incby;
-            height_max = std::max(height_max, font_item.height);
+            font_item = &font.glyph_or_unknown(c);
+            width += font_item->offsetx + font_item->incby;
         }
-        height = height_max;
+        height = font.max_height();
     }
-}
+} // namespace
 
 namespace gdi {
 
@@ -81,7 +80,7 @@ MultiLineTextMetrics::MultiLineTextMetrics(const Font& font, const char* unicode
             textmetrics_impl(
                 font, parameter.begin(), w, h,
                 [&](UTF8toUnicodeIterator & it){
-                    return it.pos() <= reinterpret_cast<uint8_t const*>(parameter.end())
+                    return it.pos() <= byte_ptr_cast(parameter.end())
                         ? *it : 0u;
                 });
 
@@ -180,22 +179,19 @@ void server_draw_text(
 
     while (*unicode_iter) {
         int total_width = 0;
-        int total_height = 0;
         uint8_t data[256];
+        data[1] = 0;
         auto data_begin = std::begin(data);
         const auto data_end = std::end(data)-2;
 
         const int cacheId = 7;
-        int distance_from_previous_fragment = 0;
-        while (data_begin != data_end) {
+        FontCharView const* font_item = nullptr;
+        while (data_begin != data_end && *unicode_iter) {
             const uint32_t charnum = *unicode_iter;
-            if (!charnum) {
-                break ;
-            }
             ++unicode_iter;
 
             int cacheIndex = 0;
-            FontChar const * font_item = font.glyph_at(charnum);
+            font_item = font.glyph_at(charnum);
             if (!font_item) {
                 LOG(LOG_WARNING, "server_draw_text() - character not defined >0x%02x<", charnum);
                 font_item = &font.unknown_glyph();
@@ -203,19 +199,16 @@ void server_draw_text(
 
             // TODO avoid passing parameters by reference to get results
             const GlyphCache::t_glyph_cache_result cache_result =
-                mod_glyph_cache.add_glyph(*font_item, cacheId, cacheIndex);
+                mod_glyph_cache.add_glyph(FontChar(*font_item), cacheId, cacheIndex);
             (void)cache_result; // supress warning
 
-            *data_begin = cacheIndex;
-            ++data_begin;
-            *data_begin = distance_from_previous_fragment;
-            ++data_begin;
-            distance_from_previous_fragment = font_item->incby;
-            total_width += font_item->incby;
-            total_height = std::max(uint16_t(total_height), font_item->height);
+            *data_begin++ = cacheIndex;
+            *data_begin++ += font_item->offsetx;
+            data_begin[1] = font_item->incby;
+            total_width += font_item->offsetx + font_item->incby;
         }
 
-        const Rect bk(x, y, total_width + 1, total_height + 1);
+        const Rect bk(x, y, total_width+1, font.max_height());
 
         RDPGlyphIndex glyphindex(
             cacheId,            // cache_id
@@ -228,17 +221,17 @@ void server_draw_text(
             bk,                 // op
             // brush
             RDPBrush(0, 0, 3, 0xaa,
-                reinterpret_cast<const uint8_t *>("\xaa\x55\xaa\x55\xaa\x55\xaa\x55")),
+                byte_ptr_cast("\xaa\x55\xaa\x55\xaa\x55\xaa\x55")),
             x,                  // glyph_x
-            y + total_height,   // glyph_y
+            y,                  // glyph_y
             data_begin - data,  // data_len in bytes
             data                // data
         );
 
-        x += total_width;
+        x += total_width - 1;
 
         drawable.draw(glyphindex, clip, color_ctx, mod_glyph_cache);
     }
 }
 
-}
+} // namespace gdi

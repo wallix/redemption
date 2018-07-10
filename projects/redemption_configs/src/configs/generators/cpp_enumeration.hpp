@@ -69,7 +69,7 @@ namespace cpp_enumeration_writer
             write(e,
                 "inline array_view_const_char assign_zbuf_from_cfg(\n"
                 "    zstr_buffer_from<%e> & buf,\n"
-                "    cfg_s_type<%e>,\n"
+                "    cfg_s_type<%e> /*type*/,\n"
                 "    %e x\n"
                 ") {\n"
             );
@@ -95,7 +95,7 @@ namespace cpp_enumeration_writer
 
         auto parse_fmt = [&](auto & e, auto lazy_integral_parse_fmt){
             write(e,
-                "inline parse_error parse(%e & x, spec_type<%e>, array_view_const_char value)\n"
+                "inline parse_error parse(%e & x, spec_type<%e> /*type*/, array_view_const_char value)\n"
                 "{\n"
             );
             if (e.is_string_parser) {
@@ -142,7 +142,7 @@ namespace cpp_enumeration_writer
                 out << "    });\n";
             });
         }
-        out << "}\n";
+        out << "} // namespace configs\n";
     }
 
     inline void write_type(std::ostream & out, type_enumerations const & enums)
@@ -241,7 +241,7 @@ namespace cpp_enumeration_writer
                 "inline bool is_valid_enum_value(%e e)\n"
                 "{\n"
                 "    auto const i = static_cast<unsigned long>(e);\n"
-                "    return false\n"
+                "    return false /* NOLINT(readability-simplify-boolean-expr) */\n"
             );
             for (auto & v : e.values) {
                 out << "     || i == " << v.val << "\n";

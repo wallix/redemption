@@ -69,8 +69,8 @@ namespace RDP {
         class DeletedNotificationIcons;
         class ActivelyMonitoredDesktop;
         class NonMonitoredDesktop;
-    }
-}
+    } // namespace RAIL
+}  // namespace RDP
 
 namespace gdi {
 
@@ -240,12 +240,12 @@ inline BGRColor color_decode(const RDPColor color, Depth depth, const BGRPalette
 // in vnc copyrect we need that to clip to the whole screen
 struct GraphicApi : private noncopyable
 {
-    GraphicApi() {}
+    GraphicApi() = default;
 
     virtual ~GraphicApi() = default;
 
-    virtual void set_pointer(Pointer      const &) {}
-    virtual void set_palette(BGRPalette   const &) {}
+    virtual void set_pointer(Pointer      const & /*unused*/) {}
+    virtual void set_palette(BGRPalette   const & /*unused*/) {}
 
     virtual void draw(RDP::FrameMarker    const & cmd) = 0;
     virtual void draw(RDPNineGrid const & , Rect , ColorCtx , Bitmap const & ) = 0;
@@ -270,18 +270,18 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, ColorCtx color_ctx, GlyphCache const & gly_cache) = 0;
 
     // NOTE maybe in an other interface
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow            &) {}
-    virtual void draw(const RDP::RAIL::WindowIcon                     &) {}
-    virtual void draw(const RDP::RAIL::CachedIcon                     &) {}
-    virtual void draw(const RDP::RAIL::DeletedWindow                  &) {}
-    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons &) {}
-    virtual void draw(const RDP::RAIL::DeletedNotificationIcons       &) {}
-    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop       &) {}
-    virtual void draw(const RDP::RAIL::NonMonitoredDesktop            &) {}
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow            & /*unused*/) {}
+    virtual void draw(const RDP::RAIL::WindowIcon                     & /*unused*/) {}
+    virtual void draw(const RDP::RAIL::CachedIcon                     & /*unused*/) {}
+    virtual void draw(const RDP::RAIL::DeletedWindow                  & /*unused*/) {}
+    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*unused*/) {}
+    virtual void draw(const RDP::RAIL::DeletedNotificationIcons       & /*unused*/) {}
+    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & /*unused*/) {}
+    virtual void draw(const RDP::RAIL::NonMonitoredDesktop            & /*unused*/) {}
 
     // TODO The 2 methods below should not exist and cache access be done before calling drawing orders
-    virtual void draw(RDPColCache   const &) {}
-    virtual void draw(RDPBrushCache const &) {}
+    virtual void draw(RDPColCache   const & /*unused*/) {}
+    virtual void draw(RDPBrushCache const & /*unused*/) {}
 
     virtual void begin_update() {}
     virtual void end_update() {}
@@ -296,40 +296,40 @@ struct GraphicApi : private noncopyable
 class NullGraphic final : public GraphicApi
 {
 public:
-    void draw(RDP::FrameMarker    const &) override {}
+    void draw(RDP::FrameMarker    const & /*cmd*/) override {}
 
-    void draw(RDPNineGrid         const &, Rect, ColorCtx, Bitmap const &) override {}
+    void draw(RDPNineGrid         const & /*unused*/, Rect /*unused*/, ColorCtx /*unused*/, Bitmap const & /*unused*/) override {}
 
-    void draw(RDPDestBlt          const &, Rect) override {}
-    void draw(RDPMultiDstBlt      const &, Rect) override {}
-    void draw(RDPPatBlt           const &, Rect, ColorCtx) override {}
-    void draw(RDP::RDPMultiPatBlt const &, Rect, ColorCtx) override {}
-    void draw(RDPOpaqueRect       const &, Rect, ColorCtx) override {}
-    void draw(RDPMultiOpaqueRect  const &, Rect, ColorCtx) override {}
-    void draw(RDPScrBlt           const &, Rect) override {}
-    void draw(RDP::RDPMultiScrBlt const &, Rect) override {}
-    void draw(RDPLineTo           const &, Rect, ColorCtx) override {}
-    void draw(RDPPolygonSC        const &, Rect, ColorCtx) override {}
-    void draw(RDPPolygonCB        const &, Rect, ColorCtx) override {}
-    void draw(RDPPolyline         const &, Rect, ColorCtx) override {}
-    void draw(RDPEllipseSC        const &, Rect, ColorCtx) override {}
-    void draw(RDPEllipseCB        const &, Rect, ColorCtx) override {}
-    void draw(RDPBitmapData       const &, Bitmap const &) override {}
-    void draw(RDPMemBlt           const &, Rect, Bitmap const &) override {}
-    void draw(RDPMem3Blt          const &, Rect, ColorCtx, Bitmap const &) override {}
-    void draw(RDPGlyphIndex       const &, Rect, ColorCtx, GlyphCache const &) override {}
+    void draw(RDPDestBlt          const & /*cmd*/, Rect /*clip*/) override {}
+    void draw(RDPMultiDstBlt      const & /*cmd*/, Rect /*clip*/) override {}
+    void draw(RDPPatBlt           const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
+    void draw(RDP::RDPMultiPatBlt const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
+    void draw(RDPOpaqueRect       const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
+    void draw(RDPMultiOpaqueRect  const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
+    void draw(RDPScrBlt           const & /*cmd*/, Rect /*clip*/) override {}
+    void draw(RDP::RDPMultiScrBlt const & /*cmd*/, Rect /*clip*/) override {}
+    void draw(RDPLineTo           const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
+    void draw(RDPPolygonSC        const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
+    void draw(RDPPolygonCB        const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
+    void draw(RDPPolyline         const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
+    void draw(RDPEllipseSC        const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
+    void draw(RDPEllipseCB        const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
+    void draw(RDPBitmapData       const & /*cmd*/, Bitmap const & /*bmp*/) override {}
+    void draw(RDPMemBlt           const & /*cmd*/, Rect /*clip*/, Bitmap const & /*bmp*/) override {}
+    void draw(RDPMem3Blt          const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}
+    void draw(RDPGlyphIndex       const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/, GlyphCache const & /*gly_cache*/) override {}
 
-    void draw(const RDP::RAIL::NewOrExistingWindow            &) override {}
-    void draw(const RDP::RAIL::WindowIcon                     &) override {}
-    void draw(const RDP::RAIL::CachedIcon                     &) override {}
-    void draw(const RDP::RAIL::DeletedWindow                  &) override {}
-    void draw(const RDP::RAIL::NewOrExistingNotificationIcons &) override {}
-    void draw(const RDP::RAIL::DeletedNotificationIcons       &) override {}
-    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       &) override {}
-    void draw(const RDP::RAIL::NonMonitoredDesktop            &) override {}
+    void draw(const RDP::RAIL::NewOrExistingWindow            & /*unused*/) override {}
+    void draw(const RDP::RAIL::WindowIcon                     & /*unused*/) override {}
+    void draw(const RDP::RAIL::CachedIcon                     & /*unused*/) override {}
+    void draw(const RDP::RAIL::DeletedWindow                  & /*unused*/) override {}
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*unused*/) override {}
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & /*unused*/) override {}
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & /*unused*/) override {}
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & /*unused*/) override {}
 
-    void draw(RDPColCache   const &) override {}
-    void draw(RDPBrushCache const &) override {}
+    void draw(RDPColCache   const & /*unused*/) override {}
+    void draw(RDPBrushCache const & /*unused*/) override {}
 
     static gdi::NullGraphic & instance()
     {
@@ -339,7 +339,7 @@ public:
 
 public:
     NullGraphic()
-    {}
+    = default;
 };
 
 inline gdi::GraphicApi & null_gd() noexcept
@@ -387,4 +387,4 @@ void server_draw_text(
     Rect clip
 );
 
-}
+}  // namespace gdi

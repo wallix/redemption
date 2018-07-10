@@ -79,12 +79,12 @@ struct Entry {
                 // on value. It will return true for all string beginning by one of the keywords
                 // as ulong_from_cstr also does not check for string end this seems to be the
                 // logical thing to do. But we should check use cases nevertheless.
-                unsigned long result = Parse(reinterpret_cast<uint8_t const *>(value)).bool_from_cstr();
+                unsigned long result = Parse(byte_ptr_cast(value)).bool_from_cstr();
                 this->store(result);
             }
             break;
             case INPUT_UNSIGNED: {
-                unsigned long result = Parse(reinterpret_cast<uint8_t const *>(value)).ulong_from_cstr();;
+                unsigned long result = Parse(byte_ptr_cast(value)).ulong_from_cstr();;
                 this->store(result);
             }
             break;

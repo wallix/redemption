@@ -40,7 +40,7 @@ public:
 
     void refresh(Rect clip) override;
 
-    void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override;
+    void draw_event(time_t /*now*/, gdi::GraphicApi & gd) override;
 
     bool is_up_and_running() override
     {
@@ -49,5 +49,6 @@ public:
 
 private:
     class WidgetTestModPrivate;
+    friend WidgetTestModPrivate;
     std::unique_ptr<WidgetTestModPrivate> d;
 };

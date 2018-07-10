@@ -34,10 +34,7 @@ void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, BGRColor 
 }
 
 
-CompositeArray::CompositeArray()
-  : child_table{}
-  , children_count(0)
-{}
+CompositeArray::CompositeArray() = default;
 
 CompositeArray::iterator CompositeArray::add(Widget * w)
 {

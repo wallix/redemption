@@ -88,22 +88,16 @@ enum {
 };
 
 struct InputCaps : public Capability {
-    uint16_t inputFlags;
-    uint16_t pad2octetsA;
-    uint32_t keyboardLayout;
-    uint32_t keyboardType;
-    uint32_t keyboardSubType;
-    uint32_t keyboardFunctionKey;
+    uint16_t inputFlags{INPUT_FLAG_SCANCODES};
+    uint16_t pad2octetsA{0x0000};
+    uint32_t keyboardLayout{0x0409};
+    uint32_t keyboardType{0x0004};
+    uint32_t keyboardSubType{0x0000};
+    uint32_t keyboardFunctionKey{0x000C};
     uint16_t imeFileName[32];
     InputCaps()
     : Capability(CAPSTYPE_INPUT, CAPLEN_INPUT)
-    , inputFlags(INPUT_FLAG_SCANCODES)
-    , pad2octetsA(0x0000)
-    , keyboardLayout(0x0409) // 0409 = English-US
-    , keyboardType(0x0004) // 04 = IBM enhanced (101- or 102-key) keyboard
-    , keyboardSubType(0x0000) // 00 = no OEM specific value
-    , keyboardFunctionKey(0x000C) // 0C = 12 function keys
-//    , imeFileName = ""
+    
     {
         memset(this->imeFileName, 0, 64);
     }
@@ -147,6 +141,6 @@ struct InputCaps : public Capability {
             this->imeFileName, sizeof(this->imeFileName) / sizeof(this->imeFileName[0]),
             imeFileName_utf8, sizeof(imeFileName_utf8) / sizeof(imeFileName_utf8[0])
         )] = 0;
-        LOG(LOG_INFO, "     Input caps::imeFileName %s", reinterpret_cast<char *>(imeFileName_utf8));
+        LOG(LOG_INFO, "     Input caps::imeFileName %s", char_ptr_cast(imeFileName_utf8));
     }
 };

@@ -1661,7 +1661,7 @@ public:
                     rdpdr::RDPDR_DTYP_FILESYSTEM,   // DeviceType
                     managed_drive.device_id,
                     managed_drive.name.c_str(),     // PreferredDosName
-                    reinterpret_cast<uint8_t const *>(managed_drive.name.c_str()),
+                    byte_ptr_cast(managed_drive.name.c_str()),
                     managed_drive.name.length() + 1
                 );
 

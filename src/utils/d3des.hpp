@@ -51,7 +51,8 @@ void rfbDes(unsigned char *, unsigned char *);
  * into the block at address 'to'.  They can be the same.
  */
 
-void rfbDesText(unsigned char *, unsigned char *, unsigned long, unsigned char *);
+void rfbDesText(unsigned char *inblock, unsigned char *outblock, unsigned long length,
+                unsigned char const *key);
 /*		       from[]	        to[]             length         iv[8]
  * Encrypts/Decrypts (according to the key currently loaded in the
  * internal key register) a text of size multiple of 8 at address 'from'

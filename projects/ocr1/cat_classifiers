@@ -11,7 +11,7 @@ for f in "$@" ; do
     bname="$(basename "$f")"
     funcname="${bname%%.hxx}"
     echo 'inline'
-    echo 'const char * '"$funcname"'(unsigned width, unsigned height, unsigned count, Pixel pixel)'
+    echo 'const char * '"$funcname"'(unsigned width, unsigned height, unsigned count, Pixel pixel) /*NOLINT(readability-function-size)*/'
     echo '{'
     echo '# include "'./ocr1/classifiers/"$bname"'"'
     echo '  return unknown;'

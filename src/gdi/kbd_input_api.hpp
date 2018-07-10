@@ -22,6 +22,7 @@
 #pragma once
 
 #include <sys/time.h> // timeval
+#include <cstdint>
 
 #include "utils/sugar/noncopyable.hpp"
 
@@ -36,5 +37,5 @@ struct KbdInputApi : private noncopyable
     virtual void enable_kbd_input_mask(bool enable) = 0;
 };
 
-}
+}  // namespace gdi
 

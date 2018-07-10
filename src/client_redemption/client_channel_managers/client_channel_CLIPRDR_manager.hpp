@@ -26,6 +26,7 @@
 #include <unordered_map>
 
 #include "utils/log.hpp"
+#include "utils/sugar/cast.hpp"
 #include "core/channel_list.hpp"
 #include "core/RDP/clipboard.hpp"
 
@@ -169,7 +170,7 @@ public:
 
 
 
-    ClientChannelCLIPRDRManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientIOClipboardAPI * clientIOClipboardAPI, RDPClipboardConfig & config)
+    ClientChannelCLIPRDRManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientIOClipboardAPI * clientIOClipboardAPI, RDPClipboardConfig const& config)
       : verbose(verbose)
       , clientIOClipboardAPI(clientIOClipboardAPI)
       , client(client)
@@ -193,8 +194,8 @@ public:
             LOG(LOG_WARNING, "Can't enable shared clipboard, %s directory doesn't exist.", this->client->CB_TEMP_DIR);
         }
 
-        for (size_t i = 0; i < config.formats.size();i++) {
-            this->add_format(config.formats[i].ID, config.formats[i].name);
+        for (auto const& format : config.formats) {
+            this->add_format(format.ID, format.name);
         }
     }
 
@@ -339,8 +340,8 @@ public:
                             RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, this->total_format_list_pdu_size);
                             format_list_header.emit(out_stream);
 
-                            for (size_t i = 0; i < this->formats_list.size(); i++) {
-                                this->formats_list[i].emit(out_stream);
+                            for (auto & format : formats_list) {
+                                format.emit(out_stream);
                             }
 
                             InStream chunk(out_stream.get_data(), out_stream.get_offset());
@@ -413,7 +414,7 @@ public:
                                         formatAvailable -=  32;
                                         uint8_t utf16_string[32];
                                         chunk.in_copy_bytes(utf16_string, 32);
-                                        this->_requestedFormatName = std::string(reinterpret_cast<const char*>(utf16_string), 32);
+                                        this->_requestedFormatName = std::string(char_ptr_cast(utf16_string), 32);
                                     } else {
 
                                         uint16_t utf16_string[120];
@@ -739,7 +740,7 @@ public:
                                       , total_length
                                       , out_stream_first_part
                                       , first_part_data_size
-                                      , reinterpret_cast<uint8_t *>(
+                                      , byte_ptr_cast(
                                         this->clientIOClipboardAPI->get_file_item_data(lindex))
                                       , this->clientIOClipboardAPI->get_file_item_size(lindex)
                                       , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
@@ -956,8 +957,8 @@ public:
                     if (cb_filesList.lindexToRequest >= cb_filesList.cItems) {
 
                         this->clientIOClipboardAPI->set_local_clipboard_stream(false);
-                        for (size_t i = 0; i < cb_filesList.itemslist.size(); i++) {
-                            this->clientIOClipboardAPI->setClipboard_files(cb_filesList.itemslist[i].name);
+                        for (auto& item : cb_filesList.itemslist) {
+                            this->clientIOClipboardAPI->setClipboard_files(item.name);
                         }
                         this->clientIOClipboardAPI->set_local_clipboard_stream(true);
 
@@ -1033,9 +1034,9 @@ public:
             length_of_utf8_string = ::UTF16toUTF8(
             this->_cb_buffers.data.get(), this->_cb_buffers.sizeTotal,
             utf8_string.get(), this->_cb_buffers.sizeTotal);
-            str_data = reinterpret_cast<const char*>(utf8_string.get());
+            str_data = char_ptr_cast(utf8_string.get());
         } else {
-            str_data = reinterpret_cast<const char*>(this->_cb_buffers.data.get());
+            str_data = char_ptr_cast(this->_cb_buffers.data.get());
             length_of_utf8_string = this->_cb_buffers.size;
         }
 

@@ -34,7 +34,7 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -55,9 +55,9 @@ RED_AUTO_TEST_CASE(TestFlatForm)
     form.move_xy(70, 70);
     form.rdp_input_invalidate(form.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "ticket_form.png");
+    // drawable.save_to_png("ticket_form.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x4e\xbe\x6f\x60\xb2\x9f\x20\xba\xa4\x0f\xda\x06\x89\xa8\x0a\x9c\x5f\xa1\x90\x66");
+    RED_CHECK_SIG(drawable.gd, "\x81\x01\x09\x20\x44\x48\x48\xeb\xb4\x83\x0f\xd5\x66\xb9\x34\x49\xcd\xf5\x25\x57");
 }
 
 // RED_AUTO_TEST_CASE(TraceFlatWait2)

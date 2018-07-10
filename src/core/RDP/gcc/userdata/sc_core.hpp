@@ -158,20 +158,15 @@ namespace GCC { namespace UserData {
 //00 00 00 00 -> TS_UD_SC_CORE::clientRequestedProtocols = PROTOCOL_RDP
 
 struct SCCore {
-    uint16_t userDataType;
-    uint16_t length;
-    uint32_t version;
-    uint32_t clientRequestedProtocols;
-    uint32_t earlyCapabilityFlags;
+    uint16_t userDataType{SC_CORE};
+    uint16_t length{8};
+    uint32_t version{0x00080001};
+    uint32_t clientRequestedProtocols{0};
+    uint32_t earlyCapabilityFlags{0};
 
     SCCore()
-    : userDataType(SC_CORE)
-    , length(8)
-    , version(0x00080001)
-    , clientRequestedProtocols(0)
-    , earlyCapabilityFlags(0)
-    {
-    }
+
+    = default;
 
     void emit(OutStream & stream) const
     {
@@ -265,4 +260,5 @@ struct SCCore {
     }
 };
 
-}}
+} // namespace UserData
+} // namespace GCC

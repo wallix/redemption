@@ -122,7 +122,7 @@ public:
     }
 
     const char * get_user_name() const {
-        return reinterpret_cast<const char *>(this->username);
+        return this->username;
     }
 
     /// \return false if terminal state

@@ -56,15 +56,12 @@ enum {
 
 
 struct OffScreenCacheCaps : public Capability {
-    uint32_t offscreenSupportLevel;
-    uint16_t offscreenCacheSize;
-    uint16_t offscreenCacheEntries;
+    uint32_t offscreenSupportLevel{false};
+    uint16_t offscreenCacheSize{0};    // 0 by default (max = 7680 KB)
+    uint16_t offscreenCacheEntries{0}; // 0 by default (max = 500 entries)
 
     OffScreenCacheCaps()
     : Capability(CAPSTYPE_OFFSCREENCACHE, CAPLEN_OFFSCREENCACHE)
-    , offscreenSupportLevel(false) // true/false
-    , offscreenCacheSize(0)        // 0 by default (max = 7680 KB)
-    , offscreenCacheEntries(0)     // 0 by default (max = 500 entries)
     {
     }
 

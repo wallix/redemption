@@ -455,13 +455,13 @@ class RDPBmpCache {
     // +----------------------+------------------------------------------------+
 
     public:
-    int      id;
-    int      idx;
+    int      id{0};
+    int      idx{0};
     Bitmap   bmp;
-    bool     persistent;
-    bool     do_not_cache;
-    uint32_t key1;
-    uint32_t key2;
+    bool     persistent{false};
+    bool     do_not_cache{false};
+    uint32_t key1{0};
+    uint32_t key2{0};
     bool verbose;
 
     RDPBmpCache(const Bitmap & bmp, int id, int idx, bool persistent, bool do_not_cache, bool verbose = false)
@@ -470,7 +470,7 @@ class RDPBmpCache {
     }
 
     explicit RDPBmpCache(bool verbose = false)
-        : id(0), idx(0), persistent(false), do_not_cache(false), key1(0), key2(0), verbose(verbose) {
+        :  verbose(verbose) {
     }
 
     void emit(uint8_t session_color_depth, OutStream & stream, const int bitmap_cache_version,

@@ -61,8 +61,9 @@ namespace
 
     private:
         char const * func_name;
-};
-}
+    };
+} // namespace
+
 
 #define SCOPED_TRACE Trace trace_l_ {__FUNCTION__}
 #define EXIT_ON_EXCEPTION() trace_l_.exit_on_exception()
@@ -264,13 +265,13 @@ struct RedCryptoReaderHandle
 
 
 using HashArray = uint8_t[MD_HASH::DIGEST_LENGTH];
-static_assert(sizeof(HashArray) * 2 + 1 == sizeof(HashHexArray), "");
+static_assert(sizeof(HashArray) * 2 + 1 == sizeof(HashHexArray));
 
 namespace
 {
     inline void hash_to_hashhex(HashArray const & hash, HashHexArray hashhex) noexcept {
         char const * t = "0123456789ABCDEF";
-        static_assert(sizeof(hash) * 2 + 1 == sizeof(HashHexArray), "");
+        static_assert(sizeof(hash) * 2 + 1 == sizeof(HashHexArray));
         auto phex = hashhex;
         for (uint8_t c : hash) {
             *phex++ = t[c >> 4];
@@ -281,7 +282,7 @@ namespace
 
     inline void hashex_to_hash(HashHexArray const & hashhex, HashArray hash) noexcept {
         // Undefined Behavior if hashhex is not a valid input hex key
-        static_assert(sizeof(HashArray) * 2 + 1 == sizeof(HashHexArray), "");
+        static_assert(sizeof(HashArray) * 2 + 1 == sizeof(HashHexArray));
         auto phex = hash;
         for (size_t i = 0 ; i < sizeof(hashhex) - 1 ; i += 2) {
             auto c1 = hashhex[i];
@@ -290,8 +291,8 @@ namespace
                     |  (0xF & (c2 < 'A'? c2 - '0' : c2 < 'a' ? c2 - 'A' : c2 - 'a'));
         }
     }
+} // namespace
 
-}
 
 
 const char* scytale_version() {

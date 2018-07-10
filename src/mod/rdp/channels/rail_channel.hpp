@@ -24,6 +24,7 @@
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/rail_session_manager.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
+#include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/rdp_api.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "utils/log.hpp"
@@ -955,7 +956,7 @@ public:
         }
         else {
             if (!this->session_probe_channel ||
-                this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
+                this->param_client_execute_exe_or_file != serpdu.ExeOrFile()) {
 
                 auto info = key_qvalue_pairs({
                     {"type", "CLIENT_EXECUTE_REMOTEAPP"},
@@ -966,7 +967,7 @@ public:
             }
         }
 
-        if (!this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
+        if (this->param_client_execute_exe_or_file == serpdu.ExeOrFile()) {
             assert(!is_auth_application);
 
             if (this->session_probe_channel) {
@@ -996,7 +997,8 @@ public:
 
             return (!this->session_probe_channel);
         }
-        else if (!this->param_client_execute_exe_or_file_2.compare(serpdu.ExeOrFile())) {
+
+        if (this->param_client_execute_exe_or_file_2 == serpdu.ExeOrFile()) {
             assert(!is_auth_application);
 
             if (this->session_probe_channel) {
@@ -1004,12 +1006,9 @@ public:
             }
 
             if (serpdu.ExecResult() != RAIL_EXEC_S_OK) {
-                if (serpdu.ExecResult() == RAIL_EXEC_E_NOT_IN_ALLOWLIST) {
-                    throw Error(ERR_RAIL_UNAUTHORIZED_PROGRAM);
-                }
-                else {
-                    throw Error(ERR_RAIL_STARTING_PROGRAM);
-                }
+                throw Error((serpdu.ExecResult() == RAIL_EXEC_E_NOT_IN_ALLOWLIST)
+                    ? ERR_RAIL_UNAUTHORIZED_PROGRAM
+                    : ERR_RAIL_STARTING_PROGRAM);
             }
 
             return true;

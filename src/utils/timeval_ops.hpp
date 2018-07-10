@@ -22,7 +22,7 @@
 #pragma once
 
 #include <sys/time.h>
-#include <stdint.h>
+#include <cstdint>
 #include <cassert>
 
 inline bool operator<(const timeval & a, const timeval & b) noexcept {

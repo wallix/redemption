@@ -32,6 +32,7 @@
 #include <sys/eventfd.h>
 #include <fcntl.h>
 
+using PacketType = RecorderFile::PacketType;
 
 namespace
 {
@@ -43,7 +44,32 @@ namespace
         }
         return ufd;
     }
+} // namespace
+
+#ifdef DEBUG_PACKETS
+static const char *PacketTypeToString(PacketType t) {
+	switch(t) {
+	case PacketType::DataIn:
+		return "dataIn";
+	case PacketType::DataOut:
+		return "dataOut";
+	case PacketType::ClientCert:
+		return "clientCert";
+	case PacketType::ServerCert:
+		return "serverCert";
+	case PacketType::Eof:
+		return "EOF";
+	case PacketType::Disconnect:
+		return "disconnect";
+	case PacketType::Connect:
+		return "connect";
+	case PacketType::Info:
+		return "info";
+	default:
+		return "unknown";
+	}
 }
+#endif
 
 ReplayTransport::ReplayTransport(
     const char* fname, const char *ip_address, int port,
@@ -63,12 +89,13 @@ ReplayTransport::ReplayTransport(
 }())
 , fd_type(fd_type)
 , unchecked_packet(unchecked_packet)
-, data_pos(0)
+, data_in_pos(0)
+, data_out_pos(0)
 {
     (void)ip_address;
     (void)port;
 
-    this->read_more_chunk();
+   	reschedule_timer();
 }
 
 
@@ -81,10 +108,12 @@ void ReplayTransport::reschedule_timer()
         return;
     }
 
-    auto const now = std::chrono::system_clock::now();
+    auto targetTime = prefetchForTimer();
+    auto now = std::chrono::system_clock::now();
+
     // zero disarms the timer, force to 1 nanoseconds
     auto const delate_time = std::max(
-        std::chrono::duration_cast<std::chrono::nanoseconds>(this->record_time - now),
+        std::chrono::duration_cast<std::chrono::nanoseconds>(targetTime - now),
         std::chrono::nanoseconds{1});
     auto const sec = std::chrono::duration_cast<std::chrono::seconds>(delate_time);
     auto const nano = delate_time - sec;
@@ -93,7 +122,7 @@ void ReplayTransport::reschedule_timer()
     timeout.it_value.tv_sec = sec.count();
     timeout.it_value.tv_nsec = nano.count();
 
-    // LOG(LOG_DEBUG, "trigerring timer now sec=%ld nsec=%ld", timeout.it_value.tv_sec, timeout.it_value.tv_nsec);
+    LOG(LOG_ERR, "scheduling in sec=%ld nsec=%ld", timeout.it_value.tv_sec, timeout.it_value.tv_nsec);
 
     if (timerfd_settime(this->fd.fd(), 0, &timeout, nullptr) < 0) {
         LOG(LOG_ERR, "unable to set the timer time");
@@ -101,99 +130,42 @@ void ReplayTransport::reschedule_timer()
     }
 }
 
-using PacketType = RecorderFile::PacketType;
 
-void ReplayTransport::read_more_chunk()
-{
-    this->data_pos = 0;
-    while (!this->datas.empty()) {
-        this->gc_datas.push_back(std::move(this->datas.back()));
-        this->datas.pop_back();
-    }
+ReplayTransport::Data *ReplayTransport::read_single_chunk() {
+	RecorderTransportHeader header;
 
-    while (!this->is_eof) {
-        auto read_buffer = [this](PacketType type, size_t const n){
-            Data* buf;
-            if (this->gc_datas.empty()) {
-                buf = &this->datas.emplace_back();
-                auto capacity = std::max(n, size_t(1024u));
-                buf->data = std::make_unique<uint8_t[]>(capacity);
-                buf->capacity = capacity;
-            }
-            else {
-                buf = &this->datas.emplace_back(std::move(this->gc_datas.back()));
-                this->gc_datas.pop_back();
-                if (buf->capacity < n) {
-                    buf->capacity = n + 1024u;
-                    buf->data = std::make_unique<uint8_t[]>(buf->capacity);
-                }
-            };
+	do {
+		header = read_recorder_transport_header(this->in_file);
 
-            buf->size = n;
-            buf->type = type;
+		switch (header.type) {
+		case PacketType::DataIn:
+		case PacketType::DataOut:
+		case PacketType::ClientCert:
+		case PacketType::ServerCert:
+		case PacketType::Eof:
+		case PacketType::Disconnect:
+		case PacketType::Connect: {
+				ReplayTransport::Data *ret = &mPrefetchQueue.emplace_back();
+				ret->type = header.type;
+				ret->time = this->start_time + header.record_duration;
+				ret->data = std::make_unique<uint8_t[]>(header.data_size);
+				ret->size = header.data_size;
+				in_file.recv_boom(ret->data.get(), header.data_size);
+				return ret;
+			}
+		case PacketType::Info:
+			this->infos.emplace_back();
+			this->infos.back().resize(header.data_size);
+			this->in_file.recv_boom(this->infos.back());
+			break;
+		default:
+			LOG(LOG_ERR, "unknown packet type %d", header.type);
+			break;
+		}
+	} while (header.type == PacketType::Info);
 
-            this->in_file.recv_boom(buf->data.get(), n);
-        };
-
-        auto header = read_recorder_transport_header(this->in_file);
-
-        this->record_time = this->start_time + header.record_duration;
-
-        switch (header.type)
-        {
-            case PacketType::ClientCert:
-            case PacketType::DataOut:
-            case PacketType::ServerCert:
-            case PacketType::Connect:
-            case PacketType::Disconnect:
-                read_buffer(header.type, header.data_size);
-                break;
-
-            case PacketType::DataIn:
-                read_buffer(header.type, header.data_size);
-                this->reschedule_timer();
-                return;
-            case PacketType::Eof:
-                read_buffer(header.type, header.data_size);
-                this->reschedule_timer();
-                this->is_eof = true;
-                return;
-
-            case PacketType::Info:
-                this->infos.emplace_back();
-                this->infos.back().resize(header.data_size);
-                this->in_file.recv_boom(this->infos.back());
-                break;
-        }
-    }
-}
-
-void ReplayTransport::unchecked_next_current_data(PacketType type)
-{
-    if (this->data_pos < this->datas.size() && this->datas[this->data_pos].type == type) {
-        ++this->data_pos;
-    }
-    else {
-        LOG(LOG_WARNING, "ReplayTransport: unchecked next type is %d, expected %d",
-            this->datas[this->data_pos].type, type);
-    }
-}
-
-array_view_const_u8 ReplayTransport::next_current_data(PacketType type)
-{
-    auto const no_more = (this->datas.size() < this->data_pos);
-    if (no_more || this->datas[this->data_pos].type != type) {
-        if (no_more) {
-            LOG(LOG_ERR, "ReplayTransport: no data");
-        }
-        else {
-            LOG(LOG_ERR, "ReplayTransport: next type is %d, expected %d",
-                this->datas[this->data_pos].type, type);
-        }
-        throw Error(no_more || this->is_eof ? ERR_TRANSPORT_NO_MORE_DATA : ERR_TRANSPORT_DIFFERS);
-    }
-
-    return this->datas[this->data_pos++].av();
+	/* never reached */
+	return nullptr;
 }
 
 
@@ -211,35 +183,51 @@ Transport::TlsResult ReplayTransport::enable_client_tls(
     (void)server_notifier;
     (void)certif_path;
 
-    auto av = this->next_current_data(PacketType::ClientCert);
+    size_t cert_pos;
+
+    try {
+    	cert_pos = searchAndPrefetchFor(PacketType::ClientCert);
+    } catch(...) {
+		throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+    }
+
+	if (cert_pos != 0) {
+		LOG(LOG_ERR, "ReplayTransport::enable_client_tls: enabling TLS is a synchronization point, so we should not have untreated records");
+		throw Error(ERR_TRANSPORT_DIFFERS);
+	}
+
+    auto av = mPrefetchQueue[cert_pos].av();
     this->public_key.size = av.size();
     this->public_key.data = std::make_unique<uint8_t[]>(av.size());
     memcpy(this->public_key.data.get(), av.data(), av.size());
+
+	mPrefetchQueue.erase(mPrefetchQueue.begin());
+
+	if (data_in_pos)
+		data_in_pos--;
+	if (data_out_pos)
+		data_out_pos--;
+
+    reschedule_timer();
     return Transport::TlsResult::Ok;
 }
 
 void ReplayTransport::enable_server_tls(
     const char* certificate_password, const char* ssl_cipher_list)
 {
-    if (UncheckedPacket::Send == this->unchecked_packet) {
-        this->unchecked_next_current_data(PacketType::ServerCert);
-        return ;
-    }
-
-    this->next_current_data(PacketType::ServerCert);
     (void)certificate_password;
     (void)ssl_cipher_list;
 }
 
 bool ReplayTransport::connect()
 {
-    this->next_current_data(PacketType::Connect);
+    //this->next_current_data(PacketType::Connect);
     return true;
 }
 
 bool ReplayTransport::disconnect()
 {
-    this->next_current_data(PacketType::Disconnect);
+    //this->next_current_data(PacketType::Disconnect);
     return true;
 }
 
@@ -261,62 +249,198 @@ void ReplayTransport::read_timer()
     }
 }
 
+std::chrono::system_clock::time_point ReplayTransport::prefetchForTimer() {
+	/* first scan prefetch queue for something that means "select in" */
+	size_t pos = data_in_pos;
+	bool found = false;
+	while (pos < mPrefetchQueue.size() && !found) {
+		switch (mPrefetchQueue[pos].type) {
+		case PacketType::DataIn:
+		case PacketType::Eof:
+			found = true;
+			break;
+		default:
+			pos++;
+			break;
+		}
+	}
+
+	if (found)
+		return mPrefetchQueue[pos].time;
+
+	/* read records until we get something that means some dataIn (and is supposed to trigger a select()) */
+	try {
+		while (true) {
+			Data *d = read_single_chunk();
+			switch(d->type) {
+			case PacketType::DataIn:
+			case PacketType::Eof:
+				return d->time;
+			default:
+				break;
+			}
+		}
+	} catch(...) {
+		/* if we've not found anything just return now so that select() will trigger right now*/
+	}
+
+	return std::chrono::system_clock::now();
+}
+
+size_t ReplayTransport::searchAndPrefetchFor(PacketType kind) {
+	size_t counter;
+
+	switch(kind) {
+	case PacketType::DataIn:
+		counter = data_in_pos;
+		break;
+	case PacketType::DataOut:
+		counter = data_out_pos;
+		break;
+	default:
+		counter = 0;
+		break;
+	}
+
+	/* try to find the requested kind of record in the prefetch queue */
+	for ( ; counter < mPrefetchQueue.size() && mPrefetchQueue[counter].type != kind; counter++)
+		;
+
+	if (counter < mPrefetchQueue.size())
+		return counter;
+
+	/* not in the prefetch queue, let's load some records until we get the good type */
+	ReplayTransport::Data *d = read_single_chunk();
+	while (d->type != kind) {
+		d = read_single_chunk();
+	}
+
+	return mPrefetchQueue.size() - 1;
+}
+
 size_t ReplayTransport::do_partial_read(uint8_t * buffer, size_t const len)
 {
-    if (this->is_eof) {
-        throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-    }
-
     this->read_timer();
 
-    auto av = this->next_current_data(PacketType::DataIn);
+    size_t pos;
+	try {
+		pos = searchAndPrefetchFor(PacketType::DataIn);
+	} catch (...) {
+		throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+	}
 
-    if (av.size() > len) {
-        LOG(LOG_ERR, "ReplayTransport::do_atomic_read(buf, len=%zu) should be %zu or greater", len, av.size());
-        throw Error(ERR_TRANSPORT_DIFFERS);
-    }
+	auto av = mPrefetchQueue[pos].av();
+	if (av.size() > len) {
+		LOG(LOG_ERR, "ReplayTransport::do_atomic_read(buf, len=%zu) should be %zu or greater", len, av.size());
+		throw Error(ERR_TRANSPORT_DIFFERS);
+	}
 
-    memcpy(buffer, av.data(), av.size());
-    this->read_more_chunk();
-    return av.size();
+	memcpy(buffer, av.data(), av.size());
+	data_in_pos = pos + 1;
+
+	if (pos == 0) {
+		/* we've treated the first element of the prefetch queue, pop and adjust counters */
+		mPrefetchQueue.erase(mPrefetchQueue.begin());
+
+		if (data_in_pos)
+			data_in_pos--;
+		if (data_out_pos)
+			data_out_pos--;
+
+		/* cleanup DataOut packets that may have been already treated */
+		while (mPrefetchQueue.size() && data_out_pos && mPrefetchQueue[0].type == PacketType::DataOut) {
+			mPrefetchQueue.erase(mPrefetchQueue.begin());
+
+			if (data_in_pos)
+				data_in_pos--;
+			if (data_out_pos)
+				data_out_pos--;
+		}
+	}
+
+	reschedule_timer();
+	return av.size();
 }
 
 Transport::Read ReplayTransport::do_atomic_read(uint8_t * buffer, size_t len)
 {
-    if (this->is_eof) {
-        return Read::Eof;
-    }
-
     this->read_timer();
 
-    auto av = this->next_current_data(PacketType::DataIn);
+    size_t pos;
+	try {
+		pos = searchAndPrefetchFor(PacketType::DataIn);
+	} catch (...) {
+		return Read::Eof;
+	}
 
-    if (av.size() != len) {
-        LOG(LOG_ERR, "ReplayTransport::do_atomic_read(buf, len=%zu) should be %zu", len, av.size());
-        throw Error(ERR_TRANSPORT_DIFFERS);
-    }
+	auto av = mPrefetchQueue[pos].av();
+	if (av.size() != len) {
+		LOG(LOG_ERR, "ReplayTransport::do_atomic_read(buf, len=%zu) should be %zu or greater", len, av.size());
+		throw Error(ERR_TRANSPORT_DIFFERS);
+	}
 
-    memcpy(buffer, av.data(), len);
-    this->read_more_chunk();
-    return Read::Ok;
+	memcpy(buffer, av.data(), av.size());
+	data_in_pos = pos + 1;
+
+	if (pos == 0) {
+		/* we've treated the first element of the prefetch queue, pop and adjust counters */
+		mPrefetchQueue.erase(mPrefetchQueue.begin());
+
+		if (data_in_pos)
+			data_in_pos--;
+		if (data_out_pos)
+			data_out_pos--;
+
+		/* cleanup DataOut packets that may have been already treated */
+		while (mPrefetchQueue.size() && data_out_pos && mPrefetchQueue[0].type == PacketType::DataOut) {
+			mPrefetchQueue.erase(mPrefetchQueue.begin());
+
+			if (data_in_pos)
+				data_in_pos--;
+			if (data_out_pos)
+				data_out_pos--;
+		}
+	}
+
+	reschedule_timer();
+	return Read::Ok;
 }
 
 void ReplayTransport::do_send(const uint8_t * const buffer, size_t len)
 {
-    if (UncheckedPacket::Send == this->unchecked_packet) {
-        this->unchecked_next_current_data(PacketType::DataOut);
-        return ;
-    }
+	size_t pos = searchAndPrefetchFor(PacketType::DataOut);
 
-    auto av = this->next_current_data(PacketType::DataOut);
+	if (UncheckedPacket::Send == this->unchecked_packet) {
+		auto av = mPrefetchQueue[data_out_pos].av();
+		if (av.size() != len || memcmp(av.data(), buffer, len)) {
+			if (av.size() != len) {
+				LOG(LOG_ERR, "ReplayTransport::do_send(buf, len=%zu) should be %zu", len, av.size());
+			}
+			else {
+				LOG(LOG_ERR, "ReplayTransport::do_send data differs");
+			}
+			throw Error(ERR_TRANSPORT_DIFFERS);
+		}
+	}
 
-    if (av.size() != len || memcmp(av.data(), buffer, len)) {
-        if (av.size() != len) {
-            LOG(LOG_ERR, "ReplayTransport::do_send(buf, len=%zu) should be %zu", len, av.size());
-        }
-        else {
-            LOG(LOG_ERR, "ReplayTransport::do_send data differs");
-        }
-        throw Error(ERR_TRANSPORT_DIFFERS);
-    }
+	data_out_pos++;
+	if (pos == 0) {
+		mPrefetchQueue.erase(mPrefetchQueue.begin());
+
+		if (data_in_pos)
+			data_in_pos--;
+		if (data_out_pos)
+			data_out_pos--;
+
+		/* cleanup DataIn packets that may have been already treated */
+		while (mPrefetchQueue.size() && data_in_pos && mPrefetchQueue[0].type == PacketType::DataIn) {
+			mPrefetchQueue.erase(mPrefetchQueue.begin());
+
+			if (data_in_pos)
+				data_in_pos--;
+			if (data_out_pos)
+				data_out_pos--;
+		}
+
+	}
 }

@@ -34,7 +34,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetEdit is a edit widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -64,9 +64,9 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid1.png");
+    // drawable.save_to_png("editvalid1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xbd\x7b\x96\xbf\x0f\x7f\xfd\x2b\xab\x0b\x38\x6f\x5a\x0a\x93\x2d\x7d\xc3\x3d\x46");
+    RED_CHECK_SIG(drawable.gd, "\xd5\x9f\x2c\x4a\x66\x0d\x2e\x10\x98\x57\x54\x71\x15\x5d\xec\x3c\x2b\x44\x17\x42");
 }
 
 
@@ -74,7 +74,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit2)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetEdit is a edit widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -101,9 +101,9 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit2)
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid2.png");
+    // drawable.save_to_png("editvalid2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x60\x94\x19\x4b\xa3\xfe\xdd\x62\x2c\xc3\xc6\x26\xc4\xcd\x5e\x4d\x05\xac\xc0\x14");
+    RED_CHECK_SIG(drawable.gd, "\xe1\x81\x3e\xac\xff\x27\xb1\xb5\xd7\xc6\xc0\xf1\x87\x89\xd1\x73\xfa\x7d\x88\x30");
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                           wedit.x() + 2, wedit.y() + 2, nullptr);
@@ -116,9 +116,9 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit2)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid3.png");
+    // drawable.save_to_png("editvalid3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x80\xbb\x8c\x86\xf5\x9e\x67\xc9\x26\xc8\xa2\xfc\x34\x4d\x63\xa4\xdd\x55\x54\xe8");
+    RED_CHECK_SIG(drawable.gd, "\xc0\x96\xb0\x4b\xe1\x9c\x7b\x45\x56\xd5\xbb\x92\xfb\x41\xa2\x0c\x6f\x1a\x09\x16");
 
     wedit.set_text("Ylajali");
 
@@ -127,9 +127,9 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit2)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid4.png");
+    // drawable.save_to_png("editvalid4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xb8\x5c\x16\x4b\x8e\xa9\x6c\x7b\xe1\xab\x52\x5e\x68\xea\x1d\x9d\x25\x21\xbc\x0d");
+    RED_CHECK_SIG(drawable.gd, "\x75\x64\xef\x93\xbf\x0c\xd7\x36\x48\x0b\xcb\x0e\x15\x92\xc1\x3b\x33\x81\x20\x2f");
     RED_CHECK_EQUAL(std::string("Ylajali"), std::string(wedit.get_text()));
 
 
@@ -137,9 +137,9 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit2)
 
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid5.png");
+    // drawable.save_to_png("editvalid5.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xc7\x8f\x6b\xb8\x20\xe0\x0d\x68\x0a\x2b\xb2\x27\xfa\xe6\xcd\xac\x1f\x26\xce\xd4");
+    RED_CHECK_SIG(drawable.gd, "\x7f\x2b\xe5\x47\x36\x1a\x3b\x9e\x64\x47\xcf\x88\x81\xc6\xcf\x4c\xef\x6e\x38\x3e");
 
     parent.clear();
 }
@@ -148,7 +148,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -177,9 +177,9 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid6.png");
+    // drawable.save_to_png("editvalid6.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x7e\xa0\x42\x9e\x72\x4a\xd1\x26\x03\xee\x2b\x64\x01\xb4\xc4\x46\xac\x18\xa1\x21");
+    RED_CHECK_SIG(drawable.gd, "\x5a\xde\x02\xf9\x84\x2e\xb2\xc4\xeb\xdb\x2e\x9c\x8c\x2b\xe6\x72\x45\x91\x7b\x20");
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                           wedit1.x() + 50, wedit1.y() + 3, nullptr);
@@ -188,9 +188,9 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
 
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid7.png");
+    // drawable.save_to_png("editvalid7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x77\x0d\xb5\x0c\x45\xc9\x2d\xab\x00\x95\x99\xcf\xac\xa2\xee\x07\x03\x3c\xf1\xcc");
+    RED_CHECK_SIG(drawable.gd, "\x66\x8f\x37\x9d\xbe\x49\xa6\x21\x52\xe9\x56\xd8\x58\x5d\x0a\x0c\xc1\xe7\xc4\x10");
 
     Keymap2 keymap;
     const int layout = 0x040C;
@@ -206,18 +206,18 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit3)
 
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid8.png");
+    // drawable.save_to_png("editvalid8.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x37\x03\x36\xe6\xd0\x9a\xac\x83\x51\x69\x5c\x71\xf1\xc7\x40\xb7\x4a\x1c\xa9\x6a");
+    RED_CHECK_SIG(drawable.gd, "\xce\xa7\xaa\x8b\xa9\x55\x5b\x12\xd9\x98\xfd\x5e\x19\xf1\x66\x24\x3a\x88\x62\xb7");
 
     keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalid9.png");
+    // drawable.save_to_png("editvalid9.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x36\x2b\x05\x1f\x52\x86\x11\xb9\x0a\xac\xac\x50\x46\xe5\xa9\xa4\x4b\xdf\x2c\x07");
+    RED_CHECK_SIG(drawable.gd, "\x4c\xd2\x07\x7c\xd5\x5d\x0b\x63\x72\x64\x3f\x94\xb7\x73\xa6\xcb\x7c\x9d\x72\x6a");
 }
 
 
@@ -225,7 +225,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -254,9 +254,9 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel1.png");
+    // drawable.save_to_png("editvalidlabel1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x1b\x00\x44\x22\x30\x91\xb4\xf6\x2f\xd4\x5a\x08\xfe\x59\xf0\xaf\x8d\xad\xa0\x1c");
+    RED_CHECK_SIG(drawable.gd, "\x97\x1f\xaa\x9a\xf4\x9a\xe7\x33\xdd\xc5\x90\xe9\xb8\x74\xb1\x7f\x19\x84\xe1\xe5");
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                           wedit1.x() + 50, wedit1.y() + 2, nullptr);
@@ -265,9 +265,9 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
 
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel2.png");
+    // drawable.save_to_png("editvalidlabel2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xbe\xaf\xc9\x87\x0d\xd6\x30\x7c\x8a\xe3\xed\x85\xba\xa2\x3d\x48\x46\x1b\x68\x1e");
+    RED_CHECK_SIG(drawable.gd, "\xd6\x8f\xf5\xed\x62\xe5\xbc\x15\xff\x02\xe6\xe4\x38\xcf\xc9\x5c\x27\xf2\x2a\x0a");
 
     Keymap2 keymap;
     const int layout = 0x040C;
@@ -283,27 +283,27 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
 
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel3.png");
+    // drawable.save_to_png("editvalidlabel3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xa8\xbd\x98\x2c\xe7\xf9\x76\xeb\xd4\x9c\x73\x95\x19\xd4\x94\x72\x0d\xd0\xdd\x85");
+    RED_CHECK_SIG(drawable.gd, "\x4d\x04\x2a\xa3\x25\xa9\xac\x0f\x05\xf7\xd7\x66\xd6\xfa\xdd\x48\xcb\x5c\x7d\x8d");
 
     keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel4.png");
+    // drawable.save_to_png("editvalidlabel4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x36\x2b\x05\x1f\x52\x86\x11\xb9\x0a\xac\xac\x50\x46\xe5\xa9\xa4\x4b\xdf\x2c\x07");
+    RED_CHECK_SIG(drawable.gd, "\x4c\xd2\x07\x7c\xd5\x5d\x0b\x63\x72\x64\x3f\x94\xb7\x73\xa6\xcb\x7c\x9d\x72\x6a");
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel5.png");
+    // drawable.save_to_png("editvalidlabel5.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x50\xba\xcc\xab\x26\x75\x81\x3d\xaa\xe8\x21\xd9\x86\xa6\x38\x32\xa4\x3f\x22\xaa");
+    RED_CHECK_SIG(drawable.gd, "\x49\xfd\x83\xf6\x69\xf6\xfa\x7e\x3b\xa1\x66\xb8\xb9\xa6\xd5\xea\x22\x9a\x2a\xdf");
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
@@ -311,22 +311,22 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabels)
     keymap.push_kevent(Keymap2::KEVENT_BACKSPACE);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel6.png");
+    // drawable.save_to_png("editvalidlabel6.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xc4\x4f\x38\x33\x7a\x27\x35\x44\x63\xba\x16\xfd\x35\x1e\x0c\x6f\x54\xc5\xd7\xd8");
+    RED_CHECK_SIG(drawable.gd, "\x75\x82\x55\x65\x23\xf5\x35\x41\x95\x66\x64\x84\x5b\xa9\x42\x0c\xb5\x51\xf0\x4d");
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel7.png");
+    // drawable.save_to_png("editvalidlabel7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xbe\xaf\xc9\x87\x0d\xd6\x30\x7c\x8a\xe3\xed\x85\xba\xa2\x3d\x48\x46\x1b\x68\x1e");
+    RED_CHECK_SIG(drawable.gd, "\xd6\x8f\xf5\xed\x62\xe5\xbc\x15\xff\x02\xe6\xe4\x38\xcf\xc9\x5c\x27\xf2\x2a\x0a");
 }
 RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -355,9 +355,9 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     // ask to widget to redraw at it's current position
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass1.png");
+    // drawable.save_to_png("editvalidlabelpass1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xa3\xaf\x62\x5c\x4c\x0d\xe4\x51\x66\x04\x4c\x4d\x32\x07\xe5\x9c\x1e\x11\x64\x13");
+    RED_CHECK_SIG(drawable.gd, "\xd0\x8f\xaa\x93\x1e\x96\x5d\x2a\x1d\x6b\x96\x4d\xfa\x8e\x6e\x21\x9b\x13\x31\x5c");
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                           wedit1.x() + 50, wedit1.y() + 2, nullptr);
@@ -366,9 +366,9 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass2.png");
+    // drawable.save_to_png("editvalidlabelpass2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xee\x77\xf2\x26\x74\xea\xa5\x69\xaa\x04\xf0\xc9\x45\x8c\x89\xd0\x04\x17\xf0\x6c");
+    RED_CHECK_SIG(drawable.gd, "\xdb\x3d\xb2\x1e\xa7\x7a\xb7\x03\xec\x28\x55\x40\x34\x54\xf0\x99\x52\x0d\xe2\x87");
 
     Keymap2 keymap;
     const int layout = 0x040C;
@@ -384,27 +384,27 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
 
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass3.png");
+    // drawable.save_to_png("editvalidlabelpass3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xc6\xc0\x75\x9a\x5b\x71\x44\xdc\x45\x8a\x06\x1a\x79\x0c\x53\x5b\xe5\xcb\x50\xe7");
+    RED_CHECK_SIG(drawable.gd, "\x93\x6c\x28\xba\xc2\xb4\xac\xb4\x4f\x58\xd0\x0a\x81\xf4\x5c\x62\x53\xe0\x92\x1b");
 
     keymap.event(keyboardFlags, keyCode, ctrl_alt_del);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass4.png");
+    // drawable.save_to_png("editvalidlabelpass4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x7f\xdd\xc5\x1d\x9b\xb2\xf6\x1b\x36\xa8\xdc\xda\x54\xbe\x9b\x1b\xf4\x12\x19\x03");
+    RED_CHECK_SIG(drawable.gd, "\x56\x58\x02\xa0\x5c\x1b\x23\x51\xef\xeb\xb3\x22\xc2\x65\x72\xaa\x7f\xa5\xf5\x17");
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass5.png");
+    // drawable.save_to_png("editvalidlabelpass5.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x17\x49\xc8\x96\xa4\x29\x4f\x2e\xf5\x25\x91\x55\xc7\x81\xd9\x07\xe2\x33\x1d\xe6");
+    RED_CHECK_SIG(drawable.gd, "\x34\x6d\xf3\x43\xc4\xac\xd7\xec\x81\xed\x2d\xa7\xbb\xa4\xd9\x46\xd2\xfe\x38\x1d");
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
@@ -412,16 +412,16 @@ RED_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
     keymap.push_kevent(Keymap2::KEVENT_BACKSPACE);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass6.png");
+    // drawable.save_to_png("editvalidlabelpass6.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xb5\x4c\x6c\xaa\x95\x3c\xa6\x61\x8d\x2c\x89\xb8\xd5\x32\x00\xd5\x2e\x62\x30\xd8");
+    RED_CHECK_SIG(drawable.gd, "\x07\x71\x86\x59\x54\x34\xd2\x39\xcb\x83\x4b\xe4\xd9\x0f\x2e\x6f\x36\xfe\xf6\x18");
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass7.png");
+    // drawable.save_to_png("editvalidlabelpass7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xee\x77\xf2\x26\x74\xea\xa5\x69\xaa\x04\xf0\xc9\x45\x8c\x89\xd0\x04\x17\xf0\x6c");
+    RED_CHECK_SIG(drawable.gd, "\xdb\x3d\xb2\x1e\xa7\x7a\xb7\x03\xec\x28\x55\x40\x34\x54\xf0\x99\x52\x0d\xe2\x87");
 
 }
 
@@ -458,7 +458,7 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
         }
     } notifier;
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
     parent.set_wh(800, 600);
@@ -479,18 +479,18 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
                           wedit.right() - 5, wedit.y() + 2, nullptr);
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush1.png");
+    // drawable.save_to_png("editvalidpush1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xe3\xc7\xaa\x49\xda\x08\x4b\xaa\x47\x94\x24\xf9\x84\x23\xe7\x1e\x9e\x19\xbe\xfe");
+    RED_CHECK_SIG(drawable.gd, "\x43\x3a\x16\xce\x44\xab\xea\x4f\x73\x87\xc3\x13\x7b\x5f\xcf\xf9\x79\x9e\xad\xb4");
 
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                           wedit.right() - 5, wedit.y() + 2, nullptr);
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush2.png");
+    // drawable.save_to_png("editvalidpush2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xaa\x20\xdf\x8a\x13\x2d\x9f\xf1\xf6\x3b\x29\x9c\x7b\xd7\xaf\x19\x1a\x5e\x6c\x4c");
+    RED_CHECK_SIG(drawable.gd, "\x2a\x41\x84\x30\x51\xab\xcf\x48\x3e\x3f\x89\xa3\x92\x57\x32\x78\xe2\x5d\x01\xa3");
 
     RED_CHECK(notifier.sender == &wedit);
     RED_CHECK(notifier.event == NOTIFY_SUBMIT);
@@ -501,18 +501,18 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
                           wedit.right() - 5, wedit.y() + 2, nullptr);
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush3.png");
+    // drawable.save_to_png("editvalidpush3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xe3\xc7\xaa\x49\xda\x08\x4b\xaa\x47\x94\x24\xf9\x84\x23\xe7\x1e\x9e\x19\xbe\xfe");
+    RED_CHECK_SIG(drawable.gd, "\x43\x3a\x16\xce\x44\xab\xea\x4f\x73\x87\xc3\x13\x7b\x5f\xcf\xf9\x79\x9e\xad\xb4");
 
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                           wedit.x() + 2, wedit.y() + 2, nullptr);
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush4.png");
+    // drawable.save_to_png("editvalidpush4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xaa\x20\xdf\x8a\x13\x2d\x9f\xf1\xf6\x3b\x29\x9c\x7b\xd7\xaf\x19\x1a\x5e\x6c\x4c");
+    RED_CHECK_SIG(drawable.gd, "\x2a\x41\x84\x30\x51\xab\xcf\x48\x3e\x3f\x89\xa3\x92\x57\x32\x78\xe2\x5d\x01\xa3");
 
 
     RED_CHECK(notifier.sender == nullptr);
@@ -524,17 +524,17 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
                           wedit.right() - 5, wedit.y() + 2, nullptr);
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush5.png");
+    // drawable.save_to_png("editvalidpush5.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xe3\xc7\xaa\x49\xda\x08\x4b\xaa\x47\x94\x24\xf9\x84\x23\xe7\x1e\x9e\x19\xbe\xfe");
+    RED_CHECK_SIG(drawable.gd, "\x43\x3a\x16\xce\x44\xab\xea\x4f\x73\x87\xc3\x13\x7b\x5f\xcf\xf9\x79\x9e\xad\xb4");
 
     parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                           0, 0, nullptr);
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush6.png");
+    // drawable.save_to_png("editvalidpush6.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xaa\x20\xdf\x8a\x13\x2d\x9f\xf1\xf6\x3b\x29\x9c\x7b\xd7\xaf\x19\x1a\x5e\x6c\x4c");
+    RED_CHECK_SIG(drawable.gd, "\x2a\x41\x84\x30\x51\xab\xcf\x48\x3e\x3f\x89\xa3\x92\x57\x32\x78\xe2\x5d\x01\xa3");
 
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
@@ -550,9 +550,9 @@ RED_AUTO_TEST_CASE(EventWidgetEditEvents)
 
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "editvalidpush7.png");
+    // drawable.save_to_png("editvalidpush7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xaa\x20\xdf\x8a\x13\x2d\x9f\xf1\xf6\x3b\x29\x9c\x7b\xd7\xaf\x19\x1a\x5e\x6c\x4c");
+    RED_CHECK_SIG(drawable.gd, "\x2a\x41\x84\x30\x51\xab\xcf\x48\x3e\x3f\x89\xa3\x92\x57\x32\x78\xe2\x5d\x01\xa3");
 
     RED_CHECK(notifier.sender == &wedit);
     RED_CHECK(notifier.event == NOTIFY_SUBMIT);

@@ -53,6 +53,7 @@
 
 #include "utils/netutils.hpp"
 #include "utils/sugar/scope_exit.hpp"
+#include "utils/sugar/update_lock.hpp"
 #include "utils/translation.hpp"
 
 #include <sys/socket.h>
@@ -176,7 +177,7 @@ public:
 
     void remove_mod() override {}
 
-    void new_mod(int target_module, time_t now, AuthApi &, ReportMessageApi &) override
+    void new_mod(int target_module, time_t now, AuthApi & /*unused*/, ReportMessageApi & /*unused*/) override
     {
         LOG(LOG_INFO, "new mod %d at time: %d\n", target_module, static_cast<int>(now));
         switch (target_module) {
@@ -223,43 +224,43 @@ public:
             LOG(LOG_INFO, "===========> MODULE_LOGIN");
             return MODULE_INTERNAL_WIDGET_LOGIN;
         }
-        else if (module_cstr == STRMODULE_SELECTOR) {
+        if (module_cstr == STRMODULE_SELECTOR) {
             LOG(LOG_INFO, "===============> MODULE_SELECTOR");
             return MODULE_INTERNAL_WIDGET_SELECTOR;
         }
-        else if (module_cstr == STRMODULE_SELECTOR_LEGACY) {
+        if (module_cstr == STRMODULE_SELECTOR_LEGACY) {
             LOG(LOG_INFO, "===============> MODULE_SELECTOR_LEGACY");
             return MODULE_INTERNAL_WIDGET_SELECTOR_LEGACY;
         }
-        else if (module_cstr == STRMODULE_CONFIRM) {
+        if (module_cstr == STRMODULE_CONFIRM) {
             LOG(LOG_INFO, "===============> MODULE_DIALOG_CONFIRM");
             return MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE;
         }
-        else if (module_cstr == STRMODULE_CHALLENGE) {
+        if (module_cstr == STRMODULE_CHALLENGE) {
             LOG(LOG_INFO, "===========> MODULE_DIALOG_CHALLENGE");
             return MODULE_INTERNAL_DIALOG_CHALLENGE;
         }
-        else if (module_cstr == STRMODULE_VALID) {
+        if (module_cstr == STRMODULE_VALID) {
             LOG(LOG_INFO, "===========> MODULE_DIALOG_VALID");
             return MODULE_INTERNAL_DIALOG_VALID_MESSAGE;
         }
-        else if (module_cstr == STRMODULE_WAITINFO) {
+        if (module_cstr == STRMODULE_WAITINFO) {
             LOG(LOG_INFO, "===========> MODULE_WAITINFO");
             return MODULE_INTERNAL_WAIT_INFO;
         }
-        else if (module_cstr == STRMODULE_TARGET) {
+        if (module_cstr == STRMODULE_TARGET) {
             LOG(LOG_INFO, "===========> MODULE_INTERACTIVE_TARGET");
             return MODULE_INTERNAL_TARGET;
         }
-        else if (module_cstr == STRMODULE_TRANSITORY) {
+        if (module_cstr == STRMODULE_TRANSITORY) {
             LOG(LOG_INFO, "===============> WAIT WITH CURRENT MODULE");
             return MODULE_TRANSITORY;
         }
-        else if (module_cstr == STRMODULE_CLOSE) {
+        if (module_cstr == STRMODULE_CLOSE) {
             LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE (1)");
             return MODULE_INTERNAL_CLOSE;
         }
-        else if (module_cstr == STRMODULE_CLOSE_BACK) {
+        if (module_cstr == STRMODULE_CLOSE_BACK) {
             LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE_BACK");
             return MODULE_INTERNAL_CLOSE_BACK;
         }
@@ -272,15 +273,15 @@ public:
             }
             return MODULE_INTERNAL_CLOSE;
         }
-        else if (module_cstr == STRMODULE_RDP) {
+        if (module_cstr == STRMODULE_RDP) {
             LOG(LOG_INFO, "===========> MODULE_RDP");
             return MODULE_RDP;
         }
-        else if (module_cstr == STRMODULE_VNC) {
+        if (module_cstr == STRMODULE_VNC) {
             LOG(LOG_INFO, "===========> MODULE_VNC");
             return MODULE_VNC;
         }
-        else if (module_cstr == STRMODULE_INTERNAL) {
+        if (module_cstr == STRMODULE_INTERNAL) {
             int res = MODULE_EXIT;
             auto & target = this->ini.get<cfg::context::target_host>();
             if (target == "bouncer2") {
@@ -289,11 +290,6 @@ public:
             }
             else if (target == "autotest") {
                 LOG(LOG_INFO, "==========> MODULE_INTERNAL test");
-                std::string user = this->ini.get<cfg::globals::target_user>();
-                if (user.size() < 5 || !std::equal(user.end() - 5u, user.end(), ".mwrm")) {
-                    user += ".mwrm";
-                }
-                this->ini.set<cfg::context::movie>(std::move(user));
                 res = MODULE_INTERNAL_TEST;
             }
             else if (target == "widget_message") {
@@ -472,7 +468,7 @@ private:
             return false;
         }
 
-        bool try_input_mouse(int device_flags, int x, int y, Keymap2 *)
+        bool try_input_mouse(int device_flags, int x, int y, Keymap2 * /*unused*/)
         {
             if (this->is_disable_by_input
              && this->get_protected_rect().contains_pt(x, y)
@@ -516,12 +512,11 @@ private:
         }
 
     private:
-        void draw_event(time_t now, gdi::GraphicApi & drawable) override
+        void draw_event(time_t now, gdi::GraphicApi & gd) override
         {
-            drawable.begin_update();
-            this->draw_osd_message_impl(drawable);
-            this->mm.mod->draw_event(now, drawable);
-            drawable.end_update();
+            update_lock lock{gd};
+            this->draw_osd_message_impl(gd);
+            this->mm.mod->draw_event(now, gd);
         }
 
         void draw_osd_message_impl(gdi::GraphicApi & drawable)
@@ -672,7 +667,7 @@ private:
         ModWithSocket(
             ModuleManager & mm, AuthApi & /*authentifier*/,
             const char * name, unique_fd sck, uint32_t verbose,
-            std::string * error_message, sock_mod_barrier, Args && ... mod_args)
+            std::string * error_message, sock_mod_barrier /*unused*/, Args && ... mod_args)
         : SocketTransport( name, std::move(sck)
                          , mm.ini.get<cfg::context::target_host>().c_str()
                          , mm.ini.get<cfg::context::target_port>()
@@ -779,7 +774,7 @@ public:
 
     void osd_message(std::string message, bool is_disable_by_input)
     {
-        if (message.compare(this->mod_osd.get_message())) {
+        if (message != this->mod_osd.get_message()) {
             this->clear_osd_message();
         }
         if (!message.empty()) {
@@ -797,6 +792,8 @@ private:
     TimeObj & timeobj;
 
     ClientExecute client_execute;
+
+    std::array<uint8_t, 28> server_auto_reconnect_packet {};
 
     int old_target_module = MODULE_UNKNOWN;
 
@@ -916,8 +913,14 @@ public:
             this->set_mod(new ReplayMod(
                 this->session_reactor,
                 this->front,
-                this->ini.get<cfg::video::replay_path>().c_str(),
-                this->ini.get<cfg::context::movie>().c_str(),
+                [this]{
+                    auto movie_path = this->ini.get<cfg::video::replay_path>().to_string()
+                                    + this->ini.get<cfg::globals::target_user>();
+                    if (movie_path.size() < 5u || !std::equal(movie_path.end() - 5u, movie_path.end(), ".mwrm")) {
+                        movie_path += ".mwrm";
+                    }
+                    return movie_path;
+                }().c_str(),
                 this->front.client_info.width,
                 this->front.client_info.height,
                 this->ini.get_ref<cfg::context::auth_error_message>(),
@@ -1252,7 +1255,8 @@ public:
             this->create_mod_rdp(
                 authentifier, report_message, this->ini,
                 this->front, this->front.client_info,
-                this->client_execute, this->front.keymap.key_flags);
+                this->client_execute, this->front.keymap.key_flags,
+                this->server_auto_reconnect_packet);
             break;
 
         case MODULE_VNC:
@@ -1310,8 +1314,9 @@ private:
 
     void create_mod_rdp(
         AuthApi& authentifier, ReportMessageApi& report_message,
-        Inifile& ini, FrontAPI& front, ClientInfo const& client_info,
-        ClientExecute& client_execute, Keymap2::KeyFlags key_flags);
+        Inifile& ini, FrontAPI& front, ClientInfo client_info,
+        ClientExecute& client_execute, Keymap2::KeyFlags key_flags,
+        std::array<uint8_t, 28>& server_auto_reconnect_packet);
 
     void create_mod_vnc(
         AuthApi& authentifier, ReportMessageApi& report_message,

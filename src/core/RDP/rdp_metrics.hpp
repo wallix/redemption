@@ -20,12 +20,14 @@
 
 #pragma once
 
-#include <stdio.h>
-#include <string.h>
+#include "utils/log.hpp"
+
+#include <cstdio>
+#include <cstring>
+
 #include <fcntl.h>
 #include <sys/uio.h>
 
-#include "utils/log.hpp"
 
 struct RDPMetrics {
 
@@ -34,6 +36,8 @@ struct RDPMetrics {
     const char * account;
     const char * target_host;
     const char * primary_user;
+
+    int fd = -1;
 
     long int total_main_amount_data_rcv_from_client = 0;
     long int total_cliprdr_amount_data_rcv_from_client = 0;
@@ -47,8 +51,12 @@ struct RDPMetrics {
     long int total_rdpdr_amount_data_rcv_from_server = 0;
     long int total_drdynvc_amount_data_rcv_from_server = 0;
 
+    int total_right_clicks = 0;
+    int total_left_clicks = 0;
+    int total_keys_pressed = 0;
 
 
+    
     RDPMetrics( const char * filename
               , const uint32_t session_id
               , const char * account
@@ -59,15 +67,37 @@ struct RDPMetrics {
       , account(account)
       , target_host(target_host)
       , primary_user(primary_user)
-      {}
+    {
+        if (this->filename) {
+        this->fd = ::open(this->filename, O_WRONLY);
+
+        if (this->fd < 0) {
+            LOG(LOG_ERR, "Log Metrics error: can't open \"%s\"", this->filename);
+        }
+        }
+    }
+
+    void set_new_file_path(const char * filename) {
+        fcntl(this->fd, F_SETFD, FD_CLOEXEC);
+        this->filename = filename;
+        this->fd = ::open(this->filename, O_WRONLY);
+    }
+
+    ~RDPMetrics() {
+        fcntl(this->fd, F_SETFD, FD_CLOEXEC);
+    }
+
 
     void log() {
 
         char sentence[4096];
           ::snprintf(sentence, sizeof(sentence), "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\""
-        "\n   Client data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld"
-        "\n   Server data received by channels - main:%ld cliprdr:%ld rail:%ld rdpdr:%ld drdynvc:%ld",
+          " right_click_sent=%d left_click_sent=%d keys_sent=%d"
+         " Client data received by channels - main=%ld cliprdr=%ld rail=%ld rdpdr=%ld drdynvc=%ld"
+        " Server data received by channels - main=%ld cliprdr=%ld rail=%ld rdpdr=%ld drdynvc=%ld",
             this->session_id, this->primary_user, this->account, this->target_host,
+            this->total_right_clicks, this->total_left_clicks, this->total_keys_pressed,
+
             this->total_main_amount_data_rcv_from_client,
             this->total_cliprdr_amount_data_rcv_from_client,
             this->total_rail_amount_data_rcv_from_client,
@@ -81,13 +111,11 @@ struct RDPMetrics {
             this->total_drdynvc_amount_data_rcv_from_server
         );
 
-        if (this->filename) {
-            int fd = ::open(this->filename, O_WRONLY);
 
-            if (fd == -1) {
-                LOG(LOG_ERR, "Log Metrics error: can't open \"%s\"", this->filename);
-                return;
-            }
+        if (this->fd < 0) {
+            LOG(LOG_INFO, "%s", sentence);
+
+        } else {
 
             struct iovec iov[1];
             iov[0].iov_base = sentence;
@@ -99,9 +127,6 @@ struct RDPMetrics {
                 LOG(LOG_ERR, "Log Metrics error: can't write \"%s\"", this->filename);
                 return;
             }
-
-        } else {
-            LOG(LOG_INFO, "%s", sentence);
         }
     }
 };

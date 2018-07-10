@@ -27,21 +27,25 @@
 #include <cstdint>
 #include <cstddef>
 
+// pad some number to next upper multiple of 4
 constexpr static inline uint16_t align4(uint16_t value) noexcept
 {
     return (value+3) & ~3;
 }
 
+// compute the number of bytes necessary to hold a given number of bits
 constexpr static inline uint8_t nbbytes(unsigned value) noexcept
 {
     return static_cast<uint8_t>((value+7) / 8);
 }
 
+// even pad some number to next upper even number
 constexpr static inline unsigned even_pad_length(unsigned value) noexcept
 {
     return value+(value&1);
 }
 
+// compute the number of bytes necessary to hold a given number of bits
 constexpr static inline uint32_t nbbytes_large(unsigned value) noexcept
 {
     return ((value+7) / 8);

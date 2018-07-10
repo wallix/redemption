@@ -41,7 +41,7 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ASK ALL (DEVICE + LOGIN + PASSWORD)
         TestDraw drawable(800, 600);
 
-        Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+        Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -59,15 +59,15 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.get_rect());
 
-        // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target.png");
+        // drawable.save_to_png("interactive_target.png");
 
-        RED_CHECK_SIG(drawable.gd, "\xaa\xa8\x12\x8e\xa4\x6b\xfc\xaf\xc8\x0b\xdc\xe0\xf7\x99\x87\xf6\x7e\x58\x19\x45");
+        RED_CHECK_SIG(drawable.gd, "\x27\xac\x46\x35\xd5\x1c\x3e\xbc\x64\xd5\xe7\x22\x35\x71\x51\x93\x04\x4d\x26\x1e");
     }
     {
         // ASK DEVICE
         TestDraw drawable(800, 600);
 
-        Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+        Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -84,15 +84,15 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.get_rect());
 
-        // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target-1.png");
+        // drawable.save_to_png("interactive_target-1.png");
 
-        RED_CHECK_SIG(drawable.gd, "\xe9\x5b\xae\xe5\xec\x96\xcb\x00\xd1\x5a\x21\x25\xc0\xa7\xb9\xf4\xbd\x20\x99\xdc");
+        RED_CHECK_SIG(drawable.gd, "\x13\xcc\x44\x3d\xa9\xcb\x5d\xd4\xe6\x4c\x3c\x45\x38\xd6\x45\xbf\x55\x8c\x12\x5f");
     }
     {
         // ASK PASSWORD
         TestDraw drawable(800, 600);
 
-        Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+        Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -109,15 +109,15 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.get_rect());
 
-        // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target-2.png");
+        // drawable.save_to_png("interactive_target-2.png");
 
-        RED_CHECK_SIG(drawable.gd, "\xcb\xcc\x5c\x60\x2a\x42\x5d\x88\x35\x7b\x58\x25\x80\x46\x5c\x7f\x88\x67\x3b\x28");
+        RED_CHECK_SIG(drawable.gd, "\x54\x66\x24\xdc\x10\x61\x14\x04\x9a\xc7\x79\xe0\xbb\x1e\xed\x2d\x98\x07\x20\x21");
     }
     {
         // ASK LOGIN + PASSWORD
         TestDraw drawable(800, 600);
 
-        Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+        Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -134,15 +134,15 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.get_rect());
 
-        // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target-3.png");
+        // drawable.save_to_png("interactive_target-3.png");
 
-        RED_CHECK_SIG(drawable.gd, "\xf8\xdc\xd6\x82\x09\x02\xb1\x0b\xcd\x61\x49\x28\x90\x41\xa8\xd6\x8f\xad\xd0\x21");
+        RED_CHECK_SIG(drawable.gd, "\xd2\x35\xde\x65\xfd\xdc\x48\x32\x9e\x28\xf4\x79\x05\x7f\xda\xb1\x1b\x7d\x55\xf7");
     }
     {
         // ASK DEVICE + PASSWORD
         TestDraw drawable(800, 600);
 
-        Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+        Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
         // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
         WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -159,9 +159,9 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.get_rect());
 
-        // drawable.save_to_png(OUTPUT_FILE_PATH "interactive_target-4.png");
+        // drawable.save_to_png("interactive_target-4.png");
 
-        RED_CHECK_SIG(drawable.gd, "\xca\x85\x6d\x9d\xb1\x80\xb8\xd2\xe9\x59\x88\xb6\xa0\x95\x20\xaf\xff\x96\xef\xd9");
+        RED_CHECK_SIG(drawable.gd, "\x7e\x0d\xb7\xe9\x4d\xb7\xf7\x2b\x9f\x80\x3b\x5f\x8a\x99\x9f\xe5\x26\x94\xfb\x92");
     }
 
 }

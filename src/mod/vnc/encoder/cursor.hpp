@@ -22,10 +22,13 @@ h
 
 #pragma once
 
+#include "core/RDP/rdp_pointer.hpp"
+#include "core/buf64k.hpp"
+#include "gdi/graphic_api.hpp"
+#include "mod/vnc/encoder/encoder_api.hpp"
+#include "mod/vnc/vnc_verbose.hpp"
 #include "utils/log.hpp"
 #include "utils/verbose_flags.hpp"
-#include "mod/vnc/vnc_verbose.hpp"
-#include "core/RDP/rdp_pointer.hpp"
 
 // 7.7.2   Cursor Pseudo-encoding
 // ------------------------------
@@ -76,18 +79,18 @@ namespace VNC {
             VNCVerbose verbose;
 
             Cursor(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy,
-                   int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max, 
-                   VNCVerbose verbose) 
+                   int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max,
+                   VNCVerbose verbose)
                 : bpp(bpp), Bpp(Bpp), x(x), y(y), cx(cx), cy(cy),
-                  red_shift(red_shift), red_max(red_max), 
-                  green_shift(green_shift), green_max(green_max), 
+                  red_shift(red_shift), red_max(red_max),
+                  green_shift(green_shift), green_max(green_max),
                   blue_shift(blue_shift), blue_max(blue_max)
                 , verbose(verbose)
             {
             }
-            
-            virtual ~Cursor(){}
-            
+
+            virtual ~Cursor()= default;
+
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
             EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
@@ -114,7 +117,7 @@ namespace VNC {
 
                 if (buf.remaining() < sz_pixel_array + sz_bitmask)
                 {
-                    return EncoderState::NeedMoreData; 
+                    return EncoderState::NeedMoreData;
                 }
 
                 auto cursor_buf = buf.av(sz_pixel_array + sz_bitmask).data();
@@ -130,17 +133,18 @@ namespace VNC {
                     hexdump_d(data.data(), data.size());
                     hexdump_d(mask.data(), mask.size());
                 }
-                Pointer cursor(this->Bpp, 
-                                CursorSize{static_cast<unsigned>(this->cx), static_cast<unsigned>(this->cy)}, 
-                                Hotspot{static_cast<unsigned>(this->x), static_cast<unsigned>(this->y)}, 
-                                data, mask, 
-                                this->red_shift, this->red_max, this->green_shift, this->green_max, this->blue_shift, this->blue_max);
+                Pointer cursor(this->Bpp,
+                                CursorSize{static_cast<unsigned>(this->cx), static_cast<unsigned>(this->cy)},
+                                Hotspot{static_cast<unsigned>(this->x), static_cast<unsigned>(this->y)},
+                                data, mask,
+                                this->red_shift, this->red_max, this->green_shift, this->green_max, this->blue_shift, this->blue_max,
+                                mask.size() / this->cy, data.size() / this->cy);
                 drawable.begin_update();
                 drawable.set_pointer(cursor);
                 drawable.end_update();
 
-                return EncoderState::Exit; 
+                return EncoderState::Exit;
             }
         };
-    } // namespace encoder
+    }  // namespace Encoder
 } // namespace VNC

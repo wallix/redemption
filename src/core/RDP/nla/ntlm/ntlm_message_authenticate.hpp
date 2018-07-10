@@ -318,17 +318,15 @@ struct NTLMAuthenticateMessage {
     NtlmField EncryptedRandomSessionKey;  /* 8 Bytes */
     NtlmNegotiateFlags negoFlags;         /* 4 Bytes */
     NtlmVersion version;                  /* 8 Bytes */
-    uint8_t MIC[16];                      /* 16 Bytes */
-    bool ignore_mic;
-    bool has_mic;
+    uint8_t MIC[16]{};                      /* 16 Bytes */
+    bool ignore_mic{false};
+    bool has_mic{true};
     uint32_t PayloadOffset;
 
     NTLMAuthenticateMessage()
         : message(NtlmAuthenticate)
-        , MIC()
-        , ignore_mic(false)
-        , has_mic(true)
-        , PayloadOffset(12+8+8+8+8+8+8+4+8)
+        ,
+         PayloadOffset(12+8+8+8+8+8+8+4+8)
     {
         memset(this->MIC, 0x00, 16);
     }
@@ -487,14 +485,11 @@ struct LM_Response {
 //   ClientChallenge, as defined in section 3.1.5.1.2.
 
 struct LMv2_Response {
-    uint8_t Response[16];
-    uint8_t ClientChallenge[8];
+    uint8_t Response[16]{};
+    uint8_t ClientChallenge[8]{};
 
     LMv2_Response()
-        : Response()
-        , ClientChallenge()
-    {
-    }
+    = default;
 
     void emit(OutStream & stream) const {
         stream.out_copy_bytes(this->Response, 16);
@@ -583,17 +578,15 @@ struct NTLMv2_Client_Challenge {
     uint8_t  HiRespType;            // MUST BE 0x01
     uint16_t Reserved1;             // MUST BE 0x00
     uint32_t Reserved2;             // MUST BE 0x00
-    uint8_t  Timestamp[8];          // Current system time
-    uint8_t  ClientChallenge[8];    // Client Challenge
+    uint8_t  Timestamp[8]{};          // Current system time
+    uint8_t  ClientChallenge[8]{};    // Client Challenge
     uint32_t Reserved3;             // MUST BE 0x00
     NtlmAvPairList AvPairList;
     uint32_t Reserved4;             // MUST BE 0x00
 
     NTLMv2_Client_Challenge()
-        : Timestamp()
-        , ClientChallenge()
-    {
-    }
+
+    = default;
 
     void emit(OutStream & stream) /* TODO const*/ {
         // ULONG length;
@@ -653,13 +646,12 @@ struct NTLMv2_Client_Challenge {
 //   temp variable from section 3.3.2.
 
 struct NTLMv2_Response {
-    uint8_t Response[16];
+    uint8_t Response[16]{};
     NTLMv2_Client_Challenge Challenge;
 
     NTLMv2_Response()
-        : Response()
-    {
-    }
+
+    = default;
 
     void emit(OutStream & stream) /* TODO const*/ {
         stream.out_copy_bytes(this->Response, 16);

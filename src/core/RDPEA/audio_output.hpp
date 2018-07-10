@@ -1474,4 +1474,4 @@ static inline void streamLogServer(InStream & stream, int flag) {
 }
 
 
-}
+}  // namespace rdpsnd

@@ -37,11 +37,11 @@ struct unique_fd
 
     explicit unique_fd(int fd) noexcept : fd_(fd) {}
 
-    unique_fd(unique_fd && other)
+    unique_fd(unique_fd && other) noexcept
     : fd_(exchange(other.fd_, -1))
     {}
 
-    unique_fd & operator=(unique_fd && other)
+    unique_fd & operator=(unique_fd && other) noexcept
     {
         unique_fd tmp(std::move(other));
         tmp.swap(*this);

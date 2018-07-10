@@ -26,7 +26,10 @@
 #include "mod/rdp/rdp_log.hpp"
 #include "core/report_message_api.hpp"
 
-typedef int_fast32_t data_size_type;
+#include <memory>
+
+
+using data_size_type = int_fast32_t;
 
 class BaseVirtualChannel
 {

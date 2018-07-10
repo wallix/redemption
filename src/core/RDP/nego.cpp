@@ -64,7 +64,6 @@ RdpNego::RdpNego(
 , lb_info(nullptr)
 , extra_message(extra_message)
 , lang(lang)
-, state(State::Negociate)
 , verbose(verbose)
 {
     LOG(LOG_INFO, "RdpNego: TLS=%s NLA=%s adminMode=%s",
@@ -87,21 +86,21 @@ RdpNego::~RdpNego() = default;
 void RdpNego::set_identity(char const * user, char const * domain, char const * pass, char const * hostname)
 {
     if (this->nla) {
-        snprintf(reinterpret_cast<char*>(this->user), sizeof(this->user), "%s", user);
-        snprintf(reinterpret_cast<char*>(this->domain), sizeof(this->domain), "%s", domain);
+        snprintf(char_ptr_cast(this->user), sizeof(this->user), "%s", user);
+        snprintf(char_ptr_cast(this->domain), sizeof(this->domain), "%s", domain);
 
         // Password is a multi-sz!
-        MultiSZCopy(reinterpret_cast<char*>(this->password), sizeof(this->password), pass);
+        MultiSZCopy(char_ptr_cast(this->password), sizeof(this->password), pass);
         this->current_password = this->password;
 
-        snprintf(reinterpret_cast<char*>(this->hostname), sizeof(this->hostname), "%s", hostname);
+        snprintf(char_ptr_cast(this->hostname), sizeof(this->hostname), "%s", hostname);
     }
 }
 
 void RdpNego::set_lb_info(uint8_t * lb_info, size_t lb_info_length)
 {
     if (lb_info_length > 0) {
-        this->lb_info = reinterpret_cast<char *>(lb_info);
+        this->lb_info = char_ptr_cast(lb_info);
     }
 }
 
@@ -430,7 +429,7 @@ RdpNego::State RdpNego::fallback_to_tls(OutTransport trans)
         throw Error(ERR_SOCKET_CONNECT_FAILED);
     }
 
-    this->current_password += (strlen(reinterpret_cast<char*>(this->current_password)) + 1);
+    this->current_password += (strlen(char_ptr_cast(this->current_password)) + 1);
 
     if (*this->current_password) {
         LOG(LOG_INFO, "try next password");

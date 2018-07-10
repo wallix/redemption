@@ -36,7 +36,7 @@ namespace redemption_unit_test__
 
 # define FIXTURES_PATH "./tests/fixtures"
 # define CFG_PATH "./sys/etc/rdpproxy"
-# define RED_CHECK_EXCEPTION_ERROR_ID(stmt, id) do { stmt; id; } while (0)
+# define RED_CHECK_EXCEPTION_ERROR_ID(stmt, id) do { stmt; (void)id; } while (0)
 # define RED_CHECK_NO_THROW(stmt) do { stmt; } while (0)
 # define RED_CHECK_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
 # define RED_CHECK_EXCEPTION(stmt, exception, predicate) do { \
@@ -162,15 +162,15 @@ namespace redemption_unit_test__
 #define RED_CHECK_EQ_RANGES(a, b) RED_CHECK_EQUAL_RANGES(a, b)
 #define RED_REQUIRE_EQ_RANGES(a, b) RED_REQUIRE_EQUAL_RANGES(a, b)
 
-namespace std
+namespace std // NOLINT(cert-dcl58-cpp)
 {
     // this is a hack...
     template<class Ch, class Tr>
-    std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & out, decltype(nullptr) const &)
+    std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & out, decltype(nullptr) const & /*nullptr*/)
     {
         return out << "nullptr";
     }
-}
+} // namespace std
 
 #include "utils/sugar/underlying_cast.hpp"
 
@@ -216,7 +216,7 @@ namespace redemption_unit_test__
 
     std::ostream & operator<<(std::ostream & out, xarray_color const & x);
     std::ostream & operator<<(std::ostream & out, xarray const & x);
-}
+}  // namespace redemption_unit_test__
 
 #define RED_CHECK_OP_VAR_MESSAGE(op, v1, v2, src1, src2) \
     RED_CHECK_MESSAGE(                                   \
@@ -288,7 +288,7 @@ namespace redemption_unit_test__
     };
 
     std::ostream & operator<<(std::ostream & out, xsarray const & x);
-}
+}  // namespace redemption_unit_test__
 
 #define RED_CHECK_SMEM(mem, memref)                  \
     do {                                             \
@@ -357,3 +357,4 @@ namespace redemption_unit_test__
 #endif
 
 #define RED_AUTO_TEST_CASE BOOST_AUTO_TEST_CASE
+

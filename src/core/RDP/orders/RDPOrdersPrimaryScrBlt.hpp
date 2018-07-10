@@ -140,7 +140,7 @@ class RDPScrBlt {
     uint16_t srcx;
     uint16_t srcy;
 
-    static uint8_t id(void)
+    static uint8_t id()
     {
         return RDP::SCREENBLT;
     }

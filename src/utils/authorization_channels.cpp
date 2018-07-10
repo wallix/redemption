@@ -92,7 +92,7 @@ namespace
     {
         return std::find(ids.begin(), ids.end(), id) != ids.end();
     }
-}
+} // namespace
 
 
 AuthorizationChannels::AuthorizationChannels(std::string const & allow, std::string const & deny)
@@ -113,7 +113,7 @@ AuthorizationChannels::AuthorizationChannels(std::string const & allow, std::str
             if (trimmed.empty()) {
                 continue;
             }
-            else if (trimmed[0] == '*') {
+            if (trimmed[0] == '*') {
                 all = true;
             }
             else switch (trimmed.size()) {

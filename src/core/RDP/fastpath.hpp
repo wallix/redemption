@@ -256,7 +256,7 @@ namespace FastPath {
                                 , CryptContext & crypt
                                 , uint32_t encryptionLevel
                                 , uint32_t encryptionMethod
-                                , uint32_t * fipsInformation = nullptr) {
+                                , uint32_t const * fipsInformation = nullptr) {
             uint8_t secFlags = (encryptionLevel | encryptionMethod) ? FASTPATH_INPUT_ENCRYPTED : 0;
 
             uint8_t fpInputHeader =
@@ -784,7 +784,7 @@ namespace FastPath {
     struct SynchronizeEvent_Recv {
         uint8_t  eventFlags;
 
-        SynchronizeEvent_Recv(InStream &, uint8_t eventHeader)
+        SynchronizeEvent_Recv(InStream & /*unused*/ /*unused*/, uint8_t eventHeader)
         : eventFlags(0) {
             uint8_t eventCode = (eventHeader & 0xE0) >> 5;
             if (eventCode != FASTPATH_INPUT_EVENT_SYNC) {

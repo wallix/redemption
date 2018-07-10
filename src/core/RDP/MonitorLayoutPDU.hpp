@@ -155,7 +155,7 @@
 //  field.
 
 class MonitorLayoutPDU {
-    uint32_t monitorCount;
+    uint32_t monitorCount{0};
 
     struct {
         int32_t  left;
@@ -167,8 +167,8 @@ class MonitorLayoutPDU {
 
 public:
     MonitorLayoutPDU()
-    : monitorCount(0)
-    , monitorDefArray() {}
+    : 
+     monitorDefArray() {}
 
     void set(GCC::UserData::CSMonitor const & cs_monitor) {
         this->monitorCount = cs_monitor.monitorCount;

@@ -75,7 +75,7 @@ private:
     const DrawablePointer * current_pointer;
     DrawablePointer dynamic_pointer;
     DrawablePointer default_pointer;
-    
+
     int frame_start_count;
     BGRPalette mod_palette_rgb;
 
@@ -213,10 +213,10 @@ public:
         this->drawable.set_row(rownum, data);
     }
 
-    void draw(RDPColCache   const &) override {
+    void draw(RDPColCache   const & /*unused*/) override {
     }
 
-    void draw(RDPBrushCache const &) override {
+    void draw(RDPBrushCache const & /*unused*/) override {
     }
 
     void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
@@ -257,7 +257,7 @@ public:
         this->last_update_index++;
     }
 
-    void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
+    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
 
 private:
     // TODO removed when RDPMultiDstBlt and RDPMultiOpaqueRect contains a rect member
@@ -667,7 +667,7 @@ public:
 //  All fragment cache indices MUST be in the range 0 to 255 (inclusive).
 
 private:
-    void draw_glyph(FontChar const & fc, int16_t px, int16_t pos_y, Color fg_color, Rect clip)
+    void draw_glyph(FontChar const & fc, int16_t px, int16_t py, Color fg_color, Rect clip)
     {
         const uint8_t * fc_data            = fc.data.get();
         for (int yy = 0 ; yy < fc.height; yy++)
@@ -680,10 +680,10 @@ private:
                     fc_data++;
                     fc_bit_mask = 128;
                 }
-                if (clip.contains_pt(px + xx, pos_y + fc.baseline + yy)
+                if (clip.contains_pt(px + xx, py + yy)
                 && (fc_bit_mask & *fc_data))
                 {
-                    this->drawable.draw_pixel(px + xx, pos_y + fc.baseline + yy, fg_color);
+                    this->drawable.draw_pixel(px + xx, py + yy, fg_color);
                 }
                 fc_bit_mask >>= 1;
             }
@@ -708,7 +708,7 @@ public:
                 FontChar const & fc = gly_cache.glyphs[cache_id][data].font_item;
                 if (!fc)
                 {
-                    LOG( LOG_INFO
+                    LOG( LOG_WARNING
                        , "RDPDrawable::draw_VariableBytes: Unknown glyph, cacheId=%u cacheIndex=%u"
                        , cache_id, data);
                     assert(fc);
@@ -732,7 +732,7 @@ public:
                     const int16_t x = draw_pos_ref + bmp_pos_x;
                     const int16_t y = offset_y + bmp_pos_y;
                     if (Rect(0,0,0,0) != clip.intersect(Rect(x, y, fc.incby, fc.height))){
-                        this->draw_glyph(fc, x + fc.offset, y, color, clip);
+                        this->draw_glyph(fc, x + fc.offsetx, y + fc.offsety, color, clip);
                     }
                 }
 
@@ -928,7 +928,7 @@ public:
         return this->drawable.logical_frame_ended;
     }
 
-    void trace_mouse(void)
+    void trace_mouse()
     {
         if (this->dont_show_mouse_cursor || !this->current_pointer) {
             return;
@@ -940,7 +940,7 @@ public:
         return this->drawable.trace_mouse(this->current_pointer, x, y, this->save_mouse);
     }
 
-    void clear_mouse(void)
+    void clear_mouse()
     {
         if (this->dont_show_mouse_cursor || !this->current_pointer) {
             return;
@@ -950,21 +950,21 @@ public:
         return this->drawable.clear_mouse(this->current_pointer, x, y, this->save_mouse);
     }
 
-    void draw(const RDP::RAIL::NewOrExistingWindow            &) override {}
-    void draw(const RDP::RAIL::WindowIcon                     &) override {}
-    void draw(const RDP::RAIL::CachedIcon                     &) override {}
-    void draw(const RDP::RAIL::DeletedWindow                  &) override {}
-    void draw(const RDP::RAIL::NewOrExistingNotificationIcons &) override {}
-    void draw(const RDP::RAIL::DeletedNotificationIcons       &) override {}
-    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       &) override {}
-    void draw(const RDP::RAIL::NonMonitoredDesktop            &) override {}
+    void draw(const RDP::RAIL::NewOrExistingWindow            & /*unused*/) override {}
+    void draw(const RDP::RAIL::WindowIcon                     & /*unused*/) override {}
+    void draw(const RDP::RAIL::CachedIcon                     & /*unused*/) override {}
+    void draw(const RDP::RAIL::DeletedWindow                  & /*unused*/) override {}
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*unused*/) override {}
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & /*unused*/) override {}
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & /*unused*/) override {}
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & /*unused*/) override {}
 
     void set_pointer(const Pointer & cursor) override {
         const auto dimensions = cursor.get_dimensions();
         const auto hotspot = cursor.get_hotspot();
         auto av_xor = cursor.get_24bits_xor_mask();
         auto av_and = cursor.get_monochrome_and_mask();
-        
+
         this->dynamic_pointer.initialize(dimensions.width, dimensions.height, av_xor.data(), av_and.data());
         this->mouse_cursor_hotspot_x = hotspot.x;
         this->mouse_cursor_hotspot_y = hotspot.y;

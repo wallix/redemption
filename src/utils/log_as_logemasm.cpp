@@ -22,14 +22,21 @@
 
 #include <cstdarg>
 
-void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...)
+#ifndef __EMSCRIPTEN__
+# define EM_ASM_(...)
+#endif
+
+void LOG__REDEMPTION__INTERNAL__IMPL(int /*priority*/, char const * format, ...)
 {
-    (void)priority;
     va_list ap;
-    char buffer[4096];
     va_start(ap, format);
-    int len = snprintf(buffer, sizeof(buffer)-2, format, args...);
+    char buffer[4096];
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+    int len = std::vsnprintf(buffer, sizeof(buffer)-2, format, ap);
+    REDEMPTION_DIAGNOSTIC_POP
     va_end(ap);
+
     buffer[len] = '\n';
     buffer[len+1] = 0;
     EM_ASM_({console.log(Pointer_stringify($0));}, buffer);

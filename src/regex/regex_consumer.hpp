@@ -22,13 +22,13 @@
 #pragma once
 
 #include <ostream>
-#include <stdint.h>
+#include <cstdint>
 #include <cstdio>
 
 namespace re {
 
     using std::size_t;
-    typedef uint32_t char_int;
+    using char_int = uint32_t;
 
     struct utf8_char
     {
@@ -50,15 +50,13 @@ namespace re {
         if (c[0]) {
             return os.write(c, 4);
         }
-        else if (c[1]) {
+        if (c[1]) {
             return os.write(c+1, 3);
         }
-        else if (c[2]) {
+        if (c[2]) {
             return os.write(c+2, 2);
         }
-        else {
-            os.write(c+3, 1);
-        }
+        os.write(c+3, 1);
         return os;
     }
 
@@ -165,5 +163,5 @@ namespace re {
         return false;
     }
 
-}
+}  // namespace re
 

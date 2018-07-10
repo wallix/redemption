@@ -48,7 +48,7 @@ public:
                 int group_id, BGRColor fgcolor, BGRColor bgcolor, Font const & font,
                 int xtext = 0, int ytext = 0);
 
-    WidgetLabel(WidgetLabel const &);
+    WidgetLabel(WidgetLabel const & other);
 
     ~WidgetLabel() override;
 
@@ -70,7 +70,7 @@ public:
 
     void set_color(BGRColor bg_color, BGRColor fg_color) override;
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2*) override;
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2* /*unused*/) override;
 
     void auto_resize();
 };

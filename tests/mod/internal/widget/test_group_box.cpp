@@ -33,7 +33,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBox)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetGroupBox is a widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -76,9 +76,9 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBox)
                                        , wgroupbox.cy()
                                        ));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "group_box_0.png");
+    // drawable.save_to_png("group_box_0.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xb3\x0e\x54\x67\x9d\xfd\x8b\x9b\x15\x83\x31\xa7\x89\x30\x95\x96\x4d\xfb\x55\x5a");
+    RED_CHECK_SIG(drawable.gd, "\x09\x6c\x32\xc4\x31\xe6\x53\x33\x8b\x19\x56\x34\x5e\xe3\xc5\x63\xbf\x1e\x8a\xf2");
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN,
                             wbutton.x() + 1, wbutton.y() + 1,
@@ -91,16 +91,16 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBox)
                                        , wgroupbox.cy()
                                        ));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "group_box_1.png");
+    // drawable.save_to_png("group_box_1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xe4\xa4\xa1\xb8\x91\x71\x0e\xf4\xcd\xe5\xe2\x5e\x79\xce\xb7\x4f\x50\xf8\xd6\xe9");
+    RED_CHECK_SIG(drawable.gd, "\x57\x7c\x4a\xcf\x93\x04\x71\xec\x56\x1c\xed\x4f\x65\x94\x03\x51\x44\x5d\x23\x31");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetGroupBox is a widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -150,9 +150,9 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
                                        , wgroupbox.cy()
                                        ));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "group_box_2.png");
+    // drawable.save_to_png("group_box_2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x3d\x38\x8c\x1e\x0f\x38\x18\xa1\x4e\x40\xe8\x9f\x1c\xe9\x80\x0b\x60\x60\x39\xb8");
+    RED_CHECK_SIG(drawable.gd, "\xcf\x03\x06\xa1\x36\x78\x17\x19\x41\xa8\x0e\x15\xdb\x68\xdf\x5e\x15\x63\xf5\x56");
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN,
                             wbutton.x() + 1, wbutton.y() + 1,
@@ -165,7 +165,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
                                        , wgroupbox.cy()
                                        ));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "group_box_3.png");
+    // drawable.save_to_png("group_box_3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x20\x96\x42\x3e\xfa\xff\x1a\x98\x75\x2a\x5c\x0a\x41\x6d\xe8\xa1\x66\x4e\x93\xe3");
+    RED_CHECK_SIG(drawable.gd, "\x12\xc4\x69\xb5\xe0\x87\xed\x94\x44\xbf\x6a\x07\x41\x6a\x45\xc8\x23\x70\xc8\xab");
 }

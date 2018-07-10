@@ -67,11 +67,11 @@ enum {
 };
 
 struct BrushCacheCaps : public Capability {
-    uint32_t brushSupportLevel;
+    uint32_t brushSupportLevel{BRUSH_DEFAULT};
 
     BrushCacheCaps()
     : Capability(CAPSTYPE_BRUSH, CAPLEN_BRUSH)
-    , brushSupportLevel(BRUSH_DEFAULT) // By default, minimal
+    
     {
     }
 

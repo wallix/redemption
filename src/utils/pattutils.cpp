@@ -131,7 +131,7 @@ namespace
         }
         return false;
     }
-}
+} // namespace
 
 bool contains_kbd_pattern(const char * soh_separated_patterns)
 {

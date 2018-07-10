@@ -24,6 +24,7 @@
 #include "core/RDP/mppc/mppc_utils.hpp"
 #include "core/RDP/mppc/mppc_50.hpp"
 #include "utils/stream.hpp"
+#include "utils/sugar/cast.hpp"
 
 #include <type_traits> // std::is_base_of
 
@@ -182,14 +183,14 @@ static const size_t RDP_61_COMPRESSOR_OUTPUT_BUFFER_SIZE        =
 struct rdp_mppc_61_dec : public rdp_mppc_dec
 {
     uint8_t   historyBuffer[RDP_61_HISTORY_BUFFER_LENGTH];    // Livel-1 history buffer.
-    size_t    historyOffset;    // Livel-1 history buffer associated history offset.
+    size_t    historyOffset{0};    // Livel-1 history buffer associated history offset.
 
     rdp_mppc_50_dec level_2_decompressor;
 
     rdp_mppc_61_dec()
         : rdp_mppc_dec()
         , historyBuffer{0}
-        , historyOffset(0)
+
     {}
 
 private:
@@ -266,7 +267,7 @@ public:
             bool nResult = this->level_2_decompressor.decompress(compressed_data_stream.get_current(),
                 compressed_data_stream.in_remain(), Level2ComprFlags, level_1_compressed_data,
                 level_1_compressed_data_size);
-            if (nResult != true) {
+            if (!nResult) {
                 LOG(LOG_ERR, "RDP 6.1 bluk compression Level-2 decompression error");
                 throw Error(ERR_RDP61_DECOMPRESS_LEVEL_2);
             }
@@ -367,7 +368,7 @@ struct rdp_mppc_enc_match_finder
 {
     StaticOutStream<65536> match_details_stream;
 
-    virtual ~rdp_mppc_enc_match_finder() {}
+    virtual ~rdp_mppc_enc_match_finder() = default;
 
     virtual void dump(bool mini_dump) const = 0;
 
@@ -474,9 +475,9 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
 {
     static const size_t MAXIMUM_HASH_BUFFER_UNDO_ELEMENT = 256;
 
-    typedef uint32_t                                     offset_type;
-    typedef rdp_mppc_enc_hash_table_manager<offset_type> hash_table_manager;
-    typedef hash_table_manager::hash_type                hash_type;
+    using offset_type = uint32_t;
+    using hash_table_manager = rdp_mppc_enc_hash_table_manager<offset_type>;
+    using hash_type = hash_table_manager::hash_type;
 
     hash_table_manager hash_tab_mgr;
 
@@ -574,34 +575,29 @@ class rdp_mppc_61_enc : public rdp_mppc_enc {
       , "MatchFinder must be derived from rdp_mppc_enc_match_finder");
 
     uint8_t    historyBuffer[RDP_61_HISTORY_BUFFER_LENGTH];   // Level-1 history buffer.
-    uint32_t   historyOffset;   // Level-1 history buffer associated history offset.
+    uint32_t   historyOffset{0};   // Level-1 history buffer associated history offset.
 
     rdp_mppc_50_enc level_2_compressor;
 
     uint8_t    level_1_output_buffer[RDP_61_COMPRESSOR_OUTPUT_BUFFER_SIZE];
-    uint16_t   level_1_compressed_data_size;
+    uint16_t   level_1_compressed_data_size{0};
 
-    uint8_t level_1_compr_flags_hold;
-    uint8_t Level1ComprFlags;
-    uint8_t Level2ComprFlags;
+    uint8_t level_1_compr_flags_hold{L1_PACKET_AT_FRONT};
+    uint8_t Level1ComprFlags{0};
+    uint8_t Level2ComprFlags{0};
 
-    uint8_t  * outputBuffer;
-    uint16_t   bytes_in_output_buffer;
+    uint8_t  * outputBuffer{nullptr};
+    uint16_t   bytes_in_output_buffer{0};
 
     MatchFinder match_finder;
 
 public:
-    explicit rdp_mppc_61_enc(bool verbose = 0)
+    explicit rdp_mppc_61_enc(bool verbose = false)
         : rdp_mppc_enc(RDP_61_MAX_DATA_BLOCK_SIZE, verbose)
         , historyBuffer{0}
-        , historyOffset(0)
-        , level_1_output_buffer{0}
-        , level_1_compressed_data_size(0)
-        , level_1_compr_flags_hold(L1_PACKET_AT_FRONT)
-        , Level1ComprFlags(0)
-        , Level2ComprFlags(0)
-        , outputBuffer(nullptr)
-        , bytes_in_output_buffer(0)
+        ,
+         level_1_output_buffer{0}
+
     {}
 
 private:
@@ -720,7 +716,7 @@ private:
                     2); // Level1ComprFlags(1) + Level2ComprFlags(1)
 
             if (Level2ComprFlags & PACKET_COMPRESSED) {
-                this->outputBuffer           = reinterpret_cast<uint8_t *>(this->level_2_compressor.outputBuffer);
+                this->outputBuffer           = this->level_2_compressor.outputBuffer;
                 this->bytes_in_output_buffer = this->level_2_compressor.bytes_in_opb;
             }
             else {
@@ -739,7 +735,7 @@ private:
                 compressed_data_size, rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
             if (Level2ComprFlags & PACKET_COMPRESSED) {
-                this->outputBuffer           = reinterpret_cast<uint8_t *>(this->level_2_compressor.outputBuffer);
+                this->outputBuffer           = this->level_2_compressor.outputBuffer;
                 this->bytes_in_output_buffer = this->level_2_compressor.bytes_in_opb;
             }
             else {
@@ -813,4 +809,4 @@ public:
     }
 };  // struct rdp_mppc_61_enc
 
-typedef rdp_mppc_61_enc<rdp_mppc_61_enc_hash_based_match_finder> rdp_mppc_61_enc_hash_based;
+using rdp_mppc_61_enc_hash_based = rdp_mppc_61_enc<rdp_mppc_61_enc_hash_based_match_finder>;

@@ -47,7 +47,7 @@ namespace
         }
         return p - list;
     }
-}
+} // namespace
 
 SelectorMod::SelectorMod(
     SelectorModVariables vars, SessionReactor& session_reactor,
@@ -60,7 +60,7 @@ SelectorMod::SelectorMod(
         client_execute, vars.get<cfg::theme>())
 
     , language_button(
-        vars.get<cfg::client::keyboard_layout_proposals>().c_str(),
+        vars.get<cfg::client::keyboard_layout_proposals>(),
         this->selector, front, front, this->font(), this->theme())
 
     , selector_params([&]() {
@@ -73,10 +73,11 @@ SelectorMod::SelectorMod(
         params.base_len[2] = 80;
         params.base_len[3] = 100;
 
-        params.label[0] = "Authorization";
-        params.label[1] = "Target";
-        params.label[2] = "Protocol";
-        params.label[3] = "Description";
+        Translator tr(language(vars.get<cfg::translation::language>()));
+        params.label[0] = tr(trkeys::authorization);
+        params.label[1] = tr(trkeys::target);
+        params.label[2] = tr(trkeys::protocol);
+        params.label[3] = tr(trkeys::description);
 
         return params;
     }())
@@ -112,7 +113,7 @@ SelectorMod::SelectorMod(
                             this->selector.selector_lines.border
                             +  this->selector.selector_lines.y_padding_label);
 
-    this->selector_lines_per_page_saved = available_height / line_height;
+    this->selector_lines_per_page_saved = std::min<int>(available_height / line_height, GRID_NB_ROWS_MAX);
     this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
     this->ask_page();
     this->selector.rdp_input_invalidate(this->selector.get_rect());
@@ -274,9 +275,7 @@ void SelectorMod::refresh_device()
         targets[size_targets] = '\0';
         protocols[size_protocols] = '\0';
 
-        //this->selector.add_device(groups, targets, protocols);
-
-        const char * texts[] = { groups, targets, protocols,  "", "", "", "", "", "", ""};
+        const char * texts[] = { groups, targets, protocols, nullptr };
         this->selector.add_device(texts);
 
         groups[size_groups] = c_group;
@@ -299,10 +298,8 @@ void SelectorMod::refresh_device()
         this->selector.selector_lines.tab_flag = Widget::IGNORE_TAB;
         this->selector.selector_lines.focus_flag = Widget::IGNORE_FOCUS;
 
-        const char * texts[] = { "", TR(trkeys::no_results, language(this->vars)), "", "", "", "", "", "", "", ""};
+        const char * texts[] = { "", TR(trkeys::no_results, language(this->vars)), nullptr };
         this->selector.add_device(texts);
-
-        //this->selector.add_device("", TR(trkeys::no_results, language(this->vars)), "", "");
     } else {
         this->selector.selector_lines.tab_flag = Widget::NORMAL_TAB;
         this->selector.selector_lines.focus_flag = Widget::NORMAL_FOCUS;
@@ -383,11 +380,10 @@ void SelectorMod::move_size_widget(int16_t left, int16_t top, uint16_t width, ui
                             this->selector.selector_lines.border
                             +  this->selector.selector_lines.y_padding_label);
 
-    int selector_lines_per_page = available_height / line_height;
+    int const selector_lines_per_page = std::min<int>(available_height / line_height, GRID_NB_ROWS_MAX);
     if (this->selector_lines_per_page_saved != selector_lines_per_page) {
         this->selector_lines_per_page_saved = selector_lines_per_page;
-
-        this->vars.set_acl<cfg::context::selector_lines_per_page>(available_height / line_height);
+        this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
         this->ask_page();
         this->selector.rdp_input_invalidate(this->selector.get_rect());
     }

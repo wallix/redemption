@@ -62,13 +62,12 @@ namespace CHANNELS {
         static const size_t max_size_name = 7;
 
         ChannelNameId name;
-        uint32_t flags;
-        int      chanid;
+        uint32_t flags{0};
+        int      chanid{0};
 
         ChannelDef()
-        : flags(0)
-        , chanid(0)
-        {}
+
+        = default;
 
         ChannelDef(ChannelNameId name, uint32_t flags, int chanid)
         : name(name)
@@ -85,11 +84,11 @@ namespace CHANNELS {
 
     class ChannelDefArray {
         // The number of requested static virtual channels (the maximum allowed is 31).
-        size_t     channelCount;
+        size_t     channelCount{0};
         ChannelDef items[MAX_STATIC_VIRTUAL_CHANNELS + 2];  // + global channel + wab channel
 
     public:
-        ChannelDefArray() : channelCount(0) {}
+        ChannelDefArray()  = default;
 
         void clear_channels()
         {
@@ -351,7 +350,7 @@ namespace CHANNELS {
     struct VirtualChannelPDU {
         bool verbose;
 
-        explicit VirtualChannelPDU(bool verbose = 0) : verbose(verbose) {}
+        explicit VirtualChannelPDU(bool verbose = false) : verbose(verbose) {}
 
         void send_to_server( OutTransport trans, CryptContext & crypt_context, int encryptionLevel
                            , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags

@@ -62,7 +62,7 @@ public:
     void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override;
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache)
     override;
-    void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
+    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override;
     void draw(const RDP::RAIL::WindowIcon                     & cmd) override;
@@ -148,7 +148,7 @@ private:
 
         // mod_api
 
-        void draw_event(time_t now, gdi::GraphicApi& drawable) override;
+        void draw_event(time_t now, gdi::GraphicApi& gd) override;
 
         bool is_up_and_running() override;
 

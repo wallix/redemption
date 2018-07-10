@@ -24,6 +24,9 @@
 #include "system/ssl_sha1.hpp"
 #include "system/ssl_md5.hpp"
 
+#include <algorithm>
+
+
 /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
 class Sign
 {
@@ -68,13 +71,13 @@ public:
         md5.update(sigconst, sizeof(sigconst));
         md5.update(shasig, sizeof(shasig));
 
-        // TODO: check out_size provided to sign.final() 
+        // TODO: check out_size provided to sign.final()
         // if it's already MD5::DIGEST_LENGTH
         // no need to provide it
-        
+
         uint8_t tmp[SslMd5::DIGEST_LENGTH];
         md5.final(tmp);
         memcpy(out, tmp, std::min(out_size, static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
-        
+
     }
 };

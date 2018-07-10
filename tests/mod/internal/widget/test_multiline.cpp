@@ -34,7 +34,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetMultiLine is a multiline widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -71,16 +71,16 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "multiline.png");
+    // drawable.save_to_png("multiline.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x72\x15\x18\x3f\xdf\xc5\x0c\xce\xb5\x7e\x35\xc7\xee\xee\xd6\x9b\x6a\xd0\x7b\xe4");
+    RED_CHECK_SIG(drawable.gd, "\x9b\x92\x55\x24\xaa\xb1\x63\xd8\x6b\xb9\xd4\x7d\xd2\x08\xe9\xff\xf0\x95\x73\x47");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine2)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -110,16 +110,16 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine2)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline2.png");
+    // drawable.save_to_png("multiline2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x40\x55\x16\x14\x94\xe6\x87\xe4\xe9\xda\xe9\x4a\x1e\x7a\x9a\x9f\x37\x95\x83\x8a");
+    RED_CHECK_SIG(drawable.gd, "\x91\xc0\xda\xdb\x61\x7c\x9e\x5d\x76\x1b\x81\x88\x1d\xa8\x3e\xeb\x3a\x71\x5c\xf3");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine3)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -149,16 +149,16 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine3)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline3.png");
+    // drawable.save_to_png("multiline3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xe4\x4e\x51\x1a\xfc\x29\xf8\x6e\xb5\xf1\xb4\x5e\x6a\xb5\x27\xad\x10\x57\x28\xc5");
+    RED_CHECK_SIG(drawable.gd, "\x20\x2b\xdf\xe4\x2d\xfe\x75\x7c\x52\x45\x8b\x41\x01\x41\x70\x20\x90\x0c\x5d\x53");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine4)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -188,16 +188,16 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine4)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline4.png");
+    // drawable.save_to_png("multiline4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x9a\x2d\xc2\x29\xac\x20\xa1\xa4\x08\xea\x94\x51\x7d\x67\x84\xf9\x7d\x28\x29\xb7");
+    RED_CHECK_SIG(drawable.gd, "\xc0\xb3\xff\x4b\x68\xb8\x8c\xf9\x58\x19\x44\x72\x6a\x7c\xd3\x18\x55\xf6\x40\x82");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine5)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position -20,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -227,16 +227,16 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine5)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline5.png");
+    // drawable.save_to_png("multiline5.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xd6\xb8\x09\x56\xfa\xde\xd0\xd4\xe0\x14\xe1\x5e\x2a\x3c\x8d\x79\x65\xee\xc3\xcf");
+    RED_CHECK_SIG(drawable.gd, "\x23\x1b\xda\x2a\x8d\x74\x75\x34\x4c\xa2\x4e\xf2\x4c\xa8\x2c\xc2\x27\x8d\x49\xe7");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine6)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -266,16 +266,16 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine6)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline6.png");
+    // drawable.save_to_png("multiline6.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x4b\xcc\xd8\xb0\x23\x6d\xa6\x2e\x79\x2b\xab\x81\x20\x82\x8e\x8c\x68\x94\x10\x8f");
+    RED_CHECK_SIG(drawable.gd, "\xaf\xef\x9e\xf5\x72\xe1\xb2\x81\x1f\xf7\xb9\x55\xf3\x93\x00\x79\xba\x71\x85\xdc");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -305,16 +305,16 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline7.png");
+    // drawable.save_to_png("multiline7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x6e\xd9\xe7\x6d\x10\x0b\x6f\x62\x93\xd0\x55\xf3\xb1\x20\x06\x57\xdb\x27\x25\x78");
+    RED_CHECK_SIG(drawable.gd, "\x13\xc4\x5b\xc6\x2f\x90\x1c\x29\xa9\x1d\x22\x77\x95\x0a\xfe\xa6\x04\xce\x19\xfb");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -344,16 +344,16 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
                                          30,
                                          10));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline8.png");
+    // drawable.save_to_png("multiline8.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xc5\x52\xb0\x08\x97\xa8\x7b\x4c\x83\x8f\x57\xb9\xdd\xde\xf4\x4f\x4b\xcf\x54\x4e");
+    RED_CHECK_SIG(drawable.gd, "\x44\x6c\xa2\x38\x99\xa8\xe0\x3d\xd7\xc8\xf7\x1b\xdf\xfe\x3b\xe5\x7e\x28\xc2\xea");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -381,7 +381,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wmultiline.rdp_input_invalidate(wmultiline.get_rect());
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline9.png");
+    // drawable.save_to_png("multiline9.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x2f\xbb\xe7\xbc\xd2\xcb\x0d\x46\xb6\x27\x24\xd4\x61\x9a\xd4\xc3\x2c\x37\x82\x0c");
+    RED_CHECK_SIG(drawable.gd, "\x3d\x88\xa2\x81\xdd\x9b\xbb\xcc\xee\xa7\xde\x22\x17\x29\x73\xa9\x47\x59\x90\x27");
 }

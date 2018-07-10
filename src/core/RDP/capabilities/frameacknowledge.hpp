@@ -59,12 +59,11 @@ enum {
 };
 
 struct FrameAcknowledgeCaps : public Capability {
-    uint32_t maxUnacknowledgedFrameCount;
+    uint32_t maxUnacknowledgedFrameCount{0}; // SC: MAY be 0
+                                             // CS: MAY be 0 but SHOULD be avoided because it provides too few information
 
     FrameAcknowledgeCaps()
     : Capability(CAPSETTYPE_FRAME_ACKNOWLEDGE, CAPLEN_FRAME_ACKNOWLEDGE)
-    , maxUnacknowledgedFrameCount(0) // SC: MAY be 0
-                                     // CS: MAY be 0 but SHOULD be avoided because it provides too few information
     {
     }
 

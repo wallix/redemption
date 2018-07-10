@@ -310,9 +310,9 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                         RDP_POINTER_MOVE,
                         RDP_POINTER_NEW
                     };
-                    static_assert(SERVER_UPDATE_POINTER_COLOR + 1 == SERVER_UPDATE_POINTER_CACHED, "");
-                    static_assert(SERVER_UPDATE_POINTER_CACHED + 1 == SERVER_UPDATE_POINTER_POSITION, "");
-                    static_assert(SERVER_UPDATE_POINTER_POSITION + 1 == SERVER_UPDATE_POINTER_NEW, "");
+                    static_assert(SERVER_UPDATE_POINTER_COLOR + 1 == SERVER_UPDATE_POINTER_CACHED );
+                    static_assert(SERVER_UPDATE_POINTER_CACHED + 1 == SERVER_UPDATE_POINTER_POSITION );
+                    static_assert(SERVER_UPDATE_POINTER_POSITION + 1 == SERVER_UPDATE_POINTER_NEW );
                     uint16_t const updateType = update_type_table[type - SERVER_UPDATE_POINTER_COLOR];
 
                     if (updateType == RDP_POINTER_NEW) {
@@ -418,7 +418,7 @@ namespace detail
         StaticOutReservedStreamHelper<1024, 65536-1024> buffer_stream_orders;
         StaticOutReservedStreamHelper<1024, 65536-1024> buffer_stream_bitmaps;
     };
-}
+} // namespace detail
 
 class GraphicsUpdatePDU : private detail::GraphicsUpdatePDUBuffer, public RDPSerializer
 {

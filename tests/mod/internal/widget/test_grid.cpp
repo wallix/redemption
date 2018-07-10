@@ -36,7 +36,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
 {
     TestDraw drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu-sans-10.fv1");
+    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
@@ -107,7 +107,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "grid.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xcd\x02\xce\x82\x20\x31\xbe\x22\xb2\xa0\xe7\xd3\x39\xc8\x11\x5b\x5c\x93\x3a\xa9");
+    RED_CHECK_SIG(drawable.gd, "\x2f\xd2\x22\x8d\x37\x69\xb6\x1b\xc9\xf2\x64\x2a\xb1\xf6\xdf\x62\x46\x23\x7e\x8e");
 
 
     wgrid.set_selection(4);
@@ -119,7 +119,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
                                     wgrid.cy()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "grid2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x69\x5f\x2b\xf5\x18\x10\xb1\xfa\xd0\x0f\x6d\xc2\xb4\xce\xe9\x11\x7a\x54\xa5\x74");
+    RED_CHECK_SIG(drawable.gd, "\x89\x88\xf6\xa2\x57\xe9\xba\x8e\x7e\x88\x66\xc9\x06\x7a\x6f\x73\xc4\x58\x6a\xb8");
 
 
     uint16_t mouse_x = wgrid.x() + 50;
@@ -135,7 +135,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
     //drawable.draw(RDPOpaqueRect(Rect(mouse_x, mouse_y, 2, 2), PINK), wgrid.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "grid3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xb5\xbc\x4f\xea\xa1\xd9\xb5\x16\x05\x0a\xc9\xca\xee\x02\x77\x2c\xcf\x4c\x22\xb1");
+    RED_CHECK_SIG(drawable.gd, "\x1a\xcf\x2d\xaa\x80\x54\x1e\x16\xfe\xb2\x1d\x5b\xe0\xc6\xdc\xac\xbd\x33\x51\xa8");
 
 
     Keymap2 keymap;
@@ -157,7 +157,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
                                     wgrid.cy()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "grid4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x95\x21\x75\xa0\xe8\x3e\x02\x77\x1e\x7f\x44\x55\xd3\x4b\xbe\x32\xbc\x7c\xff\x32");
+    RED_CHECK_SIG(drawable.gd, "\x78\x12\xfc\xd9\xc4\xdc\x38\x69\x02\x42\xd0\x3d\xb8\x39\xbf\x03\x0a\x27\x4d\x1e");
 
     wgrid.clear();
 

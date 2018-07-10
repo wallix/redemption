@@ -1,5 +1,5 @@
 inline
-const char * russian(unsigned width, unsigned height, unsigned count, Pixel pixel)
+const char * russian(unsigned width, unsigned height, unsigned count, Pixel pixel) /*NOLINT(readability-function-size)*/
 {
 # include "./ocr1/classifiers/russian.hxx"
   return unknown;
@@ -14,7 +14,7 @@ constexpr Font::Replacement const russian_replacement[] {
 };
 
 inline
-const char * cyrillic_tahoma_8_bold(unsigned width, unsigned height, unsigned count, Pixel pixel)
+const char * cyrillic_tahoma_8_bold(unsigned width, unsigned height, unsigned count, Pixel pixel) /*NOLINT(readability-function-size)*/
 {
 # include "./ocr1/classifiers/cyrillic_tahoma_8_bold.hxx"
   return unknown;

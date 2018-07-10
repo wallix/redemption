@@ -39,7 +39,7 @@ namespace VNC {
         class EncoderApi {
         public:
             virtual EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) = 0;
-            virtual ~EncoderApi() {}
+            virtual ~EncoderApi() = default;
         };
-    } // namespace encoder
+    }  // namespace Encoder
 } // namespace VNC

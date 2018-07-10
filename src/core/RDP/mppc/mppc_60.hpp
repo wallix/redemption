@@ -680,17 +680,16 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc
     static const size_t MAXIMUM_HASH_BUFFER_UNDO_ELEMENT = 256;
     static const size_t CACHED_OFFSET_COUNT              = 4;
 
-    typedef uint16_t                                     offset_type;
-    typedef rdp_mppc_enc_hash_table_manager<offset_type> hash_table_manager;
-    typedef hash_table_manager::hash_type                hash_type;
+    using offset_type = uint16_t;
+    using hash_table_manager = rdp_mppc_enc_hash_table_manager<offset_type>;
+    using hash_type = hash_table_manager::hash_type;
 
     // The shared state necessary to support the transmission and reception
     //     of RDP6.0-BC compressed data between a client and server requires
     //     a history buffer and a current offset into the history buffer
     //    (HistoryOffset).
-
     uint8_t    historyBuffer[RDP_60_HIST_BUF_LEN];   /* contains uncompressed data */
-    uint16_t   historyOffset;   /* next free slot in historyBuffer */
+    uint16_t   historyOffset{0};   /* next free slot in historyBuffer */
 
     // In addition to the history buffer and HistoryOffset, a small cache
     //     MUST also be managed by the client and server endpoints. This
@@ -699,33 +698,29 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc
     //     (copy-offsets are described in [MS-RDPBCGR] section 3.1.8.1). This
     //     saves on bandwidth in cases where there are many repeated
     //     copy-offsets.
+    // Whenever the history buffer is initialized or reinitialized, the
+    //     OffsetCache MUST be emptied
     uint16_t offsetCache[CACHED_OFFSET_COUNT];
 
     uint8_t    outputBuffer[RDP_60_HIST_BUF_LEN];    /* contains compressed data              */
-    uint16_t   bytes_in_opb;    /* compressed bytes available in         */
+    uint16_t   bytes_in_opb{0};    /* compressed bytes available in         */
                                 /*     outputBuffer                      */
 
-    uint8_t    flags;           /* PACKET_COMPRESSED, PACKET_AT_FRONT,   */
+    uint8_t    flags{0};           /* PACKET_COMPRESSED, PACKET_AT_FRONT,   */
                                 /*     PACKET_FLUSHED etc                */
-    uint8_t    flagsHold;
+    uint8_t    flagsHold{PACKET_FLUSHED};
 
     hash_table_manager hash_tab_mgr;
 
-    explicit rdp_mppc_60_enc(bool verbose = 0)
+    explicit rdp_mppc_60_enc(bool verbose = false)
         : rdp_mppc_enc(RDP_60_HIST_BUF_LEN - 1, verbose)
         // The HistoryOffset MUST start initialized to zero, while the
         //     history buffer MUST be filled with zeros. After it has been
         //     initialized, the entire history buffer is immediately
         //     regarded as valid.
         , historyBuffer{0}
-        , historyOffset(0)
-        // Whenever the history buffer is initialized or reinitialized, the
-        //     OffsetCache MUST be emptied.
         , offsetCache{0}
         , outputBuffer{0}
-        , bytes_in_opb(0)
-        , flags(0)
-        , flagsHold(PACKET_FLUSHED)
         , hash_tab_mgr(MINIMUM_MATCH_LENGTH, MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
     {}
 
@@ -739,14 +734,14 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc
         LOG(LOG_INFO, "historyOffset=%u", this->historyOffset);
         LOG(LOG_INFO, "bytes_in_opb=%u", this->bytes_in_opb);
         LOG(LOG_INFO, "offsetCache");
-        hexdump_d(reinterpret_cast<const uint8_t *>(this->offsetCache), sizeof(this->offsetCache));
+        hexdump_d(reinterpret_cast<const char *>(this->offsetCache), sizeof(this->offsetCache));
         LOG(LOG_INFO, "flags=0x%02X", this->flags);
         LOG(LOG_INFO, "flagsHold=0x%02X", this->flagsHold);
 
         this->hash_tab_mgr.dump(mini_dump);
     }
 
-    static inline int cache_find(uint16_t * offset_cache, uint16_t copy_offset)
+    static inline int cache_find(uint16_t const * offset_cache, uint16_t copy_offset)
     {
         for (int i = 0; i < 4; i++) {
             if (offset_cache[i] == copy_offset) {

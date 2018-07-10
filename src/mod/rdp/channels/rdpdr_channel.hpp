@@ -1532,7 +1532,7 @@ public:
         const uint32_t FileId         = iter->file_id;
         const uint32_t MajorFunction  = iter->major_function;
         const uint32_t extra_data     = iter->extra_data;
-        const std::string & file_path = iter->path.c_str();
+        const std::string & file_path = iter->path;
 
         if (bool(this->verbose & RDPVerbose::rdpdr)) {
             LOG(LOG_INFO,

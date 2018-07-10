@@ -19,11 +19,13 @@
                Meng Tan, Raphael Zhou
 */
 
-
 #pragma once
 
 #include "utils/log.hpp"
 #include "utils/hexdump.hpp"
+
+#include <cstring>
+
 
 struct RedirectionInfo {
     bool valid;

@@ -32,9 +32,10 @@
 #include "core/RDP/gcc/data_block_type.hpp"
 #include "utils/crypto/ssl_lib.hpp"
 #include "utils/stream.hpp"
+#include "utils/log.hpp"
 #include "openssl_crypto.hpp"
 
-#include <inttypes.h>
+#include <cinttypes>
 
 namespace GCC { namespace UserData {
 
@@ -337,11 +338,11 @@ namespace GCC { namespace UserData {
 // associated public key to verify the signature.
 
 struct SCSecurity {
-    uint16_t userDataType;
-    uint16_t length;
+    uint16_t userDataType{SC_SECURITY};
+    uint16_t length{236};
 
     // TODO use enum class
-    uint32_t encryptionMethod;
+    uint32_t encryptionMethod{0};
 
     enum {
         ENCRYPTION_LEVEL_NONE              = 0x00000000,
@@ -351,11 +352,11 @@ struct SCSecurity {
         ENCRYPTION_LEVEL_FIPS              = 0x00000004
     };
     // TODO use enum class
-    uint32_t encryptionLevel;
-    uint32_t serverRandomLen;
+    uint32_t encryptionLevel{0};  // crypt level 0 = none, 1 = low 2 = medium, 3 = high
+    uint32_t serverRandomLen{SEC_RANDOM_SIZE};
     uint8_t serverRandom[SEC_RANDOM_SIZE];
 
-    uint32_t serverCertLen;
+    uint32_t serverCertLen{184};
 
     uint8_t pri_exp[64];
     uint8_t pub_sig[64];
@@ -375,26 +376,26 @@ struct SCSecurity {
     // anyway, it's not really usefull here to bother about small lost space
     // (real alternative would be to dynamically allocate memory, buth memory allocation also has it's costs)
 
-    uint32_t dwVersion;
-    bool temporary;
+    uint32_t dwVersion{CERT_CHAIN_VERSION_1};
+    bool temporary{false};
 
     struct ServerProprietaryCertificate {
         // dwSigAlgId (4 bytes): A 32-bit, unsigned integer. The signature algorithm
         //  identifier. This field MUST be set to SIGNATURE_ALG_RSA (0x00000001).
-        uint32_t dwSigAlgId;
+        uint32_t dwSigAlgId{SIGNATURE_ALG_RSA};
 
         // dwKeyAlgId (4 bytes): A 32-bit, unsigned integer. The key algorithm
         //  identifier. This field MUST be set to KEY_EXCHANGE_ALG_RSA (0x00000001).
-        uint32_t dwKeyAlgId;
+        uint32_t dwKeyAlgId{KEY_EXCHANGE_ALG_RSA};
 
         // wPublicKeyBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
         //  in the PublicKeyBlob field. This field MUST be set to BB_RSA_KEY_BLOB
         //  (0x0006).
-        uint16_t wPublicKeyBlobType;
+        uint16_t wPublicKeyBlobType{BB_RSA_KEY_BLOB};
 
         // wPublicKeyBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
         //  of the PublicKeyBlob field.
-        uint16_t wPublicKeyBlobLen;
+        uint16_t wPublicKeyBlobLen{92};
 
         // PublicKeyBlob (variable): Variable-length server public key bytes, formatted
         //  using the Rivest-Shamir-Adleman (RSA) Public Key structure (section
@@ -408,21 +409,21 @@ struct SCSecurity {
 
             // magic (4 bytes): A 32-bit, unsigned integer. The sentinel value. This field
             //  MUST be set to 0x31415352.
-            uint32_t magic;
+            uint32_t magic{RSA_MAGIC};
 
             // keylen (4 bytes): A 32-bit, unsigned integer. The size in bytes of the
             //  modulus field. This value is directly related to the bitlen field and MUST
             //  be ((bitlen / 8) + 8) bytes.
-            uint32_t keylen;
+            uint32_t keylen{72};
 
             // bitlen (4 bytes): A 32-bit, unsigned integer. The number of bits in the
             //  public key modulus.
-            uint32_t bitlen;
+            uint32_t bitlen{512};
 
             // datalen (4 bytes): A 32-bit, unsigned integer. The maximum number of bytes
             //  that can be encoded using the public key.
             // This value is directly related to the bitlen field and MUST be ((bitlen / 8) - 1) bytes.
-            uint32_t datalen;
+            uint32_t datalen{63};
 
             // pubExp (4 bytes): A 32-bit, unsigned integer. The public exponent of the
             //  public key.
@@ -435,22 +436,18 @@ struct SCSecurity {
             uint8_t modulus[/*72*/264];
 
             PublicKeyBlob()
-            : magic(RSA_MAGIC)
-            , keylen(72)
-            , bitlen(512)
-            , datalen(63)
-            {
-            }
+
+            = default;
         } RSAPK;
 
         // wSignatureBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
         //  in the SignatureKeyBlob field. This field is set to BB_RSA_SIGNATURE_BLOB
         //  (0x0008).
-        uint16_t wSignatureBlobType;
+        uint16_t wSignatureBlobType{BB_RSA_SIGNATURE_BLOB};
 
         // wSignatureBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
         //  of the SignatureKeyBlob field.
-        uint16_t wSignatureBlobLen;
+        uint16_t wSignatureBlobLen{72};
 
         // SignatureBlob (variable): Variable-length signature of the certificate
         // created with the Terminal Services Signing Key (see sections 5.3.3.1.1 and
@@ -458,14 +455,7 @@ struct SCSecurity {
         uint8_t wSignatureBlob[72];
 
         ServerProprietaryCertificate()
-        : dwSigAlgId(SIGNATURE_ALG_RSA)
-        , dwKeyAlgId(KEY_EXCHANGE_ALG_RSA)
-        , wPublicKeyBlobType(BB_RSA_KEY_BLOB)
-        , wPublicKeyBlobLen(92)
-        , wSignatureBlobType(BB_RSA_SIGNATURE_BLOB)
-        , wSignatureBlobLen(72)
-        {
-        }
+        = default;
     } proprietaryCertificate;
 
     struct X509CertificateChain {
@@ -474,15 +464,7 @@ struct SCSecurity {
     } x509;
 
     SCSecurity()
-    : userDataType(SC_SECURITY)
-    , length(236)
-    , encryptionMethod(0)
-    , encryptionLevel(0) // crypt level 0 = none, 1 = low 2 = medium, 3 = high
-    , serverRandomLen(SEC_RANDOM_SIZE)
-    , serverCertLen(184)
-    , dwVersion(CERT_CHAIN_VERSION_1)
-    , temporary(false)
-    , x509{}
+    : x509{}
     {
     }
 
@@ -781,4 +763,5 @@ struct SCSecurity {
 
 };
 
-}}
+} // namespace UserData
+} // namespace GCC

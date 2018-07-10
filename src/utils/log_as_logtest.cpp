@@ -51,7 +51,7 @@ namespace
 # ifndef NDEBUG
     static bool previous_is_line_marker = false;
 # endif
-}
+} // namespace
 
 LOG__REDEMPTION__BUFFERED::LOG__REDEMPTION__BUFFERED()
 {
@@ -75,7 +75,7 @@ void LOG__REDEMPTION__BUFFERED::clear()
 }
 
 
-void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...)
+void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*NOLINT(cert-dcl50-cpp)*/
 {
     if (enable_buf_log) {
 # ifndef NDEBUG

@@ -61,16 +61,13 @@ enum {
 };
 
 struct ControlCaps : public Capability {
-    uint16_t controlFlags;
-    uint16_t remoteDetachFlag;
-    uint16_t controlInterest;
-    uint16_t detachInterest;
+    uint16_t controlFlags{0};
+    uint16_t remoteDetachFlag{0};
+    uint16_t controlInterest{CONTROLPRIORITY_NEVER};
+    uint16_t detachInterest{CONTROLPRIORITY_NEVER};
     ControlCaps()
     : Capability(CAPSTYPE_CONTROL, CAPLEN_CONTROL)
-    , controlFlags(0)
-    , remoteDetachFlag(0)
-    , controlInterest(CONTROLPRIORITY_NEVER)
-    , detachInterest(CONTROLPRIORITY_NEVER)
+     
     {
     }
 

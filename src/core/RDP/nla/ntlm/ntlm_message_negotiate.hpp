@@ -22,6 +22,7 @@
 #pragma once
 
 #include "core/RDP/nla/ntlm/ntlm_message.hpp"
+#include "utils/log.hpp"
 
 // [MS-NLMP]
 

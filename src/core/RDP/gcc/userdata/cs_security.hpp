@@ -30,6 +30,7 @@
 
 #include "core/RDP/gcc/data_block_type.hpp"
 #include "utils/stream.hpp"
+#include "utils/log.hpp"
 #include "core/error.hpp"
 
 namespace GCC { namespace UserData {
@@ -88,18 +89,13 @@ struct CSSecurity {
         , FIPS_ENCRYPTION_FLAG = 0x10
     };
 
-    uint16_t userDataType;
-    uint16_t length;
-    uint32_t encryptionMethods;
-    uint32_t extEncryptionMethods;
+    uint16_t userDataType{CS_SECURITY};
+    uint16_t length{12};
+    uint32_t encryptionMethods = _40BIT_ENCRYPTION_FLAG | _128BIT_ENCRYPTION_FLAG;
+    uint32_t extEncryptionMethods{0};
 
     CSSecurity()
-    : userDataType(CS_SECURITY)
-    , length(12)
-    , encryptionMethods(_40BIT_ENCRYPTION_FLAG | _128BIT_ENCRYPTION_FLAG)
-    , extEncryptionMethods(0)
-    {
-    }
+    = default;
 
     void emit(OutStream & stream) const
     {
@@ -136,4 +132,5 @@ struct CSSecurity {
     }
 };
 
-}} // namespaces
+} // namespace UserData
+} // namespace GCC

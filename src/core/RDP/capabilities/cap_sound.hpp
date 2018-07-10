@@ -57,12 +57,11 @@ enum {
 };
 
 struct SoundCaps : public Capability {
-    uint16_t soundFlags;
-    uint16_t pad2octetsA;
+    uint16_t soundFlags{SOUND_BEEPS_FLAG}; // True by default
+    uint16_t pad2octetsA{0}; // MUST be ignored
+
     SoundCaps()
     : Capability(CAPSTYPE_SOUND, CAPLEN_SOUND)
-    , soundFlags(SOUND_BEEPS_FLAG)  // True by default
-    , pad2octetsA(0)                // MUST be ignored
     {
     }
 

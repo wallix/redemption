@@ -27,8 +27,6 @@ struct WidgetLabelGrid : public WidgetGrid
     static const unsigned x_padding_label = 3;
     static const unsigned y_padding_label = 1;
 
-    bool toDelete[GRID_NB_COLUMNS_MAX][GRID_NB_ROWS_MAX];
-
     Font const & font;
 
     WidgetLabelGrid(gdi::GraphicApi & drawable, Widget & parent,

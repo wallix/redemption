@@ -39,6 +39,7 @@ h
 #include "core/RDP/rdp_pointer.hpp"
 #include "core/report_message_api.hpp"
 #include "core/session_reactor.hpp"
+#include "keyboard/keymap2.hpp"
 #include "keyboard/keymapSym.hpp"
 #include "main/version.hpp"
 #include "mod/internal/client_execute.hpp"
@@ -413,16 +414,14 @@ public:
         }
 
     private:
-        BasicResult() noexcept
-          : is_ok(false)
-        {}
+        BasicResult() noexcept = default;
 
         BasicResult(T value) noexcept
           : is_ok(true)
           , value(value)
         {}
 
-        bool is_ok;
+        bool is_ok = false;
         T value;
     };
 
@@ -902,7 +901,7 @@ public:
     } // rdp_input_mouse
 
     void rdp_input_scancode(
-        long param1, long /*param2*/, long device_flags, long /*param4*/, Keymap2 * /*keymap*/
+        long param1, long /*param2*/, long device_flags, long /*param4*/, Keymap2 * keymap
     ) override {
         if (this->state != UP_AND_RUNNING) {
             return;
@@ -915,6 +914,10 @@ public:
         // TODO As down/up state is not stored in keymapSym, code below is quite dangerous
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, param1=%ld)", device_flags, param1);
+        }
+
+        if (0x45 == param1) {
+            this->keymapSym.toggle_num_lock(keymap->is_num_locked());
         }
 
         uint8_t downflag = !(device_flags & KBD_FLAG_UP);
@@ -1538,7 +1541,7 @@ protected:
     Buf64k server_data_buf;
 
 public:
-    void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override
+    void draw_event(time_t /*now*/, gdi::GraphicApi & gd) override
     {
         if (bool(this->verbose & VNCVerbose::draw_event)) {
             LOG(LOG_INFO, "vnc::draw_event");
@@ -1546,7 +1549,7 @@ public:
 
         this->server_data_buf.read_from(this->t);
 
-        while (this->draw_event_impl(drawable)) {
+        while (this->draw_event_impl(gd)) {
         }
 
         if (bool(this->verbose & VNCVerbose::draw_event)) {
@@ -1557,12 +1560,12 @@ public:
     }
 
 private:
-    bool draw_event_impl(gdi::GraphicApi & drawable)
+    bool draw_event_impl(gdi::GraphicApi & gd)
     {
         switch (this->state)
         {
         case DO_INITIAL_CLEAR_SCREEN:
-            this->initial_clear_screen(drawable);
+            this->initial_clear_screen(gd);
             return false;
 
         case UP_AND_RUNNING:
@@ -1571,7 +1574,7 @@ private:
             }
 
             try {
-                while (this->up_and_running_ctx.run(this->server_data_buf, drawable, *this)) {
+                while (this->up_and_running_ctx.run(this->server_data_buf, gd, *this)) {
                     this->up_and_running_ctx.restart();
                 }
                 this->update_screen(Rect(0, 0, this->width, this->height), 1);
@@ -1921,7 +1924,7 @@ private:
                 if (p && *p){
                     support_zrle_encoding          = false;
                     for (;;){
-                        while (*p && *p == ','){++p;}
+                        while (*p == ','){++p;}
                         char * end;
                         int32_t encoding_type = std::strtol(p, &end, 0);
                         if (p == end) { break; }
@@ -2447,7 +2450,7 @@ private:
     } // lib_palette_update
 
     /******************************************************************************/
-    void lib_open_clip_channel(void) {
+    void lib_open_clip_channel() {
         const CHANNELS::ChannelDef * channel = this->get_channel_by_name(channel_names::cliprdr);
 
         if (channel) {

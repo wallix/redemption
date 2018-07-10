@@ -20,8 +20,15 @@
 
 #pragma once
 
+#include "core/RDP/clipboard.hpp"
+#include "main/version.hpp"
+#include "utils/cli.hpp"
+#include "utils/fileutils.hpp"
 
-
+#include "client_redemption/client_input_output_api/rdp_clipboard_config.hpp"
+#include "client_redemption/client_input_output_api/rdp_disk_config.hpp"
+#include "client_redemption/client_input_output_api/rdp_sound_config.hpp"
+#include "client_redemption/client_redemption_api.hpp"
 
 #include <algorithm>
 // #include <string>
@@ -29,19 +36,6 @@
 #include <climits>
 #include <cstdint>
 #include <openssl/ssl.h>
-
-
-#include "utils/cli.hpp"
-#include "core/RDP/clipboard.hpp"
-#include "main/version.hpp"
-
-#include "client_redemption/client_redemption_api.hpp"
-
-#include "client_redemption/client_input_output_api/rdp_clipboard_config.hpp"
-#include "client_redemption/client_input_output_api/rdp_disk_config.hpp"
-#include "client_redemption/client_input_output_api/rdp_sound_config.hpp"
-
-
 
 
 class ClientRedemptionConfig: public ClientRedemptionAPI
@@ -245,6 +239,7 @@ public:
             cli::option("remote-exe").help("Connection as remote application and set the line command.")
             .action(cli::arg("command", [this](std::string line){
                 this->mod_state = MOD_RDP_REMOTE_APP;
+                this->enable_shared_remoteapp = true;
                 auto pos(line.find(' '));
                 if (pos == std::string::npos) {
                     this->source_of_ExeOrFile = std::move(line);
@@ -326,7 +321,7 @@ public:
                 this->SHARE_DIR = std::move(s);
             })),
 
-            cli::option("remote-dir").help("Remote directory")
+            cli::option("remote-dir").help("Remote working directory")
             .action(cli::arg_location("directory", this->source_of_WorkingDir))
         );
 
@@ -588,7 +583,6 @@ public:
 
 
 
-
     void openWindowsData() override {
         if (std::ifstream ifile{this->WINDOWS_CONF}) {
             this->windowsData.no_data = false;
@@ -597,26 +591,24 @@ public:
             int pos = 0;
 
             getline(ifile, line);
-            pos = line.find(" ");
+            pos = line.find(' ');
             line = line.substr(pos, line.length());
             this->windowsData.form_x = std::stoi(line);
 
             getline(ifile, line);
-            pos = line.find(" ");
+            pos = line.find(' ');
             line = line.substr(pos, line.length());
             this->windowsData.form_y = std::stoi(line);
 
             getline(ifile, line);
-            pos = line.find(" ");
+            pos = line.find(' ');
             line = line.substr(pos, line.length());
             this->windowsData.screen_x = std::stoi(line);
 
             getline(ifile, line);
-            pos = line.find(" ");
+            pos = line.find(' ');
             line = line.substr(pos, line.length());
             this->windowsData.screen_y = std::stoi(line);
-
-            ifile.close();
         }
     }
 
@@ -752,7 +744,7 @@ public:
                 } else
                 if (line.compare(0, pos, "name") == 0) {
                     if (read_id) {
-                        this->userProfils.push_back({read_id, info.c_str()});
+                        this->userProfils.push_back({read_id, info});
                     }
                 } else
                 if (this->current_user_profil == read_id) {
@@ -816,6 +808,11 @@ public:
                             this->enable_shared_clipboard = true;
                         }
                     } else
+                    if (line.compare(0, pos, "enable_shared_remoteapp") == 0) {
+                        if (std::stoi(info)) {
+                            this->enable_shared_remoteapp = true;
+                        }
+                    } else
                     if (line.compare(0, pos, "enable_shared_virtual_disk") == 0) {
                         if (std::stoi(info)) {
                             this->enable_shared_virtual_disk = true;
@@ -862,11 +859,7 @@ public:
                 std::string info = line.substr(pos + 1);
 
                 if (line.compare(0, pos, "save_pwd") == 0) {
-                    if (info.compare(std::string("true")) == 0) {
-                        this->_save_password_account = true;
-                    } else {
-                        this->_save_password_account = false;
-                    }
+                    this->_save_password_account = (info == "true");
                 } else
                 if (line.compare(0, pos, "last_target") == 0) {
                     this->_last_target_index = std::stoi(info);
@@ -919,7 +912,7 @@ public:
             std::string title(ip + " - " + name);
 
             for (int i = 0; i < this->_accountNB; i++) {
-                if (this->_accountData[i].title.compare(title) == 0) {
+                if (this->_accountData[i].title == title) {
                     alreadySet = true;
                     this->_last_target_index = i;
                     this->_accountData[i].pwd  = pwd;
@@ -1127,7 +1120,6 @@ public:
     void setDefaultConfig() override {
         //this->current_user_profil = 0;
         this->info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
-        this->info.console_session = 0;
         this->info.brush_cache_code = 0;
         this->info.bpp = 24;
         this->info.width  = 800;
@@ -1178,7 +1170,6 @@ public:
                 new_ofile << "\nid "     << this->userProfils[this->current_user_profil].id   << "\n";
                 new_ofile << "name "   << this->userProfils[this->current_user_profil].name << "\n";
                 new_ofile << "keylayout "             << this->info.keylayout               << "\n";
-                new_ofile << "console_session "       << this->info.console_session         << "\n";
                 new_ofile << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
                 new_ofile << "bpp "                   << this->info.bpp                     << "\n";
                 new_ofile << "width "                 << this->rdp_width                   << "\n";
@@ -1194,6 +1185,7 @@ public:
 //                 new_ofile << "delta_time "            << this->delta_time << "\n";
                 new_ofile << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
                 new_ofile << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
+                new_ofile << "enable_shared_remoteapp " << this->enable_shared_remoteapp << "\n";
                 new_ofile << "share-dir "                              << this->SHARE_DIR << std::endl;
                 new_ofile << "remote-exe "                              << this->full_cmd_line << std::endl;
                 new_ofile << "remote-dir "                              << this->source_of_WorkingDir << std::endl;
@@ -1208,7 +1200,6 @@ public:
                 ofichier.seekp(ofichier.tellg());
                 ofichier << "name "   << this->userProfils[this->current_user_profil].name << "\n";
                 ofichier << "keylayout "             << this->info.keylayout               << "\n";
-                ofichier << "console_session "       << this->info.console_session         << "\n";
                 ofichier << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
                 ofichier << "bpp "                   << this->info.bpp                       << "\n";
                 ofichier << "width "                 << this->rdp_width                   << "\n";
@@ -1224,6 +1215,7 @@ public:
 //                 ofichier << "delta_time "            << this->delta_time << "\n";
                 ofichier << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
                 ofichier << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
+                ofichier << "enable_shared_remoteapp " << this->enable_shared_remoteapp << "\n";
                 ofichier << "share-dir "                              << this->SHARE_DIR << std::endl;
                 ofichier << "remote-exe "                              << this->full_cmd_line << std::endl;
                 ofichier << "remote-dir "                              << this->source_of_WorkingDir << std::endl;

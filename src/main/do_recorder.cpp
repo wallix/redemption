@@ -283,19 +283,19 @@ public:
 
                 if (this->info_version > 3) {
                     info_number_of_cache            = stream.in_uint8();
-                    info_use_waiting_list           = (stream.in_uint8() ? true : false);
+                    info_use_waiting_list           = bool(stream.in_uint8());
 
-                    info_cache_0_persistent         = (stream.in_uint8() ? true : false);
-                    info_cache_1_persistent         = (stream.in_uint8() ? true : false);
-                    info_cache_2_persistent         = (stream.in_uint8() ? true : false);
+                    info_cache_0_persistent         = bool(stream.in_uint8());
+                    info_cache_1_persistent         = bool(stream.in_uint8());
+                    info_cache_2_persistent         = bool(stream.in_uint8());
 
                     info_cache_3_entries            = stream.in_uint16_le();
                     info_cache_3_size               = stream.in_uint16_le();
-                    info_cache_3_persistent         = (stream.in_uint8() ? true : false);
+                    info_cache_3_persistent         = bool(stream.in_uint8());
 
                     info_cache_4_entries            = stream.in_uint16_le();
                     info_cache_4_size               = stream.in_uint16_le();
-                    info_cache_4_persistent         = (stream.in_uint8() ? true : false);
+                    info_cache_4_persistent         = bool(stream.in_uint8());
 
                     //uint8_t info_compression_algorithm = stream.in_uint8();
                     //assert(info_compression_algorithm < 3);
@@ -548,19 +548,19 @@ private:
             }
             else {
                 this->info_number_of_cache       = this->stream.in_uint8();
-                this->info_use_waiting_list      = (this->stream.in_uint8() ? true : false);
+                this->info_use_waiting_list      = bool(this->stream.in_uint8());
 
-                this->info_cache_0_persistent    = (this->stream.in_uint8() ? true : false);
-                this->info_cache_1_persistent    = (this->stream.in_uint8() ? true : false);
-                this->info_cache_2_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_0_persistent    = bool(this->stream.in_uint8());
+                this->info_cache_1_persistent    = bool(this->stream.in_uint8());
+                this->info_cache_2_persistent    = bool(this->stream.in_uint8());
 
                 this->info_cache_3_entries       = this->stream.in_uint16_le();
                 this->info_cache_3_size          = this->stream.in_uint16_le();
-                this->info_cache_3_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_3_persistent    = bool(this->stream.in_uint8());
 
                 this->info_cache_4_entries       = this->stream.in_uint16_le();
                 this->info_cache_4_size          = this->stream.in_uint16_le();
-                this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_4_persistent    = bool(this->stream.in_uint8());
 
                 this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
                 assert(is_valid_enum_value(this->info_compression_algorithm));
@@ -1153,13 +1153,14 @@ inline void remove_file(
 }
 
 inline
-static void raise_error(UpdateProgressData::Format pgs_format, std::string const & output_filename, int code, const char * message) {
+static void raise_error(
+    UpdateProgressData::Format pgs_format,
+    std::string const& output_filename,
+    int code, const char * message)
+{
     if (!output_filename.length()) {
         return;
     }
-
-    char outfile_pid[32];
-    std::snprintf(outfile_pid, sizeof(outfile_pid), "%06u", unsigned(getpid()));
 
     char outfile_path     [1024] = {};
     char outfile_basename [1024] = {};
@@ -1175,9 +1176,10 @@ static void raise_error(UpdateProgressData::Format pgs_format, std::string const
                   );
 
     char progress_filename[4096];
-    std::snprintf( progress_filename, sizeof(progress_filename), "%s%s-%s.pgs"
-            , outfile_path, outfile_basename, outfile_pid);
+    std::snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
+            , outfile_path, outfile_basename);
 
+    (void)unlink(progress_filename);
     UpdateProgressData update_progress_data(pgs_format, progress_filename, 0, 0, 0, 0);
 
     update_progress_data.raise_error(code, message);
@@ -1411,16 +1413,16 @@ inline int is_encrypted_file(const char * input_filename, bool & infile_is_encry
     return -1;
 }
 
-inline int get_joint_visibility_rect(
-                  Rect & out_max_image_frame_rect,
-                  Rect & out_min_image_frame_rect,
-                  std::string & infile_path, std::string & input_basename, std::string & infile_extension,
-                  std::string & hash_path,
-                  UpdateProgressData::Format pgs_format,
-                  std::string & output_filename,
-                  bool infile_is_encrypted,
-                  Inifile & ini, CryptoContext & cctx,
-                  Fstat & fstat, uint32_t verbose)
+inline void get_joint_visibility_rect(
+    Rect & out_max_image_frame_rect,
+    Rect & out_min_image_frame_rect,
+    std::string const& infile_path,
+    std::string const& input_basename,
+    std::string const& infile_extension,
+    std::string const& hash_path,
+    bool infile_is_encrypted,
+    Inifile & ini, CryptoContext & cctx,
+    Fstat & fstat, uint32_t verbose)
 {
     char infile_prefix[4096];
     std::snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), input_basename.c_str());
@@ -1431,7 +1433,7 @@ inline int get_joint_visibility_rect(
       : InMetaSequenceTransport::EncryptionMode::NotEncrypted;
 
     unsigned file_count = 0;
-    try {
+    {
         InCryptoTransport buf_meta(cctx, encryption_mode, fstat);
         MwrmReader mwrm_reader(buf_meta);
         MetaLine meta_line;
@@ -1448,17 +1450,6 @@ inline int get_joint_visibility_rect(
             }
         }
     }
-    catch (const Error & e) {
-        if (e.id == static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)) {
-            std::cerr << "Asked time not found in mwrm file\n";
-        }
-        else {
-            std::cerr << "Error: " << e.errmsg() << std::endl;
-        }
-        const bool msg_with_error_id = false;
-        raise_error(pgs_format, output_filename, e.id, e.errmsg(msg_with_error_id));
-        return -1;
-    };
 
     InMetaSequenceTransport in_wrm_trans(
         cctx, infile_prefix,
@@ -1470,73 +1461,53 @@ inline int get_joint_visibility_rect(
     timeval begin_capture = {0, 0};
     timeval end_capture = {0, 0};
 
-    int result = -1;
-    try {
-        for (unsigned i = 1; i < file_count ; i++) {
-            in_wrm_trans.next();
-        }
+    for (unsigned i = 1; i < file_count ; i++) {
+        in_wrm_trans.next();
+    }
 
-        FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(verbose));
+    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(verbose));
 
-        int return_code = 0;
+    player.play(program_requested_to_shutdown);
 
+    if (player.remote_app) {
+        out_max_image_frame_rect = player.max_image_frame_rect.intersect(Rect(0, 0, player.info_width, player.info_height));
+        if (out_max_image_frame_rect.cx & 1)
         {
-            try {
-                player.play(program_requested_to_shutdown);
+            if (out_max_image_frame_rect.x + out_max_image_frame_rect.cx < player.info_width) {
+                out_max_image_frame_rect.cx += 1;
             }
-            catch (Error const &) {
-                return_code = -1;
-            }
-        }
-
-        if (player.remote_app) {
-            out_max_image_frame_rect = player.max_image_frame_rect.intersect(Rect(0, 0, player.info_width, player.info_height));
-            if (out_max_image_frame_rect.cx & 1)
-            {
-                if (out_max_image_frame_rect.x + out_max_image_frame_rect.cx < player.info_width) {
-                    out_max_image_frame_rect.cx += 1;
-                }
-                else if (out_max_image_frame_rect.x > 0) {
-                    out_max_image_frame_rect.x  -=1;
-                    out_max_image_frame_rect.cx += 1;
-                }
-            }
-
-            out_min_image_frame_rect = Rect(0, 0,
-                std::min(player.min_image_frame_dim.w, player.info_width),
-                std::min(player.min_image_frame_dim.h, player.info_height));
-            if (!out_min_image_frame_rect.isempty()) {
-                if (out_min_image_frame_rect.cx & 1) {
-                    out_min_image_frame_rect.cx++;
-                }
-
-                out_min_image_frame_rect.x = (player.info_width  - out_min_image_frame_rect.cx) / 2;
-                out_min_image_frame_rect.y = (player.info_height - out_min_image_frame_rect.cy) / 2;
+            else if (out_max_image_frame_rect.x > 0) {
+                out_max_image_frame_rect.x  -=1;
+                out_max_image_frame_rect.cx += 1;
             }
         }
 
-        result = return_code;
-    }
-    catch (const Error & e) {
-        const bool msg_with_error_id = false;
-        raise_error(pgs_format, output_filename, e.id, e.errmsg(msg_with_error_id));
-    }
+        out_min_image_frame_rect = Rect(0, 0,
+            std::min(player.min_image_frame_dim.w, player.info_width),
+            std::min(player.min_image_frame_dim.h, player.info_height));
+        if (!out_min_image_frame_rect.isempty()) {
+            if (out_min_image_frame_rect.cx & 1) {
+                out_min_image_frame_rect.cx++;
+            }
 
-    return result;
+            out_min_image_frame_rect.x = (player.info_width  - out_min_image_frame_rect.cx) / 2;
+            out_min_image_frame_rect.y = (player.info_height - out_min_image_frame_rect.cy) / 2;
+        }
+    }
 }
 
 inline int replay(std::string & infile_path, std::string & input_basename, std::string & infile_extension,
-                  std::string & hash_path,
-                  CaptureFlags & capture_flags,
+                  std::string const& hash_path,
+                  CaptureFlags const& capture_flags,
                   UpdateProgressData::Format pgs_format,
                   bool chunk,
                   unsigned ocr_version,
-                  std::string & output_filename,
+                  std::string const& output_filename,
                   int64_t begin_cap,
                   int64_t end_cap,
                   PngParams & png_params,
                   VideoParams & video_params,
-                  FullVideoParams & full_video_params,
+                  FullVideoParams const& full_video_params,
                   int wrm_color_depth,
                   uint32_t wrm_frame_interval,
                   uint32_t wrm_break_interval,
@@ -1567,7 +1538,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     ini.set<cfg::ocr::version>(ocr_version == 2 ? OcrVersion::v2 : OcrVersion::v1);
 
     if (chunk){
-        ini.get_ref<cfg::video::disable_keyboard_log>() &= ~KeyboardLogFlags::meta;
         ini.set<cfg::ocr::interval>(std::chrono::seconds{1});
     }
 
@@ -1645,7 +1615,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
     int result = -1;
     try {
-        bool test = (
+        bool const test = (
                bool(capture_flags & CaptureFlags::video)
             || bool(capture_flags & CaptureFlags::ocr)
             || bool(capture_flags & CaptureFlags::png)
@@ -1659,7 +1629,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
             || end_cap != begin_cap);
 
         if (test){
-            for (unsigned i = 1; i < file_count ; i++) {
+            for (unsigned i = 1; i < file_count; i++) {
                 in_wrm_trans.next();
             }
 
@@ -1702,7 +1672,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                     << '\n' << std::endl;
                     }
 
-                    if (clear == 1) {
+                    if (clear) {
                         clear_files_flv_meta_png(outfile_path, outfile_basename);
                     }
 
@@ -1743,12 +1713,12 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             //std::cout << "zoom: " << zoom << '%' << std::endl;
                         }
 
-                        ini.set<cfg::video::video_break_interval>(std::chrono::seconds{video_break_interval});
                         ini.set<cfg::video::bogus_vlc_frame_rate>(video_params.bogus_vlc_frame_rate);
                         ini.set<cfg::globals::video_quality>(video_params.video_quality);
                         ini.set<cfg::globals::codec_id>(video_params.codec);
                         video_params = video_params_from_ini(
-                            player.screen_rect.cx, player.screen_rect.cy, ini);
+                            player.screen_rect.cx, player.screen_rect.cy,
+                            std::chrono::seconds{video_break_interval}, ini);
 
                         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
                         const char * record_path = record_tmp_path;
@@ -2064,7 +2034,7 @@ struct RecorderParams {
     bool auto_output_file   = false;
     bool remove_input_file  = false;
     uint32_t    clear       = 1; // default on
-    bool infile_is_encrypted = 0;
+    bool infile_is_encrypted = false;
     bool chunk = false;
 
     // verifier options
@@ -2122,7 +2092,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         {'u', "full", "create full video"},
         {'c', "chunk", "chunk splitting on title bar change detection"},
 
-        {"clear", &recorder.clear, "clear old capture files with same prefix (default on)"},
+        {"clear", &recorder.clear, "clear old capture files with same prefix (default on, 0 to disable)"},
         {"verbose", &verbose, "more logs"},
         {"zoom", &recorder.png_params.zoom, "scaling factor for png capture (default 100%)"},
         {'g', "png-geometry", &png_geometry, "png capture geometry (Ex. 160x120)"},
@@ -2149,6 +2119,14 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
         {"json-pgs", "use json format to .pgs file"},
     });
+
+    auto cl_error = [&recorder](char const* mes, int const errnum = 1){
+        std::cerr << mes << "\n";
+        if (recorder.json_pgs) {
+            raise_error(UpdateProgressData::JSON_FORMAT, recorder.output_filename, errnum, mes);
+        }
+        return ClRes::Err;
+    };
 
     auto options = program_options::parse_command_line(argc, argv, desc);
 
@@ -2206,18 +2184,17 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
       | ((recorder.chunk || options.count("ocr"))   ? CaptureFlags::ocr   : CaptureFlags::none);
 
     if (options.count("video-quality") > 0) {
-            if (0 == strcmp(recorder.video_quality.c_str(), "high")) {
+        if      (0 == strcmp(recorder.video_quality.c_str(), "high")) {
             recorder.video_params.video_quality = Level::high;
         }
         else if (0 == strcmp(recorder.video_quality.c_str(), "low")) {
             recorder.video_params.video_quality = Level::low;
         }
-        else  if (0 == strcmp(recorder.video_quality.c_str(), "medium")) {
+        else if (0 == strcmp(recorder.video_quality.c_str(), "medium")) {
             recorder.video_params.video_quality = Level::medium;
         }
         else {
-            std::cerr << "Unknown video quality" << std::endl;
-            return ClRes::Err;
+            return cl_error("Unknown video quality");
         }
     }
 
@@ -2229,8 +2206,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
                                  : (color_depth == "original") ? static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)
                                  : 0;
         if (!recorder.wrm_color_depth){
-            std::cerr << "Unknown wrm color depth\n\n";
-            return ClRes::Err;
+            return cl_error("Unknown wrm color depth");
         }
     }
 
@@ -2240,8 +2216,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
     if ((options.count("zoom") > 0)
     && (options.count("png-geometry") > 0)) {
-        std::cerr << "Conflicting options : --zoom and --png-geometry\n\n";
-        return ClRes::Err;
+        return cl_error("Conflicting options: --zoom and --png-geometry");
     }
 
     if (options.count("png-geometry") > 0) {
@@ -2253,8 +2228,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
             png_h = atoi(separator + 1);
         }
         if (!png_w || !png_h) {
-            std::cerr << "Invalide png geometry\n\n";
-            return ClRes::Err;
+            return cl_error("Invalide png geometry");
         }
         recorder.png_params.png_width  = png_w;
         recorder.png_params.png_height = png_h;
@@ -2264,7 +2238,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     //recorder.video_params.video_codec = "flv";
 
     if (options.count("compression") > 0) {
-         if (wrm_compression_algorithm == "none") {
+        if (wrm_compression_algorithm == "none") {
             recorder.wrm_compression_algorithm_ = static_cast<int>(WrmCompressionAlgorithm::no_compression);
         }
         else if (wrm_compression_algorithm == "gzip") {
@@ -2277,15 +2251,13 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
             recorder.wrm_compression_algorithm_ = static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
         }
         else {
-            std::cerr << "Unknown wrm compression algorithm\n\n";
-            return ClRes::Err;
+            return cl_error("Unknown wrm compression algorithm");
         }
     }
 
     if (options.count("hash-path") > 0){
         if (recorder.hash_path.c_str()[0] == 0) {
-            std::cerr << "Missing hash-path : use -h path\n\n";
-            return ClRes::Err;
+            return cl_error("Missing hash-path: use -h path");
         }
     }
     else {
@@ -2298,8 +2270,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
     if (options.count("mwrm-path") > 0){
         if (recorder.mwrm_path.c_str()[0] == 0) {
-            std::cerr << "Missing mwrm-path : use -m path\n\n";
-            return ClRes::Err;
+            return cl_error("Missing mwrm-path: use -m path");
         }
     }
     else {
@@ -2307,8 +2278,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     }
 
     if (recorder.input_filename.c_str()[0] == 0) {
-        std::cerr << "Missing input mwrm file name : use -i filename\n\n";
-        return ClRes::Err;
+        return cl_error("Missing input mwrm file name: use -i filename");
     }
 
     // Input path rule is as follow:
@@ -2357,12 +2327,13 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     }
 
     if (is_encrypted_file(recorder.full_path.c_str(), recorder.infile_is_encrypted) == -1) {
-        std::cerr << "Input file is missing.\n";
-        return ClRes::Err;
+        int const errnum = errno;
+        auto const mes = std::string("Input file error: ") + strerror(errnum);
+        return cl_error(mes.c_str(), -errnum);
     }
 
     if (options.count("encryption") > 0) {
-         if (0 == strcmp(recorder.wrm_encryption.c_str(), "enable")) {
+        if (0 == strcmp(recorder.wrm_encryption.c_str(), "enable")) {
             recorder.encryption_type = TraceType::cryptofile;
         }
         else if (0 == strcmp(recorder.wrm_encryption.c_str(), "disable")) {
@@ -2372,8 +2343,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
             recorder.encryption_type = recorder.infile_is_encrypted ? TraceType::cryptofile : TraceType::localfile;
         }
         else {
-            std::cerr << "Unknown wrm encryption parameter\n\n";
-            return ClRes::Err;
+            return cl_error("Unknown wrm encryption parameter");
         }
     }
 
@@ -2524,23 +2494,26 @@ extern "C" {
             if (ini.get<cfg::video::smart_video_cropping>() != SmartVideoCropping::disable) {
                 Rect max_joint_visibility_rect;
                 Rect min_joint_visibility_rect;
-                res = get_joint_visibility_rect(
-                            max_joint_visibility_rect,
-                            min_joint_visibility_rect,
-                            rp.mwrm_path, rp.input_basename, rp.infile_extension,
-                            rp.hash_path,
-                            rp.json_pgs ? UpdateProgressData::JSON_FORMAT : UpdateProgressData::OLD_FORMAT,
-                            rp.output_filename,
-                            rp.infile_is_encrypted,
-                            ini, cctx, fstat,
-                            verbose);
-                if (!res) {
+                try {
+                    get_joint_visibility_rect(
+                        max_joint_visibility_rect,
+                        min_joint_visibility_rect,
+                        rp.mwrm_path, rp.input_basename, rp.infile_extension,
+                        rp.hash_path,
+                        rp.infile_is_encrypted,
+                        ini, cctx, fstat,
+                        verbose
+                    );
+
                     if (ini.get<cfg::video::smart_video_cropping>() == SmartVideoCropping::v2) {
                         crop_rect = min_joint_visibility_rect;
                     }
                     else {
                         crop_rect = max_joint_visibility_rect;
                     }
+                }
+                catch (Error const&) {
+                    // ignore exceptions, logged within replay()
                 }
             }
 
@@ -2583,9 +2556,9 @@ extern "C" {
                 switch (get_encryption_scheme_type(cctx, rp.full_path.c_str(), cbyte_array{}, &out_error))
                 {
                     case EncryptionSchemeTypeResult::Error:
-                        throw out_error;
+                        throw out_error; /* NOLINT(misc-throw-by-value-catch-by-reference) */
                     case EncryptionSchemeTypeResult::OldScheme:
-                        cctx.old_encryption_scheme = 1;
+                        cctx.old_encryption_scheme = true;
                         break;
                     default:
                         break;
@@ -2655,10 +2628,9 @@ extern "C" {
                     std::cout << "decrypt ok" << std::endl;
                     return 0;
                 }
-                else {
-                    std::cout << "decrypt failed" << std::endl;
-                    return -1;
-                }
+
+                std::cout << "decrypt failed" << std::endl;
+                return -1;
             } catch (const Error & e) {
                 std::cout << "decrypt failed: with id=" << e.id << std::endl;
             }

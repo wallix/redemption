@@ -60,7 +60,7 @@ class variables
     struct Pack : Cfg... {};
 
     template<class T, accessmode Mode>
-    static constexpr accessmode mode(var<T, Mode>) {
+    static constexpr accessmode mode(var<T, Mode> /*unused*/) {
         return Mode;
     }
 
@@ -110,7 +110,7 @@ Translation::language_t language(variables<Cfg...> const & vars) {
     return ::language(vars.template get<cfg::translation::language>());
 }
 
-}
+} // namespace vcfg
 
 using vcfg::language;
 

@@ -81,8 +81,7 @@ private:
         : dummy()
         {}
 
-        ~CompressionTransport()
-        {}
+        ~CompressionTransport() {}
     } compressors;
 
     void destruct_()
@@ -119,5 +118,5 @@ private:
     }
 };
 
-typedef CompressionTransportBuilder<GZipCompressionOutTransport, SnappyCompressionOutTransport> CompressionOutTransportBuilder;
-typedef CompressionTransportBuilder<GZipCompressionInTransport, SnappyCompressionInTransport> CompressionInTransportBuilder;
+using CompressionOutTransportBuilder = CompressionTransportBuilder<GZipCompressionOutTransport, SnappyCompressionOutTransport>;
+using CompressionInTransportBuilder = CompressionTransportBuilder<GZipCompressionInTransport, SnappyCompressionInTransport>;

@@ -30,10 +30,10 @@
 
 extern "C" {
 
-static void scrunch(unsigned char *, unsigned long *);
-static void unscrun(unsigned long *, unsigned char *);
-static void desfunc(unsigned long *, unsigned long *);
-static void cookey(unsigned long *);
+static void scrunch(unsigned char * /*outof*/, unsigned long * /*into*/);
+static void unscrun(unsigned long * /*outof*/, unsigned char * /*into*/);
+static void desfunc(unsigned long * /*block*/, unsigned long * /*keys*/);
+static void cookey(unsigned long * /*raw1*/);
 
 static unsigned long KnL[32] = { 0L };
 /*
@@ -111,7 +111,6 @@ void rfbDesKey(const unsigned char *key, int edf)
         }
     }
     cookey(kn);
-    return;
 }
 
 static void cookey(unsigned long *raw1)
@@ -132,7 +131,6 @@ static void cookey(unsigned long *raw1)
         *cook++ |= (*raw1 & 0x0000003fL);
     }
     rfbUseKey(dough);
-    return;
 }
 
 void rfbCPKey(unsigned long *into)
@@ -140,7 +138,6 @@ void rfbCPKey(unsigned long *into)
     unsigned long * from = KnL;
     unsigned long * endp = &KnL[32];
     while ( from < endp ) *into++ = *from++;
-    return;
 }
 
 void rfbUseKey(unsigned long *from)
@@ -148,7 +145,6 @@ void rfbUseKey(unsigned long *from)
     unsigned long * to = KnL;
     unsigned long * endp = &KnL[32];
     while ( to < endp ) *to++ = *from++;
-    return;
 }
 
 void rfbDes(unsigned char *inblock, unsigned char *outblock)
@@ -158,11 +154,10 @@ void rfbDes(unsigned char *inblock, unsigned char *outblock)
     scrunch(inblock, work);
     desfunc(work, KnL);
     unscrun(work, outblock);
-    return;
 }
 
 void rfbDesText(unsigned char *inblock, unsigned char *outblock, unsigned long length,
-                unsigned char *key) {
+                unsigned char const *key) {
     for (unsigned int i = 0; i < 8; i++) {
         inblock[i] ^= key[i];
     }
@@ -186,7 +181,6 @@ static void scrunch(unsigned char *outof, unsigned long *into)
     *into	|= (*outof++ & 0xffL) << 16;
     *into	|= (*outof++ & 0xffL) << 8;
     *into	|= (*outof   & 0xffL);
-    return;
 }
 
 static void unscrun(unsigned long *outof, unsigned char *into)
@@ -199,7 +193,6 @@ static void unscrun(unsigned long *outof, unsigned char *into)
     *into++ = ((*outof >> 16) & 0xffuL);
     *into++ = ((*outof >>  8) & 0xffuL);
     *into	= ( *outof	 & 0xffuL);
-    return;
 }
 
 static unsigned long SP1[64] = {
@@ -425,7 +418,6 @@ static void desfunc(unsigned long* block, unsigned long *keys)
     right ^= (work << 4);
     *block++ = right;
     *block = leftt;
-    return;
 }
 
 /* Validation sets:

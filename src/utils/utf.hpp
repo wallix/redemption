@@ -29,7 +29,8 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include "utils/unicode_case_conversion.h"
+#include "utils/unicode_case_conversion.hpp"
+#include "utils/sugar/cast.hpp"
 
 enum {
       maximum_length_of_utf8_character_in_bytes = 4
@@ -169,7 +170,7 @@ static inline void UTF16Upper(uint8_t * source, size_t max_len)
 
 // UTF8GetLen find the number of bytes of the len first characters of input.
 // It assumes input is valid utf8, zero terminated (that has been checked before).
-static inline size_t UTF8GetPos(uint8_t * source, size_t len)
+static inline size_t UTF8GetPos(uint8_t const * source, size_t len)
 {
     len += 1;
     uint8_t c = 0;
@@ -239,8 +240,8 @@ static inline bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t *
 
 
     size_t insertion_point = i;
-    size_t end_point = insertion_point + strlen(reinterpret_cast<char *>(source+i));
-    size_t to_insert_nbbytes = strlen(reinterpret_cast<const char *>(to_insert));
+    size_t end_point = insertion_point + strlen(char_ptr_cast(source+i));
+    size_t to_insert_nbbytes = strlen(char_ptr_cast(to_insert));
     if (end_point + to_insert_nbbytes + 1 > max_source){
         return false;
     }
@@ -289,13 +290,12 @@ static inline void UTF8RemoveOneAtPos(uint8_t * source, size_t len)
         len -= ((c >> 6) == 2)?0:1;
         if (len == 0) {
             size_t insertion_point = i;
-            size_t end_point = insertion_point + strlen(reinterpret_cast<char *>(source+i));
+            size_t end_point = insertion_point + strlen(char_ptr_cast(source+i));
             uint32_t char_len = UTF8CharNbBytes(source+i);
             memmove(source + i, source + i + char_len, end_point - insertion_point + 1 - char_len);
             break;
         }
     }
-    return;
 }
 
 // UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before
@@ -422,7 +422,7 @@ static inline size_t UTF8toUTF16_CrLf(const uint8_t * source, uint8_t * target, 
         if ((ucode == 0x0D) && (source[i+1] == 0x0A)){
            continue;
         }
-        else if (ucode == 0x0A) {
+        if (ucode == 0x0A) {
             if (i_t + 4 /* CrLf en unicode */ > t_len) { goto UTF8toUTF16_exit; }
             target[i_t]     = 0x0D;
             target[i_t + 1] = 0x00;
@@ -473,7 +473,7 @@ public:
     { ++*this; }
 
     explicit UTF8toUnicodeIterator(const char * str)
-    : UTF8toUnicodeIterator(reinterpret_cast<const uint8_t*>(str))
+    : UTF8toUnicodeIterator(byte_ptr_cast(str))
     {}
 
     UTF8toUnicodeIterator & operator++()
@@ -682,7 +682,7 @@ static inline size_t UTF32toUTF8(uint32_t utf32_char, uint8_t * utf8_target, siz
 
 static inline size_t UTF8ToUTF8LCopy(uint8_t * dest, size_t dest_size, const uint8_t * source)
 {
-    size_t source_len     = strlen(reinterpret_cast<const char *>(source));
+    size_t source_len     = strlen(char_ptr_cast(source));
     if (source_len > dest_size - 1){
         // rule out malformed UTF8 source, we need to check that or the following loop may never end
         if ((source[0] & 0xC0) == 0x80) {
@@ -809,12 +809,12 @@ static inline size_t UTF16toLatin1(const uint8_t * utf16_source_, size_t utf16_l
             return false;
         }
 
-        for (unsigned int i = 0; i < sizeof(UTF16ToLatin1LUT) / sizeof(UTF16ToLatin1LUT[0]); i++) {
-            if (UTF16ToLatin1LUT[i].utf16 == src) {
-                *dst = UTF16ToLatin1LUT[i].latin1;
+        for (UTF16ToLatin1Pair const& pair : UTF16ToLatin1LUT) {
+            if (pair.utf16 == src) {
+                *dst = pair.latin1;
                 return true;
             }
-            else if (UTF16ToLatin1LUT[i].utf16 > src) {
+            if (pair.utf16 > src) {
                 break;
             }
         }

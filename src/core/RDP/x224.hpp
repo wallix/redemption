@@ -370,7 +370,8 @@ namespace X224
 
                 return;
             }
-            else if (action == FastPath::FASTPATH_OUTPUT_ACTION_X224) {
+
+            if (action == FastPath::FASTPATH_OUTPUT_ACTION_X224) {
                 /* 4 bytes */
                 t.recv_boom(*end, X224::TPKT_HEADER_LEN - nbbytes);
                 *end += X224::TPKT_HEADER_LEN - nbbytes;
@@ -1470,7 +1471,7 @@ namespace X224
 
     struct write_x224_dt_tpdu_fn
     {
-        void operator()(StreamSize<7>, OutStream & x224_header, std::size_t sz) const {
+        void operator()(StreamSize<7> /*unused*/ /*unused*/, OutStream & x224_header, std::size_t sz) const {
             X224::DT_TPDU_Send(x224_header, sz);
         }
     };

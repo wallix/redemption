@@ -22,9 +22,18 @@ h
 
 #pragma once
 
+#include "core/buf64k.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "utils/log.hpp"
+#include "utils/stream.hpp"
 #include "utils/verbose_flags.hpp"
+#include "utils/bitmap.hpp"
+#include "utils/sugar/update_lock.hpp"
+#include "gdi/graphic_api.hpp"
+#include "mod/vnc/encoder/encoder_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
+
+#include <vector>
 
 //  7.6.3   RRE Encoding
 //  ====================
@@ -75,26 +84,26 @@ namespace VNC {
                 Data,
                 Exit
             } state;
-        
+
             uint32_t number_of_subrectangles_remain;
             // this could be a fest creation of a monochrome bitmap
-            // or we could also send a drawing order for background color: 
-            // easy and fast and use very few memory, 
+            // or we could also send a drawing order for background color:
+            // easy and fast and use very few memory,
             // then sending data for colored rectangles on the go
             std::vector<uint8_t> rre_raw;
         public:
             VNCVerbose verbose;
 
-            RRE(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy, VNCVerbose verbose) 
+            RRE(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy, VNCVerbose verbose)
                 : bpp(bpp), Bpp(Bpp), x(x), y(y), cx(cx), cy(cy)
                 , state(RREState::Header)
                 , verbose(verbose)
             {
                 this->rre_raw.reserve(cx * cy * Bpp);
             }
-            
-            virtual ~RRE(){}
-            
+
+            virtual ~RRE()= default;
+
             // return is true if the Encoder has finished working (can be reset or deleted),
             // return is false if the encoder is waiting for more data
             EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) override
@@ -171,7 +180,7 @@ namespace VNC {
                 }
                 return EncoderState::Exit; // finished decoding
             }
-            
+
             public:
             void draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawable)
             {
@@ -192,6 +201,6 @@ namespace VNC {
                     }
                 }
             }
-        };            
-    } // namespace encoder
+        };
+    }  // namespace Encoder
 } // namespace VNC

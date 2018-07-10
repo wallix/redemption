@@ -51,11 +51,11 @@ enum {
 };
 
 struct MultiFragmentUpdateCaps : public Capability {
-    uint32_t MaxRequestSize;
+    uint32_t MaxRequestSize{0};
 
     MultiFragmentUpdateCaps()
     : Capability(CAPSETTYPE_MULTIFRAGMENTUPDATE, CAPLEN_MULTIFRAGMENTUPDATE)
-    , MaxRequestSize(0) // 0 by default
+    
     {
     }
 

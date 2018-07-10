@@ -479,7 +479,7 @@ private:
         uint32_t          IDs[CLIPBRD_FORMAT_COUNT];
         std::string       names[CLIPBRD_FORMAT_COUNT];
         int               index = 0;
-        const double      ARBITRARY_SCALE;  //  module MetaFilePic resolution, value=40 is
+        // const double      ARBITRARY_SCALE{40};             //  module MetaFilePic resolution, value=40 is
                                             //  empirically close to original resolution.
 
         ClipbrdFormatsList()
@@ -489,7 +489,7 @@ private:
           , FILEGROUPDESCRIPTORW(
               "F\0i\0l\0e\0G\0r\0o\0u\0p\0D\0e\0s\0c\0r\0i\0p\0t\0o\0r\0W\0\0\0"
             , 42)
-          , ARBITRARY_SCALE(40)
+
         {}
 
         void add_format(uint32_t ID, std::string name) {
@@ -900,7 +900,7 @@ public:
         }
     }
 
-    const CHANNELS::ChannelDefArray & get_channel_list(void) const override {
+    const CHANNELS::ChannelDefArray & get_channel_list() const override {
         return this->_cl;
     }
 
@@ -973,7 +973,7 @@ public:
     //         CLIPBOARD
     //-----------------------------
 
-    void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t , size_t chunk_size, int flags) override {
+    void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t  /*length*/, size_t chunk_size, int flags) override {
         const CHANNELS::ChannelDef * mod_channel = this->_cl.get_by_name(channel.name);
         if (!mod_channel) {
             return;
@@ -1244,7 +1244,7 @@ public:
     //       DRAW FUNCTIONS
     //-----------------------------
 
-    void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
+    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
 
     void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {

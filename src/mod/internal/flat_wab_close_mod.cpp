@@ -50,7 +50,7 @@ namespace
             }
         }
     };
-}
+} // namespace
 
 FlatWabCloseMod::FlatWabCloseMod(
     FlatWabCloseModVariables vars, SessionReactor& session_reactor,
@@ -106,10 +106,8 @@ FlatWabCloseMod::FlatWabCloseMod(
                 this->close_widget.refresh_timeleft((close_timeout - seconds).count());
                 return ctx.ready_to(std::min(std::chrono::seconds{1}, close_timeout));
             }
-            else {
-                ctx.get_reactor().set_event_next(BACK_EVENT_STOP);
-                return ctx.terminate();
-            }
+            ctx.get_reactor().set_event_next(BACK_EVENT_STOP);
+            return ctx.terminate();
         });
     }
 }
@@ -137,4 +135,4 @@ void FlatWabCloseMod::notify(Widget* sender, notify_event_t event)
     }
 }
 
-void FlatWabCloseMod::draw_event(time_t /*now*/, gdi::GraphicApi&) {}
+void FlatWabCloseMod::draw_event(time_t /*now*/, gdi::GraphicApi& /*unused*/) {}

@@ -22,9 +22,17 @@ h
 
 #pragma once
 
-#include "utils/log.hpp"
-#include "utils/verbose_flags.hpp"
+#include "core/buf64k.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "gdi/graphic_api.hpp"
+#include "mod/vnc/encoder/encoder_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
+#include "utils/log.hpp"
+#include "utils/stream.hpp"
+#include "utils/hexdump.hpp"
+#include "utils/bitmap.hpp"
+#include "utils/sugar/update_lock.hpp"
+#include "utils/verbose_flags.hpp"
 
 //    7.6.5   Hextile Encoding
 
@@ -38,28 +46,28 @@ h
 // if the height of the whole rectangle is not an exact multiple of 16 then the height of
 // each tile in the final row will also be smaller.
 
-//    Each tile is either encoded as raw pixel data, or as a variation on RRE. 
+//    Each tile is either encoded as raw pixel data, or as a variation on RRE.
 
 // Each tile has a background pixel value, as before. The background pixel value does
 // not need to be explicitly specified for a given tile if it is the same as the background
-// of the previous tile. However the background pixel value may not be carried over if the previous tile was raw. 
+// of the previous tile. However the background pixel value may not be carried over if the previous tile was raw.
 
 // If all of the subrectangles of a tile have the same pixel value, this can be specified
 // once as a foreground pixel value for the whole tile. As with the background, the
 // foreground pixel value can be left unspecified, meaning it is carried over from the
-// previous tile. 
+// previous tile.
 
-// The foreground pixel value may not be carried over if the previous tile 
-// was raw or had the SubrectsColored bit set. 
+// The foreground pixel value may not be carried over if the previous tile
+// was raw or had the SubrectsColored bit set.
 
-// It may, however, be carried over from a previous tile with the AnySubrects bit clear, 
+// It may, however, be carried over from a previous tile with the AnySubrects bit clear,
 // as long as that tile itself carried over a valid foreground from its previous tile.
 
-//    So the data consists of each tile encoded in order. 
+//    So the data consists of each tile encoded in order.
 // Each tile begins with a subencoding type byte, which is a mask made up of a number of bits:
 
 //    No. of bytes      Type
-//    1                  U8      
+//    1                  U8
 
 //    subencoding-mask:
 //      1   Raw
@@ -68,9 +76,9 @@ h
 //      8   AnySubrects
 //      16  SubrectsColoured
 
-//    If the Raw bit is set then the other bits are irrelevant; 
+//    If the Raw bit is set then the other bits are irrelevant;
 // width * height pixel values follow (where width and height are the width
-// and height of the tile). 
+// and height of the tile).
 
 // Otherwise the other bits in the mask are as follows:
 
@@ -80,7 +88,7 @@ h
 //        No. of bytes      Type          Description
 //        bytesPerPixel     PIXEL       background-pixel-value
 
-//        The first non-raw tile in a rectangle must have this bit set. 
+//        The first non-raw tile in a rectangle must have this bit set.
 // If this bit isn't set then the background is the same as the last tile.
 
 //    ForegroundSpecified
@@ -154,8 +162,8 @@ namespace VNC {
 
             Hextile(uint8_t bpp, uint8_t Bpp, size_t x, size_t y, size_t cx, size_t cy, VNCVerbose verbose)
                  : bpp(bpp), Bpp(Bpp), r(x, y, cx, cy)
-                 , tile(Rect(this->r.x, this->r.y, 
-                      std::min<size_t>(this->r.cx, 16), 
+                 , tile(Rect(this->r.x, this->r.y,
+                      std::min<size_t>(this->r.cx, 16),
                       std::min<size_t>(this->r.cy, 16)))
                  , cx_remain{0}
                  , cy_remain{0}
@@ -167,8 +175,8 @@ namespace VNC {
                  this->cx_remain = this->r.cx;
                  this->cy_remain = this->r.cy;
             }
-            
-            virtual ~Hextile(){}
+
+            virtual ~Hextile()= default;
 
             // return is EncoderState::Exit if the Encoder has finished working (can be reset or deleted),
             // return is EncoderState::NeedMoreData if the encoder is waiting for more data
@@ -314,7 +322,7 @@ namespace VNC {
                         LOG(LOG_INFO, "consumed tile_bytes %zu", tile_bytes);
                     }
                     buf.advance(tile_bytes);
-                    
+
 
                     if (not this->next_tile()){
                         if (bool(this->verbose & VNCVerbose::hextile_encoder)){
@@ -330,13 +338,13 @@ namespace VNC {
             }
 
             void draw_tile(const uint8_t * raw, gdi::GraphicApi & drawable)
-            {            
+            {
                 update_lock<gdi::GraphicApi> lock(drawable);
                 const Bitmap bmp(raw, this->tile.cx, this->tile.cy, this->bpp, Rect(0, 0, this->tile.cx, this->tile.cy));
                 const RDPMemBlt cmd(0, this->tile, 0xCC, 0, 0, 0);
                 drawable.draw(cmd, this->tile, bmp);
             }
-            
+
             // return false if there is no next tile any more
             bool next_tile()
             {
@@ -356,11 +364,11 @@ namespace VNC {
                 this->tile.cx = std::min<size_t>(16, this->cx_remain);
                 return true;
             }
-        
+
             const Rect current_tile() const
             {
                 return this->tile;
             }
-        };    
-    } // namespace encoder
+        };
+    }  // namespace Encoder
 } // namespace VNC

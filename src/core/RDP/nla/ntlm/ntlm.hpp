@@ -41,7 +41,7 @@ namespace {
         Ntlm_Name,              // Name
         Ntlm_Comment            // Comment
     };
-}
+} // namespace
 
 struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable
 {
@@ -136,8 +136,8 @@ public:
             if (!this->credentials) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
             }
-            this->context->ntlm_SetContextWorkstation(reinterpret_cast<uint8_t*>(pszTargetName));
-            this->context->ntlm_SetContextServicePrincipalName(reinterpret_cast<uint8_t*>(pszTargetName));
+            this->context->ntlm_SetContextWorkstation(byte_ptr_cast(pszTargetName));
+            this->context->ntlm_SetContextServicePrincipalName(byte_ptr_cast(pszTargetName));
 
             this->context->identity.CopyAuthIdentity(this->credentials->identity);
         }
@@ -161,42 +161,39 @@ public:
             }
             return SEC_E_OUT_OF_SEQUENCE;
         }
-        else {
-            PSecBuffer input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
 
-            if (!input_buffer) {
+        PSecBuffer input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
+
+        if (!input_buffer) {
+            return SEC_E_INVALID_TOKEN;
+        }
+        if (input_buffer->Buffer.size() < 1) {
+            return SEC_E_INVALID_TOKEN;
+        }
+        // channel_bindings = sspi_FindSecBuffer(pInput, SECBUFFER_CHANNEL_BINDINGS);
+
+        // if (channel_bindings) {
+        //     this->context->Bindings.BindingsLength = channel_bindings->cbBuffer;
+        //     this->context->Bindings.Bindings = (SEC_CHANNEL_BINDINGS*) channel_bindings->pvBuffer;
+        // }
+
+        if (this->context->state == NTLM_STATE_CHALLENGE) {
+            this->context->read_challenge(input_buffer);
+
+            if (!pOutput) {
                 return SEC_E_INVALID_TOKEN;
             }
-            if (input_buffer->Buffer.size() < 1) {
+            PSecBuffer output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
+
+            if (!output_buffer) {
                 return SEC_E_INVALID_TOKEN;
             }
-            // channel_bindings = sspi_FindSecBuffer(pInput, SECBUFFER_CHANNEL_BINDINGS);
-
-            // if (channel_bindings) {
-            //     this->context->Bindings.BindingsLength = channel_bindings->cbBuffer;
-            //     this->context->Bindings.Bindings = (SEC_CHANNEL_BINDINGS*) channel_bindings->pvBuffer;
-            // }
-
-            if (this->context->state == NTLM_STATE_CHALLENGE) {
-                this->context->read_challenge(input_buffer);
-
-                if (!pOutput) {
-                    return SEC_E_INVALID_TOKEN;
-                }
-                PSecBuffer output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
-
-                if (!output_buffer) {
-                    return SEC_E_INVALID_TOKEN;
-                }
-                if (output_buffer->Buffer.size() < 1) {
-                    return SEC_E_INSUFFICIENT_MEMORY;
-                }
-                if (this->context->state == NTLM_STATE_AUTHENTICATE) {
-                    return this->context->write_authenticate(output_buffer);
-                }
+            if (output_buffer->Buffer.size() < 1) {
+                return SEC_E_INSUFFICIENT_MEMORY;
             }
-
-            return SEC_E_OUT_OF_SEQUENCE;
+            if (this->context->state == NTLM_STATE_AUTHENTICATE) {
+                return this->context->write_authenticate(output_buffer);
+            }
         }
 
         return SEC_E_OUT_OF_SEQUENCE;
@@ -249,7 +246,8 @@ public:
 
             return SEC_E_OUT_OF_SEQUENCE;
         }
-        else if (this->context->state == NTLM_STATE_AUTHENTICATE) {
+
+        if (this->context->state == NTLM_STATE_AUTHENTICATE) {
             PSecBuffer input_buffer = input.FindSecBuffer(SECBUFFER_TOKEN);
 
             if (!input_buffer) {
@@ -260,7 +258,7 @@ public:
             }
 
             if (this->hardcoded_tests) {
-                this->context->identity.SetPasswordFromUtf8(reinterpret_cast<uint8_t const *>("Pénélope"));
+                this->context->identity.SetPasswordFromUtf8(byte_ptr_cast("Pénélope"));
             }
             SEC_STATUS status = this->context->read_authenticate(input_buffer);
 
@@ -315,7 +313,7 @@ public:
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
         uint8_t digest[SslMd5::DIGEST_LENGTH];
         SslHMAC_Md5 hmac_md5(this->context->SendSigningKey, 16);
-        hmac_md5.update(reinterpret_cast<uint8_t*>(&SeqNo), 4);
+        hmac_md5.update(reinterpret_cast<uint8_t const*>(&SeqNo), 4);
         hmac_md5.update(data, length);
         hmac_md5.final(digest);
 
@@ -420,7 +418,7 @@ public:
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
         SslHMAC_Md5 hmac_md5(this->context->RecvSigningKey, 16);
-        hmac_md5.update(reinterpret_cast<uint8_t*>(&SeqNo), 4);
+        hmac_md5.update(reinterpret_cast<uint8_t const*>(&SeqNo), 4);
         hmac_md5.update(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
         hmac_md5.final(digest);
 

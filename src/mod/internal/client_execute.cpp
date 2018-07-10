@@ -706,7 +706,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
     if ((SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1) == pointerFlags) {
         if (MOUSE_BUTTON_PRESSED_NONE == this->pressed_mouse_button) {
             if (!this->maximized) {
-                        if (this->north.contains_pt(xPos, yPos)) {
+                if      (this->north.contains_pt(xPos, yPos)) {
                     this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NORTH;
                 }
                 else if (this->north_west_north.contains_pt(xPos, yPos) ||
@@ -1123,8 +1123,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         }   // else if (MOUSE_BUTTON_PRESSED_CLOSEBOX == this->pressed_mouse_button)
     }   // else if (SlowPath::PTRFLAGS_MOVE == pointerFlags)
     else if (SlowPath::PTRFLAGS_BUTTON1 == pointerFlags) {
-                if (this->allow_resize_hosted_desktop_ &&
-                    (MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX == this->pressed_mouse_button)) {
+        if (this->allow_resize_hosted_desktop_ && (MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX == this->pressed_mouse_button)) {
             this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
 
             this->enable_resizing_hosted_desktop_ = (!this->enable_resizing_hosted_desktop_);
@@ -3028,14 +3027,14 @@ const char * ClientExecute::Arguments() const { return this->client_execute_argu
 
 bool ClientExecute::should_ignore_first_client_execute() const { return this->should_ignore_first_client_execute_; }
 
-void ClientExecute::create_auxiliary_window(Rect const window_rect_)
+void ClientExecute::create_auxiliary_window(Rect const window_rect)
 {
     if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != this->auxiliary_window_id) return;
 
     this->auxiliary_window_id = AUXILIARY_WINDOW_ID;
 
     {
-        const Rect adjusted_window_rect = window_rect_.offset(this->window_offset_x, this->window_offset_y);
+        const Rect adjusted_window_rect = window_rect.offset(this->window_offset_x, this->window_offset_y);
 
         RDP::RAIL::NewOrExistingWindow order;
 
@@ -3083,7 +3082,7 @@ void ClientExecute::create_auxiliary_window(Rect const window_rect_)
         this->front_->draw(order);
     }
 
-    this->auxiliary_window_rect = window_rect;
+    this->auxiliary_window_rect = this->window_rect;
 }
 
 void ClientExecute::destroy_auxiliary_window()
@@ -3144,12 +3143,7 @@ bool ClientExecute::is_rail_enabled() const
 
 bool ClientExecute::is_resizing_hosted_desktop_enabled() const
 {
-    if (this->allow_resize_hosted_desktop_ &&
-        this->enable_resizing_hosted_desktop_) {
-        return true;
-    }
-
-    return false;
+    return (this->allow_resize_hosted_desktop_ && this->enable_resizing_hosted_desktop_);
 }
 
 void ClientExecute::enable_resizing_hosted_desktop(bool enable)

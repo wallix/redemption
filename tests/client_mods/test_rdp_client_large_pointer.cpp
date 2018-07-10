@@ -92,6 +92,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
 
     Inifile ini;
 
+    std::array<uint8_t, 28> server_auto_reconnect_packet {};
     ModRDPParams mod_rdp_params( "RED\\RDUser"
                                , "SecureKurwa$42"
                                , "10.10.44.27"
@@ -99,7 +100,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
                                , 7
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
-                               , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
+                               , server_auto_reconnect_packet
                                , ini.get_ref<cfg::context::close_box_extra_message>()
                                , to_verbose_flags(511)
                                );
@@ -196,6 +197,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
 
     Inifile ini;
 
+    std::array<uint8_t, 28> server_auto_reconnect_packet {};
     ModRDPParams mod_rdp_params( "RED\\RDUser"
                                , "SecureKurwa$42"
                                , "10.10.44.27"
@@ -203,7 +205,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
                                , 7
                                , ini.get<cfg::font>()
                                , ini.get<cfg::theme>()
-                               , ini.get_ref<cfg::context::server_auto_reconnect_packet>()
+                               , server_auto_reconnect_packet
                                , ini.get_ref<cfg::context::close_box_extra_message>()
                                , to_verbose_flags(511)
                                );

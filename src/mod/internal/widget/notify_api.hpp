@@ -26,7 +26,7 @@ class Widget;
 class NotifyApi : noncopyable
 {
 public:
-    typedef int notify_event_t;
+    using notify_event_t = int;
 
     virtual void notify(Widget * sender, notify_event_t event) = 0;
 

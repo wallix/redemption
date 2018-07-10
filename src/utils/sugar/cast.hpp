@@ -22,7 +22,7 @@
 */
 
 #pragma once
-#include <stdint.h>
+#include <cstdint>
 
 static inline uint8_t * byte_ptr_cast(char * data)
 {
