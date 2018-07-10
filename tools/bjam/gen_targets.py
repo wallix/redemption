@@ -75,6 +75,7 @@ target_renames = dict((
 ))
 
 target_nosyslog = set([
+    'proxy_recorder',
     'rdpinichecker',
     'rdpclient',
 ])

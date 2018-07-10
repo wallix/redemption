@@ -147,22 +147,6 @@ exe main_client_redemption :
   <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
-exe proxy_recorder :
-  $(REDEMPTION_SRC_PATH)/main/proxy_recorder.cpp
-:
-  $(EXE_DEPENDENCIES)
-  <library>app_path_exe.o
-  <library>crypto
-  <library>openssl
-  <library>src/core/RDP/mppc.o
-  <library>src/core/error.o
-  <library>src/transport/recorder_transport.o
-  <library>src/transport/socket_transport.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
-  <variant>debug:<library>dl <variant>san:<library>dl
-;
 exe rdpheadless :
   $(REDEMPTION_SRC_PATH)/main/rdpheadless.cpp
 :
@@ -214,6 +198,22 @@ exe rdpinichecker :
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+;
+exe proxy_recorder :
+  $(REDEMPTION_SRC_PATH)/main/proxy_recorder.cpp
+:
+  $(EXE_DEPENDENCIES_NO_SYSLOG)
+  <library>app_path_exe.o
+  <library>crypto
+  <library>openssl
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
+  <library>src/transport/recorder_transport.o
+  <library>src/transport/socket_transport.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
+  <variant>debug:<library>dl <variant>san:<library>dl
 ;
 exe rdpclient :
   $(REDEMPTION_SRC_PATH)/main/rdp_client.cpp
