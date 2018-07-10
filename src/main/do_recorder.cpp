@@ -1567,7 +1567,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     ini.set<cfg::ocr::version>(ocr_version == 2 ? OcrVersion::v2 : OcrVersion::v1);
 
     if (chunk){
-        ini.get_ref<cfg::video::disable_keyboard_log>() &= ~KeyboardLogFlags::meta;
         ini.set<cfg::ocr::interval>(std::chrono::seconds{1});
     }
 
