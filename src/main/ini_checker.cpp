@@ -35,7 +35,10 @@ int main(int ac, char ** av)
         return 1;
     }
 
-    if (std::ifstream inifile{ac == 2 ? av[1] : app_path(AppPath::CfgIni)}) {
+    char const* filename = ac == 2 ? av[1] : app_path(AppPath::CfgIni);
+    std::cout << "filename: " << filename << "\n";
+
+    if (std::ifstream inifile{filename}) {
         bool const is_ok = configuration_load(Inifile().configuration_holder(), inifile);
         if (!inifile.eof()) {
             std::cerr << av[1] << ": " << strerror(errno) << std::endl;
