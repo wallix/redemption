@@ -76,11 +76,11 @@ namespace gdi {
 
 struct Depth
 {
-    static constexpr Depth unspecified() { return {0}; }
-    static constexpr Depth depth8() { return {1}; }
-    static constexpr Depth depth15() { return {2}; }
-    static constexpr Depth depth16() { return {3}; }
-    static constexpr Depth depth24() { return {4}; }
+    static constexpr Depth unspecified() { return Depth{0}; }
+    static constexpr Depth depth8() { return Depth{1}; }
+    static constexpr Depth depth15() { return Depth{2}; }
+    static constexpr Depth depth16() { return Depth{3}; }
+    static constexpr Depth depth24() { return Depth{4}; }
 
     static /*c++14: constexpr*/ Depth from_bpp(uint8_t bpp)
     {
@@ -141,7 +141,7 @@ public:
     constexpr operator PrivateDepth () const { return static_cast<PrivateDepth>(this->depth_); }
 
 private:
-    constexpr Depth(uint8_t depth) : depth_(depth) {}
+    explicit constexpr Depth(uint8_t depth) : depth_(depth) {}
 
     uint8_t depth_;
 };

@@ -143,9 +143,9 @@ struct SharedHeader {
     Component component = Component::RDPDR_CTYP_CORE;
     PacketId  packet_id = PacketId::PAKID_CORE_SERVER_ANNOUNCE;
 
-    SharedHeader() = default;
+    explicit SharedHeader() = default;
 
-    SharedHeader(Component component, PacketId  packet_id)
+    explicit SharedHeader(Component component, PacketId  packet_id)
     : component(component)
     , packet_id(packet_id) {}
 
@@ -369,11 +369,10 @@ struct CapabilityHeader {
     uint16_t CapabilityLength{0};
     uint32_t Version{0};
 
-    CapabilityHeader()
-    = default;
+    explicit CapabilityHeader() = default;
 
-    CapabilityHeader( uint16_t CapabilityType
-                    , uint32_t Version)
+    explicit CapabilityHeader( uint16_t CapabilityType
+                             , uint32_t Version)
     : CapabilityType(CapabilityType)
     , CapabilityLength(8)
     , Version(Version)
@@ -443,8 +442,8 @@ struct ClientDriveDeviceListRemove {
     uint32_t DeviceIds[1592] = { 0 };
 
     // TODO array_view
-    ClientDriveDeviceListRemove( uint32_t DeviceCount
-                               , uint32_t const * DeviceIds)
+    explicit ClientDriveDeviceListRemove( uint32_t DeviceCount
+                                        , uint32_t const * DeviceIds)
     : DeviceCount(DeviceCount)
     {
         //assert(this->DeviceCount > 1592);
@@ -453,7 +452,7 @@ struct ClientDriveDeviceListRemove {
         }
     }
 
-    ClientDriveDeviceListRemove() = default;
+    explicit ClientDriveDeviceListRemove() = default;
 
     void emit(OutStream & stream) const {
         stream.out_uint32_le(DeviceCount);
@@ -612,11 +611,11 @@ class DeviceAnnounceHeader {
     struct { uint8_t const * p; std::size_t sz; } device_data = {nullptr, 0u};
 
 public:
-    DeviceAnnounceHeader() = default;
+    explicit DeviceAnnounceHeader() = default;
 
-    DeviceAnnounceHeader(RDPDR_DTYP DeviceType, uint32_t DeviceId,
-                         const char * preferred_dos_name,
-                         uint8_t const * device_data_p, size_t device_data_size)
+    explicit DeviceAnnounceHeader(RDPDR_DTYP DeviceType, uint32_t DeviceId,
+                                  const char * preferred_dos_name,
+                                  uint8_t const * device_data_p, size_t device_data_size)
     : DeviceType_(DeviceType)
     , DeviceId_(DeviceId)
     , device_data{device_data_p, device_data_size} {
@@ -879,21 +878,21 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
 
     uint8_t * CachedPrinterConfigData;
 
-    DeviceAnnounceHeaderPrinterSpecificData() = default;
+    explicit DeviceAnnounceHeaderPrinterSpecificData() = default;
 
-    DeviceAnnounceHeaderPrinterSpecificData(/*RDPDR_DTYP DeviceType,
-                                            uint32_t DeviceId,
-                                            uint8_t * PreferredDosName,
-                                            size_t DeviceDataLength,*/
-                                            uint32_t Flags,
-                                            uint32_t CodePage,
-                                            size_t PnPNameLen,
-                                            size_t DriverNameLen,
-                                            size_t PrintNameLen,
-                                            size_t CachedFieldsLen,
-                                            char * PnPName,
-                                            char * DriverName,
-                                            char * PrinterName )
+    explicit DeviceAnnounceHeaderPrinterSpecificData(/*RDPDR_DTYP DeviceType,
+                                                     uint32_t DeviceId,
+                                                     uint8_t * PreferredDosName,
+                                                     size_t DeviceDataLength,*/
+                                                     uint32_t Flags,
+                                                     uint32_t CodePage,
+                                                     size_t PnPNameLen,
+                                                     size_t DriverNameLen,
+                                                     size_t PrintNameLen,
+                                                     size_t CachedFieldsLen,
+                                                     char * PnPName,
+                                                     char * DriverName,
+                                                     char * PrinterName )
 //         : DeviceType(DeviceType)
 //         , DeviceId(DeviceId)
 //         , DeviceDataLength(DeviceDataLength)
@@ -1149,14 +1148,13 @@ class DeviceIORequest {
 
 public:
 
-    DeviceIORequest()
-    = default;
+    explicit DeviceIORequest() = default;
 
-    DeviceIORequest( uint32_t DeviceId_
-                   , uint32_t FileId_
-                   , uint32_t CompletionId_
-                   , uint32_t MajorFunction_
-                   , uint32_t MinorFunction_)
+    explicit DeviceIORequest( uint32_t DeviceId_
+                            , uint32_t FileId_
+                            , uint32_t CompletionId_
+                            , uint32_t MajorFunction_
+                            , uint32_t MinorFunction_)
       : DeviceId_(DeviceId_)
       , FileId_(FileId_)
       , CompletionId_(CompletionId_)
@@ -1333,17 +1331,17 @@ class DeviceCreateRequest {
     uint8_t Path_[65536] = {0};
 
 public:
-    DeviceCreateRequest() = default;
+    explicit DeviceCreateRequest() = default;
 
-    DeviceCreateRequest(uint32_t DesiredAccess,
-                        uint64_t AllocationSize,
-                        uint32_t FileAttributes,
-                        uint32_t SharedAccess,
-                        uint32_t CreateDisposition,
-                        uint32_t CreateOptions,
-                        //size_t PathLength_UTF16,
-                        size_t PathLength_UTF8,
-                        const char * Path_UTF8)
+    explicit DeviceCreateRequest(uint32_t DesiredAccess,
+                                 uint64_t AllocationSize,
+                                 uint32_t FileAttributes,
+                                 uint32_t SharedAccess,
+                                 uint32_t CreateDisposition,
+                                 uint32_t CreateOptions,
+                                 //size_t PathLength_UTF16,
+                                 size_t PathLength_UTF8,
+                                 const char * Path_UTF8)
         : DesiredAccess_(DesiredAccess)
         , AllocationSize_(AllocationSize)
         , FileAttributes_(FileAttributes)
@@ -1627,10 +1625,10 @@ class DeviceReadRequest {
     uint64_t Offset_ = 0LLU;
 
 public:
-    DeviceReadRequest() = default;
+    explicit DeviceReadRequest() = default;
 
-    DeviceReadRequest( uint32_t Length
-                     , uint64_t Offset)
+    explicit DeviceReadRequest( uint32_t Length
+                              , uint64_t Offset)
       : Length_(Length)
       , Offset_(Offset)
     {}
@@ -1748,11 +1746,11 @@ struct DeviceWriteRequest {
     , FISRT_PART_DATA_MAX_LEN = 1600 - TOTAL_PDU_HEADER_LEN
     };
 
-    DeviceWriteRequest() = default;
+    explicit DeviceWriteRequest() = default;
 
-    DeviceWriteRequest( uint32_t Length
-                      , uint64_t Offset
-                      , uint8_t const * WriteData)
+    explicit DeviceWriteRequest( uint32_t Length
+                               , uint64_t Offset
+                               , uint8_t const * WriteData)
     : Length(Length)
     , Offset(Offset)
     , WriteData(WriteData)
@@ -1880,7 +1878,7 @@ class DeviceControlRequest {
     struct { uint8_t const * p; std::size_t sz; } input_buffer = {nullptr, 0u};
 
 public:
-    DeviceControlRequest() = default;
+    explicit DeviceControlRequest() = default;
 
     REDEMPTION_NON_COPYABLE(DeviceControlRequest);
 
@@ -1985,11 +1983,11 @@ struct DriveControlResponse {
 
     uint32_t OutputBufferLength = 0;
 
-    DriveControlResponse() = default;
+    explicit DriveControlResponse() = default;
 
-    DriveControlResponse( uint32_t OutputBufferLength)
+    explicit DriveControlResponse(uint32_t OutputBufferLength)
       : OutputBufferLength(OutputBufferLength)
-      {}
+    {}
 
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->OutputBufferLength);
@@ -2061,9 +2059,9 @@ class DeviceIOResponse {
     erref::NTSTATUS IoStatus_ = erref::NTSTATUS::STATUS_SUCCESS;
 
 public:
-    DeviceIOResponse() = default;
+    explicit DeviceIOResponse() = default;
 
-    DeviceIOResponse(uint32_t DeviceId, uint32_t CompletionId, erref::NTSTATUS IoStatus)
+    explicit DeviceIOResponse(uint32_t DeviceId, uint32_t CompletionId, erref::NTSTATUS IoStatus)
     : DeviceId_(DeviceId)
     , CompletionId_(CompletionId)
     , IoStatus_(IoStatus)
@@ -2202,9 +2200,9 @@ class DeviceCreateResponse {
     uint8_t  Information_ = 0;
 
 public:
-    DeviceCreateResponse() = default;
+    explicit DeviceCreateResponse() = default;
 
-    DeviceCreateResponse(uint32_t FileId, uint8_t Information)
+    explicit DeviceCreateResponse(uint32_t FileId, uint8_t Information)
     : FileId_(FileId)
     , Information_(Information) {}
 
@@ -2359,9 +2357,9 @@ struct DeviceReadResponse {
 
     uint32_t Length = 0;
 
-    DeviceReadResponse() = default;
+    explicit DeviceReadResponse() = default;
 
-    DeviceReadResponse( uint32_t Length)
+    explicit DeviceReadResponse( uint32_t Length)
       : Length(Length)
     {}
 
@@ -2441,9 +2439,9 @@ struct DeviceWriteResponse {
 
     uint32_t Length = 0;
 
-    DeviceWriteResponse() = default;
+    explicit DeviceWriteResponse() = default;
 
-    DeviceWriteResponse( uint32_t Length)
+    explicit DeviceWriteResponse( uint32_t Length)
     : Length(Length)
     {}
 
@@ -2511,9 +2509,9 @@ class ServerDeviceAnnounceResponse {
     erref::NTSTATUS ResultCode_ = erref::NTSTATUS::STATUS_SUCCESS;
 
 public:
-    ServerDeviceAnnounceResponse() = default;
+    explicit ServerDeviceAnnounceResponse() = default;
 
-    ServerDeviceAnnounceResponse(uint32_t device_id, erref::NTSTATUS result_code) :
+    explicit ServerDeviceAnnounceResponse(uint32_t device_id, erref::NTSTATUS result_code) :
         DeviceId_(device_id), ResultCode_(result_code) {}
 
     void emit(OutStream & stream) const {
@@ -2591,9 +2589,9 @@ class ServerAnnounceRequest {
 
 public:
 
-    ServerAnnounceRequest() = default;
+    explicit ServerAnnounceRequest() = default;
 
-    ServerAnnounceRequest(uint16_t VersionMajor_, uint16_t VersionMinor_, uint16_t ClientId_)
+    explicit ServerAnnounceRequest(uint16_t VersionMajor_, uint16_t VersionMinor_, uint16_t ClientId_)
       : VersionMajor_(VersionMajor_)
       , VersionMinor_(VersionMinor_)
       , ClientId_(ClientId_)
@@ -2694,9 +2692,9 @@ public:
     uint16_t ClientId     = 0;
 
 
-    ClientAnnounceReply() = default;
+    explicit ClientAnnounceReply() = default;
 
-    ClientAnnounceReply(uint16_t VersionMajor, uint16_t VersionMinor, uint16_t ClientId)
+    explicit ClientAnnounceReply(uint16_t VersionMajor, uint16_t VersionMinor, uint16_t ClientId)
     : VersionMajor(VersionMajor)
     , VersionMinor(VersionMinor)
     , ClientId(ClientId) {}
@@ -2803,7 +2801,7 @@ class ClientNameRequest {
     char ComputerName[500];
 
 public:
-    ClientNameRequest() = default;
+    explicit ClientNameRequest() = default;
 
     explicit ClientNameRequest(const char * computer_name)
     {
@@ -3119,10 +3117,10 @@ public:
     uint32_t version              = 0;
 
 
-    GeneralCapabilitySet() = default;
+    explicit GeneralCapabilitySet() = default;
 
-
-    GeneralCapabilitySet(uint32_t osType,
+    explicit GeneralCapabilitySet(
+        uint32_t osType,
         uint16_t protocolMinorVersion,
         uint32_t ioCode1, uint32_t extendedPDU,
         uint32_t extraFlags1, uint32_t SpecialTypeDeviceCap,
@@ -3261,9 +3259,9 @@ struct ClientDeviceListAnnounceRequest {
 
     uint32_t DeviceCount = 0;
 
-    ClientDeviceListAnnounceRequest() = default;
+    explicit ClientDeviceListAnnounceRequest() = default;
 
-    ClientDeviceListAnnounceRequest(uint32_t DeviceCount) : DeviceCount(DeviceCount)
+    explicit ClientDeviceListAnnounceRequest(uint32_t DeviceCount) : DeviceCount(DeviceCount)
     {}
 
     void emit(OutStream & stream) const {
@@ -3413,11 +3411,11 @@ public:
       = {cbyte_ptr("").to_u8p(), 0u};
 
 public:
-    ServerDriveQueryInformationRequest(uint32_t FsInformationClass)
+    explicit ServerDriveQueryInformationRequest(uint32_t FsInformationClass)
       : FsInformationClass_(FsInformationClass)
-      {}
+    {}
 
-    ServerDriveQueryInformationRequest() = default;
+    explicit ServerDriveQueryInformationRequest() = default;
 
     REDEMPTION_NON_COPYABLE(ServerDriveQueryInformationRequest);
 
@@ -3662,7 +3660,7 @@ class ServerDriveQueryVolumeInformationRequest {
     struct { uint8_t const * p; std::size_t sz; } query_volume_buffer = {nullptr, 0u};
 
 public:
-    ServerDriveQueryVolumeInformationRequest() = default;
+    explicit ServerDriveQueryVolumeInformationRequest() = default;
 
     REDEMPTION_NON_COPYABLE(ServerDriveQueryVolumeInformationRequest);
 
@@ -3781,11 +3779,11 @@ struct ClientDriveQueryVolumeInformationResponse {
 
     uint32_t Length = 0;
 
-    ClientDriveQueryVolumeInformationResponse() = default;
+    explicit ClientDriveQueryVolumeInformationResponse() = default;
 
-    ClientDriveQueryVolumeInformationResponse( uint32_t Length)
+    explicit ClientDriveQueryVolumeInformationResponse( uint32_t Length)
       : Length(Length)
-      {}
+    {}
 
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Length);
@@ -3927,12 +3925,12 @@ class ServerDriveSetInformationRequest {
     uint32_t Length_             = 0;
 
 public:
-    ServerDriveSetInformationRequest() = default;
+    explicit ServerDriveSetInformationRequest() = default;
 
-    ServerDriveSetInformationRequest(uint32_t FsInformationClass_, uint32_t Length_)
+    explicit ServerDriveSetInformationRequest(uint32_t FsInformationClass_, uint32_t Length_)
       : FsInformationClass_(FsInformationClass_)
       , Length_(Length_)
-      {}
+    {}
 
 
     void emit(OutStream & stream) const {
@@ -4241,15 +4239,15 @@ class ServerDriveQueryDirectoryRequest {
 
 
 public:
-    ServerDriveQueryDirectoryRequest(uint32_t FsInformationClass,
-                                     uint8_t  InitialQuery)
+    explicit ServerDriveQueryDirectoryRequest(uint32_t FsInformationClass,
+                                              uint8_t  InitialQuery)
       : FsInformationClass_(FsInformationClass)
       , InitialQuery_(InitialQuery)
     {
         this->Path_[0] = 0;
     }
 
-    ServerDriveQueryDirectoryRequest() = default;
+    explicit ServerDriveQueryDirectoryRequest() = default;
 
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->FsInformationClass_);
@@ -4414,11 +4412,11 @@ struct ClientDriveQueryDirectoryResponse {
 
     uint32_t Length = 0;
 
-    ClientDriveQueryDirectoryResponse() = default;
+    explicit ClientDriveQueryDirectoryResponse() = default;
 
-    ClientDriveQueryDirectoryResponse( uint32_t Length)
+    explicit ClientDriveQueryDirectoryResponse( uint32_t Length)
       : Length(Length)
-      {}
+    {}
 
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Length);
@@ -4520,11 +4518,11 @@ struct ClientDriveQueryInformationResponse {
 
     uint32_t Length = 0;
 
-    ClientDriveQueryInformationResponse() = default;
+    explicit ClientDriveQueryInformationResponse() = default;
 
-    ClientDriveQueryInformationResponse(uint32_t Length)
+    explicit ClientDriveQueryInformationResponse(uint32_t Length)
       : Length(Length)
-      {}
+    {}
 
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Length);
@@ -4580,9 +4578,9 @@ struct ClientDriveSetVolumeInformationResponse {
 
     uint32_t Length = 0;
 
-    ClientDriveSetVolumeInformationResponse() = default;
+    explicit ClientDriveSetVolumeInformationResponse() = default;
 
-    ClientDriveSetVolumeInformationResponse(uint32_t Length): Length(Length)
+    explicit ClientDriveSetVolumeInformationResponse(uint32_t Length): Length(Length)
     {}
 
     void emit(OutStream & stream) const {
@@ -4670,10 +4668,10 @@ struct ServerDriveSetVolumeInformationRequest {
     uint32_t FsInformationClass = 0;
     uint32_t Length = 0;
 
-    ServerDriveSetVolumeInformationRequest() = default;
+    explicit ServerDriveSetVolumeInformationRequest() = default;
 
-    ServerDriveSetVolumeInformationRequest( uint32_t FsInformationClass
-                                          , uint32_t Length)
+    explicit ServerDriveSetVolumeInformationRequest(
+        uint32_t FsInformationClass , uint32_t Length)
     : FsInformationClass(FsInformationClass)
     , Length(Length)
     {}
@@ -4751,9 +4749,9 @@ struct ClientDriveSetInformationResponse {
 
     uint32_t Length = 0;
 
-    ClientDriveSetInformationResponse() = default;
+    explicit ClientDriveSetInformationResponse() = default;
 
-    ClientDriveSetInformationResponse( uint32_t Length)
+    explicit ClientDriveSetInformationResponse( uint32_t Length)
       :  Length(Length)
     {}
 
@@ -4856,11 +4854,11 @@ struct ServerDriveLockControlRequest {
     uint32_t NumLocks = 0;
 
 
-    ServerDriveLockControlRequest() = default;
+    explicit ServerDriveLockControlRequest() = default;
 
-    ServerDriveLockControlRequest( uint32_t Operation
-                                 , uint8_t F
-                                 , uint32_t NumLocks)
+    explicit ServerDriveLockControlRequest( uint32_t Operation
+                                          , uint8_t F
+                                          , uint32_t NumLocks)
       : Operation(Operation)
       , F(F)
       , NumLocks(NumLocks)
@@ -4929,7 +4927,7 @@ struct ServerDriveLockControlRequest {
 
 struct ClientDriveLockControlResponse {
 
-    ClientDriveLockControlResponse() = default;
+    explicit ClientDriveLockControlResponse() = default;
 
     void emit(OutStream & stream) const {
         stream.out_clear_bytes(5);
@@ -4987,10 +4985,9 @@ struct RDP_Lock_Info {
     uint64_t Length = 0;
     uint64_t Offset = 0;
 
-    RDP_Lock_Info() = default;
+    explicit RDP_Lock_Info() = default;
 
-    RDP_Lock_Info( uint64_t Length
-                 , uint64_t Offset)
+    explicit RDP_Lock_Info( uint64_t Length , uint64_t Offset)
       : Length(Length)
       , Offset(Offset)
     {}
@@ -5060,9 +5057,9 @@ struct ServerDriveNotifyChangeDirectoryRequest {
     uint8_t WatchTree = 0;
     uint32_t CompletionFilter = 0;
 
-    ServerDriveNotifyChangeDirectoryRequest() = default;
+    explicit ServerDriveNotifyChangeDirectoryRequest() = default;
 
-    ServerDriveNotifyChangeDirectoryRequest(uint8_t WatchTree, uint32_t CompletionFilter)
+    explicit ServerDriveNotifyChangeDirectoryRequest(uint8_t WatchTree, uint32_t CompletionFilter)
       : WatchTree(WatchTree)
       , CompletionFilter(CompletionFilter)
     {}
@@ -5222,9 +5219,9 @@ struct ClientDriveNotifyChangeDirectoryResponse {
 
     uint32_t Length = 0;
 
-    ClientDriveNotifyChangeDirectoryResponse() = default;
+    explicit ClientDriveNotifyChangeDirectoryResponse() = default;
 
-    ClientDriveNotifyChangeDirectoryResponse(uint32_t Length)
+    explicit ClientDriveNotifyChangeDirectoryResponse(uint32_t Length)
       : Length(Length)
     {}
 
@@ -5283,9 +5280,9 @@ struct ServerCoreCapabilityRequest {
 
     uint16_t numCapabilities = 0;
 
-    ServerCoreCapabilityRequest() = default;
+    explicit ServerCoreCapabilityRequest() = default;
 
-    ServerCoreCapabilityRequest(uint16_t numCapabilities)
+    explicit ServerCoreCapabilityRequest(uint16_t numCapabilities)
       : numCapabilities(numCapabilities)
     {}
 
@@ -5347,9 +5344,9 @@ struct ClientCoreCapabilityResponse {
 
     uint16_t numCapabilities = 0;
 
-    ClientCoreCapabilityResponse() = default;
+    explicit ClientCoreCapabilityResponse() = default;
 
-    ClientCoreCapabilityResponse(uint16_t numCapabilities)
+    explicit ClientCoreCapabilityResponse(uint16_t numCapabilities)
       : numCapabilities(numCapabilities)
     {}
 
@@ -5382,10 +5379,6 @@ struct ClientCoreCapabilityResponse {
 
 
 
-
-
-
-
 struct RdpDrStatus
 {
     struct DeviceIORequestData {
@@ -5393,12 +5386,11 @@ struct RdpDrStatus
         uint32_t FsInformationClass = -1;
         uint32_t IOControlCode = -1;
 
-        DeviceIORequestData(DeviceIORequest & request)
+        explicit DeviceIORequestData(DeviceIORequest const& request)
           : request(request)
         {}
 
-        DeviceIORequestData()
-        = default;
+        explicit DeviceIORequestData() = default;
 
         uint32_t DeviceId() {
             return this->request.DeviceId();
@@ -5440,14 +5432,14 @@ struct RdpDrStatus
         for (auto & request_data : this->requestList) {
             if (request_data.DeviceId() == request.DeviceId() && request_data.CompletionId() == request.CompletionId()) {
                 LOG(LOG_ERR, " Request %s has same ID than back received Request(%s)", get_MajorFunction_name(request.MajorFunction()), get_MajorFunction_name(request_data.MajorFunction()) );
-                request_data = request;
+                request_data = DeviceIORequestData(request);
                 return;
             }
         }
         if (this->requestList.size() >=  10) {
             this->requestList.erase(this->requestList.begin());
         }
-        this->requestList.emplace_back<DeviceIORequestData>(request);
+        this->requestList.emplace_back(request);
     }
 
     DeviceIORequestData get_completion_resquest(uint32_t deviceId, uint32_t completionId) {

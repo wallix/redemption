@@ -86,9 +86,9 @@ struct RDPHeadlessFrontParams
     int index;
     int keep_alive_freq;
 
-    RDPHeadlessFrontParams() = default;
+    explicit RDPHeadlessFrontParams() = default;
 
-    RDPHeadlessFrontParams(std::string out_path, int index = 0, int keep_alive_freq = 0)
+    explicit RDPHeadlessFrontParams(std::string out_path, int index = 0, int keep_alive_freq = 0)
       : out_path(std::move(out_path))
       , index(index)
       , keep_alive_freq(keep_alive_freq)
@@ -117,7 +117,7 @@ class RDPHeadlessFront : public FrontAPI
         FrontAPI            * _front;
         CHANNELS::ChannelDef  _channel;
 
-        ClipboardClientChannelDataSender() = default;
+        explicit ClipboardClientChannelDataSender() = default;
 
         void operator()(uint32_t total_length, uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length) override {
             //std::cout << "operator()  client " << (int)flags  << std::endl;
@@ -544,7 +544,7 @@ public:
     //      CONSTRUCTOR
     //------------------------
 
-    RDPHeadlessFront(ClientInfo const & info, ReportMessageApi & report_message, uint32_t verbose, RDPHeadlessFrontParams params = {})
+    RDPHeadlessFront(ClientInfo const & info, ReportMessageApi & report_message, uint32_t verbose, RDPHeadlessFrontParams params = RDPHeadlessFrontParams{})
     : _verbose(verbose)
     , _clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [&report_message](){
         ClipboardVirtualChannel::Params params(report_message);

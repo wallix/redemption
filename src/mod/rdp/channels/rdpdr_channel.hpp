@@ -181,7 +181,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         const RDPVerbose verbose;
 
     public:
-        DeviceRedirectionManager(
+        explicit DeviceRedirectionManager(
             FileSystemVirtualChannel& file_system_virtual_channel,
             FileSystemDriveManager& file_system_drive_manager,
             bool& user_logged_on,

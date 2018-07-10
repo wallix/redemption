@@ -969,7 +969,7 @@ RED_AUTO_TEST_CASE(TestPointer1bit)
 /*0070*/ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /*...............*/
     };
 
-    Pointer cursor({32, 32}, {8, 9},{data_data, sizeof(data_data)}, {mask_data, sizeof(mask_data)}, 1, BGRPalette::classic_332(), true, BogusLinuxCursor::enable, 4, 4);
+    Pointer cursor(CursorSize{32, 32}, Hotspot{8, 9}, {data_data, sizeof(data_data)}, {mask_data, sizeof(mask_data)}, 1, BGRPalette::classic_332(), true, BogusLinuxCursor::enable, 4, 4);
 
     ARGB32Pointer vnccursor(cursor);
     const auto av_alpha_q = vnccursor.get_alpha_q();

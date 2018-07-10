@@ -52,7 +52,9 @@ public:
         data_size_type  exchanged_data_limit;
         RDPVerbose verbose;
 
-        Params(ReportMessageApi & report_message) : report_message(report_message) {}
+        explicit Params(ReportMessageApi & report_message)
+          : report_message(report_message)
+        {}
     };
 
 protected:

@@ -1880,7 +1880,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 this->load_capture(now);
                             }
 
-                            CaptureMaker(decltype(lazy_capture) & load_capture)
+                            explicit CaptureMaker(decltype(lazy_capture) & load_capture)
                             : load_capture(load_capture)
                             {}
 

@@ -29,10 +29,12 @@ class DynamicChannelVirtualChannel final : public BaseVirtualChannel
 {
 public:
     struct Params : public BaseVirtualChannel::Params {
-        Params(ReportMessageApi & report_message) : BaseVirtualChannel::Params(report_message) {}
+        explicit Params(ReportMessageApi & report_message)
+          : BaseVirtualChannel::Params(report_message)
+        {}
     };
 
-    DynamicChannelVirtualChannel(
+    explicit DynamicChannelVirtualChannel(
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
         const Params & params)

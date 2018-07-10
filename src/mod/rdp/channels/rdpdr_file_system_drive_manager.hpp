@@ -1683,13 +1683,13 @@ public:
 
     struct DriveName
     {
-        DriveName()
+        explicit DriveName()
         {
             this->name_[0] = 0;
             this->upper_name_[0] = 0;
         }
 
-        DriveName(array_view_const_char name, bool reserved = false) noexcept
+        explicit DriveName(array_view_const_char name, bool reserved = false) noexcept
         : read_only_(false)
         {
             if (name.size() && name[0] == '*') {

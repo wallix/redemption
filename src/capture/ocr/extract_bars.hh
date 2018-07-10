@@ -159,8 +159,8 @@ namespace ocr
         } context;
 
     public:
-        ExtractTitles(unsigned box_min_height = ocr::bbox_min_height,
-                      unsigned box_max_height = ocr::bbox_max_height)
+        explicit ExtractTitles(unsigned box_min_height = ocr::bbox_min_height,
+                               unsigned box_max_height = ocr::bbox_max_height)
         : bbox_min_height(box_min_height)
         , bbox_max_height(box_max_height)
         {}

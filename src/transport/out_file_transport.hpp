@@ -87,7 +87,7 @@ private:
     {
         F fun;
         template<class Fu>
-        FuncImpl(Fu && f) : fun(std::forward<Fu>(f)) {}
+        explicit FuncImpl(Fu && f) : fun(std::forward<Fu>(f)) {}
         Error get_error(Error err) override { return fun(err); }
         ImplBase* clone() const override { return new FuncImpl(fun); }
     };

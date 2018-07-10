@@ -48,20 +48,20 @@ class Array2D
     size_t height;
     const uint8_t * data;
 
-    public:
+public:
     class Iterator
     {
         const uint8_t * data;
         size_t nbbytes;
-        public:
-        Iterator (const uint8_t * data, size_t nbbytes) : data(data), nbbytes(nbbytes) {}
+    public:
+        explicit Iterator (const uint8_t * data, size_t nbbytes) : data(data), nbbytes(nbbytes) {}
         bool operator!= (const Iterator & other) const { return this->data != other.data; }
         const uint8_t * operator* () const { return this->data; }
         const Iterator & operator++ () { this->data += this->nbbytes; return *this; }
     };
 
-    public:
-    Array2D(size_t width_in_bytes, size_t height, const uint8_t * data) :
+public:
+    explicit Array2D(size_t width_in_bytes, size_t height, const uint8_t * data) :
     width_in_bytes(width_in_bytes), height(height), data(data)
     {}
 
@@ -74,19 +74,19 @@ class PixelArray
     uint8_t * data;
     const size_t width_in_bytes;
 
-    public:
+public:
     class Iterator
     {
         uint8_t * data;
         size_t offset;
-        public:
-        Iterator (uint8_t * data) : data(data), offset(0) {}
+    public:
+        explicit Iterator (uint8_t * data) : data(data), offset(0) {}
         bool operator!= (const Iterator & other) const { return (this->data != other.data) || (this->offset != other.offset); }
         uint8_t * operator* () const { return &this->data[this->offset]; }
         const Iterator & operator++ () { this->offset+=3; return *this; }
     };
 
-    PixelArray(size_t width_in_pixels, uint8_t * data) : data(data), width_in_bytes(width_in_pixels*3)  {}
+    explicit PixelArray(size_t width_in_pixels, uint8_t * data) : data(data), width_in_bytes(width_in_pixels*3)  {}
 
     Iterator begin () const { return Iterator(this->data); }
     Iterator end () const { return Iterator(this->data + this->width_in_bytes); }
@@ -98,7 +98,7 @@ class BitZones
     size_t width_in_bits;
     const uint8_t * data;
 
-    public:
+public:
     class Iterator
     {
         const size_t width_in_bits;
@@ -107,15 +107,18 @@ class BitZones
         struct Zone {
             bool bit;
             size_t length;
-            Zone(bool bit, size_t length) : bit(bit), length(length) {}
+            explicit Zone(bool bit, size_t length) : bit(bit), length(length) {}
         } zone;
-        public:
-        Iterator (const uint8_t * data, size_t width_in_bits, size_t offset) : width_in_bits(width_in_bits), data(data), offset(offset), zone(false,0)
+    public:
+        explicit Iterator (const uint8_t * data, size_t width_in_bits, size_t offset) : width_in_bits(width_in_bits), data(data), offset(offset), zone(false,0)
         {
             this->operator++();
         }
+
         bool operator!= (const Iterator & other) const { return (this->data != other.data) || (this->offset != other.offset); }
+
         Zone operator* () const { return this->zone;}
+
         const Iterator & operator++ () {
             if (this->offset < this->width_in_bits){
                 this->offset += zone.length;
@@ -136,7 +139,7 @@ class BitZones
         }
     };
 
-    BitZones(size_t width_in_bits, const uint8_t * data) : width_in_bits(width_in_bits), data(data)  {
+    explicit BitZones(size_t width_in_bits, const uint8_t * data) : width_in_bits(width_in_bits), data(data)  {
 //        printf("bitzone %.2x %.2x %.2x %.2x\n", data[0], data[1], data[2], data[3]);
     }
 
@@ -150,19 +153,19 @@ class BitArray
     size_t width_in_bits;
     const uint8_t * data;
 
-    public:
+public:
     class Iterator
     {
         const uint8_t * data;
         size_t offset;
-        public:
-        Iterator (const uint8_t * data, size_t offset) : data(data), offset(offset) {}
+    public:
+        explicit Iterator (const uint8_t * data, size_t offset) : data(data), offset(offset) {}
         bool operator!= (const Iterator & other) const { return (this->data != other.data) || (this->offset != other.offset); }
         bool operator* () const { return this->data[this->offset>>3]&(1<<(7-(offset&0x7))); }
         const Iterator & operator++ () { ++this->offset; return *this; }
     };
 
-    BitArray(size_t width_in_bits, const uint8_t * data) : width_in_bits(width_in_bits), data(data)  {}
+    explicit BitArray(size_t width_in_bits, const uint8_t * data) : width_in_bits(width_in_bits), data(data)  {}
 
     Iterator begin () const { return Iterator(this->data, 0); }
     Iterator end () const { return Iterator(this->data, this->width_in_bits); }
@@ -187,7 +190,7 @@ struct DrawablePointer {
     uint8_t Bpp;
     uint8_t data[MAX_WIDTH * MAX_HEIGHT * 3];  // 32 pixels per line * 32 lines * 3 bytes per pixel
 
-    DrawablePointer() : contiguous_pixels(), number_of_contiguous_pixels(0), Bpp(3), data() {}
+    explicit DrawablePointer() : contiguous_pixels(), number_of_contiguous_pixels(0), Bpp(3), data() {}
 
     void initialize(unsigned int width, unsigned int height, const uint8_t * pointer_data, const uint8_t * pointer_mask) {
         ::memset(this->contiguous_pixels, 0, sizeof(this->contiguous_pixels));

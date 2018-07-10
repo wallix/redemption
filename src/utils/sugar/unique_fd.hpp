@@ -48,19 +48,19 @@ struct unique_fd
         return *this;
     }
 
-    unique_fd(char const * pathname, int flags) noexcept
+    explicit unique_fd(char const * pathname, int flags) noexcept
     : fd_(::open(pathname, flags))
     {}
 
-    unique_fd(char const * pathname, int flags, mode_t mode) noexcept
+    explicit unique_fd(char const * pathname, int flags, mode_t mode) noexcept
     : fd_(::open(pathname, flags, mode))
     {}
 
-    unique_fd(std::string const & pathname, int flags) noexcept
+    explicit unique_fd(std::string const & pathname, int flags) noexcept
     : unique_fd(pathname.c_str(), flags)
     {}
 
-    unique_fd(std::string const & pathname, int flags, mode_t mode) noexcept
+    explicit unique_fd(std::string const & pathname, int flags, mode_t mode) noexcept
     : unique_fd(pathname.c_str(), flags, mode)
     {}
 

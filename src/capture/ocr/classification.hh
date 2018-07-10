@@ -46,7 +46,7 @@ public:
     unsigned first_unrecognized_index{0};
     unsigned font_id;
 
-    classifier_type(unsigned font = -1u)
+    explicit classifier_type(unsigned font = -1u)
     : font_id(font)
     {}
 

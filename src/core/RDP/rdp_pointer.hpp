@@ -37,13 +37,13 @@
 struct CursorSize {
     unsigned width;
     unsigned height;
-    CursorSize(unsigned w, unsigned h) : width(w), height(h) {}
+    explicit CursorSize(unsigned w, unsigned h) : width(w), height(h) {}
 };
 
 struct Hotspot {
     unsigned x;
     unsigned y;
-    Hotspot(unsigned x, unsigned y) : x(x), y(y) {}
+    explicit Hotspot(unsigned x, unsigned y) : x(x), y(y) {}
 };
 
 
@@ -78,7 +78,7 @@ struct ConstPointer : public BasePointer {
 };
 
 struct NormalPointer : public ConstPointer {
-    NormalPointer()
+    explicit NormalPointer()
         : ConstPointer(CursorSize{32,32}, Hotspot{0,0},
             /* 0000 */ "................................"
             /* 0060 */ "................................"
@@ -117,7 +117,7 @@ struct NormalPointer : public ConstPointer {
 };
 
 struct EditPointer : public ConstPointer {
-    EditPointer()
+    explicit EditPointer()
         : ConstPointer(CursorSize{32,32}, Hotspot{15,16},
             /* 0000 */ "................................"
             /* 0060 */ "................................"
@@ -156,7 +156,7 @@ struct EditPointer : public ConstPointer {
 };
 
 struct DrawableDefaultPointer : public ConstPointer {
-    DrawableDefaultPointer()
+    explicit DrawableDefaultPointer()
         : ConstPointer(CursorSize{32,32}, Hotspot{0,0},
             /* 0000 */ "................................"
             /* 0060 */ "................................"
@@ -195,7 +195,7 @@ struct DrawableDefaultPointer : public ConstPointer {
 };
 
 struct SizeNSPointer : public ConstPointer {
-    SizeNSPointer()
+    explicit SizeNSPointer()
         : ConstPointer(CursorSize{32,32}, Hotspot{10,10},
         /* 0000 */ "................................"
         /* 0060 */ "................................"
@@ -234,7 +234,7 @@ struct SizeNSPointer : public ConstPointer {
 };
 
 struct SizeNESWPointer : public ConstPointer {
-    SizeNESWPointer()
+    explicit SizeNESWPointer()
         : ConstPointer(CursorSize{32,32}, Hotspot{10,10},
     /* 0000 */ "................................"
     /* 0060 */ "................................"
@@ -274,7 +274,7 @@ struct SizeNESWPointer : public ConstPointer {
 
 
 struct SizeNWSEPointer : public ConstPointer {
-    SizeNWSEPointer()
+    explicit SizeNWSEPointer()
         : ConstPointer(CursorSize{32,32}, Hotspot{10,10},
     /* 0000 */ "................................"
     /* 0060 */ "................................"
@@ -314,7 +314,7 @@ struct SizeNWSEPointer : public ConstPointer {
 
 
 struct SizeWEPointer : public ConstPointer {
-    SizeWEPointer()
+    explicit SizeWEPointer()
         : ConstPointer(CursorSize{32,32}, Hotspot{10,10},
     /* 0000 */ "................................"
     /* 0060 */ "................................"
@@ -353,7 +353,7 @@ struct SizeWEPointer : public ConstPointer {
 };
 
 struct DotPointer : public ConstPointer {
-    DotPointer()
+    explicit DotPointer()
         : ConstPointer(CursorSize{32,32}, Hotspot{2,2},
     /* 0000 */ "................................"
     /* 0060 */ "................................"
@@ -392,7 +392,7 @@ struct DotPointer : public ConstPointer {
 };
 
 struct NullPointer : public ConstPointer {
-    NullPointer()
+    explicit NullPointer()
         : ConstPointer(CursorSize{32,32}, Hotspot{2,2},
     /* 0000 */ "................................"
     /* 0060 */ "................................"
@@ -431,7 +431,7 @@ struct NullPointer : public ConstPointer {
 };
 
 struct SystemDefaultPointer : public ConstPointer {
-    SystemDefaultPointer()
+    explicit SystemDefaultPointer()
         : ConstPointer(CursorSize{32,32}, Hotspot{10,10},
     /* 0000 */ "--------------------------------"
     /* 0060 */ "------------------XX------------"
@@ -480,7 +480,7 @@ struct PointerLoader2
     array_view_const_u8 data;
     array_view_const_u8 mask;
 
-    PointerLoader2(InStream & stream)
+    explicit PointerLoader2(InStream & stream)
         : dimensions(0, 0)
         , data_bpp{0}
         , hotspot(0, 0)
@@ -516,7 +516,7 @@ struct PointerLoader32x32
     array_view_const_u8 data;
     array_view_const_u8 mask;
 
-    PointerLoader32x32(InStream & stream)
+    explicit PointerLoader32x32(InStream & stream)
         : dimensions(32, 32)
         , maskline_bytes(4)
         , xorline_bytes(96)
@@ -657,7 +657,7 @@ public:
     }
 
 
-    Pointer(uint8_t Bpp, CursorSize d, Hotspot hs, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask,
+    explicit Pointer(uint8_t Bpp, CursorSize d, Hotspot hs, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask,
                    int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max, unsigned maskline_bytes, unsigned xorline_bytes)
         : BasePointer(CursorSize(32,d.height), hs)
         , maskline_bytes(maskline_bytes)
@@ -1050,7 +1050,7 @@ class ColorPointerUpdate {
     const Pointer & cursor;
 
 public:
-    ColorPointerUpdate(int cache_idx, const Pointer & cursor)
+    explicit ColorPointerUpdate(int cache_idx, const Pointer & cursor)
         : cache_idx(cache_idx)
         , cursor(cursor)
     {
@@ -1157,7 +1157,7 @@ class NewPointerUpdate
     const Pointer & cursor;
 
 public:
-    NewPointerUpdate(int cache_idx, const Pointer & cursor)
+    explicit NewPointerUpdate(int cache_idx, const Pointer & cursor)
         : cache_idx(cache_idx)
         , cursor(cursor)
     {
@@ -1335,7 +1335,7 @@ struct ARGB32Pointer {
     alignas(4)
     uint8_t data[Pointer::DATA_SIZE];
 
-    ARGB32Pointer(Pointer const & cursor)
+    explicit ARGB32Pointer(Pointer const & cursor)
         : dimensions(cursor.get_dimensions())
         , hotspot(cursor.get_hotspot())
     {

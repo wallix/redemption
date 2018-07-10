@@ -178,7 +178,7 @@ class PatternSearcher
     Utf8KbdData utf8_kbd_data;
 
 public:
-    PatternSearcher(utils::MatchFinder::ConfigureRegexes conf_regex, char const * filters, int verbose = 0) {
+    explicit PatternSearcher(utils::MatchFinder::ConfigureRegexes conf_regex, char const * filters, int verbose = 0) {
         utils::MatchFinder::configure_regexes(conf_regex, filters, this->regexes_filter, verbose, true);
         auto const count_regex = this->regexes_filter.size();
         if (count_regex) {
@@ -291,7 +291,7 @@ class PatternKbd final : public gdi::KbdInputApi
     PatternSearcher pattern_notify;
 
 public:
-    PatternKbd(
+    explicit PatternKbd(
         ReportMessageApi * report_message,
         char const * str_pattern_kill, char const * str_pattern_notify,
         int verbose = 0)
@@ -573,7 +573,7 @@ class PatternsChecker : noncopyable
     ReportMessageApi & report_message;
 
 public:
-    PatternsChecker(ReportMessageApi & report_message, PatternParams const & params)
+    explicit PatternsChecker(ReportMessageApi & report_message, PatternParams const & params)
     : report_message(report_message)
     {
         utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
@@ -632,7 +632,7 @@ protected:
 protected:
     gdi::ImageFrameApi & image_frame_api;
 
-    PngCapture(
+    explicit PngCapture(
         const CaptureParams & capture_params, const PngParams & png_params,
         RDPDrawable & drawable,
         gdi::ImageFrameApi & imageFrameApi, MutableImageDataView const & image_view)
@@ -737,7 +737,7 @@ class PngCaptureRT : public PngCapture
     SmartVideoCropping smart_video_cropping;
 
 public:
-    PngCaptureRT(
+    explicit PngCaptureRT(
         const CaptureParams & capture_params, const PngParams & png_params,
         RDPDrawable & drawable, gdi::ImageFrameApi & imageFrameApi)
     : PngCapture(capture_params, png_params, drawable, imageFrameApi)
@@ -1036,7 +1036,7 @@ class SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureApi, publi
     const bool key_markers_hidden_state;
 
 public:
-    SessionMeta(const timeval & now, Transport & trans, bool key_markers_hidden_state)
+    explicit SessionMeta(const timeval & now, Transport & trans, bool key_markers_hidden_state)
     : kbd_stream{this->kbd_buffer + session_meta_kbd_prefix().size(), kbd_buffer_usable_char}
     , last_time(now.tv_sec)
     , trans(trans)
@@ -1222,7 +1222,7 @@ class SessionLogAgent : public gdi::CaptureProbeApi
     SessionMeta & session_meta;
 
 public:
-    SessionLogAgent(SessionMeta & session_meta)
+    explicit SessionLogAgent(SessionMeta & session_meta)
     : session_meta(session_meta)
     {}
 
@@ -1245,7 +1245,7 @@ public:
     SessionLogAgent session_log_agent;
     bool enable_agent;
 
-    MetaCaptureImpl(CaptureParams const& capture_params, MetaParams const & meta_params)
+    explicit MetaCaptureImpl(CaptureParams const& capture_params, MetaParams const & meta_params)
     : meta_trans(unique_fd{[&](){
         std::string record_path;
         record_path += capture_params.record_tmp_path;
@@ -1300,7 +1300,7 @@ class TitleCaptureImpl : public gdi::CaptureApi, public gdi::CaptureProbeApi
     ReportMessageApi * report_message;
 
 public:
-    TitleCaptureImpl(
+    explicit TitleCaptureImpl(
         const timeval & now,
         RDPDrawable & drawable,
         OcrParams ocr_params,

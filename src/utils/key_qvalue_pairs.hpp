@@ -32,7 +32,7 @@ struct charp_or_string
 {
     const array_view_const_char data;
 
-    charp_or_string(const char * const data) 
+    charp_or_string(const char * const data)
         : data(data, strlen(data)){}
     charp_or_string(const array_view_const_char data)
         : data(data) {}
@@ -128,7 +128,7 @@ struct KeyQvalueFormatter
         return this->buf;
     }
 
-    KeyQvalueFormatter()
+    explicit KeyQvalueFormatter()
     {
         this->buf.reserve(64);
     }

@@ -779,10 +779,10 @@ struct ClientTemporaryDirectoryPDU
 
     std::string temp_dir;
 
-    ClientTemporaryDirectoryPDU()
+    explicit ClientTemporaryDirectoryPDU()
     : header(CB_TEMP_DIRECTORY, 0, 520) {}
 
-    ClientTemporaryDirectoryPDU(const char* temp_dir)
+    explicit ClientTemporaryDirectoryPDU(const char* temp_dir)
     : header(CB_TEMP_DIRECTORY, 0, 520),
     temp_dir(temp_dir) {}
 
@@ -897,7 +897,7 @@ struct FormatListPDU
 
     FormatListPDU()
         : header(CB_FORMAT_LIST, 0, 0)
-         
+
         {}
 
     void emit(OutStream & stream) /* TODO const*/ {
@@ -1628,7 +1628,7 @@ struct FileContentsResponse
 
     explicit FileContentsResponse(bool response_ok = false)
     : header( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 4)
-     
+
     {}
 
     void emit(OutStream & stream) const {
@@ -2231,7 +2231,7 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
 
     explicit FormatDataResponsePDU_MetaFilePic()
       : FormatDataResponsePDU()
-      , 
+      ,
        metaHeader(0, 0, 0)
       , metaSetMapMod(0)
       , metaSetWindowExt(0, 0)
@@ -2404,7 +2404,7 @@ struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
 
     explicit FormatDataResponsePDU_FileList()
       : FormatDataResponsePDU()
-       
+
     {}
 
     explicit FormatDataResponsePDU_FileList(const std::size_t cItems)
@@ -2434,7 +2434,7 @@ public:
     int imageSize{0};
 
 
-    MetaFilePicDescriptor()  
+    MetaFilePicDescriptor()
     = default;
 
     void receive(InStream & chunk) {

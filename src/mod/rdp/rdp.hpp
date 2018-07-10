@@ -189,9 +189,10 @@ protected:
         const RDPVerbose verbose;
 
     public:
-        ToClientSender(FrontAPI& front,
-                       const CHANNELS::ChannelDef& channel,
-                       RDPVerbose verbose)
+        explicit ToClientSender(
+            FrontAPI& front,
+            const CHANNELS::ChannelDef& channel,
+            RDPVerbose verbose)
         : front(front)
         , channel(channel)
         , verbose(verbose)
@@ -232,14 +233,15 @@ protected:
         const RDPVerbose verbose;
 
     public:
-        ToServerSender(OutTransport transport,
-                       CryptContext& encrypt,
-                       int encryption_level,
-                       uint16_t user_id,
-                       CHANNELS::ChannelNameId channel_name,
-                       uint16_t channel_id,
-                       bool show_protocol,
-                       RDPVerbose verbose)
+        explicit ToServerSender(
+            OutTransport transport,
+            CryptContext& encrypt,
+            int encryption_level,
+            uint16_t user_id,
+            CHANNELS::ChannelNameId channel_name,
+            uint16_t channel_id,
+            bool show_protocol,
+            RDPVerbose verbose)
         : transport(transport)
         , encrypt(encrypt)
         , encryption_level(encryption_level)
@@ -452,7 +454,7 @@ protected:
         }
 
     public:
-        AsynchronousTaskContainer(SessionReactor& session_reactor)
+        explicit AsynchronousTaskContainer(SessionReactor& session_reactor)
           : session_reactor(session_reactor)
         {}
 
@@ -499,7 +501,7 @@ protected:
         RDPVerbose verbose;
 
     public:
-        ToServerAsynchronousSender(
+        explicit ToServerAsynchronousSender(
             std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender,
             AsynchronousTaskContainer& asynchronous_tasks,
             RDPVerbose verbose)
@@ -699,18 +701,19 @@ public:
     GCC::UserData::SCSecurity sc_sec1;
     GCC::UserData::CSSecurity cs_security;
 
-    mod_rdp( Transport & trans
-           , SessionReactor& session_reactor
-           , FrontAPI & front
-           , const ClientInfo & info
-           , RedirectionInfo & redir_info
-           , Random & gen
-           , TimeObj & timeobj
-           , const ModRDPParams & mod_rdp_params
-           , AuthApi & authentifier
-           , ReportMessageApi & report_message
-           , ModRdpVariables vars
-           )
+    explicit mod_rdp(
+        Transport & trans
+      , SessionReactor& session_reactor
+      , FrontAPI & front
+      , const ClientInfo & info
+      , RedirectionInfo & redir_info
+      , Random & gen
+      , TimeObj & timeobj
+      , const ModRDPParams & mod_rdp_params
+      , AuthApi & authentifier
+      , ReportMessageApi & report_message
+      , ModRdpVariables vars
+    )
         : authorization_channels(
             mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
             mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
@@ -1580,7 +1583,8 @@ public:
             }
 
             this->file_system_drive_manager.EnableDrive(
-                array_view_const_char{trimmed_range.begin(), trimmed_range.end()},
+                FileSystemDriveManager::DriveName(
+                    array_view_const_char{trimmed_range.begin(), trimmed_range.end()}),
                 proxy_managed_drive_prefix, this->verbose);
         }
     }   // configure_proxy_managed_drives
@@ -5268,7 +5272,7 @@ public:
         const uint8_t * data = stream.in_uint8p(dlen);
         const uint8_t * mask = stream.in_uint8p(mlen);
 
-        Pointer cursor({width, height}, {hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor, mlen / height, dlen / height);
+        Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor, mlen / height, dlen / height);
         assert(::even_pad_length(::nbbytes(width)) == mlen / height);
         assert(::even_pad_length(::nbbytes(width * data_bpp)) == dlen / height);
 

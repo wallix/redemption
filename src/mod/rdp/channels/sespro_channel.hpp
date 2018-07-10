@@ -111,7 +111,7 @@ class OutboundConnectionMonitorRules
     std::vector<outbound_connection_monitor_rule> rules;
 
 public:
-    OutboundConnectionMonitorRules(
+    explicit OutboundConnectionMonitorRules(
         const char * comme_separated_monitoring_rules
     ) {
         if (comme_separated_monitoring_rules) {
@@ -213,7 +213,8 @@ class ProcessMonitorRules
     std::vector<process_monitor_rule> rules;
 
 public:
-    ProcessMonitorRules(const char * comme_separated_rules) {
+    explicit ProcessMonitorRules(const char * comme_separated_rules)
+    {
         if (comme_separated_rules) {
             const char * rule = comme_separated_rules;
 
@@ -407,10 +408,12 @@ public:
 
         bool show_maximized;
 
-        Params(ReportMessageApi & report_message) : BaseVirtualChannel::Params(report_message) {}
+        explicit Params(ReportMessageApi & report_message)
+          : BaseVirtualChannel::Params(report_message)
+        {}
     };
 
-    SessionProbeVirtualChannel(
+    explicit SessionProbeVirtualChannel(
         SessionReactor& session_reactor,
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,

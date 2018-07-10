@@ -511,7 +511,7 @@ const char * scytale_reader_fhashhex(RedCryptoReaderHandle * handle)
 
 struct RedCryptoMetaReaderHandle
 {
-    RedCryptoMetaReaderHandle(RedCryptoReaderHandle & reader)
+    explicit RedCryptoMetaReaderHandle(RedCryptoReaderHandle & reader)
       : mwrm_reader(reader.in_crypto_transport)
     {}
 
@@ -648,7 +648,7 @@ struct RedCryptoKeyHandle
     HashHexArray derivatedhex;
     HashArray derivated;
 
-    RedCryptoKeyHandle(const char * masterkeyhex)
+    explicit RedCryptoKeyHandle(const char * masterkeyhex)
     {
         memcpy(this->masterhex, masterkeyhex, sizeof(this->masterhex));
         hashex_to_hash(this->masterhex, this->master);

@@ -78,8 +78,8 @@ private:
         uint16_t    flags;
 
     public:
-        LaunchPendingApp(const char* original_exe_or_file_,
-                         const char* exe_or_file_, uint16_t flags_)
+        explicit LaunchPendingApp(const char* original_exe_or_file_,
+                                  const char* exe_or_file_, uint16_t flags_)
         : original_exe_or_file(original_exe_or_file_)
         , exe_or_file(exe_or_file_)
         , flags(flags_)
@@ -121,7 +121,9 @@ public:
         bool client_supports_handshakeex_pdu;
         bool client_supports_enhanced_remoteapp;
 
-        Params(ReportMessageApi & report_message) : BaseVirtualChannel::Params(report_message) {}
+        explicit Params(ReportMessageApi & report_message)
+          : BaseVirtualChannel::Params(report_message)
+        {}
     };
 
     RemoteProgramsVirtualChannel(

@@ -68,12 +68,12 @@ private:
 
         friend class splitter;
 
-        iterator(splitter & s)
+        explicit iterator(splitter & s)
         : splitter_(s)
         , r_(s.next())
         {}
 
-        iterator(splitter & s, int /*unused*/)
+        explicit iterator(splitter & s, int /*unused*/)
         : splitter_(s)
         {}
 

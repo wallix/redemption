@@ -61,8 +61,7 @@ private:
         uint8_t sha1[SslSha1::DIGEST_LENGTH]{};
         bool is_valid{false};
 
-        cache_lite_element()
-        = default;
+        explicit cache_lite_element() = default;
 
         explicit cache_lite_element(const uint8_t (& sha1_)[SslSha1::DIGEST_LENGTH])
         : stamp(0)
@@ -95,8 +94,7 @@ private:
         uint8_t sha1[SslSha1::DIGEST_LENGTH];
         bool cached{false};
 
-        cache_element()
-        = default;
+        explicit cache_element() = default;
 
         explicit cache_element(Bitmap const & bmp)
         : bmp(bmp)
@@ -233,7 +231,7 @@ private:
         set_type sorted_elements;
 
     public:
-        cache_range(T * first, size_t sz, storage_value_set & storage)
+        explicit cache_range(T * first, size_t sz, storage_value_set & storage)
         : first(first)
         , last(first + sz)
         , sorted_elements(set_compare(), set_allocator{storage})
@@ -395,16 +393,17 @@ public:
         persistent = 512,
     };
 
-    BmpCache(Owner owner,
-             const uint8_t bpp,
-             uint8_t number_of_cache,
-             bool use_waiting_list,
-             CacheOption c0 = CacheOption(),
-             CacheOption c1 = CacheOption(),
-             CacheOption c2 = CacheOption(),
-             CacheOption c3 = CacheOption(),
-             CacheOption c4 = CacheOption(),
-             Verbose verbose = {})
+    explicit BmpCache(
+        Owner owner,
+        const uint8_t bpp,
+        uint8_t number_of_cache,
+        bool use_waiting_list,
+        CacheOption c0 = CacheOption(),
+        CacheOption c1 = CacheOption(),
+        CacheOption c2 = CacheOption(),
+        CacheOption c3 = CacheOption(),
+        CacheOption c4 = CacheOption(),
+        Verbose verbose = {})
     : owner(owner)
     , bpp(bpp)
     , number_of_cache(number_of_cache)

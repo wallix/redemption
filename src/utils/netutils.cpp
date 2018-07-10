@@ -250,7 +250,7 @@ struct LineBuffer
     int begin_line;
     int eol;
 
-    LineBuffer(int fd)
+    explicit LineBuffer(int fd)
     : end_buffer(0)
     , fd(fd)
     , begin_line(0)

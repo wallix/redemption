@@ -1246,9 +1246,9 @@ struct VolumePDU {
     uint32_t Volume = 0;
 
 
-    VolumePDU() = default;
+    explicit VolumePDU() = default;
 
-    VolumePDU(uint32_t Volume)
+    explicit VolumePDU(uint32_t Volume)
         : Volume(Volume){}
 
     void emit(OutStream & stream) {
@@ -1301,9 +1301,9 @@ struct PitchPDU {
     uint32_t Pitch = 0;
 
 
-    PitchPDU() = default;
+    explicit PitchPDU() = default;
 
-    PitchPDU(uint32_t Pitch)
+    explicit PitchPDU(uint32_t Pitch)
         : Pitch(Pitch){}
 
     void emit(OutStream & stream) {

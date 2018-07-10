@@ -241,7 +241,7 @@ public:
     private:
         friend class Inifile;
 
-        ConfigurationHolder(configs::VariablesConfiguration & variables)
+        explicit ConfigurationHolder(configs::VariablesConfiguration & variables)
         : variables(variables)
         {}
 
@@ -369,7 +369,7 @@ public:
 
         friend class Inifile;
 
-        FieldsChanged(Inifile & ini)
+        constexpr FieldsChanged(Inifile & ini)
         :ini(&ini)
         {}
     };
