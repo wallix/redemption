@@ -441,9 +441,9 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc
 {
     static const size_t MAXIMUM_HASH_BUFFER_UNDO_ELEMENT = 256;
 
-    typedef uint16_t                                     offset_type;
-    typedef rdp_mppc_enc_hash_table_manager<offset_type> hash_table_manager;
-    typedef hash_table_manager::hash_type                hash_type;
+    using offset_type = uint16_t;
+    using hash_table_manager = rdp_mppc_enc_hash_table_manager<offset_type>;
+    using hash_type = hash_table_manager::hash_type;
 
     // TODO making it static and large enough should be good for both RDP4 and RDP5
     uint8_t    historyBuffer[RDP_40_HIST_BUF_LEN];       /* contains uncompressed data */
@@ -458,7 +458,7 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc
 
     hash_table_manager hash_tab_mgr;
 
-    explicit rdp_mppc_40_enc(bool verbose = 0)
+    explicit rdp_mppc_40_enc(bool verbose = false)
         : rdp_mppc_enc(RDP_40_HIST_BUF_LEN - 1, verbose)
         , historyBuffer{0}
         , outputBuffer(this->outputBufferPlus + 64)
@@ -687,7 +687,7 @@ private:
             if (!this->hash_tab_mgr.undo_last_changes()) {
                 this->historyOffset =  0;
                 this->flagsHold     |= PACKET_FLUSHED;
-                this->first_pkt     =  1;
+                this->first_pkt     =  true;
 
                 this->hash_tab_mgr.reset();
 

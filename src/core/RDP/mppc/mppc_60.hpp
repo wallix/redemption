@@ -680,9 +680,9 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc
     static const size_t MAXIMUM_HASH_BUFFER_UNDO_ELEMENT = 256;
     static const size_t CACHED_OFFSET_COUNT              = 4;
 
-    typedef uint16_t                                     offset_type;
-    typedef rdp_mppc_enc_hash_table_manager<offset_type> hash_table_manager;
-    typedef hash_table_manager::hash_type                hash_type;
+    using offset_type = uint16_t;
+    using hash_table_manager = rdp_mppc_enc_hash_table_manager<offset_type>;
+    using hash_type = hash_table_manager::hash_type;
 
     // The shared state necessary to support the transmission and reception
     //     of RDP6.0-BC compressed data between a client and server requires
@@ -712,7 +712,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc
 
     hash_table_manager hash_tab_mgr;
 
-    explicit rdp_mppc_60_enc(bool verbose = 0)
+    explicit rdp_mppc_60_enc(bool verbose = false)
         : rdp_mppc_enc(RDP_60_HIST_BUF_LEN - 1, verbose)
         // The HistoryOffset MUST start initialized to zero, while the
         //     history buffer MUST be filled with zeros. After it has been
@@ -741,7 +741,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc
         this->hash_tab_mgr.dump(mini_dump);
     }
 
-    static inline int cache_find(uint16_t * offset_cache, uint16_t copy_offset)
+    static inline int cache_find(uint16_t const * offset_cache, uint16_t copy_offset)
     {
         for (int i = 0; i < 4; i++) {
             if (offset_cache[i] == copy_offset) {

@@ -24,7 +24,7 @@
 #pragma once
 
 #include <sys/time.h>
-#include <stdint.h>
+#include <cstdint>
 #include <cstddef>
 
 #include "cxx/cxx.hpp"
@@ -44,15 +44,12 @@ class ServerNotifier;
 class Transport : noncopyable
 {
 protected:
-    uint32_t seqno;
+    uint32_t seqno = 0;
 
 public:
-    Transport()
-    : seqno(0)
-    {}
+    explicit Transport() = default;
 
-    virtual ~Transport()
-    = default;
+    virtual ~Transport() = default;
 
     uint32_t get_seqno() const
     { return this->seqno; }

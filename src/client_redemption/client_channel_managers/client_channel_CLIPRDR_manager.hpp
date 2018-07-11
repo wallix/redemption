@@ -170,7 +170,7 @@ public:
 
 
 
-    ClientChannelCLIPRDRManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientIOClipboardAPI * clientIOClipboardAPI, RDPClipboardConfig & config)
+    ClientChannelCLIPRDRManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientIOClipboardAPI * clientIOClipboardAPI, RDPClipboardConfig const& config)
       : verbose(verbose)
       , clientIOClipboardAPI(clientIOClipboardAPI)
       , client(client)
@@ -194,8 +194,8 @@ public:
             LOG(LOG_WARNING, "Can't enable shared clipboard, %s directory doesn't exist.", this->client->CB_TEMP_DIR);
         }
 
-        for (size_t i = 0; i < config.formats.size();i++) {
-            this->add_format(config.formats[i].ID, config.formats[i].name);
+        for (auto const& format : config.formats) {
+            this->add_format(format.ID, format.name);
         }
     }
 
@@ -340,8 +340,8 @@ public:
                             RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, this->total_format_list_pdu_size);
                             format_list_header.emit(out_stream);
 
-                            for (size_t i = 0; i < this->formats_list.size(); i++) {
-                                this->formats_list[i].emit(out_stream);
+                            for (auto & format : formats_list) {
+                                format.emit(out_stream);
                             }
 
                             InStream chunk(out_stream.get_data(), out_stream.get_offset());
@@ -957,8 +957,8 @@ public:
                     if (cb_filesList.lindexToRequest >= cb_filesList.cItems) {
 
                         this->clientIOClipboardAPI->set_local_clipboard_stream(false);
-                        for (size_t i = 0; i < cb_filesList.itemslist.size(); i++) {
-                            this->clientIOClipboardAPI->setClipboard_files(cb_filesList.itemslist[i].name);
+                        for (auto& item : cb_filesList.itemslist) {
+                            this->clientIOClipboardAPI->setClipboard_files(item.name);
                         }
                         this->clientIOClipboardAPI->set_local_clipboard_stream(true);
 

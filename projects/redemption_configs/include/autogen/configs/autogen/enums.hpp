@@ -478,7 +478,7 @@ enum class ColorDepth {
 inline bool is_valid_enum_value(ColorDepth e)
 {
     auto const i = static_cast<unsigned long>(e);
-    return false
+    return false /* NOLINT(readability-simplify-boolean-expr) */
      || i == 8
      || i == 15
      || i == 16
@@ -500,7 +500,7 @@ enum class OcrVersion {
 inline bool is_valid_enum_value(OcrVersion e)
 {
     auto const i = static_cast<unsigned long>(e);
-    return false
+    return false /* NOLINT(readability-simplify-boolean-expr) */
      || i == 1
      || i == 2
     ;

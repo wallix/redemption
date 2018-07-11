@@ -109,7 +109,7 @@ private:
     FilenameGenerator& operator=(FilenameGenerator const &) = delete;
 };
 
-typedef FilenameGenerator::Format FilenameFormat;
+using FilenameFormat = FilenameGenerator::Format;
 
 
 // TODO in PngCapture
@@ -230,7 +230,7 @@ public:
     { return &(this->buf.seqgen()); }
 
     bool next() override {
-        if (this->status == false) {
+        if (!this->status) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
         const ssize_t res = this->buf.next();

@@ -41,7 +41,7 @@ FlatLogin::ScrollableMessage::ScrollableMessage(
 , scroll_bar(
     drawable, *this, this, false, 0,
     theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
-    font, 0)
+    font, false)
 {
     this->impl = &this->composite_array;
     this->set_bg_color(theme.global.bgcolor);

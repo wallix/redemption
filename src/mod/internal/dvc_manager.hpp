@@ -33,7 +33,7 @@ class DVCManager
     bool verbose;
 
 public:
-    DVCManager(bool verbose = false)
+    explicit DVCManager(bool verbose = false)
     : verbose(verbose)
     {}
 

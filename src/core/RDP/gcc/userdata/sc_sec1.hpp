@@ -35,7 +35,7 @@
 #include "utils/log.hpp"
 #include "openssl_crypto.hpp"
 
-#include <inttypes.h>
+#include <cinttypes>
 
 namespace GCC { namespace UserData {
 

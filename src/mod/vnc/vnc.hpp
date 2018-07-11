@@ -1541,7 +1541,7 @@ protected:
     Buf64k server_data_buf;
 
 public:
-    void draw_event(time_t /*now*/, gdi::GraphicApi & drawable) override
+    void draw_event(time_t /*now*/, gdi::GraphicApi & gd) override
     {
         if (bool(this->verbose & VNCVerbose::draw_event)) {
             LOG(LOG_INFO, "vnc::draw_event");
@@ -1549,7 +1549,7 @@ public:
 
         this->server_data_buf.read_from(this->t);
 
-        while (this->draw_event_impl(drawable)) {
+        while (this->draw_event_impl(gd)) {
         }
 
         if (bool(this->verbose & VNCVerbose::draw_event)) {
@@ -1560,12 +1560,12 @@ public:
     }
 
 private:
-    bool draw_event_impl(gdi::GraphicApi & drawable)
+    bool draw_event_impl(gdi::GraphicApi & gd)
     {
         switch (this->state)
         {
         case DO_INITIAL_CLEAR_SCREEN:
-            this->initial_clear_screen(drawable);
+            this->initial_clear_screen(gd);
             return false;
 
         case UP_AND_RUNNING:
@@ -1574,7 +1574,7 @@ private:
             }
 
             try {
-                while (this->up_and_running_ctx.run(this->server_data_buf, drawable, *this)) {
+                while (this->up_and_running_ctx.run(this->server_data_buf, gd, *this)) {
                     this->up_and_running_ctx.restart();
                 }
                 this->update_screen(Rect(0, 0, this->width, this->height), 1);
@@ -1924,7 +1924,7 @@ private:
                 if (p && *p){
                     support_zrle_encoding          = false;
                     for (;;){
-                        while (*p && *p == ','){++p;}
+                        while (*p == ','){++p;}
                         char * end;
                         int32_t encoding_type = std::strtol(p, &end, 0);
                         if (p == end) { break; }

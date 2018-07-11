@@ -1,3 +1,12 @@
+redemption (1.2.47%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix disabling keyboard input log in Session data of Recorded Session Viewer.
+  * Fix buffer overflow in Selector.
+  * Fix toggling the Num Lock key in a VNC session.
+  * Improve reliability of Smart Launcher.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 10 Jul 2018 16:35:10 +0200
+
 redemption (1.2.45%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix mode of meta file.

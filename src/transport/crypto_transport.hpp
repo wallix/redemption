@@ -44,7 +44,7 @@ class InCryptoTransport : public Transport //, public PartialIO
 public:
     enum class EncryptionMode { Auto, Encrypted, NotEncrypted };
 
-    explicit InCryptoTransport(CryptoContext & cctx, EncryptionMode encryption_mode, Fstat & fsats) noexcept;
+    explicit InCryptoTransport(CryptoContext & cctx, EncryptionMode encryption_mode, Fstat & fstat) noexcept;
 
     ~InCryptoTransport();
 

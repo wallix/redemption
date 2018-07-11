@@ -38,7 +38,7 @@ namespace
         }
         height = font.max_height();
     }
-}
+} // namespace
 
 namespace gdi {
 
@@ -234,4 +234,4 @@ void server_draw_text(
     }
 }
 
-}
+} // namespace gdi

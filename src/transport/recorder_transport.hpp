@@ -44,7 +44,7 @@ public:
 		Info,
 	};
 
-	RecorderFile(char const* filename);
+	explicit RecorderFile(char const* filename);
 
 	~RecorderFile();
 
@@ -63,9 +63,9 @@ class RecorderTransport : public Transport
 {
 public:
 
-	RecorderTransport(Transport& trans, char const* filename);
+	explicit RecorderTransport(Transport& trans, char const* filename);
 
-	void add_info(byte_array bytes);
+	void add_info(byte_array info);
 
     TlsResult enable_client_tls(
         bool server_cert_store, ServerCertCheck server_cert_check,

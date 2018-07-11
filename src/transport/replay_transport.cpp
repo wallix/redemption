@@ -44,7 +44,7 @@ namespace
         }
         return ufd;
     }
-}
+} // namespace
 
 #ifdef DEBUG_PACKETS
 static const char *PacketTypeToString(PacketType t) {

@@ -75,7 +75,7 @@ void LOG__REDEMPTION__BUFFERED::clear()
 }
 
 
-void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...)
+void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*NOLINT(cert-dcl50-cpp)*/
 {
     if (enable_buf_log) {
 # ifndef NDEBUG

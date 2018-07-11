@@ -137,7 +137,8 @@ namespace VNC {
                                 CursorSize{static_cast<unsigned>(this->cx), static_cast<unsigned>(this->cy)},
                                 Hotspot{static_cast<unsigned>(this->x), static_cast<unsigned>(this->y)},
                                 data, mask,
-                                this->red_shift, this->red_max, this->green_shift, this->green_max, this->blue_shift, this->blue_max);
+                                this->red_shift, this->red_max, this->green_shift, this->green_max, this->blue_shift, this->blue_max,
+                                mask.size() / this->cy, data.size() / this->cy);
                 drawable.begin_update();
                 drawable.set_pointer(cursor);
                 drawable.end_update();

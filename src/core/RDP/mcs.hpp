@@ -303,12 +303,11 @@ namespace MCS
 
                         return len;
                     }
-                    else {
-                        LOG(LOG_ERR, "Truncated PER length (need=%u, remain=%zu)",
-                            nbbytes, this->stream.in_remain());
-                        l = 0;
-                        result = false;
-                    }
+
+                    LOG(LOG_ERR, "Truncated PER length (need=%u, remain=%zu)",
+                        nbbytes, this->stream.in_remain());
+                    l = 0;
+                    result = false;
                 }
             }
             else {

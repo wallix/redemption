@@ -78,8 +78,8 @@ private:
         uint16_t    flags;
 
     public:
-        LaunchPendingApp(const char* original_exe_or_file_,
-                         const char* exe_or_file_, uint16_t flags_)
+        explicit LaunchPendingApp(const char* original_exe_or_file_,
+                                  const char* exe_or_file_, uint16_t flags_)
         : original_exe_or_file(original_exe_or_file_)
         , exe_or_file(exe_or_file_)
         , flags(flags_)
@@ -121,7 +121,9 @@ public:
         bool client_supports_handshakeex_pdu;
         bool client_supports_enhanced_remoteapp;
 
-        Params(ReportMessageApi & report_message) : BaseVirtualChannel::Params(report_message) {}
+        explicit Params(ReportMessageApi & report_message)
+          : BaseVirtualChannel::Params(report_message)
+        {}
     };
 
     RemoteProgramsVirtualChannel(
@@ -956,7 +958,7 @@ public:
         }
         else {
             if (!this->session_probe_channel ||
-                this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
+                this->param_client_execute_exe_or_file != serpdu.ExeOrFile()) {
 
                 auto info = key_qvalue_pairs({
                     {"type", "CLIENT_EXECUTE_REMOTEAPP"},
@@ -967,7 +969,7 @@ public:
             }
         }
 
-        if (!this->param_client_execute_exe_or_file.compare(serpdu.ExeOrFile())) {
+        if (this->param_client_execute_exe_or_file == serpdu.ExeOrFile()) {
             assert(!is_auth_application);
 
             if (this->session_probe_channel) {
@@ -997,7 +999,8 @@ public:
 
             return (!this->session_probe_channel);
         }
-        else if (!this->param_client_execute_exe_or_file_2.compare(serpdu.ExeOrFile())) {
+
+        if (this->param_client_execute_exe_or_file_2 == serpdu.ExeOrFile()) {
             assert(!is_auth_application);
 
             if (this->session_probe_channel) {
@@ -1005,12 +1008,9 @@ public:
             }
 
             if (serpdu.ExecResult() != RAIL_EXEC_S_OK) {
-                if (serpdu.ExecResult() == RAIL_EXEC_E_NOT_IN_ALLOWLIST) {
-                    throw Error(ERR_RAIL_UNAUTHORIZED_PROGRAM);
-                }
-                else {
-                    throw Error(ERR_RAIL_STARTING_PROGRAM);
-                }
+                throw Error((serpdu.ExecResult() == RAIL_EXEC_E_NOT_IN_ALLOWLIST)
+                    ? ERR_RAIL_UNAUTHORIZED_PROGRAM
+                    : ERR_RAIL_STARTING_PROGRAM);
             }
 
             return true;

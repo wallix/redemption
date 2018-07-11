@@ -42,7 +42,7 @@ struct ReplayMod::Reader
         //TODO: should be generalized to some wide use FilePath object
         // with basename, path, ext, etc. methods and use it for passing
         // around all of redemption pathes.
-        Path(const char * replay_path)
+        explicit Path(const char * replay_path)
         {
             LOG(LOG_INFO, "Playing %s", replay_path);
 

@@ -402,7 +402,7 @@ namespace jln
         using ActionExecutorBuilder = ActionExecutorBuilder_Concept;
     #else
         template<class Top, class Group>
-        using GroupExecutorBuilder = GroupExecutorBuilderImpl<0, 0, Top, Group>;
+        using GroupExecutorBuilder = GroupExecutorBuilderImpl<false, false, Top, Group>;
 
         template<class InitCtx>
         using TopExecutorBuilder = TopExecutorBuilderImpl<BuilderInit::None, InitCtx>;
@@ -1059,14 +1059,14 @@ namespace jln
             }
 
             template<class F>
-            named_function<S, std::decay_t<F>> operator=(F&& f) const noexcept
+            named_function<S, std::decay_t<F>> operator=(F&& f) const noexcept /*NOLINT(cppcoreguidelines-c-copy-assignment-signature)*/
             {
                 return {static_cast<F&&>(f)};
             }
 
-            named_type const& operator=(named_type& /*unused*/) const noexcept { return *this; }
-            named_type const& operator=(named_type&& /*unused*/) const noexcept { return *this; }
-            named_type const& operator=(named_type const& /*unused*/) const noexcept { return *this; }
+            named_type const& operator=(named_type& /*unused*/) const noexcept { return *this; } /*NOLINT(cppcoreguidelines-c-copy-assignment-signature)*/
+            named_type const& operator=(named_type&& /*unused*/) const noexcept { return *this; } /*NOLINT(cppcoreguidelines-c-copy-assignment-signature)*/
+            named_type const& operator=(named_type const& /*unused*/) const noexcept { return *this; } /*NOLINT(cppcoreguidelines-c-copy-assignment-signature)*/
         };
 
         struct unamed{};
@@ -1494,7 +1494,7 @@ namespace jln
                         case R::SubstituteExit:
                             REDEMPTION_UNREACHABLE();
                     }
-                } while(0);
+                } while(false);
             }
             catch (Error const& e) {
                 this->error = e;
@@ -1564,7 +1564,7 @@ namespace jln
                         case R::SubstituteExit:
                             REDEMPTION_UNREACHABLE();
                     }
-                } while(0);
+                } while(false);
             }
             catch (Error const& e) {
                 this->error = e;
@@ -2069,7 +2069,7 @@ namespace jln
             void on_timeout(F&& f)
             {
                 this->top().timer_data.on_timeout = detail::create_on_timeout(
-                    *this->g.get(), static_cast<F&&>(f));
+                    *this->g, static_cast<F&&>(f));
             }
 
             TopSharedPtr<Ts...> terminate_init()

@@ -76,7 +76,7 @@ struct Theme
 
 struct ThemeHolder final : public ConfigurationHolder
 {
-    ThemeHolder(Theme & theme)
+    explicit ThemeHolder(Theme & theme)
     : theme(theme)
     {}
 

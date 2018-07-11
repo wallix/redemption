@@ -287,7 +287,7 @@ private:
 template<class... BGRValues>
 BGRPalette make_rgb_palette(BGRValues... bgr_values) noexcept
 {
-    static_assert(sizeof...(bgr_values) == 256, "");
+    static_assert(sizeof...(bgr_values) == 256 );
     return BGRPalette(BGRasRGBColor(BGRColor(bgr_values))...);
 }
 
@@ -305,7 +305,7 @@ inline BGRColor color_from_cstr(const char * str)
 {
     BGRColor bgr;
 
-    if (0) {}
+    if (false) {}
 # define ELSE_COLOR(COLOR_NAME) else if (0 == strcasecmp(#COLOR_NAME, str)) { bgr = COLOR_NAME; }
     ELSE_COLOR(BLACK)
     ELSE_COLOR(GREY)

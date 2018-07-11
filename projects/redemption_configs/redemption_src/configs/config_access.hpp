@@ -110,7 +110,7 @@ Translation::language_t language(variables<Cfg...> const & vars) {
     return ::language(vars.template get<cfg::translation::language>());
 }
 
-}
+} // namespace vcfg
 
 using vcfg::language;
 

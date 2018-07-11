@@ -47,7 +47,7 @@ namespace
         }
         return p - list;
     }
-}
+} // namespace
 
 SelectorMod::SelectorMod(
     SelectorModVariables vars, SessionReactor& session_reactor,
@@ -60,7 +60,7 @@ SelectorMod::SelectorMod(
         client_execute, vars.get<cfg::theme>())
 
     , language_button(
-        vars.get<cfg::client::keyboard_layout_proposals>().c_str(),
+        vars.get<cfg::client::keyboard_layout_proposals>(),
         this->selector, front, front, this->font(), this->theme())
 
     , selector_params([&]() {

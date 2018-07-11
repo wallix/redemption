@@ -28,7 +28,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <arpa/inet.h> // for sockaddr_in
-#include <errno.h>
+#include <cerrno>
 #include <unistd.h>
 #include <fcntl.h>
 

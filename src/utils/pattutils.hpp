@@ -35,7 +35,7 @@ struct PatternValue
 
 constexpr char string_pattern_separator = '\x01';
 
-PatternValue get_pattern_value(array_view_const_char av);
+PatternValue get_pattern_value(array_view_const_char pattern_rule);
 
 bool contains_ocr_pattern(const char * soh_separated_patterns);
 bool contains_kbd_pattern(const char * soh_separated_patterns);

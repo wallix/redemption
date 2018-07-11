@@ -135,13 +135,12 @@ struct Rect {
         if (this->isempty()){
             return Rect(x, y, 1, 1);
         }
-        else {
-            const int16_t x0 = std::min(this->x, x);
-            const int16_t y0 = std::min(this->y, y);
-            const int16_t x1 = std::max(static_cast<int16_t>(this->right() - 1), x);
-            const int16_t y1 = std::max(static_cast<int16_t>(this->bottom() - 1), y);
-            return Rect(x0, y0, uint16_t(x1 - x0 + 1), uint16_t(y1 - y0 + 1));
-        }
+
+        const int16_t x0 = std::min(this->x, x);
+        const int16_t y0 = std::min(this->y, y);
+        const int16_t x1 = std::max(static_cast<int16_t>(this->right() - 1), x);
+        const int16_t y1 = std::max(static_cast<int16_t>(this->bottom() - 1), y);
+        return Rect(x0, y0, uint16_t(x1 - x0 + 1), uint16_t(y1 - y0 + 1));
     }
 
     Rect offset(int16_t dx, int16_t dy) const {
@@ -208,7 +207,7 @@ struct Rect {
         if (this->isempty()) {
             return r;
         }
-        else if (r.isempty()) {
+        if (r.isempty()) {
             return *this;
         }
 

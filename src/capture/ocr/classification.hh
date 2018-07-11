@@ -46,7 +46,7 @@ public:
     unsigned first_unrecognized_index{0};
     unsigned font_id;
 
-    classifier_type(unsigned font = -1u)
+    explicit classifier_type(unsigned font = -1u)
     : font_id(font)
     {}
 
@@ -75,9 +75,8 @@ public:
         this->font_id = font_id;
         this->out.reserve(attrs.size());
         bool beginning = true;
-        typedef std::vector<label_attr_t>::iterator iterator;
-        iterator first = attrs.begin();
-        iterator last = attrs.end();
+        auto first = attrs.begin();
+        auto last = attrs.end();
 
         if (first == last) {
             return ;
@@ -137,7 +136,7 @@ public:
 
 struct Classification
 {
-    typedef classifier_type result_type;
+    using result_type = classifier_type;
 
     Classification()
     {}

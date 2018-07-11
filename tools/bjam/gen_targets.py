@@ -74,6 +74,12 @@ target_renames = dict((
     ('rdp_client', 'rdpclient'),
 ))
 
+target_nosyslog = set([
+    'proxy_recorder',
+    'rdpinichecker',
+    'rdpclient',
+])
+
 #coverage_requirements = dict((
 #))
 
@@ -210,7 +216,7 @@ for path in glob.glob('src/main/*.hpp'):
     append_file(sources, 'src/main', path, 'H')
 
 for path in glob.glob('src/main/*.cpp'):
-    if path == 'src/main/redrec.cpp':
+    if path == 'src/main/redrec.cpp': # special case in Jamroot
         continue
     a = mains
     if path in ('src/main/scytale.cpp', 'src/main/do_recorder.cpp'):
@@ -499,7 +505,8 @@ def generate_obj(files):
             requirement_action(f, lambda r: print(' :', r, end=''))
             print(' ;')
 
-generate('exe', mains, '$(EXE_DEPENDENCIES)')
+generate('exe', [f for f in mains if (get_target(f) not in target_nosyslog)], '$(EXE_DEPENDENCIES)')
+generate('exe', [f for f in mains if (get_target(f) in target_nosyslog)], '$(EXE_DEPENDENCIES_NO_SYSLOG)')
 print()
 
 generate('lib', libs, '$(LIB_DEPENDENCIES)', lambda f: 'lib'+get_target(f))

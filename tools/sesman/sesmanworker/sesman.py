@@ -103,6 +103,41 @@ def parse_auth(username):
 class AuthentifierSocketClosed(Exception):
     pass
 
+
+class RTManager(object):
+    __slots__ = ("sesman", "time_limit", "last_start")
+    def __init__(self, sesman, time_limit):
+        self.sesman = sesman
+        self.time_limit = time_limit
+        self.last_start = 0
+
+    def reset(self):
+        self.last_start = 0
+
+    def start(self, current_time):
+        Logger().debug("Start RT Manager at %s" % current_time)
+        self.last_start = current_time
+        self.send_rtdisplay(1)
+
+    def stop(self):
+        self.last_start = 0
+        self.send_rtdisplay(0)
+
+    def check(self, current_time):
+        if (self.last_start
+            and (current_time > self.last_start + self.time_limit)):
+            Logger().debug("Check RT Manager at %s STOP" % current_time)
+            # stop rt_display
+            self.stop()
+            return False
+        return True
+
+    def send_rtdisplay(self, rt_display):
+        if self.sesman.shared.get("rt_display") != rt_display:
+            Logger().debug("sending rt_display=%s" % rt_display)
+            self.sesman.send_data({ "rt_display": rt_display })
+
+
 ################################################################################
 class Sesman():
 ################################################################################
@@ -192,6 +227,11 @@ class Sesman():
 
         self.shared[u'session_probe_launch_error_message'] = u''
 
+        self.rtmanager = RTManager(
+            self,
+            self.engine.wabengine_conf.get("session_4eyes_timer", 60)
+        )
+
     def reset_session_var(self):
         self._full_user_device_account = u'Unknown'
         self.target_service_name = None
@@ -264,6 +304,7 @@ class Sesman():
             u'load_balance_info': u''
             })
         self.engine.reset_proxy_rights()
+        self.rtmanager.reset()
 
     def load_login_message(self):
         try:
@@ -1623,9 +1664,11 @@ class Sesman():
                                     raise
                                 Logger().info("Got Signal %s" % e)
                                 got_signal = True
+                            current_time = time()
                             if self.check_session_parameters:
-                                self.update_session_parameters()
+                                self.update_session_parameters(current_time)
                                 self.check_session_parameters = False
+                            self.rtmanager.check(current_time)
                             if self.proxy_conx in r:
                                 _status, _error = self.receive_data([
                                     "width", "height", "rt_ready"
@@ -2068,15 +2111,12 @@ class Sesman():
             return False
         return engine.is_device_in_subnet(host_ip, subnet)
 
-    def update_session_parameters(self):
+    def update_session_parameters(self, current_time):
         params = self.engine.read_session_parameters()
         res = params.get("rt_display")
-        Logger().info("rt_display=%s" % res)
+        Logger().debug("rt_display=%s" % res)
         if res:
-            # Logger().info("shared rt_display=%s" % self.shared.get("rt_display"))
-            if self.shared.get("rt_display") != res:
-                Logger().info("sending rt_display=%s" % res)
-                self.send_data({ "rt_display": res })
+            self.rtmanager.start(current_time)
 
     def parse_app(self, value):
         acc_name, sep, app_name = value.rpartition('@')

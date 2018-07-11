@@ -414,7 +414,7 @@ namespace cli
                 }
                 return apply_option(pr, opt.act);
             }
-            else if (*s2 == '=') {
+            if (*s2 == '=') {
                 pr.str = s2 + 1;
                 return apply_option(pr, opt.act);
             }

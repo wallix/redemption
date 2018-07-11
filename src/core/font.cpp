@@ -121,8 +121,8 @@ void Font::load_from_file(char const * file_path)
             }
             size_t const new_size = remaining + b;
             if (new_size < len) {
-                LOG(LOG_WARNING, "Font: file %s defines glyphs up to %u, file looks broken",
-                    file_path, index < 0 ? index : index+32u);
+                LOG(LOG_WARNING, "Font: file %s defines glyphs up to %d, file looks broken",
+                    file_path, index < 0 ? index : index+32);
                 return Read::error;
             }
             stream = InStream(stream_buf, new_size);
@@ -201,7 +201,7 @@ void Font::load_from_file(char const * file_path)
          || this->data_glyphs.get() + total_data_len - data < data_size
         ) {
             LOG(LOG_ERR, "Font: error reading font file [%s at glyph %u]:"
-                " width(%d)*height(%d) too large (total_data_len = %d)",
+                " width(%u)*height(%u) too large (total_data_len = %u)",
                 file_path, index, width, height, total_data_len);
             return;
         }

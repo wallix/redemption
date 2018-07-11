@@ -216,7 +216,7 @@ class ClientChannelRDPSNDManager {
     const uint32_t channel_flags;
 
     int wave_data_to_wait = 0;
-    bool last_PDU_is_WaveInfo = 0;
+    bool last_PDU_is_WaveInfo = false;
 
     uint16_t last_cBlockNo;
     uint16_t last_wTimeStamp;

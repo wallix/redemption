@@ -49,6 +49,11 @@ public:
         , f(f)
         {}
 
+        TerminateEventNotifier(TerminateEventNotifier&&) = default;
+        TerminateEventNotifier(TerminateEventNotifier const&) = default;
+        TerminateEventNotifier& operator=(TerminateEventNotifier&&) = default;
+        TerminateEventNotifier& operator=(TerminateEventNotifier const&) = default;
+
         void operator()(AsynchronousTask& self) noexcept
         {
             this->f(this->data, self);

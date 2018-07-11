@@ -27,9 +27,9 @@
 #include <sys/resource.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
-#include <errno.h>
-#include <string.h>
-#include <assert.h>
+#include <cerrno>
+#include <cstring>
+#include <cassert>
 #include <dirent.h>
 
 #include <array>
@@ -453,7 +453,8 @@ public:
                                     session_reactor.signal = signal;
                                     break;
                                 }
-                                else if (signal) {
+
+                                if (signal) {
                                     session_reactor.signal = signal;
                                 }
                                 else {

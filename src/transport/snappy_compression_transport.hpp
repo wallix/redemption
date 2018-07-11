@@ -124,7 +124,7 @@ public:
     , uncompressed_data_length(0) {
         (void)verbose;
         assert(::snappy_max_compressed_length(MAX_UNCOMPRESSED_DATA_LENGTH) <= SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH);
-        assert(MAX_UNCOMPRESSED_DATA_LENGTH <= 0xFFFF); // 0xFFFF (for uint16_t)
+        static_assert(MAX_UNCOMPRESSED_DATA_LENGTH <= 0xFFFF); // 0xFFFF (for uint16_t)
     }
 
     ~SnappyCompressionOutTransport() override {

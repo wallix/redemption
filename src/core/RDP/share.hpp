@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
@@ -536,23 +536,21 @@ struct ShareData_Recv : private CheckShareData_Recv
     , compressedType(stream.in_uint8())
     , compressedLen(stream.in_uint16_le())
     , payload([&stream, dec, this]() {
-          if (this->compressedType & PACKET_COMPRESSED) {
-              if (!dec) {
-                  LOG(LOG_INFO, "ShareData_Recv: got unexpected compressed share data");
-                  throw Error(ERR_SEC);
-              }
+        if (this->compressedType & PACKET_COMPRESSED) {
+            if (!dec) {
+                LOG(LOG_INFO, "ShareData_Recv: got unexpected compressed share data");
+                throw Error(ERR_SEC);
+            }
 
-              const uint8_t * rdata;
-              uint32_t        rlen;
+            const uint8_t * rdata;
+            uint32_t        rlen;
 
-              dec->decompress(stream.get_current(), stream.in_remain(),
-                  this->compressedType, rdata, rlen);
+            dec->decompress(stream.get_current(), stream.in_remain(),
+                this->compressedType, rdata, rlen);
 
-              return InStream(rdata, rlen);
-          }
-          else {
-              return InStream(stream.get_current(), stream.in_remain());
-          }
+            return InStream(rdata, rlen);
+        }
+        return InStream(stream.get_current(), stream.in_remain());
       }())
     // BEGIN CONSTRUCTOR
     {

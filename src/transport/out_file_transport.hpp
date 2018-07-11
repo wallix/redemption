@@ -43,7 +43,7 @@ public:
     : impl(new NullImpl)
     {}
 
-    ReportError(ReportError && other)
+    ReportError(ReportError && other) noexcept
     : impl(std::move(other.impl))
     {}
 
@@ -87,7 +87,7 @@ private:
     {
         F fun;
         template<class Fu>
-        FuncImpl(Fu && f) : fun(std::forward<Fu>(f)) {}
+        explicit FuncImpl(Fu && f) : fun(std::forward<Fu>(f)) {}
         Error get_error(Error err) override { return fun(err); }
         ImplBase* clone() const override { return new FuncImpl(fun); }
     };
@@ -127,10 +127,10 @@ private:
     ReportMessageApi & reporter;
 };
 
-inline Error ReportError::NullImpl::get_error(Error error)
+inline Error ReportError::NullImpl::get_error(Error err)
 {
-    report_and_transform_error(error, LogReporter{});
-    return error;
+    report_and_transform_error(err, LogReporter{});
+    return err;
 }
 
 inline ReportError report_error_from_reporter(ReportMessageApi & reporter)

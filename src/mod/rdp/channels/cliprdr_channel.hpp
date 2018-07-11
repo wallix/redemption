@@ -80,7 +80,9 @@ public:
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
 
-        Params(ReportMessageApi & report_message) : BaseVirtualChannel::Params(report_message) {}
+        explicit Params(ReportMessageApi & report_message)
+          : BaseVirtualChannel::Params(report_message)
+        {}
     };
 
     ClipboardVirtualChannel(
@@ -467,7 +469,7 @@ private:
     }   // process_client_format_data_response_pdu
 
 private:
-    void log_file_descriptor(RDPECLIP::FileDescriptor fd)
+    void log_file_descriptor(RDPECLIP::FileDescriptor const& fd)
     {
         auto const file_size_str = std::to_string(fd.file_size());
         auto const info = key_qvalue_pairs({
@@ -851,11 +853,7 @@ public:
             }
         }
 
-        if (this->proxy_managed) {
-            return false;
-        }
-
-        return true;
+        return !this->proxy_managed;
     }
 
     bool process_server_file_contents_request_pdu(uint32_t total_length,
@@ -1317,11 +1315,10 @@ public:
 
             return false;
         }
-        else {
-            if (this->clipboard_monitor_ready_notifier) {
-                if (!this->clipboard_monitor_ready_notifier->on_clipboard_monitor_ready()) {
-                    this->clipboard_monitor_ready_notifier = nullptr;
-                }
+
+        if (this->clipboard_monitor_ready_notifier) {
+            if (!this->clipboard_monitor_ready_notifier->on_clipboard_monitor_ready()) {
+                this->clipboard_monitor_ready_notifier = nullptr;
             }
         }
 

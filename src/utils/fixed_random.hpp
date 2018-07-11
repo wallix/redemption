@@ -31,7 +31,7 @@ Author(s): David Fort
 class FixedRandom : public Random
 {
 public:
-    FixedRandom(uint8_t fixedByte = 0xff) : value(fixedByte)
+    explicit FixedRandom(uint8_t fixedByte = 0xff) : value(fixedByte)
     {}
 
     void random(void * dest, size_t size) override

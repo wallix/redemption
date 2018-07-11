@@ -33,42 +33,42 @@ struct iter_type {
 
 namespace aux_ {
     template<class> struct iter_pointer;
-    template<class T> struct iter_pointer<T*> { typedef iter_type<T*> type; };
+    template<class T> struct iter_pointer<T*> { using type = iter_type<T *>; };
 
     template<class> struct iter_array;
-    template<class T, std::size_t N> struct iter_array<T[N]> { typedef iter_type<T*> type; };
+    template<class T, std::size_t N> struct iter_array<T[N]> { using type = iter_type<T *>; };
 
     template<class T, class U = void>
-    struct enable_type { typedef U type; };
+    struct enable_type { using type = U; };
 
     template<class, class = void> struct iter_cont;
     template<class T>
     struct iter_cont<T, typename enable_type<typename T::iterator>::type>
-    { typedef iter_type<typename T::iterator> type; };
+    { using type = iter_type<typename T::iterator>; };
 
     template<class, class = void> struct iter_const_cont;
     template<class T>
     struct iter_const_cont<T, typename enable_type<typename T::const_iterator>::type>
-    { typedef iter_type<typename T::const_iterator> type; };
+    { using type = iter_type<typename T::const_iterator>; };
 
     template<class, class = void> struct iter_iterator;
     template<class T>
     struct iter_iterator<T, typename enable_type<typename T::iterator_category>::type>
-    { typedef iter_type<T> type; };
+    { using type = iter_type<T>; };
 
     template<class, class> struct iter_array_pointer;
     template<class T, std::size_t N>
     struct iter_array_pointer<T[N], T*>
-    { typedef iter_type<T*> type; };
+    { using type = iter_type<T *>; };
     template<class T, std::size_t N>
     struct iter_array_pointer<const T[N], T*>
-    { typedef iter_type<const T*> type; };
+    { using type = iter_type<const T *>; };
     template<class T, std::size_t N>
     struct iter_array_pointer<T[N], const T*>
-    { typedef iter_type<const T*> type; };
+    { using type = iter_type<const T *>; };
     template<class T, std::size_t N>
     struct iter_array_pointer<const T[N], const T*>
-    { typedef iter_type<const T*> type; };
+    { using type = iter_type<const T *>; };
 }  // namespace aux_
 
 /**

@@ -189,9 +189,10 @@ protected:
         const RDPVerbose verbose;
 
     public:
-        ToClientSender(FrontAPI& front,
-                       const CHANNELS::ChannelDef& channel,
-                       RDPVerbose verbose)
+        explicit ToClientSender(
+            FrontAPI& front,
+            const CHANNELS::ChannelDef& channel,
+            RDPVerbose verbose)
         : front(front)
         , channel(channel)
         , verbose(verbose)
@@ -232,14 +233,15 @@ protected:
         const RDPVerbose verbose;
 
     public:
-        ToServerSender(OutTransport transport,
-                       CryptContext& encrypt,
-                       int encryption_level,
-                       uint16_t user_id,
-                       CHANNELS::ChannelNameId channel_name,
-                       uint16_t channel_id,
-                       bool show_protocol,
-                       RDPVerbose verbose)
+        explicit ToServerSender(
+            OutTransport transport,
+            CryptContext& encrypt,
+            int encryption_level,
+            uint16_t user_id,
+            CHANNELS::ChannelNameId channel_name,
+            uint16_t channel_id,
+            bool show_protocol,
+            RDPVerbose verbose)
         : transport(transport)
         , encrypt(encrypt)
         , encryption_level(encryption_level)
@@ -452,7 +454,7 @@ protected:
         }
 
     public:
-        AsynchronousTaskContainer(SessionReactor& session_reactor)
+        explicit AsynchronousTaskContainer(SessionReactor& session_reactor)
           : session_reactor(session_reactor)
         {}
 
@@ -499,7 +501,7 @@ protected:
         RDPVerbose verbose;
 
     public:
-        ToServerAsynchronousSender(
+        explicit ToServerAsynchronousSender(
             std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender,
             AsynchronousTaskContainer& asynchronous_tasks,
             RDPVerbose verbose)
@@ -519,7 +521,7 @@ protected:
             this->asynchronous_tasks.add(
                 std::make_unique<RdpdrSendClientMessageTask>(
                     total_length, flags, chunk_data, chunk_data_length,
-                    *this->to_server_synchronous_sender.get(),
+                    *this->to_server_synchronous_sender,
                     this->verbose
                 )
             );
@@ -699,18 +701,19 @@ public:
     GCC::UserData::SCSecurity sc_sec1;
     GCC::UserData::CSSecurity cs_security;
 
-    mod_rdp( Transport & trans
-           , SessionReactor& session_reactor
-           , FrontAPI & front
-           , const ClientInfo & info
-           , RedirectionInfo & redir_info
-           , Random & gen
-           , TimeObj & timeobj
-           , const ModRDPParams & mod_rdp_params
-           , AuthApi & authentifier
-           , ReportMessageApi & report_message
-           , ModRdpVariables vars
-           )
+    explicit mod_rdp(
+        Transport & trans
+      , SessionReactor& session_reactor
+      , FrontAPI & front
+      , const ClientInfo & info
+      , RedirectionInfo & redir_info
+      , Random & gen
+      , TimeObj & timeobj
+      , const ModRDPParams & mod_rdp_params
+      , AuthApi & authentifier
+      , ReportMessageApi & report_message
+      , ModRdpVariables vars
+    )
         : authorization_channels(
             mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
             mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
@@ -1580,7 +1583,8 @@ public:
             }
 
             this->file_system_drive_manager.EnableDrive(
-                array_view_const_char{trimmed_range.begin(), trimmed_range.end()},
+                FileSystemDriveManager::DriveName(
+                    array_view_const_char{trimmed_range.begin(), trimmed_range.end()}),
                 proxy_managed_drive_prefix, this->verbose);
         }
     }   // configure_proxy_managed_drives
@@ -1875,7 +1879,7 @@ private:
                 if (remaining_data_length == data_length) {
                     return (flags & (~CHANNELS::CHANNEL_FLAG_LAST));
                 }
-                else if (remaining_data_length == virtual_channel_data_length) {
+                if (remaining_data_length == virtual_channel_data_length) {
                     return (flags & (~CHANNELS::CHANNEL_FLAG_FIRST));
                 }
 
@@ -2233,7 +2237,7 @@ public:
             size_t chunk_size = sec.payload.in_remain();
 
             // If channel name is our virtual channel, then don't send data to front
-                 if (mod_channel.name == this->auth_channel && this->enable_auth_channel) {
+            if      (mod_channel.name == this->auth_channel && this->enable_auth_channel) {
                 this->process_auth_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == this->checkout_channel) {
@@ -2698,12 +2702,12 @@ public:
 
     TpduBuffer buf;
 
-    void draw_event(time_t now, gdi::GraphicApi & drawable_) override
+    void draw_event(time_t now, gdi::GraphicApi & gd) override
     {
         //LOG(LOG_INFO, "mod_rdp::draw_event()");
 
         if (this->remote_programs_session_manager) {
-            this->remote_programs_session_manager->set_drawable(&drawable_);
+            this->remote_programs_session_manager->set_drawable(&gd);
         }
 
         this->buf.load_data(this->trans);
@@ -2716,7 +2720,7 @@ public:
                     ? (*this->remote_programs_session_manager)
                     : ( this->graphics_update_disabled
                         ? gdi::null_gd()
-                        : drawable_
+                        : gd
                     ));
                 if (this->buf.current_pdu_is_fast_path()) {
                     this->connected_fast_path(drawable, this->buf.current_pdu_buffer());
@@ -2737,9 +2741,7 @@ public:
                     this->session_probe_virtual_channel_p->is_disconnection_reconnection_required()) {
                     throw Error(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION);
                 }
-                else {
-                    this->front.must_be_stop_capture();
-                }
+                this->front.must_be_stop_capture();
 
                 if (this->remote_apps_not_enabled) {
                     throw Error(ERR_RAIL_NOT_ENABLED);
@@ -3073,7 +3075,7 @@ public:
 
                 PointerCaps pointer_caps;
                 pointer_caps.len                       = 10;
-                if (this->enable_new_pointer == false) {
+                if (!this->enable_new_pointer) {
                     pointer_caps.pointerCacheSize      = 0;
                     pointer_caps.colorPointerCacheSize = 20;
                     pointer_caps.len                   = 8;
@@ -4782,7 +4784,7 @@ public:
 
         try
         {
-            while (1) {
+            for (;;) {
                 this->send_persistent_key_list_pdu(
                     [this](StreamSize<65535>, OutStream & pdu_data_stream) {
                         uint8_t * data = pdu_data_stream.get_data();
@@ -4943,7 +4945,7 @@ public:
     }
 
     void send_input(int time, int message_type, int device_flags, int param1, int param2) override {
-        if (this->enable_fastpath_client_input_event == false) {
+        if (!this->enable_fastpath_client_input_event) {
             this->send_input_slowpath(time, message_type, device_flags, param1, param2);
         }
         else {
@@ -5116,7 +5118,10 @@ public:
         const uint8_t * data = stream.in_uint8p(dlen);
         const uint8_t * mask = stream.in_uint8p(mlen);
 
-        Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen});
+        assert(::even_pad_length(::nbbytes(width)) == mlen / height);
+        assert(::even_pad_length(::nbbytes(width * 24)) == dlen / height);
+
+        Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen}, mlen / height, dlen / height);
         this->cursors[pointer_cache_idx] = cursor;
 
         drawable.set_pointer(cursor);
@@ -5263,13 +5268,15 @@ public:
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
-        LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu data_bpp=%u pointer_idx=%u hotspot_x=%u hotspot_y=%u width=%u height=%u mlen=%u dlen=%u square=%u", data_bpp, pointer_idx, hotspot_x, hotspot_y, width, height, mlen, dlen, height*width);
+        LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu data_bpp=%u pointer_idx=%u hotspot_x=%d hotspot_y=%d width=%d height=%d mlen=%u dlen=%u square=%d", data_bpp, pointer_idx, hotspot_x, hotspot_y, width, height, mlen, dlen, height*width);
         const uint8_t * data = stream.in_uint8p(dlen);
         const uint8_t * mask = stream.in_uint8p(mlen);
 
-        Pointer cursor({width, height}, {hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor);
-        this->cursors[pointer_idx] = cursor;
+        Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor, mlen / height, dlen / height);
+        assert(::even_pad_length(::nbbytes(width)) == mlen / height);
+        assert(::even_pad_length(::nbbytes(width * data_bpp)) == dlen / height);
 
+        this->cursors[pointer_idx] = cursor;
 
 
         drawable.set_pointer(cursor);

@@ -36,7 +36,7 @@ namespace re {
         unsigned num_cap = 0;
         state_list_t sts;
         std::vector<unsigned> indexes;
-        typedef std::vector<std::pair<char_int, char_int> > c_range_type;
+        using c_range_type = std::vector<std::pair<char_int, char_int>>;
         c_range_type c_ranges;
 
     private:
@@ -323,9 +323,9 @@ namespace re {
 
     struct VectorRange
     {
-        typedef std::pair<char_int, char_int> range_t;
-        typedef std::vector<range_t> container_type;
-        typedef container_type::iterator iterator;
+        using range_t = std::pair<char_int, char_int>;
+        using container_type = std::vector<range_t>;
+        using iterator = container_type::iterator;
 
         container_type & ranges;
 
@@ -374,7 +374,7 @@ namespace re {
     inline bool is_range_repetition(const char * s)
     {
         const char * begin = s;
-        while (*s && '0' <= *s && *s <= '9') {
+        while ('0' <= *s && *s <= '9') {
             ++s;
         }
         if (begin == s || !*s || (*s != ',' && *s != '}')) {
@@ -384,10 +384,10 @@ namespace re {
             return true;
         }
         ++s;
-        while (*s && '0' <= *s && *s <= '9') {
+        while ('0' <= *s && *s <= '9') {
             ++s;
         }
-        return *s && *s == '}';
+        return *s == '}';
     }
 
     inline bool is_meta_char(utf8_consumer & consumer, char_int c)
@@ -557,10 +557,8 @@ namespace re {
                                       accu.range(ranges.ranges[0].second+1, -1u, eps));
                     return &eps->out1;
                 }
-                else {
-                    *pst = accu.range(ranges.ranges[0].first, ranges.ranges[0].second);
-                    return &(*pst)->out1;
-                }
+                *pst = accu.range(ranges.ranges[0].first, ranges.ranges[0].second);
+                return &(*pst)->out1;
             }
 
             std::sort(ranges.ranges.begin(), ranges.ranges.end());
@@ -703,7 +701,7 @@ namespace re {
         }
     };
 
-    typedef std::pair<State*, State**> IntermendaryState;
+    using IntermendaryState = std::pair<State*, State**>;
 
     inline bool is_unique_string_state(State * first, State * last)
     {
@@ -1031,7 +1029,7 @@ namespace re {
             {}
         };
 #else
-        typedef StateDeleter Deleter;
+        using Deleter = StateDeleter;
 #endif
     public:
         StateParser()

@@ -404,9 +404,7 @@ public:
 
                     return ctx.exec_at("Windows (down)"_c);
                 }
-                else {
-                    return ctx.exec_at("Send format list"_c);
-                }
+                return ctx.exec_at("Send format list"_c);
             }),
 
             "Send format list"_f
@@ -476,14 +474,13 @@ public:
                     self.state = State::WAIT;
                     return ctx.set_delay(self.to_microseconds(self.short_delay, self.delay_coefficient)).at(0).ready();
                 }
-                else {
-                    return ctx.set_delay(
-                            self.to_microseconds(
-                                    (decltype(wait_for_short_delay)::value ? self.short_delay : self.long_delay),
-                                    self.delay_coefficient
-                                )
-                        ).next();
-                }
+
+                return ctx.set_delay(
+                    self.to_microseconds(
+                        (decltype(wait_for_short_delay)::value ? self.short_delay : self.long_delay),
+                        self.delay_coefficient
+                    )
+                ).next();
             };
         };
 
@@ -547,17 +544,16 @@ public:
 
             return true;
         }
-        else {
-            if (this->state != State::START) {
-                return (this->state < State::WAIT);
-            }
 
-            this->state = State::RUN;
-
-            make_run_sequencer();
-
-            return false;
+        if (this->state != State::START) {
+            return (this->state < State::WAIT);
         }
+
+        this->state = State::RUN;
+
+        make_run_sequencer();
+
+        return false;
     }
 
     // Returns false to prevent message to be sent to server.

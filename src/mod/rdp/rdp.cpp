@@ -28,7 +28,7 @@ struct Private_RdpNegociation
     RdpNegociation rdp_negociation;
 
     template<class... Ts>
-    Private_RdpNegociation(char const* program, char const* directory, Ts&&... xs)
+    explicit Private_RdpNegociation(char const* program, char const* directory, Ts&&... xs)
       : rdp_negociation(static_cast<Ts&&>(xs)...)
     {
         this->rdp_negociation.set_program(program, directory);

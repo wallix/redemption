@@ -36,7 +36,7 @@ public:
 
     enum { invalid_iterator = 0 };
 
-    typedef void * iterator;
+    using iterator = void *;
 
     virtual iterator add(Widget * w) = 0;
     virtual void remove(const Widget * w) = 0;

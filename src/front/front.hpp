@@ -383,8 +383,8 @@ private:
           , ini.get<cfg::globals::experimental_enable_serializer_data_block_size_limit>()
           , fastpath_support
           , mppc_enc
-          , bool(ini.get<cfg::client::rdp_compression>()) ? client_info.rdp_compression : 0
-          , bool(ini.get<cfg::client::enable_new_pointer_update>()) ? client_info.supported_new_pointer_update : 0
+          , bool(ini.get<cfg::client::rdp_compression>()) ? client_info.rdp_compression : false
+          , bool(ini.get<cfg::client::enable_new_pointer_update>()) ? client_info.supported_new_pointer_update : false
           , ( (ini.get<cfg::debug::primary_orders>()
                 ? RDPSerializer::Verbose::primary_orders   : RDPSerializer::Verbose::none)
             | (ini.get<cfg::debug::secondary_orders>()
@@ -694,7 +694,7 @@ public:
     , capture(nullptr)
     , verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
     , keymap(bool(this->verbose & Verbose::keymap) ? 1 : 0)
-    , up_and_running(0)
+    , up_and_running(false)
     , share_id(65538)
     , encryptionLevel(underlying_cast(ini.get<cfg::globals::encryptionLevel>()) + 1)
     , trans(trans)
@@ -762,8 +762,8 @@ public:
 
         // --------------------------------------------------------
 
-        for (size_t i = 0; i < 6 ; i++) {
-            this->palette_memblt_sent[i] = false;
+        for (bool& x : this->palette_memblt_sent) {
+            x = false;
         }
 
         // from server_sec
@@ -845,7 +845,7 @@ public:
                     // start a send_deactive, send_deman_active process with
                     // the new resolution setting
                     /* shut down the rdp client */
-                    this->up_and_running = 0;
+                    this->up_and_running = false;
                     this->send_deactive();
                     /* this should do the actual resizing */
                     this->send_demand_active();
@@ -1263,7 +1263,7 @@ public:
     TpduBuffer buf;
     size_t channel_list_index = 0;
 
-    void incoming(Callback & cb, time_t /*now*/)
+    void incoming(Callback & cb, time_t /*now*/) /*NOLINT(hicpp-function-size)*/
     {
         if (bool(this->verbose & Verbose::basic_trace3)) {
             LOG(LOG_INFO, "Front::incoming");
@@ -1865,11 +1865,10 @@ public:
                     this->state = WAITING_FOR_LOGON_INFO;
                     break;
                 }
-                else {
-                    LOG(LOG_INFO, "Front::incoming: TLS mode: exchange packet disabled");
-                    this->state = WAITING_FOR_LOGON_INFO;
-                    REDEMPTION_CXX_FALLTHROUGH;
-                }
+
+                LOG(LOG_INFO, "Front::incoming: TLS mode: exchange packet disabled");
+                this->state = WAITING_FOR_LOGON_INFO;
+                REDEMPTION_CXX_FALLTHROUGH;
             }
             case WAITING_FOR_LOGON_INFO:
             // Secure Settings Exchange
@@ -1942,7 +1941,7 @@ public:
                                 0x02, 0x00, 0x00, 0x00,
                                 0xf3, 0x99, 0x00, 0x00
                             };
-                            static_assert(sizeof(lic3) == 16, "");
+                            static_assert(sizeof(lic3) == 16);
 
                             SEC::Sec_Send sec(
                                 sec_header, lic3, sizeof(lic3),
@@ -2035,7 +2034,7 @@ public:
                                 0x6f, 0x73, 0x6f, 0x66, 0x74, 0x2e, 0x63, 0x6f,
                                 0x6d, 0x00
                             };
-                            static_assert(sizeof(lic1) == 314, "");
+                            static_assert(sizeof(lic1) == 314);
 
                             OutReservedStreamHelper hstream(sec_header.get_data(), 8, sec_header.get_capacity());
                             OutStream & stream = hstream.get_data_stream();
@@ -2444,181 +2443,180 @@ public:
                     }
                     break;
                 }
-                else {
-                    // TODO We shall put a specific case when we get Disconnect Request
-                    if (buf.current_pdu_get_type() == X224::DR_TPDU) {
-                        // TODO What is the clean way to actually disconnect ?
-                        X224::DR_TPDU_Recv x224(new_x224_stream);
-                        LOG(LOG_INFO, "Front::incoming: Received Disconnect Request from RDP client");
-                        this->is_client_disconnected = true;
-                        throw Error(ERR_X224_RECV_ID_IS_RD_TPDU);   // Disconnect Request - Transport Protocol Data Unit
-                    }
-                    else if (buf.current_pdu_get_type() != X224::DT_TPDU) {
-                        LOG(LOG_ERR, "Front::incoming: Unexpected non data PDU (got %d)", buf.current_pdu_get_type());
-                        throw Error(ERR_X224_EXPECTED_DATA_PDU);
+
+                // TODO We shall put a specific case when we get Disconnect Request
+                if (buf.current_pdu_get_type() == X224::DR_TPDU) {
+                    // TODO What is the clean way to actually disconnect ?
+                    X224::DR_TPDU_Recv x224(new_x224_stream);
+                    LOG(LOG_INFO, "Front::incoming: Received Disconnect Request from RDP client");
+                    this->is_client_disconnected = true;
+                    throw Error(ERR_X224_RECV_ID_IS_RD_TPDU);   // Disconnect Request - Transport Protocol Data Unit
+                }
+                if (buf.current_pdu_get_type() != X224::DT_TPDU) {
+                    LOG(LOG_ERR, "Front::incoming: Unexpected non data PDU (got %d)", buf.current_pdu_get_type());
+                    throw Error(ERR_X224_EXPECTED_DATA_PDU);
+                }
+
+                X224::DT_TPDU_Recv x224(new_x224_stream);
+
+                int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
+                if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum) {
+                    LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum received");
+                    MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
+                    const char * reason = MCS::get_reason(mcs.reason);
+                    LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
+                    this->is_client_disconnected = true;
+                    throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
+                }
+
+                MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+                SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
+                if (bool(this->verbose & Verbose::sec_decrypted)) {
+                    LOG(LOG_INFO, "Front::incoming: sec decrypted payload:");
+                    hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());
+                }
+
+                if (bool(this->verbose & Verbose::basic_trace4)) {
+                    LOG(LOG_INFO, "Front::incoming: sec_flags=%x", sec.flags);
+                }
+
+                if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL) {
+                    if (bool(this->verbose & Verbose::channel)) {
+                        LOG(LOG_INFO, "Front::incoming: channel_data channelId=%u", mcs.channelId);
                     }
 
-                    X224::DT_TPDU_Recv x224(new_x224_stream);
-
-                    int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
-                    if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum) {
-                        LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum received");
-                        MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                        const char * reason = MCS::get_reason(mcs.reason);
-                        LOG(LOG_INFO, "Front::incoming: DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
-                        this->is_client_disconnected = true;
-                        throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
+                    size_t num_channel_src = this->channel_list.size();
+                    for (size_t index = 0; index < this->channel_list.size(); index++) {
+                        if (this->channel_list[index].chanid == mcs.channelId) {
+                            num_channel_src = index;
+                            break;
+                        }
                     }
 
-                    MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                    SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
-                    if (bool(this->verbose & Verbose::sec_decrypted)) {
-                        LOG(LOG_INFO, "Front::incoming: sec decrypted payload:");
-                        hexdump_d(sec.payload.get_data(), sec.payload.get_capacity());
+                    if (num_channel_src >= this->channel_list.size()) {
+                        LOG(LOG_ERR, "Front::incoming: Unknown Channel");
+                        throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
                     }
 
-                    if (bool(this->verbose & Verbose::basic_trace4)) {
-                        LOG(LOG_INFO, "Front::incoming: sec_flags=%x", sec.flags);
+                    const CHANNELS::ChannelDef & channel = this->channel_list[num_channel_src];
+                    if (bool(this->verbose & Verbose::channel)) {
+                        channel.log(mcs.channelId);
                     }
 
-                    if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL) {
+                    unsigned expected = 8; /* length(4) + flags(4) */
+                    if (!sec.payload.in_check_rem(expected)) {
+                        LOG(LOG_ERR, "Front::incoming: Data truncated, need=%u remains=%zu",
+                            expected, sec.payload.in_remain());
+                        throw Error(ERR_MCS);
+                    }
+
+                    uint32_t length = sec.payload.in_uint32_le();
+                    uint32_t flags  = sec.payload.in_uint32_le();
+                    size_t chunk_size = sec.payload.in_remain();
+
+                    if (this->up_and_running) {
                         if (bool(this->verbose & Verbose::channel)) {
-                            LOG(LOG_INFO, "Front::incoming: channel_data channelId=%u", mcs.channelId);
+                            LOG(LOG_INFO, "Front::incoming: channel_name=\"%s\"", channel.name);
                         }
 
-                        size_t num_channel_src = this->channel_list.size();
-                        for (size_t index = 0; index < this->channel_list.size(); index++) {
-                            if (this->channel_list[index].chanid == mcs.channelId) {
-                                num_channel_src = index;
-                                break;
-                            }
-                        }
+                        InStream chunk(sec.payload.get_current(), chunk_size);
 
-                        if (num_channel_src >= this->channel_list.size()) {
-                            LOG(LOG_ERR, "Front::incoming: Unknown Channel");
-                            throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
-                        }
-
-                        const CHANNELS::ChannelDef & channel = this->channel_list[num_channel_src];
-                        if (bool(this->verbose & Verbose::channel)) {
-                            channel.log(mcs.channelId);
-                        }
-
-                        unsigned expected = 8; /* length(4) + flags(4) */
-                        if (!sec.payload.in_check_rem(expected)) {
-                            LOG(LOG_ERR, "Front::incoming: Data truncated, need=%u remains=%zu",
-                                expected, sec.payload.in_remain());
-                            throw Error(ERR_MCS);
-                        }
-
-                        uint32_t length = sec.payload.in_uint32_le();
-                        uint32_t flags  = sec.payload.in_uint32_le();
-                        size_t chunk_size = sec.payload.in_remain();
-
-                        if (this->up_and_running) {
-                            if (bool(this->verbose & Verbose::channel)) {
-                                LOG(LOG_INFO, "Front::incoming: channel_name=\"%s\"", channel.name);
-                            }
-
-                            InStream chunk(sec.payload.get_current(), chunk_size);
-
-                            cb.send_to_mod_channel(channel.name, chunk, length, flags);
-                        }
-                        else {
-                            if (bool(this->verbose & Verbose::channel)) {
-                                LOG(LOG_INFO, "Front::incoming: not up_and_running send_to_mod_channel dropped");
-                            }
-                        }
-                        sec.payload.in_skip_bytes(chunk_size);
+                        cb.send_to_mod_channel(channel.name, chunk, length, flags);
                     }
                     else {
-                        while (sec.payload.get_current() < sec.payload.get_data_end()) {
-                            ShareControl_Recv sctrl(sec.payload);
-
-                            switch (sctrl.pduType) {
-                            case PDUTYPE_DEMANDACTIVEPDU:
-                                if (bool(this->verbose & Verbose::basic_trace)) {
-                                    LOG(LOG_INFO, "Front::incoming: Received DEMANDACTIVEPDU (unsupported)");
-                                }
-                                break;
-                            case PDUTYPE_CONFIRMACTIVEPDU:
-                                if (bool(this->verbose & Verbose::basic_trace)) {
-                                    LOG(LOG_INFO, "Front::incoming: Received CONFIRMACTIVEPDU");
-                                }
-                                {
-                                    unsigned expected = 6;   /* shareId(4) + originatorId(2) */
-                                    if (!sctrl.payload.in_check_rem(expected)) {
-                                        LOG(LOG_ERR,
-                                            "Front::incoming: Truncated Confirm Active PDU data, need=%u remains=%zu",
-                                            expected, sctrl.payload.in_remain());
-                                        throw Error(ERR_RDP_DATA_TRUNCATED);
-                                    }
-
-                                    uint32_t share_id = sctrl.payload.in_uint32_le();
-                                    uint16_t originatorId = sctrl.payload.in_uint16_le();
-                                    this->process_confirm_active(sctrl.payload);
-                                    (void)share_id;
-                                    (void)originatorId;
-                                }
-                                // reset caches, etc.
-                                this->reset();
-                                // resizing done
-                                {
-                                    RDPColCache cmd(0, BGRPalette::classic_332());
-                                    this->orders.graphics_update_pdu().draw(cmd);
-                                }
-                                if (bool(this->verbose & Verbose::basic_trace)) {
-                                    LOG(LOG_INFO, "Front::incoming: Received CONFIRMACTIVEPDU done");
-                                }
-
-                                break;
-                            case PDUTYPE_DATAPDU: /* 7 */
-                                if (bool(this->verbose & Verbose::basic_trace4)) {
-                                    LOG(LOG_INFO, "Front::incoming: Received DATAPDU");
-                                }
-                                // this is rdp_process_data that will set up_and_running to 1
-                                // when fonts have been received
-                                // we will not exit this loop until we are in this state.
-                                //LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
-                                this->process_data(sctrl.payload, cb);
-                                if (bool(this->verbose & Verbose::basic_trace4)) {
-                                    LOG(LOG_INFO, "Front::incoming: Received DATAPDU done");
-                                }
-
-                                if (!sctrl.payload.check_end())
-                                {
-                                    LOG(LOG_ERR,
-                                        "Front::incoming: Trailing data after DATAPDU: remains=%zu",
-                                        sctrl.payload.in_remain());
-                                    throw Error(ERR_MCS_PDU_TRAILINGDATA);
-                                }
-                                break;
-                            case PDUTYPE_DEACTIVATEALLPDU:
-                                if (bool(this->verbose & Verbose::basic_trace)) {
-                                    LOG(LOG_INFO, "Front::incoming: Received DEACTIVATEALLPDU (unsupported)");
-                                }
-                                break;
-                            case PDUTYPE_SERVER_REDIR_PKT:
-                                if (bool(this->verbose & Verbose::basic_trace)) {
-                                    LOG(LOG_INFO, "Front::incoming: Received SERVER_REDIR_PKT (unsupported)");
-                                }
-                                break;
-                            default:
-                                LOG(LOG_WARNING, "Front::incoming: Received unknown PDU type in session_data (%d)\n", sctrl.pduType);
-                                break;
-                            }
-
-                            // TODO check all sctrl.payload data is consumed
+                        if (bool(this->verbose & Verbose::channel)) {
+                            LOG(LOG_INFO, "Front::incoming: not up_and_running send_to_mod_channel dropped");
                         }
                     }
+                    sec.payload.in_skip_bytes(chunk_size);
+                }
+                else {
+                    while (sec.payload.get_current() < sec.payload.get_data_end()) {
+                        ShareControl_Recv sctrl(sec.payload);
 
-                    if (!sec.payload.check_end())
-                    {
-                        LOG(LOG_ERR,
-                            "Front::incoming: Trailing data after SEC: remains=%zu",
-                            sec.payload.in_remain());
-                        throw Error(ERR_SEC_TRAILINGDATA);
+                        switch (sctrl.pduType) {
+                        case PDUTYPE_DEMANDACTIVEPDU:
+                            if (bool(this->verbose & Verbose::basic_trace)) {
+                                LOG(LOG_INFO, "Front::incoming: Received DEMANDACTIVEPDU (unsupported)");
+                            }
+                            break;
+                        case PDUTYPE_CONFIRMACTIVEPDU:
+                            if (bool(this->verbose & Verbose::basic_trace)) {
+                                LOG(LOG_INFO, "Front::incoming: Received CONFIRMACTIVEPDU");
+                            }
+                            {
+                                unsigned expected = 6;   /* shareId(4) + originatorId(2) */
+                                if (!sctrl.payload.in_check_rem(expected)) {
+                                    LOG(LOG_ERR,
+                                        "Front::incoming: Truncated Confirm Active PDU data, need=%u remains=%zu",
+                                        expected, sctrl.payload.in_remain());
+                                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                                }
+
+                                uint32_t share_id = sctrl.payload.in_uint32_le();
+                                uint16_t originatorId = sctrl.payload.in_uint16_le();
+                                this->process_confirm_active(sctrl.payload);
+                                (void)share_id;
+                                (void)originatorId;
+                            }
+                            // reset caches, etc.
+                            this->reset();
+                            // resizing done
+                            {
+                                RDPColCache cmd(0, BGRPalette::classic_332());
+                                this->orders.graphics_update_pdu().draw(cmd);
+                            }
+                            if (bool(this->verbose & Verbose::basic_trace)) {
+                                LOG(LOG_INFO, "Front::incoming: Received CONFIRMACTIVEPDU done");
+                            }
+
+                            break;
+                        case PDUTYPE_DATAPDU: /* 7 */
+                            if (bool(this->verbose & Verbose::basic_trace4)) {
+                                LOG(LOG_INFO, "Front::incoming: Received DATAPDU");
+                            }
+                            // this is rdp_process_data that will set up_and_running to 1
+                            // when fonts have been received
+                            // we will not exit this loop until we are in this state.
+                            //LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
+                            this->process_data(sctrl.payload, cb);
+                            if (bool(this->verbose & Verbose::basic_trace4)) {
+                                LOG(LOG_INFO, "Front::incoming: Received DATAPDU done");
+                            }
+
+                            if (!sctrl.payload.check_end())
+                            {
+                                LOG(LOG_ERR,
+                                    "Front::incoming: Trailing data after DATAPDU: remains=%zu",
+                                    sctrl.payload.in_remain());
+                                throw Error(ERR_MCS_PDU_TRAILINGDATA);
+                            }
+                            break;
+                        case PDUTYPE_DEACTIVATEALLPDU:
+                            if (bool(this->verbose & Verbose::basic_trace)) {
+                                LOG(LOG_INFO, "Front::incoming: Received DEACTIVATEALLPDU (unsupported)");
+                            }
+                            break;
+                        case PDUTYPE_SERVER_REDIR_PKT:
+                            if (bool(this->verbose & Verbose::basic_trace)) {
+                                LOG(LOG_INFO, "Front::incoming: Received SERVER_REDIR_PKT (unsupported)");
+                            }
+                            break;
+                        default:
+                            LOG(LOG_WARNING, "Front::incoming: Received unknown PDU type in session_data (%d)\n", sctrl.pduType);
+                            break;
+                        }
+
+                        // TODO check all sctrl.payload data is consumed
                     }
+                }
+
+                if (!sec.payload.check_end())
+                {
+                    LOG(LOG_ERR,
+                        "Front::incoming: Trailing data after SEC: remains=%zu",
+                        sec.payload.in_remain());
+                    throw Error(ERR_SEC_TRAILINGDATA);
                 }
             }
             break;
@@ -3058,8 +3056,7 @@ private:
                         this->client_info.general_caps.log("Front::process_confirm_active: Receiving from client");
                     }
                     this->client_info.use_compact_packets =
-                        (this->client_info.general_caps.extraflags & NO_BITMAP_COMPRESSION_HDR) ?
-                        1 : 0;
+                        bool(this->client_info.general_caps.extraflags & NO_BITMAP_COMPRESSION_HDR);
 
                     this->server_fastpath_update_support =
                         (   this->fastpath_support
@@ -4030,7 +4027,7 @@ private:
 
                 this->set_gd(this->orders.graphics_update_pdu());
 
-                this->up_and_running = 1;
+                this->up_and_running = true;
                 this->handshake_timeout.reset();
                 cb.rdp_input_up_and_running();
                 // TODO we should use accessors to set that, also not sure it's the right place to set it

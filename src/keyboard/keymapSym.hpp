@@ -101,7 +101,7 @@ struct KeymapSym
 
     int last_sym;
 
-    typedef int KeyLayout_t[128];
+    using KeyLayout_t = int[128];
 
     // keylayout working tables (X11 mode : begins in 8e position.)
     KeyLayout_t keylayout_WORK_noshift_sym;

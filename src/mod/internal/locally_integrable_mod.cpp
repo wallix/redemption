@@ -38,7 +38,7 @@ LocallyIntegrableMod::LocallyIntegrableMod(
     if (this->rail_enabled) {
         this->graphic_event = session_reactor.create_graphic_event()
         .on_action(jln::one_shot([this](gdi::GraphicApi&){
-            if (false == static_cast<bool>(this->client_execute)) {
+            if (!this->client_execute) {
                 this->client_execute.ready(
                     *this, this->front_width, this->front_height, this->font(),
                     this->is_resizing_hosted_desktop_allowed());

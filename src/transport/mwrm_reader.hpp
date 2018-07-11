@@ -103,7 +103,7 @@ public:
     InTransport ibuf;
 
 public:
-    MwrmLineReader(InTransport reader_buf) noexcept
+    explicit MwrmLineReader(InTransport reader_buf) noexcept
     : buf{}
     , eof(buf)
     , eol(buf)
@@ -123,7 +123,7 @@ public:
 
 struct MwrmReader
 {
-    MwrmReader(InTransport ibuf) noexcept;
+    explicit MwrmReader(InTransport ibuf) noexcept;
 
     void read_meta_headers();
 

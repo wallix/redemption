@@ -170,7 +170,7 @@ namespace std // NOLINT(cert-dcl58-cpp)
     {
         return out << "nullptr";
     }
-}
+} // namespace std
 
 #include "utils/sugar/underlying_cast.hpp"
 
@@ -357,3 +357,4 @@ namespace redemption_unit_test__
 #endif
 
 #define RED_AUTO_TEST_CASE BOOST_AUTO_TEST_CASE
+

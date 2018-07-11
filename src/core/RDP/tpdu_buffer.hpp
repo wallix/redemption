@@ -53,7 +53,7 @@ namespace Extractors
 
     private:
         HeaderResult() noexcept
-           
+
         = default;
 
         HeaderResult(uint16_t len) noexcept
@@ -163,10 +163,10 @@ namespace Extractors
 
             array_view_u8 av = buf.av(4);
 
-            /**/ if (av[1] <= 0x7F) { return HeaderResult::ok(av[1] + 2); }
-            else if (av[1] == 0x81) { return HeaderResult::ok(av[2] + 3); }
-            else if (av[1] == 0x82) { return HeaderResult::ok(((av[2] << 8) | av[3]) + 4); }
-            else                    { throw Error(ERR_NEGO_INCONSISTENT_FLAGS); }
+            if (av[1] <= 0x7F) { return HeaderResult::ok(av[1] + 2); }
+            if (av[1] == 0x81) { return HeaderResult::ok(av[2] + 3); }
+            if (av[1] == 0x82) { return HeaderResult::ok(((av[2] << 8) | av[3]) + 4); }
+            throw Error(ERR_NEGO_INCONSISTENT_FLAGS);
         }
 
         void prepare_data(Buf64k const & /*unused*/ /*unused*/) const

@@ -359,22 +359,22 @@ public:
                             );
                         general_capability_set.emit(out_stream);
 
-                        if (this->fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE] == true) {
+                        if (this->fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE]) {
                             rdpdr::CapabilityHeader ch(rdpdr::CAP_PRINTER_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                             ch.emit(out_stream);
                         }
 
-                        if (this->fileSystemCapacity[rdpdr::CAP_PORT_TYPE] == true) {
+                        if (this->fileSystemCapacity[rdpdr::CAP_PORT_TYPE]) {
                             rdpdr::CapabilityHeader ch(rdpdr::CAP_PORT_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                             ch.emit(out_stream);
                         }
 
-                        if (this->fileSystemCapacity[rdpdr::CAP_DRIVE_TYPE] == true) {
+                        if (this->fileSystemCapacity[rdpdr::CAP_DRIVE_TYPE]) {
                             rdpdr::CapabilityHeader ch(rdpdr::CAP_DRIVE_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                             ch.emit(out_stream);
                         }
 
-                        if (this->fileSystemCapacity[rdpdr::CAP_SMARTCARD_TYPE] == true) {
+                        if (this->fileSystemCapacity[rdpdr::CAP_SMARTCARD_TYPE]) {
                             rdpdr::CapabilityHeader ch(rdpdr::CAP_SMARTCARD_TYPE, rdpdr::PRINT_CAPABILITY_VERSION_01);
                             ch.emit(out_stream);
                         }
@@ -402,13 +402,13 @@ public:
                         rdpdr::ClientDeviceListAnnounceRequest cdlar(this->device_list.size());
                         cdlar.emit(out_stream);
 
-                        for (size_t i = 0; i < this->device_list.size(); i++) {
+                        for (auto const& device : this->device_list) {
 
-                            if (this->device_list[i].type == rdpdr::RDPDR_DTYP_PRINT) {
+                            if (device.type == rdpdr::RDPDR_DTYP_PRINT) {
 
-                                rdpdr::DeviceAnnounceHeader dah( this->device_list[i].type
-                                                               , this->device_list[i].ID
-                                                               , this->device_list[i].name
+                                rdpdr::DeviceAnnounceHeader dah( device.type
+                                                               , device.ID
+                                                               , device.name
                                                                , nullptr, 24 + 0 + 4 + 2 + 8 + 0);
                                 dah.emit(out_stream);
 
@@ -426,9 +426,9 @@ public:
                                 dahp.emit(out_stream);
 
                             } else {
-                                rdpdr::DeviceAnnounceHeader dah( this->device_list[i].type
-                                                               , this->device_list[i].ID
-                                                               , this->device_list[i].name
+                                rdpdr::DeviceAnnounceHeader dah( device.type
+                                                               , device.ID
+                                                               , device.name
                                                                , nullptr, 0);
                                 dah.emit(out_stream);
                             }
@@ -792,10 +792,10 @@ public:
                                         if (sdqdr.InitialQuery() && endPath != asterix) {
 
                                             std::string tmp_path = path;
-                                            int tmp_path_index = tmp_path.find("/");
+                                            int tmp_path_index = tmp_path.find('/');
                                             while (tmp_path_index != -1) {
                                                 tmp_path = tmp_path.substr(tmp_path_index+1, tmp_path.length());
-                                                tmp_path_index = tmp_path.find("/");
+                                                tmp_path_index = tmp_path.find('/');
                                             }
                                             str_file_name = tmp_path;
 

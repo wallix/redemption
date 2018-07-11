@@ -43,8 +43,8 @@ namespace re {
         }
     };
 
-    typedef std::vector<const State*> const_state_list_t;
-    typedef std::vector<State*> state_list_t;
+    using const_state_list_t = std::vector<const State *>;
+    using state_list_t = std::vector<State *>;
 
     inline void append_state(State * st, state_list_t& sts)
     {

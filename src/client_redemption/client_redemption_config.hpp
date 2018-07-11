@@ -591,26 +591,24 @@ public:
             int pos = 0;
 
             getline(ifile, line);
-            pos = line.find(" ");
+            pos = line.find(' ');
             line = line.substr(pos, line.length());
             this->windowsData.form_x = std::stoi(line);
 
             getline(ifile, line);
-            pos = line.find(" ");
+            pos = line.find(' ');
             line = line.substr(pos, line.length());
             this->windowsData.form_y = std::stoi(line);
 
             getline(ifile, line);
-            pos = line.find(" ");
+            pos = line.find(' ');
             line = line.substr(pos, line.length());
             this->windowsData.screen_x = std::stoi(line);
 
             getline(ifile, line);
-            pos = line.find(" ");
+            pos = line.find(' ');
             line = line.substr(pos, line.length());
             this->windowsData.screen_y = std::stoi(line);
-
-            ifile.close();
         }
     }
 
@@ -746,7 +744,7 @@ public:
                 } else
                 if (line.compare(0, pos, "name") == 0) {
                     if (read_id) {
-                        this->userProfils.push_back({read_id, info.c_str()});
+                        this->userProfils.push_back({read_id, info});
                     }
                 } else
                 if (this->current_user_profil == read_id) {
@@ -861,11 +859,7 @@ public:
                 std::string info = line.substr(pos + 1);
 
                 if (line.compare(0, pos, "save_pwd") == 0) {
-                    if (info.compare(std::string("true")) == 0) {
-                        this->_save_password_account = true;
-                    } else {
-                        this->_save_password_account = false;
-                    }
+                    this->_save_password_account = (info == "true");
                 } else
                 if (line.compare(0, pos, "last_target") == 0) {
                     this->_last_target_index = std::stoi(info);
@@ -918,7 +912,7 @@ public:
             std::string title(ip + " - " + name);
 
             for (int i = 0; i < this->_accountNB; i++) {
-                if (this->_accountData[i].title.compare(title) == 0) {
+                if (this->_accountData[i].title == title) {
                     alreadySet = true;
                     this->_last_target_index = i;
                     this->_accountData[i].pwd  = pwd;

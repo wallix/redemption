@@ -32,7 +32,7 @@ class InStream;
 namespace CHANNELS
 {
     class ChannelDef;
-}
+} // namespace CHANNELS
 
 
 class CopyPaste
@@ -84,7 +84,7 @@ class CopyPaste
     bool verbose;
 
 public:
-    CopyPaste(bool verbose = false)
+    explicit CopyPaste(bool verbose = false)
     : verbose(verbose)
     {}
 

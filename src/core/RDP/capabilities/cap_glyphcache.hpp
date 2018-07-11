@@ -188,9 +188,9 @@ struct GlyphCacheCaps : public Capability {
     {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
-        for (uint8_t i = 0; i < NUMBER_OF_CACHE; ++i) {
-            stream.out_uint16_le(this->GlyphCache[i].CacheEntries);
-            stream.out_uint16_le(this->GlyphCache[i].CacheMaximumCellSize);
+        for (auto const& glyph : this->GlyphCache) {
+            stream.out_uint16_le(glyph.CacheEntries);
+            stream.out_uint16_le(glyph.CacheMaximumCellSize);
         }
         stream.out_uint32_le(this->FragCache);
         stream.out_uint16_le(this->GlyphSupportLevel);
@@ -200,9 +200,9 @@ struct GlyphCacheCaps : public Capability {
     void recv(InStream & stream, uint16_t len)
     {
         this->len               = len;
-        for (uint8_t i = 0; i < NUMBER_OF_CACHE; ++i) {
-            this->GlyphCache[i].CacheEntries         = stream.in_uint16_le();
-            this->GlyphCache[i].CacheMaximumCellSize = stream.in_uint16_le();
+        for (auto & glyph : this->GlyphCache) {
+            glyph.CacheEntries         = stream.in_uint16_le();
+            glyph.CacheMaximumCellSize = stream.in_uint16_le();
         }
         this->FragCache         = stream.in_uint32_le();
         this->GlyphSupportLevel = stream.in_uint16_le();

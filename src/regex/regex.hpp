@@ -53,7 +53,7 @@ namespace re
         std::size_t pos{0};
 
     public:
-        typedef unsigned flag_t;
+        using flag_t = unsigned int;
         static const flag_t DEFAULT_FLAG =      0;
         static const flag_t OPTIMIZE_MEMORY =   1 << 0;
         static const flag_t MINIMAL_MEMORY =    1 << 1;
@@ -120,7 +120,7 @@ namespace re
             return this->parser.pos_err;
         }
 
-        typedef StateMachine2::range_matches range_matches;
+        using range_matches = StateMachine2::range_matches;
 
         range_matches exact_match(const char * s, bool all_match = true)
         {
@@ -291,8 +291,8 @@ namespace re
         };
 
     public:
-        typedef BasicPartOfText<true> ExactPartOfText;
-        typedef BasicPartOfText<false> PartOfText;
+        using ExactPartOfText = BasicPartOfText<true>;
+        using PartOfText = BasicPartOfText<false>;
 
         template<typename Tracer>
         struct ExactPartOfTextWithCapture : BasicPartOfTextWithCapture<true, Tracer>

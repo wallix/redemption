@@ -127,7 +127,7 @@ public:
         }
     }
 
-    RemoteProgramsSessionManager(
+    explicit RemoteProgramsSessionManager(
         SessionReactor& session_reactor,
         FrontAPI& front, mod_api& mod, Translation::language_t lang,
         Font const & font, Theme const & theme, AuthApi & authentifier,
@@ -235,7 +235,7 @@ private:
     {
         RemoteProgramsSessionManager & manager_;
 
-        InternalProtectedGraphics(RemoteProgramsSessionManager & self)
+        explicit InternalProtectedGraphics(RemoteProgramsSessionManager & self)
         : gdi::ProtectedGraphics(*self.drawable, self.protected_rect)
         , manager_(self)
         {}

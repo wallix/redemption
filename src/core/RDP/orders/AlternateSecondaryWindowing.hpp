@@ -72,9 +72,9 @@ class Rectangle {
     uint16_t Bottom_ = 0;
 
 public:
-    Rectangle() = default;
+    explicit Rectangle() = default;
 
-    Rectangle(uint16_t Left_,  uint16_t Top_,  uint16_t Right_, uint16_t Bottom_) {
+    explicit Rectangle(uint16_t Left_,  uint16_t Top_,  uint16_t Right_, uint16_t Bottom_) {
         this->Left_   = Left_;
         this->Top_    = Top_;
         this->Right_  = Right_;

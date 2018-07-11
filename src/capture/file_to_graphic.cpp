@@ -432,10 +432,10 @@ void FileToGraphic::interpret_order()
                         LOG(LOG_ERR, "Memblt bitmap not found in cache at (%u, %u)",
                             this->ssc.memblt.cache_id, this->ssc.memblt.cache_idx);
                         throw Error(ERR_WRM);
-                    } else {
-                        for (gdi::GraphicApi * gd : this->graphic_consumers){
-                            gd->draw(this->ssc.memblt, clip, bmp);
-                        }
+                    }
+
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.memblt, clip, bmp);
                     }
                 }
                 break;
@@ -450,10 +450,9 @@ void FileToGraphic::interpret_order()
                             this->ssc.mem3blt.cache_id, this->ssc.mem3blt.cache_idx);
                         throw Error(ERR_WRM);
                     }
-                    else {
-                        for (gdi::GraphicApi * gd : this->graphic_consumers){
-                            gd->draw(this->ssc.mem3blt, clip, receive_order.color_ctx(palette), bmp);
-                        }
+
+                    for (gdi::GraphicApi * gd : this->graphic_consumers){
+                        gd->draw(this->ssc.mem3blt, clip, receive_order.color_ctx(palette), bmp);
                     }
                 }
                 break;
@@ -598,19 +597,19 @@ void FileToGraphic::interpret_order()
         }
         else {
             this->info_number_of_cache       = this->stream.in_uint8();
-            this->info_use_waiting_list      = (this->stream.in_uint8() ? true : false);
+            this->info_use_waiting_list      = bool(this->stream.in_uint8());
 
-            this->info_cache_0_persistent    = (this->stream.in_uint8() ? true : false);
-            this->info_cache_1_persistent    = (this->stream.in_uint8() ? true : false);
-            this->info_cache_2_persistent    = (this->stream.in_uint8() ? true : false);
+            this->info_cache_0_persistent    = bool(this->stream.in_uint8());
+            this->info_cache_1_persistent    = bool(this->stream.in_uint8());
+            this->info_cache_2_persistent    = bool(this->stream.in_uint8());
 
             this->info_cache_3_entries       = this->stream.in_uint16_le();
             this->info_cache_3_size          = this->stream.in_uint16_le();
-            this->info_cache_3_persistent    = (this->stream.in_uint8() ? true : false);
+            this->info_cache_3_persistent    = bool(this->stream.in_uint8());
 
             this->info_cache_4_entries       = this->stream.in_uint16_le();
             this->info_cache_4_size          = this->stream.in_uint16_le();
-            this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
+            this->info_cache_4_persistent    = bool(this->stream.in_uint8());
 
             this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
             assert(is_valid_enum_value(this->info_compression_algorithm));
@@ -623,7 +622,7 @@ void FileToGraphic::interpret_order()
             );
 
             if (this->info_version > 4) {
-                this->remote_app = (this->stream.in_uint8() ? true : false);
+                this->remote_app = bool(this->stream.in_uint8());
             }
         }
 

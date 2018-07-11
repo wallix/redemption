@@ -33,7 +33,7 @@ namespace RDP
 {
     class RDPMultiScrBlt;
     class RDPMultiPatBlt;
-}
+} // namespace RDP
 
 class RDPGlyphIndex;
 

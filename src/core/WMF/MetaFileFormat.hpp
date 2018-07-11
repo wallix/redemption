@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
@@ -457,9 +457,9 @@ enum : int {
           , headerSize(9)
           , version(version)
           , size((data_length/2) + METAFILE_WORDS_HEADER_SIZE)
-          , 
+          ,
            maxRecord((data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2)
-          
+
         {}
 
         void emit(OutStream & stream) const {
@@ -576,12 +576,12 @@ enum : int {
 
         uint16_t mappingMode{0};
 
-        MetaSetMapMod()
+        explicit MetaSetMapMod()
           : Record(4, MFF::META_SETMAPMODE)
-           
+
         {}
 
-        MetaSetMapMod(const uint16_t mappingMode)
+        explicit MetaSetMapMod(const uint16_t mappingMode)
           : Record(4, MFF::META_SETMAPMODE)
           , mappingMode(mappingMode)
         {}
@@ -639,7 +639,7 @@ enum : int {
 
         MetaSetWindowExt()
           : Record(5, MFF::META_SETWINDOWEXT)
-           
+
         {}
 
         MetaSetWindowExt(const uint16_t height, const uint16_t width)
@@ -703,7 +703,7 @@ enum : int {
 
         MetaSetWindowOrg()
           : Record(5, MFF::META_SETWINDOWORG)
-           
+
         {}
 
         MetaSetWindowOrg(const uint16_t yOrg, const uint16_t xOrg)
@@ -1018,7 +1018,7 @@ enum : int {
         DibStretchBLT()
         : Record(META_DIBSTRETCHBLT_HEADER_SIZE/2, MFF::META_DIBSTRETCHBLT)
         , bitmapInfoHeader(0, 0, 0, 0)
-         
+
         {}
 
         DibStretchBLT(const std::size_t data_length, const uint16_t height, const uint16_t width, const uint16_t depth, uint32_t op)

@@ -68,7 +68,7 @@ public:
 
     // replay mod
 
-    virtual void create_screen(std::string const &  /*unused*/, std::string const &  /*unused*/) {}
+    virtual void create_screen(std::string const &  /*unused*/, std::string const &  /*unused*/) = 0;
 
     virtual void draw_frame(int  /*unused*/) {}
 
@@ -79,7 +79,7 @@ public:
 
     virtual void move_screen(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
 
-    virtual void set_screen_size(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
+    virtual void set_screen_size(uint32_t  /*unused*/, int  x, int  y) = 0;
 
     virtual void set_pixmap_shift(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
 
@@ -93,9 +93,9 @@ public:
 
     virtual void set_mem_size(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
 
-    virtual void show_screen(uint32_t  /*unused*/) {}
+    virtual void show_screen(uint32_t  /*unused*/) = 0;
 
-    virtual void dropScreen(uint32_t  /*unused*/) {}
+    virtual void dropScreen(uint32_t  /*unused*/) = 0;
 
     virtual void clear_remote_app_screen() {}
 

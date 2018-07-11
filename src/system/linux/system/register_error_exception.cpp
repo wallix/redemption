@@ -31,4 +31,4 @@ namespace redemption_unit_test__
         }
     };
     static register_exception Init;
-}
+} // namespace redemption_unit_test__

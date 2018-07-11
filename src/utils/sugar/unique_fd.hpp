@@ -37,30 +37,30 @@ struct unique_fd
 
     explicit unique_fd(int fd) noexcept : fd_(fd) {}
 
-    unique_fd(unique_fd && other)
+    unique_fd(unique_fd && other) noexcept
     : fd_(exchange(other.fd_, -1))
     {}
 
-    unique_fd & operator=(unique_fd && other)
+    unique_fd & operator=(unique_fd && other) noexcept
     {
         unique_fd tmp(std::move(other));
         tmp.swap(*this);
         return *this;
     }
 
-    unique_fd(char const * pathname, int flags) noexcept
+    explicit unique_fd(char const * pathname, int flags) noexcept
     : fd_(::open(pathname, flags))
     {}
 
-    unique_fd(char const * pathname, int flags, mode_t mode) noexcept
+    explicit unique_fd(char const * pathname, int flags, mode_t mode) noexcept
     : fd_(::open(pathname, flags, mode))
     {}
 
-    unique_fd(std::string const & pathname, int flags) noexcept
+    explicit unique_fd(std::string const & pathname, int flags) noexcept
     : unique_fd(pathname.c_str(), flags)
     {}
 
-    unique_fd(std::string const & pathname, int flags, mode_t mode) noexcept
+    explicit unique_fd(std::string const & pathname, int flags, mode_t mode) noexcept
     : unique_fd(pathname.c_str(), flags, mode)
     {}
 

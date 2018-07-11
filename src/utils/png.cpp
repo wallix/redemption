@@ -220,21 +220,21 @@ void dump_png24(
 }
 
 void dump_png24(
-    std::FILE * fd, uint8_t const * data,
+    std::FILE * file, uint8_t const * data,
     const size_t width, const size_t height, const size_t rowsize,
     const bool bgr
 ) {
     PngWriteStruct png;
 
     // prepare png header
-    png_init_io(png.ppng, fd);
+    png_init_io(png.ppng, file);
 
     dump_png24_impl(png.ppng, png.pinfo, data, width, height, rowsize, bgr, []{return true;});
 
     png_write_end(png.ppng, png.pinfo);
 
     // commented line below it to create row capture
-    // fwrite(this->data, 3, this->width * this->height, fd);
+    // fwrite(this->data, 3, this->width * this->height, file);
 }
 
 void dump_png24(Transport & trans, ConstImageDataView const & image_view, bool bgr)
@@ -249,7 +249,7 @@ void dump_png24(Transport & trans, ConstImageDataView const & image_view, bool b
         bgr);
 }
 
-void dump_png24(std::FILE * f, ConstImageDataView const & image_view, bool bgr)
+void dump_png24(std::FILE * file, ConstImageDataView const & image_view, bool bgr)
 {
     // TODO image_view.bytes_per_pixel(); isn't used
     assert(3 == image_view.bytes_per_pixel());
@@ -257,7 +257,7 @@ void dump_png24(std::FILE * f, ConstImageDataView const & image_view, bool bgr)
     PngWriteStruct png;
 
     // prepare png header
-    png_init_io(png.ppng, f);
+    png_init_io(png.ppng, file);
 
     dump_png24_impl(
         png.ppng, png.pinfo,
@@ -280,32 +280,32 @@ void dump_png24(const char * filename, ConstImageDataView const & image_view, bo
 }
 
 
-void read_png24(const char * filename, MutableImageDataView const & image_view)
+void read_png24(const char * filename, MutableImageDataView const & mutable_image_view)
 {
-    // TODO image_view.bytes_per_pixel(); isn't used
-    assert(3 == image_view.bytes_per_pixel());
+    // TODO mutable_image_view.bytes_per_pixel(); isn't used
+    assert(3 == mutable_image_view.bytes_per_pixel());
 
     if (File f{filename, "r"}) {
-        read_png24(f, image_view);
+        read_png24(f, mutable_image_view);
     }
 }
 
-void read_png24(std::FILE * fd, MutableImageDataView const & image_view)
+void read_png24(std::FILE * file, MutableImageDataView const & mutable_image_view)
 {
-    // TODO image_view.bytes_per_pixel(); isn't used
-    assert(3 == image_view.bytes_per_pixel());
+    // TODO mutable_image_view.bytes_per_pixel(); isn't used
+    assert(3 == mutable_image_view.bytes_per_pixel());
 
     PngReadStruct png;
-    png_init_io(png.ppng, fd);
-    read_png24_impl(png, image_view.mutable_data(),
-        image_view.width(), image_view.height(),
-        image_view.line_size());
+    png_init_io(png.ppng, file);
+    read_png24_impl(png, mutable_image_view.mutable_data(),
+        mutable_image_view.width(), mutable_image_view.height(),
+        mutable_image_view.line_size());
 }
 
-void read_png24(Transport & trans, MutableImageDataView const & image_view)
+void read_png24(Transport & trans, MutableImageDataView const & mutable_image_view)
 {
-    // TODO image_view.bytes_per_pixel(); isn't used
-    assert(3 == image_view.bytes_per_pixel());
+    // TODO mutable_image_view.bytes_per_pixel(); isn't used
+    assert(3 == mutable_image_view.bytes_per_pixel());
 
     auto png_read_data_fn = [](png_structp png_ptr, png_bytep data, png_size_t length) {
        // TODO catch exception ?
@@ -315,9 +315,9 @@ void read_png24(Transport & trans, MutableImageDataView const & image_view)
 
     PngReadStruct png;
     png_set_read_fn(png.ppng, &trans, png_read_data_fn);
-    read_png24_impl(png, image_view.mutable_data(),
-        image_view.width(), image_view.height(),
-        image_view.line_size());
+    read_png24_impl(png, mutable_image_view.mutable_data(),
+        mutable_image_view.width(), mutable_image_view.height(),
+        mutable_image_view.line_size());
 }
 
 // TODO void read_png24_by_line(read_fn:size_t(byte_array), f:void(byte_array))

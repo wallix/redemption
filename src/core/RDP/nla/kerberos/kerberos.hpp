@@ -377,7 +377,7 @@ public:
         }
         else {
             output_buffer->Buffer.init(output_tok.length);
-            output_buffer->Buffer.copy((const uint8_t*)output_tok.value, output_tok.length);
+            output_buffer->Buffer.copy(static_cast<const uint8_t*>(output_tok.value), output_tok.length);
         }
 
         (void) gss_release_buffer(&minor_status, &output_tok);
@@ -564,10 +564,7 @@ public:
             return false;
         }
 
-        if (!mech_found)
-            return false;
-
-        return true;
+        return mech_found != 0;
     }
 
 };

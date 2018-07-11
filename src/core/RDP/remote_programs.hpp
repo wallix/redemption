@@ -1809,7 +1809,7 @@ public:
 
         if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == server_window_id) {
             LOG(LOG_ERR, "ClientSystemMenuPDU::map_window_id: Failed to map window id. ClientWindowId=0x%X", this->WindowId_);
-            throw ERR_UNEXPECTED;
+            throw Error(ERR_UNEXPECTED);
         }
 
         if (server_window_id == this->WindowId_) {
@@ -1973,7 +1973,7 @@ public:
 
         if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == server_window_id) {
             LOG(LOG_ERR, "ClientSystemCommandPDU::map_window_id: Failed to map window id. ClientWindowId=0x%X", this->WindowId_);
-            throw ERR_UNEXPECTED;
+            throw Error(ERR_UNEXPECTED);
         }
 
         if (server_window_id == this->WindowId_) {
@@ -2198,7 +2198,7 @@ public:
 
         if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == server_window_id) {
             LOG(LOG_ERR, "ClientNotifyEventPDU::map_window_id: Failed to map window id. ClientWindowId=0x%X", this->WindowId_);
-            throw ERR_UNEXPECTED;
+            throw Error(ERR_UNEXPECTED);
         }
 
         if (server_window_id == this->WindowId_) {
@@ -2296,7 +2296,7 @@ public:
 
         if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == server_window_id) {
             LOG(LOG_ERR, "ClientGetApplicationIDPDU::map_window_id: Failed to map window id. ClientWindowId=0x%X", this->WindowId_);
-            throw ERR_UNEXPECTED;
+            throw Error(ERR_UNEXPECTED);
         }
 
         if (server_window_id == this->WindowId_) {
@@ -2998,7 +2998,7 @@ public:
 
         if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == server_window_id) {
             LOG(LOG_ERR, "ClientWindowMovePDU::map_window_id: Failed to map window id. ClientWindowId=0x%X", this->WindowId_);
-            throw ERR_UNEXPECTED;
+            throw Error(ERR_UNEXPECTED);
         }
 
         if (server_window_id == this->WindowId_) {
@@ -4083,7 +4083,7 @@ public:
 
         if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == server_window_id) {
             LOG(LOG_ERR, "WindowCloakStateChangePDU::map_window_id: Failed to map window id. ClientWindowId=0x%X", this->WindowId_);
-            throw ERR_UNEXPECTED;
+            throw Error(ERR_UNEXPECTED);
         }
 
         if (server_window_id == this->WindowId_) {

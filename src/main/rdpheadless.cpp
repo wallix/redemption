@@ -46,7 +46,7 @@ int main(int argc, char** argv)
     //================================
     ClientInfo info;
     info.keylayout = 0x040C;
-    info.console_session = 0;
+    info.console_session = false;
     info.brush_cache_code = 0;
     info.bpp = 24;
     info.width = 800;

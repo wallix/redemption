@@ -97,7 +97,7 @@ public:
             buffer[i] = uint8_t(0xff & (number >> (8*(7-i))));
         }
     }
-    static uint64_t uint8p_to_uint64(uint8_t* buffer) {
+    static uint64_t uint8p_to_uint64(uint8_t const* buffer) {
         uint64_t res = 0;
         for (int i = 0; i < 8; i++) {
             res <<= 8;

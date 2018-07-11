@@ -283,19 +283,19 @@ public:
 
                 if (this->info_version > 3) {
                     info_number_of_cache            = stream.in_uint8();
-                    info_use_waiting_list           = (stream.in_uint8() ? true : false);
+                    info_use_waiting_list           = bool(stream.in_uint8());
 
-                    info_cache_0_persistent         = (stream.in_uint8() ? true : false);
-                    info_cache_1_persistent         = (stream.in_uint8() ? true : false);
-                    info_cache_2_persistent         = (stream.in_uint8() ? true : false);
+                    info_cache_0_persistent         = bool(stream.in_uint8());
+                    info_cache_1_persistent         = bool(stream.in_uint8());
+                    info_cache_2_persistent         = bool(stream.in_uint8());
 
                     info_cache_3_entries            = stream.in_uint16_le();
                     info_cache_3_size               = stream.in_uint16_le();
-                    info_cache_3_persistent         = (stream.in_uint8() ? true : false);
+                    info_cache_3_persistent         = bool(stream.in_uint8());
 
                     info_cache_4_entries            = stream.in_uint16_le();
                     info_cache_4_size               = stream.in_uint16_le();
-                    info_cache_4_persistent         = (stream.in_uint8() ? true : false);
+                    info_cache_4_persistent         = bool(stream.in_uint8());
 
                     //uint8_t info_compression_algorithm = stream.in_uint8();
                     //assert(info_compression_algorithm < 3);
@@ -548,19 +548,19 @@ private:
             }
             else {
                 this->info_number_of_cache       = this->stream.in_uint8();
-                this->info_use_waiting_list      = (this->stream.in_uint8() ? true : false);
+                this->info_use_waiting_list      = bool(this->stream.in_uint8());
 
-                this->info_cache_0_persistent    = (this->stream.in_uint8() ? true : false);
-                this->info_cache_1_persistent    = (this->stream.in_uint8() ? true : false);
-                this->info_cache_2_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_0_persistent    = bool(this->stream.in_uint8());
+                this->info_cache_1_persistent    = bool(this->stream.in_uint8());
+                this->info_cache_2_persistent    = bool(this->stream.in_uint8());
 
                 this->info_cache_3_entries       = this->stream.in_uint16_le();
                 this->info_cache_3_size          = this->stream.in_uint16_le();
-                this->info_cache_3_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_3_persistent    = bool(this->stream.in_uint8());
 
                 this->info_cache_4_entries       = this->stream.in_uint16_le();
                 this->info_cache_4_size          = this->stream.in_uint16_le();
-                this->info_cache_4_persistent    = (this->stream.in_uint8() ? true : false);
+                this->info_cache_4_persistent    = bool(this->stream.in_uint8());
 
                 this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
                 assert(is_valid_enum_value(this->info_compression_algorithm));
@@ -1538,7 +1538,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
     ini.set<cfg::ocr::version>(ocr_version == 2 ? OcrVersion::v2 : OcrVersion::v1);
 
     if (chunk){
-        ini.get_ref<cfg::video::disable_keyboard_log>() &= ~KeyboardLogFlags::meta;
         ini.set<cfg::ocr::interval>(std::chrono::seconds{1});
     }
 
@@ -1881,7 +1880,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 this->load_capture(now);
                             }
 
-                            CaptureMaker(decltype(lazy_capture) & load_capture)
+                            explicit CaptureMaker(decltype(lazy_capture) & load_capture)
                             : load_capture(load_capture)
                             {}
 
@@ -2035,7 +2034,7 @@ struct RecorderParams {
     bool auto_output_file   = false;
     bool remove_input_file  = false;
     uint32_t    clear       = 1; // default on
-    bool infile_is_encrypted = 0;
+    bool infile_is_encrypted = false;
     bool chunk = false;
 
     // verifier options
@@ -2185,13 +2184,13 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
       | ((recorder.chunk || options.count("ocr"))   ? CaptureFlags::ocr   : CaptureFlags::none);
 
     if (options.count("video-quality") > 0) {
-            if (0 == strcmp(recorder.video_quality.c_str(), "high")) {
+        if      (0 == strcmp(recorder.video_quality.c_str(), "high")) {
             recorder.video_params.video_quality = Level::high;
         }
         else if (0 == strcmp(recorder.video_quality.c_str(), "low")) {
             recorder.video_params.video_quality = Level::low;
         }
-        else  if (0 == strcmp(recorder.video_quality.c_str(), "medium")) {
+        else if (0 == strcmp(recorder.video_quality.c_str(), "medium")) {
             recorder.video_params.video_quality = Level::medium;
         }
         else {
@@ -2239,7 +2238,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     //recorder.video_params.video_codec = "flv";
 
     if (options.count("compression") > 0) {
-         if (wrm_compression_algorithm == "none") {
+        if (wrm_compression_algorithm == "none") {
             recorder.wrm_compression_algorithm_ = static_cast<int>(WrmCompressionAlgorithm::no_compression);
         }
         else if (wrm_compression_algorithm == "gzip") {
@@ -2334,7 +2333,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     }
 
     if (options.count("encryption") > 0) {
-         if (0 == strcmp(recorder.wrm_encryption.c_str(), "enable")) {
+        if (0 == strcmp(recorder.wrm_encryption.c_str(), "enable")) {
             recorder.encryption_type = TraceType::cryptofile;
         }
         else if (0 == strcmp(recorder.wrm_encryption.c_str(), "disable")) {
@@ -2557,9 +2556,9 @@ extern "C" {
                 switch (get_encryption_scheme_type(cctx, rp.full_path.c_str(), cbyte_array{}, &out_error))
                 {
                     case EncryptionSchemeTypeResult::Error:
-                        throw out_error;
+                        throw out_error; /* NOLINT(misc-throw-by-value-catch-by-reference) */
                     case EncryptionSchemeTypeResult::OldScheme:
-                        cctx.old_encryption_scheme = 1;
+                        cctx.old_encryption_scheme = true;
                         break;
                     default:
                         break;
@@ -2629,10 +2628,9 @@ extern "C" {
                     std::cout << "decrypt ok" << std::endl;
                     return 0;
                 }
-                else {
-                    std::cout << "decrypt failed" << std::endl;
-                    return -1;
-                }
+
+                std::cout << "decrypt failed" << std::endl;
+                return -1;
             } catch (const Error & e) {
                 std::cout << "decrypt failed: with id=" << e.id << std::endl;
             }

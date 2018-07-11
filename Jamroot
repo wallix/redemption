@@ -177,6 +177,12 @@ constant EXE_DEPENDENCIES :
     $(OBJ_EXE_DEPENDENCIES)
 ;
 
+constant EXE_DEPENDENCIES_NO_SYSLOG :
+    <library>app_path_exe.o
+    <library>log_print.o
+    $(OBJ_EXE_DEPENDENCIES)
+;
+
 
 obj program_options : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 
@@ -223,21 +229,21 @@ exe ppocr_write_glyphs :
     $(PPOCR_SRC_PATH)/ppocr/write_glyphs.cpp
     ppocr
 :
-    $(EXE_DEPENDENCIES)
+    $(EXE_DEPENDENCIES_NO_SYSLOG)
 ;
 
 exe ppocr_normalize_glyphs :
     $(PPOCR_SRC_PATH)/ppocr/normalize_glyphs.cpp
     ppocr
 :
-    $(EXE_DEPENDENCIES)
+    $(EXE_DEPENDENCIES_NO_SYSLOG)
 ;
 
 exe ppocr_write_datas :
     $(PPOCR_SRC_PATH)/ppocr/write_datas.cpp
     ppocr
 :
-    $(EXE_DEPENDENCIES)
+    $(EXE_DEPENDENCIES_NO_SYSLOG)
 ;
 
 
@@ -346,7 +352,7 @@ exe generate_video
     $(REDEMPTION_TEST_PATH)/web_video/generate_video.cpp
     src/utils/set_exception_handler_pretty_message.o
 :
-    $(EXE_DEPENDENCIES)
+    $(EXE_DEPENDENCIES_NO_SYSLOG)
     <library>libredrec
     <library>ffmpeg
     <library>png

@@ -66,7 +66,7 @@ namespace CHANNELS {
         int      chanid{0};
 
         ChannelDef()
-         
+
         = default;
 
         ChannelDef(ChannelNameId name, uint32_t flags, int chanid)
@@ -350,7 +350,7 @@ namespace CHANNELS {
     struct VirtualChannelPDU {
         bool verbose;
 
-        explicit VirtualChannelPDU(bool verbose = 0) : verbose(verbose) {}
+        explicit VirtualChannelPDU(bool verbose = false) : verbose(verbose) {}
 
         void send_to_server( OutTransport trans, CryptContext & crypt_context, int encryptionLevel
                            , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags

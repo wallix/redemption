@@ -42,7 +42,7 @@ class Array {
 
     public:
     explicit Array(size_t size = AUTOSIZE)
-         
+
     {
         this->data = this->autobuffer;
         this->init(size);
@@ -137,7 +137,7 @@ struct SecBuffer {
     }
 };
 
-typedef SecBuffer *PSecBuffer;
+using PSecBuffer = SecBuffer *;
 struct SecBufferDesc
 {
     unsigned long ulVersion;
@@ -219,7 +219,7 @@ struct SEC_WINNT_AUTH_IDENTITY
         : User(0)
         , Domain(0)
         , Password(0)
-         
+
     {
         this->princname[0] = 0;
         this->princpass[0] = 0;
@@ -561,8 +561,10 @@ enum SecPkg_Att {
 };
 
 
-typedef void (*SEC_GET_KEY_FN)(void* Arg, void* Principal, uint32_t KeyVer, void** Key, SEC_STATUS* pStatus);
-typedef void* HANDLE, *PHANDLE, *LPHANDLE;
+using SEC_GET_KEY_FN = void (*)(void* Arg, void* Principal, uint32_t KeyVer, void** Key, SEC_STATUS* pStatus);
+using HANDLE = void*;
+using PHANDLE = void*;
+using LPHANDLE = void*;
 
 struct SecurityFunctionTable
 {

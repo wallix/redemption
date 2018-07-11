@@ -27,10 +27,11 @@
 #include "utils/bitmap.hpp"
 #include "utils/drawable.hpp"
 #include "utils/png.hpp"
-#include "core/RDP/rdp_pointer.hpp"
 #include "test_only/fake_graphic.hpp"
 #include "mod/rdp/rdp_orders.hpp"
 #include "utils/verbose_flags.hpp"
+
+#include "core/RDP/rdp_pointer.hpp"
 
 
 RED_AUTO_TEST_CASE(TestDataSize)
@@ -520,7 +521,7 @@ RED_AUTO_TEST_CASE(TestPointerVNC_BW)
 
     // r31 rs<<11 g63 gs<<5 b31 bs<<0
 
-    Pointer vnccursor(2, CursorSize{12, 19}, Hotspot{0, 0}, vncdata, vncmask, 11, 31, 5, 63, 0, 31);
+    Pointer vnccursor(2, CursorSize{12, 19}, Hotspot{0, 0}, vncdata, vncmask, 11, 31, 5, 63, 0, 31, 2, 36);
 
     RED_CHECK_EQUAL(vnccursor.get_dimensions().width, 32);
     RED_CHECK_EQUAL(vnccursor.get_dimensions().height, 19);
@@ -883,7 +884,7 @@ RED_AUTO_TEST_CASE(TestPointerVNC_Color)
     std::vector<uint8_t> vncdata(data, sizeof(data) + data);
     std::vector<uint8_t> vncmask(mask, sizeof(mask) + mask);
 
-    Pointer vnccursor(2, CursorSize{23, 27}, Hotspot{0, 8}, vncdata, vncmask, 11, 31, 5, 63, 0, 31);
+    Pointer vnccursor(2, CursorSize{23, 27}, Hotspot{0, 8}, vncdata, vncmask, 11, 31, 5, 63, 0, 31, 3, 69);
 
     // When cursor Size is odd, then the next even width is used and mask is fixed accordingly to avoid some annoying border cases
     RED_CHECK_EQUAL(vnccursor.get_dimensions().width, 32);
@@ -968,7 +969,7 @@ RED_AUTO_TEST_CASE(TestPointer1bit)
 /*0070*/ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /*...............*/
     };
 
-    Pointer cursor({32, 32}, {8, 9},{data_data, sizeof(data_data)}, {mask_data, sizeof(mask_data)}, 1, BGRPalette::classic_332(), true, BogusLinuxCursor::enable);
+    Pointer cursor(CursorSize{32, 32}, Hotspot{8, 9}, {data_data, sizeof(data_data)}, {mask_data, sizeof(mask_data)}, 1, BGRPalette::classic_332(), true, BogusLinuxCursor::enable, 4, 4);
 
     ARGB32Pointer vnccursor(cursor);
     const auto av_alpha_q = vnccursor.get_alpha_q();

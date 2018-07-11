@@ -32,7 +32,7 @@ struct charp_or_string
 {
     const array_view_const_char data;
 
-    charp_or_string(const char * const data) 
+    charp_or_string(const char * const data)
         : data(data, strlen(data)){}
     charp_or_string(const array_view_const_char data)
         : data(data) {}
@@ -51,7 +51,7 @@ public:
     }
 };
 
-typedef const kv_pair_ kv_pair;
+using kv_pair = const kv_pair_;
 //using kv_pair = const kv_pair_;
 
 // Precondition: input array view should never be empty
@@ -128,7 +128,7 @@ struct KeyQvalueFormatter
         return this->buf;
     }
 
-    KeyQvalueFormatter()
+    explicit KeyQvalueFormatter()
     {
         this->buf.reserve(64);
     }

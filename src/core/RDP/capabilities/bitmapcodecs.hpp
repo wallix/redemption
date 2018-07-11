@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include <string.h>
+#include <cstring>
 #include "utils/log.hpp"
 #include "core/RDP/capabilities/common.hpp"
 

@@ -23,7 +23,7 @@
 
 #include <string>
 #include <cinttypes>
-#include <inttypes.h>
+#include <cinttypes>
 
 #include "core/error.hpp"
 
@@ -411,9 +411,9 @@ struct FileObjectBuffer_Type1 {                             // FSCTL_CREATE_OR_G
     uint8_t DomainId[GUID_SIZE] = { 0 };
 
 
-    FileObjectBuffer_Type1() = default;
+    explicit FileObjectBuffer_Type1() = default;
 
-    FileObjectBuffer_Type1(uint8_t * ObjectId, uint8_t * BirthVolumeId, uint8_t * BirthObjectId)
+    explicit FileObjectBuffer_Type1(uint8_t const * ObjectId, uint8_t const * BirthVolumeId, uint8_t const * BirthObjectId)
     {
         for (size_t i = 0; i < GUID_SIZE; i++) {
             this->ObjectId[i] = ObjectId[i];
@@ -498,9 +498,9 @@ struct FileObjectBuffer_Type2 {                             // FSCTL_CREATE_OR_G
 
     const size_t ExtendedInfo_SIZE = 48;
 
-    FileObjectBuffer_Type2() = default;
+    explicit FileObjectBuffer_Type2() = default;
 
-    FileObjectBuffer_Type2(uint8_t * ObjectId, uint8_t * ExtendedInfo)
+    explicit FileObjectBuffer_Type2(uint8_t const * ObjectId, uint8_t const * ExtendedInfo)
     {
         for (size_t i = 0; i < GUID_SIZE; i++) {
             this->ObjectId[i] = ObjectId[i];
@@ -597,9 +597,9 @@ struct ReparseGUIDDataBuffer {
 
   uint8_t DataBuffer[65536];
 
-  ReparseGUIDDataBuffer() = default;
+  explicit ReparseGUIDDataBuffer() = default;
 
-  ReparseGUIDDataBuffer(uint32_t ReparseTag, uint16_t ReparseDataLength, uint8_t * ReparseGuid, uint8_t * DataBuffer)
+  explicit ReparseGUIDDataBuffer(uint32_t ReparseTag, uint16_t ReparseDataLength, uint8_t * ReparseGuid, uint8_t * DataBuffer)
     : ReparseTag(ReparseTag)
     , ReparseDataLength(ReparseDataLength)
     {
@@ -708,9 +708,9 @@ struct ReparseGUIDDataBuffer {
 struct FileAllocationInformation {
     uint64_t AllocationSize = 0;
 
-    FileAllocationInformation() = default;
+    explicit FileAllocationInformation() = default;
 
-    FileAllocationInformation(uint64_t AllocationSize)
+    explicit FileAllocationInformation(uint64_t AllocationSize)
     : AllocationSize(AllocationSize) {}
 
     void emit(OutStream & stream) const {
@@ -779,9 +779,9 @@ public:
     uint32_t ReparseTag     = 0;
 
 
-    FileAttributeTagInformation() = default;
+    explicit FileAttributeTagInformation() = default;
 
-    FileAttributeTagInformation(uint32_t FileAttributes, uint32_t ReparseTag)
+    explicit FileAttributeTagInformation(uint32_t FileAttributes, uint32_t ReparseTag)
     : FileAttributes(FileAttributes)
     , ReparseTag(ReparseTag) {}
 
@@ -930,9 +930,9 @@ class FileBasicInformation {
     uint32_t FileAttributes_ = 0;
 
 public:
-    FileBasicInformation() = default;
+    explicit FileBasicInformation() = default;
 
-    FileBasicInformation(uint64_t CreationTime, uint64_t LastAccessTime,
+    explicit FileBasicInformation(uint64_t CreationTime, uint64_t LastAccessTime,
                          uint64_t LastWriteTime, uint64_t ChangeTime,
                          uint32_t FileAttributes)
     : CreationTime_(CreationTime)
@@ -1193,9 +1193,9 @@ class FileBothDirectoryInformation {
     uint8_t file_name_UTF16[65536] = { 0 };
 
 public:
-    FileBothDirectoryInformation() = default;
+    explicit FileBothDirectoryInformation() = default;
 
-    FileBothDirectoryInformation(uint64_t CreationTime,
+    explicit FileBothDirectoryInformation(uint64_t CreationTime,
                                  uint64_t LastAccessTime,
                                  uint64_t LastWriteTime, uint64_t ChangeTime,
                                  int64_t EndOfFile, int64_t AllocationSize,
@@ -1489,9 +1489,9 @@ class FileDirectoryInformation {
     uint8_t file_name_UTF16[65536] = { 0 };
 
 public:
-    FileDirectoryInformation() = default;
+    explicit FileDirectoryInformation() = default;
 
-    FileDirectoryInformation(uint32_t NextEntryOffset, uint32_t FileIndex,
+    explicit FileDirectoryInformation(uint32_t NextEntryOffset, uint32_t FileIndex,
                              uint64_t CreationTime, uint64_t LastAccessTime,
                              uint64_t LastWriteTime, uint64_t ChangeTime,
                              uint32_t FileAttributes, const char* file_name)
@@ -1654,9 +1654,9 @@ public:
 struct FileDispositionInformation {
     uint8_t DeletePending = 0;
 
-    FileDispositionInformation() = default;
+    explicit FileDispositionInformation() = default;
 
-    FileDispositionInformation( uint64_t DeletePending)
+    explicit FileDispositionInformation( uint64_t DeletePending)
     : DeletePending(DeletePending) {}
 
     void emit(OutStream & stream) const {
@@ -1795,9 +1795,9 @@ struct FileFsLabelInformation {
 
     uint8_t volume_label_UTF16[65536] = { 0 };
 
-    FileFsLabelInformation() = default;
+    explicit FileFsLabelInformation() = default;
 
-    FileFsLabelInformation(char * volume_label)
+    explicit FileFsLabelInformation(char * volume_label)
     {
         this->VolumeLabelLength =
             ::UTF8toUTF16(byte_ptr_cast(volume_label), this->volume_label_UTF16,
@@ -1999,9 +1999,9 @@ class FileFullDirectoryInformation {
     uint8_t file_name_UTF16[65536] = { 0 };
 
 public:
-    FileFullDirectoryInformation() = default;
+    explicit FileFullDirectoryInformation() = default;
 
-    FileFullDirectoryInformation(uint64_t CreationTime,
+    explicit FileFullDirectoryInformation(uint64_t CreationTime,
                                  uint64_t LastAccessTime,
                                  uint64_t LastWriteTime, uint64_t ChangeTime,
                                  int64_t EndOfFile, int64_t AllocationSize,
@@ -2237,7 +2237,7 @@ class FileNamesInformation {
     uint8_t file_name_UTF16[65536] = { 0 };
 
 public:
-    FileNamesInformation() = default;
+    explicit FileNamesInformation() = default;
 
     explicit FileNamesInformation(const char * file_name)
     {
@@ -2437,9 +2437,9 @@ struct FileRenameInformation {
 
     uint8_t file_name_UTF16[65536] = { 0 };
 
-    FileRenameInformation() = default;
+    explicit FileRenameInformation() = default;
 
-    FileRenameInformation( uint8_t ReplaceIfExists
+    explicit FileRenameInformation( uint8_t ReplaceIfExists
                          , uint64_t RootDirectory
                          , const char * file_name)
       : ReplaceIfExists(ReplaceIfExists)
@@ -2583,9 +2583,9 @@ public:
     uint8_t  Directory      = 0;
 
 
-    FileStandardInformation() = default;
+    explicit FileStandardInformation() = default;
 
-    FileStandardInformation(int64_t AllocationSize, int64_t EndOfFile,
+    explicit FileStandardInformation(int64_t AllocationSize, int64_t EndOfFile,
                             uint32_t NumberOfLinks, uint8_t DeletePending,
                             uint8_t Directory)
     : AllocationSize(AllocationSize)
@@ -2844,9 +2844,9 @@ class FileFsAttributeInformation {
     uint8_t file_system_name_UTF16[65535] = { 0 };
 
 public:
-    FileFsAttributeInformation() = default;
+    explicit FileFsAttributeInformation() = default;
 
-    FileFsAttributeInformation(uint32_t FileSystemAttributes,
+    explicit FileFsAttributeInformation(uint32_t FileSystemAttributes,
                                uint32_t MaximumComponentNameLength,
                                const char * file_system_name)
     : FileSystemAttributes_(FileSystemAttributes)
@@ -3071,9 +3071,9 @@ class FileFsFullSizeInformation {
     uint32_t BytesPerSector                 = 0;
 
 public:
-    FileFsFullSizeInformation() = default;
+    explicit FileFsFullSizeInformation() = default;
 
-    FileFsFullSizeInformation(int64_t TotalAllocationUnits,
+    explicit FileFsFullSizeInformation(int64_t TotalAllocationUnits,
                               int64_t CallerAvailableAllocationUnits,
                               int64_t ActualAvailableAllocationUnits,
                               uint32_t SectorsPerAllocationUnit,
@@ -3215,9 +3215,9 @@ class FileFsSizeInformation {
     uint32_t BytesPerSector           = 0;
 
 public:
-    FileFsSizeInformation() = default;
+    explicit FileFsSizeInformation() = default;
 
-    FileFsSizeInformation(int64_t TotalAllocationUnits,
+    explicit FileFsSizeInformation(int64_t TotalAllocationUnits,
                           int64_t AvailableAllocationUnits,
                           uint32_t SectorsPerAllocationUnit,
                           uint32_t BytesPerSector)
@@ -3367,9 +3367,9 @@ class FileFsVolumeInformation {
     uint8_t volume_label_UTF16[65536] = { 0 };
 
 public:
-    FileFsVolumeInformation() = default;
+    explicit FileFsVolumeInformation() = default;
 
-    FileFsVolumeInformation(uint64_t VolumeCreationTime, uint32_t VolumeSerialNumber,
+    explicit FileFsVolumeInformation(uint64_t VolumeCreationTime, uint32_t VolumeSerialNumber,
                          uint8_t SupportsObjects, const char * volume_label)
     : VolumeCreationTime(VolumeCreationTime)
     , VolumeSerialNumber(VolumeSerialNumber)
@@ -3628,9 +3628,9 @@ class FileFsDeviceInformation {
     uint32_t Characteristics = 0;
 
 public:
-    FileFsDeviceInformation() = default;
+    explicit FileFsDeviceInformation() = default;
 
-    FileFsDeviceInformation(uint32_t DeviceType, uint32_t Characteristics)
+    explicit FileFsDeviceInformation(uint32_t DeviceType, uint32_t Characteristics)
     : DeviceType(DeviceType)
     , Characteristics(Characteristics) {}
 
@@ -3843,9 +3843,9 @@ struct FileNotifyInformation {
 
     uint8_t file_name_UTF16[65536] = { 0 };
 
-    FileNotifyInformation() = default;
+    explicit FileNotifyInformation() = default;
 
-    FileNotifyInformation(uint32_t NextEntryOffset, uint32_t Action, const char * file_name)
+    explicit FileNotifyInformation(uint32_t NextEntryOffset, uint32_t Action, const char * file_name)
       : NextEntryOffset(NextEntryOffset)
       , Action(Action)
     {

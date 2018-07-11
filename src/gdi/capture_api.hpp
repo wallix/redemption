@@ -35,8 +35,8 @@ struct timeval;
 namespace RDP {
     namespace RAIL {
         class Rectangle;
-    }
-}
+    } // namespace RAIL
+} // namespace RDP
 
 namespace gdi {
 
@@ -84,7 +84,7 @@ struct CaptureApi : private noncopyable
         this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
     }
 
-    virtual void visibility_rects_event(Rect const & /*rect*/) {}
+    virtual void visibility_rects_event(Rect /*rect*/) {}
 };
 
 

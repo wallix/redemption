@@ -425,7 +425,7 @@ public:
         bool ignore_frame_in_timeval
     ) override;
 
-    void visibility_rects_event(Rect const & rect) override;
+    void visibility_rects_event(Rect rect) override;
 
 protected:
     template<class... Ts>

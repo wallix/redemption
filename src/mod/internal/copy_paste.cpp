@@ -97,7 +97,7 @@ namespace
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
         );
     }
-}
+} // namespace
 
 
 bool CopyPaste::ready(FrontAPI & front)

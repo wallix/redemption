@@ -50,8 +50,8 @@ enum {
 };
 
 extern "C" {
-    typedef int get_hmac_key_prototype(uint8_t * buffer);
-    typedef int get_trace_key_prototype(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme);
+    using get_hmac_key_prototype = int (uint8_t *);
+    using get_trace_key_prototype = int (const uint8_t *, int, uint8_t *, unsigned int);
 }
 
 
@@ -226,7 +226,7 @@ public:
                 sha256.update(this->master_key, CRYPTO_KEY_LENGTH);
                 sha256.final(tmp);
             }
-            static_assert(sizeof(trace_key) == sizeof(tmp), "");
+            static_assert(sizeof(trace_key) == sizeof(tmp));
             memcpy(trace_key, tmp, HMAC_KEY_LENGTH);
         }
     }
@@ -273,8 +273,8 @@ public:
     {
         static constexpr std::size_t key_length = CRYPTO_KEY_LENGTH;
 
-        static_assert(sizeof(master_key) == key_length, "");
-        static_assert(sizeof(hmac_key) == key_length, "");
+        static_assert(sizeof(master_key) == key_length);
+        static_assert(sizeof(hmac_key) == key_length);
 
         friend class CryptoContext;
 
@@ -290,14 +290,14 @@ public:
         key_data(std::array<T, array_length> const & data) noexcept
         : const_byte_array(data.data(), data.size())
         {
-            static_assert(array_length == key_length, "");
+            static_assert(array_length == key_length);
         }
 
         template<class T, std::size_t array_length>
         key_data(T const (& data)[array_length]) noexcept
         : const_byte_array(data, array_length)
         {
-            static_assert(array_length == key_length, "");
+            static_assert(array_length == key_length);
         }
     };
 
