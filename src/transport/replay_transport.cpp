@@ -411,7 +411,7 @@ void ReplayTransport::do_send(const uint8_t * const buffer, size_t len)
 	size_t pos = searchAndPrefetchFor(PacketType::DataOut);
 
 	if (UncheckedPacket::Send == this->unchecked_packet) {
-		auto av = mPrefetchQueue[data_out_pos].av();
+		auto av = mPrefetchQueue[pos].av();
 		if (av.size() != len || memcmp(av.data(), buffer, len)) {
 			if (av.size() != len) {
 				LOG(LOG_ERR, "ReplayTransport::do_send(buf, len=%zu) should be %zu", len, av.size());
@@ -423,7 +423,8 @@ void ReplayTransport::do_send(const uint8_t * const buffer, size_t len)
 		}
 	}
 
-	data_out_pos++;
+	data_out_pos = pos + 1;
+
 	if (pos == 0) {
 		mPrefetchQueue.erase(mPrefetchQueue.begin());
 
