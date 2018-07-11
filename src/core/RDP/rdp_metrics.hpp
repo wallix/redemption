@@ -31,7 +31,9 @@
 
 struct RDPMetrics {
 
-    const char * filename;
+    char last_date;
+
+    const char * path_template;
     const uint32_t session_id;
     const char * account;
     const char * target_host;
@@ -56,32 +58,38 @@ struct RDPMetrics {
     int total_keys_pressed = 0;
 
 
-    
-    RDPMetrics( const char * filename
+
+    RDPMetrics( const char * path_template
               , const uint32_t session_id
               , const char * account
               , const char * target_host
               , const char * primary_user)
-      : filename(filename)
+      : path_template(path_template)
       , session_id(session_id)
       , account(account)
       , target_host(target_host)
       , primary_user(primary_user)
     {
-        if (this->filename) {
-        this->fd = ::open(this->filename, O_WRONLY);
+        if (this->path_template) {
 
-        if (this->fd < 0) {
-            LOG(LOG_ERR, "Log Metrics error: can't open \"%s\"", this->filename);
-        }
+            std::string file_path(this->path_template);
+//             file_path
+
+            this->fd = ::open(this->path_template, O_WRONLY | O_APPEND);
+
+            if (this->fd < 0) {
+                LOG(LOG_ERR, "Log Metrics error: can't open \"%s\"", this->path_template);
+            }
         }
     }
 
-    void set_new_file_path(const char * filename) {
-        fcntl(this->fd, F_SETFD, FD_CLOEXEC);
-        this->filename = filename;
-        this->fd = ::open(this->filename, O_WRONLY);
-    }
+
+
+//     void set_new_file_path(const char * filename) {
+//         fcntl(this->fd, F_SETFD, FD_CLOEXEC);
+//         this->filename = filename;
+//         this->fd = ::open(this->filename, O_WRONLY);
+//     }
 
     ~RDPMetrics() {
         fcntl(this->fd, F_SETFD, FD_CLOEXEC);
@@ -124,7 +132,7 @@ struct RDPMetrics {
             ssize_t nwritten = ::writev(fd, iov, 1);
 
             if (nwritten == -1) {
-                LOG(LOG_ERR, "Log Metrics error: can't write \"%s\"", this->filename);
+                LOG(LOG_ERR, "Log Metrics error: can't write \"%s\"", this->path_template);
                 return;
             }
         }
