@@ -321,7 +321,7 @@ namespace
     {
         template<char... c2>
         string_literal<c..., c2...>
-        operator+(string_literal<c2...> const&) const
+        operator+(string_literal<c2...> const& /*unused*/) const
         { return {}; }
 
         operator char const * () const
@@ -470,7 +470,7 @@ namespace detail
     template<bool InList = false, class TInt, TInt min, TInt max>
     parse_error parse_integral(
         TInt & x, array_view_const_char value,
-        std::integral_constant<TInt, min>, std::integral_constant<TInt, max>)
+        std::integral_constant<TInt, min> /*unused*/, std::integral_constant<TInt, max> /*unused*/)
     {
         range<char const *> rng = trim(value);
 

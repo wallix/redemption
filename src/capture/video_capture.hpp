@@ -88,10 +88,10 @@ struct VideoCaptureCtx : noncopyable
         gdi::ImageFrameApi & imageFrameApi
     );
 
-    void frame_marker_event(video_recorder &);
-    void encoding_video_frame(video_recorder &);
+    void frame_marker_event(video_recorder & /*recorder*/);
+    void encoding_video_frame(video_recorder & /*recorder*/);
     gdi::CaptureApi::Microseconds snapshot(
-        video_recorder &, timeval const & now, bool ignore_frame_in_timeval);
+        video_recorder & /*recorder*/, timeval const & now, bool ignore_frame_in_timeval);
     void next_video();
 
     uint16_t width() const noexcept {
@@ -111,7 +111,7 @@ struct VideoCaptureCtx : noncopyable
     }
 
 private:
-    void preparing_video_frame(video_recorder &);
+    void preparing_video_frame(video_recorder & /*recorder*/);
 
     RDPDrawable & drawable;
     timeval start_video_capture;

@@ -165,7 +165,7 @@ struct RDPColor
     { return RDPColor(nullptr, c); }
 
 private:
-    constexpr RDPColor(std::nullptr_t, uint32_t c) noexcept
+    constexpr RDPColor(std::nullptr_t /*unused*/, uint32_t c) noexcept
     : color_(c)
     {}
 

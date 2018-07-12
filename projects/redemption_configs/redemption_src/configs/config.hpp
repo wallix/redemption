@@ -113,7 +113,7 @@ namespace configs
     }
 
     template<class CfgType>
-    void post_set_value(VariablesConfiguration &, CfgType const & /*x*/)
+    void post_set_value(VariablesConfiguration & /*vars*/, CfgType const & /*x*/)
     {}
 
     void post_set_value(VariablesConfiguration & vars, ::cfg::internal_mod::theme const & cfg_value);

@@ -273,14 +273,14 @@ public:
 
     void process_windowing(InStream & stream, const RDP::AltsecDrawingOrderHeader & header);
 
-    void process_window_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
+    void process_window_information( InStream & stream, const RDP::AltsecDrawingOrderHeader & /*unused*/
                                    , uint32_t FieldsPresentFlags);
 
     void process_notification_icon_information( InStream & stream
-                                              , const RDP::AltsecDrawingOrderHeader &
+                                              , const RDP::AltsecDrawingOrderHeader & /*unused*/
                                               , uint32_t FieldsPresentFlags);
 
-    void process_desktop_information( InStream & stream, const RDP::AltsecDrawingOrderHeader &
+    void process_desktop_information( InStream & stream, const RDP::AltsecDrawingOrderHeader & /*unused*/
                                     , uint32_t FieldsPresentFlags);
 
     void play(bool const & requested_to_stop);

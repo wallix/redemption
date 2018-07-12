@@ -1537,7 +1537,8 @@ namespace re {
         unsigned match_impl(const char * s, unsigned step_limit, Tracer tracer, size_t * ppos,
                             ExactMatch<exact_match> /*match*/,
                             ActiveCapture<active_capture> /*capture*/,
-                            ActivePartOfText<active_part_of_text>, MatchState<R> /*part*/)
+                            ActivePartOfText<active_part_of_text> /*part*/,
+                            MatchState<R> /*match*/)
         {
             if (R & MatchStart::value) {
                 if (ppos) {
