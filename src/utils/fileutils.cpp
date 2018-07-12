@@ -108,7 +108,7 @@ void MakePath(std::string & fullpath, const char * directory,
               const char * filename, const char * extension)
 {
     fullpath = (directory ? directory : "");
-    if (fullpath.size() && (fullpath.back() != '/')) { fullpath += '/'; }
+    if (!fullpath.empty() && (fullpath.back() != '/')) { fullpath += '/'; }
     if (filename) { fullpath += filename; }
     if (extension && *extension) {
         if (*extension != '.') { fullpath += '.'; }

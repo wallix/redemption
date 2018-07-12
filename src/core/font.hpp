@@ -255,7 +255,7 @@ struct Font
 
     bool is_loaded() const
     {
-        return this->font_items.size();
+        return !this->font_items.empty();
     }
 
     uint16_t size() const noexcept {

@@ -753,7 +753,7 @@ public:
 
         } catch (const Error & e) {
             std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
-            if (error_message.size()) {
+            if (!error_message.empty()) {
                 std::cout << " Error tls: " << error_message << "\n";
             }
             return 2;

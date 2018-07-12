@@ -532,7 +532,7 @@ namespace re {
                             if ((msg_err = check_interval(prev_c, c))) {
                                 return nullptr;
                             }
-                            if (ranges.ranges.size()) {
+                            if (!ranges.ranges.empty()) {
                                 ranges.ranges.pop_back();
                             }
                             ranges.push(prev_c, c);

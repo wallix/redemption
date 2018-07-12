@@ -106,9 +106,9 @@ public:
 
     void set_master_derivator(const_byte_array derivator)
     {
-        if ((this->master_key_loaded || this->master_derivator.size())
+        if ((this->master_key_loaded || !this->master_derivator.empty())
          && not (this->master_derivator.size() == derivator.size()
-          && std::equal(derivator.begin(), derivator.end(), this->master_derivator.begin())
+           && std::equal(derivator.begin(), derivator.end(), this->master_derivator.begin())
         )) {
             LOG(LOG_ERR, "CryptoContext: master derivator is already defined");
             throw Error(ERR_WRM_INVALID_INIT_CRYPT);

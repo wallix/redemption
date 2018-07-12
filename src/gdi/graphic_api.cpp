@@ -70,7 +70,7 @@ MultiLineTextMetrics::MultiLineTextMetrics(const Font& font, const char* unicode
     int cumulative_width = 0;
 
     for (auto parameter : get_line(unicode_text, ' ')) {
-        if (!parameter.size()) {
+        if (parameter.empty()) {
             continue;
         }
 

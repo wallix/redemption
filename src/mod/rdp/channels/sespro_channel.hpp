@@ -743,7 +743,7 @@ public:
             return;
         }
 
-        if (!::strcasecmp(order_.c_str(), "Options") && parameters_.size()) {
+        if (!::strcasecmp(order_.c_str(), "Options") && !parameters_.empty()) {
             this->options = ::strtoul(parameters_[0].c_str(), nullptr, 10);
 
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
@@ -751,7 +751,7 @@ public:
                     this->options);
             }
         }
-        else if (!::strcasecmp(order_.c_str(), "Request") && parameters_.size()) {
+        else if (!::strcasecmp(order_.c_str(), "Request") && !parameters_.empty()) {
             if (!::strcasecmp(parameters_[0].c_str(), "Hello")) {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
@@ -1191,7 +1191,7 @@ public:
                     ::atoi(parameters_[2].c_str())
                 );
         }
-        else if (!::strcasecmp(order_.c_str(), "ExtraInfo") && parameters_.size()) {
+        else if (!::strcasecmp(order_.c_str(), "ExtraInfo") && !parameters_.empty()) {
             LOG(LOG_INFO,
                 "SessionProbeVirtualChannel::process_server_message: "
                     "SessionProbePID=%s",
@@ -1234,10 +1234,10 @@ public:
                     });
             }
         }
-        else if (!::strcasecmp(order_.c_str(), "Log") && parameters_.size()) {
+        else if (!::strcasecmp(order_.c_str(), "Log") && !parameters_.empty()) {
             LOG(LOG_INFO, "SessionProbe: %s", parameters_[0].c_str());
         }
-        else if (!::strcasecmp(order_.c_str(), "KeepAlive") && parameters_.size() &&
+        else if (!::strcasecmp(order_.c_str(), "KeepAlive") && !parameters_.empty() &&
                  !::strcasecmp(parameters_[0].c_str(), "OK")) {
             if (bool(this->verbose & RDPVerbose::sesprobe_repetitive)) {
                 LOG(LOG_INFO,
@@ -1281,7 +1281,7 @@ public:
 
             bool message_format_invalid = false;
 
-            if (parameters_.size()) {
+            if (!parameters_.empty()) {
                 if (!::strcasecmp(order_.c_str(), "PASSWORD_TEXT_BOX_GET_FOCUS")) {
                     auto info = key_qvalue_pairs({
                         {"type",   "PASSWORD_TEXT_BOX_GET_FOCUS"},

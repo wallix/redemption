@@ -588,7 +588,7 @@ public:
     }
 
     void operator()(array_view_const_char str) {
-        assert(str.data() && str.size());
+        assert(str.data() && not str.empty());
         this->check_filter(this->regexes_filter_kill, str.data());
         this->check_filter(this->regexes_filter_notify, str.data());
     }
@@ -997,7 +997,7 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
         }
     }
 
-    if (!message.av().size()) {
+    if (message.av().empty()) {
         LOG(LOG_WARNING,
             "MetaDataExtractor(): Invalid data format. Data=\"%.*s\"",
             int(data.size()), data.data());
