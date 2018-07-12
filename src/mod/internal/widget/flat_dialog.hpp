@@ -46,9 +46,9 @@ public:
     WidgetLabel        title;
     WidgetRect         separator;
     WidgetMultiLine    dialog;
-    WidgetEdit       * challenge;
+    std::unique_ptr<WidgetEdit> challenge;
     WidgetFlatButton   ok;
-    WidgetFlatButton * cancel;
+    std::unique_ptr<WidgetFlatButton> cancel;
     WidgetImage        img;
     WidgetFlatButton * extra_button;
 

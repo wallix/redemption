@@ -24,9 +24,12 @@
 
 #pragma once
 
-#include <cstring>
 #include "utils/log.hpp"
 #include "core/RDP/capabilities/common.hpp"
+
+#include <memory>
+#include <cstring>
+
 
 // 2.2.7.2.10 Bitmap Codecs Capability Set (TS_BITMAPCODECS_CAPABILITYSET)
 // =======================================================================
@@ -324,21 +327,13 @@ struct RFXGenCaps {
 
 struct RFXSrvrCaps : public RFXGenCaps {
 
-    uint8_t * reserved = nullptr;
+    std::unique_ptr<uint8_t[]> reserved;
 
     RFXSrvrCaps() = default;
-    RFXSrvrCaps(RFXSrvrCaps const &) = delete;
-    RFXSrvrCaps & operator = (RFXSrvrCaps const &) = delete;
-
-    ~RFXSrvrCaps() {
-        delete [] this->reserved;
-    }
 
     void setReserved(uint16_t len) {
-        this->reserved = new uint8_t[len];
-        for (size_t i = 0; i < len; i++) {
-            this->reserved[i] = 0xff;
-        }
+        this->reserved = std::make_unique<uint8_t[]>(len);
+        memset(this->reserved.get(), 0xff, len);
     }
 };
 

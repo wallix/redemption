@@ -151,21 +151,14 @@ public:
     uint8_t   height;
     uint8_t   type;
     uint8_t   size;
-    uint8_t * data;
+    std::unique_ptr<uint8_t[]> data;
 
     RDPBrushCache( uint8_t cacheIndex, uint8_t bpp, uint8_t width, uint8_t height, uint8_t type
                  , uint8_t size, const uint8_t * pattern)
     : cacheIndex(cacheIndex), bpp(bpp), width(width), height(height), type(type), size(size)
+    , data(std::make_unique<uint8_t[]>(this->size))
     {
-        this->data = static_cast<uint8_t *>(malloc(this->size));
-        memcpy(this->data, pattern, this->size);
-    }
-
-    ~RDPBrushCache()
-    {
-        if (this->data) {
-            free(this->data);
-        }
+        memcpy(this->data.get(), pattern, this->size);
     }
 
     void emit(OutStream & stream) const
@@ -185,7 +178,7 @@ public:
         stream.out_uint8(this->height);
         stream.out_uint8(this->type);
         stream.out_uint8(this->size);
-        stream.out_copy_bytes(this->data, this->size);
+        stream.out_copy_bytes(this->data.get(), this->size);
     }
 
     void receive(InStream & stream, const RDPSecondaryOrderHeader &/* header*/)
@@ -199,11 +192,10 @@ public:
         this->type       = stream.in_uint8();
         uint8_t size     = stream.in_uint8();
         if (this->size < size) {
-            free(this->data);
-            this->data   = static_cast<uint8_t *>(malloc(size));
+            this->data = std::make_unique<uint8_t[]>(size);
         }
         this->size       = size;
-        memcpy(this->data, stream.in_uint8p(this->size), this->size);
+        memcpy(this->data.get(), stream.in_uint8p(this->size), this->size);
     }
 
     bool operator==(const RDPBrushCache & other) const {
@@ -213,7 +205,7 @@ public:
                && (this->height     == other.height    )
                && (this->type       == other.type      )
                && (this->size       == other.size      )
-               && !memcmp(this->data, other.data, this->size)
+               && !memcmp(this->data.get(), other.data.get(), this->size)
                );
     }
 

@@ -880,8 +880,8 @@ struct StreamBufMaker
     uint8_t * reserve(std::size_t n) {
         uint8_t * p = this->buf_;
         if (n > sizeof(this->buf_)) {
-            p = new uint8_t[n];
-            this->dyn_buf_.reset(p);
+            this->dyn_buf_ = std::make_unique<uint8_t[]>(n);
+            p = this->dyn_buf_.get();
         }
         return p;
     }

@@ -57,6 +57,7 @@ private:
 
     VideoCropper(
         ImageFrameApi& imageFrameApi, ImageView const & image_view,
+        /* TODO x, y, out_width, out_height -> Rect*/
         unsigned int x, unsigned int y,
         unsigned int out_width, unsigned int out_height)
     : image_frame_api_ptr(imageFrameApi)
@@ -82,6 +83,7 @@ private:
 public:
     VideoCropper(
         ImageFrameApi& imageFrameApi,
+        /* TODO x, y, out_width, out_height -> Rect*/
         unsigned int x, unsigned int y,
         unsigned int out_width, unsigned int out_height)
     : VideoCropper(imageFrameApi, imageFrameApi.get_mutable_image_view(), x, y, out_width, out_height)
@@ -149,6 +151,7 @@ public:
     using gdi::ImageFrameApi::reset;
 
     // returns true if size of image frame has changed
+    /* TODO x, y, out_width, out_height -> Rect*/
     bool reset(unsigned int x, unsigned int y,
                unsigned int out_width, unsigned int out_height) override {
         unsigned int const old_out_rowsize = this->out_rowsize;

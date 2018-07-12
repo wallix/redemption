@@ -32,7 +32,7 @@ class WidgetScreen : public WidgetParent
 {
 public:
     Theme theme;
-    WidgetTooltip * tooltip;
+    std::unique_ptr<WidgetTooltip> tooltip;
     Widget * current_over;
 
     CompositeArray composite_array;

@@ -382,7 +382,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerCert const
     this->nla_tried = true;
 
     LOG(LOG_INFO, "activating CREDSSP");
-    this->credssp.reset(new rdpCredsspClient(
+    this->credssp = std::make_unique<rdpCredsspClient>(
         trans, this->user,
         // this->domain, this->password,
         this->domain, this->current_password,
@@ -390,7 +390,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerCert const
         this->krb, this->restricted_admin_mode,
         this->rand, this->timeobj, this->extra_message, this->lang,
         bool(this->verbose & Verbose::credssp)
-    ));
+    );
 
     if (!this->credssp->credssp_client_authenticate_init())
     {

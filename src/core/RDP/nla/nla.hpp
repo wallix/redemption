@@ -191,23 +191,23 @@ protected:
             case NTLM_Interface:
                 LOG(LOG_INFO, "Credssp: NTLM Authentication");
                 {
-                    auto table = new Ntlm_SecurityFunctionTable(this->rand, this->timeobj);
+                    auto table = std::make_unique<Ntlm_SecurityFunctionTable>(this->rand, this->timeobj);
                     if (this->hardcoded_tests) {
                         table->hardcoded_tests = true;
                     }
-                    this->table.reset(table);
+                    this->table = std::move(table);
                 }
                 break;
             case Kerberos_Interface:
                 LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
                 #ifndef __EMSCRIPTEN__
-                this->table.reset(new Kerberos_SecurityFunctionTable);
+                this->table = std::make_unique<Kerberos_SecurityFunctionTable>();
                 #else
                 assert(false && "Unsupported Kerberos");
                 #endif
                 break;
             default:
-                this->table.reset(new SecurityFunctionTable);
+                this->table = std::make_unique<SecurityFunctionTable>();
         }
     }
 

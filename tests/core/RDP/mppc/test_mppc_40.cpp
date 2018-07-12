@@ -45,7 +45,7 @@ RED_AUTO_TEST_CASE(TestRDP40BlukCompression4)
     mppc_enc.flags         = 0x20;
     mppc_enc.flagsHold     = 0;
     mppc_enc.first_pkt     = false;
-    memcpy(mppc_enc.hash_tab_mgr.hash_table, hash_table,       rdp_mppc_40_enc::hash_table_manager::get_table_size());
+    memcpy(mppc_enc.hash_tab_mgr.hash_table.get(), hash_table,       rdp_mppc_40_enc::hash_table_manager::get_table_size());
 
     uint8_t  compressionFlags;
     uint16_t datalen;

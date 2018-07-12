@@ -30,6 +30,7 @@
 #include "utils/hexdump.hpp"
 #include "core/error.hpp"
 
+#include <memory>
 #include <cstring>
 #include <cstdlib>
 
@@ -82,9 +83,9 @@ struct rdp_mppc_enc_hash_table_manager
 {
     static const uint32_t MAX_HASH_TABLE_ELEMENT = 65536;
 
-    T * hash_table;
+    std::unique_ptr<T[]> hash_table;
 
-    uint8_t * undo_buffer_begin;
+    std::unique_ptr<uint8_t[]> undo_buffer_begin;
     uint8_t * undo_buffer_end;
     uint8_t * undo_buffer_current;
 
@@ -104,28 +105,27 @@ struct rdp_mppc_enc_hash_table_manager
         , max_undo_element(max_undo_element)
         , undo_element_size(sizeof(hash_type) + sizeof(T))
     {
-        this->hash_table = static_cast<T *>(calloc(MAX_HASH_TABLE_ELEMENT, sizeof(T)));
+        this->hash_table = std::make_unique<T[]>(MAX_HASH_TABLE_ELEMENT);
+        std::fill(this->hash_table.get(), this->hash_table.get() + MAX_HASH_TABLE_ELEMENT, T{});
 
-        this->undo_buffer_begin   = static_cast<uint8_t *>(calloc(this->max_undo_element, this->undo_element_size));
-        this->undo_buffer_end     = this->undo_buffer_begin + this->max_undo_element * this->undo_element_size;
-        this->undo_buffer_current = this->undo_buffer_begin;
-    }
+        auto const undo_buf_size = this->max_undo_element * this->undo_element_size;
 
-    ~rdp_mppc_enc_hash_table_manager()
-    {
-        free(this->hash_table);
-        free(this->undo_buffer_begin);
+        this->undo_buffer_begin = std::make_unique<uint8_t[]>(undo_buf_size);
+        std::fill(this->undo_buffer_begin.get(), this->undo_buffer_begin.get() + undo_buf_size, uint8_t{});
+
+        this->undo_buffer_end     = this->undo_buffer_begin.get() + undo_buf_size;
+        this->undo_buffer_current = this->undo_buffer_begin.get();
     }
 
     inline void clear_undo_history() {
-        this->undo_buffer_current = this->undo_buffer_begin;
+        this->undo_buffer_current = this->undo_buffer_begin.get();
     }
 
     void dump(bool mini_dump) const
     {
         LOG(LOG_INFO, "Type=RDP X.X bulk compressor hash table manager");
         LOG(LOG_INFO, "hashTable");
-        hexdump_d(reinterpret_cast<uint8_t const*>(this->hash_table), (mini_dump ? 16 : get_table_size()));
+        hexdump_d(reinterpret_cast<uint8_t const*>(this->hash_table.get()), (mini_dump ? 16 : get_table_size()));
     }
 
     inline T get_offset(hash_type hash) const
@@ -208,9 +208,9 @@ struct rdp_mppc_enc_hash_table_manager
 
     inline void reset()
     {
-        ::memset(this->hash_table, 0, get_table_size());
+        ::memset(this->hash_table.get(), 0, get_table_size());
 
-        this->undo_buffer_current = this->undo_buffer_begin;
+        this->undo_buffer_current = this->undo_buffer_begin.get();
     }
 
     inline bool undo_last_changes()
@@ -219,7 +219,7 @@ struct rdp_mppc_enc_hash_table_manager
             return false;
         }
 
-        while (this->undo_buffer_current != this->undo_buffer_begin) {
+        while (this->undo_buffer_current != this->undo_buffer_begin.get()) {
             this->undo_buffer_current -= this->undo_element_size;
 
             this->hash_table[*(reinterpret_cast<hash_type *>(this->undo_buffer_current))] =

@@ -384,9 +384,9 @@ public:
                                     }
 
                                     // now is authentifier start time
-                                    acl.reset(new Acl(
+                                    acl = std::make_unique<Acl>(
                                         ini, std::move(client_sck), now, cctx, rnd, fstat
-                                    ));
+                                    );
                                     authentifier.set_acl_serial(&acl->acl_serial);
                                     session_reactor.set_next_event(BACK_EVENT_NEXT);
                                 }

@@ -217,8 +217,8 @@ enum {
                 {
                     auto pbuf = buf;
                     if (len > stream.get_capacity()) {
-                        pbuf = new uint8_t[len];
-                        dynbuf.reset(pbuf);
+                        dynbuf = std::make_unique<uint8_t[]>(len);
+                        pbuf = dynbuf.get();
                     }
                     stream = InStream(pbuf, len);
                 }

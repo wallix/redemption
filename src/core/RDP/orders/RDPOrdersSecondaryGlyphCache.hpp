@@ -165,7 +165,7 @@ public:
                  , std::unique_ptr<uint8_t[]> aj
                  )
     : cacheId(cacheId)
-    , 
+    ,
      cacheIndex(cacheIndex)
     , x(x)
     , y(y)
@@ -218,7 +218,7 @@ public:
 
         uint16_t size = this->datasize();
 
-        this->aj.reset(new uint8_t[size]);
+        this->aj = std::make_unique<uint8_t[]>(size);
         memcpy(this->aj.get(), stream.in_uint8p(size), size);
     }
 
