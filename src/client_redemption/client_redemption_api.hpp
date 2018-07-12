@@ -155,8 +155,8 @@ public:
     };
     std::vector<UserProfil> userProfils;
 
-    bool                 enable_shared_clipboard;
-    bool                 enable_shared_virtual_disk;
+    bool enable_shared_clipboard;
+    bool enable_shared_virtual_disk;
     bool enable_shared_remoteapp;
 
     struct KeyCustomDefinition {

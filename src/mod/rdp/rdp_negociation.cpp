@@ -470,9 +470,9 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                 {
                     this->sc_core.recv(f.payload);
                     if (bool(this->verbose & RDPVerbose::connection)) {
-                        sc_core.log("Received from server");
+                        this->sc_core.log("Received from server");
                     }
-                    if (0x0080001 == sc_core.version){ // can't use rdp5
+                    if (0x0080001 == this->sc_core.version){ // can't use rdp5
                         this->negociation_result.use_rdp5 = false;
                     }
                 }
