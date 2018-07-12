@@ -82,9 +82,9 @@ void WidgetModuleHost::ModuleHolder::send_auth_channel_data(const char * string_
 
 // mod_api
 
-void WidgetModuleHost::ModuleHolder::draw_event(time_t now, gdi::GraphicApi& drawable)
+void WidgetModuleHost::ModuleHolder::draw_event(time_t now, gdi::GraphicApi& gd)
 {
-    this->host.drawable_ptr = &drawable;
+    this->host.drawable_ptr = &gd;
 
     this->managed_mod->draw_event(now, this->host);
 
