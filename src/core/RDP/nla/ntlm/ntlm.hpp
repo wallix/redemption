@@ -99,7 +99,7 @@ public:
         if (fCredentialUse == SECPKG_CRED_OUTBOUND
          || fCredentialUse == SECPKG_CRED_INBOUND)
         {
-            this->credentials.reset(new CREDENTIALS);
+            this->credentials = std::make_unique<CREDENTIALS>();
 
             if (pAuthData) {
                 this->credentials->identity.CopyAuthIdentity(*pAuthData);
@@ -122,7 +122,7 @@ public:
         }
 
         if (!this->context) {
-            this->context.reset(new NTLMContext(this->rand, this->timeobj));
+            this->context = std::make_unique<NTLMContext>(this->rand, this->timeobj);
 
             this->context->verbose = verbose;
             // this->context->init();
@@ -206,7 +206,7 @@ public:
         SecBufferDesc& output
     ) override {
         if (!this->context) {
-            this->context.reset(new NTLMContext(this->rand, this->timeobj));
+            this->context = std::make_unique<NTLMContext>(this->rand, this->timeobj);
 
             this->context->server = true;
             if (fContextReq & ASC_REQ_CONFIDENTIALITY) {
@@ -276,8 +276,6 @@ public:
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
     SEC_STATUS EncryptMessage(SecBufferDesc& Message, unsigned long MessageSeqNo) override {
-        int length;
-        uint8_t* data;
         uint32_t SeqNo(MessageSeqNo);
         uint8_t checksum[8];
         uint8_t* signature;
@@ -306,8 +304,9 @@ public:
             return SEC_E_INVALID_TOKEN;
         }
         /* Copy original data buffer */
-        length = data_buffer->Buffer.size();
-        data = new uint8_t[length];
+        size_t const length = data_buffer->Buffer.size();
+        auto unique_data = std::make_unique<uint8_t[]>(length);
+        auto* data = unique_data.get();
         memcpy(data, data_buffer->Buffer.get_data(), length);
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
@@ -346,7 +345,7 @@ public:
         // LOG(LOG_ERR, "\n");
 // #endif
 
-        delete [] data;
+        unique_data.reset();
 
         /* RC4-encrypt first 8 bytes of digest */
         this->context->SendRc4Seal.crypt(8, digest, checksum);
@@ -371,8 +370,6 @@ public:
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
     SEC_STATUS DecryptMessage(SecBufferDesc& Message, unsigned long MessageSeqNo) override {
-        int length = 0;
-        uint8_t* data = nullptr;
         uint32_t SeqNo(MessageSeqNo);
         uint8_t digest[SslMd5::DIGEST_LENGTH] = {};
         uint8_t checksum[8] = {};
@@ -403,8 +400,9 @@ public:
             return SEC_E_INVALID_TOKEN;
         }
         /* Copy original data buffer */
-        length = data_buffer->Buffer.size();
-        data = new uint8_t[length];
+        size_t const length = data_buffer->Buffer.size();
+        auto unique_data = std::make_unique<uint8_t[]>(length);
+        auto* data = unique_data.get();
         memcpy(data, data_buffer->Buffer.get_data(), length);
 
         /* Decrypt message using with RC4, result overwrites original buffer */
@@ -441,7 +439,7 @@ public:
         // LOG(LOG_ERR, "\n");
 // #endif
 
-        delete [] data;
+        unique_data.reset();
 
         /* RC4-encrypt first 8 bytes of digest */
         this->context->RecvRc4Seal.crypt(8, digest, checksum);

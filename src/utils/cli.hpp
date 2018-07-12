@@ -213,7 +213,7 @@ namespace cli
     }
 
     template<class Act>
-    Res arg_parse(char const * /*unused*/, char const * s, Act act)
+    Res arg_parse(char const ** /*unused*/, char const * s, Act act)
     {
         return act(s), Ok;
     }

@@ -11,6 +11,7 @@ import os
 import signal
 import traceback
 import sys
+from datetime import datetime
 
 from logger import Logger
 
@@ -203,6 +204,10 @@ class ACLPassthrough():
             interactive_data[u'target_host'] = MAGICASK
         else:
             interactive_data[u'target_host'] = rvalue(self.shared.get(u'real_target_device'))
+        interactive_data[u'target_device'] = (
+            "<host>$<application path>$<working dir>$"
+            "<args> for Application"
+        )
         if interactive_data:
             _status, _error = self.interactive_target(interactive_data)
         kv = {}
@@ -216,6 +221,18 @@ class ACLPassthrough():
         kv[u'target_login'] = self.shared.get(u'target_login')
         kv[u'target_host'] = self.shared.get(u'target_host')
         kv[u'target_device'] = self.shared.get(u'target_host')
+        kv[u'session_log_path'] = datetime.now().strftime(
+            "session_log-%Y-%m-%d-%I:%M%p.log")
+
+        if '$' in kv[u'target_host']:
+            app_params = kv[u'target_host']
+            list_params = app_params.split('$', 3)
+            kv[u'target_host'] = list_params[0]
+            if len(list_params) > 3:
+                kv[u'alternate_shell'] = list_params[1]
+                kv[u'shell_working_directory'] = list_params[2]
+                kv[u'target_application'] = list_params[1]
+                kv[u'shell_arguments'] = list_params[3]
 
         self.send_data(kv)
 

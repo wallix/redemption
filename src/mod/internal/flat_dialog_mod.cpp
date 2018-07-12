@@ -53,7 +53,7 @@ FlatDialogMod::FlatDialogMod(
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
     if (this->dialog_widget.challenge) {
-        this->dialog_widget.set_widget_focus(this->dialog_widget.challenge, Widget::focus_reason_tabkey);
+        this->dialog_widget.set_widget_focus(this->dialog_widget.challenge.get(), Widget::focus_reason_tabkey);
         // this->vars.get<cfg::to_send_set::insert>()(AUTHID_AUTHENTICATION_CHALLENGE);
     }
 

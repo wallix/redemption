@@ -247,9 +247,8 @@ time_t ReplayMod::get_real_time_movie_begin()
     return this->internal_reader->in_trans.get_meta_line().start_time;
 }
 
-void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & drawable)
+void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & /*gd*/)
 {
-    (void)drawable;
     // TODO use system constants for sizes
     if (!this->sync_setted) {
         this->sync_setted = true;

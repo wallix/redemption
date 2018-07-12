@@ -132,7 +132,7 @@ class Front : public FrontAPI
 
 public:
     bool has_user_activity = true;
-    Capture * capture;
+    std::unique_ptr<Capture> capture;
 
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
@@ -161,7 +161,7 @@ private:
     struct Graphics
     {
         BmpCache bmp_cache;
-        BmpCachePersister * bmp_cache_persister;
+        std::unique_ptr<BmpCachePersister> bmp_cache_persister;
         BrushCache brush_cache;
         PointerCache pointer_cache;
         GlyphCache glyph_cache;
@@ -325,7 +325,7 @@ private:
             to_verbose_flags(ini.get<cfg::debug::cache>())
           )
         , bmp_cache_persister([&ini, verbose, this]() {
-            BmpCachePersister * bmp_cache_persister = nullptr;
+            std::unique_ptr<BmpCachePersister> bmp_cache_persister;
 
             if (ini.get<cfg::client::persistent_disk_bitmap_cache>() &&
                 ini.get<cfg::client::persist_bitmap_cache_on_disk>() &&
@@ -349,9 +349,8 @@ private:
                                 ? BmpCachePersister::Verbose::bmp_info
                                 : BmpCachePersister::Verbose::none
                             );
-                        bmp_cache_persister = new BmpCachePersister(
-                            this->bmp_cache, ift, cache_filename, cache_verbose
-                        );
+                        bmp_cache_persister = std::make_unique<BmpCachePersister>(
+                            this->bmp_cache, ift, cache_filename, cache_verbose);
                     }
                     catch (const Error & e) {
                         if (e.id != ERR_PDBC_LOAD) {
@@ -432,8 +431,7 @@ private:
 
         void clear_bmp_cache_persister()
         {
-            delete this->get_graphics().bmp_cache_persister;
-            this->get_graphics().bmp_cache_persister = nullptr;
+            this->get_graphics().bmp_cache_persister.reset();
         }
 
         bool has_bmp_cache_persister() const
@@ -443,7 +441,7 @@ private:
 
         BmpCachePersister * bmp_cache_persister() const
         {
-            return this->get_graphics().bmp_cache_persister;
+            return this->get_graphics().bmp_cache_persister.get();
         }
 
         uint8_t bpp() const
@@ -796,8 +794,6 @@ public:
         if (this->orders.has_bmp_cache_persister()) {
             this->save_persistent_disk_bitmap_cache();
         }
-
-        delete this->capture;
     }
 
     ResizeResult server_resize(int width, int height, int bpp) override
@@ -1046,27 +1042,28 @@ public:
             ini.get<cfg::debug::capture>()
         };
 
-        this->capture = new Capture( capture_params
-                                   , drawable_params
-                                   , capture_wrm, wrm_params
-                                   , capture_png, png_params
-                                   , capture_pattern_checker, pattern_params
-                                   , capture_ocr, ocr_params
-                                   , capture_video, sequenced_video_params
-                                   , capture_video_full, full_video_params
-                                   , capture_meta, meta_params
-                                   , capture_kbd, kbd_log_params
-                                   , video_params
-                                   , nullptr
-                                   , ((this->client_info.remote_program && (ini.get<cfg::video::smart_video_cropping>() != SmartVideoCropping::disable)) ?
-                                      Rect(0, 0, 640, 480) : Rect())
-                                   );
+        this->capture = std::make_unique<Capture>(
+            capture_params
+          , drawable_params
+          , capture_wrm, wrm_params
+          , capture_png, png_params
+          , capture_pattern_checker, pattern_params
+          , capture_ocr, ocr_params
+          , capture_video, sequenced_video_params
+          , capture_video_full, full_video_params
+          , capture_meta, meta_params
+          , capture_kbd, kbd_log_params
+          , video_params
+          , nullptr
+          , ((this->client_info.remote_program && (ini.get<cfg::video::smart_video_cropping>() != SmartVideoCropping::disable)) ?
+              Rect(0, 0, 640, 480) : Rect())
+        );
 
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }
         if (this->capture->has_graphic_api()) {
-            this->set_gd(this->capture);
+            this->set_gd(this->capture.get());
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
@@ -1105,9 +1102,8 @@ public:
     {
         if (this->capture) {
             LOG(LOG_INFO, "---<>  Front::must_be_stop_capture  <>---");
-            delete this->capture;
+            this->capture.reset();
             this->capture_timer.reset();
-            this->capture = nullptr;
 
             this->set_gd(this->orders.graphics_update_pdu());
             return true;

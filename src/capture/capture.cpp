@@ -588,7 +588,7 @@ public:
     }
 
     void operator()(array_view_const_char str) {
-        assert(str.data() && str.size());
+        assert(str.data() && not str.empty());
         this->check_filter(this->regexes_filter_kill, str.data());
         this->check_filter(this->regexes_filter_notify, str.data());
     }
@@ -650,7 +650,8 @@ protected:
     , image_frame_api(imageFrameApi)
     {
         if (this->zoom_factor != 100) {
-            this->scaled_buffer.reset(new uint8_t[this->scaled_width * this->scaled_height * 3]);
+            this->scaled_buffer = std::make_unique<uint8_t[]>(
+                this->scaled_width * this->scaled_height * 3);
         }
     }
 
@@ -996,7 +997,7 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
         }
     }
 
-    if (!message.av().size()) {
+    if (message.av().empty()) {
         LOG(LOG_WARNING,
             "MetaDataExtractor(): Invalid data format. Data=\"%.*s\"",
             int(data.size()), data.data());
@@ -1439,7 +1440,7 @@ Capture::Capture(
     }
 
     if (capture_meta) {
-        this->meta_capture_obj.reset(new MetaCaptureImpl(capture_params, meta_params));
+        this->meta_capture_obj = std::make_unique<MetaCaptureImpl>(capture_params, meta_params);
     }
 
     if (capture_wrm || capture_video || capture_ocr || capture_png || capture_video_full) {
@@ -1447,8 +1448,8 @@ Capture::Capture(
             this->gd_drawable = drawable_params.rdp_drawable;
         }
         else {
-            this->gd_drawable_.reset(new RDPDrawable(
-                drawable_params.width, drawable_params.height));
+            this->gd_drawable_ = std::make_unique<RDPDrawable>(
+                drawable_params.width, drawable_params.height);
             this->gd_drawable = this->gd_drawable_.get();
         }
         this->gds.push_back(*this->gd_drawable);
@@ -1457,18 +1458,18 @@ Capture::Capture(
 
         if (!crop_rect.isempty() &&
             ((capture_png && !png_params.real_time_image_capture) || capture_video || capture_video_full)) {
-            this->video_cropper.reset(new VideoCropper(
-                    *this->gd_drawable,
-                    crop_rect.x,
-                    crop_rect.y,
-                    crop_rect.cx,
-                    crop_rect.cy
-                ));
+            this->video_cropper = std::make_unique<VideoCropper>(
+                *this->gd_drawable,
+                crop_rect.x,
+                crop_rect.y,
+                crop_rect.cx,
+                crop_rect.cy
+            );
 
             image_frame_api_ptr = this->video_cropper.get();
         }
 
-        this->graphic_api.reset(new Graphic(this->mouse_info, this->gds, this->caps));
+        this->graphic_api = std::make_unique<Graphic>(this->mouse_info, this->gds, this->caps);
 
         if (capture_png) {
             if (png_params.real_time_image_capture) {
@@ -1477,29 +1478,29 @@ Capture::Capture(
                 if (png_params.remote_program_session) {
                     assert(image_frame_api_real_time_ptr == this->gd_drawable);
 
-                    this->video_cropper_real_time.reset(new VideoCropper(
-                            *this->gd_drawable,
-                            0,
-                            0,
-                            this->gd_drawable->width(),
-                            this->gd_drawable->height()
-                        ));
+                    this->video_cropper_real_time = std::make_unique<VideoCropper>(
+                        *this->gd_drawable,
+                        0,
+                        0,
+                        this->gd_drawable->width(),
+                        this->gd_drawable->height()
+                    );
 
                     image_frame_api_real_time_ptr = this->video_cropper_real_time.get();
                 }
 
-                this->png_capture_real_time_obj.reset(new PngCaptureRT(
-                    capture_params, png_params, *this->gd_drawable, *image_frame_api_real_time_ptr));
+                this->png_capture_real_time_obj = std::make_unique<PngCaptureRT>(
+                    capture_params, png_params, *this->gd_drawable, *image_frame_api_real_time_ptr);
             }
             else {
-                this->png_capture_obj.reset(new PngCapture(
-                    capture_params, png_params, *this->gd_drawable, *image_frame_api_ptr));
+                this->png_capture_obj = std::make_unique<PngCapture>(
+                    capture_params, png_params, *this->gd_drawable, *image_frame_api_ptr);
             }
         }
 
         if (capture_wrm) {
-            this->wrm_capture_obj.reset(new WrmCaptureImpl(
-                capture_params, wrm_params, *this->gd_drawable));
+            this->wrm_capture_obj = std::make_unique<WrmCaptureImpl>(
+                capture_params, wrm_params, *this->gd_drawable);
         }
 
 #ifndef REDEMPTION_NO_FFMPEG
@@ -1509,15 +1510,15 @@ Capture::Capture(
                 this->notifier_next_video.session_meta = &this->meta_capture_obj->get_session_meta();
                 notifier = this->notifier_next_video;
             }
-            this->sequenced_video_capture_obj.reset(new SequencedVideoCaptureImpl(
+            this->sequenced_video_capture_obj = std::make_unique<SequencedVideoCaptureImpl>(
                 capture_params, png_params.zoom, *this->gd_drawable,
-                *image_frame_api_ptr, video_params, notifier));
+                *image_frame_api_ptr, video_params, notifier);
         }
 
         if (capture_video_full) {
-            this->full_video_capture_obj.reset(new FullVideoCaptureImpl(
+            this->full_video_capture_obj = std::make_unique<FullVideoCaptureImpl>(
                 capture_params, *this->gd_drawable,
-                *image_frame_api_ptr, video_params, full_video_params));
+                *image_frame_api_ptr, video_params, full_video_params);
         }
 #else
         if (capture_video || capture_video_full) {
@@ -1528,8 +1529,8 @@ Capture::Capture(
 #endif
 
         if (capture_pattern_checker) {
-            this->patterns_checker.reset(new PatternsChecker(
-                *capture_params.report_message, pattern_params));
+            this->patterns_checker = std::make_unique<PatternsChecker>(
+                *capture_params.report_message, pattern_params);
             if (!this->patterns_checker->contains_pattern()) {
                 LOG(LOG_WARNING, "Disable pattern_checker");
                 this->patterns_checker.reset();
@@ -1538,10 +1539,10 @@ Capture::Capture(
 
         if (capture_ocr) {
             if (this->patterns_checker || this->meta_capture_obj || this->sequenced_video_capture_obj) {
-                this->title_capture_obj.reset(new TitleCaptureImpl(
+                this->title_capture_obj = std::make_unique<TitleCaptureImpl>(
                     capture_params.now, *this->gd_drawable, ocr_params,
                     this->notifier_title_changed, capture_params.report_message
-                ));
+                );
             }
             else {
                 LOG(LOG_INFO, "Disable title_extractor");
@@ -1578,23 +1579,23 @@ Capture::Capture(
 
     if (capture_kbd) {
         if (kbd_log_params.syslog_keyboard_log) {
-            this->syslog_kbd_capture_obj.reset(new SyslogKbd(capture_params.now));
+            this->syslog_kbd_capture_obj = std::make_unique<SyslogKbd>(capture_params.now);
             this->kbds.push_back(*this->syslog_kbd_capture_obj);
             this->caps.push_back(*this->syslog_kbd_capture_obj);
         }
 
         if (kbd_log_params.session_log_enabled) {
-            this->session_log_kbd_capture_obj.reset(new SessionLogKbd(
-                *capture_params.report_message));
+            this->session_log_kbd_capture_obj = std::make_unique<SessionLogKbd>(
+                *capture_params.report_message);
             this->kbds.push_back(*this->session_log_kbd_capture_obj);
             this->probes.push_back(*this->session_log_kbd_capture_obj);
         }
 
-        this->pattern_kbd_capture_obj.reset(new PatternKbd(
+        this->pattern_kbd_capture_obj = std::make_unique<PatternKbd>(
             capture_params.report_message,
             pattern_params.pattern_kill,
             pattern_params.pattern_notify,
-            pattern_params.verbose));
+            pattern_params.verbose);
 
         if (this->pattern_kbd_capture_obj->contains_pattern()) {
             this->kbds.push_back(*this->pattern_kbd_capture_obj);

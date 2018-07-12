@@ -2351,7 +2351,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     recorder.show_file_metadata = (options.count("meta"             ) > 0);
     recorder.show_statistics    = (options.count("statistics"       ) > 0);
 
-    if (recorder.output_filename.size()) {
+    if (!recorder.output_filename.empty()) {
         std::string directory = app_path(AppPath::Wrm); directory += "/";
         std::string filename                ;
         std::string extension = ".mwrm"     ;
@@ -2592,7 +2592,7 @@ extern "C" {
                         std::cout << "Input file is not encrypted." << std::endl;
                         return 0;
                     case EncryptionSchemeTypeResult::OldScheme:
-                        cctx.old_encryption_scheme = 1;
+                        cctx.old_encryption_scheme = true;
                         in_t.open(rp.full_path.c_str());
                         break;
                     default:

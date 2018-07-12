@@ -99,34 +99,34 @@ public:
         return {this->public_key.get(), this->public_key_length};
     }
 
-    static inline char* crypto_print_name(X509_NAME* name)
+    static inline std::unique_ptr<char[]> crypto_print_name(X509_NAME* name)
     {
-        char* buffer = nullptr;
+        std::unique_ptr<char[]> buffer;
         BIO* outBIO = BIO_new(BIO_s_mem());
 
         if (X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE) > 0)
         {
             unsigned long size = BIO_number_written(outBIO);
-            buffer = static_cast<char*>(malloc(size + 1));
-            memset(buffer, 0, size + 1);
-            BIO_read(outBIO, buffer, size);
+            buffer = std::make_unique<char[]>(size + 1);
+            memset(buffer.get(), 0, size + 1);
+            BIO_read(outBIO, buffer.get(), size);
         }
         BIO_free(outBIO);
         return buffer;
     }
 
     // TODO we should be able to simplify that to just put expected value in a provided buffer
-    static inline char* crypto_cert_fingerprint(X509* xcert)
+    static inline std::unique_ptr<char[]> crypto_cert_fingerprint(X509* xcert)
     {
         uint32_t fp_len;
         uint8_t fp[EVP_MAX_MD_SIZE];
 
         X509_digest(xcert, EVP_sha1(), fp, &fp_len);
 
-        char * fp_buffer = static_cast<char*>(malloc(3 * fp_len));
-        memset(fp_buffer, 0, 3 * fp_len);
+        auto fp_buffer = std::make_unique<char[]>(3 * fp_len);
+        memset(fp_buffer.get(), 0, 3 * fp_len);
 
-        char * p = fp_buffer;
+        char * p = fp_buffer.get();
 
         int i = 0;
         for (i = 0; i < int(fp_len - 1); i++)
@@ -374,17 +374,17 @@ public:
                     ::unlink(tmpfilename);
                     ::fclose(fp2);
 
-                    char const * const issuer_existing      = this->crypto_print_name(X509_get_issuer_name(px509Existing));
-                    char const * const subject_existing     = this->crypto_print_name(X509_get_subject_name(px509Existing));
-                    char const * const fingerprint_existing = this->crypto_cert_fingerprint(px509Existing);
+                    const std::unique_ptr<char[]> issuer_existing      = this->crypto_print_name(X509_get_issuer_name(px509Existing));
+                    const std::unique_ptr<char[]> subject_existing     = this->crypto_print_name(X509_get_subject_name(px509Existing));
+                    const std::unique_ptr<char[]> fingerprint_existing = this->crypto_cert_fingerprint(px509Existing);
 
-                    LOG(LOG_INFO, "TLS::X509 existing::issuer=%s", issuer_existing);
-                    LOG(LOG_INFO, "TLS::X509 existing::subject=%s", subject_existing);
-                    LOG(LOG_INFO, "TLS::X509 existing::fingerprint=%s", fingerprint_existing);
+                    LOG(LOG_INFO, "TLS::X509 existing::issuer=%s", issuer_existing.get());
+                    LOG(LOG_INFO, "TLS::X509 existing::subject=%s", subject_existing.get());
+                    LOG(LOG_INFO, "TLS::X509 existing::fingerprint=%s", fingerprint_existing.get());
 
-                    char const * const issuer               = this->crypto_print_name(X509_get_issuer_name(px509));
-                    char const * const subject              = this->crypto_print_name(X509_get_subject_name(px509));
-                    char const * const fingerprint          = this->crypto_cert_fingerprint(px509);
+                    const std::unique_ptr<char[]> issuer               = this->crypto_print_name(X509_get_issuer_name(px509));
+                    const std::unique_ptr<char[]> subject              = this->crypto_print_name(X509_get_subject_name(px509));
+                    const std::unique_ptr<char[]> fingerprint          = this->crypto_cert_fingerprint(px509);
 
                     certificate_matches = !binary_check_failed;
                     if (binary_check_failed
@@ -395,12 +395,12 @@ public:
                         // - fingerprint changed
                         // other changes are ignored (expiration date for instance,
                         //  and revocation list is not checked)
-                        && ((0 != strcmp(issuer_existing, issuer))
+                        && ((0 != strcmp(issuer_existing.get(), issuer.get()))
                         // Only one of subject_existing and subject is null
                         || ((!subject_existing || !subject) && (subject_existing != subject))
                         // All of subject_existing and subject are not null
-                        || (subject && (0 != strcmp(subject_existing, subject)))
-                        || (0 != strcmp(fingerprint_existing, fingerprint)))) {
+                        || (subject && (0 != strcmp(subject_existing.get(), subject.get())))
+                        || (0 != strcmp(fingerprint_existing.get(), fingerprint.get())))) {
                         if (error_message) {
                             char buff[256];
                             snprintf(buff, sizeof(buff), "The certificate for host %s:%d has changed!",
@@ -409,7 +409,9 @@ public:
                         }
                         LOG(LOG_WARNING, "The certificate for host %s:%d has changed Previous=\"%s\" \"%s\" \"%s\", New=\"%s\" \"%s\" \"%s\"\n",
                             ip_address, port,
-                            issuer_existing, subject_existing, fingerprint_existing, issuer, subject, fingerprint);
+                            issuer_existing.get(), subject_existing.get(),
+                            fingerprint_existing.get(), issuer.get(),
+                            subject.get(), fingerprint.get());
                         if (error_message) {
                             *error_message = "The certificate has changed: \"";
                             *error_message += filename;
@@ -426,14 +428,6 @@ public:
                     else {
                         server_notifier.server_cert_success();
                     }
-
-                    if (issuer_existing      != nullptr) { free(const_cast<char *>(issuer_existing     )); }
-                    if (subject_existing     != nullptr) { free(const_cast<char *>(subject_existing    )); }
-                    if (fingerprint_existing != nullptr) { free(const_cast<char *>(fingerprint_existing)); }
-
-                    if (issuer               != nullptr) { free(const_cast<char *>(issuer              )); }
-                    if (subject              != nullptr) { free(const_cast<char *>(subject             )); }
-                    if (fingerprint          != nullptr) { free(const_cast<char *>(fingerprint         )); }
 
                     X509_free(px509Existing);
                 }
@@ -524,7 +518,7 @@ public:
 
             // export the public key to DER format
             this->public_key_length = i2d_PublicKey(pkey, nullptr);
-            this->public_key.reset(new uint8_t[this->public_key_length]);
+            this->public_key = std::make_unique<uint8_t[]>(this->public_key_length);
             LOG(LOG_INFO, "TLSContext::i2d_PublicKey()");
             // hexdump_c(this->public_key, this->public_key_length);
 
@@ -576,25 +570,18 @@ public:
         //        void * subject_alt_names = X509_get_ext_d2i(xcert, NID_subject_alt_name, 0, 0);
 
            X509_NAME * issuer_name = X509_get_issuer_name(xcert);
-           char * issuer = this->crypto_print_name(issuer_name);
-           LOG(LOG_INFO, "TLS::X509::issuer=%s", issuer);
-           free(issuer);
+           LOG(LOG_INFO, "TLS::X509::issuer=%s", this->crypto_print_name(issuer_name).get());
 
            X509_NAME * subject_name = X509_get_subject_name(xcert);
-           char * subject = this->crypto_print_name(subject_name);
-           LOG(LOG_INFO, "TLS::X509::subject=%s", subject);
-           free(subject);
+           LOG(LOG_INFO, "TLS::X509::subject=%s", this->crypto_print_name(subject_name).get());
 
-           char * fingerprint = this->crypto_cert_fingerprint(xcert);
-           LOG(LOG_INFO, "TLS::X509::fingerprint=%s", fingerprint);
-           free(fingerprint);
+           LOG(LOG_INFO, "TLS::X509::fingerprint=%s", this->crypto_cert_fingerprint(xcert).get());
 
            X509_free(px509);
 
            // TODO: Probably to be set by caller if everything successfull
            this->io = this->allocated_ssl;
            this->tls = true;
-
         }
 
         if ((!certificate_exists && ensure_server_certificate_exists)

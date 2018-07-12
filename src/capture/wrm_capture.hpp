@@ -587,7 +587,7 @@ class WrmCaptureImpl :
         using GraphicToFile::draw;
         using GraphicToFile::capture_bpp;
 
-        void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
+        void draw(RDPNineGrid const & /*cmd*/, Rect , gdi::ColorCtx /*color_ctx*/, Bitmap const &  /*bmp*/) override {}
 
         void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
             auto compress_and_draw_bitmap_update = [&bitmap_data, this](const Bitmap & bmp) {
@@ -616,7 +616,7 @@ class WrmCaptureImpl :
             }
         }
 
-        void enable_kbd_input_mask(bool) override {}
+        void enable_kbd_input_mask(bool /*unused*/) override {}
 
         bool kbd_input(const timeval & now, uint32_t uchar) override {
             return this->GraphicToFile::kbd_input(now, uchar);
@@ -721,7 +721,7 @@ public:
         this->graphic_to_file.draw(cmd);
     }
 
-    void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
+    void draw(RDPNineGrid const & /*cmd*/, Rect , gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}
 
 
     // XXXXXXXXXXXXXX

@@ -26,15 +26,18 @@ Author(s): Christophe Grosjean, Jonathan Poelen
 
 // hexdump for humans
 void hexdump(const_byte_ptr data, size_t size, unsigned line_length = 16);
+void hexdump_av(const_byte_array data, unsigned line_length = 16);
 
 /**
  *  hexdump for c++ integer array.
  *  0x23, 0x53 .....
  */
 void hexdump_d(const_byte_ptr data, size_t size, unsigned line_length = 16);
+void hexdump_av_d(const_byte_array data, unsigned line_length = 16);
 
 /**
  *  hexdump for c++ raw string.
  *  "\\x23\\x53"
  */
 void hexdump_c(const_byte_ptr data, size_t size, unsigned line_length = 16);
+void hexdump_av_c(const_byte_array data, unsigned line_length = 16);

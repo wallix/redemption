@@ -685,7 +685,7 @@ namespace jln
         template<class... Us>
         GroupExecutorWithValues(Us&&... xs)
         : GroupExecutor<Ts...>([](GroupExecutor<Ts...>* p) noexcept{
-            delete static_cast<GroupExecutorWithValues*>(p);
+            delete static_cast<GroupExecutorWithValues*>(p); /*NOLINT*/
         })
         , t{static_cast<Us&&>(xs)...}
         {}
@@ -721,7 +721,7 @@ namespace jln
 
         GroupExecutorWithValues() noexcept
         : GroupExecutor<Ts...>([](GroupExecutor<Ts...>* p) noexcept{
-            delete static_cast<GroupExecutorWithValues*>(p);
+            delete static_cast<GroupExecutorWithValues*>(p); /*NOLINT*/
         })
         {}
 
@@ -1864,7 +1864,7 @@ namespace jln
                         break;
                     case FreeCat::Self:
                         assert(self->is_deleted);
-                        delete self;
+                        delete self; /*NOLINT*/
                         break;
                 }
             };

@@ -92,19 +92,24 @@ struct KERBEROSContext final {
 struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable
 {
 private:
-    Krb5Creds* credentials = nullptr;
-    KERBEROSContext* krb_ctx = nullptr;
+    struct Krb5Creds_deleter
+    {
+        void operator()(Krb5Creds* credentials) const
+        {
+            credentials->destroy_credentials(nullptr);
+            delete credentials; /*NOLINT*/
+        }
+    };
+
+    using Krb5CredsPtr = std::unique_ptr<Krb5Creds, Krb5Creds_deleter>;
+    Krb5CredsPtr credentials = nullptr;
+    std::unique_ptr<KERBEROSContext> krb_ctx = nullptr;
 
 public:
     ~Kerberos_SecurityFunctionTable()
     {
-        delete this->krb_ctx;
-
-        if (this->credentials) {
-            this->credentials->destroy_credentials(nullptr);
-            delete this->credentials;
-        }
-
+        this->krb_ctx.reset();
+        this->credentials.reset();
         unsetenv("KRB5CCNAME");
     }
 
@@ -137,7 +142,7 @@ public:
             pvLogonID->copy(byte_ptr_cast(pszPrincipal), length);
             pvLogonID->get_data()[length] = 0;
         }
-        this->credentials = new Krb5Creds;
+        this->credentials = Krb5CredsPtr(new Krb5Creds);
 
         // set KRB5CCNAME cache name to specific with PID,
         // call kinit to get tgt with identity credentials
@@ -195,7 +200,7 @@ public:
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
         if (!this->krb_ctx) {
             // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
-            this->krb_ctx = new KERBEROSContext;
+            this->krb_ctx = std::make_unique<KERBEROSContext>();
 
             // Target name (server name, ip ...)
             if (!this->get_service_name(pszTargetName, &krb_ctx->target_name)) {
@@ -304,7 +309,7 @@ public:
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
         if (!this->krb_ctx) {
             // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
-            this->krb_ctx = new KERBEROSContext;
+            this->krb_ctx = std::make_unique<KERBEROSContext>();
         }
         // else {
         //     LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");

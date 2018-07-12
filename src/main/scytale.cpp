@@ -98,7 +98,7 @@ namespace
 #define CHECK_NOTHROW(expr, errid) CHECK_NOTHROW_R(expr, -1, handle->error_ctx, errid)
 #define CREATE_HANDLE(construct) [&]()->decltype(new construct){ \
     CHECK_NOTHROW_R(                                             \
-        auto handle = new (std::nothrow) construct;              \
+        auto handle = new (std::nothrow) construct; /*NOLINT*/   \
         return handle,                                           \
         nullptr,                                                 \
         RedCryptoErrorContext(),                                 \

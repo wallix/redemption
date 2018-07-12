@@ -301,11 +301,12 @@ public:
         }
         SslHMAC_Md5 hmac_md5(hash, hash_size);
 
-        uint8_t * userup = new uint8_t[user_size];
+        auto unique_userup = std::make_unique<uint8_t[]>(user_size);
+        uint8_t * userup = unique_userup.get();
         memcpy(userup, user, user_size);
         UTF16Upper(userup, user_size);
         hmac_md5.update(userup, user_size);
-        delete [] userup;
+        unique_userup.reset();
 
         // hmac_md5.update(user, user_size);
         hmac_md5.update(domain, domain_size);
@@ -334,12 +335,12 @@ public:
 
         SslHMAC_Md5 hmac_md5(md4password, sizeof(md4password));
 
-        uint8_t * userup = new uint8_t[user_size];
+        auto unique_userup = std::make_unique<uint8_t[]>(user_size);
+        uint8_t * userup = unique_userup.get();
         memcpy(userup, user, user_size);
         UTF16Upper(userup, user_size);
         hmac_md5.update(userup, user_size);
-
-        delete [] userup;
+        unique_userup.reset();
 
         uint8_t tmp_md5[SslMd5::DIGEST_LENGTH] = {};
 
@@ -395,7 +396,8 @@ public:
             LOG(LOG_INFO, "NTLMContext Compute response: temp size %zu", temp_size);
         }
 
-        uint8_t * temp = new uint8_t[temp_size];
+        auto unique_temp = std::make_unique<uint8_t[]>(temp_size);
+        uint8_t* temp = unique_temp.get();
         memset(temp, 0, temp_size);
         temp[0] = 0x01;
         temp[1] = 0x01;
@@ -437,8 +439,8 @@ public:
             LOG(LOG_INFO, "Compute response: NtChallengeResponse Ready");
         }
 
-        delete [] temp;
-        temp = nullptr;
+        unique_temp.reset();
+
         if (this->verbose) {
             LOG(LOG_INFO, "Compute response: temp buff successfully deleted");
         }
@@ -665,7 +667,9 @@ public:
         uint8_t NtProofStr_from_msg[16] = {};
         InStream in_AuthNtResponse(AuthNtResponse.ostream.get_current(), AuthNtResponse.ostream.tailroom());
         in_AuthNtResponse.in_copy_bytes(NtProofStr_from_msg, 16);
-        uint8_t * temp = new uint8_t[temp_size];
+
+        auto unique_temp = std::make_unique<uint8_t[]>(temp_size);
+        uint8_t* temp = unique_temp.get();
         in_AuthNtResponse.in_copy_bytes(temp, temp_size);
         AuthNtResponse.ostream.rewind();
 
@@ -687,11 +691,7 @@ public:
         hmac_md5resp.update(temp, temp_size);
         hmac_md5resp.final(NtProofStr);
 
-        bool res = !memcmp(NtProofStr, NtProofStr_from_msg, 16);
-
-        delete [] temp;
-
-        return res;
+        return !memcmp(NtProofStr, NtProofStr_from_msg, 16);
     }
 
     // Server check lm response

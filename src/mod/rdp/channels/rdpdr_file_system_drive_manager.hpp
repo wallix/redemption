@@ -1692,7 +1692,7 @@ public:
         explicit DriveName(array_view_const_char name, bool reserved = false) noexcept
         : read_only_(false)
         {
-            if (name.size() && name[0] == '*') {
+            if (!name.empty() && name[0] == '*') {
                 name = name.subarray(1);
                 this->read_only_ = true;
             }
@@ -1764,7 +1764,7 @@ private:
 
         struct stat sb;
 
-        if (directory_drive_path.size()) {
+        if (!directory_drive_path.empty()) {
             directory_drive_path += '/';
         }
         directory_drive_path += drive_name.name();
@@ -1831,7 +1831,7 @@ public:
     uint32_t GetSessionProbeDriveId() const { return this->session_probe_drive_id; }
 
     bool HasManagedDrive() const {
-        return (this->managed_drives.size() > 0);
+        return !this->managed_drives.empty();
     }
 
 private:

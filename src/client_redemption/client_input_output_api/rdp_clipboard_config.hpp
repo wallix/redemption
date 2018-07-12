@@ -54,17 +54,16 @@ struct RDPClipboardConfig {
         const uint32_t ID;
         const std::string name;
 
-        ClipboardFormat(const uint32_t ID, const std::string & name)
+        ClipboardFormat(const uint32_t ID, std::string name)
           : ID(ID)
-          , name(name)
+          , name(std::move(name))
           {}
     };
 
 	std::vector<ClipboardFormat> formats;
 
-	void add_format(uint32_t ID, const std::string & name) {
-		ClipboardFormat format(ID, name);
-		this->formats.push_back(format);
+	void add_format(uint32_t ID, std::string name) {
+		this->formats.emplace_back(ID, std::move(name));
 	}
 };
 

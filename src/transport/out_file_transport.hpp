@@ -69,17 +69,20 @@ public:
     }
 
 private:
+    struct ImplBase;
+    using ImplPtr = std::unique_ptr<ImplBase>;
+
     struct ImplBase
     {
         virtual Error get_error(Error err) = 0;
-        virtual ImplBase* clone() const = 0;
+        virtual ImplPtr clone() const = 0;
         virtual ~ImplBase() = default;
     };
 
     struct NullImpl : ImplBase
     {
         Error get_error(Error err) override;
-        ImplBase* clone() const override { return new NullImpl; }
+        ImplPtr clone() const override { return ImplPtr(new NullImpl); }
     };
 
     template<class F>
@@ -89,10 +92,10 @@ private:
         template<class Fu>
         explicit FuncImpl(Fu && f) : fun(std::forward<Fu>(f)) {}
         Error get_error(Error err) override { return fun(err); }
-        ImplBase* clone() const override { return new FuncImpl(fun); }
+        ImplPtr clone() const override { return ImplPtr(new FuncImpl(fun)); }
     };
 
-    std::unique_ptr<ImplBase> impl;
+    ImplPtr impl;
 };
 
 template<class F>

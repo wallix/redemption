@@ -830,7 +830,7 @@ public:
                                                 }
                                             }
 
-                                            if (this->elem_in_path.size() == 0) {
+                                            if (this->elem_in_path.empty()) {
                                                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_MORE_FILES);
                                             } else {
                                                 str_file_name = this->elem_in_path[0];

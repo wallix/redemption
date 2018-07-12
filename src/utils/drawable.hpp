@@ -377,7 +377,7 @@ public:
         if (sz == 0) {
             throw Error(ERR_RECORDER_EMPTY_IMAGE);
         }
-        uint8_t * data = new (std::nothrow) uint8_t[sz];
+        uint8_t * data = new (std::nothrow) uint8_t[sz]; /*NOLINT*/
         // done this way because otherwise clang raise a zero-size-array is an extension warning
         memset(data, 0, sz);
 

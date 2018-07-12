@@ -77,14 +77,31 @@ void hexdump(const_byte_ptr data, size_t size, unsigned line_length)
     hexdump_impl(data.to_u8p(), size, line_length, "", " ", "", " ", "", "");
 }
 
+void hexdump_av(const_byte_array data, unsigned line_length)
+{
+    hexdump(data.to_u8p(), data.size(), line_length);
+}
+
+
 void hexdump_d(const_byte_ptr data, size_t size, unsigned line_length)
 {
     // /* %.4x */ 0x%x 0x%x ... // %c%c..
     hexdump_impl(data.to_u8p(), size, line_length, "/* ", " */ ", "0x", ", ", "", " // ");
 }
 
+void hexdump_av_d(const_byte_array data, unsigned line_length)
+{
+    hexdump_d(data.to_u8p(), data.size(), line_length);
+}
+
+
 void hexdump_c(const_byte_ptr data, size_t size, unsigned line_length)
 {
     // /* %.4x */ "\x%x\x%x ..." // %c%c..
     hexdump_impl(data.to_u8p(), size, line_length, "/* ", " */ \"", "\\x", "", "\"", " // ");
+}
+
+void hexdump_av_c(const_byte_array data, unsigned line_length)
+{
+    hexdump_c(data.to_u8p(), data.size(), line_length);
 }

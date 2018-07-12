@@ -469,7 +469,7 @@ protected:
     private:
         void next()
         {
-            if (this->tasks.size()) {
+            if (!this->tasks.empty()) {
                 this->tasks.front()->configure_event(this->session_reactor, {this, remover()});
             }
         }
@@ -4983,8 +4983,7 @@ public:
         if (bool(this->verbose & RDPVerbose::input)){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate 2");
         }
-        if ((UP_AND_RUNNING == this->connection_finalization_state)
-            && (vr.size() > 0)) {
+        if ((UP_AND_RUNNING == this->connection_finalization_state) && !vr.empty()) {
             RDP::RefreshRectPDU rrpdu(this->share_id,
                                       this->negociation_result.userid,
                                       this->negociation_result.encryptionLevel,
@@ -5595,13 +5594,13 @@ private:
         std::vector<std::string> parameters;
         ::parse_server_message(auth_channel_message.c_str(), order, parameters);
 
-        if (!::strcasecmp(order.c_str(), "Input") && parameters.size()) {
+        if (!::strcasecmp(order.c_str(), "Input") && !parameters.empty()) {
             const bool disable_input_event     = (::strcasecmp(parameters[0].c_str(), "Enable") != 0);
             const bool disable_graphics_update = false;
             this->disable_input_event_and_graphics_update(
                 disable_input_event, disable_graphics_update);
         }
-        else if (!::strcasecmp(order.c_str(), "Log") && parameters.size()) {
+        else if (!::strcasecmp(order.c_str(), "Log") && !parameters.empty()) {
             LOG(LOG_INFO, "WABLauncher: %s", parameters[0].c_str());
         }
         else {

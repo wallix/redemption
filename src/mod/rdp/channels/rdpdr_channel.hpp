@@ -256,7 +256,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         void EffectiveDisableSessionProbeDrive() {
             if (this->user_logged_on &&
                 !this->waiting_for_server_device_announce_response &&
-                !this->device_announces.size() &&
+                this->device_announces.empty() &&
                 this->session_probe_drive_should_be_disable) {
                 this->file_system_drive_manager.DisableSessionProbeDrive(
                     (*this->to_server_sender), this->verbose);
@@ -317,7 +317,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
         void announce_device() {
             while (!this->waiting_for_server_device_announce_response &&
-                   this->device_announces.size()) {
+                   !this->device_announces.empty()) {
                 assert(this->to_server_sender);
 
                 const uint32_t total_length = this->device_announces.front().length;

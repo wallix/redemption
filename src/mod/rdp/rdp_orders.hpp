@@ -92,8 +92,8 @@ public:
     uint8_t bpp = 0;
     BGRPalette global_palette;
 
-    BmpCache * bmp_cache;
-    BmpCache * ninegrid_bmp_cache;
+    std::unique_ptr<BmpCache> bmp_cache;
+    // std::unique_ptr<BmpCache> ninegrid_bmp_cache;
 
 private:
     GlyphCache gly_cache;
@@ -129,7 +129,7 @@ public:
                  , byte_ptr_cast(""))
     , global_palette(BGRPalette::classic_332())
     , bmp_cache(nullptr)
-    , ninegrid_bmp_cache(nullptr)
+    // , ninegrid_bmp_cache(nullptr)
     , verbose(verbose)
     , recv_bmp_cache_count(0)
     , recv_order_count(0)
@@ -170,10 +170,7 @@ public:
             catch(Error const & err) {
                 LOG(LOG_ERR, "%s", err.errmsg());
             }
-            delete this->bmp_cache;
         }
-
-        delete this->ninegrid_bmp_cache;
     }
 
 private:
@@ -202,17 +199,17 @@ public:
             }
 
             this->save_persistent_disk_bitmap_cache();
-            delete this->bmp_cache;
-            this->bmp_cache = nullptr;
+            this->bmp_cache.reset();
         }
 
-        this->bmp_cache = new BmpCache(BmpCache::Mod_rdp, this->bpp, 3, false,
-                                       BmpCache::CacheOption(small_entries + (enable_waiting_list ? 1 : 0), small_size, small_persistent),
-                                       BmpCache::CacheOption(medium_entries + (enable_waiting_list ? 1 : 0), medium_size, medium_persistent),
-                                       BmpCache::CacheOption(big_entries + (enable_waiting_list ? 1 : 0), big_size, big_persistent),
-                                       BmpCache::CacheOption(),
-                                       BmpCache::CacheOption(),
-                                       verbose);
+        this->bmp_cache = std::make_unique<BmpCache>(
+            BmpCache::Mod_rdp, this->bpp, 3, false,
+            BmpCache::CacheOption(small_entries + (enable_waiting_list ? 1 : 0), small_size, small_persistent),
+            BmpCache::CacheOption(medium_entries + (enable_waiting_list ? 1 : 0), medium_size, medium_persistent),
+            BmpCache::CacheOption(big_entries + (enable_waiting_list ? 1 : 0), big_size, big_persistent),
+            BmpCache::CacheOption(),
+            BmpCache::CacheOption(),
+            verbose);
 
         if (this->enable_persistent_disk_bitmap_cache && this->persist_bitmap_cache_on_disk) {
             // Generates the name of file.

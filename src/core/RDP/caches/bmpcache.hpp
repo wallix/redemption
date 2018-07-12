@@ -96,8 +96,8 @@ private:
 
         explicit cache_element() = default;
 
-        explicit cache_element(Bitmap const & bmp)
-        : bmp(bmp)
+        explicit cache_element(Bitmap bmp)
+        : bmp(std::move(bmp))
         , stamp(0)
 
         {}
@@ -139,8 +139,8 @@ private:
 
         void reserve(size_t sz) {
             assert(!this->data.get());
-            this->data.reset(new uint8_t[sz * this->elem_size]);
-            this->free_list.reset(new void*[sz]);
+            this->data = std::make_unique<uint8_t[]>(sz * this->elem_size);
+            this->free_list = std::make_unique<void*[]>(sz);
             this->free_list_cur = this->free_list.get();
 
             uint8_t * p = this->data.get();

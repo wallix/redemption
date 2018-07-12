@@ -593,12 +593,10 @@ namespace ocr
                 if (y == max_row || y == min_row) {
                     return false;
                 }
-                if (tcolor.threshold_bars(input(y, button_col))
+
+                return (tcolor.threshold_bars(input(y, button_col))
                  && rgb8(90, 56, 49) == input(y, button_col+1)
-                 && rgb8(90, 56, 49) == input(y, button_col+2)) {
-                    return true;
-                }
-                return false;
+                 && rgb8(90, 56, 49) == input(y, button_col+2));
             }
 
             return (tcolor.threshold_bars(input(y, button_col))

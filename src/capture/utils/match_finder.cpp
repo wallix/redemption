@@ -41,7 +41,7 @@ bool MatchFinder::NamedRegex::search(const char * str)
 
 void MatchFinder::NamedRegexArray::resize(size_t newlen)
 {
-    this->regexes.reset(new NamedRegex[newlen]);
+    this->regexes = std::make_unique<NamedRegex[]>(newlen);
     this->len = newlen;
 }
 

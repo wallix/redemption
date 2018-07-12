@@ -318,8 +318,8 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
             size_t const bufsize = size + padding;
             auto p = stream_data;
             if (bufsize > sizeof(stream_data)) {
-                p = new uint8_t[bufsize];
-                stream_dyndata.reset(p);
+                stream_dyndata = std::make_unique<uint8_t[]>(bufsize);
+                p = stream_dyndata.get();
             }
             for (unsigned y = 0; y < header.image_height; y++) {
                 if (not read_all(fd, p + y * row_size, row_size + padding)) {

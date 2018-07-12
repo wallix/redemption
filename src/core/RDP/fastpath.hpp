@@ -1153,7 +1153,7 @@ namespace FastPath {
                             , std::size_t data_sz
                             , uint8_t secFlags
                             , CryptContext & crypt
-                            , uint32_t * fipsInformation = nullptr) {
+                            , uint32_t const * fipsInformation = nullptr) {
             uint8_t fpOutputHeader =
                   FASTPATH_OUTPUT_ACTION_FASTPATH
                 | ((secFlags & 0x03) << 6)

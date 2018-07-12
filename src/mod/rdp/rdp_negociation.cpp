@@ -269,7 +269,7 @@ RdpNegociation::RdpNegociation(
         buffer[lg_certif_path] = '/';
         memcpy(buffer+lg_certif_path+1, device_id, lg_dev_id+1);
         return buffer;
-        }(mod_rdp_params.device_id))
+    }(mod_rdp_params.device_id))
     , server_notifier(
         front,
         report_message,
@@ -334,7 +334,7 @@ RdpNegociation::RdpNegociation(
         if (unique_fd ufd{open(path, O_RDONLY)}){
             struct stat st;
             if (fstat(ufd.fd(), &st) != 0){
-                this->lic_layer_license_data.reset(new uint8_t[this->lic_layer_license_size]);
+                this->lic_layer_license_data = std::make_unique<uint8_t[]>(this->lic_layer_license_size);
                 size_t lic_size = read(ufd.fd(), this->lic_layer_license_data.get(), this->lic_layer_license_size);
                 if (lic_size != this->lic_layer_license_size){
                     LOG(LOG_ERR, "license file truncated : expected %zu, got %zu", this->lic_layer_license_size, lic_size);
@@ -470,9 +470,9 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                 {
                     this->sc_core.recv(f.payload);
                     if (bool(this->verbose & RDPVerbose::connection)) {
-                        sc_core.log("Received from server");
+                        this->sc_core.log("Received from server");
                     }
-                    if (0x0080001 == sc_core.version){ // can't use rdp5
+                    if (0x0080001 == this->sc_core.version){ // can't use rdp5
                         this->negociation_result.use_rdp5 = false;
                     }
                 }

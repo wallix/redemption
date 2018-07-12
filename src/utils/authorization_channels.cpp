@@ -35,13 +35,13 @@
 namespace
 {
     template<std::size_t n>
-    static auto c_array(char const * p) -> char const(&)[n]
+    auto c_array(char const * p) -> char const(&)[n]
     {
         return reinterpret_cast<char const(&)[n]>(*p);
     }
 
     template<class Cont>
-    static bool contains_true(Cont const & cont)
+    bool contains_true(Cont const & cont)
     {
         for (bool x : cont) {
             if (x) {
@@ -85,7 +85,7 @@ namespace
         }
     }
 
-    static bool contains(
+    bool contains(
         array_view<CHANNELS::ChannelNameId const> ids,
         CHANNELS::ChannelNameId id
     ) noexcept

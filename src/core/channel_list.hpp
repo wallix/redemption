@@ -34,6 +34,8 @@
 #include "core/RDP/sec.hpp"
 #include "core/RDP/x224.hpp"
 
+#include <cassert>
+
 namespace CHANNELS {
     enum {
         MAX_STATIC_VIRTUAL_CHANNELS = 30 // 30 static virtual channels
@@ -108,6 +110,7 @@ namespace CHANNELS {
         }
 
         void push_back(const ChannelDef & item) {
+            assert(this->channelCount < MAX_STATIC_VIRTUAL_CHANNELS + 2);
             this->items[this->channelCount] = item;
             this->channelCount++;
         }

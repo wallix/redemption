@@ -323,20 +323,21 @@ public:
 
     bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) override {
          try {
-            this->replay_mod.reset(new ReplayMod( session_reactor
-                                                , *this
-                                                , (movie_dir + movie_name).c_str() //(this->REPLAY_DIR + "/").c_str()
-                                                , 0             //this->info.width
-                                                , 0             //this->info.height
-                                                , this->_error
-                                                , true
-                                                , begin_read
-                                                , end_read
-                                                , BALISED_FRAME
-                                                , false
-                                                //, FileToGraphic::Verbose::rdp_orders
-                                                , to_verbose_flags(0)
-                                                ));
+            this->replay_mod = std::make_unique<ReplayMod>(
+                this->session_reactor
+              , *this
+              , (movie_dir + movie_name).c_str() //(this->REPLAY_DIR + "/").c_str()
+              , 0             //this->info.width
+              , 0             //this->info.height
+              , this->_error
+              , true
+              , begin_read
+              , end_read
+              , BALISED_FRAME
+              , false
+              //, FileToGraphic::Verbose::rdp_orders
+              , to_verbose_flags(0)
+            );
 
             return true;
 
@@ -502,18 +503,19 @@ public:
                     mod_rdp_params.enable_rdpdr_data_analysis = false;
                     mod_rdp_params.bogus_linux_cursor = BogusLinuxCursor::enable;
 
-                    this->unique_mod.reset(new mod_rdp( *this->socket
-                                                , session_reactor
-                                                , *this
-                                                , this->info
-                                                , ini.get_ref<cfg::mod_rdp::redir_info>()
-                                                , *this->gen
-                                                , this->timeSystem
-                                                , mod_rdp_params
-                                                , this->authentifier
-                                                , this->reportMessage
-                                                , this->ini
-                                                ));
+                    this->unique_mod = std::make_unique<mod_rdp>(
+                      *this->socket
+                      , session_reactor
+                      , *this
+                      , this->info
+                      , ini.get_ref<cfg::mod_rdp::redir_info>()
+                      , *this->gen
+                      , this->timeSystem
+                      , mod_rdp_params
+                      , this->authentifier
+                      , this->reportMessage
+                      , this->ini
+                    );
                 }
                     break;
 
@@ -558,18 +560,19 @@ public:
                         this->info.height = this->impl_graphic->screen_max_height;
                     }
 
-                    this->unique_mod.reset(new mod_rdp( *(this->socket)
-                                                , session_reactor
-                                                , *(this)
-                                                , this->info
-                                                , ini.get_ref<cfg::mod_rdp::redir_info>()
-                                                , *this->gen
-                                                , this->timeSystem
-                                                , mod_rdp_params
-                                                , this->authentifier
-                                                , this->reportMessage
-                                                , this->ini
-                                                ));
+                    this->unique_mod = std::make_unique<mod_rdp>(
+                        *(this->socket)
+                      , session_reactor
+                      , *(this)
+                      , this->info
+                      , ini.get_ref<cfg::mod_rdp::redir_info>()
+                      , *this->gen
+                      , this->timeSystem
+                      , mod_rdp_params
+                      , this->authentifier
+                      , this->reportMessage
+                      , this->ini
+                    );
 
                     std::string target_info = this->ini.get<cfg::context::target_str>();
                     target_info += ":";
@@ -581,27 +584,27 @@ public:
 
             case MOD_VNC:
             {
-                 this->unique_mod.reset(new mod_vnc( *this->socket
-                                                    , session_reactor
-                                                    , this->user_name.c_str()
-                                                    , this->user_password.c_str()
-                                                    , *this
-                                                    , this->vnc_conf.width
-                                                    , this->vnc_conf.height
-                                                    , this->vnc_conf.keylayout
-                                                    , 0
-                                                    , true
-                                                    , true
-                                                    , this->vnc_conf.vnc_encodings.c_str()
-                                                    , mod_vnc::ClipboardEncodingType::UTF8
-                                                    , VncBogusClipboardInfiniteLoop::delayed
-                                                    , this->reportMessage
-                                                    , this->vnc_conf.is_apple
-                                                    , &this->vnc_conf.exe
-//                                                    , to_verbose_flags(0xfffffffd)
-                                                    , to_verbose_flags(0)
-                                                   )
-                                        );
+                 this->unique_mod = std::make_unique<mod_vnc>(
+                     *this->socket
+                    , this->session_reactor
+                    , this->user_name.c_str()
+                    , this->user_password.c_str()
+                    , *this
+                    , this->vnc_conf.width
+                    , this->vnc_conf.height
+                    , this->vnc_conf.keylayout
+                    , 0
+                    , true
+                    , true
+                    , this->vnc_conf.vnc_encodings.c_str()
+                    , mod_vnc::ClipboardEncodingType::UTF8
+                    , VncBogusClipboardInfiniteLoop::delayed
+                    , this->reportMessage
+                    , this->vnc_conf.is_apple
+                    , &this->vnc_conf.exe
+                    // , to_verbose_flags(0xfffffffd)
+                    , to_verbose_flags(0)
+                  );
             }
                 break;
 

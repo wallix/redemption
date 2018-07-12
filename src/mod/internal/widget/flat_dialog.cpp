@@ -53,11 +53,11 @@ FlatDialog::FlatDialog(
             theme.global.fgcolor, theme.global.bgcolor,
             theme.global.focus_color, 2, font, 6, 2)
     , cancel(cancel_text
-        ? new WidgetFlatButton(
+        ? std::make_unique<WidgetFlatButton>(
             drawable, *this, this, cancel_text, -11,
             theme.global.fgcolor, theme.global.bgcolor,
             theme.global.focus_color, 2, font, 6, 2)
-        : nullptr)
+        : std::unique_ptr<WidgetFlatButton>())
     , img(drawable,
           theme.global.logo ? theme.global.logo_path.c_str() :
           app_path(AppPath::LoginWabBlue), *this, nullptr, -8)
@@ -76,29 +76,29 @@ FlatDialog::FlatDialog(
 
     if (has_challenge) {
         if (CHALLENGE_ECHO == has_challenge) {
-            this->challenge = new WidgetEdit(
+            this->challenge = std::make_unique<WidgetEdit>(
                 this->drawable, *this, this, nullptr, -13,
                 theme.edit.fgcolor, theme.edit.bgcolor,
                 theme.edit.focus_color, font, -1u, 1, 1
             );
         }
         else {
-            this->challenge = new WidgetPassword(
+            this->challenge = std::make_unique<WidgetPassword>(
                 this->drawable, *this, this, nullptr, -13,
                 theme.edit.fgcolor, theme.edit.bgcolor,
                 theme.edit.focus_color, font, -1u, 1, 1
             );
         }
-        this->add_widget(this->challenge);
+        this->add_widget(this->challenge.get());
 
-        this->set_widget_focus(this->challenge, focus_reason_tabkey);
+        this->set_widget_focus(this->challenge.get(), focus_reason_tabkey);
     }
 
 
     this->add_widget(&this->ok);
 
     if (this->cancel) {
-        this->add_widget(this->cancel);
+        this->add_widget(this->cancel.get());
     }
 
     if (has_challenge) {
@@ -115,8 +115,6 @@ FlatDialog::FlatDialog(
 
 FlatDialog::~FlatDialog()
 {
-    delete this->challenge;
-    delete this->cancel;
     this->clear();
 }
 
@@ -204,22 +202,20 @@ BGRColor FlatDialog::get_bg_color() const
 void FlatDialog::notify(Widget* widget, NotifyApi::notify_event_t event)
 {
     if ((event == NOTIFY_CANCEL) ||
-        ((event == NOTIFY_SUBMIT) && (widget == this->cancel))) {
+        ((event == NOTIFY_SUBMIT) && (widget == this->cancel.get()))) {
         this->send_notify(NOTIFY_CANCEL);
     }
     else if ((event == NOTIFY_SUBMIT) &&
-                ((widget == &this->ok) || (widget == this->challenge))) {
+             ((widget == &this->ok) || (widget == this->challenge.get()))) {
         this->send_notify(NOTIFY_SUBMIT);
     }
+    else if (event == NOTIFY_PASTE) {
+        if (this->notifier) {
+            this->notifier->notify(widget, event);
+        }
+    }
     else {
-        if (event == NOTIFY_PASTE) {
-            if (this->notifier) {
-                this->notifier->notify(widget, event);
-            }
-        }
-        else {
-            WidgetParent::notify(widget, event);
-        }
+        WidgetParent::notify(widget, event);
     }
 }
 

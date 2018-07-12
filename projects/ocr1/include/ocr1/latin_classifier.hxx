@@ -1,5 +1,5 @@
 inline
-const char * tahoma_8_bold(unsigned width, unsigned height, unsigned count, Pixel pixel) /*NOLINT(readability-function-size)*/
+const char * tahoma_8_bold(unsigned width, unsigned height, unsigned count, Pixel pixel) /*NOLINT*/
 {
 # include "./ocr1/classifiers/tahoma_8_bold.hxx"
   return unknown;

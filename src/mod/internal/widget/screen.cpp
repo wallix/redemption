@@ -45,13 +45,7 @@ WidgetScreen::WidgetScreen(
     this->set_xy(0, 0);
 }
 
-WidgetScreen::~WidgetScreen()
-{
-    if (this->tooltip) {
-        delete this->tooltip;
-        this->tooltip = nullptr;
-    }
-}
+WidgetScreen::~WidgetScreen() = default;
 
 void WidgetScreen::show_tooltip(
     Widget * widget, const char * text, int x, int y,
@@ -59,10 +53,9 @@ void WidgetScreen::show_tooltip(
 {
     if (text == nullptr) {
         if (this->tooltip) {
-            this->remove_widget(this->tooltip);
+            this->remove_widget(this->tooltip.get());
             this->rdp_input_invalidate(this->tooltip->get_rect());
-            delete this->tooltip;
-            this->tooltip = nullptr;
+            this->tooltip.reset();
         }
     }
     else if (this->tooltip == nullptr) {
@@ -71,7 +64,7 @@ void WidgetScreen::show_tooltip(
             display_rect = this->get_rect().intersect(preferred_display_rect);
         }
 
-        this->tooltip = new WidgetTooltip(
+        this->tooltip = std::make_unique<WidgetTooltip>(
             this->drawable,
             *this, widget,
             text,
@@ -89,7 +82,7 @@ void WidgetScreen::show_tooltip(
         int posy = (y > h)?(y - h):0;
         this->tooltip->set_xy(posx, posy);
 
-        this->add_widget(this->tooltip);
+        this->add_widget(this->tooltip.get());
         this->rdp_input_invalidate(this->tooltip->get_rect());
     }
 }
@@ -176,7 +169,7 @@ void WidgetScreen::redo_mouse_pointer_change(int x, int y)
     Widget * w = this->last_widget_at_pos(x, y);
     if (this->current_over != w){
         if (this->allow_mouse_pointer_change_) {
-            switch ( !w                                          ? (Pointer::POINTER_NULL) 
+            switch ( !w                                          ? (Pointer::POINTER_NULL)
                     :(w->pointer_flag == Pointer::POINTER_CUSTOM ? (w->get_pointer() ? Pointer::POINTER_CUSTOM:Pointer::POINTER_NORMAL)
                     : w->pointer_flag) ){
             case Pointer::POINTER_EDIT:

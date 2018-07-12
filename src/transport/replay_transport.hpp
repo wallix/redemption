@@ -92,6 +92,8 @@ private:
     size_t searchAndPrefetchFor(PacketType kind);
 
 private:
+    long long count_packet = 0;
+
     const std::chrono::system_clock::time_point start_time;
 
     InFileTransport in_file;

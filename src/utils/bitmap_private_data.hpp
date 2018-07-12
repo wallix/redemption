@@ -90,14 +90,14 @@ public:
         const size_t sz = align4(cx) * nbbytes(bpp) * cy;
         const size_t sz_struct = bpp == 8 ? palette_index + sizeof(BGRPalette) : sizeof(DataBitmap);
         uint8_t * p = static_cast<uint8_t*>(aux_::bitmap_data_allocator.alloc(sz_struct + sz));
-        return new (p) DataBitmap(bpp, cx, cy, p + sz_struct);
+        return new (p) DataBitmap(bpp, cx, cy, p + sz_struct); /*NOLINT*/
     }
     static DataBitmap * construct_png(uint16_t cx, uint16_t cy)
     {
         const size_t sz = cx * cy * 3;
         const size_t sz_struct = sizeof(DataBitmap);
         uint8_t * p = static_cast<uint8_t*>(aux_::bitmap_data_allocator.alloc(sz_struct + sz));
-        return new (p) DataBitmap(cx, cy, p + sz_struct);
+        return new (p) DataBitmap(cx, cy, p + sz_struct); /*NOLINT*/
     }
     static void destruct(DataBitmap * cdata) noexcept {
         cdata->~DataBitmap();
