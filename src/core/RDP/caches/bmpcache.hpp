@@ -96,8 +96,8 @@ private:
 
         explicit cache_element() = default;
 
-        explicit cache_element(Bitmap const & bmp)
-        : bmp(bmp)
+        explicit cache_element(Bitmap bmp)
+        : bmp(std::move(bmp))
         , stamp(0)
 
         {}

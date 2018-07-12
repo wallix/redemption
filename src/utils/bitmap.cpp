@@ -57,10 +57,8 @@ namespace aux_
 } // namespace aux_
 
 Bitmap::Bitmap(Bitmap && bmp) noexcept
-: data_bitmap(bmp.data_bitmap)
-{
-    bmp.data_bitmap = nullptr;
-}
+: data_bitmap(std::exchange(bmp.data_bitmap, nullptr))
+{}
 
 Bitmap::Bitmap(const Bitmap & other) noexcept
 : data_bitmap(other.data_bitmap)

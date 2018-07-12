@@ -32,8 +32,8 @@ struct OcrTitle
     bool        is_title_bar;
     unsigned    unrecognized_rate;
 
-    OcrTitle(const std::string & text_, const Rect rect_, bool is_title_bar_, unsigned unrecognized_rate_)
-    : text(text_)
+    OcrTitle(std::string text_, const Rect rect_, bool is_title_bar_, unsigned unrecognized_rate_)
+    : text(std::move(text_))
     , rect(rect_)
     , is_title_bar(is_title_bar_)
     , unrecognized_rate(unrecognized_rate_)
