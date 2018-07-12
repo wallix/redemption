@@ -15,7 +15,7 @@
 *
 *   Product name: redemption, a FLOSS RDP proxy
 *   Copyright (C) Wallix 2010-2017
-*   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
+*   Author(s): Clément Moroldo
 */
 
 #pragma once
@@ -25,13 +25,14 @@
 #include <cstdio>
 #include <cstring>
 
+#include "utils/difftimeval.hpp"
 #include <fcntl.h>
 #include <sys/uio.h>
 
 
 struct RDPMetrics {
 
-    char last_date;
+    char last_date[20] = {'\0'};
 
     const char * path_template;
     const uint32_t session_id;
@@ -71,38 +72,58 @@ struct RDPMetrics {
       , primary_user(primary_user)
     {
         if (this->path_template) {
-
-            std::string file_path(this->path_template);
-//             file_path
-
-            this->fd = ::open(this->path_template, O_WRONLY | O_APPEND);
-
-            if (this->fd < 0) {
-                LOG(LOG_ERR, "Log Metrics error: can't open \"%s\"", this->path_template);
-            }
+            this->new_day(this->get_current_formated_date());
         }
     }
-
-
-
-//     void set_new_file_path(const char * filename) {
-//         fcntl(this->fd, F_SETFD, FD_CLOEXEC);
-//         this->filename = filename;
-//         this->fd = ::open(this->filename, O_WRONLY);
-//     }
 
     ~RDPMetrics() {
         fcntl(this->fd, F_SETFD, FD_CLOEXEC);
     }
 
+    std::string get_current_formated_date() {
+        timeval now = tvtime();
+        time_t time_now = now.tv_sec;
+
+        std::string current_date(ctime(&time_now));
+//         LOG(LOG_INFO, "current_date=%s", current_date);
+        std::string mmm(current_date.substr(4, 3));
+        std::string dd(current_date.substr(8, 2));
+        //std::string hhmmss(current_date.substr(11, 8));
+        std::string yyyy(current_date.substr(20, 4));
+        //std::string formted_date(mmm_dd+" "+yyyy+" "+hhmmss);
+
+        return "-"+yyyy+"-"+mmm+"-"+dd;
+    }
+
+    void new_day(const std::string & current_formated_date) {
+        memcpy(this->last_date, current_formated_date.data(), 12);
+        std::string file_path(this->path_template);
+        file_path += this->last_date;
+        file_path += ".log";
+//         LOG(LOG_INFO, "file_path=%s", file_path);
+        this->fd = ::open(file_path.c_str(), O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
+        if (this->fd == -1) {
+            LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\"", this->fd, file_path);
+        }
+    }
 
     void log() {
 
+        std::string last_date_str(this->last_date);
+        std::string current_formated_date(this->get_current_formated_date());
+
+        LOG(LOG_INFO,  "compare old=%s new=%s", last_date_str, current_formated_date);
+        if (last_date_str != current_formated_date) {
+            LOG(LOG_INFO,  "new day old=%s new=%s", last_date_str, current_formated_date);
+            fcntl(this->fd, F_SETFD, FD_CLOEXEC);
+            this->new_day(current_formated_date);
+        }
+
         char sentence[4096];
-          ::snprintf(sentence, sizeof(sentence), "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\""
+        ::snprintf(sentence, sizeof(sentence), "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\""
           " right_click_sent=%d left_click_sent=%d keys_sent=%d"
-         " Client data received by channels - main=%ld cliprdr=%ld rail=%ld rdpdr=%ld drdynvc=%ld"
-        " Server data received by channels - main=%ld cliprdr=%ld rail=%ld rdpdr=%ld drdynvc=%ld",
+          " Client data received by channels - main=%ld cliprdr=%ld rail=%ld rdpdr=%ld drdynvc=%ld"
+          " Server data received by channels - main=%ld cliprdr=%ld rail=%ld rdpdr=%ld drdynvc=%ld",
             this->session_id, this->primary_user, this->account, this->target_host,
             this->total_right_clicks, this->total_left_clicks, this->total_keys_pressed,
 
@@ -119,9 +140,8 @@ struct RDPMetrics {
             this->total_drdynvc_amount_data_rcv_from_server
         );
 
-
-        if (this->fd < 0) {
-            LOG(LOG_INFO, "%s", sentence);
+        if (this->fd == -1) {
+            LOG(LOG_INFO, "sentence=%s", sentence);
 
         } else {
 
@@ -132,7 +152,10 @@ struct RDPMetrics {
             ssize_t nwritten = ::writev(fd, iov, 1);
 
             if (nwritten == -1) {
-                LOG(LOG_ERR, "Log Metrics error: can't write \"%s\"", this->path_template);
+                std::string file_path_template(this->path_template);
+                file_path_template += this->last_date;
+                file_path_template += ".log";
+                LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"",this->fd, file_path_template);
                 return;
             }
         }

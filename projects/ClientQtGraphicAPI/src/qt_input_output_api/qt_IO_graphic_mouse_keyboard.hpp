@@ -1238,7 +1238,6 @@ private:
             case 0xFF: // whiteness
                 if (this->client->connected || this->client->is_replaying) {
                     this->painter.fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
-
                 }
                 break;
             default: LOG(LOG_WARNING, "DEFAULT: RDPDestBlt rop = %x", cmd.rop);
