@@ -2592,7 +2592,7 @@ extern "C" {
                         std::cout << "Input file is not encrypted." << std::endl;
                         return 0;
                     case EncryptionSchemeTypeResult::OldScheme:
-                        cctx.old_encryption_scheme = 1;
+                        cctx.old_encryption_scheme = true;
                         in_t.open(rp.full_path.c_str());
                         break;
                     default:
