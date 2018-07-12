@@ -46,10 +46,10 @@ bool & LOG__REDEMPTION__AS__LOGPRINT()
 
 namespace
 {
-    static std::string log_buf = {};
-    static bool enable_buf_log = false;
+    std::string log_buf = {};
+    bool enable_buf_log = false;
 # ifndef NDEBUG
-    static bool previous_is_line_marker = false;
+    bool previous_is_line_marker = false;
 # endif
 } // namespace
 
