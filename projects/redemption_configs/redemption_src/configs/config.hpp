@@ -207,7 +207,7 @@ private:
     template<class T>
     struct Field : FieldBase
     {
-        bool parse(configs::VariablesConfiguration & variables, array_view_const_char value) final
+        bool parse(configs::VariablesConfiguration & variables, array_view_const_char value) override final
         {
             return ! ::configs::parse_and_log(
                 T::section, T::name,
@@ -219,7 +219,7 @@ private:
 
         /// \return array_view_const_char::data() guarantee with null terminal
         array_view_const_char
-        to_string_view(configs::VariablesConfiguration const & variables, Buffers const & buffers) const final
+        to_string_view(configs::VariablesConfiguration const & variables, Buffers const & buffers) const override final
         {
             return ::configs::assign_zbuf_from_cfg(
                 const_cast<configs::zstr_buffer_from<typename T::type> &>(
