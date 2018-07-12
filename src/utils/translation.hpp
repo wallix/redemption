@@ -240,7 +240,7 @@ namespace trkeys
     );
     TR_KV(err_session_probe_asbl_maybe_something_blocks,
         "(ASBL) Could not launch Session Probe! Maybe something blocks it on the target. Is the target running under Microsoft Server products? The Command Prompt should be published as the RemoteApp program and accept any command-line parameters. Please also check the temporary directory to ensure there is enough free space.",
-        "(ASBL) Impossible de lancer Session Probe! Peut-être que quelque chose le bloque sur la cible. La cible fonctionne-elle sous un produit de famille Microsoft Server? L'invite de commande doit être publiée comme programme RemoteApp et accepter tout type de paramètres de ligne de commande. Veuillez vérifier également le répertoire temporaire afin d'assurer qu'il y a suffisamment d'espace libre."
+        "(ASBL) Impossible de lancer Session Probe! Peut-être que quelque chose le bloque sur la cible. La cible fonctionne-t-elle sous un produit de famille Microsoft Server? L'invite de commande doit être publiée comme programme RemoteApp et accepter tout type de paramètres de ligne de commande. Veuillez vérifier également le répertoire temporaire afin d'assurer qu'il y a suffisamment d'espace libre."
     );
     TR_KV(err_session_probe_asbl_unknown_reason,
         "(ASBL) Session Probe launch has failed for unknown reason!",
@@ -256,7 +256,7 @@ namespace trkeys
     );
     TR_KV(err_session_probe_cbbl_drive_not_ready_yet,
         "(CBBL) Could not launch Session Probe! Drive of Session Probe is not ready yet. Is the target running under Windows Server 2008 R2 or more recent version?",
-        "(CBBL) Impossible de lancer Session Probe! Le lecteur de Session Probe n'est pas encore prêt. La cible fonctionne-elle sous Windows Server 2008 R2 ou une version plus récente?"
+        "(CBBL) Impossible de lancer Session Probe! Le lecteur de Session Probe n'est pas encore prêt. La cible fonctionne-t-elle sous Windows Server 2008 R2 ou une version plus récente?"
     );
     TR_KV(err_session_probe_cbbl_maybe_something_blocks,
         "(CBBL) Session Probe is not launched! Maybe something blocks it on the target. Please also check the temporary directory to ensure there is enough free space.",
