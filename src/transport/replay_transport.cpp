@@ -20,10 +20,12 @@
 */
 
 #include "utils/log.hpp"
+#include "utils/hexdump.hpp"
 #include "utils/stream.hpp"
 #include "replay_transport.hpp"
 #include "recorder_transport.hpp"
 
+#include <algorithm>
 #include <cstring>
 
 #include <sys/types.h>
@@ -43,6 +45,19 @@ namespace
             throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
         }
         return ufd;
+    }
+
+    void dump_packet_differ(array_view_const_u8 data, array_view_const_u8 expected_data)
+    {
+        auto const p = std::mismatch(
+            data.begin(), data.end(),
+            expected_data.begin(), expected_data.end());
+        auto pos = unsigned(p.first - data.begin());
+		LOG(LOG_INFO, "At position: %d (0x%x)", pos, pos);
+		LOG(LOG_INFO, "Data:");
+        hexdump_av(data);
+		LOG(LOG_INFO, "Expected:");
+        hexdump_av(expected_data);
     }
 } // namespace
 
@@ -122,7 +137,7 @@ void ReplayTransport::reschedule_timer()
     timeout.it_value.tv_sec = sec.count();
     timeout.it_value.tv_nsec = nano.count();
 
-    LOG(LOG_ERR, "scheduling in sec=%ld nsec=%ld", timeout.it_value.tv_sec, timeout.it_value.tv_nsec);
+    LOG(LOG_INFO, "scheduling in sec=%ld nsec=%ld", timeout.it_value.tv_sec, timeout.it_value.tv_nsec);
 
     if (timerfd_settime(this->fd.fd(), 0, &timeout, nullptr) < 0) {
         LOG(LOG_ERR, "unable to set the timer time");
@@ -192,7 +207,7 @@ Transport::TlsResult ReplayTransport::enable_client_tls(
     }
 
 	if (cert_pos != 0) {
-		LOG(LOG_ERR, "ReplayTransport::enable_client_tls: enabling TLS is a synchronization point, so we should not have untreated records");
+		LOG(LOG_ERR, "ReplayTransport::enable_client_tls: enabling TLS is a synchronization point, so we should not have untreated records [pck_num=%lld]", this->count_packet);
 		throw Error(ERR_TRANSPORT_DIFFERS);
 	}
 
@@ -287,7 +302,10 @@ std::chrono::system_clock::time_point ReplayTransport::prefetchForTimer() {
 	return std::chrono::system_clock::now();
 }
 
-size_t ReplayTransport::searchAndPrefetchFor(PacketType kind) {
+size_t ReplayTransport::searchAndPrefetchFor(PacketType kind)
+{
+	++this->count_packet;
+
 	size_t counter;
 
 	switch(kind) {
@@ -315,7 +333,7 @@ size_t ReplayTransport::searchAndPrefetchFor(PacketType kind) {
 		d = read_single_chunk();
 	}
 
-	return mPrefetchQueue.size() - 1;
+	return mPrefetchQueue.size() - 1u;
 }
 
 size_t ReplayTransport::do_partial_read(uint8_t * buffer, size_t const len)
@@ -331,7 +349,8 @@ size_t ReplayTransport::do_partial_read(uint8_t * buffer, size_t const len)
 
 	auto av = mPrefetchQueue[pos].av();
 	if (av.size() > len) {
-		LOG(LOG_ERR, "ReplayTransport::do_atomic_read(buf, len=%zu) should be %zu or greater", len, av.size());
+		LOG(LOG_ERR, "ReplayTransport::do_atomic_read(buf, len=%zu) should be %zu or greater [pck_num=%lld]", len, av.size(), this->count_packet);
+		dump_packet_differ({buffer, len}, av);
 		throw Error(ERR_TRANSPORT_DIFFERS);
 	}
 
@@ -375,7 +394,8 @@ Transport::Read ReplayTransport::do_atomic_read(uint8_t * buffer, size_t len)
 
 	auto av = mPrefetchQueue[pos].av();
 	if (av.size() != len) {
-		LOG(LOG_ERR, "ReplayTransport::do_atomic_read(buf, len=%zu) should be %zu or greater", len, av.size());
+		LOG(LOG_ERR, "ReplayTransport::do_atomic_read(buf, len=%zu) should be %zu or greater [pck_num=%lld]", len, av.size(), this->count_packet);
+		dump_packet_differ({buffer, len}, av);
 		throw Error(ERR_TRANSPORT_DIFFERS);
 	}
 
@@ -414,11 +434,12 @@ void ReplayTransport::do_send(const uint8_t * const buffer, size_t len)
 		auto av = mPrefetchQueue[pos].av();
 		if (av.size() != len || memcmp(av.data(), buffer, len)) {
 			if (av.size() != len) {
-				LOG(LOG_ERR, "ReplayTransport::do_send(buf, len=%zu) should be %zu", len, av.size());
+				LOG(LOG_ERR, "ReplayTransport::do_send(buf, len=%zu) should be %zu [pck_num=%lld]", len, av.size(), this->count_packet);
 			}
 			else {
-				LOG(LOG_ERR, "ReplayTransport::do_send data differs");
+				LOG(LOG_ERR, "ReplayTransport::do_send data differs [pck_num=%lld]", this->count_packet);
 			}
+			dump_packet_differ({buffer, len}, av);
 			throw Error(ERR_TRANSPORT_DIFFERS);
 		}
 	}
