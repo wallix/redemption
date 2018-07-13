@@ -262,8 +262,9 @@ void SelectorMod::refresh_device()
     char * protocols = const_cast<char *>(this->vars.get<cfg::context::target_protocol>().c_str());
     for (unsigned index = 0; index < this->vars.get<cfg::context::selector_lines_per_page>(); index++) {
         size_t size_groups = proceed_item(groups);
-        if (!size_groups)
+        if (!size_groups) {
             break;
+        }
         size_t size_targets = proceed_item(targets);
         size_t size_protocols = proceed_item(protocols);
 

@@ -1135,8 +1135,12 @@ void get_run(
         data_size--;
         //LOG(LOG_INFO, "row_value=%c", *data);
         uint8_t last_raw_value = *(data++);
-        for (; data_size && (*data == last_raw_value); run_length++, data_size--, data++)
-            /*LOG(LOG_INFO, "run=%c", *data)*/;
+        while (data_size && (*data == last_raw_value)) {
+            run_length++;
+            data_size--;
+            data++;
+        }
+        /*LOG(LOG_INFO, "run=%c", *data)*/;
         if (run_length >= 3) {
             break;
         }

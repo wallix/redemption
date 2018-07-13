@@ -118,8 +118,9 @@ namespace BER {
     // ==========================
     inline bool read_universal_tag(InStream & s, uint8_t tag, bool pc) {
         uint8_t byte;
-        if (!s.in_check_rem(1))
+        if (!s.in_check_rem(1)) {
             return false;
+        }
         byte = s.in_uint8();
         return byte == (CLASS_UNIV | ber_pc(pc) | (TAG_MASK & tag));
     }
@@ -180,8 +181,9 @@ namespace BER {
     // ==========================
     inline bool read_contextual_tag(InStream & s, uint8_t tag, int & length, bool pc) {
         uint8_t byte;
-        if (!s.in_check_rem(1))
+        if (!s.in_check_rem(1)) {
             return false;
+        }
         byte = s.peek_uint8();
         // LOG(LOG_INFO, "read_contextual_tag read: %x\n", byte);
         if (byte != (CLASS_CTXT | ber_pc(pc) | (TAG_MASK & tag))) {
@@ -205,12 +207,14 @@ namespace BER {
     // ==========================
     inline bool read_sequence_tag(InStream & s, int & length) {
         uint8_t byte;
-        if (!s.in_check_rem(1))
+        if (!s.in_check_rem(1)) {
             return false;
+        }
         byte = s.in_uint8();
 
-        if (byte != (CLASS_UNIV | PC_CONSTRUCT | TAG_SEQUENCE_OF))
+        if (byte != (CLASS_UNIV | PC_CONSTRUCT | TAG_SEQUENCE_OF)) {
             return false;
+        }
 
         return read_length(s, length);
 
@@ -362,8 +366,9 @@ namespace BER {
         int length;
         if (!read_universal_tag(s, TAG_INTEGER, false) ||
             !read_length(s, length) ||
-            !s.in_check_rem(1))
+            !s.in_check_rem(1)) {
             return false;
+        }
         // if (value == nullptr) {
         //     s.in_skip_bytes(length);
         // }

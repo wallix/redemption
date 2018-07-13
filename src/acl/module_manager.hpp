@@ -849,10 +849,12 @@ public:
 private:
     void set_mod(not_null_ptr<mod_api> mod, rdp_api* rdpapi = nullptr, windowing_api* winapi = nullptr)
     {
-        while (this->front.keymap.nb_char_available())
+        while (this->front.keymap.nb_char_available()) {
             this->front.keymap.get_char();
-        while (this->front.keymap.nb_kevent_available())
+        }
+        while (this->front.keymap.nb_kevent_available()) {
             this->front.keymap.get_kevent();
+        }
 
         this->clear_osd_message();
 

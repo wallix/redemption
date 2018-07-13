@@ -530,10 +530,11 @@ public:
             ms = gss_display_status(
                 &minor_status, major_status,
                 code, GSS_C_NULL_OID, &msgctx, &status_string);
-        	if (ms != GSS_S_COMPLETE)
-                    continue;
+        	if (ms != GSS_S_COMPLETE) {
+                continue;
+            }
 
-                LOG(LOG_ERR," - %s\n", static_cast<uint8_t const*>(status_string.value));
+            LOG(LOG_ERR," - %s\n", static_cast<uint8_t const*>(status_string.value));
         }
         while (ms == GSS_S_COMPLETE && msgctx);
 
@@ -547,12 +548,14 @@ public:
 
         mech_found = 0;
 
-        if (mech == GSS_C_NO_OID)
+        if (mech == GSS_C_NO_OID) {
             return true;
+        }
 
         major_status = gss_indicate_mechs(&minor_status, &mech_set);
-        if (!mech_set)
+        if (!mech_set) {
             return false;
+        }
         if (GSS_ERROR(major_status)) {
             this->report_error(GSS_C_GSS_CODE, "Failed to get available mechs on system",
                                major_status, minor_status);

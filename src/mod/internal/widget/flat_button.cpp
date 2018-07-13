@@ -139,8 +139,9 @@ void WidgetFlatButton::draw(
         WidgetLabel::draw(clip, label_rect, drawable, text, fg_color, bg_color, color_ctx, font, xtext, ytext);
     }
 
-    if (logo)
+    if (logo) {
         return;
+    }
 
     // border
     if (border_width) {
@@ -176,8 +177,9 @@ void WidgetFlatButton::rdp_input_mouse(int device_flags, int x, int y, Keymap2* 
             this->send_notify(this->event);
         }
     }
-    else
+    else {
         this->Widget::rdp_input_mouse(device_flags, x, y, keymap);
+    }
 }
 
 void WidgetFlatButton::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)

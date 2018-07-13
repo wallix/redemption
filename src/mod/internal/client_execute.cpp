@@ -768,8 +768,9 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                                 ((this->button_1_down == MOUSE_BUTTON_PRESSED_TITLEBAR) ? "title bar" : "south edge")));
                     }
                 }
-                else
+                else {
                     this->initialize_move_size(xPos, yPos, this->pressed_mouse_button);
+                }
             }   // if (MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button)
             else if (this->allow_resize_hosted_desktop_ &&
                         this->resize_hosted_desktop_box_rect.contains_pt(xPos, yPos)) {
@@ -859,10 +860,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     case MOUSE_BUTTON_PRESSED_NORTH: {
                         const int offset_y_max = this->window_rect_saved.cy - INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT;
 
-                        offset_y = yPos - this->captured_mouse_y;
-                        if (offset_y > offset_y_max)
-                            offset_y = offset_y_max;
-
+                        offset_y = std::min(int(yPos - this->captured_mouse_y), offset_y_max);
                         offset_cy = -offset_y;
                     }
                     break;
@@ -871,16 +869,10 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                         const int offset_x_max = this->window_rect_saved.cx - INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH;
                         const int offset_y_max = this->window_rect_saved.cy - INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT;
 
-                        offset_x = xPos - this->captured_mouse_x;
-                        if (offset_x > offset_x_max)
-                            offset_x = offset_x_max;
-
+                        offset_x = std::min(int(xPos - this->captured_mouse_x), offset_x_max);
                         offset_cx = -offset_x;
 
-                        offset_y = yPos - this->captured_mouse_y;
-                        if (offset_y > offset_y_max)
-                            offset_y = offset_y_max;
-
+                        offset_y = std::min(int(yPos - this->captured_mouse_y), offset_y_max);
                         offset_cy = -offset_y;
                     }
                     break;
@@ -888,10 +880,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     case MOUSE_BUTTON_PRESSED_WEST: {
                         const int offset_x_max = this->window_rect_saved.cx - INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH;
 
-                        offset_x = xPos - this->captured_mouse_x;
-                        if (offset_x > offset_x_max)
-                            offset_x = offset_x_max;
-
+                        offset_x = std::min(int(xPos - this->captured_mouse_x), offset_x_max);
                         offset_cx = -offset_x;
                     }
                     break;
@@ -899,67 +888,49 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     case MOUSE_BUTTON_PRESSED_SOUTHWEST: {
                         const int offset_x_max = this->window_rect_saved.cx - INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH;
 
-                        offset_x = xPos - this->captured_mouse_x;
-                        if (offset_x > offset_x_max)
-                            offset_x = offset_x_max;
-
+                        offset_x = std::min(int(xPos - this->captured_mouse_x), offset_x_max);
                         offset_cx = -offset_x;
 
                         const int offset_cy_min = INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT - this->window_rect_saved.cy;
 
-                        offset_cy = yPos - this->captured_mouse_y;
-                        if (offset_cy < offset_cy_min)
-                            offset_cy = offset_cy_min;
+                        offset_cy = std::max(int(yPos - this->captured_mouse_y), offset_cy_min);
                     }
                     break;
 
                     case MOUSE_BUTTON_PRESSED_SOUTH : {
                         const int offset_cy_min = INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT - this->window_rect_saved.cy;
 
-                        offset_cy = yPos - this->captured_mouse_y;
-                        if (offset_cy < offset_cy_min)
-                            offset_cy = offset_cy_min;
+                        offset_cy = std::max(int(yPos - this->captured_mouse_y), offset_cy_min);
                     }
                     break;
 
                     case MOUSE_BUTTON_PRESSED_SOUTHEAST: {
                         const int offset_cy_min = INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT - this->window_rect_saved.cy;
 
-                        offset_cy = yPos - this->captured_mouse_y;
-                        if (offset_cy < offset_cy_min)
-                            offset_cy = offset_cy_min;
+                        offset_cy = std::max(int(yPos - this->captured_mouse_y), offset_cy_min);
 
                         const int offset_cx_min = INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH - this->window_rect_saved.cx;
 
-                        offset_cx = xPos - this->captured_mouse_x;
-                        if (offset_cx < offset_cx_min)
-                            offset_cx = offset_cx_min;
+                        offset_cx = std::max(int(xPos - this->captured_mouse_x), offset_cx_min);
                     }
                     break;
 
                     case MOUSE_BUTTON_PRESSED_EAST: {
                         const int offset_cx_min = INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH - this->window_rect_saved.cx;
 
-                        offset_cx = xPos - this->captured_mouse_x;
-                        if (offset_cx < offset_cx_min)
-                            offset_cx = offset_cx_min;
+                        offset_cx = std::max(int(xPos - this->captured_mouse_x), offset_cx_min);
                     }
                     break;
 
                     case MOUSE_BUTTON_PRESSED_NORTHEAST: {
                         const int offset_y_max = this->window_rect_saved.cy - INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT;
 
-                        offset_y = yPos - this->captured_mouse_y;
-                        if (offset_y > offset_y_max)
-                            offset_y = offset_y_max;
-
+                        offset_y = std::min(int(yPos - this->captured_mouse_y), offset_y_max);
                         offset_cy = -offset_y;
 
                         const int offset_cx_min = INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH - this->window_rect_saved.cx;
 
-                        offset_cx = xPos - this->captured_mouse_x;
-                        if (offset_cx < offset_cx_min)
-                            offset_cx = offset_cx_min;
+                        offset_cx = std::max(int(xPos - this->captured_mouse_x), offset_cx_min);
                     }
                     break;
                 }

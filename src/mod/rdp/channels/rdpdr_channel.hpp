@@ -2168,8 +2168,9 @@ public:
         }
 
         // Virtual channel is opened at client side and is authorized.
-        if (this->has_valid_to_client_sender() && !this->disable_client_sender)
+        if (this->has_valid_to_client_sender() && !this->disable_client_sender) {
             return true;
+        }
 
         {
             uint8_t message_buffer[1024];

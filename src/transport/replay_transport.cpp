@@ -218,10 +218,12 @@ Transport::TlsResult ReplayTransport::enable_client_tls(
 
 	mPrefetchQueue.erase(mPrefetchQueue.begin());
 
-	if (data_in_pos)
-		data_in_pos--;
-	if (data_out_pos)
+	if (data_in_pos) {
+        data_in_pos--;
+    }
+	if (data_out_pos) {
 		data_out_pos--;
+    }
 
     reschedule_timer();
     return Transport::TlsResult::Ok;
@@ -280,8 +282,9 @@ std::chrono::system_clock::time_point ReplayTransport::prefetchForTimer() {
 		}
 	}
 
-	if (found)
-		return mPrefetchQueue[pos].time;
+	if (found) {
+        return mPrefetchQueue[pos].time;
+    }
 
 	/* read records until we get something that means some dataIn (and is supposed to trigger a select()) */
 	try {
@@ -324,8 +327,9 @@ size_t ReplayTransport::searchAndPrefetchFor(PacketType kind)
 	for ( ; counter < mPrefetchQueue.size() && mPrefetchQueue[counter].type != kind; counter++)
 		;
 
-	if (counter < mPrefetchQueue.size())
-		return counter;
+	if (counter < mPrefetchQueue.size()) {
+        return counter;
+    }
 
 	/* not in the prefetch queue, let's load some records until we get the good type */
 	ReplayTransport::Data *d = read_single_chunk();
@@ -358,22 +362,27 @@ size_t ReplayTransport::do_partial_read(uint8_t * buffer, size_t const len)
 	data_in_pos = pos + 1;
 
 	if (pos == 0) {
+        // TODO do while or std::remove
 		/* we've treated the first element of the prefetch queue, pop and adjust counters */
 		mPrefetchQueue.erase(mPrefetchQueue.begin());
 
-		if (data_in_pos)
-			data_in_pos--;
-		if (data_out_pos)
-			data_out_pos--;
+		if (data_in_pos) {
+            data_in_pos--;
+        }
+		if (data_out_pos) {
+            data_out_pos--;
+        }
 
 		/* cleanup DataOut packets that may have been already treated */
 		while (mPrefetchQueue.size() && data_out_pos && mPrefetchQueue[0].type == PacketType::DataOut) {
 			mPrefetchQueue.erase(mPrefetchQueue.begin());
 
-			if (data_in_pos)
-				data_in_pos--;
-			if (data_out_pos)
-				data_out_pos--;
+			if (data_in_pos) {
+                data_in_pos--;
+            }
+			if (data_out_pos) {
+                data_out_pos--;
+            }
 		}
 	}
 
@@ -403,22 +412,27 @@ Transport::Read ReplayTransport::do_atomic_read(uint8_t * buffer, size_t len)
 	data_in_pos = pos + 1;
 
 	if (pos == 0) {
+        // TODO do while or std::remove
 		/* we've treated the first element of the prefetch queue, pop and adjust counters */
 		mPrefetchQueue.erase(mPrefetchQueue.begin());
 
-		if (data_in_pos)
-			data_in_pos--;
-		if (data_out_pos)
-			data_out_pos--;
+		if (data_in_pos) {
+            data_in_pos--;
+        }
+		if (data_out_pos) {
+            data_out_pos--;
+        }
 
 		/* cleanup DataOut packets that may have been already treated */
 		while (mPrefetchQueue.size() && data_out_pos && mPrefetchQueue[0].type == PacketType::DataOut) {
 			mPrefetchQueue.erase(mPrefetchQueue.begin());
 
-			if (data_in_pos)
-				data_in_pos--;
-			if (data_out_pos)
-				data_out_pos--;
+			if (data_in_pos) {
+                data_in_pos--;
+            }
+			if (data_out_pos) {
+                data_out_pos--;
+            }
 		}
 	}
 
@@ -447,21 +461,26 @@ void ReplayTransport::do_send(const uint8_t * const buffer, size_t len)
 	data_out_pos = pos + 1;
 
 	if (pos == 0) {
+        // TODO do while or std::remove
 		mPrefetchQueue.erase(mPrefetchQueue.begin());
 
-		if (data_in_pos)
-			data_in_pos--;
-		if (data_out_pos)
-			data_out_pos--;
+		if (data_in_pos) {
+            data_in_pos--;
+        }
+		if (data_out_pos) {
+            data_out_pos--;
+        }
 
 		/* cleanup DataIn packets that may have been already treated */
 		while (mPrefetchQueue.size() && data_in_pos && mPrefetchQueue[0].type == PacketType::DataIn) {
 			mPrefetchQueue.erase(mPrefetchQueue.begin());
 
-			if (data_in_pos)
-				data_in_pos--;
-			if (data_out_pos)
-				data_out_pos--;
+			if (data_in_pos) {
+                data_in_pos--;
+            }
+			if (data_out_pos) {
+                data_out_pos--;
+            }
 		}
 
 	}

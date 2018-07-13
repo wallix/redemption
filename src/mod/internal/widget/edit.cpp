@@ -417,8 +417,9 @@ void WidgetEdit::rdp_input_scancode(long int param1, long int param2, long int p
                             this->decrement_edit_pos();
                             this->update_draw_cursor(old_cursor_rect);
                         }
-                        else
+                        else {
                             break;
+                        }
                     }
                     break;
                 }
@@ -441,8 +442,9 @@ void WidgetEdit::rdp_input_scancode(long int param1, long int param2, long int p
                             this->increment_edit_pos();
                             this->update_draw_cursor(old_cursor_rect);
                         }
-                        else
+                        else {
                             break;
+                        }
                     }
                     break;
                 }

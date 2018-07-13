@@ -410,6 +410,7 @@ void WidgetScrollBar::rdp_input_mouse(int device_flags, int x, int y, Keymap2* k
             this->rdp_input_invalidate(this->get_rect());
         }
     }
-    else
+    else {
         this->Widget::rdp_input_mouse(device_flags, x, y, keymap);
+    }
 }

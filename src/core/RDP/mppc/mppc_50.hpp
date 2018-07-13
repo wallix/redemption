@@ -607,8 +607,9 @@ private:
         this->hash_tab_mgr.clear_undo_history();
 
         if ((uncompressed_data == nullptr) || (uncompressed_data_size <= 0) ||
-            (uncompressed_data_size >= RDP_50_HIST_BUF_LEN - 2))
+            (uncompressed_data_size >= RDP_50_HIST_BUF_LEN - 2)) {
             return;
+        }
 
         uint16_t opb_index = 0; /* index into outputBuffer                        */
         uint8_t  bits_left = 8; /* unused bits in current uint8_t in outputBuffer */

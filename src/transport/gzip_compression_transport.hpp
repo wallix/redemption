@@ -343,8 +343,9 @@ public:
 
 private:
     void send_to_target() {
-        if (!this->compressed_data_length)
+        if (!this->compressed_data_length) {
             return;
+        }
 
         StaticOutStream<128> buffer_stream;
 

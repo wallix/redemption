@@ -109,8 +109,9 @@ FlatDialog::FlatDialog(
 
     this->move_size_widget(left, top, width, height);
 
-    if (!has_challenge)
+    if (!has_challenge) {
         this->set_widget_focus(&this->ok, focus_reason_tabkey);
+    }
 }
 
 FlatDialog::~FlatDialog()

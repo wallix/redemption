@@ -91,23 +91,20 @@ void rfbDesKey(const unsigned char *key, int edf)
         pc1m[j] = (key[l >> 3] & bytebit[m]) ? 1 : 0;
     }
     for (int i = 0; i < 16; i++ ) {
-        if ( edf == DE1 ) m = (15 - i) << 1;
-        else m = i << 1;
+        m = (edf == DE1) ? ((15 - i) << 1) : (i << 1);
         n = m + 1;
         kn[m] = kn[n] = 0L;
         for ( j = 0; j < 28; j++ ) {
             l = j + totrot[i];
-            if ( l < 28 ) pcr[j] = pc1m[l];
-            else pcr[j] = pc1m[l - 28];
+            pcr[j] = (l < 28) ? pc1m[l] : pc1m[l - 28];
         }
         for ( j = 28; j < 56; j++ ) {
             l = j + totrot[i];
-            if ( l < 56 ) pcr[j] = pc1m[l];
-            else pcr[j] = pc1m[l - 28];
+            pcr[j] = (l < 56) ? pc1m[l] : pc1m[l - 28];
         }
         for ( j = 0; j < 24; j++ ) {
-            if ( pcr[pc2[j]] ) kn[m] |= bigbyte[j];
-            if ( pcr[pc2[j+24]] ) kn[n] |= bigbyte[j];
+            if ( pcr[pc2[j]] ) { kn[m] |= bigbyte[j]; }
+            if ( pcr[pc2[j+24]] ) { kn[n] |= bigbyte[j]; }
         }
     }
     cookey(kn);

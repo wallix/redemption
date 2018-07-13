@@ -329,8 +329,9 @@ public:
 
             uint8_t * src  = this->historyBuffer + MatchHistoryOffset;
             uint8_t * dest = current_output_buffer + current_output_offset;
-            for (uint16_t i = 0; i < MatchLength; i++, src++, dest++)
+            for (uint16_t i = 0; i < MatchLength; i++, src++, dest++) {
                 *dest = *src;
+            }
 
             current_output_offset += MatchLength;
         }
@@ -434,8 +435,9 @@ struct rdp_mppc_61_enc_sequential_search_match_finder : public rdp_mppc_enc_matc
 
     void find_match(const uint8_t * historyBuffer, uint32_t historyOffset, uint16_t uncompressed_data_size) override
     {
-        if (uncompressed_data_size < RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)
+        if (uncompressed_data_size < RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH){
             return;
+        }
 
         this->match_details_stream.rewind();
 
@@ -510,8 +512,9 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
         //  minimum LoM is RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH.
         if (historyOffset == 0) {
             counter = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1;
-            for (offset_type i = 0; i < counter; i++)
+            for (offset_type i = 0; i < counter; i++) {
                 this->hash_tab_mgr.update_indirect(historyBuffer, i);
+            }
         }
 
         uint16_t length_of_match = 0;
@@ -626,8 +629,9 @@ private:
 
         if ((uncompressed_data == nullptr) || (uncompressed_data_size == 0) ||
             (uncompressed_data_size > RDP_61_MAX_DATA_BLOCK_SIZE) ||
-            (uncompressed_data_size <= 2))   // Level1ComprFlags(1) + Level2ComprFlags(1)
+            (uncompressed_data_size <= 2)) {  // Level1ComprFlags(1) + Level2ComprFlags(1)
             return;
+        }
 
         if ((this->historyOffset + uncompressed_data_size + 1) >= RDP_61_HISTORY_BUFFER_LENGTH) {
             // historyBuffer cannot hold uncompressed_data - rewind it.
@@ -684,8 +688,9 @@ private:
                     level_1_output_stream.out_copy_bytes(uncompressed_data + current_output_offset, expected);
                     current_output_offset = match_output_offset + match_length;
                 }
-                else
+                else {
                     current_output_offset += match_length;
+                }
             }
             if (uncompressed_data_size > current_output_offset) {
                 expected = uncompressed_data_size - current_output_offset;

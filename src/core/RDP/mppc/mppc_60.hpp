@@ -497,8 +497,9 @@ public:
                 }
             }
 
-            if (!copy_offset)
+            if (!copy_offset){
                 continue;
+            }
 
             for (i = 0x2; i <= 0x9; i++) {
                 i32 = this->transposebits((d32 & (0xffffffff << (32 - i))));
@@ -784,8 +785,9 @@ private:
         this->hash_tab_mgr.clear_undo_history();
 
         if ((uncompressed_data == nullptr) || (uncompressed_data_size <= 0) ||
-            (uncompressed_data_size >= RDP_60_HIST_BUF_LEN - 1))
+            (uncompressed_data_size >= RDP_60_HIST_BUF_LEN - 1)){
             return;
+        }
 
         uint16_t opb_index = 0; /* index into outputBuffer                        */
         uint8_t  bits_left = 8; /* unused bits in current uint8_t in outputBuffer */
@@ -984,8 +986,9 @@ private:
                     LOG(LOG_INFO, "compress_60: Unable to undo changes made in hash table.");
                 }
             }
-            else
+            else{
                 ::memcpy(this->offsetCache, saved_offset_cache, sizeof(this->offsetCache));
+            }
 
             return;
         }

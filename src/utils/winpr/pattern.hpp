@@ -104,7 +104,9 @@ static bool FilePatternMatchSubExpressionA(const char * lpFileName, size_t cchFi
          */
 
         if (strncasecmp(lpFileName, lpX, cchX) != 0)
+        {
             return false;
+        }
 
         /*
          * State 1: match 'S' or 'e'
@@ -122,10 +124,14 @@ static bool FilePatternMatchSubExpressionA(const char * lpFileName, size_t cchFi
             lpMatch = strchr(&lpFileName[cchX], *lpY);
 
             if (!lpMatch)
+            {
                 return false;
+            }
 
             if (strncasecmp(lpMatch, lpY, cchY) != 0)
+            {
                 return false;
+            }
         }
         else
         {
@@ -152,10 +158,14 @@ static bool FilePatternMatchSubExpressionA(const char * lpFileName, size_t cchFi
          */
 
         if (cchFileName < cchX)
+        {
             return false;
+        }
 
         if (strncasecmp(lpFileName, lpX, cchX) != 0)
+        {
             return false;
+        }
 
         /*
          * State 1: match 'S'
@@ -171,15 +181,21 @@ static bool FilePatternMatchSubExpressionA(const char * lpFileName, size_t cchFi
             lpMatch = strchr(&lpFileName[cchX + 1], *lpY);
 
             if (!lpMatch)
-                return false;
-
-            if (strncasecmp(lpMatch, lpY, cchY) != 0)
+            {
                 return false;
             }
+
+            if (strncasecmp(lpMatch, lpY, cchY) != 0)
+            {
+                return false;
+            }
+        }
         else
         {
             if ((cchX + 1) > cchFileName)
+            {
                 return false;
+            }
 
             lpMatch = &lpFileName[cchX + 1];
         }
@@ -226,10 +242,14 @@ static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
      */
 
     if (!lpPattern)
+    {
         return false;
+    }
 
     if (!lpFileName)
+    {
         return false;
+    }
 
     cchPattern = strlen(lpPattern);
     cchFileName = strlen(lpFileName);
@@ -242,7 +262,9 @@ static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
      */
 
     if ((lpPattern[0] == '*') && (cchPattern == 1))
+    {
         return true;
+    }
 
     /**
      * Subsequently evaluation of the “*X” expression is performed. This is a case where
@@ -264,7 +286,9 @@ static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
             /* tail contains no wildcards */
 
             if (cchFileName < cchTail)
+            {
                 return false;
+            }
 
             return strcasecmp(&lpFileName[cchFileName - cchTail], lpTail) == 0;
         }
@@ -346,7 +370,9 @@ static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
                     lpX, cchX, lpY, cchY, lpWildcard, &lpMatchEnd);
 
             if (!match)
+            {
                 return false;
+            }
 
             lpSubFileName = lpMatchEnd;
 
@@ -363,4 +389,3 @@ static bool FilePatternMatchA(const char * lpFileName, const char * lpPattern)
     /* no wildcard characters */
     return (strcasecmp(lpFileName, lpPattern) == 0);
 }
-

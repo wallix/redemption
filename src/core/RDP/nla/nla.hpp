@@ -523,8 +523,9 @@ public:
 
         status = this->table->EncryptMessage(Message, this->send_seq_num++);
 
-        if (status != SEC_E_OK)
+        if (status != SEC_E_OK) {
             return status;
+        }
 
         // this->authInfo.init(this->ContextSizes.cbMaxSignature + ts_credentials_send.size());
         this->authInfo.init(Buffers[0].Buffer.size() + Buffers[1].Buffer.size());
@@ -845,8 +846,9 @@ public:
 
         status = this->table->DecryptMessage(Message, this->recv_seq_num++);
 
-        if (status != SEC_E_OK)
+        if (status != SEC_E_OK) {
             return status;
+        }
 
         InStream decrypted_creds(Buffers[1].Buffer.get_data(), Buffers[1].Buffer.size());
         this->ts_credentials.recv(decrypted_creds);
@@ -878,8 +880,9 @@ private:
         // TODO
         // sspi_GlobalInit();
 
-        if (this->credssp_ntlm_init(true) == 0)
+        if (this->credssp_ntlm_init(true) == 0) {
             return Res::Err;
+        }
 
         this->InitSecurityInterface(NTLM_Interface);
 
@@ -953,10 +956,12 @@ private:
         if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED)) {
             this->table->CompleteAuthToken(output_buffer_desc);
 
-            if (status == SEC_I_COMPLETE_NEEDED)
+            if (status == SEC_I_COMPLETE_NEEDED) {
                 status = SEC_E_OK;
-            else if (status == SEC_I_COMPLETE_AND_CONTINUE)
+            }
+            else if (status == SEC_I_COMPLETE_AND_CONTINUE) {
                 status = SEC_I_CONTINUE_NEEDED;
+            }
         }
 
         if (status == SEC_E_OK) {

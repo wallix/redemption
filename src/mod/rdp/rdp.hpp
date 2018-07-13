@@ -985,8 +985,9 @@ public:
 
                 alternate_shell = mod_rdp_params.session_probe_exe_or_file;
 
-                if (!::strncmp(alternate_shell.c_str(), "||", 2))
+                if (!::strncmp(alternate_shell.c_str(), "||", 2)) {
                     alternate_shell.erase(0, 2);
+                }
 
                 alternate_shell += " ";
                 alternate_shell += session_probe_arguments;
@@ -1108,8 +1109,9 @@ public:
             else if (this->enable_session_probe) {
                 std::string alternate_shell(mod_rdp_params.session_probe_exe_or_file);
 
-                if (!::strncmp(alternate_shell.c_str(), "||", 2))
+                if (!::strncmp(alternate_shell.c_str(), "||", 2)) {
                     alternate_shell.erase(0, 2);
+                }
 
                 alternate_shell += " ";
                 alternate_shell += session_probe_arguments;

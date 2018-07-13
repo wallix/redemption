@@ -37,8 +37,7 @@ static inline authid_t authid_from_string(const char * strauthid) {
 }
 
 static inline const char * string_from_authid(authid_t authid) {
-    if (authid >= authid_t::MAX_AUTHID)
-        return "";
-    return authstr[static_cast<unsigned>(authid)];
+    return (authid >= authid_t::MAX_AUTHID)
+        ? ""
+        : authstr[static_cast<unsigned>(authid)];
 }
-

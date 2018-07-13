@@ -415,10 +415,12 @@ struct BitmapCodec {
             memcpy(this->codecGUID, "\xCA\x8D\x1B\xB9\x00\x0F\x15\x4F\x58\x9F\xAE\x2D\x1A\x87\xE2\xD6", 16);
             this->codecID = 1;
         }
-        else if (codecGUID == CODEC_GUID_REMOTEFX)
+        else if (codecGUID == CODEC_GUID_REMOTEFX) {
             memcpy(this->codecGUID, "\x76\x77\x2F\x12\xBD\x72\x44\x63\xAF\xB3\xB7\x3C\x9C\x6F\x78\x86", 16);
-        else
+        }
+        else {
             memset(this->codecGUID, 0, 16);
+        }
     }
 };
 
