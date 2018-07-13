@@ -72,7 +72,7 @@ struct RDPMetrics {
       , primary_user(primary_user)
     {
         if (this->path_template) {
-            this->new_day(this->get_current_formated_date());
+            this->new_day(this->get_current_formated_date(false));
         }
     }
 
@@ -80,19 +80,22 @@ struct RDPMetrics {
         fcntl(this->fd, F_SETFD, FD_CLOEXEC);
     }
 
-    std::string get_current_formated_date() {
+    std::string get_current_formated_date(bool keep_hhmmss) {
         timeval now = tvtime();
         time_t time_now = now.tv_sec;
 
+        //char *
+
         std::string current_date(ctime(&time_now));
-//         LOG(LOG_INFO, "current_date=%s", current_date);
         std::string mmm(current_date.substr(4, 3));
         std::string dd(current_date.substr(8, 2));
-        //std::string hhmmss(current_date.substr(11, 8));
         std::string yyyy(current_date.substr(20, 4));
-        //std::string formted_date(mmm_dd+" "+yyyy+" "+hhmmss);
+        std::string hhmmss;
+        if (keep_hhmmss) {
+            hhmmss +=  "-"+current_date.substr(11, 8);
+        }
 
-        return "-"+yyyy+"-"+mmm+"-"+dd;
+        return "-"+yyyy+"-"+mmm+"-"+dd+hhmmss;
     }
 
     void new_day(const std::string & current_formated_date) {
@@ -100,8 +103,7 @@ struct RDPMetrics {
         std::string file_path(this->path_template);
         file_path += this->last_date;
         file_path += ".log";
-//         LOG(LOG_INFO, "file_path=%s", file_path);
-        this->fd = ::open(file_path.c_str(), O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
+        this->fd = ::open(file_path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
         if (this->fd == -1) {
             LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\"", this->fd, file_path);
         }
@@ -110,11 +112,9 @@ struct RDPMetrics {
     void log() {
 
         std::string last_date_str(this->last_date);
-        std::string current_formated_date(this->get_current_formated_date());
+        std::string current_formated_date(this->get_current_formated_date(false));
 
-        LOG(LOG_INFO,  "compare old=%s new=%s", last_date_str, current_formated_date);
         if (last_date_str != current_formated_date) {
-            LOG(LOG_INFO,  "new day old=%s new=%s", last_date_str, current_formated_date);
             fcntl(this->fd, F_SETFD, FD_CLOEXEC);
             this->new_day(current_formated_date);
         }
