@@ -39,8 +39,9 @@ struct RDPMetrics {
     const char * path_template;
     const uint32_t session_id;
     const char * account;
-    const char * target_host;
+    const char * target_name;
     const char * primary_user;
+
 
     int fd = -1;
 
@@ -65,15 +66,17 @@ struct RDPMetrics {
     RDPMetrics( const char * path_template
               , const uint32_t session_id
               , const char * account
-              , const char * target_host
+              , const char * target_name
               , const char * primary_user)
       : path_template(path_template)
       , session_id(session_id)
       , account(account)
-      , target_host(target_host)
+      , target_name(target_name)
       , primary_user(primary_user)
     {
         if (this->path_template) {
+            timeval now = tvtime();
+            this->last_date = now.tv_sec;
             this->new_day();
         }
     }
@@ -82,11 +85,11 @@ struct RDPMetrics {
         fcntl(this->fd, F_SETFD, FD_CLOEXEC);
     }
 
-    void set_current_formated_date(char * date, bool keep_hhmmss) {
-        timeval now = tvtime();
-        this->last_date = now.tv_sec;
+    void set_current_formated_date(char * date, bool keep_hhmmss, time_t time) {
+//         timeval now = tvtime();
+//         this->last_date = now.tv_sec;
         char current_date[24] = {'\0'};
-        memcpy(current_date, ctime(&(this->last_date)), 24);
+        memcpy(current_date, ctime(&time), 24);
 
         date[0] = '-';
         date[1] = current_date[20];
@@ -102,43 +105,21 @@ struct RDPMetrics {
         date[11] = current_date[9];
 
         if (keep_hhmmss) {
-
+            date[12] = current_date[11];
+            date[13] = current_date[12];
+            date[14] = current_date[13];
+            date[15] = current_date[14];
+            date[16] = current_date[15];
+            date[17] = current_date[16];
+            date[18] = current_date[17];
+            date[19] = current_date[18];
         }
     }
 
-//     void set_current_formated_time() {
-//         timeval now = tvtime();
-//         time_t time_now = now.tv_sec;
-//
-//         char current_date[24] = {'\0'};
-//         memcpy(current_date, ctime(&time_now), 24);
-//
-//
-//     }
-
-//     std::string get_current_formated_date(char * dest, bool keep_hhmmss) {
-//         timeval now = tvtime();
-//         time_t time_now = now.tv_sec;
-//
-//         char current_date[24] = {'\0'};
-//         memcpy(current_date, ctime(&time_now), 24);
-//
-// //         std::string current_date(ctime(&time_now));
-// //         LOG(LOG_INFO, "current_date=%s", current_date);
-//         std::string mmm(current_date.substr(4, 3));
-//         std::string dd(current_date.substr(8, 2));
-//         std::string yyyy(current_date.substr(20, 4));
-//         std::string hhmmss;
-//         if (keep_hhmmss) {
-//             hhmmss +=  "-"+current_date.substr(11, 8);
-//         }
-//
-//         return "-"+yyyy+"-"+mmm+"-"+dd+hhmmss;
-//     }
 
     void new_day() {
         char last_date_formated[20] = {'\0'};
-        this->set_current_formated_date(last_date_formated);
+        this->set_current_formated_date(last_date_formated, false, this->last_date);
         ::snprintf(this->complete_file_path, sizeof(this->complete_file_path), "%s%s.log", this->path_template, last_date_formated);
 
         this->fd = ::open(complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
@@ -147,6 +128,7 @@ struct RDPMetrics {
         }
     }
 
+
     void log() {
 
         timeval now = tvtime();
@@ -154,6 +136,7 @@ struct RDPMetrics {
 
         if ((time_date -this->last_date) >= 3600*24) {
             fcntl(this->fd, F_SETFD, FD_CLOEXEC);
+            this->last_date = time_date;
             this->new_day();
         }
 
@@ -162,7 +145,7 @@ struct RDPMetrics {
           " right_click_sent=%d left_click_sent=%d keys_sent=%d"
           " Client data received by channels - main=%ld cliprdr=%ld rail=%ld rdpdr=%ld drdynvc=%ld"
           " Server data received by channels - main=%ld cliprdr=%ld rail=%ld rdpdr=%ld drdynvc=%ld",
-            this->session_id, this->primary_user, this->account, this->target_host,
+            this->session_id, this->primary_user, this->account, this->target_name,
             this->total_right_clicks, this->total_left_clicks, this->total_keys_pressed,
 
             this->total_main_amount_data_rcv_from_client,

@@ -40,7 +40,8 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputFileTurnOver) {
               , 1, "user", "10.10.13.12", "admin");
 
     char current_date[24] = {'\0'};
-    metrics.set_current_formated_date(current_date);
+    timeval now = tvtime();
+    metrics.set_current_formated_date(current_date, false, now.tv_sec);
 
     char complete_file_path[4096] = {'\0'};
     ::snprintf(complete_file_path, sizeof(complete_file_path), "%s%s.log", templace_path_file, current_date);
@@ -62,5 +63,9 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputFileTurnOver) {
     RED_CHECK(fd > 0);
 
     remove(complete_file_path);
+}
+
+
+RED_AUTO_TEST_CASE(TestRDPMetricsOutputLogHeader) {
 
 }
