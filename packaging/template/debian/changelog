@@ -1,3 +1,8 @@
+redemption (1.1.47%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 13 Jul 2018 10:41:56 +0200
+
 redemption (1.1.45%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix disabling keyboard input log in Session data of Recorded Session Viewer.
