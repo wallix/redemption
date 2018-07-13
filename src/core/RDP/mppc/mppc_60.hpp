@@ -248,7 +248,7 @@ struct rdp_mppc_60_dec : public rdp_mppc_dec
     }
 
 private:
-    void _dump(size_t histo_buf_max) override
+    void _dump(size_t histo_buf_max)
     {
         LOG(LOG_INFO, "Type=RDP 6.0 bulk decompressor");
         LOG(LOG_INFO, "historyBuffer");
