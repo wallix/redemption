@@ -1639,9 +1639,7 @@ struct FileContentsResponse
 
 struct FileContentsResponse_Size : FileContentsResponse {
 
-    explicit FileContentsResponse_Size()
-    : FileContentsResponse()
-    {}
+    explicit FileContentsResponse_Size() = default;
 
     explicit FileContentsResponse_Size(const uint32_t streamID, const uint64_t size)
     : FileContentsResponse(streamID, size, 16)
@@ -1667,15 +1665,11 @@ struct FileContentsResponse_Size : FileContentsResponse {
         LOG(LOG_INFO, "          * streamID = 0X%08x (4 bytes)", this->streamID);
         LOG(LOG_INFO, "          * Padding - (4 byte) NOT USED");
     }
-
-
 };
 
 struct FileContentsResponse_Range : FileContentsResponse {
 
-    explicit FileContentsResponse_Range()
-    : FileContentsResponse()
-    {}
+    explicit FileContentsResponse_Range() = default;
 
     explicit FileContentsResponse_Range(const uint32_t streamID, const uint64_t size)
     : FileContentsResponse(streamID, size, size+4)
@@ -1696,7 +1690,6 @@ struct FileContentsResponse_Range : FileContentsResponse {
         LOG(LOG_INFO, "     File Contents Response Range:");
         LOG(LOG_INFO, "          * streamID = 0X%08x (4 bytes)", this->streamID);
     }
-
 };
 
 
@@ -2230,9 +2223,7 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
     }
 
     explicit FormatDataResponsePDU_MetaFilePic()
-      : FormatDataResponsePDU()
-      ,
-       metaHeader(0, 0, 0)
+      : metaHeader(0, 0, 0)
       , metaSetMapMod(0)
       , metaSetWindowExt(0, 0)
       , metaSetWindowOrg(0, 0)
@@ -2348,9 +2339,7 @@ struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
         }
     };
 
-    explicit FormatDataResponsePDU_Text()
-      : FormatDataResponsePDU()
-    {}
+    explicit FormatDataResponsePDU_Text() = default;
 
     explicit FormatDataResponsePDU_Text(std::size_t length)
       : FormatDataResponsePDU(length)
@@ -2402,10 +2391,7 @@ struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
         LOG(LOG_INFO, "          * cItems       = %d (4 bytes)", this->cItems);
     }
 
-    explicit FormatDataResponsePDU_FileList()
-      : FormatDataResponsePDU()
-
-    {}
+    explicit FormatDataResponsePDU_FileList() = default;
 
     explicit FormatDataResponsePDU_FileList(const std::size_t cItems)
       : FormatDataResponsePDU((FileDescriptor::size() * cItems) + 4)
@@ -2434,8 +2420,7 @@ public:
     int imageSize{0};
 
 
-    MetaFilePicDescriptor()
-    = default;
+    MetaFilePicDescriptor() = default;
 
     void receive(InStream & chunk) {
         // Header

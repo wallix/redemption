@@ -141,13 +141,13 @@ protected:
     // Internal state of orders
     RDPPolygonSC polygonSC;
     RDPPolygonCB polygonCB;
-    RDPEllipseCB ellipseCB;
+    RDPEllipseCB ellipseCB = RDPEllipseCB(Rect(), 0, 0, RDPColor{}, RDPColor{}, RDPBrush());
 
     StateChunk ssc;
 
     // state variables for gathering batch of orders
-    size_t order_count;
-    size_t bitmap_count;
+    size_t order_count = 0;
+    size_t bitmap_count = 0;
 
     // TODO: check how caches are managed by recording layer
     BmpCache      & bmp_cache;
@@ -190,13 +190,6 @@ public:
                                    (experimental_enable_serializer_data_block_size_limit ?
                                     static_cast<decltype(max_data_block_size)>(MAX_ORDERS_SIZE) :
                                     std::numeric_limits<decltype(max_data_block_size)>::max())))
-    // Internal state of orders
-    , polygonSC()
-    , polygonCB()
-    , ellipseCB(Rect(), 0, 0, RDPColor{}, RDPColor{}, RDPBrush())
-    // state variables for a batch of orders
-    , order_count(0)
-    , bitmap_count(0)
     , bmp_cache(bmp_cache)
     , glyph_cache(glyph_cache)
     , pointer_cache(pointer_cache)

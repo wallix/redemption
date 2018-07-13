@@ -61,10 +61,8 @@ namespace re
         unsigned step_limit;
 
         explicit Regex(unsigned step_limit = 10000)
-        : parser()
-        , sm(state_list_t(), nullptr, 0)
-        , 
-         step_limit(step_limit)
+        : sm(state_list_t(), nullptr, 0)
+        , step_limit(step_limit)
         {}
 
         explicit Regex(const char * s, flag_t flags = DEFAULT_FLAG, unsigned step_limit = 10000)
@@ -74,7 +72,6 @@ namespace re
              this->parser.st_parser.nb_capture(),
              flags,
              flags & MINIMAL_MEMORY)
-        , pos(0)
         , step_limit(step_limit)
         {
             if (flags) {

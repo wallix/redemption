@@ -188,9 +188,7 @@ struct rdp_mppc_61_dec : public rdp_mppc_dec
     rdp_mppc_50_dec level_2_decompressor;
 
     rdp_mppc_61_dec()
-        : rdp_mppc_dec()
-        , historyBuffer{0}
-
+      : historyBuffer{0}
     {}
 
 private:
@@ -484,8 +482,7 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
     hash_table_manager hash_tab_mgr;
 
     rdp_mppc_61_enc_hash_based_match_finder()
-        : rdp_mppc_enc_match_finder()
-        , hash_tab_mgr(RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH,
+        : hash_tab_mgr(RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH,
               MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
     {}
 

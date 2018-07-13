@@ -32,9 +32,9 @@ class DiffieHellman {
     uint64_t max;
     uint64_t gen;
     uint64_t mod;
-    uint64_t pub;
-    uint64_t priv;
-    uint64_t key;
+    uint64_t pub = 0;
+    uint64_t priv = 0;
+    uint64_t key = 0;
 
 public:
     enum {
@@ -44,14 +44,10 @@ public:
     bool error;
 
     DiffieHellman(uint64_t generator, uint64_t modulus)
-        : randgen()
-        , rand(&this->randgen)
+        : rand(&this->randgen)
         , max((uint64_t(1) << DH_MAX_BITS) - 1)
         , gen(generator)
         , mod(modulus)
-        , pub(0)
-        , priv(0)
-        , key(0)
         , error((generator >= max) || (modulus >= max))
     {
     }

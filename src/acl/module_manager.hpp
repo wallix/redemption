@@ -814,7 +814,6 @@ public:
     ModuleManager(SessionReactor& session_reactor, Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
         : MMIni(session_reactor, ini)
         , front(front)
-        , no_mod()
         , mod_osd(*this)
         , gen(gen)
         , timeobj(timeobj)

@@ -103,8 +103,7 @@ public:
                        off64_t Offset,
                        VirtualChannelDataSender & to_server_sender,
                        RDPVerbose verbose)
-    : AsynchronousTask()
-    , file_descriptor(file_descriptor)
+    : file_descriptor(file_descriptor)
     , DeviceId(DeviceId)
     , CompletionId(CompletionId)
     , total_number_of_bytes_to_read(number_of_bytes_to_read)

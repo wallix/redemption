@@ -57,8 +57,8 @@ namespace VNC {
                 Header,
                 Data,
                 Exit
-            } state;
-            uint32_t zlib_compressed_data_length;
+            } state = ZrleState::Header;
+            uint32_t zlib_compressed_data_length = 0;
             std::vector<uint8_t> accumulator;
             std::vector<uint8_t> accumulator_uncompressed;
 
@@ -74,8 +74,6 @@ namespace VNC {
                  , cx_remain{r.cx}
                  , cy_remain{r.cy}
                 , zd(zd)
-                , state(ZrleState::Header)
-                , zlib_compressed_data_length(0), accumulator{}, accumulator_uncompressed{}
                 , verbose(verbose)
             {
                 if (bool(this->verbose & VNCVerbose::zrle_trace)) {

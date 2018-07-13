@@ -44,11 +44,10 @@ private:
 public:
     ClientRedemptionController(SessionReactor& session_reactor, char* argv[], int argc, RDPVerbose verbose)
       : ClientRedemptionConfig(session_reactor, argv, argc, verbose)
-      , keymap()
       , _timer(0)
-        {
-            this->keymap.init_layout(this->info.keylayout);
-        }
+    {
+        this->keymap.init_layout(this->info.keylayout);
+    }
 
     void init_layout(int lcid) {
         this->keymap.init_layout(lcid);

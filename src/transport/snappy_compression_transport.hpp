@@ -39,15 +39,13 @@ class SnappyCompressionInTransport : public Transport {
     Transport & source_transport;
 
     uint8_t * uncompressed_data;
-    size_t    uncompressed_data_length;
+    size_t    uncompressed_data_length = 0;
     uint8_t   uncompressed_data_buffer[SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
 
 public:
     explicit SnappyCompressionInTransport(Transport & st, uint32_t verbose = 0)
-    : Transport()
-    , source_transport(st)
+    : source_transport(st)
     , uncompressed_data(nullptr)
-    , uncompressed_data_length(0)
     , uncompressed_data_buffer() {
         (void)verbose;
     }
@@ -114,14 +112,13 @@ class SnappyCompressionOutTransport : public Transport {
     static const size_t MAX_UNCOMPRESSED_DATA_LENGTH = 56000; // ::snappy_max_compressed_length(56000) = 65365
 
     uint8_t uncompressed_data[SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
-    size_t  uncompressed_data_length;
+    size_t  uncompressed_data_length = 0;
 
 public:
     explicit SnappyCompressionOutTransport(Transport & tt, uint32_t verbose = 0)
-    : Transport()
-    , target_transport(tt)
+    : target_transport(tt)
     , uncompressed_data()
-    , uncompressed_data_length(0) {
+    {
         (void)verbose;
         assert(::snappy_max_compressed_length(MAX_UNCOMPRESSED_DATA_LENGTH) <= SNAPPY_COMPRESSION_TRANSPORT_BUFFER_LENGTH);
         static_assert(MAX_UNCOMPRESSED_DATA_LENGTH <= 0xFFFF); // 0xFFFF (for uint16_t)

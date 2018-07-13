@@ -69,18 +69,18 @@
 class ClientRedemptionAPI : public FrontAPI
 {
 public:
-    const std::string    MAIN_DIR;
-    const std::string    REPLAY_DIR;
-    const std::string    USER_CONF_LOG;
-    const std::string    WINDOWS_CONF;
-    const std::string    CB_TEMP_DIR;
-    std::string          SHARE_DIR;
-    const std::string    USER_CONF_DIR;
-    const std::string    SOUND_TEMP_DIR;
-    const std::string    DATA_DIR;
-    const std::string    DATA_CONF_DIR;
+    const std::string    MAIN_DIR = CLIENT_REDEMPTION_MAIN_PATH;
+    const std::string    REPLAY_DIR = CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_REPLAY_PATH;
+    const std::string    USER_CONF_LOG = CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_LOGINS_PATH;
+    const std::string    WINDOWS_CONF = CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_WINODW_CONF_PATH;
+    const std::string    CB_TEMP_DIR = MAIN_DIR + CLIENT_REDEMPTION_CB_FILE_TEMP_PATH;
+    std::string          SHARE_DIR = MAIN_DIR + CLIENT_REDEMPTION_SHARE_PATH;
+    const std::string    USER_CONF_DIR = MAIN_DIR + CLIENT_REDEMPTION_USER_CONF_PATH;
+    const std::string    SOUND_TEMP_DIR = CLIENT_REDEMPTION_SOUND_TEMP_PATH;
+    const std::string    DATA_DIR = MAIN_DIR + CLIENT_REDEMPTION_DATA_PATH;
+    const std::string    DATA_CONF_DIR = MAIN_DIR + CLIENT_REDEMPTION_DATA_CONF_PATH;
 
-    mod_api            * mod;
+    mod_api            * mod = nullptr;
     ClientInfo           info;
 
     //  Remote App
@@ -93,8 +93,6 @@ public:
         uint16_t x = 0;
         uint16_t y = 0;
     } mouse_data;
-
-
 
     struct WindowsData {
         int form_x = 0;
@@ -137,13 +135,13 @@ public:
         int index = -1;
         int protocol = NO_PROTOCOL;
     }    _accountData[MAX_ACCOUNT_DATA];
-    int  _accountNB;
-    bool _save_password_account;
-    int  _last_target_index;
+    int  _accountNB = 0;
+    bool _save_password_account = false;
+    int  _last_target_index = 0;
 
-    int current_user_profil;
+    int current_user_profil = 0;
 
-    uint8_t mod_state;
+    uint8_t mod_state = MOD_RDP;
 
     struct UserProfil {
         int id;
@@ -155,9 +153,9 @@ public:
     };
     std::vector<UserProfil> userProfils;
 
-    bool enable_shared_clipboard;
-    bool enable_shared_virtual_disk;
-    bool enable_shared_remoteapp;
+    bool enable_shared_clipboard = true;
+    bool enable_shared_virtual_disk = true;
+    bool enable_shared_remoteapp = false;
 
     struct KeyCustomDefinition {
         int qtKeyID;
@@ -239,71 +237,38 @@ public:
         bool enable_sound = false;
     } modRDPParamsData;
 
-    bool                 is_recording;
-    bool                 is_spanning;
+    bool                 is_recording = false;
+    bool                 is_spanning = false;
 
-    int rdp_width;
-    int rdp_height;
+    int rdp_width = 0;
+    int rdp_height = 0;
 
-    bool                 is_full_capturing;
-    bool                 is_full_replaying;
+    bool                 is_full_capturing = false;
+    bool                 is_full_replaying = false;
     std::string          full_capture_file_name;
-    bool                 is_replaying;
-    bool                 is_loading_replay_mod;
-    bool                 connected;
+    bool                 is_replaying = false;
+    bool                 is_loading_replay_mod = false;
+    bool                 connected = false;
 
     std::string _movie_name;
     std::string _movie_dir;
     std::string _movie_full_path;
 
-    uint8_t           connection_info_cmd_complete;
+    uint8_t           connection_info_cmd_complete = PORT_GOT;
 
     std::string       user_name;
     std::string       user_password;
     std::string       target_IP;
-    int               port;
-    BGRPalette           mod_palette;
+    int               port = 3389;
+    BGRPalette        mod_palette = BGRPalette::classic_332();
 
 
 
     ClientRedemptionAPI(SessionReactor& session_reactor)
-    : MAIN_DIR(CLIENT_REDEMPTION_MAIN_PATH)
-    , REPLAY_DIR(CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_REPLAY_PATH)
-    , USER_CONF_LOG(CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_LOGINS_PATH)
-    , WINDOWS_CONF(CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_WINODW_CONF_PATH)
-    , CB_TEMP_DIR(MAIN_DIR + CLIENT_REDEMPTION_CB_FILE_TEMP_PATH)
-    , SHARE_DIR(MAIN_DIR + CLIENT_REDEMPTION_SHARE_PATH)
-    , USER_CONF_DIR(MAIN_DIR + CLIENT_REDEMPTION_USER_CONF_PATH)
-    , SOUND_TEMP_DIR(CLIENT_REDEMPTION_SOUND_TEMP_PATH)
-    , DATA_DIR(MAIN_DIR + CLIENT_REDEMPTION_DATA_PATH)
-    , DATA_CONF_DIR(MAIN_DIR + CLIENT_REDEMPTION_DATA_CONF_PATH)
-    , mod(nullptr)
-    , info()
-    , _accountNB(0)
-    , _save_password_account(false)
-    , _last_target_index(0)
-    , current_user_profil(0)
-    , mod_state(MOD_RDP)
-    , enable_shared_clipboard(true)
-    , enable_shared_virtual_disk(true)
-    , enable_shared_remoteapp(false)
-    , vnc_conf(session_reactor, *(this))
-    , is_recording(false)
-    , is_spanning(false)
-    , rdp_width(0)
-    , rdp_height(0)
-    , is_full_capturing(false)
-    , is_full_replaying(false)
-    , is_replaying(false)
-    , is_loading_replay_mod(false)
-    , connected(false)
-
-    , connection_info_cmd_complete(PORT_GOT)
-    , port(3389)
-    , mod_palette(BGRPalette::classic_332())
+    : vnc_conf(session_reactor, *(this))
     {}
 
-    private:
+private:
     void parse_options(int argc, char const* const argv[]);
 
 public:

@@ -213,7 +213,6 @@ public:
                      ClientInputMouseKeyboardAPI * impl_mouse_keyboard,
                      ClientIODiskAPI * impl_io_disk)
         : ClientRedemptionController(session_reactor, argv, argc, verbose)
-        , cctx()
         , socket(nullptr)
         , client_sck(-1)
         , session_reactor(session_reactor)

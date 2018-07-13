@@ -116,10 +116,7 @@ public:
     uint8_t  fillMode{0x0};
     RDPColor color;
 
-    RDPEllipseSC()
-    : 
-     color{}
-    {}
+    RDPEllipseSC() = default;
 
     RDPEllipseSC(const Rect r, RDPColor c)
     : RDPEllipseSC(r, c, 0x0D, 0x01)

@@ -50,8 +50,7 @@ class GZipCompressionInTransport : public Transport
 
 public:
     explicit GZipCompressionInTransport(Transport & st, uint32_t verbose = 0)
-    : Transport()
-    , source_transport(st)
+    : source_transport(st)
     , compression_stream()
     , uncompressed_data(nullptr)
     , uncompressed_data_length(0)
@@ -152,21 +151,18 @@ class GZipCompressionOutTransport : public Transport {
     bool reset_compressor;
 
     uint8_t uncompressed_data[GZIP_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
-    size_t  uncompressed_data_length;
+    size_t  uncompressed_data_length = 0;
 
     uint8_t compressed_data[GZIP_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
-    size_t  compressed_data_length;
+    size_t  compressed_data_length = 0;
 
 public:
     explicit GZipCompressionOutTransport(Transport & tt, uint32_t verbose = 0)
-    : Transport()
-    , target_transport(tt)
+    : target_transport(tt)
     , compression_stream()
     , reset_compressor(false)
     , uncompressed_data()
-    , uncompressed_data_length(0)
     , compressed_data()
-    , compressed_data_length(0)
     {
         (void)verbose;
         REDEMPTION_DIAGNOSTIC_PUSH
