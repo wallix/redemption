@@ -32,7 +32,9 @@
 
 struct RDPMetrics {
 
-    char last_date[20] = {'\0'};
+
+    time_t last_date;
+    char complete_file_path[4096] = {'\0'};
 
     const char * path_template;
     const uint32_t session_id;
@@ -72,7 +74,7 @@ struct RDPMetrics {
       , primary_user(primary_user)
     {
         if (this->path_template) {
-            this->new_day(this->get_current_formated_date(false));
+            this->new_day();
         }
     }
 
@@ -80,43 +82,79 @@ struct RDPMetrics {
         fcntl(this->fd, F_SETFD, FD_CLOEXEC);
     }
 
-    std::string get_current_formated_date(bool keep_hhmmss) {
+    void set_current_formated_date(char * date, bool keep_hhmmss) {
         timeval now = tvtime();
-        time_t time_now = now.tv_sec;
+        this->last_date = now.tv_sec;
+        char current_date[24] = {'\0'};
+        memcpy(current_date, ctime(&(this->last_date)), 24);
 
-        //char *
+        date[0] = '-';
+        date[1] = current_date[20];
+        date[2] = current_date[21];
+        date[3] = current_date[22];
+        date[4] = current_date[23];
+        date[5] = '-';
+        date[6] =  current_date[4];
+        date[7] =  current_date[5];
+        date[8] =  current_date[6];
+        date[9] = '-';
+        date[10] = current_date[8];
+        date[11] = current_date[9];
 
-        std::string current_date(ctime(&time_now));
-        std::string mmm(current_date.substr(4, 3));
-        std::string dd(current_date.substr(8, 2));
-        std::string yyyy(current_date.substr(20, 4));
-        std::string hhmmss;
         if (keep_hhmmss) {
-            hhmmss +=  "-"+current_date.substr(11, 8);
-        }
 
-        return "-"+yyyy+"-"+mmm+"-"+dd+hhmmss;
+        }
     }
 
-    void new_day(const std::string & current_formated_date) {
-        memcpy(this->last_date, current_formated_date.data(), 12);
-        std::string file_path(this->path_template);
-        file_path += this->last_date;
-        file_path += ".log";
-        this->fd = ::open(file_path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
+//     void set_current_formated_time() {
+//         timeval now = tvtime();
+//         time_t time_now = now.tv_sec;
+//
+//         char current_date[24] = {'\0'};
+//         memcpy(current_date, ctime(&time_now), 24);
+//
+//
+//     }
+
+//     std::string get_current_formated_date(char * dest, bool keep_hhmmss) {
+//         timeval now = tvtime();
+//         time_t time_now = now.tv_sec;
+//
+//         char current_date[24] = {'\0'};
+//         memcpy(current_date, ctime(&time_now), 24);
+//
+// //         std::string current_date(ctime(&time_now));
+// //         LOG(LOG_INFO, "current_date=%s", current_date);
+//         std::string mmm(current_date.substr(4, 3));
+//         std::string dd(current_date.substr(8, 2));
+//         std::string yyyy(current_date.substr(20, 4));
+//         std::string hhmmss;
+//         if (keep_hhmmss) {
+//             hhmmss +=  "-"+current_date.substr(11, 8);
+//         }
+//
+//         return "-"+yyyy+"-"+mmm+"-"+dd+hhmmss;
+//     }
+
+    void new_day() {
+        char last_date_formated[20] = {'\0'};
+        this->set_current_formated_date(last_date_formated);
+        ::snprintf(this->complete_file_path, sizeof(this->complete_file_path), "%s%s.log", this->path_template, last_date_formated);
+
+        this->fd = ::open(complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
         if (this->fd == -1) {
-            LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\"", this->fd, file_path);
+            LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\"", this->fd, this->complete_file_path);
         }
     }
 
     void log() {
 
-        std::string last_date_str(this->last_date);
-        std::string current_formated_date(this->get_current_formated_date(false));
+        timeval now = tvtime();
+        time_t time_date = now.tv_sec;
 
-        if (last_date_str != current_formated_date) {
+        if ((time_date -this->last_date) >= 3600*24) {
             fcntl(this->fd, F_SETFD, FD_CLOEXEC);
-            this->new_day(current_formated_date);
+            this->new_day();
         }
 
         char sentence[4096];

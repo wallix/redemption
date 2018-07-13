@@ -39,29 +39,28 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputFileTurnOver) {
     RDPMetrics metrics( templace_path_file
               , 1, "user", "10.10.13.12", "admin");
 
-    std::string str_path(templace_path_file+ metrics.get_current_formated_date() + ".log");
-    int fd = ::open(str_path.c_str(), O_RDWR | O_APPEND);
+    char current_date[24] = {'\0'};
+    metrics.set_current_formated_date(current_date);
+
+    char complete_file_path[4096] = {'\0'};
+    ::snprintf(complete_file_path, sizeof(complete_file_path), "%s%s.log", templace_path_file, current_date);
+    int fd = ::open(complete_file_path, O_RDWR | O_APPEND);
     RED_CHECK(fd > 0);
 
-    remove(str_path.c_str());
-    fd = ::open(str_path.c_str(), O_RDWR | O_APPEND);
+    remove(complete_file_path);
+    fd = ::open(complete_file_path, O_RDWR | O_APPEND);
     RED_CHECK(fd == -1);
 
-
-    const char * new_date = "-2018-Jul-xx";
-    std::string str_path_xx(templace_path_file);
-    str_path_xx += new_date;
-    str_path_xx += ".log";
-    memcpy(metrics.last_date, new_date, 12);
+    time_t last_date_save = metrics.last_date;
+    metrics.last_date -= 3600*24;
 
     metrics.log();
 
-    fd = ::open(str_path_xx.c_str(), O_RDWR | O_APPEND);
-    RED_CHECK(fd == -1);
+    RED_CHECK(last_date_save <= metrics.last_date);
 
-    fd = ::open(str_path.c_str(), O_RDWR | O_APPEND);
+    fd = ::open(complete_file_path, O_RDWR | O_APPEND);
     RED_CHECK(fd > 0);
 
-    remove(str_path.c_str());
+    remove(complete_file_path);
 
 }
