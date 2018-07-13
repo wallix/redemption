@@ -213,7 +213,7 @@ private:
 
         do {
             this->compression_stream.avail_out = sizeof(temp_compressed_data);
-            this->compression_stream.next_out  = reinterpret_cast<unsigned char *>(temp_compressed_data);
+            this->compression_stream.next_out  = temp_compressed_data;
 
             int ret = ::deflate(&this->compression_stream, flush);
             //if (this->verbose & 0x2) {

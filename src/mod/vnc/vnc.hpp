@@ -1668,7 +1668,7 @@ private:
 
                 // key is simply password padded with nulls
                 strncpy(key, this->password, 8);
-                rfbDesKey(reinterpret_cast<unsigned char*>(key), EN0); // 0, encrypt
+                rfbDesKey(byte_ptr_cast(key), EN0); // 0, encrypt
                 auto const random_buf = this->password_ctx.server_random.data();
                 rfbDes(random_buf, random_buf);
                 rfbDes(random_buf + 8, random_buf + 8);

@@ -498,7 +498,7 @@ void ocrypto::flush(uint8_t * buffer, size_t buflen, size_t & towrite)
     unsigned char ciphered_buf[4 + 65536];
     uint32_t ciphered_buf_sz = compressed_buf_sz + AES_BLOCK_SIZE;
     ciphered_buf_sz = this->ectx.encrypt(
-        reinterpret_cast<unsigned char*>(compressed_buf), compressed_buf_sz,
+        byte_ptr_cast(compressed_buf), compressed_buf_sz,
         ciphered_buf + 4, ciphered_buf_sz
     );
 
