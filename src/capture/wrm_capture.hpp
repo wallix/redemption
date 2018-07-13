@@ -282,7 +282,7 @@ public:
         return true;
     }
 
-    void enable_kbd_input_mask(bool) override {}
+    void enable_kbd_input_mask(bool /*enable*/) override {}
 
     void send_meta_chunk()
     {
@@ -587,7 +587,7 @@ class WrmCaptureImpl :
         using GraphicToFile::draw;
         using GraphicToFile::capture_bpp;
 
-        void draw(RDPNineGrid const & /*cmd*/, Rect , gdi::ColorCtx /*color_ctx*/, Bitmap const &  /*bmp*/) override {}
+        void draw(RDPNineGrid const & /*cmd*/, Rect /*rect*/, gdi::ColorCtx /*color_ctx*/, Bitmap const &  /*bmp*/) override {}
 
         void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
             auto compress_and_draw_bitmap_update = [&bitmap_data, this](const Bitmap & bmp) {
@@ -721,7 +721,7 @@ public:
         this->graphic_to_file.draw(cmd);
     }
 
-    void draw(RDPNineGrid const & /*cmd*/, Rect , gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}
+    void draw(RDPNineGrid const & /*cmd*/, Rect /*rect*/, gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}
 
 
     // XXXXXXXXXXXXXX
