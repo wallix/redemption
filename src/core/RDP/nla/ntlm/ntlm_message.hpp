@@ -537,8 +537,8 @@ struct NtlmField {
             if (sz > this->sz_buf) {
                 p = this->buf;
                 if (sz > sizeof(this->buf)) {
-                    p = new uint8_t[sz];
-                    this->dynbuf.reset(p);
+                    this->dynbuf = std::make_unique<uint8_t[]>(sz);
+                    p = this->dynbuf.get();
                     this->sz_buf = sz;
                 }
             }

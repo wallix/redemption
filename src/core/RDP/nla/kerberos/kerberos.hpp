@@ -170,12 +170,12 @@ public:
         gss_OID type = GSS_C_NT_HOSTBASED_SERVICE;
         int size = (strlen(service_name) + 1 + strlen(server) + 1);
 
-        output.value = malloc(size);
+        auto output_value = std::make_unique<char[]>(size);
+        output.value = output_value.get();
         snprintf(static_cast<char*>(output.value), size, "%s@%s", service_name, server);
         output.length = strlen(static_cast<char*>(output.value)) + 1;
         LOG(LOG_INFO, "GSS IMPORT NAME : %s", static_cast<char*>(output.value));
         major_status = gss_import_name(&minor_status, &output, type, name);
-        free(output.value);
         if (GSS_ERROR(major_status)) {
             LOG(LOG_ERR, "Failed to create service principal name");
             return false;
