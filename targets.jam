@@ -1791,6 +1791,11 @@ test-run tests/core/RDP/test_rdp_metrics :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_rdp_metrics.cpp
 :
   <covfile>src/core/RDP/rdp_metrics.hpp
+  <library>crypto
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/utils/fileutils.o
+  <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/core/RDP/test_rdp_pointer :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_rdp_pointer.cpp

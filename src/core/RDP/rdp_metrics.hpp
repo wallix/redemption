@@ -20,14 +20,18 @@
 
 #pragma once
 
-#include "utils/log.hpp"
-
 #include <cstdio>
 #include <cstring>
-
-#include "utils/difftimeval.hpp"
 #include <fcntl.h>
 #include <sys/uio.h>
+
+#include "utils/log.hpp"
+#include "utils/difftimeval.hpp"
+#include "core/client_info.hpp"
+#include "system/linux/system/ssl_sha1.hpp"
+
+
+
 
 
 struct RDPMetrics {
@@ -36,11 +40,15 @@ struct RDPMetrics {
     time_t last_date;
     char complete_file_path[4096] = {'\0'};
 
+    time_t stat_time;
+
     const char * path_template;
     const uint32_t session_id;
     const char * account;
-    const char * target_name;
     const char * primary_user;
+    const char * target_host;
+    ClientInfo info;
+    const uint32_t sccore_version;
 
 
     int fd = -1;
@@ -66,14 +74,21 @@ struct RDPMetrics {
     RDPMetrics( const char * path_template
               , const uint32_t session_id
               , const char * account
-              , const char * target_name
-              , const char * primary_user)
+              , const ClientInfo & info
+              , const char * target_host
+              , const char * primary_user
+              , const uint32_t sccore_version)
       : path_template(path_template)
       , session_id(session_id)
       , account(account)
-      , target_name(target_name)
       , primary_user(primary_user)
+      , target_host(target_host)
+      , info(info)
+      , sccore_version(sccore_version)
     {
+        timeval now = tvtime();
+        this->stat_time = now.tv_sec;
+
         if (this->path_template) {
             timeval now = tvtime();
             this->last_date = now.tv_sec;
@@ -85,9 +100,19 @@ struct RDPMetrics {
         fcntl(this->fd, F_SETFD, FD_CLOEXEC);
     }
 
+
+    void sha1_encrypt(char * dest, const char * src, const size_t src_len) {
+        SslSha1 sha1;
+        sha1.update(reinterpret_cast<const uint8_t*>(src), src_len);
+        uint8_t sig[SslSha1::DIGEST_LENGTH];
+        sha1.final(sig);
+        snprintf(dest, SslSha1::DIGEST_LENGTH,
+                 "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
+                 sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7], sig[8], sig[9],
+                 sig[10], sig[11], sig[12], sig[13], sig[14], sig[15], sig[16], sig[17], sig[18], sig[19]);
+    }
+
     void set_current_formated_date(char * date, bool keep_hhmmss, time_t time) {
-//         timeval now = tvtime();
-//         this->last_date = now.tv_sec;
         char current_date[24] = {'\0'};
         memcpy(current_date, ctime(&time), 24);
 
@@ -122,7 +147,7 @@ struct RDPMetrics {
         this->set_current_formated_date(last_date_formated, false, this->last_date);
         ::snprintf(this->complete_file_path, sizeof(this->complete_file_path), "%s%s.log", this->path_template, last_date_formated);
 
-        this->fd = ::open(complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
+        this->fd = ::open(this->complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
         if (this->fd == -1) {
             LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\"", this->fd, this->complete_file_path);
         }
@@ -140,12 +165,21 @@ struct RDPMetrics {
             this->new_day();
         }
 
+        char primary_user_sig[SslSha1::DIGEST_LENGTH];
+        this->sha1_encrypt(primary_user_sig, this->primary_user, sizeof(this->primary_user));
+
+        char account_sig[SslSha1::DIGEST_LENGTH];
+        this->sha1_encrypt(primary_user_sig, this->account, sizeof(this->account));
+
+
         char sentence[4096];
         ::snprintf(sentence, sizeof(sentence), "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\""
           " right_click_sent=%d left_click_sent=%d keys_sent=%d"
           " Client data received by channels - main=%ld cliprdr=%ld rail=%ld rdpdr=%ld drdynvc=%ld"
           " Server data received by channels - main=%ld cliprdr=%ld rail=%ld rdpdr=%ld drdynvc=%ld",
-            this->session_id, this->primary_user, this->account, this->target_name,
+
+
+            this->session_id, primary_user_sig, account_sig, this->info.hostname,
             this->total_right_clicks, this->total_left_clicks, this->total_keys_pressed,
 
             this->total_main_amount_data_rcv_from_client,

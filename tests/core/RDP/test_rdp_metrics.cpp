@@ -35,9 +35,10 @@
 
 RED_AUTO_TEST_CASE(TestRDPMetricsOutputFileTurnOver) {
 
+    ClientInfo info;
     const char * templace_path_file = "tests/core/RDP/rdp_metrics_file_test";
     RDPMetrics metrics( templace_path_file
-              , 1, "user", "10.10.13.12", "admin");
+              , 1, "user", info, "10.10.13.12", "admin", 0);
 
     char current_date[24] = {'\0'};
     timeval now = tvtime();
@@ -54,9 +55,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputFileTurnOver) {
 
     time_t last_date_save = metrics.last_date;
     metrics.last_date -= 3600*24;
-
     metrics.log();
-
     RED_CHECK(last_date_save <= metrics.last_date);
 
     fd = ::open(complete_file_path, O_RDWR | O_APPEND);
