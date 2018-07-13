@@ -177,8 +177,6 @@ public:
       , _waiting_for_data(false)
       , channel_flags(CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL)
       , arbitrary_scale(config.arbitrary_scale)
-      , _cb_buffers()
-      , _cb_filesList()
       , total_format_list_pdu_size(config.total_format_list_pdu_size)
       , server_use_long_format_names(config.server_use_long_format_names)
       , cCapabilitiesSets(config.cCapabilitiesSets)

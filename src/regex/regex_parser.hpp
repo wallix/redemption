@@ -112,11 +112,12 @@ namespace re {
 
     public:
         StateAccu()
-        : sts()
 #ifdef RE_PARSER_POOL_STATE
-        , mem(memory_list_t::allocate(nullptr))
-#endif
+        : mem(memory_list_t::allocate(nullptr))
         {}
+#else
+        = default;
+#endif
 
         ~StateAccu()
         {
@@ -627,7 +628,6 @@ namespace re {
         ContextClone(StateAccu & accu, State * st_base, unsigned nb_clone)
         : pos(std::find(accu.sts.rbegin(), accu.sts.rend(), st_base).base() - accu.sts.begin() - 1)
         , poslast(accu.sts.size())
-        , sts2()
         , accu(accu)
         , nb_clone(nb_clone)
         {
@@ -1033,7 +1033,6 @@ namespace re {
 #endif
     public:
         StateParser()
-        : m_accu()
         {
             this->m_accu.sts.reserve(32);
         }

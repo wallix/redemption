@@ -329,16 +329,16 @@ public:
     //    signed delta value.
     int16_t in_DEP() {
         int16_t point = this->in_uint8();
-        if (point & 0x80)
-        {
+        if (point & 0x80) {
             point = ((point & 0x7F) << 8) + this->in_uint8();
-            if (point & 0x4000)
+            if (point & 0x4000) {
                 point = - ((~(point - 1)) & 0x7FFF);
+            }
         }
-        else
-        {
-            if (point & 0x40)
+        else {
+            if (point & 0x40) {
                 point = - ((~(point - 1)) & 0x7F);
+            }
         }
         return point;
     }

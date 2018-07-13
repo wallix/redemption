@@ -93,9 +93,7 @@ void WidgetMultiLine::set_text(const char * text)
 
 const char * WidgetMultiLine::get_line(size_t num) const
 {
-    if (num >= this->max_line)
-        return nullptr;
-    return this->lines[num].str;
+    return (num >= this->max_line) ? nullptr : this->lines[num].str;
 }
 
 void WidgetMultiLine::rdp_input_invalidate(Rect clip)

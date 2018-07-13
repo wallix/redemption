@@ -239,20 +239,20 @@ struct rdp_mppc_60_dec : public rdp_mppc_dec
 
     void mini_dump() override
     {
-        LOG(LOG_INFO, "Type=RDP 6.0 bulk decompressor");
-        LOG(LOG_INFO, "historyBuffer");
-        hexdump_d(this->history_buf, 16);
-        LOG(LOG_INFO, "offsetCache");
-        hexdump_d(reinterpret_cast<const char *>(this->offset_cache), RDP_60_OFFSET_CACHE_SIZE);
-        LOG(LOG_INFO, "historyPointerOffset=%" PRIdPTR,   this->history_ptr - this->history_buf);
-        LOG(LOG_INFO, "historyBufferEndOffset=%" PRIdPTR, this->history_buf_end - this->history_buf);
+        this->_dump(16);
     }
 
     void dump() override
     {
+        this->_dump(RDP_60_HIST_BUF_LEN);
+    }
+
+private:
+    void _dump(size_t histo_buf_max)
+    {
         LOG(LOG_INFO, "Type=RDP 6.0 bulk decompressor");
         LOG(LOG_INFO, "historyBuffer");
-        hexdump_d(this->history_buf, RDP_60_HIST_BUF_LEN);
+        hexdump_d(this->history_buf, histo_buf_max);
         LOG(LOG_INFO, "offsetCache");
         hexdump_d(reinterpret_cast<const char *>(this->offset_cache), RDP_60_OFFSET_CACHE_SIZE);
         LOG(LOG_INFO, "historyPointerOffset=%" PRIdPTR,   this->history_ptr - this->history_buf);
@@ -497,8 +497,9 @@ public:
                 }
             }
 
-            if (!copy_offset)
+            if (!copy_offset){
                 continue;
+            }
 
             for (i = 0x2; i <= 0x9; i++) {
                 i32 = this->transposebits((d32 & (0xffffffff << (32 - i))));
@@ -784,8 +785,9 @@ private:
         this->hash_tab_mgr.clear_undo_history();
 
         if ((uncompressed_data == nullptr) || (uncompressed_data_size <= 0) ||
-            (uncompressed_data_size >= RDP_60_HIST_BUF_LEN - 1))
+            (uncompressed_data_size >= RDP_60_HIST_BUF_LEN - 1)){
             return;
+        }
 
         uint16_t opb_index = 0; /* index into outputBuffer                        */
         uint8_t  bits_left = 8; /* unused bits in current uint8_t in outputBuffer */
@@ -984,8 +986,9 @@ private:
                     LOG(LOG_INFO, "compress_60: Unable to undo changes made in hash table.");
                 }
             }
-            else
+            else{
                 ::memcpy(this->offsetCache, saved_offset_cache, sizeof(this->offsetCache));
+            }
 
             return;
         }

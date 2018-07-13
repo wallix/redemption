@@ -669,20 +669,11 @@ struct TSSmartCardCreds {
     uint8_t domainHint[256]{};
     size_t domainHint_length{0};
 
-    TSSmartCardCreds()
-        :
-         cspData()
-
-    {
-    }
+    TSSmartCardCreds() = default;
 
     TSSmartCardCreds(uint8_t * pin, size_t pin_length,
                      uint8_t * userHint, size_t userHint_length,
                      uint8_t * domainHint, size_t domainHint_length)
-        : pin_length(0)
-        , cspData()
-        , userHint_length(0)
-        , domainHint_length(0)
     {
         this->pin_length = (pin_length < sizeof(this->pin))
             ? pin_length
@@ -698,7 +689,6 @@ struct TSSmartCardCreds {
             ? domainHint_length
             : sizeof(this->domainHint);
         memcpy(this->domainHint, domainHint, this->domainHint_length);
-
     }
 
     void set_cspdatadetail(uint32_t keySpec, uint8_t * cardName, size_t cardName_length,

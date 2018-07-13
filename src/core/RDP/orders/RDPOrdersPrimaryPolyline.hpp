@@ -198,9 +198,7 @@ public:
     }
 
     RDPPolyline()
-    : 
-     PenColor{}
-     {
+    {
         ::memset(this->deltaEncodedPoints, 0, sizeof(this->deltaEncodedPoints));
     }
 

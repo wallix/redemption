@@ -188,9 +188,7 @@ public:
     }
 
     RDPPolygonSC()
-    : 
-     BrushColor{}
-     {
+    {
         ::memset(this->deltaPoints, 0, sizeof(this->deltaPoints));
     }
 

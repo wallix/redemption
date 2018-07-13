@@ -74,7 +74,7 @@ public:
     // Internal state of orders
     StateChunk ssc;
 
-    BmpCache     * bmp_cache;
+    std::unique_ptr<BmpCache> bmp_cache;
     PointerCache   ptr_cache;
     GlyphCache     gly_cache;
 

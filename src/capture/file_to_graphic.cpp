@@ -96,10 +96,7 @@ FileToGraphic::FileToGraphic(Transport & trans, const timeval begin_capture, con
     }
 }
 
-FileToGraphic::~FileToGraphic()
-{
-    delete this->bmp_cache;
-}
+FileToGraphic::~FileToGraphic() = default;
 
 void FileToGraphic::add_consumer(
     gdi::GraphicApi * graphic_ptr,
@@ -629,7 +626,7 @@ void FileToGraphic::interpret_order()
         this->stream.in_skip_bytes(this->stream.in_remain());
 
         if (!this->meta_ok) {
-            this->bmp_cache = new BmpCache(BmpCache::Recorder, this->info_bpp, this->info_number_of_cache,
+            this->bmp_cache = std::make_unique<BmpCache>(BmpCache::Recorder, this->info_bpp, this->info_number_of_cache,
                 this->info_use_waiting_list,
                 BmpCache::CacheOption(
                     this->info_cache_0_entries, this->info_cache_0_size, this->info_cache_0_persistent),

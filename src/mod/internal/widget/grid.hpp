@@ -63,11 +63,7 @@ private:
 
     // TODO: see why grid object need a difftimer ?
     struct difftimer {
-        std::chrono::microseconds t;
-
-        explicit difftimer(std::chrono::microseconds start = std::chrono::microseconds::zero())
-        : t(start)
-        {}
+        std::chrono::microseconds t = std::chrono::microseconds::zero();
 
         std::chrono::microseconds tick() {
             std::chrono::microseconds ret = this->t;
@@ -78,7 +74,7 @@ private:
         void update() {
             this->t = ustime();
         }
-    } click_interval;
+    } click_interval {};
 
 public:
     WidgetGrid(gdi::GraphicApi & drawable, Widget & parent,
@@ -105,7 +101,6 @@ public:
         , fg_color_selection(fg_color_selection)
         , border(border)
         , selection_y(static_cast<uint16_t>(-1u))
-        , click_interval()
     {
         assert(nb_columns <= GRID_NB_COLUMNS_MAX);
     }

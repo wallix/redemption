@@ -349,8 +349,9 @@ public:
 
     bool set_lang(language_t lang)
     {
-        if (lang >= MAX_LANG)
+        if (lang >= MAX_LANG) {
             return false;
+        }
         this->lang = lang;
         return true;
     }

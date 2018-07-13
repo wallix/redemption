@@ -221,8 +221,9 @@ public:
         }
         uint8_t ZeroTimestamp[8] = {};
 
-        if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0)
+        if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0) {
             memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
+        }
         else {
             timeval tv = this->timeobj.get_time();
             struct {
@@ -1084,8 +1085,9 @@ public:
         InStream in_stream(input_buffer->Buffer.get_data(),
                            input_buffer->Buffer.size());
         this->NEGOTIATE_MESSAGE.recv(in_stream);
-        if (!this->ntlm_check_nego())
+        if (!this->ntlm_check_nego()) {
             return SEC_E_INVALID_TOKEN;
+        }
 
         this->SavedNegotiateMessage.init(in_stream.get_offset());
         this->SavedNegotiateMessage.copy(in_stream.get_data(), in_stream.get_offset());

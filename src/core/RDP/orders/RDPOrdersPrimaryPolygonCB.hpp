@@ -218,11 +218,7 @@ public:
     }
 
     RDPPolygonCB()
-    : 
-     backColor{}
-    , foreColor{}
-    , brush(RDPBrush())
-     {
+    {
         ::memset(this->deltaPoints, 0, sizeof(this->deltaPoints));
     }
 

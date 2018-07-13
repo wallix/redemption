@@ -185,21 +185,21 @@ public:
 
     void send_notify(NotifyApi::notify_event_t event)
     {
-        if (this->notifier)
+        if (this->notifier) {
             this->notifier->notify(this, event);
+        }
     }
 
     void notify(Widget * /*sender*/, NotifyApi::notify_event_t event) override
     {
-        if (this->notifier)
+        if (this->notifier) {
             this->notifier->notify(this, event);
+        }
     }
 
     virtual Widget * widget_at_pos(int16_t x, int16_t y)
     {
-        if (this->rect.contains_pt(x, y))
-            return this;
-        return nullptr;
+        return (this->rect.contains_pt(x, y)) ? this : nullptr;
     }
 
     virtual void set_xy(int16_t x, int16_t y)

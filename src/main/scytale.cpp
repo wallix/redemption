@@ -378,7 +378,7 @@ int scytale_writer_close(RedCryptoWriterHandle * handle) {
 void scytale_writer_delete(RedCryptoWriterHandle * handle)
 {
     SCOPED_TRACE;
-    delete handle;
+    delete handle; /*NOLINT*/
 }
 
 char const * scytale_writer_error_message(RedCryptoWriterHandle * handle)
@@ -461,7 +461,7 @@ int scytale_reader_close(RedCryptoReaderHandle * handle) {
 
 void scytale_reader_delete(RedCryptoReaderHandle * handle) {
     SCOPED_TRACE;
-    delete handle;
+    delete handle; /*NOLINT*/
 }
 
 char const * scytale_reader_error_message(RedCryptoReaderHandle * handle)
@@ -623,7 +623,7 @@ int scytale_meta_reader_read_line_eof(RedCryptoMetaReaderHandle * handle)
 void scytale_meta_reader_delete(RedCryptoMetaReaderHandle * handle)
 {
     SCOPED_TRACE;
-    delete handle;
+    delete handle; /*NOLINT*/
 }
 
 RedCryptoMwrmHeader * scytale_meta_reader_get_header(RedCryptoMetaReaderHandle * handle)
@@ -693,7 +693,7 @@ const char * scytale_key_derivate(RedCryptoKeyHandle * handle, const uint8_t * d
 
 void scytale_key_delete(RedCryptoKeyHandle * handle) {
     SCOPED_TRACE;
-    delete handle;
+    delete handle; /*NOLINT*/
 }
 
 

@@ -124,9 +124,6 @@ public:
     }
 
     RDPMultiOpaqueRect()
-    : 
-     _Color{}
-     
     {
         ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
     }

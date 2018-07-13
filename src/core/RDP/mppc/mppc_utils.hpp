@@ -177,8 +177,9 @@ struct rdp_mppc_enc_hash_table_manager
         };
 
         hash_type crc = 0xFFFF;
-        for (unsigned int index = 0; index < length_of_data_to_sign; index++)
+        for (unsigned int index = 0; index < length_of_data_to_sign; index++) {
             crc = (crc >> 8) ^ crc_table[(crc ^ data[index]) & 0xff];
+        }
         return crc;
     }
 

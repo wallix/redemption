@@ -924,8 +924,9 @@ public:
 
                 {
                     this->reconnection_cookie = this->gen.rand32();
-                    if (INVALID_RECONNECTION_COOKIE == this->reconnection_cookie)
+                    if (INVALID_RECONNECTION_COOKIE == this->reconnection_cookie) {
                         this->reconnection_cookie &= ~(0x80000000);
+                    }
 
                     send_client_message([this](OutStream & out_s) {
                             {

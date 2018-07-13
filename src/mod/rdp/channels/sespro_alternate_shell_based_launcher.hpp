@@ -149,8 +149,9 @@ public:
         this->stopped = true;
 
         if (bLaunchSuccessful) {
-            if (this->rail_channel)
+            if (this->rail_channel) {
                 this->rail_channel->confirm_session_probe_launch();
+            }
         }
         else {
             if (!this->drive_redirection_initialized) {

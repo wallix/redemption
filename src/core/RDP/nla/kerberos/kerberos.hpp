@@ -170,12 +170,12 @@ public:
         gss_OID type = GSS_C_NT_HOSTBASED_SERVICE;
         int size = (strlen(service_name) + 1 + strlen(server) + 1);
 
-        output.value = malloc(size);
+        auto output_value = std::make_unique<char[]>(size);
+        output.value = output_value.get();
         snprintf(static_cast<char*>(output.value), size, "%s@%s", service_name, server);
         output.length = strlen(static_cast<char*>(output.value)) + 1;
         LOG(LOG_INFO, "GSS IMPORT NAME : %s", static_cast<char*>(output.value));
         major_status = gss_import_name(&minor_status, &output, type, name);
-        free(output.value);
         if (GSS_ERROR(major_status)) {
             LOG(LOG_ERR, "Failed to create service principal name");
             return false;
@@ -530,10 +530,11 @@ public:
             ms = gss_display_status(
                 &minor_status, major_status,
                 code, GSS_C_NULL_OID, &msgctx, &status_string);
-        	if (ms != GSS_S_COMPLETE)
-                    continue;
+        	if (ms != GSS_S_COMPLETE) {
+                continue;
+            }
 
-                LOG(LOG_ERR," - %s\n", static_cast<uint8_t const*>(status_string.value));
+            LOG(LOG_ERR," - %s\n", static_cast<uint8_t const*>(status_string.value));
         }
         while (ms == GSS_S_COMPLETE && msgctx);
 
@@ -547,12 +548,14 @@ public:
 
         mech_found = 0;
 
-        if (mech == GSS_C_NO_OID)
+        if (mech == GSS_C_NO_OID) {
             return true;
+        }
 
         major_status = gss_indicate_mechs(&minor_status, &mech_set);
-        if (!mech_set)
+        if (!mech_set) {
             return false;
+        }
         if (GSS_ERROR(major_status)) {
             this->report_error(GSS_C_GSS_CODE, "Failed to get available mechs on system",
                                major_status, minor_status);

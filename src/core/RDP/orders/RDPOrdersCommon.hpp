@@ -166,8 +166,7 @@ struct RDPPen {
     RDPPen(uint8_t style, uint8_t width, RDPColor color)
         : style(style), width(width), color(color) {}
 
-    RDPPen() :  color{} {
-    }
+    RDPPen() = default;
 
     bool operator==(const RDPPen &other) const {
         return  (this->style == other.style)
@@ -184,21 +183,20 @@ struct RDPBrush {
     uint8_t hatch{0};
     uint8_t extra[7];
 
-    RDPBrush() 
-        
-        {
-            memset(this->extra, 0, 7);
-        }
+    RDPBrush()
+    {
+        memset(this->extra, 0, 7);
+    }
 
     RDPBrush(int8_t org_x, int8_t org_y, uint8_t style, uint8_t hatch,
-             const uint8_t * extra = byte_ptr_cast("\0\0\0\0\0\0\0")) :
-        org_x(org_x),
-        org_y(org_y),
-        style(style),
-        hatch(hatch)
-        {
-            memcpy(this->extra, extra, 7);
-        }
+             const uint8_t * extra = byte_ptr_cast("\0\0\0\0\0\0\0"))
+    : org_x(org_x)
+    , org_y(org_y)
+    , style(style)
+    , hatch(hatch)
+    {
+        memcpy(this->extra, extra, 7);
+    }
 
     bool operator==(const RDPBrush &other) const {
         return  (this->org_x == other.org_x)
@@ -206,7 +204,7 @@ struct RDPBrush {
              && (this->style == other.style)
              && (this->hatch == other.hatch)
              && ((this->style != 3) || (0 == memcmp(this->extra, other.extra, 7)))
-             ;
+        ;
     }
 
 };

@@ -41,38 +41,22 @@
 // include "core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
 
 struct StateChunk {
-    RDPOrderCommon          common;
-    RDPDestBlt              destblt;
+    RDPOrderCommon          common{RDP::PATBLT, Rect(0, 0, 1, 1)};
+    RDPDestBlt              destblt{Rect(), 0};
     RDPMultiDstBlt          multidstblt;
     RDPMultiOpaqueRect      multiopaquerect;
     RDP::RDPMultiPatBlt     multipatblt;
     RDP::RDPMultiScrBlt     multiscrblt;
-    RDPPatBlt               patblt;
-    RDPScrBlt               scrblt;
-    RDPOpaqueRect           opaquerect;
-    RDPMemBlt               memblt;
-    RDPMem3Blt              mem3blt;
-    RDPLineTo               lineto;
-    RDPGlyphIndex           glyphindex;
+    RDPPatBlt               patblt{Rect(), 0, RDPColor{}, RDPColor{}, RDPBrush()};
+    RDPScrBlt               scrblt{Rect(), 0, 0, 0};
+    RDPOpaqueRect           opaquerect{Rect(), RDPColor{}};
+    RDPMemBlt               memblt{0, Rect(), 0, 0, 0, 0};
+    RDPMem3Blt              mem3blt{0, Rect(), 0, 0, 0, RDPColor{}, RDPColor{}, RDPBrush(), 0};
+    RDPLineTo               lineto{0, 0, 0, 0, 0, RDPColor{}, 0, RDPPen(0, 0, RDPColor{})};
+    RDPGlyphIndex           glyphindex{0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(0, 0, 1, 1),
+                                       Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, byte_ptr_cast("")};
     RDPPolyline             polyline;
     RDPEllipseSC            ellipseSC;
 
-    StateChunk()
-    : common(RDP::PATBLT, Rect(0, 0, 1, 1))
-    , destblt(Rect(), 0)
-    , multidstblt()
-    , multiopaquerect()
-    , multipatblt()
-    , multiscrblt()
-    , patblt(Rect(), 0, RDPColor{}, RDPColor{}, RDPBrush())
-    , scrblt(Rect(), 0, 0, 0)
-    , opaquerect(Rect(), RDPColor{})
-    , memblt(0, Rect(), 0, 0, 0, 0)
-    , mem3blt(0, Rect(), 0, 0, 0, RDPColor{}, RDPColor{}, RDPBrush(), 0)
-    , lineto(0, 0, 0, 0, 0, RDPColor{}, 0, RDPPen(0, 0, RDPColor{}))
-    , glyphindex( 0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
-                , byte_ptr_cast(""))
-    , polyline()
-    , ellipseSC()
-    {}
+    StateChunk() = default;
 };

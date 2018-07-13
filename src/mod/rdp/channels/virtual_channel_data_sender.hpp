@@ -23,6 +23,26 @@
 #include "utils/log.hpp"
 #include "utils/hexdump.hpp"
 
+namespace
+{
+    static void msgdump_impl(bool from_or_to_client,
+        uint32_t total_length, uint32_t flags, const uint8_t* chunk_data,
+        uint32_t chunk_data_length)
+    {
+        const uint32_t dest = (from_or_to_client
+                            ? 0  // Client
+                            : 1  // Server
+                            );
+        hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
+            sizeof(dest));
+        hexdump_c(reinterpret_cast<uint8_t*>(&total_length),
+            sizeof(total_length));
+        hexdump_c(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
+        hexdump_c(reinterpret_cast<uint8_t*>(&chunk_data_length),
+            sizeof(chunk_data_length));
+        hexdump_c(chunk_data, chunk_data_length);
+    }
+}
 
 inline static void msgdump_c(bool send, bool from_or_to_client,
     uint32_t total_length, uint32_t flags, const uint8_t* chunk_data,
@@ -34,18 +54,7 @@ inline static void msgdump_c(bool send, bool from_or_to_client,
     else {
         LOG(LOG_INFO, "Recv done on channel (%u) n bytes", chunk_data_length);
     }
-    const uint32_t dest = (from_or_to_client
-                           ? 0  // Client
-                           : 1  // Server
-                          );
-    hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
-        sizeof(dest));
-    hexdump_c(reinterpret_cast<uint8_t*>(&total_length),
-        sizeof(total_length));
-    hexdump_c(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
-    hexdump_c(reinterpret_cast<uint8_t*>(&chunk_data_length),
-        sizeof(chunk_data_length));
-    hexdump_c(chunk_data, chunk_data_length);
+    msgdump_impl(from_or_to_client, total_length, flags, chunk_data, chunk_data_length);
     if (send) {
         LOG(LOG_INFO, "Sent dumped on channel (%u) n bytes", chunk_data_length);
     }
@@ -64,18 +73,7 @@ inline static void msgdump_d(bool send, bool from_or_to_client,
     else {
         LOG(LOG_INFO, "Recv done on channel (%u) n bytes", total_length);
     }
-    const uint32_t dest = (from_or_to_client
-                           ? 0  // Client
-                           : 1  // Server
-                          );
-    hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
-        sizeof(dest));
-    hexdump_c(reinterpret_cast<uint8_t*>(&total_length),
-        sizeof(total_length));
-    hexdump_c(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
-    hexdump_c(reinterpret_cast<uint8_t*>(&chunk_data_length),
-        sizeof(chunk_data_length));
-    hexdump_c(chunk_data, chunk_data_length);
+    msgdump_impl(from_or_to_client, total_length, flags, chunk_data, chunk_data_length);
     if (total_length > chunk_data_length) {
         LOG(LOG_INFO, "/* ---- */ \"...                                                             \" //................");
     }

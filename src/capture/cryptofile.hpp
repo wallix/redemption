@@ -258,8 +258,9 @@ public:
                 bits += v;
                 nbits += 6;
                 if (nbits >= 8) {
-                    if (nbytes < bufsiz)
+                    if (nbytes < bufsiz) {
                         *buffer++ = (bits >> (nbits - 8));
+                    }
                     nbytes++;
                     nbits -= 8;
                 }
