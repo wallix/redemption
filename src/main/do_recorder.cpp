@@ -1886,7 +1886,7 @@ struct RecorderParams {
     std::string input_filename;
     std::string input_basename;
     std::string infile_extension;
-    std::string config_filename;
+    std::string config_filename = app_path(AppPath::CfgIni);
     std::string mwrm_path;
     std::string hash_path;
     std::string full_path;
@@ -2039,12 +2039,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         return ClRes::Exit;
     }
 
-    if (options.count("config-file") > 0) {
-        configuration_load(ini.configuration_holder(), recorder.config_filename);
-    }
-    else {
-        recorder.config_filename = app_path(AppPath::CfgIni);
-    }
+    configuration_load(ini.configuration_holder(), recorder.config_filename);
 
     if (options.count("quick") > 0) {
         recorder.quick_check = true;
