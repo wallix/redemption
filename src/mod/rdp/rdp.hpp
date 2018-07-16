@@ -849,10 +849,11 @@ public:
         , metrics( nullptr
                  , redir_info.session_id
                  , mod_rdp_params.target_user
-                 , info
-                 , mod_rdp_params.target_host
                  , vars.get<cfg::globals::auth_user>().c_str()
-                 , this->sc_core.version)
+                 , mod_rdp_params.target_host
+                 , info
+                 , this->sc_core.version
+                 , vars.get<cfg::context::target_service>().c_str())
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -1693,10 +1694,11 @@ public:
                 this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::drdynvc:
-                this->metrics.total_drdynvc_amount_data_rcv_from_client += length;
+                this->metrics.total_other_amount_data_rcv_from_client += length;
                 this->send_to_mod_drdynvc_channel(mod_channel, chunk, length, flags);
                 break;
             default:
+                this->metrics.total_other_amount_data_rcv_from_client += length;
                 this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
         }
     }
@@ -2251,7 +2253,9 @@ public:
             }
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
-                this->metrics.total_cliprdr_amount_data_rcv_from_server += length;
+                if (bool(this->verbose & RDPVerbose::export_metrics)) {
+                    this->metrics.set_server_cliprdr_metrics(sec.payload, length);
+                }
                 this->process_cliprdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::rail) {
@@ -2263,10 +2267,12 @@ public:
                 this->process_rdpdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::drdynvc) {
-                this->metrics.total_drdynvc_amount_data_rcv_from_server += length;
+                this->metrics.total_other_amount_data_rcv_from_server += length;
                 this->process_drdynvc_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else {
+                this->metrics.total_other_amount_data_rcv_from_server += length;
+
                 if (mod_channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
                     InStream clone = sec.payload.clone();
                     rdpsnd::streamLogServer(clone, flags);

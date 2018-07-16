@@ -40,7 +40,8 @@ using ModRdpVariables = vcfg::variables<
     vcfg::var<cfg::context::auth_notify,                       vcfg::accessmode::set>,
     vcfg::var<cfg::context::auth_notify_rail_exec_flags,       vcfg::accessmode::set>,
     vcfg::var<cfg::context::auth_notify_rail_exec_exe_or_file, vcfg::accessmode::set>,
-    vcfg::var<cfg::globals::auth_user,                         vcfg::accessmode::get>
+    vcfg::var<cfg::globals::auth_user,                         vcfg::accessmode::get>, 
+    vcfg::var<cfg::context::target_service,                    vcfg::accessmode::get>
 >;
 
 struct ModRDPParams {
