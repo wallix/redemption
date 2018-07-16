@@ -173,37 +173,49 @@ namespace cli
     template<class Act>
     Res arg_parse(int* /*unused*/, char const * s, Act act)
     {
-        return act(static_cast<int>(std::strtol(s, nullptr, 0))), Ok;
+        char* end{};
+        auto const n = static_cast<int>(std::strtol(s, &end, 0));
+        return (errno == ERANGE || *end) ? Res::BadFormat : (act(n), Ok);
     }
 
     template<class Act>
     Res arg_parse(unsigned* /*unused*/, char const * s, Act act)
     {
-        return act(static_cast<unsigned>(std::strtoul(s, nullptr, 0))), Ok;
+        char* end{};
+        auto const n = static_cast<unsigned>(std::strtoul(s, &end, 0));
+        return (errno == ERANGE || *end) ? Res::BadFormat : (act(n), Ok);
     }
 
     template<class Act>
     Res arg_parse(long* /*unused*/, char const * s, Act act)
     {
-        return act(std::strtol(s, nullptr, 0)), Ok;
+        char* end{};
+        auto const n = std::strtol(s, &end, 0);
+        return (errno == ERANGE || *end) ? Res::BadFormat : (act(n), Ok);
     }
 
     template<class Act>
     Res arg_parse(unsigned long* /*unused*/, char const * s, Act act)
     {
-        return act(std::strtoul(s, nullptr, 0)), Ok;
+        char* end{};
+        auto const n = std::strtoul(s, &end, 0);
+        return (errno == ERANGE || *end) ? Res::BadFormat : (act(n), Ok);
     }
 
     template<class Act>
     Res arg_parse(long long* /*unused*/, char const * s, Act act)
     {
-        return act(std::strtoll(s, nullptr, 0)), Ok;
+        char* end{};
+        auto const n = std::strtoll(s, &end, 0);
+        return (errno == ERANGE || *end) ? Res::BadFormat : (act(n), Ok);
     }
 
     template<class Act>
     Res arg_parse(unsigned long long* /*unused*/, char const * s, Act act)
     {
-        return act(std::strtoull(s, nullptr, 0)), Ok;
+        char* end{};
+        auto const n = std::strtoull(s, &end, 0);
+        return (errno == ERANGE || *end) ? Res::BadFormat : (act(n), Ok);
     }
 
     template<class Act>
