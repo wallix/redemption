@@ -20,18 +20,17 @@
 
 #pragma once
 
-#include <cstdio>
-#include <cstring>
-#include <fcntl.h>
-#include <sys/uio.h>
-
 #include "utils/log.hpp"
 #include "utils/difftimeval.hpp"
 #include "core/client_info.hpp"
 #include "system/linux/system/ssl_sha1.hpp"
 
+#include <cstdio>
+#include <cstring>
 
+#include <unistd.h>
 
+#include <fcntl.h>
 
 
 struct RDPMetrics {
@@ -173,7 +172,7 @@ struct RDPMetrics {
 
 
         char sentence[4096];
-        ::snprintf(sentence, sizeof(sentence), "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\""
+        int len = ::snprintf(sentence, sizeof(sentence), "Session_id=%u user=\"%s\" account=\"%s\" target_host=\"%s\""
           " right_click_sent=%d left_click_sent=%d keys_sent=%d"
           " Client data received by channels - main=%ld cliprdr=%ld rail=%ld rdpdr=%ld drdynvc=%ld"
           " Server data received by channels - main=%ld cliprdr=%ld rail=%ld rdpdr=%ld drdynvc=%ld",
@@ -197,20 +196,12 @@ struct RDPMetrics {
 
         if (this->fd == -1) {
             LOG(LOG_INFO, "sentence=%s", sentence);
-
         } else {
-
-            struct iovec iov[1];
-            iov[0].iov_base = sentence;
-            iov[0].iov_len = std::strlen(sentence);
-
-            ssize_t nwritten = ::writev(fd, iov, 1);
+            ssize_t nwritten = ::write(this->fd, sentence, len);
 
             if (nwritten == -1) {
-                std::string file_path_template(this->path_template);
-                file_path_template += this->last_date;
-                file_path_template += ".log";
-                LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"",this->fd, file_path_template);
+                LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s%ld.log\"",
+                    this->fd, this->path_template, this->last_date);
                 return;
             }
         }
