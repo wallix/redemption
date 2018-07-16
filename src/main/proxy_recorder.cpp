@@ -144,8 +144,6 @@ public:
 
 
     void run() {
-        LOG(LOG_INFO, "Recording front connection in %s", captureFile);
-
         fd_set rset;
         int front_fd = frontConn.get_fd();
         int back_fd = backConn.get_fd();
@@ -239,8 +237,9 @@ public:
                 _exit(1);
             }
 
-            char finalPath[300];
-            std::snprintf(finalPath, sizeof(finalPath), captureTemplate.c_str(), connection_counter);
+            char finalPathBuffer[256];
+            char const* finalPath = captureTemplate.format(finalPathBuffer, connection_counter);
+            LOG(LOG_INFO, "Recording front connection in %s", finalPath);
 
             FrontConnection conn(std::move(sck_in), targetHost, targetPort, finalPath);
             conn.run();
@@ -251,10 +250,47 @@ public:
     }
 
 private:
+    struct CaptureTemplate
+    {
+        std::string captureTemplate;
+        int startDigit = 0;
+        int endDigit = 0;
+
+        CaptureTemplate(std::string captureFile)
+            : captureTemplate(std::move(captureFile))
+        {
+            std::string::size_type pos = 0;
+            while ((pos = captureTemplate.find('%', pos)) != std::string::npos) {
+                LOG(LOG_INFO, "%lu", pos);
+                if (captureTemplate[pos+1] == 'd') {
+                    startDigit = int(pos);
+                    endDigit = startDigit + 2;
+                    break;
+                }
+                ++pos;
+            }
+        }
+
+        char const* format(array_view_char path, int counter) const
+        {
+            if (endDigit) {
+                std::snprintf(path.data(), path.size(), "%.*s%04d%s",
+                    startDigit, captureTemplate.c_str(),
+                    counter,
+                    captureTemplate.c_str() + endDigit
+                );
+                path.back() = '\0';
+                return path.data();
+            }
+
+            return captureTemplate.c_str();
+        }
+    };
+
     int connection_counter = 0;
     int targetPort;
     std::string targetHost;
-    std::string captureTemplate;
+    CaptureTemplate captureTemplate;
 };
 
 
